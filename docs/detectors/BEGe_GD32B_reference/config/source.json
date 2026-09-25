@@ -1,0 +1,57 @@
+{
+  "id": "BEGe_GD32B_reference",
+  "group": "commercial_reference",
+  "model": "[project]\\Additional_Simulations\\Visualization_3D\\detectors\\BEGe_GD32B_reference\\config\\model.yaml",
+  "cache": null,
+  "status": "dimension-based illustrative model; not a calibrated replica",
+  "sources": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC6892349/"
+  ],
+  "reported_dimensions": "GD32B: diameter 71.89 mm, height 32.16 mm (Table 1); groove diameters 15/21 mm and depth about 2 mm reported for the production.",
+  "assumptions": [
+    "Readout fills the central 15 mm diameter disk; microscopic contact details are idealized.",
+    "4000 V is reported for GD32B in Benato thesis Table 4.2: https://www.mpi-hd.mpg.de/gerda/public/2015/phd2015_giovanniBenato.pdf",
+    "78 K and a uniform net impurity are illustrative inputs; no measured impurity profile is claimed.",
+    "Ideal contacts; no explicit dead/transition layer. No experiment-matched electronics."
+  ],
+  "bounds_mm": [
+    -35.945,
+    35.945,
+    -35.945,
+    35.945,
+    0,
+    32.16
+  ],
+  "model_sha256": "7e651b974a5f46f9de084180c0195da047707d14084622994f56eac97a7ff913",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "Readout p+",
+      "potential_V": 0,
+      "bounds_mm": [
+        -7.5,
+        7.5,
+        -7.5,
+        7.5,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Outer n+",
+      "potential_V": 4000,
+      "bounds_mm": [
+        -35.945,
+        35.945,
+        -35.945,
+        35.945,
+        0.0,
+        32.16
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 1.0
+}

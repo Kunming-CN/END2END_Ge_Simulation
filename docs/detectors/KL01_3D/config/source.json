@@ -1,0 +1,55 @@
+{
+  "id": "KL01_3D",
+  "group": "thesis",
+  "model": "[project]\\Additional_Simulations\\models\\KL01_3D.yaml",
+  "cache": "[project]\\Additional_Simulations\\results\\KL01_3D\\baseline.jls",
+  "status": "geometry and material match",
+  "sources": [
+    "Authoritative dissertation model_manifest.json"
+  ],
+  "assumptions": [
+    "Outer bias set to 1600 V; readout 0 V.",
+    "Rectangular union geometry retained; replaced invalid phi=0 cylindrical approximation by Cartesian 3D.",
+    "Explicit SSD 0.11 impurity format with units prevents automatic legacy conversion from multiplying density by 1e9."
+  ],
+  "bounds_mm": [
+    -9.31,
+    9.31,
+    -9.795,
+    9.795,
+    0.0,
+    9.06
+  ],
+  "model_sha256": "84b215eecc13cf5f92aabc5e3c464910315dc71468533e53040cd30874d662ea",
+  "coordinate_system": "cartesian",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "PP",
+      "potential_V": 0,
+      "bounds_mm": [
+        -5.17,
+        5.17,
+        -5.64,
+        5.64,
+        9.06,
+        9.06
+      ]
+    },
+    {
+      "id": 2,
+      "name": "HV",
+      "potential_V": 1600,
+      "bounds_mm": [
+        -9.31,
+        9.31,
+        -9.795,
+        9.795,
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 0.35
+}

@@ -1,0 +1,54 @@
+{
+  "id": "SAP16",
+  "group": "thesis",
+  "model": "[project]\\Additional_Simulations\\models\\SAP16.yaml",
+  "cache": "[project]\\Additional_Simulations\\results\\SAP16\\baseline.jls",
+  "status": "geometry and material match",
+  "sources": [
+    "Authoritative dissertation model_manifest.json"
+  ],
+  "assumptions": [
+    "Outer bias set to 340 V; readout 0 V.",
+    "Explicit SSD 0.11 impurity format with units prevents automatic legacy conversion from multiplying density by 1e9."
+  ],
+  "bounds_mm": [
+    -9.05,
+    9.05,
+    -9.05,
+    9.05,
+    0.0,
+    7.1
+  ],
+  "model_sha256": "903aad272933aa6a2e2a744af0b6bfec486228633499f194c3fbe9b30d1486a4",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "p+ contact",
+      "potential_V": 0,
+      "bounds_mm": [
+        -0.75,
+        0.75,
+        -0.75,
+        0.75,
+        7.05,
+        7.1499999999999995
+      ]
+    },
+    {
+      "id": 2,
+      "name": "n+ contact",
+      "potential_V": 340,
+      "bounds_mm": [
+        -9.05,
+        9.05,
+        -9.05,
+        9.05,
+        0.0,
+        7.1
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 0.35
+}

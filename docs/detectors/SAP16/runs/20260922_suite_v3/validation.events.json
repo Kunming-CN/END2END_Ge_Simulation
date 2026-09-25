@@ -1,0 +1,41 @@
+{
+  "event_count": 31,
+  "source_inputs_unchanged": true,
+  "outside_raw_samples": 0,
+  "step_limit_carriers": 7,
+  "max_e_plus_h_signal_error": 2.0517989685053806e-07,
+  "max_initial_charge_error": 0.0,
+  "events_with_incomplete_collection": [
+    "random_02",
+    "random_04",
+    "random_08",
+    "random_09",
+    "random_10",
+    "random_11",
+    "two_wide_equal",
+    "two_wide_unequal",
+    "two_depth",
+    "three_spread",
+    "three_dominant",
+    "three_depth"
+  ],
+  "exact_seed_replay": true,
+  "no_trapping_endpoint_identity_max_error": 3.7187401924487773e-07,
+  "time_step_reference_ns": 0.125,
+  "baseline_rise_relative_difference_to_finest": 0.0021037090154285565,
+  "baseline_t99_difference_ns": 0.2991393469594783,
+  "baseline_Q_difference": 0.0,
+  "baseline_waveform_max_difference_to_finest": 0.033515953225311534,
+  "cloud_seed_rise_range_ns": [
+    43.861045714634265,
+    44.58181238890407
+  ],
+  "cloud_52_packet_rise_ns": 44.04272049750635,
+  "cloud_27_packet_rise_ns": 43.861045714634265,
+  "fixed_electronics_dt_max_error": 0.0006242065897985732,
+  "multisite_electronics_dt_max_error": 0.00039515233715847753,
+  "canonical_model_hash_unchanged": true,
+  "canonical_cache_hash_unchanged": true,
+  "convergence_limit": "Time-step and stochastic sensitivity values are reported, not certified convergence. Random samples with unfinished or incomplete collection remain in the library. Do not infer an experimentally calibrated resolution or converged instantaneous-current peak.",
+  "status": "numerical_and_provenance_checks_passed"
+}

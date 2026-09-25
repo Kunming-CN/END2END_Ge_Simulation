@@ -1,0 +1,54 @@
+{
+  "id": "Bipolar_reference_3D",
+  "group": "thesis_reference",
+  "model": "[project]\\Additional_Simulations\\models\\Bipolar_reference_3D.yaml",
+  "cache": "[project]\\Additional_Simulations\\results\\Bipolar_reference_3D\\baseline.jls",
+  "status": "reconstructed ideal planar scenario; exact fabrication details not identified",
+  "sources": [
+    "Authoritative dissertation model_manifest.json"
+  ],
+  "assumptions": [
+    "9.21 x 11.69 x 9.50 mm rectangular slab from thesis; ideal full-face contacts; +2000 V assumed operating scenario; N_eff=-3.14e10 cm^-3 assumed from nearby-boule KL01, not an independent reference measurement.",
+    "Explicit SSD 0.11 impurity format with units prevents automatic legacy conversion from multiplying density by 1e9."
+  ],
+  "bounds_mm": [
+    -4.605,
+    4.605,
+    -5.845,
+    5.845,
+    0.0,
+    9.5
+  ],
+  "model_sha256": "804093cedd9e1953589c72d7bcb0e8c13efb48f708d45773d4882dda20665fa5",
+  "coordinate_system": "cartesian",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "PP",
+      "potential_V": 0,
+      "bounds_mm": [
+        -4.605,
+        4.605,
+        -5.845,
+        5.845,
+        9.5,
+        9.5
+      ]
+    },
+    {
+      "id": 2,
+      "name": "HV",
+      "potential_V": 2000,
+      "bounds_mm": [
+        -4.605,
+        4.605,
+        -5.845,
+        5.845,
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 0.35
+}

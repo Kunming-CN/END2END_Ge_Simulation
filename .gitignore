@@ -1,0 +1,20 @@
+# Publication allowlist: accidental git add . cannot upload the raw workspace.
+*
+!.gitignore
+!.gitattributes
+!README.md
+!PROGRESS.md
+!AGENTS.md
+!Publish.cmd
+!tools/
+!tools/**
+!docs/
+!docs/**
+# Never include local test profiles, raw caches or runtime bytecode.
+.local/
+**/__pycache__/
+**/*.pyc
+**/*.jls
+**/*.pvsm
+**/*.vtr
+**/*.bin

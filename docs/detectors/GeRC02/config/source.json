@@ -1,0 +1,53 @@
+{
+  "id": "GeRC02",
+  "group": "thesis",
+  "model": "[project]\\Additional_Simulations\\models\\GeRC02.yaml",
+  "cache": "[project]\\Additional_Simulations\\results\\GeRC02\\baseline.jls",
+  "status": "geometry and material match",
+  "sources": [
+    "Authoritative dissertation model_manifest.json"
+  ],
+  "assumptions": [
+    "Outer bias set to 240 V; readout 0 V."
+  ],
+  "bounds_mm": [
+    -12.16,
+    12.16,
+    -12.16,
+    12.16,
+    0,
+    20.5
+  ],
+  "model_sha256": "7a655caeb660c07df8fcd9af51cc0998daea15f16e31f9c6afcacb89daf39218",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "ring contact",
+      "potential_V": 0,
+      "bounds_mm": [
+        -11.98,
+        11.98,
+        -11.98,
+        11.98,
+        9.6,
+        10.9
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Lithium Contact",
+      "potential_V": 240,
+      "bounds_mm": [
+        -12.16,
+        12.16,
+        -12.16,
+        12.16,
+        0.0,
+        20.5
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 0.35
+}

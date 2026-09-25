@@ -1,0 +1,55 @@
+{
+  "id": "SAP18_ring08_scenario",
+  "group": "thesis",
+  "model": "[project]\\Additional_Simulations\\models\\SAP18_ring08_scenario.yaml",
+  "cache": "[project]\\Additional_Simulations\\results\\SAP18_ring08_scenario\\baseline.jls",
+  "status": "scenario; identity unresolved",
+  "sources": [
+    "Authoritative dissertation model_manifest.json"
+  ],
+  "assumptions": [
+    "Outer bias set to -380 V; readout 0 V.",
+    "Hypothesis only: 0.8-mm ring substituted into the 2-mm GeRC geometry; other dimensions not independently identified for SAP18.",
+    "Explicit SSD 0.11 impurity format with units prevents automatic legacy conversion from multiplying density by 1e9."
+  ],
+  "bounds_mm": [
+    -12.5,
+    12.5,
+    -12.5,
+    12.5,
+    0,
+    19
+  ],
+  "model_sha256": "a4078c32a0f0c357932b12dbd7a9e719ee4aa894268b76c755bf7c3dbbb5bb09",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "ring contact",
+      "potential_V": 0,
+      "bounds_mm": [
+        -11.3,
+        11.3,
+        -11.3,
+        11.3,
+        8.4,
+        9.200000000000001
+      ]
+    },
+    {
+      "id": 2,
+      "name": "outside contact",
+      "potential_V": -380,
+      "bounds_mm": [
+        -12.5,
+        12.5,
+        -12.5,
+        12.5,
+        0.0,
+        19.0
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 0.35
+}

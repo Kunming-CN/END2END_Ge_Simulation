@@ -1,0 +1,582 @@
+{
+  "status": "all_native_scenes_reload_and_synchronization_passed",
+  "scenes": [
+    {
+      "event": "fixed",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 0.0,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 111.5,
+        "display_end_ns": 133.8,
+        "hold_ns": 22.3,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 111.0,
+        "focus_end_ns": 133.8,
+        "full_end_ns": 133.8,
+        "overview": false,
+        "ymin": -0.06999401726391381,
+        "ymax": 1.0699085496055396,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        66.9,
+        133.8
+      ]
+    },
+    {
+      "event": "random_04",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 0.0,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 382.5,
+        "display_end_ns": 459.0,
+        "hold_ns": 76.5,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 382.5,
+        "focus_end_ns": 459.0,
+        "full_end_ns": 459.0,
+        "overview": false,
+        "ymin": -0.06997617231755099,
+        "ymax": 1.0696357768539937,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        229.5,
+        459.0
+      ]
+    },
+    {
+      "event": "random_09",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 2.842170943040401e-14,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 279.0,
+        "display_end_ns": 334.8,
+        "hold_ns": 55.800000000000004,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 279.0,
+        "focus_end_ns": 334.8,
+        "full_end_ns": 334.8,
+        "overview": false,
+        "ymin": -0.06998286497917061,
+        "ymax": 1.069738078967322,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        167.39999999999998,
+        334.8
+      ]
+    },
+    {
+      "event": "random_03",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 2.842170943040401e-14,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 321.5,
+        "display_end_ns": 385.8,
+        "hold_ns": 64.3,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 321.5,
+        "focus_end_ns": 385.8,
+        "full_end_ns": 385.8,
+        "overview": false,
+        "ymin": -0.06998020598535452,
+        "ymax": 1.0696974343475618,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        192.89999999999998,
+        385.8
+      ]
+    },
+    {
+      "event": "random_10",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 2.842170943040401e-14,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 375.5,
+        "display_end_ns": 450.6,
+        "hold_ns": 75.10000000000001,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 375.5,
+        "focus_end_ns": 450.6,
+        "full_end_ns": 450.6,
+        "overview": false,
+        "ymin": -0.06997655954966013,
+        "ymax": 1.069641695973376,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        225.29999999999998,
+        450.6
+      ]
+    },
+    {
+      "event": "multisite",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 2.842170943040401e-14,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 289.0,
+        "display_end_ns": 346.8,
+        "hold_ns": 57.800000000000004,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 289.0,
+        "focus_end_ns": 346.8,
+        "full_end_ns": 346.8,
+        "overview": false,
+        "ymin": -0.06998817651293429,
+        "ymax": 1.0698192695548527,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        173.39999999999998,
+        346.8
+      ]
+    },
+    {
+      "event": "two_wide_equal",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 0.0,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 382.5,
+        "display_end_ns": 459.0,
+        "hold_ns": 76.5,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 382.5,
+        "focus_end_ns": 459.0,
+        "full_end_ns": 459.0,
+        "overview": false,
+        "ymin": -0.06997818592451852,
+        "ymax": 1.069666556274783,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        229.5,
+        459.0
+      ]
+    },
+    {
+      "event": "two_wide_unequal",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 0.0,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 382.5,
+        "display_end_ns": 459.0,
+        "hold_ns": 76.5,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 382.0,
+        "focus_end_ns": 459.0,
+        "full_end_ns": 459.0,
+        "overview": false,
+        "ymin": -0.0699793992517938,
+        "ymax": 1.069685102848848,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        229.5,
+        459.0
+      ]
+    },
+    {
+      "event": "two_nearby",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 2.842170943040401e-14,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 279.0,
+        "display_end_ns": 334.8,
+        "hold_ns": 55.800000000000004,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 279.0,
+        "focus_end_ns": 334.8,
+        "full_end_ns": 334.8,
+        "overview": false,
+        "ymin": -0.06998382660557496,
+        "ymax": 1.0697527781137888,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        167.39999999999998,
+        334.8
+      ]
+    },
+    {
+      "event": "two_depth",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 2.842170943040401e-14,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 375.5,
+        "display_end_ns": 450.6,
+        "hold_ns": 75.10000000000001,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 375.5,
+        "focus_end_ns": 450.6,
+        "full_end_ns": 450.6,
+        "overview": false,
+        "ymin": -0.06997659827287105,
+        "ymax": 1.0696422878853145,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        225.29999999999998,
+        450.6
+      ]
+    },
+    {
+      "event": "three_spread",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 0.0,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 315.0,
+        "display_end_ns": 378.0,
+        "hold_ns": 63.0,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 315.0,
+        "focus_end_ns": 378.0,
+        "full_end_ns": 378.0,
+        "overview": false,
+        "ymin": -0.06998092236475643,
+        "ymax": 1.0697083847184197,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        189.0,
+        378.0
+      ]
+    },
+    {
+      "event": "three_dominant",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 0.0,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 315.0,
+        "display_end_ns": 378.0,
+        "hold_ns": 63.0,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 315.0,
+        "focus_end_ns": 378.0,
+        "full_end_ns": 378.0,
+        "overview": false,
+        "ymin": -0.06998195498371414,
+        "ymax": 1.0697241690367731,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        189.0,
+        378.0
+      ]
+    },
+    {
+      "event": "three_depth",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 2.842170943040401e-14,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 375.5,
+        "display_end_ns": 450.6,
+        "hold_ns": 75.10000000000001,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 375.5,
+        "focus_end_ns": 450.6,
+        "full_end_ns": 450.6,
+        "overview": false,
+        "ymin": -0.06997995428448359,
+        "ymax": 1.0696935869199633,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        225.29999999999998,
+        450.6
+      ]
+    },
+    {
+      "event": "cloud",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 0.0,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 116.0,
+        "display_end_ns": 139.2,
+        "hold_ns": 23.200000000000003,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 114.0,
+        "focus_end_ns": 139.2,
+        "full_end_ns": 139.2,
+        "overview": false,
+        "ymin": -0.06999364939341013,
+        "ymax": 1.069902926442126,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        69.6,
+        139.2
+      ]
+    },
+    {
+      "event": "diffusion",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 0.0,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 116.5,
+        "display_end_ns": 139.8,
+        "hold_ns": 23.3,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 114.5,
+        "focus_end_ns": 139.8,
+        "full_end_ns": 139.8,
+        "overview": false,
+        "ymin": -0.0699936623011471,
+        "ymax": 1.0699031237461056,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        69.9,
+        139.8
+      ]
+    },
+    {
+      "event": "diffusion_repulsion",
+      "frames": 193,
+      "reloaded": true,
+      "position_error_mm": 0.0,
+      "signal_error": 0.0,
+      "clock_rounding_error_ns": 0.0,
+      "signed_electrode_channels_checked": 0,
+      "display_extension": {
+        "recorded_end_ns": 116.5,
+        "display_end_ns": 139.8,
+        "hold_ns": 23.3,
+        "all_carriers_on_electrodes": true,
+        "note": "Post-collection display extension"
+      },
+      "plateau_verified": true,
+      "plot_layout": {
+        "pulse_end_ns": 115.0,
+        "focus_end_ns": 139.8,
+        "full_end_ns": 139.8,
+        "overview": false,
+        "ymin": -0.06999365584727861,
+        "ymax": 1.069903025094116,
+        "policy": "99.5% cumulative absolute variation of each signal with variation >= 0.02; 20% or 10 ns context; full-history panel when needed",
+        "activity_channels": [
+          "Q_total",
+          "Q_hole"
+        ]
+      },
+      "legend_outside_plot": true,
+      "checks_at_times_ns": [
+        0.0,
+        69.9,
+        139.8
+      ]
+    }
+  ],
+  "tested": "Every scene reloaded; start/middle/end checked against SSD-exported carrier positions, total/e/h signal, physical clock and chart labels. Procedural time sources resolved their event data and Python module."
+}

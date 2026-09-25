@@ -1,0 +1,53 @@
+{
+  "id": "SAP22",
+  "group": "thesis",
+  "model": "[project]\\Additional_Simulations\\models\\SAP22.yaml",
+  "cache": "[project]\\Additional_Simulations\\results\\SAP22\\baseline.jls",
+  "status": "geometry and material match",
+  "sources": [
+    "Authoritative dissertation model_manifest.json"
+  ],
+  "assumptions": [
+    "Outer bias set to 700 V; readout 0 V."
+  ],
+  "bounds_mm": [
+    -12.75,
+    12.75,
+    -12.75,
+    12.75,
+    0,
+    10
+  ],
+  "model_sha256": "614c72f31a5a84b82c69b0b11f6f0657e87d94f746312c151f9a08cd00ba3dc3",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "point contact",
+      "potential_V": 0,
+      "bounds_mm": [
+        -0.75,
+        0.75,
+        -0.75,
+        0.75,
+        9.995,
+        10.005
+      ]
+    },
+    {
+      "id": 2,
+      "name": "a-Ge/Al outer contact",
+      "potential_V": 700,
+      "bounds_mm": [
+        -12.75,
+        12.75,
+        -12.75,
+        12.75,
+        0.0,
+        10.0
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 0.35
+}

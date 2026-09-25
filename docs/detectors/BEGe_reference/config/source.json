@@ -1,0 +1,54 @@
+{
+  "id": "BEGe_reference",
+  "group": "thesis_reference",
+  "model": "[project]\\Additional_Simulations\\models\\BEGe_reference.yaml",
+  "cache": "[project]\\Additional_Simulations\\results\\BEGe_reference\\baseline.jls",
+  "status": "illustrative model; no serial-number match",
+  "sources": [
+    "Authoritative dissertation model_manifest.json"
+  ],
+  "assumptions": [
+    "Original geometry, impurity and bias retained. Used as a reference, not a validated LEGEND device.",
+    "Explicit SSD 0.11 impurity format with units prevents automatic legacy conversion from multiplying density by 1e9."
+  ],
+  "bounds_mm": [
+    -40,
+    40,
+    -40,
+    40,
+    0.0,
+    30.0
+  ],
+  "model_sha256": "4456658ef2b8c777c3614ca4af5933f5a9e092ad18504aaa58754ad696215844",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "Core",
+      "potential_V": 0,
+      "bounds_mm": [
+        -3.0,
+        3.0,
+        -3.0,
+        3.0,
+        0.0,
+        0.3
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Mantle",
+      "potential_V": 1500,
+      "bounds_mm": [
+        -40,
+        40,
+        -40,
+        40,
+        0.0,
+        30.0
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 1.0
+}

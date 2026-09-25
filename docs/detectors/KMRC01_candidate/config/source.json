@@ -1,0 +1,54 @@
+{
+  "id": "KMRC01_candidate",
+  "group": "thesis",
+  "model": "[project]\\Additional_Simulations\\models\\KMRC01_candidate.yaml",
+  "cache": "[project]\\Additional_Simulations\\results\\KMRC01_candidate\\baseline.jls",
+  "status": "candidate; ring-width match",
+  "sources": [
+    "Authoritative dissertation model_manifest.json"
+  ],
+  "assumptions": [
+    "Outer bias set to -370 V; readout 0 V.",
+    "Explicit SSD 0.11 impurity format with units prevents automatic legacy conversion from multiplying density by 1e9."
+  ],
+  "bounds_mm": [
+    -12.5,
+    12.5,
+    -12.5,
+    12.5,
+    0,
+    19
+  ],
+  "model_sha256": "d4258a3b9f9c041b4da1998ded6b373833169ddcc76079f0a588785efe68b6b6",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "ring contact",
+      "potential_V": 0,
+      "bounds_mm": [
+        -11.3,
+        11.3,
+        -11.3,
+        11.3,
+        7.800000000000001,
+        9.8
+      ]
+    },
+    {
+      "id": 2,
+      "name": "outside contact",
+      "potential_V": -370,
+      "bounds_mm": [
+        -12.5,
+        12.5,
+        -12.5,
+        12.5,
+        0.0,
+        19.0
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 0.35
+}

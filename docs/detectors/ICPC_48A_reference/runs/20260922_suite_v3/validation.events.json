@@ -1,0 +1,28 @@
+{
+  "event_count": 31,
+  "source_inputs_unchanged": true,
+  "outside_raw_samples": 0,
+  "step_limit_carriers": 0,
+  "max_e_plus_h_signal_error": 3.1787787613257734e-07,
+  "max_initial_charge_error": 0.0,
+  "events_with_incomplete_collection": [],
+  "exact_seed_replay": true,
+  "no_trapping_endpoint_identity_max_error": 3.602679745640103e-07,
+  "time_step_reference_ns": 0.125,
+  "baseline_rise_relative_difference_to_finest": 0.0006246632272266517,
+  "baseline_t99_difference_ns": 0.2578783970719769,
+  "baseline_Q_difference": 0.0,
+  "baseline_waveform_max_difference_to_finest": 0.0034292860693803107,
+  "cloud_seed_rise_range_ns": [
+    173.0086880434185,
+    173.79054651438815
+  ],
+  "cloud_52_packet_rise_ns": 173.79052553469535,
+  "cloud_27_packet_rise_ns": 173.6227746922096,
+  "fixed_electronics_dt_max_error": 0.00044444048411357295,
+  "multisite_electronics_dt_max_error": 0.00028947297404113836,
+  "canonical_model_hash_unchanged": true,
+  "canonical_cache_hash_unchanged": true,
+  "convergence_limit": "Time-step and stochastic sensitivity values are reported, not certified convergence. Random samples with unfinished or incomplete collection remain in the library. Do not infer an experimentally calibrated resolution or converged instantaneous-current peak.",
+  "status": "numerical_and_provenance_checks_passed"
+}

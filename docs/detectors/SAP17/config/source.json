@@ -1,0 +1,53 @@
+{
+  "id": "SAP17",
+  "group": "thesis",
+  "model": "[project]\\Additional_Simulations\\models\\SAP17.yaml",
+  "cache": "[project]\\Additional_Simulations\\results\\SAP17\\baseline.jls",
+  "status": "geometry and material match",
+  "sources": [
+    "Authoritative dissertation model_manifest.json"
+  ],
+  "assumptions": [
+    "Outer bias set to 400 V; readout 0 V."
+  ],
+  "bounds_mm": [
+    -9.3,
+    9.3,
+    -9.3,
+    9.3,
+    0.0,
+    7.800000000000001
+  ],
+  "model_sha256": "32c47ad227066358c2698a02ed5f69b221f256da1b6f1486f8ffadf9a4a4c6bd",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "P+ contact",
+      "potential_V": 0,
+      "bounds_mm": [
+        -0.75,
+        0.75,
+        -0.75,
+        0.75,
+        7.75,
+        7.85
+      ]
+    },
+    {
+      "id": 2,
+      "name": "n+ contact",
+      "potential_V": 400,
+      "bounds_mm": [
+        -9.3,
+        9.3,
+        -9.3,
+        9.3,
+        0.0,
+        7.800000000000001
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 0.35
+}

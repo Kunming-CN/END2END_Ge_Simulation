@@ -1,0 +1,57 @@
+{
+  "id": "ICPC_48A_reference",
+  "group": "commercial_reference",
+  "model": "[project]\\Additional_Simulations\\Visualization_3D\\detectors\\ICPC_48A_reference\\config\\model.yaml",
+  "cache": null,
+  "status": "dimension-based illustrative model; not a calibrated replica",
+  "sources": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC8549949/"
+  ],
+  "reported_dimensions": "IC detector 48A: diameter 74.6 mm, height 80.4 mm, well depth 47.4 mm, well diameter 10.5 mm; Table 1.",
+  "assumptions": [
+    "Groove diameters 15/21 mm, depth 2 mm and a disk readout are estimated.",
+    "4000 V is an illustrative bias, not a verified operating voltage for serial 48A.",
+    "78 K and a uniform net impurity are illustrative inputs; no measured impurity profile is claimed.",
+    "Ideal contacts; no explicit dead/transition layer. No experiment-matched electronics."
+  ],
+  "bounds_mm": [
+    -37.3,
+    37.3,
+    -37.3,
+    37.3,
+    0,
+    80.4
+  ],
+  "model_sha256": "a3b4acf6347b03c2b39e216bfdcf825e47b5c7b6f6293e8f9fd357862815f464",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "Readout p+",
+      "potential_V": 0,
+      "bounds_mm": [
+        -7.5,
+        7.5,
+        -7.5,
+        7.5,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Outer n+",
+      "potential_V": 4000,
+      "bounds_mm": [
+        -37.3,
+        37.3,
+        -37.3,
+        37.3,
+        0.0,
+        80.4
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 1.0
+}

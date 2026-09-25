@@ -1,0 +1,53 @@
+{
+  "id": "ICPC_large_reference",
+  "group": "thesis_reference",
+  "model": "[project]\\Additional_Simulations\\models\\ICPC_large_reference.yaml",
+  "cache": "[project]\\Additional_Simulations\\results\\ICPC_large_reference\\baseline.jls",
+  "status": "illustrative model; no serial-number match",
+  "sources": [
+    "Authoritative dissertation model_manifest.json"
+  ],
+  "assumptions": [
+    "Original geometry, impurity and bias retained. Used as a reference, not a validated LEGEND device."
+  ],
+  "bounds_mm": [
+    -40,
+    40,
+    -40,
+    40,
+    0.0,
+    50.0
+  ],
+  "model_sha256": "9bd9d1f58e5e6efb2fa5a11ab07a5db84126083fd1450b5d7f40edf23a72678d",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "point contact",
+      "potential_V": 0,
+      "bounds_mm": [
+        -1,
+        1,
+        -1,
+        1,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "id": 2,
+      "name": "n+ contact",
+      "potential_V": 3200,
+      "bounds_mm": [
+        -40,
+        40,
+        -40,
+        40,
+        0.0,
+        50.0
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 1.0
+}

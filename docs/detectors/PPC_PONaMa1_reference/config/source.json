@@ -1,0 +1,56 @@
+{
+  "id": "PPC_PONaMa1_reference",
+  "group": "commercial_reference",
+  "model": "[project]\\Additional_Simulations\\Visualization_3D\\detectors\\PPC_PONaMa1_reference\\config\\model.yaml",
+  "cache": null,
+  "status": "dimension-based illustrative model; not a calibrated replica",
+  "sources": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC8921096/"
+  ],
+  "reported_dimensions": "PONaMa-1: diameter 68.9 mm, height 52 mm, contact diameter 3.2 mm and depth 2 mm, passivated diameter 60 mm; Table 1. Bias 1050 V in section 2.2.",
+  "assumptions": [
+    "A cylindrical recess approximates the curved point-contact dimple; a 45-degree 4.45 mm corner chamfer is inferred from the passivated radius.",
+    "78 K and a uniform net impurity are illustrative inputs; no measured impurity profile is claimed.",
+    "Ideal contacts; no explicit dead/transition layer. No experiment-matched electronics."
+  ],
+  "bounds_mm": [
+    -34.45,
+    34.45,
+    -34.45,
+    34.45,
+    0,
+    52
+  ],
+  "model_sha256": "16959e508f82338a3c9f7d47076bb72a1b342abb9f6d337ef642555cfd2274a6",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "Readout p+",
+      "potential_V": 0,
+      "bounds_mm": [
+        -1.6,
+        1.6,
+        -1.6,
+        1.6,
+        0.0,
+        2.0
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Outer n+",
+      "potential_V": 1050,
+      "bounds_mm": [
+        -34.45,
+        34.45,
+        -34.45,
+        34.45,
+        0,
+        52.0
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 1.0
+}

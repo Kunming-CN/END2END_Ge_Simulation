@@ -1,0 +1,53 @@
+{
+  "id": "AK01",
+  "group": "thesis",
+  "model": "[project]\\Additional_Simulations\\models\\AK01.yaml",
+  "cache": "[project]\\Additional_Simulations\\results\\AK01\\baseline.jls",
+  "status": "geometry and material match",
+  "sources": [
+    "Authoritative dissertation model_manifest.json"
+  ],
+  "assumptions": [
+    "Outer bias set to 700 V; readout 0 V."
+  ],
+  "bounds_mm": [
+    -12.45,
+    12.45,
+    -12.45,
+    12.45,
+    0,
+    8.2
+  ],
+  "model_sha256": "300fe2a86090da837e3c44489f8341929bdc32343331a40a43636c7ed503e830",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "point contact",
+      "potential_V": 0,
+      "bounds_mm": [
+        -0.75,
+        0.75,
+        -0.75,
+        0.75,
+        8.2,
+        8.21
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Lithium Contact",
+      "potential_V": 700,
+      "bounds_mm": [
+        -12.45,
+        12.45,
+        -12.45,
+        12.45,
+        0.0,
+        8.2
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 0.35
+}

@@ -1,0 +1,56 @@
+{
+  "id": "COAX_ANG2_reference",
+  "group": "commercial_reference",
+  "model": "[project]\\Additional_Simulations\\Visualization_3D\\detectors\\COAX_ANG2_reference\\config\\model.yaml",
+  "cache": null,
+  "status": "dimension-based illustrative model; not a calibrated replica",
+  "sources": [
+    "https://www.mpi-hd.mpg.de/gerda/public/2015/phd2015_giovanniBenato.pdf"
+  ],
+  "reported_dimensions": "ANG2: diameter 80 mm, height 107 mm, operating bias 3500 V; Table 4.2.",
+  "assumptions": [
+    "Bore radius 5 mm, closed-end thickness 10 mm, bottom passivated annulus 3 mm are estimates.",
+    "78 K and a uniform net impurity are illustrative inputs; no measured impurity profile is claimed.",
+    "Ideal contacts; no explicit dead/transition layer. No experiment-matched electronics."
+  ],
+  "bounds_mm": [
+    -40.0,
+    40.0,
+    -40.0,
+    40.0,
+    0,
+    107
+  ],
+  "model_sha256": "75a792c8e8105834b426733bab62bf4589866be35280102b01647a79992a736e",
+  "coordinate_system": "cylindrical",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "Readout p+",
+      "potential_V": 0,
+      "bounds_mm": [
+        -5.0,
+        5.0,
+        -5.0,
+        5.0,
+        0.0,
+        97.0
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Outer n+",
+      "potential_V": 3500,
+      "bounds_mm": [
+        -40.0,
+        40.0,
+        -40.0,
+        40.0,
+        0.0,
+        107.0
+      ]
+    }
+  ],
+  "readout_contact_id": 1,
+  "display_spacing_mm": 1.0
+}
