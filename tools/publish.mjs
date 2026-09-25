@@ -67,3 +67,16 @@ for (let attempt = 0; attempt < 24; attempt++) {
 }
 fs.writeFileSync(path.join(root, '.local/publication.json'), JSON.stringify({ repo, url: info.html_url, reachable: live, checked_at: new Date().toISOString() }, null, 2));
 console.log(live ? 'Verified: the website is reachable.' : 'Upload complete; Pages is still deploying. This is not yet a verified live site.');
+const progressPath = path.join(root, 'PROGRESS.md');
+let progress = fs.readFileSync(progressPath, 'utf8');
+progress = progress.replace('Status: public website prepared locally; first GitHub push/Pages activation awaits GitHub CLI browser authorization.', live ? `Status: published and verified at ${info.html_url}` : `Status: repository pushed and Pages configured; live deployment verification pending at ${info.html_url}`);
+progress = progress.replace('Ready locally; authorization pending', live ? 'Published; URL verified' : 'Pushed; deployment pending');
+fs.writeFileSync(progressPath, progress);
+const readmePath = path.join(root, 'README.md');
+let readme = fs.readFileSync(readmePath, 'utf8');
+readme = readme.replace("The first public deployment still requires completing the computer's GitHub CLI authorization. A linked ChatGPT GitHub account is a separate connection.", `GitHub CLI authorization is configured on the development computer. Pages address: ${info.html_url} (deployment ${live ? 'verified' : 'pending verification'}).`);
+fs.writeFileSync(readmePath, readme);
+run(git, ['add', '--', 'README.md', 'PROGRESS.md']);
+const statusUpdate = run(git, ['diff', '--cached', '--quiet'], true, true);
+if (statusUpdate.status === 1) { run(git, ['commit', '-m', 'Record initial publication status']); run(git, ['push']); }
+else if (statusUpdate.status !== 0) throw new Error('Cannot check publication status update.');
