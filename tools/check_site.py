@@ -119,12 +119,26 @@ def verify_live(url, report):
     from concurrent.futures import ThreadPoolExecutor
     from urllib.parse import quote
     from urllib.request import Request, urlopen
+    # ParaView's bundled Python may omit SSL; reuse Node HTTPS without relaxing TLS.
+    node = None
+    try:
+        import ssl
+    except ImportError:
+        import shutil
+        node = shutil.which('node')
+        if not node:
+            raise RuntimeError('Live checks require Python with SSL or Node.js on PATH.')
     base = url.rstrip('/') + '/'
     if urlsplit(base).scheme not in ('http', 'https'):
         raise ValueError('Live verification requires an HTTP(S) website')
 
     def download(relative):
         target = base + quote(relative, safe='/') + '?build=' + report['build_id']
+        if node:
+            import subprocess
+            script = "fetch(process.argv[1]).then(async r => {if (!r.ok) throw Error(String(r.status)); process.stdout.write(Buffer.from(await r.arrayBuffer()));}).catch(e => {console.error(e.message);process.exit(1);});"
+            result = subprocess.run([node, '-e', script, target], capture_output=True, timeout=35, check=True)
+            return result.stdout
         request = Request(target, headers={'User-Agent': 'SSD-site-verification/1.0'})
         with urlopen(request, timeout=30) as response:
             return response.read()

@@ -33,7 +33,7 @@ A failed network push leaves the local commit available for retry. Do not force-
 
 ## Checks that work from a clean repository clone
 
-Python 3.10+ and its standard library are sufficient for these checks. No simulation data outside the repository is needed:
+Python 3.10+ and its standard library are sufficient for these checks. Live HTTPS verification needs SSL support; when the bundled ParaView Python lacks it, the checker reuses installed Node.js without disabling certificate verification. No simulation data outside the repository is needed:
 
 ```sh
 python tools/test_site.py
