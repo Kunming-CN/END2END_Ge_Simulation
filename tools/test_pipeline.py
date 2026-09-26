@@ -830,6 +830,26 @@ class PipelineTests(unittest.TestCase):
                 p.run_pipeline(".local/uncreated-over-limit", energy=10001)
             execute.assert_not_called()
 
+    def test_resealed_public_settings_and_config_consistency(self):
+        self.run_fixture()
+        view = self.root / ".local" / "public-consistency"
+        original = p.export_run(self.output, view)
+        mutations = [
+            lambda d: (d["settings"].update(threads=4), d["settings"]["explicit_overrides"].update(threads=4)),
+            lambda d: d["readout_config"]["allowed_changed_fields"].append("gain"),
+            lambda d: d["provenance"]["artifacts"].update({p.RUN_CONFIG: "0" * 64}),
+            lambda d: d["models"][0]["config"].update(gain=99),
+        ]
+        for index, mutate in enumerate(mutations):
+            data = json.loads(json.dumps(original))
+            mutate(data)
+            data.pop("export_sha256")
+            data["export_sha256"] = p.digest(data)
+            (view / "data.json").write_bytes(p.public_json_text(data).encode("utf-8"))
+            (view / "pipeline.html").write_bytes(p.render_html(data).encode("utf-8"))
+            with self.subTest(index=index), self.assertRaisesRegex(ValueError, "public"):
+                p.validate_export(view)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

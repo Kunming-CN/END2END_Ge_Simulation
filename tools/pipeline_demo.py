@@ -728,6 +728,25 @@ def export_run(directory, output):
     return data
 
 
+def validate_public_settings(data):
+    """Check public declarations against each other; hashes are not signatures."""
+    validate_settings({"settings": data["settings"],
+                       "models": [m["model_id"] for m in data["models"]]})
+    config, binding = effective_readout_config(data["settings"]["events_per_model"])
+    require(data.get("readout_config") == binding, "public readout config binding mismatch")
+    provenance = data["provenance"]
+    require(provenance["sources"][BASELINE_CONFIG] == binding["baseline_sha256"] and
+            provenance["artifacts"][RUN_CONFIG] == binding["effective_sha256"],
+            "public config source/artifact binding mismatch")
+    require(all(json_text(m["config"]) == json_text(config) for m in data["models"]),
+            "public model config differs from census-only baseline")
+    expected = f"--threads={data['settings']['threads']}"
+    for stage in provenance["stages"]:
+        if stage["stage"] in ("julia_environment", "charge", "readout"):
+            require([a for a in stage["command"] if a.startswith("--threads=")] == [expected],
+                    "public thread setting differs from recorded command")
+
+
 def validate_export(directory):
     """For build_site: verify portable two-file export; no raw data or computation.
 
@@ -747,6 +766,7 @@ def validate_export(directory):
     require(data_path.read_bytes() == public_json_text(data).encode("utf-8"), "data.json differs from canonical compact export")
     require(html_path.read_bytes() == render_html(data).encode("utf-8"), "pipeline.html differs from verified export")
     require(TOKEN not in html_path.read_text(encoding="utf-8"), "unresolved HTML placeholder")
+    validate_public_settings(data)
     check_common_calibration(data["models"], data)
     for model in data["models"]:
         census(model["events"], data["settings"]["events_per_model"], "public")
