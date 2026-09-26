@@ -2,7 +2,7 @@
 
 **[Open the detector results website](https://kunming-cn.github.io/END2END_Ge_Simulation/)** · [GeGI strip explorer](https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/GeGI_3D/strip_explorer.html) · [Development progress](PROGRESS.md)
 
-**[Native lithium-region diagnostics](https://kunming-cn.github.io/END2END_Ge_Simulation/lithium/lithium.html)** — endpoint accounting, diffusion depth response and explicit grid sensitivity; not calibrated Li collection efficiency.
+**[Native lithium-region diagnostics](https://kunming-cn.github.io/END2END_Ge_Simulation/lithium/lithium.html)** — endpoint accounting, diffusion depth response, native residual/state checks and explicit nested-grid sensitivity; not calibrated Li collection efficiency.
 
 ## Current release
 

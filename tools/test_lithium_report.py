@@ -131,6 +131,7 @@ class LithiumReportTests(unittest.TestCase):
         data = self.run_export()
         output = self.source.parent / 'view'
         self.assertEqual(set(p.name for p in output.iterdir()), {'lithium.html', 'summary.json', *li.FILES[1:]})
+        self.assertNotIn('transition_grid', data)
         self.assertEqual(len(data['clouds']), 72)
         self.assertEqual(data['clouds'][0]['original_stats']['mean'], -.2)
         self.assertAlmostEqual(data['seed_means'][0]['original']['mean'], .1)
@@ -234,6 +235,81 @@ class LithiumReportTests(unittest.TestCase):
         page.write_bytes(page.read_bytes() + b'changed')
         with self.assertRaisesRegex(ValueError, 'HTML differs'):
             li.validate_bundle(output)
+
+    def grid_fixture(self):
+        source = self.root / 'simulation'
+        pins = {n: li.common.sha256(source / n) for n in ('Project.toml', 'Manifest.toml')}
+        declaration = lambda d: ','.join(f'"{k}"=>"{v}"' for k, v in d.items())
+        legacy = source / 'diagnose_lithium.jl'
+        legacy.write_text('const PINNED=Dict(' + declaration(pins) + ')\nconst SDK_PINS=Dict("Event/Event.jl"=>"' + 'c'*64 + '")\nrequire=C.require\n')
+        self.report['source_hashes'][legacy.name] = li.common.sha256(legacy)
+        project = {n: li.common.sha256(source / n) for n in ('run.jl', legacy.name)}
+        (source / 'diagnose_transition_grid.jl').write_text('const SOURCE_PINS=Dict(' + declaration(project) + ')\nconst NATIVE_PINS=merge(L.SDK_PINS,Dict("Native.jl"=>"' + 'd'*64 + '"))\nconst HISTORICAL_REPORT_SHA="' + 'b'*64 + '"')
+        (source / 'test_transition_grid.jl').write_text('fixture tests')
+        project.update({n: li.common.sha256(source / n) for n in ('diagnose_transition_grid.jl', 'test_transition_grid.jl')})
+        grid = self.source.parent / 'grid'
+        grid.mkdir()
+        (grid / 'profiles.csv').write_text('case,stage,depth_mm,E_V_cm,W,alpha,point_bits,net_impurity_cm3\nmin50,initial,0,0,0,0,1,1\nmin50,initial,0.5,1,0.5,0.5,1,1\nmin50,initial,1,2,1,1,1,1\n')
+        (grid / 'smallcomparisons.csv').write_text('reference,candidate,normalized_E,onset0_shift_mm,onset1_shift_mm,max_W,passed\n')
+        g = dict(schema_version=1, kind='AK02_native_transition_grid', phase='all', status='nested_blocked_baseline_defects_or_failure',
+            held_settings=dict(temperature_K=77, bias_V=500, precision='Float64', sor=1, threads=2, max_grid_mm=2, profile_relative_gate=.01, onset_gate_mm=.002,
+                               limits=dict(V=5e-6, W=1e-8, seconds=900, points=250000, initial=20000, extra=20000)),
+            provenance=dict(sources=project, native_sources={'Event/Event.jl': 'c'*64, 'Native.jl': 'd'*64}, model_sha256=li.PINS['AK02'],
+                            environment=dict(project='simulation/Project.toml', environment_manifest_sha256=pins['Manifest.toml'])),
+            cases=[dict(case='min50', status='budget_failed', failure=None, E_accepted=False, W_accepted=False,
+                E_grid=dict(shape=[3, 1, 3], ticks_m_rad_m=[[0, .5, 1], [0], [0, .5, 1]]),
+                E_checks=[dict(frozen=dict(max=.1), full_sweep=dict(potential=.2), poisson=dict(max=.3), sweeps=20000)],
+                W_checks=[dict(frozen=dict(max=.1), full_sweep=dict(potential=.2), poisson=None, sweeps=0)],
+                initial=dict(samples=[dict(depth_mm=.5, E_V_cm=1, W=.5)], target_spacings_um=[86.607, 100], onsets_0_1_V_cm=[[0, .5], [.5, 1]]))],
+            comparisons=[], baseline_accepted=False, limitations=['Fixture, no CCE claim.'], runtime_seconds=1,
+            artifacts={n: li.common.sha256(grid / n) for n in li.GRID_FILES.values()})
+        return grid, g
+
+    def test_optional_transition_partial_and_guards(self):
+        grid, g = self.grid_fixture()
+        write = lambda: (grid / 'report.json').write_text(json.dumps(g), encoding='utf-8')
+        write()
+        self.write_fixture()
+        output = self.source.parent / 'transition'
+        data = li.export(self.source, output, grid_input=grid)
+        self.assertEqual(len(list(output.iterdir())), 7)
+        self.assertEqual(data['schema_version'], 1)
+        page = (output / 'lithium.html').read_text(encoding='utf-8')
+        for token in ('budget_failed', 'Nested results absent', '86.607', 'native numerical checks', 'Grid sensitivity remains unresolved'):
+            self.assertIn(token, page)
+        for token in ('<script', 'src="http', self.root.as_posix(), 'W did not mutate E'):
+            self.assertNotIn(token, page)
+        self.assertIn('ticks_m_rad_m_summary', data['transition_grid']['cases'][0]['E_grid'])
+        for public, original in li.GRID_FILES.items():
+            self.assertIn(f'href="{public}"', page)
+            self.assertEqual((output / public).read_bytes(), (grid / original).read_bytes())
+            saved = (output / public).read_bytes()
+            (output / public).write_bytes(saved + b'changed')
+            with self.assertRaises(ValueError): li.validate_bundle(output)
+            (output / public).write_bytes(saved)
+        original = copy.deepcopy(g)
+        for mutate in (lambda: g['artifacts'].update({'profiles.csv': '0'*64}), lambda: g.update(runtime_seconds=float('nan')),
+                       lambda: g.update(status='bounded_numerical_convergence', nested_converged=True, baseline_accepted=True),
+                       lambda: g['held_settings'].update(profile_relative_gate=.1), lambda: g['cases'][0]['initial']['samples'][0].update(E_V_cm=9),
+                       lambda: g['provenance']['native_sources'].update({'Native.jl': '0'*64}), lambda: g.update(status='blocked'),
+                       lambda: g['cases'][0].update(failure='C:/Users/private/file'), lambda: g['cases'][0].pop('initial')):
+            g = copy.deepcopy(original)
+            mutate(); write()
+            with self.assertRaises((ValueError, KeyError)): li.load_transition(grid)
+        g = copy.deepcopy(original); write()
+        li.validate_bundle(output)
+        g['cases'][0].update(status='accepted_fixed_grid', E_accepted=True, W_accepted=True)
+        write()
+        with self.assertRaisesRegex(ValueError, 'false case acceptance'): li.load_transition(grid)
+        g = copy.deepcopy(original); write()
+        (output / 'unlisted.csv').write_text('unlisted')
+        with self.assertRaisesRegex(ValueError, 'unexpected Li bundle files'): li.validate_bundle(output)
+        (output / 'unlisted.csv').unlink()
+        data['transition_grid']['reporter_test_sha256'] = '0'*64
+        (output / 'summary.json').write_text(li.common.public_json_text(data), encoding='utf-8')
+        with self.assertRaisesRegex(ValueError, 'tests changed'): li.validate_bundle(output)
+        (self.root / 'simulation/diagnose_transition_grid.jl').write_text('changed producer')
+        with self.assertRaises((ValueError, IndexError)): li.load_transition(grid)
 
 
 if __name__ == '__main__':

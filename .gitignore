@@ -90,3 +90,7 @@
 # Bounded native lithium-region diagnostics and tests.
 !simulation/diagnose_lithium.jl
 !simulation/test_lithium.jl
+
+# Native fixed-state and nested transition-grid diagnostics.
+!simulation/diagnose_transition_grid.jl
+!simulation/test_transition_grid.jl

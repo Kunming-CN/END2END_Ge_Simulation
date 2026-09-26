@@ -2,7 +2,7 @@
 
 Updated: 2026-09-26 (local)
 
-Current: M2c native lithium diagnostics now reproduce the 200-event endpoint/final-signal records and quantify diffusion across the transition. A 0.50 mm grid-setting contrast changes mean response by about 15 percentage points, so quantitative Li CCE and the large cryostat/Cs137 campaign remain gated. The complete engineering workflow and compact examples are preserved.
+Current: M2d verified native all-color fixed-point checks and W/E state preservation. The old field-onset discrepancy persists; genuinely nested grids and the finest cold start do not meet the full convergence gate. The runnable pipeline and Li diagnostic data remain preserved. Next: same-grid cross-warm starts and crossed radial/axial grids, not more radiation statistics.
 
 
 ## Goal and plan alignment audit — 2026-09-26
@@ -756,3 +756,122 @@ under `.local/m2c`. No user applications or global performance settings changed,
 no recurring task was enabled, and no large Cs137 or flexible-hardware campaign
 is claimed completed. The next bounded gate is transition field/weighting/grid
 convergence, not merely increasing the radiation event count.
+
+## M2d plan — isolate transition grid/field/weighting dependence
+
+Reproduce the two Li grid settings, test whether weighting calculation changes the electric/depletion state, separate fixed-grid iterative error from grid choice, and use controlled nested local grids if needed. Frozen SDK/model/production inputs remain unchanged. Candidate native diagnostics must report residual/state checks and failures before any physical convergence claim. Existing complete examples and the M2c report remain preserved; no large Cs137 calculation is launched to mask a systematic field difference.
+
+M2d exploratory evidence: on the two original fixed electric grids, four bounded
+10k-sweep continuation calls at a tighter requested tolerance reduced the native
+reported update to about 2.2e-7 and 2.4e-7 V, but the 1 V/cm profile onsets stayed
+at 0.522 and 0.468 mm. Old weighting was held only for monitoring in that pilot;
+no self-consistent new detector response is claimed. This motivates all-color
+fixed-state defects rather than another update-only convergence assertion.
+
+Exact historical ticks show an additional important distinction: both radial
+axes have 166 nodes, but achieved spacing near the transition is approximately
+86.607 um for the min50 setting and 93.269 um for min25. A smaller minimum-spacing
+parameter did not produce a locally finer final radial grid. Surface refinement
+and adaptive grid placement must be isolated using genuinely nested ticks, not
+inferred from a parameter label. The original midpoint z ticks agree locally,
+while some other axial ticks differ. This is a numerical mechanism to test, not
+a claim that a single cause or calibrated Li response has already been established.
+
+Independent preflight review identified diagnostic-harness hazards before any
+formal acceptance run: derived point-type bits must be cleared before native
+additive marking; repainting a warm-start guess is not a final contact error;
+scalar interpolation must use SSD's adapter; the agreed comparison is the field
+vector normalized by the finer field, with only the 1 V/cm onset used as a gate;
+and alpha changes must be assessed through their source-weighted voltage effect.
+These fixes belong in the new diagnostic only, not the preserved production code.
+The exploratory continuation call limits are upper bounds, not verified numbers
+of performed sweeps, because native plateau termination can return earlier.
+
+First formal M2d run stopped before continuation because the new profile metadata dictionary inferred vector-only values and could not store a tuple of grid spacings. Both initial E/V/W hashes reproduced M2c before that reporting error. Corrected only the diagnostic metadata type and explicitly recorded the already planned profile/onset gates; failed artifacts remain preserved. No physical settings or acceptance thresholds changed.
+
+The formal native tests pass after the reporting-type correction. All-color
+checks now separate frozen-clamp, frozen-alpha Poisson, full-sweep and source-
+weighted alpha defects. Fresh-grid budgets are explicitly 20k initialization plus
+20k continuation sweeps per potential (40k total); existing-grid continuation is
+20k. These are bounds, not a promise of convergence or CPU timing.
+
+Review limitation retained: the current contact check samples grid nodes that are
+members of the geometry, not arbitrary between-node surface points. Nonempty
+coverage counts are reported; no full contact-surface interpolation validation is
+claimed. Even a passing nested-profile gate would concern the prescribed radial
+E profile/onset and finest cold/warm agreement, not all-space PDE accuracy,
+weighting-grid convergence, carrier-signal convergence or physical Li CCE.
+
+## M2d completed native audit — grid convergence remains open
+
+The corrected formal study completed in 326.523 s and intentionally returned
+exit 2 / partial_nested_not_converged. Eighty-six native/helper checks and the
+existing 90 lithium checks passed; eight report tests passed separately. The
+first formal attempt's metadata-only failure remains archived, not misreported
+as a physical failure. Source/model/SDK/production inputs stayed unchanged.
+
+Both original grids reproduced their pinned M2c E/V/W hashes. After persistent
+native continuation, their all-color electric defects were 3.60845e-6 and
+4.06923e-6 V, below 5e-6 V; W defects were 4.49901e-9 and 6.28128e-9, below1e-8.
+Frozen-clamp, frozen-alpha Poisson, full-sweep and alpha-voltage checks all passed
+at two successive checkpoints. Available before/after snapshots show that W
+initialization, solution and continuation did not alter the recorded electric,
+source or depletion state. These are native fixed-point checks, not global error
+bounds or independent PDE verification.
+
+With a 0.5 um reporting step, the E>1 V/cm brackets remain0.5200..0.5205mm versus
+0.4675..0.4680mm: a 52.5um corresponding-endpoint shift. Tightening native stopping
+alone therefore did not remove the discrepancy. The finer reporting brackets
+are consistent with the previous coarser2um brackets; no field threshold was
+changed to manufacture agreement. Achieved transition radial spacing is86.607um
+for min50 and93.269um for min25, demonstrating why parameter labels cannot stand
+in for actual spatial resolution.
+
+The genuinely nested warm-start grids retained original nodes and boundary types:
+
+| Case | r/phi/z nodes | Radial spacing near0.50mm (um) | E>1V/cm bracket (mm) |
+|---|---|---:|---|
+| nested0 |166/1/142|86.607|0.5200..0.5205|
+| nested1 |195/1/220|43.304|0.5250..0.5255|
+| nested2 |250/1/372|21.652|0.5630..0.5635|
+
+All three met the fixed-grid native gates, but neither successive spatial
+comparison passed the predeclared1% vector-profile and2um onset bounds. This is
+not an asymptotic convergence sequence and does not justify extrapolating a Li
+boundary. The corresponding normalized vector differences were10.375 and7.913
+against0.01; near-zero-field regions use the explicit1V/cm denominator floor.
+
+The finest zero/cold initialization used its full40k E and40k W sweep budgets.
+Its E defect remained3.85318e-3V and W defect6.60702e-7, so it is budget_failed.
+Its disagreement with the accepted warm solution is not evidence for multiple
+physical or numerical equilibria; one candidate is still unconverged. Five
+accepted fixed-grid cases do not clear this or the spatial-convergence gate.
+All contact-member node sets were nonempty with zero recorded potential error,
+but between-node geometric surface accuracy remains untested.
+
+The two independent reviewers (numerical/semiconductor: Astra XHigh; integrity:
+Astra High) cross-reviewed exact-source test and runtime evidence. They corrected
+one compact-summary extraction error: all six cases' available W/E state pairs
+match; earlier false flags came from using a missing snapshot key, not from a
+simulation mutation. The report now labels computed profiles, retains the old
+15.1-percentage-point Li response warning, and shows partial/cold-budget outcomes.
+All numeric precision is retained in JSON/CSV; display-only formatting is rounded
+for readability. Full checkpoint histories remain downloadable rather than being
+expanded into the default page.
+
+Next bounded scientific step agreed by both reviewers: E-only cross-warm starts
+on the same finest grid, initialized independently from accepted min50 and min25
+potentials, with identical reinitialized alpha, coefficients, contact masks and
+boundaries. Then use the crossed meshes(r1,z2) and(r2,z1) to separate radial,
+axial and interaction effects before adding another refinement level or carrier
+campaign. Keep the existing residual/profile gates and explicit budgets. Local
+source accounting must separate equation-active and fixed/contact contributions;
+the current total-source bookkeeping is not an independently integrated active
+charge. W-grid and carrier-signal convergence remain separate questions.
+
+The public report extension adds transition-profiles.csv and transition-comparisons.csv
+beside the existing Li files. It performs no simulation during a website build,
+validates source/native inventory identities, records all failures, and rejects
+false convergence labels. Offline desktop/mobile checks retain all three plots,
+old warnings, new partial status and both CSV links without horizontal overflow
+or network/JavaScript dependencies. Existing full-chain examples remain untouched.

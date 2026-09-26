@@ -412,3 +412,32 @@ assumption, not geometrical collection, recoverable pulse height or validated
 CCE. Native variable-D diffusion, finite conductivity, surface physics and
 transition-grid convergence remain separate accuracy questions. All unresolved
 stops, time caps and sensitivity outcomes remain recorded.
+
+## Transition-grid and native fixed-point audit
+
+`diagnose_transition_grid.jl` is a separate deterministic AK02 diagnostic. It
+reproduces the two historical field solutions, verifies that weighting calculations
+do not overwrite the electric/depletion state, and checks both native red/black
+update groups before testing explicit nested grids. It does not change the
+production solver or recompute the public carrier signals.
+
+```console
+julia --startup-file=no --threads=2 --project=simulation simulation/test_transition_grid.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/diagnose_transition_grid.jl --output .local/grid-check-new --phase all
+```
+
+The output has `report.json`, `profiles.csv` and `smallcomparisons.csv`. A partial
+or budget-failed diagnostic is retained explicitly; process completion is not
+convergence. The checks use the pinned native operator, not an independent proof
+of its continuum PDE. Contact checks concern grid nodes within the contacts, not
+arbitrary interpolated surface points. Source sums include fixed/contact cells.
+
+The optional report command adds those outcomes without replacing earlier Li data:
+
+```console
+python tools/lithium_report.py --input .local/m2c/results --grid-input .local/grid-check-new --output .local/li-grid-view-new
+```
+
+Two additional CSVs accompany the standalone HTML/summary. Partial cases remain
+labelled, the previous signal/grid warning is retained, and exporter checks reject
+mismatched source hashes or false convergence metadata.

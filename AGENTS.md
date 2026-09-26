@@ -155,3 +155,18 @@ finite electronics windows, energy accounting, geometry assumptions and streamin
 A 500-decay cost pilot precedes 10k per detector; 100k is conditional on measured
 resources/statistics. Adjustable readout profiles require independent injection
 calibration and must preserve the frozen demonstration regression.
+
+## Native transition-grid audit
+
+Use `diagnose_transition_grid.jl` for fixed-state residuals and explicit nested
+candidate grids; do not alter the production runner to hide the Li discrepancy.
+Both red/black groups must be checked, with frozen-alpha source scaling distinct
+from depletion-clamp checks. Restore saved alpha for an audit and clear derived
+classification bits before re-marking copied-back state. Record repainting of an
+initial guess separately from final contact-member-node errors.
+
+A native fixed-point pass is not grid/PDE/CCE convergence. Preserve partial
+statuses and cold-start budget failures; an unconverged initial guess cannot prove
+multiple equilibria. Actual grid spacings and source masks—not minimum-spacing
+parameter labels—govern comparisons. Next tests should isolate initialization
+and crossed radial/axial grids before further radiation statistics.

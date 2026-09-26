@@ -137,8 +137,10 @@ def build_export():
     for name in ('pipeline.html', 'data.json'):
         shutil.copyfile(pipeline_source / name, OUT / 'examples' / name)
     lithium_source = ROOT / ".local" / "lithium-report"
-    validate_lithium_bundle(lithium_source)
+    lithium_data = validate_lithium_bundle(lithium_source)
     lithium_files = ("lithium.html", "summary.json", "endpoint-audit.csv", "depth-scan.csv", "profiles.csv")
+    if "transition_grid" in lithium_data:
+        lithium_files += ("transition-profiles.csv", "transition-comparisons.csv")
     (OUT / "lithium").mkdir(exist_ok=True)
     for name in lithium_files:
         shutil.copyfile(lithium_source / name, OUT / "lithium" / name)

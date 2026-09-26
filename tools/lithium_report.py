@@ -6,6 +6,7 @@ import html
 import io
 import json
 import math
+import re
 from pathlib import Path
 import statistics
 
@@ -23,6 +24,9 @@ DEPTHS = [.1, .3, .45, .50, .55, .60, .65, .8, 1.0]
 SEEDS = [2609261, 2609262, 2609263]
 GRIDS = [["baseline", .05, 4], ["contrast50", .05, 8], ["contrast25", .025, 8]]
 FLAGS = ("geometric_contact", "at_step_limit", "exactly_zero_E", "stationary", "n_type", "nearest_undepleted")
+GRID_FILES = {"transition-profiles.csv": "profiles.csv", "transition-comparisons.csv": "smallcomparisons.csv"}
+HEADERS.update({"transition-profiles.csv": "case,stage,depth_mm,E_V_cm,W,alpha,point_bits,net_impurity_cm3",
+                "transition-comparisons.csv": "reference,candidate,normalized_E,onset0_shift_mm,onset1_shift_mm,max_W,passed"})
 require = common.require
 escape = lambda value: html.escape(str(value), quote=True)
 
@@ -308,6 +312,173 @@ def table(headers, rows):
     return '<div class="scroll"><table><tr>' + ''.join(f'<th>{escape(h)}</th>' for h in headers) + '</tr>' + ''.join('<tr>' + ''.join(f'<td>{escape(v)}</td>' for v in row) + '</tr>' for row in rows) + '</table></div>'
 
 
+def compact_grid(value):
+    """Retain scalar histories; replace repeated native ticks with exact-data identities."""
+    if isinstance(value, list):
+        return [compact_grid(v) for v in value]
+    if not isinstance(value, dict):
+        return value
+    result = {}
+    if "ticks_m_rad_m" in value:
+        require([len(a) for a in value["ticks_m_rad_m"]] == value["shape"], "transition grid shape mismatch")
+    for k, v in value.items():
+        if k in ("ticks_m_rad_m", "ticks_internal"):
+            require(all(a and all(y > x for x, y in zip(a, a[1:])) for a in v), "invalid actual ticks")
+            result[k + "_summary"] = dict(sha256_json=hashlib.sha256(common.public_json_text(v).encode()).hexdigest(),
+                axes=[dict(count=len(a), first=a[0], last=a[-1], spacing_range=[min(b-a for a, b in zip(a, a[1:])), max(b-a for a, b in zip(a, a[1:]))] if len(a)>1 else None) for a in v])
+        else:
+            result[k] = compact_grid(v)
+    return result
+
+
+def validate_transition(g, raw):
+    finite_tree(g)
+    common.check_public(g)
+    require(g["schema_version"] == 1 and g["kind"] == "AK02_native_transition_grid", "transition schema")
+    require(g["status"] in ("baseline_only", "partial_nested_not_converged", "nested_blocked_baseline_defects_or_failure", "bounded_numerical_convergence"), "transition incomplete/blocked")
+    held, p = g["held_settings"], g["provenance"]
+    require(all(held[k] == v for k, v in dict(temperature_K=77, bias_V=500, precision="Float64", sor=1, threads=2, max_grid_mm=2, profile_relative_gate=.01, onset_gate_mm=.002).items()), "transition held settings/gates changed")
+    require(held["limits"]["V"] == 5e-6 and held["limits"]["W"] == 1e-8 and all(held["limits"][k] > 0 for k in ("seconds", "points", "initial", "extra")), "transition native gates/budgets")
+    hash_map(ROOT / "simulation", p["sources"])
+    source = (ROOT / "simulation/diagnose_transition_grid.jl").read_text(encoding="utf-8")
+    legacy = (ROOT / "simulation/diagnose_lithium.jl").read_text(encoding="utf-8")
+    pairs = lambda text: dict(re.findall(r'"([^"\n]+)"\s*=>\s*"([0-9a-f]{64})"', text))
+    project = pairs(source.split("const SOURCE_PINS=", 1)[1].split("const NATIVE_PINS=", 1)[0])
+    native = pairs(source.split("const NATIVE_PINS=", 1)[1].split("const HISTORICAL_REPORT_SHA", 1)[0])
+    native.update(pairs(legacy.split("const SDK_PINS=", 1)[1].split("require=", 1)[0]))
+    require(project and native and set(p["sources"]) == set(project) | {"diagnose_transition_grid.jl", "test_transition_grid.jl"}, "transition source inventory")
+    require(all(p["sources"][n] == h for n, h in project.items()) and
+            all(p["native_sources"].get(n) == h for n, h in native.items()), "transition declared source identity")
+    tree_match = re.search(r'const NATIVE_TREE_SHA="([0-9a-f]{64})"', source)
+    if tree_match:
+        prefixes = ("PotentialCalculation/", "Grids/", "Axes/", "ScalarPotentials/", "ElectricField/")
+        inventory = {n: h for n, h in p["native_sources"].items() if n.startswith(prefixes)}
+        digest_map(inventory)
+        tree = hashlib.sha256("\n".join(sorted(n + " " + h for n, h in inventory.items())).encode()).hexdigest()
+        require(tree == tree_match.group(1) == p["native_tree_sha256"] and
+                set(p["native_sources"]) == set(native) | set(inventory), "transition native tree identity")
+    else:
+        require(p["native_sources"] == native, "transition declared native source inventory")
+    hash_map(ROOT / "simulation", pairs(legacy.split("const PINNED=", 1)[1].split("const SDK_PINS=", 1)[0]))
+    require(p["environment"]["project"] == "simulation/Project.toml" and p["environment"]["environment_manifest_sha256"] == common.sha256(ROOT / "simulation/Manifest.toml"), "transition environment")
+    require(p["model_sha256"] == PINS["AK02"] == common.sha256(ROOT / "models/AK02.yaml"), "transition AK02 identity")
+    require(g["reporter_test_sha256"] == common.sha256(Path(__file__).with_name("test_lithium_report.py")), "transition reporter tests changed")
+    digest_map({"report.json": g["report_sha256"], **g["artifacts"]})
+    require(set(g["artifacts"]) == set(GRID_FILES.values()), "transition artifact inventory")
+    for public, original in GRID_FILES.items():
+        require(hashlib.sha256(raw[public]).hexdigest() == g["artifacts"][original], "transition CSV hash mismatch")
+        common.check_public(raw[public].decode("utf-8"))
+    profiles, comparisons = [csv_rows(raw[n], n) for n in GRID_FILES]
+    require(profiles and profiles == g["profiles"], "transition missing/changed profiles")
+    cases = {c["case"]: c for c in g["cases"]}
+    require(cases and len(cases) == len(g["cases"]), "transition case census")
+    groups = {}
+    for r in profiles:
+        for k in ("depth_mm", "E_V_cm", "W", "alpha", "point_bits", "net_impurity_cm3"):
+            require(math.isfinite(float(r[k])), "transition invalid profile field")
+        require(r["case"] in cases and r["stage"] in ("initial", "continued", "final"), "transition unknown profile")
+        groups.setdefault((r["case"], r["stage"]), []).append(r)
+    require(set(groups) == {(n, s) for n, c in cases.items() for s in ("initial", "continued", "final") if s in c}, "transition measured profile census")
+    for (name, stage), rows in groups.items():
+        depths = [float(r["depth_mm"]) for r in rows]
+        require(len(depths) > 1 and depths[0] == 0 and depths[-1] == 1 and all(b > a for a, b in zip(depths, depths[1:])), "transition incomplete profile")
+        info = cases[name][stage]
+        require(info["samples"] and len(info["onsets_0_1_V_cm"]) == 2 and len(info["target_spacings_um"]) == 2 and all(x > 0 for x in info["target_spacings_um"]), "transition missing profile measurements")
+        for sample in info["samples"]:
+            check_csv([next(r for r in rows if float(r["depth_mm"]) == sample["depth_mm"])], [sample])
+        for threshold, recorded in zip((0, 1), info["onsets_0_1_V_cm"]):
+            i = next((j for j, r in enumerate(rows) if float(r["E_V_cm"]) > threshold), None)
+            require(recorded == (None if i is None else [None if i == 0 else depths[i-1], depths[i]]), "transition onset/profile mismatch")
+    for c in cases.values():
+        require(c["status"] in ("accepted_fixed_grid", "budget_failed", "failed"), "transition unfinished case")
+        if c["status"] == "budget_failed":
+            require(c["E_checks"] and c["W_checks"] and not (c["E_accepted"] and c["W_accepted"]), "transition missing budget failure")
+        if c["status"] == "accepted_fixed_grid":
+            require(any(n == c["case"] for n, _ in groups), "transition accepted without profile")
+            for key, tol in (("E", 5e-6), ("W", 1e-8)):
+                checks = c[key + "_checks"]
+                require(c[key + "_accepted"] is True and len(checks) >= 2 and checks[-1]["consecutive_passes"] >= 2, "transition false case acceptance")
+                require(all(0 <= d["frozen"]["max"] <= tol and 0 <= d["full_sweep"]["potential"] <= tol and (key == "W" or (0 <= d["poisson"]["max"] <= tol and 0 <= d["frozen"]["max_alpha_voltage"] <= tol and 0 <= d["full_sweep"]["alpha_voltage"] <= tol)) for d in checks[-2:]), "transition residual gate failed")
+                require(checks[-1]["elapsed_seconds"] <= held["limits"]["seconds"] and ("initial" not in c or c[key + "_repaint"]["max_change"] <= tol), "transition time/repaint gate failed")
+                require(c[key + "_final_repaint"]["max_change"] <= tol and all(d["nodes"] > 0 and d["max_error"] <= tol for d in c[key + "_geometric_contacts"]), "transition contact gate failed")
+    expected = []
+    references = {n + '_' + s: rows for (n, s), rows in groups.items()}
+    references.update({n: rows for (n, s), rows in groups.items() if s == "final"})
+    for c in g["comparisons"]:
+        require(c["reference"] in references and c["candidate"] in references, "transition unknown comparison case")
+        a, b = references[c["reference"]], references[c["candidate"]]
+        require([r["depth_mm"] for r in a] == [r["depth_mm"] for r in b] and math.isclose(c["max_W"], max(abs(float(x["W"])-float(y["W"])) for x, y in zip(a, b)), rel_tol=1e-12, abs_tol=1e-15), "transition comparison/profile mismatch")
+        expected.append(dict(reference=c["reference"], candidate=c["candidate"], normalized_E=c["normalized_E"], onset0_shift_mm=c["onset_shifts_mm"][0] if c["onset_shifts_mm"][0] is not None else "nothing", onset1_shift_mm=c["onset_shifts_mm"][1] if c["onset_shifts_mm"][1] is not None else "nothing", max_W=c["max_W"], passed=c["passed"]))
+        if c["passed"]:
+            require(0 <= c["normalized_E"] <= .01 and c["onset1_separation_upper_mm"] is not None and 0 <= c["onset1_separation_upper_mm"] <= .002 + 1e-14, "transition comparison gate failed")
+    check_csv(comparisons, expected)
+    if g["status"] == "bounded_numerical_convergence":
+        require(g["nested_converged"] is True and g["baseline_accepted"] is True and all(n in cases and cases[n]["status"] == "accepted_fixed_grid" for n in ("min50", "min25", "nested0", "nested1", "nested2", "nested2_cold")), "transition false convergence")
+        passed = {(c["reference"], c["candidate"]) for c in g["comparisons"] if c["passed"]}
+        require({("nested0", "nested1"), ("nested1", "nested2"), ("nested2", "nested2_cold")} <= passed, "transition missing convergence comparisons")
+        cold = next(c for c in g["comparisons"] if c["candidate"] == "nested2_cold")
+        require(0 <= cold["max_V"] <= 5e-6 and 0 <= cold["max_W_grid"] <= 1e-8 and 0 <= cold["alpha_voltage_difference"] <= 5e-6, "transition cold/warm gate failed")
+
+
+def load_transition(directory):
+    directory = common.local_path(directory)
+    report = common.relative_file(directory, "report.json").read_bytes()
+    g = json.loads(report)
+    finite_tree(g)
+    raw = {public: common.relative_file(directory, original).read_bytes() for public, original in GRID_FILES.items()}
+    g.update(report_sha256=hashlib.sha256(report).hexdigest(), reporter_test_sha256=common.sha256(Path(__file__).with_name("test_lithium_report.py")), profiles=csv_rows(raw["transition-profiles.csv"]),
+             provenance_scope="Project and declared native identities checked; installed SDK not reopened. Native fixed-point checks are not independent PDE residual proof or physical CCE validation.")
+    validate_transition(g, raw)
+    require(common.sha256(directory / "report.json") == g["report_sha256"] and all(common.sha256(directory / n) == h for n, h in g["artifacts"].items()), "transition input changed")
+    return compact_grid(g), raw
+
+
+def display_number(value):
+    """Readable display only; full precision remains in JSON and CSV artifacts."""
+    if value is None:
+        return "not measured"
+    if isinstance(value, float):
+        return format(value, ".6g")
+    if isinstance(value, (list, tuple)):
+        return "[" + ", ".join(display_number(v) for v in value) + "]"
+    return str(value)
+
+
+def render_transition(g):
+    out = '<section><h2>Transition grid audit — native numerical checks</h2><p class="warning">' + escape(g["status"]) + ': field gates only. Selected underconverged profiles are not converged solutions. The legacy signal/grid warning remains unresolved; no experimental accuracy or CCE claim.</p>'
+    out += '<p>' + escape(g["provenance_scope"]) + '</p>'
+    out += '<p>Contact checks cover grid nodes belonging to each electrode, not arbitrary between-node surface probes. Native source totals include fixed/contact cells and are bookkeeping diagnostics, not an independently integrated active charge. Fresh cases permit 20,000 initialization plus 20,000 continuation sweeps; the reported actual count is authoritative.</p>'
+    if not any(c["case"].startswith("nested") for c in g["cases"]):
+        out += '<p>Nested results absent: ' + escape(g["status"]) + ' (baseline budget/defects or baseline-only phase).</p>'
+    rows, series, notes, brief = [], [], [], []
+    for c in g["cases"]:
+        last_e = (c.get("E_checks") or [{}])[-1]
+        last_w = (c.get("W_checks") or [{}])[-1]
+        last_profile = next((c[k] for k in ("final", "continued", "initial") if k in c), {})
+        brief.append((c["case"], c["status"], c.get("E_grid", {}).get("shape"), last_profile.get("target_spacings_um"), (last_profile.get("onsets_0_1_V_cm") or [None, None])[1], last_e.get("frozen", {}).get("max"), last_w.get("frozen", {}).get("max")))
+        measured = next((c[s] for s in ("final", "continued", "initial") if s in c), {})
+        for key in ("E", "W"):
+            d = (c.get(key + "_checks") or [{}])[-1]
+            rows.append((c["case"], c["status"], key, c.get(key + "_grid", {}).get("shape", "not measured"), measured.get("target_spacings_um"), d.get("frozen", {}).get("max"), d.get("full_sweep", {}).get("potential"), (d.get("poisson") or {}).get("max"), [d.get("frozen", {}).get("max_alpha_voltage"), d.get("full_sweep", {}).get("alpha_voltage")], measured.get("onsets_0_1_V_cm"), d.get("sweeps"), c.get(key + "_seconds"), c.get("failure")))
+        for stage in ("initial", "continued", "final"):
+            if stage not in c:
+                continue
+            info = c[stage]
+            notes.append('<p>' + escape(f'{c["case"]}/{stage}: radial/axial spacing {display_number(info["target_spacings_um"])} µm; E=0/1 V/cm reporting brackets {display_number(info["onsets_0_1_V_cm"])} mm') + '</p>')
+            points = [(float(r["depth_mm"]), float(r["E_V_cm"]), 0) for r in g["profiles"] if (r["case"], r["stage"]) == (c["case"], stage)]
+            series.append((c["case"] + '/' + stage, ("#006c91", "#ae3f15", "#596324", "#703da0")[len(series) % 4], stage == "initial", points))
+        pairs = [(a, b) for a, b in (("before_first_W", "after_first_W_init"), ("before_first_W", "after_initial_W_solve"), ("before_W_continuation" if "before_W_continuation" in c else "before_first_W", "after_W_continuation")) if a in c and b in c]
+        if pairs and all(c[a] == c[b] and c[a] for a, b in pairs):
+            notes.append('<p>' + escape(c["case"]) + ': W did not mutate E in the recorded state-equality checks.</p>')
+    out += table(("Case", "Status", "Grid r/phi/z", "Radial/axial step (µm)", "E > 1 V/cm onset (mm)", "E defect (V)", "W defect"), [[display_number(v) for v in row] for row in brief])
+    out += '<details><summary>All residuals, iterations, spacings and state checks</summary>' + "".join(notes)
+    out += table(("Case", "Status", "Field", "Actual shape", "Last E radial/axial spacing µm", "Last frozen defect", "Sweep defect", "Poisson defect", "Alpha voltage, frozen/sweep (V)", "Last E onsets 0/1 V/cm (mm)", "Sweeps", "Seconds", "Failure"), [[display_number(v) for v in row] for row in rows])
+    out += "</details>"
+    out += plot(series, "Electric field (V/cm), computed profiles")
+    out += table(("Reference", "Candidate", "Field vector / finer norm", "Onset shifts mm", "1 V/cm separation upper mm", "Max W", "Passed"), [(c["reference"], c["candidate"], c["normalized_E"], c["onset_shifts_mm"], c.get("onset1_separation_upper_mm"), c["max_W"], c["passed"]) for c in g["comparisons"]])
+    return out + '<p>' + ' · '.join(f'<a download href="{n}">{n}</a>' for n in GRID_FILES) + '</p><details><summary>Settings and provenance (full checkpoint history in summary.json)</summary><pre>' + escape(json.dumps({"status": g["status"], "held_settings": g["held_settings"], "provenance": g["provenance"], "report_sha256": g["report_sha256"], "note": "All native checkpoint histories, cold/warm results and preserved budget failures are in the adjacent summary.json download; no numerical records were discarded."}, indent=2, sort_keys=True)) + '</pre></details></section>'
+
+
 def render(data):
     phase = data["metadata"]["phase"]
     failed = sum(not c["passed"] for c in data["sensitivities"])
@@ -318,6 +489,8 @@ def render(data):
     if grid_checks:
         largest = max(grid_checks, key=lambda c: abs(c["mean_difference"]))
         body += f'<p class="warning"><b>Grid sensitivity remains unresolved:</b> at {largest["depth_mm"]:.2f} mm, min25 minus min50 changes the native mean signal by {largest["mean_difference"]:+.5f} ({100*abs(largest["mean_difference"]):.1f} percentage points). A loose statistical screen is not close-agreement evidence. See the separate post-run seed analysis below.</p>'
+    if "transition_grid" in data:
+        body += render_transition(data["transition_grid"])
     series = []
     for key, color in (("original", "#006c91"), ("no_trapping", "#ae3f15")):
         series.append(("Native trapping" if key == "original" else "Same-path NoTrapping", color, False, [(r["depth_mm"], r[key]["mean"], r[key]["seed_sem"]) for r in data["seed_means"]]))
@@ -365,10 +538,13 @@ def render(data):
 def validate_bundle(directory):
     """Validate the compact published bundle; no detector calculation is run."""
     directory = common.no_links(Path(directory).absolute())
-    require(sorted(p.name for p in directory.iterdir()) == sorted(("lithium.html", "summary.json", *FILES[1:])), "unexpected Li bundle files")
-    for name in ("lithium.html", "summary.json", *FILES[1:]):
+    data = common.load_json(common.relative_file(directory, "summary.json"))
+    extra = GRID_FILES if "transition_grid" in data else {}
+    require(sorted(p.name for p in directory.iterdir()) == sorted(("lithium.html", "summary.json", *FILES[1:], *extra)), "unexpected Li bundle files")
+    for name in ("lithium.html", "summary.json", *FILES[1:], *extra):
         common.relative_file(directory, name)
-    data = common.load_json(directory / "summary.json")
+    if extra:
+        validate_transition(data["transition_grid"], {n: (directory / n).read_bytes() for n in extra})
     finite_tree(data)
     metadata = data["metadata"]
     require(metadata["exporter_sha256"] == common.sha256(Path(__file__)), "Li report exporter changed")
@@ -382,7 +558,7 @@ def validate_bundle(directory):
     return data
 
 
-def export(directory, output):
+def export(directory, output, grid_input=None):
     directory = common.local_path(directory)
     output = common.local_path(output, new=True)
     require(not output.is_relative_to(directory) and not directory.is_relative_to(output), "input/output roots must be separate")
@@ -391,6 +567,11 @@ def export(directory, output):
     hashes = {name: hashlib.sha256(value).hexdigest() for name, value in raw.items()}
     clouds = validate(report)
     data = summarize(report, clouds, {name: csv_rows(raw[name], name) for name in FILES[1:]}, hashes)
+    extra = {}
+    if grid_input is not None:
+        grid_root = common.local_path(grid_input)
+        require(not output.is_relative_to(grid_root) and not grid_root.is_relative_to(output), "grid input/output roots must be separate")
+        data["transition_grid"], extra = load_transition(grid_root)
     finite_tree(data)
     common.check_public(data)
     for name in FILES[1:]:
@@ -399,7 +580,7 @@ def export(directory, output):
     require(all(common.sha256(directory / name) == digest for name, digest in hashes.items()), "input changed during export")
     common.no_links(output)
     output.mkdir(parents=True, exist_ok=False)
-    for name, value in {"lithium.html": page.encode(), "summary.json": summary.encode(), **{n: raw[n] for n in FILES[1:]}}.items():
+    for name, value in {"lithium.html": page.encode(), "summary.json": summary.encode(), **{n: raw[n] for n in FILES[1:]}, **extra}.items():
         with (output / name).open("xb") as stream:
             stream.write(value)
     validate_bundle(output)
@@ -410,8 +591,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--grid-input", help="Optional completed M2d diagnostic directory")
     args = parser.parse_args()
     try:
-        export(args.input, args.output)
-    except (ValueError, KeyError, TypeError, OSError) as error:
+        export(args.input, args.output, grid_input=args.grid_input)
+    except (ValueError, KeyError, TypeError, OSError, StopIteration, IndexError) as error:
         parser.exit(1, f"Li report refused: {error}\n")
