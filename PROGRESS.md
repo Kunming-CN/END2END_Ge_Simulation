@@ -736,3 +736,23 @@ streaming. After a 500-decay capacity pilot, target 10,000 initial Cs137 decays
 per detector; extend to 100,000 only from measured resource/statistical benefit.
 Compare radiation deposition, induced charge/timing, preamp, shaping, ADC and
 final spectra with common normalizations and all rejected/flagged records retained.
+
+M2c publication verified: implementation `fd6d4f5` was pushed to main; GitHub
+Pages run `36253668200` succeeded. Exact build
+`a277ded55ffd24635de95721efda655f426e737c4ea8625d720c5257e997edd7`
+passed 80 live-file checks, and all five Li report files were fetched separately
+and matched to local SHA-256 values. The first check during deployment correctly
+rejected the old manifest. The live 390px page shows both plots, the corrected
+physical three-region explanation, the 15.1-percentage-point grid warning and
+the non-simultaneous/post-run interval caveat without horizontal overflow.
+Release marker: `v0.11.0-lithium-diagnostics`.
+
+The publisher also passed 18 site tests, 27 contact tests, 46 pipeline tests
+(one known Windows symlink-creation skip), and seven Li report tests. Original
+17-model images, GeGI content and the existing full-chain example were preserved.
+Superseded report previews were removed only after identical CSV checks; raw
+numerical results, pilot, source hashes and review/test receipts remain together
+under `.local/m2c`. No user applications or global performance settings changed,
+no recurring task was enabled, and no large Cs137 or flexible-hardware campaign
+is claimed completed. The next bounded gate is transition field/weighting/grid
+convergence, not merely increasing the radiation event count.
