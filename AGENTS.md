@@ -22,3 +22,14 @@ Work only in this project unless a recorded input dependency needs a read-only c
 - `Publish.cmd`: approved publication workflow. Browser authorization may require the owner.
 
 Do not claim that Work/Codex has been started merely because these instructions exist. The execution environment and actual working directory must be verified in that session.
+
+## Work/Codex model preference
+
+The maintainer requested Astra with High reasoning for this project's Work/Codex tasks (2026-09-25).
+- Use model `gpt-6-astra` with `model_reasoning_effort = "high"`.
+- The development computer's user config already has both values; do not replace the entire config or change unrelated settings.
+- When launching Codex programmatically, explicitly select the same model and reasoning level so another profile or task preset cannot silently change them.
+- If using Plan mode, set its supported `plan_mode_reasoning_effort` override to `high` for that run as well.
+- For Work/Codex graphical sessions, verify Astra and High in the session's model control; a project instruction alone is not a model-setting mechanism.
+- Do not silently substitute another model or enable Extra High, Max, Ultra, Fast mode or separately billed API usage.
+- Confirm the effective model, reasoning level and project directory when starting a development task. Configuration verification is not a claim that a task has been launched.
