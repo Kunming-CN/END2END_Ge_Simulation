@@ -88,6 +88,34 @@ for a bounded difficult review when useful. No background schedule changes impli
   Desktop comparison/trace previews were inspected; exact narrow mobile layout
   is not claimed validated. No original simulation records were changed.
 
+## Exact Geant4 geometry and recorded events
+
+The source is centered above the crystal at global (0,37.073,0.290) mm,
+but above the CURVED cylindrical Al wall on +y, not the flat axial end face.
+Source-to-highest-Ge distances are 26.223/25.623 mm for AK02/SAP22. This is a
+nominal pose, not an as-built lid survey. Raw Ge-hit fractions 1.21%/1.15%
+are consistent in order of magnitude with an explicitly approximate 1.06%/0.95%
+solid-angle/attenuation check; not measured efficiency validation.
+
+The new saved-data bundle is staged at docs/examples/cs137-10k-geometry/.
+Native G4GDMLParser/G4Polyhedron exports all 20 actual placed volumes per model.
+Exact GDML/macros/scenario/preparation receipts are in each model originals.zip.
+All 10,000 primary IDs/model and ALL recorded rows are present: 472,658/478,172
+scored steps and 85,858/86,276 track creation records. World-air paths were not
+scored; STEP chords and creation vertices are not complete trajectories, SSD
+carrier drifts or all-event readout waveforms. No missing connectors are invented.
+
+All 13 geometry tests, including a full raw-LH5 scalar-by-scalar comparison,
+5 publication tests, 4 efficiency-audit tests and 19 site tests passed. Actual
+browser tests covered both models, zero/last primary, stale selection handling
+and 390-pixel mobile width. Desktop/mobile views inspected. All 17 original
+computational hashes remain unchanged. No radiation/SSD/readout was rerun.
+An early derivative export correctly refused source mutation while its writer
+was finishing; preserved under bundle-pre-freeze. Final export ran after the
+writer exited and source hashes froze. Evidence: .local/geometry-events-publication/.
+Build ID: 01ad76ec12526a266a78405f172151bdf8172b1c0053f68726333f8fa5360b61.
+Online deployment confirmation will be recorded after push.
+
 Entry points: [library](https://kunming-cn.github.io/END2END_Ge_Simulation/),
 [full engineering example](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/pipeline.html),
 [native Li to readout](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/native-li/comparison.html),

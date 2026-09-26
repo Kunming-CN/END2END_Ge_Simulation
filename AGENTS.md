@@ -233,3 +233,11 @@ Reuse prior review findings. New agents require a substantive new implementation
 or a specific unresolved question, not rediscovery of already recorded results.
 Keep usage summaries local and distinguish cached CLI token telemetry from billed
 quota percentages. Preserve raw results, failed attempts and all original modes.
+
+## Freeze writers before saved-data export
+
+Before launching any hash-bound export, wait for its implementation writer to
+exit and record source hashes. A changed-source failure is an incomplete derived
+bundle, not a reason to repeat Geant4 or SSD. Preserve failed derivative evidence;
+retry only the exporter after source freeze. Radiation STEP chords and Track birth
+records must not be labeled complete trajectories across unscored material.

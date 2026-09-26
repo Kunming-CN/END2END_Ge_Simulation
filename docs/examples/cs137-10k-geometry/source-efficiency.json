@@ -1,0 +1,96 @@
+{
+  "kind": "saved_source_geometry_sanity_check_v1",
+  "campaign_sha256": "f563969cf57f3f6ff34c09dd4748ddafddcc3d7df8f4d06941b18e5212c5b43d",
+  "models": [
+    {
+      "model": "AK02",
+      "source_global_mm": [
+        0,
+        37.073,
+        0.29
+      ],
+      "crystal_translation_global_mm": [
+        0,
+        1.45,
+        0.29
+      ],
+      "radius_mm": 12.65,
+      "height_mm": 9.4,
+      "volume_mm3": 4082.2090560194792,
+      "top_global_y_mm": 10.85,
+      "source_to_top_mm": 26.223,
+      "upper_envelope_disk_solid_angle_fraction": 0.04966113767826008,
+      "volume_over_projected_area_mm": 8.12015497820619,
+      "nominal_central_Al_path_mm": 2.62,
+      "nominal_central_Al_unscattered_transmission": 0.9486082460932093,
+      "mean_thickness_total_interaction_probability": 0.2638199485891892,
+      "line_photons": 8506,
+      "initial_decays": 10000,
+      "Ge_positive_decays": 121,
+      "Ge_positive_fraction": 0.0121,
+      "deposited_total_keV": 28618.605212692677,
+      "mean_Ge_energy_per_initial_decay_keV": 2.861860521269268,
+      "mean_energy_given_Ge_deposit_keV": 236.5173984520056,
+      "Ge_deposit_650_to_670_keV_decays": 11,
+      "approximate_line_only_interacting_fraction": 0.010571498921930099,
+      "source_hashes": {
+        "scenario": "d9d22b6777b9913c3f14b3f6c871c17fb7652fbd8bb014ac0adebb1b0e75c273",
+        "geometry_report": "a113cd1e4bced30ea8cda14b96f474d1ad22c452af769a60537797787659e909",
+        "scalars": "e77a9a185b2b2ceaaf1d880c5703ebc4a07a464e1fb970ff290c6c3f6a500a3b"
+      }
+    },
+    {
+      "model": "SAP22",
+      "source_global_mm": [
+        0,
+        37.073,
+        0.29
+      ],
+      "crystal_translation_global_mm": [
+        0,
+        1.45,
+        0.29
+      ],
+      "radius_mm": 12.75,
+      "height_mm": 10,
+      "volume_mm3": 3491.724725628703,
+      "top_global_y_mm": 11.45,
+      "source_to_top_mm": 25.623,
+      "upper_envelope_disk_solid_angle_fraction": 0.05235746013453185,
+      "volume_over_projected_area_mm": 6.837065743944637,
+      "nominal_central_Al_path_mm": 2.62,
+      "nominal_central_Al_unscattered_transmission": 0.9486082460932093,
+      "mean_thickness_total_interaction_probability": 0.22731535526719804,
+      "line_photons": 8442,
+      "initial_decays": 10000,
+      "Ge_positive_decays": 115,
+      "Ge_positive_fraction": 0.0115,
+      "deposited_total_keV": 24566.680084753934,
+      "mean_Ge_energy_per_initial_decay_keV": 2.4566680084753933,
+      "mean_energy_given_Ge_deposit_keV": 213.62330508481682,
+      "Ge_deposit_650_to_670_keV_decays": 7,
+      "approximate_line_only_interacting_fraction": 0.009531024537858345,
+      "source_hashes": {
+        "scenario": "d9d22b6777b9913c3f14b3f6c871c17fb7652fbd8bb014ac0adebb1b0e75c273",
+        "geometry_report": "883830e586ac14f7fa6ee0189bf45acdbad36c1556f6e2852762ece250bd277b",
+        "scalars": "1beb094d5720cc9ffddefc1d2d57185ae4445743cb3f31d5e373ba692ad9834e"
+      }
+    }
+  ],
+  "nist": {
+    "energy_keV": 661.657,
+    "interpolation": "log-log between 0.6 and 0.8 MeV; total attenuation, includes coherent scattering",
+    "Ge_mu_cm_inverse": 0.377185602891244,
+    "Al_mu_cm_inverse": 0.20137165140351693,
+    "sources": [
+      "https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z32.html",
+      "https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z13.html"
+    ]
+  },
+  "limitations": [
+    "Order-of-magnitude disk/mean-thickness estimate, not a second transport simulation or a validation of experimental efficiency.",
+    "Ignores exact groove/bore-dependent path lengths, oblique incidence, capsule angular attenuation, scattered-in photons and non-line radiation.",
+    "Counts of decays with Ge deposition are distinct from energy-deposition fraction, accepted ADC events and full-energy peaks.",
+    "Geometry is nominal: global +y faces curved cylindrical wall, not the flat axial end of the cryostat."
+  ]
+}

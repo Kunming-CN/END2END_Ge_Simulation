@@ -63,10 +63,14 @@ def validate(site, require_manifest=True, require_models=False):
         if not f.is_file() or f.name == MANIFEST:
             continue
         relative = f.relative_to(site).as_posix()
+        geometry_file = relative.startswith('examples/cs137-10k-geometry/') and f.suffix.lower() in {'.zip','.txt'}
         ledger_zip = relative in ('examples/cs137-10k/AK02/response/ledgers.zip', 'examples/cs137-10k/SAP22/response/ledgers.zip')
-        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in model_outputs and not ledger_zip:
+        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in model_outputs and not ledger_zip and not geometry_file:
             raise ValueError(f'Unapproved public file: {relative}')
         data = f.read_bytes()
+        if geometry_file and f.suffix.lower()=='.zip':
+            from geometry_publication import archive_contents
+            archive_contents(data)
         if ledger_zip:
             from native_publication import validate_ledger_archive
             validate_ledger_archive(data)
@@ -88,7 +92,7 @@ def validate(site, require_manifest=True, require_models=False):
         total += len(data)
         entries.append({'path': relative, 'bytes': len(data),
                         'sha256': hashlib.sha256(data).hexdigest()})
-        if f.suffix.lower() in {'.html', '.json', '.md', '.svg', '.csv', '.yaml'}:
+        if f.suffix.lower() in {'.html', '.json', '.md', '.svg', '.csv', '.yaml', '.txt'}:
             text = data.decode('utf-8-sig')
             if PRIVATE_PATH.search(text) or CREDENTIAL.search(text):
                 raise ValueError(f'Local path or possible credential: {relative}')
@@ -126,6 +130,10 @@ def validate(site, require_manifest=True, require_models=False):
     if native_bundle.exists():
         from native_publication import validate_bundle
         validate_bundle(native_bundle)
+    geometry_bundle = site/'examples/cs137-10k-geometry'
+    if geometry_bundle.exists():
+        from geometry_publication import validate_bundle as validate_geometry
+        validate_geometry(geometry_bundle)
     entries.sort(key=lambda item: item['path'])
     encoded = json.dumps(entries, sort_keys=True, separators=(',', ':')).encode()
     result = {'schema_version': 1, 'build_id': hashlib.sha256(encoded).hexdigest(),
@@ -192,7 +200,7 @@ def verify_live(url, report):
                      if entry['path'].startswith(('models/', 'downloads/'))})
     # The public campaign is an auditable dataset, not just HTML; verify every file.
     selected.update({entry['path']: entry for entry in entries
-                     if entry['path'].startswith('examples/cs137-10k/')})
+                     if entry['path'].startswith(('examples/cs137-10k/', 'examples/cs137-10k-geometry/'))})
     for suffix in ('.png', '.svg', '.csv', '.mp4', '.webm', '.json', '.md'):
         examples = [entry for entry in entries if entry['path'].endswith(suffix)]
         for entry in examples[:2] + examples[-1:]:

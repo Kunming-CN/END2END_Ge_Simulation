@@ -43,3 +43,7 @@ docs/examples/native-li/** -diff
 
 # Byte-exact historical PowerShell receipt intentionally keeps CRLF, not trailing spaces.
 docs/examples/cs137-10k/run.json whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# Saved Geant4 event records are reviewed through full raw round-trip and SHA-256 checks.
+docs/examples/cs137-10k-geometry/*/events-*.json -diff
+docs/examples/cs137-10k-geometry/*/scene.json -diff

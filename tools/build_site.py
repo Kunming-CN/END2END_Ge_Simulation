@@ -298,10 +298,40 @@ def build_campaign_export(campaign):
                    '<a class="button" href="'+href+'">Open 10k comparison, traces and complete response ledgers</a></section>')
         file.write_text(text.replace('<main>', '<main>'+section, 1), encoding='utf-8', newline='\n')
 
+def build_geometry_export(source):
+    """Overlay saved Geant4 geometry/events on the validated existing snapshot."""
+    from geometry_publication import assemble, validate_bundle
+    validate(DESTINATION)
+    shutil.copytree(DESTINATION, OUT)
+    (OUT/MANIFEST).unlink()
+    target = OUT/'examples/cs137-10k-geometry'
+    if target.exists():
+        validate_bundle(target)
+        shutil.rmtree(target)
+    assemble(source, target)
+    page = OUT/'examples/cs137-10k/comparison.html'
+    text = page.read_text(encoding='utf-8')
+    text = re.sub(r'<section id="saved-g4-geometry">.*?</section>', '', text, flags=re.S)
+    if text.count('<h1>') != 1: raise ValueError('Unexpected comparison title')
+    section = ('<section id="saved-g4-geometry" class="note"><h2>Actual Geant4 geometry and all saved events</h2>'
+        '<p><a href="../cs137-10k-geometry/geometry.html">Open the rotatable geometry and 10,000-event selector for each detector</a> '
+        '| <a href="../cs137-10k-geometry/SOURCE_GEOMETRY.md">Source placement and low-deposition check</a></p>'
+        '<p>The point source is centered above the curved Al wall, not a surveyed flat axial lid. '
+        'All recorded material STEP chords and track-creation vertices are available; unrecorded paths are not invented. '
+        'Exact GDML and run macros are downloadable in the viewer.</p></section>')
+    page.write_text(text.replace('<h1>',section+'<h1>',1),encoding='utf-8',newline='\n')
+    binding = OUT/'examples/cs137-10k/publication.json'
+    metadata = json.loads(binding.read_text(encoding='utf-8'))
+    body = page.read_bytes()
+    metadata['files']['comparison.html'] = {'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest()}
+    metadata['geometry_extension'] = {'manifest_sha256':hashlib.sha256((target/'manifest.json').read_bytes()).hexdigest(),
+        'original_response_records_modified':False}
+    binding.write_text(json.dumps(metadata,indent=2)+'\n',encoding='utf-8',newline='\n')
+
 def normalize_text_outputs(folder):
     # Historical receipts and all native-bundle bytes are already hash-bound.
     for output in folder.rglob('*'):
-        if output.relative_to(folder).parts[:2] == ('examples', 'cs137-10k'):
+        if output.relative_to(folder).parts[:2] in (('examples', 'cs137-10k'), ('examples', 'cs137-10k-geometry')):
             continue
         if output.is_file() and output.suffix in {'.html', '.json', '.md', '.svg'}:
             data = output.read_bytes()
@@ -309,7 +339,7 @@ def normalize_text_outputs(folder):
             if normalized != data: output.write_bytes(normalized)
 
 
-def build(campaign=None):
+def build(campaign=None, geometry=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -326,7 +356,9 @@ def build(campaign=None):
         old = validate(DESTINATION)
     if OUT.exists():
         remove_generated(OUT)
-    if campaign is None:
+    if geometry is not None:
+        build_geometry_export(geometry)
+    elif campaign is None:
         build_export()
     else:
         build_campaign_export(campaign)
@@ -359,4 +391,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--native-campaign', type=Path, help='Publish saved 10k results onto the validated existing snapshot; no legacy regeneration')
-    build(parser.parse_args().native_campaign)
+    parser.add_argument('--geometry-events', type=Path, help='Publish saved Geant4 geometry and all recorded events; no physics rerun')
+    args=parser.parse_args()
+    if args.native_campaign is not None and args.geometry_events is not None: parser.error('Select one publication mode')
+    build(args.native_campaign, args.geometry_events)
