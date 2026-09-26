@@ -1,0 +1,63 @@
+{
+  "kind": "native_campaign_report_v1",
+  "status": "completed_with_native_failures",
+  "campaign_status": "completed_with_native_failures",
+  "campaign_sha256": "f563969cf57f3f6ff34c09dd4748ddafddcc3d7df8f4d06941b18e5212c5b43d",
+  "exporter_sha256": "fbc2d4f6b4f107c1d03b1ab6c62a9eba74d86e4c384d17a0a55208e440eca656",
+  "models": [
+    {
+      "model": "AK02",
+      "counts": {
+        "accepted": 107,
+        "analog_samples": 6000000,
+        "decay_photons": 9317,
+        "groups": 121,
+        "initial_decays": 10000,
+        "initial_primaries": 10000,
+        "line_photons": 8506,
+        "native_charge_samples": 599322,
+        "native_failed_groups": 1,
+        "readout_rejected": 13,
+        "rejected": 14,
+        "saturated": 0,
+        "zero_deposit_primaries": 9879
+      },
+      "flags": {
+        "negative_native": 27,
+        "negative_window": 27,
+        "transport_flagged": 119,
+        "step_limited": 119,
+        "stopped_without_contact": 0,
+        "current_balance_failed": 0
+      }
+    },
+    {
+      "model": "SAP22",
+      "counts": {
+        "accepted": 113,
+        "analog_samples": 5700000,
+        "decay_photons": 9301,
+        "groups": 115,
+        "initial_decays": 10000,
+        "initial_primaries": 10000,
+        "line_photons": 8442,
+        "native_charge_samples": 14215,
+        "native_failed_groups": 1,
+        "readout_rejected": 1,
+        "rejected": 2,
+        "saturated": 0,
+        "zero_deposit_primaries": 9885
+      },
+      "flags": {
+        "negative_native": 0,
+        "negative_window": 0,
+        "transport_flagged": 1,
+        "step_limited": 0,
+        "stopped_without_contact": 1,
+        "current_balance_failed": 0
+      }
+    }
+  ],
+  "figure_policy": "Exact saved 5-keV histogram counts; log1p count display only; no fitting, smoothing, truth normalization or physical resolution inference",
+  "html_sha256": "68c94b454cf356f2e14cbe8a1db14dcb7fd7a55c8f3539e81e8eb1b21d706dad"
+}

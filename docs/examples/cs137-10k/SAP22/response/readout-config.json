@@ -1,0 +1,21 @@
+{
+  "adc_bits": 14,
+  "adc_full_scale_V": 10.0,
+  "calibration_energy_keV": 500.0,
+  "expected_primary_count": 10000,
+  "feedback_capacitance_pF": 0.6,
+  "feedback_tau_us": 50.0,
+  "gain": 20.0,
+  "max_samples_per_event": 500000,
+  "max_window_ns": 1.0e6,
+  "peak_gate_end_ns": null,
+  "peak_gate_start_ns": null,
+  "peak_policy": "signed_input_positive_peak",
+  "pole_zero_tau_us": 50.0,
+  "require_all_events": true,
+  "schema_version": 2,
+  "shaping_tau_us": 0.5,
+  "tail_shaping_constants": 20.0,
+  "threshold_V": 0.001,
+  "trace_max_points": 600
+}

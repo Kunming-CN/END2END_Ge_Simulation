@@ -271,7 +271,45 @@ def rename_generated(source, destination):
             time.sleep(min(0.5 * (attempt + 1), 2.0))
 
 
-def build():
+
+def build_campaign_export(campaign):
+    """Add saved results to a checked snapshot; preserve historical gallery bytes."""
+    from native_publication import assemble, validate_bundle
+    validate(DESTINATION)
+    shutil.copytree(DESTINATION, OUT)
+    (OUT / MANIFEST).unlink()
+    target = OUT / 'examples' / 'cs137-10k'
+    if target.exists():
+        validate_bundle(target)
+        shutil.rmtree(target)
+    assemble(campaign, target)
+    for page, href in (('index.html','examples/cs137-10k/comparison.html'),
+                       ('detectors/AK02/index.html','../../examples/cs137-10k/comparison.html'),
+                       ('detectors/SAP22/index.html','../../examples/cs137-10k/comparison.html')):
+        file = OUT/page
+        text = file.read_text(encoding='utf-8')
+        text = re.sub(r'<section id="native-cs137-10k">.*?</section>', '', text, flags=re.S)
+        if text.count('<main>') != 1:
+            raise ValueError('Unexpected saved page structure: '+page)
+        section = ('<section id="native-cs137-10k"><h2>Cs137: 10,000 initial decays per detector</h2>'
+                   '<p>Saved AK02/SAP22 cryostat-to-native-charge-to-peak-ADC engineering run. '
+                   'All events retained; two native failures and trajectory-limit flags remain visible. '
+                   'Nominal geometry and synthetic electronics, not an experimental calibration.</p>'
+                   '<a class="button" href="'+href+'">Open 10k comparison, traces and complete response ledgers</a></section>')
+        file.write_text(text.replace('<main>', '<main>'+section, 1), encoding='utf-8', newline='\n')
+
+def normalize_text_outputs(folder):
+    # Historical receipts and all native-bundle bytes are already hash-bound.
+    for output in folder.rglob('*'):
+        if output.relative_to(folder).parts[:2] == ('examples', 'cs137-10k'):
+            continue
+        if output.is_file() and output.suffix in {'.html', '.json', '.md', '.svg'}:
+            data = output.read_bytes()
+            normalized = data.replace(b'\r\n', b'\n')
+            if normalized != data: output.write_bytes(normalized)
+
+
+def build(campaign=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -288,14 +326,11 @@ def build():
         old = validate(DESTINATION)
     if OUT.exists():
         remove_generated(OUT)
-    build_export()
-    # Stable text bytes on Windows/Linux; numerical CSV files remain byte-for-byte.
-    for output in OUT.rglob('*'):
-        if output.is_file() and output.suffix in {'.html', '.json', '.md', '.svg'}:
-            data = output.read_bytes()
-            normalized = data.replace(b'\r\n', b'\n')
-            if normalized != data:
-                output.write_bytes(normalized)
+    if campaign is None:
+        build_export()
+    else:
+        build_campaign_export(campaign)
+    normalize_text_outputs(OUT)
     report = validate(OUT, require_manifest=False, require_models=True)
     (OUT / MANIFEST).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8', newline='\n')
     validate(OUT)
@@ -321,4 +356,7 @@ def build():
 
 
 if __name__ == '__main__':
-    build()
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--native-campaign', type=Path, help='Publish saved 10k results onto the validated existing snapshot; no legacy regeneration')
+    build(parser.parse_args().native_campaign)

@@ -65,3 +65,28 @@ is distinct from a clean completion, and native failures are counted separately
 from threshold/ADC rejections. Native/analog histograms include successful native
 groups only; deposited truth retains every decay/group. The report exposes the
 missing-response count. A clean500 pilot remains mandatory before10k.
+
+## Publish an existing completed 10k campaign (no calculation)
+
+From the project root, use the existing site Python runtime or Python 3.10+:
+
+```powershell
+node tools/native_campaign_report.mjs .local/peak-native-delivery/cs10000-v2 --verify-only
+& 'C:\Program Files\ParaView 6.1.1\bin\pvpython.exe' tools/build_site.py --native-campaign .local/peak-native-delivery/cs10000-v2
+& 'C:\Program Files\ParaView 6.1.1\bin\pvpython.exe' tools/check_site.py
+```
+
+The explicit mode adds `docs/examples/cs137-10k/` to the validated existing
+website snapshot. It does not regenerate historical galleries or rerun old
+examples against newer code. Original campaign dependencies must still match.
+All scalar, histogram and selected-charge CSV bytes remain unchanged. Each
+model's `response/ledgers.zip` contains all 18 original response files, including
+complete truth/deposit and endpoint ledgers; original line endings are preserved.
+Original `run.json` and `source-comparison.json` remain historical receipts.
+`publication.json` separately binds adapted public pages and the complete archive
+inventory. No raw LH5, field cache or upstream geometry file is republished.
+
+After GitHub Pages deployment, run `tools/check_site.py --url` with the site URL.
+It checks every published campaign file, including both ZIP archives, not just
+page availability. Unit tests: `tools/test_native_publication.py` and
+`node --test tools/test_native_campaign_report.mjs`. None invokes a simulation.

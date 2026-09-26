@@ -1,0 +1,295 @@
+{
+    "kind":  "native_campaign_v1",
+    "status":  "completed_with_native_failures",
+    "events_per_model":  10000,
+    "seed":  26092631,
+    "source_sha256":  {
+                          "tools/run_native_campaign.ps1":  "3024a38dbc7ad4f624231cec77a6b0a10775e31c9f25d65b4582942142adaf6f",
+                          "transport/cs137.py":  "de1c276a304dad5ffa1338732e96719b22ad115e4dd8344d04ae5a91c934224d",
+                          "transport/cryostat_export.cc":  "af44c9893e4576151511b185989ff1bc88431b36261d2d3b2607640d335e767b",
+                          "transport/cryostat_nominal.json":  "9cad951c14213ac64d1e0c83c6ee44e7f4b9990d80979fd5bae35797daaf0edb",
+                          "transport/handoff.py":  "5eaf9c41852b4f4b45b3c36f78314b9fba28c39fcc4155694e8b6459375df193",
+                          "transport/pixi.lock":  "c212a7f7e78bb7af4687bbbc7322659975961e62c3ea71a6f325e65e554b56be",
+                          "simulation/native_response.jl":  "814417d83d696c0cac51f4cb39fd1fd461989e93e90ca9e0b3e12ea9f07b7077",
+                          "simulation/native_stream.jl":  "9b9073a9f2086b884f6788abc52136c7a7ee35af3acecdd2c32ffffa0f968ba9",
+                          "simulation/readout_profiles.jl":  "3f4475fffb6a13fa54235191cba6f03a7cfcd8f759da7e08ecbc05c4fe7b0130",
+                          "simulation/native_readout_profile.json":  "7556e6e77d6c21e76e1a4eabb69b2b26875517252c083c88b6eb6a80502ef6e6",
+                          "simulation/native_li_example.jl":  "5414e68773fe320082a93ebc87613f211e20cb3a644ebf82d700b65f16b75ca5",
+                          "simulation/readout.jl":  "dfc0bfcdafd2b26bf5b73135d372dde15d2509bd8d3c4b83fefdc2bf9a1ab3c0",
+                          "simulation/replay.jl":  "7ed14d7e0c1f8df9862c6c08e64f844388b57c900cf436d982a55eca15f92816",
+                          "simulation/run.jl":  "c39a82f35d3772b2c700682d4fae7c06caba13703d45738fa612610646cde1e5",
+                          "simulation/Manifest.toml":  "14b1dc8cd127ffa0ec417939ba4abdf6b31fb2258290b6f5d922f4def8ade051",
+                          ".local/m2a/cs137-build-v1/cryostat_export":  "87b510882ed3f07b610895fddc93d7c3a4d16e8cf2b5a22d2d7994b31164266e",
+                          "tools/verify_native_pilot.ps1":  "1486ed638fb8782dd810fc0cfd9c8526cbbc583e485880b84df94903706167b9"
+                      },
+    "models":  {
+                   "AK02":  {
+                                "status":  "completed_with_native_failures",
+                                "counts":  {
+                                               "accepted":  107,
+                                               "analog_samples":  6000000,
+                                               "decay_photons":  9317,
+                                               "groups":  121,
+                                               "initial_decays":  10000,
+                                               "initial_primaries":  10000,
+                                               "line_photons":  8506,
+                                               "native_charge_samples":  599322,
+                                               "native_failed_groups":  1,
+                                               "readout_rejected":  13,
+                                               "rejected":  14,
+                                               "saturated":  0,
+                                               "zero_deposit_primaries":  9879
+                                           },
+                                "response_report_sha256":  "db63be7876161e78054a45e6b8ea94097ccd1ba3567a86445f2ca13cc95ddb79",
+                                "native_seconds":  565.9080007076263,
+                                "electronics_seconds":  3.6169991493225098,
+                                "response_wall_seconds":  604.3720002174377,
+                                "process_peak_rss_bytes":  1391341568
+                            },
+                   "SAP22":  {
+                                 "status":  "completed_with_native_failures",
+                                 "counts":  {
+                                                "accepted":  113,
+                                                "analog_samples":  5700000,
+                                                "decay_photons":  9301,
+                                                "groups":  115,
+                                                "initial_decays":  10000,
+                                                "initial_primaries":  10000,
+                                                "line_photons":  8442,
+                                                "native_charge_samples":  14215,
+                                                "native_failed_groups":  1,
+                                                "readout_rejected":  1,
+                                                "rejected":  2,
+                                                "saturated":  0,
+                                                "zero_deposit_primaries":  9885
+                                            },
+                                 "response_report_sha256":  "d982d0768f286488cf81d77dfb9503285f0a7614c43c3bc4b382021d7a87943c",
+                                 "native_seconds":  109.43599891662598,
+                                 "electronics_seconds":  3.2570013999938965,
+                                 "response_wall_seconds":  152.2220001220703,
+                                 "process_peak_rss_bytes":  1322221568
+                             }
+               },
+    "stages":  [
+                   {
+                       "stage":  "AK02-prepare",
+                       "kind":  "transport",
+                       "arguments":  [
+                                         "python",
+                                         "-B",
+                                         "cs137.py",
+                                         "prepare",
+                                         "--model",
+                                         "AK02",
+                                         "--output",
+                                         "../.local/peak-native-delivery/cs10000-v2/AK02/transport",
+                                         "--exporter",
+                                         "../.local/m2a/cs137-build-v1/cryostat_export",
+                                         "--events",
+                                         "10000",
+                                         "--seed",
+                                         "26092631"
+                                     ],
+                       "status":  "complete",
+                       "exit_code":  0,
+                       "wall_seconds":  6.0360276
+                   },
+                   {
+                       "stage":  "AK02-transport",
+                       "kind":  "transport",
+                       "arguments":  [
+                                         "python",
+                                         "-B",
+                                         "cs137.py",
+                                         "run",
+                                         "--directory",
+                                         "../.local/peak-native-delivery/cs10000-v2/AK02/transport"
+                                     ],
+                       "status":  "complete",
+                       "exit_code":  0,
+                       "wall_seconds":  19.0950948
+                   },
+                   {
+                       "stage":  "AK02-extract",
+                       "kind":  "transport",
+                       "arguments":  [
+                                         "python",
+                                         "-B",
+                                         "cs137.py",
+                                         "extract",
+                                         "--directory",
+                                         "../.local/peak-native-delivery/cs10000-v2/AK02/transport",
+                                         "--chunk-size",
+                                         "100"
+                                     ],
+                       "status":  "complete",
+                       "exit_code":  0,
+                       "wall_seconds":  16.0831521
+                   },
+                   {
+                       "stage":  "AK02-check-stream",
+                       "kind":  "transport",
+                       "arguments":  [
+                                         "python",
+                                         "-B",
+                                         "cs137.py",
+                                         "check-stream",
+                                         "--manifest",
+                                         "../.local/peak-native-delivery/cs10000-v2/AK02/transport/stream/manifest.json"
+                                     ],
+                       "status":  "complete",
+                       "exit_code":  0,
+                       "wall_seconds":  7.0515702
+                   },
+                   {
+                       "stage":  "AK02-native-response",
+                       "kind":  "julia",
+                       "arguments":  [
+                                         "--startup-file=no",
+                                         "--threads=2",
+                                         "--project=simulation",
+                                         "simulation/native_response.jl",
+                                         "--input",
+                                         ".local/peak-native-delivery/cs10000-v2/AK02/transport/stream/manifest.json",
+                                         "--output",
+                                         ".local/peak-native-delivery/cs10000-v2/AK02/response",
+                                         "--trace-examples",
+                                         "4",
+                                         "--charge-csv",
+                                         "examples",
+                                         "--native-failure-policy",
+                                         "record"
+                                     ],
+                       "status":  "complete",
+                       "exit_code":  0,
+                       "wall_seconds":  628.87877759999992
+                   },
+                   {
+                       "stage":  "SAP22-prepare",
+                       "kind":  "transport",
+                       "arguments":  [
+                                         "python",
+                                         "-B",
+                                         "cs137.py",
+                                         "prepare",
+                                         "--model",
+                                         "SAP22",
+                                         "--output",
+                                         "../.local/peak-native-delivery/cs10000-v2/SAP22/transport",
+                                         "--exporter",
+                                         "../.local/m2a/cs137-build-v1/cryostat_export",
+                                         "--events",
+                                         "10000",
+                                         "--seed",
+                                         "26092631"
+                                     ],
+                       "status":  "complete",
+                       "exit_code":  0,
+                       "wall_seconds":  6.0618444999999994
+                   },
+                   {
+                       "stage":  "SAP22-transport",
+                       "kind":  "transport",
+                       "arguments":  [
+                                         "python",
+                                         "-B",
+                                         "cs137.py",
+                                         "run",
+                                         "--directory",
+                                         "../.local/peak-native-delivery/cs10000-v2/SAP22/transport"
+                                     ],
+                       "status":  "complete",
+                       "exit_code":  0,
+                       "wall_seconds":  19.1042244
+                   },
+                   {
+                       "stage":  "SAP22-extract",
+                       "kind":  "transport",
+                       "arguments":  [
+                                         "python",
+                                         "-B",
+                                         "cs137.py",
+                                         "extract",
+                                         "--directory",
+                                         "../.local/peak-native-delivery/cs10000-v2/SAP22/transport",
+                                         "--chunk-size",
+                                         "100"
+                                     ],
+                       "status":  "complete",
+                       "exit_code":  0,
+                       "wall_seconds":  16.0936716
+                   },
+                   {
+                       "stage":  "SAP22-check-stream",
+                       "kind":  "transport",
+                       "arguments":  [
+                                         "python",
+                                         "-B",
+                                         "cs137.py",
+                                         "check-stream",
+                                         "--manifest",
+                                         "../.local/peak-native-delivery/cs10000-v2/SAP22/transport/stream/manifest.json"
+                                     ],
+                       "status":  "complete",
+                       "exit_code":  0,
+                       "wall_seconds":  7.0704493
+                   },
+                   {
+                       "stage":  "SAP22-native-response",
+                       "kind":  "julia",
+                       "arguments":  [
+                                         "--startup-file=no",
+                                         "--threads=2",
+                                         "--project=simulation",
+                                         "simulation/native_response.jl",
+                                         "--input",
+                                         ".local/peak-native-delivery/cs10000-v2/SAP22/transport/stream/manifest.json",
+                                         "--output",
+                                         ".local/peak-native-delivery/cs10000-v2/SAP22/response",
+                                         "--trace-examples",
+                                         "4",
+                                         "--charge-csv",
+                                         "examples",
+                                         "--native-failure-policy",
+                                         "record"
+                                     ],
+                       "status":  "complete",
+                       "exit_code":  0,
+                       "wall_seconds":  185.1281065
+                   }
+               ],
+    "pilot":  ".local/peak-native-delivery/cs500-v4",
+    "pilot_verification":  {
+                               "kind":  "native_pilot_verification_v1",
+                               "status":  "passed",
+                               "pilot_campaign_sha256":  "d61ec37168518dba61c74a4d04f3e96a0378f7d12b38e8faf6cfa41a0c3471d6",
+                               "previous_launcher_sha256":  "3024a38dbc7ad4f624231cec77a6b0a10775e31c9f25d65b4582942142adaf6f",
+                               "verifier_sha256":  "1486ed638fb8782dd810fc0cfd9c8526cbbc583e485880b84df94903706167b9",
+                               "models":  {
+                                              "AK02":  {
+                                                           "initial_decays":  500,
+                                                           "groups":  4,
+                                                           "accepted":  4,
+                                                           "artifacts_verified":  16,
+                                                           "consumer_dependencies_verified":  13,
+                                                           "producer_dependencies_verified":  8
+                                                       },
+                                              "SAP22":  {
+                                                            "initial_decays":  500,
+                                                            "groups":  4,
+                                                            "accepted":  4,
+                                                            "artifacts_verified":  16,
+                                                            "consumer_dependencies_verified":  13,
+                                                            "producer_dependencies_verified":  8
+                                                        }
+                                          },
+                               "scope":  "Recorded project sources, profiles, original models, raw transport, chunks, binary and response artifacts; no new physics/calibration claim"
+                           },
+    "assumption":  "Explicit nominal LBNL assembly and isolated reset readout; not as-built, calibrated spectra or continuous acquisition",
+    "started_utc":  "2026-09-26T22:22:06.1635195Z",
+    "native_failure_policy":  "record",
+    "native_failed_groups":  2,
+    "readout_rejected":  14,
+    "finished_utc":  "2026-09-26T22:37:16.8729273Z",
+    "artifact_bytes":  519532901
+}

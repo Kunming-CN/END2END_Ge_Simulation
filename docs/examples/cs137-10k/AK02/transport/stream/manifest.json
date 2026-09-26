@@ -1,0 +1,2122 @@
+{
+  "chunks": [
+    {
+      "count": 100,
+      "file": "decays-00000000.jsonl",
+      "first_global_decay_id": 0,
+      "sha256": "1475336a63bf54ffcd1afb2934ac4d836f9f57cea82eb642ee5979433e5f45ce"
+    },
+    {
+      "count": 100,
+      "file": "decays-00000100.jsonl",
+      "first_global_decay_id": 100,
+      "sha256": "c3be533c9995eea9fa6fb09645cea0f038782dd338de6a604bcdfa5adc715737"
+    },
+    {
+      "count": 100,
+      "file": "decays-00000200.jsonl",
+      "first_global_decay_id": 200,
+      "sha256": "e91263f6c4f3de4445d384a31946ad196d77bd61956f4d6519653a2249dbbc38"
+    },
+    {
+      "count": 100,
+      "file": "decays-00000300.jsonl",
+      "first_global_decay_id": 300,
+      "sha256": "4a20d69d5000d7d1a4ee7eab19e25ec7c85eb13fcea0f0957ba3ca8f60b93668"
+    },
+    {
+      "count": 100,
+      "file": "decays-00000400.jsonl",
+      "first_global_decay_id": 400,
+      "sha256": "c6300c4a28c1d980ab20a60110a6df6df77d14d34d52a30a20a3a3675b26e4b4"
+    },
+    {
+      "count": 100,
+      "file": "decays-00000500.jsonl",
+      "first_global_decay_id": 500,
+      "sha256": "99ea86f798ce277e615b68ef8430e989de777b42f4e3050278cf95c917441ecc"
+    },
+    {
+      "count": 100,
+      "file": "decays-00000600.jsonl",
+      "first_global_decay_id": 600,
+      "sha256": "d7f35ae8b609275f8bbdb7256335d1edc3e66ab35029b8414e2679c6dfa8a36c"
+    },
+    {
+      "count": 100,
+      "file": "decays-00000700.jsonl",
+      "first_global_decay_id": 700,
+      "sha256": "117ddb10b742f22b886af92622ac3aa0f2fd25614c962b86647dcab26c933d61"
+    },
+    {
+      "count": 100,
+      "file": "decays-00000800.jsonl",
+      "first_global_decay_id": 800,
+      "sha256": "b92debaf705e48efba5ada60244b3d8f4710025e6286daff75e8569c2d078e83"
+    },
+    {
+      "count": 100,
+      "file": "decays-00000900.jsonl",
+      "first_global_decay_id": 900,
+      "sha256": "35fda87dc76b104d3e38c6459594d1de40140d7babcaa52afcf4e1de08b8f024"
+    },
+    {
+      "count": 100,
+      "file": "decays-00001000.jsonl",
+      "first_global_decay_id": 1000,
+      "sha256": "4d48f0258d3c3d5e19e499e64ec15e20f78a5a4d5156b3f1963b36ab6e98bbd8"
+    },
+    {
+      "count": 100,
+      "file": "decays-00001100.jsonl",
+      "first_global_decay_id": 1100,
+      "sha256": "830f72922c9077c5a99182e184ce6538eb93d960ccb182a82cd334075fbc7a79"
+    },
+    {
+      "count": 100,
+      "file": "decays-00001200.jsonl",
+      "first_global_decay_id": 1200,
+      "sha256": "5eb2d6fcb20e22d122346f22f3925b5d2052914cf2abac772225bb1d0efbf663"
+    },
+    {
+      "count": 100,
+      "file": "decays-00001300.jsonl",
+      "first_global_decay_id": 1300,
+      "sha256": "90600193958c88f96edbd862d1b7b3c4dfadf13baa207e0bbb97cdbd7f46c8a7"
+    },
+    {
+      "count": 100,
+      "file": "decays-00001400.jsonl",
+      "first_global_decay_id": 1400,
+      "sha256": "7dcd1d078409b150b5e6e28a44aa2319b2a7259aa02200663b8de705f32de6c3"
+    },
+    {
+      "count": 100,
+      "file": "decays-00001500.jsonl",
+      "first_global_decay_id": 1500,
+      "sha256": "4c065e4b36b0da9360929aa3de548df1dca5d4623a422a846208295f0b944f91"
+    },
+    {
+      "count": 100,
+      "file": "decays-00001600.jsonl",
+      "first_global_decay_id": 1600,
+      "sha256": "738ce7c80e123cdbef9beb31cc87b41b9ea4e662c6d5531247d08488a43d8fd0"
+    },
+    {
+      "count": 100,
+      "file": "decays-00001700.jsonl",
+      "first_global_decay_id": 1700,
+      "sha256": "1b4e3de72c8dcb4a53f076322d49f27941823939706d59d663a0159e2cce6925"
+    },
+    {
+      "count": 100,
+      "file": "decays-00001800.jsonl",
+      "first_global_decay_id": 1800,
+      "sha256": "a42831f409a9db255907565cedcbfe8bde77fcbc503751f4d1e010dd51faafb8"
+    },
+    {
+      "count": 100,
+      "file": "decays-00001900.jsonl",
+      "first_global_decay_id": 1900,
+      "sha256": "c84bf4f0997fd9928d5d696456379b3b73e473f6dacb4800271cb609c9d84ff4"
+    },
+    {
+      "count": 100,
+      "file": "decays-00002000.jsonl",
+      "first_global_decay_id": 2000,
+      "sha256": "d1705cc50f0bb903f404329811a5066b502c7b36bdc48ac27ba114a93860d3e4"
+    },
+    {
+      "count": 100,
+      "file": "decays-00002100.jsonl",
+      "first_global_decay_id": 2100,
+      "sha256": "5e760174963db89a2e82332d8a5ff0ce6d9bca1b752c29e80782aae980d0722d"
+    },
+    {
+      "count": 100,
+      "file": "decays-00002200.jsonl",
+      "first_global_decay_id": 2200,
+      "sha256": "0526f3d73fe5683060acdf4014fffbd73607931bfbda4f26ef63b937bf9be7cb"
+    },
+    {
+      "count": 100,
+      "file": "decays-00002300.jsonl",
+      "first_global_decay_id": 2300,
+      "sha256": "c925838903492091b4b96f5c92d546de559061502bff69e9e31c95a84fddf8c9"
+    },
+    {
+      "count": 100,
+      "file": "decays-00002400.jsonl",
+      "first_global_decay_id": 2400,
+      "sha256": "f25042348112990a464195eeeaf4a387314324c309ad679ae803f36b9e11539c"
+    },
+    {
+      "count": 100,
+      "file": "decays-00002500.jsonl",
+      "first_global_decay_id": 2500,
+      "sha256": "dfe40c4bf8d1e8efaa15d8546a49d04b427f17193e5d736ed58177ed88d385b0"
+    },
+    {
+      "count": 100,
+      "file": "decays-00002600.jsonl",
+      "first_global_decay_id": 2600,
+      "sha256": "cb0100e19077e18aaba684e43a75c0c9ea35f7cf9b33afb62a24b663c04cd51a"
+    },
+    {
+      "count": 100,
+      "file": "decays-00002700.jsonl",
+      "first_global_decay_id": 2700,
+      "sha256": "33ea55c273453a597799e2d0f55b73b39241ce5e61f630ebd1f4af329c2f3c2d"
+    },
+    {
+      "count": 100,
+      "file": "decays-00002800.jsonl",
+      "first_global_decay_id": 2800,
+      "sha256": "84a40c126312a6ecc497433e364d401a7551d1eb795337e76352c9cfec71204a"
+    },
+    {
+      "count": 100,
+      "file": "decays-00002900.jsonl",
+      "first_global_decay_id": 2900,
+      "sha256": "74c12e4dbbfb072ede35590057ca24595d40f8af7502dcf5f0c212f8e1709c2a"
+    },
+    {
+      "count": 100,
+      "file": "decays-00003000.jsonl",
+      "first_global_decay_id": 3000,
+      "sha256": "50357e0e2c56725d4b73b5c7c2ff25609f92c7ed73f3243e1a97bcd43ab02a2c"
+    },
+    {
+      "count": 100,
+      "file": "decays-00003100.jsonl",
+      "first_global_decay_id": 3100,
+      "sha256": "44bc493de0c5e8424e1c8be529add1e0bf691d4419284a70b34481bdad55be64"
+    },
+    {
+      "count": 100,
+      "file": "decays-00003200.jsonl",
+      "first_global_decay_id": 3200,
+      "sha256": "06179c33b0cf2723ed082d628491e1a39e3cbc40cb6f2657a93f736a76f17f19"
+    },
+    {
+      "count": 100,
+      "file": "decays-00003300.jsonl",
+      "first_global_decay_id": 3300,
+      "sha256": "8c65701489734fa0b1cfff51529f92edcf7a491c454d4fcda0c5c860a0a9c03c"
+    },
+    {
+      "count": 100,
+      "file": "decays-00003400.jsonl",
+      "first_global_decay_id": 3400,
+      "sha256": "adeafc06a791c0159732690c7b491316cd4214937414a0e4e4b5fa60bd9696e2"
+    },
+    {
+      "count": 100,
+      "file": "decays-00003500.jsonl",
+      "first_global_decay_id": 3500,
+      "sha256": "19feec194e4b8e3d513b5a2756fec461477b1d91333282156c4ceb65b20eeab1"
+    },
+    {
+      "count": 100,
+      "file": "decays-00003600.jsonl",
+      "first_global_decay_id": 3600,
+      "sha256": "0317453e02148b224f53b363bae8bd39e0da0aaefa430bdac5e732a869a07861"
+    },
+    {
+      "count": 100,
+      "file": "decays-00003700.jsonl",
+      "first_global_decay_id": 3700,
+      "sha256": "68da395987ca3ef2782f3c0d9b22c0bb8f664d3fdb37c33458ab9a8b2226d1ad"
+    },
+    {
+      "count": 100,
+      "file": "decays-00003800.jsonl",
+      "first_global_decay_id": 3800,
+      "sha256": "25613edc39c76e5e1b582b9380c36a26cbd2b7357853326c3a32f4159148f03b"
+    },
+    {
+      "count": 100,
+      "file": "decays-00003900.jsonl",
+      "first_global_decay_id": 3900,
+      "sha256": "d000b8149c0e1a46373a3e6432992799552646723544c250781613b728aafbde"
+    },
+    {
+      "count": 100,
+      "file": "decays-00004000.jsonl",
+      "first_global_decay_id": 4000,
+      "sha256": "cde126c110da76ead92e9f4613a06a9d74a2af5e56dfffd22112dbe099e411ec"
+    },
+    {
+      "count": 100,
+      "file": "decays-00004100.jsonl",
+      "first_global_decay_id": 4100,
+      "sha256": "9b089039e47f7b1024efe246b4eb009217b6e60e61d0c70a66bacaf28d82e2ee"
+    },
+    {
+      "count": 100,
+      "file": "decays-00004200.jsonl",
+      "first_global_decay_id": 4200,
+      "sha256": "f8e5af957a24c940052c654c696abd084cdeed6a64292aa658d3fd722812c492"
+    },
+    {
+      "count": 100,
+      "file": "decays-00004300.jsonl",
+      "first_global_decay_id": 4300,
+      "sha256": "0249fad550d2bf7757c1eb23949845a55632da11a3568ac66df44193a9538a3d"
+    },
+    {
+      "count": 100,
+      "file": "decays-00004400.jsonl",
+      "first_global_decay_id": 4400,
+      "sha256": "6985ba92bee21fa5360d3fec77c251c74b9264fa0f68da3db99c273e9aa54c8e"
+    },
+    {
+      "count": 100,
+      "file": "decays-00004500.jsonl",
+      "first_global_decay_id": 4500,
+      "sha256": "50a93327cda269286513d5f6bc5799b3c8b0cd005cc7f545590680a42571c0a9"
+    },
+    {
+      "count": 100,
+      "file": "decays-00004600.jsonl",
+      "first_global_decay_id": 4600,
+      "sha256": "7712ecc092344db29edb5429f879535b920796a021f59a903a38899983c417af"
+    },
+    {
+      "count": 100,
+      "file": "decays-00004700.jsonl",
+      "first_global_decay_id": 4700,
+      "sha256": "1fcb5aa144d4a4b17303fd0977e1494f50141a78866961a5e92ba934a6b668e6"
+    },
+    {
+      "count": 100,
+      "file": "decays-00004800.jsonl",
+      "first_global_decay_id": 4800,
+      "sha256": "f2331bd9f7fbc27815760dd50c1386402805ec8814cf6bff01b97e4cb2cd570d"
+    },
+    {
+      "count": 100,
+      "file": "decays-00004900.jsonl",
+      "first_global_decay_id": 4900,
+      "sha256": "4a9d7b10fc3b8346ad6cf45776d41e9925a60e9244670c2428eee13e00859051"
+    },
+    {
+      "count": 100,
+      "file": "decays-00005000.jsonl",
+      "first_global_decay_id": 5000,
+      "sha256": "c1abfa09a553b516868a1693246cb85a21b57f85fe40a66cad4553dae451eb44"
+    },
+    {
+      "count": 100,
+      "file": "decays-00005100.jsonl",
+      "first_global_decay_id": 5100,
+      "sha256": "621eb4b7ba9140e64a88e070ca39437e3e01997cbfb8be51e521fd6f2fa31a7c"
+    },
+    {
+      "count": 100,
+      "file": "decays-00005200.jsonl",
+      "first_global_decay_id": 5200,
+      "sha256": "86ca6c6481804735152e105327d5d559459debb5c7327577cbda7427bd619d73"
+    },
+    {
+      "count": 100,
+      "file": "decays-00005300.jsonl",
+      "first_global_decay_id": 5300,
+      "sha256": "7d1771dfedcfd3d10a4658a371820d4b3d1184bababb70264c5b3740aada9099"
+    },
+    {
+      "count": 100,
+      "file": "decays-00005400.jsonl",
+      "first_global_decay_id": 5400,
+      "sha256": "ad0ecb80a3140b8b95d105296665eca522be9b600dfe3d19ec9238af2e07805b"
+    },
+    {
+      "count": 100,
+      "file": "decays-00005500.jsonl",
+      "first_global_decay_id": 5500,
+      "sha256": "189fac857a363ae1abd06e173bd8849ff9ff5f252393c8f9705d00fc61a01d25"
+    },
+    {
+      "count": 100,
+      "file": "decays-00005600.jsonl",
+      "first_global_decay_id": 5600,
+      "sha256": "05651481ee06498e8a2595760f58090dd1b8b67a13121b6a6f190cb292f198b7"
+    },
+    {
+      "count": 100,
+      "file": "decays-00005700.jsonl",
+      "first_global_decay_id": 5700,
+      "sha256": "23581b0db96a36470fec431feba8f8b6fe612ea72d162a2cd2d6dfb9ce9085a3"
+    },
+    {
+      "count": 100,
+      "file": "decays-00005800.jsonl",
+      "first_global_decay_id": 5800,
+      "sha256": "64d2e46e110196ec1c4c220349ee509373557aa0eb0624f3601e62ade9bf41c3"
+    },
+    {
+      "count": 100,
+      "file": "decays-00005900.jsonl",
+      "first_global_decay_id": 5900,
+      "sha256": "d7f16f63be583dee3a3b1a382dad86e9d7b274643b3961e0f6d1cea97d09103c"
+    },
+    {
+      "count": 100,
+      "file": "decays-00006000.jsonl",
+      "first_global_decay_id": 6000,
+      "sha256": "799cd573300796b78f002932de6b553f229c4ed1aeb29ed172b3c15d55fb4548"
+    },
+    {
+      "count": 100,
+      "file": "decays-00006100.jsonl",
+      "first_global_decay_id": 6100,
+      "sha256": "2a30bbb86fea1ddcbb9ad9c88dc6e8ce041969c5fe3aee421a95f153bb9bcfee"
+    },
+    {
+      "count": 100,
+      "file": "decays-00006200.jsonl",
+      "first_global_decay_id": 6200,
+      "sha256": "bf3fe92cac60bf1a3e6d1281ecd23f60c0fd25545e4fe483306f54c8643b157e"
+    },
+    {
+      "count": 100,
+      "file": "decays-00006300.jsonl",
+      "first_global_decay_id": 6300,
+      "sha256": "bad568ec580ad7965c94b7681c7a1f8e4e638766d8809f3aabe630789df41ef1"
+    },
+    {
+      "count": 100,
+      "file": "decays-00006400.jsonl",
+      "first_global_decay_id": 6400,
+      "sha256": "edc95df788a861a441cb7fd4125b93e6d4ceed1f2b246211ef949d4ceb35a0a4"
+    },
+    {
+      "count": 100,
+      "file": "decays-00006500.jsonl",
+      "first_global_decay_id": 6500,
+      "sha256": "0b38ea2cd46b321719d77ffe6a9c3808c433940d7ce38689497a19d46e52c97d"
+    },
+    {
+      "count": 100,
+      "file": "decays-00006600.jsonl",
+      "first_global_decay_id": 6600,
+      "sha256": "fa28ae3cbed3ebf6152fd347e990d6a2abc951039e647de32122eb37b57871c3"
+    },
+    {
+      "count": 100,
+      "file": "decays-00006700.jsonl",
+      "first_global_decay_id": 6700,
+      "sha256": "f1cca9f22d1caf8a4ad16c4d4465902fa6b03408fa3278a6cb6d7ef52fe244fa"
+    },
+    {
+      "count": 100,
+      "file": "decays-00006800.jsonl",
+      "first_global_decay_id": 6800,
+      "sha256": "a9f7cf671874a650584f3d3b858d7dabd7a8d34273b9b7f77d5fe0353b3ce2d5"
+    },
+    {
+      "count": 100,
+      "file": "decays-00006900.jsonl",
+      "first_global_decay_id": 6900,
+      "sha256": "c4a95a1f7f1e6d123ea26c177cf4c4951238a2c48426eb24f86a3496f83a597b"
+    },
+    {
+      "count": 100,
+      "file": "decays-00007000.jsonl",
+      "first_global_decay_id": 7000,
+      "sha256": "efeb6d655305754b155b93b7c642a432008bca0743a87acf528b4ebf78f50fa5"
+    },
+    {
+      "count": 100,
+      "file": "decays-00007100.jsonl",
+      "first_global_decay_id": 7100,
+      "sha256": "2641d24657ebfbbf96a2aa47630770a4c708c97c78f0bf9095f337b86d6e12ac"
+    },
+    {
+      "count": 100,
+      "file": "decays-00007200.jsonl",
+      "first_global_decay_id": 7200,
+      "sha256": "1a46748fb6e55e4bb5f5dc5c557b30d3c937669b4267be165b5a16357e985dea"
+    },
+    {
+      "count": 100,
+      "file": "decays-00007300.jsonl",
+      "first_global_decay_id": 7300,
+      "sha256": "47a9176d661bf6c2fb654c6020976563018837c6c87c0054cc06d27c3df2ab4f"
+    },
+    {
+      "count": 100,
+      "file": "decays-00007400.jsonl",
+      "first_global_decay_id": 7400,
+      "sha256": "00f2ee6cdbede5cd5f56e031ac754c6127d1d654768d0a8e7c29f7500dfab2d2"
+    },
+    {
+      "count": 100,
+      "file": "decays-00007500.jsonl",
+      "first_global_decay_id": 7500,
+      "sha256": "d114f707342cf3342eb00dc5944239e338f04b9d2f7cc97a03b49fdb5a136cc7"
+    },
+    {
+      "count": 100,
+      "file": "decays-00007600.jsonl",
+      "first_global_decay_id": 7600,
+      "sha256": "136fffc64ca8065ddfd16db61d32a6f66249d68419d5b66d243b363ec40debcf"
+    },
+    {
+      "count": 100,
+      "file": "decays-00007700.jsonl",
+      "first_global_decay_id": 7700,
+      "sha256": "f4f97ae6af0c08e44f581a5a671d1c89b9de560407c5af33228430a0a5541e95"
+    },
+    {
+      "count": 100,
+      "file": "decays-00007800.jsonl",
+      "first_global_decay_id": 7800,
+      "sha256": "5ddbfd434becb4a9e063862e762b4b0ab94d48ad684657e4ea2625693f503b3a"
+    },
+    {
+      "count": 100,
+      "file": "decays-00007900.jsonl",
+      "first_global_decay_id": 7900,
+      "sha256": "058b612dc960469bd66bb0790be44cea3b05d8a55e4cab6843976443d7cbc8f8"
+    },
+    {
+      "count": 100,
+      "file": "decays-00008000.jsonl",
+      "first_global_decay_id": 8000,
+      "sha256": "8b2bbe1285d1945640077ecc32061dd28e28b0e207ef23ae1d9a58244bd4ae53"
+    },
+    {
+      "count": 100,
+      "file": "decays-00008100.jsonl",
+      "first_global_decay_id": 8100,
+      "sha256": "c77bfe0f8399194b7d36d13449789ee084872a4f6e27cef424f9c3e0b9c2af25"
+    },
+    {
+      "count": 100,
+      "file": "decays-00008200.jsonl",
+      "first_global_decay_id": 8200,
+      "sha256": "022d59837688cfdff3623ac2c118a9a2b0aefc5ba4fd67615916469678c22a93"
+    },
+    {
+      "count": 100,
+      "file": "decays-00008300.jsonl",
+      "first_global_decay_id": 8300,
+      "sha256": "6f601c7742d65a3a68be12513b3bb581299d0ee59f66ebbf746d3255a886df45"
+    },
+    {
+      "count": 100,
+      "file": "decays-00008400.jsonl",
+      "first_global_decay_id": 8400,
+      "sha256": "30c277bb7012c0a0fa4e1e87ea5ad9388dbe4fbc95f79dcf276cb8f82249eafc"
+    },
+    {
+      "count": 100,
+      "file": "decays-00008500.jsonl",
+      "first_global_decay_id": 8500,
+      "sha256": "c9527e2f8bb2da03327ff2f2f7a3918eda6a8b4d5e26f90fcecc75e39a3c3cb8"
+    },
+    {
+      "count": 100,
+      "file": "decays-00008600.jsonl",
+      "first_global_decay_id": 8600,
+      "sha256": "b3ea88f6e6c3183ae72f96f45b1567ef28fd549ea3edd104a4d12b03eeb2f5d1"
+    },
+    {
+      "count": 100,
+      "file": "decays-00008700.jsonl",
+      "first_global_decay_id": 8700,
+      "sha256": "8758da6d3427054ddb08b85bb81191652b69c4774792bc28bbf6a28caa90ba5a"
+    },
+    {
+      "count": 100,
+      "file": "decays-00008800.jsonl",
+      "first_global_decay_id": 8800,
+      "sha256": "6bb558b87de7bbaae9a0c0e89e03c0ebe6cc8383f0f9882a6a0da0a4b40c1d98"
+    },
+    {
+      "count": 100,
+      "file": "decays-00008900.jsonl",
+      "first_global_decay_id": 8900,
+      "sha256": "104d19c4bf952b6740d1306eb73e864dfccbde81be25d03fc83637ac8eb15fc1"
+    },
+    {
+      "count": 100,
+      "file": "decays-00009000.jsonl",
+      "first_global_decay_id": 9000,
+      "sha256": "6dcd6c31d5099482df1bc38d8763ac7d0aa47a8baab43a83f6407acc0093e4ac"
+    },
+    {
+      "count": 100,
+      "file": "decays-00009100.jsonl",
+      "first_global_decay_id": 9100,
+      "sha256": "24887b4c180dae20b16ca306f00a03fee663e20273cf708b9213dbbdb52f2506"
+    },
+    {
+      "count": 100,
+      "file": "decays-00009200.jsonl",
+      "first_global_decay_id": 9200,
+      "sha256": "c5096def116d3d56636cbd091e5554ca4c5b65a72bd6300518a86366487ee253"
+    },
+    {
+      "count": 100,
+      "file": "decays-00009300.jsonl",
+      "first_global_decay_id": 9300,
+      "sha256": "8323480658b65b5e426f8bdf0a4d1add8463ec12ea41daf56994f7af81a20bc2"
+    },
+    {
+      "count": 100,
+      "file": "decays-00009400.jsonl",
+      "first_global_decay_id": 9400,
+      "sha256": "4260efb2f31ae0ed9b35b83eaf0939056f7f543b299c9b3080e7517650d6eee4"
+    },
+    {
+      "count": 100,
+      "file": "decays-00009500.jsonl",
+      "first_global_decay_id": 9500,
+      "sha256": "9c571ff8279eae9dd4836542dcc073c7989fbc47b31cff988af93e9b5324b707"
+    },
+    {
+      "count": 100,
+      "file": "decays-00009600.jsonl",
+      "first_global_decay_id": 9600,
+      "sha256": "d9ece30203eb8ecc0a7c505c3aad8d34d3dd7ec51226eadc2e751aafdd716e0a"
+    },
+    {
+      "count": 100,
+      "file": "decays-00009700.jsonl",
+      "first_global_decay_id": 9700,
+      "sha256": "13e0e9a24aa81287c8f7feb3a05cffbbaeb3fc687c0f6d5726a5f94639b91407"
+    },
+    {
+      "count": 100,
+      "file": "decays-00009800.jsonl",
+      "first_global_decay_id": 9800,
+      "sha256": "ae7dfc61485004ccb329db7f6242329942b1ea34f603bcdac675d0fd95f9b023"
+    },
+    {
+      "count": 100,
+      "file": "decays-00009900.jsonl",
+      "first_global_decay_id": 9900,
+      "sha256": "f228b3af734c622cdf237f77ab76072f90e0f2e61fc0804e9c5497ee0e328b73"
+    }
+  ],
+  "clock_policy": "remage_initial_decay_secondaries_zero",
+  "config_sha256": "d9d22b6777b9913c3f14b3f6c871c17fb7652fbd8bb014ac0adebb1b0e75c273",
+  "coordinate_transform": {
+    "definition": "x_global_mm=R*x_local_mm+t",
+    "rotation_local_to_global": [
+      [
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        -1,
+        0
+      ]
+    ],
+    "translation_global_mm": [
+      0,
+      1.45,
+      0.29
+    ]
+  },
+  "decay_photon_line_window_keV": [
+    660,
+    663
+  ],
+  "geometry_sha256": "0ab3bfcaf7cbf8035b2cf8a13cff610c8b9c64fc217920f6b8c706d6f51e3d01",
+  "global_decay_id_range": [
+    0,
+    9999
+  ],
+  "grouping_policy": {
+    "activity_live_time_pileup_claim": false,
+    "horizon_ns": 100000,
+    "interval": "[origin, origin+horizon)",
+    "name": "nominal_isolated_windows_v1",
+    "state_at_group_start": "reset",
+    "tail": "truncate at horizon; recovery not established"
+  },
+  "kind": "cs137_decay_stream_v1",
+  "ledger": {
+    "full_energy_closure": null,
+    "kind": "recorded-only",
+    "missing_closure": [
+      "world-air deposition (unscored default region)",
+      "terminal escape energy",
+      "neutrino escape balance",
+      "complete decay/recoil accounting"
+    ],
+    "passive_raw_rows": "hashed truth.lh5; event material sums in JSONL"
+  },
+  "macro_sha256": "97d53e5b6ae98245ed0da36279446f6f1c1a906a42d1d7c848e63e0f648d76a9",
+  "model_id": "AK02",
+  "model_sha256": "793de4cc598a3e26d375525e683be1bc2072e117d1c6b8003f6cdcffc9925dfa",
+  "prepared_sha256": "4c7a6e7757591ff1d354491fa13cb1d3c02de5c098723332be7642d79b695c17",
+  "primary_count": 10000,
+  "processes": [
+    {
+      "name": "RadioactiveDecay",
+      "procid": 6403,
+      "raw_row_index": 0
+    },
+    {
+      "name": "compt",
+      "procid": 2903,
+      "raw_row_index": 1
+    },
+    {
+      "name": "eBrem",
+      "procid": 60433,
+      "raw_row_index": 2
+    },
+    {
+      "name": "eIoni",
+      "procid": 9938,
+      "raw_row_index": 3
+    },
+    {
+      "name": "phot",
+      "procid": 41229,
+      "raw_row_index": 4
+    }
+  ],
+  "raw_position_unit": "m",
+  "raw_tables": {
+    "particles": {
+      "columns": {
+        "ekin": {
+          "dtype": "float64",
+          "units": "MeV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "px": {
+          "dtype": "float64",
+          "units": "MeV"
+        },
+        "py": {
+          "dtype": "float64",
+          "units": "MeV"
+        },
+        "pz": {
+          "dtype": "float64",
+          "units": "MeV"
+        },
+        "vertexid": {
+          "dtype": "int32",
+          "units": ""
+        }
+      },
+      "rows": 10000
+    },
+    "processes": {
+      "columns": {
+        "name": {
+          "dtype": "object",
+          "units": ""
+        },
+        "procid": {
+          "dtype": "int32",
+          "units": ""
+        }
+      },
+      "rows": 5
+    },
+    "stp/germanium": {
+      "columns": {
+        "dist_to_surf": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "dist_to_surf_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "dist_to_surf_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 3242
+    },
+    "stp/ledger_1": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 1258
+    },
+    "stp/ledger_10": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 141
+    },
+    "stp/ledger_11": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 130
+    },
+    "stp/ledger_12": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 962
+    },
+    "stp/ledger_13": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 703
+    },
+    "stp/ledger_14": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 967
+    },
+    "stp/ledger_15": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 1040
+    },
+    "stp/ledger_17": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 537
+    },
+    "stp/ledger_18": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 103155
+    },
+    "stp/ledger_19": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 272372
+    },
+    "stp/ledger_2": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 46426
+    },
+    "stp/ledger_3": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 13215
+    },
+    "stp/ledger_4": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 16773
+    },
+    "stp/ledger_5": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 8143
+    },
+    "stp/ledger_6": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 1522
+    },
+    "stp/ledger_7": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 1934
+    },
+    "stp/ledger_8": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 49
+    },
+    "stp/ledger_9": {
+      "columns": {
+        "edep": {
+          "dtype": "float64",
+          "units": "keV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "xloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_post": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc_pre": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 89
+    },
+    "tracks": {
+      "columns": {
+        "ekin": {
+          "dtype": "float64",
+          "units": "MeV"
+        },
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "parent_trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "particle": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "procid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "px": {
+          "dtype": "float64",
+          "units": "MeV"
+        },
+        "py": {
+          "dtype": "float64",
+          "units": "MeV"
+        },
+        "pz": {
+          "dtype": "float64",
+          "units": "MeV"
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "trackid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 85858
+    },
+    "vtx": {
+      "columns": {
+        "evtid": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "n_part": {
+          "dtype": "int32",
+          "units": ""
+        },
+        "time": {
+          "dtype": "float64",
+          "units": "ns"
+        },
+        "xloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "yloc": {
+          "dtype": "float64",
+          "units": "m"
+        },
+        "zloc": {
+          "dtype": "float64",
+          "units": "m"
+        }
+      },
+      "rows": 10000
+    }
+  },
+  "raw_track_energy_unit": "MeV",
+  "run_sha256": "4a31d5a5a6eab521ce7fd59ed070c7188eef7949d11e4a1ddb7c12c5eb1863ff",
+  "source_lh5": "../truth.lh5",
+  "source_lh5_sha256": "f3f5e35a272d7a5e4948dc906bd6bde99aa9ff82accafba8a514f04c794a338b",
+  "source_sha256": {
+    "CMakeLists.txt": "9ea59c94d38667c65a61644164ddc245f012996a9833efc830fb82aa717f8ab1",
+    "cryostat-source.json": "5967d5d0f8500a40f704bf653be2dc1a0f69e77239f643a8f7140533c9201e2a",
+    "cryostat_export.cc": "af44c9893e4576151511b185989ff1bc88431b36261d2d3b2607640d335e767b",
+    "cryostat_nominal.json": "9cad951c14213ac64d1e0c83c6ee44e7f4b9990d80979fd5bae35797daaf0edb",
+    "cs137.py": "de1c276a304dad5ffa1338732e96719b22ad115e4dd8344d04ae5a91c934224d",
+    "handoff.py": "5eaf9c41852b4f4b45b3c36f78314b9fba28c39fcc4155694e8b6459375df193",
+    "pixi.lock": "c212a7f7e78bb7af4687bbbc7322659975961e62c3ea71a6f325e65e554b56be",
+    "pixi.toml": "87991463283a4f00b7e8a2758d9019c39ebe0fcad1387e87e500ed500f0638dd"
+  },
+  "status": "complete",
+  "uid_aliases": {
+    "det002": "/stp/ledger_1",
+    "det003": "/stp/ledger_2",
+    "det004": "/stp/ledger_3",
+    "det005": "/stp/ledger_4",
+    "det006": "/stp/ledger_5",
+    "det007": "/stp/ledger_6",
+    "det008": "/stp/ledger_7",
+    "det009": "/stp/ledger_8",
+    "det010": "/stp/ledger_9",
+    "det011": "/stp/ledger_10",
+    "det012": "/stp/ledger_11",
+    "det013": "/stp/ledger_12",
+    "det014": "/stp/ledger_13",
+    "det015": "/stp/ledger_14",
+    "det016": "/stp/ledger_15",
+    "det017": "/stp/germanium",
+    "det018": "/stp/ledger_17",
+    "det019": "/stp/ledger_18",
+    "det020": "/stp/ledger_19"
+  },
+  "units": {
+    "energy": "keV",
+    "length": "mm",
+    "time": "ns"
+  },
+  "unscored_volumes": [
+    {
+      "material": "G4_AIR",
+      "name": "ledger_0_PV",
+      "reason": "Geant4 world retains default region; no world-air deposition ledger or full energy closure is claimed"
+    }
+  ]
+}

@@ -70,9 +70,23 @@ for a bounded difficult review when useful. No background schedule changes impli
   exporter. `comparison.html` and `comparison.json` now exist in that run root.
   No new agents or physics calculations were launched during recovery.
 
+- Saved-results public bundle is built at `docs/examples/cs137-10k/`: 28 files,
+  about 50.9 MB, with all 18 original response files per detector preserved in
+  lossless ZIPs. Raw LH5/field caches/upstream geometry stay local. Publication
+  rechecked all 17 recorded computational dependencies; none changed.
+- Publication-only tests pass: 8 archive/adapter/live tests, 44 report cases,
+  19 site tests and 27 contact-display tests. Two bounded reviewers and reciprocal
+  closure found no remaining publication blocker after adding complete online
+  ZIP checks. Quote-style and CRLF compatibility issues were caught before swap
+  and regression-tested. No simulation or native-physics review was repeated.
+- The prior 1,067-file website retained 1,064 files byte-for-byte; only its home
+  and two detector landing pages gained links. Local build: 1,095 files / 1,754
+  checked links. Evidence: `.local/campaign-publication/audit.json`.
+
 Entry points: [library](https://kunming-cn.github.io/END2END_Ge_Simulation/),
 [full engineering example](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/pipeline.html),
 [native Li to readout](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/native-li/comparison.html),
+[10k Cs137 comparison and response ledgers](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/cs137-10k/comparison.html),
 [accuracy diagnostics](https://kunming-cn.github.io/END2END_Ge_Simulation/lithium/lithium.html).
 Local native example: `.local/native-li-example/comparison.html`.
 Important source: `simulation/native_li_example.jl`, `simulation/readout.jl`,
@@ -116,6 +130,20 @@ field-agreement tests remain unresolved. Numerical parcel spread is not physical
    bounded analysis of the existing anomaly records. Do not repeat transport,
    field solves, 500 pilots, 10k runs or review campaigns because ChatGPT showed
    Thinking failed. 100k is not scheduled or authorized by this recovery.
+
+### Next bounded work (after the saved-results publication)
+
+First inspect the EXISTING anomaly records: AK02 event 8432 and SAP22 event 8413
+are both 31.818831554318052 keV deposit groups rejected for a noncontact exterior
+endpoint. Reuse the preserved AK02 diagnostic; only a targeted missing reproduction
+or concrete fix should launch new calculations. Do not rerun both 10k campaigns.
+Also assess the effect of trajectory caps: 119/120 successful AK02 native groups
+are step-limited; SAP22 has 1/114 stopped-without-contact. ADC acceptance is not
+complete collection. Keep the frozen baseline and failure records unchanged.
+Then use actual source/holder dimensions and electronics/spectrum metadata for
+experimental calibration. No measured waveform recovery is possible or required.
+Do not scale to100k until a specific statistics goal and response-quality/resource
+review justify it; global Li/PDE convergence is still not a functional gate.
 
 5. **Accuracy lane, bounded and separate.** Calibrate profile/lifetimes, numerical
    parcel error, field/grid sensitivity, real electronics/noise and measured spectra.

@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "kind": "native_readout_profile_v1",
+  "name": "synthetic-signed-14bit-v1",
+  "settings": {
+    "feedback_capacitance_pF": 0.6,
+    "feedback_tau_us": 50.0,
+    "pole_zero_tau_us": 50.0,
+    "shaping_tau_us": 0.5,
+    "gain": 20.0,
+    "adc_bits": 14,
+    "adc_full_scale_V": 10.0,
+    "threshold_V": 0.001,
+    "peak_policy": "signed_input_positive_peak",
+    "peak_gate_start_ns": null,
+    "peak_gate_end_ns": null
+  }
+}

@@ -233,3 +233,20 @@ rewriting historical provenance. Generate a new named output for schema 2.
 The independent sampling verifier supports both the old default and validated
 per-run census configurations; `simulation/test_verify_readout.jl` tests that
 compatibility without running detector physics.
+
+## Saved native Cs137 campaign: 10,000 initial decays per detector
+
+[Open the 10k comparison, stage spectra, traces and complete response ledgers](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/cs137-10k/comparison.html).
+[Run and publication commands](tools/NATIVE_CAMPAIGN.md).
+
+This is the nominal LBNL cryostat → real Cs137 decay → native SSD response →
+preamp → analog shaping → peak-ADC engineering workflow, not a calibrated
+experimental prediction. All 20,000 initial decays remain represented.
+AK02: 121 pulse groups = 107 accepted + 13 electronics rejects + 1 native failure.
+SAP22: 115 = 113 accepted + 1 electronics reject + 1 native failure.
+The formal status is `completed_with_native_failures`; failed response values
+remain unknown. AK02 has 119 step-limited groups among 120 successful native
+groups; ADC acceptance never clears transport flags or proves complete collection.
+Public ZIPs retain every original response ledger byte. Raw LH5 and upstream
+geometry stay in the local campaign. No larger run or global Li convergence
+claim is implied by these saved results.

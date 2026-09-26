@@ -7,14 +7,15 @@ import {isDeepStrictEqual as same} from 'node:util';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const check=(ok,msg)=>{if(!ok)throw new Error(msg);};
-const arg=process.argv[2]; check(arg&&process.argv.length===3,'Usage: node tools/native_campaign_report.mjs .local/CAMPAIGN');
+const arg=process.argv[2], verifyOnly=process.argv[3]==='--verify-only';
+check(arg&&(process.argv.length===3||(process.argv.length===4&&verifyOnly)),'Usage: node tools/native_campaign_report.mjs .local/CAMPAIGN [--verify-only]');
 const dir=fs.realpathSync(path.resolve(arg)), local=fs.realpathSync(path.join(root,'.local'));
 check(dir.startsWith(local+path.sep),'Campaign must be below project .local');
 const json=p=>JSON.parse(fs.readFileSync(p,'utf8').replace(/^\uFEFF/,''));
 const sha=async p=>{const h=crypto.createHash('sha256');for await(const b of fs.createReadStream(p))h.update(b);return h.digest('hex');};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const output=path.join(dir,'comparison.html'), receipt=path.join(dir,'comparison.json');
-check(!fs.existsSync(output)&&!fs.existsSync(receipt),'Report exists; no overwrite');
+if(!verifyOnly)check(!fs.existsSync(output)&&!fs.existsSync(receipt),'Report exists; no overwrite');
 const campaign=json(path.join(dir,'run.json'));
 const complete=(status,clean)=>status===clean||status==='completed_with_native_failures';
 const failureMessages=['Noncontact endpoint outside crystal','Invalid waveform support'];
@@ -141,6 +142,10 @@ for(const v of verified){
 }
 html+='<p class="note">Signed charge is never rectified or calibrated against per-event deposited energy. One independent synthetic injection calibrates each fixed electronics profile. Native diffusion, finite trajectory caps and unresolved Li/grid sensitivity remain visible. Electronics reset for each finite isolated group; boundary splits, recovery uncertainty and possible tail loss are recorded. This is not a continuous acquisition simulation. Material deposition is recorded-only: unscored world-air, escape and neutrino terms prevent full energy closure.</p><p><a href="run.json">Campaign receipt</a> · <a href="comparison.json">Export checks and source hash</a></p></html>';
 const evidence={kind:'native_campaign_report_v1',status:totalFailed?'completed_with_native_failures':'validated',campaign_status:campaign.status,campaign_sha256:await sha(path.join(dir,'run.json')),exporter_sha256:await sha(fileURLToPath(import.meta.url)),models:verified.map(v=>({model:v.model,counts:v.run.counts,flags:v.flags})),figure_policy:'Exact saved 5-keV histogram counts; log1p count display only; no fitting, smoothing, truth normalization or physical resolution inference'};
+if(verifyOnly){
+  console.log(JSON.stringify(evidence));
+}else{
 fs.writeFileSync(output,html,{flag:'wx'}); evidence.html_sha256=await sha(output);
 fs.writeFileSync(receipt,JSON.stringify(evidence,null,2)+'\n',{flag:'wx'});
 console.log(JSON.stringify({status:evidence.status,html:path.relative(root,output),counts:verified.map(v=>({model:v.model,...v.run.counts}))}));
+}

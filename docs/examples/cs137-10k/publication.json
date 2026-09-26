@@ -1,0 +1,159 @@
+{
+  "kind": "native_publication_v1",
+  "status": "completed_with_native_failures",
+  "campaign_sha256": "f563969cf57f3f6ff34c09dd4748ddafddcc3d7df8f4d06941b18e5212c5b43d",
+  "notes": "Public copy of the saved 10,000-decay-per-detector engineering run. Every scalar event and pulse is retained. Each response/ledgers.zip contains ALL original response files, including every truth/deposit and endpoint record. Archive bytes and public derivatives have separate hashes. Original raw LH5, field caches and upstream geometry remain local; they are not in this public bundle. The two native failures and all trajectory limits remain unresolved. ADC acceptance is not proof of complete carrier collection or calibrated accuracy.",
+  "publisher_sha256": "b41d42e1ebe99156cab3569709e77a144a99c58c4d3647233f5aa5050df021d0",
+  "files": {
+    "AK02/response/histograms.csv": {
+      "bytes": 46655,
+      "sha256": "c48a11e351b32bde3fa46271e9758c780872cd3f4c0ef699a40ce6203f04a579"
+    },
+    "AK02/response/histograms.json": {
+      "bytes": 135928,
+      "sha256": "8cbdb6d7ba7ebbbfa4e95a270bb9db955c67d7063f1652e1383fcba459236ab1"
+    },
+    "AK02/response/ledgers.zip": {
+      "bytes": 20005821,
+      "sha256": "916d30452e1f601db5298fd3303b0346d779c2c70ec44d2d9d2ae4ee04cc164a"
+    },
+    "AK02/response/native-failures.json": {
+      "bytes": 107044,
+      "sha256": "09fbcdfe821a34df7bb5a74b42eead9a6a0d8bcf02a5e2607e580ae0e594fea3"
+    },
+    "AK02/response/profile.json": {
+      "bytes": 451,
+      "sha256": "7556e6e77d6c21e76e1a4eabb69b2b26875517252c083c88b6eb6a80502ef6e6"
+    },
+    "AK02/response/readout-config.json": {
+      "bytes": 553,
+      "sha256": "289b2d5efa7da68cd04853d844150aeac4bff1f207ee3555921494aa357ae6f5"
+    },
+    "AK02/response/run.json": {
+      "bytes": 32994,
+      "sha256": "db63be7876161e78054a45e6b8ea94097ccd1ba3567a86445f2ca13cc95ddb79"
+    },
+    "AK02/response/scalars.csv": {
+      "bytes": 4986577,
+      "sha256": "012d74bb9a68d3811d720309e9b58b960097516443bb31e47c910a0c0294abeb"
+    },
+    "AK02/response/signals.csv": {
+      "bytes": 908612,
+      "sha256": "487dad13e67bf35f7230923119c390c7aa1eae8fd0b35b00095b6db4146e9585"
+    },
+    "AK02/response/summary.html": {
+      "bytes": 141572,
+      "sha256": "229ab76c5ee201859931ee33ff2eecb9f4967b9bf238da88565dec1942bf01f4"
+    },
+    "AK02/transport/stream/manifest.json": {
+      "bytes": 51632,
+      "sha256": "624c8bc3ecad2c39d7e18d7993b3b318b2f879d687e19575a39a36a614e6047a"
+    },
+    "comparison.html": {
+      "bytes": 90736,
+      "sha256": "b0f708fffbdf44de4ebc7e796b5b56cea933337f6cd0355f8fc0db04ef3bb061"
+    },
+    "README.md": {
+      "bytes": 1079,
+      "sha256": "f253dade02c30acdcbba8817d4c3c5965e053a70b7fe1ae28b8fb9ad9048aae0"
+    },
+    "run.json": {
+      "bytes": 17807,
+      "sha256": "f563969cf57f3f6ff34c09dd4748ddafddcc3d7df8f4d06941b18e5212c5b43d"
+    },
+    "SAP22/response/histograms.csv": {
+      "bytes": 42783,
+      "sha256": "2e4a87b677fc20dbab1a7dcd0b4be6e03e5f21f676f360a6c9afc38f3b5ca15f"
+    },
+    "SAP22/response/histograms.json": {
+      "bytes": 124703,
+      "sha256": "8305b71886e2f61594917110f267f7b8b7ab6de9a1afab9c004aaade684e026f"
+    },
+    "SAP22/response/ledgers.zip": {
+      "bytes": 18934769,
+      "sha256": "c9934b56ab7b03cf4a23be702fd3a585dbe7e2d931a13b0d1f70747cfb98e011"
+    },
+    "SAP22/response/native-failures.json": {
+      "bytes": 92459,
+      "sha256": "70cb15057ba29cc85061afec7a0a28d894556e94b825b1f9c67ad0a0fd6f6217"
+    },
+    "SAP22/response/profile.json": {
+      "bytes": 451,
+      "sha256": "7556e6e77d6c21e76e1a4eabb69b2b26875517252c083c88b6eb6a80502ef6e6"
+    },
+    "SAP22/response/readout-config.json": {
+      "bytes": 553,
+      "sha256": "289b2d5efa7da68cd04853d844150aeac4bff1f207ee3555921494aa357ae6f5"
+    },
+    "SAP22/response/run.json": {
+      "bytes": 20043,
+      "sha256": "d982d0768f286488cf81d77dfb9503285f0a7614c43c3bc4b382021d7a87943c"
+    },
+    "SAP22/response/scalars.csv": {
+      "bytes": 4963382,
+      "sha256": "11ca42d7bc0ea6b8c08da6f2924b16715821470eb0d93d3f391da6a90f07ba20"
+    },
+    "SAP22/response/signals.csv": {
+      "bytes": 18522,
+      "sha256": "b27030e3ab6630bc49ee58d134b3802f7145da15a56ebc41c24b6c3bcfd6db90"
+    },
+    "SAP22/response/summary.html": {
+      "bytes": 143615,
+      "sha256": "db11f1db3da4bd87f3cb22206ae53e187ad6253a27fac5a660c5402fcc26671b"
+    },
+    "SAP22/transport/stream/manifest.json": {
+      "bytes": 51632,
+      "sha256": "cf938339cfd1f28051807c9b43c3fb0faf373a3b975f4feb68d234099c00f641"
+    },
+    "source-comparison.json": {
+      "bytes": 1966,
+      "sha256": "172775a3f1dd0e8634dc916bc1cdc590d0a14993fec61b1bdd6ee4cccff1dcbc"
+    },
+    "verification.json": {
+      "bytes": 1881,
+      "sha256": "848bd3e9bbab86a48bf031c4fbf4df4b30af64d77936e7440b1711af17975166"
+    }
+  },
+  "archive_members": {
+    "AK02": {
+      "endpoints.csv": "16ed2dfeddfcd0b2d8c4a9f0f6531a10fc1d2c7d2e168a6ee9cd39983ebf8563",
+      "endpoints.jsonl": "3aa13d976f659889bc52d1b11a7d2e90ed16b772b16d8da8223e0cf11fbb7da7",
+      "histograms.csv": "c48a11e351b32bde3fa46271e9758c780872cd3f4c0ef699a40ce6203f04a579",
+      "histograms.json": "8cbdb6d7ba7ebbbfa4e95a270bb9db955c67d7063f1652e1383fcba459236ab1",
+      "input-contract.json": "624c8bc3ecad2c39d7e18d7993b3b318b2f879d687e19575a39a36a614e6047a",
+      "input-prepared.json": "4c7a6e7757591ff1d354491fa13cb1d3c02de5c098723332be7642d79b695c17",
+      "native-failures.jsonl": "97ba1442b0637c2732729ac0bb406ee67db719fa82f337c62aacbc395ef624c4",
+      "profile-input.json": "7556e6e77d6c21e76e1a4eabb69b2b26875517252c083c88b6eb6a80502ef6e6",
+      "profile.json": "7556e6e77d6c21e76e1a4eabb69b2b26875517252c083c88b6eb6a80502ef6e6",
+      "readout-config.json": "289b2d5efa7da68cd04853d844150aeac4bff1f207ee3555921494aa357ae6f5",
+      "run.json": "db63be7876161e78054a45e6b8ea94097ccd1ba3567a86445f2ca13cc95ddb79",
+      "scalars.csv": "012d74bb9a68d3811d720309e9b58b960097516443bb31e47c910a0c0294abeb",
+      "scalars.jsonl": "e77a9a185b2b2ceaaf1d880c5703ebc4a07a464e1fb970ff290c6c3f6a500a3b",
+      "signals.csv": "487dad13e67bf35f7230923119c390c7aa1eae8fd0b35b00095b6db4146e9585",
+      "summary.html": "ea559a802de1aa69e78ae11c4b27c23c2c298dad2297ab2af9509552eb8ab89e",
+      "traces.jsonl": "3322e7b31f90cd83da37b0723b472db315a8d14c5bee08c1c62c717b7575c858",
+      "truth.csv": "8a9df9245d1a7140f5d697668df3857e2603b3902ce3a1dc44323c7f0fe47281",
+      "truth.jsonl": "7c3f19b694789760864ade6b749184aace78a4e6249dc336a1ba2a81c13dcdfc"
+    },
+    "SAP22": {
+      "endpoints.csv": "83a365e86ff3beaa460c35d34ee273faa1c23e8304bd4e61a10cb96fce3119c9",
+      "endpoints.jsonl": "372af8bc7110b77cc65bcd1d50e6818c5592d92c96d7d0f19f886d64f8611647",
+      "histograms.csv": "2e4a87b677fc20dbab1a7dcd0b4be6e03e5f21f676f360a6c9afc38f3b5ca15f",
+      "histograms.json": "8305b71886e2f61594917110f267f7b8b7ab6de9a1afab9c004aaade684e026f",
+      "input-contract.json": "cf938339cfd1f28051807c9b43c3fb0faf373a3b975f4feb68d234099c00f641",
+      "input-prepared.json": "452379b2d42c37d2a1979d0e630d2f0db206e8330df93d1b535b684a453ae70b",
+      "native-failures.jsonl": "839eebedad4eb563cd842f2e6073121d3d4d96795cbc5a485b3ef91477141cef",
+      "profile-input.json": "7556e6e77d6c21e76e1a4eabb69b2b26875517252c083c88b6eb6a80502ef6e6",
+      "profile.json": "7556e6e77d6c21e76e1a4eabb69b2b26875517252c083c88b6eb6a80502ef6e6",
+      "readout-config.json": "289b2d5efa7da68cd04853d844150aeac4bff1f207ee3555921494aa357ae6f5",
+      "run.json": "d982d0768f286488cf81d77dfb9503285f0a7614c43c3bc4b382021d7a87943c",
+      "scalars.csv": "11ca42d7bc0ea6b8c08da6f2924b16715821470eb0d93d3f391da6a90f07ba20",
+      "scalars.jsonl": "1beb094d5720cc9ffddefc1d2d57185ae4445743cb3f31d5e373ba692ad9834e",
+      "signals.csv": "b27030e3ab6630bc49ee58d134b3802f7145da15a56ebc41c24b6c3bcfd6db90",
+      "summary.html": "e6fa1de7cf6ce86f189a726e6a85fc6adbeab35d87e8c75a4c992b5fd03c462b",
+      "traces.jsonl": "484744c3d41425cba629c3eee7b4831c32d426f898092f603f06a020d6bc3ef1",
+      "truth.csv": "543c977654eebb355cafcec2f7c42958799a557a941bd9fba9a0e34a5490808f",
+      "truth.jsonl": "25cff53898cf08fe2e475038480d75af1c9dcd167b68f689fc6233deb2f1265c"
+    }
+  }
+}

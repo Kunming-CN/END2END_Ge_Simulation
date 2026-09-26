@@ -182,3 +182,20 @@ test('deliberately rehashed duplicate decay fails semantic census',()=>{
     assert.notEqual(run(dir).status,0); assert.equal(fs.existsSync(path.join(dir,'comparison.html')),false);
   }finally{clean(dir);}
 });
+
+test('verify-only validates existing artifacts without writing or rerunning anything',()=>{
+  const dir=fixture({failed:true}); try{
+    const command=()=>spawnSync(process.execPath,[path.join(root,'tools/native_campaign_report.mjs'),dir,'--verify-only'],{cwd:root,encoding:'utf8'});
+    const first=command(); assert.equal(first.status,0,first.stderr);
+    assert.equal(JSON.parse(first.stdout).status,'completed_with_native_failures');
+    assert.equal(fs.existsSync(path.join(dir,'comparison.html')),false);
+    assert.equal(run(dir).status,0);
+    const before=digest(path.join(dir,'comparison.html')), receipt=digest(path.join(dir,'comparison.json'));
+    assert.equal(command().status,0);
+    assert.equal(digest(path.join(dir,'comparison.html')),before);
+    assert.equal(digest(path.join(dir,'comparison.json')),receipt);
+    fs.appendFileSync(path.join(dir,'AK02/response/scalars.jsonl'),'{}\n');
+    assert.notEqual(command().status,0);
+    assert.equal(digest(path.join(dir,'comparison.html')),before);
+  }finally{clean(dir);}
+});
