@@ -498,3 +498,21 @@ presentation on the delivery lane; pursue Li/finite-conductivity convergence,
 source/cryostat metrology and calibrated spectrum comparison on the accuracy lane.
 No successful engineering run authorizes physical CCE, measured energy resolution
 or an as-built efficiency claim.
+
+M3a publication verified: implementation `b297ffc` was pushed to main and GitHub
+Pages run `36245299651` succeeded. Exact site build
+`7d0662f1c8a392362b8a2357db34e6be95a891eb13f360ed379d9bb0ac3d826f`
+passed79 live-file checks; the new pipeline HTML and data JSON were also fetched
+separately and matched their local SHA-256 values. The live390px page loaded
+both models, all100 selectable IDs per model, the first nonzero example and the
+prominent accepted-with-flags warning without errors or horizontal overflow.
+Release marker: `v0.9.0-pipeline-demo`.
+
+Large generated example bundles are excluded from textual Git diffs; reviewable
+sources remain the small renderer template, orchestration/readout code, tests and
+manifest hashes. No result bytes were changed by that Git presentation setting.
+Verified duplicate clean-run data and superseded viewer copies were removed,
+retaining the source archive, clean-run manifest/comparison, original complete
+example, final showcase, sampling report and review/test receipts. The copied
+Pixi environment symlink was unlinked before cleanup; shared installed package
+caches and the original transport environment were not removed.

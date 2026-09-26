@@ -29,3 +29,7 @@ simulation/*.toml text eol=lf
 *.mac text eol=lf
 .gitattributes text eol=lf
 .gitignore text eol=lf
+
+# Large generated result bundles are reviewed via source/template and manifest hashes.
+docs/examples/pipeline.html -diff
+docs/examples/data.json -diff
