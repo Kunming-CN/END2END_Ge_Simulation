@@ -875,3 +875,22 @@ validates source/native inventory identities, records all failures, and rejects
 false convergence labels. Offline desktop/mobile checks retain all three plots,
 old warnings, new partial status and both CSV links without horizontal overflow
 or network/JavaScript dependencies. Existing full-chain examples remain untouched.
+
+M2d publication verified: implementation `94748bb` was pushed to main; GitHub
+Pages run `36257719300` succeeded. Exact build
+`b587483bcd2edb800d1d289f48b95fc0be75630a677e499ba5b2c265f790adfe`
+passed80 live-file checks. Updated Li HTML/summary and both new transition CSVs
+were separately fetched and matched to local SHA-256 values. The live390px page
+retains three plots, old signal-sensitivity warning, partial/nonconverged status,
+and the cold-budget result without horizontal overflow. Computed profiles are
+labelled as such, not experimental measurements.
+Release marker: `v0.12.0-transition-grid-audit`.
+
+Publication regression checks passed18 site,27 contact,46 pipeline tests(one
+known Windows symlink-creation skip), and8 report tests. No previous model,
+production solver, SDK/lockfile, GeGI content or full-chain example changed.
+Superseded report previews were removed after exact CSV equality checks; formal
+results, initial harness failure, exploratory pilots and review/test receipts
+remain organized under `.local/m2d`. The owned verification browser was closed.
+No user application/global setting or task schedule was changed. This completes
+a native numerical diagnostic milestone, not Li-response convergence.
