@@ -198,7 +198,7 @@ function timed(f, backend)
     value, (time_ns() - started) / 1e9
 end
 function solve_fields!(sim, cfg, backend; sor_consts=missing, potential_rechecks::Int=1, iteration_observer=nothing)
-    1 <= potential_rechecks <= 8 || throw(ArgumentError("Potential rechecks must be 1..8"))
+    1 <= potential_rechecks <= 64 || throw(ArgumentError("Potential rechecks must be 1..64"))
     electric_updates = Float64[]
     weighting_updates = Float64[]
     bias = maximum(c.potential for c in sim.detector.contacts) - minimum(c.potential for c in sim.detector.contacts)

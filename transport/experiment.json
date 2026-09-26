@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "status": "incomplete_experimental_configuration_not_runnable",
+  "detectors": [
+    "AK02",
+    "SAP22"
+  ],
+  "confirmed_by_owner": {
+    "source_isotopes": [
+      "Cs137",
+      "Am241"
+    ],
+    "placement": "Source rests on the aluminum cryostat lid directly above the detector",
+    "recorded_date": "2026-09-26"
+  },
+  "coordinate_policy": "Laboratory above is not yet mapped to SSD +z; require surveyed detector pose",
+  "source": {
+    "active_shape": null,
+    "active_dimensions_mm": null,
+    "encapsulation_materials_and_thicknesses": null,
+    "source_face_toward_crystal": null,
+    "lateral_offset_mm": null,
+    "activity_Bq": null,
+    "activity_reference_date": null,
+    "source_certificate": null
+  },
+  "assembly": {
+    "lid_material": "aluminum, owner description; exact alloy not established",
+    "lid_thickness_mm": null,
+    "crystal_to_lid_gap_mm": null,
+    "intervening_layers": null,
+    "detector_local_to_lab_transform": null,
+    "contact_facing_lid": null
+  },
+  "acquisition": {
+    "preamplifier_model_and_response": null,
+    "shaper_model_and_settings": null,
+    "ADC_model_and_sampling": null,
+    "gain_and_polarity_calibration": null,
+    "live_time_and_dead_time": null,
+    "raw_waveform_dataset": null
+  },
+  "upstream_geometry": {
+    "provenance_file": "cryostat-source.json",
+    "warning": "Pinned LBNL geometry describes a different planar crystal/holder; its dimensions are not an as-built survey of AK02 or SAP22"
+  },
+  "scope": [
+    "Do not overwrite the side-on monoenergetic M2a interface source",
+    "Isotopic decay output needs an explicit per-decay emission and timing contract",
+    "Unknown values are not zero, absent material, or permission to invent a dimension",
+    "No absolute efficiency, count rate or experimental spectrum prediction is authorized by this incomplete configuration"
+  ],
+  "documented_lab_inventory": {
+    "source": "Owner dissertation baseline-equipment table, read-only source review 2026-09-26",
+    "status": "General laboratory documentation; individual AK02/SAP22 acquisition settings not verified",
+    "preamplifier": "LBNL Square-topology charge-sensitive preamplifier; BF862; nominal feedback capacitance 0.6 pF",
+    "shaping_amplifier": "ORTEC 671",
+    "spectral_acquisition": "ORTEC 927 MCA",
+    "oscilloscope": "Keysight InfiniiVision DSOX3034A",
+    "pulser": "CANBERRA 814FP",
+    "bias_supply": "CANBERRA 3106D",
+    "caution": "Nominal feedback capacitance is not a measured end-to-end gain. The exact source run, filter mode, channel range and calibration remain unresolved."
+  }
+}

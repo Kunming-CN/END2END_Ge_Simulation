@@ -55,3 +55,21 @@ transport/ keeps the Pixi manifest/lock and toy installation checks; large envir
 AK02 (Anupama ICPC2) is the Li-contact primary case; SAP22 is a non-Li cross-check, not a matched-geometry experimental control. Defer new GeGI work. Preserve original 78 K / +500 V and +700 V snapshots; first reproduce them, with any nominal 77 K override explicit and consistently recorded. No invented experimental holder/source positions or uncalibrated lifetime claims.
 Read-only research elsewhere under My Drive is authorized; never edit unrelated files. Keep raw transport energy separate from charge response; no double Li loss. Preserve event IDs, deposition times, transforms, zero-deposit primaries and incomplete-collection flags.
 After bounded implementation/testing, use two separate read-only review sessions: (1) HPGe and electronics, (2) particle transport and event integrity. Give both the same tested diff/evidence, then exchange findings for cross-review. Summarize confirmed issues and resolutions in PROGRESS.md. These are AI reviewers, not human certification. Never claim independent agents ran unless launched.
+
+## Successive authorized rounds
+
+The owner requested successive bounded rounds without per-round approval (2026-09-26).
+A scheduled continuation checks this project hourly. Before an automated round, inspect
+`.local/autonomy/state.json`, its lock directory, the Git worktree and actual
+project worker processes. Never run two supervisors/rounds concurrently. Only an
+explicit ready state with no prior active supervisor/workers/lock permits a new
+round; acquire the lock before writes. Stale or conflicting state requires
+inspection, not blind lock deletion. On completion, record tested outcomes and
+next bounded work, synchronize Git, release the owned lock and leave ready.
+Unknown experimental dimensions block claims that require them, not unrelated
+mathematical verification. Notify the owner only for substantive progress or an
+issue genuinely requiring their intervention. Usage limits never authorize resets.
+
+The scheduling state/lock governs the owner's automated continuation only. A clean
+student clone does not need this private state to run documented CLI examples or
+make manual contributions; normal source/test/review rules still apply.

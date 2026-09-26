@@ -235,3 +235,62 @@ Density keys ending in `_cm3` denote number densities in cm^-3, not volumes.
 The diffusion ensemble consists of weighted numerical sample points, not a claim
 that a 1 keV deposit produces 2048 physical electron-hole pairs. Its acceptance
 test concerns positional moments only; self-repulsion is disabled.
+
+## Transition-grid and mobility-branch verification
+
+The [physics/reference map](PHYSICS.md) separates transport assumptions, real
+measured pulse benchmarks and prerequisites for calibrated near-surface response.
+`validate_transition.jl` has two independent diagnostic phases:
+
+```powershell
+julia --startup-file=no --threads=2 --project=simulation simulation/test_transition.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/validate_transition.jl --phase fields --output .local/my-transition-fields
+julia --startup-file=no --threads=2 --project=simulation simulation/validate_transition.jl --phase mobility --output .local/my-mobility-check
+```
+
+The fields phase records actual electric/weighting r-z ticks, profiles on common
+2-micrometre depth samples, the doping-compensation root, and reporting-threshold
+crossings. It compares minimum-spacing controls and genuinely smaller maximum
+cell-spacing caps. Values below a reporting threshold are never clipped. The
+fixed-endpoint cross-weighting matrix is a hybrid numerical diagnostic, not a
+new physical detector. Signed signals and trajectory-cap flags remain present.
+A failed finer solve exits with failure and preserves continuation histories;
+passing an update gate alone does not prove grid convergence.
+
+This finer-grid diagnostic explicitly allows up to 64 bounded continuation calls
+per potential with the same tolerances. The shared runner default remains one,
+M2a replay four, and the earlier collection diagnostic eight. Budget changes are
+not automatically applied to ordinary runs or interpreted as physical validation.
+
+The mobility phase uses the actual InactiveLayerChargeDriftModel with spatially
+constant, disposable impurity coefficients sampled from three AK02 depths. It
+runs 2048 numerical parcels per species for 400 ns at 1/2/4 ns steps, with exact
+zero-field termination disabled. Both species must satisfy Einstein-hop, full
+duration, boundary-clearance, mean, variance and cross-covariance guards. The
+statistical screens are six-standard-error bounds; they do not establish a
+sub-percent calibration. The original field and detector are restored afterward.
+
+These homogeneous tests do not choose a variable-D transport closure or validate
+boundary recombination. Original lifetimes, impurity inputs, the material
+ionisation energy and locked dependencies are not changed. The fields phase
+writes `profiles.csv` and `run.json`; mobility writes its compact `run.json`.
+Source hashes and exceptions are retained. Use new output directories instead of
+overwriting the original experiments. See PROGRESS.md for completed and failed
+cases, not just whether the program produced a file.
+
+The regular `fields` phase includes five cases through the 0.05 mm maximum-tick
+cap. The more expensive 0.025 mm stress case is separate:
+
+```powershell
+julia --startup-file=no --threads=2 --project=simulation simulation/validate_transition.jl --phase fine --output .local/my-fine-stress
+julia --startup-file=no --threads=2 --project=simulation simulation/validate_transition.jl --phase mobility --output .local/my-mobility-8192 --parcels 8192
+```
+
+**Known unresolved result:** the finer 0.025 mm stress attempt failed the unchanged
+electric update gate after its bounded 64 continuations. It remains a failed
+case, not a removed data point. Even the passing 0.1/0.05 mm maximum-tick cases
+show a moving threshold crossing, so physical CCE/dead-layer interpretation remains
+blocked. Two-micrometre profile sampling is not two-micrometre field resolution;
+reported brackets are first sampled exceedances, and a missing lower endpoint is
+censored. The extra `--parcels` option only changes homogeneous sample statistics,
+not the fixed 1/2/4 ns time-step matrix or any detector coefficient.
