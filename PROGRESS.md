@@ -35,6 +35,11 @@ for a bounded difficult review when useful. No background schedule changes impli
   original deposition delays and one shared injection calibration through readout.
 - Native example repeats exactly; legacy cases remain unchanged. The timed final
   solve/replay/readout/report interval was 67.405 s, excluding initial module startup.
+- Opt-in signed-input positive-peak policy and finite peak gates are implemented;
+  signed waveforms and default legacy behavior remain unchanged. Both14-case repeats
+  matched original charge CSVs exactly. Current tests:25,804 legacy,49 policy,
+  99 complete-identity/mutation assertions; independent physics/integrity closure approved.
+  Local evidence: `.local/peak-native-delivery/verified-item1.md`.
 
 Entry points: [library](https://kunming-cn.github.io/END2END_Ge_Simulation/),
 [full engineering example](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/pipeline.html),
@@ -50,19 +55,20 @@ SSD 0.11.8 already contains the published native Li/RCC machinery; experimental
 validation exists elsewhere. AK02-specific profile/lifetime calibration is not established.
 Native diffusion produced nonzero signals for events 41/78 that were zero in the
 legacy no-diffusion replay. N/seed variation and finite trajectory caps remain visible.
-The frozen synthetic readout rejects ANY negative cumulative charge, including small
-stochastic excursions. A positive shaped peak can therefore have null ADC Erec.
-Do not rectify charge or delete rejection flags to make it pass.
+The frozen default readout still rejects ANY negative cumulative charge. The explicit
+`signed_input_positive_peak` policy now accepts otherwise valid positive peaks while
+retaining negative-input and all independent diagnostics. Low/saturated/gate-limited
+peaks still reject. Neither policy rectifies charge or calibrates against event truth.
 The recorded ~15-percentage-point transition response sensitivity and failed global
 field-agreement tests remain unresolved. Numerical parcel spread is not physical FWHM.
 
 ## Delivery plan, in order
 
-1. **Configurable peak validity and native entry.** Preserve the exact legacy policy;
-   add an explicitly selected signed-input/positive-peak policy without rectification.
-   Preserve independent clipping, threshold, negative-excursion and transport flags.
-   Validate synthetic signed/zero/saturated/delayed pulses and repeat the 14 native cases.
-   Acceptance means correct causal readout/accounting, not agreement with deposited truth.
+1. **Completed: configurable peak validity.** Legacy preserved; signed-positive
+   policy, finite gates and independent diagnostics tested.14 paired native cases
+   retained exact charge and legacy numerics; gate-interval and identity mutation
+   issues found by reciprocal reviewers were fixed. This is engineering validity,
+   not calibrated CCE. The general native entry remains step2, not yet delivered.
 2. **Reusable native AK02/SAP22 comparison and readout profiles.** Start with 100
    primaries per detector and measured cost; reuse native SSD, existing fields and
    electronics, not another solver. Add versioned preamp decay/capacitance, shaping

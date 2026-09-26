@@ -19,7 +19,8 @@ function parcel_seed(seed,event,row,parcel)
     foldl((value,b)->(value<<8)|UInt64(b),bytes[1:8];init=UInt64(0))
 end
 function options(args)
-    length(args)==4 && args[1]=="--input" && args[3]=="--output" || error("Usage: native_li_example.jl --input .local/RUN/AK02/transport/events.json --output .local/NEW")
+    length(args) in (4,6) && args[1]=="--input" && args[3]=="--output" || error("Usage: native_li_example.jl --input .local/RUN/AK02/transport/events.json --output .local/NEW [--peak-policy signed_input_positive_peak]")
+    length(args)==6 && !(args[5]=="--peak-policy" && args[6] in (E.LEGACY_PEAK_POLICY,E.SIGNED_PEAK_POLICY)) && error("Invalid peak policy option")
     abspath(args[2]),args[4]
 end
 function sum_parcels(parts,energy)
@@ -83,7 +84,8 @@ function write_html(filename,report)
         vals=(c["event_id"],c["mode"],string(c["parcels"]," / ",c["seed"]),round(c["deposited_energy_keV"];digits=3),round(c["final_induced_keV"];digits=5),round(r["analog_energy_keV"];digits=5),r["reconstructed_energy_keV"]===nothing ? "—" : round(r["reconstructed_energy_keV"];digits=5),r["accepted"] ? "accepted" : r["rejection_reason"])
         text*="<tr>"*join(["<td>$(escape(v))</td>" for v in vals])*"</tr>"
     end
-    text*="</table></div><p>Analog energy is peak voltage divided by the shared injection slope, not calibrated detector energy. The frozen readout rejects any negative cumulative input, including tiny excursions; rejected ADC energies remain null. No sign rectification or truth normalization is applied. N/seed differences measure numerical sampling, not physical resolution.</p>"
+    policy=get(get(report,"readout_config",Dict()),"peak_policy",E.LEGACY_PEAK_POLICY)
+    text*="</table></div><p>Analog energy is peak voltage divided by the shared injection slope, not calibrated detector energy. Peak policy: $(escape(policy)). Legacy rejects every negative cumulative input; the explicitly selected signed policy retains negative-input flags and accepts valid positive peaks. Rejected ADC energies remain null. No sign rectification or truth normalization is applied. N/seed differences measure numerical sampling, not physical resolution.</p>"
     for c in report["cases"]
         r=c["readout"]; t=r["trace"]["time_ns"]
         text*="<details><summary>Event $(c["event_id"]) · $(c["mode"]) · N=$(c["parcels"]) · seed $(c["seed"])</summary><p>$(escape(JSON.json(c["transport_flags"])))</p><div class='plots'>"
@@ -125,6 +127,7 @@ function main(args=ARGS)
         report["field_fingerprint"]=field_fingerprint(sim)
         report["field_settings"]=Dict("min_spacing_mm"=>0.05,"max_spacing_mm"=>2,"precision_bits"=>64,"sor"=>1,"rechecks"=>4)
         config=E.config(joinpath(@__DIR__,"readout_demo.json")); eion=ustrip(u"eV",sim.detector.semiconductor.material.E_ionisation)
+        length(args)==6 && (config["peak_policy"]=args[6])
         matrix=E.transition(config,DT); cal=E.calibration(config,eion,DT,matrix)
         report["readout_config"]=config;report["calibration"]=cal;report["ionisation_energy_eV"]=eion
         open(joinpath(out,"signals.csv"),"w") do csv

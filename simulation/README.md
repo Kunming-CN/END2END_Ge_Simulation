@@ -495,3 +495,36 @@ uncertainties; this small selected sample is not a calibrated spectrum.
 The frozen legacy replay remains unchanged for reproducibility. Its default
 `diffusion=false`/zero-field-stop behavior is not the native RCC demonstration.
 Run `simulation/test_native_li_example.jl` for the bounded interface tests.
+
+An explicit peak-policy selection retains signed stochastic excursions while
+allowing a valid positive shaped peak through the same electronics:
+
+```console
+julia --startup-file=no --threads=2 --project=simulation simulation/test_peak_policy.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/test_readout.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/native_li_example.jl --input .local/m3b/release/AK02/transport/events.json --output .local/native-li-signed-new --peak-policy signed_input_positive_peak
+```
+
+Omitting the option preserves `legacy_reject_negative_input` and the frozen demo
+electronics. The standalone readout JSON may explicitly include `peak_policy`,
+`peak_gate_start_ns` and `peak_gate_end_ns`; both gate bounds must be finite and
+supplied together, relative to primary creation. The sampled peak is searched
+inside the inclusive gate. A positive peak at either gate boundary is rejected
+as incomplete; a zero or negative peak stays below threshold. Activity outside
+the gate is recorded independently, without removing deposits or resetting time.
+The independent injection calibration is unchanged by gate selection.
+
+`negative_input`, `below_threshold`, `saturated`, `gate_limited`,
+`window_limited`, and out-of-gate activity remain separate diagnostics, even when
+the scalar rejection reason reports only the first applicable reason. Analog
+voltage outside ADC range is recorded over the full numerical waveform;
+digitization uses only the gated peak. Transport endpoint flags remain separate
+from electronic acceptance. No sign rectification or event-wise gain fit occurs.
+
+With three completed matching native fixtures, run
+`julia --startup-file=no --threads=2 --project=simulation simulation/test_native_peak_regression.jl BASELINE_DIR LEGACY_DIR SIGNED_DIR`.
+This read-only regression checks full charge CSV identity, all case identities,
+transport/analog invariants and exact policy outcomes. Deliberate identity and
+acceptance mutations must fail. It performs no additional field solve. Peak-gate
+activity diagnostics compare original current-bin intervals with requested bounds,
+including bins that only partly lie outside a fractional-time gate.

@@ -17,9 +17,10 @@ the remaining budget. current_nA[k] is the ORIGINAL bin value on
 (current_bin_start_ns[k],current_bin_end_ns[k]], not an integral or average
 between adjacent display timestamps. The initial zero has the empty bin [0,0].
 current_balance is computed on the full original grid, never the display trace.
-Any negative cumulative charge, however tiny, is a conservative unsupported-
-waveform restriction (negative_input), not rectification or a general polarity
-classifier. Signed preamp/shaped voltages are still calculated unchanged.
+By default any negative cumulative charge, however tiny, is rejected. Explicit
+peak_policy="signed_input_positive_peak" retains the negative_input flag while
+accepting otherwise valid positive peaks. Signed charge/current/preamp/shaped
+voltages are never rectified. Optional finite peak gates use primary-relative ns.
 Events reset at the primary time, with no pretrigger or cross-event state.
 events.csv is the scalar ledger (flags are JSON in a quoted field). spectrum.csv
 is a sparse histogram of ACCEPTED peak ADC codes, with bin-centre energy and counts.
@@ -56,7 +57,7 @@ function environment()
 end
 function config(p)
     c = readjson(p); defaults = readjson(joinpath(@__DIR__, "readout_demo.json"))
-    check(issubset(Set(keys(c)),Set(keys(defaults))), "Unknown config key")
+    check(issubset(Set(keys(c)),union(Set(keys(defaults)),Set(("peak_policy","peak_gate_start_ns","peak_gate_end_ns")))), "Unknown config key")
     # Omitted PZ follows feedback, even when feedback differs from the demo.
     c = merge(defaults, c)
     supplied = readjson(p)
@@ -75,6 +76,19 @@ function config(p)
     check(c["require_all_events"] isa Bool, "Invalid selection policy")
     n=c["expected_primary_count"]
     check(n === nothing || (integer(n) && 0 < n <= 100_000), "Invalid expected census")
+    validate_peak_config(c)
+    c
+end
+
+const LEGACY_PEAK_POLICY = "legacy_reject_negative_input"
+const SIGNED_PEAK_POLICY = "signed_input_positive_peak"
+function validate_peak_config(c)
+    check(get(c,"peak_policy",LEGACY_PEAK_POLICY) in (LEGACY_PEAK_POLICY,SIGNED_PEAK_POLICY), "Unknown peak policy")
+    start=get(c,"peak_gate_start_ns",nothing); stop=get(c,"peak_gate_end_ns",nothing)
+    check((start===nothing)==(stop===nothing), "Supply both peak gate bounds")
+    if start!==nothing
+        check(finite(start) && finite(stop) && 0<=start<stop<=c["max_window_ns"], "Invalid finite primary-relative peak gate")
+    end
     c
 end
 
@@ -111,14 +125,20 @@ function calibration(c, eion, dt, M=transition(c,dt))
         "adc_lsb_V"=>c["adc_full_scale_V"]/2^c["adc_bits"],
         "adc_half_lsb_energy_keV"=>c["adc_full_scale_V"]/2^c["adc_bits"]/2/slope)
 end
-function digitize(peak, c, cal; negative=false, window_limited=false)
+function digitize(peak, c, cal; negative=false, window_limited=false, gate_limited=false)
     check(finite(peak), "Nonfinite peak")
     lsb=cal["adc_lsb_V"]; full=c["adc_full_scale_V"]
     code=peak <= 0 ? 0 : peak >= full ? 2^c["adc_bits"]-1 : floor(Int,peak/lsb)
-    reason=negative ? "negative_input" : peak >= full ? "saturated" :
-        window_limited ? "peak_at_window_end" : peak < c["threshold_V"] ? "below_threshold" : nothing
+    policy=get(c,"peak_policy",LEGACY_PEAK_POLICY)
+    check(policy in (LEGACY_PEAK_POLICY,SIGNED_PEAK_POLICY), "Unknown peak policy")
+    reason=negative && policy==LEGACY_PEAK_POLICY ? "negative_input" : peak >= full ? "saturated" :
+        window_limited ? "peak_at_window_end" : gate_limited ? "peak_at_gate_boundary" :
+        peak < c["threshold_V"] ? "below_threshold" : nothing
     Dict{String,Any}("adc_code"=>code,"accepted"=>reason === nothing,"rejection_reason"=>reason,
         "adc_midpoint_V"=>(code+0.5)*lsb,"saturated"=>peak >= full,
+        "peak_policy"=>policy,"negative_input"=>negative,"below_threshold"=>peak<c["threshold_V"],
+        "nonpositive_peak"=>peak<=0,"adc_lower_clipped"=>peak<0,
+        "window_limited"=>window_limited,"gate_limited"=>gate_limited,
         "analog_energy_keV"=>peak/cal["volts_per_keV"],
         "reconstructed_energy_keV"=>reason === nothing ? (code+0.5)*lsb/cal["volts_per_keV"] : nothing)
 end
@@ -170,9 +190,12 @@ function trace_indices(q,current,n,ip,limit)
     idx,allruns
 end
 function process_event(t,q,c,eion,cal,M)
+    validate_peak_config(c)
     dt=cal["time_step_ns"]; validate_wave(t,q,dt,c["max_samples_per_event"])
     tail=ceil(Int,1000*c["tail_shaping_constants"]*c["shaping_tau_us"]/dt)
     n=length(t)+tail
+    gated=get(c,"peak_gate_end_ns",nothing)!==nothing
+    gated && (n=max(n,floor(Int,c["peak_gate_end_ns"]/dt)+1))
     check(n <= c["max_samples_per_event"] && (n-1)*dt <= c["max_window_ns"], "Readout window/sample bound exceeded")
     cf=c["feedback_capacitance_pF"]*1e-12; factor=charge_C(1.,eion)
     pre=zeros(n); shaped=zeros(n); current=zeros(n); x=zeros(5)
@@ -183,7 +206,11 @@ function process_event(t,q,c,eion,cal,M)
         pre[k]=x[1]; shaped[k]=-c["gain"]*x[4]
     end
     check(all(isfinite,pre) && all(isfinite,shaped) && all(isfinite,current), "Nonfinite electronics response")
-    peak,ip=findmax(shaped)
+    lo=gated ? ceil(Int,c["peak_gate_start_ns"]/dt)+1 : 1
+    hi=gated ? floor(Int,c["peak_gate_end_ns"]/dt)+1 : n
+    check(1<=lo<hi<=n,"Peak gate must contain at least two analog samples")
+    peak,relative_ip=findmax(@view shaped[lo:hi]); ip=lo+relative_ip-1
+    gate_limited=gated && peak>0 && (ip==lo || ip==hi)
     idx,allruns=trace_indices(q,current,n,ip,c["trace_max_points"])
     trace=Dict("time_ns"=>(idx.-1).*dt,"induced_charge_fC"=>[q[min(k,length(q))]*factor*1e15 for k in idx],
         "current_bin_start_ns"=>max.(0,idx.-2).*dt,"current_bin_end_ns"=>(idx.-1).*dt,
@@ -195,12 +222,18 @@ function process_event(t,q,c,eion,cal,M)
         "passed"=>abs(integrated-delta)<=tolerance)
     # Diagnostic only: neither normalizes charge nor changes pulse acceptance.
     negative=any(x->x<0,q)
-    result=digitize(peak,c,cal;negative=negative,window_limited=ip==n)
+    result=digitize(peak,c,cal;negative=negative,window_limited=ip==n,gate_limited=gate_limited)
     merge!(result,Dict("peak_V"=>peak,"peak_time_ns"=>(ip-1)*dt,"trace"=>trace,
         "input_sample_count"=>length(t),"original_sample_count"=>n,"readout_end_ns"=>(n-1)*dt,
-        "charge_end_ns"=>last(t),"tail_window_ns"=>tail*dt,"window_limited"=>ip==n,
+        "charge_end_ns"=>last(t),"tail_window_ns"=>(n-length(t))*dt,"window_limited"=>ip==n,
         "current_balance"=>balance,"trace_preserves_all_current_runs"=>allruns,
         "negative_input"=>negative,"final_charge_C"=>last(q)*factor))
+    merge!(result,Dict("explicit_peak_gate"=>gated,"peak_gate_start_ns"=>(lo-1)*dt,
+        "peak_gate_end_ns"=>(hi-1)*dt,"gate_limited"=>gate_limited,
+        "input_activity_outside_peak_gate"=>gated && any(k->current[k]!=0 && (max(0,k-2)*dt<c["peak_gate_start_ns"] || (k-1)*dt>c["peak_gate_end_ns"]),eachindex(current)),
+        "analog_above_adc_range"=>any(v->v>=c["adc_full_scale_V"],shaped),
+        "analog_below_adc_range"=>any(v->v<0,shaped)))
+    result
 end
 
 function load_inputs(input,truth,c)
@@ -349,11 +382,16 @@ function run(input,truth,configfile,output)
                 "Peak is sampled on the analog numerical grid; traces are decimated display data.",
                 "The display budget cannot preserve arbitrarily dense current structure; trace_preserves_all_current_runs marks sparse-run support/extrema preservation.",
                 "Any negative cumulative charge is conservatively rejected, including arbitrarily tiny excursions; this is a supported-waveform restriction."] ))
+        if get(c,"peak_policy",LEGACY_PEAK_POLICY)==SIGNED_PEAK_POLICY
+            report["supported_waveform_policy"]="Signed input is preserved; accept an otherwise valid positive sampled peak. Negative input is an independent diagnostic."
+            report["limitations"][end]="Signed-input acceptance is an engineering policy, not a physical charge-collection or noise-validation claim."
+        end
         stage="event_processing"; samples=0
         open(signalfile) do io
             check(readrow(io)=="event_id,time_since_primary_ns,induced_equivalent_energy_keV", "Invalid CSV header")
             for e in r["events"]
                 predicted=e["samples"]+ceil(Int,1000*c["tail_shaping_constants"]*c["shaping_tau_us"]/dt)
+                get(c,"peak_gate_end_ns",nothing)!==nothing && (predicted=max(predicted,floor(Int,c["peak_gate_end_ns"]/dt)+1))
                 samples+=predicted; check(samples<=c["max_total_samples"], "Total sample budget exceeded")
                 t,q=read_wave(io,e,r,c); result=process_event(t,q,c,r["ionisation_energy_eV"],cal,M)
                 flags=Dict("charge_status"=>e["status"],"steps"=>[Dict("raw_row_index"=>s["raw_row_index"],
