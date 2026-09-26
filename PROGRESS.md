@@ -2,7 +2,7 @@
 
 Updated: 2026-09-26 (local)
 
-Current: M3a now completes the synthetic radiation-to-peak-ADC engineering workflow for AK02 and SAP22, with a traceable offline event explorer and source-only replay. Production Li/finite-conductivity accuracy, as-built geometry and experimental hardware calibration remain unresolved; the demonstration does not clear those gates.
+Current: M3b adds bounded standard scenarios, a one-thread low-load option, census-only run configuration and lossless compact offline examples. The complete AK02/SAP22 engineering workflow remains verified. Production Li/finite-conductivity accuracy, as-built geometry and calibrated hardware response remain unresolved.
 
 
 ## Goal and plan alignment audit — 2026-09-26
@@ -36,8 +36,8 @@ These are migration and functionality checks, not all-detector convergence tests
 | M0 | Share existing results on GitHub Pages | Published; URL verified |
 | M1 | Clean-machine calculation example, pinned environment, portable paths | M1b CPU/CUDA examples verified on Windows; full campaign and other OS checks pending |
 | M2 | Geant4/remage deposits connected to SSD drift and electrode signal | M2a verified; M2b4 direct SSD analytic checks added; production Li CCE, finite conductivity and cryostat remain gated |
-| M3 | Causal preamp, analog shaping, peak ADC, independently reconstructed event energy | M3a synthetic electronics and complete200-primary workflow verified; hardware calibration pending |
-| M4 | Small repeatable workflow and traceable event/spectrum showcase | M3a 100-primary-per-model diagnostic spectrum and offline explorer verified; production statistics remain later |
+| M3 | Causal preamp, analog shaping, peak ADC, independently reconstructed event energy | M3b scenarios and serial resource controls verified; synthetic full-chain parity retained; hardware calibration pending |
+| M4 | Small repeatable workflow and traceable event/spectrum showcase | M3b lossless compact offline explorer and bounded presets verified; production statistics remain later |
 | M5 | Physics/readout accuracy, as-built geometry and measured-spectrum comparison | Parallel accuracy lane; unresolved Li/finite-conductivity/calibration gates remain explicit |
 
 Known portability work: the original GeGI model/cache and one benchmark still reference external local directories; these references currently exist but are not distributed. Some native build scripts also name the installed ParaView/Julia executables. The website does not depend on these paths. Do not describe M1 as complete or upgrade SSD without a separate compatibility check.
@@ -526,3 +526,81 @@ M3b prospective gates: full effective readout config may differ from the frozen 
 Reviewer preflight question resolved: no downstream upper energy bound existed. Added a10,000keV cap to this bounded example (positive finite energies only); this is a resource/workload limit, not a claimed physics-validity range. The59.5/662keV defaults and all canonical numerical inputs remain unchanged.
 
 Independent review found a standalone public consistency gap: an intentionally resealed bundle could contradict its own thread/config declarations even though source-run export was strict. Added a public settings/config/recorded-command cross-check and rehashed-metadata rejection tests. This changes only public validation, not execution or scientific calculations; archived candidate runs remain untouched. The final default sample will be regenerated against the finalized source.
+
+## M3b verified — standard scenarios and lighter examples
+
+The existing driver now offers quick (10 photons/model at 662 keV), gamma-662
+(default 100 at 662 keV) and gamma-59 (100 at 59.5 keV). Explicit overrides allow
+1..500 events, positive finite energy up to 10,000 keV, a seed, one or both
+reviewed models, and 1..4 Julia threads (default 2). These are monoenergetic
+engineering scenarios, not full isotope sources or a certified accuracy range.
+
+A single generated readout-config.json is shared by both detectors. Its only
+permitted change from the frozen baseline is expected_primary_count; unchanged
+feedback, shaping, gain, threshold, ADC and calibration settings are independently
+checked even when test mutations recompute every hash. Preset intent and actual
+overrides are recorded. Run/showcase schemas are now 2; historical schema-1
+artifacts remain preserved and are not silently rewritten by the new driver.
+
+Models/stages run serially. Julia thread limits and BLAS/OMP child-environment
+settings do not modify global settings or terminate user applications. Initial
+host observations were 36% CPU and 4.66 GiB available memory of 15.31 GiB; one
+in-run sample had 45% CPU and 1.16 GiB available, so no overlapping numerical jobs
+or test browsers were used. A 278 ms terminal startup measurement is not evidence
+of a sustained PowerShell slowdown. No registry/power-plan/WSL global changes,
+software installs, reset usage, paid API changes or schedule changes occurred.
+
+The final default run from source 340cb0e processed 200 events in 146.84 s.
+Both detectors' complete truth-event structures, charge CSV bytes, readout-event
+records and pulser calibrations exactly matched the v0.9 baseline. Original
+models, production transport/drift/readout code and environment locks were unchanged.
+
+Candidate source 9bf3000 was also run in a source-only checkout: quick processed
+10 events per detector with one Julia thread, preserving all 20 records and the
+same numerical pulser coefficients. Its 146.28 s duration is close to the default
+because environment startup and field solving dominate; quick is smaller, not a
+claim of tenfold speed. The same-machine installed package caches were reused;
+no private field cache or other-machine/OS reproducibility is claimed.
+
+The gamma-59 preset with explicit 20 events, AK02 only and one thread completed
+in 74.20 s: one zero deposit, 13 readout-accepted, seven rejected and 19 charge-
+flagged events. Accepted and flagged populations overlap. The calibration
+coefficients remained unchanged. These candidate runs retain their original
+9bf3000 provenance; the later public-consistency-only patch does not retroactively
+change their producer identity. The final default was rerun after that patch.
+
+The existing independent readout-sampling verifier now recognizes a validated
+schema-2 census-only configuration as well as the old schema-1 default. Its
+numeric equations were not changed. Twelve configuration tests passed, including
+rehashed gain rejection. All 60 fixed-input sampling/window comparisons on the
+20-event gamma-59 artifact passed; maximum peak change was 0.00030264 ADC LSB.
+This checks electronics discretization, not low-energy detector or Li accuracy.
+
+The expanded pipeline suite passed 45 of 46 tests, with one Windows symlink-
+creation test skipped; the reparse-point guard passed separately. Two independent
+Astra High reviewers checked configuration/calibration, data identity and public
+consistency. Their exchange identified a standalone public metadata gap, fixed
+by cross-checking settings, frozen configuration and recorded thread commands.
+Current public bundles pass deliberately resealed inconsistent-metadata tests.
+
+Public JSON is now 9,766,838 bytes instead of 24,894,288; standalone HTML is
+9,796,506 instead of 24,923,133 bytes (approximately 61% smaller). Compact
+serialization preserves every numeric value, type, signed zero, event, deposit,
+trace and flag; there was no precision reduction or event filtering. The default
+still contains all 200 events, with the same accepted-with-charge-flags warnings.
+
+Heavy event/provenance text is generated only while its panel is open. Offline
+browser tests confirmed opening current data, refreshing after event/model
+changes, clearing closed panels, and eight mobile event-selection cases without
+horizontal overflow. With networking disabled, zero HTTP requests and zero
+JavaScript exceptions were observed. Single comparable headless-browser samples
+showed DOM ready at 286.9 -> 128.8 ms, ten event changes at 25.6 -> 21.9 ms, and
+reported JS heap at 35.1 -> 19.3 MB. These are local observations, not guaranteed
+speedups or internet load-time measurements. Closed event-detail text decreased
+from 91,901 characters to zero until requested.
+
+Remaining priorities: preserve this runnable delivery path while returning to
+bounded AK02 endpoint/depth and finite-conductivity accuracy diagnostics. Do not
+remove incomplete-collection flags to improve a plot. True detector efficiency,
+Li CCE and hardware response remain unvalidated. Raw data, prior releases and
+review evidence remain distinct from the compact public distribution.

@@ -209,3 +209,23 @@ charge flags, units, calibration and file hashes across every stage. Its browser
 view must show those same records, not just a selection of attractive waveforms.
 See PROGRESS.md for current completion and unresolved gates rather than treating
 successful execution or a matching plot as experimental validation.
+
+## Lightweight runs and lossless viewing
+
+The `quick` preset reduces event/output scale, not fixed environment startup or
+field-solve overhead. On this computer its total startup-dominated runtime was
+close to the 100-event default; do not expect speed to scale with event count.
+Use `--threads 1` when keeping the computer responsive matters more than maximum
+throughput. No user applications, global thread settings or power plans change.
+
+Public schema-2 bundles use compact JSON without rounding numbers or dropping
+records. Original raw reports remain readable. Large event/provenance details
+are formatted only when their panels open, and refresh with the selection.
+The current default still contains all 200 events and their charge flags.
+
+Archived schema-1 runs/bundles remain preserved and usable with their original
+release. The new driver rejects mixing incompatible manifests rather than
+rewriting historical provenance. Generate a new named output for schema 2.
+The independent sampling verifier supports both the old default and validated
+per-run census configurations; `simulation/test_verify_readout.jl` tests that
+compatibility without running detector physics.

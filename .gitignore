@@ -84,3 +84,5 @@
 !simulation/readout_demo.json
 
 !simulation/verify_readout.jl
+
+!simulation/test_verify_readout.jl

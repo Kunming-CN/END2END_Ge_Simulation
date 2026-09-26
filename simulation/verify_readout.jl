@@ -11,11 +11,28 @@ function resample_charge(t, q, dt)
     end
     times,values
 end
+function verification_config(input, manifest)
+    baselinefile=joinpath(@__DIR__,"readout_demo.json")
+    baseline=R.config(baselinefile)
+    manifest["schema_version"]==1 && return baseline
+    R.check(manifest["schema_version"]==2,"Unsupported pipeline schema")
+    binding=manifest["readout_config"]
+    R.check(binding["file"]=="readout-config.json" && binding["allowed_changed_fields"]==["expected_primary_count"],"Unsupported run configuration binding")
+    file=joinpath(input,binding["file"])
+    R.check(R.hashfile(baselinefile)==binding["baseline_sha256"],"Baseline configuration changed")
+    R.check(R.hashfile(file)==binding["effective_sha256"]==manifest["artifacts"][binding["file"]],"Run configuration hash mismatch")
+    count=manifest["settings"]["events_per_model"]
+    R.check(R.integer(count) && 1<=count<=500,"Invalid example event count")
+    expected=deepcopy(baseline);expected["expected_primary_count"]=count
+    R.check(R.readjson(file)==expected,"Only primary census may differ from baseline")
+    R.config(file)
+end
+
 function verify(input, output)
     R.environment()
     out=R.reserve_output(output)
-    config=R.config(joinpath(@__DIR__,"readout_demo.json"))
     root=R.readjson(joinpath(input,"run.json"))
+    config=verification_config(input,root)
     R.check(root["status"]=="complete","A complete pipeline run is required")
     report=Dict{String,Any}("status"=>"running","source_sha256"=>R.hashfile(@__FILE__),
         "readout_source_sha256"=>R.hashfile(joinpath(@__DIR__,"readout.jl")),

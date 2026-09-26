@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "build_id": "7d0662f1c8a392362b8a2357db34e6be95a891eb13f360ed379d9bb0ac3d826f",
+  "build_id": "4a8c88d5ea48ef9e4ac5cc2c5a9d6a0ac32e62eb2fc5a25c04ff073afe804355",
   "file_count": 1054,
-  "total_bytes": 229643795,
+  "total_bytes": 199389718,
   "html_pages": 22,
   "local_links_checked": 1707,
   "files": [
@@ -5148,13 +5148,13 @@
     },
     {
       "path": "examples/data.json",
-      "bytes": 24894288,
-      "sha256": "36a570cafea574d57ad22803d390978261f868980d7324ec66e55cc3e2485f0d"
+      "bytes": 9766838,
+      "sha256": "dfc87b1814fb1a0e2c2324469f5e81a8383e56c00969ce4e3148425fab8d08d6"
     },
     {
       "path": "examples/pipeline.html",
-      "bytes": 24923133,
-      "sha256": "b3dd523e261eb4d3aaaa47f8595d3b97ae555717330c85bfacf8891b8715ad9f"
+      "bytes": 9796506,
+      "sha256": "9184b1dff4b6d42cd457141628c7c44407996eaa86800726058b7420db81c244"
     },
     {
       "path": "guide.html",
