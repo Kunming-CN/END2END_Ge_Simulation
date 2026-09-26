@@ -231,6 +231,8 @@ class ModelTests(unittest.TestCase):
         files = models.download_files(models.read_distribution(models.MODELS))
         files['index.html'] = adapt('<main></main>', Path('index.html')).encode()
         files['guide.html'] = b'<a href="downloads/all-models.zip">All models</a>'
+        files['examples/pipeline.html'] = b'<a href="data.json">Example data</a>'
+        files['examples/data.json'] = b'{}'
         for detector in models.ORIGINAL_HASHES:
             page = f'detectors/{detector}/index.html'
             files[page] = adapt('<main></main>', Path(page)).encode()

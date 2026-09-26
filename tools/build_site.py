@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_site import MANIFEST, validate
+from pipeline_demo import validate_export as validate_pipeline_export
 from export_models import MODELS, ORIGINAL_HASHES, download_files, read_distribution
 from render_contacts import (STYLE, SURFACE_NOTE, CATEGORY_NOTE, canonical_catalog,
                              contacts, contact_label, verify_applied_style)
@@ -77,6 +78,12 @@ def adapt(s, rel, catalog=None):
         if detector != 'GeGI_3D':
             catalog = canonical_catalog() if catalog is None else catalog
             s = s.replace('<main>', '<main>' + contact_legend(catalog[detector]), 1)
+    if rel == Path('index.html'):
+        flow = '<section id="pipeline-example"><h2>From a photon to an ADC result</h2><p>Explore the complete AK02/SAP22 engineering example: energy deposits, electrode charge, current, preamplifier, analog shaping and peak ADC. Every primary and unresolved charge flag remains visible.</p><a class="button" href="examples/pipeline.html">Open the end-to-end example</a><p>Small precomputed sample; synthetic electronics, not a calibrated experimental prediction.</p></section>'
+        s = s.replace('<main>', '<main>' + flow, 1)
+    elif rel in (Path('detectors/AK02/index.html'), Path('detectors/SAP22/index.html')):
+        flow = '<section><h2>Radiation-to-readout example</h2><p><a href="../../examples/pipeline.html">Inspect deposits, charge, preamp, shaping and peak ADC event by event</a>. The engineering example is separate from this earlier saved gallery; original temperatures and settings are retained.</p></section>'
+        s = s.replace('<main>', '<main>' + flow, 1)
     return scrub(s)
 class NotebookCleaner(HTMLParser):
     def __init__(self):
@@ -118,8 +125,16 @@ def build_export():
     (supplemental / 'supplement.html').write_text(nb, encoding='utf-8')
     shutil.copy2(source / 'GeGI_dimension_schematics' / 'corrected_octagon_geometry_3.png', supplemental / 'octagon_geometry.png')
     shutil.copyfile(ROOT / 'tools' / 'site_guide.html', OUT / 'guide.html')
+    # Presentation-only import of a completed, internally validated offline bundle.
+    pipeline_source = ROOT / '.local' / 'pipeline-showcase'
+    validate_pipeline_export(pipeline_source)
+    (OUT / 'examples').mkdir(exist_ok=True)
+    for name in ('pipeline.html', 'data.json'):
+        shutil.copyfile(pipeline_source / name, OUT / 'examples' / name)
     queue, done, missing = [Path('index.html')], {Path(name) for name in model_outputs}, []
     special = {Path('guide.html'), Path('detectors/GeGI_3D/supplement.html'), Path('detectors/GeGI_3D/octagon_geometry.png')}
+    special.update({Path('examples/pipeline.html'), Path('examples/data.json')})
+    done.update({Path('examples/pipeline.html'), Path('examples/data.json')})
     while queue:
         rel = queue.pop()
         if rel in done: continue

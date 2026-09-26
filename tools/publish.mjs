@@ -21,6 +21,7 @@ function files(dir) {
 run(python, [path.join(root, 'tools/export_models.py'), '--validate']);
 run(python, [path.join(root, 'tools/test_site.py')]);
 run(python, [path.join(root, 'tools/test_contacts.py')]);
+run(python, [path.join(root, 'tools/test_pipeline.py')]);
 run(python, [path.join(root, 'tools/build_site.py')]);
 for (const f of files(path.join(root, 'docs'))) {
   if (fs.statSync(f).size >= 95 * 1024 ** 2 || /\.(jls|pvsm|vtr|bin|pdf|pptx)$/i.test(f)) throw new Error('Unapproved public file: ' + f);
@@ -40,7 +41,7 @@ if (existing.status !== 0) run(gh, ['repo', 'create', repo, '--public', '--descr
 const origin = run(git, ['remote', 'get-url', 'origin'], true, true);
 if (origin.status !== 0) run(git, ['remote', 'add', 'origin', `https://github.com/${repo}.git`]);
 else if (![`https://github.com/${repo}.git`, `https://github.com/${repo}`, `git@github.com:${repo}.git`].includes(origin.stdout.trim())) throw new Error('Unexpected origin; stop and inspect.');
-const simulationFiles = new Set(["simulation/Project.toml","simulation/Manifest.toml","simulation/run.jl","simulation/README.md","simulation/benchmark.jl","simulation/test_run.jl","simulation/gpu/Project.toml","simulation/gpu/Manifest.toml","simulation/replay.jl","simulation/test_replay.jl","simulation/diagnose_collection.jl","simulation/test_collection.jl","simulation/validate_transition.jl","simulation/test_transition.jl","simulation/PHYSICS.md","simulation/verify_electrostatics.jl","simulation/test_electrostatics.jl","simulation/verify_ssd_electrostatics.jl","simulation/test_ssd_electrostatics.jl"]);
+const simulationFiles = new Set(["simulation/Project.toml","simulation/Manifest.toml","simulation/run.jl","simulation/README.md","simulation/benchmark.jl","simulation/test_run.jl","simulation/gpu/Project.toml","simulation/gpu/Manifest.toml","simulation/replay.jl","simulation/test_replay.jl","simulation/diagnose_collection.jl","simulation/test_collection.jl","simulation/validate_transition.jl","simulation/test_transition.jl","simulation/PHYSICS.md","simulation/verify_electrostatics.jl","simulation/test_electrostatics.jl","simulation/verify_ssd_electrostatics.jl","simulation/test_ssd_electrostatics.jl","simulation/readout.jl","simulation/test_readout.jl","simulation/readout_demo.json"]);
 const transportFiles = new Set(["transport/README.md","transport/pixi.toml","transport/pixi.lock","transport/.pixi/config.toml","transport/cryostat-source.json","transport/Run.cmd","transport/run.sh","transport/smoke.gdml","transport/smoke.mac","transport/check_smoke.py","transport/handoff.py","transport/test_handoff.py","transport/geometry_probe.cc","transport/CMakeLists.txt","transport/experiment.json","transport/compare_em.py","transport/test_compare_em.py"]);
 const approved = new Set(['.gitignore', '.gitattributes', 'README.md', 'PROGRESS.md', 'AGENTS.md', 'Publish.cmd']);
 // build_site.py has already validated this exact, versioned model inventory.

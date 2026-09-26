@@ -77,3 +77,8 @@
 # Direct verification of the pinned SSD source-free annulus.
 !simulation/verify_ssd_electrostatics.jl
 !simulation/test_ssd_electrostatics.jl
+
+# Flow-first synthetic electronics and example orchestration.
+!simulation/readout.jl
+!simulation/test_readout.jl
+!simulation/readout_demo.json

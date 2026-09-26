@@ -4,6 +4,15 @@ Updated: 2026-09-26 (local)
 
 Current: M2a event handoff is verified. M2b4 directly verifies SSD on a synthetic source-free annulus and clarifies both contacts in 16 geometry illustrations. Earlier EM-constructor diagnostics are retained; production Li-region convergence, finite-conductivity weighting, as-built cryostat and electronics calibration remain pending. Only measured spectra, not original measured waveforms, are available.
 
+
+## Goal and plan alignment audit — 2026-09-26
+
+Final goal: other students can run a maintainable local Geant4/remage -> SSD -> charge-sensitive preamp -> analog shaping -> peak ADC -> reconstructed-energy/spectrum workflow, with traceable browser examples. Public results are not an online solver. AK02 is primary, SAP22 a nonmatched cross-check; GeGI stays deferred.
+
+Both independent goal audits found a sequencing mismatch: the closing next-task emphasized further weighting/Li diagnostics while M3/M4 were absent. Revised critical path: **M3a causal readout prototype and analytic tests -> one-command full small AK02/SAP22 workflow -> offline event explorer/small diagnostic spectra -> reproducibility hardening**. Advanced finite-conductivity, Li transport convergence, production-cut/step sensitivity, as-built geometry and experiment calibration form a parallel accuracy lane. Their unresolved gates still prohibit physical CCE/efficiency/calibration claims, but do not block a labeled engineering demo. Existing diagnostics are retained, not abandoned.
+
+M3a prospective contract: frozen synthetic finite-feedback CSA, matched pole-zero CR-(RC)^2, independent charge-injection calibration, sampled analog peak and explicitly quantized peak ADC; no per-event truth-based gain, noise/Fano/pileup, or hardware-fit claim. Preserve every selected primary including zeros/flags; record all units, seeds, settings and hashes. Run100 monoenergetic662keV bare-detector primaries per model at explicit77K and canonical biases. The pinned SSD pair energy is2.95eV and will be read from metadata, not replaced by a literature default. New source goes beside existing stage tools; generated data lives under one example root.
+
 ## Baseline website and migration
 
 Status: published and verified at https://kunming-cn.github.io/END2END_Ge_Simulation/
@@ -27,9 +36,9 @@ These are migration and functionality checks, not all-detector convergence tests
 | M0 | Share existing results on GitHub Pages | Published; URL verified |
 | M1 | Clean-machine calculation example, pinned environment, portable paths | M1b CPU/CUDA examples verified on Windows; full campaign and other OS checks pending |
 | M2 | Geant4/remage deposits connected to SSD drift and electrode signal | M2a verified; M2b4 direct SSD analytic checks added; production Li CCE, finite conductivity and cryostat remain gated |
-| M3 | Preamp, analog shaping, ADC, independently reconstructed event energy | Planned |
-| M4 | Small repeatable spectrum and documented event-level checks | Planned |
-| M5 | Physics/readout refinements and comparison with measured data | Planned |
+| M3 | Causal preamp, analog shaping, peak ADC, independently reconstructed event energy | M3a is now the critical path; synthetic prototype and independent tests in progress |
+| M4 | Small repeatable workflow and traceable event/spectrum showcase | Start with the M3a 100-primary-per-model engineering example; production statistics remain later |
+| M5 | Physics/readout accuracy, as-built geometry and measured-spectrum comparison | Parallel accuracy lane; unresolved Li/finite-conductivity/calibration gates remain explicit |
 
 Known portability work: the original GeGI model/cache and one benchmark still reference external local directories; these references currently exist but are not distributed. Some native build scripts also name the installed ParaView/Julia executables. The website does not depend on these paths. Do not describe M1 as complete or upgrade SSD without a separate compatibility check.
 
@@ -406,3 +415,7 @@ Superseded un-applied previews and redundant numerical profiles were cleaned;
 original grey-geometry backups, final results, failed-harness diagnostics and
 review/test receipts are retained together under `.local/m2b4/`. The isolated
 test browser/server were closed. No task schedule was enabled or modified.
+
+M3a reviewers exchanged answers and fixed the contract before runtime: impulseCSA/shaper reference error <=1e-9 ofpeak+1e-12V; chargebalance <=1e-12*sum(abs(dQ))+1e-27C; fixed-input electronics1/2/4ns and10/20us tail comparisons <0.25ADC LSB; quantization error <=0.5LSB relative to analog-calibrated energy. Use negativeCSA thenfixedsignshaper, synthetic gain20, Cf0.6pF,50usfeedback,.5usRCpole and500keV-equivalent independent injection. Retain joint driftflags, clipping/threshold statuses and null invalidErec. Numeric timegrid is notwaveformADC.
+
+M3a pre-run checks: eight readout suites passed with exact-source receipts, including impulse/rectangle/RK4, sign reversal, narrow-current display preservation, tail stability, quantization and malformed inputs. The pipeline fixture suite passed29 tests withone Windows symlink-creation test skipped (reparse rejection separately tested). Review caught and corrected flag schema/counting, absent completion status, calibration identity and readout provenance/ADC checks before detector execution. No physical model or original lockfile changed.

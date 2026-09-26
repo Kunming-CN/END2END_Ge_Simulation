@@ -346,3 +346,29 @@ grid.** They must not be hidden behind the smaller interior result. The native
 coefficient equivalence to the reference FV operator has not been demonstrated;
 its residual on SSD output is labeled a consistency diagnostic, not proof of
 production algebraic/depletion accuracy. See `PROGRESS.md` for exact evidence.
+
+## Synthetic preamp, analog shaping and peak ADC
+
+`readout.jl` consumes the signed cumulative charge CSV and report from `replay.jl`.
+It does not solve detector fields or fit event truth. The frozen engineering
+configuration is `readout_demo.json`: 0.6 pF feedback capacitance, 50 us feedback
+and matched pole-zero time constants, a 0.5 us RC pole, gain 20, and a 14-bit
+0..10 V peak ADC. These assumptions are not a calibrated ORTEC 671/927 model.
+
+Current is reconstructed from original charge-bin differences. Exact state-space
+propagation produces a negative CSA pulse and positive compensated CR-(RC)^2
+output for supported positive charge. A separate 500 keV-equivalent delta-charge
+injection fixes volts/keV; every event uses that calibration. The recorded SSD
+pair energy, presently 2.95 eV, controls charge conversion. No per-event Edep
+normalization, added resolution smearing or inferred collection correction is used.
+
+```console
+julia --startup-file=no --threads=2 --project=simulation simulation/test_readout.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/readout.jl --input .local/RUN/AK02/charge --truth .local/RUN/AK02/transport/events.json --config simulation/readout_demo.json --output .local/RUN/AK02/readout
+```
+
+The demo configuration requires all 100 primary records. Rejected pulses retain
+IDs and flags but have null reconstructed energy; readout acceptance does not
+clear incomplete SSD trajectories. Any negative cumulative charge is explicitly
+outside this conservative unipolar example's accepted waveform domain, including
+tiny excursions; signed values are never rectified or silently repaired.

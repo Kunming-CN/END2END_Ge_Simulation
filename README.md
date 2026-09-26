@@ -142,3 +142,23 @@ backed up; do not delete them to bypass a mismatch. Changes to numerical source
 metadata or original meshes are not palette upgrades and require their own
 reviewed provenance update. Current stages include renderer/exporter/test
 hashes; changing those files after staging requires restaging.
+
+## Final goal and two development lanes
+
+The goal is a local, reproducible radiation-to-readout simulation that another
+student can run and inspect—not merely a large collection of plots, and not an
+online calculation service. The critical path is the smallest complete chain:
+Geant4/remage deposits -> SSD electrode charge -> preamp -> analog shaping ->
+peak-height ADC -> reconstructed energies and a small diagnostic spectrum.
+
+Advanced Li-region/finite-conductivity validation, detailed cryostat/source
+metrology, response calibration and experimental comparison form the accuracy
+lane. They remain required before quantitative physical claims, but do not block
+a clearly labeled engineering prototype. The existing AK02/SAP22 conditions,
+original models and prior diagnostics stay traceable; GeGI development is deferred.
+
+A complete example must preserve event identity, zero-deposit records, incomplete
+charge flags, units, calibration and file hashes across every stage. Its browser
+view must show those same records, not just a selection of attractive waveforms.
+See PROGRESS.md for current completion and unresolved gates rather than treating
+successful execution or a matching plot as experimental validation.

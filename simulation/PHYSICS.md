@@ -210,3 +210,29 @@ contrasts, including same-constructor controls. It is reported alongside, not in
 place of, the original marginal intervals. No significance-based seed selection
 or model substitution is permitted. SciPy used for exact tests is already pinned
 in the transport environment; no dependency version was changed.
+
+## Flow-first readout prototype (M3a; synthetic, not a hardware fit)
+
+The minimum chain is radiation deposits -> signed cumulative electrode charge ->
+current -> finite-feedback charge-sensitive preamp -> compensated analog shaping
+-> peak-height ADC -> independently calibrated reconstructed energy. This
+engineering prototype may run before production Li/finite-conductivity validation;
+those unresolved uncertainties remain visible, not silently calibrated away.
+
+The [ORTEC 671](https://www.ortec-online.com/products/electronic-instruments/amplifiers/671)
+and [ASPEC-927](https://www.ortec-online.com/products/electronic-instruments/multi-channel-analyzers/basic-analog/aspec-927)
+manufacturer descriptions support analog shaping followed by pulse-height
+conversion. The 671's actual Gaussian/triangular network is not claimed to equal
+our ideal CR-(RC)^2 transfer. A front-panel shaping setting is not automatically
+our RC pole constant or pulse peaking time. A published
+[charge-amplifier/CR-RC/pole-zero implementation](https://indico.cern.ch/event/299180/contributions/1659568/)
+provides architectural context, not AK02 calibration constants.
+
+For the chosen sign convention the CSA has transfer
+`H_CSA(s) = -1/[Cf*(s + 1/tau_f)]`. The downstream compensated stage is
+`H_shape(s) = -G*tau_s*(s + 1/tau_pz)/(1 + s*tau_s)^3`.
+With `tau_pz=tau_f`, a positive impulse Q produces
+`V_shape(t) = G*Q/(2*Cf)*(t/tau_s)^2*exp(-t/tau_s)` for t>=0.
+It peaks at `2*tau_s`; that definition fixes gain normalization independently
+of detector truth. Exact matrix-exponential propagation handles constant-current
+bins; sampled peak accuracy must still be checked against time-step refinement.

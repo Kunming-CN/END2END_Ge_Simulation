@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "feedback_capacitance_pF": 0.6,
+  "feedback_tau_us": 50.0,
+  "pole_zero_tau_us": 50.0,
+  "shaping_tau_us": 0.5,
+  "gain": 20.0,
+  "tail_shaping_constants": 20.0,
+  "max_window_ns": 1000000.0,
+  "max_samples_per_event": 500000,
+  "max_total_samples": 20000000,
+  "trace_max_points": 600,
+  "adc_bits": 14,
+  "adc_full_scale_V": 10.0,
+  "threshold_V": 0.001,
+  "calibration_energy_keV": 500.0,
+  "require_all_events": true,
+  "expected_primary_count": 100
+}

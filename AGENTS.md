@@ -100,3 +100,22 @@ source-free annulus using SSD itself. Retain separate interior/contact-interface
 errors, native-stencil checks and independent-FV diagnostic interpretation. A
 passing simple benchmark does not clear the unresolved production Li/depletion
 gates. Keep reviewer resolutions and exact tested hashes in the round evidence.
+
+## Final goal and critical-path priority (owner audit, 2026-09-26)
+
+First close the minimal reproducible radiation -> charge -> preamp -> analog
+shaper -> peak-ADC -> reconstructed-energy workflow and provide a traceable
+example. Advanced Li/finite-conductivity/source-geometry validation is a parallel
+accuracy lane, not an indefinite prerequisite to a clearly labeled engineering
+demo. Do not mark unresolved physical gates complete when the pipeline runs.
+
+Keep all selected primary IDs, zeros, raw-row provenance and charge endpoint
+flags. A readout threshold changes validity/selection, never the event census.
+Calibration must be from a separate synthetic injection or measured calibration,
+not per-event Edep. Preserve charge/current/voltage/ADC units and distinguish the
+analog numerical time grid from a waveform-digitizing acquisition system.
+
+Run one orchestration entry with one generated output root. Showcase export must
+read completed, hash-checked artifacts without simulations or external frontend
+dependencies. Maintain an offline event explorer with explicit settings, low
+statistics and limitations; no fitted experimental claims without actual data.
