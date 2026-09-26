@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Using the detector results library</title>
+<style>body{max-width:960px;margin:40px auto;padding:0 24px;background:#f6f9fc;color:#172a41;font:17px/1.65 system-ui,sans-serif}a{color:#146cb0}h1,h2{line-height:1.25}section{background:white;padding:24px;margin:24px 0;border-radius:10px}code{background:#edf1f7;padding:2px 5px}nav{display:flex;flex-wrap:wrap;gap:18px}.note{border-left:4px solid #a96c00;padding-left:18px}</style></head>
+<body><nav><a href="index.html">Detector library</a><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">Repository</a><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/PROGRESS.md">Development progress</a></nav>
+<h1>Using the detector results library</h1>
+<p>Explore saved SolidStateDetectors.jl results. No installation, account, or connection to the author's computer is needed to use this website.</p>
+<section><h2>Browse a detector</h2><p>Choose a detector on the home page. Each gallery provides geometry and field views, drift movies, comparison figures, event previews, and signal tables. Use the movie controls for playback; select an image to view it at full size.</p>
+<p>MP4 links provide videos for presentations. CSV links provide the exported numerical signals. A browser may display a CSV directly rather than download it.</p></section>
+<section><h2>GeGI: interactive strip signals and supplementary results</h2>
+<p><a href="detectors/GeGI_3D/strip_explorer.html">Open the GeGI strip explorer</a>. Choose an event, press Play or move the time slider, and select individual strips or all 34 channels. The two faces share a common global x-y projection.</p>
+<p><a href="detectors/GeGI_3D/supplement.html">Open the supplementary GeGI study</a> for saved fields, weighting potentials, charge/current curves, collection maps, charge sharing, depth, and temperature studies. These earlier notebook results are a separate study; their settings need not match every gallery event.</p></section>
+<section><h2>What is interactive, and what is not?</h2><p>GeGI strip signals can be explored in the browser. The 3D movies are pre-rendered: they do not provide free camera rotation. Full scene rotation and advanced field inspection remain desktop ParaView features in the original local workspace.</p>
+<p>This website does not run Julia, Geant4, or new detector calculations. Desktop <code>.cmd</code> launchers are not web applications. A portable calculation package for students is a later milestone.</p></section>
+<section><h2>Interpret the results carefully</h2><p>Synthetic single-site and multi-site deposits illustrate detector response; they are not a radioactive-source transport distribution or a Compton reconstruction. Candidate, scenario, and reference labels are retained.</p>
+<p>Field lines are not carrier drift paths. A flat display extension is not proof of complete collection. Read the event status, signal conventions, and assumptions before interpreting a curve.</p>
+<p class="note">Functional tests and numerical checks do not establish experimental validation. Dimension-based reference models are not calibrated replicas.</p>
+<p><a href="maintenance/MODEL_SOURCES.md">Model sources and assumptions</a> · <a href="maintenance/VALIDATION.md">Numerical checks and limitations</a></p></section>
+<section><h2>Versions and local use</h2><p>The underlying library is the saved <code>20260922_suite_v3</code> run, with later presentation and publication maintenance. Publishing a new website snapshot does not imply that its physics was recalculated.</p>
+<p>The <a href="site-manifest.json">snapshot manifest</a> identifies the exact published files by SHA-256. Project development is recorded in the repository's <code>PROGRESS.md</code>.</p>
+<p>A downloaded repository can be browsed by opening <code>docs/index.html</code>. Rebuilding numerical results still requires the original computation workspace; that capability is not included in this first release.</p></section>
+</body></html>

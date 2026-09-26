@@ -33,3 +33,7 @@ The maintainer requested Astra with High reasoning for this project's Work/Codex
 - For Work/Codex graphical sessions, verify Astra and High in the session's model control; a project instruction alone is not a model-setting mechanism.
 - Do not silently substitute another model or enable Extra High, Max, Ultra, Fast mode or separately billed API usage.
 - Confirm the effective model, reasoning level and project directory when starting a development task. Configuration verification is not a claim that a task has been launched.
+
+## Publication validation
+
+Run tools/test_site.py and tools/check_site.py before publishing. Build only through tools/build_site.py; never hand-edit docs/. Verify the live build with tools/check_site.py --url after deployment, rather than relying on the publisher's basic reachability message. Keep the public manifest and exact-byte Git attributes intact. The original numerical workspace remains out of scope for a publication-only edit.

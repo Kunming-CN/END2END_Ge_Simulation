@@ -11,3 +11,6 @@
 *.jpg binary
 *.mp4 binary
 *.webm binary
+
+# Snapshot hashes refer to exact published bytes, independent of Git EOL settings.
+docs/** -text

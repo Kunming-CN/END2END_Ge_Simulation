@@ -1,11 +1,15 @@
 """Export the existing library to a public, static site. No physics is rerun."""
-import hashlib, html, json, re, shutil
+import json, os, re, shutil, stat, sys, time
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from check_site import MANIFEST, validate
+
 ROOT = Path(__file__).resolve().parents[1]
 LIB = ROOT / 'Additional_Simulations' / 'Visualization_3D'
-OUT = ROOT / 'docs'
+DESTINATION = ROOT / 'docs'
+OUT = ROOT / '.local' / 'site-build'
 ALLOWED = {'.html', '.png', '.jpg', '.svg', '.mp4', '.webm', '.csv', '.json', '.md'}
 class Links(HTMLParser):
     def __init__(self):
@@ -27,6 +31,8 @@ def adapt(s, rel):
     s = re.sub(r'<section><h2>Open (?:any event|an event in ParaView)</h2>.*?</section>', '', s, flags=re.S)
     s = re.sub(r'<p>[^<]*(?:<[^>]+>[^<]*)*?</p>', lambda m: '<p>Desktop ParaView controls are available in the local project; this website shows exported results.</p>' if '.cmd' in m[0] else m[0], s)
     s = s.replace(' interactive events', ' event examples')
+    s = s.replace('Interactive event library', 'Saved event examples')
+    s = s.replace('href="README.md"', 'href="guide.html"')
     s = s.replace('rotatable geometry', 'exported geometry views')
     s = s.replace('Rotate the detector in ParaView', 'Desktop 3D scene preview')
     s = s.replace('</style>', '#copy{display:none!important}</style>', 1)
@@ -57,7 +63,7 @@ class NotebookCleaner(HTMLParser):
         if not self.skip: self.out.append('&' + name + ';')
     def handle_charref(self, name):
         if not self.skip: self.out.append('&#' + name + ';')
-def build():
+def build_export():
     OUT.mkdir(exist_ok=True)
     supplemental = OUT / 'detectors' / 'GeGI_3D'
     supplemental.mkdir(parents=True, exist_ok=True)
@@ -68,13 +74,9 @@ def build():
     nb = re.sub(r'(<body[^>]*>)', r'\1' + banner, nb, count=1)
     (supplemental / 'supplement.html').write_text(nb, encoding='utf-8')
     shutil.copy2(source / 'GeGI_dimension_schematics' / 'corrected_octagon_geometry_3.png', supplemental / 'octagon_geometry.png')
-    local_page = LIB / 'detectors' / 'GeGI_3D' / 'index.html'
-    local_html = local_page.read_text(encoding='utf-8')
-    if 'id="gegi-supplement-link"' not in local_html:
-        link = '<section id="gegi-supplement-link"><h2>Supplementary GeGI results</h2><p>Saved fields, collection maps, charge sharing, depth and temperature studies.</p><a class="button" href="../../../../docs/detectors/GeGI_3D/supplement.html">Open supplementary study</a></section>'
-        local_page.write_text(local_html.replace('<main>', '<main>' + link, 1), encoding='utf-8')
+    shutil.copyfile(ROOT / 'tools' / 'site_guide.html', OUT / 'guide.html')
     queue, done, missing = [Path('index.html')], set(), []
-    special = {Path('detectors/GeGI_3D/supplement.html'), Path('detectors/GeGI_3D/octagon_geometry.png')}
+    special = {Path('guide.html'), Path('detectors/GeGI_3D/supplement.html'), Path('detectors/GeGI_3D/octagon_geometry.png')}
     while queue:
         rel = queue.pop()
         if rel in done: continue
@@ -116,4 +118,97 @@ def build():
               'excluded': ['raw caches', 'ParaView states', 'logs', 'manual PDFs', 'photographs', 'slides']}
     (ROOT / '.local' / 'site-build.json').write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2), flush=True)
-if __name__ == '__main__': build()
+
+
+def remove_generated(folder):
+    """Clean generated files, handling Drive read-only attributes, never ACLs."""
+    if folder not in (OUT, ROOT / '.local' / 'site-previous') or folder.is_symlink():
+        raise RuntimeError('Refusing to clean an unexpected folder')
+    def readonly_retry(function, target, error):
+        target = Path(target)
+        if target.is_symlink() or not target.resolve().is_relative_to(folder.resolve()):
+            raise error[1]
+        if not isinstance(error[1], PermissionError):
+            raise error[1]
+        # Windows read-only attributes on our generated directory are not ACLs.
+        os.chmod(target, stat.S_IREAD | stat.S_IWRITE)
+        function(target)
+
+    for attempt in range(8):
+        if not folder.exists():
+            return
+        try:
+            shutil.rmtree(folder, onerror=readonly_retry)
+            return
+        except PermissionError:
+            if attempt == 7:
+                raise
+            time.sleep(0.5 * (attempt + 1))
+
+
+def rename_generated(source, destination):
+    """Retry temporary Drive/open-handle locks during the validated swap."""
+    allowed = {OUT, DESTINATION, ROOT / '.local' / 'site-previous'}
+    if source not in allowed or destination not in allowed:
+        raise RuntimeError('Unexpected publication move')
+    for attempt in range(12):
+        try:
+            source.rename(destination)
+            return
+        except PermissionError:
+            if attempt == 11:
+                raise
+            time.sleep(min(0.5 * (attempt + 1), 2.0))
+
+
+def build():
+    """Validate in staging, then replace only the generated publication folder."""
+    local = ROOT / '.local'
+    local.mkdir(exist_ok=True)
+    previous = local / 'site-previous'
+    if previous.exists():
+        # Only discard the old generated copy when the installed snapshot is valid.
+        validate(DESTINATION)
+        remove_generated(previous)
+    if DESTINATION.is_symlink() or OUT.is_symlink():
+        raise RuntimeError('Publication directories must not be symlinks.')
+    old = None
+    if (DESTINATION / MANIFEST).exists():
+        # Protect unknown files and hand edits: fix the source instead of losing work.
+        old = validate(DESTINATION)
+    if OUT.exists():
+        remove_generated(OUT)
+    build_export()
+    # Stable text bytes on Windows/Linux; numerical CSV files remain byte-for-byte.
+    for output in OUT.rglob('*'):
+        if output.is_file() and output.suffix in {'.html', '.json', '.md', '.svg'}:
+            data = output.read_bytes()
+            normalized = data.replace(b'\r\n', b'\n')
+            if normalized != data:
+                output.write_bytes(normalized)
+    report = validate(OUT, require_manifest=False)
+    (OUT / MANIFEST).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8', newline='\n')
+    validate(OUT)
+    if old and old['build_id'] == report['build_id']:
+        shutil.rmtree(OUT)
+        print('Unchanged snapshot; docs/ was not rewritten.', flush=True)
+    else:
+        moved = DESTINATION.exists()
+        if moved:
+            rename_generated(DESTINATION, previous)
+        try:
+            rename_generated(OUT, DESTINATION)
+        except Exception:
+            if moved:
+                rename_generated(previous, DESTINATION)
+            raise
+        if moved:
+            remove_generated(previous)
+        print('Replaced docs/ with the validated snapshot.', flush=True)
+    summary = {k: v for k, v in report.items() if k != 'files'}
+    (local / 'site-build.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
+    print(json.dumps(summary, indent=2), flush=True)
+
+
+if __name__ == '__main__':
+    build()
