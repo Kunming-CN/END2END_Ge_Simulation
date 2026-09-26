@@ -1083,3 +1083,26 @@ identity, unprocessed census and repeatability were independently checked. Both
 reviewers closed this bounded feature after inspecting actual evidence and the
 minimal scope/provenance fixes. No further PDE audit was required. The original
 model, SDK, legacy replay, electronics code and dependency locks remain unchanged.
+
+M3c publication verified: implementation `b91d119` was pushed to main and GitHub
+Pages run `36265078768` succeeded. Exact build
+`df993cae5a75787744c35f0add89a1e549b78117449cf8d94d0179c43d23bd14`
+passed 81 live-file checks. All four new example files were separately fetched
+and matched local byte counts and SHA-256 hashes. The live 390px page retains
+14 cases, 56 plots and both explicit legacy/native setting descriptions without
+horizontal overflow. Offline details opening also passed; no external requests
+or JavaScript exceptions were observed. Release: `v0.14.0-native-li-readout`.
+
+Publication regressions passed 19 site, 27 contact, 46 pipeline tests (one known
+Windows symlink-creation skip), and 14 Li-report tests. The optional feature's
+21 native-interface/presentation checks passed separately. Repeated generated
+copies were removed only after exact case/charge equality, with hashes retained;
+final output remains at `.local/native-li-example`. No SDK, canonical model,
+legacy replay/readout or lockfile was changed. The owned browser was closed.
+
+Next delivery work is a bounded, explicitly configurable peak-validity policy
+and reusable native-response entry—not another automatically blocking global
+PDE campaign. Preserve the old negative-input regression, signed pulses, threshold
+and cap flags; test any new policy independently rather than rectify signals or
+fit truth. Quantitative grid/CCE calibration remains a separate accuracy lane.
+No high-statistics Cs137 campaign or experimental agreement is claimed complete.
