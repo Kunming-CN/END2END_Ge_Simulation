@@ -73,3 +73,7 @@
 !simulation/test_electrostatics.jl
 !transport/compare_em.py
 !transport/test_compare_em.py
+
+# Direct verification of the pinned SSD source-free annulus.
+!simulation/verify_ssd_electrostatics.jl
+!simulation/test_ssd_electrostatics.jl

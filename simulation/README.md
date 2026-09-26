@@ -319,3 +319,30 @@ perturbations. Constant-bias field errors have explicit absolute V/m units.
 Passing verifies this independent operator and its checks only. A subsequent
 comparison must apply an independent residual/flux diagnostic to SSD's own output;
 this result does not resolve the AK02 fine-grid depletion failure or validate CCE.
+
+## Direct analytic verification of SSD electrostatics
+
+`verify_ssd_electrostatics.jl` solves the pinned SSD infinite-coaxial example on
+three explicit nonuniform grids. This is a synthetic homogeneous, source-free
+CPU test, not an AK02 depletion or Li-layer calibration. The electrical faces
+are **5.1 and 34.9 mm**, at 0 and 10 V; the finite-thickness contact geometry is
+kept unchanged. The analytic solution is logarithmic in radius.
+
+```console
+julia --startup-file=no --threads=2 --project=simulation simulation/test_ssd_electrostatics.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/verify_ssd_electrostatics.jl --output .local/ssd-electrostatics-new
+```
+
+The second command requires a new output directory and saves `profiles.csv` and
+`run.json`. It runs 17/33/65 annular-node cases plus zero, equal, reversed and
+offset-bias controls. Reports retain actual ticks, masks, charge-source arrays,
+source/manifest hashes, native vector fields, continuation checks, failed gates
+and independent finite-volume diagnostics. No production solver is modified.
+
+The finest tested errors were 9.56e-6 of the voltage span and 1.60e-4 relative
+interior radial-field error, with approximately second-order refinement.
+**Contact-interface field errors remain separate: about 1.61% and 1.11% on that
+grid.** They must not be hidden behind the smaller interior result. The native
+coefficient equivalence to the reference FV operator has not been demonstrated;
+its residual on SSD output is labeled a consistency diagnostic, not proof of
+production algebraic/depletion accuracy. See `PROGRESS.md` for exact evidence.

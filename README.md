@@ -107,3 +107,38 @@ The owner confirmed that original AK02/SAP22 pulse waveforms were not saved;
 measured energy spectra remain available. Experimental validation therefore
 targets spectrum observables with run/background/calibration metadata and explicit
 parameter degeneracies, not recovery or fitting of nonexistent waveforms.
+
+## Maintain the two-contact geometry illustrations
+
+The geometry key uses **contact 1 = orange-red**, **contact 2 = cyan-blue** and
+translucent grey-blue bulk. IDs, names and voltages come from the canonical
+model catalog; colors do not infer doping type, Li diffusion thickness or charge
+collection. Existing GeGI channel displays, field views and signal movies retain
+their own schemes. Small contacts retain their actual scale.
+
+Use the existing ParaView 6.1.1 Python on the development computer:
+
+```powershell
+$pv = 'C:/Program Files/ParaView 6.1.1/bin/pvpython.exe'
+& $pv --no-mpi --disable-registry tools/render_contacts.py --all --output .local/contact-review-new
+# Inspect the staged PNGs before applying them.
+& $pv --no-mpi --disable-registry tools/render_contacts.py --apply .local/contact-review-new
+.\Publish.cmd
+```
+
+The renderer reuses the original meshes and cameras; it does not solve fields.
+Apply checks original/staged hashes, stores one `originals.zip` and receipt, and
+replaces only the 16 geometry PNG/PVSM pairs. Caught failures are rolled back;
+a host crash or failed rollback still requires inspecting the saved originals.
+Do not reuse an applied/failed stage or delete its evidence before inspection.
+
+The local `.local/contact-display-applied.json` index prevents publishing a
+new color key alongside stale images after an old gallery rebuild. Generated
+`docs/` remains read-only-by-convention: edit the generator, stage, inspect,
+apply, test and publish instead. The portable site validator does not require
+this private index. For an intentional palette change, stage all 16 with the reviewed new style, then
+apply with `--upgrade-style`. The prior ledger and native hashes are checked and
+backed up; do not delete them to bypass a mismatch. Changes to numerical source
+metadata or original meshes are not palette upgrades and require their own
+reviewed provenance update. Current stages include renderer/exporter/test
+hashes; changing those files after staging requires restaging.

@@ -1,11 +1,14 @@
 """Export the existing library to a public, static site. No physics is rerun."""
 import json, os, re, shutil, stat, sys, time
+from html import escape
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_site import MANIFEST, validate
 from export_models import MODELS, ORIGINAL_HASHES, download_files, read_distribution
+from render_contacts import (STYLE, SURFACE_NOTE, CATEGORY_NOTE, canonical_catalog,
+                             contacts, contact_label, verify_applied_style)
 
 ROOT = Path(__file__).resolve().parents[1]
 LIB = ROOT / 'Additional_Simulations' / 'Visualization_3D'
@@ -26,7 +29,24 @@ def scrub(s):
     s = s.replace(str(ROOT).replace('\\', '\\\\'), '[project]')
     s = s.replace(str(ROOT), '[project]').replace(ROOT.as_posix(), '[project]')
     return re.sub(r'C:[\\/]+Users[^\n<>"`]*', '[external local input]', s)
-def adapt(s, rel):
+def contact_legend(item):
+    """Text labels keep the geometry color key usable without color perception."""
+    rows = []
+    for contact in contacts(item):
+        style = STYLE['contact_%02d.vtp' % contact['id']]
+        color = ','.join(str(round(value * 255)) for value in style['rgb'])
+        swatch = f'<span aria-hidden="true" style="display:inline-block;width:1em;height:1em;background:rgb({color});border:1px solid #354354;margin-right:.4em"></span>'
+        rows.append(f'<li>{swatch}{escape(style["color"])} — {escape(contact_label(contact))}</li>')
+    detail = f'<p><a href="runs/20260922_suite_v3/01_geometry.png">Open full-size geometry (original scale)</a>. Small point contacts may be difficult to distinguish in thumbnails; use the full-size view and contact labels.</p>'
+    return ('<section id="contact-legend"><h2>Geometry contact key</h2><ul>'
+            + ''.join(rows) + '</ul><p>Grey-blue: translucent germanium bulk. '
+            + CATEGORY_NOTE + ' Names and voltages come from the original model catalog.</p><p>'
+            + SURFACE_NOTE + ' The original display-only scale of 1.001 and translation '
+            'are retained to reduce coplanar flicker. This key applies to the geometry '
+            'illustration; field and signal views retain their own legends.</p>' + detail + '</section>')
+
+
+def adapt(s, rel, catalog=None):
     s = re.sub(r'<section id="gegi-supplement-link">.*?</section>', '', s, flags=re.S)
     s = re.sub(r'<details><summary>Find this folder in Windows</summary>.*?</details>', '', s, flags=re.S)
     s = re.sub(r'<section><h2>Open (?:any event|an event in ParaView)</h2>.*?</section>', '', s, flags=re.S)
@@ -46,12 +66,17 @@ def adapt(s, rel):
     if rel == Path('index.html'):
         note = '<section><h2>Original SSD models</h2><p><a href="downloads/all-models.zip">Download all 17 original models with includes (ZIP)</a> | <a href="models/README.md">Model distribution guide</a></p><p>Geometry and semiconductor configurations; no numerical field caches or CAD/STL files.</p></section>'
         s = s.replace('<main>', '<main>' + note, 1)
+        key = '<section><h2>Two-contact geometry colors</h2><p>Contact 1: orange-red; contact 2: cyan-blue; bulk: translucent grey-blue. Colors identify contact IDs, not doping signs. Contact surfaces do not show physical Li diffusion-layer thickness. GeGI retains its separate channel scheme.</p><p><a href="detectors/AK02/index.html#contact-legend">See the contact key and exact model voltages</a></p></section>'
+        s = s.replace('<main>', '<main>' + key, 1)
     if len(rel.parts) == 3 and rel.parts[0] == 'detectors' and rel.name == 'index.html':
         detector = rel.parts[1]
         if detector not in ORIGINAL_HASHES:
             raise ValueError('Unknown detector model: ' + detector)
         note = f'<section><h2>Original SSD model configuration</h2><p><a href="../../models/{detector}.yaml">Exact original YAML</a> | <a href="../../downloads/{detector}.zip">Model ZIP with required includes and metadata</a> | <a href="../../models/catalog.json">Provenance and assumptions</a></p><p>Use the ZIP to keep required include paths intact. These are geometry and semiconductor inputs, not CAD/STL files or numerical field caches. Candidate and reference limitations remain unchanged.</p></section>'
         s = s.replace('<main>', '<main>' + note, 1)
+        if detector != 'GeGI_3D':
+            catalog = canonical_catalog() if catalog is None else catalog
+            s = s.replace('<main>', '<main>' + contact_legend(catalog[detector]), 1)
     return scrub(s)
 class NotebookCleaner(HTMLParser):
     def __init__(self):
@@ -74,8 +99,11 @@ class NotebookCleaner(HTMLParser):
     def handle_charref(self, name):
         if not self.skip: self.out.append('&#' + name + ';')
 def build_export():
+    verify_applied_style(ROOT)
     OUT.mkdir(exist_ok=True)
-    model_outputs = download_files(read_distribution(MODELS))
+    distribution = read_distribution(MODELS)
+    model_outputs = download_files(distribution)
+    catalog = {item['id']: item for item in json.loads(distribution['catalog.json'])['detectors']}
     for name, data in model_outputs.items():
         target = OUT / name
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -103,7 +131,7 @@ def build_export():
         if not f.is_file(): missing.append(str(rel)); continue
         dest.parent.mkdir(parents=True, exist_ok=True)
         if f.suffix == '.html':
-            s = adapt(f.read_text(encoding='utf-8'), rel)
+            s = adapt(f.read_text(encoding='utf-8'), rel, catalog)
             dest.write_text(s, encoding='utf-8')
             parser = Links(); parser.feed(s)
             for link in parser.links:

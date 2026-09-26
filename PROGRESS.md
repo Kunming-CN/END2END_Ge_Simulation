@@ -2,7 +2,7 @@
 
 Updated: 2026-09-26 (local)
 
-Current: M2a event handoff is verified. M2b3 adds an independent analytic electrostatic check and Geant4 EM-constructor sensitivity with uncertainty; production Li-region convergence, as-built cryostat and electronics calibration remain pending. Only measured spectra, not original measured waveforms, are available.
+Current: M2a event handoff is verified. M2b4 directly verifies SSD on a synthetic source-free annulus and clarifies both contacts in 16 geometry illustrations. Earlier EM-constructor diagnostics are retained; production Li-region convergence, finite-conductivity weighting, as-built cryostat and electronics calibration remain pending. Only measured spectra, not original measured waveforms, are available.
 
 ## Baseline website and migration
 
@@ -26,7 +26,7 @@ These are migration and functionality checks, not all-detector convergence tests
 |---|---|---|
 | M0 | Share existing results on GitHub Pages | Published; URL verified |
 | M1 | Clean-machine calculation example, pinned environment, portable paths | M1b CPU/CUDA examples verified on Windows; full campaign and other OS checks pending |
-| M2 | Geant4/remage deposits connected to SSD drift and electrode signal | M2a verified; M2b3 independent annulus/EM checks added; production Li CCE and cryostat remain gated |
+| M2 | Geant4/remage deposits connected to SSD drift and electrode signal | M2a verified; M2b4 direct SSD analytic checks added; production Li CCE, finite conductivity and cryostat remain gated |
 | M3 | Preamp, analog shaping, ADC, independently reconstructed event energy | Planned |
 | M4 | Small repeatable spectrum and documented event-level checks | Planned |
 | M5 | Physics/readout refinements and comparison with measured data | Planned |
@@ -327,3 +327,70 @@ metadata; missing pulse records do not block mathematical verification. No curre
 result authorizes physical Li CCE, dead-layer thickness or as-built efficiency.
 
 M2b3 publication verified: implementation cb333c8 pushed to main; all18 website/model checks passed. The unchanged website snapshot d2d6fbe17da0168cf49b512e3519e8efebd18eb7db6e85bbdac8dce353660e10 again matched78 live files. Release marker: v0.7.0-analytic-em-checks. New source and spectrum-only/physics documentation are public; raw40k-case data and review logs remain local. All current specialist/compute workers finished. This is not an enabled or proven unattended-runtime continuation.
+
+## M2b4 prospective plan — 2026-09-26
+
+Resumed interactively after client-history loss; clean local/origin main 4a35190 verified. No active project computation/review worker or prior owner/lock was present. Acquired one supervisor-owned lock; schedules remain unchanged. First improve all16 two-contact geometry thumbnails/detail images: orange-red contact1, cyan-blue contact2, translucent bulk and exact ID/name/bias legends, preserving original meshes and all field/signal results; GeGI remains unchanged. Separately apply independent analytic/residual checks to SSD's own synthetic source-free annulus, using explicit grids and unchanged production code. Read-only HPGe and numerical/render specialist sessions will exchange questions and cross-review tested evidence. Finite-conductivity weighting and minimal readout prototypes remain subsequent bounded tasks; no fit to measured spectra or fabricated waveforms.
+
+M2b4 planning exchange: both specialists agreed on5.1/34.9mm electrical faces of the unchanged SSD example, explicit17/33/65 annular grids, actual native vector-field checks and separate boundary stencils. Reference-FV residuals are diagnostics unless native coefficient equivalence is established. Before numerical execution, finest voltage/midpoint/interior-field gates are1e-3, refinement ratios0.4, contact1e-10V, constant-bias1e-9V/1e-6V/m; strict bounded iteration gates are frozen in source. Supervisor added active CPU-project/manifest provenance guards before running. The67 new lightweight tests passed.
+
+M2b4 initial actual-SSD harness failed before solving: the explicit zero-width phi axis had been constructed as periodic/open, producing zero angular volume and NaN diagnostic charge densities. Source inspection of SSD.get_φ_SSDInterval/get_extended_ticks shows collapsed phi must use reflecting/closed ends. Corrected this harness API usage to match the shipped configuration, retaining initial failure/source evidence; no package or detector change and no gate relaxation.
+
+M2b4 visual review of all16 first renders found the expanded seven-line title intruded on tall detector images, and enclosing electrodes dimmed back-facing point contacts. Kept exact geometry/cameras but reduced the image header to four ID/name/bias lines (explanations remain in HTML), set bulk/contact1/contact2 opacity to0.15/0.95/0.35, and rerendered before any native application. No mesh enlargement or physical layer thickness was introduced.
+
+## M2b4 verified locally — direct SSD check and two-contact views
+
+The actual pinned SSD 0.11.8 source-free coaxial example was solved on explicit
+17/33/65-node annular grids in Float64 on CPU, with the original finite contact
+bands and electrical faces at 5.1/34.9 mm. Zero/equal/reversed/common-offset
+bias controls also passed. The 80 new lightweight tests and 43 existing reference
+tests passed. No production solver, model YAML or locked environment was changed.
+
+Finest-grid voltage error/span was 9.5647e-6, independent midpoint-field error
+8.0232e-5, and actual SSD interior radial-field relative error 1.6017e-4 (0.0160%).
+Refinement ratios were about 0.25. **Contact-interface errors remain 1.61% and
+1.11%**; these are not hidden by the interior result. Independent reconstruction
+from the unchanged numerical potential agreed with native radial fields within
+2.274e-13 V/m. Reference-FV residual sign is explicitly minus-Laplacian, and
+native/FV coefficient equivalence remains unproved. This is synthetic validation,
+not a resolution of the production AK02 depletion/Li CCE convergence gate.
+
+All 16 two-contact geometry illustrations now use contact 1 orange-red (opacity
+0.95), contact 2 cyan-blue (0.35), and translucent grey-blue bulk (0.15). Exact
+contact IDs/names/signed voltages remain in a four-line image header and adjacent
+HTML key. Full-size image links clarify tiny physical contacts at 270px thumbnail
+width. Colors do not imply doping type or Li-layer thickness. GeGI is unchanged.
+The original 78 K annotations remain those of the saved results, not new 77 K
+calculations. Native edits were confined to 32 geometry PNG/PVSM files; all other
+inventoried native files retained size/time metadata, and selected model/mesh
+hashes were checked before and after application. No field/signal cache rerun.
+
+Publication maintenance now has 27 passing contact tests and 18 passing site
+checks. Covered cases include deterministic restyling, stale inputs, safe full
+palette upgrades, explicit upgrade authorization, same-style restage/reapply,
+and caught-failure rollback with an existing ledger. New stage schema 3 records
+renderer/exporter/test and previous-ledger hashes; original PNG/PVSM backups and
+apply receipts are retained locally. A host crash still needs manual recovery.
+The final schema-3 rerender was byte-identical to all 16 reviewed images/states
+and was successfully reapplied using the maintained workflow.
+
+Two independent specialist sessions (HPGe/electronics: Astra High; numerical/
+rendering: Astra XHigh) exchanged planning questions and reviewed each other's
+findings, then reviewed implementation and actual supervisor-run evidence.
+Two bounded Astra High coding sessions owned non-overlapping files. Reviews
+identified and resolved the residual-sign wording, missing reconstruction
+comparison, title overlap and palette-upgrade workflow; they are not human
+certification. No resets, paid API switch or scheduling changes were made.
+
+Local browser checks passed at desktop 1440px and mobile 390px: 17 homepage
+cards, both AK02/SAP22 contact labels and full-size links, no missing images,
+no horizontal overflow in the checked pages and no JavaScript exceptions.
+Repeated site build was unchanged: 21 HTML pages, 1702 local links, build ID
+cfecdea41177e23d54d3ffd467ba2276fcb72b29b77749be08bd1887a5756c4a.
+
+Next scientific gate: a separate synthetic planar two-layer finite-conductivity
+weighting-response benchmark with explicit dielectric/conducting limits, not an
+inferred AK02 conductivity. Minimal preamp/shaper/ADC prototypes follow as an
+independent gate. No measured-waveform fit is possible from spectra alone.
+
+Final independent numerical/render review closed the palette migration blocker after inspecting current code, matching tool hashes, the successful same-style all16 application receipt, and 27-test evidence. HPGe cross-review closed the residual-sign and numerical-field reconstruction findings. Neither review claims live deployment or production-physics validation.

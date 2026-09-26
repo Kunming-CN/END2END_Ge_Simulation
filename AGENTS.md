@@ -81,3 +81,22 @@ waveform comparisons or require recovery of nonexistent files. Spectrum-only
 validation must retain acquisition/background/calibration metadata and model
 identifiability limits. EM-constructor changes affect radiation transport, not
 SSD carrier physics; compare with fixed settings and statistical controls.
+
+## Geometry publication and direct SSD checks
+
+Use `tools/render_contacts.py` for staged geometry-only changes; never run the
+full numerical gallery builder merely to recolor contacts. Preserve all meshes,
+model hashes, cameras and non-geometry outputs. Review full-size and thumbnail
+views, including tiny point contacts; keep categorical ID/name/bias text and a
+full-size link. Do not infer doping or Li thickness from the color key.
+
+Keep the applied-index/source provenance checks and backed-up apply transaction.
+Intentional palette changes require an explicit reviewed full-detector upgrade;
+ordinary publication must never silently rebaseline changed numerical sources.
+Run `tools/test_contacts.py` with the existing publication tests.
+
+`simulation/verify_ssd_electrostatics.jl` verifies only the synthetic homogeneous
+source-free annulus using SSD itself. Retain separate interior/contact-interface
+errors, native-stencil checks and independent-FV diagnostic interpretation. A
+passing simple benchmark does not clear the unresolved production Li/depletion
+gates. Keep reviewer resolutions and exact tested hashes in the round evidence.

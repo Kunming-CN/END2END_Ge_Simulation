@@ -234,6 +234,9 @@ class ModelTests(unittest.TestCase):
         for detector in models.ORIGINAL_HASHES:
             page = f'detectors/{detector}/index.html'
             files[page] = adapt('<main></main>', Path(page)).encode()
+            if detector != 'GeGI_3D':
+                # Bounded fixture for the new full-size illustration link.
+                files[f'detectors/{detector}/runs/20260922_suite_v3/01_geometry.png'] = b'\x89PNG\r\n\x1a\n'
         # Existing homepage/GeGI links need only bounded placeholder pages.
         for name in ('strip_explorer.html', 'supplement.html', 'octagon_geometry.png'):
             files['detectors/GeGI_3D/' + name] = b''
