@@ -106,3 +106,16 @@
 # Configurable signed peak validity and complete native regression checks.
 !simulation/test_peak_policy.jl
 !simulation/test_native_peak_regression.jl
+
+# Reviewed native response, versioned electronics and real-decay stream.
+!simulation/native_response.jl
+!simulation/native_stream.jl
+!simulation/readout_profiles.jl
+!simulation/native_readout_profile.json
+!simulation/test_native_response.jl
+!simulation/test_native_stream.jl
+!simulation/test_readout_profiles.jl
+!transport/cs137.py
+!transport/cryostat_export.cc
+!transport/cryostat_nominal.json
+!transport/test_cs137.py

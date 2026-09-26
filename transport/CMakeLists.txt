@@ -13,3 +13,9 @@ add_executable(geometry_probe geometry_probe.cc)
 target_compile_features(geometry_probe PRIVATE cxx_std_17)
 target_link_libraries(geometry_probe PRIVATE ${Geant4_LIBRARIES})
 target_compile_definitions(geometry_probe PRIVATE PROJECT_LOCAL="${PROJECT_ROOT}/.local")
+
+# Separate nominal Cs137 assembly exporter; the original probe is unchanged.
+add_executable(cryostat_export cryostat_export.cc)
+target_compile_features(cryostat_export PRIVATE cxx_std_17)
+target_link_libraries(cryostat_export PRIVATE ${Geant4_LIBRARIES})
+target_compile_definitions(cryostat_export PRIVATE PROJECT_LOCAL="${PROJECT_ROOT}/.local")

@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "scenario": "LBNL-modular-nominal-v1",
+  "status": "nominal engineering geometry; not surveyed/as-built",
+  "upstream_entry": "stage.tg",
+  "upstream_chain": ["stage.tg", "shield.tg", "chamber.tg"],
+  "coordinate_transform": {
+    "definition": "x_global_mm=R*x_local_mm+t",
+    "rotation_local_to_global": [[1,0,0],[0,0,1],[0,-1,0]],
+    "translation_global_mm": [0,1.450,0.290]
+  },
+  "expected_vacuum_global_translation_mm": [0,1.473,-3.710],
+  "crystal_in_vacuum_translation_mm": [0,-0.023,4],
+  "spacer": {"material": "boron_nitride", "radius_mm": 13, "thickness_mm": 0.5, "vacuum_centre_mm": [0,-0.273,4]},
+  "capsule": {"material": "G4_Al", "fill_material": "G4_POLYETHYLENE", "radius_mm": 3, "thickness_mm": 1, "wall_mm": 0.1, "axis_global": [0,1,0]},
+  "source": {"Z":55,"A":137,"kinetic_energy_eV":0,"position_global_mm":[0,37.073,0.290],"distribution":"point", "activity_Bq":null},
+  "top_assumption": "global +y, tangent above curved cylindrical end-cap at y=36.573 mm; NOT surveyed lab lid",
+  "unknowns": ["real capsule dimensions/composition", "active layer distribution", "lab lid orientation", "actual crystal/source/holder survey", "activity and acquisition time"],
+  "omitted": ["original planar crystal/wings and Am241 source", "zero-thickness electrodes", "finite SSD point-contact overlay"],
+  "group_horizon_ns": 100000,
+  "decay_photon_line_window_keV": [660,663],
+  "overlap_samples": 10000
+}

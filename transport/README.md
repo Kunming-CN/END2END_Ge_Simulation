@@ -340,3 +340,101 @@ All constructor comparisons remain sensitivity diagnostics, not an accuracy rank
 The first six cases reproduce their earlier event-energy arrays byte-for-byte.
 See [PHYSICS.md](../simulation/PHYSICS.md) for primary references and the separation
 between radiation models, charge response and the owner's spectrum-only data.
+
+## Nominal cryostat and actual Cs137 decays
+
+`cs137.py` is separate from the frozen mono-gamma handoff. It imports the pinned
+`stage.tg -> shield.tg -> chamber.tg` through native `G4tgbVolumeMgr`;
+`cryostat_export` is an additional CMake target. Upstream bytes are hash-checked
+and never edited. `cryostat_nominal.json` defines a nominal modular assembly
+with canonical AK02/SAP22 solid, BN spacer and Al/polyethylene capsule.
+**This is not a surveyed apparatus.** Global +y is above the curved cylindrical
+end-cap, not an identified lab lid. Real capsule/holder/source dimensions remain
+unknown; the JSON lists assumptions and omissions.
+
+The imported cavity global translation is `[0,1.473,-3.710] mm`. Crystal global
+translation `[0,1.450,0.290] mm` gives cavity-local `[0,-0.023,4] mm`; local +z
+rotates to global +y. Existing indium top is cavity y `-0.523 mm`. The 0.5 mm
+spacer centre is y `-0.273 mm`, so its top meets the crystal bottom. Native checks
+cover composed poses, canonical volume/Inside probes, source containment and
+recursive overlaps (10,000 samples/placement, fixed seed). The report lists all
+materials, densities and placements. Sampling is not a proof of absence of
+arbitrarily small overlaps. Any import/check failure blocks transport. Generated
+volume names are unique for passive ledger registration; originals stay intact.
+
+Run in `transport/` through the existing locked environment. These are prepared
+commands; completed nominal geometry and integration checks are recorded in
+`../PROGRESS.md`:
+
+```sh
+bash run.sh cmake -S . -B ../.local/m2a/cs137-build-v1 -G Ninja
+bash run.sh cmake --build ../.local/m2a/cs137-build-v1 --target cryostat_export --parallel 2
+bash run.sh python -B test_cs137.py
+bash run.sh python -B cs137.py validate-probe --raw ../.local/peak-native-delivery/rdm-probe/truth.lh5 --model AK02 --events 20
+bash run.sh python -B cs137.py prepare --model AK02 --output ../.local/cs137-nominal-check/AK02 --exporter ../.local/m2a/cs137-build-v1/cryostat_export --events 20 --seed 26092631
+bash run.sh python -B cs137.py run --directory ../.local/cs137-nominal-check/AK02
+bash run.sh python -B cs137.py extract --directory ../.local/cs137-nominal-check/AK02 --chunk-size 7
+bash run.sh python -B cs137.py check-stream --manifest ../.local/cs137-nominal-check/AK02/stream/manifest.json
+```
+
+Repeat prepare/run/extract/check-stream for SAP22 in a fresh SAP22 directory.
+Windows uses `transport\Run.cmd` with the same arguments from repository root.
+The supervisor's local `run-transport-checks.ps1 -Name FRESH_NAME` runs serial
+stages with separate stdout/stderr logs and exit receipts; optional
+`-Stage Build|Tests|Probe|AK02|SAP22` selects a subset. No new adapter command
+installs packages. Outputs must be new and below `.local/`, without linked paths.
+
+The source is one zero-kinetic-energy Cs137 ion/event. Remage resets initial
+decay secondaries to zero while retaining daughter lifetimes. Full always-on
+Track output and float64 vertex/primary/step fields preserve both endpoints,
+track links and zero-energy rows without clustering. Passive materials use the
+native Scintillator scheme with optical physics off. Their registration also
+applies the declared 0.01 mm sensitive production cut to those volumes; this is
+explicit, not a convergence claim. Unsupported commands/schemas fail without
+dropping fields. Receipts hash raw LH5, software/config/source, geometry/macro,
+upstream originals and installed Cs/Ba decay/photon and ENSDF state data.
+
+The ledger is **recorded material deposits only**. Stock Track output lacks
+terminal escape/neutrino/full recoil closure: closure is null with missing terms
+listed. Summed descendant kinetic energies are never called an energy balance.
+No 662-keV ceiling or gamma-primary check is applied.
+
+Only a finished extraction publishes `stream/manifest.json`, with kind
+`cs137_decay_stream_v1`. JSONL chunks hold <=100 complete decays, including all
+zero-Ge events. Global IDs equal original IDs `0..primary_count-1`. Records keep
+all vertex/primary/track scalars, every Ge row including zeros, raw row identity,
+raw/global/local positions, time, energy, parent links, material sums and photon
+creation records. All passive rows/tables remain in hashed LH5. Round-trip
+numeric serialization uses no rounding or sampling; changing extraction chunk
+size preserves concatenated JSONL bytes. Reads require serial monotone event
+blocks and are bounded by a block/event, not campaign length. Track IDs are
+event-local. `iter_decay_chunks(manifest_path)` checks hashes and ID completeness.
+
+Decay photons are PDG-22 tracks created by a saved process name containing
+`RadioactiveDecay`, including photons missing Ge. Inclusive `[660,663] keV`
+line-emission counts are separate from all emitted photons and accepted pulses.
+Raw Ba PDGs/ancestry/times survive; excited/stable identity still needs checking
+against installed data. A PDG suffix alone is not an isomer validation.
+
+`group_deposits(steps, horizon_ns=100000)` sorts positive rows by time/raw row and
+assigns each exactly once to `[origin, origin+horizon)`. It exports group ID,
+origin and relative delays. Zero rows remain in the decay and create no pulse.
+Delayed daughters use finite groups, never minute-long waveform allocation.
+This is a **nominal isolated-window acquisition**: reset each group, truncate
+its tail at the end and retain recovery/tail flags. Nearby deposits split by a
+window boundary are flagged; continuous-state electronics is not claimed for
+that split. No activity/live-time/pileup claim follows. Native consumers must
+preserve these flags and parent/group IDs.
+
+Synthetic tests cover zero events, delays, window edges, tiny positive energies,
+identities, duplicate/missing rows, units/precision, interruptions, paths and
+stable chunking. Original bare-probe validation is a clock/identity diagnostic.
+Nominal AK02/SAP22 checks precede an accepted 500-decay pilot or 10k campaign;
+the supplied check script only requests 20 decays per model.
+
+The guarded Windows campaign entry and post-run comparison are documented in
+[`tools/NATIVE_CAMPAIGN.md`](../tools/NATIVE_CAMPAIGN.md). A real 500-decay pilot
+with positive Ge deposits has completed for both detectors; consult the current
+handoff for larger-run status. All original failed runs and source versions remain
+local evidence. This does not change the explicit nominal geometry or null full
+energy-closure limitations.

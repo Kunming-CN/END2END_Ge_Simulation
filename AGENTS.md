@@ -208,3 +208,16 @@ Reviewers must not claim reciprocal discussion or test execution without records
 The full2026RCCpaper includes an experimental BEGe comparison; analytic-only is
 an incomplete description. No further diagnostic round is automatically authorized
 as a critical-path gate merely because a stricter criterion can be formulated.
+
+## Explicit native-failure accounting
+
+Long campaigns may explicitly select `--native-failure-policy record`; default
+`abort` and the original native helper remain strict. Only the two documented
+native-domain ArgumentErrors may be isolated. Unexpected exceptions still abort.
+A failed group retains its complete truth/identity ledger and exact error; unknown
+charge, endpoint and readout quantities remain null, never zero or a fabricated
+waveform. Count native failures separately from electronics rejections and preserve
+`completed_with_native_failures`. This is processing completion, not validated
+transport. Diagnose a concrete failing event separately; do not rectify signals,
+relax geometry checks, retune seeds or promote global Li research into an unrelated
+functional-delivery gate. A large run still requires a clean, verified pilot.

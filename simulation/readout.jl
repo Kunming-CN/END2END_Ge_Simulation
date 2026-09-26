@@ -185,17 +185,23 @@ function trace_indices(q,current,n,ip,limit)
         end
     end
     idx=sort!(unique!(vcat(collect(head),ip,
-        round.(Int,range(m+1,n;length=limit-length(head)-1)))))
+        round.(Int,range(min(m+1,n),n;length=limit-length(head)-1)))))
     check(length(idx)<=limit, "Trace selection exceeded display bound")
     idx,allruns
 end
-function process_event(t,q,c,eion,cal,M)
+function process_event(t,q,c,eion,cal,M; finite_window_ns=nothing)
     validate_peak_config(c)
     dt=cal["time_step_ns"]; validate_wave(t,q,dt,c["max_samples_per_event"])
     tail=ceil(Int,1000*c["tail_shaping_constants"]*c["shaping_tau_us"]/dt)
     n=length(t)+tail
     gated=get(c,"peak_gate_end_ns",nothing)!==nothing
     gated && (n=max(n,floor(Int,c["peak_gate_end_ns"]/dt)+1))
+    if finite_window_ns!==nothing
+        check(finite(finite_window_ns) && last(t)<=finite_window_ns<=c["max_window_ns"], "Invalid finite electronics window")
+        check(isapprox(finite_window_ns/dt,round(finite_window_ns/dt);rtol=0,atol=1e-8), "Finite window must end on the analog grid")
+        n=round(Int,finite_window_ns/dt)+1
+        check(!gated || c["peak_gate_end_ns"]<=finite_window_ns, "Peak gate exceeds finite electronics window")
+    end
     check(n <= c["max_samples_per_event"] && (n-1)*dt <= c["max_window_ns"], "Readout window/sample bound exceeded")
     cf=c["feedback_capacitance_pF"]*1e-12; factor=charge_C(1.,eion)
     pre=zeros(n); shaped=zeros(n); current=zeros(n); x=zeros(5)
@@ -233,6 +239,10 @@ function process_event(t,q,c,eion,cal,M)
         "input_activity_outside_peak_gate"=>gated && any(k->current[k]!=0 && (max(0,k-2)*dt<c["peak_gate_start_ns"] || (k-1)*dt>c["peak_gate_end_ns"]),eachindex(current)),
         "analog_above_adc_range"=>any(v->v>=c["adc_full_scale_V"],shaped),
         "analog_below_adc_range"=>any(v->v<0,shaped)))
+    if get(c,"schema_version",1)==2
+        merge!(result,Dict("preamp_min_V"=>minimum(pre),"preamp_max_V"=>maximum(pre),
+            "preamp_peak_charge_equivalent_keV"=>-minimum(pre)*cf/factor))
+    end
     result
 end
 

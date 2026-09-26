@@ -1,7 +1,8 @@
 # Current project state and next steps
 
 Updated: 2026-09-26. This is the short, maintained handoff, not an append-only log.
-Latest scientific/software release: **v0.14.0-native-li-readout**, commit **0d462ad**.
+Latest tagged release: **v0.14.0-native-li-readout**, commit **0d462ad**.
+Latest committed peak-policy milestone: **337c841**. Native campaign work below is newer.
 Read this file first in a new conversation; verify actual Git/process state before writes.
 
 ## Preserved history
@@ -40,6 +41,27 @@ for a bounded difficult review when useful. No background schedule changes impli
   matched original charge CSVs exactly. Current tests:25,804 legacy,49 policy,
   99 complete-identity/mutation assertions; independent physics/integrity closure approved.
   Local evidence: `.local/peak-native-delivery/verified-item1.md`.
+- Reusable native AK02/SAP22 entry and schema-2 electronics profiles now pass six
+  Julia suites. The prepared-stream `count` shadowing bug was reproduced, fixed
+  and covered by a real prepared-input fixture (39 stream assertions).
+- Native 100-primary comparisons completed: AK02 54 groups / 53 accepted; SAP22
+  55 / 55. All 200 primaries and every endpoint remain. Source history is preserved
+  across the subsequent stream-only correction; old receipts were not rebased.
+- Actual Cs137 nominal cryostat pilot completed: **500 decays per detector**,
+  4 positive groups / 4 accepted each, with all zero-hit decays retained. Both
+  producer/consumer dependencies, raw files and 16 response artifacts/model pass
+  the independent full-pilot guard. Evidence: `.local/peak-native-delivery/cs500-v3`.
+- **The strict 10k run stopped at AK02 event 8432**, not a completed result.
+  Output: `.local/peak-native-delivery/cs10000-v1`; check its run.json and actual
+  workers before changes. The strict helper rejected a noncontact exterior endpoint;
+  a bounded diagnostic also encountered invalid waveform support. Do not relax
+  those checks or invent an ADC value. Explicit failure-ledger mode is now tested
+  (105 native-entry assertions, 43 exporter cases) and reciprocally reviewed.
+  A new clean 500/model pilot, cs500-v4, has identical successful pulse numerics,
+  fields, calibration and full example charge CSVs to cs500-v3.
+- The reviewed record-mode **10k/model rerun is active** in
+  `.local/peak-native-delivery/cs10000-v2`, supervisor PID 18068. Native failures
+  remain unknown responses, not zero charge or electronics threshold rejections.
 
 Entry points: [library](https://kunming-cn.github.io/END2END_Ge_Simulation/),
 [full engineering example](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/pipeline.html),
@@ -68,23 +90,27 @@ field-agreement tests remain unresolved. Numerical parcel spread is not physical
    policy, finite gates and independent diagnostics tested.14 paired native cases
    retained exact charge and legacy numerics; gate-interval and identity mutation
    issues found by reciprocal reviewers were fixed. This is engineering validity,
-   not calibrated CCE. The general native entry remains step2, not yet delivered.
-2. **Reusable native AK02/SAP22 comparison and readout profiles.** Start with 100
-   primaries per detector and measured cost; reuse native SSD, existing fields and
-   electronics, not another solver. Add versioned preamp decay/capacitance, shaping
-   time/gain/pole-zero, ADC range/bits/threshold/gate settings with independent pulser
-   calibration. Show stage-by-stage signals/energies; keep analog and digital branches distinct.
-3. **Cryostat and Cs137 source contract.** Reuse the pinned LBNL geometry after
-   material/transform/overlap checks. Source capsule, placement, holder and crystal
-   orientation must be surveyed or explicitly nominal, never silently called as-built.
-   Validate parent/daughter IDs, delayed Ba137m emission, finite electronics windows
-   and radioactive energy bookkeeping; this is not a 662 keV monoenergetic substitution.
-4. **Event-complete large run.** Implement streaming/chunks and reuse one validated
-   field solution per detector/configuration. A 500-decay capacity pilot precedes
-   10,000 initial Cs137 decays per detector; consider 100,000 from measured time,
-   memory, output size and statistical benefit. Save every scalar record and bounded
-   trace examples, not 100,000 browser traces. Compare all stages and final spectra
-   with per-decay/per-emitted-photon/per-accepted-pulse normalization distinguished.
+   not calibrated CCE. The general native entry is delivered in step 2.
+2. **Completed: reusable native entry and profiles.** `native_response.jl` reuses
+   one SSD field solution per model/configuration. Full signed scalar/endpoint
+   census, independent injection calibration, explicit ADC/profile/gate settings
+   and bounded offline traces are implemented and tested.
+3. **Completed nominal integration: cryostat and Cs137.** Native import, materials,
+   transforms and sampled overlap checks passed. Original LBNL bytes are intact.
+   Capsule/spacer/pose are explicitly nominal, not as-built. Initial-decay
+   daughter clocks, parent IDs and finite isolated windows are retained. World
+   air is unscored and full energy closure remains null.
+4. **In progress: event-complete 10k/model.** The 500/model positive pilot and
+   measured resource check passed. `tools/run_native_campaign.ps1` launches
+   serial detector stages; the full dependency/artifact pilot guard now also
+   rejects missing artifacts before allocating a large-run output. Local offline
+   report: `tools/native_campaign_report.mjs`; commands in `tools/NATIVE_CAMPAIGN.md`.
+   Preserve failed strict cs10000-v1. The tested extension and clean cs500-v4
+   pilot authorize the active cs10000-v2 rerun. Wait for actual complete receipts,
+   audit every count/failure, then export/inspect its final comparison and record
+   results. Do not alter computational source during this run or overwrite evidence.
+   100k is not automatically scheduled; it remains resource/statistics-dependent.
+
 5. **Accuracy lane, bounded and separate.** Calibrate profile/lifetimes, numerical
    parcel error, field/grid sensitivity, real electronics/noise and measured spectra.
    Quantitative physical claims wait for relevant checks. Exploratory labeled runs

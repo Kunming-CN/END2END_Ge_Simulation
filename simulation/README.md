@@ -528,3 +528,122 @@ transport/analog invariants and exact policy outcomes. Deliberate identity and
 acceptance mutations must fail. It performs no additional field solve. Peak-gate
 activity diagnostics compare original current-bin intervals with requested bounds,
 including bins that only partly lie outside a fractional-time gate.
+
+## Reusable native response and versioned electronics profiles
+
+`native_response.jl` reuses the selected example's native SSD helper and the
+existing Float64 field solver for AK02 (+500 V) or SAP22 (+700 V), explicitly at
+77 K. There is one shared field solution per model/run. Diffusion is on,
+zero-field termination and self-repulsion are off, and independent equal-energy
+parcels retain the 2 ns grid and nominal 10 us trajectory cap. Default16 and
+optional32 parcels describe numerical sampling, not physical resolution.
+The original selected14-case CLI and frozen schema1 readout remain separate.
+
+Inspect and test first in the existing pinned environment; these tests do not
+solve fields or launch radiation transport. Use one or two Julia threads only.
+
+```console
+julia --startup-file=no --threads=2 --project=simulation simulation/test_readout_profiles.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/test_native_stream.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/test_native_response.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/test_readout.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/test_peak_policy.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/test_native_li_example.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/native_response.jl --input .local/m3b/release/AK02/transport/events.json --inspect
+julia --startup-file=no --threads=2 --project=simulation simulation/native_response.jl --input .local/m3b/release/SAP22/transport/events.json --inspect
+```
+
+Run the two100-primary comparisons serially, each into a fresh output root:
+
+```console
+julia --startup-file=no --threads=2 --project=simulation simulation/native_response.jl --input .local/m3b/release/AK02/transport/events.json --output .local/native-response-AK02-100
+julia --startup-file=no --threads=2 --project=simulation simulation/native_response.jl --input .local/m3b/release/SAP22/transport/events.json --output .local/native-response-SAP22-100
+```
+
+`--profile simulation/native_readout_profile.json` selects the additive schema2
+contract (the default). Copy this small profile into `.local/` to choose finite,
+positive feedback capacitance/decay, shaping pole/gain/PZ, ADC full scale and
+threshold,2..24 ADC bits, peak policy and paired gate bounds. Every setting must
+be explicit; unknown keys fail. A resolved config can differ from the profile
+only in expected primary count, checked independently of hashes. Schema2 bounds
+samples per group and streams the campaign; it does not inherit the legacy
+whole-run sample cap. Do not edit `readout_demo.json` or a canonical model.
+
+The profile is synthetic electronics, not a measured hardware model. One separate
+ideal injection calibration is shared by all groups, without truth-dependent gain.
+Analog preamp and shaping outputs precede a single digital peak ADC code. The
+analog numerical grid and bounded display traces are not waveform digitization.
+Gate bounds are relative to the primary for mono-gamma input, or to the local
+group origin for Cs137; peak acceptance never removes a decay from the census.
+
+For an already completed Cs137 stream (replace the illustrative transport path):
+
+```console
+julia --startup-file=no --threads=2 --project=simulation simulation/native_response.jl --input .local/cs137-AK02-20/stream/manifest.json --inspect
+julia --startup-file=no --threads=2 --project=simulation simulation/native_response.jl --input .local/cs137-AK02-20/stream/manifest.json --output .local/native-response-AK02-20 --charge-csv examples --trace-examples 4
+```
+
+This entry consumes transport only; it never generates a campaign. Cs137 requires
+`cs137_decay_stream_v1`, completed manifests, unchanged raw LH5/prepared/run/config/
+geometry/macro/source hashes, contiguous global decay IDs, raw row census,
+ancestry, transforms and exact half-open pulse assignments. It does not apply
+the mono-gamma primary validator or energy ceiling to an ion decay. The source
+manifest and prepared metadata are copied into the response root. Source hashes
+must still match the producer files at inspection and completion.
+
+Cs137 retains the producer's nominal isolated-window convention: every positive
+Ge row is assigned once, zero rows remain in truth, and electronics reset at
+each group. The numerical readout ends strictly before the horizon; original
+absolute times, local origins, group identity, boundary/recovery/tail flags and
+untruncated native endpoints survive. Long-lived daughter timing never allocates
+a minutes-long waveform. A grouping window is not a recovery/pileup model.
+Material energy is recorded-only, with escape/neutrino/full closure null.
+
+Outputs are streamed `truth.jsonl`/`truth.csv`, `scalars.jsonl`/`scalars.csv` and
+`endpoints.jsonl`/`endpoints.csv`. Every decay has a scalar row, including zero-hit
+decays with no fabricated pulse. Every accepted/rejected/saturated group has a
+pulse row. The quoted `record_json` CSV column preserves **all** readout diagnostics,
+current balance and transport flags, including simultaneous rejection conditions.
+Endpoint rows retain the original raw row and every parcel/carrier flag and seed.
+Seeds depend on original event/global decay ID, raw row and parcel index, never
+chunk position or a newly selected pulse ID.
+
+`signals.csv` contains all signed native charge samples for the <=100-primary
+mono-gamma demonstration (zero-charge primaries have no group ID). For streams,
+the default saves only the first four group traces. `--charge-csv all|examples|none`
+and `--trace-examples 0..16` are explicit storage choices; they never sample the
+scalar/endpoint census. `traces.jsonl` contains bounded display samples.
+`summary.html` is an offline additive summary with selected expandable traces;
+it exports only completed hash-checked files and uses no external framework.
+`histograms.json`/CSV distinguish per-initial-decay, per-emitted660..663keV-photon
+and per-accepted-pulse denominators. Stage bins are5keV with explicit under/overflow;
+they do not alter stored scalar precision or imply physical FWHM. Mono-gamma
+decay and decay-photon normalization are null; per-primary normalization is
+separate. Timing separates field solves, native response
+and electronics from startup/preflight; output sizes and process peak RSS are
+recorded when available, without capacity extrapolation.
+
+Supervisor checks now include the native/profile/stream suites, both 100-primary
+mono-gamma comparisons, prepared Cs137 stream preflight and a positive 500-decay
+full-pipeline pilot for each detector. These are engineering integration checks,
+not calibrated Li response or physical resolution. See `../PROGRESS.md` for the
+current verified campaign state and `../tools/NATIVE_CAMPAIGN.md` for the guarded
+500-to-10k entry and post-run offline comparison.
+
+### Explicit isolation of native numerical failures
+
+The general entry accepts `--native-failure-policy abort|record`, default `abort`.
+The campaign launcher explicitly chooses `record`. Only `ArgumentError` with
+exact messages `Noncontact endpoint outside crystal` or `Invalid waveform support`
+inside the native helper call can become a recorded failure; other exceptions and
+readout checks still abort. The original helper and its geometry/waveform guards
+are unchanged. No physical transport correction is implied.
+
+Failed groups keep their truth, IDs, raw rows, delays, seeds/settings and exact
+error in `native-failures.jsonl`. Unavailable response fields are null. The strict
+helper does not expose rejected endpoint details; that absence is explicit, not
+a claim that endpoint values were preserved. No failed-group signal or endpoint
+is fabricated. `native_failed_groups` and `readout_rejected` are separate counts,
+and a run with any failed groups has status `completed_with_native_failures`.
+Native/analog histograms exclude unavailable values rather than filling zeros;
+truth histograms and initial-decay denominators remain complete.
