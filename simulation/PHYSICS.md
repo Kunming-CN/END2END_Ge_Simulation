@@ -130,3 +130,11 @@ uses pulse-height ADCs, not a stored waveform sampling stream. Exact model revis
 filter mode, gains, ADC channel range and pulser response still require run records.
 Thus an analog-shaper-to-peak-ADC chain is the documented starting architecture,
 not an assumed digitize-first digital-trapezoid chain.
+
+The canonical neutral-impurity value `5.6769e15 cm^-3` also appears in the
+[upstream SSD inactive-layer configuration example](https://juliaphysics.github.io/SolidStateDetectors.jl/stable/man/charge_drift/).
+That establishes a matching reference setting, not its experimental provenance
+for AK02. Retain it for reproducibility, but do not describe it as a measured
+neutral concentration without a separate record. Likewise, effective lifetimes
+and annealing-based Li profiles require detector-specific inference/validation;
+passing a diffusion-code check does not establish those inputs.

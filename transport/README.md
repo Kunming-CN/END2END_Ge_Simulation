@@ -286,3 +286,13 @@ Implementation references: pinned remage 1.1.0
 [physics commands](https://github.com/legend-exp/remage/blob/v1.1.0/src/RMGPhysics.cc),
 and Geant4 11.3.2
 [generic polycone](https://github.com/Geant4/geant4/blob/v11.3.2/source/geometry/solids/specific/src/G4GenericPolycone.cc).
+
+## Owner-specified top-source experiment
+
+`experiment.json` records Cs137/Am241 resting on the external aluminum lid above
+the crystal, as confirmed by the owner. It also identifies documented baseline
+equipment separately from unverified per-run settings. The source active layer,
+encapsulation, lid thickness, crystal gap and local-to-lab pose remain explicit
+unknowns. Do not reinterpret laboratory above as SSD +z or reuse the old planar
+crystal dimensions as an AK02 survey. The configuration is intentionally not
+runnable; the side-on monoenergetic M2a tests retain their original identity.

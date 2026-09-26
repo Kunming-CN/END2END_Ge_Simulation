@@ -79,3 +79,18 @@ electronics validation. LBNL cryostat conversion/placement and calibrated charge
 response remain separate gates; no new GeGI work is included.
 
 The [collection diagnostic](simulation/README.md#collection-endpoint-diagnostics-not-calibrated-cce) now separates endpoint status from induced charge and tests a zero-field diffusion limit. It exposes strong AK02 near-surface grid sensitivity; quantitative CCE/dead-layer interpretation remains blocked. These synthetic scans do not replace the original gallery or radiation-event results.
+
+## Physics references and experimental configuration
+
+The [physics/reference map](simulation/PHYSICS.md) connects implemented models to
+primary papers, measured-pulse examples and explicit validation limits. The
+[transition verification](simulation/README.md#transition-grid-and-mobility-branch-verification)
+checks actual grid nodes/field profiles and the real inactive-layer diffusion
+branch in controlled homogeneous limits. A failed fine-grid stress case is
+retained; homogeneous diffusion agreement is not calibrated surface collection.
+
+[transport/experiment.json](transport/experiment.json) records the owner's
+Cs137/Am241 source placement on the aluminum lid above the detector, separates
+baseline equipment documentation from run-specific settings, and leaves unknown
+geometry/source/calibration fields explicit. It is deliberately not a runnable
+as-built setup. Do not replace unknown dimensions with another detector's geometry.
