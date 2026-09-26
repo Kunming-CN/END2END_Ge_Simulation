@@ -12,7 +12,7 @@ The full local entry remains `Additional_Simulations/Visualization_3D/Open_Libra
 
 Double-click `Publish.cmd`. It rebuilds the public site, asks for GitHub browser authorization when needed, commits the approved publication files, pushes to `Kunming-CN/END2END_Ge_Simulation`, and configures GitHub Pages from `main:/docs`. It never force-pushes or uploads the entire calculation directory.
 
-The first public deployment still requires completing the computer's GitHub CLI authorization. A linked ChatGPT GitHub account is a separate connection.
+GitHub CLI authorization is configured on the development computer. Pages address: https://kunming-cn.github.io/END2END_Ge_Simulation/ (deployment verified).
 
 ## One project, three clear areas
 

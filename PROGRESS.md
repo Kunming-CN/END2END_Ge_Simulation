@@ -4,7 +4,7 @@ Updated: 2026-09-25
 
 ## Current milestone: publish existing results
 
-Status: public website prepared locally; first GitHub push/Pages activation awaits GitHub CLI browser authorization.
+Status: published and verified at https://kunming-cn.github.io/END2END_Ge_Simulation/
 
 Verified on the development computer:
 - Installed Git 2.55.0.3 and GitHub CLI 2.101.0.
@@ -22,7 +22,7 @@ These are migration and functionality checks, not all-detector convergence tests
 
 | Milestone | Deliverable | State |
 |---|---|---|
-| M0 | Share existing results on GitHub Pages | Ready locally; authorization pending |
+| M0 | Share existing results on GitHub Pages | Published; URL verified |
 | M1 | Clean-machine calculation example, pinned environment, portable paths | Next |
 | M2 | One Geant4/remage event connected to SSD drift and electrode signal | Planned |
 | M3 | Preamp, analog shaping, ADC, independently reconstructed event energy | Planned |
