@@ -394,3 +394,15 @@ inferred AK02 conductivity. Minimal preamp/shaper/ADC prototypes follow as an
 independent gate. No measured-waveform fit is possible from spectra alone.
 
 Final independent numerical/render review closed the palette migration blocker after inspecting current code, matching tool hashes, the successful same-style all16 application receipt, and 27-test evidence. HPGe cross-review closed the residual-sign and numerical-field reconstruction findings. Neither review claims live deployment or production-physics validation.
+
+M2b4 publication verified: implementation commit `5f0d4ea` was pushed to main;
+GitHub Pages run `36241549728` completed successfully. The exact live manifest
+matches build `cfecdea41177e23d54d3ffd467ba2276fcb72b29b77749be08bd1887a5756c4a`.
+The standard 78 live-file checks passed, and all 16 changed geometry PNGs were
+separately fetched and matched to staged SHA-256 hashes. A live 390px browser
+check loaded AK02 with both exact contact labels, the full-size link, no missing
+images and no horizontal overflow. Release marker: `v0.8.0-contact-ssd-checks`.
+Superseded un-applied previews and redundant numerical profiles were cleaned;
+original grey-geometry backups, final results, failed-harness diagnostics and
+review/test receipts are retained together under `.local/m2b4/`. The isolated
+test browser/server were closed. No task schedule was enabled or modified.
