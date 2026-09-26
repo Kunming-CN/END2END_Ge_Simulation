@@ -2,7 +2,8 @@
 
 Updated: 2026-09-26. This is the short, maintained handoff, not an append-only log.
 Latest tagged release: **v0.14.0-native-li-readout**, commit **0d462ad**.
-Latest committed peak-policy milestone: **337c841**. Native campaign work below is newer.
+Latest committed implementation: **c037558** (native profiles and Cs137 campaigns).
+Peak-policy milestone: **337c841**. Completed 10k/model results are verified below.
 Read this file first in a new conversation; verify actual Git/process state before writes.
 
 ## Preserved history
@@ -59,9 +60,15 @@ for a bounded difficult review when useful. No background schedule changes impli
   (105 native-entry assertions, 43 exporter cases) and reciprocally reviewed.
   A new clean 500/model pilot, cs500-v4, has identical successful pulse numerics,
   fields, calibration and full example charge CSVs to cs500-v3.
-- The reviewed record-mode **10k/model rerun is active** in
-  `.local/peak-native-delivery/cs10000-v2`, supervisor PID 18068. Native failures
-  remain unknown responses, not zero charge or electronics threshold rejections.
+- **10k initial Cs137 decays/model finished on 2026-09-26 at 17:37:16 CDT** in
+  `.local/peak-native-delivery/cs10000-v2`; status `completed_with_native_failures`.
+  AK02: 9879 zero-Ge decays, 121 groups = 107 accepted + 13 readout rejects + 1
+  native failure. SAP22: 9885 zero-Ge decays, 115 groups = 113 accepted + 1 readout
+  reject + 1 native failure. Both full primary censuses remain; failures are unknown
+  responses, not fabricated zero charge. All 10 stages exited 0; elapsed 910.709 s.
+  Recovery verified all 17 recorded source hashes and the existing artifact/ledger
+  exporter. `comparison.html` and `comparison.json` now exist in that run root.
+  No new agents or physics calculations were launched during recovery.
 
 Entry points: [library](https://kunming-cn.github.io/END2END_Ge_Simulation/),
 [full engineering example](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/pipeline.html),
@@ -100,16 +107,15 @@ field-agreement tests remain unresolved. Numerical parcel spread is not physical
    Capsule/spacer/pose are explicitly nominal, not as-built. Initial-decay
    daughter clocks, parent IDs and finite isolated windows are retained. World
    air is unscored and full energy closure remains null.
-4. **In progress: event-complete 10k/model.** The 500/model positive pilot and
-   measured resource check passed. `tools/run_native_campaign.ps1` launches
-   serial detector stages; the full dependency/artifact pilot guard now also
-   rejects missing artifacts before allocating a large-run output. Local offline
-   report: `tools/native_campaign_report.mjs`; commands in `tools/NATIVE_CAMPAIGN.md`.
-   Preserve failed strict cs10000-v1. The tested extension and clean cs500-v4
-   pilot authorize the active cs10000-v2 rerun. Wait for actual complete receipts,
-   audit every count/failure, then export/inspect its final comparison and record
-   results. Do not alter computational source during this run or overwrite evidence.
-   100k is not automatically scheduled; it remains resource/statistics-dependent.
+4. **Completed with explicit native failures: event-complete 10k/model.**
+   Use the existing `cs10000-v2/comparison.html`, response ledgers and receipts.
+   The 500/model pilots and strict failed `cs10000-v1` remain unchanged. The two
+   record-mode native failures are unresolved and separately counted; completion
+   is functional integration, not calibrated physical accuracy. Next work is
+   inspection of the SAVED comparison and, only for a concrete new requirement,
+   bounded analysis of the existing anomaly records. Do not repeat transport,
+   field solves, 500 pilots, 10k runs or review campaigns because ChatGPT showed
+   Thinking failed. 100k is not scheduled or authorized by this recovery.
 
 5. **Accuracy lane, bounded and separate.** Calibrate profile/lifetimes, numerical
    parcel error, field/grid sensitivity, real electronics/noise and measured spectra.
@@ -130,3 +136,11 @@ storage, global shell history, raw runs or reviewer evidence as a performance fi
 Update this page in place. Commit meaningful milestones; Git history retains the
 long audit trail. Preserve unresolved findings without letting new global research
 gates silently replace the flow-first delivery plan.
+
+## Interruption recovery checkpoint
+
+The 2026-09-26 chat failure left supervisor state stale after the run completed.
+Recovery evidence and prior handoff/state backups are under
+`.local/peak-native-delivery/recovery-audit/`. Read final receipts and actual
+processes before any restart; an interface failure is not a computation receipt.
+The next conversation starts from completed 10k results, not plan item 1.

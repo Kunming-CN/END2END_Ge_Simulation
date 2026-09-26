@@ -221,3 +221,15 @@ waveform. Count native failures separately from electronics rejections and prese
 transport. Diagnose a concrete failing event separately; do not rectify signals,
 relax geometry checks, retune seeds or promote global Li research into an unrelated
 functional-delivery gate. A large run still requires a clean, verified pilot.
+
+## Interruption recovery: never confuse chat failure with computation failure
+
+After Thinking failed or a disconnected chat, first inspect Git, final run.json,
+recorded source hashes, actual process identities and the owned supervisor lock.
+A terminal completed/completed_with_native_failures receipt takes precedence over
+a stale running handoff. Reconcile state and export existing artifacts; do not
+repeat completed physics, pilots, reviews or agents solely to recover a reply.
+Reuse prior review findings. New agents require a substantive new implementation
+or a specific unresolved question, not rediscovery of already recorded results.
+Keep usage summaries local and distinguish cached CLI token telemetry from billed
+quota percentages. Preserve raw results, failed attempts and all original modes.
