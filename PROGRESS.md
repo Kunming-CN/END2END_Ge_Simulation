@@ -97,7 +97,7 @@ nominal pose, not an as-built lid survey. Raw Ge-hit fractions 1.21%/1.15%
 are consistent in order of magnitude with an explicitly approximate 1.06%/0.95%
 solid-angle/attenuation check; not measured efficiency validation.
 
-The new saved-data bundle is staged at docs/examples/cs137-10k-geometry/.
+The saved-data bundle is published at docs/examples/cs137-10k-geometry/.
 Native G4GDMLParser/G4Polyhedron exports all 20 actual placed volumes per model.
 Exact GDML/macros/scenario/preparation receipts are in each model originals.zip.
 All 10,000 primary IDs/model and ALL recorded rows are present: 472,658/478,172
@@ -114,7 +114,10 @@ An early derivative export correctly refused source mutation while its writer
 was finishing; preserved under bundle-pre-freeze. Final export ran after the
 writer exited and source hashes froze. Evidence: .local/geometry-events-publication/.
 Build ID: 01ad76ec12526a266a78405f172151bdf8172b1c0053f68726333f8fa5360b61.
-Online deployment confirmation will be recorded after push.
+Published commit: **8cf3c7a**. Online SHA-256 verification passed for **316 files**,
+including EVERY geometry/event chunk and both exact-input ZIPs. Both focused
+reviewers closed their findings using the final export/test/browser receipts.
+Open [the geometry and all-event viewer](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/cs137-10k-geometry/geometry.html).
 
 Entry points: [library](https://kunming-cn.github.io/END2END_Ge_Simulation/),
 [full engineering example](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/pipeline.html),

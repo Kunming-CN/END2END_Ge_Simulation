@@ -250,3 +250,16 @@ groups; ADC acceptance never clears transport flags or proves complete collectio
 Public ZIPs retain every original response ledger byte. Raw LH5 and upstream
 geometry stay in the local campaign. No larger run or global Li convergence
 claim is implied by these saved results.
+
+### Actual Geant4 geometry and saved radiation events
+
+[Open the 3D geometry and all-event viewer](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/cs137-10k-geometry/geometry.html).
+Both 10,000-primary datasets retain every saved material step and track-creation
+record, including zero-Ge events. Download the exact GDML, run macro and setup
+receipts from the viewer. STEP chords do not reconstruct missing world-air paths,
+and are not SSD carrier trajectories or all-event electronics waveforms.
+
+The nominal source is centered above the curved cylindrical aluminum wall,
+not a surveyed flat axial lid; source-to-crystal distances are about 26 mm.
+See [the placement and low-deposition audit](tools/SOURCE_GEOMETRY.md) and
+[geometry/export reproduction instructions](tools/geant4_scene/README.md).

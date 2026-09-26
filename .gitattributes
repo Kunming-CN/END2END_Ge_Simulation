@@ -47,3 +47,6 @@ docs/examples/cs137-10k/run.json whitespace=blank-at-eol,blank-at-eof,space-befo
 # Saved Geant4 event records are reviewed through full raw round-trip and SHA-256 checks.
 docs/examples/cs137-10k-geometry/*/events-*.json -diff
 docs/examples/cs137-10k-geometry/*/scene.json -diff
+# Keep the new native scene helper's source hashes stable across Windows/WSL.
+tools/geant4_scene/*.cc text eol=lf
+tools/geant4_scene/CMakeLists.txt text eol=lf
