@@ -12,7 +12,7 @@ To browse a downloaded repository, open `docs/index.html`. No Julia, ParaView, N
 
 ## Run a small calculation on your computer
 
-The separate [SSD CPU quickstart](simulation/README.md) uses the distributed BEGe reference YAML and calculates fields, charge drift and one electrode signal from scratch. It requires Julia 1.13.x and the supplied lockfile, but no GPU, private field cache, ParaView or Geant4. It is a bounded example, not a reproduction of every website simulation.
+The [shared SSD runner](simulation/README.md) loads a selected distributed model and calculates fields, charge drift and one electrode signal from scratch. Its default CPU example uses the BEGe reference, with optional NVIDIA acceleration available through a separate environment. It requires Julia 1.13.x and the supplied lockfile, but no GPU, private field cache, ParaView or Geant4. It is a bounded example, not a reproduction of every website simulation.
 
 ## One project root
 
@@ -22,7 +22,8 @@ The separate [SSD CPU quickstart](simulation/README.md) uses the distributed BEG
 | `2D_GeGI detector Simulation/` | Earlier GeGI study and source reference material | No |
 | `docs/` | Generated, validated public website | Yes |
 | `models/` | 17 exact original SSD YAML snapshots, shared include and portable provenance | Yes |
-| `simulation/` | Pinned Julia environment and bounded CPU quickstart | Yes |
+| `simulation/` | Shared CPU/CUDA runner, two pinned environments and bounded benchmarks | Yes |
+| `transport/` | Pinned Geant4/remage Linux environment and installation smoke test | Yes |
 | `tools/` | Export, publication checks, tests and maintenance utilities | Yes |
 | `.local/` | Ignored migration backup and bounded test/build scratch space | No |
 | `PROGRESS.md`, `AGENTS.md` | Milestones, evidence, and development rules | Yes |
@@ -61,3 +62,9 @@ Model downloads build only from versioned `models/`: direct YAMLs, per-detector 
 `tools/site_guide.html` is the editable web-guide template. The existing library generators remain the authority for galleries and scientific displays. `tools/check_site.py` and `tools/test_site.py` guard the public deliverable. `tools/migrate_paths.py`, `tools/smoke_scene.py` and `tools/smoke_test.jl` serve the original workspace and are not standalone simulation entry points.
 
 For subsequent substantial development, use one focused branch, record the purpose and tests, then review before merging to `main`. Keep model changes separate from presentation changes. Never silently alter original model parameters or discard incomplete-collection events. The staged development plan and Astra/High preference are in `PROGRESS.md` and `AGENTS.md`.
+
+## Local compute: CPU, optional GPU, and radiation transport
+
+[SSD CPU/GPU instructions](simulation/README.md) provide one shared runner with detector, point, energy, contact and grid options. CPU remains the default; CUDA accelerates potential solves only and is not assumed faster for a small problem. Use the benchmark before choosing a backend. Original YAML snapshots and the CPU lockfile remain unchanged.
+
+[Geant4/remage instructions](transport/README.md) use one WSL2/Ubuntu environment on Windows, with locked conda-forge packages managed by Pixi. Radiation transport is distinct from semiconductor drift/diffusion/trapping. The LBNL upstream geometry is pinned and cached locally; conversion/placement validation and SSD coupling are not yet complete. The Ge-box smoke test is never presented as the cryostat.

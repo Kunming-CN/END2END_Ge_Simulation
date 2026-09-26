@@ -1,0 +1,17 @@
+[workspace]
+name = "ge-detector-transport"
+version = "0.1.0"
+description = "Pinned Geant4/remage environment; separate from semiconductor transport"
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.13.*"
+remage = "==1.1.0"
+geant4 = "==11.3.2"
+cmake = ">=3.28,<5"
+ninja = ">=1.12,<2"
+cxx-compiler = ">=1,<2"
+
+[tasks]
+versions = "remage --version && geant4-config --version"

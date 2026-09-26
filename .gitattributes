@@ -20,3 +20,12 @@ models/*.yaml -text
 
 # The portable Julia environment uses stable lockfile bytes.
 simulation/*.toml text eol=lf
+
+# Portable launchers and version locks; do not alter original YAML snapshots.
+*.sh text eol=lf
+*.toml text eol=lf
+*.lock text eol=lf
+*.gdml text eol=lf
+*.mac text eol=lf
+.gitattributes text eol=lf
+.gitignore text eol=lf

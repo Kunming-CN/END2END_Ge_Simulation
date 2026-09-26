@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Installation smoke test ONLY. This is not the LBNL cryostat or an SSD model. -->
+<gdml>
+  <define/>
+  <materials/>
+  <solids>
+    <box name="smoke_world" x="200" y="200" z="200" lunit="mm"/>
+    <box name="smoke_ge" x="50" y="50" z="50" lunit="mm"/>
+  </solids>
+  <structure>
+    <volume name="smoke_ge_logical">
+      <materialref ref="G4_Ge"/>
+      <solidref ref="smoke_ge"/>
+    </volume>
+    <volume name="smoke_world_logical">
+      <materialref ref="G4_Galactic"/>
+      <solidref ref="smoke_world"/>
+      <physvol name="smoke_ge">
+        <volumeref ref="smoke_ge_logical"/>
+        <position name="smoke_origin" x="0" y="0" z="0" unit="mm"/>
+      </physvol>
+    </volume>
+  </structure>
+  <setup name="Default" version="1.0"><world ref="smoke_world_logical"/></setup>
+</gdml>

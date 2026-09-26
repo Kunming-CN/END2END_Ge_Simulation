@@ -39,7 +39,8 @@ if (existing.status !== 0) run(gh, ['repo', 'create', repo, '--public', '--descr
 const origin = run(git, ['remote', 'get-url', 'origin'], true, true);
 if (origin.status !== 0) run(git, ['remote', 'add', 'origin', `https://github.com/${repo}.git`]);
 else if (![`https://github.com/${repo}.git`, `https://github.com/${repo}`, `git@github.com:${repo}.git`].includes(origin.stdout.trim())) throw new Error('Unexpected origin; stop and inspect.');
-const simulationFiles = new Set(['simulation/Project.toml', 'simulation/Manifest.toml', 'simulation/run.jl', 'simulation/README.md']);
+const simulationFiles = new Set(["simulation/Project.toml","simulation/Manifest.toml","simulation/run.jl","simulation/README.md","simulation/benchmark.jl","simulation/test_run.jl","simulation/gpu/Project.toml","simulation/gpu/Manifest.toml"]);
+const transportFiles = new Set(["transport/README.md","transport/pixi.toml","transport/pixi.lock","transport/.pixi/config.toml","transport/cryostat-source.json","transport/Run.cmd","transport/run.sh","transport/smoke.gdml","transport/smoke.mac","transport/check_smoke.py"]);
 const approved = new Set(['.gitignore', '.gitattributes', 'README.md', 'PROGRESS.md', 'AGENTS.md', 'Publish.cmd']);
 // build_site.py has already validated this exact, versioned model inventory.
 const modelCatalog = JSON.parse(fs.readFileSync(path.join(root, 'models/catalog.json'), 'utf8'));
@@ -47,9 +48,9 @@ const modelFiles = new Set(['models/catalog.json', 'models/README.md',
   ...modelCatalog.detectors.map(d => 'models/' + d.model),
   ...modelCatalog.dependencies.map(d => 'models/' + d.path)]);
 for (const f of run(git, ['diff', '--cached', '--name-only'], true).stdout.split('\n').filter(Boolean)) {
-  if (!approved.has(f) && !f.startsWith('docs/') && !f.startsWith('tools/') && !modelFiles.has(f) && !simulationFiles.has(f)) throw new Error('Unreviewed staged file: ' + f);
+  if (!approved.has(f) && !f.startsWith('docs/') && !f.startsWith('tools/') && !modelFiles.has(f) && !simulationFiles.has(f) && !transportFiles.has(f)) throw new Error('Unreviewed staged file: ' + f);
 }
-run(git, ['add', '--', ...approved, 'docs', 'tools', ...modelFiles, ...simulationFiles]);
+run(git, ['add', '--', ...approved, 'docs', 'tools', ...modelFiles, ...simulationFiles, ...transportFiles]);
 const changed = run(git, ['diff', '--cached', '--quiet'], true, true);
 if (changed.status === 1) run(git, ['commit', '-m', 'Update reviewed detector results and project progress']);
 else if (changed.status !== 0) throw new Error('Cannot inspect staged changes.');

@@ -23,6 +23,24 @@
 !simulation/Manifest.toml
 !simulation/run.jl
 !simulation/README.md
+# Optional GPU and reviewed transport sources only.
+!simulation/benchmark.jl
+!simulation/test_run.jl
+!simulation/gpu/
+!simulation/gpu/Project.toml
+!simulation/gpu/Manifest.toml
+!transport/
+!transport/.pixi/
+!transport/README.md
+!transport/pixi.toml
+!transport/pixi.lock
+!transport/.pixi/config.toml
+!transport/cryostat-source.json
+!transport/Run.cmd
+!transport/run.sh
+!transport/smoke.gdml
+!transport/smoke.mac
+!transport/check_smoke.py
 # Never include local test profiles, raw caches or runtime bytecode.
 .local/
 **/__pycache__/

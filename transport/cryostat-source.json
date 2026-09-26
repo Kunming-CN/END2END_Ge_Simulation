@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "repository": "jintonic/geant4",
+  "commit": "1ff3371e0afb804115773af0541b3e56bd660f8c",
+  "directory": "detector/Ge/cryostat/LBNL",
+  "format": "Geant4 text geometry (.tg), not GDML",
+  "local_cache": ".local/transport/LBNL",
+  "redistribution_note": "No explicit license file was found in the pinned repository tree. Original upstream files are fetched locally, not republished or relicensed by this project.",
+  "files": [
+    {
+      "name": "Am241.tg",
+      "bytes": 943,
+      "git_blob_sha1": "e0cf142958bef3bb4cbda1320b295a8da16f217d",
+      "sha256": "ecd18a0e5e3ead3654d3c0d4584013c1dcef9b16ac2e20daaa8557017d1948ca"
+    },
+    {
+      "name": "LBNLcryostat.mac",
+      "bytes": 883,
+      "git_blob_sha1": "0a47078179266862145a09dfdd49d73ebc9c57f3",
+      "sha256": "5358e118230a50b188a2740c9bafdc644166afebde0d33054531ec2cc4093fa6"
+    },
+    {
+      "name": "LBNLcryostat.tg",
+      "bytes": 7471,
+      "git_blob_sha1": "aca25833b0a83cca71ea1370cc361ef03fcae1da",
+      "sha256": "901508adca34593d7bed1f5a9d3cdbb49311e4712a35b2b21ef9b7f00263c105"
+    },
+    {
+      "name": "README.md",
+      "bytes": 1922,
+      "git_blob_sha1": "02bea898c6c858b6c8a66a370c6753c115ad913d",
+      "sha256": "84ca91565cd6a5dc861ebae4c723cd4b016bba53f8d59eccc89d03d3cd9a5aaa"
+    },
+    {
+      "name": "chamber.tg",
+      "bytes": 736,
+      "git_blob_sha1": "ca9e317d12fd3aeedf587a8d582bb34d5e1fdab7",
+      "sha256": "5f8414f20fd114c62fe8b25d4ecb86076c6008ef6962cc2cf5fbc93b1b5b3296"
+    },
+    {
+      "name": "planar4wings.tg",
+      "bytes": 468,
+      "git_blob_sha1": "b99c47cd6b1582d6c013a29e72d3372698786621",
+      "sha256": "6f304bcf1489dc0a4f7a52ecccacc251b39866cdcb63d3798543181de24ccaaf"
+    },
+    {
+      "name": "shield.tg",
+      "bytes": 1075,
+      "git_blob_sha1": "1475cb12302098d5624ad7cf0b5f7c78ded95f40",
+      "sha256": "4a70d9788bf6931e7b4b9ee106813ab8d0285de6846a95e1088a1b3632fdea78"
+    },
+    {
+      "name": "stage.tg",
+      "bytes": 2021,
+      "git_blob_sha1": "114be80c4c288be0e39aef6f2cc8a37f2c2dbe74",
+      "sha256": "2a86127f896e7a43d645fda1125d3542bf8ededddba8c5c9633a96293b4b311d"
+    },
+    {
+      "name": "vis.mac",
+      "bytes": 370,
+      "git_blob_sha1": "c6958e090fcd5b0e1f82554b0e0eba15024c7fbf",
+      "sha256": "6934fb4cfb65dfaba99335d37b1c443fb852c28e0c2b6584fbbce245d8ff9034"
+    }
+  ]
+}

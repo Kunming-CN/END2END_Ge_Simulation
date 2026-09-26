@@ -1,0 +1,13 @@
+# Installation-only photon transport test, not detector-response validation.
+/RMG/Geometry/RegisterDetector Germanium smoke_ge 1
+/RMG/Output/NtupleUseVolumeName true
+/random/setSeeds 260925 4070
+/run/initialize
+/geometry/test/run
+/RMG/Generator/Select GPS
+/gps/particle gamma
+/gps/pos/type Point
+/gps/pos/centre 0 0 0 mm
+/gps/ang/type iso
+/gps/energy 662 keV
+/run/beamOn 100

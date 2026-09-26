@@ -43,3 +43,9 @@ Run tools/test_site.py and tools/check_site.py before publishing. Build only thr
 ## Portable CPU example
 
 M1a includes only the reviewed simulation/Project.toml, Manifest.toml, run.jl and README.md. Keep this environment separate from the preserved full campaign. Run --check-models and the bounded cache-free example before changing the lockfile or runner; log any differences. Generated files belong under .local/, not models/, simulation/ or docs/. The canonical model snapshots are deliberately frozen by reviewed hashes; do not silently mutate them.
+
+## M1b compute and transport boundaries
+
+Use the shared simulation/run.jl for both CPU and optional CUDA. CPU remains installable without CUDA. Never silently fall back from a requested GPU or force partial charge to unity. Report potential-solve and end-to-end times separately; warm-up is not production timing. Before upgrades run parser/model tests, CPU regression and the explicit parity benchmark. Do not loosen comparison gates to force a pass.
+
+transport/ keeps the Pixi manifest/lock and toy installation checks; large environments belong to Pixi’s detached Linux cache. Preserve cryostat-source.json provenance and locally cached upstream bytes. No LBNL geometry or drift/recombination validation may be inferred from the toy Ge-box smoke test. Keep coupling pending until geometry/units/event mapping are independently checked.
