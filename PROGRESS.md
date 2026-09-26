@@ -604,3 +604,22 @@ bounded AK02 endpoint/depth and finite-conductivity accuracy diagnostics. Do not
 remove incomplete-collection flags to improve a plot. True detector efficiency,
 Li CCE and hardware response remain unvalidated. Raw data, prior releases and
 review evidence remain distinct from the compact public distribution.
+
+M3b publication verified: implementation `616478d` was pushed to main and GitHub
+Pages run `36249402601` completed successfully. Build
+`4a8c88d5ea48ef9e4ac5cc2c5a9d6a0ac32e62eb2fc5a25c04ff073afe804355`
+passed 79 exact live-file checks; both compact example files were separately
+fetched and matched to their local hashes and byte counts. The first check while
+Pages was deploying correctly rejected the old manifest; success was recorded
+only after the new deployment completed. The publisher also passed all 18 site,
+27 contact and 46 pipeline tests (one platform-specific skip as noted above).
+Release marker: `v0.10.0-scenarios-compact`.
+
+All owned numerical/reviewer tasks finished. The independent quick raw run was
+retained under `.local/m3b/quick`; its duplicate source tree was removed only after
+unlinking the copied Pixi environment symlink. Shared installed environments were
+not deleted. Superseded viewer copies were removed after semantic event comparisons;
+raw historical runs, final results, source archive and evidence remain organized.
+No user application was closed, no global optimization setting was changed, and
+no recurring task was enabled. Further work should focus on bounded AK02 endpoint/
+Li-region accuracy diagnostics without disrupting the now-runnable example path.
