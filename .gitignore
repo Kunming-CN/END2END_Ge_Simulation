@@ -86,3 +86,7 @@
 !simulation/verify_readout.jl
 
 !simulation/test_verify_readout.jl
+
+# Bounded native lithium-region diagnostics and tests.
+!simulation/diagnose_lithium.jl
+!simulation/test_lithium.jl

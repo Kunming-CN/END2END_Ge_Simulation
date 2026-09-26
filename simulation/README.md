@@ -386,3 +386,29 @@ It compares all saved pulses with 1/4 ns electronics grids and a doubled
 observation tail, retaining the original injection slope. This tests fixed-input
 readout discretization, not SSD drift-step convergence. ADC-code changes are
 reported rather than forbidden: a tiny analog change can cross a code boundary.
+
+## Native lithium-region diagnostics (not a calibrated production response)
+
+`diagnose_lithium.jl` replays the preserved 200-event AK02/SAP22 source, retaining
+original endpoint flags and checking same-path NoTrapping against the Ramo
+endpoint identity. It then compares independent native diffusive parcels with
+the no-diffusion baseline across the AK02 radial transition. Each seed/depth
+uses 32 numerical parcels totaling 1 keV; these are not a measured carrier cloud.
+
+```console
+julia --startup-file=no --threads=4 --project=simulation simulation/test_lithium.jl
+julia --startup-file=no --threads=4 --project=simulation simulation/diagnose_lithium.jl --input .local/m3b/release --output .local/li-diagnostic-new --phase all
+```
+
+The input must be the completed schema-2 source with the recorded 2 ns, 77 K,
+Float64 and baseline field settings; arbitrary configurations fail instead of
+being silently reinterpreted. `audit` and `depth` select bounded subsets. Output
+is one report plus endpoint, depth and field-profile CSVs under the chosen root.
+No detector YAML, SSD package or original waveform is changed.
+
+`small_conditional_remainder` uses the noncancelling sum
+`abs(1-W_h)+abs(W_e) <= 1e-4`. It describes a static, no-further-loss completion
+assumption, not geometrical collection, recoverable pulse height or validated
+CCE. Native variable-D diffusion, finite conductivity, surface physics and
+transition-grid convergence remain separate accuracy questions. All unresolved
+stops, time caps and sensitivity outcomes remain recorded.

@@ -233,6 +233,7 @@ class ModelTests(unittest.TestCase):
         files['guide.html'] = b'<a href="downloads/all-models.zip">All models</a>'
         files['examples/pipeline.html'] = b'<a href="data.json">Example data</a>'
         files['examples/data.json'] = b'{}'
+        files['lithium/lithium.html'] = b'<a href="../index.html">Library</a>'
         for detector in models.ORIGINAL_HASHES:
             page = f'detectors/{detector}/index.html'
             files[page] = adapt('<main></main>', Path(page)).encode()

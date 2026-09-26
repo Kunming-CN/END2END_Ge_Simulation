@@ -2,7 +2,7 @@
 
 Updated: 2026-09-26 (local)
 
-Current: M3b adds bounded standard scenarios, a one-thread low-load option, census-only run configuration and lossless compact offline examples. The complete AK02/SAP22 engineering workflow remains verified. Production Li/finite-conductivity accuracy, as-built geometry and calibrated hardware response remain unresolved.
+Current: M2c native lithium diagnostics now reproduce the 200-event endpoint/final-signal records and quantify diffusion across the transition. A 0.50 mm grid-setting contrast changes mean response by about 15 percentage points, so quantitative Li CCE and the large cryostat/Cs137 campaign remain gated. The complete engineering workflow and compact examples are preserved.
 
 
 ## Goal and plan alignment audit — 2026-09-26
@@ -623,3 +623,116 @@ raw historical runs, final results, source archive and evidence remain organized
 No user application was closed, no global optimization setting was changed, and
 no recurring task was enabled. Further work should focus on bounded AK02 endpoint/
 Li-region accuracy diagnostics without disrupting the now-runnable example path.
+
+## M2c / campaign planning — 2026-09-26
+
+Owner priority: resolve and characterize Li-region transport before a large AK02/SAP22 comparison with Cs-137 on the cryostat lid. Pilot 10,000 primaries/decays first, then consider100,000 from measured runtime/memory/statistics; no artificial underuse if resources are healthy. Event normalization and decay timing must distinguish a full radioactive source from a monoenergetic662keV beam. In parallel, audit which preamp/shaping/ADC parameters can be varied with independent calibration and tests. This round starts with exact endpoint/depth and native diffusion diagnostics, preserving original numerical output and all existing flags. Large-campaign and hardware-model gates are not inferred from a successful engineering demo.
+
+The two planning reviewers exchanged findings and agreed to a bounded native Li
+scan after exact replay of the current 200-event source. Freeze 32 independent
+one-point parcels per seed, three preselected seeds, nine radial depths, 2 ns /
+5 us baseline, selected 4 ns and 10 us controls, and a small second-grid contrast.
+This is numerical sensitivity work, not fitted Li CCE. Trapping and NoTrapping
+are evaluated on identical paths; no original flags or model parameters are erased.
+
+A conditional remaining Ramo budget assumes eventual hole W=1/electron W=0 under
+static weighting and no future loss. Report both components and their absolute
+sum; 1e-4 of deposited energy is a display threshold only, not a physical recovery
+claim. The exact identity check remains 1e-10. The pilot found mobility-derived
+D about 0.009..0.030 m2/s, corresponding to approximately 10..19 um native hops
+at 2 ns. Boundary/time-grid sensitivity must therefore be measured, not assumed.
+
+The agreed future large campaign starts with 10,000 initial Cs137 decays per
+detector after Li, geometry and decay-window gates, then considers 100,000 based
+on a stage-by-stage cost/statistics pilot. Current small-demo limits will not be
+bypassed: use a tested event-complete streaming campaign with reused fields,
+full scalar ledgers and bounded trace examples. Updated experiment.json records
+these gates and stage comparisons; no large decay campaign has run this round.
+
+M2c first-run source passed 90 lightweight tests before detector execution.
+The frozen workload is the original 200 primaries, 63 seeded diffusive clouds
+(32 independent parcels each) and nine no-diffusion controls. Exact-source,
+Ramo, energy-weight and path-integrity failures remain failures; the separate
+mean/SEM sensitivity screen is not a physical-convergence certification.
+Four Julia startup threads are available; the source-matching field solver
+retains its documented two-thread limit for numerical parity. No slow-mode
+system setting or unrelated application change was made.
+
+## M2c verified native lithium diagnostics — 2026-09-26
+
+The completed run took 100.536 s including compilation. It replayed the current
+200 primaries (100 per detector, with 91 zero-deposit primaries), then ran 63
+seeded diffusive clouds and nine no-diffusion controls: 2,025 synthetic parcel-pair
+trajectories in addition to 1,942 positive-energy source deposits. All recorded
+input/source checks, Ramo identities and path-integrity checks passed. The replay
+checks match original endpoint/status records and final induced energies; they
+are not a separate sample-by-sample waveform equivalence claim.
+
+AK02: 974 positive-energy deposits, of which 954 have small noncancelling
+conditional endpoint remainders (all below 1e-6 fraction in this sample). Their
+holes reach contact 1, while electron geometric-contact flags remain incomplete.
+Twenty deposits in original events 41 and 78 start in n-type, exact-zero-field
+locations and remain stationary under the no-diffusion producer. Their distances
+to the Li contact are 0.07546..0.16705 mm and total deposited energy is 261.611929
+keV. SAP22: all 968 positive-energy deposits have both carriers at geometric
+contacts, with negligible conditional endpoint remainder. Original flags remain.
+
+AK02's aggregate conditional completion budget is 1.545% of deposited energy.
+It assumes static weighting, eventual hole W=1/electron W=0 arrival and no further
+loss. It is not measured loss, recoverable charge, trapping loss or a shaped-peak
+bound. The largest fractional same-path NoTrapping/Ramo discrepancy was about
+3.33e-16; no weighting-range violations or noncontact outer-path points were found.
+
+The native diffusion experiment explicitly disables zero-field termination and
+uses separate one-point Events, so a parcel's boundary handling cannot retime
+another parcel. Self-repulsion is off. Each depth/seed has 32 equally weighted
+parcels totaling 1 keV; the three seeds are fixed and retained. At 0.10/0.30/0.45/
+0.50 mm radial depth, baseline 2 ns/5 us native-lifetime mean fractions are
+0.02663/0.19413/0.61979/0.84413, compared with zero in the no-diffusion controls.
+Same-path NoTrapping fractions are 0.19792/0.51042/0.82292/0.94792. At 0.55 mm
+native mean is 0.99790. These are native-model diagnostic responses, not calibrated
+CCE or measured transition thickness; finite parcel spread is numerical, not
+physical detector resolution.
+
+The critical unresolved result is grid sensitivity: at 0.50 mm the native mean
+changes from 0.84413 (min50 setting) to 0.99475 (min25), a 0.15062 absolute change.
+Baseline and contrast50 fields were identical despite different allowed recheck
+counts. The 1 V/cm reporting bracket moves from 0.520..0.522 to 0.466..0.468 mm.
+The compensation depth remains 0.70680 mm. Minimum-spacing settings are not
+uniform mesh resolutions, and nearest-grid bits are not continuous boundaries.
+
+All 54 original loose per-seed sensitivity screens passed, but this is not
+convergence. A separately added post-run analysis of three matched seed means
+uses a two-degree-of-freedom 95% t interval and asks whether it lies entirely
+inside +/-0.02 absolute fraction. Six of 18 comparisons do not demonstrate that
+agreement. The 0.50 mm grid mean difference is +0.15062 with approximate interval
+[0.10821,0.19303]. The 0.30 mm time/horizon comparisons remain statistically
+unresolved. These marginal intervals share seeds, are exploratory/distribution-
+dependent, and do not provide simultaneous 95% coverage or physical uncertainty.
+Horizon variants are ensemble comparisons, not identical-path extensions: native
+random-number consumption changes with the earlier electron trajectory.
+
+The compact offline Li report contains actual depth curves, same-path trapping
+comparison, min50/min25 electric-field profiles, endpoint counts, both original
+screens and the separate paired-seed results. Its headline explicitly warns about
+the 15.1-percentage-point grid effect. CSV downloads reproduce the data. Ninety
+Julia helper/provenance tests and seven report tests passed. A report serialization
+ordering issue was caught by byte-for-byte bundle checks and corrected without
+changing numerical results. The physical three-region wording was corrected after
+independent review, while retaining the distinction from nearest-grid categories.
+
+Two specialist sessions exchanged and reviewed the evidence: semiconductor/numerical
+physics used Astra XHigh; radiation/readout/campaign integrity used Astra High.
+They agree the diagnostic milestone is substantive, but not sufficient for a
+quantitative cryostat/Cs137 production prediction. Numerical parcel sampling must
+not be mistaken for physical spectrum broadening. Original simulation models,
+source waveforms, SDK and lockfiles were not modified or relaxed to pass checks.
+
+The requested large campaign and configurable electronics are now specified in
+existing experiment.json and PHYSICS.md, not claimed implemented. Next steps are
+targeted transition field/weighting convergence and response precision, then
+validated cryostat/source transforms, radioactive-decay timing/windows and
+streaming. After a 500-decay capacity pilot, target 10,000 initial Cs137 decays
+per detector; extend to 100,000 only from measured resource/statistical benefit.
+Compare radiation deposition, induced charge/timing, preamp, shaping, ADC and
+final spectra with common normalizations and all rejected/flagged records retained.

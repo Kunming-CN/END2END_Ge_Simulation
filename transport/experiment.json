@@ -56,7 +56,14 @@
   },
   "upstream_geometry": {
     "provenance_file": "cryostat-source.json",
-    "warning": "Pinned LBNL geometry describes a different planar crystal/holder; its dimensions are not an as-built survey of AK02 or SAP22"
+    "warning": "Pinned LBNL geometry describes a different planar crystal/holder; its dimensions are not an as-built survey of AK02 or SAP22",
+    "nominal_dimensions_not_as_built": {
+      "source_file": "LBNLcryostat.tg",
+      "inner_diameter_mm": 67.7,
+      "outer_diameter_mm": 70.2,
+      "end_wall_mm": 1.27,
+      "warning": "Upstream source is Am241 and original crystal is rotated planar10x10x5mm. Neither source capsule nor detector pose may be silently reused as current Cs137/AK02/SAP22 experimental truth."
+    }
   },
   "scope": [
     "Do not overwrite the side-on monoenergetic M2a interface source",
@@ -75,5 +82,43 @@
     "pulser": "CANBERRA 814FP",
     "bias_supply": "CANBERRA 3106D",
     "caution": "Nominal feedback capacitance is not a measured end-to-end gain. The exact source run, filter mode, channel range and calibration remain unresolved."
+  },
+  "planned_large_comparison": {
+    "status": "planned_after_lithium_and_geometry_gates_not_executed",
+    "requested_by_owner": "2026-09-26",
+    "detectors": [
+      "AK02",
+      "SAP22"
+    ],
+    "source": "Cs137 on cryostat lid; not the existing monoenergetic beam",
+    "initial_primary_decays_per_detector": 10000,
+    "optional_primary_decays_per_detector": 100000,
+    "preproduction_pilot_decays": 500,
+    "selection_rule": "Measure transport/field/drift/readout time, peak memory, bytes and accepted-peak statistics; promote to100000 only within measured runtime/disk capacity with headroom. No arbitrary low-load setting if host remains responsive.",
+    "blocking_gates": [
+      "Native Li response, stop flags and time/grid sensitivity characterized without forced full collection",
+      "Cryostat model imported with correct transforms/materials/overlap checks; nominal assumptions explicitly separated from as-built measurements",
+      "Versioned ion-decay adapter, finite electronics windows and Ba137m delayed-emission policy tested",
+      "Event-complete streaming/chunks; global event ledger and provenance unchanged across chunks",
+      "Numerical parcel-sampling uncertainty bounded separately from physical Fano/trapping/noise; no artificial broadening from a small weighted-parcel ensemble. Validated response lookup/kernel may be used only with quantified interpolation and timing error."
+    ],
+    "event_contract": {
+      "normalizations": [
+        "per initial Cs137 decay",
+        "per emitted gamma in a defined line/window",
+        "per accepted electronics pulse"
+      ],
+      "time_policy": "Retain all decay-chain times and parent links. Do not sum prompt beta and delayed daughter emissions into one minutes-long SSD waveform. Finite electronics windows link back to their parent decay.",
+      "no_rate_claim_without_activity_and_live_time": true,
+      "energy_policy": "Replace the monoenergetic-gamma Edep ceiling and single-gamma-primary checks with a validated radioactive-decay energy ledger. A Cs137 ion at zero kinetic energy is not a zero-energy radiation event, and deposited energy is not universally bounded by the 662keV gamma-line energy. Track emitted radiation, recoil and escaped energy with the transport record; do not copy the existing monoenergetic validator unchanged."
+    },
+    "comparison_stages": [
+      "emitted particles and energy deposited in each material/Ge",
+      "bulk versus Li-region deposition and complete event ledger",
+      "signed induced charge, drift/collection timing and unresolved endpoint flags",
+      "preamp and shaped analog peak with independent calibration",
+      "ADC accepted/rejected/saturated counts and reconstructed energy spectrum"
+    ],
+    "storage": "Single campaign-level table/container with event-complete chunks, one shared validated field solution per detector/configuration; all-event scalar summaries plus explicitly selected trace examples. Do not embed100000 full traces into the website."
   }
 }

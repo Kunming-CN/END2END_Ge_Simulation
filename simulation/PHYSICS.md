@@ -236,3 +236,57 @@ With `tau_pz=tau_f`, a positive impulse Q produces
 It peaks at `2*tau_s`; that definition fixes gain normalization independently
 of detector truth. Exact matrix-exponential propagation handles constant-current
 bins; sampled peak accuracy must still be checked against time-step refinement.
+
+## Planned adjustable electronics and large-source comparison
+
+The owner requested 10,000 or 100,000 events per detector only after Li handling
+is sufficiently understood. The agreed first target is 10,000 initial Cs137 decays
+per detector, after a 500-decay timing/memory/record-size pilot and the gates in
+`transport/experiment.json`. A larger count is a measured capacity/statistics
+decision, not an automatic cap or an efficiency claim.
+
+Keep parent-decay, emitted-photon and accepted-pulse normalizations separate.
+The [remage generator documentation](https://remage.readthedocs.io/en/stable/manual/generators.html)
+explains ion sources, decay chains and initial-decay time resetting. Resetting the
+parent time does not make delayed daughter emissions prompt. The new adapter must
+retain daughter/track/row identities and split finite electronics windows without
+dropping late deposits or summing minute-scale decay chains into one charge pulse.
+A real source capsule is not the Am241 capsule found in the upstream LBNL example.
+
+The next readout extension will use named, versioned profiles separate from the
+frozen demonstration. Changes must pass independent charge-injection/impulse tests,
+then reuse the same detector event set for parameter comparisons. Do not tune each
+event to its deposited truth or confuse an analog RC pole with a manufacturer's
+front-panel shaping setting.
+
+| Profile stage | First adjustable controls | Required independent check |
+|---|---|---|
+| Charge-sensitive preamp | Feedback capacitance, feedback decay, fixed polarity, finite bandwidth as a later option | Delta-charge gain/decay and withheld-amplitude linearity |
+| Synthetic analog shaping | RC pole time, fixed CR-(RC)^2 initially, gain, matched or explicitly mismatched pole-zero time | Analytic impulse/rectangle response, peaking time, slow-charge ballistic deficit |
+| Peak ADC | Channel count/bit depth, full-scale voltage, threshold, finite peak gate, clipping policy | Transition codes, half-LSB error, negative/overrange/threshold census |
+| Rate response, subsequent phase | Baseline restoration, pileup rejection, conversion dead time | Double-pulse separation and known-rate time stream; no rate claim without activity/live time |
+
+The [ORTEC 671](https://www.ortec-online.com/products/electronic-instruments/amplifiers/671)
+provides 0.5/1/2/3/6/10 us settings, GAUSS/TRI choices, gain/polarity, baseline
+restoration and pileup functions. Those are manufacturer controls, not proof that
+our ideal RC cascade reproduces its exact transfer function. The
+[ASPEC-927](https://www.ortec-online.com/products/electronic-instruments/multi-channel-analyzers/basic-analog/aspec-927)
+provides selectable 512..16384 channels and gate/PUR/busy behavior. A synthetic
+configurable ADC may expose broader ranges, but must not be labeled an exact 927.
+
+A separate waveform-digitizer branch may later reuse
+[LEGEND dspeed](https://dspeed.readthedocs.io/en/stable/) rather than reinventing
+trapezoid, cusp/ZAC, pole-zero and baseline processors. These digital processors
+act on sampled waveforms and are not substitutes for the present analog-shaper
+then peak-ADC ordering. Their additional parameters require a recorded sampling
+rate, quantization, noise model and distinct calibration tests.
+
+A high-statistics spectrum must not confuse numerical parcel sampling with real
+carrier fluctuations. The present 32 weighted parcels per seed estimate a native
+mean response; their finite Monte Carlo spread is not detector energy resolution.
+Before production, quantify that numerical error against the desired spectral
+precision, or use a validated precomputed mean-response/kernel with interpolation
+checks. Physical pair statistics, trapping fluctuations and electronics noise
+must be modeled separately without double counting. Simply drawing 32 weighted
+trajectories for every deposited site could add artificial spectral broadening.
+This is an additional campaign gate, not a reason to discard the diagnostic curves.

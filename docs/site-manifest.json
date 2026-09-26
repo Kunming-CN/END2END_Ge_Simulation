@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "build_id": "4a8c88d5ea48ef9e4ac5cc2c5a9d6a0ac32e62eb2fc5a25c04ff073afe804355",
-  "file_count": 1054,
-  "total_bytes": 199389718,
-  "html_pages": 22,
-  "local_links_checked": 1707,
+  "build_id": "a277ded55ffd24635de95721efda655f426e737c4ea8625d720c5257e997edd7",
+  "file_count": 1059,
+  "total_bytes": 201418695,
+  "html_pages": 23,
+  "local_links_checked": 1715,
   "files": [
     {
       "path": ".nojekyll",
@@ -303,8 +303,8 @@
     },
     {
       "path": "detectors/AK02/index.html",
-      "bytes": 17285,
-      "sha256": "41ccd319edbda3175d07b8c06cc137bb87aeb70a31ca1b107a890de242ef546b"
+      "bytes": 17460,
+      "sha256": "a8b8e444685904c401f830107cbffb5ed30df09489adddf474dfb1246c43efb9"
     },
     {
       "path": "detectors/AK02/runs/20260922_suite_v3/01_geometry.png",
@@ -4778,8 +4778,8 @@
     },
     {
       "path": "detectors/SAP22/index.html",
-      "bytes": 17068,
-      "sha256": "4329a67cc4584873f40c912a7a2c1caf56fa4b312f43b604aa40aeefa397269a"
+      "bytes": 17243,
+      "sha256": "29b1d85d90c4b3ead207f5650a953614d9d0962c6ad5415274959e13c7fbfe9e"
     },
     {
       "path": "detectors/SAP22/runs/20260922_suite_v3/01_geometry.png",
@@ -5163,8 +5163,33 @@
     },
     {
       "path": "index.html",
-      "bytes": 13754,
-      "sha256": "95a6f8c030731bf4a910eced3214cb36e72d7b70537e4c6bf1876e0b20a2cbee"
+      "bytes": 14022,
+      "sha256": "753f6fcdef9aa025f462134cf3bcd0bb8edd89ccbd0eb975e74f7184091a1b0b"
+    },
+    {
+      "path": "lithium/depth-scan.csv",
+      "bytes": 8880,
+      "sha256": "4650f35b0f652f43d72b968592af05751f9706eee99c27a4666cdce35df8017f"
+    },
+    {
+      "path": "lithium/endpoint-audit.csv",
+      "bytes": 674049,
+      "sha256": "0588e50da4957cd3c3d619755b8d3d2a9f5ba236f47fd75084957de5c9e770d5"
+    },
+    {
+      "path": "lithium/lithium.html",
+      "bytes": 285919,
+      "sha256": "f4bd854bad78455856bda0a8e3c0a49e0a75c43b3110a7655708d4285f4ea429"
+    },
+    {
+      "path": "lithium/profiles.csv",
+      "bytes": 330791,
+      "sha256": "48c04fd519821a45cbc4bab3b58be4f8c2315044f4195c37667d423467910046"
+    },
+    {
+      "path": "lithium/summary.json",
+      "bytes": 728720,
+      "sha256": "933d3ac4dbc8d38672542e337a7276c9ac93c9fd89f6a144fb80ccf9e9688421"
     },
     {
       "path": "maintenance/MODEL_SOURCES.md",

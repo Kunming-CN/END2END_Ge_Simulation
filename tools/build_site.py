@@ -7,6 +7,7 @@ from urllib.parse import unquote, urlsplit
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_site import MANIFEST, validate
 from pipeline_demo import validate_export as validate_pipeline_export
+from lithium_report import validate_bundle as validate_lithium_bundle
 from export_models import MODELS, ORIGINAL_HASHES, download_files, read_distribution
 from render_contacts import (STYLE, SURFACE_NOTE, CATEGORY_NOTE, canonical_catalog,
                              contacts, contact_label, verify_applied_style)
@@ -84,6 +85,10 @@ def adapt(s, rel, catalog=None):
     elif rel in (Path('detectors/AK02/index.html'), Path('detectors/SAP22/index.html')):
         flow = '<section><h2>Radiation-to-readout example</h2><p><a href="../../examples/pipeline.html">Inspect deposits, charge, preamp, shaping and peak ADC event by event</a>. The engineering example is separate from this earlier saved gallery; original temperatures and settings are retained.</p></section>'
         s = s.replace('<main>', '<main>' + flow, 1)
+    if rel == Path("index.html"):
+        s = s.replace("<main>", '<main><section><h2>Lithium-region diagnostics</h2><p><a href="lithium/lithium.html">Inspect native diffusion, endpoint signals and grid sensitivity</a>. These diagnostic curves are not calibrated Li collection efficiency; the transition remains grid-sensitive.</p></section>', 1)
+    elif rel in (Path("detectors/AK02/index.html"), Path("detectors/SAP22/index.html")):
+        s = s.replace("<main>", '<main><section><h2>Charge collection diagnostics</h2><p><a href="../../lithium/lithium.html">Compare geometric contacts, remaining induced signal and Li diffusion</a>.</p></section>', 1)
     return scrub(s)
 class NotebookCleaner(HTMLParser):
     def __init__(self):
@@ -131,10 +136,18 @@ def build_export():
     (OUT / 'examples').mkdir(exist_ok=True)
     for name in ('pipeline.html', 'data.json'):
         shutil.copyfile(pipeline_source / name, OUT / 'examples' / name)
+    lithium_source = ROOT / ".local" / "lithium-report"
+    validate_lithium_bundle(lithium_source)
+    lithium_files = ("lithium.html", "summary.json", "endpoint-audit.csv", "depth-scan.csv", "profiles.csv")
+    (OUT / "lithium").mkdir(exist_ok=True)
+    for name in lithium_files:
+        shutil.copyfile(lithium_source / name, OUT / "lithium" / name)
     queue, done, missing = [Path('index.html')], {Path(name) for name in model_outputs}, []
     special = {Path('guide.html'), Path('detectors/GeGI_3D/supplement.html'), Path('detectors/GeGI_3D/octagon_geometry.png')}
     special.update({Path('examples/pipeline.html'), Path('examples/data.json')})
     done.update({Path('examples/pipeline.html'), Path('examples/data.json')})
+    special.update(Path("lithium") / name for name in lithium_files)
+    done.update(Path("lithium") / name for name in lithium_files)
     while queue:
         rel = queue.pop()
         if rel in done: continue

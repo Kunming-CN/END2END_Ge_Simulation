@@ -136,3 +136,22 @@ raw reports readable and bind the compact export to its exact serialization and
 template hashes. Defer heavy detail rendering until the panel is opened. Confirm
 offline/mobile behavior and current selection when details open or refresh.
 Measure before claiming a speedup; distinguish sampled timing from guarantees.
+
+## Li diagnostics and future source campaigns
+
+Preserve geometric-contact flags separately from conditional Ramo completion
+budgets. Small weighting-potential remainder is not proof of recoverable charge.
+Native diffusion studies must record the zero-field termination setting and use
+independent parcels so boundary handling does not silently retime another cloud.
+Keep numerical parcel uncertainty separate from physical energy-resolution noise.
+
+Retain the original loose screens and explicitly label additional post-run
+paired-seed analyses; no screen pass establishes transition-grid convergence.
+Use `tools/lithium_report.py` to export checked raw diagnostics into the stable
+`.local/lithium-report` bundle; do not manually edit generated website figures.
+
+Before large Cs137 runs, test ion-decay identities, delayed daughter timing,
+finite electronics windows, energy accounting, geometry assumptions and streaming.
+A 500-decay cost pilot precedes 10k per detector; 100k is conditional on measured
+resources/statistics. Adjustable readout profiles require independent injection
+calibration and must preserve the frozen demonstration regression.
