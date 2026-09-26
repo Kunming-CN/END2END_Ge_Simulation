@@ -126,3 +126,57 @@ RTX 4070 Laptop GPU, driver 610.62, Julia 1.13.0 / SSD 0.11.8 / CUDA 6.4.0. CPU 
 | gegi64 / Float64 | 81.833 | 20.384 | 4.01 |
 
 All three CPU/CUDA parity checks passed. The GeGI Float64 example is about four times faster here; small examples are not. Do not generalize this to every detector, precision, CPU-thread count or all-channel campaign. GeGI Float32 failed the strict iteration check with these coarse-grid settings, so the documented diagnostic command uses Float64 instead of loosening the tolerance. Full evidence and limitations are in ../PROGRESS.md.
+
+## Radiation deposit replay: AK02 and SAP22
+
+First generate the reviewed flat LH5 and `events.json` with [transport/handoff.py](../transport/README.md).
+From the repository root, use the existing CPU environment:
+
+```powershell
+julia --startup-file=no --threads=2 --project=simulation simulation/replay.jl --input .local/m2a/AK02/events.json --inspect
+julia --startup-file=no --threads=2 --project=simulation simulation/replay.jl --input .local/m2a/AK02/events.json --output .local/my-AK02-response --max-events 10 --temperature-k 77
+julia --startup-file=no --threads=2 --project=simulation simulation/test_replay.jl .local/m2a/AK02 .local/m2a/SAP22
+julia --startup-file=no --threads=2 --project=simulation simulation/test_replay.jl --linearity .local/m2a/AK02
+```
+
+The last command adds one actual field solve and a simultaneous multi-deposit
+comparison; ordinary tests do not solve fields. `--inspect` verifies all positive
+deposits, immutable input hashes, the prepared identity placement and SSD geometry
+before any solve. Rotated-transform mathematics is unit-tested, but the runtime
+producer is explicitly identity-only. Source/run identity comes from the hashed
+raw LH5 plus event ID, not an event number alone across multiple input files.
+
+The default replay retains 78 K from the canonical model. `--temperature-k 77`
+updates the in-memory semiconductor and applicable drift temperature without
+editing YAMLs or annealing parameters. **SAP22's original ADL temperature model
+is Vacuum/no scaling:** its drift-velocity parametrization is unchanged at 77/78 K.
+That fact is recorded in `run.json` and checked at a fixed electric field.
+
+Replay selects the first N **primary IDs**, including zero-deposit events, and
+keeps all their recorded positive-energy deposits. It subtracts primary time once,
+shifts each independent signal causally, and sums on a common grid. No signal is
+present before creation; the final cumulative charge is held after its simulated
+endpoint. This is valid for the stated noninteracting baseline, not interacting
+charge clouds. Diffusion and self-repulsion remain off; zero-field termination is
+explicitly on. Do not interpret this as a neutral-layer diffusion study.
+
+Outputs stay together in the new requested `.local/` directory: `signals.csv`,
+`run.json`, and one representative `waveform.svg`. Reports include input/code/env
+hashes, raw-row identities, original/effective conditions, potential histories,
+per-deposit endpoints and signed charge. `stopped_without_contact` and step limits
+are retained; near-unit induced charge is not proof of geometrical collection.
+The output is keV-equivalent electrode signal, **not ADC reconstructed energy**.
+Physical units use the model's stored ionisation energy, also recorded in the report.
+
+This replay uses Float64, a 0.05 mm minimum refinement spacing, explicit SOR=1,
+and at most four bounded post-solve relaxation checks per potential. SSD may stop
+on an update plateau before reaching its numerical gate. Every returned update is
+recorded and the original tolerance remains mandatory; no retry relaxes it. The
+shared synthetic runner still defaults to one extra check. These are iteration
+gates, not a Poisson residual or grid-convergence study. CPU is the tested replay
+backend; the optional CUDA route is not claimed as separately validated for M2a.
+
+Before Li-layer interpretation: diagnose stopping locations, test grid/time/cloud
+sampling and neutral-region diffusion, and constrain profile/lifetimes with data.
+Before electronics: preserve charge/current polarity, delayed events and flags;
+calibrate the actual preamp/shaper/ADC rather than fitting each event to truth energy.

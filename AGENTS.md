@@ -33,7 +33,7 @@ The maintainer requested Astra with High reasoning for this project's Work/Codex
 - When launching Codex programmatically, explicitly select the same model and reasoning level so another profile or task preset cannot silently change them.
 - If using Plan mode, set its supported `plan_mode_reasoning_effort` override to `high` for that run as well.
 - For Work/Codex graphical sessions, verify Astra and High in the session's model control; a project instruction alone is not a model-setting mechanism.
-- Do not silently substitute another model or enable Extra High, Max, Ultra, Fast mode or separately billed API usage.
+- Astra High remains default. The maintainer permits supported XHigh or stronger reasoning for difficult bounded reviews; specify and record effective settings. Do not enable separately billed API usage or Fast mode without approval. Never trigger, confirm or consume any banked reset/reset credit; only the owner may do that.
 - Confirm the effective model, reasoning level and project directory when starting a development task. Configuration verification is not a claim that a task has been launched.
 
 ## Publication validation
@@ -49,3 +49,9 @@ M1a includes only the reviewed simulation/Project.toml, Manifest.toml, run.jl an
 Use the shared simulation/run.jl for both CPU and optional CUDA. CPU remains installable without CUDA. Never silently fall back from a requested GPU or force partial charge to unity. Report potential-solve and end-to-end times separately; warm-up is not production timing. Before upgrades run parser/model tests, CPU regression and the explicit parity benchmark. Do not loosen comparison gates to force a pass.
 
 transport/ keeps the Pixi manifest/lock and toy installation checks; large environments belong to Pixi’s detached Linux cache. Preserve cryostat-source.json provenance and locally cached upstream bytes. No LBNL geometry or drift/recombination validation may be inferred from the toy Ge-box smoke test. Keep coupling pending until geometry/units/event mapping are independently checked.
+
+## M2 scope and independent review
+
+AK02 (Anupama ICPC2) is the Li-contact primary case; SAP22 is a non-Li cross-check, not a matched-geometry experimental control. Defer new GeGI work. Preserve original 78 K / +500 V and +700 V snapshots; first reproduce them, with any nominal 77 K override explicit and consistently recorded. No invented experimental holder/source positions or uncalibrated lifetime claims.
+Read-only research elsewhere under My Drive is authorized; never edit unrelated files. Keep raw transport energy separate from charge response; no double Li loss. Preserve event IDs, deposition times, transforms, zero-deposit primaries and incomplete-collection flags.
+After bounded implementation/testing, use two separate read-only review sessions: (1) HPGe and electronics, (2) particle transport and event integrity. Give both the same tested diff/evidence, then exchange findings for cross-review. Summarize confirmed issues and resolutions in PROGRESS.md. These are AI reviewers, not human certification. Never claim independent agents ran unless launched.

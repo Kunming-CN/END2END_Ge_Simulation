@@ -6,7 +6,7 @@
 
 A static library of 17 detector models: geometry/field views, drift movies, pulse comparisons, and signal tables. GeGI includes 20 selectable events, 34 signed channels, and a separate supplementary notebook study. Read the [website guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html) before interpreting the results.
 
-These are precomputed SSD results, **not an online solver or a full end-to-end simulation**. Movies are pre-rendered 3D views; full scene rotation still requires the original desktop ParaView workspace. Synthetic deposits are not a Geant4 source simulation or a Compton reconstruction.
+These are precomputed SSD results, **not an online solver or a full end-to-end simulation**. Movies are pre-rendered 3D views; full scene rotation still requires the original desktop ParaView workspace. The original gallery's synthetic deposits are not a Geant4 source simulation or a Compton reconstruction.
 
 To browse a downloaded repository, open `docs/index.html`. No Julia, ParaView, Node.js, or Python installation is needed for viewing. The development computer's full local entry remains `Additional_Simulations/Visualization_3D/Open_Library.cmd`.
 
@@ -22,8 +22,8 @@ The [shared SSD runner](simulation/README.md) loads a selected distributed model
 | `2D_GeGI detector Simulation/` | Earlier GeGI study and source reference material | No |
 | `docs/` | Generated, validated public website | Yes |
 | `models/` | 17 exact original SSD YAML snapshots, shared include and portable provenance | Yes |
-| `simulation/` | Shared CPU/CUDA runner, two pinned environments and bounded benchmarks | Yes |
-| `transport/` | Pinned Geant4/remage Linux environment and installation smoke test | Yes |
+| `simulation/` | Shared CPU/CUDA runner, causal event replay, pinned environments and tests | Yes |
+| `transport/` | Pinned Geant4/remage, bare-detector geometry, event adapter and tests | Yes |
 | `tools/` | Export, publication checks, tests and maintenance utilities | Yes |
 | `.local/` | Ignored migration backup and bounded test/build scratch space | No |
 | `PROGRESS.md`, `AGENTS.md` | Milestones, evidence, and development rules | Yes |
@@ -63,8 +63,17 @@ Model downloads build only from versioned `models/`: direct YAMLs, per-detector 
 
 For subsequent substantial development, use one focused branch, record the purpose and tests, then review before merging to `main`. Keep model changes separate from presentation changes. Never silently alter original model parameters or discard incomplete-collection events. The staged development plan and Astra/High preference are in `PROGRESS.md` and `AGENTS.md`.
 
-## Local compute: CPU, optional GPU, and radiation transport
+## AK02 / SAP22 radiation-to-charge example
 
-[SSD CPU/GPU instructions](simulation/README.md) provide one shared runner with detector, point, energy, contact and grid options. CPU remains the default; CUDA accelerates potential solves only and is not assumed faster for a small problem. Use the benchmark before choosing a backend. Original YAML snapshots and the CPU lockfile remain unchanged.
+The [transport instructions](transport/README.md) now generate a bare AK02 or SAP22
+Geant4 geometry from the exact SSD contour, run a bounded monoenergetic photon
+source and export a checked event contract. The [SSD replay](simulation/README.md#radiation-deposit-replay-ak02-and-sap22)
+then computes electrode signals with the original deposition times and energy
+ledger. Zero-deposit primaries and incomplete-trajectory flags are retained.
 
-[Geant4/remage instructions](transport/README.md) use one WSL2/Ubuntu environment on Windows, with locked conda-forge packages managed by Pixi. Radiation transport is distinct from semiconductor drift/diffusion/trapping. The LBNL upstream geometry is pinned and cached locally; conversion/placement validation and SSD coupling are not yet complete. The Ge-box smoke test is never presented as the cryostat.
+AK02/ICPC2 is the Li-contact primary case; SAP22 is a differently shaped non-Li
+cross-check, not a matched control. Canonical 78 K and +500/+700 V files remain
+unchanged; 77 K is an explicit run override. SAP22's original ADL parametrization
+has no temperature scaling. These are interface tests, not Li-layer CCE or
+electronics validation. LBNL cryostat conversion/placement and calibrated charge
+response remain separate gates; no new GeGI work is included.

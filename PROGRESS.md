@@ -2,7 +2,7 @@
 
 Updated: 2026-09-25 (local)
 
-Current: website/model downloads are live; configurable CPU/CUDA examples and the local Geant4/remage installation are verified. LBNL geometry conversion and radiation-to-charge coupling remain pending.
+Current: website/model downloads and CPU/CUDA examples are available; M2a bare AK02/SAP22 radiation-to-charge replay is verified. Calibrated Li response, LBNL placement and electronics remain pending.
 
 ## Baseline website and migration
 
@@ -26,7 +26,7 @@ These are migration and functionality checks, not all-detector convergence tests
 |---|---|---|
 | M0 | Share existing results on GitHub Pages | Published; URL verified |
 | M1 | Clean-machine calculation example, pinned environment, portable paths | M1b CPU/CUDA examples verified on Windows; full campaign and other OS checks pending |
-| M2 | One Geant4/remage event connected to SSD drift and electrode signal | Planned |
+| M2 | Geant4/remage deposits connected to SSD drift and electrode signal | M2a bare AK02/SAP22 handoff verified; Li-response and cryostat gates remain |
 | M3 | Preamp, analog shaping, ADC, independently reconstructed event energy | Planned |
 | M4 | Small repeatable spectrum and documented event-level checks | Planned |
 | M5 | Physics/readout refinements and comparison with measured data | Planned |
@@ -109,3 +109,40 @@ The nine pinned jintonic LBNL text-geometry files were fetched locally and check
 Charge-physics audit is documented in simulation/README.md: drift-model-specific diffusion coefficients, signal-stage trapping and its time-step constraints, and no identified dedicated SRH/detrapping solver in the pinned source. No new recombination or calibrated diffusion/trapping model is claimed. Installation and GPU parity do not establish experimental accuracy.
 
 M1b release verification: implementation commit 1943a28 was pushed to main; GitHub Pages run 36212446961 completed successfully. The exact online build 29914625da03f0998c972117da43d98dd4a7b01e3cf6649d05ac76ba81a65ea0 matched the local snapshot, with 78 live files checked (including model downloads). Release marker: v0.3.0-gpu-transport. Superseded trial output folders were removed after retaining final CPU/CUDA reports and combined Float32 GeGI diagnostics under .local/m1b-final. Original baseline, scientific inputs, migration backup and pinned cryostat sources are preserved.
+
+## M2a execution plan — 2026-09-25 local
+
+Remote connectivity restored; clean main at edd0a36 verified before creating feature/m2a-ak02-events. First implement bare AK02/SAP22 transport geometry and a versioned lossless-enough deposit handoff, then a bounded time-aware SSD replay. Preserve original model bytes, lockfiles and existing results. Use nominal stored 78 K baselines initially; explicit 77 K conditions later, never silently change snapshots. AK02 +500 V is corroborated by the private manuscript; SAP22 +700 V is the stored model setting and still needs latest experimental confirmation.
+
+Acceptance: canonical polycone equivalence (volume and sampled point membership against Geant4 and SSD); raw LH5 with track/parent IDs, both endpoints, global positions, keV/m/ns, preclustering off; zero-deposit census; explicit rigid transform; reassembly by event ID; causal delayed-signal sum without per-event normalization. Use remage already installed, not a replacement engine. Start with coarse 100-photon coupling tests, not a Li-layer efficiency prediction. Keep all Li-volume deposited energy in transport; record model-level charge losses only once. No new recombination claim. LBNL placement and M3 electronics remain separate gates.
+
+Use one focused Astra High implementation task, independent supervisor runtime checks, then two read-only specialist agents and cross-review before release. No permission/auth reset changes, no banked resets, no unrelated writes. Project sources stay in transport/simulation; compact evidence in .local/m2a.
+
+M2a numerical diagnostic: AK02 Float64 at 0.05 mm minimum spacing failed the strict 0.0005 V electric update gate with default SOR both at 10000 and 50000 budgets (0.0012436695 V). Pinned SSD may stop on an update plateau before meeting tolerance in depletion switching. In-memory SOR tests gave 0.0005917673 V at 1.2–1.4 and 0.0004786505 V at 1.0; a stricter 5e-5 V target was NOT reached. Add an explicit optional relaxation parameter, default unchanged, for the new baseline replay. Fresh full solves and reviewers must validate it; this is not a grid-convergence claim.
+
+Fresh AK02 replay with explicit SOR=1 still stopped at the same electric plateau. The earlier in-memory result required successive relaxations and does not establish a SOR-only fix. Add a bounded maximum of four extra relaxation calls in replay, preserving the same update gate and recording every returned update. The shared runner default remains one check. A failed sequence remains failed; no tolerance relaxation.
+
+SAP22 first replay reached an analogous weighting-potential plateau (1.3052206e-6 vs 1e-6 target). Apply the same explicitly bounded four-check policy to both potentials, recording both histories; keep shared-runner default one check. AK02 electric history reached the original gate on check four. A CartesianPoint iteration assertion bug was fixed to compare explicit x/y/z coordinates; failed trial evidence is retained.
+
+## M2a verified — bare AK02/SAP22 radiation-to-charge handoff
+
+The native remote connection was restored, main edd0a36 was checked clean, and work stayed on feature/m2a-ak02-events. A bounded Astra High implementation task wrote only the transport adapter/probe/tests. The supervising session implemented causal SSD replay and independently ran all numerical and environment tests. No original model bytes, field caches or pinned dependency locks were changed. GeGI new development is deferred.
+
+The adapter exports the canonical r-z contour as GDML genericPolycone, not a z-plane polycone. Actual Geant4 volume/membership and SSD contour/membership were compared. Each detector passed 34 G4 probe points including bore/groove/surface offsets; SSD passed the same closed-solid membership checks. Volumes: AK02 4082.209056019479 mm^3; SAP22 3491.724725628703 mm^3, matching independent cylinder-subtraction formulas. Runtime placement is identity only; nontrivial transform tests are synthetic, not an as-built assembly.
+
+| Transport case | Primaries | Stored step rows | Positive-energy steps | Events with deposits | Zero-deposit primaries |
+|---|---:|---:|---:|---:|---:|
+| AK02 | 100 | 1283 | 1138 | 58 | 42 |
+| SAP22 | 100 | 1167 | 1024 | 58 | 42 |
+
+These are 662 keV monoenergetic side-on photons in bare crystals, not experimental source efficiency. The raw flat LH5 retains global positions/time, track/parent IDs, endpoints and zero-energy records. Primary gamma PDG, MeV energy/momentum and census are now checked from the raw particles table, with a per-event energy bound. The JSON schema keeps all primary IDs and separates local mm from raw global metres. Both 100-event records were unchanged after review-only validation fixes.
+
+Causal replay processed primary IDs 0–9, including four zero-deposit events, at both original 78 K and explicit 77 K. AK02 +500 V and SAP22 +700 V were retained. All selected raw deposits were preserved with source row IDs and creation delays; no per-event normalization or double Li loss was applied. AK02 retains stopped_without_contact electron flags even where induced charge is near unity. SAP22 selected tracks reach geometric contacts. Neither outcome proves calibrated CCE. All raw positive-deposit positions were validated against SSD before any field solve.
+
+Current-code fresh 78/77 K runs passed their strict electric/weighting update gates using explicit SOR=1 and bounded retries; each update history is saved. The original BEGe CPU signal.csv remains byte-identical to the 146-sample baseline. The 23 transport tests include malformed primary kinematics and source energy; causal/schema/geometry tests include a changed-but-internally-consistent transform rejected against prepared geometry. A real SSD simultaneous 10-deposit check versus the independent component sum differed by at most 7.105427357601002e-15 keV. This is linearity validation with noninteracting clouds, not experimental validation.
+
+The two independent read-only AI reviewers (HPGe/electronics: Astra XHigh; particle/event integrity: Astra High) found no release-blocking bug in the stated interface scope. Their concrete follow-ups were implemented: bind the replay transform to prepared identity geometry, check actual primary-particle kinematics, and explicitly report SAP22 ADL's lack of temperature scaling. A fixed-field test confirms its original 77/78 K velocities are equal; AK02 mobility temperature is updated consistently. The same two review sessions then read each other's findings and the focused fixes. Both cross-reviews accepted the resolutions and recommended release within the stated bare-detector interface scope, with no remaining concrete release blocker. These are independent AI source reviews; runtime tests were executed by the supervising session, not by human certifiers.
+
+Final M2a acceptance: 23 Python handoff tests, 40 Julia causal/schema/temperature/actual-geometry checks, two additional actual SSD linearity assertions, and the existing runner tests passed. All four 78/77 K response reports hash the current run.jl/replay.jl files; the original 146-sample CPU CSV regression passed. Raw energy/position/time records remain unchanged by review fixes. The read-only reviewer sessions and implementation task have completed; no further agents are left running. M2b Li-depth/zero-field diffusion diagnostics, grid/time/cloud convergence, measured parameter calibration, LBNL placement and M3 electronics remain pending.
+
+Local evidence is consolidated under .local/m2a: AK02/ and SAP22/ each retain immutable raw truth/inputs, geometry-check.json and response-77K/response-78K; reviews/ retains both agent sessions and cross-reviews; checks/ and validation.json retain test evidence, original trial diagnostics and baseline regression. Superseded duplicate raw/response folders, temporary scripts and reproducible C++ build intermediates were removed only after preserving verification records. Original .local/quickstart, migration backups and LBNL source files were preserved.

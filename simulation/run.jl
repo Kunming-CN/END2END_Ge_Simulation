@@ -197,14 +197,26 @@ function timed(f, backend)
     backend.synchronize()
     value, (time_ns() - started) / 1e9
 end
-function solve_fields!(sim, cfg, backend)
-    common = (device_array_type=backend.array_type, use_nthreads=cfg.threads,
+function solve_fields!(sim, cfg, backend; sor_consts=missing, potential_rechecks::Int=1)
+    1 <= potential_rechecks <= 8 || throw(ArgumentError("Potential rechecks must be 1..8"))
+    electric_updates = Float64[]
+    weighting_updates = Float64[]
+    bias = maximum(c.potential for c in sim.detector.contacts) - minimum(c.potential for c in sim.detector.contacts)
+    common = (device_array_type=backend.array_type, use_nthreads=cfg.threads, sor_consts=sor_consts,
         depletion_handling=true, n_iterations_between_checks=250, verbose=false)
     options = (common..., convergence_limit=1e-6, refinement_limits=[0.2, 0.1, 0.05],
         min_tick_distance=cfg.min_grid*u"mm", max_tick_distance=cfg.max_grid*u"mm", max_n_iterations=cfg.max_iterations)
     electric_update, electric_s = timed(backend) do
         calculate_electric_potential!(sim; options...)
-        SSD.update_till_convergence!(sim, SSD.ElectricPotential, 1e-6; common..., max_n_iterations=3000)
+        # A depleted/neutral boundary may trigger SSD's plateau stop before its update tolerance.
+        update = Inf
+        for attempt in 1:potential_rechecks
+            update = SSD.update_till_convergence!(sim, SSD.ElectricPotential, 1e-6; common..., max_n_iterations=3000)
+            push!(electric_updates, Float64(update))
+            gate = (iszero(bias) ? maximum(abs, sim.electric_potential.data) : abs(bias)) * 1e-6
+            isfinite(update) && update <= gate && break
+        end
+        update
     end
     bias = maximum(c.potential for c in sim.detector.contacts) - minimum(c.potential for c in sim.detector.contacts)
     scale = iszero(bias) ? maximum(abs, sim.electric_potential.data) : abs(bias)
@@ -216,10 +228,16 @@ function solve_fields!(sim, cfg, backend)
     end
     weighting_update, weighting_s = timed(backend) do
         calculate_weighting_potential!(sim, cfg.contact; options...)
-        SSD.update_till_convergence!(sim, SSD.WeightingPotential, cfg.contact, 1e-6; common..., max_n_iterations=3000)
+        update = Inf
+        for attempt in 1:potential_rechecks
+            update = SSD.update_till_convergence!(sim, SSD.WeightingPotential, cfg.contact, 1e-6; common..., max_n_iterations=3000)
+            push!(weighting_updates, Float64(update))
+            isfinite(update) && update <= 1e-6 && break
+        end
+        update
     end
     isfinite(weighting_update) && weighting_update <= 1e-6 || error("Weighting iteration tolerance not reached: last update $(weighting_update), required <= 1e-6; limit $(cfg.max_iterations) per refinement.")
-    solver = Dict("electric_last_update_V" => electric_update, "weighting_last_update" => weighting_update,
+    solver = Dict("electric_update_history_V" => electric_updates, "potential_recheck_limit" => potential_rechecks, "weighting_update_history" => weighting_updates, "electric_last_update_V" => electric_update, "weighting_last_update" => weighting_update,
         "relative_tolerance" => 1e-6, "electric_grid" => collect(size(sim.electric_potential.data)),
         "weighting_grid" => collect(size(sim.weighting_potentials[cfg.contact].data)),
         "min_tick_distance_mm" => cfg.min_grid, "max_tick_distance_mm" => cfg.max_grid,

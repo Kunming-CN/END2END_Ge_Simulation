@@ -39,8 +39,8 @@ if (existing.status !== 0) run(gh, ['repo', 'create', repo, '--public', '--descr
 const origin = run(git, ['remote', 'get-url', 'origin'], true, true);
 if (origin.status !== 0) run(git, ['remote', 'add', 'origin', `https://github.com/${repo}.git`]);
 else if (![`https://github.com/${repo}.git`, `https://github.com/${repo}`, `git@github.com:${repo}.git`].includes(origin.stdout.trim())) throw new Error('Unexpected origin; stop and inspect.');
-const simulationFiles = new Set(["simulation/Project.toml","simulation/Manifest.toml","simulation/run.jl","simulation/README.md","simulation/benchmark.jl","simulation/test_run.jl","simulation/gpu/Project.toml","simulation/gpu/Manifest.toml"]);
-const transportFiles = new Set(["transport/README.md","transport/pixi.toml","transport/pixi.lock","transport/.pixi/config.toml","transport/cryostat-source.json","transport/Run.cmd","transport/run.sh","transport/smoke.gdml","transport/smoke.mac","transport/check_smoke.py"]);
+const simulationFiles = new Set(["simulation/Project.toml","simulation/Manifest.toml","simulation/run.jl","simulation/README.md","simulation/benchmark.jl","simulation/test_run.jl","simulation/gpu/Project.toml","simulation/gpu/Manifest.toml","simulation/replay.jl","simulation/test_replay.jl"]);
+const transportFiles = new Set(["transport/README.md","transport/pixi.toml","transport/pixi.lock","transport/.pixi/config.toml","transport/cryostat-source.json","transport/Run.cmd","transport/run.sh","transport/smoke.gdml","transport/smoke.mac","transport/check_smoke.py","transport/handoff.py","transport/test_handoff.py","transport/geometry_probe.cc","transport/CMakeLists.txt"]);
 const approved = new Set(['.gitignore', '.gitattributes', 'README.md', 'PROGRESS.md', 'AGENTS.md', 'Publish.cmd']);
 // build_site.py has already validated this exact, versioned model inventory.
 const modelCatalog = JSON.parse(fs.readFileSync(path.join(root, 'models/catalog.json'), 'utf8'));

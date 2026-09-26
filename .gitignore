@@ -49,3 +49,11 @@
 **/*.pvsm
 **/*.vtr
 **/*.bin
+
+# Reviewed M2 event handoff and independent geometry probe.
+!simulation/replay.jl
+!simulation/test_replay.jl
+!transport/handoff.py
+!transport/test_handoff.py
+!transport/geometry_probe.cc
+!transport/CMakeLists.txt
