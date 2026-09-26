@@ -6,6 +6,7 @@ Work only in this project unless a recorded input dependency needs a read-only c
 2. Keep one project root. Use tools/ for reusable tooling, docs/ for public results, and .local/ for disposable local evidence/backups. Do not scatter copies, timestamped reports or extra environments.
 3. Preserve existing numerical data and model hashes. Never silently change bias, impurity, geometry, carrier physics, missing-charge labels or event selection to make a test pass.
 4. The public repository initially contains the exported website and maintenance tools only. The full raw computation workspace is deliberately ignored. Add new calculation source deliberately during M1, not with a wholesale force-add.
+   Intentional M1a addition: `models/` contains exact versioned SSD model snapshots and inspected relative includes. Preserve original YAML bytes and pinned hashes; keep provenance portable and reference/candidate limitations intact. Original model/cache folders remain ignored.
 5. Never publish credentials, private paths, raw field caches, manuals, photographs or slides without a specific reason and review. Do not change permissions or enable a public service unrelated to this project.
 6. Geant4/remage provides radiation deposits, positions, creation times and identities. SSD provides semiconductor drift and electrode signals. Readout is a separate stage. A deposition time is not a drift time.
 7. Keep all relevant deposits of one event grouped. Keep truth Edep separate from readout-derived Erec. Do not set the energy gain separately for each event.
@@ -16,6 +17,7 @@ Work only in this project unless a recorded input dependency needs a read-only c
 ## Existing tools
 
 - `tools/build_site.py`: deterministic export of the locally generated library into docs/.
+- `tools/export_models.py`: explicit `--import` of recorded originals; portable `--validate` of versioned snapshots. Site model downloads use `models/` only. Unexpected managed edits must fail, never be overwritten.
 - `tools/smoke_test.jl`: bounded AK01 event replay in the existing Julia environment.
 - `tools/smoke_scene.py`: existing AK01/GeGI native-state reload and render.
 - `tools/migrate_paths.py`: explicit old-root replacement with an originals ZIP; do not rerun blindly.
@@ -37,3 +39,7 @@ The maintainer requested Astra with High reasoning for this project's Work/Codex
 ## Publication validation
 
 Run tools/test_site.py and tools/check_site.py before publishing. Build only through tools/build_site.py; never hand-edit docs/. Verify the live build with tools/check_site.py --url after deployment, rather than relying on the publisher's basic reachability message. Keep the public manifest and exact-byte Git attributes intact. The original numerical workspace remains out of scope for a publication-only edit.
+
+## Portable CPU example
+
+M1a includes only the reviewed simulation/Project.toml, Manifest.toml, run.jl and README.md. Keep this environment separate from the preserved full campaign. Run --check-models and the bounded cache-free example before changing the lockfile or runner; log any differences. Generated files belong under .local/, not models/, simulation/ or docs/. The canonical model snapshots are deliberately frozen by reviewed hashes; do not silently mutate them.

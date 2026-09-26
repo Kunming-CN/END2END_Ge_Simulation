@@ -11,6 +11,8 @@ import re
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
+from export_models import (MODELS, ORIGINAL_HASHES, download_files, public_text,
+                           read_distribution, validate_archive)
 
 MANIFEST = 'site-manifest.json'
 EXTENSIONS = {'.html', '.png', '.jpg', '.svg', '.mp4', '.webm', '.csv', '.json', '.md'}
@@ -44,11 +46,16 @@ def local_target(page, url):
     return result
 
 
-def validate(site, require_manifest=True):
+def validate(site, require_manifest=True, require_models=False):
     """Check the complete snapshot and return its deterministic file inventory."""
     site = Path(site).resolve()
     if not (site / 'index.html').is_file():
         raise ValueError(f'No index.html in {site}')
+    # Old snapshots remain valid for protected staging/rollback. Once present,
+    # the complete model distribution and every download are mandatory.
+    model_outputs = {}
+    if require_models or (site / 'models').exists() or (site / 'downloads').exists():
+        model_outputs = download_files(read_distribution(MODELS))
     entries, pages, total = [], {}, 0
     for f in sorted(site.rglob('*')):
         if f.is_symlink():
@@ -56,15 +63,28 @@ def validate(site, require_manifest=True):
         if not f.is_file() or f.name == MANIFEST:
             continue
         relative = f.relative_to(site).as_posix()
-        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS:
+        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in model_outputs:
             raise ValueError(f'Unapproved public file: {relative}')
         data = f.read_bytes()
+        if relative.startswith(('models/', 'downloads/')):
+            if relative not in model_outputs or data != model_outputs[relative]:
+                raise ValueError(f'Model download differs from versioned original: {relative}')
+            if f.suffix == '.zip':
+                # Compare exact bytes above, and independently check archive safety,
+                # metadata privacy and complete included contents without extraction.
+                import io
+                import zipfile
+                with zipfile.ZipFile(io.BytesIO(model_outputs[relative])) as archive:
+                    expected = {name: archive.read(name) for name in archive.namelist()}
+                validate_archive(data, expected)
+            else:
+                public_text(data, relative)
         if len(data) >= 95 * 1024**2:
             raise ValueError(f'Oversize public file: {relative}')
         total += len(data)
         entries.append({'path': relative, 'bytes': len(data),
                         'sha256': hashlib.sha256(data).hexdigest()})
-        if f.suffix.lower() in {'.html', '.json', '.md', '.svg', '.csv'}:
+        if f.suffix.lower() in {'.html', '.json', '.md', '.svg', '.csv', '.yaml'}:
             text = data.decode('utf-8-sig')
             if PRIVATE_PATH.search(text) or CREDENTIAL.search(text):
                 raise ValueError(f'Local path or possible credential: {relative}')
@@ -86,6 +106,18 @@ def validate(site, require_manifest=True):
             links += 1
             if target not in names and posixpath.join(target, 'index.html') not in names:
                 raise ValueError(f'Broken or wrong-case link: {page} -> {url}')
+    if model_outputs:
+        if set(model_outputs) - names:
+            raise ValueError('Missing model downloads: ' + ', '.join(sorted(set(model_outputs) - names)))
+        required_links = {'index.html': {'downloads/all-models.zip'},
+                          'guide.html': {'downloads/all-models.zip'}}
+        for detector in ORIGINAL_HASHES:
+            required_links[f'detectors/{detector}/index.html'] = {
+                f'models/{detector}.yaml', f'downloads/{detector}.zip'}
+        for page, required in required_links.items():
+            targets = {local_target(page, url) for url in pages.get(page, [])}
+            if not required <= targets:
+                raise ValueError('Missing model download links: ' + page)
     entries.sort(key=lambda item: item['path'])
     encoded = json.dumps(entries, sort_keys=True, separators=(',', ':')).encode()
     result = {'schema_version': 1, 'build_id': hashlib.sha256(encoded).hexdigest(),
@@ -115,7 +147,7 @@ def main():
 
 
 def verify_live(url, report):
-    """Verify the manifest, every HTML page, and representative media/data bytes."""
+    """Verify HTML, every model/download artifact, and representative media/data."""
     from concurrent.futures import ThreadPoolExecutor
     from urllib.parse import quote
     from urllib.request import Request, urlopen
@@ -148,6 +180,8 @@ def verify_live(url, report):
         raise ValueError('The live manifest is not this local snapshot; deployment may still be pending.')
     entries = report['files']
     selected = {entry['path']: entry for entry in entries if entry['path'].endswith('.html')}
+    selected.update({entry['path']: entry for entry in entries
+                     if entry['path'].startswith(('models/', 'downloads/'))})
     for suffix in ('.png', '.svg', '.csv', '.mp4', '.webm', '.json', '.md'):
         examples = [entry for entry in entries if entry['path'].endswith(suffix)]
         for entry in examples[:2] + examples[-1:]:

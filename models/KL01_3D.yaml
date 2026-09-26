@@ -1,0 +1,138 @@
+name: KL01_3D
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cartesian
+  axes:
+    x:
+      from: -13
+      to: 13
+      boundaries:
+        left: inf
+        right: inf
+    y:
+      from: -13
+      to: 13
+      boundaries:
+        left: inf
+        right: inf
+    z:
+      from: -3
+      to: 13
+      boundaries:
+        left: inf
+        right: inf
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 78
+    impurity_density:
+      name: constant
+      value: -3.14e10cm^-3
+    charge_drift_model:
+      include: ADLChargeDriftModel/drift_velocity_config.yaml
+    geometry:
+      union:
+      - box:
+          widths:
+          - 18.62
+          - 19.59
+          - 2
+          origin:
+          - 0
+          - 0
+          - 1
+          rotate:
+            Z: 0
+      - box:
+          widths:
+          - 10.34
+          - 11.28
+          - 7.06
+          origin:
+          - 0
+          - 0
+          - 5.53
+          rotate:
+            Z: 0
+      - box:
+          widths:
+          - 2
+          - 19.59
+          - 2.5
+          origin:
+          - 8.31
+          - 0
+          - 1.25
+          rotate:
+            Z: 0
+      - box:
+          widths:
+          - 2
+          - 19.59
+          - 2.5
+          origin:
+          - -8.31
+          - 0
+          - 1.25
+          rotate:
+            Z: 0
+      - box:
+          widths:
+          - 18.62
+          - 2
+          - 2.5
+          origin:
+          - 0
+          - 8.795
+          - 1.25
+          rotate:
+            Z: 0
+      - box:
+          widths:
+          - 18.62
+          - 2
+          - 2.5
+          origin:
+          - 0
+          - -8.795
+          - 1.25
+          rotate:
+            Z: 0
+  contacts:
+  - name: PP
+    material: HPGe
+    id: 1
+    potential: 0
+    geometry:
+      box:
+        widths:
+        - 10.34
+        - 11.28
+        - 0
+        origin:
+        - 0
+        - 0
+        - 9.06
+        rotate:
+          Z: 0
+  - name: HV
+    material: HPGe
+    id: 2
+    potential: 1600
+    geometry:
+      box:
+        widths:
+        - 18.62
+        - 19.59
+        - 0
+        origin:
+        - 0
+        - 0
+        - 0
+        rotate:
+          Z: 0

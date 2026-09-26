@@ -1,0 +1,97 @@
+name: BEGe_reference
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 45
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries:
+        left: periodic
+        right: periodic
+    z:
+      from: -5
+      to: 55
+      boundaries:
+        left: inf
+        right: inf
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 78
+    impurity_density:
+      name: cylindrical
+      offset: -0.9e10cm^-3
+      gradient:
+        z: 0.1e10cm^-4
+    charge_drift_model:
+      include: ADLChargeDriftModel/drift_velocity_config.yaml
+    geometry:
+      union:
+      - tube:
+          r:
+            from: 12
+            to: 40
+          h: 30
+          origin:
+            z: 15
+      - tube:
+          r:
+            from: 8
+            to: 12
+          h: 27.5
+          origin:
+            z: 16.25
+      - tube:
+          r:
+            from: 0
+            to: 8
+          h: 30
+          origin:
+            z: 15
+  contacts:
+  - name: Core
+    material: HPGe
+    id: 1
+    potential: 0
+    geometry:
+      tube:
+        r: 3.0
+        h: 0.3
+        origin:
+          z: 0.15
+  - name: Mantle
+    material: HPGe
+    id: 2
+    potential: 1500
+    geometry:
+      union:
+      - tube:
+          r:
+            from: 0
+            to: 40
+          h: 0
+          origin:
+            z: 30
+      - tube:
+          r:
+            from: 40
+            to: 40
+          h: 30
+          origin:
+            z: 15
+      - tube:
+          r:
+            from: 12
+            to: 40
+          h: 0
+          origin:
+            z: 0

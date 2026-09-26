@@ -1,0 +1,76 @@
+name: Bipolar_reference_3D
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cartesian
+  axes:
+    x:
+      from: -13
+      to: 13
+      boundaries:
+        left: inf
+        right: inf
+    y:
+      from: -13
+      to: 13
+      boundaries:
+        left: inf
+        right: inf
+    z:
+      from: -3
+      to: 13
+      boundaries:
+        left: inf
+        right: inf
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 78
+    impurity_density:
+      name: constant
+      value: -3.14e10cm^-3
+    charge_drift_model:
+      include: ADLChargeDriftModel/drift_velocity_config.yaml
+    geometry:
+      box:
+        widths:
+        - 9.21
+        - 11.69
+        - 9.5
+        origin:
+        - 0
+        - 0
+        - 4.75
+  contacts:
+  - name: PP
+    material: HPGe
+    id: 1
+    potential: 0
+    geometry:
+      box:
+        widths:
+        - 9.21
+        - 11.69
+        - 0
+        origin:
+        - 0
+        - 0
+        - 9.5
+  - name: HV
+    material: HPGe
+    id: 2
+    potential: 2000
+    geometry:
+      box:
+        widths:
+        - 9.21
+        - 11.69
+        - 0
+        origin:
+        - 0
+        - 0
+        - 0

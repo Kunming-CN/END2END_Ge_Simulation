@@ -1,0 +1,136 @@
+name: AK02
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 15
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries:
+        left: periodic
+        right: periodic
+    z:
+      from: -2
+      to: 11
+      boundaries:
+        left: inf
+        right: inf
+  spacing_surface_refinement:
+  - 1e-4
+  - 1e-4
+  - 1e-4
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 78
+    impurity_density:
+      name: PtypePNjunction
+      lithium_annealing_temperature: 553.15K
+      lithium_annealing_time: 30minute
+      doped_contact_id: 2
+      bulk_impurity_density:
+        name: constant
+        value: -1.58e10cm^-3
+    charge_drift_model:
+      model: InactiveLayerChargeDriftModel
+      temperature: 78K
+      neutral_impurity_density:
+        name: constant
+        value: 5.6769e15cm^-3
+    charge_trapping_model:
+      model: ConstantLifetime
+      parameters:
+        τh: 1ms
+        τe: 1ms
+      model_inactive: ConstantLifetime
+      parameters_inactive:
+        τh: 1μs
+        τe: 1μs
+    geometry:
+      polycone:
+        r:
+        - 0
+        - 7.8
+        - 7.8
+        - 12.65
+        - 12.65
+        - 7.75
+        - 7.75
+        - 2.95
+        - 2.95
+        - 0
+        - 0
+        z:
+        - 2.1
+        - 2.1
+        - 0
+        - 0
+        - 9.4
+        - 9.4
+        - 7.9
+        - 7.9
+        - 9.4
+        - 9.4
+        - 2.1
+  contacts:
+  - name: point contact
+    material: HPGe
+    id: 1
+    potential: 0
+    geometry:
+      tube:
+        r:
+          from: 0
+          to: 0.75
+        h: 0.01
+        origin:
+          z: 9.405
+  - name: Lithium Contact
+    material: HPGe
+    id: 2
+    potential: 500
+    geometry:
+      union:
+      - tube:
+          r:
+            from: 0
+            to: 7.8
+          h: 0
+          origin:
+            z: 2.1
+      - tube:
+          r:
+            from: 7.8
+            to: 7.8
+          h: 2.1
+          origin:
+            z: 1.05
+      - tube:
+          r:
+            from: 7.8
+            to: 12.65
+          h: 0
+          origin:
+            z: 0
+      - tube:
+          r:
+            from: 12.65
+            to: 12.65
+          h: 9.4
+          origin:
+            z: 4.7
+      - tube:
+          r:
+            from: 7.75
+            to: 12.65
+          h: 0
+          origin:
+            z: 9.4

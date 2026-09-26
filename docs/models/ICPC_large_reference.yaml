@@ -1,0 +1,121 @@
+name: ICPC_large_reference
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 45
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries:
+        left: periodic
+        right: periodic
+    z:
+      from: -5
+      to: 55
+      boundaries:
+        left: inf
+        right: inf
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 78
+    impurity_density:
+      name: linear_exponential_boule
+      a: -4.61456320551e9cm^-3
+      b: 7.20765915495e7cm^-4
+      n: -2.24818085714e10cm^-3
+      l: -0.087755cm
+      m: 0.72244897959cm
+      det_z0: 0cm
+    charge_drift_model:
+      include: ADLChargeDriftModel/drift_velocity_config.yaml
+    geometry:
+      union:
+      - tube:
+          r:
+            from: 5
+            to: 40
+          h: 25
+          origin:
+            z: 37.5
+      - tube:
+          r:
+            from: 0
+            to: 40
+          h: 22
+          origin:
+            z: 14
+      - tube:
+          r:
+            from: 0
+            to: 17
+          h: 3
+          origin:
+            z: 1.5
+      - tube:
+          r:
+            from: 20
+            to: 40
+          h: 3
+          origin:
+            z: 1.5
+  contacts:
+  - name: point contact
+    material: HPGe
+    id: 1
+    potential: 0
+    geometry:
+      tube:
+        r: 1
+        h: 0
+        origin:
+          z: 0
+  - name: n+ contact
+    material: HPGe
+    id: 2
+    potential: 3200
+    geometry:
+      union:
+      - tube:
+          r:
+            from: 0
+            to: 5
+          h: 0
+          origin:
+            z: 25
+      - tube:
+          r:
+            from: 5
+            to: 5
+          h: 25
+          origin:
+            z: 37.5
+      - tube:
+          r:
+            from: 5
+            to: 40
+          h: 0
+          origin:
+            z: 50
+      - tube:
+          r:
+            from: 40
+            to: 40
+          h: 50
+          origin:
+            z: 25
+      - tube:
+          r:
+            from: 20
+            to: 40
+          h: 0
+          origin:
+            z: 0

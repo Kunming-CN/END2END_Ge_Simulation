@@ -1,0 +1,1336 @@
+# GeGI 3D model. Parameter values and sources are listed in README.md.
+name: GeGI_3D
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cartesian
+  axes:
+    x:
+      from: -55.0
+      to: 55.0
+      boundaries: inf
+    y:
+      from: -55.0
+      to: 55.0
+      boundaries: inf
+    z:
+      from: -12.0
+      to: 12.0
+      boundaries: inf
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 92.3
+    impurity_density:
+      name: constant
+      value: -5000000000.0cm^-3
+    charge_drift_model:
+      model: ADL2016ChargeDriftModel
+      phi110: -45.0°
+      material: HPGe
+      drift:
+        velocity:
+          model: Bruyneel2016
+          parameters:
+            e100:
+              mu0: 37165cm^2/(V*s)
+              beta: 0.804
+              E0: 507.7V/cm
+              mun: -145cm^2/(V*s)
+            escattering:
+              eta0: 0.496
+              b: 0.0296
+              Eref: 1200V/cm
+            h100:
+              mu0: 62934cm^2/(V*s)
+              beta: 0.735
+              E0: 181.9V/cm
+            h111:
+              mu0: 62383cm^2/(V*s)
+              beta: 0.749
+              E0: 143.9V/cm
+      temperature_dependence:
+        reference_temperature: 77K
+        model: Omar1987
+        parameters:
+          e:
+            p: 1.68
+            theta: 200K
+          h:
+            p: 2.4
+            theta: 200K
+    geometry:
+      intersection:
+      - box:
+          widths:
+          - 90.0
+          - 90.0
+          - 11.0
+          origin:
+          - 0
+          - 0
+          - 0
+      - box:
+          widths:
+          - 90.0
+          - 90.0
+          - 11.0
+          origin:
+          - 0
+          - 0
+          - 0
+          rotate:
+            Z: 45
+  contacts:
+  - name: X01
+    id: 1
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - -37.03110468189838
+          - 0
+          - 5.5
+  - name: X02
+    id: 2
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - -32.09362405764526
+          - 0
+          - 5.5
+  - name: X03
+    id: 3
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - -27.156143433392142
+          - 0
+          - 5.5
+  - name: X04
+    id: 4
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - -22.218662809139026
+          - 0
+          - 5.5
+  - name: X05
+    id: 5
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - -17.281182184885907
+          - 0
+          - 5.5
+  - name: X06
+    id: 6
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - -12.343701560632791
+          - 0
+          - 5.5
+  - name: X07
+    id: 7
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - -7.406220936379675
+          - 0
+          - 5.5
+  - name: X08
+    id: 8
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - -2.468740312126556
+          - 0
+          - 5.5
+  - name: X09
+    id: 9
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - 2.468740312126556
+          - 0
+          - 5.5
+  - name: X10
+    id: 10
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - 7.406220936379675
+          - 0
+          - 5.5
+  - name: X11
+    id: 11
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - 12.343701560632795
+          - 0
+          - 5.5
+  - name: X12
+    id: 12
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - 17.281182184885907
+          - 0
+          - 5.5
+  - name: X13
+    id: 13
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - 22.218662809139026
+          - 0
+          - 5.5
+  - name: X14
+    id: 14
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - 27.15614343339214
+          - 0
+          - 5.5
+  - name: X15
+    id: 15
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - 32.093624057645265
+          - 0
+          - 5.5
+  - name: X16
+    id: 16
+    material: HPGe
+    potential: -879.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 4.687480624253117
+          - 157.99937997609973
+          - 0.0
+          origin:
+          - 37.03110468189838
+          - 0
+          - 5.5
+  - name: X_guard
+    id: 17
+    material: HPGe
+    potential: -879.0
+    geometry:
+      difference:
+      - intersection:
+        - box:
+            widths:
+            - 83.99968998804987
+            - 83.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 88.00047244789026
+            - 88.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+      - intersection:
+        - box:
+            widths:
+            - 79.99968998804987
+            - 79.99968998804987
+            - 1.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+        - box:
+            widths:
+            - 84.00047244789026
+            - 84.00047244789026
+            - 1.0
+            origin:
+            - 0
+            - 0
+            - 5.5
+            rotate:
+              Z: 45
+  - name: Y01
+    id: 18
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - -37.03110468189838
+          - -5.5
+  - name: Y02
+    id: 19
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - -32.09362405764526
+          - -5.5
+  - name: Y03
+    id: 20
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - -27.156143433392142
+          - -5.5
+  - name: Y04
+    id: 21
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - -22.218662809139026
+          - -5.5
+  - name: Y05
+    id: 22
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - -17.281182184885907
+          - -5.5
+  - name: Y06
+    id: 23
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - -12.343701560632791
+          - -5.5
+  - name: Y07
+    id: 24
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - -7.406220936379675
+          - -5.5
+  - name: Y08
+    id: 25
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - -2.468740312126556
+          - -5.5
+  - name: Y09
+    id: 26
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - 2.468740312126556
+          - -5.5
+  - name: Y10
+    id: 27
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - 7.406220936379675
+          - -5.5
+  - name: Y11
+    id: 28
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - 12.343701560632795
+          - -5.5
+  - name: Y12
+    id: 29
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - 17.281182184885907
+          - -5.5
+  - name: Y13
+    id: 30
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - 22.218662809139026
+          - -5.5
+  - name: Y14
+    id: 31
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - 27.15614343339214
+          - -5.5
+  - name: Y15
+    id: 32
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - 32.093624057645265
+          - -5.5
+  - name: Y16
+    id: 33
+    material: HPGe
+    potential: 0.0
+    geometry:
+      intersection:
+      - intersection:
+        - box:
+            widths:
+            - 78.99968998804987
+            - 78.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 83.00047244789026
+            - 83.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - box:
+          widths:
+          - 157.99937997609973
+          - 4.687480624253117
+          - 0.0
+          origin:
+          - 0
+          - 37.03110468189838
+          - -5.5
+  - name: Y_guard
+    id: 34
+    material: HPGe
+    potential: 0.0
+    geometry:
+      difference:
+      - intersection:
+        - box:
+            widths:
+            - 83.99968998804987
+            - 83.99968998804987
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 88.00047244789026
+            - 88.00047244789026
+            - 0.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45
+      - intersection:
+        - box:
+            widths:
+            - 79.99968998804987
+            - 79.99968998804987
+            - 1.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+        - box:
+            widths:
+            - 84.00047244789026
+            - 84.00047244789026
+            - 1.0
+            origin:
+            - 0
+            - 0
+            - -5.5
+            rotate:
+              Z: 45

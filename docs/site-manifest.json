@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "build_id": "bc8395cf13b9cc9a2d27990ae00edbf7efa688057dd45ada3c6e28ca775cabf0",
-  "file_count": 1014,
-  "total_bytes": 179749756,
+  "build_id": "7a12acb489930eeff5ad2d698afbef1ee12dd72adcbf74416b61ffaac2f5ec0b",
+  "file_count": 1052,
+  "total_bytes": 180113247,
   "html_pages": 21,
-  "local_links_checked": 1629,
+  "local_links_checked": 1685,
   "files": [
     {
       "path": ".nojekyll",
@@ -18,8 +18,8 @@
     },
     {
       "path": "detectors/AK01/index.html",
-      "bytes": 15464,
-      "sha256": "2c95a60514a4950ff294ec166d405b3c28984e31295bd39adc895603b0bd1b84"
+      "bytes": 15944,
+      "sha256": "4acad5e93f3138f983814e38b5167c745311d9b535e970b52aefdceeb52a12bb"
     },
     {
       "path": "detectors/AK01/runs/20260922_suite_v3/01_geometry.png",
@@ -303,8 +303,8 @@
     },
     {
       "path": "detectors/AK02/index.html",
-      "bytes": 15398,
-      "sha256": "186db40083a7ea5b4d71189a17292899103ac89be9940106be087355b41a17be"
+      "bytes": 15878,
+      "sha256": "d47de3ba12f6e62070cada8ae37f18a46e7184c905832834427276fdb1e946e8"
     },
     {
       "path": "detectors/AK02/runs/20260922_suite_v3/01_geometry.png",
@@ -588,8 +588,8 @@
     },
     {
       "path": "detectors/BEGe_GD32B_reference/index.html",
-      "bytes": 15889,
-      "sha256": "20fd2756d74e5e911f1b655e4f158b040f493290e878054b1afa5703bebf560d"
+      "bytes": 16401,
+      "sha256": "bdc66080aa7eae7fe1ae29fd9ff806ed7e44b78768822d6a5a2ed9707378dac0"
     },
     {
       "path": "detectors/BEGe_GD32B_reference/runs/20260922_suite_v3/01_geometry.png",
@@ -873,8 +873,8 @@
     },
     {
       "path": "detectors/BEGe_reference/index.html",
-      "bytes": 15084,
-      "sha256": "1dffdc8313034f7c011f1f707cee432be22d3a3ccb17dc323e978141ae7fa802"
+      "bytes": 15584,
+      "sha256": "adaaf1137dbd0efa73871b31f8048016b758711202050921e7f9d6c832694c76"
     },
     {
       "path": "detectors/BEGe_reference/runs/20260922_suite_v3/01_geometry.png",
@@ -1158,8 +1158,8 @@
     },
     {
       "path": "detectors/Bipolar_reference_3D/index.html",
-      "bytes": 15069,
-      "sha256": "54168928d978d86a58477e7e6ef695c879e99a4e338ac6c914f4b331dfaeca08"
+      "bytes": 15581,
+      "sha256": "352ec063bc62bd994ea6fc8024536c3e4331bbd0d1bebb292fd2a5307c6bb3a2"
     },
     {
       "path": "detectors/Bipolar_reference_3D/runs/20260922_suite_v3/01_geometry.png",
@@ -1443,8 +1443,8 @@
     },
     {
       "path": "detectors/COAX_ANG2_reference/index.html",
-      "bytes": 15712,
-      "sha256": "8549222838a047514f2357072dcddd75583744591f67af07a6a41f288466693c"
+      "bytes": 16222,
+      "sha256": "839724f5afd47aeeacfa041e19207ba6b3a1e9abdf43579d9305ccafd735dcb6"
     },
     {
       "path": "detectors/COAX_ANG2_reference/runs/20260922_suite_v3/01_geometry.png",
@@ -1728,8 +1728,8 @@
     },
     {
       "path": "detectors/GeGI_3D/index.html",
-      "bytes": 24111,
-      "sha256": "28f9e88616e4604bce24ed790c2a838ebf568dac761bfbdd675dfd858456954c"
+      "bytes": 24597,
+      "sha256": "6ddb5dbb35c65d4aee88d31b0ba4ad2306cf6962d90d5f43a57076d067fbb97d"
     },
     {
       "path": "detectors/GeGI_3D/octagon_geometry.png",
@@ -2213,8 +2213,8 @@
     },
     {
       "path": "detectors/GeRC02/index.html",
-      "bytes": 15439,
-      "sha256": "10ed53da23416b71f191e0a43010d0d77e21370523a311854e0c88bcfa54c839"
+      "bytes": 15923,
+      "sha256": "0dfce3fe90b9134fd536d0728c5cdf548504b8c4fdefc9925f8bbaf4ca8ed4d3"
     },
     {
       "path": "detectors/GeRC02/runs/20260922_suite_v3/01_geometry.png",
@@ -2498,8 +2498,8 @@
     },
     {
       "path": "detectors/ICPC_48A_reference/index.html",
-      "bytes": 15821,
-      "sha256": "fe816f93fdc3826637fddbac354f45767889d28cc5f73b1cac93104568b4f4c0"
+      "bytes": 16329,
+      "sha256": "4f1acbbceee9304bfeeee44291dac4020c7613392808babf8e698180d1926948"
     },
     {
       "path": "detectors/ICPC_48A_reference/runs/20260922_suite_v3/01_geometry.png",
@@ -2783,8 +2783,8 @@
     },
     {
       "path": "detectors/ICPC_large_reference/index.html",
-      "bytes": 15100,
-      "sha256": "bec849bd35bd3c3042bfb778831bd7872cddc47c0e53fc8e66a3def4cc2da017"
+      "bytes": 15612,
+      "sha256": "b8c7ffde9c390693674bf337760fa84217554d0fdec9191f225364639c75128f"
     },
     {
       "path": "detectors/ICPC_large_reference/runs/20260922_suite_v3/01_geometry.png",
@@ -3068,8 +3068,8 @@
     },
     {
       "path": "detectors/KL01_3D/index.html",
-      "bytes": 15388,
-      "sha256": "73cd81bcc45bfe2d8153d5838911d2a846511783c784abd6da0e1c0c8b1c509a"
+      "bytes": 15874,
+      "sha256": "1c96da28b5fdb537b124a722c0563b18a5afb29e6cbf193aa2b83fa945de750d"
     },
     {
       "path": "detectors/KL01_3D/runs/20260922_suite_v3/01_geometry.png",
@@ -3353,8 +3353,8 @@
     },
     {
       "path": "detectors/KMRC01_candidate/index.html",
-      "bytes": 15078,
-      "sha256": "e328140e82bfdd1424598aaa6e563f590f9ca81e1e38605b043a15bfaf50a86d"
+      "bytes": 15582,
+      "sha256": "a54dc661f45b9556494174459f2e159649998aecf36ecdece19c6602bed644a8"
     },
     {
       "path": "detectors/KMRC01_candidate/runs/20260922_suite_v3/01_geometry.png",
@@ -3638,8 +3638,8 @@
     },
     {
       "path": "detectors/PPC_PONaMa1_reference/index.html",
-      "bytes": 15844,
-      "sha256": "73af33f726fef58476910fd2e9a32be014c3e04f672a50bf1196c9d70d1d1d06"
+      "bytes": 16358,
+      "sha256": "dbe49736f4dd3bd1b8461aed189eaa1beecb10b6664dc8e2bfeae5335f796c80"
     },
     {
       "path": "detectors/PPC_PONaMa1_reference/runs/20260922_suite_v3/01_geometry.png",
@@ -3923,8 +3923,8 @@
     },
     {
       "path": "detectors/SAP16/index.html",
-      "bytes": 15494,
-      "sha256": "f3983f987bfc41e0ff718755a9519dbafc45c6fba77a889d451e2d4a40daf3bd"
+      "bytes": 15976,
+      "sha256": "fee5f2117a33d19f47907cff428d33e55dae407f77ac666bd3e1bb1688292026"
     },
     {
       "path": "detectors/SAP16/runs/20260922_suite_v3/01_geometry.png",
@@ -4208,8 +4208,8 @@
     },
     {
       "path": "detectors/SAP17/index.html",
-      "bytes": 15543,
-      "sha256": "658d1d15675f99faa45df9e4a4b2d4e0bca956659232347238461c552078cc43"
+      "bytes": 16025,
+      "sha256": "fa1762e840bc84fb45b93931a6f465ab94ccff1b5a9460af3f286486c3fb50b9"
     },
     {
       "path": "detectors/SAP17/runs/20260922_suite_v3/01_geometry.png",
@@ -4493,8 +4493,8 @@
     },
     {
       "path": "detectors/SAP18_ring08_scenario/index.html",
-      "bytes": 15122,
-      "sha256": "727193fd58229c9b4a5919736063d471594aea20854c41831813a544acf2a007"
+      "bytes": 15636,
+      "sha256": "b18f8574fc5dc64f4379b40fb87dc2a07961a15871b963157cae78c5015fb405"
     },
     {
       "path": "detectors/SAP18_ring08_scenario/runs/20260922_suite_v3/01_geometry.png",
@@ -4778,8 +4778,8 @@
     },
     {
       "path": "detectors/SAP22/index.html",
-      "bytes": 15173,
-      "sha256": "ada64c6a791ffe64596dbb50f18a481fb635585aabc745c54c5f42e2b5df038e"
+      "bytes": 15655,
+      "sha256": "f6c6e3b36a6d81262a1814e2de1014108ecf04b2449c9742f77be815d0a9c83e"
     },
     {
       "path": "detectors/SAP22/runs/20260922_suite_v3/01_geometry.png",
@@ -5057,14 +5057,104 @@
       "sha256": "3a94ab1796f5dad8f58f07c1712afdee59efb5e5339007ac06dd909871ae6b4e"
     },
     {
+      "path": "downloads/AK01.zip",
+      "bytes": 5735,
+      "sha256": "1653fbda424f2547f4bc6f4ebca3bca2e47a988a4e596e49dcedc27022722586"
+    },
+    {
+      "path": "downloads/AK02.zip",
+      "bytes": 5744,
+      "sha256": "e9f9a8b21ecf55e83c85528e9df573eb47ac2550f3100e96f1344d4c742c0dc9"
+    },
+    {
+      "path": "downloads/BEGe_GD32B_reference.zip",
+      "bytes": 6202,
+      "sha256": "cd80cb733ab31aa7321664bcf58e0f95603c16a79f3a3dab3550138bcd37ffb5"
+    },
+    {
+      "path": "downloads/BEGe_reference.zip",
+      "bytes": 6073,
+      "sha256": "12d6103d9b3219e8f295daeacf8483a6d061e182d1644551fb4d3313177aae65"
+    },
+    {
+      "path": "downloads/Bipolar_reference_3D.zip",
+      "bytes": 5806,
+      "sha256": "93b0fa15926ad91591c3bcb77f1149a9ced519fef75993609762dee697cf4fa2"
+    },
+    {
+      "path": "downloads/COAX_ANG2_reference.zip",
+      "bytes": 6080,
+      "sha256": "9317e11ca74406d4f17a35d1f43a197b8d9590c059a3b2b888be72117278fce7"
+    },
+    {
+      "path": "downloads/GeGI_3D.zip",
+      "bytes": 41233,
+      "sha256": "bedde45e44d4fc9b86d2152731392ab35d14b9ea08caab7b74729e0a5a088d66"
+    },
+    {
+      "path": "downloads/GeRC02.zip",
+      "bytes": 5718,
+      "sha256": "ae6ff3a51adedc23a2aa60af811c8bff7300436d99269f0de98927d0cd4397d4"
+    },
+    {
+      "path": "downloads/ICPC_48A_reference.zip",
+      "bytes": 6429,
+      "sha256": "3123de75f4b3abeae590eacbdf2bb67905e948e5b188a3cd34dcbcae456af3e1"
+    },
+    {
+      "path": "downloads/ICPC_large_reference.zip",
+      "bytes": 6473,
+      "sha256": "163f32b12731ae2ccc47919ce948b59cbe9f29baeb1276404dd8f6d605da67e2"
+    },
+    {
+      "path": "downloads/KL01_3D.zip",
+      "bytes": 6701,
+      "sha256": "3bf699c58bc9335b8cbca413c5921db0a6df9b2b54543e7c35499dd24a7f277f"
+    },
+    {
+      "path": "downloads/KMRC01_candidate.zip",
+      "bytes": 7531,
+      "sha256": "5a26ed4e6c1d9a9b0da09cdd8862b967699b85565965b640fd094528bfdfb2af"
+    },
+    {
+      "path": "downloads/PPC_PONaMa1_reference.zip",
+      "bytes": 6226,
+      "sha256": "8d082a02d5a777af3c7ec8b78ee46981664606a4fe1fa1c83e8f39799b3c1b07"
+    },
+    {
+      "path": "downloads/SAP16.zip",
+      "bytes": 6735,
+      "sha256": "8b4bc528fef5652485ddaf075120ca13c9acbc37a7855ac9a11362eea547091e"
+    },
+    {
+      "path": "downloads/SAP17.zip",
+      "bytes": 6606,
+      "sha256": "cb44530da78921925b2d097dde110ce5c5fa1466359971275ccba8ef881b1630"
+    },
+    {
+      "path": "downloads/SAP18_ring08_scenario.zip",
+      "bytes": 7703,
+      "sha256": "89aab9f2a507c6d648d1b246a546c43b2cec751e2675570ec5236eef76520a03"
+    },
+    {
+      "path": "downloads/SAP22.zip",
+      "bytes": 6231,
+      "sha256": "b6817171db8d3ed6a5e722721b0502fda6bae3bad623ab530b7a0f1eb7c30890"
+    },
+    {
+      "path": "downloads/all-models.zip",
+      "bytes": 106274,
+      "sha256": "31f1a1febcca44ea70797f68008648f85ad09a924e8873cc2c2a7dc828c1d81c"
+    },
+    {
       "path": "guide.html",
-      "bytes": 4111,
-      "sha256": "8043758802a977af3d8ed8d04644cf5726a3c335dd1bc3bcc8b2886b12c1a763"
+      "bytes": 5221,
+      "sha256": "bbd595116f456176a6809bc9b82f096254927bfa3efaaae295f9cef3b5fab3df"
     },
     {
       "path": "index.html",
-      "bytes": 12467,
-      "sha256": "cec6d0eefadc42a0ba130e2dd979ba89cd9b4d7cd5dad95937fcf2ab3d5a6580"
+      "bytes": 12896,
+      "sha256": "e1d7ba4264b62d8cbf5fcac2f7e3e1a293916860cad01a6626d7289ac492c4f4"
     },
     {
       "path": "maintenance/MODEL_SOURCES.md",
@@ -5075,6 +5165,106 @@
       "path": "maintenance/VALIDATION.md",
       "bytes": 6706,
       "sha256": "44f303ef48276c4e19fa1525eb7e56955884175ed25fcf692868f3499eac3fff"
+    },
+    {
+      "path": "models/ADLChargeDriftModel/drift_velocity_config.yaml",
+      "bytes": 531,
+      "sha256": "642a2bd0df1dabd9da7c71d15950e8b84f491babfd4b4fb63abdb82162f97ce6"
+    },
+    {
+      "path": "models/AK01.yaml",
+      "bytes": 2537,
+      "sha256": "300fe2a86090da837e3c44489f8341929bdc32343331a40a43636c7ed503e830"
+    },
+    {
+      "path": "models/AK02.yaml",
+      "bytes": 2532,
+      "sha256": "793de4cc598a3e26d375525e683be1bc2072e117d1c6b8003f6cdcffc9925dfa"
+    },
+    {
+      "path": "models/BEGe_GD32B_reference.yaml",
+      "bytes": 2286,
+      "sha256": "7e651b974a5f46f9de084180c0195da047707d14084622994f56eac97a7ff913"
+    },
+    {
+      "path": "models/BEGe_reference.yaml",
+      "bytes": 1731,
+      "sha256": "4456658ef2b8c777c3614ca4af5933f5a9e092ad18504aaa58754ad696215844"
+    },
+    {
+      "path": "models/Bipolar_reference_3D.yaml",
+      "bytes": 1265,
+      "sha256": "804093cedd9e1953589c72d7bcb0e8c13efb48f708d45773d4882dda20665fa5"
+    },
+    {
+      "path": "models/COAX_ANG2_reference.yaml",
+      "bytes": 2360,
+      "sha256": "75a792c8e8105834b426733bab62bf4589866be35280102b01647a79992a736e"
+    },
+    {
+      "path": "models/GeGI_3D.yaml",
+      "bytes": 28180,
+      "sha256": "4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04"
+    },
+    {
+      "path": "models/GeRC02.yaml",
+      "bytes": 2505,
+      "sha256": "7a655caeb660c07df8fcd9af51cc0998daea15f16e31f9c6afcacb89daf39218"
+    },
+    {
+      "path": "models/ICPC_48A_reference.yaml",
+      "bytes": 2632,
+      "sha256": "a3b4acf6347b03c2b39e216bfdcf825e47b5c7b6f6293e8f9fd357862815f464"
+    },
+    {
+      "path": "models/ICPC_large_reference.yaml",
+      "bytes": 2222,
+      "sha256": "9bd9d1f58e5e6efb2fa5a11ab07a5db84126083fd1450b5d7f40edf23a72678d"
+    },
+    {
+      "path": "models/KL01_3D.yaml",
+      "bytes": 2347,
+      "sha256": "84b215eecc13cf5f92aabc5e3c464910315dc71468533e53040cd30874d662ea"
+    },
+    {
+      "path": "models/KMRC01_candidate.yaml",
+      "bytes": 3216,
+      "sha256": "d4258a3b9f9c041b4da1998ded6b373833169ddcc76079f0a588785efe68b6b6"
+    },
+    {
+      "path": "models/PPC_PONaMa1_reference.yaml",
+      "bytes": 2389,
+      "sha256": "16959e508f82338a3c9f7d47076bb72a1b342abb9f6d337ef642555cfd2274a6"
+    },
+    {
+      "path": "models/README.md",
+      "bytes": 1481,
+      "sha256": "4c96eac10a34ffe8e56e77d77d7bb61b3c34d900a2ee2d846dc616e8af241845"
+    },
+    {
+      "path": "models/SAP16.yaml",
+      "bytes": 2480,
+      "sha256": "903aad272933aa6a2e2a744af0b6bfec486228633499f194c3fbe9b30d1486a4"
+    },
+    {
+      "path": "models/SAP17.yaml",
+      "bytes": 2471,
+      "sha256": "32c47ad227066358c2698a02ed5f69b221f256da1b6f1486f8ffadf9a4a4c6bd"
+    },
+    {
+      "path": "models/SAP18_ring08_scenario.yaml",
+      "bytes": 3223,
+      "sha256": "a4078c32a0f0c357932b12dbd7a9e719ee4aa894268b76c755bf7c3dbbb5bb09"
+    },
+    {
+      "path": "models/SAP22.yaml",
+      "bytes": 2093,
+      "sha256": "614c72f31a5a84b82c69b0b11f6f0657e87d94f746312c151f9a08cd00ba3dc3"
+    },
+    {
+      "path": "models/catalog.json",
+      "bytes": 35523,
+      "sha256": "ac5edd4c976a37cfcc80a8e507ac9347246a942ac843ed2ecc683079f220653b"
     }
   ]
 }

@@ -1,0 +1,138 @@
+name: ICPC_48A_reference
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 42.3
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries:
+        left: periodic
+        right: periodic
+    z:
+      from: -5
+      to: 85.4
+      boundaries:
+        left: inf
+        right: inf
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 78
+    impurity_density:
+      name: constant
+      value: -3000000000.0cm^-3
+    charge_drift_model:
+      model: ADLChargeDriftModel
+      phi110: 0°
+      material: HPGe
+      drift:
+        velocity:
+          model: Bruyneel2006
+          parameters:
+            e100:
+              mu0: 38609cm^2/(V*s)
+              beta: 0.805
+              E0: 511V/cm
+              mun: -171cm^2/(V*s)
+            e111:
+              mu0: 38536cm^2/(V*s)
+              beta: 0.641
+              E0: 538V/cm
+              mun: 510cm^2/(V*s)
+            h100:
+              mu0: 61824cm^2/(V*s)
+              beta: 0.942
+              E0: 185V/cm
+            h111:
+              mu0: 61215cm^2/(V*s)
+              beta: 0.662
+              E0: 182V/cm
+    geometry:
+      polycone:
+        r:
+        - 0
+        - 7.5
+        - 7.5
+        - 10.5
+        - 10.5
+        - 37.3
+        - 37.3
+        - 5.25
+        - 5.25
+        - 0
+        - 0
+        z:
+        - 0
+        - 0
+        - 2.0
+        - 2.0
+        - 0
+        - 0
+        - 80.4
+        - 80.4
+        - 33.00000000000001
+        - 33.00000000000001
+        - 0
+  contacts:
+  - id: 1
+    name: Readout p+
+    material: HPGe
+    potential: 0
+    geometry:
+      tube:
+        r:
+          from: 0
+          to: 7.5
+        h: 0
+        origin:
+          z: 0
+  - id: 2
+    name: Outer n+
+    material: HPGe
+    potential: 4000
+    geometry:
+      union:
+      - tube:
+          r:
+            from: 10.5
+            to: 37.3
+          h: 0
+          origin:
+            z: 0
+      - tube:
+          r:
+            from: 37.3
+            to: 37.3
+          h: 80.4
+          origin:
+            z: 40.2
+      - tube:
+          r:
+            from: 5.25
+            to: 37.3
+          h: 0
+          origin:
+            z: 80.4
+      - tube:
+          r:
+            from: 5.25
+            to: 5.25
+          h: 47.4
+          origin:
+            z: 56.7
+      - tube:
+          r:
+            from: 0
+            to: 5.25
+          h: 0
+          origin:
+            z: 33.00000000000001

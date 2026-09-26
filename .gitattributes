@@ -14,3 +14,9 @@
 
 # Snapshot hashes refer to exact published bytes, independent of Git EOL settings.
 docs/** -text
+# Original SSD YAML hashes include their original line endings.
+models/**/*.yaml -text
+models/*.yaml -text
+
+# The portable Julia environment uses stable lockfile bytes.
+simulation/*.toml text eol=lf

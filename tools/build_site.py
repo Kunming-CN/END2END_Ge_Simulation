@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_site import MANIFEST, validate
+from export_models import MODELS, ORIGINAL_HASHES, download_files, read_distribution
 
 ROOT = Path(__file__).resolve().parents[1]
 LIB = ROOT / 'Additional_Simulations' / 'Visualization_3D'
@@ -37,10 +38,19 @@ def adapt(s, rel):
     s = s.replace('Rotate the detector in ParaView', 'Desktop 3D scene preview')
     s = s.replace('</style>', '#copy{display:none!important}</style>', 1)
     if rel == Path('index.html'):
-        note = '<section><h2>Simulation results online</h2><p>Browse 17 detector models, field images, drift movies and pulse comparisons. GeGI also has an interactive, time-resolved strip display. These are precomputed SSD results, not a live solver.</p><a class="button" href="detectors/GeGI_3D/strip_explorer.html">GeGI strip explorer</a><a class="button" href="detectors/GeGI_3D/supplement.html">GeGI supplementary study</a><a class="button" href="https://github.com/Kunming-CN/END2END_Ge_Simulation">Code and project progress</a></section>'
+        note = '<section><h2>Simulation results online</h2><p>Browse 17 detector models, field images, drift movies and pulse comparisons. GeGI also has an interactive, time-resolved strip display. These are precomputed SSD results, not a live solver.</p><a class="button" href="detectors/GeGI_3D/strip_explorer.html">GeGI strip explorer</a><a class="button" href="detectors/GeGI_3D/supplement.html">GeGI supplementary study</a><a class="button" href="https://github.com/Kunming-CN/END2END_Ge_Simulation">Code and project progress</a><a class="button" href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/simulation/README.md">Run the CPU quickstart</a></section>'
         s = s.replace('<main>', '<main>' + note, 1)
     elif rel == Path('detectors/GeGI_3D/index.html'):
         note = '<section><h2>GeGI supplementary study</h2><p>Earlier notebook results: electric fields, weighting potentials, charge/current, collection maps, charge sharing, depth and temperature studies. This is a separate saved study; its settings must not be assumed identical to every event below.</p><a class="button" href="supplement.html">Open supplementary results</a><a class="button" href="octagon_geometry.png">Octagon geometry illustration</a></section>'
+        s = s.replace('<main>', '<main>' + note, 1)
+    if rel == Path('index.html'):
+        note = '<section><h2>Original SSD models</h2><p><a href="downloads/all-models.zip">Download all 17 original models with includes (ZIP)</a> | <a href="models/README.md">Model distribution guide</a></p><p>Geometry and semiconductor configurations; no numerical field caches or CAD/STL files.</p></section>'
+        s = s.replace('<main>', '<main>' + note, 1)
+    if len(rel.parts) == 3 and rel.parts[0] == 'detectors' and rel.name == 'index.html':
+        detector = rel.parts[1]
+        if detector not in ORIGINAL_HASHES:
+            raise ValueError('Unknown detector model: ' + detector)
+        note = f'<section><h2>Original SSD model configuration</h2><p><a href="../../models/{detector}.yaml">Exact original YAML</a> | <a href="../../downloads/{detector}.zip">Model ZIP with required includes and metadata</a> | <a href="../../models/catalog.json">Provenance and assumptions</a></p><p>Use the ZIP to keep required include paths intact. These are geometry and semiconductor inputs, not CAD/STL files or numerical field caches. Candidate and reference limitations remain unchanged.</p></section>'
         s = s.replace('<main>', '<main>' + note, 1)
     return scrub(s)
 class NotebookCleaner(HTMLParser):
@@ -65,6 +75,11 @@ class NotebookCleaner(HTMLParser):
         if not self.skip: self.out.append('&#' + name + ';')
 def build_export():
     OUT.mkdir(exist_ok=True)
+    model_outputs = download_files(read_distribution(MODELS))
+    for name, data in model_outputs.items():
+        target = OUT / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
     supplemental = OUT / 'detectors' / 'GeGI_3D'
     supplemental.mkdir(parents=True, exist_ok=True)
     source = ROOT / '2D_GeGI detector Simulation'
@@ -75,7 +90,7 @@ def build_export():
     (supplemental / 'supplement.html').write_text(nb, encoding='utf-8')
     shutil.copy2(source / 'GeGI_dimension_schematics' / 'corrected_octagon_geometry_3.png', supplemental / 'octagon_geometry.png')
     shutil.copyfile(ROOT / 'tools' / 'site_guide.html', OUT / 'guide.html')
-    queue, done, missing = [Path('index.html')], set(), []
+    queue, done, missing = [Path('index.html')], {Path(name) for name in model_outputs}, []
     special = {Path('guide.html'), Path('detectors/GeGI_3D/supplement.html'), Path('detectors/GeGI_3D/octagon_geometry.png')}
     while queue:
         rel = queue.pop()
@@ -186,7 +201,7 @@ def build():
             normalized = data.replace(b'\r\n', b'\n')
             if normalized != data:
                 output.write_bytes(normalized)
-    report = validate(OUT, require_manifest=False)
+    report = validate(OUT, require_manifest=False, require_models=True)
     (OUT / MANIFEST).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8', newline='\n')
     validate(OUT)
     if old and old['build_id'] == report['build_id']:

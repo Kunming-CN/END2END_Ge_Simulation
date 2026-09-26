@@ -6,9 +6,13 @@
 
 A static library of 17 detector models: geometry/field views, drift movies, pulse comparisons, and signal tables. GeGI includes 20 selectable events, 34 signed channels, and a separate supplementary notebook study. Read the [website guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html) before interpreting the results.
 
-These are precomputed SSD results, **not an online solver or a standalone calculation package**. Movies are pre-rendered 3D views; full scene rotation still requires the original desktop ParaView workspace. Synthetic deposits are not a Geant4 source simulation or a Compton reconstruction.
+These are precomputed SSD results, **not an online solver or a full end-to-end simulation**. Movies are pre-rendered 3D views; full scene rotation still requires the original desktop ParaView workspace. Synthetic deposits are not a Geant4 source simulation or a Compton reconstruction.
 
 To browse a downloaded repository, open `docs/index.html`. No Julia, ParaView, Node.js, or Python installation is needed for viewing. The development computer's full local entry remains `Additional_Simulations/Visualization_3D/Open_Library.cmd`.
+
+## Run a small calculation on your computer
+
+The separate [SSD CPU quickstart](simulation/README.md) uses the distributed BEGe reference YAML and calculates fields, charge drift and one electrode signal from scratch. It requires Julia 1.13.x and the supplied lockfile, but no GPU, private field cache, ParaView or Geant4. It is a bounded example, not a reproduction of every website simulation.
 
 ## One project root
 
@@ -17,11 +21,15 @@ To browse a downloaded repository, open `docs/index.html`. No Julia, ParaView, N
 | `Additional_Simulations/` | Existing models, calculation code, original numerical data and full desktop library | Not yet; portability is M1 |
 | `2D_GeGI detector Simulation/` | Earlier GeGI study and source reference material | No |
 | `docs/` | Generated, validated public website | Yes |
+| `models/` | 17 exact original SSD YAML snapshots, shared include and portable provenance | Yes |
+| `simulation/` | Pinned Julia environment and bounded CPU quickstart | Yes |
 | `tools/` | Export, publication checks, tests and maintenance utilities | Yes |
 | `.local/` | Ignored migration backup and bounded test/build scratch space | No |
 | `PROGRESS.md`, `AGENTS.md` | Milestones, evidence, and development rules | Yes |
 
 Only `docs/` is served by GitHub Pages. Raw caches, native scenes, manuals, photographs, slides, and private machine paths are excluded. The source calculation folders are deliberately preserved rather than reorganized during the publication milestone.
+
+The intentional [model distribution](models/README.md) preserves original YAML bytes and hashes, including candidate/scenario/reference labels and assumptions. These are SSD geometry and semiconductor configurations, not CAD/STL files or field caches. Nine models share one packaged drift-velocity include. Packaging is not numerical convergence or experimental validation.
 
 ## Updating results on the development computer
 
@@ -37,13 +45,16 @@ Python 3.10+ and its standard library are sufficient for these checks. Live HTTP
 
 ```sh
 python tools/test_site.py
+python tools/export_models.py --validate
 python tools/check_site.py
 python tools/check_site.py --url https://kunming-cn.github.io/END2END_Ge_Simulation/
 ```
 
-The live check compares the exact snapshot manifest, every HTML page, and representative image, video and data files. A not-yet-deployed version fails rather than being reported as current. The manifest contains per-file hashes and a deterministic build ID; Git is configured to preserve the exact website bytes across operating systems.
+The live check compares the exact snapshot manifest, every HTML page, every model/download artifact, and representative image, video and data files. A not-yet-deployed version fails rather than being reported as current. The manifest contains per-file hashes and a deterministic build ID; Git is configured to preserve the exact website and model YAML bytes across operating systems.
 
-Building new exports is different: `tools/build_site.py` requires the original local results and GeGI source notebook. The publication helper currently uses the installed Git, GitHub CLI, Node.js and ParaView Python on the development computer; `SITE_PYTHON` overrides its Python executable. Portable calculation/build setup is explicitly the next milestone, not a feature of this snapshot.
+Building new exports is different: `tools/build_site.py` requires the original local results and GeGI source notebook. The publication helper currently uses the installed Git, GitHub CLI, Node.js and ParaView Python on the development computer; `SITE_PYTHON` overrides its Python executable. Full-campaign calculation/build portability remains a separate milestone; the small CPU quickstart has its own environment and instructions.
+
+Model downloads build only from versioned `models/`: direct YAMLs, per-detector ZIPs with includes and metadata, and one all-model ZIP. Detector pages, the homepage and the guide provide their download links. Explicit `python tools/export_models.py --import` reads the original catalog and approved source roots, checks pinned hashes, and refuses differing managed outputs; it is not part of normal publication. Never edit scientific originals to satisfy an import check.
 
 ## Maintenance boundaries
 

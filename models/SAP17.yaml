@@ -1,0 +1,137 @@
+name: SAP17
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 12
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries:
+        left: periodic
+        right: periodic
+    z:
+      from: -2
+      to: 11
+      boundaries:
+        left: inf
+        right: inf
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 78
+    impurity_density:
+      name: constant
+      value: -3.0e10cm^-3
+    charge_drift_model:
+      include: ADLChargeDriftModel/drift_velocity_config.yaml
+    geometry:
+      union:
+      - tube:
+          r:
+            from: 7.2
+            to: 9.3
+          h: 2
+          origin:
+            z: 1
+      - tube:
+          r:
+            from: 6.2
+            to: 7.2
+          h: 7.8
+          origin:
+            z: 3.9
+      - tube:
+          r:
+            from: 5.4
+            to: 6.2
+          h: 6.3
+          origin:
+            z: 3.15
+      - tube:
+          r:
+            from: 2.5
+            to: 5.4
+          h: 2.3
+          origin:
+            z: 5.2
+      - tube:
+          r:
+            from: 0
+            to: 2.5
+          h: 3.7
+          origin:
+            z: 5.95
+  contacts:
+  - name: P+ contact
+    material: HPGe
+    id: 1
+    potential: 0
+    geometry:
+      tube:
+        r: 0.75
+        h: 0.1
+        origin:
+          z: 7.8
+  - name: n+ contact
+    material: HPGe
+    id: 2
+    potential: 400
+    geometry:
+      union:
+      - tube:
+          r:
+            from: 6.2
+            to: 7.2
+          h: 0
+          origin:
+            z: 7.8
+      - tube:
+          r:
+            from: 7.2
+            to: 7.2
+          h: 5.8
+          origin:
+            z: 4.9
+      - tube:
+          r:
+            from: 7.2
+            to: 9.3
+          h: 0
+          origin:
+            z: 2
+      - tube:
+          r:
+            from: 9.3
+            to: 9.3
+          h: 2
+          origin:
+            z: 1
+      - tube:
+          r:
+            from: 5.4
+            to: 9.3
+          h: 0
+          origin:
+            z: 0
+      - tube:
+          r:
+            from: 5.4
+            to: 5.4
+          h: 4.1
+          origin:
+            z: 2.05
+      - tube:
+          r:
+            from: 0
+            to: 5.4
+          h: 0
+          origin:
+            z: 4.1

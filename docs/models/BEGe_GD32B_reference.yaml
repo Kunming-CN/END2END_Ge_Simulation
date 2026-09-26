@@ -1,0 +1,120 @@
+name: BEGe_GD32B_reference
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 40.945
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries:
+        left: periodic
+        right: periodic
+    z:
+      from: -5
+      to: 37.16
+      boundaries:
+        left: inf
+        right: inf
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 78
+    impurity_density:
+      name: constant
+      value: -5000000000.0cm^-3
+    charge_drift_model:
+      model: ADLChargeDriftModel
+      phi110: 0°
+      material: HPGe
+      drift:
+        velocity:
+          model: Bruyneel2006
+          parameters:
+            e100:
+              mu0: 38609cm^2/(V*s)
+              beta: 0.805
+              E0: 511V/cm
+              mun: -171cm^2/(V*s)
+            e111:
+              mu0: 38536cm^2/(V*s)
+              beta: 0.641
+              E0: 538V/cm
+              mun: 510cm^2/(V*s)
+            h100:
+              mu0: 61824cm^2/(V*s)
+              beta: 0.942
+              E0: 185V/cm
+            h111:
+              mu0: 61215cm^2/(V*s)
+              beta: 0.662
+              E0: 182V/cm
+    geometry:
+      polycone:
+        r:
+        - 0
+        - 7.5
+        - 7.5
+        - 10.5
+        - 10.5
+        - 35.945
+        - 35.945
+        - 0
+        - 0
+        z:
+        - 0
+        - 0
+        - 2.0
+        - 2.0
+        - 0
+        - 0
+        - 32.16
+        - 32.16
+        - 0
+  contacts:
+  - id: 1
+    name: Readout p+
+    material: HPGe
+    potential: 0
+    geometry:
+      tube:
+        r:
+          from: 0
+          to: 7.5
+        h: 0
+        origin:
+          z: 0
+  - id: 2
+    name: Outer n+
+    material: HPGe
+    potential: 4000
+    geometry:
+      union:
+      - tube:
+          r:
+            from: 10.5
+            to: 35.945
+          h: 0
+          origin:
+            z: 0
+      - tube:
+          r:
+            from: 35.945
+            to: 35.945
+          h: 32.16
+          origin:
+            z: 16.08
+      - tube:
+          r:
+            from: 0
+            to: 35.945
+          h: 0
+          origin:
+            z: 32.16

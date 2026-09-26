@@ -10,6 +10,19 @@
 !tools/**
 !docs/
 !docs/**
+# Intentional versioned SSD snapshots; original workspace stays ignored.
+!models/
+!models/*.yaml
+!models/catalog.json
+!models/README.md
+!models/ADLChargeDriftModel/
+!models/ADLChargeDriftModel/drift_velocity_config.yaml
+# Portable CPU example only; keep generated outputs ignored.
+!simulation/
+!simulation/Project.toml
+!simulation/Manifest.toml
+!simulation/run.jl
+!simulation/README.md
 # Never include local test profiles, raw caches or runtime bytecode.
 .local/
 **/__pycache__/

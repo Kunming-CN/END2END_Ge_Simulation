@@ -1,0 +1,182 @@
+name: KMRC01_candidate
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 15
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries:
+        left: periodic
+        right: periodic
+    z:
+      from: -2
+      to: 21
+      boundaries:
+        left: inf
+        right: inf
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 78
+    impurity_density:
+      name: constant
+      value: 2.54e10cm^-3
+    charge_drift_model:
+      include: ADLChargeDriftModel/drift_velocity_config.yaml
+    geometry:
+      polycone:
+        r:
+        - 5.7
+        - 12.5
+        - 12.5
+        - 11.8
+        - 11.8
+        - 12.5
+        - 12.5
+        - 11.3
+        - 11.3
+        - 12.5
+        - 12.5
+        - 11.8
+        - 11.8
+        - 12.5
+        - 12.5
+        - 5.7
+        - 5.7
+        z:
+        - 0
+        - 0
+        - 1
+        - 1
+        - 2
+        - 2
+        - 5.2
+        - 6.8
+        - 10.8
+        - 12.4
+        - 16.4
+        - 16.4
+        - 17.4
+        - 17.4
+        - 19
+        - 19
+        - 0
+  contacts:
+  - name: ring contact
+    material: HPGe
+    id: 1
+    potential: 0
+    geometry:
+      tube:
+        r:
+          from: 11.3
+          to: 11.3
+        h: 2
+        origin:
+          z: 8.8
+  - name: outside contact
+    material: HPGe
+    id: 2
+    potential: -370
+    geometry:
+      union:
+      - tube:
+          r:
+            from: 5.7
+            to: 5.7
+          h: 19
+          origin:
+            z: 9.5
+      - tube:
+          r:
+            from: 5.7
+            to: 12.5
+          h: 0
+          origin:
+            z: 0
+      - tube:
+          r:
+            from: 12.5
+            to: 12.5
+          h: 1
+          origin:
+            z: 0.5
+      - tube:
+          r:
+            from: 11.8
+            to: 12.5
+          h: 0
+          origin:
+            z: 1
+      - tube:
+          r:
+            from: 11.8
+            to: 11.8
+          h: 1
+          origin:
+            z: 1.5
+      - tube:
+          r:
+            from: 11.8
+            to: 12.5
+          h: 0
+          origin:
+            z: 2
+      - tube:
+          r:
+            from: 12.5
+            to: 12.5
+          h: 2.4
+          origin:
+            z: 3.2
+      - tube:
+          r:
+            from: 5.7
+            to: 12.5
+          h: 0
+          origin:
+            z: 19
+      - tube:
+          r:
+            from: 12.5
+            to: 12.5
+          h: 1.6
+          origin:
+            z: 18.2
+      - tube:
+          r:
+            from: 11.8
+            to: 12.5
+          h: 0
+          origin:
+            z: 17.4
+      - tube:
+          r:
+            from: 11.8
+            to: 11.8
+          h: 1
+          origin:
+            z: 16.9
+      - tube:
+          r:
+            from: 11.8
+            to: 12.5
+          h: 0
+          origin:
+            z: 16.4
+      - tube:
+          r:
+            from: 12.5
+            to: 12.5
+          h: 3
+          origin:
+            z: 14.9

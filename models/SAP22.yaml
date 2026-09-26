@@ -1,0 +1,119 @@
+name: SAP22
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 15
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries:
+        left: periodic
+        right: periodic
+    z:
+      from: -2
+      to: 11
+      boundaries:
+        left: inf
+        right: inf
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 78
+    impurity_density:
+      name: constant
+      value: -3.25e10cm^-3
+    charge_drift_model:
+      include: ADLChargeDriftModel/drift_velocity_config.yaml
+    charge_trapping_model:
+      model: ConstantLifetime
+      parameters:
+        τh: 1ms
+        τe: 1ms
+    geometry:
+      polycone:
+        r:
+        - 0
+        - 8.85
+        - 8.85
+        - 12.75
+        - 12.75
+        - 8.75
+        - 8.75
+        - 3.85
+        - 3.85
+        - 0
+        - 0
+        z:
+        - 4.2
+        - 4.2
+        - 0
+        - 0
+        - 10
+        - 10
+        - 7
+        - 7
+        - 10
+        - 10
+        - 4.2
+  contacts:
+  - name: point contact
+    material: HPGe
+    id: 1
+    potential: 0
+    geometry:
+      tube:
+        r:
+          from: 0
+          to: 0.75
+        h: 0.01
+        origin:
+          z: 10
+  - name: a-Ge/Al outer contact
+    material: HPGe
+    id: 2
+    potential: 700
+    geometry:
+      union:
+      - tube:
+          r:
+            from: 0
+            to: 8.85
+          h: 0
+          origin:
+            z: 4.2
+      - tube:
+          r:
+            from: 8.85
+            to: 8.85
+          h: 4.2
+          origin:
+            z: 2.1
+      - tube:
+          r:
+            from: 8.85
+            to: 12.75
+          h: 0
+          origin:
+            z: 0
+      - tube:
+          r:
+            from: 12.75
+            to: 12.75
+          h: 10
+          origin:
+            z: 5
+      - tube:
+          r:
+            from: 8.75
+            to: 12.75
+          h: 0
+          origin:
+            z: 10
