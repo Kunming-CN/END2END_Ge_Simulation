@@ -325,3 +325,5 @@ keV is useful later, but is not needed to close this diagnostic comparison. Real
 spectrum ingestion requires identifying saved files and their calibration/background
 metadata; missing pulse records do not block mathematical verification. No current
 result authorizes physical Li CCE, dead-layer thickness or as-built efficiency.
+
+M2b3 publication verified: implementation cb333c8 pushed to main; all18 website/model checks passed. The unchanged website snapshot d2d6fbe17da0168cf49b512e3519e8efebd18eb7db6e85bbdac8dce353660e10 again matched78 live files. Release marker: v0.7.0-analytic-em-checks. New source and spectrum-only/physics documentation are public; raw40k-case data and review logs remain local. All current specialist/compute workers finished. This is not an enabled or proven unattended-runtime continuation.
