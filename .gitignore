@@ -94,3 +94,7 @@
 # Native fixed-state and nested transition-grid diagnostics.
 !simulation/diagnose_transition_grid.jl
 !simulation/test_transition_grid.jl
+
+# Same-grid initialization and crossed-axis diagnostics.
+!simulation/diagnose_transition_axes.jl
+!simulation/test_transition_axes.jl

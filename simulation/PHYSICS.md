@@ -290,3 +290,31 @@ checks. Physical pair statistics, trapping fluctuations and electronics noise
 must be modeled separately without double counting. Simply drawing 32 weighted
 trajectories for every deposited site could add artificial spectral broadening.
 This is an additional campaign gate, not a reason to discard the diagnostic curves.
+
+## Why a lithium contact is not simply a dead slab
+
+A zero-or-full collection step is a useful reduced model, not a statement that
+all Li-diffused material is physically dead. The experimentally established
+transition region can produce slow pulses and degraded energies. See the
+[2012 PPC contact study](https://arxiv.org/abs/1207.6716), which explicitly
+separates fully dead, transition and fully active response, and the
+[Dai et al. transport model](https://arxiv.org/abs/2207.11902), published in
+Applied Radiation and Isotopes 193 (2023), 110638, with detector measurements.
+
+The [2026 RCC pulse-shape paper](https://doi.org/10.1140/epjc/s10052-026-15508-3)
+reports a mechanistic implementation available from SSD.jl 0.11.0, with analytic
+and measured-spectrum comparisons. The current pinned 0.11.8 AK02 configuration
+uses its InactiveLayerChargeDriftModel, not a mandatory zero-response shell.
+Neutral-region holes may diffuse into a depleted region; some are lost first.
+Neither zero field nor n-type doping alone defines a zero-collection volume.
+The junction depth, depletion boundary and full-collection boundary are distinct.
+
+Three issues must remain separate: physical mechanisms and approximations;
+device-specific profile/lifetime calibration; and numerical verification. The
+published model still uses effective lifetimes and simplifying transport
+assumptions. Its validation on other detectors does not calibrate AK02. Conversely,
+the current grid/initialization sensitivity cannot be explained away by missing
+experimental calibration: fixed-input numerical tests must be addressed first.
+A step-function reference may later be compared explicitly with RCC response,
+but cannot silently replace the requested transition-layer model or erase
+partial-collection events from the large-source comparison.

@@ -141,6 +141,8 @@ def build_export():
     lithium_files = ("lithium.html", "summary.json", "endpoint-audit.csv", "depth-scan.csv", "profiles.csv")
     if "transition_grid" in lithium_data:
         lithium_files += ("transition-profiles.csv", "transition-comparisons.csv")
+    if "axis_attribution" in lithium_data:
+        lithium_files += ("axes-profiles.csv", "axes-comparisons.csv")
     (OUT / "lithium").mkdir(exist_ok=True)
     for name in lithium_files:
         shutil.copyfile(lithium_source / name, OUT / "lithium" / name)

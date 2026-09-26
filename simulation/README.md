@@ -441,3 +441,30 @@ python tools/lithium_report.py --input .local/m2c/results --grid-input .local/gr
 Two additional CSVs accompany the standalone HTML/summary. Partial cases remain
 labelled, the previous signal/grid warning is retained, and exporter checks reject
 mismatched source hashes or false convergence metadata.
+
+## Same-grid initialization and crossed-axis attribution
+
+`diagnose_transition_axes.jl` reuses the pinned native-grid helper without changing
+production code. It reproduces the two historical field states, initializes two
+independent solutions on the same finest grid, and evaluates the four crossed
+radial/axial grids from one common parent. All new cases are E-only after baseline
+hash verification; this is not a charge/weighting-potential or CCE calculation.
+
+```console
+julia --startup-file=no --threads=2 --project=simulation simulation/test_transition_axes.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/diagnose_transition_axes.jl --output .local/axes-new
+```
+
+The single output root contains report.json and two full-precision CSV files.
+Native acceptance and same-grid agreement are separate: seven accepted native
+solutions may still fail the strict whole-domain voltage agreement criterion.
+Crossed effects then remain explicitly conditional diagnostics. All four effects
+use the same pointwise E22 normalization; zero-field onset remains descriptive,
+while the 1 V/cm threshold has its predeclared conservative comparison bound.
+
+Fresh states have a 40,000-sweep limit; continuation has 20,000. The 900-second
+case budget is cooperative at native-call/checkpoint boundaries and includes
+postprocessing, not a hard wall-time guarantee. Contact checks concern nonempty
+sets of contact-member grid nodes, not arbitrary between-node boundary accuracy.
+Initial coefficient/mask/alpha identity, independent storage and parent hashes
+are checked; potential is the only intentionally changed initialization field.

@@ -25,6 +25,11 @@ SEEDS = [2609261, 2609262, 2609263]
 GRIDS = [["baseline", .05, 4], ["contrast50", .05, 8], ["contrast25", .025, 8]]
 FLAGS = ("geometric_contact", "at_step_limit", "exactly_zero_E", "stationary", "n_type", "nearest_undepleted")
 GRID_FILES = {"transition-profiles.csv": "profiles.csv", "transition-comparisons.csv": "smallcomparisons.csv"}
+AXES_FILES = {"axes-profiles.csv": "profiles.csv", "axes-comparisons.csv": "comparisons.csv"}
+AXES_CASES = ("min50", "min25", "g22_from50", "g22_from25", "g11", "g12", "g21")
+AXES_PAIRS = (("g11", "g21"), ("g12", "g22_from50"), ("g11", "g12"), ("g21", "g22_from50"))
+HEADERS.update({"axes-profiles.csv": "case,stage,depth_mm,Ex_V_cm,Ey_V_cm,Ez_V_cm,magnitude_V_cm,V,alpha,pointbits,netdensity_cm3",
+                "axes-comparisons.csv": "reference,candidate,normalized_E,onset1_separation_upper_mm,max_local_source_difference_cm3,accepted_inputs,passed"})
 HEADERS.update({"transition-profiles.csv": "case,stage,depth_mm,E_V_cm,W,alpha,point_bits,net_impurity_cm3",
                 "transition-comparisons.csv": "reference,candidate,normalized_E,onset0_shift_mm,onset1_shift_mm,max_W,passed"})
 require = common.require
@@ -331,14 +336,7 @@ def compact_grid(value):
     return result
 
 
-def validate_transition(g, raw):
-    finite_tree(g)
-    common.check_public(g)
-    require(g["schema_version"] == 1 and g["kind"] == "AK02_native_transition_grid", "transition schema")
-    require(g["status"] in ("baseline_only", "partial_nested_not_converged", "nested_blocked_baseline_defects_or_failure", "bounded_numerical_convergence"), "transition incomplete/blocked")
-    held, p = g["held_settings"], g["provenance"]
-    require(all(held[k] == v for k, v in dict(temperature_K=77, bias_V=500, precision="Float64", sor=1, threads=2, max_grid_mm=2, profile_relative_gate=.01, onset_gate_mm=.002).items()), "transition held settings/gates changed")
-    require(held["limits"]["V"] == 5e-6 and held["limits"]["W"] == 1e-8 and all(held["limits"][k] > 0 for k in ("seconds", "points", "initial", "extra")), "transition native gates/budgets")
+def validate_transition_provenance(p):
     hash_map(ROOT / "simulation", p["sources"])
     source = (ROOT / "simulation/diagnose_transition_grid.jl").read_text(encoding="utf-8")
     legacy = (ROOT / "simulation/diagnose_lithium.jl").read_text(encoding="utf-8")
@@ -362,6 +360,17 @@ def validate_transition(g, raw):
     hash_map(ROOT / "simulation", pairs(legacy.split("const PINNED=", 1)[1].split("const SDK_PINS=", 1)[0]))
     require(p["environment"]["project"] == "simulation/Project.toml" and p["environment"]["environment_manifest_sha256"] == common.sha256(ROOT / "simulation/Manifest.toml"), "transition environment")
     require(p["model_sha256"] == PINS["AK02"] == common.sha256(ROOT / "models/AK02.yaml"), "transition AK02 identity")
+
+
+def validate_transition(g, raw):
+    finite_tree(g)
+    common.check_public(g)
+    require(g["schema_version"] == 1 and g["kind"] == "AK02_native_transition_grid", "transition schema")
+    require(g["status"] in ("baseline_only", "partial_nested_not_converged", "nested_blocked_baseline_defects_or_failure", "bounded_numerical_convergence"), "transition incomplete/blocked")
+    held, p = g["held_settings"], g["provenance"]
+    require(all(held[k] == v for k, v in dict(temperature_K=77, bias_V=500, precision="Float64", sor=1, threads=2, max_grid_mm=2, profile_relative_gate=.01, onset_gate_mm=.002).items()), "transition held settings/gates changed")
+    require(held["limits"]["V"] == 5e-6 and held["limits"]["W"] == 1e-8 and all(held["limits"][k] > 0 for k in ("seconds", "points", "initial", "extra")), "transition native gates/budgets")
+    validate_transition_provenance(p)
     require(g["reporter_test_sha256"] == common.sha256(Path(__file__).with_name("test_lithium_report.py")), "transition reporter tests changed")
     digest_map({"report.json": g["report_sha256"], **g["artifacts"]})
     require(set(g["artifacts"]) == set(GRID_FILES.values()), "transition artifact inventory")
@@ -433,6 +442,165 @@ def load_transition(directory):
     return compact_grid(g), raw
 
 
+def axes_equal(actual, expected):
+    if isinstance(expected, dict):
+        require(isinstance(actual, dict), "axes comparison object")
+        for k, v in expected.items(): axes_equal(actual[k], v)
+    elif isinstance(expected, list):
+        require(isinstance(actual, list) and len(actual) == len(expected), "axes comparison array")
+        for a, b in zip(actual, expected): axes_equal(a, b)
+    else:
+        require(type(actual) is bool and actual is expected if isinstance(expected, bool) else
+                isinstance(actual, (int, float)) and not isinstance(actual, bool) and math.isclose(actual, expected, rel_tol=1e-12, abs_tol=1e-14) if isinstance(expected, (int, float)) else actual == expected, "axes comparison mismatch")
+
+
+def axes_comparison(a, b, reference=None):
+    require([r["depth_mm"] for r in a] == [r["depth_mm"] for r in b], "axes profile support")
+    onsets = lambda rows: [next(([None if j == 0 else rows[j-1]["depth_mm"], r["depth_mm"]] for j, r in enumerate(rows) if r["magnitude_V_cm"] > t), None) for t in (0, 1)]
+    shifts = [None if x is None or y is None or None in x+y else [v-u for u, v in zip(x, y)] for x, y in zip(onsets(a), onsets(b))]
+    x, y = onsets(a)[1], onsets(b)[1]
+    upper = None if x is None or y is None or None in x+y else max(abs(x[0]-y[1]), abs(x[1]-y[0]))
+    reference = b if reference is None else reference
+    require([r["depth_mm"] for r in reference] == [r["depth_mm"] for r in b], "axes normalization support")
+    norm = max(math.sqrt(sum((y[k]-x[k])**2 for k in ("Ex_V_cm", "Ey_V_cm", "Ez_V_cm"))) / max(1., r["magnitude_V_cm"]) for x, y, r in zip(a, b, reference))
+    return dict(normalized_E=norm, onset_bracket_shifts_mm=shifts, onset1_separation_upper_mm=upper,
+                max_local_source_difference_cm3=max(abs(y["alpha"]*y["netdensity_cm3"]-x["alpha"]*x["netdensity_cm3"]) for x, y in zip(a, b)), passed=norm <= .01 and upper is not None and upper <= .002+1e-14)
+
+
+def validate_axes(g, raw):
+    finite_tree(g); common.check_public(g)
+    require(g["schema_version"] == 1 and g["kind"] == "AK02_transition_axes" and g["status"] in ("completed_attribution_diagnostics", "partial_cases"), "axes unfinished/invalid report")
+    require(g["expected_case_count"] == 7 and g["final_sources_unchanged"] is True and 0 <= g["runtime_seconds"], "axes invalid source/runtime")
+    held = dict(temperature_K=77, bias_V=500, threads=2, precision="Float64", sor=1, fresh_sweeps=40000, continuation_sweeps=20000, case_seconds=900, node_cap=250000, seed="none: deterministic")
+    require(g["held_settings"] == held, "axes settings/budget changed")
+    p = g["provenance"]; hash_map(ROOT / "simulation", p["sources"]); validate_transition_provenance(p["Tprovenance"])
+    source = (ROOT / "simulation/diagnose_transition_axes.jl").read_text(encoding="utf-8").split("for (n,h)", 1)[0]
+    helpers = dict(re.findall(r'"([^"\n]+)"\s*=>\s*"([0-9a-f]{64})"', source))
+    require(set(helpers) == {"diagnose_transition_grid.jl", "test_transition_grid.jl"} and set(p["sources"]) == set(helpers) | {"diagnose_transition_axes.jl", "test_transition_axes.jl"}, "axes source inventory")
+    require(all(p["sources"][n] == h == p["Tprovenance"]["sources"][n] for n, h in helpers.items()), "axes helper identity")
+    require(g["reporter_test_sha256"] == common.sha256(Path(__file__).with_name("test_lithium_report.py")), "axes reporter tests changed")
+    digest_map({"report.json": g["report_sha256"], **g["artifacts"]})
+    require(set(g["artifacts"]) == set(AXES_FILES.values()), "axes artifact inventory")
+    for public, original in AXES_FILES.items():
+        require(hashlib.sha256(raw[public]).hexdigest() == g["artifacts"][original], "axes CSV hash mismatch")
+        common.check_public(raw[public].decode("utf-8"))
+    profiles, comparisons = [csv_rows(raw[n], n) for n in AXES_FILES]
+    require(profiles == g["profiles"], "axes changed profiles")
+    cases = {c["case"]: c for c in g["cases"]}; accepted = lambda n: cases[n]["status"] == "accepted_fixed_grid"
+    require(len(cases) == len(g["cases"]) and set(cases) == set(AXES_CASES if g["baseline_accepted"] else AXES_CASES[:2]), "axes case census")
+    require(type(g["baseline_accepted"]) is bool and g["baseline_accepted"] == all(accepted(n) for n in AXES_CASES[:2]), "axes baseline claim")
+    require((g["status"] == "completed_attribution_diagnostics") == (len(cases) == 7 and all(accepted(n) for n in cases)), "axes completion claim")
+    require(g["runtime_seconds"]+1e-9 >= sum(c["elapsed_seconds"] for c in cases.values()), "axes serial runtime mismatch")
+    groups = {}
+    for row in profiles:
+        require(row["case"] in cases and row["stage"] in ("initial", "final"), "axes unknown profile")
+        r = {k: float(v) for k, v in row.items() if k not in ("case", "stage")}
+        require(all(math.isfinite(v) for v in r.values()) and r["magnitude_V_cm"] >= 0 and 0 <= r["alpha"] <= 1 and r["pointbits"] >= 0 and r["pointbits"].is_integer(), "axes invalid profile")
+        axes_equal(r["magnitude_V_cm"], math.sqrt(sum(r[k]**2 for k in ("Ex_V_cm", "Ey_V_cm", "Ez_V_cm"))))
+        groups.setdefault((row["case"], row["stage"]), []).append(r)
+    require(set(groups) == {(n, s) for n, c in cases.items() for s in ("initial", "final") if s+"_profile" in c}, "axes profile census")
+    for (name, stage), rows in groups.items():
+        info = cases[name][stage+"_profile"]; ds = [r["depth_mm"] for r in rows]
+        require(len(ds) == info["samples"] == 2001 and ds[0] == 0 and ds[-1] == 1 and all(math.isclose(d, j*.0005, rel_tol=0, abs_tol=1e-14) for j, d in enumerate(ds)) and all(y > x for x, y in zip(ds, ds[1:])), "axes incomplete profile")
+        require(info["csv_stage"] == stage and len(info["target_spacings_um"]) == 2 and all(v > 0 for v in info["target_spacings_um"]), "axes actual spacing")
+        grid = cases[name]["nativeitem"]["E_grid"]; compact_grid(grid)
+        for axis, target, spacing in zip((0, 2), (.01215, .0047), info["target_spacings_um"]):
+            ticks = grid["ticks_m_rad_m"][axis]; i = min(max(sum(t <= target for t in ticks)-1, 0), len(ticks)-2)
+            axes_equal(spacing, (ticks[i+1]-ticks[i])*1e6)
+        axes_equal(info["E0.5_V_cm"], rows[1000]["magnitude_V_cm"])
+        axes_equal(info["onsets_0_1_V_cm"], [next(([None if j == 0 else ds[j-1], ds[j]] for j, r in enumerate(rows) if r["magnitude_V_cm"] > t), None) for t in (0, 1)])
+    for name, c in cases.items():
+        n = c["nativeitem"]; require(n["case"] == name and c["status"] in ("accepted_fixed_grid", "budget_failed") and c["elapsed_seconds"] >= 0, "axes invalid case")
+        axes_equal(c["within_cooperative_time_budget"], c["elapsed_seconds"] <= held["case_seconds"])
+        require(c["profile"] == c.get("final_profile", c.get("initial_profile")), "axes last profile mismatch")
+        if "E_grid" in n:
+            shape = n["E_grid"]["shape"]; require(len(shape) == 3 and shape[1] == 1 and all(type(x) is int and x > 0 for x in shape) and math.prod(shape) <= held["node_cap"], "axes actual dimensions/budget")
+        if "final_profile" in c:
+            require("E_grid" in n, "axes missing actual dimensions")
+            require(type(n["E_accepted"]) is bool and accepted(name) == (n["E_accepted"] and bool(n["E_geometric_contacts"]) and all(d["nodes"] > 0 and 0 <= d["max_error"] <= 5e-6 for d in n["E_geometric_contacts"]) and c["within_cooperative_time_budget"]), "axes inconsistent acceptance/budget")
+            digest_map(n["E_final_native_hashes"])
+            require(set(n["E_final_native_hashes"]) == {"potential", "imp_scale", "point_types", "q_eff_imp", "q_eff_fix", "ϵ_r"}, "axes case source identity")
+        if name not in AXES_CASES[:2] and "final_profile" in c:
+            ident = c["initial_identity"]; require(c["rebuild_identity_verified"] is True and ident["grid"] == n["E_grid"], "axes initial identity")
+            require(c["initial_potential_source"] == ("min25" if name == "g22_from25" else "min50"), "axes starting potential provenance")
+            require(set(ident) == {"q_eff_imp", "q_eff_fix", "ϵ_r", "volume_weights", "sor_const", "point_types", "imp_scale", "grid", "axis_bytes", "geom_weights"} and len(ident["axis_bytes"]) == 3 and ident["geom_weights"], "axes coefficient inventory")
+            require(c["independent_parent_storage_verified"] is True and c["parent_before"] == c["parent_after"] and c["parent_before"], "axes parent state changed")
+            digest_map({k: ident[k] for k in ("q_eff_imp", "q_eff_fix", "ϵ_r", "volume_weights", "sor_const", "point_types", "imp_scale")})
+            digest_map({str(j): h for j, h in enumerate(ident["axis_bytes"]+ident["geom_weights"])}); digest_map({"inputV": c["inputVhash"]})
+        if accepted(name):
+            checks = n["E_checks"]; contacts = n["E_geometric_contacts"]
+            require(n["E_accepted"] is True and (name, "final") in groups and len(checks) >= 2 and checks[-1]["consecutive_passes"] >= 2 and checks[-2]["consecutive_passes"] >= 1, "axes false acceptance")
+            require(contacts and all(d["nodes"] > 0 and 0 <= d["max_error"] <= 5e-6 for d in contacts) and 0 <= n["E_final_repaint"]["max_change"] <= 5e-6, "axes contact gate")
+            require(name not in AXES_CASES[:2] or 0 <= n["E_repaint"]["max_change"] <= 5e-6, "axes baseline repaint")
+            require(c["elapsed_seconds"] <= held["case_seconds"] and 0 <= checks[-2]["sweeps"] < checks[-1]["sweeps"] <= held["continuation_sweeps" if name in AXES_CASES[:2] else "fresh_sweeps"], "axes accepted budget")
+            require(all(0 <= d["elapsed_seconds"] <= held["case_seconds"] and all(0 <= v <= 5e-6 for v in (d["frozen"]["max"], d["frozen"]["max_alpha_voltage"], d["poisson"]["max"], d["full_sweep"]["potential"], d["full_sweep"]["alpha_voltage"])) for d in checks[-2:]), "axes native gates")
+    final = {n: rows for (n, s), rows in groups.items() if s == "final"}; expected = []
+    require([(d["reference"], d["candidate"]) for d in g["comparisons"]] == [(a, b) for a, b in AXES_PAIRS if a in final and b in final and "g22_from50" in final], "axes comparison census")
+    require([(d["reference"], d["candidate"]) for d in g["unavailable_comparisons"]] == [(a, b) for a, b in AXES_PAIRS if g["baseline_accepted"] and not {a, b, "g22_from50"} <= final.keys()], "axes unavailable comparison census")
+    for d in g["comparisons"]:
+        a, b = d["reference"], d["candidate"]; calc = axes_comparison(final[a], final[b], final["g22_from50"]); calc["accepted_inputs"] = accepted(a) and accepted(b) and accepted("g22_from50"); calc["passed"] &= calc["accepted_inputs"]
+        calc.update(accepted_endpoints=accepted(a) and accepted(b), accepted_reference=accepted("g22_from50"))
+        calc.update(normalization_reference="g22_from50: pointwise max(1 V/cm, norm(E22))", signed_radial_difference_V_cm=[y["Ex_V_cm"]-x["Ex_V_cm"] for x, y in zip(final[a], final[b])])
+        axes_equal(d, calc); expected.append({k: "nothing" if d[k] is None else d[k] for k in HEADERS["axes-comparisons.csv"].split(',')})
+    check_csv(comparisons, expected); same = g["same_grid"]
+    if {"g22_from50", "g22_from25"} <= final.keys():
+        a, b = "g22_from50", "g22_from25"; calc = axes_comparison(final[a], final[b]); axes_equal(same["profilecomparison"], calc)
+        identical = cases[a]["initial_identity"] == cases[b]["initial_identity"]
+        require(identical and cases[a]["nativeitem"]["E_grid"] == cases[b]["nativeitem"]["E_grid"], "axes same-grid coefficients differ")
+        require(same["maxV"] >= 0 and same["alphavoltage"] >= 0 and same["maxinitVdifference"] >= 0, "axes same-grid values")
+        require(max(abs(x["V"]-y["V"]) for x, y in zip(final[a], final[b])) <= same["maxV"]+1e-10, "axes full voltage/profile mismatch")
+        require(0 <= same["alphavoltage_update_only"] <= same["alphavoltage"] and same["whole_grid_vector_difference_V_cm"] >= 0 and type(same["classification_changes"]) is int and same["classification_changes"] >= 0, "axes whole-grid diagnostics")
+        axes_equal(same, dict(inconclusive=not (accepted(a) and accepted(b)), accepted_inputs=accepted(a) and accepted(b), coefficients_identical=identical, passed=accepted(a) and accepted(b) and identical and same["maxV"] <= 5e-6 and same["alphavoltage"] <= 5e-6 and calc["passed"]))
+    else:
+        axes_equal(same, dict(accepted_inputs=False, coefficients_identical=False, maxV=None, alphavoltage=None, profilecomparison=None, passed=False, inconclusive=True))
+    if {"g11", "g12", "g21", "g22_from50"} <= final.keys():
+        f = g["factorialsummary"]; four = [final[n] for n in ("g11", "g12", "g21", "g22_from50")]
+        vectors = [[v[3][k]-v[2][k]-v[1][k]+v[0][k] for k in ("Ex_V_cm", "Ey_V_cm", "Ez_V_cm")] for v in zip(*four)]
+        sources = [v[3]["alpha"]*v[3]["netdensity_cm3"]-v[2]["alpha"]*v[2]["netdensity_cm3"]-v[1]["alpha"]*v[1]["netdensity_cm3"]+v[0]["alpha"]*v[0]["netdensity_cm3"] for v in zip(*four)]
+        axes_equal(f, dict(depth_mm=[r["depth_mm"] for r in four[0]], signed_radial_profile_V_cm=[v[0] for v in vectors], maxnorm_V_cm=max(math.sqrt(sum(x*x for x in v)) for v in vectors), normalized_interaction=max(math.sqrt(sum(x*x for x in v))/max(1., r["magnitude_V_cm"]) for v, r in zip(vectors, four[3])), normalization_reference="g22_from50: pointwise max(1 V/cm, norm(E22))", signed_local_source_interaction_cm3=sources, max_local_source_interaction_cm3=max(map(abs, sources)), accepted_inputs=all(accepted(n) for n in ("g11", "g12", "g21", "g22_from50")), initialization_test_passed=same["passed"]))
+    else:
+        require(g["factorialsummary"] is None, "axes incomplete factorial with success data")
+    require(g["baseline_accepted"] or g["crosses_blocked_reason"], "axes missing blocked reason")
+
+
+def load_axes(directory):
+    directory = common.local_path(directory); report = common.relative_file(directory, "report.json").read_bytes(); g = json.loads(report)
+    raw = {p: common.relative_file(directory, n).read_bytes() for p, n in AXES_FILES.items()}
+    g.update(report_sha256=hashlib.sha256(report).hexdigest(), reporter_test_sha256=common.sha256(Path(__file__).with_name("test_lithium_report.py")), profiles=csv_rows(raw["axes-profiles.csv"]))
+    validate_axes(g, raw); result = compact_grid(g)
+    for c, original in zip(result["cases"], g["cases"]):
+        if "E_grid" in original["nativeitem"]: c["nativeitem"]["E_grid"] = original["nativeitem"]["E_grid"]  # Small actual axes support portable spacing checks.
+        if "initial_identity" in original: c["initial_identity"]["grid"] = original["initial_identity"]["grid"]
+    validate_axes(result, raw)
+    require(common.sha256(directory / "report.json") == g["report_sha256"] and all(common.sha256(directory / n) == h for n, h in g["artifacts"].items()), "axes input changed")
+    return result, raw
+
+
+def render_axes(g):
+    out = '<section><h2>Initialization and radial/axial attribution</h2><p class="warning">' + escape(g["status"]) + ': E-only numerical check on the current radial line; not W, drift or CCE accuracy. Native acceptance is not convergence. Failed agreement or exhausted budgets do not establish nonuniqueness. Crossed effects remain conditional on initialization agreement.</p>'
+    out += '<p>Physical Li-contact research concerns partial charge collection through diffusion, drift and recombination. This check asks whether the starting field or radial/axial mesh changes the computed electric field; these are not experimental curves. Profiles follow r = 12.65 - depth mm at phi = 0, z = 4.7 mm, over 0 to 1 mm depth. Source accounting counts grid nodes, not new gamma events. Prior nested grids remain unconverged and the earlier 15.1-percentage-point Li response warning remains unresolved.</p>'
+    rows = []
+    for c in g["cases"]:
+        n, p = c["nativeitem"], c["profile"] or {}; last = (n.get("E_checks") or [{}])[-1]
+        rows.append([display_number(v) for v in (c["case"], n.get("E_grid", {}).get("shape"), p.get("target_spacings_um"), (p.get("onsets_0_1_V_cm") or [None, None])[1], c["status"], last.get("sweeps"), c["elapsed_seconds"])])
+    out += table(("Case", "Actual r/phi/z nodes", "Actual radial/axial spacing (um)", "E > 1 V/cm onset (mm)", "Native acceptance", "Sweeps", "Cooperative time budget (s / 900)"), rows)
+    series = [(n, color, False, [(float(r["depth_mm"]), float(r["magnitude_V_cm"]), 0) for r in g["profiles"] if r["case"] == n and r["stage"] == "final"]) for n, color in zip(("g11", "g12", "g21", "g22_from50"), ("#006c91", "#ae3f15", "#596324", "#703da0"))]
+    if all(s[3] for s in series): out += plot(series, "Electric field (V/cm), computed profiles")
+    out += '<p>The local axial spacing at this sampled midheight remains 90.625 um in these cases. Axial changes refine regions near the ends/bore; smaller onset shifts do not establish general axial-resolution insensitivity. The coarse-r axial vector comparison also fails its profile gate.</p>'
+    same = g["same_grid"]
+    out += '<h3>Same-grid starting-state agreement</h3>' + table(("Accepted inputs", "Identical coefficients", "Full max V difference (V)", "Alpha voltage (V)", "Vector relative difference", "Onset separation (mm)", "Agreement"), [[display_number(v) for v in (same["accepted_inputs"], same["coefficients_identical"], same["maxV"], same["alphavoltage"], (same["profilecomparison"] or {}).get("normalized_E"), (same["profilecomparison"] or {}).get("onset1_separation_upper_mm"), same["passed"])]])
+    if not same["passed"]:
+        out += '<p class="warning"><b>The declared same-grid global agreement gate did not pass.</b> Small local profile differences do not clear the full-domain voltage criterion. Crossed effects remain conditional numerical diagnostics.</p>'
+    location = same.get("difference_location")
+    if location:
+        out += '<p>Supplementary localization, without changing acceptance: maximum voltage difference at ' + escape(display_number(location["max_V_position_mm"])) + ' mm; inside semiconductor: ' + escape(str(location["max_V_inside_semiconductor"])) + '. Maximum over semiconductor-member nodes: ' + escape(display_number(location["semiconductor_member_max_V"])) + ' V. No exterior nodes were removed from the original gate.</p>'
+    out += '<h3>Computed four effects and interaction</h3>' + table(("Reference", "Candidate", "Vector / common E22 norm (floor 1 V/cm)", "Onset separation (mm)", "Local source difference (cm^-3)", "Inputs accepted", "Profile gate"), [[display_number(d[k]) for k in HEADERS["axes-comparisons.csv"].split(',')] for d in g["comparisons"]])
+    if g["unavailable_comparisons"]: out += table(("Reference", "Candidate", "Unavailable because"), [(d["reference"], d["candidate"], d["reason"]) for d in g["unavailable_comparisons"]])
+    if g["factorialsummary"]:
+        f = g["factorialsummary"]; out += table(("Interaction", "Max vector (V/cm)", "Vector / common E22 norm", "Max local source (cm^-3)"), [["E22 - E21 - E12 + E11", display_number(f["maxnorm_V_cm"]), display_number(f["normalized_interaction"]), display_number(f["max_local_source_interaction_cm3"])]])
+    return out + '<p>All settings, source identities and checkpoint histories: <a download href="summary.json">summary.json</a>. Original report SHA-256: <small style="overflow-wrap:anywhere">' + escape(g["report_sha256"]) + '</small></p><p>' + ' · '.join(f'<a download href="{n}">{n}</a>' for n in AXES_FILES) + '</p></section>'
+
+
 def display_number(value):
     """Readable display only; full precision remains in JSON and CSV artifacts."""
     if value is None:
@@ -489,6 +657,9 @@ def render(data):
     if grid_checks:
         largest = max(grid_checks, key=lambda c: abs(c["mean_difference"]))
         body += f'<p class="warning"><b>Grid sensitivity remains unresolved:</b> at {largest["depth_mm"]:.2f} mm, min25 minus min50 changes the native mean signal by {largest["mean_difference"]:+.5f} ({100*abs(largest["mean_difference"]):.1f} percentage points). A loose statistical screen is not close-agreement evidence. See the separate post-run seed analysis below.</p>'
+    body += '<section><h2>Li contact: approximation, physics and numerical verification</h2><p>Zero field does not imply zero collection: carriers may diffuse into a depleted region before being lost. A binary dead-layer approximation cannot represent all slow or partially collected pulses. See the <a href="https://arxiv.org/abs/1207.6716">2012 contact study</a>, <a href="https://arxiv.org/abs/2207.11902">2023 transport model</a> and <a href="https://doi.org/10.1140/epjc/s10052-026-15508-3">2026 SSD RCC implementation</a>. Available models do not automatically calibrate AK02. Current grid discrepancies are numerical questions under fixed physical inputs; device-specific lifetime and profile calibration is separate.</p></section>'
+    if "axis_attribution" in data:
+        body += render_axes(data["axis_attribution"])
     if "transition_grid" in data:
         body += render_transition(data["transition_grid"])
     series = []
@@ -539,12 +710,14 @@ def validate_bundle(directory):
     """Validate the compact published bundle; no detector calculation is run."""
     directory = common.no_links(Path(directory).absolute())
     data = common.load_json(common.relative_file(directory, "summary.json"))
-    extra = GRID_FILES if "transition_grid" in data else {}
+    extra = {**(GRID_FILES if "transition_grid" in data else {}), **(AXES_FILES if "axis_attribution" in data else {})}
     require(sorted(p.name for p in directory.iterdir()) == sorted(("lithium.html", "summary.json", *FILES[1:], *extra)), "unexpected Li bundle files")
     for name in ("lithium.html", "summary.json", *FILES[1:], *extra):
         common.relative_file(directory, name)
-    if extra:
-        validate_transition(data["transition_grid"], {n: (directory / n).read_bytes() for n in extra})
+    if "transition_grid" in data:
+        validate_transition(data["transition_grid"], {n: (directory / n).read_bytes() for n in GRID_FILES})
+    if "axis_attribution" in data:
+        validate_axes(data["axis_attribution"], {n: (directory / n).read_bytes() for n in AXES_FILES})
     finite_tree(data)
     metadata = data["metadata"]
     require(metadata["exporter_sha256"] == common.sha256(Path(__file__)), "Li report exporter changed")
@@ -558,7 +731,7 @@ def validate_bundle(directory):
     return data
 
 
-def export(directory, output, grid_input=None):
+def export(directory, output, grid_input=None, axes_input=None):
     directory = common.local_path(directory)
     output = common.local_path(output, new=True)
     require(not output.is_relative_to(directory) and not directory.is_relative_to(output), "input/output roots must be separate")
@@ -572,12 +745,20 @@ def export(directory, output, grid_input=None):
         grid_root = common.local_path(grid_input)
         require(not output.is_relative_to(grid_root) and not grid_root.is_relative_to(output), "grid input/output roots must be separate")
         data["transition_grid"], extra = load_transition(grid_root)
+    if axes_input is not None:
+        axes_root = common.local_path(axes_input)
+        require(not output.is_relative_to(axes_root) and not axes_root.is_relative_to(output), "axes input/output roots must be separate")
+        data["axis_attribution"], axes_raw = load_axes(axes_root)
+        extra.update(axes_raw)
     finite_tree(data)
     common.check_public(data)
     for name in FILES[1:]:
         common.check_public(raw[name].decode("utf-8"))
     page, summary = render(data), common.public_json_text(data)
     require(all(common.sha256(directory / name) == digest for name, digest in hashes.items()), "input changed during export")
+    if axes_input is not None:
+        axes = data["axis_attribution"]
+        require(common.sha256(axes_root / "report.json") == axes["report_sha256"] and all(common.sha256(axes_root / n) == h for n, h in axes["artifacts"].items()), "axes input changed during export")
     common.no_links(output)
     output.mkdir(parents=True, exist_ok=False)
     for name, value in {"lithium.html": page.encode(), "summary.json": summary.encode(), **{n: raw[n] for n in FILES[1:]}, **extra}.items():
@@ -592,8 +773,9 @@ if __name__ == "__main__":
     parser.add_argument("--input", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--grid-input", help="Optional completed M2d diagnostic directory")
+    parser.add_argument("--axes-input", help="Optional completed M2e E-only diagnostic directory")
     args = parser.parse_args()
     try:
-        export(args.input, args.output, grid_input=args.grid_input)
+        export(args.input, args.output, grid_input=args.grid_input, axes_input=args.axes_input)
     except (ValueError, KeyError, TypeError, OSError, StopIteration, IndexError) as error:
         parser.exit(1, f"Li report refused: {error}\n")

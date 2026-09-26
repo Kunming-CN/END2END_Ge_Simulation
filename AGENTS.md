@@ -170,3 +170,19 @@ statuses and cold-start budget failures; an unconverged initial guess cannot pro
 multiple equilibria. Actual grid spacings and source masks—not minimum-spacing
 parameter labels—govern comparisons. Next tests should isolate initialization
 and crossed radial/axial grids before further radiation statistics.
+
+## Initialization/axis attribution and stopping rules
+
+Keep `diagnose_transition_axes.jl` separate from the pinned production/native-grid
+helpers. Same-grid coefficient identity excludes only initial potential; verify
+fresh alpha, independent storage and unchanged parent hashes. Contrast acceptance
+requires an accepted E22 reference, not just accepted endpoints. All crossed
+vectors share pointwise max(1 V/cm, norm(E22)) normalization.
+
+Completed attribution diagnostics is not global initialization agreement or Li
+CCE convergence. Preserve whole-domain and semiconductor-localized differences
+without dropping exterior nodes from the original gate. Midheight z spacing was
+unchanged in the tested axial refinements; do not generalize their small onset
+effect to all axial resolution. Next work is one bounded paired continuation,
+then fixed-z radial stencil/source-quadrature diagnosis, not unlimited retries.
+Physical literature/calibration and numerical verification must remain distinct.

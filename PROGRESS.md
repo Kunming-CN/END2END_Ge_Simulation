@@ -2,7 +2,7 @@
 
 Updated: 2026-09-26 (local)
 
-Current: M2d verified native all-color fixed-point checks and W/E state preservation. The old field-onset discrepancy persists; genuinely nested grids and the finest cold start do not meet the full convergence gate. The runnable pipeline and Li diagnostic data remain preserved. Next: same-grid cross-warm starts and crossed radial/axial grids, not more radiation statistics.
+Current: M2e reproduces seven E-only initialization/crossed-axis cases and isolates strong sensitivity to the tested radial grids. Same-grid local profiles agree closely, but the strict whole-domain voltage gate remains failed. Mechanistic Li models and experimental validation exist; these fixed-input numerical issues are distinct from detector-specific calibration. No large Cs137 prediction or Li CCE convergence is claimed.
 
 
 ## Goal and plan alignment audit — 2026-09-26
@@ -894,3 +894,89 @@ results, initial harness failure, exploratory pilots and review/test receipts
 remain organized under `.local/m2d`. The owned verification browser was closed.
 No user application/global setting or task schedule was changed. This completes
 a native numerical diagnostic milestone, not Li-response convergence.
+
+## M2e plan — initialization and axis attribution
+
+Owner asked whether the difficulty means Li contacts lack experimental study or are always treated as dead layers. Primary literature and the pinned model distinguish the historical step-function approximation from mechanistic RCC transport. The current blocker is numerical verification in this configuration; device-specific calibration remains a separate later requirement. Continue on the computer with E-only same-finest-grid starts from accepted min50/min25, then the crossed r/z meshes. Preserve all physical inputs, earlier reports and fixed native/profile gates; do not equate a small native residual with a global solution bound. Large Cs137 production is not started here.
+
+M2e preflight review fixes were applied before formal calculation: common E22 normalization for every crossed effect, whole-real-node alpha comparison plus update-only supplement, whole-grid vector differences, explicit parent/probe storage independence and final cooperative time-budget checks. An empty bookkeeping subgroup caused the first helper test to error; a zero-safe diagnostic sum fixed it without changing any production solver. Native-array identity and frozen physical/source inputs remain required.
+
+M2e final pre-run tests:120 new native/identity/profile/budget checks and86 frozen-helper regressions passed. The seven-case E-only workload is frozen: reproduce/continue two baselines, compare two fresh starts on one finest grid, then evaluate a common-start2x2 crossed-grid set. Per-case allowance is cooperative900s,40k fresh or20k continuation sweeps; all original residual and profile gates remain unchanged. No carrier/CCE or high-statistics radiation calculation is part of this test.
+
+The first actual seven-case run completed with all native fixed-grid checks accepted, but full-domain same-grid start agreement failed (about4.08mV versus5uV gate). Its sampled transition field was much more stable, so strict global and local conclusions remain distinct. A review-found unexecuted failure-path issue—missing or unaccepted E22 reference—was fixed before release, and supplemental geometric localization/classification diagnostics were added without altering equations or acceptance thresholds. A final-source rerun will verify the data; the first run and its source are retained.
+
+## M2e completed — initialization and crossed-axis attribution
+
+The final-source study completed seven E-only cases in 285.897 s. All seven met
+the unchanged native electric fixed-point, alpha-voltage, nonempty contact-member
+and cooperative-budget checks. The final profile CSV is byte-identical to the
+first successful run; the final source adds failure-path guards and non-gating
+localization only. 128 new native/helper tests and 86 frozen-helper regressions
+passed. No model, SDK, production solver or lockfile was changed.
+
+Two finest-grid states were independently initialized from accepted min50/min25
+potentials. Fresh coefficient arrays, masks, alpha and axes were identical;
+independent storage, reconstruction checks and parent-state hashes were verified.
+Only initial potential differed. Initial maximum potential difference was3.3544V;
+final whole-domain difference was0.00407858V, above the preserved5e-6V agreement
+gate. The maximum lies outside Ge at[15,0,9.40375]mm, but the Ge-member maximum is
+still0.00102928V. No exterior nodes were dropped from acceptance. Whole-grid
+vector-field difference was0.113654V/cm; alpha-voltage difference1.76072e-6V.
+
+The sampled transition profile agrees much more closely: normalized vector
+change2.18244e-6 and the same E>1V/cm bracket0.5630..0.5635mm. This is narrow local
+evidence, not a replacement global criterion. The5376 alpha-class changes are
+2976 zero-to-partial and2400 partial-to-zero, with no full-depletion class changes;
+classification counts alone are not measured volume or CCE changes.
+
+The coherent 2x2 mesh comparison starts every factorial case from the same
+accepted min50 potential with fresh alpha. All four effects and the interaction
+use pointwise max(1V/cm,norm(E22)) normalization:
+
+| Effect | Reference -> candidate | Normalized vector difference | Conservative onset separation |
+|---|---|---:|---:|
+| Radial at z1 | g11 -> g21 |7.91337|38.5um|
+| Radial at z2 | g12 -> g22_from50 |8.13346|39.0um|
+| Axial at r1 | g11 -> g12 |0.220682|1.0um|
+| Axial at r2 | g21 -> g22_from50 |0.00280737|0.5um|
+
+Only the last comparison meets the existing1%/2um profile gates. The interaction
+maximum is0.22009334V/cm. The local axial spacing at the sampled z=4.7mm remains
+90.625um; axial changes refine end/bore regions, so these results do not establish
+general axial-resolution insensitivity. Because global same-grid agreement fails,
+all crossed effects remain conditional numerical sensitivity, not causal proof,
+asymptotic grid convergence or physical Li collection validation.
+
+The output status completed_attribution_diagnostics means the workload completed,
+not that same_grid.passed became true. Missing normalization profiles, unaccepted
+E22 references, source mutations and elapsed-budget overruns now fail or remain
+explicitly unavailable instead of creating a successful comparison. The two
+independent reviewers cross-checked the actual source/tests and both runs. They
+retain the failed global gate and the earlier15.1-percentage-point response warning.
+
+Physical interpretation was checked against primary literature: partial Li-contact
+collection was measured in 2012; the 2023 transport model reproduced detector
+collection curves; the 2026 RCC implementation is available in SSD from0.11.0.
+The pinned SSD0.11.8 AK02 model is not a mandatory zero-response dead slab. An abrupt
+0/1 response remains a useful reduced reference, but cannot represent the partial
+collection and slow-signal questions of this project. Detector-specific lifetime
+and profile calibration is a separate need from these fixed-input numerical tests.
+References and limitations are retained in PHYSICS.md and the report, not used to
+claim AK02 has been calibrated by another detector's published measurement.
+
+The report adds axes-profiles.csv and axes-comparisons.csv beside the existing
+Li/grid files. Its14 synthetic export/validation tests passed, including partial
+outcomes, false agreement, stale provenance and missing-reference cases. The
+public validator reconstructs vector-profile comparisons from full-precision CSV
+components rather than trusting a plot. Offline1440px/390px checks show four plots,
+the failed same-grid gate, semiconductor/exterior localization, axial-scope caveat
+and primary-source links with zero HTTP requests or JavaScript exceptions.
+
+Agreed next bounded work: one paired continuation of the two finest-grid states
+at equal additional sweep counts, capped at20k each, to measure error contraction
+without repeated budget extension. Then hold the axial axis fixed and audit the
+radial stencil/source quadrature and depletion clamp using unchanged physical
+inputs and explicit active versus fixed/contact accounting. A radial slice still
+contains axial flux and is not automatically a one-dimensional Poisson solution.
+Neither new thresholds chosen after these results nor per-event truth fitting
+will be used to manufacture physical convergence. Large Cs137 runs remain gated.
