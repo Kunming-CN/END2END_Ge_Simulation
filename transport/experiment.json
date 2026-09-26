@@ -38,7 +38,21 @@
     "ADC_model_and_sampling": null,
     "gain_and_polarity_calibration": null,
     "live_time_and_dead_time": null,
-    "raw_waveform_dataset": null
+    "raw_waveform_dataset": {
+      "status": "not_recorded_or_preserved",
+      "confirmed_by_owner": "2026-09-26",
+      "scope": "Original measured pulse waveforms for AK02 and SAP22 were not saved; do not continue searching for or claim waveform-level fits."
+    },
+    "spectrum_dataset": {
+      "status": "preserved_according_to_owner_not_yet_ingested",
+      "content": "Measured energy spectrum data only",
+      "recorded_date": "2026-09-26",
+      "files": null,
+      "channel_or_energy_axis": null,
+      "counts_and_background": null,
+      "calibration": null,
+      "live_time_and_dead_time": null
+    }
   },
   "upstream_geometry": {
     "provenance_file": "cryostat-source.json",
@@ -48,7 +62,8 @@
     "Do not overwrite the side-on monoenergetic M2a interface source",
     "Isotopic decay output needs an explicit per-decay emission and timing contract",
     "Unknown values are not zero, absent material, or permission to invent a dimension",
-    "No absolute efficiency, count rate or experimental spectrum prediction is authorized by this incomplete configuration"
+    "No absolute efficiency, count rate or experimental spectrum prediction is authorized by this incomplete configuration",
+    "Spectrum-only comparisons may constrain spectral response but do not uniquely identify drift/diffusion/trapping/recombination or analog transfer functions. Raw pulse reconstruction from spectra alone is not claimed."
   ],
   "documented_lab_inventory": {
     "source": "Owner dissertation baseline-equipment table, read-only source review 2026-09-26",

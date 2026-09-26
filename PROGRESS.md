@@ -2,7 +2,7 @@
 
 Updated: 2026-09-26 (local)
 
-Current: website/model downloads and CPU/CUDA examples are available; M2a bare AK02/SAP22 radiation-to-charge replay is verified. Calibrated Li response, LBNL placement and electronics remain pending.
+Current: M2a event handoff is verified. M2b3 adds an independent analytic electrostatic check and Geant4 EM-constructor sensitivity with uncertainty; production Li-region convergence, as-built cryostat and electronics calibration remain pending. Only measured spectra, not original measured waveforms, are available.
 
 ## Baseline website and migration
 
@@ -26,7 +26,7 @@ These are migration and functionality checks, not all-detector convergence tests
 |---|---|---|
 | M0 | Share existing results on GitHub Pages | Published; URL verified |
 | M1 | Clean-machine calculation example, pinned environment, portable paths | M1b CPU/CUDA examples verified on Windows; full campaign and other OS checks pending |
-| M2 | Geant4/remage deposits connected to SSD drift and electrode signal | M2a verified; M2b2 diagnoses nonconverged front and verifies homogeneous mobility diffusion; physical CCE/cryostat still gated |
+| M2 | Geant4/remage deposits connected to SSD drift and electrode signal | M2a verified; M2b3 independent annulus/EM checks added; production Li CCE and cryostat remain gated |
 | M3 | Preamp, analog shaping, ADC, independently reconstructed event energy | Planned |
 | M4 | Small repeatable spectrum and documented event-level checks | Planned |
 | M5 | Physics/readout refinements and comparison with measured data | Planned |
@@ -236,3 +236,92 @@ M2b2 evidence is consolidated under .local/m2b2: results/ contains final fields 
 Reference-location check: the current rendered generic charge-drift page omits the numerical example visible in the pinned0.11.8 source; the public TrueCoaxial inactive-layer tutorial explicitly shows5.6769e15cm^-3. The reference map now links that direct example and preserves the distinction from measured AK02 provenance. The same tutorial demonstrates local nonuniform grid refinement; after independent residual checks, reuse this existing grid API rather than blindly tightening every domain cell. No production grid or physical parameter was changed by this documentation clarification.
 
 M2b2 publication verified: implementation candidate1d0ce04 and reviewed documentation0ffa43b were merged and pushed to main; Pages run36223099417 succeeded. The live snapshot d2d6fbe17da0168cf49b512e3519e8efebd18eb7db6e85bbdac8dce353660e10 matches all78 selected live files including model downloads. Eighteen publication/model guard tests passed. Release marker: v0.6.0-transition-verification. Original numerical galleries remain precomputed; only guide/navigation and source documentation changed. Final numerical sources remain those tested at1d0ce04; the later direct-reference correction is documentation only.
+
+## M2b3 prospective plan and spectrum-only clarification — 2026-09-26
+
+Interactive runtime restored real process access. Verified clean synchronized e47573e, no prior terminal/Julia workers, no active owner, and an empty stale automation lock. Preserved prior state before acquiring an owned lock. Do not restart inactive scheduled tasks or imply background execution succeeded. Owner confirms AK02/SAP22 raw measured waveforms were not saved; measured spectrum data were saved. Update experiment.json and move experimental validation to spectrum observables with unresolved run metadata/identifiability, not waveform recovery.
+
+Round A continues the planned independent annulus benchmark: synthetic rho=0, radii5/15mm, potentials0/500V, V=Vb*ln(r/a)/ln(b/a). Independent midpoint finite-volume tridiagonal operator on prescribed nested nonlinear grids17/33/65 nodes. Predeclare normalized algebraic residual<=1e-11, flux spread<=1e-10, exact boundary enforcement, finest relative voltage/face-field errors<=1e-3, and error decrease consistent with second order (fine/coarse<=0.4). Test sign, zero/log-grid limits and intentional perturbations. This verifies an independent diagnostic operator, NOT the AK02 depletion solver or Li CCE.
+
+Round B is prompted by the owner: compare Geant4 Livermore/Penelope/Option4 constructors using the existing bare AK02 interface geometry at monoenergetic59.5/662keV (not full Am241/Cs137 decays). Use identical geometry/cuts/no electronics, record atomic-relaxation flags and actual runtime model banner, distinct seeds and5000 primaries per case, event-level total deposited energy including zero events, unbroadened spectra with count uncertainties. No winner or detector-specific accuracy is inferred from constructor agreement. Published remage documentation confirms these affect radiation interactions, not semiconductor carrier mobility. Keep baseline Livermore unchanged. Review with two independent specialists who exchange questions and findings before release.
+
+EM initial six-case smoke completed; before final validation add one independent-seed Livermore control per energy, source-origin/direction/time checks against raw vertices/particles, exact Geant4-data package versions and independent-binomial difference intervals. Newcombe-Wilson marginal95 intervals are exploratory, not simultaneous/equivalence tests. The final eight-case run uses5000 primaries each. This is validation hardening, not physics or parameter tuning.
+
+Post-review statistical hardening: preserve all eight fixed seeds and original counts. Add structured fluorescence/Auger/PIXE/ignore-cut checks and effective-cut log checks; export Wilson bounds for every spectrum bin including empty bins. A post-hoc family of all six containment contrasts (including both same-Livermore controls) receives two-sided Fisher exact tests and Holm adjustment, explicitly labeled exploratory after observing the original unadjusted intervals. SciPy1.18.1 is already in the locked environment; no dependency upgrade. Do not select/retry random seeds to make the same-constructor control agree.
+
+## M2b3 independent electrostatics and EM comparison — measured checks
+
+The interactive school-computer connection and process tools worked. Prior scheduled
+runtime failure was not treated as successful background execution; its inactive
+state was left unchanged. An inspected empty stale lock was recovered with the
+previous state preserved. All work remains on the focused feature branch until review.
+
+Owner correction is recorded in transport/experiment.json: no original AK02/SAP22
+measured waveforms were saved; measured spectra remain available but are not yet
+ingested. Future experimental checks target calibrated spectrum observables with
+background/live-time/acquisition metadata and parameter degeneracy, not pulse recovery.
+
+The independent charge-free annulus verifier passed its original gates. On nested
+17/33/65 nonuniform grids, relative voltage errors were 2.672815e-5, 6.663323e-6,
+1.665041e-6; relative midpoint-field errors were 4.067025e-4, 1.017166e-4,
+2.543172e-5. Normalized algebraic residuals were below 8.4e-17. Voltage/field
+observed orders were approximately two; normalized analytic truncation-residual
+orders were 1.80 and 1.91. Forty-three tests include constant/reversed bias,
+log-grid nodal limits, nesting, invalid inputs and deliberate perturbations.
+This validates the independent diagnostic operator only; it does not resolve
+SSD's cap25 depletion failure or establish AK02 CCE/dead-layer thickness.
+
+The existing remage handoff now optionally selects Livermore/Penelope/Option4 and
+records the selected constructor in immutable prepared metadata. The original
+M2a default Livermore macro was independently checked unchanged. No geometry,
+original model, carrier-physics input, dependency lock or solver default was changed.
+
+The final EM comparison executed eight fixed-seed cases, 5000 primary photons each
+(40000 total), using bare AK02 and the same synthetic side-on geometry. It is not
+the owner's lid-mounted source, full isotope decay, or detector efficiency.
+
+| Mono energy (keV) | Livermore | Penelope | Option4 | Livermore independent-seed control |
+|---|---:|---:|---:|---:|
+| 59.5 | 0.9816 | 0.9838 | 0.9850 | 0.9878 |
+| 662 | 0.0686 | 0.0722 | 0.0678 | 0.0748 |
+
+Entries are full deposited-energy containment fractions per all primaries, with
+1e-6 keV numerical energy tolerance, not broadened measured photopeak areas.
+Raw energy ledgers, source origin/direction/time, actual constructor banners,
+effective cuts, zero-event census and Geant4 data-package versions passed checks.
+Actual settings were fluorescence/Auger on, PIXE off, deexcitation ignoring cuts;
+package EMLOW was 8.6.1. No electronic/Fano/CCE smearing was applied. Spectral bins
+have Wilson intervals, including nonzero upper limits for empty bins.
+
+The four cross-constructor containment difference intervals included zero, but
+this is not equivalence. At 59.5 keV, the same-Livermore control differed by
++0.0062, with unadjusted Newcombe95 interval [0.0013834, 0.0111136]. This was not
+hidden or rerun with new seeds. A transparently post-hoc family of all six
+contrasts gave Fisher p=0.0142607 and Holm-adjusted p=0.0855639 for that control;
+no family member crossed 0.05 after Holm adjustment. These exploratory results
+do not rank physical accuracy or rule out smaller EM effects. All eight event
+energy arrays remained byte-identical after validation/reporting-only fixes.
+
+Review closure: the two reused independent Astra High read-only sessions asked
+and answered questions about spectral identifiability, statistical controls and
+model activation, then audited code and cross-read the other findings. They accepted
+diagnostic-only publication after explicit zero-bias field units, structured atomic
+flags, sparse-bin intervals and exploratory multiplicity handling were checked.
+Runtime tests were supervisor-run, not human certification or agent-run simulations.
+All 43 analytic, 23 handoff, 5 EM, 88 existing-runner and 40 replay checks passed.
+The final analytic/source hashes match, and protected model/lock/production-solver
+files are unchanged. The handoff change only exposes optional radiation constructors.
+
+Evidence is consolidated under .local/m2b3/electrostatics, em, reviews, checks and
+validation.json. The final eight raw transport runs and per-event/spectrum tables
+are retained; superseded identical numerical runs were removed after preserving
+reports and byte-equality evidence. Earlier milestone data and original baselines
+remain untouched. No measured spectrum was fabricated, digitized or ingested here.
+
+Next: apply independent analytic/residual checks to SSD's own simple benchmark
+before revisiting local Li-region refinement; separately verify a synthetic planar
+finite-conductivity weighting limit. A production-cut sensitivity control at 59.5
+keV is useful later, but is not needed to close this diagnostic comparison. Real
+spectrum ingestion requires identifying saved files and their calibration/background
+metadata; missing pulse records do not block mathematical verification. No current
+result authorizes physical Li CCE, dead-layer thickness or as-built efficiency.

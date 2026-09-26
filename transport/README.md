@@ -296,3 +296,47 @@ encapsulation, lid thickness, crystal gap and local-to-lab pose remain explicit
 unknowns. Do not reinterpret laboratory above as SSD +z or reuse the old planar
 crystal dimensions as an AK02 survey. The configuration is intentionally not
 runnable; the side-on monoenergetic M2a tests retain their original identity.
+
+## EM-constructor spectrum sensitivity
+
+Geant4 Livermore, Penelope and Option4 affect radiation interactions and deposits,
+not semiconductor drift. `compare_em.py` reuses the checked bare AK02 geometry
+and flat LH5 producer, with optional constructor selection in `handoff.py`.
+Livermore is still the default. The original default macro is preserved; every
+new prepared directory records its selected constructor and diagnostic logging.
+
+From a Windows PowerShell at the repository root:
+
+```powershell
+.\transport\Run.cmd python -B test_compare_em.py
+.\transport\Run.cmd python -B compare_em.py --output ../.local/em-check --events 5000
+```
+
+This executes eight cases: two rounded monoenergetic photon energies (59.5 and
+662 keV), three EM constructors and one independent-seed Livermore repeat per
+energy. These are bare side-on interface tests, not the owner's lid-mounted
+isotopic sources. Source origin, direction, time, primary census and energy are
+checked from raw data. Model banners, cuts, atomic-deexcitation settings and
+Geant4/data-package versions are retained. No physics defaults are tuned to data.
+
+Each case keeps immutable inputs, raw `truth.lh5`, `run.log`, `run.json`, and
+`event-energies.csv`/`spectrum.csv`; the parent `comparison.json` summarizes tests
+and uncertainties. Counts are normalized to all primaries, including zero-deposit
+events. Spectrum bins are 0.5 keV and exclude zeros, which are separately counted.
+
+Full containment uses a 1e-6 keV numerical energy tolerance, not a measured
+photopeak-width window. No Fano, electronic noise, Li loss, shaping or ADC response
+is included. Marginal Wilson 95% intervals and independent Newcombe-Wilson
+intervals compare containment fractions; sparse histogram bins should not be
+interpreted with Gaussian significance from the stored standard error alone.
+A separate post-hoc two-sided Fisher exact family with Holm adjustment is also
+reported; it does not turn the marginal intervals into simultaneous intervals or
+establish equivalence. All original intervals/counts remain unchanged.
+
+The saved 59.5 keV same-constructor control has a nominal difference interval
+excluding zero; it is retained, not rerun until it passes. This finite-sample
+control motivates independent-seed studies before declaring any model effect.
+All constructor comparisons remain sensitivity diagnostics, not an accuracy rank.
+The first six cases reproduce their earlier event-energy arrays byte-for-byte.
+See [PHYSICS.md](../simulation/PHYSICS.md) for primary references and the separation
+between radiation models, charge response and the owner's spectrum-only data.

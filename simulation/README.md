@@ -294,3 +294,28 @@ blocked. Two-micrometre profile sampling is not two-micrometre field resolution;
 reported brackets are first sampled exceedances, and a missing lower endpoint is
 censored. The extra `--parcels` option only changes homogeneous sample statistics,
 not the fixed 1/2/4 ns time-step matrix or any detector coefficient.
+
+## Independent analytic electrostatic verification
+
+This is an independent finite-volume diagnostic, not an alternative production
+SSD solver. It solves a charge-free cylindrical annulus with fixed inner/outer
+voltages and compares with the analytical logarithmic potential and radial field.
+No AK02 geometry, depletion algorithm, carrier model or package is modified.
+
+From the repository root:
+
+```powershell
+julia --startup-file=no --project=simulation simulation/test_electrostatics.jl
+julia --startup-file=no --project=simulation simulation/verify_electrostatics.jl --output .local/analytic-check
+```
+
+The output must be a new directory. It contains only `profiles.csv` and `run.json`.
+Three nested nonuniform grids (17/33/65 nodes) are checked against predeclared
+boundary, normalized residual, conservative flux, analytic error and refinement
+rate gates. The report retains the actual grids, values and source checksum.
+Tests also cover constant/reversed bias, log-spaced nodal accuracy and deliberate
+perturbations. Constant-bias field errors have explicit absolute V/m units.
+
+Passing verifies this independent operator and its checks only. A subsequent
+comparison must apply an independent residual/flux diagnostic to SSD's own output;
+this result does not resolve the AK02 fine-grid depletion failure or validate CCE.

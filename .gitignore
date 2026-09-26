@@ -67,3 +67,9 @@
 !simulation/test_transition.jl
 !simulation/PHYSICS.md
 !transport/experiment.json
+
+# Reviewed independent operator and EM-constructor diagnostics.
+!simulation/verify_electrostatics.jl
+!simulation/test_electrostatics.jl
+!transport/compare_em.py
+!transport/test_compare_em.py

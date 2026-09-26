@@ -27,6 +27,7 @@ TRANSFORM = {
     "translation_global_mm": [0, 0, 0],
     "definition": "x_global_mm=R*x_local_mm+t",
 }
+EM_OPTIONS = ("Livermore", "Penelope", "Option4")
 BOUNDARY_MM = 1e-6
 TABLE = "stp/germanium"
 SCOPE = "Bare canonical semiconductor; synthetic side-on monoenergetic gamma interface test"
@@ -272,14 +273,15 @@ def gdml_text(points):
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(root, encoding="unicode") + "\n"
 
 
-def macro_text(points, events, energy):
+def macro_text(points, events, energy, em="Livermore", audit_physics=False):
+    require(em in EM_OPTIONS and type(audit_physics) is bool, "unsupported EM option/audit flag")
     radius = max(r for r, _ in points)
     mid_z = (min(z for _, z in points) + max(z for _, z in points)) / 2
-    return f"""# Synthetic interface source; no experimental source activity or apparatus.
+    text = f"""# Synthetic interface source; no experimental source activity or apparatus.
 /RMG/Geometry/RegisterDetector Germanium germanium 1
 /RMG/Output/NtupleUseVolumeName true
 /RMG/Output/NtuplePerDetector true
-/RMG/Processes/LowEnergyEMPhysics Livermore
+/RMG/Processes/LowEnergyEMPhysics {em}
 /RMG/Processes/HadronicPhysics None
 /RMG/Processes/OpticalPhysics false
 /run/initialize
@@ -307,16 +309,20 @@ def macro_text(points, events, energy):
 /gps/number 1
 /run/beamOn {events}
 """
+    if audit_physics:
+        text = "/RMG/Manager/Logging/LogLevel detail\n" + text
+        text = text.replace("/run/initialize\n", "/run/initialize\n/process/em/printParameters\n")
+    return text
 
 
-def input_bundle(model_id, events, seed, energy):
+def input_bundle(model_id, events, seed, energy, em="Livermore", audit_physics=False):
     require(type(events) is int and 0 < events <= 100000, "events must be an integer in 1..100000")
     require(type(seed) is int and 0 < seed < 2**31, "seed must be an integer in 1..2^31-1")
     energy = numeric(energy)
     require(energy > 0, "primary energy must be positive")
     doc, points = load_model(model_id)
     probes = probe_points(points)
-    files = {"geometry.gdml": gdml_text(points), "run.mac": macro_text(points, events, energy),
+    files = {"geometry.gdml": gdml_text(points), "run.mac": macro_text(points, events, energy, em, audit_physics),
              "probe-points.txt": "".join(" ".join(format(x, ".17g") for x in p["position_mm"]) + "\n"
                                           for p in probes)}
     meta = {
@@ -330,7 +336,7 @@ def input_bundle(model_id, events, seed, energy):
         "stored_temperature_K": doc["detectors"][0]["semiconductor"]["temperature"],
         "stored_contact_potentials_V": [c["potential"] for c in doc["detectors"][0]["contacts"]],
         "mass_material": "G4_Ge; entire canonical HPGe volume sensitive, including Li region",
-        "physics": {"EM": "Livermore", "default_production_cut_mm": 0.1,
+        "physics": {"EM": em, "audit_physics": audit_physics, "default_production_cut_mm": 0.1,
                     "sensitive_production_cut_mm": 0.01, "step_limit": None},
         "contour_rz_mm": points, "analytic_volume_mm3": reference_volume(model_id),
         "polygon_volume_mm3": revolved_volume(points), "probes": probes,
@@ -340,10 +346,10 @@ def input_bundle(model_id, events, seed, energy):
     return files, meta
 
 
-def prepare(model_id, output, events=100, seed=260925, energy=662):
+def prepare(model_id, output, events=100, seed=260925, energy=662, em="Livermore", audit_physics=False):
     output = local_path(output)
     require(not output.exists(), "prepare refuses an existing output directory")
-    files, meta = input_bundle(model_id, events, seed, energy)
+    files, meta = input_bundle(model_id, events, seed, energy, em, audit_physics)
     output.mkdir(parents=True, exist_ok=False)
     for name, value in files.items():
         write_new(output / name, value)
@@ -354,7 +360,8 @@ def prepare(model_id, output, events=100, seed=260925, energy=662):
 def read_prepared(directory):
     directory = local_path(directory)
     meta = json.loads(local_path(directory / "prepared.json").read_text(encoding="utf-8"))
-    files, expected = input_bundle(meta["model_id"], meta["primary_count"], meta["seed"], meta["energy_keV"])
+    files, expected = input_bundle(meta["model_id"], meta["primary_count"], meta["seed"], meta["energy_keV"],
+                                   meta["physics"]["EM"], meta["physics"].get("audit_physics", False))
     require(meta == json.loads(json_text(expected)), "prepared metadata/lock/source changed; prepare a new directory")
     for name in files:
         require(sha256(local_path(directory / name)) == meta["files_sha256"][name], "immutable prepared input changed")
@@ -610,11 +617,13 @@ def main():
     prep.add_argument("--events", type=int, default=100)
     prep.add_argument("--seed", type=int, default=260925)
     prep.add_argument("--energy-kev", type=float, default=662)
+    prep.add_argument("--em", choices=EM_OPTIONS, default="Livermore")
+    prep.add_argument("--audit-physics", action="store_true")
     for name in ("run", "extract"):
         commands.add_parser(name).add_argument("--directory", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "prepare":
-        print(prepare(args.model, args.output, args.events, args.seed, args.energy_kev))
+        print(prepare(args.model, args.output, args.events, args.seed, args.energy_kev, args.em, args.audit_physics))
     elif args.command == "run":
         print(json_text(run(args.directory)))
     else:

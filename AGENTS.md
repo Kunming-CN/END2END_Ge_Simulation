@@ -59,7 +59,8 @@ After bounded implementation/testing, use two separate read-only review sessions
 ## Successive authorized rounds
 
 The owner requested successive bounded rounds without per-round approval (2026-09-26).
-A scheduled continuation checks this project hourly. Before an automated round, inspect
+Scheduled continuation may be enabled separately; verify its live enabled state and
+actual tool capability rather than assuming it can execute. Before an automated round, inspect
 `.local/autonomy/state.json`, its lock directory, the Git worktree and actual
 project worker processes. Never run two supervisors/rounds concurrently. Only an
 explicit ready state with no prior active supervisor/workers/lock permits a new
@@ -73,3 +74,10 @@ issue genuinely requiring their intervention. Usage limits never authorize reset
 The scheduling state/lock governs the owner's automated continuation only. A clean
 student clone does not need this private state to run documented CLI examples or
 make manual contributions; normal source/test/review rules still apply.
+
+Owner-confirmed data availability (2026-09-26): original AK02/SAP22 measured pulse
+waveforms were not saved; only energy-spectrum data remain. Do not fabricate
+waveform comparisons or require recovery of nonexistent files. Spectrum-only
+validation must retain acquisition/background/calibration metadata and model
+identifiability limits. EM-constructor changes affect radiation transport, not
+SSD carrier physics; compare with fixed settings and statistical controls.

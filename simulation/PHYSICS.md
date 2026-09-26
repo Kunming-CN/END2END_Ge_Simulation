@@ -91,9 +91,15 @@ also motivate checking an actual detector's transport parameters rather than
 assuming a universal default. The original SAP22 ADL model has no temperature
 rescaling; a 77 K override alone does not calibrate its velocities.
 
-No AK02/SAP22 raw measured waveform set has been identified and validated in this
-round. Do not fabricate a measured-vs-simulated overlay, digitize smoothed figures
-without labeling it, or republish private laboratory data automatically.
+The owner confirmed on 2026-09-26 that original AK02/SAP22 measured waveforms
+were not saved; only energy-spectrum data remain. Do not search indefinitely for
+nonexistent pulse files or reconstruct unique pulses from spectra. Literature
+traces remain method illustrations, never substituted AK02/SAP22 measurements.
+Spectrum comparison must retain channel/energy calibration, counts, background,
+live time, bias and shaping settings. Peak positions/widths/areas, tails and
+continuum windows can constrain an effective spectral response, but do not
+uniquely identify mobility, diffusion, trapping, recombination and shaping losses.
+Report nuisance-parameter degeneracy and use withheld features where possible.
 
 ## Electronics validation gate
 
@@ -145,3 +151,62 @@ this existing grid API is a candidate for targeted refinement instead of further
 uniform whole-domain tightening. Actual ticks, depletion mapping, boundary
 residuals and failed gates must still be recorded; tutorial success on a simple
 coaxial example does not certify AK02.
+
+## Geant4 models: radiation physics versus charge response
+
+The owner's recollection of different Geant4 spectrum models has a useful basis.
+[remage physics-list documentation](https://remage.readthedocs.io/en/stable/manual/physicslist.html)
+and pinned `RMGPhysics.cc` map Livermore, Penelope and Option4 to Geant4 EM
+constructors. They select radiation interaction/secondary-particle models:
+photoelectric absorption, Compton/Rayleigh scattering, ionisation, bremsstrahlung
+and charged-particle transport. They do not replace SSD's band-carrier mobility,
+diffusion, trapping or semiconductor boundary conditions. Option4 is a mixed
+choice of process models, not simply a 'fourth-order correction'.
+
+[Atomic relaxation](https://geant4.web.cern.ch/documentation/dev/prm_html/PhysicsReferenceManual/electromagnetic/atomic_relaxation/relaxation.html)
+redistributes vacancy energy among fluorescence photons, Auger electrons and
+local deposition. Escape can change spectral structure. Record actual fluorescence,
+Auger, PIXE and deexcitation-cut settings rather than guessing from a constructor.
+Production cuts control secondary creation treatment; they are not track step
+limits. Step limits matter for spatial deposits near a later-applied Li response
+boundary, even when total energy per Geant4 volume is already stable.
+
+[Soti et al. (2013)](https://arxiv.org/abs/1306.4538) compare Geant4 electron
+process/multiple-scattering choices against HPGe/Si beta-detector measurements.
+This supports a model-sensitivity study, but historical versions and beta geometry
+cannot rank our Geant4 11.3.2 gamma-source configurations. Preserve the Livermore
+baseline; choose any change through validation, not because it fits one feature.
+
+Other corrections are distinct: remage supports radiative beta-decay inner
+bremsstrahlung and custom neutron-capture gamma cascades, which modify the source
+emission/interaction physics, not drift. The present monoenergetic gamma exercise
+does not test those processes or full Cs137/Am241 branching and coincidences.
+User applications may also apply charge-collection or resolution corrections
+*after* Geant4; keep such response layers explicitly identified.
+[G4CMP](https://www.pnnl.gov/publications/g4cmp-condensed-matter-physics-simulation-using-geant4-toolkit)
+is a separate condensed-matter extension including cryogenic carrier/phonon
+transport, not functionality enabled by switching Livermore to Penelope. It is
+not installed or validated for this project's 77 K Li-contact problem.
+
+`transport/compare_em.py` compares rounded 59.5/662 keV monoenergetic photons in the
+same bare AK02 side-on geometry, retaining zero-deposit primaries, raw step truth,
+actual model banners, data-package versions and atomic settings. It is not the
+owner's on-lid geometry, an isotope source, measured peak shape or efficiency.
+Unbroadened 0.5 keV histograms and deposited-energy containment are diagnostic.
+Each energy has one independent-seed Livermore control. Marginal Wilson intervals
+and independent Newcombe-Wilson difference intervals are exploratory, not
+simultaneous confidence bands, equivalence tests or accuracy rankings.
+
+The final run's 59.5 keV same-Livermore repeat differs enough that its unadjusted 95%
+difference interval excludes zero; this is explicitly retained. Multiple
+exploratory comparisons and finite Monte Carlo counts prohibit selecting a
+constructor from these fluctuations. Additional preplanned independent seeds
+and statistical controls would be required before asserting a model effect.
+
+The independent-binomial interval follows Newcombe, Statistics in Medicine17
+(1998),873-890, doi:10.1002/(SICI)1097-0258(19980430)17:8<873::AID-SIM779>3.0.CO;2-I.
+The additional Fisher/Holm analysis is explicitly post-hoc: six containment
+contrasts, including same-constructor controls. It is reported alongside, not in
+place of, the original marginal intervals. No significance-based seed selection
+or model substitution is permitted. SciPy used for exact tests is already pinned
+in the transport environment; no dependency version was changed.

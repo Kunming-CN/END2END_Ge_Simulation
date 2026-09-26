@@ -94,3 +94,16 @@ Cs137/Am241 source placement on the aluminum lid above the detector, separates
 baseline equipment documentation from run-specific settings, and leaves unknown
 geometry/source/calibration fields explicit. It is deliberately not a runnable
 as-built setup. Do not replace unknown dimensions with another detector's geometry.
+
+## Independent checks and spectra-only validation
+
+The [analytic electrostatic verifier](simulation/README.md#independent-analytic-electrostatic-verification)
+checks a source-free annulus against an exact solution; it does not certify the
+production depletion solver. The [EM spectrum comparison](transport/README.md#em-constructor-spectrum-sensitivity)
+compares Livermore/Penelope/Option4 at deposited-energy level with independent-seed
+controls and explicit uncertainty. Neither replaces semiconductor charge transport.
+
+The owner confirmed that original AK02/SAP22 pulse waveforms were not saved;
+measured energy spectra remain available. Experimental validation therefore
+targets spectrum observables with run/background/calibration metadata and explicit
+parameter degeneracies, not recovery or fitting of nonexistent waveforms.
