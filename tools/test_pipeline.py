@@ -5,6 +5,7 @@ Run: python -B tools/test_pipeline.py
 """
 import io
 import json
+import math
 import os
 from pathlib import Path
 import stat
@@ -20,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pipeline_demo as p
 
 PROJECT = p.ROOT
-CONFIG = {"schema_version": 1, "expected_primary_count": None, "threshold_V": .001,
+CONFIG = {"schema_version": 1, "expected_primary_count": 100, "threshold_V": .001, "gain": 20.0,
           "adc_bits": 14, "adc_full_scale_V": 10.0, "calibration_energy_keV": 500}
 RUNTIME = {"julia_version": "fixture", "json_version": "fixture", "json_source_sha256": "1" * 64}
 TRANSFORM = {"definition": "x_global_mm=R*x_local_mm+t",
@@ -81,7 +82,12 @@ class PipelineTests(unittest.TestCase):
         (self.root / "simulation/Manifest.toml").write_text('julia_version = "fixture"\n', encoding="utf-8")
         (self.root / p.TEMPLATE).write_bytes((PROJECT / p.TEMPLATE).read_bytes())
         self.write(self.root / "simulation/readout_demo.json", CONFIG)
+        pin = patch.object(p, "BASELINE_CONFIG_SHA256", p.sha256(self.root / p.BASELINE_CONFIG))
+        pin.start()
+        self.addCleanup(pin.stop)
         self.count = 4
+        self.energy = 662
+        self.seed = 260926
         self.fail_stage = None
         self.calls = []
 
@@ -89,12 +95,14 @@ class PipelineTests(unittest.TestCase):
     def write(path, value):
         path.write_text(p.json_text(value), encoding="utf-8")
 
-    def fake_subprocess(self, command, *, cwd, stdout, stderr, check, shell):
+    def fake_subprocess(self, command, *, cwd, stdout, stderr, check, shell, env):
         self.assertEqual(cwd, self.root)
         self.assertEqual(stderr, subprocess.STDOUT)
         self.assertTrue(check)
         self.assertFalse(shell)
         self.assertIsInstance(command, list)
+        self.assertIsNot(env, os.environ)
+        self.assertTrue(all(env[k] == v for k, v in p.CHILD_THREAD_ENV.items()))
         self.calls.append(command)
         log = Path(stdout.name)
         stage = log.stem
@@ -110,6 +118,12 @@ class PipelineTests(unittest.TestCase):
         stdout.write(b"mock fixture only, not a physical simulation\n")
         model = log.parent.name
         base = self.output / model
+        if stage == "prepare":
+            self.count = int(command[command.index("--events") + 1])
+            self.seed = int(command[command.index("--seed") + 1])
+            self.energy = float(command[command.index("--energy-kev") + 1])
+        if stage == "readout":
+            self.assertEqual(command[command.index("--config") + 1], str(self.output / p.RUN_CONFIG))
         getattr(self, "fixture_" + stage)(base, model)
         return subprocess.CompletedProcess(command, 0)
 
@@ -119,7 +133,7 @@ class PipelineTests(unittest.TestCase):
         for name in ("geometry.gdml", "run.mac", "probe-points.txt"):
             (directory / name).write_text("mock fixture\n", encoding="utf-8")
         doc = {"model_id": model, "model_sha256": p.sha256(self.root / f"models/{model}.yaml"),
-               "primary_count": self.count, "seed": 260926, "energy_keV": 662,
+               "primary_count": self.count, "seed": self.seed, "energy_keV": self.energy,
                "coordinate_transform": TRANSFORM, "stored_contact_potentials_V": [0, 500 if model == "AK02" else 700],
                "contour_rz_mm": [[0, 0], [12, 0], [12, 10], [0, 10], [0, 0]],
                "files_sha256": {n: p.sha256(directory / n) for n in ("geometry.gdml", "run.mac", "probe-points.txt")}}
@@ -138,18 +152,18 @@ class PipelineTests(unittest.TestCase):
         for i in range(self.count):
             steps = []
             if i % 4:
-                steps = [{"raw_row_index": row, "energy_keV": 100.0, "time_ns": 0.0,
+                steps = [{"raw_row_index": row, "energy_keV": min(100.0, self.energy), "time_ns": 0.0,
                           "position_mm": [10, 0, 5], "global_position_m": [.010, 0, .005],
                           "pre_position_mm": [10, 0, 5], "post_position_mm": [10, 0, 5],
                           "track_id": 1, "parent_track_id": 0, "particle_pdg": 22}]
                 row += 1
             events.append({"event_id": i, "primary_time_ns": 0.0, "steps": steps})
         self.write(directory / "events.json", {"schema_version": 1, "model_id": model, "model_sha256": prep["model_sha256"],
-                   "primary_count": self.count, "events": events, "energy_sum_keV": row * 100.0,
+                   "primary_count": self.count, "events": events, "energy_sum_keV": row * min(100.0, self.energy),
                    "coordinate_transform": TRANSFORM, "source_lh5_sha256": p.sha256(directory / "truth.lh5"),
                    "geometry_sha256": p.sha256(directory / "geometry.gdml"), "macro_sha256": p.sha256(directory / "run.mac"),
                    "provenance": {"prepared_sha256": p.sha256(directory / "prepared.json"), "run_sha256": p.sha256(directory / "run.json"),
-                                  "seed": 260926, "extractor_versions": {"python": "fixture"},
+                                  "seed": self.seed, "extractor_versions": {"python": "fixture"},
                                   "lock_sha256": p.sha256(self.root / "transport/pixi.lock"),
                                   "versions": {"remage": "fixture", "geant4": "fixture"}}})
 
@@ -214,10 +228,11 @@ class PipelineTests(unittest.TestCase):
             "geometry_sha256": "transport/geometry.gdml", "macro_sha256": "transport/run.mac",
             "prepared_sha256": "transport/prepared.json", "transport_run_sha256": "transport/run.json"}.items()}
         provenance.update({key: p.sha256(self.root / name) for key, name in {
-            "model_sha256": f"models/{model}.yaml", "config_sha256": "simulation/readout_demo.json",
+            "model_sha256": f"models/{model}.yaml",
             "readout_source_sha256": "simulation/readout.jl", "manifest_sha256": "simulation/Manifest.toml",
             "model_catalog_sha256": "models/catalog.json", "charge_manifest_sha256": "simulation/Manifest.toml"}.items()})
         provenance["test_source_sha256"] = p.sha256(self.root / "simulation/test_readout.jl")
+        provenance["config_sha256"] = p.sha256(self.output / p.RUN_CONFIG)
         provenance["readout_environment"] = dict(RUNTIME, project="simulation/Project.toml", manifest="simulation/Manifest.toml",
             project_sha256=p.sha256(self.root / "simulation/Project.toml"), manifest_sha256=p.sha256(self.root / "simulation/Manifest.toml"), pinned_julia_version="fixture")
         truth = p.load_json(base / "transport/events.json")
@@ -225,7 +240,7 @@ class PipelineTests(unittest.TestCase):
         provenance["charge_versions"] = {"julia": charge["julia_version"], "ssd": charge["ssd_version"]}
         provenance["charge_source_sha256"] = charge["source_code_sha256"]
         self.write(directory / "run.json", {"schema_version": 1, "model_id": model, "status": "completed", "events": events,
-                   "config": CONFIG, "calibration": {"volts_per_keV": .001, "adc_lsb_V": 10 / 16384,
+                   "config": p.load_json(self.output / p.RUN_CONFIG), "calibration": {"volts_per_keV": .001, "adc_lsb_V": 10 / 16384,
                                                        "method": "single delta-charge injection at t=0; sampled analog peak; fixed across events",
                                                        "adc_convention": "floor(V/LSB); reconstruct (code+0.5)*LSB; threshold inclusive; saturation at V>=10 V",
                                                        "charge_C": 500 * 1000 / 2.95 * 1.602176634e-19,
@@ -244,9 +259,11 @@ class PipelineTests(unittest.TestCase):
         for name in ("events.csv", "spectrum.csv"):
             (directory / name).write_text("mock table\n", encoding="utf-8")
 
-    def run_fixture(self, *, model=None):
-        with patch.object(p.subprocess, "run", self.fake_subprocess), patch.dict(os.environ, {"JULIA_EXECUTABLE": "C:/runtime with spaces/julia.exe"}):
-            return p.run_pipeline(self.output, events=self.count, model=model)
+    def run_fixture(self, *, model=None, **kwargs):
+        options = dict(events=self.count, model=model)
+        options.update(kwargs)
+        with patch.object(p.subprocess, "run", self.fake_subprocess), patch.dict(os.environ, {"JULIA_EXECUTABLE": "C:/runtime with spaces/julia.exe"}), patch("sys.stdout", new_callable=io.StringIO):
+            return p.run_pipeline(self.output, **options)
 
     def reseal(self):
         """Exercise semantic validation independently of the outer checksum gate."""
@@ -355,7 +372,7 @@ class PipelineTests(unittest.TestCase):
 
     def test_changed_every_relevant_artifact_rejected(self):
         self.run_fixture()
-        for rel in ("AK02/transport/events.json", "AK02/transport/truth.lh5", "AK02/charge/signals.csv", "AK02/charge/run.json", "AK02/readout/run.json", "AK02/readout/events.csv", "AK02/readout/spectrum.csv"):
+        for rel in (p.RUN_CONFIG, "AK02/transport/events.json", "AK02/transport/truth.lh5", "AK02/charge/signals.csv", "AK02/charge/run.json", "AK02/readout/run.json", "AK02/readout/events.csv", "AK02/readout/spectrum.csv"):
             path = self.output / rel
             original = path.read_bytes()
             path.write_bytes(original + b" ")
@@ -492,11 +509,240 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(event["has_step_limit"] and event["has_stopped_without_contact"])
         self.assertEqual(event["flags"], readout["events"][3]["flags"])
 
-    def test_fixed_census_fails_before_subprocess(self):
-        self.write(self.root / "simulation/readout_demo.json", dict(CONFIG, expected_primary_count=100))
-        with patch.object(p.subprocess, "run") as child, self.assertRaisesRegex(ValueError, "primary count"):
-            p.run_pipeline(self.output, events=4)
-        child.assert_not_called()
+    def test_run_config_only_census_changes(self):
+        original = (self.root / p.BASELINE_CONFIG).read_bytes()
+        manifest = self.run_fixture()
+        config = p.load_json(self.output / p.RUN_CONFIG)
+        self.assertEqual(config, dict(CONFIG, expected_primary_count=4))
+        self.assertEqual((self.root / p.BASELINE_CONFIG).read_bytes(), original)
+        self.assertEqual(manifest["readout_config"]["allowed_changed_fields"], ["expected_primary_count"])
+        self.assertEqual(manifest["readout_config"]["changed_fields"], ["expected_primary_count"])
+        self.assertEqual(manifest["artifacts"][p.RUN_CONFIG], manifest["readout_config"]["effective_sha256"])
+        for model in p.MODELS:
+            readout = p.load_json(self.output / model / "readout/run.json")
+            self.assertEqual(readout["config"], config)
+            self.assertEqual(readout["provenance"]["config_sha256"], p.sha256(self.output / p.RUN_CONFIG))
+        p.validate_run(self.output)
+
+    def test_presets_and_explicit_overrides(self):
+        for preset, (count, energy) in p.PRESETS.items():
+            with self.subTest(preset=preset):
+                settings = p.run_settings(preset=preset)
+                self.assertEqual((settings["events_per_model"], settings["energy_keV"]), (count, energy))
+                self.assertEqual(settings["explicit_overrides"], {})
+                self.assertEqual((settings["threads"], settings["seed"]), (2, 260926))
+        settings = p.run_settings(events=20, energy=60, seed=19, threads=1, model="SAP22", preset="gamma-59")
+        self.assertEqual(settings["explicit_overrides"], {"events": 20, "energy_keV": 60, "seed": 19, "threads": 1, "model": "SAP22"})
+        self.assertEqual(settings["preset"], "gamma-59")
+        self.assertEqual(p.run_settings(events=500)["events_per_model"], 500)
+        self.assertEqual(p.run_settings(events=1, threads=4)["threads"], 4)
+
+    def test_gamma59_quick_override_and_serial_thread_environment(self):
+        with patch.dict(os.environ, {key: "7" for key in p.CHILD_THREAD_ENV}):
+            before = dict(os.environ)
+            manifest = self.run_fixture(events=10, preset="gamma-59", threads=1, seed=29)
+            self.assertEqual(dict(os.environ), before)
+        self.assertEqual(manifest["settings"]["energy_keV"], 59.5)
+        self.assertEqual(manifest["settings"]["explicit_overrides"], {"events": 10, "threads": 1, "seed": 29})
+        stages = [(r["model_id"], r["stage"]) for r in manifest["stages"] if r["model_id"]]
+        self.assertEqual(stages, [(m, s) for m in p.MODELS for s in p.STAGES])
+        # Blocking subprocess.run returns before any next stage/model is launched.
+        for command in self.calls:
+            if "--startup-file=no" in command:
+                self.assertIn("--threads=1", command)
+        p.validate_run(self.output)
+
+    def test_default100_config_and_calibration_unchanged(self):
+        manifest = self.run_fixture(events=None)
+        self.assertEqual(manifest["settings"]["events_per_model"], 100)
+        self.assertEqual(manifest["settings"]["explicit_overrides"], {})
+        self.assertEqual(p.load_json(self.output / p.RUN_CONFIG), CONFIG)
+        self.assertEqual(manifest["readout_config"]["changed_fields"], [])
+        self.assertEqual(manifest["calibration_identity"]["config"], CONFIG)
+        self.assertEqual(manifest["calibration_identity"]["calibration"]["energy_keV"], 500)
+        p.validate_run(self.output)
+
+    def test_invalid_settings_fail_before_any_subprocess_or_output(self):
+        cases = [{"events": n} for n in (True, False, 0, -1, 501, 100000, 2.0, float("nan"))]
+        cases += [{"threads": n} for n in (True, 0, 5, 2.0)]
+        cases += [{"energy": n} for n in (True, 0, -1, float("nan"), float("inf"))]
+        cases += [{"seed": n} for n in (True, 0, 2**31, 1.0)]
+        cases += [{"preset": "isotope"}, {"preset": True}, {"model": "AK01"}, {"model": True}]
+        with patch.object(p.subprocess, "run") as child:
+            for kwargs in cases:
+                with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                    p.run_pipeline(self.output, **kwargs)
+                self.assertFalse(self.output.exists())
+            child.assert_not_called()
+
+    def test_duplicate_or_nonfinite_baseline_fails_preflight(self):
+        path = self.root / p.BASELINE_CONFIG
+        for index, content in enumerate(('{"gain":20,"gain":21}', '{"gain":NaN}', '{"gain":1e999}')):
+            self.output = self.root / ".local" / f"invalid-{index}"
+            path.write_text(content)
+            with self.subTest(content=content), patch.object(p.subprocess, "run") as child, patch("sys.stdout", new_callable=io.StringIO):
+                with self.assertRaisesRegex(ValueError, "duplicate JSON|nonfinite JSON"):
+                    p.run_pipeline(self.output)
+                child.assert_not_called()
+                manifest = p.load_json(self.output / "run.json")
+                self.assertEqual(manifest["failure"]["stage"], "preflight")
+                self.assertEqual(manifest["stages"], [])
+
+    def test_frozen_baseline_rejects_changed_gain_before_subprocess(self):
+        self.write(self.root / p.BASELINE_CONFIG, dict(CONFIG, gain=21))
+        with patch.object(p.subprocess, "run") as child, patch("sys.stdout", new_callable=io.StringIO):
+            with self.assertRaisesRegex(ValueError, "frozen baseline"):
+                p.run_pipeline(self.output)
+            child.assert_not_called()
+
+    def test_rehashed_wrong_gain_cannot_change_run_config(self):
+        manifest = self.run_fixture()
+        config = p.load_json(self.output / p.RUN_CONFIG)
+        config["gain"] = 21
+        self.write(self.output / p.RUN_CONFIG, config)
+        manifest["readout_config"]["effective_sha256"] = p.sha256(self.output / p.RUN_CONFIG)
+        # Even correlated config, readout, calibration and outer hash changes fail.
+        for model in p.MODELS:
+            path = self.output / model / "readout/run.json"
+            readout = p.load_json(path)
+            readout["config"] = config
+            readout["provenance"]["config_sha256"] = manifest["readout_config"]["effective_sha256"]
+            self.write(path, readout)
+        manifest["calibration_identity"]["config"] = config
+        manifest["calibration_sha256"] = p.digest(manifest["calibration_identity"])
+        self.write(self.output / "run.json", manifest)
+        self.reseal()
+        with self.assertRaisesRegex(ValueError, "readout config binding/allowlist"):
+            p.validate_run(self.output)
+
+    def test_changed_readout_settings_rejected_even_with_rehash(self):
+        self.run_fixture()
+        self.mutate_readout(lambda d: d["config"].update(threshold_V=.002))
+        with self.assertRaisesRegex(ValueError, "readout config differs"):
+            p.validate_run(self.output)
+
+    def test_signed_negative_charge_remains_rejected_and_lossless(self):
+        self.run_fixture(model="AK02")
+        base = self.output / "AK02"
+        charge = p.load_json(base / "charge/run.json")
+        charge["events"][1]["final_induced_equivalent_energy_keV"] *= -1
+        self.write(base / "charge/run.json", charge)
+        signals = base / "charge/signals.csv"
+        signals.write_text(signals.read_text().replace("1,2,80.0", "1,2,-80.0"))
+        readout = p.load_json(base / "readout/run.json")
+        event = readout["events"][1]
+        event.update(negative_input=True, accepted=False, rejection_reason="negative_input", reconstructed_energy_keV=None)
+        for key in ("final_induced_equivalent_energy_keV", "final_charge_C"):
+            event[key] *= -1
+        for key in ("integrated_current_C", "charge_change_C"):
+            event["current_balance"][key] *= -1
+        for key in ("induced_charge_fC", "current_nA", "preamp_V"):
+            event["trace"][key] = [-v for v in event["trace"][key]]
+        readout["summary"]["accepted_count"] -= 1
+        readout["summary"]["rejected_count"] += 1
+        readout["provenance"]["charge_run_sha256"] = p.sha256(base / "charge/run.json")
+        readout["provenance"]["signals_sha256"] = p.sha256(signals)
+        self.write(base / "readout/run.json", readout)
+        self.reseal()
+        data = p.export_run(self.output, self.root / ".local/export")
+        exported = data["models"][0]["events"][1]
+        self.assertEqual(exported["trace"], event["trace"])
+        self.assertEqual(exported["flags"], event["flags"])
+        self.assertLess(exported["trace"]["induced_charge_fC"][-1], 0)
+        self.assertLess(exported["trace"]["current_nA"][1], 0)
+        self.assertGreater(exported["trace"]["preamp_V"][1], 0)
+        self.assertIsNone(exported["reconstructed_energy_keV"])
+        self.assertEqual(data["models"][0]["summary"]["primaries"], self.count)
+
+    def test_run_settings_config_allowlist_and_commands_bound(self):
+        original = self.run_fixture()
+        changes = [(lambda m: m["settings"].update(threads=4), "settings/overrides"),
+                   (lambda m: m["readout_config"].update(allowed_changed_fields=["gain"]), "config binding/allowlist"),
+                   (lambda m: next(s for s in m["stages"] if s["stage"] == "readout")["command"].__setitem__(2, "--threads=4"), "thread setting/command"),
+                   (lambda m: next(s for s in m["stages"] if s["stage"] == "readout")["command"].append("--config"), "shared run config")]
+        for change, message in changes:
+            with self.subTest(message=message):
+                manifest = json.loads(p.json_text(original))
+                change(manifest)
+                p.seal_manifest(manifest)
+                self.write(self.output / "run.json", manifest)
+                with self.assertRaisesRegex(ValueError, message):
+                    p.validate_run(self.output)
+
+    def test_old_run_schema_instructs_new_run(self):
+        manifest = self.run_fixture()
+        manifest["schema_version"] = 1
+        p.seal_manifest(manifest)
+        self.write(self.output / "run.json", manifest)
+        with self.assertRaisesRegex(ValueError, "preserve archived runs and create a new run"):
+            p.validate_run(self.output)
+
+    def test_cli_presets_overrides_and_duplicate_rejection(self):
+        with patch.object(p, "run_pipeline", return_value={"run_id": "fixture"}) as run, patch("sys.stdout", new_callable=io.StringIO):
+            self.assertEqual(p.main(["run", "--output", ".local/new", "--preset", "gamma-59", "--events", "100",
+                                     "--energy-kev", "60", "--seed", "19", "--threads", "4", "--model", "AK02"]), 0)
+            run.assert_called_once_with(".local/new", 100, 19, 60.0, "AK02", preset="gamma-59", threads=4)
+        for option, value in (("--events", "100"), ("--preset", "quick"), ("--energy-kev", "59.5"),
+                              ("--threads", "2"), ("--seed", "19"), ("--model", "AK02"), ("--output", ".local/new")):
+            args = ["run", "--output", ".local/new", option, value]
+            if option != "--output":
+                args += [option, value]
+            with self.subTest(option=option), patch.object(p, "run_pipeline") as run, patch("sys.stderr", new_callable=io.StringIO) as err:
+                with self.assertRaises(SystemExit):
+                    p.main(args)
+                self.assertIn("duplicate option", err.getvalue())
+                run.assert_not_called()
+        with patch.object(p.subprocess, "run") as child, patch("sys.stderr", new_callable=io.StringIO):
+            self.assertEqual(p.main(["run", "--output", str(self.output), "--events", "501"]), 1)
+            with self.assertRaises(SystemExit):
+                p.main(["run", "--output", str(self.output), "--preset", "unknown"])
+            child.assert_not_called()
+
+    def test_compact_numbers_roundtrip_and_script_escape(self):
+        values = [0, -0.0, 1.0, -1.25, 5e-324, sys.float_info.min, sys.float_info.max,
+                  math.nextafter(1.0, 2.0), math.nextafter(1.0, 0.0), 1e-200, 9007199254740991]
+        data = {"values": values, "flags": [True, False, None], "text": "</ScRiPt><!-->&\u2028\u2029\u00e9"}
+        compact = p.public_json_text(data)
+        decoded = json.loads(compact)
+        self.assertEqual(decoded, data)
+        self.assertEqual([type(v) for v in decoded["values"]], [type(v) for v in values])
+        for a, b in zip(values, decoded["values"]):
+            if isinstance(a, float):
+                self.assertEqual(a.hex(), b.hex())
+        self.assertTrue(compact.isascii())
+        parser = PageParser()
+        parser.feed(p.render_html(data, '<script id="pipeline-data" type="application/json">' + p.TOKEN + '</script>'))
+        self.assertEqual(json.loads(parser.embedded), data)
+        self.assertNotIn("<", parser.embedded)
+        self.assertNotIn("&", parser.embedded)
+        for invalid in (float("nan"), float("inf"), -float("inf")):
+            with self.assertRaises(ValueError):
+                p.public_json_text({"value": invalid})
+
+    def test_export_compact_canonical_bytes_and_lazy_details(self):
+        self.run_fixture()
+        output = self.root / ".local/export"
+        data = p.export_run(self.output, output)
+        self.assertEqual(data["export"]["encoding"], p.PUBLIC_ENCODING)
+        compact = (output / "data.json").read_bytes()
+        self.assertEqual(compact, p.public_json_text(data).encode("ascii"))
+        self.assertEqual(json.loads(compact), data)
+        html = (output / "pipeline.html").read_text(encoding="utf-8")
+        self.assertIn('if($("event-details").open)put("event-json",JSON.stringify(', html)
+        self.assertIn('if(!$("provenance").parentElement.open)', html)
+        self.assertIn('addEventListener("toggle",eventDetails)', html)
+        self.assertIn('addEventListener("toggle",provenanceDetails)', html)
+        draw = html.split("function drawEvent(){", 1)[1].split("function drawModel(){", 1)[0]
+        self.assertNotIn("JSON.stringify", draw)
+        self.assertIn('eventDetails();', draw)
+        self.assertIn('sel.selectedIndex=Math.max(0,m.events.findIndex(e=>e.deposited_energy_keV>0))', html)
+        self.assertIn('accepted readouts retain charge-transport flags', html)
+        self.assertIn('declared Julia threads=${data.settings.threads}', html)
+        for name in ("previous", "next", "first-deposit", "zero-deposit", "largest-deposit"):
+            self.assertIn(f'$("{name}").addEventListener("click",', html)
+        (output / "data.json").write_bytes(p.json_text(data).encode("utf-8"))
+        with self.assertRaisesRegex(ValueError, "canonical compact export"):
+            p.validate_export(output)
 
     def test_original_current_bins_and_charge_endpoint_required(self):
         self.run_fixture()
@@ -553,7 +799,7 @@ class PipelineTests(unittest.TestCase):
         data["models"][0]["summary"]["primaries"] = 3
         data.pop("export_sha256")
         data["export_sha256"] = p.digest(data)
-        (output / "data.json").write_bytes(p.json_text(data).encode("utf-8"))
+        (output / "data.json").write_bytes(p.public_json_text(data).encode("utf-8"))
         (output / "pipeline.html").write_bytes(p.render_html(data).encode("utf-8"))
         with self.assertRaisesRegex(ValueError, "summary/selection"):
             p.validate_export(output)
@@ -569,10 +815,20 @@ class PipelineTests(unittest.TestCase):
     def test_cli_defaults_and_failure_exit(self):
         with patch.object(p, "run_pipeline", return_value={"run_id": "fixture"}) as run, patch("sys.stdout", new_callable=io.StringIO):
             self.assertEqual(p.main(["run", "--output", ".local/new"]), 0)
-            run.assert_called_once_with(".local/new", 100, 260926, 662, None)
+            run.assert_called_once_with(".local/new", None, None, None, None, preset="gamma-662", threads=None)
         with patch.object(p, "export_run", side_effect=ValueError("changed input")), patch("sys.stderr", new_callable=io.StringIO) as err:
             self.assertEqual(p.main(["export", "--input", ".local/old", "--output", ".local/new"]), 1)
             self.assertIn("changed input", err.getvalue())
+
+    def test_demo_energy_workload_bound(self):
+        self.assertEqual(p.run_settings(energy=10000)["energy_keV"], 10000)
+        for value in (math.nextafter(10000.0, math.inf), 1e100, True, math.inf, math.nan):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                p.run_settings(energy=value)
+        with patch.object(p, "execute") as execute:
+            with self.assertRaises(ValueError):
+                p.run_pipeline(".local/uncreated-over-limit", energy=10001)
+            execute.assert_not_called()
 
 
 if __name__ == "__main__":

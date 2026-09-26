@@ -119,3 +119,20 @@ Run one orchestration entry with one generated output root. Showcase export must
 read completed, hash-checked artifacts without simulations or external frontend
 dependencies. Maintain an offline event explorer with explicit settings, low
 statistics and limitations; no fitted experimental claims without actual data.
+
+## Resource-conscious standard examples
+
+Use bounded named monoenergetic presets and explicit per-run overrides rather
+than editing canonical detector/electronics inputs. The only allowed change in
+a generated readout configuration is its expected primary count. Verify that
+restriction independently of file hashes, including deliberately rehashed edits.
+Keep models and stages serial; default to two Julia threads, allow one for
+low-load work, and bound the selectable thread count. Child-only thread-pool
+settings must not change systemwide settings or close unrelated user programs.
+
+Compact public JSON must preserve every event, numeric value, flag and deposit.
+Do not reduce precision or silently sample events to make pages smaller. Keep
+raw reports readable and bind the compact export to its exact serialization and
+template hashes. Defer heavy detail rendering until the panel is opened. Confirm
+offline/mobile behavior and current selection when details open or refresh.
+Measure before claiming a speedup; distinguish sampled timing from guarantees.

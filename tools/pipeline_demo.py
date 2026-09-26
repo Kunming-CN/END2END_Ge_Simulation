@@ -27,6 +27,13 @@ MODELS = ("AK02", "SAP22")
 STAGES = ("prepare", "transport", "extract", "charge", "readout")
 TEMPLATE = "tools/pipeline_explorer.html"
 TOKEN = "__PIPELINE_DATA_JSON__"
+PRESETS = {"quick": (10, 662), "gamma-662": (100, 662), "gamma-59": (100, 59.5)}
+MAX_DEMO_ENERGY_KEV = 10000  # Explicit workload bound, not a validated physics range.
+BASELINE_CONFIG = "simulation/readout_demo.json"
+BASELINE_CONFIG_SHA256 = "33eb64724736c78852795ea001889759152ffefc22de9c4db6815fd1aaf8ee9e"
+RUN_CONFIG = "readout-config.json"
+PUBLIC_ENCODING = "json-compact-sorted-ascii-v1"
+CHILD_THREAD_ENV = {"OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}
 REFERENCES = [
     {"title": "ORTEC 671 architecture (not this synthetic transfer function)",
      "url": "https://www.ortec-online.com/products/electronic-instruments/amplifiers/671"},
@@ -57,6 +64,11 @@ def json_text(value):
     return json.dumps(value, indent=2, sort_keys=True, ensure_ascii=True, allow_nan=False) + "\n"
 
 
+def public_json_text(value):
+    """Lossless public encoding; raw artifacts and checksum identities stay pretty."""
+    return json.dumps(value, sort_keys=True, ensure_ascii=True, allow_nan=False, separators=(",", ":")) + "\n"
+
+
 def load_json(path):
     def unique(pairs):
         result = {}
@@ -64,7 +76,11 @@ def load_json(path):
             require(key not in result, "duplicate JSON key: " + key)
             result[key] = value
         return result
-    return json.loads(Path(path).read_text(encoding="utf-8"), object_pairs_hook=unique,
+    def finite_float(token):
+        value = float(token)
+        require(math.isfinite(value), "nonfinite JSON: " + token)
+        return value
+    return json.loads(Path(path).read_text(encoding="utf-8"), object_pairs_hook=unique, parse_float=finite_float,
                       parse_constant=lambda x: require(False, "nonfinite JSON: " + x))
 
 
@@ -180,10 +196,12 @@ def execute(manifest, output, model, stage, command, *, linux_root=None, capture
     log = output / (model or "") / (stage + ".log")
     record["log"] = log.relative_to(output).as_posix()
     started = time.perf_counter()
+    print(f"[{model or 'run'}] {stage}: starting", flush=True)
     try:
+        child_env = dict(os.environ, **CHILD_THREAD_ENV)
         with log.open("xb") as stream:
             subprocess.run(command, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT,
-                           check=True, shell=False)
+                           check=True, shell=False, env=child_env)
         record["status"] = "complete"
         return log.read_text(encoding="utf-8", errors="replace").strip() if capture else None
     except BaseException as exc:
@@ -194,18 +212,19 @@ def execute(manifest, output, model, stage, command, *, linux_root=None, capture
         raise
     finally:
         record["wall_seconds"] = time.perf_counter() - started
+        print(f"[{model or 'run'}] {stage}: {record['status']} ({record['wall_seconds']:.2f} s)", flush=True)
         after = inventory(output)
         record["output_artifacts"] = {k: v for k, v in after.items()
                                       if record["input_artifacts"].get(k) != v}
 
 
-def commands_for(model, output, events, seed, energy, julia, linux_root=None):
+def commands_for(model, output, events, seed, energy, julia, linux_root=None, threads=2):
     """Argument arrays: no shell quoting, owner paths, or command interpolation."""
     root = linux_root or ROOT.as_posix()
     transport = root + "/" + (output / model / "transport").relative_to(ROOT).as_posix()
     radiation = (["wsl.exe", "--distribution", "Ubuntu-24.04", "--exec"] if linux_root else [])
     radiation += ["bash", root + "/transport/run.sh", "python", "-B", root + "/transport/handoff.py"]
-    base = [str(julia), "--startup-file=no", "--threads=2", "--project=" + str(ROOT / "simulation")]
+    base = [str(julia), "--startup-file=no", f"--threads={threads}", "--project=" + str(ROOT / "simulation")]
     local = output / model
     return [
         ("prepare", radiation + ["prepare", "--model", model, "--output", transport,
@@ -216,7 +235,7 @@ def commands_for(model, output, events, seed, energy, julia, linux_root=None):
                             "--output", str(local / "charge"), "--max-events", str(events), "--temperature-k", "77"]),
         ("readout", base + [str(ROOT / "simulation/readout.jl"), "--input", str(local / "charge"),
                              "--truth", str(local / "transport/events.json"), "--config",
-                             str(ROOT / "simulation/readout_demo.json"), "--output", str(local / "readout")]),
+                             str(output / RUN_CONFIG), "--output", str(local / "readout")]),
     ]
 
 
@@ -227,26 +246,73 @@ def runtime_probe_result(log):
     return json.loads(records[0])
 
 
-def run_pipeline(output, events=100, seed=260926, energy=662, model=None):
-    require(type(events) is int and 0 < events <= 100000, "events must be 1..100000")
+def run_settings(events=None, seed=None, energy=None, model=None, preset="gamma-662", threads=None):
+    require(isinstance(preset, str) and preset in PRESETS, "unsupported preset; choose quick, gamma-662 or gamma-59")
+    overrides = {k: v for k, v in {"events": events, "seed": seed, "energy_keV": energy,
+                                  "model": model, "threads": threads}.items() if v is not None}
+    events = PRESETS[preset][0] if events is None else events
+    energy = PRESETS[preset][1] if energy is None else energy
+    seed = 260926 if seed is None else seed
+    threads = 2 if threads is None else threads
+    require(type(events) is int and 1 <= events <= 500, "events must be 1..500")
     require(type(seed) is int and 0 < seed < 2**31, "seed must be 1..2^31-1")
-    require(finite(energy) and energy > 0, "energy must be finite and positive")
-    require(model is None or model in MODELS, "unsupported model")
+    require(finite(energy) and 0 < energy <= MAX_DEMO_ENERGY_KEV, "energy must be finite in (0, 10000] keV for this bounded demo")
+    require(type(threads) is int and 1 <= threads <= 4, "threads must be 1..4")
+    require(model is None or (isinstance(model, str) and model in MODELS), "unsupported model")
+    return {"events_per_model": events, "seed": seed, "energy_keV": energy, "threads": threads,
+            "preset": preset, "explicit_overrides": overrides, "temperature_K": 77, "device": "cpu",
+            "child_thread_environment": dict(CHILD_THREAD_ENV)}
+
+
+def validate_settings(manifest):
+    settings = manifest["settings"]
+    overrides = settings["explicit_overrides"]
+    require(isinstance(overrides, dict) and set(overrides) <= {"events", "seed", "energy_keV", "model", "threads"},
+            "unsupported explicit overrides")
+    expected = run_settings(overrides.get("events"), overrides.get("seed"), overrides.get("energy_keV"),
+                            overrides.get("model"), settings["preset"], overrides.get("threads"))
+    require(json_text(settings) == json_text(expected), "effective run settings/overrides mismatch")
+    require(manifest["models"] == ([overrides["model"]] if "model" in overrides else list(MODELS)), "model override mismatch")
+
+
+def effective_readout_config(count):
+    baseline = load_json(ROOT / BASELINE_CONFIG)
+    require(sha256(ROOT / BASELINE_CONFIG) == BASELINE_CONFIG_SHA256, "frozen baseline readout config changed; review required")
+    require(type(count) is int and 1 <= count <= 500, "events must be 1..500")
+    effective = dict(baseline, expected_primary_count=count)
+    binding = {"file": RUN_CONFIG, "baseline_file": BASELINE_CONFIG, "baseline_sha256": BASELINE_CONFIG_SHA256,
+               "effective_sha256": digest(effective), "allowed_changed_fields": ["expected_primary_count"],
+               "changed_fields": ["expected_primary_count"] if baseline["expected_primary_count"] != count else []}
+    return effective, binding
+
+
+def validate_run_config(directory, manifest):
+    expected, binding = effective_readout_config(manifest["settings"]["events_per_model"])
+    require(manifest.get("readout_config") == binding and manifest["sources"][BASELINE_CONFIG] == binding["baseline_sha256"],
+            "readout config binding/allowlist mismatch")
+    path = directory / RUN_CONFIG
+    require(json_text(load_json(path)) == json_text(expected) and sha256(path) == binding["effective_sha256"],
+            "run readout config may change only expected_primary_count")
+    return expected
+
+
+def run_pipeline(output, events=None, seed=None, energy=None, model=None, preset="gamma-662", threads=None):
+    settings = run_settings(events, seed, energy, model, preset, threads)
+    events, seed, energy, threads = (settings[k] for k in ("events_per_model", "seed", "energy_keV", "threads"))
     output = local_path(output, new=True)
     output.mkdir(parents=True, exist_ok=False)
-    manifest = {"schema_version": 1, "kind": "hpge_pipeline_run", "run_id": uuid.uuid4().hex,
+    manifest = {"schema_version": 2, "kind": "hpge_pipeline_run", "run_id": uuid.uuid4().hex,
                 "status": "running", "models": [model] if model else list(MODELS),
-                "settings": {"events_per_model": events, "seed": seed, "energy_keV": energy,
-                             "temperature_K": 77, "device": "cpu"},
+                "settings": settings,
                 "driver_version": {"python": platform.python_version(), "os": sys.platform},
                 "sources": {}, "stages": [], "artifacts": {}, "event_keys": []}
     started = time.perf_counter()
     phase = "preflight"
+    print(f"[run] {preset}: {events} monoenergetic photons/model at {energy} keV; Julia threads={threads}; serial models", flush=True)
     try:
         manifest["sources"] = source_inventory()
-        config_count = load_json(ROOT / "simulation/readout_demo.json").get("expected_primary_count")
-        require(config_count is None or events == config_count,
-                "readout_demo.json requires a different primary count; its writer must resolve the --events contract before running")
+        config, manifest["readout_config"] = effective_readout_config(events)
+        write_new(output / RUN_CONFIG, json_text(config))
         julia = os.environ.get("JULIA_EXECUTABLE") or shutil.which("julia")
         require(bool(julia), "Julia missing: set JULIA_EXECUTABLE or add julia to PATH; no installation attempted")
         linux_root = None
@@ -259,10 +325,10 @@ def run_pipeline(output, events=100, seed=260926, energy=662, model=None):
         phase = "julia_environment"
         probe = 'using JSON, SHA; println(); println("PIPELINE_RUNTIME_JSON=" * JSON.json(Dict("julia_version"=>string(VERSION), "json_version"=>string(Base.pkgversion(JSON)), "json_source_sha256"=>bytes2hex(sha256(read(pathof(JSON)))))))'
         manifest["runtime_environment"] = runtime_probe_result(execute(manifest, output, None, phase,
-            [str(julia), "--startup-file=no", "--threads=2", "--project=" + str(ROOT / "simulation"), "-e", probe], capture=True))
+            [str(julia), "--startup-file=no", f"--threads={threads}", "--project=" + str(ROOT / "simulation"), "-e", probe], capture=True))
         for model_id in manifest["models"]:
             (output / model_id).mkdir()
-            for phase, command in commands_for(model_id, output, events, seed, energy, julia, linux_root):
+            for phase, command in commands_for(model_id, output, events, seed, energy, julia, linux_root, threads):
                 execute(manifest, output, model_id, phase, command, linux_root=linux_root)
                 require(source_inventory() == manifest["sources"], "calculation inputs/sources changed during run")
             phase = "validate"
@@ -283,6 +349,7 @@ def run_pipeline(output, events=100, seed=260926, energy=662, model=None):
         manifest["inventory_policy"] = "All regular run artifacts, including logs; only this root run.json is excluded. Sources are relative to project root."
         seal_manifest(manifest)
         write_new(output / "run.json", json_text(manifest))
+        print(f"[run] {manifest['status']} ({manifest['wall_seconds']:.2f} s); logs and manifest in output root", flush=True)
     return manifest
 
 
@@ -377,9 +444,10 @@ def validate_provenance(base, model, charge, truth, readout, manifest):
         "prepared_sha256": "transport/prepared.json", "transport_run_sha256": "transport/run.json"}.items()}
     expected.update({key: sources[name] for key, name in {
         "model_sha256": f"models/{model}.yaml", "model_catalog_sha256": "models/catalog.json",
-        "config_sha256": "simulation/readout_demo.json", "readout_source_sha256": "simulation/readout.jl",
+        "readout_source_sha256": "simulation/readout.jl",
         "manifest_sha256": "simulation/Manifest.toml", "charge_manifest_sha256": "simulation/Manifest.toml",
         "test_source_sha256": "simulation/test_readout.jl"}.items()})
+    expected["config_sha256"] = manifest["readout_config"]["effective_sha256"]
     runtime = manifest["runtime_environment"]
     require(set(runtime) == {"julia_version", "json_version", "json_source_sha256"} and
             re.fullmatch(r"[0-9a-f]{64}", runtime["json_source_sha256"]), "invalid independent runtime provenance")
@@ -434,7 +502,8 @@ def validate_model(directory, model, manifest):
     require(readout.get("status") == "completed", "incomplete readout stage: explicit completed status required")
     require(readout["schema_version"] == 1 and isinstance(readout["config"], dict) and
             isinstance(readout["calibration"], dict) and readout["calibration"], "invalid readout schema/calibration")
-    require(readout["config"] == load_json(ROOT / "simulation/readout_demo.json"), "readout config differs from recorded input")
+    config = validate_run_config(directory, manifest)
+    require(json_text(readout["config"]) == json_text(config), "readout config differs from recorded input")
     require(readout["unselected_event_ids"] == [], "readout omitted selected primaries")
     require(readout["units"] == {"time": "ns", "charge": "fC", "current": "nA", "voltage": "V", "energy": "keV"}, "readout unit mismatch")
     cal = readout["calibration"]
@@ -587,16 +656,25 @@ def validate_run(directory):
     directory = local_path(directory)
     manifest = load_json(directory / "run.json")
     check_seal(manifest, "manifest_sha256")
-    require(manifest["schema_version"] == 1 and manifest["kind"] == "hpge_pipeline_run" and
-            manifest["status"] == "complete", "run is incomplete or unsupported")
+    require(manifest.get("schema_version") == 2, "unsupported run schema; preserve archived runs and create a new run with this driver before export")
+    require(manifest["kind"] == "hpge_pipeline_run" and manifest["status"] == "complete", "run is incomplete or unsupported")
+    validate_settings(manifest)
     require(manifest["models"] in (["AK02"], ["SAP22"], list(MODELS)), "invalid model selection")
     require(manifest["artifacts"] == inventory(directory), "artifact inventory/hash mismatch")
     require(manifest["sources"] == source_inventory(), "input/source hash mismatch; preserve run and regenerate explicitly")
+    validate_run_config(directory, manifest)
     require(runtime_probe_result((directory / "julia_environment.log").read_text(encoding="utf-8")) == manifest["runtime_environment"], "runtime probe/manifest mismatch")
     expected_stages = [(m, s) for m in manifest["models"] for s in STAGES]
     actual = [(r["model_id"], r["stage"]) for r in manifest["stages"] if r["model_id"] is not None]
     require(actual == expected_stages and all(r["status"] == "complete" for r in manifest["stages"]), "incomplete stage history")
     for stage in manifest["stages"]:
+        command = stage["command"]
+        if stage["stage"] in ("charge", "readout", "julia_environment"):
+            require([v for v in command if v.startswith("--threads=")] == [f"--threads={manifest['settings']['threads']}"],
+                    "Julia thread setting/command mismatch")
+        if stage["stage"] == "readout":
+            require(command.count("--config") == 1 and command[command.index("--config") + 1] == "{RUN}/" + RUN_CONFIG,
+                    "readout must use the shared run config")
         for name, expected in stage["output_artifacts"].items():
             require(manifest["artifacts"].get(name) == expected, "stage artifact checksum mismatch")
     models = [validate_model(directory, m, manifest) for m in manifest["models"]]
@@ -622,28 +700,29 @@ def render_html(data, template=None):
     template = template if template is not None else (ROOT / TEMPLATE).read_text(encoding="utf-8")
     require(template.count(TOKEN) == 1, "HTML template placeholder count mismatch")
     # Escaping '<' also defeats case-insensitive closing-script sequences and HTML comments.
-    embedded = json_text(data).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    embedded = public_json_text(data).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     return template.replace(TOKEN, embedded)
 
 
 def export_run(directory, output):
     output = local_path(output, new=True)
     manifest, models = validate_run(directory)
-    data = {"schema_version": 1, "kind": "hpge_pipeline_showcase", "run_id": manifest["run_id"],
+    data = {"schema_version": 2, "kind": "hpge_pipeline_showcase", "run_id": manifest["run_id"],
             "root_manifest_sha256": manifest["manifest_sha256"], "settings": manifest["settings"],
             "models": models, "limitations": LIMITATIONS, "references": REFERENCES,
             "calibration_identity": manifest["calibration_identity"], "calibration_sha256": manifest["calibration_sha256"],
+            "readout_config": manifest["readout_config"],
             "provenance": {"sources": manifest["sources"], "artifacts": manifest["artifacts"],
                            "runtime_environment": manifest["runtime_environment"],
                            "driver_version": manifest["driver_version"], "wall_seconds": manifest["wall_seconds"],
                            "stages": [{k: r[k] for k in ("model_id", "stage", "status", "command", "wall_seconds")} for r in manifest["stages"]]},
-            "export": {"files": ["data.json", "pipeline.html"], "template_sha256": sha256(ROOT / TEMPLATE),
+            "export": {"files": ["data.json", "pipeline.html"], "encoding": PUBLIC_ENCODING, "template_sha256": sha256(ROOT / TEMPLATE),
                        "integrity": "export_sha256 covers canonical data without itself; HTML must equal template rendered with this complete data. No self-reference."}}
     check_public(data)
     data["export_sha256"] = digest(data)
     html = render_html(data)
     output.mkdir(parents=True, exist_ok=False)
-    write_new(output / "data.json", json_text(data))
+    write_new(output / "data.json", public_json_text(data))
     write_new(output / "pipeline.html", html)
     validate_export(output)
     return data
@@ -660,11 +739,12 @@ def validate_export(directory):
     data_path, html_path = no_links(directory / "data.json"), no_links(directory / "pipeline.html")
     data = load_json(data_path)
     check_seal(data, "export_sha256")
-    require(data["schema_version"] == 1 and data["kind"] == "hpge_pipeline_showcase", "invalid showcase schema")
+    require(data.get("schema_version") == 2 and data["kind"] == "hpge_pipeline_showcase", "unsupported showcase schema; create a new run/export with this driver; preserve archived exports")
+    require(data["export"].get("encoding") == PUBLIC_ENCODING, "unsupported public JSON encoding")
     require(data["export"]["files"] == ["data.json", "pipeline.html"] and
             data["export"]["template_sha256"] == sha256(ROOT / TEMPLATE), "showcase template/inventory mismatch")
     check_public(data)
-    require(data_path.read_bytes() == json_text(data).encode("utf-8"), "data.json differs from canonical export")
+    require(data_path.read_bytes() == public_json_text(data).encode("utf-8"), "data.json differs from canonical compact export")
     require(html_path.read_bytes() == render_html(data).encode("utf-8"), "pipeline.html differs from verified export")
     require(TOKEN not in html_path.read_text(encoding="utf-8"), "unresolved HTML placeholder")
     check_common_calibration(data["models"], data)
@@ -674,22 +754,37 @@ def validate_export(directory):
     return data
 
 
+class UniqueOption(argparse.Action):
+    """Reject repeated options instead of silently accepting the final value."""
+    def __call__(self, parser, namespace, value, option_string=None):
+        seen = getattr(namespace, "_seen_options", set())
+        if self.dest in seen:
+            parser.error("duplicate option: " + option_string)
+        seen.add(self.dest)
+        namespace._seen_options = seen
+        setattr(namespace, self.dest, value)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run", help="execute transport, SSD and readout in the existing locked environments")
-    run.add_argument("--output", required=True)
-    run.add_argument("--events", type=int, default=100, help="bounded demo: default 100 per model; incompatible readout census fails before any subprocess; config is never changed")
-    run.add_argument("--model", choices=MODELS)
-    run.add_argument("--seed", type=int, default=260926)
-    run.add_argument("--energy-kev", type=float, default=662)
+    run.add_argument("--output", required=True, action=UniqueOption)
+    run.add_argument("--preset", choices=PRESETS, default="gamma-662", action=UniqueOption,
+                     help="monoenergetic test scenarios, not isotope sources or verified line energies: quick=10 at 662 keV; gamma-662=100 at 662; gamma-59=100 at 59.5")
+    run.add_argument("--events", type=int, action=UniqueOption, help="override preset count: 1..500 photons per model")
+    run.add_argument("--model", choices=MODELS, action=UniqueOption)
+    run.add_argument("--seed", type=int, action=UniqueOption, help="default 260926")
+    run.add_argument("--energy-kev", type=float, action=UniqueOption, help="monoenergetic photon energy in (0, 10000] keV; workload limit, not accuracy certification")
+    run.add_argument("--threads", type=int, action=UniqueOption, help="Julia threads 1..4, default 2; child BLAS/OMP threads fixed at 1")
     export = sub.add_parser("export", help="validate a completed run and write the offline showcase")
     export.add_argument("--input", required=True)
     export.add_argument("--output", required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "run":
-            result = run_pipeline(args.output, args.events, args.seed, args.energy_kev, args.model)
+            result = run_pipeline(args.output, args.events, args.seed, args.energy_kev, args.model,
+                                  preset=args.preset, threads=args.threads)
             print("Pipeline complete:", result["run_id"], "—", args.output)
         else:
             result = export_run(args.input, args.output)

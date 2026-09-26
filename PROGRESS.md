@@ -516,3 +516,11 @@ retaining the source archive, clean-run manifest/comparison, original complete
 example, final showcase, sampling report and review/test receipts. The copied
 Pixi environment symlink was unlinked before cleanup; shared installed package
 caches and the original transport environment were not removed.
+
+## M3b plan — configurable examples and lightweight execution
+
+Continue the flow-first roadmap: make run counts/standard monoenergetic scenarios explicit without editing frozen detector or electronics settings; provide a low-load single-thread option, keep model runs serial, and make the offline example losslessly smaller. Initial host observation: CPU36%,4.66GiB available of15.31GiB; terminal setup278ms, no orphan project computations. This does not establish sustained slowdown. Do not close user apps, reset usage, alter systemwide policies or install software. Cap new runs and use compact progress rather than full signal/log output. Compare complete event/charge/readout records, not only plots, before publishing. Accuracy gates remain unchanged.
+
+M3b prospective gates: full effective readout config may differ from the frozen baseline only in primary census, even after an attacker/test recomputes all hashes; presets retain explicit override intent and reject invalid bounds before work; all stages/models remain serial with child-only resource limits. Compact public JSON must preserve types, signed zero and binary64 values, all event/flag/deposit records and HTML safety, and be under45% of previous pretty payload on the real sample. Closed detail panels should avoid serializing large event/provenance records until opened. Reproduce the default200-event result against M3a, exercise small59.5keV/1-thread cases and check offline/mobile behavior. Timing comparisons are sampled observations, not guaranteed speedups.
+
+Reviewer preflight question resolved: no downstream upper energy bound existed. Added a10,000keV cap to this bounded example (positive finite energies only); this is a resource/workload limit, not a claimed physics-validity range. The59.5/662keV defaults and all canonical numerical inputs remain unchanged.

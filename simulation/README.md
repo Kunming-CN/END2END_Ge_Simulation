@@ -367,7 +367,10 @@ julia --startup-file=no --threads=2 --project=simulation simulation/test_readout
 julia --startup-file=no --threads=2 --project=simulation simulation/readout.jl --input .local/RUN/AK02/charge --truth .local/RUN/AK02/transport/events.json --config simulation/readout_demo.json --output .local/RUN/AK02/readout
 ```
 
-The demo configuration requires all 100 primary records. Rejected pulses retain
+The frozen standalone demo configuration expects all 100 primary records.
+The pipeline driver may generate a separately hashed per-run configuration that
+changes only `expected_primary_count`; all selected primaries are still required.
+It never edits the frozen source configuration or retunes electronics parameters. Rejected pulses retain
 IDs and flags but have null reconstructed energy; readout acceptance does not
 clear incomplete SSD trajectories. Any negative cumulative charge is explicitly
 outside this conservative unipolar example's accepted waveform domain, including

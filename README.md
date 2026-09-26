@@ -30,12 +30,26 @@ rendering works offline. The companion `data.json` exposes the same records.
 The initial view selects the first nonzero deposit; navigation also offers zero
 and highest-deposition examples without filtering the event census or histograms.
 
-The default run processes both AK02 and SAP22; `--model AK02` restricts the run
-to one model. This bounded configuration requires exactly 100 primaries per
-model, uses explicit 77 K and frozen synthetic readout settings, and rejects
-other counts before computation. `--seed` and `--energy-kev` select the source
-scenario, not a full isotope decay. Existing output directories are never overwritten.
-`JULIA_EXECUTABLE` can override Julia discovery when it is not on PATH.
+The default run processes both AK02 and SAP22 at explicit 77 K and canonical
+biases. `--model AK02` selects one model. Choose `--preset quick` (10 photons
+per model at 662 keV), `--preset gamma-662` (default: 100 at 662 keV), or
+`--preset gamma-59` (100 at 59.5 keV). These are monoenergetic engineering
+scenarios, not complete isotope decays or exact reference line energies.
+
+`--events 1..500`, `--energy-kev` (positive and at most 10,000 keV), and
+`--seed` explicitly override the preset. The energy cap bounds workload; it is
+not certification of physical accuracy over that whole range.
+`--threads 1` is the low-load option; the default is 2, with at most 4 allowed.
+Detector jobs and stages remain serial. Child-only BLAS/OMP environment settings
+avoid nested thread pools; no systemwide environment or user applications change.
+The generated root `readout-config.json` changes only the expected event count;
+feedback, shaping, gain, ADC and calibration settings remain frozen and checked.
+Existing outputs are never overwritten. `JULIA_EXECUTABLE` overrides discovery.
+
+```console
+python tools/pipeline_demo.py run --preset quick --threads 1 --output .local/quick-test
+python tools/pipeline_demo.py run --preset gamma-59 --events 20 --threads 1 --output .local/low-energy-test
+```
 
 One output root contains `run.json` plus each model's `transport/`, `charge/`
 and `readout/` stages. Manifests bind source/data hashes, commands, identity,

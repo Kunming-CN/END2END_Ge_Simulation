@@ -34,6 +34,7 @@
     <div class="control"><label for="event-select">Primary event ID · all primaries</label><select id="event-select"></select></div>
     <button id="previous" type="button" aria-label="Previous primary event">← Previous</button><button id="next" type="button" aria-label="Next primary event">Next →</button>
     <div class="counts" aria-label="Example navigation"><button id="first-deposit" type="button">First nonzero deposit</button><button id="zero-deposit" type="button">Zero-deposit example</button><button id="largest-deposit" type="button">Highest deposited energy</button></div>
+    <p id="run-settings"></p>
     <p id="selection-note" aria-live="polite"></p>
   </section>
   <div id="error" class="error" hidden role="alert"></div>
@@ -43,7 +44,7 @@
       <div id="badges" class="badges"></div>
       <div class="ledger"><div><small>Truth Edep</small><div id="edep" class="value"></div><span class="unit">keV · all deposits</span></div><div><small>Induced equivalent</small><div id="eind" class="value"></div><span class="unit">keV · signed charge</span></div><div><small>Readout Erec</small><div id="erec" class="value"></div><span class="unit">keV · accepted only</span></div></div>
       <dl class="facts" id="event-facts"></dl><div id="event-warning" class="notice"></div>
-      <details><summary>Exact selected event values and trace samples</summary><pre id="event-json"></pre></details>
+      <details id="event-details"><summary>Exact selected event values and trace samples</summary><pre id="event-json"></pre></details>
       <p class="key" id="event-key"></p>
     </section>
     <section class="card" aria-labelledby="geometry-heading">
@@ -131,6 +132,15 @@
   function badge(value,cls=""){const n=document.createElement("span");n.className="badge "+cls;n.textContent=value;$("badges").append(n);}
   const data=JSON.parse($("pipeline-data").textContent);
   function model(){return data.models[$("model-select").selectedIndex];}
+  function eventDetails(){
+    if($("event-details").open)put("event-json",JSON.stringify(model().events[$("event-select").selectedIndex],null,2));
+    else put("event-json","");
+  }
+  function provenanceDetails(){
+    if(!$("provenance").parentElement.open){put("provenance","");return;}
+    const m=model();
+    put("provenance",JSON.stringify({run_id:data.run_id,root_manifest_sha256:data.root_manifest_sha256,calibration_sha256:data.calibration_sha256,model_sha256:m.model_sha256,settings:data.settings,readout_config:data.readout_config,polarity:m.polarity,time_origin:m.time_origin,potential_solve_timings:m.potential_solve_timings,charge_wall_seconds:m.charge_wall_seconds,versions:m.versions,coordinate_transform:m.coordinate_transform,provenance:data.provenance},null,2));
+  }
   function geometry(m,e){
     const svg=$("geometry"),contour=m.contour_rz_mm;
     const rs=contour.map(p=>p[0]),zs=contour.map(p=>p[1]);
@@ -171,7 +181,7 @@
     facts("event-facts",[["Exact analog peak · V",exact(e.peak_V)],["Exact peak time · ns",exact(e.peak_time_ns)],["Peak ADC code · 0…16383",String(e.adc_code)],["Exact reconstructed energy · keV",exact(e.reconstructed_energy_keV)],["Truth Edep · exact keV",exact(e.deposited_energy_keV)],["Final induced equivalent · exact keV",exact(e.final_induced_equivalent_energy_keV)]]);
     put("event-warning",e.charge_status==="stopped_without_contact"?"SSD stopped without contact. This event remains visible and its charge is unchanged; this status does not establish physical trapping or calibrated Li loss.":e.charge_status==="step_limit"?"An SSD trajectory reached its step limit. The induced signal is retained, with incomplete collection explicitly unresolved.":e.deposited_energy_keV===0?"This primary deposited zero energy. It remains in the truth census; a rejected peak has no reconstructed energy.":"Deposited energy, induced equivalent energy and reconstructed energy describe different stages. Incomplete charge and finite pulse duration can affect the readout; no event-specific gain correction is applied.");
     if(e.negative_input)put("event-warning",$("event-warning").textContent+" Any negative cumulative Q, however tiny, is outside this demo's supported waveform domain and is rejected. This is not a general polarity classifier; no hidden rectification is applied.");
-    put("event-key",e.event_key);put("event-json",JSON.stringify(e,null,2));
+    put("event-key",e.event_key);eventDetails();
     geometry(m,e);const t=e.trace;
     const chargeWindow=e.charge_end_ns+Math.max(e.charge_end_ns*.08,m.time_step_ns*.5);
     plot("charge-plot",t.time_ns,t.induced_charge_fC,"Charge · fC",colors.teal,null,chargeWindow);
@@ -191,16 +201,19 @@
     $("zero-deposit").disabled=!m.events.some(e=>e.deposited_energy_keV===0);
     facts("calibration-facts",[["Fixed calibration slope · V/keV",String(m.calibration.volts_per_keV)],["ADC least-significant bit · V",String(m.calibration.adc_lsb_V)],["Readout contact ID",String(m.readout_contact_id)],["SSD ionisation pair energy",`${m.ionisation_energy_eV} eV`],["Effective semiconductor temperature",`${m.temperature_K} K`],["Canonical contact potentials",m.contact_potentials_V.join(", ")+" V"],["Peak ADC convention","14 bit · 0–10 V · floor code · bin midpoint reconstruction"]]);
     put("calibration-json",JSON.stringify({config:m.config,calibration:m.calibration},null,2));
-    put("provenance",JSON.stringify({run_id:data.run_id,root_manifest_sha256:data.root_manifest_sha256,calibration_sha256:data.calibration_sha256,model_sha256:m.model_sha256,settings:data.settings,polarity:m.polarity,time_origin:m.time_origin,potential_solve_timings:m.potential_solve_timings,charge_wall_seconds:m.charge_wall_seconds,versions:m.versions,coordinate_transform:m.coordinate_transform,provenance:data.provenance},null,2));
+    provenanceDetails();
     drawEvent();
   }
   try{
     data.models.forEach(m=>{const o=document.createElement("option");o.value=m.model_id;o.textContent=`${m.model_id} · ${m.events.length} primaries · ${m.model_id==="AK02"?"Li-contact primary":"nonmatched cross-check"}`;$("model-select").append(o);});
     put("source-label",`${data.settings.energy_keV} keV photons · synthetic side-on source · ${data.settings.events_per_model}/model`);
+    put("run-settings",`Scenario ${data.settings.preset}: N=${data.settings.events_per_model} photons/model; ${data.settings.energy_keV} keV; declared Julia threads=${data.settings.threads}; serial models. Monoenergetic test, not a complete isotope source or verified line energy.`);
     data.limitations.forEach(value=>{const li=document.createElement("li");li.textContent=value;$("limitations").append(li);});
     data.references.forEach(r=>{const a=document.createElement("a");a.href=r.url;a.textContent=r.title;a.rel="noreferrer";$("references").append(a);});
     put("export-id",`Run ${data.run_id} · export SHA-256 ${data.export_sha256}`);
     $("model-select").addEventListener("change",drawModel);$("event-select").addEventListener("change",drawEvent);
+    $("event-details").addEventListener("toggle",eventDetails);
+    $("provenance").parentElement.addEventListener("toggle",provenanceDetails);
     $("previous").addEventListener("click",()=>{$("event-select").selectedIndex--;drawEvent();});$("next").addEventListener("click",()=>{$("event-select").selectedIndex++;drawEvent();});
     const jump=i=>{if(i>=0){$("event-select").selectedIndex=i;drawEvent();}};
     $("first-deposit").addEventListener("click",()=>jump(model().events.findIndex(e=>e.deposited_energy_keV>0)));
