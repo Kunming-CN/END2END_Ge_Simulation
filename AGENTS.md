@@ -2,7 +2,7 @@
 
 Work only in this project unless a recorded input dependency needs a read-only check.
 
-1. Read README.md and PROGRESS.md first. Complete one milestone-sized task at a time.
+1. Read the compact PROGRESS.md handoff first, then only relevant README/source sections. Complete one milestone-sized task at a time. The current handoff governs delivery order; older stage notes are historical accuracy guidance, not automatic blockers.
 2. Keep one project root. Use tools/ for reusable tooling, docs/ for public results, and .local/ for disposable local evidence/backups. Do not scatter copies, timestamped reports or extra environments.
 3. Preserve existing numerical data and model hashes. Never silently change bias, impurity, geometry, carrier physics, missing-charge labels or event selection to make a test pass.
 4. The public repository initially contains the exported website and maintenance tools only. The full raw computation workspace is deliberately ignored. Add new calculation source deliberately during M1, not with a wholesale force-add.
@@ -12,7 +12,11 @@ Work only in this project unless a recorded input dependency needs a read-only c
 7. Keep all relevant deposits of one event grouped. Keep truth Edep separate from readout-derived Erec. Do not set the energy gain separately for each event.
 8. Reuse existing SSD, ParaView and remage functionality. Do not introduce a second frontend framework, Docker, a VM or another solver solely to publish static results.
 9. Record exact software versions and random seeds. Distinguish smoke tests, numerical convergence, and agreement with experiment.
-10. Before committing: rebuild/validate the relevant outputs, inspect the diff, update PROGRESS.md, and commit a meaningful milestone. Push without force; stop for conflicts.
+10. Before committing: validate relevant outputs, inspect the diff, update PROGRESS.md in place, and commit a meaningful milestone. A documentation-only edit does not require rerunning physics or regenerating unchanged results. Push without force; stop for conflicts.
+
+## Keep active context short
+
+PROGRESS.md is the single current handoff; its immutable-history link preserves the full prior log. Do not append another full round transcript. Read debug output by bounded ranges and exact fields. Write long evidence to local files, not repeated terminal/chat dumps. Close owned idle sessions after each round; never clear global shell history, chat records, authentication stores or scientific evidence. Use focused reviewers for substantive implementation changes, not simple cleanup.
 
 ## Existing tools
 
