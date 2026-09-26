@@ -1,6 +1,6 @@
 # Project progress
 
-Updated: 2026-09-25 (local)
+Updated: 2026-09-26 (local)
 
 Current: website/model downloads and CPU/CUDA examples are available; M2a bare AK02/SAP22 radiation-to-charge replay is verified. Calibrated Li response, LBNL placement and electronics remain pending.
 
@@ -26,7 +26,7 @@ These are migration and functionality checks, not all-detector convergence tests
 |---|---|---|
 | M0 | Share existing results on GitHub Pages | Published; URL verified |
 | M1 | Clean-machine calculation example, pinned environment, portable paths | M1b CPU/CUDA examples verified on Windows; full campaign and other OS checks pending |
-| M2 | Geant4/remage deposits connected to SSD drift and electrode signal | M2a bare AK02/SAP22 handoff verified; Li-response and cryostat gates remain |
+| M2 | Geant4/remage deposits connected to SSD drift and electrode signal | M2a verified; M2b1 exposes AK02 grid sensitivity; physical CCE and cryostat gates remain |
 | M3 | Preamp, analog shaping, ADC, independently reconstructed event energy | Planned |
 | M4 | Small repeatable spectrum and documented event-level checks | Planned |
 | M5 | Physics/readout refinements and comparison with measured data | Planned |
@@ -148,3 +148,35 @@ Final M2a acceptance: 23 Python handoff tests, 40 Julia causal/schema/temperatur
 Local evidence is consolidated under .local/m2a: AK02/ and SAP22/ each retain immutable raw truth/inputs, geometry-check.json and response-77K/response-78K; reviews/ retains both agent sessions and cross-reviews; checks/ and validation.json retain test evidence, original trial diagnostics and baseline regression. Superseded duplicate raw/response folders, temporary scripts and reproducible C++ build intermediates were removed only after preserving verification records. Original .local/quickstart, migration backups and LBNL source files were preserved.
 
 M2a publication verified: implementation commit 1e7495f was pushed to main; GitHub Pages run 36217261727 completed successfully. The exact live snapshot ee41eb7c32afd0af65c536a5f750b8323170a9e2beffab42daf0bf7a5b45f4e4 matches the local website, with 78 files checked including all model downloads. The initial live check correctly rejected the not-yet-deployed version, then passed after deployment. Release marker: v0.4.0-event-handoff. New source and instructions are published; the original numerical gallery remains precomputed, and M2a raw runs/reviewer logs stay local.
+
+## M2b1 plan — endpoint diagnosis before Li-CCE claims
+
+Confirmed remote device response and clean main at 95112e0 before this task. Bound this step to explaining AK02 unresolved electron endpoints and testing the zero-field diffusion switch, not a calibrated Li-layer or electronics model. Reuse locked SSD0.11.8 and exact AK02/SAP22 models at explicit 77 K. Add one diagnostic entry and its tests under simulation/. No changes to existing replay/solver defaults, source geometry, lifetimes, impurity inputs or package files.
+
+Prospective checks: sample radial depth at detector mid-height, record local field, weighting potential, net/donor concentrations, grid flags and nearest-electrode distances. Compare dt=1,2,4ns and minimum refinement settings0.05/0.025 mm only as sensitivity checks, not certified convergence. Preserve no-contact/step-cap flags. For unchanged drift paths compare original trapping with an explicit no-trapping diagnostic using the analytic Ramo endpoint difference; never renormalize charge. Verify synthetic zero-field ensemble diffusion versus per-axis2Dt, and that the existing zero-field-stop switch prevents diffusion when enabled. Any mobility-specific or boundary diffusion remains a separate gate. Review with the same two specialist roles before publishing status.
+
+M2b1 first bounded run: both AK02 refinement settings and SAP22 at 0.05 mm completed. The SAP22 0.025mm weighting check remained at1.2678171e-6 after four continuation calls (target 1e-6). Preserve this failure and test at most eight existing continuation calls for this diagnostic entry only; do not relax tolerance or change replay/solver defaults. The synthetic zero-field2048-carrier test passed its prospectively fixed moment gates. Cast rational material diffusion coefficients to numeric floats in JSON.
+
+## M2b1 measured diagnostics — physical CCE still blocked
+
+The school computer remained reachable while the maintainer used a phone; a real ping and clean-worktree check succeeded. Work continued on feature/m2b-collection-diagnostics. Two new simulation files provide endpoint/depth diagnostics and lightweight guards; models, package locks and replay sources are unchanged. Review hardening adds only an optional observer to the shared solver, preserving numerical defaults. All inputs are at explicit 77 K and retain original +500/+700 V biases.
+
+Completed 144 synthetic point/time/refinement cases: two detectors, twelve mid-height radial depths, three time steps(1/2/4 ns), and two minimum refinement settings(0.05/0.025 mm). These minima are not uniform cell sizes. A no-trapping calculation on the same paths agrees with the Ramo final weighting-potential difference. For the AK02 depth 1 mm / dt 2 ns/coarse example, the electron stops at exactly zero interpolated field about 0.4545 mm short of the geometric outer contact, with weighting potential 5.44e-9; the hole reaches the point contact. Its near-unit induced signal is therefore internally consistent with the model, but is not proof of metal collection or a measured dead-layer boundary.
+
+**Critical interpretation limit:** AK02 has strong near-surface grid dependence. The maximum change in signed induced fraction between these two refinement settings is 0.99564775; the maximum1/2/4ns time-step range is 0.00099184. Some fine-grid electron paths reach the sample cap in extremely small but nonzero fields. Preserve those flags. Do not threshold small fields to zero or rescale signals to hide this. No quantitative CCE, dead-layer thickness, or convergence claim is released. SAP22 showed much smaller changes for the selected points(grid1.2143e-6, time-step2.7918e-6), but is not a matched-geometry Li-only control.
+
+An independent synthetic zero-field functional test used 2048 carriers per species for 400 ns. With zero-field termination on, all displacements were zero(two stored positions); with it off, the unmodified SSD diffusion algorithm produced per-axis variances consistent with 2Dt using its material De = 0.0239 and Dh = 0.0279 m^2/s. Seed 260926 and prospectively fixed six-standard-error gates were recorded. This tests the fallback branch only, not AK02 mobility-tied diffusion, losses at boundaries, self-repulsion or microscopic recombination.
+
+The first four-check diagnostic run correctly failed the fine SAP22 weighting gate(1.2678171e-6 versus1e-6). The explicit diagnostic-only limit was increased to at most eight continuation calls; all four fresh field cases then met the unchanged gates, with histories retained. Existing replay and solver defaults were not changed. Initial failure evidence is kept; an iteration gate is not a grid-convergence certificate.
+
+Primary method references: SSD charge drift documentation https://juliaphysics.github.io/SolidStateDetectors.jl/stable/man/charge_drift/ and Zhang et al., EPJC86,303(2026), https://doi.org/10.1140/epjc/s10052-026-15508-3. Implementation checks refer to pinned SSD0.11.8 source, especially ChargeDrift/ChargeDrift.jl, SignalGeneration/SignalGeneration.jl and ScalarPotentials/PointTypes.jl. The documented three-region method remains a basis for later calibrated work, not a claim validated by these diagnostics.
+
+Independent M2b1 reviews agreed that diagnostic-only publication is reasonable but physical CCE remains blocked. Implement targeted hardening before release: rename sample-budget status from time_limit to step_limit; verify unchanged models before writing completion; prove the synthetic diffusion cloud cannot reach a boundary and check each full random-walk increment; add an optional observer to the shared solver solely to retain continuation history if a gate fails. The observer default is absent and must leave numerical results/replay defaults unchanged. Rerun source tests, diagnostic suite and CPU baseline after these fixes, then cross-review.
+
+The maximum grid change occurs at the sampled 0.5 mm radial depth(dt = 2 ns): coarse-grid induced fraction 0 versus fine-grid 0.99564775. This is near a sharp no-diffusion transition, not a measured dead-layer thickness and not proof that all bulk event predictions are wrong. Further work must resolve the transition position/shape under grid refinement and diffusion, rather than silently smooth or renormalize it.
+
+M2b1 review closure: two independent Astra High read-only specialists(HPGe/electronics and particle/numerical integrity) cross-read the other report and accepted diagnostic-only release after the focused fixes. The last two wording issues were corrected: current summaries use step_limit and README uses step cap. The severe AK02 near-transition grid sensitivity remains a prominent blocker to physical interpretation.
+
+Final checks: all 144 point-case fraction arrays are unchanged by review hardening; 15 lightweight guards, existing 88 runner checks and 40 replay/schema/geometry checks passed. A known failed four-check solve preserved its full continuation observations. The original 146-sample CPU signal.csv stayed byte-identical. The final diffusion check also verifies full hop length, total duration, and a clearance/excursion bound excluding any boundary interaction. No new electron/hole physics, material fit, cryostat model or electronics stage was introduced.
+
+M2b1 evidence is consolidated in .local/m2b/results(depth-scan.csv and run.json), checks, reviews and validation.json. Initial failure diagnostics and the failed-observer test remain available; superseded duplicate outputs and temporary verification scripts were removed. Original M2a raw events, original CPU baseline and model snapshots are preserved. The fifteen new guards, legacy tests and all18 publication checks passed. Both cross-review sessions completed.

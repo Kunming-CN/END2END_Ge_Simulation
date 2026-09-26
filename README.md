@@ -77,3 +77,5 @@ unchanged; 77 K is an explicit run override. SAP22's original ADL parametrizatio
 has no temperature scaling. These are interface tests, not Li-layer CCE or
 electronics validation. LBNL cryostat conversion/placement and calibrated charge
 response remain separate gates; no new GeGI work is included.
+
+The [collection diagnostic](simulation/README.md#collection-endpoint-diagnostics-not-calibrated-cce) now separates endpoint status from induced charge and tests a zero-field diffusion limit. It exposes strong AK02 near-surface grid sensitivity; quantitative CCE/dead-layer interpretation remains blocked. These synthetic scans do not replace the original gallery or radiation-event results.

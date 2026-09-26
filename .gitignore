@@ -57,3 +57,7 @@
 !transport/test_handoff.py
 !transport/geometry_probe.cc
 !transport/CMakeLists.txt
+
+# Bounded M2b collection diagnostics.
+!simulation/diagnose_collection.jl
+!simulation/test_collection.jl

@@ -180,3 +180,58 @@ Before Li-layer interpretation: diagnose stopping locations, test grid/time/clou
 sampling and neutral-region diffusion, and constrain profile/lifetimes with data.
 Before electronics: preserve charge/current polarity, delayed events and flags;
 calibrate the actual preamp/shaper/ADC rather than fitting each event to truth energy.
+
+## Collection endpoint diagnostics (not calibrated CCE)
+
+From the repository root, run the CPU-only diagnostic with the existing environment:
+
+```powershell
+julia --startup-file=no --threads=2 --project=simulation simulation/test_collection.jl
+julia --startup-file=no --threads=2 --project=simulation simulation/diagnose_collection.jl --output .local/my-collection-diagnostics
+```
+
+The new output directory contains `depth-scan.csv` and `run.json`. Canonical model and replay files are unchanged. The shared solver gained only
+an optional diagnostic observer; it does not alter numerical defaults. Synthetic 1 keV point deposits sample
+12 radial depths at mid-height for AK02 and SAP22, with 1/2/4 ns time steps and
+0.05/0.025 mm minimum refinement settings. These are not uniform grid spacings.
+Fields are recalculated at 77 K; the original +500/+700 V biases are retained.
+The diagnostic alone permits up to eight existing post-solve continuation checks,
+records every value, and keeps the original tolerance. Replay defaults are unchanged.
+
+For each start/end point it records E, weighting potential, nearest-grid flags,
+Li/net impurity densities, contact distance, and geometric/step-limit status. A step cap is not a guarantee
+that the requested elapsed horizon was reached; actual end times are recorded.
+It recomputes a no-trapping signal on the **same drift paths** and checks its
+endpoint weighting-potential difference. This separates signal induction from
+physical arrival at a metal contact; it does not calibrate trapping or recombination.
+
+The separate synthetic zero-field test uses 2048 carriers per species over 400 ns.
+With zero-field termination on they do not diffuse; with it off, the material
+De/Dh fallback is checked against per-axis variance 2Dt and six-standard-error
+statistical gates. A clearance-plus-maximum-excursion bound, full-hop checks and
+an elapsed-time check exclude boundary projection or early stopping in this test.
+This does **not** test AK02's mobility-dependent near-surface
+coefficient, boundary losses, self-repulsion or a physical charge cloud distribution.
+
+**Current interpretation gate:** AK02 near-surface results are strongly grid
+sensitive in this no-diffusion setup. In the measured test, the largest change
+in signed induced fraction between the two refinement settings was about 0.996.
+A fine-grid electron path can also reach the step cap in an extremely small but
+nonzero interpolated field. Do not erase that flag or threshold the field to zero
+just to obtain collection. Neither a step in the scan nor an iteration-tolerance
+pass determines a physical dead-layer thickness or establishes convergence.
+
+SAP22 was much less sensitive for these selected points, but differs in geometry,
+impurities and drift model; it is not a one-variable Li-contact control. Further
+work must resolve grid/field sensitivity and validate mobility-tied diffusion,
+finite observation time and material parameters before quantitative CCE claims.
+Method references and the measured evidence are in `../PROGRESS.md`.
+
+The largest observed change is localized at the sampled 0.5 mm radial depth near
+the sharp transition in this no-diffusion setup. It is not a measured layer
+thickness or evidence that all bulk events/the event interface are incorrect.
+Density keys ending in `_cm3` denote number densities in cm^-3, not volumes.
+
+The diffusion ensemble consists of weighted numerical sample points, not a claim
+that a 1 keV deposit produces 2048 physical electron-hole pairs. Its acceptance
+test concerns positional moments only; self-repulsion is disabled.

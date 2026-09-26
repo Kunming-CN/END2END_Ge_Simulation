@@ -197,7 +197,7 @@ function timed(f, backend)
     backend.synchronize()
     value, (time_ns() - started) / 1e9
 end
-function solve_fields!(sim, cfg, backend; sor_consts=missing, potential_rechecks::Int=1)
+function solve_fields!(sim, cfg, backend; sor_consts=missing, potential_rechecks::Int=1, iteration_observer=nothing)
     1 <= potential_rechecks <= 8 || throw(ArgumentError("Potential rechecks must be 1..8"))
     electric_updates = Float64[]
     weighting_updates = Float64[]
@@ -214,6 +214,7 @@ function solve_fields!(sim, cfg, backend; sor_consts=missing, potential_rechecks
             update = SSD.update_till_convergence!(sim, SSD.ElectricPotential, 1e-6; common..., max_n_iterations=3000)
             push!(electric_updates, Float64(update))
             gate = (iszero(bias) ? maximum(abs, sim.electric_potential.data) : abs(bias)) * 1e-6
+            iteration_observer !== nothing && iteration_observer(Dict("potential"=>"electric", "attempt"=>attempt, "update"=>Float64(update), "limit"=>Float64(gate), "unit"=>"V"))
             isfinite(update) && update <= gate && break
         end
         update
@@ -232,6 +233,7 @@ function solve_fields!(sim, cfg, backend; sor_consts=missing, potential_rechecks
         for attempt in 1:potential_rechecks
             update = SSD.update_till_convergence!(sim, SSD.WeightingPotential, cfg.contact, 1e-6; common..., max_n_iterations=3000)
             push!(weighting_updates, Float64(update))
+            iteration_observer !== nothing && iteration_observer(Dict("potential"=>"weighting", "attempt"=>attempt, "update"=>Float64(update), "limit"=>1e-6, "unit"=>"dimensionless"))
             isfinite(update) && update <= 1e-6 && break
         end
         update
