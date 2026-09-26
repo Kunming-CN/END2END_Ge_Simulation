@@ -2,6 +2,7 @@
 import json, os, re, shutil, stat, sys, time
 from html import escape
 from html.parser import HTMLParser
+import hashlib
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -89,6 +90,8 @@ def adapt(s, rel, catalog=None):
         s = s.replace("<main>", '<main><section><h2>Lithium-region diagnostics</h2><p><a href="lithium/lithium.html">Inspect native diffusion, endpoint signals and grid sensitivity</a>. These diagnostic curves are not calibrated Li collection efficiency; the transition remains grid-sensitive.</p></section>', 1)
     elif rel in (Path("detectors/AK02/index.html"), Path("detectors/SAP22/index.html")):
         s = s.replace("<main>", '<main><section><h2>Charge collection diagnostics</h2><p><a href="../../lithium/lithium.html">Compare geometric contacts, remaining induced signal and Li diffusion</a>.</p></section>', 1)
+    if rel == Path("index.html"):
+        s = s.replace("<main>", '<main><section><h2>Native lithium response through electronics</h2><p><a href="examples/native-li/comparison.html">Compare four original events with native SSD diffusion, preamp, shaping and ADC</a>. Provisional selected-event demonstration; failed accuracy gates and readout restrictions remain visible.</p></section>', 1)
     return scrub(s)
 class NotebookCleaner(HTMLParser):
     def __init__(self):
@@ -110,6 +113,32 @@ class NotebookCleaner(HTMLParser):
         if not self.skip: self.out.append('&' + name + ';')
     def handle_charref(self, name):
         if not self.skip: self.out.append('&#' + name + ';')
+def native_example_files():
+    """Publish completed native-SDK output only; never run calculations here."""
+    directory = ROOT / '.local' / 'native-li-example'
+    report = json.loads((directory / 'report.json').read_text(encoding='utf-8'))
+    if report['status'] != 'completed_provisional_native_example' or report['selected_event_ids'] != [0, 2, 41, 78]:
+        raise ValueError('Native example incomplete or selection changed')
+    if len(report['cases']) != 14 or report['source_primary_count'] != 100:
+        raise ValueError('Native example case census mismatch')
+    if report['unprocessed_event_ids'] != [i for i in range(100) if i not in (0, 2, 41, 78)]:
+        raise ValueError('Native example omitted-event record mismatch')
+    expected_sources = {'run.jl', 'replay.jl', 'readout.jl', 'native_li_example.jl', 'test_native_li_example.jl', 'readout_demo.json'}
+    if set(report['source_code_sha256']) != expected_sources:
+        raise ValueError('Native example source inventory mismatch')
+    for name, expected in report['source_code_sha256'].items():
+        if Path(name).name != name or hashlib.sha256((ROOT / 'simulation' / name).read_bytes()).hexdigest() != expected:
+            raise ValueError('Native example source changed: ' + name)
+    names = ('comparison.html', 'report.json', 'summary.csv', 'signals.csv')
+    for name in names:
+        f = directory / name
+        if f.is_symlink() or not f.is_file():
+            raise ValueError('Unsafe/missing native example output: ' + name)
+        if name != 'report.json' and hashlib.sha256(f.read_bytes()).hexdigest() != report['artifacts'][name]:
+            raise ValueError('Native example output changed: ' + name)
+    return directory, names
+
+
 def build_export():
     verify_applied_style(ROOT)
     OUT.mkdir(exist_ok=True)
@@ -136,6 +165,10 @@ def build_export():
     (OUT / 'examples').mkdir(exist_ok=True)
     for name in ('pipeline.html', 'data.json'):
         shutil.copyfile(pipeline_source / name, OUT / 'examples' / name)
+    native_dir, native_names = native_example_files()
+    (OUT / "examples" / "native-li").mkdir(exist_ok=True)
+    for name in native_names:
+        shutil.copyfile(native_dir / name, OUT / "examples" / "native-li" / name)
     lithium_source = ROOT / ".local" / "lithium-report"
     lithium_data = validate_lithium_bundle(lithium_source)
     lithium_files = ("lithium.html", "summary.json", "endpoint-audit.csv", "depth-scan.csv", "profiles.csv")
@@ -150,6 +183,8 @@ def build_export():
     special = {Path('guide.html'), Path('detectors/GeGI_3D/supplement.html'), Path('detectors/GeGI_3D/octagon_geometry.png')}
     special.update({Path('examples/pipeline.html'), Path('examples/data.json')})
     done.update({Path('examples/pipeline.html'), Path('examples/data.json')})
+    native_paths = {Path("examples/native-li") / name for name in native_names}
+    special.update(native_paths); done.update(native_paths)
     special.update(Path("lithium") / name for name in lithium_files)
     done.update(Path("lithium") / name for name in lithium_files)
     while queue:

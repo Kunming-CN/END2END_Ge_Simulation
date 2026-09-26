@@ -27,6 +27,34 @@ class PublicationTests(unittest.TestCase):
         (self.site / MANIFEST).write_text(json.dumps(report), encoding='utf-8')
         return report
 
+    def test_native_example_export_guard(self):
+        import hashlib
+        import build_site as builder
+        directory = self.site / '.local' / 'native-li-example'
+        directory.mkdir(parents=True)
+        source = self.site / 'simulation'; source.mkdir()
+        names = ('run.jl', 'replay.jl', 'readout.jl', 'native_li_example.jl', 'test_native_li_example.jl', 'readout_demo.json')
+        hashes = {}
+        for name in names:
+            (source / name).write_bytes(b'fixture')
+            hashes[name] = hashlib.sha256(b'fixture').hexdigest()
+        artifacts = {}
+        for name in ('comparison.html', 'summary.csv', 'signals.csv'):
+            (directory / name).write_bytes(b'fixture')
+            artifacts[name] = hashlib.sha256(b'fixture').hexdigest()
+        report = dict(status='completed_provisional_native_example', selected_event_ids=[0,2,41,78], source_primary_count=100,
+                      unprocessed_event_ids=[i for i in range(100) if i not in (0,2,41,78)], cases=[{}]*14,
+                      source_code_sha256=hashes, artifacts=artifacts)
+        def save(): (directory / 'report.json').write_text(json.dumps(report))
+        save()
+        with patch.object(builder, 'ROOT', self.site):
+            self.assertEqual(len(builder.native_example_files()[1]), 4)
+            (directory / 'summary.csv').write_bytes(b'changed')
+            with self.assertRaisesRegex(ValueError, 'output changed'): builder.native_example_files()
+            (directory / 'summary.csv').write_bytes(b'fixture')
+            report['cases'].pop(); save()
+            with self.assertRaisesRegex(ValueError, 'census'): builder.native_example_files()
+
     def test_reproducible_manifest(self):
         self.assertEqual(self.seal(), validate(self.site))
         self.assertEqual(self.seal(), validate(self.site))
@@ -233,6 +261,7 @@ class ModelTests(unittest.TestCase):
         files['guide.html'] = b'<a href="downloads/all-models.zip">All models</a>'
         files['examples/pipeline.html'] = b'<a href="data.json">Example data</a>'
         files['examples/data.json'] = b'{}'
+        files['examples/native-li/comparison.html'] = b'Native demonstration fixture'
         files['lithium/lithium.html'] = b'<a href="../index.html">Library</a>'
         for detector in models.ORIGINAL_HASHES:
             page = f'detectors/{detector}/index.html'

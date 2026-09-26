@@ -98,3 +98,7 @@
 # Same-grid initialization and crossed-axis diagnostics.
 !simulation/diagnose_transition_axes.jl
 !simulation/test_transition_axes.jl
+
+# Provisional native SSD Li-to-readout delivery example.
+!simulation/native_li_example.jl
+!simulation/test_native_li_example.jl

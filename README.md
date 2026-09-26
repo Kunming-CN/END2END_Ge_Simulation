@@ -4,6 +4,8 @@
 
 **[Native lithium-region diagnostics](https://kunming-cn.github.io/END2END_Ge_Simulation/lithium/lithium.html)** — endpoint accounting, diffusion depth response, native residual/state checks and explicit nested-grid sensitivity; not calibrated Li collection efficiency.
 
+**[Native SSD lithium response through electronics](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/native-li/comparison.html)** — four selected original events, legacy/native modes, fixed seeds and parcel counts, shared injection calibration, all rejection and cap flags visible. This is a provisional engineering demonstration, not a calibrated spectrum.
+
 ## Current release
 
 **[Explore the complete radiation-to-readout example](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/pipeline.html)**: 100 primary photons each for AK02 and SAP22, with every event preserved through Geant4/remage, SSD, preamp, analog shaping and peak ADC. This is a verified engineering workflow, not a calibrated detector/cryostat prediction.

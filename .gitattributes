@@ -37,3 +37,6 @@ docs/examples/data.json -diff
 # Generated Li figures/summary are reviewed through source, CSVs and hashes.
 docs/lithium/*.html -diff
 docs/lithium/*.json -diff
+
+# Generated native-Li example reviewed through source, records and file hashes.
+docs/examples/native-li/** -diff

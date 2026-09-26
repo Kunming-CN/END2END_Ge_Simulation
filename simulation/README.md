@@ -468,3 +468,30 @@ postprocessing, not a hard wall-time guarantee. Contact checks concern nonempty
 sets of contact-member grid nodes, not arbitrary between-node boundary accuracy.
 Initial coefficient/mask/alpha identity, independent storage and parent hashes
 are checked; potential is the only intentionally changed initialization field.
+
+## Use native Li transport through the existing readout
+
+The selected-event example is a delivery feature, not another field-solver study:
+
+```console
+julia --startup-file=no --threads=2 --project=simulation simulation/native_li_example.jl --input .local/m3b/release/AK02/transport/events.json --output .local/native-li-new
+```
+
+Open `comparison.html` in the output directory. One field solve is reused for
+legacy and native responses. The native branch enables SSD diffusion and disables
+zero-field termination, then causally sums equal-energy independent parcels before
+calling the unchanged preamp/shaper/ADC functions with one injection calibration.
+Events 0,2,41,78 retain their original IDs and rows; the other source events are
+explicitly unprocessed. Only events 41/78 receive the extra seed/count comparisons.
+The input is the checked prior transport output, not a new radioactive source.
+
+The report, scalar CSV and full signed charge CSV preserve negative inputs,
+trajectory limits and readout rejection. The frozen readout conservatively rejects
+any negative cumulative charge; this can reject native stochastic traces even
+when an analog peak exists. Do not rectify charge or change seeds to obtain an
+accepted event. Parcel variation and the known transition-grid discrepancy remain
+uncertainties; this small selected sample is not a calibrated spectrum.
+
+The frozen legacy replay remains unchanged for reproducibility. Its default
+`diffusion=false`/zero-field-stop behavior is not the native RCC demonstration.
+Run `simulation/test_native_li_example.jl` for the bounded interface tests.

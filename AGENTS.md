@@ -186,3 +186,21 @@ unchanged in the tested axial refinements; do not generalize their small onset
 effect to all axial resolution. Next work is one bounded paired continuation,
 then fixed-z radial stencil/source-quadrature diagnosis, not unlimited retries.
 Physical literature/calibration and numerical verification must remain distinct.
+
+## Owner's time/scope challenge and native delivery correction
+
+Do not resume open-ended global PDE audits as the prerequisite for a labeled
+engineering example. SSD already implements RCC transport and published work
+includes measured-spectrum validation. Preserve numerical failures, but distinguish
+quantitative accuracy from functional integration. Report measured calculation
+runtime separately from coding/review/tool/publication wall time; do not explain
+an entire ten-hour interaction as necessary detector compute without profiling.
+
+Use the bounded native_li_example.jl for selected native diffusion-to-electronics
+work. It leaves the legacy producer untouched. Keep original IDs, row delays,
+weighted charge, seeds, signed signals and rejection/cap flags. No small-parcel
+variation may be called physical resolution, and no example is calibrated Li CCE.
+Reviewers must not claim reciprocal discussion or test execution without records.
+The full2026RCCpaper includes an experimental BEGe comparison; analytic-only is
+an incomplete description. No further diagnostic round is automatically authorized
+as a critical-path gate merely because a stricter criterion can be formulated.

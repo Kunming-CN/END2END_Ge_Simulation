@@ -2,7 +2,7 @@
 
 Updated: 2026-09-26 (local)
 
-Current: M2e reproduces seven E-only initialization/crossed-axis cases and isolates strong sensitivity to the tested radial grids. Same-grid local profiles agree closely, but the strict whole-domain voltage gate remains failed. Mechanistic Li models and experimental validation exist; these fixed-input numerical issues are distinct from detector-specific calibration. No large Cs137 prediction or Li CCE convergence is claimed.
+Current: M3c delivers a provisional native SSD Li-diffusion-to-electronics example, separate from the frozen no-diffusion regression. The owner audit identified unnecessary critical-path diagnostic expansion. Existing failed global/grid/CCE checks remain research limitations, not prerequisites for this labeled engineering feature.
 
 
 ## Goal and plan alignment audit — 2026-09-26
@@ -1019,3 +1019,67 @@ The exact ChatGPT request-level cause is unknown: project logs cannot distinguis
 a model-service error, client interruption or response/tool orchestration fault.
 Current service status alone is not a diagnosis. Pre-recovery state and process
 exit evidence are preserved in .local/m2e/checks/chat-interruption-recovery.json.
+
+## M3c scope correction after owner challenge
+
+The owner questioned ten hours of Li work. The three main published M2c/M2d/M2e runs total712.956s, not ten hours; other tests, pilots and agent/tool overhead are not fully profiled. Repeated diagnostic development, review and publication became a critical-path detour. The production engineering replay still explicitly disables native diffusion and ends at zero field. Existing failed numerical gates are preserved, but they do not justify withholding an explicitly provisional native-RCC-to-readout example. This round stops further PDE/grid audits and connects selected original events to the existing nativeSSD and electronics implementations.
+
+Literature correction: the2026RCCpaper includes both analytical checks and an actualBEGe measured-spectrum comparison with fitted effective lifetime, not only a hypothetical analytical example. Its code is inSSD from0.11.0; our0.11.8 already contains it. Device-specific AK02 parameters and validatedCCE remain separate. The initial auditprompt understated the experimental section; reviewers received the full-text correction before final decisions.
+
+Two explicit cross-session replies agree: stop additional globalPDE audits on this delivery critical path; use nativeSSD diffusion with zero-field termination disabled, independent E/N parcels and the existing readout functions. Keep failed accuracy gates, originals and all selected IDs/rows. A reviewer initially overstated that discussion had already occurred; it corrected this to inferred agreement before the real reciprocal exchange. Review statements are checked against recorded artifacts, not treated as authority.
+
+The fixed deliverable is four selected AK02 primaries0/2/41/78, N16seed2609261, with a secondseed andN32 only for41/78;2ns/10us nominalcap. The shared independentlyinjected calibration and legacy source remain unchanged. This is a provisional native-mode feature, not a validated spectrum or a fabricated full-census replay.
+
+## M3c outcome — native Li response reaches the existing electronics
+
+The owner challenge exposed a real scope/efficiency problem. Native RCC support
+already existed and the literature has measured validation; neither missing
+physics nor ten hours of required numerical runtime explains our delay. The
+main three formal runs total 11.9 minutes, excluding other tests/pilots and
+unprofiled orchestration. The global 5 microvolt and near-zero-field criteria
+were project-selected numerical research gates, not upstream prerequisites for
+a provisional software demonstration. Those failures remain preserved, not passed.
+
+Two independent Astra High review sessions explicitly exchanged written critiques.
+They agreed to stop further PDE audits on the delivery critical path, preserve
+frozen legacy behavior, and connect native diffusion directly to existing readout.
+One reviewer overstated prior reciprocal discussion; this was corrected before
+the recorded exchange. The initially incomplete account of the2026paper was also
+corrected: it includes a measured Ba133 BEGe spectrum, with fitted800ns effective
+lifetime, as well as analytical checks. That does not calibrate AK02 automatically.
+
+The new standalone native_li_example.jl processes selected original AK02 IDs
+0,2,41,78; all remaining96IDs are explicitly unprocessed. It reuses one unchanged
+field solution, enables native diffusion with zero-field termination disabled,
+uses independent E/N parcels at2ns with a nominal10us cap, then causally combines
+charge before the unchanged preamp/shaper/ADC functions. No per-event truth gain,
+new transport physics, field-tolerance relaxation or seed selection was introduced.
+
+Four legacy plus ten native cases completed. For native RCC, all four selected
+IDs use N16/seed2609261; only41/78 additionally use seed2609262 and N32 with both
+seeds. The final run took67.405s for field solve, replay, readout and reporting;
+initial validation/module startup is excluded. All case numerical records and
+full charge CSVs exactly reproduced the earlier execution. Four legacy peaks/
+final charges and the shared injection calibration match the prior100-event run.
+
+At event2, native and legacy induced energies are148.79301keV-equivalent and the
+same ADC energy148.84691keV. The legacy mode returns zero for41/78. Across the
+four preselected N/seed variants, native final induced energy is0.69551..4.25498
+keV-equivalent for41 and8.57122..13.50414 for78. This demonstrates diffusion-to-
+electronics functionality, not a calibrated recovery fraction or physical width.
+There was no gain fit, sign rectification or seed hunting to obtain these results.
+
+The existing conservative readout rejects ANY negative cumulative input, even a
+small stochastic excursion. Several native traces therefore have nonzero positive
+shaped peaks but null accepted ADC energies (`negative_input`). This is a known
+policy in our synthetic readout, not proof that native SSD has no Li support.
+All rejection and finite-trajectory flags remain visible. A future configurable
+peak-validity policy is a separate engineering task, not an excuse to alter this
+frozen regression or claim physical collection convergence.
+
+Twenty-one small native-interface/presentation tests passed, and actual output
+CSV values, current/charge balance, ADC-code reconstruction, selected/raw-row
+identity, unprocessed census and repeatability were independently checked. Both
+reviewers closed this bounded feature after inspecting actual evidence and the
+minimal scope/provenance fixes. No further PDE audit was required. The original
+model, SDK, legacy replay, electronics code and dependency locks remain unchanged.
