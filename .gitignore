@@ -82,3 +82,5 @@
 !simulation/readout.jl
 !simulation/test_readout.jl
 !simulation/readout_demo.json
+
+!simulation/verify_readout.jl

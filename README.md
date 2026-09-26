@@ -4,11 +4,44 @@
 
 ## Current release
 
-A static library of 17 detector models: geometry/field views, drift movies, pulse comparisons, and signal tables. GeGI includes 20 selectable events, 34 signed channels, and a separate supplementary notebook study. Read the [website guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html) before interpreting the results.
+**[Explore the complete radiation-to-readout example](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/pipeline.html)**: 100 primary photons each for AK02 and SAP22, with every event preserved through Geant4/remage, SSD, preamp, analog shaping and peak ADC. This is a verified engineering workflow, not a calibrated detector/cryostat prediction.
 
-These are precomputed SSD results, **not an online solver or a full end-to-end simulation**. Movies are pre-rendered 3D views; full scene rotation still requires the original desktop ParaView workspace. The original gallery's synthetic deposits are not a Geant4 source simulation or a Compton reconstruction.
+Also available: a static library of 17 detector models: geometry/field views, drift movies, pulse comparisons, and signal tables. GeGI includes 20 selectable events, 34 signed channels, and a separate supplementary notebook study. Read the [website guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html) before interpreting the results.
+
+The website serves precomputed results, **not an online solver**. The new example closes the minimal radiation-to-readout chain; advanced Li physics, real apparatus geometry and hardware calibration remain unresolved. Movies are pre-rendered 3D views; full scene rotation still requires the original desktop ParaView workspace. The original gallery's synthetic deposits are not a Geant4 source simulation or a Compton reconstruction.
 
 To browse a downloaded repository, open `docs/index.html`. No Julia, ParaView, Node.js, or Python installation is needed for viewing. The development computer's full local entry remains `Additional_Simulations/Visualization_3D/Open_Library.cmd`.
+
+## Run the complete engineering example
+
+First prepare the pinned [Julia CPU environment](simulation/README.md) and
+[Geant4/remage environment](transport/README.md). The driver needs Python 3.10+
+standard library only; it installs nothing.
+On this development computer the existing ParaView Python can run the same script.
+For example, replace `python` with `& "$env:ProgramFiles/ParaView 6.1.1/bin/pvpython.exe" --no-mpi --disable-registry` in PowerShell.
+
+```console
+python tools/pipeline_demo.py run --output .local/my-example --events 100
+python tools/pipeline_demo.py export --input .local/my-example --output .local/my-example-view
+```
+
+Open `.local/my-example-view/pipeline.html` directly; all data is embedded, so
+rendering works offline. The companion `data.json` exposes the same records.
+The initial view selects the first nonzero deposit; navigation also offers zero
+and highest-deposition examples without filtering the event census or histograms.
+
+The default run processes both AK02 and SAP22; `--model AK02` restricts the run
+to one model. This bounded configuration requires exactly 100 primaries per
+model, uses explicit 77 K and frozen synthetic readout settings, and rejects
+other counts before computation. `--seed` and `--energy-kev` select the source
+scenario, not a full isotope decay. Existing output directories are never overwritten.
+`JULIA_EXECUTABLE` can override Julia discovery when it is not on PATH.
+
+One output root contains `run.json` plus each model's `transport/`, `charge/`
+and `readout/` stages. Manifests bind source/data hashes, commands, identity,
+calibration and failures. Export validates those completed artifacts without
+rerunning physics. A clean source-only checkout was tested on the same Windows
+computer without the original field caches; other hardware/OS validation is pending.
 
 ## Run a small calculation on your computer
 

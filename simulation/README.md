@@ -372,3 +372,14 @@ IDs and flags but have null reconstructed energy; readout acceptance does not
 clear incomplete SSD trajectories. Any negative cumulative charge is explicitly
 outside this conservative unipolar example's accepted waveform domain, including
 tiny excursions; signed values are never rectified or silently repaired.
+
+Readout sampling/window verification against a completed pipeline is available:
+
+```console
+julia --startup-file=no --threads=2 --project=simulation simulation/verify_readout.jl --input .local/my-example --output .local/readout-check-new
+```
+
+It compares all saved pulses with 1/4 ns electronics grids and a doubled
+observation tail, retaining the original injection slope. This tests fixed-input
+readout discretization, not SSD drift-step convergence. ADC-code changes are
+reported rather than forbidden: a tiny analog change can cross a code boundary.

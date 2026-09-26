@@ -33,6 +33,7 @@
     <div class="control"><label for="model-select">Detector model</label><select id="model-select"></select></div>
     <div class="control"><label for="event-select">Primary event ID · all primaries</label><select id="event-select"></select></div>
     <button id="previous" type="button" aria-label="Previous primary event">← Previous</button><button id="next" type="button" aria-label="Next primary event">Next →</button>
+    <div class="counts" aria-label="Example navigation"><button id="first-deposit" type="button">First nonzero deposit</button><button id="zero-deposit" type="button">Zero-deposit example</button><button id="largest-deposit" type="button">Highest deposited energy</button></div>
     <p id="selection-note" aria-live="polite"></p>
   </section>
   <div id="error" class="error" hidden role="alert"></div>
@@ -56,7 +57,7 @@
     <section class="card"><div class="eyebrow">Original numerical bin intervals</div><h2>Induced current · nA</h2><svg id="current-plot" class="plot" viewBox="0 0 560 255" role="img" aria-label="Original current bin intervals and stems over the charge window"></svg><p id="current-caption" class="plot-caption"></p></section>
     <section class="card"><div class="eyebrow">Charge-sensitive preamplifier</div><h2>Preamp output · V</h2><svg id="preamp-plot" class="plot" viewBox="0 0 560 255" role="img" aria-label="Preamp output in volts versus time in nanoseconds"></svg><p class="plot-caption">Finite feedback decay; positive induced charge gives negative preamp voltage with this fixed polarity.</p></section>
     <section class="card"><div class="eyebrow">Analog shaping then peak conversion</div><h2>Shaped output · V</h2><svg id="shaped-plot" class="plot" viewBox="0 0 560 255" role="img" aria-label="Shaped analog output in volts with exact sampled peak marker versus time in nanoseconds"></svg><p id="peak-caption" class="plot-caption"></p></section>
-    <section class="card"><div class="eyebrow">Small diagnostic distributions</div><h2>Deposited vs reconstructed energy</h2><div class="legend"><span id="truth-legend">Edep · all primaries</span><span id="rec-legend">Erec · accepted only</span></div><svg id="histogram" class="plot" viewBox="0 0 560 255" role="img" aria-label="Energy histograms with all-primary deposited energy and accepted-only reconstructed energy"></svg><div id="counts" class="counts"></div><p class="plot-caption">Low statistics: this is a pipeline diagnostic, not an efficiency, resolution or measured-spectrum validation. Zero-deposit primaries enter the Edep histogram; rejected events never enter Erec.</p></section>
+    <section class="card"><div class="eyebrow">Small diagnostic distributions</div><h2>Deposited vs reconstructed energy</h2><div class="legend"><span id="truth-legend">Edep · all primaries</span><span id="rec-legend">Erec · accepted only</span></div><svg id="histogram" class="plot" viewBox="0 0 560 255" role="img" aria-label="Energy histograms with all-primary deposited energy and accepted-only reconstructed energy"></svg><div id="counts" class="counts"></div><p id="spectrum-warning" class="notice"></p><p class="plot-caption">Low statistics: this is a pipeline diagnostic, not an efficiency, resolution or measured-spectrum validation. Zero-deposit primaries enter the Edep histogram; rejected events never enter Erec.</p></section>
     <section class="card"><div class="eyebrow">Fixed across events</div><h2>Calibration and acquisition convention</h2><p class="sub">One independent synthetic charge injection defines the gain. Detector truth is never used to set gain for an individual event.</p><dl class="facts" id="calibration-facts"></dl><p class="notice">These time grids sample numerical analog signals. Only the pulse height is quantized by the 14-bit peak ADC; this is not waveform digitization.</p><details open><summary>Exact synthetic configuration and calibration</summary><pre id="calibration-json"></pre></details></section>
     <section class="card wide"><h2>What this example does—and what remains unresolved</h2><ul class="limitations" id="limitations"></ul><details><summary>Provenance, fixed inputs and stage timing</summary><p class="sub">Potential-solve timings are separate from charge-stage and full-pipeline wall time. Timings are engineering measurements, not a convergence claim. Raw data and subprocess logs stay local; their hashes remain traceable.</p><pre id="provenance"></pre></details><details><summary>Primary architecture references</summary><div class="ref-list" id="references"></div></details></section>
   </div>
@@ -154,12 +155,14 @@
     a.forEach((v,i)=>{[[v,colors.teal,0],[b[i],colors.gold,.48]].forEach(([height,fill,offset])=>{const rect=svgNode("rect",{x:p.x(i*max/n)+bw*offset,y:p.y(height),width:bw*.45,height:p.y(0)-p.y(height),fill});rect.append(svgNode("title",{},`${fmt(i*max/n)}–${fmt((i+1)*max/n)} keV: ${height} primaries`));svg.append(rect);});});
     put("truth-legend",`Edep · all ${truth.length} primaries`);put("rec-legend",`Erec · ${rec.length} accepted only`);
     $("counts").replaceChildren();
+    const acceptedFlagged=m.events.filter(e=>e.accepted&&(e.has_step_limit||e.has_stopped_without_contact)).length;
+    put("spectrum-warning",acceptedFlagged?`${acceptedFlagged} of ${rec.length} accepted readouts retain charge-transport flags. This histogram demonstrates the electronics workflow, not validated charge collection or a measured detector response.`:"No accepted event has an endpoint flag in this sample. That does not establish numerical convergence or experimental calibration.");
     [["zero deposits",m.summary.zero_deposit],["below threshold",m.summary.below_threshold],["saturated",m.summary.saturated],["negative input",m.summary.negative_input],["window end",m.summary.peak_at_window_end],["step limit",m.summary.step_limit],["stopped without contact",m.summary.stopped_without_contact],["flagged union",m.summary.flagged],["rejected",m.summary.primaries-m.summary.accepted]].forEach(([label,n])=>{const s=document.createElement("span");s.textContent=`${n} ${label}`;$("counts").append(s);});
   }
   function drawEvent(){
     const m=model(),index=$("event-select").selectedIndex,e=m.events[index];
     put("event-heading",`${m.model_id} · primary ${e.event_id}`);
-    put("selection-note",`Showing primary ${e.event_id} of ${m.events.length} retained ${m.model_id} primaries. All event IDs are selectable; no quality filter is applied. ${m.model_id==="SAP22"?"SAP22 uses its unchanged ADL temperature parametrization.":"AK02 is the Li-contact primary case."}`);
+    put("selection-note",`Showing primary ${e.event_id} of ${m.events.length} retained ${m.model_id} primaries. All event IDs are selectable; no quality filter is applied. The initial view selects the first nonzero deposit. ${m.model_id==="SAP22"?"SAP22 uses its unchanged ADL temperature parametrization.":"AK02 is the Li-contact primary case."}`);
     $("previous").disabled=index===0;$("next").disabled=index===m.events.length-1;
     $("badges").replaceChildren();badge(e.charge_status,e.charge_status==="completed"?"":"warn");badge(e.accepted?"ADC accepted":"ADC: "+e.rejection_reason,e.accepted?"neutral":"warn");
     if(e.has_step_limit)badge("Endpoint: step limit","warn");if(e.has_stopped_without_contact)badge("Endpoint: stopped without contact","warn");
@@ -183,7 +186,9 @@
   function drawModel(){
     const m=model(),sel=$("event-select");sel.replaceChildren();
     m.events.forEach(e=>{const o=document.createElement("option");o.value=String(e.event_id);o.textContent=`${e.event_id} · ${e.charge_status} · ${e.accepted?"accepted":e.rejection_reason}`;sel.append(o);});
-    sel.selectedIndex=0;histogram(m);
+    sel.selectedIndex=Math.max(0,m.events.findIndex(e=>e.deposited_energy_keV>0));histogram(m);
+    $("first-deposit").disabled=!m.events.some(e=>e.deposited_energy_keV>0);
+    $("zero-deposit").disabled=!m.events.some(e=>e.deposited_energy_keV===0);
     facts("calibration-facts",[["Fixed calibration slope · V/keV",String(m.calibration.volts_per_keV)],["ADC least-significant bit · V",String(m.calibration.adc_lsb_V)],["Readout contact ID",String(m.readout_contact_id)],["SSD ionisation pair energy",`${m.ionisation_energy_eV} eV`],["Effective semiconductor temperature",`${m.temperature_K} K`],["Canonical contact potentials",m.contact_potentials_V.join(", ")+" V"],["Peak ADC convention","14 bit · 0–10 V · floor code · bin midpoint reconstruction"]]);
     put("calibration-json",JSON.stringify({config:m.config,calibration:m.calibration},null,2));
     put("provenance",JSON.stringify({run_id:data.run_id,root_manifest_sha256:data.root_manifest_sha256,calibration_sha256:data.calibration_sha256,model_sha256:m.model_sha256,settings:data.settings,polarity:m.polarity,time_origin:m.time_origin,potential_solve_timings:m.potential_solve_timings,charge_wall_seconds:m.charge_wall_seconds,versions:m.versions,coordinate_transform:m.coordinate_transform,provenance:data.provenance},null,2));
@@ -197,6 +202,10 @@
     put("export-id",`Run ${data.run_id} · export SHA-256 ${data.export_sha256}`);
     $("model-select").addEventListener("change",drawModel);$("event-select").addEventListener("change",drawEvent);
     $("previous").addEventListener("click",()=>{$("event-select").selectedIndex--;drawEvent();});$("next").addEventListener("click",()=>{$("event-select").selectedIndex++;drawEvent();});
+    const jump=i=>{if(i>=0){$("event-select").selectedIndex=i;drawEvent();}};
+    $("first-deposit").addEventListener("click",()=>jump(model().events.findIndex(e=>e.deposited_energy_keV>0)));
+    $("zero-deposit").addEventListener("click",()=>jump(model().events.findIndex(e=>e.deposited_energy_keV===0)));
+    $("largest-deposit").addEventListener("click",()=>{const a=model().events;jump(a.reduce((best,e,i)=>e.deposited_energy_keV>a[best].deposited_energy_keV?i:best,0));});
     drawModel();
   }catch(error){$("error").hidden=false;$("panels").hidden=true;put("error","Unable to render this export: "+error.message+". The complete records remain in the data.json download.");}
 })();

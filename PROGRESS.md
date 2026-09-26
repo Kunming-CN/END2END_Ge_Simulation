@@ -2,7 +2,7 @@
 
 Updated: 2026-09-26 (local)
 
-Current: M2a event handoff is verified. M2b4 directly verifies SSD on a synthetic source-free annulus and clarifies both contacts in 16 geometry illustrations. Earlier EM-constructor diagnostics are retained; production Li-region convergence, finite-conductivity weighting, as-built cryostat and electronics calibration remain pending. Only measured spectra, not original measured waveforms, are available.
+Current: M3a now completes the synthetic radiation-to-peak-ADC engineering workflow for AK02 and SAP22, with a traceable offline event explorer and source-only replay. Production Li/finite-conductivity accuracy, as-built geometry and experimental hardware calibration remain unresolved; the demonstration does not clear those gates.
 
 
 ## Goal and plan alignment audit — 2026-09-26
@@ -36,8 +36,8 @@ These are migration and functionality checks, not all-detector convergence tests
 | M0 | Share existing results on GitHub Pages | Published; URL verified |
 | M1 | Clean-machine calculation example, pinned environment, portable paths | M1b CPU/CUDA examples verified on Windows; full campaign and other OS checks pending |
 | M2 | Geant4/remage deposits connected to SSD drift and electrode signal | M2a verified; M2b4 direct SSD analytic checks added; production Li CCE, finite conductivity and cryostat remain gated |
-| M3 | Causal preamp, analog shaping, peak ADC, independently reconstructed event energy | M3a is now the critical path; synthetic prototype and independent tests in progress |
-| M4 | Small repeatable workflow and traceable event/spectrum showcase | Start with the M3a 100-primary-per-model engineering example; production statistics remain later |
+| M3 | Causal preamp, analog shaping, peak ADC, independently reconstructed event energy | M3a synthetic electronics and complete200-primary workflow verified; hardware calibration pending |
+| M4 | Small repeatable workflow and traceable event/spectrum showcase | M3a 100-primary-per-model diagnostic spectrum and offline explorer verified; production statistics remain later |
 | M5 | Physics/readout accuracy, as-built geometry and measured-spectrum comparison | Parallel accuracy lane; unresolved Li/finite-conductivity/calibration gates remain explicit |
 
 Known portability work: the original GeGI model/cache and one benchmark still reference external local directories; these references currently exist but are not distributed. Some native build scripts also name the installed ParaView/Julia executables. The website does not depend on these paths. Do not describe M1 as complete or upgrade SSD without a separate compatibility check.
@@ -419,3 +419,82 @@ test browser/server were closed. No task schedule was enabled or modified.
 M3a reviewers exchanged answers and fixed the contract before runtime: impulseCSA/shaper reference error <=1e-9 ofpeak+1e-12V; chargebalance <=1e-12*sum(abs(dQ))+1e-27C; fixed-input electronics1/2/4ns and10/20us tail comparisons <0.25ADC LSB; quantization error <=0.5LSB relative to analog-calibrated energy. Use negativeCSA thenfixedsignshaper, synthetic gain20, Cf0.6pF,50usfeedback,.5usRCpole and500keV-equivalent independent injection. Retain joint driftflags, clipping/threshold statuses and null invalidErec. Numeric timegrid is notwaveformADC.
 
 M3a pre-run checks: eight readout suites passed with exact-source receipts, including impulse/rectangle/RK4, sign reversal, narrow-current display preservation, tail stability, quantization and malformed inputs. The pipeline fixture suite passed29 tests withone Windows symlink-creation test skipped (reparse rejection separately tested). Review caught and corrected flag schema/counting, absent completion status, calibration identity and readout provenance/ADC checks before detector execution. No physical model or original lockfile changed.
+
+## M3a verified workflow and traceable example — 2026-09-26
+
+The optimized flow-first plan has been executed. One driver ran prepared bare
+geometry, remage transport, checked event extraction, SSD replay, synthetic CSA,
+matched-pole-zero analog shaping and peak ADC for100 AK02 plus100 SAP22 primaries.
+The original models/locks/production solver were unchanged. Source was662keV
+monoenergetic side-on photons, seed260926, explicit77K and canonical+500/+700V.
+This is not a full isotope source, surveyed cryostat or calibrated detector response.
+
+| Model | Primaries | Zero deposit | Readout accepted | Below threshold | Charge-flagged union |
+|---|---:|---:|---:|---:|---:|
+| AK02 |100|46|52|48|54|
+| SAP22 |100|45|55|45|0|
+
+All IDs0–99 per model and every deposition row remain traceable. AK02 has54
+stopped-without-contact cases; one also has a step-limit endpoint, so the union
+is54, not55. Its two nonzero below-threshold events41/78 remain visible with
+null Erec. All52 accepted AK02 readouts retain charge flags; readout acceptance
+does not establish completed or validated collection. No event was renormalized
+to deposited truth or removed to improve the apparent spectrum.
+
+Synthetic electronics uses Cf0.6pF,50us feedback/matchedPZ,0.5us RC pole and gain20.
+An independent500keV-equivalent injection with SSD's recorded2.95eV pair energy
+sets the common slope0.000490013623859V/keV. The14-bit0..10V peak ADC uses floor
+codes and bin-center energy reconstruction. Half an LSB is0.622790keV; maximum
+accepted ADC-versus-analog energy errors were0.610648/0.601932keV. These are
+quantization checks, not experimental resolution or Edep agreement. No added
+noise/Fano/pileup or event-specific gain was used. Negative cumulative Q is an
+explicit conservative unsupported-waveform restriction, not physical trapping.
+
+Eight readout suites passed, including independent impulse/rectangle/RK4 limits,
+causal delays, signed reversal, narrow-current display support, tail extension,
+ADC boundaries and invalid-input checks. Final receipts contain exact code/config
+and environment hashes. The pipeline suite passed29 tests; one Windows test
+requiring symlink-creation permission was skipped, while the reparse guard passed.
+The existing88 runner,36 replay,27 contact and18 site checks also passed.
+
+All200 completed signals were then checked at1/4ns electronics grids and a
+2ns doubled tail, retaining the original calibration slope. All600 comparisons
+passed the predeclared0.25LSB peak gate. Maximum differences were0.00044512LSB
+(half step),0.00762065LSB(double step), and0(double tail); no ADC code changed.
+This verifies fixed-input electronics sampling/window stability, not SSD drift
+step convergence or recovery of charge after a stopped trajectory.
+
+A source-only checkout from candidate3a51b4d independently reran all200 primaries
+without the original field caches, website or private supervisor state. Both
+models reproduced truth-event structures, charge CSV bytes, every readout event
+and common calibration exactly. Runs took150.73s and164.87s on the same Windows
+computer with existing installed package caches; no second-machine, fresh-depot
+or other-OS claim is made.
+
+The self-contained event explorer embeds all200 records and their metadata, with
+separate charge/current/preamp/shaped plots, deposition r-z projection, exact
+peak/code/Erec, and all-primary Edep versus accepted-only Erec histograms. The
+initial nonzero-deposit selection and zero/highest-deposition navigation are
+explicit; they do not filter the census. Current segments use original-bin
+boundaries, and the short charge window is visible beside the longer electronics
+tail. A prominent warning states that52of52 accepted AK02 readouts retain flags.
+
+The final HTML was tested directly via file:// with network disabled: zero HTTP
+requests or JavaScript exceptions, both100-ID selectors, zero events, flagged
+below-threshold41/78 events, highest-deposition navigation and390px mobile layout.
+The example is separate from the original17-model numerical gallery; its images,
+model downloads and GeGI content remain unchanged. Website export imports only
+a completed hash-verified bundle; it performs no new physics computation.
+
+Both independent Astra High specialist sessions exchanged goal/plan questions,
+reviewed implementation and actual artifacts, then cross-read the other findings.
+Their closed findings include schema/flag counting, common calibration identity,
+provenance/ADC checks, narrow-current display and artifact-specific sampling.
+These are AI reviews plus supervisor-run tests, not human certification or
+experimental validation. No reset use, paid API switch or schedule changes occurred.
+
+Remaining work stays split: maintain reproducible configurable examples and
+presentation on the delivery lane; pursue Li/finite-conductivity convergence,
+source/cryostat metrology and calibrated spectrum comparison on the accuracy lane.
+No successful engineering run authorizes physical CCE, measured energy resolution
+or an as-built efficiency claim.
