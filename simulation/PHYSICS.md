@@ -132,9 +132,16 @@ Thus an analog-shaper-to-peak-ADC chain is the documented starting architecture,
 not an assumed digitize-first digital-trapezoid chain.
 
 The canonical neutral-impurity value `5.6769e15 cm^-3` also appears in the
-[upstream SSD inactive-layer configuration example](https://juliaphysics.github.io/SolidStateDetectors.jl/stable/man/charge_drift/).
+[upstream SSD TrueCoaxial inactive-layer tutorial](https://juliaphysics.github.io/SolidStateDetectors.jl/stable/tutorials/dead_layer_simulation/).
 That establishes a matching reference setting, not its experimental provenance
 for AK02. Retain it for reproducibility, but do not describe it as a measured
 neutral concentration without a separate record. Likewise, effective lifetimes
 and annealing-based Li profiles require detector-specific inference/validation;
 passing a diffusion-code check does not establish those inputs.
+
+The same tutorial constructs an explicit nonuniform grid with locally finer
+ticks near the Li region. After independent analytic residual verification,
+this existing grid API is a candidate for targeted refinement instead of further
+uniform whole-domain tightening. Actual ticks, depletion mapping, boundary
+residuals and failed gates must still be recorded; tutorial success on a simple
+coaxial example does not certify AK02.
