@@ -980,3 +980,42 @@ inputs and explicit active versus fixed/contact accounting. A radial slice still
 contains axial flux and is not automatically a one-dimensional Poisson solution.
 Neither new thresholds chosen after these results nor per-event truth fitting
 will be used to manufacture physical convergence. Large Cs137 runs remain gated.
+
+M2e publication verified: implementation `86f3d2f` was pushed to main; Pages run
+`36261061713` completed successfully. Exact build
+`6a38b53f972e24122310227983b1b23d45048e92cef3c392c0cdf3e4a6393885`
+passed80 live-file checks. Updated Li HTML/summary and both new axes CSVs were
+separately fetched and matched byte counts and SHA-256 values. The initial check
+while Pages was deploying correctly rejected the previous manifest. The live390px
+page retains four plots, failed global agreement, old response-sensitivity warning,
+primary research references and the unchanged-local-z qualification without
+horizontal overflow. Release marker: `v0.13.0-transition-axis-attribution`.
+
+Publication regressions passed18 site,27 contact,46 pipeline tests(one known
+Windows symlink-creation skip), and14 Li-report tests. Model/SDK/production inputs,
+GeGI and the existing complete pipeline example were unchanged. Superseded report
+previews were removed only after equal CSV checks; both numerical runs, the first
+producer snapshot, test failures/receipts and reviews remain under `.local/m2e`.
+The owned verification browser was closed. No user application, global setting,
+paid API/reset allowance or task schedule was modified. This completes a bounded
+numerical-attribution milestone, not global solution or physical CCE convergence.
+
+## Interrupted chat response: verified recovery — 2026-09-26
+
+After the client displayed "Thinking failed", a read-only audit recovered the
+prior supervisor session and confirmed all final calculation, review, publication
+and exact-live-check processes had exited successfully. An earlier provisional
+unit-test failure had already been corrected before publication. Implementation
+86f3d2f and successful Pages run 36261061713 were present remotely; the live build
+still matched the local manifest. No protected numerical inputs had changed.
+
+The interruption left only this publication closure uncommitted and the local
+owner/status lock stale. The supervisor was alive but idle, with no calculation
+workers running. Recovery finalizes those records without rerunning simulations,
+relaxing numerical gates or consuming resets. Original scientific failures remain
+visible: whole-domain same-grid agreement and physical Li CCE are not established.
+
+The exact ChatGPT request-level cause is unknown: project logs cannot distinguish
+a model-service error, client interruption or response/tool orchestration fault.
+Current service status alone is not a diagnosis. Pre-recovery state and process
+exit evidence are preserved in .local/m2e/checks/chat-interruption-recovery.json.
