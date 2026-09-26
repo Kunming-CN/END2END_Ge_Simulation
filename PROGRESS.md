@@ -82,6 +82,11 @@ for a bounded difficult review when useful. No background schedule changes impli
 - The prior 1,067-file website retained 1,064 files byte-for-byte; only its home
   and two detector landing pages gained links. Local build: 1,095 files / 1,754
   checked links. Evidence: `.local/campaign-publication/audit.json`.
+- Publication commit **ed733ef** is pushed. GitHub Pages verification passed for
+  **108 remote files**, including EVERY new campaign artifact and both ZIPs.
+  Live build ID: `292b389cd710b564dcebf33b2637bf5ba010560366e114cc12156c802d999be2`.
+  Desktop comparison/trace previews were inspected; exact narrow mobile layout
+  is not claimed validated. No original simulation records were changed.
 
 Entry points: [library](https://kunming-cn.github.io/END2END_Ge_Simulation/),
 [full engineering example](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/pipeline.html),
