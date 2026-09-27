@@ -183,6 +183,13 @@ SAP22:11,272 positive primaries /11,273 groups,531 line full candidates,166 unkn
 Unknown classification remains in the ledgers; it is not failed radiation transport.
 Outputs: `.local/million-analysis/analysis-results/`; see tools/MILLION_RESULTS.md.
 These are deposition truth, not ADC spectra. No native-response batch was launched.
+Publication dd3117f is pushed; 331 remote files were downloaded/hash-verified,
+including every new1M report/data file. New page: examples/cs137-1m/report.html.
+Four audit,23 analysis,3 public semantic and19 site tests passed; two bounded
+reviewers completed reciprocal closure. Desktop report preview inspected.
+Final postprocessing audit rechecked1,400 protected files and20 computational
+source hashes: zero original changes/deletions. Evidence: .local/million-analysis/.
+
 Next bounded work is the saved-HDF5-to-native bridge and representative pilot,
 retaining zeros/identities/caps/anomalies, before any long native response run.
 
