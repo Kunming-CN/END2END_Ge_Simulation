@@ -219,6 +219,29 @@ AK02 primary3950/cap impact, using existing records and few targeted calls. Then
 build resumable full native response using cached fields and saved HDF5. This is
 not a new global Li/PDE gate or permission to repeat completed source simulation.
 
+## Native boundary correction and production checkpoint stage (2026-09-27)
+
+SAP22 old8413 context dependence is now explained by a CONFIRMED SSD0.11.8
+unwritten path row: row2694/parcel1/step23 returns either arbitrary sentinel.
+New opt-in native_boundary_guard.jl throws a typed boundary failure before signal
+creation; it does not invent a point/charge or repair physical surface transport.
+Old mixed-pilot SAP8413 finite response is unreliable historical evidence, preserved.
+26 guard assertions pass: same failure before/after perturbation, good control exact.
+AK023950 paired10/20us test matches1600 carrier path/time prefixes; charge delta
+1.91e-12keV, ADC unchanged. Conditional remaining bound0.005836keV.2594 has1216
+prefixes and0.014502keV bound. Large low response is not the tested10us cap loss.
+Do not force charge to truth; default lifetime/contact model remains uncalibrated.
+Both existing agents exchanged findings through several bounded rounds and closed
+the guard/world-age, checkpoint identity and actual environment concerns.
+17 final checkpoint assertions and6 launcher tests pass. Real7group pilot paused
+at2, then resumed remaining5: first4files retain hashes AND modification times.
+5successes/2explicit numerical failures. Completed original source data untouched:
+1400campaign files,20old sources,9saved analysis artifacts checked without changes.
+New batch tools use cached fields and saved positive-event HDF5 plus full zero ledger.
+Full23693group input preparation is under .local/cs137-1m-native; inspect its config,
+progress and actual workers. Do not rerun source transport or the completed pilot.
+See tools/NATIVE_RESPONSE_FIX.md and .local/native-response-fix for exact evidence.
+
 ## Current limitations, not reasons to block every engineering feature
 
 SSD 0.11.8 already contains the published native Li/RCC machinery; experimental

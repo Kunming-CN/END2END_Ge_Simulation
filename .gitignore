@@ -123,3 +123,9 @@
 # Saved-HDF5 selected native pilot; original science code remains frozen.
 !simulation/native_bridge_pilot.jl
 !simulation/test_native_bridge_pilot.jl
+
+# Opt-in native boundary safety and resumable response stage.
+!simulation/native_boundary_guard.jl
+!simulation/test_native_boundary_guard.jl
+!simulation/native_checkpoint_batch.jl
+!simulation/test_native_checkpoint_batch.jl
