@@ -64,3 +64,7 @@ simulation/native_boundary_guard.jl -text
 simulation/native_checkpoint_batch.jl -text
 tools/prepare_native_batch.py -text
 tools/native_response_launcher.py -text
+simulation/native_boundary_guard.jl whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+simulation/native_checkpoint_batch.jl whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+tools/prepare_native_batch.py whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+tools/native_response_launcher.py whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
