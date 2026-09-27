@@ -58,3 +58,9 @@ docs/examples/cs137-10k-hits/** -text -diff
 
 # Million-decay derived summaries: exact bytes verified by publication manifests.
 docs/examples/cs137-1m/** -diff
+
+# These new response sources are bound byte-for-byte in prepared native campaigns.
+simulation/native_boundary_guard.jl -text
+simulation/native_checkpoint_batch.jl -text
+tools/prepare_native_batch.py -text
+tools/native_response_launcher.py -text

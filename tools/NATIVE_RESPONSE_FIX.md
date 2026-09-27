@@ -40,3 +40,9 @@ Use the existing Windows environment from the project root:
 Preparation refuses an existing directory. Never repeat it after a completed preparation; resume with the launcher only. `progress.html` and `progress.json` in the prepared folder track committed groups, numerical failures, accepted ADCs and an estimated remaining time. `STOP_AFTER_GROUP` requests pause; remove only that marker before resume. Final status can be `completed_with_native_failures`: this is engineering workflow completion with unknown responses retained, not zero numerical failures or calibrated detector efficiency.
 
 The two existing agents separately reviewed execution-state integrity and carrier physics, exchanged findings, requested latest-world execution and two checkpoint/environment checks, and reviewed the resulting tests. Their approval does not establish experimental agreement or global Li/PDE convergence. No such global study was started.
+
+## Actual launch
+
+Full inputs contain12,420 AK02 and11,273 SAP22 positive groups. The first two actual production groups (AK02 176/457) completed successfully and were checkpointed. At2026-09-27 13:27 CDT, the detached worker resumed `.local/cs137-1m-native` for the remaining groups. This is a running native-response campaign, not a completed ADC spectrum. The full old2M source ledger and all raw archives remain unchanged.
+
+The folder contains `Monitor.cmd`, `Pause-After-Group.cmd`, `Resume.cmd` and an automatically refreshing `progress.html`. No model/agent supervises the calculation. Keep the computer powered and awake; source, input and cache hashes must remain unchanged during the run. Do not use the old Geant4 Resume command for this native stage.

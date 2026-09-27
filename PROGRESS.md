@@ -238,8 +238,10 @@ at2, then resumed remaining5: first4files retain hashes AND modification times.
 5successes/2explicit numerical failures. Completed original source data untouched:
 1400campaign files,20old sources,9saved analysis artifacts checked without changes.
 New batch tools use cached fields and saved positive-event HDF5 plus full zero ledger.
-Full23693group input preparation is under .local/cs137-1m-native; inspect its config,
-progress and actual workers. Do not rerun source transport or the completed pilot.
+Full23693group inputs were prepared at .local/cs137-1m-native. The first2 actual
+production groups176/457 completed and were checkpointed; the detached full worker
+was started2026-09-27 at13:27 CDT to RESUME those results, not restart them.
+Inspect progress.json, launcher.json and actual workers; no new field solves. Do not rerun source transport or the completed pilot.
 See tools/NATIVE_RESPONSE_FIX.md and .local/native-response-fix for exact evidence.
 
 ## Current limitations, not reasons to block every engineering feature
