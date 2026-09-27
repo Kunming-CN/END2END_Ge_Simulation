@@ -160,6 +160,11 @@ race found by integrity review was fixed and regression-tested; both focused rev
 closed findings reciprocally. Actual desktop/mobile browser tests passed, including
 all categories and390px width. No original radiation/native/readout data were rewritten.
 
+Publication **86e5072** is pushed; GitHub Pages SHA-256 verification passed for
+323 files including all new overlay assets. Build ID:
+8a7999961e530ed371bc289b9e59521db00f2b9002e960b1afd6a7148648937
+Evidence: .local/million-transport-dev/audit.json and live-verification.log.
+
 Next: wait for COMPLETE.json / completed_transport, then analyze the saved1M data.
 Do not restart old10k, finished chunks or native Li research while waiting. The worker
 reconciles its matching private supervisor state on normal completion/pause/failure.
