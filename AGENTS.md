@@ -241,3 +241,14 @@ exit and record source hashes. A changed-source failure is an incomplete derived
 bundle, not a reason to repeat Geant4 or SSD. Preserve failed derivative evidence;
 retry only the exporter after source freeze. Radiation STEP chords and Track birth
 records must not be labeled complete trajectories across unscored material.
+
+## Owner-approved standalone million-decay transport
+
+The owner approved1M initial Cs137 decays per detector with the existing default
+uncollimated source and accepted geometry. This is Geant4 only, independent of
+unresolved native Li/cap questions. Use tools/long_transport.py and its detached
+launcher; preserve all old10k science files. Verify/resume DONE chunks, never
+restart completed radiation solely because the chat or workstation interrupted.
+Compact HDF5 and lossless raw archives preserve future analysis without radiation
+reruns. Do not launch SSD/readout or continuously invoke agents while transport
+runs. Local progress files and final COMPLETE.json are the execution authority.
