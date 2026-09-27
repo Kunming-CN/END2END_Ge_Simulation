@@ -258,7 +258,9 @@ were recomputed;27 existing numerical failures remain separate from this IO faul
 Use tools/resume_native_progress.py and the updated native Resume.cmd, not the old
 launcher. The frozen numerical configuration was NOT rebased. Extension hashes live
 in .local/cs137-1m-native/progress-recovery.json. Evidence: .local/native-progress-recovery.
-Next: resume remaining native groups; no source transport or field solve.
+Resumed at2026-09-27 17:08 CDT through the display-resilient entry. Live check
+confirmed progress beyond1871 with status running; no Geant4 or new field solve.
+Use live progress/launcher/exit records, not a remembered PID. Wait for completion.
 
 ## Current limitations, not reasons to block every engineering feature
 

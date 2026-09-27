@@ -42,3 +42,7 @@ Evidence remains in `.local/native-progress-recovery/` and unique campaign logs.
 Windows sharing semantics: a handle without FILE_SHARE_DELETE can prevent rename;
 see Microsoft CreateFileW documentation. This explains a possible mechanism,
 not proof of which program held the file during this particular incident.
+
+Actual continuation: resumed at 2026-09-27 17:08 CDT. A subsequent live check
+confirmed running and at least 1,872 completed groups, beyond the preserved boundary.
+No developer agent remains active; the local native worker continues independently.
