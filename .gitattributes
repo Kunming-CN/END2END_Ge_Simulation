@@ -68,3 +68,7 @@ simulation/native_boundary_guard.jl whitespace=blank-at-eol,blank-at-eof,space-b
 simulation/native_checkpoint_batch.jl whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 tools/prepare_native_batch.py whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 tools/native_response_launcher.py whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# Display-I/O extension is bound independently of the original native campaign.
+simulation/native_progress_resilience.jl -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+tools/resume_native_progress.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

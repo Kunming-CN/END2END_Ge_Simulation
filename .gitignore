@@ -129,3 +129,7 @@
 !simulation/test_native_boundary_guard.jl
 !simulation/native_checkpoint_batch.jl
 !simulation/test_native_checkpoint_batch.jl
+
+# Additive display-only recovery entry and regression tests.
+!simulation/native_progress_resilience.jl
+!simulation/test_native_progress_resilience.jl

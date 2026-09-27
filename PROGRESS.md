@@ -244,6 +244,22 @@ was started2026-09-27 at13:27 CDT to RESUME those results, not restart them.
 Inspect progress.json, launcher.json and actual workers; no new field solves. Do not rerun source transport or the completed pilot.
 See tools/NATIVE_RESPONSE_FIX.md and .local/native-response-fix for exact evidence.
 
+## Native progress-display recovery (2026-09-27)
+
+The native worker stopped after1870 committed groups on progress.html rename EACCES,
+not during physics or result commit. All1870 binaries/DONE hashes were verified.
+An additive display-only adapter now retries/defer sharing failures; scientific
+commit/recover, settings, source hashes and field caches remain unchanged.
+17 Julia assertions and5 Python tests passed; two existing scoped reviewers checked
+this recovery. The child-ownership finding was corrected and rechecked.
+A real resume processed only ONE new group and paused at1871 with exit0. All3747
+pre-existing protected files retain hashes/sizes/modification times. No old groups
+were recomputed;27 existing numerical failures remain separate from this IO fault.
+Use tools/resume_native_progress.py and the updated native Resume.cmd, not the old
+launcher. The frozen numerical configuration was NOT rebased. Extension hashes live
+in .local/cs137-1m-native/progress-recovery.json. Evidence: .local/native-progress-recovery.
+Next: resume remaining native groups; no source transport or field solve.
+
 ## Current limitations, not reasons to block every engineering feature
 
 SSD 0.11.8 already contains the published native Li/RCC machinery; experimental
