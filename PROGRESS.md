@@ -162,7 +162,7 @@ all categories and390px width. No original radiation/native/readout data were re
 
 Publication **86e5072** is pushed; GitHub Pages SHA-256 verification passed for
 323 files including all new overlay assets. Build ID:
-8a7999961e530ed371bc289b9e59521db00f2b9002e960b1afd6a7148648937
+a8a7999961e530ed371bc289b9e59521db00f2b9002e960b1afd6a7148648937
 Evidence: .local/million-transport-dev/audit.json and live-verification.log.
 
 Next: wait for COMPLETE.json / completed_transport, then analyze the saved1M data.
