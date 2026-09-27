@@ -50,8 +50,8 @@
       "sha256": "624c8bc3ecad2c39d7e18d7993b3b318b2f879d687e19575a39a36a614e6047a"
     },
     "comparison.html": {
-      "bytes": 91332,
-      "sha256": "a9b99c521a7de4de42b9d76af35a918a7bbcaac3c10b8f98ffb2f39127be7018"
+      "bytes": 91833,
+      "sha256": "2923998c5112bf6d0b6e7ec1fe2d6259cc2fc9bcc9abf6bef54a9ad99d398b16"
     },
     "README.md": {
       "bytes": 1079,
@@ -158,6 +158,10 @@
   },
   "geometry_extension": {
     "manifest_sha256": "e8d183af05e27f211b6464939d4c667b6d02855d68609a7627753d2f16edc379",
+    "original_response_records_modified": false
+  },
+  "hit_view_extension": {
+    "manifest_sha256": "0ad6a0df52ae725543d0c8474c5db4474e6c28af537ff944660e1ebf9b6a1b3e",
     "original_response_records_modified": false
   }
 }

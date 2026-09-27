@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "build_id": "01ad76ec12526a266a78405f172151bdf8172b1c0053f68726333f8fa5360b61",
-  "file_count": 1304,
-  "total_bytes": 731461652,
-  "html_pages": 28,
-  "local_links_checked": 1757,
+  "build_id": "a8a7999961e530ed371bc289b9e59521db00f2b9002e960b1afd6a7148648937",
+  "file_count": 1311,
+  "total_bytes": 733930004,
+  "html_pages": 29,
+  "local_links_checked": 1760,
   "files": [
     {
       "path": ".nojekyll",
@@ -6192,6 +6192,41 @@
       "sha256": "3d926cbc60e752c8107be848be1310c8b7aa7bc534e37764d9c6a821739e70da"
     },
     {
+      "path": "examples/cs137-10k-hits/AK02/scene.json",
+      "bytes": 283851,
+      "sha256": "8e24d02c9b55ccd9257850405846be32f29503df9055fa71cf82fd7fbb29d12b"
+    },
+    {
+      "path": "examples/cs137-10k-hits/AK02/selected.json.gz",
+      "bytes": 919918,
+      "sha256": "1043242ae0cb261cdba76853d3e49a407ce371be71ceae5eb6a6e5a0cbab6722"
+    },
+    {
+      "path": "examples/cs137-10k-hits/README.md",
+      "bytes": 7152,
+      "sha256": "f45a31d298b5f1c91127f29f06605f9c9c0be9e224d7b3060ab583a8272b5d9f"
+    },
+    {
+      "path": "examples/cs137-10k-hits/SAP22/scene.json",
+      "bytes": 284262,
+      "sha256": "9d2753669822bf46d8db44a82759bc4fbd0661fa10edb5ac22a63b5b502271cf"
+    },
+    {
+      "path": "examples/cs137-10k-hits/SAP22/selected.json.gz",
+      "bytes": 941920,
+      "sha256": "e2182e2c0a997a96f5c27b17eb40bca13f687c2dfd69d3baffdfaf90231597a1"
+    },
+    {
+      "path": "examples/cs137-10k-hits/hit_event_view.html",
+      "bytes": 20495,
+      "sha256": "7d609da3738490c1caa1c861f2810ec418f784f0640231d2465b92a2cc175516"
+    },
+    {
+      "path": "examples/cs137-10k-hits/manifest.json",
+      "bytes": 10083,
+      "sha256": "0ad6a0df52ae725543d0c8474c5db4474e6c28af537ff944660e1ebf9b6a1b3e"
+    },
+    {
       "path": "examples/cs137-10k/AK02/response/histograms.csv",
       "bytes": 46655,
       "sha256": "c48a11e351b32bde3fa46271e9758c780872cd3f4c0ef699a40ce6203f04a579"
@@ -6308,13 +6343,13 @@
     },
     {
       "path": "examples/cs137-10k/comparison.html",
-      "bytes": 91332,
-      "sha256": "a9b99c521a7de4de42b9d76af35a918a7bbcaac3c10b8f98ffb2f39127be7018"
+      "bytes": 91833,
+      "sha256": "2923998c5112bf6d0b6e7ec1fe2d6259cc2fc9bcc9abf6bef54a9ad99d398b16"
     },
     {
       "path": "examples/cs137-10k/publication.json",
-      "bytes": 8380,
-      "sha256": "f07f49fa113d22f03d3842792990306f71ed54a2a0ea02c1dd0a97785b29f048"
+      "bytes": 8550,
+      "sha256": "8c22434b064b1b936f5b67082c56f2b90d7191e9b96463e3345479f43a117823"
     },
     {
       "path": "examples/cs137-10k/run.json",

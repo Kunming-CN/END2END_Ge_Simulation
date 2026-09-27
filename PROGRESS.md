@@ -128,6 +128,43 @@ Local native example: `.local/native-li-example/comparison.html`.
 Important source: `simulation/native_li_example.jl`, `simulation/readout.jl`,
 `simulation/replay.jl`, `tools/pipeline_demo.py`; see module READMEs for commands.
 
+## Current independent campaign:1M initial decays per detector
+
+Standalone Geant4 transport is RUNNING at `.local/cs137-1m`, launched locally
+2026-09-26 19:50:07 CDT; initial Windows worker PID20016. Read progress.json,
+launcher.json and actual processes, not a remembered PID, before any action.
+Target: AK02 and SAP22 each1,000,000 uncollimated Cs137 decays in the SAME geometry,
+100 chunks of10,000 per detector, serial models. No SSD or readout is running.
+The first10k chunk committed successfully; remaining progress is in the live files.
+`progress.html` refreshes locally; Monitor.cmd, Resume.cmd and Pause-After-Chunk.cmd
+are in the campaign folder. Closing the monitor does not stop computation. Keep the
+computer powered and awake; power settings are unchanged. DONE chunks are verified
+and skipped on resume. Only an unfinished transport chunk may need recomputation.
+Raw successful output is losslessly archived; compact HDF5 retains all-primary
+scalars and original Ge-related records. No million-event browser JSON is generated.
+Driver/launch implementation is committed as **d532fe6**; settings/data stay frozen.
+
+Validation:11 storage/recovery/lock tests, bit-exact oldAK02 compaction, real1000/model
+pilot paused at500 and resumed with firstDONE hash AND modification time unchanged.
+Current launcher also completed a10/model smoke; owner-finalizer synthetic test passed.
+The initial transport coding agent was stopped after a recorded WebSocket idle timeout;
+no retry campaign was opened. Current driver was completed directly through Desktop Commander.
+
+New saved-data viewer at `docs/examples/cs137-10k-hits/hit_event_view.html` overlays all
+121/115 Ge-positive primaries from the OLD10k runs. Its2.46MB bundle preserves selected
+records losslessly. AK02 example IDs:9378 compact/full,698 one observedCompton/full,
+9644 two observedCompton/full,8422 partial. All are explicitly candidates, not calibrated
+PSD labels. SAP22 one-site example is a31.8keV photon, not the662keV line.
+31 viewer tests,7 publication tests and19 site tests passed. The category-during-model-load
+race found by integrity review was fixed and regression-tested; both focused reviewers
+closed findings reciprocally. Actual desktop/mobile browser tests passed, including
+all categories and390px width. No original radiation/native/readout data were rewritten.
+
+Next: wait for COMPLETE.json / completed_transport, then analyze the saved1M data.
+Do not restart old10k, finished chunks or native Li research while waiting. The worker
+reconciles its matching private supervisor state on normal completion/pause/failure.
+If the machine interrupts, verify process absence and resume, not prepare again.
+
 ## Current limitations, not reasons to block every engineering feature
 
 SSD 0.11.8 already contains the published native Li/RCC machinery; experimental
