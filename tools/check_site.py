@@ -65,8 +65,9 @@ def validate(site, require_manifest=True, require_models=False):
         relative = f.relative_to(site).as_posix()
         geometry_file = relative.startswith('examples/cs137-10k-geometry/') and f.suffix.lower() in {'.zip','.txt'}
         hit_payload = relative in ('examples/cs137-10k-hits/AK02/selected.json.gz','examples/cs137-10k-hits/SAP22/selected.json.gz')
+        million_payload = relative=='examples/cs137-1m/positive-groups.csv.gz'
         ledger_zip = relative in ('examples/cs137-10k/AK02/response/ledgers.zip', 'examples/cs137-10k/SAP22/response/ledgers.zip')
-        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload:
+        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload:
             raise ValueError(f'Unapproved public file: {relative}')
         data = f.read_bytes()
         if geometry_file and f.suffix.lower()=='.zip':
@@ -135,6 +136,9 @@ def validate(site, require_manifest=True, require_models=False):
     if geometry_bundle.exists():
         from geometry_publication import validate_bundle as validate_geometry
         validate_geometry(geometry_bundle)
+    if (site/'examples/cs137-1m').exists():
+        from million_publication import validate as validate_million
+        validate_million(site/'examples/cs137-1m')
     hit_bundle = site/'examples/cs137-10k-hits'
     if hit_bundle.exists():
         from hit_view_publication import validate as validate_hits
@@ -205,7 +209,7 @@ def verify_live(url, report):
                      if entry['path'].startswith(('models/', 'downloads/'))})
     # The public campaign is an auditable dataset, not just HTML; verify every file.
     selected.update({entry['path']: entry for entry in entries
-                     if entry['path'].startswith(('examples/cs137-10k/', 'examples/cs137-10k-geometry/', 'examples/cs137-10k-hits/'))})
+                     if entry['path'].startswith(('examples/cs137-10k/', 'examples/cs137-10k-geometry/', 'examples/cs137-10k-hits/', 'examples/cs137-1m/'))})
     for suffix in ('.png', '.svg', '.csv', '.mp4', '.webm', '.json', '.md'):
         examples = [entry for entry in entries if entry['path'].endswith(suffix)]
         for entry in examples[:2] + examples[-1:]:

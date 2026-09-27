@@ -1,0 +1,6908 @@
+{
+  "status": "completed_saved_data_analysis",
+  "models": {
+    "AK02": {
+      "initial_decays": 1000000,
+      "zero_ge_decays": 987580,
+      "positive_ge_decays": 12420,
+      "isolated_groups": 12420,
+      "emitted_RDM_photons": 931769,
+      "emitted_line_photons": 851505,
+      "category_group_counts": {
+        "compact": 2132,
+        "compton1": 302,
+        "compton2": 196,
+        "full": 2677,
+        "partial": 9593,
+        "unknown": 150
+      },
+      "photon_families": [
+        {
+          "anchor_keV": 661.6572831606165,
+          "min_keV": 661.6572831606165,
+          "max_keV": 661.6572831606165,
+          "groups": 10117,
+          "categories": {
+            "compact": 267,
+            "compton1": 281,
+            "compton2": 195,
+            "full": 806,
+            "partial": 9311,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.8188544687047,
+          "min_keV": 31.81884580036987,
+          "max_keV": 31.818861762954786,
+          "groups": 31,
+          "categories": {
+            "compact": 28,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 28,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20555528978164,
+          "min_keV": 32.20554624805439,
+          "max_keV": 32.20556517067821,
+          "groups": 42,
+          "categories": {
+            "compact": 34,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 34,
+            "partial": 8,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20550354385303,
+          "min_keV": 32.20549377711295,
+          "max_keV": 32.205513194200286,
+          "groups": 48,
+          "categories": {
+            "compact": 43,
+            "compton1": 2,
+            "compton2": 0,
+            "full": 43,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": null,
+          "min_keV": null,
+          "max_keV": null,
+          "groups": 150,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 0,
+            "unknown": 150
+          }
+        },
+        {
+          "anchor_keV": 31.81877968941653,
+          "min_keV": 31.818770033472873,
+          "max_keV": 31.818787121584396,
+          "groups": 22,
+          "categories": {
+            "compact": 20,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 20,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392006543489835,
+          "min_keV": 36.391997648968434,
+          "max_keV": 36.39201525379765,
+          "groups": 10,
+          "categories": {
+            "compact": 9,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 9,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205647771209726,
+          "min_keV": 32.205639869567264,
+          "max_keV": 32.20565739749349,
+          "groups": 41,
+          "categories": {
+            "compact": 38,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 38,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39211539614152,
+          "min_keV": 36.39211043571674,
+          "max_keV": 36.392125201724895,
+          "groups": 8,
+          "categories": {
+            "compact": 7,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 7,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.3169556233467,
+          "min_keV": 36.31694658596997,
+          "max_keV": 36.31696354112274,
+          "groups": 8,
+          "categories": {
+            "compact": 7,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 7,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81853558475253,
+          "min_keV": 31.818525796889258,
+          "max_keV": 31.818545367692312,
+          "groups": 26,
+          "categories": {
+            "compact": 22,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 22,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205492423302665,
+          "min_keV": 32.20548254936588,
+          "max_keV": 32.205492423302665,
+          "groups": 22,
+          "categories": {
+            "compact": 21,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 21,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39187825289027,
+          "min_keV": 36.391868770884166,
+          "max_keV": 36.39188784428764,
+          "groups": 10,
+          "categories": {
+            "compact": 9,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 9,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81861274440656,
+          "min_keV": 31.818603721349593,
+          "max_keV": 31.81862269258747,
+          "groups": 18,
+          "categories": {
+            "compact": 18,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 18,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81876544906518,
+          "min_keV": 31.818759099019065,
+          "max_keV": 31.81876678834502,
+          "groups": 10,
+          "categories": {
+            "compact": 9,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 9,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24508644425908,
+          "min_keV": 37.24508644425908,
+          "max_keV": 37.245094748119264,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818797339524036,
+          "min_keV": 31.81879121056664,
+          "max_keV": 31.81880727248825,
+          "groups": 24,
+          "categories": {
+            "compact": 22,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 22,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316828302185115,
+          "min_keV": 36.31681881294764,
+          "max_keV": 36.31683713108205,
+          "groups": 6,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81854856804448,
+          "min_keV": 31.81854575833265,
+          "max_keV": 31.818558484013575,
+          "groups": 14,
+          "categories": {
+            "compact": 13,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 13,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392213388922,
+          "min_keV": 36.39220743803322,
+          "max_keV": 36.39222334455138,
+          "groups": 13,
+          "categories": {
+            "compact": 11,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 11,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26054001942753,
+          "min_keV": 37.26053065024388,
+          "max_keV": 37.26054151195381,
+          "groups": 5,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81847545722427,
+          "min_keV": 31.81846557613023,
+          "max_keV": 31.818484981772325,
+          "groups": 34,
+          "categories": {
+            "compact": 30,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 30,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20546910470113,
+          "min_keV": 32.20545937927081,
+          "max_keV": 32.20547887832277,
+          "groups": 46,
+          "categories": {
+            "compact": 41,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 41,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20545329251484,
+          "min_keV": 32.205443741283766,
+          "max_keV": 32.20545902242175,
+          "groups": 38,
+          "categories": {
+            "compact": 31,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 31,
+            "partial": 7,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316686548237996,
+          "min_keV": 36.316686548237996,
+          "max_keV": 36.31668981980148,
+          "groups": 3,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20583647092877,
+          "min_keV": 32.20582716649201,
+          "max_keV": 32.205846266581865,
+          "groups": 40,
+          "categories": {
+            "compact": 32,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 33,
+            "partial": 7,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316787895195276,
+          "min_keV": 36.31678306950385,
+          "max_keV": 36.31679751231861,
+          "groups": 7,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818516489218364,
+          "min_keV": 31.818507020227877,
+          "max_keV": 31.81852522766053,
+          "groups": 26,
+          "categories": {
+            "compact": 21,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 22,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205718749252966,
+          "min_keV": 32.20570878259103,
+          "max_keV": 32.20572784119743,
+          "groups": 41,
+          "categories": {
+            "compact": 37,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 37,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205664017715975,
+          "min_keV": 32.205658126016246,
+          "max_keV": 32.205673580897056,
+          "groups": 45,
+          "categories": {
+            "compact": 36,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 36,
+            "partial": 9,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39208873125639,
+          "min_keV": 36.3920792522997,
+          "max_keV": 36.392097422839115,
+          "groups": 13,
+          "categories": {
+            "compact": 10,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 10,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20579150447018,
+          "min_keV": 32.20578175849856,
+          "max_keV": 32.205799817870954,
+          "groups": 38,
+          "categories": {
+            "compact": 35,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 35,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20538350280674,
+          "min_keV": 32.20537354989306,
+          "max_keV": 32.20539343204883,
+          "groups": 47,
+          "categories": {
+            "compact": 41,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 41,
+            "partial": 6,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818633621882245,
+          "min_keV": 31.818624479304155,
+          "max_keV": 31.81864352150489,
+          "groups": 27,
+          "categories": {
+            "compact": 22,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 22,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20534403936835,
+          "min_keV": 32.20534403936835,
+          "max_keV": 32.20535355256769,
+          "groups": 28,
+          "categories": {
+            "compact": 24,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 24,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20536076644092,
+          "min_keV": 32.20535424083071,
+          "max_keV": 32.205370001940274,
+          "groups": 20,
+          "categories": {
+            "compact": 17,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 17,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39202627380887,
+          "min_keV": 36.39201731835352,
+          "max_keV": 36.39203231233461,
+          "groups": 15,
+          "categories": {
+            "compact": 15,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 15,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20582099921653,
+          "min_keV": 32.20581185485996,
+          "max_keV": 32.20582640565196,
+          "groups": 36,
+          "categories": {
+            "compact": 30,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 30,
+            "partial": 6,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.3920494521931,
+          "min_keV": 36.39204161056467,
+          "max_keV": 36.3920585639991,
+          "groups": 11,
+          "categories": {
+            "compact": 10,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 10,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20543044599513,
+          "min_keV": 32.205420936546105,
+          "max_keV": 32.20543962894259,
+          "groups": 44,
+          "categories": {
+            "compact": 37,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 37,
+            "partial": 7,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391827334209566,
+          "min_keV": 36.39181801472136,
+          "max_keV": 36.39183714667805,
+          "groups": 6,
+          "categories": {
+            "compact": 6,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 6,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205441899282086,
+          "min_keV": 32.20544062266418,
+          "max_keV": 32.205443233839,
+          "groups": 9,
+          "categories": {
+            "compact": 6,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 6,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39184884562821,
+          "min_keV": 36.39183992879386,
+          "max_keV": 36.391853593355656,
+          "groups": 8,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20557048309303,
+          "min_keV": 32.205565543507625,
+          "max_keV": 32.205580199860556,
+          "groups": 38,
+          "categories": {
+            "compact": 31,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 31,
+            "partial": 7,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42708189918247,
+          "min_keV": 37.42708189918247,
+          "max_keV": 37.427088911864395,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818872508867926,
+          "min_keV": 31.818864521664825,
+          "max_keV": 31.818881228429568,
+          "groups": 24,
+          "categories": {
+            "compact": 24,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 24,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20569077871417,
+          "min_keV": 32.20568088453901,
+          "max_keV": 32.205699836136404,
+          "groups": 37,
+          "categories": {
+            "compact": 30,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 30,
+            "partial": 7,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39223874273734,
+          "min_keV": 36.39223081466713,
+          "max_keV": 36.39224835197721,
+          "groups": 6,
+          "categories": {
+            "compact": 6,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 6,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39181472700274,
+          "min_keV": 36.39180784934331,
+          "max_keV": 36.39181472700274,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205637320320626,
+          "min_keV": 32.205627513767276,
+          "max_keV": 32.20563773234881,
+          "groups": 24,
+          "categories": {
+            "compact": 21,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 21,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818752129919346,
+          "min_keV": 31.81874213918484,
+          "max_keV": 31.818755106836274,
+          "groups": 19,
+          "categories": {
+            "compact": 13,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 13,
+            "partial": 6,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205540556738384,
+          "min_keV": 32.20553056243639,
+          "max_keV": 32.205545258068796,
+          "groups": 30,
+          "categories": {
+            "compact": 25,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 25,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81856349182336,
+          "min_keV": 31.818558754221684,
+          "max_keV": 31.818571011769077,
+          "groups": 17,
+          "categories": {
+            "compact": 14,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 14,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.2055861656954,
+          "min_keV": 32.20558057923406,
+          "max_keV": 32.20559548350928,
+          "groups": 23,
+          "categories": {
+            "compact": 18,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 18,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39171183809331,
+          "min_keV": 36.39171183809331,
+          "max_keV": 36.39172033580473,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39172301773047,
+          "min_keV": 36.39172212655585,
+          "max_keV": 36.391731172765496,
+          "groups": 10,
+          "categories": {
+            "compact": 7,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 7,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818449670337554,
+          "min_keV": 31.81844733167486,
+          "max_keV": 31.81845875883309,
+          "groups": 13,
+          "categories": {
+            "compact": 9,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 9,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260474274117826,
+          "min_keV": 37.260466400371286,
+          "max_keV": 37.260482064012834,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392280159655094,
+          "min_keV": 36.392272661525226,
+          "max_keV": 36.39228584334568,
+          "groups": 13,
+          "categories": {
+            "compact": 10,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 10,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.2058545376658,
+          "min_keV": 32.20584756043833,
+          "max_keV": 32.20585535485564,
+          "groups": 19,
+          "categories": {
+            "compact": 17,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 17,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818623252399377,
+          "min_keV": 31.818623252399377,
+          "max_keV": 31.81862335084261,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31651424168647,
+          "min_keV": 36.31651424168647,
+          "max_keV": 36.31652146370654,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81872690996205,
+          "min_keV": 31.81871693495604,
+          "max_keV": 31.818736446023433,
+          "groups": 28,
+          "categories": {
+            "compact": 27,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 27,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.2056781254129,
+          "min_keV": 32.20567427144754,
+          "max_keV": 32.205680336616254,
+          "groups": 14,
+          "categories": {
+            "compact": 13,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 13,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205765674212046,
+          "min_keV": 32.20575573038153,
+          "max_keV": 32.20577534117858,
+          "groups": 38,
+          "categories": {
+            "compact": 30,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 30,
+            "partial": 8,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81884174513887,
+          "min_keV": 31.818832386869193,
+          "max_keV": 31.81884411489238,
+          "groups": 16,
+          "categories": {
+            "compact": 13,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 14,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818666153730433,
+          "min_keV": 31.81865677255453,
+          "max_keV": 31.81867600189904,
+          "groups": 17,
+          "categories": {
+            "compact": 16,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 16,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20575287749269,
+          "min_keV": 32.20574295825171,
+          "max_keV": 32.20575565036562,
+          "groups": 24,
+          "categories": {
+            "compact": 21,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 22,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39174209593098,
+          "min_keV": 36.391733381080314,
+          "max_keV": 36.391749368108556,
+          "groups": 12,
+          "categories": {
+            "compact": 11,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 11,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20562616884976,
+          "min_keV": 32.20561651941053,
+          "max_keV": 32.205627053149634,
+          "groups": 19,
+          "categories": {
+            "compact": 16,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 16,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818689453883636,
+          "min_keV": 31.818680693227407,
+          "max_keV": 31.818698257637084,
+          "groups": 28,
+          "categories": {
+            "compact": 26,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 26,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26060084135809,
+          "min_keV": 37.26060084135809,
+          "max_keV": 37.260602577999826,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20573046544375,
+          "min_keV": 32.20572927467301,
+          "max_keV": 32.205740170895936,
+          "groups": 29,
+          "categories": {
+            "compact": 25,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 25,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818921511838496,
+          "min_keV": 31.81891152139904,
+          "max_keV": 31.818929876073522,
+          "groups": 20,
+          "categories": {
+            "compact": 17,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 17,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20537280103497,
+          "min_keV": 32.20537170045036,
+          "max_keV": 32.20537280103497,
+          "groups": 5,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818651479042824,
+          "min_keV": 31.81864362908408,
+          "max_keV": 31.81865540582289,
+          "groups": 12,
+          "categories": {
+            "compact": 11,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 11,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818593851862836,
+          "min_keV": 31.818584748096722,
+          "max_keV": 31.818600973202265,
+          "groups": 13,
+          "categories": {
+            "compact": 12,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 12,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39196885509483,
+          "min_keV": 36.39196107011255,
+          "max_keV": 36.39197852692836,
+          "groups": 10,
+          "categories": {
+            "compact": 10,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 10,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20542042493156,
+          "min_keV": 32.205410477304326,
+          "max_keV": 32.20542042493156,
+          "groups": 22,
+          "categories": {
+            "compact": 17,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 17,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205777801202764,
+          "min_keV": 32.205776287343504,
+          "max_keV": 32.20578148132287,
+          "groups": 19,
+          "categories": {
+            "compact": 16,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 16,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81890596601005,
+          "min_keV": 31.818896774220633,
+          "max_keV": 31.818911134744837,
+          "groups": 15,
+          "categories": {
+            "compact": 13,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 13,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31703654893882,
+          "min_keV": 36.317028989522065,
+          "max_keV": 36.317044235958946,
+          "groups": 7,
+          "categories": {
+            "compact": 6,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 6,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31672457198811,
+          "min_keV": 36.31671834095342,
+          "max_keV": 36.31672564198374,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39219567744837,
+          "min_keV": 36.392186090996184,
+          "max_keV": 36.39220313086034,
+          "groups": 10,
+          "categories": {
+            "compact": 8,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 8,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205600508399655,
+          "min_keV": 32.20559637543982,
+          "max_keV": 32.205610233121845,
+          "groups": 32,
+          "categories": {
+            "compact": 25,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 25,
+            "partial": 7,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818583794426342,
+          "min_keV": 31.818574692397814,
+          "max_keV": 31.818583794426342,
+          "groups": 10,
+          "categories": {
+            "compact": 7,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 7,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39179905376637,
+          "min_keV": 36.391796365397354,
+          "max_keV": 36.39180134453571,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31679831987506,
+          "min_keV": 36.31679831987506,
+          "max_keV": 36.31679870235428,
+          "groups": 2,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26052390069684,
+          "min_keV": 37.26052390069684,
+          "max_keV": 37.26052390069684,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260457118998254,
+          "min_keV": 37.260457118998254,
+          "max_keV": 37.260457118998254,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31690211386731,
+          "min_keV": 36.316900012924826,
+          "max_keV": 36.31690211386731,
+          "groups": 3,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316527189718904,
+          "min_keV": 36.316527189718904,
+          "max_keV": 36.31653080598947,
+          "groups": 2,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391895472408876,
+          "min_keV": 36.39189072427282,
+          "max_keV": 36.39190485348798,
+          "groups": 12,
+          "categories": {
+            "compact": 11,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 11,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818811144717692,
+          "min_keV": 31.818807904603307,
+          "max_keV": 31.81882114214907,
+          "groups": 17,
+          "categories": {
+            "compact": 15,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 15,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20561375404574,
+          "min_keV": 32.205610965634314,
+          "max_keV": 32.205614995605664,
+          "groups": 7,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20580796152272,
+          "min_keV": 32.20580174139862,
+          "max_keV": 32.20581027035942,
+          "groups": 18,
+          "categories": {
+            "compact": 17,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 17,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31688075915999,
+          "min_keV": 36.316873765634476,
+          "max_keV": 36.31688819236819,
+          "groups": 7,
+          "categories": {
+            "compact": 7,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 7,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316643064946604,
+          "min_keV": 36.31663512691106,
+          "max_keV": 36.31665298677514,
+          "groups": 5,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818709242726825,
+          "min_keV": 31.818700308604342,
+          "max_keV": 31.818716848705407,
+          "groups": 20,
+          "categories": {
+            "compact": 19,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 19,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20540338295115,
+          "min_keV": 32.20539524258377,
+          "max_keV": 32.205410288138026,
+          "groups": 34,
+          "categories": {
+            "compact": 30,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 30,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31706466888641,
+          "min_keV": 36.317057293166165,
+          "max_keV": 36.3170675699826,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26067529397744,
+          "min_keV": 37.26067529397744,
+          "max_keV": 37.26067529397744,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39225911687056,
+          "min_keV": 36.39225719071919,
+          "max_keV": 36.39226621990199,
+          "groups": 6,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.3165503335974,
+          "min_keV": 36.316540398646076,
+          "max_keV": 36.31655821575734,
+          "groups": 4,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42450420500127,
+          "min_keV": 37.42450420500127,
+          "max_keV": 37.42450420500127,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39192621178326,
+          "min_keV": 36.3919167977752,
+          "max_keV": 36.39192621178326,
+          "groups": 5,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818883168178303,
+          "min_keV": 31.818882893853818,
+          "max_keV": 31.81889174508652,
+          "groups": 11,
+          "categories": {
+            "compact": 11,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 11,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81882672050801,
+          "min_keV": 31.818821665552132,
+          "max_keV": 31.818829419245986,
+          "groups": 9,
+          "categories": {
+            "compact": 9,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 9,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39199569754315,
+          "min_keV": 36.391994415063074,
+          "max_keV": 36.39199569754315,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392147541833516,
+          "min_keV": 36.39213967334637,
+          "max_keV": 36.392156778378535,
+          "groups": 9,
+          "categories": {
+            "compact": 8,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 8,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42701778220751,
+          "min_keV": 37.42701778220751,
+          "max_keV": 37.42701778220751,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316758992291085,
+          "min_keV": 36.31675099869248,
+          "max_keV": 36.31676172523685,
+          "groups": 4,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.3920757501627,
+          "min_keV": 36.39206798408883,
+          "max_keV": 36.392077718682636,
+          "groups": 8,
+          "categories": {
+            "compact": 7,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 7,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31657287160366,
+          "min_keV": 36.316563463460895,
+          "max_keV": 36.31658134481274,
+          "groups": 9,
+          "categories": {
+            "compact": 8,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 8,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26069120713772,
+          "min_keV": 37.26068569863679,
+          "max_keV": 37.2606967471783,
+          "groups": 5,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205741266291454,
+          "min_keV": 32.20574112169106,
+          "max_keV": 32.20574277182163,
+          "groups": 3,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316741679980005,
+          "min_keV": 36.316741679980005,
+          "max_keV": 36.31674292776211,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39191194485572,
+          "min_keV": 36.391905684129675,
+          "max_keV": 36.39191194485572,
+          "groups": 6,
+          "categories": {
+            "compact": 6,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 6,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24492150142536,
+          "min_keV": 37.2449207373346,
+          "max_keV": 37.24492150142536,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20551898137187,
+          "min_keV": 32.20551362192955,
+          "max_keV": 32.20552889648684,
+          "groups": 32,
+          "categories": {
+            "compact": 29,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 29,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26076219053718,
+          "min_keV": 37.260752521882694,
+          "max_keV": 37.26076850033043,
+          "groups": 3,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818932339677698,
+          "min_keV": 31.818932308122225,
+          "max_keV": 31.81894055416494,
+          "groups": 11,
+          "categories": {
+            "compact": 11,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 11,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26049519791952,
+          "min_keV": 37.26049519791952,
+          "max_keV": 37.26049962594297,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392173505475895,
+          "min_keV": 36.39216406606606,
+          "max_keV": 36.392176297535734,
+          "groups": 7,
+          "categories": {
+            "compact": 6,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 6,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31702004443823,
+          "min_keV": 36.31702004443823,
+          "max_keV": 36.31702004443823,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31708082303295,
+          "min_keV": 36.317075580438086,
+          "max_keV": 36.31708555982351,
+          "groups": 3,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818947118440786,
+          "min_keV": 31.818942455983308,
+          "max_keV": 31.818951835959925,
+          "groups": 14,
+          "categories": {
+            "compact": 14,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 14,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39216282431484,
+          "min_keV": 36.39215805163482,
+          "max_keV": 36.39216282431484,
+          "groups": 7,
+          "categories": {
+            "compact": 7,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 7,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392060035461036,
+          "min_keV": 36.392059889162965,
+          "max_keV": 36.39206387691166,
+          "groups": 7,
+          "categories": {
+            "compact": 6,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 7,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42692239612464,
+          "min_keV": 37.42692239612464,
+          "max_keV": 37.42692239612464,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24494868730176,
+          "min_keV": 37.24494868730176,
+          "max_keV": 37.24494868730176,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818465104033958,
+          "min_keV": 31.81845976410719,
+          "max_keV": 31.818465349122178,
+          "groups": 6,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.65842032759279,
+          "min_keV": 36.65842032759279,
+          "max_keV": 36.65842032759279,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81848772884433,
+          "min_keV": 31.818485573348738,
+          "max_keV": 31.818497270384647,
+          "groups": 16,
+          "categories": {
+            "compact": 13,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 13,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31694331504214,
+          "min_keV": 36.31694331504214,
+          "max_keV": 36.31694331504214,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20548025830198,
+          "min_keV": 32.20547922536391,
+          "max_keV": 32.20548217493874,
+          "groups": 11,
+          "categories": {
+            "compact": 7,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 7,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260657883455515,
+          "min_keV": 37.260647936120655,
+          "max_keV": 37.260657883455515,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24455017528584,
+          "min_keV": 37.24455017528584,
+          "max_keV": 37.244555377640445,
+          "groups": 3,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31698450551949,
+          "min_keV": 36.31698450551949,
+          "max_keV": 36.31699308280423,
+          "groups": 6,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.245009149990345,
+          "min_keV": 37.24500354835972,
+          "max_keV": 37.245009149990345,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392224043206326,
+          "min_keV": 36.392224043206326,
+          "max_keV": 36.392224043206326,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39175400071186,
+          "min_keV": 36.39175279669017,
+          "max_keV": 36.39175529211356,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42715692923346,
+          "min_keV": 37.42715692923346,
+          "max_keV": 37.42715692923346,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31671062795808,
+          "min_keV": 36.31670558482363,
+          "max_keV": 36.31671062795808,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26083261174277,
+          "min_keV": 37.26083261174277,
+          "max_keV": 37.26083452350127,
+          "groups": 3,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39213612693141,
+          "min_keV": 36.39213344973189,
+          "max_keV": 36.39213612693141,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316583695462036,
+          "min_keV": 36.3165833399717,
+          "max_keV": 36.31659026436627,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.317047545715205,
+          "min_keV": 36.317047545715205,
+          "max_keV": 36.317047545715205,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26086405556023,
+          "min_keV": 37.26085819212155,
+          "max_keV": 37.26086405556023,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818739807182986,
+          "min_keV": 31.818739807182986,
+          "max_keV": 31.818739807182986,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316858365127956,
+          "min_keV": 36.316848531196925,
+          "max_keV": 36.31686674944513,
+          "groups": 7,
+          "categories": {
+            "compact": 6,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 6,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818498820199206,
+          "min_keV": 31.818498820199206,
+          "max_keV": 31.81850579722089,
+          "groups": 10,
+          "categories": {
+            "compact": 10,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 10,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20570417388079,
+          "min_keV": 32.20570146828649,
+          "max_keV": 32.205707304384504,
+          "groups": 8,
+          "categories": {
+            "compact": 8,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 8,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.244682737917415,
+          "min_keV": 37.244676207718385,
+          "max_keV": 37.24469111198021,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24470093677798,
+          "min_keV": 37.24470093677798,
+          "max_keV": 37.24470093677798,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.658300412942715,
+          "min_keV": 36.658300412942715,
+          "max_keV": 36.658300412942715,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.2445811384101,
+          "min_keV": 37.2445811384101,
+          "max_keV": 37.2445811384101,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31683932634727,
+          "min_keV": 36.31683932634727,
+          "max_keV": 36.316844379860235,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31660064503959,
+          "min_keV": 36.31660064503959,
+          "max_keV": 36.31660953297055,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316772096569586,
+          "min_keV": 36.316772096569586,
+          "max_keV": 36.316772096569586,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26072619899936,
+          "min_keV": 37.26072619899936,
+          "max_keV": 37.26072619899936,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31691425725307,
+          "min_keV": 36.31691328594972,
+          "max_keV": 36.31691571638846,
+          "groups": 5,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26044491515587,
+          "min_keV": 37.26044491515587,
+          "max_keV": 37.26044491515587,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391774814548846,
+          "min_keV": 36.39176726340748,
+          "max_keV": 36.39178216724868,
+          "groups": 7,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 1,
+            "full": 5,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26081381005373,
+          "min_keV": 37.26080540587277,
+          "max_keV": 37.26081381005373,
+          "groups": 4,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26050659921219,
+          "min_keV": 37.26050659921219,
+          "max_keV": 37.26050659921219,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26055564312968,
+          "min_keV": 37.26055564312968,
+          "max_keV": 37.26055564312968,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31689076797765,
+          "min_keV": 36.31689076797765,
+          "max_keV": 36.31689076797765,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24503380774421,
+          "min_keV": 37.24503380774421,
+          "max_keV": 37.24503380774421,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42468293055603,
+          "min_keV": 37.42468293055603,
+          "max_keV": 37.42468293055603,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39194877543682,
+          "min_keV": 36.3919401545003,
+          "max_keV": 36.39195701106636,
+          "groups": 7,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205529024839215,
+          "min_keV": 32.205529024839215,
+          "max_keV": 32.20553052021359,
+          "groups": 4,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260646172829205,
+          "min_keV": 37.260646172829205,
+          "max_keV": 37.260646172829205,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24480176155652,
+          "min_keV": 37.24480176155652,
+          "max_keV": 37.24480176155652,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.244655319851034,
+          "min_keV": 37.244655319851034,
+          "max_keV": 37.244655319851034,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42721476872791,
+          "min_keV": 37.42721476872791,
+          "max_keV": 37.42721476872791,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391786660102134,
+          "min_keV": 36.391786660102134,
+          "max_keV": 36.39178785070991,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31699707234393,
+          "min_keV": 36.31699707234393,
+          "max_keV": 36.31699707234393,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.424419454370494,
+          "min_keV": 37.424416229557856,
+          "max_keV": 37.424419454370494,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31665960886098,
+          "min_keV": 36.31665960886098,
+          "max_keV": 36.316668271969675,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26042810504583,
+          "min_keV": 37.26042810504583,
+          "max_keV": 37.26042810504583,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260613065642026,
+          "min_keV": 37.260613065642026,
+          "max_keV": 37.26061683148724,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42443177814049,
+          "min_keV": 37.42443177814049,
+          "max_keV": 37.42443177814049,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39203837489199,
+          "min_keV": 36.39203631493737,
+          "max_keV": 36.39203837489199,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26089602632011,
+          "min_keV": 37.26089602632011,
+          "max_keV": 37.26089602632011,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24489102705081,
+          "min_keV": 37.24489102705081,
+          "max_keV": 37.24489102705081,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31661177803622,
+          "min_keV": 36.31661177803622,
+          "max_keV": 36.316621693002595,
+          "groups": 2,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316968893070886,
+          "min_keV": 36.31696823099082,
+          "max_keV": 36.31697242699627,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26074100201406,
+          "min_keV": 37.26074100201406,
+          "max_keV": 37.26074100201406,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24473584386815,
+          "min_keV": 37.24473584386815,
+          "max_keV": 37.24473584386815,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26031417014404,
+          "min_keV": 37.26031417014404,
+          "max_keV": 37.26031417014404,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39210017034325,
+          "min_keV": 36.39210017034325,
+          "max_keV": 36.39210085446027,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26032628138672,
+          "min_keV": 37.26032628138672,
+          "max_keV": 37.26033285524738,
+          "groups": 2,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42452571733038,
+          "min_keV": 37.42452571733038,
+          "max_keV": 37.42452571733038,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31681633934499,
+          "min_keV": 36.31681347776089,
+          "max_keV": 36.31681633934499,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818893717178074,
+          "min_keV": 31.818893717178074,
+          "max_keV": 31.818893717178074,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24482078952339,
+          "min_keV": 37.24482078952339,
+          "max_keV": 37.24482078952339,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.64264475730341,
+          "min_keV": 36.64264475730341,
+          "max_keV": 36.64264475730341,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.245073888154536,
+          "min_keV": 37.245073888154536,
+          "max_keV": 37.245073888154536,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.65843375215672,
+          "min_keV": 36.65843375215672,
+          "max_keV": 36.65843375215672,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26057993085879,
+          "min_keV": 37.26057993085879,
+          "max_keV": 37.26057993085879,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26085242883861,
+          "min_keV": 37.26085242883861,
+          "max_keV": 37.26085242883861,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.4267374175823,
+          "min_keV": 37.4267374175823,
+          "max_keV": 37.4267374175823,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.244962098150744,
+          "min_keV": 37.244962098150744,
+          "max_keV": 37.244962098150744,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.244837936087066,
+          "min_keV": 37.244837936087066,
+          "max_keV": 37.244837936087066,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.244985401611494,
+          "min_keV": 37.244985401611494,
+          "max_keV": 37.244985401611494,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39193629535876,
+          "min_keV": 36.39193629535876,
+          "max_keV": 36.39193629535876,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24484821984882,
+          "min_keV": 37.24484821984882,
+          "max_keV": 37.24484821984882,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39218444403109,
+          "min_keV": 36.39218444403109,
+          "max_keV": 36.39218444403109,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42678195090488,
+          "min_keV": 37.42678195090488,
+          "max_keV": 37.42678195090488,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818677702445918,
+          "min_keV": 31.818677702445918,
+          "max_keV": 31.818677702445918,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31669878214005,
+          "min_keV": 36.31669878214005,
+          "max_keV": 36.31669878214005,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260359377461,
+          "min_keV": 37.260359377461,
+          "max_keV": 37.260359377461,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260713096679545,
+          "min_keV": 37.260713096679545,
+          "max_keV": 37.260713096679545,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391859871780646,
+          "min_keV": 36.391859871780646,
+          "max_keV": 36.391859871780646,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26039962678131,
+          "min_keV": 37.26039962678131,
+          "max_keV": 37.26039962678131,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.244618938585816,
+          "min_keV": 37.244618938585816,
+          "max_keV": 37.244618938585816,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        }
+      ],
+      "full_unique_roots": 2677,
+      "line_full_unique_roots": 806,
+      "positive_fraction": {
+        "numerator": 12420,
+        "denominator": 1000000,
+        "fraction": 0.01242
+      },
+      "groups_per_initial_decay": {
+        "numerator": 12420,
+        "denominator": 1000000,
+        "fraction": 0.01242
+      },
+      "full_per_group": {
+        "numerator": 2677,
+        "denominator": 12420,
+        "fraction": 0.21553945249597423
+      },
+      "full_per_emitted_RDM_photon": {
+        "numerator": 2677,
+        "denominator": 931769,
+        "fraction": 0.002873029688688935
+      },
+      "line_full_per_emitted_line": {
+        "numerator": 806,
+        "denominator": 851505,
+        "fraction": 0.0009465593273087063
+      },
+      "band650_670_initial_decays": 808,
+      "band650_670_groups": 808,
+      "recorded_ge_energy_keV": 2879540.9227257804,
+      "recorded_material_energy_keV": {
+        "G4_Al": 67473896.67750946,
+        "G4_Cu": 576294.0007151794,
+        "G4_Galactic": 6.689450844936891e-18,
+        "G4_Ge": 2879540.9227257804,
+        "G4_In": 69315.333116666,
+        "G4_POLYETHYLENE": 189891886.34873143,
+        "boron_nitride": 605325.5216290215
+      },
+      "retained_raw_row_counts": {
+        "vtx": 1000000,
+        "particles": 1000000,
+        "tracks": 899367,
+        "stp/germanium": 329475,
+        "stp/ledger_1": 1238,
+        "stp/ledger_10": 322,
+        "stp/ledger_11": 564,
+        "stp/ledger_12": 11261,
+        "stp/ledger_13": 5142,
+        "stp/ledger_14": 15277,
+        "stp/ledger_15": 12529,
+        "stp/ledger_17": 8317,
+        "stp/ledger_18": 151174,
+        "stp/ledger_19": 380577,
+        "stp/ledger_2": 84800,
+        "stp/ledger_3": 30053,
+        "stp/ledger_4": 56971,
+        "stp/ledger_5": 33635,
+        "stp/ledger_6": 10480,
+        "stp/ledger_7": 9639,
+        "stp/ledger_8": 376,
+        "stp/ledger_9": 515
+      },
+      "classifier_failures": [],
+      "invariants": {
+        "zero_plus_positive_equals_initial": true,
+        "all_positive_events_classified": true,
+        "local_global_ranges_unique": true,
+        "done_complete_counts_match": true,
+        "scalar_detail_positive_energy_match": true,
+        "histogram_censuses_match": true,
+        "exclusive_full_partial_unknown_equals_groups": true,
+        "group_energy_partition": true
+      }
+    },
+    "SAP22": {
+      "initial_decays": 1000000,
+      "zero_ge_decays": 988728,
+      "positive_ge_decays": 11272,
+      "isolated_groups": 11273,
+      "emitted_RDM_photons": 931544,
+      "emitted_line_photons": 851318,
+      "category_group_counts": {
+        "compact": 2067,
+        "compton1": 239,
+        "compton2": 115,
+        "full": 2427,
+        "partial": 8680,
+        "unknown": 166
+      },
+      "photon_families": [
+        {
+          "anchor_keV": 32.205805274382854,
+          "min_keV": 32.20579683884837,
+          "max_keV": 32.20581483415004,
+          "groups": 35,
+          "categories": {
+            "compact": 27,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 28,
+            "partial": 7,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 661.6572831606165,
+          "min_keV": 661.6572831606165,
+          "max_keV": 661.6572831606165,
+          "groups": 8917,
+          "categories": {
+            "compact": 190,
+            "compton1": 211,
+            "compton2": 115,
+            "full": 531,
+            "partial": 8386,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20559752303666,
+          "min_keV": 32.20558780553835,
+          "max_keV": 32.20560707957395,
+          "groups": 41,
+          "categories": {
+            "compact": 34,
+            "compton1": 2,
+            "compton2": 0,
+            "full": 35,
+            "partial": 6,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": null,
+          "min_keV": null,
+          "max_keV": null,
+          "groups": 166,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 0,
+            "unknown": 166
+          }
+        },
+        {
+          "anchor_keV": 36.39184945961307,
+          "min_keV": 36.39184115292743,
+          "max_keV": 36.39185906052971,
+          "groups": 7,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818557394832,
+          "min_keV": 31.818548544730938,
+          "max_keV": 31.81856669309538,
+          "groups": 22,
+          "categories": {
+            "compact": 21,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 21,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205726681262455,
+          "min_keV": 32.20571726371218,
+          "max_keV": 32.205735617776355,
+          "groups": 53,
+          "categories": {
+            "compact": 43,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 43,
+            "partial": 10,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20545840802623,
+          "min_keV": 32.20544947019021,
+          "max_keV": 32.20546829279054,
+          "groups": 45,
+          "categories": {
+            "compact": 40,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 40,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20551633052253,
+          "min_keV": 32.20550677805662,
+          "max_keV": 32.20552585373663,
+          "groups": 41,
+          "categories": {
+            "compact": 34,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 34,
+            "partial": 7,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20553202864516,
+          "min_keV": 32.20552634868042,
+          "max_keV": 32.205541913597244,
+          "groups": 30,
+          "categories": {
+            "compact": 26,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 26,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81863183138374,
+          "min_keV": 31.818622560083686,
+          "max_keV": 31.81864142973727,
+          "groups": 22,
+          "categories": {
+            "compact": 22,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 22,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205553235744944,
+          "min_keV": 32.20554371095694,
+          "max_keV": 32.2055626737763,
+          "groups": 54,
+          "categories": {
+            "compact": 47,
+            "compton1": 2,
+            "compton2": 0,
+            "full": 47,
+            "partial": 7,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205381218879396,
+          "min_keV": 32.20537126238295,
+          "max_keV": 32.20538991740331,
+          "groups": 36,
+          "categories": {
+            "compact": 31,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 31,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392100741137725,
+          "min_keV": 36.39209174885763,
+          "max_keV": 36.39210943892995,
+          "groups": 11,
+          "categories": {
+            "compact": 11,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 11,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81864383704824,
+          "min_keV": 31.818641924751486,
+          "max_keV": 31.81865355231945,
+          "groups": 17,
+          "categories": {
+            "compact": 14,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 14,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818744718457527,
+          "min_keV": 31.81873493792226,
+          "max_keV": 31.818754358665462,
+          "groups": 34,
+          "categories": {
+            "compact": 29,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 29,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.317046410564,
+          "min_keV": 36.317039217203096,
+          "max_keV": 36.31704995800392,
+          "groups": 4,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818655663444787,
+          "min_keV": 31.818654316111335,
+          "max_keV": 31.818665411317532,
+          "groups": 15,
+          "categories": {
+            "compact": 14,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 14,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39196982597974,
+          "min_keV": 36.39196073760311,
+          "max_keV": 36.391977402504125,
+          "groups": 12,
+          "categories": {
+            "compact": 8,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 9,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31688034830475,
+          "min_keV": 36.316871273866504,
+          "max_keV": 36.31688475854403,
+          "groups": 6,
+          "categories": {
+            "compact": 6,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 6,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20556835840008,
+          "min_keV": 32.20556360231013,
+          "max_keV": 32.20557786648769,
+          "groups": 33,
+          "categories": {
+            "compact": 29,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 30,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20583214891897,
+          "min_keV": 32.20582240049849,
+          "max_keV": 32.2058418795921,
+          "groups": 51,
+          "categories": {
+            "compact": 40,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 42,
+            "partial": 9,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818584748461504,
+          "min_keV": 31.818576891728352,
+          "max_keV": 31.818593804266744,
+          "groups": 19,
+          "categories": {
+            "compact": 18,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 18,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391762606951076,
+          "min_keV": 36.39175331718197,
+          "max_keV": 36.391772288459336,
+          "groups": 13,
+          "categories": {
+            "compact": 12,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 12,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81866797619433,
+          "min_keV": 31.818666421961712,
+          "max_keV": 31.818676472574086,
+          "groups": 14,
+          "categories": {
+            "compact": 12,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 12,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20565088134799,
+          "min_keV": 32.205641172952696,
+          "max_keV": 32.205660717936254,
+          "groups": 39,
+          "categories": {
+            "compact": 34,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 35,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31693377568497,
+          "min_keV": 36.3169315104351,
+          "max_keV": 36.31693731947804,
+          "groups": 7,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818888583729116,
+          "min_keV": 31.818878873515636,
+          "max_keV": 31.8188969877876,
+          "groups": 23,
+          "categories": {
+            "compact": 18,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 18,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20550009220772,
+          "min_keV": 32.20549039581204,
+          "max_keV": 32.20550599985494,
+          "groups": 41,
+          "categories": {
+            "compact": 36,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 36,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26056445325978,
+          "min_keV": 37.26056053007475,
+          "max_keV": 37.26056445325978,
+          "groups": 3,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20581888493291,
+          "min_keV": 32.205815677077226,
+          "max_keV": 32.20582194393212,
+          "groups": 10,
+          "categories": {
+            "compact": 8,
+            "compton1": 2,
+            "compton2": 0,
+            "full": 8,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31701126127348,
+          "min_keV": 36.31701126127348,
+          "max_keV": 36.3170190204,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20544285187074,
+          "min_keV": 32.20543405324188,
+          "max_keV": 32.205447023799806,
+          "groups": 33,
+          "categories": {
+            "compact": 26,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 26,
+            "partial": 7,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20575685247549,
+          "min_keV": 32.20574694458743,
+          "max_keV": 32.205766708335716,
+          "groups": 50,
+          "categories": {
+            "compact": 46,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 47,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818534121300438,
+          "min_keV": 31.818524679958507,
+          "max_keV": 31.818544119830953,
+          "groups": 22,
+          "categories": {
+            "compact": 19,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 19,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81887679091974,
+          "min_keV": 31.818868003123598,
+          "max_keV": 31.818878282496613,
+          "groups": 13,
+          "categories": {
+            "compact": 13,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 13,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316893646528946,
+          "min_keV": 36.316893646528946,
+          "max_keV": 36.31690279434149,
+          "groups": 7,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20566934103616,
+          "min_keV": 32.20566131323645,
+          "max_keV": 32.20567867507753,
+          "groups": 43,
+          "categories": {
+            "compact": 38,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 39,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205613008934904,
+          "min_keV": 32.20560752689221,
+          "max_keV": 32.20562293404854,
+          "groups": 34,
+          "categories": {
+            "compact": 27,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 27,
+            "partial": 7,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81881993444949,
+          "min_keV": 31.81881024824236,
+          "max_keV": 31.81882600935059,
+          "groups": 24,
+          "categories": {
+            "compact": 19,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 20,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818946379007063,
+          "min_keV": 31.818936555863008,
+          "max_keV": 31.818952704991016,
+          "groups": 23,
+          "categories": {
+            "compact": 21,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 22,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20541089857446,
+          "min_keV": 32.205401055094235,
+          "max_keV": 32.205420813382055,
+          "groups": 51,
+          "categories": {
+            "compact": 40,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 40,
+            "partial": 11,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81883290904646,
+          "min_keV": 31.81883002519095,
+          "max_keV": 31.818841103671684,
+          "groups": 23,
+          "categories": {
+            "compact": 14,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 14,
+            "partial": 9,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31691947305524,
+          "min_keV": 36.316912828846824,
+          "max_keV": 36.3169221873573,
+          "groups": 6,
+          "categories": {
+            "compact": 6,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 6,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.244897074723916,
+          "min_keV": 37.244897074723916,
+          "max_keV": 37.244897074723916,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26057588939914,
+          "min_keV": 37.26057588939914,
+          "max_keV": 37.26057588939914,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205430598154855,
+          "min_keV": 32.20542201670058,
+          "max_keV": 32.205430598154855,
+          "groups": 19,
+          "categories": {
+            "compact": 16,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 17,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24473771251787,
+          "min_keV": 37.24472851434799,
+          "max_keV": 37.24473771251787,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20574675577811,
+          "min_keV": 32.20573750758756,
+          "max_keV": 32.20574675577811,
+          "groups": 19,
+          "categories": {
+            "compact": 16,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 16,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.2603078506712,
+          "min_keV": 37.26030406574595,
+          "max_keV": 37.2603078506712,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24466542792739,
+          "min_keV": 37.24465772799462,
+          "max_keV": 37.2446735557321,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20576758051108,
+          "min_keV": 32.205767020124654,
+          "max_keV": 32.20577715257906,
+          "groups": 18,
+          "categories": {
+            "compact": 18,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 18,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20584616584627,
+          "min_keV": 32.20584243677007,
+          "max_keV": 32.205855836736454,
+          "groups": 24,
+          "categories": {
+            "compact": 20,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 20,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81873173966841,
+          "min_keV": 31.81872202042873,
+          "max_keV": 31.818734540269872,
+          "groups": 16,
+          "categories": {
+            "compact": 13,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 13,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81877248744139,
+          "min_keV": 31.818762850529133,
+          "max_keV": 31.81878115674922,
+          "groups": 20,
+          "categories": {
+            "compact": 20,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 20,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39224215126255,
+          "min_keV": 36.39223319640719,
+          "max_keV": 36.392251869873036,
+          "groups": 11,
+          "categories": {
+            "compact": 10,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 10,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20547162249457,
+          "min_keV": 32.20546886989992,
+          "max_keV": 32.20548117418175,
+          "groups": 30,
+          "categories": {
+            "compact": 24,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 25,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39208880241833,
+          "min_keV": 36.39208219875621,
+          "max_keV": 36.39209061861426,
+          "groups": 10,
+          "categories": {
+            "compact": 8,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 8,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20548586782436,
+          "min_keV": 32.20548214828481,
+          "max_keV": 32.20548963026384,
+          "groups": 21,
+          "categories": {
+            "compact": 15,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 15,
+            "partial": 6,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81892688565533,
+          "min_keV": 31.81891793241661,
+          "max_keV": 31.818935981931936,
+          "groups": 20,
+          "categories": {
+            "compact": 18,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 18,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81876043858318,
+          "min_keV": 31.818755316737246,
+          "max_keV": 31.818762253489787,
+          "groups": 6,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26082404265833,
+          "min_keV": 37.26081879295275,
+          "max_keV": 37.26082404265833,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20536284642407,
+          "min_keV": 32.205352881004565,
+          "max_keV": 32.20537112604632,
+          "groups": 53,
+          "categories": {
+            "compact": 45,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 45,
+            "partial": 8,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81869949231121,
+          "min_keV": 31.818689605587974,
+          "max_keV": 31.818708926771397,
+          "groups": 26,
+          "categories": {
+            "compact": 23,
+            "compton1": 2,
+            "compton2": 0,
+            "full": 23,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316605818792794,
+          "min_keV": 36.316595840888816,
+          "max_keV": 36.31661495913148,
+          "groups": 6,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818520605725876,
+          "min_keV": 31.818510899242202,
+          "max_keV": 31.818523506901148,
+          "groups": 24,
+          "categories": {
+            "compact": 21,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 21,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81850893638929,
+          "min_keV": 31.818499063172837,
+          "max_keV": 31.81850935472294,
+          "groups": 12,
+          "categories": {
+            "compact": 7,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 8,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31686345678033,
+          "min_keV": 36.31685722114406,
+          "max_keV": 36.31686571747876,
+          "groups": 5,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42712709088916,
+          "min_keV": 37.42712709088916,
+          "max_keV": 37.42712709088916,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81871852379378,
+          "min_keV": 31.818710214726064,
+          "max_keV": 31.8187214221057,
+          "groups": 13,
+          "categories": {
+            "compact": 9,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 9,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39228065535827,
+          "min_keV": 36.39227464859456,
+          "max_keV": 36.39228921313642,
+          "groups": 7,
+          "categories": {
+            "compact": 7,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 7,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392218177538474,
+          "min_keV": 36.39220826009161,
+          "max_keV": 36.39222773617199,
+          "groups": 13,
+          "categories": {
+            "compact": 12,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 12,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81890154134165,
+          "min_keV": 31.818899874092857,
+          "max_keV": 31.818910222355377,
+          "groups": 14,
+          "categories": {
+            "compact": 11,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 11,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39186303742656,
+          "min_keV": 36.39186261944588,
+          "max_keV": 36.39187183388032,
+          "groups": 6,
+          "categories": {
+            "compact": 6,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 6,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26063809805804,
+          "min_keV": 37.260635470373934,
+          "max_keV": 37.26064805695076,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20570548687456,
+          "min_keV": 32.20569567721988,
+          "max_keV": 32.20571476498566,
+          "groups": 41,
+          "categories": {
+            "compact": 37,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 37,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818799575072102,
+          "min_keV": 31.81879127168421,
+          "max_keV": 31.81880857495356,
+          "groups": 16,
+          "categories": {
+            "compact": 15,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 15,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20563907910628,
+          "min_keV": 32.205629267200045,
+          "max_keV": 32.20564057927998,
+          "groups": 31,
+          "categories": {
+            "compact": 26,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 26,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81845002214268,
+          "min_keV": 31.818447628730137,
+          "max_keV": 31.818458456610298,
+          "groups": 11,
+          "categories": {
+            "compact": 10,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 10,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39199079826584,
+          "min_keV": 36.39198155675384,
+          "max_keV": 36.39200043920614,
+          "groups": 8,
+          "categories": {
+            "compact": 6,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 6,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.2053502538468,
+          "min_keV": 32.205344081324,
+          "max_keV": 32.20535272189242,
+          "groups": 16,
+          "categories": {
+            "compact": 14,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 14,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42715558770199,
+          "min_keV": 37.42715558770199,
+          "max_keV": 37.42715558770199,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26037442368444,
+          "min_keV": 37.26037442368444,
+          "max_keV": 37.26037991543826,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81860832436171,
+          "min_keV": 31.818598465646033,
+          "max_keV": 31.81861811133517,
+          "groups": 24,
+          "categories": {
+            "compact": 21,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 22,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316830111063965,
+          "min_keV": 36.316830111063965,
+          "max_keV": 36.31683587433742,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20562404454329,
+          "min_keV": 32.20562403157377,
+          "max_keV": 32.20562791532422,
+          "groups": 13,
+          "categories": {
+            "compact": 12,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 12,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818473970184844,
+          "min_keV": 31.818464580284832,
+          "max_keV": 31.818482997471172,
+          "groups": 22,
+          "categories": {
+            "compact": 19,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 19,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205693862125514,
+          "min_keV": 32.20568453818471,
+          "max_keV": 32.20569398428263,
+          "groups": 15,
+          "categories": {
+            "compact": 12,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 12,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31657192109931,
+          "min_keV": 36.316562578137685,
+          "max_keV": 36.31657881955971,
+          "groups": 6,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 3,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316625214456266,
+          "min_keV": 36.316618047707344,
+          "max_keV": 36.316625214456266,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39204372610456,
+          "min_keV": 36.392035942269416,
+          "max_keV": 36.39205159913229,
+          "groups": 8,
+          "categories": {
+            "compact": 8,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 8,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.65832357128319,
+          "min_keV": 36.65832357128319,
+          "max_keV": 36.65832357128319,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31653424724067,
+          "min_keV": 36.316524876410135,
+          "max_keV": 36.31653583836613,
+          "groups": 6,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81885197507771,
+          "min_keV": 31.81884344915363,
+          "max_keV": 31.818861512751337,
+          "groups": 25,
+          "categories": {
+            "compact": 21,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 21,
+            "partial": 4,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392131859687495,
+          "min_keV": 36.39212187085111,
+          "max_keV": 36.39213859084423,
+          "groups": 11,
+          "categories": {
+            "compact": 9,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 9,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81891612468108,
+          "min_keV": 31.818912788377112,
+          "max_keV": 31.818916606757888,
+          "groups": 9,
+          "categories": {
+            "compact": 9,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 9,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.2057824402485,
+          "min_keV": 32.205779605033,
+          "max_keV": 32.20579174680544,
+          "groups": 28,
+          "categories": {
+            "compact": 23,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 23,
+            "partial": 5,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39205670423213,
+          "min_keV": 36.3920563144897,
+          "max_keV": 36.39206484739174,
+          "groups": 5,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31679447842925,
+          "min_keV": 36.316791419122026,
+          "max_keV": 36.31680171394283,
+          "groups": 5,
+          "categories": {
+            "compact": 5,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 5,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.2604145281488,
+          "min_keV": 37.2604145281488,
+          "max_keV": 37.2604145281488,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26031983775923,
+          "min_keV": 37.26031983775923,
+          "max_keV": 37.26032497545376,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20558173327985,
+          "min_keV": 32.205578382188975,
+          "max_keV": 32.205587521442965,
+          "groups": 20,
+          "categories": {
+            "compact": 18,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 19,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39200105121691,
+          "min_keV": 36.39200105121691,
+          "max_keV": 36.39200678930707,
+          "groups": 3,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26069629189795,
+          "min_keV": 37.26069629189795,
+          "max_keV": 37.26069629189795,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391733012299674,
+          "min_keV": 36.39172765774089,
+          "max_keV": 36.39174081892419,
+          "groups": 12,
+          "categories": {
+            "compact": 11,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 11,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81848910590046,
+          "min_keV": 31.81848449193349,
+          "max_keV": 31.81849855408165,
+          "groups": 19,
+          "categories": {
+            "compact": 17,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 17,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260399062782895,
+          "min_keV": 37.2603903375323,
+          "max_keV": 37.260399062782895,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31664487063313,
+          "min_keV": 36.3166393932701,
+          "max_keV": 36.31665353998585,
+          "groups": 5,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818862406759145,
+          "min_keV": 31.818862406759145,
+          "max_keV": 31.818866210306002,
+          "groups": 8,
+          "categories": {
+            "compact": 7,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 7,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31676587084915,
+          "min_keV": 36.31676232308086,
+          "max_keV": 36.31677475986134,
+          "groups": 7,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31670636435297,
+          "min_keV": 36.316696971600365,
+          "max_keV": 36.31670636435297,
+          "groups": 5,
+          "categories": {
+            "compact": 5,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 5,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316592703824035,
+          "min_keV": 36.316589482538554,
+          "max_keV": 36.31659417882873,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81846155259553,
+          "min_keV": 31.81846004311148,
+          "max_keV": 31.818463820775314,
+          "groups": 9,
+          "categories": {
+            "compact": 7,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 7,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818546841772744,
+          "min_keV": 31.81854423520724,
+          "max_keV": 31.818546841772744,
+          "groups": 3,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391886244707514,
+          "min_keV": 36.39187709363329,
+          "max_keV": 36.3918947229666,
+          "groups": 11,
+          "categories": {
+            "compact": 10,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 10,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39215555453888,
+          "min_keV": 36.392146026941134,
+          "max_keV": 36.39216484430783,
+          "groups": 13,
+          "categories": {
+            "compact": 12,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 12,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20539959807058,
+          "min_keV": 32.205391643362866,
+          "max_keV": 32.20540047189416,
+          "groups": 21,
+          "categories": {
+            "compact": 20,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 20,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31667569857128,
+          "min_keV": 36.31667029536354,
+          "max_keV": 36.31667569857128,
+          "groups": 2,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39216590482596,
+          "min_keV": 36.39216590482596,
+          "max_keV": 36.39217212862617,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39223052062782,
+          "min_keV": 36.39223052062782,
+          "max_keV": 36.39223052062782,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31705669529962,
+          "min_keV": 36.31705669529962,
+          "max_keV": 36.31705669529962,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.3918347893072,
+          "min_keV": 36.3918267609904,
+          "max_keV": 36.39183937315769,
+          "groups": 10,
+          "categories": {
+            "compact": 10,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 10,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316691133517914,
+          "min_keV": 36.3166878361485,
+          "max_keV": 36.316691133517914,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818785873948187,
+          "min_keV": 31.8187839149671,
+          "max_keV": 31.818789442125585,
+          "groups": 5,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24488168003945,
+          "min_keV": 37.24488168003945,
+          "max_keV": 37.24488168003945,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818598237352564,
+          "min_keV": 31.81859521971053,
+          "max_keV": 31.818598237352564,
+          "groups": 5,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39179260477491,
+          "min_keV": 36.39178374579728,
+          "max_keV": 36.391799241915045,
+          "groups": 7,
+          "categories": {
+            "compact": 7,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 7,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.818682814775215,
+          "min_keV": 31.818678495700045,
+          "max_keV": 31.818689141608044,
+          "groups": 15,
+          "categories": {
+            "compact": 14,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 14,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26067920361611,
+          "min_keV": 37.26067267750808,
+          "max_keV": 37.26067920361611,
+          "groups": 2,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20571556047874,
+          "min_keV": 32.20571556047874,
+          "max_keV": 32.20571607302246,
+          "groups": 2,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39171581083109,
+          "min_keV": 36.39171305416926,
+          "max_keV": 36.391721798042425,
+          "groups": 5,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31698563641169,
+          "min_keV": 36.31697870601318,
+          "max_keV": 36.3169904204475,
+          "groups": 3,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26052540095736,
+          "min_keV": 37.26052540095736,
+          "max_keV": 37.26052540095736,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316742284435215,
+          "min_keV": 36.31673715529749,
+          "max_keV": 36.31674744357813,
+          "groups": 3,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.244765356664956,
+          "min_keV": 37.244765356664956,
+          "max_keV": 37.244765356664956,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391948584604016,
+          "min_keV": 36.39194722655041,
+          "max_keV": 36.391957682861296,
+          "groups": 9,
+          "categories": {
+            "compact": 9,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 9,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42694087005184,
+          "min_keV": 37.42694087005184,
+          "max_keV": 37.42694087005184,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.317074863343564,
+          "min_keV": 36.31707009754201,
+          "max_keV": 36.317081373385996,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26077057698171,
+          "min_keV": 37.26077057698171,
+          "max_keV": 37.26077057698171,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391874481340416,
+          "min_keV": 36.391874481340416,
+          "max_keV": 36.391874481340416,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26044232578725,
+          "min_keV": 37.26043593104551,
+          "max_keV": 37.26044232578725,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.317030172612924,
+          "min_keV": 36.3170229150685,
+          "max_keV": 36.317030172612924,
+          "groups": 7,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26083831134971,
+          "min_keV": 37.2608372474593,
+          "max_keV": 37.26083831134971,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316554237858256,
+          "min_keV": 36.316544350728506,
+          "max_keV": 36.31655997274394,
+          "groups": 7,
+          "categories": {
+            "compact": 6,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 6,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392072388761086,
+          "min_keV": 36.3920692225675,
+          "max_keV": 36.392072388761086,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39181790116756,
+          "min_keV": 36.39181388581835,
+          "max_keV": 36.39181790116756,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24455079985482,
+          "min_keV": 37.24455079985482,
+          "max_keV": 37.24455079985482,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391913605534036,
+          "min_keV": 36.39190737981994,
+          "max_keV": 36.3919195798406,
+          "groups": 6,
+          "categories": {
+            "compact": 6,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 6,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39192808369375,
+          "min_keV": 36.391924026082776,
+          "max_keV": 36.39193659770043,
+          "groups": 5,
+          "categories": {
+            "compact": 5,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 5,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205680857292734,
+          "min_keV": 32.20567936829808,
+          "max_keV": 32.205682887905,
+          "groups": 11,
+          "categories": {
+            "compact": 11,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 11,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39202677007606,
+          "min_keV": 36.39201864708336,
+          "max_keV": 36.3920316304391,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39189885606851,
+          "min_keV": 36.39189885606851,
+          "max_keV": 36.39190196925448,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260548331714084,
+          "min_keV": 37.260548331714084,
+          "max_keV": 37.260548331714084,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39226339077938,
+          "min_keV": 36.39225466009868,
+          "max_keV": 36.39226943322911,
+          "groups": 6,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42729469410751,
+          "min_keV": 37.42729469410751,
+          "max_keV": 37.42729469410751,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42684925279169,
+          "min_keV": 37.42684925279169,
+          "max_keV": 37.42684925279169,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.205795249793844,
+          "min_keV": 32.205792497402676,
+          "max_keV": 32.205795249793844,
+          "groups": 5,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 2,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31681656052781,
+          "min_keV": 36.316814547332825,
+          "max_keV": 36.31681977761675,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26058730299264,
+          "min_keV": 37.26058730299264,
+          "max_keV": 37.260594363075064,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81862053944278,
+          "min_keV": 31.81861930216195,
+          "max_keV": 31.81862053944278,
+          "groups": 3,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.426889742045276,
+          "min_keV": 37.4268850175707,
+          "max_keV": 37.426889742045276,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260466518983606,
+          "min_keV": 37.260466518983606,
+          "max_keV": 37.260473856376635,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260878550189034,
+          "min_keV": 37.260878550189034,
+          "max_keV": 37.26088673768367,
+          "groups": 3,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24457984414612,
+          "min_keV": 37.24457984414612,
+          "max_keV": 37.24457984414612,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31666302096392,
+          "min_keV": 36.31665820559597,
+          "max_keV": 36.31666484839583,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26071397055517,
+          "min_keV": 37.26070825847548,
+          "max_keV": 37.26071397055517,
+          "groups": 4,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260813652989725,
+          "min_keV": 37.260813652989725,
+          "max_keV": 37.260813652989725,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31652068030153,
+          "min_keV": 36.31652068030153,
+          "max_keV": 36.31652315949301,
+          "groups": 3,
+          "categories": {
+            "compact": 3,
+            "compton1": 1,
+            "compton2": 0,
+            "full": 3,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.426765294667625,
+          "min_keV": 37.426765294667625,
+          "max_keV": 37.426765294667625,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316965898265416,
+          "min_keV": 36.316960843813206,
+          "max_keV": 36.31697262153437,
+          "groups": 5,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392186412740564,
+          "min_keV": 36.39217649357662,
+          "max_keV": 36.392195335994515,
+          "groups": 6,
+          "categories": {
+            "compact": 6,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 6,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391782268805805,
+          "min_keV": 36.39177711678689,
+          "max_keV": 36.391782268805805,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31684126830205,
+          "min_keV": 36.31684126830205,
+          "max_keV": 36.31684665169322,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42469906650384,
+          "min_keV": 37.42469906650384,
+          "max_keV": 37.42469906650384,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392196414580866,
+          "min_keV": 36.392196414580866,
+          "max_keV": 36.392196414580866,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26078348846849,
+          "min_keV": 37.26078348846849,
+          "max_keV": 37.260790531793305,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39220648797007,
+          "min_keV": 36.39220648797007,
+          "max_keV": 36.39220736104973,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26074773742308,
+          "min_keV": 37.26074489548873,
+          "max_keV": 37.26074773742308,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24486880600797,
+          "min_keV": 37.244865526192385,
+          "max_keV": 37.24486880600797,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39201142122177,
+          "min_keV": 36.39201142122177,
+          "max_keV": 36.392015177302966,
+          "groups": 4,
+          "categories": {
+            "compact": 4,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 4,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39214421539859,
+          "min_keV": 36.392143992267066,
+          "max_keV": 36.39214421539859,
+          "groups": 2,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24470065724979,
+          "min_keV": 37.24470065724979,
+          "max_keV": 37.24470065724979,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24499784783645,
+          "min_keV": 37.24499784783645,
+          "max_keV": 37.24499784783645,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26079569244758,
+          "min_keV": 37.26079569244758,
+          "max_keV": 37.26079569244758,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26051477353484,
+          "min_keV": 37.26051477353484,
+          "max_keV": 37.26051477353484,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 31.81857347300965,
+          "min_keV": 31.81857144226294,
+          "max_keV": 31.81857347300965,
+          "groups": 4,
+          "categories": {
+            "compact": 3,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 3,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24505448773413,
+          "min_keV": 37.24505448773413,
+          "max_keV": 37.24505448773413,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 32.20554276427483,
+          "min_keV": 32.20554276427483,
+          "max_keV": 32.20554302450308,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26035282121121,
+          "min_keV": 37.26035282121121,
+          "max_keV": 37.26035282121121,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24503655953937,
+          "min_keV": 37.24503655953937,
+          "max_keV": 37.24503655953937,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26048523490633,
+          "min_keV": 37.26048523490633,
+          "max_keV": 37.26048523490633,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42674892872612,
+          "min_keV": 37.42674892872612,
+          "max_keV": 37.42674892872612,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.34924702568057,
+          "min_keV": 37.34924702568057,
+          "max_keV": 37.34924702568057,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.316783715286725,
+          "min_keV": 36.316783715286725,
+          "max_keV": 36.316783715286725,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42718765532212,
+          "min_keV": 37.42718765532212,
+          "max_keV": 37.42718765532212,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26043069052972,
+          "min_keV": 37.26043069052972,
+          "max_keV": 37.26043069052972,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.392252498133026,
+          "min_keV": 36.392252498133026,
+          "max_keV": 36.392252729742474,
+          "groups": 2,
+          "categories": {
+            "compact": 2,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 2,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31671813548891,
+          "min_keV": 36.31671813548891,
+          "max_keV": 36.316723862169795,
+          "groups": 2,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.260615281712354,
+          "min_keV": 37.260615281712354,
+          "max_keV": 37.260615281712354,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.42455882839171,
+          "min_keV": 37.42455882839171,
+          "max_keV": 37.42455882839171,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.24459614382041,
+          "min_keV": 37.24459614382041,
+          "max_keV": 37.24459614382041,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31673041992843,
+          "min_keV": 36.31673041992843,
+          "max_keV": 36.31673041992843,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31694633619675,
+          "min_keV": 36.31694633619675,
+          "max_keV": 36.31694633619675,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.31675389717063,
+          "min_keV": 36.31675389717063,
+          "max_keV": 36.31675389717063,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.391807282271124,
+          "min_keV": 36.391807282271124,
+          "max_keV": 36.391807282271124,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 37.26086529461977,
+          "min_keV": 37.26086529461977,
+          "max_keV": 37.26086529461977,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39211284780556,
+          "min_keV": 36.39211284780556,
+          "max_keV": 36.39211284780556,
+          "groups": 1,
+          "categories": {
+            "compact": 1,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 1,
+            "partial": 0,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.658570824435685,
+          "min_keV": 36.658570824435685,
+          "max_keV": 36.658570824435685,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        },
+        {
+          "anchor_keV": 36.39174789538283,
+          "min_keV": 36.39174789538283,
+          "max_keV": 36.39174789538283,
+          "groups": 1,
+          "categories": {
+            "compact": 0,
+            "compton1": 0,
+            "compton2": 0,
+            "full": 0,
+            "partial": 1,
+            "unknown": 0
+          }
+        }
+      ],
+      "full_unique_roots": 2427,
+      "line_full_unique_roots": 531,
+      "positive_fraction": {
+        "numerator": 11272,
+        "denominator": 1000000,
+        "fraction": 0.011272
+      },
+      "groups_per_initial_decay": {
+        "numerator": 11273,
+        "denominator": 1000000,
+        "fraction": 0.011273
+      },
+      "full_per_group": {
+        "numerator": 2427,
+        "denominator": 11273,
+        "fraction": 0.21529317839084539
+      },
+      "full_per_emitted_RDM_photon": {
+        "numerator": 2427,
+        "denominator": 931544,
+        "fraction": 0.002605351974785947
+      },
+      "line_full_per_emitted_line": {
+        "numerator": 531,
+        "denominator": 851318,
+        "fraction": 0.0006237387204311432
+      },
+      "band650_670_initial_decays": 535,
+      "band650_670_groups": 535,
+      "recorded_ge_energy_keV": 2453094.1191513636,
+      "recorded_material_energy_keV": {
+        "G4_Al": 67471109.78499895,
+        "G4_Cu": 581016.6548132512,
+        "G4_Galactic": 6.819468451579474e-18,
+        "G4_Ge": 2453094.1191513636,
+        "G4_In": 67349.12777590522,
+        "G4_POLYETHYLENE": 190258335.57260692,
+        "boron_nitride": 626050.1228218614
+      },
+      "retained_raw_row_counts": {
+        "vtx": 1000000,
+        "particles": 1000000,
+        "tracks": 923288,
+        "stp/germanium": 316081,
+        "stp/ledger_1": 990,
+        "stp/ledger_10": 448,
+        "stp/ledger_11": 500,
+        "stp/ledger_12": 9676,
+        "stp/ledger_13": 4593,
+        "stp/ledger_14": 12158,
+        "stp/ledger_15": 9874,
+        "stp/ledger_17": 7734,
+        "stp/ledger_18": 146702,
+        "stp/ledger_19": 355377,
+        "stp/ledger_2": 81012,
+        "stp/ledger_3": 27383,
+        "stp/ledger_4": 51151,
+        "stp/ledger_5": 32199,
+        "stp/ledger_6": 8938,
+        "stp/ledger_7": 7779,
+        "stp/ledger_8": 338,
+        "stp/ledger_9": 487
+      },
+      "classifier_failures": [],
+      "invariants": {
+        "zero_plus_positive_equals_initial": true,
+        "all_positive_events_classified": true,
+        "local_global_ranges_unique": true,
+        "done_complete_counts_match": true,
+        "scalar_detail_positive_energy_match": true,
+        "histogram_censuses_match": true,
+        "exclusive_full_partial_unknown_equals_groups": true,
+        "group_energy_partition": true
+      }
+    }
+  },
+  "old10k": {
+    "description": "Descriptive simulation sample comparison only; different random seeds, not a matched experimental control.",
+    "run_sha256": "f563969cf57f3f6ff34c09dd4748ddafddcc3d7df8f4d06941b18e5212c5b43d",
+    "viewer_manifest_sha256": "0ad6a0df52ae725543d0c8474c5db4474e6c28af537ff944660e1ebf9b6a1b3e",
+    "models": {
+      "AK02": {
+        "initial_decays": 10000,
+        "positive_ge_decays": 121,
+        "isolated_groups": 121,
+        "emitted_RDM_photons": 9317,
+        "emitted_line_photons": 8506,
+        "category_group_counts": {
+          "compact": 22,
+          "compton1": 1,
+          "compton2": 2,
+          "full": 29,
+          "partial": 92,
+          "unknown": 0
+        },
+        "line_full_unique_roots": 11,
+        "photon_families": [
+          {
+            "anchor_keV": 661.6572831606165,
+            "min_keV": 661.6572831606165,
+            "max_keV": 661.6572831606165,
+            "groups": 101,
+            "categories": {
+              "compact": 4,
+              "compton1": 1,
+              "compton2": 2,
+              "full": 11,
+              "partial": 90,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20584867082563,
+            "min_keV": 32.20584867082563,
+            "max_keV": 32.20584867082563,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20582981865069,
+            "min_keV": 32.20582981865069,
+            "max_keV": 32.20582981865069,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.205517290409155,
+            "min_keV": 32.205517290409155,
+            "max_keV": 32.205517290409155,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 31.818801828264707,
+            "min_keV": 31.818801828264707,
+            "max_keV": 31.818801828264707,
+            "groups": 1,
+            "categories": {
+              "compact": 0,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 0,
+              "partial": 1,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20564813201827,
+            "min_keV": 32.20564813201827,
+            "max_keV": 32.20564813201827,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20557972237832,
+            "min_keV": 32.20557972237832,
+            "max_keV": 32.20557972237832,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20546223457827,
+            "min_keV": 32.20546223457827,
+            "max_keV": 32.20546223457827,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 31.81847318544123,
+            "min_keV": 31.81847318544123,
+            "max_keV": 31.81847318544123,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 37.26033402066402,
+            "min_keV": 37.26033402066402,
+            "max_keV": 37.26033402066402,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 36.39187835660286,
+            "min_keV": 36.39187835660286,
+            "max_keV": 36.39187835660286,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 31.81877920666284,
+            "min_keV": 31.81877920666284,
+            "max_keV": 31.81877920666284,
+            "groups": 1,
+            "categories": {
+              "compact": 0,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 0,
+              "partial": 1,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 36.39201364203304,
+            "min_keV": 36.39201364203304,
+            "max_keV": 36.39201364203304,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.205476991278275,
+            "min_keV": 32.205476991278275,
+            "max_keV": 32.205476991278275,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 36.31659563371449,
+            "min_keV": 36.31659563371449,
+            "max_keV": 36.31659563371449,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 31.818828603738858,
+            "min_keV": 31.818828603738858,
+            "max_keV": 31.81883155431805,
+            "groups": 2,
+            "categories": {
+              "compact": 2,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 2,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 36.39210674344744,
+            "min_keV": 36.39210674344744,
+            "max_keV": 36.39210674344744,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20543821093195,
+            "min_keV": 32.20543821093195,
+            "max_keV": 32.20543821093195,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20570941010901,
+            "min_keV": 32.20570941010901,
+            "max_keV": 32.20570941010901,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20578714513254,
+            "min_keV": 32.20578714513254,
+            "max_keV": 32.20578714513254,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          }
+        ],
+        "positive_fraction": {
+          "numerator": 121,
+          "denominator": 10000,
+          "fraction": 0.0121
+        },
+        "line_full_per_emitted_line": {
+          "numerator": 11,
+          "denominator": 8506,
+          "fraction": 0.0012932047966141547
+        }
+      },
+      "SAP22": {
+        "initial_decays": 10000,
+        "positive_ge_decays": 115,
+        "isolated_groups": 115,
+        "emitted_RDM_photons": 9301,
+        "emitted_line_photons": 8442,
+        "category_group_counts": {
+          "compact": 28,
+          "compton1": 1,
+          "compton2": 2,
+          "full": 32,
+          "partial": 83,
+          "unknown": 0
+        },
+        "line_full_unique_roots": 7,
+        "photon_families": [
+          {
+            "anchor_keV": 661.6572831606165,
+            "min_keV": 661.6572831606165,
+            "max_keV": 661.6572831606165,
+            "groups": 87,
+            "categories": {
+              "compact": 3,
+              "compton1": 0,
+              "compton2": 2,
+              "full": 7,
+              "partial": 80,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.2053811750089,
+            "min_keV": 32.2053811750089,
+            "max_keV": 32.20538608285099,
+            "groups": 2,
+            "categories": {
+              "compact": 2,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 2,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20539564687491,
+            "min_keV": 32.20539564687491,
+            "max_keV": 32.20539564687491,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20581797880703,
+            "min_keV": 32.20581797880703,
+            "max_keV": 32.20581797880703,
+            "groups": 1,
+            "categories": {
+              "compact": 0,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 0,
+              "partial": 1,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.205660802815046,
+            "min_keV": 32.205660802815046,
+            "max_keV": 32.205660802815046,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.205517290409155,
+            "min_keV": 32.205517290409155,
+            "max_keV": 32.205517290409155,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 31.818553308593817,
+            "min_keV": 31.818553308593817,
+            "max_keV": 31.818553308593817,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 31.818504998972887,
+            "min_keV": 31.818504998972887,
+            "max_keV": 31.818504998972887,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 36.3922341592202,
+            "min_keV": 36.3922341592202,
+            "max_keV": 36.3922341592202,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 37.42463174488137,
+            "min_keV": 37.42463174488137,
+            "max_keV": 37.42463174488137,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 36.31683445177241,
+            "min_keV": 36.31683445177241,
+            "max_keV": 36.31683445177241,
+            "groups": 1,
+            "categories": {
+              "compact": 0,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 0,
+              "partial": 1,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20554450258267,
+            "min_keV": 32.20554450258267,
+            "max_keV": 32.20554450258267,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20561732763771,
+            "min_keV": 32.20561732763771,
+            "max_keV": 32.20561732763771,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 31.81847318544123,
+            "min_keV": 31.81847318544123,
+            "max_keV": 31.81847318544123,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 37.26033402066402,
+            "min_keV": 37.26033402066402,
+            "max_keV": 37.26033402066402,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 31.818540398646427,
+            "min_keV": 31.818540398646427,
+            "max_keV": 31.81854250460078,
+            "groups": 2,
+            "categories": {
+              "compact": 2,
+              "compton1": 1,
+              "compton2": 0,
+              "full": 2,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 37.26056967089743,
+            "min_keV": 37.26056967089743,
+            "max_keV": 37.26056967089743,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20540998219967,
+            "min_keV": 32.20540998219967,
+            "max_keV": 32.20540998219967,
+            "groups": 1,
+            "categories": {
+              "compact": 0,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 0,
+              "partial": 1,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 31.818950213876366,
+            "min_keV": 31.818950213876366,
+            "max_keV": 31.818950213876366,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.205476991278275,
+            "min_keV": 32.205476991278275,
+            "max_keV": 32.205476991278275,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 36.39210674344744,
+            "min_keV": 36.39210674344744,
+            "max_keV": 36.39210674344744,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20543821093195,
+            "min_keV": 32.20543821093195,
+            "max_keV": 32.20543821093195,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 31.81883155431805,
+            "min_keV": 31.81883155431805,
+            "max_keV": 31.81883155431805,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 31.818894394899903,
+            "min_keV": 31.818894394899903,
+            "max_keV": 31.818894394899903,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20577310089607,
+            "min_keV": 32.20577310089607,
+            "max_keV": 32.20577310089607,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20573008692334,
+            "min_keV": 32.20573008692334,
+            "max_keV": 32.20573008692334,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          },
+          {
+            "anchor_keV": 32.20578714513254,
+            "min_keV": 32.20578714513254,
+            "max_keV": 32.20578714513254,
+            "groups": 1,
+            "categories": {
+              "compact": 1,
+              "compton1": 0,
+              "compton2": 0,
+              "full": 1,
+              "partial": 0,
+              "unknown": 0
+            }
+          }
+        ],
+        "positive_fraction": {
+          "numerator": 115,
+          "denominator": 10000,
+          "fraction": 0.0115
+        },
+        "line_full_per_emitted_line": {
+          "numerator": 7,
+          "denominator": 8442,
+          "fraction": 0.0008291873963515755
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Deposition truth Edep only; not reconstructed energy, an ADC spectrum, or measured data.",
+    "No SSD, readout, electronics noise, fitted FWHM, calibrated CCE or physical resolution is included.",
+    "Nominal uncollimated source and saved geometry; no matched experimental control or efficiency validation.",
+    "Material energy is recorded-only deposition. Unscored world air and escaping energy prevent energy closure.",
+    "STEP chords and track birth records are not complete trajectories across unscored material.",
+    "Raw scoring coordinates are global metres, despite xloc/yloc/zloc field names; no transform is applied.",
+    "Isolated 100 us groups reset at each first positive Ge row; no activity, live-time or pileup model.",
+    "Full/compact/Compton classifications are ancestry/tolerance candidates from the existing classifier; categories overlap.",
+    "660--663 keV describes emitted line photons. The inclusive 650--670 keV Edep band is not an exact photopeak.",
+    "The compact audit checks all-primary scalars and retained detail. All 200 raw archives are audited separately by the supervisor."
+  ],
+  "runtime": {
+    "python": "3.12.7 (tags/v3.12.7:0b05ead, Oct  1 2024, 03:06:41) [MSC v.1941 64 bit (AMD64)]",
+    "numpy": "1.26.4",
+    "h5py": "3.9.0",
+    "hdf5": "1.14.2",
+    "platform": "Windows-11-10.0.26200"
+  },
+  "histogram_width_keV": 1,
+  "band650_670": "inclusive [650,670] keV, not exact photopeak",
+  "family_rule": "First encountered source energy anchor; existing numerical tolerance; exact min/max retained",
+  "random_seed": "none; deterministic saved-data analysis",
+  "completed_utc": "2026-09-27T16:18:58.242491+00:00",
+  "analysis_wall_seconds": 83.4825603000063,
+  "source_sha256": {
+    "tools/analyze_million.py": "40eb233b78057f3679edb7cd5eea92d10f1456472ac553128f20083114904448",
+    "tools/test_analyze_million.py": "33f19a29a3c8eb81c68e2d359b69a0d6d3c8cff3d18d5ebde9640d1f1cc51e81",
+    "tools/MILLION_ANALYSIS.md": "b1f857c49af72d8031e6e0f2c9b2d5cea71fb9f063fa9f6b28c761339f63a7cb",
+    "tools/hit_event_view.py": "7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e",
+    "tools/long_transport.py": "5004c1a04e6f69e9d26af9d7dfaa0f440428f519aa4426d35693aae172a0ebb5"
+  },
+  "source_summary_sha256": "fe58dae8c08c04ee27bd607562ce1f3c2e6d7b2ad01cd6bbffbae55207c4d902",
+  "publication_scope": "Deposition truth, not SSD/ADC. Local all-event HDF5 and all200 complete raw archives remain preserved; public files are summaries, every positive-group classification, and selected representative raw events."
+}

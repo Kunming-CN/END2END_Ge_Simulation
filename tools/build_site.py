@@ -354,10 +354,25 @@ def build_hit_view_export(source):
     metadata['hit_view_extension'] = {'manifest_sha256':hashlib.sha256((target/'manifest.json').read_bytes()).hexdigest(), 'original_response_records_modified':False}
     binding.write_text(json.dumps(metadata,indent=2)+'\n',encoding='utf-8',newline='\n')
 
+def build_million_export(source):
+    from million_publication import assemble
+    validate(DESTINATION)
+    shutil.copytree(DESTINATION, OUT); (OUT/MANIFEST).unlink()
+    target=OUT/'examples/cs137-1m'
+    if target.exists(): raise ValueError('Existing million report must be explicitly reconciled')
+    assemble(source,target)
+    page=OUT/'examples/cs137-10k/comparison.html'; text=page.read_text(encoding='utf-8')
+    if text.count('<h1>')!=1: raise ValueError('Unexpected comparison title')
+    section='<section id="million-deposition" class="note"><h2>Completed: one million decays per detector</h2><p><a href="../cs137-1m/report.html">Open 1M deposition spectra, statistics, representative records and archive audit</a></p><p>Geant4 deposition truth only, not SSD/ADC. Original 10k response results below remain unchanged.</p></section>'
+    page.write_text(text.replace('<h1>',section+'<h1>',1),encoding='utf-8',newline='\n')
+    binding=OUT/'examples/cs137-10k/publication.json'; metadata=json.loads(binding.read_text())
+    metadata['files']['comparison.html']={'bytes':page.stat().st_size,'sha256':hashlib.sha256(page.read_bytes()).hexdigest()}
+    binding.write_text(json.dumps(metadata,indent=2)+'\n',encoding='utf-8',newline='\n')
+
 def normalize_text_outputs(folder):
     # Historical receipts and all native-bundle bytes are already hash-bound.
     for output in folder.rglob('*'):
-        if output.relative_to(folder).parts[:2] in (('examples', 'cs137-10k'), ('examples', 'cs137-10k-geometry'), ('examples', 'cs137-10k-hits')):
+        if output.relative_to(folder).parts[:2] in (('examples', 'cs137-10k'), ('examples', 'cs137-10k-geometry'), ('examples', 'cs137-10k-hits'), ('examples', 'cs137-1m')):
             continue
         if output.is_file() and output.suffix in {'.html', '.json', '.md', '.svg'}:
             data = output.read_bytes()
@@ -365,7 +380,7 @@ def normalize_text_outputs(folder):
             if normalized != data: output.write_bytes(normalized)
 
 
-def build(campaign=None, geometry=None, hit_view=None):
+def build(campaign=None, geometry=None, hit_view=None, million=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -382,7 +397,9 @@ def build(campaign=None, geometry=None, hit_view=None):
         old = validate(DESTINATION)
     if OUT.exists():
         remove_generated(OUT)
-    if hit_view is not None:
+    if million is not None:
+        build_million_export(million)
+    elif hit_view is not None:
         build_hit_view_export(hit_view)
     elif geometry is not None:
         build_geometry_export(geometry)
@@ -421,6 +438,7 @@ if __name__ == '__main__':
     parser.add_argument('--native-campaign', type=Path, help='Publish saved 10k results onto the validated existing snapshot; no legacy regeneration')
     parser.add_argument('--geometry-events', type=Path, help='Publish saved Geant4 geometry and all recorded events; no physics rerun')
     parser.add_argument('--hit-view', type=Path, help='Publish saved Ge-hit overlay without any simulation')
+    parser.add_argument('--million-results',type=Path,help='Publish completed 1M deposition analysis only')
     args=parser.parse_args()
-    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view))>1: parser.error('Select one publication mode')
-    build(args.native_campaign, args.geometry_events,args.hit_view)
+    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results))>1: parser.error('Select one publication mode')
+    build(args.native_campaign, args.geometry_events,args.hit_view,args.million_results)

@@ -55,3 +55,6 @@ tools/geant4_scene/CMakeLists.txt text eol=lf
 tools/Start-Transport.ps1 text eol=lf
 tools/Monitor-Transport.ps1 text eol=lf
 docs/examples/cs137-10k-hits/** -text -diff
+
+# Million-decay derived summaries: exact bytes verified by publication manifests.
+docs/examples/cs137-1m/** -diff

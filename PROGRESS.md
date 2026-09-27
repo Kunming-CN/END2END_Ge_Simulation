@@ -130,12 +130,12 @@ Important source: `simulation/native_li_example.jl`, `simulation/readout.jl`,
 
 ## Current independent campaign:1M initial decays per detector
 
-Standalone Geant4 transport is RUNNING at `.local/cs137-1m`, launched locally
-2026-09-26 19:50:07 CDT; initial Windows worker PID20016. Read progress.json,
-launcher.json and actual processes, not a remembered PID, before any action.
+Standalone Geant4 transport COMPLETED at `.local/cs137-1m` on 2026-09-27
+01:56:46 UTC. COMPLETE.json and launcher exit=0 agree: 200 batches, 2,000,000
+initial decays. No worker remains. Do not resume or relaunch completed transport.
 Target: AK02 and SAP22 each1,000,000 uncollimated Cs137 decays in the SAME geometry,
 100 chunks of10,000 per detector, serial models. No SSD or readout is running.
-The first10k chunk committed successfully; remaining progress is in the live files.
+Final Ge-positive counts: AK02 12,420 and SAP22 11,272; no SSD/ADC for this1M run.
 `progress.html` refreshes locally; Monitor.cmd, Resume.cmd and Pause-After-Chunk.cmd
 are in the campaign folder. Closing the monitor does not stop computation. Keep the
 computer powered and awake; power settings are unchanged. DONE chunks are verified
@@ -165,10 +165,26 @@ Publication **86e5072** is pushed; GitHub Pages SHA-256 verification passed for
 a8a7999961e530ed371bc289b9e59521db00f2b9002e960b1afd6a7148648937
 Evidence: .local/million-transport-dev/audit.json and live-verification.log.
 
-Next: wait for COMPLETE.json / completed_transport, then analyze the saved1M data.
+Next: use the completed saved-data analysis below; transport must not rerun.
 Do not restart old10k, finished chunks or native Li research while waiting. The worker
 reconciles its matching private supervisor state on normal completion/pause/failure.
 If the machine interrupts, verify process absence and resume, not prepare again.
+
+## Completed million-decay preservation and postprocessing (2026-09-27)
+
+Full200-archive compressed/decompressed SHA-256 and byte-count audit passed;
+all compact HDF5 datasets, global ranges, counts and Ge energy sums checked.
+No original scientific files were changed or deleted. Preserve `.local/cs137-1m/`
+per tools/DATA_RETENTION.md; it is permanent data, not disposable cache.
+Exact input/source/checkpoint snapshot and audit: `.local/million-analysis/preservation/`.
+Saved-data analysis completed ONCE,86s including verification, with23 tests passed.
+AK02:12,420 positive groups,806 line full-energy candidates,150 unknown groups.
+SAP22:11,272 positive primaries /11,273 groups,531 line full candidates,166 unknown.
+Unknown classification remains in the ledgers; it is not failed radiation transport.
+Outputs: `.local/million-analysis/analysis-results/`; see tools/MILLION_RESULTS.md.
+These are deposition truth, not ADC spectra. No native-response batch was launched.
+Next bounded work is the saved-HDF5-to-native bridge and representative pilot,
+retaining zeros/identities/caps/anomalies, before any long native response run.
 
 ## Current limitations, not reasons to block every engineering feature
 

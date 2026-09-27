@@ -252,3 +252,10 @@ restart completed radiation solely because the chat or workstation interrupted.
 Compact HDF5 and lossless raw archives preserve future analysis without radiation
 reruns. Do not launch SSD/readout or continuously invoke agents while transport
 runs. Local progress files and final COMPLETE.json are the execution authority.
+
+## Completed campaign retention (owner request, 2026-09-27)
+
+`.local/cs137-1m/` and its original archives, compact HDF5, configuration, inputs,
+DONE and COMPLETE records are permanent science data, not disposable cache.
+See tools/DATA_RETENTION.md. No automatic cleanup or radiation rerun is authorized
+for postprocessing. Use new derivative folders and preserve old10k baselines.

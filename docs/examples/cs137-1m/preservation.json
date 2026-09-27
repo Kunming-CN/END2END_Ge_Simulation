@@ -1,0 +1,3632 @@
+{
+  "status": "verified",
+  "verified_chunks": 200,
+  "completed_decays": 2000000,
+  "models": {
+    "AK02": {
+      "decays": 1000000,
+      "ge_positive": 12420,
+      "decay_photons": 931769,
+      "line_photons": 851505,
+      "bytes": 3869810706,
+      "ge_steps": 329475
+    },
+    "SAP22": {
+      "decays": 1000000,
+      "ge_positive": 11272,
+      "decay_photons": 931544,
+      "line_photons": 851318,
+      "bytes": 3869001884,
+      "ge_steps": 316081
+    }
+  },
+  "config_sha256": "5eec9b3970561250daa8ac43d606f1cad4665424addbadd61cdcd0f5daf800be",
+  "complete_sha256": "27f99279e6df62f2ba8c3d5d41035dabbd7a618d09f5ffe494ac1cb90616a6f6",
+  "decompressed_raw_bytes": 7556540348,
+  "original_files_deleted": 0,
+  "original_files_modified": 0,
+  "chunks": [
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 0,
+        "start": 0,
+        "count": 10000,
+        "seed": 514663347
+      },
+      "done_sha256": "d07db5ed267796f3dda2322de84c2b07afe72b3d1d57a11b9dc51488c88db303",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 116,
+        "decay_photons": 9339,
+        "line_photons": 8534
+      },
+      "raw_sha256": "0ecc0bbe979b94692c2272557c9c0c2d858bbd0ab943a6d3175598de47d69684",
+      "raw_bytes": 37427462
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 1,
+        "start": 10000,
+        "count": 10000,
+        "seed": 1446755562
+      },
+      "done_sha256": "308b8f1123898048ffc6315270a6cf8303e1203e5deba0e2b7aecddeb9767802",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 108,
+        "decay_photons": 9329,
+        "line_photons": 8474
+      },
+      "raw_sha256": "d0affde988b962d73195effcadb6a1765eae27649581b227d7185bc6d595c329",
+      "raw_bytes": 37888846
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 2,
+        "start": 20000,
+        "count": 10000,
+        "seed": 101173224
+      },
+      "done_sha256": "f8bdfcf16ac6c4b619af8a08add08f8d3ad4db55992e5d061be895a366d27da4",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 116,
+        "decay_photons": 9333,
+        "line_photons": 8592
+      },
+      "raw_sha256": "01bdcb2677dbd353ba14624406c337a79438db83b3b259ff03d89fe2276c6f9f",
+      "raw_bytes": 37799979
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 3,
+        "start": 30000,
+        "count": 10000,
+        "seed": 144089682
+      },
+      "done_sha256": "b351885a34fdb68deccb6d8e8fe165ffbfe11d45ab9245c27397fead6663f082",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 122,
+        "decay_photons": 9292,
+        "line_photons": 8505
+      },
+      "raw_sha256": "8402e48cfed1bf672a20e2e6dbe4c6f3fdb20851a3fc1dcdca2875ce81952cd8",
+      "raw_bytes": 37615412
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 4,
+        "start": 40000,
+        "count": 10000,
+        "seed": 15743665
+      },
+      "done_sha256": "8d25d5adaa8bc898f3e347ccb8fb62e0799d907641bd847a328e4a1f0fee60cf",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 114,
+        "decay_photons": 9313,
+        "line_photons": 8528
+      },
+      "raw_sha256": "bcd1bae443c6ef64d98995bb3cfd1b8cfc7055bf38c0bba01135ef2391a5ba59",
+      "raw_bytes": 37921751
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 5,
+        "start": 50000,
+        "count": 10000,
+        "seed": 1917050713
+      },
+      "done_sha256": "7996afe1742a71874119268e378486608a3051f60021f3a98ad39b6c519091bb",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 127,
+        "decay_photons": 9350,
+        "line_photons": 8533
+      },
+      "raw_sha256": "6e438195d32847bea9b2954fa61622caeee927bd57bddfe8662608f92beb1fd3",
+      "raw_bytes": 37421427
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 6,
+        "start": 60000,
+        "count": 10000,
+        "seed": 559185643
+      },
+      "done_sha256": "bc83f1beb3c80a9402a4cb462941723d4396aff2727cbcc37c00f460a1e0822d",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 136,
+        "decay_photons": 9338,
+        "line_photons": 8564
+      },
+      "raw_sha256": "f341e10dc99dbe5ce722be78f7ded181a8aee54ca71f819998ec824f3206e851",
+      "raw_bytes": 37527021
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 7,
+        "start": 70000,
+        "count": 10000,
+        "seed": 1814224282
+      },
+      "done_sha256": "5ed349354a1c596668f4e589c513d1e2a9fed2054e78ab4f50b019007a23d7ba",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 124,
+        "decay_photons": 9283,
+        "line_photons": 8469
+      },
+      "raw_sha256": "7b87715b8b2844c4a73be91c02607b711850b9914da5d92f20d31addeeaa122a",
+      "raw_bytes": 38133486
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 8,
+        "start": 80000,
+        "count": 10000,
+        "seed": 816298314
+      },
+      "done_sha256": "36ff5e64412c51ae2f98c94bd5eb0ea2cab004e893612b5a91199fa3c66bdb8e",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 118,
+        "decay_photons": 9335,
+        "line_photons": 8552
+      },
+      "raw_sha256": "cea536276710afdd19381352117dd19114402e7f790820cb64380b4b0b774ee3",
+      "raw_bytes": 37464111
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 9,
+        "start": 90000,
+        "count": 10000,
+        "seed": 1510345125
+      },
+      "done_sha256": "13195c311374ce31f6a7ce538821d41d20ab054416993471707b5c6ea49fbcdf",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 127,
+        "decay_photons": 9317,
+        "line_photons": 8499
+      },
+      "raw_sha256": "4092d5c3d78a7150543b3444a3edab527140530d73500590655e650f8dfb3ad7",
+      "raw_bytes": 37992077
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 10,
+        "start": 100000,
+        "count": 10000,
+        "seed": 366184690
+      },
+      "done_sha256": "62d173e2f9fc0a9999a90c9c274370615984cdf8f0f5f79da54bd8c7cb72e7c4",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 133,
+        "decay_photons": 9291,
+        "line_photons": 8551
+      },
+      "raw_sha256": "33e2c13f138a81b10e4f729519ec435812dc0968fcf0cb0f5139605a7c56cc0b",
+      "raw_bytes": 37661053
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 11,
+        "start": 110000,
+        "count": 10000,
+        "seed": 1025992861
+      },
+      "done_sha256": "3e3c455a60537d980f355257dca1e5f4371dc7732b87eb14d44ff2356fae596f",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 123,
+        "decay_photons": 9346,
+        "line_photons": 8511
+      },
+      "raw_sha256": "ba66352e60fcdd3a8e70adbbaf2087c8f338f291eb7a541d7778e30723a68525",
+      "raw_bytes": 37803945
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 12,
+        "start": 120000,
+        "count": 10000,
+        "seed": 413321498
+      },
+      "done_sha256": "005edeee230a1096f8aae711a432b58280227f31244e22cc06ee9a640a16021c",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 137,
+        "decay_photons": 9329,
+        "line_photons": 8506
+      },
+      "raw_sha256": "b71b82ca5d3aaee3030cc744af86d8d9beca66e06f86cb4713e2d79d0e72fdeb",
+      "raw_bytes": 38269847
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 13,
+        "start": 130000,
+        "count": 10000,
+        "seed": 1669930682
+      },
+      "done_sha256": "d0ee859ec717534e2e625a6327072733db3af35876774417cacba4bc438d864e",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 119,
+        "decay_photons": 9337,
+        "line_photons": 8544
+      },
+      "raw_sha256": "91111810f25b4cb6c1c66ee9603f67aa2cd7b0842f3deab2d2c2143afd53bf98",
+      "raw_bytes": 37568352
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 14,
+        "start": 140000,
+        "count": 10000,
+        "seed": 786767703
+      },
+      "done_sha256": "9f4837d80d8e05b8c566a2f4daa2643356d724a04f05aec97986246a21afa5a0",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 115,
+        "decay_photons": 9339,
+        "line_photons": 8517
+      },
+      "raw_sha256": "11b4fff35d91d1fb56b1462e71deb70c8f86af68b14d1d2c7261773a19ae5a1e",
+      "raw_bytes": 37818689
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 15,
+        "start": 150000,
+        "count": 10000,
+        "seed": 1970055194
+      },
+      "done_sha256": "3e53ae46eb41d700f3d8b3e3206e679563e9a7396c598c09ccf25c305dd72135",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 116,
+        "decay_photons": 9348,
+        "line_photons": 8493
+      },
+      "raw_sha256": "3d3c4f14a4b7f9aa6f99a1082850b5f6f6158ee195feb973ded8b89be6b6dec4",
+      "raw_bytes": 37960524
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 16,
+        "start": 160000,
+        "count": 10000,
+        "seed": 2082682868
+      },
+      "done_sha256": "8e828cfa9005c7b553fcfae8012bc7ad19851937f5a30e534955cba1c9934407",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 113,
+        "decay_photons": 9276,
+        "line_photons": 8471
+      },
+      "raw_sha256": "be939cf047ee7c7250f3878c3e93ee874009fd56ecac7e17e7f9dbb6f6b7b4fc",
+      "raw_bytes": 38152428
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 17,
+        "start": 170000,
+        "count": 10000,
+        "seed": 444151431
+      },
+      "done_sha256": "c31ab8662f74cff05d81ef73d18594b3e7ee3e4c21c29fe916e3c3a869b0ad48",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 123,
+        "decay_photons": 9363,
+        "line_photons": 8534
+      },
+      "raw_sha256": "28c78d1f86eda29caee1765e40eedb249552e8bc476bc6b8460b220d37adbe94",
+      "raw_bytes": 37644002
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 18,
+        "start": 180000,
+        "count": 10000,
+        "seed": 1187807605
+      },
+      "done_sha256": "c543e258f7c536dcce12b0d905b19701170c93992ddadaad28910825ae0065d3",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 114,
+        "decay_photons": 9264,
+        "line_photons": 8503
+      },
+      "raw_sha256": "29ad754d03f738a08518a18a2bc090a4dc2ea1b9fd3315d0c2b02acb49bb69ab",
+      "raw_bytes": 37130352
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 19,
+        "start": 190000,
+        "count": 10000,
+        "seed": 1899856127
+      },
+      "done_sha256": "9a0032aae878ad926081b380cdbfc0eba41b0b8e38cae235a22b08b46997289f",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 128,
+        "decay_photons": 9301,
+        "line_photons": 8476
+      },
+      "raw_sha256": "a7ffa334af1bcbbf90688385613952eeae70c408e0a4130e77f4298f2800fe2c",
+      "raw_bytes": 38105548
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 20,
+        "start": 200000,
+        "count": 10000,
+        "seed": 1670612495
+      },
+      "done_sha256": "2b2e137f0093184bd5c220cc99dd5fcb4212dd092f1b7825e97fd02582e87cfc",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 109,
+        "decay_photons": 9272,
+        "line_photons": 8528
+      },
+      "raw_sha256": "4514b9f9dbcb866e5e3b48af69819a283ff6ca8617d7037c42aa5875ac87e876",
+      "raw_bytes": 37093302
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 21,
+        "start": 210000,
+        "count": 10000,
+        "seed": 1946945370
+      },
+      "done_sha256": "d9a1a319e5ddae803cfe0ada6ba9f316c17686fe6fd62bd1109614127bf9a2c2",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 122,
+        "decay_photons": 9332,
+        "line_photons": 8499
+      },
+      "raw_sha256": "56d4fb9137302f233039d0d8a71cf88c5802949281c824f8a37bb27690b58ced",
+      "raw_bytes": 38192699
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 22,
+        "start": 220000,
+        "count": 10000,
+        "seed": 575648377
+      },
+      "done_sha256": "00b5d52b127fa451d028a5c0ffc8c05f96ebf355ef170d66c01f1aecbb97e11a",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 130,
+        "decay_photons": 9286,
+        "line_photons": 8523
+      },
+      "raw_sha256": "a614df6ab4e94764891d4ad45c7a48f330c2cc0f4e4f080fb876e0a68dcd9fcb",
+      "raw_bytes": 37569964
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 23,
+        "start": 230000,
+        "count": 10000,
+        "seed": 217418854
+      },
+      "done_sha256": "aa2f5a8316379598bdefda211d10afc0f36f0060178bcae57cb2b099525cb3fb",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 137,
+        "decay_photons": 9309,
+        "line_photons": 8522
+      },
+      "raw_sha256": "6e4b8593087849d08c5e287f63c972cd9cfa2f93176db016acc9c76b01cabba9",
+      "raw_bytes": 37187076
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 24,
+        "start": 240000,
+        "count": 10000,
+        "seed": 402710568
+      },
+      "done_sha256": "92f281adaf754d6040289fa35b8f0b09db38f6c0d6d8687598f7af94753eeb44",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 134,
+        "decay_photons": 9353,
+        "line_photons": 8529
+      },
+      "raw_sha256": "05b8c96e48284704c89c8ff55866664c95c38a3757fa3bbab7def8724650c083",
+      "raw_bytes": 37553783
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 25,
+        "start": 250000,
+        "count": 10000,
+        "seed": 970232929
+      },
+      "done_sha256": "3eb58d01f14a8ad91463e26aa16b17d056f305959d7b80636f4d18657acbdcc5",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 124,
+        "decay_photons": 9319,
+        "line_photons": 8563
+      },
+      "raw_sha256": "f789421ffb765359af7b9fa3abe0fbf0b952bf4dc312a1991fdc3e500e9d4e20",
+      "raw_bytes": 37500132
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 26,
+        "start": 260000,
+        "count": 10000,
+        "seed": 2014557300
+      },
+      "done_sha256": "bcbddefdf74110ca30f6ab6886efa2d8aecc9529a3560977c0a008546f698ffb",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 136,
+        "decay_photons": 9341,
+        "line_photons": 8489
+      },
+      "raw_sha256": "8afd53bd2b374a1a55c1eac17ac60e2f3a1dad1358771fe9d62a9655bb89a94b",
+      "raw_bytes": 37973041
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 27,
+        "start": 270000,
+        "count": 10000,
+        "seed": 410621977
+      },
+      "done_sha256": "9e635536c71b6be59ceea740bb7ddd07c1d32444c7f7519f4cd51f01e36935b9",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 127,
+        "decay_photons": 9344,
+        "line_photons": 8519
+      },
+      "raw_sha256": "3669f4951df4d9917a845e04dbd4aa6b292db738efb3d3e363bce042da957c1b",
+      "raw_bytes": 38085816
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 28,
+        "start": 280000,
+        "count": 10000,
+        "seed": 229072473
+      },
+      "done_sha256": "ea29232726ea16a471fadcf45b0885c4013b93f8b9fe0601c603fd83d3dae7c7",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 114,
+        "decay_photons": 9337,
+        "line_photons": 8537
+      },
+      "raw_sha256": "ef9610739c7e84625232aec0e2a3ece46decd4ed4fb3f5c7a3bc6128c6a1fdb7",
+      "raw_bytes": 37869253
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 29,
+        "start": 290000,
+        "count": 10000,
+        "seed": 734223765
+      },
+      "done_sha256": "218d29a3658dfc7c079711d430f77226980a178439b8fa4981617c0e8fff2050",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 130,
+        "decay_photons": 9339,
+        "line_photons": 8547
+      },
+      "raw_sha256": "97b4721f898dee990bb37f97132f9e56251e1e7fc07425e1ea47cc01e8e572c4",
+      "raw_bytes": 37498182
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 30,
+        "start": 300000,
+        "count": 10000,
+        "seed": 117350605
+      },
+      "done_sha256": "96977967e89a2c1e06a3847ebb540f828b28b406748e6b3c5428ccfcfa4fafa5",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 119,
+        "decay_photons": 9287,
+        "line_photons": 8521
+      },
+      "raw_sha256": "0aa7ab432bbec365c9ce4b2b77fc13026daca6ec09d1ccf50d6727676936031b",
+      "raw_bytes": 37482720
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 31,
+        "start": 310000,
+        "count": 10000,
+        "seed": 1225651322
+      },
+      "done_sha256": "dc858275f1cd9e4655739eed9c0a06dbc4c1a3b21bbfb6cc00fcd0b144f1bc0e",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 135,
+        "decay_photons": 9354,
+        "line_photons": 8523
+      },
+      "raw_sha256": "9a43c96c802094cf3bc6ca10cdcce4bbaefb177eeeba59d71561c6a761c10de4",
+      "raw_bytes": 37630852
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 32,
+        "start": 320000,
+        "count": 10000,
+        "seed": 733731305
+      },
+      "done_sha256": "d559bc674f86541559b42d2e20e87da410f1391f4e73e4025a017b93863671ef",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 117,
+        "decay_photons": 9294,
+        "line_photons": 8502
+      },
+      "raw_sha256": "f1dc438b1b68914b7f697f2619e915facd8c82d87cbc533dbff8cd7a4701db6e",
+      "raw_bytes": 37751389
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 33,
+        "start": 330000,
+        "count": 10000,
+        "seed": 655080741
+      },
+      "done_sha256": "794a79b66ac237b6d1e7b89f2074c4d028fbe2ce0b70286821e84c0a06a3ec15",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 131,
+        "decay_photons": 9334,
+        "line_photons": 8580
+      },
+      "raw_sha256": "02eed99e5ab5276620a531729b116f35409d81e81ee66adde2b0dfa0c6c5bade",
+      "raw_bytes": 37452926
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 34,
+        "start": 340000,
+        "count": 10000,
+        "seed": 1990323142
+      },
+      "done_sha256": "9aa30fe1377726e0a99c4830530b50dd6a8e2999f97a277c5a4738c6fca6b537",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 127,
+        "decay_photons": 9313,
+        "line_photons": 8508
+      },
+      "raw_sha256": "45fdd1719e10793470cb56099e8f044a82f85c907b321afad5f1cf9e4bc6e0f5",
+      "raw_bytes": 37638942
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 35,
+        "start": 350000,
+        "count": 10000,
+        "seed": 354622777
+      },
+      "done_sha256": "26344d3161a28048f345184fc561c8516cadbf032b0b58a6bf81fdc7d096a2ee",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 134,
+        "decay_photons": 9281,
+        "line_photons": 8480
+      },
+      "raw_sha256": "65213e805b5ad14f4761c11b55748e1d272363f8ab6f6c8419a7eabbc6e72160",
+      "raw_bytes": 38144925
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 36,
+        "start": 360000,
+        "count": 10000,
+        "seed": 1207178301
+      },
+      "done_sha256": "5f720b42326bcd34f8b37ff3536c8de514ba48bdd693266afd6d6e4a890aec1b",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 131,
+        "decay_photons": 9312,
+        "line_photons": 8532
+      },
+      "raw_sha256": "0c0caa53b626f032f3173181571fa844bc3f2c0f95ea2cc94f528043fe57988a",
+      "raw_bytes": 37704917
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 37,
+        "start": 370000,
+        "count": 10000,
+        "seed": 1292710078
+      },
+      "done_sha256": "9c02b02ec5f72696c06d4d708910a83967ff7d9c1d3eef57bbb6f814cdc0bfdb",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 126,
+        "decay_photons": 9269,
+        "line_photons": 8468
+      },
+      "raw_sha256": "02d61f1428b0a3fef6a77bb4830436b07799d507bdf2ffa8cbdabdef089cb221",
+      "raw_bytes": 38111476
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 38,
+        "start": 380000,
+        "count": 10000,
+        "seed": 931668947
+      },
+      "done_sha256": "3a7773b8325cb14dcb40843e4efe46ff03991548706d164722e06f1c23a43b7b",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 122,
+        "decay_photons": 9313,
+        "line_photons": 8530
+      },
+      "raw_sha256": "0e4e2ad2b4b595174c318f0df6b96aa2fb25ab571e482608e746b58ec858b6b1",
+      "raw_bytes": 37373344
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 39,
+        "start": 390000,
+        "count": 10000,
+        "seed": 1784965946
+      },
+      "done_sha256": "834a01e7fda88e9e559f380fdd6cadc5288e21e0022f379eeaf3dd011bfc0b46",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 99,
+        "decay_photons": 9336,
+        "line_photons": 8560
+      },
+      "raw_sha256": "79e52fdb4b83be713ddb1e433155d33042ea98b045fbb7fbfc3cb668fd869afc",
+      "raw_bytes": 37926589
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 40,
+        "start": 400000,
+        "count": 10000,
+        "seed": 852179514
+      },
+      "done_sha256": "aead99bd87eed89e1082a397430bb1d6f617cc9c0610c2d6abf8b5fd69e69f59",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 128,
+        "decay_photons": 9344,
+        "line_photons": 8508
+      },
+      "raw_sha256": "2e4deda2114d0f12a8f11896ee7fd1a4916cff87554e0a572933cfcac72553fe",
+      "raw_bytes": 37484889
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 41,
+        "start": 410000,
+        "count": 10000,
+        "seed": 1781524092
+      },
+      "done_sha256": "17e96b6f30d46354b035e5969a56c9fb73fc84b94cd263847adafb6d32ec97cf",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 140,
+        "decay_photons": 9336,
+        "line_photons": 8544
+      },
+      "raw_sha256": "2d612523a3a96402babf07bac7ceac82e63e011a23c04d129e13a2c82a4c9002",
+      "raw_bytes": 37265207
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 42,
+        "start": 420000,
+        "count": 10000,
+        "seed": 799912049
+      },
+      "done_sha256": "a6f06bb26827ad19f0d9a41d43185c19123ef3cc5ca5d8379df9d808dc7c1838",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 133,
+        "decay_photons": 9341,
+        "line_photons": 8492
+      },
+      "raw_sha256": "701ce12b2aff3d8c7b6be7cecb14bcabba6d483211f0e6b412a26fd4574428ab",
+      "raw_bytes": 38009835
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 43,
+        "start": 430000,
+        "count": 10000,
+        "seed": 1667921148
+      },
+      "done_sha256": "a916f84425cae3147275d49bcc57ac9669429342167a233b1e571c40d743eac5",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 125,
+        "decay_photons": 9298,
+        "line_photons": 8463
+      },
+      "raw_sha256": "2c0ec755bda3a47763de7363a31a222c9c54b5b142d7612c2ffcccb6dd5a6040",
+      "raw_bytes": 38308113
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 44,
+        "start": 440000,
+        "count": 10000,
+        "seed": 1548103376
+      },
+      "done_sha256": "f80e5a863c757145fa5d3d360ae87b9d55f522c8dbd63b366eb68b85c045bab5",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 122,
+        "decay_photons": 9266,
+        "line_photons": 8453
+      },
+      "raw_sha256": "8b9d8b903e1c7d443eac7089a4cc702ff8016814367bc9b13239b35d7b31d64b",
+      "raw_bytes": 38365215
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 45,
+        "start": 450000,
+        "count": 10000,
+        "seed": 512717606
+      },
+      "done_sha256": "4931145da823228b6a43c43a85b883559046eaaeec5401222063cb7399eb617f",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 116,
+        "decay_photons": 9284,
+        "line_photons": 8500
+      },
+      "raw_sha256": "43eeec8f04ea7cdd7e8f7c09906f39dcc77aad768c5ea129e16ff3a550d30c79",
+      "raw_bytes": 37643512
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 46,
+        "start": 460000,
+        "count": 10000,
+        "seed": 1057919477
+      },
+      "done_sha256": "f7eadb0830b1806aa4f031fa191d9762391f5845f4e7db7abf25571f32ce9b28",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 129,
+        "decay_photons": 9373,
+        "line_photons": 8515
+      },
+      "raw_sha256": "2c1b7b86f2aa7d961263439d42cfe3ff13823f50751d50c91855e58a8a32842b",
+      "raw_bytes": 38119554
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 47,
+        "start": 470000,
+        "count": 10000,
+        "seed": 410288849
+      },
+      "done_sha256": "916b8a95b61ebe182c0134b3591ca0d8416e5934ae0df290412f00fac684585f",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 126,
+        "decay_photons": 9293,
+        "line_photons": 8487
+      },
+      "raw_sha256": "3c404513825c4e39458f28bf7edabefb978c1bd2d1a3b75d744209d219a92bcd",
+      "raw_bytes": 38056748
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 48,
+        "start": 480000,
+        "count": 10000,
+        "seed": 1494479912
+      },
+      "done_sha256": "2d0d760429ca75f419dc3aef518e0afafeeeb679fc7514e38ffe0968fa174a79",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 124,
+        "decay_photons": 9291,
+        "line_photons": 8513
+      },
+      "raw_sha256": "26ee9ea458283e1605fdc9b502ca918f1210afc6ece35efe8b01776395466f9e",
+      "raw_bytes": 37691726
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 49,
+        "start": 490000,
+        "count": 10000,
+        "seed": 2031316567
+      },
+      "done_sha256": "4632be870bffc5eabc566b9acf761c03da375cbe512e9d8417a96c682ed53dd7",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 120,
+        "decay_photons": 9327,
+        "line_photons": 8557
+      },
+      "raw_sha256": "d82e2880b149f2c4869b27762a3dbdd470e4e0c64e7a8cfe013a48e71b01fc63",
+      "raw_bytes": 36875625
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 50,
+        "start": 500000,
+        "count": 10000,
+        "seed": 1945929527
+      },
+      "done_sha256": "3b7ce7a8959a03a8a0a2fe20fc2bfba2ec38ed483c90d53c77dcce6226037788",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 122,
+        "decay_photons": 9269,
+        "line_photons": 8448
+      },
+      "raw_sha256": "3cfed41e9201ee23e674df24048adbcac3b787462882edde76986a194cc65a68",
+      "raw_bytes": 37613751
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 51,
+        "start": 510000,
+        "count": 10000,
+        "seed": 679209435
+      },
+      "done_sha256": "432eca2ebdd7d226381efa98dcdc1c63a56dd9333928b56f71772ea0767c280b",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 127,
+        "decay_photons": 9354,
+        "line_photons": 8555
+      },
+      "raw_sha256": "2ba78f8559637799f55da48d0f06dfb711381a41cb0017f3c582130e4b3333b6",
+      "raw_bytes": 37933649
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 52,
+        "start": 520000,
+        "count": 10000,
+        "seed": 929797669
+      },
+      "done_sha256": "f4cccaf576ed5e16f8973611da8f98fa3aedf511fc0aa3588ea4ed6ed1f94336",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 127,
+        "decay_photons": 9277,
+        "line_photons": 8465
+      },
+      "raw_sha256": "a50efc449540a470e3cdbfef305e6847bd6969717e8d1a0f2e08d1d6f4451a74",
+      "raw_bytes": 37926119
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 53,
+        "start": 530000,
+        "count": 10000,
+        "seed": 2026388773
+      },
+      "done_sha256": "bb93327c2660ae9dc12f86700264d1dc97a074b96e7cfe9a04a9a720b2eef24e",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 125,
+        "decay_photons": 9344,
+        "line_photons": 8541
+      },
+      "raw_sha256": "8183153d9f2c42e010a8fbecc92ae534889e2f0be1daaf4313ecd5ba99260df8",
+      "raw_bytes": 38149311
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 54,
+        "start": 540000,
+        "count": 10000,
+        "seed": 2032132037
+      },
+      "done_sha256": "e5da7adaa85b3711bf293805103b95ce7b025c2497282d37575a11d27dbf3e98",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 113,
+        "decay_photons": 9304,
+        "line_photons": 8509
+      },
+      "raw_sha256": "2dbf3a879c82f27f91d8efd9acdc1581a8c832204c7258ca3ed71941e9a91522",
+      "raw_bytes": 37582627
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 55,
+        "start": 550000,
+        "count": 10000,
+        "seed": 1741607410
+      },
+      "done_sha256": "2db8aec389ac708cc5119e9163b28a91da54193c4772716c943c348ee945d40e",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 122,
+        "decay_photons": 9351,
+        "line_photons": 8505
+      },
+      "raw_sha256": "929e1f6bb238def8d66d19a4881b905ba7c177cfed36cf777c61d1b55f9cbe56",
+      "raw_bytes": 38326125
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 56,
+        "start": 560000,
+        "count": 10000,
+        "seed": 947161595
+      },
+      "done_sha256": "b8d0f408c7e950cf6323c8dbe28d8da5cb0a5b80c1936b545a5e424d045ed8fe",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 121,
+        "decay_photons": 9295,
+        "line_photons": 8503
+      },
+      "raw_sha256": "7689a1bf81c5b8a0b918e1adb8fb4a3e37fed5ee65faec807f19d27f007075ac",
+      "raw_bytes": 38128309
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 57,
+        "start": 570000,
+        "count": 10000,
+        "seed": 335802397
+      },
+      "done_sha256": "94eaed18b9095e9019911081bdec4ae64acd4ff69d6e8a6c392d24720662a120",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 112,
+        "decay_photons": 9321,
+        "line_photons": 8517
+      },
+      "raw_sha256": "920990f13da69aeacb3f2fd63e0ec6c5ab1c35c4e5b5906c39ce57bcce3c5206",
+      "raw_bytes": 37514509
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 58,
+        "start": 580000,
+        "count": 10000,
+        "seed": 159714836
+      },
+      "done_sha256": "96d134f308c76dd2a45277b0913d66998ac72f860b4b3cc80c13a8b73b9d1ce8",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 108,
+        "decay_photons": 9338,
+        "line_photons": 8508
+      },
+      "raw_sha256": "ea924465f8d441f2b0bcdbc415ee411d6782bf7955db4cf0b379409d01fcc20f",
+      "raw_bytes": 37555543
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 59,
+        "start": 590000,
+        "count": 10000,
+        "seed": 466117536
+      },
+      "done_sha256": "1884f75bfa6d3a53644c3c4a87a5a2cba3283dce853c39415d526249738a6ae2",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 113,
+        "decay_photons": 9280,
+        "line_photons": 8464
+      },
+      "raw_sha256": "d439f6911b0a9bcea9a5497c04eba641c72976bc336546fcc60bd43909ad09ea",
+      "raw_bytes": 37977476
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 60,
+        "start": 600000,
+        "count": 10000,
+        "seed": 2107099793
+      },
+      "done_sha256": "b7e3b4e644fc82351a16f0d6e16840b098bc82cfdaaa623ad0ddf062d91d079a",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 127,
+        "decay_photons": 9302,
+        "line_photons": 8541
+      },
+      "raw_sha256": "390bba04a64a69bfc150b9d4c876be628d4565cf31e5b0b72c2f7d182c6f720f",
+      "raw_bytes": 37591526
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 61,
+        "start": 610000,
+        "count": 10000,
+        "seed": 1654598805
+      },
+      "done_sha256": "2834b056fc19d9204bf9b20da0fc81c0800ae8de96d1aaa9897ee8ca094714b5",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 121,
+        "decay_photons": 9350,
+        "line_photons": 8549
+      },
+      "raw_sha256": "499e1ca884cae5039d5c3e3a4444e3ea46bbb6fa4a6bbbab81c86ce764ffd174",
+      "raw_bytes": 37582369
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 62,
+        "start": 620000,
+        "count": 10000,
+        "seed": 459035296
+      },
+      "done_sha256": "56bcc3ea61e51d285f12d218881243776cf5dbef5cec5af7f3ea932dbd7f5926",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 129,
+        "decay_photons": 9334,
+        "line_photons": 8529
+      },
+      "raw_sha256": "d9ff978bdd262c96a1ed0329357ef17e4544da2a854f6b3cf40d067d7c0e9da7",
+      "raw_bytes": 37803711
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 63,
+        "start": 630000,
+        "count": 10000,
+        "seed": 1788635213
+      },
+      "done_sha256": "b5d963eaf6ea2963a0b06757179302e31769ebc21a1826c95578271b32892367",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 137,
+        "decay_photons": 9285,
+        "line_photons": 8439
+      },
+      "raw_sha256": "3e94dec43c0c3cbd40218c0fe9d138c8aca507ac39c28d1f5164c286da80f923",
+      "raw_bytes": 37830234
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 64,
+        "start": 640000,
+        "count": 10000,
+        "seed": 1786730535
+      },
+      "done_sha256": "ed2a2266d04c1836376b208b30ef86129f1af2147ae52fa9f8e6c04954267ea8",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 122,
+        "decay_photons": 9310,
+        "line_photons": 8486
+      },
+      "raw_sha256": "e9f003035292d9fa94cd1e46874665f38ecb17d7b3ef92e830c7c9ce4d46ff02",
+      "raw_bytes": 37668628
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 65,
+        "start": 650000,
+        "count": 10000,
+        "seed": 577450050
+      },
+      "done_sha256": "a180ef5b0fb587560e00607f2d3834d40aa5f93763dce4ec940c56223e071a35",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 118,
+        "decay_photons": 9367,
+        "line_photons": 8566
+      },
+      "raw_sha256": "c180330b59f95cfeb50b2dc9b7fcdffdc333b2aee2cb48345a168127b5b1aca9",
+      "raw_bytes": 37603689
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 66,
+        "start": 660000,
+        "count": 10000,
+        "seed": 2064137111
+      },
+      "done_sha256": "6cbc0b0a335d23acef02502b34c9770629a34ec1a578d61dd5df83e0b35bff0a",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 136,
+        "decay_photons": 9318,
+        "line_photons": 8501
+      },
+      "raw_sha256": "2e21313aecdae6568391494986793ef0ae006d28b508e2de4d9773604c4020fd",
+      "raw_bytes": 37932566
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 67,
+        "start": 670000,
+        "count": 10000,
+        "seed": 1807845782
+      },
+      "done_sha256": "03b96502b4bc531f7541ea862cd29432e7d175d0540ac9f26766c55251b13d3f",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 126,
+        "decay_photons": 9325,
+        "line_photons": 8524
+      },
+      "raw_sha256": "c41269a67b3acc80398c2378cce5bcce5026fb9d93ef76850549d10bd88fd9f9",
+      "raw_bytes": 37729774
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 68,
+        "start": 680000,
+        "count": 10000,
+        "seed": 1128245596
+      },
+      "done_sha256": "a6500376a942d38ab9b23f327d312c4893a3005671c379c17deecea00f53407f",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 134,
+        "decay_photons": 9343,
+        "line_photons": 8499
+      },
+      "raw_sha256": "2d78021ad86abbb69e8cc3a7442ee7538e57449e54e8d59ecce19e38f4467a14",
+      "raw_bytes": 37882787
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 69,
+        "start": 690000,
+        "count": 10000,
+        "seed": 859001363
+      },
+      "done_sha256": "2d31ee4173661a31700e738553abbbfdc0579d3951d15828a0777912478b42b1",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 128,
+        "decay_photons": 9311,
+        "line_photons": 8478
+      },
+      "raw_sha256": "2ede26f9bf7aba6b1881c85df6bfe66065459dbb3187642a07ae2e029bd03436",
+      "raw_bytes": 37828985
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 70,
+        "start": 700000,
+        "count": 10000,
+        "seed": 1755063746
+      },
+      "done_sha256": "7de917be0c4938fea905f31471d9198275a6dd0f48b8f024f9c7ed76c3cafe13",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 113,
+        "decay_photons": 9281,
+        "line_photons": 8521
+      },
+      "raw_sha256": "bed1a3269d9a8d768ca45791bb7e7759ed45115a813191c1df65942efa4d923b",
+      "raw_bytes": 37648081
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 71,
+        "start": 710000,
+        "count": 10000,
+        "seed": 1807872205
+      },
+      "done_sha256": "2bde829fb98b85981bb4e9d543678e138a69939ce2b2b91c93fd5cb71ae882f4",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 138,
+        "decay_photons": 9324,
+        "line_photons": 8515
+      },
+      "raw_sha256": "de465983fa0cd678b213ba082ec3353d3b96d33d8b7ce53ba2aaf18c4eec905c",
+      "raw_bytes": 37615012
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 72,
+        "start": 720000,
+        "count": 10000,
+        "seed": 860746013
+      },
+      "done_sha256": "166ba6448d25fe86039f968a5c5c94b6010eb2d5cfaaddb21b852365df7cce1d",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 119,
+        "decay_photons": 9319,
+        "line_photons": 8538
+      },
+      "raw_sha256": "54e4b9b5e18d12b2bc2e8cc855ce74f1be1692ac88ade4f67320ea2afcaebc69",
+      "raw_bytes": 37456590
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 73,
+        "start": 730000,
+        "count": 10000,
+        "seed": 1021303496
+      },
+      "done_sha256": "80373ef942423694afec75fd76731ec273779daf5343c70fe5ddcff1639e9b8d",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 132,
+        "decay_photons": 9292,
+        "line_photons": 8497
+      },
+      "raw_sha256": "dbb42e8663dca9c2015cc00cfa2124f48f4def96b2fe332d218ffa18ae68f87c",
+      "raw_bytes": 37772892
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 74,
+        "start": 740000,
+        "count": 10000,
+        "seed": 1594916943
+      },
+      "done_sha256": "53cfba8f61675f37db91aff5c8d773dacdabec0aaacef3699626cbaa755cda97",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 125,
+        "decay_photons": 9274,
+        "line_photons": 8502
+      },
+      "raw_sha256": "6a8471845d00289fa3ec220f5bf6b6e8da07f76c13e49c1ab30d1a3b26730841",
+      "raw_bytes": 37667951
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 75,
+        "start": 750000,
+        "count": 10000,
+        "seed": 1278419594
+      },
+      "done_sha256": "6e1e027d69ceda4f081ae722b859e802eeb3788c41b7b5639bce64360b5dd2d8",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 137,
+        "decay_photons": 9330,
+        "line_photons": 8508
+      },
+      "raw_sha256": "f9d3cbba6bf1c90c5ba60202606352373f18b8f238113bf1058cc8d779ec76de",
+      "raw_bytes": 38230734
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 76,
+        "start": 760000,
+        "count": 10000,
+        "seed": 662151101
+      },
+      "done_sha256": "c4728b147f9254c32b9fc8ab4eae8e46a8e88dfb736f8e830e280c1b161d0ecb",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 120,
+        "decay_photons": 9350,
+        "line_photons": 8498
+      },
+      "raw_sha256": "add490d4ccb9b112735cf088770b6266b20c4afcaa3af25f071a40f681ecc1df",
+      "raw_bytes": 37936855
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 77,
+        "start": 770000,
+        "count": 10000,
+        "seed": 1797934404
+      },
+      "done_sha256": "b6be8120391b8c309e0e6bffa8339f635e52c02e886e23cd2d093fa6d2761c35",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 120,
+        "decay_photons": 9302,
+        "line_photons": 8528
+      },
+      "raw_sha256": "842c17d347861c35a42250a374fa37d2d03b37e0f9451501f1d51fbc8a77c00d",
+      "raw_bytes": 37721194
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 78,
+        "start": 780000,
+        "count": 10000,
+        "seed": 724166695
+      },
+      "done_sha256": "6cdf1ad179b3e6c121f48281cebc14ce7d98f1e3a5bc484b99d5ce61265d24dd",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 104,
+        "decay_photons": 9337,
+        "line_photons": 8533
+      },
+      "raw_sha256": "344d3fa07bcf9be819cbe4969cf066b7de9fca03b4344f98e63a9ee4ac3265dd",
+      "raw_bytes": 37816760
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 79,
+        "start": 790000,
+        "count": 10000,
+        "seed": 2139090073
+      },
+      "done_sha256": "debbd954bb1d3c828ecfca58b378c00066990b0ed6264f7d07b01dd9670b82b5",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 132,
+        "decay_photons": 9337,
+        "line_photons": 8543
+      },
+      "raw_sha256": "e544e821482e140ded5d133f0cf665e4dd244e73950bcfa55113a225a94b16b4",
+      "raw_bytes": 37429473
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 80,
+        "start": 800000,
+        "count": 10000,
+        "seed": 1442289038
+      },
+      "done_sha256": "d8d60d827fc1001f2246052a2001143656d4fdd64fd0bf8d1a22fd482c1b9f36",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 133,
+        "decay_photons": 9348,
+        "line_photons": 8545
+      },
+      "raw_sha256": "13b6c42a4f4daeafb830c4a1590baa04d7d94e513abf272923fb906bc8d4d0ae",
+      "raw_bytes": 37463674
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 81,
+        "start": 810000,
+        "count": 10000,
+        "seed": 1106325682
+      },
+      "done_sha256": "5a5cb61431cd1cac7cb428a820ad390f677299d76f7baa32ad1c2253642aa579",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 121,
+        "decay_photons": 9322,
+        "line_photons": 8484
+      },
+      "raw_sha256": "4084dbea7b4d7779a58878ecd9ca965116a40e6ebce2bd1419b5a586feac1a8f",
+      "raw_bytes": 38304895
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 82,
+        "start": 820000,
+        "count": 10000,
+        "seed": 1152604905
+      },
+      "done_sha256": "59bb5786ab663df67e622e9d450c5465515c9576575131584a6ad940d2385566",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 122,
+        "decay_photons": 9283,
+        "line_photons": 8494
+      },
+      "raw_sha256": "45630986ff705218586a2b62cd212f7d075a6c6f9db85f8f4c1bf84a172b876f",
+      "raw_bytes": 37978855
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 83,
+        "start": 830000,
+        "count": 10000,
+        "seed": 1674655563
+      },
+      "done_sha256": "790c787b58c1bff9f92d494856ade26b9dab2aa40d07cb780f6a43eba01e7345",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 126,
+        "decay_photons": 9363,
+        "line_photons": 8590
+      },
+      "raw_sha256": "6fddff610fc74b181acef94a5eb7e0892667b14966af172d90db80a1bff8f633",
+      "raw_bytes": 37916545
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 84,
+        "start": 840000,
+        "count": 10000,
+        "seed": 310719119
+      },
+      "done_sha256": "21cc07b3a2306022707017b172b36ae73706f3639f1447f4304fd56b3fa1b59a",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 136,
+        "decay_photons": 9283,
+        "line_photons": 8504
+      },
+      "raw_sha256": "04c7d99db09f0f2e13ba1b0e8767750a39d2cc283769c8aa26903eaf1ee70890",
+      "raw_bytes": 37732936
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 85,
+        "start": 850000,
+        "count": 10000,
+        "seed": 2044969363
+      },
+      "done_sha256": "fa96a03331c456c845f9253ce4e0a525cc39619b7b08f8ecacf830c34268d5ce",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 123,
+        "decay_photons": 9349,
+        "line_photons": 8483
+      },
+      "raw_sha256": "2e32410769e8f27d72694ad1bc25ab48f2ff65d8ff9c22298c6c584dbf906c14",
+      "raw_bytes": 38717838
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 86,
+        "start": 860000,
+        "count": 10000,
+        "seed": 1572148300
+      },
+      "done_sha256": "00e51afbaffc6d5e0279ae06edbded55904397039e1ba8a9cb4b090dbb85a94e",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 137,
+        "decay_photons": 9319,
+        "line_photons": 8523
+      },
+      "raw_sha256": "4fa048790338134e72023da01ecc7ca33100f330f54af88a20d22e92b67a6a89",
+      "raw_bytes": 38012140
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 87,
+        "start": 870000,
+        "count": 10000,
+        "seed": 1764861868
+      },
+      "done_sha256": "aece103cce3ec9697ab7e3bf88f2cdd8e5a082ac992b6f66210f6bb3f35b7f79",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 130,
+        "decay_photons": 9340,
+        "line_photons": 8517
+      },
+      "raw_sha256": "863fc24291d75b2f2ff8549408353922f922d8f8424597b2ca030b1ce258535b",
+      "raw_bytes": 37745333
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 88,
+        "start": 880000,
+        "count": 10000,
+        "seed": 1313910346
+      },
+      "done_sha256": "1e85cca5a17d937732858b0ccfc4dc9510bb527412384f19c016a9ae2618509c",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 130,
+        "decay_photons": 9329,
+        "line_photons": 8523
+      },
+      "raw_sha256": "4c07be560d8d8ec67eb7759e69fa2f2c00226970c644fc0605827d298db70d4a",
+      "raw_bytes": 37708056
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 89,
+        "start": 890000,
+        "count": 10000,
+        "seed": 7855664
+      },
+      "done_sha256": "e1999f5d714fe3d03d1e8a6ed677bc51c9f708bbe798d8bf300dc343859a1078",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 137,
+        "decay_photons": 9323,
+        "line_photons": 8529
+      },
+      "raw_sha256": "3d1a5e5e169661b240435f75940beaf1bd0d56f9f6c7d101f1de2795dc8e1251",
+      "raw_bytes": 37770977
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 90,
+        "start": 900000,
+        "count": 10000,
+        "seed": 1559062904
+      },
+      "done_sha256": "2511f041919f34d093eda1753baae2ea38397590d9a7495fa1fb235f794fe009",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 117,
+        "decay_photons": 9302,
+        "line_photons": 8499
+      },
+      "raw_sha256": "a9e6701c0f6aeb586b49d452a6168a547e3ff625c96b4a40418d5320760a6dc0",
+      "raw_bytes": 37765433
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 91,
+        "start": 910000,
+        "count": 10000,
+        "seed": 1859222823
+      },
+      "done_sha256": "dfeb4c66a5e18e05b6ecb598264698154b12a7762051e383710bb2436cd1d453",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 103,
+        "decay_photons": 9269,
+        "line_photons": 8444
+      },
+      "raw_sha256": "11dcf0d87fc12042a159979c4cdac762594fb22858bfbb71f69203fa7df2bcf7",
+      "raw_bytes": 38746953
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 92,
+        "start": 920000,
+        "count": 10000,
+        "seed": 1357663032
+      },
+      "done_sha256": "043ea8e1dcfdb8a025dbb21cd2bf3ac7ebd3f3eeb80e78b99dc95368efe236b1",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 105,
+        "decay_photons": 9327,
+        "line_photons": 8544
+      },
+      "raw_sha256": "3930c48e09e3ac119711adeeb2a413f6902e7677d85739ae14f4f749caf8d865",
+      "raw_bytes": 37480106
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 93,
+        "start": 930000,
+        "count": 10000,
+        "seed": 1800213047
+      },
+      "done_sha256": "33d3c5fb8b8ab62964898b9a86266fef7d067e8cd7bf9d023642584dd6010a50",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 124,
+        "decay_photons": 9297,
+        "line_photons": 8535
+      },
+      "raw_sha256": "ccbd583570e85c55ca7c1b03dceada067dbfab034dfc8c58578279e3f885fbe8",
+      "raw_bytes": 37420750
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 94,
+        "start": 940000,
+        "count": 10000,
+        "seed": 976802327
+      },
+      "done_sha256": "3e3932c9138ff341135be0bd12aca9f212beaf55a9e1312953247f0f2ced706f",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 127,
+        "decay_photons": 9348,
+        "line_photons": 8569
+      },
+      "raw_sha256": "d0b7a782dec4b09b0b41925697badfabaa3a327b6f1daf3dcc3f377d5ec3fda3",
+      "raw_bytes": 37402762
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 95,
+        "start": 950000,
+        "count": 10000,
+        "seed": 1319155772
+      },
+      "done_sha256": "dea5d61e3cb6a330982288bcdb55e7019cdd654d429e5c94ccccf00b5608a055",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 144,
+        "decay_photons": 9307,
+        "line_photons": 8492
+      },
+      "raw_sha256": "04540f40b53924a2aebf0711a724e7dd63a69bbd393d7d79811003d98deae5a1",
+      "raw_bytes": 38017794
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 96,
+        "start": 960000,
+        "count": 10000,
+        "seed": 1464103396
+      },
+      "done_sha256": "1a682a6d7ccda19eda983823eabc8c36a148c652144bc5e6fd0b506e5747b8b6",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 124,
+        "decay_photons": 9276,
+        "line_photons": 8516
+      },
+      "raw_sha256": "c455b161d6354c57de1ad7e329e217ca48e7d4e9f39df9f81fc08f6395284a57",
+      "raw_bytes": 37513956
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 97,
+        "start": 970000,
+        "count": 10000,
+        "seed": 1461583853
+      },
+      "done_sha256": "3c989dd903514a84b1aaea073d629e301da350f81478943f295d6a648501497e",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 131,
+        "decay_photons": 9305,
+        "line_photons": 8481
+      },
+      "raw_sha256": "76d2fa77e38ce6793d2a6c43d11dcf00ac947ee5a13a18dcb7c35187059600b2",
+      "raw_bytes": 37458345
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 98,
+        "start": 980000,
+        "count": 10000,
+        "seed": 1157252484
+      },
+      "done_sha256": "f96cdf9de614718782fd63b00ebdc0c2777077ad4a0d9f5f4de59331a2cb053b",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 134,
+        "decay_photons": 9311,
+        "line_photons": 8507
+      },
+      "raw_sha256": "38ed9490173a1b7353573180f9bdc99ab0b7d554359d55fc52155de083d530bb",
+      "raw_bytes": 38066471
+    },
+    {
+      "plan": {
+        "model": "AK02",
+        "index": 99,
+        "start": 990000,
+        "count": 10000,
+        "seed": 250275193
+      },
+      "done_sha256": "d1e9ce384a7703d83b96710bb481c11d09ac23f6426429ae93756468a04ecf8f",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 112,
+        "decay_photons": 9343,
+        "line_photons": 8568
+      },
+      "raw_sha256": "ba9164878639b13faafb4de8a49e3c6caea268002c4034d907f56ae322c68fdb",
+      "raw_bytes": 36922075
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 0,
+        "start": 0,
+        "count": 10000,
+        "seed": 996008157
+      },
+      "done_sha256": "f6ebf201dcfa251ed706023413197ed7833dd24395dddd7a33744d432ea762e1",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 108,
+        "decay_photons": 9328,
+        "line_photons": 8462
+      },
+      "raw_sha256": "63ab6f890275c6f1e4132909ab2590a5a6a20bfcfa31a71019ffaf1a3233b778",
+      "raw_bytes": 38519567
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 1,
+        "start": 10000,
+        "count": 10000,
+        "seed": 157445461
+      },
+      "done_sha256": "efa4b71bc7373ed3c5f489b1ee6cd0de6e7892d0179a3d51355f55c9c746444a",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 98,
+        "decay_photons": 9327,
+        "line_photons": 8519
+      },
+      "raw_sha256": "f3376b5bf931cf845191f6f25dfb8b6722755114df73f115907acdd071f23db5",
+      "raw_bytes": 37933175
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 2,
+        "start": 20000,
+        "count": 10000,
+        "seed": 1187603775
+      },
+      "done_sha256": "0a790688e163f1203748fc4132274190dd516c837f1a737bd51c0d5953c362c4",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 111,
+        "decay_photons": 9357,
+        "line_photons": 8581
+      },
+      "raw_sha256": "d8b9f2f543859e5b38dffba9f72e6a76c040378e3cbabc019bbacfcc8e59708a",
+      "raw_bytes": 37294605
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 3,
+        "start": 30000,
+        "count": 10000,
+        "seed": 1198812716
+      },
+      "done_sha256": "51e969930092b889f025b5eff2d5e828c6e23b3b06dc854894cc6950a242c369",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 109,
+        "decay_photons": 9336,
+        "line_photons": 8513
+      },
+      "raw_sha256": "b68a7ecf68eba5d0ad3446e392e80786665652173f7196ca2b053818298b4994",
+      "raw_bytes": 37822718
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 4,
+        "start": 40000,
+        "count": 10000,
+        "seed": 425393186
+      },
+      "done_sha256": "0b69a77940b4af70b05c42c4404b4493f93a2cbeb6b4de7777c96255f42959cc",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 107,
+        "decay_photons": 9305,
+        "line_photons": 8522
+      },
+      "raw_sha256": "ab7b087a6ee1e3e16513dcde9462cb73be9ec9e491bb819f95a592ff79dd9caf",
+      "raw_bytes": 37685405
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 5,
+        "start": 50000,
+        "count": 10000,
+        "seed": 623305265
+      },
+      "done_sha256": "c1229c94e415a4652521ccba89edb761c25cbb25530c2587aa1b63f4a5084151",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 107,
+        "decay_photons": 9313,
+        "line_photons": 8499
+      },
+      "raw_sha256": "5b466fcc88a23021e1f078082959e4e9b0b932b6fd0724a12344831e638f36ad",
+      "raw_bytes": 37649305
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 6,
+        "start": 60000,
+        "count": 10000,
+        "seed": 1048525891
+      },
+      "done_sha256": "dd3a353556eba600d6f8479afff6f706a84e36978d489bf94a3c3430671df27a",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 108,
+        "decay_photons": 9344,
+        "line_photons": 8548
+      },
+      "raw_sha256": "545c5b10d51694c6406e9a0dd15e01b0aaf6f1faa7984d420aa372a06658ee3e",
+      "raw_bytes": 37626861
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 7,
+        "start": 70000,
+        "count": 10000,
+        "seed": 1635179176
+      },
+      "done_sha256": "156e53b86d70aa7f7a6d7d3000c232adfea232e48f6082c8a86eea5a8a297530",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 131,
+        "decay_photons": 9356,
+        "line_photons": 8565
+      },
+      "raw_sha256": "f7346d0b15f19eff686686d0ed07377c2a265a2313218061f732e621c78167e6",
+      "raw_bytes": 37235171
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 8,
+        "start": 80000,
+        "count": 10000,
+        "seed": 418982111
+      },
+      "done_sha256": "164535b1fe3659b41759f3a9fce4f332e831d2e87582bc7bba93c0e7719b7cd6",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 119,
+        "decay_photons": 9327,
+        "line_photons": 8489
+      },
+      "raw_sha256": "e79cfe2a925f3957c04c44dfd116cfcb222b24ca916e781c0638cadc7d45f4d8",
+      "raw_bytes": 38072592
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 9,
+        "start": 90000,
+        "count": 10000,
+        "seed": 1632698244
+      },
+      "done_sha256": "1074316028b51fe339a8a948af0cdddc9db41a49b4892d8a9c57f40e78595a85",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 108,
+        "decay_photons": 9288,
+        "line_photons": 8477
+      },
+      "raw_sha256": "28871dff129434f95d397d1cb085d3e9dbade3be7798bf593e70bbb14e34f3b7",
+      "raw_bytes": 37816692
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 10,
+        "start": 100000,
+        "count": 10000,
+        "seed": 1026779057
+      },
+      "done_sha256": "b95ed54e7254d80bf585218bf83900aa8649e5c6cfc5096b1dc4c6c269bfc73c",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 106,
+        "decay_photons": 9327,
+        "line_photons": 8526
+      },
+      "raw_sha256": "586c315449d7b2ef2c33e28c156149e89369d53013269e7d947a2ef7f1c88916",
+      "raw_bytes": 37448998
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 11,
+        "start": 110000,
+        "count": 10000,
+        "seed": 564994074
+      },
+      "done_sha256": "bb478808c19cffe365bd6cf7215c04e8ed1c180917eeef28241d3286fc384551",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 126,
+        "decay_photons": 9343,
+        "line_photons": 8550
+      },
+      "raw_sha256": "df044ce7871e1c1d7300b244d73336c4bc983acf85d4e1f8caaffd958a3f536a",
+      "raw_bytes": 37652145
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 12,
+        "start": 120000,
+        "count": 10000,
+        "seed": 1109125189
+      },
+      "done_sha256": "f2278196f67f76cd35d6bf627a6f583eb8f87f794fb0d005c97cb30d6eab0250",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 97,
+        "decay_photons": 9309,
+        "line_photons": 8507
+      },
+      "raw_sha256": "7fff94e70d7f6fd9815deab15068b8f70bd395d67121a00894f751a48eae11b1",
+      "raw_bytes": 37602480
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 13,
+        "start": 130000,
+        "count": 10000,
+        "seed": 395817251
+      },
+      "done_sha256": "52f3a69c6a128287cfba1fb43332ba34a46b9b7477e423ae721a980843bd6dc2",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 109,
+        "decay_photons": 9293,
+        "line_photons": 8499
+      },
+      "raw_sha256": "4efbee823d91859cac246efd5d4af9018be06ef7e5563d8c16fcf8235cbc13f2",
+      "raw_bytes": 38080259
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 14,
+        "start": 140000,
+        "count": 10000,
+        "seed": 296278175
+      },
+      "done_sha256": "31785be3061c1b862a4a41f64c621c166503acc83348e47b04e95159f6896763",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 114,
+        "decay_photons": 9347,
+        "line_photons": 8535
+      },
+      "raw_sha256": "5e1518533c7d01b6e02457323e55a35884aef6d47c16b5db99f858750acb6385",
+      "raw_bytes": 37945212
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 15,
+        "start": 150000,
+        "count": 10000,
+        "seed": 99263109
+      },
+      "done_sha256": "5ba8174c44095f2901e0df80bd51d502dddb692a4c734fa11e2295fd9dced1b0",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 122,
+        "decay_photons": 9329,
+        "line_photons": 8479
+      },
+      "raw_sha256": "38d72f86fa43d0557c86548631693063e3de9104ca0c1281d28b8a21b927dcfe",
+      "raw_bytes": 37915257
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 16,
+        "start": 160000,
+        "count": 10000,
+        "seed": 182461114
+      },
+      "done_sha256": "3d0d198358f9df0a6af3b5f7270aea7806a45e12838ec390f1a4b71ed11a6ada",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 123,
+        "decay_photons": 9313,
+        "line_photons": 8529
+      },
+      "raw_sha256": "acb6ff6390359fdecda72b21ec2c949096b28eb0717a95c63a3a35664a6a7f57",
+      "raw_bytes": 37975566
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 17,
+        "start": 170000,
+        "count": 10000,
+        "seed": 147041743
+      },
+      "done_sha256": "6da3ce1e10d3d02a8792b53aafef4b3f50066d4b8e60d332c67dc830a7450b6d",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 129,
+        "decay_photons": 9333,
+        "line_photons": 8535
+      },
+      "raw_sha256": "100a8736c28227647047361f7ab59421b5b3f55e495f68a7c0ea731d6d6f08b1",
+      "raw_bytes": 37764505
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 18,
+        "start": 180000,
+        "count": 10000,
+        "seed": 1104538083
+      },
+      "done_sha256": "2ad996eb53e66e44ccb30b0a41d87b781085ba1798b44dc2558decc524929049",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 108,
+        "decay_photons": 9320,
+        "line_photons": 8498
+      },
+      "raw_sha256": "d12c9cd2976dffbf95fa5fbbf7b9490857f892034feb1ce5d04043557a7109c6",
+      "raw_bytes": 38103964
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 19,
+        "start": 190000,
+        "count": 10000,
+        "seed": 1222493977
+      },
+      "done_sha256": "f3d1ee494647afb6701d8df1c8ce87e69393e4c3969c901bc8493766276e4126",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 121,
+        "decay_photons": 9308,
+        "line_photons": 8516
+      },
+      "raw_sha256": "ac722382780159b4419fe6283a8d8c70858b7e1e3700592fae3306715766ffab",
+      "raw_bytes": 37589577
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 20,
+        "start": 200000,
+        "count": 10000,
+        "seed": 1116954879
+      },
+      "done_sha256": "9a2b7a0a8653f1d02950488b464e873edc9af01410255a7b3708d3b6e6331ee0",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 131,
+        "decay_photons": 9313,
+        "line_photons": 8496
+      },
+      "raw_sha256": "5cdf7e32d6c2d1b99d7e6f36e71a6452f96c1f15fced021f4f596bab394a9d54",
+      "raw_bytes": 37970637
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 21,
+        "start": 210000,
+        "count": 10000,
+        "seed": 262785376
+      },
+      "done_sha256": "00fe24451f552f07c7d2e041782e25a16497de0041fe6c7a3115f3a1db937431",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 113,
+        "decay_photons": 9315,
+        "line_photons": 8521
+      },
+      "raw_sha256": "4a99c4bbb739a988d37cdc4eba8b67e3c2e3d73e97ede40aa9a26645b088393e",
+      "raw_bytes": 38111939
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 22,
+        "start": 220000,
+        "count": 10000,
+        "seed": 373030291
+      },
+      "done_sha256": "bbb4177f6b1c105d9eb5ea8cf75b3303f0d2984e7dcfff10afd06800c4857674",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 89,
+        "decay_photons": 9319,
+        "line_photons": 8579
+      },
+      "raw_sha256": "a1b15336fd7aecc7c873b482b38a8f5e7881005bd9b023e0ab6754aa21468a17",
+      "raw_bytes": 37504023
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 23,
+        "start": 230000,
+        "count": 10000,
+        "seed": 1983223836
+      },
+      "done_sha256": "f6fbee1e3e0d57746b9cfe69487d58cca5a942c7931d2f9d895b5766a098d38c",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 128,
+        "decay_photons": 9277,
+        "line_photons": 8493
+      },
+      "raw_sha256": "6d3820cc9e1320c19272d29e5881817d27cf8e18774f77a02c6074fb5fd3d879",
+      "raw_bytes": 37666290
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 24,
+        "start": 240000,
+        "count": 10000,
+        "seed": 49122012
+      },
+      "done_sha256": "989d8971532968fb48bada9666e0898d4e359888359fba6bf9a7afdb8f9fee37",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 111,
+        "decay_photons": 9314,
+        "line_photons": 8453
+      },
+      "raw_sha256": "64a117dbc3d786bd4c74663af38c09da52a468562ce19f0cd328fc31a30fdf86",
+      "raw_bytes": 38002497
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 25,
+        "start": 250000,
+        "count": 10000,
+        "seed": 1722882012
+      },
+      "done_sha256": "97766ac97b5bc0b71be249f2457fa684b7ca454bb12c28aa1c555f2126dce67a",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 112,
+        "decay_photons": 9327,
+        "line_photons": 8516
+      },
+      "raw_sha256": "c258d3142cb816a026b322c44d43f12a8887fca08de2da5effbac00ea3c561a6",
+      "raw_bytes": 37846295
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 26,
+        "start": 260000,
+        "count": 10000,
+        "seed": 1106979311
+      },
+      "done_sha256": "2e20bfd08b898b7c81e8c098090ab9833e2a56d23a77c33c5363f06319e7f09a",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 117,
+        "decay_photons": 9283,
+        "line_photons": 8451
+      },
+      "raw_sha256": "7d57da6bb62d6a3c024dfa4f71e610d66aaf73fef87cd315ad4183a0b1fd93c5",
+      "raw_bytes": 38399990
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 27,
+        "start": 270000,
+        "count": 10000,
+        "seed": 349888913
+      },
+      "done_sha256": "1069c82f0e3252409f89fdce63bcd70fc72bd918cec41c789ee51b93a923bb1c",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 129,
+        "decay_photons": 9325,
+        "line_photons": 8567
+      },
+      "raw_sha256": "5d210515ca20d9ba4bda4eb15c783b98839f34ac782a6aa2bdf2aa91c4d276a7",
+      "raw_bytes": 37735879
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 28,
+        "start": 280000,
+        "count": 10000,
+        "seed": 884564399
+      },
+      "done_sha256": "da7035b6d23608221b990511dd995dcbb3cc020e11e96891b040a2dc71164c94",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 112,
+        "decay_photons": 9313,
+        "line_photons": 8488
+      },
+      "raw_sha256": "875179da7c29a6ae9ac8623adf315d7fccf5eca9319e3ca4073bd6d19635f644",
+      "raw_bytes": 38283838
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 29,
+        "start": 290000,
+        "count": 10000,
+        "seed": 1798021356
+      },
+      "done_sha256": "db42704bb4cf7a88bf9384b5e8e9efd94f6f0f13f4e43ba3c38d09a4d023551f",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 102,
+        "decay_photons": 9344,
+        "line_photons": 8508
+      },
+      "raw_sha256": "99f3b5e429436048b6224c2e68698319e9646c1861cdffd8d92ddbd673f4224c",
+      "raw_bytes": 38062603
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 30,
+        "start": 300000,
+        "count": 10000,
+        "seed": 1927708755
+      },
+      "done_sha256": "a743205651ce3100bfb23c10d6b64b5ead7401e8912adf45e5bbb3af09ce14d6",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 113,
+        "decay_photons": 9329,
+        "line_photons": 8572
+      },
+      "raw_sha256": "e0b4761f8f6ef82fb45ece8605f1f1d73a253800d2522f6a544170b05eb07588",
+      "raw_bytes": 37162349
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 31,
+        "start": 310000,
+        "count": 10000,
+        "seed": 1915541588
+      },
+      "done_sha256": "35e2603a3a6ddc79f0e9bba4b4170d77b63e34009a2edd4b16d33ae632dae7f0",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 124,
+        "decay_photons": 9278,
+        "line_photons": 8518
+      },
+      "raw_sha256": "8cee9a84e14db8de9b579c73f52ffa2fbb5e89f67605ea36c5dc99537bb60fc6",
+      "raw_bytes": 37570728
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 32,
+        "start": 320000,
+        "count": 10000,
+        "seed": 1516091785
+      },
+      "done_sha256": "aa81fc644158eb270b0578c9786b2651855acc9e8599a7c385a711e378328d4d",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 103,
+        "decay_photons": 9358,
+        "line_photons": 8523
+      },
+      "raw_sha256": "98faeb3ebbcb080a33c26ae952cdfda470c57928e49c7351e5c08d0e8cd2feb4",
+      "raw_bytes": 37716318
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 33,
+        "start": 330000,
+        "count": 10000,
+        "seed": 2140368566
+      },
+      "done_sha256": "6119de4ac400b4dab56b4d778114fd4e9a36e4559362e49e01e26d327f96702d",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 97,
+        "decay_photons": 9301,
+        "line_photons": 8525
+      },
+      "raw_sha256": "b389057700d6018482c3144572becac64efc3e2bb8fccf7930c9d8487881087a",
+      "raw_bytes": 37264292
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 34,
+        "start": 340000,
+        "count": 10000,
+        "seed": 2135635818
+      },
+      "done_sha256": "35da6f74d68f70ec81aa7655e2c9da96c9e51c3513e293d6b6803926758d4e5d",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 116,
+        "decay_photons": 9323,
+        "line_photons": 8508
+      },
+      "raw_sha256": "2194002a71d4dd9c3aa94158dc027a666364c23fe4768ffe0214c1cd581a8cbe",
+      "raw_bytes": 37768351
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 35,
+        "start": 350000,
+        "count": 10000,
+        "seed": 121516415
+      },
+      "done_sha256": "47fdbc7de6604838b50ed00a7985db52313a79d05c612184c28a0611452360ea",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 116,
+        "decay_photons": 9304,
+        "line_photons": 8524
+      },
+      "raw_sha256": "7a5853e3289df58efadb73e7d638655941fd1414efd6dae432a89e0315ac73b3",
+      "raw_bytes": 37754648
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 36,
+        "start": 360000,
+        "count": 10000,
+        "seed": 177089136
+      },
+      "done_sha256": "36efec3bd00275ed4e5f64ed2b49151268a68f5264c33f69f7f2ec054df3a584",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 103,
+        "decay_photons": 9315,
+        "line_photons": 8556
+      },
+      "raw_sha256": "c1d58384f4e894ba46c7be22253b3053e0ee1825daa8ab2ab2dc3dc9917f732f",
+      "raw_bytes": 37679946
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 37,
+        "start": 370000,
+        "count": 10000,
+        "seed": 1806109744
+      },
+      "done_sha256": "67fdd4a070524794604230bd4726da0bf491f5b69dae76a70628c28144801e5b",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 102,
+        "decay_photons": 9314,
+        "line_photons": 8518
+      },
+      "raw_sha256": "c13ac5004a84298fee0eaf7605d3135fcc5d70557b2204a9976b97d10db3cff9",
+      "raw_bytes": 37660405
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 38,
+        "start": 380000,
+        "count": 10000,
+        "seed": 1451124801
+      },
+      "done_sha256": "5d7d23f37616e579932c7e8152dccf7539818d70cb653a96bba01178557df336",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 115,
+        "decay_photons": 9307,
+        "line_photons": 8530
+      },
+      "raw_sha256": "005341bc89f856ee1509604010ac6a95ef29ac7c80e0d2d619ee1e4f010a4d7d",
+      "raw_bytes": 37859738
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 39,
+        "start": 390000,
+        "count": 10000,
+        "seed": 1511258104
+      },
+      "done_sha256": "c85889d55e5bf66d865fbc1e9b57b322e5cef32a8ed128e2c50fabbeaa8beddb",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 109,
+        "decay_photons": 9323,
+        "line_photons": 8501
+      },
+      "raw_sha256": "3f7d167a2b484051335b586673fdbff3ee21b65fe2e1bb3ceb1aa176d1814468",
+      "raw_bytes": 38299498
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 40,
+        "start": 400000,
+        "count": 10000,
+        "seed": 1345378795
+      },
+      "done_sha256": "c203b7f3c8555f37d88a6776ab9c69c053962a271723b110fae3ca8aa64d7535",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 122,
+        "decay_photons": 9352,
+        "line_photons": 8537
+      },
+      "raw_sha256": "e9aef20de996de84ff40c167736ac06025d147d4f0ddd000d078184baeec9596",
+      "raw_bytes": 37484848
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 41,
+        "start": 410000,
+        "count": 10000,
+        "seed": 581073041
+      },
+      "done_sha256": "f1fd701e82e009d1a233949467767fb542f7b0dfe22bd9794faee58a78bb1e47",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 114,
+        "decay_photons": 9347,
+        "line_photons": 8486
+      },
+      "raw_sha256": "23fd55d48c6a5b926512399f5121ec80c5183f44d2a94e76897c2abda0c5bf23",
+      "raw_bytes": 38312954
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 42,
+        "start": 420000,
+        "count": 10000,
+        "seed": 272280652
+      },
+      "done_sha256": "7eb9cd8590e331fbcd921b181d3abd7fa52678150e5f23f3be3971b3fc6791dd",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 116,
+        "decay_photons": 9316,
+        "line_photons": 8488
+      },
+      "raw_sha256": "53a7cfc1dac668c5dde04d71f0bd65159004b6cf8ebcd88b622b21cb5e10bd6b",
+      "raw_bytes": 37976553
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 43,
+        "start": 430000,
+        "count": 10000,
+        "seed": 1322541655
+      },
+      "done_sha256": "68596a056962bb7a4afaabd96c5fbdad732177d637a79edf951a5e95d56db571",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 135,
+        "decay_photons": 9273,
+        "line_photons": 8453
+      },
+      "raw_sha256": "4a7c40780d862fb04a7368fd64df608aa5982f76c7f7d3cb213e8d859c23fbc9",
+      "raw_bytes": 38730586
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 44,
+        "start": 440000,
+        "count": 10000,
+        "seed": 1951634387
+      },
+      "done_sha256": "9a46de6745b25a3d07710b32aa3df449e01577a28a6e36ad9ce7af3c66b32376",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 128,
+        "decay_photons": 9291,
+        "line_photons": 8521
+      },
+      "raw_sha256": "b94b0040c7f8bfdb24e2f30ec664f31f4ac413832528b02d09fc5913b25de13e",
+      "raw_bytes": 37549134
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 45,
+        "start": 450000,
+        "count": 10000,
+        "seed": 52377666
+      },
+      "done_sha256": "7dedbf0488bd16cfa5c6a4f98c76b6ca4f14c804b90addfee6fce774cb086ac6",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 118,
+        "decay_photons": 9348,
+        "line_photons": 8533
+      },
+      "raw_sha256": "a09fb72a52499452caf4c4cc0d103d13d51cbc7abead43df4f38718ba32a8911",
+      "raw_bytes": 37937445
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 46,
+        "start": 460000,
+        "count": 10000,
+        "seed": 2098174081
+      },
+      "done_sha256": "aeb27f3b51b786221e14b8dac15dde1efcade90dee4433f8c22a340fb61f4ef8",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 117,
+        "decay_photons": 9311,
+        "line_photons": 8438
+      },
+      "raw_sha256": "ce300ea0ccee81846cd2cbcd659715547cb407ea3d052ba9649e8162c397b819",
+      "raw_bytes": 37844752
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 47,
+        "start": 470000,
+        "count": 10000,
+        "seed": 1198239856
+      },
+      "done_sha256": "45198b062d1d839e7982e48886e13a7de343c54144017a3e4a8dc04f56371c3c",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 125,
+        "decay_photons": 9364,
+        "line_photons": 8527
+      },
+      "raw_sha256": "ea8bde2c9b7078f92bcf4fbbcc14ec9e72a0696e04badf8f00bfdbd27f891a2a",
+      "raw_bytes": 37685418
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 48,
+        "start": 480000,
+        "count": 10000,
+        "seed": 1573961000
+      },
+      "done_sha256": "8ad4e26b98da1c4c21cc61dd82a6c4e606f7ebf3e6d88567e6f6d9a6cd74a0dd",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 121,
+        "decay_photons": 9327,
+        "line_photons": 8490
+      },
+      "raw_sha256": "8a2f34df59fd9d80b7008ba7170feaf15aa73c28d7914031acbf3f896604d465",
+      "raw_bytes": 38364039
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 49,
+        "start": 490000,
+        "count": 10000,
+        "seed": 2132072936
+      },
+      "done_sha256": "d13cb72e8f13469ba24d416ad4fc7c56e70b72a2cd01e716743839cb35342f44",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 100,
+        "decay_photons": 9324,
+        "line_photons": 8540
+      },
+      "raw_sha256": "c133bcd4f8af6d72e5a12e9e1f29733ecaefde36f44f4b59def804b2c37c25e4",
+      "raw_bytes": 37681394
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 50,
+        "start": 500000,
+        "count": 10000,
+        "seed": 635179013
+      },
+      "done_sha256": "11d46469bb80f9efdd2317ba039c1cfa8119d5492b375412d6b8fc5d6fea194b",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 109,
+        "decay_photons": 9354,
+        "line_photons": 8501
+      },
+      "raw_sha256": "ca29f3db5c551c0ea27456c70741dc6da6dd984511ea1e5e3dc35d6a688436ac",
+      "raw_bytes": 37349171
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 51,
+        "start": 510000,
+        "count": 10000,
+        "seed": 247799489
+      },
+      "done_sha256": "f391d43881ce18ed1575334f698bd750dd1a5461dc0e3b5300292a5c8d8f7d92",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 113,
+        "decay_photons": 9323,
+        "line_photons": 8543
+      },
+      "raw_sha256": "caaa20266f19b841c0bfc57b7d80c04ace390cdeabbb83b55d8e9929ff21c7c5",
+      "raw_bytes": 37760698
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 52,
+        "start": 520000,
+        "count": 10000,
+        "seed": 1250147465
+      },
+      "done_sha256": "7623e4dabd36cd8af777960371805d32e4141effdb4bf29687ac1cec617387bc",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 91,
+        "decay_photons": 9332,
+        "line_photons": 8513
+      },
+      "raw_sha256": "6b8e409f996fdb47673667010a409ac74878cbaae85ff8e26b23f279ede521e7",
+      "raw_bytes": 38004307
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 53,
+        "start": 530000,
+        "count": 10000,
+        "seed": 578900119
+      },
+      "done_sha256": "cb6a7c6981e78e579f05aba675d927f20f3d8ad2de11f03698d79fd72f9e499c",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 97,
+        "decay_photons": 9320,
+        "line_photons": 8533
+      },
+      "raw_sha256": "70ba45bdcc527008f6006d817b409119423cebee8ef70b076031d5740add03e9",
+      "raw_bytes": 37754155
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 54,
+        "start": 540000,
+        "count": 10000,
+        "seed": 527085328
+      },
+      "done_sha256": "bd09dec6dccab18e2916cb8e0ebcc912e9cfa8b0e5eb9d7eb05b50504915db37",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 106,
+        "decay_photons": 9300,
+        "line_photons": 8520
+      },
+      "raw_sha256": "cb7eb0b10609f78e8a61ff1f3640a97d2b55283fe3d9939de1de7f05e9e58300",
+      "raw_bytes": 37333857
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 55,
+        "start": 550000,
+        "count": 10000,
+        "seed": 1665897436
+      },
+      "done_sha256": "56b1d4d7d851b98aad20e8d924fcd189ce9d4695ed299417a699f8a1cefa3756",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 104,
+        "decay_photons": 9306,
+        "line_photons": 8491
+      },
+      "raw_sha256": "ef739d8796803ed0c28b9d2bd531725b15087622ecab272664d56294719385f5",
+      "raw_bytes": 37586717
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 56,
+        "start": 560000,
+        "count": 10000,
+        "seed": 1077929565
+      },
+      "done_sha256": "986f66705992388e5bd5af06f5f63a915d8aa34ba4591da6128d4b8301c621d8",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 126,
+        "decay_photons": 9316,
+        "line_photons": 8493
+      },
+      "raw_sha256": "572c600998eae06c4e70fc0708a5429774e48a50c3e3eeeb3d38f74b448c696e",
+      "raw_bytes": 37729327
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 57,
+        "start": 570000,
+        "count": 10000,
+        "seed": 1562510344
+      },
+      "done_sha256": "9a1c935911069a1e80f1f2cbc94d9bbc0cb7a9138b9468d477d05b5e7644f2dd",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 108,
+        "decay_photons": 9249,
+        "line_photons": 8464
+      },
+      "raw_sha256": "bfe9b188a05715ab3d773daee4fa80f7b96cd312dfade28538ced3de5397135c",
+      "raw_bytes": 37677177
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 58,
+        "start": 580000,
+        "count": 10000,
+        "seed": 1080256972
+      },
+      "done_sha256": "2e5654026d643b36d64de9ccb517e4328f7bebd0efe8595462c0256c38b25477",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 113,
+        "decay_photons": 9310,
+        "line_photons": 8497
+      },
+      "raw_sha256": "0ef4b73e634878feba9c88299eabd31daf0c05b3eebfa011a844ff96ef549b82",
+      "raw_bytes": 37642946
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 59,
+        "start": 590000,
+        "count": 10000,
+        "seed": 695046856
+      },
+      "done_sha256": "2fcdb34818f867a00321263827d97f09858acff1e28bb186edde17e4d19bd4ea",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 108,
+        "decay_photons": 9298,
+        "line_photons": 8536
+      },
+      "raw_sha256": "f79830c22399f1b7147a24557c89a94d9827be45cf9a37c44ac97e72633b0817",
+      "raw_bytes": 37851446
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 60,
+        "start": 600000,
+        "count": 10000,
+        "seed": 831994070
+      },
+      "done_sha256": "b4204a39194ca50a0f95a98ad415e209a77528e5a96b174ab074092c35d2f70d",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 93,
+        "decay_photons": 9302,
+        "line_photons": 8483
+      },
+      "raw_sha256": "6fedcfabfa52633eeb598551e5a82b5e7dc5ec3292c2a2846dd7cfc1d0b14660",
+      "raw_bytes": 38389960
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 61,
+        "start": 610000,
+        "count": 10000,
+        "seed": 1698448586
+      },
+      "done_sha256": "757fe4efe4d75c2672215d8e720a923b249ad29ff783ca5aa4688ed4d827a4aa",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 117,
+        "decay_photons": 9329,
+        "line_photons": 8535
+      },
+      "raw_sha256": "311463688463f793b27bbe541d4a9bbdae07bc35630ad8977f50f463c29e4e55",
+      "raw_bytes": 37187677
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 62,
+        "start": 620000,
+        "count": 10000,
+        "seed": 566346021
+      },
+      "done_sha256": "8c32a7b03f7f125bc2fc7b22c8a66627e0824f533590867c50382ea461ae4986",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 112,
+        "decay_photons": 9275,
+        "line_photons": 8513
+      },
+      "raw_sha256": "2aa39066d1bc368f14589e4ee416634545d8fbd42665ce16d5ca7e232e4d86ba",
+      "raw_bytes": 37306283
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 63,
+        "start": 630000,
+        "count": 10000,
+        "seed": 1081087840
+      },
+      "done_sha256": "086113ff8cb336a670601f07e4e09990037c2aa908190697d5e64b926da8cafe",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 110,
+        "decay_photons": 9338,
+        "line_photons": 8555
+      },
+      "raw_sha256": "7ed596b486b0a503418e54e7901b33515af3ed51f6dd144a6a86131b6ec51b95",
+      "raw_bytes": 37121802
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 64,
+        "start": 640000,
+        "count": 10000,
+        "seed": 535947324
+      },
+      "done_sha256": "44ddbb6e08d2e1c0e90c7dec912a839a29753a23604cdd30172d0ec0d9201595",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 96,
+        "decay_photons": 9319,
+        "line_photons": 8520
+      },
+      "raw_sha256": "c88562b39fe95f1c15dd70006b02d6187a4a76ed7c0f62c70baa610e58daebb0",
+      "raw_bytes": 37885722
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 65,
+        "start": 650000,
+        "count": 10000,
+        "seed": 700886278
+      },
+      "done_sha256": "153099ced9d445a07cc3e3ae8973c2cffc7677b78186d83ba99c1bda96f844fc",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 113,
+        "decay_photons": 9267,
+        "line_photons": 8489
+      },
+      "raw_sha256": "1d75ab1f97bd6775e59eaaa38404933bf8f5613a90a4c4d8032508a01c87f629",
+      "raw_bytes": 37750270
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 66,
+        "start": 660000,
+        "count": 10000,
+        "seed": 1386067854
+      },
+      "done_sha256": "8eeebe6ebe92598e0d150293b293ca1f459daa66dfe39f2362059b9e0530c9b1",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 102,
+        "decay_photons": 9289,
+        "line_photons": 8545
+      },
+      "raw_sha256": "41e36fc36d5f3511962d293234f00fd39385b43de3832ec14191539753b3c8d4",
+      "raw_bytes": 37761573
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 67,
+        "start": 670000,
+        "count": 10000,
+        "seed": 2043601877
+      },
+      "done_sha256": "04b4e201213f054ffc57b76126a3fb4bd8fc063e2ac7b2b62f854b3726fbb3f6",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 102,
+        "decay_photons": 9323,
+        "line_photons": 8515
+      },
+      "raw_sha256": "1bd20d448cc0dde1cf847ea8e7329afc60010fe158502b916db2b180bd2f1b0a",
+      "raw_bytes": 37683906
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 68,
+        "start": 680000,
+        "count": 10000,
+        "seed": 116048675
+      },
+      "done_sha256": "8e847d64ef1cfc0a74c652f34307a8ff683127c738c36926fdba649bc9cfd1b6",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 120,
+        "decay_photons": 9328,
+        "line_photons": 8546
+      },
+      "raw_sha256": "98bc2110c974efcded57f5ea24b7d1d31375eb17b2ddf025746ec6735fb0b133",
+      "raw_bytes": 37711312
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 69,
+        "start": 690000,
+        "count": 10000,
+        "seed": 720395053
+      },
+      "done_sha256": "0d190354269de831b06b2b3090ac18d393f2af62cd0b1d3b6c253bf652c12b25",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 138,
+        "decay_photons": 9318,
+        "line_photons": 8513
+      },
+      "raw_sha256": "dc4dc5d14cd655c896a15e7d32bd176afa6e62b21b65a8aa5d8368a5f11c11f6",
+      "raw_bytes": 38047817
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 70,
+        "start": 700000,
+        "count": 10000,
+        "seed": 512320750
+      },
+      "done_sha256": "82821a6e651c1bf9a94abf7061341fcd915f8c78c50724f00e40e98f454ae365",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 130,
+        "decay_photons": 9334,
+        "line_photons": 8530
+      },
+      "raw_sha256": "93d7eebbcd66c364c5a575d7fd626157e76345646e3c8ddcd09cb21bdec49036",
+      "raw_bytes": 37783786
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 71,
+        "start": 710000,
+        "count": 10000,
+        "seed": 1006502851
+      },
+      "done_sha256": "6626a6ad64e48d3a19b19dd93fd63338d510ccee3b1effcf8cfe3ef389a40dff",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 104,
+        "decay_photons": 9315,
+        "line_photons": 8493
+      },
+      "raw_sha256": "24ad30dfc85ca2dfb3494d559e1f6daf0c2b3e4151b0be543b5f5568211d96b8",
+      "raw_bytes": 38161797
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 72,
+        "start": 720000,
+        "count": 10000,
+        "seed": 1639489805
+      },
+      "done_sha256": "17ee4c4f7e1d68f8898d5537e482905786cf42ed6081faa8d73ea768198e21f2",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 105,
+        "decay_photons": 9338,
+        "line_photons": 8548
+      },
+      "raw_sha256": "0693fadaa4b5f8d04a7de228ada904165b6c8fb7675dc2851dd0775ebbe51f88",
+      "raw_bytes": 37944543
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 73,
+        "start": 730000,
+        "count": 10000,
+        "seed": 668369598
+      },
+      "done_sha256": "3965305a708727830857f66fe5c310dea4306b7f476716eb85cac9171d597783",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 112,
+        "decay_photons": 9278,
+        "line_photons": 8463
+      },
+      "raw_sha256": "1049540c2a78655c4e22bb0c4e36afe85d6c284656d6a29da0012042d351457b",
+      "raw_bytes": 38223253
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 74,
+        "start": 740000,
+        "count": 10000,
+        "seed": 649604090
+      },
+      "done_sha256": "c6ce2146e2a667b2cbb75b82d0787a2bc3b8c2f718ed9e20fd8718dcb86c77ab",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 107,
+        "decay_photons": 9276,
+        "line_photons": 8486
+      },
+      "raw_sha256": "b5eb178881c32736167deb8e414dbd2c2c2539222ed901ac1559eb30d86bca65",
+      "raw_bytes": 37735955
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 75,
+        "start": 750000,
+        "count": 10000,
+        "seed": 498238282
+      },
+      "done_sha256": "2f3a1205deffe42fb92c9e7ec3aad53f5fda32a4d9f64b1df45d0c93eccdb0a7",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 100,
+        "decay_photons": 9298,
+        "line_photons": 8474
+      },
+      "raw_sha256": "dbc34759c51cdfef51e0e02bf9349ab2f06a2f44a7f0bddf8550fdac4de72610",
+      "raw_bytes": 37826921
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 76,
+        "start": 760000,
+        "count": 10000,
+        "seed": 550446410
+      },
+      "done_sha256": "78566aeaab85f79310af02f6bdf78098430095f2d6bb9c7f5882585780a81d00",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 110,
+        "decay_photons": 9247,
+        "line_photons": 8419
+      },
+      "raw_sha256": "d5ab8641b1ff725324a90bfdcac1055d295600f7572503638a9152a878f1b313",
+      "raw_bytes": 38052359
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 77,
+        "start": 770000,
+        "count": 10000,
+        "seed": 972766820
+      },
+      "done_sha256": "352d50bc1cd8f0a6c92851610d465238bca61acd526ae602d3078e67e24045af",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 120,
+        "decay_photons": 9354,
+        "line_photons": 8546
+      },
+      "raw_sha256": "561265ae345d199f38c7983f76c3411d466631640a0feedda890e5177df3b532",
+      "raw_bytes": 37686720
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 78,
+        "start": 780000,
+        "count": 10000,
+        "seed": 1529376879
+      },
+      "done_sha256": "982dd2b745ea1a8b964a886c0e9a61c7b523cfe9a7cb22090163b172ebb56f8e",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 111,
+        "decay_photons": 9316,
+        "line_photons": 8507
+      },
+      "raw_sha256": "36221c22fe18c4140c45c2b6519d11adf79623b901c00e512d3c8889ae9ee586",
+      "raw_bytes": 38196851
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 79,
+        "start": 790000,
+        "count": 10000,
+        "seed": 643655431
+      },
+      "done_sha256": "2e7e5bf113197be11e9c05bc74ee38a79a34f442197973550491dabe9bc5a2ff",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 118,
+        "decay_photons": 9326,
+        "line_photons": 8572
+      },
+      "raw_sha256": "71024488392b7d424d89e19b3c67d13925be781c5c83d326c638c4a3c449bf48",
+      "raw_bytes": 37024174
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 80,
+        "start": 800000,
+        "count": 10000,
+        "seed": 810816136
+      },
+      "done_sha256": "657c73e1b0747db4101099511b9899d3a3d8a7cc4daa017aa88c4d0b178d8871",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 106,
+        "decay_photons": 9254,
+        "line_photons": 8490
+      },
+      "raw_sha256": "64fa50e9ab2311f65d06d60279b252f127c6309001ce4ae12eb719f9ca1b24bc",
+      "raw_bytes": 37935254
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 81,
+        "start": 810000,
+        "count": 10000,
+        "seed": 1661790143
+      },
+      "done_sha256": "9a0571242189fcb9e6dece41ae338c08fe8070a3ea3bd64770af1903ebe3d823",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 110,
+        "decay_photons": 9296,
+        "line_photons": 8518
+      },
+      "raw_sha256": "438e879d137034daf8183bdab529b20cf2d9f113eb166008e318c79e13f75626",
+      "raw_bytes": 37437029
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 82,
+        "start": 820000,
+        "count": 10000,
+        "seed": 2099880857
+      },
+      "done_sha256": "377e467e9f736739bac9896af6c38bf3871db17800abfada3fa4e4e11ec038b2",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 111,
+        "decay_photons": 9317,
+        "line_photons": 8552
+      },
+      "raw_sha256": "3fa41176d7bf27043a0e8a4c75c08ad0dd49ead2bb387f99968ae846dcbda28f",
+      "raw_bytes": 37461049
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 83,
+        "start": 830000,
+        "count": 10000,
+        "seed": 1705732515
+      },
+      "done_sha256": "5b86ea74938d2ceb82b214a45557d421b55195d3f8b687f83a8b42a754f88502",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 110,
+        "decay_photons": 9286,
+        "line_photons": 8454
+      },
+      "raw_sha256": "99175bfd57ad75222b4c35cd352e347f38c060d6e8355af3801d02afaf7d64d8",
+      "raw_bytes": 38488591
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 84,
+        "start": 840000,
+        "count": 10000,
+        "seed": 1957671648
+      },
+      "done_sha256": "cf7cce895e589d6b16c8591cc4206eab9e6fc4d1afa9411dcb878cb2e8bbcc77",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 104,
+        "decay_photons": 9304,
+        "line_photons": 8510
+      },
+      "raw_sha256": "0470e92139c6f991e2e52360451447cd0094e69a212650321669bf9564c69c88",
+      "raw_bytes": 38002388
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 85,
+        "start": 850000,
+        "count": 10000,
+        "seed": 1151401945
+      },
+      "done_sha256": "a2d03dd0a428ba7b5d45ef02fe9863cb47fda0d5906c59f2c71043f403872c0e",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 111,
+        "decay_photons": 9296,
+        "line_photons": 8504
+      },
+      "raw_sha256": "821c6c6559a1b00c49168376719086e5b29fee485ff72a4c30cebd3edd9d3056",
+      "raw_bytes": 37873099
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 86,
+        "start": 860000,
+        "count": 10000,
+        "seed": 1835677947
+      },
+      "done_sha256": "7ef7da25ea27a45990a21ec49c7699bbbd1c08ac6c78a773d8fcf01bbd471cf9",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 115,
+        "decay_photons": 9279,
+        "line_photons": 8468
+      },
+      "raw_sha256": "15da92a728ceff5fe9e4ae1b117b475061ec1fa619efcc787055742c812b9a0a",
+      "raw_bytes": 38030403
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 87,
+        "start": 870000,
+        "count": 10000,
+        "seed": 1549414434
+      },
+      "done_sha256": "559970748e7915a856687ab05d5ce5e5fe16dcbae5112299162d2dff1786a19f",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 123,
+        "decay_photons": 9304,
+        "line_photons": 8515
+      },
+      "raw_sha256": "280f5ef6937e1f7524cc2bc0171a484f4926021af90d47313e6754ef8328a21a",
+      "raw_bytes": 37774109
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 88,
+        "start": 880000,
+        "count": 10000,
+        "seed": 1292615545
+      },
+      "done_sha256": "dd98761045769a13acd4022cceb6a3544a8b4dd1b546232c6076e1afbf3dae0b",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 119,
+        "decay_photons": 9348,
+        "line_photons": 8614
+      },
+      "raw_sha256": "2dec4e9f2f159be2995c5825857675980111710db130712d396f3469b2bcabd2",
+      "raw_bytes": 37160747
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 89,
+        "start": 890000,
+        "count": 10000,
+        "seed": 1179529790
+      },
+      "done_sha256": "d65d2d9742241ee0f8f98bc3cd034d470348c7adac9663aa2e68bd627dc5136d",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 113,
+        "decay_photons": 9348,
+        "line_photons": 8559
+      },
+      "raw_sha256": "043359df12de11e9ec835a02f06ca82e1c473861cff69029514fb733d7b7af50",
+      "raw_bytes": 37705853
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 90,
+        "start": 900000,
+        "count": 10000,
+        "seed": 297185005
+      },
+      "done_sha256": "9cfe961b331f8f144ca4fab6661fdb75a62aeeffd792d8ecdffce491b3d8810a",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 120,
+        "decay_photons": 9346,
+        "line_photons": 8567
+      },
+      "raw_sha256": "f1ba0afbb879ee4ede08779e862b3f3afd21f76327a82ca667526405dffd4f0c",
+      "raw_bytes": 37696865
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 91,
+        "start": 910000,
+        "count": 10000,
+        "seed": 1351604240
+      },
+      "done_sha256": "7b341ad0953be2af7300915bc73aa987c2b06d46b2198bc24ef3d3d2356fd923",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 124,
+        "decay_photons": 9294,
+        "line_photons": 8438
+      },
+      "raw_sha256": "24e2cfd1fe7c0f9376bc91579b7afba4739e4c9d29edccfb44993c1c23993068",
+      "raw_bytes": 38247882
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 92,
+        "start": 920000,
+        "count": 10000,
+        "seed": 785070115
+      },
+      "done_sha256": "14cef59bf8b59810ff932c966cabdc76acf708d1c40425584141750aaddd79bb",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 107,
+        "decay_photons": 9305,
+        "line_photons": 8525
+      },
+      "raw_sha256": "cf4efd9be3a2d88a3c6cfa3cd09b820ba9dd2d26991600f389a01804ff79d541",
+      "raw_bytes": 37862540
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 93,
+        "start": 930000,
+        "count": 10000,
+        "seed": 461851385
+      },
+      "done_sha256": "ffe5ff529c8a82753d04dfc06387cadc5718cca6902578fb62166c4a8474607e",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 115,
+        "decay_photons": 9343,
+        "line_photons": 8596
+      },
+      "raw_sha256": "5c3fa7a97af98d12cae2c643ad3949462d182d5ea43d7066567286afc2c9e34c",
+      "raw_bytes": 37408574
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 94,
+        "start": 940000,
+        "count": 10000,
+        "seed": 1568120500
+      },
+      "done_sha256": "8ff53a5cacfd8695f29002f179e0073dfc21ade26a47de801993a19889e66f77",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 128,
+        "decay_photons": 9339,
+        "line_photons": 8526
+      },
+      "raw_sha256": "58fe2d42fe26fa669aa059f40c8ae135f7f58e23f3e7a894f1ea29618b7877ce",
+      "raw_bytes": 37478067
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 95,
+        "start": 950000,
+        "count": 10000,
+        "seed": 1354705801
+      },
+      "done_sha256": "e0884bf9d37135e662e6aed6faa2797c9de683437f14ba5bea8057e4713c9d53",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 104,
+        "decay_photons": 9358,
+        "line_photons": 8472
+      },
+      "raw_sha256": "aafd10179a0b6eab95da4b4701f66d6b85204fab62af09f0c0da889cbe5e5427",
+      "raw_bytes": 38269026
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 96,
+        "start": 960000,
+        "count": 10000,
+        "seed": 124974159
+      },
+      "done_sha256": "5495f77f605a35e1f0160b018386a5d62c821d77b887f645864b8145bb5710ea",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 125,
+        "decay_photons": 9344,
+        "line_photons": 8493
+      },
+      "raw_sha256": "d1093eb6bf7c39c23d4073e2d799ca0519a0c3cefc4d6f6d27766671582c42cb",
+      "raw_bytes": 37923353
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 97,
+        "start": 970000,
+        "count": 10000,
+        "seed": 1088046082
+      },
+      "done_sha256": "4f690b2241dea3f51bdd46fc9280bdb8565537d32942ec710be4aa725376baad",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 104,
+        "decay_photons": 9308,
+        "line_photons": 8494
+      },
+      "raw_sha256": "33303dea74c463726b26a7147d100ac98f4fedad5c08fe1f2aaacccd5150c99b",
+      "raw_bytes": 37796795
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 98,
+        "start": 980000,
+        "count": 10000,
+        "seed": 2069313
+      },
+      "done_sha256": "da93c4b5e07fbb53ef1e3b6a48d70cb81481a9cfd5e169375c4e7a22c7a9c305",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 114,
+        "decay_photons": 9301,
+        "line_photons": 8476
+      },
+      "raw_sha256": "c6c1c24ba811e6341dc88fbc4f97f3937e04cffec2904aca51fe576820b48146",
+      "raw_bytes": 37663428
+    },
+    {
+      "plan": {
+        "model": "SAP22",
+        "index": 99,
+        "start": 990000,
+        "count": 10000,
+        "seed": 421621177
+      },
+      "done_sha256": "64e848bcc1aafa8509de2cae2ebe2c37b7f21e650e945644b11f8dffa0cc8ddc",
+      "counts": {
+        "decays": 10000,
+        "ge_positive": 115,
+        "decay_photons": 9258,
+        "line_photons": 8495
+      },
+      "raw_sha256": "a3489b56d8708e05866554db73996dd2bc4b80fece245c4a74d17c3014741d96",
+      "raw_bytes": 38060185
+    }
+  ],
+  "reproducibility_snapshot_sha256": "9f66f3ca30149029474bba14fe302693c42f9023e23aeb4671973b66d2dcbbc8",
+  "backup_scope": "Snapshot and archives are on the same local disk; this is not an independent off-device backup."
+}
