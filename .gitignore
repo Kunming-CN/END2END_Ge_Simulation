@@ -119,3 +119,7 @@
 !transport/cryostat_export.cc
 !transport/cryostat_nominal.json
 !transport/test_cs137.py
+
+# Saved-HDF5 selected native pilot; original science code remains frozen.
+!simulation/native_bridge_pilot.jl
+!simulation/test_native_bridge_pilot.jl

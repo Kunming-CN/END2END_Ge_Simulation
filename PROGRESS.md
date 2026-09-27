@@ -1,6 +1,6 @@
 # Current project state and next steps
 
-Updated: 2026-09-26. This is the short, maintained handoff, not an append-only log.
+Updated: 2026-09-27. This is the short, maintained handoff, not an append-only log.
 Latest tagged release: **v0.14.0-native-li-readout**, commit **0d462ad**.
 Latest committed implementation: **c037558** (native profiles and Cs137 campaigns).
 Peak-policy milestone: **337c841**. Completed 10k/model results are verified below.
@@ -190,8 +190,34 @@ reviewers completed reciprocal closure. Desktop report preview inspected.
 Final postprocessing audit rechecked1,400 protected files and20 computational
 source hashes: zero original changes/deletions. Evidence: .local/million-analysis/.
 
-Next bounded work is the saved-HDF5-to-native bridge and representative pilot,
-retaining zeros/identities/caps/anomalies, before any long native response run.
+## Completed selected HDF5-to-native pilot (2026-09-27)
+
+The bridge is implemented; do not rebuild it or rerun the full pilot just to recover
+context. See tools/NATIVE_BRIDGE_RESULTS.md and .local/native-bridge-pilot/.
+Final contracts-v3 feed pilot-v2:23 selected million primaries (2zeros),22positive
+groups,22accepted ADC results; two additional old diagnostic primaries are separate.
+SAP22 primary965630 retains two groups. Compute/export interval133.134s; OS exit0
+independently observed. Existing fields/calibration/profile match old10k exactly.
+AK02 all9new groups have caps; SAP22 one of13groups has stopped-without-contact
+flags. AK02 primary3950 has661.657keV deposited but only59.169keV induced and
+47.955keV ADC; retain this concrete low-response case rather than assuming validity.
+Old AK8432 fails as before. Old SAP8413 succeeds in the mixed pilot but FAILS in
+all3fresh-process isolated repeats of that control with the same saved inputs/seeds
+and field fingerprints. Cross-context reproducibility remains unresolved, not fixed.
+No full-million native processing is launched. Do not erase or silently relabel
+old failures. Exact charge/endpoint/scalar/trace outputs and failed pilot-v1 remain.
+Tests:13Python bridge,87Julia assertions,3rehashed metadata/units,4output-ledger
+mutation,4renderer. Output-order bug fixed without changing frozen solver; true
+process exit verified independently of invalid temporary null-code receipt.
+Report-v2/comparison.html is a LOCAL selected waveform report; source/result notes
+are versioned. Original public million report remains deposition truth only.
+Preservation-after.json confirms1400campaign files,20original sources and9saved
+analysis artifacts unchanged. No Geant4 or million-analysis rerun occurred.
+
+Next bounded work: isolate SAP22 control execution-context dependence and assess
+AK02 primary3950/cap impact, using existing records and few targeted calls. Then
+build resumable full native response using cached fields and saved HDF5. This is
+not a new global Li/PDE gate or permission to repeat completed source simulation.
 
 ## Current limitations, not reasons to block every engineering feature
 
