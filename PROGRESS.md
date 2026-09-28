@@ -279,7 +279,9 @@ The original runner/config/cached fields remain frozen. The updated local Resume
 `tools/resume_native_contact.py`; see tools/NATIVE_CONTACT_START_RECOVERY.md and
 .local/native-contact-start-recovery. During the live run the legacy numerical_failures field is
 an aggregate native-failure count; final analysis must separate input-domain, boundary-numerical
-and electronics rejection categories.
+and electronics rejection categories. The full worker resumed through the separately bound
+contact-safe entry at 2026-09-28 10:45 CDT. A live check passed the original failure point and
+reached at least13,855/23,693 with status running; completed checkpoints were reused, not rerun.
 
 ## Deferred post-native UX/usability roadmap
 
