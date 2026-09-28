@@ -401,7 +401,7 @@ def normalize_text_outputs(folder):
             if normalized != data: output.write_bytes(normalized)
 
 
-def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None):
+def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -418,7 +418,15 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         old = validate(DESTINATION)
     if OUT.exists():
         remove_generated(OUT)
-    if native_response is not None:
+    if restructure:
+        validate(DESTINATION)
+        shutil.copytree(DESTINATION, OUT); (OUT/MANIFEST).unlink()
+    elif ssd_geometry is not None:
+        from ssd_geometry_publication import assemble as assemble_ssd_geometry
+        validate(DESTINATION)
+        shutil.copytree(DESTINATION, OUT); (OUT/MANIFEST).unlink()
+        assemble_ssd_geometry(ssd_geometry, OUT)
+    elif native_response is not None:
         build_native_response_export(native_response)
     elif million is not None:
         build_million_export(million)
@@ -430,6 +438,11 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         build_export()
     else:
         build_campaign_export(campaign)
+    from site_restructure import apply as apply_site_structure
+    # Tiny failure fixtures used by publication tests intentionally omit the model catalog.
+    # Real builds still require models/catalog.json in the final validator below.
+    if (OUT / 'models' / 'catalog.json').is_file():
+        apply_site_structure(OUT)
     normalize_text_outputs(OUT)
     report = validate(OUT, require_manifest=False, require_models=True)
     (OUT / MANIFEST).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8', newline='\n')
@@ -463,6 +476,8 @@ if __name__ == '__main__':
     parser.add_argument('--hit-view', type=Path, help='Publish saved Ge-hit overlay without any simulation')
     parser.add_argument('--million-results',type=Path,help='Publish completed 1M deposition analysis only')
     parser.add_argument('--native-response',type=Path,help='Publish completed 1M native SSD/readout analysis only')
+    parser.add_argument('--ssd-geometry',type=Path,help='Publish saved interactive SSD geometry assets only')
+    parser.add_argument('--restructure',action='store_true',help='Rebuild navigation/hub pages from the validated current snapshot only')
     args=parser.parse_args()
-    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response))>1: parser.error('Select one publication mode')
-    build(args.native_campaign, args.geometry_events,args.hit_view,args.million_results,args.native_response)
+    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry)) + int(args.restructure)>1: parser.error('Select one publication mode')
+    build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure)

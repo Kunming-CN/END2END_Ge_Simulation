@@ -143,6 +143,11 @@ def validate(site, require_manifest=True, require_models=False):
     if (site/'examples/cs137-1m-response').exists():
         from native_response_publication import validate as validate_native_response
         validate_native_response(site/'examples/cs137-1m-response')
+    geometry_viewers=[site/'detectors'/m/'geometry.html' for m in ('AK02','SAP22')]
+    if any(p.exists() for p in geometry_viewers):
+        if not all(p.exists() for p in geometry_viewers): raise ValueError('Partial SSD geometry viewer publication')
+        from ssd_geometry_publication import validate_site as validate_ssd_geometry
+        validate_ssd_geometry(site)
     hit_bundle = site/'examples/cs137-10k-hits'
     if hit_bundle.exists():
         from hit_view_publication import validate as validate_hits

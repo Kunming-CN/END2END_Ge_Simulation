@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "build_id": "75c6692d4d075ae9acd94ceb1b9a8e9710593c90de48f417ce676475849b12e3",
-  "file_count": 1325,
-  "total_bytes": 745855440,
-  "html_pages": 31,
-  "local_links_checked": 1776,
+  "build_id": "32f0fa6fa721a19355f9a1a61287f4a52e62a974217fbb91b1f07e0398348d42",
+  "file_count": 1340,
+  "total_bytes": 746166444,
+  "html_pages": 40,
+  "local_links_checked": 1843,
   "files": [
     {
       "path": ".nojekyll",
@@ -302,9 +302,29 @@
       "sha256": "d86f4a1e977ea89100ac86edda53d1bd9d171acb067a51f293f0d64838a81392"
     },
     {
+      "path": "detectors/AK02/geometry-active.json",
+      "bytes": 199,
+      "sha256": "1e4e434d1e2c41ab3173e14216dafe969424c249999b5babc8777adec7f309c1"
+    },
+    {
+      "path": "detectors/AK02/geometry.html",
+      "bytes": 8517,
+      "sha256": "ed23cb94b1f321a255e0ce3a46a28519475059cadb7544454bef42114a185b50"
+    },
+    {
+      "path": "detectors/AK02/geometry/318dbd0d1cacc72ca8bcdf608dc889621319a33055740fba967f0b9c2e616553/manifest.json",
+      "bytes": 939,
+      "sha256": "1d24905ad61a234e87e73be778530a7118cb34a3fa30c1a076eef180fe0050db"
+    },
+    {
+      "path": "detectors/AK02/geometry/318dbd0d1cacc72ca8bcdf608dc889621319a33055740fba967f0b9c2e616553/scene.json",
+      "bytes": 137757,
+      "sha256": "99f6756aec471b5e11b1ccc65835f80f008edd94945abfde2b49a930dff35cba"
+    },
+    {
       "path": "detectors/AK02/index.html",
-      "bytes": 17917,
-      "sha256": "409773edc5e864f687f2a28730a906ee409d8b3516dff0314b279363cfb3edf5"
+      "bytes": 19728,
+      "sha256": "98f5582c9c684f82555a96222c1b79f3cd50c07d14e4b83295e74c500994fce1"
     },
     {
       "path": "detectors/AK02/runs/20260922_suite_v3/01_geometry.png",
@@ -4777,9 +4797,29 @@
       "sha256": "94e282168d5e033551fa8f7b68691fcb54e0392436217a42b69db505860f0ecb"
     },
     {
+      "path": "detectors/SAP22/geometry-active.json",
+      "bytes": 200,
+      "sha256": "b4910d02f2e78d98d04206fc13f6cf9224ae061615eb001965b3828cea2783c2"
+    },
+    {
+      "path": "detectors/SAP22/geometry.html",
+      "bytes": 8522,
+      "sha256": "3ba141fcbc629d4817c160a2180e6491b62b0d669ca9d707eb6f27171144d3ac"
+    },
+    {
+      "path": "detectors/SAP22/geometry/7b53ae63ebffc0232aba60f47c784071a63779fd0228d86fcb7d581addb3a6b4/manifest.json",
+      "bytes": 940,
+      "sha256": "d688b4eda7cafa0753af4a673c351b13d20519108b216598c5ed55ac7e6ba835"
+    },
+    {
+      "path": "detectors/SAP22/geometry/7b53ae63ebffc0232aba60f47c784071a63779fd0228d86fcb7d581addb3a6b4/scene.json",
+      "bytes": 136965,
+      "sha256": "cd2a46372ed294c3ecb476adc032fa4bfb5c280336e6802021d6094845607784"
+    },
+    {
       "path": "detectors/SAP22/index.html",
-      "bytes": 17700,
-      "sha256": "8e7be9518c9a0770d7fa2196dd7be447d45b5779955d3697bbbb835dac5b1568"
+      "bytes": 19512,
+      "sha256": "9efb76253617b12381babbecbceb26652ac02113963053a41c9bb411905f7c26"
     },
     {
       "path": "detectors/SAP22/runs/20260922_suite_v3/01_geometry.png",
@@ -5055,6 +5095,11 @@
       "path": "detectors/SAP22/runs/20260922_suite_v3/validation.scenes.json",
       "bytes": 17546,
       "sha256": "3a94ab1796f5dad8f58f07c1712afdee59efb5e5339007ac06dd909871ae6b4e"
+    },
+    {
+      "path": "detectors/index.html",
+      "bytes": 5973,
+      "sha256": "6a7d81783af44444bab84b0c1cda92c1e846230e74a3a7826817253125584be0"
     },
     {
       "path": "downloads/AK01.zip",
@@ -6473,8 +6518,13 @@
     },
     {
       "path": "index.html",
-      "bytes": 14785,
-      "sha256": "9cc789729e74374d4fcd26f4c0613a19dd13a801b69da18bba981b4ea3ed60bb"
+      "bytes": 3783,
+      "sha256": "ba6d481a8a18115ebbd587a38b1a3a0699419d1c7904c31850b2267663eaa63d"
+    },
+    {
+      "path": "learn/index.html",
+      "bytes": 3120,
+      "sha256": "e6fc9dc0059313381e11de929852927f50442a8a10d95c93138ffab68c05dc37"
     },
     {
       "path": "lithium/axes-comparisons.csv",
@@ -6530,6 +6580,11 @@
       "path": "maintenance/VALIDATION.md",
       "bytes": 6706,
       "sha256": "44f303ef48276c4e19fa1525eb7e56955884175ed25fcf692868f3499eac3fff"
+    },
+    {
+      "path": "methods/index.html",
+      "bytes": 2921,
+      "sha256": "322123bb965b10dbd6eca4580aca9bf55b0887f9ca1c3751d89e16a775c9e348"
     },
     {
       "path": "models/ADLChargeDriftModel/drift_velocity_config.yaml",
@@ -6630,6 +6685,26 @@
       "path": "models/catalog.json",
       "bytes": 35523,
       "sha256": "ac5edd4c976a37cfcc80a8e507ac9347246a942ac843ed2ecc683079f220653b"
+    },
+    {
+      "path": "results/cs137-10k/index.html",
+      "bytes": 2879,
+      "sha256": "7789c081838ba46cc7c07cdcb5154f316d045e3fd880136324de36c7387e0837"
+    },
+    {
+      "path": "results/cs137-1m/index.html",
+      "bytes": 3289,
+      "sha256": "3e1b41458599d9ce1378dd92ba9d2d394a4127db20fdde8a693807c054467dba"
+    },
+    {
+      "path": "results/index.html",
+      "bytes": 2901,
+      "sha256": "a5a837f84fad50554a050256861147ca37d8c19e74513fb29568d4aafa6f38f7"
+    },
+    {
+      "path": "scenarios/lbnl-cs137/index.html",
+      "bytes": 3261,
+      "sha256": "4687f6242fc4b7639f120282fb796ce1c32f3411d601b46b029c5b9d97423dff"
     }
   ]
 }

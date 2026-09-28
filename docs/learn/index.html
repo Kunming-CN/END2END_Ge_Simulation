@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Start here · END2END Ge Simulation</title><style>
+:root{font:16px/1.55 system-ui;color:#173047;background:#f6f8fa}
+*{box-sizing:border-box}body{margin:0}.wrap{max-width:1120px;margin:auto;padding:24px}
+a{color:#075e9b}.top{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.top nav{display:flex;gap:8px;flex-wrap:wrap}.top nav a,.button{padding:10px 14px;border-radius:8px;background:#edf3f7;text-decoration:none}
+.hero{padding:44px 0 24px;max-width:820px}.hero h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.05;margin:.2em 0}
+.muted{color:#526575}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:22px 0}
+.card,.panel{background:#fff;border:1px solid #d7e0e7;border-radius:12px;padding:20px}.card h2{margin-top:0}
+.card a{font-weight:700}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+table{border-collapse:collapse;width:100%;background:white}th,td{padding:9px;border-bottom:1px solid #dce3e8;text-align:left}
+.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#edf3f7;font-size:.85rem;margin-right:5px}
+footer{margin-top:32px;padding-top:18px;border-top:1px solid #ccd6de;color:#526575}
+@media(max-width:760px){.cards,.grid{grid-template-columns:1fr}.wrap{padding:16px}.hero{padding-top:26px}}
+</style><body><main class="wrap"><header class="top"><a href="../index.html"><strong>END2END Ge Simulation</strong></a><nav aria-label="Primary"><a href="../learn/index.html">Start here</a><a href="../detectors/index.html">Explore detectors</a><a href="../results/index.html">Results</a></nav></header><section class="hero"><p class="muted">Start here</p><h1>Radiation → charge → electronics</h1>
+<p>Geant4/remage records where radiation deposits energy. SolidStateDetectors.jl transports electron/hole charge and calculates electrode signals. The electronics stage applies preamplifier, shaping and peak-ADC response.</p></section>
+<div class="grid"><article class="card"><h2>Explore a saved event</h2><p>Walk through deposits, charge, preamplifier, shaper and ADC in a compact example.</p><a href="../examples/pipeline.html">Open the engineering example →</a></article>
+<article class="card"><h2>Scenario and local setup</h2><p>Review the nominal LBNL cryostat/source model and the current local setup path while the one-click launcher is still being packaged.</p><a href="../scenarios/lbnl-cs137/index.html">Open scenario & setup →</a></article></div>
+<section class="panel"><h2>Important separation</h2><p>Geant4 deposition time is not carrier drift time. Deposited energy, induced charge, analog voltage, ADC code and reconstructed energy are retained as separate quantities.</p></section><footer><a href="../guide.html">Guide</a> · <a href="../methods/index.html">Methods & limitations</a> · <a href="../downloads/all-models.zip">Download all models</a> · <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">Code</a></footer></main></body></html>
