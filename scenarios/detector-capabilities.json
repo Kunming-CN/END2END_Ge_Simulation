@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "scenario_id": "lbnl-cs137",
+  "scope": "Viewing support is separate from cryostat placement and end-to-end execution. Both means separate serial cases.",
+  "detectors": [
+    {
+      "model_id": "AK01",
+      "model_sha256": "300fe2a86090da837e3c44489f8341929bdc32343331a40a43636c7ed503e830",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "AK02",
+      "model_sha256": "793de4cc598a3e26d375525e683be1bc2072e117d1c6b8003f6cdcffc9925dfa",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": true,
+      "geometry_adapter": "lbnl_cs137_v1",
+      "readout_contacts": [
+        1
+      ],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": null
+    },
+    {
+      "model_id": "BEGe_GD32B_reference",
+      "model_sha256": "7e651b974a5f46f9de084180c0195da047707d14084622994f56eac97a7ff913",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "BEGe_reference",
+      "model_sha256": "4456658ef2b8c777c3614ca4af5933f5a9e092ad18504aaa58754ad696215844",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "Bipolar_reference_3D",
+      "model_sha256": "804093cedd9e1953589c72d7bcb0e8c13efb48f708d45773d4882dda20665fa5",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "COAX_ANG2_reference",
+      "model_sha256": "75a792c8e8105834b426733bab62bf4589866be35280102b01647a79992a736e",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "GeGI_3D",
+      "model_sha256": "4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04",
+      "contact_count": 34,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "Multichannel geometry placement and readout adapter are not yet integrated."
+    },
+    {
+      "model_id": "GeRC02",
+      "model_sha256": "7a655caeb660c07df8fcd9af51cc0998daea15f16e31f9c6afcacb89daf39218",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "ICPC_48A_reference",
+      "model_sha256": "a3b4acf6347b03c2b39e216bfdcf825e47b5c7b6f6293e8f9fd357862815f464",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "ICPC_large_reference",
+      "model_sha256": "9bd9d1f58e5e6efb2fa5a11ab07a5db84126083fd1450b5d7f40edf23a72678d",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "KL01_3D",
+      "model_sha256": "84b215eecc13cf5f92aabc5e3c464910315dc71468533e53040cd30874d662ea",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "KMRC01_candidate",
+      "model_sha256": "d4258a3b9f9c041b4da1998ded6b373833169ddcc76079f0a588785efe68b6b6",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "PPC_PONaMa1_reference",
+      "model_sha256": "16959e508f82338a3c9f7d47076bb72a1b342abb9f6d337ef642555cfd2274a6",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "SAP16",
+      "model_sha256": "903aad272933aa6a2e2a744af0b6bfec486228633499f194c3fbe9b30d1486a4",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "SAP17",
+      "model_sha256": "32c47ad227066358c2698a02ed5f69b221f256da1b6f1486f8ffadf9a4a4c6bd",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "SAP18_ring08_scenario",
+      "model_sha256": "a4078c32a0f0c357932b12dbd7a9e719ee4aa894268b76c755bf7c3dbbb5bb09",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": false,
+      "geometry_adapter": null,
+      "readout_contacts": [],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": "This model has not yet been integrated and checked for the fixed LBNL assembly and response adapter."
+    },
+    {
+      "model_id": "SAP22",
+      "model_sha256": "614c72f31a5a84b82c69b0b11f6f0657e87d94f746312c151f9a08cd00ba3dc3",
+      "contact_count": 2,
+      "geometry_view": "saved_surface_viewer",
+      "lbnl_execution_implemented": true,
+      "geometry_adapter": "lbnl_cs137_v1",
+      "readout_contacts": [
+        1
+      ],
+      "positive_uninstrumented_launcher": "not_validated",
+      "cold_machine_reproduction": "not_validated",
+      "reason_unavailable": null
+    }
+  ]
+}

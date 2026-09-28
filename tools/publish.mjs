@@ -23,7 +23,10 @@ run(python, [path.join(root, 'tools/test_site.py')]);
 run(python, [path.join(root, 'tools/test_contacts.py')]);
 run(python, [path.join(root, 'tools/test_pipeline.py')]);
 run(python, [path.join(root, 'tools/test_lithium_report.py')]);
-run(python, [path.join(root, 'tools/build_site.py')]);
+// Preserve reviewed saved campaigns and geometry during ordinary publication.
+// New scientific/geometry exports use the explicit build_site.py modes first.
+const existingSnapshot = fs.existsSync(path.join(root, 'docs/site-manifest.json'));
+run(python, [path.join(root, 'tools/build_site.py'), ...(existingSnapshot ? ['--restructure'] : [])]);
 for (const f of files(path.join(root, 'docs'))) {
   if (fs.statSync(f).size >= 95 * 1024 ** 2 || /\.(jls|pvsm|vtr|bin|pdf|pptx)$/i.test(f)) throw new Error('Unapproved public file: ' + f);
   if (/\.(html|json|md)$/i.test(f) && /BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY|gh[pousr]_[A-Za-z0-9]{25,}|sk-proj-[A-Za-z0-9_-]{25,}/.test(fs.readFileSync(f, 'utf8'))) throw new Error('Potential credential in public output: ' + f);
@@ -44,7 +47,7 @@ if (origin.status !== 0) run(git, ['remote', 'add', 'origin', `https://github.co
 else if (![`https://github.com/${repo}.git`, `https://github.com/${repo}`, `git@github.com:${repo}.git`].includes(origin.stdout.trim())) throw new Error('Unexpected origin; stop and inspect.');
 const simulationFiles = new Set(["simulation/Project.toml","simulation/Manifest.toml","simulation/run.jl","simulation/README.md","simulation/benchmark.jl","simulation/test_run.jl","simulation/gpu/Project.toml","simulation/gpu/Manifest.toml","simulation/replay.jl","simulation/test_replay.jl","simulation/diagnose_collection.jl","simulation/test_collection.jl","simulation/validate_transition.jl","simulation/test_transition.jl","simulation/PHYSICS.md","simulation/verify_electrostatics.jl","simulation/test_electrostatics.jl","simulation/verify_ssd_electrostatics.jl","simulation/test_ssd_electrostatics.jl","simulation/readout.jl","simulation/test_readout.jl","simulation/readout_demo.json","simulation/verify_readout.jl","simulation/test_verify_readout.jl","simulation/diagnose_lithium.jl","simulation/test_lithium.jl","simulation/diagnose_transition_grid.jl","simulation/test_transition_grid.jl","simulation/diagnose_transition_axes.jl","simulation/test_transition_axes.jl","simulation/native_li_example.jl","simulation/test_native_li_example.jl"]);
 const transportFiles = new Set(["transport/README.md","transport/pixi.toml","transport/pixi.lock","transport/.pixi/config.toml","transport/cryostat-source.json","transport/Run.cmd","transport/run.sh","transport/smoke.gdml","transport/smoke.mac","transport/check_smoke.py","transport/handoff.py","transport/test_handoff.py","transport/geometry_probe.cc","transport/CMakeLists.txt","transport/experiment.json","transport/compare_em.py","transport/test_compare_em.py"]);
-const approved = new Set(['.gitignore', '.gitattributes', 'README.md', 'PROGRESS.md', 'AGENTS.md', 'Publish.cmd']);
+const approved = new Set(['.gitignore', '.gitattributes', 'README.md', 'PROGRESS.md', 'AGENTS.md', 'Publish.cmd', 'Run.cmd', 'Open_Workspace.cmd', 'scenarios/lbnl-cs137.json', 'scenarios/detector-capabilities.json']);
 // build_site.py has already validated this exact, versioned model inventory.
 const modelCatalog = JSON.parse(fs.readFileSync(path.join(root, 'models/catalog.json'), 'utf8'));
 const modelFiles = new Set(['models/catalog.json', 'models/README.md',
@@ -73,7 +76,7 @@ let live = false;
 for (let attempt = 0; attempt < 24; attempt++) {
   try {
     const response = await fetch(info.html_url, { signal: AbortSignal.timeout(8000), cache: 'no-store' });
-    if (response.ok && (await response.text()).includes('Simulation results online')) { live = true; break; }
+    if (response.ok && (await response.text()).includes('END2END Ge Simulation')) { live = true; break; }
   } catch { /* The initial Pages deployment can take a few minutes. */ }
   await new Promise(resolve => setTimeout(resolve, 5000));
 }

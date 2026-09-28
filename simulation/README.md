@@ -1,8 +1,10 @@
 # Configurable SSD CPU / NVIDIA examples
 
+For the nominal LBNL end-to-end workflow, start with the [Windows setup checklist](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup). This document is the advanced standalone SSD reference. The low-code LBNL preflight requires exactly Julia 1.13.0; the standalone parser accepts 1.13.x but other patch versions are not certified by that preflight.
+
 This cache-free example uses the exact distributed YAML snapshots and relative includes. Geometry, bias, impurity, drift and trapping settings remain those of the selected model. Catalog status/assumptions are included in each report. These bounded calculations do not reproduce the website's full numerical campaign or establish convergence or experimental agreement.
 
-Use Julia **1.13.x**, SSD **0.11.8**, and the supplied CPU project or optional `gpu/` project (CUDA **6.4.0**). Keep each Project/Manifest pair together. The CPU environment does not require or import CUDA. The GPU environment must already be provisioned with its locked dependencies and a working NVIDIA driver; the runner neither installs packages nor changes the driver. CPU runs are also allowed in the GPU project for fair comparisons. Reports hash the manifest actually selected by Julia.
+Use the reviewed Julia **1.13.0**, SSD **0.11.8**, and the supplied CPU project or optional `gpu/` project (CUDA **6.4.0**). Keep each Project/Manifest pair together. The CPU environment does not require or import CUDA. The GPU environment must already be provisioned with its locked dependencies and a working NVIDIA driver; the runner neither installs packages nor changes the driver. CPU runs are also allowed in the GPU project for fair comparisons. Reports hash the manifest actually selected by Julia.
 
 Install the locked dependencies once from the repository root (internet is needed on first installation):
 

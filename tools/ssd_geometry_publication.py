@@ -1,5 +1,8 @@
 """Publish validated SSD geometry scenes and a lightweight Canvas viewer."""
 import hashlib,json,re,shutil
+import geometry_catalog as GC
+from html import escape
+from site_fragments import remove_sections, prepend_main
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 MODELS=('AK02','SAP22')
@@ -23,8 +26,8 @@ def validate_asset(directory,model,expected_asset=None):
     require(canonical_scene_id(scene)==asset,'Geometry content-addressed identity')
     require(sha(directory/'scene.json')==man['scene_sha256'],'Geometry scene hash')
     require(scene['physical_length_unit']=='mm' and scene['scene_kind']=='ssd_detector_geometry','Scene units/kind')
-    require([x['id'] for x in scene['layers']]==['crystal','contact:1','contact:2'],'Scene layer IDs')
-    require(sum(len(x['faces']) for x in scene['layers'])==3712,'Unexpected polygon census')
+    GC.validate_layers(scene,man)
+    require((directory/'scene.json').stat().st_size==man['scene_bytes'],'Scene byte count')
     for layer in scene['layers']:
         require(layer['vertices_mm'] and layer['faces'],'Empty scene layer')
         require(layer['display_transform']['kind']=='display_only_antiflicker','Display transform semantics')
@@ -34,12 +37,16 @@ def viewer_html(model,asset):
     text=TEMPLATE.read_text(encoding='utf-8')
     scene=f'geometry/{asset}/scene.json'; manifest=f'geometry/{asset}/manifest.json'
     require(text.count('__MODEL__')>=1 and text.count('__SCENE__')>=1 and text.count('__MANIFEST__')==1,'Viewer template placeholders')
-    return text.replace('__MODEL__',model).replace('__SCENE__',scene).replace('__MANIFEST__',manifest)
+    choices=''.join('<option value="'+escape(m)+'"'+(' selected' if m==model else '')+'>'+escape(m)+'</option>' for m in GC.catalog())
+    item=GC.catalog()[model]
+    rows=''.join('<tr><td>'+str(c['id'])+'</td><td>'+escape(c['name'])+'</td><td>'+str(c['potential_V'])+'</td></tr>' for c in item['contacts'])
+    key='<details><summary>Static contact key and signed potentials (V)</summary><p>Saved catalog reference readout contact: '+str(item['readout_contact_id'])+'. This is geometry metadata, not proof of LBNL full-chain support.</p><table><thead><tr><th>ID</th><th>Name</th><th>V</th></tr></thead><tbody>'+rows+'</tbody></table></details>'
+    return text.replace('__CONTACT_KEY__',key).replace('__READOUT__',str(item['readout_contact_id'])).replace('__MODELS__',choices).replace('__MODEL__',model).replace('__SCENE__',scene).replace('__MANIFEST__',manifest)
 def assemble(source,site):
     source=Path(source).resolve();site=Path(site); export=read(source/'export.json')
     require(export['kind']=='ssd_geometry_export','Wrong geometry export');records={}
     for row in export['models']:
-        model=row['model']; require(model in MODELS,'Unexpected exported model')
+        model=row['model']; require(model in GC.catalog(),'Unexpected exported model')
         asset=row['asset_id']; src=source/model/asset; man,_=validate_asset(src,model,asset)
         dest=site/'detectors'/model/'geometry'/asset
         if dest.exists(): validate_asset(dest,model,asset)
@@ -50,20 +57,28 @@ def assemble(source,site):
         (site/'detectors'/model/'geometry-active.json').write_text(json.dumps(active,sort_keys=True,separators=(',',':'))+'\n',encoding='utf-8',newline='\n')
         (site/'detectors'/model/'geometry.html').write_text(viewer_html(model,asset),encoding='utf-8',newline='\n')
         page=site/'detectors'/model/'index.html'; text=page.read_text(encoding='utf-8')
-        text=re.sub(r'<section id="ssd-interactive-geometry">.*?</section>','',text,flags=re.S)
-        require(text.count('<main>')==1,'Unexpected detector main element')
+        text=remove_sections(text,{'ssd-interactive-geometry'})
+        require(len(re.findall(r'<main\b[^>]*>',text))==1,'Unexpected detector main element')
         section=(f'<section id="ssd-interactive-geometry"><h2>Interactive detector geometry</h2>'
                  f'<p>Rotate the saved SSD surface geometry and toggle the crystal/electrodes. '
                  f'<a href="geometry.html">Open full interactive geometry</a>. Display offsets are anti-flicker styling only.</p>'
                  f'<iframe title="{model} interactive detector geometry" src="geometry.html" '
                  f'style="width:100%;height:660px;border:1px solid #ccd;border-radius:8px" loading="lazy"></iframe></section>')
-        page.write_text(text.replace('<main>','<main>'+section,1),encoding='utf-8',newline='\n')
+        page.write_text(prepend_main(text,section),encoding='utf-8',newline='\n')
         records[model]={'asset_id':asset,'scene_sha256':man['scene_sha256']}
+    active_models=sorted(p.parent.name for p in (site/'detectors').glob('*/geometry-active.json'))
+    coverage={'schema_version':1,'model_ids':active_models,'all_catalog_models':set(active_models)==set(GC.catalog())}
+    (site/'detectors/geometry-index.json').write_text(json.dumps(coverage,sort_keys=True)+'\n',encoding='utf-8',newline='\n')
     return records
 def validate_site(site):
     site=Path(site);records={}
     require(TEMPLATE.is_file(),'Viewer template missing')
-    for model in MODELS:
+    coverage=site/'detectors/geometry-index.json'
+    models=read(coverage)['model_ids'] if coverage.is_file() else list(MODELS)
+    require(set(models)<=set(GC.catalog()) and len(models)==len(set(models)),'Invalid viewer coverage')
+    if coverage.is_file() and read(coverage)['all_catalog_models']:
+        require(set(models)==set(GC.catalog()),'Incomplete all-detector viewer coverage')
+    for model in models:
         viewer=site/'detectors'/model/'geometry.html'
         require(viewer.is_file(),'Missing geometry viewer '+model)
         page=(site/'detectors'/model/'index.html').read_text(encoding='utf-8')
@@ -84,3 +99,20 @@ if __name__=='__main__':
     import argparse
     p=argparse.ArgumentParser();p.add_argument('source',type=Path);p.add_argument('site',type=Path);a=p.parse_args()
     print(json.dumps(assemble(a.source,a.site),indent=2))
+
+def refresh_viewers(site):
+    """Refresh only HTML from verified active assets; no mesh export or solve."""
+    site=Path(site)
+    updated=[]
+    for model in GC.catalog():
+        active_file=site/'detectors'/model/'geometry-active.json'
+        if not active_file.is_file():
+            continue
+        active=read(active_file)
+        if active.get('model_id')!=model:
+            raise ValueError('Active geometry model mismatch')
+        asset=active['asset_id']
+        validate_asset(active_file.parent/'geometry'/asset,model,asset)
+        (active_file.parent/'geometry.html').write_text(viewer_html(model,asset),encoding='utf-8',newline='\n')
+        updated.append(model)
+    return updated

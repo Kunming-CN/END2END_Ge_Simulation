@@ -5,13 +5,13 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff after bounded launcher acceptance
+## Current handoff: all-model Pages and local workspace
 
 - Scientific outputs: 23,693 groups = 21,672 accepted + 1,613 readout rejects + 408 unavailable native responses.
 - Failures: 403 boundary-stall cases and 5 SAP22 contact-domain cases. Truth remains intact; unknown response is never zero-filled.
 - Final scalar audit is `.local/native-final-analysis-v3`; final report is `.local/native-final-report-v2`. Reuse them, not v1/v2 failed experiments.
-- Public final response: `examples/cs137-1m-response/report.html`; SSD geometry: `detectors/AK02/geometry.html` and `detectors/SAP22/geometry.html`.
-- Navigation hubs and lightweight saved-surface rotation are published as foundations only. Full homepage visuals, detector subpages and visitor-path acceptance remain pending; see the complete roadmap below.
+- Public final response: `examples/cs137-1m-response/report.html`. All 17 detector pages now have geometry/gallery/technical routes; geometry viewers preserve all 66 contacts, including GeGI's 34.
+- Full first-visitor route implemented: three action-first homepage entries with saved previews, concise detector overviews and deeper gallery/technical pages, explicit earlier-10k labels, legacy links/fragments, and one authoritative Windows setup guide. README is 68 lines/519 words instead of 304/3164.
 - Low-code v1 is implemented: `Run.cmd` -> check/setup/run/resume/open/status, with a data-only LBNL scenario, pinned preflight, guarded native entry and stage-level reuse.
 - Native artifacts/input/source/profile/receipt bindings are verified before reuse. A per-run exclusive lock and atomic run receipt protect ordinary concurrent starts/interruption.
 - The prepared seed must match the campaign seed; the deliberate mismatch fixture rejects before transport. Scenario references remain constrained to reviewed canonical files.
@@ -19,7 +19,11 @@ Do not restart any completed simulation, analyzer or reviewer because the chat s
 - New bounded acceptance: 8 saved positive groups (1000 retained primaries) pass 64 assertions after scoped review hardening, through the guarded main argument path with explicit test-only field-cache injection. All 149 protected files retain SHA-256/size/mtime. This is NOT uninstrumented Run.cmd acceptance.
 - Isolated same-machine source clone correctly rejects missing prerequisites (check exit 2; dry-run nonzero) without installing or calculating. Pinned transport version checks now forbid implicit installation. See tools/LAUNCHER_ACCEPTANCE.md.
 - Incomplete small-run native stages are preserved and require inspection; this launcher does NOT implement the million-campaign per-group resume. Do not advertise that capability.
-- Latest acceptance/review evidence: `.local/launcher-acceptance-v1/`; both original site-UX/workflow threads completed three bounded reciprocal rounds and closed this milestone. NEXT is the full Pages first-visitor route, not another physics/acceptance rerun. Earlier recovery evidence remains `.local/stream-recovery-final/`.
+- Current evidence: `.local/all-detector-pages-v1/`, including `outsider-audit/`. A fresh strict reviewer raised seven onboarding/maintenance issues; both original reviewers discussed them and all seven were addressed. Final review/publication receipts are retained there; prior launcher acceptance remains `.local/launcher-acceptance-v1/`.
+- `Open_Workspace.cmd` opens a guarded local-only results/file index: final reports first, historical evidence collapsed, original science paths retained. The loose presentation move has an exact hash/mtime/reverse journal.
+- Core regression: seven Julia suites and 37 transport/handoff tests passed without Geant4 generation or field solving. All-model browser, link/fragment, repeat-generation, original-root and same-machine 22-file clone checks are separate evidence, not cold-machine reproduction.
+- Final closure: independent outsider initial audit and re-audit, original site-UX r4 and workflow r5 (including a corrected -NoOpen wrapper). Release browser checks bind build `b5b1c9a76ac213dc7ee8a670fd867c2f5f6e04b3912b5b0a8fae45f7a05dd889`; 89 pages/2716 links and all 17 viewers pass. Exact commit/live deployment receipt is `.local/all-detector-pages-v1/COMPLETE.json`.
+- NEXT: low-code settings/recovery and tested additional LBNL detector adapters, per the full roadmap. Do not rerun completed science or the finished website review solely after a chat interruption.
 
 ## Preserved history
 
@@ -27,6 +31,25 @@ The complete pre-cleanup development log is preserved [at its immutable Git comm
 An exact local backup is `.local/maintenance-context/PROGRESS-before.md`.
 Raw runs, source hashes, review exchanges, failures and release tags remain intact.
 Consult only the relevant historical section when needed; do not reread the whole log.
+
+## Owner additions: all-model viewing, detector replacement, local organization
+
+The owner explicitly requested all catalog detectors, not just AK02/SAP22, to have
+simple browser drag/rotate geometry. This is a presentation capability, not proof
+that every model fits the current fixed LBNL cryostat or has a full-chain adapter.
+Local detector replacement must ultimately propagate the selected model through
+assembly placement, Geant4 deposits, SSD fields/charge, contacts and electronics,
+with saved configuration and no silent physical resizing. AK02/SAP22 selection
+already uses that shared implemented chain; the remaining catalog models require
+explicit placement/geometry/readout integration and remain visible but disabled
+for LBNL execution. Do not mark universal end-to-end replacement complete merely
+because the viewer or capability table lists 17 models.
+
+Project-local file organization is also in scope: a categorized local workspace
+entry and private reference-document folder, with original scientific paths,
+archives, checkpoints, model sources and review history retained. Only a checked,
+reversible move of the loose presentation is authorized by this round; no blanket
+cleanup of .local, no unrelated computer changes and no implicit resume/run.
 
 ## Goal and constraints
 
@@ -341,16 +364,16 @@ acceptance of the full visitor experience. Use saved outputs, not new campaigns.
 1. **COMPLETE / PRESERVE:** 1M/model Geant4 truth, native SSD, synthetic electronics
    and peak-ADC response, final analysis and published reports. Protect original
    LH5/HDF5, inputs, fields, checkpoints, failure ledgers and old examples.
-2. **CURRENT BOUNDED ACCEPTANCE:** saved-positive guarded-entry regression using
+2. **COMPLETE BOUNDED ACCEPTANCE:** saved-positive guarded-entry regression using
    explicitly test-only verified cached fields; same-machine source-only clone
    negative preflight. See tools/LAUNCHER_ACCEPTANCE.md for executed evidence and
    limits. Positive uninstrumented Run.cmd orchestration, cold setup and a public
    saved-input/cache-import interface remain NOT_VALIDATED / future work. Do not
    add those new features solely as a gate to saved-data-only Pages improvements.
-3. **NEXT / GITHUB PAGES FIRST-VISITOR ROUTE:** discuss and cross-review with the
-   same site-UX and workflow agents. Keep three main entry points but add lightweight
+3. **DELIVERED / GITHUB PAGES FIRST-VISITOR ROUTE:** independently audited and
+   discussed with the original site-UX/workflow agents. Three main entries have lightweight
    SAVED geometry, signal and spectrum previews. Move detail into second/third
-   levels: concise AK02/SAP22 overviews, gallery and technical pages; organized
+   levels: concise overviews, gallery and technical pages for all 17 models; organized
    detector/result/scenario/methods/download hubs. Preserve all model downloads.
    Fix duplicate detector navigation, ambiguous 10k links in 1M sections and stale
    guide wording. Clearly distinguish initial decays, pulse groups, truth, native
@@ -360,15 +383,18 @@ acceptance of the full visitor experience. Use saved outputs, not new campaigns.
    prerequisites, offline/fetch behavior and validation status. Verify repeat-build
    idempotence, unique IDs, links/fragments and desktop/mobile/keyboard journeys.
    Do not merely add more homepage announcements or call generated HTML acceptance.
-4. **LIGHTWEIGHT SSD GEOMETRY / PART OF PAGES:** AK02/SAP22 saved-surface rotation,
-   zoom and two-contact toggles exist. Make them discoverable and verify controls,
+4. **DELIVERED LIGHTWEIGHT SSD GEOMETRY:** all 17 catalog models have saved-surface rotation,
+   zoom and per-contact toggles, including all 34 GeGI contacts. Continue preserving controls,
    small contacts and fallback behavior. No browser ParaView replacement is needed.
    Additional saved fields/weighting potential/drift interaction is optional later
    work, never a new prerequisite. Keep real coordinates and display transforms
    distinct; do not fabricate unavailable trajectories or ship million-event JSON.
 5. **LOW-CODE COMPLETION AFTER PAGES:** Setup/check -> select detector/cryostat/
    source/events -> validate/save settings -> run -> progress/pause/resume -> results.
-   Start with reviewed LBNL Cs137 AK02/SAP22; unsupported scenarios are not options.
+   Start with reviewed LBNL Cs137 AK02/SAP22; unsupported scenarios are not executable options.
+   Add additional physically compatible detector replacements through an explicit
+   geometry/placement/readout adapter, not only a viewer dropdown. Keep the full
+   selected detector configuration consistent across every downstream stage.
    Organize simple defaults and advanced preamp/shaping/pole-zero/sampling/ADC
    settings in the ELECTRONICS stage. Save effective parameters, units, identities
    and provenance. Reuse earlier stages only when their dependencies match.

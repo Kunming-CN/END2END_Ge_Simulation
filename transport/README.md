@@ -1,5 +1,7 @@
 # Geant4/remage: radiation transport, not semiconductor charge transport
 
+For a first LBNL run on Windows, use the [single setup/run checklist](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup). The sections below are component-level and historical engineering references, not separate beginner workflows.
+
 This directory keeps one pinned Linux environment for radiation energy deposits.
 Windows uses Ubuntu 24.04 under WSL2; SSD remains native Windows Julia.
 The Pixi manifest pins remage 1.1.0 and Geant4 11.3.2, selected from the same
@@ -60,7 +62,7 @@ not a second source checkout. Installation requires several GB for Geant4 data
 and dependencies. `Run.cmd` selects Ubuntu-24.04; `run.sh` is the native Linux
 entry. Only Linux x86-64 is locked here; macOS is not claimed as tested.
 
-## Before connecting the cryostat to SSD
+## Historical pre-integration geometry notes
 
 The upstream is Geant4 `.tg` text geometry, while remage normally reads GDML.
 Its `/geometry/source` macro belongs to the original application, not remage.
@@ -70,7 +72,7 @@ Do not merge both variants or silently replace their detector with an SSD model.
 The modular detector uses a 10 x 5 x 10 mm bulk and separate handling wings;
 its coordinates/orientation must be reconciled with the selected SSD geometry.
 
-Conversion and LBNL overlap/material/placement verification are still pending.
+The nominal conversion, placement and bounded overlap/material checks are now implemented; see [Nominal cryostat and actual Cs137 decays](#nominal-cryostat-and-actual-cs137-decays). The earlier checklist below is retained as historical context. Surveyed as-built geometry and experimental response calibration remain unresolved.
 Preserve the distinction between bulk and wings, choose the correct as-built
 variant and source placement, then export Geant4 deposit identities/positions/
 times without mistaking them for carrier drift times. Preserve zero-deposit

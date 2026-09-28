@@ -4,9 +4,12 @@ This is presentation only. It never runs physics and never rewrites scientific
 campaign artifacts. Existing report/detector URLs remain valid.
 """
 import json
+import site_detector_pages as detector_pages
 import re
 from html import escape
 from pathlib import Path
+from site_detector_pages import apply as apply_detector_pages
+from site_previews import add_previews
 
 PRIMARY = ("Start here", "Explore detectors", "Results")
 STYLE = """
@@ -14,12 +17,12 @@ STYLE = """
 *{box-sizing:border-box}body{margin:0}.wrap{max-width:1120px;margin:auto;padding:24px}
 a{color:#075e9b}.top{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .top nav{display:flex;gap:8px;flex-wrap:wrap}.top nav a,.button{padding:10px 14px;border-radius:8px;background:#edf3f7;text-decoration:none}
-.hero{padding:44px 0 24px;max-width:820px}.hero h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.05;margin:.2em 0}
+.hero{padding:44px 0 24px;max-width:820px}.hero h1{overflow-wrap:anywhere;font-size:clamp(2rem,5vw,3.4rem);line-height:1.05;margin:.2em 0}
 .muted{color:#526575}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:22px 0}
 .card,.panel{background:#fff;border:1px solid #d7e0e7;border-radius:12px;padding:20px}.card h2{margin-top:0}
 .card a{font-weight:700}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 table{border-collapse:collapse;width:100%;background:white}th,td{padding:9px;border-bottom:1px solid #dce3e8;text-align:left}
-.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#edf3f7;font-size:.85rem;margin-right:5px}
+.preview{margin:12px 0}.preview img,.preview svg{width:100%;height:180px;object-fit:contain}.preview figcaption{font-size:.82rem;color:#526575}.legend span{display:inline-block;width:12px;height:12px;margin-right:4px}iframe{max-width:100%}td,th{overflow-wrap:anywhere}.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#edf3f7;font-size:.85rem;margin-right:5px}
 footer{margin-top:32px;padding-top:18px;border-top:1px solid #ccd6de;color:#526575}
 @media(max-width:760px){.cards,.grid{grid-template-columns:1fr}.wrap{padding:16px}.hero{padding-top:26px}}
 """
@@ -60,6 +63,8 @@ def apply(site):
     site=Path(site)
     require((site/'index.html').is_file(),'Site snapshot missing index')
     catalog=read(site/'models/catalog.json')
+    capabilities=detector_pages.execution_capabilities()
+    execution_ids={key for key,row in capabilities.items() if row['lbnl_execution_implemented']}
     require(len(catalog.get('detectors',[]))>=2,'Detector catalog missing')
 
     response=site/'examples/cs137-1m-response/summary.json'
@@ -69,25 +74,19 @@ def apply(site):
     has_10k=(site/'examples/cs137-10k/comparison.html').exists()
     has_hit_view=(site/'examples/cs137-10k-hits/hit_event_view.html').exists()
 
-    result_note=''
-    if response_summary:
-        total=response_summary['totals']
-        event_cta=' <a class="button" href="examples/cs137-10k-hits/hit_event_view.html">Follow one saved event →</a>' if has_hit_view else ''
-        result_note=(f'<section class="panel"><h2>Featured completed result</h2>'
-                     f'<p>Cs137, one million initial decays per detector: <strong>{total["accepted"]:,} accepted peak-ADC groups combined across AK02 + SAP22</strong>, with failures and rejects kept explicit.</p>'
-                     f'<p><a class="button" href="examples/cs137-1m-response/report.html">Compare deposited and reconstructed energy →</a>'+event_cta+'</p></section>')
-
     home=('''<section class="hero"><p class="muted">Precomputed HPGe detector simulations</p>
 <h1>From radiation to an energy measurement.</h1>
-<p>Explore detector geometry, radiation energy deposits, semiconductor charge motion and synthetic electronics without digging through the full development archive.</p></section>
+<p>Explore detector geometry and follow radiation deposits through charge collection and electronics.</p></section>
 <section class="cards">
 <article class="card"><h2>Start here</h2><p>Follow the chain from an energy deposit through charge collection and electronics.</p><a href="learn/index.html">Learn the pipeline →</a></article>
 <article class="card"><h2>Explore detectors</h2><p>Browse the model library and inspect detector contacts and saved field/response views.</p><a href="detectors/index.html">Open detector library →</a></article>
 <article class="card"><h2>Results</h2><p>Compare deposited and reconstructed energy in completed campaigns.</p><a href="results/index.html">Open results →</a></article></section>'''
-          +result_note+'''
-<section class="panel"><h2>Run it locally</h2><p>The public site contains saved results; computation runs on your own machine. Clone the repository and double-click <code>Run.cmd</code> for Check setup → New run / Resume → Open results.</p><a href="scenarios/lbnl-cs137/index.html">LBNL Cs137 scenario & launcher</a> · <a href="guide.html">Detailed setup guide</a></section>
+          +'''
+<section class="panel"><h2>Run it locally</h2><p>The <code>Run.cmd</code> workflow implements __EXECUTION_CASES__ selection. Prepare the pinned dependencies and cryostat inputs first. Positive uninstrumented launcher runs and fresh-machine reproduction remain unvalidated.</p><a class="button" href="guide.html#setup">Start the Windows setup checklist →</a> · <a href="scenarios/lbnl-cs137/index.html">Scenario details</a></section>
 <p><a href="downloads/all-models.zip">Download all detector models</a></p>''')
     home=home.replace('Download all detector models',f'Download all {len(catalog["detectors"])} detector models')
+    home=home.replace('__EXECUTION_CASES__',' / '.join(sorted(execution_ids)))
+    home=add_previews(site,home)
     write_page(site/'index.html','END2END Ge Simulation',home,0)
 
     learn=('''<section class="hero"><p class="muted">Start here</p><h1>Radiation → charge → electronics</h1>
@@ -97,26 +96,13 @@ def apply(site):
 <section class="panel"><h2>Important separation</h2><p>Geant4 deposition time is not carrier drift time. Deposited energy, induced charge, analog voltage, ADC code and reconstructed energy are retained as separate quantities.</p></section>''')
     write_page(site/'learn/index.html','Start here · END2END Ge Simulation',learn,1)
 
-    featured_items=[x for x in catalog['detectors'] if x['id'] in ('AK02','SAP22')]
-    other_items=[x for x in catalog['detectors'] if x['id'] not in ('AK02','SAP22')]
+    featured_items=[x for x in catalog['detectors'] if x['id'] in execution_ids]
+    other_items=[x for x in catalog['detectors'] if x['id'] not in execution_ids]
     det=('''<section class="hero"><p class="muted">Detector library</p><h1>Explore detector models</h1>
-<p>AK02 and SAP22 are featured for the completed end-to-end Cs137 campaign. The remaining models retain their saved SSD galleries and original model downloads.</p></section>
-<h2>Featured end-to-end detectors</h2><div class="grid">'''+detector_cards({'detectors':featured_items})+'''</div>
+<p>Models with implemented LBNL selections are shown first. All models retain their geometry, saved galleries and original downloads; viewing does not establish execution support.</p></section>
+<h2>Implemented LBNL selections</h2><div class="grid">'''+detector_cards({'detectors':featured_items})+'''</div>
 <h2>Full model library</h2><div class="grid">'''+detector_cards({'detectors':other_items})+'''</div>''')
     write_page(site/'detectors/index.html','Detectors · END2END Ge Simulation',det,1)
-    for model in ('AK02','SAP22'):
-        page=site/'detectors'/model/'index.html'
-        if not page.is_file(): continue
-        text=page.read_text(encoding='utf-8')
-        text=re.sub(r'<section id="featured-detector-navigation">.*?</section>','',text,flags=re.S)
-        actions=[]
-        if (page.parent/'geometry.html').is_file(): actions.append('<a class="button" href="geometry.html">Rotate geometry →</a>')
-        if (site/'examples/cs137-10k-hits/hit_event_view.html').is_file(): actions.append('<a class="button" href="../../examples/cs137-10k-hits/hit_event_view.html">Follow a saved event →</a>')
-        if has_1m: actions.append('<a class="button" href="../../results/cs137-1m/index.html">View 1M results →</a>')
-        section=('<section id="featured-detector-navigation" class="panel"><h2>Start with this detector</h2><p>'+' '.join(actions)+'</p>'
-                 '<p class="muted">The saved gallery, diagnostics, original model files and provenance remain below as technical detail.</p></section>')
-        require(text.count('<main>')==1,'Unexpected detector main: '+model+' count='+str(text.count('<main>'))+' head='+repr(text[:120]))
-        page.write_text(text.replace('<main>','<main>'+section,1),encoding='utf-8',newline='\n')
     result_cards=[]
     if has_1m:
         result_cards.append('''<article class="card"><h2>Cs137 · 1M per detector</h2><p>Completed nominal LBNL cryostat campaign: Geant4 truth → native SSD → synthetic peak ADC.</p><a href="cs137-1m/index.html">Open campaign overview →</a></article>''')
@@ -170,9 +156,15 @@ def apply(site):
 <p>A Cs137 source above the curved aluminum cryostat wall, with AK02 or SAP22 simulated as separate detector cases. The geometry/source pose is nominal, not an as-built survey.</p></section>
 <div class="grid"><article class="card" id="ak02"><h2>AK02 case</h2><p>Primary Li-contact detector case; native response uses explicit 77 K override and the canonical model bias.</p><a href="../../detectors/AK02/index.html">AK02 detector page →</a></article>
 <article class="card" id="sap22"><h2>SAP22 case</h2><p>Different-geometry non-Li cross-check; it is not a matched control detector.</p><a href="../../detectors/SAP22/index.html">SAP22 detector page →</a></article></div>'''+saved_html+'''
-<section class="panel"><h2>Run locally with minimal commands</h2><p>On Windows, clone the repository and double-click <code>Run.cmd</code>, or use <code>Run.cmd check</code>, <code>Run.cmd run -Preset demo -Detector both</code>, <code>Run.cmd resume -Name RUN_NAME</code>, and <code>Run.cmd open -Name RUN_NAME</code>. The default demo is 500 initial decays per selected detector; smoke is 20 and may produce no Ge pulse; 10k requires a verified 500-event pilot. Setup never silently substitutes geometry or installs unreviewed physics.</p><p>The pinned LBNL source files are not redistributed because no explicit license was found in the pinned upstream tree; the launcher verifies exact originals under <code>.local/transport/LBNL</code>. See the <a href="../../guide.html">detailed setup guide</a> and <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/transport/cryostat-source.json">upstream manifest</a>.</p></section>'''
+<section class="panel"><h2>Run a supported local case</h2><p>Prepare the Windows setup checklist first. Positive uninstrumented launcher runs and fresh-machine reproduction remain unvalidated.</p><p>After preparation, double-click <code>Run.cmd</code>, or use <code>.\\Run.cmd check</code>, <code>.\\Run.cmd run -Preset demo -Detector both</code>, <code>.\\Run.cmd resume -Name RUN_NAME</code>, and <code>.\\Run.cmd open -Name RUN_NAME</code>. The default demo is 500 initial decays per selected detector; smoke is 20 and may produce no Ge pulse; 10k requires a verified 500-event pilot. Setup never silently substitutes geometry or installs unreviewed physics.</p><p>The pinned LBNL source files are not redistributed because no explicit license was found in the pinned upstream tree; the launcher verifies exact originals under <code>.local/transport/LBNL</code>. See the <a href="../../guide.html">detailed setup guide</a> and <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/transport/cryostat-source.json">upstream manifest</a>.</p></section>'''
+    caprows=''.join('<tr><td><a href="../../detectors/'+escape(m['id'])+'/index.html">'+escape(m['id'])+'</a></td><td>'+str(len(m.get('contacts',[])))+'</td><td>'+('Implemented' if m['id'] in execution_ids else 'Not yet integrated')+'</td></tr>' for m in catalog['detectors'])
+    scenario+='<section class="panel"><h2>Choose a detector locally</h2><p>Run <code>.\\Run.cmd detectors</code> to inspect the local capability list. Select <code>-Detector AK02</code>, <code>-Detector SAP22</code>, or <code>-Detector both</code>; both means separate serial cases through the same end-to-end chain, not two crystals in one assembly.</p><p>All catalog models can be viewed in 3D. Additional LBNL models require geometry/placement and readout integration; they are not enabled merely by appearing in this table. Positive uninstrumented launcher and fresh-machine reproduction remain unvalidated.</p><table><thead><tr><th>Model</th><th>Contacts</th><th>LBNL execution adapter</th></tr></thead><tbody>'+caprows+'</tbody></table></section>'
     write_page(site/'scenarios/lbnl-cs137/index.html','LBNL Cs137 scenario · END2END Ge Simulation',scenario,2)
 
+    (site/'guide.html').write_text((Path(__file__).resolve().parent/'site_guide.html').read_text(encoding='utf-8'),encoding='utf-8',newline='\n')
+    from ssd_geometry_publication import refresh_viewers
+    refresh_viewers(site)
+    apply_detector_pages(site,write_page)
     return {'status':'applied','detectors':len(catalog['detectors']),
             'response_present':response.exists(),'truth_present':truth.exists()}
 

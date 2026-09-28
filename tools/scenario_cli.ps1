@@ -1,6 +1,6 @@
 # Low-code Windows entry for reviewed local scenarios. No installs or physics hidden here.
 param(
-  [ValidateSet('menu','check','setup','run','resume','open','status')][string]$Action='menu',
+  [ValidateSet('menu','check','setup','run','resume','open','status','detectors')][string]$Action='menu',
   [ValidateSet('lbnl-cs137')][string]$Scenario='lbnl-cs137',
   [ValidateSet('smoke','demo','larger')][string]$Preset='demo',
   [ValidateSet('AK02','SAP22','both')][string]$Detector='both',
@@ -81,7 +81,7 @@ function Show-SetupStatus {
     if(!$s.julia_ready){Write-Host 'Julia: follow simulation/README.md to install the pinned Julia environment.'}
     if(!$s.wsl_ubuntu_24 -or !$s.locked_transport){Write-Host 'Transport: follow transport/README.md for Ubuntu-24.04 and explicit pixi install --locked.'}
     if(!$s.upstream){Write-Host 'LBNL inputs: use the pinned repository, commit and file hashes in transport/cryostat-source.json; place exact files in .local/transport/LBNL.'}
-    if(!$s.exporter){Write-Host 'After dependencies and LBNL inputs are ready, run: Run.cmd setup -BuildExporter'}
+    if(!$s.exporter){Write-Host 'After dependencies and LBNL inputs are ready, run: .\Run.cmd setup -BuildExporter'}
     exit 2
   }
 }
@@ -99,7 +99,7 @@ function Require-Ready {
     $s|Format-List
     $up=Check-Upstream
     if(!$up.ok){Write-Host "LBNL originals are not redistributed. See transport/cryostat-source.json and the pinned upstream commit." -ForegroundColor Yellow}
-    throw 'Setup is incomplete. Run: Run.cmd setup'
+    throw 'Setup is incomplete. Run: .\Run.cmd setup'
   }
   return $s
 }
@@ -126,6 +126,32 @@ function Write-RunIndex([string]$Directory){
   $body='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>END2END local run</title><style>body{font:16px/1.5 system-ui;max-width:850px;margin:auto;padding:22px}code{background:#eee;padding:2px 5px}</style><h1>'+[System.Net.WebUtility]::HtmlEncode($scenarioConfig.title)+'</h1><p>Status: <strong>'+$status+'</strong></p><p>Saved local results; synthetic electronics and nominal geometry.</p><ul>'+($links -join '')+'</ul><p><code>run.json</code> preserves configuration, stages, hashes and failures.</p>'
   [IO.File]::WriteAllText((Join-Path $Directory 'index.html'),$body)
 }
+function Show-DetectorChoices {
+  $file=Join-Path $root 'scenarios/detector-capabilities.json'
+  $caps=Get-Content -LiteralPath $file -Raw|ConvertFrom-Json
+  $catalog=Get-Content -LiteralPath (Join-Path $root 'models/catalog.json') -Raw|ConvertFrom-Json
+  if($caps.schema_version -ne 1 -or $caps.scenario_id -ne $Scenario){throw 'Unsupported capability registry'}
+  $names=@($caps.detectors|ForEach-Object {$_.model_id})
+  if($names.Count -ne $catalog.detectors.Count -or ($names|Select-Object -Unique).Count -ne $names.Count){throw 'Capability catalog coverage mismatch'}
+  foreach($entry in $caps.detectors){
+    $model=@($catalog.detectors|Where-Object {$_.id -ceq $entry.model_id})
+    if($model.Count -ne 1 -or $model[0].model_sha256 -ne $entry.model_sha256 -or $model[0].contacts.Count -ne $entry.contact_count){throw 'Capability model identity mismatch'}
+    if($entry.lbnl_execution_implemented -isnot [bool]){throw 'Capability execution flag must be a Boolean'}
+    if([bool]$entry.lbnl_execution_implemented -ne ($scenarioConfig.detectors -contains $entry.model_id)){throw 'Capability/scenario execution mismatch'}
+    if($entry.lbnl_execution_implemented){
+      if($entry.geometry_adapter -ne $scenarioConfig.adapter -or @($entry.readout_contacts).Count -ne 1 -or $entry.readout_contacts[0] -ne $model[0].readout_contact_id){throw 'Capability adapter/readout mismatch'}
+    }elseif($null -ne $entry.geometry_adapter -or @($entry.readout_contacts).Count -ne 0){throw 'Unsupported model has execution metadata'}
+  }
+  $caps.detectors|ForEach-Object {[pscustomobject]@{
+    Detector=$_.model_id;Contacts=$_.contact_count
+    ViewerPage=(Test-Path -LiteralPath (Join-Path $root ('docs/detectors/'+$_.model_id+'/geometry.html')))
+    LBNL=if($_.lbnl_execution_implemented){'implemented'}else{'not integrated'}
+  }}|Format-Table -AutoSize
+  Write-Host '.\Run.cmd run -Detector AK02 -Preset demo  (or SAP22; both runs separate cases)'
+  Write-Host 'Viewing a model does not establish cryostat fit or full-chain support.'
+  Write-Host 'Positive uninstrumented launcher and clean-machine reproduction remain unvalidated.'
+}
+
 function Show-Status {
   if(!(Test-Path $runsRoot)){Write-Host 'No .local/runs yet.';return}
   $rows=@()
@@ -171,7 +197,7 @@ function Invoke-Run([bool]$ResumeMode){
   if($Open){Open-Run $Name}
 }
 function Menu {
-  Write-Host '';Write-Host 'END2END Ge Simulation';Write-Host '1) Check setup';Write-Host '2) Setup / build local exporter';Write-Host '3) New LBNL Cs137 run';Write-Host '4) Resume a saved run';Write-Host '5) Open saved results';Write-Host '6) List run status';Write-Host 'Q) Quit'
+  Write-Host '';Write-Host 'END2END Ge Simulation';Write-Host '1) Check setup';Write-Host '2) Setup / build local exporter';Write-Host '3) New LBNL Cs137 run';Write-Host '4) Resume a saved run';Write-Host '5) Open saved results';Write-Host '6) List run status';Write-Host '7) Detector capabilities';Write-Host 'Q) Quit'
   $choice=(Read-Host 'Select').Trim().ToUpperInvariant()
   switch($choice){
     '1'{$script:Action='check'}
@@ -180,6 +206,7 @@ function Menu {
     '4'{$script:Action='resume';$script:Name=(Read-Host 'Saved run name').Trim()}
     '5'{$script:Action='open';$script:Name=(Read-Host 'Saved run name').Trim()}
     '6'{$script:Action='status'}
+    '7'{$script:Action='detectors'}
     default{return $false}
   }; return $true
 }
@@ -191,4 +218,5 @@ switch($Action){
   'resume'{Invoke-Run $true}
   'open'{Open-Run $Name}
   'status'{Show-Status}
+  'detectors'{Show-DetectorChoices}
 }

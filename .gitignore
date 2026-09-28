@@ -147,3 +147,6 @@
 
 # Explicit maintainer-only saved-input acceptance test; no cached data are published.
 !simulation/test_guarded_saved_input.jl
+
+# Local workspace launcher; generated indexes and reference documents stay private.
+!Open_Workspace.cmd

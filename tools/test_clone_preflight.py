@@ -17,7 +17,10 @@ SOURCES = ('Run.cmd', 'tools/scenario_cli.ps1', 'tools/run_native_campaign.ps1',
            'transport/Run.cmd', 'transport/run.sh', 'transport/pixi.toml',
            'transport/pixi.lock', 'scenarios/lbnl-cs137.json',
            'simulation/Project.toml', 'simulation/Manifest.toml',
-           'simulation/native_response_guarded.jl', 'simulation/native_response.jl')
+           'simulation/native_response_guarded.jl', 'simulation/native_response.jl',
+           'Open_Workspace.cmd', 'tools/open_workspace.ps1', 'tools/build_local_dashboard.py',
+           'tools/local_paths.py', 'scenarios/detector-capabilities.json',
+           'README.md', 'tools/LOCAL_WORKSPACE.md', 'tools/MAINTENANCE.md')
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -75,6 +78,8 @@ def main() -> None:
                        f"& '{run_path}' {arguments}; exit $LASTEXITCODE"], cwd=out)
     code, text = launcher('status', 'status')
     require(code == 0 and 'No .local/runs yet.' in text, 'Fresh-clone status failed.')
+    code, text = launcher('detectors', 'detectors')
+    require(code == 0 and 'AK02' in text and 'SAP22' in text and 'GeGI_3D' in text, 'Source-only model menu failed.')
     code, text = launcher('check-missing', 'check')
     require(code == 2, f'Incomplete preflight must exit 2, received {code}.')
     require('Setup is incomplete' in text and 'transport/cryostat-source.json' in text,
@@ -86,6 +91,15 @@ def main() -> None:
     require(not (clone / '.local' / 'transport' / 'LBNL').exists(), 'Upstream was silently copied/fetched.')
     require(not (clone / '.local' / 'm2a').exists(), 'Exporter was silently built.')
     require(all(digest(clone / rel) == h for rel, h in hashes.items()), 'Preflight mutated checked sources.')
+    code, text = command('workspace-no-open', [powershell, '-NoProfile', '-ExecutionPolicy', 'Bypass',
+                          '-File', str(clone / 'tools/open_workspace.ps1'), '-NoOpen'], cwd=out)
+    require(code == 0 and (clone / '.local/workspace/index.html').is_file(), 'Source-only workspace entry failed.')
+    require(not (clone / '.local/runs').exists(), 'Workspace entry started a campaign.')
+    require('browser opening suppressed by -NoOpen' in text, 'Direct workspace suppression not observed.')
+    command_path=str(clone / 'Open_Workspace.cmd').replace("'", "''")
+    code, text=command('workspace-wrapper-no-open', [powershell, '-NoProfile', '-Command',
+                        f"& '{command_path}' -NoOpen; exit $LASTEXITCODE"], cwd=out)
+    require(code==0 and 'browser opening suppressed by -NoOpen' in text, 'Root wrapper failed to forward -NoOpen.')
     result = dict(status='passed_negative_same_machine_source_clone_preflight',
                   base_commit=base, candidate_runtime_sha256=hashes,
                   candidate_overlay=list(SOURCES), source_clone=str(clone.relative_to(ROOT)),

@@ -3,7 +3,7 @@
 Work only in this project unless a recorded input dependency needs a read-only check.
 
 1. Read the compact PROGRESS.md handoff first, then only relevant README/source sections. Complete one milestone-sized task at a time. The current handoff governs delivery order; older stage notes are historical accuracy guidance, not automatic blockers.
-2. Keep one project root. Use tools/ for reusable tooling, docs/ for public results, and .local/ for disposable local evidence/backups. Do not scatter copies, timestamped reports or extra environments.
+2. Keep one project root. Use tools/ for reusable tooling, docs/ for generated public results, and .local/ for classified local data/evidence. Completed science and unique failure records under .local/ are permanent, not disposable; follow tools/DATA_RETENTION.md and tools/LOCAL_WORKSPACE.md. Do not scatter copies, timestamped reports or extra environments.
 3. Preserve existing numerical data and model hashes. Never silently change bias, impurity, geometry, carrier physics, missing-charge labels or event selection to make a test pass.
 4. The public repository initially contains the exported website and maintenance tools only. The full raw computation workspace is deliberately ignored. Add new calculation source deliberately during M1, not with a wholesale force-add.
    Intentional M1a addition: `models/` contains exact versioned SSD model snapshots and inspected relative includes. Preserve original YAML bytes and pinned hashes; keep provenance portable and reference/candidate limitations intact. Original model/cache folders remain ignored.
@@ -17,6 +17,10 @@ Work only in this project unless a recorded input dependency needs a read-only c
 ## Keep active context short
 
 PROGRESS.md is the single current handoff; its immutable-history link preserves the full prior log. Do not append another full round transcript. Read debug output by bounded ranges and exact fields. Write long evidence to local files, not repeated terminal/chat dumps. Close owned idle sessions after each round; never clear global shell history, chat records, authentication stores or scientific evidence. Use focused reviewers for substantive implementation changes, not simple cleanup.
+
+## Publication and onboarding ownership
+
+Keep README as a short browse/run entry. The maintained Windows setup authority is tools/site_guide.html; advanced component READMEs are not competing beginner routes. Use tools/MAINTENANCE.md for source ownership. Normal Publish.cmd preserves the checked saved snapshot and refreshes maintained navigation/viewer HTML without physics. Derive presentation eligibility from scenarios/detector-capabilities.json while keeping independent backend checks. Seventeen viewable models do not imply seventeen LBNL-executable models.
 
 ## Existing tools
 
