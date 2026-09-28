@@ -65,12 +65,24 @@ function Check-Setup {
   $transport=$false; if($ubuntu){& (Join-Path $root 'transport/Run.cmd') versions *> $null; $transport=($LASTEXITCODE -eq 0)}
   $ErrorActionPreference=$savedEap
   [pscustomobject]@{
-    scenario=$scenarioConfig.id; scenario_sha256=$scenarioSha256
+    scenario=$scenarioConfig.id; scenario_sha256=$scenarioSha256; check_mode='read_only_no_install'
     julia_executable=($null -ne $j); julia_environment=$juliaEnv; julia_ready=$juliaReady
     wsl_ubuntu_24=$ubuntu; locked_transport=$transport; upstream=$up.ok; exporter=(Test-Path $exporter -PathType Leaf)
     free_GB=[math]::Round((Get-PSDrive -Name ([IO.Path]::GetPathRoot($root).TrimEnd('\').TrimEnd(':'))).Free/1GB,1)
     geometry_sha256=Hash-Lower $geometry; readout_profile_sha256=Hash-Lower $profile
     ready=($juliaReady -and $ubuntu -and $transport -and $up.ok -and (Test-Path $exporter -PathType Leaf))
+  }
+}
+function Show-SetupStatus {
+  $s=Check-Setup
+  $s|Format-List
+  if(!$s.ready){
+    Write-Host 'Setup is incomplete. No packages or source files were installed by this check.' -ForegroundColor Yellow
+    if(!$s.julia_ready){Write-Host 'Julia: follow simulation/README.md to install the pinned Julia environment.'}
+    if(!$s.wsl_ubuntu_24 -or !$s.locked_transport){Write-Host 'Transport: follow transport/README.md for Ubuntu-24.04 and explicit pixi install --locked.'}
+    if(!$s.upstream){Write-Host 'LBNL inputs: use the pinned repository, commit and file hashes in transport/cryostat-source.json; place exact files in .local/transport/LBNL.'}
+    if(!$s.exporter){Write-Host 'After dependencies and LBNL inputs are ready, run: Run.cmd setup -BuildExporter'}
+    exit 2
   }
 }
 function Build-Exporter {
@@ -173,8 +185,8 @@ function Menu {
 }
 if($Action -eq 'menu'){if(!(Menu)){return}}
 switch($Action){
-  'check'{Check-Setup|Format-List}
-  'setup'{if($BuildExporter -or !(Test-Path $exporter)){Build-Exporter};Check-Setup|Format-List}
+  'check'{Show-SetupStatus}
+  'setup'{if($BuildExporter -or !(Test-Path $exporter)){Build-Exporter};Show-SetupStatus}
   'run'{Invoke-Run $false}
   'resume'{Invoke-Run $true}
   'open'{Open-Run $Name}

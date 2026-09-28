@@ -144,3 +144,6 @@
 # Guarded low-code response entry; legacy native_response.jl remains unchanged.
 !simulation/native_response_guarded.jl
 !simulation/test_native_response_guarded.jl
+
+# Explicit maintainer-only saved-input acceptance test; no cached data are published.
+!simulation/test_guarded_saved_input.jl

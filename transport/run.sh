@@ -10,7 +10,7 @@ if [[ ! -x "$pixi" ]]; then
 fi
 case "${1:-versions}" in
   versions)
-    exec "$pixi" run --locked --manifest-path "$here/pixi.toml" versions
+    exec "$pixi" run --locked --no-install --manifest-path "$here/pixi.toml" versions
     ;;
   smoke)
     output="$root/.local/transport/smoke.lh5"

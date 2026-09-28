@@ -5,19 +5,21 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Immediate handoff after stream recovery
+## Current handoff after bounded launcher acceptance
 
 - Scientific outputs: 23,693 groups = 21,672 accepted + 1,613 readout rejects + 408 unavailable native responses.
 - Failures: 403 boundary-stall cases and 5 SAP22 contact-domain cases. Truth remains intact; unknown response is never zero-filled.
 - Final scalar audit is `.local/native-final-analysis-v3`; final report is `.local/native-final-report-v2`. Reuse them, not v1/v2 failed experiments.
 - Public final response: `examples/cs137-1m-response/report.html`; SSD geometry: `detectors/AK02/geometry.html` and `detectors/SAP22/geometry.html`.
-- Clean navigation and lightweight saved-surface rotation are published. This is geometry only, not a newly interactive field/drift solver.
+- Navigation hubs and lightweight saved-surface rotation are published as foundations only. Full homepage visuals, detector subpages and visitor-path acceptance remain pending; see the complete roadmap below.
 - Low-code v1 is implemented: `Run.cmd` -> check/setup/run/resume/open/status, with a data-only LBNL scenario, pinned preflight, guarded native entry and stage-level reuse.
 - Native artifacts/input/source/profile/receipt bindings are verified before reuse. A per-run exclusive lock and atomic run receipt protect ordinary concurrent starts/interruption.
 - The prepared seed must match the campaign seed; the deliberate mismatch fixture rejects before transport. Scenario references remain constrained to reviewed canonical files.
 - The guarded 20-decay smoke is an installation/zero-census test (zero positive groups), NOT a validation of nonzero pulse response or an independent clean-machine reproduction.
+- New bounded acceptance: 8 saved positive groups (1000 retained primaries) pass 64 assertions after scoped review hardening, through the guarded main argument path with explicit test-only field-cache injection. All 149 protected files retain SHA-256/size/mtime. This is NOT uninstrumented Run.cmd acceptance.
+- Isolated same-machine source clone correctly rejects missing prerequisites (check exit 2; dry-run nonzero) without installing or calculating. Pinned transport version checks now forbid implicit installation. See tools/LAUNCHER_ACCEPTANCE.md.
 - Incomplete small-run native stages are preserved and require inspection; this launcher does NOT implement the million-campaign per-group resume. Do not advertise that capability.
-- Local recovery evidence and pre-edit handoff/state: `.local/stream-recovery-final/`. Read receipts and actual processes before any retry.
+- Latest acceptance/review evidence: `.local/launcher-acceptance-v1/`; both original site-UX/workflow threads completed three bounded reciprocal rounds and closed this milestone. NEXT is the full Pages first-visitor route, not another physics/acceptance rerun. Earlier recovery evidence remains `.local/stream-recovery-final/`.
 
 ## Preserved history
 
@@ -330,13 +332,65 @@ group records; raw3.4GB JLS checkpoints remain local. The full site snapshot val
 is tools/analyze_native_complete.jl, native_final_report.py,
 native_response_publication.py and updated build_site.py/check_site.py.
 
-## Current roadmap
+## Current roadmap (full owner-approved scope)
 
-1. COMPLETE: 1M/model saved truth and native SSD/peak-ADC response analysis and publication. Preserve `.local/cs137-1m`, `.local/cs137-1m-native`, all original LH5 archives, prepared inputs, fields and checkpoints.
-2. COMPLETE v1: rotatable AK02/SAP22 saved ParaView surface meshes, contact toggles, light static viewer; navigation hubs with legacy URLs retained. Additional field/trajectory interaction is future work, not claimed delivered.
-3. LOW-CODE v1: reviewed LBNL scenario/menu, guarded response entry, 20/500/10k presets, strict saved-setting and complete-stage resume. Upstream files and pinned environments remain explicit setup prerequisites.
-4. NEXT BOUNDED WORK: verify a nonzero saved-input run through the new guarded CLI and test the clone/setup path in an isolated checkout, without repeating the production campaign. Extend beginner progress/pause/group-level recovery only after this bounded check. Keep old launcher/results available through Git and all original data unchanged.
-5. LATER: benchmark Geant4 threads/chunk sizes and SSD parallelism with explicit parity tolerances; then add independently reviewed GeGI/large-cryostat adapters and experimental spectrum calibration. No cone source sampling or global Li convergence delivery gate.
+Owner reaffirmed this COMPLETE roadmap on 2026-09-28. An immediate launcher test
+must not replace the website/low-code deliverables below. Foundation v1 is not
+acceptance of the full visitor experience. Use saved outputs, not new campaigns.
+
+1. **COMPLETE / PRESERVE:** 1M/model Geant4 truth, native SSD, synthetic electronics
+   and peak-ADC response, final analysis and published reports. Protect original
+   LH5/HDF5, inputs, fields, checkpoints, failure ledgers and old examples.
+2. **CURRENT BOUNDED ACCEPTANCE:** saved-positive guarded-entry regression using
+   explicitly test-only verified cached fields; same-machine source-only clone
+   negative preflight. See tools/LAUNCHER_ACCEPTANCE.md for executed evidence and
+   limits. Positive uninstrumented Run.cmd orchestration, cold setup and a public
+   saved-input/cache-import interface remain NOT_VALIDATED / future work. Do not
+   add those new features solely as a gate to saved-data-only Pages improvements.
+3. **NEXT / GITHUB PAGES FIRST-VISITOR ROUTE:** discuss and cross-review with the
+   same site-UX and workflow agents. Keep three main entry points but add lightweight
+   SAVED geometry, signal and spectrum previews. Move detail into second/third
+   levels: concise AK02/SAP22 overviews, gallery and technical pages; organized
+   detector/result/scenario/methods/download hubs. Preserve all model downloads.
+   Fix duplicate detector navigation, ambiguous 10k links in 1M sections and stale
+   guide wording. Clearly distinguish initial decays, pulse groups, truth, native
+   charge, electronics, 10k examples, 1M results and curated/all-record selections.
+   Preserve legacy URLs and meaningful fragments, including contact legends.
+   Update README and one maintained Setup/Run/Open Results guide, with honest
+   prerequisites, offline/fetch behavior and validation status. Verify repeat-build
+   idempotence, unique IDs, links/fragments and desktop/mobile/keyboard journeys.
+   Do not merely add more homepage announcements or call generated HTML acceptance.
+4. **LIGHTWEIGHT SSD GEOMETRY / PART OF PAGES:** AK02/SAP22 saved-surface rotation,
+   zoom and two-contact toggles exist. Make them discoverable and verify controls,
+   small contacts and fallback behavior. No browser ParaView replacement is needed.
+   Additional saved fields/weighting potential/drift interaction is optional later
+   work, never a new prerequisite. Keep real coordinates and display transforms
+   distinct; do not fabricate unavailable trajectories or ship million-event JSON.
+5. **LOW-CODE COMPLETION AFTER PAGES:** Setup/check -> select detector/cryostat/
+   source/events -> validate/save settings -> run -> progress/pause/resume -> results.
+   Start with reviewed LBNL Cs137 AK02/SAP22; unsupported scenarios are not options.
+   Organize simple defaults and advanced preamp/shaping/pole-zero/sampling/ADC
+   settings in the ELECTRONICS stage. Save effective parameters, units, identities
+   and provenance. Reuse earlier stages only when their dependencies match.
+   Improve novice errors/log access and implement/test finer native recovery before
+   claiming per-group resume. Track positive uninstrumented launcher and explicit
+   saved-input/cache reuse acceptance here; do not invent historical run receipts.
+   Strengthen saved-response required artifact/source inventories and explicit
+   native seed/parcel/field-setting checks, including rehashed-mutation fixtures.
+6. **THEN / PERFORMANCE:** inspect saved stage timings, then bounded benchmarks
+   of Geant4 threads/chunks, IO/compression and SSD parallelism/GPU suitability.
+   Record resource costs and numerical/statistical parity tolerances. Do not rerun
+   1M to benchmark, silently drop records, or change uncollimated source sampling.
+7. **LATER / EXTENSIONS AND ACCURACY:** independently reviewed GeGI/large-cryostat
+   adapters only with actual available geometry. Compare the owner's SAVED SPECTRA
+   with documented apparatus/source/electronics metadata; measured pulse waveforms
+   were not retained. Li profile/lifetime, grid/parcel uncertainty and calibration
+   remain bounded accuracy research, not global delivery-blocking PDE gates.
+8. **THROUGHOUT / MAINTAINABILITY:** one readable project and authoritative handoff;
+   separate code/models, public derivatives, permanent science and rebuildable
+   temporary output. Never blanket-delete .local or erase failed evidence. Edit
+   generators rather than generated pages; preserve old links/data; record tests,
+   scoped reciprocal reviews and milestone commits without resets or API billing.
 
 ## Current limitations, not reasons to block every engineering feature
 

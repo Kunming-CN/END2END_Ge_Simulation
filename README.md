@@ -42,6 +42,10 @@ Scientific settings live in [`scenarios/lbnl-cs137.json`](scenarios/lbnl-cs137.j
 
 Resume is conservative: hash-verified completed prepare/transport/stream/native stages are reused; an incomplete transport/stream/native attempt is preserved and stops for inspection rather than being silently deleted and rerun. This v1 does **not** advertise group-level continuation inside an interrupted small native-response stage. The separately validated checkpoint workflow remains the path for long native production runs.
 
+`Run.cmd check` is a non-installing preflight; incomplete readiness returns exit code **2** with specific preparation guidance. It does not install Julia/transport dependencies or acquire upstream geometry. Setup builds the exporter only after its explicit prerequisites are present.
+
+**Acceptance boundary:** positive native regression uses eight preserved pulse groups through the guarded entry with test-only verified field-cache injection. An isolated source clone on this same computer correctly rejects missing prerequisites. These are not positive uninstrumented `Run.cmd` acceptance or clean-machine end-to-end reproduction. See [the acceptance record and remaining work](tools/LAUNCHER_ACCEPTANCE.md).
+
 The pinned LBNL text-geometry originals are **not redistributed** because no explicit license was found in the pinned upstream tree. `Run.cmd check/setup` verifies the exact expected files under `.local/transport/LBNL`; see [`transport/cryostat-source.json`](transport/cryostat-source.json) for the upstream commit, inventory and hashes. Setup does not silently substitute geometry or install unreviewed physics packages.
 
 ## Run the complete engineering example

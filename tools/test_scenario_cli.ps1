@@ -26,6 +26,13 @@ $cmd=Get-Content (Join-Path $root 'Run.cmd') -Raw
 Check ($cmd -match 'scenario_cli\.ps1') 'Root Run.cmd does not select scenario CLI'
 Check ($cmd -match 'exit /b %RC%') 'Root Run.cmd must propagate launcher exit code'
 Check ($cmd -notmatch '(?i)curl|Invoke-WebRequest|winget|choco') 'Run.cmd must not install/fetch software'
+$transportScript=Get-Content (Join-Path $root 'transport/run.sh') -Raw
+Check ($transportScript -match 'run --locked --no-install --manifest-path[^\r\n]+ versions') 'Transport preflight must forbid implicit installation and lockfile updates'
+$cli=Get-Content (Join-Path $root 'tools/scenario_cli.ps1') -Raw
+Check ($cli -match "'check'\{Show-SetupStatus\}") 'Check must use readiness status propagation'
+Check ($cli -match "'setup'\{[^\r\n]+Show-SetupStatus\}") 'Setup must propagate incomplete readiness'
+Check ($cli -match 'exit 2') 'Incomplete preflight must return nonzero'
+Check ($cli -match 'simulation/README.md' -and $cli -match 'transport/README.md') 'Missing dependencies must have actionable guidance'
 $result=[ordered]@{
   status='passed'; scenario=$s.id; detectors=@($s.detectors)
   presets=[ordered]@{smoke=20;demo=500;larger=10000}
