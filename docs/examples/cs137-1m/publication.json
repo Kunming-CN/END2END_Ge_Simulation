@@ -20,8 +20,8 @@
       "bytes": 101943
     },
     "report.html": {
-      "sha256": "f0380f990313b434c11bab7ee446c44f1cd9e6c7b5dd8a60e49685e858a16085",
-      "bytes": 133765
+      "bytes": 134184,
+      "sha256": "a04c9d0557f150d37fa2b381a445ef5315fbc2cd6dd3a0eccd38026fcd098f35"
     },
     "representative-events.json": {
       "sha256": "ffd8aaee78f13867d7afd202a99f63191f160afdb7f14cb9c1913c57c7cc9152",
@@ -31,5 +31,9 @@
       "sha256": "d3581ba5e633708cbb37b1472f0dfa1033c02f21c2b300b38a9e84aec4009b38",
       "bytes": 182030
     }
+  },
+  "native_response_extension": {
+    "publication_sha256": "b2cbd14d37ba5b1bb0e15d39efb28808f06b63e14d6de04bd947e5ccac24cff5",
+    "original_truth_artifacts_modified": false
   }
 }

@@ -369,10 +369,31 @@ def build_million_export(source):
     metadata['files']['comparison.html']={'bytes':page.stat().st_size,'sha256':hashlib.sha256(page.read_bytes()).hexdigest()}
     binding.write_text(json.dumps(metadata,indent=2)+'\n',encoding='utf-8',newline='\n')
 
+def build_native_response_export(source):
+    from native_response_publication import assemble
+    validate(DESTINATION)
+    shutil.copytree(DESTINATION, OUT); (OUT/MANIFEST).unlink()
+    target=OUT/'examples/cs137-1m-response'
+    if target.exists(): raise ValueError('Existing native-response report must be explicitly reconciled')
+    assemble(source,target)
+    page=OUT/'examples/cs137-1m/report.html'; text=page.read_text(encoding='utf-8')
+    text=re.sub(r'<section id="million-native-response">.*?</section>', '', text, flags=re.S)
+    if text.count('<h1>')!=1: raise ValueError('Unexpected million-report title')
+    section=('<section id="million-native-response" class="note"><h2>Completed: native SSD and peak-ADC response</h2>'
+        '<p><a href="../cs137-1m-response/report.html">Open the full 1M-per-detector Geant4 → SSD → synthetic peak-ADC comparison</a></p>'
+        '<p>Engineering response with explicit numerical/input-domain failures and electronics rejects. No calibrated CCE, physical FWHM or measured-spectrum agreement is claimed.</p></section>')
+    page.write_text(text.replace('<h1>',section+'<h1>',1),encoding='utf-8',newline='\n')
+    binding=OUT/'examples/cs137-1m/publication.json'; metadata=json.loads(binding.read_text(encoding='utf-8'))
+    metadata['files']['report.html']={'bytes':page.stat().st_size,'sha256':hashlib.sha256(page.read_bytes()).hexdigest()}
+    metadata['native_response_extension']={'publication_sha256':hashlib.sha256((target/'publication.json').read_bytes()).hexdigest(),
+        'original_truth_artifacts_modified':False}
+    binding.write_text(json.dumps(metadata,indent=2)+'\n',encoding='utf-8',newline='\n')
+
+
 def normalize_text_outputs(folder):
     # Historical receipts and all native-bundle bytes are already hash-bound.
     for output in folder.rglob('*'):
-        if output.relative_to(folder).parts[:2] in (('examples', 'cs137-10k'), ('examples', 'cs137-10k-geometry'), ('examples', 'cs137-10k-hits'), ('examples', 'cs137-1m')):
+        if output.relative_to(folder).parts[:2] in (('examples', 'cs137-10k'), ('examples', 'cs137-10k-geometry'), ('examples', 'cs137-10k-hits'), ('examples', 'cs137-1m'), ('examples', 'cs137-1m-response')):
             continue
         if output.is_file() and output.suffix in {'.html', '.json', '.md', '.svg'}:
             data = output.read_bytes()
@@ -380,7 +401,7 @@ def normalize_text_outputs(folder):
             if normalized != data: output.write_bytes(normalized)
 
 
-def build(campaign=None, geometry=None, hit_view=None, million=None):
+def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -397,7 +418,9 @@ def build(campaign=None, geometry=None, hit_view=None, million=None):
         old = validate(DESTINATION)
     if OUT.exists():
         remove_generated(OUT)
-    if million is not None:
+    if native_response is not None:
+        build_native_response_export(native_response)
+    elif million is not None:
         build_million_export(million)
     elif hit_view is not None:
         build_hit_view_export(hit_view)
@@ -439,6 +462,7 @@ if __name__ == '__main__':
     parser.add_argument('--geometry-events', type=Path, help='Publish saved Geant4 geometry and all recorded events; no physics rerun')
     parser.add_argument('--hit-view', type=Path, help='Publish saved Ge-hit overlay without any simulation')
     parser.add_argument('--million-results',type=Path,help='Publish completed 1M deposition analysis only')
+    parser.add_argument('--native-response',type=Path,help='Publish completed 1M native SSD/readout analysis only')
     args=parser.parse_args()
-    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results))>1: parser.error('Select one publication mode')
-    build(args.native_campaign, args.geometry_events,args.hit_view,args.million_results)
+    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response))>1: parser.error('Select one publication mode')
+    build(args.native_campaign, args.geometry_events,args.hit_view,args.million_results,args.native_response)

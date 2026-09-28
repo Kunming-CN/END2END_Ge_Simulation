@@ -1,0 +1,29 @@
+{
+  "kind": "million_native_response_publication_v1",
+  "source_complete_sha256": "73fede542b120dfee060168d4cfed50724ca18408edbb325e24b483ef992ce83",
+  "source_summary_sha256": "33bd7a9558ab16f5c9d7e6950e8aab83f5ce15168ae51bdaaf1357067f934904",
+  "publisher_sha256": "c23d695c8d5a24da0175902346dc313b3cc6a48c83bfe6772f3772ecf372b47e",
+  "scope": "Verified saved Geant4 truth joined to native SSD and synthetic peak ADC; no raw checkpoints or physics rerun.",
+  "files": {
+    "groups.csv.gz": {
+      "sha256": "45133a2b0043bcb176815bc0e81708ae78b5803673691ca1c12e3246bfe10d02",
+      "bytes": 1167168
+    },
+    "histograms.csv": {
+      "sha256": "bd9dee5dbfffdd10aeb3a756672e12188ad7069c9360c599c7233c28fdb4eb56",
+      "bytes": 381791
+    },
+    "histograms.json": {
+      "sha256": "04c0fa1693bd9ba02a00a76288c0b3974b5fa0c791504ce86294f6cd13769640",
+      "bytes": 93151
+    },
+    "report.html": {
+      "sha256": "4de4b264f6df246982b3991bb1cedf3d5eefcf26aa9726e1379e0e511f135b77",
+      "bytes": 52506
+    },
+    "summary.json": {
+      "sha256": "33bd7a9558ab16f5c9d7e6950e8aab83f5ce15168ae51bdaaf1357067f934904",
+      "bytes": 4304
+    }
+  }
+}

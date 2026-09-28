@@ -280,8 +280,42 @@ The original runner/config/cached fields remain frozen. The updated local Resume
 .local/native-contact-start-recovery. During the live run the legacy numerical_failures field is
 an aggregate native-failure count; final analysis must separate input-domain, boundary-numerical
 and electronics rejection categories. The full worker resumed through the separately bound
-contact-safe entry at 2026-09-28 10:45 CDT. A live check passed the original failure point and
-reached at least13,855/23,693 with status running; completed checkpoints were reused, not rerun.
+contact-safe entry at 2026-09-28 10:45 CDT and finished at 12:41 CDT with numeric exit0.
+All23,693/23,693 groups are committed; completed checkpoints were reused, not rerun.
+
+## Completed million-event native response and final engineering spectrum (2026-09-28)
+
+The saved 1M-per-detector transport is now processed through native SSD drift, synthetic
+electronics and peak ADC for every23,693 positive pulse group. COMPLETE is
+completed_with_native_failures with21,672 accepted,1,613 readout rejects and408
+native/input-domain failures. No Geant4 source transport or field solve was repeated.
+
+Per model: AK02=12,420 groups:127 boundary stalls,1,536 below-threshold readout rejects,
+10,757 accepted. SAP22=11,273 groups:276 boundary stalls,5 contact-start input-domain
+failures,77 below-threshold rejects,10,915 accepted. Unknown native/input failures remain
+null responses, not zero-energy events. AK02 retains12,235 native-completed groups with
+step-limit flags; SAP22 retains92 groups with stopped-without-contact flags.
+
+The final scalar audit v3 re-bound all23,693 DONE/JLS checkpoints to the hash-checked
+frozen input JSONL, including input-line hashes and embedded event/group hashes. It
+verified about3.66GB of committed result files. The final response report joins these
+records one-to-one to the saved Geant4 truth classifier and verifies the classifier
+ledger hash. Six report tests pass, including complete group identity, response/failure
+partitions, histogram bins+flows and line-full accounting. Two existing independent
+reviewers closed the final integrity/physics review with no blockers.
+
+For saved 660-663keV line-photon full-containment candidates: AK02 has806 truth groups,
+2 native failures and804 accepted;630 accepted responses remain in [650,670)keV.
+SAP22 has531 truth groups,6 native failures and525 accepted;514 remain in [650,670)keV.
+These are engineering broad-window counts, not photopeak fits, efficiencies, physical
+FWHM or calibrated CCE.
+
+Public result: docs/examples/cs137-1m-response/report.html. The existing 1M Geant4 truth
+page links to it. Publication contains only summary/histograms and all23,693 scalar
+group records; raw3.4GB JLS checkpoints remain local. The full site snapshot validates
+1325 files,745855440 bytes,31 HTML pages and1776 local links. Final publication tooling
+is tools/analyze_native_complete.jl, native_final_report.py,
+native_response_publication.py and updated build_site.py/check_site.py.
 
 ## Deferred post-native UX/usability roadmap
 

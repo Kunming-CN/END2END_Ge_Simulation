@@ -1,0 +1,134 @@
+{
+  "kind": "million_native_response_summary_v1",
+  "status": "completed_response_comparison",
+  "native_scalar_summary_sha256": "dd0e6287a2ce94824410054bd534a13232b903e2e018bb6b1e543e38e430ea75",
+  "truth_summary_sha256": "fe58dae8c08c04ee27bd607562ce1f3c2e6d7b2ad01cd6bbffbae55207c4d902",
+  "models": {
+    "AK02": {
+      "response": {
+        "groups": 12420,
+        "native_completed": 12293,
+        "native_failed": 127,
+        "accepted": 10757,
+        "readout_rejected": 1536,
+        "failure_classes": {
+          "boundary_stall": 127
+        },
+        "rejection_reasons": {
+          "below_threshold": 1536
+        }
+      },
+      "truth_classes": {
+        "partial": 9593,
+        "full": 2677,
+        "unknown": 150
+      },
+      "line_full": {
+        "truth_groups": 806,
+        "native_failed": 2,
+        "readout_rejected": 0,
+        "accepted": 804,
+        "accepted_reco_650_670": 630
+      },
+      "engineering_ratios": {
+        "induced_over_deposit": {
+          "n": 12293,
+          "p05": 0.005451610182567543,
+          "median": 0.9999076766172663,
+          "p95": 0.999982398967256,
+          "min": -1.4278664305171084e-09,
+          "max": 0.9999989200956957
+        },
+        "line_full_accepted_reconstructed_keV": {
+          "n": 804,
+          "p05": 229.99649505281283,
+          "median": 662.0261961579747,
+          "p95": 662.0261961579747,
+          "min": 3.113952004505996,
+          "max": 662.0261961579747
+        }
+      },
+      "bands": {
+        "truth_groups_650_670": 808,
+        "accepted_reco_650_670": 631
+      },
+      "initial_decays": 1000000,
+      "zero_ge_decays": 987580,
+      "positive_ge_decays": 12420,
+      "isolated_groups": 12420,
+      "line_photons_660_663": 851505
+    },
+    "SAP22": {
+      "response": {
+        "groups": 11273,
+        "native_completed": 10992,
+        "native_failed": 281,
+        "accepted": 10915,
+        "readout_rejected": 77,
+        "failure_classes": {
+          "boundary_stall": 276,
+          "input_domain_compatibility": 5
+        },
+        "rejection_reasons": {
+          "below_threshold": 77
+        }
+      },
+      "truth_classes": {
+        "partial": 8680,
+        "full": 2427,
+        "unknown": 166
+      },
+      "line_full": {
+        "truth_groups": 531,
+        "native_failed": 6,
+        "readout_rejected": 0,
+        "accepted": 525,
+        "accepted_reco_650_670": 514
+      },
+      "engineering_ratios": {
+        "induced_over_deposit": {
+          "n": 10992,
+          "p05": 0.9996572502948795,
+          "median": 0.9997573899420549,
+          "p95": 0.9999479300722542,
+          "min": -4.7519547146795935e-11,
+          "max": 0.9999916566464543
+        },
+        "line_full_accepted_reconstructed_keV": {
+          "n": 525,
+          "p05": 654.8018275075208,
+          "median": 660.7806153561722,
+          "p95": 660.7806153561722,
+          "min": 183.72316826585376,
+          "max": 662.0261961579747
+        }
+      },
+      "bands": {
+        "truth_groups_650_670": 535,
+        "accepted_reco_650_670": 517
+      },
+      "initial_decays": 1000000,
+      "zero_ge_decays": 988728,
+      "positive_ge_decays": 11272,
+      "isolated_groups": 11273,
+      "line_photons_660_663": 851318
+    }
+  },
+  "totals": {
+    "accepted": 21672,
+    "groups": 23693,
+    "native_completed": 23285,
+    "native_failed": 408,
+    "readout_rejected": 1613
+  },
+  "scope": "One million initial Cs137 decays per detector. Saved Geant4 truth joined to completed native SSD and synthetic peak-ADC response; no calculation rerun.",
+  "limitations": [
+    "Synthetic electronics; no measured-spectrum fit or physical FWHM claim.",
+    "Native/input-domain failures retain truth but have unknown charge/readout.",
+    "Trajectory-cap/contact flags remain diagnostics; ADC acceptance is not complete collection.",
+    "Final public comparison must retain the two-million initial-decay denominator separately.",
+    "Accepted reconstructed spectra omit native failures and electronics rejections; denominators are shown explicitly.",
+    "No added Fano/noise model or measured-spectrum fit; histogram width is not physical detector FWHM.",
+    "Induced/deposited ratios are engineering diagnostics, not calibrated charge-collection efficiency."
+  ]
+}
