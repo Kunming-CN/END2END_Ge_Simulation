@@ -262,6 +262,44 @@ Resumed at2026-09-27 17:08 CDT through the display-resilient entry. Live check
 confirmed progress beyond1871 with status running; no Geant4 or new field solve.
 Use live progress/launcher/exit records, not a remembered PID. Wait for completion.
 
+## Native contact-start compatibility recovery (2026-09-28)
+
+The resumed worker later stopped after 13,841 committed groups at SAP22 event128042/group0:
+positive row2248 is inside retained Geant4 Ge but inside SSD point contact1. A full saved-input
+scan found AK02=0 and SAP22 exactly5 affected events/groups,38 positive rows, all contact1.
+Both existing reviewers approved fail-closed group handling: no coordinate shift, no partial-energy
+subtraction and no assumed immediate collection. The entire affected group keeps truth/identity
+while native/readout remain null under failure_class=input_domain_compatibility; exterior deposits
+remain fatal and ordinary groups use the unchanged response.
+
+19 Julia assertions pass. max_new=0 recovered all13,841 groups and paused exit0; max_new=1
+committed only event128042 as the typed input-domain failure. A full after-check rehashed all
+13,841 prior DONE/JLS files and confirmed hashes, sizes and modification times unchanged.
+The original runner/config/cached fields remain frozen. The updated local Resume.cmd selects
+`tools/resume_native_contact.py`; see tools/NATIVE_CONTACT_START_RECOVERY.md and
+.local/native-contact-start-recovery. During the live run the legacy numerical_failures field is
+an aggregate native-failure count; final analysis must separate input-domain, boundary-numerical
+and electronics rejection categories.
+
+## Deferred post-native UX/usability roadmap
+
+These tasks start only after the current native batch, result verification and reconstructed-spectrum
+analysis. They are non-blocking for the running computation.
+
+1. Add lightweight interactive SSD 3D views to detector pages: export ParaView geometry/field data
+offline and render it in the existing static-site style with drag rotation, zoom and simple layer
+switches, similar to the Geant4 viewer. Do not embed a heavy ParaView-Web stack.
+2. Redesign GitHub Pages information architecture with two focused agents before implementation.
+Keep only a few compelling top-level entries; move detailed diagnostics/numerical studies to
+secondary/tertiary pages so first-time students have an obvious path.
+3. Build a low-code/no-code clone workflow. Target Setup -> choose detector/cryostat/source/events ->
+Run -> Open Results, with LBNL Cs137 as the first supported end-to-end scenario. Use modular
+scenario configuration so future GeGI-strip and larger cryostats add geometry/scenarios rather
+than duplicate the pipeline.
+4. Add explicit performance benchmarks after scientific completion: Geant4 thread/chunk scaling,
+SSD event/parcel parallelism and GPU feasibility, accepting optimizations only with defined
+numerical/physics parity checks.
+
 ## Current limitations, not reasons to block every engineering feature
 
 SSD 0.11.8 already contains the published native Li/RCC machinery; experimental

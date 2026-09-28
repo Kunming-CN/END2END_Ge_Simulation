@@ -133,3 +133,7 @@
 # Additive display-only recovery entry and regression tests.
 !simulation/native_progress_resilience.jl
 !simulation/test_native_progress_resilience.jl
+
+# Saved contact-start compatibility failure adapter; original numerical runner stays frozen.
+!simulation/native_contact_start_resilience.jl
+!simulation/test_native_contact_start_resilience.jl
