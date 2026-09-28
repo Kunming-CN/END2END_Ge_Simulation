@@ -1,10 +1,23 @@
 # Current project state and next steps
 
-Updated: 2026-09-27. This is the short, maintained handoff, not an append-only log.
-Latest tagged release: **v0.14.0-native-li-readout**, commit **0d462ad**.
-Latest committed implementation: **c037558** (native profiles and Cs137 campaigns).
-Peak-policy milestone: **337c841**. Completed 10k/model results are verified below.
-Read this file first in a new conversation; verify actual Git/process state before writes.
+Updated: 2026-09-28. Current status below supersedes historical milestone notes.
+The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science worker is active.
+Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
+Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
+
+## Immediate handoff after stream recovery
+
+- Scientific outputs: 23,693 groups = 21,672 accepted + 1,613 readout rejects + 408 unavailable native responses.
+- Failures: 403 boundary-stall cases and 5 SAP22 contact-domain cases. Truth remains intact; unknown response is never zero-filled.
+- Final scalar audit is `.local/native-final-analysis-v3`; final report is `.local/native-final-report-v2`. Reuse them, not v1/v2 failed experiments.
+- Public final response: `examples/cs137-1m-response/report.html`; SSD geometry: `detectors/AK02/geometry.html` and `detectors/SAP22/geometry.html`.
+- Clean navigation and lightweight saved-surface rotation are published. This is geometry only, not a newly interactive field/drift solver.
+- Low-code v1 is implemented: `Run.cmd` -> check/setup/run/resume/open/status, with a data-only LBNL scenario, pinned preflight, guarded native entry and stage-level reuse.
+- Native artifacts/input/source/profile/receipt bindings are verified before reuse. A per-run exclusive lock and atomic run receipt protect ordinary concurrent starts/interruption.
+- The prepared seed must match the campaign seed; the deliberate mismatch fixture rejects before transport. Scenario references remain constrained to reviewed canonical files.
+- The guarded 20-decay smoke is an installation/zero-census test (zero positive groups), NOT a validation of nonzero pulse response or an independent clean-machine reproduction.
+- Incomplete small-run native stages are preserved and require inspection; this launcher does NOT implement the million-campaign per-group resume. Do not advertise that capability.
+- Local recovery evidence and pre-edit handoff/state: `.local/stream-recovery-final/`. Read receipts and actual processes before any retry.
 
 ## Preserved history
 
@@ -317,24 +330,13 @@ group records; raw3.4GB JLS checkpoints remain local. The full site snapshot val
 is tools/analyze_native_complete.jl, native_final_report.py,
 native_response_publication.py and updated build_site.py/check_site.py.
 
-## Deferred post-native UX/usability roadmap
+## Current roadmap
 
-These tasks start only after the current native batch, result verification and reconstructed-spectrum
-analysis. They are non-blocking for the running computation.
-
-1. Add lightweight interactive SSD 3D views to detector pages: export ParaView geometry/field data
-offline and render it in the existing static-site style with drag rotation, zoom and simple layer
-switches, similar to the Geant4 viewer. Do not embed a heavy ParaView-Web stack.
-2. Redesign GitHub Pages information architecture with two focused agents before implementation.
-Keep only a few compelling top-level entries; move detailed diagnostics/numerical studies to
-secondary/tertiary pages so first-time students have an obvious path.
-3. Build a low-code/no-code clone workflow. Target Setup -> choose detector/cryostat/source/events ->
-Run -> Open Results, with LBNL Cs137 as the first supported end-to-end scenario. Use modular
-scenario configuration so future GeGI-strip and larger cryostats add geometry/scenarios rather
-than duplicate the pipeline.
-4. Add explicit performance benchmarks after scientific completion: Geant4 thread/chunk scaling,
-SSD event/parcel parallelism and GPU feasibility, accepting optimizations only with defined
-numerical/physics parity checks.
+1. COMPLETE: 1M/model saved truth and native SSD/peak-ADC response analysis and publication. Preserve `.local/cs137-1m`, `.local/cs137-1m-native`, all original LH5 archives, prepared inputs, fields and checkpoints.
+2. COMPLETE v1: rotatable AK02/SAP22 saved ParaView surface meshes, contact toggles, light static viewer; navigation hubs with legacy URLs retained. Additional field/trajectory interaction is future work, not claimed delivered.
+3. LOW-CODE v1: reviewed LBNL scenario/menu, guarded response entry, 20/500/10k presets, strict saved-setting and complete-stage resume. Upstream files and pinned environments remain explicit setup prerequisites.
+4. NEXT BOUNDED WORK: verify a nonzero saved-input run through the new guarded CLI and test the clone/setup path in an isolated checkout, without repeating the production campaign. Extend beginner progress/pause/group-level recovery only after this bounded check. Keep old launcher/results available through Git and all original data unchanged.
+5. LATER: benchmark Geant4 threads/chunk sizes and SSD parallelism with explicit parity tolerances; then add independently reviewed GeGI/large-cryostat adapters and experimental spectrum calibration. No cone source sampling or global Li convergence delivery gate.
 
 ## Current limitations, not reasons to block every engineering feature
 
@@ -349,7 +351,7 @@ peaks still reject. Neither policy rectifies charge or calibrates against event 
 The recorded ~15-percentage-point transition response sensitivity and failed global
 field-agreement tests remain unresolved. Numerical parcel spread is not physical FWHM.
 
-## Delivery plan, in order
+## Historical delivery plan (superseded by the current roadmap above)
 
 1. **Completed: configurable peak validity.** Legacy preserved; signed-positive
    policy, finite gates and independent diagnostics tested.14 paired native cases
@@ -375,7 +377,7 @@ field-agreement tests remain unresolved. Numerical parcel spread is not physical
    field solves, 500 pilots, 10k runs or review campaigns because ChatGPT showed
    Thinking failed. 100k is not scheduled or authorized by this recovery.
 
-### Next bounded work (after the saved-results publication)
+### Historical anomaly work (completed/bounded checks recorded above)
 
 First inspect the EXISTING anomaly records: AK02 event 8432 and SAP22 event 8413
 are both 31.818831554318052 keV deposit groups rejected for a noncontact exterior
@@ -415,4 +417,4 @@ The 2026-09-26 chat failure left supervisor state stale after the run completed.
 Recovery evidence and prior handoff/state backups are under
 `.local/peak-native-delivery/recovery-audit/`. Read final receipts and actual
 processes before any restart; an interface failure is not a computation receipt.
-The next conversation starts from completed 10k results, not plan item 1.
+The next conversation starts from the CURRENT header and saved final 1M response results, not the historical 10k plan. Stream polling failure is not a simulation failure receipt.

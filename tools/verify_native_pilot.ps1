@@ -1,5 +1,9 @@
 # Read-only pilot verification. Does not modify historical receipts or run physics.
-param([Parameter(Mandatory=$true)][string]$Pilot,[Parameter(Mandatory=$true)][string]$Exporter)
+param(
+  [Parameter(Mandatory=$true)][string]$Pilot,
+  [Parameter(Mandatory=$true)][string]$Exporter,
+  [ValidateSet('AK02','SAP22')][string[]]$Models=@('AK02','SAP22')
+)
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $pilotDir=[IO.Path]::GetFullPath((Join-Path $root $Pilot)); $localRoot=Join-Path $root '.local'
@@ -24,8 +28,9 @@ function Verify-Map([string]$Folder,$Map){
 }
 $p=Read-Json (Join-Path $pilotDir 'run.json')
 if($p.kind -ne 'native_campaign_v1' -or $p.status -ne 'completed_provisional_native_campaign' -or $p.events_per_model -ne 500){throw 'Require completed 500/model pilot'}
+$Models=@($Models|Select-Object -Unique); if($Models.Count -lt 1){throw 'Select at least one model'}
 $checks=[ordered]@{}
-foreach($model in @('AK02','SAP22')){
+foreach($model in $Models){
   $response=Join-Path $pilotDir ($model+'/response'); $transport=Join-Path $pilotDir ($model+'/transport')
   $pr=Read-Json (Join-Path $response 'run.json'); $meta=Read-Json (Join-Path $transport 'prepared.json')
   $manifestPath=Join-Path $transport 'stream/manifest.json'; $m=Read-Json $manifestPath

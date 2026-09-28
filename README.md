@@ -8,13 +8,41 @@
 
 ## Current release
 
-**[Explore the complete radiation-to-readout example](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/pipeline.html)**: 100 primary photons each for AK02 and SAP22, with every event preserved through Geant4/remage, SSD, preamp, analog shaping and peak ADC. This is a verified engineering workflow, not a calibrated detector/cryostat prediction.
+**[Completed 1M/model Geant4 to native SSD and peak-ADC comparison](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/cs137-1m-response/report.html)**: 23,693 positive-deposit groups, 21,672 accepted responses, 1,613 electronics rejects and 408 unavailable native responses. The initial-decay denominator remains one million per detector; results are engineering simulations, not calibrated experimental predictions.
+
+**[Interactive AK02 geometry](https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/AK02/geometry.html)** and **[SAP22 geometry](https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/SAP22/geometry.html)** reuse saved ParaView surface meshes. Rotate, zoom and toggle contacts; field/trajectory interaction is not claimed by these geometry-only viewers.
+
+### Earlier compact example
+
+**[Open the completed 1M-per-detector Cs137 response](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/cs137-1m-response/report.html)**: saved Geant4 deposition truth → native SSD charge response → synthetic shaping and peak ADC for AK02 and SAP22, with native/input-domain failures and electronics rejects accounted separately. This is an engineering response study, not calibrated CCE, a physical FWHM measurement, or agreement with an experimental spectrum.
+
+**[Explore the compact radiation-to-readout example](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/pipeline.html)**: 100 primary photons each for AK02 and SAP22, with every event preserved through Geant4/remage, SSD, preamp, analog shaping and peak ADC. This is a verified engineering workflow, not a calibrated detector/cryostat prediction.
 
 Also available: a static library of 17 detector models: geometry/field views, drift movies, pulse comparisons, and signal tables. GeGI includes 20 selectable events, 34 signed channels, and a separate supplementary notebook study. Read the [website guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html) before interpreting the results.
 
-The website serves precomputed results, **not an online solver**. The new example closes the minimal radiation-to-readout chain; advanced Li physics, real apparatus geometry and hardware calibration remain unresolved. Movies are pre-rendered 3D views; full scene rotation still requires the original desktop ParaView workspace. The original gallery's synthetic deposits are not a Geant4 source simulation or a Compton reconstruction.
+The website serves precomputed results, **not an online solver**. The end-to-end examples close the engineering radiation-to-readout chain; advanced Li physics, real apparatus metrology and hardware calibration remain unresolved. Featured AK02/SAP22 detector geometry is now rotatable directly in the browser; the larger saved field/drift gallery remains pre-rendered, with desktop ParaView still useful for full scientific scene inspection. The original gallery's synthetic deposits are not a Geant4 source simulation or a Compton reconstruction.
 
-To browse a downloaded repository, open `docs/index.html`. No Julia, ParaView, Node.js, or Python installation is needed for viewing. The development computer's full local entry remains `Additional_Simulations/Visualization_3D/Open_Library.cmd`.
+To browse the saved static galleries in a downloaded repository, open `docs/index.html`. Their images and embedded reports need no runtime installation. The new geometry viewer fetches scene JSON: use GitHub Pages, or serve `docs/` over local HTTP (for example, `python -m http.server 8765 --bind 127.0.0.1 --directory docs`) rather than opening its HTML via a `file://` URL. The development computer's full local entry remains `Additional_Simulations/Visualization_3D/Open_Library.cmd`.
+
+## Run the reviewed LBNL Cs137 scenario without writing code
+
+On Windows, double-click `Run.cmd`. The menu provides **Check setup / New run / Resume / Open results / Status**. The first reviewed scenario is the nominal LBNL cryostat with an uncollimated Cs137 source and AK02, SAP22, or both detectors. It reuses the pinned Geant4/remage, SSD and synthetic-electronics implementations; the launcher does not introduce another solver.
+
+The presets are intentionally bounded: **smoke = 20 initial decays per selected detector** (installation check; it may produce no Ge pulse), **demo = 500** (default first end-to-end run), and **larger = 10,000** (requires a verified clean 500-event pilot). Million-decay production remains an advanced workflow, not a beginner default.
+
+```console
+Run.cmd check
+Run.cmd run -Preset demo -Detector both
+Run.cmd status
+Run.cmd resume -Name RUN_NAME
+Run.cmd open -Name RUN_NAME
+```
+
+Scientific settings live in [`scenarios/lbnl-cs137.json`](scenarios/lbnl-cs137.json), which references the canonical geometry and readout profile rather than duplicating them. Machine-specific paths and executable commands are not stored in the scenario file. Each run is created under `.local/runs/<name>` with immutable scientific receipts, hashes, logs, and a local `index.html` linking the saved response summaries.
+
+Resume is conservative: hash-verified completed prepare/transport/stream/native stages are reused; an incomplete transport/stream/native attempt is preserved and stops for inspection rather than being silently deleted and rerun. This v1 does **not** advertise group-level continuation inside an interrupted small native-response stage. The separately validated checkpoint workflow remains the path for long native production runs.
+
+The pinned LBNL text-geometry originals are **not redistributed** because no explicit license was found in the pinned upstream tree. `Run.cmd check/setup` verifies the exact expected files under `.local/transport/LBNL`; see [`transport/cryostat-source.json`](transport/cryostat-source.json) for the upstream commit, inventory and hashes. Setup does not silently substitute geometry or install unreviewed physics packages.
 
 ## Run the complete engineering example
 
@@ -76,7 +104,7 @@ The [shared SSD runner](simulation/README.md) loads a selected distributed model
 | `simulation/` | Shared CPU/CUDA runner, causal event replay, pinned environments and tests | Yes |
 | `transport/` | Pinned Geant4/remage, bare-detector geometry, event adapter and tests | Yes |
 | `tools/` | Export, publication checks, tests and maintenance utilities | Yes |
-| `.local/` | Ignored migration backup and bounded test/build scratch space | No |
+| `.local/` | Protected raw campaigns/checkpoints plus local test/build evidence; not blanket-disposable | No |
 | `PROGRESS.md`, `AGENTS.md` | Milestones, evidence, and development rules | Yes |
 
 Only `docs/` is served by GitHub Pages. Raw caches, native scenes, manuals, photographs, slides, and private machine paths are excluded. The source calculation folders are deliberately preserved rather than reorganized during the publication milestone.

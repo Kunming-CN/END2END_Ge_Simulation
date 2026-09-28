@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "build_id": "32f0fa6fa721a19355f9a1a61287f4a52e62a974217fbb91b1f07e0398348d42",
+  "build_id": "d50083d9f8bee724998804effb267f26dbb90c1f11003535543ef99098b01e9c",
   "file_count": 1340,
-  "total_bytes": 746166444,
+  "total_bytes": 746168225,
   "html_pages": 40,
-  "local_links_checked": 1843,
+  "local_links_checked": 1849,
   "files": [
     {
       "path": ".nojekyll",
@@ -323,8 +323,8 @@
     },
     {
       "path": "detectors/AK02/index.html",
-      "bytes": 19728,
-      "sha256": "98f5582c9c684f82555a96222c1b79f3cd50c07d14e4b83295e74c500994fce1"
+      "bytes": 20206,
+      "sha256": "6a3379178545b12367a9454622783b57fab6523aa4128b88ff21b76561162097"
     },
     {
       "path": "detectors/AK02/runs/20260922_suite_v3/01_geometry.png",
@@ -4818,8 +4818,8 @@
     },
     {
       "path": "detectors/SAP22/index.html",
-      "bytes": 19512,
-      "sha256": "9efb76253617b12381babbecbceb26652ac02113963053a41c9bb411905f7c26"
+      "bytes": 19990,
+      "sha256": "c6820973abe700c4ed44bb047376d6b3b877ac3da1ca9e95f3460f929a8d4a60"
     },
     {
       "path": "detectors/SAP22/runs/20260922_suite_v3/01_geometry.png",
@@ -6518,13 +6518,13 @@
     },
     {
       "path": "index.html",
-      "bytes": 3783,
-      "sha256": "ba6d481a8a18115ebbd587a38b1a3a0699419d1c7904c31850b2267663eaa63d"
+      "bytes": 3825,
+      "sha256": "e0ab03862ae5b57ccfb60663724242624815ba927921af7ba71ece7dc83b4cc4"
     },
     {
       "path": "learn/index.html",
-      "bytes": 3120,
-      "sha256": "e6fc9dc0059313381e11de929852927f50442a8a10d95c93138ffab68c05dc37"
+      "bytes": 3185,
+      "sha256": "5c76287bec3c31735b85d13f8e8d4dd118cb804a99224da2c48043dcde908ea4"
     },
     {
       "path": "lithium/axes-comparisons.csv",
@@ -6703,8 +6703,8 @@
     },
     {
       "path": "scenarios/lbnl-cs137/index.html",
-      "bytes": 3261,
-      "sha256": "4687f6242fc4b7639f120282fb796ce1c32f3411d601b46b029c5b9d97423dff"
+      "bytes": 3979,
+      "sha256": "9f0ea5aa4aed5122ceb0add7fdd9e8143817addd14174e4004f15f8007659003"
     }
   ]
 }

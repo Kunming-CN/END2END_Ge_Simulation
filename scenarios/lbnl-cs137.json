@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lbnl-cs137",
+  "title": "Nominal LBNL cryostat + Cs137",
+  "adapter": "lbnl_cs137_v1",
+  "detectors": ["AK02", "SAP22"],
+  "geometry_ref": "transport/cryostat_nominal.json",
+  "upstream_manifest_ref": "transport/cryostat-source.json",
+  "readout_profile_ref": "simulation/native_readout_profile.json",
+  "default_preset": "demo",
+  "presets": {
+    "smoke": {"events_per_detector": 20, "purpose": "installation check; may produce zero detector pulses"},
+    "demo": {"events_per_detector": 500, "purpose": "first end-to-end engineering run"},
+    "larger": {"events_per_detector": 10000, "purpose": "larger run; requires a verified 500-event pilot"}
+  },
+  "scope": "Nominal uncollimated Cs137; synthetic electronics; isolated reset windows; not as-built or calibrated."
+}

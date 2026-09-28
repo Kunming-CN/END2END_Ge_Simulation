@@ -28,9 +28,14 @@ class SiteStructureTests(unittest.TestCase):
         for label in S.PRIMARY:self.assertIn(label,home)
         self.assertEqual(home.count('<article class="card">'),3)
         self.assertIn('downloads/all-models.zip',home)
+        self.assertIn('Run.cmd',home)
         for p in ('learn/index.html','detectors/index.html','results/index.html',
                   'methods/index.html','scenarios/lbnl-cs137/index.html'):
             self.assertTrue((root/p).is_file(),p)
+        scenario=(root/'scenarios/lbnl-cs137/index.html').read_text()
+        self.assertIn('Run.cmd run -Preset demo -Detector both',scenario)
+        self.assertIn('10k requires a verified 500-event pilot',scenario)
+        self.assertIn('not redistributed',scenario)
 
     def test_result_hubs_are_conditional(self):
         root=self.fixture(with_results=True);S.apply(root)

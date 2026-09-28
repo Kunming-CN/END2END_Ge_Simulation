@@ -85,7 +85,7 @@ def apply(site):
 <article class="card"><h2>Explore detectors</h2><p>Browse the model library and inspect detector contacts and saved field/response views.</p><a href="detectors/index.html">Open detector library →</a></article>
 <article class="card"><h2>Results</h2><p>Compare deposited and reconstructed energy in completed campaigns.</p><a href="results/index.html">Open results →</a></article></section>'''
           +result_note+'''
-<section class="panel"><h2>Run it locally</h2><p>The public site contains saved results; computation runs on your own machine. The LBNL Cs137 workflow is being packaged as a Setup → Run → Open Results path.</p><a href="scenarios/lbnl-cs137/index.html">LBNL Cs137 scenario</a> · <a href="guide.html">Current setup guide</a></section>
+<section class="panel"><h2>Run it locally</h2><p>The public site contains saved results; computation runs on your own machine. Clone the repository and double-click <code>Run.cmd</code> for Check setup → New run / Resume → Open results.</p><a href="scenarios/lbnl-cs137/index.html">LBNL Cs137 scenario & launcher</a> · <a href="guide.html">Detailed setup guide</a></section>
 <p><a href="downloads/all-models.zip">Download all detector models</a></p>''')
     home=home.replace('Download all detector models',f'Download all {len(catalog["detectors"])} detector models')
     write_page(site/'index.html','END2END Ge Simulation',home,0)
@@ -93,7 +93,7 @@ def apply(site):
     learn=('''<section class="hero"><p class="muted">Start here</p><h1>Radiation → charge → electronics</h1>
 <p>Geant4/remage records where radiation deposits energy. SolidStateDetectors.jl transports electron/hole charge and calculates electrode signals. The electronics stage applies preamplifier, shaping and peak-ADC response.</p></section>
 <div class="grid"><article class="card"><h2>Explore a saved event</h2><p>Walk through deposits, charge, preamplifier, shaper and ADC in a compact example.</p><a href="../examples/pipeline.html">Open the engineering example →</a></article>
-<article class="card"><h2>Scenario and local setup</h2><p>Review the nominal LBNL cryostat/source model and the current local setup path while the one-click launcher is still being packaged.</p><a href="../scenarios/lbnl-cs137/index.html">Open scenario & setup →</a></article></div>
+<article class="card"><h2>Run the reviewed LBNL scenario</h2><p>The Windows <code>Run.cmd</code> launcher checks the pinned environment, lets you choose AK02/SAP22/both and a 20/500/10k preset, preserves completed stages, and opens local results.</p><a href="../scenarios/lbnl-cs137/index.html">Open scenario & launcher guide →</a></article></div>
 <section class="panel"><h2>Important separation</h2><p>Geant4 deposition time is not carrier drift time. Deposited energy, induced charge, analog voltage, ADC code and reconstructed energy are retained as separate quantities.</p></section>''')
     write_page(site/'learn/index.html','Start here · END2END Ge Simulation',learn,1)
 
@@ -170,7 +170,7 @@ def apply(site):
 <p>A Cs137 source above the curved aluminum cryostat wall, with AK02 or SAP22 simulated as separate detector cases. The geometry/source pose is nominal, not an as-built survey.</p></section>
 <div class="grid"><article class="card" id="ak02"><h2>AK02 case</h2><p>Primary Li-contact detector case; native response uses explicit 77 K override and the canonical model bias.</p><a href="../../detectors/AK02/index.html">AK02 detector page →</a></article>
 <article class="card" id="sap22"><h2>SAP22 case</h2><p>Different-geometry non-Li cross-check; it is not a matched control detector.</p><a href="../../detectors/SAP22/index.html">SAP22 detector page →</a></article></div>'''+saved_html+'''
-<section class="panel"><h2>Run locally</h2><p>A Setup → Run → Open Results launcher is the next workflow milestone. Until that launcher is released, use the current <a href="../../guide.html">setup guide</a>.</p></section>'''
+<section class="panel"><h2>Run locally with minimal commands</h2><p>On Windows, clone the repository and double-click <code>Run.cmd</code>, or use <code>Run.cmd check</code>, <code>Run.cmd run -Preset demo -Detector both</code>, <code>Run.cmd resume -Name RUN_NAME</code>, and <code>Run.cmd open -Name RUN_NAME</code>. The default demo is 500 initial decays per selected detector; smoke is 20 and may produce no Ge pulse; 10k requires a verified 500-event pilot. Setup never silently substitutes geometry or installs unreviewed physics.</p><p>The pinned LBNL source files are not redistributed because no explicit license was found in the pinned upstream tree; the launcher verifies exact originals under <code>.local/transport/LBNL</code>. See the <a href="../../guide.html">detailed setup guide</a> and <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/transport/cryostat-source.json">upstream manifest</a>.</p></section>'''
     write_page(site/'scenarios/lbnl-cs137/index.html','LBNL Cs137 scenario · END2END Ge Simulation',scenario,2)
 
     return {'status':'applied','detectors':len(catalog['detectors']),
