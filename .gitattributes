@@ -76,3 +76,8 @@ tools/resume_native_progress.py -text whitespace=blank-at-eol,blank-at-eof,space
 # Contact-start recovery is separately hash-bound for the interrupted campaign.
 simulation/native_contact_start_resilience.jl -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 tools/resume_native_contact.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# Spectrum renderer provenance is byte-exact across Windows checkouts.
+tools/spectrum_controls.js text eol=lf
+# Generated spectrum HTML is reviewed through its reader, renderer and bound hashes.
+docs/spectra/** -diff
