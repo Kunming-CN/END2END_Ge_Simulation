@@ -60,6 +60,13 @@ foreach ($f in $m.files) {
 <p class="note">All 17 geometries are viewable, but the nominal LBNL Cs137 end-to-end adapter currently implements AK02 and SAP22 only. Additional models require geometry/placement and readout checks; a model must never be scaled to fit. <a href="scenarios/lbnl-cs137/index.html">Scenario and assumptions</a>.</p>
 <p>The demo preset uses 500 initial decays per selected detector. Smoke uses 20 and may produce no Ge pulse. The 10k preset requires a verified 500-event pilot. Million-event production is not a beginner default.</p>
 <p>The selected case proceeds through radiation deposition, native SSD charge transport, synthetic preamplifier/shaping and peak ADC. Geant4 deposition times are not carrier drift times; deposited and reconstructed energies remain separate quantities.</p></section>
+<section id="electronics"><h2>Save electronics settings</h2>
+<pre>.\Run.cmd settings
+.\Run.cmd settings show -View advanced
+.\Run.cmd settings save -SaveName my-electronics
+.\Run.cmd settings check -SettingsFile .local/electronics-profiles/my-electronics.json</pre>
+<p>Simple editing exposes shaping time, gain, threshold and peak ADC bits/range; advanced also exposes capacitance, decay, pole-zero compensation, peak policy and optional gates with units. The exact default shaping time is <strong>0.5 microseconds</strong>. Saves retain all settings and input/source provenance; existing saves are never overwritten. Show, check and compare read files only.</p>
+<p>These commands save and validate configurations; custom-profile execution and electronics-only replay are not implemented. New runs still use canonical electronics, and resume rejects configuration overrides. Electronics changes can theoretically reuse radiation, fields and complete charge signals, but configuration comparison does not verify those artifacts or launch a comparison. The analog numerical grid is not waveform ADC sampling. See <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/ELECTRONICS_SETTINGS.md">exact settings syntax, units and reuse limits</a>.</p></section>
 <section id="results"><h2>3. Inspect status, open results or resume conservatively</h2>
 <pre>.\Run.cmd status
 .\Run.cmd inspect -Name RUN_NAME

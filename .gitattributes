@@ -91,3 +91,6 @@ tools/verify_native_pilot.ps1 text eol=lf
 # Current launcher and its structural tests use stable Windows checkout bytes.
 tools/scenario_cli.ps1 text eol=lf
 tools/test_scenario_cli.ps1 text eol=lf
+
+# Saved electronics provenance includes the exact editor source bytes.
+tools/electronics_settings.ps1 text eol=lf

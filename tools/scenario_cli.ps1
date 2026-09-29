@@ -1,6 +1,14 @@
 # Low-code Windows entry for reviewed local scenarios. No installs or physics hidden here.
+[CmdletBinding()]
 param(
-  [ValidateSet('menu','check','setup','run','resume','open','status','detectors','inspect')][string]$Action='menu',
+  [ValidateSet('menu','check','setup','run','resume','open','status','detectors','inspect','settings')][string]$Action='menu',
+  [ValidateSet('interactive','show','check','save','compare')][string]$SettingsMode='interactive',
+  [ValidateSet('simple','advanced')][string]$View='simple',
+  [string]$SettingsFile='',
+  [string]$CompareTo='',
+  [string]$SetJson='',
+  [string]$SaveName='',
+  [string]$ElectronicsProfile='',
   [ValidateSet('lbnl-cs137')][string]$Scenario='lbnl-cs137',
   [ValidateSet('smoke','demo','larger')][string]$Preset='demo',
   [ValidateSet('AK02','SAP22','both')][string]$Detector='both',
@@ -14,6 +22,21 @@ param(
 )
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
+# Fail before runtime checks, output reservation, locks or simulation. Settings
+# are a separate read-only preflight/editor, not a displayed-but-unused override.
+if($PSBoundParameters.ContainsKey('ElectronicsProfile')){throw 'Custom electronics execution is not implemented. Saved settings are configuration only; canonical pilots cannot authorize changed electronics. Resume uses recorded configuration.'}
+if($Action -in @('resume','menu')){
+  foreach($key in @('Preset','Detector','Seed','Pilot','Scenario')){if($PSBoundParameters.ContainsKey($key)){throw "Resume/menu uses recorded or prompted configuration; override forbidden: $key"}}
+}
+$settingsKeys=@('SettingsMode','View','SettingsFile','CompareTo','SetJson','SaveName')
+if($Action -ne 'settings'){
+  foreach($key in $settingsKeys){if($PSBoundParameters.ContainsKey($key)){throw "Settings option requires settings action: $key"}}
+}else{
+  foreach($key in @('Scenario','Preset','Detector','Name','Seed','Pilot','BuildExporter','Open','DryRun')){if($PSBoundParameters.ContainsKey($key)){throw "settings forbids run/setup options: $key"}}
+  . (Join-Path $PSScriptRoot 'electronics_settings.ps1')
+  try{Invoke-ElectronicsSettings -Root $root -Mode $SettingsMode -View $View -SettingsFile $SettingsFile -CompareTo $CompareTo -SetJson $SetJson -SaveName $SaveName -AsJson:$Json;exit 0}
+  catch{Write-Error $_ -ErrorAction Continue;exit 2}
+}
 . (Join-Path $PSScriptRoot 'native_run_validation.ps1')
 $scenarioFile=Join-Path $root ('scenarios/'+$Scenario+'.json')
 if(!(Test-Path $scenarioFile -PathType Leaf)){throw 'Scenario definition missing'}
@@ -197,7 +220,7 @@ function Invoke-Run([bool]$ResumeMode){
   $args=@{Output=$rel;Events=$events;Seed=$runSeed;Models=$models;Exporter=$exporterRel;ScenarioFile='scenarios/lbnl-cs137.json'}
   if($pilotArg){$args.Pilot=$pilotArg}; if($ResumeMode){$args.Resume=$true}
   Write-Host "Scenario: $($scenarioConfig.title)"; Write-Host "Detectors: $($models -join ', ')"; Write-Host "Initial decays per detector: $events"; Write-Host "Output: $rel"
-  if($ResumeMode){Write-Host 'Resume uses the saved run configuration; command-line preset/detector/seed overrides are ignored.'}
+  if($ResumeMode){Write-Host 'Resume uses the saved run configuration; command-line configuration overrides are forbidden.'}
   if($DryRun){Write-Host 'DRY RUN: setup/config resolved; no simulation started.';return}
   & (Join-Path $root 'tools/run_native_campaign.ps1') @args
   if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw 'Campaign driver failed'}
@@ -205,7 +228,7 @@ function Invoke-Run([bool]$ResumeMode){
   if($Open){Open-Run $Name}
 }
 function Menu {
-  Write-Host '';Write-Host 'END2END Ge Simulation';Write-Host '1) Check setup';Write-Host '2) Setup / build local exporter';Write-Host '3) New LBNL Cs137 run';Write-Host '4) Resume a saved run (inspect first)';Write-Host '5) Open saved results';Write-Host '6) List run status';Write-Host '7) Detector capabilities';Write-Host '8) Inspect saved run - no calculation';Write-Host 'Q) Quit'
+  Write-Host '';Write-Host 'END2END Ge Simulation';Write-Host '1) Check setup';Write-Host '2) Setup / build local exporter';Write-Host '3) New LBNL Cs137 run';Write-Host '4) Resume a saved run (inspect first)';Write-Host '5) Open saved results';Write-Host '6) List run status';Write-Host '7) Detector capabilities';Write-Host '8) Inspect saved run - no calculation';Write-Host '9) Electronics settings - save configuration only';Write-Host 'Q) Quit'
   $choice=(Read-Host 'Select').Trim().ToUpperInvariant()
   switch($choice){
     '1'{$script:Action='check'}
@@ -216,6 +239,7 @@ function Menu {
     '6'{$script:Action='status'}
     '7'{$script:Action='detectors'}
     '8'{$script:Action='inspect';$script:Name=(Read-Host 'Saved run name').Trim()}
+    '9'{. (Join-Path $PSScriptRoot 'electronics_settings.ps1');Invoke-ElectronicsSettings -Root $root;return $false}
     'Q'{return $false}
     default{throw 'Invalid menu choice'}
   }; return $true

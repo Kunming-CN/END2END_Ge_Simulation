@@ -5,7 +5,48 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: read-only saved-run inspection and validation
+## Current handoff: structured electronics configuration (configuration-only)
+
+`Run.cmd settings` now exposes simple/advanced editing plus show/check/save/compare.
+Simple controls are shaping time, gain, threshold and peak-ADC bits/range; advanced
+retains all eleven existing settings, with a complete independently resolved
+configuration. Defaults remain 0.5 us, signed input and the existing peak ADC.
+Gate times are relative to each readout trace's origin (each Cs137 pulse group),
+not automatically the initial radioactive primary. The 2 ns numerical grid is not
+waveform ADC sampling.
+
+Saved bundles are immutable-by-name under `.local/electronics-profiles/`, with
+schema/revision, input/default/source hashes and a deterministic effective-configuration
+hash. Preflight/compare use PowerShell reads only. Full ancestry is validated with
+cycle detection and a 16-file bound; all input hashes are checked again before
+return/save. Unknown CLI options fail before dispatch. Google Drive hardlink aliases
+remain readable; path-redirection/reparse links and output replacement are refused.
+
+**Boundary:** saving a configuration does not enable custom-profile execution.
+`-ElectronicsProfile` is explicitly refused. The unchanged campaign driver still
+uses its canonical settings; no custom child propagation or matching-pilot acceptance
+is claimed. Electronics-only replay is NOT_IMPLEMENTED, artifact reuse is NOT_CHECKED
+by settings comparison, and upstream reuse is labelled theoretical only. Structural
+preflight is not numerical calibration/sample-window readiness.
+
+Acceptance and review evidence: `.local/electronics-settings-v1/`; feature reference:
+`tools/ELECTRONICS_SETTINGS.md`. The final corrected candidate passed 23 settings
+tests, 22 saved-run tests and launcher checks; prior independent command acceptance
+covered 15 scenarios. Frozen synthetic readout suites passed 25,804 + 51 assertions.
+Six website suites passed 81 tests. Both independent reviewers exchanged findings;
+the unknown-CLI and transitive-provenance blockers were corrected and cross-reviewed.
+The initial hardlink false positive and failed attempts remain preserved. No production
+science was rerun; 275 protected original files retain hash, byte size and mtime.
+
+NEXT: bind a selected saved profile through a NEW run's actual child argument,
+copied inputs, independently checked effective settings, parent/child receipts and
+matching pilot; then add bounded electronics-only reuse only where complete charge
+waveforms/identities exist. Continue interruption recovery and physically checked
+additional LBNL adapters afterward. Per-group resume, uninstrumented positive full-chain
+acceptance and fresh-machine reproduction remain unfinished. Do not rerun completed
+science or reset quotas merely because the chat or review was interrupted.
+
+## Retained validated capabilities
 
 - Scientific outputs: 23,693 groups = 21,672 accepted + 1,613 readout rejects + 408 unavailable native responses.
 - Failures: 403 boundary-stall cases and 5 SAP22 contact-domain cases. Truth remains intact; unknown response is never zero-filled.
@@ -32,7 +73,6 @@ Do not restart any completed simulation, analyzer or reviewer because the chat s
 - New `Run.cmd inspect -Name RUN_NAME [-Json]` and `resume -Name RUN_NAME -DryRun` read saved files without Julia/WSL, new locks, output writes or scientific execution. Exit 0 means terminal saved-state compatibility only; exit 2 reports blockers. `terminal_compatible` is not runtime readiness or permission to execute. Current-source mismatch does not imply data corruption or a need to rerun/edit original receipts.
 - Inspector reports phase states, expected native seed, source compatibility and snapshot stability. Linked descendants, held/inaccessible/missing locks, missing parent hashes, partial children and contradictory counts block reuse. `open` remains a separate action that may regenerate its local index.
 - Evidence `.local/lowcode-inspect-v1/`: 22 targeted file/command tests passed, including saved positive/zero and explicit legacy-pilot checks without recalculation; 24-file same-machine source clone passed negative preflight/missing-run inspection. All 272 protected originals retain hashes/sizes/mtime. The initial failed path-handling test and source snapshots remain preserved. Both original reviewer threads closed three scoped rounds.
-- NEXT: structured simple/advanced electronics settings with saved configuration and bounded acceptance, then finer interrupted-phase recovery, positive uninstrumented launcher/cold-machine validation and physically checked additional LBNL detector adapters. The full roadmap remains authoritative. Do not rerun completed science or the finished website review solely after a chat interruption.
 
 ## Preserved history
 
