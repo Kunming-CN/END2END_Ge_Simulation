@@ -1,10 +1,12 @@
 # Serial nominal Cs137 -> native SSD -> synthetic readout campaign. No installs.
+[CmdletBinding()]
 param(
   [Parameter(Mandatory=$true)][ValidatePattern('^\.local/[A-Za-z0-9_/-]+$')][string]$Output,
   [ValidateSet(20,500,10000)][int]$Events=500,
   [ValidateRange(1,2147483647)][int]$Seed=26092631,
   [ValidateSet('AK02','SAP22')][string[]]$Models=@('AK02','SAP22'),
   [string]$Pilot='',
+  [string]$ElectronicsProfile='',
   [ValidatePattern('^\.local/[A-Za-z0-9_/-]+$')][string]$Exporter='.local/m2a/cs137-build-v1/cryostat_export',
   [ValidatePattern('^[A-Za-z0-9_.\/-]*$')][string]$ScenarioFile='',
   [switch]$Resume
@@ -12,7 +14,12 @@ param(
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
 $localRoot=Join-Path $root '.local'
-. (Join-Path $PSScriptRoot 'native_run_validation.ps1')
+. (Join-Path $PSScriptRoot 'electronics_execution.ps1')
+if($Resume){foreach($key in @('Events','Seed','Models','Pilot','Exporter','ScenarioFile','ElectronicsProfile')){
+  if($PSBoundParameters.ContainsKey($key)){throw "Resume uses recorded configuration; override forbidden: $key"}
+}}
+$selection=$null;$electronicsBinding=$null;$effectiveProfile='simulation/native_readout_profile.json'
+if($PSBoundParameters.ContainsKey('ElectronicsProfile')){$selection=Get-EESelection $root $ElectronicsProfile}
 function Assert-Local([string]$Path) {
   $full=[IO.Path]::GetFullPath((Join-Path $root $Path))
   if(!$full.StartsWith($localRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Path must be below project .local'}
@@ -21,7 +28,7 @@ function Assert-Local([string]$Path) {
     if((Test-Path -LiteralPath $p) -and ((Get-Item -LiteralPath $p -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)){throw 'Linked campaign path refused'}
     $p=[IO.Path]::GetDirectoryName($p)
   }
-  return $full
+  return Resolve-NRPath $root $full
 }
 function Acquire-RunLock([string]$Directory,[bool]$MustExist=$false){
   $path=Resolve-NRPath $root (Join-Path $Directory 'run.lock')
@@ -39,6 +46,17 @@ if(Test-Path -LiteralPath $out){
   $runFile=Join-Path $out 'run.json'; if(!(Test-Path $runFile -PathType Leaf)){throw 'Resume requires an existing run.json; preserve the directory'}
   $existingReport=Get-Content $runFile -Raw|ConvertFrom-Json
   if($existingReport.kind -ne 'native_campaign_v1'){throw 'Resume run kind mismatch'}
+  $Events=$existingReport.events_per_model;$Seed=$existingReport.seed
+  Assert-NR ($Events -in @(20,500,10000)) 'Unsupported saved event count'
+  Assert-NRInteger $Seed 'saved radiation seed' 1
+  $Models=if($existingReport.PSObject.Properties['detectors']){@($existingReport.detectors)}else{@($existingReport.models.PSObject.Properties.Name)}
+  Assert-NR ($Models.Count -gt 0 -and $Models.Count -le 2 -and @($Models|Select-Object -Unique).Count -eq $Models.Count) 'Invalid saved detectors'
+  foreach($model in $Models){Assert-NR ($model -cin @('AK02','SAP22')) 'Unsupported saved detector'}
+  $Pilot=[string]$existingReport.pilot
+  $ScenarioFile=if($null -ne $existingReport.scenario){[string]$existingReport.scenario.file}else{''}
+  $Exporter=Get-NRRecordedExporter $existingReport
+  $effectiveProfile=Get-EERecordedProfile $root $out $existingReport
+  if($existingReport.PSObject.Properties['electronics']){$electronicsBinding=$existingReport.electronics}
 }else{
   if($Resume){throw 'Resume requested but output does not exist'}
 }
@@ -53,7 +71,8 @@ $scenarioId=''; if($ScenarioFile){
 }
 $exporterFile=Assert-Local $Exporter
 if(!(Test-Path -LiteralPath $exporterFile -PathType Leaf)){throw 'Build cryostat_export and supply its project-relative path with -Exporter'}
-$sourceFiles=@(Get-NRCampaignSources $Exporter $ScenarioFile)
+$custom=($null -ne $selection -or $null -ne $electronicsBinding)
+$sourceFiles=@(Get-NRCampaignSources $Exporter $ScenarioFile $custom)
 $hashes=[ordered]@{}; foreach($f in $sourceFiles){$hashes[$f]=(Get-FileHash -Algorithm SHA256 (Join-Path $root $f)).Hash.ToLowerInvariant()}
 if($existingReport){
   Assert-NREqual @($existingReport.source_sha256.PSObject.Properties.Name|Sort-Object) @($sourceFiles|Sort-Object) 'resume source inventory'
@@ -71,14 +90,11 @@ if($Events -eq 10000){
   if(!$Pilot){throw '10000 requires a completed 500-decay pilot directory'}
   $pilotDir=Assert-Local $Pilot; $p=Get-Content (Join-Path $pilotDir 'run.json') -Raw|ConvertFrom-Json
   if($p.status -ne 'completed_provisional_native_campaign' -or $p.events_per_model -ne 500){throw 'Pilot is not a completed 500/model campaign'}
-  $pilotValidation=& (Join-Path $PSScriptRoot 'verify_native_pilot.ps1') -Pilot $Pilot -Exporter $Exporter -Models $Models | ConvertFrom-Json
+  $expectedConfig=if($null -ne $selection){$selection.selected.configuration}elseif($null -ne $electronicsBinding){$electronicsBinding.configuration}else{Resolve-ESConfiguration $root (Read-NRJson $root (Join-Path $root $effectiveProfile))}
+  $pilotValidation=& (Join-Path $PSScriptRoot 'verify_native_pilot.ps1') -Pilot $Pilot -Exporter $Exporter -Models $Models -ExpectedConfiguration $expectedConfig | ConvertFrom-Json
   if($pilotValidation.status -ne 'passed'){throw 'Full pilot verification failed'}
   # Launcher/verifier revisions are recorded separately, never rebased into old receipts.
   # The verifier compares every recorded compute dependency and every pilot artifact.
-  foreach($f in $sourceFiles){
-    if($f -in @('tools/run_native_campaign.ps1','tools/verify_native_pilot.ps1','tools/native_run_validation.ps1')){continue}
-    if($p.source_sha256.PSObject.Properties[$f].Value -ne $hashes[$f]){throw "Pilot source differs: $f"}
-  }
   foreach($m in $Models){
     $pr=Get-Content (Join-Path $pilotDir ($m+'/response/run.json')) -Raw|ConvertFrom-Json
     if($pr.status -ne 'completed_provisional_native_response' -or $pr.counts.initial_decays -ne 500 -or $pr.counts.groups -lt 1){throw "Pilot has no complete positive native integration: $m"}
@@ -90,6 +106,7 @@ if($Events -eq 10000){
   if($estimatedBytes -gt 0.7*$drive.Free){throw 'Pilot-scaled storage estimate lacks free-space headroom'}
 }
 if(!$existingReport){New-Item -ItemType Directory -Path $out | Out-Null; $runLock=Acquire-RunLock $out}
+if($null -ne $selection){$electronicsBinding=New-EEBinding $root $Output $selection;$effectiveProfile=$electronicsBinding.profile_path}
 $env:OPENBLAS_NUM_THREADS='1'; $env:OMP_NUM_THREADS='1'; $env:MKL_NUM_THREADS='1'
 $modelsMap=[ordered]@{}; $oldStages=@(); $resumeCount=0; $started=(Get-Date).ToUniversalTime().ToString('o')
 $scenarioBinding=if($ScenarioFile){[ordered]@{id=$scenarioId;file=$ScenarioFile;sha256=$hashes[$ScenarioFile]}}else{$null}
@@ -98,6 +115,7 @@ if($existingReport){
   $oldStages=@($existingReport.stages); $resumeCount=if($existingReport.PSObject.Properties['resume_count']){[int]$existingReport.resume_count+1}else{1}; $started=$existingReport.started_utc
 }
 $report=[ordered]@{kind='native_campaign_v1';status='running';events_per_model=$Events;seed=$Seed;detectors=$Models;scenario=$scenarioBinding;source_sha256=$hashes;models=$modelsMap;stages=$oldStages;pilot=$Pilot;pilot_verification=$pilotValidation;resume_count=$resumeCount;assumption='Explicit nominal LBNL assembly and isolated reset readout; not as-built, calibrated spectra or continuous acquisition';started_utc=$started}
+if($null -ne $electronicsBinding){$report.electronics=$electronicsBinding}
 function Save-Report {
   $target=Join-Path $out 'run.json'; $temp=$target+'.partial-'+$PID+'-'+[DateTime]::UtcNow.Ticks
   $json=$report|ConvertTo-Json -Depth 14
@@ -134,8 +152,8 @@ function Invoke-Recorded([string]$Label,[string]$Kind,[string[]]$CommandArgs){
     $rec.log_prefix=$logLabel
     $stdout=Join-Path $out ($logLabel+'.stdout.log'); $stderr=Join-Path $out ($logLabel+'.stderr.log')
     if($Kind -eq 'transport'){
-      $args='/d /s /c ""'+$wrapper+'" '+$quoted+'"'
-      $proc=Start-Process -FilePath (Get-Command cmd.exe -ErrorAction Stop).Source -ArgumentList $args -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -Wait
+      $processArgs='/d /s /c ""'+$wrapper+'" '+$quoted+'"'
+      $proc=Start-Process -FilePath (Get-Command cmd.exe -ErrorAction Stop).Source -ArgumentList $processArgs -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -Wait
     }else{
       $proc=Start-Process -FilePath $j -ArgumentList $quoted -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -Wait
     }
@@ -163,7 +181,8 @@ function Validate-Transport([string]$Directory){
 function Validate-Response([string]$Model,[string]$Directory,[string]$ExpectedReportHash='',[bool]$FreshChild=$false){
   if(!(Test-Path -LiteralPath (Join-Path $Directory 'run.json') -PathType Leaf)){return $null}
   $manifest=Join-Path (Split-Path $Directory -Parent) 'transport/stream/manifest.json'
-  return Test-NRResponse -Root $root -Directory $Directory -Model $Model -Events $Events -Manifest $manifest -ExpectedReportHash $ExpectedReportHash -NewChild:$FreshChild
+  if($null -ne $electronicsBinding){[void](Test-EEBinding $root $Output $electronicsBinding)}
+  return Test-NRResponse -Root $root -Directory $Directory -Model $Model -Events $Events -Manifest $manifest -ExpectedReportHash $ExpectedReportHash -NewChild:$FreshChild -ExpectedProfilePath $effectiveProfile
 }
 # Verify existing terminal children BEFORE rewriting any campaign receipt.
 if($existingReport){
@@ -210,14 +229,16 @@ try {
       Invoke-Recorded ($model+'-extract') 'transport' @('python','-B','cs137.py','extract','--directory',$transport,'--chunk-size','100')
     }
     Invoke-Recorded ($model+'-check-stream') 'transport' @('python','-B','cs137.py','check-stream','--manifest',($transport+'/stream/manifest.json'))
-    $input=$Output+'/'+$model+'/transport/stream/manifest.json'
+    $manifestArg=$Output+'/'+$model+'/transport/stream/manifest.json'
     $expectedResponseHash=''
     if($existingReport -and $existingReport.models.PSObject.Properties[$model]){$expectedResponseHash=[string]$existingReport.models.PSObject.Properties[$model].Value.response_report_sha256}
     $rr=if($Resume){Validate-Response $model $responseFull $expectedResponseHash}else{$null}
     if($null -ne $rr){Add-Reused ($model+'-native-response') 'julia' 'terminal response/run.json + artifact/input/source hashes'}
     else{
       if($Resume -and (Test-Path $responseFull)){throw "$model native response is incomplete; this v1 preserves it and does not claim group-level resume"}
-      Invoke-Recorded ($model+'-native-response') 'julia' @('--startup-file=no','--threads=2','--project=simulation','simulation/native_response_guarded.jl','--input',$input,'--output',$response,'--seed','2609261','--parcels','16','--trace-examples','4','--charge-csv','examples','--native-failure-policy','record')
+      $nativeArgs=@('--startup-file=no','--threads=2','--project=simulation','simulation/native_response_guarded.jl','--input',$manifestArg,'--output',$response,'--seed','2609261','--parcels','16','--trace-examples','4','--charge-csv','examples','--native-failure-policy','record')
+      if($null -ne $electronicsBinding){[void](Test-EEBinding $root $Output $electronicsBinding);$nativeArgs+=@('--profile',$effectiveProfile)}
+      Invoke-Recorded ($model+'-native-response') 'julia' $nativeArgs
       $rr=Validate-Response $model $responseFull '' $true; if($null -eq $rr){throw "$model native response missing terminal receipt"}
     }
     $rp=Join-Path $responseFull 'run.json'

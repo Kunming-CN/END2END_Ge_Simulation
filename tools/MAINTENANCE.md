@@ -17,7 +17,7 @@ another complete installation recipe.
 | Saved energy-spectrum views | `tools/spectrum_display.py`, `spectrum_plot.py`, `spectrum_controls.js`; see [display semantics](SPECTRUM_DISPLAY.md) |
 | Windows setup/run guide | `tools/site_guide.html` |
 | Scenario eligibility labels | `scenarios/detector-capabilities.json`; backend restrictions remain independently enforced |
-| Electronics settings and configuration preflight | `tools/electronics_settings.ps1`, `scenario_cli.ps1`; see [ELECTRONICS_SETTINGS.md](ELECTRONICS_SETTINGS.md) |
+| Electronics settings and configuration preflight | `tools/electronics_settings.ps1`, `electronics_execution.ps1`, `scenario_cli.ps1`; see [ELECTRONICS_SETTINGS.md](ELECTRONICS_SETTINGS.md) |
 | Saved-run validation and inspection | `tools/native_run_validation.ps1`, `inspect_native_run.ps1`; see [INSPECT_RUNS.md](INSPECT_RUNS.md) |
 | Local file/result index | `tools/build_local_dashboard.py`, `local_paths.py`, `open_workspace.ps1` |
 

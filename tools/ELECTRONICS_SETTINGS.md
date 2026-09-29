@@ -79,8 +79,8 @@ the editor never modifies an input or replaces a saved output name.
 All commands use the same PowerShell validation path, including the existing
 saved-run profile validator. Checks are configuration preflight, not execution
 readiness: no propagator, injection calibration or pulse simulation is run.
-Runtime window/sample limits and numerical conditioning still need testing with
-the actual child configuration before execution can be supported.
+NEW execution additionally checks sample/window feasibility before runtime work.
+This arithmetic check is not a propagator or successful injection-calibration test.
 
 ## Saved bundle and provenance
 
@@ -118,17 +118,68 @@ output. JSON mode returns one object; validation failures are nonzero (normally
 
 ## Execution, pilots and reuse boundary
 
-This milestone supports editing, persistence and preflight. Custom-profile run
-selection is deliberately unavailable. `-ElectronicsProfile` is rejected before
-runtime checks or writes, including on resume/dry-run. The campaign driver still
-uses its original canonical profile and original source inventories. A canonical
-pilot cannot authorize different electronics. Custom execution requires a later
-change binding the selected profile, child argument, copied inputs, independent
-configuration checks, run receipts and matching pilot. No new-run or positive
-custom-profile execution is claimed here.
+Saved custom electronics are implemented for NEW AK02/SAP22 LBNL runs:
+
+```powershell
+.\Run.cmd run -Name custom-smoke -Preset smoke -Detector AK02 -ElectronicsProfile .local/electronics-profiles/my-electronics.json
+.\Run.cmd run -Name custom-pilot -Preset demo -ElectronicsProfile .local/electronics-profiles/my-electronics.json
+.\Run.cmd run -Name custom-larger -Preset larger -Pilot .local/runs/custom-pilot -ElectronicsProfile .local/electronics-profiles/my-electronics.json
+.\Run.cmd inspect -Name custom-pilot -Json
+.\Run.cmd resume -Name custom-pilot -DryRun
+.\Run.cmd resume -Name custom-pilot
+```
+
+These commands perform the normal upstream radiation, field, native charge and
+electronics calculation. They do not automatically reuse old fields or charge.
+The named presets retain 20/500/10000 initial decays per selected detector.
+Omitting `-ElectronicsProfile` preserves the canonical child defaults.
+`-DryRun` creates neither a run nor a profile; a NEW dry run still probes installed
+runtime readiness after read-only configuration and pilot validation.
+
+The shared `electronics_execution.ps1` validates the saved bundle with the strict
+`Get-ESInput` ancestry contract before runtime probes or writes. Only a NEW run
+creates `electronics/profile.json`, a standalone schema-2 profile passed by its
+exact project-relative path to the actual `native_response_guarded.jl --profile`
+argument. `electronics/inputs/` mirrors the small set of exact bundle/ancestor/
+default/settings-source bytes at their original relative names. Original bundle
+provenance is retained without rewriting it; copied scripts are data, never loaded.
+The parent receipt binds the input identity, exact copy inventory, profile bytes,
+settings-source hashes, full effective configuration, configuration hash and
+arithmetic feasibility. Campaign source inventories distinguish custom/canonical.
+
+Inspection/resume independently reconstruct from those copies and compare the
+standalone profile, parent configuration, child receipt, child profile copies,
+resolved configuration and event census. Child configuration may differ from the
+selected effective configuration only in `expected_primary_count`. Hash-only
+resealing cannot bypass the independent parameter comparison. Original saved
+bundles/ancestors are no longer needed after successful copying; current compatible
+project sources, models and ordinary recorded transport dependencies remain required.
+Missing/corrupt copies block reuse; the launcher never reconstructs them from current
+UI selection. Source-incompatible historical receipts remain untouched. This revision
+changes settings-source hashes, so older saves may fail compatibility checks; do not
+edit/rebase their provenance to bypass that check.
+
+A 10000/model request requires a completed clean 500/model pilot with positive
+native integration for every requested detector. The verifier first validates the
+pilot's own saved binding and child artifacts, then compares the full effective
+electronics to the request and checks compute dependencies. Display names and copy
+paths do not define physics equality. A canonical pilot cannot authorize changed
+electronics. Historical orchestration revisions remain recorded; supported legacy
+unguarded pilot validation stays explicitly labelled.
+Legacy unguarded verification does not authorize a NEW guarded campaign request;
+that request requires a guarded pilot with the current compute dependencies.
+
+Evidence is bounded, source-only, mocked public-CLI/driver execution, not
+uninstrumented full-chain acceptance. The test clone intercepts runtime readiness,
+child processes and disk-capacity reporting; it runs the actual dispatch, argument
+construction, snapshot, receipt and validation code. The fixture's synthetic receipts
+are not scientific results. No production simulation or electronics rerun is part of
+this implementation milestone; numerical injection acceptance is a separate check.
 
 Resume uses recorded configuration and rejects explicit preset, detector, seed,
-pilot and scenario overrides, rather than silently ignoring them. No old receipt
+pilot, scenario and electronics-profile overrides, including explicit defaults.
+The underlying driver also rejects explicit resume configuration overrides and
+loads the recorded values itself. No old receipt
 is changed by settings comparison.
 The interactive main menu also rejects these command-line overrides; choose
 its prompted values or use an explicit `run` command.
@@ -139,8 +190,8 @@ Comparison always separates three claims:
   new radiation, fields or charge, provided compatible complete charge waveforms,
   identities, timing, units and producer settings are available.
 - **Artifact-verified supported reuse:** `NOT_CHECKED` by settings comparison.
-  `Run.cmd inspect` can check terminal saved campaigns for unchanged canonical
-  settings. Configuration equality alone verifies no scientific artifacts.
+  `Run.cmd inspect` checks terminal saved campaigns using their recorded canonical
+  or custom binding. Configuration equality alone verifies no scientific artifacts.
 - **Electronics-only replay:** `NOT_IMPLEMENTED`. The coupled response driver does
   not automatically reuse charge. A comparison never starts either configuration.
 
@@ -163,5 +214,21 @@ checked again before save or comparison returns. Original receipts are not rebas
 Structural validity is not numerical readiness. For example, a 0--1 ns peak gate
 contains only one point on the 2 ns grid, and 50 us shaping requests 500001
 calibration samples against the inherited 500000 limit. These are structurally
-valid settings, but are not executable-ready configurations. Runtime calibration,
-sample/window feasibility and numerical conditioning remain a later execution gate.
+valid settings, but NEW execution rejects them before runtime work or allocation.
+Execution fixes DT=2 ns and the half-open 100000 ns window (last sample 99998 ns).
+A finite gate needs at least two grid points. Injection calibration requires
+`n = ceil(20000 * shaping_tau_us / 2) + 1`, with `3 <= n <= 500000` and
+`(n-1)*2 <= max_window_ns`. This does not guarantee numerical conditioning or
+successful calibration; the unchanged native child performs the actual independent
+injection calibration, with one gain across events.
+
+## Bounded uninstrumented acceptance
+
+One new custom-profile AK02 demo ran through the real Run.cmd path without child
+stubs or field-cache injection:500 initial Cs137 decays, 4 groups,
+4 accepted, 0 electronics rejects and 0 native failures.
+The actual child --profile path, snapshot bytes and all effective parameters were
+independently verified. This establishes that selected configuration on the existing
+computer only; it is not all-model or fresh-machine reproduction, experimental
+validation, or electronics-only replay. The preserved original campaigns were not
+recomputed. Exact local evidence is in .local/electronics-execution-v1/.

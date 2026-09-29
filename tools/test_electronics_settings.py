@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FILES = (
     "Run.cmd", "tools/scenario_cli.ps1", "tools/electronics_settings.ps1",
     "tools/native_run_validation.ps1", "tools/run_native_campaign.ps1",
+    "tools/electronics_execution.ps1",
     "simulation/readout_profiles.jl", "simulation/readout.jl",
     "simulation/Project.toml", "simulation/Manifest.toml",
     "simulation/readout_demo.json", "simulation/native_readout_profile.json",
@@ -309,7 +310,7 @@ class ElectronicsSettings(unittest.TestCase):
             self.assertIn("override forbidden", result.stderr)
         result = self.invoke("-Output", ".local/never", "-ElectronicsProfile", "missing.json",
                              script="tools/run_native_campaign.ps1", ok=False)
-        self.assertIn("ElectronicsProfile", result.stderr)
+        self.assertIn("Select an existing saved bundle", result.stderr)
         self.assertEqual(snapshot(self.root), before)
         self.assertFalse((self.root / ".local").exists())
 
@@ -334,17 +335,26 @@ class ElectronicsSettings(unittest.TestCase):
         self.assertEqual(saved["configuration"]["peak_gate_end_ns"], 90000)
 
     def test_original_backend_inventory_and_default_argument_regression(self):
-        # Source-only regression: optional custom execution did not rewrite the
-        # pinned driver, independent validation, or original numerical inputs.
-        # Exact dbc3590 baselines; no Git history needed in a source archive.
+        # Frozen numerical input bytes stay pinned; the changed driver/validator
+        # now have explicit inventory coverage plus actual default child-path
+        # regression in test_electronics_execution.py. No historic Git required.
         baseline_sha256 = {
-            "tools/run_native_campaign.ps1": "0736d2718c94897b17cef928d66d71ca1f91058b92c09a7865fae27b3d27770c",
-            "tools/native_run_validation.ps1": "b19083dcbedce91620decd101b20fb85c81e285e8b0b70fecd7053dfaca1bb9d",
             "simulation/native_readout_profile.json": "7556e6e77d6c21e76e1a4eabb69b2b26875517252c083c88b6eb6a80502ef6e6",
             "simulation/readout_demo.json": "33eb64724736c78852795ea001889759152ffefc22de9c4db6815fd1aaf8ee9e"
         }
         for rel, expected in baseline_sha256.items():
             self.assertEqual(hashlib.sha256((ROOT / rel).read_bytes()).hexdigest(), expected, rel)
+        probe = self.home / 'inventory.ps1'
+        probe.write_text('. '+psquote(self.root/'tools/native_run_validation.ps1')+"\nGet-NRCampaignSources '.local/exporter' 'scenarios/lbnl-cs137.json' | ConvertTo-Json", encoding='utf-8')
+        result=self.invoke(script=probe)
+        self.assertEqual(json.loads(result.stdout), [
+            'tools/run_native_campaign.ps1','tools/native_run_validation.ps1','transport/cs137.py',
+            'transport/cryostat_export.cc','transport/cryostat_nominal.json','transport/handoff.py','transport/pixi.lock',
+            'simulation/native_response_guarded.jl','simulation/native_boundary_guard.jl','simulation/native_response.jl',
+            'simulation/native_stream.jl','simulation/readout_profiles.jl','simulation/native_readout_profile.json',
+            'simulation/native_li_example.jl','simulation/readout.jl','simulation/replay.jl','simulation/run.jl',
+            'simulation/Manifest.toml','tools/verify_native_pilot.ps1','.local/exporter','scenarios/lbnl-cs137.json',
+            'tools/electronics_execution.ps1','tools/electronics_settings.ps1'])
 
 
     def test_unknown_cli_options_and_extra_arguments_rejected(self):
@@ -399,10 +409,11 @@ class ElectronicsSettings(unittest.TestCase):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--evidence", required=True)
+    parser.add_argument('tests', nargs='*')
     options = parser.parse_args()
     EVIDENCE = (ROOT / options.evidence).resolve()
-    if not EVIDENCE.is_relative_to(ROOT / ".local/electronics-settings-v1"):
-        parser.error("Evidence must be below .local/electronics-settings-v1")
+    if not any(EVIDENCE.is_relative_to(ROOT / parent) for parent in ('.local/electronics-settings-v1','.local/electronics-execution-v1/implementation')):
+        parser.error("Evidence must be below a settings or execution implementation evidence directory")
     EVIDENCE.mkdir(parents=True, exist_ok=False)
     shutil.copy2(__file__, EVIDENCE / "executed_test.py")
-    unittest.main(argv=[__file__], verbosity=2)
+    unittest.main(argv=[__file__, *options.tests], verbosity=2)

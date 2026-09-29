@@ -94,3 +94,6 @@ tools/test_scenario_cli.ps1 text eol=lf
 
 # Saved electronics provenance includes the exact editor source bytes.
 tools/electronics_settings.ps1 text eol=lf
+
+# Execution snapshot source hashes are portable across Windows checkouts.
+tools/electronics_execution.ps1 text eol=lf

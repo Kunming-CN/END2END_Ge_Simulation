@@ -1,7 +1,7 @@
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 function Check([bool]$Value,[string]$Message){if(!$Value){throw $Message}}
-foreach($name in @('tools/scenario_cli.ps1','tools/run_native_campaign.ps1','tools/verify_native_pilot.ps1','tools/native_run_validation.ps1','tools/inspect_native_run.ps1')){
+foreach($name in @('tools/scenario_cli.ps1','tools/run_native_campaign.ps1','tools/verify_native_pilot.ps1','tools/native_run_validation.ps1','tools/inspect_native_run.ps1','tools/electronics_execution.ps1','tools/electronics_settings.ps1')){
   [void][scriptblock]::Create((Get-Content (Join-Path $root $name) -Raw))
 }
 $scenarioPath=Join-Path $root 'scenarios/lbnl-cs137.json'
@@ -36,6 +36,6 @@ Check ($cli -match 'simulation/README.md' -and $cli -match 'transport/README.md'
 $result=[ordered]@{
   status='passed'; scenario=$s.id; detectors=@($s.detectors)
   presets=[ordered]@{smoke=20;demo=500;larger=10000}
-  scripts_parsed=5; command_fields_in_scenario=$false
+  scripts_parsed=7; command_fields_in_scenario=$false
 }
 $result|ConvertTo-Json -Depth 5

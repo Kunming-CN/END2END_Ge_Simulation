@@ -144,9 +144,9 @@ function Get-ESInput([string]$Root,[string]$Relative,$Sources,
 function Get-ESReuse {
   return [pscustomobject]@{
     dependency_based_theoretical_reuse='Electronics changes alone do not require new radiation, fields or charge. Requires compatible full charge waveforms, complete identities, timing, units and producer settings.'
-    artifact_verified_supported_reuse='NOT_CHECKED: settings comparison verifies no run artifacts. Run.cmd inspect checks terminal saved-run compatibility for unchanged canonical settings; it does not authorize electronics replay.'
+    artifact_verified_supported_reuse='NOT_CHECKED: settings comparison verifies no run artifacts. Run.cmd inspect checks terminal saved-run compatibility including recorded custom bindings; it does not authorize electronics replay.'
     electronics_only_replay='NOT_IMPLEMENTED: the coupled response driver does not automatically reuse charge for changed electronics. No comparison calculation is started.'
-    custom_profile_execution='NOT_IMPLEMENTED: new runs and resume retain canonical electronics. A canonical pilot cannot authorize changed electronics; no custom-profile pilot matching is implemented.'
+    custom_profile_execution='IMPLEMENTED for NEW AK02/SAP22 runs: Run.cmd run -ElectronicsProfile .local/electronics-profiles/NAME.json. Normal upstream calculation; no automatic charge/field reuse. Larger runs require a verified pilot with matching effective settings. Resume uses recorded copies. Bounded mocked CLI evidence, not uninstrumented full-chain acceptance.'
   }
 }
 function Invoke-ElectronicsSettings {
@@ -169,7 +169,7 @@ function Invoke-ElectronicsSettings {
     }
   }
   if($Mode -ceq 'interactive'){
-    Write-Host 'Electronics settings: saves a configuration only; custom run selection/replay is not implemented.'
+    Write-Host 'Electronics settings: saves configuration without calculation. Select the saved bundle explicitly for a NEW run; electronics-only replay is NOT_IMPLEMENTED.'
     $chosen=Read-Host "View simple/advanced [$View]";if($chosen){$View=$chosen}
     Assert-NR ($View -cin @('simple','advanced')) 'Expected simple or advanced'
     $keys=if($View -ceq 'simple'){@('shaping_tau_us','gain','threshold_V','adc_bits','adc_full_scale_V')}else{@($script:ESUnits.Keys)}

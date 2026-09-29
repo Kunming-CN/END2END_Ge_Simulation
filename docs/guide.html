@@ -64,9 +64,10 @@ foreach ($f in $m.files) {
 <pre>.\Run.cmd settings
 .\Run.cmd settings show -View advanced
 .\Run.cmd settings save -SaveName my-electronics
-.\Run.cmd settings check -SettingsFile .local/electronics-profiles/my-electronics.json</pre>
+.\Run.cmd settings check -SettingsFile .local/electronics-profiles/my-electronics.json
+.\Run.cmd run -Name my-custom-smoke -Preset smoke -Detector AK02 -ElectronicsProfile .local/electronics-profiles/my-electronics.json</pre>
 <p>Simple editing exposes shaping time, gain, threshold and peak ADC bits/range; advanced also exposes capacitance, decay, pole-zero compensation, peak policy and optional gates with units. The exact default shaping time is <strong>0.5 microseconds</strong>. Saves retain all settings and input/source provenance; existing saves are never overwritten. Show, check and compare read files only.</p>
-<p>These commands save and validate configurations; custom-profile execution and electronics-only replay are not implemented. New runs still use canonical electronics, and resume rejects configuration overrides. Electronics changes can theoretically reuse radiation, fields and complete charge signals, but configuration comparison does not verify those artifacts or launch a comparison. The analog numerical grid is not waveform ADC sampling. See <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/ELECTRONICS_SETTINGS.md">exact settings syntax, units and reuse limits</a>.</p></section>
+<p>Saved custom electronics are implemented for NEW AK02/SAP22 runs, with bounded mocked CLI evidence. A custom run performs normal upstream calculation; it does not automatically reuse old charge or fields. The larger preset requires a verified 500/model pilot with matching effective electronics and compute dependencies. Resume and inspection use the recorded copied binding, and resume rejects configuration overrides. Settings show/check/compare remain read-only configuration checks; execution additionally checks numerical sample/window feasibility. Electronics-only replay is still NOT_IMPLEMENTED. The analog numerical grid is not waveform ADC sampling; gates use each readout trace/Cs137 pulse-group origin. See <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/ELECTRONICS_SETTINGS.md">exact syntax, binding, evidence scope and reuse limits</a>.</p></section>
 <section id="results"><h2>3. Inspect status, open results or resume conservatively</h2>
 <pre>.\Run.cmd status
 .\Run.cmd inspect -Name RUN_NAME

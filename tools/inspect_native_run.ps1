@@ -1,8 +1,9 @@
 # Inspect a saved small LBNL campaign without starting calculations.
+[CmdletBinding()]
 param([Parameter(Mandatory=$true)][string]$Directory,[switch]$Json)
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-. (Join-Path $PSScriptRoot 'native_run_validation.ps1')
+. (Join-Path $PSScriptRoot 'electronics_execution.ps1')
 $blocks=New-Object 'System.Collections.Generic.List[object]'
 $rows=New-Object 'System.Collections.Generic.List[object]'
 $watched=New-Object 'System.Collections.Generic.List[object]'
@@ -65,8 +66,12 @@ try{
     Assert-NREqual $r.scenario.id 'lbnl-cs137' 'scenario identity';$scenario=$r.scenario.file
     try{Test-NRHash $root (Join-Path $root $scenario) $r.scenario.sha256}catch{Add-InspectBlock 'source_changed' $scenario $_.Exception.Message}
   }
-  $exporter='.local/m2a/cs137-build-v1/cryostat_export'
-  $required=Get-NRCampaignSources $exporter $scenario
+  $exporter=Get-NRRecordedExporter $r
+  $selectedProfile=Get-EERecordedProfile $root $dir $r
+  $custom=$null -ne $r.PSObject.Properties['electronics']
+  $result.electronics=[ordered]@{selection=$(if($custom){'saved_custom'}else{'canonical'});profile_path=$selectedProfile;profile=(Read-NRJson $root (Join-Path $root $selectedProfile));binding_verified=$true}
+  if($custom){$result.electronics.input=$r.electronics.input;$result.electronics.physics_sha256=$r.electronics.physics_sha256}
+  $required=Get-NRCampaignSources $exporter $scenario $custom
   if($r.source_sha256 -isnot [System.Management.Automation.PSCustomObject]){Add-InspectBlock 'source_inventory_missing' 'run.json' 'Campaign source inventory is missing.'}
   else{
     $actual=@($r.source_sha256.PSObject.Properties.Name|Sort-Object)
@@ -84,7 +89,7 @@ try{
     Add-InspectStage $model 'response' $response (Join-Path $response 'run.json') {
       $parent=$r.models.PSObject.Properties[$model]
       Assert-NR ($null -ne $parent) 'Terminal child has no parent response binding; preserve for explicit recovery review.'
-      $rr=Test-NRResponse -Root $root -Directory $response -Model $model -Events $r.events_per_model -Manifest (Join-Path $t 'stream/manifest.json') -ExpectedReportHash $parent.Value.response_report_sha256
+      $rr=Test-NRResponse -Root $root -Directory $response -Model $model -Events $r.events_per_model -Manifest (Join-Path $t 'stream/manifest.json') -ExpectedReportHash $parent.Value.response_report_sha256 -ExpectedProfilePath $selectedProfile
       Assert-NREqual $parent.Value.status $rr.status 'parent/child status';Assert-NREqual $parent.Value.counts $rr.counts 'parent/child census'
     }
   }
@@ -98,11 +103,26 @@ try{
     Assert-NREqual ($r.status -ceq 'completed_with_native_failures') ($fail -gt 0) 'campaign failure status'
   }
   $result.saved_artifacts_verified=(@($rows|Where-Object {$_.saved_state -ne 'complete_verified'}).Count -eq 0)
-}catch{Add-InspectBlock 'inspection_blocked' 'run' $_.Exception.Message}
+  if($custom){
+    try{[void](Get-EERecordedProfile $root $dir $r)}
+    catch{
+      $result.saved_artifacts_verified=$false;$result.electronics.binding_verified=$false
+      Add-InspectBlock 'changed_during_inspection' 'electronics' $_.Exception.Message
+      if($_.Exception.Message -match 'Execution settings source compatibility|Frozen readout defaults|Frozen native profile'){
+        Add-InspectBlock 'source_changed' 'electronics' $_.Exception.Message
+      }
+    }
+  }
+}catch{
+  $result.saved_artifacts_verified=$false
+  if($result.Contains('electronics')){$result.electronics.binding_verified=$false}
+  $code=if($_.Exception.Message -match 'Execution settings source compatibility|Frozen readout defaults|Frozen native profile'){'source_changed'}else{'inspection_blocked'}
+  Add-InspectBlock $code 'run' $_.Exception.Message
+}
 finally{
   try{
     foreach($entry in $watched){
-      try{Test-NRHash $root $entry.path $entry.hash}catch{$result.saved_artifacts_verified=$false;Add-InspectBlock 'changed_during_inspection' $entry.path $_.Exception.Message}
+      try{Test-NRHash $root $entry.path $entry.hash}catch{$result.saved_artifacts_verified=$false;if($result.Contains('electronics')){$result.electronics.binding_verified=$false};Add-InspectBlock 'changed_during_inspection' $entry.path $_.Exception.Message}
     }
   }finally{if($null -ne $lease){$lease.Dispose()}}
 }
@@ -118,6 +138,7 @@ else{
   Write-Output ('Detectors: '+($result.detectors -join ', ')+'; initial decays/model: '+$result.events_per_detector)
   Write-Output ('Radiation seed: '+$result.radiation_seed+'; expected native seed: '+$result.expected_native_seed)
   Write-Output ('Lock observation: '+$result.lock_observation)
+  if($result.Contains('electronics')){Write-Output ('Electronics: '+$result.electronics.selection+'; '+$result.electronics.profile_path)}
   $rows|Format-Table detector,stage,saved_state,detail -Wrap -AutoSize
   foreach($block in $blocks){Write-Output ('BLOCKED ['+$block.code+'] '+$block.location+': '+$block.message)}
   Write-Output 'Inspection did not check runtime readiness or start/resume work. Preserve all originals; never edit receipts to bypass a mismatch.'

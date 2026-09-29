@@ -1,12 +1,15 @@
 # Read-only pilot verification. Does not modify historical receipts or run physics.
+[CmdletBinding()]
 param(
   [Parameter(Mandatory=$true)][string]$Pilot,
   [Parameter(Mandatory=$true)][string]$Exporter,
-  [ValidateSet('AK02','SAP22')][string[]]$Models=@('AK02','SAP22')
+  [ValidateSet('AK02','SAP22')][string[]]$Models=@('AK02','SAP22'),
+  $ExpectedConfiguration=$null
 )
 $ErrorActionPreference='Stop'
+$requireGuarded=$PSBoundParameters.ContainsKey('ExpectedConfiguration')
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-. (Join-Path $PSScriptRoot 'native_run_validation.ps1')
+. (Join-Path $PSScriptRoot 'electronics_execution.ps1')
 $pilotDir=[IO.Path]::GetFullPath((Join-Path $root $Pilot)); $localRoot=Join-Path $root '.local'
 if(!$pilotDir.StartsWith($localRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Pilot must be inside project .local'}
 function Read-Json([string]$Path){Get-Content -LiteralPath $Path -Raw|ConvertFrom-Json}
@@ -29,6 +32,22 @@ function Verify-Map([string]$Folder,$Map){
 }
 $p=Read-Json (Join-Path $pilotDir 'run.json')
 if($p.kind -ne 'native_campaign_v1' -or $p.status -ne 'completed_provisional_native_campaign' -or $p.events_per_model -ne 500){throw 'Require completed 500/model pilot'}
+$pilotProfile=Get-EERecordedProfile $root $pilotDir $p
+# Verify the pilot against its OWN saved profile before comparing requested physics.
+$pilotConfig=Resolve-ESConfiguration $root (Read-NRJson $root (Join-Path $root $pilotProfile))
+if($null -eq $ExpectedConfiguration){$ExpectedConfiguration=Resolve-ESConfiguration $root (Read-NRJson $root (Join-Path $root 'simulation/native_readout_profile.json'))}
+$customPilot=$null -ne $p.PSObject.Properties['electronics']
+if($customPilot){
+  $scenario=if($null -ne $p.scenario){[string]$p.scenario.file}else{''}
+  Assert-NREqual @($p.source_sha256.PSObject.Properties.Name|Sort-Object) @(Get-NRCampaignSources (Get-NRRecordedExporter $p) $scenario $true|Sort-Object) 'Custom pilot source inventory'
+}
+# Only three historical canonical orchestration revisions are exempt. Custom
+# pilots must match every recorded control/compute hash. Compute dependencies
+# must still match; copy locations and profile names are not physical settings.
+foreach($entry in $p.source_sha256.PSObject.Properties){
+  if(!$customPilot -and $entry.Name -in @('tools/run_native_campaign.ps1','tools/verify_native_pilot.ps1','tools/native_run_validation.ps1')){continue}
+  Test-NRHash $root (Join-Path $root $entry.Name) $entry.Value
+}
 $Models=@($Models|Select-Object -Unique); if($Models.Count -lt 1){throw 'Select at least one model'}
 $checks=[ordered]@{}
 foreach($model in $Models){
@@ -40,7 +59,10 @@ foreach($model in $Models){
   if($pr.counts.initial_decays -ne 500 -or $pr.counts.initial_primaries -ne 500 -or $pr.counts.groups -lt 1 -or $pr.counts.accepted+$pr.counts.rejected -ne $pr.counts.groups -or $meta.primary_count -ne 500 -or $m.primary_count -ne 500){throw 'Pilot positive/census check failed'}
   Verify-Hash (Join-Path $response 'run.json') $p.models.PSObject.Properties[$model].Value.response_report_sha256
   $contract=if($null -ne $pr.boundary_guard){'guarded'}else{'legacy_unguarded'}
-  [void](Test-NRResponse -Root $root -Directory $response -Model $model -Events 500 -Manifest $manifestPath -ExpectedReportHash $p.models.PSObject.Properties[$model].Value.response_report_sha256 -Contract $contract)
+  if($requireGuarded){Assert-NREqual $contract 'guarded' 'New guarded campaign requires a guarded pilot compute contract'}
+  $checked=Test-NRResponse -Root $root -Directory $response -Model $model -Events 500 -Manifest $manifestPath -ExpectedReportHash $p.models.PSObject.Properties[$model].Value.response_report_sha256 -Contract $contract -ExpectedProfilePath $pilotProfile
+  Assert-NREqual $p.models.$model.counts $checked.counts 'pilot parent/child census'
+  Assert-NREqual $p.models.$model.status $checked.status 'pilot parent/child status'
   [void](Test-NRPrepared $root $transport $model 500 $p.seed $Exporter)
   [void](Test-NRTransport $root $transport)
   [void](Test-NRStream $root $transport $model 500)
@@ -54,7 +76,7 @@ foreach($model in $Models){
   Verify-Map $transport $meta.files_sha256
   Verify-Map (Join-Path $root '.local/transport/LBNL') $meta.upstream_sha256
   Verify-Hash (Join-Path $root $Exporter) $meta.exporter_sha256
-  Verify-Hash (Join-Path $root 'simulation/native_readout_profile.json') $pr.profile_sha256
+  Verify-Hash (Join-Path $root $pilotProfile) $pr.profile_sha256
   Verify-Hash $manifestPath $pr.input_sha256
   Verify-Hash (Join-Path $transport 'prepared.json') $m.prepared_sha256
   Verify-Hash (Join-Path $transport 'run.json') $m.run_sha256
@@ -65,4 +87,5 @@ foreach($model in $Models){
   foreach($chunk in $m.chunks){if([IO.Path]::GetFileName($chunk.file) -ne $chunk.file){throw 'Unsafe chunk filename'}; Verify-Hash (Join-Path (Join-Path $transport 'stream') $chunk.file) $chunk.sha256}
   $checks[$model]=[ordered]@{initial_decays=500;contract=$contract;groups=$pr.counts.groups;accepted=$pr.counts.accepted;artifacts_verified=@($pr.artifacts.PSObject.Properties).Count;consumer_dependencies_verified=@($pr.source_sha256.PSObject.Properties).Count;producer_dependencies_verified=@($meta.source_sha256.PSObject.Properties).Count}
 }
+Assert-NREqual $pilotConfig $ExpectedConfiguration 'Pilot effective electronics must match request (names and copy paths excluded)'
 [ordered]@{kind='native_pilot_verification_v1';status='passed';pilot_campaign_sha256=(Get-FileHash (Join-Path $pilotDir 'run.json') -Algorithm SHA256).Hash.ToLowerInvariant();previous_launcher_sha256=$p.source_sha256.PSObject.Properties['tools/run_native_campaign.ps1'].Value;verifier_sha256=(Get-FileHash $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant();models=$checks;scope='Recorded project sources, profiles, original models, raw transport, chunks, binary and response artifacts; no new physics/calibration claim'}|ConvertTo-Json -Depth 8

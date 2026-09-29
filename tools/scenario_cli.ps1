@@ -21,10 +21,11 @@ param(
   [switch]$DryRun
 )
 $ErrorActionPreference='Stop'
+$script:customRequested=$PSBoundParameters.ContainsKey('ElectronicsProfile')
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
 # Fail before runtime checks, output reservation, locks or simulation. Settings
 # are a separate read-only preflight/editor, not a displayed-but-unused override.
-if($PSBoundParameters.ContainsKey('ElectronicsProfile')){throw 'Custom electronics execution is not implemented. Saved settings are configuration only; canonical pilots cannot authorize changed electronics. Resume uses recorded configuration.'}
+if($PSBoundParameters.ContainsKey('ElectronicsProfile') -and $Action -ne 'run'){throw 'ElectronicsProfile is only for a NEW run; override forbidden for resume and other actions'}
 if($Action -in @('resume','menu')){
   foreach($key in @('Preset','Detector','Seed','Pilot','Scenario')){if($PSBoundParameters.ContainsKey($key)){throw "Resume/menu uses recorded or prompted configuration; override forbidden: $key"}}
 }
@@ -54,7 +55,7 @@ function Resolve-ProjectFile([string]$Relative){
 }
 $geometry=Resolve-ProjectFile $scenarioConfig.geometry_ref
 $upstreamManifest=Resolve-ProjectFile $scenarioConfig.upstream_manifest_ref
-$profile=Resolve-ProjectFile $scenarioConfig.readout_profile_ref
+$canonicalElectronics=Resolve-ProjectFile $scenarioConfig.readout_profile_ref
 $exporterRel='.local/m2a/cs137-build-v1/cryostat_export'
 $exporter=Join-Path $root $exporterRel
 $runsRoot=Join-Path $root '.local/runs'
@@ -94,7 +95,7 @@ function Check-Setup {
     julia_executable=($null -ne $j); julia_environment=$juliaEnv; julia_ready=$juliaReady
     wsl_ubuntu_24=$ubuntu; locked_transport=$transport; upstream=$up.ok; exporter=(Test-Path $exporter -PathType Leaf)
     free_GB=[math]::Round((Get-PSDrive -Name ([IO.Path]::GetPathRoot($root).TrimEnd('\').TrimEnd(':'))).Free/1GB,1)
-    geometry_sha256=Hash-Lower $geometry; readout_profile_sha256=Hash-Lower $profile
+    geometry_sha256=Hash-Lower $geometry; readout_profile_sha256=Hash-Lower $canonicalElectronics
     ready=($juliaReady -and $ubuntu -and $transport -and $up.ok -and (Test-Path $exporter -PathType Leaf))
   }
 }
@@ -201,7 +202,9 @@ function Inspect-Run([string]$RunName){
 }
 function Invoke-Run([bool]$ResumeMode){
   if($ResumeMode -and $DryRun){Inspect-Run $Name;return}
-  $ready=Require-Ready
+  . (Join-Path $PSScriptRoot 'electronics_execution.ps1')
+  $selection=$null
+  if(!$ResumeMode -and $script:customRequested){$selection=Get-EESelection $root $ElectronicsProfile}
   if(!$Name){if($ResumeMode){throw 'Resume requires -Name'}else{$script:Name=New-Name}}
   $dir=Run-Path $Name; $rel='.local/runs/'+$Name
   if($ResumeMode){
@@ -217,18 +220,28 @@ function Invoke-Run([bool]$ResumeMode){
     $models=Model-List $Detector; $events=Events-For $Preset; $runSeed=$Seed; $pilotArg=$Pilot
     if($Preset -eq 'larger' -and !$pilotArg){throw 'The larger preset requires -Pilot pointing to a verified 500/model run'}
   }
-  $args=@{Output=$rel;Events=$events;Seed=$runSeed;Models=$models;Exporter=$exporterRel;ScenarioFile='scenarios/lbnl-cs137.json'}
-  if($pilotArg){$args.Pilot=$pilotArg}; if($ResumeMode){$args.Resume=$true}
+  if(!$ResumeMode -and $events -eq 10000){
+    $expectedConfig=if($null -ne $selection){$selection.selected.configuration}else{Resolve-ESConfiguration $root (Read-NRJson $root $canonicalElectronics)}
+    [void](& (Join-Path $PSScriptRoot 'verify_native_pilot.ps1') -Pilot $pilotArg -Exporter $exporterRel -Models $models -ExpectedConfiguration $expectedConfig)
+  }
+  $ready=Require-Ready
+  $campaignArgs=@{Output=$rel}
+  if($ResumeMode){$campaignArgs.Resume=$true}else{
+    $campaignArgs.Events=$events;$campaignArgs.Seed=$runSeed;$campaignArgs.Models=$models
+    $campaignArgs.Exporter=$exporterRel;$campaignArgs.ScenarioFile='scenarios/lbnl-cs137.json'
+    if($pilotArg){$campaignArgs.Pilot=$pilotArg}
+    if($null -ne $selection){$campaignArgs.ElectronicsProfile=$ElectronicsProfile}
+  }
   Write-Host "Scenario: $($scenarioConfig.title)"; Write-Host "Detectors: $($models -join ', ')"; Write-Host "Initial decays per detector: $events"; Write-Host "Output: $rel"
   if($ResumeMode){Write-Host 'Resume uses the saved run configuration; command-line configuration overrides are forbidden.'}
   if($DryRun){Write-Host 'DRY RUN: setup/config resolved; no simulation started.';return}
-  & (Join-Path $root 'tools/run_native_campaign.ps1') @args
+  & (Join-Path $root 'tools/run_native_campaign.ps1') @campaignArgs
   if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw 'Campaign driver failed'}
   Write-RunIndex $dir
   if($Open){Open-Run $Name}
 }
 function Menu {
-  Write-Host '';Write-Host 'END2END Ge Simulation';Write-Host '1) Check setup';Write-Host '2) Setup / build local exporter';Write-Host '3) New LBNL Cs137 run';Write-Host '4) Resume a saved run (inspect first)';Write-Host '5) Open saved results';Write-Host '6) List run status';Write-Host '7) Detector capabilities';Write-Host '8) Inspect saved run - no calculation';Write-Host '9) Electronics settings - save configuration only';Write-Host 'Q) Quit'
+  Write-Host '';Write-Host 'END2END Ge Simulation';Write-Host '1) Check setup';Write-Host '2) Setup / build local exporter';Write-Host '3) New LBNL Cs137 run';Write-Host '4) Resume a saved run (inspect first)';Write-Host '5) Open saved results';Write-Host '6) List run status';Write-Host '7) Detector capabilities';Write-Host '8) Inspect saved run - no calculation';Write-Host '9) Electronics settings - save for a new run';Write-Host 'Q) Quit'
   $choice=(Read-Host 'Select').Trim().ToUpperInvariant()
   switch($choice){
     '1'{$script:Action='check'}

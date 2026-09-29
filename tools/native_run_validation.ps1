@@ -119,6 +119,7 @@ function Get-NRConsumerSources([string]$Contract='guarded'){
 function Test-NRResponse {
   param([string]$Root,[string]$Directory,[string]$Model,[int]$Events,[string]$Manifest,
     [string]$ExpectedReportHash='',[switch]$NewChild,
+    [string]$ExpectedProfilePath='simulation/native_readout_profile.json',
     [ValidateSet('guarded','legacy_unguarded')][string]$Contract='guarded')
   $file=Join-Path $Directory 'run.json'
   if(!$NewChild){Test-NRHash $Root $file $ExpectedReportHash}
@@ -165,16 +166,16 @@ function Test-NRResponse {
   Assert-NREqual $r.units ([ordered]@{charge='fC';current='nA';voltage='V';energy='keV';time='ns'}) 'response units'
   Assert-NREqual $r.grouping_policy $m.grouping_policy 'grouping policy'
   Assert-NREqual $m.grouping_policy ([ordered]@{activity_live_time_pileup_claim=$false;horizon_ns=100000;interval='[origin, origin+horizon)';name='nominal_isolated_windows_v1';state_at_group_start='reset';tail='truncate at horizon; recovery not established'}) 'reviewed grouping'
-  $profile=Read-NRJson $Root (Join-Path $Root 'simulation/native_readout_profile.json')
-  Test-NRProfile $profile
-  Test-NRHash $Root (Join-Path $Root 'simulation/native_readout_profile.json') $r.profile_sha256
+  $electronics=Read-NRJson $Root (Join-Path $Root $ExpectedProfilePath)
+  Test-NRProfile $electronics
+  Test-NRHash $Root (Join-Path $Root $ExpectedProfilePath) $r.profile_sha256
   Test-NRHash $Root (Join-Path $Directory 'profile-input.json') $r.profile_sha256
-  Assert-NREqual $r.profile $profile 'recorded profile'
-  Assert-NREqual (Read-NRJson $Root (Join-Path $Directory 'profile.json')) $profile 'copied profile'
+  Assert-NREqual $r.profile $electronics 'recorded profile'
+  Assert-NREqual (Read-NRJson $Root (Join-Path $Directory 'profile.json')) $electronics 'copied profile'
   $expected=Read-NRJson $Root (Join-Path $Root 'simulation/readout_demo.json')
   $expected.schema_version=2;$expected.expected_primary_count=$Events
   $expected.PSObject.Properties.Remove('max_total_samples')
-  foreach($p in $profile.settings.PSObject.Properties){$expected|Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force}
+  foreach($p in $electronics.settings.PSObject.Properties){$expected|Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force}
   $resolved=Join-Path $Directory 'readout-config.json'
   Test-NRHash $Root $resolved $r.config_sha256
   Assert-NREqual (Read-NRJson $Root $resolved) $expected 'resolved electronics settings'
@@ -194,22 +195,31 @@ function Test-NRResponse {
   }else{Assert-NR ($null -eq $r.boundary_guard) 'Legacy response unexpectedly declares a guard'}
   return $r
 }
-function Get-NRCampaignSources([string]$Exporter,[string]$ScenarioFile=''){
+function Get-NRRecordedExporter($Receipt){
+  $names=@($Receipt.source_sha256.PSObject.Properties.Name|Where-Object {$_ -like '.local/*' -and $_ -notlike '*/electronics/*'})
+  Assert-NR ($names.Count -eq 1) 'Saved exporter binding is ambiguous'
+  return $names[0]
+}
+function Get-NRCampaignSources([string]$Exporter,[string]$ScenarioFile='',[bool]$CustomElectronics=$false){
   $files=@('tools/run_native_campaign.ps1','tools/native_run_validation.ps1','transport/cs137.py','transport/cryostat_export.cc','transport/cryostat_nominal.json','transport/handoff.py','transport/pixi.lock','simulation/native_response_guarded.jl','simulation/native_boundary_guard.jl','simulation/native_response.jl','simulation/native_stream.jl','simulation/readout_profiles.jl','simulation/native_readout_profile.json','simulation/native_li_example.jl','simulation/readout.jl','simulation/replay.jl','simulation/run.jl','simulation/Manifest.toml','tools/verify_native_pilot.ps1')
   $files+=,$Exporter
   if($ScenarioFile){$files+=,$ScenarioFile}
+  # Both modes load these shared functions; custom selection additionally uses
+  # the strict settings-source inventory, including the CLI and frozen defaults.
+  $files+=@('tools/electronics_execution.ps1','tools/electronics_settings.ps1')
+  if($CustomElectronics){$files+=@('tools/scenario_cli.ps1','simulation/readout_demo.json','simulation/Project.toml')}
   return $files
 }
 function Test-NRFinite($Value){
   return (($Value -is [int] -or $Value -is [long] -or $Value -is [double] -or $Value -is [decimal]) -and ![double]::IsNaN([double]$Value) -and ![double]::IsInfinity([double]$Value))
 }
-function Test-NRProfile($Profile){
-  Assert-NR ($Profile -is [System.Management.Automation.PSCustomObject]) 'Missing profile object'
-  Assert-NREqual @($Profile.PSObject.Properties.Name|Sort-Object) @('kind','name','schema_version','settings') 'profile field inventory'
-  Assert-NRInteger $Profile.schema_version 'profile version';Assert-NREqual $Profile.schema_version 2 'profile schema'
-  Assert-NREqual $Profile.kind 'native_readout_profile_v1' 'profile kind'
-  Assert-NR ($Profile.name -is [string] -and $Profile.name -cmatch '^[A-Za-z0-9_.-]{1,80}$') 'Invalid profile name'
-  $s=$Profile.settings
+function Test-NRProfile($Electronics){
+  Assert-NR ($Electronics -is [System.Management.Automation.PSCustomObject]) 'Missing profile object'
+  Assert-NREqual @($Electronics.PSObject.Properties.Name|Sort-Object) @('kind','name','schema_version','settings') 'profile field inventory'
+  Assert-NRInteger $Electronics.schema_version 'profile version';Assert-NREqual $Electronics.schema_version 2 'profile schema'
+  Assert-NREqual $Electronics.kind 'native_readout_profile_v1' 'profile kind'
+  Assert-NR ($Electronics.name -is [string] -and $Electronics.name -cmatch '^[A-Za-z0-9_.-]{1,80}$') 'Invalid profile name'
+  $s=$Electronics.settings
   Assert-NR ($s -is [System.Management.Automation.PSCustomObject]) 'Missing profile settings'
   $names=@('feedback_capacitance_pF','feedback_tau_us','pole_zero_tau_us','shaping_tau_us','gain','adc_bits','adc_full_scale_V','threshold_V','peak_policy','peak_gate_start_ns','peak_gate_end_ns')
   Assert-NREqual @($s.PSObject.Properties.Name|Sort-Object) @($names|Sort-Object) 'profile settings inventory'

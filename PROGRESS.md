@@ -5,46 +5,54 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: structured electronics configuration (configuration-only)
+## Current handoff: saved electronics execution and bounded AK02 acceptance
 
-`Run.cmd settings` now exposes simple/advanced editing plus show/check/save/compare.
-Simple controls are shaping time, gain, threshold and peak-ADC bits/range; advanced
-retains all eleven existing settings, with a complete independently resolved
-configuration. Defaults remain 0.5 us, signed input and the existing peak ADC.
-Gate times are relative to each readout trace's origin (each Cs137 pulse group),
-not automatically the initial radioactive primary. The 2 ns numerical grid is not
-waveform ADC sampling.
+Saved simple/advanced electronics bundles now reach NEW LBNL runs through
+`Run.cmd run -ElectronicsProfile .local/electronics-profiles/NAME.json`.
+The driver copies exact input/ancestor/default/source bytes into the new run,
+creates a standalone profile, passes its actual `--profile` argument to the guarded
+native child and binds parent/child/profile/configuration/census independently.
+The copied scripts are data, not executed. External original saved profiles may
+be absent after successful snapshotting; compatible current code is still required.
 
-Saved bundles are immutable-by-name under `.local/electronics-profiles/`, with
-schema/revision, input/default/source hashes and a deterministic effective-configuration
-hash. Preflight/compare use PowerShell reads only. Full ancestry is validated with
-cycle detection and a 16-file bound; all input hashes are checked again before
-return/save. Unknown CLI options fail before dispatch. Google Drive hardlink aliases
-remain readable; path-redirection/reparse links and output replacement are refused.
+Inspect/resume select recorded copies, never a new UI/default selection. Missing
+or changed copies, rehashed setting mismatches and caller overrides block reuse.
+Custom pilot verification checks all control/compute hashes, its own profile/copies
+and requested effective settings. Display names are not physics identity. A new
+guarded10k request needs a clean guarded500-initial-decay pilot per requested model
+with at least one positive group; an old unguarded pilot cannot authorize it.
+Canonical history remains readable without rebasing receipts.
 
-**Boundary:** saving a configuration does not enable custom-profile execution.
-`-ElectronicsProfile` is explicitly refused. The unchanged campaign driver still
-uses its canonical settings; no custom child propagation or matching-pilot acceptance
-is claimed. Electronics-only replay is NOT_IMPLEMENTED, artifact reuse is NOT_CHECKED
-by settings comparison, and upstream reuse is labelled theoretical only. Structural
-preflight is not numerical calibration/sample-window readiness.
+Execution checks arithmetic sample/window feasibility at DT2ns and100000ns isolated
+group windows; this is not a guarantee of arbitrary numerical conditioning.
+No physical clamping, waveform sampling-frequency feature or model change was added.
+Electronics-only replay and automatic upstream field/charge reuse remain unimplemented.
 
-Acceptance and review evidence: `.local/electronics-settings-v1/`; feature reference:
-`tools/ELECTRONICS_SETTINGS.md`. The final corrected candidate passed 23 settings
-tests, 22 saved-run tests and launcher checks; prior independent command acceptance
-covered 15 scenarios. Frozen synthetic readout suites passed 25,804 + 51 assertions.
-Six website suites passed 81 tests. Both independent reviewers exchanged findings;
-the unknown-CLI and transitive-provenance blockers were corrected and cross-reviewed.
-The initial hardlink false positive and failed attempts remain preserved. No production
-science was rerun; 275 protected original files retain hash, byte size and mtime.
+ONE NEW uninstrumented custom AK02 chain completed in `.local/runs/custom-electronics-500-ak02-v1`:
+500 initial decays, 4 positive groups, 4 accepted,
+0 electronics rejects and 0 native failures.
+All requested electronics values match the independently reconstructed actual config;
+child arguments and profile copies match the selected snapshot. This is bounded
+engineering acceptance on the owner's existing computer, NOT cold-machine reproduction,
+all-detector replacement acceptance, calibrated resolution or experimental agreement.
+SAP22 has mocked launcher and real guarded profile-inspection evidence in this round,
+not this new uninstrumented acceptance. No original1M/old500 science was rerun or edited.
 
-NEXT: bind a selected saved profile through a NEW run's actual child argument,
-copied inputs, independently checked effective settings, parent/child receipts and
-matching pilot; then add bounded electronics-only reuse only where complete charge
-waveforms/identities exist. Continue interruption recovery and physically checked
-additional LBNL adapters afterward. Per-group resume, uninstrumented positive full-chain
-acceptance and fresh-machine reproduction remain unfinished. Do not rerun completed
-science or reset quotas merely because the chat or review was interrupted.
+Final corrected-source regressions:19 execution tests,23 settings tests,22 saved-run
+tests, launcher checks and independent instrumented CLI scenarios. Separate backend
+probes passed21 synthetic assertions and actual guarded --inspect for both saved500
+streams. Two original independent reviewers exchanged findings and closed the pilot-hash
+and contradictory-inspector-flag issues subject to the terminal test receipts.
+Evidence and failures are preserved in `.local/electronics-execution-v1/`; feature
+reference remains `tools/ELECTRONICS_SETTINGS.md`. Preserved280 originals retain hashes,
+byte sizes and mtimes. The new500 acceptance is separate from all original outputs.
+
+NEXT: bounded interruption recovery and complete-charge-waveform electronics-only
+replay where stored inputs support it; then physically checked additional LBNL adapters.
+Per-group recovery, positive full-chain acceptance of untested replacements, broad
+SAP22/new-detector acceptance and fresh-machine reproduction remain unfinished.
+Never restart completed science, rebase old receipts or consume reset credits after
+chat interruptions. Read COMPLETE.json and actual processes before continuation.
 
 ## Retained validated capabilities
 
