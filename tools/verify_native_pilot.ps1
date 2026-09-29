@@ -6,6 +6,7 @@ param(
 )
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+. (Join-Path $PSScriptRoot 'native_run_validation.ps1')
 $pilotDir=[IO.Path]::GetFullPath((Join-Path $root $Pilot)); $localRoot=Join-Path $root '.local'
 if(!$pilotDir.StartsWith($localRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Pilot must be inside project .local'}
 function Read-Json([string]$Path){Get-Content -LiteralPath $Path -Raw|ConvertFrom-Json}
@@ -38,6 +39,11 @@ foreach($model in $Models){
   if(($pr.counts.PSObject.Properties['native_failed_groups'] -and $pr.counts.native_failed_groups -ne 0) -or ($pr.counts.PSObject.Properties['readout_rejected'] -and $pr.counts.readout_rejected -ne $pr.counts.rejected)){throw 'Pilot must be clean: native failures are not accepted'}
   if($pr.counts.initial_decays -ne 500 -or $pr.counts.initial_primaries -ne 500 -or $pr.counts.groups -lt 1 -or $pr.counts.accepted+$pr.counts.rejected -ne $pr.counts.groups -or $meta.primary_count -ne 500 -or $m.primary_count -ne 500){throw 'Pilot positive/census check failed'}
   Verify-Hash (Join-Path $response 'run.json') $p.models.PSObject.Properties[$model].Value.response_report_sha256
+  $contract=if($null -ne $pr.boundary_guard){'guarded'}else{'legacy_unguarded'}
+  [void](Test-NRResponse -Root $root -Directory $response -Model $model -Events 500 -Manifest $manifestPath -ExpectedReportHash $p.models.PSObject.Properties[$model].Value.response_report_sha256 -Contract $contract)
+  [void](Test-NRPrepared $root $transport $model 500 $p.seed $Exporter)
+  [void](Test-NRTransport $root $transport)
+  [void](Test-NRStream $root $transport $model 500)
   foreach($needed in @('readout.jl','readout_demo.json','readout_profiles.jl','native_response.jl','native_stream.jl','native_li_example.jl','replay.jl','run.jl','Project.toml','Manifest.toml')){if(!$pr.source_sha256.PSObject.Properties[$needed]){throw 'Missing recorded consumer dependency'}}
   foreach($needed in @('cs137.py','handoff.py','cryostat_export.cc','cryostat_nominal.json','cryostat-source.json','CMakeLists.txt','pixi.toml','pixi.lock')){if(!$meta.source_sha256.PSObject.Properties[$needed]){throw 'Missing recorded producer dependency'}}
   foreach($needed in @('scalars.jsonl','endpoints.jsonl','truth.jsonl','traces.jsonl','histograms.json','readout-config.json','profile-input.json')){if(!$pr.artifacts.PSObject.Properties[$needed]){throw 'Missing response artifact binding'}}
@@ -57,6 +63,6 @@ foreach($model in $Models){
   Verify-Hash (Join-Path $transport 'run.mac') $m.macro_sha256
   foreach($doc in @($pr,$meta,$m)){Verify-Hash (Join-Path $root ('models/'+$model+'.yaml')) $doc.model_sha256}
   foreach($chunk in $m.chunks){if([IO.Path]::GetFileName($chunk.file) -ne $chunk.file){throw 'Unsafe chunk filename'}; Verify-Hash (Join-Path (Join-Path $transport 'stream') $chunk.file) $chunk.sha256}
-  $checks[$model]=[ordered]@{initial_decays=500;groups=$pr.counts.groups;accepted=$pr.counts.accepted;artifacts_verified=@($pr.artifacts.PSObject.Properties).Count;consumer_dependencies_verified=@($pr.source_sha256.PSObject.Properties).Count;producer_dependencies_verified=@($meta.source_sha256.PSObject.Properties).Count}
+  $checks[$model]=[ordered]@{initial_decays=500;contract=$contract;groups=$pr.counts.groups;accepted=$pr.counts.accepted;artifacts_verified=@($pr.artifacts.PSObject.Properties).Count;consumer_dependencies_verified=@($pr.source_sha256.PSObject.Properties).Count;producer_dependencies_verified=@($meta.source_sha256.PSObject.Properties).Count}
 }
 [ordered]@{kind='native_pilot_verification_v1';status='passed';pilot_campaign_sha256=(Get-FileHash (Join-Path $pilotDir 'run.json') -Algorithm SHA256).Hash.ToLowerInvariant();previous_launcher_sha256=$p.source_sha256.PSObject.Properties['tools/run_native_campaign.ps1'].Value;verifier_sha256=(Get-FileHash $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant();models=$checks;scope='Recorded project sources, profiles, original models, raw transport, chunks, binary and response artifacts; no new physics/calibration claim'}|ConvertTo-Json -Depth 8

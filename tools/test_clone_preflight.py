@@ -14,6 +14,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ('Run.cmd', 'tools/scenario_cli.ps1', 'tools/run_native_campaign.ps1',
            'tools/verify_native_pilot.ps1', 'tools/test_scenario_cli.ps1',
+           'tools/native_run_validation.ps1', 'tools/inspect_native_run.ps1',
            'transport/Run.cmd', 'transport/run.sh', 'transport/pixi.toml',
            'transport/pixi.lock', 'scenarios/lbnl-cs137.json',
            'simulation/Project.toml', 'simulation/Manifest.toml',
@@ -80,6 +81,14 @@ def main() -> None:
     require(code == 0 and 'No .local/runs yet.' in text, 'Fresh-clone status failed.')
     code, text = launcher('detectors', 'detectors')
     require(code == 0 and 'AK02' in text and 'SAP22' in text and 'GeGI_3D' in text, 'Source-only model menu failed.')
+    code, text = launcher('inspect-missing', 'inspect -Name missing-run -Json')
+    require(code == 2, 'Missing saved run inspection must return blockers.')
+    # The wrapper sends diagnostics to stderr; JSON lines are the leading object.
+    decoder = json.JSONDecoder()
+    inspection, _ = decoder.raw_decode(text.lstrip())
+    require(inspection['kind'] == 'native_run_inspection_v1' and inspection['files_written'] == 0,
+            'Inspection did not return the read-only contract.')
+    require(not inspection['runtime_readiness_checked'], 'Inspection must not probe runtimes.')
     code, text = launcher('check-missing', 'check')
     require(code == 2, f'Incomplete preflight must exit 2, received {code}.')
     require('Setup is incomplete' in text and 'transport/cryostat-source.json' in text,

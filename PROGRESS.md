@@ -5,7 +5,7 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: saved spectra with Log / Linear controls
+## Current handoff: read-only saved-run inspection and validation
 
 - Scientific outputs: 23,693 groups = 21,672 accepted + 1,613 readout rejects + 408 unavailable native responses.
 - Failures: 403 boundary-stall cases and 5 SAP22 contact-domain cases. Truth remains intact; unknown response is never zero-filled.
@@ -28,7 +28,11 @@ Do not restart any completed simulation, analyzer or reviewer because the chat s
 - Spectrum acceptance: 19 dedicated tests plus site/hierarchy/model/contact suites; actual browser controls, count/path invariance, two pipeline states, unchanged waveform DOM, keyboard, offline and no-JavaScript log fallback. Mobile390/tablet834/desktop views checked, not a physical iPad/Safari certification.
 - Preservation: all1439 previous public files retained; original report/data/model/media bundles unchanged. All173 protected local files retain hashes, byte counts and modification times. Evidence: `.local/spectrum-display-v1/`; see `tools/SPECTRUM_DISPLAY.md` for semantics and exact current/original distinction.
 - The same site-UX and workflow threads completed three scoped spectrum review rounds and closed the tested release. Rendering-source ownership and archived/current URL mapping are documented in `tools/SPECTRUM_DISPLAY.md`.
-- NEXT: low-code settings/recovery and tested additional LBNL detector adapters, per the full roadmap. Do not rerun completed science or the finished website review solely after a chat interruption.
+- Saved-run validation now has one shared PowerShell contract: complete response artifact/source inventories, byte sizes, independent native/profile settings, stream/prepared bindings and parent-child census checks. Existing parent-bound children must validate before any resumed receipt rewrite; missing children never authorize a replacement calculation.
+- New `Run.cmd inspect -Name RUN_NAME [-Json]` and `resume -Name RUN_NAME -DryRun` read saved files without Julia/WSL, new locks, output writes or scientific execution. Exit 0 means terminal saved-state compatibility only; exit 2 reports blockers. `terminal_compatible` is not runtime readiness or permission to execute. Current-source mismatch does not imply data corruption or a need to rerun/edit original receipts.
+- Inspector reports phase states, expected native seed, source compatibility and snapshot stability. Linked descendants, held/inaccessible/missing locks, missing parent hashes, partial children and contradictory counts block reuse. `open` remains a separate action that may regenerate its local index.
+- Evidence `.local/lowcode-inspect-v1/`: 22 targeted file/command tests passed, including saved positive/zero and explicit legacy-pilot checks without recalculation; 24-file same-machine source clone passed negative preflight/missing-run inspection. All 272 protected originals retain hashes/sizes/mtime. The initial failed path-handling test and source snapshots remain preserved. Both original reviewer threads closed three scoped rounds.
+- NEXT: structured simple/advanced electronics settings with saved configuration and bounded acceptance, then finer interrupted-phase recovery, positive uninstrumented launcher/cold-machine validation and physically checked additional LBNL detector adapters. The full roadmap remains authoritative. Do not rerun completed science or the finished website review solely after a chat interruption.
 
 ## Preserved history
 
@@ -406,8 +410,9 @@ acceptance of the full visitor experience. Use saved outputs, not new campaigns.
    Improve novice errors/log access and implement/test finer native recovery before
    claiming per-group resume. Track positive uninstrumented launcher and explicit
    saved-input/cache reuse acceptance here; do not invent historical run receipts.
-   Strengthen saved-response required artifact/source inventories and explicit
-   native seed/parcel/field-setting checks, including rehashed-mutation fixtures.
+   Completed this bounded prerequisite: shared required artifact/source inventories,
+   native/profile settings, rehashed-mutation checks and read-only terminal inspection.
+   Finer recovery and editable electronics settings remain separate future work.
 6. **THEN / PERFORMANCE:** inspect saved stage timings, then bounded benchmarks
    of Geant4 threads/chunks, IO/compression and SSD parallelism/GPU suitability.
    Record resource costs and numerical/statistical parity tolerances. Do not rerun

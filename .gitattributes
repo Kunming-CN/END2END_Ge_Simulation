@@ -81,3 +81,13 @@ tools/resume_native_contact.py -text whitespace=blank-at-eol,blank-at-eof,space-
 tools/spectrum_controls.js text eol=lf
 # Generated spectrum HTML is reviewed through its reader, renderer and bound hashes.
 docs/spectra/** -diff
+
+# New shared launcher validation is pinned by campaign source hashes.
+tools/native_run_validation.ps1 text eol=lf
+tools/inspect_native_run.ps1 text eol=lf
+tools/run_native_campaign.ps1 text eol=lf
+tools/verify_native_pilot.ps1 text eol=lf
+
+# Current launcher and its structural tests use stable Windows checkout bytes.
+tools/scenario_cli.ps1 text eol=lf
+tools/test_scenario_cli.ps1 text eol=lf

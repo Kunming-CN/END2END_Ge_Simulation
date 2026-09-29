@@ -1,5 +1,9 @@
 # Bounded launcher acceptance and remaining scope
 
+Current follow-up: the saved-run inventory/settings checks and read-only inspector
+are documented in [INSPECT_RUNS.md](INSPECT_RUNS.md). The account below preserves
+the earlier acceptance round; its then-next Pages work has since been delivered.
+
 Date: 2026-09-28. This is engineering regression evidence, not experimental validation.
 The complete owner-approved roadmap remains in `../PROGRESS.md`; these tests do not
 replace the pending GitHub Pages first-visitor, detector-subpage and guide work.

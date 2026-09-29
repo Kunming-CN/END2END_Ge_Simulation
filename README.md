@@ -31,6 +31,7 @@ Use `-Detector SAP22` to switch the crystal without editing YAML; `-Detector bot
 
 ```powershell
 .\Run.cmd status
+.\Run.cmd inspect -Name RUN_NAME
 .\Run.cmd open -Name RUN_NAME
 .\Open_Workspace.cmd
 ```

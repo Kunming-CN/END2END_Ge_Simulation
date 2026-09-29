@@ -1,6 +1,6 @@
 # Low-code Windows entry for reviewed local scenarios. No installs or physics hidden here.
 param(
-  [ValidateSet('menu','check','setup','run','resume','open','status','detectors')][string]$Action='menu',
+  [ValidateSet('menu','check','setup','run','resume','open','status','detectors','inspect')][string]$Action='menu',
   [ValidateSet('lbnl-cs137')][string]$Scenario='lbnl-cs137',
   [ValidateSet('smoke','demo','larger')][string]$Preset='demo',
   [ValidateSet('AK02','SAP22','both')][string]$Detector='both',
@@ -9,10 +9,12 @@ param(
   [string]$Pilot='',
   [switch]$BuildExporter,
   [switch]$Open,
+  [switch]$Json,
   [switch]$DryRun
 )
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
+. (Join-Path $PSScriptRoot 'native_run_validation.ps1')
 $scenarioFile=Join-Path $root ('scenarios/'+$Scenario+'.json')
 if(!(Test-Path $scenarioFile -PathType Leaf)){throw 'Scenario definition missing'}
 $scenarioConfig=Get-Content $scenarioFile -Raw|ConvertFrom-Json
@@ -104,7 +106,7 @@ function Require-Ready {
   return $s
 }
 function Run-Path([string]$RunName){
-  if(!$RunName){throw 'A run name is required'}
+  if($RunName -cnotmatch '^[A-Za-z0-9_-]+$'){throw 'A valid run name is required (letters, digits, underscore or hyphen).'}
   $p=[IO.Path]::GetFullPath((Join-Path $runsRoot $RunName))
   if(!$p.StartsWith($runsRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Run path escapes .local/runs'}
   $scan=$p
@@ -115,16 +117,17 @@ function Run-Path([string]$RunName){
   return $p
 }
 function Write-RunIndex([string]$Directory){
-  $run=Join-Path $Directory 'run.json'; if(!(Test-Path $run -PathType Leaf)){return}
+  $run=Resolve-NRPath $root (Join-Path $Directory 'run.json'); if(!(Test-Path -LiteralPath $run -PathType Leaf)){return}
   $r=Get-Content $run -Raw|ConvertFrom-Json
   $links=@()
   foreach($m in @($r.models.PSObject.Properties.Name)){
-    $summary=Join-Path $Directory ($m+'/response/summary.html')
+    Assert-NR ($m -cin @('AK02','SAP22')) 'Unsupported saved result detector'
+    $summary=Resolve-NRPath $root (Join-Path $Directory ($m+'/response/summary.html'))
     if(Test-Path $summary -PathType Leaf){$links+=('<li><a href="'+$m+'/response/summary.html">'+$m+' response summary</a></li>')}
   }
   $status=[System.Net.WebUtility]::HtmlEncode([string]$r.status)
   $body='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>END2END local run</title><style>body{font:16px/1.5 system-ui;max-width:850px;margin:auto;padding:22px}code{background:#eee;padding:2px 5px}</style><h1>'+[System.Net.WebUtility]::HtmlEncode($scenarioConfig.title)+'</h1><p>Status: <strong>'+$status+'</strong></p><p>Saved local results; synthetic electronics and nominal geometry.</p><ul>'+($links -join '')+'</ul><p><code>run.json</code> preserves configuration, stages, hashes and failures.</p>'
-  [IO.File]::WriteAllText((Join-Path $Directory 'index.html'),$body)
+  [IO.File]::WriteAllText((Resolve-NRPath $root (Join-Path $Directory 'index.html')),$body)
 }
 function Show-DetectorChoices {
   $file=Join-Path $root 'scenarios/detector-capabilities.json'
@@ -157,19 +160,24 @@ function Show-Status {
   $rows=@()
   foreach($f in Get-ChildItem $runsRoot -Directory -ErrorAction SilentlyContinue){
     $run=Join-Path $f.FullName 'run.json'; if(!(Test-Path $run)){continue}
-    try{$r=Get-Content $run -Raw|ConvertFrom-Json;$rows+=[pscustomobject]@{Name=$f.Name;Status=$r.status;Events=$r.events_per_model;Detectors=(@($r.models.PSObject.Properties.Name)-join ',')}}catch{}
+    try{$r=Read-NRJson $root $run;$rows+=[pscustomobject]@{Name=$f.Name;Status=$r.status;Events=$r.events_per_model;Detectors=(@($r.models.PSObject.Properties.Name)-join ',')}}catch{$rows+=[pscustomobject]@{Name=$f.Name;Status='unreadable_or_blocked';Events=$null;Detectors='inspect saved files'}}
   }
   $rows|Sort-Object Name -Descending|Select-Object -First 20|Format-Table -AutoSize
 }
 function Open-Run([string]$RunName){
-  $dir=Run-Path $RunName; Write-RunIndex $dir; $page=Join-Path $dir 'index.html'
+  $dir=Run-Path $RunName; Write-RunIndex $dir; $page=Resolve-NRPath $root (Join-Path $dir 'index.html')
   if(!(Test-Path $page)){throw 'Run has no viewable receipt yet'}
   Start-Process $page
 }
 function New-Name {
   $stamp=Get-Date -Format 'yyyyMMdd-HHmmss'; return "$Scenario-$Preset-$Detector-$stamp"
 }
+function Inspect-Run([string]$RunName){
+  $dir=Run-Path $RunName
+  & (Join-Path $PSScriptRoot 'inspect_native_run.ps1') -Directory $dir -Json:$Json
+}
 function Invoke-Run([bool]$ResumeMode){
+  if($ResumeMode -and $DryRun){Inspect-Run $Name;return}
   $ready=Require-Ready
   if(!$Name){if($ResumeMode){throw 'Resume requires -Name'}else{$script:Name=New-Name}}
   $dir=Run-Path $Name; $rel='.local/runs/'+$Name
@@ -197,7 +205,7 @@ function Invoke-Run([bool]$ResumeMode){
   if($Open){Open-Run $Name}
 }
 function Menu {
-  Write-Host '';Write-Host 'END2END Ge Simulation';Write-Host '1) Check setup';Write-Host '2) Setup / build local exporter';Write-Host '3) New LBNL Cs137 run';Write-Host '4) Resume a saved run';Write-Host '5) Open saved results';Write-Host '6) List run status';Write-Host '7) Detector capabilities';Write-Host 'Q) Quit'
+  Write-Host '';Write-Host 'END2END Ge Simulation';Write-Host '1) Check setup';Write-Host '2) Setup / build local exporter';Write-Host '3) New LBNL Cs137 run';Write-Host '4) Resume a saved run (inspect first)';Write-Host '5) Open saved results';Write-Host '6) List run status';Write-Host '7) Detector capabilities';Write-Host '8) Inspect saved run - no calculation';Write-Host 'Q) Quit'
   $choice=(Read-Host 'Select').Trim().ToUpperInvariant()
   switch($choice){
     '1'{$script:Action='check'}
@@ -207,16 +215,23 @@ function Menu {
     '5'{$script:Action='open';$script:Name=(Read-Host 'Saved run name').Trim()}
     '6'{$script:Action='status'}
     '7'{$script:Action='detectors'}
-    default{return $false}
+    '8'{$script:Action='inspect';$script:Name=(Read-Host 'Saved run name').Trim()}
+    'Q'{return $false}
+    default{throw 'Invalid menu choice'}
   }; return $true
 }
 if($Action -eq 'menu'){if(!(Menu)){return}}
+if($Action -cnotin @('check','setup','run','resume','open','status','detectors','inspect')){throw 'Unsupported action'}
+if($Preset -cnotin @('smoke','demo','larger') -or $Detector -cnotin @('AK02','SAP22','both') -or $Name -cnotmatch '^[A-Za-z0-9_-]*$'){throw 'Invalid menu parameter'}
+if($Json -and $Action -ne 'inspect'){throw '-Json is supported only for inspect'}
+if($Action -eq 'inspect' -and ($BuildExporter -or $Open -or $DryRun -or $Pilot -or $PSBoundParameters.ContainsKey('Preset') -or $PSBoundParameters.ContainsKey('Detector') -or $PSBoundParameters.ContainsKey('Seed'))){throw 'inspect does not accept setup/run/open options'}
 switch($Action){
   'check'{Show-SetupStatus}
   'setup'{if($BuildExporter -or !(Test-Path $exporter)){Build-Exporter};Show-SetupStatus}
   'run'{Invoke-Run $false}
-  'resume'{Invoke-Run $true}
+  'resume'{Invoke-Run $true; if($DryRun){exit $LASTEXITCODE}}
   'open'{Open-Run $Name}
   'status'{Show-Status}
   'detectors'{Show-DetectorChoices}
+  'inspect'{Inspect-Run $Name;exit $LASTEXITCODE}
 }
