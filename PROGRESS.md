@@ -5,52 +5,53 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: saved electronics execution and bounded AK02 acceptance
+## Current handoff: explicit completed-child metadata recovery
 
-Saved simple/advanced electronics bundles now reach NEW LBNL runs through
-`Run.cmd run -ElectronicsProfile .local/electronics-profiles/NAME.json`.
-The driver copies exact input/ancestor/default/source bytes into the new run,
-creates a standalone profile, passes its actual `--profile` argument to the guarded
-native child and binds parent/child/profile/configuration/census independently.
-The copied scripts are data, not executed. External original saved profiles may
-be absent after successful snapshotting; compatible current code is still required.
+`Run.cmd recover -Name NAME [-DryRun] [-Json]` and menu **R** now reconcile a
+completed final guarded native child whose campaign-parent update was interrupted.
+This is metadata-only: no Julia/WSL lookup, runtime readiness probe, simulation,
+calibration, per-group resume or electronics replay. See `tools/RECOVERY.md`.
 
-Inspect/resume select recorded copies, never a new UI/default selection. Missing
-or changed copies, rehashed setting mismatches and caller overrides block reuse.
-Custom pilot verification checks all control/compute hashes, its own profile/copies
-and requested effective settings. Display names are not physics identity. A new
-guarded10k request needs a clean guarded500-initial-decay pilot per requested model
-with at least one positive group; an old unguarded pilot cannot authorize it.
-Canonical history remains readable without rebasing receipts.
+New campaigns durably save an independently bound executable/argument, input,
+profile/configuration, source, detector and census intent BEFORE native launch.
+Recovery requires the existing exclusive run lock and verified complete child.
+Legacy orphans, missing/partial children, pre-guard receipts, incompatible sources,
+rehashed settings mismatches and missing/held locks remain blocked. Old receipts
+are never rebased. Current-code incompatibility does not imply corrupt science.
 
-Execution checks arithmetic sample/window feasibility at DT2ns and100000ns isolated
-group windows; this is not a guarantee of arbitrary numerical conditioning.
-No physical clamping, waveform sampling-frequency feature or model change was added.
-Electronics-only replay and automatic upstream field/charge reuse remain unimplemented.
+Exact before/after parent bytes, immutable PREPARED evidence, atomic replacement
+and an additive COMMITTED marker support checked reentry. Conflicting markers
+fail before mutation. Complete parents are read-only no-ops; a partial parent with
+no new completed child returns a read-only refusal. An unfinished second detector
+remains nonterminal and is never launched by recovery. Original child files,
+stage history, errors, timing, native failures, nulls and zero primaries remain intact.
 
-ONE NEW uninstrumented custom AK02 chain completed in `.local/runs/custom-electronics-500-ak02-v1`:
-500 initial decays, 4 positive groups, 4 accepted,
-0 electronics rejects and 0 native failures.
-All requested electronics values match the independently reconstructed actual config;
-child arguments and profile copies match the selected snapshot. This is bounded
-engineering acceptance on the owner's existing computer, NOT cold-machine reproduction,
-all-detector replacement acceptance, calibrated resolution or experimental agreement.
-SAP22 has mocked launcher and real guarded profile-inspection evidence in this round,
-not this new uninstrumented acceptance. No original1M/old500 science was rerun or edited.
+Terminal evidence: 20 recovery + 19 electronics execution + 23 settings + 22
+saved-run validation + 6 existing native-launcher tests passed, plus PowerShell
+launcher checks. These use explicit mock children/process-death fixtures, not
+new physics acceptance. Independent coordinator checks passed 15 CLI commands,
+conflicting-marker rejection before writes and a read-only historical-run refusal.
+All 347 protected files retain SHA-256, size and mtime. Original science was not
+rerun. Evidence, failed tests and the original reviewer threads' plan/code checks
+are in `.local/recovery-plan-v1/`; its COMPLETE.json records final release closure.
+Only the marked saved-run test fixture's relocated mock-executable path changed
+after the first frozen candidate; production checks were not weakened.
 
-Final corrected-source regressions:19 execution tests,23 settings tests,22 saved-run
-tests, launcher checks and independent instrumented CLI scenarios. Separate backend
-probes passed21 synthetic assertions and actual guarded --inspect for both saved500
-streams. Two original independent reviewers exchanged findings and closed the pilot-hash
-and contradictory-inspector-flag issues subject to the terminal test receipts.
-Evidence and failures are preserved in `.local/electronics-execution-v1/`; feature
-reference remains `tools/ELECTRONICS_SETTINGS.md`. Preserved280 originals retain hashes,
-byte sizes and mtimes. The new500 acceptance is separate from all original outputs.
+Retained electronics capability: saved simple/advanced bundles are copied with
+lineage/default/source bytes and passed as the actual guarded-child profile.
+Inspect/resume use recorded copies, not new caller settings. A guarded10k request
+still needs a clean guarded500 pilot with a positive group for each requested model;
+old unguarded pilots do not authorize it. See `tools/ELECTRONICS_SETTINGS.md`.
+The prior uninstrumented custom AK02 500-decay acceptance remains 4 positive/accepted
+groups, 0 rejects and 0 native failures, at `.local/runs/custom-electronics-500-ak02-v1`.
+It is bounded existing-machine evidence, not all-detector or fresh-machine acceptance.
+Its original execution/review records remain in `.local/electronics-execution-v1/`.
 
-NEXT: bounded interruption recovery and complete-charge-waveform electronics-only
-replay where stored inputs support it; then physically checked additional LBNL adapters.
-Per-group recovery, positive full-chain acceptance of untested replacements, broad
-SAP22/new-detector acceptance and fresh-machine reproduction remain unfinished.
+NEXT: establish complete signed-charge waveform eligibility, then electronics-only
+replay where saved inputs support it. General small-run per-group recovery and
+physically checked additional LBNL adapters remain separate unfinished milestones.
+Partial native-stage recovery, broad SAP22/new-detector positive acceptance and
+fresh-machine reproduction are NOT completed by this metadata feature.
 Never restart completed science, rebase old receipts or consume reset credits after
 chat interruptions. Read COMPLETE.json and actual processes before continuation.
 
@@ -60,7 +61,7 @@ chat interruptions. Read COMPLETE.json and actual processes before continuation.
 - Failures: 403 boundary-stall cases and 5 SAP22 contact-domain cases. Truth remains intact; unknown response is never zero-filled.
 - Final scalar audit is `.local/native-final-analysis-v3`; final report is `.local/native-final-report-v2`. Reuse them, not v1/v2 failed experiments.
 - Public final response: `examples/cs137-1m-response/report.html`. All 17 detector pages now have geometry/gallery/technical routes; geometry viewers preserve all 66 contacts, including GeGI's 34.
-- Full first-visitor route implemented: three action-first homepage entries with saved previews, concise detector overviews and deeper gallery/technical pages, explicit earlier-10k labels, legacy links/fragments, and one authoritative Windows setup guide. README is 68 lines/519 words instead of 304/3164.
+- Full first-visitor route implemented: three action-first homepage entries with saved previews, concise detector overviews and deeper gallery/technical pages, explicit earlier-10k labels, legacy links/fragments, and one authoritative Windows setup guide. README remains an entry route, not a competing installation manual.
 - Low-code v1 is implemented: `Run.cmd` -> check/setup/run/resume/open/status, with a data-only LBNL scenario, pinned preflight, guarded native entry and stage-level reuse.
 - Native artifacts/input/source/profile/receipt bindings are verified before reuse. A per-run exclusive lock and atomic run receipt protect ordinary concurrent starts/interruption.
 - The prepared seed must match the campaign seed; the deliberate mismatch fixture rejects before transport. Scenario references remain constrained to reviewed canonical files.

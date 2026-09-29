@@ -14,7 +14,7 @@ param(
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
 $localRoot=Join-Path $root '.local'
-. (Join-Path $PSScriptRoot 'electronics_execution.ps1')
+. (Join-Path $PSScriptRoot 'native_recovery.ps1')
 if($Resume){foreach($key in @('Events','Seed','Models','Pilot','Exporter','ScenarioFile','ElectronicsProfile')){
   if($PSBoundParameters.ContainsKey($key)){throw "Resume uses recorded configuration; override forbidden: $key"}
 }}
@@ -61,6 +61,7 @@ if(Test-Path -LiteralPath $out){
   if($Resume){throw 'Resume requested but output does not exist'}
 }
 $j=(Get-Command julia -ErrorAction Stop).Source
+if($existingReport -and $existingReport.PSObject.Properties['native_executable']){Assert-NREqual $j $existingReport.native_executable 'recorded native executable'}
 $wrapper=Join-Path $root 'transport/Run.cmd'
 $sourceFiles=@()
 $scenarioId=''; if($ScenarioFile){
@@ -116,6 +117,11 @@ if($existingReport){
 }
 $report=[ordered]@{kind='native_campaign_v1';status='running';events_per_model=$Events;seed=$Seed;detectors=$Models;scenario=$scenarioBinding;source_sha256=$hashes;models=$modelsMap;stages=$oldStages;pilot=$Pilot;pilot_verification=$pilotValidation;resume_count=$resumeCount;assumption='Explicit nominal LBNL assembly and isolated reset readout; not as-built, calibrated spectra or continuous acquisition';started_utc=$started}
 if($null -ne $electronicsBinding){$report.electronics=$electronicsBinding}
+if(!$existingReport){$report.recovery_contract='guarded_child_intent_v1';$report.native_executable=$j;$report.child_launches=[ordered]@{}}
+elseif($existingReport.PSObject.Properties['recovery_contract']){
+  $report.recovery_contract=$existingReport.recovery_contract;$report.native_executable=$existingReport.native_executable;$report.child_launches=[ordered]@{}
+  foreach($entry in $existingReport.child_launches.PSObject.Properties){$report.child_launches[$entry.Name]=$entry.Value}
+}
 function Save-Report {
   $target=Join-Path $out 'run.json'; $temp=$target+'.partial-'+$PID+'-'+[DateTime]::UtcNow.Ticks
   $json=$report|ConvertTo-Json -Depth 14
@@ -189,6 +195,7 @@ if($existingReport){
   foreach($model in $Models){
     $responsePath=Join-Path $out ($model+'/response')
     $parent=$existingReport.models.PSObject.Properties[$model]
+    if($null -eq $parent -and ((Test-Path -LiteralPath (Join-Path $out ($model+'/native-launch-intent.json'))) -or ($null -ne $existingReport.child_launches -and $existingReport.child_launches.PSObject.Properties[$model]))){throw 'Pending launch intent requires explicit metadata recovery/inspection; resume cannot launch a replacement'}
     if($null -ne $parent -or (Test-Path -LiteralPath $responsePath)){
       Assert-NR ($null -ne $parent) 'Saved response lacks parent binding; inspect without changing historical receipts.'
       Assert-NR (Test-Path -LiteralPath (Join-Path $responsePath 'run.json') -PathType Leaf) 'Parent-bound response directory or terminal receipt is missing; preserve this attempt.'
@@ -236,8 +243,13 @@ try {
     if($null -ne $rr){Add-Reused ($model+'-native-response') 'julia' 'terminal response/run.json + artifact/input/source hashes'}
     else{
       if($Resume -and (Test-Path $responseFull)){throw "$model native response is incomplete; this v1 preserves it and does not claim group-level resume"}
-      $nativeArgs=@('--startup-file=no','--threads=2','--project=simulation','simulation/native_response_guarded.jl','--input',$manifestArg,'--output',$response,'--seed','2609261','--parcels','16','--trace-examples','4','--charge-csv','examples','--native-failure-policy','record')
-      if($null -ne $electronicsBinding){[void](Test-EEBinding $root $Output $electronicsBinding);$nativeArgs+=@('--profile',$effectiveProfile)}
+      $nativeArgs=@(Get-RCArguments $Output $model $effectiveProfile ($null -ne $electronicsBinding))
+      if($null -ne $electronicsBinding){[void](Test-EEBinding $root $Output $electronicsBinding)}
+      [void](Test-NRPrepared $root $transportFull $model $Events $Seed $Exporter)
+      [void](Test-NRTransport $root $transportFull);[void](Test-NRStream $root $transportFull $model $Events)
+      if(!$report.Contains('recovery_contract')){throw 'Legacy campaign cannot acquire new child intents retroactively'}
+      $report.child_launches[$model]=New-RCIntent $root $Output $model ($report|ConvertTo-Json -Depth 40|ConvertFrom-Json) $effectiveProfile
+      Save-Report
       Invoke-Recorded ($model+'-native-response') 'julia' $nativeArgs
       $rr=Validate-Response $model $responseFull '' $true; if($null -eq $rr){throw "$model native response missing terminal receipt"}
     }

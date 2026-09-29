@@ -135,11 +135,12 @@ class Execution(unittest.TestCase):
         for flag,value in [('-ElectronicsProfile','missing.json'),('-Preset','smoke'),('-Seed','2'),('-Detector','SAP22'),('-Pilot','bad'),('-Scenario','lbnl-cs137'),('-Typo','bad')]:
             self.cmd('resume','-Name','run',flag,value,ok=False)
         self.assertEqual(before,snapshot(self.root))
-    def test_resume_unstarted_child_uses_recorded_profile_argument(self):
+    def test_resume_before_intent_uses_recorded_profile_argument(self):
         b=self.saved();run=self.run_new(b)
         # Preserve the old MOCK child; model a stopped attempt with no child yet.
         (run/'AK02/response').rename(run/'AK02/preserved-mock-response')
-        p=read(run/'run.json');p['models']={};p['status']='failed';save(run/'run.json',p)
+        (run/'AK02/native-launch-intent.json').rename(run/'AK02/preserved-mock-intent.json')
+        p=read(run/'run.json');p['models']={};p['child_launches']={};p['status']='failed';save(run/'run.json',p)
         (self.root/b).unlink();(self.root/'inputs/custom.json').unlink()
         self.saved('unrelated',17)
         self.cmd('resume','-Name','run')
@@ -230,7 +231,7 @@ class Execution(unittest.TestCase):
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--evidence',required=True);parser.add_argument('tests',nargs='*');opts=parser.parse_args()
     EVIDENCE=(ROOT/opts.evidence).resolve()
-    if not EVIDENCE.is_relative_to(ROOT/'.local/electronics-execution-v1/implementation'):parser.error('Use implementation evidence directory')
+    if not any(EVIDENCE.is_relative_to(ROOT/p) for p in ('.local/electronics-execution-v1/implementation','.local/recovery-plan-v1/implementation')):parser.error('Use implementation evidence directory')
     EVIDENCE.mkdir(parents=True,exist_ok=False)
     save(EVIDENCE/'scope.json',dict(mocked_child_execution=True,uninstrumented_full_chain=False,python=sys.executable,argv=sys.argv))
     unittest.main(argv=[__file__,*opts.tests],verbosity=2)

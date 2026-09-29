@@ -62,6 +62,9 @@ class SavedRunTests(unittest.TestCase):
         self.run=ROOT/'.local/runs/run'
         r=read(self.run/'run.json')
         r['source_sha256']={name:sha(ROOT/name) for name in self.sources}
+        # The source-only fixture was relocated from baseline. Bind its mock
+        # executable here so runtime identity does not mask child-validation tests.
+        r['native_executable']=str(ROOT/'fixture-bin/julia.cmd')
         r['test_fixture_only']=True
         r['fixture_origin_receipt_sha256']=sha(BASE/'run.json')
         save(self.run/'run.json',r)
@@ -241,6 +244,6 @@ class SavedRunTests(unittest.TestCase):
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--evidence',required=True);parser.add_argument('tests',nargs='*');options=parser.parse_args()
     EVIDENCE=(PROJECT/options.evidence).resolve()
-    if not EVIDENCE.is_relative_to(PROJECT/'.local/electronics-execution-v1/implementation'):parser.error('Use implementation evidence directory')
+    if not any(EVIDENCE.is_relative_to(PROJECT/p) for p in ('.local/electronics-execution-v1/implementation','.local/recovery-plan-v1/implementation')):parser.error('Use implementation evidence directory')
     EVIDENCE.mkdir(parents=True,exist_ok=False)
     unittest.main(argv=[__file__,*options.tests],verbosity=2)

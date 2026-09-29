@@ -207,6 +207,7 @@ function Get-NRCampaignSources([string]$Exporter,[string]$ScenarioFile='',[bool]
   # Both modes load these shared functions; custom selection additionally uses
   # the strict settings-source inventory, including the CLI and frozen defaults.
   $files+=@('tools/electronics_execution.ps1','tools/electronics_settings.ps1')
+  $files+=@('tools/native_recovery.ps1','tools/recover_native_run.ps1')
   if($CustomElectronics){$files+=@('tools/scenario_cli.ps1','simulation/readout_demo.json','simulation/Project.toml')}
   return $files
 }

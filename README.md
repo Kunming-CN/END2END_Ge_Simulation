@@ -27,7 +27,7 @@ From the repository root in **PowerShell**, after setup:
 
 Use `-Detector SAP22` to switch the crystal without editing YAML; `-Detector both` runs two separate cases serially. The demo uses 500 initial decays per selected model. Double-click `Run.cmd` for the menu.
 
-**Scope:** 17 viewable models do not mean 17 LBNL-ready models. The LBNL adapter currently implements AK02/SAP22. Positive uninstrumented launcher execution and fresh-machine end-to-end reproduction remain unvalidated; first-time setup is explicit, not one-click automatic installation.
+**Scope:** 17 viewable models do not mean 17 LBNL-ready models. The LBNL adapter currently implements AK02/SAP22. One custom AK02 500-decay uninstrumented run is recorded; broader positive replacement acceptance and fresh-machine end-to-end reproduction remain unvalidated. First-time setup is explicit, not one-click automatic installation.
 
 ```powershell
 .\Run.cmd status
@@ -37,6 +37,8 @@ Use `-Detector SAP22` to switch the crystal without editing YAML; `-Detector bot
 ```
 
 The optional workspace index needs an installed Windows Python 3.10+ (standard library only); ParaView is not required for students. Replace `RUN_NAME` with the name printed by the launcher. The workspace entry opens a local-only results/file index; it does not start or resume calculations. Completed stages are reused only after verification. Interrupted native-stage group recovery is not yet part of this beginner launcher.
+
+For a completed child whose parent update was interrupted, see the [metadata-only recovery guide](tools/RECOVERY.md). Start with `.\Run.cmd recover -Name RUN_NAME -DryRun -Json`. Recovery never starts missing calculations or adopts legacy/partial responses.
 
 <details><summary>Source-only checkout instead of downloading the saved media</summary>
 

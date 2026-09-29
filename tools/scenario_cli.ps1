@@ -1,7 +1,7 @@
 # Low-code Windows entry for reviewed local scenarios. No installs or physics hidden here.
 [CmdletBinding()]
 param(
-  [ValidateSet('menu','check','setup','run','resume','open','status','detectors','inspect','settings')][string]$Action='menu',
+  [ValidateSet('menu','check','setup','run','resume','recover','open','status','detectors','inspect','settings')][string]$Action='menu',
   [ValidateSet('interactive','show','check','save','compare')][string]$SettingsMode='interactive',
   [ValidateSet('simple','advanced')][string]$View='simple',
   [string]$SettingsFile='',
@@ -23,6 +23,12 @@ param(
 $ErrorActionPreference='Stop'
 $script:customRequested=$PSBoundParameters.ContainsKey('ElectronicsProfile')
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
+if($Action -eq 'recover'){
+  foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','DryRun','Json')){throw "recover accepts only -Name, -DryRun and -Json; forbidden: $key"}}
+  if(!$Name){throw 'recover requires -Name'}
+  & (Join-Path $PSScriptRoot 'recover_native_run.ps1') -Name $Name -DryRun:$DryRun -Json:$Json
+  exit $LASTEXITCODE
+}
 # Fail before runtime checks, output reservation, locks or simulation. Settings
 # are a separate read-only preflight/editor, not a displayed-but-unused override.
 if($PSBoundParameters.ContainsKey('ElectronicsProfile') -and $Action -ne 'run'){throw 'ElectronicsProfile is only for a NEW run; override forbidden for resume and other actions'}
@@ -242,6 +248,7 @@ function Invoke-Run([bool]$ResumeMode){
 }
 function Menu {
   Write-Host '';Write-Host 'END2END Ge Simulation';Write-Host '1) Check setup';Write-Host '2) Setup / build local exporter';Write-Host '3) New LBNL Cs137 run';Write-Host '4) Resume a saved run (inspect first)';Write-Host '5) Open saved results';Write-Host '6) List run status';Write-Host '7) Detector capabilities';Write-Host '8) Inspect saved run - no calculation';Write-Host '9) Electronics settings - save for a new run';Write-Host 'Q) Quit'
+  Write-Host 'R) Recover completed child metadata - no calculation (Run.cmd recover -Name NAME [-DryRun] [-Json])'
   $choice=(Read-Host 'Select').Trim().ToUpperInvariant()
   switch($choice){
     '1'{$script:Action='check'}
@@ -252,12 +259,14 @@ function Menu {
     '6'{$script:Action='status'}
     '7'{$script:Action='detectors'}
     '8'{$script:Action='inspect';$script:Name=(Read-Host 'Saved run name').Trim()}
+    'R'{$script:Action='recover';$script:Name=(Read-Host 'Saved run name for metadata-only recovery').Trim()}
     '9'{. (Join-Path $PSScriptRoot 'electronics_settings.ps1');Invoke-ElectronicsSettings -Root $root;return $false}
     'Q'{return $false}
     default{throw 'Invalid menu choice'}
   }; return $true
 }
 if($Action -eq 'menu'){if(!(Menu)){return}}
+if($Action -eq 'recover'){& (Join-Path $PSScriptRoot 'recover_native_run.ps1') -Name $Name -DryRun:$DryRun -Json:$Json;exit $LASTEXITCODE}
 if($Action -cnotin @('check','setup','run','resume','open','status','detectors','inspect')){throw 'Unsupported action'}
 if($Preset -cnotin @('smoke','demo','larger') -or $Detector -cnotin @('AK02','SAP22','both') -or $Name -cnotmatch '^[A-Za-z0-9_-]*$'){throw 'Invalid menu parameter'}
 if($Json -and $Action -ne 'inspect'){throw '-Json is supported only for inspect'}

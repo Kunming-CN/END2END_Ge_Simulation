@@ -25,7 +25,8 @@ ARTIFACTS = ['endpoints.csv', 'endpoints.jsonl', 'histograms.csv', 'histograms.j
              'summary.html', 'traces.jsonl', 'truth.csv', 'truth.jsonl']
 TOOLS = ['scenario_cli.ps1', 'run_native_campaign.ps1', 'native_run_validation.ps1',
          'inspect_native_run.ps1', 'verify_native_pilot.ps1', 'electronics_settings.ps1',
-         'electronics_execution.ps1', 'electronics_execution_fixture.py']
+         'electronics_execution.ps1', 'electronics_execution_fixture.py',
+         'native_recovery.ps1', 'recover_native_run.ps1']
 EXPORTER = '.local/m2a/cs137-build-v1/cryostat_export'
 GROUPING = dict(activity_live_time_pileup_claim=False, horizon_ns=100000,
                 interval='[origin, origin+horizon)', name='nominal_isolated_windows_v1',
@@ -38,7 +39,7 @@ def save(p, v):
     p.write_text(json.dumps(v, indent=2), encoding='utf-8')
 def hashes(root, names): return {n: sha(root/n) for n in names}
 
-def clone(source, dest, python):
+def clone(source, dest, python, recovery=False):
     files = ['Run.cmd', 'scenarios/lbnl-cs137.json', 'simulation/native_readout_profile.json',
              'models/AK02.yaml', 'models/SAP22.yaml', 'transport/Run.cmd']
     files += ['tools/'+n for n in TOOLS] + ['simulation/'+n for n in CONSUMER] + ['transport/'+n for n in PRODUCER]
@@ -73,6 +74,59 @@ $env:PATH=(Join-Path $root 'fixture-bin')+';'+$env:PATH
     p.write_text(s.replace(anchor, fixture+'\n'+anchor), encoding='utf-8')
     save(dest/'FIXTURE.json', {'test_only':True, 'intercepted':['Require-Ready','Start-Process','Get-PSDrive'],
                               'scientific_execution':False, 'source_files':files})
+    if recovery: install_recovery_faults(dest)
+
+
+def install_recovery_faults(dest):
+    """Deterministic process death in cloned sources only, before hashes are recorded."""
+    helper=dest/'tools/native_recovery.ps1'
+    hook=r'''
+# TEST ONLY: abrupt process death, including bypass of finally blocks.
+if($Action -eq 'recover'){
+  function Get-Command { throw 'TEST: recovery attempted runtime lookup' }
+  function Start-Process { throw 'TEST: recovery attempted child launch' }
+  function Require-Ready { throw 'TEST: recovery attempted readiness' }
+}
+function Invoke-RCTestBoundary([string]$Boundary){
+  $control=Join-Path $Root 'recovery-fixture-control.json'
+  if(Test-Path -LiteralPath $control){
+    $fault=Get-Content -LiteralPath $control -Raw|ConvertFrom-Json
+    if($fault.boundary -ceq $Boundary){Stop-Process -Id $PID -Force}
+  }
+}
+'''
+    source=helper.read_text();source=hook+'\n'+source
+    replacements={
+        '[void][IO.Directory]::CreateDirectory($tx)': 'transaction_directory',
+        'Write-RCImmutable $Root $beforePath $currentBytes': 'before_bytes',
+        'Write-RCImmutable $Root $afterPath $afterBytes': 'after_bytes',
+        'Write-RCImmutable $Root $preparedPath (ConvertTo-RCBytes $receipt)': 'prepared_receipt',
+        'Write-RCImmutable $Root $replacement ([IO.File]::ReadAllBytes($afterPath))': 'replacement_bytes',
+        '[IO.File]::Replace($replacement,$file,$backup,$true)': 'parent_replaced',
+        "Write-RCImmutable $Root (Join-Path $tx 'COMMITTED.json') (ConvertTo-RCBytes $marker)": 'committed_marker',
+    }
+    for anchor,boundary in replacements.items():
+        assert source.count(anchor)==1,anchor
+        source=source.replace(anchor,anchor+f"\n      Invoke-RCTestBoundary '{boundary}'")
+    helper.write_text(source,encoding='utf-8')
+    driver=dest/'tools/run_native_campaign.ps1';source=driver.read_text()
+    anchor='      $report.child_launches[$model]=New-RCIntent'
+    assert source.count(anchor)==1
+    source=source.replace(anchor,"      Invoke-RCTestBoundary ('before_intent_'+$model)\n"+anchor)
+    anchor="      Save-Report\n      Invoke-Recorded ($model+'-native-response') 'julia' $nativeArgs"
+    assert source.count(anchor)==1
+    source=source.replace(anchor,"      Invoke-RCTestBoundary ('intent_file_'+$model)\n      Save-Report\n      Invoke-RCTestBoundary ('after_intent_'+$model)\n      Invoke-Recorded ($model+'-native-response') 'julia' $nativeArgs")
+    anchor="      $rr=Validate-Response $model $responseFull '' $true;"
+    assert source.count(anchor)==1
+    source=source.replace(anchor,"      Invoke-RCTestBoundary ('final_child_'+$model)\n"+anchor)
+    driver.write_text(source,encoding='utf-8')
+    cli=dest/'tools/scenario_cli.ps1';source=cli.read_text()
+    anchor='  return [pscustomobject]@{ExitCode=$LASTEXITCODE}'
+    assert source.count(anchor)==1
+    source=source.replace(anchor,"  if($tokens -contains 'simulation/native_response_guarded.jl'){Invoke-RCTestBoundary 'child_return'}\n"+anchor)
+    cli.write_text(source,encoding='utf-8')
+    save(dest/'RECOVERY-FIXTURE.json',dict(test_only=True,production_flags=False,
+         boundaries=list(replacements.values())+['before_intent_MODEL','intent_file_MODEL','after_intent_MODEL','final_child_MODEL']))
 
 def prepare(root, path, model, events, seed, exporter):
     path.mkdir(parents=True)
@@ -137,6 +191,13 @@ def response(root, path, manifest, electronics):
 def child(root, tokens):
     def val(flag, default=None): return tokens[tokens.index(flag)+1] if flag in tokens else default
     if 'simulation/native_response_guarded.jl' in tokens:
+        if (root/'RECOVERY-FIXTURE.json').exists():
+            output=root/val('--output');campaign=output.parent.parent
+            parent=read(campaign/'run.json');binding=parent['child_launches'][output.parent.name]
+            intent=read(root/binding['path'])
+            assert binding['sha256']==sha(root/binding['path'])
+            assert intent['arguments']==tokens and not output.exists()
+            save(root/'native-launch-observed.json',dict(test_only=True,intent_sha256=binding['sha256'],parent_sha256=sha(campaign/'run.json'),arguments=tokens))
         response(root,root/val('--output'),root/val('--input'),root/val('--profile','simulation/native_readout_profile.json'));return
     assert 'cs137.py' in tokens, tokens
     action=tokens[tokens.index('cs137.py')+1]

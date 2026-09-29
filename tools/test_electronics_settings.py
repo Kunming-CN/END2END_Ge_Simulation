@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FILES = (
     "Run.cmd", "tools/scenario_cli.ps1", "tools/electronics_settings.ps1",
     "tools/native_run_validation.ps1", "tools/run_native_campaign.ps1",
-    "tools/electronics_execution.ps1",
+    "tools/electronics_execution.ps1", "tools/native_recovery.ps1", "tools/recover_native_run.ps1",
     "simulation/readout_profiles.jl", "simulation/readout.jl",
     "simulation/Project.toml", "simulation/Manifest.toml",
     "simulation/readout_demo.json", "simulation/native_readout_profile.json",
@@ -354,7 +354,8 @@ class ElectronicsSettings(unittest.TestCase):
             'simulation/native_stream.jl','simulation/readout_profiles.jl','simulation/native_readout_profile.json',
             'simulation/native_li_example.jl','simulation/readout.jl','simulation/replay.jl','simulation/run.jl',
             'simulation/Manifest.toml','tools/verify_native_pilot.ps1','.local/exporter','scenarios/lbnl-cs137.json',
-            'tools/electronics_execution.ps1','tools/electronics_settings.ps1'])
+            'tools/electronics_execution.ps1','tools/electronics_settings.ps1',
+            'tools/native_recovery.ps1','tools/recover_native_run.ps1'])
 
 
     def test_unknown_cli_options_and_extra_arguments_rejected(self):
@@ -412,7 +413,7 @@ if __name__ == "__main__":
     parser.add_argument('tests', nargs='*')
     options = parser.parse_args()
     EVIDENCE = (ROOT / options.evidence).resolve()
-    if not any(EVIDENCE.is_relative_to(ROOT / parent) for parent in ('.local/electronics-settings-v1','.local/electronics-execution-v1/implementation')):
+    if not any(EVIDENCE.is_relative_to(ROOT / parent) for parent in ('.local/electronics-settings-v1','.local/electronics-execution-v1/implementation','.local/recovery-plan-v1/implementation')):
         parser.error("Evidence must be below a settings or execution implementation evidence directory")
     EVIDENCE.mkdir(parents=True, exist_ok=False)
     shutil.copy2(__file__, EVIDENCE / "executed_test.py")
