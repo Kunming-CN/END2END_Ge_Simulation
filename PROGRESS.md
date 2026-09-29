@@ -5,6 +5,74 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
+## OWNER PAUSE: wait for an explicit start; next display and preamp checks
+
+Owner instruction on 2026-09-28 (local): record these additions only tonight.
+Do not implement, launch agents, simulate, rebuild/publish the website or start
+at a scheduled time. Resume only after the owner explicitly says to start,
+expected tomorrow; arrival of tomorrow alone is NOT authorization. This hold
+supersedes earlier successive-round permission until the owner releases it.
+
+After explicit release, prioritize these user-reported issues before the next
+waveform-eligibility/replay milestone. These are OPEN reports, not diagnosed fixes.
+
+1. **All spectrum displays: solid steps, independent series toggles, full extent.**
+   Owner screenshots show fragmented/missing-looking log-spectrum segments;
+   investigate rendering, zero-count handling, clipping and autoscaling rather
+   than assuming dashed strokes explain every symptom. Use continuous solid
+   step-histogram strokes in distinct consistent colors, never dashed spectra.
+   Add independent checkboxes for `Geant4 deposited-energy truth` and
+   `Accepted peak-ADC reconstructed energy`: either alone or both, both initially
+   selected where both exist. Single-stage pages must not invent unavailable data.
+   Keep Linear/Log controls and selections coherent across changes. Verify narrow
+   peaks, one-count bins, zero gaps, endpoints, overlaps, axis limits and label
+   clipping at desktop/tablet/mobile sizes; an all-hidden state needs clear text.
+   Do not map zero counts to artificial positive counts or connect unsupported
+   gaps. Preserve bin edges/counts, event selection, under/overflow and science
+   hashes. Inventory ALL current spectrum routes and older reachable views,
+   including home/previews and comparison/detail pages, not just the screenshot.
+   Use saved data and maintained renderers; no Geant4/SSD rerun. Byte-pinned
+   historical originals stay intact; use explicit current-view routes where
+   necessary instead of silently editing archived science/report manifests.
+
+2. **Bidirectional Geant4 3D-view navigation.** The newer `Ge hits - saved
+   radiation overlay` has a link to the older `Actual Geant4 assembly - recorded
+   radiation events`; the older entry needs an equally visible return link.
+   Inspect the maintained templates/current routes for
+   `examples/cs137-10k-hits/hit_event_view.html` and
+   `examples/cs137-10k-geometry/geometry.html`. Use descriptive buttons both ways,
+   preserve original URLs/assets and offline/mobile navigation. Transfer model
+   and event/group selection where the destination contains them; explicitly
+   explain unavailable zero-hit/filtered selections instead of inventing a match.
+   Keep the populations distinct: Ge-positive overlay versus all-event assembly;
+   neither old10k viewer is automatically a million-event trajectory viewer.
+
+3. **Preamp waveform correctness and laboratory relevance: diagnose first.**
+   The screenshot shows a sharp negative transition and slow return, unlike the
+   owner's oscilloscope expectation. Do NOT declare it correct or merely invert
+   its polarity for appearance. Trace saved charge/current -> preamp -> shaper;
+   check sign convention/contact, charge and voltage units/gain, feedback model
+   and decay constant, finite bandwidth/rise time, baseline and pretrigger,
+   time origin/window, display decimation versus complete stored samples.
+   Compare full native numerical traces to displayed traces and, if saved support
+   exists, show both a leading-edge zoom and a longer recorded decay window.
+   Never extrapolate missing samples as recorded data. Consult primary technical
+   references and available actual preamp/oscilloscope metadata after restart:
+   resistive-feedback versus reset design, output node/polarity, AC/DC coupling,
+   termination and acquisition settings. Unknown laboratory settings stay unknown;
+   measured AK02/SAP22 pulse files were not retained. Distinguish display error,
+   synthetic-model limitation and verified implementation error. Any bounded
+   electronics/injection test uses separate derivatives, not rerun transport/drift.
+
+Acceptance after restart: reproduce each report from saved inputs, fix the shared
+presentation path, verify desktop/tablet/mobile/offline behavior and unchanged
+science, then use focused existing reviewers for meaningful code/physics changes.
+Preamp investigation is bounded, not a new open-ended physics gate. After these
+items, continue complete-charge eligibility -> supported electronics-only replay,
+with general per-group recovery and physically checked detector adapters retained.
+No item above is implemented or validated by tonight's planning-only update.
+
+
 ## Current handoff: explicit completed-child metadata recovery
 
 `Run.cmd recover -Name NAME [-DryRun] [-Json]` and menu **R** now reconcile a
@@ -47,7 +115,7 @@ groups, 0 rejects and 0 native failures, at `.local/runs/custom-electronics-500-
 It is bounded existing-machine evidence, not all-detector or fresh-machine acceptance.
 Its original execution/review records remain in `.local/electronics-execution-v1/`.
 
-NEXT: establish complete signed-charge waveform eligibility, then electronics-only
+After the owner releases the hold and the three new checks above: establish complete signed-charge waveform eligibility, then electronics-only
 replay where saved inputs support it. General small-run per-group recovery and
 physically checked additional LBNL adapters remain separate unfinished milestones.
 Partial native-stage recovery, broad SAP22/new-detector positive acceptance and
