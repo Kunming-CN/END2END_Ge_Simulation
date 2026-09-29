@@ -1,0 +1,112 @@
+{
+  "kind": "saved_spectrum_display_v1",
+  "display_revision": 2,
+  "default_scale": "log",
+  "histogram_style": "step",
+  "zero_count_policy": "gaps on true log axes; no pseudocounts",
+  "origin_files": {
+    "examples/cs137-1m/report.html": "a04c9d0557f150d37fa2b381a445ef5315fbc2cd6dd3a0eccd38026fcd098f35",
+    "examples/cs137-1m-response/report.html": "4de4b264f6df246982b3991bb1cedf3d5eefcf26aa9726e1379e0e511f135b77",
+    "examples/cs137-10k/comparison.html": "b94d57dbb9657f68dd8aa0043e8e88203c54a71c1bffae7f38c19e485c1247c4",
+    "examples/pipeline.html": "9184b1dff4b6d42cd457141628c7c44407996eaa86800726058b7420db81c244",
+    "examples/cs137-1m/histograms.json": "4fff0a89cc28164115b6c0ae3575adcf706b31d24f677264f90d80b9b1c406a3",
+    "examples/cs137-1m-response/histograms.json": "04c0fa1693bd9ba02a00a76288c0b3974b5fa0c791504ce86294f6cd13769640",
+    "examples/cs137-10k/AK02/response/histograms.json": "8cbdb6d7ba7ebbbfa4e95a270bb9db955c67d7063f1652e1383fcba459236ab1",
+    "examples/cs137-10k/SAP22/response/histograms.json": "8305b71886e2f61594917110f267f7b8b7ab6de9a1afab9c004aaade684e026f",
+    "examples/data.json": "dfc87b1814fb1a0e2c2324469f5e81a8383e56c00969ce4e3148425fab8d08d6",
+    "examples/cs137-1m/publication.json": "e829d66bbf4f315d6dc8b26db921932a7112f98bc08d5cae42eddb9a5553003d",
+    "examples/cs137-1m-response/publication.json": "b2cbd14d37ba5b1bb0e15d39efb28808f06b63e14d6de04bd947e5ccac24cff5",
+    "examples/cs137-10k/publication.json": "554eece013b193baf48310f5dfb62379d63663fa1ac29a83866428ab52805eec"
+  },
+  "generators": {
+    "tools/spectrum_display.py": "8fad66df092717a387f4e1ba20908764aa2278df202a8151b98b81763c83052d",
+    "tools/spectrum_plot.py": "944e0bd231c18b14549d87e558bcdbac3f728730bf5d56f79bbfa3be872d189f",
+    "tools/spectrum_controls.js": "a1bbf89b26f54a3d8a80e7b19e18e3d63171d51f884b8b89faa21553cf853162"
+  },
+  "pages": {
+    "spectra/million-truth.html": {
+      "source": "examples/cs137-1m/report.html",
+      "source_sha256": "a04c9d0557f150d37fa2b381a445ef5315fbc2cd6dd3a0eccd38026fcd098f35",
+      "sha256": "dd5605ce6ec6b5debcc77452612bd95a1b8c0815372bef81ffc944406cce5034",
+      "specs_sha256": "83ee90ccfd3ce820518d94b44941d891dbe69458d74f66fcdce6520570ddb0e7",
+      "plot_states": 4,
+      "render_components": {
+        "charts": [
+          "15ff232e0172da07b1bf0a8726d9ab9b076ca3588f370bd912c753ad94c14d93",
+          "c9470e5c011316f988c814b6630d8e1b1c5593f80e41fc990058cce53426c8b5",
+          "412d77950b3fa59c6142532a54141eef22a07cfb3026a34d6cc219a4063cce3a",
+          "d5e3748f77e1b25a6d02a229df8d7cb094151f42ccebdcfddbc522bfec817874"
+        ],
+        "script": "a1bbf89b26f54a3d8a80e7b19e18e3d63171d51f884b8b89faa21553cf853162",
+        "style": "95697aeaab3db42c5eaee15700c6c039807d5c872556b6ebd523b5b1edd1aef3"
+      }
+    },
+    "spectra/million-response.html": {
+      "source": "examples/cs137-1m-response/report.html",
+      "source_sha256": "4de4b264f6df246982b3991bb1cedf3d5eefcf26aa9726e1379e0e511f135b77",
+      "sha256": "45d99fdada50655593942f6989a0b19e5f22c87e462d8c19d0f3161c11907fbe",
+      "specs_sha256": "2c8660dbc4997b8a6348f3ab5d67f07349390db0ad2b8d4a113eb511011a0539",
+      "plot_states": 4,
+      "render_components": {
+        "charts": [
+          "815e8da535835d165c110f4bb8d92a70ec9067a2892d38979733113e5c032959",
+          "75307ba8621552b2dd69ef9d7b47ed8dc637c6e236ee37f51aad1c3befb7f173",
+          "df2c15787ff6c61aa6d1b5b27bc213f3e1dbeeeb9365f6b85bf4514c99ab5b65",
+          "3c6dc36a89af68ec665e302c741a3bb23603f30696d8a071cfb6e0c79e03d746"
+        ],
+        "script": "a1bbf89b26f54a3d8a80e7b19e18e3d63171d51f884b8b89faa21553cf853162",
+        "style": "95697aeaab3db42c5eaee15700c6c039807d5c872556b6ebd523b5b1edd1aef3"
+      }
+    },
+    "spectra/cs137-10k.html": {
+      "source": "examples/cs137-10k/comparison.html",
+      "source_sha256": "b94d57dbb9657f68dd8aa0043e8e88203c54a71c1bffae7f38c19e485c1247c4",
+      "sha256": "73d1dc37b157ebbbb7c45a2039fe48348605277ca32fe8693f5bda24212b4a7c",
+      "specs_sha256": "261ebe21cb3ef2a25194aea7db3350697496ab22629c0c9c753882ded3db9e8a",
+      "plot_states": 10,
+      "render_components": {
+        "charts": [
+          "7897089d3738353201bb63b741e1cbd01a7e94f58e70cc6f38eb953139a84124",
+          "90291124362baa6471284412ad41bd8d3efe4e0477d9d297dfe2acb8796e206b",
+          "b285b3af764591d5e167754b5ab03397a4412ed7d71a6df50165f0fc31eb1320",
+          "1969b1583f7ee4ecb0e92c2a34a91ac7002b4e6fe388326ca4078be44633b3de",
+          "315131bbbca5e2b4c008d65a8dcb56211865552e44238b2dbfc6e3a86ddfd5a1",
+          "57c71fb6d1139c630c8cbaef26c2b4eb9fe88b9d74573947ac6d4f80daf7f771",
+          "c709743045406034a1dafe4f9f6878b40f28ada7f5cc938e3723988c25a3fcc2",
+          "a3674aef587be9c0a191e8a59ef45dc6b15c02f4991782ab422c14c996be7d95",
+          "9db0c3bf71d5c2b30ca4de467b97065325e881b0b1e61f94dbac54d076df5439",
+          "e2cf031a0ef77b8480f80a1b3f56f479bf7cb614eb7592374d13328d4c595c15"
+        ],
+        "script": "a1bbf89b26f54a3d8a80e7b19e18e3d63171d51f884b8b89faa21553cf853162",
+        "style": "95697aeaab3db42c5eaee15700c6c039807d5c872556b6ebd523b5b1edd1aef3"
+      }
+    },
+    "spectra/pipeline.html": {
+      "source": "examples/pipeline.html",
+      "source_sha256": "9184b1dff4b6d42cd457141628c7c44407996eaa86800726058b7420db81c244",
+      "sha256": "a96da5c82f702dc3ada3a2f81159ac05802853321a44c27ba8d3e83334839940",
+      "specs_sha256": "8024d78e57b02968c7a867bf8481737db94283fe773e113320aae05ef892d455",
+      "plot_states": 2,
+      "render_components": {
+        "charts": [
+          "c66b695c8cbc2bd44d9229bfd9704f43bebf2945457dc5b4ac55693ce540d60c"
+        ],
+        "script": "a1bbf89b26f54a3d8a80e7b19e18e3d63171d51f884b8b89faa21553cf853162",
+        "style": "95697aeaab3db42c5eaee15700c6c039807d5c872556b6ebd523b5b1edd1aef3"
+      }
+    }
+  },
+  "new_simulations": 0,
+  "original_reports_modified": false,
+  "scope": "Current views derived from saved results. Original reports and complete scientific bundles remain unchanged.",
+  "homepage": {
+    "panel_sha256": "9fac112c713e7f80abfe08d9f0562ff3c881f09c8e620fdbc7da320f95d3e3e7",
+    "render_components": {
+      "charts": [
+        "815e8da535835d165c110f4bb8d92a70ec9067a2892d38979733113e5c032959"
+      ],
+      "script": "a1bbf89b26f54a3d8a80e7b19e18e3d63171d51f884b8b89faa21553cf853162",
+      "style": "95697aeaab3db42c5eaee15700c6c039807d5c872556b6ebd523b5b1edd1aef3"
+    }
+  }
+}

@@ -12,6 +12,8 @@ The [detector library](https://kunming-cn.github.io/END2END_Ge_Simulation/detect
 
 The featured [Cs137 result](https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-1m/index.html) processes one million initial decays **per detector** for AK02 and SAP22. Earlier 10k event viewers and the compact teaching example are labelled separately. Results are engineering simulations, not calibrated experimental predictions.
 
+Current energy spectra use **step histograms**, default **Log**, with **Linear / Log** controls. The display reuses saved bin counts; original reports and numerical data remain preserved.
+
 ## Run one local example
 
 Follow the **[Windows setup checklist](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup)** first. It is the primary installation/run guide. The reviewed LBNL path requires Julia **1.13.0**, the supplied SSD environment, Ubuntu-24.04/WSL, pinned Geant4/remage dependencies and the separately obtained upstream cryostat files.

@@ -5,7 +5,7 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: all-model Pages and local workspace
+## Current handoff: saved spectra with Log / Linear controls
 
 - Scientific outputs: 23,693 groups = 21,672 accepted + 1,613 readout rejects + 408 unavailable native responses.
 - Failures: 403 boundary-stall cases and 5 SAP22 contact-domain cases. Truth remains intact; unknown response is never zero-filled.
@@ -23,6 +23,11 @@ Do not restart any completed simulation, analyzer or reviewer because the chat s
 - `Open_Workspace.cmd` opens a guarded local-only results/file index: final reports first, historical evidence collapsed, original science paths retained. The loose presentation move has an exact hash/mtime/reverse journal.
 - Core regression: seven Julia suites and 37 transport/handoff tests passed without Geant4 generation or field solving. All-model browser, link/fragment, repeat-generation, original-root and same-machine 22-file clone checks are separate evidence, not cold-machine reproduction.
 - Final closure: independent outsider initial audit and re-audit, original site-UX r4 and workflow r5 (including a corrected -NoOpen wrapper). Release browser checks bind build `b5b1c9a76ac213dc7ee8a670fd867c2f5f6e04b3912b5b0a8fae45f7a05dd889`; 89 pages/2716 links and all 17 viewers pass. Exact commit/live deployment receipt is `.local/all-detector-pages-v1/COMPLETE.json`.
+- Spectrum presentation: current routes use `spectra/million-truth.html`, `spectra/million-response.html`, `spectra/cs137-10k.html` and `spectra/pipeline.html`. All 20 current panels including the homepage use default true-log step histograms with Linear/Log controls. Pipeline scale persists across model/event selection; original 24-bin grouping is checked unchanged.
+- Original report URLs are intentionally retained as archived presentations with unchanged publication hashes, scientific downloads and signed waveforms. Current generated navigation and the refreshed local workspace target the new display views. No radiation, field, native-response, electronics or completed analysis run was repeated.
+- Spectrum acceptance: 19 dedicated tests plus site/hierarchy/model/contact suites; actual browser controls, count/path invariance, two pipeline states, unchanged waveform DOM, keyboard, offline and no-JavaScript log fallback. Mobile390/tablet834/desktop views checked, not a physical iPad/Safari certification.
+- Preservation: all1439 previous public files retained; original report/data/model/media bundles unchanged. All173 protected local files retain hashes, byte counts and modification times. Evidence: `.local/spectrum-display-v1/`; see `tools/SPECTRUM_DISPLAY.md` for semantics and exact current/original distinction.
+- The same site-UX and workflow threads completed three scoped spectrum review rounds and closed the tested release. Rendering-source ownership and archived/current URL mapping are documented in `tools/SPECTRUM_DISPLAY.md`.
 - NEXT: low-code settings/recovery and tested additional LBNL detector adapters, per the full roadmap. Do not rerun completed science or the finished website review solely after a chat interruption.
 
 ## Preserved history

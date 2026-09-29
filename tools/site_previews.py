@@ -14,7 +14,11 @@ def add_previews(site, home):
             token='<h2>'+title+'</h2>'
             home=home.replace(token,token+preview,1)
     report=site/'examples/cs137-1m-response/report.html'
-    if report.is_file():
+    from spectrum_display import homepage_preview
+    current=homepage_preview(site)
+    if current is not None:
+        home=home.replace('<h2>Results</h2>','<h2>Results</h2><div class="preview">'+current+'</div>',1)
+    elif report.is_file():
         saved=report.read_text(encoding='utf-8')
         charts=re.findall(r'<svg\b[^>]*>.*?</svg>',saved,flags=re.S)
         if charts and not re.search(r'<script|foreignObject|\bid=',charts[0],re.I):

@@ -14,6 +14,7 @@ another complete installation recipe.
 | Detector overview/gallery/technical levels | `tools/site_detector_pages.py` |
 | Geometry export and validation | `tools/export_ssd_geometry.py`, `geometry_catalog.py`, `ssd_geometry_publication.py` |
 | Browser geometry controls | `tools/ssd_geometry_viewer.html` |
+| Saved energy-spectrum views | `tools/spectrum_display.py`, `spectrum_plot.py`, `spectrum_controls.js`; see [display semantics](SPECTRUM_DISPLAY.md) |
 | Windows setup/run guide | `tools/site_guide.html` |
 | Scenario eligibility labels | `scenarios/detector-capabilities.json`; backend restrictions remain independently enforced |
 | Local file/result index | `tools/build_local_dashboard.py`, `local_paths.py`, `open_workspace.ps1` |
@@ -35,6 +36,7 @@ Before publishing, run the applicable checks:
 python tools/test_all_detector_pages.py
 python tools/test_site_restructure.py
 python tools/test_site_hierarchy.py
+python tools/test_spectrum_display.py
 python tools/test_site.py
 python tools/test_contacts.py
 python tools/check_site.py

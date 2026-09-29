@@ -438,11 +438,21 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         build_export()
     else:
         build_campaign_export(campaign)
+    from spectrum_display import assemble as assemble_spectra, ROUTES, route_current_pages
+    spectrum_sources_ready=all((OUT / p).is_file() for p in ROUTES)
+    if restructure and (OUT / "models" / "catalog.json").is_file() and not spectrum_sources_ready:
+        raise ValueError("Current full-site spectrum sources are incomplete; preserve the previous snapshot")
+    if spectrum_sources_ready:
+        assemble_spectra(OUT)
     from site_restructure import apply as apply_site_structure
     # Tiny failure fixtures used by publication tests intentionally omit the model catalog.
     # Real builds still require models/catalog.json in the final validator below.
     if (OUT / 'models' / 'catalog.json').is_file():
         apply_site_structure(OUT)
+    if (OUT / "spectra" / "manifest.json").is_file():
+        route_current_pages(OUT)
+        from spectrum_display import finalize as finalize_spectra
+        finalize_spectra(OUT)
     normalize_text_outputs(OUT)
     report = validate(OUT, require_manifest=False, require_models=True)
     (OUT / MANIFEST).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8', newline='\n')

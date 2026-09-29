@@ -1,0 +1,172 @@
+"""Saved-spectrum display regression. No radiation, field or readout computation."""
+import copy
+import json
+import re
+import shutil
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+import spectrum_display as D
+import spectrum_plot as P
+ROOT=Path(__file__).resolve().parents[1]
+
+def toy(counts,edges=None):
+    edges=edges or list(range(len(counts)+1))
+    return D.specification('test','Synthetic bin fixture',edges,
+        [{'label':'Counts','color':'#123456','counts':counts,'total':sum(counts),
+          'underflow':0,'overflow':0,'exact_zero':0}],[edges[0],edges[-1]])
+
+class RenderTests(unittest.TestCase):
+    def test_log_breaks_at_zeros_and_shows_one(self):
+        s=toy([1,0,4,4,0,1]); g=P.geometry(s,'log'); path=g['paths'][0]
+        self.assertEqual(path.count('M'),3)
+        self.assertGreater(g['low'],0);self.assertLess(g['low'],1)
+        self.assertLess(g['y'](1),242)
+        self.assertIn(1,g['ticks']);self.assertEqual(s['series'][0]['counts'],[1,0,4,4,0,1])
+    def test_linear_retains_zero_bins(self):
+        g=P.geometry(toy([1,0,4,0]),'linear')
+        self.assertEqual(g['paths'][0].count('M'),1)
+        self.assertIn(',242.000',g['paths'][0])
+    def test_nonuniform_edges_negative_energy_and_empty(self):
+        s=toy([1,2,0],[-5,-1,0,7]); g=P.geometry(s)
+        self.assertTrue(g['paths'][0].startswith('M70.000,'))
+        self.assertIn(f'L{g["x"](-1):.3f}',g['paths'][0])
+        self.assertIn('No positive-count bins',P.svg(toy([0,0])))
+        self.assertNotIn('NaN',P.svg(toy([1,1])))
+    def test_invalid_counts_and_edges_rejected(self):
+        for bad in ([-1,2],[True,0],[float('nan'),1]):
+            with self.assertRaises(ValueError):toy(bad)
+        with self.assertRaises(ValueError):toy([1,2],[0,2,1])
+    def test_zoom_exclusion_not_overflow(self):
+        s=toy([1,2,3,4]);s['view']=[1,3]
+        note=P.accounting(s)[0]
+        self.assertIn('5 in view; 5 outside view',note)
+        self.assertIn('under/overflow 0/0',note)
+    def test_toggle_math_does_not_mutate_data(self):
+        s=toy([0,1,50,0]); before=copy.deepcopy(s)
+        for mode in ('linear','log','linear','log'):P.geometry(s,mode)
+        self.assertEqual(s,before)
+    def test_true_log_is_not_log1p(self):
+        g=P.geometry(toy([1,10,100]))
+        self.assertAlmostEqual(g['y'](1)-g['y'](10),g['y'](10)-g['y'](100))
+
+class SavedDisplayTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp=tempfile.TemporaryDirectory(prefix='spectrum-test-')
+        cls.site=Path(cls.tmp.name)
+        for rel in tuple(D.ROUTES)+D.DATA_SOURCES+D.RECEIPTS:
+            target=cls.site/rel;target.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copyfile(ROOT/'docs'/rel,target)
+        cls.before={rel:D.sha(cls.site/rel) for rel in tuple(D.ROUTES)+D.DATA_SOURCES+D.RECEIPTS}
+        cls.manifest=D.assemble(cls.site)
+    @classmethod
+    def tearDownClass(cls):cls.tmp.cleanup()
+    def test_complete_coverage(self):
+        self.assertEqual([v['plot_states'] for v in self.manifest['pages'].values()],[4,4,10,2])
+        self.assertEqual(sum(v['plot_states'] for v in self.manifest['pages'].values()),20)
+        self.assertEqual(self.before,{p:D.sha(self.site/p) for p in self.before})
+    def test_repeat_is_byte_and_mtime_exact(self):
+        before={p.name:(p.read_bytes(),p.stat().st_mtime_ns) for p in (self.site/'spectra').iterdir()}
+        D.assemble(self.site)
+        after={p.name:(p.read_bytes(),p.stat().st_mtime_ns) for p in (self.site/'spectra').iterdir()}
+        self.assertEqual(before,after)
+    def test_saved_bin_accounting(self):
+        truth=D.truth_specs(self.site);response=D.response_specs(self.site)
+        self.assertEqual(truth[0]['series'][0]['exact_zero'],987580)
+        self.assertEqual(response[0]['series'][0]['total'],12420)
+        self.assertEqual(response[0]['series'][1]['total'],10757)
+        for specs in (truth,response,D.tenk_specs(self.site),D.pipeline_specs(self.site)):
+            for s in specs:P.validate_spec(s)
+    def test_rehashed_display_mutation_is_rejected(self):
+        path=self.site/'spectra/million-response.html';original=path.read_bytes()
+        manifest_path=self.site/'spectra/manifest.json';manifest_bytes=manifest_path.read_bytes()
+        try:
+            text=original.decode();values=D.embedded_specs(text);changed=copy.deepcopy(values[0])
+            changed['series'][0]['counts'][100]+=1;changed['series'][0]['total']+=1
+            match=re.search(r'(<script type="application/json" class="spectrum-data">)(.*?)(</script>)',text,re.S)
+            text=text[:match.start(2)]+json.dumps(changed,separators=(',',':'))+text[match.end(2):]
+            path.write_text(text,encoding='utf-8');m=D.read(manifest_path)
+            m['pages']['spectra/million-response.html']['sha256']=D.sha(path)
+            manifest_path.write_text(json.dumps(m),encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'Rendered display|Display bin data'):D.validate(self.site)
+        finally:
+            path.write_bytes(original);manifest_path.write_bytes(manifest_bytes)
+    def test_rehashed_svg_and_control_mutations_are_rejected(self):
+        path=self.site/'spectra/million-response.html';original=path.read_bytes()
+        mp=self.site/'spectra/manifest.json';saved=mp.read_bytes()
+        for old,new in [('class="spectrum-step" d="M','class="spectrum-step" d="M999,'),('Counts / bin (log10 scale)','Incorrect count scale')]:
+            try:
+                text=original.decode();self.assertIn(old,text)
+                path.write_text(text.replace(old,new,1),encoding='utf-8')
+                m=D.read(mp);m['pages']['spectra/million-response.html']['sha256']=D.sha(path)
+                mp.write_text(json.dumps(m),encoding='utf-8')
+                with self.assertRaisesRegex(ValueError,'Static chart|Rendered display'):D.validate(self.site)
+            finally:path.write_bytes(original);mp.write_bytes(saved)
+    def test_current_generator_policy_does_not_block_saved_snapshot(self):
+        mp=self.site/'spectra/manifest.json';saved=mp.read_bytes()
+        try:
+            m=D.read(mp);m['generators']['tools/spectrum_plot.py']='0'*64
+            mp.write_text(json.dumps(m),encoding='utf-8')
+            D.validate(self.site)
+            with self.assertRaisesRegex(ValueError,'generator binding'):D.validate(self.site,require_current_generators=True)
+        finally:mp.write_bytes(saved)
+    def test_reconstructed_edges_must_match_truth(self):
+        path=self.site/'examples/cs137-1m-response/histograms.json';saved=path.read_bytes()
+        try:
+            data=D.read(path);data['AK02']['reconstructed_accepted']['lower_keV']=1
+            path.write_text(json.dumps(data),encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'edge definitions'):D.response_specs(self.site)
+        finally:path.write_bytes(saved)
+
+    def test_pipeline_payload_and_model_states(self):
+        m=D.validate(self.site); specs=D.pipeline_specs(self.site)
+        self.assertEqual([s['model_id'] for s in specs],['AK02','SAP22'])
+        self.assertEqual([len(s['edges']) for s in specs],[25,25])
+        page=(self.site/'spectra/pipeline.html').read_text()
+        self.assertIn('window.SpectrumUI.update("pipeline-energy",display)',page)
+        self.assertNotIn('<svg id="histogram"',page)
+    def test_current_routes_preserve_original_reports(self):
+        p=self.site/'results/index.html';p.parent.mkdir(exist_ok=True)
+        p.write_text('<a href="../examples/cs137-1m-response/report.html">Result</a>')
+        D.route_current_pages(self.site)
+        self.assertIn('../spectra/million-response.html',p.read_text())
+        self.assertEqual(self.before,{rel:D.sha(self.site/rel) for rel in self.before})
+    def test_homepage_is_semantically_sealed(self):
+        home=self.site/'index.html';prior=home.read_bytes() if home.exists() else None
+        mp=self.site/'spectra/manifest.json';saved=mp.read_bytes()
+        try:
+            home.write_text('<html>'+D.homepage_preview(self.site)+'</html>',encoding='utf-8')
+            D.finalize(self.site);D.validate(self.site,require_current_generators=True,require_home=True)
+            home.write_text(home.read_text().replace('Counts / bin (log10 scale)','Wrong label',1),encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'Homepage spectrum rendering'):D.validate(self.site)
+        finally:
+            mp.write_bytes(saved)
+            if prior is None:home.unlink(missing_ok=True)
+            else:home.write_bytes(prior)
+
+    def test_home_preview_uses_same_component(self):
+        preview=D.homepage_preview(self.site)
+        self.assertEqual(D.embedded_specs(preview),D.response_specs(self.site)[:1])
+        self.assertIn('data-scale="log"',preview)
+
+class JavaScriptTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('node'),'Node needed for browser-math parity')
+    def test_js_log_linear_parity(self):
+        source=(ROOT/'tools/spectrum_controls.js').read_text()
+        self.assertNotIn('Math.log1p',source)
+        fixtures=[toy([1,0,10,100,0,1]),toy([0,0]),toy([1,1]),toy([5,0,2],[-5,-1,2,7])]
+        script='''import fs from 'node:fs'; import vm from 'node:vm';
+const context={};vm.createContext(context);vm.runInContext(fs.readFileSync(process.argv[1],'utf8'),context);
+const data=JSON.parse(process.argv[2]);const before=JSON.stringify(data);
+const out=data.map(s=>['log','linear'].map(mode=>{const g=context.SpectrumUI.geometry(s,mode);return {paths:g.paths,ticks:g.ticks,low:g.low,high:g.high};}));
+if(JSON.stringify(data)!==before)throw Error('Mutated bins');process.stdout.write(JSON.stringify(out));'''
+        result=subprocess.run(['node','--input-type=module','-e',script,str(ROOT/'tools/spectrum_controls.js'),json.dumps(fixtures)],capture_output=True,text=True,timeout=20,check=True)
+        actual=json.loads(result.stdout)
+        for s,states in zip(fixtures,actual):
+            for mode,state in zip(('log','linear'),states):
+                expected=P.geometry(s,mode)
+                for key in ('paths','ticks','low','high'):self.assertEqual(state[key],expected[key])
+
+if __name__=='__main__':unittest.main(verbosity=2)

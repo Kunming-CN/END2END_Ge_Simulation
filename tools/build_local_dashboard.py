@@ -86,8 +86,8 @@ def build(root=ROOT):
                         '<table><thead><tr><th>Location</th><th>Type</th><th>Saved receipts/status files</th>'
                         '</tr></thead><tbody>'+''.join(rows)+'</tbody></table></div></details>')
     report_links=[]
-    for relative,label in [('docs/examples/cs137-1m-response/report.html','Final SSD / electronics / ADC comparison'),
-                           ('docs/examples/cs137-1m/report.html','Final Geant4 deposited-energy results')]:
+    for relative,label in [('docs/spectra/million-response.html','Final SSD / electronics / ADC comparison - Log/Linear'),
+                           ('docs/spectra/million-truth.html','Final Geant4 deposited-energy results - Log/Linear')]:
         path=root/relative
         report_links.append('<p>'+link(path,label,allow_html=True)+'</p>' if safe_path(path,root) and path.is_file()
                             else '<p>'+escape(label)+' — not included in this checkout.</p>')
