@@ -7,11 +7,12 @@ Do not restart any completed simulation, analyzer or reviewer because the chat s
 
 ## OWNER PAUSE: wait for an explicit start; next display and preamp checks
 
-Owner instruction on 2026-09-28 (local): record these additions only tonight.
-Do not implement, launch agents, simulate, rebuild/publish the website or start
-at a scheduled time. Resume only after the owner explicitly says to start,
-expected tomorrow; arrival of tomorrow alone is NOT authorization. This hold
-supersedes earlier successive-round permission until the owner releases it.
+Owner paused implementation on 2026-09-28 (local). On 2026-09-29 the owner
+explicitly authorized reading the LEGEND-public-simulation conversation and TWO
+read-only planning reviewers with cross-discussion. That planning is complete.
+Implementation, installation, simulation, website rebuild/publication and timed
+continuation remain paused until a separate explicit owner start. The date alone
+is not authorization. No further agents are scheduled by this plan.
 
 After explicit release, prioritize these user-reported issues before the next
 waveform-eligibility/replay milestone. These are OPEN reports, not diagnosed fixes.
@@ -71,6 +72,50 @@ Preamp investigation is bounded, not a new open-ended physics gate. After these
 items, continue complete-charge eligibility -> supported electronics-only replay,
 with general per-group recovery and physically checked detector adapters retained.
 No item above is implemented or validated by tonight's planning-only update.
+
+
+## LEGEND-informed detailed plan (2026-09-29; planning only)
+
+The owner-requested conversation retrieval and TWO actual read-only reviewers,
+followed by reciprocal discussion, are complete. Implementation remains paused.
+Detailed local plan: `.local/legend-reuse-plan-v1/PLAN.md`; actual reports and
+source-reference notes are in the same folder. This is planning evidence, not
+implementation acceptance or a successful upstream interoperability test.
+
+Decision: keep the laboratory remage/SSD workflow and frozen results; add a thin
+OPTIONAL official interface rather than replace the whole project with simflow.
+The project already uses remage. Public simflow/reboost cover response and batch
+production, including SSD-derived maps/libraries and data-fitted electronics;
+public code is not proof that required calibration/metadata are public, available
+or valid for AK02/SAP22. l1000dsg01 is a CDR design, not final as-built geometry.
+
+Sequence after an explicit implementation start:
+M0 short static reuse/input/effect-ownership map (not an installation gate);
+M1 all-spectrum fixes and M2 reciprocal3D navigation already specified above;
+M3 bounded preamp implementation/display/laboratory audit;
+M4 complete-charge eligibility, then independently calibrated electronics-only
+DERIVATIVES; M5 separately checkpointed charge/readout for NEW small runs;
+M6 one tiny optional existing-LH5/official interface pilot with corrections off,
+only after an actual metadata-independent API is confirmed;
+M7 physically compatible detector adapters, actual fresh-machine reproduction
+and measured, domain-bounded response-library or simflow optimizations.
+The public-tool audit must not postpone the three owner-visible fixes.
+
+Reuse requires complete signed samples, units/time support, origin/primary/group/
+detector/row identities and explicit zero-primary/null-failure ledgers. New stage
+identities supplement original provenance; they never remove/rebase old source
+bindings. Changes to grouping/window or missing samples are not automatically
+electronics-only. Assign each physical correction once; do not stack equivalent
+dead-layer loss, fitted transfer, noise or resolution smearing. Serialized Julia
+inputs still require a compatible reader/runtime. Neither shared SSD code nor
+agreement between two processing paths establishes experimental validation.
+
+Primary references checked: official [simflow](https://github.com/legend-exp/legend-simflow),
+[setup/stage controls](https://github.com/legend-exp/legend-simflow/blob/main/docs/source/manual/setup.md),
+[reboost](https://github.com/legend-exp/reboost), and
+[configuration scope](https://github.com/legend-exp/legend-simflow-config).
+No general replay, per-group recovery, new detector compatibility, fresh-machine
+acceptance or full official production has been completed by this planning round.
 
 
 ## Current handoff: explicit completed-child metadata recovery
