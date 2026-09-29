@@ -9,6 +9,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 from spectrum_plot import panel, assets, require, validate_spec
+import spectrum_plot
 ROOT=Path(__file__).resolve().parents[1]
 ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/cs137-1m-response/report.html':'spectra/million-response.html',
@@ -17,6 +18,13 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js')
 
 def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+LOADED_GENERATORS={rel:sha(ROOT/rel) for rel in GENERATORS}
+require(LOADED_GENERATORS['tools/spectrum_plot.py']==spectrum_plot.SOURCE_SHA256,
+        'Spectrum renderer source changed after import')
+
+def require_frozen_sources():
+    require(LOADED_GENERATORS=={rel:sha(ROOT/rel) for rel in GENERATORS},
+            'Spectrum sources changed after import; restart export with frozen sources')
 def read(path): return json.loads(Path(path).read_text(encoding='utf-8-sig'))
 def digest(value): return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
 def write_if_changed(path,text):
@@ -135,6 +143,9 @@ def add_at_end(text,content):
     return text[:index]+content+text[index:] if index>=0 else text+content
 
 def pipeline_page(text,specs):
+    legacy=r'<div class="legend"><span id="truth-legend">[^<]*</span><span id="rec-legend">[^<]*</span></div>'
+    require(len(re.findall(legacy,text))==1,'Original pipeline legend changed')
+    text=re.sub(legacy,'',text,count=1)
     original=r'<svg id="histogram"[^>]*></svg>'
     require(len(re.findall(original,text))==1,'Original pipeline histogram missing')
     data={s['model_id']:s for s in specs}
@@ -143,6 +154,7 @@ def pipeline_page(text,specs):
     text=re.sub(original,lambda _:replacement,text,count=1)
     start=text.index('    const a=bins(truth),b=bins(rec),svg=$("histogram")')
     end=text.index('    put("truth-legend"',start)
+    end=text.index('\n',end)+1  # Remove the duplicate legacy legend updates too.
     new='''    const a=bins(truth),b=bins(rec);
     const display=JSON.parse($("pipeline-spectrum-specs").textContent)[m.model_id];
     if(max!==display.view[1] || a.some((v,i)=>v!==display.series[0].counts[i]) || b.some((v,i)=>v!==display.series[1].counts[i]))throw Error("Saved pipeline spectrum bins differ");
@@ -209,6 +221,7 @@ def finalize(site):
     return validate(site,require_current_generators=True,require_home=True)
 
 def assemble(site):
+    require_frozen_sources()
     site=Path(site)
     if not any((site/p).is_file() for p in ROUTES): return None
     require(all((site/p).is_file() for p in ROUTES),'Partial source spectrum report set')
@@ -221,6 +234,7 @@ def assemble(site):
         pages[destination]={'source':original,'source_sha256':origin[original],
             'sha256':sha(site/destination),'specs_sha256':digest(specs),'plot_states':len(specs),
             'render_components':component_hashes(text)}
+    require_frozen_sources()
     require(origin=={rel:sha(site/rel) for rel in sources},'Source reports or numeric data changed')
     manifest={'kind':'saved_spectrum_display_v1','display_revision':2,'default_scale':'log','histogram_style':'step',
               'zero_count_policy':'gaps on true log axes; no pseudocounts',
@@ -243,6 +257,7 @@ def validate(site,require_current_generators=False,require_home=False):
     current={rel:sha(ROOT/rel) for rel in GENERATORS}
     same_generators=m['generators']==current
     if require_current_generators:
+        require_frozen_sources()
         require(same_generators and m.get('display_revision')==2,'Candidate generator binding mismatch')
     for destination,record in m['pages'].items():
         text=(site/destination).read_text(encoding='utf-8'); expected=READERS[destination](site)

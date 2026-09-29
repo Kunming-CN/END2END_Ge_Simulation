@@ -1,124 +1,94 @@
 # Current project state and next steps
 
-Updated: 2026-09-28. Current status below supersedes historical milestone notes.
+Updated: 2026-09-29. Current status below supersedes historical milestone notes.
 The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science worker is active.
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## OWNER PAUSE: wait for an explicit start; next display and preamp checks
+## Current handoff: solid, selectable saved-spectrum displays
 
-Owner paused implementation on 2026-09-28 (local). On 2026-09-29 the owner
-explicitly authorized reading the LEGEND-public-simulation conversation and TWO
-read-only planning reviewers with cross-discussion. That planning is complete.
-Implementation, installation, simulation, website rebuild/publication and timed
-continuation remain paused until a separate explicit owner start. The date alone
-is not authorization. No further agents are scheduled by this plan.
+Owner explicitly restarted implementation on 2026-09-29. Codex is ASTRA ONLY,
+High minimum; supported XHigh or stronger Astra effort is allowed for concrete
+bounded problems. This round used Astra High for implementation/review and Astra
+XHigh for the metadata/readability review. No reset credits or paid API fallback.
 
-After explicit release, prioritize these user-reported issues before the next
-waveform-eligibility/replay milestone. These are OPEN reports, not diagnosed fixes.
+M1: all20 CURRENT spectrum panels (including homepage and both pipeline detector
+states) use solid step outlines, consistent colors and independent series
+checkboxes. Truth and accepted peak-ADC can be shown separately or together;
+Log/Linear and visibility survive model/event changes. Exact bins, counts, flows,
+zeros and numerical populations are unchanged. Archived original reports remain
+byte-identical and may retain their historical display; current views are under
+`spectra/`. See tools/SPECTRUM_DISPLAY.md for the route/ownership distinction.
 
-1. **All spectrum displays: solid steps, independent series toggles, full extent.**
-   Owner screenshots show fragmented/missing-looking log-spectrum segments;
-   investigate rendering, zero-count handling, clipping and autoscaling rather
-   than assuming dashed strokes explain every symptom. Use continuous solid
-   step-histogram strokes in distinct consistent colors, never dashed spectra.
-   Add independent checkboxes for `Geant4 deposited-energy truth` and
-   `Accepted peak-ADC reconstructed energy`: either alone or both, both initially
-   selected where both exist. Single-stage pages must not invent unavailable data.
-   Keep Linear/Log controls and selections coherent across changes. Verify narrow
-   peaks, one-count bins, zero gaps, endpoints, overlaps, axis limits and label
-   clipping at desktop/tablet/mobile sizes; an all-hidden state needs clear text.
-   Do not map zero counts to artificial positive counts or connect unsupported
-   gaps. Preserve bin edges/counts, event selection, under/overflow and science
-   hashes. Inventory ALL current spectrum routes and older reachable views,
-   including home/previews and comparison/detail pages, not just the screenshot.
-   Use saved data and maintained renderers; no Geant4/SSD rerun. Byte-pinned
-   historical originals stay intact; use explicit current-view routes where
-   necessary instead of silently editing archived science/report manifests.
+The isolated-bin bug was reproduced: the original renderer drew only a tiny top
+stroke for an isolated narrow peak. Positive runs now have visible bin-boundary
+sides clipped to the log display floor, never pseudocounts or bridges over zeros.
+Peak headroom and endpoint labels are checked. The XHigh review's mobile-font
+regression was corrected from14 back to20 SVG units; final browser screenshots
+are desktop Edge device emulation, not native iPad/Safari certification.
 
-2. **Bidirectional Geant4 3D-view navigation.** The newer `Ge hits - saved
-   radiation overlay` has a link to the older `Actual Geant4 assembly - recorded
-   radiation events`; the older entry needs an equally visible return link.
-   Inspect the maintained templates/current routes for
-   `examples/cs137-10k-hits/hit_event_view.html` and
-   `examples/cs137-10k-geometry/geometry.html`. Use descriptive buttons both ways,
-   preserve original URLs/assets and offline/mobile navigation. Transfer model
-   and event/group selection where the destination contains them; explicitly
-   explain unavailable zero-hit/filtered selections instead of inventing a match.
-   Keep the populations distinct: Ge-positive overlay versus all-event assembly;
-   neither old10k viewer is automatically a million-event trajectory viewer.
+The pipeline reader's duplicate old legend was removed; its complete event/
+waveform payload and waveform/geometry DOM remain unchanged. A source-freeze
+check now refuses changed renderer/control files after import; original manifests
+and deterministic output guards remain strict. The source-race failed preliminary
+build and its derived outputs are retained, not counted as successful acceptance.
 
-3. **Preamp waveform correctness and laboratory relevance: diagnose first.**
-   The screenshot shows a sharp negative transition and slow return, unlike the
-   owner's oscilloscope expectation. Do NOT declare it correct or merely invert
-   its polarity for appearance. Trace saved charge/current -> preamp -> shaper;
-   check sign convention/contact, charge and voltage units/gain, feedback model
-   and decay constant, finite bandwidth/rise time, baseline and pretrigger,
-   time origin/window, display decimation versus complete stored samples.
-   Compare full native numerical traces to displayed traces and, if saved support
-   exists, show both a leading-edge zoom and a longer recorded decay window.
-   Never extrapolate missing samples as recorded data. Consult primary technical
-   references and available actual preamp/oscilloscope metadata after restart:
-   resistive-feedback versus reset design, output node/polarity, AC/DC coupling,
-   termination and acquisition settings. Unknown laboratory settings stay unknown;
-   measured AK02/SAP22 pulse files were not retained. Distinguish display error,
-   synthetic-model limitation and verified implementation error. Any bounded
-   electronics/injection test uses separate derivatives, not rerun transport/drift.
+Independent numeric comparison retains22 static/dynamic specs exactly. A separate
+saved-data arithmetic check found ADC spacing1.2455808018023982keV for the frozen
+AK02 million response against1keV histogram bins: all79 zero bins in[50,450)keV
+match unreachable ADC-code-center bins. These gaps are real saved quantization,
+not missing plot segments. Do not smooth/rebin/retune frozen science to hide them.
+This does not validate laboratory hardware, noise, resolution or preamp behavior.
 
-Acceptance after restart: reproduce each report from saved inputs, fix the shared
-presentation path, verify desktop/tablet/mobile/offline behavior and unchanged
-science, then use focused existing reviewers for meaningful code/physics changes.
-Preamp investigation is bounded, not a new open-ended physics gate. After these
-items, continue complete-charge eligibility -> supported electronics-only replay,
-with general per-group recovery and physically checked detector adapters retained.
-No item above is implemented or validated by tonight's planning-only update.
+Preservation is qualified: all347 protected local contents and byte sizes match,
+but24 empty files have mtimes rounded down to milliseconds. Independent host
+checks confirm the metadata difference; its cause is unknown. No timestamps or
+old receipts were repaired/rebased. Keep before/after evidence; never claim exact
+mtime preservation for this round. All1445 original public paths are retained;
+only seven maintained generated display/manifest files changed.
 
+The two historical raw-viewer suites still reject the old campaign's recorded
+run_native_campaign.ps1 hash (geometry:1error/1skip; hit view:2errors). That source
+is unchanged in this round. These failures remain distinct from passing current
+spectrum/site/publication tests; no guard was weakened. A repeat full-site build
+reached identical-output comparison but failed temporary staging cleanup with
+Windows access denied; preserve that receipt, not a claimed second clean exit.
 
-## LEGEND-informed detailed plan (2026-09-29; planning only)
+Final source-bound commands, browser checks, reviewer exchanges, preservation,
+commit and live deployment status are recorded in
+`.local/display-repair-v2/COMPLETE.json`. Failed attempts remain in the same round.
+No radiation/field/drift/electronics calculation was rerun for this display work.
 
-The owner-requested conversation retrieval and TWO actual read-only reviewers,
-followed by reciprocal discussion, are complete. Implementation remains paused.
-Detailed local plan: `.local/legend-reuse-plan-v1/PLAN.md`; actual reports and
-source-reference notes are in the same folder. This is planning evidence, not
-implementation acceptance or a successful upstream interoperability test.
+NEXT M2: add maintained current reader routes with reciprocal buttons for the
+all-event assembly and Ge-positive overlay, preserving model/event/group context
+where representable and explaining zero/filtered selections. Original signed
+viewer HTML/data/manifests must remain exact; use a new display provenance layer.
+Current original assembly STILL lacks its reciprocal button. M2 is NOT delivered.
+The narrow adapter plan is in `.local/display-repair-v2/implementation/SCOPE.md`.
 
-Decision: keep the laboratory remage/SSD workflow and frozen results; add a thin
-OPTIONAL official interface rather than replace the whole project with simflow.
-The project already uses remage. Public simflow/reboost cover response and batch
-production, including SSD-derived maps/libraries and data-fitted electronics;
-public code is not proof that required calibration/metadata are public, available
-or valid for AK02/SAP22. l1000dsg01 is a CDR design, not final as-built geometry.
+Then M3: bounded preamp code/display/laboratory audit; do not declare the posted
+waveform experimentally correct or just invert/smooth it. Check signed current,
+charge conversion, Q/Cf, decay, time grid/window and decimation with available
+hardware metadata; measured AK02/SAP22 pulse files were not retained.
 
-Sequence after an explicit implementation start:
-M0 short static reuse/input/effect-ownership map (not an installation gate);
-M1 all-spectrum fixes and M2 reciprocal3D navigation already specified above;
-M3 bounded preamp implementation/display/laboratory audit;
-M4 complete-charge eligibility, then independently calibrated electronics-only
-DERIVATIVES; M5 separately checkpointed charge/readout for NEW small runs;
-M6 one tiny optional existing-LH5/official interface pilot with corrections off,
-only after an actual metadata-independent API is confirmed;
-M7 physically compatible detector adapters, actual fresh-machine reproduction
-and measured, domain-bounded response-library or simflow optimizations.
-The public-tool audit must not postpone the three owner-visible fixes.
+Retained roadmap after M2/M3: M4 full signed-charge eligibility and separately
+calibrated electronics-only derivatives; M5 atomic per-group charge/readout for
+NEW small runs; M6 tiny optional existing-LH5/official API pilot only after actual
+input/API compatibility; M7 physically checked detector adapters, true fresh-
+machine reproduction and domain-bounded library acceleration. Preserve the lab
+remage/SSD workflow, not a wholesale simflow migration or repeated framework audit.
+The already-discussed detailed plan remains `.local/legend-reuse-plan-v1/PLAN.md`.
 
-Reuse requires complete signed samples, units/time support, origin/primary/group/
-detector/row identities and explicit zero-primary/null-failure ledgers. New stage
-identities supplement original provenance; they never remove/rebase old source
-bindings. Changes to grouping/window or missing samples are not automatically
-electronics-only. Assign each physical correction once; do not stack equivalent
-dead-layer loss, fitted transfer, noise or resolution smearing. Serialized Julia
-inputs still require a compatible reader/runtime. Neither shared SSD code nor
-agreement between two processing paths establishes experimental validation.
+No M2/preamp/replay/per-group/new-detector/cold-machine acceptance is implied by
+this M1 display delivery. Never rerun completed science or restart finished agents
+merely because a chat disconnects. Read terminal receipts and actual processes.
 
-Primary references checked: official [simflow](https://github.com/legend-exp/legend-simflow),
-[setup/stage controls](https://github.com/legend-exp/legend-simflow/blob/main/docs/source/manual/setup.md),
-[reboost](https://github.com/legend-exp/reboost), and
-[configuration scope](https://github.com/legend-exp/legend-simflow-config).
-No general replay, per-group recovery, new detector compatibility, fresh-machine
-acceptance or full official production has been completed by this planning round.
+The later electronics audit should also report the inherited ADC full-scale/gain
+versus calibrated energy-code spacing. The saved1.2456keV code step is an explicit
+synthetic configuration consequence; any improved gain/range/noise choice belongs
+to a new labelled configuration, not a silent rewrite of the frozen spectra.
 
-
-## Current handoff: explicit completed-child metadata recovery
+## Retained completed-child metadata recovery (2e73937)
 
 `Run.cmd recover -Name NAME [-DryRun] [-Json]` and menu **R** now reconcile a
 completed final guarded native child whose campaign-parent update was interrupted.
@@ -160,7 +130,7 @@ groups, 0 rejects and 0 native failures, at `.local/runs/custom-electronics-500-
 It is bounded existing-machine evidence, not all-detector or fresh-machine acceptance.
 Its original execution/review records remain in `.local/electronics-execution-v1/`.
 
-After the owner releases the hold and the three new checks above: establish complete signed-charge waveform eligibility, then electronics-only
+After M2 reciprocal navigation and M3 preamp audit above: establish complete signed-charge waveform eligibility, then electronics-only
 replay where saved inputs support it. General small-run per-group recovery and
 physically checked additional LBNL adapters remain separate unfinished milestones.
 Partial native-stage recovery, broad SAP22/new-detector positive acceptance and

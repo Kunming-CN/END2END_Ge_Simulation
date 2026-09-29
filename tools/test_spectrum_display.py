@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 import spectrum_display as D
 import spectrum_plot as P
@@ -18,6 +19,44 @@ def toy(counts,edges=None):
           'underflow':0,'overflow':0,'exact_zero':0}],[edges[0],edges[-1]])
 
 class RenderTests(unittest.TestCase):
+    def test_isolated_narrow_peak_has_two_sides_and_headroom(self):
+        counts=[0]*750;counts[662]=1000
+        s=toy(counts);g=P.geometry(s)
+        x,y=g['x'],g['y']
+        self.assertEqual(g['paths'][0],f'M{x(662):.3f},242.000 L{x(662):.3f},{y(1000):.3f} L{x(663):.3f},{y(1000):.3f} L{x(663):.3f},242.000')
+        self.assertGreater(y(1000),38+1.4)
+        self.assertLess(x(663)-x(662),1)
+        self.assertEqual(sum(s['series'][0]['counts']),1000)
+    def test_positive_runs_close_at_gap_and_view_ends(self):
+        g=P.geometry(toy([1,2,0,1]))
+        self.assertEqual(g['paths'][0].count('M'),2)
+        self.assertTrue(g['paths'][0].startswith('M70.000,242.000 L70.000,'))
+        self.assertIn('L400.000,242.000 M565.000,242.000',g['paths'][0])
+        self.assertTrue(g['paths'][0].endswith('L730.000,242.000'))
+    def test_masks_keep_data_axes_and_colors_stable(self):
+        s=toy([1,0,100]);s['series'].append(copy.deepcopy(s['series'][0]))
+        s['series'][0]['label']='Edep - all primaries';s['series'][1]['label']='Erec - accepted only'
+        before=copy.deepcopy(s);all_paths=P.geometry(s)['paths']
+        for mask in ([True,True],[True,False],[False,True],[False,False]):
+            g=P.geometry(s,visible=mask)
+            self.assertEqual(g['paths'],[p if show else '' for p,show in zip(all_paths,mask)])
+            self.assertEqual(g['high'],P.geometry(s)['high'])
+        self.assertEqual(s,before)
+        self.assertIn('All series hidden',P.svg(s,visible=[False,False]))
+        markup=P.panel(s)
+        self.assertEqual(markup.count('type="checkbox"'),2)
+        self.assertEqual(markup.count('checked disabled'),2)
+        self.assertNotIn('stroke-dasharray',markup)
+        self.assertIn('Geant4 deposited-energy truth',markup)
+        self.assertIn('Accepted peak-ADC reconstructed energy',markup)
+        self.assertEqual(P.presentation(s['series'][0])[1],'#406090')
+        self.assertEqual(P.presentation(s['series'][1])[1],'#b05040')
+        with self.assertRaises(ValueError):P.geometry(s,visible=[True])
+    def test_count_one_not_floor_and_zero_never_logged(self):
+        g=P.geometry(toy([0,1,0]))
+        self.assertLess(g['y'](1),g['y'](g['low']))
+        self.assertEqual(g['paths'][0].count('M'),1)
+        self.assertEqual(P.geometry(toy([0,0]))['paths'],[''])
     def test_log_breaks_at_zeros_and_shows_one(self):
         s=toy([1,0,4,4,0,1]); g=P.geometry(s,'log'); path=g['paths'][0]
         self.assertEqual(path.count('M'),3)
@@ -52,6 +91,12 @@ class RenderTests(unittest.TestCase):
         self.assertAlmostEqual(g['y'](1)-g['y'](10),g['y'](10)-g['y'](100))
 
 class SavedDisplayTests(unittest.TestCase):
+    def test_source_edit_after_import_fails_before_writes(self):
+        before={p.name:p.read_bytes() for p in (self.site/'spectra').iterdir()}
+        with patch.dict(D.LOADED_GENERATORS,{'tools/spectrum_plot.py':'0'*64}):
+            with self.assertRaisesRegex(ValueError,'sources changed after import'):D.assemble(self.site)
+            with self.assertRaisesRegex(ValueError,'sources changed after import'):D.validate(self.site,require_current_generators=True)
+        self.assertEqual(before,{p.name:p.read_bytes() for p in (self.site/'spectra').iterdir()})
     @classmethod
     def setUpClass(cls):
         cls.tmp=tempfile.TemporaryDirectory(prefix='spectrum-test-')
@@ -127,6 +172,10 @@ class SavedDisplayTests(unittest.TestCase):
         page=(self.site/'spectra/pipeline.html').read_text()
         self.assertIn('window.SpectrumUI.update("pipeline-energy",display)',page)
         self.assertNotIn('<svg id="histogram"',page)
+        self.assertNotIn('truth-legend',page)
+        self.assertNotIn('rec-legend',page)
+        self.assertIn('Geant4 deposited-energy truth',page)
+        self.assertIn('Accepted peak-ADC reconstructed energy',page)
     def test_current_routes_preserve_original_reports(self):
         p=self.site/'results/index.html';p.parent.mkdir(exist_ok=True)
         p.write_text('<a href="../examples/cs137-1m-response/report.html">Result</a>')
@@ -156,17 +205,19 @@ class JavaScriptTests(unittest.TestCase):
     def test_js_log_linear_parity(self):
         source=(ROOT/'tools/spectrum_controls.js').read_text()
         self.assertNotIn('Math.log1p',source)
-        fixtures=[toy([1,0,10,100,0,1]),toy([0,0]),toy([1,1]),toy([5,0,2],[-5,-1,2,7])]
+        fixtures=[toy([1,0,10,100,0,1]),toy([0,0]),toy([1,1]),toy([5,0,2],[-5,-1,2,7]),toy([0]*662+[1000]+[0]*87)]
+        for s in fixtures:s['series'].append(copy.deepcopy(s['series'][0]))
         script='''import fs from 'node:fs'; import vm from 'node:vm';
 const context={};vm.createContext(context);vm.runInContext(fs.readFileSync(process.argv[1],'utf8'),context);
 const data=JSON.parse(process.argv[2]);const before=JSON.stringify(data);
-const out=data.map(s=>['log','linear'].map(mode=>{const g=context.SpectrumUI.geometry(s,mode);return {paths:g.paths,ticks:g.ticks,low:g.low,high:g.high};}));
+const out=data.map(s=>['log','linear'].flatMap(mode=>[[true,true],[true,false],[false,true],[false,false]].map(mask=>{const g=context.SpectrumUI.geometry(s,mode,mask);return {paths:g.paths,ticks:g.ticks,low:g.low,high:g.high};})));
 if(JSON.stringify(data)!==before)throw Error('Mutated bins');process.stdout.write(JSON.stringify(out));'''
         result=subprocess.run(['node','--input-type=module','-e',script,str(ROOT/'tools/spectrum_controls.js'),json.dumps(fixtures)],capture_output=True,text=True,timeout=20,check=True)
         actual=json.loads(result.stdout)
         for s,states in zip(fixtures,actual):
-            for mode,state in zip(('log','linear'),states):
-                expected=P.geometry(s,mode)
+            cases=[(mode,mask) for mode in ('log','linear') for mask in ([True,True],[True,False],[False,True],[False,False])]
+            for (mode,mask),state in zip(cases,states):
+                expected=P.geometry(s,mode,mask)
                 for key in ('paths','ticks','low','high'):self.assertEqual(state[key],expected[key])
 
 if __name__=='__main__':unittest.main(verbosity=2)

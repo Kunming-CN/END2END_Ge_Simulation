@@ -29,9 +29,24 @@ from selected waveform examples or repeated numerical variants.
 
 Counts remain raw integer counts per existing bin. Horizontal segments span true
 bin edges, not interpolated centres. Log zero-count bins break the path; no
-pseudocount is added. The axis floor is 0.5 solely to make count-one bins visible.
-Linear mode restores the zero-count segments. Solid/dashed outlines and labelled
-legends distinguish overlaid populations without relying only on color.
+pseudocount is added. Positive runs have vertical boundary edges clipped to the
+0.5 display floor, so an isolated narrow bin retains visible sides. The floor is
+not a count, and count one remains above it. Linear mode restores zero segments.
+The y ceiling includes headroom even for an exact power-of-ten peak.
+
+All energy traces are solid. Independent, keyboard-accessible checkboxes select
+the available series, all initially selected. Truth is consistently blue and
+accepted peak-ADC energy red; other stages retain distinct colors and their own
+labels. Both overlaid populations can be inspected alone. Scale changes and
+pipeline model/event changes preserve selection; hiding every series displays an
+explicit message. Axis bounds remain fixed across series toggles for comparison.
+Without JavaScript the static log chart shows all available series and explains
+why its controls are disabled. Responsive endpoints use inward-facing labels.
+
+Presentation aliases standardize the truth/reconstructed labels and colors
+without changing the sealed input specs. Original bin arrays, labels and colors
+in those input specs remain available for provenance; displayed labels are
+`Geant4 deposited-energy truth` and `Accepted peak-ADC reconstructed energy`.
 
 The truth histogram keeps exact-zero events in its separate category; this is
 not the same as a bin containing zero events. Negative equivalent energy remains
@@ -53,6 +68,9 @@ hashes, display specs, static SVG/control/style seals and derived page hashes.
 Final staging verifies deterministic rendering against current sources, including
 the actual homepage preview. Saved-snapshot checks remain compatible with prior
 generators so a later presentation update can validate its starting snapshot.
+The adapter also pins loaded renderer/control source hashes and refuses an export
+if those files change after import. Freeze writers before starting a build; a
+failed derivative requires a fresh exporter process, never a science rerun.
 
 Run `python tools/test_spectrum_display.py` for exact-bin, count-one, zero-gap,
 negative-energy, rehashed-mutation, repeat-generation and JS/Python geometry
@@ -61,10 +79,12 @@ model/event changes, offline controls, keyboard/mobile use and static no-JavaScr
 fallback. Normal site, link, archive and model checks still apply.
 
 The original two scoped reviewer threads remain the reviewers for this work.
-Local evidence is `.local/spectrum-display-v1/`. A display test pass is not new
+Original evidence is `.local/spectrum-display-v1/`; the owner-authorized repair
+candidate and its test/browser records are in `.local/display-repair-v2/implementation/`.
+A display test pass is not new
 scientific validation, calibrated energy resolution or clean-machine reproduction.
 
-## Recorded review and acceptance
+## Previous display release (before the current repair)
 
 The original site-UX and workflow threads completed three scoped rounds: source
 inventory, reciprocal implementation review, and final evidence inspection. Both

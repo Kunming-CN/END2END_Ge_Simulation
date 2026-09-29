@@ -35,6 +35,8 @@ Do not claim that Work/Codex has been started merely because these instructions 
 
 ## Work/Codex model preference
 
+Owner update (2026-09-29): Astra ONLY for every Codex task, with High as the minimum reasoning level. XHigh is authorized for difficult bounded tasks. Higher effort may be used only if actually supported by Astra in the installed interface; never invent an effort name or fall back to a different model, paid API, Fast mode or reset credits. Record the effective model/effort for each launch.
+
 The maintainer requested Astra with High reasoning for this project's Work/Codex tasks (2026-09-25).
 - Use model `gpt-6-astra` with `model_reasoning_effort = "high"`.
 - The development computer's user config already has both values; do not replace the entire config or change unrelated settings.

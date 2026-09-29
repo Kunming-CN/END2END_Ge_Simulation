@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "build_id": "2685bfb760615dc92db00ca555a5e9c496b4f796b4c97a89128f3bf70c14b476",
+  "build_id": "ba3338a4e867b32944a3cabf1f7b73e90dd68205553d55d00805dc2deae53afd",
   "file_count": 1444,
-  "total_bytes": 759368858,
+  "total_bytes": 759414130,
   "html_pages": 93,
   "local_links_checked": 2764,
   "files": [
@@ -7013,8 +7013,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 63255,
-      "sha256": "5df72cc0a8d12aeb192948726f866435355a560648b6e183cdecaf7163a74226"
+      "bytes": 71309,
+      "sha256": "3389a01b3ed42b4c6cada7e7ec919f00a48c2431162ea760a8ab9ba4e6fca22f"
     },
     {
       "path": "learn/index.html",
@@ -7203,28 +7203,28 @@
     },
     {
       "path": "spectra/cs137-10k.html",
-      "bytes": 136248,
-      "sha256": "73d1dc37b157ebbbb7c45a2039fe48348605277ca32fe8693f5bda24212b4a7c"
+      "bytes": 149642,
+      "sha256": "501b49c31aed004c7f36045a754303dba232230c9a3423422c897a1620a40df5"
     },
     {
       "path": "spectra/manifest.json",
       "bytes": 6439,
-      "sha256": "a751141f8f4d99a98ab257b5ac3bc5a428ee764584b378499561503950d62de1"
+      "sha256": "61693beb73abd07a634f1ea10cd62d5f014880be0994df1529c68ce963d58571"
     },
     {
       "path": "spectra/million-response.html",
-      "bytes": 144648,
-      "sha256": "45d99fdada50655593942f6989a0b19e5f22c87e462d8c19d0f3161c11907fbe"
+      "bytes": 159554,
+      "sha256": "87eaf7d21d6319f6fd4e8210083890a51620fcee9233c9d1e1f3733aacfef6e8"
     },
     {
       "path": "spectra/million-truth.html",
-      "bytes": 201213,
-      "sha256": "dd5605ce6ec6b5debcc77452612bd95a1b8c0815372bef81ffc944406cce5034"
+      "bytes": 207778,
+      "sha256": "72fb7223882de866ba6555bcf589f23aef6d2c9f3789ae50448f786df08957a8"
     },
     {
       "path": "spectra/pipeline.html",
-      "bytes": 9812335,
-      "sha256": "a96da5c82f702dc3ada3a2f81159ac05802853321a44c27ba8d3e83334839940"
+      "bytes": 9814688,
+      "sha256": "3d9a08deb88891b282858990e37abd96e5af63c3fa5f4d2db6547d9fc77f730c"
     }
   ]
 }
