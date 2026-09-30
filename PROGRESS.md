@@ -5,7 +5,38 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: reciprocal current Geant4 readers
+## Current handoff: bounded preamp waveform audit
+
+M3 equation/saved-waveform audit is complete; see `tools/PREAMP_AUDIT.md`.
+The owner's screenshot is AK02 event2 from the older100-primary/model mono662
+pipeline, NOT the million-native campaign. All49 charge samples through96ns are
+retained in the600-point display; its negative preamp minimum is-13.465970mV at94ns.
+The saved readout ends at10096ns with-11.024563mV. Cf0.6pF and feedback50us explain
+this: the appended10us is20 shaping constants, only0.2 feedback constants, leaving
+81.873% of the post-charge preamp amplitude. No display sign inversion, charge-unit
+error or decay-exponent error was found in the bounded inspected path.
+
+31 numerical assertions using the unchanged actual Readout module passed,
+including analytic injection/finite-current checks, scaling/sign/grid/charge
+balance and comparison to this saved event. Complete49-sample charge support was
+used, not generic reconstruction from decimated traces or a spectrum. The older
+producer and current tested code hashes remain distinct; no receipt was rebased.
+Evidence: `.local/preamp-audit-v1/COMPLETE.json`. Two original Astra reviewers used
+XHigh for physics and High for data/display, then exchanged actual findings.
+
+This event's stopped_without_contact flag remains. Zero current after the saved
+endpoint is not proof of physical collection completion. Laboratory inventory is
+partly documented (LBNL Square/BF862, nominal0.6pF, ORTEC671/927, DSOX3034A), but
+actual acquisition node/polarity/gain/coupling/reset details remain unverified.
+No claim of experimental waveform agreement or generic replay eligibility follows.
+
+NEXT: M3 presentation follow-up: leading-edge zoom using saved samples, feedback
+constant/saved-endpoint labels, and clear preamp versus shaped-node polarity.
+Do not globally invert/smooth signals or invent pretrigger/extended saved tails.
+Then retain M4 eligibility/replay and subsequent roadmap. Original code/settings,
+website and1799 protected file contents/sizes/mtimes were unchanged by this audit.
+
+## Retained reciprocal current Geant4 readers
 
 M2 now has maintained saved-data readers at `viewers/geant4-assembly.html` and
 `viewers/ge-positive.html`, with visible reciprocal buttons and actual model/
@@ -62,12 +93,8 @@ is now terminal. Never repeat that completed development merely to recover a rep
 The sparse AK02 spectrum retains genuine quantization gaps: the frozen synthetic
 ADC spacing is1.2455808018023982keV for1keV bins. Do not smooth or rebin old results.
 
-NEXT M3: bounded preamp code/display/laboratory audit. Check signed current,
-charge conversion, Q/Cf, feedback decay, time grid/window, display decimation and
-ADC gain/full-scale versus calibrated code spacing. Distinguish display defects,
-implementation errors and idealized hardware assumptions. Actual lab preamp/node/
-coupling/termination settings remain unknown where not recorded; measured AK02/
-SAP22 pulse files were not retained. Do not simply invert or smooth the waveform.
+M3 numerical/saved-example audit is now recorded above. Presentation follow-up and
+actual laboratory transfer/polarity validation remain open.
 
 Then M4 full signed-charge eligibility and separately calibrated electronics-only
 derivatives; M5 per-group charge/readout commits for NEW small runs; M6 tiny
@@ -76,7 +103,7 @@ physically checked detector adapters and actual fresh-machine reproduction.
 Keep the laboratory remage/SSD workflow, not a wholesale simflow rewrite.
 Astra ONLY for all Codex tasks, High minimum, supported XHigh when useful; never
 invent higher settings, use another model, paid API fallback or reset credits.
-M3/preamp/replay/group-recovery/new-detector/cold-machine acceptance remains pending.
+M3 UI/laboratory-response, general replay/group-recovery/new-detector/cold-machine acceptance remains pending.
 
 Historical raw-viewer suites remain source-incompatible; this round used
 sealed saved-bundle checks without rebasing those older producer bindings.
