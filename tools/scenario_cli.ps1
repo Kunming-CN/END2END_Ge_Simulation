@@ -1,7 +1,7 @@
 # Low-code Windows entry for reviewed local scenarios. No installs or physics hidden here.
 [CmdletBinding()]
 param(
-  [ValidateSet('menu','check','setup','run','resume','recover','open','status','detectors','inspect','settings')][string]$Action='menu',
+  [ValidateSet('menu','check','setup','run','resume','recover','open','status','detectors','inspect','settings','charge-check')][string]$Action='menu',
   [ValidateSet('interactive','show','check','save','compare')][string]$SettingsMode='interactive',
   [ValidateSet('simple','advanced')][string]$View='simple',
   [string]$SettingsFile='',
@@ -23,6 +23,12 @@ param(
 $ErrorActionPreference='Stop'
 $script:customRequested=$PSBoundParameters.ContainsKey('ElectronicsProfile')
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
+if($Action -eq 'charge-check'){
+  foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','Detector','Json')){throw "charge-check accepts only -Name, -Detector and -Json; forbidden: $key"}}
+  if(!$Name){throw 'charge-check requires -Name'}
+  & (Join-Path $PSScriptRoot 'charge_check.ps1') -Name $Name -Detector $Detector -Json:$Json
+  exit $LASTEXITCODE
+}
 if($Action -eq 'recover'){
   foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','DryRun','Json')){throw "recover accepts only -Name, -DryRun and -Json; forbidden: $key"}}
   if(!$Name){throw 'recover requires -Name'}
@@ -249,6 +255,7 @@ function Invoke-Run([bool]$ResumeMode){
 function Menu {
   Write-Host '';Write-Host 'END2END Ge Simulation';Write-Host '1) Check setup';Write-Host '2) Setup / build local exporter';Write-Host '3) New LBNL Cs137 run';Write-Host '4) Resume a saved run (inspect first)';Write-Host '5) Open saved results';Write-Host '6) List run status';Write-Host '7) Detector capabilities';Write-Host '8) Inspect saved run - no calculation';Write-Host '9) Electronics settings - save for a new run';Write-Host 'Q) Quit'
   Write-Host 'R) Recover completed child metadata - no calculation (Run.cmd recover -Name NAME [-DryRun] [-Json])'
+  Write-Host 'Saved charge coverage: Run.cmd charge-check -Name NAME [-Detector AK02|SAP22|both] [-Json] (tools/CHARGE_REUSE.md)'
   $choice=(Read-Host 'Select').Trim().ToUpperInvariant()
   switch($choice){
     '1'{$script:Action='check'}

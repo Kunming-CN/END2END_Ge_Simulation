@@ -5,33 +5,70 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current priority: M4 saved-charge eligibility and reuse
+## Current priority: M4a saved-charge inspection; M4b next
 
-Owner decision (2026-09-29 local): defer the remaining preamplifier/ORTEC work.
-Do not continue M3 waveform UI polishing, commercial-filter matching, noise/
-optimum-resolution calibration or real-hardware parameter tuning until the owner
-reopens that topic. Retain the completed bounded diagnostic and its limitations;
-no global waveform inversion, parameter changes or new hardware claims.
+M4a provides `.\Run.cmd charge-check -Name NAME [-Detector AK02|SAP22|both] [-Json]`.
+It is READ-ONLY inspection, not an electronics replay command. It uses the same
+Python inspect_run API for CLI and future interfaces, without Julia/WSL/readiness
+probes, output reservation or upstream calculation. See `tools/CHARGE_REUSE.md`.
+Storage, producer compatibility, runtime and replay capability are separate fields.
+Runtime remains NOT_CHECKED, replay NOT_IMPLEMENTED and eligible=false at M4a.
+An exit0 means inspection completed, not that calculation is authorized.
 
-NEXT M4a: read-only coverage/provenance check of existing signed-charge data.
-Distinguish full native-completed group coverage, example-only traces, missing/
-truncated samples and incompatible producer/runtime. Preserve primary/event/group
-identity, zero-primary ledger, native failures and charge endpoint flags. Start
-with a small saved candidate, not a blanket million-result conversion.
-M4b follows only for eligible inputs: create separately recorded electronics-only
-derivatives using the existing explicitly synthetic model. Same-configuration
-reproduction and independent injection calibration precede controlled configuration
-changes. No Geant4, field or drift call, no per-event truth-fitted gain, no claim
-of ORTEC-equivalent response or optimal experimental energy resolution.
-If no saved candidate qualifies, report the exact gap; add complete-charge output
-for NEW bounded runs with M5 instead of weakening checks or rerunning production.
+The actual saved custom AK02 500-decay candidate has all4 native-success groups
+and20,008 signed-charge samples despite the examples label. All500 primaries,
+including496 zeros, reconcile. Endpoint step-limit flags remain26/88/35/59;
+complete storage is NOT complete physical charge collection. Child/transport
+sources match, while changed parent launcher/control sources are reported separately.
+Original receipts and resume gates are unchanged. Unsupported serialized/large
+formats need an explicitly compatible reader, not automatic conversion or reruns.
 
-Then M5: atomic per-group charge/readout checkpoints for NEW small runs;
-M6: one optional official remage/LH5/reboost interface trial after a narrow actual
-API/input check, with corrections off and no whole-simflow rewrite;
-M7: physically checked detector adapters, genuine fresh-machine reproduction,
-and only later measured, domain-bounded acceleration.
-This turn changes the plan only: no agents, implementation or simulation started.
+The stream interruption was reconciled from actual writer/agent exit records.
+Prior implementation and planning were real but not release-complete. The same
+Astra writer was resumed at XHigh for the reviewers' bounded lineage, malformed
+input and final-recheck issues; do not repeat completed plan discussions or tests
+merely because ChatGPT displayed Thinking failed. Terminal corrected reviews,
+independent CLI/no-write tests and preservation are in
+`.local/charge-reuse-v1/COMPLETE.json`; old failures remain separate evidence.
+
+Owner's M3 deferral remains: do NOT resume preamp waveform polishing, ORTEC
+filter matching, noise/optimum-resolution calibration or hardware tuning until
+explicitly reopened. M4b may use the existing labelled synthetic electronics only.
+
+NEXT M4b: independently verify supported runtime/reader, then make separately
+recorded electronics-only derivatives from eligible complete charge. Reproduce
+same settings before controlled changes; fixed independent injection calibration,
+no per-event truth fit, no Geant4/field/drift call and no old-result overwrite.
+If compatibility/support fails, report the gap and improve complete-charge saving
+for NEW bounded runs rather than replaying completed production.
+Then M5 per-group charge/readout checkpoints for NEW runs; M6 tiny optional
+existing-LH5/official API trial; M7 physically checked adapters and genuine
+independent reproduction. No whole-simflow rewrite or premature GUI framework.
+
+## Appended owner roadmap: new students, no-source-edit, mouse control, extensions
+
+Detailed future requirements and acceptance criteria are in
+`tools/ONBOARDING_EXTENSIBILITY_PLAN.md`. These follow M4-M7, not replace them.
+Two existing Astra advisers independently discussed and cross-reviewed the plan.
+They are NOT the two future project-naive testers; no student acceptance is claimed.
+M8 uses TWO NEW threads, neutral working context and public GitHub materials only,
+separate clean checkout/output roots, no maintainer caches/hints or quiet source
+repairs. Test discovery/install/run/results/stop/resume and critique GitHub menus,
+clutter, duplicate/outdated content and clarity. Record every blocker and help
+request. Same-machine clean checkout is not fresh-machine installation proof.
+M9 fixes those observed problems so documented routine tasks need no code or
+manual YAML/JSON edits. M10 adds a mouse-driven local interface using the SAME
+backend configuration/preflight/run/stop/resume contracts, not a second simulator.
+M11 proves source/type/pose changes, another validated detector and ONE vetted
+cryostat preset/adapter. Supported choices use configuration; truly new unsupported
+geometry or physics can require a documented, tested developer adapter.
+Record units/frames/transforms, capabilities, materials/containment/overlap,
+readout mapping, source time/normalization and reuse boundaries from now on,
+without implementing the later GUI or a schema overhaul ahead of the roadmap.
+
+Validation: 88 corrected checker tests plus64 unchanged-dependency regressions;
+7 independent public CLI cases,6 independent review checks and1799 protected
+files unchanged. These are software/storage tests, not new physical validation.
 
 ## Retained bounded preamp waveform audit
 
