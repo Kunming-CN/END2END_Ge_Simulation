@@ -1,11 +1,65 @@
 # Current project state and next steps
 
 Updated: 2026-09-30. Current status below supersedes historical milestone notes.
-The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science worker is active.
+The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No original campaign worker is active.
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: M5a checkpointed saved-charge replay
+## Current handoff: M5b experimental native-charge checkpoints accepted
+
+Accepted small milestone: NEW SSD native-charge generation now has verified
+per-group commits and interruption/resume for the fixed AK02 engineering cohort.
+**Full M5b is NOT complete.** Ordinary entry/readout/calibration integration remains
+next. M5a saved-charge electronics replay remains accepted at `2124d6f`; do not
+restart it or the completed million-event campaigns after a chat interruption.
+
+The current candidate passed **48 mocked-native software tests** and separate
+**actual SSD host-v4** reference/driver-death/resume acceptance. The selected ledger
+retains original primaries 0/2594/3950, one true zero, 91 deposition rows and two
+nonzero groups with 5002 samples/group. Recovery calculates only the unfinished
+group. Full signed native records/identities/endpoints/flags match uninterrupted
+work exactly, excluding native_seconds only, and match preserved host-v3 records.
+Committed first-group data, witnesses and inputs retain their SHA/size/mtime.
+Completed resume is read-only without Julia lookup/probing or a worker launch.
+
+All three independent reviewers accepted scoped closure using actual verified
+`gpt-6.1-sol` / `ultra` sessions. Integrity and the fresh third-party reviewer found
+that optional/count-only progress could requeue lost completed work. The same
+writer reproduced three real-file mocked cases, then added mandatory manifest-bound
+completed-key/count authority. All three cases now refuse before any probe/worker
+or write; legitimate newer commits remain reusable. The same reviewer threads
+closed the fix; initial implementation/reviews were not restarted.
+
+The native adapter/backend, physics/settings/seeds, models, dependency locks and
+shared M5a helpers were not changed by the lifecycle correction. Original 29,055
+protected files, 4,518 prior-round evidence files and 35 frozen numerical/configuration
+boundaries passed exact preservation checks. Earlier probe/fixture failures and
+successful host-v3 outputs remain intact; no old source/output was rebased.
+
+Owner-machine evidence is under `.local/native-group-checkpoint-v1/`:
+`implementation/lifecycle-v1/FREEZE.json`, `implementation/lifecycle-v1/tests/RESULT.json`, `implementation/host-acceptance-v4/COMPLETE.json`,
+`coordinator-host-v4-audit.json`, and `REVIEW_CLOSURE.json`.
+The round-level `COMPLETE.json` records the release commit, verified local/remote
+parity and ownership release; absence of that receipt means release is not closed.
+Usage and restrictions: [experimental charge checkpoints](tools/NATIVE_GROUP_CHECKPOINTS.md).
+
+**Next: continue M5b, not M6.** Carry the verified charge commits into the existing
+electronics/readout/calibration orchestration with one entry and output root.
+Keep charge and electronics provenance/stage boundaries distinct, preserve the
+zero-event ledger and transport flags, and declare a bounded end-to-end recovery
+acceptance before implementation. Do not silently create another campaign
+framework. Broader consolidation or replacement requires owner discussion.
+
+This remains an experimental, fixed-cohort, private-input charge-only pilot.
+The negative signal segment and 143/93 step-limit flags remain visible; numerical
+completion does not establish physical collection/CCE convergence. Readout is
+still null/pending. Hardware/noise calibration, SAP22 host acceptance, general
+power-loss recovery and fresh-machine usability are not claimed.
+M3 and M8/M9 remain deferred; no new environment, PATH/WSL/global-default change,
+website rebuild or reset/banked-reset action was performed. Further development
+and review use the requested model settings without changing global defaults.
+
+## Retained M5a checkpointed saved-charge replay
 
 M5a adds opt-in `-CheckpointGroups` to `Run.cmd replay-readout`, with
 `-StopAfterGroups N`, `-Resume` and read-only `-DryRun`. This imports already saved

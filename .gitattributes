@@ -115,3 +115,7 @@ tools/replay_profile.ps1 text eol=lf
 # M5a checkpoint source bindings use stable checkout bytes.
 tools/group_checkpoints.py text eol=lf
 simulation/replay_groups.jl text eol=lf
+# M5b native-charge provenance uses stable checkout bytes.
+tools/native_group_checkpoints.py text eol=lf
+tools/test_native_group_checkpoints.py text eol=lf
+simulation/native_groups.jl text eol=lf

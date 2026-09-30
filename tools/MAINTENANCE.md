@@ -20,6 +20,7 @@ another complete installation recipe.
 | Scenario eligibility labels | `scenarios/detector-capabilities.json`; backend restrictions remain independently enforced |
 | Electronics settings and configuration preflight | `tools/electronics_settings.ps1`, `electronics_execution.ps1`, `scenario_cli.ps1`; see [ELECTRONICS_SETTINGS.md](ELECTRONICS_SETTINGS.md) |
 | Saved-run validation and inspection | `tools/native_run_validation.ps1`, `inspect_native_run.ps1`; see [INSPECT_RUNS.md](INSPECT_RUNS.md) |
+| Bounded NEW native-charge group commits | `tools/native_group_checkpoints.py`, `simulation/native_groups.jl`; see [charge-only scope](NATIVE_GROUP_CHECKPOINTS.md). Host acceptance is separate. |
 | Local file/result index | `tools/build_local_dashboard.py`, `local_paths.py`, `open_workspace.ps1` |
 
 Never hand-edit generated `docs/` files. Do not alter frozen model files,

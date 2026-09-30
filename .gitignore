@@ -156,3 +156,5 @@
 !simulation/test_replay_readout.jl
 # Opt-in M5a saved-charge checkpoints; generated groups remain local.
 !simulation/replay_groups.jl
+# Additive M5b tiny native-charge adapter; outputs/evidence remain local.
+!simulation/native_groups.jl
