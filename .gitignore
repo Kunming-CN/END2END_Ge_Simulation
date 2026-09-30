@@ -154,3 +154,5 @@
 # Additive M4b electronics-only worker; no generated replay artifacts.
 !simulation/replay_readout.jl
 !simulation/test_replay_readout.jl
+# Opt-in M5a saved-charge checkpoints; generated groups remain local.
+!simulation/replay_groups.jl

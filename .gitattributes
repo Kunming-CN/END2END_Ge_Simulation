@@ -112,3 +112,6 @@ tools/charge_check.ps1 text eol=lf
 # M4b helper source hashes must be stable on Windows checkouts.
 tools/replay_readout.ps1 text eol=lf
 tools/replay_profile.ps1 text eol=lf
+# M5a checkpoint source bindings use stable checkout bytes.
+tools/group_checkpoints.py text eol=lf
+simulation/replay_groups.jl text eol=lf

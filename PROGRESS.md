@@ -5,67 +5,80 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: M4b saved-charge electronics replay
+## Current handoff: M5a checkpointed saved-charge replay
 
-`Run.cmd replay-readout -Name SOURCE -ReplayName NEW [-Detector AK02|SAP22|both]
-[-ElectronicsProfile PATH] [-DryRun] [-Json]` creates a separate, checked synthetic
-electronics derivative. No Geant4, field solve or SSD charge transport is called.
-Dry-run checks stored support/configuration without Julia or output reservation.
-The current M4a observer still reports conservative runtime/replay eligibility;
-the separate M4b command performs its own actual runtime and completion checks.
-See `tools/CHARGE_REUSE.md` for commands, limits and receipt/output locations.
+M5a adds opt-in `-CheckpointGroups` to `Run.cmd replay-readout`, with
+`-StopAfterGroups N`, `-Resume` and read-only `-DryRun`. This imports already saved
+charge and checkpoints NEW electronics derivatives; M5b checkpoints during NEW
+native charge generation remain unfinished. Ordinary one-shot M4b is still default.
+See `tools/GROUP_CHECKPOINTS.md` and `tools/CHARGE_REUSE.md`.
 
-Actual normal-host acceptance used the existing Julia1.13.0/JSON1.9.0 installation
-and unchanged readout modules. Same settings reproduced original calibration,
-all scalar records and saved traces; identities/clocks/ADC/selection were exact,
-with predeclared analog tolerances. A threshold-only0.05V derivative accepted
-213/450 and rejected220/325 while analog signals/calibration/ADC stayed unchanged.
-Both retained500 primaries,496 zeros,4 groups,20008 charge samples and step-limit
-flags26/88/35/59. Full stored coverage is NOT complete physical charge collection.
-Successful derivatives are `.local/replays/m4b-coordinator-host-v2-same` and
-`m4b-coordinator-host-v2-threshold`; the earlier failed derivative remains evidence.
+The immutable initial manifest defines all expected groups and the full primary
+ledger. Charge, fixed-injection calibration and electronic group results have
+bound commits plus separate witnesses. Resume validates every committed group
+before starting missing work. Missing/corrupt committed records are refused, not
+silently recalculated. Original zeros, signed charge, native failure nulls and
+endpoint/step-limit flags remain. No source/config/runtime pin is rebased.
 
-The driver retains the source read-only exclusive lease, records exact inputs,
-validates loaded runtime/profile/census/worker output, and publishes an atomic
-outer receipt only after final checks. Repeat output names never overwrite.
-Native-failure nulls and signed negative input have explicit software fixtures;
-actual failed-native and SAP22 numerical replay were not newly certified here.
-M5 per-group recovery and general large/serialized replay remain undelivered.
+One sequential Julia worker runs per execution attempt, with driver verification
+and acknowledgement at each group. Calibration is reused, not recalculated on
+each resume. StopAfterGroups counts newly completed groups in that command;
+completed resume is a read-only no-op, even with an invalid JULIA_EXE override.
 
-Final evidence:27 current replay workflow tests,88 checker tests,21 actual Julia
-parser/runtime assertions,7 actual independent CLI commands with2 successful
-numerical derivatives,2 final valid dry-runs and current read-only revalidation
-of both immutable derivatives. All1799 protected files remain exact in hash,
-size and mtime, including the61-file source run. No original science was rerun.
+Actual normal-host acceptance produced two NEW four-group electronics derivatives:
+`m5a-host-v2` paused after1, then2, then completed4, with no duplicate group work;
+`m5a-crash-death-v2` survived test-driver exit75 after verified group1 commit and
+before worker ACK, then resumed the remaining groups. The child exited via closed
+pipe without an external kill. Earlier group/calibration/charge/witness/input
+hashes, sizes and mtimes remained exact. Both final scalar/calibration/trace
+results matched the immutable accepted M4b reference under predeclared gates.
+The500-primary/496-zero census,20008 samples and flags26/88/35/59 remained.
+No Geant4, field solve, SSD charge production or original simulation was rerun.
 
-The author left a frozen handoff but stalled before its final response; only that
-idle author tree was closed, and exit1 remains explicitly coordinator-induced.
-Sandbox Julia path refusal was not a broken host installation. The new worker's
-mixed-type metadata and quoted-numeric CSV defects were corrected and tested on
-the host. A non-grid gate-verifier defect was independently reproduced/fixed.
-Physics review subsequently found missing two-sample gate preflight: invalid
-windows now fail before Julia/allocation. Explicit empty profiles cannot silently
-fall back. An AST comparison proves those last two guards are the only execution
-code delta after the successful numerical runs; original receipts stay unchanged.
-Later tests hit an audit-helper traversal error and pvpython's empty-argument
-startup bug; scoped test-only corrections retained their criteria and failures.
-No permission, installation, global PATH/package/default-model change was made.
+Software evidence:22 current checkpoint tests,88 M4a checks,27 one-shot M4b tests,
+23 settings tests and dispatch checks. Fixture process-death tests are separately
+labelled from the actual Julia/driver-death host test. All1835 baseline-protected
+files, including prior replays and the61-file source run, remain exact.
 
-Two scoped reviewers and a NEW independent third-party detail/direction reviewer
-used GPT-6.1-Sol Ultra, confirmed by actual session metadata; their initial
-reports and cross-closure are in `.local/charge-replay-v1/`. The third-party
-assessment supports the goal and shared-backend approach. Optional idea for owner
-discussion: a concise human result summary with synthetic-model label, calibration
-slope and receipt path. It is not implemented or a reason to build the GUI early.
-Complete test/source/preservation/Git closure: `.local/charge-replay-v1/COMPLETE.json`.
+This is bounded recovery, not every crash/power-loss case: canonical data lacking
+its receipt/witness, final worker data without COMPLETE, and incomplete initial
+snapshots are conservatively refused. Partial attempts remain evidence. These
+limitations are documented, not bypassed with orphan adoption or altered hashes.
+Complete stored support and software reproduction are not physical collection,
+noise/ORTEC calibration, SAP22 numerical acceptance or fresh-machine validation.
 
-NEXT M5: bounded atomic per-group charge/readout checkpoints for NEW small runs;
-then M6 optional existing-LH5/official API pilot and M7 physically checked adapters.
-M3 preamp/ORTEC/noise/optimal-resolution work and M8/M9 novice/no-code trials stay
-DEFERRED. Fresh-machine tests wait for a second computer; no installation trials
-on this working PC. M10/M11 remain future mouse-interface/extension work using
-the same backend. Maintain one project and tracked local/GitHub source/config
-parity; private data, machine-specific paths and evidence remain local.
+Retained failures include Windows staged-file read-only fsync, deep test paths,
+a shared-helper local-variable omission, and the additive Julia worker's local
+keys shadowing Base.keys. Fixes did not alter frozen numerical modules or global
+settings. The failed m5a-host-v1 derivative and earlier test receipts remain.
+The host-tested candidate and original author freeze are distinct evidence.
+
+Round evidence and review closure: `.local/group-checkpoint-v1/COMPLETE.json`.
+Two scoped reviews plus a NEW independent detail/direction review use Sol6.1 Ultra.
+
+Optional reporting follow-up: after a later failure, nested preliminary source
+observations should be labelled nonfinal or cleared. Outer failed status already
+prevents completion; do not use nested flags to override it. This reporting
+improvement is recorded, not implemented as part of this accepted numerical path.
+
+Independent direction review supports the shared-backend M5a scope. Optional
+idea: show completed/expected groups in ordinary paused text, as JSON already does.
+It is not implemented and should not delay M5b. The first integrity review hit
+provider capacity; its failed receipt remains, with a same-thread/model retry.
+
+NEXT M5b: add tested group commits to NEW native charge-generation runs without
+rewriting existing producers/results; then M6 optional interface pilot and M7
+physically checked adapters. M3 and M8/M9 remain DEFERRED; fresh-machine trials
+wait for the owner's second computer. No new environments, global settings,
+GUI or website build were introduced by M5a. Keep one project and tracked
+local/GitHub configuration parity; private evidence and outputs stay local.
+
+## Retained M4b saved-charge electronics replay
+
+One-shot M4b remains available without CheckpointGroups. Its actual same-profile
+and threshold-only acceptance remains in `.local/charge-replay-v1/COMPLETE.json`.
+M4a's conservative inspection fields do not themselves authorize a calculation;
+replay/checkpoint commands perform separate runtime and completion checks.
 
 ## Retained bounded preamp waveform audit
 

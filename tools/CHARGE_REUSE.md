@@ -125,8 +125,9 @@ python -B tools/test_charge_check.py --evidence .local/charge-reuse-v1/implement
 .\Run.cmd replay-readout -Name SOURCE -ReplayName OTHER -ElectronicsProfile .local/electronics-profiles/PROFILE.json -Json
 ```
 
-Only `-Name`, `-ReplayName`, `-Detector`, `-ElectronicsProfile`, `-DryRun` and
-`-Json` are accepted. Default `both` selects the source's recorded detectors.
+The one-shot mode accepts `-Name`, `-ReplayName`, `-Detector`, `-ElectronicsProfile`,
+`-DryRun` and `-Json`; opt-in M5a adds the checkpoint flags documented below.
+Default `both` selects the source's recorded detectors.
 Omitting a profile preserves each detector's recorded effective profile.
 An explicit profile uses the existing settings contract: schema-2 profiles or
 current-source-bound schema-1 settings bundles, including checked ancestry.
@@ -176,8 +177,9 @@ Traces are display-decimated outputs and are never generic replay inputs.
 Limits include the M4a reader caps, 2,000,000 charge samples, 20,000,000 analog
 samples, per-group 500,000 samples, 600 s worker time, 4 MiB joined child output
 (60 s/64 KiB runtime probe). Requested settings exceeding injection calibration
-bounds fail. M5 per-group recovery, serialized/large readers, noise/hardware
-fitting, waveform ADC acquisition and new physics remain unsupported.
+bounds fail. One-shot replay has no group recovery; opt-in saved-charge M5a is
+documented below. Native-production checkpoints, serialized/large readers,
+noise/hardware fitting, waveform ADC acquisition and new physics remain unsupported.
 
 Same-setting acceptance gates are fixed before calculation: analog voltage
 `1e-11 V` absolute plus `1e-10` relative, energy `1e-8 keV`, charge `1e-25 C`;
@@ -196,6 +198,17 @@ pvpython --no-mpi --disable-registry -B tools/test_replay_readout.py --real --ev
 ```
 
 ## Recorded host acceptance and remaining limits
+
+Opt-in M5a checkpoints for **new saved-charge electronics derivatives** now use
+the same `replay-readout` entry with `-CheckpointGroups`, `-StopAfterGroups N` and
+`-Resume`. Saved-progress `-DryRun` and completed resume launch no Julia and write
+nothing. The default one-shot workflow remains unchanged. See
+[GROUP_CHECKPOINTS.md](GROUP_CHECKPOINTS.md) for strict flags, immutable group
+receipts, conservative interruption boundaries, retained evidence and coordinator
+host acceptance. This mode imports saved charge; M5b native-production checkpoints
+are not delivered. M5a passed existing-host cooperative and instrumented process-death
+acceptance; see GROUP_CHECKPOINTS.md and `.local/group-checkpoint-v1/COMPLETE.json`.
+The following retained acceptance concerns the separate one-shot M4b mode.
 
 The normal existing-host acceptance used the public command for two NEW
 same-setting/threshold-only derivatives of the saved AK02 500-primary run.

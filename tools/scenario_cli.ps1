@@ -19,19 +19,28 @@ param(
   [switch]$BuildExporter,
   [switch]$Open,
   [switch]$Json,
-  [switch]$DryRun
+  [switch]$DryRun,
+  [switch]$CheckpointGroups,
+  [switch]$Resume,
+  [ValidateRange(1,400)][int]$StopAfterGroups
 )
 $ErrorActionPreference='Stop'
 $script:customRequested=$PSBoundParameters.ContainsKey('ElectronicsProfile')
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
 if($Action -eq 'replay-readout'){
-  foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','ReplayName','Detector','ElectronicsProfile','DryRun','Json')){throw "replay-readout forbids: $key"}}
+  foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','ReplayName','Detector','ElectronicsProfile','DryRun','Json','CheckpointGroups','Resume','StopAfterGroups')){throw "replay-readout forbids: $key"}}
   if(!$Name -or !$ReplayName){throw 'replay-readout requires -Name SOURCE and -ReplayName NEW'}
   if($PSBoundParameters.ContainsKey('ElectronicsProfile') -and !$ElectronicsProfile){throw 'ElectronicsProfile must not be empty'}
-  & (Join-Path $PSScriptRoot 'replay_readout.ps1') -Name $Name -ReplayName $ReplayName -Detector $Detector -ElectronicsProfile $ElectronicsProfile -DryRun:$DryRun -Json:$Json
+  if(($Resume -or $PSBoundParameters.ContainsKey('StopAfterGroups')) -and !$CheckpointGroups){throw 'Resume/StopAfterGroups require -CheckpointGroups'}
+  if($Resume -and $PSBoundParameters.ContainsKey('ElectronicsProfile')){throw 'No ElectronicsProfile override on checkpoint resume'}
+  $replayArgs=@{Name=$Name;ReplayName=$ReplayName;Detector=$Detector;DryRun=$DryRun;Json=$Json;CheckpointGroups=$CheckpointGroups;Resume=$Resume}
+  if($PSBoundParameters.ContainsKey('ElectronicsProfile')){$replayArgs.ElectronicsProfile=$ElectronicsProfile}
+  if($PSBoundParameters.ContainsKey('StopAfterGroups')){$replayArgs.StopAfterGroups=$StopAfterGroups}
+  & (Join-Path $PSScriptRoot 'replay_readout.ps1') @replayArgs
   exit $LASTEXITCODE
 }
 if($PSBoundParameters.ContainsKey('ReplayName')){throw 'ReplayName requires replay-readout'}
+foreach($key in @('CheckpointGroups','Resume','StopAfterGroups')){if($PSBoundParameters.ContainsKey($key)){throw "$key requires replay-readout"}}
 if($Action -eq 'charge-check'){
   foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','Detector','Json')){throw "charge-check accepts only -Name, -Detector and -Json; forbidden: $key"}}
   if(!$Name){throw 'charge-check requires -Name'}
