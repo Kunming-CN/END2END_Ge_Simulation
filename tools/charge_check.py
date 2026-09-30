@@ -135,6 +135,7 @@ class Reader:
     def __init__(self, root):
         self.root = Path(os.path.abspath(root))
         self.watched = {}
+        self.stamps = {}
         self.total = 0
 
     def path(self, relative):
@@ -153,7 +154,11 @@ class Reader:
     def digest(self, relative, expected=None, size=None):
         path = self.path(relative)
         require(path.is_file(), 'missing file: ' + str(relative), 'missing_file')
-        n = path.stat().st_size
+        before = path.stat()
+        n = before.st_size
+        stamp = (n, before.st_mtime_ns)
+        require(str(relative) not in self.stamps or self.stamps[str(relative)] == stamp,
+                "file metadata changed: " + str(relative), "changed_during_read")
         require(n <= MAX_FILE, 'file exceeds bounded reader: ' + str(relative), 'not_supported')
         if str(relative) not in self.watched:
             self.total += n
@@ -169,6 +174,9 @@ class Reader:
                 require(consumed <= MAX_FILE, 'growing file exceeds reader cap', 'not_supported')
                 h.update(chunk)
         require(consumed == n, 'file size changed during hash: ' + str(relative), 'changed_during_read')
+        after = path.stat()
+        require((after.st_size, after.st_mtime_ns) == stamp, "file changed while hashing: " + str(relative), "changed_during_read")
+        self.stamps[str(relative)] = stamp
         value = h.hexdigest()
         if expected is not None:
             require(isinstance(expected, str) and re.fullmatch('[0-9a-f]{64}', expected), 'invalid SHA256: ' + str(relative))
@@ -841,7 +849,10 @@ def inspect_detector(reader, run, parent, model, result):
     return result
 
 
-def inspect_run(root, name, detector='both'):
+ERRORS = (Rejected, KeyError, TypeError, ValueError, OSError, csv.Error, RecursionError)
+
+
+def _inspection_result(name, detector):
     result = dict(schema_version=1, kind='saved_charge_eligibility_v1', inspection_status='completed',
                   name=name, detector_selection=detector, eligible=False, storage_complete=False,
                   producer_compatible=False, runtime_verified='NOT_CHECKED', replay_supported='NOT_IMPLEMENTED',
@@ -850,48 +861,77 @@ def inspect_run(root, name, detector='both'):
                   scope='M4a stored-charge inspection; complete storage is not complete physical collection or permission to replay.',
                   compatibility_policy='Full recorded child/transport source inventory must match current files and supported recorded versions. Parent control-source differences are reported separately; no resume guard changes.',
                   processes_launched=0, files_written=0)
+    result['eligibility_status'] = 'not_eligible'
+    return result
+
+
+@contextmanager
+def inspection_session(root, name, detector='both'):
+    """Shared read-only reader/lease, retained until the caller finishes.
+
+    The inspection claims describe only the preliminary recheck. Consumers must
+    call reader.recheck() after consumption and before publishing completion.
+    No weaker producer policy or alternate reader is introduced.
+    """
     reader = Reader(root)
+    result = _inspection_result(name, detector)
+    require(isinstance(name, str) and re.fullmatch('[A-Za-z0-9_-]+', name), 'unsafe run name', 'unsafe_path')
+    require(detector in ('AK02', 'SAP22', 'both'), 'unsupported detector', 'invalid_selection')
+    run = '.local/runs/' + name
+    with existing_lock(reader, run + '/run.lock'):
+        try:
+            _inspect_leased(reader, run, detector, result)
+        except ERRORS as error:
+            error.inspection_result = result
+            raise
+        yield reader, result
+
+
+def _inspect_leased(reader, run, detector, result):
+    result['lock_observation'] = 'existing_lock_exclusively_opened_read_only'
+    parent = reader.json(run + '/run.json')
+    require(parent.get('kind') == 'native_campaign_v1', 'compatible_reader_required: only native_campaign_v1 CSV is supported; serialized .jls/checkpoint/archives are not deserialized', 'not_supported')
+    integer(parent['events_per_model'], 'bounded primaries', 1, 10000)
+    require(parent['status'] in ('completed_provisional_native_campaign', 'completed_with_native_failures'), 'nonterminal parent')
+    parent_models = object_value(parent['models'], 'parent models')
+    for child in parent_models.values():
+        object_value(child, 'parent model receipt')
+        object_value(child['counts'], 'parent model counts')
+    models = array_value(parent.get('detectors', list(parent_models)), 'parent detectors')
+    require(models and len(models) == len(set(models)) and all(x in ('AK02','SAP22') for x in models), 'saved detector inventory')
+    equal(set(models), set(parent['models']), 'parent model inventory')
+    selected = models if detector == 'both' else [detector]
+    require(all(x in models for x in selected), 'requested detector absent; no other-run fallback', 'missing_detector')
+    result['original_parent_sources'] = parent['source_sha256']
+    result['parent_source_comparisons'] = source_inventory(reader, parent['source_sha256'], '')
+    result['original_electronics_provenance'] = parent.get('electronics')
+    if any(not c['matches'] for c in result['parent_source_comparisons']):
+        result['findings'].append(dict(code='parent_source_differences', detail='Original launcher/control provenance retained. Current differences do not establish stored-charge corruption; strict resume validators remain unchanged.'))
+    for model in selected:
+        child = dict(detector=model, storage_complete=False, producer_compatible=False,
+                     runtime_verified='NOT_CHECKED', replay_supported='NOT_IMPLEMENTED', eligible=False, findings=[],
+                     verification_final=False, observations_status='nonfinal')
+        result['detectors'].append(child)
+        try:
+            inspect_detector(reader, run, parent, model, child)
+        except (Rejected, KeyError, TypeError, ValueError, OSError, csv.Error, RecursionError) as error:
+            child['findings'].append(finding(error))
+    reader.recheck()
+    result['verification_final'] = True
+    for child in result['detectors']:
+        child.update(verification_final=True, observations_status='final')
+    result['storage_complete'] = all(d['storage_complete'] for d in result['detectors'])
+    result['producer_compatible'] = all(d['producer_compatible'] for d in result['detectors'])
+    result['verified_file_count'] = len(reader.watched)
+
+
+def inspect_run(root, name, detector='both'):
+    result = _inspection_result(name, detector)
     try:
-        require(isinstance(name, str) and re.fullmatch('[A-Za-z0-9_-]+', name), 'unsafe run name', 'unsafe_path')
-        require(detector in ('AK02', 'SAP22', 'both'), 'unsupported detector', 'invalid_selection')
-        run = '.local/runs/' + name
-        with existing_lock(reader, run + '/run.lock'):
-            result['lock_observation'] = 'existing_lock_exclusively_opened_read_only'
-            parent = reader.json(run + '/run.json')
-            require(parent.get('kind') == 'native_campaign_v1', 'compatible_reader_required: only native_campaign_v1 CSV is supported; serialized .jls/checkpoint/archives are not deserialized', 'not_supported')
-            integer(parent['events_per_model'], 'bounded primaries', 1, 10000)
-            require(parent['status'] in ('completed_provisional_native_campaign', 'completed_with_native_failures'), 'nonterminal parent')
-            parent_models = object_value(parent['models'], 'parent models')
-            for child in parent_models.values():
-                object_value(child, 'parent model receipt')
-                object_value(child['counts'], 'parent model counts')
-            models = array_value(parent.get('detectors', list(parent_models)), 'parent detectors')
-            require(models and len(models) == len(set(models)) and all(x in ('AK02','SAP22') for x in models), 'saved detector inventory')
-            equal(set(models), set(parent['models']), 'parent model inventory')
-            selected = models if detector == 'both' else [detector]
-            require(all(x in models for x in selected), 'requested detector absent; no other-run fallback', 'missing_detector')
-            result['original_parent_sources'] = parent['source_sha256']
-            result['parent_source_comparisons'] = source_inventory(reader, parent['source_sha256'], '')
-            result['original_electronics_provenance'] = parent.get('electronics')
-            if any(not c['matches'] for c in result['parent_source_comparisons']):
-                result['findings'].append(dict(code='parent_source_differences', detail='Original launcher/control provenance retained. Current differences do not establish stored-charge corruption; strict resume validators remain unchanged.'))
-            for model in selected:
-                child = dict(detector=model, storage_complete=False, producer_compatible=False,
-                             runtime_verified='NOT_CHECKED', replay_supported='NOT_IMPLEMENTED', eligible=False, findings=[],
-                             verification_final=False, observations_status='nonfinal')
-                result['detectors'].append(child)
-                try:
-                    inspect_detector(reader, run, parent, model, child)
-                except (Rejected, KeyError, TypeError, ValueError, OSError, csv.Error, RecursionError) as error:
-                    child['findings'].append(finding(error))
-            reader.recheck()
-            result['verification_final'] = True
-            for child in result['detectors']:
-                child.update(verification_final=True, observations_status='final')
-            result['storage_complete'] = all(d['storage_complete'] for d in result['detectors'])
-            result['producer_compatible'] = all(d['producer_compatible'] for d in result['detectors'])
-            result['verified_file_count'] = len(reader.watched)
-    except (Rejected, KeyError, TypeError, ValueError, OSError, csv.Error, RecursionError) as error:
+        with inspection_session(root, name, detector) as (_, observed):
+            result = observed
+    except ERRORS as error:
+        result = getattr(error, 'inspection_result', result)
         result['inspection_status'] = 'blocked'
         result.update(storage_complete=False, producer_compatible=False, verification_final=False)
         for child in result['detectors']:
@@ -900,7 +940,6 @@ def inspect_run(root, name, detector='both'):
         result['findings'].append(finding(error))
         if isinstance(error, Rejected) and error.code in ('missing_lock', 'held_or_inaccessible_lock'):
             result['lock_observation'] = error.code
-    result['eligibility_status'] = 'not_eligible'
     return result
 
 

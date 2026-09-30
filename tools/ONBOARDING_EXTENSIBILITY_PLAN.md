@@ -8,6 +8,18 @@ Two existing Astra reviewers independently discussed this plan and exchanged
 findings. They are planning advisers, NOT the two future project-naive testers.
 The future tests require new threads without this project's history.
 
+## Current owner disposition (2026-09-30)
+
+M8 and M9 are DEFERRED until a second computer is available and the owner reopens
+them. Fresh-machine installation aspects of M7 are also not attempted on this
+working computer. No new-student clones, environment installs or global settings
+changes are authorized by the current development request. M10/M11 remain later
+planned backend/UI/extension work, without claiming deferred novice acceptance.
+Current priority is M4b, then M5-M7's available scoped tasks. Preserve one working
+project and synchronize its tracked source/configuration/lockfiles with GitHub.
+The two regular agents now use GPT-6.1-Sol Ultra. Each completed milestone also
+receives a fresh third-party Sol Ultra detail AND goal/direction review.
+
 ## Delivery order and terms
 
 Finish scoped M4a saved-charge eligibility, M4b supported synthetic electronics
@@ -28,9 +40,9 @@ control, and M11 extension proofs. Freeze one release per acceptance milestone.
   genuinely new unsupported geometry/physics may need a documented developer
   adapter once. This does not promise arbitrary uploaded geometry will work.
 
-## M8 - Two genuinely new-student trials
+## M8 - Two genuinely new-student trials (DEFERRED)
 
-Create two NEW Astra sessions, High minimum, and separate source-only checkout
+When reopened, create two NEW sessions using the then-authorized model policy, and separate source-only checkout
 and output roots. Give a neutral task and public GitHub URL/user guide only.
 Launch from a neutral authorized working directory and check automatic instruction
 injection, so project AGENTS/history cannot silently provide the solution.
@@ -64,7 +76,7 @@ Developers fix outside the frozen trial. A now-informed tester's retry is regres
 evidence; a new discovery test needs another new thread. These are AI usability
 proxies, not claims of human-student testing or universal OS support.
 
-## M9 - No-source-edit workflow and clear public entry
+## M9 - No-source-edit workflow and clear public entry (DEFERRED)
 
 Repair observed M8 blockers through the existing backend/menu and one maintained
 user guide. Keep README short: Browse results / Install / Run / Inspect; separate

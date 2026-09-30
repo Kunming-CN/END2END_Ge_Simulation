@@ -108,3 +108,7 @@ tools/viewer_overlay_selection.js text eol=lf
 
 # Keep the new read-only charge-check entry stable across Windows checkouts.
 tools/charge_check.ps1 text eol=lf
+
+# M4b helper source hashes must be stable on Windows checkouts.
+tools/replay_readout.ps1 text eol=lf
+tools/replay_profile.ps1 text eol=lf

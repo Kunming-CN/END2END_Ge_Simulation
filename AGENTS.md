@@ -35,16 +35,27 @@ Do not claim that Work/Codex has been started merely because these instructions 
 
 ## Work/Codex model preference
 
-Owner update (2026-09-29): Astra ONLY for every Codex task, with High as the minimum reasoning level. XHigh is authorized for difficult bounded tasks. Higher effort may be used only if actually supported by Astra in the installed interface; never invent an effort name or fall back to a different model, paid API, Fast mode or reset credits. Record the effective model/effort for each launch.
+Owner update (2026-09-30): use `gpt-6.1-sol` with `model_reasoning_effort="ultra"`
+for this project's development/review agents. This supersedes the earlier Astra-only
+policy; prior receipts remain historical facts. Verify model/effort and working
+root on every launch; never silently substitute a model or weaker setting.
+Do not change global user configuration, install another environment, enable Fast
+or separately billed APIs, or consume reset/banked reset credits. Only the owner
+may use reset credits. Keep all task files in the existing project/evidence root.
 
-The maintainer requested Astra with High reasoning for this project's Work/Codex tasks (2026-09-25).
-- Use model `gpt-6-astra` with `model_reasoning_effort = "high"`.
-- The development computer's user config already has both values; do not replace the entire config or change unrelated settings.
-- When launching Codex programmatically, explicitly select the same model and reasoning level so another profile or task preset cannot silently change them.
-- If using Plan mode, set its supported `plan_mode_reasoning_effort` override to `high` for that run as well.
-- For Work/Codex graphical sessions, verify Astra and High in the session's model control; a project instruction alone is not a model-setting mechanism.
-- Astra High remains default. The maintainer permits supported XHigh or stronger reasoning for difficult bounded reviews; specify and record effective settings. Do not enable separately billed API usage or Fast mode without approval. Never trigger, confirm or consume any banked reset/reset credit; only the owner may do that.
-- Confirm the effective model, reasoning level and project directory when starting a development task. Configuration verification is not a claim that a task has been launched.
+After each implementation milestone, two scoped independent reviewers examine
+physics/electronics and data/workflow integrity. Add a NEW third-party reviewer
+using the same Sol 6.1 Ultra setting, independent of implementation and initial
+peer conclusions. The third review covers details AND whether the goal, direction,
+complexity and user value are appropriate. Exchange concrete findings after initial
+reviews. Fix verified blockers; bring material alternative directions or useful
+ideas to the owner rather than silently broadening work. These are AI reviews.
+
+M8/M9 newcomer/no-code acceptance is deferred until the owner provides a second
+computer. Do not run installation experiments, create novice environments or alter
+system PATH/WSL/global packages on the current machine. Keep tracked local code,
+configuration and lockfiles synchronized with GitHub; retain machine-specific
+paths, private inputs, caches and raw scientific outputs locally and identified.
 
 ## Publication validation
 
@@ -64,7 +75,7 @@ transport/ keeps the Pixi manifest/lock and toy installation checks; large envir
 
 AK02 (Anupama ICPC2) is the Li-contact primary case; SAP22 is a non-Li cross-check, not a matched-geometry experimental control. Defer new GeGI work. Preserve original 78 K / +500 V and +700 V snapshots; first reproduce them, with any nominal 77 K override explicit and consistently recorded. No invented experimental holder/source positions or uncalibrated lifetime claims.
 Read-only research elsewhere under My Drive is authorized; never edit unrelated files. Keep raw transport energy separate from charge response; no double Li loss. Preserve event IDs, deposition times, transforms, zero-deposit primaries and incomplete-collection flags.
-After bounded implementation/testing, use two separate read-only review sessions: (1) HPGe and electronics, (2) particle transport and event integrity. Give both the same tested diff/evidence, then exchange findings for cross-review. Summarize confirmed issues and resolutions in PROGRESS.md. These are AI reviewers, not human certification. Never claim independent agents ran unless launched.
+After bounded implementation/testing, use two separate read-only review sessions: (1) HPGe and electronics, (2) particle transport and event integrity. Give both the same tested diff/evidence, add the independent third-party goal/direction review specified above, then exchange findings for cross-review. Summarize confirmed issues and resolutions in PROGRESS.md. These are AI reviewers, not human certification. Never claim independent agents ran unless launched.
 
 ## Successive authorized rounds
 

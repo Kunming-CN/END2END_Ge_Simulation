@@ -1,7 +1,7 @@
 # Low-code Windows entry for reviewed local scenarios. No installs or physics hidden here.
 [CmdletBinding()]
 param(
-  [ValidateSet('menu','check','setup','run','resume','recover','open','status','detectors','inspect','settings','charge-check')][string]$Action='menu',
+  [ValidateSet('menu','check','setup','run','resume','recover','open','status','detectors','inspect','settings','charge-check','replay-readout')][string]$Action='menu',
   [ValidateSet('interactive','show','check','save','compare')][string]$SettingsMode='interactive',
   [ValidateSet('simple','advanced')][string]$View='simple',
   [string]$SettingsFile='',
@@ -13,6 +13,7 @@ param(
   [ValidateSet('smoke','demo','larger')][string]$Preset='demo',
   [ValidateSet('AK02','SAP22','both')][string]$Detector='both',
   [ValidatePattern('^[A-Za-z0-9_-]*$')][string]$Name='',
+  [ValidatePattern('^[A-Za-z0-9_-]{0,80}$')][string]$ReplayName='',
   [ValidateRange(1,2147483647)][int]$Seed=26092631,
   [string]$Pilot='',
   [switch]$BuildExporter,
@@ -23,6 +24,14 @@ param(
 $ErrorActionPreference='Stop'
 $script:customRequested=$PSBoundParameters.ContainsKey('ElectronicsProfile')
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
+if($Action -eq 'replay-readout'){
+  foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','ReplayName','Detector','ElectronicsProfile','DryRun','Json')){throw "replay-readout forbids: $key"}}
+  if(!$Name -or !$ReplayName){throw 'replay-readout requires -Name SOURCE and -ReplayName NEW'}
+  if($PSBoundParameters.ContainsKey('ElectronicsProfile') -and !$ElectronicsProfile){throw 'ElectronicsProfile must not be empty'}
+  & (Join-Path $PSScriptRoot 'replay_readout.ps1') -Name $Name -ReplayName $ReplayName -Detector $Detector -ElectronicsProfile $ElectronicsProfile -DryRun:$DryRun -Json:$Json
+  exit $LASTEXITCODE
+}
+if($PSBoundParameters.ContainsKey('ReplayName')){throw 'ReplayName requires replay-readout'}
 if($Action -eq 'charge-check'){
   foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','Detector','Json')){throw "charge-check accepts only -Name, -Detector and -Json; forbidden: $key"}}
   if(!$Name){throw 'charge-check requires -Name'}

@@ -1,4 +1,4 @@
-# Saved-charge inspection (M4a)
+# Saved-charge inspection (M4a) and electronics replay (M4b)
 
 From PowerShell at the project root:
 
@@ -108,10 +108,121 @@ Display-decimated `traces.jsonl` never substitutes for charge CSV. Missing/parti
 CSV gives exact missing/truncated findings. `.jls`, checkpoint and other parent
 formats return `not_supported` / `compatible_reader_required`; no arbitrary
 deserialization, SSD load or recursive archive conversion. Numerical convergence,
-calibrated Li CCE, experimental agreement and M4b replay remain out of scope.
+calibrated Li CCE and experimental agreement remain out of scope. The inspector
+itself never performs M4b replay.
 
 Tests use explicit synthetic storage fixtures, not physics acceptance:
 
 ```powershell
 python -B tools/test_charge_check.py --evidence .local/charge-reuse-v1/implementation/NEW_TEST_DIRECTORY
 ```
+
+## Electronics-only derivatives
+
+```powershell
+.\Run.cmd replay-readout -Name custom-electronics-500-ak02-v1 -ReplayName NEW -DryRun -Json
+.\Run.cmd replay-readout -Name custom-electronics-500-ak02-v1 -ReplayName NEW -Detector AK02 -Json
+.\Run.cmd replay-readout -Name SOURCE -ReplayName OTHER -ElectronicsProfile .local/electronics-profiles/PROFILE.json -Json
+```
+
+Only `-Name`, `-ReplayName`, `-Detector`, `-ElectronicsProfile`, `-DryRun` and
+`-Json` are accepted. Default `both` selects the source's recorded detectors.
+Omitting a profile preserves each detector's recorded effective profile.
+An explicit profile uses the existing settings contract: schema-2 profiles or
+current-source-bound schema-1 settings bundles, including checked ancestry.
+Old saved bundle provenance is retained and never rebased. The original run's
+eleven mirrored inputs are still inspected by M4a independently of any override.
+
+`tools/replay_readout.py:replay_run` is the shared backend. It keeps M4a's existing
+exclusive read-only source lock through checks, exact CSV/ledger extraction,
+child execution, independent reconciliation and final checksum/size/mtime checks.
+Missing or held locks are refused. Every native-success group uses complete
+`signals.csv`, with signed induced-equivalent keV and recorded 2.95 eV/2 ns units.
+Native failures keep their original null response and exact reason; zero primaries
+remain in the census. Endpoint/step-limit flags never change.
+
+Dry-run reports `planned` and `runtime_verified=NOT_CHECKED`. It launches no Julia
+or scientific worker, creates no derivative folder, and writes nothing. It checks
+storage, producer, configuration and arithmetic limits; it cannot certify runtime
+availability. An explicit settings file may invoke the read-only PowerShell parser.
+
+Run requires installed Julia **1.13.0 / JSON 1.9.0** in the unchanged simulation
+project/manifest. `JULIA_EXE` selects an existing executable; an invalid explicit
+path fails. Otherwise PATH Julia or the existing pinned Juliaup installation is
+used. No Juliaup update, package installation or environment modification occurs.
+Child-only settings use two Julia threads, one BLAS thread, offline package mode,
+the project/stdlib load path and existing compiled modules. Actual loaded JSON,
+project/manifest and `ReadoutProfiles.process` source/module identities are checked.
+The additive worker includes only `readout_profiles.jl` and its unchanged
+`readout.jl`; it never loads SSD/native-response or transport.
+
+The new `.local/replays/NEW` must not exist. Atomic directory creation prevents
+repeat/concurrent overwrite; failed folders retain evidence and require a new
+name. The driver-owned `run.json` has kind `electronics_replay_v1`, distinct from
+native campaigns. The worker's `worker_complete_untrusted` receipt cannot publish
+trusted outer completion. `completed` (or `completed_with_native_failures`) is
+written only after the child succeeds and every primary/group, flag, signal
+identity, trace grid/current/charge, ADC decision and artifact binding reconciles.
+Failure invalidates final claims. JSON stdout is a summary; full provenance,
+runtime, original receipts, configuration and artifact hashes are in `run.json`.
+
+Electronics uses `ReadoutProfiles.process` with the recorded isolated group origin
+and half-open 100 us window, ending at 99998 ns. Calibration is a separate fixed
+500 keV delta-charge injection for each effective configuration, shared across
+groups; no Edep normalization or event-specific gain. Constant terminal charge
+means zero tail current under the original assumption, not completed collection.
+Traces are display-decimated outputs and are never generic replay inputs.
+
+Limits include the M4a reader caps, 2,000,000 charge samples, 20,000,000 analog
+samples, per-group 500,000 samples, 600 s worker time, 4 MiB joined child output
+(60 s/64 KiB runtime probe). Requested settings exceeding injection calibration
+bounds fail. M5 per-group recovery, serialized/large readers, noise/hardware
+fitting, waveform ADC acquisition and new physics remain unsupported.
+
+Same-setting acceptance gates are fixed before calculation: analog voltage
+`1e-11 V` absolute plus `1e-10` relative, energy `1e-8 keV`, charge `1e-25 C`;
+peak times, ADC codes, acceptance/reasons and census/flags are exact. Small analog
+roundoff could affect a pulse close to a threshold/LSB boundary; those discrete
+gates are never loosened. Agreement verifies software reuse, not experimental CCE.
+The acceptance tool then changes only threshold to 1 V: calibration, analog
+signals, times and ADC codes must remain identical while all four stored peaks
+become rejected and all 500 primaries/496 zeros remain.
+
+```powershell
+# Software fixtures explicitly mock runtime/electronics; no numerical acceptance.
+pvpython --no-mpi --disable-registry -B tools/test_replay_readout.py --evidence .local/charge-replay-v1/implementation/NEW_TESTS
+# Actual existing-Julia acceptance; exactly two NEW electronics derivatives.
+pvpython --no-mpi --disable-registry -B tools/test_replay_readout.py --real --evidence .local/charge-replay-v1/implementation/NEW_ACCEPTANCE --same-name NEW_SAME --changed-name NEW_THRESHOLD
+```
+
+## Recorded host acceptance and remaining limits
+
+The normal existing-host acceptance used the public command for two NEW
+same-setting/threshold-only derivatives of the saved AK02 500-primary run.
+Same-setting calibration, complete scalar records and saved display traces
+reproduced the original under the declared tolerances, with exact clocks,
+identities, ADC codes, selection and endpoint flags. Changing only threshold to
+0.05 V kept calibration/analog traces/ADC unchanged and accepted events 213/450,
+rejecting 220/325. All 500 primaries, 496 zeros and 20,008 charge samples remained.
+Complete stored charge still has step-limit flags; it is not complete collection.
+
+Evidence: `.local/charge-replay-v1/coordinator-host-v2/COMPLETE.json` and
+`host-verification-v2/`. The independent host acceptance uses 0.05 V; the optional
+`--real` test above uses 1 V and is a different predefined check. Its original
+writer-side attempt failed before calculation and is not counted as passed.
+The host checks are not SAP22/native-failure numerical acceptance or general
+serialized-reader, hardware, noise, fresh-machine or GUI validation.
+
+Writer-side Windows sandbox path refusal, a host metadata-type error and the
+first worker's quoted-CSV error remain recorded failures. They were resolved for
+the host workflow without changing installations, global paths or existing
+numerical modules. The failed derivative remains separate from successful ones.
+The author's idle process was closed after its frozen handoff; its exit 1 is not
+reported as a passed implementation test. Actual host receipts supply the
+numerical evidence. Later invalid-gate/profile guards were checked separately
+without rebasing those receipts or recomputing their valid numerical results.
+
+A finite peak gate must contain at least two samples on the recorded 2 ns grid.
+Limits round inward to that grid; invalid gates fail before Julia or output
+reservation. Omitting the profile preserves stored settings; explicitly supplying
+an empty profile is rejected, never silently treated as omission.

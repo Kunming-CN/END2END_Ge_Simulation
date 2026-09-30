@@ -726,7 +726,7 @@ class CustomLineageTests(unittest.TestCase):
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--evidence',required=True);parser.add_argument('tests',nargs='*');args=parser.parse_args()
     EVIDENCE=(ROOT/args.evidence).resolve()
-    if not EVIDENCE.is_relative_to(ROOT/'.local/charge-reuse-v1/implementation'):parser.error('Use charge-reuse implementation evidence')
+    if not any(EVIDENCE.is_relative_to(ROOT/p) for p in ('.local/charge-reuse-v1/implementation', '.local/charge-replay-v1/implementation')):parser.error('Use charge-reuse implementation evidence')
     EVIDENCE.mkdir(parents=True,exist_ok=False)
     save(EVIDENCE/'scope.json',dict(test_only=True,synthetic_storage_contract=True,scientific_acceptance=False,python=sys.executable,argv=sys.argv))
     unittest.main(argv=[__file__,*args.tests],verbosity=2)

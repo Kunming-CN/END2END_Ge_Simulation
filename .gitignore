@@ -150,3 +150,7 @@
 
 # Local workspace launcher; generated indexes and reference documents stay private.
 !Open_Workspace.cmd
+
+# Additive M4b electronics-only worker; no generated replay artifacts.
+!simulation/replay_readout.jl
+!simulation/test_replay_readout.jl
