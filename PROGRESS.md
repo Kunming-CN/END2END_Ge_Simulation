@@ -5,7 +5,35 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: bounded preamp waveform audit
+## Current priority: M4 saved-charge eligibility and reuse
+
+Owner decision (2026-09-29 local): defer the remaining preamplifier/ORTEC work.
+Do not continue M3 waveform UI polishing, commercial-filter matching, noise/
+optimum-resolution calibration or real-hardware parameter tuning until the owner
+reopens that topic. Retain the completed bounded diagnostic and its limitations;
+no global waveform inversion, parameter changes or new hardware claims.
+
+NEXT M4a: read-only coverage/provenance check of existing signed-charge data.
+Distinguish full native-completed group coverage, example-only traces, missing/
+truncated samples and incompatible producer/runtime. Preserve primary/event/group
+identity, zero-primary ledger, native failures and charge endpoint flags. Start
+with a small saved candidate, not a blanket million-result conversion.
+M4b follows only for eligible inputs: create separately recorded electronics-only
+derivatives using the existing explicitly synthetic model. Same-configuration
+reproduction and independent injection calibration precede controlled configuration
+changes. No Geant4, field or drift call, no per-event truth-fitted gain, no claim
+of ORTEC-equivalent response or optimal experimental energy resolution.
+If no saved candidate qualifies, report the exact gap; add complete-charge output
+for NEW bounded runs with M5 instead of weakening checks or rerunning production.
+
+Then M5: atomic per-group charge/readout checkpoints for NEW small runs;
+M6: one optional official remage/LH5/reboost interface trial after a narrow actual
+API/input check, with corrections off and no whole-simflow rewrite;
+M7: physically checked detector adapters, genuine fresh-machine reproduction,
+and only later measured, domain-bounded acceleration.
+This turn changes the plan only: no agents, implementation or simulation started.
+
+## Retained bounded preamp waveform audit
 
 M3 equation/saved-waveform audit is complete; see `tools/PREAMP_AUDIT.md`.
 The owner's screenshot is AK02 event2 from the older100-primary/model mono662
@@ -30,11 +58,8 @@ partly documented (LBNL Square/BF862, nominal0.6pF, ORTEC671/927, DSOX3034A), bu
 actual acquisition node/polarity/gain/coupling/reset details remain unverified.
 No claim of experimental waveform agreement or generic replay eligibility follows.
 
-NEXT: M3 presentation follow-up: leading-edge zoom using saved samples, feedback
-constant/saved-endpoint labels, and clear preamp versus shaped-node polarity.
-Do not globally invert/smooth signals or invent pretrigger/extended saved tails.
-Then retain M4 eligibility/replay and subsequent roadmap. Original code/settings,
-website and1799 protected file contents/sizes/mtimes were unchanged by this audit.
+Remaining M3 work is deferred by the owner; active M4 priorities are above.
+Original audit evidence and unknown hardware settings remain unchanged.
 
 ## Retained reciprocal current Geant4 readers
 
@@ -93,8 +118,8 @@ is now terminal. Never repeat that completed development merely to recover a rep
 The sparse AK02 spectrum retains genuine quantization gaps: the frozen synthetic
 ADC spacing is1.2455808018023982keV for1keV bins. Do not smooth or rebin old results.
 
-M3 numerical/saved-example audit is now recorded above. Presentation follow-up and
-actual laboratory transfer/polarity validation remain open.
+M3 numerical/saved-example audit is recorded above. Remaining M3 presentation and
+hardware-response work is deferred by the owner, not a prerequisite for M4.
 
 Then M4 full signed-charge eligibility and separately calibrated electronics-only
 derivatives; M5 per-group charge/readout commits for NEW small runs; M6 tiny
