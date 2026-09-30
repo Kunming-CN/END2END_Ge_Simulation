@@ -19,15 +19,16 @@
     "examples/cs137-10k/publication.json": "554eece013b193baf48310f5dfb62379d63663fa1ac29a83866428ab52805eec"
   },
   "generators": {
-    "tools/spectrum_display.py": "1aedea420a8422cdbae66fe4d85a89ffb213d67f1ae4af98eb905f592b683ec3",
+    "tools/spectrum_display.py": "3a19385dd77719ae70d7aa8d30fc4b45575375a2a9a151978f065b9bedb5a554",
     "tools/spectrum_plot.py": "f00dbf5efdb393f03eebd501cb71a74bbd268fc3f0cff240de9a7eb54948a29c",
-    "tools/spectrum_controls.js": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094"
+    "tools/spectrum_controls.js": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
+    "tools/viewer_navigation.py": "6178b5ee1cb9c61d74d789535ab9799a040257978990080eb96ab4392b9b040b"
   },
   "pages": {
     "spectra/million-truth.html": {
       "source": "examples/cs137-1m/report.html",
       "source_sha256": "a04c9d0557f150d37fa2b381a445ef5315fbc2cd6dd3a0eccd38026fcd098f35",
-      "sha256": "72fb7223882de866ba6555bcf589f23aef6d2c9f3789ae50448f786df08957a8",
+      "sha256": "c3a9efdf7a6ddf6908b3826e1742cfb5fb5fc8f276e1d651b03d9c31792cd7b0",
       "specs_sha256": "83ee90ccfd3ce820518d94b44941d891dbe69458d74f66fcdce6520570ddb0e7",
       "plot_states": 4,
       "render_components": {
@@ -44,7 +45,7 @@
     "spectra/million-response.html": {
       "source": "examples/cs137-1m-response/report.html",
       "source_sha256": "4de4b264f6df246982b3991bb1cedf3d5eefcf26aa9726e1379e0e511f135b77",
-      "sha256": "87eaf7d21d6319f6fd4e8210083890a51620fcee9233c9d1e1f3733aacfef6e8",
+      "sha256": "fbb4a92da96571b79e1f422374509a9643940c866eb83e1aa46b1d8226a1f0c9",
       "specs_sha256": "2c8660dbc4997b8a6348f3ab5d67f07349390db0ad2b8d4a113eb511011a0539",
       "plot_states": 4,
       "render_components": {
@@ -61,7 +62,7 @@
     "spectra/cs137-10k.html": {
       "source": "examples/cs137-10k/comparison.html",
       "source_sha256": "b94d57dbb9657f68dd8aa0043e8e88203c54a71c1bffae7f38c19e485c1247c4",
-      "sha256": "501b49c31aed004c7f36045a754303dba232230c9a3423422c897a1620a40df5",
+      "sha256": "904dc0f214e2ede1cb7a1c5dbef23bb870fb2c4c60cc3cd887a17d7b9c109e8e",
       "specs_sha256": "261ebe21cb3ef2a25194aea7db3350697496ab22629c0c9c753882ded3db9e8a",
       "plot_states": 10,
       "render_components": {

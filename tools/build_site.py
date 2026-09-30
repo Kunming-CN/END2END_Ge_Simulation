@@ -444,6 +444,8 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         raise ValueError("Current full-site spectrum sources are incomplete; preserve the previous snapshot")
     if spectrum_sources_ready:
         assemble_spectra(OUT)
+    from viewer_navigation import assemble as assemble_readers, route_current_pages as route_readers
+    assemble_readers(OUT)
     from site_restructure import apply as apply_site_structure
     # Tiny failure fixtures used by publication tests intentionally omit the model catalog.
     # Real builds still require models/catalog.json in the final validator below.
@@ -453,6 +455,8 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         route_current_pages(OUT)
         from spectrum_display import finalize as finalize_spectra
         finalize_spectra(OUT)
+    if (OUT / 'viewers/manifest.json').is_file():
+        route_readers(OUT)
     normalize_text_outputs(OUT)
     report = validate(OUT, require_manifest=False, require_models=True)
     (OUT / MANIFEST).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8', newline='\n')

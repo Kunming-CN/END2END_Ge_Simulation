@@ -60,7 +60,7 @@ def apply(site, write_page):
         past=('<section id="native-cs137-10k" class="panel"><h2>Results using this detector</h2>'
               '<p><a href="../../results/cs137-1m/index.html">1M campaign overview</a> · '
               '<a href="../../results/cs137-10k/index.html">Earlier 10k campaign</a> · '
-              '<a href="../../examples/cs137-10k-hits/hit_event_view.html">Explore earlier 10k events</a></p></section>' if model in campaign_models else '')
+              f'<a href="../../examples/cs137-10k-hits/hit_event_view.html?model={model}">Explore earlier 10k Ge-positive events</a></p></section>' if model in campaign_models else '')
         header=(f'<section class="hero"><p><a href="../index.html">All detectors</a> / <a href="index.html">{escape(model)}</a></p>'
                 f'<h1>{escape(model)}</h1><p>{count} contacts · {escape(item.get("coordinate_system",""))} · '
                 f'{escape(item.get("status","Saved model"))}</p></section>')

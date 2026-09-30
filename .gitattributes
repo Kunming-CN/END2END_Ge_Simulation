@@ -101,3 +101,7 @@ tools/electronics_execution.ps1 text eol=lf
 # Recovery intent/control hashes remain byte-stable across Windows checkouts.
 tools/native_recovery.ps1 text eol=lf
 tools/recover_native_run.ps1 text eol=lf
+
+# Current Geant4 reader source hashes retain exact LF bytes on Windows.
+tools/viewer_navigation.js text eol=lf
+tools/viewer_overlay_selection.js text eol=lf

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "build_id": "ba3338a4e867b32944a3cabf1f7b73e90dd68205553d55d00805dc2deae53afd",
-  "file_count": 1444,
-  "total_bytes": 759414130,
-  "html_pages": 93,
-  "local_links_checked": 2764,
+  "build_id": "a8567542e1b6e79d8bbdfa5bdba7c0d1d2735352dbfbccab1d52d87777d8cafd",
+  "file_count": 1447,
+  "total_bytes": 759499009,
+  "html_pages": 95,
+  "local_links_checked": 2777,
   "files": [
     {
       "path": ".nojekyll",
@@ -368,8 +368,8 @@
     },
     {
       "path": "detectors/AK02/index.html",
-      "bytes": 4769,
-      "sha256": "72a5f8e235e98d64a0f19656aa0e466de76bc004f6d11a7f515263994ea7deb0"
+      "bytes": 4773,
+      "sha256": "666551393db92f32e93774b2a0dcd1bb00a0119ce03591025efa4c1ab5e85ada"
     },
     {
       "path": "detectors/AK02/runs/20260922_suite_v3/01_geometry.png",
@@ -5303,8 +5303,8 @@
     },
     {
       "path": "detectors/SAP22/index.html",
-      "bytes": 4783,
-      "sha256": "60ba47faf4d66c6e0fbd6cc229793e22eb906f2690e7542a53715ee4329367b0"
+      "bytes": 4788,
+      "sha256": "818914e93f009e642fd524aaf26937cc2c484b650bf6f188a54c862e57416f38"
     },
     {
       "path": "detectors/SAP22/runs/20260922_suite_v3/01_geometry.png",
@@ -7183,8 +7183,8 @@
     },
     {
       "path": "results/cs137-10k/index.html",
-      "bytes": 3147,
-      "sha256": "125278788ce94ad20b658102f294928942d4aad4ce24da1988ad1f9a5d662ee7"
+      "bytes": 3115,
+      "sha256": "7e617c69cb611d8fbdb88129e35ce28099e2d4bb16539735b1f709ff3f83024e"
     },
     {
       "path": "results/cs137-1m/index.html",
@@ -7203,28 +7203,43 @@
     },
     {
       "path": "spectra/cs137-10k.html",
-      "bytes": 149642,
-      "sha256": "501b49c31aed004c7f36045a754303dba232230c9a3423422c897a1620a40df5"
+      "bytes": 149610,
+      "sha256": "904dc0f214e2ede1cb7a1c5dbef23bb870fb2c4c60cc3cd887a17d7b9c109e8e"
     },
     {
       "path": "spectra/manifest.json",
-      "bytes": 6439,
-      "sha256": "61693beb73abd07a634f1ea10cd62d5f014880be0994df1529c68ce963d58571"
+      "bytes": 6541,
+      "sha256": "602b461eb0e133e9a12f02afd58f010c150a5792ceaeb87fba29aec677e60a07"
     },
     {
       "path": "spectra/million-response.html",
-      "bytes": 159554,
-      "sha256": "87eaf7d21d6319f6fd4e8210083890a51620fcee9233c9d1e1f3733aacfef6e8"
+      "bytes": 159535,
+      "sha256": "fbb4a92da96571b79e1f422374509a9643940c866eb83e1aa46b1d8226a1f0c9"
     },
     {
       "path": "spectra/million-truth.html",
-      "bytes": 207778,
-      "sha256": "72fb7223882de866ba6555bcf589f23aef6d2c9f3789ae50448f786df08957a8"
+      "bytes": 207759,
+      "sha256": "c3a9efdf7a6ddf6908b3826e1742cfb5fb5fc8f276e1d651b03d9c31792cd7b0"
     },
     {
       "path": "spectra/pipeline.html",
       "bytes": 9814688,
       "sha256": "3d9a08deb88891b282858990e37abd96e5af63c3fa5f4d2db6547d9fc77f730c"
+    },
+    {
+      "path": "viewers/ge-positive.html",
+      "bytes": 25088,
+      "sha256": "4d02c0b9aec829242eed96d689162c073f25bc1138e97efca21a8f4cb145d725"
+    },
+    {
+      "path": "viewers/geant4-assembly.html",
+      "bytes": 20862,
+      "sha256": "1cfe6cd1f8b0f8cf92256919428b29a198d335d6d9fd5dfffd52bafc31738498"
+    },
+    {
+      "path": "viewers/manifest.json",
+      "bytes": 38920,
+      "sha256": "2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12"
     }
   ]
 }

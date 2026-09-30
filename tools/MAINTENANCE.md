@@ -15,6 +15,7 @@ another complete installation recipe.
 | Geometry export and validation | `tools/export_ssd_geometry.py`, `geometry_catalog.py`, `ssd_geometry_publication.py` |
 | Browser geometry controls | `tools/ssd_geometry_viewer.html` |
 | Saved energy-spectrum views | `tools/spectrum_display.py`, `spectrum_plot.py`, `spectrum_controls.js`; see [display semantics](SPECTRUM_DISPLAY.md) |
+| Current reciprocal Geant4 readers | `tools/viewer_navigation.py`, `viewer_navigation.js`, `viewer_overlay_selection.js`; see [reader ownership](VIEWER_NAVIGATION.md). Original signed viewers remain frozen. |
 | Windows setup/run guide | `tools/site_guide.html` |
 | Scenario eligibility labels | `scenarios/detector-capabilities.json`; backend restrictions remain independently enforced |
 | Electronics settings and configuration preflight | `tools/electronics_settings.ps1`, `electronics_execution.ps1`, `scenario_cli.ps1`; see [ELECTRONICS_SETTINGS.md](ELECTRONICS_SETTINGS.md) |
@@ -39,6 +40,7 @@ python tools/test_all_detector_pages.py
 python tools/test_site_restructure.py
 python tools/test_site_hierarchy.py
 python tools/test_spectrum_display.py
+python tools/test_viewer_navigation.py
 python tools/test_site.py
 python tools/test_contacts.py
 python tools/check_site.py

@@ -1,0 +1,892 @@
+{
+  "kind": "reciprocal_geant4_readers_v1",
+  "original_files": {
+    "examples/cs137-10k-geometry/AK02/events-00000.json": {
+      "sha256": "fa0c89a31c41d622e482b9ef9d5b013140338777601625f89696262cbc099b35",
+      "bytes": 2039524
+    },
+    "examples/cs137-10k-geometry/AK02/events-00100.json": {
+      "sha256": "e5edf0b98990e19ad344edd763cfbd06df44164b4a0dc22647c48eadb9311871",
+      "bytes": 2062330
+    },
+    "examples/cs137-10k-geometry/AK02/events-00200.json": {
+      "sha256": "76949e1ebaa1e178907a7146e343b594917de678922d55e9569df25649107f5c",
+      "bytes": 2051395
+    },
+    "examples/cs137-10k-geometry/AK02/events-00300.json": {
+      "sha256": "6a9740a9c0307ba7366fa26669cc5cbd23926deb79d95c978d049a1bfd243778",
+      "bytes": 2060121
+    },
+    "examples/cs137-10k-geometry/AK02/events-00400.json": {
+      "sha256": "2a0cb19b95e018eb05572baaf7a16b74ae1aeb0b3cc0161539df7417ce6811cc",
+      "bytes": 2212305
+    },
+    "examples/cs137-10k-geometry/AK02/events-00500.json": {
+      "sha256": "d105d1d12b7c1dce050ec300e15d5e065223e9950c3efff80944932223909318",
+      "bytes": 1982694
+    },
+    "examples/cs137-10k-geometry/AK02/events-00600.json": {
+      "sha256": "827cb7b7379995c73a96c2e09a816dcbfd036313626e4683720793653fc5958e",
+      "bytes": 2483949
+    },
+    "examples/cs137-10k-geometry/AK02/events-00700.json": {
+      "sha256": "57dfb5d300d3c8df268d09228b8233f6b03c87e102849cd09475aad4b8ebfdd4",
+      "bytes": 2148177
+    },
+    "examples/cs137-10k-geometry/AK02/events-00800.json": {
+      "sha256": "28d6782086359948cd719bb2d54af39fba2228bcb5c4986e61cef013da1060e7",
+      "bytes": 2583694
+    },
+    "examples/cs137-10k-geometry/AK02/events-00900.json": {
+      "sha256": "f1d94b8ba5580e613f0a3ea86133aba2bbb85b69d3eb643f2497f788cca30af2",
+      "bytes": 2210814
+    },
+    "examples/cs137-10k-geometry/AK02/events-01000.json": {
+      "sha256": "307f3a5e6a398259f134b3e07a914158632efbd1890f1690f5dab225c932b8fb",
+      "bytes": 2272264
+    },
+    "examples/cs137-10k-geometry/AK02/events-01100.json": {
+      "sha256": "3d4de7a203fbc7dfd9084637fa1834ca9bff840c5ecc700c3ed202e38be6b31c",
+      "bytes": 2356106
+    },
+    "examples/cs137-10k-geometry/AK02/events-01200.json": {
+      "sha256": "6c345509008532176c85756f16aa0a7c274d5ad1833a004f594bbda4f69c2e82",
+      "bytes": 2047679
+    },
+    "examples/cs137-10k-geometry/AK02/events-01300.json": {
+      "sha256": "d3005a17011342daac11cacd90e19bb4184d0a6d2082e3808331e119a4d18089",
+      "bytes": 1977099
+    },
+    "examples/cs137-10k-geometry/AK02/events-01400.json": {
+      "sha256": "e231645aa4fdf64316f4c835687a8c5be4d7d07517abcb423be980dc9946c7c0",
+      "bytes": 1979359
+    },
+    "examples/cs137-10k-geometry/AK02/events-01500.json": {
+      "sha256": "8f87bbd810a3066465068679d6d8682409d5a3dd7442a2f3782dc02d5eb4801b",
+      "bytes": 2244584
+    },
+    "examples/cs137-10k-geometry/AK02/events-01600.json": {
+      "sha256": "f894215739f88e52aa1f5af1dd19791a0471a92a7ae7ba1d9a9e03f5b9465f57",
+      "bytes": 2052234
+    },
+    "examples/cs137-10k-geometry/AK02/events-01700.json": {
+      "sha256": "e5ec7603e33eccad26accd1f3a55ee3d9c0e60e8535a046460525a31566fd5ee",
+      "bytes": 2084724
+    },
+    "examples/cs137-10k-geometry/AK02/events-01800.json": {
+      "sha256": "f615d95781fe00510dba609f542972572f98741414ccf057fd4c5469edd579c9",
+      "bytes": 2291240
+    },
+    "examples/cs137-10k-geometry/AK02/events-01900.json": {
+      "sha256": "d5e3acb4435c8f0e24f0eb0350aa9da0794203fdc4366edeb212e90376c99083",
+      "bytes": 2087007
+    },
+    "examples/cs137-10k-geometry/AK02/events-02000.json": {
+      "sha256": "83dd4ac7133102e56ec15119ad3e4b25c5097497dc7b83a20da0311fc6469a75",
+      "bytes": 2193670
+    },
+    "examples/cs137-10k-geometry/AK02/events-02100.json": {
+      "sha256": "29b6b33742a24d49143f783ff8d79cc91e591df9823afd8b9d3ba8aafa366465",
+      "bytes": 2626331
+    },
+    "examples/cs137-10k-geometry/AK02/events-02200.json": {
+      "sha256": "2f8ef1eb3a6772ea58d4ce90822317da7068791f495b405ed5f574c4bddc707f",
+      "bytes": 2442065
+    },
+    "examples/cs137-10k-geometry/AK02/events-02300.json": {
+      "sha256": "cb08b8d750706e1e2d70ce827f017e1bda908eea88d3581b3cc04a1f8b8862c4",
+      "bytes": 2252078
+    },
+    "examples/cs137-10k-geometry/AK02/events-02400.json": {
+      "sha256": "55db65d5829e81eb5b43ed06c20614f83608de1b95f1779c48f8b6444096a082",
+      "bytes": 2470925
+    },
+    "examples/cs137-10k-geometry/AK02/events-02500.json": {
+      "sha256": "66d3527e93cc19e2854de128735515dd8bb1b4213b2f8d1b08d35e617a5e1262",
+      "bytes": 1993923
+    },
+    "examples/cs137-10k-geometry/AK02/events-02600.json": {
+      "sha256": "3d8d2155154102cce9bbf6ee42ef8a9c4796ee41d93b132897384c4f57e641fc",
+      "bytes": 2297320
+    },
+    "examples/cs137-10k-geometry/AK02/events-02700.json": {
+      "sha256": "dd9141bf506c71ba97eda72bb38c6471dc0c2045b31dc617871a441edb224dc3",
+      "bytes": 1869402
+    },
+    "examples/cs137-10k-geometry/AK02/events-02800.json": {
+      "sha256": "927486a25f479844baa60c796cbd5a5d61c52de435e7977d4d01d12220d5604d",
+      "bytes": 2444410
+    },
+    "examples/cs137-10k-geometry/AK02/events-02900.json": {
+      "sha256": "69db518ba6acdc3991d84611f5ea6a0a91b3d61e06317d08dae5fb541b61ecbc",
+      "bytes": 2683178
+    },
+    "examples/cs137-10k-geometry/AK02/events-03000.json": {
+      "sha256": "06d60f22fa0f6d6f40c4e6e8bdeda98dba05028f22b55ad827ff5b934ebcf65a",
+      "bytes": 2597358
+    },
+    "examples/cs137-10k-geometry/AK02/events-03100.json": {
+      "sha256": "6b97a17afce4bde0571d4b9434d779875b327bf5b95c70d4586fdfbeef2846ac",
+      "bytes": 2101994
+    },
+    "examples/cs137-10k-geometry/AK02/events-03200.json": {
+      "sha256": "fd4a81726ec78b6895e493c42b2c6763ff7d197b5c7e880fcb6c7e759f15929a",
+      "bytes": 2315802
+    },
+    "examples/cs137-10k-geometry/AK02/events-03300.json": {
+      "sha256": "f57942de7a08879e7bbfdb0e61caa60e6997b0f51e71e9db3d327c8109488a2a",
+      "bytes": 2517977
+    },
+    "examples/cs137-10k-geometry/AK02/events-03400.json": {
+      "sha256": "15794828579792899eaff664d30f8ebc13ac7e7a0a773294850a1321d785791e",
+      "bytes": 1864915
+    },
+    "examples/cs137-10k-geometry/AK02/events-03500.json": {
+      "sha256": "f2769d342f403f2a0f22fab74468c212e1c0eb2da972cd5aae50dade7844ae5b",
+      "bytes": 2139841
+    },
+    "examples/cs137-10k-geometry/AK02/events-03600.json": {
+      "sha256": "b8eb14cef208d63f99d006722e48c3f24ba578b07e66e9b9ad40d4ed32667043",
+      "bytes": 2362132
+    },
+    "examples/cs137-10k-geometry/AK02/events-03700.json": {
+      "sha256": "543ae97375bfaf5b80e778831a1d03f9a4cf8e234facdcfb98e95844936f0369",
+      "bytes": 2180532
+    },
+    "examples/cs137-10k-geometry/AK02/events-03800.json": {
+      "sha256": "a8dd68bf987bcb8ad55e7da18d50bd7847cf1a20b6c0d3b2f023e09492ebde18",
+      "bytes": 1964645
+    },
+    "examples/cs137-10k-geometry/AK02/events-03900.json": {
+      "sha256": "8724f973727d224803ad28f7e7886fda4254ba013823bb70bc0899259e5df218",
+      "bytes": 2458736
+    },
+    "examples/cs137-10k-geometry/AK02/events-04000.json": {
+      "sha256": "1d2228b5cd7fff5baace75cb9bbd6e9ffd875133ecc9ea4d5849d02359f253af",
+      "bytes": 2215592
+    },
+    "examples/cs137-10k-geometry/AK02/events-04100.json": {
+      "sha256": "af77d47d4bc771cacb215c7e861190d4b71569372768d0b5134ad8fe7842479f",
+      "bytes": 2598031
+    },
+    "examples/cs137-10k-geometry/AK02/events-04200.json": {
+      "sha256": "0eed522b44771ef3fc290a049d9cc9d04a4f04a2874a7bb4dd937d7590f27d78",
+      "bytes": 2523458
+    },
+    "examples/cs137-10k-geometry/AK02/events-04300.json": {
+      "sha256": "4d5a2b1d4f44650c3c5e5d95dacfb4211e507a4010557e92c64fa0fb2d3f4c11",
+      "bytes": 2450561
+    },
+    "examples/cs137-10k-geometry/AK02/events-04400.json": {
+      "sha256": "77744283c8f580efacf16de38fcc4ea2e30160576d8d4d662322cd54475e1feb",
+      "bytes": 2164559
+    },
+    "examples/cs137-10k-geometry/AK02/events-04500.json": {
+      "sha256": "013fe7075b8da037be022e2cc25a4b23897733999cc342cd5852d03735f9778b",
+      "bytes": 2114654
+    },
+    "examples/cs137-10k-geometry/AK02/events-04600.json": {
+      "sha256": "474aa57e516208a9a8d9d0caecc2fdd203376a666e00e9f5f0faff20e70000d9",
+      "bytes": 2722540
+    },
+    "examples/cs137-10k-geometry/AK02/events-04700.json": {
+      "sha256": "03423a09d93912a7e2382ce2776a830653b07aace01d7d8d54c5c57df9d4205e",
+      "bytes": 2495186
+    },
+    "examples/cs137-10k-geometry/AK02/events-04800.json": {
+      "sha256": "b782d52f87de3893861e189c674a9bbda7ff84e1cd65b3265af6b75e90684f19",
+      "bytes": 2344582
+    },
+    "examples/cs137-10k-geometry/AK02/events-04900.json": {
+      "sha256": "9e90122dac04f3d0fb96f7a4e0671f130421365035eb5d3a6759baacd5d4c214",
+      "bytes": 2457702
+    },
+    "examples/cs137-10k-geometry/AK02/events-05000.json": {
+      "sha256": "a0ab5ed15bfaef3627f57506ba8d47a3f0dfd0bda3eb4821d07ba2339dfa9d8f",
+      "bytes": 2359059
+    },
+    "examples/cs137-10k-geometry/AK02/events-05100.json": {
+      "sha256": "27a4928b1aae83a7b9c0161a4dbecd68a7140c38874c57497a3ae9ab668aeb40",
+      "bytes": 2125725
+    },
+    "examples/cs137-10k-geometry/AK02/events-05200.json": {
+      "sha256": "9d4d278802a4de96618297e559c891846e0d034c73d55c069719340fcd3f2ee1",
+      "bytes": 2095258
+    },
+    "examples/cs137-10k-geometry/AK02/events-05300.json": {
+      "sha256": "beb0f94cabbad68097eae68566d0375cfa6448a739431976b14d54067ed21861",
+      "bytes": 2114534
+    },
+    "examples/cs137-10k-geometry/AK02/events-05400.json": {
+      "sha256": "22b9eb87838a386ac3c10e73d110b1fc88e4e7516e7ef390660136f4eb279a24",
+      "bytes": 2499697
+    },
+    "examples/cs137-10k-geometry/AK02/events-05500.json": {
+      "sha256": "dbe986fd31c75dc92f2d9c3fd6e1658b49692a8b16072b310c65d0dfb51b9d06",
+      "bytes": 2049702
+    },
+    "examples/cs137-10k-geometry/AK02/events-05600.json": {
+      "sha256": "a207f6f8ac778924ec483657fc69c94c26dcf505beba2c9d5d3ea4e7b8459a31",
+      "bytes": 2235829
+    },
+    "examples/cs137-10k-geometry/AK02/events-05700.json": {
+      "sha256": "0a744ef166daea294cb0b96d1155a6569f02bce668850d80d30014a6cf0ca117",
+      "bytes": 2141424
+    },
+    "examples/cs137-10k-geometry/AK02/events-05800.json": {
+      "sha256": "92f2b7c49f55c76801e1e9598fe88a5e309373819e8cd7e07d7a5834a4f2359a",
+      "bytes": 2522013
+    },
+    "examples/cs137-10k-geometry/AK02/events-05900.json": {
+      "sha256": "f1cd06146da1f6219d69fa11dc2c43029a6f26f351b84fc3f04a3cfd382cfcb5",
+      "bytes": 2086202
+    },
+    "examples/cs137-10k-geometry/AK02/events-06000.json": {
+      "sha256": "fc4efd5a9464fc39eb293fba27fb8477fa12268545e7ac5a9bdc85b6722ca722",
+      "bytes": 2308053
+    },
+    "examples/cs137-10k-geometry/AK02/events-06100.json": {
+      "sha256": "d75cd1c253b8460e56602e7f6cd844e9880152fee53642eccb17017bde2aada4",
+      "bytes": 2037101
+    },
+    "examples/cs137-10k-geometry/AK02/events-06200.json": {
+      "sha256": "f17540e45944e6e70b3b8d5340e4eaa8a628ce97a56e6763ee7a21b414cf0ddc",
+      "bytes": 2509516
+    },
+    "examples/cs137-10k-geometry/AK02/events-06300.json": {
+      "sha256": "ff9bd515d901b314e9bacfe2211bc79be3c7be7b01a4dc3554a5eb82eae97819",
+      "bytes": 2450291
+    },
+    "examples/cs137-10k-geometry/AK02/events-06400.json": {
+      "sha256": "524854d3558c3fd7ed3b5c34bbd990508d33f94cfbdc4a8b856eff04b84e167f",
+      "bytes": 2210369
+    },
+    "examples/cs137-10k-geometry/AK02/events-06500.json": {
+      "sha256": "065e37d1dd5816aea448229a73cdbcf1f65746d260da4fe3be846e18de585b87",
+      "bytes": 1928367
+    },
+    "examples/cs137-10k-geometry/AK02/events-06600.json": {
+      "sha256": "586bfc23f7a4876eb3ac65dad326444cc3159033479822128b7fb3f8a708aae4",
+      "bytes": 2212803
+    },
+    "examples/cs137-10k-geometry/AK02/events-06700.json": {
+      "sha256": "33d87d27b3070dbcb83ee99d6fdf2ffc0f0f7c29e3ac72c7cc28c7751fc6aa06",
+      "bytes": 2307489
+    },
+    "examples/cs137-10k-geometry/AK02/events-06800.json": {
+      "sha256": "aad6d4c1357b0a2dd005a1f276c4ce7a097d02bfd9adaea284dc7817ddb19855",
+      "bytes": 2543057
+    },
+    "examples/cs137-10k-geometry/AK02/events-06900.json": {
+      "sha256": "97950c9caa3fdd9d052f23f63ed3a8aa782445ad6edf6a04b4782882c7ebee58",
+      "bytes": 2403876
+    },
+    "examples/cs137-10k-geometry/AK02/events-07000.json": {
+      "sha256": "253d546d7469b6fade8f425cb552d2c122231a1317fac0bd630c1aad9c44e33f",
+      "bytes": 2371590
+    },
+    "examples/cs137-10k-geometry/AK02/events-07100.json": {
+      "sha256": "dc17badd2f80f3c908691b3285a0bd26919b8ea9b0d789f0465ccdcecbefc4f5",
+      "bytes": 2645126
+    },
+    "examples/cs137-10k-geometry/AK02/events-07200.json": {
+      "sha256": "4425223478bdcc1353a0a0b5a6e5ad338892f1de1760a92913cb6cb70fbd74a8",
+      "bytes": 2491566
+    },
+    "examples/cs137-10k-geometry/AK02/events-07300.json": {
+      "sha256": "876fc9044c62623177806c3f4a0f3fc7224de761d5da3b9d010aa24f8696897a",
+      "bytes": 1867790
+    },
+    "examples/cs137-10k-geometry/AK02/events-07400.json": {
+      "sha256": "8fd0bb182a10633bda8a8392710710d8de98df25e3b53915c2dabf05437fa541",
+      "bytes": 1991644
+    },
+    "examples/cs137-10k-geometry/AK02/events-07500.json": {
+      "sha256": "2656cbcc22c05101fa60d8b153328d5c2961e22a08c4870a05ff07ff36ebd373",
+      "bytes": 2371146
+    },
+    "examples/cs137-10k-geometry/AK02/events-07600.json": {
+      "sha256": "a74bb0bdff9ffa20826ce354f31843fc9aa47978c4e521f1181ae9b023fd0fcd",
+      "bytes": 2073747
+    },
+    "examples/cs137-10k-geometry/AK02/events-07700.json": {
+      "sha256": "955c722f4d3d0c9c029b74c301a6beceee641a1a7374ff64310dad432b5bded2",
+      "bytes": 2325872
+    },
+    "examples/cs137-10k-geometry/AK02/events-07800.json": {
+      "sha256": "2c2b54fdd2effc059d5fcec7120f3ca41fb4c23c3cc469d4ab5ef0a0ff92758c",
+      "bytes": 2393208
+    },
+    "examples/cs137-10k-geometry/AK02/events-07900.json": {
+      "sha256": "234846b94f26796159059d7f878b8a84e6321ee7ffc740cb2b8340a53b4517e4",
+      "bytes": 2105689
+    },
+    "examples/cs137-10k-geometry/AK02/events-08000.json": {
+      "sha256": "2c89432e81eb00e45d99a152d2aebdb96731ef2590c12ece36d5f5203be3101c",
+      "bytes": 2335914
+    },
+    "examples/cs137-10k-geometry/AK02/events-08100.json": {
+      "sha256": "79ef7b3b9845ba1d4255417664fd9665e53e917d849abb1be203f577d00d7603",
+      "bytes": 2267718
+    },
+    "examples/cs137-10k-geometry/AK02/events-08200.json": {
+      "sha256": "05140e4f2e91e11c728bef2c1a46495b5cd1cc5078433c03c8647977b10d0806",
+      "bytes": 2091159
+    },
+    "examples/cs137-10k-geometry/AK02/events-08300.json": {
+      "sha256": "c307a818397dc1220ab378f317d1b977ff3f736bd5b25cc9d831d471e6906d6e",
+      "bytes": 2159575
+    },
+    "examples/cs137-10k-geometry/AK02/events-08400.json": {
+      "sha256": "5d60268fee2ef7f4ad07b017ded6151796237da2c2c6188c2c5e5db12bab5f38",
+      "bytes": 2365641
+    },
+    "examples/cs137-10k-geometry/AK02/events-08500.json": {
+      "sha256": "25c41c96103f5a0e6c36ca063fb104a2482d3615573f0363664c027a9f26265b",
+      "bytes": 2387453
+    },
+    "examples/cs137-10k-geometry/AK02/events-08600.json": {
+      "sha256": "0c2119aefee7ba49128d39e618fd24873b0237984b7c35d1bfb21ce14dcf44d2",
+      "bytes": 2312192
+    },
+    "examples/cs137-10k-geometry/AK02/events-08700.json": {
+      "sha256": "f3aaaddd04a034d536637b713c1aa7fc44f75cc23bd689d652c2e806c5a81270",
+      "bytes": 2240594
+    },
+    "examples/cs137-10k-geometry/AK02/events-08800.json": {
+      "sha256": "55e56fe49c12a6a8c1fcee727d5e35ad44b1e8c2125a0a6e50224c9a149df323",
+      "bytes": 2296096
+    },
+    "examples/cs137-10k-geometry/AK02/events-08900.json": {
+      "sha256": "17108d22e5f958bd14e80cf989b3d6c6a6b79dd4c07e3a720d726b9b99f9d192",
+      "bytes": 2155422
+    },
+    "examples/cs137-10k-geometry/AK02/events-09000.json": {
+      "sha256": "5c00c641eac5194796fd90477a12e524bfed1f138835cb1f08a2fedaf57f2325",
+      "bytes": 2221055
+    },
+    "examples/cs137-10k-geometry/AK02/events-09100.json": {
+      "sha256": "53a1e8bac9ac20858668c1ce8b52062b7f1191e292cf8c3f89543ccc0ea697eb",
+      "bytes": 2119532
+    },
+    "examples/cs137-10k-geometry/AK02/events-09200.json": {
+      "sha256": "8731b1e83e7ced3d03846e7c854b6c76d46635f9498420bc3984480892156275",
+      "bytes": 2008821
+    },
+    "examples/cs137-10k-geometry/AK02/events-09300.json": {
+      "sha256": "0bef97fd3e61fac056f8aa9325a403ce29c55e9526a87284a3694c977f65df57",
+      "bytes": 2026962
+    },
+    "examples/cs137-10k-geometry/AK02/events-09400.json": {
+      "sha256": "f1fa49002d6149957b6e3ab2e3434ab6f95d90665dcc14eece6a26e55120f316",
+      "bytes": 2038305
+    },
+    "examples/cs137-10k-geometry/AK02/events-09500.json": {
+      "sha256": "ff5014e84a7cd3d8230ec26b444c960ed7265bc6a2f409428463ef500366842a",
+      "bytes": 2335976
+    },
+    "examples/cs137-10k-geometry/AK02/events-09600.json": {
+      "sha256": "328b7b81416abe6981cf9f5044481724b3181c19ca04b7f1193f712c4857f9f3",
+      "bytes": 2269709
+    },
+    "examples/cs137-10k-geometry/AK02/events-09700.json": {
+      "sha256": "a4732af775c8ad332d47c0f37b9f5462903839f2490eb7696a51abba2eee005e",
+      "bytes": 2084401
+    },
+    "examples/cs137-10k-geometry/AK02/events-09800.json": {
+      "sha256": "d65a818d9ea394ff0165ec025da9007327117dd5d70aa0a879b2eb7d19a6135e",
+      "bytes": 2215197
+    },
+    "examples/cs137-10k-geometry/AK02/events-09900.json": {
+      "sha256": "cb4626aea03de00e99375f17297724079b7bec16235f7298dcdc44790928d775",
+      "bytes": 2505625
+    },
+    "examples/cs137-10k-geometry/AK02/originals.zip": {
+      "sha256": "54df3bf1ceef3b7d7eb06c08fe12fe2f01eeda533db81816f5b6df0aed80c116",
+      "bytes": 11234
+    },
+    "examples/cs137-10k-geometry/AK02/scene.json": {
+      "sha256": "8e24d02c9b55ccd9257850405846be32f29503df9055fa71cf82fd7fbb29d12b",
+      "bytes": 283851
+    },
+    "examples/cs137-10k-geometry/README.txt": {
+      "sha256": "1b375018ed80649837de63d3734c457a6f3a3ee102cb850a44547e3d5ff8fcea",
+      "bytes": 438
+    },
+    "examples/cs137-10k-geometry/SAP22/events-00000.json": {
+      "sha256": "46bb2dc3cda061ba8cc75d1c7592eb65c26ea1eee25a9e67ff1c7194590bc32c",
+      "bytes": 2328552
+    },
+    "examples/cs137-10k-geometry/SAP22/events-00100.json": {
+      "sha256": "93d91beb5722a899cf7b22a7d49a76709c60c995234f70d9d9e98f6dd5c268b5",
+      "bytes": 1952418
+    },
+    "examples/cs137-10k-geometry/SAP22/events-00200.json": {
+      "sha256": "102abaf9150f5bbbe718873f607782f8441b08ea3b7d010ce879d80dc295d1b7",
+      "bytes": 2346598
+    },
+    "examples/cs137-10k-geometry/SAP22/events-00300.json": {
+      "sha256": "360d629636787de3f57de16ca6c86371caf0701452593452215891c4e6223194",
+      "bytes": 2437291
+    },
+    "examples/cs137-10k-geometry/SAP22/events-00400.json": {
+      "sha256": "c7c5ecb2aea87d701bcbcb7cd1f924e99b79bd068d46d2cb974e1fbbe03de892",
+      "bytes": 2063543
+    },
+    "examples/cs137-10k-geometry/SAP22/events-00500.json": {
+      "sha256": "a498dc333d4308301d0007dcb300046e957cbe7ab75e2a65512ed68ea1170c80",
+      "bytes": 2163376
+    },
+    "examples/cs137-10k-geometry/SAP22/events-00600.json": {
+      "sha256": "5c7fbf6d7319260cd130479f1923df5d474e3b242ce0370e55dd457d181e9860",
+      "bytes": 2501128
+    },
+    "examples/cs137-10k-geometry/SAP22/events-00700.json": {
+      "sha256": "e166ecf7502ebc7f0894ca5c809a93cda878939af32d823f5d3dba0c04a0cdf5",
+      "bytes": 2264427
+    },
+    "examples/cs137-10k-geometry/SAP22/events-00800.json": {
+      "sha256": "f8086534199d227bdc19d890c99064e4c52cd83fe9081f3ea7e9930bb2819029",
+      "bytes": 2380245
+    },
+    "examples/cs137-10k-geometry/SAP22/events-00900.json": {
+      "sha256": "6d29a6a77d37547112db560434ae243b184b01cbfcc5f503923cc1d5f4d6810b",
+      "bytes": 2484518
+    },
+    "examples/cs137-10k-geometry/SAP22/events-01000.json": {
+      "sha256": "dbb8e46f4a27115450bc9807c4cbc153fe83905be86ac1d8e1cab59ce92da220",
+      "bytes": 2290554
+    },
+    "examples/cs137-10k-geometry/SAP22/events-01100.json": {
+      "sha256": "259cb8f5b3b6625017b3a4047df77430c8cf01d65fe895e79551499d73aed760",
+      "bytes": 2216850
+    },
+    "examples/cs137-10k-geometry/SAP22/events-01200.json": {
+      "sha256": "2aa2fdee07e4269fa5939a5eceb925483022f4363cc5e5b4a49a55ec9b621549",
+      "bytes": 1951330
+    },
+    "examples/cs137-10k-geometry/SAP22/events-01300.json": {
+      "sha256": "875c3f7c5d086899997e0abb9347a4fd0376c9f37ce64b48e6b28ef57efcc1dd",
+      "bytes": 2398923
+    },
+    "examples/cs137-10k-geometry/SAP22/events-01400.json": {
+      "sha256": "ab5683310cde5551a22ea76472a32ba732efb31b17f5d33a95e383548b368b7f",
+      "bytes": 2275773
+    },
+    "examples/cs137-10k-geometry/SAP22/events-01500.json": {
+      "sha256": "2ee2760494b378c9f109a6b1903c40740752aaacd3f2fbeeb290e4c4033d9bd7",
+      "bytes": 2348927
+    },
+    "examples/cs137-10k-geometry/SAP22/events-01600.json": {
+      "sha256": "ca200bef34b1a805aa10b839987dc5c18a8e1c1c60250e454ac900602232724b",
+      "bytes": 2191614
+    },
+    "examples/cs137-10k-geometry/SAP22/events-01700.json": {
+      "sha256": "32bacf048af2c99c66ae0f9685e565d3ac2c5abbbb5fa5015c170013bb20b593",
+      "bytes": 2387775
+    },
+    "examples/cs137-10k-geometry/SAP22/events-01800.json": {
+      "sha256": "1199789bfdc87d1b2938e67a26052e8c09d937bd43340c10f8050411fa83ff24",
+      "bytes": 2218722
+    },
+    "examples/cs137-10k-geometry/SAP22/events-01900.json": {
+      "sha256": "904535417c28c4ed9680fada623a369d4b163f4e3c8f3c47ea2a9b3a4273c8b8",
+      "bytes": 2333907
+    },
+    "examples/cs137-10k-geometry/SAP22/events-02000.json": {
+      "sha256": "cd33ecc5fbef8e4f12deb2a43099df02409b31ce43ea95eda5c69975a6a68221",
+      "bytes": 2247035
+    },
+    "examples/cs137-10k-geometry/SAP22/events-02100.json": {
+      "sha256": "12dc2672731ab32c3035a7fde0e8c665580add6ddaefc5efb15f81e23f4a3bfe",
+      "bytes": 2243995
+    },
+    "examples/cs137-10k-geometry/SAP22/events-02200.json": {
+      "sha256": "f8a13c5a9a4219811dd66f1cb5bda90a06b295336e5870df6d6f95ec2c0bc599",
+      "bytes": 1927246
+    },
+    "examples/cs137-10k-geometry/SAP22/events-02300.json": {
+      "sha256": "5a803d75134d005bfd8d3dec7eb2ed08a5a22fefbfd603e1fc6b14390b94abd7",
+      "bytes": 2256907
+    },
+    "examples/cs137-10k-geometry/SAP22/events-02400.json": {
+      "sha256": "2a17335858056f02d37f53ebda0884cf689a72c124d40bc5adbd31f65acb1976",
+      "bytes": 2091943
+    },
+    "examples/cs137-10k-geometry/SAP22/events-02500.json": {
+      "sha256": "f91d8d74cfc156dfd8cd7927b291b66fad312bb71774eaa4d9aaed683a0ef44e",
+      "bytes": 2108647
+    },
+    "examples/cs137-10k-geometry/SAP22/events-02600.json": {
+      "sha256": "fb138536d22fa5d1dcfd0d6a555ab3b7e8e7c9756586e87611d91ccd012838aa",
+      "bytes": 2322703
+    },
+    "examples/cs137-10k-geometry/SAP22/events-02700.json": {
+      "sha256": "d8baef1f9f6b5ec38b2aa22753ca9d192a89405bf6c9099e1e6c23f60fc39ef0",
+      "bytes": 2092213
+    },
+    "examples/cs137-10k-geometry/SAP22/events-02800.json": {
+      "sha256": "982e45d84436d094ac6578d70032cae81b0c12c87214c6a5f63df1c56cba3f37",
+      "bytes": 2104315
+    },
+    "examples/cs137-10k-geometry/SAP22/events-02900.json": {
+      "sha256": "46c6c5a58a59a7f13b18423faf46b780c611869580d84b94d94868d43f6052ff",
+      "bytes": 2390512
+    },
+    "examples/cs137-10k-geometry/SAP22/events-03000.json": {
+      "sha256": "c577133f0ac5b0342193280993e3692302cf031e9049065132ed7f1006cf7b4f",
+      "bytes": 2276348
+    },
+    "examples/cs137-10k-geometry/SAP22/events-03100.json": {
+      "sha256": "8f2629f9e77016c8d0165eba58c37e654c81a27c8ee1e0a214320d525faefaa6",
+      "bytes": 2419833
+    },
+    "examples/cs137-10k-geometry/SAP22/events-03200.json": {
+      "sha256": "5b4e4b531de448ec2647ba16ef16cc597042fe5774fea4b9910744bead7d4204",
+      "bytes": 2127043
+    },
+    "examples/cs137-10k-geometry/SAP22/events-03300.json": {
+      "sha256": "af5a9423d011b983b5261041fea7200c581fb6a61705f8c495ed5efa32aaa5f8",
+      "bytes": 2311396
+    },
+    "examples/cs137-10k-geometry/SAP22/events-03400.json": {
+      "sha256": "4333cc8ae1b87a7d961b4b78508f72c0ef36cc98d7cc92e92d41ddbda1c6def0",
+      "bytes": 2776681
+    },
+    "examples/cs137-10k-geometry/SAP22/events-03500.json": {
+      "sha256": "794c488c397038162deb462b94082f3d511a08ab067d2fff84e0f2839658a66c",
+      "bytes": 1975132
+    },
+    "examples/cs137-10k-geometry/SAP22/events-03600.json": {
+      "sha256": "6d257e8b9cbd90ec1b9692fb5676a9544b2ed548d29f14e3f39803d5eee07839",
+      "bytes": 2348989
+    },
+    "examples/cs137-10k-geometry/SAP22/events-03700.json": {
+      "sha256": "8f8254d531045166dbbff82569451140583668c3f1d515ee0b6198616bab5bae",
+      "bytes": 2239868
+    },
+    "examples/cs137-10k-geometry/SAP22/events-03800.json": {
+      "sha256": "4e08ac4696bb2bfef48c82cd31a81ea7ff3fdf40b5dfcdf542046c1857e803a1",
+      "bytes": 2507457
+    },
+    "examples/cs137-10k-geometry/SAP22/events-03900.json": {
+      "sha256": "c22a8694280f2746c168bcbf71b8c46f4ddab8364f2b162bcd21baacc684e1f7",
+      "bytes": 2007911
+    },
+    "examples/cs137-10k-geometry/SAP22/events-04000.json": {
+      "sha256": "75449af91751934d7e68f994b5d1c62e82da680086105393961611e65bb57b2d",
+      "bytes": 2451750
+    },
+    "examples/cs137-10k-geometry/SAP22/events-04100.json": {
+      "sha256": "e9abef6b9a094417eee5e2fb7cff243234541580671e4d833e293b9483ab8751",
+      "bytes": 2173513
+    },
+    "examples/cs137-10k-geometry/SAP22/events-04200.json": {
+      "sha256": "be435a50a11cc1f26367d70df1b3ebc9006ebea31f743e9f6b398ebf4febe18b",
+      "bytes": 2018994
+    },
+    "examples/cs137-10k-geometry/SAP22/events-04300.json": {
+      "sha256": "d3d8b33d16d0187f074197d23dd2f617970084dd1dcd16c1a342986d7eb7c500",
+      "bytes": 2416502
+    },
+    "examples/cs137-10k-geometry/SAP22/events-04400.json": {
+      "sha256": "ca989aa3c1220df096c950b6ce340377176cc0b5a78fc49a2f52273586ae567e",
+      "bytes": 2434542
+    },
+    "examples/cs137-10k-geometry/SAP22/events-04500.json": {
+      "sha256": "4531160001933c249e3d35f66f7e2f1b7f04c5374b9f49b33282360fd7c8d172",
+      "bytes": 2259395
+    },
+    "examples/cs137-10k-geometry/SAP22/events-04600.json": {
+      "sha256": "26aa756ad318e5ea1b7f13817176616202337e7c1fbe4054be505dc823bdff43",
+      "bytes": 2177147
+    },
+    "examples/cs137-10k-geometry/SAP22/events-04700.json": {
+      "sha256": "182d266cc225c9fe936fa9db912733c359c428feb90f2848988984e3ad8539cc",
+      "bytes": 2327415
+    },
+    "examples/cs137-10k-geometry/SAP22/events-04800.json": {
+      "sha256": "64242bf1f73b141e29405554256fbbdf1e1061d0b137401b5563a40932414fa6",
+      "bytes": 2265755
+    },
+    "examples/cs137-10k-geometry/SAP22/events-04900.json": {
+      "sha256": "1654fde6e7807afc0b0497cbe3dc40e25d3ae4001d50512ea95b14641c0f4e8c",
+      "bytes": 2633468
+    },
+    "examples/cs137-10k-geometry/SAP22/events-05000.json": {
+      "sha256": "73cd921361bdea0cbcbc6f7913d2b979798d3e38d89f902f9f815b442ef72bba",
+      "bytes": 2410039
+    },
+    "examples/cs137-10k-geometry/SAP22/events-05100.json": {
+      "sha256": "eb8629957f461dfa28dfd725c691d7c6cd853f2e4393e096db15f9b117a69122",
+      "bytes": 2228428
+    },
+    "examples/cs137-10k-geometry/SAP22/events-05200.json": {
+      "sha256": "382f49dd0a190da9cb8af12c21ad1a46a59b59ef64c2a8770d7633246e9c0a39",
+      "bytes": 2165351
+    },
+    "examples/cs137-10k-geometry/SAP22/events-05300.json": {
+      "sha256": "7bc5025be2d8e79688026a55516aa6f635915401fe4c54ea41cdcc2c1dbabeac",
+      "bytes": 2330258
+    },
+    "examples/cs137-10k-geometry/SAP22/events-05400.json": {
+      "sha256": "16f3804a967e701cf404226d384756e6ca975108bea41846d7a50475cb671286",
+      "bytes": 2534268
+    },
+    "examples/cs137-10k-geometry/SAP22/events-05500.json": {
+      "sha256": "02aa9147a98c58c453f41f90044f6cf33e049a56282393d1db57eb3c5f5e9c88",
+      "bytes": 2446988
+    },
+    "examples/cs137-10k-geometry/SAP22/events-05600.json": {
+      "sha256": "3a26b6b5358f2745ec455f20c2149e9d1a4fb1f1ada2cdf631fd9b2dcda42e79",
+      "bytes": 2419365
+    },
+    "examples/cs137-10k-geometry/SAP22/events-05700.json": {
+      "sha256": "082faeac5b473512cb52496a2adda0aa98fc40fa9a277a6a2a82d8c0b7b4bf83",
+      "bytes": 2133420
+    },
+    "examples/cs137-10k-geometry/SAP22/events-05800.json": {
+      "sha256": "a925702cdb60e441362f3f2edfa03edafaeef6939cb6a955cc09f48aa1ac8637",
+      "bytes": 2329068
+    },
+    "examples/cs137-10k-geometry/SAP22/events-05900.json": {
+      "sha256": "eed9252f44edc4c90e711f3b16b3d7de3d48722e506fa70580241cbb1d6f483d",
+      "bytes": 2117625
+    },
+    "examples/cs137-10k-geometry/SAP22/events-06000.json": {
+      "sha256": "f7a7aadd01142329a710757bc32623df5e4ef64c1a2c774e1a10ad505bd0c736",
+      "bytes": 2229449
+    },
+    "examples/cs137-10k-geometry/SAP22/events-06100.json": {
+      "sha256": "95c0bde596fa2f3dd2fd6a38d48f6f66bdea1b6dcddc86f75445bbd51f5ab10f",
+      "bytes": 2144478
+    },
+    "examples/cs137-10k-geometry/SAP22/events-06200.json": {
+      "sha256": "74ec8a15920f91a0a56fab29c731b0aa37e3f6d6dedc84c3aac7f5098fdd8279",
+      "bytes": 1885944
+    },
+    "examples/cs137-10k-geometry/SAP22/events-06300.json": {
+      "sha256": "7d5412b6365de602520d77b5df9e12d9e695d12d676659c98c18dad0e0c541f6",
+      "bytes": 2320169
+    },
+    "examples/cs137-10k-geometry/SAP22/events-06400.json": {
+      "sha256": "c6562d79068ca4d354798235ca178d656d41579526695ef4c8afeaa97e1c1cea",
+      "bytes": 2347964
+    },
+    "examples/cs137-10k-geometry/SAP22/events-06500.json": {
+      "sha256": "a673e16764d9f83dfc75d4df22c53002a4a52dad9fd2bfc7e6e59168d7b39536",
+      "bytes": 2149654
+    },
+    "examples/cs137-10k-geometry/SAP22/events-06600.json": {
+      "sha256": "284a79047349bb7a56ae3874e77b6624732ba0f2107d7ffd22bd48491df10bc7",
+      "bytes": 2433607
+    },
+    "examples/cs137-10k-geometry/SAP22/events-06700.json": {
+      "sha256": "2b68fcfe8749ec8471c5f6cde876d00488923482abe5c8906657eed57256eec6",
+      "bytes": 2307645
+    },
+    "examples/cs137-10k-geometry/SAP22/events-06800.json": {
+      "sha256": "95239a5627854453c1c3d1d56725b652e1eabdcb4620d51f722b87cd0f752aff",
+      "bytes": 2536995
+    },
+    "examples/cs137-10k-geometry/SAP22/events-06900.json": {
+      "sha256": "72d3f8240a7aea3c5d4620aea0f7dd790c081fb9da7177ddb2abdbfd05a9fb59",
+      "bytes": 2354609
+    },
+    "examples/cs137-10k-geometry/SAP22/events-07000.json": {
+      "sha256": "0d05a5a17378611b8346b4036d69db94c69dab394c9a3dfd6aa9736e625830b1",
+      "bytes": 2358712
+    },
+    "examples/cs137-10k-geometry/SAP22/events-07100.json": {
+      "sha256": "e13994cbf3282c8f87fa4655faa6c930ff2ebbf2e9533849d5628016632c596f",
+      "bytes": 2046222
+    },
+    "examples/cs137-10k-geometry/SAP22/events-07200.json": {
+      "sha256": "9e71600ee1855f09369f2e0fffdb0016b0a7386266ed95b314644ce05dbb7ffe",
+      "bytes": 2639201
+    },
+    "examples/cs137-10k-geometry/SAP22/events-07300.json": {
+      "sha256": "0d63ef3d46cc5891d8bfd8f59b6a3b1847087298600a78078dbd6c3d81b3ce16",
+      "bytes": 2223638
+    },
+    "examples/cs137-10k-geometry/SAP22/events-07400.json": {
+      "sha256": "cd37e3b92a0b80ebc08993854bf57c0711bed49b1ce44ef6b07c204ba7f05bbc",
+      "bytes": 2252944
+    },
+    "examples/cs137-10k-geometry/SAP22/events-07500.json": {
+      "sha256": "a1616b43776f2ea34e1a29462d87e5d39e41e87e22f23e70cade27be65660665",
+      "bytes": 2360571
+    },
+    "examples/cs137-10k-geometry/SAP22/events-07600.json": {
+      "sha256": "be2d4e954c255ad6edf80b57b132c7c4efad7e7712c3c3736c2b429fd96d306e",
+      "bytes": 2215331
+    },
+    "examples/cs137-10k-geometry/SAP22/events-07700.json": {
+      "sha256": "797f257dc680b51f0102f68dc2223e18dccaa69f89237a223dbf707ff5c59755",
+      "bytes": 2333377
+    },
+    "examples/cs137-10k-geometry/SAP22/events-07800.json": {
+      "sha256": "920fa1223f55dfa3fe24434ea742c42f2a50d7104b56782fd97510a4baa62bbb",
+      "bytes": 2166834
+    },
+    "examples/cs137-10k-geometry/SAP22/events-07900.json": {
+      "sha256": "21052c7aef14741269fa183c6d855eae2cc0589bfd80e4d2003883bb7606be84",
+      "bytes": 2328013
+    },
+    "examples/cs137-10k-geometry/SAP22/events-08000.json": {
+      "sha256": "628082cb2fd29803e4956bae12954001289b4dad26a457efd822bd6d84442c53",
+      "bytes": 2365685
+    },
+    "examples/cs137-10k-geometry/SAP22/events-08100.json": {
+      "sha256": "14532f795f3e2719114d1eb5da408c19e9e597a34c84c5858bc625e504442f10",
+      "bytes": 2149616
+    },
+    "examples/cs137-10k-geometry/SAP22/events-08200.json": {
+      "sha256": "a15adb4d6605bb2063c9f8f2bed47ceebb9adc3d4b20558cc622f3adb09ef7e1",
+      "bytes": 2147900
+    },
+    "examples/cs137-10k-geometry/SAP22/events-08300.json": {
+      "sha256": "ccd82f3c36fd6a05c66a8baaea1522eda3b6500ef18fdf420d850be549824f56",
+      "bytes": 2341809
+    },
+    "examples/cs137-10k-geometry/SAP22/events-08400.json": {
+      "sha256": "5da6fa77d1c9458dca8caff1487ecf6a348c11a2de577fdc814f35ad610484f0",
+      "bytes": 2475277
+    },
+    "examples/cs137-10k-geometry/SAP22/events-08500.json": {
+      "sha256": "5adfbec90a510d4d4a7d155b3c93bdb978566a73ecca6836a640bfa955bcb0a0",
+      "bytes": 2261691
+    },
+    "examples/cs137-10k-geometry/SAP22/events-08600.json": {
+      "sha256": "f44ff46ff5c6092e54b237e335fa6fe5e8c362d7e9463f0b7928370f3e051cbc",
+      "bytes": 2358177
+    },
+    "examples/cs137-10k-geometry/SAP22/events-08700.json": {
+      "sha256": "5734a4006c4ba8c945c8b5e50032c358203612e2999b034177825432deed2cb6",
+      "bytes": 2454715
+    },
+    "examples/cs137-10k-geometry/SAP22/events-08800.json": {
+      "sha256": "45381be9fa719deff454e4897ded59d7750909b127d3af4d6d1526b44086697e",
+      "bytes": 2027295
+    },
+    "examples/cs137-10k-geometry/SAP22/events-08900.json": {
+      "sha256": "72f7df7c07486725f6c49302d733914fa24d332e6d56277dbb78d911666ed17b",
+      "bytes": 2508961
+    },
+    "examples/cs137-10k-geometry/SAP22/events-09000.json": {
+      "sha256": "1fb01626a0e5700732aeaba270d21943880328502618e40336dab4b0599ceb9f",
+      "bytes": 2323218
+    },
+    "examples/cs137-10k-geometry/SAP22/events-09100.json": {
+      "sha256": "f84a742099d731ada5c54fe427c94c9e985976b8f1b9446a745b559c42b20127",
+      "bytes": 2122568
+    },
+    "examples/cs137-10k-geometry/SAP22/events-09200.json": {
+      "sha256": "c545b4f7714fee3761f14ba78b9e04b98bbe93373a0720a0cca532caf9bdeb1b",
+      "bytes": 1983195
+    },
+    "examples/cs137-10k-geometry/SAP22/events-09300.json": {
+      "sha256": "fd3923032c7f23eb2ea8d58c65de509cb263b94f8c0f443cbfb21997f2d4da80",
+      "bytes": 2040007
+    },
+    "examples/cs137-10k-geometry/SAP22/events-09400.json": {
+      "sha256": "07a9198016e057818c55c437ac8b74b8b2d0d9f55f142d30d82cfad1c67aa9eb",
+      "bytes": 2627395
+    },
+    "examples/cs137-10k-geometry/SAP22/events-09500.json": {
+      "sha256": "2ab6fb15fc9d2759d3b2c76e55a1267903b03fcfebd390c9c3029252d6bde4e5",
+      "bytes": 2230640
+    },
+    "examples/cs137-10k-geometry/SAP22/events-09600.json": {
+      "sha256": "79bb4f0fe0d707fbc6892d90795abe78c9e47835011236cf8b9b65ea127801d6",
+      "bytes": 2214338
+    },
+    "examples/cs137-10k-geometry/SAP22/events-09700.json": {
+      "sha256": "ec2adb1084e96141f56792ccb874ec4bf409bf07f761d7ceb08563b2a6a03706",
+      "bytes": 2040424
+    },
+    "examples/cs137-10k-geometry/SAP22/events-09800.json": {
+      "sha256": "1080adb9def41d66cadccc8cac54af7f520cdfb7dea176493761093b4aa7b325",
+      "bytes": 2636226
+    },
+    "examples/cs137-10k-geometry/SAP22/events-09900.json": {
+      "sha256": "8b136e78d18f5a2685372ef4f44f9d5b7e086d42b7ba9a67e89d529b2c5f5fb5",
+      "bytes": 2191726
+    },
+    "examples/cs137-10k-geometry/SAP22/originals.zip": {
+      "sha256": "c00a9333278639c0cd30d2d1ed2d45a973a59d22be5beab64335a2b6069a641d",
+      "bytes": 11221
+    },
+    "examples/cs137-10k-geometry/SAP22/scene.json": {
+      "sha256": "9d2753669822bf46d8db44a82759bc4fbd0661fa10edb5ac22a63b5b502271cf",
+      "bytes": 284262
+    },
+    "examples/cs137-10k-geometry/geometry.html": {
+      "sha256": "b6322ea76fc067a0df0596978dae027d7aa7ad395b26d0a10779ce2b83cce0f2",
+      "bytes": 16350
+    },
+    "examples/cs137-10k-geometry/source-efficiency.json": {
+      "bytes": 3924,
+      "sha256": "3d926cbc60e752c8107be848be1310c8b7aa7bc534e37764d9c6a821739e70da"
+    },
+    "examples/cs137-10k-geometry/SOURCE_GEOMETRY.md": {
+      "bytes": 3545,
+      "sha256": "3982b716db684290491a0e3bed5b2eba2150d3154baa4db22b6dcc51a6a5ffff"
+    },
+    "examples/cs137-10k-geometry/manifest.json": {
+      "sha256": "e8d183af05e27f211b6464939d4c667b6d02855d68609a7627753d2f16edc379",
+      "bytes": 38470
+    },
+    "examples/cs137-10k-hits/AK02/scene.json": {
+      "sha256": "8e24d02c9b55ccd9257850405846be32f29503df9055fa71cf82fd7fbb29d12b",
+      "bytes": 283851
+    },
+    "examples/cs137-10k-hits/AK02/selected.json.gz": {
+      "sha256": "1043242ae0cb261cdba76853d3e49a407ce371be71ceae5eb6a6e5a0cbab6722",
+      "bytes": 919918
+    },
+    "examples/cs137-10k-hits/hit_event_view.html": {
+      "sha256": "7d609da3738490c1caa1c861f2810ec418f784f0640231d2465b92a2cc175516",
+      "bytes": 20495
+    },
+    "examples/cs137-10k-hits/README.md": {
+      "sha256": "f45a31d298b5f1c91127f29f06605f9c9c0be9e224d7b3060ab583a8272b5d9f",
+      "bytes": 7152
+    },
+    "examples/cs137-10k-hits/SAP22/scene.json": {
+      "sha256": "9d2753669822bf46d8db44a82759bc4fbd0661fa10edb5ac22a63b5b502271cf",
+      "bytes": 284262
+    },
+    "examples/cs137-10k-hits/SAP22/selected.json.gz": {
+      "sha256": "e2182e2c0a997a96f5c27b17eb40bca13f687c2dfd69d3baffdfaf90231597a1",
+      "bytes": 941920
+    },
+    "examples/cs137-10k-hits/manifest.json": {
+      "sha256": "0ad6a0df52ae725543d0c8474c5db4474e6c28af537ff944660e1ebf9b6a1b3e",
+      "bytes": 10083
+    }
+  },
+  "original_sources": {
+    "tools/geometry_events.html": "b6322ea76fc067a0df0596978dae027d7aa7ad395b26d0a10779ce2b83cce0f2",
+    "tools/hit_event_view.html": "7d609da3738490c1caa1c861f2810ec418f784f0640231d2465b92a2cc175516",
+    "tools/geometry_events.py": "8473e9c6ae0ec8866ac0d720fa55a9cab4766c158d764fd30266668bdf8e05ca",
+    "tools/hit_event_view.py": "7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e"
+  },
+  "adapter_sources": {
+    "tools/viewer_navigation.py": "6178b5ee1cb9c61d74d789535ab9799a040257978990080eb96ab4392b9b040b",
+    "tools/viewer_navigation.js": "d94e08b66c9184565184ea2793d099ba1fac11161817f23c320b1d10ebaf85a9",
+    "tools/viewer_overlay_selection.js": "c2fac1885c2c594139c602d341d5b6242973de8d2261393215f2d140e2e0d15a"
+  },
+  "pages": {
+    "viewers/geant4-assembly.html": {
+      "source": "examples/cs137-10k-geometry/geometry.html",
+      "sha256": "1cfe6cd1f8b0f8cf92256919428b29a198d335d6d9fd5dfffd52bafc31738498"
+    },
+    "viewers/ge-positive.html": {
+      "source": "examples/cs137-10k-hits/hit_event_view.html",
+      "sha256": "4d02c0b9aec829242eed96d689162c073f25bc1138e97efca21a8f4cb145d725"
+    }
+  },
+  "new_simulations": 0,
+  "scope": "Earlier 10k/model saved radiation records; no group rendering in assembly, no absent-event substitution in overlay."
+}

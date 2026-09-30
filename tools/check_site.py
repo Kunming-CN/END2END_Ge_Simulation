@@ -155,6 +155,9 @@ def validate(site, require_manifest=True, require_models=False):
     if (site/"spectra/manifest.json").exists():
         from spectrum_display import validate as validate_spectrum_display
         validate_spectrum_display(site)
+    if any((site/p).exists() for p in ('viewers/manifest.json','viewers/geant4-assembly.html','viewers/ge-positive.html')):
+        from viewer_navigation import validate as validate_readers
+        validate_readers(site)
     entries.sort(key=lambda item: item['path'])
     encoded = json.dumps(entries, sort_keys=True, separators=(',', ':')).encode()
     result = {'schema_version': 1, 'build_id': hashlib.sha256(encoded).hexdigest(),
@@ -228,6 +231,7 @@ def verify_live(url, report):
                      ('/geometry/' in entry['path'] or entry['path'].endswith('/geometry-active.json')
                       or entry['path']=='detectors/geometry-index.json')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('spectra/')})
+    selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('viewers/')})
     for suffix in ('.png', '.svg', '.csv', '.mp4', '.webm', '.json', '.md'):
         examples = [entry for entry in entries if entry['path'].endswith(suffix)]
         for entry in examples[:2] + examples[-1:]:

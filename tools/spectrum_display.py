@@ -10,12 +10,13 @@ from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 from spectrum_plot import panel, assets, require, validate_spec
 import spectrum_plot
+from viewer_navigation import ROUTES as VIEWER_ROUTES
 ROOT=Path(__file__).resolve().parents[1]
 ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/cs137-1m-response/report.html':'spectra/million-response.html',
         'examples/cs137-10k/comparison.html':'spectra/cs137-10k.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
-GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js')
+GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py')
 
 def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 LOADED_GENERATORS={rel:sha(ROOT/rel) for rel in GENERATORS}
@@ -125,6 +126,7 @@ def rewrite_links(text,source_page,destination_page):
             return match.group(0)
         target=posixpath.normpath(posixpath.join(posixpath.dirname(source_page),parts.path))
         target=ROUTES.get(target,target)
+        target=VIEWER_ROUTES.get(target,target)
         relative=posixpath.relpath(target,posixpath.dirname(destination_page) or '.')
         value=urlunsplit(('', '',relative,parts.query,parts.fragment))
         return match.group(1)+html.escape(value,quote=True)+match.group(3)
@@ -285,7 +287,7 @@ def route_current_pages(site):
     site=Path(site)
     for p in site.rglob('*.html'):
         rel=p.relative_to(site).as_posix()
-        if rel.startswith(('examples/','spectra/','lithium/')): continue
+        if rel.startswith(('examples/','spectra/','viewers/','lithium/')): continue
         if rel.startswith('detectors/') and p.name not in ('index.html','gallery.html','technical.html'): continue
         text=p.read_text(encoding='utf-8'); updated=rewrite_links(text,rel,rel)
         if updated!=text: write_if_changed(p,updated)

@@ -5,88 +5,81 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No science work
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: solid, selectable saved-spectrum displays
+## Current handoff: reciprocal current Geant4 readers
 
-Owner explicitly restarted implementation on 2026-09-29. Codex is ASTRA ONLY,
-High minimum; supported XHigh or stronger Astra effort is allowed for concrete
-bounded problems. This round used Astra High for implementation/review and Astra
-XHigh for the metadata/readability review. No reset credits or paid API fallback.
+M2 now has maintained saved-data readers at `viewers/geant4-assembly.html` and
+`viewers/ge-positive.html`, with visible reciprocal buttons and actual model/
+primary selection continuity. Overlay group IDs survive the round trip where
+represented; assembly labels them return-navigation context, not rendered groups.
+Zero/absent/filtered primaries or missing groups are not replaced by an arbitrary
+highlight. Malformed requests fail visibly; late successes and failures cannot
+replace a newer selection. Original radiation records are not full trajectories.
 
-M1: all20 CURRENT spectrum panels (including homepage and both pipeline detector
-states) use solid step outlines, consistent colors and independent series
-checkboxes. Truth and accepted peak-ADC can be shown separately or together;
-Log/Linear and visibility survive model/event changes. Exact bins, counts, flows,
-zeros and numerical populations are unchanged. Archived original reports remain
-byte-identical and may retain their historical display; current views are under
-`spectra/`. See tools/SPECTRUM_DISPLAY.md for the route/ownership distinction.
+Maintained detector/result/spectrum links use these current routes. Original
+`examples/cs137-10k-geometry/geometry.html` and `cs137-10k-hits/hit_event_view.html`
+remain byte-exact archives with historical navigation. Their original templates,
+manifest, geometry and event payloads were not rewritten. Population labels stay
+10,000 initial decays/model, with121 AK02/115 SAP22 Ge-positive primaries, not1M.
+The new display manifest separately binds original data and adapter/readers.
 
-The isolated-bin bug was reproduced: the original renderer drew only a tiny top
-stroke for an isolated narrow peak. Positive runs now have visible bin-boundary
-sides clipped to the log display floor, never pseudocounts or bridges over zeros.
-Peak headroom and endpoint labels are checked. The XHigh review's mobile-font
-regression was corrected from14 back to20 SVG units; final browser screenshots
-are desktop Edge device emulation, not native iPad/Safari certification.
+Astra High implemented the adapter; the original physics reviewer used High,
+while integrity used Astra XHigh. The XHigh provenance finding was independently
+reproduced: unknown source hashes could skip deterministic HTML reconstruction.
+The corrected validator rejects this; a prior display is readable only through
+an explicit entire-manifest pin, not self-declared source compatibility. New
+exports require current source hashes. Tests cover modified/rehashed HTML and
+unknown sources, including tampering with the trusted-old-manifest path.
 
-The pipeline reader's duplicate old legend was removed; its complete event/
-waveform payload and waveform/geometry DOM remain unchanged. A source-freeze
-check now refuses changed renderer/control files after import; original manifests
-and deterministic output guards remain strict. The source-race failed preliminary
-build and its derived outputs are retained, not counted as successful acceptance.
+Final component evidence: 104 distinct Python tests pass across
+the relevant suites, plus query/actual-script checks and 26 real-browser
+checks across two host harnesses. The failed contact-test aggregate is retained
+and reconciled with its separately passing unchanged-source retry.
 
-Independent numeric comparison retains22 static/dynamic specs exactly. A separate
-saved-data arithmetic check found ADC spacing1.2455808018023982keV for the frozen
-AK02 million response against1keV histogram bins: all79 zero bins in[50,450)keV
-match unreachable ADC-code-center bins. These gaps are real saved quantization,
-not missing plot segments. Do not smooth/rebin/retune frozen science to hide them.
-This does not validate laboratory hardware, noise, resolution or preamp behavior.
+Terminal test, production browser, preservation, Git and live-deployment evidence
+is in `.local/viewer-navigation-v1/COMPLETE.json`; retain its failed attempts too.
+Browser checks use dedicated host Edge profiles over localhost with no external
+page-service requests, plus390/834/desktop emulation. They are not native iPad/
+Safari or direct-file-fetch certification. See `tools/VIEWER_NAVIGATION.md`.
 
-Preservation is qualified: all347 protected local contents and byte sizes match,
-but24 empty files have mtimes rounded down to milliseconds. Independent host
-checks confirm the metadata difference; its cause is unknown. No timestamps or
-old receipts were repaired/rebased. Keep before/after evidence; never claim exact
-mtime preservation for this round. All1445 original public paths are retained;
-only seven maintained generated display/manifest files changed.
+All347 protected local hashes, sizes and this round's observed mtimes are unchanged;
+all1445 prior public paths remain. The earlier M1 difference in24 empty-file mtimes
+remains historical evidence, with unknown cause and no timestamp repair. M1's22
+static/dynamic spectrum specifications remain exact; only relevant links changed.
 
-The two historical raw-viewer suites still reject the old campaign's recorded
-run_native_campaign.ps1 hash (geometry:1error/1skip; hit view:2errors). That source
-is unchanged in this round. These failures remain distinct from passing current
-spectrum/site/publication tests; no guard was weakened. A repeat full-site build
-reached identical-output comparison but failed temporary staging cleanup with
-Windows access denied; preserve that receipt, not a claimed second clean exit.
+Retained failures: sandbox Edge failed before page load; host execution worked
+without disabling browser security. The first host harness deadlocked while
+awaiting a deliberately deferred selection Promise; the corrected test uses void
+and retains its assertions. An unchanged contact-test fixture hit Windows rename
+access denied, rolled back, and passed one separately recorded retry. The original
+failed aggregate is not relabelled passed. The first candidate build/check passed;
+a second build/check was required only for the reproduced provenance correction.
+No radiation, field, carrier transport or electronics calculation was repeated.
 
-Final source-bound commands, browser checks, reviewer exchanges, preservation,
-commit and live deployment status are recorded in
-`.local/display-repair-v2/COMPLETE.json`. Failed attempts remain in the same round.
-No radiation/field/drift/electronics calculation was rerun for this display work.
+M1 is complete at `f2bc220`: solid step spectra, independent truth/accepted-ADC
+checkboxes and Log/Linear. Recovery of its failed HTTPS wrapper reused the existing
+Node-TLS verifier and checked455 online artifacts; `.local/display-repair-v2/COMPLETE.json`
+is now terminal. Never repeat that completed development merely to recover a reply.
+The sparse AK02 spectrum retains genuine quantization gaps: the frozen synthetic
+ADC spacing is1.2455808018023982keV for1keV bins. Do not smooth or rebin old results.
 
-NEXT M2: add maintained current reader routes with reciprocal buttons for the
-all-event assembly and Ge-positive overlay, preserving model/event/group context
-where representable and explaining zero/filtered selections. Original signed
-viewer HTML/data/manifests must remain exact; use a new display provenance layer.
-Current original assembly STILL lacks its reciprocal button. M2 is NOT delivered.
-The narrow adapter plan is in `.local/display-repair-v2/implementation/SCOPE.md`.
+NEXT M3: bounded preamp code/display/laboratory audit. Check signed current,
+charge conversion, Q/Cf, feedback decay, time grid/window, display decimation and
+ADC gain/full-scale versus calibrated code spacing. Distinguish display defects,
+implementation errors and idealized hardware assumptions. Actual lab preamp/node/
+coupling/termination settings remain unknown where not recorded; measured AK02/
+SAP22 pulse files were not retained. Do not simply invert or smooth the waveform.
 
-Then M3: bounded preamp code/display/laboratory audit; do not declare the posted
-waveform experimentally correct or just invert/smooth it. Check signed current,
-charge conversion, Q/Cf, decay, time grid/window and decimation with available
-hardware metadata; measured AK02/SAP22 pulse files were not retained.
+Then M4 full signed-charge eligibility and separately calibrated electronics-only
+derivatives; M5 per-group charge/readout commits for NEW small runs; M6 tiny
+optional existing-LH5/official API pilot after actual compatibility checks; M7
+physically checked detector adapters and actual fresh-machine reproduction.
+Keep the laboratory remage/SSD workflow, not a wholesale simflow rewrite.
+Astra ONLY for all Codex tasks, High minimum, supported XHigh when useful; never
+invent higher settings, use another model, paid API fallback or reset credits.
+M3/preamp/replay/group-recovery/new-detector/cold-machine acceptance remains pending.
 
-Retained roadmap after M2/M3: M4 full signed-charge eligibility and separately
-calibrated electronics-only derivatives; M5 atomic per-group charge/readout for
-NEW small runs; M6 tiny optional existing-LH5/official API pilot only after actual
-input/API compatibility; M7 physically checked detector adapters, true fresh-
-machine reproduction and domain-bounded library acceleration. Preserve the lab
-remage/SSD workflow, not a wholesale simflow migration or repeated framework audit.
-The already-discussed detailed plan remains `.local/legend-reuse-plan-v1/PLAN.md`.
-
-No M2/preamp/replay/per-group/new-detector/cold-machine acceptance is implied by
-this M1 display delivery. Never rerun completed science or restart finished agents
-merely because a chat disconnects. Read terminal receipts and actual processes.
-
-The later electronics audit should also report the inherited ADC full-scale/gain
-versus calibrated energy-code spacing. The saved1.2456keV code step is an explicit
-synthetic configuration consequence; any improved gain/range/noise choice belongs
-to a new labelled configuration, not a silent rewrite of the frozen spectra.
+Historical raw-viewer suites remain source-incompatible; this round used
+sealed saved-bundle checks without rebasing those older producer bindings.
 
 ## Retained completed-child metadata recovery (2e73937)
 
