@@ -15,16 +15,20 @@ them. Fresh-machine installation aspects of M7 are also not attempted on this
 working computer. No new-student clones, environment installs or global settings
 changes are authorized by the current development request. M10/M11 remain later
 planned backend/UI/extension work, without claiming deferred novice acceptance.
-Current priority is M4b, then M5-M7's available scoped tasks. Preserve one working
+M4 and bounded engineering M5 are delivered; their accepted limits remain.
+M6's installed-interface assessment retains the existing readers; the unavailable
+reboost/simflow operation is deferred, not accepted. See
+[the M6 decision](M6_INTERFACE_ASSESSMENT.md). M7 is the next main scoped feature.
+Preserve one working
 project and synchronize its tracked source/configuration/lockfiles with GitHub.
 The two regular agents now use GPT-6.1-Sol Ultra. Each completed milestone also
 receives a fresh third-party Sol Ultra detail AND goal/direction review.
 
 ## Delivery order and terms
 
-Finish scoped M4a saved-charge eligibility, M4b supported synthetic electronics
-replay, M5 new-run group checkpoints, M6 the optional official interface trial,
-and M7 physically checked adapters and independent reproduction first. Report
+Do not reopen completed M4 or bounded M5. The optional M6 assessment has a
+recorded keep-current decision; proceed to one useful M7 physically checked
+adapter. Fresh-machine reproduction waits for the second computer. Report
 blocked optional items and their disposition explicitly; never call a deferred
 item complete or let an unbounded research topic silently replace the roadmap.
 Then execute M8 discovery trials, M9 no-source-edit improvements, M10 mouse-driven
@@ -39,6 +43,34 @@ control, and M11 extension proofs. Freeze one release per acceptance milestone.
 - **Extensible:** supported assets and placements change through configuration;
   genuinely new unsupported geometry/physics may need a documented developer
   adapter once. This does not promise arbitrary uploaded geometry will work.
+
+## Website links and information organization
+
+Owner addition, 2026-09-30: the public pages are cleaner, but links and information
+still feel scattered. Plan a separate saved-display milestone using existing
+generators and the single maintained Windows guide. It can proceed on this
+computer; it is not the deferred fresh-user or installation acceptance.
+
+- Keep a clear main route from the homepage to detector overview or current
+  results, then event/geometry details. Consolidate competing or repeated links
+  and give return links a predictable destination.
+- Label current million-decay results, earlier 10k examples and archives clearly;
+  retain original URLs/fragments, scientific downloads and immutable evidence.
+- Correct stale capability/status text, including the guide's electronics-replay
+  NOT_IMPLEMENTED label and historical M5a/charge-only status. Link delivered
+  replay/checkpoints and bounded native-readout without implying generic launcher
+  recovery, arbitrary-input support or fresh-machine validation.
+- Keep 17 viewable models distinct from checked executable detector/scenario
+  combinations. Put setup in the maintained guide and detailed history behind
+  methods/advanced links; do not add another beginner tutorial or framework.
+
+Before implementation, inventory the reachable current links and define one
+bounded change with explicit entry/destination rules. Accept it only after local
+link/fragment and applicable navigation/publication checks plus desktop/mobile/
+keyboard review, a strict independent direction review and peer discussion.
+Build with `tools/build_site.py`, publish through the approved workflow, verify
+the live build, and synchronize tracked local/GitHub sources. Read saved data;
+no physics rerun, precision reduction or rebaseline is part of this task.
 
 ## M8 - Two genuinely new-student trials (DEFERRED)
 

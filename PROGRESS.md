@@ -5,7 +5,40 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No original cam
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: BOUNDED ENGINEERING M5 CLOSED
+## Current handoff: M6 DECISION RECORDED; BOUNDED M5 REMAINS CLOSED
+
+M6 keeps the existing backend/readers. Installed official legend-lh5io0.2.7 /
+pydataobj2.0.3 passed one bounded reader-only saved-AK02 comparison: full10k
+primary census plus whole0/213/3645 rows, including one true zero,76 Ge rows,
+six zero-energy rows, delayed daughter birth records, passive tables and aliases.
+Official decoding compared14 nonempty tables;8 empty selections remain separately
+in the ledger, without an official empty-decoding claim. Exact selected nonempty
+column inventory/dtype/shape/bytes/attributes agree; original
+row indices and source/model hashes/size/mtime remain. No simulation or install.
+The unavailable reboost/simflow grouping/dry-plan proposal is DEFERRED, not
+accepted. Official decoding does not replace the current strict project census,
+provenance, unit or geometry checks; no concrete simplification was demonstrated.
+See `tools/M6_INTERFACE_ASSESSMENT.md`; evidence: `.local/m6-interface-v1/`.
+
+Two scoped Sol6.1 Ultra reviews plus a NEW independent strict third-party audit
+closed the assessment after actual peer discussion. Corrected official-reader
+oracle attribution (direct raw HDF5, with a separate project-Ge index check),
+14-nonempty/8-empty coverage and final-freeze chronology; initial candidates and
+metadata failures remain preserved. No further trial or numerical work is needed.
+These are AI reviews, not physical or human certification.
+
+NEXT: M7's one useful detector/scenario candidate, concrete new user capability,
+complete existing inputs and bounded geometry/mapping/positive-example plan.
+If no candidate meets those limits, record the missing inputs and offer the owner
+the already-requested website organization as an alternative; do not silently
+expand research or change priority. Website link/information organization is a
+separate owner-requested later
+saved-display milestone: consolidate routes, distinguish current/earlier/archive
+results and viewable/executable models, correct stale guide/M4/M5 status while
+preserving old URLs/data. See `tools/ONBOARDING_EXTENSIBILITY_PLAN.md`.
+M3, M8/M9 and fresh-machine work remain deferred; no extra environment or new GUI.
+
+## Accepted bounded engineering M5 closure
 
 M5 now has its finite engineering endpoint: saved-charge replay recovery,
 new-charge checkpoints, integrated independent calibration/readout recovery,
@@ -59,10 +92,8 @@ Persistent PATH/WSL/Codex configuration remains unchanged. No original Geant4,
 field, default/native million campaign, packages, resets or website build ran.
 Older accepted bundles retain their original source versions, never rebased.
 
-NEXT is M6's OPTIONAL existing-interface compatibility/utility pilot, not more M5
-expansion. Check the actual installed stack and use one small saved-data-only
-trial only if useful; do not install or replace the backend to force a pass.
-M7 checked adapters remains later; M3, M8/M9 and fresh-machine work stay deferred.
+The M6 decision above supersedes this closure's original next-task note.
+M7 checked adapters follows; M3, M8/M9 and fresh-machine work stay deferred.
 Necessary future corrections may be recorded as such; broader enhancements must
 have separate scope and must not silently become new M5 completion requirements.
 
