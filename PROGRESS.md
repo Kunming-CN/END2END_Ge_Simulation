@@ -5,64 +5,60 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No original cam
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: SAVED-SITE ACCEPTED LOCALLY; PUBLICATION PENDING; M7a DELIVERED
+## Current handoff: SAVED-SITE AND M7a DELIVERED; LIVE VERIFIED
 
-The owner-authorized website organization is implemented in existing generators:
-Results first, current1M prominent, earlier10k/teaching separate, campaign-specific
-returns, accurately labelled10k event links, and one maintained setup/run guide.
-README is shorter; generic run/recover, compatible saved-charge replay and bounded
-private-input AK02/SAP22 native-readout are distinct. Old scientific reports and
-original presentations remain reachable; viewing17 models enables no new backend.
+Owner-authorized saved-site organization is delivered through existing generators:
+Results first, current1M prominent, earlier10k/teaching separate, same-campaign
+spectrum returns, accurate earlier10k event labels and one maintained setup guide.
+README is short; generic run/recover, compatible saved-charge replay and bounded
+private-input AK02/SAP22 native-readout remain distinct. Seventeen viewable models
+enable no extra backend; old scientific reports/downloads remain reachable.
 
-Writer actual EXIT precedes source freeze.33focused fixture/spectrum checks passed
-before final wording corrections; final frozen-candidate19site checks and complete
-check_site pass. Real final-build protection
-passed:1447old paths,1382exact public files,95pages' old IDs, all spectrum scripts,
-tables/bins/SVG/controls/style/home preview;40local fragment links also pass.
-19site,27contacts,6reader checks passed. All-detector suite passed9/10 with its
-VTK-only test skipped under bundled Python; that1test then passed separately in
-the existing ParaView environment. These are software/saved-data checks.
-
-First export exited1 AFTER the validated new snapshot swap because restricted
-cleanup of old generated site-previous/.nojekyll failed. Failed receipt is retained;
-existing builder cleanup under verified owned path succeeded without ACL changes.
-Subsequent normal saved-snapshot builds exited0; final build is
+Published source commits: cf66b6c organization;8c206a5 unchanged-Windows cleanup.
+Local and live snapshot:
 `912177bdcd868c4edac22cd926fc28618f77ea4d40ceacaa86e8238e90a88887`.
-No scientific calculation/rerender or installation occurred. Actual desktop
-pointer/keyboard, chart controls, geometry isolation and event220 return context
-were checked;390px emulation has no observed horizontal overflow in home/results/
-overview/response/guide. Wrapped response-link locator-pointer attempts remain
-unpassed; per-line DOM hits, Enter and desktop pointer work. Native touch and
-fresh-computer acceptance are not claimed.
+Normal Publish.cmd succeeded; exact check_site --url passed458 deployed files,
+including all HTML/models/downloads and maintained campaign/reader assets.
+Final Git parity and owned-state closure are recorded in the terminal local
+`.local/site-organization-v1/COMPLETE.json`; final handoff edits are docs-only.
 
-Independent source reviewers found/corrected a guide interpreter prerequisite:
-native-readout uses SITE_PYTHON or existing ParaView6.1.1, not Python PATH discovery.
-Root browser/physics review also clarified contact2 is biased(+500V/+700V), while
-contact1 is the0V readout in both models. No model/cache/physics change. Final
-source freeze includes those narrow guide corrections and plan disposition.
-Two scoped Sol6.1 Ultra specialists and a NEW strict detail/direction reviewer
-independently accepted the actual final build, then directly exchanged concrete
-findings and replies. No verified blocker or direction disagreement remains.
-These are AI reviews. Separate larger mobile report-action targets are an optional
-future P3, not a new gate. Final handoff edits are documentation-only and identified
-separately from the preserved tested source freeze.
-Evidence: `.local/site-organization-v1/`, including preserved build/freeze versions.
+All1447 prior manifest paths,1382exact protected public files,95pages' old IDs,
+full spectrum scripts/tables/bins/SVG/controls/style/home preview are retained.
+40local fragments pass. Actual unchanged publication preserves1448installed file
+sizes/mtimes, including the manifest; staging is removed, global Git files exact.
+Writer33focused checks preceded final wording corrections; final20site guards and
+complete local/live check_site pass.27contacts/6readers pass; all-detector9pass/
+1VTK-only skip was closed by that1focused test in existing ParaView. Publisher's
+46pipeline checks include1OS symlink skip with separate reparse guard coverage;
+14lithium export fixtures pass. No scientific calculation/rerender/install ran.
 
-First normal Publish.cmd failed BEFORE push on unchanged-snapshot staging cleanup:
-its raw rmtree could not remove a copied Windows read-only directory. Installed
-docs/protected bytes and global Git files remained exact. Failed log, receipt and
-partial temporary-stage inventory/manifest are retained. A real bounded Windows
-regression reproduces that same failure. The unchanged branch now reuses the
-existing path-guarded remove_generated helper; no new cleanup root/ACL change.
-This necessary publisher correction and its regression receive separate frozen
-evidence and scoped specialist/NEW strict review before retrying publication.
+Failed derivative receipts remain: first build cleanup failed AFTER valid swap;
+first normal publisher failed BEFORE push in raw unchanged-stage rmtree. The
+existing path-guarded cleanup helper now handles that branch; actual Windows
+baseline reproduces failure, corrected20-test suite passes. No ACL/root/gate
+relaxation. Corrected full publisher confirms the same saved snapshot unchanged.
 
-NEXT: approved Publish.cmd, exact live check_site --url and Git parity/clean state,
-then owned preview/view restoration and lock release. Local build/reviews are
-complete; live deployment is not yet claimed.
-Do not repeat M6/M7 physics/tests/reviews or broaden GUI/research. M3, M8/M9 and
-fresh-machine work remain deferred; later M10/M11 order remains in the maintained
-plan. Continue authorized bounded rounds without per-round owner confirmation.
+Website two scoped Sol6.1 Ultra specialists and NEW strict detail/direction review
+accepted independently, then actually exchanged findings/replies. The necessary
+cleanup fix has scoped reviews plus another NEW strict reviewer and real exchange.
+Cleanup workflow checks/provisional judgment preceded strict's message, but its
+written report followed receipt; that isolation limitation is retained explicitly.
+These are AI reviews; no verified blocker or direction disagreement remains.
+
+Actual desktop/keyboard/chart/geometry/event220 return checks and390px emulated
+home/results/overview/response/guide layouts pass observed no-overflow checks.
+Wrapped response-link locator-pointer attempts remain unpassed; valid per-line
+hits, Enter and desktop pointer work. Native touch/fresh-machine acceptance is
+not claimed. Guide now accurately states SITE_PYTHON/default existing ParaView
+and contact2bias(+500/+700V) versus contact1=0V/readout; model/cache unchanged.
+
+NEXT: M3, M8/M9 and fresh-machine trials remain deferred; M8/M9 await the owner's
+second computer, with later M10/M11 order unchanged in the maintained plan.
+Larger mobile report-action targets are an optional later P3, not a new gate.
+Do not repeat completed M6/M7 science/tests/reviews, install environments or
+silently broaden GUI/research. No original scientific worker remains active.
+Current successive bounded rounds ran in this session; scheduler view exposed
+no enabled/executor state, so future scheduled execution is not inferred.
 
 ## Accepted M7a SAP22 delivery
 

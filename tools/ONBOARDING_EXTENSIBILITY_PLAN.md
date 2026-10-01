@@ -13,9 +13,10 @@ The future tests require new threads without this project's history.
 Current follow-up (2026-10-01): M7a's bounded SAP22 native-readout and checkpoint
 recovery is delivered alongside the retained AK02 route; see
 [its checked private-input scope](NATIVE_READOUT_INTEGRATION.md).
-The separate saved-site organization milestone below is implemented, locally
-tested and accepted after independent AI reviews and actual peer discussion;
-publication and exact live verification are pending. Neither change reopens
+The separate saved-site organization milestone below is delivered after local
+checks, AI reviews and actual peer discussion; normal publication and exact live
+verification pass. Its unchanged Windows staging cleanup is corrected and
+regression-tested without scientific changes. Neither delivery reopens
 fresh-machine trials or changes the later M8-M11 delivery order.
 
 M8 and M9 are DEFERRED until a second computer is available and the owner reopens
