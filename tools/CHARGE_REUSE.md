@@ -1,5 +1,13 @@
 # Saved-charge inspection (M4a) and electronics replay (M4b)
 
+Current routes: the read-only M4a inspector retains its historical status fields
+below; these do not describe the separate delivered M4b replay command. Replay
+and its opt-in saved-charge checkpoints are documented here and in
+[GROUP_CHECKPOINTS.md](GROUP_CHECKPOINTS.md). Bounded new native charge/readout
+from checked private AK02/SAP22 inputs is a distinct delivered entry:
+[NATIVE_READOUT_INTEGRATION.md](NATIVE_READOUT_INTEGRATION.md). Use the single
+[setup & run guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#local-routes) for prerequisites and route selection.
+
 From PowerShell at the project root:
 
 ```powershell
@@ -205,8 +213,9 @@ the same `replay-readout` entry with `-CheckpointGroups`, `-StopAfterGroups N` a
 nothing. The default one-shot workflow remains unchanged. See
 [GROUP_CHECKPOINTS.md](GROUP_CHECKPOINTS.md) for strict flags, immutable group
 receipts, conservative interruption boundaries, retained evidence and coordinator
-host acceptance. This mode imports saved charge; M5b native-production checkpoints
-are not delivered. M5a passed existing-host cooperative and instrumented process-death
+host acceptance. This mode imports saved charge; it does not produce new native
+charge. The separate bounded native-readout entry now has its own recovery contract
+and host acceptance. M5a passed existing-host cooperative and instrumented process-death
 acceptance; see GROUP_CHECKPOINTS.md and `.local/group-checkpoint-v1/COMPLETE.json`.
 The following retained acceptance concerns the separate one-shot M4b mode.
 

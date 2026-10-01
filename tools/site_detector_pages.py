@@ -25,12 +25,13 @@ def apply(site, write_page):
         original=(gallery if gallery.is_file() else page).read_text(encoding='utf-8')
         cleaned=remove_sections(original,MANAGED)
         cleaned=cleaned.replace('href="../../index.html">Detector library','href="../index.html">Detector library')
-        banner=(f'<section id="saved-gallery-intro"><h2>{escape(model)} saved gallery</h2>'
+        banner=(f'<section id="saved-gallery-intro"><h2>{escape(model)} earlier saved gallery</h2>'
                 '<p><a href="index.html">Detector overview</a> · '
                 '<a href="geometry.html">Rotate geometry</a> · '
                 '<a href="technical.html">Technical details</a></p>'
-                '<p>Saved SSD gallery and synthetic event examples; not a newly run '
-                'LBNL source simulation. Original settings and limitations remain below.</p></section>')
+                '<p>Original synthetic SSD study from <code>20260922_suite_v3</code>. '
+                'For source-campaign results, return to the detector overview. '
+                'Original settings and limitations remain below.</p></section>')
         if cleaned.count('<main>')!=1:
             raise ValueError('Unexpected saved gallery structure: '+model)
         gallery.write_text(cleaned.replace('<main>','<main>'+banner,1),encoding='utf-8',newline='\n')
@@ -49,17 +50,19 @@ def apply(site, write_page):
         if not (folder/'geometry.html').is_file():
             geometry=f'<section class="panel"><h2>Saved geometry</h2><img style="max-width:100%" src="runs/{RUN}/01_geometry.png" alt="{escape(model)} saved geometry"></section>'
         supported=capabilities[model]['lbnl_execution_implemented']
-        run_note=(f'<p>Use the <a href="../../scenarios/lbnl-cs137/index.html">LBNL Cs137 scenario</a>: '
-                  f'<code>.\\Run.cmd run -Detector {model} -Preset demo</code>.</p>' if supported else
+        run_note=(f'<p>{escape(model)} has an implemented nominal '
+                  '<a href="../../scenarios/lbnl-cs137/index.html">LBNL Cs137 selection</a>. '
+                  'Use the <a href="../../guide.html#local-routes">setup & run guide</a> '
+                  'to choose a new run or a checked existing-input workflow.</p>' if supported else
                   '<p>LBNL end-to-end execution is not yet integrated for this model. '
                   'Geometry viewing is available independently of cryostat placement and readout support.</p>')
         special=('<p><a href="strip_explorer.html">Explore all 34 GeGI signal channels</a> · '
                  '<a href="supplement.html">Earlier supplementary study</a></p>' if model=='GeGI_3D' else '')
         legacy_ids=set(ids(cleaned))-MANAGED-{'contact-legend','native-cs137-10k'}
         aliases=''.join(f'<p id="{escape(i,quote=True)}"><a href="gallery.html#{escape(i,quote=True)}">Open saved gallery detail</a></p>' for i in sorted(legacy_ids))
-        past=('<section id="native-cs137-10k" class="panel"><h2>Results using this detector</h2>'
-              '<p><a href="../../results/cs137-1m/index.html">1M campaign overview</a> · '
-              '<a href="../../results/cs137-10k/index.html">Earlier 10k campaign</a> · '
+        past=('<section id="native-cs137-10k" class="panel"><h2>Source-campaign results</h2>'
+              '<p><strong>Current:</strong> <a href="../../results/cs137-1m/index.html">1M campaign overview</a></p>'
+              '<p><strong>Earlier:</strong> <a href="../../results/cs137-10k/index.html">10k campaign</a> · '
               f'<a href="../../examples/cs137-10k-hits/hit_event_view.html?model={model}">Explore earlier 10k Ge-positive events</a></p></section>' if model in campaign_models else '')
         header=(f'<section class="hero"><p><a href="../index.html">All detectors</a> / <a href="index.html">{escape(model)}</a></p>'
                 f'<h1>{escape(model)}</h1><p>{count} contacts · {escape(item.get("coordinate_system",""))} · '
@@ -67,14 +70,14 @@ def apply(site, write_page):
         nav=('<section id="featured-detector-navigation" class="panel"><h2>Explore this detector</h2>'
              '<p><a href="geometry.html">Rotate geometry</a> · <a href="gallery.html">Fields, movies and signals</a> · '
              '<a href="technical.html">Model and technical details</a></p></section>')
-        overview=(header+nav+geometry+'<section class="panel"><h2>Saved response gallery</h2>'
+        overview=(header+nav+past+geometry+'<section class="panel"><h2>Earlier synthetic response gallery</h2>'
                   f'<a href="gallery.html"><img loading="lazy" style="max-width:100%;max-height:280px" src="runs/{RUN}/02_static_fields.png" alt="{escape(model)} saved field and weighting-potential preview"></a>'
-                  '<p>Field lines are not carrier trajectories. Gallery settings and scenario overrides are separate.</p>'+special+'</section>'+past+
+                  '<p>Saved synthetic study, separate from source-campaign results. Field lines are not carrier trajectories. Gallery settings and scenario overrides are separate.</p>'+special+'</section>'+
                   '<section id="contact-legend" class="panel"><h2>Contact key and model files</h2>'
                   '<p>Colors identify contacts, not doping or layer thickness. Small contacts retain their actual size. '
                   '<a href="runs/'+RUN+'/01_geometry.png">Full-size saved geometry</a></p>'+
                   '<details><summary>Contact IDs and signed potentials</summary>'+contact_table+'</details><p>'+downloads+'</p></section>'+
-                  '<section class="panel"><h2>Run locally</h2>'+run_note+'<p><a href="../../guide.html">Setup and validation limits</a></p></section>'+aliases)
+                  '<section class="panel"><h2>Run locally</h2>'+run_note+'<p><a href="../../guide.html#validation">Validation limits</a></p></section>'+aliases)
         write_page(page,model+' · Detector overview',overview,2)
         diagnostics=[]
         for name in ('validation.events.json','validation.scenes.json'):

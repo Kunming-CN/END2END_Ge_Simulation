@@ -112,6 +112,28 @@ class SavedDisplayTests(unittest.TestCase):
         self.assertEqual([v['plot_states'] for v in self.manifest['pages'].values()],[4,4,10,2])
         self.assertEqual(sum(v['plot_states'] for v in self.manifest['pages'].values()),20)
         self.assertEqual(self.before,{p:D.sha(self.site/p) for p in self.before})
+    def test_campaign_returns_and_library_target(self):
+        for name,label,target in (
+            ('million-truth','Current 1M campaign','../results/cs137-1m/index.html'),
+            ('million-response','Current 1M campaign','../results/cs137-1m/index.html'),
+            ('cs137-10k','Earlier 10k campaign','../results/cs137-10k/index.html'),
+            ('pipeline','Teaching example context','../learn/index.html')):
+            page=(self.site/'spectra'/f'{name}.html').read_text(encoding='utf-8')
+            self.assertIn(f'href="{target}">{label}</a>',page)
+            self.assertIn('Original report (archived presentation)',page)
+        pipeline=(self.site/'spectra/pipeline.html').read_text(encoding='utf-8')
+        self.assertIn('href="../detectors/index.html">← Detector library</a>',pipeline)
+        response=(self.site/'spectra/million-response.html').read_text(encoding='utf-8')
+        self.assertIn('href="../viewers/ge-positive.html">Earlier 10k Ge-hit examples</a>',response)
+        self.assertIn('use the earlier 10k campaign',response)
+    def test_navigation_preserves_all_saved_spectrum_scripts_tables_and_charts(self):
+        for destination in D.ROUTES.values():
+            before=(ROOT/'docs'/destination).read_text(encoding='utf-8')
+            after=(self.site/destination).read_text(encoding='utf-8')
+            self.assertEqual(D.component_hashes(before),D.component_hashes(after),destination)
+            self.assertEqual(D.embedded_specs(before),D.embedded_specs(after),destination)
+            for expression in (r'<script\b[^>]*>.*?</script>',r'<table\b[^>]*>.*?</table>'):
+                self.assertEqual(re.findall(expression,before,re.S),re.findall(expression,after,re.S),destination)
     def test_repeat_is_byte_and_mtime_exact(self):
         before={p.name:(p.read_bytes(),p.stat().st_mtime_ns) for p in (self.site/'spectra').iterdir()}
         D.assemble(self.site)

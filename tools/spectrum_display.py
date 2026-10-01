@@ -186,9 +186,26 @@ def render_page(site,original,destination,specs):
         text=text.replace('No SSD, readout or noise has run for this campaign.','This page shows Geant4 deposition truth only. The completed native SSD/readout response is reported separately.')
         text=add_at_end(text,assets())
     text=rewrite_links(text,original,destination)
+    if destination=='spectra/pipeline.html':
+        old='href="../index.html">← Detector library</a>'
+        require(text.count(old)==1,'Original pipeline library return changed')
+        text=text.replace(old,'href="../detectors/index.html">← Detector library</a>',1)
+    if destination=='spectra/million-response.html':
+        old='>3D Ge-hit examples</a>'
+        require(text.count(old)==1,'Original response Ge-hit link changed')
+        text=text.replace(old,'>Earlier 10k Ge-hit examples</a>',1)
     archive=posixpath.relpath(original,'spectra')
+    returns={
+        'spectra/million-truth.html':('../results/cs137-1m/index.html','Current 1M campaign'),
+        'spectra/million-response.html':('../results/cs137-1m/index.html','Current 1M campaign'),
+        'spectra/cs137-10k.html':('../results/cs137-10k/index.html','Earlier 10k campaign'),
+        'spectra/pipeline.html':('../learn/index.html','Teaching example context'),
+    }
+    target,label=returns[destination]
     note=('<aside class="spectrum-note"><strong>Updated spectrum display.</strong> Exact saved bins; default Log, optional Linear. No simulations rerun. '
-          '<a href="../results/index.html">Results</a> · <a href="'+archive+'">Original report (archived presentation)</a> · <a href="manifest.json">Display provenance</a></aside>')
+          '<a href="'+target+'">'+label+'</a> · <a href="../results/index.html">All results</a> · '
+          '<a href="'+archive+'">Original report (archived presentation)</a> · <a href="manifest.json">Display provenance</a>'
+          +(' <span>Ge-hit event examples on this page use the earlier 10k campaign.</span>' if destination=='spectra/million-response.html' else '')+'</aside>')
     anchor=text.find('<h1')
     require(anchor>=0,'Report heading missing')
     text=text[:anchor]+note+text[anchor:]

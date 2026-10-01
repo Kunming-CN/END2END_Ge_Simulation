@@ -26,23 +26,33 @@ class HierarchyTests(unittest.TestCase):
                     Path(dest).write_bytes(b'fixture existence marker')
                 return dest
             shutil.copytree(ROOT/'docs',fixture,copy_function=copy)
+            original_ids={p.relative_to(fixture).as_posix():set(ids(p.read_text(encoding='utf-8')))
+                          for p in fixture.rglob('*.html')}
+            old_home=(fixture/'index.html').read_text(encoding='utf-8')
+            old_preview=re.findall(r'<figure class="spectrum-panel".*?</figure>',old_home,re.S)
             S.apply(fixture)
             first={p.relative_to(fixture).as_posix():p.read_bytes() for p in fixture.rglob('*.html')}
             S.apply(fixture)
             second={p.relative_to(fixture).as_posix():p.read_bytes() for p in fixture.rglob('*.html')}
             self.assertEqual(first,second,'Repeated navigation generation changed HTML')
+            for relative,anchors in original_ids.items():
+                current=set(ids((fixture/relative).read_text(encoding='utf-8')))
+                self.assertTrue(anchors<=current,'Old fragments removed from '+relative+': '+str(anchors-current))
             home=(fixture/'index.html').read_text(encoding='utf-8')
             self.assertNotIn('Featured completed result',home)
             for card in re.findall(r'<article class="card">.*?</article>',home,re.S):
                 if '<figure' in card:
                     self.assertLess(card.index('<a '),card.index('<figure'),'Primary action follows preview')
-            self.assertIn('fresh-machine reproduction remain unvalidated',home)
+            self.assertEqual(old_preview,re.findall(r'<figure class="spectrum-panel".*?</figure>',home,re.S))
+            self.assertIn('Fresh-machine reproduction remains unvalidated',home)
             guide=(fixture/'guide.html').read_text(encoding='utf-8')
             self.assertIn('Julia <strong>1.13.0</strong>',guide)
             self.assertIn('PowerShell in the repository root',guide)
             self.assertNotRegex(guide,r'(?<!\\)Run\.cmd (?:check|run|setup|open|resume)')
             catalog=json.loads((fixture/'models/catalog.json').read_text())
-            selected=['index.html','guide.html','detectors/index.html','results/index.html']
+            selected=['index.html','guide.html','learn/index.html','detectors/index.html','results/index.html',
+                      'results/cs137-1m/index.html','results/cs137-10k/index.html','methods/index.html',
+                      'scenarios/lbnl-cs137/index.html']
             for model in catalog['detectors']:
                 base='detectors/'+model['id']+'/'
                 selected.extend(base+name for name in ('index.html','gallery.html','technical.html','geometry.html'))
@@ -50,11 +60,18 @@ class HierarchyTests(unittest.TestCase):
                 self.assertEqual(overview.count('id="featured-detector-navigation"'),1)
                 self.assertEqual(overview.count('id="ssd-interactive-geometry"'),1)
                 self.assertIn('../../downloads/'+model['id']+'.zip',overview)
+                if model['id'] in ('AK02','SAP22'):
+                    self.assertIn('id="native-cs137-10k"',overview)
+                    self.assertLess(overview.index('<strong>Current:</strong>'),overview.index('<strong>Earlier:</strong>'))
+                    self.assertIn('../../guide.html#local-routes',overview)
+                self.assertNotIn('Run.cmd run',overview)
                 technical=(fixture/base/'technical.html').read_text(encoding='utf-8')
                 self.assertIn('Model at a glance',technical)
                 self.assertIn('Coordinate bounds:',technical)
                 self.assertIn('href="index.html">Overview',technical)
                 gallery=(fixture/base/'gallery.html').read_text(encoding='utf-8')
+                self.assertIn('earlier saved gallery',gallery)
+                self.assertIn('Original synthetic SSD study',gallery)
                 for href in re.findall(r'<a href="([^"]+)">Detector library</a>',gallery):
                     self.assertEqual(local_target(base+'gallery.html',href),'detectors/index.html')
 

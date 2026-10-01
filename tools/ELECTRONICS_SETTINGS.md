@@ -1,5 +1,11 @@
 # Saved electronics settings
 
+Current workflow selection belongs to the maintained [setup & run guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#local-routes).
+Settings checks remain read-only. A custom generic run starts its normal upstream
+calculation; compatible saved-charge replay is a separate delivered command in
+[CHARGE_REUSE.md](CHARGE_REUSE.md). Bounded private-input native-readout has its
+own fixed profile and does not accept electronics overrides.
+
 From Windows PowerShell in the repository root:
 
 ```powershell
@@ -192,8 +198,11 @@ Comparison always separates three claims:
 - **Artifact-verified supported reuse:** `NOT_CHECKED` by settings comparison.
   `Run.cmd inspect` checks terminal saved campaigns using their recorded canonical
   or custom binding. Configuration equality alone verifies no scientific artifacts.
-- **Electronics-only replay:** `NOT_IMPLEMENTED`. The coupled response driver does
-  not automatically reuse charge. A comparison never starts either configuration.
+- **Automatic electronics replay in settings comparison/coupled run:** the
+  comparison retains its `NOT_IMPLEMENTED` status. The coupled response driver
+  does not automatically reuse charge. A comparison never starts either
+  configuration. The separate `replay-readout` command supports compatible
+  saved-charge derivatives under [CHARGE_REUSE.md](CHARGE_REUSE.md).
 
 Threshold changes affect acceptance, never the event census. Every independently
 executed electronics configuration requires injection calibration, not an

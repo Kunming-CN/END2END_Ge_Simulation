@@ -1,8 +1,14 @@
 # Bounded launcher acceptance and remaining scope
 
 Current follow-up: the saved-run inventory/settings checks and read-only inspector
-are documented in [INSPECT_RUNS.md](INSPECT_RUNS.md). The account below preserves
-the earlier acceptance round; its then-next Pages work has since been delivered.
+are documented in [INSPECT_RUNS.md](INSPECT_RUNS.md). One later custom-profile
+AK02 500-decay uninstrumented run is recorded in [ELECTRONICS_SETTINGS.md](ELECTRONICS_SETTINGS.md),
+for that configuration on the existing computer only. Separate delivered
+[saved-charge replay](CHARGE_REUSE.md) and [bounded private-input AK02/SAP22 native-readout](NATIVE_READOUT_INTEGRATION.md)
+have their own host/checkpoint acceptance; they do not clear generic launcher,
+arbitrary-input or fresh-machine limits. Use the maintained [setup & run guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#local-routes)
+to choose a route. The account below preserves the historical 2026-09-28 round;
+its then-next Pages work has since been delivered.
 
 Date: 2026-09-28. This is engineering regression evidence, not experimental validation.
 The complete owner-approved roadmap remains in `../PROGRESS.md`; these tests do not

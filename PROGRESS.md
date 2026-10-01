@@ -5,7 +5,57 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No original cam
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: M7a SAP22 DELIVERED; WEBSITE ORGANIZATION NEXT
+## Current handoff: SAVED-SITE ACCEPTED LOCALLY; PUBLICATION PENDING; M7a DELIVERED
+
+The owner-authorized website organization is implemented in existing generators:
+Results first, current1M prominent, earlier10k/teaching separate, campaign-specific
+returns, accurately labelled10k event links, and one maintained setup/run guide.
+README is shorter; generic run/recover, compatible saved-charge replay and bounded
+private-input AK02/SAP22 native-readout are distinct. Old scientific reports and
+original presentations remain reachable; viewing17 models enables no new backend.
+
+Writer actual EXIT precedes source freeze.33focused fixture/spectrum checks passed
+before final wording corrections; final frozen-candidate19site checks and complete
+check_site pass. Real final-build protection
+passed:1447old paths,1382exact public files,95pages' old IDs, all spectrum scripts,
+tables/bins/SVG/controls/style/home preview;40local fragment links also pass.
+19site,27contacts,6reader checks passed. All-detector suite passed9/10 with its
+VTK-only test skipped under bundled Python; that1test then passed separately in
+the existing ParaView environment. These are software/saved-data checks.
+
+First export exited1 AFTER the validated new snapshot swap because restricted
+cleanup of old generated site-previous/.nojekyll failed. Failed receipt is retained;
+existing builder cleanup under verified owned path succeeded without ACL changes.
+Subsequent normal saved-snapshot builds exited0; final build is
+`912177bdcd868c4edac22cd926fc28618f77ea4d40ceacaa86e8238e90a88887`.
+No scientific calculation/rerender or installation occurred. Actual desktop
+pointer/keyboard, chart controls, geometry isolation and event220 return context
+were checked;390px emulation has no observed horizontal overflow in home/results/
+overview/response/guide. Wrapped response-link locator-pointer attempts remain
+unpassed; per-line DOM hits, Enter and desktop pointer work. Native touch and
+fresh-computer acceptance are not claimed.
+
+Independent source reviewers found/corrected a guide interpreter prerequisite:
+native-readout uses SITE_PYTHON or existing ParaView6.1.1, not Python PATH discovery.
+Root browser/physics review also clarified contact2 is biased(+500V/+700V), while
+contact1 is the0V readout in both models. No model/cache/physics change. Final
+source freeze includes those narrow guide corrections and plan disposition.
+Two scoped Sol6.1 Ultra specialists and a NEW strict detail/direction reviewer
+independently accepted the actual final build, then directly exchanged concrete
+findings and replies. No verified blocker or direction disagreement remains.
+These are AI reviews. Separate larger mobile report-action targets are an optional
+future P3, not a new gate. Final handoff edits are documentation-only and identified
+separately from the preserved tested source freeze.
+Evidence: `.local/site-organization-v1/`, including preserved build/freeze versions.
+
+NEXT: approved Publish.cmd, exact live check_site --url and Git parity/clean state,
+then owned preview/view restoration and lock release. Local build/reviews are
+complete; live deployment is not yet claimed.
+Do not repeat M6/M7 physics/tests/reviews or broaden GUI/research. M3, M8/M9 and
+fresh-machine work remain deferred; later M10/M11 order remains in the maintained
+plan. Continue authorized bounded rounds without per-round owner confirmation.
+
+## Accepted M7a SAP22 delivery
 
 `Run.cmd native-readout -Name NAME -Detector SAP22` now selects the second
 checked nominal LBNL detector through NEW native charge, independent injection
@@ -15,7 +65,8 @@ contracts/caches, not arbitrary inputs or a fresh-checkout calculation example.
 Resume obtains model/IDs only from the witnessed INITIAL manifest and forbids
 every explicit selector override, including matching values. Legacy charge-only
 remains AK02-only. Models/includes, physics helpers, profiles and locks are frozen.
-SAP22 retains +700 V/contact1 and the existing explicit77 K cache from78 K source.
+SAP22 retains +700 V on contact2, contact1 readout, and the explicit77 K cache
+from78 K source.
 
 Actual bounded0/207/263 reference/death/pause/resume passed:3whole primaries,
 1truezero,2groups,33ALL Ge rows including4zero-energy rows. Exactly4NEW native
@@ -53,16 +104,8 @@ M6 keeps the existing readers; the bounded official-reader assessment and deferr
 reboost/simflow proposal remain recorded in `tools/M6_INTERFACE_ASSESSMENT.md`.
 M4 and bounded M5 remain closed. Do not repeat completed science/tests/reviews.
 
-NEXT: the owner-authorized separate saved-website organization milestone:
-inventory reachable routes; consolidate current-results/setup/return links,
-distinguish1M/earlier10k/archive and17viewable/checked executable models, and
-correct stale guide replay/public-command/recovery statements BY ROUTE.
-Retain generic launcher's historical test-cache/fresh-machine limits; expose
-delivered replay and existing-input native-readout accurately. Preserve old URLs,
-fragments and scientific bytes. Use existing generators, build/publish checks
-and desktop/mobile/keyboard review; no physics or new framework.
-See `tools/ONBOARDING_EXTENSIBILITY_PLAN.md`. M3, M8/M9 and fresh-machine work
-remain deferred. Continue bounded rounds without per-round owner confirmation.
+The separate website milestone is the current handoff above. See
+`tools/ONBOARDING_EXTENSIBILITY_PLAN.md`; completed science remains immutable.
 
 ## Accepted bounded engineering M5 closure
 

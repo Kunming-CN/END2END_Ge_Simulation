@@ -1,4 +1,4 @@
-import json,tempfile,unittest
+import json,re,tempfile,unittest
 from pathlib import Path
 import site_restructure as S
 
@@ -27,13 +27,20 @@ class SiteStructureTests(unittest.TestCase):
         self.assertEqual(result['detectors'],2)
         for label in S.PRIMARY:self.assertIn(label,home)
         self.assertEqual(home.count('<article class="card">'),3)
-        self.assertIn('downloads/all-models.zip',home)
+        self.assertEqual(home.count('href="downloads/all-models.zip"'),1)
+        self.assertRegex(home,r'<section class="cards">\s*<article class="card"><h2>Results</h2>')
+        primary=re.search(r'<nav aria-label="Primary">(.*?)</nav>',home).group(1)
+        self.assertEqual(re.findall(r'href="([^"]+)"',primary),
+                         ['results/index.html','detectors/index.html','guide.html'])
+        self.assertEqual(re.findall(r'>([^<]+)</a>',primary),list(S.PRIMARY))
         self.assertIn('Run.cmd',home)
         for p in ('learn/index.html','detectors/index.html','results/index.html',
                   'methods/index.html','scenarios/lbnl-cs137/index.html'):
             self.assertTrue((root/p).is_file(),p)
         scenario=(root/'scenarios/lbnl-cs137/index.html').read_text()
-        self.assertIn('Run.cmd run -Preset demo -Detector both',scenario)
+        self.assertIn('guide.html#choose',scenario)
+        self.assertIn('guide.html#local-routes',scenario)
+        self.assertNotIn('Run.cmd run',scenario)
         self.assertIn('10k requires a verified 500-event pilot',scenario)
         self.assertIn('not redistributed',scenario)
 
@@ -45,6 +52,11 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('1M-per-detector campaign',scenario);self.assertIn('earlier 10k campaign',scenario)
         overview=(root/'results/cs137-1m/index.html').read_text()
         self.assertIn('12,420',overview);self.assertIn('10,757',overview)
+        results=(root/'results/index.html').read_text()
+        self.assertLess(results.index('Current completed campaign'),results.index('Earlier campaign and teaching example'))
+        self.assertIn('Original reports remain available as archived presentations of this same campaign',results)
+        self.assertNotIn('1M per detector',''.join(re.findall(r'<article class="card">.*?</article>',results,re.S)))
+        self.assertIn('Compact teaching example',results)
 
     def test_repeat_application_is_idempotent(self):
         root=self.fixture(with_results=True);S.apply(root)
@@ -56,6 +68,7 @@ class SiteStructureTests(unittest.TestCase):
         (root/'examples/cs137-1m-response/summary.json').unlink();(root/'examples/cs137-1m/summary.json').unlink();(root/'examples/cs137-10k/comparison.html').unlink()
         S.apply(root)
         self.assertNotIn('Open campaign overview',(root/'results/index.html').read_text())
+        self.assertIn('Current campaign unavailable in this snapshot',(root/'results/index.html').read_text())
         self.assertNotIn('Saved campaigns',(root/'scenarios/lbnl-cs137/index.html').read_text())
         self.assertIn('unavailable in this snapshot',(root/'results/cs137-1m/index.html').read_text())
         self.assertIn('unavailable in this snapshot',(root/'results/cs137-10k/index.html').read_text())
@@ -63,5 +76,28 @@ class SiteStructureTests(unittest.TestCase):
         root=self.fixture(); c=json.loads((root/'models/catalog.json').read_text())
         c['detectors'][0]['id']='../escape';(root/'models/catalog.json').write_text(json.dumps(c))
         with self.assertRaisesRegex(ValueError,'Unsafe detector ID'):S.apply(root)
+
+    def test_guide_keeps_distinct_local_routes_and_historical_scopes(self):
+        root=self.fixture();S.apply(root)
+        guide=(root/'guide.html').read_text()
+        sections=dict(re.findall(r'<section id="([^"]+)">(.*?)</section>',guide,re.S))
+        for anchor in ('browse','setup','choose','electronics','results','validation','workspace','downloads',
+                       'local-routes','replay','native-readout','recovery'):
+            self.assertIn(anchor,sections)
+        self.assertIn('WSL2',sections['setup'])
+        self.assertIn('full signed <code>signals.csv</code>',sections['replay'])
+        self.assertIn('no group recovery',sections['replay'])
+        self.assertIn('-Detector AK02 -CheckpointGroups -Resume',sections['replay'])
+        native=sections['native-readout']
+        self.assertIn('checked private',native);self.assertIn('not in a fresh checkout',native)
+        resume_lines=[line for line in native.splitlines() if 'Run.cmd native-readout' in line and '-Resume' in line]
+        self.assertEqual(len(resume_lines),2)
+        self.assertTrue(all('-Detector' not in line and '-PrimaryIds' not in line for line in resume_lines))
+        self.assertIn('newly committed <strong>electronics</strong> groups',native)
+        self.assertIn('does not provide per-group recovery',sections['results'])
+        self.assertIn('Neither command starts missing calculations',sections['recovery'])
+        self.assertIn('Those historical checks alone',sections['validation'])
+        self.assertIn('one custom-profile AK02 500-decay uninstrumented run',sections['validation'])
+        self.assertNotIn('Electronics-only replay is still NOT_IMPLEMENTED',guide)
 
 if __name__=='__main__':unittest.main(verbosity=2)

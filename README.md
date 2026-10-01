@@ -1,6 +1,6 @@
 # END2END germanium detector simulation
 
-**[Browse the results website](https://kunming-cn.github.io/END2END_Ge_Simulation/)** · **[Run a supported local case](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup)** · [Download detector models](https://kunming-cn.github.io/END2END_Ge_Simulation/downloads/all-models.zip)
+**[Browse results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html)** · **[Setup & run guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html)** · [Download detector models](https://kunming-cn.github.io/END2END_Ge_Simulation/downloads/all-models.zip)
 
 Explore how radiation deposits become an energy measurement:
 **Geant4/remage → SSD charge transport → preamplifier → shaping → peak ADC.**
@@ -16,7 +16,7 @@ Current energy spectra use **step histograms**, default **Log**, with **Linear /
 
 ## Run one local example
 
-Follow the **[Windows setup checklist](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup)** first. It is the primary installation/run guide. The reviewed LBNL path requires Julia **1.13.0**, the supplied SSD environment, Ubuntu-24.04/WSL, pinned Geant4/remage dependencies and the separately obtained upstream cryostat files.
+Use the **[setup & run guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#local-routes)** to choose a workflow. For a generic new LBNL run, follow its [Windows setup checklist](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup) first; it is the single installation/run authority.
 
 From the repository root in **PowerShell**, after setup:
 
@@ -29,30 +29,9 @@ Use `-Detector SAP22` to switch the crystal without editing YAML; `-Detector bot
 
 **Scope:** 17 viewable models do not mean 17 LBNL-ready models. The LBNL adapter currently implements AK02/SAP22. One custom AK02 500-decay uninstrumented run is recorded; broader positive replacement acceptance and fresh-machine end-to-end reproduction remain unvalidated. First-time setup is explicit, not one-click automatic installation.
 
-```powershell
-.\Run.cmd status
-.\Run.cmd inspect -Name RUN_NAME
-.\Run.cmd open -Name RUN_NAME
-.\Open_Workspace.cmd
-```
+The guide also covers [status, inspection and generic resume](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#results), the optional [local workspace index](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#workspace), and a source-only checkout. ParaView is not a student runtime prerequisite.
 
-The optional workspace index needs an installed Windows Python 3.10+ (standard library only); ParaView is not required for students. Replace `RUN_NAME` with the name printed by the launcher. The workspace entry opens a local-only results/file index; it does not start or resume calculations. Completed stages are reused only after verification. Interrupted native-stage group recovery is not yet part of this beginner launcher.
-
-For a completed child whose parent update was interrupted, see the [metadata-only recovery guide](tools/RECOVERY.md). Start with `.\Run.cmd recover -Name RUN_NAME -DryRun -Json`. Recovery never starts missing calculations or adopts legacy/partial responses.
-
-<details><summary>Source-only checkout instead of downloading the saved media</summary>
-
-Browse saved results online; obtain the calculation sources with Git:
-
-```powershell
-git clone --filter=blob:none --sparse https://github.com/Kunming-CN/END2END_Ge_Simulation.git
-cd END2END_Ge_Simulation
-git sparse-checkout set models simulation transport scenarios tools
-```
-
-This omits `docs/` from the checkout. It does not install dependencies or fetch cryostat inputs. A full clone also contains the saved website and media.
-
-</details>
+Advanced existing-input routes are distinct: [saved-charge electronics replay](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#replay) and [bounded new native-readout](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#native-readout) use compatible private local inputs, not public report HTML or a fresh checkout. Generic resume still lacks interrupted native-stage group recovery. [Metadata-only recovery](tools/RECOVERY.md) reconciles a completed child with its parent; it never starts missing calculations or adopts partial responses.
 
 ## Project layout
 

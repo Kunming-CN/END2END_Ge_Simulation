@@ -10,6 +10,14 @@ The future tests require new threads without this project's history.
 
 ## Current owner disposition (2026-09-30)
 
+Current follow-up (2026-10-01): M7a's bounded SAP22 native-readout and checkpoint
+recovery is delivered alongside the retained AK02 route; see
+[its checked private-input scope](NATIVE_READOUT_INTEGRATION.md).
+The separate saved-site organization milestone below is implemented, locally
+tested and accepted after independent AI reviews and actual peer discussion;
+publication and exact live verification are pending. Neither change reopens
+fresh-machine trials or changes the later M8-M11 delivery order.
+
 M8 and M9 are DEFERRED until a second computer is available and the owner reopens
 them. Fresh-machine installation aspects of M7 are also not attempted on this
 working computer. No new-student clones, environment installs or global settings
@@ -18,7 +26,8 @@ planned backend/UI/extension work, without claiming deferred novice acceptance.
 M4 and bounded engineering M5 are delivered; their accepted limits remain.
 M6's installed-interface assessment retains the existing readers; the unavailable
 reboost/simflow operation is deferred, not accepted. See
-[the M6 decision](M6_INTERFACE_ASSESSMENT.md). M7 is the next main scoped feature.
+[the M6 decision](M6_INTERFACE_ASSESSMENT.md). The requested useful M7 adapter
+is delivered within its recorded engineering scope.
 Preserve one working
 project and synchronize its tracked source/configuration/lockfiles with GitHub.
 The two regular agents now use GPT-6.1-Sol Ultra. Each completed milestone also
