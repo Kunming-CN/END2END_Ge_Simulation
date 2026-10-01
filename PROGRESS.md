@@ -37,9 +37,13 @@ No radiation, field, SSD or readout computation was run for this publication tas
 
 Three independent Sol 6.1 Ultra AI INITIALs accept the frozen implementation.
 Actual two-peer reciprocal discussion based on the new strict review is recorded;
-no verified blocker or required source correction remains. Normal publication,
-exact live verification and final Git parity still pending. These are AI reviews,
-not human certification.
+no verified blocker or required source correction remains. Normal publication
+exits 0 and preserves the frozen build. Full live check_site verifies all 458
+selected public files against build 0c2fa3af. Publisher ran 163 Python fixture
+tests (one OS symlink test skipped), model validation and frontend checks; no
+scientific computation. Local/GitHub source synchronization is recorded locally.
+These are AI implementation reviews, not human certification; no duplicate
+review or science round is needed for unchanged deployment-only closure.
 Evidence: .local/navigation-routes-v1/.
 
 ## Retained functional delivery and permanent science
