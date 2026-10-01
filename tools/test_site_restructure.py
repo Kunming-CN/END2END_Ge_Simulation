@@ -1,5 +1,6 @@
 import json,re,tempfile,unittest
 from pathlib import Path
+from unittest.mock import patch
 import site_restructure as S
 
 class SiteStructureTests(unittest.TestCase):
@@ -63,6 +64,25 @@ class SiteStructureTests(unittest.TestCase):
         owned=('index.html','learn/index.html','detectors/index.html','results/index.html','results/cs137-1m/index.html','results/cs137-10k/index.html','methods/index.html','scenarios/lbnl-cs137/index.html')
         first={p:(root/p).read_bytes() for p in owned};S.apply(root)
         self.assertEqual(first,{p:(root/p).read_bytes() for p in owned})
+
+    def test_gamma_adds_only_one_results_entry_and_preserves_saved_bytes(self):
+        root=self.fixture(with_results=True);S.apply(root)
+        before={p.relative_to(root).as_posix():p.read_bytes() for p in root.rglob('*') if p.is_file()}
+        gamma=root/'examples/gamma-native';gamma.mkdir(parents=True)
+        (gamma/'gamma.html').write_bytes(b'synthetic checked fixture\r\n')
+        with patch('gamma_showcase.validate_bundle') as checked:
+            S.apply(root)
+        checked.assert_called_once_with(gamma)
+        results=(root/'results/index.html').read_text()
+        self.assertEqual(results.count('Completed gamma → native SSD → peak ADC'),1)
+        self.assertEqual(results.count('../examples/gamma-native/gamma.html'),1)
+        self.assertIn('Compact teaching example',results)
+        self.assertIn('../examples/pipeline.html',results)
+        for name,raw in before.items():
+            if name!='results/index.html':self.assertEqual((root/name).read_bytes(),raw,name)
+        self.assertEqual((gamma/'gamma.html').read_bytes(),b'synthetic checked fixture\r\n')
+        with patch('gamma_showcase.validate_bundle',side_effect=ValueError('incomplete gamma')):
+            with self.assertRaisesRegex(ValueError,'incomplete gamma'):S.apply(root)
     def test_source_removal_replaces_owned_hubs_with_unavailable_pages(self):
         root=self.fixture(with_results=True);S.apply(root)
         (root/'examples/cs137-1m-response/summary.json').unlink();(root/'examples/cs137-1m/summary.json').unlink();(root/'examples/cs137-10k/comparison.html').unlink()

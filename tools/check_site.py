@@ -143,6 +143,9 @@ def validate(site, require_manifest=True, require_models=False):
     if (site/'examples/cs137-1m-response').exists():
         from native_response_publication import validate as validate_native_response
         validate_native_response(site/'examples/cs137-1m-response')
+    if (site/'examples/gamma-native').exists():
+        from gamma_showcase import validate_bundle as validate_gamma_showcase
+        validate_gamma_showcase(site/'examples/gamma-native')
     geometry_viewers=[site/'detectors'/m/'geometry.html' for m in ('AK02','SAP22')]
     if any(p.exists() for p in geometry_viewers):
         if not all(p.exists() for p in geometry_viewers): raise ValueError('Partial SSD geometry viewer publication')
@@ -224,7 +227,7 @@ def verify_live(url, report):
                      if entry['path'].startswith(('models/', 'downloads/'))})
     # The public campaign is an auditable dataset, not just HTML; verify every file.
     selected.update({entry['path']: entry for entry in entries
-                     if entry['path'].startswith(('examples/cs137-10k/', 'examples/cs137-10k-geometry/', 'examples/cs137-10k-hits/', 'examples/cs137-1m/', 'examples/cs137-1m-response/'))})
+                     if entry['path'].startswith(('examples/cs137-10k/', 'examples/cs137-10k-geometry/', 'examples/cs137-10k-hits/', 'examples/cs137-1m/', 'examples/cs137-1m-response/', 'examples/gamma-native/'))})
     # Interactive geometry requires every scene, manifest and active pointer online.
     selected.update({entry['path']: entry for entry in entries
                      if entry['path'].startswith('detectors/') and

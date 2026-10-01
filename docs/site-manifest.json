@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "build_id": "0c2fa3af800c3063661529e2118799f51511ec604e2aa1a1aeda80a54b24f45a",
-  "file_count": 1447,
-  "total_bytes": 759518636,
-  "html_pages": 95,
-  "local_links_checked": 2834,
+  "build_id": "97f4dba8d88cb15e4ed557880fdc49b93394b90baba5ee0fc4ef09a2508135f0",
+  "file_count": 1452,
+  "total_bytes": 767588761,
+  "html_pages": 96,
+  "local_links_checked": 2840,
   "files": [
     {
       "path": ".nojekyll",
@@ -6982,6 +6982,31 @@
       "sha256": "dfc87b1814fb1a0e2c2324469f5e81a8383e56c00969ce4e3148425fab8d08d6"
     },
     {
+      "path": "examples/gamma-native/AK02-signals.csv",
+      "bytes": 271953,
+      "sha256": "68d2686f139d2e2f3043845b094e85a04d6a7762f2f3fa7db9897d84276d0a09"
+    },
+    {
+      "path": "examples/gamma-native/SAP22-signals.csv",
+      "bytes": 1307,
+      "sha256": "344659ab49b560fe85d8845e3b64c84327133a69d045b65256c2a246e74f6a5f"
+    },
+    {
+      "path": "examples/gamma-native/data.json",
+      "bytes": 3869197,
+      "sha256": "2b8ea1ddd64e7c903d2aff8a91257d7f6793313d338359922bd1737ea8f969ba"
+    },
+    {
+      "path": "examples/gamma-native/gamma.html",
+      "bytes": 3912625,
+      "sha256": "b967c473849b20c1a6bb1f94c3937bcc7a2d50bb058986e47b8e507022237aaf"
+    },
+    {
+      "path": "examples/gamma-native/publication.json",
+      "bytes": 14649,
+      "sha256": "d7aa6292444dd5c11a3132f72155fcd440c2a9308b5223e1d81e0fb89e5729f1"
+    },
+    {
       "path": "examples/native-li/comparison.html",
       "bytes": 512196,
       "sha256": "8fcbe7c037f2246dc4d3e7a6e2830988bd02220e8bc25a0b452eda04c250c6b4"
@@ -7193,8 +7218,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 3464,
-      "sha256": "10f5113cf1fee84e60cdf49bbee4caf5568d54aac3241e4dcb119774e4460e2f"
+      "bytes": 3858,
+      "sha256": "7cfc008868faf37c7fb7394b7d7ae72b213c11c6ddc2dc66c31f46ff30ed1fed"
     },
     {
       "path": "scenarios/lbnl-cs137/index.html",

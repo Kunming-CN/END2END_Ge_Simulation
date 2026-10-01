@@ -393,7 +393,7 @@ def build_native_response_export(source):
 def normalize_text_outputs(folder):
     # Historical receipts and all native-bundle bytes are already hash-bound.
     for output in folder.rglob('*'):
-        if output.relative_to(folder).parts[:2] in (('examples', 'cs137-10k'), ('examples', 'cs137-10k-geometry'), ('examples', 'cs137-10k-hits'), ('examples', 'cs137-1m'), ('examples', 'cs137-1m-response')):
+        if output.relative_to(folder).parts[:2] in (('examples', 'cs137-10k'), ('examples', 'cs137-10k-geometry'), ('examples', 'cs137-10k-hits'), ('examples', 'cs137-1m'), ('examples', 'cs137-1m-response'), ('examples', 'gamma-native')):
             continue
         if output.is_file() and output.suffix in {'.html', '.json', '.md', '.svg'}:
             data = output.read_bytes()
@@ -401,7 +401,16 @@ def normalize_text_outputs(folder):
             if normalized != data: output.write_bytes(normalized)
 
 
-def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False):
+def build_gamma_export(source):
+    """Copy a completed frozen showcase onto the checked saved site; no exporter."""
+    from gamma_showcase import assemble
+    validate(DESTINATION)
+    shutil.copytree(DESTINATION, OUT)
+    (OUT / MANIFEST).unlink()
+    assemble(source, OUT / 'examples' / 'gamma-native')
+
+
+def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -418,7 +427,9 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         old = validate(DESTINATION)
     if OUT.exists():
         remove_generated(OUT)
-    if restructure:
+    if gamma_showcase is not None:
+        build_gamma_export(gamma_showcase)
+    elif restructure:
         validate(DESTINATION)
         shutil.copytree(DESTINATION, OUT); (OUT/MANIFEST).unlink()
     elif ssd_geometry is not None:
@@ -492,6 +503,7 @@ if __name__ == '__main__':
     parser.add_argument('--native-response',type=Path,help='Publish completed 1M native SSD/readout analysis only')
     parser.add_argument('--ssd-geometry',type=Path,help='Publish saved interactive SSD geometry assets only')
     parser.add_argument('--restructure',action='store_true',help='Rebuild navigation/hub pages from the validated current snapshot only')
+    parser.add_argument('--gamma-showcase',type=Path,help='Copy a completed hash-checked saved gamma showcase; no scientific work or export')
     args=parser.parse_args()
-    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry)) + int(args.restructure)>1: parser.error('Select one publication mode')
-    build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure)
+    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase)) + int(args.restructure)>1: parser.error('Select one publication mode')
+    build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase)

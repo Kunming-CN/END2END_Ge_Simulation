@@ -23,6 +23,7 @@ another complete installation recipe.
 | Finite synthetic gamma transport and raw event stream | `transport/scenario_transport.py`, `test_scenario_transport.py`, `Gamma.cmd`, `gamma.sh`; see [transport contract](SCENARIO_TRANSPORT.md). Separate from the strict Cs137 reader and later charge/readout coupling. |
 | Electronics settings and configuration preflight | `tools/electronics_settings.ps1`, `electronics_execution.ps1`, `scenario_cli.ps1`; see [ELECTRONICS_SETTINGS.md](ELECTRONICS_SETTINGS.md) |
 | Source-aware bounded gamma charge/calibration/readout | `tools/gamma_native_example.py`, `simulation/gamma_native_example.jl`; see [gamma example contract](GAMMA_NATIVE_EXAMPLE.md). Uses completed gamma truth, existing fields and independently injected calibration. |
+| Saved gamma public example | `tools/gamma_showcase.py`, `gamma_showcase.html`, `test_gamma_showcase.py`; explicit `build_site.py --gamma-showcase` copies a frozen completed bundle. No calculation or private inputs are published. |
 | Saved-run validation and inspection | `tools/native_run_validation.ps1`, `inspect_native_run.ps1`; see [INSPECT_RUNS.md](INSPECT_RUNS.md) |
 | Bounded NEW native-charge group commits | `tools/native_group_checkpoints.py`, `simulation/native_groups.jl`; see [charge-only scope](NATIVE_GROUP_CHECKPOINTS.md). Host acceptance is separate. |
 | Local file/result index | `tools/build_local_dashboard.py`, `local_paths.py`, `open_workspace.ps1` |

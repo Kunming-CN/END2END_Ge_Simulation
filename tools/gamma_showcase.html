@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Saved gamma → native charge → peak ADC</title>
+<style>
+:root{--ink:#17333a;--muted:#546b72;--line:#d7e3e5;--paper:#f3f7f7;--teal:#007b80;--gold:#ad6216;--blue:#3a60a7;--warning:#7a4813;--radius:15px}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;color:var(--ink);background:var(--paper);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}a{color:var(--teal);text-underline-offset:3px}button,select{font:inherit}button,select,a,summary{touch-action:manipulation}button:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #bd6b17;outline-offset:4px}header{background:#123840;color:#fff;padding:26px max(24px,calc((100vw - 1160px)/2)) 32px}header a{color:#b7eded}.topline{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-size:12px;margin-bottom:25px}.topline span{letter-spacing:.12em;color:#bbd5d8}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;font-weight:700;color:var(--teal)}header .eyebrow{color:#a7dddd}h1{font-size:clamp(28px,4.4vw,48px);line-height:1.12;letter-spacing:-.03em;margin:10px 0 16px;max-width:880px}header p{max-width:850px;color:#d2e4e6;margin:0;font-size:16px}.census{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:25px;max-width:840px}.census div{border-left:2px solid #5da6aa;padding:2px 15px}.census strong{display:block;font-size:32px;line-height:1.2}.census span{font-size:12px;color:#d2e4e6}.hero-note{font-size:13px;margin-top:18px}main{max-width:1210px;margin:auto;padding:22px 25px 40px}.stages{list-style:none;display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:0 0 23px;padding:0}.stages li{background:#e7eeef;border-radius:10px;padding:12px 14px}.stages span{font-size:11px;color:var(--muted)}.stages strong{display:block;font-size:14px}.stages small{display:block;color:var(--muted);font-size:11px}.selection{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin:0 0 21px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px}.control{min-width:200px;flex:1}.control label{display:block;font-size:12px;font-weight:650;margin-bottom:5px}select{width:100%;min-height:44px;background:#fff;border:1px solid #98aeb3;border-radius:7px;padding:8px 32px 8px 10px;color:var(--ink)}button{min-height:44px;background:#fff;border:1px solid #98aeb3;border-radius:7px;padding:8px 12px;color:var(--ink);cursor:pointer}button:hover{background:#e8f3f3}button:disabled{opacity:.45;cursor:default}.selection p{flex-basis:100%;margin:3px 0 0;font-size:13px;color:var(--muted)}#selection-note{color:var(--ink)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px;min-width:0}.wide{grid-column:1/-1}h2{font-size:21px;line-height:1.25;letter-spacing:-.015em;margin:8px 0 15px}h3{font-size:15px;margin:20px 0 8px}.sub{font-size:13px;color:var(--muted);margin:0 0 14px}.ledger{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:18px 0}.ledger>div{padding:14px 12px;background:#f1f6f6;border-radius:10px;min-width:0}.ledger small{font-size:12px;font-weight:650}.value{font-size:27px;font-weight:750;letter-spacing:-.035em;overflow-wrap:anywhere;line-height:1.2;margin:7px 0}.unit{font-size:11px;color:var(--muted)}.badges{display:flex;flex-wrap:wrap;gap:7px}.badge{font-size:11px;background:#e4f2ee;color:#175e4b;border:1px solid #bbdcd1;border-radius:20px;padding:4px 9px}.badge.warn{background:#fff3e2;color:var(--warning);border-color:#e7cfac}.badge.neutral{background:#edf1f4;color:#4a5c69;border-color:#cfd9df}.facts{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;margin:17px 0}.facts div{min-width:0}.facts dt{font-size:11px;color:var(--muted)}.facts dd{margin:3px 0 0;font-size:13px;overflow-wrap:anywhere}.notice{font-size:13px;background:#fff5e8;border-left:3px solid #c68b3b;padding:10px 12px;margin:16px 0 0}.plot{display:block;width:100%;height:auto;overflow:visible}.plot-caption{font-size:12px;color:var(--muted);margin:9px 0 0}.tick{fill:var(--muted);font-size:10px}.axislabel{fill:var(--muted);font-size:11px}.gridline{stroke:#e1e9ea;stroke-width:1}.axis{stroke:#98adb2;stroke-width:1}.curve{fill:none;stroke-width:2;stroke-linejoin:round}.zero{stroke:#9eb4b8;stroke-width:1;stroke-dasharray:4 4}details{border-top:1px solid var(--line);margin-top:16px;padding-top:12px}summary{font-size:13px;font-weight:650;cursor:pointer}summary::marker{color:var(--teal)}.scroll{overflow:auto;max-height:350px;margin-top:12px;overscroll-behavior:contain}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}th{position:sticky;top:0;background:#edf3f3;z-index:1}caption{text-align:left;font-size:12px;color:var(--muted);padding-bottom:10px}pre{font-family:ui-monospace,Consolas,monospace;font-size:11px;background:#f2f6f6;padding:12px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:380px;overflow:auto;margin:12px 0 0}pre:empty{display:none}.key{font-size:11px;color:var(--muted);overflow-wrap:anywhere}.limits{font-size:13px;padding-left:19px}.limits li{margin:8px 0}.downloads{display:flex;flex-wrap:wrap;gap:12px 20px;margin:15px 0}.downloads a{font-size:13px}footer{margin-top:23px;font-size:12px;color:var(--muted)}.error{border:1px solid #af6950;background:#fff0eb;border-radius:12px;padding:18px;margin-bottom:20px}noscript{display:block;padding:20px;background:#fff1d9}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.stages{grid-template-columns:repeat(3,1fr)}.card{padding:20px}.ledger>div{padding:12px 8px}.value{font-size:24px}}
+@media(max-width:440px){header{padding:22px 18px 26px}main{padding:17px 12px 32px}.topline{margin-bottom:20px}.census{grid-template-columns:repeat(2,1fr);gap:14px}.census div{padding-left:10px}.census strong{font-size:29px}.selection{padding:17px;gap:10px}.control{min-width:100%}.selection button{flex:1}.stages{gap:6px}.stages li{padding:9px}.stages strong{font-size:12px}.stages small{font-size:10px}.card{padding:18px}.ledger{gap:5px}.ledger>div{padding:10px 6px}.ledger small{font-size:11px}.value{font-size:20px}.facts{grid-template-columns:1fr}.unit{font-size:10px}}
+.scroll:focus-visible,pre:focus-visible{outline:3px solid #bd6b17;outline-offset:3px}
+</style>
+</head>
+<body>
+<header>
+  <div class="topline"><a href="../../results/index.html">← Saved results</a><span>SAVED ENGINEERING EXAMPLE · OFFLINE</span></div>
+  <div class="eyebrow">Completed gamma → native SSD → peak ADC</div>
+  <h1>Follow a recorded gamma event to reconstructed energy.</h1>
+  <p>Browse the completed radiation, semiconductor charge and electronics chain. Truth deposits, induced charge and reconstructed energy stay separate; every initial primary remains in the ledger.</p>
+  <div class="census" aria-label="Saved example event census">
+    <div><strong id="total-count">40</strong><span>recorded events</span></div>
+    <div><strong id="processed-count">6</strong><span>processed events</span></div>
+    <div><strong id="positive-count">4</strong><span>positive responses</span></div>
+    <div><strong id="zero-count">2</strong><span>selected true-zero bypasses</span></div>
+  </div>
+  <p class="hero-note" id="hero-note">The other 34 events have no processed response. Synthetic 662 keV gamma source · nominal geometry · 20 primaries per detector · low statistics.</p>
+</header>
+<noscript>Local plotting requires JavaScript. The data.json and signals.csv downloads preserve the saved records and do not require an internet connection.</noscript>
+<main>
+  <ol class="stages" aria-label="Recorded processing stages">
+    <li><span>01</span><strong>Radiation deposits</strong><small>Geant4 / remage · truth Edep</small></li>
+    <li><span>02</span><strong>Native charge</strong><small>SSD · signed induction</small></li>
+    <li><span>03</span><strong>Preamp</strong><small>Finite feedback · volts</small></li>
+    <li><span>04</span><strong>Analog shaping</strong><small>Pole-zero + CR-(RC)²</small></li>
+    <li><span>05</span><strong>Peak ADC</strong><small>Code → accepted Erec</small></li>
+  </ol>
+  <section class="selection" aria-label="Select a recorded initial primary">
+    <div class="control"><label for="model-select">Detector model</label><select id="model-select"></select></div>
+    <div class="control"><label for="event-select">Initial primary ID · all 20 events</label><select id="event-select"></select></div>
+    <button id="previous" type="button" aria-label="Previous initial primary">← Previous</button>
+    <button id="next" type="button" aria-label="Next initial primary">Next →</button>
+    <p id="run-settings"></p><p id="selection-note" aria-live="polite"></p>
+  </section>
+  <div id="error" class="error" hidden role="alert"></div>
+  <div id="panels" class="grid">
+    <section class="card wide" aria-labelledby="event-heading">
+      <div class="eyebrow">One event, three distinct quantities</div><h2 id="event-heading">Event energy ledger</h2>
+      <div id="badges" class="badges"></div>
+      <div class="ledger">
+        <div><small>Truth Edep in Ge</small><div id="edep" class="value"></div><span class="unit">keV · radiation deposits</span></div>
+        <div><small>Induced equivalent</small><div id="eind" class="value"></div><span class="unit">keV · signed charge equivalent</span></div>
+        <div><small>Readout Erec</small><div id="erec" class="value"></div><span class="unit">keV · accepted peak ADC only</span></div>
+      </div>
+      <dl id="event-facts" class="facts"></dl><p id="event-warning" class="notice"></p>
+      <details id="event-details"><summary>Formatted complete event record and saved samples</summary><p class="sub">This formatted view preserves negative zero. Download data.json for exact serialized values, original number types and all records.</p><pre id="event-json" tabindex="0" aria-label="Formatted selected event record"></pre></details>
+      <details id="deposit-details"><summary id="deposit-summary">All Ge deposition rows and identities</summary><p class="sub">Depositions retain creation delays relative to the initial primary. A deposition time is not a carrier drift time. STEP chords and Track birth records do not establish complete particle trajectories.</p><div class="scroll" tabindex="0" role="region" aria-label="Ge deposition rows"><table><thead><tr><th>Raw row</th><th>Edep keV</th><th>Time ns</th><th>x mm</th><th>y mm</th><th>z mm</th><th>Track</th><th>Parent</th><th>PDG</th></tr></thead><tbody id="deposits"></tbody></table></div></details>
+      <details id="material-details"><summary>All scored-material rows, energies and raw fields</summary><p class="sub">These original radiation STEP rows use the recorded table units: edep in keV, global positions in m and time in ns. Track and particle kinetic-energy fields in the complete event record use MeV. Ge rows also have the separate keV/mm representation above. Unscored-world energy closure is not established.</p><div id="material-content"></div></details>
+      <details id="endpoint-details"><summary id="endpoint-summary">Native parcel endpoints and contact/cap flags</summary><p class="sub">Contact membership and drift-cap flags remain recorded independently of readout acceptance. Parcel variation is numerical sampling, not physical energy resolution.</p><div id="endpoint-content"></div></details>
+    </section>
+    <section class="card"><div class="eyebrow">Complete saved charge input</div><h2>Native induced equivalent · keV</h2><svg id="charge-plot" class="plot" viewBox="0 0 560 260" role="img" aria-label="Complete signed induced-equivalent charge input versus time since initial primary"></svg><p id="charge-caption" class="plot-caption"></p></section>
+    <section class="card"><div class="eyebrow">Original numerical bin intervals</div><h2>Induced current · nA</h2><svg id="current-plot" class="plot" viewBox="0 0 560 260" role="img" aria-label="Saved current values on their original numerical bin intervals"></svg><p id="current-caption" class="plot-caption"></p></section>
+    <section class="card"><div class="eyebrow">Charge-sensitive preamplifier</div><h2>Preamp output · V</h2><svg id="preamp-plot" class="plot" viewBox="0 0 560 260" role="img" aria-label="Signed saved preamp display trace in volts"></svg><p id="preamp-caption" class="plot-caption"></p></section>
+    <section class="card"><div class="eyebrow">Analog shaping, then peak conversion</div><h2>Shaped output · V</h2><svg id="shaped-plot" class="plot" viewBox="0 0 560 260" role="img" aria-label="Signed saved shaped display trace with exact sampled peak marker"></svg><p id="peak-caption" class="plot-caption"></p></section>
+    <section class="card" aria-labelledby="calibration-heading">
+      <div class="eyebrow">One fixed gain per detector</div><h2 id="calibration-heading">Calibration and time convention</h2>
+      <p class="sub">A separate 500 keV synthetic delta-charge injection defines each detector's gain across its selected events.</p>
+      <dl id="calibration-facts" class="facts"></dl>
+      <p class="notice">The time grids sample numerical analog signals. Only the peak is digitized by the 14-bit ADC. The compact saved traces are display samples, not a complete waveform acquisition.</p>
+      <details id="calibration-details"><summary>Formatted fixed configuration and injection calibration</summary><pre id="calibration-json" tabindex="0" aria-label="Formatted calibration and configuration"></pre></details>
+    </section>
+    <section class="card" aria-labelledby="census-heading">
+      <div class="eyebrow">All initial primaries remain counted</div><h2 id="census-heading">Recorded event census</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Recorded event census"><table><caption>Processed positive and selected true-zero events are separate from unprocessed responses.</caption><thead><tr><th>Model</th><th>Recorded</th><th>Processed</th><th>Positive</th><th>True zero</th><th>Unprocessed</th><th>Capped endpoints</th></tr></thead><tbody id="census-table"></tbody></table></div>
+      <p class="notice">AK02 retains 195 capped carrier endpoints beside accepted readouts. Readout acceptance does not establish complete charge collection. SAP22 is a non-Li cross-check, not a matched-geometry experimental control.</p>
+      <p class="plot-caption">Four positive energies demonstrate the integration. This sample does not establish a spectrum fit, efficiency or physical energy resolution.</p>
+    </section>
+    <section class="card wide">
+      <h2>Scope and recorded limitations</h2><ul id="limitations" class="limits"></ul>
+      <details id="provenance-details"><summary>Provenance hashes, fixed inputs and measured stage timing</summary><p class="sub">These hashes bind saved data and the exporter/template bytes. They do not establish numerical convergence. Recorded calculation runtime is separate from implementation, review and publication time. The preparation metadata retains its original preparation-stage status; the completed run is the execution authority.</p><pre id="provenance-json" tabindex="0" aria-label="Formatted provenance and timing"></pre></details>
+      <div class="downloads" aria-label="Exact saved-data downloads"><a href="data.json" download>Exact data.json</a><a href="AK02-signals.csv" download>AK02 signed inputs.csv</a><a href="SAP22-signals.csv" download>SAP22 signed inputs.csv</a><a href="publication.json" download>Publication manifest</a></div>
+      <p class="key" id="export-id"></p>
+    </section>
+  </div>
+  <footer>All plotting data is embedded in this HTML. Open the saved file directly for offline browsing; the adjacent downloads contain the exact records. No simulation is run by this page.</footer>
+</main>
+<script type="application/json" id="gamma-data">__GAMMA_SAVED_DATA_JSON__</script>
+<script>
+"use strict";
+(() => {
+  const $ = id => document.getElementById(id);
+  const NS = "http://www.w3.org/2000/svg";
+  const colors = {teal:"#007b80",blue:"#3a60a7",gold:"#ad6216"};
+  const put = (id, value) => { $(id).textContent = value; };
+  const numberText = value => Object.is(value, -0) ? "-0" : String(value);
+  const fmt = value => value === null || value === undefined ? "Unavailable" : Object.is(value,-0) ? "-0" : Number(value).toLocaleString("en-US",{maximumSignificantDigits:7});
+  const exact = value => value === null || value === undefined ? "Unavailable" : typeof value === "number" ? numberText(value) : String(value);
+  function formatted(value, depth=0) {
+    if(value === null) return "null";
+    if(typeof value === "number") return Object.is(value,-0) ? "-0.0" : String(value);
+    if(typeof value !== "object") return JSON.stringify(value);
+    const pad="  ".repeat(depth), inner="  ".repeat(depth+1);
+    if(Array.isArray(value)) return value.length ? "[\n"+value.map(v=>inner+formatted(v,depth+1)).join(",\n")+"\n"+pad+"]" : "[]";
+    const entries=Object.entries(value);
+    return entries.length ? "{\n"+entries.map(([k,v])=>inner+JSON.stringify(k)+": "+formatted(v,depth+1)).join(",\n")+"\n"+pad+"}" : "{}";
+  }
+  function node(tag, text=null, className=null) {
+    const n=document.createElement(tag);
+    if(text!==null) n.textContent=text;
+    if(className!==null) n.className=className;
+    if(tag==="pre"){n.setAttribute("tabindex","0");n.setAttribute("aria-label","Formatted saved data");}
+    return n;
+  }
+  function svgNode(tag, attrs={}, text=null) {
+    const n=document.createElementNS(NS,tag);
+    Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,String(v)));
+    if(text!==null) n.textContent=text;
+    return n;
+  }
+  function svgText(svg,x,y,value,cls="tick",anchor="middle") {
+    svg.append(svgNode("text",{x,y,class:cls,"text-anchor":anchor},value));
+  }
+  function frame(svg,xmin,xmax,ymin,ymax,ylabel) {
+    svg.replaceChildren();
+    svg.append(svgNode("title",{},ylabel+" versus time since initial primary in ns"));
+    if(xmax<=xmin) xmax=xmin+1;
+    if(ymax<=ymin){ymin-=.5;ymax+=.5;}
+    const W=560,H=260,L=72,R=18,T=26,B=46;
+    const x=v=>L+(v-xmin)/(xmax-xmin)*(W-L-R), y=v=>H-B-(v-ymin)/(ymax-ymin)*(H-T-B);
+    for(let i=0;i<=4;i++){
+      const xv=xmin+(xmax-xmin)*i/4,yv=ymin+(ymax-ymin)*i/4;
+      svg.append(svgNode("line",{x1:L,x2:W-R,y1:y(yv),y2:y(yv),class:"gridline"}));
+      svgText(svg,L-8,y(yv)+4,fmt(yv),"tick","end");svgText(svg,x(xv),H-B+19,fmt(xv));
+    }
+    if(ymin<=0&&ymax>=0) svg.append(svgNode("line",{x1:L,x2:W-R,y1:y(0),y2:y(0),class:"zero"}));
+    svg.append(svgNode("path",{d:`M${L},${T}V${H-B}H${W-R}`,class:"axis",fill:"none"}));
+    svgText(svg,(L+W-R)/2,H-4,"Time since initial primary · ns","axislabel");
+    svgText(svg,L,13,ylabel,"axislabel","start");
+    return {x,y,W,H,L,R,T,B};
+  }
+  function bounds(values) {
+    let min=0,max=0;
+    values.forEach(v=>{if(!Number.isFinite(v)) throw Error("Nonfinite plot sample");min=Math.min(min,v);max=Math.max(max,v);});
+    const padding=(max-min)*.08||.5;
+    return [min-padding,max+padding];
+  }
+  function unavailablePlot(id,message) {
+    const svg=$(id);svg.replaceChildren();
+    svg.append(svgNode("title",{},message));
+    svgText(svg,280,115,"No processed response","axislabel");
+    svgText(svg,280,139,"Charge and readout are unavailable for this event.","tick");
+  }
+  function linePlot(id,times,values,label,color,peak=null) {
+    if(!times.length||times.length!==values.length) throw Error("Invalid saved plot arrays");
+    const svg=$(id),[ymin,ymax]=bounds(values);
+    const xmax=Math.max(times[times.length-1],peak?peak.t:0),p=frame(svg,Math.min(0,times[0]),xmax,ymin,ymax,label);
+    const d=values.map((v,i)=>(i?"L":"M")+p.x(times[i])+","+p.y(v)).join(" ");
+    const path=svgNode("path",{d,class:"curve",stroke:color});
+    path.append(svgNode("title",{},`${times.length} saved samples; signed values retained`));svg.append(path);
+    if(peak){
+      svg.append(svgNode("line",{x1:p.x(peak.t),x2:p.x(peak.t),y1:p.T,y2:p.H-p.B,stroke:colors.gold,"stroke-dasharray":"4 4"}));
+      const mark=svgNode("circle",{cx:p.x(peak.t),cy:p.y(peak.v),r:4,fill:colors.gold,stroke:"white","stroke-width":1.5});
+      mark.append(svgNode("title",{},`Exact sampled peak: ${exact(peak.v)} V at ${exact(peak.t)} ns`));svg.append(mark);
+    }
+  }
+  function currentPlot(readout) {
+    const t=readout.trace,svg=$("current-plot"),[ymin,ymax]=bounds(t.current_nA);
+    const p=frame(svg,0,readout.readout_end_ns,ymin,ymax,"Current · nA");
+    t.current_nA.forEach((value,i)=>{
+      const a=t.current_bin_start_ns[i],b=t.current_bin_end_ns[i];
+      const mark=svgNode("path",{d:`M${p.x(b)},${p.y(0)}V${p.y(value)}M${p.x(a)},${p.y(value)}H${p.x(b)}`,stroke:colors.blue,"stroke-width":1.5,fill:"none"});
+      mark.append(svgNode("title",{},`Original bin (${exact(a)}, ${exact(b)}] ns: ${exact(value)} nA`));svg.append(mark);
+    });
+  }
+  function facts(id,items) {
+    const box=$(id);box.replaceChildren();
+    items.forEach(([label,value])=>{const div=node("div"),dt=node("dt",label),dd=node("dd",value);div.append(dt,dd);box.append(div);});
+  }
+  function badge(text,cls="") { $("badges").append(node("span",text,"badge "+cls)); }
+  function table(headers,rows) {
+    const wrap=node("div",null,"scroll"),t=node("table"),head=node("thead"),tr=node("tr"),body=node("tbody");
+    wrap.setAttribute("tabindex","0");wrap.setAttribute("role","region");wrap.setAttribute("aria-label","Saved rows: "+headers.join(", "));
+    headers.forEach(h=>tr.append(node("th",h)));head.append(tr);
+    rows.forEach(values=>{const r=node("tr");values.forEach(v=>r.append(node("td",exact(v))));body.append(r);});
+    t.append(head,body);wrap.append(t);return wrap;
+  }
+  let data,models,activeModel,activeId;
+  const remembered=new Map();
+  const model=()=>models.find(m=>m.model_id===activeModel);
+  const event=()=>model().truth_ledger.find(e=>e.initial_primary_id===activeId);
+  function lazyDetails() {
+    const m=model(),e=event(),r=e.response;
+    put("event-json",$("event-details").open?formatted(e):"");
+    const deposits=$("deposits");deposits.replaceChildren();
+    if($("deposit-details").open) e.source_truth.steps.forEach(s=>{
+      const row=node("tr");[s.raw_row_index,s.energy_keV,s.time_ns,...s.position_mm,s.track_id,s.parent_track_id,s.particle_pdg].forEach(v=>row.append(node("td",exact(v))));deposits.append(row);
+    });
+    const materials=$("material-content");materials.replaceChildren();
+    if($("material-details").open){
+      Object.entries(e.source_truth.material_rows).forEach(([name,rows])=>{
+        const heading=node("h3",`${name} · ${rows.length} rows`);materials.append(heading);
+        materials.append(table(["Raw row","Edep keV","Time ns","x m","y m","z m","Track","Parent","PDG"],rows.map(s=>[s.raw_row_index,s.edep,s.time,s.xloc,s.yloc,s.zloc,s.trackid,s.parent_trackid,s.particle])));
+      });
+      materials.append(node("h3","Formatted material energy totals and complete raw fields"),node("pre",formatted({material_energy_keV:e.source_truth.material_energy_keV,material_rows:e.source_truth.material_rows})));
+    }
+    const endpoints=$("endpoint-content");endpoints.replaceChildren();
+    if($("endpoint-details").open){
+      if(!r) endpoints.append(node("p","Native response unavailable: this event was unprocessed.","sub"));
+      else if(r.native===null) endpoints.append(node("p","True-zero deposit: native drift was not applicable; no parcel endpoints exist.","sub"));
+      else {
+        const rows=[];
+        r.native.steps.forEach(s=>s.endpoints.forEach(p=>rows.push([s.raw_row_index,p.parcel_index,p.species,p.status,p.step_limit_reached,p.inside_semiconductor,p.contact_ids.join(", "),...p.position_mm,p.samples])));
+        endpoints.append(table(["Raw row","Parcel","Species","Status","Cap","Inside Ge","Contacts","x mm","y mm","z mm","Samples"],rows));
+        endpoints.append(node("h3","Formatted native steps, weighted parcels and seeds"),node("pre",formatted({transport_flags:r.transport_flags,steps:r.native.steps,parcel_seed_rule:r.parcel_seed_rule,parcel_seeds:r.parcel_seeds})));
+      }
+    }
+    put("calibration-json",$("calibration-details").open?formatted({calibration:m.calibration,detector_settings:m.report.detector_settings,native_settings:m.report.settings}):"");
+    put("provenance-json",$("provenance-details").open?formatted({science_sha256:data.science_sha256,run:data.science.run,source:data.science.source,presentation:data.presentation,model_id:m.model_id,detector_settings:m.report.detector_settings,native_settings:m.report.settings,stage_timing:{field_solve_seconds:m.report.field_solve_seconds,native_calls:m.report.native_calls,calibration_seconds:m.report.calibration_seconds,worker_seconds:m.report.worker_seconds},source_manifest:m.source_manifest,prepared_metadata:m.prepared_metadata}):"");
+  }
+  function render() {
+    const m=model(),e=event(),r=e.response,ro=r?r.readout:null,truth=e.source_truth;
+    const index=m.truth_ledger.indexOf(e),settings=m.report.settings,detector=m.report.detector_settings;
+    put("event-heading",`${m.model_id} · initial primary ${e.initial_primary_id}`);
+    put("selection-note",`Showing initial primary ${e.initial_primary_id}; event ${index+1} of ${m.truth_ledger.length}. All IDs are selectable. ${r?(r.zero_ge?"Selected true-zero event: known zero input, native drift bypassed.":"Selected positive event: saved native charge and readout."):"Unprocessed event: truth is recorded; charge, ADC and Erec are unavailable."}`);
+    put("run-settings",`Original ${detector.source_temperature_K} K model · explicit ${detector.cached_temperature_K} K cached override · +${detector.bias_V} V · ${settings.parcels} parcels / deposit · seed family ${settings.seed_family} · ${settings.drift_dt_ns} ns diffusion grid · ${settings.drift_cap_ns/1000} µs drift cap.`);
+    $("previous").disabled=index===0;$("next").disabled=index===m.truth_ledger.length-1;
+    $("badges").replaceChildren();
+    if(!r) badge("Unprocessed · response null","neutral");
+    else {
+      badge(r.zero_ge?"True zero · native not applicable":"Native response saved",r.zero_ge?"neutral":"");
+      badge(ro.accepted?"Readout accepted":"Readout rejected · "+ro.rejection_reason,ro.accepted?"":"warn");
+      if(r.transport_flags&&r.transport_flags.step_limits) badge(`${r.transport_flags.step_limits} capped endpoints retained`,"warn");
+      if(r.transport_flags&&r.transport_flags.stopped_without_contact) badge(`${r.transport_flags.stopped_without_contact} stopped without contact`,"warn");
+      if(ro.negative_input) badge("Negative cumulative-input flag","warn");
+      if(ro.saturated) badge("ADC saturation","warn");
+      if(ro.window_limited||ro.gate_limited) badge("Readout window/gate flag","warn");
+    }
+    put("edep",fmt(truth.truth_ge_edep_keV));put("eind",r?fmt(r.final_induced_keV):"Unavailable");put("erec",ro?(ro.accepted?fmt(ro.reconstructed_energy_keV):"Not accepted"):"Unavailable");
+    const caps=r&&r.transport_flags?r.transport_flags.step_limits:null;
+    facts("event-facts",[
+      ["Processing status",e.processing_status],
+      ["Ge deposition rows",String(truth.steps.length)+" · includes zero-energy rows"],
+      ["Peak ADC code",ro?exact(ro.adc_code):"Unavailable · unprocessed"],
+      ["Exact sampled analog peak",ro?`${exact(ro.peak_V)} V at ${exact(ro.peak_time_ns)} ns`:"Unavailable · unprocessed"],
+      ["Transport endpoint caps",!r?"Unavailable · unprocessed":r.native===null?"Not applicable · true zero":exact(caps)],
+      ["Final induced charge",ro?`${exact(ro.final_charge_C)} C`:"Unavailable · unprocessed"],
+      ["Charge / readout window end",ro?`${exact(r.charge_end_ns)} / ${exact(ro.readout_end_ns)} ns`:"Unavailable · unprocessed"],
+      ["Stored input / analog / display samples",ro?`${ro.input_sample_count} / ${ro.original_sample_count} / ${ro.trace.time_ns.length}`:"Unavailable · unprocessed"],
+      ["Electronics flags",ro?`below threshold: ${ro.below_threshold}; saturation: ${ro.saturated}; negative input: ${ro.negative_input}; window limited: ${ro.window_limited}; gate limited: ${ro.gate_limited}`:"Unavailable · unprocessed"],
+      ["Current/charge balance",ro?`passed: ${ro.current_balance.passed}; residual ${exact(ro.current_balance.residual_C)} C`:"Unavailable · unprocessed"]
+    ]);
+    put("event-warning",!r?"No charge processing was selected for this event. A null response does not mean zero charge, ADC 0 or zero reconstructed energy.":r.zero_ge?"This selected event has an actual zero Ge deposit and saved zero input. Its ADC code is 0; it is below threshold, so Erec remains null. Native drift and endpoints are not applicable.":caps?`The accepted electronics result retains ${caps} capped carrier endpoints. Small induced-charge remainder and ADC acceptance do not establish recoverable charge or calibrated Li collection.`:"This saved native response demonstrates the processing chain. No capped endpoints in this event does not establish numerical convergence or experimental agreement.");
+    put("deposit-summary",`All ${truth.steps.length} Ge deposition rows and identities`);
+    put("endpoint-summary",!r?"Native endpoints · unavailable":r.native===null?"Native endpoints · not applicable for true zero":`Native parcel endpoints · ${r.transport_flags.carrier_parcels} endpoints, ${caps} capped`);
+    if(!r){
+      ["charge-plot","current-plot","preamp-plot","shaped-plot"].forEach(id=>unavailablePlot(id,"Unprocessed event: no saved charge or readout"));
+      ["charge-caption","current-caption","preamp-caption","peak-caption"].forEach(id=>put(id,"Unavailable for this unprocessed event; no zero trace has been fabricated."));
+    } else {
+      linePlot("charge-plot",r.charge_input.time_since_initial_primary_ns,r.charge_input.induced_equivalent_energy_keV,"Induced equivalent · keV",colors.teal);
+      currentPlot(ro);linePlot("preamp-plot",ro.trace.time_ns,ro.trace.preamp_V,"Preamp · V",colors.blue);
+      linePlot("shaped-plot",ro.trace.time_ns,ro.trace.shaped_V,"Shaped · V",colors.teal,{t:ro.peak_time_ns,v:ro.peak_V});
+      put("charge-caption",`${r.charge_input.time_since_initial_primary_ns.length} original signed input samples; every sample is plotted. ${r.zero_ge?"Known zero input; native drift was bypassed.":"Whole-event deposits retain their row delays and weighted native signal."} Time is measured from the initial primary; it is not drift duration.`);
+      put("current-caption",`${ro.trace.current_nA.length} retained current bins over the ${exact(ro.readout_end_ns)} ns readout window. Each horizontal segment belongs to its original (bin start, bin end] interval. Gaps are not averaged or filled. All current runs preserved: ${ro.trace_preserves_all_current_runs}.`);
+      put("preamp-caption",`${ro.trace.time_ns.length} saved display points from ${ro.original_sample_count} numerical analog samples. Lines connect retained points; unsaved samples are unavailable. Signed voltages are retained; positive charge uses negative preamp polarity.`);
+      put("peak-caption",`Exact sampled peak: ${exact(ro.peak_V)} V at ${exact(ro.peak_time_ns)} ns. ADC ${ro.adc_code}; ${ro.accepted?"accepted Erec "+exact(ro.reconstructed_energy_keV)+" keV":"rejected, Erec null"}. This is the compact saved display trace; lines connect retained points.`);
+    }
+    const cal=m.calibration.calibration,config=m.calibration.config;
+    facts("calibration-facts",[
+      ["Independent injection",`${exact(cal.energy_keV)} keV · ${m.calibration.calibration_calls} call`],
+      ["Fixed conversion",`${exact(cal.volts_per_keV)} V / keV`],
+      ["Pair creation energy",`${exact(m.calibration.ionisation_energy_eV)} eV`],
+      ["Numerical electronics time step",`${exact(cal.time_step_ns)} ns`],
+      ["Preamp feedback",`${exact(config.feedback_capacitance_pF)} pF · ${exact(config.feedback_tau_us)} µs`],
+      ["Shaper / threshold",`${exact(config.shaping_tau_us)} µs · ${exact(config.threshold_V)} V`],
+      ["Peak ADC",`${config.adc_bits} bits · ${exact(config.adc_full_scale_V)} V full scale`],
+      ["ADC energy convention",cal.adc_convention]
+    ]);
+    lazyDetails();
+  }
+  function buildEventOptions() {
+    const select=$("event-select");select.replaceChildren();
+    model().truth_ledger.forEach(e=>{
+      const status=!e.response?"unprocessed":e.response.zero_ge?"selected true zero":"selected positive";
+      const option=node("option",`${e.initial_primary_id} · ${status}`);option.value=String(e.initial_primary_id);select.append(option);
+    });
+    select.value=String(activeId);
+  }
+  function readFragment() {
+    const match=/^#model=(AK02|SAP22)&primary=(0|[1-9][0-9]*)$/.exec(location.hash);
+    if(!match) return null;
+    const m=models.find(v=>v.model_id===match[1]),id=Number(match[2]);
+    return m&&Number.isSafeInteger(id)&&m.truth_ledger.some(e=>e.initial_primary_id===id)?{modelId:m.model_id,id}:null;
+  }
+  function select(modelId,id,publish=false) {
+    const m=models.find(v=>v.model_id===modelId);
+    if(!m||!m.truth_ledger.some(e=>e.initial_primary_id===id)) return;
+    activeModel=modelId;activeId=id;remembered.set(modelId,id);
+    $("model-select").value=modelId;buildEventOptions();render();
+    const fragment=`#model=${modelId}&primary=${id}`;
+    if(publish&&location.hash!==fragment) location.hash=fragment;
+  }
+  try {
+    data=JSON.parse($("gamma-data").textContent);
+    if(data.kind!=="saved_gamma_native_showcase_v1"||data.schema_version!==1||!data.science) throw Error("Unsupported saved example");
+    models=data.science.models;
+    if(!Array.isArray(models)||models.length!==2||models.some(m=>!["AK02","SAP22"].includes(m.model_id)||!Array.isArray(m.truth_ledger)||m.truth_ledger.length!==20)) throw Error("Invalid saved event census");
+    const totals={recorded:0,processed:0,positive:0,zero:0,unprocessed:0};
+    models.forEach(m=>{
+      remembered.set(m.model_id,m.truth_ledger[0].initial_primary_id);
+      const option=node("option",m.model_id==="AK02"?"AK02 · Li-contact primary":"SAP22 · non-Li cross-check");option.value=m.model_id;$("model-select").append(option);
+      const counts={recorded:m.truth_ledger.length,processed:0,positive:0,zero:0,unprocessed:0,caps:0};
+      m.truth_ledger.forEach(e=>{if(e.response){counts.processed++;e.response.zero_ge?counts.zero++:counts.positive++;counts.caps+=e.response.transport_flags?e.response.transport_flags.step_limits:0;}else counts.unprocessed++;});
+      Object.keys(totals).forEach(k=>totals[k]+=counts[k]);
+      const row=node("tr");[m.model_id,counts.recorded,counts.processed,counts.positive,counts.zero,counts.unprocessed,counts.caps].forEach(v=>row.append(node("td",String(v))));$("census-table").append(row);
+    });
+    put("total-count",totals.recorded);put("processed-count",totals.processed);put("positive-count",totals.positive);put("zero-count",totals.zero);
+    put("hero-note",`The other ${totals.unprocessed} events have no processed response. Synthetic 662 keV gamma source · nominal geometry · 20 primaries per detector · low statistics.`);
+    data.limitations.forEach(value=>$("limitations").append(node("li",value)));
+    put("export-id",`Saved science digest: ${data.science_sha256}. Template SHA-256: ${data.presentation.template_sha256}.`);
+    $("model-select").addEventListener("change",()=>{const id=$("model-select").value;select(id,remembered.get(id),true);});
+    $("event-select").addEventListener("change",()=>select(activeModel,Number($("event-select").value),true));
+    $("previous").addEventListener("click",()=>{const rows=model().truth_ledger,i=rows.indexOf(event());if(i>0) select(activeModel,rows[i-1].initial_primary_id,true);});
+    $("next").addEventListener("click",()=>{const rows=model().truth_ledger,i=rows.indexOf(event());if(i+1<rows.length) select(activeModel,rows[i+1].initial_primary_id,true);});
+    ["event-details","deposit-details","material-details","endpoint-details","calibration-details","provenance-details"].forEach(id=>$(id).addEventListener("toggle",lazyDetails));
+    window.addEventListener("hashchange",()=>{const state=readFragment();if(state) select(state.modelId,state.id);});
+    const initial=readFragment()||{modelId:models[0].model_id,id:models[0].truth_ledger[0].initial_primary_id};
+    select(initial.modelId,initial.id);
+    if(!readFragment()) history.replaceState(null,"",`#model=${activeModel}&primary=${activeId}`);
+  } catch(error) {
+    $("panels").hidden=true;$("error").hidden=false;
+    put("error","The saved explorer could not be loaded: "+error.message+". Use the adjacent exact data download and publication manifest to inspect the saved bundle.");
+  }
+})();
+</script>
+</body>
+</html>

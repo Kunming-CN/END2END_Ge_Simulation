@@ -108,6 +108,11 @@ def apply(site):
         current='''<section class="panel"><p class="muted">Current completed campaign</p><h2>Cs137 · 1M per detector</h2><p>AK02 and SAP22 in the nominal LBNL cryostat: Geant4 deposition truth → native SSD charge → synthetic peak ADC. Original reports remain available as archived presentations of this same campaign.</p><a class="button" href="cs137-1m/index.html">Open campaign overview →</a></section>'''
     if has_10k:
         result_cards.append('''<article class="card"><h2>Earlier Cs137 · 10k</h2><p>Engineering response, response ledgers and interactive recorded-event geometry.</p><a href="cs137-10k/index.html">Open earlier campaign →</a></article>''')
+    gamma=site/'examples/gamma-native'
+    if gamma.exists():
+        from gamma_showcase import validate_bundle as validate_gamma_showcase
+        validate_gamma_showcase(gamma)
+        result_cards.append('''<article class="card"><h2>Completed gamma → native SSD → peak ADC</h2><p>Follow 40 saved gamma events, six processed responses and synthetic charge-injection calibration. Four positive responses and two selected true zeros; small engineering sample with unresolved collection limits.</p><a href="../examples/gamma-native/gamma.html">Inspect saved native charge and readout →</a></article>''')
     result_cards.append('''<article class="card"><h2>Compact teaching example</h2><p>A selected event-by-event engineering demonstration of the signal chain.</p><a href="../examples/pipeline.html">Open example →</a></article>''')
     results=('''<section class="hero"><p class="muted">Completed simulations</p><h1>Results</h1>
 <p>Campaign pages keep initial-decay denominators, zero-deposit events, unavailable native responses and electronics rejection separate.</p></section>'''+current+'''<h2>Earlier campaign and teaching example</h2><div class="grid">'''+''.join(result_cards)+'''</div>''')

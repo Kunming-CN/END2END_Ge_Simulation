@@ -28,6 +28,57 @@ class PublicationTests(unittest.TestCase):
         (self.site / MANIFEST).write_text(json.dumps(report), encoding='utf-8')
         return report
 
+    def test_gamma_explicit_mode_copies_checked_bytes_without_export(self):
+        import build_site as builder
+        import gamma_showcase
+        project = self.site / 'gamma-mode-fixture'; docs = project / 'docs'
+        docs.mkdir(parents=True); (docs / 'index.html').write_bytes(b'old saved snapshot\n')
+        sealed = validate(docs, require_manifest=False)
+        (docs / MANIFEST).write_text(json.dumps(sealed))
+        original = {p.name: p.read_bytes() for p in docs.iterdir()}
+        bundle = project / 'synthetic-bundle'; bundle.mkdir()
+        for name in (*gamma_showcase.FILES, 'publication.json'):
+            (bundle / name).write_bytes(b'synthetic fixture\r\n')
+        stage = project / '.local' / 'site-build'
+        with patch.multiple(builder, DESTINATION=docs, OUT=stage), \
+             patch('gamma_showcase.validate_bundle') as checked, \
+             patch('gamma_showcase.export_saved', side_effect=AssertionError('Export forbidden')):
+            builder.build_gamma_export(bundle)
+        self.assertEqual(checked.call_count, 2)
+        self.assertEqual(original, {p.name: p.read_bytes() for p in docs.iterdir()})
+        for name in (*gamma_showcase.FILES, 'publication.json'):
+            self.assertEqual((stage / 'examples/gamma-native' / name).read_bytes(), (bundle / name).read_bytes())
+        builder.normalize_text_outputs(stage)
+        self.assertEqual((stage / 'examples/gamma-native/gamma.html').read_bytes(), b'synthetic fixture\r\n')
+
+    def test_site_validator_refuses_partial_gamma_bundle(self):
+        (self.site / 'examples/gamma-native').mkdir(parents=True)
+        with self.assertRaisesRegex(ValueError, 'public inventory'):
+            validate(self.site, require_manifest=False)
+
+    def test_normal_restructure_preserves_saved_gamma_bundle_without_export(self):
+        import build_site as builder
+        import gamma_showcase
+        project=self.site/'gamma-preservation-fixture';docs=project/'docs'
+        gamma=docs/'examples/gamma-native';gamma.mkdir(parents=True)
+        (docs/'index.html').write_bytes(b'<a href="examples/gamma-native/gamma.html">Saved example</a>\n')
+        for name in (*gamma_showcase.FILES,'publication.json'):
+            (gamma/name).write_bytes(b'{}\n' if name.endswith('.json') else b'synthetic saved bytes\r\n')
+        with patch('gamma_showcase.validate_bundle'):
+            sealed=validate(docs,require_manifest=False)
+        (docs/MANIFEST).write_text(json.dumps(sealed))
+        before={p.relative_to(docs).as_posix():(p.read_bytes(),p.stat().st_mtime_ns) for p in docs.rglob('*') if p.is_file()}
+        def fixture_validate(folder,**kwargs):
+            return validate(folder,require_manifest=kwargs.get('require_manifest',True))
+        with patch.multiple(builder,ROOT=project,DESTINATION=docs,OUT=project/'.local/site-build'), \
+             patch.object(builder,'validate',fixture_validate),patch('viewer_navigation.assemble'), \
+             patch('gamma_showcase.validate_bundle'), \
+             patch('gamma_showcase.export_saved',side_effect=AssertionError('Export forbidden')), \
+             patch.object(builder,'build_export',side_effect=AssertionError('Legacy export forbidden')):
+            builder.build(restructure=True)
+        after={p.relative_to(docs).as_posix():(p.read_bytes(),p.stat().st_mtime_ns) for p in docs.rglob('*') if p.is_file()}
+        self.assertEqual(before,after)
+
     def test_native_example_export_guard(self):
         import hashlib
         import build_site as builder

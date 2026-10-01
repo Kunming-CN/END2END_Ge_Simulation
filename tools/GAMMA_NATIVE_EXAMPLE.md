@@ -71,3 +71,55 @@ recorded-material energy is distinct from readout-derived Erec; missing world/
 escape energy and activity remain unknown. STEP chords and Track births are not
 complete trajectories across unscored material. Old science and failed trials
 remain permanent evidence.
+
+## Public saved-data showcase
+
+`tools/gamma_showcase.py` reads only the specifically pinned completed M11c
+example, its archived 19 execution sources and existing M11b JSON streams.
+It imports no producer, loads no cache/LH5 and launches no Julia, radiation,
+charge, calibration or readout work. All 40 original truth objects, six original
+responses, 34 unprocessed/null responses and 10057 signed input samples survive.
+AK02 retains 195 capped endpoints even where peak ADC accepted a response.
+
+The saved readout traces already contain only 599/600 display points; their
+`original_sample_count` values are larger. Full original analog arrays were not
+saved. No missing bin is reconstructed. These are numerical analog samples,
+not waveform acquisitions. The exact CSV bytes and canonical public JSON retain
+binary64 values, numeric types and negative zero. UI detail formatting is a view;
+the download is the exact exported data.
+
+First wait for both implementation writers to exit. Record
+`.local/m11d-gamma-showcase-v1/WRITER-EXIT.json` with `status="exited"` and
+`science_calls=0`, then `SOURCE-FREEZE.json` with
+`status="frozen_after_writer_exit"`, the exact `writer_exit_sha256`, and `files`
+containing every `gamma_showcase.SOURCE_FILES` path with `{sha256,bytes}`.
+The frozen source binding excludes mutable handoff/review records. Run
+`python tools/gamma_showcase.py export`; the only accepted new output is
+`.local/m11d-gamma-showcase-v1/bundle`. Existing or partial outputs are refused,
+and failures require inspected exporter recovery, never a science rerun.
+
+`python tools/gamma_showcase.py validate BUNDLE` checks a completed public bundle
+without original private data. A reviewed fixed typed scientific digest rejects
+scientific edits even after public manifests are rehashed; configuration/census,
+exact CSV bytes, privacy, frozen source/template and embedded HTML bindings are
+checked separately. Hashes establish reproducibility/integrity, not authorship
+signatures, physical validation or human certification. Only identified runtime
+path fields change to portable roles; scientific fields and LH5-internal `/stp/`
+dataset addresses remain exact. Raw caches, upstream geometry inputs and private
+evidence stay local.
+
+All eleven implementation sources are checked at the first export/freeze, and
+their hashes remain historical generation provenance. Later changes to generic
+navigation/checkers/tests/publishing/documentation or a compatible exporter do
+not invalidate an already checked bundle. The gamma HTML template remains an
+active exact rendering dependency: an intentional template/schema change needs
+a reviewed saved-data-only export, without scientific reruns. Preserve the
+previous completed bundle and reconcile a presentation upgrade explicitly.
+
+Use `python tools/build_site.py --gamma-showcase BUNDLE` to copy this checked
+bundle onto the current checked website snapshot. The optional Results card
+links to `examples/gamma-native/gamma.html`; old example URLs remain available.
+Normal `Publish.cmd` / `--restructure` preserves these hash-bound bytes and does
+not export or compute the example. Validate the full public prefix locally and
+with `check_site.py --url` after deployment. M8/M9 acceptance on a second computer
+remains deferred.

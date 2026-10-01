@@ -22,6 +22,7 @@ run(python, [path.join(root, 'tools/export_models.py'), '--validate']);
 run(python, [path.join(root, 'tools/test_site.py')]);
 run(python, [path.join(root, 'tools/test_contacts.py')]);
 run(python, [path.join(root, 'tools/test_pipeline.py')]);
+run(python, ['-B', path.join(root, 'tools/test_gamma_showcase.py')]);
 run(python, ['-B', path.join(root, 'tools/test_local_ui_jobs.py')]);
 run(python, ['-B', path.join(root, 'tools/test_local_ui.py')]);
 run(process.execPath, [path.join(root, 'tools/test_local_ui_frontend.js')]);
