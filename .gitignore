@@ -166,3 +166,9 @@
 !transport/test_scenario_prepare.py
 !transport/Prepare.cmd
 !transport/prepare.sh
+
+# Reviewed M11b finite gamma transport; generated truth/streams stay local.
+!transport/scenario_transport.py
+!transport/test_scenario_transport.py
+!transport/Gamma.cmd
+!transport/gamma.sh
