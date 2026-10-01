@@ -106,6 +106,175 @@ class JobProtocolTests(unittest.TestCase):
     def job(self):
         return self.c.snapshot()['jobs'][0]
 
+    def replacement_error(self, winerror):
+        error = PermissionError(13, 'injected state replacement failure')
+        if winerror is not None:
+            error.winerror = winerror
+        return error
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows state replacement retry')
+    def test_transient_windows_replace_retries_identical_pending_bytes_with_both_guards(self):
+        state = self.root / J.STATE / 'jobs.json'
+        pending = self.root / J.STATE / 'jobs.json.pending'
+        prior = (state.read_bytes(), state.stat().st_mtime_ns)
+        self.c._jobs.append(dict(id='b' * 32, name='retry', detector='AK02', output=J.BASE + '/retry',
+                                 status='blocked', stop_requested=False, child=None, logs=['exact \u00b5'],
+                                 backend={}, result={}))
+        intended = copy.deepcopy(self.c._jobs)
+        replace = J.os.replace
+        captures = []
+        def injected(source, target):
+            captures.append((Path(source).read_bytes(), Path(source).stat().st_mtime_ns))
+            self.assertEqual((state.read_bytes(), state.stat().st_mtime_ns), prior)
+            if len(captures) <= 3:
+                raise self.replacement_error((5, 32, 33)[len(captures) - 1])
+            return replace(source, target)
+        with mock.patch.object(J.os, 'replace', side_effect=injected) as replacements, \
+                mock.patch.object(J.time, 'sleep') as sleeps, \
+                mock.patch.object(J, 'safe_path', wraps=J.safe_path) as guards:
+            self.c._persist()
+        self.assertEqual(replacements.call_count, 4)
+        self.assertEqual(sleeps.call_args_list, [mock.call(d) for d in J.STATE_REPLACE_DELAYS[:3]])
+        self.assertTrue(all(item == captures[0] for item in captures))
+        self.assertEqual(state.read_bytes(), captures[0][0])
+        self.assertEqual(J.decode_json(state.read_text(encoding='utf-8'))['jobs'], intended)
+        self.assertFalse(pending.exists())
+        for suffix in ('jobs.json', 'jobs.json.pending'):
+            self.assertEqual(sum(call.args[1] == J.STATE + '/' + suffix for call in guards.call_args_list), 5)
+        self.assertEqual(self.fake.calls, [])
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows state replacement retry')
+    def test_exhausted_windows_reservation_keeps_prior_state_pending_and_zero_dispatch(self):
+        state = self.root / J.STATE / 'jobs.json'
+        pending = self.root / J.STATE / 'jobs.json.pending'
+        for code in J.STATE_REPLACE_WINERRORS:
+            with self.subTest(winerror=code):
+                prior = (state.read_bytes(), state.stat().st_mtime_ns)
+                error = self.replacement_error(code)
+                seen = []
+                def injected(source, target):
+                    seen.append((Path(source).read_bytes(), Path(source).stat().st_mtime_ns))
+                    self.assertEqual((state.read_bytes(), state.stat().st_mtime_ns), prior)
+                    raise error
+                with mock.patch.object(J.os, 'replace', side_effect=injected) as replacements, \
+                        mock.patch.object(J.time, 'sleep') as sleeps:
+                    with self.assertRaises(PermissionError) as refused:
+                        self.c.start('reservation-' + str(code), 'AK02')
+                self.assertIs(refused.exception, error)
+                self.assertEqual(replacements.call_count, len(J.STATE_REPLACE_DELAYS) + 1)
+                self.assertEqual(sleeps.call_args_list, [mock.call(d) for d in J.STATE_REPLACE_DELAYS])
+                self.assertTrue(all(item == seen[0] for item in seen))
+                self.assertEqual((state.read_bytes(), state.stat().st_mtime_ns), prior)
+                self.assertEqual(pending.read_bytes(), seen[0][0])
+                self.assertEqual(J.decode_json(pending.read_text(encoding='utf-8'))['jobs'][0]['name'],
+                                 'reservation-' + str(code))
+                self.assertIsNone(self.c._active)
+                self.assertIsNone(self.c._thread)
+                self.assertEqual(self.c._jobs, [])
+                self.c._guard_idle()  # No phantom reservation leaves the interface busy.
+                self.assertEqual(self.fake.calls, [])
+                self.assertFalse((self.root / J.BASE / ('reservation-' + str(code))).exists())
+
+    def test_unrelated_replace_errors_refuse_immediately_and_preserve_reservation_evidence(self):
+        state = self.root / J.STATE / 'jobs.json'
+        pending = self.root / J.STATE / 'jobs.json.pending'
+        for code in (None, 87):
+            with self.subTest(winerror=code):
+                prior = (state.read_bytes(), state.stat().st_mtime_ns)
+                error = self.replacement_error(code)
+                with mock.patch.object(J.os, 'replace', side_effect=error) as replacements, \
+                        mock.patch.object(J.time, 'sleep') as sleeps:
+                    with self.assertRaises(PermissionError) as refused:
+                        self.c.start('other-error', 'SAP22')
+                self.assertIs(refused.exception, error)
+                self.assertEqual(replacements.call_count, 1)
+                sleeps.assert_not_called()
+                self.assertEqual((state.read_bytes(), state.stat().st_mtime_ns), prior)
+                self.assertEqual(J.decode_json(pending.read_text(encoding='utf-8'))['jobs'][0]['name'], 'other-error')
+                self.assertIsNone(self.c._active)
+                self.assertIsNone(self.c._thread)
+                self.assertEqual(self.c._jobs, [])
+                self.assertEqual(self.fake.calls, [])
+
+    def test_nonwindows_replacement_never_retries_windows_error_attribute(self):
+        state = self.root / J.STATE / 'jobs.json'
+        pending = self.root / J.STATE / 'jobs.json.pending'
+        prior = (state.read_bytes(), state.stat().st_mtime_ns)
+        error = self.replacement_error(5)
+        def injected(source, target):
+            # Change the platform only after real path construction/opening,
+            # isolating the platform predicate without unsupported Path classes.
+            J.os.name = 'posix'
+            raise error
+        with mock.patch.object(J.os, 'name', os.name), \
+                mock.patch.object(J.os, 'replace', side_effect=injected) as replacements, \
+                mock.patch.object(J.time, 'sleep') as sleeps:
+            with self.assertRaises(PermissionError) as refused:
+                self.c.start('nonwindows', 'AK02')
+        self.assertIs(refused.exception, error)
+        self.assertEqual(replacements.call_count, 1)
+        sleeps.assert_not_called()
+        self.assertEqual((state.read_bytes(), state.stat().st_mtime_ns), prior)
+        self.assertEqual(J.decode_json(pending.read_text(encoding='utf-8'))['jobs'][0]['name'], 'nonwindows')
+        self.assertIsNone(self.c._active)
+        self.assertIsNone(self.c._thread)
+        self.assertEqual(self.c._jobs, [])
+        self.assertEqual(self.fake.calls, [])
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows state replacement retry')
+    def test_failed_resume_reservation_restores_memory_with_no_new_worker(self):
+        self.c.start('resume-persist', 'AK02')
+        self.c.wait_for_idle(3)
+        state = self.root / J.STATE / 'jobs.json'
+        pending = self.root / J.STATE / 'jobs.json.pending'
+        prior = (state.read_bytes(), state.stat().st_mtime_ns)
+        prior_jobs, prior_thread = copy.deepcopy(self.c._jobs), self.c._thread
+        before = len(self.fake.calls)
+        error = self.replacement_error(5)
+        with mock.patch.object(J.os, 'replace', side_effect=error) as replacements, \
+                mock.patch.object(J.time, 'sleep') as sleeps:
+            with self.assertRaises(PermissionError) as refused:
+                self.c.resume('resume-persist')
+        self.assertIs(refused.exception, error)
+        self.assertEqual(replacements.call_count, len(J.STATE_REPLACE_DELAYS) + 1)
+        self.assertEqual(sleeps.call_count, len(J.STATE_REPLACE_DELAYS))
+        self.assertEqual((state.read_bytes(), state.stat().st_mtime_ns), prior)
+        self.assertEqual(J.decode_json(pending.read_text(encoding='utf-8'))['jobs'][0]['status'], 'preflight')
+        self.assertEqual(self.c._jobs, prior_jobs)
+        self.assertIsNone(self.c._active)
+        self.assertIs(self.c._thread, prior_thread)
+        self.assertEqual(len(self.fake.calls), before)
+        self.c._guard_idle()
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows state replacement retry')
+    def test_retry_rechecks_new_pending_reparse_guard_before_second_replace(self):
+        state = self.root / J.STATE / 'jobs.json'
+        pending = self.root / J.STATE / 'jobs.json.pending'
+        prior = (state.read_bytes(), state.stat().st_mtime_ns)
+        lstat = Path.lstat
+        introduced = False
+        captured = []
+        def injected(source, target):
+            nonlocal introduced
+            captured.append(Path(source).read_bytes())
+            introduced = True
+            raise self.replacement_error(5)
+        def guarded_stat(path, *args, **kwargs):
+            if introduced and path == pending:
+                return type('Reparse', (), {'st_mode': 0o100644, 'st_file_attributes': 0x400})()
+            return lstat(path, *args, **kwargs)
+        with mock.patch.object(J.os, 'replace', side_effect=injected) as replacements, \
+                mock.patch.object(J.time, 'sleep') as sleeps, \
+                mock.patch.object(Path, 'lstat', guarded_stat):
+            with self.assertRaises(J.ControlError) as refused:
+                self.c._persist()
+        self.assertEqual(refused.exception.code, 'unsafe_path')
+        self.assertEqual(replacements.call_count, 1)
+        self.assertEqual(sleeps.call_args_list, [mock.call(J.STATE_REPLACE_DELAYS[0])])
+        self.assertEqual((state.read_bytes(), state.stat().st_mtime_ns), prior)
+        self.assertEqual(pending.read_bytes(), captured[0])
+        self.assertEqual(self.fake.calls, [])
+
     def test_check_only_shared_structured_dry_run(self):
         parent_env = dict(os.environ)
         got = self.c.check('abc-1', 'SAP22')

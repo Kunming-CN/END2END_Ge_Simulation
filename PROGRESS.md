@@ -4,7 +4,7 @@ Updated: 2026-10-01. Current handoff supersedes historical milestone ordering.
 Full prior log is immutable [at 5226462](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/5226462bd202275b0f71f227aa8ba0a5b0945a63/PROGRESS.md).
 Keep long receipts/failures local; do not repeat completed work after chat failure.
 
-## M10a accepted locally; publication/live verification pending
+## M10a local acceptance retained; finite persistence correction before publication
 
 Owner explicitly skips deferred M8/M9, proceeds M10 then M11. M8/M9 await the
 second computer and are not current development gates. M10a is the local mouse
@@ -32,7 +32,7 @@ identity mismatch. Public launcher with the original matching existing Python
 passes. Guide records SITE_PYTHON matching; no provenance rebase/gate relaxation.
 Module-inheritance, WindowsApps alias and driver-refusal failures remain evidence.
 
-25mocked controller checks/7actual loopback HTTP checks/1mocked delayed DOM race
+31mocked controller checks/7actual loopback HTTP checks/1mocked delayed DOM race
 fixture pass. Exact saved manifest/stage/calibration identity governs detector
 labels and result authority; mismatched persisted labels block new computation.
 Delayed response targets current immutable job ID; raw JSON serialization stays.
@@ -49,7 +49,15 @@ are not port-isolated. No public execution service, credentials or raw caches.
 Three independent Sol6.1 Ultra INITIAL AI judgments were saved/hash-recorded
 before actual reciprocal discussion. Strict found detector-label/mobile issues;
 all three accepted the frozen fixes and completed reciprocal final discussion.
-Publication/live verification and Git/owned-state closure are pending.
+Publication first stopped BEFORE build/push on Windows state-file replacement
+WinError5 in mocked fixtures. Failure/global-config receipts are preserved.
+Bounded atomic persistence correction is accepted: Windows5/32/33-only atomic
+replace,6attempts/5fixedwaits totaling1.55s requested sleep, both path guards,
+same fsynced pending bytes and failed-reservation rollback before worker dispatch.
+Three scoped v5 follow-up judgments and actual reciprocal discussion accept it.
+Prior GUI/science evidence is retained without replay. Original failed publisher
+and corrected one-byte review-format ledger chronology remain local. Formal
+publication/live/Git closure is next; failure holder/cause remains unestablished.
 Evidence .local/m10-local-ui-v1/; AI reviews are not human/physical certification.
 Measured compute: native35.357s/calibration0.373s/electronics7.237s/fields0s.
 Coding/review/UI/probe/provenance/publication wall time is separate. No calibrated
@@ -84,5 +92,6 @@ Preserve M11's three extension demonstrations and explicit pending execution.
 See tools/ONBOARDING_EXTENSIBILITY_PLAN.md; no universal geometry compatibility.
 
 M3/M8/M9/fresh-machine trials remain deferred. No installation experiments/global
-environment changes. Scheduler enabled/executor state remains unverified; no
-future automatic execution claimed. Current owned state/round is recorded locally.
+environment changes. A current-chat30minute heartbeat is ACTIVE by successful
+tool creation; future execution is not yet observed. Legacy project scheduling
+status remains unverified. One-writer ready/lock/process guards remain mandatory.

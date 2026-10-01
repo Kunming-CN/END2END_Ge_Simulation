@@ -32,6 +32,8 @@ NAME = re.compile(r'[A-Za-z0-9_-]{1,24}\Z')
 LOG_LINES = 80
 LOG_BYTES = 1024 * 1024
 JSON_BYTES = 2 * 1024 * 1024
+STATE_REPLACE_DELAYS = (0.05, 0.1, 0.2, 0.4, 0.8)
+STATE_REPLACE_WINERRORS = (5, 32, 33)
 
 
 class ControlError(Exception):
@@ -229,9 +231,20 @@ class Controller:
             stream.write(raw + '\n')
             stream.flush()
             os.fsync(stream.fileno())
-        # A name is reserved in state before its thread is allowed to launch.
-        safe_path(self.root, STATE + '/jobs.json')
-        os.replace(temp, path)
+        # Replace the same flushed serialization atomically. Windows file
+        # sharing/access failures may be temporary; every other error and the
+        # bounded final failure propagate with prior state and pending evidence.
+        for attempt in range(len(STATE_REPLACE_DELAYS) + 1):
+            path = safe_path(self.root, STATE + '/jobs.json')
+            temp = safe_path(self.root, STATE + '/jobs.json.pending')
+            try:
+                os.replace(temp, path)
+                return
+            except OSError as error:
+                if (os.name != 'nt' or getattr(error, 'winerror', None) not in STATE_REPLACE_WINERRORS or
+                        attempt == len(STATE_REPLACE_DELAYS)):
+                    raise
+                time.sleep(STATE_REPLACE_DELAYS[attempt])
 
     def _sanitized(self, value):
         text = str(value).replace(str(self.root), '[project]').replace(str(self.root).replace('\\', '/'), '[project]')
@@ -596,7 +609,13 @@ class Controller:
                    'status': 'preflight', 'stop_requested': False, 'child': None, 'logs': [],
                    'created_at': utc_now(), 'updated_at': utc_now(), 'backend': {}, 'result': {}, 'command': []}
             self._jobs.append(job)
-            return self._launch(job, resume=False)
+            try:
+                return self._launch(job, resume=False)
+            except OSError:
+                # Failed reservation is not an active job. Keep the pending
+                # bytes for inspection while restoring prior in-memory state.
+                self._jobs.remove(job)
+                raise
 
     def resume(self, name):
         name = self._name(name)
@@ -608,15 +627,22 @@ class Controller:
             job = found[-1]
             if not self._path(name).is_dir():
                 raise ControlError('The recorded output is missing; it cannot be resumed.', 'missing_output')
+            prior = copy.deepcopy(job)
             job.update(status='preflight', stop_requested=False, updated_at=utc_now())
             job.pop('error', None)
             job.pop('complete_sha256', None)
             job.pop('verification_required', None)
-            return self._launch(job, resume=True)
+            try:
+                return self._launch(job, resume=True)
+            except OSError:
+                job.clear()
+                job.update(prior)
+                raise
 
     def _launch(self, job, resume):
-        self._active = job['id']
+        # Durable reservation must succeed before any active mark or dispatch.
         self._persist()
+        self._active = job['id']
         initial = self._public_job(job)
         self._thread = threading.Thread(target=self._work, args=(job, resume),
                                         name='local-native-readout-' + job['id'][:8], daemon=True)
