@@ -4,7 +4,7 @@ Updated: 2026-10-01. Current handoff supersedes historical milestone ordering.
 Full prior log is immutable [at 5226462](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/5226462bd202275b0f71f227aa8ba0a5b0945a63/PROGRESS.md).
 Keep long receipts/failures local; do not repeat completed work after chat failure.
 
-## M10a local acceptance retained; finite persistence correction before publication
+## M10a accepted, published and synchronized
 
 Owner explicitly skips deferred M8/M9, proceeds M10 then M11. M8/M9 await the
 second computer and are not current development gates. M10a is the local mouse
@@ -56,8 +56,12 @@ replace,6attempts/5fixedwaits totaling1.55s requested sleep, both path guards,
 same fsynced pending bytes and failed-reservation rollback before worker dispatch.
 Three scoped v5 follow-up judgments and actual reciprocal discussion accept it.
 Prior GUI/science evidence is retained without replay. Original failed publisher
-and corrected one-byte review-format ledger chronology remain local. Formal
-publication/live/Git closure is next; failure holder/cause remains unestablished.
+and corrected one-byte review-format ledger chronology remain local. An unchanged
+contacts-fixture WinError5 also stopped a later attempt; a same-gate retry passed.
+Holder/cause remains unestablished; no legacy helper or gate was changed.
+Normal Publish.cmd passed and pushed2fdabb3. Only guide.html changed among1447
+payloads;1446others remain exact. check_site --url passes95pages/2834links and
+458live files, build913b97eb. Pages reports2fdabb3 built; final handoff sync follows.
 Evidence .local/m10-local-ui-v1/; AI reviews are not human/physical certification.
 Measured compute: native35.357s/calibration0.373s/electronics7.237s/fields0s.
 Coding/review/UI/probe/provenance/publication wall time is separate. No calibrated
@@ -82,10 +86,14 @@ and terminal local bundles retain exact versions/failures. Do not rediscover the
 
 ## Next bounded work
 
-Finish normal Publish.cmd/check_site --url, Git parity and owned
-process/lock closure. Then M11a: register existing vetted nominal LBNL cryostat
-asset and resolve explicit source instances with configuration/geometry checks.
+Close this owned M10 round, then M11a: register the existing vetted nominal LBNL
+cryostat asset and resolve explicit source instances with configuration/geometry
+checks. First support Cs137 point decay and synthetic662keV gamma along global
+-y, with candidate nominal/+5mm centered capsule-source poses. Native checks
+must accept each new preparation; no transport/charge/readout is launched here.
 .local/m10-local-ui-v1/M11-NEXT-BOUNDED.md verifies9pinned upstream originals.
+.local/m10-local-ui-v1/M11-PREPARATION-SEAM.md pins the existing native exporter
+and no-install locked runtime invocation. No rebuild/environment install needed.
 Reuse M7a's second-detector proof. Preparation alone is not new-source transport/
 full-chain proof: transport and native stream still hardcode Cs137 identity.
 Preserve M11's three extension demonstrations and explicit pending execution.
