@@ -172,3 +172,7 @@
 !transport/test_scenario_transport.py
 !transport/Gamma.cmd
 !transport/gamma.sh
+
+# Reviewed additive gamma charge/calibration/readout example; artifacts stay local.
+!simulation/gamma_native_example.jl
+!simulation/test_gamma_native_example.jl
