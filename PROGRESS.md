@@ -5,7 +5,24 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No original cam
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: bounded M5b native-charge/calibration/readout recovery accepted
+## Owner direction gate: M5 expansion paused
+
+The owner requested a fresh direction/stopping-rule audit after the accepted
+858fe6d integration. The independent Sol6.1 Ultra auditor supports the recovery
+approach but finds over-fragmented delivery and an undefined general-M5b endpoint;
+it does NOT recommend continuing the last handoff as written.
+Proposal AWAITING OWNER DECISION: one final bounded primary-selection task using
+only the existing checked AK02 transport contract/cache, fixed physics/profile
+and existing 8-primary/4-group/100-row limits. The proposed acceptance adds
+0/176/457 to the original 0/2594/3950 regression, with no silent event substitution.
+Passing that finite task closes bounded engineering M5; broader input formats,
+detectors, GUI, universal crash coverage and physical validation are not its gates.
+No feature development or numerical runs started for this audit. The accepted
+receipts remain valid with their original limits. The NEXT M5 proposal below is
+SUSPENDED until the owner approves or revises this stopping rule. Do not resume
+feature workers automatically. Audit: .local/m5-direction-audit-v1/auditor-result.md.
+
+## Accepted engineering handoff: bounded M5b native-charge/calibration/readout recovery
 
 `Run.cmd native-readout -Name NAME` now connects NEW SSD native charge through
 existing independent injection calibration and electronics to reconstructed energy.
