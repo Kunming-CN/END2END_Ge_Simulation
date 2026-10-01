@@ -1,42 +1,68 @@
 # Current project state and next steps
 
-Updated: 2026-09-30. Current status below supersedes historical milestone notes.
+Updated: 2026-10-01. Current status below supersedes historical milestone notes.
 The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No original campaign worker is active.
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: M6 DECISION RECORDED; BOUNDED M5 REMAINS CLOSED
+## Current handoff: M7a SAP22 DELIVERED; WEBSITE ORGANIZATION NEXT
 
-M6 keeps the existing backend/readers. Installed official legend-lh5io0.2.7 /
-pydataobj2.0.3 passed one bounded reader-only saved-AK02 comparison: full10k
-primary census plus whole0/213/3645 rows, including one true zero,76 Ge rows,
-six zero-energy rows, delayed daughter birth records, passive tables and aliases.
-Official decoding compared14 nonempty tables;8 empty selections remain separately
-in the ledger, without an official empty-decoding claim. Exact selected nonempty
-column inventory/dtype/shape/bytes/attributes agree; original
-row indices and source/model hashes/size/mtime remain. No simulation or install.
-The unavailable reboost/simflow grouping/dry-plan proposal is DEFERRED, not
-accepted. Official decoding does not replace the current strict project census,
-provenance, unit or geometry checks; no concrete simplification was demonstrated.
-See `tools/M6_INTERFACE_ASSESSMENT.md`; evidence: `.local/m6-interface-v1/`.
+`Run.cmd native-readout -Name NAME -Detector SAP22` now selects the second
+checked nominal LBNL detector through NEW native charge, independent injection
+calibration, electronics and checkpoint recovery. Omission retains the original
+AK02 default; explicit AK02 is supported. This uses existing checked private
+contracts/caches, not arbitrary inputs or a fresh-checkout calculation example.
+Resume obtains model/IDs only from the witnessed INITIAL manifest and forbids
+every explicit selector override, including matching values. Legacy charge-only
+remains AK02-only. Models/includes, physics helpers, profiles and locks are frozen.
+SAP22 retains +700 V/contact1 and the existing explicit77 K cache from78 K source.
 
-Two scoped Sol6.1 Ultra reviews plus a NEW independent strict third-party audit
-closed the assessment after actual peer discussion. Corrected official-reader
-oracle attribution (direct raw HDF5, with a separate project-Ge index check),
-14-nonempty/8-empty coverage and final-freeze chronology; initial candidates and
-metadata failures remain preserved. No further trial or numerical work is needed.
-These are AI reviews, not physical or human certification.
+Actual bounded0/207/263 reference/death/pause/resume passed:3whole primaries,
+1truezero,2groups,33ALL Ge rows including4zero-energy rows. Exactly4NEW native
+group completions and2calibrations total;0fields/radiation/old-campaign reruns.
+Reference/resumes are DIRECT public commands; death75 is actual backend
+instrumentation after verified charge207 commit and BEFORE ACK. First resume
+adds only charge263/calibration/electronics207; final resume only electronics263.
+Complete native/calibration/scalars/SAVED traces agree exactly under the existing
+timing/calibration-timing-digest exclusions, with within-output bindings verified.
+Committed bytes/hash/size/mtime survive. Four public invalid-Julia completed
+Resume/DryRun noops launch0workers;5public Resume overrides refuse before dispatch.
 
-NEXT: M7's one useful detector/scenario candidate, concrete new user capability,
-complete existing inputs and bounded geometry/mapping/positive-example plan.
-If no candidate meets those limits, record the missing inputs and offer the owner
-the already-requested website organization as an alternative; do not silently
-expand research or change priority. Website link/information organization is a
-separate owner-requested later
-saved-display milestone: consolidate routes, distinguish current/earlier/archive
-results and viewable/executable models, correct stale guide/M4/M5 status while
-preserving old URLs/data. See `tools/ONBOARDING_EXTENSIBILITY_PLAN.md`.
-M3, M8/M9 and fresh-machine work remain deferred; no extra environment or new GUI.
+Complete native support is152/151 samples, not AK02's5002. Endpoint counts224/704
+have no cap/native failures; actual selected signals have0negative samples.
+Signed-path fixtures remain separate.600SAVED display points are not all50000
+internal analog evaluations; tail_truncated_possible=true remains visible.
+Processing acceptance is not calibrated CCE, hardware/as-built/experiment,
+all-detector M7 or fresh-machine validation. SAP8413's unwritten-row execution
+cause is diagnosed; its physical/native boundary failure remains unresolved.
+
+26new mocked/parser checks pass;73prior integration tests pass plus1focused
+pass after a historical test-HOME fixture error;14legacy regressions pass.
+Initial failures are retained; final product code matches successful tests.
+46-file source freeze follows writer EXIT.664protected baseline/reference files
+remain exact. Two independent Sol6.1 Ultra specialists and a NEW strict reviewer
+accepted source/actual evidence, then exchanged concrete findings and replies.
+These are AI reviews, not human or physical certification. No blocker remains.
+Measured native/calibration/electronics work:21.497/0.352/5.060s; declared command
+orchestration:117.780s, excluding coding/review/tool/publication wall time.
+Evidence: `.local/m7-sap22-v1/COMPLETE.json`, `host/COMPLETE.json`,
+`FREEZE-host.json` and the three initial/host/discussion review records.
+Prior accepted outputs retain their original source versions, never rebased.
+
+M6 keeps the existing readers; the bounded official-reader assessment and deferred
+reboost/simflow proposal remain recorded in `tools/M6_INTERFACE_ASSESSMENT.md`.
+M4 and bounded M5 remain closed. Do not repeat completed science/tests/reviews.
+
+NEXT: the owner-authorized separate saved-website organization milestone:
+inventory reachable routes; consolidate current-results/setup/return links,
+distinguish1M/earlier10k/archive and17viewable/checked executable models, and
+correct stale guide replay/public-command/recovery statements BY ROUTE.
+Retain generic launcher's historical test-cache/fresh-machine limits; expose
+delivered replay and existing-input native-readout accurately. Preserve old URLs,
+fragments and scientific bytes. Use existing generators, build/publish checks
+and desktop/mobile/keyboard review; no physics or new framework.
+See `tools/ONBOARDING_EXTENSIBILITY_PLAN.md`. M3, M8/M9 and fresh-machine work
+remain deferred. Continue bounded rounds without per-round owner confirmation.
 
 ## Accepted bounded engineering M5 closure
 
@@ -92,8 +118,8 @@ Persistent PATH/WSL/Codex configuration remains unchanged. No original Geant4,
 field, default/native million campaign, packages, resets or website build ran.
 Older accepted bundles retain their original source versions, never rebased.
 
-The M6 decision above supersedes this closure's original next-task note.
-M7 checked adapters follows; M3, M8/M9 and fresh-machine work stay deferred.
+The current handoff above supersedes this closure's original next-task note.
+Bounded M7a now adds SAP22; M3, M8/M9 and fresh-machine work stay deferred.
 Necessary future corrections may be recorded as such; broader enhancements must
 have separate scope and must not silently become new M5 completion requirements.
 

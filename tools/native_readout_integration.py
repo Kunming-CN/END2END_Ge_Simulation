@@ -1,4 +1,4 @@
-"""Bounded AK02 NEW native charge -> existing calibrated electronics recovery.
+"""Bounded AK02/SAP22 NEW native charge -> existing calibrated electronics recovery.
 
 Run.cmd native-readout owns one root. This composes the existing workers and
 transactions; it does not change native or readout numerical functions.
@@ -30,20 +30,22 @@ PHASES=('charge','calibration','electronics')
 TERMINAL=('completed','completed_with_native_failures')
 
 
-def load_plan(reader, primary_ids=None):
+def load_plan(reader, primary_ids=None, detector=None):
     # The recorded cache has five settings; validate the complete schema here,
     # independently of the legacy producer's present-key comparison.
     expected_settings=dict(drift_cap_ns=10000,drift_dt_ns=2,parcels=16,seed_family=2609261,temperature_K=77)
     settings=reader.json(N.BATCH+'/config.json').get('settings')
     C.require(type(settings) is dict and set(settings)==set(expected_settings),'exact recorded cache settings keys')
     C.require(all(type(settings[k]) is int and settings[k]==v for k,v in expected_settings.items()),'exact recorded cache settings values')
-    plan=N.load_plan(reader,'abort') if primary_ids is None else N.load_plan(reader,'abort',primary_ids)
+    if detector is None:
+        plan=N.load_plan(reader,'abort') if primary_ids is None else N.load_plan(reader,'abort',primary_ids)
+    else:plan=N.load_plan(reader,'abort',primary_ids,detector=detector)
     plan['source_sha256']={n:reader.digest(n) for n in SOURCES}
     selection,_=R.resolve_profile(reader,PROFILE)
     C.equal(reader.digest(PROFILE),C.ES_DEFAULTS[PROFILE],'frozen integration profile')
     config=R.expected_config(reader,selection['profile'],len(plan['events']))
     C.equal(selection['configuration'],dict(config,expected_primary_count=None),'independent profile/config gate')
-    d=dict(model='AK02',profile=selection['profile'],config=config,dt=2,eion=2.95,
+    d=dict(model=plan['model'],profile=selection['profile'],config=config,dt=2,eion=2.95,
         primary_count=len(plan['events']),model_sha256=plan['model_sha256'],readout_contact_id=plan['readout_contact_id'])
     return plan,d,selection
 
@@ -75,7 +77,7 @@ def adapter(record,plan,g):
     if not failed:
         for t,q in zip(native['times'],native['signal']):writer.writerow([ids[k] for k in ('event_id','global_decay_id','group_id')]+[t,q])
     files={'scalars.jsonl':G.encoded(scalar),'signals.csv':stream.getvalue().encode('utf-8')}
-    group=dict(key=g['key'],model='AK02',identity=ids,samples=0 if failed else len(native['times']),
+    group=dict(key=g['key'],model=plan['model'],identity=ids,samples=0 if failed else len(native['times']),
         files={n:dict(sha256=G.digest_bytes(b),bytes=len(b)) for n,b in files.items()})
     return group,files
 
@@ -89,7 +91,7 @@ def verify_charge(path,g,plan,runtime):
 
 def expected(plan):
     keys=[g['key'] for g in plan['groups']]
-    return dict(charge=keys,calibration=['AK02'],electronics=keys)
+    return dict(charge=keys,calibration=[plan['model']],electronics=keys)
 
 
 def progress(result,mh,plan,done,status,final=False):
@@ -126,16 +128,16 @@ def signals(dest,plan):
 
 
 def verify_final(dest,m):
-    out=C.Reader(dest);report=out.json('worker/report.json');d=m['detectors'][0]
-    C.equal(G.inventory(dest/'worker'),['AK02/scalars.jsonl','AK02/traces.jsonl','report.json'],'final artifact inventory')
+    out=C.Reader(dest);report=out.json('worker/report.json');d=m['detectors'][0];model=m['plan']['model']
+    C.equal(G.inventory(dest/'worker'),[model+'/scalars.jsonl',model+'/traces.jsonl','report.json'],'final artifact inventory')
     C.equal(report['kind'],'electronics_replay_worker_v1','final worker kind')
     C.equal(report['status'],'worker_complete_untrusted','final worker status')
     C.equal(report['runtime'],G.raw_runtime(m['runtime']),'final runtime')
-    C.equal(set(report['detectors']),{'AK02'},'final detector census')
-    C.equal(set(report['artifacts']),{'AK02/scalars.jsonl','AK02/traces.jsonl'},'final hashes inventory')
+    C.equal(set(report['detectors']),{model},'final detector census')
+    C.equal(set(report['artifacts']),{model+'/scalars.jsonl',model+'/traces.jsonl'},'final hashes inventory')
     for n,h in report['artifacts'].items():out.digest('worker/'+n,h)
-    R.verify_detector_outputs(d,report['detectors']['AK02'],ledger(dest,m['plan']),out.jsonl('worker/AK02/scalars.jsonl'),
-        out.jsonl('worker/AK02/traces.jsonl'),signals(dest,m['plan']))
+    R.verify_detector_outputs(d,report['detectors'][model],ledger(dest,m['plan']),out.jsonl('worker/'+model+'/scalars.jsonl'),
+        out.jsonl('worker/'+model+'/traces.jsonl'),signals(dest,m['plan']))
     out.recheck();return report
 
 
@@ -148,7 +150,7 @@ def validate_saved(reader,dest,name,plan,d,selection):
     m=out.json('manifest.json');mh=out.digest('manifest.json')
     C.equal((m['kind'],m['schema_version'],m['name']),(KIND,1,name),'manifest identity')
     C.equal(m['plan'],plan,'native input/source/cache/settings/primary ledger')
-    C.equal(N.expected_groups(plan['events'],plan['prepared']),plan['groups'],'expected full group census')
+    C.equal(N.expected_groups(plan['events'],plan['prepared'],plan['model']),plan['groups'],'expected full group census')
     C.equal(m['detectors'],[d],'independent resolved detector/profile/config gate')
     C.equal(m['selection'],selection,'independent profile selection gate')
     C.equal(out.json('inputs/effective-config.json'),R.expected_config(reader,d['profile'],len(plan['events'])),'copied config independent gate')
@@ -161,7 +163,7 @@ def validate_saved(reader,dest,name,plan,d,selection):
     for runtime in (m['native_runtime'],m['runtime']):
         for k,h in (('launcher_executable','launcher_sha256'),('executable','executable_sha256')):
             C.equal(hashlib.sha256(Path(runtime[k]).read_bytes()).hexdigest(),runtime[h],'saved runtime bytes')
-    keys=expected(plan);done={p:[] for p in PHASES};groups=[];cals={}
+    keys=expected(plan);done={p:[] for p in PHASES};groups=[];cals={};model=plan['model']
     for phase in PHASES:
         path=dest/phase;witnesses=dest/'receipts'/phase
         C.require(path.is_dir() and witnesses.is_dir(),'missing stage/witness inventory','missing_commit')
@@ -173,20 +175,20 @@ def validate_saved(reader,dest,name,plan,d,selection):
             _,receipt=G.committed(p,G.binding(mh,'charge',g['key']))
             C.equal(set(receipt['artifacts']),{'charge.json','scalars.jsonl','signals.csv'},'charge artifact set')
             groups.append(verify_charge(p,g,plan,m['native_runtime']));done['charge'].append(g['key'])
-    p=dest/'calibration/AK02'
+    p=dest/'calibration'/model
     if p.exists() or G.witness_path(p).exists():
         C.equal(done['charge'],keys['charge'],'calibration requires full charge stage')
-        _,receipt=G.committed(p,G.binding(mh,'calibration','AK02'))
+        _,receipt=G.committed(p,G.binding(mh,'calibration',model))
         C.equal(set(receipt['artifacts']),{'calibration.json'},'calibration artifact set')
-        cals['AK02']=G.verify_calibration(p,d,m['runtime']);done['calibration'].append('AK02')
+        cals[model]=G.verify_calibration(p,d,m['runtime']);done['calibration'].append(model)
     for key in keys['electronics']:
         p=dest/'electronics'/key
         if p.exists() or G.witness_path(p).exists():
-            C.require(key in done['charge'] and 'AK02' in cals,'electronics without charge/calibration')
+            C.require(key in done['charge'] and model in cals,'electronics without charge/calibration')
             _,receipt=G.committed(p,G.binding(mh,'electronics',key))
             C.equal(set(receipt['artifacts']),{'result.json','scalars.jsonl','traces.jsonl'},'electronics artifact set')
             g=next(g for g in groups if g['key']==key)
-            G.verify_group(dest/'charge'/key,p,g,d,m['runtime'],cals['AK02']);done['electronics'].append(key)
+            G.verify_group(dest/'charge'/key,p,g,d,m['runtime'],cals[model]);done['electronics'].append(key)
     saved=out.json('run.json')
     C.require({'kind','schema_version','manifest_sha256','status','stages','selected_census'}<=set(saved),'missing progress identity authority','missing_commit')
     C.equal((saved['kind'],saved['schema_version'],saved['manifest_sha256']),(KIND,1,mh),'progress identity')
@@ -206,7 +208,7 @@ def validate_saved(reader,dest,name,plan,d,selection):
         complete=out.json('COMPLETE.json');C.equal((complete['kind'],complete['manifest_sha256']),(KIND,mh),'complete binding')
         C.equal(complete['completed_keys'],keys,'complete stage identity ledger');C.equal(done,keys,'every stage completed')
         G.check_stamps(out,complete['artifacts']);report=verify_final(dest,m)
-        failures=report['detectors']['AK02']['counts']['native_failed_groups']
+        failures=report['detectors'][model]['counts']['native_failed_groups']
         C.equal(saved['status'],TERMINAL[bool(failures)],'complete status');C.equal(saved['verification_final'],True,'verified complete')
         for p in PHASES:C.equal(saved['stages'][p]['completed_keys'],keys[p],'final progress')
     else:
@@ -215,51 +217,70 @@ def validate_saved(reader,dest,name,plan,d,selection):
 
 
 def aggregate(reader,dest,m,groups,cals,attempt):
-    worker=attempt/'final';worker.mkdir();folder=worker/'AK02';folder.mkdir();counts=dict.fromkeys(R.COUNT_FIELDS,0);seconds=0.
+    model=m['plan']['model'];worker=attempt/'final';worker.mkdir();folder=worker/model;folder.mkdir();counts=dict.fromkeys(R.COUNT_FIELDS,0);seconds=0.
     with (folder/'scalars.jsonl').open('xb') as scalars,(folder/'traces.jsonl').open('xb') as traces:
         for rec in ledger(dest,m['plan']):
             if rec['record_kind']=='decay':
                 scalars.write(G.encoded(rec));counts['initial_primaries']+=1;counts['zero_deposit_primaries']+=rec['zero_deposit'];continue
-            key='AK02-e'+str(rec['event_id'])+'-d'+str(rec['global_decay_id'])+'-g'+str(rec['group_id']);p=dest/'electronics'/key
+            key=model+'-e'+str(rec['event_id'])+'-d'+str(rec['global_decay_id'])+'-g'+str(rec['group_id']);p=dest/'electronics'/key
             info=C.Reader(p).json('result.json');seconds+=info['electronics_seconds']
             for k,v in info['counts'].items():counts[k]+=v
             scalars.write((p/'scalars.jsonl').read_bytes());traces.write((p/'traces.jsonl').read_bytes())
         for stream in (scalars,traces):stream.flush();os.fsync(stream.fileno())
-    cal=cals['AK02'];report=dict(kind='electronics_replay_worker_v1',status='worker_complete_untrusted',runtime=G.raw_runtime(m['runtime']),
-        detectors={'AK02':dict(counts=counts,config=m['detectors'][0]['config'],calibration=cal['calibration'],
+    cal=cals[model];report=dict(kind='electronics_replay_worker_v1',status='worker_complete_untrusted',runtime=G.raw_runtime(m['runtime']),
+        detectors={model:dict(counts=counts,config=m['detectors'][0]['config'],calibration=cal['calibration'],
             calibration_seconds=cal['calibration_seconds'],electronics_seconds=seconds)},
-        artifacts={'AK02/'+n:G.digest_bytes((folder/n).read_bytes()) for n in ('scalars.jsonl','traces.jsonl')})
-    R.verify_detector_outputs(m['detectors'][0],report['detectors']['AK02'],ledger(dest,m['plan']),C.Reader(folder).jsonl('scalars.jsonl'),C.Reader(folder).jsonl('traces.jsonl'),signals(dest,m['plan']))
+        artifacts={model+'/'+n:G.digest_bytes((folder/n).read_bytes()) for n in ('scalars.jsonl','traces.jsonl')})
+    R.verify_detector_outputs(m['detectors'][0],report['detectors'][model],ledger(dest,m['plan']),C.Reader(folder).jsonl('scalars.jsonl'),C.Reader(folder).jsonl('traces.jsonl'),signals(dest,m['plan']))
     G.write_json(worker/'report.json',report);reader.recheck();os.rename(worker,dest/'worker');return report
 
 
-def saved_primary_ids(dest,name):
-    """Read selection only after the immutable INITIAL/manifest binding passes."""
+def saved_manifest(dest,name):
+    """No detector or primary selector is trusted before its INITIAL binding."""
     out=C.Reader(dest);initial=out.json('INITIAL.json')
     C.equal((initial['kind'],initial['schema_version']),(KIND,1),'initial identity')
     G.check_stamps(out,{'manifest.json':initial['manifest'],**initial['inputs']})
     m=out.json('manifest.json')
     C.equal((m['kind'],m['schema_version'],m['name']),(KIND,1,name),'manifest identity')
-    plan=m['plan']
+    out.recheck();return m
+
+
+def saved_detector(dest,name):
+    plan=saved_manifest(dest,name)['plan']
+    if 'detector_selection_mode' not in plan:
+        C.equal(plan['model'],'AK02','saved legacy detector')
+        C.require('detector_settings' not in plan,'unexpected legacy detector settings');return None
+    C.equal(plan['detector_selection_mode'],'explicit','saved detector mode')
+    N.integration_detector(plan['model'])
+    C.equal(plan['detector_settings'],N.detector_settings(plan['model']),'saved detector metadata')
+    return plan['model']
+
+
+def saved_primary_ids(dest,name):
+    """Read selection only after the immutable INITIAL/manifest binding passes."""
+    plan=saved_manifest(dest,name)['plan']
     if 'primary_selection_mode' not in plan:
-        C.equal(plan['selected_primary_ids'],N.COHORT,'saved default cohort');return None
+        cohort=N.COHORT if 'detector_selection_mode' not in plan else N.integration_detector(plan['model'])['cohort']
+        C.equal(plan['selected_primary_ids'],cohort,'saved default cohort');return None
     C.equal(plan['primary_selection_mode'],'explicit','saved primary selection mode')
     ids=plan['selected_primary_ids']
     C.require(type(ids) is list and 1<=len(ids)<=8 and all(type(x) is int for x in ids),
         'Invalid saved PrimaryIds','invalid_selection')
     value=','.join(str(x) for x in ids);C.equal(N.parse_primary_ids(value),ids,'saved PrimaryIds')
-    out.recheck();return value
+    return value
 
 
-def integrate(root,name,resume=False,dry_run=False,stop_after_groups=None,primary_ids=None):
+def integrate(root,name,resume=False,dry_run=False,stop_after_groups=None,primary_ids=None,detector=None):
     result=dict(kind=KIND,schema_version=1,status='blocked',verification_final=False,findings=[],scientific_workers_launched=0,
-        limitations=['Bounded selected AK02 engineering cohort; synthetic noiseless injection calibration; no calibrated Li CCE or experimental spectrum claim.'])
+        limitations=['Bounded selected engineering cohort; synthetic noiseless injection calibration; no calibrated CCE or experimental spectrum claim.'])
     dest=None;attempt=None
     try:
         C.require(os.name=='nt','bounded Windows interface','not_supported')
         C.require(re.fullmatch('[A-Za-z0-9_-]{1,24}',name or ''),'bounded safe name','unsafe_path')
         C.require(stop_after_groups is None or type(stop_after_groups) is int and 1<=stop_after_groups<=2,'StopAfterGroups must be 1..2','invalid_flags')
         C.require(not resume or primary_ids is None,'PrimaryIds override is forbidden on Resume','invalid_flags')
+        C.require(not resume or detector is None,'Detector override is forbidden on Resume','invalid_flags')
+        if detector is not None:N.integration_detector(detector)
         if primary_ids is not None:N.parse_primary_ids(primary_ids)
         reader=C.Reader(root);target=reader.path(BASE+'/'+name)
         C.require(len(str(target))+95<260,'bounded Windows output path','unsafe_path')
@@ -267,7 +288,10 @@ def integrate(root,name,resume=False,dry_run=False,stop_after_groups=None,primar
         with ExitStack() as leases:
             if resume:leases.enter_context(C.existing_lock(C.Reader(target),'run.lock'))
             effective=saved_primary_ids(target,name) if resume else primary_ids
-            plan,d,selection=load_plan(reader) if effective is None else load_plan(reader,effective)
+            selected_detector=saved_detector(target,name) if resume else detector
+            if selected_detector is None:plan,d,selection=load_plan(reader) if effective is None else load_plan(reader,effective)
+            else:plan,d,selection=load_plan(reader,effective,selected_detector)
+            model=plan['model']
             result['output']=BASE+'/'+name
             if resume:
                 m,mh,done,groups,cals=validate_saved(reader,target,name,plan,d,selection)
@@ -321,12 +345,12 @@ def integrate(root,name,resume=False,dry_run=False,stop_after_groups=None,primar
                     phase=event['phase'];key=event['key'];C.equal(event['directory'],phase+'-'+key,'readout staged path')
                     stage=C.Reader(attempt).path(event['directory'])
                     if phase=='calibration':
-                        C.require(key=='AK02' and key not in cals,'unexpected/duplicate calibration')
+                        C.require(key==model and key not in cals,'unexpected/duplicate calibration')
                         C.equal(G.inventory(stage),['calibration.json'],'calibration stage inventory');info=G.verify_calibration(stage,d,m['runtime'])
                     else:
                         C.equal(phase,'electronics','phase');g=active[0];C.require(g is not None and key==g['key'],'unexpected/duplicate electronics')
                         C.equal(G.inventory(stage),['result.json','scalars.jsonl','traces.jsonl'],'electronics stage inventory')
-                        G.verify_group(dest/'charge'/key,stage,g,d,m['runtime'],cals['AK02'])
+                        G.verify_group(dest/'charge'/key,stage,g,d,m['runtime'],cals[model])
                     reader.recheck();G.commit(stage,dest/phase/key,G.binding(mh,phase,key));G.committed(dest/phase/key,G.binding(mh,phase,key))
                     if phase=='calibration':cals[key]=info
                     else:active[0]=next(remaining,None)
@@ -340,7 +364,7 @@ def integrate(root,name,resume=False,dry_run=False,stop_after_groups=None,primar
                 progress(result,mh,plan,done,'paused',True);G.status(dest/'run.json',result);return result
             if attempt is None:attempt=dest/'attempts'/uuid.uuid4().hex[:12];attempt.mkdir()
             report=aggregate(reader,dest,m,groups,cals,attempt);G.check_stamps(reader,m['source_snapshot']);reader.recheck()
-            status=TERMINAL[bool(report['detectors']['AK02']['counts']['native_failed_groups'])]
+            status=TERMINAL[bool(report['detectors'][model]['counts']['native_failed_groups'])]
             progress(result,mh,plan,done,status,True);result['detectors']=report['detectors'];G.status(dest/'run.json',result)
             files=['run.json',*['worker/'+n for n in G.inventory(dest/'worker')],*[p+'/'+n for p in (*PHASES,'receipts') for n in G.inventory(dest/p)]]
             G.write_json(dest/'COMPLETE.json',dict(kind=KIND,schema_version=1,manifest_sha256=mh,completed_keys=expected(plan),artifacts=G.stamps(C.Reader(dest),files)))
@@ -354,7 +378,8 @@ def integrate(root,name,resume=False,dry_run=False,stop_after_groups=None,primar
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--name',required=True)
     p.add_argument('--resume',action='store_true');p.add_argument('--dry-run',action='store_true');p.add_argument('--stop-after-groups',type=int)
-    p.add_argument('--primary-ids',help='Quoted canonical CSV of 1..8 checked AK02 cs137-1m primaries; new output only')
+    p.add_argument('--primary-ids',help='Quoted canonical CSV of 1..8 checked selected-detector cs137-1m primaries; new output only')
+    p.add_argument('--detector',help='Opt-in AK02 or SAP22; omitted retains AK02; new output only')
     a=p.parse_args(argv);r=integrate(ROOT,**vars(a));print(G.encoded(r).decode(),end='');return 0 if r['verification_final'] else 2
 
 

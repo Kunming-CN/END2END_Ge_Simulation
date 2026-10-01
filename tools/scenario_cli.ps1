@@ -29,12 +29,15 @@ $ErrorActionPreference='Stop'
 $script:customRequested=$PSBoundParameters.ContainsKey('ElectronicsProfile')
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
 if($Action -eq 'native-readout'){
-  foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','DryRun','Json','Resume','StopAfterGroups','PrimaryIds')){throw "native-readout forbids: $key"}}
-  if(!$Name){throw 'native-readout requires -Name NEW (checked AK02 engineering selection/fixed profile)'}
+  foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','DryRun','Json','Resume','StopAfterGroups','PrimaryIds','Detector')){throw "native-readout forbids: $key"}}
+  if(!$Name){throw 'native-readout requires -Name NEW (checked detector engineering selection/fixed profile)'}
   if($Resume -and $PSBoundParameters.ContainsKey('PrimaryIds')){throw 'PrimaryIds override is forbidden on Resume'}
+  if($Resume -and $PSBoundParameters.ContainsKey('Detector')){throw 'Detector override is forbidden on Resume'}
+  if($PSBoundParameters.ContainsKey('Detector') -and $Detector -cnotin @('AK02','SAP22')){throw 'native-readout Detector requires AK02 or SAP22'}
   $nativeArgs=@{Name=$Name;DryRun=$DryRun;Json=$Json;Resume=$Resume}
   if($PSBoundParameters.ContainsKey('StopAfterGroups')){$nativeArgs.StopAfterGroups=$StopAfterGroups}
   if($PSBoundParameters.ContainsKey('PrimaryIds')){$nativeArgs.PrimaryIds=$PrimaryIds}
+  if($PSBoundParameters.ContainsKey('Detector')){$nativeArgs.Detector=$Detector}
   & (Join-Path $PSScriptRoot 'native_readout_integration.ps1') @nativeArgs
   exit $LASTEXITCODE
 }

@@ -5,6 +5,49 @@ using ..NativeCheckpointBatch, JSON, SHA, Serialization, Unitful, LinearAlgebra
 const L=NativeCheckpointBatch;const V=L.V;const B=L.B;const N=L.N;const Q=L.Q;const G=L.G
 const ROOT=Q.ROOT
 check=L.check
+const INTEGRATION_DETECTORS=Dict(
+    "AK02"=>(bias=500,cohort=[0,2594,3950],
+        model_sha256="793de4cc598a3e26d375525e683be1bc2072e117d1c6b8003f6cdcffc9925dfa",
+        contract_sha256="e120f8347d09680a20d27eb5cd067052041afe3538ae4b69167e7850cdd8b06a",
+        prepared_sha256="4c7a6e7757591ff1d354491fa13cb1d3c02de5c098723332be7642d79b695c17",
+        cache_sha256="2d5102499d30531d8ef6d03a79dc0bfe2f3c57e784457dc8d5da02ed53a670ac"),
+    "SAP22"=>(bias=700,cohort=[0,207,263],
+        model_sha256="614c72f31a5a84b82c69b0b11f6f0657e87d94f746312c151f9a08cd00ba3dc3",
+        contract_sha256="0d7a7a97ac28caa4df19df25ad43db2e677459680af5e59279e4d27c2faa1009",
+        prepared_sha256="452379b2d42c37d2a1979d0e630d2f0db206e8330df93d1b535b684a453ae70b",
+        cache_sha256="39e8e121fcc696fad0686bac31710c53f28a2c7bc4102fdb57c70f6cb12dd804"))
+
+function integration_detector(plan,allowed)
+    model=plan["model"]
+    if !haskey(plan,"detector_selection_mode")
+        check(model=="AK02" && !haskey(plan,"detector_settings"),"Declared legacy AK02 model")
+        return model
+    end
+    check(allowed && plan["detector_selection_mode"]=="explicit" && haskey(INTEGRATION_DETECTORS,model),
+        "Detector selection requires native-readout opt-in")
+    spec=INTEGRATION_DETECTORS[model]
+    check(plan["detector_settings"]==Dict("model_id"=>model,"source_temperature_K"=>78,"temperature_K"=>77,
+        "bias_V"=>spec.bias,"readout_contact_id"=>1),"Frozen detector metadata")
+    check(plan["model_sha256"]==spec.model_sha256 && plan["readout_contact_id"]==1,"Frozen detector model/contact")
+    check(replace(plan["cache_file"],'\\'=>'/')==".local/cs137-1m-native/cache/"*model*".jls" &&
+        plan["cache_sha256"]==spec.cache_sha256,"Frozen detector cache identity")
+    check(L.hashfile(joinpath(ROOT,".local","cs137-1m-native","config.json"))==
+        "64db8f79fa4fae393b0e1abbdfb5e2ed30d44b48cd814a40a7f1bdddb16933de","Frozen detector batch")
+    check(L.hashfile(joinpath(ROOT,"models","catalog.json"))==
+        "ac5edd4c976a37cfcc80a8e507ac9347246a942ac843ed2ecc683079f220653b","Frozen detector catalog")
+    check(L.hashfile(joinpath(ROOT,"models",model*".yaml"))==spec.model_sha256,"Frozen detector YAML")
+    prepared=joinpath(ROOT,".local","cs137-1m","inputs",model,"prepared.json")
+    check(L.hashfile(prepared)==spec.prepared_sha256 && plan["prepared"]==JSON.parsefile(prepared) &&
+        plan["prepared"]["model_id"]==model,"Frozen detector prepared geometry")
+    contract=".local/native-bridge-pilot/contracts-v3/"*model*".json"
+    check(first(plan["input_files"])==contract && L.hashfile(joinpath(ROOT,contract))==spec.contract_sha256,
+        "Frozen detector radiation contract")
+    if model=="SAP22"
+        check(L.hashfile(joinpath(ROOT,"models","ADLChargeDriftModel","drift_velocity_config.yaml"))==
+            "642a2bd0df1dabd9da7c71d15950e8b84f491babfd4b4fb63abdb82162f97ce6","Frozen detector drift include")
+    end
+    model
+end
 function runtime()
     check(Threads.nthreads()==2 && VERSION==v"1.13.0","Pinned two-thread Julia1.13.0 required")
     BLAS.set_num_threads(1)
@@ -44,14 +87,16 @@ function charge(sim,cfg,plan,g,loaded)
 end
 function selection(plan,allow_primary_selection)
     ids=plan["selected_primary_ids"];events=plan["events"];groups=plan["groups"]
-    check(plan["model"]=="AK02","Declared AK02 model")
+    model=plan["model"]
+    check(model=="AK02" || (model=="SAP22" && haskey(plan,"detector_selection_mode")),"Declared checked detector")
+    cohort=haskey(plan,"detector_selection_mode") ? INTEGRATION_DETECTORS[model].cohort : [0,2594,3950]
     if !allow_primary_selection
-        check(ids==[0,2594,3950] && !haskey(plan,"primary_selection_mode"),"Declared tiny AK02 cohort")
+        check(model=="AK02" && ids==[0,2594,3950] && !haskey(plan,"primary_selection_mode"),"Declared tiny AK02 cohort")
     elseif haskey(plan,"primary_selection_mode")
         check(plan["primary_selection_mode"]=="explicit","Explicit primary selection mode")
         check(!isempty(groups),"Zero-only selected native readout is unsupported")
     else
-        check(ids==[0,2594,3950],"Declared default AK02 cohort")
+        check(ids==cohort,"Declared default detector cohort")
     end
     integer(x)=x isa Integer && !(x isa Bool)
     check(1<=length(ids)<=8 && all(x->integer(x)&&0<=x<1000000,ids) &&
@@ -68,16 +113,16 @@ function selection(plan,allow_primary_selection)
     for (g,(index,eid,pulse)) in zip(groups,expected)
         check(integer(g["event_index"]) && g["event_index"]==index && g["event_id"]==eid &&
             g["global_decay_id"]==eid && g["namespace"]=="cs137-1m" && g["group"]==pulse &&
-            g["key"]=="AK02-e"*string(eid)*"-d"*string(eid)*"-g"*string(pulse["group_id"]),"Exact selected group/event correspondence")
+            g["key"]==model*"-e"*string(eid)*"-d"*string(eid)*"-g"*string(pulse["group_id"]),"Exact selected group/event correspondence")
     end
 end
 function session(file; output_base=joinpath(ROOT,".local","native-group-checkpoint-v1","implementation","outputs"),
-        allow_primary_selection=false)
+        allow_primary_selection=false,allow_detector_selection=false)
     check(isfile(file) && filesize(file)<=4*1024^2,"Bounded native session request")
     req=JSON.parsefile(file);check(req["kind"]=="native_charge_group_checkpoint_v1","Wrong native session kind")
     base=dirname(realpath(file));root=realpath(req["root"])
     check(Q.childof(base,joinpath(root,"attempts")) && Q.childof(root,output_base),"Native output boundary")
-    plan=req["plan"];selection(plan,allow_primary_selection)
+    plan=req["plan"];model=integration_detector(plan,allow_detector_selection);selection(plan,allow_primary_selection)
     pins(plan);loaded=runtime();check(loaded==req["runtime"],"Loaded runtime changed")
     expected=Dict("parcels"=>16,"seed_family"=>2609261,"drift_dt_ns"=>2,"drift_cap_ns"=>10000,
         "temperature_K"=>77,"diffusion"=>true,"end_drift_when_no_field"=>false,"self_repulsion"=>false,"geometry_check"=>true,
@@ -88,10 +133,11 @@ function session(file; output_base=joinpath(ROOT,".local","native-group-checkpoi
     sim=deserialize(joinpath(ROOT,plan["cache_file"]))
     check(N.field_fingerprint(sim)==plan["expected_field_fingerprint"],"Cached field/grid differs")
     check(sim.detector.semiconductor.temperature==77,"Cached temperature changed")
-    check(maximum(c.potential for c in sim.detector.contacts)-minimum(c.potential for c in sim.detector.contacts)==500,"Cached bias changed")
+    bias=haskey(plan,"detector_selection_mode") ? INTEGRATION_DETECTORS[model].bias : 500
+    check(maximum(c.potential for c in sim.detector.contacts)-minimum(c.potential for c in sim.detector.contacts)==bias,"Cached bias changed")
     B.geometry(plan["prepared"],sim,true)
     for e in plan["events"];B.R.validate_deposits(Dict("events"=>[e]),sim);end
-    cfg=Q.parse_args(["--model","AK02","--position-mm","3,0,5","--precision","64","--dt-ns","2",
+    cfg=Q.parse_args(["--model",model,"--position-mm","3,0,5","--precision","64","--dt-ns","2",
         "--min-grid-mm","0.05","--max-iterations","50000","--contact",string(plan["readout_contact_id"]),"--output",joinpath(base,"unused")])
     G.install!()
     for g in req["groups"]

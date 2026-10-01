@@ -37,9 +37,54 @@ SETTINGS = dict(parcels=16, seed_family=2609261, drift_dt_ns=2,
                 drift_cap_ns=10000, temperature_K=77, diffusion=True,
                 end_drift_when_no_field=False, self_repulsion=False, geometry_check=True)
 TERMINAL = ('completed_native_charge', 'completed_native_charge_with_failures')
+# Only the integration entry opts into these already checked inputs. The legacy
+# entry still has no detector option and retains its original AK02 plan shape.
+INTEGRATION_BATCH_SHA256 = '64db8f79fa4fae393b0e1abbdfb5e2ed30d44b48cd814a40a7f1bdddb16933de'
+INTEGRATION_CATALOG_SHA256 = 'ac5edd4c976a37cfcc80a8e507ac9347246a942ac843ed2ecc683079f220653b'
+INTEGRATION_DETECTORS = {
+    'AK02': dict(cohort=[0,2594,3950], bias_V=500,
+        contract_sha256='e120f8347d09680a20d27eb5cd067052041afe3538ae4b69167e7850cdd8b06a',
+        model_sha256='793de4cc598a3e26d375525e683be1bc2072e117d1c6b8003f6cdcffc9925dfa',
+        prepared_sha256='4c7a6e7757591ff1d354491fa13cb1d3c02de5c098723332be7642d79b695c17',
+        cache_sha256='2d5102499d30531d8ef6d03a79dc0bfe2f3c57e784457dc8d5da02ed53a670ac', dependencies={}),
+    'SAP22': dict(cohort=[0,207,263], bias_V=700,
+        contract_sha256='0d7a7a97ac28caa4df19df25ad43db2e677459680af5e59279e4d27c2faa1009',
+        model_sha256='614c72f31a5a84b82c69b0b11f6f0657e87d94f746312c151f9a08cd00ba3dc3',
+        prepared_sha256='452379b2d42c37d2a1979d0e630d2f0db206e8330df93d1b535b684a453ae70b',
+        cache_sha256='39e8e121fcc696fad0686bac31710c53f28a2c7bc4102fdb57c70f6cb12dd804',
+        dependencies={'ADLChargeDriftModel/drift_velocity_config.yaml':
+            '642a2bd0df1dabd9da7c71d15950e8b84f491babfd4b4fb63abdb82162f97ce6'}),
+}
 
 
-def expected_groups(events, prepared):
+def integration_detector(detector):
+    C.require(type(detector) is str and detector in INTEGRATION_DETECTORS,
+        'Detector requires AK02 or SAP22 for native-readout', 'invalid_selection')
+    return INTEGRATION_DETECTORS[detector]
+
+
+def detector_settings(model):
+    spec=integration_detector(model)
+    return dict(model_id=model,source_temperature_K=78,temperature_K=77,
+                bias_V=spec['bias_V'],readout_contact_id=1)
+
+
+def model_dependencies(reader,catalog,entry):
+    """Resolve versioned relative include names through unique catalog pins."""
+    selected=entry.get('dependencies',[])
+    C.require(type(selected) is list and all(type(n) is str for n in selected), 'relative model include names')
+    C.equal(len(selected),len(set(selected)),'unique model includes')
+    result={}
+    for name in selected:
+        C.require(re.fullmatch(r'[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*',name) is not None,
+            'unsafe model include', 'unsafe_path')
+        matches=[d for d in catalog.get('dependencies',[]) if type(d) is dict and d.get('path')==name]
+        C.equal(len(matches),1,'unique canonical include pin '+name)
+        dep=matches[0];reader.digest('models/'+name,dep['sha256']);result[name]=dep['sha256']
+    return result
+
+
+def expected_groups(events, prepared, model='AK02'):
     """Independent full-ledger check, including zeros; native validator also runs."""
     groups = []; seen = set(); total_rows = 0
     for index, event in enumerate(events):
@@ -49,7 +94,7 @@ def expected_groups(events, prepared):
         C.equal([event[k] for k in ('global_decay_id','seed_event_id')], [eid,eid], 'seed/global identity')
         C.equal(event['seed_family'], SETTINGS['seed_family'], 'native seed family')
         identity = event['identity']
-        C.equal(identity['model_id'], 'AK02', 'identity model')
+        C.equal(identity['model_id'], model, 'identity model')
         for k in ('chunk_index','global_offset','local_primary_id','global_primary_id','chunk_count','radiation_seed'):
             C.integer(identity[k], k, high=2**63-1)
         C.require(0 <= identity['local_primary_id'] < identity['chunk_count'] <= 10000, 'chunk bounds')
@@ -96,7 +141,7 @@ def expected_groups(events, prepared):
         C.equal(event['pulse_groups'],rebuilt,'original group/deposition clock ledger')
         C.equal(not rebuilt,event['zero_ge'],'zero group assignment')
         for g in rebuilt:
-            groups.append(dict(key='AK02-e'+str(eid)+'-d'+str(eid)+'-g'+str(g['group_id']),
+            groups.append(dict(key=model+'-e'+str(eid)+'-d'+str(eid)+'-g'+str(g['group_id']),
                 event_index=index,event_id=eid,global_decay_id=eid,namespace=event['namespace'],group=g,
                 event_sha256=G.digest_bytes(G.encoded(event))))
     C.require(1<=len(events)<=8 and len(groups)<=4 and total_rows<=100,'tiny native cohort bound','not_supported')
@@ -114,45 +159,64 @@ def parse_primary_ids(value):
     return ids
 
 
-def load_plan(reader, policy, primary_ids=None):
+def load_plan(reader, policy, primary_ids=None, *, detector=None):
     """Read existing radiation/cache provenance; never invoke legacy campaigns."""
-    ids=list(COHORT) if primary_ids is None else parse_primary_ids(primary_ids)
+    model='AK02' if detector is None else detector
+    spec=None if detector is None else integration_detector(detector)
+    contract=CONTRACT if spec is None else '.local/native-bridge-pilot/contracts-v3/'+model+'.json'
+    ids=list(COHORT if spec is None else spec['cohort']) if primary_ids is None else parse_primary_ids(primary_ids)
+    if spec is not None:
+        reader.digest(BATCH+'/config.json',INTEGRATION_BATCH_SHA256)
+        reader.digest('models/catalog.json',INTEGRATION_CATALOG_SHA256)
+        reader.digest(contract,spec['contract_sha256'])
     c=reader.json(BATCH+'/config.json')
     C.equal(reader.digest(BATCH+'/config.json'),reader.path(BATCH+'/config.sha256').read_text().strip(),'existing batch pin')
     reader.digest(BATCH+'/config.sha256')
     C.equal(c['kind'],'native_checkpoint_batch_v1','cache provenance kind')
-    m=c['models']['AK02']; d=reader.json(CONTRACT); export=reader.json(EXPORT)
+    m=c['models'][model]; d=reader.json(contract); export=reader.json(EXPORT)
     C.equal(export['kind'],'selected_native_hdf5_pilot_v1','radiation exporter kind')
     C.equal(export['status'],'exported_checked_inputs','checked radiation export')
-    C.equal(export['contracts']['AK02']['file'],'AK02.json','contract filename')
-    reader.digest(CONTRACT,export['contracts']['AK02']['sha256'])
-    C.equal((d['kind'],d['status'],d['model_id']),('selected_native_hdf5_pilot_v1','complete','AK02'),'radiation contract')
+    C.equal(export['contracts'][model]['file'],model+'.json','contract filename')
+    reader.digest(contract,export['contracts'][model]['sha256'])
+    C.equal((d['kind'],d['status'],d['model_id']),('selected_native_hdf5_pilot_v1','complete',model),'radiation contract')
     C.equal(d['source_sha256'],export['source_sha256'],'original contract source bindings')
     C.equal(d['input_sha256'],export['input_sha256'],'original contract input bindings')
     for n,h in d['input_sha256'].items():reader.digest(n,h)
     C.equal(d['prepared'],m['prepared'],'checked cache geometry')
-    C.equal(d['model_sha256'],reader.digest('models/AK02.yaml'),'canonical model')
+    C.equal(d['model_sha256'],reader.digest('models/'+model+'.yaml'),'canonical model')
     C.equal(d['prepared']['model_sha256'],d['model_sha256'],'prepared model')
-    C.equal(d['prepared'],reader.json('.local/cs137-1m/inputs/AK02/prepared.json'),'original prepared geometry')
+    prepared_path='.local/cs137-1m/inputs/'+model+'/prepared.json'
+    C.equal(d['prepared'],reader.json(prepared_path),'original prepared geometry')
     for n in NUMERICAL:reader.digest(n,c['source_sha256'][n])
     C.equal(c['expected_environment']['environment_manifest_sha256'],reader.digest('simulation/Manifest.toml'),'pinned environment')
     C.equal(c['settings'],{k:SETTINGS[k] for k in c['settings']},'existing cache physics settings')
     cache=BATCH+'/'+m['cache_file'].replace('\\','/');reader.digest(cache,m['cache_sha256'])
-    catalog=reader.json('models/catalog.json'); entry=next(e for e in catalog['detectors'] if e['id']=='AK02')
-    for dep in entry.get('dependencies',[]):reader.digest('models/'+dep['path'],dep['sha256'])
+    catalog=reader.json('models/catalog.json');entries=[e for e in catalog['detectors'] if e['id']==model]
+    C.equal(len(entries),1,'unique model catalog entry');entry=entries[0]
+    dependencies=model_dependencies(reader,catalog,entry)
+    if spec is not None:
+        C.equal(d['prepared']['model_id'],model,'prepared detector identity')
+        reader.digest(prepared_path,spec['prepared_sha256'])
+        C.equal(d['model_sha256'],spec['model_sha256'],'independent frozen model')
+        C.equal(entry['model_sha256'],spec['model_sha256'],'catalog model pin')
+        C.equal(entry['readout_contact_id'],1,'frozen readout contact')
+        C.equal(sorted([e['id'],e['potential_V']] for e in entry['contacts']),[[1,0],[2,spec['bias_V']]],'frozen contact potentials')
+        C.equal(cache,BATCH+'/cache/'+model+'.jls','detector cache path')
+        C.equal(m['cache_sha256'],spec['cache_sha256'],'independent detector cache pin')
+        C.equal(dependencies,spec['dependencies'],'independent detector include pins')
     # Every requested ID must occur once; no fallback or failure-avoiding selection.
     events=[]
     for eid in ids:
         chosen=[e for e in d['events'] if e['namespace']=='cs137-1m' and e['event_id']==eid]
         C.equal(len(chosen),1,'declared selected primary '+str(eid));events.append(chosen[0])
-    groups=expected_groups(events,d['prepared'])
+    groups=expected_groups(events,d['prepared'],model)
     C.equal([e['event_id'] for e in events],ids,'declared cohort')
     if primary_ids is None:
         C.equal((sum(e['zero_ge'] for e in events),len(groups)),(1,2),'declared zero/group census')
     else:
         C.require(groups,'Zero-only PrimaryIds selection is not supported','not_supported')
     sources={n:reader.digest(n) for n in SOURCES}
-    plan=dict(model='AK02',selected_primary_ids=ids,events=events,groups=groups,prepared=d['prepared'],
+    plan=dict(model=model,selected_primary_ids=ids,events=events,groups=groups,prepared=d['prepared'],
         selected_census=dict(initial_primaries=len(events),zero_ge_primaries=sum(e['zero_ge'] for e in events),
                              nonzero_primaries=sum(not e['zero_ge'] for e in events),groups=len(groups)),
         population_reference=d['input_population_reference'],nonselected_response=None,
@@ -160,8 +224,9 @@ def load_plan(reader, policy, primary_ids=None):
         model_sha256=d['model_sha256'],readout_contact_id=entry['readout_contact_id'],
         expected_environment=c['expected_environment'],settings=dict(SETTINGS,native_failure_policy=policy),
         source_sha256=sources,units=dict(raw_position='m',local_position='mm',time='ns',truth_energy='keV',signed_charge='induced_equivalent_energy_keV'),
-        seed_rule=d['seed_rule'],input_files=[CONTRACT,EXPORT,BATCH+'/config.json',BATCH+'/config.sha256'])
+        seed_rule=d['seed_rule'],input_files=[contract,EXPORT,BATCH+'/config.json',BATCH+'/config.sha256'])
     if primary_ids is not None:plan['primary_selection_mode']='explicit'
+    if spec is not None:plan.update(detector_selection_mode='explicit',detector_settings=detector_settings(model))
     return plan
 
 
