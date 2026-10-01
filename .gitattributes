@@ -119,3 +119,5 @@ simulation/replay_groups.jl text eol=lf
 tools/native_group_checkpoints.py text eol=lf
 tools/test_native_group_checkpoints.py text eol=lf
 simulation/native_groups.jl text eol=lf
+# New hash-bound integration launcher; Python/Julia already use LF above.
+tools/native_readout_integration.ps1 text eol=lf

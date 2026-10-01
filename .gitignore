@@ -158,3 +158,4 @@
 !simulation/replay_groups.jl
 # Additive M5b tiny native-charge adapter; outputs/evidence remain local.
 !simulation/native_groups.jl
+!simulation/native_readout_groups.jl

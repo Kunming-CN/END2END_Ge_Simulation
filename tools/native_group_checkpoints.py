@@ -171,9 +171,9 @@ def probe_runtime(reader, plan):
     return actual,probe
 
 
-def verify_charge(path, group, plan, runtime):
+def verify_charge(path, group, plan, runtime, extra_files=()):
     out=C.Reader(path); r=out.json('charge.json')
-    C.equal(G.inventory(path),['COMMIT.json','charge.json'] if (path/'COMMIT.json').exists() else ['charge.json'],'charge file set')
+    C.equal(G.inventory(path),sorted([*extra_files,'charge.json',*(['COMMIT.json'] if (path/'COMMIT.json').exists() else [])]),'charge file set')
     C.equal(r['kind'],'native_charge_group_v1','charge kind');C.equal(r['group'],group,'complete group identity')
     C.equal(r['runtime'],G.raw_runtime(runtime),'group loaded runtime')
     for k in ('settings','cache_sha256','model_sha256','readout_contact_id','units'):
@@ -305,13 +305,13 @@ def validate_saved(reader, dest, name, plan):
     out.recheck();reader.recheck();return m,mh,done
 
 
-def run_session(reader, dest, manifest, groups, attempt, callback):
+def run_session(reader, dest, manifest, groups, attempt, callback, worker_source='simulation/native_groups.jl'):
     """One serial native worker, verified durable commit before each ACK."""
     runtime=manifest['runtime'];req=dict(kind=KIND,root=str(dest),plan=manifest['plan'],
         runtime=G.raw_runtime(runtime),groups=groups)
     G.write_json(attempt/'session.json',req)
     argv=[runtime['launcher_executable'],'--startup-file=no','--project=simulation','--threads=2','--compiled-modules=existing',
-          str(reader.path('simulation/native_groups.jl')),'--session',str(attempt/'session.json')]
+          str(reader.path(worker_source)),'--session',str(attempt/'session.json')]
     env=dict(os.environ,JULIA_NUM_THREADS='2',OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='1',JULIA_PKG_OFFLINE='true',
              JULIA_LOAD_PATH='@;@stdlib' if os.name=='nt' else '@:@stdlib',PYTHONDONTWRITEBYTECODE='1')
     p=subprocess.Popen(argv,cwd=reader.root,env=env,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,

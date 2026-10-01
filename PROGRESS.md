@@ -5,59 +5,66 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No original cam
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: M5b experimental native-charge checkpoints accepted
+## Current handoff: bounded M5b native-charge/calibration/readout recovery accepted
 
-Accepted small milestone: NEW SSD native-charge generation now has verified
-per-group commits and interruption/resume for the fixed AK02 engineering cohort.
-**Full M5b is NOT complete.** Ordinary entry/readout/calibration integration remains
-next. M5a saved-charge electronics replay remains accepted at `2124d6f`; do not
-restart it or the completed million-event campaigns after a chat interruption.
+`Run.cmd native-readout -Name NAME` now connects NEW SSD native charge through
+existing independent injection calibration and electronics to reconstructed energy.
+One named output root retains separate charge/calibration/electronics commits,
+mandatory stage identities/counts, witnesses, full truth/zero ledger and provenance.
+This fixed private AK02 cohort is an engineering integration, not full/general M5b.
+See `tools/NATIVE_READOUT_INTEGRATION.md`; no new solver/campaign framework was added.
 
-The current candidate passed **48 mocked-native software tests** and separate
-**actual SSD host-v4** reference/driver-death/resume acceptance. The selected ledger
-retains original primaries 0/2594/3950, one true zero, 91 deposition rows and two
-nonzero groups with 5002 samples/group. Recovery calculates only the unfinished
-group. Full signed native records/identities/endpoints/flags match uninterrupted
-work exactly, excluding native_seconds only, and match preserved host-v3 records.
-Committed first-group data, witnesses and inputs retain their SHA/size/mtime.
-Completed resume is read-only without Julia lookup/probing or a worker launch.
+Options are Resume, DryRun, Json and StopAfterGroups1..2. StopAfterGroups counts
+newly committed ELECTRONICS groups; native charge completes first. No detector,
+physics/profile overrides or new environments are exposed by this bounded entry.
+Completed resume/dry-run perform no Julia lookup/probe/numerical work; profile
+validation can still invoke PowerShell. Original saved-charge/charge-only defaults
+remain. Old accepted bundles retain old source bindings, never rebased or adopted.
 
-All three independent reviewers accepted scoped closure using actual verified
-`gpt-6.1-sol` / `ultra` sessions. Integrity and the fresh third-party reviewer found
-that optional/count-only progress could requeue lost completed work. The same
-writer reproduced three real-file mocked cases, then added mandatory manifest-bound
-completed-key/count authority. All three cases now refuse before any probe/worker
-or write; legitimate newer commits remain reusable. The same reviewer threads
-closed the fix; initial implementation/reviews were not restarted.
+Actual corrected host-v4 passed: uninterrupted versus driver-death/recovery, then
+a controlled electronics pause/recovery. First death75 is after verified charge1
+and BEFORE ACK; resume computes only missing charge2, calibration and electronics1.
+After the controlled pause, final resume computes only electronics2. Calibration
+runs once/output. Earlier committed files/witnesses/inputs retain SHA/size/mtime.
+Exact complete native/calibration/scalar/SAVED display-trace equality holds under
+only predeclared timing and calibration-timing-digest exclusions; no gates relaxed.
 
-The native adapter/backend, physics/settings/seeds, models, dependency locks and
-shared M5a helpers were not changed by the lifecycle correction. Original 29,055
-protected files, 4,518 prior-round evidence files and 35 frozen numerical/configuration
-boundaries passed exact preservation checks. Earlier probe/fixture failures and
-successful host-v3 outputs remain intact; no old source/output was rebased.
+Census/output: primaries0/2594/3950, one true zero, two groups,91 truth rows (88
+positive native rows). Each group retains5002 COMPLETE native samples; readout
+has50000 internal analog evaluations but600 SAVED DISPLAY points.30 negative
+samples and143/93 capped-parcel flags remain; response is not normalized to truth.
+Two readout acceptances do not prove complete physical collection or Li CCE.
+Production native policy is strict abort; native-failure/rejection edges have
+labelled mocked evidence, not actual-host failure acceptance from this cohort.
 
-Owner-machine evidence is under `.local/native-group-checkpoint-v1/`:
-`implementation/lifecycle-v1/FREEZE.json`, `implementation/lifecycle-v1/tests/RESULT.json`, `implementation/host-acceptance-v4/COMPLETE.json`,
-`coordinator-host-v4-audit.json`, and `REVIEW_CLOSURE.json`.
-The round-level `COMPLETE.json` records the release commit, verified local/remote
-parity and ownership release; absence of that receipt means release is not closed.
-Usage and restrictions: [experimental charge checkpoints](tools/NATIVE_GROUP_CHECKPOINTS.md).
+Two scoped reviewers and a NEW independent third-party detail/direction review
+ran on actual gpt-6.1-sol/ultra sessions. Integrity found2 blockers missed by the
+initial positive-path accepts: incomplete rehashed cache settings reached a probe,
+and attempt failure receipts could be written after releasing the output lease.
+New write-bearing mocked BEFORE/AFTER cases proved both. Exact5-key/value checks
+now precede planning/probes; failed status and attempt receipts publish inside
+the lease.57 maintained integration tests pass;14 unchanged-mode tests are reused.
+Same-thread focused followups from all3 reviewers close both blockers and precise
+trace/freeze wording. No verified blocker or substantive direction disagreement
+remains. These are AI reviews, not physical or human certification.
 
-**Next: continue M5b, not M6.** Carry the verified charge commits into the existing
-electronics/readout/calibration orchestration with one entry and output root.
-Keep charge and electronics provenance/stage boundaries distinct, preserve the
-zero-event ledger and transport flags, and declare a bounded end-to-end recovery
-acceptance before implementation. Do not silently create another campaign
-framework. Broader consolidation or replacement requires owner discussion.
+Evidence: `.local/native-readout-integration-v1/COMPLETE.json` and
+`implementation/host-v4/COMPLETE.json`; current tested receipt is
+`implementation/FREEZE-workflow-fixed.json`. Earlier host-v3/source/failed attempts
+remain unchanged. Host-v2 timed out before output creation; cause unestablished.
+A separate unchanged-source host-v3 passed, then a necessary revised host-v4 pair
+accepted the2 guard fixes. Eight NEW native group calls total across these2 pairs;
+no old million/Geant4/field/native campaign was restarted.41250 older files and144
+prior host/failure/CLI artifacts retain SHA/size/mtime;35 frozen numerical/model/
+dependency boundaries and declared persistent global/PATH/WSL configuration pass.
+Three actual public Run.cmd no-op/dry-run checks also pass with invalid Julia.
 
-This remains an experimental, fixed-cohort, private-input charge-only pilot.
-The negative signal segment and 143/93 step-limit flags remain visible; numerical
-completion does not establish physical collection/CCE convergence. Readout is
-still null/pending. Hardware/noise calibration, SAP22 host acceptance, general
-power-loss recovery and fresh-machine usability are not claimed.
-M3 and M8/M9 remain deferred; no new environment, PATH/WSL/global-default change,
-website rebuild or reset/banked-reset action was performed. Further development
-and review use the requested model settings without changing global defaults.
+NEXT bounded M5b: use the EXISTING scenario/configuration path to support checked
+small saved-transport input selection beyond fixed acceptance IDs, with the same
+stage ledgers/commits/recovery. Declare scope/acceptance first; no parallel campaign
+framework. General M5b remains pending; M6 optional interface pilot and M7 checked
+adapters follow. M3 and M8/M9/fresh-machine trials remain DEFERRED. Preserve the
+accepted M5a and charge-only M5b receipts; no reset/default/global/install changes.
 
 ## Retained M5a checkpointed saved-charge replay
 

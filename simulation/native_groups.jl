@@ -42,11 +42,11 @@ function charge(sim,cfg,plan,g,loaded)
         "native"=>native,"transport_flags"=>native===nothing ? nothing : N.flags(native.steps),
         "error"=>result.error,"readout"=>nothing,"native_seconds"=>time()-started,"field_solve_seconds"=>0)
 end
-function session(file)
+function session(file; output_base=joinpath(ROOT,".local","native-group-checkpoint-v1","implementation","outputs"))
     check(isfile(file) && filesize(file)<=4*1024^2,"Bounded native session request")
     req=JSON.parsefile(file);check(req["kind"]=="native_charge_group_checkpoint_v1","Wrong native session kind")
     base=dirname(realpath(file));root=realpath(req["root"])
-    check(Q.childof(base,joinpath(root,"attempts")) && Q.childof(root,joinpath(ROOT,".local","native-group-checkpoint-v1","implementation","outputs")),"Native output boundary")
+    check(Q.childof(base,joinpath(root,"attempts")) && Q.childof(root,output_base),"Native output boundary")
     plan=req["plan"];pins(plan);loaded=runtime();check(loaded==req["runtime"],"Loaded runtime changed")
     expected=Dict("parcels"=>16,"seed_family"=>2609261,"drift_dt_ns"=>2,"drift_cap_ns"=>10000,
         "temperature_K"=>77,"diffusion"=>true,"end_drift_when_no_field"=>false,"self_repulsion"=>false,"geometry_check"=>true,

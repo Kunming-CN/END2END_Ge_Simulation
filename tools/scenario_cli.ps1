@@ -1,7 +1,7 @@
 # Low-code Windows entry for reviewed local scenarios. No installs or physics hidden here.
 [CmdletBinding()]
 param(
-  [ValidateSet('menu','check','setup','run','resume','recover','open','status','detectors','inspect','settings','charge-check','replay-readout')][string]$Action='menu',
+  [ValidateSet('menu','check','setup','run','resume','recover','open','status','detectors','inspect','settings','charge-check','replay-readout','native-readout')][string]$Action='menu',
   [ValidateSet('interactive','show','check','save','compare')][string]$SettingsMode='interactive',
   [ValidateSet('simple','advanced')][string]$View='simple',
   [string]$SettingsFile='',
@@ -27,6 +27,14 @@ param(
 $ErrorActionPreference='Stop'
 $script:customRequested=$PSBoundParameters.ContainsKey('ElectronicsProfile')
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
+if($Action -eq 'native-readout'){
+  foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','DryRun','Json','Resume','StopAfterGroups')){throw "native-readout forbids: $key"}}
+  if(!$Name){throw 'native-readout requires -Name NEW (fixed AK02 engineering cohort/profile)'}
+  $nativeArgs=@{Name=$Name;DryRun=$DryRun;Json=$Json;Resume=$Resume}
+  if($PSBoundParameters.ContainsKey('StopAfterGroups')){$nativeArgs.StopAfterGroups=$StopAfterGroups}
+  & (Join-Path $PSScriptRoot 'native_readout_integration.ps1') @nativeArgs
+  exit $LASTEXITCODE
+}
 if($Action -eq 'replay-readout'){
   foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','ReplayName','Detector','ElectronicsProfile','DryRun','Json','CheckpointGroups','Resume','StopAfterGroups')){throw "replay-readout forbids: $key"}}
   if(!$Name -or !$ReplayName){throw 'replay-readout requires -Name SOURCE and -ReplayName NEW'}
