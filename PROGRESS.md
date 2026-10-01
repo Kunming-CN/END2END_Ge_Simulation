@@ -5,60 +5,46 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No original cam
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: SAVED-SITE AND M7a DELIVERED; LIVE VERIFIED
+## Current handoff: REPORT ACTIONS REVIEWED; PUBLICATION PENDING
 
-Owner-authorized saved-site organization is delivered through existing generators:
-Results first, current1M prominent, earlier10k/teaching separate, same-campaign
-spectrum returns, accurate earlier10k event labels and one maintained setup guide.
-README is short; generic run/recover, compatible saved-charge replay and bounded
-private-input AK02/SAP22 native-readout remain distinct. Seventeen viewable models
-enable no extra backend; old scientific reports/downloads remain reachable.
+Owner's latest continuation closes the recorded optional mobile-report P3.
+Only the current1M overview's two native links become separate padded actions,
+using existing button styling and page-local layout. Labels, routes, counting
+rules and scientific limits are exact; no shared CSS, API, script or backend change.
+Prior saved-site organization and M7a remain delivered; their full handoff,
+failures and review limits are preserved [at c48f9d0](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/c48f9d073eca2cdbbf0dc5b7cf3e972fd4e8ace5/PROGRESS.md)
+and in their terminal local evidence. Do not repeat those completed rounds.
 
-Published source commits: cf66b6c organization;8c206a5 unchanged-Windows cleanup.
-Local and live snapshot:
-`912177bdcd868c4edac22cd926fc28618f77ea4d40ceacaa86e8238e90a88887`.
-Normal Publish.cmd succeeded; exact check_site --url passed458 deployed files,
-including all HTML/models/downloads and maintained campaign/reader assets.
-Final Git parity and owned-state closure are recorded in the terminal local
-`.local/site-organization-v1/COMPLETE.json`; final handoff edits are docs-only.
+Tested local snapshot:
+`d832609afa49ff620a24fb62aa9514ad85f3e1bec3f5460a03bd1b34a4750ea0`.
+Only results/cs137-1m/index.html and the manifest change; all1446other installed
+files are byte-exact, every1447payload path and95HTML-ID inventory is retained.
+Overview words/counts/ordered hrefs match; all scientific reports, spectrum data,
+scripts/controls, models, downloads, viewers and cached science remain untouched.
+6focused checks in child UTF8 mode,1hierarchy,20site and27contacts pass;
+check_site passes95pages/2834links. Initial focused GBK fixture-read failure is
+retained separately from the unchanged-test UTF8 pass. No global setting changed.
+Saved export246.052s and local checking58.803s are publication work, not physics.
 
-All1447 prior manifest paths,1382exact protected public files,95pages' old IDs,
-full spectrum scripts/tables/bins/SVG/controls/style/home preview are retained.
-40local fragments pass. Actual unchanged publication preserves1448installed file
-sizes/mtimes, including the manifest; staging is removed, global Git files exact.
-Writer33focused checks preceded final wording corrections; final20site guards and
-complete local/live check_site pass.27contacts/6readers pass; all-detector9pass/
-1VTK-only skip was closed by that1focused test in existing ParaView. Publisher's
-46pipeline checks include1OS symlink skip with separate reparse guard coverage;
-14lithium export fixtures pass. No scientific calculation/rerender/install ran.
+Old390px response-pointer failure remains recorded. New ordinary pointer clicks
+reach both reports at390/320/1280px and return to the same campaign; targets have
+one complete box, at least48px height,12px separation and no observed overflow.
+At320px the wrapped response grows to69.59375px; real Tab gives visible focus
+and Enter opens each report. Native-touch/every-device/fresh-machine acceptance
+is not claimed. No scientific calculation, scene rerender or installation ran.
 
-Failed derivative receipts remain: first build cleanup failed AFTER valid swap;
-first normal publisher failed BEFORE push in raw unchanged-stage rmtree. The
-existing path-guarded cleanup helper now handles that branch; actual Windows
-baseline reproduces failure, corrected20-test suite passes. No ACL/root/gate
-relaxation. Corrected full publisher confirms the same saved snapshot unchanged.
-
-Website two scoped Sol6.1 Ultra specialists and NEW strict detail/direction review
-accepted independently, then actually exchanged findings/replies. The necessary
-cleanup fix has scoped reviews plus another NEW strict reviewer and real exchange.
-Cleanup workflow checks/provisional judgment preceded strict's message, but its
-written report followed receipt; that isolation limitation is retained explicitly.
-These are AI reviews; no verified blocker or direction disagreement remains.
-
-Actual desktop/keyboard/chart/geometry/event220 return checks and390px emulated
-home/results/overview/response/guide layouts pass observed no-overflow checks.
-Wrapped response-link locator-pointer attempts remain unpassed; valid per-line
-hits, Enter and desktop pointer work. Native touch/fresh-machine acceptance is
-not claimed. Guide now accurately states SITE_PYTHON/default existing ParaView
-and contact2bias(+500/+700V) versus contact1=0V/readout; model/cache unchanged.
+Two scoped Sol6.1 Ultra reviews plus a NEW strict detail/direction review saved
+all three INITIAL judgments before findings exchanged; actual reciprocal replies
+then accepted the finite candidate, with no blocker or direction disagreement.
+Earlier workflow planning incorporated root steering; that caveat is distinct
+from these independently saved tested-diff reviews. These are AI reviews.
+Evidence: `.local/site-report-actions-v1/`; normal publisher, exact deployed-file
+verification, final Git parity and owned preview/lock closure are pending.
 
 NEXT: M3, M8/M9 and fresh-machine trials remain deferred; M8/M9 await the owner's
-second computer, with later M10/M11 order unchanged in the maintained plan.
-Larger mobile report-action targets are an optional later P3, not a new gate.
-Do not repeat completed M6/M7 science/tests/reviews, install environments or
-silently broaden GUI/research. No original scientific worker remains active.
-Current successive bounded rounds ran in this session; scheduler view exposed
-no enabled/executor state, so future scheduled execution is not inferred.
+second computer, with later M10/M11 order unchanged. This optional P3 creates no
+new accuracy gate. Do not reopen science, install environments or broaden GUI.
+Scheduler enabled/executor state remains unverified; no future execution claimed.
 
 ## Accepted M7a SAP22 delivery
 

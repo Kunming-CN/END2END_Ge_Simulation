@@ -121,7 +121,9 @@ def apply(site):
 <div class="grid"><article class="card"><h2>AK02</h2><p>{a["positive_ge_decays"]:,} positive-Ge decays; {a["response"]["accepted"]:,} accepted ADC groups.</p></article>
 <article class="card"><h2>SAP22</h2><p>{b["positive_ge_decays"]:,} positive-Ge decays; {b["response"]["accepted"]:,} accepted ADC groups.</p></article></div>
 <section class="panel"><h2>Open the saved reports</h2>
-<p><a href="../../examples/cs137-1m/report.html">Geant4 deposition truth</a> · <a href="../../examples/cs137-1m-response/report.html">Native SSD and peak-ADC comparison</a></p>
+<div style="display:grid;gap:12px;margin:16px 0">
+<a class="button" style="display:flex;align-items:center;min-height:48px" href="../../examples/cs137-1m/report.html">Geant4 deposition truth</a>
+<a class="button" style="display:flex;align-items:center;min-height:48px" href="../../examples/cs137-1m-response/report.html">Native SSD and peak-ADC comparison</a></div>
 <p><a href="../../scenarios/lbnl-cs137/index.html">Scenario and geometry assumptions</a></p></section>
 <section class="panel"><h2>Counting rules</h2><p>One million refers to initial Cs137 decays <strong>per detector</strong>. Positive deposits are grouped in isolated 100 µs reset windows; this is not an activity/live-time/pileup acquisition model. Native failures remain unknown responses and electronics rejection remains a separate outcome.</p></section>'''
         write_page(site/'results/cs137-1m/index.html','Cs137 1M results · END2END Ge Simulation',body,2)
