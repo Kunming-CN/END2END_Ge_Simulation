@@ -1,105 +1,90 @@
 # Current project state and next steps
 
 Updated: 2026-10-01. Current handoff supersedes historical milestone ordering.
-Full prior log is immutable [at 5226462](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/5226462bd202275b0f71f227aa8ba0a5b0945a63/PROGRESS.md).
-Keep long receipts/failures local; do not repeat completed work after chat failure.
+Full prior M10 handoff is immutable [at5861f07](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/5861f07dfa374f4083953e0f726387f5c10010a2/PROGRESS.md).
+Keep detailed receipts/failures local; do not repeat completed work after chat failure.
 
-## M10a accepted, published and synchronized
+## M11a accepted; publication pending
 
-Owner explicitly skips deferred M8/M9, proceeds M10 then M11. M8/M9 await the
-second computer and are not current development gates. M10a is the local mouse
-interface for existing bounded AK02/SAP22 native examples, not the whole future
-custom-source/geometry/electronics GUI. No install or new frontend framework.
+Existing nominal LBNL cryostat, canonical AK02/SAP22, Cs137 point decay or one
+synthetic662keV gamma along global-y, nominal/+5mm centered capsule-source poses.
+Separately versioned finite assets/instances and pure standard-library check;
+opt-in native preparation uses existing locked --no-install runtime and pinned
+private originals/exporter. Fresh local roots, exact mapping/material/probe/
+containment/overlap checks and source/generated-input hashes; new kind remains
+incompatible with the legacy Cs137 reader. Count20/seed26092631 are planned
+inputs, not emitted events; native overlap10000/seed26092632 is distinct.
+Original models78K/contact1=0V readout/contact2=+500AK02/+700SAP22; no fields.
 
-Control.cmd opens a session-protected loopback page with existing Python. Check,
-explicit Run, actual progress, checkpoint Stop/selector-free Continue, reopening,
-lazy whole-event results and exact-byte downloads call the unchanged native CLI.
-First step completes missing charge, independent calibration and one electronics
-group; Stop waits for that command. Late Stop cannot replace terminal completion.
-Reopening launches nothing; completed results require explicit verification.
-Fixed physics/profile/provenance/zeros/signals/units/flags remain backend-owned.
+Four actual serial v6 native geometry preparations pass: both models with Cs137
+nominal and gamma+5mm,20volumes/34probes each. Nativegeometry totals0.519846s;
+preparation/environment/coding/review/publication wall time separately recorded.
+No new radiation/SSD/calibration/readout. Original405 hash/size/mtime records exact.
+SOURCE-FREEZE.json/source-v6 preserve exact executed sources; never rehash/rebase
+these receipts as a later adapter version. Two scoped independent AI INITIALs
+and NEW strict INITIAL saved before actual peer exchange. Workflow and strict
+independently reproduced a pre-inventory configuration-binding P2 with mocks;
+physics accepted original geometry and subsequently agreed in actual discussion.
+v7 binds same-read config/assets/nominal JSON digests to the first inventory
+before output/dispatch. Root18tests PASS5.770s, six mutation cases refuse with
+no output/dispatch/re-resolution; four actual existing Python3.12.7 public checks
+PASS. Python3.10 API compatibility is mocked, not fresh-machine acceptance.
+Three scoped FINALs accept the frozen correction, followed by actual reciprocal
+confirmation; INITIAL/FINAL records remain immutable. CodeSHA4dd27621.
+Evidence .local/m11a-preparation/; contract tools/SCENARIO_PREPARATION.md.
+Source milestone commit and normal publication are next; live verification and
+local/GitHub synchronization remain pending until recorded below.
 
-Actual mouse AK02 default and SAP22 variation complete: each3whole primaries,
-1truezero/2groups; AK02 has91rawGe rows, SAP22 33including4zero-energy rows.
-Exactly4NEW native groups/2calibrations total,0radiation/field/old-campaign reruns.
-All four full scalar/saved-trace files match checked references byte-exactly.
-AK Stop/reopen/Resume preserves18earlier commits including hash/size/mtime.
-Final public launcher reopen preserves98new-output files and verifies both saved
-runs without scientific workers, even with invalid current explicit Julia.
+## Accepted earlier delivery and permanent science
 
-Default ParaView launcher opens but correctly refuses a saved Python-driver
-identity mismatch. Public launcher with the original matching existing Python
-passes. Guide records SITE_PYTHON matching; no provenance rebase/gate relaxation.
-Module-inheritance, WindowsApps alias and driver-refusal failures remain evidence.
+M10a local mouse control is delivered and synchronized at5861f07: Control.cmd
+opens protected loopback Check/Run/progress/Stop/Continue/lazy whole-event results/
+exact downloads through unchanged native backend. Reopen computes nothing;
+completed verification checks fixed identities and all artifacts. No new frontend
+framework, arbitrary sources/geometry or fresh-clone runtime claim.
+Actual new AK02/SAP22 each3wholeprimaries/1truezero/2groups; originalIDs and91/33
+rawGe rows preserved. Exactly4NEW native groups/2independentcalibrations,
+0nativefailures/rejections/saturation. Four scalar/trace files byte-exact references.
+AK stop/reopen/resume preserves18earlier commits; final reopen preserves98outputs.
+Actual host/browser/download/mobile/keyboard proofs and fixes are retained under
+.local/m10-local-ui-v1/; no replay required. Native35.357s/calibration0.373s/
+electronics7.237s/fields0s, separate from coding/review/tool/publication time.
+M10 published onlyguide.html among1447payloads;1446otherpayloads exact,
+check_site --url passed458livefiles/build913b97eb. Failure/atomic-persistence/
+review-ledger chronology and unknown Windows sharing holders remain local.
 
-31mocked controller checks/7actual loopback HTTP checks/1mocked delayed DOM race
-fixture pass. Exact saved manifest/stage/calibration identity governs detector
-labels and result authority; mismatched persisted labels block new computation.
-Delayed response targets current immutable job ID; raw JSON serialization stays.
-Actual320/390px layouts have no document overflow; all14targets >=46px, tables
-scroll within containers, Tab has3px visible focus and Enter opens exact3+2rows.
-Pointer downloads deliver scalar, saved traces and manifest with exact bytes.
-Native touch/all-device/Explorer-doubleclick/newcomer acceptance is not claimed.
-
-Ordinary attachments use a separate rotating read-only cookie valid only for
-/api/file. State and writes still need header token; every POST needs exact Origin.
-Exact Host/fetch-site/owned COMPLETE/hash/path guards remain. Loopback cookies
-are not port-isolated. No public execution service, credentials or raw caches.
-
-Three independent Sol6.1 Ultra INITIAL AI judgments were saved/hash-recorded
-before actual reciprocal discussion. Strict found detector-label/mobile issues;
-all three accepted the frozen fixes and completed reciprocal final discussion.
-Publication first stopped BEFORE build/push on Windows state-file replacement
-WinError5 in mocked fixtures. Failure/global-config receipts are preserved.
-Bounded atomic persistence correction is accepted: Windows5/32/33-only atomic
-replace,6attempts/5fixedwaits totaling1.55s requested sleep, both path guards,
-same fsynced pending bytes and failed-reservation rollback before worker dispatch.
-Three scoped v5 follow-up judgments and actual reciprocal discussion accept it.
-Prior GUI/science evidence is retained without replay. Original failed publisher
-and corrected one-byte review-format ledger chronology remain local. An unchanged
-contacts-fixture WinError5 also stopped a later attempt; a same-gate retry passed.
-Holder/cause remains unestablished; no legacy helper or gate was changed.
-Normal Publish.cmd passed and pushed2fdabb3. Only guide.html changed among1447
-payloads;1446others remain exact. check_site --url passes95pages/2834links and
-458live files, build913b97eb. Pages reports2fdabb3 built; final handoff sync follows.
-Evidence .local/m10-local-ui-v1/; AI reviews are not human/physical certification.
-Measured compute: native35.357s/calibration0.373s/electronics7.237s/fields0s.
-Coding/review/UI/probe/provenance/publication wall time is separate. No calibrated
-Li CCE/experimental spectrum or waveform-ADC acquisition claim.
-
-## Preserved science and prior accepted delivery
-
-Original .local/cs137-1m/ transport is permanent COMPLETE science. Native million
-campaign remains completed_with_native_failures; retain null unknowns/exacterrors,
-zero-primary census and original outputs/archives. No original worker is active.
-Do not restart completed science/pilots or delete evidence. Production Li/grid/
-depletion accuracy gates remain unresolved, distinct from functional integration.
-Original AK02/SAP22 measured waveforms do not exist; spectrum-only limits remain.
-
-M4/boundedM5/M6assessment are closed. M7a adds SAP22 to unchanged AK02 through
-NEW native charge, independent calibration, readout and checkpoint recovery.
-Bias/contact/selectedIDs/explicit77K cache override remain recorded. Saved-charge
-and native examples require private checked inputs, not a fresh clone/arbitrary
-model.17geometries viewable does not mean17executable adapters. Prior website
-organization/mobile-report actions/live saved snapshot remain delivered; history
-and terminal local bundles retain exact versions/failures. Do not rediscover them.
+Original .local/cs137-1m/ is permanent COMPLETE radiation science. Native million
+campaign remains completed_with_native_failures: retain nullunknowns, exacterrors,
+zero-primary census, configuration, archives/HDF5/receipts and all failure records.
+No completed science/pilots/field solve rerun or cleanup is authorized.
+Production Li/depletion/grid accuracy is unresolved, distinct from functional
+engineering integration. Original measured pulse waveforms do not exist;
+spectrum-only experimental limits remain. Seventeen geometries viewable does
+not mean seventeen executable adapters. M4/boundedM5/M6assessment/M7a remain
+closed; M7a already proves second-detector native/calibration/readout/recovery.
 
 ## Next bounded work
 
-Close this owned M10 round, then M11a: register the existing vetted nominal LBNL
-cryostat asset and resolve explicit source instances with configuration/geometry
-checks. First support Cs137 point decay and synthetic662keV gamma along global
--y, with candidate nominal/+5mm centered capsule-source poses. Native checks
-must accept each new preparation; no transport/charge/readout is launched here.
-.local/m10-local-ui-v1/M11-NEXT-BOUNDED.md verifies9pinned upstream originals.
-.local/m10-local-ui-v1/M11-PREPARATION-SEAM.md pins the existing native exporter
-and no-install locked runtime invocation. No rebuild/environment install needed.
-Reuse M7a's second-detector proof. Preparation alone is not new-source transport/
-full-chain proof: transport and native stream still hardcode Cs137 identity.
-Preserve M11's three extension demonstrations and explicit pending execution.
-See tools/ONBOARDING_EXTENSIBILITY_PLAN.md; no universal geometry compatibility.
+Skip deferred M8/M9; they await the second computer and do not block M10/M11.
+M11b: at most two serial20-primary new gamma transport cases, AK02/SAP22 +5mm,
+existing seed/runtime/settings. Audit emitted primary identity, eventcensus/zeros,
+source/energy/clock/unit/track-parent/material-row provenance and Ge transforms
+before an additive source-aware stream/native adapter. Preserve old Cs137 reader
+strictness, permanent radiation and v6 preparations; do not silently swap a macro
+into an incompatible reader. Then a bounded new-source charge -> independent
+injection calibration -> electronics example; keep actual78K/77Kcacheoverride,
+original bias/contact, truth/readout and failure/null boundaries explicit.
+No global Li/PDE prerequisite, arbitrary geometry framework or installation.
+Three M11 extension proofs and full future custom GUI remain pending where stated;
+see tools/ONBOARDING_EXTENSIBILITY_PLAN.md and local M11B-BOUNDED-SEAM.md.
 
-M3/M8/M9/fresh-machine trials remain deferred. No installation experiments/global
-environment changes. A current-chat30minute heartbeat is ACTIVE by successful
-tool creation; future execution is not yet observed. Legacy project scheduling
-status remains unverified. One-writer ready/lock/process guards remain mandatory.
+Owner's GitHub links/information cleanup is a separate authorized publication lane:
+inventory current routes, make one bounded navigation change, preserve URLs/
+scientific downloads, check links plus desktop/mobile/keyboard, use existing site
+builder/publisher and saved data, strict review/peer exchange, live/Git sync.
+No physics rerun or precision reduction. M3/newcomer installation acceptance
+remains deferred; no globalenvironment/newnovice-environment experiments.
+
+Current-chat30minute heartbeat was successfully created ACTIVE; future execution
+has not been observed. Legacy scheduling status remains unverified. Only explicit
+ready/noownedlock/noactiveworkers permits the next supervisor; acquire lock first.

@@ -1,0 +1,19 @@
+{
+  "A": 137,
+  "Z": 55,
+  "angular_policy": "radioactive_decay",
+  "clock_policy": "remage_initial_decay_secondaries_zero",
+  "daughter_lifetime_limit_ns": -1,
+  "direction_global": null,
+  "distribution": "point",
+  "id": "cs137_point_decay_v1",
+  "kind": "source_asset",
+  "kinetic_energy_keV": 0,
+  "normalization": "per initial Cs137 decay; conditional isolated windows, not activity/live time",
+  "particle": "ion",
+  "particles_per_primary": 1,
+  "pdg": 1000551370,
+  "schema_version": 1,
+  "time_ns": 0,
+  "version": 1
+}

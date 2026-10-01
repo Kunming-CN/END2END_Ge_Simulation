@@ -1,0 +1,29 @@
+{
+  "catalog_ref": "models/catalog.json",
+  "catalog_sha256": "ac5edd4c976a37cfcc80a8e507ac9347246a942ac843ed2ecc683079f220653b",
+  "contacts": [
+    {
+      "id": 1,
+      "potential_V": 0
+    },
+    {
+      "id": 2,
+      "potential_V": 700
+    }
+  ],
+  "id": "SAP22",
+  "includes_sha256": {
+    "models/ADLChargeDriftModel/drift_velocity_config.yaml": "642a2bd0df1dabd9da7c71d15950e8b84f491babfd4b4fb63abdb82162f97ce6"
+  },
+  "kind": "detector_asset",
+  "material": "HPGe",
+  "model_ref": "models/SAP22.yaml",
+  "model_sha256": "614c72f31a5a84b82c69b0b11f6f0657e87d94f746312c151f9a08cd00ba3dc3",
+  "readout_contact_id": 1,
+  "readout_profile_ref": "simulation/native_readout_profile.json",
+  "readout_profile_sha256": "7556e6e77d6c21e76e1a4eabb69b2b26875517252c083c88b6eb6a80502ef6e6",
+  "schema_version": 1,
+  "scope": "Original SSD snapshot; preparation computes no fields or carrier response; no 77 K override.",
+  "temperature_K": 78,
+  "version": 1
+}

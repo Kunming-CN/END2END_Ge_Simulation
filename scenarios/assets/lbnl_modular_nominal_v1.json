@@ -1,0 +1,29 @@
+{
+  "capsule_axis_global": [
+    0,
+    1,
+    0
+  ],
+  "capsule_material": "G4_Al",
+  "fill_material": "G4_POLYETHYLENE",
+  "geometry_ref": "transport/cryostat_nominal.json",
+  "geometry_sha256": "9cad951c14213ac64d1e0c83c6ee44e7f4b9990d80979fd5bae35797daaf0edb",
+  "id": "lbnl_modular_nominal_v1",
+  "kind": "cryostat_asset",
+  "schema_version": 1,
+  "scope": "Nominal engineering geometry; not surveyed/as-built; original upstream bytes stay private.",
+  "spacer_material": "boron_nitride",
+  "supported_stages": [
+    "check",
+    "prepare"
+  ],
+  "upstream_chain": [
+    "stage.tg",
+    "shield.tg",
+    "chamber.tg"
+  ],
+  "upstream_entry": "stage.tg",
+  "upstream_manifest_ref": "transport/cryostat-source.json",
+  "upstream_manifest_sha256": "5967d5d0f8500a40f704bf653be2dc1a0f69e77239f643a8f7140533c9201e2a",
+  "version": 1
+}

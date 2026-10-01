@@ -1,0 +1,33 @@
+{
+  "cryostat": {
+    "id": "lbnl_modular_nominal_v1",
+    "ref": "scenarios/assets/lbnl_modular_nominal_v1.json",
+    "sha256": "b579bb9bd854ef2ad10ba6f369d1ddaa95edc95a9364dae4fae2ad5777119646",
+    "version": 1
+  },
+  "detector": {
+    "id": "AK02",
+    "ref": "scenarios/assets/AK02.json",
+    "sha256": "1c6fcc6b0778a180cef04457bead672dd860d3937b1c49e52d4d43bd8542da02",
+    "version": 1
+  },
+  "kind": "source_instance_v1",
+  "primary_count": 20,
+  "schema_version": 1,
+  "seed": 26092631,
+  "source": {
+    "id": "mono_gamma_662_axis_v1",
+    "ref": "scenarios/assets/mono_gamma_662_axis_v1.json",
+    "sha256": "b9c3990f835fe094d6482e2fe8b6cfb13e2419e3abe5b7f6902cd28f340fc6e9",
+    "version": 1
+  },
+  "source_pose": "plus5mm",
+  "units": {
+    "angle": "deg",
+    "energy": "keV",
+    "length": "mm",
+    "potential": "V",
+    "temperature": "K",
+    "time": "ns"
+  }
+}

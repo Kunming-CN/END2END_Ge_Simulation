@@ -1,0 +1,27 @@
+{
+  "catalog_ref": "models/catalog.json",
+  "catalog_sha256": "ac5edd4c976a37cfcc80a8e507ac9347246a942ac843ed2ecc683079f220653b",
+  "contacts": [
+    {
+      "id": 1,
+      "potential_V": 0
+    },
+    {
+      "id": 2,
+      "potential_V": 500
+    }
+  ],
+  "id": "AK02",
+  "includes_sha256": {},
+  "kind": "detector_asset",
+  "material": "HPGe",
+  "model_ref": "models/AK02.yaml",
+  "model_sha256": "793de4cc598a3e26d375525e683be1bc2072e117d1c6b8003f6cdcffc9925dfa",
+  "readout_contact_id": 1,
+  "readout_profile_ref": "simulation/native_readout_profile.json",
+  "readout_profile_sha256": "7556e6e77d6c21e76e1a4eabb69b2b26875517252c083c88b6eb6a80502ef6e6",
+  "schema_version": 1,
+  "scope": "Original SSD snapshot; preparation computes no fields or carrier response; no 77 K override.",
+  "temperature_K": 78,
+  "version": 1
+}

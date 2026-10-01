@@ -1,0 +1,21 @@
+{
+  "angular_policy": "fixed_global_direction",
+  "clock_policy": "synthetic_primary_time_zero",
+  "daughter_lifetime_limit_ns": null,
+  "direction_global": [
+    0,
+    -1,
+    0
+  ],
+  "distribution": "point",
+  "id": "mono_gamma_662_axis_v1",
+  "kind": "source_asset",
+  "kinetic_energy_keV": 662,
+  "normalization": "per one synthetic 662 keV incident gamma; no decay/activity normalization",
+  "particle": "gamma",
+  "particles_per_primary": 1,
+  "pdg": 22,
+  "schema_version": 1,
+  "time_ns": 0,
+  "version": 1
+}

@@ -25,6 +25,7 @@ run(python, [path.join(root, 'tools/test_pipeline.py')]);
 run(python, ['-B', path.join(root, 'tools/test_local_ui_jobs.py')]);
 run(python, ['-B', path.join(root, 'tools/test_local_ui.py')]);
 run(process.execPath, [path.join(root, 'tools/test_local_ui_frontend.js')]);
+run(python, ['-B', path.join(root, 'transport/test_scenario_prepare.py')]);
 run(python, [path.join(root, 'tools/test_lithium_report.py')]);
 // Preserve reviewed saved campaigns and geometry during ordinary publication.
 // New scientific/geometry exports use the explicit build_site.py modes first.
@@ -50,7 +51,12 @@ if (origin.status !== 0) run(git, ['remote', 'add', 'origin', `https://github.co
 else if (![`https://github.com/${repo}.git`, `https://github.com/${repo}`, `git@github.com:${repo}.git`].includes(origin.stdout.trim())) throw new Error('Unexpected origin; stop and inspect.');
 const simulationFiles = new Set(["simulation/Project.toml","simulation/Manifest.toml","simulation/run.jl","simulation/README.md","simulation/benchmark.jl","simulation/test_run.jl","simulation/gpu/Project.toml","simulation/gpu/Manifest.toml","simulation/replay.jl","simulation/test_replay.jl","simulation/diagnose_collection.jl","simulation/test_collection.jl","simulation/validate_transition.jl","simulation/test_transition.jl","simulation/PHYSICS.md","simulation/verify_electrostatics.jl","simulation/test_electrostatics.jl","simulation/verify_ssd_electrostatics.jl","simulation/test_ssd_electrostatics.jl","simulation/readout.jl","simulation/test_readout.jl","simulation/readout_demo.json","simulation/verify_readout.jl","simulation/test_verify_readout.jl","simulation/diagnose_lithium.jl","simulation/test_lithium.jl","simulation/diagnose_transition_grid.jl","simulation/test_transition_grid.jl","simulation/diagnose_transition_axes.jl","simulation/test_transition_axes.jl","simulation/native_li_example.jl","simulation/test_native_li_example.jl"]);
 const transportFiles = new Set(["transport/README.md","transport/pixi.toml","transport/pixi.lock","transport/.pixi/config.toml","transport/cryostat-source.json","transport/Run.cmd","transport/run.sh","transport/smoke.gdml","transport/smoke.mac","transport/check_smoke.py","transport/handoff.py","transport/test_handoff.py","transport/geometry_probe.cc","transport/CMakeLists.txt","transport/experiment.json","transport/compare_em.py","transport/test_compare_em.py"]);
-const approved = new Set(['.gitignore', '.gitattributes', 'README.md', 'PROGRESS.md', 'AGENTS.md', 'Publish.cmd', 'Run.cmd', 'Control.cmd', 'Open_Workspace.cmd', 'scenarios/lbnl-cs137.json', 'scenarios/detector-capabilities.json']);
+for (const f of ['transport/scenario_prepare.py', 'transport/test_scenario_prepare.py', 'transport/Prepare.cmd', 'transport/prepare.sh']) transportFiles.add(f);
+const approved = new Set(['.gitignore', '.gitattributes', 'README.md', 'PROGRESS.md', 'AGENTS.md', 'Publish.cmd', 'Run.cmd', 'Control.cmd', 'Open_Workspace.cmd', 'scenarios/lbnl-cs137.json', 'scenarios/detector-capabilities.json',
+  'scenarios/assets/AK02.json', 'scenarios/assets/SAP22.json', 'scenarios/assets/lbnl_modular_nominal_v1.json',
+  'scenarios/assets/cs137_point_decay_v1.json', 'scenarios/assets/mono_gamma_662_axis_v1.json',
+  'scenarios/m11a-ak02-cs137_point_decay_v1-nominal.json', 'scenarios/m11a-ak02-mono_gamma_662_axis_v1-plus5mm.json',
+  'scenarios/m11a-sap22-cs137_point_decay_v1-nominal.json', 'scenarios/m11a-sap22-mono_gamma_662_axis_v1-plus5mm.json']);
 // build_site.py has already validated this exact, versioned model inventory.
 const modelCatalog = JSON.parse(fs.readFileSync(path.join(root, 'models/catalog.json'), 'utf8'));
 const modelFiles = new Set(['models/catalog.json', 'models/README.md',

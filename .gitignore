@@ -160,3 +160,9 @@
 # Additive M5b tiny native-charge adapter; outputs/evidence remain local.
 !simulation/native_groups.jl
 !simulation/native_readout_groups.jl
+
+# Reviewed M11a preparation-only adapter; generated geometry stays local.
+!transport/scenario_prepare.py
+!transport/test_scenario_prepare.py
+!transport/Prepare.cmd
+!transport/prepare.sh
