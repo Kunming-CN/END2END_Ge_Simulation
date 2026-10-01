@@ -18,6 +18,8 @@ Current energy spectra use **step histograms**, default **Log**, with **Linear /
 
 Use the **[setup & run guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#local-routes)** to choose a workflow. For a generic new LBNL run, follow its [Windows setup checklist](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup) first; it is the single installation/run authority.
 
+On the existing prepared computer, double-click `Control.cmd` for the [local mouse interface](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#local-control): check, run, stop/continue and download the bounded AK02/SAP22 native example.
+
 From the repository root in **PowerShell**, after setup:
 
 ```powershell

@@ -10,6 +10,13 @@ The future tests require new threads without this project's history.
 
 ## Current owner disposition (2026-09-30)
 
+Owner update (2026-10-01): skip deferred M8/M9 and proceed directly to M10,
+then M11. This explicitly supersedes the earlier ordering paragraphs below.
+M8/M9 remain deferred acceptance items, not prerequisites for local UI work.
+The first M10 delivery is the bounded native AK02/SAP22 local-control route;
+generic radiation runs, arbitrary source/geometry editing and fresh-machine
+acceptance remain separate work. Use the existing backend without new installs.
+
 Current follow-up (2026-10-01): M7a's bounded SAP22 native-readout and checkpoint
 recovery is delivered alongside the retained AK02 route; see
 [its checked private-input scope](NATIVE_READOUT_INTEGRATION.md).
@@ -41,8 +48,9 @@ recorded keep-current decision; proceed to one useful M7 physically checked
 adapter. Fresh-machine reproduction waits for the second computer. Report
 blocked optional items and their disposition explicitly; never call a deferred
 item complete or let an unbounded research topic silently replace the roadmap.
-Then execute M8 discovery trials, M9 no-source-edit improvements, M10 mouse-driven
-control, and M11 extension proofs. Freeze one release per acceptance milestone.
+Current order: M10 mouse-driven control, then M11 extension proofs. M8 discovery
+trials and M9 novice improvements await the second computer. Freeze one release
+per acceptance milestone; deferred acceptance is never reported as completed.
 
 - **No source code required:** a student can install documented prerequisites,
   select a supported preset, enter settings through prompts, run and inspect
