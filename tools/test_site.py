@@ -1,6 +1,7 @@
 """Fast publication guard tests; no scientific environment or network required."""
 import json
 import io
+import os
 import stat
 import sys
 import tempfile
@@ -106,6 +107,43 @@ class PublicationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Broken'):
                 build_site.build()
         self.assertEqual((docs / 'index.html').read_text(), original)
+        self.assertEqual(validate(docs), sealed)
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows read-only directory regression')
+    def test_unchanged_export_cleans_readonly_stage_without_rewriting_docs(self):
+        import build_site
+        project = self.site / 'unchanged-project'
+        docs = project / 'docs'
+        nested = docs / 'assets' / 'nested'
+        nested.mkdir(parents=True)
+        (docs / 'index.html').write_text('<a href="assets/nested/data.csv">Data</a>')
+        (nested / 'data.csv').write_text('x\n1\n')
+        sealed = validate(docs, require_manifest=False)
+        (docs / MANIFEST).write_text(json.dumps(sealed))
+        before = {p.relative_to(docs).as_posix(): (p.read_bytes(), p.stat().st_mtime_ns)
+                  for p in docs.rglob('*') if p.is_file()}
+        stage = project / '.local' / 'site-build'
+        def identical_export():
+            build_site.shutil.copytree(docs, stage)
+            (stage / MANIFEST).unlink()
+            os.chmod(stage / 'assets' / 'nested', stat.S_IREAD)
+        def fixture_validate(folder, **kwargs):
+            return validate(folder, require_manifest=kwargs.get('require_manifest', True))
+        # Bounded saved-byte fixture omits model/gallery/readers; real publication
+        # remains separately checked against the complete preserved snapshot.
+        with patch.multiple(build_site, ROOT=project, DESTINATION=docs, OUT=stage), \
+             patch.object(build_site, 'build_export', identical_export), \
+             patch.object(build_site, 'validate', fixture_validate), \
+             patch('viewer_navigation.assemble'):
+            try:
+                build_site.build()
+                self.assertFalse(stage.exists())
+            finally:
+                if stage.exists():
+                    build_site.remove_generated(stage)
+        after = {p.relative_to(docs).as_posix(): (p.read_bytes(), p.stat().st_mtime_ns)
+                 for p in docs.rglob('*') if p.is_file()}
+        self.assertEqual(before, after)
         self.assertEqual(validate(docs), sealed)
 
 

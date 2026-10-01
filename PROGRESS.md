@@ -48,6 +48,15 @@ future P3, not a new gate. Final handoff edits are documentation-only and identi
 separately from the preserved tested source freeze.
 Evidence: `.local/site-organization-v1/`, including preserved build/freeze versions.
 
+First normal Publish.cmd failed BEFORE push on unchanged-snapshot staging cleanup:
+its raw rmtree could not remove a copied Windows read-only directory. Installed
+docs/protected bytes and global Git files remained exact. Failed log, receipt and
+partial temporary-stage inventory/manifest are retained. A real bounded Windows
+regression reproduces that same failure. The unchanged branch now reuses the
+existing path-guarded remove_generated helper; no new cleanup root/ACL change.
+This necessary publisher correction and its regression receive separate frozen
+evidence and scoped specialist/NEW strict review before retrying publication.
+
 NEXT: approved Publish.cmd, exact live check_site --url and Git parity/clean state,
 then owned preview/view restoration and lock release. Local build/reviews are
 complete; live deployment is not yet claimed.

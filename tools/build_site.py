@@ -462,7 +462,7 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
     (OUT / MANIFEST).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8', newline='\n')
     validate(OUT)
     if old and old['build_id'] == report['build_id']:
-        shutil.rmtree(OUT)
+        remove_generated(OUT)
         print('Unchanged snapshot; docs/ was not rewritten.', flush=True)
     else:
         moved = DESTINATION.exists()
