@@ -4,7 +4,7 @@ Updated: 2026-10-01. Current handoff supersedes historical milestone ordering.
 Full prior M10 handoff is immutable [at5861f07](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/5861f07dfa374f4083953e0f726387f5c10010a2/PROGRESS.md).
 Keep detailed receipts/failures local; do not repeat completed work after chat failure.
 
-## M11a accepted; publication pending
+## M11a accepted, published and synchronized
 
 Existing nominal LBNL cryostat, canonical AK02/SAP22, Cs137 point decay or one
 synthetic662keV gamma along global-y, nominal/+5mm centered capsule-source poses.
@@ -32,8 +32,13 @@ PASS. Python3.10 API compatibility is mocked, not fresh-machine acceptance.
 Three scoped FINALs accept the frozen correction, followed by actual reciprocal
 confirmation; INITIAL/FINAL records remain immutable. CodeSHA4dd27621.
 Evidence .local/m11a-preparation/; contract tools/SCENARIO_PREPARATION.md.
-Source milestone commit and normal publication are next; live verification and
-local/GitHub synchronization remain pending until recorded below.
+Source milestone4d73bd9 and normal publicatione103ad4 are synchronized with
+GitHub. Publication changes onlyguide.html among1447payloads;1446others exact.
+Required publication tests and independent local check_site PASS. GitHub Pages
+build689c80cd is built; unchanged full check_site --url PASS458livefiles after
+one retained HTTP503 failure. No validation gate changed or physics rerun.
+Actual live guide screenshot and exact receipts remain in the same evidence root.
+The final handoff-only commit records closure without regenerating public data.
 
 ## Accepted earlier delivery and permanent science
 
