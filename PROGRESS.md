@@ -5,7 +5,7 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No original cam
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Current handoff: REPORT ACTIONS REVIEWED; PUBLICATION PENDING
+## Current handoff: REPORT ACTIONS DELIVERED; LIVE VERIFIED
 
 Owner's latest continuation closes the recorded optional mobile-report P3.
 Only the current1M overview's two native links become separate padded actions,
@@ -15,7 +15,7 @@ Prior saved-site organization and M7a remain delivered; their full handoff,
 failures and review limits are preserved [at c48f9d0](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/c48f9d073eca2cdbbf0dc5b7cf3e972fd4e8ace5/PROGRESS.md)
 and in their terminal local evidence. Do not repeat those completed rounds.
 
-Tested local snapshot:
+Tested local and live snapshot:
 `d832609afa49ff620a24fb62aa9514ad85f3e1bec3f5460a03bd1b34a4750ea0`.
 Only results/cs137-1m/index.html and the manifest change; all1446other installed
 files are byte-exact, every1447payload path and95HTML-ID inventory is retained.
@@ -38,8 +38,17 @@ all three INITIAL judgments before findings exchanged; actual reciprocal replies
 then accepted the finite candidate, with no blocker or direction disagreement.
 Earlier workflow planning incorporated root steering; that caveat is distinct
 from these independently saved tested-diff reviews. These are AI reviews.
-Evidence: `.local/site-report-actions-v1/`; normal publisher, exact deployed-file
-verification, final Git parity and owned preview/lock closure are pending.
+Source milestone c55d06e is published. Normal Publish.cmd passed20site/27contacts,
+46pipeline checks(1OS-symlink skip, separate reparse guard passes)/14export checks.
+Its unchanged export preserves1448installed sizes/mtimes and original global Git
+files; staging is removed. Exact check_site --url passes458deployed files in
+271.696s. Live390px pointer/return checks also pass; viewport is restored and
+the verified owned preview process/port is closed. No physics was restarted.
+First publication stopped BEFORE build/push on a synthetic rollback WinError5;
+the same focused test and complete publisher then pass with frozen source and
+unchanged gates. Cause is unestablished; original failure/replay evidence remains.
+`.local/site-report-actions-v1/COMPLETE.json` is the terminal closure authority
+for final Git parity/owned lock. Final handoff edits change no public-site bytes.
 
 NEXT: M3, M8/M9 and fresh-machine trials remain deferred; M8/M9 await the owner's
 second computer, with later M10/M11 order unchanged. This optional P3 creates no
