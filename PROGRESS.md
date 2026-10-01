@@ -62,8 +62,14 @@ Saved export elapsed 3.0065132s; website build 307.1721612s. These are derivativ
 and publication work, separate from coding/review wall time. New science: zero.
 Evidence: .local/m11d-gamma-showcase-v1/ (original failures permanently retained).
 
-Publication closure: peer discussion completed; pending meaningful commit/push,
-normal publication, full live check_site and owned preview/process/lock closure.
+Publication: source milestone 85d701c is pushed. The first normal publisher
+stopped before push on a temporary rollback-fixture WinError5; the unchanged
+focused test passed and the unchanged normal retry exits0. Failure evidence
+remains. Publisher ran185 Python fixtures (one OS fixture skipped), model and
+frontend checks. Full live check_site verifies463 selected files, including all
+five gamma files, against build97f4dba8. Actual live browser shows AK02 ID4 and
+its cap warning; viewport reset, owned preview tab/server closed. Local/GitHub
+parity and owned-lock ready closure are recorded in the terminal local receipt.
 
 ## Retained delivery and permanent science
 
@@ -86,6 +92,8 @@ After M11d publication, independently inventory vetted cryostat input provenance
 dimensions, materials, placements and mapping in a separate bounded milestone.
 Unknown experimental geometry cannot be invented or certified by a nominal asset.
 Preserve science and URLs; presentation exports never justify physics reruns.
+Keep remaining website link/information cleanup in subsequent bounded work;
+use existing hubs and preserve old destinations, without another frontend.
 Current-chat 30-minute heartbeat ACTIVE creation is verified; future execution
 remains unobserved. Only ready/no lock/no active workers permits a new round;
 acquire the owned lock before writes. One root, Sol 6.1 Ultra, no installs,
