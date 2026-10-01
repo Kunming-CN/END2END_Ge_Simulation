@@ -42,20 +42,49 @@ function charge(sim,cfg,plan,g,loaded)
         "native"=>native,"transport_flags"=>native===nothing ? nothing : N.flags(native.steps),
         "error"=>result.error,"readout"=>nothing,"native_seconds"=>time()-started,"field_solve_seconds"=>0)
 end
-function session(file; output_base=joinpath(ROOT,".local","native-group-checkpoint-v1","implementation","outputs"))
+function selection(plan,allow_primary_selection)
+    ids=plan["selected_primary_ids"];events=plan["events"];groups=plan["groups"]
+    check(plan["model"]=="AK02","Declared AK02 model")
+    if !allow_primary_selection
+        check(ids==[0,2594,3950] && !haskey(plan,"primary_selection_mode"),"Declared tiny AK02 cohort")
+    elseif haskey(plan,"primary_selection_mode")
+        check(plan["primary_selection_mode"]=="explicit","Explicit primary selection mode")
+        check(!isempty(groups),"Zero-only selected native readout is unsupported")
+    else
+        check(ids==[0,2594,3950],"Declared default AK02 cohort")
+    end
+    integer(x)=x isa Integer && !(x isa Bool)
+    check(1<=length(ids)<=8 && all(x->integer(x)&&0<=x<1000000,ids) &&
+        length(unique(ids))==length(ids),"Unique bounded primary IDs")
+    check(length(events)==length(ids) && [e["event_id"] for e in events]==ids,"Exact selected-event correspondence")
+    check(length(groups)<=4 && sum((length(e["steps"]) for e in events);init=0)<=100,"Tiny complete-row/group caps")
+    expected=[]
+    for (index,e) in enumerate(events)
+        check(e["namespace"]=="cs137-1m","Selected cs137-1m namespace")
+        V.validate_event(e,plan["prepared"])
+        for g in e["pulse_groups"];push!(expected,(index-1,e["event_id"],g));end
+    end
+    check(length(groups)==length(expected),"Full selected group census")
+    for (g,(index,eid,pulse)) in zip(groups,expected)
+        check(integer(g["event_index"]) && g["event_index"]==index && g["event_id"]==eid &&
+            g["global_decay_id"]==eid && g["namespace"]=="cs137-1m" && g["group"]==pulse &&
+            g["key"]=="AK02-e"*string(eid)*"-d"*string(eid)*"-g"*string(pulse["group_id"]),"Exact selected group/event correspondence")
+    end
+end
+function session(file; output_base=joinpath(ROOT,".local","native-group-checkpoint-v1","implementation","outputs"),
+        allow_primary_selection=false)
     check(isfile(file) && filesize(file)<=4*1024^2,"Bounded native session request")
     req=JSON.parsefile(file);check(req["kind"]=="native_charge_group_checkpoint_v1","Wrong native session kind")
     base=dirname(realpath(file));root=realpath(req["root"])
     check(Q.childof(base,joinpath(root,"attempts")) && Q.childof(root,output_base),"Native output boundary")
-    plan=req["plan"];pins(plan);loaded=runtime();check(loaded==req["runtime"],"Loaded runtime changed")
+    plan=req["plan"];selection(plan,allow_primary_selection)
+    pins(plan);loaded=runtime();check(loaded==req["runtime"],"Loaded runtime changed")
     expected=Dict("parcels"=>16,"seed_family"=>2609261,"drift_dt_ns"=>2,"drift_cap_ns"=>10000,
         "temperature_K"=>77,"diffusion"=>true,"end_drift_when_no_field"=>false,"self_repulsion"=>false,"geometry_check"=>true,
         "native_failure_policy"=>plan["settings"]["native_failure_policy"])
     check(plan["settings"]==expected && expected["native_failure_policy"] in ("abort","record"),"Frozen native settings")
-    check(plan["model"]=="AK02" && plan["selected_primary_ids"]==[0,2594,3950],"Declared tiny AK02 cohort")
     check(length(req["groups"])<=4 && all(g->g in plan["groups"],req["groups"]),"Unexpected native request groups")
     check(length(unique(g["key"] for g in req["groups"]))==length(req["groups"]),"Duplicate native request group")
-    for e in plan["events"];V.validate_event(e,plan["prepared"]);end
     sim=deserialize(joinpath(ROOT,plan["cache_file"]))
     check(N.field_fingerprint(sim)==plan["expected_field_fingerprint"],"Cached field/grid differs")
     check(sim.detector.semiconductor.temperature==77,"Cached temperature changed")

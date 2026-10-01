@@ -103,8 +103,20 @@ def expected_groups(events, prepared):
     return groups
 
 
-def load_plan(reader, policy):
+def parse_primary_ids(value):
+    """Explicit whole-primary selector: canonical decimal CSV, in request order."""
+    C.require(type(value) is str and len(value)<=55 and
+        re.fullmatch(r'(?:0|[1-9][0-9]{0,5})(?:,(?:0|[1-9][0-9]{0,5}))*',value),
+        'PrimaryIds requires quoted canonical decimal CSV (0..999999)', 'invalid_selection')
+    ids=[int(token) for token in value.split(',')]
+    C.require(1<=len(ids)<=8 and len(set(ids))==len(ids),
+        'PrimaryIds requires 1..8 unique primaries', 'invalid_selection')
+    return ids
+
+
+def load_plan(reader, policy, primary_ids=None):
     """Read existing radiation/cache provenance; never invoke legacy campaigns."""
+    ids=list(COHORT) if primary_ids is None else parse_primary_ids(primary_ids)
     c=reader.json(BATCH+'/config.json')
     C.equal(reader.digest(BATCH+'/config.json'),reader.path(BATCH+'/config.sha256').read_text().strip(),'existing batch pin')
     reader.digest(BATCH+'/config.sha256')
@@ -130,14 +142,17 @@ def load_plan(reader, policy):
     for dep in entry.get('dependencies',[]):reader.digest('models/'+dep['path'],dep['sha256'])
     # Every requested ID must occur once; no fallback or failure-avoiding selection.
     events=[]
-    for eid in COHORT:
+    for eid in ids:
         chosen=[e for e in d['events'] if e['namespace']=='cs137-1m' and e['event_id']==eid]
         C.equal(len(chosen),1,'declared selected primary '+str(eid));events.append(chosen[0])
     groups=expected_groups(events,d['prepared'])
-    C.equal([e['event_id'] for e in events],COHORT,'declared cohort')
-    C.equal((sum(e['zero_ge'] for e in events),len(groups)),(1,2),'declared zero/group census')
+    C.equal([e['event_id'] for e in events],ids,'declared cohort')
+    if primary_ids is None:
+        C.equal((sum(e['zero_ge'] for e in events),len(groups)),(1,2),'declared zero/group census')
+    else:
+        C.require(groups,'Zero-only PrimaryIds selection is not supported','not_supported')
     sources={n:reader.digest(n) for n in SOURCES}
-    return dict(model='AK02',selected_primary_ids=COHORT,events=events,groups=groups,prepared=d['prepared'],
+    plan=dict(model='AK02',selected_primary_ids=ids,events=events,groups=groups,prepared=d['prepared'],
         selected_census=dict(initial_primaries=len(events),zero_ge_primaries=sum(e['zero_ge'] for e in events),
                              nonzero_primaries=sum(not e['zero_ge'] for e in events),groups=len(groups)),
         population_reference=d['input_population_reference'],nonselected_response=None,
@@ -146,6 +161,8 @@ def load_plan(reader, policy):
         expected_environment=c['expected_environment'],settings=dict(SETTINGS,native_failure_policy=policy),
         source_sha256=sources,units=dict(raw_position='m',local_position='mm',time='ns',truth_energy='keV',signed_charge='induced_equivalent_energy_keV'),
         seed_rule=d['seed_rule'],input_files=[CONTRACT,EXPORT,BATCH+'/config.json',BATCH+'/config.sha256'])
+    if primary_ids is not None:plan['primary_selection_mode']='explicit'
+    return plan
 
 
 def python_runtime():

@@ -1,7 +1,7 @@
 # Bounded new native charge to readout recovery (M5b integration)
 
 `Run.cmd native-readout -Name NAME` generates new native charge for original AK02
-IDs 0, 2594, 3950, then runs the existing fixed-injection calibration and noiseless
+IDs 0, 2594, 3950 by default, then runs the existing fixed-injection calibration and noiseless
 readout functions. This deliberately selected engineering cohort contains three
 primaries, one true zero, two nonzero groups and 91 original deposition rows.
 It is not a spectrum/efficiency measurement or calibrated Li CCE result.
@@ -11,7 +11,26 @@ It is not a spectrum/efficiency measurement or calibrated Li CCE result.
 .\Run.cmd native-readout -Name example -StopAfterGroups 1
 .\Run.cmd native-readout -Name example -Resume -DryRun
 .\Run.cmd native-readout -Name example -Resume
+.\Run.cmd native-readout -Name selected -PrimaryIds "0,176,457" -DryRun
+.\Run.cmd native-readout -Name selected -PrimaryIds "0,176,457"
+.\Run.cmd native-readout -Name selected -Resume
 ```
+
+Optional `-PrimaryIds` accepts one quoted CSV of canonical decimal IDs from the
+current checked AK02 `cs137-1m` transport contract/cache. It preserves request
+order, original identities, seeds, deposition clocks and every raw row, including
+zeros. Grammar, uniqueness, membership and the limits of 8 whole primaries,
+4 pulse groups and 100 complete raw rows are checked before runtime work or output
+creation. Zero-only selections refuse. Unknown or malformed selections never
+fall back. The selected 0/176/457 example has one true zero, two groups and
+61 raw rows, including four zero-energy rows. It is an engineering example.
+
+The immutable manifest binds the effective selection. Resume verifies its INITIAL
+binding, rebuilds the plan from the original checked inputs and validates saved
+stages. Any explicitly supplied PrimaryIds on Resume refuses, including an
+identical list. Omission retains the default cohort and default-mode restrictions;
+only the native-readout Julia adapter opts into selected events, with independent
+identity, namespace, correspondence and resource checks before cache loading.
 
 One output root is `.local/native-readout-integration-v1/implementation/outputs/NAME`.
 Names use 1..24 letters/digits/underscores/hyphens and must fit the Windows path
@@ -72,7 +91,8 @@ PATH/global settings or publication is changed by this route.
 The maintained software tests and host harness are
 `tools/test_native_readout_integration.py`. Generated fixtures, logs, partials,
 freezes and numerical outputs stay under
-`.local/native-readout-integration-v1/implementation`. The coordinator's local
+`.local/native-readout-integration-v1/implementation` for historical integration,
+or `.local/m5-close-v1/implementation` for this final selection task. The coordinator's local
 `run-host.ps1` invokes that maintained source with an explicit freeze. Select the
 exact current source receipt named in the current implementation/coordinator
 handoff for each future host test, after its writer exits. A candidate source

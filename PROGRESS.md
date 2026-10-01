@@ -5,22 +5,66 @@ The 1M/model Geant4 AND native SSD/readout campaign is COMPLETE. No original cam
 Response publication: `11dd951`; interactive geometry/navigation publication: `99f5c1b`.
 Do not restart any completed simulation, analyzer or reviewer because the chat stream timed out.
 
-## Owner direction gate: M5 expansion paused
+## Current handoff: BOUNDED ENGINEERING M5 CLOSED
 
-The owner requested a fresh direction/stopping-rule audit after the accepted
-858fe6d integration. The independent Sol6.1 Ultra auditor supports the recovery
-approach but finds over-fragmented delivery and an undefined general-M5b endpoint;
-it does NOT recommend continuing the last handoff as written.
-Proposal AWAITING OWNER DECISION: one final bounded primary-selection task using
-only the existing checked AK02 transport contract/cache, fixed physics/profile
-and existing 8-primary/4-group/100-row limits. The proposed acceptance adds
-0/176/457 to the original 0/2594/3950 regression, with no silent event substitution.
-Passing that finite task closes bounded engineering M5; broader input formats,
-detectors, GUI, universal crash coverage and physical validation are not its gates.
-No feature development or numerical runs started for this audit. The accepted
-receipts remain valid with their original limits. The NEXT M5 proposal below is
-SUSPENDED until the owner approves or revises this stopping rule. Do not resume
-feature workers automatically. Audit: .local/m5-direction-audit-v1/auditor-result.md.
+M5 now has its finite engineering endpoint: saved-charge replay recovery,
+new-charge checkpoints, integrated independent calibration/readout recovery,
+and configurable whole-primary selection from the existing checked AK02
+cs137-1m transport contract/cache. This is NOT arbitrary-input/detector support,
+physical CCE/hardware validation or universal power-loss certification. Those
+limitations do not automatically reopen M5 or create another general-M5b stage.
+
+Use `Run.cmd native-readout -Name NAME -PrimaryIds "0,176,457"` (DryRun supported).
+Omitting PrimaryIds retains0/2594/3950. Canonical decimal CSV preserves request
+order and whole original IDs/seeds/times/raw records; duplicates, unknown IDs,
+zero-only and caps beyond8 primaries/4 groups/100 ALL raw rows refuse before work.
+Resume uses the witnessed manifest selection and forbids every explicit override.
+Native-readout alone opts into bounded Julia selection checks before cache load;
+legacy/default restrictions and original numerical/readout functions remain.
+
+Actual normal PUBLIC reference/death/pause/resume for0/176/457 passed:3 primaries,
+1 true zero,2 groups,61 rows including4 zero-energy rows. Exactly4 NEW native calls
+across the two outputs; calibration once/output. Charge176 was committed before
+driver exit75/pre-ACK; only charge457 remained. After a controlled electronics176
+pause, final resume ran ONLY electronics457. Committed hash/size/mtime remain exact.
+Full native/calibration/scalars/SAVED display traces agree under predeclared timing
+exclusions. Complete native support is5002 samples/group;600-point display traces
+are not all50000 internal analog evaluations. Cap counts97/87 stay visible.
+
+The selected pair has no negative samples; unchanged signed bridge/math and prior
+default/fixture evidence retain negative-charge coverage. Processing/readout
+acceptance never implies complete physical collection or normalization to truth.
+74 final integration/selection fixtures and14 affected-mode regressions pass;
+software negative-path evidence is mocked, not real failed-native acceptance.
+
+Two Sol6.1 Ultra specialists endorsed the plan and independently accepted final
+implementation; a NEW third-party reviewer also recommends bounded M5 closure.
+Concrete peer findings were exchanged in the same threads; no verified blocker
+or further calculation is required. Do not repeat these completed reviews.
+
+Terminal evidence: `.local/m5-close-v1/COMPLETE.json`; actual host evidence is
+`implementation/host3/COMPLETE.json`, with frozen `implementation/FREEZE.json`.
+Host3 is DIRECT normal-public-command orchestration plus the maintained death
+helper, not the original nested automated harness. Host1/2 remain failed60s Julia
+preflight attempts with0 native work and no output. Direct unchanged runtime and
+public entry succeeded; cause of nested startup failures remains unestablished.
+Temporary OWNED-terminal Julia/Python variables were restored; no global changes.
+The coordinator's mistaken Python-exit2 expectation for PowerShell's correct
+pre-dispatch exit1 remains as failed test evidence; only that check was corrected.
+No product/numerical gate was weakened; the successful reference was never rerun.
+
+All57150 baseline-protected science/prior evidence files remain exact;19 frozen
+numerical/model/environment sources and22 unchanged function checks pass.
+Persistent PATH/WSL/Codex configuration remains unchanged. No original Geant4,
+field, default/native million campaign, packages, resets or website build ran.
+Older accepted bundles retain their original source versions, never rebased.
+
+NEXT is M6's OPTIONAL existing-interface compatibility/utility pilot, not more M5
+expansion. Check the actual installed stack and use one small saved-data-only
+trial only if useful; do not install or replace the backend to force a pass.
+M7 checked adapters remains later; M3, M8/M9 and fresh-machine work stay deferred.
+Necessary future corrections may be recorded as such; broader enhancements must
+have separate scope and must not silently become new M5 completion requirements.
 
 ## Accepted engineering handoff: bounded M5b native-charge/calibration/readout recovery
 
@@ -76,12 +120,9 @@ prior host/failure/CLI artifacts retain SHA/size/mtime;35 frozen numerical/model
 dependency boundaries and declared persistent global/PATH/WSL configuration pass.
 Three actual public Run.cmd no-op/dry-run checks also pass with invalid Julia.
 
-NEXT bounded M5b: use the EXISTING scenario/configuration path to support checked
-small saved-transport input selection beyond fixed acceptance IDs, with the same
-stage ledgers/commits/recovery. Declare scope/acceptance first; no parallel campaign
-framework. General M5b remains pending; M6 optional interface pilot and M7 checked
-adapters follow. M3 and M8/M9/fresh-machine trials remain DEFERRED. Preserve the
-accepted M5a and charge-only M5b receipts; no reset/default/global/install changes.
+The historical M5 input-selection proposal is superseded by the CLOSED bounded
+engineering M5 handoff above. Retained sections below are historical evidence,
+not instructions to repeat or expand completed M5 work.
 
 ## Retained M5a checkpointed saved-charge replay
 

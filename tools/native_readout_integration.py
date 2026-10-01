@@ -30,14 +30,14 @@ PHASES=('charge','calibration','electronics')
 TERMINAL=('completed','completed_with_native_failures')
 
 
-def load_plan(reader):
+def load_plan(reader, primary_ids=None):
     # The recorded cache has five settings; validate the complete schema here,
     # independently of the legacy producer's present-key comparison.
     expected_settings=dict(drift_cap_ns=10000,drift_dt_ns=2,parcels=16,seed_family=2609261,temperature_K=77)
     settings=reader.json(N.BATCH+'/config.json').get('settings')
     C.require(type(settings) is dict and set(settings)==set(expected_settings),'exact recorded cache settings keys')
     C.require(all(type(settings[k]) is int and settings[k]==v for k,v in expected_settings.items()),'exact recorded cache settings values')
-    plan=N.load_plan(reader,'abort')
+    plan=N.load_plan(reader,'abort') if primary_ids is None else N.load_plan(reader,'abort',primary_ids)
     plan['source_sha256']={n:reader.digest(n) for n in SOURCES}
     selection,_=R.resolve_profile(reader,PROFILE)
     C.equal(reader.digest(PROFILE),C.ES_DEFAULTS[PROFILE],'frozen integration profile')
@@ -233,20 +233,42 @@ def aggregate(reader,dest,m,groups,cals,attempt):
     G.write_json(worker/'report.json',report);reader.recheck();os.rename(worker,dest/'worker');return report
 
 
-def integrate(root,name,resume=False,dry_run=False,stop_after_groups=None):
+def saved_primary_ids(dest,name):
+    """Read selection only after the immutable INITIAL/manifest binding passes."""
+    out=C.Reader(dest);initial=out.json('INITIAL.json')
+    C.equal((initial['kind'],initial['schema_version']),(KIND,1),'initial identity')
+    G.check_stamps(out,{'manifest.json':initial['manifest'],**initial['inputs']})
+    m=out.json('manifest.json')
+    C.equal((m['kind'],m['schema_version'],m['name']),(KIND,1,name),'manifest identity')
+    plan=m['plan']
+    if 'primary_selection_mode' not in plan:
+        C.equal(plan['selected_primary_ids'],N.COHORT,'saved default cohort');return None
+    C.equal(plan['primary_selection_mode'],'explicit','saved primary selection mode')
+    ids=plan['selected_primary_ids']
+    C.require(type(ids) is list and 1<=len(ids)<=8 and all(type(x) is int for x in ids),
+        'Invalid saved PrimaryIds','invalid_selection')
+    value=','.join(str(x) for x in ids);C.equal(N.parse_primary_ids(value),ids,'saved PrimaryIds')
+    out.recheck();return value
+
+
+def integrate(root,name,resume=False,dry_run=False,stop_after_groups=None,primary_ids=None):
     result=dict(kind=KIND,schema_version=1,status='blocked',verification_final=False,findings=[],scientific_workers_launched=0,
-        limitations=['Fixed selected AK02 engineering cohort; synthetic noiseless injection calibration; no calibrated Li CCE or experimental spectrum claim.'])
+        limitations=['Bounded selected AK02 engineering cohort; synthetic noiseless injection calibration; no calibrated Li CCE or experimental spectrum claim.'])
     dest=None;attempt=None
     try:
         C.require(os.name=='nt','bounded Windows interface','not_supported')
         C.require(re.fullmatch('[A-Za-z0-9_-]{1,24}',name or ''),'bounded safe name','unsafe_path')
         C.require(stop_after_groups is None or type(stop_after_groups) is int and 1<=stop_after_groups<=2,'StopAfterGroups must be 1..2','invalid_flags')
+        C.require(not resume or primary_ids is None,'PrimaryIds override is forbidden on Resume','invalid_flags')
+        if primary_ids is not None:N.parse_primary_ids(primary_ids)
         reader=C.Reader(root);target=reader.path(BASE+'/'+name)
         C.require(len(str(target))+95<260,'bounded Windows output path','unsafe_path')
         C.require(target.is_dir() if resume else not target.exists(),'resume requires root; new name must not exist','output_exists')
         with ExitStack() as leases:
             if resume:leases.enter_context(C.existing_lock(C.Reader(target),'run.lock'))
-            plan,d,selection=load_plan(reader);result['output']=BASE+'/'+name
+            effective=saved_primary_ids(target,name) if resume else primary_ids
+            plan,d,selection=load_plan(reader) if effective is None else load_plan(reader,effective)
+            result['output']=BASE+'/'+name
             if resume:
                 m,mh,done,groups,cals=validate_saved(reader,target,name,plan,d,selection)
                 progress(result,mh,plan,done,'paused')
@@ -332,6 +354,7 @@ def integrate(root,name,resume=False,dry_run=False,stop_after_groups=None):
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--name',required=True)
     p.add_argument('--resume',action='store_true');p.add_argument('--dry-run',action='store_true');p.add_argument('--stop-after-groups',type=int)
+    p.add_argument('--primary-ids',help='Quoted canonical CSV of 1..8 checked AK02 cs137-1m primaries; new output only')
     a=p.parse_args(argv);r=integrate(ROOT,**vars(a));print(G.encoded(r).decode(),end='');return 0 if r['verification_final'] else 2
 
 
