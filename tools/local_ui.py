@@ -25,6 +25,38 @@ FILES = {'run.json', 'COMPLETE.json', 'manifest.json', 'worker/report.json',
          'worker/SAP22/scalars.jsonl', 'worker/SAP22/traces.jsonl'}
 
 
+class SavedGammaUnavailable(RuntimeError):
+    pass
+
+
+class SavedGammaOpenError(RuntimeError):
+    pass
+
+
+def open_saved_gamma_example():
+    """Check the fixed completed bundle, then request its existing offline viewer."""
+    try:
+        from gamma_showcase import validate_bundle
+        bundle = ROOT / '.local/m11d-gamma-showcase-v1/bundle'
+        data = validate_bundle(bundle)
+        counts = data['science']['source']['counts']
+        expected = {'radiation_primaries': 40, 'selected_primaries': 6,
+                    'unprocessed_primaries': 34}
+        census = {key: counts[key] for key in expected}
+        if any(type(value) is not int for value in census.values()) or census != expected:
+            raise ValueError('Unsupported saved example census')
+        target = (bundle / 'gamma.html').as_uri()
+    except Exception:
+        raise SavedGammaUnavailable from None
+    try:
+        if not webbrowser.open(target):
+            raise SavedGammaOpenError
+    except Exception:
+        raise SavedGammaOpenError from None
+    return {'kind': 'saved_gamma_example_open_v1', 'status': 'browser_open_requested',
+            'science_calls': 0, 'census': census}
+
+
 def guarded(root, relative):
     """Reject traversal/reparse components before reads and writes."""
     root = Path(root).absolute()
@@ -202,6 +234,15 @@ class Handler(BaseHTTPRequestHandler):
             if not 1 <= size <= 4096:
                 raise ValueError('Request size must be 1..4096 bytes')
             data = json.loads(self.rfile.read(size))
+            if self.path == '/api/open-saved-gamma':
+                if type(data) is not dict or data:
+                    raise ValueError('Unsupported input fields or types')
+                try:
+                    return self.send_data(200, open_saved_gamma_example())
+                except SavedGammaUnavailable:
+                    return self.reject(503, 'Saved gamma example is unavailable')
+                except SavedGammaOpenError:
+                    return self.reject(503, 'Saved gamma example open request failed')
             routes = {'/api/check': ({'name', 'detector'}, 'check'),
                       '/api/start': ({'name', 'detector'}, 'start'),
                       '/api/stop': ({'job_id'}, 'stop'), '/api/resume': ({'name'}, 'resume')}

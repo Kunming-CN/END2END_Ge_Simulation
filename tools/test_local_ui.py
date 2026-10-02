@@ -1,4 +1,5 @@
-"""Real loopback protocol/security tests; no simulation or browser mocking claim."""
+"""Real loopback protocol/security tests; saved-example browser opening is mocked."""
+import copy
 import hashlib
 import http.client
 import json
@@ -9,6 +10,18 @@ import unittest
 from unittest.mock import patch
 
 import local_ui as U
+
+
+SAVED_COUNTS = {'radiation_primaries': 40, 'selected_primaries': 6,
+                'unprocessed_primaries': 34, 'native_calls': 4, 'injection_calibrations': 2}
+SAVED_ACK = {'kind': 'saved_gamma_example_open_v1', 'status': 'browser_open_requested',
+             'science_calls': 0, 'census': {key: SAVED_COUNTS[key] for key in
+                 ('radiation_primaries', 'selected_primaries', 'unprocessed_primaries')}}
+
+
+def checked_saved_fixture():
+    """Only the already-validated helper return shape; no synthetic science validation."""
+    return {'science': {'source': {'counts': SAVED_COUNTS.copy()}}}
 
 
 class FakeController:
@@ -27,9 +40,11 @@ class FakeController:
 
 class Protocol(unittest.TestCase):
     def setUp(self):
-        fixtures = U.ROOT / '.local/m11i-scenario-preview-v1/backend/test-fixtures'
+        fixtures = U.ROOT / '.local/m11j-saved-example-v1/backend/test-fixtures'
         fixtures.mkdir(parents=True, exist_ok=True)
         self.temp = tempfile.TemporaryDirectory(dir=fixtures)
+        self.opener = self.enterContext(patch.object(U.webbrowser, 'open',
+            side_effect=AssertionError('Unexpected browser opening')))
         self.controller = FakeController(Path(self.temp.name))
         self.server = U.Server(0, self.controller, token='test-session-token')
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
@@ -45,7 +60,9 @@ class Protocol(unittest.TestCase):
         if method == 'POST':
             base.update(Origin=self.server.origin, **{'Content-Type':'application/json'})
         if headers:
-            base.update(headers)
+            for key, value in headers.items():
+                if value is None: base.pop(key, None)
+                else: base[key] = value
         connection = http.client.HTTPConnection('127.0.0.1', self.server.server_port, timeout=3)
         if isinstance(body, dict): body = json.dumps(body)
         connection.request(method, route, body=body, headers=base)
@@ -115,6 +132,82 @@ class Protocol(unittest.TestCase):
             self.assertEqual(code, 503)
             self.assertEqual(json.loads(data), {'error':'Scenario configuration preview is unavailable'})
             self.assertEqual(headers['Cache-Control'], 'no-store')
+        self.assertEqual(self.controller.calls, [])
+
+    def test_saved_gamma_exact_action_and_sanitized_checked_response(self):
+        import gamma_showcase as G
+        self.opener.side_effect = None; self.opener.return_value = True
+        with patch.object(G, 'validate_bundle', return_value=checked_saved_fixture()) as validator, \
+             patch.object(self.controller, 'snapshot', side_effect=AssertionError('Controller called')), \
+             patch.object(self.controller, 'check', side_effect=AssertionError('Controller called')), \
+             patch.object(U, 'checked_scenarios', side_effect=AssertionError('Scenario provider called')), \
+             patch.object(G, 'export_saved', side_effect=AssertionError('Exporter called')), \
+             patch.object(G, 'read_saved_science', side_effect=AssertionError('Original reader called')):
+            code, data, headers = self.request('POST', '/api/open-saved-gamma', {})
+        self.assertEqual((code, json.loads(data)), (200, SAVED_ACK))
+        bundle = U.ROOT / '.local/m11d-gamma-showcase-v1/bundle'
+        validator.assert_called_once_with(bundle)
+        self.opener.assert_called_once_with((bundle / 'gamma.html').as_uri())
+        self.assertEqual(headers['Cache-Control'], 'no-store')
+        self.assertEqual(headers['X-Content-Type-Options'], 'nosniff')
+        self.assertEqual(headers['Referrer-Policy'], 'no-referrer')
+        self.assertIn("frame-ancestors 'none'", headers['Content-Security-Policy'])
+        self.assertNotIn('Set-Cookie', headers)
+        self.assertEqual(self.controller.calls, [])
+
+    def test_saved_gamma_auth_query_path_and_method_refusal_before_helper(self):
+        with patch.object(U, 'open_saved_gamma_example', side_effect=AssertionError('Helper called')) as helper:
+            for headers in ({'X-Control-Token':''}, {'X-Control-Token':None}, {'X-Control-Token':'wrong'}, {'Host':'evil.example'},
+                            {'Host':'localhost:'+str(self.server.server_port)}, {'Origin':'https://evil.example'},
+                            {'Origin':''}, {'Origin':None}, {'Sec-Fetch-Site':'cross-site'}, {'Sec-Fetch-Site':'same-site'}):
+                self.assertEqual(self.request('POST', '/api/open-saved-gamma', {}, headers)[0], 403)
+            for route in ('/api/open-saved-gamma?', '/api/open-saved-gamma?path=private',
+                          '/api/open-saved-gamma?detector=AK02', '/api/open-saved-gamma/',
+                          '/api/open-saved-gamma/anything', '/api/open-saved-gamma#selector'):
+                self.assertEqual(self.request('POST', route, {})[0], 404)
+            self.assertEqual(self.request(route='/api/open-saved-gamma')[0], 404)
+            self.assertEqual(self.request('OPTIONS', '/api/open-saved-gamma')[0], 403)
+            self.assertEqual(self.request('HEAD', '/api/open-saved-gamma')[0], 501)
+            self.assertEqual(self.request('PUT', '/api/open-saved-gamma', '{}')[0], 501)
+            self.assertEqual(self.request('DELETE', '/api/open-saved-gamma')[0], 501)
+            browser = {'X-Control-Token':'', 'Cookie':self.server.download_cookie+'='+self.server.download_token,
+                       'Sec-Fetch-Site':'same-origin'}
+            self.assertEqual(self.request('POST', '/api/open-saved-gamma', {}, browser)[0], 403)
+        helper.assert_not_called(); self.opener.assert_not_called()
+        self.assertEqual(self.controller.calls, [])
+
+    def test_saved_gamma_exact_empty_object_and_bounded_json_required(self):
+        with patch.object(U, 'open_saved_gamma_example', side_effect=AssertionError('Helper called')) as helper:
+            for body in ('null', '[]', '0', 'false', '""', '{bad', 'x'*4097,
+                         '{"name":"a"}', '{"detector":"SAP22"}', '{"path":"private"}',
+                         '{"uri":"file:///private"}', '{"scenario_id":"gamma"}', '{"unused":null}'):
+                self.assertEqual(self.request('POST', '/api/open-saved-gamma', body)[0], 400)
+            for headers in ({'Content-Type':'text/plain'}, {'Content-Type':'application/json; charset=utf-8'},
+                            {'Transfer-Encoding':'chunked'}, {'Content-Length':'0'}, {'Content-Length':'-1'},
+                            {'Content-Length':'invalid'}):
+                self.assertEqual(self.request('POST', '/api/open-saved-gamma', '{}', headers)[0], 400)
+        helper.assert_not_called(); self.opener.assert_not_called()
+        self.assertEqual(self.controller.calls, [])
+
+    def test_saved_gamma_validation_failure_is_uniform_and_sanitized(self):
+        import gamma_showcase as G
+        for error in (ValueError('C:/private/model/path'), OSError('secret input'), RuntimeError('raw failure')):
+            with patch.object(G, 'validate_bundle', side_effect=error):
+                code, data, headers = self.request('POST', '/api/open-saved-gamma', {})
+            self.assertEqual((code, json.loads(data)), (503, {'error':'Saved gamma example is unavailable'}))
+            self.assertEqual(headers['Cache-Control'], 'no-store')
+            self.assertNotIn('Set-Cookie', headers)
+        self.opener.assert_not_called(); self.assertEqual(self.controller.calls, [])
+
+    def test_saved_gamma_opener_false_and_exception_are_distinct_sanitized_failures(self):
+        import gamma_showcase as G
+        with patch.object(G, 'validate_bundle', return_value=checked_saved_fixture()):
+            for error in (None, OSError('file:///C:/private/secret')):
+                self.opener.side_effect = error; self.opener.return_value = False
+                code, data, _ = self.request('POST', '/api/open-saved-gamma', {})
+                self.assertEqual((code, json.loads(data)),
+                    (503, {'error':'Saved gamma example open request failed'}))
+        self.assertEqual(self.opener.call_count, 2)
         self.assertEqual(self.controller.calls, [])
 
     def test_structured_input_and_size_refusal(self):
@@ -187,6 +280,39 @@ class Protocol(unittest.TestCase):
                 with U.server_lease(self.controller.root): pass
         # Released file remains evidence; a subsequent process can acquire it.
         with U.server_lease(self.controller.root): pass
+
+
+class SavedGammaHelper(unittest.TestCase):
+    def test_fixed_target_opens_only_after_completed_validation(self):
+        import gamma_showcase as G
+        sequence = []
+        bundle = U.ROOT / '.local/m11d-gamma-showcase-v1/bundle'
+        def checked(path):
+            self.assertEqual(path, bundle); sequence.append('validated')
+            return checked_saved_fixture()
+        def opened(target):
+            self.assertEqual(sequence, ['validated'])
+            self.assertEqual(target, (bundle / 'gamma.html').as_uri())
+            sequence.append('open_requested'); return True
+        with patch.object(G, 'validate_bundle', side_effect=checked) as validator, \
+             patch.object(U.webbrowser, 'open', side_effect=opened) as opener:
+            self.assertEqual(U.open_saved_gamma_example(), SAVED_ACK)
+        validator.assert_called_once(); opener.assert_called_once()
+        self.assertEqual(sequence, ['validated', 'open_requested'])
+
+    def test_invalid_checked_census_never_opens(self):
+        import gamma_showcase as G
+        bad = [None, {}, {'science':{}}]
+        for value in (None, '40', 40.0, True, 39):
+            item = checked_saved_fixture(); item['science']['source']['counts']['radiation_primaries'] = value
+            bad.append(item)
+        missing = checked_saved_fixture(); del missing['science']['source']['counts']['selected_primaries']
+        bad.append(missing)
+        for item in bad:
+            with patch.object(G, 'validate_bundle', return_value=copy.deepcopy(item)), \
+                 patch.object(U.webbrowser, 'open') as opener:
+                with self.assertRaises(U.SavedGammaUnavailable): U.open_saved_gamma_example()
+            opener.assert_not_called()
 
 
 if __name__ == '__main__': unittest.main()

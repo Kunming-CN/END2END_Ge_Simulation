@@ -17,6 +17,21 @@ function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefine
 function btn(label,action){const b=el('button',label);b.addEventListener('click',async()=>{b.disabled=true;try{await action();await poll();}catch(e){message(e.message,true);}finally{if(b.isConnected)b.disabled=false;}});return b;}
 function downloadLink(label,name,file){const a=el('a','下载'+label,'link');a.href='/api/file?'+new URLSearchParams({name,file});return a;}
 function table(caption,heads,rows){const box=el('div',undefined,'table-scroll'),t=el('table');t.append(el('caption',caption));const h=el('tr');for(const name of heads)h.append(el('th',name));const head=el('thead');head.append(h);t.append(head);const body=el('tbody');for(const row of rows){const r=el('tr');for(const value of row)r.append(el('td',value==null?'未知 / 未定义':String(value)));body.append(r);}t.append(body);box.append(t);return box;}
+// The fixed saved-gamma action is independent of preview selections and job state.
+let savedGammaPending = false;
+function savedGammaMessage(text,error=false){$('saved-gamma-notice').textContent=text;$('saved-gamma-notice').className='message '+(error?'error':'ok');}
+function validateSavedGammaOpen(result){
+ const keys=(value,expected)=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join('|')===[...expected].sort().join('|');
+ if(!keys(result,['kind','status','science_calls','census'])||result.kind!=='saved_gamma_example_open_v1'||result.status!=='browser_open_requested'||result.science_calls!==0||!keys(result.census,['radiation_primaries','selected_primaries','unprocessed_primaries'])||result.census.radiation_primaries!==40||result.census.selected_primaries!==6||result.census.unprocessed_primaries!==34)throw new Error('保存示例打开响应未通过格式核对。');
+}
+async function openSavedGamma(){
+ if(savedGammaPending)return;
+ savedGammaPending=true;$('saved-gamma-open').disabled=true;savedGammaMessage('正在核对保存示例并请求打开；不会启动模拟。');
+ try{const result=await api('/api/open-saved-gamma',{});validateSavedGammaOpen(result);savedGammaMessage('保存示例已通过核对，已请求浏览器打开。科学计算调用 0 次；浏览器是否显示尚未确认。');}
+ catch(e){savedGammaMessage('保存示例暂不可用、未通过核对，或浏览器打开请求失败。请稍后手动重试；没有启动模拟。',true);}
+ finally{savedGammaPending=false;$('saved-gamma-open').disabled=false;}
+}
+$('saved-gamma-open').addEventListener('click',openSavedGamma);
 // This finite preview has no relationship to the saved-Cs137 launch state above.
 const previewPresets = [
  ['m11a-ak02-cs137_point_decay_v1-nominal','AK02','cs137_point_decay_v1','nominal'],

@@ -7,6 +7,9 @@
 </style><script src="/local_ui.js" defer></script></head><body><main>
 <div class="tag">GE SIMULATION · 本机控制</div><h1>从已记录的沉积到重建能量</h1>
 <p class="subtle">使用已核对的 Cs137 沉积与电场缓存，重新计算电荷、独立注入校准和电子学响应。每个示例只选 3 个完整初级粒子，包含 1 个真实零沉积事件。</p>
+<section aria-labelledby="saved-gamma-title"><h2 id="saved-gamma-title">已保存的 γ 工程示例</h2><p class="subtle">检查并打开已完成的 662 keV 合成 γ 名义工程示例及原有离线事件浏览器；只核对保存文件，不重新计算。保留 40 个真值初级粒子，其中 6 个已处理，34 个未处理且响应为空（null），不能视为零响应。</p>
+<p class="subtle">保存结果使用 78 K 模型快照及明确的 77 K 已保存电场缓存覆盖。这是低统计工程示例，不是经校准的 Li 电荷收集效率或实验校准验证；设置、限制与下载仍在原有浏览器中查看。</p><div class="actions"><button id="saved-gamma-open">检查并打开保存的 γ 示例</button></div><p id="saved-gamma-notice" class="message" role="status" aria-live="polite">明确点击后才检查并请求打开；不会启动模拟。</p>
+</section>
 <section aria-labelledby="preview-title"><h2 id="preview-title">配置预览 · 只检查，不执行</h2><p class="subtle">查看四个已记录的源与探测器配置。刷新只核对文件与元数据；此区域不会准备源文件或启动计算。下面的固定 Cs137 示例仍使用自己的设置。</p>
 <label>预览配置<select id="preview-select"><option value="m11a-ak02-cs137_point_decay_v1-nominal">AK02 · Cs137 衰变点源 · 名义位置</option><option value="m11a-ak02-mono_gamma_662_axis_v1-plus5mm">AK02 · 662 keV 单能 gamma · 沿 +y 移动 5 mm</option><option value="m11a-sap22-cs137_point_decay_v1-nominal">SAP22 · Cs137 衰变点源 · 名义位置</option><option value="m11a-sap22-mono_gamma_662_axis_v1-plus5mm">SAP22 · 662 keV 单能 gamma · 沿 +y 移动 5 mm</option></select></label>
 <div class="actions"><button id="preview-refresh">刷新并检查四个配置</button></div><p id="preview-notice" class="message" role="status" aria-live="polite">点击刷新后显示已核对的配置；选择本身不会运行任务。</p><div id="preview-fields"></div>

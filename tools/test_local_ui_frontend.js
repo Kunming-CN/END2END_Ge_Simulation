@@ -1,5 +1,5 @@
 'use strict';
-// Bounded DOM fixture for independent preview and saved-result response races.
+// Bounded DOM fixture for independent saved-gamma opening, preview and result races.
 // Mock/static checks do not establish browser/mobile/keyboard acceptance.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -34,8 +34,9 @@ function catalog(){return {kind:'finite_scenario_preview_v1',schema_version:1,co
 }))};}
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};}
 function jsonResponse(result,ok=true){return {ok,json:async()=>result};}
+function savedGammaResponse(){return {kind:'saved_gamma_example_open_v1',status:'browser_open_requested',science_calls:0,census:{radiation_primaries:40,selected_primaries:6,unprocessed_primaries:34}};}
 function fixture(){
-  const elements=Object.fromEntries(['name','detector','notice','check','run','resolved','jobs','connection','preview-select','preview-refresh','preview-notice','preview-fields'].map(k=>[k,new Element(k)]));
+  const elements=Object.fromEntries(['name','detector','notice','check','run','resolved','jobs','connection','preview-select','preview-refresh','preview-notice','preview-fields','saved-gamma-open','saved-gamma-notice'].map(k=>[k,new Element(k)]));
   for(const element of Object.values(elements))element.root=true;
   elements.detector.value='AK02';elements.name.value='fixture';elements['preview-select'].value=presets[0][0];
   const requests=[],queues=new Map(),intervals=[];
@@ -119,8 +120,62 @@ async function legacyIsolation(){
  const html=fs.readFileSync(__dirname+'/local_ui.html','utf8'),section=html.match(/<section aria-labelledby="preview-title">([\s\S]*?)<\/section>/)[1];
  assert.deepEqual([...section.matchAll(/<option value="([^"]+)"/g)].map(m=>m[1]),presets.map(p=>p[0]));assert.equal([...section.matchAll(/<button /g)].length,1);assert.match(section,/配置预览 · 只检查，不执行/);assert.doesNotMatch(section,/id="(?:check|run|name|detector)"/);
 }
+async function savedGammaExplicitRequest(){
+ const f=fixture(),{elements}=f;await f.run('poll()');
+ for(const interval of f.intervals)await interval.fn();
+ elements['preview-select'].value=presets[3][0];await elements['preview-select'].dispatch('change');
+ const preview=f.queue('/api/scenarios'),refresh=elements['preview-refresh'].dispatch('click');preview.resolve(jsonResponse(catalog()));await refresh;
+ assert.equal(f.requests.filter(r=>r.path==='/api/open-saved-gamma').length,0,'load, job polling, preview selection and refresh never open the saved example');
+ assert.equal(f.intervals.length,1,'no new polling action');
+ const response=f.queue('/api/open-saved-gamma'),pending=elements['saved-gamma-open'].dispatch('click');
+ const requests=f.requests.filter(r=>r.path==='/api/open-saved-gamma');assert.equal(requests.length,1);
+ assert.equal(requests[0].options.method,'POST');assert.equal(requests[0].options.body,'{}');assert.equal(requests[0].options.headers['X-Control-Token'],'fixture-token');assert.equal(requests[0].options.headers['Content-Type'],'application/json');assert.equal(requests[0].options.cache,'no-store');
+ response.resolve(jsonResponse(savedGammaResponse()));await pending;
+ assert.equal(elements['saved-gamma-open'].disabled,false);assert.equal(f.run('savedGammaPending'),false);assert.equal(elements['saved-gamma-notice'].className,'message ok');assert.match(elements['saved-gamma-notice'].textContent,/已请求浏览器打开/);assert.match(elements['saved-gamma-notice'].textContent,/科学计算调用 0 次/);assert.match(elements['saved-gamma-notice'].textContent,/是否显示尚未确认/);
+ assert.equal(f.requests.filter(r=>r.options.method==='POST').length,1,'fixed saved action is the only POST');
+ const html=fs.readFileSync(__dirname+'/local_ui.html','utf8'),section=html.match(/<section aria-labelledby="saved-gamma-title">([\s\S]*?)<\/section>/)[1];
+ assert.equal([...section.matchAll(/<button /g)].length,1);assert.match(section,/id="saved-gamma-open">检查并打开保存的 γ 示例<\/button>/);assert.match(section,/id="saved-gamma-notice"[^>]*role="status" aria-live="polite"/);assert.match(section,/662 keV 合成 γ 名义工程示例/);assert.match(section,/40 个真值初级粒子.*6 个已处理.*34 个未处理且响应为空（null）/);assert.match(section,/不重新计算/);assert.match(section,/78 K.*77 K/);assert.match(section,/不是经校准的 Li 电荷收集效率或实验校准验证/);assert.doesNotMatch(section,/<(?:select|input|a|iframe|canvas)\b|(?:https?:|file:|\.local\/)|id="(?:check|run|name|detector|preview-select)"/);
+}
+async function savedGammaPendingIsolation(){
+ const f=fixture(),{elements,context}=f;await f.run('poll()');await elements.check.dispatch('click');
+ const legacyState=()=>f.run('JSON.stringify({values:values(),checked,busy,active,runDisabled:$("run").disabled,checkDisabled:$("check").disabled,notice:$("notice").textContent})');
+ const original=legacyState(),response=f.queue('/api/open-saved-gamma'),pending=elements['saved-gamma-open'].dispatch('click');
+ assert.equal(elements['saved-gamma-open'].disabled,true);assert.equal(f.run('savedGammaPending'),true);assert.equal(legacyState(),original,'pending only disables its own button');assert.match(elements['saved-gamma-notice'].textContent,/正在核对/);
+ await elements['saved-gamma-open'].dispatch('click');assert.equal(f.requests.filter(r=>r.path==='/api/open-saved-gamma').length,1,'pending guard refuses duplicate dispatch');
+ const preview=f.queue('/api/scenarios'),refresh=elements['preview-refresh'].dispatch('click');elements['preview-select'].value=presets[3][0];await elements['preview-select'].dispatch('change');preview.resolve(jsonResponse(catalog()));await refresh;
+ const previewState=()=>f.run('JSON.stringify({selectedPreviewId,preview:[...previewCatalog],fields:$("preview-fields").textContent,notice:$("preview-notice").textContent})'),selected=previewState();assert.equal(legacyState(),original);
+ for(const interval of f.intervals)await interval.fn();assert.equal(elements['saved-gamma-open'].disabled,true,'job polling cannot re-enable pending saved button');
+ response.resolve(jsonResponse(savedGammaResponse()));await pending;assert.equal(legacyState(),original);assert.equal(previewState(),selected,'saved acknowledgement cannot reset or retarget preview');
+ assert.equal(elements['saved-gamma-open'].disabled,false);assert.equal(f.run('selectedPreviewId'),presets[3][0]);
+ // Active legacy jobs affect their own controls, not this completed-file action.
+ context.activeSnapshot={active:{id:'working'},jobs:[]};f.run('render(activeSnapshot)');assert.equal(elements.check.disabled,true);assert.equal(elements.run.disabled,true);assert.equal(elements['saved-gamma-open'].disabled,false);
+ const retry=f.queue('/api/open-saved-gamma'),opening=elements['saved-gamma-open'].dispatch('click');assert.equal(elements.check.disabled,true);retry.resolve(jsonResponse(savedGammaResponse()));await opening;assert.equal(f.run('active'),true);assert.equal(elements.check.disabled,true);assert.equal(elements['saved-gamma-open'].disabled,false);
+}
+async function savedGammaRefusalRecovery(){
+ const f=fixture(),{elements}=f;await f.run('poll()');await elements.check.dispatch('click');
+ const legacy=f.run('JSON.stringify({values:values(),checked,busy,active,runDisabled:$("run").disabled,notice:$("notice").textContent})');
+ async function deliver(result,ok=true){const response=f.queue('/api/open-saved-gamma'),pending=elements['saved-gamma-open'].dispatch('click');response.resolve(jsonResponse(result,ok));await pending;}
+ const invalids=[
+  ()=>null,()=>[],r=>({...r,kind:'other'}),r=>({...r,status:'displayed'}),r=>({...r,science_calls:1}),r=>({...r,science_calls:'0'}),r=>({...r,census:[]} ),r=>({...r,census:{...r.census,radiation_primaries:39}}),r=>({...r,census:{...r.census,selected_primaries:'6'}}),r=>({...r,census:{...r.census,unprocessed_primaries:0}}),r=>({...r,private_uri:'file:///private-fixture'}),r=>({...r,census:{...r.census,path:'private-fixture'}}),r=>{delete r.status;return r;},r=>{delete r.census.unprocessed_primaries;return r;}
+ ];
+ for(const change of invalids){await deliver(savedGammaResponse());assert.equal(elements['saved-gamma-notice'].className,'message ok');await deliver(change(savedGammaResponse()));assert.equal(elements['saved-gamma-notice'].className,'message error');assert.doesNotMatch(elements['saved-gamma-notice'].textContent,/已请求浏览器打开|private-fixture|file:/);assert.equal(elements['saved-gamma-open'].disabled,false);assert.equal(f.run('savedGammaPending'),false);}
+ for(const failure of ['Saved gamma example is unavailable','Saved gamma example open request failed','private fixture path should not appear']){await deliver({error:failure},false);assert.equal(elements['saved-gamma-notice'].className,'message error');assert.doesNotMatch(elements['saved-gamma-notice'].textContent,/private fixture/);assert.equal(elements['saved-gamma-open'].disabled,false);}
+ const network=f.queue('/api/open-saved-gamma'),failed=elements['saved-gamma-open'].dispatch('click');network.reject(new Error('private fixture path should not appear'));await failed;assert.doesNotMatch(elements['saved-gamma-notice'].textContent,/private fixture/);assert.equal(elements['saved-gamma-open'].disabled,false);
+ const parse=f.queue('/api/open-saved-gamma'),malformed=elements['saved-gamma-open'].dispatch('click');parse.resolve({ok:true,json:async()=>{throw new Error('private fixture malformed JSON');}});await malformed;assert.equal(elements['saved-gamma-notice'].className,'message error');assert.equal(elements['saved-gamma-open'].disabled,false);assert.doesNotMatch(elements['saved-gamma-notice'].textContent,/private fixture/);
+ await deliver(savedGammaResponse());assert.equal(elements['saved-gamma-notice'].className,'message ok');assert.equal(f.run('JSON.stringify({values:values(),checked,busy,active,runDisabled:$("run").disabled,notice:$("notice").textContent})'),legacy,'success/failure/retry leave legacy check intact');
+ assert.ok(f.requests.filter(r=>r.path==='/api/open-saved-gamma').every(r=>r.options.method==='POST'&&r.options.body==='{}'));assert.equal(f.requests.filter(r=>r.path==='/api/scenarios').length,0);assert.equal(f.requests.filter(r=>r.path==='/api/start'||r.path==='/api/resume').length,0);
+}
+async function savedGammaLegacyActions(){
+ const f=fixture(),{elements,context}=f;await f.run('poll()');await elements.check.dispatch('click');
+ const stale=f.queue('/api/scenarios'),oldRefresh=elements['preview-refresh'].dispatch('click'),latest=f.queue('/api/scenarios'),newRefresh=elements['preview-refresh'].dispatch('click');elements['preview-select'].value=presets[3][0];await elements['preview-select'].dispatch('change');latest.resolve(jsonResponse(catalog()));await newRefresh;
+ const response=f.queue('/api/open-saved-gamma'),opening=elements['saved-gamma-open'].dispatch('click');elements['preview-select'].value=presets[2][0];await elements['preview-select'].dispatch('change');stale.reject(new Error('stale private preview failure'));await oldRefresh;response.resolve(jsonResponse(savedGammaResponse()));await opening;
+ assert.equal(f.run('selectedPreviewId'),presets[2][0]);assert.equal(f.run('previewCatalog.size'),4);assert.equal(elements['preview-notice'].className,'message ok');assert.match(elements['preview-fields'].textContent,/SAP22 · 78 K/);
+ await elements.run.dispatch('click');assert.deepEqual(f.requests.filter(r=>r.options.method==='POST').map(r=>[r.path,JSON.parse(r.options.body)]),[['/api/check',{name:'fixture',detector:'AK02'}],['/api/open-saved-gamma',{}],['/api/start',{name:'fixture',detector:'AK02'}]]);
+ const paused={id:'paused-id',name:'legacy-paused',detector:'AK02',status:'paused',can_resume:true,logs:[]};context.paused=paused;f.run('render({active:null,jobs:[paused]})');const resume=f.queue('/api/resume'),resuming=elements.jobs.children[0].querySelector('button').dispatch('click');resume.resolve(jsonResponse({}));await resuming;assert.deepEqual(JSON.parse(f.requests.find(r=>r.path==='/api/resume').options.body),{name:'legacy-paused'});
+ const job={id:'complete-id',name:'legacy-complete',detector:'AK02',status:'completed',complete_sha256:'verified',logs:[]};context.completed=job;f.run('render({active:null,jobs:[completed]})');const actions=elements.jobs.children[0].querySelector('.actions'),links=actions.children.filter(n=>n.tag==='a');assert.deepEqual(links.map(n=>n.href),['worker/AK02/scalars.jsonl','worker/AK02/traces.jsonl','run.json','manifest.json','COMPLETE.json'].map(file=>'/api/file?'+new URLSearchParams({name:'legacy-complete',file})));assert.equal(f.requests.filter(r=>r.path==='/api/open-saved-gamma').length,1,'legacy start/resume/download rendering never auto-opens');
+}
 async function main(){
- for(const [name,test] of [['saved-result races/raw records',savedResultRace],['preview selection/newest response',previewSelectionRace],['preview invalid/failure/unknown refusals',previewRefusal],['gamma/legacy isolation/static controls',legacyIsolation]]){await test();console.log('PASS: '+name);}
- console.log('PASS: 4 focused mock/static groups; actual browser/mobile/keyboard acceptance unperformed.');
+ for(const [name,test] of [['saved-result races/raw records',savedResultRace],['preview selection/newest response',previewSelectionRace],['preview invalid/failure/unknown refusals',previewRefusal],['gamma/legacy isolation/static controls',legacyIsolation],['saved-gamma explicit fixed request/static copy',savedGammaExplicitRequest],['saved-gamma pending/preview/job isolation',savedGammaPendingIsolation],['saved-gamma schema/failure/manual recovery',savedGammaRefusalRecovery],['saved-gamma stale selection/legacy actions/downloads',savedGammaLegacyActions]]){await test();console.log('PASS: '+name);}
+ console.log('PASS: 8 focused mock/static groups; actual browser/mobile/keyboard acceptance unperformed.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
