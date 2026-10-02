@@ -1,7 +1,8 @@
 # Unified event viewer and ring-contact 10K delivery
 
-Owner decisions: 2026-10-02. This is the current delivery plan, not a completed
-campaign or numerical validation. M8/M9 remain deferred and do not block it.
+Owner decisions: 2026-10-02. Both ring 10K processing campaigns are complete;
+M13f public coverage is pending. Processing completion is not physical
+validation. M8/M9 remain deferred and do not block it.
 
 ## Fixed scope
 
@@ -52,14 +53,18 @@ fixed-wiring derivative now passes: all 500 primaries, 497 zeros and 3 accepted
 groups; 220 raw signed samples and the original three rejects remain preserved.
 Julia 66/Python 6 checks pass. Three independent initial reviews and concrete
 cross-review accepted KM10K admission. Actual guarded production started
-2026-10-02T21:53:56Z, supervisor35764; no completed pilot physics is repeated.
+2026-10-02T21:53:56Z and finished21:59:25Z:10000 initial decays,9769 zeros,
+231 groups,230 accepted,0 native failures and1 electronics reject. Original
+positive-peak electronics retains0 accepted/231 rejects. Native159.058s,
+field22.554s, derivative10.363s, negative injection0.325s, remage6.289s;
+supervisor328.431s is separate. Both workers exited and terminal checks pass.
 
 GeRC02's guarded 10K launched2026-10-02T17:28:41Z and finished18:05:09Z:
 10,000 primaries, 9,703 zeros, 297 groups, 231 accepted, 4 native failures and
 62 electronics rejects. The terminal and all44 source pins were independently
 verified after the application update. This is processing completion, not Li CCE
-validation. Keep original science/source bindings; finish KM admission and the
-saved public presentation in parallel.
+validation. Keep original science/source bindings; finish the equal four-detector
+saved public presentation using completed data only.
 Do not run a second native worker. A saved-only readout correction does not
 require repeating the completed KM radiation, field or native500 stages.
 
@@ -89,6 +94,17 @@ required before each 10K run. Timings will be estimated from these new pilots,
 not copied from the much larger ICPC geometries or tool/review waiting time.
 
 ## Page coverage and preserved history
+
+Current full ring bundle is complete and permanent at
+`.local/ring-publication-v1/bundle` (manifest e9ff0c6c1272d258dcfdd109055b8642587caf3ad1cde5fed2cb3334a03503d6).
+Its standalone files exceed GitHub hosting limits. M13f therefore makes a
+lossless web derivative: gzip all200 event chunks, retaining original decoded
+SHA/bytes, and deliver large redundant ledger files in their complete exact ZIPs.
+Preserve full local science, every event/sample/value/flag/null and both original
+KM rejections and fixed-wiring output. The final site must fit1GB and95MiB/file.
+Initial full exports and stopped oversized staging remain evidence; no physics
+is repeated to change serialization. The real source-reader764group/40000primary
+regression passes; generated compact-site/browser/live acceptance remains pending.
 
 The initial direct 10K inventory is nine HTML pages:
 
