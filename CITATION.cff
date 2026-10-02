@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, cite this repository and the upstream simulation tools. Record the exact commit and relevant model/data provenance."
+type: software
+title: "GeSignal — HPGe Radiation-to-Readout Simulation"
+authors:
+  - family-names: "Dong"
+    given-names: "Kunming"
+    website: "https://github.com/Kunming-CN"
+repository-code: "https://github.com/Kunming-CN/END2END_Ge_Simulation"
+url: "https://kunming-cn.github.io/END2END_Ge_Simulation/"
+abstract: "HPGe radiation, semiconductor charge transport and electronics workflows with saved engineering results. This software citation does not establish experimental validation or grant rights to third-party inputs."
+keywords:
+  - hpge
+  - germanium-detector
+  - geant4
+  - detector-simulation
+  - solid-state-detectors
+  - remage

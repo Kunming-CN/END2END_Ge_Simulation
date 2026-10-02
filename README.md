@@ -78,3 +78,7 @@ Use the [local workspace guide](tools/LOCAL_WORKSPACE.md) for file retention. Th
 Advanced component references: [SSD/CPU/GPU](simulation/README.md), [transport and earlier workflows](transport/README.md), [physics references](simulation/PHYSICS.md). These are not competing beginner setup routes.
 
 </details>
+
+To propose a change, see [Contributing](CONTRIBUTING.md). Cite the software with
+[CITATION.cff](CITATION.cff). The project software license is pending;
+[third-party and data rights](THIRD_PARTY_NOTICES.md) remain separate.

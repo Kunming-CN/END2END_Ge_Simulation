@@ -18,6 +18,7 @@ another complete installation recipe.
 | Saved energy-spectrum views | `tools/spectrum_display.py`, `spectrum_plot.py`, `spectrum_controls.js`; see [display semantics](SPECTRUM_DISPLAY.md) |
 | Current reciprocal Geant4 readers | `tools/viewer_navigation.py`, `viewer_navigation.js`, `viewer_overlay_selection.js`; see [reader ownership](VIEWER_NAVIGATION.md). Original signed viewers remain frozen. |
 | Windows setup/run guide | `tools/site_guide.html` |
+| Contributions, software citation and rights scope | Root `CONTRIBUTING.md`, `CITATION.cff`, `THIRD_PARTY_NOTICES.md`; `.github/PULL_REQUEST_TEMPLATE.md` |
 | Loopback bounded-native control | `Control.cmd`, `tools/local_ui.ps1`, `local_ui.py`, `local_ui_jobs.py`, `local_ui.html`, `local_ui.js`; same native backend, no public execution service |
 | Scenario eligibility labels | `scenarios/detector-capabilities.json`; backend restrictions remain independently enforced |
 | Cryostat source-input inventory | `transport/cryostat-input-ledger.json`, `tools/check_cryostat_inputs.py`, `test_cryostat_inputs.py`; see [input verification contract](CRYOSTAT_INPUTS.md). Curated metadata and opt-in original-byte checks only; no new adapter or native/experimental acceptance. |
@@ -89,6 +90,29 @@ the host's crawling policy; this project does not manage the account-root site.
 [Google's ownership instructions](https://support.google.com/webmasters/answer/9008080?hl=en)
 and [crawl-request guidance](https://developers.google.com/search/docs/crawling-indexing/ask-google-to-recrawl)
 explain verification and submission; a request does not guarantee indexing.
+
+## Contributions and default-branch policy
+
+External contributors use [fork, branch and PR](../CONTRIBUTING.md), with owner
+review before merge; no collaborator permission is needed. Keep the small PR
+template in `.github/`. [CITATION.cff](../CITATION.cff) identifies this software,
+not ownership or experimental validation of its upstream tools and inputs.
+[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) records the rights boundary.
+The software license remains pending the owner's explicit choice; adopt a root
+`LICENSE` and its exact publisher allowlist entry only after that choice.
+
+The intended `main` protection requires one approving PR review, dismisses stale
+approvals and requires resolved conversations. Force pushes and deletions are
+disabled; no unknown CI check, CODEOWNERS requirement or new collaborator is added.
+`enforce_admins` remains false: the owner's existing bounded, tested and reviewed
+maintenance retains GitHub's default administrator exception. These flags are
+not a claim that administrators cannot bypass them. Project policy still forbids
+force-pushing or deleting `main`. Inspect actual GitHub settings before changing
+this policy; settings are not installed merely by cloning the repository.
+The private automation state and lock apply only to automated owner rounds;
+a normal clone, CLI example or manual contribution needs neither.
+[GitHub's branch-protection documentation](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
+explains the administrator exception.
 
 ## Retention and changes
 

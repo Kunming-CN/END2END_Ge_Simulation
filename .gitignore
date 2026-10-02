@@ -3,6 +3,10 @@
 !.gitignore
 !.gitattributes
 !README.md
+# Reviewed community root files only.
+!/CONTRIBUTING.md
+!/CITATION.cff
+!/THIRD_PARTY_NOTICES.md
 !PROGRESS.md
 !AGENTS.md
 !Publish.cmd
@@ -177,3 +181,8 @@
 # Reviewed additive gamma charge/calibration/readout example; artifacts stay local.
 !simulation/gamma_native_example.jl
 !simulation/test_gamma_native_example.jl
+
+# Keep this final: only the reviewed PR template may enter .github.
+!/.github/
+/.github/**
+!/.github/PULL_REQUEST_TEMPLATE.md

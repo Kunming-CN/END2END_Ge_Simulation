@@ -1,53 +1,65 @@
 # Project state and next bounded work
 
 Updated: 2026-10-02 UTC. This compact handoff governs delivery order.
-The preceding homepage handoff is immutable
-[at 896e0db](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/896e0db91eefc98e909857d955fe28bf5e81c884/PROGRESS.md).
+The preceding discovery handoff is immutable
+[at a35d163](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/a35d16328fc5ee62c41dff438f261b249977dd07/PROGRESS.md).
 Inspect terminal receipts, Git, hashes and actual workers before repeating work.
 
-## M12a project discovery and display identity
+## M12b contribution, citation and compatible protection
 
-Owner requested the two pictured discovery/contribution tasks before the guide
-round. Conservative display choice: GeSignal — HPGe Radiation-to-Readout Simulation;
-GitHub slug and Pages URL stay END2END_Ge_Simulation. README, maintained landing
-labels and GitHub About agree. Ten requested GitHub Topics are written and GET
-verified; no collaborator added, owner remains sole admin.
+Publish CONTRIBUTING.md, CITATION.cff, THIRD_PARTY_NOTICES.md and one small PR
+template; README has one brief entry, maintenance names ownership, publisher
+admits exactly those four paths. External contributions use fork -> branch -> PR
+-> owner review; normal clones/CLI/manual contributions need no private supervisor
+state. Author/permission terms must be agreed before accepting contributions;
+merging does not automatically authorize the owner's future relicensing.
+Software license choice remains unanswered; root LICENSE absent, no license grant.
+MIT is only the local proposal in .local/m12a-discovery-v1/m12b-drafts/.
+No invented DOI/ORCID/release or blanket rights to model/data/upstream assets.
 
-Saved-only source assembly adds descriptions/self-canonical URLs to nine current
-hubs and 17 catalog-derived detector overviews, plus deterministic sitemap.xml.
-Historical/partial snapshots may contain fewer; the validator does not alone
-require 26. Current frozen export independently confirms all26. No fabricated
-lastmod, host-root robots management, analytics, ranking or calibrated claims.
-All existing destinations/IDs remain. 1426 older payloads, frozen scientific
-bundles and canonical models stay exact. Public payload count1453/files1454;
+Actual main protection PUT/GET verified: one approving review, stale approvals
+removed, conversations resolved, force/delete flags false, no unknown CI or
+CODEOWNERS gate; enforce_admins false preserves the existing reviewed owner
+maintenance exception. Flags do not constrain every admin action. Owner remains
+sole admin; no collaborator grants. Snapshot/readback is in .local/m12b-community-v1/.
+
+35 local document links, Node syntax and exact publisher delta pass. New-file
+ignore allowlist v2 had confirmed basename alias leaks; both peer and NEW third
+review found concrete scope issues. Preserve their original positions/failure
+records. v3 anchors three root files and ends with .github deny plus exact template;
+4 positive/20 negative path checks pass. Eight implementation sources are frozen,
+prior seven unchanged. Two scoped Sol6.1 Ultra peers plus a NEW same-setting
+public-only static reviewer accept v3 after repair, with six actual reciprocal
+messages (four original plus two correction exchanges). These are AI reviews,
+not legal/experimental certification; third tools0, actual launch independently
+verified.23 publication tests and full local96HTML/2841links pass (58.485s checker).
+Scientific/model/site payloads unchanged; science0/build0. Git synchronization and
+GitHub's native CFF citation UI follow this implementation commit; terminal receipt
+supersedes that pending stage. No installation, global settings or reset use.
+
+## M12a discovery delivered and live verified
+
+GeSignal — HPGe Radiation-to-Readout Simulation is the display identity; repo slug,
+root and Pages URL stay END2END_Ge_Simulation. About/README/maintained landings and
+ten requested Topics agree, GET plus actual desktop GitHub view verified.
+Descriptions/self-canonicals and deterministic sitemap cover26 current landings;
+historical/partial snapshots may contain fewer. No fake dates/ranking or changed
+science pages.1426 older payloads/models stay exact;1453 payloads/1454files,
 build8ec47ca9235f95f1446dede18ca15c1b220ea616a62a668affb0a31202cb502b.
-Build257.3512394s is publication wall time, physics0. First publication attempt
-was interrupted to correct source-hash-record ordering; its logs/exit4294967295
-are retained, docs baseline stayed exact, and the frozen-source retry succeeded.
-Ordinary publisher's old-name reachability marker is repaired after exporter exit;
-syntax/rendered-marker checks pass, no publisher/auth/global setup invocation.
+a35d163 synchronized local/main/origin/GitHub and deployed; exact464 live files
+PASS110.5515493s including sitemap.64 unique tests/zero skips and3AI reviews pass.
+Publication257.3512394s, physics0. Interrupted first source-record ordering attempt
+and exporter-only retry remain recorded; publisher brand marker repaired without
+auth/global setup. One actual desktop home screenshot/Enter disclosure pass,
+mobile0, not comprehensive usability/install acceptance. Owned local server closed.
+Evidence .local/m12a-discovery-v1/COMPLETE.json governs terminal state.
 
-64 unique tests/zero skips pass (5 discovery,8 structure,1 hierarchy,23 publication,
-27 contacts); complete local96 HTML/2841 links pass. Two independent scoped
-Sol6.1 Ultra AI reviews and a NEW independent public-source-only Sol6.1 Ultra
-review examine correctness/direction; their initial limits and reciprocal review
-records are in .local/m12a-discovery-v1/. Third review is static, with no tool/test
-execution; actual launch model/effort/root is verified separately. Actual supported
-browser: one desktop-home screenshot and one Enter disclosure check, no horizontal
-overflow; mobile0, not comprehensive UI/installation acceptance. Owned temporary
-127.0.0.1 public-docs-only server is closed. Git/live deployment checks follow this
-implementation commit; do not equate a successful push with live verification.
-
-Search Console currently reaches Google sign-in with no logged-in account.
-Property creation, ownership verification, sitemap submission and URL Inspection
-request are NOT performed. Owner login is needed; indexing itself is Google's
-later decision. Existing public source explains the exact URL-prefix property and
-submission steps. Missing login blocks those account actions, not other milestones.
-
-M11l homepage retained all17 hrefs/13 destinations while exposed links15→8.
-Its exact live463-file verification belongs to buildeff982/41d19c4, preserved in
-.local/m11l-home-hierarchy-v1/. Overall clutter remains an optional later design
-scope; this discovery round does not claim comprehensive usability improvement.
+Search Console is logged out; property/ownership/sitemap/URL Inspection actions0.
+Owner login is needed and later indexing is Google's decision, not a push result.
+Existing maintenance instructions describe the exact URL-prefix workflow. Account
+and license decisions block only their own actions, not the next guide round.
+M11l's earlier exposed links15→8/all17href13dest and exact463-file check belong to
+buildeff982/41d19c4. Broader optional clutter design is not declared closed.
 
 ## Retained delivered results and limitations
 
@@ -110,15 +122,14 @@ verification, not a new executable adapter. Seventeen viewable is not executable
 ## Next bounded work
 
 Skip M8/M9: second-computer newcomer acceptance blocks no current development.
-M12b follows the owner's second image: simple fork -> branch -> PR -> owner review
-contribution guide, citation and explicit original-software/third-party license
-scope, with compatible main protection. License choice question remains pending;
-do not present a preselected option as an owner answer. Keep recorded model/source
-rights and local-only upstream cryostat files separate from project software.
-No collaborator grants, invented DOI/ORCID/release or unknown required CI checks.
-After those changes, M11m describes delivered fixed gamma controls and the separate
-saved-reference action in the single maintained guide, retaining all anchors,
-40/6/34-null/private-input/77K/fresh-clone limitations. No physics/environment rerun.
+M11m is next: describe delivered fixed gamma controls and the separate saved-reference
+action in the single maintained guide. Read-only scope proposal is frozen at
+.local/m12b-community-v1/next-guide-plan/PLAN.json. Retain all14anchors and existing
+fragments/commands; scope stop/continue to Cs137, preserve40/6/34-null/private-input/
+78K-models/explicit77K-cache/fresh-clone limits. One saved-only publication, no
+physics/environment rerun or frontend redesign. Root LICENSE requires the owner's
+MIT/Apache/GPL choice and specific rights scope; do not treat preselection as an
+answer. Model/source permissions stay separate. No collaborator grants or new CI.
 Search Console can resume after actual owner login; do not invent verification.
 Current-chat30-minute heartbeat ACTIVE creation verified; future execution
 unobserved. New rounds require ready/no conflicting lock or actual workers, owned
