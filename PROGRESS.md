@@ -27,8 +27,10 @@ AI INITIALs and a NEW independent public-code-only Sol6.1 Ultra INITIAL pass;
 actual reciprocal peer discussion and final publication/closure are recorded in
 .local/m11l-home-hierarchy-v1/ terminal evidence. No numerical run, environment
 change, installer or fresh-machine experiment. Actual browser/mobile/keyboard0.
-Exact live verification must pass before calling this website deployment complete;
-terminal receipt records tested live files, Git parity and owned lock closure.
+Deployment of41d19c4 is verified:463 live files match this exact build; live check
+115.3965799s. Terminal receipt records Git parity and owned lock closure. The final
+handoff-only commit preserves the verified website payload and does not repeat
+publication tests or numerical work.
 
 ## Retained delivered results and limitations
 
