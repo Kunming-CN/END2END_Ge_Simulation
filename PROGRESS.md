@@ -7,34 +7,56 @@ Inspect terminal receipts, Git, hashes and actual workers before repeating work.
 
 ## M13 unified viewer and ring-contact 10K plan
 
-Owner priority now replaces the previous link-clutter assessment. Ordered plan:
-[tools/RING_10K_PLAN.md](tools/RING_10K_PLAN.md). First merge the two maintained
-event readers into one GeSignal event viewer, preserving old deep links and
-exact model/event/group identity; then integrate two ring-contact cases and
-complete equivalent four-detector current 10K presentation. Original signed
-bundles and completed AK02/SAP22 science stay exact; no old campaign rerun.
+Owner delivery order: [tools/RING_10K_PLAN.md](tools/RING_10K_PLAN.md).
+M13a implementation and local acceptance are complete. The maintained GeSignal
+reader is `viewers/events.html`: one model/primary/group/view selection and one
+native canvas. Both previous entries remain strict compatibility aliases,
+preserving requested IDs and assembly/positive defaults. The 10K hub has one
+viewer entry; original signed viewers remain explicit archives.
 
-Owner explicitly corrected the Li target: GeRC02 280 C/30min -> 50min independent
-variant, original 30min frozen; KMRC01_candidate stays unchanged. Each new case
-has 10,000 initial Cs137 decays including zero-Ge, same nominal source/outer
-cryostat/electronics, separately checked ring mounting. Both ring adapters are
-currently unimplemented; model/bias/contact/transform/effective-variant checks,
-bounded full-chain integration and each clean 500-decay pilot precede 10K. Keep
-native failure/null and electronics selection separate from full event census.
-77 K runtime versus 78 K stored model and KM signed polarity remain explicit.
-No arbitrary Li thickness, abs rectification, per-event truth gain or calibrated
-Li/resolution claim. Reuse only hash-verified terminal stages, not partial runs.
+All 20,000 original AK02/SAP22 primaries remain available, including 9879/9885
+zero-Ge events; the optional positive layer retains 121/115 primaries and236
+saved groups. Group/category misses retain the request without replacement;
+overlay failures preserve independently checked assembly. Open rows/proof
+follow the current identity; late responses, Back/Forward and chunk limits are
+checked. Radiation STEP chords/birth records remain distinct from complete
+tracks, SSD drift, charge, Erec and waveforms. Existing native failures/unknown
+response do not remove radiation records. No old science or model byte changed.
 
-Three reused scoped Sol6.1 Ultra agents audit frontend, physics and workflow
-then exchange concrete findings; some peer openers arrived before final INITIAL
-saves, while core independent findings preceded them, accurately recorded.
-This is planning AI review, not
-a new implementation's mandatory NEW third-party review or certification.
-Exact two live deep links load correctly; nine direct 10K HTML pages inventoried.
-Local .local/ring-10k-plan-v1/ holds decisions/reviews/browser/guard evidence.
-Planning only: new calculations0, implementation/model/site changes0; plan/PG
-sync terminal receipt follows. Existing30-minute heartbeat ACTIVE/readback agrees
-with M13 priorities; future execution remains unobserved.
+The generated saved-data harness passes all236 groups,972019 exact scalar
+comparisons,6 stale success/failure cases,3 overlay failures and6 invalid typed
+input cases. It retains strict Object.is checks, original rows and zeros. An
+initial raw-detail negative-zero loss was found and repaired without weakening
+the oracle; failed log/first derivative remain permanent evidence. Strict NEW
+reviewer S-P2-01 found misleading invalid-input/default/previous-URL wording;
+scoped peers discussed it in4 actual reciprocal messages after all3 INITIALs
+froze. The narrow repair displays available DOM input, clears details, performs
+no fetch/history write and preserves valid0/group0; type=number may sanitize
+nonnumeric text to empty. All3 same-setting Sol6.1 Ultra AI final reviews accept
+source and root's local evidence, not human certification or independent tests.
+
+Current saved-only build8812f403954052a1797b7558d2caad4379326846aecddd6ca6d3aff6e2c9d632
+has1454 payloads/97 HTML pages. Adapter9, publication23, contact27, hierarchy1,
+query/alias/history/formatter and full generated-reader checks pass; final
+check_site passes. Actual desktop1280x720/mobile390x844, keyboard, exact legacy
+links, zero0/9999, missing groups/category, final history/fold refresh and signed
+zero checks pass over localhost saved data; no horizontal overflow. Existing-host
+Chromium/local-data checks do not establish native Safari or M8/M9 acceptance.
+Three saved-only exports took245.183/246.708/271.782s; new science0. Original
+examples/models/downloads/lithium bytes are exact; spectrum manifest changes
+only its reader-generator hash. Publication/Git terminal receipt follows this
+handoff in `.local/m13a-unified-viewer-v1/COMPLETE.json`.
+
+Next bounded work is M13b effective-model and ring-mounting contracts, then
+bounded full-chain integration, matching clean500-decay pilots and10K per ring.
+GeRC02 gets an independent280 C/50min Li variant; original30min stays frozen.
+KMRC01_candidate stays unchanged. Both ring adapters remain unimplemented;
+model/bias/contact/transform/cache and signed injection checks precede promotion.
+Minutes are not thickness; no30min-field reuse, abs rectification, per-event
+truth gain or calibrated Li/resolution claim. Each10K includes all initial zeros
+with the existing nominal source/outer cryostat/electronics and checked mounting.
+Stored78 K/explicit runtime77 K and KM polarity stay explicit. Reuse only verified
+terminal stages; no old10K/1M rerun. M8/M9 remain deferred and do not block M13.
 
 ## M11o narrow Gamma status/time wording repair
 

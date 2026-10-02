@@ -1,5 +1,5 @@
 {
-  "kind": "reciprocal_geant4_readers_v1",
+  "kind": "unified_geant4_reader_v1",
   "original_files": {
     "examples/cs137-10k-geometry/AK02/events-00000.json": {
       "sha256": "fa0c89a31c41d622e482b9ef9d5b013140338777601625f89696262cbc099b35",
@@ -873,20 +873,31 @@
     "tools/hit_event_view.py": "7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e"
   },
   "adapter_sources": {
-    "tools/viewer_navigation.py": "6178b5ee1cb9c61d74d789535ab9799a040257978990080eb96ab4392b9b040b",
-    "tools/viewer_navigation.js": "d94e08b66c9184565184ea2793d099ba1fac11161817f23c320b1d10ebaf85a9",
-    "tools/viewer_overlay_selection.js": "c2fac1885c2c594139c602d341d5b6242973de8d2261393215f2d140e2e0d15a"
+    "tools/viewer_navigation.py": "b8475c63a7a5d0be955b82b1e445ed5dffc174ec9752a56d38745985b3716940",
+    "tools/viewer_navigation.js": "ea592bc56b39f98235fff1e52d74b0903faff37f9d9542a109858978de4231db",
+    "tools/unified_event_viewer.html": "f58fda87d4f386935b8549aac2390d623cd356fb5745108518ffcfd3c770b653",
+    "tools/unified_event_viewer.js": "13493720251398d2f02bbcdc9a61fad2a4eee1e9d6f2d047ccfead39feaa3cd2"
   },
   "pages": {
+    "viewers/events.html": {
+      "source": "tools/unified_event_viewer.html",
+      "view": "assembly",
+      "role": "canonical",
+      "sha256": "bf3a10d6fa40594901799007619ef8f9fe52b6de0037a4f3eff9c5aaf629ab2a"
+    },
     "viewers/geant4-assembly.html": {
       "source": "examples/cs137-10k-geometry/geometry.html",
-      "sha256": "1cfe6cd1f8b0f8cf92256919428b29a198d335d6d9fd5dfffd52bafc31738498"
+      "view": "assembly",
+      "role": "alias",
+      "sha256": "8ee0e1d0009bfe49af3360932b16ade3229bb963fb8a6917a66869965b593a7b"
     },
     "viewers/ge-positive.html": {
       "source": "examples/cs137-10k-hits/hit_event_view.html",
-      "sha256": "4d02c0b9aec829242eed96d689162c073f25bc1138e97efca21a8f4cb145d725"
+      "view": "positive",
+      "role": "alias",
+      "sha256": "539fd4e1a311e24082b9c0caf2e6b64e0c74bdfdf352c6a2cc4693ec3c0a1347"
     }
   },
   "new_simulations": 0,
-  "scope": "Earlier 10k/model saved radiation records; no group rendering in assembly, no absent-event substitution in overlay."
+  "scope": "Earlier 10k/model saved radiation records; all primaries including zeros; assembly groups are return context only."
 }

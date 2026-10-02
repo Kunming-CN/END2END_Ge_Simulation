@@ -6,8 +6,7 @@ campaign or numerical validation. M8/M9 remain deferred and do not block it.
 ## Fixed scope
 
 - Merge the maintained `viewers/ge-positive.html` and
-  `viewers/geant4-assembly.html` into one **GeSignal event viewer**, proposed
-  canonical path `viewers/events.html`, with one detector/event/pulse-group
+  `viewers/geant4-assembly.html` into one **GeSignal event viewer**, canonical path `viewers/events.html`, with one detector/event/pulse-group
   selection and display controls for assembly context and Ge-positive overlays.
 - Reuse the completed AK02 and SAP22 10K data. Add GeRC02 and KMRC01, each with
   **10,000 initial Cs137 decays**, including zero-Ge events. The final current

@@ -1,204 +1,51 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ge hits · saved radiation overlay</title>
-<style>
-:root{color-scheme:dark;font:15px system-ui,sans-serif;background:#101923;color:#e8f0f6}*{box-sizing:border-box}body{margin:0}header,main,footer{max-width:1450px;margin:auto;padding:18px}h1{font-size:1.65rem;margin:0 0 8px}h2{font-size:1.05rem}p{line-height:1.5}a{color:#9edbff}button,select{font:inherit;border:1px solid #64788c;border-radius:6px;padding:8px;background:#243546;color:inherit;max-width:100%}button{cursor:pointer}button:disabled{opacity:.45;cursor:default}button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #ffd179;outline-offset:2px}label{display:inline-flex;gap:6px;align-items:center}.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}.note{background:#1d3040;padding:12px;border-left:3px solid #90c7eb}.small{font-size:.86rem;color:#b7c9d8}.layout{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:18px}canvas{width:100%;height:65vh;min-height:340px;display:block;background:#09111a;border:1px solid #43596a;border-radius:8px;touch-action:none}aside{min-width:0}#status{min-height:2.5em;color:#ffd488}#evidence{line-height:1.5}details{border:1px solid #43596a;border-radius:6px;padding:12px;margin:12px 0}summary{cursor:pointer}pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:450px;overflow:auto}#representatives button{font-size:.85rem;text-align:left}#category{max-width:min(100%,480px)}.key{display:inline-block;width:10px;height:10px;margin-right:5px;border-radius:50%}footer{font-size:.85rem;color:#b7c9d8}@media(max-width:850px){.layout{grid-template-columns:1fr}header,main,footer{padding:12px}canvas{height:52vh;min-height:300px}.bar>*{min-width:0}#category{width:100%}h1{font-size:1.35rem}}
-a.reader-button{display:inline-block;padding:10px;border:1px solid #9edbff;border-radius:6px;font-weight:600}a:focus-visible{outline:3px solid #ffd179;outline-offset:2px}a[aria-disabled]{opacity:.55}#identity{overflow-wrap:anywhere}.reader-nav{border:1px solid #64788c;padding:12px}*,*:before,*:after{box-sizing:border-box}canvas{max-width:100%}.bar label{max-width:100%}
-</style></head><body>
-<header><nav class="reader-nav" aria-label="Current and archived event viewers"><div class="bar"><a id="reciprocal" class="reader-button" data-kind="overlay" data-route="geant4-assembly.html" href="geant4-assembly.html">Inspect this primary in the all-event assembly</a><a href="../results/cs137-10k/index.html">10k results</a></div><p>Assembly: all 20,000 initial events (10,000/model), including zeros. Ge-positive overlay: 121 AK02 / 115 SAP22 primaries from the earlier 10k/model campaign; candidate counts are pulse groups.</p><p id="identity" role="status" aria-live="polite"></p><p><a href="../examples/cs137-10k-hits/hit_event_view.html">Original viewer (archive; historical navigation, no current selection continuity)</a> · <a href="../examples/cs137-10k-hits/manifest.json">Original data manifest / downloads</a> · <a href="manifest.json">Current display provenance</a></p><p>Local offline browsing: serve the complete site on localhost HTTP and open this reader. Direct file:// fetch is unsupported.</p></nav><h1>Ge hits · saved radiation overlay</h1>
-<p class="note"><strong>Selected population: all 121 AK02 / 115 SAP22 Ge-positive primaries.</strong> Overlaid decays are independent, not simultaneous. The <a id="allEvents" href="../examples/cs137-10k-geometry/geometry.html">original all-event viewer</a> retains all 20,000 decays, including zeros.</p>
-<p class="small">Frozen nominal assembly and source at (0, 37.073, 0.290) mm, above the curved Al wall on +y. No source relocation, simulation, drift or readout is performed here.</p>
-<div class="bar"><label>Model <select id="model"><option>AK02</option><option>SAP22</option></select></label><span id="census"></span></div>
-<div class="bar"><label for="category">Candidate filter</label><select id="category"><option value="all">All Ge-positive events</option></select>
-<label>Primary <select id="event" disabled></select></label><label>Pulse group <select id="group" disabled></select></label></div>
-<div id="representatives" class="bar" aria-label="Representative candidate shortcuts"></div>
-<div id="status" role="status" aria-live="polite">Loading saved manifest…</div></header>
-<main><div class="layout"><section>
-<div class="bar"><button data-view="default">Fit</button><button data-view="front">Front XY</button><button data-view="side">Side ZY</button><button id="zoomIn">Zoom +</button><button id="zoomOut">Zoom −</button><button id="pan" aria-pressed="false">Pan</button></div>
-<canvas id="canvas" aria-label="Ge-positive radiation overlay with highlighted primary and pulse group"></canvas>
-<p class="small"><span class="key" style="background:#edd896"></span>Ge deposits/chords <span class="key" style="background:#67cde4"></span>Relevant photons <span class="key" style="background:#ff8f61"></span>Highlighted group <span class="key" style="background:#ac93db"></span>Ge mesh. Drag to rotate; Pan or Shift-drag to move; wheel/buttons to zoom.</p>
-<div class="bar"><label><input id="overlay" type="checkbox" checked>All Ge-hit events</label><label><input id="photons" type="checkbox" checked>Relevant photons</label><label><input id="shells" type="checkbox">Show passive shells</label><label><input id="detail" type="checkbox">Selected event: all recorded STEP chords</label></div>
-<p id="detailLimit" class="small"></p>
-<p class="small">Chords connect only one saved STEP pre/post pair. Photon dots are birth records. No joins across unscored air paths or between steps; these are not complete trajectories. Passive electron fragments appear only in optional selected-event detail.</p>
-<details id="rawPanel"><summary>Selected primary: all exact saved rows and lineage</summary><p class="small">Raw positions: m; STEP Edep: keV; track kinetic energy/momentum: MeV; time: ns; particle: PDG ID. raw_row_index is the original table row. Every table/track/step for this selected primary is retained, even when not drawn.</p><pre id="raw"></pre></details>
-<details><summary>Classification method, provenance and limitations</summary><pre id="method"></pre></details>
-</section><aside><h2>Selected pulse-group evidence</h2><div id="evidence">Choose a saved event.</div>
-<details id="evidencePanel"><summary>Exact classification evidence</summary><pre id="evidenceRaw"></pre></details>
-<p class="small">“Full” means a numerical match to ONE ancestor photon’s birth energy in one saved 100 µs window, using max(10⁻⁵ keV, 10⁻⁸ Eγ). It does not mean every Cs137 decay emits 662 keV.</p>
-<p class="small">Compton counts are observed electron-creation sites on photon ancestry. Same-vertex/time secondary electrons share one site. Step counts are not scatter counts. Without per-step processes/energies, precise interaction multiplicity is unresolved.</p>
-<p class="small">Compact SSE candidates have a maximum positive-deposit diameter ≤ 1 mm. This is a spatial screen, not calibrated PSD. Partial-energy cases do not establish escape or a complete energy balance. Categories may overlap; counts refer to pulse groups.</p>
-<p class="small">Representative buttons prefer the highest observed photon-energy family, then its median deposit diameter (compact) or Ge energy. This is illustrative, not statistical typicality. Empty categories stay empty; no substitution. The button reports the actual photon energy.</p></aside></div></main>
-<footer>Offline portable bundle: serve the complete site root with a localhost static server and open viewers/ge-positive.html. Direct file:// fetch is unsupported. Requires a modern browser with native gzip DecompressionStream and SHA-256 (HTTPS or localhost). No external frontend dependencies. The original all-event link requires the sibling published bundle. <a href="../examples/cs137-10k-hits/manifest.json">Hash manifest and upstream attribution</a>; no upstream relicensing grant is made. Rendering throughput has not been benchmarked.</footer>
-<script id="selection-core">
-'use strict';
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>GeSignal event viewer — saved link</title><meta name="description" content="A preserved event link to the unified saved-radiation viewer."><link rel="canonical" href="https://kunming-cn.github.io/END2END_Ge_Simulation/viewers/events.html"><style>body{font:17px/1.5 system-ui;background:#0c1724;color:#e7f0fa;max-width:760px;margin:3rem auto;padding:1rem}a{color:#9edbff}a:focus-visible{outline:3px solid #ffd179}p{overflow-wrap:anywhere}</style></head><body><h1>GeSignal event viewer</h1><p id="aliasStatus" role="status" aria-live="polite">Opening the saved event identity…</p><p><a href="events.html">Choose an event in the unified viewer</a> · <a href="../examples/cs137-10k-hits/hit_event_view.html">Original viewer (archive)</a></p><noscript>This saved-link transition needs JavaScript. The original archived viewer remains available above.</noscript><script id="viewer-navigation">// Requested identity is distinct from a verified primary or pulse group.
+function parseViewerQuery(search, options = {}) {
+  const legacy = options.legacy === true, q = new URLSearchParams(search);
+  const state = {model:'AK02',event:null,group:null,view:options.view || 'assembly',invalid:''};
+  const allowed = legacy ? ['model','event','group'] : ['model','event','group','view'];
+  for (const key of q.keys()) if (!allowed.includes(key) || q.getAll(key).length !== 1)
+    state.invalid = 'Unknown or repeated query parameter.';
+  if (q.has('model')) {state.model = q.get('model');if (!['AK02','SAP22'].includes(state.model))state.invalid = 'Unknown model.';}
+  if (!legacy && q.has('view')) state.view = q.get('view');
+  if (!['assembly','positive'].includes(state.view)) state.invalid = 'Unknown view.';
+  for (const key of ['event','group']) if (q.has(key)) {
+    const raw = q.get(key), value = Number(raw);
+    if (!/^(0|[1-9][0-9]*)$/.test(raw) || !Number.isSafeInteger(value) || (key === 'event' && value > 9999))
+      state.invalid = 'Invalid '+key+'; use a nonnegative integer'+(key === 'event'?' from 0 to 9999.':'.');
+    else state[key] = value;
+  }
+  if (state.group !== null && state.event === null) state.invalid = 'A group requires a primary event ID.';
+  return state;
+}
+function canonicalViewerQuery(identity) {
+  if (identity.invalid) throw Error(identity.invalid);
+  const q = new URLSearchParams({model:identity.model});
+  if (identity.event !== null) q.set('event', String(identity.event));
+  if (identity.group !== null) q.set('group', String(identity.group));
+  q.set('view', identity.view);
+  const result = parseViewerQuery('?'+q);
+  if (result.invalid) throw Error(result.invalid);
+  return q.toString();
+}
+function legacyViewerTarget(search, view) {
+  const requested = parseViewerQuery(search,{legacy:true,view});
+  return {requested,target:requested.invalid ? null : 'events.html?'+canonicalViewerQuery(requested)};
+}
+function viewerHistoryTarget(identity, pathname, search) {
+  const target = pathname+'?'+canonicalViewerQuery(identity);
+  return {target,changed:target !== pathname+search};
+}
 function selectionGate(clear) {
-  let generation=0;
+  let generation = 0;
   return {
     invalidate(){++generation;clear();},
     async run(load,apply,fail){
-      const token=++generation;clear();
-      try {const result=await load();if(token!==generation)return false;apply(result);return true;}
-      catch(error){if(token===generation)fail(error);return false;}
+      const ticket = ++generation;clear();
+      try {const result = await load();if(ticket !== generation)return false;apply(result);return true;}
+      catch(error){if(ticket === generation)fail(error);return false;}
     }
   };
 }
-function unpackEvent(event, columns) {
-  return {event_id:event.event_id,tables:Object.fromEntries(Object.entries(columns).map(([table,keys])=>
-    [table,(event.tables[table]||[]).map(row=>Object.fromEntries(keys.map((key,i)=>[key,row[i]])))]))};
-}
 </script>
-<script>
-'use strict';
-// Navigation identity is separate from rendered selection. Null is not primary 0.
-function parseViewerQuery(search) {
-  const q=new URLSearchParams(search), state={model:'AK02',event:null,group:null,invalid:''};
-  for(const key of q.keys())if(!['model','event','group'].includes(key)||q.getAll(key).length!==1)state.invalid='Unknown or repeated query parameter.';
-  if(q.has('model')){state.model=q.get('model');if(!['AK02','SAP22'].includes(state.model))state.invalid='Unknown model.';}
-  for(const key of ['event','group'])if(q.has(key)){
-    const raw=q.get(key), value=Number(raw);
-    if(!/^(0|[1-9][0-9]*)$/.test(raw)||!Number.isSafeInteger(value)||(key==='event'&&value>9999))state.invalid='Invalid '+key+'; use a nonnegative integer'+(key==='event'?' from 0 to 9999.':'.');
-    else state[key]=value;
-  }
-  if(state.group!==null&&state.event===null)state.invalid='A group requires a primary event ID.';
-  return state;
-}
-const navigation=parseViewerQuery(location.search);
-function navigationLinks(success=false){
-  const link=document.getElementById('reciprocal'), status=document.getElementById('identity');
-  if(navigation.invalid){link.removeAttribute('href');link.setAttribute('aria-disabled','true');status.textContent='Unavailable request: '+navigation.invalid+' Query: '+location.search;return;}
-  const q=new URLSearchParams({model:navigation.model});
-  if(navigation.event!==null)q.set('event',navigation.event);
-  if(navigation.group!==null)q.set('group',navigation.group);
-  link.href=link.dataset.route+'?'+q;link.removeAttribute('aria-disabled');
-  status.textContent=(success?'Selected: ':'Requested: ')+navigation.model+(navigation.event===null?'':', original primary '+navigation.event)+
-    (navigation.group===null?'':', group '+navigation.group)+(link.dataset.kind==='assembly'&&navigation.group!==null?' (return-navigation context only; assembly does not render pulse groups).':'');
-  if(success)history.replaceState(null,'',location.pathname+'?'+q);
-}
-function requestIdentity(model,event,group){Object.assign(navigation,{model,event,group,invalid:''});navigationLinks();}
-function successfulIdentity(model,event,group){requestIdentity(model,event,group);navigationLinks(true);}
-function unavailableSelection(message){
-  document.getElementById('status').textContent='Unavailable: '+message+' No primary or group is highlighted. Use the all-event assembly for the requested primary.';
-  navigationLinks();
-}
-
-const $=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d');
-let manifest=null,scene=null,data=null,events=new Map(),evidence=new Map(),selected=null,selectedGroup=null;
-let activeModel=null,yaw=.45,pitch=-.18,zoom=1,panX=0,panY=0,center=[0,0,0],radius=40,panMode=false;
-const DETAIL_CAP=2000;
-function clearSelection(){selected=null;selectedGroup=null;$('raw').textContent='';$('evidenceRaw').textContent='';$('evidence').textContent='No pulse group selected.';$('detailLimit').textContent='';draw();}
-const gate=selectionGate(clearSelection);
-function failure(error){unavailableSelection('Load failed: '+error.message);}
-async function fetchJSON(path, expected) {
-  const response=await fetch("../examples/cs137-10k-hits/"+path);if(!response.ok)throw Error(path+': HTTP '+response.status);
-  let bytes=await response.arrayBuffer();
-  if(expected){if(!globalThis.crypto?.subtle)throw Error('SHA-256 requires HTTPS or localhost.');
-    const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
-    if(hash!==expected)throw Error('Hash mismatch: '+path);}
-  if(path.endsWith('.gz')){if(typeof DecompressionStream==='undefined')throw Error('Native gzip DecompressionStream is required.');
-    bytes=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();}
-  return JSON.parse(new TextDecoder().decode(bytes));
-}
-const pos=(r,s='')=>['xloc','yloc','zloc'].map(k=>r[k+s]*1000);
-function project(p){const [x,y,z]=p.map((v,i)=>v-center[i]);const a=Math.cos(yaw)*x+Math.sin(yaw)*z,b=-Math.sin(yaw)*x+Math.cos(yaw)*z;
-  const c=Math.cos(pitch)*y-Math.sin(pitch)*b,d=Math.sin(pitch)*y+Math.cos(pitch)*b,s=Math.min(canvas.clientWidth,canvas.clientHeight)*.43/radius*zoom;
-  return [canvas.clientWidth/2+a*s+panX,canvas.clientHeight/2-c*s+panY,d];}
-function line(a,b,color,width=1){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
-function dot(p,color,size){const q=project(p);ctx.beginPath();ctx.arc(q[0],q[1],size,0,2*Math.PI);ctx.fillStyle=color;ctx.fill();}
-function chord(r,color,width){line(project(pos(r,'_pre')),project(pos(r,'_post')),color,width);}
-function drawEvent(event,highlight=false){const proof=evidence.get(event.event_id),photons=new Set(proof.relevant_photon_track_ids),groupRows=new Set(selectedGroup?.ge_raw_row_indices||[]);
-  for(const r of event.tables['stp/germanium']){const chosen=highlight&&groupRows.has(r.raw_row_index);ctx.globalAlpha=highlight?.95:.18;
-    chord(r,chosen?'#ff8f61':highlight?'#ffe5a0':'#edd896',highlight?2:1);
-    if(r.edep>0)dot(pos(r),chosen?'#ff8f61':'#edd896',highlight?3:1.4);}
-  if($('photons').checked){ctx.globalAlpha=highlight?.9:.12;
-    for(const [name,rows] of Object.entries(event.tables)){if(!name.startsWith('stp/')||name==='stp/germanium')continue;
-      for(const r of rows)if(r.particle===22&&photons.has(r.trackid))chord(r,'#67cde4',highlight?2:1);}
-    for(const r of event.tables.tracks)if(r.particle===22&&photons.has(r.trackid))dot(pos(r),'#67cde4',highlight?3:1.3);}
-  ctx.globalAlpha=1;
-}
-function draw(){const ratio=globalThis.devicePixelRatio||1,w=canvas.clientWidth,h=canvas.clientHeight;
-  if(canvas.width!==Math.round(w*ratio)||canvas.height!==Math.round(h*ratio)){canvas.width=Math.round(w*ratio);canvas.height=Math.round(h*ratio);}
-  ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,w,h);if(!scene)return;
-  const volumes=scene.volumes.filter(v=>v.name==='germanium'||($('shells').checked&&!['G4_AIR','G4_Galactic'].includes(v.material)));
-  for(const v of volumes){const points=v.vertices_global_mm.map(project),color=v.name==='germanium'?'#ac93db':'#88a5b6';ctx.globalAlpha=v.name==='germanium'?.2:.07;
-    for(const face of v.triangles){ctx.beginPath();face.forEach((i,n)=>n?ctx.lineTo(points[i][0],points[i][1]):ctx.moveTo(points[i][0],points[i][1]));ctx.closePath();ctx.fillStyle=color;ctx.fill();}
-    ctx.globalAlpha=v.name==='germanium'?.3:.12;for(const [a,b] of v.wireframe)line(points[a],points[b],color);}
-  ctx.globalAlpha=1;
-  if($('overlay').checked)for(const event of events.values())if(event!==selected)drawEvent(event);
-  if(selected&&$('detail').checked){let count=0,total=0;ctx.globalAlpha=.5;
-    for(const [name,rows] of Object.entries(selected.tables))if(name.startsWith('stp/'))for(const r of rows){total++;if(count++<DETAIL_CAP)chord(r,'#8ca3b8',1);}
-    ctx.globalAlpha=1;$('detailLimit').textContent=`Optional detail: ${Math.min(total,DETAIL_CAP)} / ${total} recorded STEP chords drawn (cap ${DETAIL_CAP}); all original rows remain in the payload and raw panel.`;
-  }else $('detailLimit').textContent='Optional detail caps drawing only; the selected-event census is never capped.';
-  if(selected)drawEvent(selected,true);
-  dot(scene.source_position_global_mm,'#fff3a3',4);const p=project(scene.source_position_global_mm);ctx.fillStyle='#fff3a3';ctx.font='12px system-ui';ctx.fillText('Source (+y)',p[0]+7,p[1]-7);
-}
-function fit(view='default'){yaw=view==='front'?0:view==='side'?Math.PI/2:.45;pitch=view==='default'?-.18:0;zoom=1;panX=panY=0;
-  if(scene){const points=scene.volumes.filter(v=>v.name==='germanium'||($('shells').checked&&!['G4_AIR','G4_Galactic'].includes(v.material))).flatMap(v=>v.vertices_global_mm);points.push(scene.source_position_global_mm);
-    const lo=[0,1,2].map(a=>Math.min(...points.map(p=>p[a]))),hi=[0,1,2].map(a=>Math.max(...points.map(p=>p[a])));center=lo.map((v,i)=>(v+hi[i])/2);radius=Math.max(1,...points.map(p=>Math.hypot(...p.map((v,i)=>v-center[i]))));}draw();}
-function option(value,label){const o=document.createElement('option');o.value=String(value);o.textContent=label;return o;}
-function refreshDetails(){if($('rawPanel').open)$('raw').textContent=selected?JSON.stringify(selected,null,2):'';
-  if($('evidencePanel').open)$('evidenceRaw').textContent=selectedGroup?JSON.stringify({event:evidence.get(selected.event_id),selected_group_id:selectedGroup.group_id},null,2):'';}
-function describe(){const g=selectedGroup,e=evidence.get(selected.event_id);$('evidence').replaceChildren();
-  const lines=[`${activeModel} primary ${selected.event_id}, pulse group ${g.group_id}`,
-    g.categories.map(k=>manifest.category_labels[k]).join(' · '),
-    `Ge Edep ${g.ge_energy_keV.toPrecision(10)} keV; source photon ${g.source_photon_energy_keV===null?'unknown':g.source_photon_energy_keV.toPrecision(10)+' keV'}.`,
-    `Source photon track(s): ${g.source_photon_track_ids.join(', ')||'unresolved'}. Group origin ${g.origin_time_ns} ns; saved delay span ${Math.max(...g.relative_delays_ns)} ns.`,
-    `Deposit diameter ${g.deposit_diameter_mm.toPrecision(6)} mm; ${g.ge_raw_row_indices.length} positive Ge steps in this group (${e.ge_step_count} total Ge steps in primary).`,
-    `Observed in-window Compton creation sites: ${g.observed_compton_site_count??'unknown'}.`,
-    g.reason];
-  if(g.root_non_ge_energy_keV!==undefined)lines.push(`Recorded root-linked non-Ge Edep: ${g.root_non_ge_energy_keV.toPrecision(8)} keV; same-root Ge energy outside this pulse group: ${g.root_other_group_ge_energy_keV} keV.`);
-  if(e.graph_errors.length)lines.push('Graph errors: '+e.graph_errors.join('; '));
-  for(const text of lines){const p=document.createElement('p');p.textContent=text;$('evidence').append(p);}
-  $('status').textContent=`${activeModel}: all ${events.size} Ge-positive primaries available. Highlight: original primary ${selected.event_id}, group ${g.group_id}. Background overlay ${$('overlay').checked?'contains all selected primaries':'hidden'}.`;
-  refreshDetails();draw();}
-async function selectEvent(id,groupId=null){
-  requestIdentity($('model').value,id,groupId);
-  if(!data)return;
-  const chosenData=data,chosenModel=activeModel,category=$('category').value;
-  $('event').value='';$('group').replaceChildren();$('group').disabled=true;
-  await gate.run(async()=>{
-    const event=events.get(id),proof=evidence.get(id);
-    if(!event||!proof)throw Error(`${chosenModel} primary ${id} is outside the saved Ge-positive population (zero-Ge or otherwise not represented).`);
-    const matches=proof.groups.filter(g=>category==='all'||g.categories.includes(category));
-    const group=groupId===null?matches[0]:matches.find(g=>g.group_id===groupId);
-    if(!group)throw Error(`${chosenModel} primary ${id}${groupId===null?'':', group '+groupId} is not represented by the current candidate filter / saved groups.`);
-    return {event,group,matches};
-  },value=>{
-    if(chosenData!==data||chosenModel!==activeModel)return;
-    selected=value.event;selectedGroup=value.group;$('event').value=String(id);
-    $('group').replaceChildren(...value.matches.map(g=>option(g.group_id,`${g.group_id} · ${g.ge_energy_keV.toPrecision(6)} keV`)));
-    $('group').disabled=false;$('group').value=String(value.group.group_id);
-    successfulIdentity(chosenModel,id,value.group.group_id);describe();
-  },error=>unavailableSelection(error.message));
-}
-function filterCategory(preferred=null){
-  if(!data)return;
-  gate.invalidate();$('event').replaceChildren();$('group').replaceChildren();$('group').disabled=true;
-  const category=$('category').value,members=category==='all'?data.event_ids:data.categories[category].map(m=>m.event_id),ids=[...new Set(members)];
-  const empty=option('','Choose a represented primary');empty.disabled=true;
-  $('event').replaceChildren(empty,...ids.map(id=>option(id,String(id))));$('event').value='';$('event').disabled=!ids.length;
-  if(navigation.invalid){unavailableSelection(navigation.invalid);return;}
-  const id=preferred?.event_id??navigation.event??ids[0],group=preferred?.group_id??navigation.group;
-  if(id===undefined){unavailableSelection('No saved groups in this category.');return;}
-  selectEvent(id,group);
-}
-
-function representativeButtons(){ $('representatives').replaceChildren();
-  for(const key of ['compact','compton1','compton2','partial']){const b=document.createElement('button'),rep=data.representatives[key],g=rep?evidence.get(rep.event_id).groups.find(g=>g.group_id===rep.group_id):null;b.textContent=`${manifest.category_labels[key]} (${data.categories[key].length})${g?' · Eγ '+g.source_photon_energy_keV.toPrecision(6)+' keV':''}`;b.disabled=!rep;
-    b.onclick=()=>{$('category').value=key;filterCategory(rep);};$('representatives').append(b);}}
-async function selectModel(name){requestIdentity(name,navigation.event,navigation.group);activeModel=name;scene=null;data=null;events=new Map();evidence=new Map();$('event').replaceChildren();$('group').replaceChildren();$('event').disabled=true;$('group').disabled=true;$('representatives').replaceChildren();$('census').textContent='';$('method').textContent='';
-  $('status').textContent=`Loading ${name} saved geometry and selected records…`;
-  await gate.run(async()=>{const entry=manifest.models[name];const [s,p]=await Promise.all([fetchJSON(entry.scene,manifest.files[entry.scene].sha256),fetchJSON(entry.selected,manifest.files[entry.selected].sha256)]);
-    if(s.model!==name||p.model!==name||p.event_ids.length!==entry.selected_count||p.events.length!==entry.selected_count||p.events.some((e,i)=>e.event_id!==p.event_ids[i]))throw Error('Model/census mismatch');
-    return {s,p};},({s,p})=>{scene=s;data=p;events=new Map(p.events.map(e=>[e.event_id,unpackEvent(e,p.columns)]));evidence=new Map(p.evidence.map(e=>[e.event_id,e]));
-      $('census').textContent=`${events.size} selected / 10,000 original decays`;
-      $('method').textContent=JSON.stringify({method:manifest.method,source_sha256:manifest.source_sha256,input_pins:manifest.input_pins,scene_sha256:manifest.models[name].source_scene_sha256,raw_lh5_sha256:s.raw_lh5_sha256,raw_software_versions:s.raw_software_versions,seed:s.seed,upstream:manifest.upstream,representative_rule:p.representative_rule},null,2);
-      representativeButtons();fit();filterCategory();},failure);}
-$('model').onchange=()=>{requestIdentity($('model').value,navigation.event,navigation.group);if(manifest)selectModel($('model').value);};$('category').onchange=()=>filterCategory();$('event').onchange=()=>selectEvent(Number($('event').value));$('group').onchange=()=>selectEvent(Number($('event').value),Number($('group').value));
-$('rawPanel').ontoggle=$('evidencePanel').ontoggle=refreshDetails;
-for(const id of ['overlay','photons','detail'])$(id).onchange=()=>{if(selected)describe();else draw();};$('shells').onchange=()=>fit();
-document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>fit(b.dataset.view));$('zoomIn').onclick=()=>{zoom=Math.min(50,zoom*1.3);draw();};$('zoomOut').onclick=()=>{zoom=Math.max(.1,zoom/1.3);draw();};$('pan').onclick=()=>{panMode=!panMode;$('pan').setAttribute('aria-pressed',String(panMode));};
-let drag=null;canvas.oncontextmenu=e=>e.preventDefault();canvas.onpointerdown=e=>{canvas.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,pan:panMode||e.shiftKey||e.button===2};};canvas.onpointerup=canvas.onpointercancel=()=>drag=null;
-canvas.onpointermove=e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;if(drag.pan){panX+=dx;panY+=dy;}else{yaw+=dx*.008;pitch=Math.max(-1.5,Math.min(1.5,pitch+dy*.008));}draw();};
-canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.1,Math.min(50,zoom*Math.exp(-e.deltaY*.001)));draw();},{passive:false});new ResizeObserver(draw).observe(canvas);
-fetchJSON('manifest.json').then(m=>{manifest=m;navigationLinks();for(const [key,label] of Object.entries(m.category_labels))$('category').append(option(key,label));if(navigation.invalid){failure(Error(navigation.invalid));return;}$('model').value=navigation.model;return selectModel(navigation.model);}).catch(failure);
-</script></body></html>
+<script id="viewer-alias">const alias=legacyViewerTarget(location.search,"positive");if(alias.target)location.replace(alias.target+location.hash);else document.getElementById("aliasStatus").textContent="Unavailable saved-link request: "+alias.requested.invalid+" Query: "+location.search;</script></body></html>

@@ -105,6 +105,7 @@ tools/recover_native_run.ps1 text eol=lf
 # Current Geant4 reader source hashes retain exact LF bytes on Windows.
 tools/viewer_navigation.js text eol=lf
 tools/viewer_overlay_selection.js text eol=lf
+tools/unified_event_viewer.js text eol=lf
 
 # Keep the new read-only charge-check entry stable across Windows checkouts.
 tools/charge_check.ps1 text eol=lf

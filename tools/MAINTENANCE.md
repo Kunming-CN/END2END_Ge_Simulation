@@ -16,7 +16,7 @@ another complete installation recipe.
 | Geometry export and validation | `tools/export_ssd_geometry.py`, `geometry_catalog.py`, `ssd_geometry_publication.py` |
 | Browser geometry controls | `tools/ssd_geometry_viewer.html` |
 | Saved energy-spectrum views | `tools/spectrum_display.py`, `spectrum_plot.py`, `spectrum_controls.js`; see [display semantics](SPECTRUM_DISPLAY.md) |
-| Current reciprocal Geant4 readers | `tools/viewer_navigation.py`, `viewer_navigation.js`, `viewer_overlay_selection.js`; see [reader ownership](VIEWER_NAVIGATION.md). Original signed viewers remain frozen. |
+| Unified GeSignal event reader and old entry aliases | `tools/viewer_navigation.py`, `viewer_navigation.js`, `unified_event_viewer.html`, `unified_event_viewer.js`; see [reader ownership](VIEWER_NAVIGATION.md). Original signed viewers remain frozen. |
 | Windows setup/run guide | `tools/site_guide.html` |
 | Contributions, software citation and rights scope | Root `CONTRIBUTING.md`, `CITATION.cff`, `THIRD_PARTY_NOTICES.md`; `.github/PULL_REQUEST_TEMPLATE.md` |
 | Loopback bounded-native control | `Control.cmd`, `tools/local_ui.ps1`, `local_ui.py`, `local_ui_jobs.py`, `local_ui.html`, `local_ui.js`; same native backend, no public execution service |

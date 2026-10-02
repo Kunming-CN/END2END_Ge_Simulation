@@ -158,7 +158,7 @@ def validate(site, require_manifest=True, require_models=False):
     if (site/"spectra/manifest.json").exists():
         from spectrum_display import validate as validate_spectrum_display
         validate_spectrum_display(site)
-    if any((site/p).exists() for p in ('viewers/manifest.json','viewers/geant4-assembly.html','viewers/ge-positive.html')):
+    if any((site/p).exists() for p in ('viewers/manifest.json','viewers/events.html','viewers/geant4-assembly.html','viewers/ge-positive.html')):
         from viewer_navigation import validate as validate_readers
         validate_readers(site)
     from site_discovery import validate as validate_discovery
