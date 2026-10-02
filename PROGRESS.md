@@ -5,6 +5,21 @@ The preceding handoff is immutable
 [at 8162c57](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/8162c5721d331ad0f8b0a6741f501c8352211909/PROGRESS.md).
 Inspect terminal receipts, Git, hashes and actual workers before repeating work.
 
+Owner-requested pause2026-10-02 for an application update: development agents
+have saved coherent local checkpoints and stopped; heartbeat `automation` is
+PAUSED. Detached GeRC02 10K supervisor41132/native44292 continues under its own
+campaign lock. Do not launch another worker or retry science after the update:
+inspect `.local/ring-cs137-v1/progress.json`, production terminal/run/envelope,
+source hashes and actual processes first. Outer round ownership is released into
+the pause evidence; autonomy remains paused, not ready. Resume only on owner input.
+KM polarity/launcher are written but untested; exporter is partial and explicitly
+refuses export. Their exact unfinished steps and source hashes are in
+KM-POLARITY-WRITER-v1.json, KM-RUNNER-WRITER-PAUSE-v1.json and
+`.local/ring-publication-v1/build/WRITER-PAUSE-v1.json`. The unchanged scene
+exporter's hardcoded historical roots need a bounded additive helper later.
+These unfinished calculation files remain local until testing/review; no new
+launch, test, export or geometry operation belongs to the pause checkpoint.
+
 ## M13 unified viewer and ring-contact 10K plan
 
 Owner delivery order: [tools/RING_10K_PLAN.md](tools/RING_10K_PLAN.md).
@@ -79,7 +94,10 @@ samples remain exact. Saved-only build8bff93f passes54 gamma/site/hierarchy test
 desktop positive plots, model defaults/memory, zero/unknown choices and mobile
 facts pass. Expanded raw-JSON AX/CDP timeouts prevent fresh native-file offline
 and detail-refresh checks; bad clipped capture is retained, not four-plot proof.
-Narrow source/evidence review accepts with these limits; Git/live sync pending.
+All3 narrow source/evidence reviews accept with these limits. Commit3ff61e9 is
+synchronized with origin/main; exact live check passes465 files/build8bff93f.
+Publication evidence is `.local/remage-adoption-v1/COMPLETE.json`; the subsequent
+pause handoff changes documentation only and preserves the same website bytes.
 Remage-paper adoption is deferred TODO in RING_10K_PLAN.
 No old10K/1M rerun; M8/M9 remain deferred and do not block M13.
 
