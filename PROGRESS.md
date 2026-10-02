@@ -1,9 +1,38 @@
 # Project state and next bounded work
 
 Updated: 2026-10-02 UTC. This compact handoff governs delivery order.
-The preceding discovery handoff is immutable
-[at a35d163](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/a35d16328fc5ee62c41dff438f261b249977dd07/PROGRESS.md).
+The preceding community handoff is immutable
+[at 11ad559](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/11ad559b2b4e804a3c475058a07f31acc7fb1098/PROGRESS.md).
 Inspect terminal receipts, Git, hashes and actual workers before repeating work.
+
+## M11m maintained mouse-interface guide
+
+Only local-routes/local-control source sections changed. Cs137 stop/continue stays
+Cs-only; fixed gamma check/start/observed progress/verify/12 raw downloads and the
+separate saved-reference action are explicit. Preview does not retarget; gamma
+has no stop/resume/retry or new explorer. Private calculation inputs and a completed
+saved-reference bundle are separate prerequisites, unavailable in a fresh clone.
+40 truth/6 selected/34 unprocessed-null, two true zeros, original IDs, 78 K models/
+explicit77 K cache, bias, signed flags and independent500 keV injection remain.
+No calibrated Li CCE, physical resolution, experimental fit or newcomer claim.
+
+All14 section IDs,15 fragment occurrences,15 command blocks,46 inline-code entries
+retain their order/bytes;12 other sections and outside bytes exact.64 existing
+unique tests/zero skips pass. Two scoped Sol6.1 Ultra source peers exchange four
+actual messages; science conclusions preceded the workflow opener, but final
+hash/assertion/receipt checks followed it, accurately recorded. A NEW public-only
+Sol6.1 Ultra static session independently accepts details/direction; tool items0.
+These are AI reviews, not certification. Source writer stopped before15 pinned
+hashes and saved-only export start; all pins unchanged at completion.
+
+Saved-only export254.265s; guide.html is the sole changed payload,1452 others exact.
+1453 payloads/1454 files, build26aebee66405115b4a8e6d99ad8ad9bbcf6e0bb4ba3a3d96114b5c1d3fb93ab2.
+Local96HTML/2841links PASS60.593s. Actual rendered guide1280x720 desktop and390x844
+mobile has no horizontal overflow; keyboard Enter expands/collapses the limits
+fold. One screenshot each, temporary owned preview closed. This checks the public
+guide, not local-control execution or second-computer installation. Science0.
+Git/published exact-live validation follows this commit; terminal receipt governs.
+Evidence .local/m11m-guide-contract-v1/; old raw results/failures unchanged.
 
 ## M12b contribution, citation and compatible protection
 
@@ -33,9 +62,11 @@ public-only static reviewer accept v3 after repair, with six actual reciprocal
 messages (four original plus two correction exchanges). These are AI reviews,
 not legal/experimental certification; third tools0, actual launch independently
 verified.23 publication tests and full local96HTML/2841links pass (58.485s checker).
-Scientific/model/site payloads unchanged; science0/build0. Git synchronization and
-GitHub's native CFF citation UI follow this implementation commit; terminal receipt
-supersedes that pending stage. No installation, global settings or reset use.
+Scientific/model/site payloads unchanged; science0/build0.11ad559 synchronized
+local/main/origin/GitHub with clean worktree. Actual GitHub native CFF APA/BibTeX
+UI passes; two desktop screenshots, no full external-schema certification.
+Terminal .local/m12b-community-v1/COMPLETE.json governs. No installation, global
+settings or reset use.
 
 ## M12a discovery delivered and live verified
 
@@ -122,12 +153,14 @@ verification, not a new executable adapter. Seventeen viewable is not executable
 ## Next bounded work
 
 Skip M8/M9: second-computer newcomer acceptance blocks no current development.
-M11m is next: describe delivered fixed gamma controls and the separate saved-reference
-action in the single maintained guide. Read-only scope proposal is frozen at
-.local/m12b-community-v1/next-guide-plan/PLAN.json. Retain all14anchors and existing
-fragments/commands; scope stop/continue to Cs137, preserve40/6/34-null/private-input/
-78K-models/explicit77K-cache/fresh-clone limits. One saved-only publication, no
-physics/environment rerun or frontend redesign. Root LICENSE requires the owner's
+M11n is next: bounded actual browser acceptance of the already implemented local
+controls on this existing host, using input checks/metadata previews and saved
+verification/open only. Inspect state/processes/source compatibility before any
+interface launch; no new radiation, SSD, electronics, installation or campaign.
+Do not blindly adopt or rerun the completed M11k job; preserve its source-bound
+receipt and failure accounting. Keep M8/M9 deferred, record actual browser scope,
+owned process cleanup and any concrete UI problem before deciding a narrow fix.
+Root LICENSE requires the owner's
 MIT/Apache/GPL choice and specific rights scope; do not treat preselection as an
 answer. Model/source permissions stay separate. No collaborator grants or new CI.
 Search Console can resume after actual owner login; do not invent verification.
