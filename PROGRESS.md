@@ -1,73 +1,68 @@
 # Project state and next bounded work
 
 Updated: 2026-10-01 (2026-10-02 UTC). This compact handoff governs delivery order.
-The preceding M11f/M11e/M11d handoff is immutable
-[at 1574aa7](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/1574aa73b04011eb6931cefbeb3be53ad4e65852/PROGRESS.md).
-Recover terminal receipts and actual workers before repeating interrupted work.
+The preceding navigation/native/engineering handoff is immutable
+[at 292fba3](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/292fba3c78074530034845e54f75228cf781b0c6/PROGRESS.md).
+Inspect terminal receipts, Git, hashes and actual workers before repeating work.
 
-## M11g first navigation cleanup
+## M11h README entry organization
 
-Learn now promotes the checked completed gamma-native engineering example while
-retaining the separately named compact teaching route. Results separates the
-current 1M campaign, saved engineering examples and earlier 10k campaign. The
-Windows guide's Browse label points to all saved results. Gamma is checked once
-before any page writes; absence keeps the compact fallback, corruption fails.
-Existing spectrum routing, all old URLs and fourteen guide anchors remain intact.
-Homepage, README, models, figures, saved reports and numerical payloads are exact.
-This is a first navigation improvement, not resolution of all information clutter.
+README now starts with four task links: Results, Detector Library, the sole
+Windows setup/run guide and Maintenance. One native Markdown details area groups
+the other 16 references. All 20 exact targets, seven guide anchors and original
+commands/facts remain. Setup, 17-viewable/two-implemented scope, 500 demo/serial
+choices, private-input and interrupted-native-stage recovery limits stay visible.
+This improves reading order only; broader website clutter is not declared closed.
 
-Four sources froze after actual writer exit. Two focused fixture suites pass
-8 checks; root publication tests pass 23 and contact tests pass 27. The prescribed
-saved-only build took 258.071881 s. Local check verifies 96 HTML pages/2841 links.
-Build f73753911bf22436df83e9600e996baead072d7ae3cd50188a962f1022243235
-has 1452 payloads/1453 files. Exactly guide.html, learn/index.html, results/index.html
-and the manifest change; 1449 payloads are byte-exact. No scientific computation.
-Three independent Sol 6.1 Ultra AI INITIAL reviews and four actual reciprocal
-peer messages find no confirmed blocker. NEW stern review supports the limited
-direction and preserves its readability limitation. AI reviews are not certification.
+Writer exited and source froze. Root diff/link/command/visible-limit checks pass;
+3579 protected records and all 1453 public files remain exact. GitHub's server GFM
+render parses four primary/16 folded links, three tables and one details/summary.
+Three independent Sol 6.1 Ultra AI INITIALs and four actual reciprocal peer messages
+find no confirmed blocker; NEW stern review supports the narrow value/direction.
+No physics/native/site build, installation or global configuration change.
+Actual browser/mobile/keyboard checks remain 0: server parsing is not visual
+acceptance. Evidence .local/m11h-readme-v1/; final Git parity/lock closure is in
+its terminal receipt. All reviews are AI assessments, not certification.
 
-Current browser interfaces have no enabled surface; supported Codex panel opening
-is queued. This round has no actual visual/mobile acceptance. Earlier M11d HTTP
-checks remain historical; file opening was browser-policy blocked. Static/link
-checks and live byte verification do not replace browser or second-PC acceptance.
-Existing-auth normal Git synchronization preserves global configuration; the
-publisher's unconditional authentication setup is not invoked. Final Git parity,
-exact live check and owned-lock closure belong to the terminal local receipt.
-Evidence: .local/m11g-navigation-v1/; unique fixture/browser attempts are retained.
+## Retained delivered results and limitations
 
-## Retained native audit and engineering delivery
+M11g 292fba3 is deployed. Saved-only build
+f73753911bf22436df83e9600e996baead072d7ae3cd50188a962f1022243235
+has 1452 payloads/1453 files; only Learn, Results and guide navigation plus manifest
+changed, 1449 payloads exact. Tests 8 focused/23 publication/27 contacts pass;
+local check 96 HTML/2841 links and exact live check 463 files pass. Original URLs,
+guide anchors and numerical results remain. No enabled browser surface; supported
+panel opening was queued. Existing-auth Git avoids publisher global auth setup.
 
-M11f 1574aa7 performed one native geometry/source audit: 22 logical volumes,
-23 placements, 66 native solid IDs from 47 authored origins plus rebuilt instances
-and 15 displaced helpers. All 1000 GPS positions and sampled overlaps pass the
-finite checks. Three closed-store warnings remain; scoped_acceptance=false.
-The monolithic input remains candidate_input_only; event mapping/experiment are
-unfinished. Original execution receipt/raw bytes and failed bridge attempt remain.
-Saved-only integer-identity repair passes 36 tests/eight aliases and three delta
-reviews. Native 0.059635996 s, command 0.493357 s, control 51.7781441 s are distinct
-from development/review time. No further native or science rerun is needed here.
+M11f 1574aa7 retains one native audit: 22 logical volumes, 23 placements, 66 native
+solid IDs from 47 authored origins plus rebuilt instances/15 displaced helpers.
+1000 GPS positions and sampled overlaps pass finite checks. Three closed-store
+warnings remain: completed_with_native_warnings/scoped_acceptance=false. Monolithic
+input remains candidate_input_only; event mapping/experimental acceptance unfinished.
+Saved integer-identity repair 36 tests/eight aliases and targeted reviews pass;
+original raw receipts, failed bridge attempt and timing correction are preserved.
+Native 0.059635996 s, command 0.493357 s, control 51.7781441 s are separate from coding.
 
-M11d 85d701c/59ad779 retains 40 truth events, six selected responses/four positive/
-two true zeros, 34 unprocessed/nulls, 10057 signed samples, exact CSVs and independent
-500 keV injection calibration. AK02 retains 195 caps; SAP22 none. Model hashes,
-78 K snapshots/explicit 77 K cache override, +500/+700 V, IDs, seeds, units and
-endpoint flags remain exact. No calibrated Li CCE, physical resolution, fitted
-experiment or complete trajectory claim. Pulse waveforms were not saved;
-available measured spectra retain their acquisition/calibration limitations.
-.local/cs137-1m COMPLETE/archives/HDF5/DONE/configurations and prior native failures
-are permanent science. Preserve them and old10k results; no rerun or cleanup.
-M11e input ledger remains portable curated verification, not an executable adapter.
-Seventeen viewable models do not imply seventeen LBNL-executable models.
+M11d 85d701c/59ad779 retains 40 truth IDs/six selected/four positive/two true zeros,
+34 unprocessed/nulls, 10057 signed samples/exact CSVs and independent 500 keV injection
+calibration. AK02 retains 195 caps; SAP22 none. Frozen 78 K models/explicit 77 K cache
+override, +500/+700 V, seeds/units/flags stay exact. No calibrated Li CCE/resolution,
+fitted experiment or complete trajectory claim. Measured pulse waveforms were not
+saved; spectrum-only acquisition/background/calibration limitations remain.
+.local/cs137-1m COMPLETE/archives/HDF5/DONE/configuration and old 10k/native failures
+are permanent science; no rerun or cleanup. M11e input ledger is curated portable
+verification, not a new executable adapter. Seventeen viewable is not executable 17.
 
 ## Next bounded work
 
 Skip M8/M9: second-computer newcomer acceptance blocks no current development.
-Next M11h: review and consolidate remaining repeated GitHub README/home browse/run
-and advanced-reference links through existing hubs. Keep target URLs and the sole
-Windows setup authority; establish a small source scope before implementation.
-When the browser interface is available, inspect actual readability/mobile layout;
-do not assume the broader clutter issue is closed. Heavy-detail optimization is
-optional and requires measurements first. No new framework or science gate.
+M11i: expose the four existing finite M11a scenario configurations through a
+distinct local mouse preview/check area, reusing scenario_prepare.check. Establish
+small public-summary/server/frontend/test scope before implementation. Keep
+cryostat/source pose/direction/units and not-executed stages explicit; selecting
+gamma must never launch the existing fixed Cs137 example. No arbitrary models,
+monolithic adapter promotion, numerical dispatch, installation or new framework.
+Plan .local/m11i-scenario-preview-v1/; browser readability remains a separate check.
 Current-chat 30-minute heartbeat ACTIVE creation is verified; future execution
-remains unobserved. New rounds require ready/no conflicting lock or workers and an
-owned lock. One root, verified Sol 6.1 Ultra, no installs/global changes/reset credits.
+unobserved. New rounds require ready/no conflicting lock or actual workers, owned
+lock and verified Sol 6.1 Ultra/root. No global changes or reset credits.
