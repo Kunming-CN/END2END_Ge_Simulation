@@ -32,7 +32,7 @@ def require(ok,msg):
 def read(path):
     return json.loads(Path(path).read_text(encoding='utf-8-sig'))
 
-def write_page(path,title,body,depth=0):
+def write_page(path,title,body,depth=0,*,fold_footer=False):
     path=Path(path); path.parent.mkdir(parents=True,exist_ok=True)
     up='../'*depth
     nav=(f'<a href="{up}results/index.html">Results</a>'
@@ -43,6 +43,8 @@ def write_page(path,title,body,depth=0):
             f'<a href="{up}methods/index.html">Methods & limitations</a> · '
             f'<a href="{up}downloads/all-models.zip">Download all models</a> · '
             '<a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">Code</a></footer>')
+    if fold_footer:
+        footer=footer.replace('<footer>','<footer><details><summary>More project resources</summary><p>',1).replace('</footer>','</p></details></footer>',1)
     html=(f'<!doctype html><html lang="en"><meta charset="utf-8">'
           f'<meta name="viewport" content="width=device-width,initial-scale=1">'
           f'<title>{escape(title)}</title><style>{STYLE}</style><body><main class="wrap">'
@@ -82,16 +84,16 @@ def apply(site):
 
     home=('''<section class="hero"><p class="muted">Precomputed HPGe detector simulations</p>
 <h1>From radiation to an energy measurement.</h1>
-<p>Explore detector geometry and follow radiation deposits through charge collection and electronics.</p></section>
+<p>Browse saved radiation, charge and electronics results or explore detector models. Use the guide to choose a local workflow.</p></section>
 <section class="cards">
 <article class="card"><h2>Results</h2><p>Compare deposited and reconstructed energy in the current million-decay campaign, with earlier examples listed separately.</p><a href="results/index.html">Open results →</a></article>
 <article class="card"><h2>Start here</h2><p>Follow the chain from an energy deposit through charge collection and electronics.</p><a href="learn/index.html">Learn the pipeline →</a></article>
 <article class="card"><h2>Explore detectors</h2><p>Browse the model library and inspect detector contacts and saved field/response views.</p><a href="detectors/index.html">Open detector library →</a></article></section>'''
           +'''
-<section class="panel"><h2>Run it locally</h2><p>The <code>Run.cmd</code> workflow implements __EXECUTION_CASES__ LBNL selection. The guide distinguishes new radiation runs, compatible saved-charge replay and bounded native-readout from checked private inputs. Fresh-machine reproduction remains unvalidated.</p><a class="button" href="guide.html#local-routes">Choose a local workflow →</a> · <a href="guide.html#setup">Windows setup checklist</a> · <a href="scenarios/lbnl-cs137/index.html">Scenario details</a></section>''')
+<section class="panel"><h2>Run it locally</h2><p>Choose a local workflow for __EXECUTION_CASES__ in the guide.</p><a class="button" href="guide.html#local-routes">Choose a local workflow →</a><p class="muted">Fresh-machine reproduction remains unvalidated.</p><details><summary>Setup and scenario details</summary><p>The <code>Run.cmd</code> workflow implements __EXECUTION_CASES__ LBNL selection. The guide distinguishes new radiation runs, compatible saved-charge replay and bounded native-readout from checked private inputs.</p><p><a href="guide.html#setup">Windows setup checklist</a> · <a href="scenarios/lbnl-cs137/index.html">Scenario details</a></p></details></section>''')
     home=home.replace('__EXECUTION_CASES__',' / '.join(sorted(execution_ids)))
     home=add_previews(site,home)
-    write_page(site/'index.html','END2END Ge Simulation',home,0)
+    write_page(site/'index.html','END2END Ge Simulation',home,0,fold_footer=True)
 
     learn_example='''<article class="card"><h2>Compact teaching example</h2><p>Walk through deposits, charge, preamplifier, shaper and ADC in a compact example.</p><a href="../examples/pipeline.html">Open the compact teaching example →</a></article>'''
     if has_gamma:

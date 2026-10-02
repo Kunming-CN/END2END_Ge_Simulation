@@ -1,6 +1,7 @@
 import json,re,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
+from html.parser import HTMLParser
 import site_restructure as S
 
 class SiteStructureTests(unittest.TestCase):
@@ -52,6 +53,35 @@ class SiteStructureTests(unittest.TestCase):
         self.assertNotIn('Run.cmd run',scenario)
         self.assertIn('10k requires a verified 500-event pilot',scenario)
         self.assertIn('not redistributed',scenario)
+
+    def test_home_folds_secondary_routes_without_losing_destinations(self):
+        class HomeLinks(HTMLParser):
+            def __init__(self):
+                super().__init__(); self.closed=[]; self.links=[]; self.outside=[]
+            def handle_starttag(self,tag,attrs):
+                values=dict(attrs)
+                if tag=='details':self.closed.append('open' not in values)
+                if tag=='a':
+                    self.links.append(values['href'])
+                    if not any(self.closed):self.outside.append(values['href'])
+            def handle_endtag(self,tag):
+                if tag=='details':self.closed.pop()
+        root=self.fixture(with_results=True);S.apply(root)
+        home=(root/'index.html').read_text();parser=HomeLinks();parser.feed(home)
+        self.assertEqual(len(parser.links),17);self.assertEqual(len(set(parser.links)),13)
+        self.assertEqual(parser.outside,['index.html','results/index.html','detectors/index.html','guide.html',
+                                        'results/index.html','learn/index.html','detectors/index.html','guide.html#local-routes'])
+        for href in ('guide.html#setup','scenarios/lbnl-cs137/index.html','methods/index.html',
+                     'downloads/all-models.zip','https://github.com/Kunming-CN/END2END_Ge_Simulation'):
+            self.assertIn(href,parser.links);self.assertNotIn(href,parser.outside)
+        self.assertIn('Browse saved radiation, charge and electronics results',home)
+        self.assertIn('Choose a local workflow for AK02 / SAP22 in the guide.',home)
+        self.assertIn('<p class="muted">Fresh-machine reproduction remains unvalidated.</p><details>',home)
+        self.assertIn('bounded native-readout from checked private inputs',home)
+        self.assertIn('<summary>Setup and scenario details</summary>',home)
+        self.assertIn('<summary>More project resources</summary>',home)
+        for name in ('learn/index.html','results/index.html','detectors/index.html'):
+            self.assertNotIn('More project resources',(root/name).read_text(),'Fold is homepage-only')
 
     def test_result_hubs_are_conditional(self):
         root=self.fixture(with_results=True);S.apply(root)
