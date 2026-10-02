@@ -28,6 +28,8 @@ records provenance without republishing or relicensing those upstream files.
 
 For the finite authored input inventory and its portable/explicit-local verification boundaries, see the [advanced cryostat input contract](../tools/CRYOSTAT_INPUTS.md).
 
+The separate [bounded monolithic native audit](../tools/NATIVE_CRYOSTAT_AUDIT.md) inspects structure and confined source positions; it does not add transport eligibility or experimental acceptance.
+
 ## Run on the configured Windows computer
 
 From the repository root in PowerShell:

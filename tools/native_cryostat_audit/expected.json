@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "kind": "monolithic_native_audit_expectations_v1",
+  "verification_scope": "bounded_native_structure_and_source_positions_only",
+  "original_manifest_sha256": "5967d5d0f8500a40f704bf653be2dc1a0f69e77239f643a8f7140533c9201e2a",
+  "upstream_commit": "1ff3371e0afb804115773af0541b3e56bd660f8c",
+  "census": {
+    "logical_count": 22,
+    "physical_count_including_world": 23,
+    "authored_solid_count": 47,
+    "authored_entity_counts": {
+      "G4Box": 18,
+      "G4Tubs": 14,
+      "G4SubtractionSolid": 9,
+      "G4UnionSolid": 6
+    },
+    "actual_used_material_count": 11
+  },
+  "authored_solids": [
+    {"name": "lab", "entity_type": "G4Box"},
+    {"name": "WingBase", "entity_type": "G4Box"},
+    {"name": "Detector", "entity_type": "G4Box"},
+    {"name": "aGeTop", "entity_type": "G4Box"},
+    {"name": "AlTop", "entity_type": "G4Box"},
+    {"name": "aGeBot", "entity_type": "G4Box"},
+    {"name": "AlBot", "entity_type": "G4Box"},
+    {"name": "base", "entity_type": "G4Tubs"},
+    {"name": "inner", "entity_type": "G4Tubs"},
+    {"name": "outer", "entity_type": "G4Tubs"},
+    {"name": "Cover", "entity_type": "G4Tubs"},
+    {"name": "Active", "entity_type": "G4Tubs"},
+    {"name": "Backing", "entity_type": "G4Tubs"},
+    {"name": "Substrate", "entity_type": "G4Tubs"},
+    {"name": "CapBase", "entity_type": "G4Tubs"},
+    {"name": "CapSub", "entity_type": "G4Tubs"},
+    {"name": "Vacuum", "entity_type": "G4Tubs"},
+    {"name": "IRBase", "entity_type": "G4Box"},
+    {"name": "IRSub1", "entity_type": "G4Box"},
+    {"name": "IRSub2", "entity_type": "G4Box"},
+    {"name": "IRSub3", "entity_type": "G4Tubs"},
+    {"name": "Window", "entity_type": "G4Box"},
+    {"name": "StBase", "entity_type": "G4Box"},
+    {"name": "StSub", "entity_type": "G4Box"},
+    {"name": "Post", "entity_type": "G4Tubs"},
+    {"name": "BarBase", "entity_type": "G4Box"},
+    {"name": "BarHole", "entity_type": "G4Tubs"},
+    {"name": "BNBlock", "entity_type": "G4Box"},
+    {"name": "InBelow", "entity_type": "G4Box"},
+    {"name": "InAbove", "entity_type": "G4Box"},
+    {"name": "CuPlate", "entity_type": "G4Box"},
+    {"name": "Solder", "entity_type": "G4Tubs"},
+    {"name": "Wings", "entity_type": "G4SubtractionSolid"},
+    {"name": "top", "entity_type": "G4SubtractionSolid"},
+    {"name": "holder", "entity_type": "G4SubtractionSolid"},
+    {"name": "Cap", "entity_type": "G4SubtractionSolid"},
+    {"name": "IRSub4", "entity_type": "G4UnionSolid"},
+    {"name": "IRSub5", "entity_type": "G4UnionSolid"},
+    {"name": "IRSub", "entity_type": "G4UnionSolid"},
+    {"name": "Shield1", "entity_type": "G4SubtractionSolid"},
+    {"name": "Shield2", "entity_type": "G4SubtractionSolid"},
+    {"name": "Stage1", "entity_type": "G4SubtractionSolid"},
+    {"name": "Stage2", "entity_type": "G4UnionSolid"},
+    {"name": "Stage3", "entity_type": "G4UnionSolid"},
+    {"name": "Stage", "entity_type": "G4UnionSolid"},
+    {"name": "SubBar1", "entity_type": "G4SubtractionSolid"},
+    {"name": "SubBar2", "entity_type": "G4SubtractionSolid"}
+  ],
+  "boolean_edges": [
+    {"name": "Wings", "first": "WingBase", "second": "Detector"},
+    {"name": "top", "first": "base", "second": "inner"},
+    {"name": "holder", "first": "top", "second": "outer"},
+    {"name": "Cap", "first": "CapBase", "second": "CapSub"},
+    {"name": "IRSub4", "first": "IRSub1", "second": "IRSub2"},
+    {"name": "IRSub5", "first": "IRSub4", "second": "IRSub3"},
+    {"name": "IRSub", "first": "IRSub5", "second": "IRSub3"},
+    {"name": "Shield1", "first": "IRBase", "second": "IRSub"},
+    {"name": "Shield2", "first": "Shield1", "second": "Window"},
+    {"name": "Stage1", "first": "StBase", "second": "StSub"},
+    {"name": "Stage2", "first": "Stage1", "second": "Post"},
+    {"name": "Stage3", "first": "Stage2", "second": "Post"},
+    {"name": "Stage", "first": "Stage3", "second": "Post"},
+    {"name": "SubBar1", "first": "BarBase", "second": "BarHole"},
+    {"name": "SubBar2", "first": "SubBar1", "second": "BarHole"}
+  ],
+  "logical_volumes": [
+    {"name": "lab", "material": "G4_AIR", "solid_name": "lab"},
+    {"name": "HPGe(S)", "material": "G4_Ge", "solid_name": "Detector"},
+    {"name": "Wings", "material": "G4_Ge", "solid_name": "Wings"},
+    {"name": "aGeTop", "material": "G4_Ge", "solid_name": "aGeTop"},
+    {"name": "AlTop", "material": "G4_Al", "solid_name": "AlTop"},
+    {"name": "aGeBot", "material": "G4_Ge", "solid_name": "aGeBot"},
+    {"name": "AlBot", "material": "G4_Al", "solid_name": "AlBot"},
+    {"name": "Holder", "material": "G4_Al", "solid_name": "holder"},
+    {"name": "Cover", "material": "G4_Au", "solid_name": "Cover"},
+    {"name": "Active", "material": "G4_Au", "solid_name": "Active"},
+    {"name": "Backing", "material": "G4_Au", "solid_name": "Backing"},
+    {"name": "Substrate", "material": "G4_Ag", "solid_name": "Substrate"},
+    {"name": "EndCap", "material": "G4_Al", "solid_name": "Cap"},
+    {"name": "Vacuum", "material": "G4_Galactic", "solid_name": "Vacuum"},
+    {"name": "Shield", "material": "G4_Al", "solid_name": "Shield2"},
+    {"name": "Stage", "material": "G4_Al", "solid_name": "Stage"},
+    {"name": "PTFEBar", "material": "PTFE", "solid_name": "SubBar2"},
+    {"name": "BNBlock", "material": "BN", "solid_name": "BNBlock"},
+    {"name": "InBelow", "material": "G4_In", "solid_name": "InBelow"},
+    {"name": "InAbove", "material": "G4_In", "solid_name": "InAbove"},
+    {"name": "CuPlate", "material": "G4_Cu", "solid_name": "CuPlate"},
+    {"name": "Solder", "material": "G4_Sn", "solid_name": "Solder"}
+  ],
+  "physical_identities": [
+    {"name": "lab", "logical_name": "lab", "path": "/lab", "copy_chain": [0], "copy_number": 0, "mother_path": null},
+    {"name": "Cover", "logical_name": "Cover", "path": "/lab/Holder/Cover", "copy_chain": [0, -5, -1], "copy_number": -1, "mother_path": "/lab/Holder"},
+    {"name": "Active", "logical_name": "Active", "path": "/lab/Holder/Active", "copy_chain": [0, -5, -2], "copy_number": -2, "mother_path": "/lab/Holder"},
+    {"name": "Backing", "logical_name": "Backing", "path": "/lab/Holder/Backing", "copy_chain": [0, -5, -3], "copy_number": -3, "mother_path": "/lab/Holder"},
+    {"name": "Substrate", "logical_name": "Substrate", "path": "/lab/Holder/Substrate", "copy_chain": [0, -5, -4], "copy_number": -4, "mother_path": "/lab/Holder"},
+    {"name": "Holder", "logical_name": "Holder", "path": "/lab/Holder", "copy_chain": [0, -5], "copy_number": -5, "mother_path": "/lab"},
+    {"name": "EndCap", "logical_name": "EndCap", "path": "/lab/EndCap", "copy_chain": [0, -6], "copy_number": -6, "mother_path": "/lab"},
+    {"name": "Vacuum", "logical_name": "Vacuum", "path": "/lab/EndCap/Vacuum", "copy_chain": [0, -6, -7], "copy_number": -7, "mother_path": "/lab/EndCap"},
+    {"name": "Shield", "logical_name": "Shield", "path": "/lab/EndCap/Vacuum/Shield", "copy_chain": [0, -6, -7, -8], "copy_number": -8, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "Stage", "logical_name": "Stage", "path": "/lab/EndCap/Vacuum/Stage", "copy_chain": [0, -6, -7, -9], "copy_number": -9, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "InBelow", "logical_name": "InBelow", "path": "/lab/EndCap/Vacuum/InBelow", "copy_chain": [0, -6, -7, -10], "copy_number": -10, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "BNBlock", "logical_name": "BNBlock", "path": "/lab/EndCap/Vacuum/BNBlock", "copy_chain": [0, -6, -7, -11], "copy_number": -11, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "CuPlate", "logical_name": "CuPlate", "path": "/lab/EndCap/Vacuum/CuPlate", "copy_chain": [0, -6, -7, -12], "copy_number": -12, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "InAbove", "logical_name": "InAbove", "path": "/lab/EndCap/Vacuum/InAbove", "copy_chain": [0, -6, -7, -13], "copy_number": -13, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "AlBot", "logical_name": "AlBot", "path": "/lab/EndCap/Vacuum/AlBot", "copy_chain": [0, -6, -7, -14], "copy_number": -14, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "aGeBot", "logical_name": "aGeBot", "path": "/lab/EndCap/Vacuum/aGeBot", "copy_chain": [0, -6, -7, -15], "copy_number": -15, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "HPGe(S)", "logical_name": "HPGe(S)", "path": "/lab/EndCap/Vacuum/HPGe(S)", "copy_chain": [0, -6, -7, 1], "copy_number": 1, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "Wings", "logical_name": "Wings", "path": "/lab/EndCap/Vacuum/Wings", "copy_chain": [0, -6, -7, -16], "copy_number": -16, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "aGeTop", "logical_name": "aGeTop", "path": "/lab/EndCap/Vacuum/aGeTop", "copy_chain": [0, -6, -7, -17], "copy_number": -17, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "AlTop", "logical_name": "AlTop", "path": "/lab/EndCap/Vacuum/AlTop", "copy_chain": [0, -6, -7, -18], "copy_number": -18, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "PTFEBar", "logical_name": "PTFEBar", "path": "/lab/EndCap/Vacuum/PTFEBar", "copy_chain": [0, -6, -7, -19], "copy_number": -19, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "Solder", "logical_name": "Solder", "path": "/lab/EndCap/Vacuum/Solder", "copy_chain": [0, -6, -7, -20], "copy_number": -20, "mother_path": "/lab/EndCap/Vacuum"},
+    {"name": "Solder", "logical_name": "Solder", "path": "/lab/EndCap/Vacuum/Solder", "copy_chain": [0, -6, -7, -21], "copy_number": -21, "mother_path": "/lab/EndCap/Vacuum"}
+  ],
+  "material_uses": [
+    "G4_AIR",
+    "G4_Ge",
+    "G4_Al",
+    "G4_Au",
+    "G4_Ag",
+    "G4_Galactic",
+    "PTFE",
+    "BN",
+    "G4_In",
+    "G4_Cu",
+    "G4_Sn"
+  ],
+  "custom_materials": [
+    {"name": "PTFE", "density_g_cm3": 2.2, "atomic_counts": {"C": 2, "F": 4}},
+    {"name": "BN", "density_g_cm3": 1.9, "atomic_counts": {"B": 1, "N": 1}}
+  ],
+  "unused_material_definition": {
+    "name": "AmO2",
+    "volume_use_count": 0
+  },
+  "source": {
+    "active_path": "/lab/Holder/Active",
+    "active_copy_chain": [
+      0,
+      -5,
+      -2
+    ],
+    "material": "G4_Au",
+    "radius_mm": 1.61,
+    "half_length_mm": 0.001,
+    "active_to_holder": {
+      "object_rotation": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "translation_mm": [
+        0,
+        0,
+        0.756
+      ]
+    },
+    "holder_to_world": {
+      "object_rotation": [
+        [
+          0,
+          0,
+          -1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          0
+        ]
+      ],
+      "frame_rotation": [
+        [
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          -1,
+          0,
+          0
+        ]
+      ],
+      "translation_mm": [
+        37.833,
+        0,
+        0
+      ]
+    },
+    "active_to_world": {
+      "object_rotation": [
+        [
+          0,
+          0,
+          -1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          0
+        ]
+      ],
+      "translation_mm": [
+        37.077,
+        0,
+        0
+      ]
+    }
+  },
+  "gps": {
+    "original_settings": {
+      "particle": "gamma",
+      "energy_keV": 59.5,
+      "type": "Volume",
+      "shape": "Cylinder",
+      "centre_mm": [
+        37.077,
+        0,
+        0
+      ],
+      "rot1": [
+        0,
+        1,
+        0
+      ],
+      "rot2": [
+        0,
+        0,
+        1
+      ],
+      "half_length_mm": 0.002,
+      "radius_mm": 1.62,
+      "confine": "Active"
+    },
+    "native_getters": {
+      "type": "Volume",
+      "shape": "Cylinder",
+      "centre_mm": [
+        37.077,
+        0,
+        0
+      ],
+      "half_length_mm": 0.002,
+      "radius_mm": 1.62,
+      "inner_radius_mm": 0,
+      "basis_x": [
+        0,
+        1,
+        0
+      ],
+      "basis_y": [
+        0,
+        0,
+        1
+      ],
+      "basis_z": [
+        1,
+        0,
+        0
+      ],
+      "confined": true,
+      "confine": "Active"
+    },
+    "seed": 26100161,
+    "positions": 1000,
+    "rejection_counter": "unknown; preserve null; envelope excess is intentional confinement input"
+  },
+  "probes": [
+    {"name": "centre", "source_local_mm": [0, 0, 0], "expected_source_inside": "inside"},
+    {"name": "radial_inside", "source_local_mm": [1.6, 0, 0], "expected_source_inside": "inside"},
+    {"name": "axial_inside", "source_local_mm": [0, 0, 0.0009], "expected_source_inside": "inside"},
+    {"name": "radial_outside", "source_local_mm": [1.615, 0, 0], "expected_source_inside": "outside"},
+    {"name": "axial_outside", "source_local_mm": [0, 0, 0.0015], "expected_source_inside": "outside"},
+    {"name": "envelope_edge", "source_local_mm": [1.62, 0, 0.002], "expected_source_inside": "outside"}
+  ],
+  "budgets": {
+    "geant4_version_number": 1132,
+    "overlap_seed": 26092632,
+    "overlap_samples": 10000,
+    "native_timeout_seconds": 60,
+    "threads": 1
+  },
+  "limits": [
+    "No adapter eligibility or event mapping acceptance",
+    "No as-built or experimental acceptance",
+    "Sampled overlaps do not prove overlap-free geometry",
+    "Stochastic Boolean volumes remain null/not_run and are not scoped acceptance gates",
+    "Raw reports and private original inputs remain local"
+  ]
+}
