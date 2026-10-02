@@ -407,7 +407,7 @@ def build_gamma_export(source):
     validate(DESTINATION)
     shutil.copytree(DESTINATION, OUT)
     (OUT / MANIFEST).unlink()
-    assemble(source, OUT / 'examples' / 'gamma-native')
+    assemble(source, OUT / 'examples' / 'gamma-native', replace=True)
 
 
 def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None):

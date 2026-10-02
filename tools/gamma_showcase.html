@@ -16,9 +16,9 @@
 <body>
 <header>
   <div class="topline"><a href="../../results/index.html">← Saved results</a><span>SAVED ENGINEERING EXAMPLE · OFFLINE</span></div>
-  <div class="eyebrow">Completed gamma → native SSD → peak ADC</div>
+  <div class="eyebrow">Small saved gamma → native SSD → peak ADC example</div>
   <h1>Follow a recorded gamma event to reconstructed energy.</h1>
-  <p>Browse the completed radiation, semiconductor charge and electronics chain. Truth deposits, induced charge and reconstructed energy stay separate; every initial primary remains in the ledger.</p>
+  <p>Browse the saved radiation, semiconductor charge and electronics chain for six selected events. Truth deposits, induced charge and reconstructed energy stay separate; all 40 initial primaries remain in the ledger.</p>
   <div class="census" aria-label="Saved example event census">
     <div><strong id="total-count">40</strong><span>recorded events</span></div>
     <div><strong id="processed-count">6</strong><span>processed events</span></div>
@@ -189,6 +189,7 @@
   const remembered=new Map();
   const model=()=>models.find(m=>m.model_id===activeModel);
   const event=()=>model().truth_ledger.find(e=>e.initial_primary_id===activeId);
+  const firstSavedPositive=m=>m.truth_ledger.find(e=>e.response&&!e.response.zero_ge)||m.truth_ledger[0];
   function lazyDetails() {
     const m=model(),e=event(),r=e.response;
     put("event-json",$("event-details").open?formatted(e):"");
@@ -307,7 +308,7 @@
     if(!Array.isArray(models)||models.length!==2||models.some(m=>!["AK02","SAP22"].includes(m.model_id)||!Array.isArray(m.truth_ledger)||m.truth_ledger.length!==20)) throw Error("Invalid saved event census");
     const totals={recorded:0,processed:0,positive:0,zero:0,unprocessed:0};
     models.forEach(m=>{
-      remembered.set(m.model_id,m.truth_ledger[0].initial_primary_id);
+      remembered.set(m.model_id,firstSavedPositive(m).initial_primary_id);
       const option=node("option",m.model_id==="AK02"?"AK02 · Li-contact primary":"SAP22 · non-Li cross-check");option.value=m.model_id;$("model-select").append(option);
       const counts={recorded:m.truth_ledger.length,processed:0,positive:0,zero:0,unprocessed:0,caps:0};
       m.truth_ledger.forEach(e=>{if(e.response){counts.processed++;e.response.zero_ge?counts.zero++:counts.positive++;counts.caps+=e.response.transport_flags?e.response.transport_flags.step_limits:0;}else counts.unprocessed++;});
@@ -324,7 +325,7 @@
     $("next").addEventListener("click",()=>{const rows=model().truth_ledger,i=rows.indexOf(event());if(i+1<rows.length) select(activeModel,rows[i+1].initial_primary_id,true);});
     ["event-details","deposit-details","material-details","endpoint-details","calibration-details","provenance-details"].forEach(id=>$(id).addEventListener("toggle",lazyDetails));
     window.addEventListener("hashchange",()=>{const state=readFragment();if(state) select(state.modelId,state.id);});
-    const initial=readFragment()||{modelId:models[0].model_id,id:models[0].truth_ledger[0].initial_primary_id};
+    const initial=readFragment()||{modelId:models[0].model_id,id:remembered.get(models[0].model_id)};
     select(initial.modelId,initial.id);
     if(!readFragment()) history.replaceState(null,"",`#model=${activeModel}&primary=${activeId}`);
   } catch(error) {

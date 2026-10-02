@@ -16,4 +16,13 @@ These files and the reproducibility snapshot currently occupy the same physical 
 
 ## Permitted follow-up
 
+Preserve `.local/ring-cs137-v1/` as permanent ring-campaign science, including the
+original 500-decay transport containers, streams, effective-model contracts,
+native endpoints/signed signals, readout records, stage logs/configuration and
+supervisor receipts. KMRC01's completed negative-signal pilot and failed readout
+promotion are unique evidence, not a reason to delete or repeat transport/drift.
+Future polarity/readout analysis must use a new derivative leaf and retain the
+original rejection/null records. `.local/ring-delivery-v1/` retains its audit,
+failed checks and AI-review evidence.
+
 Read completed data, regenerate derived spectra, change explicitly versioned readout settings in NEW runs, or recover a raw archive into a new analysis scratch location. Preserve event, chunk and detector identities. Do not invoke `prepare`, `run`, `Resume.cmd` or a radiation generator simply to inspect completed data. No automated deletion of the protected campaign is authorized.

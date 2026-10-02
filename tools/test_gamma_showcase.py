@@ -292,6 +292,18 @@ class SavedGammaTests(unittest.TestCase):
         self.write_bundle(); (self.root / G.TEMPLATE).write_text('changed ' + G.TOKEN)
         with self.assertRaises(ValueError): G.validate_bundle(self.bundle)
 
+    def test_pinned_historical_template_survives_reviewed_update_but_rehashed_html_does_not(self):
+        self.write_bundle()
+        original_hash = G.sha((self.root / G.TEMPLATE).read_bytes())
+        (self.root / G.TEMPLATE).write_text('new reviewed template ' + G.TOKEN, encoding='utf-8')
+        with patch.object(G, 'LEGACY_TEMPLATE_SHA256', original_hash):
+            G.validate_bundle(self.bundle)
+            page = self.bundle / 'gamma.html'; page.write_bytes(page.read_bytes().replace(b'doctype', b'changed'))
+            manifest = G.decode((self.bundle / 'publication.json').read_bytes())
+            manifest['files']['gamma.html'] = dict(sha256=G.sha(page.read_bytes()), bytes=page.stat().st_size)
+            (self.bundle / 'publication.json').write_bytes(G.canonical(manifest))
+            with self.assertRaisesRegex(ValueError, 'pinned original M11d template'): G.validate_bundle(self.bundle)
+
     def test_unrelated_current_source_changes_preserve_saved_bundle(self):
         self.write_bundle()
         for name in ('tools/site_restructure.py','tools/check_site.py','tools/build_site.py',
@@ -317,7 +329,42 @@ class SavedGammaTests(unittest.TestCase):
         (round_root / 'SOURCE-FREEZE.json').write_bytes(G.canonical(frozen))
         with self.assertRaises(ValueError): G.verify_freeze()
         (round_root / 'bundle').mkdir()
-        with self.assertRaisesRegex(ValueError, 'new M11d bundle'): G.export_saved()
+        with self.assertRaisesRegex(ValueError, 'new saved-gamma bundle'): G.export_saved()
+
+    def test_new_presentation_round_preserves_original_bundle_and_science(self):
+        self.write_bundle()
+        original = {p.name: p.read_bytes() for p in self.bundle.iterdir()}
+        name = '.local/new-presentation-fixture'
+        round_root = self.root / name; round_root.mkdir(parents=True)
+        exited = dict(status='exited', science_calls=0)
+        (round_root / 'WRITER-EXIT.json').write_bytes(G.canonical(exited))
+        sources, _ = G.current_sources()
+        frozen = dict(status='frozen_after_writer_exit', writer_exit_sha256=G.sha(G.canonical(exited)), files=sources)
+        (round_root / 'SOURCE-FREEZE.json').write_bytes(G.canonical(frozen))
+        class OriginalReader:
+            def recheck(self): pass
+        with patch.object(G, 'read_saved_science', return_value=(self.science, self.csv_files, OriginalReader())):
+            result = G.export_saved(round_name=name)
+        self.assertEqual(result['status'], 'completed_saved_export')
+        renewed = G.validate_bundle(round_root / 'bundle')
+        G.exact(renewed['science'], self.science)
+        self.assertEqual(original, {p.name: p.read_bytes() for p in self.bundle.iterdir()})
+        with self.assertRaisesRegex(ValueError, 'new saved-gamma bundle'): G.export_saved(round_name=name)
+        for invalid in ('../elsewhere', '.local/a/b', '.local/../a', 'docs/example', '.local/a\\b'):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'one named local'):
+                G.export_saved(round_name=invalid)
+
+    def test_explicit_replacement_is_only_for_checked_staging(self):
+        self.write_bundle()
+        old = {p.name: p.read_bytes() for p in self.bundle.iterdir()}
+        stage = self.root / '.local/site-build/examples/gamma-native'
+        G.assemble(self.bundle, stage)
+        with self.assertRaisesRegex(ValueError, 'explicit staging reconciliation'): G.assemble(self.bundle, stage)
+        G.assemble(self.bundle, stage, replace=True)
+        self.assertEqual(old, {p.name: p.read_bytes() for p in self.bundle.iterdir()})
+        with self.assertRaisesRegex(ValueError, 'explicit staging reconciliation'): G.assemble(stage, self.bundle, replace=True)
+        (stage / 'unexpected.json').write_text('{}')
+        with self.assertRaisesRegex(ValueError, 'public inventory'): G.assemble(self.bundle, stage, replace=True)
 
 
 if __name__ == '__main__':

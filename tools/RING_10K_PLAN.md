@@ -42,6 +42,31 @@ exact data, failure accounting, hashes and historical identity.
 
 ## Ordered milestones and acceptance
 
+Current execution (2026-10-02): both original500 pilots have completed their
+transport/native/readout stages. GeRC02 Li50min passed with21 groups/19 accepted;
+KMRC01_candidate has3 complete negative-charge groups, all rejected by the frozen
+positive-peak electronics. The owner has authorized a KM-only fixed linear -1
+electronics input wiring plus independent negative injection calibration. KM is
+not yet promoted: the additive adapter must pass its saved-500 derivative checks.
+Preserve the original pilot and reuse saved native signals for readout analysis.
+
+GeRC02's guarded 10K was actually launched2026-10-02T17:28:41Z and is processing
+native charge/readout. Keep its44 computational source pins unchanged while it
+runs; prepare the additive KM readout/launcher and public presentation in parallel.
+Do not run a second native worker. A saved-only readout correction does not
+require repeating the completed KM radiation, field or native500 stages.
+
+Production MUST use `tools/ring_production.py start --directory
+.local/ring-cs137-v1 --model GeRC02`. The separately accepted KM case will use
+its additive fixed-polarity entry after saved-pilot admission. This
+maintained entry itself checks and launches the real500-derived10K. It rejects
+known test-only receipts/non-HDF5 placeholders, binds model-specific VERIFIED and
+four actual execution stages to the frozen sources/commands and recorded
+supervisor exit. The frozen `ring_run.py --phase production` option is internal,
+not the maintained production entry. Verify actual workers and any owned lock
+before launch; a failed combined supervisor does not invalidate Ge's separately
+verified completed stages. No original campaign source/configuration is rewritten.
+
 | Milestone | Work | Completion evidence |
 |---|---|---|
 | M13a: one maintained viewer | Build one canonical page using the existing canvas/data readers. One selection controls assembly, STEP/deposit layers, Ge-positive overlay, classification and exact-row details. Preserve both old deep links through compatible entry pages, their default display modes and requested identities, including legacy assembly group return-context. | AK02/213/group 0 and SAP22/5930 resolve exactly; event 0, zero-Ge, missing groups, category misses, strict duplicate/unknown-parameter rejection, late async results and Back/Forward behave explicitly. Unavailable selection retains its requested identity without silently selecting another event. Radiation-only/zero/native-failure/no-charge cases remain valid geometry-viewing states. Existing raw bundles unchanged. Desktop/mobile, keyboard and offline-localhost checks pass. Publish and verify live. |
@@ -111,6 +136,13 @@ waveforms for zero-deposit or failed groups.
 - No noise/Fano/resolution or calibrated Li CCE claims follow from numerical
   parcel sampling. No spectrum fitted to nonexistent measured pulse waveforms.
   Keep unresolved accuracy studies separate from the functional delivery path.
+
+## Deferred recommendations
+
+Owner update2026-10-02: evaluating and adopting additional remage practices is
+a TODO. Prioritize the actual two ring-contact full-chain runs and the saved
+engineering-example presentation repair. Reuse recorded findings when resumed;
+no extra research round or software upgrade precedes these runs.
 
 ## Review, synchronization and continuation
 

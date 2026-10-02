@@ -41,6 +41,7 @@ class PublicationTests(unittest.TestCase):
             (bundle / name).write_bytes(b'synthetic fixture\r\n')
         stage = project / '.local' / 'site-build'
         with patch.multiple(builder, DESTINATION=docs, OUT=stage), \
+             patch.object(gamma_showcase, 'ROOT', project), \
              patch('gamma_showcase.validate_bundle') as checked, \
              patch('gamma_showcase.export_saved', side_effect=AssertionError('Export forbidden')):
             builder.build_gamma_export(bundle)
@@ -50,6 +51,29 @@ class PublicationTests(unittest.TestCase):
             self.assertEqual((stage / 'examples/gamma-native' / name).read_bytes(), (bundle / name).read_bytes())
         builder.normalize_text_outputs(stage)
         self.assertEqual((stage / 'examples/gamma-native/gamma.html').read_bytes(), b'synthetic fixture\r\n')
+
+    def test_explicit_gamma_mode_reconciles_only_staged_saved_files(self):
+        import build_site as builder
+        import gamma_showcase
+        project = self.site / 'gamma-update-fixture'; docs = project / 'docs'
+        old_gamma = docs / 'examples/gamma-native'; old_gamma.mkdir(parents=True)
+        (docs / 'index.html').write_bytes(b'old saved snapshot\n')
+        for name in (*gamma_showcase.FILES, 'publication.json'): (old_gamma / name).write_bytes(b'old fixture\n')
+        bundle = project / 'new-bundle'; bundle.mkdir()
+        for name in (*gamma_showcase.FILES, 'publication.json'): (bundle / name).write_bytes(b'new fixture\n')
+        stage = project / '.local/site-build'
+        before = {p.relative_to(docs).as_posix(): p.read_bytes() for p in docs.rglob('*') if p.is_file()}
+        (docs / MANIFEST).write_text('{}')
+        with patch.multiple(builder, DESTINATION=docs, OUT=stage), \
+             patch.object(builder, 'validate'), patch.object(gamma_showcase, 'ROOT', project), \
+             patch('gamma_showcase.validate_bundle') as checked, \
+             patch('gamma_showcase.export_saved', side_effect=AssertionError('Export forbidden')):
+            builder.build_gamma_export(bundle)
+        self.assertEqual(checked.call_count, 3)
+        for name, raw in before.items(): self.assertEqual((docs / name).read_bytes(), raw)
+        self.assertEqual((stage / 'index.html').read_bytes(), before['index.html'])
+        for name in (*gamma_showcase.FILES, 'publication.json'):
+            self.assertEqual((stage / 'examples/gamma-native' / name).read_bytes(), (bundle / name).read_bytes())
 
     def test_site_validator_refuses_partial_gamma_bundle(self):
         (self.site / 'examples/gamma-native').mkdir(parents=True)

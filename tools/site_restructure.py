@@ -120,12 +120,13 @@ def apply(site):
     if has_10k:
         earlier_cards.append('''<article class="card"><h2>Earlier Cs137 · 10k</h2><p>Engineering response, response ledgers and interactive recorded-event geometry.</p><a href="cs137-10k/index.html">Open earlier campaign →</a></article>''')
     if has_gamma:
-        example_cards.append('''<article class="card"><h2>Completed gamma → native SSD → peak ADC</h2><p>Follow 40 truth events and six selected responses: four positive responses and two selected true zeros. The other 34 responses stay unknown/unprocessed. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.</p><a href="../examples/gamma-native/gamma.html">Inspect saved native charge and readout →</a></article>''')
+        example_cards.append('''<article class="card"><h2>Small gamma → native SSD → peak ADC example</h2><p>Follow 40 truth events and six selected responses: four positive responses and two selected true zeros. The other 34 responses stay unknown/unprocessed. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.</p><a href="../examples/gamma-native/gamma.html">Inspect saved native charge and readout →</a></article>''')
     example_cards.append('''<article class="card"><h2>Compact teaching example</h2><p>A selected event-by-event engineering demonstration of the signal chain.</p><a href="../examples/pipeline.html">Open example →</a></article>''')
-    results=('''<section class="hero"><p class="muted">Completed simulations</p><h1>Results</h1>
+    results=('''<section class="hero"><p class="muted">Saved simulations and campaign status</p><h1>Results</h1>
 <p>Campaign pages keep initial-decay denominators, zero-deposit events, unavailable native responses and electronics rejection separate.</p></section>'''+current+'''<h2>Saved engineering examples</h2><div class="grid">'''+''.join(example_cards)+'''</div>''')
     if earlier_cards:
         results+='<h2>Earlier campaign</h2><div class="grid">'+''.join(earlier_cards)+'</div>'
+    results+='''<section class="panel"><h2>Ring-contact campaigns · pending saved results</h2><p>GeRC02 with a separate 280 °C / 50 min Li variant and unchanged KMRC01_candidate are planned for 10,000 initial Cs137 decays each, following a checked 500-decay pilot per detector. Their new radiation, native charge and electronics results are not included in this public snapshot.</p><p>The original GeRC02 30 min model stays available in the <a href="../detectors/GeRC02/index.html">detector library</a>; <a href="../detectors/KMRC01_candidate/index.html">KMRC01_candidate</a> retains its candidate qualification. Geometry viewing and adapter availability do not establish a completed campaign or calibrated collection.</p></section>'''
     write_page(site/'results/index.html','Results · END2END Ge Simulation',results,1)
 
     if has_1m:

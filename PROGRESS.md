@@ -47,16 +47,41 @@ examples/models/downloads/lithium bytes are exact; spectrum manifest changes
 only its reader-generator hash. Publication/Git terminal receipt follows this
 handoff in `.local/m13a-unified-viewer-v1/COMPLETE.json`.
 
-Next bounded work is M13b effective-model and ring-mounting contracts, then
-bounded full-chain integration, matching clean500-decay pilots and10K per ring.
-GeRC02 gets an independent280 C/50min Li variant; original30min stays frozen.
-KMRC01_candidate stays unchanged. Both ring adapters remain unimplemented;
-model/bias/contact/transform/cache and signed injection checks precede promotion.
-Minutes are not thickness; no30min-field reuse, abs rectification, per-event
-truth gain or calibrated Li/resolution claim. Each10K includes all initial zeros
-with the existing nominal source/outer cryostat/electronics and checked mounting.
-Stored78 K/explicit runtime77 K and KM polarity stay explicit. Reuse only verified
-terminal stages; no old10K/1M rerun. M8/M9 remain deferred and do not block M13.
+M13b/c adapters now exist and actual serial500-decay pilots ran in the existing
+remage/Julia environments at `.local/ring-cs137-v1`, supervisor44300 exited.
+GeRC02 Li50min passed:500 primaries,479 zero-Ge,21 groups,19 accepted,
+0 native failures. Native field26.556s/drift168.043s/readout1.579s,
+remage4.236s; startup/check/orchestration time is separate. The original30min
+bytes remain frozen; effective variant changes only annealing time. Nominal ring
+mounting, native overlaps/volume/membership, explicit78->77 K and independent
+500keV injection checks pass. These are functional engineering checks, not Li CCE.
+
+Unchanged KMRC01_candidate also completed500 radiation/native/readout processing:
+497 zeros/3 groups/0 native failures, but its negative charge is rejected by the
+existing positive-peak electronics (accepted0). Its pilot is NOT promoted. Owner
+has authorized fixed KM-only -1 electronics wiring and independent negative
+injection calibration. The additive adapter is source-frozen; saved-only tests and
+pilot derivative admission follow the active native worker, preserving all raw
+signs and the original failed readout without radiation/field/drift repeats.
+Three independent Sol6.1 Ultra AI INITIALs froze before real peer exchange
+(six scoped messages plus the independent third/root exchange). Guarded Ge10K
+admission passes and actually launched17:28:41Z, supervisor41132 at this handoff.
+Its44 compute pins remain unchanged while native charge/readout runs. Neither
+ring10K nor equal public coverage is complete yet; actual terminal receipts under
+`.local/ring-cs137-v1` govern recovery. Reviews and pilot/launch evidence are under
+`.local/ring-delivery-v1`. New calculation-source synchronization follows its
+implementation freeze/review; no raw scientific data is published.
+
+The misleading saved40-event gamma example now has positive saved defaults and
+an honest small-sample title; all40 records/34 unknown responses/10057 signed
+samples remain exact. Saved-only build8bff93f passes54 gamma/site/hierarchy tests,
+27 contact checks and check_site;1450 other payloads remain byte-exact. Actual
+desktop positive plots, model defaults/memory, zero/unknown choices and mobile
+facts pass. Expanded raw-JSON AX/CDP timeouts prevent fresh native-file offline
+and detail-refresh checks; bad clipped capture is retained, not four-plot proof.
+Narrow source/evidence review accepts with these limits; Git/live sync pending.
+Remage-paper adoption is deferred TODO in RING_10K_PLAN.
+No old10K/1M rerun; M8/M9 remain deferred and do not block M13.
 
 ## M11o narrow Gamma status/time wording repair
 

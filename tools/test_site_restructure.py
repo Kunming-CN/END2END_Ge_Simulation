@@ -115,12 +115,13 @@ class SiteStructureTests(unittest.TestCase):
             S.apply(root)
         checked.assert_called_once_with(gamma)
         results=(root/'results/index.html').read_text()
-        self.assertEqual(results.count('Completed gamma → native SSD → peak ADC'),1)
+        self.assertEqual(results.count('Small gamma → native SSD → peak ADC example'),1)
+        self.assertNotIn('Completed gamma',results)
         self.assertEqual(results.count('../examples/gamma-native/gamma.html'),1)
         self.assertIn('Compact teaching example',results)
         self.assertIn('../examples/pipeline.html',results)
         order=('Current completed campaign','Saved engineering examples',
-               'Completed gamma → native SSD → peak ADC','Compact teaching example',
+               'Small gamma → native SSD → peak ADC example','Compact teaching example',
                '<h2>Earlier campaign</h2>','Earlier Cs137 · 10k')
         self.assertEqual([results.index(label) for label in order],
                          sorted(results.index(label) for label in order))
@@ -130,6 +131,10 @@ class SiteStructureTests(unittest.TestCase):
         self.assertLess(learn.index('../examples/gamma-native/gamma.html'),learn.index('../examples/pipeline.html'))
         self.assertIn('Open the saved engineering example',learn)
         self.assertIn('Compact teaching example',learn)
+        self.assertIn('Ring-contact campaigns · pending saved results',results)
+        self.assertIn('not included in this public snapshot',results)
+        self.assertIn('280 °C / 50 min Li variant',results)
+        self.assertIn('unchanged KMRC01_candidate',results)
         for page in (learn,results):
             for wording in ('40 truth events','six selected responses','four positive responses',
                             'two selected true zeros','34 responses stay unknown/unprocessed',

@@ -1,7 +1,9 @@
 """Export only the pinned, completed M11c saved example; never run a producer.
 
-Standard library only. `export` requires the M11d writer-exit/source-freeze
-receipts. `validate BUNDLE` needs only public files and this reviewed source.
+Standard library only. `export` requires writer-exit/source-freeze receipts
+for its explicit local presentation round. `validate BUNDLE` needs only public
+files and this reviewed source. A new presentation round preserves the original
+M11d bundle and reads exactly the same pinned scientific artifacts.
 """
 from __future__ import annotations
 import argparse
@@ -23,6 +25,9 @@ BASE = '.local/m11c-gamma-native-v1'
 ROUND = '.local/m11d-gamma-showcase-v1'
 TEMPLATE = 'tools/gamma_showcase.html'
 TOKEN = '__GAMMA_SAVED_DATA_JSON__'
+# Reviewed original M11d template bytes. Historical bundles must reconstruct
+# exactly this template; their self-reported template hashes alone are not trusted.
+LEGACY_TEMPLATE_SHA256 = '0f4df5af9309caffa60b1b29dd13b9f551ed0fe125dbb32f6399a1987405cedf'
 ENCODING = 'json-compact-sorted-ascii-lf-v1'
 FILES = ('AK02-signals.csv', 'SAP22-signals.csv', 'data.json', 'gamma.html')
 MODELS = ('AK02', 'SAP22')
@@ -393,14 +398,21 @@ def current_sources(root=None):
     return values, reader
 
 
-def verify_freeze(root=None):
+def presentation_round(root, name):
+    require(type(name) is str and re.fullmatch(r'\.local/[A-Za-z0-9][A-Za-z0-9_-]*', name),
+            'Presentation round must be one named local evidence directory')
+    return relative(root, name)
+
+
+def verify_freeze(root=None, round_name=ROUND):
     root = ROOT if root is None else root
+    presentation_round(root, round_name)
     reader = Reader(root)
-    exited = reader.json(ROUND + '/WRITER-EXIT.json')
+    exited = reader.json(round_name + '/WRITER-EXIT.json')
     require(exited['status'] == 'exited' and exited['science_calls'] == 0, 'Writer has not exited')
-    frozen = reader.json(ROUND + '/SOURCE-FREEZE.json')
+    frozen = reader.json(round_name + '/SOURCE-FREEZE.json')
     require(frozen['status'] == 'frozen_after_writer_exit' and
-            frozen['writer_exit_sha256'] == reader.seen[ROUND + '/WRITER-EXIT.json'], 'Source freeze lacks writer exit')
+            frozen['writer_exit_sha256'] == reader.seen[round_name + '/WRITER-EXIT.json'], 'Source freeze lacks writer exit')
     sources, source_reader = current_sources(root)
     for name, item in sources.items():
         exact(frozen['files'][name], item, 'frozen current source')
@@ -427,14 +439,20 @@ def validate_data(data):
     # All eleven sources are checked at export/freeze. Historical nav/checker/test/
     # publisher/docs updates must not invalidate already-saved scientific bytes.
     template_reader = Reader(ROOT)
-    template_reader.raw(TEMPLATE, binding['template_sha256'])
+    active = template_reader.raw(TEMPLATE)
+    require(binding['template_sha256'] in (sha(active), LEGACY_TEMPLATE_SHA256),
+            'Template is neither current nor the pinned original M11d template')
     template_reader.recheck(); public_safe(data)
+
+
+def embedded_data(data):
+    return canonical(data).decode('ascii').replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
 
 
 def render(data, template=None):
     template = template if template is not None else relative(ROOT, TEMPLATE).read_bytes().decode('utf-8')
     require(template.count(TOKEN) == 1, 'Template placeholder census')
-    embedded = canonical(data).decode('ascii').replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
+    embedded = embedded_data(data)
     return template.replace(TOKEN, embedded).encode('utf-8')
 
 
@@ -451,7 +469,16 @@ def validate_bundle(directory):
     payload = {n: reader.raw(n, item['sha256'], item['bytes']) for n, item in manifest['files'].items()}
     data = decode(payload['data.json']); validate_data(data)
     require(payload['data.json'] == canonical(data), 'Noncanonical public serialization')
-    require(payload['gamma.html'] == render(data), 'HTML differs from frozen template and embedded data')
+    if data['presentation']['template_sha256'] == LEGACY_TEMPLATE_SHA256:
+        html = payload['gamma.html'].decode('utf-8')
+        embedded = embedded_data(data)
+        require(html.count(embedded) == 1, 'Historical embedded-data census')
+        template = html.replace(embedded, TOKEN)
+        require(sha(template.encode('utf-8')) == LEGACY_TEMPLATE_SHA256,
+                'Historical HTML differs from the pinned original M11d template')
+        require(payload['gamma.html'] == render(data, template), 'Changed historical embedded data')
+    else:
+        require(payload['gamma.html'] == render(data), 'HTML differs from frozen template and embedded data')
     exact(manifest['source'], data['science']['source'], 'public original provenance')
     exact(manifest['presentation'], data['presentation'], 'public presentation binding')
     require(manifest['science_sha256'] == SCIENCE_SHA256, 'Changed manifest scientific digest')
@@ -465,10 +492,11 @@ def validate_bundle(directory):
     return data
 
 
-def export_saved(output=None):
-    output = no_links(output or ROOT / ROUND / 'bundle')
-    require(output == no_links(ROOT / ROUND / 'bundle') and not output.exists(), 'Only a new M11d bundle destination is allowed')
-    sources, source_reader = verify_freeze()
+def export_saved(output=None, round_name=ROUND):
+    round_root = presentation_round(ROOT, round_name)
+    output = no_links(output or round_root / 'bundle')
+    require(output == no_links(round_root / 'bundle') and not output.exists(), 'Only a new saved-gamma bundle destination is allowed')
+    sources, source_reader = verify_freeze(round_name=round_name)
     science, csv_files, original_reader = read_saved_science()
     require(typed_digest(science) == SCIENCE_SHA256, 'Pinned saved science digest changed')
     data = dict(kind='saved_gamma_native_showcase_v1', schema_version=1, science=science,
@@ -481,7 +509,7 @@ def export_saved(output=None):
     for name, raw in payload.items():
         with relative(output, name).open('xb') as stream:
             stream.write(raw)
-    original_reader.recheck(); source_reader.recheck(); verify_freeze()
+    original_reader.recheck(); source_reader.recheck(); verify_freeze(round_name=round_name)
     manifest = dict(kind='saved_gamma_publication_v1', status='completed', science_sha256=SCIENCE_SHA256,
                     source=science['source'], presentation=data['presentation'],
                     files={n: dict(sha256=sha(raw), bytes=len(raw)) for n, raw in sorted(payload.items())})
@@ -491,11 +519,15 @@ def export_saved(output=None):
     return dict(status='completed_saved_export', events=40, selected=6, signed_samples=10057)
 
 
-def assemble(source, target):
+def assemble(source, target, *, replace=False):
     source = no_links(source); target = no_links(target)
     validate_bundle(source)
-    require(not target.exists(), 'Existing public gamma bundle requires explicit reconciliation')
-    target.mkdir(parents=True)
+    if target.exists():
+        require(replace and target == no_links(ROOT / '.local/site-build/examples/gamma-native') and
+                source != target, 'Existing public gamma bundle requires explicit staging reconciliation')
+        validate_bundle(target)
+    else:
+        target.mkdir(parents=True)
     for name in (*FILES, 'publication.json'):
         shutil.copyfile(relative(source, name), relative(target, name))
     validate_bundle(target)
@@ -504,11 +536,13 @@ def assemble(source, target):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='mode', required=True)
-    sub.add_parser('export')
+    export = sub.add_parser('export')
+    export.add_argument('--round', default=ROUND,
+                        help='Explicit .local/NAME presentation round with writer-exit/source-freeze receipts; creates a new bundle only')
     check = sub.add_parser('validate'); check.add_argument('bundle', type=Path)
     args = parser.parse_args()
     if args.mode == 'export':
-        result = export_saved()
+        result = export_saved(round_name=args.round)
     else:
         validate_bundle(args.bundle); result = dict(status='verified_saved_bundle', science_calls=0)
     print(json.dumps(result, sort_keys=True))

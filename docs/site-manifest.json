@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "build_id": "8812f403954052a1797b7558d2caad4379326846aecddd6ca6d3aff6e2c9d632",
+  "build_id": "8bff93f76d680f1c9f9d44a462545394f0b899f16fbd5902654e52d8b174ad71",
   "file_count": 1454,
-  "total_bytes": 767603486,
+  "total_bytes": 767604359,
   "html_pages": 97,
-  "local_links_checked": 2837,
+  "local_links_checked": 2839,
   "files": [
     {
       "path": ".nojekyll",
@@ -6993,18 +6993,18 @@
     },
     {
       "path": "examples/gamma-native/data.json",
-      "bytes": 3869197,
-      "sha256": "2b8ea1ddd64e7c903d2aff8a91257d7f6793313d338359922bd1737ea8f969ba"
+      "bytes": 3869198,
+      "sha256": "114b0c00dc483ef6b114d2567c28f87ba95ee2c0c1a1853bbd5dc16e649b91c1"
     },
     {
       "path": "examples/gamma-native/gamma.html",
-      "bytes": 3912625,
-      "sha256": "b967c473849b20c1a6bb1f94c3937bcc7a2d50bb058986e47b8e507022237aaf"
+      "bytes": 3912758,
+      "sha256": "83feea77de2580eee612fbfe65dc6202bbe8bcd1a3a04fe1ff15a44fa55a5c41"
     },
     {
       "path": "examples/gamma-native/publication.json",
-      "bytes": 14649,
-      "sha256": "d7aa6292444dd5c11a3132f72155fcd440c2a9308b5223e1d81e0fb89e5729f1"
+      "bytes": 14650,
+      "sha256": "ab73fe1b49b5337b0130c60598a551862209f5251f357fab4943296606e52801"
     },
     {
       "path": "examples/native-li/comparison.html",
@@ -7218,8 +7218,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 4273,
-      "sha256": "d607108e2013e8a586cdeac0c31fa781b7a5399166d571493f31221c80a82e16"
+      "bytes": 5011,
+      "sha256": "c5ec96e889ca6eb813270ab35f652ca0da3de4b712ffa5ea66ce03b8e279e8f9"
     },
     {
       "path": "scenarios/lbnl-cs137/index.html",
