@@ -1,9 +1,40 @@
 # Project state and next bounded work
 
 Updated: 2026-10-02 UTC. This compact handoff governs delivery order.
-The preceding browser handoff is immutable
-[at 2373a29](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/2373a290e4dcedaa2538619b67d60b32ed63a053/PROGRESS.md).
+The preceding handoff is immutable
+[at 8162c57](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/8162c5721d331ad0f8b0a6741f501c8352211909/PROGRESS.md).
 Inspect terminal receipts, Git, hashes and actual workers before repeating work.
+
+## M13 unified viewer and ring-contact 10K plan
+
+Owner priority now replaces the previous link-clutter assessment. Ordered plan:
+[tools/RING_10K_PLAN.md](tools/RING_10K_PLAN.md). First merge the two maintained
+event readers into one GeSignal event viewer, preserving old deep links and
+exact model/event/group identity; then integrate two ring-contact cases and
+complete equivalent four-detector current 10K presentation. Original signed
+bundles and completed AK02/SAP22 science stay exact; no old campaign rerun.
+
+Owner explicitly corrected the Li target: GeRC02 280 C/30min -> 50min independent
+variant, original 30min frozen; KMRC01_candidate stays unchanged. Each new case
+has 10,000 initial Cs137 decays including zero-Ge, same nominal source/outer
+cryostat/electronics, separately checked ring mounting. Both ring adapters are
+currently unimplemented; model/bias/contact/transform/effective-variant checks,
+bounded full-chain integration and each clean 500-decay pilot precede 10K. Keep
+native failure/null and electronics selection separate from full event census.
+77 K runtime versus 78 K stored model and KM signed polarity remain explicit.
+No arbitrary Li thickness, abs rectification, per-event truth gain or calibrated
+Li/resolution claim. Reuse only hash-verified terminal stages, not partial runs.
+
+Three reused scoped Sol6.1 Ultra agents audit frontend, physics and workflow
+then exchange concrete findings; some peer openers arrived before final INITIAL
+saves, while core independent findings preceded them, accurately recorded.
+This is planning AI review, not
+a new implementation's mandatory NEW third-party review or certification.
+Exact two live deep links load correctly; nine direct 10K HTML pages inventoried.
+Local .local/ring-10k-plan-v1/ holds decisions/reviews/browser/guard evidence.
+Planning only: new calculations0, implementation/model/site changes0; plan/PG
+sync terminal receipt follows. Existing30-minute heartbeat ACTIVE/readback agrees
+with M13 priorities; future execution remains unobserved.
 
 ## M11o narrow Gamma status/time wording repair
 
@@ -25,7 +56,7 @@ Ctrl-C terminal exit1 is recorded. Two scoped source AI reviews accept with four
 both INITIALs freeze. NEW independently verified
 Sol6.1 Ultra public-only static third PASS/tools0; it notes unit assertions do not
 directly cover the new paragraph/class, which the actual browser checks cover.
-Evidence .local/m11o-gamma-wording-v1/; publication/Git terminal receipt follows.
+Evidence .local/m11o-gamma-wording-v1/COMPLETE.json;8162c57 synchronized clean.
 Website payloads remain build26aebee/8ee8cc5 exact464live from M11m, no rebuild.
 
 ## M11n actual existing-host control browser checks
@@ -177,11 +208,13 @@ verification, not a new executable adapter. Seventeen viewable is not executable
 ## Next bounded work
 
 Skip M8/M9: second-computer newcomer acceptance blocks no current development.
-Next bounded work is a read-only assessment of remaining Results/Methods link
-clutter, then select one useful maintained-source navigation change with all
-existing destinations/results preserved. Do not declare overall clutter closed,
-add a frontend/environment, expose private examples or expand into new physics.
-The completed M11o repair and its terminal sync take precedence over older notes.
+Next bounded implementation is M13a saved-data-only unified event viewer under
+tools/RING_10K_PLAN.md, with a bounded design/freeze before edits and compatible
+old entry URLs. No new science is needed for that milestone. Ring M13b-f follows
+the owner-confirmed inputs and each verified pilot; do not promote unimplemented
+capabilities or reinterpret processing completion as physical validation.
+Navigation clarity is part of this new priority. No further per-round approval
+is needed within these confirmed inputs and existing successive-round authority.
 Root LICENSE requires the owner's
 MIT/Apache/GPL choice and specific rights scope; do not treat preselection as an
 answer. Model/source permissions stay separate. No collaborator grants or new CI.
