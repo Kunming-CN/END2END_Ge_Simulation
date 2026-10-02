@@ -10,13 +10,88 @@ const stateLabels = {preflight:'检查中',running:'运行中', 'stop-requested'
 function values(){return {name:$('name').value,detector:$('detector').value};}
 function key(){return JSON.stringify(values());}
 function message(text, error=false){$('notice').textContent=text;$('notice').className='message '+(error?'error':'ok');}
-function controls(){ $('check').disabled=busy||active;$('run').disabled=busy||active||checked!==key();$('name').disabled=busy||active;$('detector').disabled=busy||active; }
+function controls(){ const blocked=busy||active||gammaBlocksLegacy();$('check').disabled=blocked;$('run').disabled=blocked||checked!==key();$('name').disabled=blocked;$('detector').disabled=blocked;gammaControls(); }
 function resolved(){const d=$('detector').value;$('resolved').textContent=d==='AK02'?'AK02：3 个完整初级粒子，91 条原始 Ge 沉积行；固定 +500 V。':'SAP22：3 个完整初级粒子，33 条原始 Ge 沉积行（包含零能量行）；固定 +700 V。';}
 async function api(path,data){const response=await fetch(path,{method:data?'POST':'GET',headers:{'X-Control-Token':token,...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{}),cache:'no-store'});const result=await response.json();if(!response.ok)throw new Error(result.error||'本地操作失败');return result;}
 function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
 function btn(label,action){const b=el('button',label);b.addEventListener('click',async()=>{b.disabled=true;try{await action();await poll();}catch(e){message(e.message,true);}finally{if(b.isConnected)b.disabled=false;}});return b;}
 function downloadLink(label,name,file){const a=el('a','下载'+label,'link');a.href='/api/file?'+new URLSearchParams({name,file});return a;}
 function table(caption,heads,rows){const box=el('div',undefined,'table-scroll'),t=el('table');t.append(el('caption',caption));const h=el('tr');for(const name of heads)h.append(el('th',name));const head=el('thead');head.append(h);t.append(head);const body=el('tbody');for(const row of rows){const r=el('tr');for(const value of row)r.append(el('td',value==null?'未知 / 未定义':String(value)));body.append(r);}t.append(body);box.append(t);return box;}
+// Fixed gamma jobs share dispatch activity, but never the preview or Cs137 identity.
+const gammaFiles=['run.json','COMPLETE.json','AK02/request.json','AK02/report.json','AK02/calibration.json','AK02/truth-ledger.jsonl','AK02/signals.csv','SAP22/request.json','SAP22/report.json','SAP22/calibration.json','SAP22/truth-ledger.jsonl','SAP22/signals.csv'];
+const gammaErrors={invalid_state:'Unsupported Gamma control state; preserve it for inspection.',incomplete_output:'Only existing completed Gamma receipts can be verified.',controller_failed:'Gamma action failed; inspect preserved local evidence.',unknown_job:'Unknown owned Gamma job.',invalid_threads:'Choose one or two Julia threads.',busy:'An owned calculation or input check is active. Wait before another action.',launcher_failed:'Gamma launcher failed; inspect preserved local evidence.',backend_refused:'Gamma input or receipt verification failed; inspect preserved local evidence.',uncertain_dispatch:'A prior Gamma driver has uncertain nested-worker lifetime. Preserve its output for owner inspection.',verification_required:'Verify the existing completed Gamma receipt before downloading.',download_refused:'Verified Gamma artifact is unavailable or changed.',invalid_check:'Check these fixed Gamma inputs before starting.',invalid_backend_receipt:'Gamma returned an unsupported receipt; inspect preserved local evidence.',output_exists:'The generated Gamma output already exists; no replacement was launched.'};
+const gammaStatusLabels={'dispatch-uncertain':'启动状态未确定 · 等待人工检查',running:'运行中','verification-required':'完成记录待验证',completed:'完成并已验证',failed:'失败 · 保留证据',blocked:'受阻 · 等待人工检查'};
+const gammaStageLabels={waiting:'等待模型记录',native_models:'native 电荷与电子学模型',verification:'完成记录核对',complete:'模型处理完成',failed:'计算失败',unknown:'阶段未确定'};
+let gammaSupported=false,gammaState=null,gammaGlobalBusy=false,gammaPending=null,gammaInFlight=0,gammaGeneration=0,gammaCheck=null,pollGeneration=0;
+const gammaStartedIds=new Set(),gammaVerifiedReceipts=new Map(),gammaCards=new Map();
+function gammaRequire(condition){if(!condition)throw new Error('γ 响应未通过格式核对。');}
+function gammaKeys(value,keys){gammaRequire(value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join('|')===[...keys].sort().join('|'));}
+function gammaHex(value,length){return typeof value==='string'&&new RegExp('^[a-f0-9]{'+length+'}$').test(value);}
+function gammaTime(value){return typeof value==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?\+00:00$/.test(value)&&Number.isFinite(Date.parse(value));}
+function gammaNumber(value){return typeof value==='number'&&Number.isFinite(value)&&value>=0;}
+function validateGammaJob(value){
+ gammaKeys(value,['id','label','threads','status','created_at','updated_at','elapsed_seconds','progress','can_verify','verified','files','error','complete_sha256','run_sha256','calculation_seconds']);
+ gammaRequire(gammaHex(value.id,32)&&value.label==='ui-gamma-'+value.id&&[1,2].includes(value.threads)&&Object.hasOwn(gammaStatusLabels,value.status)&&gammaTime(value.created_at)&&gammaTime(value.updated_at)&&gammaNumber(value.elapsed_seconds)&&typeof value.can_verify==='boolean'&&typeof value.verified==='boolean'&&(value.calculation_seconds===null||gammaNumber(value.calculation_seconds)));
+ gammaKeys(value.progress,['completed_models','current_model','stage']);const progress=value.progress;
+ gammaRequire(Array.isArray(progress.completed_models)&&JSON.stringify(progress.completed_models)===JSON.stringify(['AK02','SAP22'].slice(0,progress.completed_models.length))&&progress.completed_models.length<=2&&[null,'AK02','SAP22'].includes(progress.current_model)&&Object.hasOwn(gammaStageLabels,progress.stage));
+ gammaRequire(Array.isArray(value.files)&&JSON.stringify(value.files)===JSON.stringify(value.verified?gammaFiles:[]));
+ gammaRequire(value.verified?value.status==='completed'&&gammaHex(value.complete_sha256,64)&&gammaHex(value.run_sha256,64):value.complete_sha256===null&&value.run_sha256===null);
+ let error=null;if(value.error!==null){gammaKeys(value.error,['code','message']);gammaRequire(Object.hasOwn(gammaErrors,value.error.code)&&value.error.message===gammaErrors[value.error.code]);error={code:value.error.code,message:value.error.message};}
+ return {id:value.id,label:value.label,threads:value.threads,status:value.status,created_at:value.created_at,updated_at:value.updated_at,elapsed_seconds:value.elapsed_seconds,progress:{completed_models:[...progress.completed_models],current_model:progress.current_model,stage:progress.stage},can_verify:value.can_verify,verified:value.verified,files:[...value.files],error,complete_sha256:value.complete_sha256,run_sha256:value.run_sha256,calculation_seconds:value.calculation_seconds};
+}
+function validateGammaState(value){
+ gammaKeys(value,['kind','active','jobs','checking','busy']);gammaRequire(value.kind==='gamma_local_control_state_v1'&&typeof value.checking==='boolean'&&typeof value.busy==='boolean'&&Array.isArray(value.jobs)&&value.jobs.length<=20);
+ const jobs=value.jobs.map(validateGammaJob);gammaRequire(new Set(jobs.map(j=>j.id)).size===jobs.length);const current=value.active===null?null:validateGammaJob(value.active);
+ gammaRequire(current===null||(['running','dispatch-uncertain'].includes(current.status)&&jobs.some(j=>JSON.stringify(j)===JSON.stringify(current))));gammaRequire(value.busy||(!current&&!value.checking));
+ return {kind:value.kind,active:current,jobs,checking:value.checking,busy:value.busy};
+}
+function validateGammaCheck(value,threads){
+ gammaKeys(value,['kind','status','threads','models','radiation_primaries','selected_primaries','unprocessed_primaries','native_calls','injection_calibrations','check_id']);
+ gammaRequire(value.kind==='gamma_local_control_check_v1'&&value.status==='checked_no_execution'&&value.threads===threads&&JSON.stringify(value.models)==='["AK02","SAP22"]'&&value.radiation_primaries===40&&value.selected_primaries===6&&value.unprocessed_primaries===34&&value.native_calls===0&&value.injection_calibrations===0&&gammaHex(value.check_id,64));return {check_id:value.check_id,threads};
+}
+function gammaMessage(text,error=false){$('gamma-notice').textContent=text;$('gamma-notice').className='message '+(error?'error':'ok');}
+function gammaThreads(){const choice=$('gamma-threads').value;return choice==='1'?1:choice==='2'?2:null;}
+function gammaBlocksLegacy(){return gammaGlobalBusy||gammaInFlight>0;}
+function gammaControls(){const blocked=!gammaSupported||busy||active||gammaState?.busy||gammaPending!==null;$('gamma-check').disabled=blocked;$('gamma-start').disabled=blocked||gammaInFlight>0||!gammaCheck||gammaCheck.threads!==gammaThreads();$('gamma-threads').disabled=busy||active||!!gammaState?.busy||['start','verify'].includes(gammaPending);}
+function gammaReceiptKey(job){return job.complete_sha256+':'+job.run_sha256;}
+function gammaCanDownload(job){return job.verified&&(gammaStartedIds.has(job.id)||gammaVerifiedReceipts.get(job.id)===gammaReceiptKey(job));}
+function renderGammaJobs(){
+ const box=$('gamma-jobs');if(!gammaSupported){box.textContent='新的 γ 控制状态不可用；没有可用的新结果下载。';gammaCards.clear();return;}const old=new Map(gammaCards);gammaCards.clear();box.replaceChildren();
+ if(!gammaState.jobs.length){box.textContent='尚无新的 γ 计算。';return;}
+ for(const job of gammaState.jobs){const card=el('article',undefined,'job'),title=el('strong','新 γ 结果 · '+job.label);title.append(el('span',gammaStatusLabels[job.status],'pill'));card.append(title);card.append(el('p','已观察模型：'+(job.progress.completed_models.join(' → ')||'尚无完成记录')+'；当前模型：'+(job.progress.current_model||'未记录')+'；阶段：'+gammaStageLabels[job.progress.stage]+'。实际经过时间 '+job.elapsed_seconds.toFixed(1)+' 秒；线程 '+job.threads+'。'));
+  if(job.calculation_seconds!==null)card.append(el('p','保存的计算编排用时 '+job.calculation_seconds.toFixed(3)+' 秒；与页面开发、检查和审阅时间分别记录。'));
+  if(job.error)card.append(el('p',job.error.code==='uncertain_dispatch'?'先前计算的子进程状态未确定；请保留证据并由所有者检查。':'此计算受阻或失败；本地证据已保留，请由所有者检查。','error'));
+  const actions=el('div',undefined,'actions');if(job.can_verify){const verify=el('button',gammaCanDownload(job)?'重新验证此新结果':'验证此新保存结果');verify.disabled=busy||active||gammaPending!==null||gammaInFlight>0;verify.addEventListener('click',()=>verifyGamma(job.id));actions.append(verify);}card.append(actions);
+  if(gammaCanDownload(job)){const downloads=el('details');downloads.open=old.get(job.id)?.querySelector('details')?.open||false;downloads.append(el('summary','已验证的新结果 · 12 个原始记录与信号下载'));downloads.append(el('p','新结果标识：'+job.label+'；完整真值与响应标记均保留。'));const links=el('div',undefined,'actions');for(const file of gammaFiles){const a=el('a','下载 '+file,'link');a.href='/api/gamma-file?'+new URLSearchParams({job_id:job.id,file});links.append(a);}downloads.append(links);downloads.append(el('p','COMPLETE SHA256：'+job.complete_sha256));downloads.append(el('p','run SHA256：'+job.run_sha256));card.append(downloads);}else if(['completed','verification-required'].includes(job.status))card.append(el('p','请明确验证此新保存结果，然后下载原始记录与信号。'));
+  box.append(card);gammaCards.set(job.id,card);
+ }
+}
+function gammaRefresh(){controls();renderGammaJobs();if(lastSnapshot)render(lastSnapshot,false);}
+function receiveGammaState(value){try{gammaState=validateGammaState(value);gammaSupported=true;gammaGlobalBusy=gammaState.busy;if(gammaGlobalBusy)gammaCheck=null;}catch(e){gammaSupported=false;gammaCheck=null;gammaMessage('新的 γ 控制状态不可用或格式未获支持；请保留本地证据并检查。',true);}renderGammaJobs();}
+function receiveGammaJob(job){const jobs=[job,...gammaState.jobs.filter(j=>j.id!==job.id)].slice(0,20),isActive=['running','dispatch-uncertain'].includes(job.status);gammaState={...gammaState,jobs,active:isActive?job:null,busy:gammaState.busy||isActive||jobs.some(j=>['blocked','verification-required','running','dispatch-uncertain'].includes(j.status)),checking:false};gammaGlobalBusy=gammaState.busy;gammaSupported=true;}
+async function checkGamma(){
+ if(!gammaSupported||busy||active||gammaState.busy||gammaPending!==null)return;const threads=gammaThreads();if(threads===null){gammaCheck=null;gammaMessage('请选择 1 或 2 个线程并重新检查。',true);gammaRefresh();return;}
+ const generation=++gammaGeneration;gammaPending='check';gammaInFlight++;gammaCheck=null;gammaMessage('正在检查固定 γ 输入；不会启动计算。');gammaRefresh();
+ try{const response=await api('/api/gamma-check',{threads});if(generation!==gammaGeneration)return;gammaCheck=validateGammaCheck(response,threads);gammaMessage('输入已核对：40 个真值、计划处理 6 个、34 个响应保持 null。此次检查 native 调用 0 次、注入校准 0 次；点击开始才计算。');}
+ catch(e){if(generation!==gammaGeneration)return;gammaCheck=null;gammaMessage('固定 γ 输入暂不可用或未通过核对；没有启动计算，请手动重新检查。',true);}
+ finally{gammaInFlight--;if(generation===gammaGeneration){gammaPending=null;gammaGeneration++;}gammaRefresh();}
+}
+async function startGamma(){
+ if(!gammaSupported||busy||active||gammaState.busy||gammaPending!==null||gammaInFlight>0||!gammaCheck||gammaCheck.threads!==gammaThreads())return;
+ const selection=gammaCheck,generation=++gammaGeneration;gammaCheck=null;gammaPending='start';gammaInFlight++;gammaMessage('正在请求开始一个新的固定 γ 计算；请等待后端确认。');gammaRefresh();
+ try{const response=await api('/api/gamma-start',{check_id:selection.check_id});if(generation!==gammaGeneration)return;gammaKeys(response,['kind','job']);gammaRequire(response.kind==='gamma_local_control_start_v1');const job=validateGammaJob(response.job);gammaRequire(job.threads===selection.threads);gammaStartedIds.add(job.id);receiveGammaJob(job);gammaMessage('后端已记录新任务 '+job.label+'。仅显示已观察到的模型阶段和经过时间；此计算没有停止或继续功能。');}
+ catch(e){if(generation!==gammaGeneration)return;gammaMessage('新的 γ 开始请求未获有效确认；请查看保存状态并保留证据。不会自动重试。',true);}
+ finally{gammaInFlight--;if(generation===gammaGeneration){gammaPending=null;gammaGeneration++;}gammaRefresh();}
+}
+async function verifyGamma(id){
+ const target=gammaState?.jobs.find(j=>j.id===id);if(!gammaSupported||busy||active||gammaPending!==null||gammaInFlight>0||!target?.can_verify)return;
+ const generation=++gammaGeneration;gammaPending='verify';gammaInFlight++;gammaVerifiedReceipts.delete(id);gammaStartedIds.delete(id);gammaMessage('正在核对新结果 '+target.label+'；不会运行科学计算。');gammaRefresh();
+ try{const response=await api('/api/gamma-verify',{job_id:id});if(generation!==gammaGeneration)return;gammaKeys(response,['kind','status','scientific_workers_launched','job']);gammaRequire(response.kind==='gamma_local_control_verify_v1'&&response.status==='verified'&&response.scientific_workers_launched===0);const job=validateGammaJob(response.job);gammaRequire(job.id===id&&job.threads===target.threads&&job.verified);receiveGammaJob(job);gammaVerifiedReceipts.set(id,gammaReceiptKey(job));gammaMessage('新结果 '+job.label+' 已通过保存记录与文件核对；科学计算调用 0 次。展开此任务的原始记录与信号下载。');}
+ catch(e){if(generation!==gammaGeneration)return;gammaMessage('此新结果未通过有效核对；下载仍不可用。请保留本地证据并手动检查。',true);}
+ finally{gammaInFlight--;if(generation===gammaGeneration){gammaPending=null;gammaGeneration++;}gammaRefresh();}
+}
+$('gamma-threads').addEventListener('change',()=>{if(['start','verify'].includes(gammaPending))return;gammaGeneration++;gammaPending=null;gammaCheck=null;gammaMessage('线程选择已更改，请重新检查固定 γ 输入。');gammaRefresh();});
+$('gamma-check').addEventListener('click',checkGamma);$('gamma-start').addEventListener('click',startGamma);
 // The fixed saved-gamma action is independent of preview selections and job state.
 let savedGammaPending = false;
 function savedGammaMessage(text,error=false){$('saved-gamma-notice').textContent=text;$('saved-gamma-notice').className='message '+(error?'error':'ok');}
@@ -107,24 +182,24 @@ async function showEvents(job){const response=await fetch('/api/file?'+new URLSe
  panel.append(table('全部读出脉冲组',['原始 ID / 组','Erec / keV','状态','接受','尾部可能截断'],records.filter(r=>r.record_kind==='pulse').map(r=>[r.global_decay_id+' / '+r.group_id,r.readout?.reconstructed_energy_keV,r.status,r.accepted,r.readout?.tail_truncated_possible])));
  const details=el('details');details.append(el('summary','每条完整记录：原始沉积、时间、单位与所有标记'));for(const [index,record] of records.entries()){const d=el('details');d.append(el('summary',record.record_kind+' · ID '+record.global_decay_id+(record.group_id==null?'':' / group '+record.group_id)));d.append(el('pre',lines[index]));details.append(d);}panel.append(details);const card=cards.get(job.id);if(!card?.isConnected)return;card.querySelector('.events')?.remove();card.append(panel);
 }
-function render(snapshot){active=!!snapshot.active;controls();const container=$('jobs');if(!snapshot.jobs.length){container.textContent='尚无任务。';return;}
+function render(snapshot,applyGamma=true){active=!!snapshot.active;if(applyGamma)receiveGammaState(snapshot.gamma);controls();const container=$('jobs');if(!snapshot.jobs.length){container.textContent='尚无任务。';return;}
  for(const child of [...container.childNodes])if(child.nodeType===Node.TEXT_NODE)child.remove();const present=new Set();let index=0;
- for(const job of snapshot.jobs){present.add(job.id);const signature=JSON.stringify([job,snapshot.active?.id||null]);const old=cards.get(job.id);if(old&&signatures.get(job.id)===signature){if(container.children[index]!==old)container.insertBefore(old,container.children[index]||null);index++;continue;}
+ for(const job of snapshot.jobs){present.add(job.id);const signature=JSON.stringify([job,snapshot.active?.id||null,gammaBlocksLegacy()]);const old=cards.get(job.id);if(old&&signatures.get(job.id)===signature){if(container.children[index]!==old)container.insertBefore(old,container.children[index]||null);index++;continue;}
   const card=el('article',undefined,'job');const title=el('strong',job.name+' · '+(job.detector||'保存的设置'));title.append(el('span',stateLabels[job.status]||job.status,'pill'));card.append(title);
   const backend=job.backend||job.result||{};const stages=backend.stages||{};const counts=backend.completed_counts||stages.completed_counts||{};const expected=backend.expected_counts||stages.expected_counts||{};
   const progressText=['charge','calibration','electronics'].filter(k=>counts[k]!=null).map(k=>({charge:'电荷',calibration:'校准',electronics:'电子学'}[k])+': '+counts[k]+' / '+(expected[k]??'?')).join(' · ');if(progressText)card.append(el('p',progressText));
   const census=backend.selected_census;if(census)card.append(el('p','原始事件统计：'+[['initial_primaries','初级粒子'],['zero_ge_primaries','零沉积'],['nonzero_primaries','非零沉积'],['groups','脉冲组']].map(([k,label])=>label+' '+(census[k]??'未知')).join(' · ')));
   if(job.error)card.append(el('p',job.error.message||JSON.stringify(job.error),'error'));
   const actions=el('div',undefined,'actions');if(snapshot.active&&snapshot.active.id===job.id&&['preflight','running','queued'].includes(job.status))actions.append(btn('停止（当前步骤结束后）',()=>api('/api/stop',{job_id:job.id})));
-  if(!snapshot.active&&job.can_resume&&['stopped','paused','failed','blocked'].includes(job.status))actions.append(btn('验证并继续此任务',()=>api('/api/resume',{name:job.name})));
-  if(['completed','completed_with_native_failures'].includes(job.status)){if(!job.complete_sha256)actions.append(btn('验证已保存结果',()=>api('/api/resume',{name:job.name})));else{actions.append(btn('查看全部事件结果',()=>showEvents(job)));for(const [label,file] of [['结果与标记','worker/'+job.detector+'/scalars.jsonl'],['完整保存波形','worker/'+job.detector+'/traces.jsonl'],['运行记录','run.json'],['设置与来源','manifest.json'],['完成凭据','COMPLETE.json']])actions.append(downloadLink(label,job.name,file));}}
+  if(!snapshot.active&&job.can_resume&&['stopped','paused','failed','blocked'].includes(job.status)){const resume=btn('验证并继续此任务',()=>{if(!gammaBlocksLegacy()&&!busy&&!active)return api('/api/resume',{name:job.name});});resume.disabled=gammaBlocksLegacy();actions.append(resume);}
+  if(['completed','completed_with_native_failures'].includes(job.status)){if(!job.complete_sha256){const verify=btn('验证已保存结果',()=>{if(!gammaBlocksLegacy()&&!busy&&!active)return api('/api/resume',{name:job.name});});verify.disabled=gammaBlocksLegacy();actions.append(verify);}else{actions.append(btn('查看全部事件结果',()=>showEvents(job)));for(const [label,file] of [['结果与标记','worker/'+job.detector+'/scalars.jsonl'],['完整保存波形','worker/'+job.detector+'/traces.jsonl'],['运行记录','run.json'],['设置与来源','manifest.json'],['完成凭据','COMPLETE.json']])actions.append(downloadLink(label,job.name,file));}}
   card.append(actions);const details=el('details');details.append(el('summary','记录 / 等价命令 / 输出位置'));details.append(el('p',job.output||''));if(job.runtime_choice)details.append(el('p','运行环境选择：'+job.runtime_choice.label+'；实际版本与程序字节由后端核对。'));details.append(el('pre',(job.command||[]).join(' ')));details.append(el('pre',(job.logs||[]).join('\n')||'等待后端记录。'));card.append(details);
   if(old){details.open=old.querySelector('details')?.open||false;const events=old.querySelector('.events');if(events)card.append(events);old.replaceWith(card);}else container.insertBefore(card,container.children[index]||null);cards.set(job.id,card);signatures.set(job.id,signature);index++;
  }
  for(const [id,card] of cards)if(!present.has(id)){card.remove();cards.delete(id);signatures.delete(id);}
 }
-async function poll(){try{const s=await api('/api/state');$('connection').textContent='已连接到本机 · 状态来自保存的后端记录';if(JSON.stringify(s)!==JSON.stringify(lastSnapshot)){render(s);lastSnapshot=s;}}catch(e){$('connection').textContent=e.message+'；重开 Control.cmd 后使用新会话链接。';$('run').disabled=true;}}
+async function poll(){const generation=++pollGeneration,gammaAtRequest=gammaGeneration;try{const s=await api('/api/state');if(generation!==pollGeneration)return;$('connection').textContent='已连接到本机 · 状态来自保存的后端记录';const applyGamma=gammaAtRequest===gammaGeneration&&gammaInFlight===0;if(JSON.stringify(s)!==JSON.stringify(lastSnapshot)){render(s,applyGamma);lastSnapshot=s;}else if(applyGamma){receiveGammaState(s.gamma);controls();}}catch(e){if(generation!==pollGeneration)return;$('connection').textContent=e.message+'；重开 Control.cmd 后使用新会话链接。';gammaSupported=false;gammaCheck=null;renderGammaJobs();controls();$('run').disabled=true;}}
 for(const id of ['name','detector'])$(id).addEventListener('input',()=>{checked='';resolved();controls();message('设置已更改，请重新检查输入。');});
-$('check').addEventListener('click',async()=>{busy=true;controls();message('正在读取并验证输入；不会启动计算。');try{const r=await api('/api/check',values());if(!r.verification_final||r.status!=='planned')throw new Error((r.findings||[]).map(x=>x.message||JSON.stringify(x)).join('\n')||'输入未通过检查');checked=key();message('输入检查通过。点击“开始运行”才会计算；运行时还会核对软件与来源。');}catch(e){checked='';message(e.message,true);}finally{busy=false;controls();}});
-$('run').addEventListener('click',async()=>{busy=true;controls();try{await api('/api/start',values());checked='';message('任务已明确启动。可以查看进度，或请求在当前步骤后停止。');await poll();}catch(e){message(e.message,true);}finally{busy=false;controls();}});
+$('check').addEventListener('click',async()=>{if(busy||active||gammaBlocksLegacy())return;busy=true;controls();message('正在读取并验证输入；不会启动计算。');try{const r=await api('/api/check',values());if(!r.verification_final||r.status!=='planned')throw new Error((r.findings||[]).map(x=>x.message||JSON.stringify(x)).join('\n')||'输入未通过检查');checked=key();message('输入检查通过。点击“开始运行”才会计算；运行时还会核对软件与来源。');}catch(e){checked='';message(e.message,true);}finally{busy=false;controls();}});
+$('run').addEventListener('click',async()=>{if(busy||active||gammaBlocksLegacy()||checked!==key())return;busy=true;controls();try{await api('/api/start',values());checked='';message('任务已明确启动。可以查看进度，或请求在当前步骤后停止。');await poll();}catch(e){message(e.message,true);}finally{busy=false;controls();}});
 resolved();controls();poll();setInterval(poll,1000);

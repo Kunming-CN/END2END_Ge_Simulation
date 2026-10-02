@@ -10,10 +10,12 @@ from pathlib import Path
 import secrets
 import stat
 import sys
+import threading
 from urllib.parse import parse_qs, urlsplit
 import webbrowser
 
-from local_ui_jobs import BASE, Controller, ControlError
+from local_ui_jobs import BASE, Controller, ControlError, decode_json
+from local_ui_gamma_jobs import GammaController
 from local_ui_scenarios import checked_scenarios
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -109,15 +111,18 @@ def server_lease(root):
 class Server(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, port, controller, token=None):
+    def __init__(self, port, controller, token=None, *, gamma_controller=None):
         super().__init__(('127.0.0.1', port), Handler)
         self.controller = controller
+        self.gamma_controller = gamma_controller
         self.token = token or secrets.token_urlsafe(32)
         # Separate read-only session capability; never authorizes state or writes.
         # Loopback cookies are not isolated by port. Exact origin/fetch-site guards
         # remain required, and a random name avoids stale-instance collisions.
         self.download_cookie = 'ge_download_' + secrets.token_hex(12)
         self.download_token = secrets.token_urlsafe(32)
+        self.gamma_download_cookie = 'ge_gamma_download_' + secrets.token_hex(12)
+        self.gamma_download_token = secrets.token_urlsafe(32)
         self.origin = 'http://127.0.0.1:' + str(self.server_port)
         self.static_root = ROOT / 'tools'
 
@@ -128,7 +133,7 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass  # Requests may contain private run identities; no URL/access log.
 
-    def send_data(self, status, body, content_type='application/json; charset=utf-8', filename=None, grant_download=False):
+    def send_data(self, status, body, content_type='application/json; charset=utf-8', filename=None, grant_download=False, grant_gamma_download=False):
         if isinstance(body, dict):
             body = json.dumps(body, ensure_ascii=False, allow_nan=False).encode('utf-8')
         self.send_response(status)
@@ -144,6 +149,9 @@ class Handler(BaseHTTPRequestHandler):
         if grant_download:
             self.send_header('Set-Cookie', self.server.download_cookie + '=' + self.server.download_token +
                              '; Path=/api/file; HttpOnly; SameSite=Strict')
+        if grant_gamma_download:
+            self.send_header('Set-Cookie', self.server.gamma_download_cookie + '=' + self.server.gamma_download_token +
+                             '; Path=/api/gamma-file; HttpOnly; SameSite=Strict')
         self.end_headers()
         self.wfile.write(body)
         self.close_connection = True
@@ -151,7 +159,7 @@ class Handler(BaseHTTPRequestHandler):
     def reject(self, code, message):
         self.send_data(code, {'error': message})
 
-    def authorized(self, write=False, download=False):
+    def authorized(self, write=False, download=False, gamma_download=False):
         if self.headers.get('Host') != urlsplit(self.server.origin).netloc:
             self.reject(403, 'Loopback host required'); return False
         origin = self.headers.get('Origin')
@@ -161,11 +169,13 @@ class Handler(BaseHTTPRequestHandler):
             self.reject(403, 'Same origin required'); return False
         bearer_ok = secrets.compare_digest(self.headers.get('X-Control-Token', '').encode('utf-8'), self.server.token.encode('utf-8'))
         cookie_ok = False
-        if download and not write and self.headers.get('Sec-Fetch-Site') == 'same-origin':
+        if (download or gamma_download) and not write and self.headers.get('Sec-Fetch-Site') == 'same-origin':
             try:
                 cookie = SimpleCookie(self.headers.get('Cookie', ''))
-                value = cookie.get(self.server.download_cookie)
-                cookie_ok = bool(value) and secrets.compare_digest(value.value.encode('utf-8'), self.server.download_token.encode('utf-8'))
+                name = self.server.gamma_download_cookie if gamma_download else self.server.download_cookie
+                token = self.server.gamma_download_token if gamma_download else self.server.download_token
+                value = cookie.get(name)
+                cookie_ok = bool(value) and secrets.compare_digest(value.value.encode('utf-8'), token.encode('utf-8'))
             except CookieError:
                 pass
         if not bearer_ok and not cookie_ok:
@@ -179,7 +189,7 @@ class Handler(BaseHTTPRequestHandler):
         if parts.path in STATIC and not parts.query:
             name, mime = STATIC[parts.path]
             return self.send_data(200, (self.server.static_root / name).read_bytes(), mime)
-        if not self.authorized(download=parts.path == '/api/file'):
+        if not self.authorized(download=parts.path == '/api/file', gamma_download=parts.path == '/api/gamma-file'):
             return
         try:
             if self.path == '/api/scenarios':
@@ -187,8 +197,19 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_data(200, checked_scenarios())
                 except Exception:
                     return self.reject(503, 'Scenario configuration preview is unavailable')
-            if parts.path == '/api/state' and not parts.query:
-                return self.send_data(200, self.server.controller.snapshot(), grant_download=True)
+            if self.path == '/api/state':
+                state = self.server.controller.snapshot()
+                if self.server.gamma_controller is not None:
+                    state['gamma'] = self.server.gamma_controller.snapshot()
+                return self.send_data(200, state, grant_download=True)
+            if parts.path == '/api/gamma-file':
+                if parts.fragment:
+                    raise ValueError('Invalid Gamma result request')
+                query = parse_qs(parts.query, strict_parsing=True)
+                if set(query) != {'job_id', 'file'} or any(len(v) != 1 for v in query.values()) or self.server.gamma_controller is None:
+                    raise ValueError('Invalid Gamma result request')
+                body, filename = self.server.gamma_controller.download(query['job_id'][0], query['file'][0])
+                return self.send_data(200, body, 'application/octet-stream', filename)
             if parts.path == '/api/file':
                 query = parse_qs(parts.query, strict_parsing=True)
                 if set(query) != {'name', 'file'} or any(len(v) != 1 for v in query.values()):
@@ -233,7 +254,7 @@ class Handler(BaseHTTPRequestHandler):
             size = int(self.headers.get('Content-Length', '-1'))
             if not 1 <= size <= 4096:
                 raise ValueError('Request size must be 1..4096 bytes')
-            data = json.loads(self.rfile.read(size))
+            data = decode_json(self.rfile.read(size).decode('utf-8'))
             if self.path == '/api/open-saved-gamma':
                 if type(data) is not dict or data:
                     raise ValueError('Unsupported input fields or types')
@@ -243,6 +264,19 @@ class Handler(BaseHTTPRequestHandler):
                     return self.reject(503, 'Saved gamma example is unavailable')
                 except SavedGammaOpenError:
                     return self.reject(503, 'Saved gamma example open request failed')
+            gamma_routes = {'/api/gamma-check': ({'threads'}, 'check'),
+                            '/api/gamma-start': ({'check_id'}, 'start'),
+                            '/api/gamma-verify': ({'job_id'}, 'verify')}
+            if self.path in gamma_routes:
+                keys, method = gamma_routes[self.path]
+                if (type(data) is not dict or set(data) != keys or
+                        (method == 'check' and (type(data['threads']) is not int or data['threads'] not in (1, 2))) or
+                        (method != 'check' and any(type(v) is not str for v in data.values()))):
+                    raise ValueError('Unsupported input fields or types')
+                if self.server.gamma_controller is None:
+                    return self.reject(503, 'Gamma control is unavailable')
+                result = getattr(self.server.gamma_controller, method)(**data)
+                return self.send_data(200, result, grant_gamma_download=True)
             routes = {'/api/check': ({'name', 'detector'}, 'check'),
                       '/api/start': ({'name', 'detector'}, 'start'),
                       '/api/stop': ({'job_id'}, 'stop'), '/api/resume': ({'name'}, 'resume')}
@@ -270,12 +304,16 @@ def main(argv=None):
     if not 0 <= args.port <= 65535:
         parser.error('Port must be 0..65535')
     with server_lease(ROOT) as folder:
-        server = Server(args.port, Controller(ROOT))
+        coordination = threading.RLock()
+        controller = Controller(ROOT, coordination_lock=coordination)
+        gamma = GammaController(ROOT, coordination_lock=coordination, peer_busy=controller.own_busy)
+        controller.set_peer_busy(gamma.own_busy)
+        server = Server(args.port, controller, gamma_controller=gamma)
         session = server.origin + '/#' + server.token
         receipt = folder / 'server.json'
         receipt.write_text(json.dumps({'pid': os.getpid(), 'url': session, 'origin': server.origin}, indent=2), encoding='utf-8')
         print('Local control: ' + server.origin + ' (session link opens in your browser).', flush=True)
-        print('Closing this terminal stops the interface. Stop an active job in the page first.', flush=True)
+        print('Keep this terminal open until calculations complete. Gamma has no Stop or Resume; closing the interface does not safely stop nested workers.', flush=True)
         if not args.no_browser:
             webbrowser.open(session)
         try:

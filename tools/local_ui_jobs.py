@@ -42,6 +42,43 @@ class ControlError(Exception):
         self.code = code
 
 
+def existing_julia_environment(env):
+    """Select the existing readable launcher in a CHILD environment only."""
+    if os.name != 'nt':
+        return env
+    # WindowsApps app-execution aliases can execute yet cannot be read
+    # for the backend's launcher-byte provenance gate. Use the exact
+    # already-installed fallback that the shared backend documents.
+    # An explicit value, including an empty/unreadable one, is honored
+    # as a request and refuses instead of silently choosing another.
+    explicit = next((k for k in env if k.casefold() == 'julia_exe'), None)
+    if explicit is not None:
+        chosen = env[explicit]
+        if not chosen:
+            raise ControlError('Explicit JULIA_EXE is empty. Select an existing readable Julia executable; no fallback was used.', 'unsupported_runtime')
+    else:
+        profile = env.get('USERPROFILE') or env.get('UserProfile')
+        if not profile:
+            raise ControlError('Existing pinned Julia cannot be located. Set JULIA_EXE to a readable existing executable; nothing was installed.', 'unsupported_runtime')
+        chosen = str(Path(profile) / '.julia/juliaup/julia-1.13.0+0.x64.w64.mingw32/bin/julia.exe')
+    try:
+        candidate = Path(chosen)
+        if not candidate.is_file():
+            raise OSError('not a file')
+        with candidate.open('rb') as stream:
+            if not stream.read(1):
+                raise OSError('empty executable')
+    except (OSError, ValueError) as error:
+        raise ControlError(('Explicit JULIA_EXE is not readable; no fallback was used.' if explicit is not None else
+                            'The existing pinned Julia 1.13.0 binary is missing or unreadable. Set JULIA_EXE to a readable existing executable; nothing was installed.'),
+                           'unsupported_runtime') from error
+    for key in list(env):
+        if key.casefold() == 'julia_exe':
+            del env[key]
+    env['JULIA_EXE'] = chosen
+    return env
+
+
 def utc_now():
     return datetime.now(timezone.utc).isoformat(timespec='seconds')
 
@@ -175,12 +212,14 @@ def run_command(argv, *, cwd, env, on_output, on_spawn):
 
 class Controller:
     """One active owned job; durable names, read-only reopening, verified steps."""
-    def __init__(self, root=None, runner=None, *, identity_probe=None, lock_probe=None):
+    def __init__(self, root=None, runner=None, *, identity_probe=None, lock_probe=None,
+                 coordination_lock=None, peer_busy=None):
         self.root = Path(os.path.abspath(root or Path(__file__).parent.parent))
         self._runner = runner or run_command
         self._identity_probe = identity_probe or process_identity
         self._lock_probe = lock_probe or lock_busy
-        self._lock = threading.RLock()
+        self._lock = coordination_lock or threading.RLock()
+        self._peer_busy = peer_busy or (lambda: False)
         self._active = None
         self._checking = False
         self._thread = None
@@ -312,11 +351,22 @@ class Controller:
             job['error'] = {'code': 'interrupted_before_receipt', 'message': 'The prior controller did not retain a verified backend receipt. Inspect or resume the saved output; no new computation was started.'}
 
     def _guard_idle(self):
+        if self._peer_busy():
+            raise ControlError('Another owned calculation or input check is active; wait before launching.', 'busy')
         if self._active is not None or self._checking:
             raise ControlError('One job or input check is already active.', 'busy')
         for job in self._jobs:
             if self._live(job):
                 raise ControlError('An owned backend process or run lease is still active; wait before launching.', 'backend_still_active')
+
+    def own_busy(self):
+        """Nonrecursive peer probe; shared lock covers decision and reservation."""
+        with self._lock:
+            return self._active is not None or self._checking or any(self._live(j) for j in self._jobs)
+
+    def set_peer_busy(self, probe):
+        with self._lock:
+            self._peer_busy = probe
 
     def _argv(self, name, detector=None, *, resume=False, dry=False, step=False):
         safe_path(self.root, 'tools/scenario_cli.ps1')
@@ -359,36 +409,7 @@ class Controller:
                 # Saved Resume/DryRun is backend-only receipt verification and
                 # retains the public route's no-Julia-discovery/no-launch path.
                 return env
-            # WindowsApps app-execution aliases can execute yet cannot be read
-            # for the backend's launcher-byte provenance gate. Use the exact
-            # already-installed fallback that the shared backend documents.
-            # An explicit value, including an empty/unreadable one, is honored
-            # as a request and refuses instead of silently choosing another.
-            explicit = next((k for k in env if k.casefold() == 'julia_exe'), None)
-            if explicit is not None:
-                chosen = env[explicit]
-                if not chosen:
-                    raise ControlError('Explicit JULIA_EXE is empty. Select an existing readable Julia executable; no fallback was used.', 'unsupported_runtime')
-            else:
-                profile = env.get('USERPROFILE') or env.get('UserProfile')
-                if not profile:
-                    raise ControlError('Existing pinned Julia cannot be located. Set JULIA_EXE to a readable existing executable; nothing was installed.', 'unsupported_runtime')
-                chosen = str(Path(profile) / '.julia/juliaup/julia-1.13.0+0.x64.w64.mingw32/bin/julia.exe')
-            try:
-                candidate = Path(chosen)
-                if not candidate.is_file():
-                    raise OSError('not a file')
-                with candidate.open('rb') as stream:
-                    if not stream.read(1):
-                        raise OSError('empty executable')
-            except (OSError, ValueError) as error:
-                raise ControlError(('Explicit JULIA_EXE is not readable; no fallback was used.' if explicit is not None else
-                                    'The existing pinned Julia 1.13.0 binary is missing or unreadable. Set JULIA_EXE to a readable existing executable; nothing was installed.'),
-                                   'unsupported_runtime') from error
-            for key in list(env):
-                if key.casefold() == 'julia_exe':
-                    del env[key]
-            env['JULIA_EXE'] = chosen
+            existing_julia_environment(env)
         return env
 
     def _runtime_label(self, env, *, selected=True):

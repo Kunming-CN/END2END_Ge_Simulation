@@ -1,39 +1,55 @@
 # Project state and next bounded work
 
-Updated: 2026-10-01 (2026-10-02 UTC). This compact handoff governs delivery order.
-The preceding preview/navigation/native/engineering handoff is immutable
-[at 2f04845](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/2f048457ded6fd5566fea767d27a688bcb5b3c9a/PROGRESS.md).
+Updated: 2026-10-02 UTC. This compact handoff governs delivery order.
+The preceding saved-opening/preview/navigation handoff is immutable
+[at 19cb1b8](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/19cb1b8d583b0bfc7684ef80c9885447b5ef83ec/PROGRESS.md).
 Inspect terminal receipts, Git, hashes and actual workers before repeating work.
 
-## M11j checked opening of the saved gamma example
+## M11k fixed gamma calculation from local control
 
-One separate explicit local mouse action checks the fixed completed M11d bundle
-with unchanged gamma_showcase.validate_bundle, then requests the existing offline
-gamma.html browser. No producer, export, new renderer or computation. The original
-explorer and adjacent downloads remain exact. Authenticated same-origin POST
-accepts exactly {}; no query, selector, path or download-cookie authorization.
-Missing/altered data, stale template and failed browser requests are sanitized;
-no automatic fallback or retry. A requested open is not confirmed display.
-Its independent pending/message state preserves existing jobs, run/stop/resume,
-download identity and M11i preview. Visible scope is saved nominal synthetic
-662 keV gamma, 40 truth/six processed/34 unprocessed-null responses, original
-78 K models and explicit 77 K cached fields, low statistics and calibration limits.
-File checks are not a race-resistant sandbox; a file may change after validation.
+Manual check/start/progress/verify and twelve owned new-result downloads reuse
+the unchanged gamma_native_example CLI and native worker. A shared reservation
+coordinates Cs137 and gamma; consumed tickets persist before dispatch and replay
+keeps one identity. Thread choice is 1/2, default2, child-only; models stay serial,
+failure policy abort. No new radiation/field solve, stop/resume/kill/adoption/retry.
+Saved reference, preview and Cs137 identities remain separate. Reopening calls
+no CLI and writes no state; known ended completions need renewed explicit file
+verification, even if terminal files are missing. Unknown/live/failed dispatch
+lifetime remains conservative. A single-job reply cannot clear aggregate busy;
+only authoritative state refresh does. Downloads require exact hashes and the
+separate read cookie; cookie possession never authorizes control writes.
 
-Both writers exited; five sources froze. All 53 Python tests pass without skips
-(17 protocol/helper, five unchanged saved-validator, 31 unchanged jobs). Eight
-frontend mock/static groups and two syntax checks pass. Real saved-bundle
-validation via owned authenticated loopback HTTP and actual acknowledgement in
-the mock frontend pass; opener mocked, Controller calls 0, owned server closed.
-3725 protected records include completed M11i evidence; 1453 public files exact.
-Three independent Sol 6.1 Ultra AI INITIALs and four actual reciprocal peer
-messages find no blocker. Root metadata-wrapper errors are preserved; no product,
-science or test retry. No physics/native/export/site build/install/global change.
-Actual browser/mobile/keyboard checks remain 0; mocks/HTTP are not visual
-acceptance. Evidence .local/m11j-saved-example-v1/; final Git parity and owned
-lock closure are recorded in its terminal receipt. AI reviews are not certification.
+One actual native/electronics calculation passes: 40 truth/six selected/34
+unprocessed-null, four native calls and two independent 500keV injections.
+Calculation orchestration67.9476419s; AK02/SAP22 child wall42.6042639/24.8783573s;
+HTTP/control74.4411303s, distinct from coding/review wall time. Twelve downloads,
+serial observed progress, reopen verification and actual-response DOM replay pass.
+Final-source saved verification checks the same22 science files and12 downloads
+without recomputation. First driver attempt failed before any scientific dispatch
+on an unreadable WindowsApps alias; preserve its trace/ticket/failed job. Exact
+historical control-flow and fresh-worker evidence support only this zero-science
+classification. Shared readable pinned Julia selection is child-only; no install.
+
+Both writers exited; eight sources froze. Final85 unique Python methods/zero
+skips and15 frontend mock/static groups pass. Two private scoped Sol6.1 Ultra AI
+reviews and a NEW independent public-code-only Sol6.1 Ultra review close four
+concrete state defects; four actual reciprocal peer messages shaped the repairs.
+Private-log submission to the third reviewer was rejected by automatic approval;
+the approved public-code route does not certify private science. Original failed
+and superseded receipts and root bookkeeping failures remain; the final DOM replay
+passes its assertions but its command receipt filename collided, so no separately
+recorded child exit/time is claimed. No science/test repeated to repair bookkeeping.
+1453 public files and original saved results exact; no site export/global changes.
+Actual browser/mobile/keyboard acceptance0; mocks/HTTP do not confirm display.
+Evidence .local/m11k-gamma-control-v1/; terminal receipt records Git parity and owned
+lock closure. AI reviews are not human certification or quantitative Li validation.
 
 ## Retained delivered results and limitations
+
+M11j 19cb1b8 opens the checked fixed M11d saved gamma browser through explicit
+authenticated POST{}, separate from new calculations.53 Python/eight mock groups,
+real validator/HTTP with mocked opener and three AI reviews pass; visual checks0.
+Original explorer/downloads exact. Evidence .local/m11j-saved-example-v1/ retained.
 
 M11i 2f04845 provides four manual checked AK02/SAP22 Cs137/662 keV gamma previews
 through pinned scenario_prepare.check: all-or-none metadata only, no execution.
@@ -77,15 +93,13 @@ verification, not a new executable adapter. Seventeen viewable is not executable
 ## Next bounded work
 
 Skip M8/M9: second-computer newcomer acceptance blocks no current development.
-M11k planning: connect one fixed gamma engineering calculation to local mouse
-check/start/progress/verified new-result downloads using the unchanged shared
-gamma_native_example CLI and worker. First inspect source/output bindings and
-shared Cs137/gamma exclusivity; keep one new output root, serial models and
-40 truth/six selected/34 nulls. Never rerun radiation/fields or overwrite the
-completed example. Existing gamma CLI has no stop/resume: do not invent recovery,
-kill workers or show unsupported actions. Keep fixed saved reference distinct
-from new results. Read-only plan .local/m11k-gamma-control-v1/plan/; no implementation
-or science until a coherent scope is approved and ready/no-worker/new-lock checks.
+M11l: one bounded public homepage information/navigation pass. Inspect maintained
+source and current saved page, choose clearer primary browse/run routes and fold
+secondary references without deleting original destinations or changing claims.
+Build only through the saved-snapshot exporter; preserve every numerical payload,
+model hash and completed campaign. Run publication/link/contact checks and exact
+live verification after normal Git push/deployment. No physics, installation or
+new frontend. Plan/review this small scope before editing; M8/M9 stay deferred.
 Current-chat 30-minute heartbeat ACTIVE creation is verified; future execution
 unobserved. New rounds require ready/no conflicting lock or actual workers, owned
 lock and verified Sol 6.1 Ultra/root. No global changes or reset credits.

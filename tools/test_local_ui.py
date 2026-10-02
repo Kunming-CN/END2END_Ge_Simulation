@@ -10,6 +10,7 @@ import unittest
 from unittest.mock import patch
 
 import local_ui as U
+import local_ui_gamma_jobs as G
 
 
 SAVED_COUNTS = {'radiation_primaries': 40, 'selected_primaries': 6,
@@ -40,7 +41,10 @@ class FakeController:
 
 class Protocol(unittest.TestCase):
     def setUp(self):
-        fixtures = U.ROOT / '.local/m11j-saved-example-v1/backend/test-fixtures'
+        self.enterContext(patch.object(G, 'gamma_environment', return_value={
+            'PYTHONDONTWRITEBYTECODE': '1', 'OPENBLAS_NUM_THREADS': '1',
+            'OMP_NUM_THREADS': '1', 'JULIA_PKG_OFFLINE': 'true'}))
+        fixtures = U.ROOT / '.local/m11k-gamma-control-v1/backend/test-fixtures'
         fixtures.mkdir(parents=True, exist_ok=True)
         self.temp = tempfile.TemporaryDirectory(dir=fixtures)
         self.opener = self.enterContext(patch.object(U.webbrowser, 'open',
@@ -280,6 +284,149 @@ class Protocol(unittest.TestCase):
                 with U.server_lease(self.controller.root): pass
         # Released file remains evidence; a subsequent process can acquire it.
         with U.server_lease(self.controller.root): pass
+
+    def gamma_fixture(self):
+        from test_local_ui_gamma_jobs import Runner
+        self.gamma_runner = Runner()
+        self.gamma = U.GammaController(self.controller.root, self.gamma_runner, identity_probe=lambda pid: None)
+        self.server.gamma_controller = self.gamma
+        return self.gamma
+
+    def test_gamma_source_bound_owned_loopback_full_workflow_once(self):
+        import local_ui_gamma_jobs as G
+        gamma = self.gamma_fixture()
+        self.assertEqual(Path(G.__file__).resolve(), U.ROOT / 'tools/local_ui_gamma_jobs.py')
+        self.assertEqual(Path(U.__file__).resolve(), U.ROOT / 'tools/local_ui.py')
+        code, data, headers = self.request('POST', '/api/gamma-check', {'threads': 2})
+        checked = json.loads(data); self.assertEqual((code, checked['status']), (200, 'checked_no_execution'))
+        self.assertIn('Path=/api/gamma-file; HttpOnly; SameSite=Strict', headers['Set-Cookie'])
+        code, data, _ = self.request('POST', '/api/gamma-start', {'check_id': checked['check_id']})
+        job_id = json.loads(data)['job']['id']; self.assertEqual(code, 200)
+        gamma.wait_for_idle()
+        code, data, state_headers = self.request()
+        state = json.loads(data)
+        self.assertEqual(code, 200); self.assertEqual(state['gamma']['jobs'][0]['id'], job_id)
+        self.assertEqual(state['gamma']['jobs'][0]['status'], 'completed')
+        self.assertIn('Path=/api/file;', state_headers['Set-Cookie'])
+        self.assertNotIn('gamma', state_headers['Set-Cookie'])
+        code, data, verify_headers = self.request('POST', '/api/gamma-verify', {'job_id': job_id})
+        verified = json.loads(data)
+        self.assertEqual((code, verified['status'], verified['scientific_workers_launched']), (200, 'verified', 0))
+        browser = {'X-Control-Token': '', 'Cookie': verify_headers['Set-Cookie'].split(';')[0], 'Sec-Fetch-Site': 'same-origin'}
+        for artifact in ('run.json', 'COMPLETE.json', 'AK02/signals.csv', 'SAP22/signals.csv'):
+            route = '/api/gamma-file?job_id=' + job_id + '&file=' + artifact
+            code, body, response_headers = self.request(route=route, headers=browser)
+            self.assertEqual((code, body), (200, gamma._path(gamma._find(job_id), artifact).read_bytes()))
+            self.assertIn('attachment;', response_headers['Content-Disposition'])
+        # Replayed start returns the same job and does not dispatch again.
+        code, data, _ = self.request('POST', '/api/gamma-start', {'check_id': checked['check_id']})
+        self.assertEqual((code, json.loads(data)['job']['id']), (200, job_id))
+        self.assertEqual([v[0] for v in self.gamma_runner.calls], ['check', 'run', 'verify', 'verify'])
+        self.assertEqual(self.controller.calls, [])
+
+    def test_gamma_exact_fields_types_methods_and_auth_before_controller(self):
+        gamma = self.gamma_fixture()
+        with patch.object(gamma, 'check', side_effect=AssertionError('Unexpected Gamma check')) as provider:
+            for value in ({}, {'threads': True}, {'threads': 0}, {'threads': 3}, {'threads': 2.0},
+                          {'threads': '2'}, {'threads': None}, {'threads': 2, 'model': 'AK02'},
+                          {'threads': 2, 'output': 'example'}, {'threads': 2, 'policy': 'record'}):
+                self.assertEqual(self.request('POST', '/api/gamma-check', value)[0], 400)
+            for raw in ('[]', 'null', '{"threads":1,"threads":2}', '{"threads":NaN}'):
+                self.assertEqual(self.request('POST', '/api/gamma-check', raw)[0], 400)
+            for headers in ({'X-Control-Token': ''}, {'X-Control-Token': 'wrong'}, {'Host': 'evil.example'},
+                            {'Origin': None}, {'Origin': ''}, {'Origin': 'http://127.0.0.1:1'},
+                            {'Sec-Fetch-Site': 'same-site'}, {'Sec-Fetch-Site': 'cross-site'}):
+                self.assertEqual(self.request('POST', '/api/gamma-check', {'threads': 2}, headers)[0], 403)
+            for route in ('/api/gamma-check?', '/api/gamma-check?threads=2', '/api/gamma-check/',
+                          '/api/gamma-check/path', '/api/gamma-check#fragment'):
+                self.assertEqual(self.request('POST', route, {'threads': 2})[0], 404)
+            self.assertEqual(self.request(route='/api/gamma-check')[0], 404)
+            self.assertEqual(self.request(route='/api/gamma-state')[0], 404)
+            self.assertEqual(self.request('OPTIONS', '/api/gamma-check')[0], 403)
+            self.assertEqual(self.request('HEAD', '/api/gamma-check')[0], 501)
+        provider.assert_not_called()
+        for route, good in (('/api/gamma-start', {'check_id': 'a' * 64}), ('/api/gamma-verify', {'job_id': 'a' * 32})):
+            for bad in ({}, {'ticket': 'a' * 64}, {'name': 'example'}, {next(iter(good)): True}, {**good, 'threads': 2}):
+                self.assertEqual(self.request('POST', route, bad)[0], 400)
+        self.assertEqual(self.gamma_runner.calls, [])
+        self.assertEqual(self.controller.calls, [])
+
+    def test_gamma_cookie_separate_scopes_never_authorize_state_or_any_write(self):
+        gamma = self.gamma_fixture()
+        old_cookie = self.request()[2]['Set-Cookie'].split(';')[0]
+        code, data, headers = self.request('POST', '/api/gamma-check', {'threads': 1})
+        self.assertEqual(code, 200)
+        gamma_cookie = headers['Set-Cookie'].split(';')[0]
+        self.assertNotEqual(gamma_cookie, old_cookie)
+        gamma_before = (gamma.root / U.STATE / 'gamma-jobs.json').read_bytes()
+        before = len(self.gamma_runner.calls)
+        state = self.request()
+        self.assertEqual(state[0], 200); self.assertIn('gamma', json.loads(state[1]))
+        self.assertEqual(state[2]['Set-Cookie'].split(';')[0], old_cookie)
+        self.assertEqual((gamma.root / U.STATE / 'gamma-jobs.json').read_bytes(), gamma_before)
+        self.assertEqual(len(self.gamma_runner.calls), before)
+        for cookie in (old_cookie, gamma_cookie, old_cookie + '; ' + gamma_cookie):
+            browser = {'X-Control-Token': '', 'Cookie': cookie, 'Sec-Fetch-Site': 'same-origin'}
+            self.assertEqual(self.request(headers=browser)[0], 403)
+            for route, values in (('/api/check', {'name': 'new', 'detector': 'AK02'}),
+                                  ('/api/start', {'name': 'new', 'detector': 'AK02'}),
+                                  ('/api/stop', {'job_id': 'a' * 32}), ('/api/resume', {'name': 'new'}),
+                                  ('/api/gamma-check', {'threads': 2}), ('/api/gamma-start', {'check_id': 'a' * 64}),
+                                  ('/api/gamma-verify', {'job_id': 'a' * 32}), ('/api/open-saved-gamma', {})):
+                self.assertEqual(self.request('POST', route, values, browser)[0], 403)
+        gamma_browser = {'X-Control-Token': '', 'Cookie': gamma_cookie, 'Sec-Fetch-Site': 'same-origin'}
+        old_browser = {**gamma_browser, 'Cookie': old_cookie}
+        self.assertEqual(self.request(route='/api/file?name=own&file=run.json', headers=gamma_browser)[0], 403)
+        self.assertEqual(self.request(route='/api/gamma-file?job_id=' + 'a' * 32 + '&file=run.json', headers=old_browser)[0], 403)
+        self.assertEqual(self.controller.calls, [])
+
+    def test_gamma_state_exact_target_is_readonly_without_gamma_cookie(self):
+        gamma = self.gamma_fixture()
+        with patch.object(self.controller, 'snapshot', wraps=self.controller.snapshot) as old_snapshot, \
+             patch.object(gamma, 'snapshot', wraps=gamma.snapshot) as gamma_snapshot:
+            for route in ('/api/state?', '/api/state?gamma=1', '/api/state#selector', '/api/state/'):
+                self.assertEqual(self.request(route=route)[0], 404)
+            old_snapshot.assert_not_called(); gamma_snapshot.assert_not_called()
+            code, body, headers = self.request()
+            self.assertEqual(code, 200); self.assertIn('gamma', json.loads(body))
+            self.assertIn('Path=/api/file;', headers['Set-Cookie'])
+            self.assertNotIn('gamma', headers['Set-Cookie'])
+            old_snapshot.assert_called_once(); gamma_snapshot.assert_called_once()
+        self.assertFalse((gamma.root / U.STATE / 'gamma-jobs.json').exists())
+        self.assertEqual(self.gamma_runner.calls, [])
+        self.assertEqual(self.controller.calls, [])
+
+    def test_gamma_download_fixed_query_ownership_auth_rehashed_artifacts(self):
+        gamma = self.gamma_fixture()
+        ticket = gamma.check()['check_id']; job_id = gamma.start(ticket)['job']['id']; gamma.wait_for_idle()
+        prefix = '/api/gamma-file?job_id=' + job_id
+        for route in ('/api/gamma-file', prefix, prefix + '&file=run.json&file=COMPLETE.json',
+                      prefix + '&file=../run.json', prefix + '&file=worker.log', prefix + '&file=gamma.html',
+                      prefix + '&file=run.json&path=example', prefix + '&file=C:/private',
+                      prefix + '&file=run.json#selector',
+                      '/api/gamma-file?job_id=' + 'f' * 32 + '&file=run.json'):
+            self.assertEqual(self.request(route=route)[0], 400)
+        route = prefix + '&file=AK02/signals.csv'
+        for headers in ({'X-Control-Token': ''}, {'Origin': 'https://evil.example'}, {'Sec-Fetch-Site': 'same-site'}, {'Host': 'evil.example'}):
+            self.assertEqual(self.request(route=route, headers=headers)[0], 403)
+        job = gamma._find(job_id); path = gamma._path(job, 'AK02/signals.csv'); path.write_bytes(b'changed')
+        self.assertEqual(self.request(route=route)[0], 400)
+        complete_path = gamma._path(job, 'COMPLETE.json'); complete = json.loads(complete_path.read_bytes())
+        complete['artifacts']['AK02/signals.csv'] = dict(bytes=7, sha256=hashlib.sha256(b'changed').hexdigest())
+        complete_path.write_text(json.dumps(complete))
+        code, body, _ = self.request(route=route)
+        self.assertEqual(code, 400); self.assertEqual(json.loads(body), {'error': 'Verified Gamma artifact is unavailable or changed.'})
+
+    def test_gamma_provider_failure_sanitized_no_cookie_or_old_calls(self):
+        gamma = self.gamma_fixture()
+        for method, route, values in (('check', '/api/gamma-check', {'threads': 2}),
+                                      ('start', '/api/gamma-start', {'check_id': 'a' * 64}),
+                                      ('verify', '/api/gamma-verify', {'job_id': 'a' * 32})):
+            with patch.object(gamma, method, side_effect=RuntimeError('C:/private/input raw diagnostic')):
+                code, body, headers = self.request('POST', route, values)
+            self.assertEqual((code, json.loads(body)), (500, {'error': 'Local action failed; inspect the saved local control evidence'}))
+            self.assertNotIn('Set-Cookie', headers)
+        self.assertEqual(self.controller.calls, [])
 
 
 class SavedGammaHelper(unittest.TestCase):
