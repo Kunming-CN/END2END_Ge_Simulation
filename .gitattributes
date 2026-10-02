@@ -50,6 +50,8 @@ docs/examples/cs137-10k-geometry/*/scene.json -diff
 # Keep the new native scene helper's source hashes stable across Windows/WSL.
 tools/geant4_scene/*.cc text eol=lf
 tools/geant4_scene/CMakeLists.txt text eol=lf
+tools/ring_scene.cc text eol=lf
+docs/examples/cs137-10k-rings/** -text -diff
 
 # Standalone transport launchers must keep their prepared dependency hashes portable.
 tools/Start-Transport.ps1 text eol=lf

@@ -32,7 +32,12 @@ assert.equal(canonical,'model=AK02&event=213&group=0&view=positive');
 assert.deepEqual(query('?'+canonical),identity);
 assert.equal(c.canonicalViewerQuery(query('?event=0&group=0')),'model=AK02&event=0&group=0&view=assembly');
 assert.throws(()=>c.canonicalViewerQuery({...identity,invalid:'unavailable'}),/unavailable/);
-assert.throws(()=>c.canonicalViewerQuery({...identity,model:'GeRC02'}),/model/);
+assert.throws(()=>c.canonicalViewerQuery({...identity,model:'unknown'}),/model/);
+for(const model of ['GeRC02','KMRC01_candidate']){
+  const saved=query('?model='+model+'&event=0&group=0&view=positive');assert.equal(saved.invalid,'');
+  assert.equal(c.canonicalViewerQuery(saved),'model='+model+'&event=0&group=0&view=positive');
+  assert.equal(alias('?model='+model+'&event=0&group=0','assembly').target,null);
+}
 assert.throws(()=>c.canonicalViewerQuery({...identity,event:null}),/requires/);
 assert.throws(()=>c.canonicalViewerQuery({...identity,view:'unknown'}),/view/);
 assert.equal(target(identity,'/viewers/events.html','?'+canonical).changed,false);

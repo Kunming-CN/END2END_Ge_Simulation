@@ -393,7 +393,7 @@ def build_native_response_export(source):
 def normalize_text_outputs(folder):
     # Historical receipts and all native-bundle bytes are already hash-bound.
     for output in folder.rglob('*'):
-        if output.relative_to(folder).parts[:2] in (('examples', 'cs137-10k'), ('examples', 'cs137-10k-geometry'), ('examples', 'cs137-10k-hits'), ('examples', 'cs137-1m'), ('examples', 'cs137-1m-response'), ('examples', 'gamma-native')):
+        if output.relative_to(folder).parts[:2] in (('examples', 'cs137-10k'), ('examples', 'cs137-10k-geometry'), ('examples', 'cs137-10k-hits'), ('examples', 'cs137-10k-rings'), ('examples', 'cs137-1m'), ('examples', 'cs137-1m-response'), ('examples', 'gamma-native')):
             continue
         if output.is_file() and output.suffix in {'.html', '.json', '.md', '.svg'}:
             data = output.read_bytes()
@@ -410,7 +410,7 @@ def build_gamma_export(source):
     assemble(source, OUT / 'examples' / 'gamma-native', replace=True)
 
 
-def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None):
+def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -427,7 +427,12 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         old = validate(DESTINATION)
     if OUT.exists():
         remove_generated(OUT)
-    if gamma_showcase is not None:
+    if ring_results is not None:
+        from ring_publication import assemble as assemble_rings
+        validate(DESTINATION)
+        shutil.copytree(DESTINATION, OUT); (OUT / MANIFEST).unlink()
+        assemble_rings(ring_results, OUT / 'examples/cs137-10k-rings')
+    elif gamma_showcase is not None:
         build_gamma_export(gamma_showcase)
     elif restructure:
         validate(DESTINATION)
@@ -462,6 +467,8 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
     # Real builds still require models/catalog.json in the final validator below.
     if (OUT / 'models' / 'catalog.json').is_file():
         apply_site_structure(OUT)
+        from ring_site import apply as apply_ring_pages
+        apply_ring_pages(OUT)
     if (OUT / "spectra" / "manifest.json").is_file():
         route_current_pages(OUT)
         from spectrum_display import finalize as finalize_spectra
@@ -472,6 +479,13 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         from site_discovery import assemble as assemble_discovery
         assemble_discovery(OUT)
     normalize_text_outputs(OUT)
+    return install_snapshot(old)
+
+
+def install_snapshot(old):
+    """Fully validate the generated stage, then use the existing atomic swap."""
+    local = ROOT / '.local'
+    previous = local / 'site-previous'
     report = validate(OUT, require_manifest=False, require_models=True)
     (OUT / MANIFEST).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8', newline='\n')
     validate(OUT)
@@ -494,6 +508,20 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
     summary = {k: v for k, v in report.items() if k != 'files'}
     (local / 'site-build.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
     print(json.dumps(summary, indent=2), flush=True)
+    return summary
+
+
+def finish_staged():
+    """Retry final validation after a publication-only failure; no generation."""
+    paths = (OUT, DESTINATION)
+    linked = any(item.is_symlink() or getattr(item, 'is_junction', lambda: False)()
+                 for path in paths for item in (path, *path.parents))
+    if not OUT.is_dir() or linked:
+        raise ValueError('A real generated stage and installed snapshot are required')
+    if not (DESTINATION / MANIFEST).is_file() or (ROOT / '.local/site-previous').exists():
+        raise ValueError('Inspect the installed snapshot or pending atomic swap before recovery')
+    old = validate(DESTINATION)
+    return install_snapshot(old)
 
 
 if __name__ == '__main__':
@@ -507,6 +535,11 @@ if __name__ == '__main__':
     parser.add_argument('--ssd-geometry',type=Path,help='Publish saved interactive SSD geometry assets only')
     parser.add_argument('--restructure',action='store_true',help='Rebuild navigation/hub pages from the validated current snapshot only')
     parser.add_argument('--gamma-showcase',type=Path,help='Copy a completed hash-checked saved gamma showcase; no scientific work or export')
+    parser.add_argument('--ring-results',type=Path,help='Copy complete saved GeRC02/KMRC01 10K results and refresh all four current cases; no computation')
+    parser.add_argument('--finish-staged',action='store_true',help='Fully validate and install an existing generated stage after a publication-only failure; no regeneration')
     args=parser.parse_args()
-    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase)) + int(args.restructure)>1: parser.error('Select one publication mode')
-    build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase)
+    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
+    if args.finish_staged:
+        finish_staged()
+    else:
+        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results)

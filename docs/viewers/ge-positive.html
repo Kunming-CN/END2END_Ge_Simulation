@@ -6,7 +6,7 @@ function parseViewerQuery(search, options = {}) {
   const allowed = legacy ? ['model','event','group'] : ['model','event','group','view'];
   for (const key of q.keys()) if (!allowed.includes(key) || q.getAll(key).length !== 1)
     state.invalid = 'Unknown or repeated query parameter.';
-  if (q.has('model')) {state.model = q.get('model');if (!['AK02','SAP22'].includes(state.model))state.invalid = 'Unknown model.';}
+  if (q.has('model')) {state.model = q.get('model');if (!(legacy ? ['AK02','SAP22'] : ['AK02','SAP22','GeRC02','KMRC01_candidate']).includes(state.model))state.invalid = 'Unknown model.';}
   if (!legacy && q.has('view')) state.view = q.get('view');
   if (!['assembly','positive'].includes(state.view)) state.invalid = 'Unknown view.';
   for (const key of ['event','group']) if (q.has(key)) {

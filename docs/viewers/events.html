@@ -1,13 +1,15 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GeSignal event viewer</title><meta name="description" content="Exact saved AK02 and SAP22 10K radiation records, assembly context and Ge-positive pulse-group evidence in one viewer."><link rel="canonical" href="https://kunming-cn.github.io/END2END_Ge_Simulation/viewers/events.html">
+<title>GeSignal event viewer</title><meta name="description" content="Exact saved 10K radiation records, assembly context and Ge-positive pulse-group evidence, with checked ring datasets when available, in one viewer."><link rel="canonical" href="https://kunming-cn.github.io/END2END_Ge_Simulation/viewers/events.html">
 <style>
 :root{color-scheme:dark;font:15px system-ui;background:#111924;color:#edf3fa}*{box-sizing:border-box}body{margin:0}header,main,footer{max-width:1450px;margin:auto;padding:16px}h1{font-size:1.65rem;margin:0 0 8px}h2{font-size:1.05rem}p{line-height:1.5}a{color:#9edbff}button,input,select{font:inherit;background:#233348;color:inherit;border:1px solid #647991;border-radius:5px;padding:8px;max-width:100%}button{cursor:pointer}button:disabled,select:disabled{opacity:.5}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #ffd179;outline-offset:2px}label{display:inline-flex;align-items:center;gap:5px}.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}canvas{display:block;width:100%;height:65vh;min-height:340px;touch-action:none;background:#0a1019;border:1px solid #3e5065;border-radius:6px}aside{min-width:0}.volume{display:block;font-size:.85rem;margin:9px 0}.volume small{display:block;margin-left:24px;color:#adbdce}.note{border-left:3px solid #90c7eb;padding:10px 12px;background:#1d3040}.small{font-size:.87rem;color:#b7c9d8}#status,#identity,#overlayStatus{overflow-wrap:anywhere;min-height:1.5em}#status{color:#ffda7b}.error{color:#ff9090}details{margin:12px 0;padding:10px;border:1px solid #3e5065;border-radius:5px}summary{cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:450px;overflow:auto}#eid{width:100px}#category{max-width:min(100%,480px)}#representatives button{text-align:left;font-size:.85rem}footer{color:#b7c9d8}@media(max-width:850px){.layout{grid-template-columns:1fr}header,main,footer{padding:10px}canvas{height:52vh;min-height:300px}.bar>*{min-width:0}#category{width:100%}h1{font-size:1.35rem}}
+#responseLinks a{margin-inline-end:.8em}
 </style></head><body>
 <header><h1>GeSignal event viewer</h1><p><a href="../results/cs137-10k/index.html">10K results</a> · <a href="manifest.json">Display provenance</a></p>
-<p class="note">All 20,000 original primaries are retained, including zeros (10,000/model). The optional Ge-positive overlay contains 121 AK02 / 115 SAP22 primaries; candidate counts refer to pulse groups. Overlaid decays are independent, not simultaneous.</p>
+<p class="note">Every saved model retains 10,000 initial primaries, including zeros. AK02 / SAP22 retain all 20,000 original primaries and 121 / 115 Ge-positive primaries. Checked GeRC02 and KMRC01 candidate bundles appear when included in this saved site. Candidate counts refer to pulse groups. Overlaid decays are independent, not simultaneous.</p>
 <div class="bar"><label>Model <select id="model"><option>AK02</option><option>SAP22</option></select></label><label>Primary ID <input id="eid" type="number" min="0" max="9999" value="0"></label><button id="show">Show primary</button><button id="prev">Previous Ge hit</button><button id="next">Next Ge hit</button><label>View <select id="view"><option value="assembly">Assembly context</option><option value="positive">Ge-positive overlay</option></select></label></div>
 <div class="bar"><label>Candidate filter <select id="category"><option value="all">All saved groups</option></select></label><label>Pulse group <select id="group" disabled></select></label><span id="census"></span></div>
+<p id="modelNotes" class="small"></p><p id="responseLinks" hidden><a id="savedResponse">Saved response</a> <a id="savedResponseReport">Response / calibration record</a> <a id="savedSignals">Raw signed signals</a> <a id="savedCurrent">Electronics charge / current data</a></p>
 <div id="identity" role="status" aria-live="polite"></div><div id="status" role="status" aria-live="polite">Loading saved assembly…</div><div id="overlayStatus" role="status" aria-live="polite"></div></header>
 <main><div class="layout"><section><div class="bar"><button data-view="default">Default / fit</button><button data-view="front">Front (XY)</button><button data-view="side">Side (ZY)</button><button id="zin" aria-label="Zoom in">Zoom +</button><button id="zout" aria-label="Zoom out">Zoom −</button><button id="pan" aria-pressed="false">Pan</button></div>
 <canvas id="canvas" aria-label="Recorded radiation assembly and pulse-group overlay"></canvas><p class="small">Drag to rotate; Shift-drag / right-drag or Pan to move; wheel / Zoom to zoom. Orthographic global mm. Yellow: Ge STEP/deposits; cyan: photon/birth records; orange: highlighted group. Creation vertices are not complete tracks.</p>
@@ -15,7 +17,7 @@
 <div class="bar"><label><input id="overlay" type="checkbox">All Ge-positive primaries</label><label><input id="photons" type="checkbox" checked>Relevant photons</label><label><input id="detail" type="checkbox">Optional selected detail (cap 2,000)</label></div><p id="detailLimit" class="small"></p>
 <p class="small">Chords join only one saved scored STEP pre/post pair. No joins cross unscored air or connect separate steps. These are radiation records and Edep, not SSD drift, charge, Erec or waveforms. Zero-Ge and missing/native-failed response do not remove a radiation primary.</p>
 <details id="recordPanel"><summary>Requested primary: all exact saved rows and units</summary><p class="small">Positions: m; STEP Edep: keV; Track kinetic energy/momentum: MeV; creation time: ns. PDG particle IDs and original zero-based raw_row_index remain exact.</p><pre id="records"></pre></details><details id="evidencePanel"><summary>Selected pulse group: exact saved evidence</summary><pre id="evidenceRaw"></pre></details>
-<details><summary>Settings, provenance and limitations</summary><pre id="provenance"></pre><p class="small">Nominal source above the curved Al wall, not an as-built survey. Saved source (0, 37.073, 0.290) mm; crystal local +z maps to global +y. Candidate classes are radiation-energy/ancestry/spatial screens, not calibrated PSD, CCE or experimental resolution. Group origin and relative delays are separate from drift time.</p></details></section>
+<details><summary>Settings, provenance and limitations</summary><pre id="provenance"></pre><p class="small">Nominal source above the curved Al wall, not an as-built survey. The selected scene records its exact source position in global mm; crystal local +z maps to global +y. Candidate classes are radiation-energy/ancestry/spatial screens, not calibrated PSD, CCE or experimental resolution. Group origin and relative delays are separate from drift time.</p></details></section>
 <aside><h2>Pulse-group evidence</h2><div id="evidence">Assembly view: group IDs are return-navigation context only.</div><div id="representatives" class="bar"></div><details><summary>Placed-volume visibility</summary><div id="volumes"></div></details><p><a id="originals">Exact GDML and run inputs</a></p><p class="small">Historical presentations: <a href="../examples/cs137-10k-geometry/geometry.html">original assembly</a> · <a href="../examples/cs137-10k-hits/hit_event_view.html">original Ge-positive viewer</a>.</p></aside></div></main>
 <footer>No simulation runs here. Data load in 100-event chunks with at most two chunks cached. Serve the complete site over localhost HTTP for offline browsing; file:// fetch is unsupported. SHA-256 requires HTTPS or localhost, and the overlay requires native gzip DecompressionStream. Original data and upstream attribution remain in the <a href="../examples/cs137-10k-geometry/manifest.json">assembly manifest</a> and <a href="../examples/cs137-10k-hits/manifest.json">positive manifest</a>; no upstream relicensing grant is made.</footer>
 <script id="viewer-navigation">// Requested identity is distinct from a verified primary or pulse group.
@@ -25,7 +27,7 @@ function parseViewerQuery(search, options = {}) {
   const allowed = legacy ? ['model','event','group'] : ['model','event','group','view'];
   for (const key of q.keys()) if (!allowed.includes(key) || q.getAll(key).length !== 1)
     state.invalid = 'Unknown or repeated query parameter.';
-  if (q.has('model')) {state.model = q.get('model');if (!['AK02','SAP22'].includes(state.model))state.invalid = 'Unknown model.';}
+  if (q.has('model')) {state.model = q.get('model');if (!(legacy ? ['AK02','SAP22'] : ['AK02','SAP22','GeRC02','KMRC01_candidate']).includes(state.model))state.invalid = 'Unknown model.';}
   if (!legacy && q.has('view')) state.view = q.get('view');
   if (!['assembly','positive'].includes(state.view)) state.invalid = 'Unknown view.';
   for (const key of ['event','group']) if (q.has(key)) {
@@ -66,13 +68,14 @@ function selectionGate(clear) {
     }
   };
 }
-</script><script id="viewer-config">const VIEWER_CONFIG = {"assembly":{"base":"../examples/cs137-10k-geometry/","sha256":"e8d183af05e27f211b6464939d4c667b6d02855d68609a7627753d2f16edc379"},"positive":{"base":"../examples/cs137-10k-hits/","sha256":"0ad6a0df52ae725543d0c8474c5db4474e6c28af537ff944660e1ebf9b6a1b3e"}};</script><script id="viewer-controller">'use strict';
+</script><script id="viewer-config">const VIEWER_CONFIG = {"assembly":{"base":"../examples/cs137-10k-geometry/","sha256":"e8d183af05e27f211b6464939d4c667b6d02855d68609a7627753d2f16edc379"},"positive":{"base":"../examples/cs137-10k-hits/","sha256":"0ad6a0df52ae725543d0c8474c5db4474e6c28af537ff944660e1ebf9b6a1b3e"},"models":{"GeRC02":{"assembly":{"base":"../examples/cs137-10k-rings/","sha256":"773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860","kind":"ring_saved_publication_v1"},"positive":{"base":"../examples/cs137-10k-rings/","sha256":"773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860","kind":"ring_saved_publication_v1"}},"KMRC01_candidate":{"assembly":{"base":"../examples/cs137-10k-rings/","sha256":"773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860","kind":"ring_saved_publication_v1"},"positive":{"base":"../examples/cs137-10k-rings/","sha256":"773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860","kind":"ring_saved_publication_v1"}}}};</script><script id="viewer-controller">'use strict';
 const $=id=>document.getElementById(id), canvas=$('canvas'), ctx=canvas.getContext('2d');
 const DETAIL_CAP=2000, categories=['all','compact','compton1','compton2','full','partial','unknown'];
 const viewer={generation:0,requested:parseViewerQuery(location.search),scene:null,primary:null,group:null,
   assemblyManifest:null,positiveManifest:null,data:null,events:new Map(),evidence:new Map(),category:'all',overlayError:''};
-const sceneCache=new Map(),positiveCache=new Map(),chunkCache=new Map();
-let assemblyPromise=null,positivePromise=null,mode=null,pendingSelection=null;
+const RING_KIND='ring_saved_publication_v1',ringModels=['GeRC02','KMRC01_candidate'];
+const sceneCache=new Map(),positiveCache=new Map(),chunkCache=new Map(),manifestCache=new Map();
+let mode=null,pendingSelection=null;
 let yaw=.55,pitch=-.2,zoom=1,panX=0,panY=0,center=[0,0,0],radius=1,panMode=false,visible=new Set();
 const labels={ledger_0_PV:'World air',ledger_1:'Flange',ledger_2:'Outer Al wall / endCap',ledger_3:'Outer hollow',ledger_4:'Inner Al shield',ledger_5:'Inner vacuum',ledger_6:'Holder: stage',ledger_7:'Holder: backStage',ledger_12:'Holder: BN block',ledger_13:'Holder: lower indium',ledger_14:'Holder: copper plate',ledger_15:'Holder: upper indium',germanium:'Germanium crystal',ledger_17:'Nominal BN spacer',ledger_18:'Nominal Al source capsule',ledger_19:'Nominal source fill'};
 const color=v=>v.name==='germanium'?'#c697ff':v.material==='G4_Al'?'#a9c2d5':v.material==='G4_Cu'?'#d78d5e':v.material==='boron_nitride'?'#7fdcae':v.material==='G4_Galactic'?'#5c7593':'#ddd290';
@@ -103,33 +106,41 @@ async function fetchJSON(path,expected){
   }
   return JSON.parse(new TextDecoder().decode(bytes));
 }
-function bundlePath(kind,file){return VIEWER_CONFIG[kind].base+file;}
-async function assemblyManifest(){
-  if(!assemblyPromise)assemblyPromise=fetchJSON(bundlePath('assembly','manifest.json'),VIEWER_CONFIG.assembly.sha256)
-    .then(m=>{requireViewer(m.status==='complete'&&m.schema_version===1,'Unsupported assembly manifest.');return m;})
-    .catch(e=>{assemblyPromise=null;throw e;});
-  return assemblyPromise;
+function modelBinding(kind,name){
+  const binding=ringModels.includes(name)?VIEWER_CONFIG.models?.[name]?.[kind]:VIEWER_CONFIG[kind];
+  requireViewer(binding,'No completed saved 10K bundle is available for '+name+'. Requested identity is retained.');
+  if(ringModels.includes(name))requireViewer(binding.kind===RING_KIND,'Unsupported saved ring binding.');
+  return binding;
 }
-async function positiveManifest(){
-  if(!positivePromise)positivePromise=fetchJSON(bundlePath('positive','manifest.json'),VIEWER_CONFIG.positive.sha256)
-    .then(m=>{requireViewer(m.status==='complete'&&m.schema_version===1,'Unsupported positive manifest.');return m;})
-    .catch(e=>{positivePromise=null;throw e;});
-  return positivePromise;
+function bundlePath(kind,file,name){return modelBinding(kind,name).base+file;}
+function bundleKey(kind,name){const binding=modelBinding(kind,name);return binding.base+'|'+binding.sha256+'|'+name;}
+async function savedManifest(kind,name){
+  const binding=modelBinding(kind,name),key=binding.base+'|'+binding.sha256;
+  if(!manifestCache.has(key))manifestCache.set(key,fetchJSON(binding.base+'manifest.json',binding.sha256)
+    .then(m=>{requireViewer(m.status==='complete'&&m.schema_version===1&&(!binding.kind||m.kind===binding.kind),
+      'Unsupported '+kind+' manifest.');return m;})
+    .catch(e=>{manifestCache.delete(key);throw e;}));
+  return manifestCache.get(key);
 }
+function assemblyManifest(name){return savedManifest('assembly',name);}
+function positiveManifest(name){return savedManifest('positive',name);}
 async function loadScene(name){
-  const manifest=await assemblyManifest();
-  if(!sceneCache.has(name)){
+  const manifest=await assemblyManifest(name),key=bundleKey('assembly',name);
+  if(!sceneCache.has(key)){
     const entry=manifest.models[name];requireViewer(entry,'No recorded assembly for '+name+'.');
-    const scene=await fetchJSON(bundlePath('assembly',entry.scene),manifest.files[entry.scene].sha256);
+    const scene=await fetchJSON(bundlePath('assembly',entry.scene,name),manifest.files[entry.scene].sha256);
     requireViewer(scene.model===name&&scene.event_index.event_count===10000,'Assembly model/census mismatch.');
-    sceneCache.set(name,scene);
+    if(ringModels.includes(name))requireViewer(scene.event_index.chunks.length===100&&
+      scene.event_index.chunks.every((c,i)=>c.first===i*100&&c.count===100&&
+        manifest.files[name+'/'+c.file]?.sha256===c.sha256),'Saved ring chunk census mismatch.');
+    sceneCache.set(key,scene);
   }
-  return {manifest,scene:sceneCache.get(name)};
+  return {manifest,scene:sceneCache.get(key)};
 }
 async function loadPrimary(name,scene,id){
-  const index=scene.event_index.chunks[Math.floor(id/100)],key=name+'/'+index.file;
+  const index=scene.event_index.chunks[Math.floor(id/100)],file=name+'/'+index.file,key=bundleKey('assembly',name)+'/'+index.file;
   let chunk=chunkCache.get(key);
-  if(!chunk){chunk=await fetchJSON(bundlePath('assembly',key),index.sha256);
+  if(!chunk){chunk=await fetchJSON(bundlePath('assembly',file,name),index.sha256);
     requireViewer(chunk.model===name&&chunk.first===index.first&&chunk.events.length===index.count&&
       chunk.events.every((e,i)=>e.event_id===index.first+i),'Chunk event census mismatch.');}
   chunkCache.delete(key);chunkCache.set(key,chunk);while(chunkCache.size>2)chunkCache.delete(chunkCache.keys().next().value);
@@ -140,21 +151,40 @@ function unpackEvent(event,columns){
     [table,(event.tables[table]||[]).map(row=>{requireViewer(row.length===keys.length,'Positive raw row schema mismatch.');return Object.fromEntries(keys.map((key,i)=>[key,row[i]]));})]))};
 }
 async function loadPositive(name,assembly,scene){
-  const manifest=await positiveManifest(),entry=manifest.models[name],assemblyEntry=assembly.models[name];
-  requireViewer(entry&&manifest.input_pins.campaign_run===assembly.campaign_run_sha256&&
+  const manifest=await positiveManifest(name),entry=manifest.models[name],assemblyEntry=assembly.models[name],key=bundleKey('positive',name);
+  const bound=ringModels.includes(name)?assembly.kind===RING_KIND&&manifest.kind===RING_KIND&&
+    entry?.dataset_binding&&assemblyEntry?.dataset_binding&&
+    sameBinding(entry.dataset_binding,assemblyEntry.dataset_binding)&&
+    entry.dataset_binding.model_id===name&&entry.dataset_binding.primary_count===10000&&
+    typeof entry.dataset_binding_sha256==='string'&&/^[a-f0-9]{64}$/.test(entry.dataset_binding_sha256)&&
+    entry.dataset_binding_sha256===assemblyEntry.dataset_binding_sha256:
+    manifest.input_pins.campaign_run===assembly.campaign_run_sha256;
+  requireViewer(entry&&assemblyEntry&&bound&&
     entry.source_scene_sha256===assembly.files[assemblyEntry.scene].sha256&&
     manifest.files[entry.scene].sha256===entry.source_scene_sha256,'Positive/assembly campaign or scene mismatch.');
-  if(!positiveCache.has(name)){
-    const data=await fetchJSON(bundlePath('positive',entry.selected),manifest.files[entry.selected].sha256);
+  if(!positiveCache.has(key)){
+    const data=await fetchJSON(bundlePath('positive',entry.selected,name),manifest.files[entry.selected].sha256);
     requireViewer(data.model===name&&data.schema_version===1&&data.event_ids.length===entry.selected_count&&
       data.events.length===entry.selected_count&&data.evidence.length===entry.selected_count&&
       data.events.every((e,i)=>e.event_id===data.event_ids[i])&&data.evidence.every((e,i)=>e.event_id===data.event_ids[i])&&
       JSON.stringify(data.event_ids)===JSON.stringify(scene.event_index.ge_hit_ids),'Positive model/census mismatch.');
-    positiveCache.set(name,{data,events:new Map(data.events.map(e=>[e.event_id,unpackEvent(e,data.columns)])),
+    positiveCache.set(key,{data,events:new Map(data.events.map(e=>[e.event_id,unpackEvent(e,data.columns)])),
       evidence:new Map(data.evidence.map(e=>[e.event_id,e]))});
   }
-  return {manifest,...positiveCache.get(name)};
+  return {manifest,...positiveCache.get(key)};
 }
+function sameBinding(a,b){
+  if(a===null||b===null||typeof a!=='object'||typeof b!=='object')return Object.is(a,b);
+  if(Array.isArray(a)!==Array.isArray(b))return false;
+  const keys=Object.keys(a);return keys.length===Object.keys(b).length&&keys.every(k=>Object.hasOwn(b,k)&&sameBinding(a[k],b[k]));
+}
+function modelOptions(name){
+  const names=['AK02','SAP22',...ringModels.filter(n=>VIEWER_CONFIG.models?.[n]?.assembly&&VIEWER_CONFIG.models[n].positive)];
+  const options=names.map(n=>option(n,n==='GeRC02'?'GeRC02 · Li50min':n==='KMRC01_candidate'?'KMRC01 · candidate':n));
+  if(!names.includes(name)){const unavailable=option(name,name+' · saved data unavailable');unavailable.disabled=true;options.push(unavailable);}
+  $('model').replaceChildren(...options);$('model').value=name;
+}
+function clearModelLinks(){for(const id of ['savedResponse','savedResponseReport','savedSignals','savedCurrent']){$(id).removeAttribute('href');$(id).hidden=true;}$('modelNotes').textContent='';$('responseLinks').hidden=true;}
 function clearGroup(){viewer.group=null;$('group').replaceChildren();$('group').disabled=true;$('evidence').replaceChildren();$('evidenceRaw').textContent='';}
 function clearOverlay(){clearGroup();viewer.data=null;viewer.events=new Map();viewer.evidence=new Map();$('representatives').replaceChildren();}
 function clearPrimary(){viewer.primary=null;$('records').textContent='';clearGroup();}
@@ -184,11 +214,22 @@ function showScene(scene,manifest,name){
     check.onchange=()=>{if(check.checked)visible.add(v.name);else visible.delete(v.name);draw();};
     const title=document.createElement('span');title.textContent=labels[v.name]||'Holder: '+v.original_path.split('/').pop();title.style.color=color(v);
     const small=document.createElement('small');small.textContent=v.name+' · '+v.material+' · '+v.solid_type;label.append(check,title,small);$('volumes').append(label);}
-  $('originals').href=bundlePath('assembly',manifest.models[name].originals);
+  const entry=manifest.models[name];$('originals').href=bundlePath('assembly',entry.originals,name);clearModelLinks();
+  if(ringModels.includes(name)){
+    $('modelNotes').textContent=name==='GeRC02'?
+      'GeRC02: the original 30 min annealing model is preserved; this saved 10K case is the independent 50 min variant. Functional engineering example; Li CCE remains unvalidated.':
+      'KMRC01 candidate: raw native signals remain signed and negative. This saved response uses fixed −1 electronics wiring and a separate negative injection calibration; original rejections remain available. No eventwise gain or charge rectification.';
+    for(const [id,file]of [['savedResponse',entry.response],['savedResponseReport',entry.response_report],
+      ['savedSignals',name+'/response/signals.csv'],['savedCurrent',name+'/response/readout-input.csv']])
+      if(manifest.files[file]){$(id).href=bundlePath('assembly',file,name);$(id).hidden=false;}
+    $('responseLinks').hidden=false;
+  }
   $('census').textContent=scene.event_index.event_count+' primaries; '+scene.event_index.ge_hit_ids.length+' Ge-positive; '+scene.event_index.zero_ge_primaries+' zero-Ge';
   $('provenance').textContent=exactJSON({model:name,scenario:scene.scenario,raw_lh5_sha256:scene.raw_lh5_sha256,originals_sha256:scene.originals_sha256,
     raw_rows:scene.event_index.raw_rows,raw_columns:scene.event_index.raw_columns,versions:scene.raw_software_versions,seed:scene.seed,
-    exporter_sha256:manifest.exporter_sha256,upstream:manifest.upstream,omissions:scene.omissions});
+    source_position_global_mm:scene.source_position_global_mm,exporter_sha256:manifest.exporter_sha256,upstream:manifest.upstream,omissions:scene.omissions,
+    ...(ringModels.includes(name)?{variant_id:entry.variant_id,dataset_binding:entry.dataset_binding,dataset_binding_sha256:entry.dataset_binding_sha256,
+      model_contract:entry.model_contract,counts:entry.counts,original_native_counts:entry.original_native_counts,readout_wiring:entry.readout_wiring,calibration:entry.calibration}:{})});
 }
 function refreshDetails(){
   if($('recordPanel').open)$('records').textContent=viewer.primary?exactJSON(viewer.primary):'';
@@ -232,9 +273,9 @@ function normalizeRequest(identity){
 async function applySelection(identity,options={}){
   const r=normalizeRequest(identity),ticket=++viewer.generation,previousModel=viewer.requested.model,previousScene=viewer.scene,previousMode=mode;
   viewer.requested=r;clearPrimary();viewer.overlayError='';$('overlayStatus').textContent='';$('status').className='';
-  if(previousModel!==r.model){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');}
-  $('model').value=r.model;$('view').value=r.view;if(r.event!==null)$('eid').value=String(r.event);identityText();
-  if(r.invalid){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');$('status').textContent='Unavailable request: '+r.invalid+(options.rejectedInput===undefined?' Query: '+location.search:'');$('status').className='error';draw();return false;}
+  if(previousModel!==r.model){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');clearModelLinks();}
+  modelOptions(r.model);$('view').value=r.view;if(r.event!==null)$('eid').value=String(r.event);identityText();
+  if(r.invalid){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');clearModelLinks();$('status').textContent='Unavailable request: '+r.invalid+(options.rejectedInput===undefined?' Query: '+location.search:'');$('status').className='error';draw();return false;}
   applyMode(r.view);writeHistory(options.history||'push');draw();
   const current=()=>ticket===viewer.generation;
   try{

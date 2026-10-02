@@ -25,4 +25,10 @@ Future polarity/readout analysis must use a new derivative leaf and retain the
 original rejection/null records. `.local/ring-delivery-v1/` retains its audit,
 failed checks and AI-review evidence.
 
+Preserve `.local/ring-publication-v1/bundle/` as the complete checked original
+ring export and `.local/ring-publication-v1/web-bundle/` as its separately bound
+lossless delivery derivative. Keep raw-reader/scene receipts, source freezes,
+failed export/package attempts and their logs. Gzip chunks and ZIP-only download
+delivery never authorize deletion of original transport, native or readout data.
+
 Read completed data, regenerate derived spectra, change explicitly versioned readout settings in NEW runs, or recover a raw archive into a new analysis scratch location. Preserve event, chunk and detector identities. Do not invoke `prepare`, `run`, `Resume.cmd` or a radiation generator simply to inspect completed data. No automated deletion of the protected campaign is authorized.

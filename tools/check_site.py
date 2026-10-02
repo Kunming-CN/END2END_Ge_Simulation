@@ -14,6 +14,9 @@ from urllib.parse import unquote, urlsplit
 from export_models import (MODELS, ORIGINAL_HASHES, download_files, public_text,
                            read_distribution, validate_archive)
 
+MAX_PUBLIC_FILE_BYTES = 100 * 1024 * 1024
+MAX_PUBLIC_SITE_BYTES = 1_000_000_000
+
 MANIFEST = 'site-manifest.json'
 EXTENSIONS = {'.html', '.png', '.jpg', '.svg', '.mp4', '.webm', '.csv', '.json', '.md'}
 PRIVATE_PATH = re.compile(r'[A-Za-z]:[\\/]+Users[\\/]|file:///|/home/[^/\s]+/', re.I)
@@ -63,12 +66,16 @@ def validate(site, require_manifest=True, require_models=False):
         if not f.is_file() or f.name == MANIFEST:
             continue
         relative = f.relative_to(site).as_posix()
+        size = f.stat().st_size
+        if size > MAX_PUBLIC_FILE_BYTES or total + size > MAX_PUBLIC_SITE_BYTES:
+            raise ValueError(f'GitHub publication size limit exceeded: {relative}; use complete lossless archives')
         geometry_file = relative.startswith('examples/cs137-10k-geometry/') and f.suffix.lower() in {'.zip','.txt'}
         hit_payload = relative in ('examples/cs137-10k-hits/AK02/selected.json.gz','examples/cs137-10k-hits/SAP22/selected.json.gz')
         million_payload = relative=='examples/cs137-1m/positive-groups.csv.gz'
         native_response_payload = relative=='examples/cs137-1m-response/groups.csv.gz'
         ledger_zip = relative in ('examples/cs137-10k/AK02/response/ledgers.zip', 'examples/cs137-10k/SAP22/response/ledgers.zip')
-        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative != 'sitemap.xml' and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload:
+        ring_payload = relative.startswith('examples/cs137-10k-rings/') and (f.suffix.lower() in {'.zip', '.gz', '.jsonl'} or relative == 'examples/cs137-10k-rings/README.txt')
+        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative != 'sitemap.xml' and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload and not ring_payload:
             raise ValueError(f'Unapproved public file: {relative}')
         data = f.read_bytes()
         if geometry_file and f.suffix.lower()=='.zip':
@@ -105,8 +112,8 @@ def validate(site, require_manifest=True, require_models=False):
                 parser = Links()
                 parser.feed(text)
                 pages[relative] = parser.urls
-    if total >= 800 * 1024**2:
-        raise ValueError('Site exceeded the project publication budget (800 MiB).')
+    if total > MAX_PUBLIC_SITE_BYTES:
+        raise ValueError('Site exceeded the GitHub Pages publication budget (1 GB).')
     names = {entry['path'] for entry in entries} | {MANIFEST}
     links = 0
     for page, urls in pages.items():
@@ -155,6 +162,10 @@ def validate(site, require_manifest=True, require_models=False):
     if hit_bundle.exists():
         from hit_view_publication import validate as validate_hits
         validate_hits(hit_bundle)
+    ring_bundle = site/'examples/cs137-10k-rings'
+    if ring_bundle.exists():
+        from ring_publication import validate_bundle as validate_rings
+        validate_rings(ring_bundle)
     if (site/"spectra/manifest.json").exists():
         from spectrum_display import validate as validate_spectrum_display
         validate_spectrum_display(site)
@@ -169,6 +180,13 @@ def validate(site, require_manifest=True, require_models=False):
               'file_count': len(entries), 'total_bytes': total,
               'html_pages': len(pages), 'local_links_checked': links,
               'files': entries}
+    # total_bytes is the payload census; the hosting budget also includes the
+    # manifest itself. Before sealing, budget its exact generated serialization.
+    manifest_path = site / MANIFEST
+    manifest_bytes = (manifest_path.stat().st_size if require_manifest and manifest_path.is_file()
+                      else len((json.dumps(result, indent=2) + '\n').encode('utf-8')))
+    if manifest_bytes > MAX_PUBLIC_FILE_BYTES or total + manifest_bytes > MAX_PUBLIC_SITE_BYTES:
+        raise ValueError('GitHub publication size limit exceeded including the site manifest.')
     if require_manifest:
         saved = json.loads((site / MANIFEST).read_text(encoding='utf-8'))
         if saved != result:
@@ -230,7 +248,7 @@ def verify_live(url, report):
                      if entry['path'].startswith(('models/', 'downloads/'))})
     # The public campaign is an auditable dataset, not just HTML; verify every file.
     selected.update({entry['path']: entry for entry in entries
-                     if entry['path'].startswith(('examples/cs137-10k/', 'examples/cs137-10k-geometry/', 'examples/cs137-10k-hits/', 'examples/cs137-1m/', 'examples/cs137-1m-response/', 'examples/gamma-native/'))})
+                     if entry['path'].startswith(('examples/cs137-10k/', 'examples/cs137-10k-geometry/', 'examples/cs137-10k-hits/', 'examples/cs137-10k-rings/', 'examples/cs137-1m/', 'examples/cs137-1m-response/', 'examples/gamma-native/'))})
     # Interactive geometry requires every scene, manifest and active pointer online.
     selected.update({entry['path']: entry for entry in entries
                      if entry['path'].startswith('detectors/') and

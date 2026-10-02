@@ -3,8 +3,9 @@ const $=id=>document.getElementById(id), canvas=$('canvas'), ctx=canvas.getConte
 const DETAIL_CAP=2000, categories=['all','compact','compton1','compton2','full','partial','unknown'];
 const viewer={generation:0,requested:parseViewerQuery(location.search),scene:null,primary:null,group:null,
   assemblyManifest:null,positiveManifest:null,data:null,events:new Map(),evidence:new Map(),category:'all',overlayError:''};
-const sceneCache=new Map(),positiveCache=new Map(),chunkCache=new Map();
-let assemblyPromise=null,positivePromise=null,mode=null,pendingSelection=null;
+const RING_KIND='ring_saved_publication_v1',ringModels=['GeRC02','KMRC01_candidate'];
+const sceneCache=new Map(),positiveCache=new Map(),chunkCache=new Map(),manifestCache=new Map();
+let mode=null,pendingSelection=null;
 let yaw=.55,pitch=-.2,zoom=1,panX=0,panY=0,center=[0,0,0],radius=1,panMode=false,visible=new Set();
 const labels={ledger_0_PV:'World air',ledger_1:'Flange',ledger_2:'Outer Al wall / endCap',ledger_3:'Outer hollow',ledger_4:'Inner Al shield',ledger_5:'Inner vacuum',ledger_6:'Holder: stage',ledger_7:'Holder: backStage',ledger_12:'Holder: BN block',ledger_13:'Holder: lower indium',ledger_14:'Holder: copper plate',ledger_15:'Holder: upper indium',germanium:'Germanium crystal',ledger_17:'Nominal BN spacer',ledger_18:'Nominal Al source capsule',ledger_19:'Nominal source fill'};
 const color=v=>v.name==='germanium'?'#c697ff':v.material==='G4_Al'?'#a9c2d5':v.material==='G4_Cu'?'#d78d5e':v.material==='boron_nitride'?'#7fdcae':v.material==='G4_Galactic'?'#5c7593':'#ddd290';
@@ -35,33 +36,41 @@ async function fetchJSON(path,expected){
   }
   return JSON.parse(new TextDecoder().decode(bytes));
 }
-function bundlePath(kind,file){return VIEWER_CONFIG[kind].base+file;}
-async function assemblyManifest(){
-  if(!assemblyPromise)assemblyPromise=fetchJSON(bundlePath('assembly','manifest.json'),VIEWER_CONFIG.assembly.sha256)
-    .then(m=>{requireViewer(m.status==='complete'&&m.schema_version===1,'Unsupported assembly manifest.');return m;})
-    .catch(e=>{assemblyPromise=null;throw e;});
-  return assemblyPromise;
+function modelBinding(kind,name){
+  const binding=ringModels.includes(name)?VIEWER_CONFIG.models?.[name]?.[kind]:VIEWER_CONFIG[kind];
+  requireViewer(binding,'No completed saved 10K bundle is available for '+name+'. Requested identity is retained.');
+  if(ringModels.includes(name))requireViewer(binding.kind===RING_KIND,'Unsupported saved ring binding.');
+  return binding;
 }
-async function positiveManifest(){
-  if(!positivePromise)positivePromise=fetchJSON(bundlePath('positive','manifest.json'),VIEWER_CONFIG.positive.sha256)
-    .then(m=>{requireViewer(m.status==='complete'&&m.schema_version===1,'Unsupported positive manifest.');return m;})
-    .catch(e=>{positivePromise=null;throw e;});
-  return positivePromise;
+function bundlePath(kind,file,name){return modelBinding(kind,name).base+file;}
+function bundleKey(kind,name){const binding=modelBinding(kind,name);return binding.base+'|'+binding.sha256+'|'+name;}
+async function savedManifest(kind,name){
+  const binding=modelBinding(kind,name),key=binding.base+'|'+binding.sha256;
+  if(!manifestCache.has(key))manifestCache.set(key,fetchJSON(binding.base+'manifest.json',binding.sha256)
+    .then(m=>{requireViewer(m.status==='complete'&&m.schema_version===1&&(!binding.kind||m.kind===binding.kind),
+      'Unsupported '+kind+' manifest.');return m;})
+    .catch(e=>{manifestCache.delete(key);throw e;}));
+  return manifestCache.get(key);
 }
+function assemblyManifest(name){return savedManifest('assembly',name);}
+function positiveManifest(name){return savedManifest('positive',name);}
 async function loadScene(name){
-  const manifest=await assemblyManifest();
-  if(!sceneCache.has(name)){
+  const manifest=await assemblyManifest(name),key=bundleKey('assembly',name);
+  if(!sceneCache.has(key)){
     const entry=manifest.models[name];requireViewer(entry,'No recorded assembly for '+name+'.');
-    const scene=await fetchJSON(bundlePath('assembly',entry.scene),manifest.files[entry.scene].sha256);
+    const scene=await fetchJSON(bundlePath('assembly',entry.scene,name),manifest.files[entry.scene].sha256);
     requireViewer(scene.model===name&&scene.event_index.event_count===10000,'Assembly model/census mismatch.');
-    sceneCache.set(name,scene);
+    if(ringModels.includes(name))requireViewer(scene.event_index.chunks.length===100&&
+      scene.event_index.chunks.every((c,i)=>c.first===i*100&&c.count===100&&
+        manifest.files[name+'/'+c.file]?.sha256===c.sha256),'Saved ring chunk census mismatch.');
+    sceneCache.set(key,scene);
   }
-  return {manifest,scene:sceneCache.get(name)};
+  return {manifest,scene:sceneCache.get(key)};
 }
 async function loadPrimary(name,scene,id){
-  const index=scene.event_index.chunks[Math.floor(id/100)],key=name+'/'+index.file;
+  const index=scene.event_index.chunks[Math.floor(id/100)],file=name+'/'+index.file,key=bundleKey('assembly',name)+'/'+index.file;
   let chunk=chunkCache.get(key);
-  if(!chunk){chunk=await fetchJSON(bundlePath('assembly',key),index.sha256);
+  if(!chunk){chunk=await fetchJSON(bundlePath('assembly',file,name),index.sha256);
     requireViewer(chunk.model===name&&chunk.first===index.first&&chunk.events.length===index.count&&
       chunk.events.every((e,i)=>e.event_id===index.first+i),'Chunk event census mismatch.');}
   chunkCache.delete(key);chunkCache.set(key,chunk);while(chunkCache.size>2)chunkCache.delete(chunkCache.keys().next().value);
@@ -72,21 +81,40 @@ function unpackEvent(event,columns){
     [table,(event.tables[table]||[]).map(row=>{requireViewer(row.length===keys.length,'Positive raw row schema mismatch.');return Object.fromEntries(keys.map((key,i)=>[key,row[i]]));})]))};
 }
 async function loadPositive(name,assembly,scene){
-  const manifest=await positiveManifest(),entry=manifest.models[name],assemblyEntry=assembly.models[name];
-  requireViewer(entry&&manifest.input_pins.campaign_run===assembly.campaign_run_sha256&&
+  const manifest=await positiveManifest(name),entry=manifest.models[name],assemblyEntry=assembly.models[name],key=bundleKey('positive',name);
+  const bound=ringModels.includes(name)?assembly.kind===RING_KIND&&manifest.kind===RING_KIND&&
+    entry?.dataset_binding&&assemblyEntry?.dataset_binding&&
+    sameBinding(entry.dataset_binding,assemblyEntry.dataset_binding)&&
+    entry.dataset_binding.model_id===name&&entry.dataset_binding.primary_count===10000&&
+    typeof entry.dataset_binding_sha256==='string'&&/^[a-f0-9]{64}$/.test(entry.dataset_binding_sha256)&&
+    entry.dataset_binding_sha256===assemblyEntry.dataset_binding_sha256:
+    manifest.input_pins.campaign_run===assembly.campaign_run_sha256;
+  requireViewer(entry&&assemblyEntry&&bound&&
     entry.source_scene_sha256===assembly.files[assemblyEntry.scene].sha256&&
     manifest.files[entry.scene].sha256===entry.source_scene_sha256,'Positive/assembly campaign or scene mismatch.');
-  if(!positiveCache.has(name)){
-    const data=await fetchJSON(bundlePath('positive',entry.selected),manifest.files[entry.selected].sha256);
+  if(!positiveCache.has(key)){
+    const data=await fetchJSON(bundlePath('positive',entry.selected,name),manifest.files[entry.selected].sha256);
     requireViewer(data.model===name&&data.schema_version===1&&data.event_ids.length===entry.selected_count&&
       data.events.length===entry.selected_count&&data.evidence.length===entry.selected_count&&
       data.events.every((e,i)=>e.event_id===data.event_ids[i])&&data.evidence.every((e,i)=>e.event_id===data.event_ids[i])&&
       JSON.stringify(data.event_ids)===JSON.stringify(scene.event_index.ge_hit_ids),'Positive model/census mismatch.');
-    positiveCache.set(name,{data,events:new Map(data.events.map(e=>[e.event_id,unpackEvent(e,data.columns)])),
+    positiveCache.set(key,{data,events:new Map(data.events.map(e=>[e.event_id,unpackEvent(e,data.columns)])),
       evidence:new Map(data.evidence.map(e=>[e.event_id,e]))});
   }
-  return {manifest,...positiveCache.get(name)};
+  return {manifest,...positiveCache.get(key)};
 }
+function sameBinding(a,b){
+  if(a===null||b===null||typeof a!=='object'||typeof b!=='object')return Object.is(a,b);
+  if(Array.isArray(a)!==Array.isArray(b))return false;
+  const keys=Object.keys(a);return keys.length===Object.keys(b).length&&keys.every(k=>Object.hasOwn(b,k)&&sameBinding(a[k],b[k]));
+}
+function modelOptions(name){
+  const names=['AK02','SAP22',...ringModels.filter(n=>VIEWER_CONFIG.models?.[n]?.assembly&&VIEWER_CONFIG.models[n].positive)];
+  const options=names.map(n=>option(n,n==='GeRC02'?'GeRC02 · Li50min':n==='KMRC01_candidate'?'KMRC01 · candidate':n));
+  if(!names.includes(name)){const unavailable=option(name,name+' · saved data unavailable');unavailable.disabled=true;options.push(unavailable);}
+  $('model').replaceChildren(...options);$('model').value=name;
+}
+function clearModelLinks(){for(const id of ['savedResponse','savedResponseReport','savedSignals','savedCurrent']){$(id).removeAttribute('href');$(id).hidden=true;}$('modelNotes').textContent='';$('responseLinks').hidden=true;}
 function clearGroup(){viewer.group=null;$('group').replaceChildren();$('group').disabled=true;$('evidence').replaceChildren();$('evidenceRaw').textContent='';}
 function clearOverlay(){clearGroup();viewer.data=null;viewer.events=new Map();viewer.evidence=new Map();$('representatives').replaceChildren();}
 function clearPrimary(){viewer.primary=null;$('records').textContent='';clearGroup();}
@@ -116,11 +144,22 @@ function showScene(scene,manifest,name){
     check.onchange=()=>{if(check.checked)visible.add(v.name);else visible.delete(v.name);draw();};
     const title=document.createElement('span');title.textContent=labels[v.name]||'Holder: '+v.original_path.split('/').pop();title.style.color=color(v);
     const small=document.createElement('small');small.textContent=v.name+' · '+v.material+' · '+v.solid_type;label.append(check,title,small);$('volumes').append(label);}
-  $('originals').href=bundlePath('assembly',manifest.models[name].originals);
+  const entry=manifest.models[name];$('originals').href=bundlePath('assembly',entry.originals,name);clearModelLinks();
+  if(ringModels.includes(name)){
+    $('modelNotes').textContent=name==='GeRC02'?
+      'GeRC02: the original 30 min annealing model is preserved; this saved 10K case is the independent 50 min variant. Functional engineering example; Li CCE remains unvalidated.':
+      'KMRC01 candidate: raw native signals remain signed and negative. This saved response uses fixed −1 electronics wiring and a separate negative injection calibration; original rejections remain available. No eventwise gain or charge rectification.';
+    for(const [id,file]of [['savedResponse',entry.response],['savedResponseReport',entry.response_report],
+      ['savedSignals',name+'/response/signals.csv'],['savedCurrent',name+'/response/readout-input.csv']])
+      if(manifest.files[file]){$(id).href=bundlePath('assembly',file,name);$(id).hidden=false;}
+    $('responseLinks').hidden=false;
+  }
   $('census').textContent=scene.event_index.event_count+' primaries; '+scene.event_index.ge_hit_ids.length+' Ge-positive; '+scene.event_index.zero_ge_primaries+' zero-Ge';
   $('provenance').textContent=exactJSON({model:name,scenario:scene.scenario,raw_lh5_sha256:scene.raw_lh5_sha256,originals_sha256:scene.originals_sha256,
     raw_rows:scene.event_index.raw_rows,raw_columns:scene.event_index.raw_columns,versions:scene.raw_software_versions,seed:scene.seed,
-    exporter_sha256:manifest.exporter_sha256,upstream:manifest.upstream,omissions:scene.omissions});
+    source_position_global_mm:scene.source_position_global_mm,exporter_sha256:manifest.exporter_sha256,upstream:manifest.upstream,omissions:scene.omissions,
+    ...(ringModels.includes(name)?{variant_id:entry.variant_id,dataset_binding:entry.dataset_binding,dataset_binding_sha256:entry.dataset_binding_sha256,
+      model_contract:entry.model_contract,counts:entry.counts,original_native_counts:entry.original_native_counts,readout_wiring:entry.readout_wiring,calibration:entry.calibration}:{})});
 }
 function refreshDetails(){
   if($('recordPanel').open)$('records').textContent=viewer.primary?exactJSON(viewer.primary):'';
@@ -164,9 +203,9 @@ function normalizeRequest(identity){
 async function applySelection(identity,options={}){
   const r=normalizeRequest(identity),ticket=++viewer.generation,previousModel=viewer.requested.model,previousScene=viewer.scene,previousMode=mode;
   viewer.requested=r;clearPrimary();viewer.overlayError='';$('overlayStatus').textContent='';$('status').className='';
-  if(previousModel!==r.model){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');}
-  $('model').value=r.model;$('view').value=r.view;if(r.event!==null)$('eid').value=String(r.event);identityText();
-  if(r.invalid){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');$('status').textContent='Unavailable request: '+r.invalid+(options.rejectedInput===undefined?' Query: '+location.search:'');$('status').className='error';draw();return false;}
+  if(previousModel!==r.model){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');clearModelLinks();}
+  modelOptions(r.model);$('view').value=r.view;if(r.event!==null)$('eid').value=String(r.event);identityText();
+  if(r.invalid){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');clearModelLinks();$('status').textContent='Unavailable request: '+r.invalid+(options.rejectedInput===undefined?' Query: '+location.search:'');$('status').className='error';draw();return false;}
   applyMode(r.view);writeHistory(options.history||'push');draw();
   const current=()=>ticket===viewer.generation;
   try{

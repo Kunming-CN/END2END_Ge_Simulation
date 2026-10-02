@@ -54,6 +54,10 @@ const simulationFiles = new Set(["simulation/Project.toml","simulation/Manifest.
 const transportFiles = new Set(["transport/README.md","transport/pixi.toml","transport/pixi.lock","transport/.pixi/config.toml","transport/cryostat-source.json","transport/cryostat-input-ledger.json","transport/Run.cmd","transport/run.sh","transport/smoke.gdml","transport/smoke.mac","transport/check_smoke.py","transport/handoff.py","transport/test_handoff.py","transport/geometry_probe.cc","transport/CMakeLists.txt","transport/experiment.json","transport/compare_em.py","transport/test_compare_em.py"]);
 for (const f of ['transport/scenario_prepare.py', 'transport/test_scenario_prepare.py', 'transport/Prepare.cmd', 'transport/prepare.sh']) transportFiles.add(f);
 for (const f of ['simulation/gamma_native_example.jl', 'simulation/test_gamma_native_example.jl']) simulationFiles.add(f);
+// Reviewed ring adapters reuse the existing native solver and locked transport.
+for (const f of ['simulation/ring_stream.jl', 'simulation/test_ring_stream.jl',
+  'simulation/ring_response.jl', 'simulation/ring_polarity.jl', 'simulation/test_ring_polarity.jl']) simulationFiles.add(f);
+transportFiles.add('transport/ring_cs137.py');
 // HDF5 transport tests use the existing locked Linux environment separately.
 for (const f of ['transport/scenario_transport.py', 'transport/test_scenario_transport.py', 'transport/Gamma.cmd', 'transport/gamma.sh']) transportFiles.add(f);
 const approved = new Set(['.gitignore', '.gitattributes', 'README.md', 'CONTRIBUTING.md', 'CITATION.cff', 'THIRD_PARTY_NOTICES.md', '.github/PULL_REQUEST_TEMPLATE.md', 'PROGRESS.md', 'AGENTS.md', 'Publish.cmd', 'Run.cmd', 'Control.cmd', 'Open_Workspace.cmd', 'scenarios/lbnl-cs137.json', 'scenarios/detector-capabilities.json',

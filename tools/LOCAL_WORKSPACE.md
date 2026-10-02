@@ -13,6 +13,10 @@ evidence. It never starts or resumes a simulation and performs no deletion.
 - `Additional_Simulations/` and `2D_GeGI detector Simulation/`: original workspaces
   retained at their current paths because saved references may depend on them.
 - `.local/cs137-1m/` and `.local/cs137-1m-native/`: permanent science, not cache.
+- `.local/ring-cs137-v1/`: completed ring pilots and 10K transport/native/readout
+  science, including original signed signals and failures; permanent.
+- `.local/ring-publication-v1/`: full saved export, lossless web derivative and
+  retained failed attempts; preserve their receipts, hashes and original bytes.
   Preserve original archives, compact records, inputs, fields and checkpoints.
 - `.local/runs/`: ordinary launcher runs. Opening a result is not a resume action.
 - `.local/reference-docs/`: private documents, including `presentations/`.

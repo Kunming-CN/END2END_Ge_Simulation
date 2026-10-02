@@ -17,6 +17,9 @@ another complete installation recipe.
 | Browser geometry controls | `tools/ssd_geometry_viewer.html` |
 | Saved energy-spectrum views | `tools/spectrum_display.py`, `spectrum_plot.py`, `spectrum_controls.js`; see [display semantics](SPECTRUM_DISPLAY.md) |
 | Unified GeSignal event reader and old entry aliases | `tools/viewer_navigation.py`, `viewer_navigation.js`, `unified_event_viewer.html`, `unified_event_viewer.js`; see [reader ownership](VIEWER_NAVIGATION.md). Original signed viewers remain frozen. |
+| Four-detector 10K hub and saved ring results | `tools/ring_site.py`, `ring_publication.py`, `ring_scene.cc`; `build_site.py --ring-results` copies completed, checked saved data. The shared spectrum and event readers remain the maintained display route. |
+| Ring calculation and signed electronics | `transport/ring_cs137.py`, `simulation/ring_stream.jl`, `ring_response.jl`, `ring_polarity.jl`, `tools/ring_run.py`, `ring_production.py`, `km_ring_run.py`, `ring_model_contract.py`. Use matching clean 500-decay admission before a new 10K; source/configuration checks remain strict. |
+| Completed ring campaign verification | `tools/ring_saved_basis.py` has two closed read-only operations for the registered terminal campaigns. It retains original producer hashes and receipts across the exact portable-runtime line change; it cannot start, resume or rewrite science. Its fixed private basis stays local. |
 | Windows setup/run guide | `tools/site_guide.html` |
 | Contributions, software citation and rights scope | Root `CONTRIBUTING.md`, `CITATION.cff`, `THIRD_PARTY_NOTICES.md`; `.github/PULL_REQUEST_TEMPLATE.md` |
 | Loopback bounded-native control | `Control.cmd`, `tools/local_ui.ps1`, `local_ui.py`, `local_ui_jobs.py`, `local_ui.html`, `local_ui.js`; same native backend, no public execution service |
@@ -43,7 +46,21 @@ the underlying command is `python tools/build_site.py --restructure`: it starts
 from the checked saved snapshot rather than rerunning simulations. New saved
 geometry exports use the explicit `--ssd-geometry` publication mode.
 
+If generation completed but final publication validation failed, first inspect
+and retain the failed stage, source pins and log. `build_site.py --finish-staged`
+validates the installed snapshot and the existing fixed `.local/site-build`
+stage, then uses the normal atomic replacement. It refuses linked directories
+and pending swaps; it never regenerates pages or repeats scientific work.
+
 Before publishing, run the applicable checks:
+
+The complete four-detector snapshot must fit GitHub Pages' 1 GB site limit;
+the previous 800 MiB project budget preceded the two ring campaigns. Keep the
+95 MiB per-file margin. Ring event chunks use deterministic lossless gzip;
+complete response archives retain every original ledger member and exact value.
+The checker rejects an oversized snapshot before deployment. Local full bundles
+and raw scientific outputs remain permanent and are not constrained by this
+website budget.
 
 ```powershell
 python tools/test_all_detector_pages.py

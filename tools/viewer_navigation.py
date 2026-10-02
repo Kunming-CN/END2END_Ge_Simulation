@@ -1,4 +1,4 @@
-"""One saved-radiation reader with strict aliases for immutable old-10k bundles."""
+"""One saved-radiation reader with strict aliases and checked ring datasets."""
 import hashlib
 import html
 import json
@@ -24,6 +24,9 @@ ORIGINAL_SOURCES={'tools/geometry_events.html':'b6322ea76fc067a0df0596978dae027d
  'tools/hit_event_view.py':'7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e'}
 SOURCES=('tools/viewer_navigation.py','tools/viewer_navigation.js',
          'tools/unified_event_viewer.html','tools/unified_event_viewer.js')
+RING_BASE='examples/cs137-10k-rings'
+RING_KIND='ring_saved_publication_v1'
+RING_MODELS=('GeRC02','KMRC01_candidate')
 # Whole-manifest pins authorize protected older display reads only. New exports
 # must bind current sources; a self-declared source inventory is never authority.
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
@@ -31,7 +34,10 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
  'bc25cdba48e876df82af56f2713f2227292ae21ee6bf7f949dcfa6bd0cd83988',
- '1cec34532d0166bff8ead1f6d9c3a9d4234bdea9789b32aec06bec78c8cd85d6'})
+ '1cec34532d0166bff8ead1f6d9c3a9d4234bdea9789b32aec06bec78c8cd85d6',
+ # Verified before this four-model source upgrade; never derived from a new
+ # self-declared adapter inventory.
+ '27ec5778f811eae44a70f91106056567cd4bf07d0d503c2e4526ee4cc900941a'})
 
 def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def require(ok,message):
@@ -76,9 +82,61 @@ def route_links(text,page):
         return match[1]+html.escape(value,quote=True)+match[3]
     return re.sub(r'(href=["\'])([^"\']*)(["\'])',link,text)
 
-def config():
-    return {'assembly':{'base':'../examples/cs137-10k-geometry/','sha256':PINS['examples/cs137-10k-geometry/manifest.json']},
-            'positive':{'base':'../examples/cs137-10k-hits/','sha256':PINS['examples/cs137-10k-hits/manifest.json']}}
+def ring_bundle(site):
+    """Read a completed public bundle only; never invoke its scientific writer."""
+    folder=Path(site)/RING_BASE;path=folder/'manifest.json'
+    if not path.exists():
+        require(not folder.exists(),'Incomplete saved ring bundle: no manifest')
+        return None
+    m=read(path)
+    require(m.get('kind')==RING_KIND and m.get('schema_version')==1 and m.get('status')=='complete'
+            and set(m.get('models',{}))==set(RING_MODELS),'Incomplete saved ring manifest')
+    for name in m['files']:
+        require(isinstance(name,str) and name and not name.startswith('/') and '\\' not in name
+                and not any(part in ('','.','..') for part in name.split('/')),'Unsafe saved ring path')
+        asset=folder/name
+        require(asset.resolve().is_relative_to(folder.resolve()),'Saved ring path outside bundle')
+    actual={p.relative_to(folder).as_posix() for p in folder.rglob('*') if p.is_file()}
+    require(actual==set(m['files'])|{'manifest.json'},'Saved ring file inventory mismatch')
+    for name,record in m['files'].items():
+        asset=folder/name
+        require(sha(asset)==record['sha256'] and asset.stat().st_size==record['bytes'],
+                'Saved ring asset changed: '+name)
+    for name,entry in m['models'].items():
+        binding=entry['dataset_binding']
+        binding_bytes=(json.dumps(binding,ensure_ascii=True,allow_nan=False,separators=(',',':'))+'\n').encode('utf-8')
+        require(binding.get('kind')=='ring_model_saved_dataset_binding_v1' and binding.get('model_id')==name
+                and binding.get('primary_count')==10000 and entry.get('model_id')==name
+                and hashlib.sha256(binding_bytes).hexdigest()==entry['dataset_binding_sha256'],
+                'Saved ring dataset binding mismatch: '+name)
+        require(entry['scene']==name+'/scene.json' and entry['selected']==name+'/selected.json.gz'
+                and entry['source_scene_sha256']==m['files'][entry['scene']]['sha256'],
+                'Saved ring scene/selected binding mismatch: '+name)
+        scene=read(folder/entry['scene']);index=scene['event_index']
+        require(scene['model']==name and index['event_count']==10000 and len(index['chunks'])==100
+                and all(c['first']==i*100 and c['count']==100
+                        and m['files'][name+'/'+c['file']]['sha256']==c['sha256']
+                        for i,c in enumerate(index['chunks'])),'Saved ring chunk census mismatch: '+name)
+        for field in ('originals','response','response_report'):
+            require(entry[field] in m['files'] and entry[field].startswith(name+'/'),
+                    'Saved ring linked asset missing: '+field)
+    return m
+
+def ring_records(site,manifest):
+    if manifest is None:return {}
+    out={RING_BASE+'/'+name:record for name,record in manifest['files'].items()}
+    path=Path(site)/RING_BASE/'manifest.json'
+    out[RING_BASE+'/manifest.json']={'sha256':sha(path),'bytes':path.stat().st_size}
+    return out
+
+def config(site=None):
+    out={'assembly':{'base':'../examples/cs137-10k-geometry/','sha256':PINS['examples/cs137-10k-geometry/manifest.json']},
+         'positive':{'base':'../examples/cs137-10k-hits/','sha256':PINS['examples/cs137-10k-hits/manifest.json']}}
+    m=ring_bundle(site) if site is not None else None
+    if m is not None:
+        binding={'base':'../'+RING_BASE+'/','sha256':sha(Path(site)/RING_BASE/'manifest.json'),'kind':RING_KIND}
+        out['models']={name:{'assembly':dict(binding),'positive':dict(binding)} for name in RING_MODELS}
+    return out
 
 def render(site,page=MAIN_PAGE):
     frozen();site=Path(site);page=ROUTES.get(page,page)
@@ -87,7 +145,7 @@ def render(site,page=MAIN_PAGE):
     if binding['role']=='canonical':
         text=(ROOT/binding['source']).read_text(encoding='utf-8')
         text=replace(text,'__VIEWER_NAVIGATION__',common)
-        text=replace(text,'__VIEWER_CONFIG__',json.dumps(config(),separators=(',',':')))
+        text=replace(text,'__VIEWER_CONFIG__',json.dumps(config(site),separators=(',',':')))
         return replace(text,'__VIEWER_CONTROLLER__',(ROOT/'tools/unified_event_viewer.js').read_text(encoding='utf-8'))
     original=binding['source'];template='tools/geometry_events.html' if binding['view']=='assembly' else 'tools/hit_event_view.html'
     require(sha(site/original)==ORIGINAL_SOURCES[template],'Original HTML pin mismatch')
@@ -110,7 +168,7 @@ def render(site,page=MAIN_PAGE):
 def assemble(site):
     site=Path(site)
     if not any((site/p).exists() for p in ROUTES):return None
-    frozen();original=origins(site,checked=True)
+    frozen();original=origins(site,checked=True);rings=ring_bundle(site)
     require({p:sha(ROOT/p) for p in ORIGINAL_SOURCES}==ORIGINAL_SOURCES,'Original viewer source changed')
     pages={}
     for dest,binding in PAGES.items():
@@ -119,6 +177,9 @@ def assemble(site):
     m={'kind':'unified_geant4_reader_v1','original_files':original,'original_sources':ORIGINAL_SOURCES,
        'adapter_sources':FROZEN,'pages':pages,'new_simulations':0,
        'scope':'Earlier 10k/model saved radiation records; all primaries including zeros; assembly groups are return context only.'}
+    if rings is not None:
+        m['saved_ring_files']=ring_records(site,rings)
+        m['scope']='Saved 10k/model radiation records: AK02, SAP22, GeRC02 Li50min and KMRC01 candidate; all primaries including zeros; assembly groups are return context only.'
     write(site/'viewers/manifest.json',json.dumps(m,indent=2)+'\n')
     return validate(site,True)
 
@@ -141,6 +202,9 @@ def validate(site,current=False):
     known_current=m['adapter_sources']==FROZEN
     require(known_current or (not current and sha(manifest_path) in TRUSTED_PREVIOUS_UNIFIED_MANIFESTS),
             'Unknown adapter source binding; preserve the saved display instead of resealing it')
+    if current or known_current:
+        rings=ring_bundle(site)
+        require(m.get('saved_ring_files',{})==ring_records(site,rings),'Saved ring file binding mismatch')
     require(set(m['pages'])==set(PAGES),'Reader route inventory mismatch')
     require({p.name for p in (site/'viewers').iterdir()}=={'manifest.json','events.html','geant4-assembly.html','ge-positive.html'},'Reader file inventory mismatch')
     if current:frozen()

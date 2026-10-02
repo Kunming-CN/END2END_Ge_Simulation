@@ -16,7 +16,7 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/cs137-1m-response/report.html':'spectra/million-response.html',
         'examples/cs137-10k/comparison.html':'spectra/cs137-10k.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
-GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py')
+GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/ring_site.py')
 
 def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 LOADED_GENERATORS={rel:sha(ROOT/rel) for rel in GENERATORS}
@@ -91,13 +91,17 @@ def sparse_stage(data,stage):
 
 def tenk_specs(site):
     result=[]
-    for model in ('AK02','SAP22'):
-        data=read(site/f'examples/cs137-10k/{model}/response/histograms.json')
+    from ring_site import ring_manifest, RING_MODELS, RING_FOLDER
+    models=('AK02','SAP22') + (RING_MODELS if ring_manifest(site) else ())
+    for model in models:
+        base=RING_FOLDER if model in RING_MODELS else 'examples/cs137-10k'
+        data=read(site/f'{base}/{model}/response/histograms.json')
         for stage,label in STAGES:
             edges,hist,view=sparse_stage(data,stage)
             result.append(specification(f'tenk-{model}-{stage}',f'{model}: {label}',edges,
                 [series(hist,label,'#17334b')],view,xlabel='Energy / equivalent energy (keV)',
-                note='5 keV bins [lower, upper). Raw counts with stage-specific populations; deposited-per-decay includes zero-energy decays. Negative equivalent-energy bins remain negative on x.'))
+                note='5 keV bins [lower, upper). Raw counts with stage-specific populations; deposited-per-decay includes zero-energy decays. Negative equivalent-energy bins remain negative on x.'
+                + (' KM raw native charge stays negative; the electronics uses fixed -1 wiring and independent negative-injection calibration.' if model=='KMRC01_candidate' else '')))
     return result
 
 def pipeline_specs(site):
@@ -173,7 +177,46 @@ DATA_SOURCES=('examples/cs137-1m/histograms.json','examples/cs137-1m-response/hi
               'examples/cs137-10k/AK02/response/histograms.json','examples/cs137-10k/SAP22/response/histograms.json','examples/data.json')
 RECEIPTS=('examples/cs137-1m/publication.json','examples/cs137-1m-response/publication.json','examples/cs137-10k/publication.json')
 
+def source_inventory(site):
+    from ring_site import source_files
+    return tuple(ROUTES)+DATA_SOURCES+RECEIPTS+source_files(site)
+
+def four_detector_spectra(site,specs):
+    from ring_site import cases
+    rows=cases(site)
+    require(len(rows)==4 and len(specs)==len(rows)*len(STAGES),'Four-detector spectrum inventory differs')
+    body=('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+          '<title>Four-detector Cs137 10K spectra · GeSignal</title>'
+          '<style>body{font:16px/1.5 system-ui;color:#173047;background:#f6f8fa;margin:0}main{max-width:1120px;margin:auto;padding:20px}'
+          'h1,h2{overflow-wrap:anywhere}details{margin:12px 0;padding:12px;border:1px solid #d7e0e7;border-radius:8px;background:white}'
+          'summary{cursor:pointer;font-weight:600}a{color:#075e9b}a:focus-visible,summary:focus-visible{outline:3px solid #f8ad30}'
+          'section{margin:28px 0}figure{max-width:100%}</style></head><body><main>'
+          '<p><a href="../results/cs137-10k/index.html">Four-detector 10K results</a> · <a href="../viewers/events.html">Event viewer</a> · '
+          '<a href="manifest.json">Display provenance</a></p><h1>Cs137 · 10K stage spectra</h1>'
+          '<p>10,000 initial Cs137 decays per detector, including zero-Ge events. Each stage has its own counted population; '
+          'native failures remain unknown and electronics rejects are excluded from accepted ADC energy. '
+          'Raw counts, 5 keV bins, default Log with optional Linear. No simulations run here.</p>')
+    for i,row in enumerate(rows):
+        c=row['counts'];base='../'+row['base'];model=row['model']
+        body+=('<section id="tenk-'+model+'"><h2>'+html.escape(row['label'])+'</h2><p>'+html.escape(row['note'])+'</p><p>'
+               + f'{c["zero_deposit_primaries"]:,} zero-Ge decays; {c["groups"]:,} groups; {c["accepted"]:,} accepted; '
+               + f'{c["native_failed_groups"]:,} native failures; {c["readout_rejected"]:,} electronics rejects.</p><p>'
+               + f'<a href="{base}/response/summary.html">Charge and readout</a> · <a href="{base}/response/histograms.json">Exact bins</a> · '
+               + f'<a href="{base}/response/ledgers.zip">Complete ledger archive</a></p>')
+        for (stage,label),spec in zip(STAGES,specs[i*len(STAGES):(i+1)*len(STAGES)],strict=True):
+            opened=' open' if stage=='accepted_peak_ADC' else ''
+            body+='<details'+opened+'><summary>'+html.escape(label)+'</summary>'+panel(spec)+'</details>'
+        body+='</section>'
+    return (body+'<p>Nominal source/mounting, isolated electronics windows and synthetic injection calibration. '
+            'No calibrated Li CCE, physical energy resolution or measured-spectrum fit is claimed.</p>'
+            '<p><a href="../examples/cs137-10k/comparison.html">Original AK02/SAP22 report (archive)</a></p>'
+            +assets()+'</main></body></html>\n')
+
 def render_page(site,original,destination,specs):
+    if destination=='spectra/cs137-10k.html':
+        from ring_site import ring_manifest
+        if ring_manifest(site):
+            return four_detector_spectra(site,specs)
     text=(site/original).read_text(encoding='utf-8')
     if destination=='spectra/pipeline.html':
         text=pipeline_page(text,specs)
@@ -244,7 +287,7 @@ def assemble(site):
     site=Path(site)
     if not any((site/p).is_file() for p in ROUTES): return None
     require(all((site/p).is_file() for p in ROUTES),'Partial source spectrum report set')
-    sources=tuple(ROUTES)+DATA_SOURCES+RECEIPTS
+    sources=source_inventory(site)
     origin={rel:sha(site/rel) for rel in sources}; pages={}
     for original,destination in ROUTES.items():
         specs=READERS[destination](site)
@@ -271,7 +314,7 @@ def validate(site,require_current_generators=False,require_home=False):
     require(m['kind']=='saved_spectrum_display_v1' and m['default_scale']=='log','Unsupported spectrum display manifest')
     require(set(m['pages'])==set(ROUTES.values()),'Spectrum page inventory changed')
     require({p.name for p in folder.iterdir()}=={Path(p).name for p in ROUTES.values()}|{'manifest.json'},'Unexpected spectrum directory contents')
-    require(set(m['origin_files'])==set(ROUTES)|set(DATA_SOURCES)|set(RECEIPTS),'Incomplete origin binding')
+    require(set(m['origin_files'])==set(source_inventory(site)),'Incomplete origin binding')
     for rel,h in m['origin_files'].items(): require(sha(site/rel)==h,'Original spectrum source changed: '+rel)
     current={rel:sha(ROOT/rel) for rel in GENERATORS}
     same_generators=m['generators']==current

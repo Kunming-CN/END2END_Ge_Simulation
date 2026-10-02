@@ -67,10 +67,16 @@ class Readers(unittest.TestCase):
         self.assertEqual(scripts[0][1],(V.ROOT/'tools/viewer_navigation.js').read_text(encoding='utf-8'))
         self.assertEqual(scripts[2][1],(V.ROOT/'tools/unified_event_viewer.js').read_text(encoding='utf-8'))
         config=json.loads(re.fullmatch(r'const VIEWER_CONFIG = (.*);',scripts[1][1]).group(1))
-        self.assertEqual(config,{'assembly':{'base':'../examples/cs137-10k-geometry/',
+        expected_config={'assembly':{'base':'../examples/cs137-10k-geometry/',
                          'sha256':V.PINS['examples/cs137-10k-geometry/manifest.json']},
                          'positive':{'base':'../examples/cs137-10k-hits/',
-                         'sha256':V.PINS['examples/cs137-10k-hits/manifest.json']}})
+                         'sha256':V.PINS['examples/cs137-10k-hits/manifest.json']}}
+        ring_manifest=V.ROOT/'docs/examples/cs137-10k-rings/manifest.json'
+        if ring_manifest.is_file():
+            expected_config['models']={model:{layer:{'base':'../examples/cs137-10k-rings/',
+                'sha256':V.sha(ring_manifest),'kind':'ring_saved_publication_v1'}
+                for layer in ('assembly','positive')} for model in ('GeRC02','KMRC01_candidate')}
+        self.assertEqual(config,expected_config)
         self.assertEqual(len(re.findall(r'<canvas\b',main)),1)
         ids=re.findall(r'\bid="([^"]+)"',main)
         self.assertEqual(len(ids),len(set(ids)))

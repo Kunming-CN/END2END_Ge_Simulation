@@ -1,12 +1,15 @@
 """Fast publication guard tests; no scientific environment or network required."""
 import json
+import hashlib
 import io
 import os
 import stat
+import subprocess
 import sys
 import tempfile
 import unittest
 import zipfile
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -14,6 +17,68 @@ from check_site import MANIFEST, local_target, validate
 import export_models as models
 
 class PublicationTests(unittest.TestCase):
+    def test_staged_recovery_requires_validated_snapshot_and_stage(self):
+        import build_site as builder
+        project=self.site/'recovery'; docs=project/'docs'; stage=project/'.local/site-build'
+        docs.mkdir(parents=True); (docs/MANIFEST).write_bytes(b'{}\n')
+        with patch.multiple(builder,ROOT=project,DESTINATION=docs,OUT=stage), patch.object(builder,'validate') as gate:
+            with self.assertRaisesRegex(ValueError,'real generated stage'):builder.finish_staged()
+            stage.mkdir(parents=True); (stage/'index.html').write_bytes(b'generated\n')
+            backup=project/'.local/site-previous'; backup.mkdir()
+            with self.assertRaisesRegex(ValueError,'pending atomic swap'):builder.finish_staged()
+            backup.rmdir()
+            before={p.relative_to(project):p.read_bytes() for p in project.rglob('*') if p.is_file()}
+            def reject_stage(folder,**kwargs):
+                if folder==docs:return {'build_id':'old'}
+                self.assertEqual(kwargs,{'require_manifest':False,'require_models':True})
+                raise ValueError('invalid source-bound staged payload')
+            gate.side_effect=reject_stage
+            with self.assertRaisesRegex(ValueError,'invalid source-bound'):builder.finish_staged()
+            self.assertEqual(before,{p.relative_to(project):p.read_bytes() for p in project.rglob('*') if p.is_file()})
+
+    def test_staged_recovery_shares_atomic_install_without_generation(self):
+        import build_site as builder
+        project=self.site/'recovery-success'; docs=project/'docs'; stage=project/'.local/site-build'
+        docs.mkdir(parents=True); (docs/MANIFEST).write_bytes(b'{}\n'); (docs/'index.html').write_bytes(b'old\n')
+        stage.mkdir(parents=True); (stage/'index.html').write_bytes(b'new\n')
+        def checked(folder,**kwargs):return {'build_id':'old' if folder==docs else 'new','files':[]}
+        printed=io.StringIO()
+        with patch.multiple(builder,ROOT=project,DESTINATION=docs,OUT=stage), patch.object(builder,'validate',side_effect=checked) as gate, patch.object(builder,'build',side_effect=AssertionError('must not regenerate')), redirect_stdout(printed):
+            summary=builder.finish_staged()
+            self.assertEqual(gate.call_args_list,[unittest.mock.call(docs),unittest.mock.call(stage,require_manifest=False,require_models=True),unittest.mock.call(stage)])
+        self.assertEqual(summary,{'build_id':'new'})
+        self.assertEqual(json.loads(printed.getvalue().split('\n',1)[1]),summary)
+        self.assertEqual((docs/'index.html').read_bytes(),b'new\n')
+        self.assertFalse(stage.exists()); self.assertFalse((project/'.local/site-previous').exists())
+
+    def test_staged_recovery_is_exclusive_with_generation_mode(self):
+        script=Path(__file__).with_name('build_site.py')
+        result=subprocess.run([sys.executable,'-B',str(script),'--finish-staged','--restructure'],capture_output=True,text=True)
+        self.assertEqual(result.returncode,2)
+        self.assertIn('Select one publication mode',result.stderr)
+
+    def test_staged_recovery_refuses_junctions_and_linked_ancestors(self):
+        import build_site as builder
+        project=self.site/'recovery-links'; docs=project/'docs'; stage=project/'.local/site-build'
+        docs.mkdir(parents=True); (docs/MANIFEST).write_bytes(b'{}\n'); stage.mkdir(parents=True)
+        before={p.relative_to(project):p.read_bytes() for p in project.rglob('*') if p.is_file()}
+        for linked in (stage, stage.parent, docs, project):
+            with self.subTest(linked=linked), patch.multiple(builder,ROOT=project,DESTINATION=docs,OUT=stage), patch.object(Path,'is_junction',lambda path:path==linked,create=True), patch.object(builder,'validate') as gate, patch.object(builder,'install_snapshot') as installer:
+                with self.assertRaisesRegex(ValueError,'real generated stage'):builder.finish_staged()
+                gate.assert_not_called(); installer.assert_not_called()
+        self.assertEqual(before,{p.relative_to(project):p.read_bytes() for p in project.rglob('*') if p.is_file()})
+
+    def test_hash_bound_ring_text_keeps_exact_line_endings(self):
+        import build_site as builder
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1] / '.local') as temporary:
+            folder = Path(temporary)
+            ring = folder / 'examples/cs137-10k-rings/KMRC01_candidate/response/summary.html'
+            ring.parent.mkdir(parents=True)
+            body = b'<html>saved byte-exact result</html>\r\n'
+            ring.write_bytes(body)
+            builder.normalize_text_outputs(folder)
+            self.assertEqual(ring.read_bytes(), body)
+
     def setUp(self):
         local = Path(__file__).resolve().parents[1] / '.local'
         local.mkdir(exist_ok=True)
@@ -27,6 +92,33 @@ class PublicationTests(unittest.TestCase):
         report = validate(self.site, require_manifest=False)
         (self.site / MANIFEST).write_text(json.dumps(report), encoding='utf-8')
         return report
+
+    def test_host_size_limits_refuse_before_publication_without_large_fixture(self):
+        import check_site as checker
+        # Lower only the operational limits; real file sizes and hashes stay real.
+        with patch.object(checker, 'MAX_PUBLIC_FILE_BYTES', 1):
+            with self.assertRaisesRegex(ValueError, 'publication size limit'):
+                validate(self.site, require_manifest=False)
+
+    def test_host_size_budget_includes_existing_and_generated_manifest(self):
+        import check_site as checker
+        report=self.seal(); payload=report['total_bytes']; manifest=self.site/MANIFEST
+        with patch.object(checker,'MAX_PUBLIC_SITE_BYTES',payload+manifest.stat().st_size-1):
+            with self.assertRaisesRegex(ValueError,'including the site manifest'):validate(self.site)
+        generated=len((json.dumps(report,indent=2)+'\n').encode('utf-8'))
+        self.assertLess(manifest.stat().st_size,generated)
+        # Re-sealing replaces a valid compact manifest with the generated pretty
+        # serialization; its old on-disk size must not underestimate that write.
+        with patch.object(checker,'MAX_PUBLIC_SITE_BYTES',payload+generated-1):
+            with self.assertRaisesRegex(ValueError,'including the site manifest'):validate(self.site,require_manifest=False)
+        manifest.unlink()
+        with patch.object(checker,'MAX_PUBLIC_SITE_BYTES',payload+generated-1):
+            with self.assertRaisesRegex(ValueError,'including the site manifest'):validate(self.site,require_manifest=False)
+        with patch.object(checker,'MAX_PUBLIC_SITE_BYTES',payload+generated):
+            self.assertEqual(validate(self.site,require_manifest=False),report)
+        with patch.object(checker, 'MAX_PUBLIC_SITE_BYTES', 1):
+            with self.assertRaisesRegex(ValueError, 'publication size limit'):
+                validate(self.site, require_manifest=False)
 
     def test_gamma_explicit_mode_copies_checked_bytes_without_export(self):
         import build_site as builder
@@ -155,6 +247,19 @@ class PublicationTests(unittest.TestCase):
         (self.site / 'fields.jls').write_bytes(b'not a web resource')
         with self.assertRaisesRegex(ValueError, 'Unapproved'):
             validate(self.site, require_manifest=False)
+
+    def test_jsonl_requires_ring_prefix_and_bundle_validation(self):
+        ring=self.site/'examples/cs137-10k-rings/GeRC02/response/scalars.jsonl'
+        ring.parent.mkdir(parents=True)
+        ring.write_bytes(b'{"signed":-0.0,"unknown":null}\n')
+        # Only the file-policy boundary is synthetic here. Full scientific
+        # validation has its own real bundle and mutation regression.
+        with patch('ring_publication.validate_bundle',return_value={}) as check_ring:
+            validate(self.site,require_manifest=False)
+            check_ring.assert_called_once_with(self.site/'examples/cs137-10k-rings')
+        (self.site/'scalars.jsonl').write_bytes(ring.read_bytes())
+        with self.assertRaisesRegex(ValueError,'Unapproved public file'):
+            validate(self.site,require_manifest=False)
 
     def test_url_boundaries(self):
         self.assertEqual(local_target('detectors/A/index.html', '../../index.html'), 'index.html')
@@ -409,11 +514,20 @@ class ModelTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Missing model download links'):
             validate(self.root, require_manifest=False)
 
-    def test_live_check_requests_every_model_download(self):
+    def test_live_check_requests_every_model_and_ring_download(self):
         from check_site import verify_live
         from urllib.parse import unquote, urlsplit
         files = self.model_site()
         report = validate(self.root, require_manifest=False)
+        # Synthetic network fixtures exercise complete ring-prefix selection;
+        # this test does not claim they are valid saved scientific artifacts.
+        for name, data in {
+            'examples/cs137-10k-rings/GeRC02/raw/events-000.json.gz': b'gzip-fixture',
+            'examples/cs137-10k-rings/KMRC01_candidate/response/ledgers.zip': b'zip-fixture',
+            'examples/cs137-10k-rings/packaging-source-manifest.json': b'manifest-fixture',
+        }.items():
+            files[name] = data
+            report['files'].append(dict(path=name, bytes=len(data), sha256=hashlib.sha256(data).hexdigest()))
         files[MANIFEST] = models.json_bytes(report)
         requested = set()
 
@@ -426,7 +540,7 @@ class ModelTests(unittest.TestCase):
         # under ParaView Python without SSL. This is not a live deployment test.
         with patch.dict(sys.modules, {'ssl': object()}), patch('urllib.request.urlopen', fake_open):
             verify_live('https://example.org/site/', report)
-        expected = {name for name in files if name.startswith(('models/', 'downloads/'))}
+        expected = {name for name in files if name.startswith(('models/', 'downloads/', 'examples/cs137-10k-rings/'))}
         self.assertTrue(expected <= requested)
 
 

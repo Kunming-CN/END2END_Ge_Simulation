@@ -7,6 +7,14 @@ const site=path.resolve(process.argv[2]||'docs');
 const read=p=>JSON.parse(fs.readFileSync(p,'utf8')),sha=b=>createHash('sha256').update(b).digest('hex');
 const assemblyRoot=path.join(site,'examples/cs137-10k-geometry'),positiveRoot=path.join(site,'examples/cs137-10k-hits');
 const assembly=read(path.join(assemblyRoot,'manifest.json')),positive=read(path.join(positiveRoot,'manifest.json'));
+// Exercise current sources against the protected saved payloads without a site
+// build or copying/regenerating science. Python tests separately cover render().
+const sourceMode=process.argv.includes('--source');
+const sourceHTML=sourceMode?fs.readFileSync('tools/unified_event_viewer.html','utf8')
+  .replace('__VIEWER_NAVIGATION__',()=>fs.readFileSync('tools/viewer_navigation.js','utf8'))
+  .replace('__VIEWER_CONFIG__',()=>JSON.stringify({assembly:{base:'../examples/cs137-10k-geometry/',sha256:sha(fs.readFileSync(path.join(assemblyRoot,'manifest.json')))},
+    positive:{base:'../examples/cs137-10k-hits/',sha256:sha(fs.readFileSync(path.join(positiveRoot,'manifest.json')))}}))
+  .replace('__VIEWER_CONTROLLER__',()=>fs.readFileSync('tools/unified_event_viewer.js','utf8')):null;
 const oracles=new Map(),chunks=new Map();let scalarComparisons=0;
 function exact(a,b,p='value'){
   if(b===null||typeof b!=='object'){assert.ok(Object.is(a,b),p+': scalar/type differs');scalarComparisons++;return;}
@@ -37,7 +45,7 @@ class Element{
   getContext(){return new Proxy({}, {get:(t,k)=>t[k]||(()=>{}),set:(t,k,v)=>(t[k]=v,true)});}
 }
 async function viewer(query,options={}){
-  const html=fs.readFileSync(path.join(site,'viewers/events.html'),'utf8'),els=new Map();
+  const html=sourceHTML||fs.readFileSync(path.join(site,'viewers/events.html'),'utf8'),els=new Map();
   for(const m of html.matchAll(/<(\w+)\b[^>]*id="([^"]+)"[^>]*>/g)){
     const e=new Element(m[1]);e.checked=/\bchecked\b/.test(m[0]);e.disabled=/\bdisabled\b/.test(m[0]);els.set(m[2],e);}
   els.get('category').value='all';els.get('model').value='AK02';
@@ -169,4 +177,4 @@ let typedInputCases=0;
   v.els.get('eid').value='0';assert.equal(await v.els.get('show').onclick(),true);identity(v,'AK02',0,null,'positive');primary(v,'AK02',0);
   v.els.get('eid').value='213';assert.equal(await v.els.get('show').onclick(),true);identity(v,'AK02',213,0,'positive');primary(v,'AK02',213);
 }
-console.log(JSON.stringify({status:'passed',kind:'generated-script minimal-DOM saved-payload regression, not browser acceptance',site,groups,scalarComparisons,results,asyncCases:6,overlayFailureCases:3,historyAndAliases:true,typedInputCases,numericalSourceWrites:0},null,2));
+console.log(JSON.stringify({status:'passed',kind:'generated-script minimal-DOM saved-payload regression, not browser acceptance',sourceMode,site,groups,scalarComparisons,results,asyncCases:6,overlayFailureCases:3,historyAndAliases:true,typedInputCases,numericalSourceWrites:0},null,2));

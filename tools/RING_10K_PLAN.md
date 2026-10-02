@@ -1,7 +1,9 @@
 # Unified event viewer and ring-contact 10K delivery
 
-Owner decisions: 2026-10-02. Both ring 10K processing campaigns are complete;
-M13f public coverage is pending. Processing completion is not physical
+Owner decisions: 2026-10-02. Both ring 10K processing campaigns and the four-model
+local presentation are complete. All three independent M13f AI reviews and
+reciprocal discussion accept publication; synchronization/live acceptance
+remain pending. Processing completion is not physical
 validation. M8/M9 remain deferred and do not block it.
 
 ## Fixed scope
@@ -103,8 +105,17 @@ SHA/bytes, and deliver large redundant ledger files in their complete exact ZIPs
 Preserve full local science, every event/sample/value/flag/null and both original
 KM rejections and fixed-wiring output. The final site must fit1GB and95MiB/file.
 Initial full exports and stopped oversized staging remain evidence; no physics
-is repeated to change serialization. The real source-reader764group/40000primary
-regression passes; generated compact-site/browser/live acceptance remains pending.
+is repeated to change serialization. WEB manifest773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860
+has225payload files/211149029bytes. It is installed through `build_site.py` in
+local build677031855afa9c2b80643b0fc3d26b5fc703010979e352d487b7574fffd3aa48,
+979165418payload bytes/100HTML pages/2888local links. Every generated stage byte,
+all200decoded event chunks and every ZIP member remain exact. Original full
+bundle and failed derivatives/stages remain permanent. The generated
+764group/40000primary reader regression, actual IAB event/alias/response/spectrum
+checks,390px event/hub/spectrum layouts and complete local site checks pass.
+Common frozen3AI review packet is `.local/ring-delivery-v1/PUBLIC-REVIEW-PACKET-01.json`;
+freeze independent initial opinions before reciprocal discussion. Final reviews,
+nonforce synchronization and exact live validation remain the release steps.
 
 The initial direct 10K inventory is nine HTML pages:
 
