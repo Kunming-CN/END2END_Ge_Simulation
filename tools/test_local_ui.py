@@ -6,6 +6,7 @@ from pathlib import Path
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 
 import local_ui as U
 
@@ -26,7 +27,7 @@ class FakeController:
 
 class Protocol(unittest.TestCase):
     def setUp(self):
-        fixtures = U.ROOT / '.local/m10-local-ui-v1/fixtures'
+        fixtures = U.ROOT / '.local/m11i-scenario-preview-v1/backend/test-fixtures'
         fixtures.mkdir(parents=True, exist_ok=True)
         self.temp = tempfile.TemporaryDirectory(dir=fixtures)
         self.controller = FakeController(Path(self.temp.name))
@@ -69,6 +70,52 @@ class Protocol(unittest.TestCase):
             self.assertEqual(self.request('POST','/api/check',values,headers)[0], 403)
         self.assertEqual(self.controller.calls, [])
         self.assertEqual(self.request('OPTIONS','/api/check')[0], 403)
+
+    def test_scenario_catalog_authorized_no_query_and_no_controller_calls(self):
+        code, data, headers = self.request(route='/api/scenarios')
+        catalog = json.loads(data)
+        self.assertEqual(code, 200)
+        self.assertEqual(catalog['kind'], 'finite_scenario_preview_v1')
+        self.assertEqual(len(catalog['scenarios']), 4)
+        self.assertEqual(catalog['scientific_workers_launched'], 0)
+        self.assertEqual(headers['Cache-Control'], 'no-store')
+        self.assertEqual(headers['X-Content-Type-Options'], 'nosniff')
+        self.assertEqual(headers['Referrer-Policy'], 'no-referrer')
+        self.assertIn("frame-ancestors 'none'", headers['Content-Security-Policy'])
+        self.assertNotIn('Set-Cookie', headers)
+        self.assertEqual(self.controller.calls, [])
+
+    def test_scenario_auth_query_path_and_method_refusal_before_provider(self):
+        with patch.object(U, 'checked_scenarios', side_effect=AssertionError('Provider called')) as provider:
+            for headers in ({'X-Control-Token':''}, {'X-Control-Token':'wrong'}, {'Host':'evil.example'},
+                            {'Host':'localhost:'+str(self.server.server_port)}, {'Origin':'https://evil.example'},
+                            {'Sec-Fetch-Site':'cross-site'}, {'Sec-Fetch-Site':'same-site'}):
+                self.assertEqual(self.request(route='/api/scenarios', headers=headers)[0], 403)
+            for route in ('/api/scenarios?', '/api/scenarios?id=anything', '/api/scenarios?path=private',
+                          '/api/scenarios?detector=AK02', '/api/scenarios/anything', '/api/scenarios/',
+                          '/api/scenarios#selector'):
+                self.assertEqual(self.request(route=route)[0], 404)
+            self.assertEqual(self.request('POST', '/api/scenarios', {})[0], 404)
+            self.assertEqual(self.request('OPTIONS', '/api/scenarios')[0], 403)
+            self.assertEqual(self.request('HEAD', '/api/scenarios')[0], 501)
+            self.assertEqual(self.request('PUT', '/api/scenarios', '{}')[0], 501)
+            self.assertEqual(self.request('POST', '/api/check',
+                {'name':'a', 'detector':'AK02', 'scenario_id':'gamma'})[0], 400)
+            self.request()  # Its separate download cookie never grants catalog access.
+            browser = {'X-Control-Token':'', 'Cookie':self.server.download_cookie+'='+self.server.download_token,
+                       'Sec-Fetch-Site':'same-origin'}
+            self.assertEqual(self.request(route='/api/scenarios', headers=browser)[0], 403)
+        provider.assert_not_called()
+        self.assertEqual(self.controller.calls, [])
+
+    def test_scenario_failure_is_uniform_sanitized_and_has_no_partial_catalog(self):
+        for error in (ValueError('C:/private/model/path'), OSError('secret input'), RuntimeError('raw failure')):
+            with patch.object(U, 'checked_scenarios', side_effect=error):
+                code, data, headers = self.request(route='/api/scenarios')
+            self.assertEqual(code, 503)
+            self.assertEqual(json.loads(data), {'error':'Scenario configuration preview is unavailable'})
+            self.assertEqual(headers['Cache-Control'], 'no-store')
+        self.assertEqual(self.controller.calls, [])
 
     def test_structured_input_and_size_refusal(self):
         for data in ({'name':'a','detector':'AK02','command':'echo'}, {'name':9,'detector':'AK02'}, ['a'], None):

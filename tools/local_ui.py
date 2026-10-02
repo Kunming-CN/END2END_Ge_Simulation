@@ -14,6 +14,7 @@ from urllib.parse import parse_qs, urlsplit
 import webbrowser
 
 from local_ui_jobs import BASE, Controller, ControlError
+from local_ui_scenarios import checked_scenarios
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE = '.local/local-control-v1'
@@ -149,6 +150,11 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized(download=parts.path == '/api/file'):
             return
         try:
+            if self.path == '/api/scenarios':
+                try:
+                    return self.send_data(200, checked_scenarios())
+                except Exception:
+                    return self.reject(503, 'Scenario configuration preview is unavailable')
             if parts.path == '/api/state' and not parts.query:
                 return self.send_data(200, self.server.controller.snapshot(), grant_download=True)
             if parts.path == '/api/file':

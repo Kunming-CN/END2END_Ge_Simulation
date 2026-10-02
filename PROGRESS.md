@@ -1,30 +1,41 @@
 # Project state and next bounded work
 
 Updated: 2026-10-01 (2026-10-02 UTC). This compact handoff governs delivery order.
-The preceding navigation/native/engineering handoff is immutable
-[at 292fba3](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/292fba3c78074530034845e54f75228cf781b0c6/PROGRESS.md).
+The preceding README/navigation/native/engineering handoff is immutable
+[at 6bc2f60](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/6bc2f602f6eba1d180d0ba0f2e782973b2fc680a/PROGRESS.md).
 Inspect terminal receipts, Git, hashes and actual workers before repeating work.
 
-## M11h README entry organization
+## M11i finite local configuration preview
 
-README now starts with four task links: Results, Detector Library, the sole
-Windows setup/run guide and Maintenance. One native Markdown details area groups
-the other 16 references. All 20 exact targets, seven guide anchors and original
-commands/facts remain. Setup, 17-viewable/two-implemented scope, 500 demo/serial
-choices, private-input and interrupted-native-stage recovery limits stay visible.
-This improves reading order only; broader website clutter is not declared closed.
+The local interface has a separate manual preview/check area for four existing
+AK02/SAP22 Cs137 and 662 keV synthetic-gamma presets. It reuses the exact pinned
+scenario_prepare.check and returns all four checked summaries or a sanitized
+failure. Authenticated no-query GET only; no arbitrary path or execution action.
+Source/capsule pose, separate gamma direction, units, 78 K model/contact metadata,
+planned 20 primaries/seed and candidate/not-executed stages remain explicit.
+Creation clock is not drift time; zero ion kinetic energy is not zero radiation.
+Preview selection/state cannot retarget the existing fixed three-primary Cs137
+run, its private 77 K cache or check/start/resume/download identity. Latest refresh
+wins, uses current selection and clears stale/invalid success. Guards do not
+claim a race-resistant filesystem sandbox or physical/source-pose acceptance.
 
-Writer exited and source froze. Root diff/link/command/visible-limit checks pass;
-3579 protected records and all 1453 public files remain exact. GitHub's server GFM
-render parses four primary/16 folded links, three tables and one details/summary.
-Three independent Sol 6.1 Ultra AI INITIALs and four actual reciprocal peer messages
-find no confirmed blocker; NEW stern review supports the narrow value/direction.
-No physics/native/site build, installation or global configuration change.
-Actual browser/mobile/keyboard checks remain 0: server parsing is not visual
-acceptance. Evidence .local/m11h-readme-v1/; final Git parity/lock closure is in
-its terminal receipt. All reviews are AI assessments, not certification.
+Both writers exited; seven sources froze. All 54 Python tests pass without skips,
+four frontend mock/static groups and two syntax checks pass. Real authenticated
+loopback HTTP plus its actual four-config response rendered in the mock frontend
+pass; no Controller calls/POST/scientific workers. 3575 protected records and all
+1453 public files remain exact. Three independent Sol 6.1 Ultra AI INITIALs and
+four actual reciprocal peer messages find no confirmed blocker. No physics,
+native preparation, site build, installation or global configuration change.
+Actual browser/mobile/keyboard checks remain 0; mocks/HTTP are not visual
+acceptance. Evidence .local/m11i-scenario-preview-v1/; final Git parity and owned
+lock closure are recorded in its terminal receipt. AI reviews are not certification.
 
 ## Retained delivered results and limitations
+
+M11h 6bc2f60 organizes README into four task links and 16 folded references;
+all 20 URLs, seven guide anchors, commands/facts and visible scope remain exact.
+GitHub server Markdown parsing passes; actual visual checks 0. Broader website
+clutter remains future work, not declared closed by these navigation changes.
 
 M11g 292fba3 is deployed. Saved-only build
 f73753911bf22436df83e9600e996baead072d7ae3cd50188a962f1022243235
@@ -56,13 +67,15 @@ verification, not a new executable adapter. Seventeen viewable is not executable
 ## Next bounded work
 
 Skip M8/M9: second-computer newcomer acceptance blocks no current development.
-M11i: expose the four existing finite M11a scenario configurations through a
-distinct local mouse preview/check area, reusing scenario_prepare.check. Establish
-small public-summary/server/frontend/test scope before implementation. Keep
-cryostat/source pose/direction/units and not-executed stages explicit; selecting
-gamma must never launch the existing fixed Cs137 example. No arbitrary models,
-monolithic adapter promotion, numerical dispatch, installation or new framework.
-Plan .local/m11i-scenario-preview-v1/; browser readability remains a separate check.
+M11j: one explicit local mouse action checks and opens the already completed
+M11d saved-gamma bundle. Reuse gamma_showcase.validate_bundle and its unchanged
+offline explorer/adjacent downloads; keep this independent of Controller jobs and
+preview selection. Fixed authenticated same-origin action, no supplied path,
+export, new renderer, rerun or new execution eligibility. Missing/altered inputs
+fail safely; an open request is not confirmed display. Preserve 40 truth/six
+processed/34 unprocessed-null records and all physics/calibration/cache limits.
+Read-only five-file proposal .local/m11j-saved-example-v1/plan/; approve bounded
+implementation only after current lock closes and ready/no-worker checks pass.
 Current-chat 30-minute heartbeat ACTIVE creation is verified; future execution
 unobserved. New rounds require ready/no conflicting lock or actual workers, owned
 lock and verified Sol 6.1 Ultra/root. No global changes or reset credits.

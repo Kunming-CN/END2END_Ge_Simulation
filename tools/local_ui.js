@@ -17,6 +17,76 @@ function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefine
 function btn(label,action){const b=el('button',label);b.addEventListener('click',async()=>{b.disabled=true;try{await action();await poll();}catch(e){message(e.message,true);}finally{if(b.isConnected)b.disabled=false;}});return b;}
 function downloadLink(label,name,file){const a=el('a','下载'+label,'link');a.href='/api/file?'+new URLSearchParams({name,file});return a;}
 function table(caption,heads,rows){const box=el('div',undefined,'table-scroll'),t=el('table');t.append(el('caption',caption));const h=el('tr');for(const name of heads)h.append(el('th',name));const head=el('thead');head.append(h);t.append(head);const body=el('tbody');for(const row of rows){const r=el('tr');for(const value of row)r.append(el('td',value==null?'未知 / 未定义':String(value)));body.append(r);}t.append(body);box.append(t);return box;}
+// This finite preview has no relationship to the saved-Cs137 launch state above.
+const previewPresets = [
+ ['m11a-ak02-cs137_point_decay_v1-nominal','AK02','cs137_point_decay_v1','nominal'],
+ ['m11a-ak02-mono_gamma_662_axis_v1-plus5mm','AK02','mono_gamma_662_axis_v1','plus5mm'],
+ ['m11a-sap22-cs137_point_decay_v1-nominal','SAP22','cs137_point_decay_v1','nominal'],
+ ['m11a-sap22-mono_gamma_662_axis_v1-plus5mm','SAP22','mono_gamma_662_axis_v1','plus5mm']
+];
+let previewCatalog = null, selectedPreviewId = previewPresets[0][0], previewGeneration = 0;
+function previewMessage(text,error=false){$('preview-notice').textContent=text;$('preview-notice').className='message '+(error?'error':'ok');}
+function previewRequire(condition){if(!condition)throw new Error('配置预览未通过格式核对；请刷新重试。');}
+function previewKeys(value,keys){previewRequire(value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join('|')===[...keys].sort().join('|'));}
+function previewSame(value,expected){return JSON.stringify(value)===JSON.stringify(expected);}
+function previewVector(value,expected){return Array.isArray(value)&&value.length===3&&value.every(Number.isFinite)&&previewSame(value,expected);}
+function validatePreview(result){
+ previewKeys(result,['kind','schema_version','configuration_status','read_only','scientific_workers_launched','scenarios']);
+ previewRequire(result.kind==='finite_scenario_preview_v1'&&result.schema_version===1&&result.configuration_status==='checked'&&result.read_only===true&&result.scientific_workers_launched===0&&Array.isArray(result.scenarios)&&result.scenarios.length===4);
+ const catalog=new Map(),sha=value=>typeof value==='string'&&/^[0-9a-f]{64}$/.test(value);
+ for(const item of result.scenarios){
+  previewKeys(item,['id','configuration_sha256','detector','cryostat','source_pose','source','planned_primary_count','seed','units','source_pose_status','model_check','stages']);
+  const preset=previewPresets.find(p=>p[0]===item.id);previewRequire(!!preset&&!catalog.has(item.id)&&sha(item.configuration_sha256));
+  const [,detectorId,sourceId,poseId]=preset,d=item.detector,s=item.source,ion=sourceId==='cs137_point_decay_v1';
+  previewKeys(d,['id','model_sha256','temperature_K','contacts','readout_contact_id']);
+  previewRequire(d.id===detectorId&&sha(d.model_sha256)&&d.temperature_K===78&&d.readout_contact_id===1&&Array.isArray(d.contacts)&&d.contacts.length===2);
+  for(const contact of d.contacts)previewKeys(contact,['id','potential_V']);
+  previewRequire(d.contacts[0].id===1&&d.contacts[0].potential_V===0&&d.contacts[1].id===2&&d.contacts[1].potential_V===(detectorId==='AK02'?500:700));
+  previewKeys(item.cryostat,['id','capsule_axis_global']);previewRequire(item.cryostat.id==='lbnl_modular_nominal_v1'&&previewVector(item.cryostat.capsule_axis_global,[0,1,0]));
+  previewKeys(item.source_pose,['id','position_global_mm']);previewRequire(item.source_pose.id===poseId&&previewVector(item.source_pose.position_global_mm,poseId==='nominal'?[0,37.073,0.290]:[0,42.073,0.290]));
+  previewKeys(s,['id','particle','pdg',...(ion?['Z','A']:[]),'kinetic_energy_keV','angular_policy','direction_global','clock_policy','time_ns','normalization']);
+  previewRequire(s.id===sourceId&&s.particle===(ion?'ion':'gamma')&&s.pdg===(ion?1000551370:22)&&(!ion||(s.Z===55&&s.A===137))&&s.kinetic_energy_keV===(ion?0:662)&&s.angular_policy===(ion?'radioactive_decay':'fixed_global_direction')&&(ion?s.direction_global===null:previewVector(s.direction_global,[0,-1,0]))&&s.clock_policy===(ion?'remage_initial_decay_secondaries_zero':'synthetic_primary_time_zero')&&s.time_ns===0&&s.normalization===(ion?'per initial Cs137 decay; conditional isolated windows, not activity/live time':'per one synthetic 662 keV incident gamma; no decay/activity normalization'));
+  previewRequire(item.planned_primary_count===20&&item.seed===26092631);
+  previewKeys(item.units,['length','time','energy','angle','potential','temperature']);
+  previewRequire(item.units.length==='mm'&&item.units.time==='ns'&&item.units.energy==='keV'&&item.units.angle==='deg'&&item.units.potential==='V'&&item.units.temperature==='K');
+  previewRequire(item.source_pose_status==="candidate until this preparation's native checks pass"&&item.model_check==='exact pinned bytes/reviewed metadata; independent YAML parse occurs only in prepare');
+  previewKeys(item.stages,['geometry','source_macro','transport','charge','readout']);
+  previewRequire(item.stages.source_macro==='not_prepared'&&['geometry','transport','charge','readout'].every(k=>item.stages[k]==='not_executed'));
+  catalog.set(item.id,item);
+ }
+ previewRequire(previewPresets.every(p=>catalog.has(p[0])));return catalog;
+}
+function renderPreview(){
+ const box=$('preview-fields');box.replaceChildren();const item=previewCatalog?.get(selectedPreviewId);if(!item)return;
+ const ion=item.source.particle==='ion',fields=el('dl',undefined,'preview-fields');
+ const rows=[
+  ['探测器模型',item.detector.id+' · 78 K；接触 1：0 V（读出）；接触 2：+'+item.detector.contacts[1].potential_V+' V。此预览没有 77 K 缓存覆盖。'],
+  ['源类型',ion?'Cs137 初始离子 · Z=55，A=137；初始动能 0 keV。这不表示发射辐射或沉积能量为零。':'单个合成 gamma · 初始能量 662 keV。'],
+  ['源 / 胶囊中心位置','全局坐标 ['+item.source_pose.position_global_mm.join(', ')+'] mm · '+(item.source_pose.id==='nominal'?'名义位置':'相对名义位置沿 +y 移动 5 mm')+'；仍是候选位置。'],
+  ['胶囊轴线','全局 ['+item.cryostat.capsule_axis_global.join(', ')+']；名义工程低温恒温器，未经实测装配确认。'],
+  ['辐射方向',ion?'由放射性衰变决定；固定方向未定义。':'固定全局 ['+item.source.direction_global.join(', ')+']；与胶囊轴线分别记录。'],
+  ['计划数量 / 种子','20 个初级粒子 · 种子 '+item.seed+'；仅为计划，未生成。与下方 3 个已保存初级粒子的示例不同。'],
+  ['源时钟','0 ns · '+(ion?'初始衰变的次级粒子按条件窗口归零':'合成初级粒子创建时间归零')+'；源创建时间不等于载流子漂移时间。'],
+  ['归一化',ion?'每个初始 Cs137 衰变；条件化的独立窗口，不表示活度或测量活时间。':'每个入射的合成 662 keV gamma；不使用衰变或活度归一化。'],
+  ['单位','位置 mm · 时间 ns · 能量 keV · 角度 deg · 电势 V · 温度 K'],
+  ['检查范围','仅核对模型原始字节与已审阅元数据；没有解析或求解 YAML。几何、辐射输运、电荷和读出均未执行；源宏尚未准备。此检查不构成物理精度、实验校准或完整几何执行验证。']
+ ];
+ for(const [label,value] of rows)fields.append(el('dt',label),el('dd',value));box.append(fields);
+ const refs=el('details');refs.append(el('summary','配置与模型标识'));refs.append(el('p','配置：'+item.id));refs.append(el('p','配置 SHA256：'+item.configuration_sha256));refs.append(el('p','模型 SHA256：'+item.detector.model_sha256));box.append(refs);
+}
+function selectPreview(){
+ const id=$('preview-select').value;
+ if(!previewPresets.some(p=>p[0]===id)){previewCatalog=null;renderPreview();previewMessage('未知配置未显示；请从四个配置中选择并刷新。',true);return;}
+ selectedPreviewId=id;renderPreview();
+ if(previewCatalog)previewMessage('四个配置已核对。当前仅显示所选配置；没有执行任何计算。');
+}
+async function refreshPreview(){
+ const generation=++previewGeneration;previewCatalog=null;renderPreview();previewMessage('正在核对四个配置；此前检查显示已清除。不会启动计算。');
+ try{const result=await api('/api/scenarios');if(generation!==previewGeneration)return;const catalog=validatePreview(result);previewRequire(previewPresets.some(p=>p[0]===$('preview-select').value));selectedPreviewId=$('preview-select').value;previewCatalog=catalog;renderPreview();previewMessage('四个配置已核对。当前仅显示所选配置；没有执行任何计算。');}
+ catch(e){if(generation!==previewGeneration)return;previewCatalog=null;renderPreview();previewMessage('配置预览暂不可用或未通过核对；请刷新重试。当前没有有效的检查显示。',true);}
+}
+$('preview-select').addEventListener('change',selectPreview);
+$('preview-refresh').addEventListener('click',refreshPreview);
 async function showEvents(job){const response=await fetch('/api/file?'+new URLSearchParams({name:job.name,file:'worker/'+job.detector+'/scalars.jsonl'}),{headers:{'X-Control-Token':token},cache:'no-store'});if(!response.ok)throw new Error((await response.json()).error);const lines=(await response.text()).trim().split('\n');const records=lines.map(line=>JSON.parse(line));const panel=el('div',undefined,'events');panel.append(el('p','全部初级粒子与全部脉冲组分别列出。Edep 是整个初级粒子的 Ge 真值沉积；Erec 属于单个读出组。两者不作为逐事件增益校准。真实零沉积没有伪造的 ADC / 波形。'));
  panel.append(table('初级粒子统计（包含真实零沉积）',['原始 ID','Ge Edep / keV','零沉积'],records.filter(r=>r.record_kind==='decay').map(r=>[r.global_decay_id,r.event.ge_energy_keV,r.zero_deposit])));
  panel.append(table('全部读出脉冲组',['原始 ID / 组','Erec / keV','状态','接受','尾部可能截断'],records.filter(r=>r.record_kind==='pulse').map(r=>[r.global_decay_id+' / '+r.group_id,r.readout?.reconstructed_energy_keV,r.status,r.accepted,r.readout?.tail_truncated_possible])));
