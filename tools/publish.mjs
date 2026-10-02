@@ -89,7 +89,7 @@ let live = false;
 for (let attempt = 0; attempt < 24; attempt++) {
   try {
     const response = await fetch(info.html_url, { signal: AbortSignal.timeout(8000), cache: 'no-store' });
-    if (response.ok && (await response.text()).includes('END2END Ge Simulation')) { live = true; break; }
+    if (response.ok && (await response.text()).includes('GeSignal — HPGe Radiation-to-Readout Simulation')) { live = true; break; }
   } catch { /* The initial Pages deployment can take a few minutes. */ }
   await new Promise(resolve => setTimeout(resolve, 5000));
 }

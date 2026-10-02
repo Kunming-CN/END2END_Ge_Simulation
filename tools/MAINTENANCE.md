@@ -11,6 +11,7 @@ another complete installation recipe.
 | Area | Edit these sources |
 |---|---|
 | Home, hubs and navigation | `tools/site_restructure.py`, `site_previews.py` |
+| Search descriptions, canonical landing URLs and sitemap | `tools/site_discovery.py`; generated only by `build_site.py` |
 | Detector overview/gallery/technical levels | `tools/site_detector_pages.py` |
 | Geometry export and validation | `tools/export_ssd_geometry.py`, `geometry_catalog.py`, `ssd_geometry_publication.py` |
 | Browser geometry controls | `tools/ssd_geometry_viewer.html` |
@@ -61,6 +62,33 @@ comparison additionally needs VTK and the owner's saved geometry; source-only
 checks explicitly report that limitation rather than fabricating coverage.
 After deployment, verify the actual website with `tools/check_site.py --url`
 and the published site address; successful Git push alone is not deployment proof.
+
+## Search discovery
+
+The display name is **GeSignal — HPGe Radiation-to-Readout Simulation**. The
+repository slug and Pages address remain `END2END_Ge_Simulation`. GitHub Topics:
+`hpge`, `germanium-detector`, `geant4`, `detector-simulation`,
+`radiation-detectors`, `nuclear-physics`, `particle-detector`,
+`solid-state-detectors`, `ssd-jl`, `remage`.
+
+Normal saved-only publication generates descriptions and self-canonical URLs
+for maintained landing pages, plus
+[sitemap.xml](https://kunming-cn.github.io/END2END_Ge_Simulation/sitemap.xml).
+The map selects current entry pages; archived reports and hash-bound scientific
+bundles stay byte-exact and remain reachable through their existing links.
+No generated dates or search-ranking claims are added.
+
+For Google Search Console, add a **URL-prefix** property with the exact
+`https://kunming-cn.github.io/END2END_Ge_Simulation/` address. Use the owner's
+Google account and an offered HTML-tag or HTML-file ownership method. Keep the
+actual verification value in a maintained publication source, never hand-edit
+`docs/`; retain it after verification. Then submit `sitemap.xml`, inspect the
+homepage URL and request indexing. Record the actual result rather than treating
+publication as submission. A project-subdirectory `robots.txt` cannot control
+the host's crawling policy; this project does not manage the account-root site.
+[Google's ownership instructions](https://support.google.com/webmasters/answer/9008080?hl=en)
+and [crawl-request guidance](https://developers.google.com/search/docs/crawling-indexing/ask-google-to-recrawl)
+explain verification and submission; a request does not guarantee indexing.
 
 ## Retention and changes
 

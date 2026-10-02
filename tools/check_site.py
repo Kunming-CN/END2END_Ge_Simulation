@@ -68,7 +68,7 @@ def validate(site, require_manifest=True, require_models=False):
         million_payload = relative=='examples/cs137-1m/positive-groups.csv.gz'
         native_response_payload = relative=='examples/cs137-1m-response/groups.csv.gz'
         ledger_zip = relative in ('examples/cs137-10k/AK02/response/ledgers.zip', 'examples/cs137-10k/SAP22/response/ledgers.zip')
-        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload:
+        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative != 'sitemap.xml' and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload:
             raise ValueError(f'Unapproved public file: {relative}')
         data = f.read_bytes()
         if geometry_file and f.suffix.lower()=='.zip':
@@ -95,7 +95,7 @@ def validate(site, require_manifest=True, require_models=False):
         total += len(data)
         entries.append({'path': relative, 'bytes': len(data),
                         'sha256': hashlib.sha256(data).hexdigest()})
-        if f.suffix.lower() in {'.html', '.json', '.md', '.svg', '.csv', '.yaml', '.txt'}:
+        if f.suffix.lower() in {'.html', '.json', '.md', '.svg', '.csv', '.yaml', '.txt', '.xml'}:
             text = data.decode('utf-8-sig')
             if PRIVATE_PATH.search(text) or CREDENTIAL.search(text):
                 raise ValueError(f'Local path or possible credential: {relative}')
@@ -161,6 +161,8 @@ def validate(site, require_manifest=True, require_models=False):
     if any((site/p).exists() for p in ('viewers/manifest.json','viewers/geant4-assembly.html','viewers/ge-positive.html')):
         from viewer_navigation import validate as validate_readers
         validate_readers(site)
+    from site_discovery import validate as validate_discovery
+    validate_discovery(site)
     entries.sort(key=lambda item: item['path'])
     encoded = json.dumps(entries, sort_keys=True, separators=(',', ':')).encode()
     result = {'schema_version': 1, 'build_id': hashlib.sha256(encoded).hexdigest(),
@@ -223,6 +225,7 @@ def verify_live(url, report):
         raise ValueError('The live manifest is not this local snapshot; deployment may still be pending.')
     entries = report['files']
     selected = {entry['path']: entry for entry in entries if entry['path'].endswith('.html')}
+    selected.update({entry['path']: entry for entry in entries if entry['path'] == 'sitemap.xml'})
     selected.update({entry['path']: entry for entry in entries
                      if entry['path'].startswith(('models/', 'downloads/'))})
     # The public campaign is an auditable dataset, not just HTML; verify every file.

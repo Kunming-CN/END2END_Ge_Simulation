@@ -1,36 +1,53 @@
 # Project state and next bounded work
 
 Updated: 2026-10-02 UTC. This compact handoff governs delivery order.
-The preceding gamma-control/saved-opening handoff is immutable
-[at 92b5ca7](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/92b5ca7d9b1e13aafc9850425d51441ac1f79cae/PROGRESS.md).
+The preceding homepage handoff is immutable
+[at 896e0db](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/896e0db91eefc98e909857d955fe28bf5e81c884/PROGRESS.md).
 Inspect terminal receipts, Git, hashes and actual workers before repeating work.
 
-## M11l homepage hierarchy without lost destinations
+## M12a project discovery and display identity
 
-Three cards, their preview hooks and primary navigation remain. The hero clearly
-separates saved browsing from choosing a local workflow. One guide#local-routes
-action remains exposed; setup/scenario detail and existing five footer resources
-use closed native details on the homepage only. Fresh-machine reproduction remains
-visibly unvalidated. All17 href occurrences/13 destinations/four original IDs stay;
-hrefs outside closed details reduce15→8. This counts links, not disclosure summaries
-or spectrum controls, and is not measured visual/usability acceptance. Large saved
-previews remain a separate optional design direction; overall clutter is not closed.
+Owner requested the two pictured discovery/contribution tasks before the guide
+round. Conservative display choice: GeSignal — HPGe Radiation-to-Readout Simulation;
+GitHub slug and Pages URL stay END2END_Ge_Simulation. README, maintained landing
+labels and GitHub About agree. Ten requested GitHub Topics are written and GET
+verified; no collaborator added, owner remains sole admin.
 
-Saved-only build eff982585912eba5751e87deb4e8424e713bae5a30efcb09a692f222772064d6
-has1452 payloads/1453 files. Only home and manifest change;1451 other payloads,
-all original SVG/preview bytes, model hashes and permanent science remain exact.
-Build248.0396323s and local check57.011372s are publication wall time, not physics.
-59 unique tests/zero skips pass: eight structure plus one hierarchy,23 publication,
-27 contacts. Local96 HTML/2841 links pass. The ninth test's suite membership is
-clarified by existing command/AST evidence without a rerun. Two scoped Sol6.1 Ultra
-AI INITIALs and a NEW independent public-code-only Sol6.1 Ultra INITIAL pass;
-actual reciprocal peer discussion and final publication/closure are recorded in
-.local/m11l-home-hierarchy-v1/ terminal evidence. No numerical run, environment
-change, installer or fresh-machine experiment. Actual browser/mobile/keyboard0.
-Deployment of41d19c4 is verified:463 live files match this exact build; live check
-115.3965799s. Terminal receipt records Git parity and owned lock closure. The final
-handoff-only commit preserves the verified website payload and does not repeat
-publication tests or numerical work.
+Saved-only source assembly adds descriptions/self-canonical URLs to nine current
+hubs and 17 catalog-derived detector overviews, plus deterministic sitemap.xml.
+Historical/partial snapshots may contain fewer; the validator does not alone
+require 26. Current frozen export independently confirms all26. No fabricated
+lastmod, host-root robots management, analytics, ranking or calibrated claims.
+All existing destinations/IDs remain. 1426 older payloads, frozen scientific
+bundles and canonical models stay exact. Public payload count1453/files1454;
+build8ec47ca9235f95f1446dede18ca15c1b220ea616a62a668affb0a31202cb502b.
+Build257.3512394s is publication wall time, physics0. First publication attempt
+was interrupted to correct source-hash-record ordering; its logs/exit4294967295
+are retained, docs baseline stayed exact, and the frozen-source retry succeeded.
+Ordinary publisher's old-name reachability marker is repaired after exporter exit;
+syntax/rendered-marker checks pass, no publisher/auth/global setup invocation.
+
+64 unique tests/zero skips pass (5 discovery,8 structure,1 hierarchy,23 publication,
+27 contacts); complete local96 HTML/2841 links pass. Two independent scoped
+Sol6.1 Ultra AI reviews and a NEW independent public-source-only Sol6.1 Ultra
+review examine correctness/direction; their initial limits and reciprocal review
+records are in .local/m12a-discovery-v1/. Third review is static, with no tool/test
+execution; actual launch model/effort/root is verified separately. Actual supported
+browser: one desktop-home screenshot and one Enter disclosure check, no horizontal
+overflow; mobile0, not comprehensive UI/installation acceptance. Owned temporary
+127.0.0.1 public-docs-only server is closed. Git/live deployment checks follow this
+implementation commit; do not equate a successful push with live verification.
+
+Search Console currently reaches Google sign-in with no logged-in account.
+Property creation, ownership verification, sitemap submission and URL Inspection
+request are NOT performed. Owner login is needed; indexing itself is Google's
+later decision. Existing public source explains the exact URL-prefix property and
+submission steps. Missing login blocks those account actions, not other milestones.
+
+M11l homepage retained all17 hrefs/13 destinations while exposed links15→8.
+Its exact live463-file verification belongs to buildeff982/41d19c4, preserved in
+.local/m11l-home-hierarchy-v1/. Overall clutter remains an optional later design
+scope; this discovery round does not claim comprehensive usability improvement.
 
 ## Retained delivered results and limitations
 
@@ -93,13 +110,16 @@ verification, not a new executable adapter. Seventeen viewable is not executable
 ## Next bounded work
 
 Skip M8/M9: second-computer newcomer acceptance blocks no current development.
-M11m: update the single maintained guide to describe the delivered fixed gamma
-control workflow and its separate saved-reference action. Preserve all guide
-anchors and existing routes,40/6/34-null/fixed private inputs/77K override/fresh-clone
-limitations. Inspect actual UI/CLI contracts first; no new executor, physics,
-installation test or competing beginner README. Use saved-only export and exact
-publication checks. Broader preview/layout changes are optional future work and
-must receive a coherent scoped plan; do not silently expand this homepage round.
-Current-chat 30-minute heartbeat ACTIVE creation is verified; future execution
+M12b follows the owner's second image: simple fork -> branch -> PR -> owner review
+contribution guide, citation and explicit original-software/third-party license
+scope, with compatible main protection. License choice question remains pending;
+do not present a preselected option as an owner answer. Keep recorded model/source
+rights and local-only upstream cryostat files separate from project software.
+No collaborator grants, invented DOI/ORCID/release or unknown required CI checks.
+After those changes, M11m describes delivered fixed gamma controls and the separate
+saved-reference action in the single maintained guide, retaining all anchors,
+40/6/34-null/private-input/77K/fresh-clone limitations. No physics/environment rerun.
+Search Console can resume after actual owner login; do not invent verification.
+Current-chat30-minute heartbeat ACTIVE creation verified; future execution
 unobserved. New rounds require ready/no conflicting lock or actual workers, owned
-lock and verified Sol 6.1 Ultra/root. No global changes or reset credits.
+lock and verified Sol6.1Ultra/root. No global changes or reset credits.

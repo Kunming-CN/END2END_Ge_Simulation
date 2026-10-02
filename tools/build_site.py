@@ -468,6 +468,9 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         finalize_spectra(OUT)
     if (OUT / 'viewers/manifest.json').is_file():
         route_readers(OUT)
+    if (OUT / 'models/catalog.json').is_file():
+        from site_discovery import assemble as assemble_discovery
+        assemble_discovery(OUT)
     normalize_text_outputs(OUT)
     report = validate(OUT, require_manifest=False, require_models=True)
     (OUT / MANIFEST).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8', newline='\n')

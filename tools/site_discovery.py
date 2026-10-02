@@ -1,0 +1,104 @@
+"""Search metadata for maintained landing pages; never touch saved science bundles."""
+import json
+import re
+from html import escape
+from html.parser import HTMLParser
+from pathlib import Path
+from xml.etree import ElementTree as ET
+
+SITE_URL = 'https://kunming-cn.github.io/END2END_Ge_Simulation/'
+PROJECT_NAME = 'GeSignal'
+PROJECT_TITLE = 'GeSignal — HPGe Radiation-to-Readout Simulation'
+SITEMAP = 'sitemap.xml'
+NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
+LANDINGS = {
+    'index.html': 'Saved HPGe detector engineering simulations: Geant4/remage radiation deposits, SSD charge transport and electronics readout. Browse results or choose a local workflow.',
+    'guide.html': 'Windows setup and supported local HPGe simulation workflows. Saved browsing, new radiation runs and private-input engineering examples have separate requirements.',
+    'learn/index.html': 'Follow radiation deposits through SSD electron and hole transport, preamplifier, shaping and peak ADC. Saved engineering examples retain units and limitations.',
+    'detectors/index.html': 'Explore 17 saved HPGe detector models, contacts and original configurations. Viewing a model does not establish LBNL execution support or experimental validation.',
+    'results/index.html': 'Browse saved Cs137 campaigns and bounded HPGe engineering examples. Deposited energy, reconstructed energy, zero events and unavailable responses remain separate.',
+    'results/cs137-1m/index.html': 'Saved AK02 and SAP22 Cs137 engineering results, with one million initial decays per detector. No measured-spectrum fit or calibrated charge-collection claim.',
+    'results/cs137-10k/index.html': 'Earlier saved AK02 and SAP22 10k Cs137 engineering campaign, including event and response viewers. This is separate from the current million-decay campaign.',
+    'methods/index.html': 'HPGe simulation methods, original model provenance and numerical, calibration and experimental limitations of the saved engineering results.',
+    'scenarios/lbnl-cs137/index.html': 'Nominal LBNL Cs137 scenario and AK02/SAP22 execution boundaries, source assumptions and detector selection. Additional models require independent integration.',
+}
+
+
+def landing_descriptions(site):
+    site = Path(site)
+    descriptions = dict(LANDINGS)
+    catalog = site / 'models/catalog.json'
+    if catalog.is_file():
+        for item in json.loads(catalog.read_text(encoding='utf-8'))['detectors']:
+            ident = item['id']
+            if not re.fullmatch(r'[A-Za-z0-9_-]+', ident):
+                raise ValueError('Unsafe discovery detector ID')
+            descriptions[f'detectors/{ident}/index.html'] = (
+                f'{ident} HPGe model: saved geometry, contact information, field and response galleries, '
+                'original configuration and provenance. Model viewing is not experimental validation.')
+    return {path: description for path, description in sorted(descriptions.items())
+            if (site / path).is_file()}
+
+
+def canonical(path):
+    return SITE_URL + ('' if path == 'index.html' else path)
+
+
+def sitemap_bytes(paths):
+    rows = ''.join(f'  <url><loc>{escape(canonical(path))}</loc></url>\n' for path in sorted(paths))
+    return (f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="{NS}">\n'
+            + rows + '</urlset>\n').encode('utf-8')
+
+
+def assemble(site):
+    """Called only by the saved-data publisher after maintained pages are assembled."""
+    site = Path(site)
+    descriptions = landing_descriptions(site)
+    for path, description in descriptions.items():
+        page = site / path
+        html = page.read_text(encoding='utf-8')
+        # These pages are maintained sources, not hash-bound result presentations.
+        html = re.sub(r'<meta\s+name="description"[^>]*>', '', html)
+        html = re.sub(r'<link\s+rel="canonical"[^>]*>', '', html)
+        html = html.replace('END2END Ge Simulation', 'GeSignal · HPGe detector simulation')
+        if path == 'index.html':
+            html = re.sub(r'<title>.*?</title>', '<title>' + escape(PROJECT_TITLE) + '</title>', html, count=1)
+        tags = (f'<meta name="description" content="{escape(description, quote=True)}">'
+                f'<link rel="canonical" href="{canonical(path)}">')
+        if '<title>' not in html:
+            raise ValueError(f'Maintained discovery page has no title: {path}')
+        html = html.replace('<title>', tags + '<title>', 1)
+        page.write_text(html, encoding='utf-8', newline='\n')
+    (site / SITEMAP).write_bytes(sitemap_bytes(descriptions))
+
+
+class Metadata(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.descriptions, self.canonicals = [], []
+
+    def handle_starttag(self, tag, attrs):
+        values = dict(attrs)
+        if tag == 'meta' and values.get('name') == 'description':
+            self.descriptions.append(values.get('content'))
+        if tag == 'link' and values.get('rel') == 'canonical':
+            self.canonicals.append(values.get('href'))
+
+
+def validate(site):
+    """Optional on historical snapshots; strict once the sitemap is installed."""
+    site = Path(site)
+    if not (site / SITEMAP).exists():
+        return
+    descriptions = landing_descriptions(site)
+    raw = (site / SITEMAP).read_bytes()
+    tree = ET.fromstring(raw)
+    urls = [node.text for node in tree.findall(f'{{{NS}}}url/{{{NS}}}loc')]
+    expected = [canonical(path) for path in sorted(descriptions)]
+    if tree.tag != f'{{{NS}}}urlset' or urls != expected or raw != sitemap_bytes(descriptions):
+        raise ValueError('Discovery sitemap differs from maintained landing URLs')
+    for path, description in descriptions.items():
+        parser = Metadata()
+        parser.feed((site / path).read_text(encoding='utf-8'))
+        if parser.descriptions != [description] or parser.canonicals != [canonical(path)]:
+            raise ValueError(f'Discovery metadata differs: {path}')

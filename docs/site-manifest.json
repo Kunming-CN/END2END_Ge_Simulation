@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "build_id": "eff982585912eba5751e87deb4e8424e713bae5a30efcb09a692f222772064d6",
-  "file_count": 1452,
-  "total_bytes": 767589371,
+  "build_id": "8ec47ca9235f95f1446dede18ca15c1b220ea616a62a668affb0a31202cb502b",
+  "file_count": 1453,
+  "total_bytes": 767600919,
   "html_pages": 96,
   "local_links_checked": 2841,
   "files": [
@@ -43,8 +43,8 @@
     },
     {
       "path": "detectors/AK01/index.html",
-      "bytes": 4596,
-      "sha256": "80d47393610ec5ec8c1690498d5690473570e38df3f1898614100c5d1dd1a930"
+      "bytes": 4921,
+      "sha256": "9b20f31bd7d708999b4337dad6743cd30e86ce52e43fff2bd7e4b9f102f9ed14"
     },
     {
       "path": "detectors/AK01/runs/20260922_suite_v3/01_geometry.png",
@@ -368,8 +368,8 @@
     },
     {
       "path": "detectors/AK02/index.html",
-      "bytes": 5059,
-      "sha256": "5d589558b045a620622552a8e8d1fee2106c32dcd213215af974378f47cd54a5"
+      "bytes": 5384,
+      "sha256": "8e6ccbcfa710c4fa4fe2477f7fefaff3637dc92d3ac2a0ed4825a6565b45f952"
     },
     {
       "path": "detectors/AK02/runs/20260922_suite_v3/01_geometry.png",
@@ -683,8 +683,8 @@
     },
     {
       "path": "detectors/BEGe_GD32B_reference/index.html",
-      "bytes": 4732,
-      "sha256": "f0d397565f65d30233eef700ebd94faefa3431319116fa4d54e4c472456fb8e6"
+      "bytes": 5089,
+      "sha256": "d4cca8516799c7882d86620290baed2f85539a0c3e0d0aa95cce1b49ab611ea3"
     },
     {
       "path": "detectors/BEGe_GD32B_reference/runs/20260922_suite_v3/01_geometry.png",
@@ -998,8 +998,8 @@
     },
     {
       "path": "detectors/BEGe_reference/index.html",
-      "bytes": 4664,
-      "sha256": "ddb8929d65339070c4a4e5f9fe8b22cea644813f83ab73d24441a1c8859948bd"
+      "bytes": 5009,
+      "sha256": "7316692de80451b9711f0e103e4dcc88de5bd14816700f75324d172844be772c"
     },
     {
       "path": "detectors/BEGe_reference/runs/20260922_suite_v3/01_geometry.png",
@@ -1313,8 +1313,8 @@
     },
     {
       "path": "detectors/Bipolar_reference_3D/index.html",
-      "bytes": 4733,
-      "sha256": "11fbe207e7b73bfdeea8006d74e405b375bef614f74bb81b9076927796d6d38d"
+      "bytes": 5090,
+      "sha256": "dcb61cc296e2d80004b85162a304325d6b60c3813864c5eb1616b49fac9d6d72"
     },
     {
       "path": "detectors/Bipolar_reference_3D/runs/20260922_suite_v3/01_geometry.png",
@@ -1628,8 +1628,8 @@
     },
     {
       "path": "detectors/COAX_ANG2_reference/index.html",
-      "bytes": 4725,
-      "sha256": "c06ab7979e7917a0e9ca2099c2920c29ee36986df504538e8e71d51f3b5582df"
+      "bytes": 5080,
+      "sha256": "009a8fe11d1b48741899b81b0a2ad6d0c0f254eee36562eacc2c2bfd29f94460"
     },
     {
       "path": "detectors/COAX_ANG2_reference/runs/20260922_suite_v3/01_geometry.png",
@@ -1943,8 +1943,8 @@
     },
     {
       "path": "detectors/GeGI_3D/index.html",
-      "bytes": 6223,
-      "sha256": "e2765c66f4eca8e542ac0d0a3c7fb7863f1af3986dad5f74c3344a26f1842f9b"
+      "bytes": 6554,
+      "sha256": "d5d5a9a0197cc98cf831135e1fb64b7edb51177291ade1725babb8ae5adb9064"
     },
     {
       "path": "detectors/GeGI_3D/octagon_geometry.png",
@@ -2458,8 +2458,8 @@
     },
     {
       "path": "detectors/GeRC02/index.html",
-      "bytes": 4609,
-      "sha256": "44893290353c34a7668c087c8bd6527630ab6482c0a270cd417ec84adc5a3b43"
+      "bytes": 4938,
+      "sha256": "e64092ff75851299216d3e01228a984f056babf8e2109e9216f5737cac2a5e41"
     },
     {
       "path": "detectors/GeRC02/runs/20260922_suite_v3/01_geometry.png",
@@ -2773,8 +2773,8 @@
     },
     {
       "path": "detectors/ICPC_48A_reference/index.html",
-      "bytes": 4718,
-      "sha256": "c8c95bd267d8769370bcdceddb03fab62f246c123b498c6b68669374677ca698"
+      "bytes": 5071,
+      "sha256": "ef61aedbd0c510b5098e09872457d49c7881438960362f19451e14eb74a19f9e"
     },
     {
       "path": "detectors/ICPC_48A_reference/runs/20260922_suite_v3/01_geometry.png",
@@ -3088,8 +3088,8 @@
     },
     {
       "path": "detectors/ICPC_large_reference/index.html",
-      "bytes": 4719,
-      "sha256": "d875e2e6adb627004a451eb32c71b8f8ed8294e29eb64e4332f3e0973dc49534"
+      "bytes": 5076,
+      "sha256": "a04018659e71185932f3a5bc1a77628714172fc9f354b358c2c27d6d2fcfd917"
     },
     {
       "path": "detectors/ICPC_large_reference/runs/20260922_suite_v3/01_geometry.png",
@@ -3403,8 +3403,8 @@
     },
     {
       "path": "detectors/KL01_3D/index.html",
-      "bytes": 4592,
-      "sha256": "49f8b6d6ba008a6d84a78c69c61526fabddf2681694f6431be2d3817ee3922b2"
+      "bytes": 4923,
+      "sha256": "91efc1841ba8b3349b9616b7ccf3b521406189ad36206a70a65848d21919cee5"
     },
     {
       "path": "detectors/KL01_3D/runs/20260922_suite_v3/01_geometry.png",
@@ -3718,8 +3718,8 @@
     },
     {
       "path": "detectors/KMRC01_candidate/index.html",
-      "bytes": 4680,
-      "sha256": "686bc3f23c49260eaa77783ceb83fb6b95c4d89d70a654a883b05b220f9b61aa"
+      "bytes": 5029,
+      "sha256": "b723aea76d394f6675529dfb01290c2e7a71afa0730ce9215c046d734487d0cb"
     },
     {
       "path": "detectors/KMRC01_candidate/runs/20260922_suite_v3/01_geometry.png",
@@ -4033,8 +4033,8 @@
     },
     {
       "path": "detectors/PPC_PONaMa1_reference/index.html",
-      "bytes": 4739,
-      "sha256": "054dd0a8d26951303c3106dc0f2dd0ecd1f6c68cd0d547cdae69d1010f35bf06"
+      "bytes": 5098,
+      "sha256": "d87f39022c826231416609ec647fcd471862560ab68b6ade44e0c0ddad351dba"
     },
     {
       "path": "detectors/PPC_PONaMa1_reference/runs/20260922_suite_v3/01_geometry.png",
@@ -4348,8 +4348,8 @@
     },
     {
       "path": "detectors/SAP16/index.html",
-      "bytes": 4595,
-      "sha256": "1f0552de677846442f84eb3c16b113de4eb683612d586086316e00c411f0372a"
+      "bytes": 4922,
+      "sha256": "1ab6df0b5aeccae2923bca65aa5ef47d90f40c6b61f308cfa47deec49732189c"
     },
     {
       "path": "detectors/SAP16/runs/20260922_suite_v3/01_geometry.png",
@@ -4663,8 +4663,8 @@
     },
     {
       "path": "detectors/SAP17/index.html",
-      "bytes": 4595,
-      "sha256": "2041c0806fb4c815ee606131d7ac4822af9de4c4dd50fc5de563a8f50338587a"
+      "bytes": 4922,
+      "sha256": "aa92d3fe6a9a652d514ccb91beae0e10ada3f9b08f7bc7230b65c77c7005c518"
     },
     {
       "path": "detectors/SAP17/runs/20260922_suite_v3/01_geometry.png",
@@ -4978,8 +4978,8 @@
     },
     {
       "path": "detectors/SAP18_ring08_scenario/index.html",
-      "bytes": 4717,
-      "sha256": "0a1067809fb9c91f410c18b62c009695676025b923941a8df7b745689088de88"
+      "bytes": 5076,
+      "sha256": "b35295f1052b7d7b5e30390a07f80a66da8d7ff9d08cc6943e720a2f7815982e"
     },
     {
       "path": "detectors/SAP18_ring08_scenario/runs/20260922_suite_v3/01_geometry.png",
@@ -5303,8 +5303,8 @@
     },
     {
       "path": "detectors/SAP22/index.html",
-      "bytes": 5074,
-      "sha256": "3a480c3608931a00efb80498dffe173ec727feb14c68c009fea82c587dfca702"
+      "bytes": 5401,
+      "sha256": "711decaf100efbd71c06a2ad218137040ba4d8868fb10dc443543d3f1fa4a2bf"
     },
     {
       "path": "detectors/SAP22/runs/20260922_suite_v3/01_geometry.png",
@@ -5593,8 +5593,8 @@
     },
     {
       "path": "detectors/index.html",
-      "bytes": 6337,
-      "sha256": "6b23b1794825eb5e347b9fe388f886e179c819881c07e910ae244a39e356dfa6"
+      "bytes": 6666,
+      "sha256": "1e01d37b4ff42694c46411aabbedd30792433f4e464abf1a2b5b857e8414f714"
     },
     {
       "path": "downloads/AK01.zip",
@@ -7033,18 +7033,18 @@
     },
     {
       "path": "guide.html",
-      "bytes": 27240,
-      "sha256": "deb343c5484ab92b84c7bb549619fbfc04dc6ce1a0b3a0b8f34af93de2ebd25c"
+      "bytes": 27544,
+      "sha256": "85baa490fd88785513d72b5158ac220ccacf842d7f0a00db34cd61b4653f385e"
     },
     {
       "path": "index.html",
-      "bytes": 71684,
-      "sha256": "47d7ab7b9efcf08caaa4ca75f4b0ecd58d65395e25dca60dd3843c08459bd3ce"
+      "bytes": 72011,
+      "sha256": "efaf5ade0bdf60ea3499b096fc081fd46a8f12f57c474270fe9c2e9f1d5fdcca"
     },
     {
       "path": "learn/index.html",
-      "bytes": 3830,
-      "sha256": "52ef5469558c8679b9687ad4ff9b90f0749907c71404ca2d0ebca4789486ceb2"
+      "bytes": 4152,
+      "sha256": "c2ec835da5f7fd44b8a7dc1918079971934697cd4002cb4d872d0951f50342ff"
     },
     {
       "path": "lithium/axes-comparisons.csv",
@@ -7103,8 +7103,8 @@
     },
     {
       "path": "methods/index.html",
-      "bytes": 3466,
-      "sha256": "f895d253788a512c2e2f383f8ce4d71f596200e36be6a3c1a9db6db0857e87bb"
+      "bytes": 3771,
+      "sha256": "30a047b922e298466533b0a8eff9e3aaf4bb42e647874316e5a79561549c2a12"
     },
     {
       "path": "models/ADLChargeDriftModel/drift_velocity_config.yaml",
@@ -7208,23 +7208,28 @@
     },
     {
       "path": "results/cs137-10k/index.html",
-      "bytes": 3186,
-      "sha256": "bac2ead9f6bb4bc7faa8948e91961f5781f97348badba3a782179626401289a6"
+      "bytes": 3517,
+      "sha256": "6527d7a6533c63fb55e2cf45f6fd9d13424c24c3263db7c1aaca7db90ed8d9b3"
     },
     {
       "path": "results/cs137-1m/index.html",
-      "bytes": 3824,
-      "sha256": "13c8eea47743b883e8fe7fd659427191d12f9a11da9cd185caf432a4aae1feac"
+      "bytes": 4155,
+      "sha256": "cbdbb095f0c86cef40ec5f0cd8b48a9074a545e667dfdc832164e4faf29412cf"
     },
     {
       "path": "results/index.html",
-      "bytes": 3946,
-      "sha256": "07992ae7002513ca7bdf0c1d7a72e52c866bae134d94585ab534cb883e26e2a6"
+      "bytes": 4273,
+      "sha256": "d607108e2013e8a586cdeac0c31fa781b7a5399166d571493f31221c80a82e16"
     },
     {
       "path": "scenarios/lbnl-cs137/index.html",
-      "bytes": 6953,
-      "sha256": "5664c9ed0f2fb7e12614ff0aa7737e22020185834d0c2ac1a6b8ac172cc84a01"
+      "bytes": 7289,
+      "sha256": "73ca576cbaf1c76210ead7db43db930f492e55ccb0ffdda04234b877f9f8b6c4"
+    },
+    {
+      "path": "sitemap.xml",
+      "bytes": 2823,
+      "sha256": "771fe7d892ad948b80909f379c59ea926a118738badef813bdd89be807b3622e"
     },
     {
       "path": "spectra/cs137-10k.html",

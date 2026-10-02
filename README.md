@@ -1,4 +1,6 @@
-# END2END germanium detector simulation
+# GeSignal — HPGe Radiation-to-Readout Simulation
+
+The END2END germanium detector project; its repository and website addresses stay unchanged.
 
 Explore how radiation deposits become an energy measurement:
 **Geant4/remage → SSD charge transport → preamplifier → shaping → peak ADC.**
