@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "kind": "cryostat_source_input_ledger_v1",
+  "verification_scope": "source_input_verification_only",
+  "provenance": {
+    "manifest_ref": "transport/cryostat-source.json",
+    "manifest_sha256": "5967d5d0f8500a40f704bf653be2dc1a0f69e77239f643a8f7140533c9201e2a",
+    "repository": "jintonic/geant4",
+    "commit": "1ff3371e0afb804115773af0541b3e56bd660f8c",
+    "directory": "detector/Ge/cryostat/LBNL",
+    "local_cache_ref": ".local/transport/LBNL",
+    "license_record_scope": "Existing pinned-tree record found no explicit license file; no current licensing research or redistribution permission is claimed.",
+    "identity_limit": "Hashes identify source bytes, not authorship, physical accuracy or experimental acceptance."
+  },
+  "inventory": [
+    {"file": "Am241.tg", "bytes": 943, "sha256": "ecd18a0e5e3ead3654d3c0d4584013c1dcef9b16ac2e20daaa8557017d1948ca", "role": "standalone modular source-holder geometry, not included by stage"},
+    {"file": "LBNLcryostat.mac", "bytes": 883, "sha256": "5358e118230a50b188a2740c9bafdc644166afebde0d33054531ec2cc4093fa6", "role": "original monolithic GPS gamma macro"},
+    {"file": "LBNLcryostat.tg", "bytes": 7471, "sha256": "901508adca34593d7bed1f5a9d3cdbb49311e4712a35b2b21ef9b7f00263c105", "role": "monolithic geometry candidate"},
+    {"file": "README.md", "bytes": 1922, "sha256": "84ca91565cd6a5dc861ebae4c723cd4b016bba53f8d59eccc89d03d3cd9a5aaa", "role": "upstream organization note"},
+    {"file": "chamber.tg", "bytes": 736, "sha256": "5f8414f20fd114c62fe8b25d4ecb86076c6008ef6962cc2cf5fbc93b1b5b3296", "role": "modular chamber"},
+    {"file": "planar4wings.tg", "bytes": 468, "sha256": "6f304bcf1489dc0a4f7a52ecccacc251b39866cdcb63d3798543181de24ccaaf", "role": "original planar detector and wings"},
+    {"file": "shield.tg", "bytes": 1075, "sha256": "4a70d9788bf6931e7b4b9ee106813ab8d0285de6846a95e1088a1b3632fdea78", "role": "modular infrared shield"},
+    {"file": "stage.tg", "bytes": 2021, "sha256": "2a86127f896e7a43d645fda1125d3542bf8ededddba8c5c9633a96293b4b311d", "role": "modular cold stage"},
+    {"file": "vis.mac", "bytes": 370, "sha256": "6934fb4cfb65dfaba99335d37b1c443fb852c28e0c2b6584fbbce245d8ff9034", "role": "original planar visualization macro"}
+  ],
+  "units": {
+    "tg_default_length": "mm",
+    "tg_default_angle": "deg",
+    "tg_default_density": "g/cm3",
+    "inch_parameter_mm": 25.4,
+    "selected_tg_explicit_unit_tokens": false,
+    "macro_length_token": "mm",
+    "macro_energy_token": "keV",
+    "parameter_interpretation": "Named values may be full lengths, positions or a scale; raw numeric parameters are not automatically solid extents. $in is a user parameter, not an explicit inch unit token.",
+    "primitive_interpretation": "BOX inputs are half-lengths; TUBE inputs are radii and axial half-length. Recorded full extents describe only the selected primitive.",
+    "placement_interpretation": "Raw translation is in parent coordinates with parser-default mm; rotation names require native interpretation."
+  },
+  "variants": [
+    {"id": "modular", "status": "supported_existing", "entry": "stage.tg", "include_closure": ["stage.tg", "shield.tg", "chamber.tg"], "cavity_diameter_mm": 67.7, "original_detector_ref": "planar4wings.tg", "original_source_ref": "Am241.tg", "original_source_volume": "active", "source_included_by_entry": false, "limit": "Support belongs only to the existing nominal adapter; original detector/wings and standalone source are omitted there."},
+    {"id": "monolithic", "status": "candidate_input_only", "entry": "LBNLcryostat.tg", "include_closure": ["LBNLcryostat.tg"], "cavity_diameter_mm": 67.7, "original_detector_ref": "LBNLcryostat.tg", "original_source_ref": "LBNLcryostat.tg", "original_source_volume": "Active", "source_included_by_entry": true, "limit": "Dimensional input exists. Independent native import, volume/material/source/transform and event mapping checks are unfinished."}
+  ],
+  "includes": [
+    {"file": "stage.tg", "targets": ["shield.tg"]},
+    {"file": "shield.tg", "targets": ["chamber.tg"]},
+    {"file": "chamber.tg", "targets": []},
+    {"file": "planar4wings.tg", "targets": ["stage.tg"]},
+    {"file": "Am241.tg", "targets": []},
+    {"file": "LBNLcryostat.tg", "targets": []}
+  ],
+  "parameters": [
+    {"file": "chamber.tg", "name": "in", "raw": "25.4", "value_mm": 25.4},
+    {"file": "chamber.tg", "name": "Tfl", "raw": "10.5", "value_mm": 10.5},
+    {"file": "chamber.tg", "name": "Lec", "raw": "165.5", "value_mm": 165.5},
+    {"file": "chamber.tg", "name": "y0", "raw": "1.473", "value_mm": 1.473},
+    {"file": "chamber.tg", "name": "z0", "raw": "44.98", "value_mm": 44.98},
+    {"file": "shield.tg", "name": "Hir", "raw": "(1.79+0.05)*$in", "value_mm": 46.736},
+    {"file": "shield.tg", "name": "Lir", "raw": "3.10*$in", "value_mm": 78.74},
+    {"file": "shield.tg", "name": "Wir", "raw": "1.72*$in", "value_mm": 43.688},
+    {"file": "stage.tg", "name": "Tstg", "raw": "0.20*$in", "value_mm": 5.08},
+    {"file": "stage.tg", "name": "Lbn", "raw": "1.20*$in", "value_mm": 30.48},
+    {"file": "stage.tg", "name": "Wbn", "raw": "1.00*$in", "value_mm": 25.4},
+    {"file": "stage.tg", "name": "Hbn", "raw": "0.25*$in", "value_mm": 6.35},
+    {"file": "stage.tg", "name": "Tcu", "raw": "1.0", "value_mm": 1.0},
+    {"file": "stage.tg", "name": "Tbelow", "raw": "0.01", "value_mm": 0.01},
+    {"file": "stage.tg", "name": "Tabove", "raw": "0.1", "value_mm": 0.1},
+    {"file": "planar4wings.tg", "name": "Wge", "raw": "10", "value_mm": 10},
+    {"file": "planar4wings.tg", "name": "Hge", "raw": "5", "value_mm": 5},
+    {"file": "Am241.tg", "name": "Tatv", "raw": "0.002", "value_mm": 0.002},
+    {"file": "LBNLcryostat.tg", "name": "in", "raw": "25.4", "value_mm": 25.4},
+    {"file": "LBNLcryostat.tg", "name": "CapID", "raw": "67.7", "value_mm": 67.7},
+    {"file": "LBNLcryostat.tg", "name": "CapLength", "raw": "165.5", "value_mm": 165.5},
+    {"file": "LBNLcryostat.tg", "name": "CapEndW", "raw": "0.05*$in", "value_mm": 1.27},
+    {"file": "LBNLcryostat.tg", "name": "ActiveThick", "raw": "0.002", "value_mm": 0.002},
+    {"file": "LBNLcryostat.tg", "name": "DetectorHeight", "raw": "5", "value_mm": 5},
+    {"file": "LBNLcryostat.tg", "name": "VacOrigin", "raw": "33.028", "value_mm": 33.028}
+  ],
+  "primitive_solids": [
+    {"file": "chamber.tg", "tag": "volu", "name": "RmP124", "shape": "TUBE", "raw_arguments": ["0", "50", "130"], "material": "G4_AIR", "full_axis_extents_mm": [100, 100, 260]},
+    {"file": "chamber.tg", "tag": "volu", "name": "endCap", "shape": "TUBE", "raw_arguments": ["0", "70.2/2", "($Lec-$Tfl)/2"], "material": "G4_Al", "full_axis_extents_mm": [70.2, 70.2, 155]},
+    {"file": "chamber.tg", "tag": "volu", "name": "hollow", "shape": "TUBE", "raw_arguments": ["0", "67.7/2", "($Lec-$Tfl)/2-0.05*$in"], "material": "G4_Galactic", "full_axis_extents_mm": [67.7, 67.7, 152.46]},
+    {"file": "shield.tg", "tag": "volu", "name": "shield", "shape": "BOX", "raw_arguments": ["$Wir/2", "$Hir/2", "$Lir/2"], "material": "G4_Al", "full_axis_extents_mm": [43.688, 46.736, 78.74]},
+    {"file": "stage.tg", "tag": "volu", "name": "BNblock", "shape": "BOX", "raw_arguments": ["$Wbn/2", "$Hbn/2", "$Lbn/2"], "material": "boron_nitride", "full_axis_extents_mm": [25.4, 6.35, 30.48]},
+    {"file": "stage.tg", "tag": "volu", "name": "CuPlate", "shape": "BOX", "raw_arguments": ["$Wbn/2", "$Tcu/2", "$Lbn/2"], "material": "G4_Cu", "full_axis_extents_mm": [25.4, 1.0, 30.48]},
+    {"file": "planar4wings.tg", "tag": "solid", "name": "detector", "shape": "BOX", "raw_arguments": ["$Wge/2", "$Hge/2", "$Wge/2"], "material": null, "full_axis_extents_mm": [10, 5, 10]},
+    {"file": "Am241.tg", "tag": "volu", "name": "active", "shape": "TUBE", "raw_arguments": ["0", "1.61", "$Tatv/2"], "material": "G4_Au", "full_axis_extents_mm": [3.22, 3.22, 0.002]},
+    {"file": "LBNLcryostat.tg", "tag": "volu", "name": "Vacuum", "shape": "TUBE", "raw_arguments": ["0", "$CapID/2", "($CapLength-$FlangeW-$CapEndW)/2"], "material": "G4_Galactic", "full_axis_extents_mm": [67.7, 67.7, 153.73]},
+    {"file": "LBNLcryostat.tg", "tag": "solid", "name": "Detector", "shape": "BOX", "raw_arguments": ["$DetectorWidth/2", "$DetectorWidth/2", "$DetectorHeight/2"], "material": null, "full_axis_extents_mm": [10, 10, 5]},
+    {"file": "LBNLcryostat.tg", "tag": "volu", "name": "Active", "shape": "TUBE", "raw_arguments": ["0", "1.61", "$ActiveThick/2"], "material": "G4_Au", "full_axis_extents_mm": [3.22, 3.22, 0.002]}
+  ],
+  "placements": [
+    {"file": "chamber.tg", "volume": "flange", "copy_number": -10, "parent": "RmP124", "rotation": "r000", "raw_translation": ["0", "$y0", "$z0+$Tfl/2-$Lec"]},
+    {"file": "chamber.tg", "volume": "endCap", "copy_number": -11, "parent": "RmP124", "rotation": "r000", "raw_translation": ["0", "$y0", "$z0+$Tfl/2-$Lec/2"]},
+    {"file": "chamber.tg", "volume": "hollow", "copy_number": -12, "parent": "endCap", "rotation": "r000", "raw_translation": ["0", "0", "0"]},
+    {"file": "shield.tg", "volume": "shield", "copy_number": -21, "parent": "hollow", "rotation": "r000", "raw_translation": ["0", "($Hir/2-24.003)", "($Lir/2-13.1)"]},
+    {"file": "shield.tg", "volume": "vacuum", "copy_number": -20, "parent": "shield", "rotation": "r000", "raw_translation": ["0", "($Tbm-$Ttp)/2", "($Tbk-$Tfr-$Rcr)/2"]},
+    {"file": "stage.tg", "volume": "stage", "copy_number": -30, "parent": "vacuum", "rotation": "r000", "raw_translation": ["0", "($Tstg-$Hvc)/2+$y1", "($Lstg+$Tstg-$Lvc)/2+$z1"]},
+    {"file": "stage.tg", "volume": "BNblock", "copy_number": -36, "parent": "vacuum", "rotation": "r000", "raw_translation": ["0", "($Hbn-$Hvc)/2+$Tstg+$y1", "4"]},
+    {"file": "Am241.tg", "volume": "active", "copy_number": -2, "parent": "holder", "rotation": "rtm", "raw_translation": ["0", "0", "0.76-$Tcvr-$Tatv/2"]},
+    {"file": "planar4wings.tg", "volume": "Ge(S)", "copy_number": 1, "parent": "vacuum", "rotation": "r000", "raw_translation": ["0", "2", "0"]},
+    {"file": "LBNLcryostat.tg", "volume": "Holder", "copy_number": -5, "parent": "lab", "rotation": "r010", "raw_translation": ["(36.573+1.26)", "0", "0"]},
+    {"file": "LBNLcryostat.tg", "volume": "Active", "copy_number": -2, "parent": "Holder", "rotation": "r000", "raw_translation": ["0", "0", "0.76-$CoverThick-$ActiveThick/2"]},
+    {"file": "LBNLcryostat.tg", "volume": "HPGe(S)", "copy_number": 1, "parent": "Vacuum", "rotation": "r010", "raw_translation": ["($BNHeight+$InThickBelow+$CuThickness+$InThickAbove+$AlThickness+$aGeThickness+$DetectorHeight/2-8.023)", "0", "$VacOrigin"]}
+  ],
+  "material_definitions": [
+    {"file": "stage.tg", "name": "boron_nitride", "density_g_cm3": 1.9, "atoms": {"B": 1, "N": 1}, "selected_use": "BNblock"},
+    {"file": "LBNLcryostat.tg", "name": "AmO2", "density_g_cm3": 11.68, "atoms": {"Am": 1, "O": 2}, "selected_use": null}
+  ],
+  "original_macro": {
+    "file": "LBNLcryostat.mac",
+    "emission": "monoenergetic_gamma",
+    "particle": "gamma",
+    "energy_keV": 59.5,
+    "confine_volume": "Active",
+    "actual_active_material": "G4_Au",
+    "unused_AmO2_is_activity_evidence": false,
+    "commands": [
+      {
+        "command": "/geometry/source",
+        "arguments": [
+          "LBNLcryostat.tg"
+        ]
+      },
+      {
+        "command": "/gps/particle",
+        "arguments": [
+          "gamma"
+        ]
+      },
+      {
+        "command": "/gps/energy",
+        "arguments": [
+          "59.5",
+          "keV"
+        ]
+      },
+      {
+        "command": "/gps/pos/type",
+        "arguments": [
+          "Volume"
+        ]
+      },
+      {
+        "command": "/gps/pos/shape",
+        "arguments": [
+          "Cylinder"
+        ]
+      },
+      {
+        "command": "/gps/pos/centre",
+        "arguments": [
+          "37.077",
+          "0",
+          "0",
+          "mm"
+        ]
+      },
+      {
+        "command": "/gps/pos/rot1",
+        "arguments": [
+          "0",
+          "1",
+          "0"
+        ]
+      },
+      {
+        "command": "/gps/pos/rot2",
+        "arguments": [
+          "0",
+          "0",
+          "1"
+        ]
+      },
+      {
+        "command": "/gps/pos/halfz",
+        "arguments": [
+          "0.002",
+          "mm"
+        ]
+      },
+      {
+        "command": "/gps/pos/radius",
+        "arguments": [
+          "1.62",
+          "mm"
+        ]
+      },
+      {
+        "command": "/gps/pos/confine",
+        "arguments": [
+          "Active"
+        ]
+      },
+      {
+        "command": "/run/beamOn",
+        "arguments": [
+          "10"
+        ]
+      }
+    ],
+    "limit": "Adding a radioactive-decay physics constructor does not replace the explicit gamma primary with an Am241 decay; filename and unused material are not activity evidence."
+  },
+  "current_adapter": {
+    "id": "lbnl_modular_nominal_v1",
+    "native_entry": "stage.tg",
+    "native_expected_volume_count": 20,
+    "nominal_ref": "transport/cryostat_nominal.json",
+    "native_import_ref": "transport/cryostat_export.cc",
+    "independent_mapping_ref": "transport/scenario_prepare.py",
+    "mapping_identity": "case-sensitive original ancestry and copy number plus unique renamed volume; includes material and transform checks",
+    "models": [
+      "AK02",
+      "SAP22"
+    ],
+    "rotation_local_to_global": [
+      [
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        -1,
+        0
+      ]
+    ],
+    "translation_global_mm": [
+      0,
+      1.45,
+      0.29
+    ],
+    "vacuum_global_translation_mm": [
+      0,
+      1.473,
+      -3.71
+    ],
+    "source_nominal_global_mm": [
+      0,
+      37.073,
+      0.29
+    ],
+    "plus5mm_meaning": "Source-pose variant on the same nominal modular cryostat; not another or larger cryostat.",
+    "limit": "This checker does not run or repeat native acceptance. Editing/re-hashing the ledger cannot admit a new executable adapter."
+  },
+  "unknowns": {
+    "experimental_geometry": [
+      "surveyed crystal/source/holder positions and rotations",
+      "actual source capsule/active-layer dimensions and composition",
+      "experimental lid orientation and mounting clearances"
+    ],
+    "acquisition": [
+      "activity, acquisition/live time and response calibration for a claimed experiment"
+    ],
+    "candidate_software_checks": [
+      "independent monolithic native import and solid/volume census",
+      "material use, composed source transforms and containment",
+      "case-sensitive volume/copy identities and radiation-event mapping"
+    ],
+    "unprovided_variants": [
+      "larger cryostat",
+      "GeGI installation"
+    ]
+  },
+  "references": [
+    {"topic": "TG default units and BOX/TUBE parameter meaning", "url": "https://cern.ch/geant4/collaboration/working_groups/persistency/docs/textgeom.pdf", "document_version": "Geant4 Geometry from Text File 1.0, linked by Book for Application Developers 11.4", "accessed": "2026-10-01"},
+    {"topic": "GPS particle, energy, position and confinement semantics", "url": "https://geant4.web.cern.ch/documentation/dev/bfad_html/ForApplicationDevelopers/GettingStarted/generalParticleSource.html", "document_version": "Book for Application Developers 11.4 (doc Rev11.4)", "accessed": "2026-10-01"}
+  ]
+}

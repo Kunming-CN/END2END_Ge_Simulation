@@ -40,6 +40,7 @@
 !transport/pixi.lock
 !transport/.pixi/config.toml
 !transport/cryostat-source.json
+!transport/cryostat-input-ledger.json
 !transport/Run.cmd
 !transport/run.sh
 !transport/smoke.gdml

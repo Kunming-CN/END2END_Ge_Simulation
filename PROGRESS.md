@@ -1,100 +1,91 @@
 # Project state and next bounded work
 
 Updated: 2026-10-01. This compact handoff governs delivery order.
-The previous navigation/M11c/M11b/M11a/M10 handoff is immutable
-[at add15fc](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/add15fc3540e300b90239b52a57268b6bae3ccdf/PROGRESS.md).
-Detailed evidence and failed attempts stay local. Recover completed artifacts
-after chat failure; do not repeat science or reviews to recover a reply.
+The full previous M11d/navigation/M11c handoff is immutable
+[at 59ad779](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/59ad779365045ea755b71268d8661b01632ac48a/PROGRESS.md).
+Detailed evidence and failed attempts remain local. Recover terminal artifacts
+before rerunning work after a disconnected chat.
 
-## M11d saved gamma public engineering example
+## M11e cryostat input inventory
 
-The new Results card opens examples/gamma-native/gamma.html. All 40 saved gamma
-truth events, six selected responses and 34 explicitly unprocessed/null responses
-survive. Four positive responses have accepted Erec; two selected true zeros
-retain native bypass, ADC0, threshold rejection and null Erec. All 10057 original
-signed input samples and both exact CSV files remain downloadable. AK02 retains
-195 capped endpoints; SAP22 retains none. Original 78 K models, explicit 77 K
-cache override, +500/+700 V, weighted parcels, signed signals, seeds, units,
-separate 500 keV injection calibration and fixed readout settings remain exact.
+transport/cryostat-input-ledger.json records the nine pinned originals and finite
+selected provenance, units, include edges, parameters, primitive dimensions,
+materials, parent/copy placements, macro commands and current adapter mapping.
+The modular stage -> shield -> chamber chain remains supported only through the
+existing nominal adapter. LBNLcryostat.tg has actual dimensioned input but remains
+candidate_input_only: independent native import/census/material/source/transform
+and event mapping work is unfinished. Surveyed experimental crystal/source/holder
+poses, actual capsule/active-layer facts and acquisition metadata are separate
+unknowns. Neither 67.7 mm cavity variant supplies a larger cryostat or GeGI setup.
 
-The 599/600-point readout traces were already compact in the saved originals;
-unsaved analog arrays are not reconstructed. Current intervals retain their
-original (start,end] bins. Numerical analog grids are separate from peak ADC;
-this is not waveform acquisition, calibrated Li CCE, physical resolution,
-grid convergence, experiment, efficiency or independently surveyed geometry.
-STEP chords and Track births are not complete trajectories across unscored material.
+Raw parameters are distinct from solid extents: modular Lec=165.5 mm gives 155 mm
+endCap and 152.46 mm hollow; monolithic Vacuum is 153.73 mm. Uppercase Active and
+lowercase active remain distinct. Original macro selects 59.5 keV gamma; Active
+uses G4_Au and AmO2 is an unused definition, not activity or ion-decay evidence.
+GPS envelope radius 1.62 mm/half-length 0.002 mm differs from Active radius 1.61 mm/
+full thickness 0.002 mm. Preserve confinement semantics and verify composed source
+coordinates natively before accepting them; do not change originals to fit.
 
-tools/gamma_showcase.py exports only pinned completed M11c/M11b saved artifacts;
-it invokes no producer, radiation, SSD, calibration or readout. Exactly 19 known
-runtime-path strings become portable roles; scientific strings, values, types,
-binary64 and negative zero remain. The trusted typed digest rejects scientific
-edits even after rehashing. Two writers exited before the eleven-source freeze.
-The old 19-source execution archive remains unchanged despite maintained docs.
-Historical general-source bindings do not force regeneration after unrelated
-maintenance; the gamma template remains an active exact rendering dependency.
+The stdlib checker defaults to two public JSON inputs/zero private original reads;
+--check-local additionally checks all nine exact original bytes and finite selected
+raw tokens. Independent code-owned digest prevents metadata-only rehashing or
+candidate promotion. This is input verification, not a general TG parser, native
+acceptance, race-resistant sandbox, signature, physical support or experiment.
+The original manifest and nine originals are unchanged; only one named ledger is
+added to Git/publisher allowlists. Original TG/MAC text and private paths stay local.
 
-Explicit build_site.py --gamma-showcase copies the completed checked bundle.
-Normal Publish.cmd/--restructure preserves it without calculation. Build
-97f4dba8 has 1452 manifest payloads/1453 files. Five new gamma files are added;
-only results/index.html and site-manifest.json change among old public files.
-All 1446 other old payloads are exact. The local protection audit verifies 3314
-of 3322 records exact, with eight explicit maintained-source exceptions;
-no scientific rebaseline. Root protection hashing reads bytes, not field states.
+Root 22 adverse tests pass without skips, portable/local checks pass and the older
+completed gamma bundle still validates after the generic publisher allowance.
+Root independently compares original facts and existing nominal metadata. All 1453
+public files are byte-exact; 3467 of 3471 protected records are unchanged with four
+explicit maintained-source exceptions. No new science, site build or publication.
+Eight sources froze after actual writer exit. Three scoped independent AI INITIALs
+verified actual Sol 6.1 Ultra/cwd: physics, workflow, NEW stern detail/goal/value.
+All find no confirmed blocker; workflow independently rejects 21 targeted adverse
+cases. AI reviews are not human certification. Actual four-message reciprocal
+peer discussion confirms no current repair and precisely separates Active->Holder r000 from Holder->lab r010; both exits frozen.
+Evidence: .local/m11e-cryostat-inputs-v1/; unique failed helper/inspection attempts
+remain preserved. Final source synchronization and owned-lock closure belong to
+its terminal local receipt. SOURCE-FREEZE.json and INITIALS/DISCUSSION ledgers
+retain the exact tested source hashes.
 
-Final implementation checks: 19 gamma, 23 site, 27 contacts and seven restructure
-fixtures pass. Independent root saved/public audits retain exact types/binary64
-and full embedded data; three scoped AI INITIALs separately inspect physics,
-workflow and goal/direction using verified Sol 6.1 Ultra. All find no confirmed
-blocker. Actual reciprocal peer discussion confirms no required repair; the optional
-details rendering idea remains separate from this frozen delivery.
-These are AI implementation reviews, not human certification.
+## Retained engineering delivery and permanent science
 
-Actual HTTP browser checks cover all 40 IDs, positive/zero/unknown views, lazy
-details/current-selection refresh, model/fragment memory, reload/back, keyboard
-and mobile without page overflow. Large-detail automation timeouts remain failed
-attempts; subsequent actual states verify refreshed IDs, 544 to 1632 endpoints,
-39 to 156 caps, and collapse clearing. There is no latency guarantee. Standalone
-file opening was blocked by browser policy and remains unperformed; static
-self-containment/Node VM/HTTP checks do not replace file-open or second-PC acceptance.
-The optional review idea is to measure details before targeted rendering changes.
+M11d source 85d701c and closure 59ad779 are pushed. Results opens the saved offline
+engineering example at examples/gamma-native/gamma.html: 40 truth events, six
+selected responses/four positive/two true zeros, 34 explicit unprocessed/nulls,
+10057 original signed input samples, exact CSVs and independent 500 keV injections.
+AK02 retains 195 caps; SAP22 retains none. All model hashes, 78 K snapshots/explicit
+77 K cache override, +500/+700 V, identities, seeds, units, endpoint flags and fixed
+readout settings remain exact. Already compact analog traces are not reconstructed.
+Numerical analog sampling is distinct from peak ADC and waveform acquisition.
+No calibrated Li CCE, physical resolution, experiment or complete trajectory claim.
+Build 97f4dba8 has 1452 payloads/1453 files; full live check verifies 463 selected files.
+Actual HTTP browser checks cover all 40 IDs, zero/unknown/positive states, details
+refresh, keyboard and mobile. File opening was browser-policy blocked and remains
+unperformed; recorded automation timeouts do not establish a latency guarantee.
+Details rendering optimization is optional and requires measurements first.
+M11d export 3.0065132 s/build 307.1721612 s are derivative work, not detector compute.
 
-Saved export elapsed 3.0065132s; website build 307.1721612s. These are derivative
-and publication work, separate from coding/review wall time. New science: zero.
-Evidence: .local/m11d-gamma-showcase-v1/ (original failures permanently retained).
-
-Publication: source milestone 85d701c is pushed. The first normal publisher
-stopped before push on a temporary rollback-fixture WinError5; the unchanged
-focused test passed and the unchanged normal retry exits0. Failure evidence
-remains. Publisher ran185 Python fixtures (one OS fixture skipped), model and
-frontend checks. Full live check_site verifies463 selected files, including all
-five gamma files, against build97f4dba8. Actual live browser shows AK02 ID4 and
-its cap warning; viewport reset, owned preview tab/server closed. Local/GitHub
-parity and owned-lock ready closure are recorded in the terminal local receipt.
-
-## Retained delivery and permanent science
-
-The completed M11c orchestration took 69.573899s; native 28.462000s includes
-integrity hashing/first-call JIT, injection 0.344000s/readout 2.672000s. M11b
-retains two 20-gamma streams; M11a retains four geometry-only preparations.
-M10 Control.cmd retains its checked Cs137 backend/recovery. The maintained
-Windows guide has six workflow intents; old IDs/links and example URLs survive.
+M11c orchestration 69.573899 s/native 28.462000 s includes hash/JIT, injection 0.344000 s,
+readout 2.672000 s. M11b retains two 20-gamma streams; M11a four geometry preparations.
+M10 retains checked Cs137 controls/recovery; Windows guide has six workflow intents.
 Seventeen viewable models do not imply seventeen executable adapters. Measured
-pulse waveforms were not saved; do not fabricate waveform comparisons.
-.local/cs137-1m/ COMPLETE/archives/HDF5/DONE/configurations are permanent science.
-The native campaign retains completed_with_native_failures, truth, errors and
-unknown nulls. No rerun or cleanup is authorized. Li/depletion/grid accuracy
-remains a separate lane from labeled functional delivery.
+pulse waveforms were not saved; preserve actual spectrum-only limitations.
+.local/cs137-1m COMPLETE/archives/HDF5/DONE/configurations and native failures are
+permanent science. No rerun/cleanup. Li/PDE accuracy is a separate lane from the
+completed functional radiation -> charge -> electronics -> reconstructed-energy demo.
 
 ## Next bounded work
 
-Skip M8/M9: second-computer newcomer acceptance is deferred and blocks no M11.
-After M11d publication, independently inventory vetted cryostat input provenance,
-dimensions, materials, placements and mapping in a separate bounded milestone.
-Unknown experimental geometry cannot be invented or certified by a nominal asset.
-Preserve science and URLs; presentation exports never justify physics reruns.
-Keep remaining website link/information cleanup in subsequent bounded work;
-use existing hubs and preserve old destinations, without another frontend.
+Skip M8/M9: second-computer newcomer acceptance blocks no M11 work.
+Next, one independent monolithic native import/census/material/source/composed-
+transform audit, with explicit expected facts, actual runtime/version, source
+confinement and failed/partial outcomes. Do not inherit modular 20-volume counts,
+change original inputs, grant adapter eligibility or claim event mapping/experiment
+without separate checks. Keep this finite; no radiation/SSD/PDE statistics needed.
+Then continue website link/information cleanup through existing hubs, preserving
+URLs and the sole Windows guide; measure heavy details before optimizing them.
 Current-chat 30-minute heartbeat ACTIVE creation is verified; future execution
-remains unobserved. Only ready/no lock/no active workers permits a new round;
-acquire the owned lock before writes. One root, Sol 6.1 Ultra, no installs,
-global environment changes or reset credits.
+remains unobserved. New rounds require ready/no lock/no active workers and an owned
+lock. One root, verified Sol 6.1 Ultra, no installs/global changes/reset credits.

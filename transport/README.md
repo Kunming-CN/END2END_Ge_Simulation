@@ -26,6 +26,8 @@ not substituted with a generic cryostat and are not part of the website.
 The pinned repository did not expose an explicit license file. This project
 records provenance without republishing or relicensing those upstream files.
 
+For the finite authored input inventory and its portable/explicit-local verification boundaries, see the [advanced cryostat input contract](../tools/CRYOSTAT_INPUTS.md).
+
 ## Run on the configured Windows computer
 
 From the repository root in PowerShell:

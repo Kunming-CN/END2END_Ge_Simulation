@@ -19,6 +19,7 @@ another complete installation recipe.
 | Windows setup/run guide | `tools/site_guide.html` |
 | Loopback bounded-native control | `Control.cmd`, `tools/local_ui.ps1`, `local_ui.py`, `local_ui_jobs.py`, `local_ui.html`, `local_ui.js`; same native backend, no public execution service |
 | Scenario eligibility labels | `scenarios/detector-capabilities.json`; backend restrictions remain independently enforced |
+| Cryostat source-input inventory | `transport/cryostat-input-ledger.json`, `tools/check_cryostat_inputs.py`, `test_cryostat_inputs.py`; see [input verification contract](CRYOSTAT_INPUTS.md). Curated metadata and opt-in original-byte checks only; no new adapter or native/experimental acceptance. |
 | Opt-in source-instance geometry preparation | `transport/scenario_prepare.py`, `scenarios/assets/`, `scenarios/m11a-*.json`, `transport/Prepare.cmd`, `prepare.sh`; see [preparation contract](SCENARIO_PREPARATION.md). This entry prepares geometry and macros only. |
 | Finite synthetic gamma transport and raw event stream | `transport/scenario_transport.py`, `test_scenario_transport.py`, `Gamma.cmd`, `gamma.sh`; see [transport contract](SCENARIO_TRANSPORT.md). Separate from the strict Cs137 reader and later charge/readout coupling. |
 | Electronics settings and configuration preflight | `tools/electronics_settings.ps1`, `electronics_execution.ps1`, `scenario_cli.ps1`; see [ELECTRONICS_SETTINGS.md](ELECTRONICS_SETTINGS.md) |
