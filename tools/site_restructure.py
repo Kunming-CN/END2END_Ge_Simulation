@@ -74,6 +74,11 @@ def apply(site):
     has_1m=response.exists() and truth.exists()
     has_10k=(site/'examples/cs137-10k/comparison.html').exists()
     has_hit_view=(site/'examples/cs137-10k-hits/hit_event_view.html').exists()
+    gamma=site/'examples/gamma-native'
+    has_gamma=gamma.exists()
+    if has_gamma:
+        from gamma_showcase import validate_bundle as validate_gamma_showcase
+        validate_gamma_showcase(gamma)
 
     home=('''<section class="hero"><p class="muted">Precomputed HPGe detector simulations</p>
 <h1>From radiation to an energy measurement.</h1>
@@ -88,9 +93,12 @@ def apply(site):
     home=add_previews(site,home)
     write_page(site/'index.html','END2END Ge Simulation',home,0)
 
+    learn_example='''<article class="card"><h2>Compact teaching example</h2><p>Walk through deposits, charge, preamplifier, shaper and ADC in a compact example.</p><a href="../examples/pipeline.html">Open the compact teaching example →</a></article>'''
+    if has_gamma:
+        learn_example='''<article class="card"><h2>Explore saved gamma events</h2><p>Follow 40 truth events and six selected responses: four positive responses and two selected true zeros. The other 34 responses stay unknown/unprocessed. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.</p><a href="../examples/gamma-native/gamma.html">Open the saved engineering example →</a><p><a href="../examples/pipeline.html">Compact teaching example →</a></p></article>'''
     learn=('''<section class="hero"><p class="muted">Start here</p><h1>Radiation → charge → electronics</h1>
 <p>Geant4/remage records where radiation deposits energy. SolidStateDetectors.jl transports electron/hole charge and calculates electrode signals. The electronics stage applies preamplifier, shaping and peak-ADC response.</p></section>
-<div class="grid"><article class="card"><h2>Explore a saved event</h2><p>Walk through deposits, charge, preamplifier, shaper and ADC in a compact example.</p><a href="../examples/pipeline.html">Open the engineering example →</a></article>
+<div class="grid">'''+learn_example+'''
 <article class="card"><h2>Choose a local workflow</h2><p>The maintained guide covers Windows setup and separates new LBNL runs from existing-input replay and native-readout. The <a href="../scenarios/lbnl-cs137/index.html">scenario page</a> records geometry and detector assumptions.</p><a href="../guide.html#local-routes">Open setup & run guide →</a></article></div>
 <section class="panel"><h2>Important separation</h2><p>Geant4 deposition time is not carrier drift time. Deposited energy, induced charge, analog voltage, ADC code and reconstructed energy are retained as separate quantities.</p></section>''')
     write_page(site/'learn/index.html','Start here · END2END Ge Simulation',learn,1)
@@ -102,20 +110,20 @@ def apply(site):
 <h2>Implemented LBNL selections</h2><div class="grid">'''+detector_cards({'detectors':featured_items})+'''</div>
 <h2>Full model library</h2><div class="grid">'''+detector_cards({'detectors':other_items})+'''</div>''')
     write_page(site/'detectors/index.html','Detectors · END2END Ge Simulation',det,1)
-    result_cards=[]
+    earlier_cards=[]
+    example_cards=[]
     current='''<section class="panel"><h2>Current campaign unavailable in this snapshot</h2><p><a href="cs137-1m/index.html">View the stable 1M campaign overview</a> for availability details.</p></section>'''
     if has_1m:
         current='''<section class="panel"><p class="muted">Current completed campaign</p><h2>Cs137 · 1M per detector</h2><p>AK02 and SAP22 in the nominal LBNL cryostat: Geant4 deposition truth → native SSD charge → synthetic peak ADC. Original reports remain available as archived presentations of this same campaign.</p><a class="button" href="cs137-1m/index.html">Open campaign overview →</a></section>'''
     if has_10k:
-        result_cards.append('''<article class="card"><h2>Earlier Cs137 · 10k</h2><p>Engineering response, response ledgers and interactive recorded-event geometry.</p><a href="cs137-10k/index.html">Open earlier campaign →</a></article>''')
-    gamma=site/'examples/gamma-native'
-    if gamma.exists():
-        from gamma_showcase import validate_bundle as validate_gamma_showcase
-        validate_gamma_showcase(gamma)
-        result_cards.append('''<article class="card"><h2>Completed gamma → native SSD → peak ADC</h2><p>Follow 40 saved gamma events, six processed responses and synthetic charge-injection calibration. Four positive responses and two selected true zeros; small engineering sample with unresolved collection limits.</p><a href="../examples/gamma-native/gamma.html">Inspect saved native charge and readout →</a></article>''')
-    result_cards.append('''<article class="card"><h2>Compact teaching example</h2><p>A selected event-by-event engineering demonstration of the signal chain.</p><a href="../examples/pipeline.html">Open example →</a></article>''')
+        earlier_cards.append('''<article class="card"><h2>Earlier Cs137 · 10k</h2><p>Engineering response, response ledgers and interactive recorded-event geometry.</p><a href="cs137-10k/index.html">Open earlier campaign →</a></article>''')
+    if has_gamma:
+        example_cards.append('''<article class="card"><h2>Completed gamma → native SSD → peak ADC</h2><p>Follow 40 truth events and six selected responses: four positive responses and two selected true zeros. The other 34 responses stay unknown/unprocessed. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.</p><a href="../examples/gamma-native/gamma.html">Inspect saved native charge and readout →</a></article>''')
+    example_cards.append('''<article class="card"><h2>Compact teaching example</h2><p>A selected event-by-event engineering demonstration of the signal chain.</p><a href="../examples/pipeline.html">Open example →</a></article>''')
     results=('''<section class="hero"><p class="muted">Completed simulations</p><h1>Results</h1>
-<p>Campaign pages keep initial-decay denominators, zero-deposit events, unavailable native responses and electronics rejection separate.</p></section>'''+current+'''<h2>Earlier campaign and teaching example</h2><div class="grid">'''+''.join(result_cards)+'''</div>''')
+<p>Campaign pages keep initial-decay denominators, zero-deposit events, unavailable native responses and electronics rejection separate.</p></section>'''+current+'''<h2>Saved engineering examples</h2><div class="grid">'''+''.join(example_cards)+'''</div>''')
+    if earlier_cards:
+        results+='<h2>Earlier campaign</h2><div class="grid">'+''.join(earlier_cards)+'</div>'
     write_page(site/'results/index.html','Results · END2END Ge Simulation',results,1)
 
     if has_1m:

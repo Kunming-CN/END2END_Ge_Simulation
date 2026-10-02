@@ -1,5 +1,5 @@
 """Test full generated navigation using a disposable structural site fixture.
-HTML/JSON use the saved site; large media are placeholders for existence checks.
+HTML/JSON/Markdown/CSV use saved bytes; large media are placeholders for existence checks.
 This does not replace the real site's manifest/media validation or browser tests.
 """
 import json
@@ -20,7 +20,7 @@ class HierarchyTests(unittest.TestCase):
             fixture=Path(tmp)/'site'
             def copy(source,dest):
                 path=Path(source)
-                if path.suffix in ('.html','.json','.md'):
+                if path.suffix in ('.html','.json','.md','.csv'):
                     shutil.copyfile(source,dest)
                 else:
                     Path(dest).write_bytes(b'fixture existence marker')
@@ -30,11 +30,14 @@ class HierarchyTests(unittest.TestCase):
                           for p in fixture.rglob('*.html')}
             old_home=(fixture/'index.html').read_text(encoding='utf-8')
             old_preview=re.findall(r'<figure class="spectrum-panel".*?</figure>',old_home,re.S)
+            gamma=fixture/'examples/gamma-native'
+            gamma_bytes={p.name:p.read_bytes() for p in gamma.iterdir() if p.is_file()}
             S.apply(fixture)
             first={p.relative_to(fixture).as_posix():p.read_bytes() for p in fixture.rglob('*.html')}
             S.apply(fixture)
             second={p.relative_to(fixture).as_posix():p.read_bytes() for p in fixture.rglob('*.html')}
             self.assertEqual(first,second,'Repeated navigation generation changed HTML')
+            self.assertEqual(gamma_bytes,{p.name:p.read_bytes() for p in gamma.iterdir() if p.is_file()})
             for relative,anchors in original_ids.items():
                 current=set(ids((fixture/relative).read_text(encoding='utf-8')))
                 self.assertTrue(anchors<=current,'Old fragments removed from '+relative+': '+str(anchors-current))
@@ -49,6 +52,18 @@ class HierarchyTests(unittest.TestCase):
             self.assertIn('Julia <strong>1.13.0</strong>',guide)
             self.assertIn('PowerShell in the repository root',guide)
             self.assertNotRegex(guide,r'(?<!\\)Run\.cmd (?:check|run|setup|open|resume)')
+            self.assertIn('href="results/index.html">All saved results and engineering examples</a>',guide)
+            learn=(fixture/'learn/index.html').read_text(encoding='utf-8')
+            results=(fixture/'results/index.html').read_text(encoding='utf-8')
+            for page in (learn,results):
+                self.assertEqual(page.count('../examples/gamma-native/gamma.html'),1)
+                self.assertEqual(page.count('../examples/pipeline.html'),1)
+                self.assertIn('Compact teaching example',page)
+            order=('Current completed campaign','Saved engineering examples',
+                   'Completed gamma → native SSD → peak ADC','Compact teaching example',
+                   '<h2>Earlier campaign</h2>','Earlier Cs137 · 10k')
+            self.assertEqual([results.index(label) for label in order],
+                             sorted(results.index(label) for label in order))
             catalog=json.loads((fixture/'models/catalog.json').read_text())
             selected=['index.html','guide.html','learn/index.html','detectors/index.html','results/index.html',
                       'results/cs137-1m/index.html','results/cs137-10k/index.html','methods/index.html',

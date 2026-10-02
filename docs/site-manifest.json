@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "build_id": "97f4dba8d88cb15e4ed557880fdc49b93394b90baba5ee0fc4ef09a2508135f0",
+  "build_id": "f73753911bf22436df83e9600e996baead072d7ae3cd50188a962f1022243235",
   "file_count": 1452,
-  "total_bytes": 767588761,
+  "total_bytes": 767589130,
   "html_pages": 96,
-  "local_links_checked": 2840,
+  "local_links_checked": 2841,
   "files": [
     {
       "path": ".nojekyll",
@@ -7033,8 +7033,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 27234,
-      "sha256": "78c7b42e770a9abe9bd839146527101c12584bddb6efc0d6419e8880955e2a75"
+      "bytes": 27240,
+      "sha256": "deb343c5484ab92b84c7bb549619fbfc04dc6ce1a0b3a0b8f34af93de2ebd25c"
     },
     {
       "path": "index.html",
@@ -7043,8 +7043,8 @@
     },
     {
       "path": "learn/index.html",
-      "bytes": 3555,
-      "sha256": "fbca64ea3aa75cfa8a0b51adc518b6852d634c400e6e42f33f611c0e8107633d"
+      "bytes": 3830,
+      "sha256": "52ef5469558c8679b9687ad4ff9b90f0749907c71404ca2d0ebca4789486ceb2"
     },
     {
       "path": "lithium/axes-comparisons.csv",
@@ -7218,8 +7218,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 3858,
-      "sha256": "7cfc008868faf37c7fb7394b7d7ae72b213c11c6ddc2dc66c31f46ff30ed1fed"
+      "bytes": 3946,
+      "sha256": "07992ae7002513ca7bdf0c1d7a72e52c866bae134d94585ab534cb883e26e2a6"
     },
     {
       "path": "scenarios/lbnl-cs137/index.html",

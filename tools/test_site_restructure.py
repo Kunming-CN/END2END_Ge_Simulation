@@ -23,7 +23,10 @@ class SiteStructureTests(unittest.TestCase):
             (root/'examples/cs137-10k').mkdir();(root/'examples/cs137-10k/comparison.html').write_text('x')
         return root
     def test_three_primary_entries_and_download(self):
-        root=self.fixture(); result=S.apply(root)
+        root=self.fixture()
+        with patch('gamma_showcase.validate_bundle') as checked:
+            result=S.apply(root)
+        checked.assert_not_called()
         home=(root/'index.html').read_text()
         self.assertEqual(result['detectors'],2)
         for label in S.PRIMARY:self.assertIn(label,home)
@@ -38,6 +41,11 @@ class SiteStructureTests(unittest.TestCase):
         for p in ('learn/index.html','detectors/index.html','results/index.html',
                   'methods/index.html','scenarios/lbnl-cs137/index.html'):
             self.assertTrue((root/p).is_file(),p)
+        for name in ('learn/index.html','results/index.html'):
+            page=(root/name).read_text()
+            self.assertIn('Compact teaching example',page)
+            self.assertEqual(page.count('../examples/pipeline.html'),1)
+            self.assertNotIn('../examples/gamma-native/gamma.html',page)
         scenario=(root/'scenarios/lbnl-cs137/index.html').read_text()
         self.assertIn('guide.html#choose',scenario)
         self.assertIn('guide.html#local-routes',scenario)
@@ -54,7 +62,10 @@ class SiteStructureTests(unittest.TestCase):
         overview=(root/'results/cs137-1m/index.html').read_text()
         self.assertIn('12,420',overview);self.assertIn('10,757',overview)
         results=(root/'results/index.html').read_text()
-        self.assertLess(results.index('Current completed campaign'),results.index('Earlier campaign and teaching example'))
+        self.assertLess(results.index('Current completed campaign'),results.index('Saved engineering examples'))
+        self.assertLess(results.index('Saved engineering examples'),results.index('Compact teaching example'))
+        self.assertLess(results.index('Compact teaching example'),results.index('<h2>Earlier campaign</h2>'))
+        self.assertLess(results.index('<h2>Earlier campaign</h2>'),results.index('Earlier Cs137 · 10k'))
         self.assertIn('Original reports remain available as archived presentations of this same campaign',results)
         self.assertNotIn('1M per detector',''.join(re.findall(r'<article class="card">.*?</article>',results,re.S)))
         self.assertIn('Compact teaching example',results)
@@ -65,7 +76,7 @@ class SiteStructureTests(unittest.TestCase):
         first={p:(root/p).read_bytes() for p in owned};S.apply(root)
         self.assertEqual(first,{p:(root/p).read_bytes() for p in owned})
 
-    def test_gamma_adds_only_one_results_entry_and_preserves_saved_bytes(self):
+    def test_checked_gamma_promotes_both_hubs_and_preserves_saved_bytes(self):
         root=self.fixture(with_results=True);S.apply(root)
         before={p.relative_to(root).as_posix():p.read_bytes() for p in root.rglob('*') if p.is_file()}
         gamma=root/'examples/gamma-native';gamma.mkdir(parents=True)
@@ -78,11 +89,35 @@ class SiteStructureTests(unittest.TestCase):
         self.assertEqual(results.count('../examples/gamma-native/gamma.html'),1)
         self.assertIn('Compact teaching example',results)
         self.assertIn('../examples/pipeline.html',results)
+        order=('Current completed campaign','Saved engineering examples',
+               'Completed gamma → native SSD → peak ADC','Compact teaching example',
+               '<h2>Earlier campaign</h2>','Earlier Cs137 · 10k')
+        self.assertEqual([results.index(label) for label in order],
+                         sorted(results.index(label) for label in order))
+        learn=(root/'learn/index.html').read_text()
+        self.assertEqual(learn.count('../examples/gamma-native/gamma.html'),1)
+        self.assertEqual(learn.count('../examples/pipeline.html'),1)
+        self.assertLess(learn.index('../examples/gamma-native/gamma.html'),learn.index('../examples/pipeline.html'))
+        self.assertIn('Open the saved engineering example',learn)
+        self.assertIn('Compact teaching example',learn)
+        for page in (learn,results):
+            for wording in ('40 truth events','six selected responses','four positive responses',
+                            'two selected true zeros','34 responses stay unknown/unprocessed',
+                            'Small engineering sample','unresolved collection limits',
+                            'independent synthetic injection calibration'):
+                self.assertIn(wording,page)
         for name,raw in before.items():
-            if name!='results/index.html':self.assertEqual((root/name).read_bytes(),raw,name)
+            if name not in ('learn/index.html','results/index.html'):
+                self.assertEqual((root/name).read_bytes(),raw,name)
         self.assertEqual((gamma/'gamma.html').read_bytes(),b'synthetic checked fixture\r\n')
-        with patch('gamma_showcase.validate_bundle',side_effect=ValueError('incomplete gamma')):
+        invalid_before={p.relative_to(root).as_posix():p.read_bytes() for p in root.rglob('*') if p.is_file()}
+        with patch('gamma_showcase.validate_bundle',side_effect=ValueError('incomplete gamma')) as checked, \
+             patch.object(S,'write_page') as write:
             with self.assertRaisesRegex(ValueError,'incomplete gamma'):S.apply(root)
+        checked.assert_called_once_with(gamma)
+        write.assert_not_called()
+        self.assertEqual(invalid_before,{p.relative_to(root).as_posix():p.read_bytes()
+                                       for p in root.rglob('*') if p.is_file()})
     def test_source_removal_replaces_owned_hubs_with_unavailable_pages(self):
         root=self.fixture(with_results=True);S.apply(root)
         (root/'examples/cs137-1m-response/summary.json').unlink();(root/'examples/cs137-1m/summary.json').unlink();(root/'examples/cs137-10k/comparison.html').unlink()
@@ -101,9 +136,11 @@ class SiteStructureTests(unittest.TestCase):
         root=self.fixture();S.apply(root)
         guide=(root/'guide.html').read_text()
         sections=dict(re.findall(r'<section id="([^"]+)">(.*?)</section>',guide,re.S))
-        for anchor in ('browse','setup','choose','electronics','results','validation','workspace','downloads',
-                       'local-routes','replay','native-readout','recovery'):
-            self.assertIn(anchor,sections)
+        anchors=('local-routes','browse','setup','choose','local-control','electronics','replay',
+                 'native-readout','source-preparation','results','recovery','validation','workspace','downloads')
+        self.assertEqual(set(sections),set(anchors))
+        self.assertEqual(len(re.findall(r'<section id="([^"]+)"',guide)),len(anchors))
+        self.assertIn('href="results/index.html">All saved results and engineering examples</a>',sections['local-routes'])
         self.assertIn('WSL2',sections['setup'])
         self.assertIn('full signed <code>signals.csv</code>',sections['replay'])
         self.assertIn('no group recovery',sections['replay'])
