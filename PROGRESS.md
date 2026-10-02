@@ -1,9 +1,32 @@
 # Project state and next bounded work
 
 Updated: 2026-10-02 UTC. This compact handoff governs delivery order.
-The preceding guide handoff is immutable
-[at 8ee8cc5](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/8ee8cc50ada94097ecf9160be3cfb020d33a29e2/PROGRESS.md).
+The preceding browser handoff is immutable
+[at 2373a29](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/2373a290e4dcedaa2538619b67d60b32ed63a053/PROGRESS.md).
 Inspect terminal receipts, Git, hashes and actual workers before repeating work.
+
+## M11o narrow Gamma status/time wording repair
+
+Two renderGamma lines now give verification_required a neutral pending notice,
+retain real failure/uncertain warnings, and name elapsed_seconds control-record
+span including waiting/result checks rather than calculation time. Every time
+value, backend/schema/state/guard/download contract and scientific byte is retained.
+One existing test label assertion follows the new wording; exact1.3 rounding gate
+and all other fixture/assertion bytes remain. Old-label failure is preserved,
+then syntax/15 existing mock-static groups PASS. No new tests/framework.
+
+Actual pending/verified/failed browser cases confirm neutral note/error distinction,
+separate unchanged67.948s saved computation, and Start disabled. Control record
+span10352.0->28396.0s changes on explicit verification by the unchanged backend;
+this includes prior tool waiting, not new science. Desktop2screenshots/mobile1,
+390x844 no horizontal overflow; one saved verification, Start/Resume/Retry0,
+downloads0/science0. Source/run/COMPLETE pins exact, owned server/receipt closed;
+Ctrl-C terminal exit1 is recorded. Two scoped source AI reviews accept with four actual reciprocal messages after
+both INITIALs freeze. NEW independently verified
+Sol6.1 Ultra public-only static third PASS/tools0; it notes unit assertions do not
+directly cover the new paragraph/class, which the actual browser checks cover.
+Evidence .local/m11o-gamma-wording-v1/; publication/Git terminal receipt follows.
+Website payloads remain build26aebee/8ee8cc5 exact464live from M11m, no rebuild.
 
 ## M11n actual existing-host control browser checks
 
@@ -28,8 +51,7 @@ messages: verification_required is misleadingly labelled failed; control-record
 elapsed1676.5->10352.0s is updated by explicit verification and includes offline
 waiting, while saved calculation67.948s remains exact. Preserve both raw clocks,
 all job state/failures/gates and science. Their direct findings preceded the peer
-opener but final checks followed it, accurately recorded; AI review only. Next
-M11o is a narrow JS wording correction, no backend timer/schema or physics change.
+opener but final checks followed it, accurately recorded; AI review only. M11o implements only the diagnosed JS wording correction below the same guards.
 Evidence .local/m11n-control-browser-v1/ governs; Git sync follows this handoff.
 
 ## M11m maintained mouse-interface guide
@@ -155,11 +177,11 @@ verification, not a new executable adapter. Seventeen viewable is not executable
 ## Next bounded work
 
 Skip M8/M9: second-computer newcomer acceptance blocks no current development.
-M11o is next: correct only misleading Gamma pending-verification and control-clock
-wording in local_ui.js. Keep actual numerical values and validation/busy/download
-semantics unchanged; existing frontend checks plus actual browser evidence, two
-independent scoped peers and NEW Sol6.1 Ultra public-only third review. No backend
-schema/timer migration, simulations, installations or browser-download retry.
+Next bounded work is a read-only assessment of remaining Results/Methods link
+clutter, then select one useful maintained-source navigation change with all
+existing destinations/results preserved. Do not declare overall clutter closed,
+add a frontend/environment, expose private examples or expand into new physics.
+The completed M11o repair and its terminal sync take precedence over older notes.
 Root LICENSE requires the owner's
 MIT/Apache/GPL choice and specific rights scope; do not treat preselection as an
 answer. Model/source permissions stay separate. No collaborator grants or new CI.
