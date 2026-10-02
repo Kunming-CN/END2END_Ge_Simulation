@@ -1,9 +1,36 @@
 # Project state and next bounded work
 
 Updated: 2026-10-02 UTC. This compact handoff governs delivery order.
-The preceding community handoff is immutable
-[at 11ad559](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/11ad559b2b4e804a3c475058a07f31acc7fb1098/PROGRESS.md).
+The preceding guide handoff is immutable
+[at 8ee8cc5](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/8ee8cc50ada94097ecf9160be3cfb020d33a29e2/PROGRESS.md).
 Inspect terminal receipts, Git, hashes and actual workers before repeating work.
+
+## M11n actual existing-host control browser checks
+
+Four actual metadata selections after one explicit refresh, separate saved-reference
+open acknowledgement, one successful existing-gamma verification and two input
+checks (threads2/1) pass with new science0. Changing threads invalidates Start;
+no Start/Resume/Retry calls. Twelve ordinary download links bind the existing job.
+One actual browser run.json download is byte-exact; its event/path call unexpectedly
+blocked17241.9799s (~4h47m) despite requested10s timeouts. This is tool waiting,
+not detector computation. No further download calls. Temporary downloaded input
+is recorded and copied read-only into the project evidence leaf.
+
+Desktop1280x720/mobile390x844 show no horizontal overflow; keyboard folds work,
+selected SAP22 gamma preview persists and Start is left disabled. Four desktop
+screenshots/one mobile; native default opener display remains unobserved. Actual
+browser scope does not establish new-calculation UI or M8/M9 acceptance. Existing
+source/run pins remain exact, server closed with receipt removed; Ctrl-C terminal
+exit1 is recorded separately from confirmed process/lease cleanup.
+
+Two scoped Sol6.1 Ultra agents discuss two P2 presentation issues in two actual
+messages: verification_required is misleadingly labelled failed; control-record
+elapsed1676.5->10352.0s is updated by explicit verification and includes offline
+waiting, while saved calculation67.948s remains exact. Preserve both raw clocks,
+all job state/failures/gates and science. Their direct findings preceded the peer
+opener but final checks followed it, accurately recorded; AI review only. Next
+M11o is a narrow JS wording correction, no backend timer/schema or physics change.
+Evidence .local/m11n-control-browser-v1/ governs; Git sync follows this handoff.
 
 ## M11m maintained mouse-interface guide
 
@@ -31,7 +58,8 @@ Local96HTML/2841links PASS60.593s. Actual rendered guide1280x720 desktop and390x
 mobile has no horizontal overflow; keyboard Enter expands/collapses the limits
 fold. One screenshot each, temporary owned preview closed. This checks the public
 guide, not local-control execution or second-computer installation. Science0.
-Git/published exact-live validation follows this commit; terminal receipt governs.
+8ee8cc5 synchronized local/main/origin/GitHub and deployed; exact464 live files
+PASS117.203s. Terminal COMPLETE receipt governs.
 Evidence .local/m11m-guide-contract-v1/; old raw results/failures unchanged.
 
 ## M12b contribution, citation and compatible protection
@@ -94,51 +122,25 @@ buildeff982/41d19c4. Broader optional clutter design is not declared closed.
 
 ## Retained delivered results and limitations
 
-M11k 92b5ca7 provides fixed gamma manual check/start/observed progress/verify and
-12 new-result downloads via unchanged science CLI/worker; shared owned Cs137/gamma
-reservation, threads1/2/default2, serial/abort, no gamma stop/resume/retry. Reopen
-and downloads remain explicit/conservative; saved reference/preview identities
-stay separate. One actual40/6/34-null calculation,4native/2independent500keV injection
-calls passes; orchestration67.9476419s vs HTTP/control74.4411303s. Same22 outputfiles
-and12 downloads reverified without repeat.85 Python/15mock groups and3AI reviews/
-4actual peer messages pass; UI acceptance0. Zero-science early WindowsApps alias
-failure, exact classification, raw logs/tickets and bookkeeping failures retained.
-Third review is public-code-only; private payload auto-approval rejection remains
-recorded. Evidence .local/m11k-gamma-control-v1/COMPLETE.json, ownedlock closed.
+M11k92b5ca7 fixed gamma control retains one actual40/6/34-null calculation,
+22 outputfiles,12 downloads,4native/2independent500keV injections. Serial2threads/
+abort, orchestration67.9476419s versus control74.4411303s;85 Python/15mock groups,
+threeAI reviews/fourmessages. Initial real-UI0 is historical; M11n covers only the
+explicit subset above, with new Start0. Zero-science WindowsApps alias failure,
+raw logs/tickets and private-payload approval refusal are preserved. Authority:
+.local/m11k-gamma-control-v1/COMPLETE.json; no pilot repeat.
 
-M11j 19cb1b8 opens the checked fixed M11d saved gamma browser through explicit
-authenticated POST{}, separate from new calculations.53 Python/eight mock groups,
-real validator/HTTP with mocked opener and three AI reviews pass; visual checks0.
-Original explorer/downloads exact. Evidence .local/m11j-saved-example-v1/ retained.
+M11j19cb1b8 checks the fixed M11d saved browser through authenticated POST{};
+no export/science, requested does not mean displayed. M11i2f04845 provides four
+metadata-only candidate previews, not execution/retargeting. M11h6bc2f60 README
+four task links/folded references and M11g292fba3 saved-only navigation publication
+remain delivered; old exact test/build/live receipts are linked in the immutable
+handoff. Broader clutter is not declared closed by those changes.
 
-M11i 2f04845 provides four manual checked AK02/SAP22 Cs137/662 keV gamma previews
-through pinned scenario_prepare.check: all-or-none metadata only, no execution.
-Planned20/seed, units/pose/direction/creation-not-drift clock, 78 K contacts and
-candidate/not-executed statuses remain. Selecting gamma cannot retarget fixed
-Cs137/private77 K cached physics. Tests54/zero skips, four mock groups/two syntax
-and real HTTP/catalog-to-mock pass; actual visual checks0. Evidence retained exact.
-
-M11h 6bc2f60 organizes README into four task links and 16 folded references;
-all 20 URLs, seven guide anchors, commands/facts and visible scope remain exact.
-GitHub server Markdown parsing passes; actual visual checks 0. Broader website
-clutter remains future work, not declared closed by these navigation changes.
-
-M11g 292fba3 is deployed. Saved-only build
-f73753911bf22436df83e9600e996baead072d7ae3cd50188a962f1022243235
-has 1452 payloads/1453 files; only Learn, Results and guide navigation plus manifest
-changed, 1449 payloads exact. Tests 8 focused/23 publication/27 contacts pass;
-local check 96 HTML/2841 links and exact live check 463 files pass. Original URLs,
-guide anchors and numerical results remain. No enabled browser surface; supported
-panel opening was queued. Existing-auth Git avoids publisher global auth setup.
-
-M11f 1574aa7 retains one native audit: 22 logical volumes, 23 placements, 66 native
-solid IDs from 47 authored origins plus rebuilt instances/15 displaced helpers.
-1000 GPS positions and sampled overlaps pass finite checks. Three closed-store
-warnings remain: completed_with_native_warnings/scoped_acceptance=false. Monolithic
-input remains candidate_input_only; event mapping/experimental acceptance unfinished.
-Saved integer-identity repair 36 tests/eight aliases and targeted reviews pass;
-original raw receipts, failed bridge attempt and timing correction are preserved.
-Native 0.059635996 s, command 0.493357 s, control 51.7781441 s are separate from coding.
+M11f1574aa7 retains22logical volumes/23placements/66native IDs and1000GPS checks;
+three closed-store warnings, completed_with_native_warnings/scoped_acceptance=false.
+Candidate geometry is not experimental acceptance; original identity repair,
+failed bridge evidence and distinct native/command/control timings remain intact.
 
 M11d 85d701c/59ad779 retains 40 truth IDs/six selected/four positive/two true zeros,
 34 unprocessed/nulls, 10057 signed samples/exact CSVs and independent 500 keV injection
@@ -153,13 +155,11 @@ verification, not a new executable adapter. Seventeen viewable is not executable
 ## Next bounded work
 
 Skip M8/M9: second-computer newcomer acceptance blocks no current development.
-M11n is next: bounded actual browser acceptance of the already implemented local
-controls on this existing host, using input checks/metadata previews and saved
-verification/open only. Inspect state/processes/source compatibility before any
-interface launch; no new radiation, SSD, electronics, installation or campaign.
-Do not blindly adopt or rerun the completed M11k job; preserve its source-bound
-receipt and failure accounting. Keep M8/M9 deferred, record actual browser scope,
-owned process cleanup and any concrete UI problem before deciding a narrow fix.
+M11o is next: correct only misleading Gamma pending-verification and control-clock
+wording in local_ui.js. Keep actual numerical values and validation/busy/download
+semantics unchanged; existing frontend checks plus actual browser evidence, two
+independent scoped peers and NEW Sol6.1 Ultra public-only third review. No backend
+schema/timer migration, simulations, installations or browser-download retry.
 Root LICENSE requires the owner's
 MIT/Apache/GPL choice and specific rights scope; do not treat preselection as an
 answer. Model/source permissions stay separate. No collaborator grants or new CI.
