@@ -47,12 +47,19 @@ transport/native/readout stages. GeRC02 Li50min passed with21 groups/19 accepted
 KMRC01_candidate has3 complete negative-charge groups, all rejected by the frozen
 positive-peak electronics. The owner has authorized a KM-only fixed linear -1
 electronics input wiring plus independent negative injection calibration. KM is
-not yet promoted: the additive adapter must pass its saved-500 derivative checks.
-Preserve the original pilot and reuse saved native signals for readout analysis.
+not promoted solely from the original positive-peak result. Its saved-only
+fixed-wiring derivative now passes: all 500 primaries, 497 zeros and 3 accepted
+groups; 220 raw signed samples and the original three rejects remain preserved.
+Julia 66/Python 6 checks pass. Three independent initial reviews and concrete
+cross-review accepted KM10K admission. Actual guarded production started
+2026-10-02T21:53:56Z, supervisor35764; no completed pilot physics is repeated.
 
-GeRC02's guarded 10K was actually launched2026-10-02T17:28:41Z and is processing
-native charge/readout. Keep its44 computational source pins unchanged while it
-runs; prepare the additive KM readout/launcher and public presentation in parallel.
+GeRC02's guarded 10K launched2026-10-02T17:28:41Z and finished18:05:09Z:
+10,000 primaries, 9,703 zeros, 297 groups, 231 accepted, 4 native failures and
+62 electronics rejects. The terminal and all44 source pins were independently
+verified after the application update. This is processing completion, not Li CCE
+validation. Keep original science/source bindings; finish KM admission and the
+saved public presentation in parallel.
 Do not run a second native worker. A saved-only readout correction does not
 require repeating the completed KM radiation, field or native500 stages.
 

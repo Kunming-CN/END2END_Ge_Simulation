@@ -5,20 +5,17 @@ The preceding handoff is immutable
 [at 8162c57](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/8162c5721d331ad0f8b0a6741f501c8352211909/PROGRESS.md).
 Inspect terminal receipts, Git, hashes and actual workers before repeating work.
 
-Owner-requested pause2026-10-02 for an application update: development agents
-have saved coherent local checkpoints and stopped; heartbeat `automation` is
-PAUSED. Detached GeRC02 10K supervisor41132/native44292 continues under its own
-campaign lock. Do not launch another worker or retry science after the update:
-inspect `.local/ring-cs137-v1/progress.json`, production terminal/run/envelope,
-source hashes and actual processes first. Outer round ownership is released into
-the pause evidence; autonomy remains paused, not ready. Resume only on owner input.
-KM polarity/launcher are written but untested; exporter is partial and explicitly
-refuses export. Their exact unfinished steps and source hashes are in
-KM-POLARITY-WRITER-v1.json, KM-RUNNER-WRITER-PAUSE-v1.json and
-`.local/ring-publication-v1/build/WRITER-PAUSE-v1.json`. The unchanged scene
-exporter's hardcoded historical roots need a bounded additive helper later.
-These unfinished calculation files remain local until testing/review; no new
-launch, test, export or geometry operation belongs to the pause checkpoint.
+Owner directly resumed after the application update2026-10-02. Actual root
+turn_context confirms Sol6.1 Ultra/project cwd; current owner is
+`km-polarity-v1-root`, host39260. Heartbeat `automation` is ACTIVE; state running
+prevents duplicate rounds. Ge10K finished during the pause: its terminal,
+source44 and stages were independently verified without new science. Both old
+worker PIDs are absent. Its read-only empty-lock cleanup failure is retained;
+the empty owned lock was retired after terminal/PID checks. See KM-RESUME-01.json.
+Current bounded work: KM fixed-inversion/negative-injection admission passed;
+KM10K actually started21:53:56Z, supervisor35764. Complete the four-detector
+saved public presentation while this serial worker runs; never edit its51 pins.
+No old10K/1M or completed500 radiation/field/drift is repeated.
 
 ## M13 unified viewer and ring-contact 10K plan
 
@@ -73,16 +70,36 @@ mounting, native overlaps/volume/membership, explicit78->77 K and independent
 
 Unchanged KMRC01_candidate also completed500 radiation/native/readout processing:
 497 zeros/3 groups/0 native failures, but its negative charge is rejected by the
-existing positive-peak electronics (accepted0). Its pilot is NOT promoted. Owner
+existing positive-peak electronics (accepted0). That original result alone cannot
+promote the case. Owner
 has authorized fixed KM-only -1 electronics wiring and independent negative
-injection calibration. The additive adapter is source-frozen; saved-only tests and
-pilot derivative admission follow the active native worker, preserving all raw
-signs and the original failed readout without radiation/field/drift repeats.
+injection calibration. The additive adapter/launcher are source-frozen. Julia
+33+33 meaningful checks and Python6 checks pass. Actual saved-only500 derivative
+completes:497 zeros/3 groups/3 accepted/0 failures; all220 raw signed samples,
+original reject/ADC records, truth, delays, flags and nulls remain retained.
+Independent negative500keV injection through fixed -1 wiring gives0.245006812V
+at1000ns with one slope; readout3.350s/injection0.283s, no radiation/field/native
+calls. New51-source KM config, corrected pilot and common tested review packet
+are under `.local/ring-cs137-v1` and KM-REVIEW-PACKET-01.json. Three independent
+AI INITIALs froze; scoped peers completed3 real direct messages, then NEW strict
+reviewer/root confirmed direction. All FINALs accept;51 pins rechecked. Analog
+tail holds the last charge inside a clipped window, not necessarily full native
+final charge; original flags/untruncated values remain. The real pilot has no
+native failure, so failure-path support is source/test-fixture evidence only.
+Actual PID/lock/source/pilot checks preceded guarded KM10K launch21:53:56Z.
+Public code still requires portable-runtime treatment of the frozen host-only
+Julia path; no computation-source edit is allowed during this run.
 Three independent Sol6.1 Ultra AI INITIALs froze before real peer exchange
 (six scoped messages plus the independent third/root exchange). Guarded Ge10K
-admission passes and actually launched17:28:41Z, supervisor41132 at this handoff.
-Its44 compute pins remain unchanged while native charge/readout runs. Neither
-ring10K nor equal public coverage is complete yet; actual terminal receipts under
+admission passes and launched17:28:41Z; Ge10K finished18:05:09Z. Independent saved
+verification passes:10000 initial decays/9703 zero-Ge/297 groups/231 accepted,
+4 native failures and62 electronics rejects. The4 failures are IDs560,1519,3230,
+5212/group0, exact ArgumentError "Noncontact endpoint outside crystal"; unknown
+charge/readout remain null. Native drift2048.070s/field26.215s/readout7.019s,
+remage6.461s; supervisor span2196.642s is separate. Its44 compute pins remain
+unchanged. This is processing completion with retained numerical failures,
+not Li CCE validation. KM10K and equal public coverage remain unfinished;
+actual terminal receipts under
 `.local/ring-cs137-v1` govern recovery. Reviews and pilot/launch evidence are under
 `.local/ring-delivery-v1`. New calculation-source synchronization follows its
 implementation freeze/review; no raw scientific data is published.
