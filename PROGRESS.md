@@ -4,7 +4,7 @@ Updated: 2026-10-03 UTC. Read this before starting work.
 The complete M13/M14 record is preserved [at 9b73383](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/9b733834c245834658151a2d31f092a1b2bd5305/PROGRESS.md).
 Inspect terminal receipts, source hashes and real processes before repeating work.
 
-## Current state: manual prerequisites and planning; continuation paused
+## Current state: manual prerequisites/submission and planning delivered; continuation paused
 
 The owner paused automatic development, then requested a status audit, completion
 of LICENSE/Google submission and a detailed next-window plan. This manual round
@@ -20,9 +20,14 @@ Google uses the owner's exact URL-prefix property
 https://kunming-cn.github.io/END2END_Ge_Simulation/ and its persistent verification
 tag. Console rejected the first live snapshot because its head was implicit.
 The normal assembler now emits explicit head boundaries; the rejection and
-repair reviews are retained. Verification, sitemap submission and homepage
-index-request await the repaired deployment and actual Console results.
-Publication or a submission is not proof of indexing.
+repair reviews are retained. Actual Console results on 2026-10-03: HTML-tag
+ownership verified; sitemap.xml submitted successfully; homepage "Indexing
+requested" and added to the priority crawl queue. The sitemap report still says
+"Couldn't fetch"/Unknown/0 discovered. Google's live inspection of that exact
+sitemap URL confirms Crawl allowed=Yes, Page fetch=Successful and Indexing
+allowed=Yes. No specific remaining site defect was found; report processing and
+search inclusion remain external pending outcomes, not completed indexing or a
+new software-development gate. Do not resubmit repeatedly or invent success.
 
 MIT and the plan were synchronized at 2f79c9e; GitHub recognizes MIT. That exact
 c257d2f1 snapshot passed the explicit online check of 696 selected artifacts.
@@ -32,8 +37,10 @@ Its only payload differences from c257 are literal head wrappers in 25 maintaine
 HTML pages (325 bytes); no files added/deleted or science/model/media edits.
 No physics ran. Source freeze matches; 13 discovery and 32 site tests passed,
 including rehashed implicit-head rejection and exact predecessor admission.
-The repaired explicit local check passed. Repaired deployment, exact live
-validation and actual Console results remain pending.
+The repaired explicit local check passed. Commit 2878092 deployed successfully
+(Pages run 37144887058), and the repaired explicit online check passed all 696
+selected exact artifacts. Homepage, manifest and LICENSE also match live bytes.
+The final handoff-only commit preserves this same checked website build.
 
 Private planning/publication evidence: .local/product-delivery-v1/next-plan/.
 Two independent Sol6.1 Ultra scoped INITIALs and a NEW strict INITIAL froze
