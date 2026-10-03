@@ -1,16 +1,47 @@
 """Generate detector overview/gallery/technical levels from saved website assets."""
 import json
+import re
 from html import escape
 from pathlib import Path
 from site_fragments import remove_sections, ids
 
 RUN='20260922_suite_v3'
 MANAGED={'featured-detector-navigation','ssd-interactive-geometry','saved-gallery-intro'}
+TYPE_LABELS={
+    'AK01':'Inverted coaxial point-contact (ICPC)',
+    'AK02':'Inverted coaxial point-contact (ICPC)',
+    'BEGe_GD32B_reference':'Broad energy germanium (BEGe)',
+    'BEGe_reference':'Broad energy germanium (BEGe)',
+    'Bipolar_reference_3D':'Planar detector',
+    'COAX_ANG2_reference':'Coaxial detector',
+    'GeGI_3D':'Double-sided strip detector',
+    'GeRC02':'Ring-contact detector',
+    'ICPC_48A_reference':'Inverted coaxial point-contact (ICPC)',
+    'ICPC_large_reference':'Inverted coaxial point-contact (ICPC)',
+    'KL01_3D':'Planar detector',
+    'KMRC01_candidate':'Ring-contact detector',
+    'PPC_PONaMa1_reference':'Point-contact detector (PPC)',
+    'SAP16':'Inverted coaxial point-contact (ICPC)',
+    'SAP17':'Inverted coaxial point-contact (ICPC)',
+    'SAP18_ring08_scenario':'Ring-contact detector',
+    'SAP22':'Inverted coaxial point-contact (ICPC)',
+}
+
+def archive_notebook(html):
+    """Correct only the public execution invitation; retain saved outputs/anchors."""
+    html=html.replace('Back to GeGI results','Back to GeGI overview')
+    html=html.replace('Dimensions and model inputs are listed in <code>README.md</code>.',
+        'Dimensions and model inputs belong to the earlier study’s private <code>README.md</code>, which is not included in this archive.')
+    html=html.replace('Supplementary saved notebook; not a live simulation. Original code inputs are omitted. Parameters belong to this earlier study.',
+        'Archived executed notebook. Recorded outputs and parameters belong to this earlier study; code inputs and private README are omitted. Use the setup guide for supported new calculations.')
+    return re.sub(r'<p>Kernel: <strong>Julia 1\.13 — GeGI</strong>\. Run all cells in order\.</p>',
+        '<p>Recorded notebook kernel: <strong>Julia 1.13 — GeGI</strong>. This archive displays saved outputs; it does not execute cells.</p>',html)
 
 def apply(site, write_page):
     site=Path(site)
     catalog=json.loads((site/'models/catalog.json').read_text(encoding='utf-8'))
     capabilities=execution_capabilities()
+    control_ids=control_capabilities(capabilities)
     report=site/"examples/cs137-1m-response/summary.json"
     campaign_models=set(json.loads(report.read_text())["models"]) if report.is_file() else set()
     delivered=[]
@@ -49,28 +80,31 @@ def apply(site, write_page):
                   'style="width:100%;height:720px;border:0" loading="lazy"></iframe></section>')
         if not (folder/'geometry.html').is_file():
             geometry=f'<section class="panel"><h2>Saved geometry</h2><img style="max-width:100%" src="runs/{RUN}/01_geometry.png" alt="{escape(model)} saved geometry"></section>'
-        supported=capabilities[model]['lbnl_execution_implemented']
-        run_note=(f'<p>{escape(model)} has an implemented nominal '
-                  '<a href="../../scenarios/lbnl-cs137/index.html">LBNL Cs137 selection</a>. '
-                  'Use the <a href="../../guide.html#local-routes">setup & run guide</a> '
-                  'to choose a new run or a checked existing-input workflow.</p>' if supported else
-                  '<p>LBNL end-to-end execution is not yet integrated for this model. '
-                  'Geometry viewing is available independently of cryostat placement and readout support.</p>')
+        supported=model in control_ids
+        run_note=(f'<p>Control supports {escape(model)} in the nominal LBNL modular cryostat. '
+                  'Use the <a href="../../guide.html#local-control">Control instructions</a> '
+                  'after <a href="../../guide.html#setup">setup</a>. '
+                  'Fresh-machine reproduction remains unvalidated.</p>' if supported else
+                  '<p>This model is available for browsing. New end-to-end execution in Control is not integrated for it.</p>')
         special=('<p><a href="strip_explorer.html">Explore all 34 GeGI signal channels</a> · '
                  '<a href="supplement.html">Earlier supplementary study</a></p>' if model=='GeGI_3D' else '')
         legacy_ids=set(ids(cleaned))-MANAGED-{'contact-legend','native-cs137-10k'}
         aliases=''.join(f'<p id="{escape(i,quote=True)}"><a href="gallery.html#{escape(i,quote=True)}">Open saved gallery detail</a></p>' for i in sorted(legacy_ids))
         past=('<section id="native-cs137-10k" class="panel"><h2>Source-campaign results</h2>'
-              '<p><strong>Current:</strong> <a href="../../results/cs137-1m/index.html">1M campaign overview</a></p>'
-              '<p><strong>Earlier:</strong> <a href="../../results/cs137-10k/index.html">10k campaign</a> · '
-              f'<a href="../../examples/cs137-10k-hits/hit_event_view.html?model={model}">Explore earlier 10k Ge-positive events</a></p></section>' if model in campaign_models else '')
+              '<p><a href="../../results/cs137-10k/index.html">Cs137 10K results</a> · '
+              '<a href="../../results/cs137-1m/index.html">Separate 1M campaign overview</a></p>'
+              f'<p><a href="../../examples/cs137-10k-hits/hit_event_view.html?model={model}">Explore 10K Ge-positive events</a></p></section>' if model in campaign_models else '')
         header=(f'<section class="hero"><p><a href="../index.html">All detectors</a> / <a href="index.html">{escape(model)}</a></p>'
-                f'<h1>{escape(model)}</h1><p>{count} contacts · {escape(item.get("coordinate_system",""))} · '
-                f'{escape(item.get("status","Saved model"))}</p></section>')
+                f'<h1>{escape(model)}</h1><p>{escape(TYPE_LABELS[model])}</p></section>')
+        image=(f'<figure class="panel"><a href="runs/{RUN}/01_geometry.png">'
+               f'<img loading="lazy" style="width:100%;height:300px;object-fit:contain" src="runs/{RUN}/01_geometry.png" '
+               f'alt="{escape(model)} {escape(TYPE_LABELS[model])}, saved geometry"></a>'
+               '<figcaption>Saved geometry · <a href="runs/'+RUN+'/01_geometry.png">Open full-size image</a>. '
+               'Colors identify contact IDs; they do not show doping or Li thickness.</figcaption></figure>')
         nav=('<section id="featured-detector-navigation" class="panel"><h2>Explore this detector</h2>'
              '<p><a href="geometry.html">Rotate geometry</a> · <a href="gallery.html">Fields, movies and signals</a> · '
              '<a href="technical.html">Model and technical details</a></p></section>')
-        overview=(header+nav+past+geometry+'<section class="panel"><h2>Earlier synthetic response gallery</h2>'
+        overview=(header+image+nav+past+geometry+'<section class="panel"><h2>Earlier synthetic response gallery</h2>'
                   f'<a href="gallery.html"><img loading="lazy" style="max-width:100%;max-height:280px" src="runs/{RUN}/02_static_fields.png" alt="{escape(model)} saved field and weighting-potential preview"></a>'
                   '<p>Saved synthetic study, separate from source-campaign results. Field lines are not carrier trajectories. Gallery settings and scenario overrides are separate.</p>'+special+'</section>'+
                   '<section id="contact-legend" class="panel"><h2>Contact key and model files</h2>'
@@ -87,6 +121,8 @@ def apply(site, write_page):
         ranges='; '.join(f'{axis}: [{b[2*i]:g}, {b[2*i+1]:g}] mm' for i,axis in enumerate('xyz')) if len(b)==6 else 'Not recorded'
         assumptions='<ul>'+''.join('<li>'+escape(a)+'</li>' for a in item.get('assumptions',[]))+'</ul>'
         facts=('<section class="panel"><h2>Model at a glance</h2><p><strong>Coordinate bounds:</strong> '+ranges+'</p>'
+               '<p><strong>Recorded model status:</strong> '+escape(item.get('status','Saved model'))+'</p>'
+               '<p><strong>Contacts and coordinates:</strong> '+str(count)+' contacts · '+escape(item.get('coordinate_system',''))+'</p>'
                '<p>These are coordinate bounds, not active-volume or dead-layer measurements.</p>'
                '<p><strong>Reference readout contact:</strong> '+str(item['readout_contact_id'])+'</p>'
                '<p><strong>Recorded model assumptions:</strong></p>'+assumptions+'</section>')
@@ -96,6 +132,7 @@ def apply(site, write_page):
         technical=(header+sibling_nav+facts+'<section class="panel"><h2>Original model and provenance</h2><p>'+downloads+
                    '</p><p><a href="../../models/catalog.json">Canonical model catalog and hashes</a> · '
                    '<a href="../../models/README.md">Model distribution guide</a></p>'
+                   '<ul>'+''.join('<li>'+escape(source)+'</li>' for source in item.get('sources',[]))+'</ul>'
                    '<p>Original model settings are preserved. The LBNL AK02/SAP22 campaign uses '
                    'an explicit 77 K override; it does not replace the saved gallery configuration.</p></section>'
                    '<section class="panel"><h2>Contact metadata</h2>'+contact_table+'</section>'
@@ -105,7 +142,19 @@ def apply(site, write_page):
                    'and incomplete collection must remain distinct from zero deposition.</p></section>'+run_note)
         write_page(folder/'technical.html',model+' · Technical details',technical,2)
         delivered.append(model)
+    notebook=site/'detectors/GeGI_3D/supplement.html'
+    if notebook.is_file():notebook.write_text(archive_notebook(notebook.read_text(encoding='utf-8')),encoding='utf-8',newline='\n')
     return delivered
+
+def control_capabilities(capabilities=None):
+    """Read reviewed Control adapters separately from the legacy CLI flags."""
+    capabilities=execution_capabilities() if capabilities is None else capabilities
+    root=Path(__file__).resolve().parents[1]
+    adapters=json.loads((root/'scenarios/detector-capabilities.json').read_text())['control_adapters']
+    for model,row in adapters.items():
+        if model not in capabilities or row['adapter']!='fresh_ring_control_v1' or row['sources']!=['cs137_point_decay_v1'] or row['counts']!=[20,500]:
+            raise ValueError('Unreviewed Control capability')
+    return {model for model,row in capabilities.items() if row['lbnl_execution_implemented']}|set(adapters)
 
 def execution_capabilities():
     """Presentation authority only; this never enables a backend model."""

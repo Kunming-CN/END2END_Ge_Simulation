@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import {preflight} from './publication_preflight.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repo = 'Kunming-CN/END2END_Ge_Simulation';
 const git = process.platform === 'win32' ? 'C:/Program Files/Git/cmd/git.exe' : 'git';
@@ -18,29 +19,13 @@ function run(exe, args, capture = false, allowFailure = false) {
 function files(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(d => d.isDirectory() ? files(path.join(dir, d.name)) : [path.join(dir, d.name)]);
 }
-run(python, [path.join(root, 'tools/export_models.py'), '--validate']);
-run(python, [path.join(root, 'tools/test_site.py')]);
-run(python, [path.join(root, 'tools/test_contacts.py')]);
-run(python, [path.join(root, 'tools/test_pipeline.py')]);
-run(python, ['-B', path.join(root, 'tools/test_gamma_showcase.py')]);
-run(python, ['-B', path.join(root, 'tools/test_gamma_complete_example.py')]);
-run(python, ['-B', path.join(root, 'tools/test_gamma_complete_showcase.py')]);
-run(python, ['-B', path.join(root, 'tools/test_saved_terminal.py')]);
-run(python, ['-B', path.join(root, 'tools/test_saved_focus_waveforms.py')]);
-run(python, ['-B', path.join(root, 'tools/test_saved_focus_pages.py')]);
-run(python, ['-B', path.join(root, 'tools/test_local_ui_workflow_jobs.py')]);
-run(python, ['-B', path.join(root, 'tools/test_local_ui_workflow_protocol.py')]);
-run(process.execPath, [path.join(root, 'tools/test_focused_plots.js')]);
-run(process.execPath, [path.join(root, 'tools/test_local_workflow.js')]);
-run(python, ['-B', path.join(root, 'tools/test_local_ui_jobs.py')]);
-run(python, ['-B', path.join(root, 'tools/test_local_ui.py')]);
-run(process.execPath, [path.join(root, 'tools/test_local_ui_frontend.js')]);
-run(python, ['-B', path.join(root, 'transport/test_scenario_prepare.py')]);
-run(python, [path.join(root, 'tools/test_lithium_report.py')]);
+preflight({root,python,node:process.execPath,run});
 // Preserve reviewed saved campaigns and geometry during ordinary publication.
 // New scientific/geometry exports use the explicit build_site.py modes first.
 const existingSnapshot = fs.existsSync(path.join(root, 'docs/site-manifest.json'));
-run(python, [path.join(root, 'tools/build_site.py'), ...(existingSnapshot ? ['--restructure'] : [])]);
+if (!existingSnapshot) throw new Error('Include the checked docs/ website snapshot in this checkout before publication. New scientific imports use explicit build modes.');
+run(python, ['-B', path.join(root, 'tools/build_site.py'), '--restructure']);
+run(python, ['-B', path.join(root, 'tools/check_site.py')]);
 for (const f of files(path.join(root, 'docs'))) {
   if (fs.statSync(f).size >= 95 * 1024 ** 2 || /\.(jls|pvsm|vtr|bin|pdf|pptx)$/i.test(f)) throw new Error('Unapproved public file: ' + f);
   if (/\.(html|json|md)$/i.test(f) && /BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY|gh[pousr]_[A-Za-z0-9]{25,}|sk-proj-[A-Za-z0-9_-]{25,}/.test(fs.readFileSync(f, 'utf8'))) throw new Error('Potential credential in public output: ' + f);
@@ -104,7 +89,7 @@ let live = false;
 for (let attempt = 0; attempt < 24; attempt++) {
   try {
     const response = await fetch(info.html_url, { signal: AbortSignal.timeout(8000), cache: 'no-store' });
-    if (response.ok && (await response.text()).includes('GeSignal — HPGe Radiation-to-Readout Simulation')) { live = true; break; }
+    if (response.ok && (await response.text()).includes('From radiation to an energy measurement.')) { live = true; break; }
   } catch { /* The initial Pages deployment can take a few minutes. */ }
   await new Promise(resolve => setTimeout(resolve, 5000));
 }

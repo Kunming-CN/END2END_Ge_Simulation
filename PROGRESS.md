@@ -12,10 +12,11 @@ complete gamma responses, clearer plots/public pages and verified local cleanup.
 Control executes checked AK02/SAP22 and both ring configurations through the
 shared GUI/CLI workflow. Existing-machine four-detector execution and explicit
 source-bound exporter preparation are verified. M14b now completes all40 original
-gamma responses with focused plots. Next: M14c English gallery/navigation.
+gamma responses with focused plots. M14c English gallery/navigation now passes
+local build/browser checks; finish its Git/live admission, then M14d cleanup.
 Do not claim fresh-clone acceptance yet.
 
-Root is delivering M14b under `.local/autonomy/lock`, owner
+Root is delivering M14c under `.local/autonomy/lock`, owner
 `product-framework-v1-root`, actual gpt-6.1-sol/ultra in this project.
 Do not start a second supervisor or duplicate scientific workers. The bounded
 plan and independent planning evidence are in `.local/product-delivery-v1`.
@@ -144,11 +145,46 @@ findings are resolved. Final browser/site review records are under `reviews/m14b
 
 Website build `7b51300b9a439f311c33b75219758b07fb73e27ad6dbe9ff6ebb5fd300521ca3`
 has1681files/100HTML/2888checked links and982,858,640bytes.32 site tests and exact
-local publication checks pass. Deployment must still pass the exact live checker;
-the terminal milestone receipt records the actual synchronization outcome.
+local publication checks pass. Commit `4ae3df53253af170fb60b816e7b5477fdb9b1e2b`
+is synchronized; GitHub Pages deployed successfully and the exact live checker
+passed691 files. `implementation/m14b/COMPLETE.json` records the terminal outcome.
 
-Next bounded slice: M14c English gallery/navigation and newcomer-audit findings,
-then M14d the two proved duplicate leaves. Reuse frozen audit/deletion proofs;
+## M14c English gallery and newcomer routes
+
+All17 detector cards now show their unchanged saved geometry and reviewed type.
+Original model/candidate/reference/source limits remain secondary technical
+details; four executable Control cases remain distinct from seventeen viewable
+models. Browse/Setup/Use lead to current four-case10K results, one English setup
+authority and the actual local application. Stale ring-pending text is removed.
+Four contextual charge/readout pages embed the unchanged raw reports and link
+four distinct complete-ledger ZIPs. The GeGI notebook execution invitation now
+clearly describes an archived output. Three proved inactive Chinese UI sources
+are retired; served compatibility routes/backends remain intact.
+
+Control distinguishes file-readiness from actual runtime/plan checks and folds
+legacy jobs. A checkout containing docs can open its strictly checked all40
+public gamma example without private inputs. Present partial/corrupt private
+results refuse fallback and publication. The marker-skip hole is closed by a
+direct saved-bundle validator. Only the exact previous snapshot may retain its
+two old discovery descriptions during migration; rehashed/unsealed stale
+metadata still fails. Neither repair changes frozen science or reruns it.
+
+Three independent AI INITIALs froze before concrete reciprocal discussion;
+all verified blockers are resolved. Final21-source freeze and local evidence:
+`.local/product-delivery-v1/implementation/m14c`. Initial53 focused Python tests,
+two Node harnesses, repaired7 discovery tests and32 publication tests pass.
+Actual post-build checks retain101 protected files byte exact;105 HTML/static
+accessibility-label scans have no CJK text. Desktop browser checks load all17
+images, English routes and all four original embedded reports; actual KM500
+stage selection is verified. Mobile/direct-file/fresh-machine acceptance remains
+unverified. The staging-preview404 at the atomic swap is preserved; installed
+report pages work. Unique first-build metadata failure evidence is retained.
+
+Build `186b9008a790683486598e48e6b86ede2b1d9119008c191cc5fed32c955f6afc`
+has1685 files/104 HTML/3083 checked links and982,879,364 payload bytes. Local
+checks pass; Git synchronization and exact live admission are recorded in the
+terminal receipt after deployment. Next: M14d only the two proved duplicate
+leaves, after fresh worker/lock checks. Reuse frozen audit/deletion proofs;
 do not repeat old science. M8/M9 second-computer acceptance remains deferred.
 
 ## Completed science and publication: reuse, never redo

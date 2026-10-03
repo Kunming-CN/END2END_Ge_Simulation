@@ -3,6 +3,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 import check_site
@@ -10,6 +11,38 @@ import site_discovery as D
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_exact_previous_snapshot_migrates_but_rehashed_stale_text_fails(self):
+        old=next(iter(D.HISTORICAL_DESCRIPTIONS.values()))
+        for path in old:
+            p=self.site/path;p.parent.mkdir(parents=True,exist_ok=True)
+            p.write_text('<html><head><title>Saved</title></head><body>Saved</body></html>')
+        with mock.patch.dict(D.LANDINGS,old):
+            D.assemble(self.site);self.seal()
+        old_digest=json.loads((self.site/check_site.MANIFEST).read_bytes())['build_id']
+        # Isolated small fixture stands in for the exact pinned previous digest.
+        with mock.patch.dict(D.HISTORICAL_DESCRIPTIONS,{old_digest:old}):
+            check_site.validate(self.site)
+            p=self.site/'results/cs137-10k/index.html';original=p.read_text()
+            p.write_text(original.replace('Saved</body>','Changed</body>'))
+            self.rehash_without_semantic_validation()
+            with self.assertRaisesRegex(ValueError,'metadata differs'):
+                check_site.validate(self.site)
+            p.write_text(original)
+            # An unsealed staging copy must carry current descriptions.
+            (self.site/check_site.MANIFEST).unlink()
+            with self.assertRaisesRegex(ValueError,'metadata differs'):
+                D.validate(self.site)
+            D.assemble(self.site);D.validate(self.site)
+            for path in old:
+                parser=D.Metadata();parser.feed((self.site/path).read_text())
+                self.assertEqual(parser.descriptions,[D.LANDINGS[path]])
+    def test_four_case_metadata_and_legacy_control_boundary(self):
+        description=D.LANDINGS['results/cs137-10k/index.html']
+        for name in ('AK02','SAP22','GeRC02 Li50min','KMRC01 candidate'):self.assertIn(name,description)
+        self.assertNotIn('Earlier',description)
+        scenario=D.LANDINGS['scenarios/lbnl-cs137/index.html']
+        self.assertIn('four Control configurations',scenario)
+        self.assertIn('Legacy AK02/SAP22 CLI support',scenario)
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

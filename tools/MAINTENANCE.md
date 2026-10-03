@@ -1,7 +1,8 @@
 # Maintaining the project
 
 The website and the local workflow have different jobs. The public site is a
-saved-results browser; `Run.cmd` is the supported local calculation entry.
+saved-results browser; `Control.cmd` is the primary local application. The older
+generic `Run.cmd` calculation route remains distinct.
 The beginner instructions have one authority: `tools/site_guide.html`, published
 as `guide.html`. Keep README short and link to that guide rather than adding
 another complete installation recipe.
@@ -17,7 +18,7 @@ another complete installation recipe.
 | Browser geometry controls | `tools/ssd_geometry_viewer.html` |
 | Saved energy-spectrum views | `tools/spectrum_display.py`, `spectrum_plot.py`, `spectrum_controls.js`; see [display semantics](SPECTRUM_DISPLAY.md) |
 | Unified GeSignal event reader and old entry aliases | `tools/viewer_navigation.py`, `viewer_navigation.js`, `unified_event_viewer.html`, `unified_event_viewer.js`; see [reader ownership](VIEWER_NAVIGATION.md). Original signed viewers remain frozen. |
-| Four-detector 10K hub and saved ring results | `tools/ring_site.py`, `ring_publication.py`, `ring_scene.cc`; `build_site.py --ring-results` copies completed, checked saved data. The shared spectrum and event readers remain the maintained display route. |
+| Four-detector 10K hub, report context and saved ring results | `tools/ring_site.py` owns the maintained charge/readout wrappers; frozen original reports stay unchanged. `ring_publication.py`, `ring_scene.cc`; `build_site.py --ring-results` copies completed, checked saved data. The shared spectrum and event readers remain the maintained display route. |
 | Ring calculation and signed electronics | `transport/ring_cs137.py`, `simulation/ring_stream.jl`, `ring_response.jl`, `ring_polarity.jl`, `tools/ring_run.py`, `ring_production.py`, `km_ring_run.py`, `ring_model_contract.py`. Use matching clean 500-decay admission before a new 10K; source/configuration checks remain strict. |
 | Completed ring campaign verification | `tools/ring_saved_basis.py` has two closed read-only operations for the registered terminal campaigns. It retains original producer hashes and receipts across the exact portable-runtime line change; it cannot start, resume or rewrite science. Its fixed private basis stays local. |
 | Windows setup/run guide | `tools/site_guide.html` |
@@ -30,7 +31,9 @@ another complete installation recipe.
 | Finite synthetic gamma transport and raw event stream | `transport/scenario_transport.py`, `test_scenario_transport.py`, `Gamma.cmd`, `gamma.sh`; see [transport contract](SCENARIO_TRANSPORT.md). Separate from the strict Cs137 reader and later charge/readout coupling. |
 | Electronics settings and configuration preflight | `tools/electronics_settings.ps1`, `electronics_execution.ps1`, `scenario_cli.ps1`; see [ELECTRONICS_SETTINGS.md](ELECTRONICS_SETTINGS.md) |
 | Source-aware bounded gamma charge/calibration/readout | `tools/gamma_native_example.py`, `simulation/gamma_native_example.jl`; see [gamma example contract](GAMMA_NATIVE_EXAMPLE.md). Uses completed gamma truth, existing fields and independently injected calibration. |
-| Saved gamma public example | `tools/gamma_showcase.py`, `gamma_showcase.html`, `test_gamma_showcase.py`; explicit `build_site.py --gamma-showcase` copies a frozen completed bundle. No calculation or private inputs are published. |
+| Saved gamma public examples | `tools/gamma_showcase.py` and `gamma_showcase.html` retain the original six responses. `gamma_complete_example.py` and `simulation/gamma_complete_example.jl` own the full40 saved-input completion; `gamma_complete_showcase.py` and `.html` publish its checked bundle. `gamma_publication.py` dispatches the two versions. Do not edit their frozen science/export sources during a presentation-only update. |
+| Focused saved waveform presentation | `tools/focused_plots.js`, `saved_focus_waveforms.py`, `saved_focus_pages.py`, `pipeline_focus.html`; `simulation/saved_collection_edge.jl` and `saved_control_edge.jl` own explicitly labelled electronics-only display derivatives. Keep full original signed samples, peaks and calibration distinct. |
+| Publication check dispatch | `tools/publication_preflight.mjs`, `test_publication_preflight.mjs`, `publish.mjs`; portable fixtures and checked public bundles always run. Private-data regressions skip explicitly only when their recorded roots are absent; present partial/corrupt data fails. |
 | Saved-run validation and inspection | `tools/native_run_validation.ps1`, `inspect_native_run.ps1`; see [INSPECT_RUNS.md](INSPECT_RUNS.md) |
 | Bounded NEW native-charge group commits | `tools/native_group_checkpoints.py`, `simulation/native_groups.jl`; see [charge-only scope](NATIVE_GROUP_CHECKPOINTS.md). Host acceptance is separate. |
 | Local file/result index | `tools/build_local_dashboard.py`, `local_paths.py`, `open_workspace.ps1` |
@@ -45,6 +48,12 @@ From the project root, use `Publish.cmd`. For a source-only navigation update,
 the underlying command is `python tools/build_site.py --restructure`: it starts
 from the checked saved snapshot rather than rerunning simulations. New saved
 geometry exports use the explicit `--ssd-geometry` publication mode.
+
+Normal publication requires the checked `docs/` snapshot. It does not silently
+rebuild from private scientific workspaces. A public checkout without `.local`
+science skips those saved-data regressions explicitly, while retaining model,
+fixture, JavaScript and full public-artifact validation. A present private input
+root never excuses missing or corrupt contents.
 
 If generation completed but final publication validation failed, first inspect
 and retain the failed stage, source pins and log. `build_site.py --finish-staged`

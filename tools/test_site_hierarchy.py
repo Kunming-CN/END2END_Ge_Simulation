@@ -7,20 +7,22 @@ import re
 import shutil
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from urllib.parse import urlsplit, unquote
 import site_restructure as S
+import ring_site as R
 from site_fragments import ids
 from check_site import Links, local_target
 ROOT=Path(__file__).resolve().parents[1]
 
 class HierarchyTests(unittest.TestCase):
     def test_all_model_repeat_generation_and_fragments(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory(dir=ROOT/'.local') as tmp:
             fixture=Path(tmp)/'site'
             def copy(source,dest):
                 path=Path(source)
-                if path.suffix in ('.html','.json','.md','.csv'):
+                if path.suffix in ('.html','.json','.md','.csv','.js'):
                     shutil.copyfile(source,dest)
                 else:
                     Path(dest).write_bytes(b'fixture existence marker')
@@ -32,9 +34,15 @@ class HierarchyTests(unittest.TestCase):
             old_preview=re.findall(r'<figure class="spectrum-panel".*?</figure>',old_home,re.S)
             gamma=fixture/'examples/gamma-native'
             gamma_bytes={p.name:p.read_bytes() for p in gamma.iterdir() if p.is_file()}
-            S.apply(fixture)
+            # Structural placeholders do not represent ring payload validation.
+            # Reuse checked source metadata; ring source validation has separate tests.
+            cases=R.cases(ROOT/'docs')
+            def maintain():
+                S.apply(fixture)
+                with patch.object(R,'cases',return_value=cases):R.apply(fixture)
+            maintain()
             first={p.relative_to(fixture).as_posix():p.read_bytes() for p in fixture.rglob('*.html')}
-            S.apply(fixture)
+            maintain()
             second={p.relative_to(fixture).as_posix():p.read_bytes() for p in fixture.rglob('*.html')}
             self.assertEqual(first,second,'Repeated navigation generation changed HTML')
             self.assertEqual(gamma_bytes,{p.name:p.read_bytes() for p in gamma.iterdir() if p.is_file()})
@@ -47,21 +55,20 @@ class HierarchyTests(unittest.TestCase):
                 if '<figure' in card:
                     self.assertLess(card.index('<a '),card.index('<figure'),'Primary action follows preview')
             self.assertEqual(old_preview,re.findall(r'<figure class="spectrum-panel".*?</figure>',home,re.S))
-            self.assertIn('Fresh-machine reproduction remains unvalidated',home)
+            self.assertIn('Fresh-machine setup remains unvalidated',home)
             guide=(fixture/'guide.html').read_text(encoding='utf-8')
-            self.assertIn('Julia <strong>1.13.0</strong>',guide)
-            self.assertIn('PowerShell in the repository root',guide)
-            self.assertNotRegex(guide,r'(?<!\\)Run\.cmd (?:check|run|setup|open|resume)')
-            self.assertIn('href="results/index.html">All saved results and engineering examples</a>',guide)
+            self.assertIn('Julia 1.13.0',guide)
+            self.assertIn('PowerShell in the project root',guide)
+            self.assertIn('four-case Cs137 10K results',guide)
+            self.assertIn('BuildPortableSourceExporter',guide)
             learn=(fixture/'learn/index.html').read_text(encoding='utf-8')
             results=(fixture/'results/index.html').read_text(encoding='utf-8')
             for page in (learn,results):
                 self.assertEqual(page.count('../examples/gamma-native/gamma.html'),1)
                 self.assertEqual(page.count('../examples/pipeline.html'),1)
                 self.assertIn('Compact teaching example',page)
-            order=('Current completed campaign','Saved engineering examples',
-                   'Completed gamma → native SSD → peak ADC','Compact teaching example',
-                   '<h2>Earlier campaign</h2>','Earlier Cs137 · 10k')
+            order=('Four-detector Cs137 10K','Separate Cs137 · 1M campaign','Small engineering examples',
+                   'Small gamma → native SSD → peak ADC example','Compact teaching example')
             self.assertEqual([results.index(label) for label in order],
                              sorted(results.index(label) for label in order))
             catalog=json.loads((fixture/'models/catalog.json').read_text())
@@ -77,8 +84,8 @@ class HierarchyTests(unittest.TestCase):
                 self.assertIn('../../downloads/'+model['id']+'.zip',overview)
                 if model['id'] in ('AK02','SAP22'):
                     self.assertIn('id="native-cs137-10k"',overview)
-                    self.assertLess(overview.index('<strong>Current:</strong>'),overview.index('<strong>Earlier:</strong>'))
-                    self.assertIn('../../guide.html#local-routes',overview)
+                    self.assertLess(overview.index('Cs137 10K results'),overview.index('Separate 1M campaign'))
+                    self.assertIn('../../guide.html#local-control',overview)
                 self.assertNotIn('Run.cmd run',overview)
                 technical=(fixture/base/'technical.html').read_text(encoding='utf-8')
                 self.assertIn('Model at a glance',technical)

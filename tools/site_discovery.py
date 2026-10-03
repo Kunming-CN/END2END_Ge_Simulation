@@ -18,9 +18,19 @@ LANDINGS = {
     'detectors/index.html': 'Explore 17 saved HPGe detector models, contacts and original configurations. Viewing a model does not establish LBNL execution support or experimental validation.',
     'results/index.html': 'Browse saved Cs137 campaigns and bounded HPGe engineering examples. Deposited energy, reconstructed energy, zero events and unavailable responses remain separate.',
     'results/cs137-1m/index.html': 'Saved AK02 and SAP22 Cs137 engineering results, with one million initial decays per detector. No measured-spectrum fit or calibrated charge-collection claim.',
-    'results/cs137-10k/index.html': 'Earlier saved AK02 and SAP22 10k Cs137 engineering campaign, including event and response viewers. This is separate from the current million-decay campaign.',
+    'results/cs137-10k/index.html': 'Saved four-case Cs137 10K engineering results: AK02, SAP22, GeRC02 Li50min and KMRC01 candidate. Events, spectra, charge/readout and complete ledgers retain every initial decay.',
     'methods/index.html': 'HPGe simulation methods, original model provenance and numerical, calibration and experimental limitations of the saved engineering results.',
-    'scenarios/lbnl-cs137/index.html': 'Nominal LBNL Cs137 scenario and AK02/SAP22 execution boundaries, source assumptions and detector selection. Additional models require independent integration.',
+    'scenarios/lbnl-cs137/index.html': 'Nominal LBNL scenario with four Control configurations: AK02, SAP22, GeRC02 Li50min and KMRC01 candidate. Legacy AK02/SAP22 CLI support and model viewing are separate.',
+}
+
+# The exact preceding saved snapshot must validate before normal restructuring.
+# This permits only its two known old descriptions. check_site still binds the
+# entire snapshot to this build digest; rehashed edits cannot retain admission.
+HISTORICAL_DESCRIPTIONS = {
+    '7b51300b9a439f311c33b75219758b07fb73e27ad6dbe9ff6ebb5fd300521ca3': {
+        'results/cs137-10k/index.html': 'Earlier saved AK02 and SAP22 10k Cs137 engineering campaign, including event and response viewers. This is separate from the current million-decay campaign.',
+        'scenarios/lbnl-cs137/index.html': 'Nominal LBNL Cs137 scenario and AK02/SAP22 execution boundaries, source assumptions and detector selection. Additional models require independent integration.',
+    },
 }
 
 
@@ -91,6 +101,8 @@ def validate(site):
     if not (site / SITEMAP).exists():
         return
     descriptions = landing_descriptions(site)
+    manifest = site / 'site-manifest.json'
+    historical = HISTORICAL_DESCRIPTIONS.get(json.loads(manifest.read_bytes()).get('build_id'), {}) if manifest.is_file() else {}
     raw = (site / SITEMAP).read_bytes()
     tree = ET.fromstring(raw)
     urls = [node.text for node in tree.findall(f'{{{NS}}}url/{{{NS}}}loc')]
@@ -100,5 +112,6 @@ def validate(site):
     for path, description in descriptions.items():
         parser = Metadata()
         parser.feed((site / path).read_text(encoding='utf-8'))
-        if parser.descriptions != [description] or parser.canonicals != [canonical(path)]:
+        accepted = ([description], [historical[path]]) if path in historical else ([description],)
+        if parser.descriptions not in accepted or parser.canonicals != [canonical(path)]:
             raise ValueError(f'Discovery metadata differs: {path}')

@@ -140,8 +140,10 @@ class Protocol(unittest.TestCase):
 
     def test_saved_gamma_exact_action_and_sanitized_checked_response(self):
         import gamma_showcase as G
+        import gamma_publication as P
         self.opener.side_effect = None; self.opener.return_value = True
-        with patch.object(G, 'validate_bundle', return_value=checked_saved_fixture()) as validator, \
+        with patch.object(U,'ROOT',self.controller.root), \
+             patch.object(P, 'validate_bundle', return_value=checked_saved_fixture()) as validator, \
              patch.object(self.controller, 'snapshot', side_effect=AssertionError('Controller called')), \
              patch.object(self.controller, 'check', side_effect=AssertionError('Controller called')), \
              patch.object(U, 'checked_scenarios', side_effect=AssertionError('Scenario provider called')), \
@@ -149,7 +151,7 @@ class Protocol(unittest.TestCase):
              patch.object(G, 'read_saved_science', side_effect=AssertionError('Original reader called')):
             code, data, headers = self.request('POST', '/api/open-saved-gamma', {})
         self.assertEqual((code, json.loads(data)), (200, SAVED_ACK))
-        bundle = U.ROOT / '.local/m11d-gamma-showcase-v1/bundle'
+        bundle = self.controller.root / '.local/m11d-gamma-showcase-v1/bundle'
         validator.assert_called_once_with(bundle)
         self.opener.assert_called_once_with((bundle / 'gamma.html').as_uri())
         self.assertEqual(headers['Cache-Control'], 'no-store')
@@ -194,9 +196,9 @@ class Protocol(unittest.TestCase):
         self.assertEqual(self.controller.calls, [])
 
     def test_saved_gamma_validation_failure_is_uniform_and_sanitized(self):
-        import gamma_showcase as G
+        import gamma_publication as G
         for error in (ValueError('C:/private/model/path'), OSError('secret input'), RuntimeError('raw failure')):
-            with patch.object(G, 'validate_bundle', side_effect=error):
+            with patch.object(U,'ROOT',self.controller.root),patch.object(G, 'validate_bundle', side_effect=error):
                 code, data, headers = self.request('POST', '/api/open-saved-gamma', {})
             self.assertEqual((code, json.loads(data)), (503, {'error':'Saved gamma example is unavailable'}))
             self.assertEqual(headers['Cache-Control'], 'no-store')
@@ -204,8 +206,8 @@ class Protocol(unittest.TestCase):
         self.opener.assert_not_called(); self.assertEqual(self.controller.calls, [])
 
     def test_saved_gamma_opener_false_and_exception_are_distinct_sanitized_failures(self):
-        import gamma_showcase as G
-        with patch.object(G, 'validate_bundle', return_value=checked_saved_fixture()):
+        import gamma_publication as G
+        with patch.object(U,'ROOT',self.controller.root),patch.object(G, 'validate_bundle', return_value=checked_saved_fixture()):
             for error in (None, OSError('file:///C:/private/secret')):
                 self.opener.side_effect = error; self.opener.return_value = False
                 code, data, _ = self.request('POST', '/api/open-saved-gamma', {})
@@ -477,6 +479,41 @@ class SavedGammaHelper(unittest.TestCase):
         validator.assert_called_once_with(bundle);opener.assert_called_once_with((bundle/'gamma.html').as_uri())
         self.assertEqual(result['census'],{'radiation_primaries':40,'selected_primaries':40,'unprocessed_primaries':0})
         self.assertEqual(result['science_calls'],0)
+
+    def test_public_only_completed40_opens_checked_snapshot_without_science(self):
+        import gamma_publication as G
+        bundle=U.ROOT/'docs/examples/gamma-native';bundle.mkdir(parents=True)
+        data={'kind':'saved_gamma_complete_showcase_v1','science':{'source':{'counts':{
+            'radiation_primaries':40,'processed_primaries':40,'unprocessed_primaries':0}}}}
+        with patch.object(G,'validate_bundle',return_value=data) as validator, \
+             patch.object(U.webbrowser,'open',return_value=True) as opener:
+            result=U.open_saved_gamma_example()
+        validator.assert_called_once_with(bundle)
+        opener.assert_called_once_with((bundle/'gamma.html').as_uri())
+        self.assertEqual(result['census'],{'radiation_primaries':40,'selected_primaries':40,'unprocessed_primaries':0})
+        self.assertEqual(result['science_calls'],0)
+
+    def test_partial_or_corrupt_private_run_refuses_public_fallback(self):
+        import gamma_publication as G
+        private=U.ROOT/'.local/gamma-complete-v1';private.mkdir(parents=True)
+        (U.ROOT/'docs/examples/gamma-native').mkdir(parents=True)
+        for exists in (False,True):
+            bundle=private/'bundle'
+            if exists:bundle.mkdir()
+            with patch.object(G,'validate_bundle',side_effect=ValueError('Invalid private evidence')) as validator, \
+                 patch.object(U.webbrowser,'open') as opener:
+                with self.assertRaises(U.SavedGammaUnavailable):U.open_saved_gamma_example()
+            validator.assert_called_once_with(bundle);opener.assert_not_called()
+
+    def test_public_snapshot_requires_complete40_not_original6(self):
+        import gamma_publication as G
+        bundle=U.ROOT/'docs/examples/gamma-native';bundle.mkdir(parents=True)
+        incomplete={'kind':'saved_gamma_complete_showcase_v1','science':{'source':{'counts':{
+            'radiation_primaries':40,'processed_primaries':39,'unprocessed_primaries':1}}}}
+        for data in (checked_saved_fixture(),incomplete):
+            with patch.object(G,'validate_bundle',return_value=data),patch.object(U.webbrowser,'open') as opener:
+                with self.assertRaises(U.SavedGammaUnavailable):U.open_saved_gamma_example()
+            opener.assert_not_called()
 
 
 if __name__ == '__main__': unittest.main()

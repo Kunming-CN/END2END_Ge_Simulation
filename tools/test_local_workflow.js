@@ -2,7 +2,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 class Element {
-  constructor(tag='div'){this.tagName=tag;this.children=[];this.value='';this.checked=false;this.disabled=false;this.textContent='';this.isConnected=true;this.dataset={};this.style={};}
+  constructor(tag='div'){this.tagName=tag;this.children=[];this.value='';this.checked=false;this.disabled=false;this.textContent='';this.isConnected=true;this.dataset={};this.style={};this.open=false;}
   append(...nodes){this.children.push(...nodes);if(this.tagName==='select'&&this.children.length&&this.value==='')this.value=this.children[0].value;}
   replaceChildren(...nodes){this.children=[];this.value='';this.append(...nodes);}
   addEventListener(name,fn){this['on'+name]=fn;}
@@ -51,6 +51,8 @@ assert.equal(run('firstSavedWaveform(ringRows,[])'),null);
 run('electronics();');
 for(const label of get('electronics').children)assert.equal(label.htmlFor,label.children[0].id);
 const html=fs.readFileSync(__dirname+'/local_workflow.html','utf8');
+assert.match(html,/Check environment inspects installed files\. Check plan validates the selected source, runtime and settings/);
+assert.match(html,/<details id="legacy-recovery">/);
 for(const id of ['cryostat','detector','source','pose','count','threads','seed','name','use-peak-gate','event','group'])assert.match(html,new RegExp('<label for="'+id+'"'));
 for(const [id,value]of Object.entries({name:'fixture',cryostat:'lbnl_modular_nominal_v1',detector:'AK02',source:'mono_gamma_662_axis_v1',pose:'plus5mm',count:'20',seed:'26092631',threads:'2'}))get(id).value=value;
 for(const key of run('Object.keys(labels)'))get('setting-'+key).value=key==='peak_policy'?'signed_input_positive_peak':key.startsWith('peak_gate_')?'':1;
@@ -97,7 +99,7 @@ run('renderJobs({busy:false,jobs:[]});');
 run("renderJobs({busy:true,jobs:[]});renderLegacy({gamma:{busy:true,jobs:[{id:'old',label:'old-completion',status:'verification-required',blocks_new_work:true,can_verify:true}]}});");
 assert.ok(get('legacy-runs').children[0].children.some(n=>n.textContent==='Verify saved completion'));
 assert.match(get('legacy-notice').textContent,/Before starting another calculation.*Verify saved completion/);
-assert.equal(get('legacy-recovery').open,true);
+assert.equal(get('legacy-recovery').open,false);
 run("renderLegacy({gamma:{jobs:[{label:'held',status:'verification-required',blocks_new_work:true,can_verify:false}]}});");
 assert.match(get('legacy-notice').textContent,/currently unavailable/);
 assert.ok(!get('legacy-runs').children[0].children.some(n=>n.tagName==='button'));
@@ -112,6 +114,8 @@ run("renderLegacy({gamma:{jobs:[{label:'uncertain-failed',status:'failed',blocks
 assert.equal(get('legacy-notice').hidden,false);
 assert.match(get('legacy-notice').textContent,/needs verification or inspection/);
 run("renderLegacy({gamma:{jobs:[]}});");assert.equal(get('legacy-notice').hidden,true);
+get('legacy-recovery').open=true;
+run("renderLegacy({gamma:{jobs:[]}});");assert.equal(get('legacy-recovery').open,true);
 run('renderJobs({busy:false,jobs:[]});');
 // Editing the next setup never relabels the immutable run whose stages are shown.
 run("const savedJob={name:'saved-sap-gamma',configuration_sha256:'a'.repeat(64),selection:{detector:'SAP22',source:'mono_gamma_662_axis_v1',primary_count:20,electronics:{gain:21}},stages:{geometry:{status:'completed',elapsed_seconds:7.62}}};showRun(savedJob);");

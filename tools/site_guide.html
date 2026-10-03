@@ -1,46 +1,75 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Setup & run guide · END2END Ge Simulation</title>
-<style>body{max-width:980px;margin:30px auto;padding:0 20px;background:#f6f9fc;color:#172a41;font:17px/1.6 system-ui}a{color:#146cb0}h1,h2{line-height:1.25}section{background:white;padding:24px;margin:22px 0;border-radius:10px}code,pre{background:#edf1f7;padding:4px 6px}code{overflow-wrap:anywhere}pre{overflow:auto}nav{display:flex;flex-wrap:wrap;gap:18px}.note{border-left:4px solid #a96c00;padding-left:16px}</style></head><body>
-<nav aria-label="Primary"><a href="index.html">Home</a><a href="results/index.html">Results</a><a href="detectors/index.html">Detector library</a><a href="guide.html" aria-current="page">Setup & run guide</a><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">Code</a></nav>
-<h1>Browse saved results, or run a supported local case</h1>
-<p>The public website shows precomputed results. New calculations run on your computer, not in this website.</p>
-<section id="local-routes"><h2>Choose the route you need</h2>
-<ul>
-<li><strong>Browse saved results.</strong> Prerequisite: none. Outcome: saved campaign plots and downloads. <strong><a href="results/cs137-1m/index.html">Open the current 1M campaign</a></strong>. Other saved views: <a href="results/index.html">All saved results and engineering examples</a> or <a href="#browse">detector geometries</a>.</li>
-<li><strong>Use the prepared-computer mouse interface.</strong> Prerequisite: existing Windows Python; new Cs137 or fixed 662 keV gamma calculations also need their checked private AK02/SAP22 deposits, field caches and pinned Julia. The saved gamma reference needs its completed checked local bundle. Outcome: bounded new charge/readout, or check and open that reference. <strong><a href="#local-control">Open the mouse-interface instructions</a></strong>.</li>
-<li><strong>Prepare a generic new run.</strong> Prerequisite: full Windows/WSL setup and pinned upstream cryostat inputs. Outcome: setup checks and supported AK02/SAP22 selection for a new LBNL Cs137 radiation → charge → electronics case. <strong><a href="#setup">Start the setup checklist</a></strong>, then <a href="#choose">select AK02 or SAP22</a>.</li>
-<li><strong>Replay electronics from compatible saved charge.</strong> Prerequisite: a complete local signed-charge run, Windows Python and pinned Julia. Outcome: an electronics-only derivative, with no new radiation or SSD charge. <strong><a href="#replay">Open saved-charge replay</a></strong>.</li>
-<li><strong>Use the advanced native CLI.</strong> Prerequisite: checked private AK02/SAP22 transport contracts and field caches, Windows Python and pinned Julia. Outcome: bounded new native charge and readout from saved deposits, with electronics-group checkpoints. <strong><a href="#native-readout">Open native-readout commands</a></strong>.</li>
-<li><strong>Check or prepare a public source configuration.</strong> Prerequisite: existing Python 3.10+ for the public check; native preparation also needs checked originals, a Geant4 exporter and locked Linux environment. Outcome: a configuration check or geometry/source-macro preparation, without particle, SSD or electronics execution. <strong><a href="#source-preparation">Open source check and preparation</a></strong>.</li>
-</ul>
-<p><strong>Utilities:</strong> use <a href="#results">status/inspection and generic resume</a> for generic runs, or <a href="#recovery">metadata-only recovery</a> for an interrupted parent update. Replay and native-readout have their own resume commands.</p>
-<p>Mouse calculations, saved-charge and native CLI routes require compatible local inputs; the mouse saved-reference action needs its completed local bundle. A fresh checkout or model ZIP supplies neither the calculation inputs nor that bundle. Browse public saved results using the first route above. Seventeen viewable models do not imply seventeen executable adapters. The public website never starts calculations.</p></section>
-<section id="browse"><h2>Explore all 17 detector geometries</h2>
-<p>Open the <a href="detectors/index.html">detector library</a>, select a model and enable drag rotation. Each model has a geometry viewer, saved gallery and technical page. GeGI retains all 34 contacts and its <a href="detectors/GeGI_3D/strip_explorer.html">saved multichannel signal explorer</a>.</p>
-<p>Geometry viewers support rotation, zoom, individual layer visibility and selected-contact isolation. Fields and drift movies in the galleries remain saved views, not interactive field solvers. Contact colors indicate IDs or labelled channel families, not doping or layer thickness.</p>
-<p>Use GitHub Pages or a local HTTP server for JSON-fetching viewers. Opening HTML directly through <code>file://</code> may retain only the static geometry fallback. A simple local server is <code>python -m http.server 8765 --bind 127.0.0.1 --directory docs</code>.</p></section>
-<section id="setup"><h2>1. Windows setup checklist</h2>
-<p>This full checklist prepares a generic new LBNL run. For compatible saved inputs, follow the separate <a href="#replay">replay</a> or <a href="#native-readout">native-readout</a> prerequisites.</p>
-<p>Use <strong>PowerShell in the repository root</strong> (the folder containing <code>Run.cmd</code>). Prepare the steps in order. These are explicit installation/acquisition actions; browsing the website and running <code>.\Run.cmd check</code> do not perform them for you.</p>
-<h3>Obtain a checkout first</h3><p>Install Git, then open PowerShell in the folder where you want this project. A source-only checkout is sufficient for calculation; browse the saved results online.</p><pre>git clone --filter=blob:none --sparse https://github.com/Kunming-CN/END2END_Ge_Simulation.git
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Setup and use · GeSignal</title>
+<style>
+:root{color-scheme:light;--ink:#18323e;--muted:#536b76;--line:#d9e5e9;--accent:#007d8a}
+*{box-sizing:border-box}body{margin:0;background:#f4f8f9;color:var(--ink);font:17px/1.6 system-ui,sans-serif}
+main,header,footer{max-width:1000px;margin:auto;padding:24px}nav{display:flex;flex-wrap:wrap;gap:10px 22px}
+a{color:var(--accent);text-underline-offset:3px}h1,h2,h3{line-height:1.25}h1{font-size:2.3rem;margin-bottom:12px}
+h2{font-size:1.6rem}h3{font-size:1.15rem}p{margin:12px 0}section{margin:24px 0;padding:26px;background:white;border:1px solid var(--line);border-radius:12px}
+.routes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.route{padding:20px;border:1px solid var(--line);border-radius:10px;background:#f8fbfc}
+.route h3{margin-top:0}.route p{font-size:.95rem}.button{display:inline-block;padding:9px 14px;border-radius:7px;background:var(--accent);color:white;text-decoration:none;font-weight:650}
+.muted,small{color:var(--muted)}code{background:#edf4f6;padding:2px 5px;overflow-wrap:anywhere}pre{background:#edf4f6;padding:16px;overflow:auto;line-height:1.45;font-size:.87rem}
+pre code{padding:0;background:none;overflow-wrap:normal}li{margin:9px 0}details{border-top:1px solid var(--line);padding:16px 0;margin-top:14px}
+summary{cursor:pointer;font-weight:650}table{width:100%;border-collapse:collapse;font-size:.95rem}th,td{text-align:left;border-bottom:1px solid var(--line);padding:10px;vertical-align:top}
+.note{border-left:4px solid var(--accent);padding-left:16px}section,details,h3{scroll-margin-top:20px}footer{font-size:.9rem}
+@media(max-width:720px){header,main,footer{padding:16px}.routes{grid-template-columns:1fr}section{padding:20px}h1{font-size:1.9rem}table{font-size:.85rem}th,td{padding:8px}}
+</style>
+</head>
+<body>
+<header>
+<nav aria-label="Primary"><a href="index.html">Home</a><a href="results/index.html">Results</a><a href="detectors/index.html">Detector library</a><a href="guide.html" aria-current="page">Setup and use</a><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">Code</a></nav>
+<h1>Browse, set up, or use GeSignal</h1>
+<p>Explore saved results in your browser. Run new supported calculations on your own Windows computer.</p>
+</header>
+<main>
+<section id="local-routes" aria-label="Choose an action">
+<div class="routes">
+<div class="route"><h3>Browse</h3><p>No installation needed. Explore detector shapes, event signals and saved campaigns.</p><a class="button" href="#browse">Browse saved results</a></div>
+<div class="route"><h3>Setup</h3><p>Prepare the pinned Windows and WSL environment, source files and exporter.</p><a class="button" href="#setup">Set up Windows</a></div>
+<div class="route"><h3>Use</h3><p>On a prepared computer, choose a supported setup and run the pipeline with Control.</p><a class="button" href="#local-control">Use Control</a></div>
+</div>
+</section>
+
+<section id="browse">
+<h2>Browse saved results</h2>
+<p>Start with the <a href="results/cs137-10k/index.html">four-case Cs137 10K results</a> for events, spectra, charge/readout and complete ledgers. Browse shapes and types in the <a href="detectors/index.html">17-model detector library</a>. The <a href="results/cs137-1m/index.html">separate million-decay campaign</a> covers AK02/SAP22.</p>
+<p>The website displays saved data; it does not start simulations. Seventeen viewable models do not mean seventeen executable Control models.</p>
+<details><summary>Browse an offline website copy</summary>
+<p>Include <code>docs/</code> in your checkout. From the project root, use an existing Windows Python:</p>
+<pre><code>python -m http.server 8765 --bind 127.0.0.1 --directory docs</code></pre>
+<p>Open <code>http://127.0.0.1:8765/</code>. Interactive viewers need HTTP to load their saved data; opening HTML directly may show only a static fallback.</p>
+</details>
+</section>
+
+<section id="setup">
+<h2>Set up Windows</h2>
+<p>Use PowerShell in the project root: the folder containing <code>Control.cmd</code> and <code>Run.cmd</code>. These steps explicitly install or acquire dependencies. Opening the website or Control does not install them.</p>
+<ol>
+<li><strong>Install the platform tools.</strong> You need Git, Windows Python 3.10+, Juliaup, WSL2 with Ubuntu-24.04, and Pixi inside Ubuntu. Follow the official <a href="https://github.com/JuliaLang/juliaup#installation">Juliaup</a>, <a href="https://learn.microsoft.com/windows/wsl/install">WSL</a> and <a href="https://pixi.prefix.dev/latest/installation/">Pixi</a> instructions. WSL may need an administrator and restart. No GPU or ParaView installation is required.</li>
+<li><strong>Obtain the project.</strong> A source-only checkout is enough for calculations:
+<pre><code>git clone --filter=blob:none --sparse https://github.com/Kunming-CN/END2END_Ge_Simulation.git
 cd END2END_Ge_Simulation
-git sparse-checkout set models simulation transport scenarios tools</pre><p>The current directory now contains <code>Run.cmd</code>. For an offline copy of the saved website/media, also run <code>git sparse-checkout add docs</code>; a full clone is another option. Neither clone command installs physics dependencies.</p>
-<h3>A. Install the platform prerequisites</h3>
-<p>Install Git and Juliaup, enable WSL2 with the <code>Ubuntu-24.04</code> distribution, and install Pixi <strong>inside Ubuntu</strong>. Use the <a href="https://github.com/JuliaLang/juliaup#installation">Juliaup installer instructions</a>, <a href="https://learn.microsoft.com/windows/wsl/install">Microsoft WSL instructions</a> and <a href="https://pixi.prefix.dev/latest/installation/">Pixi installer instructions</a>. WSL installation may require an administrator and restart. No GPU is required. For the optional local workspace index and local HTTP browsing, install Windows Python 3.10+; those utilities need only its standard library. ParaView is not a student runtime prerequisite.</p>
-<h3>B. Select the exact reviewed Julia version and instantiate SSD</h3>
-<pre>juliaup add 1.13.0
+git sparse-checkout set models simulation transport scenarios tools</code></pre>
+<p>To keep the saved website offline, also use <code>git sparse-checkout add docs</code>. A full clone is another option.</p></li>
+<li><strong>Prepare the pinned Julia environment.</strong>
+<pre><code>juliaup add 1.13.0
 juliaup override set 1.13.0
 julia --version
-julia --startup-file=no --project=simulation -e "using Pkg; Pkg.instantiate()"</pre>
-<p>The directory override selects Julia <strong>1.13.0</strong> for this checkout without changing other projects' default. The LBNL preflight also checks SSD 0.11.8, JSON 1.9.0 and Unitful 1.29.0 from the supplied environment. Keep its Project/Manifest pair unchanged.</p>
-<h3>C. Install the locked Linux transport environment</h3>
-<pre>$Project = (Get-Location).Path
+julia --startup-file=no --project=simulation -e "using Pkg; Pkg.instantiate()"</code></pre>
+<p>The directory override selects Julia 1.13.0 for this checkout. Keep the supplied Project/Manifest pair unchanged; it pins SSD 0.11.8, JSON 1.9.0 and Unitful 1.29.0.</p></li>
+<li><strong>Install the locked Linux transport environment.</strong>
+<pre><code>$Project = (Get-Location).Path
 wsl.exe -d Ubuntu-24.04 --cd "$Project\transport" -- bash -lc '$HOME/.pixi/bin/pixi install --locked'
-.\transport\Run.cmd versions</pre>
-<p>The version check should report remage 1.1.0 and Geant4 11.3.2. The large dependency environment belongs in Pixi's Linux cache, not in the synced source tree. Later version checks use <code>--no-install</code>; they fail rather than silently installing a missing environment.</p>
-<h3>D. Obtain the pinned upstream cryostat files</h3>
-<p>The nine upstream files are not redistributed here. The following PowerShell recipe reads their pinned repository, commit, path and hashes from <code>transport/cryostat-source.json</code>. It preserves matching existing files and stops on a mismatch. A failed download remains a labelled <code>.download</code> file for inspection.</p>
-<pre>$m = Get-Content .\transport\cryostat-source.json -Raw | ConvertFrom-Json
+.\transport\Run.cmd versions</code></pre>
+<p>The version check should report remage 1.1.0 and Geant4 11.3.2. Pixi keeps the large environment in its Linux cache.</p></li>
+<li><strong>Acquire the exact upstream cryostat files.</strong> Expand the recipe below. The nine files are fetched locally from the manifest-pinned commit and verified before use.
+<details><summary>Download the nine pinned source files</summary>
+<p>The authority is <code>transport/cryostat-source.json</code>: <code>jintonic/geant4</code>, commit <code>1ff3371e0afb804115773af0541b3e56bd660f8c</code>, directory <code>detector/Ge/cryostat/LBNL</code>. Run this in the project root:</p>
+<pre><code>$m = Get-Content .\transport\cryostat-source.json -Raw | ConvertFrom-Json
 $target = Join-Path (Get-Location).Path $m.local_cache
 New-Item -ItemType Directory -Force $target | Out-Null
 foreach ($f in $m.files) {
@@ -55,99 +84,138 @@ foreach ($f in $m.files) {
     Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $temp
     if ((Get-Item -LiteralPath $temp).Length -ne $f.bytes -or (Get-FileHash -LiteralPath $temp).Hash.ToLowerInvariant() -ne $f.sha256) { throw "Downloaded bytes differ: $($f.name)" }
     [IO.File]::Move($temp, $dest)
-}</pre>
-<p>The result is <code>.local/transport/LBNL/</code> containing the exact manifest-listed files, not another level of nested repository folders. This uses upstream bytes locally; it does not relicense or publish them.</p>
-<h3>E. Check, build the exporter, then check again</h3>
-<pre>.\Run.cmd check
-.\Run.cmd setup -BuildExporter
-.\Run.cmd check</pre>
-<p>Before the exporter is built, <code>check</code> may correctly return <strong>exit 2</strong>. After all prerequisites and the build succeed, it should return <strong>exit 0</strong> with <code>ready : True</code>. A missing-dependency failure is not installation success. Stop and address the reported item rather than starting a run.</p>
-<p class="note">This ordered recipe follows the current preflight predicates. Fresh-machine installation remains unvalidated; the recorded clone test checked correct rejection of missing prerequisites. One custom AK02 500-decay uninstrumented run is recorded on the existing computer; broader positive replacement acceptance is still unvalidated. See <a href="#validation">validation scope</a>.</p></section>
-
-<section id="choose"><h2>2. Start a generic new LBNL run</h2>
-<pre>.\Run.cmd detectors
-.\Run.cmd run -Detector AK02 -Preset demo
-.\Run.cmd run -Detector SAP22 -Preset demo</pre>
-<p>The double-click <code>Run.cmd</code> menu offers the same selection without editing YAML. Choose one command/model for a new run; use <code>-Detector both</code> to run two separate cases serially, not two crystals together.</p>
-<p class="note">All 17 geometries are viewable, but the nominal LBNL Cs137 end-to-end adapter currently implements AK02 and SAP22 only. Additional models require geometry/placement and readout checks; a model must never be scaled to fit. <a href="scenarios/lbnl-cs137/index.html">Scenario and assumptions</a>.</p>
-<p>The demo preset uses 500 initial decays per selected detector. Smoke uses 20 and may produce no Ge pulse. The 10k preset requires a verified 500-event pilot. Million-event production is not a beginner default.</p>
-<p>The selected case proceeds through radiation deposition, native SSD charge transport, synthetic preamplifier/shaping and peak ADC. Geant4 deposition times are not carrier drift times; deposited and reconstructed energies remain separate quantities.</p></section>
-<section id="local-control"><h2>Local mouse interface: new calculations and saved reference</h2>
-<p>Double-click <code>Control.cmd</code> in the project root. It opens a session-protected page on <code>127.0.0.1</code> using an existing Python 3.10+ (the current <code>SITE_PYTHON</code>, otherwise installed ParaView 6.1.1, otherwise an existing PATH Python). Nothing is installed and system PATH is unchanged. New Cs137 calculations require the checked private inputs and pinned Julia environment described <a href="#native-readout">below</a>; new fixed gamma calculations need their own compatible recorded gamma deposits, field caches and the same pinned environment. The saved-reference action only needs its completed checked local bundle in this interface. A fresh clone or model ZIP supplies neither the calculation inputs nor that bundle.</p>
-<h3>Cs137: three-primary calculation</h3>
-<p>Select AK02 (default IDs 0,2594,3950) or SAP22 (IDs 0,207,263), choose an unused result name, click <strong>检查输入</strong> (Check inputs), then explicitly <strong>开始运行</strong> (Run). Each example retains three complete primaries, including one true zero, and fixed recorded physics/electronics settings. The interface calls the same backend as <code>Run.cmd native-readout</code>; it does not calculate new radiation or fields.</p>
-<p>For <strong>Cs137 only</strong>, <strong>停止（当前步骤结束后）</strong> (Stop) waits for the current verified step. The first step finishes all missing native charge, independent calibration and one electronics group; it is not an immediate per-particle interruption. <strong>验证并继续此任务</strong> (Continue) uses only saved selectors/configuration. Stop the Cs137 job before closing the interface terminal.</p>
-<details><summary>Cs137 runtime, continuation and local files</summary>
-<p>Its child process uses existing Windows PowerShell built-in modules and the existing pinned Julia 1.13.0 binary, avoiding incompatible inherited modules or unreadable WindowsApps aliases. An explicit <code>JULIA_EXE</code> is honored exactly; an invalid explicit path refuses rather than falling back. Runtime versions and bytes are still independently checked by the backend.</p>
-<p>A finished last step stays completed even if a late stop request arrives. Reopening the browser attaches to the same Cs137 job and never starts a new calculation. Saved-result verification/continuation also requires the same Python executable recorded in that run; a different default interpreter is refused without rebasing provenance. Launch with the matching existing <code>SITE_PYTHON</code> when needed. A restarted interface checks existing process/lease records before permitting work.</p>
-<p>Cs137 progress, logs and exact-byte result/settings/receipt downloads are available locally under <code>.local/native-readout-integration-v1/implementation/outputs/NAME</code>. Control metadata stays under <code>.local/local-control-v1/</code>.</p></details>
-<h3>Fixed 662 keV gamma: a new calculation</h3>
-<ol>
-<li>Use <strong>新建 662 keV γ 工程计算</strong>. Choose child threads <strong>2 (default)</strong> or <strong>1</strong>; changing threads requires a new input check. The configuration-preview dropdown does not retarget this fixed calculation.</li>
-<li>Click <strong>检查固定 γ 输入</strong>, then explicitly <strong>开始新的 γ 计算</strong>. AK02 and SAP22 run serially. Follow this new task's observed model stages and actual elapsed time; there is no percentage or per-event progress.</li>
-<li>After completion, use <strong>验证此新保存结果</strong> when offered; reopening requires this explicit verification before downloads. Expand <strong>已验证的新结果 · 12 个原始记录与信号下载</strong> for this new result's raw records, signed signals and receipts. Verification reads saved files without science; no new event explorer is generated.</li>
+}</code></pre>
+<p>Matching existing files are preserved. A failed attempt leaves its labelled <code>.download</code> file for inspection. The final files belong directly in <code>.local/transport/LBNL/</code>. They are not republished or relicensed by this project.</p>
+</details></li>
+<li><strong>Build the source-bound exporter used by Control.</strong>
+<pre><code>.\Run.cmd setup -BuildPortableSourceExporter
+.\Control.cmd</code></pre>
+<p>This explicit build uses the existing locked environment and records the exporter/source binding. In Control, <strong>Check environment</strong> reports file readiness. Select a setup and use <strong>Check plan</strong> to verify its current build, source, runtime and settings. Address any missing or changed dependency before running. Control opens a protected local page on <code>127.0.0.1</code>.</p></li>
 </ol>
-<p>The fixed cohort retains <strong>40 truth primaries, 6 selected and 34 unprocessed/null responses</strong>; null is not zero. The selected IDs are AK02 0/4/5 and SAP22 0/2/3, including two true zero-deposit primaries. No new radiation or fields are calculated.</p>
-<p class="note">Gamma has <strong>no stop, resume or retry action</strong>. Keep the interface terminal and calculation driver running until completion. Preserve blocked or uncertain output for owner inspection rather than relaunching blindly. Shared interface activity disables incompatible new Cs137/gamma actions; independently launched command-line calculations are outside that guard.</p>
-<h3>Fixed saved gamma reference: check and open</h3>
-<p>In the separate <strong>已保存的 γ 工程示例</strong> card, click <strong>检查并打开保存的 γ 示例</strong>. This checks the fixed completed 40-truth/6-processed/34-unprocessed-null bundle and requests its original offline event browser, with no science or export. A browser-open request does not confirm that it displayed. This button always opens the saved reference, not the new task's result; the new calculation has its own raw downloads.</p>
-<details><summary>Fixed inputs, signal meaning and acceptance limits</summary><ul>
-<li>Original model snapshots are 78 K, with an explicit 77 K saved field-cache override. AK02 retains +500 V and SAP22 +700 V on contact 2; contact 1 is the 0 V readout. Existing private deposits/caches and pinned Julia are calculation prerequisites, not public report HTML or downloaded model files.</li>
-<li>Each model uses independent 500 keV synthetic-injection calibration, never per-event truth-energy gain. Truth Edep and readout Erec remain separate. Signed charge/current/voltage, truth identities, zero deposits, endpoint/cap/rejection flags are retained.</li>
-<li>Creation/deposition times are not carrier drift times. The analog numerical time grid is not waveform ADC sampling. Opening or reopening the page starts no calculation; preview checks and saved-file verification do not run science.</li>
-<li>These are low-statistics, noiseless nominal engineering examples, not calibrated Li CCE, physical energy resolution, experimental fits, numerical convergence or newcomer acceptance. Arbitrary models, source/geometry editing, new radiation and electronics editing are not exposed here.</li>
-</ul></details></section>
-<section id="electronics"><h2>Save electronics settings</h2>
-<pre>.\Run.cmd settings
+<p class="note">The application and source-bound preparation have been verified on the existing Windows/WSL computer. Fresh-clone and second-computer installation acceptance remain deferred. A failed prerequisite check is not a successful installation.</p>
+<details><summary>Select an existing Python or Julia executable</summary>
+<p>Control uses <code>SITE_PYTHON</code> when set, otherwise an existing ParaView 6.1.1 Python, otherwise an existing PATH Python. To select an already installed interpreter for this PowerShell session:</p>
+<pre><code>$env:SITE_PYTHON = 'C:\path\to\installed\python.exe'
+.\Control.cmd</code></pre>
+<p>Replace the illustrative path with the actual executable. The child workflow uses the pinned Julia runtime; an explicit <code>JULIA_EXE</code> must be valid. Opening Control installs nothing and does not change system PATH.</p>
+</details>
+</section>
+
+<section id="local-control">
+<h2>Use Control</h2>
+<p>Double-click <code>Control.cmd</code> in the project root. It opens the English <strong>Local simulation</strong> application. New runs calculate geometry/source preparation, radiation deposits, the event ledger, fields and charge, independent calibration, readout, and verified results.</p>
+<h3>Choose a supported setup</h3>
+<table>
+<thead><tr><th scope="col">Detector</th><th scope="col">Cs137 point decay</th><th scope="col">662 keV gamma beam</th></tr></thead>
+<tbody>
+<tr><th scope="row">AK02 · ICPC</th><td>20 or 500 initial decays</td><td>20 primaries</td></tr>
+<tr><th scope="row">SAP22 · ICPC</th><td>20 or 500 initial decays</td><td>20 primaries</td></tr>
+<tr><th scope="row">GeRC02 · Li50min ring</th><td>20 or 500 initial decays</td><td>Unavailable</td></tr>
+<tr><th scope="row">KMRC01 candidate · ring</th><td>20 or 500 initial decays</td><td>Unavailable</td></tr>
+</tbody>
+</table>
+<p>One cryostat is executable: <strong>LBNL modular cryostat</strong>. Other models and cryostats remain unavailable for a new run. Cs137 uses the nominal point source; the gamma preset uses the fixed +5 mm position, global −y beam and seed 26092631. Choose one or two Julia threads; CPU stages run serially.</p>
+<ol>
+<li>Choose the cryostat, detector, source, primary count and threads. For Cs137, choose the radiation seed. Enter a new unused run name.</li>
+<li>Adjust <strong>Electronics settings</strong> if needed. Use <strong>Export configuration</strong> or <strong>Load configuration</strong> to keep an exact setup.</li>
+<li>Click <strong>Check plan</strong>. Review <strong>Checked next-run configuration</strong>. Changing any selection invalidates the check.</li>
+<li>Click <strong>Run simulation</strong>. Follow <strong>Pipeline</strong> and open the stage logs from <strong>Runs</strong>.</li>
+<li>After completion, choose <strong>Explore events</strong>. The selected saved run stays separate from the next-run form.</li>
+</ol>
+<details id="control-electronics"><summary>The eleven electronics settings</summary>
+<p>All eleven are used by the checked execution:</p>
+<table>
+<thead><tr><th scope="col">Setting</th><th scope="col">Unit or choice</th></tr></thead>
+<tbody>
+<tr><td>Shaping time</td><td>µs</td></tr><tr><td>Shaper gain</td><td>V/V</td></tr>
+<tr><td>Peak threshold</td><td>V</td></tr><tr><td>Peak ADC bits</td><td>bits</td></tr>
+<tr><td>Peak ADC full scale</td><td>V</td></tr><tr><td>Feedback capacitance</td><td>pF</td></tr>
+<tr><td>Feedback decay</td><td>µs</td></tr><tr><td>Pole-zero time</td><td>µs</td></tr>
+<tr><td>Peak policy</td><td>Signed-input positive peak</td></tr>
+<tr><td>Peak gate start</td><td>ns</td></tr><tr><td>Peak gate end</td><td>ns</td></tr>
+</tbody>
+</table>
+<p><strong>Use a peak gate</strong> enables both boundaries. With it off, both are unset. One independent 500 keV injection calibrates the selected configuration; there is no per-event truth-energy gain. The analog calculation grid is separate from the peak ADC, which records one peak code rather than a sampled acquisition waveform.</p>
+</details>
+<h3>Stop at a completed stage boundary</h3>
+<p>Choose <strong>Stop after current stage</strong> in the run card. The current stage finishes first. When the status is <strong>Stopped at stage boundary</strong>, <strong>Resume saved settings</strong> rechecks that run and reuses its completed stages. It does not accept new settings or restart an interrupted partial stage. Keep the launcher open until the run completes or reaches its stopped boundary.</p>
+<h3>Read a saved result</h3>
+<p>Use <strong>Show stages</strong> for that run's settings, receipts and logs; use <strong>Explore events</strong> for its original primary IDs and pulse groups. A saved nonzero waveform is selected first when available. The charge, original-bin current, analog preamp and analog shaper plots retain their signed signals and units.</p>
+<p>Each signal has a useful independent focus range; <strong>Full saved window</strong> restores its saved time span. Where a dense early preamp view is available, it is an explicitly labelled electronics-only replay from full signed charge. It does not recover unsaved original analog samples or alter the original peak, ADC code or reconstructed energy. Collection caps and incomplete endpoints remain visible.</p>
+<p>Truth deposited energy, induced charge-equivalent energy and reconstructed energy are separate values. A true zero has no fabricated waveform and keeps reconstructed energy unavailable. Native failures retain their truth and error; unknown response quantities remain null. Changing the next-run form does not relabel the saved result.</p>
+<p><strong>Download settings</strong> and <strong>Download run receipt</strong> retain the exact configuration and provenance. Results live in <code>.local/runs/NAME/</code>, with raw ledgers, signals and the checked completion receipt. Opening or inspecting a completed result does not rerun science.</p>
+</section>
+
+<section id="validation">
+<h2>What the examples establish</h2>
+<p>The four Control connectors are functional on the existing prepared computer. These are bounded engineering examples with synthetic electronics and explicit model/geometry limitations. Successful processing does not establish calibrated charge-collection efficiency, experimental agreement, physical energy resolution or numerical convergence.</p>
+<p>Source creation/deposition time is not carrier drift time. A readout threshold changes acceptance, not the original primary census. Zeros, endpoint/cap flags, electronics rejects and native failures remain distinct. The GeRC02 Li50min operating variant and KM candidate keep their recorded model and polarity qualifications.</p>
+<p>Fresh-clone and second-computer setup remain unaccepted. Saved galleries, 10K campaigns and million-decay radiation results are distinct datasets; follow each page's scope and receipts.</p>
+</section>
+
+<section aria-labelledby="advanced-title">
+<h2 id="advanced-title">Advanced and historical routes</h2>
+<p>Use these only for their stated inputs and scope. They are separate from the primary Control workflow.</p>
+<details id="choose"><summary>Legacy Run.cmd setup and AK02/SAP22 generic runs</summary>
+<p>This older command-line route supports AK02 and SAP22, not the ring Control adapters. Its <code>check</code> and <code>-BuildExporter</code> refer to the legacy exporter, not Control's <code>-BuildPortableSourceExporter</code>. Prepare the common dependencies and pinned originals first.</p>
+<pre><code>.\Run.cmd check
+.\Run.cmd setup -BuildExporter
+.\Run.cmd check
+.\Run.cmd detectors
+.\Run.cmd run -Name ak02-smoke -Detector AK02 -Preset smoke</code></pre>
+<p><code>smoke</code> uses 20 initial decays; <code>demo</code> uses 500. A larger run needs a matching verified pilot. <code>-Detector both</code> creates two serial cases, not two crystals together.</p>
+<h3 id="electronics">Legacy saved electronics profiles</h3>
+<pre><code>.\Run.cmd settings
 .\Run.cmd settings show -View advanced
-.\Run.cmd settings save -SaveName my-electronics
-.\Run.cmd settings check -SettingsFile .local/electronics-profiles/my-electronics.json
-.\Run.cmd run -Name my-custom-smoke -Preset smoke -Detector AK02 -ElectronicsProfile .local/electronics-profiles/my-electronics.json</pre>
-<p>Simple editing exposes shaping time, gain, threshold and peak ADC bits/range; advanced also exposes capacitance, decay, pole-zero compensation, peak policy and optional gates with units. The exact default shaping time is <strong>0.5 microseconds</strong>. Saves retain all settings and input/source provenance; existing saves are never overwritten. Show, check and compare read files only.</p>
-<p>Saved custom electronics are implemented for NEW AK02/SAP22 runs. A custom <code>run</code> performs normal upstream calculation; it does not automatically reuse old charge or fields. The larger preset requires a verified 500/model pilot with matching effective electronics and compute dependencies. Resume and inspection use the recorded copied binding, and resume rejects configuration overrides. Settings show/check/compare remain read-only configuration checks; execution additionally checks numerical sample/window feasibility. The separate <a href="#replay">saved-charge replay route</a> is implemented for compatible existing inputs. The analog numerical grid is not waveform ADC sampling; gates use each readout trace/Cs137 pulse-group origin. See <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/ELECTRONICS_SETTINGS.md">exact syntax, binding, evidence scope and reuse limits</a>.</p></section>
-<section id="replay"><h2>Advanced: replay electronics from saved charge</h2>
-<p>Requires PowerShell at the repository root, installed Windows Python 3.10+, Julia 1.13.0 / JSON 1.9.0 in the unchanged simulation project, and a compatible complete source under <code>.local/runs/SOURCE</code>. The source must contain full signed <code>signals.csv</code>, identities, timing, flags and matching producer/input bindings. Public report HTML, display-decimated traces and model ZIPs are not replay inputs. This entry does not load SSD/native transport or invoke Geant4.</p>
-<pre>.\Run.cmd replay-readout -Name SOURCE -ReplayName NEW -Detector AK02 -CheckpointGroups -DryRun -Json
-.\Run.cmd replay-readout -Name SOURCE -ReplayName NEW -Detector AK02 -CheckpointGroups -Json</pre>
-<p>Replace SOURCE with the compatible source run and NEW with an unused derivative name. Output lives under <code>.local/replays/NEW</code>. Omitting an electronics profile retains the recorded configuration; a new derivative may explicitly select <code>-ElectronicsProfile</code>. Each effective configuration uses a separate fixed synthetic-injection calibration, never per-event truth-energy gain.</p>
-<pre>.\Run.cmd replay-readout -Name SOURCE -ReplayName NEW -Detector AK02 -CheckpointGroups -Resume -DryRun -Json
-.\Run.cmd replay-readout -Name SOURCE -ReplayName NEW -Detector AK02 -CheckpointGroups -Resume -Json</pre>
-<p>Keep the same source, derivative name and detector selection on replay resume. Profile overrides refuse on resume. Optional <code>-StopAfterGroups 1</code> stops at a verified new group commit; it requires <code>-CheckpointGroups</code>. The default one-shot replay remains available without that flag, but has no group recovery. Read-only dry-runs do not verify the loaded runtime. See <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/CHARGE_REUSE.md">charge/replay contracts</a> and <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/GROUP_CHECKPOINTS.md">checkpoint limits</a>.</p></section>
-<section id="native-readout"><h2>Advanced: bounded new native charge → readout</h2>
-<p>Requires PowerShell at the repository root, installed Windows Python 3.10+, the pinned Julia 1.13.0/SSD simulation environment, and the existing checked private <code>cs137-1m</code> transport contracts, prepared geometry and native field caches. These inputs are not in a fresh checkout or the model download. This entry generates new charge from recorded deposits, then independent fixed-injection calibration and synthetic electronics; it performs no radiation or field rerun and accepts no arbitrary input/cache import.</p>
-<p>This entry uses the existing executable selected by <code>SITE_PYTHON</code>; otherwise it uses <code>%ProgramFiles%/ParaView 6.1.1/bin/pvpython.exe</code>. It does not find standalone Python through PATH. To select an already installed standalone interpreter, replace the illustrative path below with its actual executable path and set it in the current PowerShell session. This does not install Python or change system PATH.</p>
-<pre>$env:SITE_PYTHON = 'C:\path\to\installed\python.exe'</pre>
-<pre>.\Run.cmd native-readout -Name native-example -Detector SAP22 -DryRun
+.\Run.cmd settings save -SaveName my-electronics</code></pre>
+<p>These settings commands belong to the legacy route. See <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/ELECTRONICS_SETTINGS.md">electronics settings</a> for profile syntax and binding.</p>
+</details>
+<details id="results"><summary>Legacy run inspection and stage resume</summary>
+<pre><code>.\Run.cmd status
+.\Run.cmd inspect -Name RUN_NAME
+.\Run.cmd open -Name RUN_NAME
+.\Run.cmd resume -Name RUN_NAME -DryRun
+.\Run.cmd resume -Name RUN_NAME</code></pre>
+<p>These commands inspect/open or resume their compatible generic-run records. <code>inspect</code> and resume dry-run read saved state without science; exit 0 means the applicable saved-state checks passed, not that a current runtime is ready. Actual resume is explicit and checks the recorded stages/settings. Generic resume is not interrupted native-group recovery. A source mismatch is a reason to inspect preserved evidence, not edit receipts or repeat completed science.</p>
+</details>
+<details id="replay"><summary>Replay electronics from compatible saved charge</summary>
+<p>Requires a complete compatible <code>.local/runs/SOURCE</code> with full signed charge, identities, timing and flags, plus Windows Python and the pinned Julia environment. Model ZIPs, public HTML and display samples are not replay inputs. This route calculates electronics only; it does not run radiation or SSD charge transport.</p>
+<pre><code>.\Run.cmd replay-readout -Name SOURCE -ReplayName NEW -Detector AK02 -CheckpointGroups -DryRun -Json
+.\Run.cmd replay-readout -Name SOURCE -ReplayName NEW -Detector AK02 -CheckpointGroups -Json
+.\Run.cmd replay-readout -Name SOURCE -ReplayName NEW -Detector AK02 -CheckpointGroups -Resume -Json</code></pre>
+<p>Use an unused derivative name. Resume keeps the same source, detector and saved profile; no profile override. Output is <code>.local/replays/NEW</code>. See <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/CHARGE_REUSE.md">charge reuse</a> and <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/GROUP_CHECKPOINTS.md">group checkpoints</a>.</p>
+</details>
+<details id="native-readout"><summary>Earlier bounded native-charge examples from private inputs</summary>
+<p>This historical entry needs the checked local Cs137 deposits, prepared geometry and field caches for AK02/SAP22, plus the pinned Julia/SSD environment and Windows Python. Those private inputs are not supplied by a clone or model ZIP. It calculates charge and readout from saved deposits; it does not generate new radiation or fields.</p>
+<pre><code>.\Run.cmd native-readout -Name native-example -Detector SAP22 -DryRun
 .\Run.cmd native-readout -Name native-example -Detector SAP22 -StopAfterGroups 1
 .\Run.cmd native-readout -Name native-example -Resume -DryRun
-.\Run.cmd native-readout -Name native-example -Resume</pre>
-<p>A new SAP22 command defaults to original IDs 0,207,263; omitting Detector selects the original AK02 cohort. Each command handles one checked detector; <code>both</code> and other models refuse. Optional quoted <code>-PrimaryIds</code> selects whole original primaries within 8 primaries, 4 groups and 100 complete raw rows. Zeros, deposition clocks, seeds and endpoint flags remain recorded. Existing nominal caches use an explicit 77 K override from the original 78 K models. Original detector biases are +500 V for AK02 and +700 V for SAP22, applied to contact 2; contact 1 is the 0 V readout electrode for both.</p>
-<p>Output lives under <code>.local/native-readout-integration-v1/implementation/outputs/NAME</code>. Use an unused name of at most 24 letters/digits/underscores/hyphens. Native resume obtains detector and IDs from the witnessed manifest: omit <strong>all</strong> Detector/PrimaryIds selectors, even matching values. <code>StopAfterGroups</code> counts newly committed <strong>electronics</strong> groups after native charge has completed; it is not an immediate native stop. Source/runtime/model/cache mismatches refuse. Preserve prior outputs and receipts; do not rehash them to bypass a refusal. See <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/NATIVE_READOUT_INTEGRATION.md">exact bounded contract and acceptance</a>.</p></section>
-<section id="source-preparation"><h2>Advanced: check a supported source configuration</h2>
-<p>The opt-in preparation adapter selects the existing nominal LBNL cryostat, AK02 or SAP22, a Cs137 point decay or a synthetic 662 keV gamma along global -y, and a centered nominal or +5 mm source pose. From the project root, an existing Python 3.10+ can check the public configuration without physics packages or private inputs:</p>
-<pre>python transport/scenario_prepare.py check --config scenarios/m11a-ak02-mono_gamma_662_axis_v1-plus5mm.json</pre>
-<p>Native preparation additionally requires the checked upstream originals, existing Geant4 exporter and locked Linux environment. It checks geometry and writes a source macro in a new local output root; it does not run the planned particles, SSD or electronics. Each new preparation needs native containment/overlap and mapping checks. The nominal geometry is not an experimental survey, and a prepared input is not a completed end-to-end source run. See the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/SCENARIO_PREPARATION.md">finite preparation contract, explicit launcher syntax and limitations</a>. This entry is separate from the local mouse interface.</p></section>
-<section id="results"><h2>3. Inspect status, open results or resume conservatively</h2>
-<pre>.\Run.cmd status
-.\Run.cmd inspect -Name RUN_NAME
-.\Run.cmd open -Name RUN_NAME</pre>
-<p><code>inspect</code> reads saved files without importing Julia, invoking WSL, creating a lock or writing results. Exit 0 means terminal saved-state checks passed; exit 2 reports blockers. It does not establish runtime readiness or permission to execute. Add <code>-Json</code> for one machine-readable object.</p><p>A source mismatch can legitimately block reuse of an old completed campaign. It does not require rerunning it or editing its receipts. <code>open</code> may regenerate the local presentation index; <code>inspect</code> does not.</p><pre>.\Run.cmd resume -Name RUN_NAME -DryRun
-.\Run.cmd resume -Name RUN_NAME</pre><p>The resume dry-run performs saved-state inspection only. Actual resume remains a separate explicit action and rechecks inputs under its own lock.</p><p>Use the run name printed by the launcher. Results and receipts live under <code>.local/runs/RUN_NAME</code>. Open and status do not start a calculation. Resume verifies saved inputs/settings and complete-stage outputs before reuse.</p>
-<p>An incomplete transport, stream or native stage is preserved for inspection. Generic <code>run/resume</code> does not provide per-group recovery inside an interrupted native stage. The separate <a href="#native-readout">bounded native-readout</a> entry has verified group checkpoints. The completed production workflow must not be restarted merely to inspect its results.</p></section>
-<section id="recovery"><h2>Advanced: recover a completed child’s parent update</h2>
-<pre>.\Run.cmd recover -Name RUN_NAME -DryRun -Json
-.\Run.cmd recover -Name RUN_NAME -Json</pre>
-<p>This generic-run action reconciles a completed guarded native child when its parent metadata update was interrupted. It requires the existing compatible run, launch intent, receipts and lock. Dry-run inspects only; actual recovery writes an additive metadata transaction. Neither command starts missing calculations, calibrates, resumes groups or adopts partial/legacy responses. It is separate from replay and native-readout resume. See <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/RECOVERY.md">recovery boundaries</a>.</p></section>
-<section id="validation"><h2>What has actually been validated?</h2>
-<p>The completed 1M-per-detector campaign, native response and explicit failure accounting are saved engineering results. Synthetic electronics and numerical tests do not establish experimental energy resolution or calibrated charge-collection efficiency.</p>
-<p>The earlier guarded regression passed 64 assertions using eight saved positive groups and test-only verified field-cache injection. Its source-only checkout test on the same computer correctly rejected missing prerequisites. Those historical checks alone do not validate positive uninstrumented orchestration, a new field solve or fresh-machine installation. Separately, one custom-profile AK02 500-decay uninstrumented run completed on the existing computer; this is one recorded configuration, not all-model or fresh-machine acceptance. <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/LAUNCHER_ACCEPTANCE.md">Exact acceptance boundaries</a>.</p>
-<p>Saved-charge replay and bounded existing-input AK02/SAP22 native-readout have separate public-command and checkpoint-recovery acceptance on the existing host. These do not validate arbitrary inputs, calibrated physical charge collection, hardware or experimental agreement. Fresh-machine/no-code acceptance remains deferred to a second computer.</p>
-<p>The original gallery uses synthetic deposits. Earlier 10k event viewers and 1M aggregate results are distinct datasets; links identify their campaign. Native failures are unknown responses, not zero-energy measurements.</p></section>
-<section id="workspace"><h2>Keep local files understandable</h2>
-<p><code>Open_Workspace.cmd</code> refreshes a local-only dashboard grouping results, current runs, code/models, references and review evidence. It does not launch or resume simulations. Generated dashboards and private documents are not published.</p>
-<p>Permanent transport archives, fields and native checkpoints remain at their existing paths. An unfamiliar folder under <code>.local</code> is not disposable cache. Use the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/LOCAL_WORKSPACE.md">workspace guide</a> before reorganizing them.</p></section>
-<section id="downloads"><h2>Original models and deeper methods</h2>
-<p><a href="downloads/all-models.zip">Download all 17 original model configurations with includes</a>. Each detector overview also links its YAML and ZIP. These are model definitions, not field caches; preserve their folder layout and provenance.</p>
-<p><a href="models/README.md">Model distribution guide</a> · <a href="models/catalog.json">Canonical catalog and hashes</a> · <a href="methods/index.html">Methods and limitations</a> · <a href="detectors/GeGI_3D/supplement.html">Earlier GeGI supplementary study</a>.</p>
-<p>Original galleries use the saved <code>20260922_suite_v3</code> run. A website update does not imply recalculated physics. The <a href="site-manifest.json">site manifest</a> identifies the published snapshot.</p></section>
-</body></html>
+.\Run.cmd native-readout -Name native-example -Resume</code></pre>
+<p>This route's default saved IDs and group checkpoint rules apply only here. On resume, omit Detector/PrimaryIds overrides. <code>StopAfterGroups</code> is an electronics-group boundary after native charge, not an immediate native stop. It selects <code>SITE_PYTHON</code> or the existing ParaView Python; set <code>SITE_PYTHON</code> explicitly for a standalone interpreter. See the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/NATIVE_READOUT_INTEGRATION.md">bounded native contract</a>.</p>
+</details>
+<details id="source-preparation"><summary>Check an advanced public source configuration</summary>
+<p>The separate preparation entry supports a finite AK02/SAP22 configuration set. Its public configuration check needs an existing Python 3.10+:</p>
+<pre><code>python transport/scenario_prepare.py check --config scenarios/m11a-ak02-mono_gamma_662_axis_v1-plus5mm.json</code></pre>
+<p>Native preparation additionally needs the pinned originals, exporter and locked environment. It writes checked geometry/macros in a new local root; it does not run particles, charge or readout. See <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/SCENARIO_PREPARATION.md">source preparation</a>. A prepared geometry is not a completed pipeline or an experimental survey.</p>
+</details>
+<details id="recovery"><summary>Inspect or reconcile an interrupted historical receipt</summary>
+<p>Preserve uncertain output and check actual process identities before another action. Control's <strong>Verify existing completion</strong> reads completed saved artifacts. <strong>Inspect denied launch</strong>, <strong>Finalize saved results</strong> and <strong>Continue from verified transport</strong> are limited to their specifically verified historical cases; they are not general failed-stage retry controls.</p>
+<pre><code>.\Run.cmd recover -Name RUN_NAME -DryRun -Json
+.\Run.cmd recover -Name RUN_NAME -Json</code></pre>
+<p>This separate generic-run recovery reconciles a completed guarded child with its parent metadata. It requires compatible recorded intent and receipts; it starts no missing calculations and adopts no partial response. See <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/RECOVERY.md">recovery boundaries</a>.</p>
+</details>
+</section>
+
+<section id="workspace">
+<h2>Keep local results and evidence</h2>
+<p><code>Open_Workspace.cmd</code> refreshes a local index of results, runs, models and evidence without launching science. Permanent archives, fields, checkpoints and unique failure records remain at their recorded paths. Follow the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/LOCAL_WORKSPACE.md">workspace guide</a> before reorganizing local files.</p>
+</section>
+<section id="downloads">
+<h2>Models and methods</h2>
+<p><a href="downloads/all-models.zip">Download all 17 model definitions with their includes</a>. Preserve their folder layout. These are model definitions, not field caches or seventeen executable adapters.</p>
+<p><a href="models/README.md">Model distribution</a> · <a href="models/catalog.json">Canonical model hashes</a> · <a href="methods/index.html">Methods and limitations</a> · <a href="site-manifest.json">Published snapshot</a></p>
+</section>
+</main>
+<footer><a href="index.html">Home</a> · <a href="results/index.html">Results</a> · <a href="detectors/index.html">Detector library</a></footer>
+</body>
+</html>

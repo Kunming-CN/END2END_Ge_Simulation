@@ -33,12 +33,12 @@ class SiteStructureTests(unittest.TestCase):
         for label in S.PRIMARY:self.assertIn(label,home)
         self.assertEqual(home.count('<article class="card">'),3)
         self.assertEqual(home.count('href="downloads/all-models.zip"'),1)
-        self.assertRegex(home,r'<section class="cards">\s*<article class="card"><h2>Results</h2>')
+        self.assertRegex(home,r'<section class="cards">\s*<article class="card"><h2>Browse</h2>')
         primary=re.search(r'<nav aria-label="Primary">(.*?)</nav>',home).group(1)
         self.assertEqual(re.findall(r'href="([^"]+)"',primary),
-                         ['results/index.html','detectors/index.html','guide.html'])
-        self.assertEqual(re.findall(r'>([^<]+)</a>',primary),list(S.PRIMARY))
-        self.assertIn('Run.cmd',home)
+                         ['results/index.html','detectors/index.html','guide.html#setup','guide.html#local-control'])
+        self.assertEqual(re.findall(r'>([^<]+)</a>',primary),['Browse','Detectors','Setup','Use'])
+        self.assertIn('Use Control',home)
         for p in ('learn/index.html','detectors/index.html','results/index.html',
                   'methods/index.html','scenarios/lbnl-cs137/index.html'):
             self.assertTrue((root/p).is_file(),p)
@@ -51,7 +51,8 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('guide.html#choose',scenario)
         self.assertIn('guide.html#local-routes',scenario)
         self.assertNotIn('Run.cmd run',scenario)
-        self.assertIn('10k requires a verified 500-event pilot',scenario)
+        self.assertIn('Cs137 supports 20 or 500 initial decays per case',scenario)
+        self.assertIn('Control offers four separate detector configurations',scenario)
         self.assertIn('not redistributed',scenario)
 
     def test_home_folds_secondary_routes_without_losing_destinations(self):
@@ -68,17 +69,17 @@ class SiteStructureTests(unittest.TestCase):
                 if tag=='details':self.closed.pop()
         root=self.fixture(with_results=True);S.apply(root)
         home=(root/'index.html').read_text();parser=HomeLinks();parser.feed(home)
-        self.assertEqual(len(parser.links),17);self.assertEqual(len(set(parser.links)),13)
-        self.assertEqual(parser.outside,['index.html','results/index.html','detectors/index.html','guide.html',
-                                        'results/index.html','learn/index.html','detectors/index.html','guide.html#local-routes'])
-        for href in ('guide.html#setup','scenarios/lbnl-cs137/index.html','methods/index.html',
+        self.assertEqual(len(parser.links),18);self.assertEqual(len(set(parser.links)),12)
+        self.assertEqual(parser.outside,['index.html','results/index.html','detectors/index.html','guide.html#setup',
+                                        'guide.html#local-control','results/index.html','detectors/index.html',
+                                        'guide.html#setup','guide.html#local-control'])
+        for href in ('learn/index.html','methods/index.html','examples/pipeline.html','results/cs137-10k/index.html',
                      'downloads/all-models.zip','https://github.com/Kunming-CN/END2END_Ge_Simulation'):
             self.assertIn(href,parser.links);self.assertNotIn(href,parser.outside)
-        self.assertIn('Browse saved radiation, charge and electronics results',home)
-        self.assertIn('Choose a local workflow for AK02 / SAP22 in the guide.',home)
-        self.assertIn('<p class="muted">Fresh-machine reproduction remains unvalidated.</p><details>',home)
-        self.assertIn('bounded native-readout from checked private inputs',home)
-        self.assertIn('<summary>Setup and scenario details</summary>',home)
+        self.assertIn('Inspect events, signals and spectra',home)
+        self.assertIn('choose AK02, SAP22 or either ring case',home)
+        self.assertIn('Fresh-machine setup remains unvalidated',home)
+        self.assertIn('<summary>Pipeline, methods and earlier examples</summary>',home)
         self.assertIn('<summary>More project resources</summary>',home)
         for name in ('learn/index.html','results/index.html','detectors/index.html'):
             self.assertNotIn('More project resources',(root/name).read_text(),'Fold is homepage-only')
@@ -88,15 +89,14 @@ class SiteStructureTests(unittest.TestCase):
         self.assertTrue((root/'results/cs137-1m/index.html').is_file())
         self.assertTrue((root/'results/cs137-10k/index.html').is_file())
         scenario=(root/'scenarios/lbnl-cs137/index.html').read_text()
-        self.assertIn('1M-per-detector campaign',scenario);self.assertIn('earlier 10k campaign',scenario)
+        self.assertIn('1M-per-detector campaign',scenario);self.assertIn('Cs137 10K results',scenario)
         overview=(root/'results/cs137-1m/index.html').read_text()
         self.assertIn('12,420',overview);self.assertIn('10,757',overview)
         results=(root/'results/index.html').read_text()
-        self.assertLess(results.index('Current completed campaign'),results.index('Saved engineering examples'))
-        self.assertLess(results.index('Saved engineering examples'),results.index('Compact teaching example'))
+        self.assertLess(results.index('Separate Cs137 · 1M campaign'),results.index('Small engineering examples'))
+        self.assertLess(results.index('Small engineering examples'),results.index('Compact teaching example'))
         self.assertLess(results.index('Compact teaching example'),results.index('<h2>Earlier campaign</h2>'))
         self.assertLess(results.index('<h2>Earlier campaign</h2>'),results.index('Earlier Cs137 · 10k'))
-        self.assertIn('Original reports remain available as archived presentations of this same campaign',results)
         self.assertNotIn('1M per detector',''.join(re.findall(r'<article class="card">.*?</article>',results,re.S)))
         self.assertIn('Compact teaching example',results)
 
@@ -120,7 +120,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertEqual(results.count('../examples/gamma-native/gamma.html'),1)
         self.assertIn('Compact teaching example',results)
         self.assertIn('../examples/pipeline.html',results)
-        order=('Current completed campaign','Saved engineering examples',
+        order=('Separate Cs137 · 1M campaign','Small engineering examples',
                'Small gamma → native SSD → peak ADC example','Compact teaching example',
                '<h2>Earlier campaign</h2>','Earlier Cs137 · 10k')
         self.assertEqual([results.index(label) for label in order],
@@ -131,10 +131,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertLess(learn.index('../examples/gamma-native/gamma.html'),learn.index('../examples/pipeline.html'))
         self.assertIn('Open the saved engineering example',learn)
         self.assertIn('Compact teaching example',learn)
-        self.assertIn('Ring-contact campaigns · pending saved results',results)
-        self.assertIn('not included in this public snapshot',results)
-        self.assertIn('280 °C / 50 min Li variant',results)
-        self.assertIn('unchanged KMRC01_candidate',results)
+        self.assertNotIn('pending saved results',results)
         for page in (learn,results):
             for wording in ('40 truth events','six selected responses','four positive responses',
                             'two selected true zeros','34 responses stay unknown/unprocessed',
@@ -170,26 +167,26 @@ class SiteStructureTests(unittest.TestCase):
     def test_guide_keeps_distinct_local_routes_and_historical_scopes(self):
         root=self.fixture();S.apply(root)
         guide=(root/'guide.html').read_text()
-        sections=dict(re.findall(r'<section id="([^"]+)">(.*?)</section>',guide,re.S))
         anchors=('local-routes','browse','setup','choose','local-control','electronics','replay',
                  'native-readout','source-preparation','results','recovery','validation','workspace','downloads')
-        self.assertEqual(set(sections),set(anchors))
-        self.assertEqual(len(re.findall(r'<section id="([^"]+)"',guide)),len(anchors))
-        self.assertIn('href="results/index.html">All saved results and engineering examples</a>',sections['local-routes'])
-        self.assertIn('WSL2',sections['setup'])
-        self.assertIn('full signed <code>signals.csv</code>',sections['replay'])
-        self.assertIn('no group recovery',sections['replay'])
-        self.assertIn('-Detector AK02 -CheckpointGroups -Resume',sections['replay'])
-        native=sections['native-readout']
-        self.assertIn('checked private',native);self.assertIn('not in a fresh checkout',native)
+        ids=re.findall(r'\bid="([^"]+)"',guide)
+        self.assertEqual(len(ids),len(set(ids)))
+        self.assertTrue(set(anchors).issubset(ids))
+        for name in ('choose','replay','native-readout','source-preparation','results','recovery'):
+            self.assertRegex(guide,r'<details id="'+name+r'">')
+        self.assertIn('four-case Cs137 10K results',guide)
+        self.assertIn('WSL2',guide)
+        self.assertIn('-Detector AK02 -CheckpointGroups -Resume',guide)
+        native=re.search(r'<details id="native-readout">(.*?)</details>',guide,re.S).group(1)
+        self.assertIn('checked local',native);self.assertIn('not supplied by a clone',native)
         resume_lines=[line for line in native.splitlines() if 'Run.cmd native-readout' in line and '-Resume' in line]
         self.assertEqual(len(resume_lines),2)
         self.assertTrue(all('-Detector' not in line and '-PrimaryIds' not in line for line in resume_lines))
-        self.assertIn('newly committed <strong>electronics</strong> groups',native)
-        self.assertIn('does not provide per-group recovery',sections['results'])
-        self.assertIn('Neither command starts missing calculations',sections['recovery'])
-        self.assertIn('Those historical checks alone',sections['validation'])
-        self.assertIn('one custom-profile AK02 500-decay uninstrumented run',sections['validation'])
+        self.assertIn('electronics-group boundary after native charge',native)
+        self.assertIn('not interrupted native-group recovery',guide)
+        self.assertIn('not general failed-stage retry controls',guide)
+        self.assertIn('Successful processing does not establish calibrated charge-collection efficiency',guide)
+        self.assertIn('not Control\'s <code>-BuildPortableSourceExporter</code>',guide)
         self.assertNotIn('Electronics-only replay is still NOT_IMPLEMENTED',guide)
 
 if __name__=='__main__':unittest.main(verbosity=2)

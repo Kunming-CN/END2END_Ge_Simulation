@@ -48,7 +48,7 @@ Documentation-only edits do not require physics reruns or unchanged exports.
 |---|---|
 | Website sources | Matching generator tests; `python tools/test_site.py` and `python tools/check_site.py` before publication; `tools/test_contacts.py` for contact views |
 | Canonical model handling | `python tools/export_models.py --validate`; reviewed byte/provenance changes require explicit review |
-| Local control | Matching `tools/test_local_ui*.py` tests and `node tools/test_local_ui_frontend.js` for frontend behavior |
+| Local control | Matching `tools/test_local_ui*.py` tests and `node tools/test_local_workflow.js` for frontend behavior |
 | SSD runner/parser | The two lightweight validation commands in [simulation/README.md](simulation/README.md): parser tests and `--check-models` in the pinned project |
 | Transport/readout | Matching component tests and a bounded regression appropriate to the changed stage |
 

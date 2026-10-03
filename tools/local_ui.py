@@ -43,11 +43,25 @@ def open_saved_gamma_example():
     """Check the fixed completed bundle, then request its existing offline viewer."""
     try:
         from gamma_publication import validate_bundle
-        completed_bundle=ROOT/'.local/gamma-complete-v1/bundle'
-        bundle=completed_bundle if completed_bundle.exists() else ROOT/'.local/m11d-gamma-showcase-v1/bundle'
+        from gamma_showcase import no_links
+        completed_root = no_links(ROOT / '.local/gamma-complete-v1')
+        if completed_root.exists():
+            # A partial private run is evidence to inspect, never a fallback trigger.
+            bundle = no_links(completed_root / 'bundle')
+            require_complete = True
+        else:
+            public_bundle = no_links(ROOT / 'docs/examples/gamma-native')
+            if public_bundle.exists():
+                bundle = public_bundle
+                require_complete = True
+            else:
+                bundle = no_links(ROOT / '.local/m11d-gamma-showcase-v1/bundle')
+                require_complete = False
         data = validate_bundle(bundle)
         counts = data['science']['source']['counts']
         is_complete=data.get('kind')=='saved_gamma_complete_showcase_v1'
+        if require_complete and not is_complete:
+            raise ValueError('Completed saved example required')
         expected = {'radiation_primaries': 40, 'selected_primaries':40 if is_complete else 6,
                     'unprocessed_primaries':0 if is_complete else 34}
         census = {'radiation_primaries':counts['radiation_primaries'],

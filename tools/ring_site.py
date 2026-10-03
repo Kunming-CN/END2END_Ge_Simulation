@@ -84,7 +84,6 @@ def cards(items, up):
     out = []
     for case in items:
         c = case['counts']; model = case['model']; base = up + case['base']
-        response = 'summary.html'
         out.append('<article class="card"><h2>' + escape(case['label']) + '</h2><p>'
                    + escape(case['note']) + '</p><p>10,000 initial decays · '
                    + f'{c["zero_deposit_primaries"]:,} zero-Ge decays · {c["groups"]:,} pulse groups.</p><p>'
@@ -92,8 +91,8 @@ def cards(items, up):
                    + f'{c["readout_rejected"]:,} electronics rejects.</p><p>'
                    + f'<a href="{up}viewers/events.html?model={model}&amp;view=positive">Events</a> · '
                    + f'<a href="{up}spectra/cs137-10k.html#tenk-{model}">Spectra</a> · '
-                   + f'<a href="{base}/response/{response}">Charge &amp; readout</a> · '
-                   + f'<a href="{base}/response/ledgers.zip">Data</a></p></article>')
+                   + f'<a href="{up}results/cs137-10k/{model}/charge-readout.html">Charge &amp; readout</a></p><p>'
+                   + f'<a href="{base}/response/ledgers.zip">Download complete ledgers (ZIP)</a></p></article>')
     return '<div class="grid">' + ''.join(out) + '</div>'
 
 
@@ -130,6 +129,31 @@ def apply(site):
             '<a href="../../examples/cs137-10k/comparison.html">Original ICPC report</a> · '
             '<a href="../../examples/cs137-10k-rings/manifest.json">Ring provenance</a></p></section>')
     write_page(site / 'results/cs137-10k/index.html', 'Four-detector Cs137 10K · GeSignal', body, 2)
+    for case in items:
+        model=case['model'];base='../../../'+case['base']+'/response/'
+        original=site/case['base']/'response/summary.html'
+        require(original.is_file(),'Missing original charge/readout report: '+model)
+        wrapper=('<section class="hero"><p><a href="../index.html">← Four-detector 10K results</a></p>'
+                 '<h1>'+escape(case['label'])+' · charge and readout</h1>'
+                 '<p>Saved Cs137 campaign · 10,000 initial decays. '+escape(case['note'])+'</p></section>'
+                 '<section class="panel"><h2>Explore this case</h2>'
+                 f'<p><a href="../../../viewers/events.html?model={model}&amp;view=positive">Events and signals</a> · '
+                 f'<a href="../../../spectra/cs137-10k.html#tenk-{model}">Stage spectra</a> · '
+                 f'<a href="../../../detectors/{model}/index.html">Detector overview</a></p>'
+                 f'<p><a class="button" href="{base}ledgers.zip">Download complete ledgers (ZIP)</a></p>'
+                 '<p>The archive contains every primary/pulse scalar, complete deposition truth, native endpoints and stage histograms. '
+                 'Zero events, exact native failures and signed signals are retained.</p></section>'
+                 '<section class="panel"><h2>Original saved report</h2>'
+                 f'<p><a href="{base}summary.html">Open the original report in its own page</a>. '
+                 'The report and archive retain their checked original bytes.</p>'
+                 '<details><summary>Show the archived charge/readout report</summary>'
+                 f'<iframe title="{escape(case["label"])} original Cs137 10K charge/readout report" src="{base}summary.html" '
+                 'loading="lazy" style="width:100%;height:1400px;border:0"></iframe></details></section>'
+                 '<details class="panel"><summary>Scientific scope and counting</summary>'
+                 '<p>Truth deposited energy, native induced charge and reconstructed energy remain separate. '
+                 'Unknown charge/readout stays null; electronics rejection differs from native failure. '
+                 'Synthetic injection calibration and nominal geometry do not establish experimental agreement, calibrated Li CCE or physical energy resolution.</p></details>')
+        write_page(site/'results/cs137-10k'/model/'charge-readout.html',case['label']+' · Cs137 10K charge/readout · GeSignal',wrapper,3)
     for rel, up in (('index.html', ''), ('results/index.html', '../'), ('detectors/index.html', '../')):
         section = ('<section id="current-ring-10k" class="panel"><h2>Four-detector Cs137 10K</h2>'
                    '<p>ICPC: AK02, SAP22. Ring contact: GeRC02 Li50min, KMRC01 candidate. '
@@ -142,12 +166,4 @@ def apply(site):
             continue
         insert_section(page, 'current-ring-10k', '<section id="current-ring-10k" class="panel">'
                        '<h2>Current Cs137 10K result</h2>' + cards([case], '../../') + '</section>')
-        text = page.read_text(encoding='utf-8')
-        old = ('<p>LBNL end-to-end execution is not yet integrated for this model. '
-               'Geometry viewing is available independently of cryostat placement and readout support.</p>')
-        replacement = ('<p>The saved ring 10K used a separately checked bounded adapter. '
-                       'The generic beginner new-run selection remains AK02/SAP22; '
-                       'saved-result availability and fresh-machine reproduction are separate.</p>')
-        if case['model'] in RING_MODELS and old in text:
-            page.write_text(text.replace(old, replacement, 1), encoding='utf-8', newline='\n')
     return {'models': list(ALL_MODELS), 'initial_decays': 40000, 'new_simulations': 0}

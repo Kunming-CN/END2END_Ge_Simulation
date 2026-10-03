@@ -26,7 +26,7 @@
     "tools/spectrum_plot.py": "f00dbf5efdb393f03eebd501cb71a74bbd268fc3f0cff240de9a7eb54948a29c",
     "tools/spectrum_controls.js": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
     "tools/viewer_navigation.py": "f3d5686efc6272f3e360d6ecdf7b5908b120980459e13a10a1234412c2ad6a48",
-    "tools/ring_site.py": "540edbd6dc589b7cfb66b93b22e3c30b02bfd9efe6322c2fca672f688f3c3de1"
+    "tools/ring_site.py": "66fab904e6cdbec41fab468e182d206e89f599b53adf59d7318337d7d0760371"
   },
   "pages": {
     "spectra/million-truth.html": {
