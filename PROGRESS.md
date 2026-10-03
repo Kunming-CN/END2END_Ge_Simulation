@@ -12,12 +12,13 @@ complete gamma responses, clearer plots/public pages and verified local cleanup.
 Control executes checked AK02/SAP22 and both ring configurations through the
 shared GUI/CLI workflow. Existing-machine four-detector execution and explicit
 source-bound exporter preparation are verified. M14b now completes all40 original
-gamma responses with focused plots. M14c English gallery/navigation now passes
-local build/browser checks; finish its Git/live admission, then M14d cleanup.
-Do not claim fresh-clone acceptance yet.
+gamma responses with focused plots. M14c English gallery/navigation is deployed
+and exact live checks pass. M14d removed only822 verified duplicate intermediate
+files. Authorized M14 delivery is complete; fresh-clone acceptance is unverified.
 
-Root is delivering M14c under `.local/autonomy/lock`, owner
-`product-framework-v1-root`, actual gpt-6.1-sol/ultra in this project.
+Root completed M14 under owner `product-framework-v1-root`, actual
+gpt-6.1-sol/ultra in this project. Inspect private terminal state/lease before
+starting another round; no further automatic implementation is in this scope.
 Do not start a second supervisor or duplicate scientific workers. The bounded
 plan and independent planning evidence are in `.local/product-delivery-v1`.
 The backend and gamma planners froze their INITIALs before reciprocal discussion;
@@ -182,10 +183,29 @@ report pages work. Unique first-build metadata failure evidence is retained.
 
 Build `186b9008a790683486598e48e6b86ede2b1d9119008c191cc5fed32c955f6afc`
 has1685 files/104 HTML/3083 checked links and982,879,364 payload bytes. Local
-checks pass; Git synchronization and exact live admission are recorded in the
-terminal receipt after deployment. Next: M14d only the two proved duplicate
-leaves, after fresh worker/lock checks. Reuse frozen audit/deletion proofs;
-do not repeat old science. M8/M9 second-computer acceptance remains deferred.
+checks pass. Commit `64178d03c0dd351e195dc672ee542f2b91615acb` is synchronized;
+GitHub Pages deployment37126450657 succeeded and exact live checks passed695
+files. `implementation/m14c/COMPLETE.json` records the terminal outcome.
+No scientific calculation was repeated for this publication.
+
+## M14d verified local cleanup
+
+Fresh actual Windows/Linux process identities, ready state, absent prior lock,
+clean synchronized Git and actual Sol6.1 Ultra/root were checked before obtaining
+the owned M14d lease. All three C reviewers had independently reviewed the exact
+unchanged cleanup guard/proofs and exchanged their conditional findings.
+
+Only the expanded `ring-delivery-v1/clean-saved-export` fixture and the duplicate
+`failed-site-build-01/examples/cs137-10k-rings` leaf were removed:822 files,
+1,752,689,816 logical bytes. Every candidate and retained counterpart was checked
+again before removal. The complete ZIP, canonical full ring bundle, failed-build
+parent/logs/receipts, permanent science and active input workspaces remain intact.
+This is logical file size, not measured allocated-disk savings or cloud backup.
+The exact removal receipt, fresh process evidence and retained reconstruction
+instructions are under `.local/product-delivery-v1/cleanup-audit`. No physics,
+site rebuild, environment, global settings or broad workspace deletion occurred.
+Only this compact handoff changes after the checked M14c website snapshot.
+M8/M9 second-computer acceptance and other owner-dependent items remain deferred.
 
 ## Completed science and publication: reuse, never redo
 
