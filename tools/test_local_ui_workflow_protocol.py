@@ -152,6 +152,25 @@ class Protocol(unittest.TestCase):
             self.assertEqual(self.request(route=prefix+query)[0],400,query)
         self.workflow.waveforms.assert_not_called()
 
+    def test_focused_plots_closed_same_origin_identity_contract(self):
+        route='/api/workflow-file/focus?name=fixture&primary=7&group='
+        self.workflow.focused_waveforms.return_value={'kind':'saved_focus_waveforms_v1','science_calls':0}
+        for group,expected in (('none',None),('0',0),('2',2)):
+            status,raw,_=self.request(route=route+group)
+            self.assertEqual(status,200);self.assertEqual(json.loads(raw)['science_calls'],0)
+            self.workflow.focused_waveforms.assert_called_with('fixture',7,expected)
+        self.workflow.focused_waveforms.reset_mock()
+        for headers in ({'X-Control-Token':None},{'Origin':'https://evil.example'},
+                        {'Sec-Fetch-Site':'cross-site'},{'Host':'evil.example'}):
+            self.assertEqual(self.request(route=route+'2',headers=headers)[0],403)
+        for query in ('name=fixture&primary=7&group=2&extra=1','name=fixture&primary=7&group=2&group=0',
+                      'name=fixture&primary=07&group=2','name=fixture&primary=7&group=-1',
+                      'name=fixture&primary=7&group=2#x'):
+            self.assertEqual(self.request(route='/api/workflow-file/focus?'+query)[0],400)
+        cookie=self.server.download_cookie+'='+self.server.download_token
+        self.assertEqual(self.request(route=route+'2',headers={'X-Control-Token':'','Cookie':cookie,'Sec-Fetch-Site':'same-origin'})[0],403)
+        self.workflow.focused_waveforms.assert_not_called();self.workflow.start.assert_not_called()
+
     def test_terminal_gamma_verify_clears_cross_state_continuation_deadlock_without_science(self):
         root=self.server.controller.root;lock=threading.RLock();runner=Runner()
         gamma=G.GammaController(root,runner,identity_probe=lambda pid:None,coordination_lock=lock)

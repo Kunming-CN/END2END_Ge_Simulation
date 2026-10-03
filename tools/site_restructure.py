@@ -79,8 +79,9 @@ def apply(site):
     gamma=site/'examples/gamma-native'
     has_gamma=gamma.exists()
     if has_gamma:
-        from gamma_showcase import validate_bundle as validate_gamma_showcase
+        from gamma_publication import validate_bundle as validate_gamma_showcase, completed as gamma_completed
         validate_gamma_showcase(gamma)
+    completed_gamma=has_gamma and gamma_completed(gamma)
 
     home=('''<section class="hero"><p class="muted">Precomputed HPGe detector simulations</p>
 <h1>From radiation to an energy measurement.</h1>
@@ -97,7 +98,8 @@ def apply(site):
 
     learn_example='''<article class="card"><h2>Compact teaching example</h2><p>Walk through deposits, charge, preamplifier, shaper and ADC in a compact example.</p><a href="../examples/pipeline.html">Open the compact teaching example →</a></article>'''
     if has_gamma:
-        learn_example='''<article class="card"><h2>Explore saved gamma events</h2><p>Follow 40 truth events and six selected responses: four positive responses and two selected true zeros. The other 34 responses stay unknown/unprocessed. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.</p><a href="../examples/gamma-native/gamma.html">Open the saved engineering example →</a><p><a href="../examples/pipeline.html">Compact teaching example →</a></p></article>'''
+        gamma_caption='Follow all40 original primaries:29 known zero inputs and11 positive primaries, with recorded native failures kept as null unknown outputs. Independent collection-edge/full-window views preserve signed signals and original caps. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.' if completed_gamma else 'Follow 40 truth events and six selected responses: four positive responses and two selected true zeros. The other 34 responses stay unknown/unprocessed. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.'
+        learn_example='<article class="card"><h2>Explore saved gamma events</h2><p>'+gamma_caption+'</p><a href="../examples/gamma-native/gamma.html">Open the saved engineering example →</a><p><a href="../examples/pipeline.html">Compact teaching example →</a></p></article>'
     learn=('''<section class="hero"><p class="muted">Start here</p><h1>Radiation → charge → electronics</h1>
 <p>Geant4/remage records where radiation deposits energy. SolidStateDetectors.jl transports electron/hole charge and calculates electrode signals. The electronics stage applies preamplifier, shaping and peak-ADC response.</p></section>
 <div class="grid">'''+learn_example+'''
@@ -120,7 +122,7 @@ def apply(site):
     if has_10k:
         earlier_cards.append('''<article class="card"><h2>Earlier Cs137 · 10k</h2><p>Engineering response, response ledgers and interactive recorded-event geometry.</p><a href="cs137-10k/index.html">Open earlier campaign →</a></article>''')
     if has_gamma:
-        example_cards.append('''<article class="card"><h2>Small gamma → native SSD → peak ADC example</h2><p>Follow 40 truth events and six selected responses: four positive responses and two selected true zeros. The other 34 responses stay unknown/unprocessed. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.</p><a href="../examples/gamma-native/gamma.html">Inspect saved native charge and readout →</a></article>''')
+        example_cards.append('<article class="card"><h2>Small gamma → native SSD → peak ADC example</h2><p>'+gamma_caption+'</p><a href="../examples/gamma-native/gamma.html">Inspect saved native charge and readout →</a></article>')
     example_cards.append('''<article class="card"><h2>Compact teaching example</h2><p>A selected event-by-event engineering demonstration of the signal chain.</p><a href="../examples/pipeline.html">Open example →</a></article>''')
     results=('''<section class="hero"><p class="muted">Saved simulations and campaign status</p><h1>Results</h1>
 <p>Campaign pages keep initial-decay denominators, zero-deposit events, unavailable native responses and electronics rejection separate.</p></section>'''+current+'''<h2>Saved engineering examples</h2><div class="grid">'''+''.join(example_cards)+'''</div>''')

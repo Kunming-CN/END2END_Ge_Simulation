@@ -2,7 +2,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 class Element {
-  constructor(tag='div'){this.tagName=tag;this.children=[];this.value='';this.checked=false;this.disabled=false;this.textContent='';this.isConnected=true;this.dataset={};}
+  constructor(tag='div'){this.tagName=tag;this.children=[];this.value='';this.checked=false;this.disabled=false;this.textContent='';this.isConnected=true;this.dataset={};this.style={};}
   append(...nodes){this.children.push(...nodes);if(this.tagName==='select'&&this.children.length&&this.value==='')this.value=this.children[0].value;}
   replaceChildren(...nodes){this.children=[];this.value='';this.append(...nodes);}
   addEventListener(name,fn){this['on'+name]=fn;}
@@ -17,6 +17,7 @@ const elements=new Map(),get=id=>{if(!elements.has(id))elements.set(id,new Eleme
 const context=vm.createContext({document:{getElementById:get,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>{const n=new Element(tag);n.namespaceURI=ns;return n;},createTextNode:text=>({textContent:text})},DOMParser:Parser,
   location:{hash:'#fixture',pathname:'/'},sessionStorage:{getItem:()=>'',setItem:()=>{}},history:{replaceState:()=>{}},
   URLSearchParams,TextDecoder,Uint8Array,fetch:()=>new Promise(()=>{}),setInterval:()=>{},setTimeout:()=>{}});
+vm.runInContext(fs.readFileSync(__dirname+'/focused_plots.js','utf8'),context);
 vm.runInContext(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),context);
 function run(code){return vm.runInContext(code,context);}
 run(`catalog={electronics_keys:Object.keys(labels),electronics_defaults:{},sources:[{id:'mono_gamma_662_axis_v1',label:'Gamma',pose:'plus5mm',counts:[20]},{id:'cs137_point_decay_v1',label:'Cs137',pose:'nominal',counts:[20,500]}],cryostats:[{id:'lbnl_modular_nominal_v1',available:true}],detectors:[{id:'AK02',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'SAP22',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'GeRC02',available:true,sources:['cs137_point_decay_v1'],operating_label:'Li50min +240 V'},{id:'KMRC01_candidate',available:true,sources:['cs137_point_decay_v1'],operating_label:'−370 V; fixed −1 wiring'}]};`);
@@ -165,10 +166,10 @@ svgDocument.getElementsByTagName=()=>[{}];assert.throws(()=>run("safeSvg('<svg/>
   const staleError=run('openResult(savedJob)');run("showRun(newerJob);reports[8].reject(Error('Old result unavailable'));");
   await staleError;assert.equal(run('selectedJob'),'newer-run');assert.equal(run('result'),null);
   // Positive → zero → positive: late replies never paint under another group.
-  run("let plotReplies=[];api=path=>new Promise(resolve=>plotReplies.push({path,resolve}));result={job:newerJob,summaryHash:'c'.repeat(64),records:[{initial_primary_id:2,event_id:2,zero_ge:false,readout:{trace:{}}},{initial_primary_id:0,event_id:0,zero_ge:true,readout:{trace:{}}}],traces:[]};$('event').value='2';showEvent();");
+  run("let plotReplies=[];api=path=>new Promise(resolve=>plotReplies.push({path,resolve}));result={job:newerJob,summaryHash:'c'.repeat(64),records:[{initial_primary_id:2,event_id:2,zero_ge:false,readout:{trace:{},peak_time_ns:1000,peak_V:1}},{initial_primary_id:0,event_id:0,zero_ge:true,readout:{trace:{},peak_time_ns:1000,peak_V:1}}],traces:[]};$('event').value='2';showEvent();");
   get('event').value='0';run('showEvent();');get('event').value='2';run('showEvent();');
   assert.match(run('plotReplies[1].path'),/primary=0&group=none/);assert.match(run('plotReplies[2].path'),/primary=2&group=0/);
-  run("const plotReply=(id,group)=>({name:newerJob.name,configuration_sha256:newerJob.configuration_sha256,primary_id:id,group_id:group,summary_sha256:'c'.repeat(64),figures:['Charge (fC)','Original-bin current (nA)','Analog preamp (V)','Analog shaper (V)'].map(caption=>({caption,svg:'<svg/>'})),notes:['Bounded display samples; current belongs to original intervals.']});plotReplies[2].resolve(plotReply(2,0));");
+  run("const plotReply=(id,group)=>({kind:'saved_focus_projection_v1',name:newerJob.name,configuration_sha256:newerJob.configuration_sha256,primary_id:id,group_id:group,summary_sha256:'c'.repeat(64),sidecar_manifest_sha256:null,sidecar_data_sha256:null,panels:['Charge','Current','Preamp','Shaper'].map(title=>({title,time_ns:[0,2,1000],values:[0,-0,-1],full_end_ns:1000,focus_end_ns:12,peak:{t:1000,v:1},note:'Original saved points'})),notes:['Bounded display samples; current belongs to original intervals.']});plotReplies[2].resolve(plotReply(2,0));");
   await Promise.resolve();await Promise.resolve();assert.equal(get('plots').children.filter(n=>n.tagName==='figure').length,4);
   run('plotReplies[1].resolve(plotReply(0,null));plotReplies[0].resolve(plotReply(2,0));');
   await Promise.resolve();await Promise.resolve();assert.equal(get('plots').children.filter(n=>n.tagName==='figure').length,4);
@@ -177,5 +178,5 @@ svgDocument.getElementsByTagName=()=>[{}];assert.throws(()=>run("safeSvg('<svg/>
   await Promise.resolve();await Promise.resolve();assert.equal(get('plots').children.filter(n=>n.tagName==='figure').length,4);assert.match(get('event-identity').textContent,/known zero input/);
   run("showGroup();plotReplies[4].resolve(plotReply(0,0));");await Promise.resolve();await Promise.resolve();assert.match(get('plots').children[0].textContent,/identities differ/);
   run("showGroup();showRun(savedJob);plotReplies[5].resolve(plotReply(0,null));");await Promise.resolve();await Promise.resolve();assert.equal(get('plots').children.length,0);
-  console.log('Browser setup/run binding, all groups/zeros/null/signs, stale Check/report/plot fencing, inline four-SVG and recovery notice contracts passed.');
+  console.log('Browser setup/run binding, all groups/zeros/null/signs, stale Check/report/focus fencing, four independent plots and recovery notice contracts passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "build_id": "677031855afa9c2b80643b0fc3d26b5fc703010979e352d487b7574fffd3aa48",
-  "file_count": 1680,
-  "total_bytes": 979165418,
+  "build_id": "7b51300b9a439f311c33b75219758b07fb73e27ad6dbe9ff6ebb5fd300521ca3",
+  "file_count": 1681,
+  "total_bytes": 982858640,
   "html_pages": 100,
   "local_links_checked": 2888,
   "files": [
@@ -8113,28 +8113,28 @@
     },
     {
       "path": "examples/gamma-native/AK02-signals.csv",
-      "bytes": 271953,
-      "sha256": "68d2686f139d2e2f3043845b094e85a04d6a7762f2f3fa7db9897d84276d0a09"
+      "bytes": 836427,
+      "sha256": "3761830408226e31fe71693284d1518c5bcf5f5575655b0b1244be5ebd94b15a"
     },
     {
       "path": "examples/gamma-native/SAP22-signals.csv",
-      "bytes": 1307,
-      "sha256": "344659ab49b560fe85d8845e3b64c84327133a69d045b65256c2a246e74f6a5f"
+      "bytes": 7699,
+      "sha256": "96b4ca3da9a8d58415af4b12a559307565a6e9157cc9a963088c8263ee1a9241"
     },
     {
       "path": "examples/gamma-native/data.json",
-      "bytes": 3869198,
-      "sha256": "114b0c00dc483ef6b114d2567c28f87ba95ee2c0c1a1853bbd5dc16e649b91c1"
+      "bytes": 5412764,
+      "sha256": "c96bec9da168cdd07c23b8748c0d3717bf9ace77f430246e38f7a23fd4a11f49"
     },
     {
       "path": "examples/gamma-native/gamma.html",
-      "bytes": 3912758,
-      "sha256": "83feea77de2580eee612fbfe65dc6202bbe8bcd1a3a04fe1ff15a44fa55a5c41"
+      "bytes": 5464306,
+      "sha256": "1858fd960a395615736c3a91d2806c4f32778ba58950f68c46dadaa660b2b5c9"
     },
     {
       "path": "examples/gamma-native/publication.json",
-      "bytes": 14650,
-      "sha256": "ab73fe1b49b5337b0130c60598a551862209f5251f357fab4943296606e52801"
+      "bytes": 23459,
+      "sha256": "1efdd33521d27d8b9a413a1df64592018349af2e81d1b0d69cc612d72c76c166"
     },
     {
       "path": "examples/native-li/comparison.html",
@@ -8157,9 +8157,14 @@
       "sha256": "5a8fdfc15f13faf3a5795272d0cf6770f9ac29e1b7b232e789c4a7868eabf5b5"
     },
     {
+      "path": "examples/pipeline-display.json",
+      "bytes": 737,
+      "sha256": "3a0a5fdbfde1e00c20c810e197f7e27bbdad854e241759bd8bf42ec438079ae3"
+    },
+    {
       "path": "examples/pipeline.html",
-      "bytes": 9796506,
-      "sha256": "9184b1dff4b6d42cd457141628c7c44407996eaa86800726058b7420db81c244"
+      "bytes": 9805279,
+      "sha256": "6b97584824ef8237fccc44c24255eec44b8233242a3264fffd46f36cd5a7277f"
     },
     {
       "path": "guide.html",
@@ -8173,8 +8178,8 @@
     },
     {
       "path": "learn/index.html",
-      "bytes": 4152,
-      "sha256": "c2ec835da5f7fd44b8a7dc1918079971934697cd4002cb4d872d0951f50342ff"
+      "bytes": 4227,
+      "sha256": "335693b828864464a18a8ff0ab1b6633e4077332d075635ca4a1df305bf23720"
     },
     {
       "path": "lithium/axes-comparisons.csv",
@@ -8348,8 +8353,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 5320,
-      "sha256": "f2e0bbb52c3238d62b6924466af39da41b8e9f170a301e564473ef224d7f9d84"
+      "bytes": 5395,
+      "sha256": "50d8a375a529377b34603ec6f31b5ecd861c36d1cf79b97769b91f32e0ef722b"
     },
     {
       "path": "scenarios/lbnl-cs137/index.html",
@@ -8369,7 +8374,7 @@
     {
       "path": "spectra/manifest.json",
       "bytes": 7803,
-      "sha256": "a93f72de78656f4687f65c528183c85a23cc072f1cc0f7cfc032fa19cb2ef1f5"
+      "sha256": "1f0d61e23a87cbb3b63da0a683ec120cdb3515fc55263f5d4b6615a5cb3d3454"
     },
     {
       "path": "spectra/million-response.html",
@@ -8383,8 +8388,8 @@
     },
     {
       "path": "spectra/pipeline.html",
-      "bytes": 9814764,
-      "sha256": "47892bb45754ba3d29bfa2a1c5c6e78e624a05df1a2ddc0f8755295b950aa061"
+      "bytes": 9823537,
+      "sha256": "fb5a9811c5b1cef86d5e5531800e9ee1e028e3d643c531656ab92c5d26985042"
     },
     {
       "path": "viewers/events.html",

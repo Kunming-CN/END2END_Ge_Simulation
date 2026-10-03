@@ -23,6 +23,7 @@ import scenario_workflow as workflow
 ROOT = Path(__file__).resolve().parents[1]
 STATE = '.local/local-control-v1'
 STATIC = {'/': ('local_workflow.html', 'text/html; charset=utf-8'),
+          '/focused_plots.js': ('focused_plots.js', 'text/javascript; charset=utf-8'),
           '/local_workflow.js': ('local_workflow.js', 'text/javascript; charset=utf-8'),
           '/local_ui.js': ('local_workflow.js', 'text/javascript; charset=utf-8')}
 FILES = {'run.json', 'COMPLETE.json', 'manifest.json', 'worker/report.json',
@@ -41,13 +42,17 @@ class SavedGammaOpenError(RuntimeError):
 def open_saved_gamma_example():
     """Check the fixed completed bundle, then request its existing offline viewer."""
     try:
-        from gamma_showcase import validate_bundle
-        bundle = ROOT / '.local/m11d-gamma-showcase-v1/bundle'
+        from gamma_publication import validate_bundle
+        completed_bundle=ROOT/'.local/gamma-complete-v1/bundle'
+        bundle=completed_bundle if completed_bundle.exists() else ROOT/'.local/m11d-gamma-showcase-v1/bundle'
         data = validate_bundle(bundle)
         counts = data['science']['source']['counts']
-        expected = {'radiation_primaries': 40, 'selected_primaries': 6,
-                    'unprocessed_primaries': 34}
-        census = {key: counts[key] for key in expected}
+        is_complete=data.get('kind')=='saved_gamma_complete_showcase_v1'
+        expected = {'radiation_primaries': 40, 'selected_primaries':40 if is_complete else 6,
+                    'unprocessed_primaries':0 if is_complete else 34}
+        census = {'radiation_primaries':counts['radiation_primaries'],
+                  'selected_primaries':counts['processed_primaries'] if is_complete else counts['selected_primaries'],
+                  'unprocessed_primaries':counts['unprocessed_primaries']}
         if any(type(value) is not int for value in census.values()) or census != expected:
             raise ValueError('Unsupported saved example census')
         target = (bundle / 'gamma.html').as_uri()
@@ -198,10 +203,10 @@ class Handler(BaseHTTPRequestHandler):
         if parts.path in STATIC and not parts.query:
             name, mime = STATIC[parts.path]
             return self.send_data(200, (self.server.static_root / name).read_bytes(), mime)
-        if not self.authorized(download=parts.path == '/api/file', gamma_download=parts.path == '/api/gamma-file', workflow_download=parts.path in ('/api/workflow-file','/api/workflow-file/plots')):
+        if not self.authorized(download=parts.path == '/api/file', gamma_download=parts.path == '/api/gamma-file', workflow_download=parts.path in ('/api/workflow-file','/api/workflow-file/plots','/api/workflow-file/focus')):
             return
         try:
-            if parts.path == '/api/workflow-file/plots':
+            if parts.path in ('/api/workflow-file/plots','/api/workflow-file/focus'):
                 import re
                 if parts.fragment:raise ValueError('Invalid waveform artifact fragment')
                 query=parse_qs(parts.query,strict_parsing=True)
@@ -212,7 +217,8 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError('Invalid exact waveform identity')
                 if int(primary)>2147483646 or group!='none' and int(group)>2147483646:
                     raise ValueError('Invalid exact waveform identity')
-                return self.send_data(200,self.server.workflow_controller.waveforms(
+                project=self.server.workflow_controller.focused_waveforms if parts.path.endswith('/focus') else self.server.workflow_controller.waveforms
+                return self.send_data(200,project(
                     query['name'][0],int(primary),None if group=='none' else int(group)))
             if parts.path in ('/api/workflow/catalog','/api/workflow/setup','/api/workflow/state'):
                 if self.path!=parts.path:return self.reject(404,'Unknown workflow route')

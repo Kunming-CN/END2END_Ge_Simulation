@@ -81,6 +81,8 @@ tools/resume_native_contact.py -text whitespace=blank-at-eol,blank-at-eof,space-
 
 # Spectrum renderer provenance is byte-exact across Windows checkouts.
 tools/spectrum_controls.js text eol=lf
+# Saved focus renderer hashes are byte-exact across Windows checkouts.
+tools/focused_plots.js text eol=lf
 # Generated spectrum HTML is reviewed through its reader, renderer and bound hashes.
 docs/spectra/** -diff
 

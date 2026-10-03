@@ -403,11 +403,13 @@ def normalize_text_outputs(folder):
 
 def build_gamma_export(source):
     """Copy a completed frozen showcase onto the checked saved site; no exporter."""
-    from gamma_showcase import assemble
+    from gamma_publication import assemble
     validate(DESTINATION)
     shutil.copytree(DESTINATION, OUT)
     (OUT / MANIFEST).unlink()
     assemble(source, OUT / 'examples' / 'gamma-native', replace=True)
+    from saved_focus_pages import assemble as assemble_teaching_focus
+    if (OUT/'examples/data.json').is_file():assemble_teaching_focus(OUT/'examples')
 
 
 def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None):

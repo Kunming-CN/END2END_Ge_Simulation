@@ -151,8 +151,11 @@ def validate(site, require_manifest=True, require_models=False):
         from native_response_publication import validate as validate_native_response
         validate_native_response(site/'examples/cs137-1m-response')
     if (site/'examples/gamma-native').exists():
-        from gamma_showcase import validate_bundle as validate_gamma_showcase
+        from gamma_publication import validate_bundle as validate_gamma_showcase
         validate_gamma_showcase(site/'examples/gamma-native')
+    if (site/'examples/pipeline-display.json').exists():
+        from saved_focus_pages import validate as validate_teaching_focus
+        validate_teaching_focus(site/'examples')
     geometry_viewers=[site/'detectors'/m/'geometry.html' for m in ('AK02','SAP22')]
     if any(p.exists() for p in geometry_viewers):
         if not all(p.exists() for p in geometry_viewers): raise ValueError('Partial SSD geometry viewer publication')

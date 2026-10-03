@@ -191,6 +191,13 @@
 # Reviewed M14a3 paired portable source adapter; build/runtime receipts stay local.
 !transport/scenario_source_portable.py
 
+# Additive M14b saved40 completion and electronics-only display adapters.
+!simulation/gamma_complete_example.jl
+!simulation/gamma_saved_replay.jl
+!simulation/saved_collection_edge.jl
+!simulation/test_saved_collection_edge.jl
+!simulation/saved_control_edge.jl
+
 # Keep this final: only the reviewed PR template may enter .github.
 !/.github/
 /.github/**

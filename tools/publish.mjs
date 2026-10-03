@@ -23,6 +23,15 @@ run(python, [path.join(root, 'tools/test_site.py')]);
 run(python, [path.join(root, 'tools/test_contacts.py')]);
 run(python, [path.join(root, 'tools/test_pipeline.py')]);
 run(python, ['-B', path.join(root, 'tools/test_gamma_showcase.py')]);
+run(python, ['-B', path.join(root, 'tools/test_gamma_complete_example.py')]);
+run(python, ['-B', path.join(root, 'tools/test_gamma_complete_showcase.py')]);
+run(python, ['-B', path.join(root, 'tools/test_saved_terminal.py')]);
+run(python, ['-B', path.join(root, 'tools/test_saved_focus_waveforms.py')]);
+run(python, ['-B', path.join(root, 'tools/test_saved_focus_pages.py')]);
+run(python, ['-B', path.join(root, 'tools/test_local_ui_workflow_jobs.py')]);
+run(python, ['-B', path.join(root, 'tools/test_local_ui_workflow_protocol.py')]);
+run(process.execPath, [path.join(root, 'tools/test_focused_plots.js')]);
+run(process.execPath, [path.join(root, 'tools/test_local_workflow.js')]);
 run(python, ['-B', path.join(root, 'tools/test_local_ui_jobs.py')]);
 run(python, ['-B', path.join(root, 'tools/test_local_ui.py')]);
 run(process.execPath, [path.join(root, 'tools/test_local_ui_frontend.js')]);
@@ -54,6 +63,8 @@ const simulationFiles = new Set(["simulation/Project.toml","simulation/Manifest.
 const transportFiles = new Set(["transport/README.md","transport/pixi.toml","transport/pixi.lock","transport/.pixi/config.toml","transport/cryostat-source.json","transport/cryostat-input-ledger.json","transport/Run.cmd","transport/run.sh","transport/smoke.gdml","transport/smoke.mac","transport/check_smoke.py","transport/handoff.py","transport/test_handoff.py","transport/geometry_probe.cc","transport/CMakeLists.txt","transport/experiment.json","transport/compare_em.py","transport/test_compare_em.py"]);
 for (const f of ['transport/scenario_prepare.py', 'transport/test_scenario_prepare.py', 'transport/Prepare.cmd', 'transport/prepare.sh']) transportFiles.add(f);
 for (const f of ['simulation/gamma_native_example.jl', 'simulation/test_gamma_native_example.jl']) simulationFiles.add(f);
+for (const f of ['simulation/gamma_complete_example.jl','simulation/gamma_saved_replay.jl',
+  'simulation/saved_collection_edge.jl','simulation/test_saved_collection_edge.jl','simulation/saved_control_edge.jl']) simulationFiles.add(f);
 // Reviewed ring adapters reuse the existing native solver and locked transport.
 for (const f of ['simulation/ring_stream.jl', 'simulation/test_ring_stream.jl',
   'simulation/ring_response.jl', 'simulation/ring_polarity.jl', 'simulation/test_ring_polarity.jl']) simulationFiles.add(f);

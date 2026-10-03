@@ -11,10 +11,11 @@ The owner now prioritizes a real mouse-operated end-to-end application, then
 complete gamma responses, clearer plots/public pages and verified local cleanup.
 Control executes checked AK02/SAP22 and both ring configurations through the
 shared GUI/CLI workflow. Existing-machine four-detector execution and explicit
-source-bound exporter preparation are verified. Next: M14b saved gamma completion
-and focused plots. Do not claim fresh-clone acceptance yet.
+source-bound exporter preparation are verified. M14b now completes all40 original
+gamma responses with focused plots. Next: M14c English gallery/navigation.
+Do not claim fresh-clone acceptance yet.
 
-Root is executing M14a under `.local/autonomy/lock`, owner
+Root is delivering M14b under `.local/autonomy/lock`, owner
 `product-framework-v1-root`, actual gpt-6.1-sol/ultra in this project.
 Do not start a second supervisor or duplicate scientific workers. The bounded
 plan and independent planning evidence are in `.local/product-delivery-v1`.
@@ -62,93 +63,93 @@ exact deployed site with `tools/check_site.py --url`. Do not edit `docs/` by han
 Freeze scientific/export sources before hash-bound export. No new environment,
 global PATH/settings, reset credits, separately billed API or million-decay task.
 
-## M14a1 verified application slice
+## Completed M14a application framework
 
-The English local application selects the modular cryostat, AK02/SAP22, nominal
-Cs137 (20/500 primaries) or a fixed 662 keV gamma beam (20), and eleven actual
-electronics settings. Check is read-only; changing the form invalidates it.
-Pipeline captions/settings belong to the selected saved run, independently of
-the next-run form. Stages, logs, complete primary identities and four original
-signed waveform SVGs are available inside the application. Known zeros retain
-zero input and null reconstructed energy; failures retain their original evidence.
+The full M14a1–3 record is immutable
+[at c2909be](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/c2909bef0645ecdee4dbfc21487efd82692772f6/PROGRESS.md).
+One English Control application uses a shared closed GUI/CLI resolver, actual
+four-detector adapters and one generated run root. AK02/SAP22 support Cs13720/500
+and fixed662keV gamma20; both rings support Cs13720/500. One actual modular
+cryostat, nominal source position and eleven electronics settings are exposed.
+Unavailable adapters are disabled. Check is read-only; form changes invalidate
+it. Stop waits at a stage boundary; saved run/event/group identity is independent
+of the next-run form. Stages, receipts, logs and signed waveforms are accessible.
 
-Actual mouse acceptance completed SAP22/gamma20 with gain21: all20 primaries,
-15 zero-Ge, five accepted responses, no unprocessed/native failure/readout reject.
-One independent500keV injection calibrated the selected electronics. Response
-stage70.754s (including potential22.646s/native7.881s/electronics1.592s); this is
-measured computation, not coding/review wall time. Original complete radiation
-was copied losslessly from the preserved cold-entry failure; it was not rerun.
-Denied launch01 and failed cold-entry02 remain unchanged. New terminal data are
-`.local/runs/m14a-gamma-ui-03`; final source/mouse/review evidence is under
-`.local/product-delivery-v1/implementation` and `reviews`. The final source freeze
-is `M14a1-LEGACY-GUARD-DISPLAY-SOURCE-FREEZE.json`.
-Two independent scoped AI reviewers and a NEW clean-context strict reviewer
-accepted this slice after frozen initials, reciprocal discussion and final repairs.
-Caption binding, original-SVG access and false legacy prerequisite findings are
-resolved. Relevant protocol/projection/browser contracts and unchanged-site
-checks passed; the website snapshot itself was not regenerated in this slice.
+Actual existing-machine runs and permanent roots:
 
-## M14a2 verified ring application slice
+| Run | Primaries | Known zeros | Accepted | Native failures | Electronics rejects | Response wall |
+|---|---:|---:|---:|---:|---:|---:|
+| m14a-gamma-ui-03 / SAP22 |20|15|5|0|0|70.754s|
+| m14a2-ge-ui-01 / GeRC02 Li50min |500|478|18|0|4|283.411s|
+| m14a2-km-ui-02 / KMRC01_candidate |500|488|12|0|0|87.547s|
+| m14a3-portable-ui-01 / SAP22 |20|15|5|0|0|74.206s|
 
-The same English application now executes GeRC02 Li50min and KMRC01_candidate
-with Cs137, selected seed,20/500 initial decays and selected electronics. New
-fields are solved; original30-minute GeRC02 and KM0/-370V contacts are unchanged.
-KM raw signals stay negative; the fixed-1 electronics wiring uses one independent
-negative500keV injection. All500 original IDs and signed charge/current/preamp/
-shaper plots are selectable; zero input retains null reconstructed energy.
-Changing the next-run form leaves saved model/event/group identity unchanged.
+All reside under `.local/runs/`. KM retains original0/-370V contacts and signed
+negative charge, with owner-approved fixed-1 wiring and independent negative500keV
+injection. Ge original30min is unchanged. Completed radiation/prefix artifacts
+and unique denied/interrupted attempts remain byte exact; derived inspections
+and sharing-retry repairs did not rerun completed science. Recorded stage times
+are computation, not development/review wall time.
 
-Actual mouse acceptance: Ge500 has478 zero-energy events,22 pulse groups,
-18 accepted/4 electronics rejects/0 native failures; KM500 has488 zeros,
-12 accepted/0 rejects/0 native failures. Ge response283.411s; KM response87.547s,
-core52.119s excluding preparation/preflight and separate0.234s calibration.
-These are measured computation times, not development/review wall time.
-Ge completed response was finalized without recomputation after a derived-sum
-1-3ULP validation mismatch; raw identities remain exact. KM continued only
-response/results from23 byte-exact prefix files after a receipt-publication
-interruption. Its original27 files, pending receipt and failure log remain exact;
-unobserved original ledger exit/time remain null. Atomic progress publication
-now has unique pending names and finite Windows sharing/access retries; a
-secondary receipt failure cannot mask the original exception.
+Explicit source preparation built the pinned exporter in the existing locked
+runtime (configure31.570s/build3.311s); six actual detector/source Checks passed
+without science. No global environment/PATH/settings changed. The final source,
+mouse, terminal and three independent AI review/exchange evidence is preserved
+under `.local/product-delivery-v1/implementation` and `reviews`. M14a3 preserves
+64 terminal artifacts and123 protected source bytes. Actual existing-machine
+acceptance does not establish fresh-clone/second-computer or experimental physics
+acceptance. Do not repeat its science or reviews to recover a disconnected chat.
 
-Terminal roots: `.local/runs/m14a2-ge-ui-01` and `m14a2-km-ui-02`; root mouse
-acceptance, source freeze and review evidence are under the existing M14 bundle.
-The30-source freeze is `M14a2-KM-PUBLICATION-SOURCE-FREEZE.json`.
-Relevant semantic/tamper/publication/protocol/browser tests passed. Two scoped
-AI reviewers and the NEW independent strict reviewer accepted after frozen
-initials, direct reciprocal exchange, fixes and actual mouse-evidence review.
-The owned preview and worker processes are closed. Website snapshot unchanged.
+## M14b complete saved gamma and focused display
 
-## M14a3 verified source preparation and application closure
+All40 original gamma primaries are processed:29 known zero inputs and11 positive
+accepted responses;0 unprocessed/native failures/positive electronics rejects.
+The original six response files remain byte exact. Only seven missing native
+responses were computed from existing radiation and fields, preserving118 whole
+Ge rows,105 positive-energy rows and3360 planned carrier endpoints. AK02 retains
+347 capped endpoints; ADC acceptance is not validated Li charge collection.
+Independent per-detector500keV injection calibration remains fixed across events.
 
-One paired source adapter builds the frozen exporter explicitly in the existing
-locked environment, with clone-local root, compiler/link/runtime and source
-receipts. Actual configure31.570s/build3.311s; six read-only detector/source Checks
-passed without science. The actual mouse SAP22/gamma20/gain22/one-thread run
-completed all20 primaries:15 known zeros, five accepted, no unprocessed/native
-failure/readout rejection. Response74.206s, potential23.577s/native7.512s/
-electronics1.283s; separate single-injection calibration0.756s. These are measured
-computation times, not development wall time. Original signed plots, event/group
-identity and zero/null distinctions passed actual mouse checks; next-run KM/Cs137
-selection leaves saved SAP22/gamma results unchanged.
+AK02 completed55.691s wall; SAP22 continuation37.911s wall. The original aggregate
+reader's4MiB postprocessing refusal occurred after AK completed. A closed,
+independently reviewed recovery preserves all45 original failed-attempt artifacts
+and44 original AK files, permits only the two recorded reader/resume source edits,
+and resumes SAP's missing three native calls. Producer pins, current validators
+and per-stage timing remain separate. No radiation, fields or AK charge was rerun.
 
-Terminal `.local/runs/m14a3-portable-ui-01` and its64 artifacts remain exact.
-Windows child module-path failure, normal Pixi activation-hint refusal, WSL JSON
-argument parsing and post-extraction inspection failure are preserved in the M14
-evidence. Repairs admit exact locked activation hints, use direct WSL execution,
-and validate completed radiation through the stronger complete-ledger reader.
-No completed science, old source attribution, model/kernel or exporter was rerun
-for the later inspection repair. The final11-source freeze is
-`M14a3-TERMINAL-LEDGER-SOURCE-FREEZE.json`;123 protected bytes remain unchanged.
-Two scoped AI reviewers and the NEW independent strict reviewer accepted the final actual evidence after frozen initials and concrete peer exchange.
+The gamma and English Control plots use independent charge/current/preamp-edge/
+shaper ranges, with full saved windows available. A separate electronics-only
+five-state replay reveals the early preamp edge; old peaks/ADC/Erec/signs/flags
+remain exact. The old-six binary64 replay passes;484 synthetic assertions pass.
+Ge's22 saved groups have science-free dense edges:16 original traces pass bit
+parity; six missing originals have explicit null parity. The teaching example
+preserves its original data bytes and uses its saved early samples.
 
-Next bounded slice: M14b completes the original40 gamma IDs from saved radiation
-and fields, preserves old6 response bytes, and supplies useful independent plot
-ranges. Also remove repeated expensive terminal parsing from saved-artifact
-requests while retaining exact content checks; current Control full-window views
-are functional acceptance only. Then M14c English gallery/navigation and M14d
-the two proved duplicate leaves. Reuse frozen plans/audit/proofs; do not repeat
-old science. M8/M9 second-computer acceptance remains deferred.
+Saved artifacts: `.local/gamma-complete-v1/example` and `bundle`;
+`.local/product-delivery-v1/display-derived/m14a2-ge-ui-01` and `teaching-display`.
+The55-source freeze is `implementation/m14b/SOURCE-FREEZE.json` in the M14 bundle.
+Original failures and retained science are permanent. The public gamma JSON is
+lossless (11,744,655bytes), including every ID, value, deposit and failure flag.
+Successful terminal parsing is cached only within a process; every artifact
+request still verifies the full exact inventory and refuses tampered content.
+
+Actual browser checks cover positive/zero events, changing open details, useful
+ranges/full windows, Ge saved identity while changing the next-run form, and
+teaching preamp details. Desktop1280px has no horizontal overflow or console error.
+The browser's viewport override stayed1280px and its policy blocks file://;
+actual mobile/direct-file acceptance is unverified. Self-contained embedded-data
+and responsive fixture contracts pass; do not convert these to browser claims.
+Three independent AI initial reviews precede concrete exchange; all source/data
+findings are resolved. Final browser/site review records are under `reviews/m14b-*`.
+
+Website build `7b51300b9a439f311c33b75219758b07fb73e27ad6dbe9ff6ebb5fd300521ca3`
+has1681files/100HTML/2888checked links and982,858,640bytes.32 site tests and exact
+local publication checks pass. Deployment must still pass the exact live checker;
+the terminal milestone receipt records the actual synchronization outcome.
+
+Next bounded slice: M14c English gallery/navigation and newcomer-audit findings,
+then M14d the two proved duplicate leaves. Reuse frozen audit/deletion proofs;
+do not repeat old science. M8/M9 second-computer acceptance remains deferred.
 
 ## Completed science and publication: reuse, never redo
 

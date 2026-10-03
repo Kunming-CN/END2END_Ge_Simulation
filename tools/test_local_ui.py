@@ -430,8 +430,13 @@ class Protocol(unittest.TestCase):
 
 
 class SavedGammaHelper(unittest.TestCase):
+    def setUp(self):
+        base=U.ROOT/'.local/product-delivery-v1/implementation-tests';base.mkdir(parents=True,exist_ok=True)
+        self.temp=tempfile.TemporaryDirectory(dir=base);self.addCleanup(self.temp.cleanup)
+        root_patch=patch.object(U,'ROOT',Path(self.temp.name));root_patch.start();self.addCleanup(root_patch.stop)
+
     def test_fixed_target_opens_only_after_completed_validation(self):
-        import gamma_showcase as G
+        import gamma_publication as G
         sequence = []
         bundle = U.ROOT / '.local/m11d-gamma-showcase-v1/bundle'
         def checked(path):
@@ -448,7 +453,7 @@ class SavedGammaHelper(unittest.TestCase):
         self.assertEqual(sequence, ['validated', 'open_requested'])
 
     def test_invalid_checked_census_never_opens(self):
-        import gamma_showcase as G
+        import gamma_publication as G
         bad = [None, {}, {'science':{}}]
         for value in (None, '40', 40.0, True, 39):
             item = checked_saved_fixture(); item['science']['source']['counts']['radiation_primaries'] = value
@@ -460,6 +465,18 @@ class SavedGammaHelper(unittest.TestCase):
                  patch.object(U.webbrowser, 'open') as opener:
                 with self.assertRaises(U.SavedGammaUnavailable): U.open_saved_gamma_example()
             opener.assert_not_called()
+
+    def test_completed40_fixed_bundle_is_preferred(self):
+        import gamma_publication as G
+        bundle=U.ROOT/'.local/gamma-complete-v1/bundle';bundle.mkdir(parents=True)
+        data={'kind':'saved_gamma_complete_showcase_v1','science':{'source':{'counts':{
+            'radiation_primaries':40,'processed_primaries':40,'unprocessed_primaries':0}}}}
+        with patch.object(G,'validate_bundle',return_value=data) as validator, \
+             patch.object(U.webbrowser,'open',return_value=True) as opener:
+            result=U.open_saved_gamma_example()
+        validator.assert_called_once_with(bundle);opener.assert_called_once_with((bundle/'gamma.html').as_uri())
+        self.assertEqual(result['census'],{'radiation_primaries':40,'selected_primaries':40,'unprocessed_primaries':0})
+        self.assertEqual(result['science_calls'],0)
 
 
 if __name__ == '__main__': unittest.main()

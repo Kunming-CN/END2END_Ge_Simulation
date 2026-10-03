@@ -8,7 +8,7 @@
     "examples/cs137-1m/report.html": "a04c9d0557f150d37fa2b381a445ef5315fbc2cd6dd3a0eccd38026fcd098f35",
     "examples/cs137-1m-response/report.html": "4de4b264f6df246982b3991bb1cedf3d5eefcf26aa9726e1379e0e511f135b77",
     "examples/cs137-10k/comparison.html": "b94d57dbb9657f68dd8aa0043e8e88203c54a71c1bffae7f38c19e485c1247c4",
-    "examples/pipeline.html": "9184b1dff4b6d42cd457141628c7c44407996eaa86800726058b7420db81c244",
+    "examples/pipeline.html": "6b97584824ef8237fccc44c24255eec44b8233242a3264fffd46f36cd5a7277f",
     "examples/cs137-1m/histograms.json": "4fff0a89cc28164115b6c0ae3575adcf706b31d24f677264f90d80b9b1c406a3",
     "examples/cs137-1m-response/histograms.json": "04c0fa1693bd9ba02a00a76288c0b3974b5fa0c791504ce86294f6cd13769640",
     "examples/cs137-10k/AK02/response/histograms.json": "8cbdb6d7ba7ebbbfa4e95a270bb9db955c67d7063f1652e1383fcba459236ab1",
@@ -98,8 +98,8 @@
     },
     "spectra/pipeline.html": {
       "source": "examples/pipeline.html",
-      "source_sha256": "9184b1dff4b6d42cd457141628c7c44407996eaa86800726058b7420db81c244",
-      "sha256": "47892bb45754ba3d29bfa2a1c5c6e78e624a05df1a2ddc0f8755295b950aa061",
+      "source_sha256": "6b97584824ef8237fccc44c24255eec44b8233242a3264fffd46f36cd5a7277f",
+      "sha256": "fb5a9811c5b1cef86d5e5531800e9ee1e028e3d643c531656ab92c5d26985042",
       "specs_sha256": "8024d78e57b02968c7a867bf8481737db94283fe773e113320aae05ef892d455",
       "plot_states": 2,
       "render_components": {

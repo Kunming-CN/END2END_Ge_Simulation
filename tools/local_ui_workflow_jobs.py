@@ -17,6 +17,8 @@ import workflow_inspection as I
 import workflow_recovery as R
 import workflow_finalize as F
 import saved_waveforms
+import saved_focus_waveforms
+from saved_terminal import Verifier
 from local_ui_jobs import ControlError, process_identity, safe_path
 
 STATE='.local/local-control-v1'
@@ -28,6 +30,7 @@ class WorkflowController:
         self.root=Path(root or W.ROOT);self._lock=coordination_lock or threading.RLock()
         self._peer_busy=peer_busy or (lambda:False);self._resolver=resolver or W.check
         self._launcher=launcher or self._spawn;self._checks={};self._active=None;self._entry_thread=None
+        self._saved_verifier=Verifier(self.root)
         path=safe_path(self.root,STATE+'/workflow-jobs.json')
         self._state_path=path
         if path.exists():
@@ -267,7 +270,7 @@ class WorkflowController:
                     stream.seek(max(0,path.stat().st_size-256*1024));body=stream.read(256*1024)
                 return body,'text/plain; charset=utf-8'
             W.require(job['status'] in W.TERMINAL,'Verify completed results before downloading.')
-            W.inspect(name,self.root)
+            self._saved_verifier.inspect(name)
             complete=W.read(directory/'COMPLETE.json');W.require(file in complete['artifacts'] or file=='COMPLETE.json','Unsupported result artifact.')
             path=safe_path(directory,file);W.require(path.stat().st_size<=64*1024*1024,'Artifact exceeds the browser size limit.')
             mime='text/html; charset=utf-8' if file.endswith('.html') else 'text/plain; charset=utf-8' if file.endswith(('.csv','.jsonl')) else 'application/json; charset=utf-8'
@@ -278,3 +281,11 @@ class WorkflowController:
             body,mime=self.artifact(name,'response/summary.html')
             job=next(j for j in self._jobs if j['name']==name)
             return saved_waveforms.project(body,name,job['plan']['configuration_sha256'],primary_id,group_id)
+
+    def focused_waveforms(self,name,primary_id,group_id):
+        with self._lock:
+            self.artifact(name,'response/summary.html')
+            job=next(j for j in self._jobs if j['name']==name)
+            reply=saved_focus_waveforms.project(W.run_path(name,self.root),name,job['plan']['configuration_sha256'],primary_id,group_id,self.root)
+            self._saved_verifier.inspect(name)
+            return reply
