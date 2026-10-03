@@ -4,6 +4,7 @@
 !.gitattributes
 !README.md
 # Reviewed community root files only.
+!/LICENSE
 !/CONTRIBUTING.md
 !/CITATION.cff
 !/THIRD_PARTY_NOTICES.md

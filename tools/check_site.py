@@ -75,9 +75,13 @@ def validate(site, require_manifest=True, require_models=False):
         native_response_payload = relative=='examples/cs137-1m-response/groups.csv.gz'
         ledger_zip = relative in ('examples/cs137-10k/AK02/response/ledgers.zip', 'examples/cs137-10k/SAP22/response/ledgers.zip')
         ring_payload = relative.startswith('examples/cs137-10k-rings/') and (f.suffix.lower() in {'.zip', '.gz', '.jsonl'} or relative == 'examples/cs137-10k-rings/README.txt')
-        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative != 'sitemap.xml' and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload and not ring_payload:
+        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in {'sitemap.xml', 'LICENSE'} and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload and not ring_payload:
             raise ValueError(f'Unapproved public file: {relative}')
         data = f.read_bytes()
+        if relative == 'LICENSE':
+            from site_discovery import SOFTWARE_LICENSE
+            if data != SOFTWARE_LICENSE.read_bytes():
+                raise ValueError('Published software LICENSE differs from maintained source')
         if geometry_file and f.suffix.lower()=='.zip':
             from geometry_publication import archive_contents
             archive_contents(data)
@@ -102,7 +106,7 @@ def validate(site, require_manifest=True, require_models=False):
         total += len(data)
         entries.append({'path': relative, 'bytes': len(data),
                         'sha256': hashlib.sha256(data).hexdigest()})
-        if f.suffix.lower() in {'.html', '.json', '.md', '.svg', '.csv', '.yaml', '.txt', '.xml'}:
+        if relative == 'LICENSE' or f.suffix.lower() in {'.html', '.json', '.md', '.svg', '.csv', '.yaml', '.txt', '.xml'}:
             text = data.decode('utf-8-sig')
             if PRIVATE_PATH.search(text) or CREDENTIAL.search(text):
                 raise ValueError(f'Local path or possible credential: {relative}')
@@ -246,7 +250,7 @@ def verify_live(url, report):
         raise ValueError('The live manifest is not this local snapshot; deployment may still be pending.')
     entries = report['files']
     selected = {entry['path']: entry for entry in entries if entry['path'].endswith('.html')}
-    selected.update({entry['path']: entry for entry in entries if entry['path'] == 'sitemap.xml'})
+    selected.update({entry['path']: entry for entry in entries if entry['path'] in {'sitemap.xml', 'LICENSE'}})
     selected.update({entry['path']: entry for entry in entries
                      if entry['path'].startswith(('models/', 'downloads/'))})
     # The public campaign is an auditable dataset, not just HTML; verify every file.

@@ -77,5 +77,6 @@ Advanced component references: [SSD/CPU/GPU](simulation/README.md), [transport a
 </details>
 
 To propose a change, see [Contributing](CONTRIBUTING.md). Cite the software with
-[CITATION.cff](CITATION.cff). The project software license is pending;
+[CITATION.cff](CITATION.cff). Original project software and maintained-source
+documentation use the [MIT License](LICENSE);
 [third-party and data rights](THIRD_PARTY_NOTICES.md) remain separate.

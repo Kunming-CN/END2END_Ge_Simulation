@@ -10,6 +10,11 @@ SITE_URL = 'https://kunming-cn.github.io/END2END_Ge_Simulation/'
 PROJECT_NAME = 'GeSignal'
 PROJECT_TITLE = 'GeSignal — HPGe Radiation-to-Readout Simulation'
 SITEMAP = 'sitemap.xml'
+# Public ownership proof supplied by the owner's Search Console property.
+# Retain after verification; it is neither a credential nor a tracking script.
+GOOGLE_VERIFICATION = 'wFWyU8uT-Mpj18hGTUOsVugVXg5AlW6TDcfRP2r--RE'
+SOFTWARE_LICENSE = Path(__file__).resolve().parents[1] / 'LICENSE'
+LEGACY_WITHOUT_SUPPORT = {'186b9008a790683486598e48e6b86ede2b1d9119008c191cc5fed32c955f6afc'}
 NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
 LANDINGS = {
     'index.html': 'Saved HPGe detector engineering simulations: Geant4/remage radiation deposits, SSD charge transport and electronics readout. Browse results or choose a local workflow.',
@@ -70,39 +75,66 @@ def assemble(site):
         # These pages are maintained sources, not hash-bound result presentations.
         html = re.sub(r'<meta\s+name="description"[^>]*>', '', html)
         html = re.sub(r'<link\s+rel="canonical"[^>]*>', '', html)
+        html = re.sub(r'<meta\s+name="google-site-verification"[^>]*>', '', html)
         html = html.replace('END2END Ge Simulation', 'GeSignal · HPGe detector simulation')
         if path == 'index.html':
             html = re.sub(r'<title>.*?</title>', '<title>' + escape(PROJECT_TITLE) + '</title>', html, count=1)
         tags = (f'<meta name="description" content="{escape(description, quote=True)}">'
                 f'<link rel="canonical" href="{canonical(path)}">')
+        if path == 'index.html':
+            tags += f'<meta name="google-site-verification" content="{GOOGLE_VERIFICATION}">'
         if '<title>' not in html:
             raise ValueError(f'Maintained discovery page has no title: {path}')
         html = html.replace('<title>', tags + '<title>', 1)
         page.write_text(html, encoding='utf-8', newline='\n')
     (site / SITEMAP).write_bytes(sitemap_bytes(descriptions))
+    (site / 'LICENSE').write_bytes(SOFTWARE_LICENSE.read_bytes())
 
 
 class Metadata(HTMLParser):
     def __init__(self):
         super().__init__()
-        self.descriptions, self.canonicals = [], []
+        self.descriptions, self.canonicals, self.verifications = [], [], []
+        self.verification_in_head = []
+        self.head_closed = self.body_started = False
 
     def handle_starttag(self, tag, attrs):
+        if tag not in {'html', 'head', 'title', 'meta', 'link', 'style', 'script',
+                       'base', 'noscript', 'template'}:
+            self.body_started = True
         values = dict(attrs)
         if tag == 'meta' and values.get('name') == 'description':
             self.descriptions.append(values.get('content'))
         if tag == 'link' and values.get('rel') == 'canonical':
             self.canonicals.append(values.get('href'))
+        if tag == 'meta' and values.get('name') == 'google-site-verification':
+            self.verifications.append(values.get('content'))
+            self.verification_in_head.append(not self.head_closed and not self.body_started)
+
+    def handle_endtag(self, tag):
+        if tag == 'head':
+            self.head_closed = True
 
 
 def validate(site):
     """Optional on historical snapshots; strict once the sitemap is installed."""
     site = Path(site)
     if not (site / SITEMAP).exists():
+        if (site / 'models/catalog.json').is_file() or (site / 'LICENSE').is_file():
+            raise ValueError('Discovery sitemap is missing from a current publication')
         return
     descriptions = landing_descriptions(site)
     manifest = site / 'site-manifest.json'
-    historical = HISTORICAL_DESCRIPTIONS.get(json.loads(manifest.read_bytes()).get('build_id'), {}) if manifest.is_file() else {}
+    build_id = json.loads(manifest.read_bytes()).get('build_id') if manifest.is_file() else None
+    historical = HISTORICAL_DESCRIPTIONS.get(build_id, {})
+    has_license = (site / 'LICENSE').is_file()
+    if has_license and (site / 'LICENSE').read_bytes() != SOFTWARE_LICENSE.read_bytes():
+        raise ValueError('Published software LICENSE differs from maintained source')
+    # Full old snapshots may be validated before generation/rollback. New full
+    # snapshots and small assembled fixtures must carry the ownership proof.
+    legacy = not has_license and build_id in LEGACY_WITHOUT_SUPPORT
+    if (site / 'models/catalog.json').is_file() and not has_license and not legacy:
+        raise ValueError('Published software LICENSE is missing')
     raw = (site / SITEMAP).read_bytes()
     tree = ET.fromstring(raw)
     urls = [node.text for node in tree.findall(f'{{{NS}}}url/{{{NS}}}loc')]
@@ -115,3 +147,8 @@ def validate(site):
         accepted = ([description], [historical[path]]) if path in historical else ([description],)
         if parser.descriptions not in accepted or parser.canonicals != [canonical(path)]:
             raise ValueError(f'Discovery metadata differs: {path}')
+        expected = [GOOGLE_VERIFICATION] if path == 'index.html' and has_license else []
+        if parser.verifications != expected:
+            raise ValueError(f'Google ownership metadata differs: {path}')
+        if parser.verification_in_head != [True] * len(expected):
+            raise ValueError(f'Google ownership metadata is outside the head: {path}')

@@ -42,7 +42,9 @@ def write_page(path,title,body,depth=0,*,fold_footer=False):
             f'<a href="{up}guide.html">Setup & run guide</a> · '
             f'<a href="{up}methods/index.html">Methods & limitations</a> · '
             f'<a href="{up}downloads/all-models.zip">Download all models</a> · '
-            '<a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">Code</a></footer>')
+            '<a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">Code</a> · '
+            f'<a href="{up}LICENSE">MIT software license</a> · '
+            '<a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/THIRD_PARTY_NOTICES.md">Third-party and data rights</a></footer>')
     if fold_footer:
         footer=footer.replace('<footer>','<footer><details><summary>More project resources</summary><p>',1).replace('</footer>','</p></details></footer>',1)
     html=(f'<!doctype html><html lang="en"><meta charset="utf-8">'

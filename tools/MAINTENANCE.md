@@ -124,8 +124,10 @@ review before merge; no collaborator permission is needed. Keep the small PR
 template in `.github/`. [CITATION.cff](../CITATION.cff) identifies this software,
 not ownership or experimental validation of its upstream tools and inputs.
 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) records the rights boundary.
-The software license remains pending the owner's explicit choice; adopt a root
-`LICENSE` and its exact publisher allowlist entry only after that choice.
+The owner selected MIT on 2026-10-03. The root `LICENSE` covers original project
+software and maintained-source documentation; model/data/upstream rights remain
+separate. The publisher copies its exact bytes to the site root, admits only that
+extensionless path, and checks it during local and live publication validation.
 
 The intended `main` protection requires one approving PR review, dismisses stale
 approvals and requires resolved conversations. Force pushes and deletions are

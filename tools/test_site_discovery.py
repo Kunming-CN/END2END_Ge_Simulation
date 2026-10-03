@@ -62,6 +62,7 @@ class DiscoveryTests(unittest.TestCase):
         """Rebind every edited byte; metadata refusal must not rely on old hashes."""
         path = self.site / check_site.MANIFEST
         report = json.loads(path.read_text())
+        report['files'] = [row for row in report['files'] if (self.site / row['path']).is_file()]
         for row in report['files']:
             data = (self.site / row['path']).read_bytes()
             row.update(bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
@@ -124,6 +125,73 @@ class DiscoveryTests(unittest.TestCase):
         (self.site / check_site.MANIFEST).write_text(json.dumps(report))
         self.assertEqual(report, check_site.validate(self.site))
         self.assertIn(D.SITEMAP, [row['path'] for row in report['files']])
+
+    def test_rehashed_ownership_and_license_changes_are_refused(self):
+        D.assemble(self.site)
+        self.seal()
+        p = self.site / 'index.html'
+        original = p.read_text()
+        tag = f'<meta name="google-site-verification" content="{D.GOOGLE_VERIFICATION}">'
+        for bad in (original.replace(tag, ''), original.replace(D.GOOGLE_VERIFICATION, 'wrong'),
+                    original.replace(tag, tag + tag)):
+            p.write_text(bad)
+            self.rehash_without_semantic_validation()
+            with self.assertRaisesRegex(ValueError, 'ownership metadata differs'):
+                check_site.validate(self.site)
+        p.write_text(original)
+        (self.site / 'LICENSE').write_text('An invented grant')
+        self.rehash_without_semantic_validation()
+        with self.assertRaisesRegex(ValueError, 'LICENSE differs'):
+            check_site.validate(self.site)
+
+    def test_only_exact_root_software_license_is_admitted(self):
+        D.assemble(self.site)
+        root = self.site / 'LICENSE'
+        root.write_bytes(D.SOFTWARE_LICENSE.read_bytes())
+        check_site.validate(self.site, require_manifest=False)
+        root.write_text('Invented grant without a sitemap')
+        with self.assertRaisesRegex(ValueError, 'LICENSE differs'):
+            check_site.validate(self.site, require_manifest=False)
+        root.write_bytes(D.SOFTWARE_LICENSE.read_bytes())
+        (self.site / 'examples/LICENSE').write_bytes(root.read_bytes())
+        with self.assertRaisesRegex(ValueError, 'Unapproved public file'):
+            check_site.validate(self.site, require_manifest=False)
+
+    def test_rehashed_missing_sitemap_cannot_skip_ownership_validation(self):
+        D.assemble(self.site)
+        self.seal()
+        (self.site / D.SITEMAP).unlink()
+        p = self.site / 'index.html'
+        p.write_text(p.read_text().replace(
+            f'<meta name="google-site-verification" content="{D.GOOGLE_VERIFICATION}">', ''))
+        self.rehash_without_semantic_validation()
+        with self.assertRaisesRegex(ValueError, 'sitemap is missing'):
+            check_site.validate(self.site)
+
+    def test_rehashed_ownership_body_placement_is_refused(self):
+        D.assemble(self.site)
+        self.seal()
+        p = self.site / 'index.html'
+        original = p.read_text()
+        tag = f'<meta name="google-site-verification" content="{D.GOOGLE_VERIFICATION}">'
+        for bad in (original.replace(tag, '').replace('</body>', tag + '</body>'),
+                    original.replace(tag, '').replace('</head>', '</head>' + tag),
+                    original.replace(tag, '').replace('<body>', '<body><p>Content</p>' + tag)):
+            p.write_text(bad)
+            self.rehash_without_semantic_validation()
+            with self.assertRaisesRegex(ValueError, 'outside the head'):
+                check_site.validate(self.site)
+
+    def test_full_unsealed_site_cannot_drop_both_support_markers(self):
+        D.assemble(self.site)
+        (self.site / 'models').mkdir()
+        (self.site / 'models/catalog.json').write_text('{"detectors": []}')
+        (self.site / 'LICENSE').unlink()
+        p = self.site / 'index.html'
+        p.write_text(p.read_text().replace(
+            f'<meta name="google-site-verification" content="{D.GOOGLE_VERIFICATION}">', ''))
+        with self.assertRaisesRegex(ValueError, 'LICENSE is missing'):
+            D.validate(self.site)
 
 
 if __name__ == '__main__':

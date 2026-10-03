@@ -56,7 +56,7 @@ for (const f of ['simulation/ring_stream.jl', 'simulation/test_ring_stream.jl',
 transportFiles.add('transport/ring_cs137.py');
 // HDF5 transport tests use the existing locked Linux environment separately.
 for (const f of ['transport/scenario_transport.py', 'transport/test_scenario_transport.py', 'transport/Gamma.cmd', 'transport/gamma.sh']) transportFiles.add(f);
-const approved = new Set(['.gitignore', '.gitattributes', 'README.md', 'CONTRIBUTING.md', 'CITATION.cff', 'THIRD_PARTY_NOTICES.md', '.github/PULL_REQUEST_TEMPLATE.md', 'PROGRESS.md', 'AGENTS.md', 'Publish.cmd', 'Run.cmd', 'Control.cmd', 'Open_Workspace.cmd', 'scenarios/lbnl-cs137.json', 'scenarios/detector-capabilities.json',
+const approved = new Set(['.gitignore', '.gitattributes', 'README.md', 'LICENSE', 'CONTRIBUTING.md', 'CITATION.cff', 'THIRD_PARTY_NOTICES.md', '.github/PULL_REQUEST_TEMPLATE.md', 'PROGRESS.md', 'AGENTS.md', 'Publish.cmd', 'Run.cmd', 'Control.cmd', 'Open_Workspace.cmd', 'scenarios/lbnl-cs137.json', 'scenarios/detector-capabilities.json',
   'scenarios/assets/AK02.json', 'scenarios/assets/SAP22.json', 'scenarios/assets/lbnl_modular_nominal_v1.json',
   'scenarios/assets/cs137_point_decay_v1.json', 'scenarios/assets/mono_gamma_662_axis_v1.json',
   'scenarios/m11a-ak02-cs137_point_decay_v1-nominal.json', 'scenarios/m11a-ak02-mono_gamma_662_axis_v1-plus5mm.json',

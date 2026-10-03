@@ -474,16 +474,18 @@ class ModelTests(unittest.TestCase):
 
     def model_site(self):
         from build_site import adapt
+        from site_discovery import assemble
+        page_html = '<html><head><title>Models</title></head><body><main></main></body></html>'
         files = models.download_files(models.read_distribution(models.MODELS))
-        files['index.html'] = adapt('<main></main>', Path('index.html')).encode()
-        files['guide.html'] = b'<a href="downloads/all-models.zip">All models</a>'
+        files['index.html'] = adapt(page_html, Path('index.html')).encode()
+        files['guide.html'] = b'<html><head><title>Guide</title></head><body><a href="downloads/all-models.zip">All models</a></body></html>'
         files['examples/pipeline.html'] = b'<a href="data.json">Example data</a>'
         files['examples/data.json'] = b'{}'
         files['examples/native-li/comparison.html'] = b'Native demonstration fixture'
         files['lithium/lithium.html'] = b'<a href="../index.html">Library</a>'
         for detector in models.ORIGINAL_HASHES:
             page = f'detectors/{detector}/index.html'
-            files[page] = adapt('<main></main>', Path(page)).encode()
+            files[page] = adapt(page_html, Path(page)).encode()
             if detector != 'GeGI_3D':
                 # Bounded fixture for the new full-size illustration link.
                 files[f'detectors/{detector}/runs/20260922_suite_v3/01_geometry.png'] = b'\x89PNG\r\n\x1a\n'
@@ -491,7 +493,9 @@ class ModelTests(unittest.TestCase):
         for name in ('strip_explorer.html', 'supplement.html', 'octagon_geometry.png'):
             files['detectors/GeGI_3D/' + name] = b''
         models.write_new_or_identical(self.root, files)
-        return files
+        assemble(self.root)
+        return {p.relative_to(self.root).as_posix(): p.read_bytes()
+                for p in self.root.rglob('*') if p.is_file()}
 
     def test_bounded_download_site_and_missing_dependencies(self):
         self.model_site()
@@ -541,6 +545,7 @@ class ModelTests(unittest.TestCase):
         with patch.dict(sys.modules, {'ssl': object()}), patch('urllib.request.urlopen', fake_open):
             verify_live('https://example.org/site/', report)
         expected = {name for name in files if name.startswith(('models/', 'downloads/', 'examples/cs137-10k-rings/'))}
+        expected.update({'LICENSE', 'sitemap.xml'})
         self.assertTrue(expected <= requested)
 
 

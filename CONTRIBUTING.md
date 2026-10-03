@@ -70,16 +70,16 @@ reviewed public evidence; explain private dependencies without uploading them.
 
 ## License, citation and credit
 
-The project software license is pending the owner's choice; this guide grants no
-license. Consult the root `LICENSE` once adopted and the existing
+Original project software and maintained-source documentation use the
+[MIT License](LICENSE). Consult the existing
 [software/model/source rights notice](THIRD_PARTY_NOTICES.md). A software license
 does not automatically cover model snapshots, data or third-party inputs.
 Preserve file-specific provenance and notices.
 
 State who authored your contribution and any existing third-party terms; submit
-only work you may lawfully share. Opening or merging a PR does not give the owner
-authority to apply a future license to your work. Agree any such grant with its
-rights holder before accepting the contribution; no new CLA or DCO is required.
+only work you may lawfully share. Submit original software/documentation changes
+under the project's MIT terms, and identify any separately licensed content before
+review. No new CLA or DCO is required.
 Pinned LBNL cryostat inputs have no recorded explicit upstream license; originals
 stay local under the [recorded policy](transport/cryostat-source.json).
 Use [CITATION.cff](CITATION.cff) for this software, and cite the upstream tools and

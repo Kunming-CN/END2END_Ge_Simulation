@@ -3,6 +3,8 @@
 *.jl text eol=lf
 *.mjs text eol=lf
 *.md text eol=lf
+LICENSE text eol=lf
+CITATION.cff text eol=lf
 *.html text eol=lf
 *.json text eol=lf
 *.cmd text eol=crlf
