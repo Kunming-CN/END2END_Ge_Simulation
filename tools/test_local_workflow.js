@@ -19,7 +19,7 @@ const context=vm.createContext({document:{getElementById:get,createElement:tag=>
   URLSearchParams,TextDecoder,Uint8Array,fetch:()=>new Promise(()=>{}),setInterval:()=>{},setTimeout:()=>{}});
 vm.runInContext(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),context);
 function run(code){return vm.runInContext(code,context);}
-run(`catalog={electronics_keys:Object.keys(labels),electronics_defaults:{},sources:[{id:'mono_gamma_662_axis_v1',label:'Gamma',pose:'plus5mm',counts:[20]},{id:'cs137_point_decay_v1',label:'Cs137',pose:'nominal',counts:[20,500]}],cryostats:[{id:'lbnl_modular_nominal_v1',available:true}],detectors:[{id:'AK02',available:true},{id:'SAP22',available:true}]};`);
+run(`catalog={electronics_keys:Object.keys(labels),electronics_defaults:{},sources:[{id:'mono_gamma_662_axis_v1',label:'Gamma',pose:'plus5mm',counts:[20]},{id:'cs137_point_decay_v1',label:'Cs137',pose:'nominal',counts:[20,500]}],cryostats:[{id:'lbnl_modular_nominal_v1',available:true}],detectors:[{id:'AK02',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'SAP22',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'GeRC02',available:true,sources:['cs137_point_decay_v1'],operating_label:'Li50min +240 V'},{id:'KMRC01_candidate',available:true,sources:['cs137_point_decay_v1'],operating_label:'−370 V; fixed −1 wiring'}]};`);
 // A primary's delayed groups and zero primaries are all independently selectable.
 run(`result={job:{name:'fixture'},records:[
  {record_kind:'decay',event_id:7,deposited_energy_keV:4,pulse_count:2,zero_deposit:false},
@@ -38,6 +38,14 @@ get('event').value='8';run('showEvent()');
 assert.equal(get('group').children.length,1);
 assert.equal(get('result-data').children[0].children[0].children[0].textContent,'0');
 assert.equal(get('result-data').children[0].children[1].children[0].textContent,'0');
+// Initial presentation finds saved native-completed pulses even with negative
+// KM charge. No primary/zero/failure is removed from the actual selector.
+run(`const ringRows=[{record_kind:'decay',event_id:0,deposited_energy_keV:0,pulse_count:0,zero_deposit:true},
+ {record_kind:'pulse',event_id:1,group_id:0,deposited_energy_keV:4,status:'native_transport_failed',readout:null},
+ {record_kind:'decay',event_id:2,deposited_energy_keV:4,pulse_count:1},
+ {record_kind:'pulse',event_id:2,group_id:0,deposited_energy_keV:4,final_induced_keV:-3.9,readout:{reconstructed_energy_keV:4}}];`);
+assert.deepEqual(JSON.parse(run("JSON.stringify(firstSavedWaveform(ringRows,[{event_id:2,group_id:0}]))")),{id:2,groupIndex:1});
+assert.equal(run('firstSavedWaveform(ringRows,[])'),null);
 // Every selected field and both gate boundaries are part of the checked data.
 run('electronics();');
 for(const label of get('electronics').children)assert.equal(label.htmlFor,label.children[0].id);
@@ -54,6 +62,15 @@ run("checked={check_id:'old'};invalidate();");assert.equal(run('checked'),null);
 assert.equal(run('importedConfig(config()).seed'),26092631);
 assert.throws(()=>run('importedConfig({...config(),seed:42})'),/unavailable/);
 assert.throws(()=>run('importedConfig({...config(),extra:1})'),/fields/);
+// Ring changes visibly remove unavailable gamma; imports cannot bypass this.
+get('detector').value='KMRC01_candidate';run('detectorChanged();');
+assert.equal(get('source').children.length,1);assert.equal(get('source').value,'cs137_point_decay_v1');
+assert.match(get('operating-details').textContent,/−370 V; fixed −1 wiring/);
+assert.throws(()=>run("importedConfig({...config(),source:'mono_gamma_662_axis_v1',pose:'plus5mm'})"),/unavailable/);
+get('detector').value='GeRC02';run('detectorChanged();');assert.match(get('operating-details').textContent,/Li50min/);
+get('detector').value='AK02';run('detectorChanged();');get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
+assert.equal(get('source').children.length,2);
+assert.match(html,/\.plot\{margin:0;min-width:0\}/);assert.match(html,/\.plot-grid>p,\.plot-grid>small\{grid-column:1\/-1;min-width:0;overflow-wrap:anywhere\}/);
 // Open logs stay outside the recreated run cards; Results has an observed label.
 get('log-text').textContent='retained UTF-16 diagnostic';get('log-view').hidden=false;
 run("renderJobs({busy:false,jobs:[]});renderJobs({busy:false,jobs:[]});stageList({results:{status:'completed',elapsed_seconds:0.01}});");
@@ -61,10 +78,19 @@ assert.equal(get('log-text').textContent,'retained UTF-16 diagnostic');assert.eq
 assert.match(get('pipeline').children[4].children[1].children[0].textContent,/0.01 s observed/);
 run("stageList({geometry:{status:'completed',reuse:'verified_transport_prefix',original_elapsed_seconds:7.62}});");
 assert.match(get('pipeline').children[0].children[1].children[0].textContent,/Reused · originally 7.62 s/);
+run("stageList({event_ledger:{status:'completed',reuse:'verified_transport_prefix',original_elapsed_seconds:null,elapsed_seconds:null,exit_code:null,finished_utc:null}});");
+assert.match(get('pipeline').children[2].children[1].children[0].textContent,/saved artifacts verified; original execution time unavailable/);
+assert.doesNotMatch(get('pipeline').children[2].children[1].children[0].textContent,/0\.00 s/);
 run("continuationNames.set('m14a-gamma-ui-02','chosen-new-name');renderJobs({busy:true,jobs:[{id:'a',name:'m14a-gamma-ui-02',status:'dispatch_uncertain',can_continue_prefix:true,selection:{detector:'SAP22',source:'mono_gamma_662_axis_v1',primary_count:20},stages:{}}]});");
 const continuation=get('runs').children[0].children.find(n=>n.tagName==='label');
 assert.equal(continuation.htmlFor,'continue-name-a');assert.equal(continuation.children[0].value,'chosen-new-name');
 assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Continue from verified transport'));
+run("renderJobs({busy:true,jobs:[{id:'b',name:'ring-ended',status:'dispatch_uncertain',can_finalize_results:true,selection:{detector:'GeRC02',source:'cs137_point_decay_v1',primary_count:500},stages:{}}]});");
+assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Finalize saved results'));
+assert.ok(get('runs').children[0].children.some(n=>/No simulation is repeated/.test(n.textContent)));
+assert.match(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),/api\('\/api\/workflow\/finalize-results',\{name:job.name\}\)/);
+run("renderJobs({busy:true,jobs:[{id:'b',name:'ring-ended',status:'dispatch_uncertain',can_finalize_results:false,selection:{detector:'GeRC02',source:'cs137_point_decay_v1',primary_count:500},stages:{}}]});");
+assert.ok(!get('runs').children[0].children.some(n=>n.textContent==='Finalize saved results'));
 run('renderJobs({busy:false,jobs:[]});');
 // The read-only saved completion action remains visible beside uncertain work.
 run("renderJobs({busy:true,jobs:[]});renderLegacy({gamma:{busy:true,jobs:[{id:'old',label:'old-completion',status:'verification-required',blocks_new_work:true,can_verify:true}]}});");

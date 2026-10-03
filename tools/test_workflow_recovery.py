@@ -99,6 +99,25 @@ class Recovery(unittest.TestCase):
             altered=copy.deepcopy(self.plan['resolved']);mutate(altered)
             with self.assertRaises(W.ControlError):R.compatible(self.oldplan['resolved'],altered)
 
+    def test_historical_retirement_survives_producer_upgrade_but_transfer_does_not(self):
+        self.retire();before=W.inventory(self.directory);gamma=W.gamma_request
+        def upgraded(directory,resolved,root,*,historical=False):
+            W.require(historical,'Current producer differs from saved transport attribution.')
+            return gamma(directory,resolved,root,historical=True)
+        target=W.run_path('synthetic-prefix-derivative',self.root);target.mkdir()
+        with patch.object(W,'process_identity',return_value=None),patch.object(W,'gamma_request',side_effect=upgraded):
+            self.assertIsNotNone(R.retirement(self.root))
+            with self.assertRaises(W.ControlError):R.inspect_parent(self.job,self.root,probe=lambda root:self.quiet)
+            with self.assertRaises(W.ControlError):R.transfer(target,self.plan,{'stages':{}},self.root,probe=lambda root:self.quiet)
+        self.assertEqual(before,W.inventory(self.directory));self.assertEqual(W.inventory(target),{})
+
+    def test_historical_retirement_keeps_original_byte_and_process_authority(self):
+        self.retire();path=self.directory/'transport/prepared.json';original=path.read_bytes()
+        path.write_bytes(original+b' ')
+        with patch.object(W,'process_identity',return_value=None),self.assertRaises(W.ControlError):R.retirement(self.root)
+        path.write_bytes(original)
+        with patch.object(W,'process_identity',return_value='unknown'),self.assertRaises(W.ControlError):R.retirement(self.root)
+
     def test_lossless_transfer_keeps_runtime_path_and_inherited_timings(self):
         self.retire();target=W.run_path('synthetic-prefix-derivative',self.root);target.mkdir()
         W.write(target/'electronics/profile.json',self.plan['resolved']['profile'],fresh=True);receipt={'stages':{}}

@@ -1,6 +1,10 @@
 {
   "schema_version": 1,
   "scenario_id": "lbnl-cs137",
+  "control_adapters": {
+    "GeRC02": {"adapter": "fresh_ring_control_v1", "sources": ["cs137_point_decay_v1"], "counts": [20, 500], "variant": "GeRC02_Li50min"},
+    "KMRC01_candidate": {"adapter": "fresh_ring_control_v1", "sources": ["cs137_point_decay_v1"], "counts": [20, 500], "variant": "KMRC01_candidate"}
+  },
   "scope": "Viewing support is separate from cryostat placement and end-to-end execution. Both means separate serial cases.",
   "detectors": [
     {

@@ -57,6 +57,16 @@ class Protocol(unittest.TestCase):
             self.assertEqual(self.request('POST','/api/workflow/start',{'check_id':'checked'},headers)[0],403)
         self.workflow.start.assert_not_called()
 
+    def test_explicit_saved_results_route_is_closed_and_authenticated(self):
+        self.workflow.finalize_results.return_value={'status':'completed','science_calls':0}
+        for data in ({'name':'saved','resume':True},{'name':True},'[]'):
+            self.assertEqual(self.request('POST','/api/workflow/finalize-results',data)[0],400)
+        for headers in ({'X-Control-Token':''},{'Origin':'https://evil.example'},{'Origin':None}):
+            self.assertEqual(self.request('POST','/api/workflow/finalize-results',{'name':'saved'},headers)[0],403)
+        self.workflow.finalize_results.assert_not_called()
+        self.assertEqual(self.request('POST','/api/workflow/finalize-results',{'name':'saved'})[0],200)
+        self.workflow.finalize_results.assert_called_once_with(name='saved')
+
     def test_cookie_read_only_and_same_origin(self):
         status,_,headers=self.request();self.assertEqual(status,200)
         self.assertIn('; Path=/api/workflow-file; HttpOnly; SameSite=Strict',headers['Set-Cookie'])

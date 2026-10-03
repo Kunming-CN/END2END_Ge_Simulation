@@ -33,6 +33,8 @@ FIELDS = {'name','cryostat','detector','source','pose','primary_count','seed','t
 CRYOSTAT = 'lbnl_modular_nominal_v1'
 CS = 'cs137_point_decay_v1'
 GAMMA = 'mono_gamma_662_axis_v1'
+RINGS = ('GeRC02','KMRC01_candidate')
+MODELS = ('AK02','SAP22',*RINGS)
 STAGES = ('geometry', 'radiation', 'event_ledger', 'response', 'results')
 TERMINAL = ('completed', 'completed_with_native_failures')
 EXPORTER = '.local/m2a/cs137-build-v1/cryostat_export'
@@ -72,14 +74,23 @@ def write(path, value, *, fresh=False):
     path = Path(path)
     require(not fresh or not path.exists(), 'Output exists; choose a new name.')
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(path.name + '.pending-' + str(os.getpid()))
+    temporary = path.with_name(path.name + '.pending-' + str(os.getpid())+'-'+secrets.token_hex(12))
     with temporary.open('xb') as stream:
         stream.write(encoded(value)+b'\n'); stream.flush(); os.fsync(stream.fileno())
     if fresh:
         # Hard-link publication refuses overwrite, including another writer.
         os.link(temporary, path); temporary.unlink()
     else:
-        os.replace(temporary, path)
+        # The error alone does not identify a reader/sync/antivirus cause.
+        # Preserve atomic replacement and failed pending evidence. Only these
+        # Windows access/sharing/lock errors receive a finite publication retry.
+        delays=(.01,.02,.04,.08,.16,.32)
+        for attempt in range(len(delays)+1):
+            try:
+                os.replace(temporary, path);break
+            except PermissionError as error:
+                if os.name!='nt' or getattr(error,'winerror',None) not in (5,32,33) or attempt==len(delays):raise
+                time.sleep(delays[attempt])
 
 
 def run_path(name, root=ROOT):
@@ -155,8 +166,15 @@ def source_pins(detector, root=ROOT):
     names.update('transport/'+n for n in ('cs137.py','handoff.py','scenario_prepare.py',
                                           'scenario_transport.py','cryostat_export.cc',
                                           'run.sh','workflow.sh','prepare.sh','gamma.sh'))
-    names.update('scenarios/assets/'+n+'.json' for n in (CRYOSTAT,detector,CS,GAMMA))
-    names.add('scenarios/m11a-'+detector.lower()+'-mono_gamma_662_axis_v1-plus5mm.json')
+    names.add('scenarios/detector-capabilities.json')
+    names.update('scenarios/assets/'+n+'.json' for n in (CRYOSTAT,CS))
+    if detector in RINGS:
+        names.update(('tools/ring_workflow.py','tools/ring_model_contract.py','transport/ring_cs137.py'))
+        names.update('simulation/'+n for n in ('ring_stream.jl','ring_response.jl','ring_polarity.jl','workflow_ring_response.jl'))
+        names.difference_update(('simulation/scenario_response.jl','simulation/gamma_native_example.jl','simulation/test_gamma_native_example.jl'))
+    else:
+        names.update('scenarios/assets/'+n+'.json' for n in (detector,GAMMA))
+        names.add('scenarios/m11a-'+detector.lower()+'-mono_gamma_662_axis_v1-plus5mm.json')
     manifest = read(root/'transport/cryostat-source.json')
     for item in manifest['files']:
         name = '.local/transport/LBNL/'+item['name']
@@ -178,8 +196,9 @@ def check(config, *, root=ROOT, validate_settings=settings_check, pin_reader=sou
     require(type(config) is dict and set(config)==FIELDS, 'Unsupported or missing configuration fields.')
     run_path(config['name'],root)
     require(config['cryostat']==CRYOSTAT, 'This cryostat has no executable adapter yet.')
-    require(config['detector'] in ('AK02','SAP22'), 'This detector has no selectable new-run connector yet.')
+    require(config['detector'] in MODELS, 'This detector has no selectable new-run connector yet.')
     require(config['source'] in (CS,GAMMA), 'This source has no executable adapter yet.')
+    require(config['detector'] not in RINGS or config['source']==CS,'Ring connectors currently support Cs137 only; select its nominal source.')
     require(type(config['threads']) is int and config['threads'] in (1,2), 'Choose one or two Julia threads.')
     require(type(config['seed']) is int and 0<config['seed']<2147483647, 'Seed must be an integer between 1 and 2147483646.')
     require(type(config['primary_count']) is int, 'Primary count must be an integer.')
@@ -207,10 +226,13 @@ def check(config, *, root=ROOT, validate_settings=settings_check, pin_reader=sou
                 'source_count_unit':'initial gamma primaries' if config['source']==GAMMA else 'initial Cs137 decays',
                 'numerics':{'parcels':16,'native_seed_family':2609261,'drift_dt_ns':2,
                             'drift_cap_ns':10000,'stored_temperature_K':78,'runtime_temperature_K':77,
-                            'bias_V':500 if config['detector']=='AK02' else 700,
+                            'bias_V':{'AK02':500,'SAP22':700,'GeRC02':240,'KMRC01_candidate':370}[config['detector']],
                             'native_failure_policy':'record','models_serial':True,'stages_serial':True},
                 'source_sha256':pin_reader(config['detector'],root),
                 'runtime_identity':runtime_reader(config['threads'])}
+    if config['detector'] in RINGS:
+        from ring_workflow import operating
+        resolved['operating_model']=operating(config['detector'])
     return {'kind':KIND,'status':'checked_configuration','science_calls':0,
             'resolved':resolved,'configuration_sha256':digest(resolved)}
 
@@ -226,16 +248,31 @@ def admit(plan,root=ROOT,*,resume=False):
 
 def catalog(root=ROOT):
     default=read(Path(root)/'simulation/native_readout_profile.json')['settings']
+    registry=read(Path(root)/'scenarios/detector-capabilities.json')
+    capabilities={d['model_id']:d for d in registry['detectors']}
+    from ring_workflow import LABELS
+    detectors=[]
+    for model in read(Path(root)/'models/catalog.json')['detectors']:
+        id=model['id'];ring=registry.get('control_adapters',{}).get(id)
+        available=id in MODELS and (capabilities[id]['lbnl_execution_implemented'] is True or
+            id in RINGS and ring=={'adapter':'fresh_ring_control_v1','sources':[CS],'counts':[20,500],
+                                 'variant':'GeRC02_Li50min' if id=='GeRC02' else id})
+        detectors.append({'id':id,'label':LABELS.get(id,{'AK02':'AK02 · ICPC · +500 V','SAP22':'SAP22 · PPC · +700 V'}.get(id,id)),
+            'available':available,'reason':None if available else 'Selectable new-run connector is pending.',
+            'sources':[CS] if id in RINGS else [CS,GAMMA] if id in ('AK02','SAP22') else [],
+            'operating_label':'Stored 78 K; runtime 77 K; '+('Li50min at 553.15 K; contacts 1: 0 V, 2: +240 V; fresh fields.' if id=='GeRC02' else
+                'Original candidate; contacts 1: 0 V, 2: −370 V; native bias magnitude 370 V; fixed −1 readout wiring; negative injection calibration.' if id=='KMRC01_candidate' else
+                'Contact 1 readout; operating bias '+str(500 if id=='AK02' else 700)+' V; fresh fields.' if id in ('AK02','SAP22') else
+                'Model viewer only; no Control execution adapter.')})
     # Registry values are the execution dispatch table, not user-supplied commands.
     return {'kind':KIND,'cryostats':[{'id':CRYOSTAT,'label':'LBNL modular cryostat','available':True},
             {'id':'lbnl_monolithic_candidate','label':'LBNL monolithic cryostat','available':False,'reason':'Transport and charge adapters are pending.'}],
-            'detectors':[{'id':x['id'],'label':x['id'],'available':x['id'] in ('AK02','SAP22'),
-                          'reason':None if x['id'] in ('AK02','SAP22') else 'Selectable new-run connector is pending.'}
-                         for x in read(Path(root)/'models/catalog.json')['detectors']],
+            'detectors':detectors,
             'sources':[{'id':CS,'label':'Cs137 point decay','pose':'nominal','counts':[20,500]},
                        {'id':GAMMA,'label':'662 keV gamma beam','pose':'plus5mm','counts':[20]}],
             'electronics_defaults':default,'electronics_keys':list(SETTINGS),
             'numerics':'16 parcels; native seed 2609261; 2 ns grid; 10,000 ns cap; CPU; one or two Julia threads.',
+            'setup_limit':'Fresh gamma and ring preparation currently require the existing root-bound exporter. A portable fresh-clone exporter contract is pending.',
             'setup_guide':'https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup'}
 
 
@@ -385,13 +422,16 @@ def stage_commands(directory,resolved,root=ROOT,environment=None):
     julia=[env['JULIA_EXE'],'--startup-file=no','--threads='+str(s['threads']),
            '--project='+str(Path(root)/'simulation')]
     if s['source']==CS:
-        prepare=wsl+['python','-B','./cs137.py','prepare','--model',s['detector'],'--output','../'+transport,
+        producer='./ring_cs137.py' if s['detector'] in RINGS else './cs137.py'
+        prepare=wsl+['python','-B',producer,'prepare','--model',s['detector'],'--output','../'+transport,
                      '--exporter','../'+EXPORTER,'--events',str(s['primary_count']),'--seed',str(s['seed'])]
-        radiation=wsl+['python','-B','./cs137.py','run','--directory','../'+transport]
-        extract=wsl+['python','-B','./cs137.py','extract','--directory','../'+transport,'--chunk-size','100']
+        radiation=wsl+['python','-B',producer,'run','--directory','../'+transport]
+        extract=wsl+['python','-B',producer,'extract','--directory','../'+transport,'--chunk-size','100']
         response=julia+[str(Path(root)/'simulation/native_response_guarded.jl'),'--input',transport+'/stream/manifest.json',
                  '--output',BASE+'/'+s['name']+'/response','--profile',BASE+'/'+s['name']+'/electronics/profile.json',
                  '--parcels','16','--seed','2609261','--trace-examples','16','--charge-csv','all','--native-failure-policy','record']
+        if s['detector'] in RINGS:
+            response=julia+[str(Path(root)/'simulation/workflow_ring_response.jl'),'--request',str(directory/'ring-request.json'),'--output',str(directory/'response')]
     else:
         prepare=wsl+['python','-B','./scenario_prepare.py','prepare','--config',
                     '../scenarios/m11a-'+s['detector'].lower()+'-mono_gamma_662_axis_v1-plus5mm.json',
@@ -433,6 +473,9 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
         require(instance['seed']==s['seed'] and p['source_position_global_mm']==resolved['source_position_global_mm'],
                 'Prepared source pose or radiation seed differs from selected settings.')
         for name,value in p['files_sha256'].items():require(sha(safe_path(t,name))==value,'Prepared artifact changed.')
+        if s['detector'] in RINGS:
+            from ring_workflow import prepared
+            prepared(directory,resolved,root,historical=historical)
         # Later stages add their own transport files; geometry owns its saved inputs.
         names=set(p['files_sha256'])|{'prepared.json','prepare-receipt.json'}
         return {n:{'sha256':sha(safe_path(t,n)),'bytes':safe_path(t,n).stat().st_size} for n in sorted(names)}
@@ -446,6 +489,9 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
         for c in m['chunks']: require(sha(safe_path(t/'stream',c['file']))==c['sha256'],'Changed event chunk.')
         require(m['prepared_sha256']==sha(t/'prepared.json') and m['run_sha256']==sha(t/'run.json') and m['source_lh5_sha256']==sha(t/'truth.lh5'),'Ledger source bindings changed.')
         if s['source']==GAMMA: gamma_request(directory,resolved,root,historical=historical)
+        elif s['detector'] in RINGS:
+            from ring_workflow import ledger
+            ledger(directory,resolved,root,historical=historical)
         return inventory(t/'stream')
     if stage=='response':
         r=read(directory/'response/run.json')
@@ -475,9 +521,19 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
             for chunk in read(t/'stream/manifest.json')['chunks']:
                 source.extend(decode_json(line) for line in safe_path(t/'stream',chunk['file']).read_text(encoding='utf-8').splitlines())
             require(encoded(source)==encoded(truths),'Cs137 response changed original truth records.')
+            if s['detector'] in RINGS:
+                from ring_workflow import response
+                response(directory,resolved,r,root,historical=historical)
         actual=read(directory/'response/readout-config.json')
         expected=dict(resolved['electronics_configuration'],expected_primary_count=s['primary_count'])
-        require(encoded(actual)==encoded(expected),'Readout configuration differs from selected settings.')
+        # Julia's declared Float64 constants serialize as e.g. 500.0 while the
+        # checked PowerShell JSON can contain 500. Only these three real-valued
+        # constants allow that spelling difference; every value remains exact.
+        comparable=dict(actual);comparison=dict(expected)
+        for key in ('calibration_energy_keV','max_window_ns','tail_shaping_constants'):
+            require(type(actual[key]) in (int,float) and math.isfinite(actual[key]),'Invalid real-valued readout constant.')
+            comparable[key]=float(actual[key]);comparison[key]=float(expected[key])
+        require(encoded(comparable)==encoded(comparison),'Readout configuration differs from selected settings.')
         for name,value in r['artifacts'].items(): require(sha(safe_path(directory/'response',name))==value,'Response artifact changed: '+name)
         return inventory(directory/'response')
     return {}
@@ -487,12 +543,16 @@ def saved_plan(plan):
     require(set(plan)=={'kind','status','science_calls','resolved','configuration_sha256'} and plan['kind']==KIND and plan['status']=='checked_configuration' and plan['science_calls']==0 and
             digest(plan['resolved'])==plan['configuration_sha256'],'Saved plan authority changed.')
     r=plan['resolved'];s=r['selection'];run_path(s['name'])
-    require(set(s)==FIELDS and s['detector'] in ('AK02','SAP22') and s['cryostat']==CRYOSTAT and s['source'] in (CS,GAMMA),'Saved tuple is unsupported.')
+    require(set(s)==FIELDS and s['detector'] in MODELS and s['cryostat']==CRYOSTAT and s['source'] in (CS,GAMMA) and
+            (s['detector'] not in RINGS or s['source']==CS),'Saved tuple is unsupported.')
     require(type(s['threads']) is int and s['threads'] in (1,2) and type(s['seed']) is int and 0<s['seed']<2147483647 and type(s['primary_count']) is int and
             (s['source']==GAMMA and [s['pose'],s['primary_count'],s['seed']]==['plus5mm',20,26092631] or s['source']==CS and s['pose']=='nominal' and s['primary_count'] in (20,500)),
             'Saved source/count/runtime selection is unsupported.')
     expected_numerics={'parcels':16,'native_seed_family':2609261,'drift_dt_ns':2,'drift_cap_ns':10000,'stored_temperature_K':78,
-        'runtime_temperature_K':77,'bias_V':500 if s['detector']=='AK02' else 700,'native_failure_policy':'record','models_serial':True,'stages_serial':True}
+        'runtime_temperature_K':77,'bias_V':{'AK02':500,'SAP22':700,'GeRC02':240,'KMRC01_candidate':370}[s['detector']],'native_failure_policy':'record','models_serial':True,'stages_serial':True}
+    if s['detector'] in RINGS:
+        from ring_workflow import operating
+        require(encoded(r.get('operating_model'))==encoded(operating(s['detector'])),'Saved ring operating variant/wiring changed.')
     require(encoded(r['numerics'])==encoded(expected_numerics) and r['source_position_global_mm']==([0,42.073,.290] if s['source']==GAMMA else [0,37.073,.290]) and
             r['source_kind']==('synthetic_gamma' if s['source']==GAMMA else 'radioactive_decay'),'Saved source/operating settings changed.')
     require(set(s['electronics'])==set(SETTINGS) and s['electronics']['peak_policy'] in ('signed_input_positive_peak','legacy_reject_negative_input') and
@@ -605,6 +665,9 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
                         'artifacts':{'index.html':{'sha256':sha(directory/'index.html'),'bytes':(directory/'index.html').stat().st_size}},'finished_utc':utc()};continue
                 if stage=='response' and s['source']==GAMMA:
                     write(directory/'gamma-request.json',gamma_request(directory,resolved,root),fresh=True)
+                elif stage=='response' and s['detector'] in RINGS:
+                    from ring_workflow import request
+                    write(directory/'ring-request.json',request(directory,resolved,root),fresh=True)
                 executor(commands[stage],directory,stage,receipt,environment,root)
                 artifacts=validate_stage(directory,stage,resolved,root)
                 receipt['stages'][stage].update(status='completed',artifacts=artifacts)
@@ -617,7 +680,11 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
             return receipt
         except BaseException as error:
             receipt.update(status='failed',error=str(error),failed_utc=utc(),resume_allowed=False)
-            write(directory/'run.json',receipt);raise
+            try:write(directory/'run.json',receipt)
+            except Exception as publication_error:
+                # A second publication failure must not mask the first cause.
+                error.add_note('Failure receipt could not be published; preserved pending evidence: '+repr(publication_error))
+            raise
 
 
 def inspect(name,root=ROOT):
@@ -634,6 +701,9 @@ def inspect(name,root=ROOT):
         require(encoded(complete['artifacts'])==encoded(inventory(directory,exclude=('COMPLETE.json','STOP.json'))),'Completed artifact inventory is incomplete.')
         for stage in STAGES[:-1]:validate_stage(directory,stage,receipt['resolved'],root,historical=True)
         verify_inventory(directory,receipt['stages']['results']['artifacts'])
+        if 'saved_results_finalization' in receipt:
+            from workflow_finalize import verify_finalization
+            verify_finalization(directory,receipt,root)
     else:
         complete=None
     receipt['verification']='terminal_artifacts_verified' if complete else 'nonterminal_preserved'
@@ -641,7 +711,7 @@ def inspect(name,root=ROOT):
 
 
 def main(argv=None):
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('catalog','check','run','continue','resume','inspect','stop'))
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('catalog','check','run','continue','resume','inspect','stop','finalize-results'))
     p.add_argument('--config');p.add_argument('--plan');p.add_argument('--name');p.add_argument('--dispatch-id',help=argparse.SUPPRESS);a=p.parse_args(argv)
     if a.action=='catalog': value=catalog()
     elif a.action=='check': require(a.config,'--config is required.');value=check(read(Path(a.config)))
@@ -650,6 +720,10 @@ def main(argv=None):
     elif a.action=='resume':
         require(a.name,'--name is required.');d=run_path(a.name);value=execute(read(d/'resolved-config.json'),resume=True,dispatch_id=a.dispatch_id)
     elif a.action=='inspect': require(a.name,'--name is required.');value=inspect(a.name)
+    elif a.action=='finalize-results':
+        require(a.name,'--name is required.')
+        from workflow_finalize import finalize
+        value=finalize(a.name)
     else:
         require(a.name,'--name is required.');d=run_path(a.name);r=read(d/'run.json');require(r['status']=='running','Run is not active.');write(d/'STOP.json',{'requested_utc':utc()},fresh=True);value={'status':'stop_requested'}
     print(json.dumps(value,allow_nan=False,ensure_ascii=False))

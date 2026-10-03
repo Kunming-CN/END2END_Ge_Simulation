@@ -9,9 +9,9 @@ Inspect receipts, source hashes and actual processes before repeating work.
 
 The owner now prioritizes a real mouse-operated end-to-end application, then
 complete gamma responses, clearer plots/public pages and verified local cleanup.
-Control now executes its checked AK02/SAP22 configuration through the shared
-GUI/CLI workflow. Ring connectors and portable fresh-gamma setup are the next
-bounded application slice; do not claim the four-detector application complete.
+Control executes checked AK02/SAP22 and both ring configurations through the
+shared GUI/CLI workflow. Existing-machine four-detector execution is verified;
+portable source preparation is next. Do not claim fresh-clone acceptance yet.
 
 Root is executing M14a under `.local/autonomy/lock`, owner
 `product-framework-v1-root`, actual gpt-6.1-sol/ultra in this project.
@@ -87,12 +87,43 @@ Caption binding, original-SVG access and false legacy prerequisite findings are
 resolved. Relevant protocol/projection/browser contracts and unchanged-site
 checks passed; the website snapshot itself was not regenerated in this slice.
 
-Next: M14a2 first separates immutable historical retirement from current-source
-admission (review I7), then connects GeRC02_Li50min and KMRC01_candidate to the
-same application. Wrap long plot-hash notes at1280px. Keep signed KM wiring and
-independent negative calibration. Portable gamma exporter preparation is still
-pending; existing-root acceptance is not fresh-clone acceptance. M14b/c/d and
-the audit/planning evidence above remain pending; do not repeat those audits.
+## M14a2 verified ring application slice
+
+The same English application now executes GeRC02 Li50min and KMRC01_candidate
+with Cs137, selected seed,20/500 initial decays and selected electronics. New
+fields are solved; original30-minute GeRC02 and KM0/-370V contacts are unchanged.
+KM raw signals stay negative; the fixed-1 electronics wiring uses one independent
+negative500keV injection. All500 original IDs and signed charge/current/preamp/
+shaper plots are selectable; zero input retains null reconstructed energy.
+Changing the next-run form leaves saved model/event/group identity unchanged.
+
+Actual mouse acceptance: Ge500 has478 zero-energy events,22 pulse groups,
+18 accepted/4 electronics rejects/0 native failures; KM500 has488 zeros,
+12 accepted/0 rejects/0 native failures. Ge response283.411s; KM response87.547s,
+core52.119s excluding preparation/preflight and separate0.234s calibration.
+These are measured computation times, not development/review wall time.
+Ge completed response was finalized without recomputation after a derived-sum
+1-3ULP validation mismatch; raw identities remain exact. KM continued only
+response/results from23 byte-exact prefix files after a receipt-publication
+interruption. Its original27 files, pending receipt and failure log remain exact;
+unobserved original ledger exit/time remain null. Atomic progress publication
+now has unique pending names and finite Windows sharing/access retries; a
+secondary receipt failure cannot mask the original exception.
+
+Terminal roots: `.local/runs/m14a2-ge-ui-01` and `m14a2-km-ui-02`; root mouse
+acceptance, source freeze and review evidence are under the existing M14 bundle.
+The30-source freeze is `M14a2-KM-PUBLICATION-SOURCE-FREEZE.json`.
+Relevant semantic/tamper/publication/protocol/browser tests passed. Two scoped
+AI reviewers and the NEW independent strict reviewer accepted after frozen
+initials, direct reciprocal exchange, fixes and actual mouse-evidence review.
+The owned preview and worker processes are closed. Website snapshot unchanged.
+
+Next bounded slice: M14a3 admits a paired portable source/exporter adapter and
+explicit existing-environment setup into GUI/CLI. The private candidate and
+contract are design evidence only; preserve historical guards and all old science.
+Then complete M14b/c/d, reusing the frozen gamma plan, newcomer audit and cleanup
+proofs. Focused local waveform ranges remain M14b; current full-window plots are
+functional acceptance only. M8/M9 second-computer acceptance remains deferred.
 
 ## Completed science and publication: reuse, never redo
 

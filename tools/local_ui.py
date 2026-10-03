@@ -314,6 +314,7 @@ class Handler(BaseHTTPRequestHandler):
                              '/api/workflow/resume':({'name'},'resume'),
                              '/api/workflow/inspect-failure':({'name'},'inspect_failure'),
                              '/api/workflow/continue-prefix':({'name','new_name'},'continue_prefix'),
+                             '/api/workflow/finalize-results':({'name'},'finalize_results'),
                              '/api/workflow/verify':({'name'},'verify')}
             if self.path in workflow_routes:
                 keys,method=workflow_routes[self.path]

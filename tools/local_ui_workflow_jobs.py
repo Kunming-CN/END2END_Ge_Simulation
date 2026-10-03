@@ -15,6 +15,7 @@ import threading
 import scenario_workflow as W
 import workflow_inspection as I
 import workflow_recovery as R
+import workflow_finalize as F
 import saved_waveforms
 from local_ui_jobs import ControlError, process_identity, safe_path
 
@@ -197,11 +198,22 @@ class WorkflowController:
                 job.update(status='inspected_failure',inspection_sha256=stamp);job.pop('error',None);self._persist()
             return self._view(job)
 
+    def finalize_results(self,name):
+        with self._lock:
+            W.require(self._active is None and not W.lease_busy(self.root) and not self._peer_busy(),
+                      'Wait for active work or verify existing saved work before finalizing results.')
+            W.require(any(j['name']==name and j['status']=='dispatch_uncertain' for j in self._jobs),'Unknown owned terminal-response failure.')
+            # The same closed saved-data policy serves GUI and CLI. It settles
+            # durable state only after a complete W.inspect; no child launches.
+            F.finalize(name,self.root)
+            self._jobs=W.read(self._state_path)['jobs']
+            return self._view(next(j for j in self._jobs if j['name']==name))
+
     def continue_prefix(self,name,new_name):
         with self._lock:
             parent=next((j for j in self._jobs if j['name']==name),None)
-            W.require(name==R.PARENT and parent and parent['status']=='dispatch_uncertain',
-                      'Only the recognized pre-entrypoint failure can continue from transport.')
+            W.require(R.eligible_name(name) and parent and parent['status']=='dispatch_uncertain',
+                      'Only a recognized sealed pre-response interruption can continue from transport.')
             W.require(self._active is None and not W.lease_busy(self.root) and not self._peer_busy() and
                       all(j is parent or (j['status'] not in ACTIVE and W.identity_ended(j.get('driver'))) for j in self._jobs),
                       'Other active, unknown or uncertain work prevents continuation.')
@@ -224,10 +236,12 @@ class WorkflowController:
         out['selection']=copy.deepcopy(job['plan']['resolved']['selection'])
         out['configuration_sha256']=job['plan']['configuration_sha256']
         out['output']=W.BASE+'/'+job['name'];out['error']=job.get('error');out['stages']={}
-        out['can_continue_prefix']=job['name']==R.PARENT and job['status']=='dispatch_uncertain'
+        out['can_continue_prefix']=R.eligible_name(job['name']) and job['status']=='dispatch_uncertain'
+        out['can_finalize_results']=False
         directory=W.run_path(job['name'],self.root)
         try:
             receipt=W.read(directory/'run.json');out['stages']=receipt['stages'];out['counts']=receipt.get('counts')
+            out['can_finalize_results']=job['status']=='dispatch_uncertain' and F.candidate(directory)
             # This live progress is display-only until terminal artifact verification.
             if (directory/'response/progress.json').exists():out['response_progress']=W.read(directory/'response/progress.json')
         except (OSError,ValueError,ControlError):pass

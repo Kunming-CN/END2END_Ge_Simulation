@@ -184,6 +184,8 @@
 
 # Additive fresh-source Control connector; generated runs remain private.
 !simulation/scenario_response.jl
+!simulation/workflow_ring_response.jl
+!simulation/test_workflow_ring_response.jl
 !transport/workflow.sh
 
 # Keep this final: only the reviewed PR template may enter .github.

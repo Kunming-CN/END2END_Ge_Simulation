@@ -99,18 +99,25 @@ class Jobs(unittest.TestCase):
         self.assertCountEqual(outcomes,['reserved','refused']);self.assertEqual(len(self.controller._jobs),1)
 
     def test_prefix_continuation_reserves_under_shared_lease_once(self):
-        parent={'id':R.PARENT_DISPATCH,'name':R.PARENT,'plan':copy.deepcopy(self.plan),'driver':None,'status':'dispatch_uncertain','created_utc':'synthetic','mode':'run'}
-        parent['plan']['resolved']['selection']['name']=R.PARENT;self.controller._jobs=[parent];self.controller._persist()
+        self._prefix_reservation(R.PARENT,R.PARENT_DISPATCH)
+
+    def test_km_prefix_continuation_uses_same_closed_reservation(self):
+        self._prefix_reservation(R.KM_PARENT,R.KM_DISPATCH)
+
+    def _prefix_reservation(self,name,dispatch):
+        parent={'id':dispatch,'name':name,'plan':copy.deepcopy(self.plan),'driver':None,'status':'dispatch_uncertain','created_utc':'synthetic','mode':'run'}
+        parent['plan']['resolved']['selection']['name']=name;self.controller._jobs=[parent];self.controller._persist()
+        self.assertTrue(self.controller._view(parent)['can_continue_prefix'])
         def resolve(config,root):
             value=copy.deepcopy(parent['plan']);value['resolved']['selection']=config;return value
         self.controller._resolver=resolve
         def inspection(*args):
             self.assertTrue(W.lease_busy(self.root));self.assertEqual(parent['status'],'dispatch_uncertain');return {}
         with patch.object(R,'inspect_parent',side_effect=inspection),patch.object(R,'compatible',return_value=[]),patch.object(R,'release',return_value='a'*64),patch.object(self.controller,'_launch',side_effect=self.controller._view):
-            result=self.controller.continue_prefix(R.PARENT,'prefix-derived')
+            result=self.controller.continue_prefix(name,'prefix-derived')
             self.assertEqual(result['name'],'prefix-derived');self.assertEqual(parent['status'],'verified_transport')
             self.assertEqual(self.controller._jobs[1]['mode'],'continue')
-            with self.assertRaises(W.ControlError):self.controller.continue_prefix(R.PARENT,'prefix-derived-again')
+            with self.assertRaises(W.ControlError):self.controller.continue_prefix(name,'prefix-derived-again')
         saved=W.read(self.controller._state_path)['jobs'];self.assertEqual(len(saved),2);self.assertEqual(saved[1]['status'],'dispatch_uncertain')
 
     def test_cli_lease_blocks_continuation_before_inspection(self):
