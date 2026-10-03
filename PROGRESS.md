@@ -10,8 +10,9 @@ Inspect receipts, source hashes and actual processes before repeating work.
 The owner now prioritizes a real mouse-operated end-to-end application, then
 complete gamma responses, clearer plots/public pages and verified local cleanup.
 Control executes checked AK02/SAP22 and both ring configurations through the
-shared GUI/CLI workflow. Existing-machine four-detector execution is verified;
-portable source preparation is next. Do not claim fresh-clone acceptance yet.
+shared GUI/CLI workflow. Existing-machine four-detector execution and explicit
+source-bound exporter preparation are verified. Next: M14b saved gamma completion
+and focused plots. Do not claim fresh-clone acceptance yet.
 
 Root is executing M14a under `.local/autonomy/lock`, owner
 `product-framework-v1-root`, actual gpt-6.1-sol/ultra in this project.
@@ -118,12 +119,36 @@ AI reviewers and the NEW independent strict reviewer accepted after frozen
 initials, direct reciprocal exchange, fixes and actual mouse-evidence review.
 The owned preview and worker processes are closed. Website snapshot unchanged.
 
-Next bounded slice: M14a3 admits a paired portable source/exporter adapter and
-explicit existing-environment setup into GUI/CLI. The private candidate and
-contract are design evidence only; preserve historical guards and all old science.
-Then complete M14b/c/d, reusing the frozen gamma plan, newcomer audit and cleanup
-proofs. Focused local waveform ranges remain M14b; current full-window plots are
-functional acceptance only. M8/M9 second-computer acceptance remains deferred.
+## M14a3 verified source preparation and application closure
+
+One paired source adapter builds the frozen exporter explicitly in the existing
+locked environment, with clone-local root, compiler/link/runtime and source
+receipts. Actual configure31.570s/build3.311s; six read-only detector/source Checks
+passed without science. The actual mouse SAP22/gamma20/gain22/one-thread run
+completed all20 primaries:15 known zeros, five accepted, no unprocessed/native
+failure/readout rejection. Response74.206s, potential23.577s/native7.512s/
+electronics1.283s; separate single-injection calibration0.756s. These are measured
+computation times, not development wall time. Original signed plots, event/group
+identity and zero/null distinctions passed actual mouse checks; next-run KM/Cs137
+selection leaves saved SAP22/gamma results unchanged.
+
+Terminal `.local/runs/m14a3-portable-ui-01` and its64 artifacts remain exact.
+Windows child module-path failure, normal Pixi activation-hint refusal, WSL JSON
+argument parsing and post-extraction inspection failure are preserved in the M14
+evidence. Repairs admit exact locked activation hints, use direct WSL execution,
+and validate completed radiation through the stronger complete-ledger reader.
+No completed science, old source attribution, model/kernel or exporter was rerun
+for the later inspection repair. The final11-source freeze is
+`M14a3-TERMINAL-LEDGER-SOURCE-FREEZE.json`;123 protected bytes remain unchanged.
+Two scoped AI reviewers and the NEW independent strict reviewer accepted the final actual evidence after frozen initials and concrete peer exchange.
+
+Next bounded slice: M14b completes the original40 gamma IDs from saved radiation
+and fields, preserves old6 response bytes, and supplies useful independent plot
+ranges. Also remove repeated expensive terminal parsing from saved-artifact
+requests while retaining exact content checks; current Control full-window views
+are functional acceptance only. Then M14c English gallery/navigation and M14d
+the two proved duplicate leaves. Reuse frozen plans/audit/proofs; do not repeat
+old science. M8/M9 second-computer acceptance remains deferred.
 
 ## Completed science and publication: reuse, never redo
 

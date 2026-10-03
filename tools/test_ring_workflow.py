@@ -34,7 +34,7 @@ class Rings(unittest.TestCase):
         config=copy.deepcopy(self.config)
         if model:config['detector']=model
         return W.check(config,root=self.root,validate_settings=lambda e,r:copy.deepcopy(self.validated),
-                       pin_reader=lambda model,r:W.source_pins(model),runtime_reader=lambda t:copy.deepcopy(self.runtime))
+                       pin_reader=lambda model,r:W.source_pins(model),runtime_reader=lambda t:copy.deepcopy(self.runtime),portable_reader=lambda c,r:None)
 
     def geometry(self,model='GeRC02'):
         plan=self.plan(model);resolved=plan['resolved'];s=resolved['selection'];directory=W.run_path(s['name'],self.root);t=directory/'transport'
@@ -114,7 +114,7 @@ class Rings(unittest.TestCase):
         self.assertEqual({d['id'] for d in enabled},set(W.MODELS))
         for d in enabled:
             if d['id'] in R.MODELS:self.assertEqual(d['sources'],[W.CS])
-        self.assertIn('fresh-clone',W.catalog()['setup_limit'])
+        self.assertIn('fresh-clone',W.catalog()['setup_limit'].lower())
         c=dict(self.config,source=W.GAMMA,pose='plus5mm',seed=26092631)
         with self.assertRaises(W.ControlError):W.check(c,root=self.root)
 

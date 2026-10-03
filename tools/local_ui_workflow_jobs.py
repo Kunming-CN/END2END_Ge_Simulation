@@ -80,19 +80,26 @@ class WorkflowController:
 
     def setup(self):
         checks=[]
-        for label,relative in (('Cryostat exporter',W.EXPORTER),('Pinned cryostat inventory','transport/cryostat-source.json'),
+        for label,relative in (('Pinned cryostat inventory','transport/cryostat-source.json'),
                                ('Julia project','simulation/Manifest.toml')):
             checks.append({'label':label,'available':safe_path(self.root,relative).is_file()})
+        try:
+            sys.path.insert(0,str(W.ROOT/'transport')) if str(W.ROOT/'transport') not in sys.path else None
+            from scenario_source_portable import file_readiness
+            portable=file_readiness(self.root)
+            checks.append({'label':'Portable source exporter and matching build receipt','available':True})
+        except (OSError,ValueError,KeyError,ControlError):
+            portable=None;checks.append({'label':'Portable source exporter and matching build receipt','available':False})
         try:
             runtime=W.runtime_identity(2)
             checks.append({'label':'Existing pinned Julia executable','available':True})
         except (OSError,ControlError):
             runtime=None;checks.append({'label':'Existing pinned Julia executable','available':False})
-        try:W.source_pins('AK02',self.root);checks.append({'label':'Exact model and upstream input bytes','available':True})
+        try:W.source_pins('AK02',self.root,portable=True);checks.append({'label':'Exact model and upstream input bytes','available':True})
         except (OSError,ValueError,KeyError,ControlError):checks.append({'label':'Exact model and upstream input bytes','available':False})
-        return {'status':'file_readiness_only','checks':checks,'runtime_identity':runtime,
+        return {'status':'file_readiness_only','checks':checks,'runtime_identity':runtime,'portable_source':portable,
                 'ready_for_config_check':all(c['available'] for c in checks),'science_calls':0,
-                'note':'File readiness only. Existing locked transport and Julia package versions are checked by each actual backend stage. Nothing is installed.',
+                'note':'File readiness only. Run.cmd setup -BuildPortableSourceExporter explicitly builds the exporter in the existing locked environment. Check verifies current build/runtime identities; opening Control installs or builds nothing.',
                 'guide':W.catalog(self.root)['setup_guide']}
 
     def check(self,config):

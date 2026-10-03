@@ -17,6 +17,7 @@ param(
   [ValidateRange(1,2147483647)][int]$Seed=26092631,
   [string]$Pilot='',
   [switch]$BuildExporter,
+  [switch]$BuildPortableSourceExporter,
   [switch]$Open,
   [switch]$Json,
   [switch]$DryRun,
@@ -28,6 +29,7 @@ param(
 $ErrorActionPreference='Stop'
 $script:customRequested=$PSBoundParameters.ContainsKey('ElectronicsProfile')
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
+if($BuildPortableSourceExporter -and ($Action -ne 'setup' -or $BuildExporter)){throw 'BuildPortableSourceExporter requires setup and cannot be combined with BuildExporter'}
 if($Action -eq 'native-readout'){
   foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','DryRun','Json','Resume','StopAfterGroups','PrimaryIds','Detector')){throw "native-readout forbids: $key"}}
   if(!$Name){throw 'native-readout requires -Name NEW (checked detector engineering selection/fixed profile)'}
@@ -163,6 +165,13 @@ function Build-Exporter {
   if($LASTEXITCODE -ne 0){throw 'CMake configure failed'}
   & (Join-Path $root 'transport/Run.cmd') cmake --build ../.local/m2a/cs137-build-v1 --target cryostat_export --parallel 2
   if($LASTEXITCODE -ne 0 -or !(Test-Path $exporter -PathType Leaf)){throw 'cryostat_export build failed'}
+}
+function Build-PortableSourceExporter {
+  $up=Check-Upstream
+  if(!$up.ok){throw 'Pinned LBNL originals are missing or changed; follow tools/site_guide.html before portable setup.'}
+  & wsl.exe --distribution Ubuntu-24.04 --cd (Join-Path $root 'transport') -- bash ./workflow.sh python -B ./scenario_source_portable.py build-exporter --windows-root $root
+  if($LASTEXITCODE -ne 0){throw 'Portable source build failed. Preserve its build directory and inspect the recorded attempt; no rebuild or cleanup was attempted.'}
+  Write-Host 'Portable source exporter verified. Open Control.cmd and Check a selected configuration.'
 }
 function Require-Ready {
   $s=Check-Setup
@@ -313,7 +322,7 @@ if($Json -and $Action -ne 'inspect'){throw '-Json is supported only for inspect'
 if($Action -eq 'inspect' -and ($BuildExporter -or $Open -or $DryRun -or $Pilot -or $PSBoundParameters.ContainsKey('Preset') -or $PSBoundParameters.ContainsKey('Detector') -or $PSBoundParameters.ContainsKey('Seed'))){throw 'inspect does not accept setup/run/open options'}
 switch($Action){
   'check'{Show-SetupStatus}
-  'setup'{if($BuildExporter -or !(Test-Path $exporter)){Build-Exporter};Show-SetupStatus}
+  'setup'{if($BuildPortableSourceExporter){Build-PortableSourceExporter;exit 0};if($BuildExporter -or !(Test-Path $exporter)){Build-Exporter};Show-SetupStatus}
   'run'{Invoke-Run $false}
   'resume'{Invoke-Run $true; if($DryRun){exit $LASTEXITCODE}}
   'open'{Open-Run $Name}

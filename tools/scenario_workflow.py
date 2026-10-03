@@ -38,6 +38,8 @@ MODELS = ('AK02','SAP22',*RINGS)
 STAGES = ('geometry', 'radiation', 'event_ledger', 'response', 'results')
 TERMINAL = ('completed', 'completed_with_native_failures')
 EXPORTER = '.local/m2a/cs137-build-v1/cryostat_export'
+PORTABLE_ADAPTER = 'transport/scenario_source_portable.py'
+PORTABLE_BUILD = '.local/m2a/scenario-source-portable-build-v1'
 
 
 def require(ok, message):
@@ -142,7 +144,7 @@ def electronics_feasibility(c,dt=2):
                 'Peak gate must contain at least two analog samples within the inherited limits.')
 
 
-def source_pins(detector, root=ROOT):
+def source_pins(detector, root=ROOT, *, portable=False):
     root = Path(root)
     catalog = read(safe_path(root, 'models/catalog.json'))
     entry = next(x for x in catalog['detectors'] if x['id'] == detector)
@@ -168,6 +170,17 @@ def source_pins(detector, root=ROOT):
                                           'run.sh','workflow.sh','prepare.sh','gamma.sh'))
     names.add('scenarios/detector-capabilities.json')
     names.update('scenarios/assets/'+n+'.json' for n in (CRYOSTAT,CS))
+    if portable:
+        from importlib import import_module
+        sys.path.insert(0,str(ROOT/'transport')) if str(ROOT/'transport') not in sys.path else None
+        adapter=import_module('scenario_source_portable')
+        adapter.recheck_map(adapter.PINNED,root)
+        names.discard(EXPORTER)
+        names.update((PORTABLE_ADAPTER,PORTABLE_BUILD+'/exporter-build.json',PORTABLE_BUILD+'/cryostat_export',PORTABLE_BUILD+'/build-attempt.json'))
+        receipt_path=safe_path(root,PORTABLE_BUILD+'/exporter-build.json')
+        require(receipt_path.is_file(),'Portable source exporter is not set up. Run.cmd setup -BuildPortableSourceExporter is the explicit build action.')
+        receipt=read(receipt_path)
+        names.update(receipt['build']['evidence_sha256'])
     if detector in RINGS:
         names.update(('tools/ring_workflow.py','tools/ring_model_contract.py','transport/ring_cs137.py'))
         names.update('simulation/'+n for n in ('ring_stream.jl','ring_response.jl','ring_polarity.jl','workflow_ring_response.jl'))
@@ -191,8 +204,47 @@ def runtime_identity(threads):
             'julia_executable':env['JULIA_EXE'],'julia_sha256':sha(env['JULIA_EXE'])}
 
 
-def check(config, *, root=ROOT, validate_settings=settings_check, pin_reader=source_pins,
-          runtime_reader=runtime_identity, allow_existing=False):
+def portable_request(selection):
+    return {'detector':'GeRC02_Li50min' if selection['detector']=='GeRC02' else selection['detector'],
+            'source_mode':selection['source'],'source_pose':selection['pose'],
+            'primary_count':selection['primary_count'],'seed':selection['seed']}
+
+
+def portable_command(root=ROOT):
+    return ['wsl.exe','--distribution','Ubuntu-24.04','--cd',str(Path(root)/'transport'),'--exec',
+            'bash','./workflow.sh','python','-B','./scenario_source_portable.py']
+
+
+def portable_query(arguments, root=ROOT, *, runner=subprocess.run):
+    result=runner(portable_command(root)+arguments+['--windows-root',str(Path(root).resolve())],
+                  stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=120,shell=False,
+                  creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
+    require(result.returncode==0,'Portable source setup/check failed: '+result.stderr.decode('utf-8',errors='replace')[-2000:])
+    return decode_json(result.stdout.decode('utf-8-sig'))
+
+
+def portable_check(config,root=ROOT):
+    return portable_query(['check','--request-json',encoded(portable_request(config)).decode('utf-8')],root)
+
+
+def portable_stage(directory,resolved,stage,root=ROOT):
+    checked=resolved.get('portable_source_plan')
+    if checked is None:return
+    request=portable_request(resolved['selection'])
+    require(checked['request']==request,'Portable checked source tuple changed.')
+    # After extraction, the stronger ledger reader verifies both the original
+    # radiation files and the exact derived stream. The pre-extraction reader
+    # deliberately refuses those additional files.
+    directory=run_path(resolved['selection']['name'],root)/'transport'
+    checked_stage='event_ledger' if stage=='radiation' and (directory/'stream/manifest.json').is_file() else stage
+    value=portable_query(['check','--directory','../'+BASE+'/'+resolved['selection']['name']+'/transport','--stage',checked_stage],root)
+    for key in ('execution_contract','portable_source_sha256'):
+        require(encoded(value.get(key))==encoded(checked[key]),'Portable stage differs from Check: '+key)
+    return value
+
+
+def check(config, *, root=ROOT, validate_settings=settings_check, pin_reader=None,
+          runtime_reader=runtime_identity, portable_reader=portable_check, allow_existing=False):
     require(type(config) is dict and set(config)==FIELDS, 'Unsupported or missing configuration fields.')
     run_path(config['name'],root)
     require(config['cryostat']==CRYOSTAT, 'This cryostat has no executable adapter yet.')
@@ -228,8 +280,14 @@ def check(config, *, root=ROOT, validate_settings=settings_check, pin_reader=sou
                             'drift_cap_ns':10000,'stored_temperature_K':78,'runtime_temperature_K':77,
                             'bias_V':{'AK02':500,'SAP22':700,'GeRC02':240,'KMRC01_candidate':370}[config['detector']],
                             'native_failure_policy':'record','models_serial':True,'stages_serial':True},
-                'source_sha256':pin_reader(config['detector'],root),
+                'source_sha256':(pin_reader(config['detector'],root) if pin_reader else source_pins(config['detector'],root,portable=True)),
                 'runtime_identity':runtime_reader(config['threads'])}
+    portable=portable_reader(config,root)
+    if portable is not None:
+        require(portable['kind']=='portable_source_checked_plan_v1' and portable['schema_version']==1 and
+                portable['request']==portable_request(config),'Portable source Check returned an unsupported tuple.')
+        resolved['portable_source_plan']=portable
+        resolved['source_sha256'].update(portable['portable_source_sha256'])
     if config['detector'] in RINGS:
         from ring_workflow import operating
         resolved['operating_model']=operating(config['detector'])
@@ -241,6 +299,9 @@ def admit(plan,root=ROOT,*,resume=False):
     require(type(plan) is dict and set(plan)=={'kind','status','science_calls','resolved','configuration_sha256'}
             and plan['kind']==KIND and plan['status']=='checked_configuration' and plan['science_calls']==0,
             'Unsupported checked plan.')
+    if resume:
+        require(plan['resolved'].get('portable_source_plan') is not None,
+                'This legacy checked configuration cannot resume under the current portable source contract. Inspect its preserved saved results.')
     actual=check(plan['resolved']['selection'],root=root,allow_existing=resume)
     require(encoded(actual)==encoded(plan),'Checked plan changed or does not reconstruct from current admitted inputs.')
     return actual
@@ -257,7 +318,7 @@ def catalog(root=ROOT):
         available=id in MODELS and (capabilities[id]['lbnl_execution_implemented'] is True or
             id in RINGS and ring=={'adapter':'fresh_ring_control_v1','sources':[CS],'counts':[20,500],
                                  'variant':'GeRC02_Li50min' if id=='GeRC02' else id})
-        detectors.append({'id':id,'label':LABELS.get(id,{'AK02':'AK02 · ICPC · +500 V','SAP22':'SAP22 · PPC · +700 V'}.get(id,id)),
+        detectors.append({'id':id,'label':LABELS.get(id,{'AK02':'AK02 · ICPC · +500 V','SAP22':'SAP22 · ICPC · +700 V'}.get(id,id)),
             'available':available,'reason':None if available else 'Selectable new-run connector is pending.',
             'sources':[CS] if id in RINGS else [CS,GAMMA] if id in ('AK02','SAP22') else [],
             'operating_label':'Stored 78 K; runtime 77 K; '+('Li50min at 553.15 K; contacts 1: 0 V, 2: +240 V; fresh fields.' if id=='GeRC02' else
@@ -272,7 +333,7 @@ def catalog(root=ROOT):
                        {'id':GAMMA,'label':'662 keV gamma beam','pose':'plus5mm','counts':[20]}],
             'electronics_defaults':default,'electronics_keys':list(SETTINGS),
             'numerics':'16 parcels; native seed 2609261; 2 ns grid; 10,000 ns cap; CPU; one or two Julia threads.',
-            'setup_limit':'Fresh gamma and ring preparation currently require the existing root-bound exporter. A portable fresh-clone exporter contract is pending.',
+            'setup_limit':'Fresh runs require the explicit portable source-exporter build in the existing locked environment. Fresh-clone and second-computer acceptance remain deferred.',
             'setup_guide':'https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup'}
 
 
@@ -385,6 +446,8 @@ def gamma_request(directory, resolved, root=ROOT,*,historical=False):
     from gamma_native_example import validate_events
     transport=directory/'transport'; m=read(transport/'stream/manifest.json')
     prepared=read(transport/'prepared.json'); run=read(transport/'run.json')
+    if resolved.get('portable_source_plan') is not None:
+        portable_stage(directory,resolved,'event_ledger',root)
     require(m['kind']=='scenario_gamma_event_stream_v1' and m['status']=='complete'
             and m['model_id']==resolved['selection']['detector'] and m['primary_count']==20,
             'Gamma stream does not match the selected model and complete census.')
@@ -410,6 +473,9 @@ def gamma_request(directory, resolved, root=ROOT,*,historical=False):
               relative(transport/'truth.lh5'):m['source_lh5_sha256'],
               relative(transport/'stream/manifest.json'):sha(transport/'stream/manifest.json'),
               relative(chunk):sha(chunk), relative(directory/'electronics/profile.json'):sha(directory/'electronics/profile.json')}
+    if resolved.get('portable_source_plan') is not None:
+        bindings.update({relative(transport/'portable-plan.json'):sha(transport/'portable-plan.json'),
+                         relative(transport/'runtime/runtime.json'):sha(transport/'runtime/runtime.json')})
     return {'kind':'local_scenario_gamma_request_v1','model_id':m['model_id'],'source_manifest':m,
             'prepared':prepared,'events':events,'readout_config':config,'profile':profile,
             'configuration_sha256':digest(resolved),'threads':resolved['selection']['threads'],
@@ -440,6 +506,14 @@ def stage_commands(directory,resolved,root=ROOT,environment=None):
         extract=wsl+['python','-B','./scenario_transport.py','extract','--prepared','../'+transport]
         response=julia+[str(Path(root)/'simulation/scenario_response.jl'),'--request',str(directory/'gamma-request.json'),
                          '--output',str(directory/'response')]
+    if resolved.get('portable_source_plan') is not None:
+        shared=portable_command(root)
+        identity=['--windows-root',str(Path(root).resolve())]
+        prepare=shared+['prepare','--request',BASE+'/'+s['name']+'/portable-request.json',
+                        '--checked-plan','../'+BASE+'/'+s['name']+'/portable-checked-plan.json',
+                        '--output','../'+transport,*identity]
+        radiation=shared+['run','--directory','../'+transport,*identity]
+        extract=shared+['extract','--directory','../'+transport,*identity]
     return {'geometry':prepare,'radiation':radiation,'event_ledger':extract,'response':response}
 
 
@@ -463,6 +537,8 @@ def command(argv,directory,stage,receipt,environment,root=ROOT):
 
 def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
     s=resolved['selection']; t=directory/'transport'
+    if (stage in ('geometry','radiation') or stage=='event_ledger' and s['source']==CS and s['detector'] not in RINGS) and resolved.get('portable_source_plan') is not None:
+        portable_stage(directory,resolved,stage,root)
     if stage=='geometry':
         p=read(t/'prepared.json');r=read(t/'prepare-receipt.json')
         instance=p['instance'] if s['source']==GAMMA else p
@@ -472,12 +548,13 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
         require(report['overlaps_passed'] is True and report['source_inside_fill'] is True,'Geometry native checks failed.')
         require(instance['seed']==s['seed'] and p['source_position_global_mm']==resolved['source_position_global_mm'],
                 'Prepared source pose or radiation seed differs from selected settings.')
-        for name,value in p['files_sha256'].items():require(sha(safe_path(t,name))==value,'Prepared artifact changed.')
+        files={**p['files_sha256'],**p.get('portable_files_sha256',{})}
+        for name,value in files.items():require(sha(safe_path(t,name))==value,'Prepared artifact changed.')
         if s['detector'] in RINGS:
             from ring_workflow import prepared
             prepared(directory,resolved,root,historical=historical)
         # Later stages add their own transport files; geometry owns its saved inputs.
-        names=set(p['files_sha256'])|{'prepared.json','prepare-receipt.json'}
+        names=set(files)|{'prepared.json','prepare-receipt.json'}
         return {n:{'sha256':sha(safe_path(t,n)),'bytes':safe_path(t,n).stat().st_size} for n in sorted(names)}
     if stage=='radiation':
         r=read(t/'run.json');require(r['status']=='complete' and r['returncode']==0 and
@@ -645,6 +722,9 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
                      'runtime':{'python':sys.executable,'python_sha256':sha(sys.executable),'julia':environment['JULIA_EXE'],'julia_sha256':sha(environment['JULIA_EXE'])}}
             write(directory/'resolved-config.json',plan,fresh=True)
             write(directory/'electronics/profile.json',resolved['profile'],fresh=True)
+            if resolved.get('portable_source_plan') is not None:
+                write(directory/'portable-request.json',portable_request(s),fresh=True)
+                write(directory/'portable-checked-plan.json',resolved['portable_source_plan'],fresh=True)
         write(directory/'run.json',receipt)
         try:
             if continuation:

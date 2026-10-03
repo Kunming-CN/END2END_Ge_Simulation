@@ -94,6 +94,10 @@ def prepared(directory,resolved,root=W.ROOT,*,historical=False):
     W.require(W.encoded(resolved['operating_model'])==W.encoded(operating(model)),
               'Selected ring signed bias, wiring or effective-model identity changed.')
     p=W.read(t/'prepared.json');adapter=producers();mount=adapter.scenario()
+    if resolved.get('portable_source_plan') is not None:
+        checked=resolved['portable_source_plan']
+        for key in ('execution_contract','portable_source_sha256'):
+            W.require(W.encoded(p.get(key))==W.encoded(checked[key]),'Ring portable preparation binding changed: '+key)
     W.require(p['kind']=='ring_cs137_prepared_v1' and p['producer_adapter']=='ring_cs137_v1' and
               p['model_id']==model and p['model_sha256']==M.PINS[model] and p['source_pdg']==1000551370 and
               p['primary_count']==s['primary_count'] and p['seed']==s['seed'], 'Ring preparation differs from selected source/model/count/seed.')
@@ -123,10 +127,14 @@ def prepared(directory,resolved,root=W.ROOT,*,historical=False):
 
 
 def ledger(directory,resolved,root=W.ROOT,*,historical=False):
+    if resolved.get('portable_source_plan') is not None:W.portable_stage(directory,resolved,'event_ledger',root)
     p=prepared(directory,resolved,root,historical=historical);t=Path(directory)/'transport';m=W.read(t/'stream/manifest.json')
     W.require(m['kind']=='cs137_decay_stream_v1' and m['producer_adapter']=='ring_cs137_v1' and m['status']=='complete', 'Not a complete ring decay stream.')
     for key in ('model_id','model_sha256','model_contract','primary_count','coordinate_transform','grouping_policy','clock_policy','source_sha256','ring_source_sha256','mounting_contract'):
         W.require(W.encoded(m[key])==W.encoded(p[key]),'Ring ledger/prepared mismatch: '+key)
+    if resolved.get('portable_source_plan') is not None:
+        for key in ('execution_contract','portable_source_sha256'):
+            W.require(W.encoded(m.get(key))==W.encoded(p[key]),'Ring portable ledger binding changed: '+key)
     W.require(m['units']=={'energy':'keV','length':'mm','time':'ns'} and m['source_lh5']=='../truth.lh5' and
               m['raw_track_energy_unit']=='MeV' and m['raw_position_unit']=='m' and m['ledger']['full_energy_closure'] is None,
               'Ring ledger units/clock or energy accounting changed.')
@@ -142,11 +150,15 @@ def ledger(directory,resolved,root=W.ROOT,*,historical=False):
 def request(directory,resolved,root=W.ROOT,*,historical=False):
     ledger(directory,resolved,root,historical=historical)
     profile=Path(directory)/'electronics/profile.json';stream=Path(directory)/'transport/stream/manifest.json'
+    pins=dict(resolved['source_sha256'])
+    if resolved.get('portable_source_plan') is not None:
+        for ref in ('transport/portable-plan.json','transport/runtime/runtime.json'):
+            path=Path(directory)/ref;pins[path.relative_to(root).as_posix()]=W.sha(path)
     return {'kind':'workflow_ring_request_v1','configuration_sha256':W.digest(resolved),
             'selection':resolved['selection'],'operating_model':resolved['operating_model'],
             'profile_ref':profile.relative_to(root).as_posix(),'profile_sha256':W.sha(profile),
             'stream_ref':stream.relative_to(root).as_posix(),'stream_sha256':W.sha(stream),
-            'source_sha256':resolved['source_sha256'],'numerics':resolved['numerics']}
+            'source_sha256':pins,'numerics':resolved['numerics']}
 
 
 def response(directory,resolved,report,root=W.ROOT,*,historical=False):
@@ -161,7 +173,7 @@ def response(directory,resolved,report,root=W.ROOT,*,historical=False):
               'Fresh ring envelope/report authority mismatch.')
     p=W.read(Path(directory)/'transport/prepared.json')
     W.require(report['model_contract']==envelope['model_contract']==p['model_contract'] and
-              envelope['source_sha256']==resolved['source_sha256'] and
+              envelope['source_sha256']==actual['source_sha256'] and
               report['signed_operating_bias_V']==envelope['signed_operating_bias_V']==op['signed_bias_V'] and
               report['contact_potentials_V']==op['contact_potentials_V'] and report['wiring_factor']==envelope['wiring_factor']==op['wiring_factor'] and
               report['new_field_solution'] is True and envelope['new_field_solution'] is True and report['geometry_checks']['field_cache_used'] is False and

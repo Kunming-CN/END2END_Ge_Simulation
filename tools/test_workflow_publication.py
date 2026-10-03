@@ -1,11 +1,13 @@
 """Publication and sealed KM-prefix fixtures only; no science or servers."""
 import copy
+import hashlib
 import os
 from pathlib import Path
 import shutil
 import sys
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import patch
 
 import scenario_workflow as W
@@ -89,6 +91,8 @@ class KMPrefix(unittest.TestCase):
         for ref in R.preserved_inventory(source):
             target=W.safe_path(self.directory,ref);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(W.safe_path(source,ref),target)
         self.receipt=W.read(self.directory/'run.json');self.pending=W.read(self.directory/R.KM_PENDING);self.oldplan=W.read(self.directory/'resolved-config.json')
+        runtime=patch.object(W,'runtime_identity',return_value=copy.deepcopy(self.oldplan['resolved']['runtime_identity']))
+        runtime.start();self.addCleanup(runtime.stop)
         commands=W.stage_commands(self.directory,self.receipt['resolved'],self.root,{'JULIA_EXE':self.receipt['runtime']['julia']})
         for stage in R.PREFIX:
             self.receipt['stages'][stage]['arguments']=commands[stage];self.pending['stages'][stage]['arguments']=commands[stage]
@@ -99,13 +103,22 @@ class KMPrefix(unittest.TestCase):
         ref=self.basis['driver_log'];target=W.safe_path(self.root,ref);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(W.ROOT/ref,target)
         archived=W.ROOT/R.KM_AUTHORITY;target=W.safe_path(self.root,R.KM_AUTHORITY).parent/self.basis['source_archive'];target.parent.mkdir(parents=True,exist_ok=True)
         shutil.copyfile(archived.parent/self.basis['source_archive'],target)
+        # Exercise the historical recovery contract with its recorded producer
+        # bytes. M14a3 deliberately changes current workflow admission; it does
+        # not broaden this frozen two-source recovery exception.
+        with zipfile.ZipFile(target) as original:
+            for ref,h in self.oldplan['resolved']['source_sha256'].items():
+                if ref in original.namelist() and ref not in ('tools/scenario_workflow.py','tools/workflow_recovery.py'):
+                    data=original.read(ref)
+                    self.assertEqual(hashlib.sha256(data).hexdigest(),h)
+                    W.safe_path(self.root,ref).write_bytes(data)
         self.bind_basis()
         scoped=patch.object(R,'KM_AUTHORITY_SHA',W.sha(self.root/R.KM_AUTHORITY));scoped.start();self.addCleanup(scoped.stop)
         self.job={'id':R.KM_DISPATCH,'name':R.KM_PARENT,'plan':self.oldplan,'driver':self.receipt['supervisor'],'status':'dispatch_uncertain'}
         config=copy.deepcopy(self.oldplan['resolved']['selection']);config['name']='synthetic-km-prefix-derivative'
         old=self.oldplan['resolved']
         self.plan=W.check(config,root=self.root,validate_settings=lambda e,r:{'profile':old['profile'],'configuration':old['electronics_configuration'],
-            'physics_sha256':old['electronics_physics_sha256']},pin_reader=lambda m,r:W.source_pins(m),runtime_reader=lambda t:old['runtime_identity'])
+            'physics_sha256':old['electronics_physics_sha256']},pin_reader=lambda m,r:{ref:W.sha(W.safe_path(self.root,ref)) for ref in old['source_sha256']},runtime_reader=lambda t:old['runtime_identity'],portable_reader=lambda c,r:None)
         self.quiet={'windows_succeeded':True,'linux_succeeded':True,'relevant_windows_workers':[],'relevant_linux_workers':[]}
 
     def bind_basis(self):

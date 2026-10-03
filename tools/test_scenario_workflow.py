@@ -23,7 +23,7 @@ class Workflow(unittest.TestCase):
 
     def check(self,c=None):
         return W.check(c or self.config,root=self.root,validate_settings=self.settings,
-                       pin_reader=self.pins,runtime_reader=self.runtime)
+                       pin_reader=self.pins,runtime_reader=self.runtime,portable_reader=lambda c,r:None)
 
     def test_actual_source_and_detector_choices_change_config(self):
         p=self.check();c=copy.deepcopy(self.config);c.update(detector='SAP22');q=self.check(c)

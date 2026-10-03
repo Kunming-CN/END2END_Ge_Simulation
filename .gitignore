@@ -188,6 +188,9 @@
 !simulation/test_workflow_ring_response.jl
 !transport/workflow.sh
 
+# Reviewed M14a3 paired portable source adapter; build/runtime receipts stay local.
+!transport/scenario_source_portable.py
+
 # Keep this final: only the reviewed PR template may enter .github.
 !/.github/
 /.github/**
