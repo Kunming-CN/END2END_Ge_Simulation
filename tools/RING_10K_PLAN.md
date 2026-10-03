@@ -1,9 +1,9 @@
 # Unified event viewer and ring-contact 10K delivery
 
 Owner decisions: 2026-10-02. Both ring 10K processing campaigns and the four-model
-local presentation are complete. All three independent M13f AI reviews and
-reciprocal discussion accept publication; synchronization/live acceptance
-remain pending. Processing completion is not physical
+local and public presentation are complete. All three independent M13f AI reviews
+and reciprocal discussion accept publication. Normal Git synchronization and
+exact live acceptance passed2026-10-03UTC. Processing completion is not physical
 validation. M8/M9 remain deferred and do not block it.
 
 ## Fixed scope
@@ -114,8 +114,13 @@ bundle and failed derivatives/stages remain permanent. The generated
 764group/40000primary reader regression, actual IAB event/alias/response/spectrum
 checks,390px event/hub/spectrum layouts and complete local site checks pass.
 Common frozen3AI review packet is `.local/ring-delivery-v1/PUBLIC-REVIEW-PACKET-01.json`;
-freeze independent initial opinions before reciprocal discussion. Final reviews,
-nonforce synchronization and exact live validation remain the release steps.
+all independent initial opinions froze before actual reciprocal discussion.
+All FINALs and narrow-budget addenda accept with no verified blockers. Commit
+0709447d215f8394224ebf2455ba76dfe04f6410 synchronized without force and deployed.
+The maintained `check_site.py --url` passes691exact online artifacts plus full
+local validation; live IAB adds11event/alias/zero/failure/stage/card/home checks.
+The manifest-inclusive deployment totals979504351bytes. Final evidence is under
+`.local/ring-delivery-v1`; the remaining checkpoint edits documentation only.
 
 The initial direct 10K inventory is nine HTML pages:
 

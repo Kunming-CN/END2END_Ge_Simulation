@@ -1,20 +1,19 @@
 # Project state and next bounded work
 
-Updated: 2026-10-02 UTC. This compact handoff governs delivery order.
+Updated: 2026-10-03 UTC. This compact handoff governs delivery order.
 Full preceding history is immutable
 [at 6fa7bf3](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/6fa7bf35097a5c51b7f81f77a3d81183034f1f04/PROGRESS.md).
 Inspect terminal receipts, hashes and actual processes before repeating work.
 
-Owner resumed after the application update. Actual root launch is Sol 6.1 Ultra
-in this project; outer owner `km-polarity-v1-root`, host39260, heartbeat
-`automation` ACTIVE. State is running and the owned lock prevents duplicate
-rounds. Both ring 10K workers have exited and terminal verification passed.
-Current bounded work is M13f: synchronize the accepted four-detector saved
-website and perform exact live validation. Local checks and all three independent
-AI reviews with reciprocal concrete discussion have passed.
-No radiation, SSD, calibration or pilot rerun is needed for this publication.
+M13 is delivered. Actual root launch and all AI reviewers used Sol 6.1 Ultra
+in this project. Both ring10K workers and three final reviewers have exited;
+terminal verification, local checks, normal Git synchronization and exact live
+validation passed. The owned localhost preview is closed. The controller records
+its final receipt and releases only its own lock after this documentation
+checkpoint. No executable continuation milestone is queued; postponed tasks below
+remain postponed. No radiation, SSD, calibration or pilot was rerun for publication.
 
-## M13 science completed; four-detector local website accepted
+## M13 science and four-detector website delivered
 
 The delivery authority is [tools/RING_10K_PLAN.md](tools/RING_10K_PLAN.md).
 M13a unified reader is already delivered at `viewers/events.html`; both old
@@ -106,7 +105,7 @@ summary. Subsequent budget review now includes manifest bytes and always budgets
 the exact generated serialization when re-sealing an existing compact manifest;
 32publication tests pass. The complete installed deployment is979,504,351bytes,
 including338,933manifest bytes, within1,000,000,000. The real `check_site.py` passed;
-the post-deployment invocation will also exercise this final narrow budget fix.
+the final post-deployment invocation also passed this narrow budget fix.
 
 Generated reader regression passes764groups/40000primaries/39236zero-Ge,
 39,016,621exact scalar and83,156signed-zero checks. Four null photon identities,
@@ -135,8 +134,21 @@ sign along with14647negative/231zero raw samples. No waveform is rectified.
 The exact Git tree export passes saved validation using published14producer
 sources with no private.local/raw/cache/basis, in the existing Python runtime.
 This is not second-computer setup or scientific reproduction acceptance.
-Nonforce Git synchronization and exact live validation remain release steps.
-Retain all failure evidence; do not repeat completed science for release.
+Nonforce publication commit0709447d215f8394224ebf2455ba76dfe04f6410 is synchronized
+with GitHub and its Pages build completed. `check_site.py --url` passed at
+2026-10-03T00:00:55Z: the exact live manifest matches this build,691online HTML,
+model/download, campaign, ring gzip/ZIP, scene, spectrum and viewer artifacts
+match local bytes/SHA. Local1680files/100HTML/2888links also pass. Actual live
+IAB acceptance adds11checks: both ring events/charge stages, four cards/20stage
+plots, negative KM axis, original deep links, zero/failure radiation identities
+and prominent homepage route. Receipt `.local/ring-delivery-v1/LIVE-SITE-01-COMPLETE.json`
+and `BROWSER-LIVE-01.json` distinguish online hash checks from browser evidence.
+The final documentation-only checkpoint preserves every site byte. Retain all
+failure evidence and permanent full/local science; do not repeat completed work.
+
+Current entry: [four-detector10K results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-10k/index.html).
+Each case has Events, Spectra, Charge & readout and complete Data links. The
+canonical event viewer has four-model selection and both old links remain aliases.
 
 ## Retained website and postponed work
 
