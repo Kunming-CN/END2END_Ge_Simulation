@@ -16,20 +16,24 @@ MIT LICENSE. THIRD_PARTY_NOTICES.md preserves separate model, data and upstream
 rights. Exact root LICENSE admission exists in Git, the publisher and local/live
 site validation. No upstream source or scientific model has been relicensed.
 
-Google preparation uses the owner's exact URL-prefix property
-https://kunming-cn.github.io/END2END_Ge_Simulation/ and its actual persistent
-head verification tag. Ownership verification, sitemap submission and homepage
-index-request still await deployment and the corresponding observed Console
-results. Publication alone is not a submission or proof of indexing.
+Google uses the owner's exact URL-prefix property
+https://kunming-cn.github.io/END2END_Ge_Simulation/ and its persistent verification
+tag. Console rejected the first live snapshot because its head was implicit.
+The normal assembler now emits explicit head boundaries; the rejection and
+repair reviews are retained. Verification, sitemap submission and homepage
+index-request await the repaired deployment and actual Console results.
+Publication or a submission is not proof of indexing.
 
-Publication build c257d2f120d5d446664f049af057f085baa2e389fe9b45ba19466bc7d794a858
-has 1686 files, 104 HTML pages, 3129 checked links and 982888891 payload bytes.
-Only LICENSE was added and 46 maintained HTML pages changed; all model/science,
-waveform, numerical JSON, archive and media bytes are unchanged. No physics ran.
-The generator completed before validator/allowlist hardening. Those later fixes
-change validation, not generated output. Tests cover missing/wrong/duplicate/body
-ownership tags, missing sitemap despite rehash, exact LICENSE and live selection.
-Final local/live verification and Git synchronization are recorded below when done.
+MIT and the plan were synchronized at 2f79c9e; GitHub recognizes MIT. That exact
+c257d2f1 snapshot passed the explicit online check of 696 selected artifacts.
+Repaired build 785fd3cfe9f2a542b467cf934042304d046a9ee4acafdc0df125da7a8e55b0f0
+has 1686 files, 104 HTML pages, 3129 checked links and 982889216 payload bytes.
+Its only payload differences from c257 are literal head wrappers in 25 maintained
+HTML pages (325 bytes); no files added/deleted or science/model/media edits.
+No physics ran. Source freeze matches; 13 discovery and 32 site tests passed,
+including rehashed implicit-head rejection and exact predecessor admission.
+The repaired explicit local check passed. Repaired deployment, exact live
+validation and actual Console results remain pending.
 
 Private planning/publication evidence: .local/product-delivery-v1/next-plan/.
 Two independent Sol6.1 Ultra scoped INITIALs and a NEW strict INITIAL froze
@@ -37,7 +41,9 @@ before discussion; patch INITIALs froze separately. Actual reciprocal architectu
 and remage discussion resolved count representation, upstream API reuse, seed
 identity, streaming, shared native state and bounded acceptance. Four confirmed
 publication issues were fixed: ignored root LICENSE, publisher root admission,
-body-position admission and missing-sitemap bypass. These are AI reviews.
+body-position admission and missing-sitemap bypass. The three reviewers also
+accepted the narrow explicit-head repair after the actual Console rejection.
+These are AI reviews, not a substitute for observed Console results.
 
 ## Already delivered: do not repeat or call these M15 work
 

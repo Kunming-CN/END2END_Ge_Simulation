@@ -182,6 +182,29 @@ class DiscoveryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'outside the head'):
                 check_site.validate(self.site)
 
+    def test_implicit_home_head_is_repaired_and_rehashed_implicit_is_refused(self):
+        p = self.site / 'index.html'
+        p.write_text(p.read_text().replace('<head>', '').replace('</head>', ''))
+        D.assemble(self.site)
+        explicit = p.read_text()
+        self.assertIn('<html><head>', explicit)
+        self.assertIn('</head><body>', explicit)
+        self.seal()
+        p.write_text(explicit.replace('<head>', '').replace('</head>', ''))
+        self.rehash_without_semantic_validation()
+        digest = json.loads((self.site / check_site.MANIFEST).read_bytes())['build_id']
+        with self.assertRaisesRegex(ValueError, 'outside the head'):
+            check_site.validate(self.site)
+        # Only an exact historical digest may pass before repair, not a rehash.
+        with mock.patch.object(D, 'LEGACY_IMPLICIT_HEAD', {digest}):
+            check_site.validate(self.site)
+            p.write_text(p.read_text().replace('Saved</body>', 'Edited</body>'))
+            self.rehash_without_semantic_validation()
+            with self.assertRaisesRegex(ValueError, 'outside the head'):
+                check_site.validate(self.site)
+            D.assemble(self.site)
+            D.validate(self.site)
+
     def test_full_unsealed_site_cannot_drop_both_support_markers(self):
         D.assemble(self.site)
         (self.site / 'models').mkdir()

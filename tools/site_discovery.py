@@ -15,6 +15,9 @@ SITEMAP = 'sitemap.xml'
 GOOGLE_VERIFICATION = 'wFWyU8uT-Mpj18hGTUOsVugVXg5AlW6TDcfRP2r--RE'
 SOFTWARE_LICENSE = Path(__file__).resolve().parents[1] / 'LICENSE'
 LEGACY_WITHOUT_SUPPORT = {'186b9008a790683486598e48e6b86ede2b1d9119008c191cc5fed32c955f6afc'}
+# Exact deployed predecessor used an implicit head. Search Console rejected it;
+# allow only this hash-bound snapshot while the publisher stages the repair.
+LEGACY_IMPLICIT_HEAD = {'c257d2f120d5d446664f049af057f085baa2e389fe9b45ba19466bc7d794a858'}
 NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
 LANDINGS = {
     'index.html': 'Saved HPGe detector engineering simulations: Geant4/remage radiation deposits, SSD charge transport and electronics readout. Browse results or choose a local workflow.',
@@ -77,6 +80,11 @@ def assemble(site):
         html = re.sub(r'<link\s+rel="canonical"[^>]*>', '', html)
         html = re.sub(r'<meta\s+name="google-site-verification"[^>]*>', '', html)
         html = html.replace('END2END Ge Simulation', 'GeSignal · HPGe detector simulation')
+        if not re.search(r'<head(?:\s[^>]*)?>', html, re.I):
+            html, opened = re.subn(r'(<html(?:\s[^>]*)?>)', r'\1<head>', html, count=1, flags=re.I)
+            html, closed = re.subn(r'(<body(?:\s[^>]*)?>)', r'</head>\1', html, count=1, flags=re.I)
+            if opened != 1 or closed != 1:
+                raise ValueError('Maintained discovery page cannot form an explicit head')
         if path == 'index.html':
             html = re.sub(r'<title>.*?</title>', '<title>' + escape(PROJECT_TITLE) + '</title>', html, count=1)
         tags = (f'<meta name="description" content="{escape(description, quote=True)}">'
@@ -97,8 +105,11 @@ class Metadata(HTMLParser):
         self.descriptions, self.canonicals, self.verifications = [], [], []
         self.verification_in_head = []
         self.head_closed = self.body_started = False
+        self.head_open = False
 
     def handle_starttag(self, tag, attrs):
+        if tag == 'head':
+            self.head_open = True
         if tag not in {'html', 'head', 'title', 'meta', 'link', 'style', 'script',
                        'base', 'noscript', 'template'}:
             self.body_started = True
@@ -109,11 +120,12 @@ class Metadata(HTMLParser):
             self.canonicals.append(values.get('href'))
         if tag == 'meta' and values.get('name') == 'google-site-verification':
             self.verifications.append(values.get('content'))
-            self.verification_in_head.append(not self.head_closed and not self.body_started)
+            self.verification_in_head.append(self.head_open and not self.head_closed and not self.body_started)
 
     def handle_endtag(self, tag):
         if tag == 'head':
             self.head_closed = True
+            self.head_open = False
 
 
 def validate(site):
@@ -150,5 +162,8 @@ def validate(site):
         expected = [GOOGLE_VERIFICATION] if path == 'index.html' and has_license else []
         if parser.verifications != expected:
             raise ValueError(f'Google ownership metadata differs: {path}')
-        if parser.verification_in_head != [True] * len(expected):
+        accepted_positions = [[True] * len(expected)]
+        if path == 'index.html' and build_id in LEGACY_IMPLICIT_HEAD:
+            accepted_positions.append([False])
+        if parser.verification_in_head not in accepted_positions:
             raise ValueError(f'Google ownership metadata is outside the head: {path}')
