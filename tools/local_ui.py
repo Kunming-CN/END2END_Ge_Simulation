@@ -17,11 +17,14 @@ import webbrowser
 from local_ui_jobs import BASE, Controller, ControlError, decode_json
 from local_ui_gamma_jobs import GammaController
 from local_ui_scenarios import checked_scenarios
+from local_ui_workflow_jobs import WorkflowController
+import scenario_workflow as workflow
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE = '.local/local-control-v1'
-STATIC = {'/': ('local_ui.html', 'text/html; charset=utf-8'),
-          '/local_ui.js': ('local_ui.js', 'text/javascript; charset=utf-8')}
+STATIC = {'/': ('local_workflow.html', 'text/html; charset=utf-8'),
+          '/local_workflow.js': ('local_workflow.js', 'text/javascript; charset=utf-8'),
+          '/local_ui.js': ('local_workflow.js', 'text/javascript; charset=utf-8')}
 FILES = {'run.json', 'COMPLETE.json', 'manifest.json', 'worker/report.json',
          'worker/AK02/scalars.jsonl', 'worker/AK02/traces.jsonl',
          'worker/SAP22/scalars.jsonl', 'worker/SAP22/traces.jsonl'}
@@ -111,10 +114,11 @@ def server_lease(root):
 class Server(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, port, controller, token=None, *, gamma_controller=None):
+    def __init__(self, port, controller, token=None, *, gamma_controller=None, workflow_controller=None):
         super().__init__(('127.0.0.1', port), Handler)
         self.controller = controller
         self.gamma_controller = gamma_controller
+        self.workflow_controller = workflow_controller
         self.token = token or secrets.token_urlsafe(32)
         # Separate read-only session capability; never authorizes state or writes.
         # Loopback cookies are not isolated by port. Exact origin/fetch-site guards
@@ -123,6 +127,8 @@ class Server(ThreadingHTTPServer):
         self.download_token = secrets.token_urlsafe(32)
         self.gamma_download_cookie = 'ge_gamma_download_' + secrets.token_hex(12)
         self.gamma_download_token = secrets.token_urlsafe(32)
+        self.workflow_download_cookie = 'ge_workflow_download_' + secrets.token_hex(12)
+        self.workflow_download_token = secrets.token_urlsafe(32)
         self.origin = 'http://127.0.0.1:' + str(self.server_port)
         self.static_root = ROOT / 'tools'
 
@@ -133,7 +139,7 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass  # Requests may contain private run identities; no URL/access log.
 
-    def send_data(self, status, body, content_type='application/json; charset=utf-8', filename=None, grant_download=False, grant_gamma_download=False):
+    def send_data(self, status, body, content_type='application/json; charset=utf-8', filename=None, grant_download=False, grant_gamma_download=False, grant_workflow_download=False):
         if isinstance(body, dict):
             body = json.dumps(body, ensure_ascii=False, allow_nan=False).encode('utf-8')
         self.send_response(status)
@@ -152,6 +158,9 @@ class Handler(BaseHTTPRequestHandler):
         if grant_gamma_download:
             self.send_header('Set-Cookie', self.server.gamma_download_cookie + '=' + self.server.gamma_download_token +
                              '; Path=/api/gamma-file; HttpOnly; SameSite=Strict')
+        if grant_workflow_download:
+            self.send_header('Set-Cookie', self.server.workflow_download_cookie + '=' + self.server.workflow_download_token +
+                             '; Path=/api/workflow-file; HttpOnly; SameSite=Strict')
         self.end_headers()
         self.wfile.write(body)
         self.close_connection = True
@@ -159,7 +168,7 @@ class Handler(BaseHTTPRequestHandler):
     def reject(self, code, message):
         self.send_data(code, {'error': message})
 
-    def authorized(self, write=False, download=False, gamma_download=False):
+    def authorized(self, write=False, download=False, gamma_download=False, workflow_download=False):
         if self.headers.get('Host') != urlsplit(self.server.origin).netloc:
             self.reject(403, 'Loopback host required'); return False
         origin = self.headers.get('Origin')
@@ -169,11 +178,11 @@ class Handler(BaseHTTPRequestHandler):
             self.reject(403, 'Same origin required'); return False
         bearer_ok = secrets.compare_digest(self.headers.get('X-Control-Token', '').encode('utf-8'), self.server.token.encode('utf-8'))
         cookie_ok = False
-        if (download or gamma_download) and not write and self.headers.get('Sec-Fetch-Site') == 'same-origin':
+        if (download or gamma_download or workflow_download) and not write and self.headers.get('Sec-Fetch-Site') == 'same-origin':
             try:
                 cookie = SimpleCookie(self.headers.get('Cookie', ''))
-                name = self.server.gamma_download_cookie if gamma_download else self.server.download_cookie
-                token = self.server.gamma_download_token if gamma_download else self.server.download_token
+                name = self.server.workflow_download_cookie if workflow_download else self.server.gamma_download_cookie if gamma_download else self.server.download_cookie
+                token = self.server.workflow_download_token if workflow_download else self.server.gamma_download_token if gamma_download else self.server.download_token
                 value = cookie.get(name)
                 cookie_ok = bool(value) and secrets.compare_digest(value.value.encode('utf-8'), token.encode('utf-8'))
             except CookieError:
@@ -189,9 +198,53 @@ class Handler(BaseHTTPRequestHandler):
         if parts.path in STATIC and not parts.query:
             name, mime = STATIC[parts.path]
             return self.send_data(200, (self.server.static_root / name).read_bytes(), mime)
-        if not self.authorized(download=parts.path == '/api/file', gamma_download=parts.path == '/api/gamma-file'):
+        if not self.authorized(download=parts.path == '/api/file', gamma_download=parts.path == '/api/gamma-file', workflow_download=parts.path in ('/api/workflow-file','/api/workflow-file/plots')):
             return
         try:
+            if parts.path == '/api/workflow-file/plots':
+                import re
+                if parts.fragment:raise ValueError('Invalid waveform artifact fragment')
+                query=parse_qs(parts.query,strict_parsing=True)
+                if set(query)!={'name','primary','group'} or any(len(v)!=1 for v in query.values()) or self.server.workflow_controller is None:
+                    raise ValueError('Invalid exact waveform request')
+                primary=query['primary'][0];group=query['group'][0]
+                if not re.fullmatch(r'0|[1-9]\d{0,9}',primary) or not (group=='none' or re.fullmatch(r'0|[1-9]\d{0,9}',group)):
+                    raise ValueError('Invalid exact waveform identity')
+                if int(primary)>2147483646 or group!='none' and int(group)>2147483646:
+                    raise ValueError('Invalid exact waveform identity')
+                return self.send_data(200,self.server.workflow_controller.waveforms(
+                    query['name'][0],int(primary),None if group=='none' else int(group)))
+            if parts.path in ('/api/workflow/catalog','/api/workflow/setup','/api/workflow/state'):
+                if self.path!=parts.path:return self.reject(404,'Unknown workflow route')
+                if self.server.workflow_controller is None:
+                    return self.reject(503, 'Workflow control is unavailable')
+                method = {'/api/workflow/catalog': lambda: workflow.catalog(),
+                          '/api/workflow/setup': self.server.workflow_controller.setup,
+                          '/api/workflow/state': self.server.workflow_controller.snapshot}[parts.path]
+                return self.send_data(200, method(),grant_workflow_download=True)
+            if parts.path == '/api/workflow-file':
+                if parts.fragment:raise ValueError('Invalid workflow artifact fragment')
+                query=parse_qs(parts.query,strict_parsing=True)
+                if set(query)!={'name','file'} or any(len(v)!=1 for v in query.values()) or self.server.workflow_controller is None:
+                    raise ValueError('Invalid workflow artifact request')
+                body,mime=self.server.workflow_controller.artifact(query['name'][0],query['file'][0])
+                if mime.startswith('text/html'):
+                    # Derived navigation only; original downloaded science bytes remain exact.
+                    import posixpath
+                    import re
+                    from urllib.parse import urlencode
+                    base=posixpath.dirname(query['file'][0])
+                    def link(match):
+                        ref=match.group(2)
+                        if ':' in ref or ref.startswith(('/', '#')):
+                            return match.group(0)
+                        target=posixpath.normpath(posixpath.join(base,ref))
+                        return 'href='+match.group(1)+'/api/workflow-file?'+urlencode({'name':query['name'][0],'file':target})+match.group(1)
+                    document=re.sub(r'href=([\'\"])([^\'\"]+)\1',link,body.decode('utf-8'))
+                    document=re.sub(r'<details><summary>Event (\d+) / group (\d+|nothing)</summary>',
+                        lambda m:'<details id="event-'+m[1]+'-group-'+('none' if m[2]=='nothing' else m[2])+'"><summary>Event '+m[1]+' / group '+m[2]+'</summary>',document)
+                    body=document.encode('utf-8')
+                return self.send_data(200,body,mime)
             if self.path == '/api/scenarios':
                 try:
                     return self.send_data(200, checked_scenarios())
@@ -255,6 +308,22 @@ class Handler(BaseHTTPRequestHandler):
             if not 1 <= size <= 4096:
                 raise ValueError('Request size must be 1..4096 bytes')
             data = decode_json(self.rfile.read(size).decode('utf-8'))
+            workflow_routes={'/api/workflow/check':({'config'},'check'),
+                             '/api/workflow/start':({'check_id'},'start'),
+                             '/api/workflow/stop':({'name'},'stop'),
+                             '/api/workflow/resume':({'name'},'resume'),
+                             '/api/workflow/inspect-failure':({'name'},'inspect_failure'),
+                             '/api/workflow/continue-prefix':({'name','new_name'},'continue_prefix'),
+                             '/api/workflow/verify':({'name'},'verify')}
+            if self.path in workflow_routes:
+                keys,method=workflow_routes[self.path]
+                if type(data) is not dict or set(data)!=keys or self.server.workflow_controller is None:
+                    raise ValueError('Unsupported workflow input fields')
+                if method=='check':
+                    if type(data['config']) is not dict:raise ValueError('Configuration must be a JSON object')
+                elif any(type(v) is not str for v in data.values()):
+                    raise ValueError('Workflow identities must be strings')
+                return self.send_data(200,getattr(self.server.workflow_controller,method)(**data))
             if self.path == '/api/open-saved-gamma':
                 if type(data) is not dict or data:
                     raise ValueError('Unsupported input fields or types')
@@ -275,7 +344,9 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError('Unsupported input fields or types')
                 if self.server.gamma_controller is None:
                     return self.reject(503, 'Gamma control is unavailable')
-                result = getattr(self.server.gamma_controller, method)(**data)
+                if method=='start' and self.server.workflow_controller is not None:
+                    with self.server.workflow_controller.scientific_entry():result=getattr(self.server.gamma_controller,method)(**data)
+                else:result = getattr(self.server.gamma_controller, method)(**data)
                 return self.send_data(200, result, grant_gamma_download=True)
             routes = {'/api/check': ({'name', 'detector'}, 'check'),
                       '/api/start': ({'name', 'detector'}, 'start'),
@@ -285,7 +356,9 @@ class Handler(BaseHTTPRequestHandler):
             keys, method = routes[self.path]
             if type(data) is not dict or set(data) != keys or any(type(v) is not str for v in data.values()):
                 raise ValueError('Unsupported input fields or types')
-            result = getattr(self.server.controller, method)(**data)
+            if method in ('start','resume') and self.server.workflow_controller is not None:
+                with self.server.workflow_controller.scientific_entry():result=getattr(self.server.controller,method)(**data)
+            else:result = getattr(self.server.controller, method)(**data)
             return self.send_data(200, result)
         except (ValueError, ControlError) as error:
             return self.reject(400, str(error))
@@ -307,13 +380,16 @@ def main(argv=None):
         coordination = threading.RLock()
         controller = Controller(ROOT, coordination_lock=coordination)
         gamma = GammaController(ROOT, coordination_lock=coordination, peer_busy=controller.own_busy)
-        controller.set_peer_busy(gamma.own_busy)
-        server = Server(args.port, controller, gamma_controller=gamma)
+        configured=WorkflowController(ROOT,coordination_lock=coordination,
+                                      peer_busy=lambda: controller.own_busy() or gamma.own_busy())
+        controller.set_peer_busy(lambda: gamma.own_busy() or configured.own_busy())
+        gamma.set_peer_busy(lambda: controller.own_busy() or configured.own_busy())
+        server = Server(args.port, controller, gamma_controller=gamma, workflow_controller=configured)
         session = server.origin + '/#' + server.token
         receipt = folder / 'server.json'
         receipt.write_text(json.dumps({'pid': os.getpid(), 'url': session, 'origin': server.origin}, indent=2), encoding='utf-8')
         print('Local control: ' + server.origin + ' (session link opens in your browser).', flush=True)
-        print('Keep this terminal open until calculations complete. Gamma has no Stop or Resume; closing the interface does not safely stop nested workers.', flush=True)
+        print('Keep this terminal open. Stop waits for the current workflow stage; incomplete or uncertain workers are preserved for inspection.', flush=True)
         if not args.no_browser:
             webbrowser.open(session)
         try:

@@ -361,11 +361,14 @@ class GammaJobs(unittest.TestCase):
                 self.assertEqual(len(self.runner.calls), before)
                 self.assertEqual((self.root / C.STATE / 'gamma-jobs.json').read_bytes(), state_bytes)
 
-    def test_can_verify_excludes_peer_and_other_uncertain_jobs(self):
+    def test_can_verify_ignores_unrelated_peer_but_excludes_own_uncertain_jobs(self):
         job = self.completed()
         self.controller.set_peer_busy(lambda: True)
-        self.assertFalse(self.controller.snapshot()['jobs'][0]['can_verify'])
-        self.controller.set_peer_busy(lambda: False)
+        self.assertTrue(self.controller.snapshot()['jobs'][0]['can_verify'])
+        before = len(self.runner.calls)
+        self.assertEqual(self.controller.verify(job['id'])['scientific_workers_launched'], 0)
+        self.assertEqual([call[0] for call in self.runner.calls[before:]], ['verify'])
+        with self.assertRaises(C.ControlError): self.controller.check()
         other = dict(job, id='f' * 32, output=G.BASE + '/ui-gamma-' + 'f' * 32,
                      status='blocked', uncertain=True, child=None)
         self.controller._jobs.append(other)
@@ -394,14 +397,18 @@ class GammaJobs(unittest.TestCase):
         self.assertFalse(reopened.snapshot()['busy'])
         self.assertEqual([call[0] for call in self.runner.calls].count('run'), before_runs)
 
-    def test_verify_peer_busy_incomplete_unknown_and_live_driver_refuse(self):
+    def test_verify_own_active_checking_incomplete_unknown_and_live_driver_refuse(self):
         job = self.completed()
         self.controller.set_peer_busy(lambda: True)
+        self.controller._active = job['id']
         with self.assertRaises(C.ControlError): self.controller.verify(job['id'])
-        self.controller.set_peer_busy(lambda: False)
+        self.controller._active = None; self.controller._checking = True
+        with self.assertRaises(C.ControlError): self.controller.verify(job['id'])
+        self.controller._checking = False
         for identity in ('unknown', 'fixture-driver'):
             job['child'] = dict(pid=123, identity='fixture-driver')
             self.controller._identity_probe = lambda pid: identity
+            self.assertFalse(self.controller.snapshot()['jobs'][0]['can_verify'])
             with self.assertRaises(C.ControlError): self.controller.verify(job['id'])
         job['child'] = None
         with self.assertRaises(C.ControlError): self.controller.verify('f' * 32)
@@ -415,6 +422,28 @@ class GammaJobs(unittest.TestCase):
         self.assertEqual(len(self.runner.calls), before)
         self.assertFalse(self.controller.snapshot()['checking'])
         self.assertFalse(self.controller.snapshot()['jobs'][0]['verified'])
+
+    def test_public_blocking_flag_matches_existing_guard_not_failed_label(self):
+        completed=self.completed()
+        failed=dict(completed,id='f'*32,output=G.BASE+'/ui-gamma-'+'f'*32,
+                    status='failed',uncertain=False,child=None)
+        self.controller._jobs.append(failed)
+        public={j['id']:j for j in self.controller.snapshot()['jobs']}
+        self.assertFalse(public[completed['id']]['blocks_new_work'])
+        self.assertFalse(public[failed['id']]['blocks_new_work'])
+        self.assertEqual(public[failed['id']]['status'],'failed')
+        self.assertFalse(self.controller.own_busy());self.controller._guard_idle()
+        before=len(self.runner.calls)
+        for uncertain,child,identity in ((True,None,None),(False,{'pid':999999,'identity':'old'},'unknown'),
+                                         (False,{'pid':999999,'identity':'old'},'old')):
+            failed.update(uncertain=uncertain,child=child);self.controller._identity_probe=lambda pid:identity
+            self.assertTrue(self.controller._public_job(failed)['blocks_new_work'])
+            self.assertTrue(self.controller.own_busy())
+            with self.assertRaises(C.ControlError):self.controller._guard_idle()
+        failed.update(uncertain=False,child=None);completed['status']='verification-required'
+        public=self.controller._public_job(completed)
+        self.assertTrue(public['blocks_new_work']);self.assertTrue(public['can_verify'])
+        self.assertEqual(len(self.runner.calls),before)
 
     def test_rehashed_policy_or_threads_receipt_refused_after_cli_claim(self):
         job = self.completed()

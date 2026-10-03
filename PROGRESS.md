@@ -1,173 +1,137 @@
-# Project state and next bounded work
+# Current work and delivery order
 
-Updated: 2026-10-03 UTC. This compact handoff governs delivery order.
-Full preceding history is immutable
-[at 6fa7bf3](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/6fa7bf35097a5c51b7f81f77a3d81183034f1f04/PROGRESS.md).
-Inspect terminal receipts, hashes and actual processes before repeating work.
+Updated: 2026-10-03 UTC. Read this handoff before starting a round.
+The complete M13 delivery record is immutable
+[at db9c864](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/db9c864fd5718b643a92cb280c5e684c897960b8/PROGRESS.md).
+Inspect receipts, source hashes and actual processes before repeating work.
 
-M13 is delivered. Actual root launch and all AI reviewers used Sol 6.1 Ultra
-in this project. Both ring10K workers and three final reviewers have exited;
-terminal verification, local checks, normal Git synchronization and exact live
-validation passed. The owned localhost preview is closed. The controller records
-its final receipt and releases only its own lock after this documentation
-checkpoint. No executable continuation milestone is queued; postponed tasks below
-remain postponed. No radiation, SSD, calibration or pilot was rerun for publication.
+## M14: owner-requested usable software and presentation
 
-## M13 science and four-detector website delivered
+The owner now prioritizes a real mouse-operated end-to-end application, then
+complete gamma responses, clearer plots/public pages and verified local cleanup.
+Control now executes its checked AK02/SAP22 configuration through the shared
+GUI/CLI workflow. Ring connectors and portable fresh-gamma setup are the next
+bounded application slice; do not claim the four-detector application complete.
 
-The delivery authority is [tools/RING_10K_PLAN.md](tools/RING_10K_PLAN.md).
-M13a unified reader is already delivered at `viewers/events.html`; both old
-entry URLs remain strict aliases preserving model, primary and pulse-group IDs.
-Original AK02/SAP22 10K and million-decay data remain exact and permanent.
+Root is executing M14a under `.local/autonomy/lock`, owner
+`product-framework-v1-root`, actual gpt-6.1-sol/ultra in this project.
+Do not start a second supervisor or duplicate scientific workers. The bounded
+plan and independent planning evidence are in `.local/product-delivery-v1`.
+The backend and gamma planners froze their INITIALs before reciprocal discussion;
+the newcomer website audit is independent. These are planning reviews, not
+implementation acceptance. Each substantive implementation still requires two
+scoped independent reviews plus a NEW strict reviewer, frozen before discussion.
 
-M13b-e terminal cases under `.local/ring-cs137-v1`:
+Delivery order and acceptance:
+
+1. **M14a — working local application.** One English Control application with
+   independent detector/cryostat/source selectors and settings bound to actual
+   execution. Reuse the protected local server, existing environment and scientific
+   stages. A shared closed configuration resolver serves GUI and CLI. Start uses
+   the exact checked configuration; changing a selection invalidates that check.
+   First connect actual AK02/SAP22 Cs137 and fresh 662 keV gamma scenarios, then
+   bounded single-ring adapters. All four current detectors must be accessible
+   before claiming the four-detector application complete. Do not invent a second
+   executable cryostat or expose options that the worker ignores. One generated
+   `.local/runs/NAME` root; real stage states, receipts, logs, settings and results.
+   Stop is cooperative at a stage boundary; uncertain/incomplete work is inspected
+   rather than overwritten. A real bounded nonzero end-to-end run is required.
+2. **M14b — complete saved gamma example and readable plots.** Retain all40
+   original primary IDs and old6 response bytes. The remaining34 are27 known
+   zero-input readouts and7 positive native-charge events; no radiation/field
+   rerun is needed. Use independent useful time ranges for charge, current,
+   preamp collection edge and shaper, with full saved windows available. Existing
+   gamma preamp samples need a dense electronics-only derivative to reveal the
+   early edge; zoom alone cannot restore missing samples. Preserve exact old peak,
+   ADC/Erec/flags, signs, intervals, caps, delays and null numerical failures.
+3. **M14c — English public gallery and newcomer navigation.** Put a model image
+   and clear detector type on every detector card. Keep provenance in secondary
+   details. Fix obsolete ring-pending text, inconsistent return routes, unnecessary
+   front-page detail and Chinese UI references. Audit every public HTML page and
+   outgoing link, distinguishing actual browser visits/clicks from HTTP checks.
+4. **M14d — classified local cleanup.** Remove verified useless duplicate staging
+   and reproducible scratch with exact deletion/dependency evidence. Permanent
+   science, unique failures and recorded input dependencies remain unchanged.
+   Never follow junction targets during deletion. The two original computation
+   workspaces still have active dependencies and must not be casually moved.
+
+Build website output only through `tools/build_site.py`; run relevant tests and
+`tools/check_site.py` before normal nonforce Git synchronization, then verify the
+exact deployed site with `tools/check_site.py --url`. Do not edit `docs/` by hand.
+Freeze scientific/export sources before hash-bound export. No new environment,
+global PATH/settings, reset credits, separately billed API or million-decay task.
+
+## M14a1 verified application slice
+
+The English local application selects the modular cryostat, AK02/SAP22, nominal
+Cs137 (20/500 primaries) or a fixed 662 keV gamma beam (20), and eleven actual
+electronics settings. Check is read-only; changing the form invalidates it.
+Pipeline captions/settings belong to the selected saved run, independently of
+the next-run form. Stages, logs, complete primary identities and four original
+signed waveform SVGs are available inside the application. Known zeros retain
+zero input and null reconstructed energy; failures retain their original evidence.
+
+Actual mouse acceptance completed SAP22/gamma20 with gain21: all20 primaries,
+15 zero-Ge, five accepted responses, no unprocessed/native failure/readout reject.
+One independent500keV injection calibrated the selected electronics. Response
+stage70.754s (including potential22.646s/native7.881s/electronics1.592s); this is
+measured computation, not coding/review wall time. Original complete radiation
+was copied losslessly from the preserved cold-entry failure; it was not rerun.
+Denied launch01 and failed cold-entry02 remain unchanged. New terminal data are
+`.local/runs/m14a-gamma-ui-03`; final source/mouse/review evidence is under
+`.local/product-delivery-v1/implementation` and `reviews`. The final source freeze
+is `M14a1-LEGACY-GUARD-DISPLAY-SOURCE-FREEZE.json`.
+Two independent scoped AI reviewers and a NEW clean-context strict reviewer
+accepted this slice after frozen initials, reciprocal discussion and final repairs.
+Caption binding, original-SVG access and false legacy prerequisite findings are
+resolved. Relevant protocol/projection/browser contracts and unchanged-site
+checks passed; the website snapshot itself was not regenerated in this slice.
+
+Next: M14a2 first separates immutable historical retirement from current-source
+admission (review I7), then connects GeRC02_Li50min and KMRC01_candidate to the
+same application. Wrap long plot-hash notes at1280px. Keep signed KM wiring and
+independent negative calibration. Portable gamma exporter preparation is still
+pending; existing-root acceptance is not fresh-clone acceptance. M14b/c/d and
+the audit/planning evidence above remain pending; do not repeat those audits.
+
+## Completed science and publication: reuse, never redo
+
+M13 is complete and synchronized: HEAD baseline
+`db9c864fd5718b643a92cb280c5e684c897960b8`; publication
+`0709447d215f8394224ebf2455ba76dfe04f6410`.
+Build `677031855afa9c2b80643b0fc3d26b5fc703010979e352d487b7574fffd3aa48`
+is979,504,351bytes including its manifest. Exact live checks passed691artifacts;
+local checks passed1680files/100HTML/2888links. M13 receipt:
+`.local/ring-delivery-v1/COMPLETE.json`. The old preview and workers are closed.
 
 | Case | Initial decays | Zero-Ge | Groups | Accepted | Native failures | Electronics rejects |
 |---|---:|---:|---:|---:|---:|---:|
 | GeRC02 Li50min | 10000 | 9703 | 297 | 231 | 4 | 62 |
 | KMRC01_candidate | 10000 | 9769 | 231 | 230 | 0 | 1 |
 
-GeRC02 is an independent 280 C / 50-minute annealing variant; original 30-minute
-YAML bytes stay unchanged. Only annealing time changes, never a direct minutes-to-
-thickness conversion. Unchanged KM retains its candidate qualification and
--370 V bias. Nominal ring mounting, units, transforms, overlap/membership and
-separate 500 keV injection checks passed. Model 78 K and explicit runtime 77 K
-remain distinct. These are functional engineering checks, not calibrated Li CCE,
-physical FWHM, experimental mounting or measured-waveform agreement.
+GeRC02 is the separate280 C/50-minute Li variant; original30-minute YAML is
+unchanged. KM remains the original candidate/-370 V model. Owner-approved
+KM-only fixed -1 wiring uses separate negative-charge injection calibration;
+raw signed signals and original positive-electronics rejection history remain.
+Ge failures560/1519/3230/5212 group0 retain exact error/null output.
+KM3239 is near-zero positive, below threshold, not exact zero. Both matching
+500-decay pilots passed before10K. Calculations and unique failures are permanent.
 
-Each matching 500-decay pilot passed cleanly before its own 10K admission.
-Ge pilot:479 zeros/21 groups/19 accepted/0 native failures. Original KM pilot
-preserves497 zeros/3 negative groups/3 electronics rejects. Owner-authorized
-KM-only fixed -1 electronics wiring plus independent negative-charge injection
-then accepted all3, without repeating radiation, field or drift. Raw signed
-samples, original flags, calibration and rejection history remain retained.
-Three independent Sol6.1 Ultra AI INITIALs froze before real peer exchange;
-all FINALs accepted admission. Their receipts are in `.local/ring-delivery-v1`.
+Original AK02/SAP22 10K and million-decay radiation/native data are also permanent.
+Keep `.local/ring-publication-v1/bundle` (full267files/1.537GB), web-bundle,
+all raw/archive/HDF5/configuration/COMPLETE evidence and the14 frozen producer
+sources intact unless a new, explicit derivative/source contract is reviewed.
+The four-case public entry is
+[10K results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-10k/index.html).
+The unified viewer `viewers/events.html` preserves both old deep-link aliases.
+These are nominal engineering results, not measured-waveform agreement,
+calibrated Li CCE, physical FWHM or experimentally established mounting.
 
-Ge terminal `production-GeRC02-COMPLETE.json`, finished18:05:09Z: native drift
-2048.070s, field26.215s, electronics7.019s, remage6.461s, supervisor2196.642s;
-peak RSS1,474,600,960bytes. Its4 failed groups are560/1519/3230/5212, each group0,
-exact ArgumentError "Noncontact endpoint outside crystal". Unknown charge,
-endpoint and readout stay null. Status completed_with_native_failures.
+## Postponed items
 
-KM terminal `km-production-COMPLETE.json`, finished21:59:25Z: native159.058s,
-field22.554s, original electronics6.221s, fixed-wiring derivative10.363s,
-negative injection0.325s, remage6.289s, supervisor328.431s;
-peak RSS1,358,864,384bytes. Status completed; original positive electronics
-still records0 accepted/231 rejects. The current230 accepted groups use one
-independent slope, never Edep-derived eventwise gain or abs/rectification.
-Calculation times are separate from coding, review, tools and publication.
-
-Original44/51 source pins and31 execution receipts were verified before the
-portable runtime change. The exact old runner and fixed private basis remain
-under `.local/ring-cs137-v1/source-basis-v1`. Current runner changes only its
-owner-specific Julia path to Path.home(); `ring_saved_basis.py` exposes two
-closed read-only verifications for the registered completed campaigns. It
-cannot launch, resume, write receipts or execute archived code. Current new-run
-admission still checks current sources strictly. Actual14 boundary tests pass;
-old receipts and full scientific outputs are unchanged.
-
-Both full saved exports completed without science: unchanged HDF5 raw reader
-used the existing locked remage environment after updated Windows Python lacked
-h5py; no installation. Native geometry inspection used existing Geant4 only.
-FULL bundle `.local/ring-publication-v1/bundle`, manifest e9ff0c6c1272d258dcfdd109055b8642587caf3ad1cde5fed2cb3334a03503d6,
-has267files/1,536,656,831bytes and is permanent. Initial failed exports, source
-freezes and error logs remain. Zero-energy Ge rows are preserved in native truth
-and excluded only from positive pulse groups; exact raw-row/sign checks pass.
-
-Real source-reader regression passes all764 groups and40000 primary IDs,
-including39236 zero-Ge primaries,39016357 Object.is scalar checks,83156 signed
-zero checks, all14897 KM saved raw samples and4 null Ge failures. Ten binding
-mutants, six stale races and three overlay failures pass. This is a minimal-DOM
-reader check, not browser/layout or physics acceptance. Evidence:
-`.local/ring-delivery-v1/reader-real/SOURCE-01-SUMMARY.json`.
-
-M13f saved web derivative is complete at `.local/ring-publication-v1/web-bundle`,
-manifest773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860:
-225payload files/211,149,029bytes. All200 raw-event gzip chunks decode to the
-exact originals; selected overlays and every complete ZIP ledger member remain
-byte-exact. No precision, identity, sign, failure or null is dropped. Direct signed
-signals/JSONL scalars/JSON histograms remain; large redundant downloads honestly
-open complete ZIPs. The permanent1.537GB full bundle and unique failed derivatives
-remain local. Both web package and existing site fit the1GB hosting limit and
-95MiB/file margin without repeating radiation, SSD or calibration.
-
-`build_site.py` generated the four-case hub/home/model entries, shared20-stage
-spectra and four-model unified reader. Final JSONL guard failure preserved a
-complete frozen stage; after the narrow guard fix, `--finish-staged` fully
-validated and atomically installed that exact generated payload without copying
-or rendering again. All1680 payloads match the frozen stage,14 producer sources
-remain frozen. Local build677031855afa9c2b80643b0fc3d26b5fc703010979e352d487b7574fffd3aa48
-has979,165,418payload bytes,100HTML pages and2888checked local links. Manifest
-SHAf5b8c78e562abde89615171aac2425ae67c688dc63bc83a96eec70deae0f1b71.
-The recovery CLI now also refuses junction/linked ancestors and prints its
-summary. Subsequent budget review now includes manifest bytes and always budgets
-the exact generated serialization when re-sealing an existing compact manifest;
-32publication tests pass. The complete installed deployment is979,504,351bytes,
-including338,933manifest bytes, within1,000,000,000. The real `check_site.py` passed;
-the final post-deployment invocation also passed this narrow budget fix.
-
-Generated reader regression passes764groups/40000primaries/39236zero-Ge,
-39,016,621exact scalar and83,156signed-zero checks. Four null photon identities,
-all14897KM raw samples,4Ge native-null failures,10binding mutants,6stale races,
-3overlay failures and2full-gzip-unavailable cases are retained/tested. An initial
-fault-test assumption treated all raw chunks as uncompressed; its failed log is
-preserved and the updated harness separately checks overlay decoding and absence
-of all decoding. Production viewer/data needed no fix.9navigation/6ring-reader/
-4ring-site/26spectrum/27contact/12package/14saved-boundary checks also pass.
-Actual IAB checks cover four-model selection, zero/failure identities, both old
-deep links, native raw/adapted traces,20spectra and homepage/card/download links.
-390x844viewport checks pass for event/hub/spectrum without horizontal overflow;
-this is not physical-phone, Safari or second-machine acceptance.
-
-Common frozen AI review packet is `.local/ring-delivery-v1/PUBLIC-REVIEW-PACKET-01.json`
-(d60bfd261d13f9787617ae31e60508e28d636d7caf64e908d99b06788d1465a6).
-All three independent INITIALs froze before reciprocal concrete discussion.
-Physics/electronics, integrity and the NEW strict FINALs accept publication with
-zero verified blockers. Physics/integrity addenda and the strict review confirm
-the final narrow manifest re-sealing budget fix and its32 passing tests.
-Discussion distinguishes41removed archive-only files from56total ZIP members,
-exact zero-Ge census from the[0,5)keV bin, and true Object.is negative zeros from
-a byte-substring count. KM3239 is near-zero positive(+7.001380755584819e-17keV),
-below-threshold rejected;19tiny positive transient samples retain their original
-sign along with14647negative/231zero raw samples. No waveform is rectified.
-The exact Git tree export passes saved validation using published14producer
-sources with no private.local/raw/cache/basis, in the existing Python runtime.
-This is not second-computer setup or scientific reproduction acceptance.
-Nonforce publication commit0709447d215f8394224ebf2455ba76dfe04f6410 is synchronized
-with GitHub and its Pages build completed. `check_site.py --url` passed at
-2026-10-03T00:00:55Z: the exact live manifest matches this build,691online HTML,
-model/download, campaign, ring gzip/ZIP, scene, spectrum and viewer artifacts
-match local bytes/SHA. Local1680files/100HTML/2888links also pass. Actual live
-IAB acceptance adds11checks: both ring events/charge stages, four cards/20stage
-plots, negative KM axis, original deep links, zero/failure radiation identities
-and prominent homepage route. Receipt `.local/ring-delivery-v1/LIVE-SITE-01-COMPLETE.json`
-and `BROWSER-LIVE-01.json` distinguish online hash checks from browser evidence.
-The final documentation-only checkpoint preserves every site byte. Retain all
-failure evidence and permanent full/local science; do not repeat completed work.
-
-Current entry: [four-detector10K results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-10k/index.html).
-Each case has Events, Spectra, Charge & readout and complete Data links. The
-canonical event viewer has four-model selection and both old links remain aliases.
-
-## Retained website and postponed work
-
-The pre-M13f public build8bff93f is byte-exact against the saved baseline. Prior
-M13a and gamma presentation checks/publication are recorded in the immutable
-handoff and `.local/m13a-unified-viewer-v1`, `.local/remage-adoption-v1`.
-The gamma example honestly retains40 truth IDs, six selected responses,
-four positive/two zeros and34 unprocessed/null responses; no fitted prediction.
-
-M12 discovery/Topics, contributions, CITATION and branch-policy work are
-recorded in the prior handoff. Root LICENSE still requires the owner's explicit
-choice and rights scope. Search Console requires the owner's Google login and
-ownership/indexing actions; no account action is fabricated. These block only
-their own tasks. Remage-paper adoption is a deferred TODO after ring delivery;
-reuse existing findings rather than starting another research round.
-
-M8/M9 second-computer newcomer acceptance stays deferred. All old10K/1M raw
-archives, HDF5, inputs, field caches, DONE/COMPLETE and unique failures are
-permanent. No new million-decay task, global settings/environment install,
-reset credits or separately billed API is authorized. Unknown experimental
-dimensions limit physical claims, not this explicitly nominal engineering flow.
-Finish the authorized four-detector delivery before expanding scope.
+M8/M9 second-computer acceptance and remage-paper adoption remain TODOs.
+Root LICENSE needs the owner's explicit choice/rights scope. Search Console
+needs the owner's Google login/ownership/indexing actions. These block only
+their own tasks. Unknown experimental dimensions restrict physical assertions,
+not the explicitly nominal application framework. Finish the authorized M14
+work before expanding scope.

@@ -182,6 +182,10 @@
 !simulation/gamma_native_example.jl
 !simulation/test_gamma_native_example.jl
 
+# Additive fresh-source Control connector; generated runs remain private.
+!simulation/scenario_response.jl
+!transport/workflow.sh
+
 # Keep this final: only the reviewed PR template may enter .github.
 !/.github/
 /.github/**

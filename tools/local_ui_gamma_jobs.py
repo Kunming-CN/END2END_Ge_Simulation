@@ -194,13 +194,21 @@ class GammaController:
                     any(j['uncertain'] or j['status'] == 'verification-required' or
                         self._driver_live(j) for j in self._jobs))
 
-    def _guard_idle(self, *, verifying=None):
+    def _guard_idle(self):
         if self._active is not None or self._checking or self._peer_busy():
             raise refused('busy')
         for job in self._jobs:
-            if (self._driver_live(job) or (job is not verifying and job['uncertain']) or
-                    (verifying is None and job['status'] == 'verification-required')):
+            if (self._driver_live(job) or job['uncertain'] or
+                    job['status'] == 'verification-required'):
                 raise refused('busy')
+
+    def _verification_idle(self, job):
+        # This existing-output CLI mode never launches science. An unrelated
+        # workflow's uncertainty must not prevent clearing this terminal hold.
+        # Own active/unknown lifetimes and other uncertain Gamma jobs still block.
+        return (self._active is None and not self._checking and not any(
+            self._driver_live(other) or (other is not job and other['uncertain'])
+            for other in self._jobs))
 
     def _argv(self, mode, job=None):
         safe_path(self.root, 'tools/gamma_native_example.py')
@@ -415,7 +423,8 @@ class GammaController:
     def verify(self, job_id):
         with self._lock:
             job = self._find(job_id)
-            self._guard_idle(verifying=job)
+            if not self._verification_idle(job):
+                raise refused('busy')
             if not self._terminal_receipts(job):
                 raise refused('incomplete_output')
             self._checking = True
@@ -474,11 +483,7 @@ class GammaController:
         stage = ('complete' if verified else 'verification' if self._terminal_receipts(job) else
                  'failed' if job['status'] == 'failed' else 'native_models' if current else
                  'waiting' if job['status'] in ('dispatch-uncertain', 'running') else 'unknown')
-        can_verify = (self._active is None and not self._checking and
-                      not self._driver_live(job) and self._terminal_receipts(job) and
-                      not self._peer_busy() and not any(
-                          other['uncertain'] or self._driver_live(other)
-                          for other in self._jobs if other is not job))
+        can_verify = self._verification_idle(job) and self._terminal_receipts(job)
         error = job.get('error')
         safe_error = None
         if isinstance(error, dict) and error.get('code') in ERRORS:
@@ -489,7 +494,9 @@ class GammaController:
             elapsed_seconds=seconds if finite_seconds(seconds) else 0.0,
             calculation_seconds=run['orchestration_seconds'] if run and finite_seconds(run.get('orchestration_seconds')) else None,
             progress=dict(completed_models=completed, current_model=current, stage=stage),
-            can_verify=bool(can_verify), verified=verified, files=list(FILES) if verified else [],
+            can_verify=bool(can_verify),
+            blocks_new_work=bool(self._driver_live(job) or job['uncertain'] or job['status']=='verification-required'),
+            verified=verified, files=list(FILES) if verified else [],
             complete_sha256=job.get('complete_sha256') if verified else None,
             run_sha256=job.get('run_sha256') if verified else None, error=safe_error)
 
