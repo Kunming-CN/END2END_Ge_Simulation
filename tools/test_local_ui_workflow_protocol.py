@@ -51,6 +51,49 @@ class Protocol(unittest.TestCase):
         self.assertEqual(self.request('POST','/api/workflow/start',{'check_id':'checked'})[0],200)
         self.workflow.start.assert_called_once_with(check_id='checked')
 
+    def test_batch_preview_route_is_closed_authenticated_and_read_only(self):
+        self.workflow.preview_batches.return_value={'kind':'local_scenario_batch_preview_v2',
+            'schema_version':2,'science_calls':0,'execution_enabled':False}
+        for data in ({'request':{} ,'start':True},{'request':[]},{'request':True},'null'):
+            self.assertEqual(self.request('POST','/api/workflow/preview-batches',data)[0],400)
+        for headers in ({'X-Control-Token':''},{'Origin':'https://evil.example'},{'Origin':None}):
+            self.assertEqual(self.request('POST','/api/workflow/preview-batches',{'request':{}},headers)[0],403)
+        self.workflow.preview_batches.assert_not_called()
+        status,raw,_=self.request('POST','/api/workflow/preview-batches',{'request':{'schema_version':2}})
+        self.assertEqual(status,200);self.assertIs(json.loads(raw)['execution_enabled'],False)
+        self.workflow.preview_batches.assert_called_once_with(request={'schema_version':2})
+        self.workflow.start.assert_not_called()
+
+    def test_actual_gui_and_cli_batch_import_admission_matches(self):
+        import workflow_batches as B
+        root=self.server.controller.root
+        request={'kind':B.REQUEST_KIND,'schema_version':2,'selection':dict(name='fixture-v2',
+            cryostat=W.CRYOSTAT,detector='AK02',source=W.CS,pose='nominal',primary_count=25001,
+            seed=26092631,threads=2,electronics=W.catalog()['electronics_defaults'])}
+        readers=dict(validate_settings=lambda e,r:{'profile':{'settings':e},
+            'configuration':dict(e,expected_primary_count=None,max_samples_per_event=500000,max_window_ns=1000000),
+            'physics_sha256':W.digest(e)},pin_reader=lambda d,r:{'fixture.txt':'no-science'},
+            runtime_reader=lambda t:{'python_sha256':'fixture','julia_sha256':'fixture'})
+        original=W.preview
+        with patch.object(W,'preview',side_effect=lambda c,root=None:original(c,root=self.server.controller.root,**readers)):
+            self.server.workflow_controller=J.WorkflowController(root,launcher=Mock())
+            for n in (1,499,500,9999,10000,10001,25001):
+                candidate=copy.deepcopy(request);candidate['selection']['primary_count']=n
+                status,body,_=self.request('POST','/api/workflow/preview-batches',{'request':candidate})
+                self.assertEqual(status,200)
+                cli=W.preview(W.preview_request(candidate),root=root)
+                self.assertTrue(B.typed_equal(json.loads(body),cli))
+            for n in (0,-1,True,1.0,'25001',None,B.MAX_SAFE_INTEGER+1,B.MAX_SEEDED_PRIMARIES+1):
+                candidate=copy.deepcopy(request);candidate['selection']['primary_count']=n
+                self.assertEqual(self.request('POST','/api/workflow/preview-batches',{'request':candidate})[0],400)
+                with self.assertRaises(W.ControlError):W.preview(W.preview_request(candidate),root=root)
+            duplicate=json.dumps({'request':request}).replace('"primary_count": 25001',
+                '"primary_count": 25001, "primary_count": 1')
+            self.assertEqual(self.request('POST','/api/workflow/preview-batches',duplicate)[0],400)
+            self.assertEqual(self.server.workflow_controller._checks,{})
+            self.server.workflow_controller._launcher.assert_not_called()
+        self.assertFalse((root/W.BASE).exists());self.assertFalse((root/J.STATE).exists())
+
     def test_origin_host_and_token_refused_before_backend(self):
         for headers in ({'X-Control-Token':''},{'Host':'evil.example'},{'Origin':'https://evil.example'},
                         {'Sec-Fetch-Site':'cross-site'},{'Origin':None}):

@@ -1,105 +1,101 @@
 # Current handoff and next development plan
 
-Updated: 2026-10-03 UTC. Read this before starting work.
-The complete M13/M14 record is preserved [at 9b73383](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/9b733834c245834658151a2d31f092a1b2bd5305/PROGRESS.md).
-Inspect terminal receipts, source hashes and real processes before repeating work.
+Updated: 2026-10-04 UTC. Read this before starting work.
+Prior full handoff/planning is preserved [at bf0ccee](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/bf0ccee5f2cff06baa781238a1202cc2a8afaaf6/PROGRESS.md).
+The complete M13/M14 history remains [at 9b73383](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/9b733834c245834658151a2d31f092a1b2bd5305/PROGRESS.md).
+Inspect terminal receipts, hashes, actual processes and owned lock before repeating work.
 
-## Current state: manual prerequisites/submission and planning delivered; continuation paused
+## Current state: M15a accepted; next M15b; automatic continuation paused
 
-The owner paused automatic development, then requested a status audit, completion
-of LICENSE/Google submission and a detailed next-window plan. This manual round
-is limited to those prerequisites and planning. It does not implement M15 or
-resume the PAUSED heartbeat. The owner explicitly selected MIT on 2026-10-03.
+The owner explicitly requested verification recovery and continued development on
+2026-10-04. This is one manual M15a milestone; automatic continuation remains
+PAUSED. Actual root and all four implementation/review launches use gpt-6.1-sol
+with ultra effort in this project. No scientific worker was active at launch.
+The clean checkout fast-forwarded to the owner's a323b65 upload; original root
+`google82c89328d0f5dbe9.html` bytes remain preserved.
 
-Original project software and maintained-source documentation now use the root
-MIT LICENSE. THIRD_PARTY_NOTICES.md preserves separate model, data and upstream
-rights. Exact root LICENSE admission exists in Git, the publisher and local/live
-site validation. No upstream source or scientific model has been relicensed.
+Google verification is actually complete for the URL-prefix property
+https://kunming-cn.github.io/END2END_Ge_Simulation/.
+The referenced chat "解释验证失败原因" and open dialog targeted the GitHub
+repository URL instead. The correct property's settings report "You are a
+verified owner". Its homepage now reports "URL is on Google" and "Page is indexed"
+on 2026-10-04, superseding the earlier pending indexing status. Correct Console
+homepage inspection is left open. No repeated verification/index/sitemap request
+was submitted. Sitemap report still says "Couldn't fetch"; the current Google
+live test confirms Crawl allowed=Yes, Page fetch=Successful, Indexing allowed=Yes.
+That unresolved sitemap report is not claimed Success. Private screenshots,
+DOM proofs and GOOGLE-RESULT.json are in `.local/product-delivery-v1/m15a/`.
 
-Google uses the owner's exact URL-prefix property
-https://kunming-cn.github.io/END2END_Ge_Simulation/ and its persistent verification
-tag. Console rejected the first live snapshot because its head was implicit.
-The normal assembler now emits explicit head boundaries; the rejection and
-repair reviews are retained. Actual Console results on 2026-10-03: HTML-tag
-ownership verified; sitemap.xml submitted successfully; homepage "Indexing
-requested" and added to the priority crawl queue. The sitemap report still says
-"Couldn't fetch"/Unknown/0 discovered. Google's live inspection of that exact
-sitemap URL confirms Crawl allowed=Yes, Page fetch=Successful and Indexing
-allowed=Yes. No specific remaining site defect was found; report processing and
-search inclusion remain external pending outcomes, not completed indexing or a
-new software-development gate. Do not resubmit repeatedly or invent success.
+MIT remains adopted for original software/maintained documentation; third-party
+model/data/upstream rights remain separate. Website payload, model hashes,
+scientific producers/data and environment locks are unchanged. Existing build
+785fd3cfe9f2a542b467cf934042304d046a9ee4acafdc0df125da7a8e55b0f0 passed
+13 discovery tests, 32 site tests and exact live verification of all 696 selected
+artifacts (1686 total files, 104 HTML pages, 3129 links, 982889216 payload bytes).
+The bundled Python's initial GBK decoding failure is retained; child-only UTF-8
+passed without editing tests/global settings. No website regeneration or physics ran.
 
-MIT and the plan were synchronized at 2f79c9e; GitHub recognizes MIT. That exact
-c257d2f1 snapshot passed the explicit online check of 696 selected artifacts.
-Repaired build 785fd3cfe9f2a542b467cf934042304d046a9ee4acafdc0df125da7a8e55b0f0
-has 1686 files, 104 HTML pages, 3129 checked links and 982889216 payload bytes.
-Its only payload differences from c257 are literal head wrappers in 25 maintained
-HTML pages (325 bytes); no files added/deleted or science/model/media edits.
-No physics ran. Source freeze matches; 13 discovery and 32 site tests passed,
-including rehashed implicit-head rejection and exact predecessor admission.
-The repaired explicit local check passed. Commit 2878092 deployed successfully
-(Pages run 37144887058), and the repaired explicit online check passed all 696
-selected exact artifacts. Homepage, manifest and LICENSE also match live bytes.
-The final handoff-only commit preserves this same checked website build.
+## M15a implemented: exact count and serial batch preview
 
-Private planning/publication evidence: .local/product-delivery-v1/next-plan/.
-Two independent Sol6.1 Ultra scoped INITIALs and a NEW strict INITIAL froze
-before discussion; patch INITIALs froze separately. Actual reciprocal architecture
-and remage discussion resolved count representation, upstream API reuse, seed
-identity, streaming, shared native state and bounded acceptance. Four confirmed
-publication issues were fixed: ignored root LICENSE, publisher root admission,
-body-position admission and missing-sitemap bypass. The three reviewers also
-accepted the narrow explicit-head repair after the actual Console rejection.
-These are AI reviews, not a substitute for observed Console results.
+`tools/workflow_batches.py` owns pure count/partition/seed/identity/census rules.
+The existing resolver now serves a versioned preview-only CLI action and protected
+loopback route; old v1 Check/import/execution/saved validators and the English
+Control form keep their original restrictions. [Contract](tools/BATCH_PREVIEW.md).
 
-## Already delivered: do not repeat or call these M15 work
+- Exact positive integer admission rejects booleans, floats, strings, unsafe
+  numbers and rehashed rule/config edits. Numeric, seed and resource limits differ.
+- Lazy batches are capped at 10000, with exact disjoint zero-based global IDs.
+  Versioned radiation seeds depend on master seed and batch index, not total/name/
+  time/order. Numeric seed uniqueness does not prove independent engine streams.
+- Raw local IDs, file/table/row/Track/Vertex keys, delayed times, zero deposits,
+  null failed charge and signed values are preserved. Pure census checks compare
+  literal beamOn, raw simulated count and every initial ledger ID.
+- Preview creates no run root/reservation/Start token. V1 Run and GUI Start refuse
+  it before lease/state/science writes. Remage runtime readiness, actual raw reader,
+  native global row/group seeding, execution and resume remain M15b.
 
-- Four saved 10000-initial-Cs137 cases and their current pages: AK02, SAP22,
-  GeRC02 Li50min and KMRC01_candidate. Ge original 280 C/30 min remains unchanged;
-  50 min is a separate model. KM retains -370 V and fixed -1 electronics wiring
-  with independent negative injection calibration. Existing 1M data are permanent.
-- English Control uses real four-detector adapters, one actual modular cryostat,
-  Cs137 and supported fixed 662 keV gamma, eleven effective electronics settings,
-  settings import/save, stage logs/receipts/results and boundary Stop/Resume.
-- All40 saved gamma primaries:29 known zero inputs,11 positive accepted responses,
-  0 unprocessed. Original six responses remain byte exact. Useful independent plot
-  ranges, preamp early edges, full-window views and old peak/ADC/Erec are delivered.
-- English gallery with17 detector images/types, current routes and novice link
-  audit. Unified event viewer retains old deep links and exact saved selection.
-- Classified cleanup removed only822 proved duplicate files,1752689816 logical
-  bytes. Permanent science, original workspaces and unique failures remain.
+61 focused tests passed: 11 batch, 18 legacy workflow, 16 controller, 16 protocol.
+Actual CLI preview 25001 produced 10000+10000+5001, seeds
+26092631/26197360/26302089, in 1.143432 s, with zero science calls and no run root.
+This is configuration-check wall time; detector calculation time this round is 0.
+Boundary tests include 1/499/500/9999/10000/10001/25001 and a constant-size capacity
+preview; no large radiation task was used to prove partition arithmetic.
 
-Current Control counts are still Cs13720/500; fixed gamma20 for AK02/SAP22.
-Both rings currently support Cs137. Arbitrary counts/batches below are proposed
-work, not implemented capabilities. Existing-machine acceptance does not establish
-fresh-clone/second-computer or experimental physics acceptance.
+Implementation writer exited before source freeze and three independent AI INITIALs.
+Physics/electronics and transport/workflow reviewers found no implementation blocker;
+a NEW strict reviewer accepted the goal, direction, complexity and bounded value.
+Each verified identical frozen hashes and recorded only tests actually executed.
+The physics review found one P3 prose denominator error: local census coverage is
+0..batch.primary_count-1, not parent batch_count-1. Corrected documentation only;
+all executable/test hashes remain unchanged. Actual reciprocal peer findings
+exchange is complete; all three FINAL receipts accept the bounded M15a preview.
+These are AI reviews, not scientific or experimental certification.
 
-## Next delivery order
+Current round evidence: `.local/product-delivery-v1/m15a/implementation/`,
+`reviews/`, Google proofs and completion receipt. Initial failures are retained.
+The earlier four 10K Cs137 cases, all40 gamma primaries (29 zeros/11 positive,
+0 unprocessed), original six responses, 1M campaigns and existing gallery/viewers
+remain preserved; do not repeat science or older completed reviews for recovery.
 
-Detailed settings, module boundaries and acceptance are in
-[tools/NEXT_DEVELOPMENT_PLAN.md](tools/NEXT_DEVELOPMENT_PLAN.md).
+## Next bounded milestone: M15b
 
-1. M15a: shared positive-count admission, <=10000 serial partition, seed/global/raw
-   identity and pure checked plan. Preserve old versions and scientific fixtures.
-2. M15b: real serial execution, sealed shared geometry/fields/injection calibration,
-   complete streamed ledger and safe resume; one <=500 two-batch acceptance run.
-3. M15c: exact count input, real batch/stage progress and complete lazy event access
-   in the existing English Control. No giant all-event waveform array.
-4. M16: individually checked source parameters, ring gamma and real cryostat/
-   detector options; reuse native remage/SSD APIs through existing capabilities.
+Follow [the detailed plan](tools/NEXT_DEVELOPMENT_PLAN.md): real serial workers,
+once-only compatible geometry/fields/independent injection calibration, complete
+streamed initial ledger, global native seeds, sealed stage/batch receipts and safe
+Stop/Resume. Bind census to the effective native macro and checked actual raw
+reader; the M15a helper does not expand arbitrary control/include macros.
+One preselected real two-batch acceptance uses at most500 total primaries and a
+recorded immutable acceptance-only cap below10000. No count escalation to find a
+pulse, source/seed retuning, giant task or new PDE/CCE delivery prerequisite.
 
-M8/M9 second-computer acceptance remains deferred. No new environment, global
-configuration, reset credits, separately billed API or million task. Numerical
-accuracy studies do not become new prerequisites for labelled engineering delivery.
+Then M15c connects exact count/batch status and complete lazy event access in the
+existing English form. M16 enables real source energy/pose, ring gamma and
+cryostat/model options individually. No enabled capability without bounded actual
+acceptance. M8/M9 remain deferred until a second computer. No new environment,
+global configuration, reset credits, separately billed API or million campaign.
 
-Each implementation milestone still requires focused validation, two independent
-scoped AI INITIALs plus a NEW strict INITIAL, actual findings exchange, verified
-fixes, concise handoff and normal nonforce synchronization. Website changes use
-build_site/test_site/check_site and exact deployed checks. Permanent science and
-unique failures stay local and byte exact; never repeat them for controller/export
-or chat recovery.
-
-New window first action: read this handoff and its linked plan; verify actual
-Sol6.1Ultra/root/Git/processes/lease and terminal receipts. Continue only M15a
-after the owner's execution instruction. The heartbeat remains PAUSED; no earlier
-completion or this plan alone enables it.
+Automatic heartbeat remains PAUSED. New manual work must inspect Git, actual
+processes, terminal receipts and the lock; this round releases only its owned
+`.local/autonomy/round.lock` after normal synchronization; the final local COMPLETE
+receipt records exact Git synchronization and lock release. Do not enable automatic
+continuation or restart completed transport/SSD/readout to recover a reply.

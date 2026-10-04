@@ -111,10 +111,18 @@ class WorkflowController:
             check_id=secrets.token_hex(32);self._checks[check_id]=copy.deepcopy(plan)
             return dict(plan,check_id=check_id)
 
+    def preview_batches(self,request):
+        # Preview creates no check_id, reservation, execution lease or output.
+        # A future M15b dispatcher needs its own reviewed admission contract.
+        with self._lock:
+            return W.preview(W.preview_request(request),root=self.root)
+
     def start(self,check_id):
         with self._lock:
-            self._idle();W.require(type(check_id) is str and check_id in self._checks,'Check this configuration before Start.')
+            W.require(type(check_id) is str and check_id in self._checks,'Check this configuration before Start.')
             plan=self._checks[check_id]
+            W.require(plan.get('kind')==W.KIND,'Batch preview execution is unavailable until the M15b worker integration is accepted.')
+            self._idle()
             # Reconstruct the complete trusted plan; rehashed browser edits are not authority.
             actual=self._resolver(plan['resolved']['selection'],root=self.root)
             W.require(W.encoded(actual)==W.encoded(plan),'Inputs, settings or runtime changed after Check.')

@@ -243,8 +243,9 @@ def portable_stage(directory,resolved,stage,root=ROOT):
     return value
 
 
-def check(config, *, root=ROOT, validate_settings=settings_check, pin_reader=None,
-          runtime_reader=runtime_identity, portable_reader=portable_check, allow_existing=False):
+def _resolve(config, *, root=ROOT, validate_settings=settings_check, pin_reader=None,
+             runtime_reader=runtime_identity, portable_reader=portable_check, allow_existing=False,
+             batch_preview=False):
     require(type(config) is dict and set(config)==FIELDS, 'Unsupported or missing configuration fields.')
     run_path(config['name'],root)
     require(config['cryostat']==CRYOSTAT, 'This cryostat has no executable adapter yet.')
@@ -253,11 +254,17 @@ def check(config, *, root=ROOT, validate_settings=settings_check, pin_reader=Non
     require(config['detector'] not in RINGS or config['source']==CS,'Ring connectors currently support Cs137 only; select its nominal source.')
     require(type(config['threads']) is int and config['threads'] in (1,2), 'Choose one or two Julia threads.')
     require(type(config['seed']) is int and 0<config['seed']<2147483647, 'Seed must be an integer between 1 and 2147483646.')
-    require(type(config['primary_count']) is int, 'Primary count must be an integer.')
-    if config['source']==GAMMA:
+    if batch_preview:
+        import workflow_batches as B
+        batching=B.partition(config['primary_count'],config['seed'])
+        require(config['pose']==('plus5mm' if config['source']==GAMMA else 'nominal'),
+                'This source position has no adapter yet.')
+    elif config['source']==GAMMA:
+        require(type(config['primary_count']) is int, 'Primary count must be an integer.')
         require(config['pose']=='plus5mm' and config['primary_count']==20 and config['seed']==26092631,
                 'This gamma adapter uses +5 mm, 20 primaries and radiation seed 26092631.')
     else:
+        require(type(config['primary_count']) is int, 'Primary count must be an integer.')
         require(config['pose']=='nominal' and config['primary_count'] in (20,500),
                 'Cs137 supports nominal pose and 20 or 500 initial decays here; larger runs need a matching pilot connector.')
     require(allow_existing or not run_path(config['name'],root).exists(), 'This output name already exists; choose a new name.')
@@ -291,8 +298,53 @@ def check(config, *, root=ROOT, validate_settings=settings_check, pin_reader=Non
     if config['detector'] in RINGS:
         from ring_workflow import operating
         resolved['operating_model']=operating(config['detector'])
+    if batch_preview:
+        resolved['batching']=batching
+        resolved['batch_preview_scope']={'contract':'count_seed_identity_configuration_only',
+            'transport_runtime':'not_probed_by_preview',
+            'worker_readiness':'not_established',
+            'native_global_seed_integration':'pending_M15b',
+            'execution':'disabled_until_M15b'}
+        if pin_reader is None:
+            resolved['source_sha256']['tools/workflow_batches.py']=sha(Path(root)/'tools/workflow_batches.py')
+        return {'kind':B.KIND,'schema_version':2,'status':'checked_preview','science_calls':0,
+                'execution_enabled':False,'resolved':resolved,'configuration_sha256':digest(resolved)}
     return {'kind':KIND,'status':'checked_configuration','science_calls':0,
             'resolved':resolved,'configuration_sha256':digest(resolved)}
+
+
+def check(config, *, root=ROOT, validate_settings=settings_check, pin_reader=None,
+          runtime_reader=runtime_identity, portable_reader=portable_check, allow_existing=False):
+    """Unchanged v1 saved/import/execution restrictions."""
+    return _resolve(config,root=root,validate_settings=validate_settings,pin_reader=pin_reader,
+                    runtime_reader=runtime_reader,portable_reader=portable_reader,allow_existing=allow_existing)
+
+
+def preview(config, *, root=ROOT, validate_settings=settings_check, pin_reader=None,
+            runtime_reader=runtime_identity):
+    """Read-only v2 admission; the v1 portable worker is never asked to execute N."""
+    return _resolve(config,root=root,validate_settings=validate_settings,pin_reader=pin_reader,
+                    runtime_reader=runtime_reader,portable_reader=lambda c,r:None,batch_preview=True)
+
+
+def preview_request(value):
+    import workflow_batches as B
+    require(type(value) is dict and set(value)=={'kind','schema_version','selection'} and
+            value['kind']==B.REQUEST_KIND and type(value['schema_version']) is int and
+            value['schema_version']==2,'Unsupported versioned batch-preview request.')
+    return value['selection']
+
+
+def admit_preview(plan, *, root=ROOT, **readers):
+    import workflow_batches as B
+    require(type(plan) is dict and set(plan)=={'kind','schema_version','status','science_calls','execution_enabled','resolved','configuration_sha256'} and
+            plan['kind']==B.KIND and type(plan['schema_version']) is int and plan['schema_version']==2 and
+            plan['status']=='checked_preview' and type(plan['science_calls']) is int and plan['science_calls']==0 and
+            plan['execution_enabled'] is False,'Unsupported batch-preview plan.')
+    require(type(plan['resolved']) is dict and 'selection' in plan['resolved'],'Batch preview has no admitted selection.')
+    actual=preview(plan['resolved']['selection'],root=root,**readers)
+    require(encoded(actual)==encoded(plan),'Batch preview changed or does not reconstruct from current admitted inputs.')
+    return actual
 
 
 def admit(plan,root=ROOT,*,resume=False):
@@ -791,10 +843,11 @@ def inspect(name,root=ROOT):
 
 
 def main(argv=None):
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('catalog','check','run','continue','resume','inspect','stop','finalize-results'))
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('catalog','check','preview-batches','run','continue','resume','inspect','stop','finalize-results'))
     p.add_argument('--config');p.add_argument('--plan');p.add_argument('--name');p.add_argument('--dispatch-id',help=argparse.SUPPRESS);a=p.parse_args(argv)
     if a.action=='catalog': value=catalog()
     elif a.action=='check': require(a.config,'--config is required.');value=check(read(Path(a.config)))
+    elif a.action=='preview-batches': require(a.config,'--config is required.');value=preview(preview_request(read(Path(a.config))))
     elif a.action=='run': require(a.plan,'--plan from Check is required.');value=execute(read(Path(a.plan)),dispatch_id=a.dispatch_id)
     elif a.action=='continue': require(a.plan,'--plan from verified prefix is required.');value=execute(read(Path(a.plan)),dispatch_id=a.dispatch_id,continuation=True)
     elif a.action=='resume':

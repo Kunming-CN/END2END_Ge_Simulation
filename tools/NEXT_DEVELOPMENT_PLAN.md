@@ -1,7 +1,9 @@
 # Next development plan
 
-Planning only; M15 is not implemented. PROGRESS.md is the current state and priority authority.
+M15a's versioned count/batch preview is implemented and tested; real M15b execution
+and M15c UI remain planned. PROGRESS.md is the current state and priority authority.
 This plan follows the owner-requested status audit and actual independent AI discussion.
+The delivered preview contract and limitations are in [BATCH_PREVIEW.md](BATCH_PREVIEW.md).
 
 ## M15a: one exact count and batch contract
 
@@ -130,7 +132,7 @@ M8/M9 second-computer acceptance remains deferred until the owner provides that
 computer. No new million task, raw-data publication, global configuration changes,
 separately billed API, reset credits or environment installation is authorized here.
 
-New window: read this handoff, verify actual gpt-6.1-sol/ultra, project root, Git,
-terminal receipts, real workers and lease. Continue only M15a after the owner's
-execution instruction. Do not rerun M13/M14, repeat old reviews or enable the
+New window: read the current handoff, verify actual gpt-6.1-sol/ultra, project root,
+Git, terminal receipts, real workers and lease. The next authorized manual milestone
+is M15b; do not repeat completed M15a. Do not rerun M13/M14, repeat old reviews or enable the
 paused heartbeat merely because this plan exists.
