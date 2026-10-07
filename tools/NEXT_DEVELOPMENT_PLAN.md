@@ -1,5 +1,50 @@
 # Next development plan
 
+## Owner priority update: 2026-10-07
+
+The accepted student UI milestone provides 17 inspectable models, five registered
+computation connectors and 12 view-only models. The next bounded manual milestone
+is shared source configuration, superseding the earlier immediate-M15b ordering.
+PROGRESS.md remains the current state/priority authority. M5 is closed; M15b/M15c
+remain unfinished and the automatic heartbeat remains PAUSED. M8/M9 still require
+the owner's second computer; student-own-computer reproducibility is a goal,
+not an installation result already demonstrated.
+
+Use the existing remage/Geant4, SSD and electronics backend with:
+
+- One reusable cryostat-world baseline plus maintained detector/source anchor
+  definitions with explicit units, frames and transforms. Preserve detector model,
+  operating variant, signed contacts and readout mapping independently of source.
+- One source preset registry and a generic decay reader/runtime. Effective run
+  configuration composes existing world, detector and source definitions; avoid
+  per-combination code, configuration files or geometry templates.
+- Mandatory Am241 at the existing Cs137 nominal source anchor:
+  global [0, 37.073, 0.290] mm for the current assembly. Retain the original Cs137
+  baseline and record emission/decay identities and time policy explicitly.
+- Full resolved configuration and model/source/runtime/seed hashes, stage receipts
+  and artifact bindings, including complete original primary IDs, zero deposits,
+  delayed daughters, raw rows and null native failures. Keep truth Edep, signed
+  charge and independently calibrated reconstructed energy separate.
+- Meaningful source-specific acceptance before enabling each additional preset.
+  Preselect one bounded detector/source/count/seed case, verify geometry/placement,
+  radiation identity/census and native-to-electronics behavior, and retain failure
+  evidence. Optional common sources follow only when feasible and actually checked;
+  do not retune source/count/geometry after seeing an outcome or imply arbitrary
+  uploaded-source support.
+
+Document the required installed runtimes/inputs and expose traceable saved results
+for students. Reuse compatible unchanged world/detector geometry and fields only
+through exact provenance checks; source changes still require their own radiation
+and event-ledger validation. Do not reuse Cs137-specific particle/line assumptions
+as Am241 validation. A passed engineering source case does not prove physical
+detector identity, experimental source placement or calibrated CCE.
+
+Complete this bounded source milestone through one tested integrated diff and the
+existing review method: two scoped reviews in parallel, then a NEW independent
+third review, with targeted verified corrections only. No new environment,
+framework, physics engine, large campaign or batch-execution prerequisite is
+introduced. The detailed M15/M16 plan below is retained for subsequent work.
+
 M15a's versioned count/batch preview is implemented and tested; real M15b execution
 and M15c UI remain planned. PROGRESS.md is the current state and priority authority.
 This plan follows the owner-requested status audit and actual independent AI discussion.
@@ -133,6 +178,6 @@ computer. No new million task, raw-data publication, global configuration change
 separately billed API, reset credits or environment installation is authorized here.
 
 New window: read the current handoff, verify actual gpt-6.1-sol/ultra, project root,
-Git, terminal receipts, real workers and lease. The next authorized manual milestone
-is M15b; do not repeat completed M15a. Do not rerun M13/M14, repeat old reviews or enable the
+Git, terminal receipts, real workers and lease. Follow the owner's 2026-10-07 shared
+source priority above before queued M15b work; do not repeat completed M15a. Do not rerun M13/M14, repeat old reviews or enable the
 paused heartbeat merely because this plan exists.

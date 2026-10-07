@@ -104,7 +104,9 @@ foreach ($f in $m.files) {
 <section id="local-control">
 <h2>Use Control</h2>
 <p>Double-click <code>Control.cmd</code> in the project root. It opens the English <strong>Local simulation</strong> application. New runs calculate geometry/source preparation, radiation deposits, the event ledger, fields and charge, independent calibration, readout, and verified results.</p>
-<h3>Choose a supported setup</h3>
+<h3>Inspect a model, then choose a supported setup</h3>
+<p>The <strong>Detector · all catalog models</strong> list lets you select all seventeen models. The model panel shows its original ID, detector type, reference/candidate/scenario qualification, contacts and signed voltages. Its image is a checked saved catalog geometry; <strong>Open saved rotatable geometry</strong> opens the public website. Inspection starts no calculation and does not establish cryostat compatibility, lithium thickness or charge-collection accuracy.</p>
+<p><strong>View only</strong> explains an unavailable computation connector. Source, Check plan, Run and configuration export stay disabled for that selection; <strong>Load configuration</strong> can load an existing supported setup. Imports cannot replace an unsupported model with another detector. A loaded setup still needs Check plan. The saved-run event explorer stays tied to its original run when the next model selection changes.</p>
 <table>
 <thead><tr><th scope="col">Detector</th><th scope="col">Cs137 point decay</th><th scope="col">662 keV gamma beam</th></tr></thead>
 <tbody>
@@ -112,11 +114,14 @@ foreach ($f in $m.files) {
 <tr><th scope="row">SAP22 · ICPC</th><td>20 or 500 initial decays</td><td>20 primaries</td></tr>
 <tr><th scope="row">GeRC02 · Li50min ring</th><td>20 or 500 initial decays</td><td>Unavailable</td></tr>
 <tr><th scope="row">KMRC01 candidate · ring</th><td>20 or 500 initial decays</td><td>Unavailable</td></tr>
+<tr><th scope="row">SAP18 ring0.8 scenario · identity unresolved</th><td>20 or 500 initial decays</td><td>Unavailable</td></tr>
 </tbody>
 </table>
-<p>One cryostat is executable: <strong>LBNL modular cryostat</strong>. Other models and cryostats remain unavailable for a new run. Cs137 uses the nominal point source; the gamma preset uses the fixed +5 mm position, global −y beam and seed 26092631. Choose one or two Julia threads; CPU stages run serially.</p>
+<p>SAP18 uses the frozen <code>SAP18_ring08_scenario</code> model: 0.8 mm readout contact width, contacts 1: 0 V and 2: −380 V, explicit runtime 77 K instead of stored 78 K, its own fresh fields, and one independent negative 500 keV injection through fixed −1 wiring. Its first and only preselected 500-decay acceptance retained all IDs 0–499, including 485 zero deposits, and accepted 15 pulse groups with no native failure, readout rejection or saturation. This proves bounded engineering integration on the prepared computer; the detector identity remains unresolved and the placement is nominal, with no experimental dimension claim.</p>
+<p>GeRC02 inspection shows the frozen Ge30min base model and its saved geometry. Its computation connector uses the separate Li50min operating variant (50 minutes at 553.15 K), explicit runtime 77 K instead of stored 78 K, and fresh fields. These identities must remain distinct.</p>
+<p>One cryostat is executable: <strong>LBNL modular cryostat</strong>. Catalog models without supported connectors and other cryostats remain unavailable for a new run. Cs137 uses the nominal point source; the gamma preset uses the fixed +5 mm position, global −y beam and seed 26092631. Choose one or two Julia threads; CPU stages run serially.</p>
 <ol>
-<li>Choose the cryostat, detector, source, primary count and threads. For Cs137, choose the radiation seed. Enter a new unused run name.</li>
+<li>Select a detector and inspect its model panel. Choose a supported cryostat, source, primary count and threads. For Cs137, choose the radiation seed. Enter a new unused run name.</li>
 <li>Adjust <strong>Electronics settings</strong> if needed. Use <strong>Export configuration</strong> or <strong>Load configuration</strong> to keep an exact setup.</li>
 <li>Click <strong>Check plan</strong>. Review <strong>Checked next-run configuration</strong>. Changing any selection invalidates the check.</li>
 <li>Click <strong>Run simulation</strong>. Follow <strong>Pipeline</strong> and open the stage logs from <strong>Runs</strong>.</li>
@@ -148,7 +153,7 @@ foreach ($f in $m.files) {
 
 <section id="validation">
 <h2>What the examples establish</h2>
-<p>The four Control connectors are functional on the existing prepared computer. These are bounded engineering examples with synthetic electronics and explicit model/geometry limitations. Successful processing does not establish calibrated charge-collection efficiency, experimental agreement, physical energy resolution or numerical convergence.</p>
+<p>The five Control connectors are functional on the existing prepared computer. These are bounded engineering examples with synthetic electronics and explicit model/geometry limitations. Successful processing does not establish calibrated charge-collection efficiency, experimental agreement, physical energy resolution or numerical convergence.</p>
 <p>Source creation/deposition time is not carrier drift time. A readout threshold changes acceptance, not the original primary census. Zeros, endpoint/cap flags, electronics rejects and native failures remain distinct. The GeRC02 Li50min operating variant and KM candidate keep their recorded model and polarity qualifications.</p>
 <p>Fresh-clone and second-computer setup remain unaccepted. Saved galleries, 10K campaigns and million-decay radiation results are distinct datasets; follow each page's scope and receipts.</p>
 </section>

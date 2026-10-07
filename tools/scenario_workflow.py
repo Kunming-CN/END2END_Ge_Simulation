@@ -34,7 +34,8 @@ CRYOSTAT = 'lbnl_modular_nominal_v1'
 CS = 'cs137_point_decay_v1'
 GAMMA = 'mono_gamma_662_axis_v1'
 RINGS = ('GeRC02','KMRC01_candidate')
-MODELS = ('AK02','SAP22',*RINGS)
+SAP18 = 'SAP18_ring08_scenario'
+MODELS = ('AK02','SAP22',*RINGS,SAP18)
 STAGES = ('geometry', 'radiation', 'event_ledger', 'response', 'results')
 TERMINAL = ('completed', 'completed_with_native_failures')
 EXPORTER = '.local/m2a/cs137-build-v1/cryostat_export'
@@ -146,6 +147,9 @@ def electronics_feasibility(c,dt=2):
 
 def source_pins(detector, root=ROOT, *, portable=False):
     root = Path(root)
+    if detector==SAP18:
+        from sap18_workflow import source_pins as sap18_pins
+        return sap18_pins(root)
     catalog = read(safe_path(root, 'models/catalog.json'))
     entry = next(x for x in catalog['detectors'] if x['id'] == detector)
     names = {'models/catalog.json', 'models/'+entry['model'],
@@ -224,12 +228,18 @@ def portable_query(arguments, root=ROOT, *, runner=subprocess.run):
 
 
 def portable_check(config,root=ROOT):
+    if config['detector']==SAP18:
+        from sap18_workflow import portable_check as sap18_check
+        return sap18_check(config,root)
     return portable_query(['check','--request-json',encoded(portable_request(config)).decode('utf-8')],root)
 
 
 def portable_stage(directory,resolved,stage,root=ROOT):
     checked=resolved.get('portable_source_plan')
     if checked is None:return
+    if resolved['selection']['detector']==SAP18:
+        from sap18_workflow import portable_stage as sap18_stage
+        return sap18_stage(directory,resolved,stage,root)
     request=portable_request(resolved['selection'])
     require(checked['request']==request,'Portable checked source tuple changed.')
     # After extraction, the stronger ledger reader verifies both the original
@@ -251,7 +261,7 @@ def _resolve(config, *, root=ROOT, validate_settings=settings_check, pin_reader=
     require(config['cryostat']==CRYOSTAT, 'This cryostat has no executable adapter yet.')
     require(config['detector'] in MODELS, 'This detector has no selectable new-run connector yet.')
     require(config['source'] in (CS,GAMMA), 'This source has no executable adapter yet.')
-    require(config['detector'] not in RINGS or config['source']==CS,'Ring connectors currently support Cs137 only; select its nominal source.')
+    require(config['detector'] not in (*RINGS,SAP18) or config['source']==CS,'Ring connectors currently support Cs137 only; select its nominal source.')
     require(type(config['threads']) is int and config['threads'] in (1,2), 'Choose one or two Julia threads.')
     require(type(config['seed']) is int and 0<config['seed']<2147483647, 'Seed must be an integer between 1 and 2147483646.')
     if batch_preview:
@@ -285,17 +295,20 @@ def _resolve(config, *, root=ROOT, validate_settings=settings_check, pin_reader=
                 'source_count_unit':'initial gamma primaries' if config['source']==GAMMA else 'initial Cs137 decays',
                 'numerics':{'parcels':16,'native_seed_family':2609261,'drift_dt_ns':2,
                             'drift_cap_ns':10000,'stored_temperature_K':78,'runtime_temperature_K':77,
-                            'bias_V':{'AK02':500,'SAP22':700,'GeRC02':240,'KMRC01_candidate':370}[config['detector']],
+                            'bias_V':{'AK02':500,'SAP22':700,'GeRC02':240,'KMRC01_candidate':370,SAP18:380}[config['detector']],
                             'native_failure_policy':'record','models_serial':True,'stages_serial':True},
                 'source_sha256':(pin_reader(config['detector'],root) if pin_reader else source_pins(config['detector'],root,portable=True)),
                 'runtime_identity':runtime_reader(config['threads'])}
     portable=portable_reader(config,root)
     if portable is not None:
-        require(portable['kind']=='portable_source_checked_plan_v1' and portable['schema_version']==1 and
+        require(portable['kind']==('sap18_source_checked_plan_v1' if config['detector']==SAP18 else 'portable_source_checked_plan_v1') and portable['schema_version']==1 and
                 portable['request']==portable_request(config),'Portable source Check returned an unsupported tuple.')
         resolved['portable_source_plan']=portable
         resolved['source_sha256'].update(portable['portable_source_sha256'])
-    if config['detector'] in RINGS:
+    if config['detector']==SAP18:
+        from sap18_workflow import operating
+        resolved['operating_model']=operating()
+    elif config['detector'] in RINGS:
         from ring_workflow import operating
         resolved['operating_model']=operating(config['detector'])
     if batch_preview:
@@ -364,17 +377,24 @@ def catalog(root=ROOT):
     registry=read(Path(root)/'scenarios/detector-capabilities.json')
     capabilities={d['model_id']:d for d in registry['detectors']}
     from ring_workflow import LABELS
+    from site_detector_pages import TYPE_LABELS
     detectors=[]
     for model in read(Path(root)/'models/catalog.json')['detectors']:
         id=model['id'];ring=registry.get('control_adapters',{}).get(id)
         available=id in MODELS and (capabilities[id]['lbnl_execution_implemented'] is True or
             id in RINGS and ring=={'adapter':'fresh_ring_control_v1','sources':[CS],'counts':[20,500],
-                                 'variant':'GeRC02_Li50min' if id=='GeRC02' else id})
-        detectors.append({'id':id,'label':LABELS.get(id,{'AK02':'AK02 · ICPC · +500 V','SAP22':'SAP22 · ICPC · +700 V'}.get(id,id)),
-            'available':available,'reason':None if available else 'Selectable new-run connector is pending.',
-            'sources':[CS] if id in RINGS else [CS,GAMMA] if id in ('AK02','SAP22') else [],
+                                 'variant':'GeRC02_Li50min' if id=='GeRC02' else id} or
+            id==SAP18 and ring=={'adapter':'sap18_control_v1','sources':[CS],'counts':[20,500],'variant':SAP18})
+        detectors.append({'id':id,'label':LABELS.get(id,{'AK02':'AK02 · ICPC · +500 V','SAP22':'SAP22 · ICPC · +700 V',SAP18:'SAP18_ring08_scenario · ring 0.8 mm · −380 V'}.get(id,id)),
+            'available':available,'reason':None if available else capabilities[id]['reason_unavailable'],
+            'type_label':TYPE_LABELS[id],
+            'model':{key:model[key] for key in ('id','group','status','assumptions','bounds_mm',
+                'model_sha256','coordinate_system','contacts','readout_contact_id','model')},
+            'geometry_url':'https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/'+id+'/geometry.html',
+            'sources':[] if not available else [CS] if id in (*RINGS,SAP18) else [CS,GAMMA],
             'operating_label':'Stored 78 K; runtime 77 K; '+('Li50min at 553.15 K; contacts 1: 0 V, 2: +240 V; fresh fields.' if id=='GeRC02' else
                 'Original candidate; contacts 1: 0 V, 2: −370 V; native bias magnitude 370 V; fixed −1 readout wiring; negative injection calibration.' if id=='KMRC01_candidate' else
+                'Original scenario; identity unresolved; ring contact width 0.8 mm; contacts 1: 0 V, 2: −380 V; native magnitude 380 V; fixed −1 wiring; own fresh fields and negative injection calibration.' if id==SAP18 and available else
                 'Contact 1 readout; operating bias '+str(500 if id=='AK02' else 700)+' V; fresh fields.' if id in ('AK02','SAP22') else
                 'Model viewer only; no Control execution adapter.')})
     # Registry values are the execution dispatch table, not user-supplied commands.
@@ -536,6 +556,9 @@ def gamma_request(directory, resolved, root=ROOT,*,historical=False):
 
 def stage_commands(directory,resolved,root=ROOT,environment=None):
     s=resolved['selection']; env=environment or child_env(s['threads']); transport=BASE+'/'+s['name']+'/transport'
+    if s['detector']==SAP18:
+        from sap18_workflow import stage_commands as sap18_commands
+        return sap18_commands(directory,resolved,root,env)
     wsl=['wsl.exe','--distribution','Ubuntu-24.04','--cd',str(Path(root)/'transport'),'--','bash','./workflow.sh']
     julia=[env['JULIA_EXE'],'--startup-file=no','--threads='+str(s['threads']),
            '--project='+str(Path(root)/'simulation')]
@@ -602,7 +625,10 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
                 'Prepared source pose or radiation seed differs from selected settings.')
         files={**p['files_sha256'],**p.get('portable_files_sha256',{})}
         for name,value in files.items():require(sha(safe_path(t,name))==value,'Prepared artifact changed.')
-        if s['detector'] in RINGS:
+        if s['detector']==SAP18:
+            from sap18_workflow import prepared
+            prepared(directory,resolved,root,historical=historical)
+        elif s['detector'] in RINGS:
             from ring_workflow import prepared
             prepared(directory,resolved,root,historical=historical)
         # Later stages add their own transport files; geometry owns its saved inputs.
@@ -618,6 +644,9 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
         for c in m['chunks']: require(sha(safe_path(t/'stream',c['file']))==c['sha256'],'Changed event chunk.')
         require(m['prepared_sha256']==sha(t/'prepared.json') and m['run_sha256']==sha(t/'run.json') and m['source_lh5_sha256']==sha(t/'truth.lh5'),'Ledger source bindings changed.')
         if s['source']==GAMMA: gamma_request(directory,resolved,root,historical=historical)
+        elif s['detector']==SAP18:
+            from sap18_workflow import ledger
+            ledger(directory,resolved,root,historical=historical)
         elif s['detector'] in RINGS:
             from ring_workflow import ledger
             ledger(directory,resolved,root,historical=historical)
@@ -650,7 +679,10 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
             for chunk in read(t/'stream/manifest.json')['chunks']:
                 source.extend(decode_json(line) for line in safe_path(t/'stream',chunk['file']).read_text(encoding='utf-8').splitlines())
             require(encoded(source)==encoded(truths),'Cs137 response changed original truth records.')
-            if s['detector'] in RINGS:
+            if s['detector']==SAP18:
+                from sap18_workflow import response
+                response(directory,resolved,r,root,historical=historical)
+            elif s['detector'] in RINGS:
                 from ring_workflow import response
                 response(directory,resolved,r,root,historical=historical)
         actual=read(directory/'response/readout-config.json')
@@ -673,13 +705,16 @@ def saved_plan(plan):
             digest(plan['resolved'])==plan['configuration_sha256'],'Saved plan authority changed.')
     r=plan['resolved'];s=r['selection'];run_path(s['name'])
     require(set(s)==FIELDS and s['detector'] in MODELS and s['cryostat']==CRYOSTAT and s['source'] in (CS,GAMMA) and
-            (s['detector'] not in RINGS or s['source']==CS),'Saved tuple is unsupported.')
+            (s['detector'] not in (*RINGS,SAP18) or s['source']==CS),'Saved tuple is unsupported.')
     require(type(s['threads']) is int and s['threads'] in (1,2) and type(s['seed']) is int and 0<s['seed']<2147483647 and type(s['primary_count']) is int and
             (s['source']==GAMMA and [s['pose'],s['primary_count'],s['seed']]==['plus5mm',20,26092631] or s['source']==CS and s['pose']=='nominal' and s['primary_count'] in (20,500)),
             'Saved source/count/runtime selection is unsupported.')
     expected_numerics={'parcels':16,'native_seed_family':2609261,'drift_dt_ns':2,'drift_cap_ns':10000,'stored_temperature_K':78,
-        'runtime_temperature_K':77,'bias_V':{'AK02':500,'SAP22':700,'GeRC02':240,'KMRC01_candidate':370}[s['detector']],'native_failure_policy':'record','models_serial':True,'stages_serial':True}
-    if s['detector'] in RINGS:
+        'runtime_temperature_K':77,'bias_V':{'AK02':500,'SAP22':700,'GeRC02':240,'KMRC01_candidate':370,SAP18:380}[s['detector']],'native_failure_policy':'record','models_serial':True,'stages_serial':True}
+    if s['detector']==SAP18:
+        from sap18_workflow import operating
+        require(encoded(r.get('operating_model'))==encoded(operating()),'Saved SAP18 signed operating settings changed.')
+    elif s['detector'] in RINGS:
         from ring_workflow import operating
         require(encoded(r.get('operating_model'))==encoded(operating(s['detector'])),'Saved ring operating variant/wiring changed.')
     require(encoded(r['numerics'])==encoded(expected_numerics) and r['source_position_global_mm']==([0,42.073,.290] if s['source']==GAMMA else [0,37.073,.290]) and
@@ -797,6 +832,9 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
                         'artifacts':{'index.html':{'sha256':sha(directory/'index.html'),'bytes':(directory/'index.html').stat().st_size}},'finished_utc':utc()};continue
                 if stage=='response' and s['source']==GAMMA:
                     write(directory/'gamma-request.json',gamma_request(directory,resolved,root),fresh=True)
+                elif stage=='response' and s['detector']==SAP18:
+                    from sap18_workflow import request
+                    write(directory/'sap18-request.json',request(directory,resolved,root),fresh=True)
                 elif stage=='response' and s['detector'] in RINGS:
                     from ring_workflow import request
                     write(directory/'ring-request.json',request(directory,resolved,root),fresh=True)

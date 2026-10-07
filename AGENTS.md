@@ -43,12 +43,14 @@ Do not change global user configuration, install another environment, enable Fas
 or separately billed APIs, or consume reset/banked reset credits. Only the owner
 may use reset credits. Keep all task files in the existing project/evidence root.
 
-After each implementation milestone, two scoped independent reviewers examine
-physics/electronics and data/workflow integrity. Add a NEW third-party reviewer
+Owner update (2026-10-07): review once per integrated, tested substantive milestone,
+not after each small edit. Run two scoped independent reviews in parallel for
+physics/electronics and data/workflow integrity, then add a NEW third-party reviewer
 using the same Sol 6.1 Ultra setting, independent of implementation and initial
 peer conclusions. The third review covers details AND whether the goal, direction,
 complexity and user value are appropriate. Exchange concrete findings after initial
-reviews. Fix verified blockers; bring material alternative directions or useful
+reviews. Re-review only specific verified corrections; tiny documentation edits do
+not need another review cycle. Fix verified blockers; bring material alternative directions or useful
 ideas to the owner rather than silently broadening work. These are AI reviews.
 
 M8/M9 newcomer/no-code acceptance is deferred until the owner provides a second

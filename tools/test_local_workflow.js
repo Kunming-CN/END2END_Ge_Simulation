@@ -8,15 +8,16 @@ class Element {
   addEventListener(name,fn){this['on'+name]=fn;}
   scrollIntoView(){}
   setAttribute(name,value){this[name]=value;}
+  removeAttribute(name){delete this[name];}
 }
 const svgNs='http://www.w3.org/2000/svg';
 function xml(tag,attrs={},children=[]){return {nodeType:1,localName:tag,prefix:null,namespaceURI:null,attributes:Object.entries(attrs).map(([name,value])=>({name,value,prefix:null})),childNodes:children};}
 const svgDocument={doctype:null,documentElement:xml('svg',{role:'img',viewBox:'0 0 600 205'},[xml('polyline',{points:'55,160 565,35',fill:'none',stroke:'currentColor','stroke-width':'1.7'}),xml('text',{x:'5',y:'35'},[{nodeType:3,nodeValue:'-0.003'}])]),getElementsByTagName:()=>[]};
 class Parser{parseFromString(){return svgDocument;}}
-const elements=new Map(),get=id=>{if(!elements.has(id))elements.set(id,new Element(id==='event'||id==='group'?'select':'div'));return elements.get(id);};
+const elements=new Map(),get=id=>{if(!elements.has(id))elements.set(id,new Element(['cryostat','detector','source','pose','count','threads','event','group'].includes(id)?'select':'div'));return elements.get(id);};
 const context=vm.createContext({document:{getElementById:get,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>{const n=new Element(tag);n.namespaceURI=ns;return n;},createTextNode:text=>({textContent:text})},DOMParser:Parser,
   location:{hash:'#fixture',pathname:'/'},sessionStorage:{getItem:()=>'',setItem:()=>{}},history:{replaceState:()=>{}},
-  URLSearchParams,TextDecoder,Uint8Array,fetch:()=>new Promise(()=>{}),setInterval:()=>{},setTimeout:()=>{}});
+  URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL:()=>{}},URLSearchParams,TextDecoder,Uint8Array,fetch:()=>new Promise(()=>{}),setInterval:()=>{},setTimeout:()=>{}});
 vm.runInContext(fs.readFileSync(__dirname+'/focused_plots.js','utf8'),context);
 vm.runInContext(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),context);
 function run(code){return vm.runInContext(code,context);}
@@ -74,6 +75,25 @@ get('detector').value='GeRC02';run('detectorChanged();');assert.match(get('opera
 get('detector').value='AK02';run('detectorChanged();');get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
 assert.equal(get('source').children.length,2);
 assert.match(html,/\.plot\{margin:0;min-width:0\}/);assert.match(html,/\.plot-grid>p,\.plot-grid>small\{grid-column:1\/-1;min-width:0;overflow-wrap:anywhere\}/);
+// Every catalog model is selectable for inspection, while unsupported selections
+// cannot Check, Start or export. The immutable selected run stays independent.
+run("const currentModels=catalog.detectors;catalog.detectors=[...currentModels,...Array.from({length:13},(_,i)=>({id:'view-'+i,label:'Reference '+i,available:false,reason:'No checked connector',sources:[],model:{group:'reference',status:'reference only',assumptions:['No physical identity claim'],contacts:[{id:1,name:'readout',potential_V:0},{id:2,name:'outer',potential_V:-380}],readout_contact_id:1},geometry_url:'https://example.test/geometry'}))];options('detector',catalog.detectors,true);");
+assert.equal(get('detector').children.length,17);
+assert.ok(get('detector').children.every(n=>!n.disabled));
+for(let i=0;i<13;i++){
+  get('detector').value='view-'+i;run('detectorChanged();');
+  assert.equal(get('source').children.length,0);assert.equal(get('count').children.length,0);
+  assert.match(get('model-capability').textContent,/View only.*Computation.*pending/);
+  assert.match(get('setup-preview').textContent,/view only; no source/);
+  assert.equal(get('model-contacts').children[1].textContent,'Contact 2 · outer · -380 V');
+  for(const id of ['check','start','save','source','count'])assert.equal(get(id).disabled,true,id);
+  assert.equal(get('load').disabled,false);
+  assert.throws(()=>run('importedConfig({...config(),source:"cs137_point_decay_v1",pose:"nominal",primary_count:20})'),/unavailable/);
+}
+run("catalog.detectors.push({id:'GeGI_3D',available:false,sources:[],model:{contacts:Array.from({length:34},(_,i)=>({id:i+1,name:'strip '+(i+1),potential_V:i<17?-879:0})),readout_contact_id:9}});");get('detector').value='GeGI_3D';run('detectorChanged();');
+assert.equal(get('model-contacts').children.length,34);assert.equal(get('model-contact-list').open,false);assert.match(get('model-contact-summary').textContent,/34 contacts.*readout contact 9/);
+assert.equal(get('model-contacts').children[8].textContent,'Contact 9 · strip 9 · -879 V · catalog readout');
+run('catalog.detectors=currentModels;');get('detector').value='AK02';run('detectorChanged();');
 // Open logs stay outside the recreated run cards; Results has an observed label.
 get('log-text').textContent='retained UTF-16 diagnostic';get('log-view').hidden=false;
 run("renderJobs({busy:false,jobs:[]});renderJobs({busy:false,jobs:[]});stageList({results:{status:'completed',elapsed_seconds:0.01}});");
@@ -153,6 +173,31 @@ svgDocument.getElementsByTagName=()=>[{}];assert.throws(()=>run("safeSvg('<svg/>
   }
   const current=run("$('check').onclick()");run("resolveCheck({check_id:'new',resolved:{selection:{detector:'SAP22'}}});");await current;
   assert.equal(run('checked.check_id'),'new');assert.equal(get('start').disabled,false);
+  // View-only selection while Check is pending refuses even an otherwise valid reply.
+  run("catalog.detectors.push({id:'view-only',available:false,sources:[],reason:'Pending connector'});");
+  const pendingView=run("$('check').onclick()");get('detector').value='view-only';run('detectorChanged();resolveCheck({check_id:"stale-view",resolved:{}});');
+  await pendingView;assert.equal(run('checked'),null);assert.equal(get('check').disabled,true);assert.equal(get('start').disabled,true);
+  run("let actionCalls=0;api=async()=>{actionCalls++;return {};};");
+  await run("$('check').onclick()");await run("$('start').onclick()");run("$('save').onclick()");
+  assert.equal(run('actionCalls'),0);
+  get('detector').value='SAP22';run('detectorChanged();');assert.equal(get('check').disabled,false);
+  // Slow imports never overwrite an edited setup or launch during active work.
+  run("let resolveImport;const importText=JSON.stringify(config());$('import').files=[{size:100,text:()=>new Promise(resolve=>resolveImport=resolve)}];");
+  const oldImport=run("$('import').onchange()");get('name').value='name-edited';run('invalidate();resolveImport(importText);');await oldImport;
+  assert.equal(get('name').value,'name-edited');assert.match(get('notice').textContent,/changed while loading/);
+  const activeImport=run("$('import').onchange()");run('active=true;resolveImport(importText);');await activeImport;
+  assert.equal(get('name').value,'name-edited');assert.equal(run('checked'),null);run('active=false;controls();');
+  // Preview replies are fenced by model identity; unavailable saved bytes stay explicit.
+  run("let previewReplies=[];fetch=()=>new Promise(resolve=>previewReplies.push(resolve));");
+  const oldPreview=run("loadModelPreview(catalog.detectors[0])");
+  get('detector').value='GeRC02';run('detectorChanged();');
+  run("previewReplies[1]({ok:true,blob:async()=>({})});");
+  await Promise.resolve();await Promise.resolve();assert.equal(get('model-preview').alt,'GeRC02 saved catalog geometry');
+  assert.match(get('model-variant').textContent,/frozen catalog Ge30min base.*Li50min/);
+  run("previewReplies[0]({ok:true,blob:async()=>({})});");await oldPreview;
+  assert.equal(get('model-preview').alt,'GeRC02 saved catalog geometry');
+  const failedPreview=run("loadModelPreview(currentDetector())");run("previewReplies[2]({ok:false});");await failedPreview;
+  assert.equal(get('model-preview-box').hidden,true);assert.match(get('model-preview-status').textContent,/public website/);
   // A slow old report cannot replace a newer run; native failure stays null.
   run("let reports=[];artifact=(name,file)=>new Promise((resolve,reject)=>reports.push({name,file,resolve,reject}));const newerJob={...savedJob,name:'newer-run',configuration_sha256:'b'.repeat(64)};");
   const oldReport=run('openResult(savedJob)'),newReport=run('openResult(newerJob)');

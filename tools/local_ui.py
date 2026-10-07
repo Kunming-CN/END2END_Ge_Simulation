@@ -19,6 +19,7 @@ from local_ui_gamma_jobs import GammaController
 from local_ui_scenarios import checked_scenarios
 from local_ui_workflow_jobs import WorkflowController
 import scenario_workflow as workflow
+from local_ui_jobs import safe_path
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE = '.local/local-control-v1'
@@ -29,6 +30,29 @@ STATIC = {'/': ('local_workflow.html', 'text/html; charset=utf-8'),
 FILES = {'run.json', 'COMPLETE.json', 'manifest.json', 'worker/report.json',
          'worker/AK02/scalars.jsonl', 'worker/AK02/traces.jsonl',
          'worker/SAP22/scalars.jsonl', 'worker/SAP22/traces.jsonl'}
+
+
+def saved_model_preview(model_id, root=None):
+    """Serve one checked, saved PNG for a catalog ID; no general file access."""
+    root = Path(root or ROOT)
+    current = workflow.read(safe_path(root, 'models/catalog.json'))
+    model = next((m for m in current['detectors'] if m['id'] == model_id), None)
+    if model is None:
+        raise ValueError('Unknown model')
+    published = workflow.read(safe_path(root, 'docs/models/catalog.json'))
+    frozen = next((m for m in published['detectors'] if m['id'] == model_id), None)
+    if frozen != model:
+        raise ValueError('Published model differs from current catalog')
+    relative = 'detectors/' + model_id + '/runs/20260922_suite_v3/01_geometry.png'
+    manifest = workflow.read(safe_path(root, 'docs/site-manifest.json'))
+    item = next((f for f in manifest['files'] if f['path'] == relative), None)
+    if item is None:
+        raise ValueError('Saved geometry is unavailable')
+    body = safe_path(root, 'docs/' + relative).read_bytes()
+    if (not body.startswith(b'\x89PNG\r\n\x1a\n') or len(body) != item['bytes'] or
+            hashlib.sha256(body).hexdigest() != item['sha256']):
+        raise ValueError('Saved geometry differs from publication manifest')
+    return body
 
 
 class SavedGammaUnavailable(RuntimeError):
@@ -167,7 +191,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('Referrer-Policy', 'no-referrer')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' blob:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'")
         self.send_header('Connection', 'close')
         if filename:
             self.send_header('Content-Disposition', 'attachment; filename="' + filename + '"')
@@ -220,6 +244,16 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized(download=parts.path == '/api/file', gamma_download=parts.path == '/api/gamma-file', workflow_download=parts.path in ('/api/workflow-file','/api/workflow-file/plots','/api/workflow-file/focus')):
             return
         try:
+            if parts.path == '/api/model-preview':
+                query = parse_qs(parts.query, strict_parsing=True)
+                if (parts.fragment or set(query) != {'model'} or
+                        any(len(v) != 1 for v in query.values())):
+                    raise ValueError('Invalid saved model preview request')
+                try:
+                    body = saved_model_preview(query['model'][0])
+                except Exception:
+                    return self.reject(503, 'Saved geometry preview is unavailable. Open the public saved geometry.')
+                return self.send_data(200, body, 'image/png')
             if parts.path in ('/api/workflow-file/plots','/api/workflow-file/focus'):
                 import re
                 if parts.fragment:raise ValueError('Invalid waveform artifact fragment')

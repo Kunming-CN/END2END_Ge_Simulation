@@ -42,6 +42,93 @@ class Protocol(unittest.TestCase):
         connection.request(method,route,body=body,headers=values);r=connection.getresponse()
         result=(r.status,r.read(),dict(r.getheaders()));connection.close();return result
 
+    def test_catalog_inspection_metadata_preserves_all17_and_execution_boundary(self):
+        catalog = W.catalog()
+        source = W.read(W.ROOT/'models/catalog.json')['detectors']
+        self.assertEqual(len(catalog['detectors']), 17)
+        self.assertEqual([d['id'] for d in catalog['detectors']], [m['id'] for m in source])
+        for item, model in zip(catalog['detectors'], source):
+            self.assertEqual(item['model']['contacts'], model['contacts'])
+            self.assertEqual(item['model']['status'], model['status'])
+            self.assertEqual(item['model']['model_sha256'], model['model_sha256'])
+            self.assertIn(item['id']+'/geometry.html', item['geometry_url'])
+            self.assertTrue(item['type_label'])
+            if not item['available']:
+                self.assertEqual(item['sources'], [])
+                self.assertTrue(item['reason'])
+                candidate=dict(name='catalog-fixture',cryostat=W.CRYOSTAT,
+                    detector=item['id'],source=W.CS,pose='nominal',primary_count=20,
+                    seed=26092631,threads=2,electronics=catalog['electronics_defaults'])
+                if item['id'] not in W.MODELS:
+                    with patch.object(W,'settings_check',side_effect=AssertionError('Settings executed')), self.assertRaises(W.ControlError):
+                        W._resolve(candidate,root=self.server.controller.root)
+        self.assertTrue({d['id'] for d in catalog['detectors'] if d['available']} <= set(W.MODELS))
+        self.assertTrue({'AK02','SAP22','GeRC02','KMRC01_candidate'} <= {d['id'] for d in catalog['detectors'] if d['available']})
+
+    def test_sap18_exact_capability_after_acceptance_and_unchecked_edits_refused(self):
+        catalog=W.catalog()
+        sap=next(d for d in catalog['detectors'] if d['id']==W.SAP18)
+        self.assertTrue(sap['available']);self.assertEqual(sap['sources'],[W.CS])
+        self.assertIn('identity unresolved',sap['operating_label'])
+        self.assertEqual(sum(d['available'] for d in catalog['detectors']),5)
+        original=W.read(W.ROOT/'scenarios/detector-capabilities.json')
+        self.assertIs(next(d for d in original['detectors'] if d['model_id']==W.SAP18)['lbnl_execution_implemented'],False)
+        for mutate in (lambda r:r['control_adapters'].pop(W.SAP18),
+                lambda r:r['control_adapters'][W.SAP18].update(sources=[W.CS,W.GAMMA]),
+                lambda r:r['control_adapters'][W.SAP18].update(counts=[20,500,10000]),
+                lambda r:r['control_adapters'][W.SAP18].update(variant='KMRC01_candidate')):
+            changed=copy.deepcopy(original);mutate(changed)
+            reader=W.read
+            with patch.object(W,'read',side_effect=lambda p:changed if str(p).endswith('detector-capabilities.json') else reader(p)):
+                item=next(d for d in W.catalog()['detectors'] if d['id']==W.SAP18)
+            self.assertFalse(item['available']);self.assertEqual(item['sources'],[])
+
+    def test_saved_preview_route_is_exact_authenticated_and_read_only(self):
+        with patch.object(U,'saved_model_preview',return_value=b'saved-png') as reader:
+            status,body,headers=self.request(route='/api/model-preview?model=AK02')
+            self.assertEqual((status,body,headers['Content-Type']),(200,b'saved-png','image/png'))
+            reader.assert_called_once_with('AK02')
+            reader.reset_mock()
+            for headers in ({'X-Control-Token':''},{'Host':'evil.example'},
+                    {'Origin':'https://evil.example'},{'Sec-Fetch-Site':'cross-site'}):
+                self.assertEqual(self.request(route='/api/model-preview?model=AK02',headers=headers)[0],403)
+            for route in ('/api/model-preview','/api/model-preview?model=AK02&model=SAP22',
+                    '/api/model-preview?model=AK02&file=private','/api/model-preview?model=AK02#x'):
+                self.assertEqual(self.request(route=route)[0],400)
+            self.assertEqual(self.request('POST','/api/model-preview?model=AK02',{})[0],404)
+            reader.assert_not_called()
+        self.workflow.check.assert_not_called();self.workflow.start.assert_not_called()
+
+    def test_saved_preview_exact_bytes_and_failure_is_sanitized(self):
+        for model in W.read(W.ROOT/'models/catalog.json')['detectors']:
+            self.assertTrue(U.saved_model_preview(model['id']).startswith(b'\x89PNG'))
+        for model in ('../AK02','AK02/../../private','unknown','AK02\\\\private'):
+            with self.assertRaises(ValueError):U.saved_model_preview(model)
+        for error in (ValueError('C:/private/path'), OSError('secret inputs')):
+            with patch.object(U,'saved_model_preview',side_effect=error):
+                code,data,_=self.request(route='/api/model-preview?model=AK02')
+            self.assertEqual(code,503);self.assertNotIn(b'private',data);self.assertNotIn(b'secret',data)
+
+    def test_saved_preview_refuses_changed_catalog_hash_bytes_and_links(self):
+        model=W.read(W.ROOT/'models/catalog.json')['detectors'][0]
+        root=self.server.controller.root
+        (root/'models').mkdir();(root/'docs/models').mkdir(parents=True)
+        def save_model(current,published):
+            (root/'models/catalog.json').write_text(json.dumps({'detectors':[current]}))
+            (root/'docs/models/catalog.json').write_text(json.dumps({'detectors':[published]}))
+        changed=copy.deepcopy(model);changed['model_sha256']='f'*64
+        save_model(model,changed)
+        with self.assertRaises(ValueError):U.saved_model_preview(model['id'],root)
+        save_model(model,model)
+        relative='detectors/'+model['id']+'/runs/20260922_suite_v3/01_geometry.png'
+        image=root/'docs'/relative;image.parent.mkdir(parents=True);image.write_bytes(b'\x89PNG\r\n\x1a\nfixture')
+        (root/'docs/site-manifest.json').write_text(json.dumps({'files':[{'path':relative,'bytes':image.stat().st_size,'sha256':W.sha(image)}]}))
+        self.assertEqual(U.saved_model_preview(model['id'],root),image.read_bytes())
+        image.write_bytes(image.read_bytes()+b'changed')
+        with self.assertRaises(ValueError):U.saved_model_preview(model['id'],root)
+        with patch.object(U,'safe_path',side_effect=W.ControlError('Linked path refused')):
+            with self.assertRaises(W.ControlError):U.saved_model_preview(model['id'],root)
+
     def test_exact_checked_identity_only_start(self):
         self.assertEqual(self.request('POST','/api/workflow/check',{'config':{'name':'fixture'}})[0],200)
         self.workflow.check.assert_called_once_with(config={'name':'fixture'})

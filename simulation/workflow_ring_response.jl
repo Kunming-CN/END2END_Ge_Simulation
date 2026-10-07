@@ -92,7 +92,7 @@ function summary_html(out,report)
     R.check(report["status"] in ("completed_provisional_native_response","completed_with_native_failures"),"Export requires completed ring response")
     for (file,h) in report["artifacts"];R.check(E.hashfile(joinpath(out,file))==h,"Export artifact changed");end
     open(joinpath(out,"summary.html"),"w") do io
-        print(io,"<!doctype html><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Ring response</title><style>body{font:16px/1.5 system-ui;max-width:1000px;margin:auto;padding:20px;overflow-wrap:anywhere}svg{width:100%}pre{white-space:pre-wrap}summary{cursor:pointer}</style><h1>Ring detector response</h1><p>Synthetic isolated readout; native charge/current retain their original signs. KM analog output uses fixed -1 input wiring. No physical-resolution, measured-waveform or calibrated Li CCE claim.</p>")
+        print(io,"<!doctype html><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Ring response</title><style>body{font:16px/1.5 system-ui;max-width:1000px;margin:auto;padding:20px;overflow-wrap:anywhere}svg{width:100%}pre{white-space:pre-wrap}summary{cursor:pointer}</style><h1>Ring detector response</h1><p>Synthetic isolated readout; native charge/current retain their original signs. Negative ring analog output uses fixed -1 input wiring. No physical-resolution, measured-waveform or calibrated Li CCE claim.</p>")
         print(io,"<pre>",N.escape(JSON.json(report["counts"],2)),"</pre><p><a href='run.json'>Settings and receipts</a> · <a href='scalars.csv'>All primaries and groups</a> · <a href='endpoints.csv'>Endpoints</a> · <a href='truth.jsonl'>Original truth</a> · <a href='histograms.csv'>Histograms</a></p>")
         open(joinpath(out,"traces.jsonl")) do traces
             for line in eachline(traces)
@@ -114,13 +114,13 @@ function progress(out,started,stage,status,counts,total)
     pending=joinpath(out,"progress.json.pending-"*string(getpid()))
     write(pending,JSON.json(value));mv(pending,joinpath(out,"progress.json");force=true)
 end
-function run(o,a,request)
+function run(o,a,request; process_response=process_ring, source_names=SOURCES)
     env=Q.environment("cpu"); readout_env=E.environment()
     R.check(Threads.nthreads() in (1,2),"Use one or two Julia threads")
     d=a.document; sim=a.sim; c=P.for_census(a.profile.profile,d["primary_count"])
     cfg=Q.parse_args(["--model",d["model_id"],"--position-mm","3,0,5","--precision","64",
         "--dt-ns","2","--min-grid-mm","0.05","--max-iterations","50000","--output",o["output"]])
-    sources=Dict(n=>E.hashfile(joinpath(@__DIR__,n)) for n in SOURCES)
+    sources=Dict(n=>E.hashfile(joinpath(@__DIR__,n)) for n in source_names)
     out=Q.reserve_output(cfg.output); started=time(); hist=Dict{String,Dict{Int,Int}}()
     counts=Dict{String,Any}("initial_primaries"=>0,"initial_decays"=>a.ion ? 0 : nothing,"zero_deposit_primaries"=>0,"groups"=>0,"accepted"=>0,
         "rejected"=>0,"readout_rejected"=>0,"native_failed_groups"=>0,"saturated"=>0,"native_charge_samples"=>0,"analog_samples"=>0,
@@ -150,13 +150,13 @@ function run(o,a,request)
         report["configuration_sha256"]=request["configuration_sha256"]
         report["request_sha256"]=E.hashfile(o["request"])
         report["model_contract"]=a.document["model_contract"]
-        report["signed_operating_bias_V"]=a.document["model_id"]=="GeRC02" ? 240 : -370
+        report["signed_operating_bias_V"]=request["operating_model"]["signed_bias_V"]
         report["contact_potentials_V"]=a.document["model_contract"]["contact_potentials_V"]
-        report["wiring_factor"]=a.document["model_id"]=="GeRC02" ? 1 : -1
+        report["wiring_factor"]=request["operating_model"]["wiring_factor"]
         report["new_field_solution"]=true
         report["independent_calibration_calls"]=1
         report["calibration_seconds"]=a.calibration_seconds
-        report["trace_signal_convention"]="Charge/current are raw signed native signals; KM preamp/shaper follow fixed -1 wiring."
+        report["trace_signal_convention"]="Charge/current are raw signed native signals; Negative ring preamp/shaper follow fixed -1 wiring."
         cp(o["request"],joinpath(out,"request-input.json"))
         a.injection!==nothing && E.save(joinpath(out,"negative-injection.json"),a.injection)
         E.save(joinpath(out,"profile.json"),a.profile.profile)
@@ -229,7 +229,7 @@ function run(o,a,request)
                 result=attempt.result
                 t,q=result.times,result.signal
                 R.check(all(isfinite,q) && first(q)==0,"Invalid native cumulative charge")
-                t0=time(); r=process_ring(t,q,c,eion,cal,M,a.document["model_id"];horizon_ns=g["horizon_ns"]); electronics_s+=time()-t0
+                t0=time(); r=process_response(t,q,c,eion,cal,M,a.document["model_id"];horizon_ns=g["horizon_ns"]); electronics_s+=time()-t0
                 R.check(r["current_balance"]["passed"],"Current/charge balance failed")
                 counts["groups"]+=1; counts[r["accepted"] ? "accepted" : "rejected"]+=1; counts["saturated"]+=r["saturated"]
                 counts["readout_rejected"]+= !r["accepted"]

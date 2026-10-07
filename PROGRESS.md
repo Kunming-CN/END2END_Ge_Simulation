@@ -1,11 +1,75 @@
 # Current handoff and next development plan
 
-Updated: 2026-10-04 UTC. Read this before starting work.
+Updated: 2026-10-07 UTC. Read this before starting work.
 Prior full handoff/planning is preserved [at bf0ccee](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/bf0ccee5f2cff06baa781238a1202cc2a8afaaf6/PROGRESS.md).
 The complete M13/M14 history remains [at 9b73383](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/9b733834c245834658151a2d31f092a1b2bd5305/PROGRESS.md).
 Inspect terminal receipts, hashes, actual processes and owned lock before repeating work.
 
-## Current state: M15a accepted; next M15b; automatic continuation paused
+## Current state: student UI accepted; next shared source presets
+
+Owner priority (2026-10-07): make the existing English local browser useful for
+Prof. Mei's students. This manual milestone began at verified main/live origin
+ab66a72cf4fae3e3eccc251c912ab0b58118e25a; the coordinator will synchronize its
+accepted changes. Automatic heartbeat remains PAUSED. M5 is closed; M15a is
+accepted; real M15b execution and M15c arbitrary-count UI remain unfinished.
+M8/M9 fresh-machine acceptance stays deferred until a second computer is provided.
+
+All 17 catalog models are selectable for inspection: five registered computation
+connectors and 12 view-only models. Contact IDs/signed voltages, model types and
+reference/candidate/scenario qualifications come from maintained sources.
+Checked saved previews and existing public rotatable geometry are available;
+view-only selections disable Check/Run/export. Stale Check/import/preview replies
+are fenced, and saved run/results retain their original identities. GeRC02's
+preview remains the frozen Ge30min base, separate from its Li50min operating case.
+
+SAP18 was enabled after its first and only preselected 500-decay run sealed
+COMPLETE: 15 accepted groups, 485 zero-deposit primaries and zero native failures,
+readout rejections or saturation. Original −380 V contacts and 0.8 mm model
+readout width remain intact, with stored 78 K/runtime 77 K, own fresh fields and
+one independent negative 500 keV injection through fixed −1 wiring. Its physical
+identity is unresolved and placement nominal; no experimental dimension,
+calibrated CCE, physical resolution or convergence claim is made.
+Configuration: 8ffc022282bd289557770187156aa3ceb31ff3c045535b918e7dbb04aa1f20e0.
+Sealed run: .local/runs/student-sap18-500-v1/.
+
+Validation: 116 affected Python tests, JavaScript browser contracts and 28 Julia
+checks passed. Actual browser acceptance covered all 17 previews/selections,
+390×844 mobile layout, GeGI's full 34-contact disclosure, keyboard focus and final
+five-connector availability. The actual 500 run used the shared CLI; no GUI500
+rerun or fresh-machine/human-student trial is claimed. Ordinary post-promotion
+Inspect verified all 56 artifacts unchanged; only exact capability registration
+differs from the original accepted source closure. Scientific receipts/hashes
+were preserved. Measured solve/replay/readout/export wall time was 48.553 s,
+excluding Julia startup and preparation/preflight; full response command 82.992 s.
+Calculation, validation, development/tool and review wall times remain separate.
+
+Two scoped independent gpt-6.1-sol/ultra AI reviews and a NEW independent third
+review accepted the milestone. One integrity P2 was corrected in the test only:
+the SAP18 source check now uses public protected tracked-source hashes instead
+of ignored milestone-private history. Its eight tests and unavailable-private-
+snapshot proof passed; the integrity reviewer independently closed that finding.
+Original INITIAL freezes/reports and the complete private before/after evidence
+are retained. These are AI reviews, not experimental certification. Review once
+per integrated tested substantive milestone; re-review only verified corrections,
+with no new cycle for this final documentation update.
+
+No website build/publication, installation or global environment change occurred.
+Source tools/site_guide.html is updated; docs/ remains the existing published
+snapshot. Evidence and correction/review receipts: .local/student-ui-v1/.
+
+## Next bounded owner request: shared world, anchors and source presets
+
+The owner now authorizes reusable cryostat-world and detector/source anchor
+definitions, one source preset registry and a generic decay reader/runtime using
+the same backend. Am241 at the existing Cs137 nominal position is mandatory.
+Preserve the Cs137 baseline; do not create per-combination code, configuration or
+geometry templates. Optional common sources require meaningful source-specific
+acceptance before enabling them. Preserve complete resolved configuration,
+model/source/runtime hashes and stage/artifact provenance for student reproduction.
+See [the detailed next plan](tools/NEXT_DEVELOPMENT_PLAN.md). This source milestone
+takes priority over immediate M15b work; batch execution remains explicitly open.
+
+## Preserved preceding milestone: M15a accepted
 
 The owner explicitly requested verification recovery and continued development on
 2026-10-04. This is one manual M15a milestone; automatic continuation remains
@@ -77,7 +141,7 @@ The earlier four 10K Cs137 cases, all40 gamma primaries (29 zeros/11 positive,
 0 unprocessed), original six responses, 1M campaigns and existing gallery/viewers
 remain preserved; do not repeat science or older completed reviews for recovery.
 
-## Next bounded milestone: M15b
+## Queued computation milestone: M15b
 
 Follow [the detailed plan](tools/NEXT_DEVELOPMENT_PLAN.md): real serial workers,
 once-only compatible geometry/fields/independent injection calibration, complete
