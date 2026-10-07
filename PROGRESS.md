@@ -4,7 +4,7 @@ Updated: 2026-10-07 UTC. Read this before starting work.
 The complete prior source, UI and planning history is preserved
 [at verified f274f96](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/f274f96a5c5449cf0183ef783118805c1b8c8e96/PROGRESS.md).
 
-## Current result and remaining closure
+## Accepted ten-model engineering milestone
 
 Ten detector configurations now use the existing LBNL cryostat through Control:
 the original AK02, SAP22, GeRC02 Li50min, KMRC01 candidate and SAP18 ring scenario,
@@ -22,10 +22,14 @@ factorization does not mean thirty actual source/model physics acceptances.
 
 This manual round starts from f274f96a5c5449cf0183ef783118805c1b8c8e96 under the
 owned coordinator lock `student-batches-v1-root`. Five new fixed science cases
-completed; the two scoped AI FINAL reviews accept the integration. Independent
-third-review closure, publication, Git synchronization and final owned-lease
-closure are still being finalized by the root coordinator.
-Do not repeat completed science or infer those final operations from this document.
+completed; physics/electronics, integrity and the new independent third AI FINAL
+reviews accept the integrated engineering milestone. The saved-site guide and
+navigation refresh passed its local build and complete check.
+Final Git/live-publication/process/lock outcomes are authoritative only in
+`.local/student-detector-coverage-v1/COMPLETE.json`, `.local/autonomy/state.json`
+and actual Git/process state. The root writes terminal COMPLETE after those
+operations actually finish; this handoff does not infer their completion.
+Do not repeat completed science.
 
 ## Five completed fixed cases
 
@@ -76,8 +80,10 @@ UI/setup freeze: `.local/student-batches-v1/ui/SOURCE-FREEZE.json`.
 Current integrated AI reviews: `.local/student-detector-coverage-v1/reviews/`.
 Physics/electronics and integrity FINAL accept the integrated milestone with
 I-001's exact saved-response settings binding and P-R001's resource-wording
-correction closed. The independent third review covers final presentation/source
-freeze separately. Original sources, science and unique failures remain preserved.
+correction closed. The independent third FINAL also accepts the validated
+presentation snapshot, final guide/source freeze and focused tests. Local build
+and publication are separate delivery checks. Original sources, science and
+unique failures remain preserved.
 AI engineering review is not human student or experimental certification.
 
 ## Delivery order and retained state
@@ -89,7 +95,11 @@ checks and a live `check_site.py --url` after deployment; generated docs are nev
 edited by hand. One tracked `scenarios/catalog-presentation.json` snapshot
 validates exact canonical-model, nominal-assembly and unchanged science-bound
 registry hashes for public display; the backend independently checks runtime
-admission. Publication/commit/push are not claimed by this handoff yet.
+admission. Focused publication checks passed 75 tests plus the final guide check.
+`docs/` was refreshed once through `--restructure` and the full local checker
+passed. `.local/student-batches-v1/docs/SAVED-PUBLICATION-BUILD.json` binds its
+manifest/guide hashes; live publication and Git/lock closure use the terminal
+authorities above.
 
 M5 remains closed; M15a preview remains accepted. M15b/M15c unfinished batch WIP is
 preserved in `.local/student-batches-v1/wip/` and paused, not a model-coverage

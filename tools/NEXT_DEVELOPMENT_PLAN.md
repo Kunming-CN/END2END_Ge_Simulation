@@ -19,10 +19,12 @@ Cs137/Am241/Ba133 selection is shared; original fixed-20 gamma and held Co60
 source admission retain their distinct existing contracts. Software factorization
 is not thirty actual model/source physics acceptances.
 
-Finalize only verified focused corrections, truthful student documentation and
-the saved-only public navigation/guide refresh. Reuse the integrated review and
-its targeted closure; no per-model full reviews, further physics or new environment
-are needed. The complete prior source milestone and roadmap are preserved
+The integrated milestone and its focused corrections are accepted by the two
+scoped and new independent third AI FINAL reviews. Student documentation and the
+saved-only public navigation/guide build passed their recorded checks. Final
+Git/live-publication/process/lock outcomes use `.local/student-detector-coverage-v1/COMPLETE.json`,
+`.local/autonomy/state.json` and actual Git/process state. No per-model
+full reviews, further physics or new environment are needed. The complete prior source milestone and roadmap are preserved
 [at f274f96](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/f274f96a5c5449cf0183ef783118805c1b8c8e96/PROGRESS.md).
 
 M15a's versioned count/batch preview remains accepted; its contract is in
