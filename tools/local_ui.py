@@ -278,12 +278,15 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_data(200, method(),grant_workflow_download=True)
             if parts.path == '/api/workflow-file':
                 if parts.fragment:raise ValueError('Invalid workflow artifact fragment')
-                query=parse_qs(parts.query,strict_parsing=True)
-                if set(query)!={'name','file'} or any(len(v)!=1 for v in query.values()) or self.server.workflow_controller is None:
+                query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
+                if (set(query) not in ({'name','file'},{'name','file','download'}) or
+                        any(len(v)!=1 for v in query.values()) or
+                        'download' in query and query['download']!=['1'] or self.server.workflow_controller is None):
                     raise ValueError('Invalid workflow artifact request')
+                raw_download=query.get('download')==['1']
                 body,mime=self.server.workflow_controller.artifact(query['name'][0],query['file'][0])
-                if mime.startswith('text/html'):
-                    # Derived navigation only; original downloaded science bytes remain exact.
+                if mime.startswith('text/html') and not raw_download:
+                    # Viewing derives navigation; download=1 preserves verified original bytes.
                     import posixpath
                     import re
                     from urllib.parse import urlencode

@@ -156,7 +156,7 @@ def source_pins(detector, root=ROOT, *, portable=False):
              'transport/cryostat_nominal.json', 'transport/cryostat-source.json',
              'transport/pixi.toml', 'transport/pixi.lock', 'transport/CMakeLists.txt',
              EXPORTER, 'tools/scenario_workflow.py', 'tools/workflow_settings.ps1',
-             'tools/workflow_inspection.py',
+             'tools/workflow_inspection.py', 'tools/decay_validation.py',
              'tools/workflow_recovery.py',
              'tools/electronics_settings.ps1', 'tools/electronics_execution.ps1',
              'tools/native_run_validation.ps1', 'tools/local_ui_jobs.py',
@@ -228,6 +228,9 @@ def portable_query(arguments, root=ROOT, *, runner=subprocess.run):
 
 
 def portable_check(config,root=ROOT):
+    if config['source'] not in (CS,GAMMA):
+        from decay_workflow import portable_check as decay_check
+        return decay_check(config,root)
     if config['detector']==SAP18:
         from sap18_workflow import portable_check as sap18_check
         return sap18_check(config,root)
@@ -235,6 +238,9 @@ def portable_check(config,root=ROOT):
 
 
 def portable_stage(directory,resolved,stage,root=ROOT):
+    if 'decay_source_contract' in resolved:
+        from decay_workflow import portable_stage as decay_stage
+        return decay_stage(directory,resolved,stage,root)
     checked=resolved.get('portable_source_plan')
     if checked is None:return
     if resolved['selection']['detector']==SAP18:
@@ -327,8 +333,16 @@ def _resolve(config, *, root=ROOT, validate_settings=settings_check, pin_reader=
 
 
 def check(config, *, root=ROOT, validate_settings=settings_check, pin_reader=None,
-          runtime_reader=runtime_identity, portable_reader=portable_check, allow_existing=False):
-    """Unchanged v1 saved/import/execution restrictions."""
+          runtime_reader=runtime_identity, portable_reader=portable_check, allow_existing=False,
+          bootstrap_source=False):
+    """Legacy restrictions stay exact; generic decay sources use their own contract."""
+    if type(config) is dict and config.get('source') not in (CS,GAMMA):
+        import decay_workflow as D
+        if D.is_source(config.get('source'),ROOT):
+            return D.check(config,root=root,validate_settings=validate_settings,pin_reader=pin_reader,
+                runtime_reader=runtime_reader,portable_reader=portable_reader,allow_existing=allow_existing,
+                bootstrap_source=bootstrap_source)
+    require(not bootstrap_source,'Source bootstrap applies only to a registered shared decay preset.')
     return _resolve(config,root=root,validate_settings=validate_settings,pin_reader=pin_reader,
                     runtime_reader=runtime_reader,portable_reader=portable_reader,allow_existing=allow_existing)
 
@@ -360,7 +374,11 @@ def admit_preview(plan, *, root=ROOT, **readers):
     return actual
 
 
-def admit(plan,root=ROOT,*,resume=False):
+def admit(plan,root=ROOT,*,resume=False,bootstrap_source=False):
+    if type(plan) is dict and type(plan.get('resolved')) is dict and 'decay_source_contract' in plan['resolved']:
+        from decay_workflow import admit as decay_admit
+        return decay_admit(plan,root,resume=resume,bootstrap_source=bootstrap_source)
+    require(not bootstrap_source,'Source bootstrap applies only to a registered shared decay preset.')
     require(type(plan) is dict and set(plan)=={'kind','status','science_calls','resolved','configuration_sha256'}
             and plan['kind']==KIND and plan['status']=='checked_configuration' and plan['science_calls']==0,
             'Unsupported checked plan.')
@@ -376,6 +394,14 @@ def catalog(root=ROOT):
     default=read(Path(root)/'simulation/native_readout_profile.json')['settings']
     registry=read(Path(root)/'scenarios/detector-capabilities.json')
     capabilities={d['model_id']:d for d in registry['detectors']}
+    from decay_workflow import source_catalog
+    sources=source_catalog(root)
+    # Attempt metadata describes withheld qualification; it cannot admit a source.
+    for source in sources:
+        attempt=registry.get('source_attempts',{}).get(source['id'])
+        if not source['available'] and type(attempt) is dict and attempt.get('status')=='qualification_withheld' and type(attempt.get('reason')) is str:
+            source['reason']=attempt['reason'];source['attempt']=attempt
+    generic=[s['id'] for s in sources if s['source_contract']['adapter']=='shared_decay_source_v1']
     from ring_workflow import LABELS
     from site_detector_pages import TYPE_LABELS
     detectors=[]
@@ -391,7 +417,7 @@ def catalog(root=ROOT):
             'model':{key:model[key] for key in ('id','group','status','assumptions','bounds_mm',
                 'model_sha256','coordinate_system','contacts','readout_contact_id','model')},
             'geometry_url':'https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/'+id+'/geometry.html',
-            'sources':[] if not available else [CS] if id in (*RINGS,SAP18) else [CS,GAMMA],
+            'sources':[] if not available else ([CS] if id in (*RINGS,SAP18) else [CS,GAMMA])+generic,
             'operating_label':'Stored 78 K; runtime 77 K; '+('Li50min at 553.15 K; contacts 1: 0 V, 2: +240 V; fresh fields.' if id=='GeRC02' else
                 'Original candidate; contacts 1: 0 V, 2: −370 V; native bias magnitude 370 V; fixed −1 readout wiring; negative injection calibration.' if id=='KMRC01_candidate' else
                 'Original scenario; identity unresolved; ring contact width 0.8 mm; contacts 1: 0 V, 2: −380 V; native magnitude 380 V; fixed −1 wiring; own fresh fields and negative injection calibration.' if id==SAP18 and available else
@@ -401,8 +427,7 @@ def catalog(root=ROOT):
     return {'kind':KIND,'cryostats':[{'id':CRYOSTAT,'label':'LBNL modular cryostat','available':True},
             {'id':'lbnl_monolithic_candidate','label':'LBNL monolithic cryostat','available':False,'reason':'Transport and charge adapters are pending.'}],
             'detectors':detectors,
-            'sources':[{'id':CS,'label':'Cs137 point decay','pose':'nominal','counts':[20,500]},
-                       {'id':GAMMA,'label':'662 keV gamma beam','pose':'plus5mm','counts':[20]}],
+            'sources':sources,
             'electronics_defaults':default,'electronics_keys':list(SETTINGS),
             'numerics':'16 parcels; native seed 2609261; 2 ns grid; 10,000 ns cap; CPU; one or two Julia threads.',
             'setup_limit':'Fresh runs require the explicit portable source-exporter build in the existing locked environment. Fresh-clone and second-computer acceptance remain deferred.',
@@ -556,6 +581,9 @@ def gamma_request(directory, resolved, root=ROOT,*,historical=False):
 
 def stage_commands(directory,resolved,root=ROOT,environment=None):
     s=resolved['selection']; env=environment or child_env(s['threads']); transport=BASE+'/'+s['name']+'/transport'
+    if 'decay_source_contract' in resolved:
+        from decay_workflow import stage_commands as decay_commands
+        return decay_commands(directory,resolved,root,env)
     if s['detector']==SAP18:
         from sap18_workflow import stage_commands as sap18_commands
         return sap18_commands(directory,resolved,root,env)
@@ -612,7 +640,18 @@ def command(argv,directory,stage,receipt,environment,root=ROOT):
 
 def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
     s=resolved['selection']; t=directory/'transport'
-    if (stage in ('geometry','radiation') or stage=='event_ledger' and s['source']==CS and s['detector'] not in RINGS) and resolved.get('portable_source_plan') is not None:
+    generic='decay_source_contract' in resolved
+    if generic and stage in ('geometry','radiation','event_ledger'):
+        import decay_workflow as D
+        if stage=='radiation':D.portable_stage(directory,resolved,stage,root)
+        if stage=='geometry':
+            p=D.prepared(directory,resolved,root,historical=historical)
+            names=set(p['files_sha256'])|set(p.get('portable_files_sha256',{}))|{'prepared.json','prepare-receipt.json'}
+            return {n:{'sha256':sha(safe_path(t,n)),'bytes':safe_path(t,n).stat().st_size} for n in sorted(names)}
+        if stage=='event_ledger':
+            D.ledger(directory,resolved,root,historical=historical)
+            return inventory(t/'stream')
+    if not generic and (stage in ('geometry','radiation') or stage=='event_ledger' and s['source']==CS and s['detector'] not in RINGS) and resolved.get('portable_source_plan') is not None:
         portable_stage(directory,resolved,stage,root)
     if stage=='geometry':
         p=read(t/'prepared.json');r=read(t/'prepare-receipt.json')
@@ -658,7 +697,10 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
         c=r['counts'];require(c['accepted']+c['rejected']==c['groups'] and c['rejected']==c['native_failed_groups']+c['readout_rejected'],'Response accounting mismatch.')
         require(r['stored_temperature_K']==78 and r['temperature_K']==77 and r['bias_V']==resolved['numerics']['bias_V']
                 and r['parcels']==16 and r['seed_family']==2609261,'Response operating settings differ from selection.')
-        if s['source']==GAMMA:
+        if generic:
+            from decay_validation import response as decay_response
+            decay_response(directory,resolved,r,root,historical=historical)
+        elif s['source']==GAMMA:
             require(r['request_sha256']==sha(directory/'gamma-request.json') and
                     r['configuration_sha256']==digest(resolved),'Gamma request/configuration binding mismatch.')
             request=gamma_request(directory,resolved,root,historical=historical)
@@ -700,7 +742,10 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
     return {}
 
 
-def saved_plan(plan):
+def saved_plan(plan,root=ROOT):
+    if type(plan) is dict and type(plan.get('resolved')) is dict and 'decay_source_contract' in plan['resolved']:
+        from decay_workflow import saved_plan as decay_saved
+        return decay_saved(plan,root)
     require(set(plan)=={'kind','status','science_calls','resolved','configuration_sha256'} and plan['kind']==KIND and plan['status']=='checked_configuration' and plan['science_calls']==0 and
             digest(plan['resolved'])==plan['configuration_sha256'],'Saved plan authority changed.')
     r=plan['resolved'];s=r['selection'];run_path(s['name'])
@@ -768,9 +813,9 @@ def result_page(directory,receipt):
     (directory/'index.html').write_text(body,encoding='utf-8')
 
 
-def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,continuation=False):
+def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,continuation=False,bootstrap_source=False):
     require(not (resume and continuation),'A derivative is a new root, not failed-stage Resume.')
-    plan=admit(plan,root,resume=resume)
+    plan=admit(plan,root,resume=resume,bootstrap_source=bootstrap_source)
     resolved=plan['resolved'];s=resolved['selection'];directory=run_path(s['name'],root)
     with execution_lease(root):
         verify_dispatch_reservations(plan,root,dispatch_id)
@@ -830,7 +875,10 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
                     require((directory/'index.html').stat().st_size>0,'Results page was not created.')
                     receipt['stages'][stage]={'status':'completed','started_utc':started,'elapsed_seconds':time.perf_counter()-observed,
                         'artifacts':{'index.html':{'sha256':sha(directory/'index.html'),'bytes':(directory/'index.html').stat().st_size}},'finished_utc':utc()};continue
-                if stage=='response' and s['source']==GAMMA:
+                if stage=='response' and 'decay_source_contract' in resolved:
+                    from decay_workflow import request as decay_request
+                    write(directory/'decay-request.json',decay_request(directory,resolved,root),fresh=True)
+                elif stage=='response' and s['source']==GAMMA:
                     write(directory/'gamma-request.json',gamma_request(directory,resolved,root),fresh=True)
                 elif stage=='response' and s['detector']==SAP18:
                     from sap18_workflow import request
@@ -861,7 +909,7 @@ def inspect(name,root=ROOT):
     directory=run_path(name,root);receipt=read(directory/'run.json')
     require(receipt['kind']==KIND and receipt['configuration_sha256']==digest(receipt['resolved']), 'Saved configuration changed.')
     plan=read(directory/'resolved-config.json')
-    if receipt['status'] in TERMINAL:saved_plan(plan)
+    if receipt['status'] in TERMINAL:saved_plan(plan,root)
     else:admit(plan,root,resume=True)
     require(encoded(receipt['resolved'])==encoded(plan['resolved']),'Run settings differ from saved checked authority.')
     if receipt['status'] in TERMINAL:
@@ -882,14 +930,15 @@ def inspect(name,root=ROOT):
 
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('catalog','check','preview-batches','run','continue','resume','inspect','stop','finalize-results'))
-    p.add_argument('--config');p.add_argument('--plan');p.add_argument('--name');p.add_argument('--dispatch-id',help=argparse.SUPPRESS);a=p.parse_args(argv)
+    p.add_argument('--config');p.add_argument('--plan');p.add_argument('--name');p.add_argument('--dispatch-id',help=argparse.SUPPRESS);p.add_argument('--bootstrap-source',action='store_true',help='Explicit CLI-only first source acceptance; does not enable the browser.');a=p.parse_args(argv)
+    require(not a.bootstrap_source or a.action in ('check','run','resume'),'Source bootstrap is only available for explicit CLI Check, Run or Resume.')
     if a.action=='catalog': value=catalog()
-    elif a.action=='check': require(a.config,'--config is required.');value=check(read(Path(a.config)))
+    elif a.action=='check': require(a.config,'--config is required.');value=check(read(Path(a.config)),bootstrap_source=a.bootstrap_source)
     elif a.action=='preview-batches': require(a.config,'--config is required.');value=preview(preview_request(read(Path(a.config))))
-    elif a.action=='run': require(a.plan,'--plan from Check is required.');value=execute(read(Path(a.plan)),dispatch_id=a.dispatch_id)
+    elif a.action=='run': require(a.plan,'--plan from Check is required.');value=execute(read(Path(a.plan)),dispatch_id=a.dispatch_id,bootstrap_source=a.bootstrap_source)
     elif a.action=='continue': require(a.plan,'--plan from verified prefix is required.');value=execute(read(Path(a.plan)),dispatch_id=a.dispatch_id,continuation=True)
     elif a.action=='resume':
-        require(a.name,'--name is required.');d=run_path(a.name);value=execute(read(d/'resolved-config.json'),resume=True,dispatch_id=a.dispatch_id)
+        require(a.name,'--name is required.');d=run_path(a.name);value=execute(read(d/'resolved-config.json'),resume=True,dispatch_id=a.dispatch_id,bootstrap_source=a.bootstrap_source)
     elif a.action=='inspect': require(a.name,'--name is required.');value=inspect(a.name)
     elif a.action=='finalize-results':
         require(a.name,'--name is required.')

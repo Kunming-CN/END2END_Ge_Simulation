@@ -134,3 +134,14 @@ tools/native_readout_integration.ps1 text eol=lf
 # Standalone native cryostat audit hashes retain exact LF bytes on Windows.
 tools/native_cryostat_audit/audit.cc text eol=lf
 tools/native_cryostat_audit/CMakeLists.txt text eol=lf
+
+# New shared-source contracts retain the exact acceptance-bound Windows bytes.
+transport/decay_source.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+scenarios/source-presets.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+scenarios/placement-anchors.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+tools/decay_workflow.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+tools/decay_validation.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+tools/test_decay_workflow.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# Frozen portable exporter input retains its acceptance-bound mixed/CRLF bytes.
+transport/CMakeLists.txt -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

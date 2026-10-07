@@ -24,7 +24,8 @@ another complete installation recipe.
 | Completed ring campaign verification | `tools/ring_saved_basis.py` has two closed read-only operations for the registered terminal campaigns. It retains original producer hashes and receipts across the exact portable-runtime line change; it cannot start, resume or rewrite science. Its fixed private basis stays local. |
 | Windows setup/run guide | `tools/site_guide.html` |
 | Contributions, software citation and rights scope | Root `CONTRIBUTING.md`, `CITATION.cff`, `THIRD_PARTY_NOTICES.md`; `.github/PULL_REQUEST_TEMPLATE.md` |
-| Catalog inspection in Control | Existing scenario_workflow.catalog() projects models/catalog.json, site_detector_pages.TYPE_LABELS and the capability registry into all seventeen selectable models. local_workflow.js separates viewing from execution; local_ui.saved_model_preview() serves only a known catalog PNG after catalog equality, manifest byte/hash and safe-path checks. No general docs file server or new capability registry. Saved rotatable geometry opens the existing public viewer. |
+| Catalog inspection in Control | Existing scenario_workflow.catalog() projects models/catalog.json, site_detector_pages.TYPE_LABELS and the capability registry into all seventeen selectable models. local_workflow.js separates viewing from execution; local_ui.saved_model_preview() serves only a known catalog PNG after catalog equality, manifest byte/hash and safe-path checks. Source presets are projected from the single source registry; no general docs file server. Saved rotatable geometry opens the existing public viewer. |
+| Shared source presets and anchors | `scenarios/source-presets.json` owns immutable source physics/policy metadata, including the legacy Cs137/gamma display records. `scenarios/placement-anchors.json` owns the reused nominal world, detector frames and source anchor. Additive `transport/decay_source.py`, `tools/decay_workflow.py`, `tools/decay_validation.py`, `simulation/decay_stream.jl` and `workflow_decay_response.jl` compose the same world/detector/source contracts for all five registered connectors. `detector-capabilities.json` source admission changes only after source-specific positive terminal acceptance; preserve old saved receipts and legacy producer contracts. `scenario_workflow.py` source dispatch and `local_workflow.js` metadata projection share Check/import/identity rules. CLI `--bootstrap-source` is the explicit first-acceptance gate, unavailable to GUI requests. |
 | Loopback simulation application | `Control.cmd`, `tools/local_ui.ps1`, `local_ui.py`, `local_workflow.html`, `local_workflow.js`, `local_ui_workflow_jobs.py`, `scenario_workflow.py`, `workflow_settings.ps1`, `workflow_inspection.py`, `workflow_recovery.py`, `saved_waveforms.py`, `simulation/scenario_response.jl`, `transport/workflow.sh`; shared checked GUI/CLI configuration, original transport/SSD/readout backends. Retained `local_ui_jobs.py` and `local_ui_gamma_jobs.py` own saved legacy jobs. No public execution service. |
 | Exact count and serial batch preview | `tools/workflow_batches.py`, shared resolver `scenario_workflow.py`, protected `local_ui_workflow_jobs.py`/`local_ui.py` preview route; see [M15a contract](BATCH_PREVIEW.md). Preview only; existing v1 saved validators/science and current Control form remain unchanged. Execution/worker readiness/global native seeding are pending M15b. |
 | Scenario eligibility labels | `scenarios/detector-capabilities.json`; backend restrictions remain independently enforced |
@@ -40,6 +41,42 @@ another complete installation recipe.
 | Saved-run validation and inspection | `tools/native_run_validation.ps1`, `inspect_native_run.ps1`; see [INSPECT_RUNS.md](INSPECT_RUNS.md) |
 | Bounded NEW native-charge group commits | `tools/native_group_checkpoints.py`, `simulation/native_groups.jl`; see [charge-only scope](NATIVE_GROUP_CHECKPOINTS.md). Host acceptance is separate. |
 | Local file/result index | `tools/build_local_dashboard.py`, `local_paths.py`, `open_workspace.ps1` |
+
+Shared-source admission uses one source registry and independent detector contracts.
+Am241 and Ba133 are promoted through the fixed positive source gate; Co60 remains unavailable
+because its terminal 500-primary trial retained one below-threshold rejection.
+Every accepted `source_adapters` entry binds the source contract, SAP22/500/seed
+26092631 acceptance, positive accepted-group count, zero native failures/readout
+rejects/saturation, resolved configuration hash, COMPLETE hash and run reference.
+Do not loosen the gate, retune science or rewrite original receipts to enable a
+preset. All three case geometries are byte-identical; five-model compatibility is
+software factorization, not fifteen actual science acceptances.
+
+`tools/decay_validation.py` owns the active generic response validation;
+`scenario_workflow.py` dispatches to its `response`. The unused
+`decay_workflow.response` is retained because its old producer bytes are bound to
+accepted evidence; defer cleanup to a future unbound maintenance change. The
+Am241 acceptance retained its original native success and failed outer CLI record;
+the explicit saved-data completion added no science and preserved FAILED-run.json
+and the failure basis. This acceptance repair is not a general GUI finalization
+route. Source/world/placement contracts, counts, runtime/producer/model hashes,
+raw LH5/ledger IDs, signed native quantities, independent calibration and failure
+records remain authoritative. Curated downloads use the existing verified owned-
+run artifact route with exact original bytes; HTML viewing retains its derived
+navigation. I-001's original INITIAL and closed targeted correction remain retained.
+Exact HTTP payload checks do not prove the actual browser destination file. The
+promoted-source browser selections passed; current review/synchronization status
+is recorded in PROGRESS.md. Own-PC reproduction requires documented runtimes and
+pinned upstream inputs; fresh-machine acceptance remains deferred.
+
+The registry's `dataset_lifetime_evidence` annotations describe half-lives. For
+example, Np237's 59.54 keV level in the Am241 record has half-life 67.2 ns,
+corresponding to mean lifetime about 96.94911 ns. The runtime daughter cap uses the
+installed ground-secondary PDG mean lifetime and does not consume this static
+annotation. Preserve the already bound registry bytes; clarify this terminology
+only in a future versioned metadata change. A 20-primary run is a smoke check that
+may produce only zeros; 500 primaries are a bounded example, not convergence or
+physical validation.
 
 Never hand-edit generated `docs/` files. Do not alter frozen model files,
 scientific results, input identities or calibration to make a display test pass.

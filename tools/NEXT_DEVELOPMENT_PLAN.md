@@ -2,48 +2,53 @@
 
 ## Owner priority update: 2026-10-07
 
-The accepted student UI milestone provides 17 inspectable models, five registered
-computation connectors and 12 view-only models. The next bounded manual milestone
-is shared source configuration, superseding the earlier immediate-M15b ordering.
-PROGRESS.md remains the current state/priority authority. M5 is closed; M15b/M15c
-remain unfinished and the automatic heartbeat remains PAUSED. M8/M9 still require
-the owner's second computer; student-own-computer reproducibility is a goal,
-not an installation result already demonstrated.
+Shared-source functionality is delivered from baseline
+`20bd82512c8326cf9a73136a0a4b0b03b8bdfd0e`; all three final AI reviews accept the
+bounded milestone. Final revision, live-main synchronization and owned-process/lease
+cleanup are recorded in `.local/source-switch-v1/COMPLETE.json` and
+`.local/autonomy/state.json`; verify those and actual Git before further work. One source registry and one nominal
+world/detector/source anchor contract compose with the five existing computation
+connectors. All 17 models remain inspectable, with 12 view-only. Am241 and Ba133
+are promoted after their fixed SAP22/500/seed26092631 cases passed the unchanged
+source gate. Co60 completed its trial with one below-threshold rejection and
+remains disabled. Exactly 1500 new initial primaries were run, with no retry or
+retuning. Five-model software compatibility is factorized; actual source science
+ran only for the three SAP22 cases.
 
-Use the existing remage/Geant4, SSD and electronics backend with:
+Real Chrome passed ten promoted-source/model selections and AK01's disabled
+execution controls. Curated intermediate downloads and original saved identities
+remain traceable. The necessary Am241 outer-validator repair retained its native
+science and failed CLI evidence and completed from saved data with science_calls=0.
+I-001's protected raw-byte download repair is independently closed; 39 focused
+HTTP/controller checks, JavaScript contracts and the saved Am241 HTML HTTP hash
+passed. Browser destination-file checksum proof remains unconfirmed. Seven exact
+Git byte rules preserve frozen science/configuration bytes; corrected staging
+matches the raw source bytes. These repairs preserve the delivered contracts.
 
-- One reusable cryostat-world baseline plus maintained detector/source anchor
-  definitions with explicit units, frames and transforms. Preserve detector model,
-  operating variant, signed contacts and readout mapping independently of source.
-- One source preset registry and a generic decay reader/runtime. Effective run
-  configuration composes existing world, detector and source definitions; avoid
-  per-combination code, configuration files or geometry templates.
-- Mandatory Am241 at the existing Cs137 nominal source anchor:
-  global [0, 37.073, 0.290] mm for the current assembly. Retain the original Cs137
-  baseline and record emission/decay identities and time policy explicitly.
-- Full resolved configuration and model/source/runtime/seed hashes, stage receipts
-  and artifact bindings, including complete original primary IDs, zero deposits,
-  delayed daughters, raw rows and null native failures. Keep truth Edep, signed
-  charge and independently calibrated reconstructed energy separate.
-- Meaningful source-specific acceptance before enabling each additional preset.
-  Preselect one bounded detector/source/count/seed case, verify geometry/placement,
-  radiation identity/census and native-to-electronics behavior, and retain failure
-  evidence. Optional common sources follow only when feasible and actually checked;
-  do not retune source/count/geometry after seeing an outcome or imply arbitrary
-  uploaded-source support.
+Physics FINAL, integrity FINAL and the NEW independent third FINAL accept the
+milestone without unresolved blockers; recorded peer exchange has no remaining
+disagreement. Commit/push and process/lease cleanup belong to the root
+coordinator; this plan does not claim they have occurred. PROGRESS.md remains the
+current state/priority authority. Automatic heartbeat stays PAUSED; M5 is closed
+and M15a accepted. Fresh-machine/M8/M9 acceptance still requires the owner's
+second computer and documented installed runtimes/pinned upstream inputs.
 
-Document the required installed runtimes/inputs and expose traceable saved results
-for students. Reuse compatible unchanged world/detector geometry and fields only
-through exact provenance checks; source changes still require their own radiation
-and event-ledger validation. Do not reuse Cs137-specific particle/line assumptions
-as Am241 validation. A passed engineering source case does not prove physical
-detector identity, experimental source placement or calibrated CCE.
+The next bounded task resumes the retained M15b plan: one preselected real
+two-batch acceptance, <=500 total primaries, using the immutable acceptance-only
+cap below10000. It is not launched in this round. Preserve its planned settings,
+census, shared preparation/calibration and stop/resume conditions. Optional
+saved-only diagnosis of Co60 event475 is not a prerequisite and does not authorize
+new computation or a looser source gate. M15c arbitrary counts, source angle
+controls, additional cryostats and the 12 view-only model adapters remain deferred.
+The current isotropic point source stays at global [0, 37.073, 0.290] mm.
 
-Complete this bounded source milestone through one tested integrated diff and the
-existing review method: two scoped reviews in parallel, then a NEW independent
-third review, with targeted verified corrections only. No new environment,
-framework, physics engine, large campaign or batch-execution prerequisite is
-introduced. The detailed M15/M16 plan below is retained for subsequent work.
+The source cases are bounded engineering evidence. A 20-primary smoke check may
+produce only zeros; 500 primaries do not establish convergence, physical detector
+identity, experimental placement, calibrated CCE or experimental agreement.
+Reuse unchanged world/detector inputs only through exact provenance checks; any
+future source capability still requires its own radiation/ledger acceptance.
+No new environment, large campaign or repeated review cycle is a prerequisite
+for the retained M15b work below.
 
 M15a's versioned count/batch preview is implemented and tested; real M15b execution
 and M15c UI remain planned. PROGRESS.md is the current state and priority authority.
@@ -178,6 +183,7 @@ computer. No new million task, raw-data publication, global configuration change
 separately billed API, reset credits or environment installation is authorized here.
 
 New window: read the current handoff, verify actual gpt-6.1-sol/ultra, project root,
-Git, terminal receipts, real workers and lease. Follow the owner's 2026-10-07 shared
-source priority above before queued M15b work; do not repeat completed M15a. Do not rerun M13/M14, repeat old reviews or enable the
-paused heartbeat merely because this plan exists.
+Git, terminal receipts, real workers and lease. Resume the retained bounded M15b
+plan only in the next authorized round; do not repeat delivered shared-source work,
+completed M15a or M13/M14, repeat closed reviews or enable the paused heartbeat
+merely because this plan exists.

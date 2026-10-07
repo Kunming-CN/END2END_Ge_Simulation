@@ -34,6 +34,14 @@ class Inspection(unittest.TestCase):
         W.write(self.root/(I.STATE+'/workflow-jobs.json'),{'kind':'local_workflow_jobs_v1','jobs':[self.job]})
         return stamp
 
+    def test_generic_decay_python_worker_is_kept_in_science_inventory(self):
+        for command in ('python -B ./decay_source.py prepare --request run.json',
+                        '/existing/python /project/transport/decay_source.py run --directory run',
+                        'PYTHON DECAY_SOURCE.PY extract --directory run'):
+            with self.subTest(command=command):self.assertIsNotNone(I.SCIENCE.search(command))
+        for command in ('notepad.exe notes.txt','python readme_analysis.py'):
+            with self.subTest(command=command):self.assertIsNone(I.SCIENCE.search(command))
+
     def test_recognized_ended_failure_preserves_every_failed_byte(self):
         before=W.inventory(self.directory);self.retire();self.assertEqual(before,W.inventory(self.directory))
         with patch.object(W,'process_identity',return_value=None):self.assertTrue(I.verified_retirement(self.directory,self.root))

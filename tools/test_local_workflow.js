@@ -7,6 +7,7 @@ class Element {
   replaceChildren(...nodes){this.children=[];this.value='';this.append(...nodes);}
   addEventListener(name,fn){this['on'+name]=fn;}
   scrollIntoView(){}
+  click(){this.clicked=true;}
   setAttribute(name,value){this[name]=value;}
   removeAttribute(name){delete this[name];}
 }
@@ -21,7 +22,7 @@ const context=vm.createContext({document:{getElementById:get,createElement:tag=>
 vm.runInContext(fs.readFileSync(__dirname+'/focused_plots.js','utf8'),context);
 vm.runInContext(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),context);
 function run(code){return vm.runInContext(code,context);}
-run(`catalog={electronics_keys:Object.keys(labels),electronics_defaults:{},sources:[{id:'mono_gamma_662_axis_v1',label:'Gamma',pose:'plus5mm',counts:[20]},{id:'cs137_point_decay_v1',label:'Cs137',pose:'nominal',counts:[20,500]}],cryostats:[{id:'lbnl_modular_nominal_v1',available:true}],detectors:[{id:'AK02',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'SAP22',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'GeRC02',available:true,sources:['cs137_point_decay_v1'],operating_label:'Li50min +240 V'},{id:'KMRC01_candidate',available:true,sources:['cs137_point_decay_v1'],operating_label:'−370 V; fixed −1 wiring'}]};`);
+run(`catalog={electronics_keys:Object.keys(labels),electronics_defaults:{},sources:[{id:'mono_gamma_662_axis_v1',label:'Gamma',pose:'plus5mm',pose_label:'+5 mm along global y',counts:[20],fixed_seed:26092631,details:'One 662 keV gamma per primary; fixed global −y beam, time zero.',count_unit:'initial gamma primaries'},{id:'cs137_point_decay_v1',label:'Cs137',pose:'nominal',pose_label:'Nominal source anchor',counts:[20,500],details:'One initial Cs137 decay per primary; isolated pulse windows retain daughter timing.',count_unit:'initial Cs137 decays',fixed_seed:null}],cryostats:[{id:'lbnl_modular_nominal_v1',available:true}],detectors:[{id:'AK02',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'SAP22',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'GeRC02',available:true,sources:['cs137_point_decay_v1'],operating_label:'Li50min +240 V'},{id:'KMRC01_candidate',available:true,sources:['cs137_point_decay_v1'],operating_label:'−370 V; fixed −1 wiring'}]};`);
 // A primary's delayed groups and zero primaries are all independently selectable.
 run(`result={job:{name:'fixture'},records:[
  {record_kind:'decay',event_id:7,deposited_energy_keV:4,pulse_count:2,zero_deposit:false},
@@ -159,13 +160,37 @@ assert.equal(run("safeSvg('<svg/>')").xmlns,svgNs);originalTree.attributes.pop()
 originalTree.prefix='foreign';assert.throws(()=>run("safeSvg('<svg/>')"),/element/);originalTree.prefix=null;
 svgDocument.doctype={};assert.throws(()=>run("safeSvg('<svg/>')"),/Malformed/);svgDocument.doctype=null;
 svgDocument.getElementsByTagName=()=>[{}];assert.throws(()=>run("safeSvg('<svg/>')"),/Malformed/);svgDocument.getElementsByTagName=()=>[];
+// Source policy is catalog data; no isotope description is inferred in the UI.
+run(`catalog.sources.push({id:'am241_point_decay_v1',label:'Am241 point decay',pose:'nominal',pose_label:'Shared nominal anchor',counts:[20,500],available:false,reason:'Acceptance pending',details:'One initial Am241 decay per primary; daughter timing remains recorded.',count_unit:'initial Am241 decays',position_global_mm:[0,37.073,.290],source_contract:{isotope:{Z:95,A:241}},acceptance:{status:'pending'}});catalog.detectors.forEach(d=>{if(d.available)d.sources.push('am241_point_decay_v1');});`);
+get('detector').value='SAP22';run('detectorChanged();');
+assert.equal(get('source').children.find(o=>o.value==='am241_point_decay_v1').disabled,true);
+assert.throws(()=>run(`importedConfig({...config(),source:'am241_point_decay_v1',pose:'nominal',primary_count:500,seed:17})`),/unavailable/);
+run("catalog.sources.find(s=>s.id==='am241_point_decay_v1').available=true;");get('source').value='am241_point_decay_v1';run('sourceChanged();');
+assert.match(get('source-details').textContent,/Am241.*daughter timing/);assert.doesNotMatch(get('source-details').textContent,/Cs137/);
+assert.match(get('source-identity').textContent,/95/);assert.equal(get('seed').disabled,false);
+assert.equal(run("importedConfig({...config(),seed:17}).seed"),17);
+for(const bad of [true,500.0+0.5,'500'])assert.throws(()=>run(`importedConfig({...config(),primary_count:${JSON.stringify(bad)}})`),/unavailable/);
+run("showRun(savedJob);");assert.match(get('selected').textContent,/saved-sap-gamma.*Gamma/);
+run(`savedArtifacts(savedJob,{artifacts:{'resolved-config.json':{sha256:'1'.repeat(64),bytes:101},'transport/truth.lh5':{sha256:'2'.repeat(64),bytes:202},'transport/stream/events-00000.jsonl':{sha256:'3'.repeat(64),bytes:303},'response/scalars.jsonl':{sha256:'4'.repeat(64),bytes:404},'response/calibration.json':{sha256:'5'.repeat(64),bytes:505},'unrelated.json':{sha256:'6'.repeat(64),bytes:606}}});`);
+const artifactButtons=get('saved-artifacts').children.flatMap(row=>row.children).filter(n=>n.tagName==='button').map(n=>n.textContent);
+for(const name of ['COMPLETE.json','transport/truth.lh5','transport/stream/events-00000.jsonl','response/scalars.jsonl','response/calibration.json'])assert.ok(artifactButtons.includes('Download '+name),name);
+assert.ok(!artifactButtons.includes('Download unrelated.json'));
+assert.ok(get('saved-artifacts').children.flatMap(row=>row.children).some(n=>/202 bytes.*SHA256/.test(n.textContent)));
+get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
 // A delayed old Check reply cannot enable Start for a changed current selection.
 (async()=>{
+  // Every Download requests exact bytes; viewing keeps the default route.
+  run("let artifactRequests=[];fetch=async(url,options)=>{artifactRequests.push({url,options});return {ok:true,blob:async()=>({})};};");
+  await run("download('fixture','response/summary.html')");
+  await run("artifact('fixture','response/summary.html')");
+  assert.match(run('artifactRequests[0].url'),/download=1/);
+  assert.doesNotMatch(run('artifactRequests[1].url'),/download=/);
+  assert.equal(run("artifactRequests[0].options.headers['X-Control-Token']"),'fixture');
   run("let resolveCheck;api=()=>new Promise(resolve=>resolveCheck=resolve);");
   const pending=run("$('check').onclick()");
   get('detector').value='SAP22';run("invalidate();resolveCheck({check_id:'old',resolved:{selection:{detector:'AK02'}}});");
   await pending;assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
-  for(const [id,value]of [['name','changed-name'],['setting-gain','4'],['source','cs137_point_decay_v1']]){
+  for(const [id,value]of [['name','changed-name'],['setting-gain','4'],['source','am241_point_decay_v1']]){
     const old=run("$('check').onclick()");get(id).value=value;
     run(id==='source'?"sourceChanged();":"invalidate();");
     run("resolveCheck({check_id:'stale',resolved:{selection:{detector:'AK02'}}});");await old;

@@ -113,7 +113,9 @@ class Rings(unittest.TestCase):
         enabled=[d for d in W.catalog()['detectors'] if d['available']]
         self.assertEqual({d['id'] for d in enabled},set(W.MODELS))
         for d in enabled:
-            if d['id'] in R.MODELS:self.assertEqual(d['sources'],[W.CS])
+            if d['id'] in R.MODELS:
+                self.assertEqual([source for source in d['sources'] if source in (W.CS,W.GAMMA)],[W.CS])
+                self.assertNotIn(W.GAMMA,d['sources'])
         self.assertIn('fresh-clone',W.catalog()['setup_limit'].lower())
         c=dict(self.config,source=W.GAMMA,pose='plus5mm',seed=26092631)
         with self.assertRaises(W.ControlError):W.check(c,root=self.root)

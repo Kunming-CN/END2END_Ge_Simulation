@@ -5,12 +5,97 @@ Prior full handoff/planning is preserved [at bf0ccee](https://github.com/Kunming
 The complete M13/M14 history remains [at 9b73383](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/9b733834c245834658151a2d31f092a1b2bd5305/PROGRESS.md).
 Inspect terminal receipts, hashes, actual processes and owned lock before repeating work.
 
-## Current state: student UI accepted; next shared source presets
+## Current state: shared-source milestone accepted
+
+This shared-source milestone began from clean synchronized baseline
+`20bd82512c8326cf9a73136a0a4b0b03b8bdfd0e`. Automatic heartbeat remains PAUSED;
+M5 is closed and M15a accepted. Real M15b execution/M15c arbitrary-count UI remain
+unfinished; M8/M9 fresh-machine acceptance still requires the owner's second PC.
+
+One immutable source registry and one shared nominal world/placement record now
+compose source physics with the five existing detector/readout connectors. All
+17 models remain inspectable; five have computation connectors. Am241 uses the
+existing Cs137 global point [0, 37.073, 0.290] mm. The cryostat geometry, models,
+operating variants, signed contacts and source anchor were not retuned. Source
+orientation controls remain future work. Cs137/gamma/SAP18 saved contracts and
+original source hashes are preserved; no per-combination template was added.
+
+Three preselected SAP22 cases used 500 initial nuclei each, radiation seed
+26092631, one thread, +700 V and the frozen model/native/electronics/anchor settings:
+
+| Source | Accepted groups | Zero-deposit primaries | Native failures / readout rejects / saturation | Admission |
+|---|---:|---:|---|---|
+| Am241 | 9 | 491 | 0 / 0 / 0 | Promoted after unchanged source gate passed |
+| Ba133 | 21 | 479 | 0 / 0 / 0 | Promoted after unchanged source gate passed |
+| Co60 | 8 | 491 | 0 / 1 / 0 | Completed processing; remains disabled |
+
+Exactly 1500 new initial primaries were run, with no scientific retry, seed/count
+change or tuning after outcomes. Co60 event 475 was genuinely below the fixed
+readout threshold; the gate is unchanged. The three geometry-file SHA256 values
+are identical: `2f865826f961502b4760abf8a036b3ea1a294df2538fdf5d8026f209b510f805`.
+These are three actual SAP22 source cases plus factorized software admission for
+five detector bindings, not fifteen actual source/detector science acceptances.
+
+Am241's native science succeeded in 49.915 s, but its original CLI returned exit 1
+because outer validation expected a status field absent on successful scalar
+records. The narrow `tools/decay_validation.py` correction and explicit saved-data
+completion retained immutable `FAILED-run.json`, the original science bindings
+and failure basis. That completion used science_calls=0; ordinary Inspect passed.
+Co60 and Ba133 completed through the normal CLI. Runs are retained under
+`.local/runs/source-{am241,co60,ba133}-500-v1/`; no science was regenerated.
+
+Control shows source policy and collapsible identity from the registry; stale
+Check/import replies and saved-run identities remain fenced. Real Chrome passed
+all ten Am241/Ba133 selections across the five computation connectors and the
+four disabled-control protections for view-only AK01. The 17 curated artifact
+entries under Explore events → Reproduce or analyze this saved run cover resolved
+settings/completion, raw transport/ledger, signed signals and independent
+calibration. CLI acceptance roots were not silently imported into Control.
+
+Integrity finding I-001 is closed: Download now returns original artifact bytes
+through the same protected route; HTML viewing retains derived navigation links.
+The correction passed 39 HTTP/controller tests, JavaScript contracts and an exact
+HTTP byte/SHA check of the saved Am241 HTML, independently rechecked. Original
+INITIAL and correction evidence are retained. The actual browser download
+destination file/checksum remains unconfirmed after the original tool waiter
+timeout; the HTTP proof does not establish that destination.
+
+Seven exact-path Git byte rules preserve the acceptance-bound source/configuration
+bytes, including the existing mixed-line-ending CMake input. During the Git
+byte-protection correction, all 108 frozen source SHA256 values stayed unchanged; raw/clean Git hashes agree, and all 26 staged
+production/test files match their original bytes after the recorded CMake index
+refresh. No scientific file was rewritten for Git normalization. Evidence is
+retained under `.local/source-switch-v1/`, including the original and corrected
+staging receipts. The separated Am241 outer validator and I-001 download repair
+are necessary acceptance/provenance corrections within this milestone.
+
+The two scoped independent FINAL reviews (physics and integrity) and the NEW
+independent third FINAL accept the bounded milestone with no unresolved blockers.
+Their recorded peer exchange found no remaining disagreement. These are scoped
+AI engineering reviews. The
+20-primary option is a smoke check and may yield only zeros; 500 primaries are a
+bounded example, not numerical convergence or physical validation. Neither the
+runs nor review establish physical detector identity, surveyed source placement,
+calibrated CCE, physical resolution or experimental agreement. Students still
+need documented installed runtimes and pinned upstream inputs; second-PC/M8/M9
+acceptance remains deferred. No installation/PATH/WSL/global change or website
+publication occurred; `docs/` remains the existing published snapshot.
+
+Final revision, live-main synchronization and owned-process/lease cleanup are
+recorded in `.local/source-switch-v1/COMPLETE.json` and `.local/autonomy/state.json`;
+verify those and actual Git before further work. The next bounded task is
+the retained M15b real serial execution acceptance: one preselected two-batch case,
+<=500 total primaries, with the recorded acceptance-only cap. This round does not
+start M15b. Co60 event 475 may be diagnosed from saved data in a separately chosen
+step; it is not a prerequisite and does not authorize new computation. M15c,
+source angles and the 12 view-only model adapters remain future work. See
+[the maintained detailed plan](tools/NEXT_DEVELOPMENT_PLAN.md).
+
+## Preserved preceding milestone: student UI accepted
 
 Owner priority (2026-10-07): make the existing English local browser useful for
-Prof. Mei's students. This manual milestone began at verified main/live origin
-ab66a72cf4fae3e3eccc251c912ab0b58118e25a; the coordinator will synchronize its
-accepted changes. Automatic heartbeat remains PAUSED. M5 is closed; M15a is
+Prof. Mei's students. The preserved student UI milestone began at verified main/live origin
+ab66a72cf4fae3e3eccc251c912ab0b58118e25a. Automatic heartbeat remains PAUSED. M5 is closed; M15a is
 accepted; real M15b execution and M15c arbitrary-count UI remain unfinished.
 M8/M9 fresh-machine acceptance stays deferred until a second computer is provided.
 
@@ -56,18 +141,6 @@ with no new cycle for this final documentation update.
 No website build/publication, installation or global environment change occurred.
 Source tools/site_guide.html is updated; docs/ remains the existing published
 snapshot. Evidence and correction/review receipts: .local/student-ui-v1/.
-
-## Next bounded owner request: shared world, anchors and source presets
-
-The owner now authorizes reusable cryostat-world and detector/source anchor
-definitions, one source preset registry and a generic decay reader/runtime using
-the same backend. Am241 at the existing Cs137 nominal position is mandatory.
-Preserve the Cs137 baseline; do not create per-combination code, configuration or
-geometry templates. Optional common sources require meaningful source-specific
-acceptance before enabling them. Preserve complete resolved configuration,
-model/source/runtime hashes and stage/artifact provenance for student reproduction.
-See [the detailed next plan](tools/NEXT_DEVELOPMENT_PLAN.md). This source milestone
-takes priority over immediate M15b work; batch execution remains explicitly open.
 
 ## Preserved preceding milestone: M15a accepted
 

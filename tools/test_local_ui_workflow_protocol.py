@@ -1,5 +1,6 @@
 """Real protected loopback workflow routes; every backend action is mocked."""
 import http.client
+import hashlib
 import copy
 import json
 from pathlib import Path
@@ -68,7 +69,10 @@ class Protocol(unittest.TestCase):
     def test_sap18_exact_capability_after_acceptance_and_unchecked_edits_refused(self):
         catalog=W.catalog()
         sap=next(d for d in catalog['detectors'] if d['id']==W.SAP18)
-        self.assertTrue(sap['available']);self.assertEqual(sap['sources'],[W.CS])
+        self.assertTrue(sap['available'])
+        legacy={s['id'] for s in catalog['sources'] if s['source_contract']['adapter'].startswith('legacy_')}
+        self.assertEqual([s for s in sap['sources'] if s in legacy],[W.CS])
+        self.assertNotIn(W.GAMMA,sap['sources'])
         self.assertIn('identity unresolved',sap['operating_label'])
         self.assertEqual(sum(d['available'] for d in catalog['detectors']),5)
         original=W.read(W.ROOT/'scenarios/detector-capabilities.json')
@@ -214,13 +218,56 @@ class Protocol(unittest.TestCase):
         self.assertIn(b'id="event-7-group-2"',body)
         self.workflow.artifact.assert_called_once_with('fixture','response/summary.html')
 
+    def test_raw_html_download_preserves_original_bytes_and_view_derivative(self):
+        original='<html>\r\n<a href="run.json">π data</a><details><summary>Event 7 / group 2</summary></details>\r\n</html>'.encode('utf-8')
+        self.workflow.artifact.return_value=(original,'text/html; charset=utf-8')
+        route='/api/workflow-file?name=fixture&file=response%2Fsummary.html'
+        view_status,view,_=self.request(route=route)
+        raw_status,raw,headers=self.request(route=route+'&download=1')
+        self.assertEqual((view_status,raw_status),(200,200))
+        self.assertEqual(raw,original)
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),hashlib.sha256(original).hexdigest())
+        self.assertEqual(int(headers['Content-Length']),len(original))
+        self.assertNotEqual(view,original)
+        self.assertIn(b'/api/workflow-file?name=fixture&file=response%2Frun.json',view)
+        self.assertIn(b'id="event-7-group-2"',view)
+        self.assertNotIn(b'id="event-7-group-2"',raw)
+        self.assertEqual(self.workflow.artifact.call_args_list,[
+            unittest.mock.call('fixture','response/summary.html'),
+            unittest.mock.call('fixture','response/summary.html')])
+
+    def test_raw_download_keeps_session_and_controller_boundaries(self):
+        route='/api/workflow-file?name=fixture&file=response%2Fsummary.html&download=1'
+        cookie=self.server.workflow_download_cookie+'='+self.server.workflow_download_token
+        browser={'X-Control-Token':'','Cookie':cookie,'Sec-Fetch-Site':'same-origin'}
+        self.assertEqual(self.request(route=route,headers=browser)[0],200)
+        self.workflow.artifact.reset_mock()
+        wrong=self.server.download_cookie+'='+self.server.download_token
+        for headers in ({'X-Control-Token':''},{'Origin':'https://evil.example'},
+                {**browser,'Sec-Fetch-Site':'cross-site'},
+                {**browser,'Sec-Fetch-Site':'same-site'},
+                {**browser,'Cookie':wrong},{**browser,'Sec-Fetch-Site':None}):
+            with self.subTest(headers=headers):self.assertEqual(self.request(route=route,headers=headers)[0],403)
+        self.workflow.artifact.assert_not_called()
+        # The raw mode must still invoke the existing owner/path/hash authority.
+        self.workflow.artifact.side_effect=W.ControlError('Saved artifact changed','workflow_refused')
+        status,body,_=self.request(route=route)
+        self.assertEqual(status,400)
+        self.assertIn(b'Saved artifact changed',body)
+        self.workflow.artifact.assert_called_once_with('fixture','response/summary.html')
+
     def test_query_alias_and_duplicate_artifact_fields_refused(self):
         for route in ('/api/workflow/state?','/api/workflow/state?name=a','/api/workflow/state#x'):
             self.assertEqual(self.request(route=route)[0],404)
         self.workflow.snapshot.assert_not_called()
         for route in ('/api/workflow-file?name=a&name=b&file=run.json',
                       '/api/workflow-file?name=a&file=run.json&extra=1',
-                      '/api/workflow-file?name=a&file=run.json#x'):
+                      '/api/workflow-file?name=a&file=run.json#x',
+                      '/api/workflow-file?name=a&file=run.json&download=',
+                      '/api/workflow-file?name=a&file=run.json&download=0',
+                      '/api/workflow-file?name=a&file=run.json&download=true',
+                      '/api/workflow-file?name=a&file=run.json&download=01',
+                      '/api/workflow-file?name=a&file=run.json&download=1&download=1'):
             self.assertEqual(self.request(route=route)[0],400)
         self.workflow.artifact.assert_not_called()
 

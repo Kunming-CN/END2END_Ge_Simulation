@@ -114,7 +114,10 @@ function progress(out,started,stage,status,counts,total)
     pending=joinpath(out,"progress.json.pending-"*string(getpid()))
     write(pending,JSON.json(value));mv(pending,joinpath(out,"progress.json");force=true)
 end
-function run(o,a,request; process_response=process_ring, source_names=SOURCES)
+function run(o,a,request; process_response=process_ring, source_names=SOURCES, stream_api=S,
+    native_attempt_response=native_attempt, report_kind="workflow_ring_native_response_v1",
+    summary_writer=summary_html, progress_writer=progress, report_extra=Dict{String,Any}(),
+    source_limitations=nothing, trace_signal_convention=nothing)
     env=Q.environment("cpu"); readout_env=E.environment()
     R.check(Threads.nthreads() in (1,2),"Use one or two Julia threads")
     d=a.document; sim=a.sim; c=P.for_census(a.profile.profile,d["primary_count"])
@@ -125,8 +128,8 @@ function run(o,a,request; process_response=process_ring, source_names=SOURCES)
     counts=Dict{String,Any}("initial_primaries"=>0,"initial_decays"=>a.ion ? 0 : nothing,"zero_deposit_primaries"=>0,"groups"=>0,"accepted"=>0,
         "rejected"=>0,"readout_rejected"=>0,"native_failed_groups"=>0,"saturated"=>0,"native_charge_samples"=>0,"analog_samples"=>0,
         "line_photons"=>a.ion ? 0 : nothing,"decay_photons"=>a.ion ? 0 : nothing)
-    report=Dict{String,Any}("kind"=>"workflow_ring_native_response_v1","status"=>"running","environment"=>env,
-        "readout_environment"=>readout_env,"input_kind"=>a.ion ? S.KIND : "mono_gamma_json_v1",
+    report=Dict{String,Any}("kind"=>report_kind,"status"=>"running","environment"=>env,
+        "readout_environment"=>readout_env,"input_kind"=>a.ion ? stream_api.KIND : "mono_gamma_json_v1",
         "input_sha256"=>a.inputhash,"source_lh5_sha256"=>d["source_lh5_sha256"],
         "model_id"=>d["model_id"],"model_sha256"=>d["model_sha256"],"temperature_K"=>77,
         "stored_temperature_K"=>a.stored,"bias_V"=>a.bias,"geometry_checks"=>a.geometry,
@@ -145,6 +148,10 @@ function run(o,a,request; process_response=process_ring, source_names=SOURCES)
             "Cs137 uses finite nominal isolated windows with reset, possible tail loss and unestablished recovery; no activity/live-time/pileup claim.",
             "Material ledger is recorded-only; escape/neutrino/full energy closure is null."],
         "ledger"=>get(d,"ledger",Dict("kind"=>"recorded-only","full_energy_closure"=>nothing)))
+    isempty(intersect(Set(keys(report)),Set(keys(report_extra)))) || throw(ArgumentError("Response report extension may not replace core provenance"))
+    merge!(report,report_extra)
+    source_limitations!==nothing && (report["limitations"]=source_limitations)
+    haskey(d,"source_id") && (counts["line_photon_counts"]=Dict(x["name"]=>0 for x in d["source_contract"]["diagnostic_lines"]))
     handles=IO[]; stage="field_solve"
     try
         report["configuration_sha256"]=request["configuration_sha256"]
@@ -157,6 +164,7 @@ function run(o,a,request; process_response=process_ring, source_names=SOURCES)
         report["independent_calibration_calls"]=1
         report["calibration_seconds"]=a.calibration_seconds
         report["trace_signal_convention"]="Charge/current are raw signed native signals; Negative ring preamp/shaper follow fixed -1 wiring."
+        trace_signal_convention!==nothing && (report["trace_signal_convention"]=trace_signal_convention)
         cp(o["request"],joinpath(out,"request-input.json"))
         a.injection!==nothing && E.save(joinpath(out,"negative-injection.json"),a.injection)
         E.save(joinpath(out,"profile.json"),a.profile.profile)
@@ -170,11 +178,11 @@ function run(o,a,request; process_response=process_ring, source_names=SOURCES)
         report["config_sha256"]=E.hashfile(joinpath(out,"readout-config.json"))
         report["grouping_policy"]=a.ion ? d["grouping_policy"] : Dict("name"=>"one_primary_one_response","state_at_group_start"=>"reset","time_origin"=>"original primary_time_ns")
         E.save(joinpath(out,"run.json"),report)
-        progress(out,started,stage,"running",counts,d["primary_count"])
+        progress_writer(out,started,stage,"running",counts,d["primary_count"])
         solver,timing=Base.invokelatest(Q.solve_fields!,sim,cfg,Q.prepare_backend("cpu");sor_consts=1.0,potential_rechecks=4)
         report["solver"]=solver; report["field_timings"]=timing; report["field_fingerprint"]=N.field_fingerprint(sim)
         stage="native_and_readout"; replay_start=time(); native_s=0.; electronics_s=0.
-        progress(out,started,stage,"running",counts,d["primary_count"])
+        progress_writer(out,started,stage,"running",counts,d["primary_count"])
         eion=a.eion; M=a.matrix; cal=a.calibration
         report["calibration"]=cal; report["ionisation_energy_eV"]=eion
         report["readout_contact_id"]=cfg.contact
@@ -193,6 +201,7 @@ function run(o,a,request; process_response=process_ring, source_names=SOURCES)
             gs=event_groups(e,a.ion)
             counts["initial_primaries"]+=1; counts["zero_deposit_primaries"]+=energy==0
             if a.ion; counts["initial_decays"]+=1; counts["line_photons"]+=e["line_photon_count"]; counts["decay_photons"]+=e["decay_photon_count"]; end
+            if haskey(d,"source_id"); for (name,n) in e["line_photon_counts"]; counts["line_photon_counts"][name]+=n; end; end
             scalar!(sj,sc,Dict("record_kind"=>a.ion ? "decay" : "primary","event_id"=>id,"global_decay_id"=>globalid,"group_id"=>nothing,
                 "deposited_energy_keV"=>energy,"pulse_count"=>length(gs),"zero_deposit"=>energy==0,
                 "raw_row_indices"=>[s["raw_row_index"] for s in e["steps"]],
@@ -208,7 +217,7 @@ function run(o,a,request; process_response=process_ring, source_names=SOURCES)
                 gid=g["group_id"]; origin=g["origin_time_ns"]; steps=[byrow[i] for i in g["row_indices"]]
                 event=Dict("event_id"=>id,"primary_time_ns"=>origin,"steps"=>steps)
                 t0=time()
-                attempt=native_attempt(()->N.native_event(event,sim,cfg,o["parcels"],o["seed"]),report["native_failure_policy"])
+                attempt=native_attempt_response(()->N.native_event(event,sim,cfg,o["parcels"],o["seed"]),report["native_failure_policy"])
                 native_s+=time()-t0
                 if attempt.error!==nothing
                     rec=failed_pulse(e,g,steps,o,attempt.error,d["source_lh5_sha256"])
@@ -266,9 +275,9 @@ function run(o,a,request; process_response=process_ring, source_names=SOURCES)
                 scalar!(sj,sc,rec)
                 group_hist!(hist,edep,q,r,eion)
             end
-            progress(out,started,stage,"running",counts,d["primary_count"])
+            progress_writer(out,started,stage,"running",counts,d["primary_count"])
         end
-        if a.ion; S.foreach_decay(consume,a.stream)
+        if a.ion; stream_api.foreach_decay(consume,a.stream)
         else; for e in d["events"]; consume(e); end
         end
         for io in handles; close(io); end; empty!(handles)
@@ -281,21 +290,21 @@ function run(o,a,request; process_response=process_ring, source_names=SOURCES)
         R.check(E.hashfile(a.input)==a.inputhash && E.hashfile(o["profile"])==a.profile.sha256,"Input/profile changed")
         P.validate_resolved(JSON.parsefile(joinpath(out,"readout-config.json")),a.profile.profile,d["primary_count"])
         R.check(E.hashfile(joinpath(out,"readout-config.json"))==report["config_sha256"],"Configuration bytes changed")
-        a.ion ? S.recheck(a.stream) : R.load_input(a.input)
+        a.ion ? stream_api.recheck(a.stream) : R.load_input(a.input)
         R.check(all(E.hashfile(joinpath(@__DIR__,n))==h for (n,h) in sources),"Consumer source changed")
         Q.verify_model_files()
         export_hist(out,hist,counts,cal)
         report["status"]=counts["native_failed_groups"]>0 ? "completed_with_native_failures" : "completed_provisional_native_response"
-        progress(out,started,"completed",report["status"],counts,d["primary_count"])
+        progress_writer(out,started,"completed",report["status"],counts,d["primary_count"])
         names=vcat(collect(files),["request-input.json","profile.json","profile-input.json","readout-config.json","input-contract.json","input-prepared.json","histograms.json","histograms.csv"])
         a.injection!==nothing && push!(names,"negative-injection.json")
         failures[]!==nothing && push!(names,"native-failures.jsonl")
         report["artifacts"]=Dict(n=>E.hashfile(joinpath(out,n)) for n in names)
-        summary_html(out,report); report["artifacts"]["summary.html"]=E.hashfile(joinpath(out,"summary.html"))
+        summary_writer(out,report); report["artifacts"]["summary.html"]=E.hashfile(joinpath(out,"summary.html"))
         report["artifact_bytes"]=Dict(n=>filesize(joinpath(out,n)) for n in keys(report["artifacts"]))
     catch err
         report["status"]="failed"; report["failure_stage"]=stage; report["error_type"]=string(typeof(err))
-        progress(out,started,stage,"failed",counts,d["primary_count"]);rethrow()
+        progress_writer(out,started,stage,"failed",counts,d["primary_count"]);rethrow()
     finally
         for io in handles; isopen(io) && close(io); end
         report["solve_replay_readout_export_wall_seconds"]=time()-started

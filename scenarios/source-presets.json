@@ -1,0 +1,282 @@
+{
+  "kind": "radioactive_source_presets_v1",
+  "schema_version": 1,
+  "presets": [
+    {
+      "id": "cs137_point_decay_v1",
+      "label": "Cs137 point decay",
+      "adapter": "legacy_cs137_v1",
+      "isotope": "Cs137",
+      "pose": "nominal",
+      "pose_label": "Existing nominal capsule centre",
+      "counts": [
+        20,
+        500
+      ],
+      "count_unit": "initial Cs137 decays",
+      "position_global_mm": [
+        0,
+        37.073,
+        0.29
+      ],
+      "fixed_seed": null,
+      "details": "Conditional isolated decay windows; delayed barium emissions retained; no activity/live-time normalization."
+    },
+    {
+      "id": "mono_gamma_662_axis_v1",
+      "label": "662 keV gamma beam",
+      "adapter": "legacy_gamma_v1",
+      "isotope": null,
+      "pose": "plus5mm",
+      "pose_label": "Existing +5 mm beam position",
+      "counts": [
+        20
+      ],
+      "count_unit": "initial gamma primaries",
+      "position_global_mm": [
+        0,
+        42.073,
+        0.29
+      ],
+      "fixed_seed": 26092631,
+      "details": "One synthetic 662 keV gamma along global -y; no decay normalization."
+    },
+    {
+      "id": "am241_point_decay_v1",
+      "label": "Am241 point decay",
+      "adapter": "shared_decay_source_v1",
+      "isotope": "Am241",
+      "pose": "nominal",
+      "pose_label": "Existing nominal capsule centre",
+      "counts": [
+        20,
+        500
+      ],
+      "count_unit": "initial Am241 decays",
+      "position_global_mm": [
+        0,
+        37.073,
+        0.29
+      ],
+      "fixed_seed": null,
+      "details": "At-rest unpolarized nuclear decay with correlated prompt cascade/atomic emissions; ground secondary nuclei above 100 us lifetime stopped. Conditional isolated 100 us windows; no source-capsule measurement/activity/live-time claim.",
+      "Z": 95,
+      "A": 241,
+      "pdg": 1000952410,
+      "generator": "GPS_ion_at_rest",
+      "primary_excitation_keV": 0,
+      "kinetic_energy_keV": 0,
+      "decay_mode": "alpha",
+      "daughter_Z": 93,
+      "daughter_A": 237,
+      "ground_daughter_pdg": 1000932370,
+      "allowed_light_nuclear_pdgs": [
+        1000020040
+      ],
+      "diagnostic_lines": [
+        {
+          "name": "Np237_59.54092",
+          "window_keV": [
+            59,
+            60
+          ]
+        }
+      ],
+      "diagnostic_line_policy": "diagnostics only; no photon/event filtering or fixed branching-intensity claim",
+      "units": {
+        "energy": "keV",
+        "length": "mm",
+        "time": "ns"
+      },
+      "angular_policy": "unpolarized radioactive decay; Geant4 correlated cascade, no directed beam",
+      "direction_global": null,
+      "nuclear_policy": {
+        "primary_threshold_ns": 1e+27,
+        "reset_initial_children_to_zero": true,
+        "ground_secondary_lifetime_cap_ns": 100000,
+        "nucleus_limits": "unrestricted_default",
+        "initial_nucleus_count_per_event": 1
+      },
+      "required_data_sha256": {
+        "G4RADIOACTIVEDATA": {
+          "z95.a241": "67ef4d5f82d8383ece44ffdb20154561e54eedf17f42852c7770228780860cd6",
+          "z93.a237": "9491ee0cf91531ccf414cbafd64c762accea661a8ef271fa30d7710917c3eac0"
+        },
+        "G4LEVELGAMMADATA": {
+          "z93.a237": "c23a2ca7fd00fb9ae4b0300d640ca6d4a55213e88911421c64af8818512a6c2b"
+        },
+        "G4ENSDFSTATEDATA": {
+          "ENSDFSTATE.dat": "12b2b4a608b445914fa29a39600dd1ec324fffd5cae20ad09b26bbe9ff0a224c"
+        }
+      },
+      "dataset_lifetime_evidence": {
+        "parent_ground_lifetime_s": 13651820000.0,
+        "daughter_ground_lifetime_s": 67659490000000.0,
+        "daughter_ground_stable": false,
+        "short_excited_lifetime_s": 6.72e-08
+      },
+      "normalization": "per initial Am241 nucleus; every primary including zero Ge deposit; never gamma=decay"
+    },
+    {
+      "id": "co60_point_decay_v1",
+      "label": "Co60 point decay",
+      "adapter": "shared_decay_source_v1",
+      "isotope": "Co60",
+      "pose": "nominal",
+      "pose_label": "Existing nominal capsule centre",
+      "counts": [
+        20,
+        500
+      ],
+      "count_unit": "initial Co60 decays",
+      "position_global_mm": [
+        0,
+        37.073,
+        0.29
+      ],
+      "fixed_seed": null,
+      "details": "At-rest unpolarized nuclear decay with correlated prompt cascade/atomic emissions; ground secondary nuclei above 100 us lifetime stopped. Conditional isolated 100 us windows; no source-capsule measurement/activity/live-time claim.",
+      "Z": 27,
+      "A": 60,
+      "pdg": 1000270600,
+      "generator": "GPS_ion_at_rest",
+      "primary_excitation_keV": 0,
+      "kinetic_energy_keV": 0,
+      "decay_mode": "beta_minus",
+      "daughter_Z": 28,
+      "daughter_A": 60,
+      "ground_daughter_pdg": 1000280600,
+      "allowed_light_nuclear_pdgs": [],
+      "diagnostic_lines": [
+        {
+          "name": "Ni60_1173.239",
+          "window_keV": [
+            1172,
+            1175
+          ]
+        },
+        {
+          "name": "Ni60_1332.514",
+          "window_keV": [
+            1331,
+            1334
+          ]
+        }
+      ],
+      "diagnostic_line_policy": "diagnostics only; no photon/event filtering or fixed branching-intensity claim",
+      "units": {
+        "energy": "keV",
+        "length": "mm",
+        "time": "ns"
+      },
+      "angular_policy": "unpolarized radioactive decay; Geant4 correlated cascade, no directed beam",
+      "direction_global": null,
+      "nuclear_policy": {
+        "primary_threshold_ns": 1e+27,
+        "reset_initial_children_to_zero": true,
+        "ground_secondary_lifetime_cap_ns": 100000,
+        "nucleus_limits": "unrestricted_default",
+        "initial_nucleus_count_per_event": 1
+      },
+      "required_data_sha256": {
+        "G4RADIOACTIVEDATA": {
+          "z27.a60": "bc2f5dbd7da0e6d5db44c62ff12da7ef85772c16631c8809eb72f044566faa28"
+        },
+        "G4LEVELGAMMADATA": {
+          "z28.a60": "8b53914d656404ca32fbfb2d6ef631db67c8b068025fab7f1748dd55ce95fc34"
+        },
+        "G4ENSDFSTATEDATA": {
+          "ENSDFSTATE.dat": "12b2b4a608b445914fa29a39600dd1ec324fffd5cae20ad09b26bbe9ff0a224c"
+        }
+      },
+      "dataset_lifetime_evidence": {
+        "parent_ground_lifetime_s": 166344200.0,
+        "daughter_ground_lifetime_s": null,
+        "daughter_ground_stable": true,
+        "short_excited_lifetime_s": 7.35e-13
+      },
+      "normalization": "per initial Co60 nucleus; every primary including zero Ge deposit; never gamma=decay"
+    },
+    {
+      "id": "ba133_point_decay_v1",
+      "label": "Ba133 point decay",
+      "adapter": "shared_decay_source_v1",
+      "isotope": "Ba133",
+      "pose": "nominal",
+      "pose_label": "Existing nominal capsule centre",
+      "counts": [
+        20,
+        500
+      ],
+      "count_unit": "initial Ba133 decays",
+      "position_global_mm": [
+        0,
+        37.073,
+        0.29
+      ],
+      "fixed_seed": null,
+      "details": "At-rest unpolarized nuclear decay with correlated prompt cascade/atomic emissions; ground secondary nuclei above 100 us lifetime stopped. Conditional isolated 100 us windows; no source-capsule measurement/activity/live-time claim.",
+      "Z": 56,
+      "A": 133,
+      "pdg": 1000561330,
+      "generator": "GPS_ion_at_rest",
+      "primary_excitation_keV": 0,
+      "kinetic_energy_keV": 0,
+      "decay_mode": "electron_capture",
+      "daughter_Z": 55,
+      "daughter_A": 133,
+      "ground_daughter_pdg": 1000551330,
+      "allowed_light_nuclear_pdgs": [],
+      "diagnostic_lines": [
+        {
+          "name": "Cs133_80.9979",
+          "window_keV": [
+            80,
+            82
+          ]
+        },
+        {
+          "name": "Cs133_356.0134",
+          "window_keV": [
+            355,
+            357
+          ]
+        }
+      ],
+      "diagnostic_line_policy": "diagnostics only; no photon/event filtering or fixed branching-intensity claim",
+      "units": {
+        "energy": "keV",
+        "length": "mm",
+        "time": "ns"
+      },
+      "angular_policy": "unpolarized radioactive decay; Geant4 correlated cascade, no directed beam",
+      "direction_global": null,
+      "nuclear_policy": {
+        "primary_threshold_ns": 1e+27,
+        "reset_initial_children_to_zero": true,
+        "ground_secondary_lifetime_cap_ns": 100000,
+        "nucleus_limits": "unrestricted_default",
+        "initial_nucleus_count_per_event": 1
+      },
+      "required_data_sha256": {
+        "G4RADIOACTIVEDATA": {
+          "z56.a133": "c14c90d1cf465480a894cc0d45f0dc0fb51a6b1a349b78148cbfc618585c83d7",
+          "z55.a133": "fb211743b42a2e6d069aa54804e99c99f52d8724ac50c639978c16a0adc7d09c"
+        },
+        "G4LEVELGAMMADATA": {
+          "z55.a133": "23c94c13818b87b2cf25e53da5fe713c388499264ad2deaf7774c27f3665f7f5"
+        },
+        "G4ENSDFSTATEDATA": {
+          "ENSDFSTATE.dat": "12b2b4a608b445914fa29a39600dd1ec324fffd5cae20ad09b26bbe9ff0a224c"
+        }
+      },
+      "dataset_lifetime_evidence": {
+        "parent_ground_lifetime_s": 332964200.0,
+        "daughter_ground_lifetime_s": null,
+        "daughter_ground_stable": true,
+        "short_excited_lifetime_s": 6.283e-09
+      },
+      "normalization": "per initial Ba133 nucleus; every primary including zero Ge deposit; never gamma=decay"
+    }
+  ]
+}
