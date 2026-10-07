@@ -1,0 +1,148 @@
+{
+  "kind": "catalog_presentation_v1",
+  "schema_version": 1,
+  "scope": "presentation_only",
+  "qualification": "Reviewed fixed-cryostat engineering capability; runtime checks remain independent. No experimental or convergence claim.",
+  "authority_sha256": {
+    "models/catalog.json": "ac5edd4c976a37cfcc80a8e507ac9347246a942ac843ed2ecc683079f220653b",
+    "transport/cryostat_nominal.json": "9cad951c14213ac64d1e0c83c6ee44e7f4b9990d80979fd5bae35797daaf0edb",
+    "scenarios/detector-capabilities.json": "131cac88fd9e2c5089ca5414953b14bf87cb360348bb926a4d90e670ad5528d5"
+  },
+  "catalog_adapter": {
+    "counts": [
+      20,
+      500
+    ],
+    "cryostat": "lbnl_modular_nominal_v1",
+    "descriptor_kind": "catalog_detector_contract_v1",
+    "model_rule": "Canonical complete model outside preserved legacy five; independently checked geometry and fixed cavity placement.",
+    "pose": "nominal",
+    "producer_adapter": "catalog_source_v1",
+    "qualification": "Nominal engineering assembly; no experimental detector qualification or numerical convergence claim.",
+    "readout_rule": "Original selected contact and voltages; signed native signal with fixed polarity inferred from contact levels.",
+    "source_rule": "Legacy Cs137 or an unchanged registered source with positive acceptance; gamma retains its legacy adapter.",
+    "temperature_rule": "Original canonical YAML temperature; no legacy runtime override.",
+    "workflow_kind": "local_catalog_workflow_v1"
+  },
+  "models": [
+    {
+      "model_id": "AK01",
+      "model_sha256": "300fe2a86090da837e3c44489f8341929bdc32343331a40a43636c7ed503e830",
+      "available": true,
+      "block_code": null,
+      "reason": null
+    },
+    {
+      "model_id": "AK02",
+      "model_sha256": "793de4cc598a3e26d375525e683be1bc2072e117d1c6b8003f6cdcffc9925dfa",
+      "available": true,
+      "block_code": null,
+      "reason": null
+    },
+    {
+      "model_id": "BEGe_GD32B_reference",
+      "model_sha256": "7e651b974a5f46f9de084180c0195da047707d14084622994f56eac97a7ff913",
+      "available": false,
+      "block_code": "cryostat_size",
+      "reason": "Fixed LBNL transverse x occupancy [-35.945, 35.945] mm exceeds cavity [-20.574, 20.574] mm. Fixed LBNL axial y occupancy [-0.023, 32.137] mm exceeds cavity [-21.463, 21.463] mm. Fixed LBNL transverse z occupancy exceeds the cavity and front-corner envelope."
+    },
+    {
+      "model_id": "BEGe_reference",
+      "model_sha256": "4456658ef2b8c777c3614ca4af5933f5a9e092ad18504aaa58754ad696215844",
+      "available": false,
+      "block_code": "cryostat_size",
+      "reason": "Fixed LBNL transverse x occupancy [-40, 40] mm exceeds cavity [-20.574, 20.574] mm. Fixed LBNL axial y occupancy [-0.023, 29.977] mm exceeds cavity [-21.463, 21.463] mm. Fixed LBNL transverse z occupancy exceeds the cavity and front-corner envelope."
+    },
+    {
+      "model_id": "Bipolar_reference_3D",
+      "model_sha256": "804093cedd9e1953589c72d7bcb0e8c13efb48f708d45773d4882dda20665fa5",
+      "available": true,
+      "block_code": null,
+      "reason": null
+    },
+    {
+      "model_id": "COAX_ANG2_reference",
+      "model_sha256": "75a792c8e8105834b426733bab62bf4589866be35280102b01647a79992a736e",
+      "available": false,
+      "block_code": "cryostat_size",
+      "reason": "Fixed LBNL transverse x occupancy [-40, 40] mm exceeds cavity [-20.574, 20.574] mm. Fixed LBNL axial y occupancy [-0.023, 106.977] mm exceeds cavity [-21.463, 21.463] mm. Fixed LBNL transverse z occupancy exceeds the cavity and front-corner envelope."
+    },
+    {
+      "model_id": "GeGI_3D",
+      "model_sha256": "4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04",
+      "available": false,
+      "block_code": "cryostat_size",
+      "reason": "Fixed LBNL transverse x occupancy [-45, 45] mm exceeds cavity [-20.574, 20.574] mm. Fixed LBNL transverse z occupancy exceeds the cavity and front-corner envelope. Original local z minimum -5.5 mm extends below the unchanged support plane; holder overlap requires a different placement."
+    },
+    {
+      "model_id": "GeRC02",
+      "model_sha256": "7a655caeb660c07df8fcd9af51cc0998daea15f16e31f9c6afcacb89daf39218",
+      "available": true,
+      "block_code": null,
+      "reason": null
+    },
+    {
+      "model_id": "ICPC_48A_reference",
+      "model_sha256": "a3b4acf6347b03c2b39e216bfdcf825e47b5c7b6f6293e8f9fd357862815f464",
+      "available": false,
+      "block_code": "cryostat_size",
+      "reason": "Fixed LBNL transverse x occupancy [-37.3, 37.3] mm exceeds cavity [-20.574, 20.574] mm. Fixed LBNL axial y occupancy [-0.023, 80.377] mm exceeds cavity [-21.463, 21.463] mm. Fixed LBNL transverse z occupancy exceeds the cavity and front-corner envelope."
+    },
+    {
+      "model_id": "ICPC_large_reference",
+      "model_sha256": "9bd9d1f58e5e6efb2fa5a11ab07a5db84126083fd1450b5d7f40edf23a72678d",
+      "available": false,
+      "block_code": "cryostat_size",
+      "reason": "Fixed LBNL transverse x occupancy [-40, 40] mm exceeds cavity [-20.574, 20.574] mm. Fixed LBNL axial y occupancy [-0.023, 49.977] mm exceeds cavity [-21.463, 21.463] mm. Fixed LBNL transverse z occupancy exceeds the cavity and front-corner envelope."
+    },
+    {
+      "model_id": "KL01_3D",
+      "model_sha256": "84b215eecc13cf5f92aabc5e3c464910315dc71468533e53040cd30874d662ea",
+      "available": true,
+      "block_code": null,
+      "reason": null
+    },
+    {
+      "model_id": "KMRC01_candidate",
+      "model_sha256": "d4258a3b9f9c041b4da1998ded6b373833169ddcc76079f0a588785efe68b6b6",
+      "available": true,
+      "block_code": null,
+      "reason": null
+    },
+    {
+      "model_id": "PPC_PONaMa1_reference",
+      "model_sha256": "16959e508f82338a3c9f7d47076bb72a1b342abb9f6d337ef642555cfd2274a6",
+      "available": false,
+      "block_code": "cryostat_size",
+      "reason": "Fixed LBNL transverse x occupancy [-34.45, 34.45] mm exceeds cavity [-20.574, 20.574] mm. Fixed LBNL axial y occupancy [-0.023, 51.977] mm exceeds cavity [-21.463, 21.463] mm. Fixed LBNL transverse z occupancy exceeds the cavity and front-corner envelope."
+    },
+    {
+      "model_id": "SAP16",
+      "model_sha256": "903aad272933aa6a2e2a744af0b6bfec486228633499f194c3fbe9b30d1486a4",
+      "available": true,
+      "block_code": null,
+      "reason": null
+    },
+    {
+      "model_id": "SAP17",
+      "model_sha256": "32c47ad227066358c2698a02ed5f69b221f256da1b6f1486f8ffadf9a4a4c6bd",
+      "available": true,
+      "block_code": null,
+      "reason": null
+    },
+    {
+      "model_id": "SAP18_ring08_scenario",
+      "model_sha256": "a4078c32a0f0c357932b12dbd7a9e719ee4aa894268b76c755bf7c3dbbb5bb09",
+      "available": true,
+      "block_code": null,
+      "reason": null
+    },
+    {
+      "model_id": "SAP22",
+      "model_sha256": "614c72f31a5a84b82c69b0b11f6f0657e87d94f746312c151f9a08cd00ba3dc3",
+      "available": true,
+      "block_code": null,
+      "reason": null
+    }
+  ]
+}

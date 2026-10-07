@@ -52,7 +52,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('guide.html#local-routes',scenario)
         self.assertNotIn('Run.cmd run',scenario)
         self.assertIn('Cs137 supports 20 or 500 initial decays per case',scenario)
-        self.assertIn('Control offers four separate detector configurations',scenario)
+        self.assertIn('Control offers 10 separate detector configurations',scenario)
         self.assertIn('not redistributed',scenario)
 
     def test_home_folds_secondary_routes_without_losing_destinations(self):
@@ -69,7 +69,7 @@ class SiteStructureTests(unittest.TestCase):
                 if tag=='details':self.closed.pop()
         root=self.fixture(with_results=True);S.apply(root)
         home=(root/'index.html').read_text();parser=HomeLinks();parser.feed(home)
-        self.assertEqual(len(parser.links),18);self.assertEqual(len(set(parser.links)),12)
+        self.assertEqual(len(parser.links),20);self.assertEqual(len(set(parser.links)),14)
         self.assertEqual(parser.outside,['index.html','results/index.html','detectors/index.html','guide.html#setup',
                                         'guide.html#local-control','results/index.html','detectors/index.html',
                                         'guide.html#setup','guide.html#local-control'])
@@ -77,7 +77,7 @@ class SiteStructureTests(unittest.TestCase):
                      'downloads/all-models.zip','https://github.com/Kunming-CN/END2END_Ge_Simulation'):
             self.assertIn(href,parser.links);self.assertNotIn(href,parser.outside)
         self.assertIn('Inspect events, signals and spectra',home)
-        self.assertIn('choose AK02, SAP22 or either ring case',home)
+        self.assertIn('choose one of 10 configurations available in the current cryostat',home)
         self.assertIn('Fresh-machine setup remains unvalidated',home)
         self.assertIn('<summary>Pipeline, methods and earlier examples</summary>',home)
         self.assertIn('<summary>More project resources</summary>',home)

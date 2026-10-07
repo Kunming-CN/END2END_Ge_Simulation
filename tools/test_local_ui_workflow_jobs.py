@@ -3,6 +3,7 @@ import copy
 from pathlib import Path
 import tempfile
 import threading
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -19,6 +20,63 @@ class Jobs(unittest.TestCase):
         self.plan={'kind':W.KIND,'status':'checked_configuration','science_calls':0,'resolved':{'selection':self.config},'configuration_sha256':'original'}
         self.resolver=lambda config,root:copy.deepcopy(self.plan)
         self.controller=J.WorkflowController(self.root,resolver=self.resolver,launcher=lambda *a:self.fail('Unrequested launch'))
+
+
+    def catalog_plan(self):
+        plan=copy.deepcopy(self.plan);plan['kind']=J.CATALOG_KIND
+        plan['resolved']['selection']['detector']='AK01'
+        return plan
+
+    def test_catalog_check_is_read_only_and_reserves_versioned_authority(self):
+        plan=self.catalog_plan();self.controller._catalog_resolver=lambda config,root:copy.deepcopy(plan)
+        checked=self.controller.check_catalog(plan['resolved']['selection'])
+        self.assertEqual(checked['kind'],J.CATALOG_KIND);self.assertFalse(W.run_path('owned-fixture',self.root).exists())
+        with patch.object(self.controller,'_launch',side_effect=self.controller._view):
+            job=self.controller.start(checked['check_id'])
+        self.assertEqual(job['workflow_kind'],J.CATALOG_KIND)
+        self.assertFalse(job['can_inspect_failure']);self.assertFalse(job['can_continue_prefix'])
+        reopened=J.WorkflowController(self.root,resolver=self.resolver)
+        self.assertEqual(reopened.snapshot()['jobs'][0]['workflow_kind'],J.CATALOG_KIND)
+        self.assertTrue(reopened.own_busy())
+
+    def test_catalog_changed_plan_and_preview_cannot_start(self):
+        plan=self.catalog_plan();self.controller._catalog_resolver=lambda config,root:copy.deepcopy(plan)
+        checked=self.controller.check_catalog(plan['resolved']['selection'])
+        plan['configuration_sha256']='changed'
+        with self.assertRaisesRegex(W.ControlError,'changed after Check'):self.controller.start(checked['check_id'])
+        self.assertEqual(self.controller._jobs,[])
+        self.controller._checks['preview']={'kind':'local_scenario_batch_preview_v2'}
+        with self.assertRaisesRegex(W.ControlError,'preview'):self.controller.start('preview')
+        self.assertFalse(self.controller._state_path.exists())
+
+    def test_catalog_route_uses_catalog_cli_without_legacy_failure_inspection(self):
+        plan=self.catalog_plan();self.controller._catalog_resolver=lambda config,root:copy.deepcopy(plan)
+        with patch.object(self.controller,'_launch',return_value={}):
+            checked=self.controller.check_catalog(plan['resolved']['selection']);self.controller.start(checked['check_id'])
+        job=self.controller._jobs[0];calls=[]
+        def launch(argv,log,on_spawn):
+            calls.append(argv)
+            directory=W.run_path(job['name'],self.root);directory.mkdir(parents=True)
+            W.write(directory/'run.json',{'status':'stopped','stages':{}},fresh=True)
+            return 0
+        self.controller._launcher=launch
+        with patch.object(W,'inspect',side_effect=AssertionError('Legacy inspector called')):
+            self.controller._work(job)
+        self.assertIn('run-catalog',calls[0]);self.assertIn('--plan',calls[0])
+        self.assertEqual(job['status'],'stopped')
+        with self.assertRaises(W.ControlError):self.controller.inspect_failure(job['name'])
+
+    def test_new_exporter_readiness_does_not_block_original_setup(self):
+        for relative in ('transport/cryostat-source.json','simulation/Manifest.toml'):
+            path=self.root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'fixture')
+        backend=SimpleNamespace(EXPORTER_REF='.local/new-exporter',BUILD_REF='.local/new-build.json')
+        portable=SimpleNamespace(file_readiness=lambda root:{'available':True})
+        with patch.dict('sys.modules',{'scenario_source_portable':portable}),patch.object(W,'runtime_identity',return_value={}),patch.object(W,'source_pins',return_value={}),patch.object(W,'catalog',return_value={'setup_guide':'fixture'}),patch.object(J,'catalog_backend',return_value=backend):
+            reply=self.controller.setup()
+            self.assertTrue(reply['ready_for_config_check']);self.assertFalse(reply['catalog_models_file_ready']);self.assertEqual(reply['science_calls'],0)
+            for relative in (backend.EXPORTER_REF,backend.BUILD_REF):
+                path=self.root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'fixture')
+            self.assertTrue(self.controller.setup()['catalog_models_file_ready'])
 
     def test_check_does_not_launch_or_create_run(self):
         result=self.controller.check(self.config)

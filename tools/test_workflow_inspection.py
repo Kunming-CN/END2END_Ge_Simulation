@@ -42,6 +42,13 @@ class Inspection(unittest.TestCase):
         for command in ('notepad.exe notes.txt','python readme_analysis.py'):
             with self.subTest(command=command):self.assertIsNone(I.SCIENCE.search(command))
 
+    def test_catalog_transport_geometry_and_build_workers_remain_owned(self):
+        for command in ('python -B ./catalog_source.py prepare --selection config.json',
+                        '/existing/python /project/transport/catalog_source.py run --directory run',
+                        '/project/.local/m2a/catalog-source-build-v1/cryostat_catalog_export stage.tg canonical.gdml',
+                        'PYTHON ./CATALOG_EXPORTER_SETUP.PY build --windows-root project'):
+            with self.subTest(command=command):self.assertIsNotNone(I.SCIENCE.search(command))
+
     def test_recognized_ended_failure_preserves_every_failed_byte(self):
         before=W.inventory(self.directory);self.retire();self.assertEqual(before,W.inventory(self.directory))
         with patch.object(W,'process_identity',return_value=None):self.assertTrue(I.verified_retirement(self.directory,self.root))

@@ -423,6 +423,16 @@ def catalog(root=ROOT):
                 'Original scenario; identity unresolved; ring contact width 0.8 mm; contacts 1: 0 V, 2: −380 V; native magnitude 380 V; fixed −1 wiring; own fresh fields and negative injection calibration.' if id==SAP18 and available else
                 'Contact 1 readout; operating bias '+str(500 if id=='AK02' else 700)+' V; fresh fields.' if id in ('AK02','SAP22') else
                 'Model viewer only; no Control execution adapter.')})
+    # New catalog shapes share one explicit contract. Legacy five adapters and
+    # their original operating/source registrations retain their exact behavior.
+    from catalog_workflow import catalog_capabilities, KIND as catalog_kind
+    additions=catalog_capabilities(root)
+    admitted_sources=[source['id'] for source in sources if source['available'] and source['id']!=GAMMA]
+    for detector in detectors:
+        detector['workflow_kind']=KIND
+        if detector['id'] not in MODELS:
+            detector.update(additions[detector['id']])
+            detector['sources']=admitted_sources if detector['available'] else []
     # Registry values are the execution dispatch table, not user-supplied commands.
     return {'kind':KIND,'cryostats':[{'id':CRYOSTAT,'label':'LBNL modular cryostat','available':True},
             {'id':'lbnl_monolithic_candidate','label':'LBNL monolithic cryostat','available':False,'reason':'Transport and charge adapters are pending.'}],
@@ -430,7 +440,7 @@ def catalog(root=ROOT):
             'sources':sources,
             'electronics_defaults':default,'electronics_keys':list(SETTINGS),
             'numerics':'16 parcels; native seed 2609261; 2 ns grid; 10,000 ns cap; CPU; one or two Julia threads.',
-            'setup_limit':'Fresh runs require the explicit portable source-exporter build in the existing locked environment. Fresh-clone and second-computer acceptance remain deferred.',
+            'setup_limit':'Fresh runs require the portable source exporter and, for additional models, the catalog source exporter, built explicitly in the installed project environment. Fresh-clone and second-computer acceptance remain deferred.',
             'setup_guide':'https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup'}
 
 
@@ -813,16 +823,24 @@ def result_page(directory,receipt):
     (directory/'index.html').write_text(body,encoding='utf-8')
 
 
-def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,continuation=False,bootstrap_source=False):
+def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,continuation=False,bootstrap_source=False,workflow=None):
     require(not (resume and continuation),'A derivative is a new root, not failed-stage Resume.')
-    plan=admit(plan,root,resume=resume,bootstrap_source=bootstrap_source)
+    if workflow is None:
+        plan=admit(plan,root,resume=resume,bootstrap_source=bootstrap_source)
+        kind=KIND;stage_validator=validate_stage
+    else:
+        # Only the maintained explicit catalog adapter may supply hooks. This
+        # is not a user-loaded plugin or a relaxation of legacy v1 admission.
+        import catalog_workflow as catalog_adapter
+        require(workflow is catalog_adapter and not continuation and not bootstrap_source,'Unsupported workflow adapter.')
+        plan=workflow.admit(plan,root,resume=resume);kind=workflow.KIND;stage_validator=workflow.validate_stage
     resolved=plan['resolved'];s=resolved['selection'];directory=run_path(s['name'],root)
     with execution_lease(root):
         verify_dispatch_reservations(plan,root,dispatch_id)
         # A lost outer lease cannot establish that a nested WSL/Julia child ended.
         for previous in (Path(root)/BASE).glob('*/run.json'):
             prior=read(previous)
-            if prior.get('kind')==KIND and previous.parent!=directory:
+            if prior.get('kind') in (KIND,'local_catalog_workflow_v1') and previous.parent!=directory:
                 from workflow_inspection import verified_retirement
                 retired=verified_retirement(previous.parent,root)
                 if not retired:
@@ -834,7 +852,7 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
         verify_pins(resolved,root); environment=child_env(s['threads'])
         if resume:
             receipt=read(directory/'run.json')
-            require(receipt['kind']==KIND and receipt['configuration_sha256']==plan['configuration_sha256'], 'Resume uses saved settings only.')
+            require(receipt['kind']==kind and receipt['configuration_sha256']==plan['configuration_sha256'], 'Resume uses saved settings only.')
             require(receipt['status']=='stopped','Only a stage-boundary stopped run can resume; partial or uncertain runs need inspection.')
             verify_checkpoint(directory,receipt,root)
             require(set(receipt['stages'])==set(STAGES[:len(receipt['stages'])]),'Stopped stages do not form a completed prefix.')
@@ -842,18 +860,21 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
             for stage,record in receipt['stages'].items():
                 base=directory/'response' if stage=='response' else directory/'transport/stream' if stage=='event_ledger' else directory/'transport'
                 verify_inventory(base,record['artifacts'])
-                actual=validate_stage(directory,stage,resolved,root)
+                actual=stage_validator(directory,stage,resolved,root)
                 require(encoded(actual)==encoded(record['artifacts']),'Completed-stage inventory is not authoritative.')
             receipt.setdefault('resumes',[]).append({'requested_utc':utc(),'prior_stop':read(directory/'STOP.json') if (directory/'STOP.json').exists() else None})
             receipt['supervisor']={'pid':os.getpid(),'identity':process_identity(os.getpid())}
             (directory/'STOP.json').unlink(missing_ok=True)
         else:
             directory.mkdir(parents=True,exist_ok=False)
-            receipt={'kind':KIND,'status':'running','configuration_sha256':plan['configuration_sha256'],
+            receipt={'kind':kind,'status':'running','configuration_sha256':plan['configuration_sha256'],
                      'resolved':resolved,'created_utc':utc(),'stages':{},'supervisor':{'pid':os.getpid(),'identity':process_identity(os.getpid())},
                      'runtime':{'python':sys.executable,'python_sha256':sha(sys.executable),'julia':environment['JULIA_EXE'],'julia_sha256':sha(environment['JULIA_EXE'])}}
             write(directory/'resolved-config.json',plan,fresh=True)
             write(directory/'electronics/profile.json',resolved['profile'],fresh=True)
+            if workflow is not None:
+                write(directory/'selection.json',s,fresh=True)
+                write(directory/'source-checked.json',resolved['transport_plan'],fresh=True)
             if resolved.get('portable_source_plan') is not None:
                 write(directory/'portable-request.json',portable_request(s),fresh=True)
                 write(directory/'portable-checked-plan.json',resolved['portable_source_plan'],fresh=True)
@@ -862,7 +883,7 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
             if continuation:
                 from workflow_recovery import transfer
                 transfer(directory,plan,receipt,root);write(directory/'run.json',receipt)
-            commands=stage_commands(directory,resolved,root,environment)
+            commands=stage_commands(directory,resolved,root,environment) if workflow is None else workflow.stage_commands(directory,resolved,root)
             for stage in STAGES:
                 verify_pins(resolved,root)
                 if stage in receipt['stages']:
@@ -875,7 +896,9 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
                     require((directory/'index.html').stat().st_size>0,'Results page was not created.')
                     receipt['stages'][stage]={'status':'completed','started_utc':started,'elapsed_seconds':time.perf_counter()-observed,
                         'artifacts':{'index.html':{'sha256':sha(directory/'index.html'),'bytes':(directory/'index.html').stat().st_size}},'finished_utc':utc()};continue
-                if stage=='response' and 'decay_source_contract' in resolved:
+                if stage=='response' and workflow is not None:
+                    write(directory/'catalog-request.json',workflow.native_request(directory,resolved,root),fresh=True)
+                elif stage=='response' and 'decay_source_contract' in resolved:
                     from decay_workflow import request as decay_request
                     write(directory/'decay-request.json',decay_request(directory,resolved,root),fresh=True)
                 elif stage=='response' and s['source']==GAMMA:
@@ -887,13 +910,13 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
                     from ring_workflow import request
                     write(directory/'ring-request.json',request(directory,resolved,root),fresh=True)
                 executor(commands[stage],directory,stage,receipt,environment,root)
-                artifacts=validate_stage(directory,stage,resolved,root)
+                artifacts=stage_validator(directory,stage,resolved,root)
                 receipt['stages'][stage].update(status='completed',artifacts=artifacts)
                 write(directory/'run.json',receipt)
             verify_pins(resolved,root);r=read(directory/'response/run.json')
             receipt['counts']=r['counts'];receipt['status']='completed_with_native_failures' if r['counts']['native_failed_groups'] else 'completed'
             receipt['finished_utc']=utc();write(directory/'run.json',receipt)
-            write(directory/'COMPLETE.json',{'kind':KIND,'status':receipt['status'],'configuration_sha256':plan['configuration_sha256'],
+            write(directory/'COMPLETE.json',{'kind':kind,'status':receipt['status'],'configuration_sha256':plan['configuration_sha256'],
                    'artifacts':inventory(directory,exclude=('COMPLETE.json','STOP.json'))},fresh=True)
             return receipt
         except BaseException as error:
@@ -929,10 +952,16 @@ def inspect(name,root=ROOT):
 
 
 def main(argv=None):
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('catalog','check','preview-batches','run','continue','resume','inspect','stop','finalize-results'))
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('catalog','check','preview-batches','run','continue','resume','inspect','stop','finalize-results','check-catalog','run-catalog','resume-catalog','inspect-catalog'))
     p.add_argument('--config');p.add_argument('--plan');p.add_argument('--name');p.add_argument('--dispatch-id',help=argparse.SUPPRESS);p.add_argument('--bootstrap-source',action='store_true',help='Explicit CLI-only first source acceptance; does not enable the browser.');a=p.parse_args(argv)
     require(not a.bootstrap_source or a.action in ('check','run','resume'),'Source bootstrap is only available for explicit CLI Check, Run or Resume.')
-    if a.action=='catalog': value=catalog()
+    if a.action in ('check-catalog','run-catalog','resume-catalog','inspect-catalog'):
+        import catalog_workflow as C
+        if a.action=='check-catalog':require(a.config,'--config is required.');value=C.check(read(Path(a.config)))
+        elif a.action=='run-catalog':require(a.plan,'--plan is required.');value=C.execute(read(Path(a.plan)),dispatch_id=a.dispatch_id)
+        elif a.action=='resume-catalog':require(a.name,'--name is required.');value=C.execute(read(run_path(a.name)/'resolved-config.json'),resume=True,dispatch_id=a.dispatch_id)
+        else:require(a.name,'--name is required.');value=C.inspect(a.name)
+    elif a.action=='catalog': value=catalog()
     elif a.action=='check': require(a.config,'--config is required.');value=check(read(Path(a.config)),bootstrap_source=a.bootstrap_source)
     elif a.action=='preview-batches': require(a.config,'--config is required.');value=preview(preview_request(read(Path(a.config))))
     elif a.action=='run': require(a.plan,'--plan from Check is required.');value=execute(read(Path(a.plan)),dispatch_id=a.dispatch_id,bootstrap_source=a.bootstrap_source)

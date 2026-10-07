@@ -18,6 +18,7 @@ param(
   [string]$Pilot='',
   [switch]$BuildExporter,
   [switch]$BuildPortableSourceExporter,
+  [switch]$BuildCatalogSourceExporter,
   [switch]$Open,
   [switch]$Json,
   [switch]$DryRun,
@@ -30,6 +31,7 @@ $ErrorActionPreference='Stop'
 $script:customRequested=$PSBoundParameters.ContainsKey('ElectronicsProfile')
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')); Set-Location $root
 if($BuildPortableSourceExporter -and ($Action -ne 'setup' -or $BuildExporter)){throw 'BuildPortableSourceExporter requires setup and cannot be combined with BuildExporter'}
+if($BuildCatalogSourceExporter -and ($Action -ne 'setup' -or $BuildExporter -or $BuildPortableSourceExporter)){throw 'BuildCatalogSourceExporter requires setup and cannot be combined with another exporter build flag'}
 if($Action -eq 'native-readout'){
   foreach($key in $PSBoundParameters.Keys){if($key -notin @('Action','Name','DryRun','Json','Resume','StopAfterGroups','PrimaryIds','Detector')){throw "native-readout forbids: $key"}}
   if(!$Name){throw 'native-readout requires -Name NEW (checked detector engineering selection/fixed profile)'}
@@ -172,6 +174,13 @@ function Build-PortableSourceExporter {
   & wsl.exe --distribution Ubuntu-24.04 --cd (Join-Path $root 'transport') -- bash ./workflow.sh python -B ./scenario_source_portable.py build-exporter --windows-root $root
   if($LASTEXITCODE -ne 0){throw 'Portable source build failed. Preserve its build directory and inspect the recorded attempt; no rebuild or cleanup was attempted.'}
   Write-Host 'Portable source exporter verified. Open Control.cmd and Check a selected configuration.'
+}
+function Build-CatalogSourceExporter {
+  $up=Check-Upstream
+  if(!$up.ok){throw 'Pinned LBNL originals are missing or changed; follow tools/site_guide.html before catalog setup.'}
+  & wsl.exe --distribution Ubuntu-24.04 --cd (Join-Path $root 'transport') --exec bash ./workflow.sh python -B ./catalog_exporter_setup.py build --windows-root $root
+  if($LASTEXITCODE -ne 0){throw 'Catalog source build failed. Preserve its build directory and recorded attempt; no rebuild or cleanup was attempted.'}
+  Write-Host 'Catalog source exporter verified. Open Control.cmd, choose an available model, and Check plan.'
 }
 function Require-Ready {
   $s=Check-Setup
@@ -322,7 +331,7 @@ if($Json -and $Action -ne 'inspect'){throw '-Json is supported only for inspect'
 if($Action -eq 'inspect' -and ($BuildExporter -or $Open -or $DryRun -or $Pilot -or $PSBoundParameters.ContainsKey('Preset') -or $PSBoundParameters.ContainsKey('Detector') -or $PSBoundParameters.ContainsKey('Seed'))){throw 'inspect does not accept setup/run/open options'}
 switch($Action){
   'check'{Show-SetupStatus}
-  'setup'{if($BuildPortableSourceExporter){Build-PortableSourceExporter;exit 0};if($BuildExporter -or !(Test-Path $exporter)){Build-Exporter};Show-SetupStatus}
+  'setup'{if($BuildCatalogSourceExporter){Build-CatalogSourceExporter;exit 0};if($BuildPortableSourceExporter){Build-PortableSourceExporter;exit 0};if($BuildExporter -or !(Test-Path $exporter)){Build-Exporter};Show-SetupStatus}
   'run'{Invoke-Run $false}
   'resume'{Invoke-Run $true; if($DryRun){exit $LASTEXITCODE}}
   'open'{Open-Run $Name}

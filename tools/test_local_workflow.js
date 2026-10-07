@@ -84,7 +84,7 @@ assert.ok(get('detector').children.every(n=>!n.disabled));
 for(let i=0;i<13;i++){
   get('detector').value='view-'+i;run('detectorChanged();');
   assert.equal(get('source').children.length,0);assert.equal(get('count').children.length,0);
-  assert.match(get('model-capability').textContent,/View only.*Computation.*pending/);
+  assert.match(get('model-capability').textContent,/View only.*No checked connector/);
   assert.match(get('setup-preview').textContent,/view only; no source/);
   assert.equal(get('model-contacts').children[1].textContent,'Contact 2 · outer · -380 V');
   for(const id of ['check','start','save','source','count'])assert.equal(get(id).disabled,true,id);
@@ -95,6 +95,20 @@ run("catalog.detectors.push({id:'GeGI_3D',available:false,sources:[],model:{cont
 assert.equal(get('model-contacts').children.length,34);assert.equal(get('model-contact-list').open,false);assert.match(get('model-contact-summary').textContent,/34 contacts.*readout contact 9/);
 assert.equal(get('model-contacts').children[8].textContent,'Contact 9 · strip 9 · -879 V · catalog readout');
 run('catalog.detectors=currentModels;');get('detector').value='AK02';run('detectorChanged();');
+// The common model entry is selected by its checked contract, not detector IDs.
+run("catalog.detectors.push({id:'AK01',available:true,workflow_kind:'local_catalog_workflow_v1',sources:['cs137_point_decay_v1'],operating_label:'Original 78 K; readout contact 1; contact 2 +700 V',parameter_summary:[{label:'Model temperature',value:78,unit:'K'},{label:'Readout contact',value:1}],checks:[{label:'Cryostat fit',status:'supported',detail:'Fits the selected LBNL cavity'}]},{id:'large-model',available:false,block_code:'cryostat_size',reason:'Radius 40 mm exceeds cryostat half-width 20.574 mm; a larger cryostat is needed.',sources:[],operating_label:'Original 92.3 K; readout contact 9'});options('detector',detectorItems(),true);");
+assert.ok(get('detector').children.slice(0,5).every(n=>!n.textContent.includes('larger cryostat')));
+get('detector').value='AK01';run('detectorChanged();');
+assert.equal(run('sharedModelSelection()'),true);assert.equal(get('check').disabled,false);
+assert.match(get('model-capability').textContent,/Available in the current cryostat.*Check plan/);
+assert.equal(get('model-parameters').children[0].textContent,'Model temperature: 78 K');
+assert.equal(get('model-parameters').children[1].textContent,'Readout contact: 1');
+get('detector').value='large-model';run('detectorChanged();');
+assert.match(get('model-capability').textContent,/Radius 40 mm.*20.574 mm.*larger cryostat/);
+assert.doesNotMatch(get('model-capability').textContent,/pending|missing input/i);
+assert.equal(get('check').disabled,true);assert.equal(get('model-parameters').children[0].textContent,'Original 92.3 K; readout contact 9');
+assert.ok(get('detector').children.find(n=>n.value==='large-model').textContent.endsWith('Needs larger cryostat'));
+get('detector').value='AK02';run('detectorChanged();');
 // Open logs stay outside the recreated run cards; Results has an observed label.
 get('log-text').textContent='retained UTF-16 diagnostic';get('log-view').hidden=false;
 run("renderJobs({busy:false,jobs:[]});renderJobs({busy:false,jobs:[]});stageList({results:{status:'completed',elapsed_seconds:0.01}});");
@@ -198,6 +212,17 @@ get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
   }
   const current=run("$('check').onclick()");run("resolveCheck({check_id:'new',resolved:{selection:{detector:'SAP22'}}});");await current;
   assert.equal(run('checked.check_id'),'new');assert.equal(get('start').disabled,false);
+  let requestedRoute;
+  run("let catalogChecks=[];api=(path,body)=>{catalogChecks.push({path,body});return new Promise(resolve=>resolveCheck=resolve);};");
+  get('detector').value='AK01';run('detectorChanged();');
+  const catalogPending=run("$('check').onclick()");
+  assert.equal(run('catalogChecks[0].path'),'/api/workflow/check-catalog');
+  run("resolveCheck({kind:'local_catalog_workflow_v1',status:'checked_configuration',check_id:'shared-new',resolved:{selection:{detector:'AK01'}}});");
+  await catalogPending;assert.equal(run('checked.check_id'),'shared-new');
+  get('detector').value='large-model';run('detectorChanged();');
+  assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
+  get('detector').value='SAP22';run('detectorChanged();');
+  run("api=()=>new Promise(resolve=>resolveCheck=resolve);");
   // View-only selection while Check is pending refuses even an otherwise valid reply.
   run("catalog.detectors.push({id:'view-only',available:false,sources:[],reason:'Pending connector'});");
   const pendingView=run("$('check').onclick()");get('detector').value='view-only';run('detectorChanged();resolveCheck({check_id:"stale-view",resolved:{}});');

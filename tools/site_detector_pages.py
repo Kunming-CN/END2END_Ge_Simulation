@@ -1,4 +1,5 @@
 """Generate detector overview/gallery/technical levels from saved website assets."""
+import hashlib
 import json
 import re
 from html import escape
@@ -42,6 +43,7 @@ def apply(site, write_page):
     catalog=json.loads((site/'models/catalog.json').read_text(encoding='utf-8'))
     capabilities=execution_capabilities()
     control_ids=control_capabilities(capabilities)
+    catalog_control=catalog_control_capabilities(capabilities)
     report=site/"examples/cs137-1m-response/summary.json"
     campaign_models=set(json.loads(report.read_text())["models"]) if report.is_file() else set()
     delivered=[]
@@ -85,7 +87,7 @@ def apply(site, write_page):
                   'Use the <a href="../../guide.html#local-control">Control instructions</a> '
                   'after <a href="../../guide.html#setup">setup</a>. '
                   'Fresh-machine reproduction remains unvalidated.</p>' if supported else
-                  '<p>This model is available for browsing. New end-to-end execution in Control is not integrated for it.</p>')
+                  '<p>This model is available for browsing and needs a future larger cryostat.</p><p>'+escape(catalog_control[model]['reason'])+'</p>')
         special=('<p><a href="strip_explorer.html">Explore all 34 GeGI signal channels</a> · '
                  '<a href="supplement.html">Earlier supplementary study</a></p>' if model=='GeGI_3D' else '')
         legacy_ids=set(ids(cleaned))-MANAGED-{'contact-legend','native-cs137-10k'}
@@ -152,9 +154,36 @@ def control_capabilities(capabilities=None):
     root=Path(__file__).resolve().parents[1]
     adapters=json.loads((root/'scenarios/detector-capabilities.json').read_text())['control_adapters']
     for model,row in adapters.items():
-        if model not in capabilities or row['adapter']!='fresh_ring_control_v1' or row['sources']!=['cs137_point_decay_v1'] or row['counts']!=[20,500]:
+        if model not in capabilities or row['adapter'] not in {'fresh_ring_control_v1','sap18_control_v1'} or row['sources']!=['cs137_point_decay_v1'] or row['counts']!=[20,500]:
             raise ValueError('Unreviewed Control capability')
-    return {model for model,row in capabilities.items() if row['lbnl_execution_implemented']}|set(adapters)
+    catalog=catalog_control_capabilities(capabilities,root)
+    return {model for model,row in capabilities.items() if row['lbnl_execution_implemented']}|set(adapters)|{model for model,row in catalog.items() if row['available']}
+
+
+def catalog_control_capabilities(capabilities,root=None):
+    """Validate the reviewed display snapshot; backend admission is independent."""
+    root=Path(root or Path(__file__).resolve().parents[1])
+    data=json.loads((root/'scenarios/catalog-presentation.json').read_text(encoding='utf-8'))
+    expected={'models/catalog.json','transport/cryostat_nominal.json','scenarios/detector-capabilities.json'}
+    if (data.get('kind')!='catalog_presentation_v1' or data.get('schema_version')!=1 or
+            data.get('scope')!='presentation_only' or set(data.get('authority_sha256',{}))!=expected):
+        raise ValueError('Unreviewed catalog presentation authority')
+    for ref,digest in data['authority_sha256'].items():
+        if hashlib.sha256((root/ref).read_bytes()).hexdigest()!=digest:
+            raise ValueError('Catalog presentation authority bytes changed: '+ref)
+    registry=json.loads((root/'scenarios/detector-capabilities.json').read_text(encoding='utf-8'))
+    if data.get('catalog_adapter')!=registry.get('catalog_adapter'):
+        raise ValueError('Catalog presentation source/model policy changed')
+    rows=data.get('models',[])
+    if len(rows)!=len(capabilities) or {r.get('model_id') for r in rows}!=set(capabilities):
+        raise ValueError('Catalog presentation model inventory changed')
+    for row in rows:
+        if (row.get('model_sha256')!=capabilities[row['model_id']]['model_sha256'] or
+                type(row.get('available')) is not bool or
+                (row['available'] and (row.get('block_code') is not None or row.get('reason') is not None)) or
+                (not row['available'] and (row.get('block_code')!='cryostat_size' or not isinstance(row.get('reason'),str) or not row['reason']))):
+            raise ValueError('Unreviewed catalog presentation model binding or size reason')
+    return {row['model_id']:row for row in rows}
 
 def execution_capabilities():
     """Presentation authority only; this never enables a backend model."""

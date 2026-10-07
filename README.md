@@ -11,22 +11,27 @@ The website contains saved results, not an online solver.
 | Task | Start here |
 |---|---|
 | Browse | [Four-case Cs137 10K results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-10k/index.html) — events, spectra, charge/readout and complete ledgers; [17 detector models](https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/index.html) — shapes, types and saved galleries |
-| Setup | [Windows setup](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup) — the single installation authority, including the explicit source-bound exporter build |
+| Setup | [Windows setup](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup) — the single installation authority, including the explicit source-bound exporter builds |
 | Use | [Control instructions](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#local-control) — check a setup, run a supported case and explore its saved result |
 
 ## Run one local example
 
-After following the guide, double-click `Control.cmd`. Choose AK02, SAP22,
-GeRC02 Li50min or KMRC01 candidate. Cs137 supports 20/500 initial decays; the
-fixed 662 keV gamma beam supports 20 primaries for AK02/SAP22. Electronics
-settings belong to the checked run; changing the form invalidates its check.
+After following the guide, double-click `Control.cmd`. Choose one of ten
+configurations available in the current cryostat. Cs137, Am241 and Ba133 share
+the same selection and run workflow, with 20 or 500 initial nuclei. The fixed
+662 keV gamma beam retains its 20-primary AK02/SAP22 route; Co60 remains unavailable
+under its unchanged source-admission gate.
 
 **Check environment** inspects installed files. **Check plan** verifies the selected
-source, build, runtime and settings before **Run simulation**. The four Control
-connectors and source-bound preparation have been verified on the existing
-Windows/WSL computer. Fresh-clone and second-computer setup remain unvalidated.
-Seventeen viewable models do not mean seventeen executable models. ParaView is
-not a student runtime prerequisite.
+source, build, runtime and settings before **Run simulation**. Changing the form
+invalidates its check. The five additional models—AK01, SAP16, SAP17,
+Bipolar_reference_3D and KL01_3D—completed fixed 500-decay Cs137 cases on the
+existing Windows/WSL computer. Native failures, readout rejections and zero events
+remain visible; these are engineering checks, not experimental qualification.
+
+All 17 models remain browsable. Seven require a future larger cryostat; Control
+shows their specific dimension limits. Fresh-clone and second-computer setup
+remain unvalidated. ParaView is not a student runtime prerequisite.
 
 ## Project layout
 

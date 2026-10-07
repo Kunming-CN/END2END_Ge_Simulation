@@ -145,3 +145,6 @@ tools/test_decay_workflow.py -text whitespace=blank-at-eol,blank-at-eof,space-be
 
 # Frozen portable exporter input retains its acceptance-bound mixed/CRLF bytes.
 transport/CMakeLists.txt -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Additive catalog exporter sources keep exact LF bytes; the frozen exporter inputs stay unchanged.
+transport/cryostat_catalog_export.cc text eol=lf
+transport/catalog_exporter/CMakeLists.txt text eol=lf

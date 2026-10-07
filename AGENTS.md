@@ -22,6 +22,21 @@ PROGRESS.md is the single current handoff; its immutable-history link preserves 
 
 Keep README as a short browse/run entry. The maintained Windows setup authority is tools/site_guide.html; advanced component READMEs are not competing beginner routes. Use tools/MAINTENANCE.md for source ownership. Normal Publish.cmd preserves the checked saved snapshot and refreshes maintained navigation/viewer HTML without physics. Derive presentation eligibility from scenarios/detector-capabilities.json while keeping independent backend checks. Seventeen viewable models do not imply seventeen LBNL-executable models.
 
+Owner update (2026-10-07): prioritize student use of compatible catalog models
+through one shared model-data and computation workflow. Reuse existing common
+functions; do not make a bespoke adapter, hours of development, or a separate
+full review for every model a prerequisite. Report concrete compatibility limits
+and missing inputs. Do not enable a model from its label alone or silently change
+the selected cryostat. Batch UI work is paused while this model-coverage priority
+is delivered; its preserved WIP remains in .local/student-batches-v1/wip/.
+
+Real browser acceptance must not click Download or trigger Save As, and must not
+change the owner's browser settings. Verify downloads through protected HTTP and
+mock/source contracts. Resource-bounded independent calculations may run in
+parallel when useful, retaining distinct seeds, roots and provenance; measure
+available memory first and avoid memory oversubscription or parallel field solves
+when the machine has insufficient headroom.
+
 ## Existing tools
 
 - `tools/build_site.py`: deterministic export of the locally generated library into docs/.

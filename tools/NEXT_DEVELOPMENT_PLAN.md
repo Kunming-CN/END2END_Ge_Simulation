@@ -1,59 +1,38 @@
 # Next development plan
 
-## Owner priority update: 2026-10-07
+## Current owner priority and delivered boundary
 
-Shared-source functionality is delivered from baseline
-`20bd82512c8326cf9a73136a0a4b0b03b8bdfd0e`; all three final AI reviews accept the
-bounded milestone. Final revision, live-main synchronization and owned-process/lease
-cleanup are recorded in `.local/source-switch-v1/COMPLETE.json` and
-`.local/autonomy/state.json`; verify those and actual Git before further work. One source registry and one nominal
-world/detector/source anchor contract compose with the five existing computation
-connectors. All 17 models remain inspectable, with 12 view-only. Am241 and Ba133
-are promoted after their fixed SAP22/500/seed26092631 cases passed the unchanged
-source gate. Co60 completed its trial with one below-threshold rejection and
-remains disabled. Exactly 1500 new initial primaries were run, with no retry or
-retuning. Five-model software compatibility is factorized; actual source science
-ran only for the three SAP22 cases.
+The owner prioritized student use of compatible original models through common
+existing geometry, transport, native charge and readout functions. One shared
+catalog route now connects the five added models that fit the unchanged LBNL
+cryostat—AK01, SAP16, SAP17, Bipolar_reference_3D and KL01_3D—bringing Control to
+ten configurations. All five preselected Cs137/500 public Check/Run/Inspect cases
+completed with retained zeros, three KL01 native failures and three readout
+rejections. Exact counts, limitations, correction/review closure and publication
+state are in [PROGRESS.md](../PROGRESS.md).
 
-Real Chrome passed ten promoted-source/model selections and AK01's disabled
-execution controls. Curated intermediate downloads and original saved identities
-remain traceable. The necessary Am241 outer-validator repair retained its native
-science and failed CLI evidence and completed from saved data with science_calls=0.
-I-001's protected raw-byte download repair is independently closed; 39 focused
-HTTP/controller checks, JavaScript contracts and the saved Am241 HTML HTTP hash
-passed. Browser destination-file checksum proof remains unconfirmed. Seven exact
-Git byte rules preserve frozen science/configuration bytes; corrected staging
-matches the raw source bytes. These repairs preserve the delivered contracts.
+All 17 models remain browsable. The other seven require a future larger cryostat
+because of their actual dimensions; GeGI also intersects the fixed support. Their
+canonical physical inputs are complete. Do not substitute a bare world, retune
+original geometry/contacts/temperature/bias or call them missing-field adapters.
+Cs137/Am241/Ba133 selection is shared; original fixed-20 gamma and held Co60
+source admission retain their distinct existing contracts. Software factorization
+is not thirty actual model/source physics acceptances.
 
-Physics FINAL, integrity FINAL and the NEW independent third FINAL accept the
-milestone without unresolved blockers; recorded peer exchange has no remaining
-disagreement. Commit/push and process/lease cleanup belong to the root
-coordinator; this plan does not claim they have occurred. PROGRESS.md remains the
-current state/priority authority. Automatic heartbeat stays PAUSED; M5 is closed
-and M15a accepted. Fresh-machine/M8/M9 acceptance still requires the owner's
-second computer and documented installed runtimes/pinned upstream inputs.
+Finalize only verified focused corrections, truthful student documentation and
+the saved-only public navigation/guide refresh. Reuse the integrated review and
+its targeted closure; no per-model full reviews, further physics or new environment
+are needed. The complete prior source milestone and roadmap are preserved
+[at f274f96](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/f274f96a5c5449cf0183ef783118805c1b8c8e96/PROGRESS.md).
 
-The next bounded task resumes the retained M15b plan: one preselected real
-two-batch acceptance, <=500 total primaries, using the immutable acceptance-only
-cap below10000. It is not launched in this round. Preserve its planned settings,
-census, shared preparation/calibration and stop/resume conditions. Optional
-saved-only diagnosis of Co60 event475 is not a prerequisite and does not authorize
-new computation or a looser source gate. M15c arbitrary counts, source angle
-controls, additional cryostats and the 12 view-only model adapters remain deferred.
-The current isotropic point source stays at global [0, 37.073, 0.290] mm.
-
-The source cases are bounded engineering evidence. A 20-primary smoke check may
-produce only zeros; 500 primaries do not establish convergence, physical detector
-identity, experimental placement, calibrated CCE or experimental agreement.
-Reuse unchanged world/detector inputs only through exact provenance checks; any
-future source capability still requires its own radiation/ledger acceptance.
-No new environment, large campaign or repeated review cycle is a prerequisite
-for the retained M15b work below.
-
-M15a's versioned count/batch preview is implemented and tested; real M15b execution
-and M15c UI remain planned. PROGRESS.md is the current state and priority authority.
-This plan follows the owner-requested status audit and actual independent AI discussion.
-The delivered preview contract and limitations are in [BATCH_PREVIEW.md](BATCH_PREVIEW.md).
+M15a's versioned count/batch preview remains accepted; its contract is in
+[BATCH_PREVIEW.md](BATCH_PREVIEW.md). M15b/M15c execution/UI remain paused, with
+exact WIP and four-file restore evidence in `.local/student-batches-v1/wip/`.
+They are not prerequisites for the ten-model student path. The retained plan
+below is future work, not automatic authorization to launch calculations.
+M5 remains closed, heartbeat PAUSED and M8/M9 acceptance deferred until the owner
+provides a second computer. Real browser tests must not click Download or change
+browser settings; protected HTTP/mock contracts cover exact download bytes.
 
 ## M15a: one exact count and batch contract
 
@@ -154,7 +133,8 @@ there is no reason to add a wrapper merely to claim new adoption. No package or
 lockfile change is needed for the next count milestone. Do not assume available
 LEGEND data validate our detectors, Li profile or electronics.
 
-After M15, add checked capabilities individually: first source energy/pose options
+After the retained count work, add checked capabilities through shared input
+functions: first source energy/pose options
 mapped to native GPS; then small ring gamma adapters; then actual parameterized
 components/variants of the current cryostat. Additional cryostats/detectors require
 real input definitions and bounded geometry/units/identity/readout acceptance.
@@ -183,7 +163,8 @@ computer. No new million task, raw-data publication, global configuration change
 separately billed API, reset credits or environment installation is authorized here.
 
 New window: read the current handoff, verify actual gpt-6.1-sol/ultra, project root,
-Git, terminal receipts, real workers and lease. Resume the retained bounded M15b
-plan only in the next authorized round; do not repeat delivered shared-source work,
+Git, terminal receipts, real workers and lease. Follow the current owner priority;
+resume the retained bounded M15b plan only when requested. Do not repeat delivered
+shared-source/model work,
 completed M15a or M13/M14, repeat closed reviews or enable the paused heartbeat
 merely because this plan exists.

@@ -23,12 +23,18 @@ from local_ui_jobs import ControlError, process_identity, safe_path
 
 STATE='.local/local-control-v1'
 ACTIVE=('dispatch_uncertain','running','stop_requested')
+CATALOG_KIND='local_catalog_workflow_v1'
+
+def catalog_backend():
+    import catalog_workflow
+    return catalog_workflow
 
 
 class WorkflowController:
-    def __init__(self,root=None,*,coordination_lock=None,peer_busy=None,resolver=None,launcher=None):
+    def __init__(self,root=None,*,coordination_lock=None,peer_busy=None,resolver=None,catalog_resolver=None,launcher=None):
         self.root=Path(root or W.ROOT);self._lock=coordination_lock or threading.RLock()
         self._peer_busy=peer_busy or (lambda:False);self._resolver=resolver or W.check
+        self._catalog_resolver=catalog_resolver
         self._launcher=launcher or self._spawn;self._checks={};self._active=None;self._entry_thread=None
         self._saved_verifier=Verifier(self.root)
         path=safe_path(self.root,STATE+'/workflow-jobs.json')
@@ -100,9 +106,14 @@ class WorkflowController:
             runtime=None;checks.append({'label':'Existing pinned Julia executable','available':False})
         try:W.source_pins('AK02',self.root,portable=True);checks.append({'label':'Exact model and upstream input bytes','available':True})
         except (OSError,ValueError,KeyError,ControlError):checks.append({'label':'Exact model and upstream input bytes','available':False})
+        ready_for_config_check=all(c['available'] for c in checks)
+        backend=catalog_backend()
+        catalog_ready=safe_path(self.root,backend.EXPORTER_REF).is_file() and safe_path(self.root,backend.BUILD_REF).is_file()
+        checks.append({'label':'Common model geometry exporter and build receipt','available':catalog_ready})
         return {'status':'file_readiness_only','checks':checks,'runtime_identity':runtime,'portable_source':portable,
-                'ready_for_config_check':all(c['available'] for c in checks),'science_calls':0,
-                'note':'File readiness only. Run.cmd setup -BuildPortableSourceExporter explicitly builds the exporter in the existing locked environment. Check verifies current build/runtime identities; opening Control installs or builds nothing.',
+                'catalog_models_file_ready':catalog_ready,
+                'ready_for_config_check':ready_for_config_check,'science_calls':0,
+                'note':'File readiness only. Run.cmd setup -BuildPortableSourceExporter builds the original exporter; Run.cmd setup -BuildCatalogSourceExporter builds the common model exporter. Both use the existing locked environment. Check verifies current build/runtime identities; opening Control installs or builds nothing.',
                 'guide':W.catalog(self.root)['setup_guide']}
 
     def check(self,config):
@@ -117,14 +128,27 @@ class WorkflowController:
         with self._lock:
             return W.preview(W.preview_request(request),root=self.root)
 
+    def check_catalog(self,config):
+        with self._lock:
+            self._idle();resolver=self._catalog_resolver or catalog_backend().check
+            plan=resolver(config,root=self.root)
+            W.require(plan.get('kind')==CATALOG_KIND and plan.get('status')=='checked_configuration',
+                      'A checked shared-model configuration is required.')
+            check_id=secrets.token_hex(32);self._checks[check_id]=copy.deepcopy(plan)
+            return dict(plan,check_id=check_id)
+
+    @staticmethod
+    def _catalog_job(job):return job['plan'].get('kind')==CATALOG_KIND
+
     def start(self,check_id):
         with self._lock:
             W.require(type(check_id) is str and check_id in self._checks,'Check this configuration before Start.')
             plan=self._checks[check_id]
-            W.require(plan.get('kind')==W.KIND,'Batch preview execution is unavailable until the M15b worker integration is accepted.')
+            W.require(plan.get('kind') in (W.KIND,CATALOG_KIND),'A preview is not an execution Check token.')
             self._idle()
             # Reconstruct the complete trusted plan; rehashed browser edits are not authority.
-            actual=self._resolver(plan['resolved']['selection'],root=self.root)
+            resolver=(self._catalog_resolver or catalog_backend().check) if plan.get('kind')==CATALOG_KIND else self._resolver
+            actual=resolver(plan['resolved']['selection'],root=self.root)
             W.require(W.encoded(actual)==W.encoded(plan),'Inputs, settings or runtime changed after Check.')
             name=plan['resolved']['selection']['name']
             W.require(not any(j['name'].casefold()==name.casefold() for j in self._jobs),'This run name is already recorded.')
@@ -151,7 +175,8 @@ class WorkflowController:
             plan_path=safe_path(self.root,STATE+'/workflow-plans/'+job['id']+'.json')
             if job['mode'] in ('run','continue'):W.write(plan_path,job['plan'],fresh=True)
             log=safe_path(self.root,STATE+'/workflow-logs/'+job['id']+'.log');log.parent.mkdir(parents=True,exist_ok=True)
-            argv=[sys.executable,'-B',str(self.root/'tools/scenario_workflow.py'),job['mode']]
+            mode=job['mode']+'-catalog' if self._catalog_job(job) else job['mode']
+            argv=[sys.executable,'-B',str(self.root/'tools/scenario_workflow.py'),mode]
             if Path(sys.executable).name.casefold()=='pvpython.exe':argv[1:1]=['--no-mpi','--disable-registry']
             argv+=['--plan',str(plan_path)] if job['mode'] in ('run','continue') else ['--name',job['name']]
             argv+=['--dispatch-id',job['id']]
@@ -163,11 +188,12 @@ class WorkflowController:
                 directory=W.run_path(job['name'],self.root)
                 receipt=W.read(directory/'run.json') if (directory/'run.json').exists() else None
                 if code==0 and receipt and receipt['status'] in (*W.TERMINAL,'stopped'):
-                    if receipt['status'] in W.TERMINAL:W.inspect(job['name'],self.root)
+                    if receipt['status'] in W.TERMINAL:
+                        (catalog_backend().inspect if self._catalog_job(job) else W.inspect)(job['name'],self.root)
                     job['status']=receipt['status'];job.pop('error',None)
                 else:
                     job.update(status='dispatch_uncertain',error='The workflow did not return verified terminal or stopped stages. Retain output and inspect possible nested workers.')
-                    I.capture(job,self.root)
+                    if not self._catalog_job(job):I.capture(job,self.root)
                 self._persist()
         except BaseException as error:
             with self._lock:job.update(status='dispatch_uncertain',error=str(error));self._persist()
@@ -188,7 +214,7 @@ class WorkflowController:
         with self._lock:
             self._idle();job=next((j for j in self._jobs if j['name']==name),None)
             W.require(job and job['status']=='stopped','Only this interface\'s stage-boundary stopped runs can resume.')
-            W.admit(job['plan'],self.root,resume=True)
+            (catalog_backend().admit if self._catalog_job(job) else W.admit)(job['plan'],self.root,resume=True)
             # New dispatch/log identity; selected settings are the preserved plan.
             with W.execution_lease(self.root):
                 W.verify_dispatch_reservations(job['plan'],self.root)
@@ -199,7 +225,7 @@ class WorkflowController:
     def verify(self,name):
         with self._lock:
             job=next((j for j in self._jobs if j['name']==name),None);W.require(job is not None,'Unknown owned run.')
-            receipt=W.inspect(name,self.root)
+            receipt=(catalog_backend().inspect if self._catalog_job(job) else W.inspect)(name,self.root)
             W.require(receipt['configuration_sha256']==job['plan']['configuration_sha256'],'Saved run differs from owned plan.')
             W.require(receipt['status'] in W.TERMINAL,'Run has no verified completion; incomplete evidence is retained.')
             driver=job.get('driver')
@@ -210,7 +236,8 @@ class WorkflowController:
         with self._lock:
             W.require(self._active is None and not W.lease_busy(self.root),'Wait for active work before inspecting a failed launch.')
             job=next((j for j in self._jobs if j['name']==name),None)
-            W.require(job and job['status']=='dispatch_uncertain','Only an uncertain owned failed launch can be inspected.')
+            W.require(job and not self._catalog_job(job) and job['status']=='dispatch_uncertain',
+                      'Only a recognized legacy denied launch can use this failure inspector.')
             with W.execution_lease(self.root):
                 stamp=I.inspect_failure(job,self.root)
                 job.update(status='inspected_failure',inspection_sha256=stamp);job.pop('error',None);self._persist()
@@ -254,12 +281,14 @@ class WorkflowController:
         out['selection']=copy.deepcopy(job['plan']['resolved']['selection'])
         out['configuration_sha256']=job['plan']['configuration_sha256']
         out['output']=W.BASE+'/'+job['name'];out['error']=job.get('error');out['stages']={}
-        out['can_continue_prefix']=R.eligible_name(job['name']) and job['status']=='dispatch_uncertain'
+        out['workflow_kind']=job['plan'].get('kind')
+        out['can_inspect_failure']=not self._catalog_job(job)
+        out['can_continue_prefix']=not self._catalog_job(job) and R.eligible_name(job['name']) and job['status']=='dispatch_uncertain'
         out['can_finalize_results']=False
         directory=W.run_path(job['name'],self.root)
         try:
             receipt=W.read(directory/'run.json');out['stages']=receipt['stages'];out['counts']=receipt.get('counts')
-            out['can_finalize_results']=job['status']=='dispatch_uncertain' and F.candidate(directory)
+            out['can_finalize_results']=not self._catalog_job(job) and job['status']=='dispatch_uncertain' and F.candidate(directory)
             # This live progress is display-only until terminal artifact verification.
             if (directory/'response/progress.json').exists():out['response_progress']=W.read(directory/'response/progress.json')
         except (OSError,ValueError,ControlError):pass
@@ -278,7 +307,7 @@ class WorkflowController:
                     stream.seek(max(0,path.stat().st_size-256*1024));body=stream.read(256*1024)
                 return body,'text/plain; charset=utf-8'
             W.require(job['status'] in W.TERMINAL,'Verify completed results before downloading.')
-            self._saved_verifier.inspect(name)
+            (catalog_backend().inspect(name,self.root) if self._catalog_job(job) else self._saved_verifier.inspect(name))
             complete=W.read(directory/'COMPLETE.json');W.require(file in complete['artifacts'] or file=='COMPLETE.json','Unsupported result artifact.')
             path=safe_path(directory,file);W.require(path.stat().st_size<=64*1024*1024,'Artifact exceeds the browser size limit.')
             mime='text/html; charset=utf-8' if file.endswith('.html') else 'text/plain; charset=utf-8' if file.endswith(('.csv','.jsonl')) else 'application/json; charset=utf-8'
@@ -295,5 +324,5 @@ class WorkflowController:
             self.artifact(name,'response/summary.html')
             job=next(j for j in self._jobs if j['name']==name)
             reply=saved_focus_waveforms.project(W.run_path(name,self.root),name,job['plan']['configuration_sha256'],primary_id,group_id,self.root)
-            self._saved_verifier.inspect(name)
+            (catalog_backend().inspect(name,self.root) if self._catalog_job(job) else self._saved_verifier.inspect(name))
             return reply

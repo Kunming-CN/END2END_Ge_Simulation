@@ -13,7 +13,7 @@ STATE='.local/local-control-v1'
 KNOWN_RUN='39ac8d49a95bdae12a5e41d32a56e8abc4f230d63af9b84710d1c7b6af791cdb'
 KNOWN_LOG='2c3dc855eb0f8875a7d8bfaf80a7f948ef85a7105336bdd4c66607b93c3f9cf7'
 KNOWN_LAUNCH='5ff5f9279978a1aa4e2321f9d72749d245ba417d6d592a1d19db8f254ca2d4a8'
-SCIENCE=re.compile(r'julia(?:\.exe)?|remage|pixi(?:\.exe)?|scenario_workflow\.py|scenario_source_portable\.py|scenario-source-portable-build-v1|cryostat_export|cmake(?:\.exe)?|ninja(?:\.exe)?|(?<![A-Za-z0-9_])(?:g\+\+|gcc|cc1plus|collect2|ld)(?:\s|\.exe|$)|scenario_prepare\.py|scenario_transport\.py|gamma_native_example\.(?:py|jl)|native_response|ring_run\.py|km_ring_run\.py|cs137\.py|decay_source\.py|workflow\.sh',re.I)
+SCIENCE=re.compile(r'julia(?:\.exe)?|remage|pixi(?:\.exe)?|scenario_workflow\.py|scenario_source_portable\.py|scenario-source-portable-build-v1|cryostat_export|catalog_source\.py|catalog_exporter_setup\.py|catalog-source-build-v1|cryostat_catalog_export|cmake(?:\.exe)?|ninja(?:\.exe)?|(?<![A-Za-z0-9_])(?:g\+\+|gcc|cc1plus|collect2|ld)(?:\s|\.exe|$)|scenario_prepare\.py|scenario_transport\.py|gamma_native_example\.(?:py|jl)|native_response|ring_run\.py|km_ring_run\.py|cs137\.py|decay_source\.py|workflow\.sh',re.I)
 
 
 def recognized(directory):

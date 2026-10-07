@@ -366,6 +366,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('Request size must be 1..4096 bytes')
             data = decode_json(self.rfile.read(size).decode('utf-8'))
             workflow_routes={'/api/workflow/check':({'config'},'check'),
+                             '/api/workflow/check-catalog':({'config'},'check_catalog'),
                              '/api/workflow/preview-batches':({'request'},'preview_batches'),
                              '/api/workflow/start':({'check_id'},'start'),
                              '/api/workflow/stop':({'name'},'stop'),
@@ -378,8 +379,8 @@ class Handler(BaseHTTPRequestHandler):
                 keys,method=workflow_routes[self.path]
                 if type(data) is not dict or set(data)!=keys or self.server.workflow_controller is None:
                     raise ValueError('Unsupported workflow input fields')
-                if method in ('check','preview_batches'):
-                    if type(data['config' if method=='check' else 'request']) is not dict:raise ValueError('Configuration must be a JSON object')
+                if method in ('check','check_catalog','preview_batches'):
+                    if type(data['request' if method=='preview_batches' else 'config']) is not dict:raise ValueError('Configuration must be a JSON object')
                 elif any(type(v) is not str for v in data.values()):
                     raise ValueError('Workflow identities must be strings')
                 return self.send_data(200,getattr(self.server.workflow_controller,method)(**data))

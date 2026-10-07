@@ -63,7 +63,8 @@ class Protocol(unittest.TestCase):
                 if item['id'] not in W.MODELS:
                     with patch.object(W,'settings_check',side_effect=AssertionError('Settings executed')), self.assertRaises(W.ControlError):
                         W._resolve(candidate,root=self.server.controller.root)
-        self.assertTrue({d['id'] for d in catalog['detectors'] if d['available']} <= set(W.MODELS))
+        self.assertTrue({d['id'] for d in catalog['detectors'] if d['available']} <=
+                        set(W.MODELS)|{'AK01','SAP16','SAP17','Bipolar_reference_3D','KL01_3D'})
         self.assertTrue({'AK02','SAP22','GeRC02','KMRC01_candidate'} <= {d['id'] for d in catalog['detectors'] if d['available']})
 
     def test_sap18_exact_capability_after_acceptance_and_unchecked_edits_refused(self):
@@ -74,7 +75,8 @@ class Protocol(unittest.TestCase):
         self.assertEqual([s for s in sap['sources'] if s in legacy],[W.CS])
         self.assertNotIn(W.GAMMA,sap['sources'])
         self.assertIn('identity unresolved',sap['operating_label'])
-        self.assertEqual(sum(d['available'] for d in catalog['detectors']),5)
+        self.assertEqual({d['id'] for d in catalog['detectors'] if d['available'] and d.get('workflow_kind')!=J.CATALOG_KIND},
+                         {'AK02','SAP22','GeRC02','KMRC01_candidate',W.SAP18})
         original=W.read(W.ROOT/'scenarios/detector-capabilities.json')
         self.assertIs(next(d for d in original['detectors'] if d['model_id']==W.SAP18)['lbnl_execution_implemented'],False)
         for mutate in (lambda r:r['control_adapters'].pop(W.SAP18),
@@ -132,6 +134,18 @@ class Protocol(unittest.TestCase):
         with self.assertRaises(ValueError):U.saved_model_preview(model['id'],root)
         with patch.object(U,'safe_path',side_effect=W.ControlError('Linked path refused')):
             with self.assertRaises(W.ControlError):U.saved_model_preview(model['id'],root)
+
+    def test_catalog_check_route_is_closed_protected_and_read_only(self):
+        self.workflow.check_catalog.return_value={'kind':J.CATALOG_KIND,'status':'checked_configuration','check_id':'catalog-check'}
+        for data in ({'config':{},'start':True},{'config':[]},{'config':True},'null'):
+            self.assertEqual(self.request('POST','/api/workflow/check-catalog',data)[0],400)
+        for headers in ({'X-Control-Token':''},{'Origin':'https://evil.example'},{'Origin':None}):
+            self.assertEqual(self.request('POST','/api/workflow/check-catalog',{'config':{}},headers)[0],403)
+        self.workflow.check_catalog.assert_not_called()
+        status,body,_=self.request('POST','/api/workflow/check-catalog',{'config':{'detector':'AK01'}})
+        self.assertEqual(status,200);self.assertEqual(json.loads(body)['kind'],J.CATALOG_KIND)
+        self.workflow.check_catalog.assert_called_once_with(config={'detector':'AK01'})
+        self.workflow.check.assert_not_called();self.workflow.start.assert_not_called()
 
     def test_exact_checked_identity_only_start(self):
         self.assertEqual(self.request('POST','/api/workflow/check',{'config':{'name':'fixture'}})[0],200)
