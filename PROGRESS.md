@@ -24,7 +24,13 @@ build_site --restructure installed snapshot34d201e2c6c21a26032ede5cba53a25cb5df4
 after full stage validation. Both installed preview plots and all eight unchanged
 full-reader plots passed actual scale checks. Details, both new links andBack,
 390px layout and console checks passed; temporary preview closed. Standalone check_site passed:1,693 files/105 HTML/3,324 typed references.
-All local acceptance is complete. Upload/live acceptance and lease closure pending.
+Publication accepted: codea7990de is pushed and GitHub Pages built it.
+Mandatory check_site --url passed702 exactfiles, plusone independently checked
+lithium displayreceipt:703 unique livefiles. Actual publicoverview showsboth
+models; scales, fullreaderlinks andBack passed with no consoleerrors. BROWSER.json,
+LIVE-CHECK.log andLIVE-EXTRA.json retain evidence. Final Git/process/lease closure
+is recorded in.local/student-million-page-v1/COMPLETE.json andautonomy state.
+Heartbeat remains PAUSED; manualcontinuation isready onlyafter recordedclosure.
 Never restart completed work after a chat failure; inspect the current receipt first.
 
 Both previews reuse saved 1 keV bins and the shared panel/assets renderer. Models,
@@ -50,7 +56,8 @@ exchanged after initial conclusions. Generated preservation passed:1,583 non-HTM
 match immutablebaseline; only theoverview andfive presentation receipts changed.
 Initial protection-count1582 assumption is FAILED inROUND.json; it omitted the
 new teachingJSON. Actual fullbaseline filemembership and unchangedbytes passed.
-Desktop/narrow acceptance passed; actualdeployment/live acceptance remains pending. No repeated broad reviews or physics checks.
+Desktop/narrow andactualdeployment/live acceptance passed. No second-computer
+or native-mobile installation certification isclaimed. No repeated broad reviews or physics checks.
 
 TEST-SPECTRA.log and TEST-SPECTRA-CORRECTED.log preserve the first failed software
 attempts: new test import and legacy-gamma fixture versus current Cs137 reader;
