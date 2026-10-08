@@ -16,6 +16,13 @@ recovery contracts remain in `BATCH_PREVIEW.md`. Legacy producers and saved
 validators retain their original contracts; generated run-local state stays
 under `.local/runs/`.
 
+Student analysis guidance belongs to the existing `local_workflow.html/js`
+panel: explain saved file purposes and selected batch/local/global/group joins,
+while retaining every original artifact link. Raw LH5 column units and coordinate
+transforms are recorded in the stream manifest; they differ from normalized
+detector-local fields. Viewing is read-only and download requires an explicit
+user action. Do not add a second exporter or mutate scientific records for labels.
+
 ## Source ownership
 
 | Area | Edit these sources |

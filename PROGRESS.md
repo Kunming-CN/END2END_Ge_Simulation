@@ -1,110 +1,95 @@
 # Current handoff
 
-Updated: 2026-10-07 UTC. Read this before starting work.
-The complete prior detector/source milestone and history remain
-[at verified be4155b9](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/be4155b9e2089a34819ddf4bdd640620cec75f4d/PROGRESS.md).
+Updated: 2026-10-08 UTC. Read this before starting work.
+The complete accepted counts/batches/Control milestone and preserved failures are
+[at verified e489faf](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/e489faf5b808f51412b85d305245d17270d1a8bf/PROGRESS.md).
 
-## Current integrated milestone: exact counts, batches and Control
+## Completed bounded work: student analysis guidance
 
-The owner authorized M15b/M15c together after the ten-model delivery. This round
-starts from be4155b9e2089a34819ddf4bdd640620cec75f4d under the owned
-`student-batch-execution-v1-root` lease. The usable outcome is one checked
-radioactive-source job with an exact positive-integer count, serial batches of
-at most10000, shared native fields/calibration, boundary Stop/Resume and lazy
-saved event pages. The CLI and existing Control application share the executable
-v3 contract. A v2 preview is never a Run token. Gamma keeps its original fixed20
-route; existing saved validators, ten admitted configurations, Cs137/Am241/Ba133
-and the Co60 gate are preserved. Seven large models await a larger cryostat.
+Direct owner request: explain next plan and continue, with usable core first and
+no rabbit holes/repeated broad reviews/useless artifacts. Actual baseline HEAD,
+origin/main and live GitHub main were all e489faf5b808f51412b85d305245d17270d1a8bf;
+worktree was clean, prior owned lease released, Windows/Linux science absent.
+Root and UI developer actual sessions are gpt-6.1-sol/ultra in this project.
+Automatic scheduler remains PAUSED. This manually authorized round uses owner
+`student-analysis-v1-root`; its terminal receipt records actual lease/Git closure.
 
-The implementation and bounded integration are complete. Two scoped AI reviews
-and a NEW independent third accepted with explicit limits; concrete findings
-were exchanged once. The GUI-export/CLI Check mismatch was fixed through the
-existing strict parser (five focused tests passed), and one stale maintenance
-row was corrected. No unresolved implementation/science blockers remain. These
-are AI reviews, not human student or experimental certification. Final Git,
-process and lease closure must be read from the actual state and
-`.local/student-batches-v1/execution-v1/COMPLETE.json` after it exists.
-Do not repeat finished physics or claim closure merely from this handoff.
+Read-only inventory found the saved v3 access already complete: raw radiation,
+all event-ledger chunks, full signed native signals, endpoints, scalars/traces,
+readout settings and independent calibration in response/run.json are available.
+Do not invent another backend, export format or wrapper for these working paths.
+The concrete usability gap is v3's unclassified filename list and lack of visible
+selected-event filter/unit guidance.
 
-## Actual two-batch acceptance
+Input: the existing protected Control interface and retained completed
+`.local/runs/batch-AK01-cs137-500-v2/` results. Output: the existing analysis panel
+explains file purposes by stage, keeps every existing link/hash, and shows current
+saved batch/global/local/group filters and precise raw/normalized units. No
+source/detector/model/scientific configuration, API, solver, backend or lock change.
+No automatic Download/Export or browser settings action.
 
-One preselected AK01/Cs137 case used500 initial nuclei, seed26092631, two Julia
-threads, unchanged electronics/physics and an immutable acceptance-only cap250.
-The ordinary student cap remains10000. In
-`.local/runs/batch-AK01-cs137-500-v2/`, the first250 were sealed, the driver stopped,
-and a fresh process resumed the pending second250. Final counts:500 initial,
-496 zero-deposit,4 accepted groups,0 native failures/readout rejects/saturation.
-The field solution and independent500 keV injection each ran once. First-batch
-and shared artifacts retained exact bytes across recovery;73 protected original
-inputs/results are unchanged. Terminal artifact verification passed.
+Delivered in tools/local_workflow.html/js and the existing JavaScript contracts:
+five stage-purpose groups, all22 selected-batch artifact links plus3 parent links,
+and live saved run/batch/local/global/group guidance. No next-run form leakage or
+stale page guidance. Raw evtid is local; derived joins use global initial ID and
+group only where that record type carries it. CSV scalars/endpoints identities
+are decoded from record_json. Charge samples are in signals.csv, current in
+traces.jsonl. Raw row indices are zero-based within their source table. Manifest
+column units/transforms govern raw data; creation/deposition/group-relative/drift
+times remain distinct. Signed values, zeros and unknown null results are retained.
 
-Measured shared potential solve:18.4052162 s; independent injection:0.117 s.
-Per-batch native drift/charge:17.210 s and18.806 s; electronics:1.160 s and1.120 s.
-These exclude startup and are not total development time or a promised speedup.
-This low-statistics engineering test establishes neither physical resolution,
-efficiency, PDE/CCE convergence nor experimental agreement. Existing five-model
-Cs137500 acceptances, KL01 native failures and the million-decay campaign remain
-unchanged and are not rerun.
+Acceptance passed: existing pure+saved Node suite with retained zero0,
+positive188/group0 and batch1 global250/local0, null/negative/unavailable fixtures,
+and event/group/page/run changes. Real local-browser checks passed the retained
+positive plots, both batch file lists and selection guidance. One authenticated
+in-memory raw-file read matched saved bytes; no browser Download/Export, Save As
+or browser-setting action occurred. An optional test initially assumed a server
+attachment header; that assumption was corrected without backend changes.
 
-## Preserved failures and source binding
+Two scoped AI reviews and one NEW independent Sol6.1/ultra direction/detail/value
+review accepted this integrated scope. The two charge/current and nested-CSV
+wording findings were corrected and specifically rechecked; concrete findings
+were exchanged. No broad repeat, new science or environment change. The owned
+preview and browser tab are closed; Windows/Linux checks found no science workers.
+This milestone stops here. Software/UI acceptance is not second-PC student testing.
 
-The v1 native-preparation preflight reserved output before configuration parsing;
-it failed before fields, calibration or radiation. Its FAILED receipt and exact
-source remain in `.local/runs/batch-AK01-cs137-500-v1/`. The narrow order correction
-passed four new pure assertions; the complete native contract suite passed72.
-The v2 controller later collided `batch.json` with `BATCH.json` on Windows after
-its first250 scientific stages were sealed. Its original error/driver/source
-remain preserved; scientific completion was not discarded.
+## Retained completed engineering boundaries
 
-The sole consumer correction is12 filename substitutions to `batch-complete.json`.
-Original producer SHA256 is249b5ba418735854198f75831591018d7b3985b23600f2ac569a39fd05cb3063;
-corrected consumer SHA256 is453f4fc2696368e4cb3cffe00665ec66b56edefffd4bcf98379d7dd74ecbfda3.
-The actual producer111-file freeze remains exact throughout science. The derived
-consumer recovered existing stages with zero repeated scientific worker calls,
-then resumed only the pending batch. Managed source now equals that tested
-consumer; a fresh Check binds it. Historical run.json retains the prior controller
-error alongside completed status; it is retained history, not a new science failure.
-The Windows coexistence/terminal recovery regression passed. Do not rehash the old
-plan or erase unique failures to make history look clean.
+M15b/M15c terminal authority:
+`.local/student-batches-v1/execution-v1/COMPLETE.json`. Exact positive counts and
+serial10000 cap, one shared field/injection, real boundary Stop/Resume and lazy
+Control pages are accepted. Actual500AK01/Cs137 two250 batches:4 accepted,
+496 zero primaries,0 native/readout failures; first-batch/shared bytes and73
+protected originals unchanged. The v1 preflight and v2 Windows receipt-name
+collision are unique preserved failures, not rewritten successes. No recompute.
+Two accepted native bridge sources retain exact mixed/CRLF bytes through explicit
+Git attributes; never normalize their acceptance bindings casually.
 
-## Verification, UI and ownership
+Ten original-cryostat configurations are runnable through the shared existing
+engines; Cs137/Am241/Ba133 admitted, Gamma fixed20 and Co60 gate unchanged. Seven
+larger models await a larger cryostat; no bare world or model resizing. Prior
+five-model500 science, KL01 native failures and original million-decay campaign
+remain unchanged. Engineering/software acceptance does not establish efficiency,
+physical resolution, PDE/CCE convergence or experimental agreement. M5 stays closed.
 
-Evidence is purposefully collected in `.local/student-batches-v1/execution-v1/`:
-SCIENCE-FREEZE.json, STOP-CHECKPOINT.json, ACCEPTANCE-RESULT.json,
-CONTROLLER-FIX.json, NATIVE-SOURCE-TESTS.json, SOFTWARE-CHECKS.log,
-AGENT-SETTINGS.json and UI-BROWSER-CHECKS.json. Native caches are run-local,
-hash-checked before decoding and bound to inputs/runtime; no imported cache route.
-Raw signals and complete event ledgers retain local/global IDs, timing, signs,
-zeros and null failures. Waveform previews are explicitly limited to16 groups per
-batch; absent previews are never fabricated. Histogram merge uses fixed bins and
-integer counts, keeping truth Edep distinct from reconstructed Erec.
+## Evidence, closure and next task
 
-Focused checks passed: core8, source5, host CLI/workflow/protocol56, native72,
-UI-controller/protocol47, JavaScript contracts, five targeted CLI export checks
-and one targeted Windows completion
-regression. These categories overlap; do not report their sum as unique tests.
-The initial restricted-host hardlink/socket errors are preserved, followed by
-successful approved host checks. UI Start/Stop/Resume/reopen and stale/boundary
-identity cases use fixtures. Real browser selection/Check and read-only saved
-500-case viewing are separate evidence, not a claim of a second UI physics run.
-The CLI case was explicitly registered for browser QA, not automatically discovered.
+Evidence root is `.local/student-analysis-v1/`: AGENT-SETTINGS.json records actual
+launch contexts; SOURCE-FREEZE.json, SAVED-ACCEPTANCE.json, UI-BROWSER-CHECKS.json
+and three review receipts retain the tested bindings and concrete corrections.
+COMPLETE.json is authoritative only after actual Git/process/lease closure;
+inspect it and current state before another round. Preserve unique failures.
 
-`tools/BATCH_PREVIEW.md` is the maintained count/execution contract;
-`tools/MAINTENANCE.md` records ownership. No model, configuration, dependency lock,
-old science or generated public website is changed. This round updates source
-and Control; the prior checked saved website remains byte-exact. Setup remains
-`tools/site_guide.html`. No needless saved-site rebuild is required for unchanged
-site inputs. The owner's global core-first principles are saved in global AGENTS.md.
-
-## Stop condition and next work
-
-The integrated milestone has reached its scientific/software stop condition;
-no further physics, full review cycle or feature extension is needed. Final
-source synchronization and owned process/lease closure are recorded in the
-terminal local receipt after actual completion. Automatic
-heartbeat remains PAUSED; manual readiness is recorded separately. M5 stays closed.
-M8/M9 fresh-machine/student acceptance awaits a second computer; no installation,
-PATH/WSL/global package change or reset is authorized. Next bounded work prioritizes
-student analysis access and only measured blocking performance/usability issues.
-Source pose/angle extensions and future larger cryostats remain separate milestones,
-not prerequisites or permission to expand this delivery.
+The setup authority remains tools/site_guide.html; README stays short. This local
+UI/source milestone does not rebuild or change the old checked saved website.
+Only the existing UI/tests and ownership/handoff documents changed. The normal
+commit/push and live main/source/config/model/lock byte check are recorded in the
+terminal receipt, together with release of the owned lease.
+M8/M9 second-computer acceptance still awaits the owner's device. No installation,
+new environment, PATH/WSL/global packages or reset. Next bounded task: inspect the
+existing source anchor/GPS contract for one useful explicit position adjustment
+in the same cryostat, then define inputs/checks before adding controls. An isotropic
+point source has no useful angle control by itself. Use a shared transform, never
+copied detector/source combinations; retain the nominal default. Profile a delay
+only when it actually blocks students. Larger cryostat and deeper physical
+research remain separate future milestones.

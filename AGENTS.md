@@ -27,8 +27,10 @@ through one shared model-data and computation workflow. Reuse existing common
 functions; do not make a bespoke adapter, hours of development, or a separate
 full review for every model a prerequisite. Report concrete compatibility limits
 and missing inputs. Do not enable a model from its label alone or silently change
-the selected cryostat. Batch UI work is paused while this model-coverage priority
-is delivered; its preserved WIP remains in .local/student-batches-v1/wip/.
+the selected cryostat. The temporary batch-UI pause ended after this model-coverage
+delivery and the owner's subsequent approval: M15b/M15c are now accepted at
+e489faf. Preserved WIP in .local/student-batches-v1/wip/ is historical evidence;
+the current PROGRESS.md handoff governs further bounded work.
 
 Real browser acceptance must not click Download or trigger Save As, and must not
 change the owner's browser settings. Verify downloads through protected HTTP and

@@ -24,27 +24,42 @@ row were corrected. Final source/process/lease closure uses the local terminal
 receipt. No additional physics campaign, environment,
 framework or public science bundle is needed to finish this milestone.
 
-## Next bounded student-analysis improvement
+## Delivered student-analysis improvement
 
 Input: completed, hash-checked runs and the existing Control/event interfaces.
 Output: a clear route from selected event to raw radiation, ledger, signed charge,
 readout and effective settings, with understandable file labels and stable IDs.
 Reuse existing references and lazy pages; preserve full ledgers, numbers and flags.
-First inspect what is already available so this task does not duplicate working
-features. Add only access or explanation that blocks a student's analysis.
+The bounded inventory confirmed all five data stages are already accessible.
+The completed round explains the existing file links, selected local/global
+IDs and groups, and raw-versus-normalized units in the analysis panel. It adds
+no backend, exporter or file format. Saved calibration already exists in the
+response receipt. Avoid duplicating working features.
 
-Acceptance: one retained completed run, zero and positive events, unavailable
-previews/null failures, and correct file/row identity. Test saved-only access; no
-Geant4/SSD rerun. Download must be an explicit user action; automated browser
-checks do not click it or modify browser settings. Stop once the analysis path is
-usable. Cosmetic redesign and rare cases go to a brief backlog.
+Acceptance passed on one retained completed500-primary run: zero and positive
+events, unavailable/null/negative fixtures, batch-local/global identity and stale
+selection handling. Real browser and exact protected raw-byte access passed;
+no Geant4/SSD rerun or browser download/settings action. Two scoped plus NEW
+independent AI reviews closed two descriptive findings with targeted rechecks.
+The usable analysis path is delivered; stop expanding it.
+
+## Next bounded task: useful source positioning
+
+Inspect existing nominal anchor, remage GPS and admitted-source contract first.
+Input: one admitted source and detector in the present cryostat. Intended output:
+one shared, explicit position adjustment with units and recorded effective inputs,
+retaining the nominal default. No detector/source configuration cross-product.
+Only add a control after placement/material/sensitive-volume implications and
+one small preselected acceptance are defined. An isotropic point source alone
+does not benefit from an angle control. Stop at this one usable adjustment;
+directional/finite sources and larger cryostats remain separate future work.
 
 ## Subsequent options through existing engines
 
 1. Profile an actual blocking delay before optimizing. Reuse shared preparation
    and lazy data first; bound memory and thread choices. Keep serial science unless
    independent ownership and measured resource headroom justify concurrency.
-2. Add a bounded source pose/angle control through the existing nominal anchor and
+2. Extend source pose only when useful through the existing nominal anchor and
    remage GPS, using explicit transforms/units. Validate geometry and one small
    preselected positive case; do not create a detector/source config cross-product.
 3. Add further source options only when existing installation and physical source,
