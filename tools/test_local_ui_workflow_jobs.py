@@ -27,6 +27,69 @@ class Jobs(unittest.TestCase):
         plan['resolved']['selection']['detector']='AK01'
         return plan
 
+    def batch_plan(self):
+        plan=copy.deepcopy(self.plan)
+        plan.update(kind=J.B.CHECKED_KIND,schema_version=3,execution_enabled=True)
+        plan['resolved']['selection'].update(source=W.CS,primary_count=25001)
+        plan['resolved']['batching']={'batch_count':3}
+        return plan
+
+    def test_batch_check_start_route_reopen_and_changed_authority(self):
+        plan=self.batch_plan();self.controller._batch_resolver=lambda config,root:copy.deepcopy(plan)
+        request={'kind':'local_scenario_batch_request_v2','schema_version':2,'selection':plan['resolved']['selection']}
+        checked=self.controller.check_batches(request)
+        self.assertFalse(W.run_path(plan['resolved']['selection']['name'],self.root).exists())
+        plan['configuration_sha256']='edited'
+        with self.assertRaisesRegex(W.ControlError,'changed after Check'):self.controller.start(checked['check_id'])
+        plan['configuration_sha256']='original'
+        with patch.object(self.controller,'_launch',side_effect=self.controller._view):
+            job=self.controller.start(checked['check_id'])
+        self.assertEqual(job['execution_contract'],'serial_batches_v3');self.assertFalse(job['can_inspect_failure'])
+        with self.assertRaises(W.ControlError):self.controller.start(checked['check_id'])
+        reopened=J.WorkflowController(self.root,batch_resolver=self.controller._batch_resolver)
+        self.assertTrue(reopened.own_busy());self.assertEqual(reopened._jobs[0]['status'],'dispatch_uncertain')
+        calls=[]
+        def launch(argv,log,on_spawn):
+            calls.append(argv);directory=W.run_path(job['name'],self.root);directory.mkdir(parents=True)
+            W.write(directory/'run.json',{'status':'stopped','stages':{},'completed_batch_count':1,'completed_primary_count':10000,'batch_count':3})
+            return 0
+        self.controller._launcher=launch;self.controller._work(self.controller._jobs[0])
+        self.assertIn('run-batches',calls[0]);self.assertEqual(self.controller._jobs[0]['status'],'stopped')
+        reopened=J.WorkflowController(self.root,batch_resolver=self.controller._batch_resolver)
+        with patch.object(J.B,'admit',return_value=plan),patch.object(reopened,'_launch',side_effect=reopened._view):
+            resumed=reopened.resume(job['name'])
+        self.assertEqual(resumed['selection']['primary_count'],25001)
+        self.assertEqual(reopened._jobs[0]['mode'],'resume');self.assertEqual(resumed['batch_progress']['completed_primary_count'],10000)
+
+    def test_batch_stop_is_idempotent_and_events_require_owned_sealed_identity(self):
+        plan=self.batch_plan();self.controller._batch_resolver=lambda config,root:copy.deepcopy(plan)
+        checked=self.controller.check_batches({'kind':'local_scenario_batch_request_v2','schema_version':2,'selection':plan['resolved']['selection']})
+        with patch.object(self.controller,'_launch',return_value={}):self.controller.start(checked['check_id'])
+        job=self.controller._jobs[0];job['status']='running';directory=W.run_path(job['name'],self.root);directory.mkdir(parents=True)
+        W.write(directory/'run.json',{'status':'running','stages':{},'completed_batch_count':0,'completed_primary_count':0})
+        def stop(name,root):W.write(directory/'STOP.json',{'fixture':True})
+        with patch.object(J.B,'request_stop',side_effect=stop) as requester:
+            self.controller.stop(job['name']);self.controller.stop(job['name']);requester.assert_called_once()
+        with patch.object(J.B,'event_page') as page,self.assertRaises(W.ControlError):self.controller.event_page(job['name'],1,0,100)
+        page.assert_not_called();job['status']='stopped'
+        with patch.object(J.B,'event_page',return_value={'configuration_sha256':'changed'}),self.assertRaises(W.ControlError):self.controller.event_page(job['name'],1,0,100)
+        reply={'configuration_sha256':'original','records':[{'global_initial_id':10000,'final_induced_keV':-.003,'readout':None}]}
+        with patch.object(J.B,'event_page',return_value=reply) as page:
+            self.assertEqual(self.controller.event_page(job['name'],1,0,100),reply)
+            page.assert_called_once_with(job['name'],1,0,100,self.root)
+        with patch.object(J.B,'focused_waveforms',return_value={'configuration_sha256':'changed'}),self.assertRaises(W.ControlError):self.controller.batch_waveforms(job['name'],1,10000,0)
+
+    def test_reopened_batch_can_verify_real_stopped_boundary_after_driver_ended(self):
+        plan=self.batch_plan();self.controller._batch_resolver=lambda config,root:copy.deepcopy(plan)
+        checked=self.controller.check_batches({'kind':'local_scenario_batch_request_v2','schema_version':2,'selection':plan['resolved']['selection']})
+        with patch.object(self.controller,'_launch',return_value={}):self.controller.start(checked['check_id'])
+        job=self.controller._jobs[0];job['driver']={'pid':999998,'identity':'saved'}
+        receipt={'status':'stopped','configuration_sha256':'original','resume_allowed':True,'verification':'sealed_prefix_verified'}
+        with patch.object(J.B,'inspect',return_value=receipt),patch.object(W,'process_identity',return_value='unknown'),self.assertRaises(W.ControlError):self.controller.verify(job['name'])
+        with patch.object(J.B,'inspect',return_value=receipt),patch.object(W,'process_identity',return_value=None):
+            self.assertEqual(self.controller.verify(job['name'])['status'],'stopped')
+        with patch.object(J.B,'inspect',return_value=dict(receipt,resume_allowed=False)),self.assertRaises(W.ControlError):self.controller.verify(job['name'])
+
     def test_catalog_check_is_read_only_and_reserves_versioned_authority(self):
         plan=self.catalog_plan();self.controller._catalog_resolver=lambda config,root:copy.deepcopy(plan)
         checked=self.controller.check_catalog(plan['resolved']['selection'])

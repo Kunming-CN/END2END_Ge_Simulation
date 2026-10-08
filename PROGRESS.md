@@ -1,111 +1,110 @@
 # Current handoff
 
 Updated: 2026-10-07 UTC. Read this before starting work.
-The complete prior source, UI and planning history is preserved
-[at verified f274f96](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/f274f96a5c5449cf0183ef783118805c1b8c8e96/PROGRESS.md).
+The complete prior detector/source milestone and history remain
+[at verified be4155b9](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/be4155b9e2089a34819ddf4bdd640620cec75f4d/PROGRESS.md).
 
-## Accepted ten-model engineering milestone
+## Current integrated milestone: exact counts, batches and Control
 
-Ten detector configurations now use the existing LBNL cryostat through Control:
-the original AK02, SAP22, GeRC02 Li50min, KMRC01 candidate and SAP18 ring scenario,
-plus AK01, SAP16, SAP17, Bipolar_reference_3D and KL01_3D through one common route.
-All 17 original models remain browsable. BEGe_GD32B_reference, BEGe_reference,
-COAX_ANG2_reference, ICPC_48A_reference, ICPC_large_reference, PPC_PONaMa1_reference
-and GeGI_3D require a future larger cryostat because of their actual dimensions;
-GeGI also intersects the fixed support. Their canonical inputs are complete.
-No replacement world, model geometry, temperature, contact or bias was introduced.
+The owner authorized M15b/M15c together after the ten-model delivery. This round
+starts from be4155b9e2089a34819ddf4bdd640620cec75f4d under the owned
+`student-batch-execution-v1-root` lease. The usable outcome is one checked
+radioactive-source job with an exact positive-integer count, serial batches of
+at most10000, shared native fields/calibration, boundary Stop/Resume and lazy
+saved event pages. The CLI and existing Control application share the executable
+v3 contract. A v2 preview is never a Run token. Gamma keeps its original fixed20
+route; existing saved validators, ten admitted configurations, Cs137/Am241/Ba133
+and the Co60 gate are preserved. Seven large models await a larger cryostat.
 
-Cs137, Am241 and Ba133 share the existing source-selection workflow at the nominal
-anchor, with 20/500 initial nuclei. Gamma retains its original fixed-20 AK02/SAP22
-contract. Co60 remains held by its unchanged source gate. Source/model software
-factorization does not mean thirty actual source/model physics acceptances.
+The implementation and bounded integration are complete. Two scoped AI reviews
+and a NEW independent third accepted with explicit limits; concrete findings
+were exchanged once. The GUI-export/CLI Check mismatch was fixed through the
+existing strict parser (five focused tests passed), and one stale maintenance
+row was corrected. No unresolved implementation/science blockers remain. These
+are AI reviews, not human student or experimental certification. Final Git,
+process and lease closure must be read from the actual state and
+`.local/student-batches-v1/execution-v1/COMPLETE.json` after it exists.
+Do not repeat finished physics or claim closure merely from this handoff.
 
-This manual round starts from f274f96a5c5449cf0183ef783118805c1b8c8e96 under the
-owned coordinator lock `student-batches-v1-root`. Five new fixed science cases
-completed; physics/electronics, integrity and the new independent third AI FINAL
-reviews accept the integrated engineering milestone. The saved-site guide and
-navigation refresh passed its local build and complete check.
-Final Git/live-publication/process/lock outcomes are authoritative only in
-`.local/student-detector-coverage-v1/COMPLETE.json`, `.local/autonomy/state.json`
-and actual Git/process state. The root writes terminal COMPLETE after those
-operations actually finish; this handoff does not infer their completion.
-Do not repeat completed science.
+## Actual two-batch acceptance
 
-## Five completed fixed cases
+One preselected AK01/Cs137 case used500 initial nuclei, seed26092631, two Julia
+threads, unchanged electronics/physics and an immutable acceptance-only cap250.
+The ordinary student cap remains10000. In
+`.local/runs/batch-AK01-cs137-500-v2/`, the first250 were sealed, the driver stopped,
+and a fresh process resumed the pending second250. Final counts:500 initial,
+496 zero-deposit,4 accepted groups,0 native failures/readout rejects/saturation.
+The field solution and independent500 keV injection each ran once. First-batch
+and shared artifacts retained exact bytes across recovery;73 protected original
+inputs/results are unchanged. Terminal artifact verification passed.
 
-The preselected normal public CLI Check → Run → Inspect route completed five
-distinct Cs137 cases, each with 500 initial nuclei, sequentially with two Julia
-threads and one remage thread. Each had one independent 500 keV injection.
-There was no scientific retry, seed/count change, outcome tuning or source-input
-change. Each case retains original IDs 0–499, exact raw truth and every zero event.
+Measured shared potential solve:18.4052162 s; independent injection:0.117 s.
+Per-batch native drift/charge:17.210 s and18.806 s; electronics:1.160 s and1.120 s.
+These exclude startup and are not total development time or a promised speedup.
+This low-statistics engineering test establishes neither physical resolution,
+efficiency, PDE/CCE convergence nor experimental agreement. Existing five-model
+Cs137500 acceptances, KL01 native failures and the million-decay campaign remain
+unchanged and are not rerun.
 
-| Model | Accepted groups | Zero-deposit primaries | Native failures | Readout rejects | Public Run wall time (s) |
-|---|---:|---:|---:|---:|---:|
-| AK01 | 3 | 496 | 0 | 1 | 219.231 |
-| SAP16 | 1 | 497 | 0 | 2 | 176.966 |
-| SAP17 | 1 | 499 | 0 | 0 | 153.829 |
-| Bipolar_reference_3D | 2 | 498 | 0 | 0 | 149.596 |
-| KL01_3D | 2 | 495 | 3 | 0 | 146.576 |
+## Preserved failures and source binding
 
-Total: 2,500 initial primaries, 2,485 zero-deposit primaries and 15 pulse groups:
-9 accepted, 3 native-failed and 3 readout-rejected; no saturation. KL01's
-NativeBoundaryStall events 124, 236 and 367 retain error/raw truth and null unknown
-charge/readout. AK01 event480 and SAP16 events151/311 remain below-threshold
-readout rejections. KL01 is `completed_with_native_failures`, not a clean result.
+The v1 native-preparation preflight reserved output before configuration parsing;
+it failed before fields, calibration or radiation. Its FAILED receipt and exact
+source remain in `.local/runs/batch-AK01-cs137-500-v1/`. The narrow order correction
+passed four new pure assertions; the complete native contract suite passed72.
+The v2 controller later collided `batch.json` with `BATCH.json` on Windows after
+its first250 scientific stages were sealed. Its original error/driver/source
+remain preserved; scientific completion was not discarded.
 
-Measured totals are 90.661 s potential solves, 213.163 s native stages,
-846.197 s public Run and 1,102.779 s public Check/Run/Inspect. The five added paths
-use explicit Float64 initial-grid parameters 0.25/2 mm; original five paths remain
-unchanged. The earlier spacing extrapolation was disproved as an upper bound:
-AK01's actual electric grid is 162×1×124. Maximum measured whole-process peak RSS
-is 1,209,978,880 bytes; this is not field-only memory or parallel-solve headroom.
-These small engineering cases establish neither grid/PDE/CCE convergence nor
-physical resolution, detector efficiency, surveyed placement or experimental agreement.
+The sole consumer correction is12 filename substitutions to `batch-complete.json`.
+Original producer SHA256 is249b5ba418735854198f75831591018d7b3985b23600f2ac569a39fd05cb3063;
+corrected consumer SHA256 is453f4fc2696368e4cb3cffe00665ec66b56edefffd4bcf98379d7dd74ecbfda3.
+The actual producer111-file freeze remains exact throughout science. The derived
+consumer recovered existing stages with zero repeated scientific worker calls,
+then resumed only the pending batch. Managed source now equals that tested
+consumer; a fresh Check binds it. Historical run.json retains the prior controller
+error alongside completed status; it is retained history, not a new science failure.
+The Windows coexistence/terminal recovery regression passed. Do not rehash the old
+plan or erase unique failures to make history look clean.
 
-## Verification and evidence
+## Verification, UI and ownership
 
-Recorded software checks passed: core48, native-model164, native-request15,
-UI-controller20, protected-HTTP24, setup2 and JavaScript contracts. All five actual
-Geant4/SSD geometry checks passed. Legacy saved inspections preserve prior counts.
-Real Chrome selected all five added models with Am241 and displayed all seven
-dimension blockers. After the existing saved-only Gamma Verify action, AK01/Ba133
-Check enabled Run; changing to Cs137 invalidated it. No UI Run, Download or Export
-was clicked. UI-BROWSER-CHECKS.json records this selection/Check acceptance; the
-owned browser tab and server were closed. The root records publication closure.
+Evidence is purposefully collected in `.local/student-batches-v1/execution-v1/`:
+SCIENCE-FREEZE.json, STOP-CHECKPOINT.json, ACCEPTANCE-RESULT.json,
+CONTROLLER-FIX.json, NATIVE-SOURCE-TESTS.json, SOFTWARE-CHECKS.log,
+AGENT-SETTINGS.json and UI-BROWSER-CHECKS.json. Native caches are run-local,
+hash-checked before decoding and bound to inputs/runtime; no imported cache route.
+Raw signals and complete event ledgers retain local/global IDs, timing, signs,
+zeros and null failures. Waveform previews are explicitly limited to16 groups per
+batch; absent previews are never fabricated. Histogram merge uses fixed bins and
+integer counts, keeping truth Edep distinct from reconstructed Erec.
 
-Acceptance, exact per-case identities/hashes, timing, failure records and source
-preservation: `.local/student-batches-v1/model-coverage/acceptance-v1/COMPLETE.json`
-(SHA256 `4c47b8b2ea9f8e2fb4947ec46335549f67fa1ef45e4c471ba782df15413770a5`).
-UI/setup freeze: `.local/student-batches-v1/ui/SOURCE-FREEZE.json`.
-Current integrated AI reviews: `.local/student-detector-coverage-v1/reviews/`.
-Physics/electronics and integrity FINAL accept the integrated milestone with
-I-001's exact saved-response settings binding and P-R001's resource-wording
-correction closed. The independent third FINAL also accepts the validated
-presentation snapshot, final guide/source freeze and focused tests. Local build
-and publication are separate delivery checks. Original sources, science and
-unique failures remain preserved.
-AI engineering review is not human student or experimental certification.
+Focused checks passed: core8, source5, host CLI/workflow/protocol56, native72,
+UI-controller/protocol47, JavaScript contracts, five targeted CLI export checks
+and one targeted Windows completion
+regression. These categories overlap; do not report their sum as unique tests.
+The initial restricted-host hardlink/socket errors are preserved, followed by
+successful approved host checks. UI Start/Stop/Resume/reopen and stale/boundary
+identity cases use fixtures. Real browser selection/Check and read-only saved
+500-case viewing are separate evidence, not a claim of a second UI physics run.
+The CLI case was explicitly registered for browser QA, not automatically discovered.
 
-## Delivery order and retained state
+`tools/BATCH_PREVIEW.md` is the maintained count/execution contract;
+`tools/MAINTENANCE.md` records ownership. No model, configuration, dependency lock,
+old science or generated public website is changed. This round updates source
+and Control; the prior checked saved website remains byte-exact. Setup remains
+`tools/site_guide.html`. No needless saved-site rebuild is required for unchanged
+site inputs. The owner's global core-first principles are saved in global AGENTS.md.
 
-`tools/site_guide.html` remains the single setup authority, including both explicit
-exporter builds in the existing pinned environment. README stays a short entry.
-Public guide/navigation refresh uses `build_site.py --restructure`, saved-only
-checks and a live `check_site.py --url` after deployment; generated docs are never
-edited by hand. One tracked `scenarios/catalog-presentation.json` snapshot
-validates exact canonical-model, nominal-assembly and unchanged science-bound
-registry hashes for public display; the backend independently checks runtime
-admission. Focused publication checks passed 75 tests plus the final guide check.
-`docs/` was refreshed once through `--restructure` and the full local checker
-passed. `.local/student-batches-v1/docs/SAVED-PUBLICATION-BUILD.json` binds its
-manifest/guide hashes; live publication and Git/lock closure use the terminal
-authorities above.
+## Stop condition and next work
 
-M5 remains closed; M15a preview remains accepted. M15b/M15c unfinished batch WIP is
-preserved in `.local/student-batches-v1/wip/` and paused, not a model-coverage
-prerequisite. Its exact four-file baseline restore is recorded in RESTORED.json.
-M8/M9 fresh-machine/student setup acceptance remains deferred until the owner's
-second computer. Automatic heartbeat remains PAUSED. Future larger cryostat,
-source angles and extra models are outside this milestone. Next work follows
-the owner's priority; no new science, installation experiment or full review
-cycle is justified by these documentation changes.
+The integrated milestone has reached its scientific/software stop condition;
+no further physics, full review cycle or feature extension is needed. Final
+source synchronization and owned process/lease closure are recorded in the
+terminal local receipt after actual completion. Automatic
+heartbeat remains PAUSED; manual readiness is recorded separately. M5 stays closed.
+M8/M9 fresh-machine/student acceptance awaits a second computer; no installation,
+PATH/WSL/global package change or reset is authorized. Next bounded work prioritizes
+student analysis access and only measured blocking performance/usability issues.
+Source pose/angle extensions and future larger cryostats remain separate milestones,
+not prerequisites or permission to expand this delivery.

@@ -1,11 +1,62 @@
-# Exact count and serial batch preview (M15a)
+# Exact count, serial batch preview and execution
 
 The versioned v2 preview checks configuration, count arithmetic, seed assignment
 and identity only. It launches no remage, Geant4, Julia, SSD or readout worker,
 creates no run root/reservation and gives no Start token. Existing v1 Check,
 saved imports, producers and terminal-result validators retain their original
-Cs13720/500 and gamma20/fixed-seed restrictions. Control's current form remains
-the v1 form. Real batch execution is M15b; the count form/event access is M15c.
+Cs13720/500 and gamma20/fixed-seed restrictions. The current Control form uses
+the separate executable v3 contract for radioactive sources; gamma retains v1.
+
+## Versioned batch execution (M15b)
+
+The shared `tools/scenario_workflow.py` CLI has explicit `check-batches`,
+`run-batches`, `stop-batches`, `resume-batches` and `inspect-batches` actions.
+They use the same positive-integer selection fields as the existing local
+workflow, with an executable v3 checked contract separate from the v2 preview.
+Control uses this same Check/Run contract for its count input. A preview is
+never silently upgraded into a runnable plan. Gamma retains its legacy route;
+the batch connector covers the admitted radioactive source/model selections.
+
+Use an existing Python executable in the configured project environment:
+
+```text
+python tools/scenario_workflow.py check-batches --config selection.json
+python tools/scenario_workflow.py run-batches --plan checked-plan.json
+python tools/scenario_workflow.py stop-batches --name RUN_NAME
+python tools/scenario_workflow.py resume-batches --name RUN_NAME
+python tools/scenario_workflow.py inspect-batches --name RUN_NAME
+```
+
+Save the JSON returned by Check as `checked-plan.json`; Run consumes that exact
+plan. CLI Check accepts either a bare selection or Control's versioned exported
+configuration; both reconstruct a fresh checked plan. Check starts no science.
+Default transport batches contain at most10000
+initial nuclei and execute serially. One run root owns shared geometry, SSD
+preparation and independent injection calibration; each batch owns raw transport,
+complete event ledger and signed charge/readout. Model/source/operating settings,
+runtime and source bytes bind reuse. The parent count includes zero-deposit and
+failed primaries, not only detected events.
+
+In Control, enter the total initial nuclei, click Check, then Run. Check shows
+the exact serial partition; changing any input invalidates Run. Stop waits for
+a sealed boundary. Resume validates that saved job before continuing it.
+Saved batch event pages load on demand and retain global/local IDs, zero events,
+truth/readout distinctions and raw artifact references. Native signals remain
+saved; waveform previews cover only the first 16 groups per batch and show
+unavailability explicitly for other groups. No download is triggered by viewing.
+
+Stop is cooperative at a completed stage or batch boundary. Resume verifies
+sealed stages and continues pending work. Uncertain unsealed scientific attempts
+are retained and refused rather than silently rerun. A terminal receipt takes
+precedence over a stale driver status. Existing science and legacy saved
+validators are unchanged; this is functional engineering, not physical
+convergence, calibrated efficiency or experimental agreement.
+
+One preselected acceptance uses500 initial Cs137 nuclei in two250-nucleus
+batches. The smaller cap is an immutable acceptance-only override, not a new
+student setting. Ordinary runs retain the10000 cap. Arithmetic boundaries and
+injected crash cases require no large physics campaign. Milestone status and
+actual acceptance outcomes are recorded in the current `PROGRESS.md` handoff.
 
 ## Shared entry and immutable plan
 
@@ -58,9 +109,8 @@ capacity and practical resources. The default radiation batch cap is10000.
 
 The plan stores a constant-size descriptor, not an all-batch or all-event array.
 `iter_batches` is lazy; `batch_at` resolves any zero-based index. Each batch uses
-one prospective stock remage process with `-t 1`; Julia threads never multiply
-the radiation count. This is an execution requirement for M15b, not execution
-already implemented here. Transport batching differs from LH5 extraction chunks.
+one stock remage process with `-t 1`; Julia threads never multiply
+the radiation count. Transport batching differs from LH5 extraction chunks.
 
 Radiation seed rule `remage_affine_permutation_v1` assigns batch index `i`:
 
@@ -81,7 +131,8 @@ on master seed and batch index, never total N, run name, timestamp or invocation
 order; enlarging a partial final batch keeps its seed, without claiming unchanged
 transport results. Edited/colliding seed receipts fail before dispatch.
 
-Native parcel/row/group seeding from global identity is explicitly pending M15b.
+The v3 native connector seeds parcels from the recorded native seed family,
+global initial identity, raw row and parcel indices. Raw local IDs are retained.
 The fixed legacy native seed and old science remain unchanged.
 
 ## Complete identity and independently checked census
@@ -99,9 +150,8 @@ requires every local initial ID exactly once in ordered `0..batch.primary_count-
 Zero-deposit primaries and native/readout failures stay in that census. Tracks,
 vertices, delayed pulse groups and threshold-selected events never replace its
 denominator. A doubled remage count, missing/duplicate/foreign/reordered ID or
-additional beamOn command fails. These checks are pure/injected in M15a; actual
-raw reader/worker and parent receipts must connect and independently validate
-them in M15b. Charge, signed voltage/ADC/Erec and unknown/null accounting remain
+additional beamOn command fails. The v3 raw reader/worker and parent receipts
+connect these checks to actual saved data. Charge, signed voltage/ADC/Erec and unknown/null accounting remain
 the existing science/readout responsibilities.
 
 ## Focused acceptance
@@ -112,5 +162,6 @@ the unchanged workflow/controller tests. They cover boundary arithmetic,
 constant-size/lazy large previews, seed stability/collisions, exact raw identity,
 independent census, malformed/rehashed imports, GUI/CLI agreement, protected
 protocol and refusal before any science/state/lease write. No10001-primary run
-is needed to prove an arithmetic boundary. M15b still requires its one
-preselected real two-batch acceptance using at most500 total primaries.
+is needed to prove an arithmetic boundary. The preselected real two-batch
+acceptance used500 total primaries; exact results, corrections and unchanged
+original evidence are recorded in PROGRESS.md and the local execution receipt.

@@ -148,3 +148,7 @@ transport/CMakeLists.txt -text whitespace=blank-at-eol,blank-at-eof,space-before
 # Additive catalog exporter sources keep exact LF bytes; the frozen exporter inputs stay unchanged.
 transport/cryostat_catalog_export.cc text eol=lf
 transport/catalog_exporter/CMakeLists.txt text eol=lf
+
+# Preserve the exact native bridge bytes already bound by batch acceptance.
+simulation/batch_decay_stream.jl -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+simulation/batch_native_contract.jl -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

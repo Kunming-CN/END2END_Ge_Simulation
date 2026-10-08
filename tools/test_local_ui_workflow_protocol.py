@@ -169,6 +169,29 @@ class Protocol(unittest.TestCase):
         self.workflow.preview_batches.assert_called_once_with(request={'schema_version':2})
         self.workflow.start.assert_not_called()
 
+    def test_batch_check_execution_route_and_lazy_pages_are_closed_and_protected(self):
+        self.workflow.check_batches.return_value={'kind':'local_scenario_batch_execution_v3','schema_version':3,'execution_enabled':True,'check_id':'batch-check'}
+        for data in ({'request':{},'start':True},{'request':[]},{'request':True},'null'):
+            self.assertEqual(self.request('POST','/api/workflow/check-batches',data)[0],400)
+        for headers in ({'X-Control-Token':''},{'Origin':None},{'Origin':'https://evil.example'}):
+            self.assertEqual(self.request('POST','/api/workflow/check-batches',{'request':{}},headers)[0],403)
+        self.workflow.check_batches.assert_not_called()
+        self.assertEqual(self.request('POST','/api/workflow/check-batches',{'request':{'schema_version':2}})[0],200)
+        self.workflow.check_batches.assert_called_once_with(request={'schema_version':2})
+        self.workflow.event_page.return_value={'records':[{'global_initial_id':10000,'readout':None,'final_induced_keV':-.003}]}
+        route='/api/workflow/events?name=saved&batch=1&offset=0&limit=100'
+        code,body,_=self.request(route=route);self.assertEqual(code,200);self.assertEqual(json.loads(body)['records'][0]['global_initial_id'],10000)
+        self.workflow.event_page.assert_called_once_with('saved',1,0,100)
+        self.workflow.event_page.reset_mock()
+        for bad in (route+'&limit=100',route+'&extra=1',route.replace('batch=1','batch=01'),route.replace('offset=0','offset=-1'),route.replace('limit=100','limit=101'),route.replace('offset=0','offset=9007199254740992'),route+'#bad'):
+            self.assertEqual(self.request(route=bad)[0],400,bad)
+        for headers in ({'X-Control-Token':''},{'Origin':'https://evil.example'},{'Sec-Fetch-Site':'cross-site'}):
+            self.assertEqual(self.request(route=route,headers=headers)[0],403)
+        self.workflow.event_page.assert_not_called();self.workflow.start.assert_not_called()
+        self.workflow.batch_waveforms.return_value={'record':{'global_initial_id':20000,'group_id':0}}
+        self.assertEqual(self.request(route='/api/workflow/batch-waveforms?name=saved&batch=2&primary=20000&group=0')[0],200)
+        self.workflow.batch_waveforms.assert_called_once_with('saved',2,20000,0)
+
     def test_actual_gui_and_cli_batch_import_admission_matches(self):
         import workflow_batches as B
         root=self.server.controller.root

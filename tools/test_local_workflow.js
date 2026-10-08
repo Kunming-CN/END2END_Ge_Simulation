@@ -15,7 +15,7 @@ const svgNs='http://www.w3.org/2000/svg';
 function xml(tag,attrs={},children=[]){return {nodeType:1,localName:tag,prefix:null,namespaceURI:null,attributes:Object.entries(attrs).map(([name,value])=>({name,value,prefix:null})),childNodes:children};}
 const svgDocument={doctype:null,documentElement:xml('svg',{role:'img',viewBox:'0 0 600 205'},[xml('polyline',{points:'55,160 565,35',fill:'none',stroke:'currentColor','stroke-width':'1.7'}),xml('text',{x:'5',y:'35'},[{nodeType:3,nodeValue:'-0.003'}])]),getElementsByTagName:()=>[]};
 class Parser{parseFromString(){return svgDocument;}}
-const elements=new Map(),get=id=>{if(!elements.has(id))elements.set(id,new Element(['cryostat','detector','source','pose','count','threads','event','group'].includes(id)?'select':'div'));return elements.get(id);};
+const elements=new Map(),get=id=>{if(!elements.has(id))elements.set(id,new Element(['cryostat','detector','source','pose','threads','event','group'].includes(id)?'select':'div'));return elements.get(id);};
 const context=vm.createContext({document:{getElementById:get,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>{const n=new Element(tag);n.namespaceURI=ns;return n;},createTextNode:text=>({textContent:text})},DOMParser:Parser,
   location:{hash:'#fixture',pathname:'/'},sessionStorage:{getItem:()=>'',setItem:()=>{}},history:{replaceState:()=>{}},
   URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL:()=>{}},URLSearchParams,TextDecoder,Uint8Array,fetch:()=>new Promise(()=>{}),setInterval:()=>{},setTimeout:()=>{}});
@@ -191,6 +191,33 @@ for(const name of ['COMPLETE.json','transport/truth.lh5','transport/stream/event
 assert.ok(!artifactButtons.includes('Download unrelated.json'));
 assert.ok(get('saved-artifacts').children.flatMap(row=>row.children).some(n=>/202 bytes.*SHA256/.test(n.textContent)));
 get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
+// Exact decimal input rejects coercion and preserves the legacy Gamma contract.
+assert.match(html,/<input id="count" type="text" inputmode="numeric"/);
+for(const text of ['0','-1','1.5','1e3',' 500','500 ','9007199254740992','true',''])assert.throws(()=>run(`exactInteger(${JSON.stringify(text)},'Initial primaries')`),/integer|range/);
+for(const n of [1,499,500,9999,10000,10001,25001])assert.equal(run(`exactInteger('${n}','Initial primaries')`),n);
+assert.equal(get('count').readOnly,true);assert.equal(get('count').value,'20');
+get('source').value='cs137_point_decay_v1';run('sourceChanged();');get('count').value='25001';
+assert.equal(get('count').readOnly,false);assert.equal(run('config().primary_count'),25001);
+assert.equal(run('importedRequest(batchRequest(config())).primary_count'),25001);
+assert.throws(()=>run('importedConfig(config())'),/unavailable/);
+for(const bad of [true,500.5,'500',0,9007199254740992])assert.throws(()=>run(`importedRequest(batchRequest({...config(),primary_count:${JSON.stringify(bad)}}))`),/unavailable/);
+assert.throws(()=>run('importedRequest({...batchRequest(config()),extra:true})'),/fields/);
+get('count').value='500';get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
+// Per-batch pages retain boundary identities, signs, raw deposits and null failures.
+run(`const batchJob={name:'batch-saved',configuration_sha256:'d'.repeat(64),execution_contract:'serial_batches_v3',status:'completed',selection:{detector:'AK01',source:'cs137_point_decay_v1',primary_count:25001},batching:{batch_count:3},stages:{}};
+function batchFixture(batch,offset,count=1){const globalOffset=batch*10000;return {kind:'local_batch_event_page_v1',name:batchJob.name,configuration_sha256:batchJob.configuration_sha256,batch_index:batch,batch_offset:globalOffset,batch_primary_count:10000,offset,limit:100,next_offset:offset+count<10000?offset+count:null,batch_sha256:'e'.repeat(64),response_summary_sha256:'f'.repeat(64),traces:[],artifacts:['batches/b'+String(batch).padStart(10,'0')+'/response/scalars.jsonl'],records:Array.from({length:count},(_,i)=>({batch_index:batch,global_initial_id:globalOffset+offset+i,local_initial_id:offset+i,truth:{steps:[{energy_keV:4,time_ns:500000,raw_row_index:12}]},primary:{record_kind:'decay',event_id:offset+i,pulse_count:1,deposited_energy_keV:4},pulse_groups:[{record_kind:'pulse',event_id:offset+i,group_id:0,origin_time_ns:500000,final_induced_keV:-.003,deposited_energy_keV:4,readout:null,status:'native_transport_failed'}]}))};}
+`);
+for(const [batch,local,global]of [[0,9999,9999],[1,0,10000],[1,9999,19999],[2,0,20000]]){
+  assert.equal(run(`flatBatchRecords(pageIdentity(batchFixture(${batch},${local}),batchJob,${batch},${local}))[1].global_initial_id`),global);
+}
+assert.throws(()=>run('pageIdentity({...batchFixture(1,0),name:"wrong"},batchJob,1,0)'),/identities/);
+assert.throws(()=>run('pageIdentity({...batchFixture(1,0),batch_index:2},batchJob,1,0)'),/identities/);
+run(`result={job:batchJob,records:flatBatchRecords(batchFixture(1,0)),traces:[]};$('event').value='10000';showEvent(1);`);
+assert.equal(get('result-data').children[0].children[1].children[0].textContent,'-0.003');
+assert.equal(get('result-data').children[0].children[2].children[0].textContent,'Unavailable');
+assert.match(get('event-record').textContent,/500000/);assert.match(get('event-record').textContent,/raw_row_index/);
+run("showRun(savedJob);");
+
 // A delayed old Check reply cannot enable Start for a changed current selection.
 (async()=>{
   // Every Download requests exact bytes; viewing keeps the default route.
@@ -210,14 +237,14 @@ get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
     run("resolveCheck({check_id:'stale',resolved:{selection:{detector:'AK02'}}});");await old;
     assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
   }
-  const current=run("$('check').onclick()");run("resolveCheck({check_id:'new',resolved:{selection:{detector:'SAP22'}}});");await current;
+  const current=run("$('check').onclick()");run("resolveCheck({kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:true,check_id:'new',resolved:{selection:{detector:'SAP22'},batching:{batch_count:1}}});");await current;
   assert.equal(run('checked.check_id'),'new');assert.equal(get('start').disabled,false);
   let requestedRoute;
   run("let catalogChecks=[];api=(path,body)=>{catalogChecks.push({path,body});return new Promise(resolve=>resolveCheck=resolve);};");
   get('detector').value='AK01';run('detectorChanged();');
   const catalogPending=run("$('check').onclick()");
-  assert.equal(run('catalogChecks[0].path'),'/api/workflow/check-catalog');
-  run("resolveCheck({kind:'local_catalog_workflow_v1',status:'checked_configuration',check_id:'shared-new',resolved:{selection:{detector:'AK01'}}});");
+  assert.equal(run('catalogChecks[0].path'),'/api/workflow/check-batches');assert.equal(run('catalogChecks[0].body.request.schema_version'),2);assert.equal(run('catalogChecks[0].body.request.selection.detector'),'AK01');
+  run("resolveCheck({kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:true,check_id:'shared-new',resolved:{selection:{detector:'AK01'},batching:{batch_count:1}}});");
   await catalogPending;assert.equal(run('checked.check_id'),'shared-new');
   get('detector').value='large-model';run('detectorChanged();');
   assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
@@ -277,5 +304,27 @@ get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
   await Promise.resolve();await Promise.resolve();assert.equal(get('plots').children.filter(n=>n.tagName==='figure').length,4);assert.match(get('event-identity').textContent,/known zero input/);
   run("showGroup();plotReplies[4].resolve(plotReply(0,0));");await Promise.resolve();await Promise.resolve();assert.match(get('plots').children[0].textContent,/identities differ/);
   run("showGroup();showRun(savedJob);plotReplies[5].resolve(plotReply(0,null));");await Promise.resolve();await Promise.resolve();assert.equal(get('plots').children.length,0);
-  console.log('Browser setup/run binding, all groups/zeros/null/signs, stale Check/report/focus fencing, four independent plots and recovery notice contracts passed.');
+  // Slow saved pages cannot replace a newer batch or reopen another selected run.
+  run("let pageReplies=[];api=path=>new Promise(resolve=>pageReplies.push({path,resolve}));");
+  const openingBatch=run('openBatchResult(batchJob)');
+  get('batch-index').value='1';get('page-offset').value='0';const newerPage=run('loadBatchPage()');
+  run('pageReplies[1].resolve(batchFixture(1,0));');await newerPage;
+  assert.equal(get('event').value,'10000');assert.match(get('page-status').textContent,/Batch 1/);
+  run('pageReplies[0].resolve(batchFixture(0,0));');await openingBatch;
+  assert.equal(get('event').value,'10000');assert.equal(run('result.page.batch_index'),1);
+  const stalePage=run('loadBatchPage()');run('showRun(savedJob);pageReplies[2].resolve(batchFixture(1,0));');await stalePage;
+  assert.equal(run('result'),null);assert.match(get('selected').textContent,/saved-sap-gamma/);
+  // Four saved panels use exact selected charge and analog samples only.
+  run(`const successfulPage=batchFixture(2,0);successfulPage.records[0].pulse_groups[0].readout={readout_end_ns:1000,peak_time_ns:1000,peak_V:1};successfulPage.traces=[{global_initial_id:20000,group_id:0}];showRun(batchJob);result={job:batchJob,page:successfulPage,records:flatBatchRecords(successfulPage),traces:successfulPage.traces,summaryHash:'f'.repeat(64)};$('event').value='20000';showEvent(1);`);
+  assert.match(run('pageReplies[3].path'),/batch=2&primary=20000&group=0/);
+  run(`pageReplies[3].resolve({kind:'local_batch_waveform_v1',name:batchJob.name,configuration_sha256:batchJob.configuration_sha256,batch_index:2,batch_sha256:'e'.repeat(64),response_summary_sha256:'f'.repeat(64),charge_input:{time_since_origin_ns:[0,2,1000],induced_equivalent_energy_keV:[0,-.001,-.003]},record:{global_initial_id:20000,group_id:0,origin_time_ns:500000,trace:{time_ns:[0,2,1000],current_nA:[0,-.2,-.1],current_bin_start_ns:[0,0,998],current_bin_end_ns:[0,2,1000],preamp_V:[0,-.5,-1],shaped_V:[0,.5,1]}}});`);
+  await Promise.resolve();await Promise.resolve();assert.equal(get('plots').children.filter(n=>n.tagName==='figure').length,4);
+  assert.match(get('event-identity').textContent,/Initial primary 20000/);
+  // Poll responses arriving out of order never restore obsolete job status.
+  run("let pollReplies=[];api=path=>new Promise(resolve=>pollReplies.push({path,resolve}));");
+  const oldPoll=run('poll()'),newPoll=run('poll()');
+  run("pollReplies[2].resolve({busy:false,jobs:[]});pollReplies[3].resolve({jobs:[]});");await newPoll;
+  run("pollReplies[0].resolve({busy:true,jobs:[]});pollReplies[1].resolve({jobs:[]});");await oldPoll;
+  assert.equal(run('active'),false);
+  console.log('Browser exact count/Gamma, batch Stop/Resume selection, paged boundary IDs/null/signs, stale Check/report/page/poll/focus, four saved plots and recovery contracts passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

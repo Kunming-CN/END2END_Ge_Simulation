@@ -1,172 +1,78 @@
 # Next development plan
 
-## Current owner priority and delivered boundary
+## Current owner outcome and boundary
 
-The owner prioritized student use of compatible original models through common
-existing geometry, transport, native charge and readout functions. One shared
-catalog route now connects the five added models that fit the unchanged LBNL
-cryostat—AK01, SAP16, SAP17, Bipolar_reference_3D and KL01_3D—bringing Control to
-ten configurations. All five preselected Cs137/500 public Check/Run/Inspect cases
-completed with retained zeros, three KL01 native failures and three readout
-rejections. Exact counts, limitations, correction/review closure and publication
-state are in [PROGRESS.md](../PROGRESS.md).
+Students should select an admitted detector and radioactive source in the existing
+cryostat, run one traceable end-to-end job, then inspect any saved stage. Ten
+configurations already use shared existing engines; seven large models await a
+future larger cryostat. Cs137/Am241/Ba133 are admitted; Gamma keeps its fixed20
+legacy path and Co60 its existing gate. Factorized software is not thirty actual
+source/model physical validations. Prior results remain unchanged.
 
-All 17 models remain browsable. The other seven require a future larger cryostat
-because of their actual dimensions; GeGI also intersects the fixed support. Their
-canonical physical inputs are complete. Do not substitute a bare world, retune
-original geometry/contacts/temperature/bias or call them missing-field adapters.
-Cs137/Am241/Ba133 selection is shared; original fixed-20 gamma and held Co60
-source admission retain their distinct existing contracts. Software factorization
-is not thirty actual model/source physics acceptances.
+M15a preview is retained. M15b/M15c are now implemented together: exact positive
+count, at most10000 initial nuclei per serial batch, one native field preparation
+and independent injection, sealed-stage Stop/Resume and lazy saved event pages in
+Control. The shared executable v3 CLI/GUI is separate from preview and old saved
+contracts. One preselected500-initial AK01/Cs137 acceptance with cap250 completed
+across a real stopped/resumed boundary;4 accepted groups and496 zero primaries,
+shared/first-batch bytes preserved. Actual failures, source bindings, review and
+Git/process closure are in [PROGRESS.md](../PROGRESS.md) and local receipts.
 
-The integrated milestone and its focused corrections are accepted by the two
-scoped and new independent third AI FINAL reviews. Student documentation and the
-saved-only public navigation/guide build passed their recorded checks. Final
-Git/live-publication/process/lock outcomes use `.local/student-detector-coverage-v1/COMPLETE.json`,
-`.local/autonomy/state.json` and actual Git/process state. No per-model
-full reviews, further physics or new environment are needed. The complete prior source milestone and roadmap are preserved
-[at f274f96](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/f274f96a5c5449cf0183ef783118805c1b8c8e96/PROGRESS.md).
+The integrated two-scope and NEW independent third reviews accepted; concrete
+findings were exchanged and only the verified CLI export and stale ownership
+row were corrected. Final source/process/lease closure uses the local terminal
+receipt. No additional physics campaign, environment,
+framework or public science bundle is needed to finish this milestone.
 
-M15a's versioned count/batch preview remains accepted; its contract is in
-[BATCH_PREVIEW.md](BATCH_PREVIEW.md). M15b/M15c execution/UI remain paused, with
-exact WIP and four-file restore evidence in `.local/student-batches-v1/wip/`.
-They are not prerequisites for the ten-model student path. The retained plan
-below is future work, not automatic authorization to launch calculations.
-M5 remains closed, heartbeat PAUSED and M8/M9 acceptance deferred until the owner
-provides a second computer. Real browser tests must not click Download or change
-browser settings; protected HTTP/mock contracts cover exact download bytes.
+## Next bounded student-analysis improvement
 
-## M15a: one exact count and batch contract
+Input: completed, hash-checked runs and the existing Control/event interfaces.
+Output: a clear route from selected event to raw radiation, ledger, signed charge,
+readout and effective settings, with understandable file labels and stable IDs.
+Reuse existing references and lazy pages; preserve full ledgers, numbers and flags.
+First inspect what is already available so this task does not duplicate working
+features. Add only access or explanation that blocks a student's analysis.
 
-Accept user-entered positive integer N through the existing shared GUI/CLI
-resolver. Remove source-specific20/500 restrictions only in a new versioned
-execution contract; keep old saved/import/regression validators intact. Use the
-existing numeric protocol with explicit exact safe-integer admission; never round,
-clip, coerce booleans or silently substitute another count. Disclose representability
-and reliable resource/seed limits separately from the10000 batch size.
+Acceptance: one retained completed run, zero and positive events, unavailable
+previews/null failures, and correct file/row identity. Test saved-only access; no
+Geant4/SSD rerun. Download must be an explicit user action; automated browser
+checks do not click it or modify browser settings. Stop once the analysis path is
+usable. Cosmetic redesign and rare cases go to a brief backlog.
 
-| Requested initial primaries | Serial batch counts |
-|---:|---|
-|1|1|
-|9999|9999|
-|10000|10000|
-|10001|10000 + 1|
-|25001|10000 + 10000 + 5001|
+## Subsequent options through existing engines
 
-One checked parent job and one .local/runs/NAME root own immutable settings,
-source/model/software hashes and versioned seed rules. Keep raw batch-local
-IDs, file/table/row/Track/Vertex keys and delayed daughters; add global initial
-ID = batch offset + local initial ID. Requested counts include zeros and failures,
-not descendant tracks or pulse groups. Stable seeds do not depend on run name,
-timestamps, total N or execution order; reject collisions before science.
+1. Profile an actual blocking delay before optimizing. Reuse shared preparation
+   and lazy data first; bound memory and thread choices. Keep serial science unless
+   independent ownership and measured resource headroom justify concurrency.
+2. Add a bounded source pose/angle control through the existing nominal anchor and
+   remage GPS, using explicit transforms/units. Validate geometry and one small
+   preselected positive case; do not create a detector/source config cross-product.
+3. Add further source options only when existing installation and physical source,
+   decay timing and electronics windows support a useful concrete case. Reuse
+   current source admission and native interfaces, not another wrapper/framework.
+4. Larger cryostats and the seven larger detectors need separate real dimensions,
+   material/placement/contact/readout inputs and one bounded acceptance. They are
+   future work, not missing adapters in the present small cryostat.
 
-Reuse stock remage seeded CLI/macros/configuration, with one remage process per
-batch. Julia threads must not multiply radiation counts. Native beamOn and
-number_of_simulated_events must agree with the batch count and complete ledger.
-A small batch controller owns partition/seeds/receipts; no general scheduler,
-new frontend, database service or environment is needed.
+The existing pinned remage1.1.0/Geant4.11.3.2 and SSD0.11.8 remain the engines.
+No dependency/lock change is required. New components extend the current catalog
+and resolver; enabled controls must change verified effective inputs. Physical
+accuracy, Li/depletion/transition convergence, experimental electronics and GeRC
+research remain independent lanes, never indefinite usability prerequisites.
 
-Acceptance: pure/injected tests at1/499/500/9999/10000/10001/25001; exact disjoint
-coverage, malformed/unsafe imports, doubled remage census, seed collisions and
-GUI/CLI agreement. Check stays read-only and runs no science. Preview can appear
-first; arbitrary-count execution stays disabled until M15b is genuinely connected.
-Do not run10001 primaries merely to prove the arithmetic boundary.
+## Delivery rules
 
-## M15b: real serial execution, shared preparation and safe resume
+Begin each task with outcome, complete minimal workflow, inputs/outputs, necessary
+acceptance and stop condition. Build core first, preserve science/failures, review
+one integrated tested milestone, then correct specific findings. Keep one compact
+handoff and only purposeful artifacts. Do not rerun finished work after chat failure.
+No invented ETA or unmeasured speedup; record scientific compute separately from
+coding/review/tool time. Update the maintained setup authority only when required;
+build/check saved website and live publication only for an actual site change.
 
-Connect existing transport, native SSD and readout with narrow prepared-state,
-count and progress hooks. Retain frozen legacy producers/results; new contracts
-and saved jobs use explicit versions. Prepare compatible run-local geometry and
-fields once, and independent injection calibration once per detector/electronics
-profile. Reuse must bind model/variant, geometry, contacts/bias/temperature,
-solver settings/version and electronics/wiring. Count-only census metadata is
-not a new energy calibration. Ge30min/Li50min and ring polarities never mix.
-
-Each batch retains raw truth, complete initial ledger, signed native charge,
-readout and terminal receipts. A threshold does not remove initial IDs. Numerical
-failures and readout rejections stay separate; unknown quantities remain null.
-Native row/pulse-group seed assignment uses recorded global identity while raw
-local identity remains intact. Merge unchanged histogram bins and accounting;
-never adjust gain per event, rectify signals or replace unknowns with zeros.
-
-Extend existing boundary Stop/Resume to the parent campaign. Reuse only terminal,
-fully checked compatible stages and batches. Inspect real processes and partial
-states; preserve failed attempts. A controller/export interruption does not justify
-repeating completed radiation, fields, charge or calibration.
-
-Acceptance: injected workers prove once-only shared preparation/calibration,
-crash cases before/after receipts and DONE, stopped/resumed/restarted jobs and
-rehashed mismatch refusal. One preselected real two-batch test uses <=500 total
-primaries and a recorded immutable acceptance-only cap below10000. It proves
-native integration with actual settings, census and stage/resource timings.
-No repeated count escalation to find a pulse, new large campaign or PDE/CCE
-convergence prerequisite. Reuse previous evidence for unchanged adapters.
-
-## M15c: arbitrary counts usable in the existing Control application
-
-Replace count presets with an English positive-integer input. Check shows exact
-count, effective settings and planned batches; Start uses that checked plan and
-any form change invalidates it. Display one job with real batch/stage counts,
-logs, receipts, reused preparations and original/completed timings. Never invent
-progress percentages. Saved event identity stays independent of the next-run form.
-
-Stream validation and ledger comparisons instead of building one all-N event
-list. Load sealed event batches/pages lazily, retaining every ID/value/deposit/
-flag at full precision. Transport batch size and LH5 extraction chunk size are
-separate. Complete ledger/archive access must remain available.
-
-Acceptance: real browser plus focused fixtures for checked input/import, invalidation,
-Start/Stop/Resume/restart, stale updates, zeros/nulls/signs and batch-boundary IDs
-9999/10000/19999/20000. No giant waveform array or fake enabled adapter. Update the
-single setup authority and public sources only after the actual capability passes.
-Generated local science stays local; large arbitrary runs are not auto-published.
-
-## M16: expand real options using upstream functionality
-
-Reuse the current remage1.1.0/Geant4.11.3.2 and SSD0.11.8. The earlier private
-upstream assessment was read-only; it did not implement new features. Native
-remage GPS, generation, flat LH5, identities, timing and geometry APIs are already
-used; native SSD Event/drift/get_signal remain the semiconductor engine. The
-paper's language-agnostic data handoff is not another drift/electronics solver.
-
-Keep the existing CLI that already delegates to remage_run_from_args. Convert
-to its direct seeded Python API only if it removes proved duplicate handling;
-there is no reason to add a wrapper merely to claim new adoption. No package or
-lockfile change is needed for the next count milestone. Do not assume available
-LEGEND data validate our detectors, Li profile or electronics.
-
-After the retained count work, add checked capabilities through shared input
-functions: first source energy/pose options
-mapped to native GPS; then small ring gamma adapters; then actual parameterized
-components/variants of the current cryostat. Additional cryostats/detectors require
-real input definitions and bounded geometry/units/identity/readout acceptance.
-Extend the existing capability catalog/resolver/adapters, not a parallel registry
-or speculative plugin framework. An enabled option must change verified effective
-input and pass an actual bounded run; unavailable options stay clearly disabled.
-
-Native geometry inventory/checks, geantino navigation, max-step/production-cut
-controls or EM comparisons are reused for a concrete relevant question. Filtering
-or clustering may form labelled derivatives, never replace the complete raw truth.
-Thin-layer and experimental accuracy studies remain separate from delivery of
-clearly labelled engineering functionality. No global Li audit becomes a new gate.
-
-## Delivery method and next-window first action
-
-One bounded milestone per round: decide effective settings/identity/acceptance,
-implement the smallest shared boundary, run focused tests and bounded integration,
-freeze two scoped independent AI reviews plus a NEW strict review, exchange actual
-findings, fix confirmed blockers, update this handoff and synchronize without force.
-Build only through build_site; site tests/local check precede publication and exact
-live check follows it. Keep logs/evidence classified locally and source ownership
-in tools/MAINTENANCE.md. Avoid duplicate reports/environments and speculative layers.
-
-M8/M9 second-computer acceptance remains deferred until the owner provides that
-computer. No new million task, raw-data publication, global configuration changes,
-separately billed API, reset credits or environment installation is authorized here.
-
-New window: read the current handoff, verify actual gpt-6.1-sol/ultra, project root,
-Git, terminal receipts, real workers and lease. Follow the current owner priority;
-resume the retained bounded M15b plan only when requested. Do not repeat delivered
-shared-source/model work,
-completed M15a or M13/M14, repeat closed reviews or enable the paused heartbeat
-merely because this plan exists.
+M5 is closed. M8/M9 second-computer acceptance remains deferred until the owner
+provides it. Automatic heartbeat stays PAUSED. No installations, extra environment,
+global PATH/WSL/packages, new million campaign, raw-data publication or reset credits.
+New window: read current handoff and actual state; verify model/effort, root, Git,
+terminal receipts, real workers and lease. Resume only the next authorized bounded
+work, not historical WIP or completed reviews.

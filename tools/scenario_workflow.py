@@ -952,10 +952,21 @@ def inspect(name,root=ROOT):
 
 
 def main(argv=None):
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('catalog','check','preview-batches','run','continue','resume','inspect','stop','finalize-results','check-catalog','run-catalog','resume-catalog','inspect-catalog'))
-    p.add_argument('--config');p.add_argument('--plan');p.add_argument('--name');p.add_argument('--dispatch-id',help=argparse.SUPPRESS);p.add_argument('--bootstrap-source',action='store_true',help='Explicit CLI-only first source acceptance; does not enable the browser.');a=p.parse_args(argv)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('catalog','check','preview-batches','run','continue','resume','inspect','stop','finalize-results','check-catalog','run-catalog','resume-catalog','inspect-catalog','check-batches','run-batches','resume-batches','inspect-batches','stop-batches'))
+    p.add_argument('--config');p.add_argument('--plan');p.add_argument('--name');p.add_argument('--dispatch-id',help=argparse.SUPPRESS);p.add_argument('--acceptance',help=argparse.SUPPRESS);p.add_argument('--bootstrap-source',action='store_true',help='Explicit CLI-only first source acceptance; does not enable the browser.');a=p.parse_args(argv)
     require(not a.bootstrap_source or a.action in ('check','run','resume'),'Source bootstrap is only available for explicit CLI Check, Run or Resume.')
-    if a.action in ('check-catalog','run-catalog','resume-catalog','inspect-catalog'):
+    require(not a.acceptance or a.action=='check-batches','Acceptance-only batch cap is available only for an explicit bounded batch Check.')
+    if a.action in ('check-batches','run-batches','resume-batches','inspect-batches','stop-batches'):
+        import batch_execution as E
+        if a.action=='check-batches':
+            require(a.config,'--config is required.');config=read(Path(a.config))
+            if type(config) is dict and 'kind' in config:config=preview_request(config)
+            value=E.check(config,acceptance=read(Path(a.acceptance)) if a.acceptance else None)
+        elif a.action=='run-batches':require(a.plan,'--plan from Check is required.');value=E.execute(read(Path(a.plan)),dispatch_id=a.dispatch_id)
+        elif a.action=='resume-batches':require(a.name,'--name is required.');value=E.execute(read(run_path(a.name)/'resolved-config.json'),resume=True,dispatch_id=a.dispatch_id)
+        elif a.action=='inspect-batches':require(a.name,'--name is required.');value=E.inspect(a.name)
+        else:require(a.name,'--name is required.');value=E.request_stop(a.name)
+    elif a.action in ('check-catalog','run-catalog','resume-catalog','inspect-catalog'):
         import catalog_workflow as C
         if a.action=='check-catalog':require(a.config,'--config is required.');value=C.check(read(Path(a.config)))
         elif a.action=='run-catalog':require(a.plan,'--plan is required.');value=C.execute(read(Path(a.plan)),dispatch_id=a.dispatch_id)

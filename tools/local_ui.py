@@ -254,6 +254,26 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception:
                     return self.reject(503, 'Saved geometry preview is unavailable. Open the public saved geometry.')
                 return self.send_data(200, body, 'image/png')
+            if parts.path in ('/api/workflow/events','/api/workflow/batch-waveforms'):
+                import re
+                query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
+                waveform=parts.path.endswith('/batch-waveforms')
+                keys={'name','batch','primary','group'} if waveform else {'name','batch','offset','limit'}
+                if parts.fragment or set(query)!=keys or any(len(v)!=1 for v in query.values()) or self.server.workflow_controller is None:
+                    raise ValueError('Invalid exact batch event request')
+                values={k:v[0] for k,v in query.items()}
+                for key in ('batch','primary') if waveform else ('batch','offset','limit'):
+                    if not re.fullmatch(r'0|[1-9][0-9]{0,15}',values[key]) or int(values[key])>9007199254740991:
+                        raise ValueError('Invalid exact batch event identity')
+                if waveform:
+                    group=values['group']
+                    if group!='none' and (not re.fullmatch(r'0|[1-9][0-9]{0,15}',group) or int(group)>9007199254740991):
+                        raise ValueError('Invalid exact pulse-group identity')
+                    return self.send_data(200,self.server.workflow_controller.batch_waveforms(
+                        values['name'],int(values['batch']),int(values['primary']),None if group=='none' else int(group)))
+                if not 1<=int(values['limit'])<=100:raise ValueError('Event page limit must be 1..100')
+                return self.send_data(200,self.server.workflow_controller.event_page(
+                    values['name'],int(values['batch']),int(values['offset']),int(values['limit'])))
             if parts.path in ('/api/workflow-file/plots','/api/workflow-file/focus'):
                 import re
                 if parts.fragment:raise ValueError('Invalid waveform artifact fragment')
@@ -368,6 +388,7 @@ class Handler(BaseHTTPRequestHandler):
             workflow_routes={'/api/workflow/check':({'config'},'check'),
                              '/api/workflow/check-catalog':({'config'},'check_catalog'),
                              '/api/workflow/preview-batches':({'request'},'preview_batches'),
+                             '/api/workflow/check-batches':({'request'},'check_batches'),
                              '/api/workflow/start':({'check_id'},'start'),
                              '/api/workflow/stop':({'name'},'stop'),
                              '/api/workflow/resume':({'name'},'resume'),
@@ -379,8 +400,8 @@ class Handler(BaseHTTPRequestHandler):
                 keys,method=workflow_routes[self.path]
                 if type(data) is not dict or set(data)!=keys or self.server.workflow_controller is None:
                     raise ValueError('Unsupported workflow input fields')
-                if method in ('check','check_catalog','preview_batches'):
-                    if type(data['request' if method=='preview_batches' else 'config']) is not dict:raise ValueError('Configuration must be a JSON object')
+                if method in ('check','check_catalog','preview_batches','check_batches'):
+                    if type(data['request' if method in ('preview_batches','check_batches') else 'config']) is not dict:raise ValueError('Configuration must be a JSON object')
                 elif any(type(v) is not str for v in data.values()):
                     raise ValueError('Workflow identities must be strings')
                 return self.send_data(200,getattr(self.server.workflow_controller,method)(**data))

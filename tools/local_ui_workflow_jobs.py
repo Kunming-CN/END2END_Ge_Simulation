@@ -13,6 +13,7 @@ import sys
 import threading
 
 import scenario_workflow as W
+import batch_execution as B
 import workflow_inspection as I
 import workflow_recovery as R
 import workflow_finalize as F
@@ -31,10 +32,11 @@ def catalog_backend():
 
 
 class WorkflowController:
-    def __init__(self,root=None,*,coordination_lock=None,peer_busy=None,resolver=None,catalog_resolver=None,launcher=None):
+    def __init__(self,root=None,*,coordination_lock=None,peer_busy=None,resolver=None,catalog_resolver=None,batch_resolver=None,launcher=None):
         self.root=Path(root or W.ROOT);self._lock=coordination_lock or threading.RLock()
         self._peer_busy=peer_busy or (lambda:False);self._resolver=resolver or W.check
         self._catalog_resolver=catalog_resolver
+        self._batch_resolver=batch_resolver or B.check
         self._launcher=launcher or self._spawn;self._checks={};self._active=None;self._entry_thread=None
         self._saved_verifier=Verifier(self.root)
         path=safe_path(self.root,STATE+'/workflow-jobs.json')
@@ -140,14 +142,31 @@ class WorkflowController:
     @staticmethod
     def _catalog_job(job):return job['plan'].get('kind')==CATALOG_KIND
 
+    def check_batches(self,request):
+        with self._lock:
+            self._idle();plan=self._batch_resolver(W.preview_request(request),root=self.root)
+            W.require(plan.get('kind')==B.CHECKED_KIND and plan.get('schema_version')==3 and
+                      plan.get('execution_enabled') is True,'A runnable versioned batch plan is required.')
+            check_id=secrets.token_hex(32);self._checks[check_id]=copy.deepcopy(plan)
+            return dict(plan,check_id=check_id)
+
+    @staticmethod
+    def _batch_job(job):return job['plan'].get('kind')==B.CHECKED_KIND
+
+    def _inspect(self,job):
+        return (B.inspect if self._batch_job(job) else catalog_backend().inspect if self._catalog_job(job) else W.inspect)(job['name'],self.root)
+
     def start(self,check_id):
         with self._lock:
             W.require(type(check_id) is str and check_id in self._checks,'Check this configuration before Start.')
             plan=self._checks[check_id]
-            W.require(plan.get('kind') in (W.KIND,CATALOG_KIND),'A preview is not an execution Check token.')
+            W.require(plan.get('kind') in (W.KIND,CATALOG_KIND,B.CHECKED_KIND),'A preview is not an execution Check token.')
+            if self._batch_job({'plan':plan}):
+                W.require(plan.get('schema_version')==3 and plan.get('execution_enabled') is True,
+                          'Batch execution requires a runnable versioned checked plan.')
             self._idle()
             # Reconstruct the complete trusted plan; rehashed browser edits are not authority.
-            resolver=(self._catalog_resolver or catalog_backend().check) if plan.get('kind')==CATALOG_KIND else self._resolver
+            resolver=self._batch_resolver if plan.get('kind')==B.CHECKED_KIND else (self._catalog_resolver or catalog_backend().check) if plan.get('kind')==CATALOG_KIND else self._resolver
             actual=resolver(plan['resolved']['selection'],root=self.root)
             W.require(W.encoded(actual)==W.encoded(plan),'Inputs, settings or runtime changed after Check.')
             name=plan['resolved']['selection']['name']
@@ -175,7 +194,7 @@ class WorkflowController:
             plan_path=safe_path(self.root,STATE+'/workflow-plans/'+job['id']+'.json')
             if job['mode'] in ('run','continue'):W.write(plan_path,job['plan'],fresh=True)
             log=safe_path(self.root,STATE+'/workflow-logs/'+job['id']+'.log');log.parent.mkdir(parents=True,exist_ok=True)
-            mode=job['mode']+'-catalog' if self._catalog_job(job) else job['mode']
+            mode=job['mode']+'-batches' if self._batch_job(job) else job['mode']+'-catalog' if self._catalog_job(job) else job['mode']
             argv=[sys.executable,'-B',str(self.root/'tools/scenario_workflow.py'),mode]
             if Path(sys.executable).name.casefold()=='pvpython.exe':argv[1:1]=['--no-mpi','--disable-registry']
             argv+=['--plan',str(plan_path)] if job['mode'] in ('run','continue') else ['--name',job['name']]
@@ -189,11 +208,11 @@ class WorkflowController:
                 receipt=W.read(directory/'run.json') if (directory/'run.json').exists() else None
                 if code==0 and receipt and receipt['status'] in (*W.TERMINAL,'stopped'):
                     if receipt['status'] in W.TERMINAL:
-                        (catalog_backend().inspect if self._catalog_job(job) else W.inspect)(job['name'],self.root)
+                        self._inspect(job)
                     job['status']=receipt['status'];job.pop('error',None)
                 else:
                     job.update(status='dispatch_uncertain',error='The workflow did not return verified terminal or stopped stages. Retain output and inspect possible nested workers.')
-                    if not self._catalog_job(job):I.capture(job,self.root)
+                    if not self._catalog_job(job) and not self._batch_job(job):I.capture(job,self.root)
                 self._persist()
         except BaseException as error:
             with self._lock:job.update(status='dispatch_uncertain',error=str(error));self._persist()
@@ -207,14 +226,16 @@ class WorkflowController:
             directory=W.run_path(name,self.root);path=directory/'STOP.json'
             W.require((directory/'run.json').is_file() and W.read(directory/'run.json')['status']=='running',
                       'Wait for the first committed run receipt before requesting Stop.')
-            if not path.exists():W.write(path,{'requested_utc':W.utc()},fresh=True)
+            if self._batch_job(job):
+                if not path.exists():B.request_stop(name,self.root)
+            elif not path.exists():W.write(path,{'requested_utc':W.utc()},fresh=True)
             job['status']='stop_requested';self._persist();return self._view(job)
 
     def resume(self,name):
         with self._lock:
             self._idle();job=next((j for j in self._jobs if j['name']==name),None)
             W.require(job and job['status']=='stopped','Only this interface\'s stage-boundary stopped runs can resume.')
-            (catalog_backend().admit if self._catalog_job(job) else W.admit)(job['plan'],self.root,resume=True)
+            (B.admit if self._batch_job(job) else catalog_backend().admit if self._catalog_job(job) else W.admit)(job['plan'],self.root,resume=True)
             # New dispatch/log identity; selected settings are the preserved plan.
             with W.execution_lease(self.root):
                 W.verify_dispatch_reservations(job['plan'],self.root)
@@ -225,9 +246,10 @@ class WorkflowController:
     def verify(self,name):
         with self._lock:
             job=next((j for j in self._jobs if j['name']==name),None);W.require(job is not None,'Unknown owned run.')
-            receipt=(catalog_backend().inspect if self._catalog_job(job) else W.inspect)(name,self.root)
+            receipt=self._inspect(job)
             W.require(receipt['configuration_sha256']==job['plan']['configuration_sha256'],'Saved run differs from owned plan.')
-            W.require(receipt['status'] in W.TERMINAL,'Run has no verified completion; incomplete evidence is retained.')
+            stopped=self._batch_job(job) and receipt.get('status')=='stopped' and receipt.get('resume_allowed') is True and receipt.get('verification')=='sealed_prefix_verified'
+            W.require(receipt['status'] in W.TERMINAL or stopped,'Run has no verified completion or saved batch boundary; incomplete evidence is retained.')
             driver=job.get('driver')
             W.require(W.identity_ended(driver),'Owned driver is active or its lifetime is unknown.')
             job.update(status=receipt['status']);job.pop('error',None);self._persist();return self._view(job)
@@ -236,7 +258,7 @@ class WorkflowController:
         with self._lock:
             W.require(self._active is None and not W.lease_busy(self.root),'Wait for active work before inspecting a failed launch.')
             job=next((j for j in self._jobs if j['name']==name),None)
-            W.require(job and not self._catalog_job(job) and job['status']=='dispatch_uncertain',
+            W.require(job and not self._catalog_job(job) and not self._batch_job(job) and job['status']=='dispatch_uncertain',
                       'Only a recognized legacy denied launch can use this failure inspector.')
             with W.execution_lease(self.root):
                 stamp=I.inspect_failure(job,self.root)
@@ -282,13 +304,32 @@ class WorkflowController:
         out['configuration_sha256']=job['plan']['configuration_sha256']
         out['output']=W.BASE+'/'+job['name'];out['error']=job.get('error');out['stages']={}
         out['workflow_kind']=job['plan'].get('kind')
-        out['can_inspect_failure']=not self._catalog_job(job)
-        out['can_continue_prefix']=not self._catalog_job(job) and R.eligible_name(job['name']) and job['status']=='dispatch_uncertain'
+        out['execution_contract']='serial_batches_v3' if self._batch_job(job) else 'legacy_v1'
+        out['can_inspect_failure']=not self._catalog_job(job) and not self._batch_job(job)
+        out['can_continue_prefix']=out['can_inspect_failure'] and R.eligible_name(job['name']) and job['status']=='dispatch_uncertain'
         out['can_finalize_results']=False
+        out['logs']=[]
+        if self._batch_job(job):out['batching']=copy.deepcopy(job['plan']['resolved']['batching'])
         directory=W.run_path(job['name'],self.root)
         try:
             receipt=W.read(directory/'run.json');out['stages']=receipt['stages'];out['counts']=receipt.get('counts')
-            out['can_finalize_results']=not self._catalog_job(job) and job['status']=='dispatch_uncertain' and F.candidate(directory)
+            out['can_finalize_results']=out['can_inspect_failure'] and job['status']=='dispatch_uncertain' and F.candidate(directory)
+            if self._batch_job(job):
+                out['batch_progress']={k:copy.deepcopy(receipt.get(k)) for k in
+                    ('completed_batch_count','completed_primary_count','batch_count','active_batch_index','active_stage','resumes')}
+                out['batch_progress']['status']=receipt.get('status')
+                current=receipt.get('active_stage')
+                if current and receipt.get('status')=='running':
+                    out['stages'][current]={'status':'running'}
+                for stage in B.SHARED:
+                    file='logs/'+stage+'.log'
+                    if safe_path(directory,file).is_file():out['logs'].append({'file':file,'label':stage.replace('_',' ')})
+                index=receipt.get('active_batch_index')
+                if index is None and receipt.get('completed_batch_count',0)>0:index=receipt['completed_batch_count']-1
+                if type(index) is int:
+                    for stage in B.BATCH_STAGES:
+                        file=f'batches/b{index:010d}/logs/{stage}.log'
+                        if safe_path(directory,file).is_file():out['logs'].append({'file':file,'label':f'batch {index} '+stage.replace('_',' ')})
             # This live progress is display-only until terminal artifact verification.
             if (directory/'response/progress.json').exists():out['response_progress']=W.read(directory/'response/progress.json')
         except (OSError,ValueError,ControlError):pass
@@ -301,17 +342,42 @@ class WorkflowController:
         with self._lock:
             job=next((j for j in self._jobs if j['name']==name),None);W.require(job,'Unknown owned run.')
             directory=W.run_path(name,self.root)
-            if file.endswith('.log') and file in {stage+'.log' for stage in W.STAGES}:
+            allowed_log=file in {stage+'.log' for stage in W.STAGES}
+            if self._batch_job(job):allowed_log=bool(re.fullmatch(r'(?:logs/|batches/b[0-9]{10}/logs/)(?:geometry|native_preparation|radiation|event_ledger|response)\.log',file))
+            if file.endswith('.log') and allowed_log:
                 path=safe_path(directory,file)
                 with path.open('rb') as stream:
                     stream.seek(max(0,path.stat().st_size-256*1024));body=stream.read(256*1024)
                 return body,'text/plain; charset=utf-8'
+            if self._batch_job(job):
+                W.require(job['status'] in (*W.TERMINAL,'stopped'),'Use verified completed or stopped batch results.')
+                path=B.artifact(name,file,self.root)
+                W.require(path.stat().st_size<=64*1024*1024,'Artifact exceeds the browser size limit; use its retained local path.')
+                mime='text/html; charset=utf-8' if file.endswith('.html') else 'text/plain; charset=utf-8' if file.endswith(('.csv','.jsonl')) else 'application/octet-stream' if file.endswith(('.lh5','.h5','.jld2')) else 'application/json; charset=utf-8'
+                return path.read_bytes(),mime
             W.require(job['status'] in W.TERMINAL,'Verify completed results before downloading.')
             (catalog_backend().inspect(name,self.root) if self._catalog_job(job) else self._saved_verifier.inspect(name))
             complete=W.read(directory/'COMPLETE.json');W.require(file in complete['artifacts'] or file=='COMPLETE.json','Unsupported result artifact.')
             path=safe_path(directory,file);W.require(path.stat().st_size<=64*1024*1024,'Artifact exceeds the browser size limit.')
             mime='text/html; charset=utf-8' if file.endswith('.html') else 'text/plain; charset=utf-8' if file.endswith(('.csv','.jsonl')) else 'application/json; charset=utf-8'
             return path.read_bytes(),mime
+
+    def event_page(self,name,batch_index,offset,limit):
+        with self._lock:
+            job=next((j for j in self._jobs if j['name']==name),None)
+            W.require(job and self._batch_job(job),'Unknown owned batch run.')
+            W.require(job['status'] in (*W.TERMINAL,'stopped'),'Use completed batches from a sealed or stopped run.')
+            reply=B.event_page(name,batch_index,offset,limit,self.root)
+            W.require(reply.get('configuration_sha256')==job['plan']['configuration_sha256'],'Saved event page differs from the owned plan.')
+            return reply
+
+    def batch_waveforms(self,name,batch_index,primary_id,group_id):
+        with self._lock:
+            job=next((j for j in self._jobs if j['name']==name),None)
+            W.require(job and self._batch_job(job) and job['status'] in (*W.TERMINAL,'stopped'),'Use a sealed owned event batch.')
+            reply=B.focused_waveforms(name,batch_index,primary_id,group_id,self.root)
+            W.require(reply.get('configuration_sha256')==job['plan']['configuration_sha256'],'Saved waveform differs from the owned plan.')
+            return reply
 
     def waveforms(self,name,primary_id,group_id):
         with self._lock:

@@ -199,6 +199,13 @@
 !simulation/test_saved_collection_edge.jl
 !simulation/saved_control_edge.jl
 
+# Reviewed exact-count batch bridge; keep run-local fields and raw science ignored.
+!transport/batch_source.py
+!simulation/batch_native_contract.jl
+!simulation/batch_decay_stream.jl
+!simulation/batch_native_response.jl
+!simulation/test_batch_native.jl
+
 # Keep this final: only the reviewed PR template may enter .github.
 !/.github/
 /.github/**
