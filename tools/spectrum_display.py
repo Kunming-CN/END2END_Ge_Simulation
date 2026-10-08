@@ -16,7 +16,7 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/cs137-1m-response/report.html':'spectra/million-response.html',
         'examples/cs137-10k/comparison.html':'spectra/cs137-10k.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
-GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/ring_site.py')
+GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/ring_site.py','tools/site_restructure.py')
 
 def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 LOADED_GENERATORS={rel:sha(ROOT/rel) for rel in GENERATORS}
@@ -216,7 +216,8 @@ def render_page(site,original,destination,specs):
     if destination=='spectra/cs137-10k.html':
         from ring_site import ring_manifest
         if ring_manifest(site):
-            return four_detector_spectra(site,specs)
+            from site_restructure import navigation
+            return four_detector_spectra(site,specs).replace('<main>','<main>'+navigation('../'),1)
     text=(site/original).read_text(encoding='utf-8')
     if destination=='spectra/pipeline.html':
         text=pipeline_page(text,specs)
@@ -252,6 +253,9 @@ def render_page(site,original,destination,specs):
     anchor=text.find('<h1')
     require(anchor>=0,'Report heading missing')
     text=text[:anchor]+note+text[anchor:]
+    if destination!='spectra/pipeline.html':
+        from site_restructure import navigation
+        text=text.replace('<body>','<body>'+navigation('../'),1)
     return text
 
 def component_hashes(text):

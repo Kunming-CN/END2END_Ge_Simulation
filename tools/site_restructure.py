@@ -31,13 +31,18 @@ def require(ok,msg):
 def read(path):
     return json.loads(Path(path).read_text(encoding='utf-8-sig'))
 
+def navigation(up=''):
+    """Direct destinations shared by hubs and the two saved waveform readers."""
+    links=(('guide.html#local-control','Run'),('results/index.html','Results'),
+           ('spectra/pipeline.html','Waveforms'),('spectra/cs137-10k.html','Spectra'),
+           ('detectors/index.html','Detectors'))
+    return '<nav aria-label="Primary" style="display:flex;gap:8px;flex-wrap:wrap">'+''.join(
+        f'<a href="{up}{path}" style="padding:8px 10px">{label}</a>' for path,label in links)+'</nav>'
+
 def write_page(path,title,body,depth=0,*,fold_footer=False):
     path=Path(path); path.parent.mkdir(parents=True,exist_ok=True)
     up='../'*depth
-    nav=(f'<a href="{up}results/index.html">Browse</a>'
-         f'<a href="{up}detectors/index.html">Detectors</a>'
-         f'<a href="{up}guide.html#setup">Setup</a>'
-         f'<a href="{up}guide.html#local-control">Use</a>')
+    nav=navigation(up)
     footer=(f'<footer><a href="{up}learn/index.html">Learn the pipeline</a> · '
             f'<a href="{up}guide.html">Setup & run guide</a> · '
             f'<a href="{up}methods/index.html">Methods & limitations</a> · '
@@ -51,7 +56,7 @@ def write_page(path,title,body,depth=0,*,fold_footer=False):
           f'<meta name="viewport" content="width=device-width,initial-scale=1">'
           f'<title>{escape(title)}</title><style>{STYLE}</style><body><main class="wrap">'
           f'<header class="top"><a href="{up}index.html"><strong>GeSignal</strong></a>'
-          f'<nav aria-label="Primary">{nav}</nav></header>{body}{footer}</main></body></html>')
+          f'{nav}</header>{body}{footer}</main></body></html>')
     path.write_text(html,encoding='utf-8',newline='\n')
 
 def detector_cards(catalog):
@@ -99,6 +104,7 @@ def apply(site):
 <article class="card"><h2>Setup</h2><p><a href="guide.html#setup">Set up Windows →</a></p><p>Prepare the pinned environment, source files and exporter.</p></article>
 <article class="card"><h2>Use</h2><p><a href="guide.html#local-control">Use Control →</a></p><p>On a prepared computer, choose one of '''+str(control_count)+''' configurations available in the current cryostat and run the pipeline.</p><a href="guide.html#saved-analysis">Analyze your saved run →</a></article></section>
 <details class="panel"><summary>Pipeline, methods and earlier examples</summary><p><a href="learn/index.html">Learn the signal chain</a> · <a href="methods/index.html">Methods and limitations</a></p><p id="pipeline-example"><a href="examples/pipeline.html">Compact teaching example</a></p><p id="native-cs137-10k"><a href="results/cs137-10k/index.html">Cs137 10K results</a></p><p>Saved results are engineering simulations. Fresh-machine setup remains unvalidated.</p></details>''')
+    home+='<section class="panel"><h2>Open a saved view directly</h2><div class="grid"><a class="button" href="spectra/pipeline.html">Event waveforms · main teaching example</a><a class="button" href="spectra/cs137-10k.html">Energy spectra · four-detector 10K</a><a class="button" href="viewers/events.html">3D radiation events · 10K</a><a class="button" href="guide.html#saved-analysis">Find saved data and downloads</a></div></section>'
     from spectrum_display import homepage_preview
     preview=homepage_preview(site)
     if preview is not None:
@@ -108,7 +114,7 @@ def apply(site):
     learn_example='''<article class="card"><h2>Compact teaching example</h2><p>Walk through deposits, charge, preamplifier, shaper and ADC in a compact example.</p><a href="../examples/pipeline.html">Open the compact teaching example →</a></article>'''
     if has_gamma:
         gamma_caption='Follow all 40 original primaries: 29 known zero inputs and 11 positive primaries. Native failures keep unknown charge and readout null. Collection-edge and full-window views preserve signed signals and original caps; independent synthetic injection calibration and unresolved collection limits remain explicit.' if completed_gamma else 'Follow 40 truth events and six selected responses: four positive responses and two selected true zeros. The other 34 responses stay unknown/unprocessed. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.'
-        learn_example='<article class="card"><h2>Explore saved gamma events</h2><p>'+gamma_caption+'</p><a href="../examples/gamma-native/gamma.html">Open the saved engineering example →</a><p><a href="../examples/pipeline.html">Compact teaching example →</a></p></article>'
+        learn_example+='<details class="panel"><summary>Additional cryostat gamma example · different saved dataset</summary><p>20 primaries per detector inside the nominal cryostat; the main teaching example uses 100 side-on primaries in bare geometry. Event IDs belong to their own dataset.</p><p>'+gamma_caption+'</p><a href="../examples/gamma-native/gamma.html">Open the additional cryostat example →</a></details>'
     learn=('''<section class="hero"><p class="muted">Start here</p><h1>Radiation → charge → electronics</h1>
 <p>Geant4/remage records where radiation deposits energy. SolidStateDetectors.jl transports electron/hole charge and calculates electrode signals. The electronics stage applies preamplifier, shaping and peak-ADC response.</p></section>
 <div class="grid">'''+learn_example+'''
@@ -131,10 +137,12 @@ def apply(site):
     if has_10k and not has_rings:
         earlier_cards.append('''<article class="card"><h2>Earlier Cs137 · 10k</h2><p>Engineering response, response ledgers and interactive recorded-event geometry.</p><a href="cs137-10k/index.html">Open earlier campaign →</a></article>''')
     if has_gamma:
-        example_cards.append('<article class="card"><h2>Small gamma → native SSD → peak ADC example</h2><p>'+gamma_caption+'</p><a href="../examples/gamma-native/gamma.html">Inspect saved native charge and readout →</a></article>')
+        additional_gamma='<details class="panel"><summary>Additional cryostat gamma example · 20 primaries per detector</summary><p>'+gamma_caption+'</p><p>Different saved geometry and primary IDs from the main 100-primary teaching example.</p><a href="../examples/gamma-native/gamma.html">Inspect this cryostat dataset →</a></details>'
+    else:
+        additional_gamma=''
     example_cards.append('''<article class="card"><h2>Compact teaching example</h2><p>A selected event-by-event engineering demonstration of the signal chain.</p><a href="../examples/pipeline.html">Open example →</a></article>''')
     results=('''<section class="hero"><p class="muted">Saved simulations and campaign status</p><h1>Results</h1>
-<p>Choose a saved campaign or a small example. Each retains its initial-decay census, zero events and unavailable responses.</p></section>'''+current+'''<h2>Small engineering examples</h2><div class="grid">'''+''.join(example_cards)+'''</div>''')
+<p>Choose a saved campaign or a small example. Each retains its initial-decay census, zero events and unavailable responses.</p></section><section class="panel"><h2>Open a saved view directly</h2><p><a class="button" href="../spectra/pipeline.html">Event waveforms · main teaching example</a> <a class="button" href="../spectra/cs137-10k.html">Four-detector 10K spectra</a> <a class="button" href="../viewers/events.html">3D radiation events · 10K</a> <a class="button" href="../guide.html#saved-analysis">Find saved data and downloads</a></p></section>'''+current+'''<h2>Main teaching example</h2><div class="grid">'''+''.join(example_cards)+'''</div>'''+additional_gamma)
     if earlier_cards:
         results+='<h2>Earlier campaign</h2><div class="grid">'+''.join(earlier_cards)+'</div>'
     write_page(site/'results/index.html','Results · GeSignal',results,1)

@@ -54,14 +54,16 @@ This owner-requested page maintenance precedes source positioning.
 
 ## Subsequent bounded task: useful source positioning
 
-Inspect existing nominal anchor, remage GPS and admitted-source contract first.
-Input: one admitted source and detector in the present cryostat. Intended output:
-one shared, explicit position adjustment with units and recorded effective inputs,
-retaining the nominal default. No detector/source configuration cross-product.
-Only add a control after placement/material/sensitive-volume implications and
-one small preselected acceptance are defined. An isotropic point source alone
-does not benefit from an angle control. Stop at this one usable adjustment;
-directional/finite sources and larger cryostats remain separate future work.
+Owner clarification: move source and capsule along the outer cylindrical shell
+by an angle, using one shared placement resolver with units and effective inputs.
+Nominal geometry: global-z axis at x=0/y=1.473 mm, outer radius35.1 mm,
+source-center radius35.6 mm and z=0.290 mm. Degrees from+y toward+x. Rotate the
+capsule/fill separately from crystal/spacer, keeping the exact zero-angle default
+and source physics. No detector/source configuration cross-product.
+Acceptance: containment/overlap, capsule/fill/GPS identity and tangent placement,
+then one preselected small positive full-chain case in a new directory. Stop at
+this usable control. Old Gamma defaults, larger cryostats and research remain
+separate. This is nominal geometry, not an experimental source survey.
 
 ## Subsequent options through existing engines
 

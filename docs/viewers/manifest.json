@@ -873,9 +873,9 @@
     "tools/hit_event_view.py": "7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e"
   },
   "adapter_sources": {
-    "tools/viewer_navigation.py": "f3d5686efc6272f3e360d6ecdf7b5908b120980459e13a10a1234412c2ad6a48",
+    "tools/viewer_navigation.py": "29f16c1bcd3e09e7bb75556c8f4f1c45ad36e52cc1874f12a07bdb4835834a50",
     "tools/viewer_navigation.js": "eef7591b5b98ccf293a2207744e5ee9feef6b37a2512a0c0f21401090cadbc8b",
-    "tools/unified_event_viewer.html": "69dcb0a56e0d91547065b80baf093fe9a09ede948c0c5a950786350210fdc7d4",
+    "tools/unified_event_viewer.html": "fa7d43246fa26b5a26bd21d6023b121938024ce3de87334efdd1ee84102c4b40",
     "tools/unified_event_viewer.js": "3b7b0ff5bce5f37b4bd19139137c28da53750388706245f9403d5e66162d6dc0"
   },
   "pages": {
@@ -883,7 +883,7 @@
       "source": "tools/unified_event_viewer.html",
       "view": "assembly",
       "role": "canonical",
-      "sha256": "b5ed022ed2dd74fa239c4dac12bdb9f523f04dc13af95e3d8691760b4f25aa72"
+      "sha256": "7e8a5ed605ac5b30b0859269df8cc0864dc378ed6da866e9e7a4b3a849af54c9"
     },
     "viewers/geant4-assembly.html": {
       "source": "examples/cs137-10k-geometry/geometry.html",

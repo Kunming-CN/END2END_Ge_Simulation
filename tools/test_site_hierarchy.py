@@ -67,8 +67,8 @@ class HierarchyTests(unittest.TestCase):
                 self.assertEqual(page.count('../examples/gamma-native/gamma.html'),1)
                 self.assertEqual(page.count('../examples/pipeline.html'),1)
                 self.assertIn('Compact teaching example',page)
-            order=('Four-detector Cs137 10K','Separate Cs137 · 1M campaign','Small engineering examples',
-                   'Small gamma → native SSD → peak ADC example','Compact teaching example')
+            order=('Four-detector Cs137 10K','Separate Cs137 · 1M campaign','Main teaching example',
+                   'Compact teaching example','Additional cryostat gamma example · 20 primaries per detector')
             self.assertEqual([results.index(label) for label in order],
                              sorted(results.index(label) for label in order))
             catalog=json.loads((fixture/'models/catalog.json').read_text())

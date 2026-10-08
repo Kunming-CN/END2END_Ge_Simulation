@@ -456,6 +456,9 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         build_export()
     else:
         build_campaign_export(campaign)
+    if restructure:
+        from saved_focus_pages import upgrade_displays
+        upgrade_displays(OUT)
     from spectrum_display import assemble as assemble_spectra, ROUTES, route_current_pages
     spectrum_sources_ready=all((OUT / p).is_file() for p in ROUTES)
     if restructure and (OUT / "models" / "catalog.json").is_file() and not spectrum_sources_ready:

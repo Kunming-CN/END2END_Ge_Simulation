@@ -8,7 +8,7 @@
     "examples/cs137-1m/report.html": "a04c9d0557f150d37fa2b381a445ef5315fbc2cd6dd3a0eccd38026fcd098f35",
     "examples/cs137-1m-response/report.html": "4de4b264f6df246982b3991bb1cedf3d5eefcf26aa9726e1379e0e511f135b77",
     "examples/cs137-10k/comparison.html": "b94d57dbb9657f68dd8aa0043e8e88203c54a71c1bffae7f38c19e485c1247c4",
-    "examples/pipeline.html": "6b97584824ef8237fccc44c24255eec44b8233242a3264fffd46f36cd5a7277f",
+    "examples/pipeline.html": "4fe9003df61579f7f45942cb42e53075179990ae94aad585d209f7c4309de5b4",
     "examples/cs137-1m/histograms.json": "4fff0a89cc28164115b6c0ae3575adcf706b31d24f677264f90d80b9b1c406a3",
     "examples/cs137-1m-response/histograms.json": "04c0fa1693bd9ba02a00a76288c0b3974b5fa0c791504ce86294f6cd13769640",
     "examples/cs137-10k/AK02/response/histograms.json": "8cbdb6d7ba7ebbbfa4e95a270bb9db955c67d7063f1652e1383fcba459236ab1",
@@ -22,11 +22,12 @@
     "examples/cs137-10k-rings/KMRC01_candidate/response/histograms.json": "11cfbed9fd93db18528a1a73f25a298fa554fd70c9f3136203468970a5c053e3"
   },
   "generators": {
-    "tools/spectrum_display.py": "2d0559e502dc5cbdfafa8337685a50f07d0195e61b9ea454d6eaa45d4daf6534",
+    "tools/spectrum_display.py": "de7afa59c62a924ab67d9fba684fcc17f5233aa0392fafa2539de37eae983392",
     "tools/spectrum_plot.py": "f00dbf5efdb393f03eebd501cb71a74bbd268fc3f0cff240de9a7eb54948a29c",
     "tools/spectrum_controls.js": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
-    "tools/viewer_navigation.py": "f3d5686efc6272f3e360d6ecdf7b5908b120980459e13a10a1234412c2ad6a48",
-    "tools/ring_site.py": "66fab904e6cdbec41fab468e182d206e89f599b53adf59d7318337d7d0760371"
+    "tools/viewer_navigation.py": "29f16c1bcd3e09e7bb75556c8f4f1c45ad36e52cc1874f12a07bdb4835834a50",
+    "tools/ring_site.py": "66fab904e6cdbec41fab468e182d206e89f599b53adf59d7318337d7d0760371",
+    "tools/site_restructure.py": "3ec5cc9a4e560ba5c21d9c8776ee7a3572c4d359d72403e3e635d037cd90c437"
   },
   "pages": {
     "spectra/million-truth.html": {
@@ -66,7 +67,7 @@
     "spectra/cs137-10k.html": {
       "source": "examples/cs137-10k/comparison.html",
       "source_sha256": "b94d57dbb9657f68dd8aa0043e8e88203c54a71c1bffae7f38c19e485c1247c4",
-      "sha256": "690b38896e415106522adf0451673eaaa31669fc183051cfe27f3aff3aa33218",
+      "sha256": "8b4f9c150520bc3b23d77e3116601ff001700bc3d9e4db5bb31222c70cdddf74",
       "specs_sha256": "58bb23a3aef770dc16e4c875888805d68083e02c7d539a86dbbcddabb7f4e1d1",
       "plot_states": 20,
       "render_components": {
@@ -98,8 +99,8 @@
     },
     "spectra/pipeline.html": {
       "source": "examples/pipeline.html",
-      "source_sha256": "6b97584824ef8237fccc44c24255eec44b8233242a3264fffd46f36cd5a7277f",
-      "sha256": "fb5a9811c5b1cef86d5e5531800e9ee1e028e3d643c531656ab92c5d26985042",
+      "source_sha256": "4fe9003df61579f7f45942cb42e53075179990ae94aad585d209f7c4309de5b4",
+      "sha256": "d858ff4241848f341adc859fd0ae7d660ec72359ab16a6b4e26f4ca6b8f8faaf",
       "specs_sha256": "8024d78e57b02968c7a867bf8481737db94283fe773e113320aae05ef892d455",
       "plot_states": 2,
       "render_components": {

@@ -122,7 +122,13 @@ def validate_bundle(directory):
     for name,stamp in manifest['files'].items():
         raw=(directory/name).read_bytes();S.require(S.sha(raw)==stamp['sha256'] and len(raw)==stamp['bytes'],'Changed public artifact');payload[name]=raw
     data=S.decode(payload['data.json']);validate_data(data)
-    S.require(payload['data.json']==S.canonical(data) and payload['gamma.html']==render(data),'Exact serialization/template')
+    S.require(payload['data.json']==S.canonical(data),'Exact scientific serialization')
+    from saved_focus_pages import historical_display, validate_display_binding, display_render
+    if 'display_upgrade' in manifest:
+        validate_display_binding('gamma',manifest)
+        S.require(payload['gamma.html']==display_render('gamma',data),'Exact upgraded gamma display')
+    elif not historical_display('gamma',(directory/'publication.json').read_bytes()):
+        S.require(payload['gamma.html']==render(data),'Exact serialization/template')
     S.exact(manifest['source'],data['science']['source'],'Source authority');S.exact(manifest['presentation'],data['presentation'],'Presentation hashes')
     S.require(manifest['science_sha256']==data['science_sha256'],'Science hash binding')
     for model in data['science']['models']:

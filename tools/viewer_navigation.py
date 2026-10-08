@@ -33,6 +33,7 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '4945d697ae27217b3c4ff008d247445af43a6f44c5a327a845a3e48aa20b5675',
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
+ '488bf59fe48a2bcfe14bfe8f428f200ee45587ef0f0f50fb79f1aba45b9b293c',
  'bc25cdba48e876df82af56f2713f2227292ae21ee6bf7f949dcfa6bd0cd83988',
  '1cec34532d0166bff8ead1f6d9c3a9d4234bdea9789b32aec06bec78c8cd85d6',
  # Verified before this four-model source upgrade; never derived from a new

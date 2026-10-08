@@ -34,10 +34,10 @@ class SiteStructureTests(unittest.TestCase):
         self.assertEqual(home.count('<article class="card">'),3)
         self.assertEqual(home.count('href="downloads/all-models.zip"'),1)
         self.assertRegex(home,r'<section class="cards">\s*<article class="card"><h2>Browse</h2>')
-        primary=re.search(r'<nav aria-label="Primary">(.*?)</nav>',home).group(1)
+        primary=re.search(r'<nav aria-label="Primary"[^>]*>(.*?)</nav>',home).group(1)
         self.assertEqual(re.findall(r'href="([^"]+)"',primary),
-                         ['results/index.html','detectors/index.html','guide.html#setup','guide.html#local-control'])
-        self.assertEqual(re.findall(r'>([^<]+)</a>',primary),['Browse','Detectors','Setup','Use'])
+                         ['guide.html#local-control','results/index.html','spectra/pipeline.html','spectra/cs137-10k.html','detectors/index.html'])
+        self.assertEqual(re.findall(r'>([^<]+)</a>',primary),['Run','Results','Waveforms','Spectra','Detectors'])
         self.assertIn('Use Control',home)
         for p in ('learn/index.html','detectors/index.html','results/index.html',
                   'methods/index.html','scenarios/lbnl-cs137/index.html'):
@@ -69,10 +69,12 @@ class SiteStructureTests(unittest.TestCase):
                 if tag=='details':self.closed.pop()
         root=self.fixture(with_results=True);S.apply(root)
         home=(root/'index.html').read_text();parser=HomeLinks();parser.feed(home)
-        self.assertEqual(len(parser.links),21);self.assertEqual(len(set(parser.links)),15)
-        self.assertEqual(parser.outside,['index.html','results/index.html','detectors/index.html','guide.html#setup',
-                                        'guide.html#local-control','results/index.html','detectors/index.html',
-                                        'guide.html#setup','guide.html#local-control','guide.html#saved-analysis'])
+        # The owner reported that folded routes made useful views hard to find.
+        # Waveforms, spectra, 3D events and data help must be visible directly.
+        for href in ('index.html','spectra/pipeline.html','spectra/cs137-10k.html',
+                     'viewers/events.html','guide.html#saved-analysis',
+                     'guide.html#setup','guide.html#local-control'):
+            self.assertIn(href,parser.outside)
         for href in ('learn/index.html','methods/index.html','examples/pipeline.html','results/cs137-10k/index.html',
                      'downloads/all-models.zip','https://github.com/Kunming-CN/END2END_Ge_Simulation'):
             self.assertIn(href,parser.links);self.assertNotIn(href,parser.outside)
@@ -93,8 +95,8 @@ class SiteStructureTests(unittest.TestCase):
         overview=(root/'results/cs137-1m/index.html').read_text()
         self.assertIn('12,420',overview);self.assertIn('10,757',overview)
         results=(root/'results/index.html').read_text()
-        self.assertLess(results.index('Separate Cs137 · 1M campaign'),results.index('Small engineering examples'))
-        self.assertLess(results.index('Small engineering examples'),results.index('Compact teaching example'))
+        self.assertLess(results.index('Separate Cs137 · 1M campaign'),results.index('Main teaching example'))
+        self.assertLess(results.index('Main teaching example'),results.index('Compact teaching example'))
         self.assertLess(results.index('Compact teaching example'),results.index('<h2>Earlier campaign</h2>'))
         self.assertLess(results.index('<h2>Earlier campaign</h2>'),results.index('Earlier Cs137 · 10k'))
         self.assertNotIn('1M per detector',''.join(re.findall(r'<article class="card">.*?</article>',results,re.S)))
@@ -115,21 +117,21 @@ class SiteStructureTests(unittest.TestCase):
             S.apply(root)
         checked.assert_called_once_with(gamma)
         results=(root/'results/index.html').read_text()
-        self.assertEqual(results.count('Small gamma → native SSD → peak ADC example'),1)
+        self.assertEqual(results.count('Additional cryostat gamma example · 20 primaries per detector'),1)
         self.assertNotIn('Completed gamma',results)
         self.assertEqual(results.count('../examples/gamma-native/gamma.html'),1)
         self.assertIn('Compact teaching example',results)
         self.assertIn('../examples/pipeline.html',results)
-        order=('Separate Cs137 · 1M campaign','Small engineering examples',
-               'Small gamma → native SSD → peak ADC example','Compact teaching example',
+        order=('Separate Cs137 · 1M campaign','Main teaching example',
+               'Compact teaching example','Additional cryostat gamma example · 20 primaries per detector',
                '<h2>Earlier campaign</h2>','Earlier Cs137 · 10k')
         self.assertEqual([results.index(label) for label in order],
                          sorted(results.index(label) for label in order))
         learn=(root/'learn/index.html').read_text()
         self.assertEqual(learn.count('../examples/gamma-native/gamma.html'),1)
         self.assertEqual(learn.count('../examples/pipeline.html'),1)
-        self.assertLess(learn.index('../examples/gamma-native/gamma.html'),learn.index('../examples/pipeline.html'))
-        self.assertIn('Open the saved engineering example',learn)
+        self.assertLess(learn.index('../examples/pipeline.html'),learn.index('../examples/gamma-native/gamma.html'))
+        self.assertIn('Open the additional cryostat example',learn)
         self.assertIn('Compact teaching example',learn)
         self.assertNotIn('pending saved results',results)
         for page in (learn,results):
