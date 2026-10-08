@@ -18,8 +18,8 @@ workers. Root and required development/review sessions verified Sol6.1/ultra.
 Lease: student-navigation-v2-root; automatic heartbeat remains PAUSED.
 Current execution authority: .local/student-navigation-v2/ROUND.json,
 .local/autonomy/state.json, actual Git and owned processes. Do not repeat work
-because a chat/session failed. Local acceptance passed; live publication is IN PROGRESS;
-manual_ready remains false until the actual checks and closure below finish.
+because a chat/session failed. Local and live acceptance passed. Final Git/process/lease closure is recorded
+in COMPLETE.json/state; do not infer an unfinished run from a stale chat.
 
 Implemented: small display-only route registry shared by existing generators;
 Results/Detectors/Run locally/Methods, fixed breadcrumbs and one local view group.
@@ -69,8 +69,14 @@ No raw computation, unique failure, original hash binding, seed or physics chang
 External links,68 video playback, direct file:// and fresh-machine installation
 remain outside this runtime proof; prior retrieval limits retained, never called
 all-online success. No Download control used for acceptance; downloads verified
-by public bytes and contracts. Final live exact-byte check and Git/lease closure
-are still pending in ROUND/state; do not claim ready until COMPLETE.json exists.
+by public bytes and contracts. Live verification passed:701 standard selected files including all105 HTML, plus
+the new lithium receipt,702 distinct exact files. Initial network HTTP503 attempt
+remains FAILED in LIVE-CHECK-FAILED.log; network-only retry succeeded using the
+unchanged accepted local snapshot. Actual live Results->GeRC Li50min report->
+spectrum->3D61/group0 and owner gamma AK02/primary11 deep link pass. Code commit
+db0602af1402707a1eb33d12861584eeb7b54940 was deployed. Final source/manifest
+and remote equality, owned worker closure and released lease are recorded in
+.local/student-navigation-v2/COMPLETE.json and state after this handoff commit.
 
 ## Retained delivery and next bounded work
 
