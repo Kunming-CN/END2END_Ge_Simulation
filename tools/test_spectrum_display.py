@@ -1,5 +1,6 @@
 """Saved-spectrum display regression. No radiation, field or readout computation."""
 import copy
+import hashlib
 import json
 import re
 import shutil
@@ -139,6 +140,12 @@ class SavedDisplayTests(unittest.TestCase):
         for destination in D.ROUTES.values():
             before=(ROOT/'docs'/destination).read_text(encoding='utf-8')
             after=(self.site/destination).read_text(encoding='utf-8')
+            if destination=='spectra/pipeline.html' and 'id="teaching-data"' in before:
+                # This fixture is the older bare-gamma input; today's teaching
+                # reader contains six separate saved Cs137 cases instead.
+                self.assertEqual(D.embedded_specs(after),D.pipeline_specs(self.site)[:1])
+                self.assertEqual(self.before,{p:D.sha(self.site/p) for p in self.before})
+                continue
             if destination=='spectra/cs137-10k.html' and len(D.embedded_specs(before))!=len(D.embedded_specs(after)):
                 # This fixture deliberately contains AK02/SAP22 only; the real
                 # site now also has the separately saved GeRC02/KMRC01 bundle.
@@ -242,8 +249,35 @@ class SavedDisplayTests(unittest.TestCase):
 
     def test_home_preview_uses_same_component(self):
         preview=D.homepage_preview(self.site)
-        self.assertEqual(D.embedded_specs(preview),D.response_specs(self.site)[:1])
+        self.assertEqual(D.embedded_specs(preview),D.response_specs(self.site)[::2])
+        self.assertEqual([s['key'] for s in D.embedded_specs(preview)],['response-AK02-0','response-SAP22-0'])
+        self.assertEqual(preview.count('id="spectrum-controls-script"'),1)
+        self.assertEqual(preview.count('id="spectrum-style"'),1)
         self.assertIn('data-scale="log"',preview)
+
+    def test_campaign_preview_rejects_sap22_removal_even_after_resealing(self):
+        home=self.site/D.PREVIEW_PATH;prior=home.read_bytes() if home.exists() else None
+        mp=self.site/'spectra/manifest.json';saved=mp.read_bytes()
+        try:
+            home.parent.mkdir(parents=True,exist_ok=True)
+            home.write_text('<html>'+D.homepage_preview(self.site)+'</html>',encoding='utf-8')
+            finalized=D.finalize(self.site)
+            self.assertEqual(finalized['campaign_preview']['models'],['AK02','SAP22'])
+            page=home.read_text(encoding='utf-8')
+            blocks=re.findall(r'<figure class="spectrum-panel".*?</figure>',page,re.S)
+            self.assertEqual(len(blocks),2)
+            home.write_text(page.replace(blocks[1],''),encoding='utf-8')
+            text,block=D.home_component(self.site)
+            metadata=finalized['campaign_preview']
+            metadata['panel_sha256']=hashlib.sha256(block.encode()).hexdigest()
+            metadata['render_components']=D.component_hashes(text)
+            mp.write_text(json.dumps(finalized),encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'Campaign spectrum data differs'):
+                D.validate(self.site,require_current_generators=True,require_home=True)
+        finally:
+            mp.write_bytes(saved)
+            if prior is None:home.unlink(missing_ok=True)
+            else:home.write_bytes(prior)
 
     def test_four_case_context_uses_saved_variant_and_formal_result_routes(self):
         from ring_site import cases

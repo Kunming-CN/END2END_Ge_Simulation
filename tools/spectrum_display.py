@@ -18,6 +18,8 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+    # Exact accepted0cf58d3 display before restoring both campaign previews.
+    '6e6d196150c26650c0b26f209fa2d11aa15f311ead00138785fd45a06c781a7c',
     # Exact accepted 5c21a3e snapshot before the curated teaching update.
     '7451548d76b74a898807739551b7367a6621ae75c818f3d790efde8eb735e255',
     '122e6ee7f6e303decb97181b7a8f4054b9a51f3381c3f9fb30c86f647a471370',
@@ -352,8 +354,8 @@ def home_component(site,path=PREVIEW_PATH):
     """Retained API name; current compact preview belongs to its 1M campaign."""
     text=(Path(site)/path).read_text(encoding='utf-8')
     blocks=re.findall(r'<figure class="spectrum-panel".*?</figure>',text,re.S)
-    require(len(blocks)==1,'Campaign summary must contain one spectrum preview')
-    return text,blocks[0]
+    require(len(blocks) in (1,2),'Unexpected campaign spectrum preview inventory')
+    return text,''.join(blocks)
 
 def validate_home(site,manifest,strict=False):
     # Older protected publications retain their existing homepage contract.
@@ -362,14 +364,18 @@ def validate_home(site,manifest,strict=False):
     if key=='campaign_preview':require(path==PREVIEW_PATH,'Campaign spectrum preview route changed')
     text,block=home_component(site,path)
     require(component_hashes(text)==metadata['render_components'],'Campaign spectrum rendering changed')
-    require(embedded_specs(block)==response_specs(Path(site))[:1],'Campaign spectrum data differs')
+    models=metadata.get('models')
+    require(models is None or models==['AK02','SAP22'],'Campaign preview model inventory changed')
+    expected=campaign_preview_specs(site) if models is not None else response_specs(Path(site))[:1]
+    if strict:require(models==['AK02','SAP22'],'Current campaign preview must include both detectors')
+    require(embedded_specs(block)==expected,'Campaign spectrum data differs')
     require(hashlib.sha256(block.encode()).hexdigest()==metadata['panel_sha256'],'Campaign spectrum panel changed')
-    if strict: require(block==panel(response_specs(Path(site))[0],compact=True),'Campaign spectrum differs from current renderer')
+    if strict: require(block==''.join(panel(spec,compact=True) for spec in expected),'Campaign spectrum differs from current renderer')
 
 def finalize(site):
     site=Path(site);text,block=home_component(site);m=read(site/'spectra/manifest.json')
     m.pop('homepage',None)
-    m['campaign_preview']={'path':PREVIEW_PATH,'panel_sha256':hashlib.sha256(block.encode()).hexdigest(),'render_components':component_hashes(text)}
+    m['campaign_preview']={'path':PREVIEW_PATH,'models':['AK02','SAP22'],'panel_sha256':hashlib.sha256(block.encode()).hexdigest(),'render_components':component_hashes(text)}
     write_if_changed(site/'spectra/manifest.json',json.dumps(m,indent=2,allow_nan=False)+'\n')
     return validate(site,require_current_generators=True,require_home=True)
 
@@ -465,11 +471,16 @@ def route_current_pages(site):
         text=p.read_text(encoding='utf-8'); updated=rewrite_links(text,rel,rel)
         if updated!=text: write_if_changed(p,updated)
 
+def campaign_preview_specs(site):
+    specs=response_specs(Path(site))[::2]
+    require([spec['key'] for spec in specs]==['response-AK02-0','response-SAP22-0'],
+            'Both detector broad-range response spectra are required')
+    return specs
+
 def homepage_preview(site):
     path=Path(site)/'spectra/million-response.html'
     if not path.is_file(): return None
-    spec=response_specs(Path(site))[0]
-    return panel(spec,compact=True)+assets()
+    return ''.join(panel(spec,compact=True) for spec in campaign_preview_specs(site))+assets()
 
 if __name__=='__main__':
     import argparse

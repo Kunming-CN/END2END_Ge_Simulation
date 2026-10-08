@@ -1,97 +1,75 @@
 # Current handoff
 
-Updated:2026-10-08 UTC. Read this before starting work.
-Prior accepted navigation/science history: [5c21a3e](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/5c21a3e4d1233c03b3a7eafa05280293b1c31fb5/PROGRESS.md).
+Updated: 2026-10-08 UTC. Read this before starting work.
+Prior accepted teaching/navigation/science history: [0cf58d3](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/0cf58d343f49b144150fd88698d1cacc277a62ee/PROGRESS.md).
 
-## Selected newer saved teaching signals
+## Both-detector 1M overview and fresh site coverage
 
-Owner asked to replace the old teaching data with a small representative selection
-from later completed results, preserve the preamp behavior, and verify actual plots
-and GitHub display. Input: accepted5c21a3e snapshot and exact four-case Cs13710K
-public run/settings, full native signals.csv and scalar/trace/truth ledger archives.
-Output: one six-example reader at spectra/pipeline.html, compact exact JSON,
-matching Results/Learn/README entry. Stop at accepted publication and lease closure.
-No Geant4, SSD, electronics replay, scientific-input or environment changes.
+Owner reported the 1M webpage appeared to lose SAP22, and requested correction
+before a fresh GitHub site check. Verified cause: campaign overview selected only
+response_specs[0] (AK02); its previous seal/test also required only that preview.
+SAP22 saved JSON, complete scalar ledgers, original reports and full truth/response
+readers were intact. This was a presentation omission, not deleted science.
 
-Start verified clean HEAD/origin/live main5c21a3e, released prior lease and no
-science workers. Root/implementation/review launches verified Sol6.1/ultra.
-Lease: student-teaching-v1-root; automatic heartbeat remains PAUSED.
-Publication accepted: implementation commit26dd810 is pushed and GitHub Pages
-built it. Snapshot2da44f3b3eb379036f9d770f50e3a2f690ecb271341da507047a031abac7a688:
-1693 files/105 HTML/976793600 bytes,3322 typed references. Required live check
-passed702 exact files, plus the separately checked lithium display receipt:703
-unique live files. LIVE-CHECK.log/LIVE-EXTRA.json retain the checks. Actual live
-six selections/24 plots, KM report->Back and390px layout passed. BROWSER.json
-retains evidence and the actual online screenshot. Final synchronization, owned
-worker cleanup and lease release are recorded in .local/student-teaching-v1/COMPLETE.json
-and autonomy state; consult actual Git/processes as well. Automatic heartbeat stays
-PAUSED; only manual continuation is ready after closure. Never restart science,
-completed tests or broad reviews after a chat failure.
+Input: clean local HEAD/origin/live main 0cf58d3; no prior lease or science workers.
+Output: one overview with both exact broad-range spectra and prominent full-reader
+entrances, a strict two-model semantic seal, and fresh saved/live site coverage.
+Stop: accepted deployment, synchronized Git, closed owned workers and released lease.
+No Geant4, SSD, electronics replay, numerical-input, environment or preamp changes.
 
-Six exact (model/initial-decay/group) examples:
-GeRC02/61/0 near661.657keV; SAP22/155/0 recorded32.205keV photon;
-SAP22/74/0 partial403.128keV deposition; GeRC02/69/0 separated25 positions;
-AK02/213/0 retains26 step-limit endpoints; KMRC01_candidate/26/0 retains
-negative native charge with recorded fixed-1 electronics wiring. They are an
-explicit illustrative subset, not a random sample or spectrum. GeRC uses saved
-Li50min, catalog30min remains original; KM remains a candidate. Caps, all original
-rows/identities/time origins and tail-truncation flags remain explicit.
+Execution authority: .local/student-million-page-v1/ROUND.json and autonomy state,
+plus actual Git/processes. Owned lease: student-million-page-v1-root; automatic
+heartbeat remains PAUSED. Current status: 32 spectrum, 8 structure and 33 site tests passed. Normal
+build_site --restructure installed snapshot34d201e2c6c21a26032ede5cba53a25cb5df49de3e005bf8322da9d3d8dcc71c
+after full stage validation. Both installed preview plots and all eight unchanged
+full-reader plots passed actual scale checks. Details, both new links andBack,
+390px layout and console checks passed; temporary preview closed. Standalone check_site passed:1,693 files/105 HTML/3,324 typed references.
+All local acceptance is complete. Upload/live acceptance and lease closure pending.
+Never restart completed work after a chat failure; inspect the current receipt first.
 
-New teaching_examples.py/html reuse focused_plots.js and existing publication
-readers. Twelve source-file pins, complete archive-member checks and exact output
-reconstruction bind every selected record. Current uses full original2ns charge
-bins and recorded wiring. Preamp/shaper use the original600 retained analog
-samples; no invented early values or per-event calibration. Full40K ledgers,
-39,236 zero-Ge primaries,681 accepted groups,6 native failures and77 readout
-rejects remain in case records. Original200-event gamma teaching is an archive.
+Both previews reuse saved 1 keV bins and the shared panel/assets renderer. Models,
+raw truth groups and accepted ADC populations remain separate. Current generation
+requires AK02 and SAP22 and rejects SAP22 removal even after rehashing the edited
+panel. Only exact accepted predecessor receipts admit the previous presentation.
+SAP22 retains 1,000,000 initial decays, 988,728 zero-Ge decays, 11,272 positive-Ge
+decays, 11,273 groups, 10,915 accepted ADC groups, 281 native failures and 77 readout
+rejects. AK02 retains 12,420 groups and 10,757 accepted ADC groups. Unknown charge,
+endpoint caps and rejection flags retain their original meaning.
 
-Software acceptance:8 teaching tests;100 relevant site/spectrum/structure/routes/
-viewer tests;9 archive tests including1 unavailable historical-fixture skip;
-1 saved-focus test. Two concrete browser corrections each passed8 focused tests.
+Fresh semantic scan: all 105 HTML pages, 17 model/geometry memberships, four 10K
+cases and 20 stage spectra, six separate Cs137 teaching examples, 40 gamma primaries,
+20 GeGI saved events and maintained inbound routes checked. Seven critical live
+HTML pages and raw GitHub README matched baseline bytes. No other verified content
+omission found. This is content/control/navigation coverage, not new physical
+validation or a screenshot audit of every unchanged gallery image.
+
 One integrated AI review cycle: parallel science/electronics and data/workflow,
-then a NEW independent details/direction/complexity/value review. No verified
-blockers; concrete findings exchanged. Follow-up only on responsive CSS and
-actual browser-history correction, no repeated full review or physics.
+then NEW independent details/direction/complexity/student-value review, all actual
+Sol6.1 Ultra/project launches verified. No verified blocker; concrete findings
+exchanged after initial conclusions. Generated preservation passed:1,583 non-HTML assets and104 other HTML pages
+match immutablebaseline; only theoverview andfive presentation receipts changed.
+Initial protection-count1582 assumption is FAILED inROUND.json; it omitted the
+new teachingJSON. Actual fullbaseline filemembership and unchangedbytes passed.
+Desktop/narrow acceptance passed; actualdeployment/live acceptance remains pending. No repeated broad reviews or physics checks.
 
-BROWSER.json: all6 selections/24 plots inspected,48 focus/full-window actions,
-exact energy/sign/unit/range and six open-detail/row/link refresh checks. Actual
-390px SVG labels enlarged at teaching source; all24 plots have no clipped labels
-or whole-page overflow. Selected KM report->Back now redraws KM identity/negative
-charge/plots/links together. Fresh Reload starts first example with consistent
-selector and plots. Downloads/Save As were never triggered. Desktop/narrow checks
-are browser emulation, not new-computer or native mobile certification.
-PROTECTED.json:1582 baseline non-HTML assets and5 original scientific report HTML
-unchanged; no removed files or model/configuration/lock differences.
+TEST-SPECTRA.log and TEST-SPECTRA-CORRECTED.log preserve the first failed software
+attempts: new test import and legacy-gamma fixture versus current Cs137 reader;
+a failed helper-import command made no edit. TEST-SPECTRA-FINAL.log records the
+corrected 32-test pass. The legacy fixture still checks its own exact saved bins
+and unchanged inputs; current six-case teaching retains its independent binding.
+BUILD.log is the current execution log. Do not promote failed attempts to passed.
 
-Retained evidence: initial BUILD.log failed before generation on an old display
-receipt; only exact accepted-baseline predecessor receipts were admitted. Candidate
-export logs stopped for two verified browser corrections remain separate. Original
-Back mismatch is FAILED in BROWSER-CANDIDATE-WITH-BACK-FAILURE.json. First history
-VM test needed a safe window guard and remains FAILED in TEACHING-AFTER-HISTORY.log;
-corrected8-test pass is TEACHING-AFTER-HISTORY2.log. Static stage recovery rebuilds
-only teaching derivatives/seals and uses build_site final validators/atomic install.
-No scientific failure or result was overwritten or promoted.
+## Retained scope and later work
 
-## Retained delivery and next bounded work
+Six later completed Cs137 teaching examples, their original signed charge/current
+and sparse analog traces remain accepted at 0cf58d3. Full 40K event ledgers and
+zero-deposit primaries remain accessible. Million-campaign archives and original
+source bindings are permanent; no radiation or SSD rerun is needed for this fix.
+M5 remains closed; ten current-cryostat configurations share existing engines.
+Seven oversized detectors await a future larger cryostat. Second-computer delivery
+was removed; act on actual student feedback. Deeper Li/calibration/GeRC research
+remains separate. No new environment, global PATH/WSL changes or reset credits.
 
-Previous authorities: .local/student-navigation-v2/COMPLETE.json,
-.local/student-pages-v1/COMPLETE.json, .local/student-analysis-v1/COMPLETE.json,
-.local/student-batches-v1/execution-v1/COMPLETE.json and
-.local/student-plot-fix-v1/COMPLETE.json. Prior105-page/64directSVG/490image/
-172inline-chart audit remains accepted; unchanged pictures are not re-audited.
-Ten current-cryostat configurations share existing engines; Cs137/Am241/Ba133
-admitted, Gamma fixed20 and Co60 gate unchanged. Seven large detectors await a
-larger cryostat. M5 closed. Second-computer milestone removed: act on actual
-student feedback; no installation experiment or fresh-machine claim. Deeper Li,
-calibration and GeRC research remain separate. Publication verification time is
-software/file validation, not new detector compute. Profile before optimization.
-
-Next separate task: shared source/capsule angular displacement along nominal outer
-cylinder. Global-z axis x=0/y=1.473mm, outer radius35.1mm, source-center radius
-35.6mm at z=0.290mm. Degrees from+y toward+x:
-p=[35.6*sin(theta),1.473+35.6*cos(theta),0.290]mm. Capsule/fill use separate
-Rz(-theta)*Rx(-90deg), never rotate crystal/spacer through existing shared r.
-Preserve exact theta0 and old Gamma plus5mm position/direction. Define containment,
-overlap/tangent/GPS checks and one small positive acceptance before implementation.
-Nominal geometry is not a measured survey; unidentified Shashika article is not
-an automatic delivery prerequisite.
+Next separate bounded feature remains shared source/capsule angular displacement
+along the nominal outer cylinder; use the exact prior handoff geometry and stop
+bounds linked above. Do not start it inside this website correction.

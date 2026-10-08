@@ -31,6 +31,8 @@ DISPLAY_SOURCES=(JS,'tools/saved_focus_pages.py','tools/site_restructure.py','to
 # immutable original receipt above. Rehashed edits are never a historical basis.
 PREVIOUS_DISPLAY_RECEIPTS={
     'gamma':frozenset({
+                       # Exact accepted0cf58d3 display before the1M overview correction.
+                       'ddd701de0f1f93aaf6e8af9436bfbaf5672f0e1e1caa15d1abd3fdd59997fb9b',
                        # Exact accepted 5c21a3e display before teaching selection.
                        '61e4b6ceaba49298bb5e30bfe23b405802fdf3b810a69d78eefc8f8222bf6719','725c852d635021b0aef16f9b651c56ebdd16fb9f7e13a7737101ea78fa4b11e7',
                        'b7b90f6e14bd88b903e0e7bb761384c51c2b0e2b863dbe7e29d2ed29b14d0eba',

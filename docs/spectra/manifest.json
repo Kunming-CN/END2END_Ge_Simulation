@@ -23,13 +23,13 @@
     "examples/cs137-10k-rings/KMRC01_candidate/response/histograms.json": "11cfbed9fd93db18528a1a73f25a298fa554fd70c9f3136203468970a5c053e3"
   },
   "generators": {
-    "tools/spectrum_display.py": "79e4bf1d0bb44c49f45b8ee21fdc2ae9015b79c3e0cedc62370fbe78eb32351b",
+    "tools/spectrum_display.py": "c830e7e1d287dcb51af05b747c030aefcb908c4d300ecb0de321df1397ef17e6",
     "tools/spectrum_plot.py": "f00dbf5efdb393f03eebd501cb71a74bbd268fc3f0cff240de9a7eb54948a29c",
     "tools/spectrum_controls.js": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
-    "tools/viewer_navigation.py": "99873c0b0ae449cb332c4a6907149765518cc12dddca9f9207b2ac15260bf03b",
+    "tools/viewer_navigation.py": "8adcc990c8cbb3a790712c71610645278517e2028609d73d86b72283489f2442",
     "tools/viewer_navigation.js": "a09e5ecb04bd5f6d4e1a24c2debf40bb9a0bfc882784cc146c8915dee7704ff5",
     "tools/ring_site.py": "0de35a96611bcf99975210f43804269141a2ab318da7819e5d392e40c762c5ac",
-    "tools/site_restructure.py": "9a8fc0a0d8aaca523f83647981a7e08f93a9a0f405aac72bb4a83d8c74935782",
+    "tools/site_restructure.py": "5f1a6547a4c2878197dc8a4e41c86642225b51f401391344be5ca502ab7af3c7",
     "tools/site_routes.py": "63893c40c6a500f1b65b71d3dc4dade9948b9317b875294f73c0cd4ef3b63d72",
     "tools/teaching_examples.py": "cd4f6703223db5f5bd396f615f38f274b04596f8431820a981d276713f01c952",
     "tools/teaching_examples.html": "1a9a36942eb0f96185da05dcad3272796c6d2cd847ff0d6b3df4ee832e588649",
@@ -109,10 +109,15 @@
   "scope": "Current views derived from saved results. Original reports and complete scientific bundles remain unchanged.",
   "campaign_preview": {
     "path": "results/cs137-1m/index.html",
-    "panel_sha256": "3f1d996f8f14b15a196896fd7b986e8f7832fdffe981ffcfc1ca52739e22692c",
+    "models": [
+      "AK02",
+      "SAP22"
+    ],
+    "panel_sha256": "9234edab8691afb5de27c81441c16f2ff2dd08b8814ab73f5664307263fbf658",
     "render_components": {
       "charts": [
-        "1a299aebc85aeb53ca6977002bc15b2ddb687aa54515a9f2576c6db3c4368efe"
+        "1a299aebc85aeb53ca6977002bc15b2ddb687aa54515a9f2576c6db3c4368efe",
+        "2b07b8ba1ef357e461c3340faeeb034620c9fa2a4827f4c32faa59e14107249e"
       ],
       "script": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
       "style": "72034d144998f59db6e8f788446c22986c474b294a182ef7e2d80b5992976203"

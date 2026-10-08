@@ -159,7 +159,8 @@ def apply(site):
         s=response_summary
         a=s['models']['AK02']; b=s['models']['SAP22']
         body=f'''<section class="hero"><p class="muted">Separate completed campaign</p><h1>Cs137 · one million initial decays per detector</h1>
-<p>Nominal uncollimated LBNL cryostat geometry. Radiation transport, SSD charge response and synthetic peak ADC are saved; no measured-spectrum fit or calibrated CCE is claimed.</p></section>
+<p>Nominal uncollimated LBNL cryostat geometry. Radiation transport, SSD charge response and synthetic peak ADC are saved; no measured-spectrum fit or calibrated CCE is claimed.</p>
+<p><a class="button" href="../../spectra/million-response.html">Response spectra · AK02 &amp; SAP22 →</a> · <a class="button" href="../../spectra/million-truth.html">Deposition spectra · AK02 &amp; SAP22 →</a></p></section>
 <div class="grid"><article class="card"><h2>AK02</h2><p>{a["positive_ge_decays"]:,} positive-Ge decays; {a["response"]["accepted"]:,} accepted ADC groups.</p></article>
 <article class="card"><h2>SAP22</h2><p>{b["positive_ge_decays"]:,} positive-Ge decays; {b["response"]["accepted"]:,} accepted ADC groups.</p></article></div>
 <section class="panel" id="data-files"><h2>Data & settings</h2>
@@ -170,7 +171,7 @@ def apply(site):
         from spectrum_display import homepage_preview
         preview=homepage_preview(site)
         if preview is not None:
-            body+='<section class="panel"><h2>Campaign spectrum preview</h2>'+preview+'</section>'
+            body+='<section class="panel"><h2>AK02 and SAP22 · saved response spectra</h2><p>Both separate one-million-decay cases are shown below. Each plot retains its own deposited-truth and accepted-ADC population; they are not merged or normalized.</p>'+preview+'</section>'
         write_page(site/'results/cs137-1m/index.html','Cs137 1M results · GeSignal',body,2)
 
     else:

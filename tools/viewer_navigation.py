@@ -35,6 +35,8 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '4945d697ae27217b3c4ff008d247445af43a6f44c5a327a845a3e48aa20b5675',
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
+ # Exact accepted0cf58d3 display before the1M overview correction.
+ 'e6d35df5c14b3de717f8e58235038301ba1384fe2e92260946c8cc7a86b45d92',
  # Exact accepted 5c21a3e display; current exports retain strict source checks.
  '0a42f23b8045a93b2aad96783841c5c6efa6a9320186b982c970974f052c2a10',
  '70c4a84008568b7b9a7fb6159a1e0c5736bafb5259a7d1fbe1232f0b2f51013e',

@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "build_id": "2da44f3b3eb379036f9d770f50e3a2f690ecb271341da507047a031abac7a688",
+  "build_id": "34d201e2c6c21a26032ede5cba53a25cb5df49de3e005bf8322da9d3d8dcc71c",
   "file_count": 1693,
-  "total_bytes": 976793600,
+  "total_bytes": 976849559,
   "html_pages": 105,
-  "local_links_checked": 3274,
-  "resource_references_checked": 3322,
-  "page_navigation_checked": 1271,
+  "local_links_checked": 3276,
+  "resource_references_checked": 3324,
+  "page_navigation_checked": 1273,
   "fragments_checked": 71,
   "downloads_checked": 753,
   "media_references_checked": 1265,
@@ -8161,7 +8161,7 @@
     {
       "path": "examples/gamma-native/publication.json",
       "bytes": 24399,
-      "sha256": "ddd701de0f1f93aaf6e8af9436bfbaf5672f0e1e1caa15d1abd3fdd59997fb9b"
+      "sha256": "a271d710183982a50a2ab6117765d9543e8eb7f2847ddf356e8c92298e174b72"
     },
     {
       "path": "examples/native-li/comparison.html",
@@ -8271,12 +8271,12 @@
     {
       "path": "methods/lithium-display.json",
       "bytes": 3346,
-      "sha256": "4518901f0d09f72df85959c25bdfe17a57ff65b1c76ebf1fa257117d89d78c68"
+      "sha256": "e8206a3147ee4e01d1e89d9377efd97e41b9147e25aebdba001b39ab0710ac9d"
     },
     {
       "path": "methods/native-li-display.json",
       "bytes": 4991,
-      "sha256": "3d400e4b337f545bae7031579342d2b35f4c6113075ea3b4159d0522c6b75f46"
+      "sha256": "8562c1de121ab1ffe2ff1a8f9df8cf8e175e1d9c53c8b72c5eb4707c54e46e6e"
     },
     {
       "path": "methods/native-li.html",
@@ -8410,8 +8410,8 @@
     },
     {
       "path": "results/cs137-1m/index.html",
-      "bytes": 73089,
-      "sha256": "678b3fae1596e3397223844025500518170a1cc6c7648e74d56701a70f476cc8"
+      "bytes": 128921,
+      "sha256": "77970fc901d618e64270069d45a79221f23f30e612b8abc18353f88837574a48"
     },
     {
       "path": "results/index.html",
@@ -8435,8 +8435,8 @@
     },
     {
       "path": "spectra/manifest.json",
-      "bytes": 7802,
-      "sha256": "6e6d196150c26650c0b26f209fa2d11aa15f311ead00138785fd45a06c781a7c"
+      "bytes": 7929,
+      "sha256": "9ff3931b15ad180663874c3482fbfce746fbe3d194bb8bb66fb84b9bcc912259"
     },
     {
       "path": "spectra/million-response.html",
@@ -8476,7 +8476,7 @@
     {
       "path": "viewers/manifest.json",
       "bytes": 81162,
-      "sha256": "e6d35df5c14b3de717f8e58235038301ba1384fe2e92260946c8cc7a86b45d92"
+      "sha256": "7d61a001ff10dd56b50f879fda464edb455e27dcd464aaeaed8f9b76bef0bdc0"
     }
   ]
 }
