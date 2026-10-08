@@ -1,6 +1,7 @@
 {
   "kind": "saved_spectrum_display_v1",
-  "display_revision": 3,
+  "display_revision": 4,
+  "teaching_examples": true,
   "default_scale": "log",
   "histogram_style": "step",
   "zero_count_policy": "gaps on true log axes; no pseudocounts",
@@ -22,14 +23,17 @@
     "examples/cs137-10k-rings/KMRC01_candidate/response/histograms.json": "11cfbed9fd93db18528a1a73f25a298fa554fd70c9f3136203468970a5c053e3"
   },
   "generators": {
-    "tools/spectrum_display.py": "d0241f40832754f4acf40b57bf801c6adaadfb671eba6ed1813b31b997d56da3",
+    "tools/spectrum_display.py": "79e4bf1d0bb44c49f45b8ee21fdc2ae9015b79c3e0cedc62370fbe78eb32351b",
     "tools/spectrum_plot.py": "f00dbf5efdb393f03eebd501cb71a74bbd268fc3f0cff240de9a7eb54948a29c",
     "tools/spectrum_controls.js": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
-    "tools/viewer_navigation.py": "e16e9b8284bbb79b47ddf267cab85b5ddd7001634ee90857cfb4c5b870936e5e",
+    "tools/viewer_navigation.py": "99873c0b0ae449cb332c4a6907149765518cc12dddca9f9207b2ac15260bf03b",
     "tools/viewer_navigation.js": "a09e5ecb04bd5f6d4e1a24c2debf40bb9a0bfc882784cc146c8915dee7704ff5",
     "tools/ring_site.py": "0de35a96611bcf99975210f43804269141a2ab318da7819e5d392e40c762c5ac",
-    "tools/site_restructure.py": "a7abbde9cc65575ac4cc9920e1e853c74afe86bc447e878e9c96af0d07184d93",
-    "tools/site_routes.py": "3436a77ab16dbf89b70cceb4a4e37fdf0f3c828cadaf27fc286143ff1abf5d1c"
+    "tools/site_restructure.py": "9a8fc0a0d8aaca523f83647981a7e08f93a9a0f405aac72bb4a83d8c74935782",
+    "tools/site_routes.py": "63893c40c6a500f1b65b71d3dc4dade9948b9317b875294f73c0cd4ef3b63d72",
+    "tools/teaching_examples.py": "cd4f6703223db5f5bd396f615f38f274b04596f8431820a981d276713f01c952",
+    "tools/teaching_examples.html": "1a9a36942eb0f96185da05dcad3272796c6d2cd847ff0d6b3df4ee832e588649",
+    "tools/focused_plots.js": "230c98bb7f41a5437f483aa9e168b8476a06b9d6ac4a782ba7681ce442ba49eb"
   },
   "pages": {
     "spectra/million-truth.html": {
@@ -94,20 +98,6 @@
           "3e83556269c1b8046117bf11ec48089003489032021d34a8f1a6f0dc3f3b1469",
           "b3d2107145a4a1eaebacca0138b490d20bffa78c31cf7e8123f7e3126a76953a",
           "cd7c509a00a23425c3de143b9baec9ff8ec57336a3fbe0074543ed698144d71f"
-        ],
-        "script": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
-        "style": "72034d144998f59db6e8f788446c22986c474b294a182ef7e2d80b5992976203"
-      }
-    },
-    "spectra/pipeline.html": {
-      "source": "examples/pipeline.html",
-      "source_sha256": "71d898465740d2ad4eb098cc5cc1d27c494f38c0151e634dfc067bf53f147bf7",
-      "sha256": "db0ef29a6016693d5399e687fa9b0d6a9c6dc8c9b98990e7f5a386151de93d2d",
-      "specs_sha256": "8024d78e57b02968c7a867bf8481737db94283fe773e113320aae05ef892d455",
-      "plot_states": 2,
-      "render_components": {
-        "charts": [
-          "5ee683b6363549e023731d4f7d14ead0259d5d5479914f1ce78276054e1b6b87"
         ],
         "script": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
         "style": "72034d144998f59db6e8f788446c22986c474b294a182ef7e2d80b5992976203"

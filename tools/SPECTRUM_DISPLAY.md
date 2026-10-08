@@ -11,15 +11,19 @@ field solving, carrier transport, electronics processing, fitting or smearing ru
 | `docs/spectra/million-truth.html` | `docs/examples/cs137-1m/report.html` |
 | `docs/spectra/million-response.html` | `docs/examples/cs137-1m-response/report.html` |
 | `docs/spectra/cs137-10k.html` | `docs/examples/cs137-10k/comparison.html` |
-| `docs/spectra/pipeline.html` | `docs/examples/pipeline.html` |
+| `docs/spectra/pipeline.html` | Six selected saved signals from the four current Cs137 10K cases |
 
 Current homepage/result/detector routes and local workspace links use these new
 views. Original reports remain available as explicitly linked archived displays;
 their file hashes, numerical downloads, publication receipts and source generators
 are unchanged. Old incoming links can still open those unchanged originals.
 
-There are four truth plots, four response overlays, ten 10k stage spectra, one
-pipeline plot with two detector states, and one homepage response preview. Time
+There are four truth plots, four response overlays, ten 10k stage spectra and one
+homepage response preview. The teaching route shows six illustrative Cs137 signals;
+it is not a spectrum or the complete event population. `teaching_examples.py` and
+`teaching_examples.html` read pinned, completed scalar/trace/truth ledgers and full
+native charge CSVs, and retain exact identities, signs, units, deposit rows and flags.
+The older two-detector gamma report stays in `examples/pipeline.html` as an archive. Time
 waveforms, current/preamp/shaper traces, field views and depth diagnostics are not
 energy spectra and are not changed. The inspected gallery/supplement captions
 contain no further count-versus-energy distributions; no spectrum was invented
@@ -51,9 +55,11 @@ in those input specs remain available for provenance; displayed labels are
 The truth histogram keeps exact-zero events in its separate category; this is
 not the same as a bin containing zero events. Negative equivalent energy remains
 negative on x. Underflow/overflow, population totals and bins outside a zoom view
-remain distinct. Existing 1-keV and 5-keV bins are unchanged. The pipeline retains
-its original 24-bin rule and complete event/waveform payload; changing model or
-event cannot retune calibration or normalize the spectrum.
+remain distinct. Existing 1-keV and 5-keV bins are unchanged. The archived gamma pipeline retains its original 24-bin rule and complete
+event/waveform payload. Selected teaching signals preserve the recorded independent
+injection calibration and fixed wiring; changing the example cannot retune gain.
+Analog plots show only the 600 originally retained samples, without restoring
+missing values. The preamp model and saved traces are unchanged.
 
 ## Maintenance and validation
 
@@ -78,7 +84,9 @@ checks. Browser acceptance additionally exercises the actual generated pages,
 model/event changes, offline controls, keyboard/mobile use and static no-JavaScript
 fallback. Normal site, link, archive and model checks still apply.
 
-The original two scoped reviewer threads remain the reviewers for this work.
+The earlier spectrum release keeps its original review records. The later selected
+Cs137 teaching route has its focused tests and integrated acceptance records in
+`.local/student-teaching-v1/`; no scientific calculation is part of that change.
 Original evidence is `.local/spectrum-display-v1/`; the owner-authorized repair
 candidate and its test/browser records are in `.local/display-repair-v2/implementation/`.
 A display test pass is not new

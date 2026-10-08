@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Six saved Cs137 signals · GeSignal</title>
+<style>
+:root{color-scheme:light;--ink:#173047;--muted:#526575;--teal:#087a80;--line:#d4e0e5;--paper:#f5f7f7}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1220px;margin:auto;padding:18px 22px 42px}h1{font-size:clamp(28px,4vw,44px);line-height:1.15;margin:24px 0 12px;letter-spacing:-.035em}h2{font-size:22px;margin:0 0 8px}h3{font-size:17px;margin:0 0 8px}p{margin:8px 0 14px}a{color:#07628a;text-underline-offset:3px}a,button,select,summary{touch-action:manipulation}button,select{font:inherit}button,select{padding:8px 12px;border:1px solid #7d969f;background:white;border-radius:7px;color:var(--ink)}button{cursor:pointer}button[aria-pressed=true]{background:#e1f1f1;border-color:var(--teal)}a:focus-visible,button:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #e6a040;outline-offset:3px}.muted{color:var(--muted);font-size:14px}.intro{max-width:900px}.card{background:white;border:1px solid var(--line);border-radius:12px;padding:20px;margin:18px 0;min-width:0}.selection label{display:block;font-weight:650;margin-bottom:7px}.selection select{max-width:100%;width:100%;min-height:44px}.selection p{margin-bottom:0}.stages{display:flex;gap:10px;flex-wrap:wrap;padding:0;list-style:none;font-size:14px;color:var(--muted)}.stages li{background:#e9f0f2;border-radius:7px;padding:7px 11px}.energy{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:16px 0;padding:14px 0;border-block:1px solid var(--line)}.energy small{display:block;color:var(--muted)}.energy strong{display:block;font-size:clamp(20px,2.5vw,28px);font-variant-numeric:tabular-nums}.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px}.facts div{min-width:0}.facts dt{font-size:13px;color:var(--muted)}.facts dd{margin:0;font-variant-numeric:tabular-nums}.flagline{font-size:14px;background:#fff5df;border-left:3px solid #ba741c;padding:10px 14px;margin:15px 0}.plots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}.plots figure{padding:16px;background:white;border:1px solid var(--line);border-radius:12px}.plots figcaption{font-size:17px;font-weight:650;margin-bottom:10px}.plots figure p{margin-bottom:0}.plots small{color:var(--muted);margin:7px 0}.plots svg{display:block;max-width:100%;height:auto}.source-links{display:flex;flex-wrap:wrap;gap:8px 17px;font-size:14px}details{border-top:1px solid var(--line);padding-top:12px;margin-top:14px}summary{cursor:pointer;font-weight:650}pre{font-size:12px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;max-height:440px;overflow:auto;padding:12px;background:#eef3f4;border-radius:7px}.table-scroll{overflow:auto;max-height:380px;margin-top:12px}table{border-collapse:collapse;font-size:12px;white-space:nowrap;width:100%}td,th{padding:7px;text-align:right;border-bottom:1px solid var(--line)}th{position:sticky;top:0;background:#eef3f4}td:first-child,th:first-child{text-align:left}.error{padding:18px;background:#fff0eb;border:1px solid #b66550;border-radius:12px}footer{font-size:13px;color:var(--muted);margin-top:22px}.exact-value{overflow-wrap:anywhere}.fact-note{font-size:13px;color:var(--muted)}[hidden]{display:none!important}
+@media(max-width:750px){main{padding:12px 14px 32px}.plots{grid-template-columns:minmax(0,1fr)}.card{padding:16px}.facts{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:750px){.plots svg text{font-size:16px}.plots svg text[y="235"][x="84"]{text-anchor:start}.plots svg text[y="235"][x="542"]{text-anchor:end}.plots svg text[transform]{display:none}}
+@media(max-width:440px){.energy{grid-template-columns:minmax(0,1fr);gap:10px}.energy>div{display:grid;grid-template-columns:1fr 1fr;align-items:center}.energy strong{font-size:21px}.plots figure{padding:12px}.source-links{gap:8px 13px}}
+</style>
+</head>
+<body>
+<main>
+__PAGE_NAVIGATION__
+<h1>From Cs137 deposits to a saved pulse.</h1>
+<p class="intro">Choose one of six representative signals from the completed 10,000-decay cryostat cases. Follow deposited energy, signed native charge, electronics-input current, the preamp and the shaped peak. These curated examples teach the signal chain; they are not a spectrum or a random statistical sample.</p>
+<ol class="stages" aria-label="Signal chain"><li>1 · Radiation deposits</li><li>2 · Native signed charge</li><li>3 · Current → preamp</li><li>4 · Analog shaping</li><li>5 · Peak ADC → Erec</li></ol>
+<noscript>The plots need JavaScript. <a href="teaching-examples.json">The exact selected records</a> remain readable as JSON.</noscript>
+<section class="card selection"><label for="example-select">Saved example · detector / initial decay ID / pulse group</label><select id="example-select"></select><p id="selection-note" class="muted" aria-live="polite"></p></section>
+<div id="error" class="error" role="alert" hidden></div>
+<div id="content">
+<section class="card">
+<h2 id="case-title"></h2><p id="case-explanation"></p>
+<div class="energy"><div><small>Truth Edep · group</small><strong id="edep"></strong><small>keV</small></div><div><small>Signed native induced equivalent</small><strong id="induced"></strong><small>keV</small></div><div><small>Accepted peak-ADC Erec</small><strong id="erec"></strong><small>keV</small></div></div>
+<dl class="facts" id="case-facts"></dl>
+<p class="flagline" id="case-flags"></p>
+<p class="fact-note">Native endpoint flags remain separate from electronics acceptance. A close energy match or a small remaining induced signal is not proof of calibrated Li collection efficiency.</p>
+</section>
+<div class="plots" id="plots" aria-label="Four saved signal stages"></div>
+<section class="card">
+<h2>Fixed settings and exact source records</h2>
+<p id="electronics-settings"></p><p class="muted">One independent synthetic injection sets the calibration slope across events. The numerical analog grid is followed by a peak ADC; it is not a waveform-digitizing acquisition. No new electronics replay is used in this page.</p>
+<div class="source-links"><a id="case-report">Case report</a><a id="case-files">Case data files</a><a id="source-csv">Full native charge CSV</a><a id="source-zip">Complete source ledgers ZIP</a><a id="source-run">Run settings JSON</a><a id="case-spectrum">All 10K stage spectra</a></div>
+<details id="deposits-details"><summary id="deposits-summary"></summary><p class="muted">All recorded semiconductor STEP rows of this initial decay remain below, including zero-energy rows. Pulse-group row IDs identify which positive deposits feed this group. Deposition delays are radiation creation/deposition times, not drift times.</p><div class="table-scroll"><table><thead><tr><th>Raw row</th><th>In group</th><th>Edep keV</th><th>Delay from group ns</th><th>x mm</th><th>y mm</th><th>z mm</th><th>Track</th><th>Parent</th><th>PDG</th></tr></thead><tbody id="deposit-rows"></tbody></table></div></details>
+<details id="exact-details"><summary>Exact selected ledger, retained samples and settings</summary><pre id="exact-json"></pre></details>
+<details id="provenance-details"><summary>Source hashes and export binding</summary><pre id="provenance-json"></pre></details>
+</section>
+<section class="card"><h2>How to interpret these examples</h2><p>The nominal cryostat and source arrangement are engineering inputs, not a surveyed replica. Native transport includes finite parcel counts, caps and recorded failures. The electronics is synthetic and noiseless; these curves are not measured pulse comparisons or physical energy-resolution predictions.</p><p>Original signs, IDs, time origins, deposit rows and flags are retained. The complete 10K event ledgers, zeros and statistical distributions stay in the linked case records. GeRC02 here uses the saved Li 50 minute run variant; its catalog model retains the original 30 minute input. KM is a candidate with fixed readout wiring.</p><p class="muted">The earlier 200-event bare-gamma teaching dataset is retained as the <a href="../examples/pipeline.html">original teaching archive</a>.</p></section>
+</div>
+<footer><a href="teaching-examples.json">Exact six-example JSON</a> · All plotting data is also embedded here for offline use.</footer>
+</main>
+<script id="teaching-data" type="application/json">__TEACHING_DATA_JSON__</script>
+<script>__FOCUSED_PLOTS_JS__</script>
+<script>
+"use strict";
+(() => {
+const $=id=>document.getElementById(id),data=JSON.parse($("teaching-data").textContent);
+const fmt=v=>v===null||v===undefined?"Unavailable":Number(v).toLocaleString("en-US",{maximumSignificantDigits:8});
+const exact=v=>v===null||v===undefined?"Unavailable":String(v);
+function facts(items){const host=$("case-facts");host.replaceChildren();for(const[label,value]of items){const div=document.createElement("div"),dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=label;dd.textContent=value;div.append(dt,dd);host.append(div);}}
+function selected(){return data.cases[$("example-select").selectedIndex];}
+function details(){const c=selected(),m=data.models[c.model];$("exact-json").textContent=$("exact-details").open?JSON.stringify({selected_case:c,model_settings:m},null,2):"";$("provenance-json").textContent=$("provenance-details").open?JSON.stringify(data.provenance,null,2):"";if(!$("deposits-details").open){$("deposit-rows").replaceChildren();return;}const ids=new Set(c.pulse.raw_row_indices),body=$("deposit-rows");body.replaceChildren();for(const row of c.truth.steps){const tr=document.createElement("tr");for(const v of[row.raw_row_index,ids.has(row.raw_row_index)?"yes":"no",row.energy_keV,row.time_ns-c.pulse.origin_time_ns,...row.position_mm,row.track_id,row.parent_track_id,row.particle_pdg]){const td=document.createElement("td");td.textContent=exact(v);tr.append(td);}body.append(tr);}}
+function link(id,href){const node=$(id);node.href=href;}
+function render(){
+const c=selected(),m=data.models[c.model],p=c.pulse,r=p.readout,t=c.saved_trace.trace,q=c.native_charge.induced_equivalent_energy_keV,times=c.native_charge.time_since_origin_ns;
+const eion=m.calibration.ionisation_energy_eV,dt=m.calibration.time_step_ns,wiring=m.wiring.factor,chargeFactor=1000/eion*1.602176634e-19*1e15;
+const end=SavedFocusPlots.focusEnd(times,q),analogEnd=t.time_ns.at(-1),peak={t:r.peak_time_ns,v:r.peak_V};
+$("case-title").textContent=c.title;$("case-explanation").textContent=c.explanation;
+$("selection-note").textContent=c.model+" · initial decay "+c.event_id+" · group "+c.group_id+" · exact saved records";
+$("edep").textContent=fmt(p.deposited_energy_keV);$("induced").textContent=fmt(p.final_induced_keV);$("erec").textContent=r.accepted?fmt(r.reconstructed_energy_keV):"Not accepted";
+const photon=c.truth.decay_photons.map(v=>exact(v.energy_keV)+" keV").join(", ")||"No recorded decay photon";
+const s=m.settings;
+facts([["Identity",c.model+" / decay "+c.event_id+" / group "+c.group_id],["Clock origin",exact(p.origin_time_ns)+" ns; plots use time since this group origin"],["Recorded decay photon energies",photon],["Recorded semiconductor deposits",c.truth.steps.length+" rows; "+c.positive_deposit_count+" positive-energy rows"],["Bias / runtime temperature",exact(s.bias_V)+" V / "+exact(s.temperature_K)+" K (stored "+exact(s.stored_temperature_K)+" K)"],["Native sampling / parcels",exact(s.drift_dt_ns)+" ns / "+exact(s.parcels)+" per deposit; seed family "+exact(s.seed_family)],["Saved native charge extent",exact(times[0])+"–"+exact(times.at(-1))+" ns; "+times.length+" original samples"],["Saved analog extent",exact(t.time_ns[0])+"–"+exact(analogEnd)+" ns; "+t.time_ns.length+" retained of "+r.original_sample_count+" original samples"],["Peak ADC",r.accepted?"Code "+r.adc_code+"; exact sampled peak "+exact(r.peak_V)+" V at "+exact(r.peak_time_ns)+" ns":"Rejected: "+exact(r.rejection_reason)],["Electronics wiring",exact(wiring)+" fixed factor from native charge to electronics input"]]);
+const f=p.transport_flags;
+$("case-flags").textContent="Native parcels: "+f.carrier_parcels+"; geometric contacts: "+f.geometric_contacts+"; step-limit endpoints: "+f.step_limits+"; stopped without contact: "+f.stopped_without_contact+". Readout accepted: "+r.accepted+"; charge clipped: "+r.charge_clipped_at_window+"; window limited: "+r.window_limited+"; tail truncation possible: "+r.tail_truncated_possible+"; recovery not established: "+p.group.recovery_not_established+". Case native failures: "+m.counts.native_failed_groups+".";
+const analogNote="Exact retained original analog samples only: "+t.time_ns.length+" of "+r.original_sample_count+" points, "+exact(t.time_ns[0])+"–"+exact(analogEnd)+" ns. Lines connect retained points as visual guides; omitted points are unavailable. ";
+const inputNote=wiring===-1?"Fixed -1 KM wiring is applied before the electronics input. Native charge remains negative in the charge panel; current here has the electronics-input sign. ":"The recorded +1 wiring preserves the native sign at electronics input. ";
+const panels=[
+{title:"Native signed induced charge · fC",time_ns:times,values:q.map(v=>v*chargeFactor),full_end_ns:times.at(-1),focus_end_ns:Math.min(times.at(-1),end),note:"Every original native charge sample is retained and converted with the recorded "+exact(eion)+" eV pair energy. Sampled-variation focus is a camera choice, not proof of complete charge collection."},
+{title:"Electronics-input original-bin current · nA",time_ns:t.time_ns,values:t.current_nA,full_end_ns:r.readout_end_ns,focus_end_ns:Math.min(r.readout_end_ns,end),current_from_charge:{time_ns:times,values:q.map(v=>v*wiring),ionisation_energy_eV:eion,time_step_ns:dt,readout_end_ns:r.readout_end_ns},note:"Exact original "+exact(dt)+" ns (start, end] bins from full saved charge, bounded by "+exact(r.readout_end_ns)+" ns. "+inputNote+"No smoothing, rectification or per-event gain."},
+{title:"Saved analog preamp · V",time_ns:t.time_ns,values:t.preamp_V,full_end_ns:analogEnd,focus_end_ns:Math.min(analogEnd,end),note:analogNote+"The existing circuit gives negative preamp voltage for positive electronics-input charge. Its behavior and calibration are unchanged."},
+{title:"Saved analog shaper · V",time_ns:t.time_ns,values:t.shaped_V,full_end_ns:analogEnd,focus_end_ns:SavedFocusPlots.shaperEnd(t.time_ns,t.shaped_V,peak,analogEnd),peak,note:analogNote+"Gold marker: exact original sampled peak from the scalar ledger; accepted ADC and Erec stay unchanged."}
+];
+SavedFocusPlots.draw($("plots"),panels,"Time since selected group origin · ns");
+const config=m.readout_config;
+$("electronics-settings").textContent="Feedback "+exact(config.feedback_capacitance_pF)+" pF / "+exact(config.feedback_tau_us)+" µs; pole-zero "+exact(config.pole_zero_tau_us)+" µs; shaping "+exact(config.shaping_tau_us)+" µs; gain "+exact(config.gain)+"; "+exact(config.adc_bits)+"-bit peak ADC / "+exact(config.adc_full_scale_V)+" V; threshold "+exact(config.threshold_V)+" V. "+m.calibration.method+".";
+const folder="../"+m.source_folder;
+link("case-report","../results/cs137-10k/"+c.model+"/charge-readout.html");link("case-files","../results/cs137-10k/"+c.model+"/charge-readout.html#data-files");link("source-csv",folder+"/signals.csv");link("source-zip",folder+"/ledgers.zip");link("source-run",folder+"/run.json");link("case-spectrum","cs137-10k.html#tenk-"+c.model);
+$("deposits-summary").textContent="All "+c.truth.steps.length+" semiconductor deposition rows and identities";
+details();
+}
+try{
+for(const c of data.cases){const option=document.createElement("option");option.value=c.model+"-"+c.event_id+"-"+c.group_id;option.textContent=c.title+" · "+c.model+" / "+c.event_id+" / "+c.group_id;$("example-select").append(option);}
+$("example-select").onchange=render;for(const id of["exact-details","deposits-details","provenance-details"])$(id).ontoggle=details;render();
+// Browser history can restore the select after scripts run; redraw from that restored choice.
+if(typeof window!=="undefined"&&typeof window.addEventListener==="function")window.addEventListener("pageshow",()=>window.requestAnimationFrame(render));
+}catch(error){$("error").hidden=false;$("error").textContent="Saved example unavailable: "+error.message;$("content").hidden=true;}
+})();
+</script>
+</body>
+</html>

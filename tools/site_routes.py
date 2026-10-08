@@ -12,7 +12,7 @@ PRIMARY = (("results/index.html", "Results"), ("detectors/index.html", "Detector
            ("guide.html", "Run locally"), ("methods/index.html", "Methods"))
 CASE_MODELS = ("AK02", "SAP22", "GeRC02", "KMRC01_candidate")
 DATASETS = {
-    "teaching": ("Teaching gamma · bare detectors", "spectra/pipeline.html"),
+    "teaching": ("Selected Cs137 signals · four 10K cases", "spectra/pipeline.html"),
     "gamma": ("Cryostat gamma · nominal cryostat", "examples/gamma-native/gamma.html"),
     "tenk": ("Cs137 10K · four separate cryostat cases", "results/cs137-10k/index.html"),
     "million": ("Cs137 1M · two separate cryostat cases", "results/cs137-1m/index.html"),
@@ -29,7 +29,7 @@ FIXED = {
     "lithium/lithium.html": ("Lithium diagnostics", "methods/index.html", "Methods", "method", "saved_archive_display"),
     "results/cs137-10k/index.html": ("Cs137 10K", "results/index.html", "Results", "dataset", "ring_site"),
     "results/cs137-1m/index.html": ("Cs137 1M", "results/index.html", "Results", "dataset", "site_restructure"),
-    "spectra/pipeline.html": ("Teaching gamma", "results/index.html", "Results", "reader", "spectrum_display"),
+    "spectra/pipeline.html": ("Selected signals", "results/index.html", "Results", "reader", "teaching_examples"),
     "examples/gamma-native/gamma.html": ("Cryostat gamma", "results/index.html", "Results", "reader", "saved_focus_pages"),
     "spectra/cs137-10k.html": ("Stage spectra", "results/cs137-10k/index.html", "Results", "reader", "spectrum_display"),
     "spectra/million-truth.html": ("Deposition spectra", "results/cs137-1m/index.html", "Results", "reader", "spectrum_display"),
@@ -165,7 +165,7 @@ def dataset_navigation(dataset, current_path, model=None, model_label=None):
                       ("spectra/million-response.html", "Response spectra", None),
                       (home + '#data-files', "Data & settings", 'files')))
     elif dataset == 'teaching':
-        views.append((home, "Waveforms, spectrum & event ledger", None))
+        views.append((home, "Six signal examples", None))
     elif dataset == 'gamma':
         views.append((home, "Waveforms & event ledger", None))
     focus = ('Focused case: ' + (model_label or model)) if model and dataset == 'tenk' else 'All four cases' if dataset == 'tenk' else description

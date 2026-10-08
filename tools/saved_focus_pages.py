@@ -30,7 +30,9 @@ DISPLAY_SOURCES=(JS,'tools/saved_focus_pages.py','tools/site_restructure.py','to
 # read during the next presentation upgrade; science still reconstructs the
 # immutable original receipt above. Rehashed edits are never a historical basis.
 PREVIOUS_DISPLAY_RECEIPTS={
-    'gamma':frozenset({'725c852d635021b0aef16f9b651c56ebdd16fb9f7e13a7737101ea78fa4b11e7',
+    'gamma':frozenset({
+                       # Exact accepted 5c21a3e display before teaching selection.
+                       '61e4b6ceaba49298bb5e30bfe23b405802fdf3b810a69d78eefc8f8222bf6719','725c852d635021b0aef16f9b651c56ebdd16fb9f7e13a7737101ea78fa4b11e7',
                        'b7b90f6e14bd88b903e0e7bb761384c51c2b0e2b863dbe7e29d2ed29b14d0eba',
                        # Authenticated first local build 76a8596f; never published.
                        '0f660aeeaa0954a4c12ea5193d8cbe8bf6fc17e5e050cfc791bcaf7e646c49a4'}),
@@ -65,7 +67,7 @@ def display_render(family,data):
         old='<a href="../../results/index.html">← Saved results</a>'
         S.require(body.count(old)==1,'Gamma saved return anchor')
         body=body.replace(old,'',1)
-        context='<p style="margin:12px 24px">Additional cryostat example: 20 gamma primaries per detector. Different geometry and event IDs from the 100-primary teaching example.</p>'
+        context='<p style="margin:12px 24px">Additional cryostat example: 20 gamma primaries per detector. Separate monoenergetic source and event namespace from the selected Cs137 teaching signals.</p>'
     else:
         raise ValueError('Original teaching reader is frozen; upgrade its spectrum derivative')
     anchor='<header>'

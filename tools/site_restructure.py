@@ -109,7 +109,10 @@ def apply(site):
 <section class="panel" id="pipeline-example"><span id="native-cs137-10k"></span><span id="current-ring-10k"></span><p>Saved results are engineering simulations. Fresh-machine setup remains unvalidated.</p></section>'''
     write_page(site/'index.html','GeSignal',home,0,fold_footer=True)
 
+    curated_teaching=(site/'spectra/teaching-examples.json').is_file()
     learn_example='''<section class="panel"><h2>Main teaching example</h2><p>Follow one saved bare-detector gamma event through deposits, charge, preamplifier, shaper and peak ADC.</p><a class="button" href="../spectra/pipeline.html">Open the teaching example →</a></section>'''
+    if curated_teaching:
+        learn_example=learn_example.replace('Follow one saved bare-detector gamma event through deposits, charge, preamplifier, shaper and peak ADC.','Compare six representative signals selected from the completed Cs137 10K cryostat cases. Each retains its source event, charge, electronics settings and limitations.')
     if has_gamma:
         gamma_caption='Follow all 40 original primaries: 29 known zero inputs and 11 positive primaries. Native failures keep unknown charge and readout null. Collection-edge and full-window views preserve signed signals and original caps; independent synthetic injection calibration and unresolved collection limits remain explicit.' if completed_gamma else 'Follow 40 truth events and six selected responses: four positive responses and two selected true zeros. The other 34 responses stay unknown/unprocessed. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.'
     learn=('''<section class="hero"><p class="muted">Pipeline explanation</p><h1>Radiation → charge → electronics</h1>
@@ -132,13 +135,13 @@ def apply(site):
         return (f'<section id="{ident}" class="panel" data-dataset="{ident}" style="margin:16px 0">'
                 f'<h2>{title}</h2><p>{description}</p><p>{actions}</p>'+extra+'</section>')
     results='''<section class="hero"><p class="muted">Choose the dataset first</p><h1>Saved results</h1>
-<p>These are different saved studies. Open a dataset, then select its detector and view. Primary IDs belong to their own dataset; counts include zero-deposit events and unavailable responses.</p></section>'''
+<p>Start with selected teaching signals or open a full saved study. Every primary ID belongs to its source detector case; complete studies retain zeros and unavailable responses.</p></section>'''
     teaching_present=(site/'examples/data.json').is_file()
-    results+=result_panel('teaching','Main teaching example · 200 gamma primaries',
-        'AK02 and SAP22 · 100 side-on primaries per detector · bare geometry. Start here to follow one event from radiation deposits to an energy measurement.',
+    results+=result_panel('teaching','Start here · six representative Cs137 signals' if curated_teaching else 'Main teaching example · 200 gamma primaries',
+        'A selected view of the completed four-case Cs137 10K study: near-line, low-energy, partial-deposition, separated-position, capped and fixed-wiring signals. The six examples are illustrative, not a statistical sample.' if curated_teaching else 'AK02 and SAP22 · 100 side-on primaries per detector · bare geometry. Start here to follow one event from radiation deposits to an energy measurement.',
         (('../spectra/pipeline.html','Open teaching example →'),),teaching_present)
     results+=result_panel('gamma','Cryostat gamma · 40 primaries',
-        'AK02 and SAP22 · 20 primaries per detector · nominal cryostat. Saved waveforms and event ledger. Different geometry and event IDs from the teaching example.',
+        'AK02 and SAP22 · 20 primaries per detector · nominal cryostat. Saved waveforms and event ledger. A separate monoenergetic source and event namespace.' if curated_teaching else 'AK02 and SAP22 · 20 primaries per detector · nominal cryostat. Saved waveforms and event ledger. Different geometry and event IDs from the teaching example.',
         (('../examples/gamma-native/gamma.html','Open cryostat gamma example →'),),has_gamma,
         '<details><summary>Processing and collection scope</summary><p>'+gamma_caption+'</p></details>' if has_gamma else '')
     tenk_description=('AK02, SAP22, GeRC02 Li50min and KMRC01 candidate · 10,000 initial Cs137 decays in each of four separate cases. Charge/readout, stage spectra, radiation events and complete scalar ledgers.' if has_rings else

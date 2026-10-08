@@ -8,7 +8,8 @@ The website contains saved results, not an online solver.
 
 ## Start here
 
-- [Saved results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) — choose a dataset, then its detector and available views.
+- [Selected signals](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html) — six representative saved Cs137 examples, from deposits to peak ADC.
+- [Saved results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) — complete datasets, detector views and analysis files.
 - [Run locally](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html) — the maintained Windows preparation and Control guide.
 - [Contributing](CONTRIBUTING.md) — propose changes or report a problem.
 

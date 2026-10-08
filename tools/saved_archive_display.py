@@ -13,7 +13,9 @@ PAGE='methods/native-li.html'
 MANIFEST='methods/native-li-display.json'
 SOURCES=('tools/saved_archive_display.py','tools/site_restructure.py','tools/site_routes.py')
 LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in SOURCES}
-PREVIOUS_RECEIPTS=frozenset({'d3a1b4b03629ed01ac9fb6967197aaf41c088ad16bae5d8ed09a282b998402ec',
+PREVIOUS_RECEIPTS=frozenset({
+    # Exact accepted 5c21a3e display before the teaching-route update.
+    'c694ac4c70d01bcc6c57692d78911d24ae93146c96e8bb50695064f99e0ed833','d3a1b4b03629ed01ac9fb6967197aaf41c088ad16bae5d8ed09a282b998402ec',
     # Authenticated first local build 76a8596f; never published.
     '3cf2560a5ffeb398227377daed4e36bcc272379422ddb5c2b12543b363e1b723'})
 LITHIUM_PAGE='lithium/lithium.html'
@@ -23,6 +25,8 @@ LITHIUM_SUMMARY_SHA='c5e1b2c85406f077cb692ac6e99dd1c9affe7cb6632a3098f96a86708e0
 LITHIUM_SOURCES=SOURCES+('tools/lithium_report.py','tools/pipeline_demo.py')
 LITHIUM_LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in LITHIUM_SOURCES}
 PREVIOUS_LITHIUM_RECEIPTS=frozenset({
+    # Exact accepted 5c21a3e display; original science remains pinned.
+    'c7b03c3132201a94c7811bb813e217bcbbe911f299bded28f74e972a5cd5a301',
     # Authenticated first local build 76a8596f; never published.
     'c9ce86c38f85bf5bc2353e5c725531ac7936c733df3fd4a760c605bc6b81050c'})
 
