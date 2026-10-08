@@ -10,7 +10,7 @@ from html import escape
 from pathlib import Path
 from site_detector_pages import apply as apply_detector_pages
 
-PRIMARY = ("Browse", "Setup", "Use")
+PRIMARY = ("Run", "Saved results", "Detectors", "Help")
 STYLE = """
 :root{font:16px/1.55 system-ui;color:#173047;background:#f6f8fa}
 *{box-sizing:border-box}body{margin:0}.wrap{max-width:1120px;margin:auto;padding:24px}
@@ -32,12 +32,31 @@ def read(path):
     return json.loads(Path(path).read_text(encoding='utf-8-sig'))
 
 def navigation(up=''):
-    """Direct destinations shared by hubs and the two saved waveform readers."""
-    links=(('guide.html#local-control','Run'),('results/index.html','Results'),
-           ('spectra/pipeline.html','Waveforms'),('spectra/cs137-10k.html','Spectra'),
-           ('detectors/index.html','Detectors'))
+    """Task routes; selecting a saved view belongs to its dataset context."""
+    links=(('guide.html#local-control','Run'),('results/index.html','Saved results'),
+           ('detectors/index.html','Detectors'),('guide.html#saved-analysis','Help'))
     return '<nav aria-label="Primary" style="display:flex;gap:8px;flex-wrap:wrap">'+''.join(
         f'<a href="{up}{path}" style="padding:8px 10px">{label}</a>' for path,label in links)+'</nav>'
+
+def dataset_navigation(dataset,up=''):
+    """Name one saved dataset and link only to its existing views."""
+    contexts={
+        'teaching':('Teaching gamma · 200 primaries total (100 per detector) · bare geometry',
+                    (('spectra/pipeline.html','Waveforms and spectrum'),('learn/index.html','Pipeline explanation'))),
+        'gamma':('Cryostat gamma · 40 primaries total (20 per detector) · nominal cryostat',
+                 (('examples/gamma-native/gamma.html','Waveforms and event ledger'),)),
+        'tenk':('Cs137 10K · 10,000 initial decays per detector · four separate cryostat cases',
+                (('results/cs137-10k/index.html','Detector cases'),('spectra/cs137-10k.html','Stage spectra'),('viewers/events.html','3D radiation events'))),
+        'million':('Cs137 1M · 1,000,000 initial decays per detector · two separate cryostat cases',
+                   (('results/cs137-1m/index.html','Campaign summary'),('spectra/million-truth.html','Deposition spectra'),('spectra/million-response.html','Response spectra'))),
+    }
+    require(dataset in contexts,'Unknown saved dataset')
+    description,links=contexts[dataset]
+    return ('<section class="dataset-context" aria-label="Saved dataset" style="padding:12px 0">'
+            '<p><strong>'+escape(description)+'</strong> · '
+            f'<a href="{up}results/index.html#{dataset}">Saved results</a></p>'
+            '<nav aria-label="Dataset views" style="display:flex;gap:12px;flex-wrap:wrap">'+
+            ''.join(f'<a href="{up}{path}">{label}</a>' for path,label in links)+'</nav></section>')
 
 def write_page(path,title,body,depth=0,*,fold_footer=False):
     path=Path(path); path.parent.mkdir(parents=True,exist_ok=True)
@@ -98,66 +117,73 @@ def apply(site):
 
     home=('''<section class="hero"><p class="muted">Saved HPGe simulations and local software</p>
 <h1>From radiation to an energy measurement.</h1>
-<p>Explore saved detector results, or set up GeSignal to run a supported calculation on your computer.</p></section>
-<section class="cards">
-<article class="card"><h2>Browse</h2><p><a href="results/index.html">Open saved results →</a></p><p>No installation needed. Inspect events, signals and spectra.</p><a href="detectors/index.html">Explore 17 detector models →</a></article>
-<article class="card"><h2>Setup</h2><p><a href="guide.html#setup">Set up Windows →</a></p><p>Prepare the pinned environment, source files and exporter.</p></article>
-<article class="card"><h2>Use</h2><p><a href="guide.html#local-control">Use Control →</a></p><p>On a prepared computer, choose one of '''+str(control_count)+''' configurations available in the current cryostat and run the pipeline.</p><a href="guide.html#saved-analysis">Analyze your saved run →</a></article></section>
-<details class="panel"><summary>Pipeline, methods and earlier examples</summary><p><a href="learn/index.html">Learn the signal chain</a> · <a href="methods/index.html">Methods and limitations</a></p><p id="pipeline-example"><a href="examples/pipeline.html">Compact teaching example</a></p><p id="native-cs137-10k"><a href="results/cs137-10k/index.html">Cs137 10K results</a></p><p>Saved results are engineering simulations. Fresh-machine setup remains unvalidated.</p></details>''')
-    home+='<section class="panel"><h2>Open a saved view directly</h2><div class="grid"><a class="button" href="spectra/pipeline.html">Event waveforms · main teaching example</a><a class="button" href="spectra/cs137-10k.html">Energy spectra · four-detector 10K</a><a class="button" href="viewers/events.html">3D radiation events · 10K</a><a class="button" href="guide.html#saved-analysis">Find saved data and downloads</a></div></section>'
+<p>Choose a task. The saved website works without installation; new calculations run through Control on your own computer.</p></section>
+<section class="grid">
+<article class="card"><h2>Run</h2><p><a href="guide.html#local-control">Use Control →</a></p><p>Check a setup and run one of '''+str(control_count)+''' configurations available in the current cryostat.</p><a href="guide.html#setup">First-time Windows setup</a></article>
+<article class="card"><h2>Saved results</h2><p><a href="results/index.html">Choose a saved dataset →</a></p><p>Start with the teaching example, or choose a gamma or Cs137 campaign. Each dataset names its available waveforms, spectra, radiation views and files.</p></article>
+<article class="card"><h2>Detectors</h2><p><a href="detectors/index.html">Explore 17 detector models →</a></p><p>Inspect geometry, saved fields and signals, or original model settings.</p></article>
+<article class="card"><h2>Help</h2><p><a href="guide.html#saved-analysis">Understand a saved run →</a></p><p>Find event identities, settings, data files, and instructions for viewing a saved result.</p></article></section>
+<details class="panel"><summary>Methods and retained links</summary><p><a href="learn/index.html">Pipeline explanation</a> · <a href="methods/index.html">Methods and limitations</a></p><p id="pipeline-example"><a href="results/index.html#teaching">Main teaching dataset</a></p><p id="native-cs137-10k"><a href="results/index.html#tenk">Cs137 10K dataset</a></p><p id="current-ring-10k"><a href="results/cs137-10k/index.html">Four-detector Cs137 10K</a></p><p>Saved results are engineering simulations. Fresh-machine setup remains unvalidated.</p></details>''')
     from spectrum_display import homepage_preview
     preview=homepage_preview(site)
     if preview is not None:
         home+='<details class="panel"><summary>Separate 1M campaign spectrum preview</summary>'+preview+'</details>'
     write_page(site/'index.html','GeSignal',home,0,fold_footer=True)
 
-    learn_example='''<article class="card"><h2>Compact teaching example</h2><p>Walk through deposits, charge, preamplifier, shaper and ADC in a compact example.</p><a href="../examples/pipeline.html">Open the compact teaching example →</a></article>'''
+    learn_example='''<section class="panel"><h2>Main teaching example</h2><p>Follow one saved bare-detector gamma event through deposits, charge, preamplifier, shaper and peak ADC.</p><a class="button" href="../spectra/pipeline.html">Open the teaching example →</a></section>'''
     if has_gamma:
         gamma_caption='Follow all 40 original primaries: 29 known zero inputs and 11 positive primaries. Native failures keep unknown charge and readout null. Collection-edge and full-window views preserve signed signals and original caps; independent synthetic injection calibration and unresolved collection limits remain explicit.' if completed_gamma else 'Follow 40 truth events and six selected responses: four positive responses and two selected true zeros. The other 34 responses stay unknown/unprocessed. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.'
-        learn_example+='<details class="panel"><summary>Additional cryostat gamma example · different saved dataset</summary><p>20 primaries per detector inside the nominal cryostat; the main teaching example uses 100 side-on primaries in bare geometry. Event IDs belong to their own dataset.</p><p>'+gamma_caption+'</p><a href="../examples/gamma-native/gamma.html">Open the additional cryostat example →</a></details>'
-    learn=('''<section class="hero"><p class="muted">Start here</p><h1>Radiation → charge → electronics</h1>
+    learn=('''<section class="hero"><p class="muted">Pipeline explanation</p><h1>Radiation → charge → electronics</h1>
 <p>Geant4/remage records where radiation deposits energy. SolidStateDetectors.jl transports electron/hole charge and calculates electrode signals. The electronics stage applies preamplifier, shaping and peak-ADC response.</p></section>
-<div class="grid">'''+learn_example+'''
-<article class="card"><h2>Run with Control</h2><p>Use the guide to set up Windows and choose one of '''+str(control_count)+''' supported detector configurations. The <a href="../scenarios/lbnl-cs137/index.html">scenario page</a> records geometry and detector assumptions.</p><a href="../guide.html#local-control">Open Control instructions →</a></article></div>
+'''+learn_example+'''
 <section class="panel"><h2>Important separation</h2><p>Geant4 deposition time is not carrier drift time. Deposited energy, induced charge, analog voltage, ADC code and reconstructed energy are retained as separate quantities.</p></section>''')
-    write_page(site/'learn/index.html','Start here · GeSignal',learn,1)
+    write_page(site/'learn/index.html','Pipeline explanation · GeSignal',learn,1)
 
     featured_items=[x for x in catalog['detectors'] if x['id'] in control_ids]
     other_items=[x for x in catalog['detectors'] if x['id'] not in control_ids]
     det=('''<section class="hero"><p class="muted">Detector library</p><h1>Explore detector models</h1>
 <p>Choose a detector to inspect its geometry, saved fields and signals. All 17 model definitions retain their original settings and provenance.</p></section>
+<p id="current-ring-10k"><a href="../results/index.html#tenk">Saved Cs137 10K source-campaign cases</a></p>
 <h2>Control configurations</h2><p>'''+str(control_count)+''' supported local configurations. GeRC02 uses a separate Li50min operating variant; its library geometry is the original 30-minute model.</p><div class="grid">'''+detector_cards({'detectors':featured_items})+'''</div>
 <h2>More detector models</h2><p>These '''+str(blocked_count)+''' models need a future larger cryostat. Their pages show the actual dimension limits; all remain available for browsing.</p><div class="grid">'''+detector_cards({'detectors':other_items})+'''</div>''')
     write_page(site/'detectors/index.html','Detectors · GeSignal',det,1)
-    earlier_cards=[]
-    example_cards=[]
-    current='''<section class="panel"><h2>Current campaign unavailable in this snapshot</h2><p><a href="cs137-1m/index.html">View the stable 1M campaign overview</a> for availability details.</p></section>'''
-    if has_1m:
-        current='''<section class="panel"><h2>Separate Cs137 · 1M campaign</h2><p>AK02 and SAP22: saved Geant4 deposition truth, native SSD charge and synthetic peak ADC in the nominal LBNL cryostat.</p><a class="button" href="cs137-1m/index.html">Open 1M campaign →</a></section>'''
-    if has_10k and not has_rings:
-        earlier_cards.append('''<article class="card"><h2>Earlier Cs137 · 10k</h2><p>Engineering response, response ledgers and interactive recorded-event geometry.</p><a href="cs137-10k/index.html">Open earlier campaign →</a></article>''')
-    if has_gamma:
-        additional_gamma='<details class="panel"><summary>Additional cryostat gamma example · 20 primaries per detector</summary><p>'+gamma_caption+'</p><p>Different saved geometry and primary IDs from the main 100-primary teaching example.</p><a href="../examples/gamma-native/gamma.html">Inspect this cryostat dataset →</a></details>'
-    else:
-        additional_gamma=''
-    example_cards.append('''<article class="card"><h2>Compact teaching example</h2><p>A selected event-by-event engineering demonstration of the signal chain.</p><a href="../examples/pipeline.html">Open example →</a></article>''')
-    results=('''<section class="hero"><p class="muted">Saved simulations and campaign status</p><h1>Results</h1>
-<p>Choose a saved campaign or a small example. Each retains its initial-decay census, zero events and unavailable responses.</p></section><section class="panel"><h2>Open a saved view directly</h2><p><a class="button" href="../spectra/pipeline.html">Event waveforms · main teaching example</a> <a class="button" href="../spectra/cs137-10k.html">Four-detector 10K spectra</a> <a class="button" href="../viewers/events.html">3D radiation events · 10K</a> <a class="button" href="../guide.html#saved-analysis">Find saved data and downloads</a></p></section>'''+current+'''<h2>Main teaching example</h2><div class="grid">'''+''.join(example_cards)+'''</div>'''+additional_gamma)
-    if earlier_cards:
-        results+='<h2>Earlier campaign</h2><div class="grid">'+''.join(earlier_cards)+'</div>'
+    def result_panel(ident,title,description,links,available=True,extra=''):
+        actions=(' · '.join(f'<a href="{url}">{label}</a>' for url,label in links)
+                 if available else 'This dataset is unavailable in this snapshot.')
+        return (f'<section id="{ident}" class="panel" data-dataset="{ident}" style="margin:16px 0">'
+                f'<h2>{title}</h2><p>{description}</p><p>{actions}</p>'+extra+'</section>')
+    results='''<section class="hero"><p class="muted">Choose the dataset first</p><h1>Saved results</h1>
+<p>These are different saved studies. Open a dataset, then select its detector and view. Primary IDs belong to their own dataset; counts include zero-deposit events and unavailable responses.</p></section>'''
+    teaching_present=(site/'examples/data.json').is_file()
+    results+=result_panel('teaching','Main teaching example · 200 gamma primaries',
+        'AK02 and SAP22 · 100 side-on primaries per detector · bare geometry. Start here to follow one event from radiation deposits to an energy measurement.',
+        (('../spectra/pipeline.html','Waveforms, spectrum and event ledger'),('../examples/data.json','Exact saved data (JSON)')),teaching_present)
+    results+=result_panel('gamma','Cryostat gamma · 40 primaries',
+        'AK02 and SAP22 · 20 primaries per detector · nominal cryostat. Different geometry and event IDs from the teaching example.',
+        (('../examples/gamma-native/gamma.html','Waveforms and event ledger'),('../examples/gamma-native/data.json','Exact saved data (JSON)')),has_gamma,
+        '<details><summary>Processing and collection scope</summary><p>'+gamma_caption+'</p></details>' if has_gamma else '')
+    tenk_description=('AK02, SAP22, GeRC02 Li50min and KMRC01 candidate · 10,000 initial Cs137 decays in each of four separate cases.' if has_rings else
+                      'AK02 and SAP22 · 10,000 initial Cs137 decays per detector in two separate cases.')
+    results+=result_panel('tenk','Cs137 10K · '+('four detector cases' if has_rings else 'two detector cases'),tenk_description,
+        (('cs137-10k/index.html','Choose a detector for charge/readout and complete data'),('../spectra/cs137-10k.html','Stage spectra'),('../viewers/events.html','3D radiation events')),has_10k,
+        '<span id="current-ring-10k"></span>')
+    results+=result_panel('million','Cs137 1M · two detector cases',
+        'AK02 and SAP22 · one million initial decays per detector · nominal cryostat. Available views are ensemble truth/response spectra and complete scalar group records.',
+        (('cs137-1m/index.html','Campaign summary'),('../spectra/million-truth.html','Deposition spectra'),('../spectra/million-response.html','Response spectra'),('../examples/cs137-1m-response/groups.csv.gz','All saved group records')),has_1m)
+    results+='<p><a href="../guide.html#saved-analysis">Help with settings, event identities and data files</a>. Saved engineering results do not establish experimental spectrum agreement or calibrated charge-collection efficiency.</p>'
     write_page(site/'results/index.html','Results · GeSignal',results,1)
 
     if has_1m:
         s=response_summary
         a=s['models']['AK02']; b=s['models']['SAP22']
-        body=f'''<section class="hero"><p class="muted">Current completed campaign</p><h1>Cs137 · one million initial decays per detector</h1>
+        body=dataset_navigation('million','../../')+f'''<section class="hero"><p class="muted">Separate completed campaign</p><h1>Cs137 · one million initial decays per detector</h1>
 <p>Nominal uncollimated LBNL cryostat geometry. Radiation transport, SSD charge response and synthetic peak ADC are saved; no measured-spectrum fit or calibrated CCE is claimed.</p></section>
 <div class="grid"><article class="card"><h2>AK02</h2><p>{a["positive_ge_decays"]:,} positive-Ge decays; {a["response"]["accepted"]:,} accepted ADC groups.</p></article>
 <article class="card"><h2>SAP22</h2><p>{b["positive_ge_decays"]:,} positive-Ge decays; {b["response"]["accepted"]:,} accepted ADC groups.</p></article></div>
 <section class="panel"><h2>Open the saved reports</h2>
 <div style="display:grid;gap:12px;margin:16px 0">
-<a class="button" style="display:flex;align-items:center;min-height:48px" href="../../examples/cs137-1m/report.html">Geant4 deposition truth</a>
-<a class="button" style="display:flex;align-items:center;min-height:48px" href="../../examples/cs137-1m-response/report.html">Native SSD and peak-ADC comparison</a></div>
+<a class="button" style="display:flex;align-items:center;min-height:48px" href="../../spectra/million-truth.html">Geant4 deposition truth</a>
+<a class="button" style="display:flex;align-items:center;min-height:48px" href="../../spectra/million-response.html">Native SSD and peak-ADC comparison</a></div>
 <p><a href="../../scenarios/lbnl-cs137/index.html">Scenario and geometry assumptions</a></p></section>
 <section class="panel"><h2>Counting rules</h2><p>One million refers to initial Cs137 decays <strong>per detector</strong>. Positive deposits are grouped in isolated 100 µs reset windows; this is not an activity/live-time/pileup acquisition model. Native failures remain unknown responses and electronics rejection remains a separate outcome.</p></section>'''
         write_page(site/'results/cs137-1m/index.html','Cs137 1M results · GeSignal',body,2)
@@ -186,20 +212,25 @@ def apply(site):
 <h2>Models and local workflow</h2><div class="grid">
 <article class="card"><h2>Model distribution</h2><p>Original YAML configurations, includes and provenance.</p><a href="../models/README.md">Model guide →</a></article>
 <article class="card"><h2>Setup & run guide</h2><p>Windows prerequisites and distinct new-run, replay and native-readout routes.</p><a href="../guide.html">Open guide →</a></article></div>'''
+    if (site/'examples/native-li/comparison.html').is_file():
+        from saved_archive_display import assemble as assemble_archive_display
+        assemble_archive_display(site)
+        methods=methods.replace('href="../examples/native-li/comparison.html">Open selected study →',
+                                'href="native-li.html">Open readable saved plots →',1)
     write_page(site/'methods/index.html','Methods · GeSignal',methods,1)
 
     saved=[]
     if has_1m: saved.append('<a href="../../results/cs137-1m/index.html">1M-per-detector campaign</a>')
     if has_10k: saved.insert(0,'<a href="../../results/cs137-10k/index.html">Cs137 10K results</a>')
     saved_html=('<section class="panel"><h2>Saved campaigns</h2><p>'+ ' · '.join(saved)+'</p></section>') if saved else ''
-    scenario='''<section class="hero"><p class="muted">Nominal engineering scenario</p><h1>LBNL cryostat + Cs137</h1>
+    scenario='''<section class="hero"><p class="muted">Geometry and source assumptions</p><h1>Nominal LBNL cryostat</h1>
 <p>A Cs137 source above the curved aluminum cryostat wall. Control offers '''+str(control_count)+''' separate detector configurations: '''+control_choices+'''. The geometry/source pose is nominal, not an as-built survey.</p></section>
 <div class="grid"><article class="card" id="ak02"><h2>AK02 case</h2><p>Primary Li-contact detector case; native response uses explicit 77 K override and the canonical model bias.</p><a href="../../detectors/AK02/index.html">AK02 detector page →</a></article>
 <article class="card" id="sap22"><h2>SAP22 case</h2><p>Different-geometry non-Li cross-check; it is not a matched control detector.</p><a href="../../detectors/SAP22/index.html">SAP22 detector page →</a></article></div>'''+saved_html+'''
 <section class="panel"><h2>Use a supported local case</h2><p>Follow <a href="../../guide.html#setup">Windows setup</a>, then <a href="../../guide.html#local-control">Use Control</a>. Cs137, Am241 and Ba133 accept an exact positive initial-nucleus count through the shared checked workflow, with serial batches of at most 10,000 nuclei. Stop and Resume preserve verified completed boundaries. Use the <a href="../../guide.html#saved-analysis">saved-result guide</a> to inspect batch files and event identities. Co60 remains unavailable under its unchanged source gate. The fixed 662 keV gamma beam supports 20 primaries for AK02/SAP22. A small sample may contain no Ge pulse. Fresh-machine reproduction remains unvalidated.</p><details><summary>Original source and advanced routes</summary><p>The pinned LBNL source files are not redistributed because no explicit license was found in the pinned upstream tree. The <a href="../../guide.html#setup">setup recipe</a> obtains and verifies exact originals under <code>.local/transport/LBNL</code>. See the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/transport/cryostat-source.json">upstream manifest</a>.</p><p>Compatible saved-charge replay and earlier native-readout have separate private-input requirements in the <a href="../../guide.html#local-routes">guide</a>.</p></details></section>'''
     caprows=''.join('<tr><td><a href="../../detectors/'+escape(m['id'])+'/index.html">'+escape(m['id'])+'</a></td><td>'+str(len(m.get('contacts',[])))+'</td><td>'+('Implemented' if m['id'] in execution_ids else 'Not integrated')+'</td><td>'+('Available in current cryostat' if m['id'] in control_ids else 'Needs larger cryostat: '+escape(catalog_control[m['id']]['reason']))+'</td></tr>' for m in catalog['detectors'])
     scenario+='<section class="panel"><h2>Execution support</h2><p>Control supports '+str(control_count)+' configurations in the current cryostat; its shared catalog and ring routes are distinct from the legacy <code>Run.cmd</code> adapter. GeRC02 Li50min uses the separate operating variant, while the library retains the original 30-minute model. KM retains its candidate qualification, −370 V bias and fixed −1 electronics wiring.</p><details><summary>All model capabilities and legacy commands</summary><p>The older generic adapter selects AK02, SAP22 or both; both means separate serial cases. See the <a href="../../guide.html#choose">legacy commands</a>. All 17 catalog models can be viewed; '+str(blocked_count)+' require a future larger cryostat because of the recorded dimensions. Complete canonical inputs and original settings are retained. Runtime Check plan independently verifies actual setup, geometry, source and readout before Run.</p><table><thead><tr><th>Model</th><th>Contacts</th><th>Legacy Run.cmd</th><th>Control</th></tr></thead><tbody>'+caprows+'</tbody></table></details></section>'
-    write_page(site/'scenarios/lbnl-cs137/index.html','LBNL Cs137 scenario · GeSignal',scenario,2)
+    write_page(site/'scenarios/lbnl-cs137/index.html','Nominal LBNL cryostat · GeSignal',scenario,2)
 
     (site/'guide.html').write_text((Path(__file__).resolve().parent/'site_guide.html').read_text(encoding='utf-8'),encoding='utf-8',newline='\n')
     from ssd_geometry_publication import refresh_viewers

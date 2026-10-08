@@ -216,8 +216,8 @@ def render_page(site,original,destination,specs):
     if destination=='spectra/cs137-10k.html':
         from ring_site import ring_manifest
         if ring_manifest(site):
-            from site_restructure import navigation
-            return four_detector_spectra(site,specs).replace('<main>','<main>'+navigation('../'),1)
+            from site_restructure import navigation, dataset_navigation
+            return four_detector_spectra(site,specs).replace('<main>','<main>'+navigation('../')+dataset_navigation('tenk','../'),1)
     text=(site/original).read_text(encoding='utf-8')
     if destination=='spectra/pipeline.html':
         text=pipeline_page(text,specs)
@@ -232,8 +232,12 @@ def render_page(site,original,destination,specs):
     text=rewrite_links(text,original,destination)
     if destination=='spectra/pipeline.html':
         old='href="../index.html">← Detector library</a>'
-        require(text.count(old)==1,'Original pipeline library return changed')
-        text=text.replace(old,'href="../detectors/index.html">← Detector library</a>',1)
+        if old in text:
+            require(text.count(old)==1,'Original pipeline library return changed')
+            text=text.replace(old,'href="../results/index.html#teaching">← Teaching dataset</a>',1)
+        else:
+            require('href="../results/index.html#teaching">← Teaching dataset</a>' in text,
+                    'Teaching dataset return missing')
     if destination=='spectra/million-response.html':
         old='>3D Ge-hit examples</a>'
         require(text.count(old)==1,'Original response Ge-hit link changed')
@@ -254,8 +258,13 @@ def render_page(site,original,destination,specs):
     require(anchor>=0,'Report heading missing')
     text=text[:anchor]+note+text[anchor:]
     if destination!='spectra/pipeline.html':
-        from site_restructure import navigation
-        text=text.replace('<body>','<body>'+navigation('../'),1)
+        from site_restructure import navigation, dataset_navigation
+        kind='tenk' if destination=='spectra/cs137-10k.html' else 'million'
+        bar=navigation('../')+dataset_navigation(kind,'../')
+        text,n=re.subn(r'<body\b[^>]*>',lambda m:m.group(0)+bar,text,count=1)
+        if not n:  # The frozen two-detector report uses a valid implicit body.
+            require('</style>' in text,'Implicit spectrum body/navigation anchor')
+            text=text.replace('</style>','</style>'+bar,1)
     return text
 
 def component_hashes(text):

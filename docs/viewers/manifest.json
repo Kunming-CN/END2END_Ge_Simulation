@@ -873,17 +873,18 @@
     "tools/hit_event_view.py": "7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e"
   },
   "adapter_sources": {
-    "tools/viewer_navigation.py": "29f16c1bcd3e09e7bb75556c8f4f1c45ad36e52cc1874f12a07bdb4835834a50",
+    "tools/viewer_navigation.py": "85cf923ea9048a9ff1f5d7cc6b78531e53e84b25627c3c0b4fdec816f45ca427",
     "tools/viewer_navigation.js": "eef7591b5b98ccf293a2207744e5ee9feef6b37a2512a0c0f21401090cadbc8b",
-    "tools/unified_event_viewer.html": "fa7d43246fa26b5a26bd21d6023b121938024ce3de87334efdd1ee84102c4b40",
-    "tools/unified_event_viewer.js": "3b7b0ff5bce5f37b4bd19139137c28da53750388706245f9403d5e66162d6dc0"
+    "tools/unified_event_viewer.html": "5dda79ded14e6b3a670736e82cf94d678e0832a4440d329a40ec753af9533dcd",
+    "tools/unified_event_viewer.js": "3b7b0ff5bce5f37b4bd19139137c28da53750388706245f9403d5e66162d6dc0",
+    "tools/site_restructure.py": "c66b8d0b11f7e1c844ddf19b1edcecb2e3fd875e77ef0c3b0974f84389c18b6c"
   },
   "pages": {
     "viewers/events.html": {
       "source": "tools/unified_event_viewer.html",
       "view": "assembly",
       "role": "canonical",
-      "sha256": "7e8a5ed605ac5b30b0859269df8cc0864dc378ed6da866e9e7a4b3a849af54c9"
+      "sha256": "d38c4423f3ee0948109d424cf754632e346626bba0f383542c2f2a38ce90a981"
     },
     "viewers/geant4-assembly.html": {
       "source": "examples/cs137-10k-geometry/geometry.html",

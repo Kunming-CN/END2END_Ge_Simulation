@@ -52,6 +52,20 @@ and verify the deployed snapshot. Local checks and one focused copy/link review 
 the exact live deployment. Stop after these concrete usability fixes.
 This owner-requested page maintenance precedes source positioning.
 
+## Current bounded task: all saved plots and site routes
+
+Input: every existing public page, local link, original saved PNG/SVG and embedded
+chart. Output: one dataset-first results catalog, four consistent task entrances,
+compact detector pages and readable corrections of verified display defects.
+Keep different datasets, event IDs, original images, model settings and frozen
+reports distinct. Remove competing beginner routes while preserving old URLs and
+fragment destinations. No numerical campaign or backend change is needed.
+
+Acceptance: per-image visual coverage, actual browser page/inline-chart checks,
+focused preservation/refusal tests, one integrated review cycle and exact local/
+live publication. Stop when this navigation and saved-data presentation milestone
+is accepted; remaining research and source movement are separate tasks.
+
 ## Subsequent bounded task: useful source positioning
 
 Owner clarification: move source and capsule along the outer cylindrical shell

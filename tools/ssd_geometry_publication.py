@@ -35,6 +35,9 @@ def validate_asset(directory,model,expected_asset=None):
 def viewer_html(model,asset):
     require(TEMPLATE.is_file(),'Viewer template missing')
     text=TEMPLATE.read_text(encoding='utf-8')
+    from site_restructure import navigation
+    require(text.count('<body>')==1,'Geometry viewer body anchor')
+    text=text.replace('<body>','<body>'+navigation('../../'),1)
     scene=f'geometry/{asset}/scene.json'; manifest=f'geometry/{asset}/manifest.json'
     require(text.count('__MODEL__')>=1 and text.count('__SCENE__')>=1 and text.count('__MANIFEST__')==1,'Viewer template placeholders')
     choices=''.join('<option value="'+escape(m)+'"'+(' selected' if m==model else '')+'>'+escape(m)+'</option>' for m in GC.catalog())
@@ -82,7 +85,9 @@ def validate_site(site):
         viewer=site/'detectors'/model/'geometry.html'
         require(viewer.is_file(),'Missing geometry viewer '+model)
         page=(site/'detectors'/model/'index.html').read_text(encoding='utf-8')
-        require(page.count('id="ssd-interactive-geometry"')==1 and 'src="geometry.html"' in page,'Detector viewer link '+model)
+        require(page.count('id="ssd-interactive-geometry"')==1 and
+                ('src="geometry.html"' in page or 'href="geometry.html"' in page),
+                'Detector viewer link '+model)
         root=site/'detectors'/model/'geometry'; require(root.is_dir(),'Missing geometry asset root '+model)
         active_path=site/'detectors'/model/'geometry-active.json'; require(active_path.is_file(),'Missing active geometry record '+model)
         active=read(active_path); asset=active.get('asset_id','')

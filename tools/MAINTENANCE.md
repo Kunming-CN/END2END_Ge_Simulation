@@ -27,9 +27,11 @@ user action. Do not add a second exporter or mutate scientific records for label
 
 | Area | Edit these sources |
 |---|---|
-| Home, hubs and navigation | `tools/site_restructure.py`, `site_previews.py` |
+| Home, hubs and navigation | `tools/site_restructure.py`, `site_previews.py`; four shared task routes and dataset-specific view links. Saved-result anchors `#teaching`, `#gamma`, `#tenk`, `#million` keep different studies distinct. |
 | Search descriptions, canonical landing URLs and sitemap | `tools/site_discovery.py`; generated only by `build_site.py` |
 | Detector overview/gallery/technical levels | `tools/site_detector_pages.py` |
+| Readable GeGI saved-plot derivatives | `tools/saved_plot_repairs.py`; exact original channel/position CSVs produce two SVGs and their checked manifest. `build_site.py` integrates them; original images, coordinates, signed values and uncalibrated position rule remain unchanged. |
+| Readable earlier native Li report | `tools/saved_archive_display.py`; one pinned original report keeps all56 SVGs, tables, scripts and settings verbatim. Only layout, navigation and relative data links change; narrow screens scroll each full-width chart. `site_restructure.py` creates this Methods entry during the saved-site build. |
 | Geometry export and validation | `tools/export_ssd_geometry.py`, `geometry_catalog.py`, `ssd_geometry_publication.py` |
 | Browser geometry controls | `tools/ssd_geometry_viewer.html` |
 | Saved energy-spectrum views | `tools/spectrum_display.py`, `spectrum_plot.py`, `spectrum_controls.js`; see [display semantics](SPECTRUM_DISPLAY.md) |

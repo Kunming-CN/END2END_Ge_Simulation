@@ -1,0 +1,159 @@
+{
+  "channel_plots": [
+    {
+      "event": "strip_gap_sharing",
+      "samples": 198,
+      "selected_channels": [
+        "X08",
+        "X09",
+        "Y08",
+        "Y09",
+        "Y10"
+      ],
+      "time_range_ns": [
+        0.0,
+        98.5
+      ]
+    },
+    {
+      "event": "three_spread",
+      "samples": 289,
+      "selected_channels": [
+        "X06",
+        "X07",
+        "X10",
+        "X14",
+        "Y04",
+        "Y05",
+        "Y11",
+        "Y15"
+      ],
+      "time_range_ns": [
+        0.0,
+        144.0
+      ]
+    }
+  ],
+  "generator": {
+    "tools/saved_plot_repairs.py": "e6f520b072ff3ad0a4d2229ab17d76fc4bb5deb99a7032eeae0d4ae7cb252098"
+  },
+  "inputs": {
+    "detectors/GeGI_3D/runs/20260922_suite_v3/comparisons/event_summary.csv": "c5fd6d6ca945d12fdc803c4c4d51677bcf0da63d0507154e1e4c94918fb0f601",
+    "detectors/GeGI_3D/runs/20260922_suite_v3/events/random_05/channels.csv": "d233333bebcbec90766bac337cbdbdf22cd4b84dfb3cb2cb8119a7c807675834",
+    "detectors/GeGI_3D/runs/20260922_suite_v3/events/random_07/channels.csv": "0e96abc671e0092748f839bcc8bb8a8c01a604075d6583561b498edc7132757e",
+    "detectors/GeGI_3D/runs/20260922_suite_v3/events/random_10/channels.csv": "b821763109e7382bcd55ca031e43a99bc537633ba25915a7049306279fb9e32f",
+    "detectors/GeGI_3D/runs/20260922_suite_v3/events/random_12/channels.csv": "94031ecd5c0d73e3d3e850f99e15ae631c2333696b182555f020a3f4de948b90",
+    "detectors/GeGI_3D/runs/20260922_suite_v3/events/strip_gap_sharing/channels.csv": "41b0e5cac6aa11feb6a22f9c318d903f7c0f05a0c2a0ed3c37e09bfeee053add",
+    "detectors/GeGI_3D/runs/20260922_suite_v3/events/three_spread/channels.csv": "e4993287ab64ed7b713bd2a2c0f6d1fcf8dfe2f50d820fa4bb6c40cb69bbb58d",
+    "models/catalog.json": "ac5edd4c976a37cfcc80a8e507ac9347246a942ac843ed2ecc683079f220653b"
+  },
+  "kind": "saved-data-display-repairs",
+  "limitation": "Uncalibrated strip illustration: max-|signal| strip × pitch, not a calibrated position fit",
+  "outputs": {
+    "detectors/GeGI_3D/display/03_strip_channels.svg": {
+      "sha256": "41aa5957f4f5bebde18c46d2ab83ce50a7932fa4d3beaebdfff9d3b5a02058f2"
+    },
+    "detectors/GeGI_3D/display/08_strip_position.svg": {
+      "sha256": "7308a98bb956844b895e3d0b9e912160fb7031dd83e505b8834867a7d8df3a39"
+    }
+  },
+  "position_events": [
+    {
+      "estimate_xy_mm": [
+        -37.03110468189838,
+        -37.03110468189838
+      ],
+      "event": "random_10",
+      "selected_final_signed_signal": [
+        0.0,
+        0.0
+      ],
+      "strips": [
+        "X01",
+        "Y01"
+      ],
+      "truth_xy_mm": [
+        41.352491825819016,
+        -9.142025373876095
+      ],
+      "zero_signal_tie": [
+        true,
+        true
+      ]
+    },
+    {
+      "estimate_xy_mm": [
+        -37.03110468189838,
+        -37.03110468189838
+      ],
+      "event": "random_12",
+      "selected_final_signed_signal": [
+        0.0,
+        0.0
+      ],
+      "strips": [
+        "X01",
+        "Y01"
+      ],
+      "truth_xy_mm": [
+        -41.90399497747421,
+        10.000617243349552
+      ],
+      "zero_signal_tie": [
+        true,
+        true
+      ]
+    },
+    {
+      "estimate_xy_mm": [
+        12.343701560632795,
+        -37.03110468189838
+      ],
+      "event": "random_05",
+      "selected_final_signed_signal": [
+        1.0000000921981211,
+        -1.0000000921981211
+      ],
+      "strips": [
+        "X11",
+        "Y01"
+      ],
+      "truth_xy_mm": [
+        11.827326379716396,
+        -39.35828059911728
+      ],
+      "zero_signal_tie": [
+        false,
+        false
+      ]
+    },
+    {
+      "estimate_xy_mm": [
+        -12.343701560632791,
+        32.093624057645265
+      ],
+      "event": "random_07",
+      "selected_final_signed_signal": [
+        1.0000000921981211,
+        -1.0000000921981211
+      ],
+      "strips": [
+        "X06",
+        "Y15"
+      ],
+      "truth_xy_mm": [
+        -11.692948639392853,
+        33.34851190447807
+      ],
+      "zero_signal_tie": [
+        false,
+        false
+      ]
+    }
+  ],
+  "rules": {
+    "channels": "All final |signal| >= 0.01 plus up to two strongest nonfinal channels with peak |signal| >= 0.02; original order breaks ties.",
+    "position": "Strongest absolute final non-guard X and Y signals; original contact order breaks ties, including all-zero ties; use catalog contact-bound centres."
+  },
+  "schema_version": 1
+}

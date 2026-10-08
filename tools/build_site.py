@@ -474,6 +474,11 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         apply_site_structure(OUT)
         from ring_site import apply as apply_ring_pages
         apply_ring_pages(OUT)
+        if (OUT/'detectors/GeGI_3D/runs/20260922_suite_v3/events/strip_gap_sharing/channels.csv').is_file():
+            from saved_plot_repairs import assemble as assemble_plot_repairs, patch_gallery
+            assemble_plot_repairs(OUT)
+            gallery=OUT/'detectors/GeGI_3D/gallery.html'
+            gallery.write_text(patch_gallery(gallery.read_text(encoding='utf-8')),encoding='utf-8',newline='\n')
     if (OUT / "spectra" / "manifest.json").is_file():
         route_current_pages(OUT)
         from spectrum_display import finalize as finalize_spectra

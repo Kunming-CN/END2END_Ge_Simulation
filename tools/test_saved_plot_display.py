@@ -12,6 +12,19 @@ from gamma_publication import validate_bundle
 
 
 class SavedDisplayTests(unittest.TestCase):
+    def test_known_previous_upgrade_requires_exact_receipt_and_html(self):
+        for family,relative in (
+                ('gamma','examples/gamma-native/publication.json'),
+                ('teaching','examples/pipeline-display.json')):
+            manifest=json.loads((D.ROOT/'docs'/relative).read_bytes())
+            if S.sha(S.canonical(manifest)) not in D.PREVIOUS_DISPLAY_RECEIPTS[family]:
+                continue  # The site has already installed the current upgrade.
+            self.assertFalse(D.validate_display_binding(family,manifest))
+            altered=copy.deepcopy(manifest)
+            altered['files'][D.DISPLAY_BASES[family]['html']]['sha256']='0'*64
+            with self.assertRaisesRegex(ValueError,'Unknown saved display upgrade binding'):
+                D.validate_display_binding(family,altered)
+
     def test_original_receipt_cannot_be_resealed_after_data_change(self):
         for family,relative in (
                 ('gamma','examples/gamma-native/publication.json'),

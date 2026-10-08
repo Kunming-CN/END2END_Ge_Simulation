@@ -125,8 +125,8 @@ def validate_bundle(directory):
     S.require(payload['data.json']==S.canonical(data),'Exact scientific serialization')
     from saved_focus_pages import historical_display, validate_display_binding, display_render
     if 'display_upgrade' in manifest:
-        validate_display_binding('gamma',manifest)
-        S.require(payload['gamma.html']==display_render('gamma',data),'Exact upgraded gamma display')
+        if validate_display_binding('gamma',manifest):
+            S.require(payload['gamma.html']==display_render('gamma',data),'Exact upgraded gamma display')
     elif not historical_display('gamma',(directory/'publication.json').read_bytes()):
         S.require(payload['gamma.html']==render(data),'Exact serialization/template')
     S.exact(manifest['source'],data['science']['source'],'Source authority');S.exact(manifest['presentation'],data['presentation'],'Presentation hashes')

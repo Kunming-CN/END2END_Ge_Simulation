@@ -23,7 +23,7 @@ ORIGINAL_SOURCES={'tools/geometry_events.html':'b6322ea76fc067a0df0596978dae027d
  'tools/geometry_events.py':'8473e9c6ae0ec8866ac0d720fa55a9cab4766c158d764fd30266668bdf8e05ca',
  'tools/hit_event_view.py':'7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e'}
 SOURCES=('tools/viewer_navigation.py','tools/viewer_navigation.js',
-         'tools/unified_event_viewer.html','tools/unified_event_viewer.js')
+         'tools/unified_event_viewer.html','tools/unified_event_viewer.js','tools/site_restructure.py')
 RING_BASE='examples/cs137-10k-rings'
 RING_KIND='ring_saved_publication_v1'
 RING_MODELS=('GeRC02','KMRC01_candidate')
@@ -33,6 +33,7 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '4945d697ae27217b3c4ff008d247445af43a6f44c5a327a845a3e48aa20b5675',
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
+ '70c4a84008568b7b9a7fb6159a1e0c5736bafb5259a7d1fbe1232f0b2f51013e',
  '488bf59fe48a2bcfe14bfe8f428f200ee45587ef0f0f50fb79f1aba45b9b293c',
  'bc25cdba48e876df82af56f2713f2227292ae21ee6bf7f949dcfa6bd0cd83988',
  '1cec34532d0166bff8ead1f6d9c3a9d4234bdea9789b32aec06bec78c8cd85d6',
@@ -145,6 +146,8 @@ def render(site,page=MAIN_PAGE):
     binding=PAGES[page];common=(ROOT/'tools/viewer_navigation.js').read_text(encoding='utf-8')
     if binding['role']=='canonical':
         text=(ROOT/binding['source']).read_text(encoding='utf-8')
+        from site_restructure import navigation, dataset_navigation
+        text=replace(text,'__PRIMARY_NAVIGATION__',navigation('../')+dataset_navigation('tenk','../'))
         text=replace(text,'__VIEWER_NAVIGATION__',common)
         text=replace(text,'__VIEWER_CONFIG__',json.dumps(config(site),separators=(',',':')))
         return replace(text,'__VIEWER_CONTROLLER__',(ROOT/'tools/unified_event_viewer.js').read_text(encoding='utf-8'))
@@ -199,7 +202,10 @@ def validate(site,current=False):
             require(m['pages'][dest]=={'source':src,'sha256':sha(site/dest)},'Changed older display HTML')
         return m
     require(m['kind']=='unified_geant4_reader_v1','Wrong display manifest')
-    require(set(m['adapter_sources'])==set(SOURCES),'Adapter source inventory mismatch')
+    previous=not current and sha(manifest_path) in TRUSTED_PREVIOUS_UNIFIED_MANIFESTS
+    require(set(m['adapter_sources'])==set(SOURCES) or
+            (previous and set(m['adapter_sources'])==set(SOURCES)-{'tools/site_restructure.py'}),
+            'Adapter source inventory mismatch')
     known_current=m['adapter_sources']==FROZEN
     require(known_current or (not current and sha(manifest_path) in TRUSTED_PREVIOUS_UNIFIED_MANIFESTS),
             'Unknown adapter source binding; preserve the saved display instead of resealing it')

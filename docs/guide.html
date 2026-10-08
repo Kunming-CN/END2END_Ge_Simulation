@@ -21,22 +21,23 @@ summary{cursor:pointer;font-weight:650}table{width:100%;border-collapse:collapse
 </head>
 <body>
 <header>
-<nav aria-label="Primary"><a href="index.html">Home</a><a href="#local-control">Run</a><a href="results/index.html">Results</a><a href="spectra/pipeline.html">Waveforms</a><a href="spectra/cs137-10k.html">Spectra</a><a href="detectors/index.html">Detectors</a><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">Code</a></nav>
-<h1>Browse, set up, or use GeSignal</h1>
-<p>Explore saved results in your browser. Run new supported calculations on your own Windows computer.</p>
+<p><a href="index.html">GeSignal home</a></p>
+<nav aria-label="Primary"><a href="#local-control">Run</a><a href="results/index.html">Saved results</a><a href="detectors/index.html">Detectors</a><a href="#saved-analysis">Help</a></nav>
+<h1>Run and understand GeSignal</h1>
+<p>Set up Windows, use Control, or inspect the files and identities in a saved run.</p>
 </header>
 <main>
-<section id="local-routes" aria-label="Choose an action">
+<section id="local-routes" aria-label="Local workflow steps">
 <div class="routes">
-<div class="route"><h3>Browse</h3><p>No installation needed. Explore detector shapes, event signals and saved campaigns.</p><a class="button" href="#browse">Browse saved results</a></div>
-<div class="route"><h3>Setup</h3><p>Prepare the pinned Windows and WSL environment, source files and exporter.</p><a class="button" href="#setup">Set up Windows</a></div>
-<div class="route"><h3>Use</h3><p>On a prepared computer, choose a supported setup and run the pipeline with Control.</p><a class="button" href="#local-control">Use Control</a></div>
+<div class="route"><h3>1. Setup</h3><p>Prepare the pinned Windows and WSL environment, source files and exporter.</p><a class="button" href="#setup">Set up Windows</a></div>
+<div class="route"><h3>2. Run</h3><p>On a prepared computer, check a supported setup and run the pipeline with Control.</p><a class="button" href="#local-control">Use Control</a></div>
+<div class="route"><h3>3. Inspect</h3><p>Read a saved result, select its event identities and locate its original files.</p><a class="button" href="#saved-analysis">Understand a saved run</a></div>
 </div>
 </section>
 
 <section id="browse">
 <h2>Browse saved results</h2>
-<p>Start with the <a href="results/cs137-10k/index.html">four-case Cs137 10K results</a> for events, spectra, charge/readout and complete ledgers. Browse shapes and types in the <a href="detectors/index.html">17-model detector library</a>. The <a href="results/cs137-1m/index.html">separate million-decay campaign</a> covers AK02/SAP22.</p>
+<p><a href="results/index.html">Choose a saved dataset</a> to find its available waveforms, spectra, radiation views and exact files. The teaching, cryostat gamma, four-case Cs137 10K and two-case million-decay campaigns retain separate geometries and event IDs. Use the <a href="detectors/index.html">17-model detector library</a> for shapes, fields and original model settings.</p>
 <p>The website displays saved data; it does not start simulations. Seventeen viewable models do not mean seventeen executable Control models.</p>
 <details><summary>Browse an offline website copy</summary>
 <p>Include <code>docs/</code> in your checkout. From the project root, use an existing Windows Python:</p>

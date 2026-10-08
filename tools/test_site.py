@@ -486,6 +486,9 @@ class ModelTests(unittest.TestCase):
         for detector in models.ORIGINAL_HASHES:
             page = f'detectors/{detector}/index.html'
             files[page] = adapt(page_html, Path(page)).encode()
+            files[f'detectors/{detector}/technical.html'] = (
+                f'<a href="../../models/{detector}.yaml">Original YAML</a>'
+                f'<a href="../../downloads/{detector}.zip">Model ZIP</a>').encode()
             if detector != 'GeGI_3D':
                 # Bounded fixture for the new full-size illustration link.
                 files[f'detectors/{detector}/runs/20260922_suite_v3/01_geometry.png'] = b'\x89PNG\r\n\x1a\n'
@@ -514,7 +517,7 @@ class ModelTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'differs'):
             validate(self.root, require_manifest=False)
         archive.write_bytes(files['downloads/AK01.zip'])
-        (self.root / 'detectors/AK01/index.html').write_text('<main></main>')
+        (self.root / 'detectors/AK01/technical.html').write_text('<main></main>')
         with self.assertRaisesRegex(ValueError, 'Missing model download links'):
             validate(self.root, require_manifest=False)
 

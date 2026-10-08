@@ -8,6 +8,8 @@ from site_fragments import remove_sections, ids
 
 RUN='20260922_suite_v3'
 MANAGED={'featured-detector-navigation','ssd-interactive-geometry','saved-gallery-intro'}
+SIGNAL_AXIS_NOTE='Horizontal signal axis: physical time (ns). Open the image or Signal CSV for original signed values.'
+CAMERA_CLOSE_MODELS={'Bipolar_reference_3D','KL01_3D','ICPC_48A_reference'}
 TYPE_LABELS={
     'AK01':'Inverted coaxial point-contact (ICPC)',
     'AK02':'Inverted coaxial point-contact (ICPC)',
@@ -38,7 +40,62 @@ def archive_notebook(html):
     return re.sub(r'<p>Kernel: <strong>Julia 1\.13 — GeGI</strong>\. Run all cells in order\.</p>',
         '<p>Recorded notebook kernel: <strong>Julia 1.13 — GeGI</strong>. This archive displays saved outputs; it does not execute cells.</p>',html)
 
+def gallery_navigation(text,model):
+    """Retain study settings/plots while retiring competing invitation cards."""
+    def adapt(match):
+        block=match.group(0)
+        heading=re.search(r'<h2>(.*?)</h2>',block,re.S)
+        if not heading:return block
+        title=heading.group(1)
+        if title=='Start here':
+            body=block[block.index('</h2>')+5:block.rindex('</section>')]
+            return '<details class="panel"><summary>Saved study settings and files</summary>'+body+'</details>'
+        if title in ('Cs137: 10,000 initial decays per detector','Radiation-to-readout example','Charge collection diagnostics'):
+            # These are generated invitations to other studies, not gallery plots.
+            if re.search(r'<(?:img|svg|video|table|script)\b',block,re.I):
+                raise ValueError('Scientific content appeared in a gallery invitation')
+            return ''.join(f'<span id="{escape(i,quote=True)}"></span>' for i in ids(block))
+        return block
+    text=re.sub(r'<section\b[^>]*>.*?</section>',adapt,text,flags=re.S)
+    anchor='<h2>Saved event examples</h2>'
+    if anchor in text and 'id="saved-signal-axis-note"' not in text:
+        note='<p id="saved-signal-axis-note">'+SIGNAL_AXIS_NOTE+'</p>'
+        if model in CAMERA_CLOSE_MODELS:
+            note+='<p>Event camera is a close view; use full geometry for detector boundaries.</p>'
+        text=text.replace(anchor,anchor+note,1)
+    return text
+
+def strip_navigation(text):
+    """Repair the retained GeGI specialist reader without changing its payload."""
+    text=text.replace('<a href="index.html">GeGI gallery</a>',
+                      '<a href="index.html">GeGI overview</a>')
+    text=text.replace('<a href="../../index.html">All detectors</a>',
+                      '<a href="../index.html">All detectors</a>')
+    if 'id="strip-study-context"' not in text:
+        from site_restructure import navigation
+        text=text.replace('<header>','<header>'+navigation('../../')+
+            '<p id="strip-study-context">Earlier saved 34-channel strip study · '
+            '<a href="gallery.html">Fields and saved signals</a> · '
+            '<a href="technical.html">Model and provenance</a>.</p>',1)
+    return text
+
+def gegi_channel_captions(text,site):
+    """Expose each preview's exact original selected channels beside its PNG."""
+    from saved_plot_repairs import channel_data, selected_channels
+    def caption(match):
+        block=match.group(0)
+        preview=re.search(r'src="runs/'+RUN+r'/events/([A-Za-z0-9_-]+)/preview\.png"',block)
+        if not preview:return block
+        event=preview.group(1)
+        _,channels=channel_data(site,event)
+        names=selected_channels(channels)
+        block=re.sub(r'<p class="saved-channel-caption">.*?</p>','',block,flags=re.S)
+        note='<p class="saved-channel-caption">Saved preview channels: '+escape(', '.join(names) if names else 'none selected')+f'. Original signed values and times are in <a href="runs/{RUN}/events/{event}/channels.csv">channels.csv</a>.</p>'
+        return block.replace('</article>',note+'</article>',1)
+    return re.sub(r'<article class="card">.*?</article>',caption,text,flags=re.S)
+
 def apply(site, write_page):
+    from site_restructure import navigation
     site=Path(site)
     catalog=json.loads((site/'models/catalog.json').read_text(encoding='utf-8'))
     capabilities=execution_capabilities()
@@ -56,12 +113,13 @@ def apply(site, write_page):
         page=folder/'index.html'
         gallery=folder/'gallery.html'
         original=(gallery if gallery.is_file() else page).read_text(encoding='utf-8')
-        cleaned=remove_sections(original,MANAGED)
+        cleaned=gallery_navigation(remove_sections(original,MANAGED),model)
+        if model=='GeGI_3D':cleaned=gegi_channel_captions(cleaned,site)
         cleaned=cleaned.replace('href="../../index.html">Detector library','href="../index.html">Detector library')
-        banner=(f'<section id="saved-gallery-intro"><h2>{escape(model)} earlier saved gallery</h2>'
+        banner=(f'<section id="saved-gallery-intro">'+navigation('../../')+f'<h2>{escape(model)} earlier saved gallery</h2>'
                 '<p><a href="index.html">Detector overview</a> · '
                 '<a href="geometry.html">Rotate geometry</a> · '
-                '<a href="technical.html">Technical details</a></p>'
+                '<a href="technical.html">Model and provenance</a></p>'
                 '<p>Original synthetic SSD study from <code>20260922_suite_v3</code>. '
                 'For source-campaign results, return to the detector overview. '
                 'Original settings and limitations remain below.</p></section>')
@@ -75,27 +133,17 @@ def apply(site, write_page):
                        '<th>Potential (V)</th></tr></thead><tbody>'+contact_rows+'</tbody></table>')
         downloads=(f'<a href="../../models/{model}.yaml">Original YAML</a> · '
                    f'<a href="../../downloads/{model}.zip">Model ZIP with includes</a>')
-        geometry=(f'<section id="ssd-interactive-geometry" class="panel"><h2>Rotate the detector</h2>'
-                  '<p><a href="geometry.html">Open full interactive geometry</a>. '
-                  'Saved physical meshes; no fields or carrier trajectories are solved here.</p>'
-                  f'<iframe title="{escape(model)} interactive detector geometry" src="geometry.html" '
-                  'style="width:100%;height:720px;border:0" loading="lazy"></iframe></section>')
-        if not (folder/'geometry.html').is_file():
-            geometry=f'<section class="panel"><h2>Saved geometry</h2><img style="max-width:100%" src="runs/{RUN}/01_geometry.png" alt="{escape(model)} saved geometry"></section>'
         supported=model in control_ids
         run_note=(f'<p>Control supports {escape(model)} in the nominal LBNL modular cryostat. '
                   'Use the <a href="../../guide.html#local-control">Control instructions</a> '
                   'after <a href="../../guide.html#setup">setup</a>. '
                   'Fresh-machine reproduction remains unvalidated.</p>' if supported else
                   '<p>This model is available for browsing and needs a future larger cryostat.</p><p>'+escape(catalog_control[model]['reason'])+'</p>')
-        special=('<p><a href="strip_explorer.html">Explore all 34 GeGI signal channels</a> · '
+        special=('<p><a href="strip_explorer.html">Saved 34-channel strip study</a> · '
                  '<a href="supplement.html">Earlier supplementary study</a></p>' if model=='GeGI_3D' else '')
-        legacy_ids=set(ids(cleaned))-MANAGED-{'contact-legend','native-cs137-10k'}
+        legacy_ids=set(ids(cleaned))-MANAGED-{'contact-legend','native-cs137-10k','saved-signal-axis-note'}
         aliases=''.join(f'<p id="{escape(i,quote=True)}"><a href="gallery.html#{escape(i,quote=True)}">Open saved gallery detail</a></p>' for i in sorted(legacy_ids))
-        past=('<section id="native-cs137-10k" class="panel"><h2>Source-campaign results</h2>'
-              '<p><a href="../../results/cs137-10k/index.html">Cs137 10K results</a> · '
-              '<a href="../../results/cs137-1m/index.html">Separate 1M campaign overview</a></p>'
-              f'<p><a href="../../examples/cs137-10k-hits/hit_event_view.html?model={model}">Explore 10K Ge-positive events</a></p></section>' if model in campaign_models else '')
+        past=('<p id="native-cs137-10k"><a href="../../results/cs137-1m/index.html">Separate Cs137 1M campaign · '+escape(model)+'</a></p>' if model in campaign_models else '')
         header=(f'<section class="hero"><p><a href="../index.html">All detectors</a> / <a href="index.html">{escape(model)}</a></p>'
                 f'<h1>{escape(model)}</h1><p>{escape(TYPE_LABELS[model])}</p></section>')
         image=(f'<figure class="panel"><a href="runs/{RUN}/01_geometry.png">'
@@ -103,17 +151,11 @@ def apply(site, write_page):
                f'alt="{escape(model)} {escape(TYPE_LABELS[model])}, saved geometry"></a>'
                '<figcaption>Saved geometry · <a href="runs/'+RUN+'/01_geometry.png">Open full-size image</a>. '
                'Colors identify contact IDs; they do not show doping or Li thickness.</figcaption></figure>')
-        nav=('<section id="featured-detector-navigation" class="panel"><h2>Explore this detector</h2>'
-             '<p><a href="geometry.html">Rotate geometry</a> · <a href="gallery.html">Fields, movies and signals</a> · '
-             '<a href="technical.html">Model and technical details</a></p></section>')
-        overview=(header+image+nav+past+geometry+'<section class="panel"><h2>Earlier synthetic response gallery</h2>'
-                  f'<a href="gallery.html"><img loading="lazy" style="max-width:100%;max-height:280px" src="runs/{RUN}/02_static_fields.png" alt="{escape(model)} saved field and weighting-potential preview"></a>'
-                  '<p>Saved synthetic study, separate from source-campaign results. Field lines are not carrier trajectories. Gallery settings and scenario overrides are separate.</p>'+special+'</section>'+
-                  '<section id="contact-legend" class="panel"><h2>Contact key and model files</h2>'
-                  '<p>Colors identify contacts, not doping or layer thickness. Small contacts retain their actual size. '
-                  '<a href="runs/'+RUN+'/01_geometry.png">Full-size saved geometry</a></p>'+
-                  '<details><summary>Contact IDs and signed potentials</summary>'+contact_table+'</details><p>'+downloads+'</p></section>'+
-                  '<section class="panel"><h2>Run locally</h2>'+run_note+'<p><a href="../../guide.html#validation">Validation limits</a></p></section>'+aliases)
+        nav=('<section id="featured-detector-navigation" class="panel"><h2>View this detector</h2><div class="grid">'
+             '<article id="ssd-interactive-geometry"><h3><a href="geometry.html">Geometry</a></h3><p>Rotate the saved physical meshes and inspect contact IDs.</p></article>'
+             '<article><h3><a href="gallery.html">Fields and saved signals</a></h3><p>Earlier synthetic SSD study: field plots, movies and event signals.</p>'+special+'</article>'
+             '<article id="contact-legend"><h3><a href="technical.html">Model and provenance</a></h3><p>Original settings, contacts, signed bias and model downloads.</p></article></div></section>')
+        overview=(header+image+nav+'<section class="panel"><h2>Local calculation support</h2>'+run_note+'</section>'+past+aliases)
         write_page(page,model+' · Detector overview',overview,2)
         diagnostics=[]
         for name in ('validation.events.json','validation.scenes.json'):
@@ -146,6 +188,8 @@ def apply(site, write_page):
         delivered.append(model)
     notebook=site/'detectors/GeGI_3D/supplement.html'
     if notebook.is_file():notebook.write_text(archive_notebook(notebook.read_text(encoding='utf-8')),encoding='utf-8',newline='\n')
+    strips=site/'detectors/GeGI_3D/strip_explorer.html'
+    if strips.is_file():strips.write_text(strip_navigation(strips.read_text(encoding='utf-8')),encoding='utf-8',newline='\n')
     return delivered
 
 def control_capabilities(capabilities=None):

@@ -8,7 +8,7 @@
     "examples/cs137-1m/report.html": "a04c9d0557f150d37fa2b381a445ef5315fbc2cd6dd3a0eccd38026fcd098f35",
     "examples/cs137-1m-response/report.html": "4de4b264f6df246982b3991bb1cedf3d5eefcf26aa9726e1379e0e511f135b77",
     "examples/cs137-10k/comparison.html": "b94d57dbb9657f68dd8aa0043e8e88203c54a71c1bffae7f38c19e485c1247c4",
-    "examples/pipeline.html": "4fe9003df61579f7f45942cb42e53075179990ae94aad585d209f7c4309de5b4",
+    "examples/pipeline.html": "71d898465740d2ad4eb098cc5cc1d27c494f38c0151e634dfc067bf53f147bf7",
     "examples/cs137-1m/histograms.json": "4fff0a89cc28164115b6c0ae3575adcf706b31d24f677264f90d80b9b1c406a3",
     "examples/cs137-1m-response/histograms.json": "04c0fa1693bd9ba02a00a76288c0b3974b5fa0c791504ce86294f6cd13769640",
     "examples/cs137-10k/AK02/response/histograms.json": "8cbdb6d7ba7ebbbfa4e95a270bb9db955c67d7063f1652e1383fcba459236ab1",
@@ -22,18 +22,18 @@
     "examples/cs137-10k-rings/KMRC01_candidate/response/histograms.json": "11cfbed9fd93db18528a1a73f25a298fa554fd70c9f3136203468970a5c053e3"
   },
   "generators": {
-    "tools/spectrum_display.py": "de7afa59c62a924ab67d9fba684fcc17f5233aa0392fafa2539de37eae983392",
+    "tools/spectrum_display.py": "1a98ebb768946d51b87fa4dbfcc1c59925c07d36a8fe201d1e39e8eb4fdc7472",
     "tools/spectrum_plot.py": "f00dbf5efdb393f03eebd501cb71a74bbd268fc3f0cff240de9a7eb54948a29c",
     "tools/spectrum_controls.js": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
-    "tools/viewer_navigation.py": "29f16c1bcd3e09e7bb75556c8f4f1c45ad36e52cc1874f12a07bdb4835834a50",
-    "tools/ring_site.py": "66fab904e6cdbec41fab468e182d206e89f599b53adf59d7318337d7d0760371",
-    "tools/site_restructure.py": "3ec5cc9a4e560ba5c21d9c8776ee7a3572c4d359d72403e3e635d037cd90c437"
+    "tools/viewer_navigation.py": "85cf923ea9048a9ff1f5d7cc6b78531e53e84b25627c3c0b4fdec816f45ca427",
+    "tools/ring_site.py": "74762ec003d0083fc517158d8dffeb3bef823eef8bc93b5ba10fd756d3a908e2",
+    "tools/site_restructure.py": "c66b8d0b11f7e1c844ddf19b1edcecb2e3fd875e77ef0c3b0974f84389c18b6c"
   },
   "pages": {
     "spectra/million-truth.html": {
       "source": "examples/cs137-1m/report.html",
       "source_sha256": "a04c9d0557f150d37fa2b381a445ef5315fbc2cd6dd3a0eccd38026fcd098f35",
-      "sha256": "ef0c2847e0a0d54c9d0392c1de5ee16db9aa1912346d295adf711fd9981792d4",
+      "sha256": "7d9defc2ab3ff5c2e9a756c2214a36f658aab4c9c9fe32d6d17bf74b01721449",
       "specs_sha256": "83ee90ccfd3ce820518d94b44941d891dbe69458d74f66fcdce6520570ddb0e7",
       "plot_states": 4,
       "render_components": {
@@ -50,7 +50,7 @@
     "spectra/million-response.html": {
       "source": "examples/cs137-1m-response/report.html",
       "source_sha256": "4de4b264f6df246982b3991bb1cedf3d5eefcf26aa9726e1379e0e511f135b77",
-      "sha256": "57d9b8c144536acfc40f35b0d4efa43228f300510e1d85798cc1b3399e9c1d49",
+      "sha256": "e63ae50939acf686cc6cb787d5573ecbdcf70b8895433b2533ecd82461ac02d4",
       "specs_sha256": "2c8660dbc4997b8a6348f3ab5d67f07349390db0ad2b8d4a113eb511011a0539",
       "plot_states": 4,
       "render_components": {
@@ -67,7 +67,7 @@
     "spectra/cs137-10k.html": {
       "source": "examples/cs137-10k/comparison.html",
       "source_sha256": "b94d57dbb9657f68dd8aa0043e8e88203c54a71c1bffae7f38c19e485c1247c4",
-      "sha256": "8b4f9c150520bc3b23d77e3116601ff001700bc3d9e4db5bb31222c70cdddf74",
+      "sha256": "474cc028dfb3ab79068abb18c6392f9fc52fc9e48baf06bd22a6120664055bf2",
       "specs_sha256": "58bb23a3aef770dc16e4c875888805d68083e02c7d539a86dbbcddabb7f4e1d1",
       "plot_states": 20,
       "render_components": {
@@ -99,8 +99,8 @@
     },
     "spectra/pipeline.html": {
       "source": "examples/pipeline.html",
-      "source_sha256": "4fe9003df61579f7f45942cb42e53075179990ae94aad585d209f7c4309de5b4",
-      "sha256": "d858ff4241848f341adc859fd0ae7d660ec72359ab16a6b4e26f4ca6b8f8faaf",
+      "source_sha256": "71d898465740d2ad4eb098cc5cc1d27c494f38c0151e634dfc067bf53f147bf7",
+      "sha256": "11837ab01cb9a9486d1b78e198990603311815d2ef6957093155bd7adb71df21",
       "specs_sha256": "8024d78e57b02968c7a867bf8481737db94283fe773e113320aae05ef892d455",
       "plot_states": 2,
       "render_components": {

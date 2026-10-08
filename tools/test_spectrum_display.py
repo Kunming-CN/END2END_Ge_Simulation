@@ -122,7 +122,12 @@ class SavedDisplayTests(unittest.TestCase):
             self.assertIn(f'href="{target}">{label}</a>',page)
             self.assertIn('Original report (archived presentation)',page)
         pipeline=(self.site/'spectra/pipeline.html').read_text(encoding='utf-8')
-        self.assertIn('href="../detectors/index.html">← Detector library</a>',pipeline)
+        self.assertIn('href="../results/index.html#teaching">← Teaching dataset</a>',pipeline)
+        for name,dataset in (('million-truth','million'),('million-response','million'),
+                             ('cs137-10k','tenk'),('pipeline','teaching')):
+            page=(self.site/'spectra'/f'{name}.html').read_text(encoding='utf-8')
+            self.assertIn('aria-label="Primary"',page)
+            self.assertIn(f'href="../results/index.html#{dataset}"',page)
         response=(self.site/'spectra/million-response.html').read_text(encoding='utf-8')
         self.assertIn('href="../viewers/ge-positive.html">Earlier 10k Ge-hit examples</a>',response)
         self.assertIn('use the earlier 10k campaign',response)

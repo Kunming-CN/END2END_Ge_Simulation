@@ -134,7 +134,7 @@ def validate(site, require_manifest=True, require_models=False):
         required_links = {'index.html': {'downloads/all-models.zip'},
                           'guide.html': {'downloads/all-models.zip'}}
         for detector in ORIGINAL_HASHES:
-            required_links[f'detectors/{detector}/index.html'] = {
+            required_links[f'detectors/{detector}/technical.html'] = {
                 f'models/{detector}.yaml', f'downloads/{detector}.zip'}
         for page, required in required_links.items():
             targets = {local_target(page, url) for url in pages.get(page, [])}
@@ -160,6 +160,12 @@ def validate(site, require_manifest=True, require_models=False):
     if (site/'examples/pipeline-display.json').exists():
         from saved_focus_pages import validate as validate_teaching_focus
         validate_teaching_focus(site/'examples')
+    if (site/'detectors/GeGI_3D/display/manifest.json').exists():
+        from saved_plot_repairs import validate as validate_plot_repairs
+        validate_plot_repairs(site)
+    if (site/'methods/native-li.html').exists() or (site/'methods/native-li-display.json').exists():
+        from saved_archive_display import validate as validate_archive_display
+        validate_archive_display(site)
     geometry_viewers=[site/'detectors'/m/'geometry.html' for m in ('AK02','SAP22')]
     if any(p.exists() for p in geometry_viewers):
         if not all(p.exists() for p in geometry_viewers): raise ValueError('Partial SSD geometry viewer publication')
@@ -250,7 +256,8 @@ def verify_live(url, report):
         raise ValueError('The live manifest is not this local snapshot; deployment may still be pending.')
     entries = report['files']
     selected = {entry['path']: entry for entry in entries if entry['path'].endswith('.html')}
-    selected.update({entry['path']: entry for entry in entries if entry['path'] in {'sitemap.xml', 'LICENSE'}})
+    selected.update({entry['path']: entry for entry in entries
+                     if entry['path'] in {'sitemap.xml','LICENSE','methods/native-li-display.json'}})
     selected.update({entry['path']: entry for entry in entries
                      if entry['path'].startswith(('models/', 'downloads/'))})
     # The public campaign is an auditable dataset, not just HTML; verify every file.
@@ -263,6 +270,8 @@ def verify_live(url, report):
                       or entry['path']=='detectors/geometry-index.json')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('spectra/')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('viewers/')})
+    selected.update({entry['path']:entry for entry in entries
+                     if entry['path'].startswith('detectors/GeGI_3D/display/')})
     for suffix in ('.png', '.svg', '.csv', '.mp4', '.webm', '.json', '.md'):
         examples = [entry for entry in entries if entry['path'].endswith(suffix)]
         for entry in examples[:2] + examples[-1:]:

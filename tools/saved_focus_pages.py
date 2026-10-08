@@ -26,6 +26,13 @@ DISPLAY_SOURCES=(JS,'tools/saved_focus_pages.py','tools/site_restructure.py',
                  'tools/gamma_complete_showcase.py','tools/gamma_complete_showcase.html',
                  TEMPLATE,'tools/pipeline_demo.py')
 
+# Accepted b2e9d76 display receipts. Only these exact prior derivatives may be
+# read during the next presentation upgrade; science still reconstructs the
+# immutable original receipt above. Rehashed edits are never a historical basis.
+PREVIOUS_DISPLAY_RECEIPTS={
+    'gamma':frozenset({'725c852d635021b0aef16f9b651c56ebdd16fb9f7e13a7737101ea78fa4b11e7'}),
+    'teaching':frozenset({'30ea3de554ed4408e4aac06c2f54fd178e886aa7ae9a737d73ed210b7b052bc3'})}
+
 def display_sources():
     return {n:S.sha((ROOT/n).read_bytes()) for n in DISPLAY_SOURCES}
 
@@ -34,14 +41,17 @@ def historical_display(family,raw):
 
 def validate_display_binding(family,manifest):
     extension=manifest['display_upgrade'];base=DISPLAY_BASES[family]
-    S.require(extension==dict(kind='saved_plot_display_v1',science_calls=0,
-        original_receipt_sha256=base['receipt'],sources=display_sources()),'Unknown saved display upgrade binding')
+    current=extension==dict(kind='saved_plot_display_v1',science_calls=0,
+        original_receipt_sha256=base['receipt'],sources=display_sources())
+    previous=S.sha(S.canonical(manifest)) in PREVIOUS_DISPLAY_RECEIPTS[family]
+    S.require(current or previous,'Unknown saved display upgrade binding')
     original=copy.deepcopy(manifest);original.pop('display_upgrade')
     original['files'][base['html']]=base['stamp']
     S.require(historical_display(family,S.canonical(original)),'Original scientific/export receipt changed')
+    return current
 
 def display_render(family,data):
-    from site_restructure import navigation
+    from site_restructure import navigation, dataset_navigation
     if family=='gamma':
         from gamma_complete_showcase import render as original_render
         body=original_render(data).decode('utf-8');up='../../'
@@ -49,9 +59,14 @@ def display_render(family,data):
         S.require(body.count(call)==1,'Gamma saved settings anchor')
         body=body.replace(call,'SavedFocusPlots.gammaPanels(r,m.display_edges[String(activeId)],{ionisation_energy_eV:m.report.ionisation_energy_eV,time_step_ns:m.report.calibration.time_step_ns})',1)
         context='<p style="margin:12px 24px">Additional cryostat example: 20 gamma primaries per detector. Different geometry and event IDs from the 100-primary teaching example.</p>'
+        context+=dataset_navigation('gamma',up)
     else:
         body=render(data).decode('utf-8');up='../'
         context='<p style="margin:12px 24px"><strong>Main teaching example.</strong> 100 side-on gamma primaries per detector in bare geometry. <a href="gamma-native/gamma.html">Additional cryostat example: 20 primaries per detector</a>.</p>'
+        context+=dataset_navigation('teaching',up)
+        old='href="../index.html">← Detector library</a>'
+        S.require(body.count(old)==1,'Teaching dataset return anchor')
+        body=body.replace(old,'href="../results/index.html#teaching">← Teaching dataset</a>',1)
     anchor='<header>'
     S.require(body.count(anchor)==1,'Saved reader header anchor')
     bar='<div style="padding:12px 24px;background:#fff;color:#173047"><a href="'+up+'index.html">GeSignal home</a>'+navigation(up)+'</div>'+context
@@ -113,8 +128,8 @@ def validate(directory):
     raw=(directory/'data.json').read_bytes();S.require(S.sha(raw)==manifest['original_data_sha256'],'Original teaching numerical bytes')
     data=S.decode(raw)
     if 'display_upgrade' in manifest:
-        validate_display_binding('teaching',manifest)
-        S.require((directory/'pipeline.html').read_bytes()==display_render('teaching',data),'Exact upgraded teaching display')
+        if validate_display_binding('teaching',manifest):
+            S.require((directory/'pipeline.html').read_bytes()==display_render('teaching',data),'Exact upgraded teaching display')
     elif not historical_display('teaching',(directory/'pipeline-display.json').read_bytes()):
         S.require((directory/'pipeline.html').read_bytes()==render(data),'Exact focused teaching template/data')
         S.require(manifest['template_sha256']==S.sha((ROOT/TEMPLATE).read_bytes()) and manifest['javascript_sha256']==S.sha((ROOT/JS).read_bytes()),'Frozen presentation sources')
