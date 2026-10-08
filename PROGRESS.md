@@ -16,13 +16,17 @@ No Geant4, SSD, electronics replay, scientific-input or environment changes.
 Start verified clean HEAD/origin/live main5c21a3e, released prior lease and no
 science workers. Root/implementation/review launches verified Sol6.1/ultra.
 Lease: student-teaching-v1-root; automatic heartbeat remains PAUSED.
-Execution authority: .local/student-teaching-v1/ROUND.json, autonomy state,
-actual Git/processes. Current publication status: final static recovery installed the validated snapshot
-2da44f3b3eb379036f9d770f50e3a2f690ecb271341da507047a031abac7a688.
-All six installed-page selections and KM report->Back pass. Standalone pre-publication
-check_site passes:1693 files/105 HTML/976793600 bytes,3322 typed references.
-Upload/live acceptance is pending; PUBLICATION-CHECK.log retains the exact result.
-Never restart science, completed tests or broad reviews after a chat failure.
+Publication accepted: implementation commit26dd810 is pushed and GitHub Pages
+built it. Snapshot2da44f3b3eb379036f9d770f50e3a2f690ecb271341da507047a031abac7a688:
+1693 files/105 HTML/976793600 bytes,3322 typed references. Required live check
+passed702 exact files, plus the separately checked lithium display receipt:703
+unique live files. LIVE-CHECK.log/LIVE-EXTRA.json retain the checks. Actual live
+six selections/24 plots, KM report->Back and390px layout passed. BROWSER.json
+retains evidence and the actual online screenshot. Final synchronization, owned
+worker cleanup and lease release are recorded in .local/student-teaching-v1/COMPLETE.json
+and autonomy state; consult actual Git/processes as well. Automatic heartbeat stays
+PAUSED; only manual continuation is ready after closure. Never restart science,
+completed tests or broad reviews after a chat failure.
 
 Six exact (model/initial-decay/group) examples:
 GeRC02/61/0 near661.657keV; SAP22/155/0 recorded32.205keV photon;
@@ -41,7 +45,7 @@ samples; no invented early values or per-event calibration. Full40K ledgers,
 39,236 zero-Ge primaries,681 accepted groups,6 native failures and77 readout
 rejects remain in case records. Original200-event gamma teaching is an archive.
 
-Acceptance so far:8 teaching tests;100 relevant site/spectrum/structure/routes/
+Software acceptance:8 teaching tests;100 relevant site/spectrum/structure/routes/
 viewer tests;9 archive tests including1 unavailable historical-fixture skip;
 1 saved-focus test. Two concrete browser corrections each passed8 focused tests.
 One integrated AI review cycle: parallel science/electronics and data/workflow,
