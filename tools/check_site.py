@@ -13,40 +13,95 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 from export_models import (MODELS, ORIGINAL_HASHES, download_files, public_text,
                            read_distribution, validate_archive)
+from site_discovery import SITE_URL
 
 MAX_PUBLIC_FILE_BYTES = 100 * 1024 * 1024
 MAX_PUBLIC_SITE_BYTES = 1_000_000_000
 
 MANIFEST = 'site-manifest.json'
+NAVIGATION_PREDECESSOR_MANIFEST_SHA256 = '340d8865dfff0339a2e0e0dd086ad9f9a771925e883d0b26c62b82d3909bb1b9'
 EXTENSIONS = {'.html', '.png', '.jpg', '.svg', '.mp4', '.webm', '.csv', '.json', '.md'}
 PRIVATE_PATH = re.compile(r'[A-Za-z]:[\\/]+Users[\\/]|file:///|/home/[^/\s]+/', re.I)
 CREDENTIAL = re.compile(r'BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY|gh[pousr]_[A-Za-z0-9]{25,}|sk-proj-[A-Za-z0-9_-]{25,}')
 
 class Links(HTMLParser):
-    """Collect explicit page, image, poster, and video resource references."""
+    """Collect static resources separately from page navigation and JS markers."""
     def __init__(self):
         super().__init__()
         self.urls = []
+        self.references, self.anchors, self.dynamic = [], set(), []
+        self.script_blocks = 0
 
     def handle_starttag(self, tag, attrs):
+        values = dict(attrs)
+        if values.get('id'):
+            self.anchors.add(values['id'])
+        if tag == 'a' and values.get('name'):
+            self.anchors.add(values['name'])
+        if tag == 'script':
+            self.script_blocks += 1
         self.urls.extend(v for k, v in attrs if k in ('href', 'src', 'poster') and v)
+        for attribute, value in attrs:
+            if attribute in ('href', 'src', 'poster') and value:
+                self.references.append(dict(tag=tag, attribute=attribute, url=value,
+                                            download='download' in values,
+                                            rel=values.get('rel', '')))
+        markers = {k: v for k, v in attrs if k in ('data-context-link', 'data-base-href')}
+        if markers or tag == 'a' and not values.get('href') and not values.get('name'):
+            self.dynamic.append(dict(tag=tag, id=values.get('id'), markers=markers))
+
+
+def resolve_reference(page, url):
+    """Retain query/fragment while resolving project-absolute and relative URLs."""
+    parsed = urlsplit(url)
+    project = urlsplit(SITE_URL)
+    absolute_internal = (parsed.scheme in ('https', 'http', '') and
+                         bool(parsed.netloc) and
+                         parsed.netloc.lower() == project.netloc.lower() and
+                         (parsed.path.startswith(project.path) or parsed.path == project.path.rstrip('/')))
+    if parsed.scheme in ('https', 'http', 'mailto', 'data', 'tel') or parsed.netloc:
+        if not absolute_internal:
+            return None
+        value = unquote(parsed.path[len(project.path):])
+        base = ''
+    else:
+        if parsed.scheme:
+            raise ValueError(f'{page}: unsupported URL scheme: {parsed.scheme}')
+        value = unquote(parsed.path)
+        base = posixpath.dirname(page)
+    if value.startswith('/') or '\\' in value:
+        raise ValueError(f'{page}: nonportable URL: {url}')
+    target = (posixpath.normpath(posixpath.join(base, value)) if value else
+              'index.html' if absolute_internal else page)
+    if target == '..' or target.startswith('../'):
+        raise ValueError(f'{page}: URL escapes site: {url}')
+    return dict(path=target, query=parsed.query, fragment=unquote(parsed.fragment),
+                project_absolute=absolute_internal)
+
+
+def reference_kind(reference, target):
+    """Classify the action, rather than count every href as a page transition."""
+    if reference['tag'] in ('link', 'meta', 'base'):
+        return 'metadata'
+    if reference['attribute'] in ('src', 'poster'):
+        return 'media' if reference['tag'] in ('img', 'video', 'audio', 'source', 'iframe', 'embed', 'object') else 'other'
+    if reference['tag'] in ('a', 'area'):
+        if reference['download']:
+            return 'download'
+        path = target['path'] if target is not None else urlsplit(reference['url']).path
+        if posixpath.basename(path) == 'LICENSE':
+            return 'download'
+        if not path or path.endswith('.html') or not posixpath.splitext(path)[1]:
+            return 'page_navigation'
+        if Path(path).suffix.lower() in {'.png', '.svg', '.jpg', '.jpeg', '.webp', '.mp4', '.webm'}:
+            return 'media'
+        return 'download'
+    return 'other'
 
 def local_target(page, url):
     """Resolve case-sensitive project-relative links; reject local/escaping URLs."""
-    parsed = urlsplit(url)
-    if parsed.scheme in ('https', 'http', 'mailto', 'data') or parsed.netloc:
-        return None
-    if parsed.scheme:
-        raise ValueError(f'{page}: unsupported URL scheme: {parsed.scheme}')
-    value = unquote(parsed.path)
-    if not value:
-        return None
-    if value.startswith('/') or '\\' in value:
-        raise ValueError(f'{page}: nonportable URL: {url}')
-    result = posixpath.normpath(posixpath.join(posixpath.dirname(page), value))
-    if result == '..' or result.startswith('../'):
-        raise ValueError(f'{page}: URL escapes site: {url}')
-    return result
+    target = resolve_reference(page, url)
+    return target['path'] if target is not None else None
 
 
 def validate(site, require_manifest=True, require_models=False):
@@ -115,29 +170,51 @@ def validate(site, require_manifest=True, require_models=False):
             if f.suffix == '.html':
                 parser = Links()
                 parser.feed(text)
-                pages[relative] = parser.urls
+                pages[relative] = parser
     if total > MAX_PUBLIC_SITE_BYTES:
         raise ValueError('Site exceeded the GitHub Pages publication budget (1 GB).')
     names = {entry['path'] for entry in entries} | {MANIFEST}
     links = 0
-    for page, urls in pages.items():
-        for url in urls:
-            target = local_target(page, url)
-            if target is None:
+    counts = dict(resource_references_checked=0, page_navigation_checked=0,
+                  fragments_checked=0, downloads_checked=0,
+                  media_references_checked=0, metadata_references_checked=0,
+                  other_references_checked=0)
+    fields = dict(page_navigation='page_navigation_checked', download='downloads_checked',
+                  media='media_references_checked', metadata='metadata_references_checked',
+                  other='other_references_checked')
+    for page, parser in pages.items():
+        for reference in parser.references:
+            url = reference['url']
+            resolved = resolve_reference(page, url)
+            if resolved is None:
                 continue
-            links += 1
-            if target not in names and posixpath.join(target, 'index.html') not in names:
+            target = resolved['path']
+            old_url = urlsplit(url)
+            # Retain the old manifest field's precise resource-reference census:
+            # explicit relative href/src/poster with a nonempty path, no anchors.
+            if not old_url.scheme and not old_url.netloc and old_url.path:
+                links += 1
+            counts['resource_references_checked'] += 1
+            counts[fields[reference_kind(reference, resolved)]] += 1
+            directory_target = posixpath.normpath(posixpath.join(target, 'index.html'))
+            if target not in names and directory_target not in names:
                 raise ValueError(f'Broken or wrong-case link: {page} -> {url}')
+            if target not in names:
+                target = directory_target
+            fragment = resolved['fragment'].split(':~:text=', 1)[0]
+            if fragment and target in pages:
+                counts['fragments_checked'] += 1
+                if fragment not in pages[target].anchors:
+                    raise ValueError(f'Broken fragment: {page} -> {url}')
     if model_outputs:
         if set(model_outputs) - names:
             raise ValueError('Missing model downloads: ' + ', '.join(sorted(set(model_outputs) - names)))
-        required_links = {'index.html': {'downloads/all-models.zip'},
-                          'guide.html': {'downloads/all-models.zip'}}
+        required_links = {'guide.html': {'downloads/all-models.zip'}}
         for detector in ORIGINAL_HASHES:
             required_links[f'detectors/{detector}/technical.html'] = {
                 f'models/{detector}.yaml', f'downloads/{detector}.zip'}
         for page, required in required_links.items():
-            targets = {local_target(page, url) for url in pages.get(page, [])}
+            targets = {local_target(page, url) for url in pages[page].urls} if page in pages else set()
             if not required <= targets:
                 raise ValueError('Missing model download links: ' + page)
     native_bundle = site / 'examples' / 'cs137-10k'
@@ -166,6 +243,9 @@ def validate(site, require_manifest=True, require_models=False):
     if (site/'methods/native-li.html').exists() or (site/'methods/native-li-display.json').exists():
         from saved_archive_display import validate as validate_archive_display
         validate_archive_display(site)
+    if (site/'methods/lithium-display.json').exists():
+        from saved_archive_display import validate_lithium_display
+        validate_lithium_display(site)
     geometry_viewers=[site/'detectors'/m/'geometry.html' for m in ('AK02','SAP22')]
     if any(p.exists() for p in geometry_viewers):
         if not all(p.exists() for p in geometry_viewers): raise ValueError('Partial SSD geometry viewer publication')
@@ -185,13 +265,14 @@ def validate(site, require_manifest=True, require_models=False):
     if any((site/p).exists() for p in ('viewers/manifest.json','viewers/events.html','viewers/geant4-assembly.html','viewers/ge-positive.html')):
         from viewer_navigation import validate as validate_readers
         validate_readers(site)
-    from site_discovery import validate as validate_discovery
-    validate_discovery(site)
     entries.sort(key=lambda item: item['path'])
     encoded = json.dumps(entries, sort_keys=True, separators=(',', ':')).encode()
+    from site_discovery import validate as validate_discovery
+    validate_discovery(site, snapshot_build_id=hashlib.sha256(encoded).hexdigest())
     result = {'schema_version': 1, 'build_id': hashlib.sha256(encoded).hexdigest(),
               'file_count': len(entries), 'total_bytes': total,
               'html_pages': len(pages), 'local_links_checked': links,
+              **counts,
               'files': entries}
     # total_bytes is the payload census; the hosting budget also includes the
     # manifest itself. Before sealing, budget its exact generated serialization.
@@ -201,9 +282,18 @@ def validate(site, require_manifest=True, require_models=False):
     if manifest_bytes > MAX_PUBLIC_FILE_BYTES or total + manifest_bytes > MAX_PUBLIC_SITE_BYTES:
         raise ValueError('GitHub publication size limit exceeded including the site manifest.')
     if require_manifest:
-        saved = json.loads((site / MANIFEST).read_text(encoding='utf-8'))
+        saved_raw = (site / MANIFEST).read_bytes()
+        saved = json.loads(saved_raw)
         if saved != result:
-            raise ValueError('Snapshot differs from its manifest; rebuild from sources.')
+            # Only this byte-exact predecessor may retain the older counter
+            # schema while protected staging validates it before rebuilding.
+            from site_discovery import NAVIGATION_PREDECESSOR
+            old_result = {key: value for key, value in result.items() if key not in counts}
+            predecessor = (result['build_id'] == NAVIGATION_PREDECESSOR and
+                           hashlib.sha256(saved_raw).hexdigest() == NAVIGATION_PREDECESSOR_MANIFEST_SHA256 and
+                           saved == old_result)
+            if not predecessor:
+                raise ValueError('Snapshot differs from its manifest; rebuild from sources.')
     return result
 
 

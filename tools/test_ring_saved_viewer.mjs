@@ -16,6 +16,14 @@ for(const n of names.slice(2)){assert.equal(rings.models[n].event_count,10000);a
 const config={assembly:{base:'../examples/cs137-10k-geometry/',sha256:sha(bytes(path.join(assemblyRoot,'manifest.json')))},
   positive:{base:'../examples/cs137-10k-hits/',sha256:sha(bytes(path.join(positiveRoot,'manifest.json')))},
   models:Object.fromEntries(names.slice(2).map(n=>[n,Object.fromEntries(['assembly','positive'].map(k=>[k,{base:ringBase,sha256:sha(bytes(path.join(ringRoot,'manifest.json'))),kind:rings.kind}]))]))};
+const responsePublication=read(path.join(site,'examples/cs137-10k/publication.json'));
+config.case_routes=Object.fromEntries(names.map(model=>{
+  const ring=names.slice(2).includes(model),base=ring?ringBase:'../examples/cs137-10k/',inventory=ring?rings.files:responsePublication.files;
+  return [model,{model,label:model,result:'../results/cs137-10k/'+model+'/charge-readout.html',
+    files:'../results/cs137-10k/'+model+'/charge-readout.html#data-files',spectrum:'../spectra/cs137-10k.html#tenk-'+model,
+    events:'events.html?model='+model+'&view=positive',original_files:Object.fromEntries(
+      [['savedSignals','signals.csv'],['savedScalars',ring?'scalars.jsonl':'scalars.csv'],['savedCurrent','readout-input.csv']]
+        .filter(([,file])=>inventory[model+'/response/'+file]).map(([key,file])=>[key,{href:base+model+'/response/'+file,...inventory[model+'/response/'+file]}]))}];}));
 const html=sourceMode?bytes('tools/unified_event_viewer.html').toString('utf8')
   .replace('__VIEWER_NAVIGATION__',()=>bytes('tools/viewer_navigation.js').toString('utf8'))
   .replace('__VIEWER_CONFIG__',()=>JSON.stringify(config))
@@ -82,18 +90,15 @@ async function viewer(query,options={}){
 function identity(v,model,event,group,view){const s=v.state();assert.equal(s.requested.model,model);assert.equal(s.requested.event,event);assert.equal(s.requested.group,group);assert.equal(s.requested.view,view);assert.equal(s.primary?.event_id??null,event);assert.equal(s.scene.model,model);}
 function fold(v){v.els.get('recordPanel').open=true;v.els.get('evidencePanel').open=true;v.els.get('recordPanel').ontoggle();}
 function modelLinks(v,model){
-  const ids=['savedResponse','savedResponseReport','savedSignals','savedCurrent'];
-  if(!names.slice(2).includes(model)){
-    assert.equal(v.els.get('responseLinks').hidden,true);for(const id of ids){assert.equal(v.els.get(id).href,undefined);assert.equal(v.els.get(id).hidden,true);}return;
-  }
-  const e=rings.models[model],files=[e.response,e.response_report,model+'/response/signals.csv',model+'/response/readout-input.csv'];
+  const ids=['savedSignals','savedScalars','savedCurrent'],e=config.case_routes[model];
   assert.equal(v.els.get('responseLinks').hidden,false);
+  assert.equal(v.els.get('savedResponse').href,e.result);assert.equal(v.els.get('savedResponseReport').href,e.files);
   for(let i=0;i<ids.length;i++){
-    const element=v.els.get(ids[i]),pin=rings.files[files[i]];assert.equal(element.hidden,!pin,model+'/'+ids[i]+'/visibility');
-    if(pin){assert.equal(element.href,ringBase+files[i]);const b=bytes(path.join(ringRoot,files[i]));assert.equal(sha(b),pin.sha256);assert.equal(b.length,pin.bytes);}
+    const element=v.els.get(ids[i]),pin=e.original_files[ids[i]];assert.equal(element.hidden,!pin,model+'/'+ids[i]+'/visibility');
+    if(pin){assert.equal(element.href,pin.href);const file=pin.href.startsWith(ringBase)?path.join(ringRoot,pin.href.slice(ringBase.length)):path.resolve(site,'viewers',pin.href);const b=bytes(file);assert.equal(sha(b),pin.sha256);assert.equal(b.length,pin.bytes);}
     else assert.equal(element.href,undefined,model+'/'+ids[i]+'/unavailable href');
   }
-  assert.equal(v.els.get('savedCurrent').hidden,model==='GeRC02');
+  assert.equal(v.els.get('savedCurrent').hidden,model!=='KMRC01_candidate');
 }
 const first=model=>oracle(model).data.event_ids[0],firstGroup=model=>oracle(model).evidence.get(first(model)).groups[0].group_id;
 let groups=0,primaries=0,zeros=0;const results=[];

@@ -17,6 +17,22 @@ from check_site import MANIFEST, local_target, validate
 import export_models as models
 
 class PublicationTests(unittest.TestCase):
+    def test_restructure_reuses_checked_input_and_keeps_both_candidate_checks(self):
+        import build_site as builder
+        for has_previous in (False,True):
+            with self.subTest(previous=has_previous):
+                project=self.site/('checked-'+str(has_previous));docs=project/'docs';stage=project/'.local/site-build'
+                docs.mkdir(parents=True);(docs/'index.html').write_text('<html><body>saved</body></html>')
+                (docs/MANIFEST).write_text('{}')
+                if has_previous:
+                    previous=project/'.local/site-previous';previous.mkdir(parents=True);(previous/'index.html').write_text('older')
+                def gate(folder,**kwargs):
+                    return {'build_id':'old' if folder==docs else 'new','files':[]}
+                with patch.multiple(builder,ROOT=project,DESTINATION=docs,OUT=stage),patch.object(builder,'validate',side_effect=gate) as checked,redirect_stdout(io.StringIO()):
+                    builder.build(restructure=True)
+                self.assertEqual(checked.call_args_list,[unittest.mock.call(docs),
+                    unittest.mock.call(stage,require_manifest=False,require_models=True),unittest.mock.call(stage)])
+
     def test_staged_recovery_requires_validated_snapshot_and_stage(self):
         import build_site as builder
         project=self.site/'recovery'; docs=project/'docs'; stage=project/'.local/site-build'

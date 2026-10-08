@@ -16,7 +16,12 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/cs137-1m-response/report.html':'spectra/million-response.html',
         'examples/cs137-10k/comparison.html':'spectra/cs137-10k.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
-GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/ring_site.py','tools/site_restructure.py')
+GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py')
+TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+    '122e6ee7f6e303decb97181b7a8f4054b9a51f3381c3f9fb30c86f647a471370',
+    # Authenticated local 76a8596f stage before browser-found navigation fixes;
+    # an intermediate build, not a claim of accepted public publication.
+    '36ba63613061e1354d73e6716b528d2cd089eaccea2dd7f090e5633be50326e9'})
 
 def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 LOADED_GENERATORS={rel:sha(ROOT/rel) for rel in GENERATORS}
@@ -124,17 +129,27 @@ def pipeline_specs(site):
     return result
 
 def rewrite_links(text,source_page,destination_page):
-    def replace(match):
+    def replace(match,preserve_original=False):
         url=html.unescape(match.group(2)); parts=urlsplit(url)
         if parts.scheme or parts.netloc or not parts.path or parts.path.startswith('/'):
             return match.group(0)
         target=posixpath.normpath(posixpath.join(posixpath.dirname(source_page),parts.path))
-        target=ROUTES.get(target,target)
-        target=VIEWER_ROUTES.get(target,target)
+        if not preserve_original:
+            target=ROUTES.get(target,target)
+            target=VIEWER_ROUTES.get(target,target)
         relative=posixpath.relpath(target,posixpath.dirname(destination_page) or '.')
         value=urlunsplit(('', '',relative,parts.query,parts.fragment))
         return match.group(1)+html.escape(value,quote=True)+match.group(3)
-    return re.sub(r'(href=["\'])([^"\']*)(["\'])',replace,text)
+    def opening_tag(match):
+        tag=match.group(0)
+        # Read attribute names with quoted values as complete tokens. A marker
+        # inside a class/title value is not an archive instruction.
+        names=re.findall(r'\s([^\s=<>/]+)(?:\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+))?',tag)
+        archive=bool(re.match(r'<a\b',tag,re.I)) and 'data-original-report' in {name.lower() for name in names}
+        return re.sub(r'(href=["\'])([^"\']*)(["\'])',lambda href:replace(href,archive),tag)
+    # Marked archives still need path rebasing when their report is displayed in
+    # another folder; only substitution of the scientific record is bypassed.
+    return re.sub(r'<[A-Za-z](?:[^<\'">]|"[^"]*"|\'[^\']*\')*>',opening_tag,text)
 
 def replace_plots(text,specs,figures=False):
     expression=r'<figure>.*?</figure>' if figures else r'<svg\b[^>]*>.*?</svg>'
@@ -181,8 +196,27 @@ def source_inventory(site):
     from ring_site import source_files
     return tuple(ROUTES)+DATA_SOURCES+RECEIPTS+source_files(site)
 
+def case_context(rows,page):
+    from site_routes import case_result_path, event_view_path, spectrum_path, relative_url
+    return {row['model']:{'model':row['model'],'label':row['label'],
+        'result':relative_url(case_result_path(row['model']),page),
+        'files':relative_url(case_result_path(row['model'])+'#data-files',page),
+        'events':relative_url(event_view_path(row['model']),page),
+        'spectrum':relative_url(spectrum_path(row['model']),page)} for row in rows}
+
+def spectrum_focus(rows,page):
+    payload=json.dumps(case_context(rows,page),ensure_ascii=True,separators=(',',':')).replace('<','\\u003c')
+    common=(ROOT/'tools/viewer_navigation.js').read_text(encoding='utf-8')
+    return ('<label>Focus a saved case <select id="spectrum-case"><option value="">All four cases</option>'
+        +''.join('<option value="'+html.escape(row['model'],quote=True)+'">'+html.escape(row['label'])+'</option>' for row in rows)
+        +'</select></label><p id="spectrum-focus" role="status" aria-live="polite">All four cases.</p>'
+        '<script id="spectrum-case-context" type="application/json">'+payload+'</script>'
+        '<script id="spectrum-case-navigation">'+common+'\n'
+        'globalThis.spectrumNavigation=installSpectrumFocus(JSON.parse(document.getElementById("spectrum-case-context").textContent));</script>')
+
 def four_detector_spectra(site,specs):
     from ring_site import cases
+    from site_routes import page_navigation, case_result_path, relative_url
     rows=cases(site)
     require(len(rows)==4 and len(specs)==len(rows)*len(STAGES),'Four-detector spectrum inventory differs')
     body=('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -190,18 +224,18 @@ def four_detector_spectra(site,specs):
           '<style>body{font:16px/1.5 system-ui;color:#173047;background:#f6f8fa;margin:0}main{max-width:1120px;margin:auto;padding:20px}'
           'h1,h2{overflow-wrap:anywhere}details{margin:12px 0;padding:12px;border:1px solid #d7e0e7;border-radius:8px;background:white}'
           'summary{cursor:pointer;font-weight:600}a{color:#075e9b}a:focus-visible,summary:focus-visible{outline:3px solid #f8ad30}'
-          'section{margin:28px 0}figure{max-width:100%}</style></head><body><main>'
-          '<p><a href="../results/cs137-10k/index.html">Four-detector 10K results</a> · <a href="../viewers/events.html">Event viewer</a> · '
-          '<a href="manifest.json">Display provenance</a></p><h1>Cs137 · 10K stage spectra</h1>'
+          'section{margin:28px 0}figure{max-width:100%}select{font:inherit;padding:8px;max-width:100%}.error{color:#a12720}</style></head><body><main>'
+          +page_navigation('spectra/cs137-10k.html',dataset='tenk')+'<h1>Cs137 · 10K stage spectra</h1>'
           '<p>10,000 initial Cs137 decays per detector, including zero-Ge events. Each stage has its own counted population; '
           'native failures remain unknown and electronics rejects are excluded from accepted ADC energy. '
-          'Raw counts, 5 keV bins, default Log with optional Linear. No simulations run here.</p>')
+          'Raw counts, 5 keV bins, default Log with optional Linear. No simulations run here.</p>'
+          +spectrum_focus(rows,'spectra/cs137-10k.html'))
     for i,row in enumerate(rows):
         c=row['counts'];base='../'+row['base'];model=row['model']
         body+=('<section id="tenk-'+model+'"><h2>'+html.escape(row['label'])+'</h2><p>'+html.escape(row['note'])+'</p><p>'
                + f'{c["zero_deposit_primaries"]:,} zero-Ge decays; {c["groups"]:,} groups; {c["accepted"]:,} accepted; '
                + f'{c["native_failed_groups"]:,} native failures; {c["readout_rejected"]:,} electronics rejects.</p><p>'
-               + f'<a href="{base}/response/summary.html">Charge and readout</a> · <a href="{base}/response/histograms.json">Exact bins</a> · '
+               + f'<a href="{relative_url(case_result_path(model),"spectra/cs137-10k.html")}">Charge and readout</a> · <a href="{base}/response/histograms.json">Exact bins</a> · '
                + f'<a href="{base}/response/ledgers.zip">Complete ledger archive</a></p>')
         for (stage,label),spec in zip(STAGES,specs[i*len(STAGES):(i+1)*len(STAGES)],strict=True):
             opened=' open' if stage=='accepted_peak_ADC' else ''
@@ -209,16 +243,69 @@ def four_detector_spectra(site,specs):
         body+='</section>'
     return (body+'<p>Nominal source/mounting, isolated electronics windows and synthetic injection calibration. '
             'No calibrated Li CCE, physical energy resolution or measured-spectrum fit is claimed.</p>'
-            '<p><a href="../examples/cs137-10k/comparison.html">Original AK02/SAP22 report (archive)</a></p>'
+            '<details><summary>Display provenance and original report</summary><p><a href="manifest.json">Display provenance</a> · '
+            '<a data-original-report href="../examples/cs137-10k/comparison.html">Original AK02/SAP22 report (archive)</a></p></details>'
             +assets()+'</main></body></html>\n')
+
+def display_navigation(text,original,destination):
+    """Replace known presentation blocks, retaining scientific prose and files."""
+    extra=''
+    if destination.startswith('spectra/million-'):
+        matches=list(re.finditer(r'<nav>.*?</nav>',text,re.S))
+        require(len(matches)==1,'Original million-report navigation changed')
+        old=matches[0].group(0)
+        text=text[:matches[0].start()]+text[matches[0].end():]
+        if destination=='spectra/million-truth.html':
+            files=re.findall(r'<a href="([^\"]+)">([^<]+)</a>',old)
+            files=[(path,label) for path,label in files if not path.startswith('../')]
+            require(len(files)==5,'Original truth file navigation changed')
+            extra+='<section id="data-files"><h2>Data and settings</h2><p>'+ ' · '.join(
+                '<a href="'+path+'">'+label+'</a>' for path,label in files)+'</p></section>'
+            link='<p><a href="../cs137-1m-response/report.html">Open the full 1M-per-detector Geant4 → SSD → synthetic peak-ADC comparison</a></p>'
+            require(text.count(link)==1,'Original truth response link changed')
+            text=text.replace(link,'',1)
+        # These inherited examples belong to a separate saved campaign. They
+        # never enter the 1M local-view menu.
+        extra+='<section id="other-datasets"><h2>Other datasets</h2><p>Switch to the earlier Cs137 10K dataset: '
+        extra+='<a href="../cs137-10k/comparison.html">10K stage spectra</a> · '
+        extra+='<a href="../../viewers/events.html?model=AK02&amp;view=positive">10K radiation events (AK02 initially)</a>. '
+        extra+='These event records are not from the million-decay campaign.</p></section>'
+    elif destination=='spectra/pipeline.html':
+        # The saved teaching reader already has the previous display header.
+        old=r'<div style="padding:12px 24px;background:#fff;color:#173047"><a href="../index.html">GeSignal home</a><nav aria-label="Primary".*?</nav></div>'
+        text,n=re.subn(old,'',text,count=1,flags=re.S)
+        require(n==1,'Original teaching header changed')
+        context=r'<section class="dataset-context" aria-label="Saved dataset"[^>]*>.*?</section>'
+        text,n=re.subn(context,'',text,count=1,flags=re.S)
+        require(n==1,'Original teaching dataset navigation changed')
+        text,n=re.subn(r'<a href="(?:../index.html|../results/index.html#teaching)">← (?:Detector library|Teaching dataset)</a>','',text,count=1)
+        require(n==1,'Original teaching return navigation changed')
+    else:
+        from site_routes import case_result_path, relative_url
+        for section_id in ('saved-g4-geometry','saved-ge-hit-overlay','million-deposition'):
+            expression=r'(<section id="'+section_id+r'"[^>]*>)(.*?)(</section>)'
+            found=re.search(expression,text,re.S)
+            require(found is not None,'Original 10K presentation section changed: '+section_id)
+            body=found.group(2)
+            if section_id=='saved-g4-geometry':
+                body,n=re.subn(r'<a href="../cs137-10k-geometry/geometry.html">[^<]+</a> \| ','',body,count=1)
+            else:
+                body,n=re.subn(r'<p><a href="[^\"]+">[^<]+</a></p>','',body,count=1)
+            require(n==1,'Original 10K presentation link changed: '+section_id)
+            text=text[:found.start(2)]+body+text[found.end(2):]
+        for model in ('AK02','SAP22'):
+            old='href="'+model+'/response/summary.html"'
+            require(text.count(old)==1,'Original 10K response entry changed')
+            text=text.replace(old,'href="'+relative_url(case_result_path(model),original)+'"',1)
+    return add_at_end(text,extra) if extra else text
 
 def render_page(site,original,destination,specs):
     if destination=='spectra/cs137-10k.html':
         from ring_site import ring_manifest
         if ring_manifest(site):
-            from site_restructure import navigation, dataset_navigation
-            return four_detector_spectra(site,specs).replace('<main>','<main>'+navigation('../')+dataset_navigation('tenk','../'),1)
+            return four_detector_spectra(site,specs)
     text=(site/original).read_text(encoding='utf-8')
+    text=display_navigation(text,original,destination)
     if destination=='spectra/pipeline.html':
         text=pipeline_page(text,specs)
     else:
@@ -230,41 +317,20 @@ def render_page(site,original,destination,specs):
         text=text.replace('No SSD, readout or noise has run for this campaign.','This page shows Geant4 deposition truth only. The completed native SSD/readout response is reported separately.')
         text=add_at_end(text,assets())
     text=rewrite_links(text,original,destination)
-    if destination=='spectra/pipeline.html':
-        old='href="../index.html">← Detector library</a>'
-        if old in text:
-            require(text.count(old)==1,'Original pipeline library return changed')
-            text=text.replace(old,'href="../results/index.html#teaching">← Teaching dataset</a>',1)
-        else:
-            require('href="../results/index.html#teaching">← Teaching dataset</a>' in text,
-                    'Teaching dataset return missing')
-    if destination=='spectra/million-response.html':
-        old='>3D Ge-hit examples</a>'
-        require(text.count(old)==1,'Original response Ge-hit link changed')
-        text=text.replace(old,'>Earlier 10k Ge-hit examples</a>',1)
     archive=posixpath.relpath(original,'spectra')
-    returns={
-        'spectra/million-truth.html':('../results/cs137-1m/index.html','Current 1M campaign'),
-        'spectra/million-response.html':('../results/cs137-1m/index.html','Current 1M campaign'),
-        'spectra/cs137-10k.html':('../results/cs137-10k/index.html','Earlier 10k campaign'),
-        'spectra/pipeline.html':('../learn/index.html','Teaching example context'),
-    }
-    target,label=returns[destination]
     note=('<aside class="spectrum-note"><strong>Updated spectrum display.</strong> Exact saved bins; default Log, optional Linear. No simulations rerun. '
-          '<a href="'+target+'">'+label+'</a> · <a href="../results/index.html">All results</a> · '
-          '<a href="'+archive+'">Original report (archived presentation)</a> · <a href="manifest.json">Display provenance</a>'
-          +(' <span>Ge-hit event examples on this page use the earlier 10k campaign.</span>' if destination=='spectra/million-response.html' else '')+'</aside>')
+          '<a data-original-report href="'+archive+'">Original report (archived presentation)</a> · <a href="manifest.json">Display provenance</a>'
+          '</aside>')
     anchor=text.find('<h1')
     require(anchor>=0,'Report heading missing')
     text=text[:anchor]+note+text[anchor:]
-    if destination!='spectra/pipeline.html':
-        from site_restructure import navigation, dataset_navigation
-        kind='tenk' if destination=='spectra/cs137-10k.html' else 'million'
-        bar=navigation('../')+dataset_navigation(kind,'../')
-        text,n=re.subn(r'<body\b[^>]*>',lambda m:m.group(0)+bar,text,count=1)
-        if not n:  # The frozen two-detector report uses a valid implicit body.
-            require('</style>' in text,'Implicit spectrum body/navigation anchor')
-            text=text.replace('</style>','</style>'+bar,1)
+    from site_routes import page_navigation
+    kind='teaching' if destination=='spectra/pipeline.html' else 'tenk' if destination=='spectra/cs137-10k.html' else 'million'
+    bar=page_navigation(destination,dataset=kind)
+    text,n=re.subn(r'<body\b[^>]*>',lambda m:m.group(0)+bar,text,count=1)
+    if not n:  # The frozen reports use a valid implicit body.
+        require('</style>' in text,'Implicit spectrum body/navigation anchor')
+        text=text.replace('</style>','</style>'+bar,1)
     return text
 
 def component_hashes(text):
@@ -276,22 +342,30 @@ def component_hashes(text):
             'script':hashlib.sha256(scripts[0].encode()).hexdigest(),
             'style':hashlib.sha256(styles[0].encode()).hexdigest()}
 
-def home_component(site):
-    text=(Path(site)/'index.html').read_text(encoding='utf-8')
+PREVIEW_PATH='results/cs137-1m/index.html'
+
+def home_component(site,path=PREVIEW_PATH):
+    """Retained API name; current compact preview belongs to its 1M campaign."""
+    text=(Path(site)/path).read_text(encoding='utf-8')
     blocks=re.findall(r'<figure class="spectrum-panel".*?</figure>',text,re.S)
-    require(len(blocks)==1,'Homepage must contain one spectrum preview')
+    require(len(blocks)==1,'Campaign summary must contain one spectrum preview')
     return text,blocks[0]
 
 def validate_home(site,manifest,strict=False):
-    text,block=home_component(site); metadata=manifest['homepage']
-    require(component_hashes(text)==metadata['render_components'],'Homepage spectrum rendering changed')
-    require(embedded_specs(block)==response_specs(Path(site))[:1],'Homepage spectrum data differs')
-    require(hashlib.sha256(block.encode()).hexdigest()==metadata['panel_sha256'],'Homepage spectrum panel changed')
-    if strict: require(block==panel(response_specs(Path(site))[0],compact=True),'Homepage spectrum differs from current renderer')
+    # Older protected publications retain their existing homepage contract.
+    key='campaign_preview' if 'campaign_preview' in manifest else 'homepage'
+    metadata=manifest[key];path=metadata.get('path','index.html')
+    if key=='campaign_preview':require(path==PREVIEW_PATH,'Campaign spectrum preview route changed')
+    text,block=home_component(site,path)
+    require(component_hashes(text)==metadata['render_components'],'Campaign spectrum rendering changed')
+    require(embedded_specs(block)==response_specs(Path(site))[:1],'Campaign spectrum data differs')
+    require(hashlib.sha256(block.encode()).hexdigest()==metadata['panel_sha256'],'Campaign spectrum panel changed')
+    if strict: require(block==panel(response_specs(Path(site))[0],compact=True),'Campaign spectrum differs from current renderer')
 
 def finalize(site):
     site=Path(site);text,block=home_component(site);m=read(site/'spectra/manifest.json')
-    m['homepage']={'panel_sha256':hashlib.sha256(block.encode()).hexdigest(),'render_components':component_hashes(text)}
+    m.pop('homepage',None)
+    m['campaign_preview']={'path':PREVIEW_PATH,'panel_sha256':hashlib.sha256(block.encode()).hexdigest(),'render_components':component_hashes(text)}
     write_if_changed(site/'spectra/manifest.json',json.dumps(m,indent=2,allow_nan=False)+'\n')
     return validate(site,require_current_generators=True,require_home=True)
 
@@ -311,7 +385,7 @@ def assemble(site):
             'render_components':component_hashes(text)}
     require_frozen_sources()
     require(origin=={rel:sha(site/rel) for rel in sources},'Source reports or numeric data changed')
-    manifest={'kind':'saved_spectrum_display_v1','display_revision':2,'default_scale':'log','histogram_style':'step',
+    manifest={'kind':'saved_spectrum_display_v1','display_revision':3,'default_scale':'log','histogram_style':'step',
               'zero_count_policy':'gaps on true log axes; no pseudocounts',
               'origin_files':origin,'generators':{rel:sha(ROOT/rel) for rel in GENERATORS},
               'pages':pages,'new_simulations':0,'original_reports_modified':False,
@@ -331,15 +405,18 @@ def validate(site,require_current_generators=False,require_home=False):
     for rel,h in m['origin_files'].items(): require(sha(site/rel)==h,'Original spectrum source changed: '+rel)
     current={rel:sha(ROOT/rel) for rel in GENERATORS}
     same_generators=m['generators']==current
+    previous=sha(folder/'manifest.json') in TRUSTED_PREVIOUS_MANIFESTS
+    require(same_generators or (not require_current_generators and previous),
+            'Unknown spectrum generator binding; preserve the checked saved display')
     if require_current_generators:
         require_frozen_sources()
-        require(same_generators and m.get('display_revision')==2,'Candidate generator binding mismatch')
+        require(same_generators and m.get('display_revision')==3,'Candidate generator binding mismatch')
     for destination,record in m['pages'].items():
         text=(site/destination).read_text(encoding='utf-8'); expected=READERS[destination](site)
         require(sha(site/destination)==record['sha256'],'Display HTML changed')
-        if m.get('display_revision')==2:
+        if m.get('display_revision') in (2,3):
             require(component_hashes(text)==record['render_components'],'Static chart or controls changed')
-        if require_current_generators or (m.get('display_revision')==2 and same_generators):
+        if require_current_generators or (m.get('display_revision') in (2,3) and same_generators):
             require(text==render_page(site,record['source'],destination,expected),'Rendered display differs from deterministic generator')
         require(record['specs_sha256']==digest(expected),'Spectrum reader/data mismatch')
         actual=embedded_specs(text)
@@ -352,7 +429,7 @@ def validate(site,require_current_generators=False,require_home=False):
                 start=body.index('<script id="pipeline-data" type="application/json">')
                 return body[start:body.index('</script>',start)]
             require(payload(text)==payload((site/'examples/pipeline.html').read_text(encoding='utf-8')),'Pipeline event/waveform payload changed')
-    if require_home or "homepage" in m:
+    if require_home or 'homepage' in m or 'campaign_preview' in m:
         validate_home(site,m,require_current_generators or same_generators)
     return m
 

@@ -30,6 +30,16 @@ TYPE_LABELS={
     'SAP22':'Inverted coaxial point-contact (ICPC)',
 }
 
+def navigation_block(path, *, context=''):
+    """A replaceable display fragment, separate from the saved scientific body."""
+    from site_routes import page_navigation
+    return ('<!-- detector-page-navigation -->'+page_navigation(path)+context+
+            '<!-- /detector-page-navigation -->')
+
+def strip_navigation_block(text):
+    return re.sub(r'<!-- detector-page-navigation -->.*?<!-- /detector-page-navigation -->',
+                  '',text,flags=re.S)
+
 def archive_notebook(html):
     """Correct only the public execution invitation; retain saved outputs/anchors."""
     html=html.replace('Back to GeGI results','Back to GeGI overview')
@@ -37,8 +47,39 @@ def archive_notebook(html):
         'Dimensions and model inputs belong to the earlier study’s private <code>README.md</code>, which is not included in this archive.')
     html=html.replace('Supplementary saved notebook; not a live simulation. Original code inputs are omitted. Parameters belong to this earlier study.',
         'Archived executed notebook. Recorded outputs and parameters belong to this earlier study; code inputs and private README are omitted. Use the setup guide for supported new calculations.')
-    return re.sub(r'<p>Kernel: <strong>Julia 1\.13 — GeGI</strong>\. Run all cells in order\.</p>',
+    html=re.sub(r'<p>Kernel: <strong>Julia 1\.13 — GeGI</strong>\. Run all cells in order\.</p>',
         '<p>Recorded notebook kernel: <strong>Julia 1.13 — GeGI</strong>. This archive displays saved outputs; it does not execute cells.</p>',html)
+    if '<!-- detector-page-navigation -->' in html:
+        html=strip_navigation_block(html)
+        anchor=re.search(r'<body\b[^>]*>',html)
+        if anchor is None:raise ValueError('Unexpected supplementary study body')
+        start,end=anchor.end(),anchor.end()
+    else:
+        banner=re.search(r'<nav\b[^>]*>[^<]*(?:<a\b[^>]*>.*?</a>)?.*?Archived executed notebook\..*?</nav>',html,re.S)
+        if banner is None:raise ValueError('Unexpected supplementary study navigation')
+        if re.search(r'<(?:img|svg|video|table|script)\b',banner.group(0),re.I):
+            raise ValueError('Scientific content appeared in supplementary study navigation')
+        start,end=banner.span()
+    context=('<p id="supplement-study-context">Archived executed notebook. Recorded outputs and parameters '
+             'belong to this earlier study; code inputs and private README are omitted. '
+             '<a href="gallery.html">Return to GeGI saved fields &amp; signals</a>. '
+             'Use the <a href="../../guide.html">local guide</a> for supported new calculations.</p>')
+    return html[:start]+navigation_block('detectors/GeGI_3D/supplement.html',context=context)+html[end:]
+
+def gallery_header(text,model):
+    """Replace the old header's navigation while retaining its saved title/settings."""
+    text=strip_navigation_block(text)
+    header=re.search(r'<header\b[^>]*>(.*?)<h1\b',text,re.S)
+    block=navigation_block('detectors/'+model+'/gallery.html')
+    if header:
+        prefix=header.group(1)
+        if re.search(r'<(?:img|svg|video|table|script)\b',prefix,re.I):
+            raise ValueError('Scientific content appeared before gallery title')
+        return text[:header.start(1)]+block+text[header.end(1):]
+    # Structural fixtures have only a main element; public saved galleries have headers.
+    main=re.search(r'<main\b[^>]*>',text)
+    if main is None:raise ValueError('Unexpected saved gallery header: '+model)
+    return text[:main.end()]+block+text[main.end():]
 
 def gallery_navigation(text,model):
     """Retain study settings/plots while retiring competing invitation cards."""
@@ -67,17 +108,13 @@ def gallery_navigation(text,model):
 
 def strip_navigation(text):
     """Repair the retained GeGI specialist reader without changing its payload."""
-    text=text.replace('<a href="index.html">GeGI gallery</a>',
-                      '<a href="index.html">GeGI overview</a>')
-    text=text.replace('<a href="../../index.html">All detectors</a>',
-                      '<a href="../index.html">All detectors</a>')
-    if 'id="strip-study-context"' not in text:
-        from site_restructure import navigation
-        text=text.replace('<header>','<header>'+navigation('../../')+
-            '<p id="strip-study-context">Earlier saved 34-channel strip study · '
-            '<a href="gallery.html">Fields and saved signals</a> · '
-            '<a href="technical.html">Model and provenance</a>.</p>',1)
-    return text
+    text=strip_navigation_block(text)
+    header=re.search(r'<header\b[^>]*>(.*?)<h1\b',text,re.S)
+    if header is None:raise ValueError('Unexpected GeGI strip study header')
+    if re.search(r'<(?:img|svg|video|table|script)\b',header.group(1),re.I):
+        raise ValueError('Scientific content appeared in strip study navigation')
+    context='<p id="strip-study-context">Earlier saved 34-channel strip study. <a href="gallery.html">Return to GeGI saved fields &amp; signals</a>.</p>'
+    return text[:header.start(1)]+navigation_block('detectors/GeGI_3D/strip_explorer.html',context=context)+text[header.end(1):]
 
 def gegi_channel_captions(text,site):
     """Expose each preview's exact original selected channels beside its PNG."""
@@ -95,7 +132,6 @@ def gegi_channel_captions(text,site):
     return re.sub(r'<article class="card">.*?</article>',caption,text,flags=re.S)
 
 def apply(site, write_page):
-    from site_restructure import navigation
     site=Path(site)
     catalog=json.loads((site/'models/catalog.json').read_text(encoding='utf-8'))
     capabilities=execution_capabilities()
@@ -115,11 +151,8 @@ def apply(site, write_page):
         original=(gallery if gallery.is_file() else page).read_text(encoding='utf-8')
         cleaned=gallery_navigation(remove_sections(original,MANAGED),model)
         if model=='GeGI_3D':cleaned=gegi_channel_captions(cleaned,site)
-        cleaned=cleaned.replace('href="../../index.html">Detector library','href="../index.html">Detector library')
-        banner=(f'<section id="saved-gallery-intro">'+navigation('../../')+f'<h2>{escape(model)} earlier saved gallery</h2>'
-                '<p><a href="index.html">Detector overview</a> · '
-                '<a href="geometry.html">Rotate geometry</a> · '
-                '<a href="technical.html">Model and provenance</a></p>'
+        cleaned=gallery_header(cleaned,model)
+        banner=(f'<section id="saved-gallery-intro"><h2>{escape(model)} earlier saved gallery</h2>'
                 '<p>Original synthetic SSD study from <code>20260922_suite_v3</code>. '
                 'For source-campaign results, return to the detector overview. '
                 'Original settings and limitations remain below.</p></section>')
@@ -141,11 +174,14 @@ def apply(site, write_page):
                   '<p>This model is available for browsing and needs a future larger cryostat.</p><p>'+escape(catalog_control[model]['reason'])+'</p>')
         special=('<p><a href="strip_explorer.html">Saved 34-channel strip study</a> · '
                  '<a href="supplement.html">Earlier supplementary study</a></p>' if model=='GeGI_3D' else '')
-        legacy_ids=set(ids(cleaned))-MANAGED-{'contact-legend','native-cs137-10k','saved-signal-axis-note'}
-        aliases=''.join(f'<p id="{escape(i,quote=True)}"><a href="gallery.html#{escape(i,quote=True)}">Open saved gallery detail</a></p>' for i in sorted(legacy_ids))
+        legacy_ids=set(ids(strip_navigation_block(cleaned)))-MANAGED-{'contact-legend','native-cs137-10k','saved-signal-axis-note'}
+        aliases=('<details class="panel"><summary>Earlier saved gallery sections</summary>'+''.join(
+            f'<p id="{escape(i,quote=True)}"><a href="gallery.html#{escape(i,quote=True)}">Open saved gallery detail</a></p>'
+            for i in sorted(legacy_ids))+'</details>' if legacy_ids else '')
         past=('<p id="native-cs137-10k"><a href="../../results/cs137-1m/index.html">Separate Cs137 1M campaign · '+escape(model)+'</a></p>' if model in campaign_models else '')
-        header=(f'<section class="hero"><p><a href="../index.html">All detectors</a> / <a href="index.html">{escape(model)}</a></p>'
-                f'<h1>{escape(model)}</h1><p>{escape(TYPE_LABELS[model])}</p></section>')
+        variant_note=('<p>Catalog model: original 30-minute GeRC02. Cs137 10K uses a separate Li50min operating variant.</p>' if model=='GeRC02' else '')
+        header=(f'<section class="hero"><h1>{escape(model)}</h1><p>{escape(TYPE_LABELS[model])}</p>'
+                '<p>Recorded model status: '+escape(item.get('status','Saved model'))+'</p>'+variant_note+'</section>')
         image=(f'<figure class="panel"><a href="runs/{RUN}/01_geometry.png">'
                f'<img loading="lazy" style="width:100%;height:300px;object-fit:contain" src="runs/{RUN}/01_geometry.png" '
                f'alt="{escape(model)} {escape(TYPE_LABELS[model])}, saved geometry"></a>'
@@ -153,9 +189,11 @@ def apply(site, write_page):
                'Colors identify contact IDs; they do not show doping or Li thickness.</figcaption></figure>')
         nav=('<section id="featured-detector-navigation" class="panel"><h2>View this detector</h2><div class="grid">'
              '<article id="ssd-interactive-geometry"><h3><a href="geometry.html">Geometry</a></h3><p>Rotate the saved physical meshes and inspect contact IDs.</p></article>'
-             '<article><h3><a href="gallery.html">Fields and saved signals</a></h3><p>Earlier synthetic SSD study: field plots, movies and event signals.</p>'+special+'</article>'
-             '<article id="contact-legend"><h3><a href="technical.html">Model and provenance</a></h3><p>Original settings, contacts, signed bias and model downloads.</p></article></div></section>')
-        overview=(header+image+nav+'<section class="panel"><h2>Local calculation support</h2>'+run_note+'</section>'+past+aliases)
+             '<article id="contact-legend"><h3><a href="technical.html">Model &amp; files</a></h3><p>Original settings, contacts, signed bias and model downloads.</p></article></div></section>')
+        studies=('<section id="saved-studies" class="panel"><h2>Saved studies</h2>'
+                 '<p><a href="gallery.html">Saved fields &amp; signals</a> · earlier synthetic SSD study: field plots, movies and event signals.</p>'
+                 +special+past+'</section>')
+        overview=(header+image+nav+'<section class="panel"><h2>Local calculation support</h2>'+run_note+'</section>'+studies+aliases)
         write_page(page,model+' · Detector overview',overview,2)
         diagnostics=[]
         for name in ('validation.events.json','validation.scenes.json'):
@@ -170,10 +208,7 @@ def apply(site, write_page):
                '<p>These are coordinate bounds, not active-volume or dead-layer measurements.</p>'
                '<p><strong>Reference readout contact:</strong> '+str(item['readout_contact_id'])+'</p>'
                '<p><strong>Recorded model assumptions:</strong></p>'+assumptions+'</section>')
-        sibling_nav=('<nav aria-label="Detector pages"><a href="index.html">Overview</a> · '
-                     '<a href="geometry.html">Geometry</a> · <a href="gallery.html">Saved gallery</a> · '
-                     '<a href="../index.html">Detector library</a></nav>')
-        technical=(header+sibling_nav+facts+'<section class="panel"><h2>Original model and provenance</h2><p>'+downloads+
+        technical=(header+facts+'<section class="panel"><h2>Original model and provenance</h2><p>'+downloads+
                    '</p><p><a href="../../models/catalog.json">Canonical model catalog and hashes</a> · '
                    '<a href="../../models/README.md">Model distribution guide</a></p>'
                    '<ul>'+''.join('<li>'+escape(source)+'</li>' for source in item.get('sources',[]))+'</ul>'

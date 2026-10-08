@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+import re
+import zipfile
 
 import ring_site as R
 import spectrum_display as S
@@ -10,7 +12,8 @@ import spectrum_display as S
 
 class RingSiteTests(unittest.TestCase):
     def setUp(self):
-        root = R.Path(__file__).resolve().parents[1] / '.local/ring-delivery-v1'
+        root = R.Path(__file__).resolve().parents[1] / '.local/student-navigation-v2'
+        root.mkdir(parents=True, exist_ok=True)
         self.temp = tempfile.TemporaryDirectory(prefix='site-fixture-', dir=root)
         self.site = Path(self.temp.name)
         self.addCleanup(self.temp.cleanup)
@@ -95,6 +98,100 @@ class RingSiteTests(unittest.TestCase):
         self.fixture()
         self.assertEqual(len(R.source_files(self.site)), 3)
         self.assertEqual(set(S.source_inventory(self.site)), set(S.ROUTES)|set(S.DATA_SOURCES)|set(S.RECEIPTS)|set(R.source_files(self.site)))
+
+    def report_fixture(self, model='AK02', traces=4):
+        base = (R.RING_FOLDER if model in R.RING_MODELS else 'examples/cs137-10k') + '/' + model
+        case = dict(model=model, label=model, note='Frozen scientific fixture.', base=base,
+                    counts=dict(initial_primaries=10000, initial_decays=10000, zero_deposit_primaries=9999,
+                                groups=1, accepted=0, native_failed_groups=1, readout_rejected=0))
+        folder = self.site / base / 'response'; folder.mkdir(parents=True, exist_ok=True)
+        svg = "<svg role='img' viewBox='0 0 600 205'><polyline points='1,-2 3,0' stroke='currentColor'/><text>−2 fC</text></svg>"
+        report = ("<!doctype html><html><head><meta charset='utf-8'><title>Frozen native report</title>"
+                  "<style>body{padding:20px}svg{width:100%}pre{white-space:pre-wrap}</style>"
+                  "<script id='source-data' type='application/json'>{\"signed\":-0.000123456789,\"unknown\":null,\"zero\":0,\"text\":\"href='unchanged'\"}</script>"
+                  "<script src='chart.js'></script></head><body><h1 id='original-title'>Native report</h1>"
+                  "<nav><a href='run.json'>Settings</a><a href='ledgers.zip'>Truth</a><a href='ledgers.zip'>Endpoints</a></nav>"
+                  "<pre>{\"zero_deposit_primaries\":9999,\"native_failed_groups\":1,\"charge\":null}</pre>"
+                  "<table id='original-errors'><tr><td>ArgumentError: Invalid waveform support</td><td>0</td><td>−0.1</td></tr></table>"
+                  "<p>Failure is unknown. <a href='ledgers.zip'>Failure diagnostics</a>.</p>"
+                  "<details id='event-213'><summary>Event 213 / group 0</summary><figure>" + svg + "</figure></details>"
+                  "<img src='preview.png' poster='plot.png'><a href='run.json#calibration'>Calibration</a>"
+                  "<a href='#event-213'>Same event</a><a href='https://example.invalid/ref'>Reference</a></body></html>")
+        (folder / 'summary.html').write_bytes(report.encode('utf-8'))
+        self.put(base + '/response/run.json', {'counts': case['counts']})
+        members = {name: b'{}\n' for name in ('truth.jsonl', 'scalars.jsonl', 'endpoints.jsonl', 'histograms.json', 'run.json')}
+        members['traces.jsonl'] = b'{}\n' * traces
+        members['native-failures.jsonl'] = b'{"error":"ArgumentError: Invalid waveform support"}\n'
+        with zipfile.ZipFile(folder / 'ledgers.zip', 'w') as bundle:
+            for name, content in members.items(): bundle.writestr(name, content)
+        self.put(base + '/response/native-failures.json', {'groups': 1, 'charge': None})
+        if model == 'KMRC01_candidate':
+            old = folder / 'original-native/summary.html'; old.parent.mkdir()
+            old.write_bytes(b'<h1>Original response</h1><p>0 of 231 accepted; raw negative charge.</p>')
+        return case, report
+
+    def test_direct_report_preserves_science_scripts_ids_and_relative_resources(self):
+        case, original = self.report_fixture()
+        source = self.site / case['base'] / 'response/summary.html'; digest = R.sha(source)
+        body = R.saved_report(self.site, case)
+        for pattern in (r'<svg\b.*?</svg>', r'<table\b.*?</table>', r'<pre>.*?</pre>',
+                        r'<script id=\x27source-data\x27.*?</script>'):
+            self.assertEqual(re.findall(pattern, body, re.S), re.findall(pattern, original, re.S))
+        prefix = '../../../' + case['base'] + '/response/'
+        for resource in ('chart.js', 'preview.png', 'plot.png', 'run.json#calibration'):
+            self.assertIn(prefix + resource, body)
+        for unchanged in ("href='#event-213'", "href='https://example.invalid/ref'", "id='original-title'", "id='event-213'"):
+            self.assertIn(unchanged, body)
+        self.assertIn("<details id='event-213' open>", body)
+        self.assertIn('4 saved trace records', body); self.assertIn('do not imply complete waveforms', body)
+        self.assertIn('Independent saved native-failure diagnostics', body)
+        self.assertEqual(body.count('href="' + prefix + 'ledgers.zip"'), 1)
+        science = body.split('<section id="data-files"', 1)[0]
+        self.assertNotIn('ledgers.zip', science)
+        self.assertIn('Failure diagnostics (included in the complete response archive)', science)
+        self.assertNotIn('<nav>', body); self.assertNotIn('<iframe', body)
+        self.assertNotIn('body{padding:20px}', body)
+        self.assertIn('.saved-response-report{padding:20px}', body)
+        self.assertEqual(R.sha(source), digest)
+
+    def test_km_current_trace_scope_and_original_zero_acceptance_archive_remain_separate(self):
+        case, original = self.report_fixture('KMRC01_candidate', traces=231)
+        old = self.site / case['base'] / 'response/original-native/summary.html'; digest = R.sha(old)
+        body = R.saved_report(self.site, case)
+        self.assertIn('231 saved trace records', body)
+        self.assertIn('0/231 accepted (archive)', body); self.assertIn('fixed −1 wiring is a separate derivative', body)
+        self.assertIn('/original-native/summary.html', body)
+        self.assertEqual(R.sha(old), digest); self.assertNotIn('http-equiv="refresh"', old.read_text())
+        self.assertIn('−2 fC', body)
+
+    def test_archive_member_and_waveform_identity_checks_fail_without_science_changes(self):
+        case, original = self.report_fixture('GeRC02')
+        self.put(case['base'] + '/response/run.json', {'trace_examples': {'source_trace_records': 4, 'displayed_trace_keys': [[999, 0]]}})
+        with self.assertRaisesRegex(ValueError, 'waveform display keys differ'):
+            R.saved_report(self.site, case)
+        with zipfile.ZipFile(self.site / case['base'] / 'response/ledgers.zip', 'w') as bundle:
+            bundle.writestr('truth.jsonl', '{}\n')
+        with self.assertRaisesRegex(ValueError, 'Incomplete response archive'):
+            R.saved_report(self.site, case)
+        self.assertEqual((self.site / case['base'] / 'response/summary.html').read_bytes(), original.encode('utf-8'))
+
+    def test_case_cards_have_one_primary_report_action_and_studies_insert_after_geometry(self):
+        case, _ = self.report_fixture()
+        cards = R.cards([case], '../../')
+        self.assertEqual(cards.count('<a '), 1)
+        self.assertIn('results/cs137-10k/AK02/charge-readout.html', cards)
+        self.assertNotIn('ledgers.zip', cards)
+        page = self.site / 'detector.html'
+        page.write_text('<main><section id="hero">Model</section><section id="current-ring-10k">old</section>'
+                        '<figure>Geometry</figure><section id="saved-studies"><h2>Saved studies</h2><p>Original gallery</p></section></main>')
+        block = '<section id="current-ring-10k"><h3>Cs137 10K</h3></section>'
+        R.insert_section(page, 'current-ring-10k', block)
+        first = page.read_bytes(); html = first.decode()
+        self.assertEqual(html.count('id="current-ring-10k"'), 1)
+        self.assertLess(html.index('Geometry'), html.index('saved-studies'))
+        self.assertLess(html.index('Original gallery'), html.index('current-ring-10k'))
+        R.insert_section(page, 'current-ring-10k', block)
+        self.assertEqual(page.read_bytes(), first)
 
 
 if __name__ == '__main__':

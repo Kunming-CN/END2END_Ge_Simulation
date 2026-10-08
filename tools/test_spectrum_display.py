@@ -99,7 +99,8 @@ class SavedDisplayTests(unittest.TestCase):
         self.assertEqual(before,{p.name:p.read_bytes() for p in (self.site/'spectra').iterdir()})
     @classmethod
     def setUpClass(cls):
-        cls.tmp=tempfile.TemporaryDirectory(prefix='spectrum-test-')
+        evidence=ROOT/'.local/student-navigation-v2';evidence.mkdir(parents=True,exist_ok=True)
+        cls.tmp=tempfile.TemporaryDirectory(dir=evidence,prefix='spectrum-test-')
         cls.site=Path(cls.tmp.name)
         for rel in tuple(D.ROUTES)+D.DATA_SOURCES+D.RECEIPTS:
             target=cls.site/rel;target.parent.mkdir(parents=True,exist_ok=True)
@@ -113,24 +114,27 @@ class SavedDisplayTests(unittest.TestCase):
         self.assertEqual(sum(v['plot_states'] for v in self.manifest['pages'].values()),20)
         self.assertEqual(self.before,{p:D.sha(self.site/p) for p in self.before})
     def test_campaign_returns_and_library_target(self):
-        for name,label,target in (
-            ('million-truth','Current 1M campaign','../results/cs137-1m/index.html'),
-            ('million-response','Current 1M campaign','../results/cs137-1m/index.html'),
-            ('cs137-10k','Earlier 10k campaign','../results/cs137-10k/index.html'),
-            ('pipeline','Teaching example context','../learn/index.html')):
+        for name,target in (
+            ('million-truth','../results/cs137-1m/index.html'),
+            ('million-response','../results/cs137-1m/index.html'),
+            ('cs137-10k','../results/cs137-10k/index.html'),
+            ('pipeline','../results/index.html')):
             page=(self.site/'spectra'/f'{name}.html').read_text(encoding='utf-8')
-            self.assertIn(f'href="{target}">{label}</a>',page)
+            self.assertIn(f'href="{target}"',page)
             self.assertIn('Original report (archived presentation)',page)
-        pipeline=(self.site/'spectra/pipeline.html').read_text(encoding='utf-8')
-        self.assertIn('href="../results/index.html#teaching">← Teaching dataset</a>',pipeline)
         for name,dataset in (('million-truth','million'),('million-response','million'),
                              ('cs137-10k','tenk'),('pipeline','teaching')):
             page=(self.site/'spectra'/f'{name}.html').read_text(encoding='utf-8')
-            self.assertIn('aria-label="Primary"',page)
-            self.assertIn(f'href="../results/index.html#{dataset}"',page)
+            self.assertEqual(page.count('aria-label="Primary"'),1)
+            self.assertEqual(page.count('aria-label="Breadcrumb"'),1)
+            self.assertEqual(page.count('aria-label="Dataset views"'),1)
+            self.assertIn(f'data-dataset="{dataset}"',page)
         response=(self.site/'spectra/million-response.html').read_text(encoding='utf-8')
-        self.assertIn('href="../viewers/ge-positive.html">Earlier 10k Ge-hit examples</a>',response)
-        self.assertIn('use the earlier 10k campaign',response)
+        other=re.search(r'<section id="other-datasets">(.*?)</section>',response,re.S).group(1)
+        self.assertIn('../viewers/events.html?model=AK02&amp;view=positive',other)
+        self.assertIn('not from the million-decay campaign',other)
+        local=re.search(r'<nav aria-label="Dataset views">(.*?)</nav>',response,re.S).group(1)
+        self.assertNotIn('viewers/',local)
     def test_navigation_preserves_all_saved_spectrum_scripts_tables_and_charts(self):
         for destination in D.ROUTES.values():
             before=(ROOT/'docs'/destination).read_text(encoding='utf-8')
@@ -192,7 +196,7 @@ class SavedDisplayTests(unittest.TestCase):
         try:
             m=D.read(mp);m['generators']['tools/spectrum_plot.py']='0'*64
             mp.write_text(json.dumps(m),encoding='utf-8')
-            D.validate(self.site)
+            with self.assertRaisesRegex(ValueError,'Unknown spectrum generator binding'):D.validate(self.site)
             with self.assertRaisesRegex(ValueError,'generator binding'):D.validate(self.site,require_current_generators=True)
         finally:mp.write_bytes(saved)
     def test_reconstructed_edges_must_match_truth(self):
@@ -220,14 +224,17 @@ class SavedDisplayTests(unittest.TestCase):
         D.route_current_pages(self.site)
         self.assertIn('../spectra/million-response.html',p.read_text())
         self.assertEqual(self.before,{rel:D.sha(self.site/rel) for rel in self.before})
-    def test_homepage_is_semantically_sealed(self):
-        home=self.site/'index.html';prior=home.read_bytes() if home.exists() else None
+    def test_campaign_preview_is_semantically_sealed(self):
+        home=self.site/D.PREVIEW_PATH;prior=home.read_bytes() if home.exists() else None
         mp=self.site/'spectra/manifest.json';saved=mp.read_bytes()
         try:
+            home.parent.mkdir(parents=True,exist_ok=True)
             home.write_text('<html>'+D.homepage_preview(self.site)+'</html>',encoding='utf-8')
-            D.finalize(self.site);D.validate(self.site,require_current_generators=True,require_home=True)
+            finalized=D.finalize(self.site);D.validate(self.site,require_current_generators=True,require_home=True)
+            self.assertNotIn('homepage',finalized)
+            self.assertEqual(finalized['campaign_preview']['path'],D.PREVIEW_PATH)
             home.write_text(home.read_text().replace('Counts / bin (log10 scale)','Wrong label',1),encoding='utf-8')
-            with self.assertRaisesRegex(ValueError,'Homepage spectrum rendering'):D.validate(self.site)
+            with self.assertRaisesRegex(ValueError,'Campaign spectrum rendering'):D.validate(self.site)
         finally:
             mp.write_bytes(saved)
             if prior is None:home.unlink(missing_ok=True)
@@ -237,6 +244,92 @@ class SavedDisplayTests(unittest.TestCase):
         preview=D.homepage_preview(self.site)
         self.assertEqual(D.embedded_specs(preview),D.response_specs(self.site)[:1])
         self.assertIn('data-scale="log"',preview)
+
+    def test_four_case_context_uses_saved_variant_and_formal_result_routes(self):
+        from ring_site import cases
+        site=ROOT/'docs';rows=cases(site);specs=D.tenk_specs(site)
+        page=D.four_detector_spectra(site,specs)
+        self.assertEqual(D.embedded_specs(page),specs)
+        self.assertEqual(len(specs),20)
+        state=json.loads(re.search(r'<script id="spectrum-case-context" type="application/json">(.*?)</script>',page,re.S).group(1))
+        self.assertEqual(set(state),{row['model'] for row in rows})
+        for row in rows:
+            model=row['model'];self.assertEqual(state[model]['label'],row['label'])
+            self.assertEqual(state[model]['events'],'../viewers/events.html?model='+model+'&view=positive')
+            self.assertEqual(state[model]['spectrum'],'cs137-10k.html#tenk-'+model)
+            result='../results/cs137-10k/'+model+'/charge-readout.html'
+            self.assertEqual(state[model]['result'],result)
+            self.assertIn('href="'+result+'">Charge and readout</a>',page)
+            self.assertNotIn('href="../'+row['base']+'/response/summary.html"',page)
+        for label in ('Primary','Breadcrumb','Dataset views'):
+            self.assertEqual(page.count('aria-label="'+label+'"'),1)
+
+class NavigationCorrectionTests(unittest.TestCase):
+    def test_archive_marker_preserves_record_but_rebases_relative_path(self):
+        for attrs in ('data-original-report href="{href}"','href="{href}" data-original-report',
+                      "data-original-report='true' href='{href}'"):
+            for source,target in (
+                ('results/cs137-10k/index.html','../../examples/cs137-10k/comparison.html'),
+                ('results/cs137-1m/index.html','../../examples/cs137-1m/report.html'),
+                ('results/cs137-1m/index.html','../../examples/cs137-1m-response/report.html')):
+                original='<a '+attrs.format(href=target+'?saved=1&amp;query=2#original')+'>Archive</a>'
+                self.assertEqual(D.rewrite_links(original,source,source),original)
+        original='<a title="Record > preview" href="../cs137-10k-hits/hit_event_view.html?model=SAP22&amp;event=0&amp;group=0#recordPanel" data-original-report>Archive</a>'
+        moved=D.rewrite_links(original,'examples/cs137-10k/comparison.html','spectra/cs137-10k.html')
+        self.assertIn('href="../examples/cs137-10k-hits/hit_event_view.html?model=SAP22&amp;event=0&amp;group=0#recordPanel"',moved)
+        self.assertNotIn('../viewers/',moved)
+        active='<a class="data-original-report" href="../../examples/cs137-10k/comparison.html#original">Current view</a>'
+        self.assertIn('href="../../spectra/cs137-10k.html#original"',D.rewrite_links(active,'results/cs137-10k/index.html','results/cs137-10k/index.html'))
+
+    def test_postmapper_preserves_marked_hub_archives_and_maps_active_links(self):
+        with tempfile.TemporaryDirectory(dir=ROOT/'.local/student-navigation-v2',prefix='archive-navigation-') as tmp:
+            site=Path(tmp)
+            for rel,original,active in (
+                ('results/cs137-10k/index.html','../../examples/cs137-10k/comparison.html','../../spectra/cs137-10k.html'),
+                ('results/cs137-1m/index.html','../../examples/cs137-1m/report.html','../../spectra/million-truth.html')):
+                page=site/rel;page.parent.mkdir(parents=True,exist_ok=True)
+                page.write_text('<a data-original-report href="'+original+'">Archive</a><a href="'+original+'">Active</a>',encoding='utf8')
+            D.route_current_pages(site)
+            for rel,original,active in (
+                ('results/cs137-10k/index.html','../../examples/cs137-10k/comparison.html','../../spectra/cs137-10k.html'),
+                ('results/cs137-1m/index.html','../../examples/cs137-1m/report.html','../../spectra/million-truth.html')):
+                text=(site/rel).read_text(encoding='utf8')
+                self.assertIn('<a data-original-report href="'+original+'">Archive</a>',text)
+                self.assertIn('<a href="'+active+'">Active</a>',text)
+                self.assertEqual(D.rewrite_links(text,rel,rel),text)
+
+    def test_actual_dynamic_headers_contain_initially_hidden_case_actions(self):
+        from site_routes import page_navigation
+        for rel in ('spectra/cs137-10k.html','viewers/events.html'):
+            header=page_navigation(rel,dataset='tenk')
+            links={re.search(r'data-context-link="([^"]+)"',tag).group(1):tag
+                for tag in re.findall(r'<a\b[^>]*>',header) if 'data-context-link=' in tag}
+            self.assertEqual(set(links),{'events','spectrum','result','files'})
+            for key in ('result','files'):
+                self.assertRegex(links[key],r'\bhidden\b')
+                self.assertNotRegex(links[key],r'\shref=')
+                self.assertNotIn('AK02',links[key])
+
+    def test_authenticated_intermediate_receipts_are_exact_and_not_rehash_authority(self):
+        import viewer_navigation as V
+        site=ROOT/'docs';spectrum=site/'spectra/manifest.json';viewer=site/'viewers/manifest.json'
+        self.assertIn('36ba63613061e1354d73e6716b528d2cd089eaccea2dd7f090e5633be50326e9',D.TRUSTED_PREVIOUS_MANIFESTS)
+        self.assertIn('387e4034bd43932320c53c202bf49d0a805b9d3b61a210f2695baaeb06072e4d',V.TRUSTED_PREVIOUS_UNIFIED_MANIFESTS)
+        D.validate(site)
+        vm=V.read(viewer)
+        # Origin science validation was already performed for this authenticated
+        # build. Isolate the receipt trust gate without repeating that scan.
+        with patch.object(V,'origins',return_value=vm['original_files']):V.validate(site)
+        for module,path,key,error in ((D,spectrum,'generators','Unknown spectrum generator binding'),
+                                      (V,viewer,'adapter_sources','Unknown adapter source')):
+            raw=module.read(path);changed=copy.deepcopy(raw);changed[key]['tools/site_routes.py']='0'*64
+            changed_bytes=(json.dumps(changed,indent=2)+'\n').encode();changed_hash=module.hashlib.sha256(changed_bytes).hexdigest()
+            read_original,sha_original=module.read,module.sha
+            def read_candidate(candidate):return changed if Path(candidate)==path else read_original(candidate)
+            def sha_candidate(candidate):return changed_hash if Path(candidate)==path else sha_original(candidate)
+            with patch.object(module,'read',side_effect=read_candidate),patch.object(module,'sha',side_effect=sha_candidate),\
+                 patch.object(V,'origins',return_value=vm['original_files']):
+                with self.assertRaisesRegex(ValueError,error):module.validate(site)
 
 class JavaScriptTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'),'Node needed for browser-math parity')

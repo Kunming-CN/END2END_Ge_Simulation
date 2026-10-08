@@ -24,7 +24,7 @@ class HierarchyTests(unittest.TestCase):
             fixture=Path(tmp)/'site'
             def copy(source,dest):
                 path=Path(source)
-                if path.suffix in ('.html','.json','.md','.csv','.js'):
+                if path.suffix in ('.html','.json','.md','.csv','.js') or path.name=='ledgers.zip':
                     shutil.copyfile(source,dest)
                 else:
                     Path(dest).write_bytes(b'fixture existence marker')
@@ -34,6 +34,8 @@ class HierarchyTests(unittest.TestCase):
                           for p in fixture.rglob('*.html')}
             old_home=(fixture/'index.html').read_text(encoding='utf-8')
             old_preview=re.findall(r'<figure class="spectrum-panel".*?</figure>',old_home,re.S)
+            if not old_preview:
+                old_preview=re.findall(r'<figure class="spectrum-panel".*?</figure>',(fixture/'results/cs137-1m/index.html').read_text(),re.S)
             gamma=fixture/'examples/gamma-native'
             gamma_bytes={p.name:p.read_bytes() for p in gamma.iterdir() if p.is_file()}
             saved_hashes={p.relative_to(fixture).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
@@ -52,12 +54,18 @@ class HierarchyTests(unittest.TestCase):
             self.assertEqual(gamma_bytes,{p.name:p.read_bytes() for p in gamma.iterdir() if p.is_file()})
             current_hashes={p.relative_to(fixture).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
                             for p in fixture.rglob('*') if p.is_file() and p.suffix!='.html'}
-            self.assertEqual(saved_hashes,{name:current_hashes[name] for name in saved_hashes})
+            self.assertEqual({name:h for name,h in saved_hashes.items() if name not in {'methods/native-li-display.json','methods/lithium-display.json'}},
+                             {name:current_hashes[name] for name in saved_hashes if name not in {'methods/native-li-display.json','methods/lithium-display.json'}})
             added=set(current_hashes)-set(saved_hashes)
-            self.assertEqual(added,{'methods/native-li-display.json'} if added else set())
+            self.assertTrue(added <= {'methods/native-li-display.json','methods/lithium-display.json'})
             from saved_archive_display import validate as validate_archive_display
             validate_archive_display(fixture)
             for relative,anchors in original_ids.items():
+                if relative=='index.html':
+                    # Preview asset IDs move with the exact1M panel; user-facing historical anchors stay.
+                    anchors=anchors-{'spectrum-style','spectrum-controls-script'}
+                    campaign_ids=set(ids((fixture/'results/cs137-1m/index.html').read_text()))
+                    self.assertTrue({'spectrum-style','spectrum-controls-script'}<=campaign_ids)
                 current=set(ids((fixture/relative).read_text(encoding='utf-8')))
                 self.assertTrue(anchors<=current,'Old fragments removed from '+relative+': '+str(anchors-current))
             home=(fixture/'index.html').read_text(encoding='utf-8')
@@ -65,7 +73,8 @@ class HierarchyTests(unittest.TestCase):
             for card in re.findall(r'<article class="card">.*?</article>',home,re.S):
                 if '<figure' in card:
                     self.assertLess(card.index('<a '),card.index('<figure'),'Primary action follows preview')
-            self.assertEqual(old_preview,re.findall(r'<figure class="spectrum-panel".*?</figure>',home,re.S))
+            self.assertEqual([],re.findall(r'<figure class="spectrum-panel".*?</figure>',home,re.S))
+            self.assertEqual(old_preview,re.findall(r'<figure class="spectrum-panel".*?</figure>',(fixture/'results/cs137-1m/index.html').read_text(),re.S))
             self.assertIn('Fresh-machine setup remains unvalidated',home)
             guide=(fixture/'guide.html').read_text(encoding='utf-8')
             self.assertIn('Julia 1.13.0',guide)
@@ -130,7 +139,7 @@ class HierarchyTests(unittest.TestCase):
                 primary=re.search(r'<nav aria-label="Primary"[^>]*>(.*?)</nav>',html,re.S)
                 if primary:
                     self.assertEqual(re.findall(r'>([^<]+)</a>',primary.group(1)),
-                                     ['Run','Saved results','Detectors','Help'],relative)
+                                     ['Results','Detectors','Run locally','Methods'],relative)
                 self.assertEqual(len(ids(html)),len(set(ids(html))),'Duplicate IDs in '+relative)
                 links=Links();links.feed(html)
                 for url in links.urls:

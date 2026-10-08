@@ -12,7 +12,7 @@ from pathlib import Path
 
 import viewer_navigation as V
 
-EVIDENCE=V.ROOT/'.local/ring-delivery-v1/reader'
+EVIDENCE=V.ROOT/'.local/student-navigation-v2/reader'
 
 
 def encoded(value):
@@ -151,7 +151,7 @@ class RingReaders(unittest.TestCase):
         V.validate(V.ROOT/'docs')
         manifest = V.ROOT/'docs/viewers/manifest.json'
         if V.sha(manifest) in V.TRUSTED_PREVIOUS_UNIFIED_MANIFESTS:
-            with self.assertRaisesRegex(ValueError,'Unknown adapter source'):V.validate(V.ROOT/'docs',True)
+            with self.assertRaisesRegex(ValueError,'Unknown adapter source|Adapter source inventory'):V.validate(V.ROOT/'docs',True)
         else:
             V.validate(V.ROOT/'docs',True)
 

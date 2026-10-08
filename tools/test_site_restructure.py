@@ -40,13 +40,13 @@ class SiteStructureTests(unittest.TestCase):
         self.assertEqual(result['detectors'],2)
         for label in S.PRIMARY:self.assertIn(label,home)
         self.assertEqual(home.count('<article class="card">'),4)
-        self.assertEqual(home.count('href="downloads/all-models.zip"'),1)
-        self.assertRegex(home,r'<section class="grid">\s*<article class="card"><h2>Run</h2>')
+        self.assertNotIn('href="downloads/all-models.zip"',home)
+        self.assertRegex(home,r'<section class="grid">\s*<article class="card"><h2>Results</h2>')
         primary=re.search(r'<nav aria-label="Primary"[^>]*>(.*?)</nav>',home).group(1)
         self.assertEqual(re.findall(r'href="([^"]+)"',primary),
-                         ['guide.html#local-control','results/index.html','detectors/index.html','guide.html#saved-analysis'])
-        self.assertEqual(re.findall(r'>([^<]+)</a>',primary),['Run','Saved results','Detectors','Help'])
-        self.assertIn('Use Control',home)
+                         ['results/index.html','detectors/index.html','guide.html','methods/index.html'])
+        self.assertEqual(re.findall(r'>([^<]+)</a>',primary),['Results','Detectors','Run locally','Methods'])
+        self.assertIn('use Control',home)
         for p in ('learn/index.html','detectors/index.html','results/index.html',
                   'methods/index.html','scenarios/lbnl-cs137/index.html'):
             self.assertTrue((root/p).is_file(),p)
@@ -55,14 +55,15 @@ class SiteStructureTests(unittest.TestCase):
         self.assertNotIn('../examples/gamma-native/gamma.html',learn)
         panels=self.result_panels((root/'results/index.html').read_text())
         self.assertIn('../spectra/pipeline.html',panels['teaching'])
-        self.assertIn('../examples/data.json',panels['teaching'])
+        self.assertNotIn('../examples/data.json',panels['teaching'])
+        self.assertEqual(panels['teaching'].count('<a '),1)
         for ident in ('gamma','tenk','million'):
             self.assertIn('unavailable in this snapshot',panels[ident])
         scenario=(root/'scenarios/lbnl-cs137/index.html').read_text()
         self.assertIn('guide.html#choose',scenario)
-        self.assertIn('guide.html#local-routes',scenario)
+        self.assertIn('guide.html',scenario)
         self.assertNotIn('Run.cmd run',scenario)
-        self.assertIn('Cs137, Am241 and Ba133 accept an exact positive initial-nucleus count',scenario)
+        self.assertIn('Cs137, Am241 and Ba133',scenario)
         self.assertIn('Control offers 10 separate detector configurations',scenario)
         self.assertIn('not redistributed',scenario)
 
@@ -82,29 +83,24 @@ class SiteStructureTests(unittest.TestCase):
         home=(root/'index.html').read_text();parser=HomeLinks();parser.feed(home)
         # Visible task entrances lead to the dataset catalog; legacy destinations
         # remain available without implying that their saved event IDs match.
-        for href in ('index.html','results/index.html','detectors/index.html',
-                     'guide.html#saved-analysis','guide.html#setup','guide.html#local-control'):
+        for href in ('index.html','results/index.html','detectors/index.html','guide.html','methods/index.html'):
             self.assertIn(href,parser.outside)
-        for href in ('learn/index.html','methods/index.html','results/index.html#teaching',
-                     'results/index.html#tenk','results/cs137-10k/index.html',
-                     'downloads/all-models.zip','https://github.com/Kunming-CN/END2END_Ge_Simulation'):
-            self.assertIn(href,parser.links);self.assertNotIn(href,parser.outside)
-        for href in ('spectra/pipeline.html','spectra/cs137-10k.html','viewers/events.html'):
-            self.assertNotIn(href,parser.outside)
+        for href in ('spectra/pipeline.html','spectra/cs137-10k.html','viewers/events.html','results/cs137-10k/index.html','downloads/all-models.zip'):
+            self.assertNotIn(href,parser.links)
         self.assertIn('Choose a saved dataset',home)
         self.assertIn('one of 10 configurations available in the current cryostat',home)
         self.assertIn('Fresh-machine setup remains unvalidated',home)
-        self.assertIn('<summary>Methods and retained links</summary>',home)
+        self.assertNotIn('Methods and retained links',home)
+        for anchor in ('pipeline-example','native-cs137-10k','current-ring-10k'):
+            self.assertIn('id="'+anchor+'"',home)
         self.assertIn('<summary>More project resources</summary>',home)
-        for name in ('learn/index.html','results/index.html','detectors/index.html'):
-            self.assertNotIn('More project resources',(root/name).read_text(),'Fold is homepage-only')
 
     def test_result_hubs_are_conditional(self):
         root=self.fixture(with_results=True);S.apply(root)
         self.assertTrue((root/'results/cs137-1m/index.html').is_file())
         self.assertTrue((root/'results/cs137-10k/index.html').is_file())
         scenario=(root/'scenarios/lbnl-cs137/index.html').read_text()
-        self.assertIn('1M-per-detector campaign',scenario);self.assertIn('Cs137 10K results',scenario)
+        self.assertNotIn('Saved campaigns',scenario)
         overview=(root/'results/cs137-1m/index.html').read_text()
         self.assertIn('12,420',overview);self.assertIn('10,757',overview)
         results=(root/'results/index.html').read_text()

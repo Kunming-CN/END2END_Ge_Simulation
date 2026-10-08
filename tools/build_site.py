@@ -417,31 +417,34 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
     previous = local / 'site-previous'
+    old = None
     if previous.exists():
-        # Only discard the old generated copy when the installed snapshot is valid.
-        validate(DESTINATION)
+        # Reuse this exact checked snapshot in the branch below.
+        old = validate(DESTINATION)
         remove_generated(previous)
     if DESTINATION.is_symlink() or OUT.is_symlink():
         raise RuntimeError('Publication directories must not be symlinks.')
-    old = None
-    if (DESTINATION / MANIFEST).exists():
+    if (DESTINATION / MANIFEST).exists() and old is None:
         # Protect unknown files and hand edits: fix the source instead of losing work.
         old = validate(DESTINATION)
     if OUT.exists():
         remove_generated(OUT)
     if ring_results is not None:
         from ring_publication import assemble as assemble_rings
-        validate(DESTINATION)
+        if old is None:
+            validate(DESTINATION)
         shutil.copytree(DESTINATION, OUT); (OUT / MANIFEST).unlink()
         assemble_rings(ring_results, OUT / 'examples/cs137-10k-rings')
     elif gamma_showcase is not None:
         build_gamma_export(gamma_showcase)
     elif restructure:
-        validate(DESTINATION)
+        if old is None:
+            validate(DESTINATION)
         shutil.copytree(DESTINATION, OUT); (OUT/MANIFEST).unlink()
     elif ssd_geometry is not None:
         from ssd_geometry_publication import assemble as assemble_ssd_geometry
-        validate(DESTINATION)
+        if old is None:
+            validate(DESTINATION)
         shutil.copytree(DESTINATION, OUT); (OUT/MANIFEST).unlink()
         assemble_ssd_geometry(ssd_geometry, OUT)
     elif native_response is not None:

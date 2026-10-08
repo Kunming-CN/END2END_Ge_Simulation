@@ -5,11 +5,22 @@
 :root{color-scheme:dark;font:15px system-ui;background:#111924;color:#edf3fa}*{box-sizing:border-box}body{margin:0}header,main,footer{max-width:1450px;margin:auto;padding:16px}h1{font-size:1.65rem;margin:0 0 8px}h2{font-size:1.05rem}p{line-height:1.5}a{color:#9edbff}button,input,select{font:inherit;background:#233348;color:inherit;border:1px solid #647991;border-radius:5px;padding:8px;max-width:100%}button{cursor:pointer}button:disabled,select:disabled{opacity:.5}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #ffd179;outline-offset:2px}label{display:inline-flex;align-items:center;gap:5px}.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}canvas{display:block;width:100%;height:65vh;min-height:340px;touch-action:none;background:#0a1019;border:1px solid #3e5065;border-radius:6px}aside{min-width:0}.volume{display:block;font-size:.85rem;margin:9px 0}.volume small{display:block;margin-left:24px;color:#adbdce}.note{border-left:3px solid #90c7eb;padding:10px 12px;background:#1d3040}.small{font-size:.87rem;color:#b7c9d8}#status,#identity,#overlayStatus{overflow-wrap:anywhere;min-height:1.5em}#status{color:#ffda7b}.error{color:#ff9090}details{margin:12px 0;padding:10px;border:1px solid #3e5065;border-radius:5px}summary{cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:450px;overflow:auto}#eid{width:100px}#category{max-width:min(100%,480px)}#representatives button{text-align:left;font-size:.85rem}footer{color:#b7c9d8}@media(max-width:850px){.layout{grid-template-columns:1fr}header,main,footer{padding:10px}canvas{height:52vh;min-height:300px}.bar>*{min-width:0}#category{width:100%}h1{font-size:1.35rem}}
 #responseLinks a{margin-inline-end:.8em}
 </style></head><body>
-<header><p><a href="../index.html">GeSignal home</a></p><nav aria-label="Primary" style="display:flex;gap:8px;flex-wrap:wrap"><a href="../guide.html#local-control" style="padding:8px 10px">Run</a><a href="../results/index.html" style="padding:8px 10px">Saved results</a><a href="../detectors/index.html" style="padding:8px 10px">Detectors</a><a href="../guide.html#saved-analysis" style="padding:8px 10px">Help</a></nav><section class="dataset-context" aria-label="Saved dataset" style="padding:12px 0"><p><strong>Cs137 10K · 10,000 initial decays per detector · four separate cryostat cases</strong> · <a href="../results/index.html#tenk">Saved results</a></p><nav aria-label="Dataset views" style="display:flex;gap:12px;flex-wrap:wrap"><a href="../results/cs137-10k/index.html">Detector cases</a><a href="../spectra/cs137-10k.html">Stage spectra</a><a href="../viewers/events.html">3D radiation events</a></nav></section><h1>GeSignal event viewer</h1><p><a href="../results/cs137-10k/index.html">10K results</a> · <a href="manifest.json">Display provenance</a></p>
+<header><!-- page-navigation:start --><div id="page-navigation"><style id="site-navigation-style">body{overflow-wrap:anywhere}
+@media(max-width:450px){.channels{grid-template-columns:repeat(3,minmax(0,1fr))}}
+#page-navigation{width:100%;font:16px/1.5 system-ui;color:#173047;margin:12px 0}
+#page-navigation [hidden]{display:none}
+#page-navigation nav{display:flex;flex-wrap:wrap;gap:8px 14px;margin:10px 0}
+#page-navigation a{color:#075e9b;text-decoration:none;padding:4px 0}
+#page-navigation a[aria-current]{font-weight:700;text-decoration:underline;text-underline-offset:5px}
+#page-navigation ol{display:flex;flex-wrap:wrap;list-style:none;gap:7px;margin:0;padding:0}
+#page-navigation li+li:before{content:"›";padding-right:7px;color:#526575}
+#page-navigation .dataset-context{padding:8px 0;border-top:1px solid #d7e0e7}
+#page-navigation p{margin:5px 0;overflow-wrap:anywhere}#page-navigation a:focus-visible{outline:3px solid #f8ad30}
+@media(max-width:600px){#page-navigation{font-size:14px}#page-navigation nav{gap:6px 12px}}</style><nav aria-label="Primary"><a href="../results/index.html" aria-current="true">Results</a><a href="../detectors/index.html">Detectors</a><a href="../guide.html">Run locally</a><a href="../methods/index.html">Methods</a></nav><nav aria-label="Breadcrumb"><ol><li><a href="../index.html">GeSignal</a></li><li><a href="../results/index.html">Results</a></li><li><a href="../results/cs137-10k/index.html">Cs137 10K</a></li><li><span aria-current="page">3D radiation events</span></li></ol></nav><section class="dataset-context" aria-label="Saved dataset" data-dataset="tenk" data-model=""><p><strong>Cs137 10K · four separate cryostat cases</strong></p><p data-context-label>All four cases</p><nav aria-label="Dataset views"><a href="../results/cs137-10k/index.html">Detector cases</a><a hidden data-context-link="result" aria-disabled="true">Charge &amp; readout</a><a data-context-link="spectrum" data-base-href="../spectra/cs137-10k.html" href="../spectra/cs137-10k.html">Stage spectra</a><a data-context-link="events" data-base-href="events.html" href="events.html" aria-current="page">3D radiation events</a><a hidden data-context-link="files" aria-disabled="true">Data &amp; settings</a></nav></section></div><!-- page-navigation:end --><h1>GeSignal event viewer</h1>
 <p class="note">Every saved model retains 10,000 initial primaries, including zeros. AK02 / SAP22 retain all 20,000 original primaries and 121 / 115 Ge-positive primaries. Checked GeRC02 and KMRC01 candidate bundles appear when included in this saved site. Candidate counts refer to pulse groups. Overlaid decays are independent, not simultaneous.</p>
 <div class="bar"><label>Model <select id="model"><option>AK02</option><option>SAP22</option></select></label><label>Primary ID <input id="eid" type="number" min="0" max="9999" value="0"></label><button id="show">Show primary</button><button id="prev">Previous Ge hit</button><button id="next">Next Ge hit</button><label>View <select id="view"><option value="assembly">Assembly context</option><option value="positive">Ge-positive overlay</option></select></label></div>
 <div class="bar"><label>Candidate filter <select id="category"><option value="all">All saved groups</option></select></label><label>Pulse group <select id="group" disabled></select></label><span id="census"></span></div>
-<p id="modelNotes" class="small"></p><p id="responseLinks" hidden><a id="savedResponse">Saved response</a> <a id="savedResponseReport">Response / calibration record</a> <a id="savedSignals">Raw signed signals</a> <a id="savedCurrent">Electronics charge / current data</a></p>
+<p id="modelNotes" class="small"></p>
 <div id="identity" role="status" aria-live="polite"></div><div id="status" role="status" aria-live="polite">Loading saved assembly…</div><div id="overlayStatus" role="status" aria-live="polite"></div></header>
 <main><div class="layout"><section><div class="bar"><button data-view="default">Default / fit</button><button data-view="front">Front (XY)</button><button data-view="side">Side (ZY)</button><button id="zin" aria-label="Zoom in">Zoom +</button><button id="zout" aria-label="Zoom out">Zoom −</button><button id="pan" aria-pressed="false">Pan</button></div>
 <canvas id="canvas" aria-label="Recorded radiation assembly and pulse-group overlay"></canvas><p class="small">Drag to rotate; Shift-drag / right-drag or Pan to move; wheel / Zoom to zoom. Orthographic global mm. Yellow: Ge STEP/deposits; cyan: photon/birth records; orange: highlighted group. Creation vertices are not complete tracks.</p>
@@ -18,8 +29,8 @@
 <p class="small">Chords join only one saved scored STEP pre/post pair. No joins cross unscored air or connect separate steps. These are radiation records and Edep, not SSD drift, charge, Erec or waveforms. Zero-Ge and missing/native-failed response do not remove a radiation primary.</p>
 <details id="recordPanel"><summary>Requested primary: all exact saved rows and units</summary><p class="small">Positions: m; STEP Edep: keV; Track kinetic energy/momentum: MeV; creation time: ns. PDG particle IDs and original zero-based raw_row_index remain exact.</p><pre id="records"></pre></details><details id="evidencePanel"><summary>Selected pulse group: exact saved evidence</summary><pre id="evidenceRaw"></pre></details>
 <details><summary>Settings, provenance and limitations</summary><pre id="provenance"></pre><p class="small">Nominal source above the curved Al wall, not an as-built survey. The selected scene records its exact source position in global mm; crystal local +z maps to global +y. Candidate classes are radiation-energy/ancestry/spatial screens, not calibrated PSD, CCE or experimental resolution. Group origin and relative delays are separate from drift time.</p></details></section>
-<aside><h2>Pulse-group evidence</h2><div id="evidence">Assembly view: group IDs are return-navigation context only.</div><div id="representatives" class="bar"></div><details><summary>Placed-volume visibility</summary><div id="volumes"></div></details><p><a id="originals">Exact GDML and run inputs</a></p><p class="small">Historical presentations: <a href="../examples/cs137-10k-geometry/geometry.html">original assembly</a> · <a href="../examples/cs137-10k-hits/hit_event_view.html">original Ge-positive viewer</a>.</p></aside></div></main>
-<footer>No simulation runs here. Data load in 100-event chunks with at most two chunks cached. Serve the complete site over localhost HTTP for offline browsing; file:// fetch is unsupported. SHA-256 requires HTTPS or localhost, and the overlay requires native gzip DecompressionStream. Original data and upstream attribution remain in the <a href="../examples/cs137-10k-geometry/manifest.json">assembly manifest</a> and <a href="../examples/cs137-10k-hits/manifest.json">positive manifest</a>; no upstream relicensing grant is made.</footer>
+<aside><h2>Pulse-group evidence</h2><div id="evidence">Assembly view: group IDs are return-navigation context only.</div><div id="representatives" class="bar"></div><details><summary>Placed-volume visibility</summary><div id="volumes"></div></details><details id="responseLinks" hidden><summary>Case results, data and settings</summary><p><a id="savedResponse">Charge and readout</a> <a id="savedResponseReport">Data and settings</a></p><p><a id="originals">Exact GDML and run inputs</a></p><p><a id="savedScalars">Complete scalar ledger</a> <a id="savedSignals">Raw signed signal samples</a> <a id="savedCurrent">Electronics charge / current data</a></p><p class="small">A complete scalar ledger does not imply that every event waveform is published. <a href="manifest.json">Display provenance</a></p></details><details><summary>Earlier AK02/SAP22 viewers</summary><p class="small">These saved archive presentations cover the earlier AK02/SAP22 records. They do not provide the GeRC02 Li50min or KMRC01 candidate cases.</p><p><a href="../examples/cs137-10k-geometry/geometry.html">Earlier assembly viewer (archive)</a> · <a href="../examples/cs137-10k-hits/hit_event_view.html">Earlier Ge-positive viewer (archive)</a></p></details></aside></div></main>
+<footer>No simulation runs here. Data load in 100-event chunks with at most two chunks cached. Serve the complete site over localhost HTTP for offline browsing; file:// fetch is unsupported. SHA-256 requires HTTPS or localhost, and the overlay requires native gzip DecompressionStream. The <a href="manifest.json">display manifest</a> binds each saved dataset and its original upstream attribution; no upstream relicensing grant is made.</footer>
 <script id="viewer-navigation">// Requested identity is distinct from a verified primary or pulse group.
 function parseViewerQuery(search, options = {}) {
   const legacy = options.legacy === true, q = new URLSearchParams(search);
@@ -53,9 +64,53 @@ function legacyViewerTarget(search, view) {
   const requested = parseViewerQuery(search,{legacy:true,view});
   return {requested,target:requested.invalid ? null : 'events.html?'+canonicalViewerQuery(requested)};
 }
-function viewerHistoryTarget(identity, pathname, search) {
-  const target = pathname+'?'+canonicalViewerQuery(identity);
-  return {target,changed:target !== pathname+search};
+function viewerHistoryTarget(identity, pathname, search, hash = '') {
+  const target = pathname+'?'+canonicalViewerQuery(identity)+hash;
+  return {target,changed:target !== pathname+search+hash};
+}
+// Only a verified case route table supplies model-specific destinations. Page
+// ownership stays fixed; this changes the local selection label and view links.
+function updateCaseNavigation(routes, label, invalid = '') {
+  for (const node of document.querySelectorAll('[data-dataset="tenk"]'))
+    node.dataset.model=invalid?'':routes?.model||'';
+  for (const node of document.querySelectorAll('[data-context-label]'))
+    node.textContent = invalid || label;
+  for (const node of document.querySelectorAll('[data-context-link]')) {
+    const kind = node.dataset.contextLink, href = routes?.[kind] ||
+      (!invalid && !['result','files'].includes(kind) ? node.dataset.baseHref : null);
+    if (href && !invalid) {
+      node.href = href;node.hidden = false;node.removeAttribute('aria-disabled');
+    } else {
+      node.removeAttribute('href');node.setAttribute('aria-disabled','true');
+      node.hidden = !invalid && ['result','files'].includes(kind);
+    }
+  }
+}
+function spectrumFocusState(hash, cases) {
+  if (!hash || hash === '#') return {model:null,invalid:''};
+  let id;
+  try {id=decodeURIComponent(hash.slice(1));}
+  catch {return {model:null,invalid:'Unavailable spectrum focus: malformed fragment.'};}
+  const entry=Object.entries(cases).find(([model])=>id==='tenk-'+model);
+  return entry ? {model:entry[0],invalid:''} :
+    {model:null,invalid:'Unavailable spectrum focus: '+id+'. Choose a saved case.'};
+}
+function installSpectrumFocus(cases) {
+  const select=document.getElementById('spectrum-case'),status=document.getElementById('spectrum-focus');
+  function restore() {
+    const state=spectrumFocusState(location.hash,cases),entry=state.model===null?null:cases[state.model];
+    select.value=state.model||'';
+    status.textContent=state.invalid || (entry ? 'Focused case: '+entry.label+'. All four cases remain below.' :
+      'All four cases. Choose a case to preserve its identity when switching views.');
+    status.className=state.invalid?'error':'';
+    updateCaseNavigation(entry,entry?'Focused case: '+entry.label:'All four cases',state.invalid);
+    return state;
+  }
+  select.onchange=()=>{location.hash=select.value?'tenk-'+select.value:'';restore();};
+  globalThis.addEventListener('hashchange',restore);
+  globalThis.addEventListener('popstate',restore);
+  restore();
+  return {restore};
 }
 function selectionGate(clear) {
   let generation = 0;
@@ -68,7 +123,7 @@ function selectionGate(clear) {
     }
   };
 }
-</script><script id="viewer-config">const VIEWER_CONFIG = {"assembly":{"base":"../examples/cs137-10k-geometry/","sha256":"e8d183af05e27f211b6464939d4c667b6d02855d68609a7627753d2f16edc379"},"positive":{"base":"../examples/cs137-10k-hits/","sha256":"0ad6a0df52ae725543d0c8474c5db4474e6c28af537ff944660e1ebf9b6a1b3e"},"models":{"GeRC02":{"assembly":{"base":"../examples/cs137-10k-rings/","sha256":"773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860","kind":"ring_saved_publication_v1"},"positive":{"base":"../examples/cs137-10k-rings/","sha256":"773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860","kind":"ring_saved_publication_v1"}},"KMRC01_candidate":{"assembly":{"base":"../examples/cs137-10k-rings/","sha256":"773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860","kind":"ring_saved_publication_v1"},"positive":{"base":"../examples/cs137-10k-rings/","sha256":"773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860","kind":"ring_saved_publication_v1"}}}};</script><script id="viewer-controller">'use strict';
+</script><script id="viewer-config">const VIEWER_CONFIG = {"assembly":{"base":"../examples/cs137-10k-geometry/","sha256":"e8d183af05e27f211b6464939d4c667b6d02855d68609a7627753d2f16edc379"},"positive":{"base":"../examples/cs137-10k-hits/","sha256":"0ad6a0df52ae725543d0c8474c5db4474e6c28af537ff944660e1ebf9b6a1b3e"},"case_routes":{"AK02":{"result":"../results/cs137-10k/AK02/charge-readout.html","model":"AK02","label":"AK02","files":"../results/cs137-10k/AK02/charge-readout.html#data-files","spectrum":"../spectra/cs137-10k.html#tenk-AK02","events":"events.html?model=AK02&view=positive","original_files":{"savedSignals":{"href":"../examples/cs137-10k/AK02/response/signals.csv","bytes":908612,"sha256":"487dad13e67bf35f7230923119c390c7aa1eae8fd0b35b00095b6db4146e9585"},"savedScalars":{"href":"../examples/cs137-10k/AK02/response/scalars.csv","bytes":4986577,"sha256":"012d74bb9a68d3811d720309e9b58b960097516443bb31e47c910a0c0294abeb"}}},"SAP22":{"result":"../results/cs137-10k/SAP22/charge-readout.html","model":"SAP22","label":"SAP22","files":"../results/cs137-10k/SAP22/charge-readout.html#data-files","spectrum":"../spectra/cs137-10k.html#tenk-SAP22","events":"events.html?model=SAP22&view=positive","original_files":{"savedSignals":{"href":"../examples/cs137-10k/SAP22/response/signals.csv","bytes":18522,"sha256":"b27030e3ab6630bc49ee58d134b3802f7145da15a56ebc41c24b6c3bcfd6db90"},"savedScalars":{"href":"../examples/cs137-10k/SAP22/response/scalars.csv","bytes":4963382,"sha256":"11ca42d7bc0ea6b8c08da6f2924b16715821470eb0d93d3f391da6a90f07ba20"}}},"GeRC02":{"result":"../results/cs137-10k/GeRC02/charge-readout.html","model":"GeRC02","label":"GeRC02 \u00b7 Li50min","files":"../results/cs137-10k/GeRC02/charge-readout.html#data-files","spectrum":"../spectra/cs137-10k.html#tenk-GeRC02","events":"events.html?model=GeRC02&view=positive","original_files":{"savedSignals":{"href":"../examples/cs137-10k-rings/GeRC02/response/signals.csv","sha256":"21e49040cd0fe247d556980be963d913e2421de34f958938a99be168cd4e48a8","bytes":862889},"savedScalars":{"href":"../examples/cs137-10k-rings/GeRC02/response/scalars.jsonl","sha256":"5feed83df7d12911d6dc1061c76a15d7c8ff89bf3caa5da52264f00062be5cca","bytes":4708529}}},"KMRC01_candidate":{"result":"../results/cs137-10k/KMRC01_candidate/charge-readout.html","model":"KMRC01_candidate","label":"KMRC01 \u00b7 candidate","files":"../results/cs137-10k/KMRC01_candidate/charge-readout.html#data-files","spectrum":"../spectra/cs137-10k.html#tenk-KMRC01_candidate","events":"events.html?model=KMRC01_candidate&view=positive","original_files":{"savedSignals":{"href":"../examples/cs137-10k-rings/KMRC01_candidate/response/signals.csv","sha256":"dc53d63f4d3ad63f9da534bec0e1061dcf78e53c331aed5505b49afd4cb9a2de","bytes":689518},"savedScalars":{"href":"../examples/cs137-10k-rings/KMRC01_candidate/response/scalars.jsonl","sha256":"5be5a5ea5d37947363af271b001d3cc0475ab3357b14ddc0cf60fe5a1a1bd186","bytes":5078392},"savedCurrent":{"href":"../examples/cs137-10k-rings/KMRC01_candidate/response/readout-input.csv","sha256":"15d61729233e49df5e82cde8994070052983ad6c1c39b1aa6064e8896d1bf139","bytes":2239502}}}},"models":{"GeRC02":{"assembly":{"base":"../examples/cs137-10k-rings/","sha256":"773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860","kind":"ring_saved_publication_v1"},"positive":{"base":"../examples/cs137-10k-rings/","sha256":"773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860","kind":"ring_saved_publication_v1"}},"KMRC01_candidate":{"assembly":{"base":"../examples/cs137-10k-rings/","sha256":"773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860","kind":"ring_saved_publication_v1"},"positive":{"base":"../examples/cs137-10k-rings/","sha256":"773e9529ad19b5ff0c48113957248e15d0754429026d7f09d4774332632b6860","kind":"ring_saved_publication_v1"}}}};</script><script id="viewer-controller">'use strict';
 const $=id=>document.getElementById(id), canvas=$('canvas'), ctx=canvas.getContext('2d');
 const DETAIL_CAP=2000, categories=['all','compact','compton1','compton2','full','partial','unknown'];
 const viewer={generation:0,requested:parseViewerQuery(location.search),scene:null,primary:null,group:null,
@@ -184,7 +239,7 @@ function modelOptions(name){
   if(!names.includes(name)){const unavailable=option(name,name+' · saved data unavailable');unavailable.disabled=true;options.push(unavailable);}
   $('model').replaceChildren(...options);$('model').value=name;
 }
-function clearModelLinks(){for(const id of ['savedResponse','savedResponseReport','savedSignals','savedCurrent']){$(id).removeAttribute('href');$(id).hidden=true;}$('modelNotes').textContent='';$('responseLinks').hidden=true;}
+function clearModelLinks(){for(const id of ['savedResponse','savedResponseReport','savedSignals','savedScalars','savedCurrent']){$(id).removeAttribute('href');$(id).hidden=true;}$('modelNotes').textContent='';$('responseLinks').hidden=true;}
 function clearGroup(){viewer.group=null;$('group').replaceChildren();$('group').disabled=true;$('evidence').replaceChildren();$('evidenceRaw').textContent='';}
 function clearOverlay(){clearGroup();viewer.data=null;viewer.events=new Map();viewer.evidence=new Map();$('representatives').replaceChildren();}
 function clearPrimary(){viewer.primary=null;$('records').textContent='';clearGroup();}
@@ -196,7 +251,7 @@ function identityText(){
 }
 function writeHistory(action){
   if(action==='none'||viewer.requested.invalid)return;
-  const next=viewerHistoryTarget(viewer.requested,location.pathname,location.search),state={viewer:1,category:viewer.category};
+  const next=viewerHistoryTarget(viewer.requested,location.pathname,location.search,location.hash||''),state={viewer:1,category:viewer.category};
   if(action==='replace')history.replaceState(state,'',next.target);
   else if(next.changed||history.state?.category!==viewer.category)history.pushState(state,'',next.target);
 }
@@ -215,14 +270,16 @@ function showScene(scene,manifest,name){
     const title=document.createElement('span');title.textContent=labels[v.name]||'Holder: '+v.original_path.split('/').pop();title.style.color=color(v);
     const small=document.createElement('small');small.textContent=v.name+' · '+v.material+' · '+v.solid_type;label.append(check,title,small);$('volumes').append(label);}
   const entry=manifest.models[name];$('originals').href=bundlePath('assembly',entry.originals,name);clearModelLinks();
+  const routes=VIEWER_CONFIG.case_routes?.[name];requireViewer(routes,'No maintained case routes are bound for '+name+'.');
+  for(const [id,path]of [['savedResponse',routes.result],['savedResponseReport',routes.files]]){
+    $(id).href=path;$(id).hidden=false;
+  }
+  for(const [id,record]of Object.entries(routes.original_files)){$(id).href=record.href;$(id).hidden=false;}
+  $('responseLinks').hidden=false;
   if(ringModels.includes(name)){
     $('modelNotes').textContent=name==='GeRC02'?
       'GeRC02: the original 30 min annealing model is preserved; this saved 10K case is the independent 50 min variant. Functional engineering example; Li CCE remains unvalidated.':
       'KMRC01 candidate: raw native signals remain signed and negative. This saved response uses fixed −1 electronics wiring and a separate negative injection calibration; original rejections remain available. No eventwise gain or charge rectification.';
-    for(const [id,file]of [['savedResponse',entry.response],['savedResponseReport',entry.response_report],
-      ['savedSignals',name+'/response/signals.csv'],['savedCurrent',name+'/response/readout-input.csv']])
-      if(manifest.files[file]){$(id).href=bundlePath('assembly',file,name);$(id).hidden=false;}
-    $('responseLinks').hidden=false;
   }
   $('census').textContent=scene.event_index.event_count+' primaries; '+scene.event_index.ge_hit_ids.length+' Ge-positive; '+scene.event_index.zero_ge_primaries+' zero-Ge';
   $('provenance').textContent=exactJSON({model:name,scenario:scene.scenario,raw_lh5_sha256:scene.raw_lh5_sha256,originals_sha256:scene.originals_sha256,
@@ -273,6 +330,9 @@ function normalizeRequest(identity){
 async function applySelection(identity,options={}){
   const r=normalizeRequest(identity),ticket=++viewer.generation,previousModel=viewer.requested.model,previousScene=viewer.scene,previousMode=mode;
   viewer.requested=r;clearPrimary();viewer.overlayError='';$('overlayStatus').textContent='';$('status').className='';
+  const routes=VIEWER_CONFIG.case_routes?.[r.model];
+  updateCaseNavigation(r.invalid?null:routes,routes?'Focused case: '+routes.label:r.model,
+    r.invalid?'Unavailable request: '+r.invalid:(!routes?'Case routes unavailable for '+r.model:''));
   if(previousModel!==r.model){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');clearModelLinks();}
   modelOptions(r.model);$('view').value=r.view;if(r.event!==null)$('eid').value=String(r.event);identityText();
   if(r.invalid){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');clearModelLinks();$('status').textContent='Unavailable request: '+r.invalid+(options.rejectedInput===undefined?' Query: '+location.search:'');$('status').className='error';draw();return false;}
@@ -310,7 +370,12 @@ async function applySelection(identity,options={}){
   refreshDetails();draw();return true;
 }
 function requestSelection(identity,options={}){pendingSelection=applySelection(identity,options);return pendingSelection;}
-function selectModel(name){return requestSelection({...viewer.requested,model:name,invalid:''});}
+function selectModel(name){
+  const same=name===viewer.requested.model;
+  if(!same)viewer.category='all';
+  return requestSelection({...viewer.requested,model:name,event:same?viewer.requested.event:null,
+    group:same?viewer.requested.group:null,invalid:''});
+}
 function selectEvent(id,groupId=null){return requestSelection({...viewer.requested,event:id,group:groupId,invalid:''});}
 function setView(view){return requestSelection({...viewer.requested,view,invalid:''});}
 function filterCategory(){viewer.category=$('category').value;return requestSelection({...viewer.requested});}

@@ -76,7 +76,21 @@ class Readers(unittest.TestCase):
             expected_config['models']={model:{layer:{'base':'../examples/cs137-10k-rings/',
                 'sha256':V.sha(ring_manifest),'kind':'ring_saved_publication_v1'}
                 for layer in ('assembly','positive')} for model in ('GeRC02','KMRC01_candidate')}
-        self.assertEqual(config,expected_config)
+        self.assertEqual({key:config[key] for key in expected_config},expected_config)
+        self.assertEqual(set(config['case_routes']),{'AK02','SAP22','GeRC02','KMRC01_candidate'})
+        for name,entry in config['case_routes'].items():
+            self.assertEqual(entry['result'],'../results/cs137-10k/'+name+'/charge-readout.html')
+            self.assertEqual(entry['files'],entry['result']+'#data-files')
+            self.assertEqual(entry['spectrum'],'../spectra/cs137-10k.html#tenk-'+name)
+            for item in entry['original_files'].values():
+                path=(V.ROOT/'docs/viewers'/item['href']).resolve()
+                self.assertEqual(V.sha(path),item['sha256'])
+                self.assertEqual(path.stat().st_size,item['bytes'])
+        self.assertNotIn('savedCurrent',config['case_routes']['AK02']['original_files'])
+        self.assertNotIn('savedCurrent',config['case_routes']['SAP22']['original_files'])
+        if ring_manifest.is_file():
+            for name in ('GeRC02','KMRC01_candidate'):
+                self.assertTrue(config['case_routes'][name]['original_files']['savedScalars']['href'].endswith('/response/scalars.jsonl'))
         self.assertEqual(len(re.findall(r'<canvas\b',main)),1)
         ids=re.findall(r'\bid="([^"]+)"',main)
         self.assertEqual(len(ids),len(set(ids)))
@@ -106,6 +120,26 @@ class Readers(unittest.TestCase):
         with patch.dict(V.PINS,{'examples/cs137-10k-hits/manifest.json':'changed'}):
             with self.assertRaisesRegex(ValueError,'manifest changed'):V.origins(V.ROOT/'docs')
         with self.assertRaisesRegex(ValueError,'Unknown reader page'):V.render(V.ROOT/'docs','viewers/unknown.html')
+
+    def test_response_files_are_exactly_available_and_rehashing_is_not_authority(self):
+        import shutil
+        with tempfile.TemporaryDirectory(dir=V.ROOT/'.local/student-navigation-v2',prefix='response-links-') as tmp:
+            site=Path(tmp);folder=site/V.RESPONSE_BASE;folder.mkdir(parents=True)
+            shutil.copyfile(V.ROOT/'docs'/V.RESPONSE_BASE/'publication.json',folder/'publication.json')
+            for name in ('AK02','SAP22'):
+                for file in ('signals.csv','scalars.csv'):
+                    path=folder/name/'response'/file;path.parent.mkdir(parents=True,exist_ok=True)
+                    shutil.copyfile(V.ROOT/'docs'/V.RESPONSE_BASE/name/'response'/file,path)
+            config=V.config(site)
+            for name in ('AK02','SAP22'):
+                self.assertEqual(set(config['case_routes'][name]['original_files']),{'savedSignals','savedScalars'})
+                self.assertNotIn('readout-input.csv',json.dumps(config['case_routes'][name]))
+            path=folder/'AK02/response/signals.csv';path.write_bytes(path.read_bytes()+b'\nunauthorized')
+            with self.assertRaisesRegex(ValueError,'asset changed'):V.config(site)
+            m=V.read(folder/'publication.json');m['files']['AK02/response/signals.csv']['sha256']=V.sha(path)
+            m['files']['AK02/response/signals.csv']['bytes']=path.stat().st_size
+            V.write(folder/'publication.json',json.dumps(m))
+            with self.assertRaisesRegex(ValueError,'publication changed'):V.config(site)
 
     def test_rehashed_current_html_and_unknown_code_are_refused(self):
         with tempfile.TemporaryDirectory(dir=V.ROOT/'.local',prefix='reader-test-') as tmp:

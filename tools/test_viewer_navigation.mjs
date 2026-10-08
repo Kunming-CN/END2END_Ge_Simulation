@@ -14,6 +14,7 @@ assert.equal(query('?event=9999').event,9999);
 for(const s of ['?event=','?event=-1','?event=10000','?event=1e2','?event=01','?event=1.5','?event=%2B1','?event=%201',
   '?event=0&event=1','?model=unknown','?model=AK02&model=SAP22','?foo=1','?group=0','?event=213&group=9007199254740992',
   '?event=213&group=-1','?event=213&group=00','?event=213&group=0&group=1','?view=','?view=combined','?view=assembly&view=positive'])assert.ok(query(s).invalid,s);
+for(const s of ['?dataset=tenk','?case=GeRC02','?return_to=spectra/cs137-10k.html'])assert.ok(query(s).invalid,s);
 for(const s of ['?model=AK02&event=213&group=0','?model=SAP22&event=5930','?event=0','?event=213&group=9007199254740991','?view=positive'])assert.equal(query(s).invalid,'',s);
 const positive=alias('?model=AK02&event=213&group=0','positive');
 assert.equal(positive.target,'events.html?model=AK02&event=213&group=0&view=positive');
@@ -45,6 +46,38 @@ assert.equal(target({...identity,event:0},'/viewers/events.html','?'+canonical).
 assert.equal(target(identity,'/viewers/events.html','').target,'/viewers/events.html?'+canonical);
 assert.equal(target({...identity,view:'assembly'},'/viewers/events.html','?'+canonical).changed,true);
 assert.equal(target(identity,'/viewers/events.html','?view=positive&event=213&model=AK02&group=0').target,'/viewers/events.html?'+canonical);
+assert.equal(c.viewerHistoryTarget(identity,'/viewers/events.html','?'+canonical,'#recordPanel').changed,false);
+assert.equal(c.viewerHistoryTarget({...identity,view:'assembly'},'/viewers/events.html','?'+canonical,'#recordPanel').target,
+  '/viewers/events.html?model=AK02&event=213&group=0&view=assembly#recordPanel');
+// Exact fragment identity, opening, hashchange, browser back and a refreshed
+// reader all use the same checked four-case context table.
+const caseNames=['AK02','SAP22','GeRC02','KMRC01_candidate'];
+const cases=Object.fromEntries(caseNames.map(model=>[model,{model,label:model==='GeRC02'?'GeRC02 · Li 50 min':model,
+  events:'../viewers/events.html?model='+model+'&view=positive',spectrum:'cs137-10k.html#tenk-'+model,
+  result:'../results/cs137-10k/'+model+'/charge-readout.html',files:'../results/cs137-10k/'+model+'/charge-readout.html#data-files'}]));
+function node(dataset={}){return {dataset,hidden:false,textContent:'',attrs:{},removeAttribute(k){delete this[k];delete this.attrs[k];},setAttribute(k,v){this.attrs[k]=v;}};}
+const contextLinks=['events','spectrum','result','files'].map(contextLink=>node({contextLink,baseHref:'generic-'+contextLink}));
+for(const link of contextLinks.slice(2))link.hidden=true;
+const focus=node(),selection=node(),status=node(),context=node({dataset:'tenk',model:''}),listeners=new Map();
+const focusContext=vm.createContext({URLSearchParams,location:{hash:'#tenk-GeRC02'},addEventListener:(key,fn)=>listeners.set(key,fn),
+  document:{getElementById:id=>id==='spectrum-case'?selection:status,
+    querySelectorAll:selector=>selector==='[data-context-label]'?[focus]:selector==='[data-context-link]'?contextLinks:[context]}});
+vm.runInContext(code,focusContext);const focusUI=focusContext.installSpectrumFocus(cases);
+assert.equal(selection.value,'GeRC02');assert.equal(context.dataset.model,'GeRC02');
+assert.match(focus.textContent,/GeRC02.*50 min/);assert.equal(contextLinks[0].href,cases.GeRC02.events);
+assert.equal(contextLinks[2].href,cases.GeRC02.result);assert.equal(contextLinks[2].hidden,false);
+assert.equal(contextLinks[3].href,cases.GeRC02.files);assert.equal(contextLinks[3].hidden,false);
+for(const model of caseNames){focusContext.location.hash='#tenk-'+model;listeners.get('hashchange')();
+  assert.equal(selection.value,model);assert.equal(contextLinks[0].href,cases[model].events);assert.equal(contextLinks[1].href,cases[model].spectrum);}
+focusContext.location.hash='#tenk-GeRC02';listeners.get('popstate')();assert.equal(contextLinks[0].href,cases.GeRC02.events);
+focusContext.installSpectrumFocus(cases);assert.equal(contextLinks[0].href,cases.GeRC02.events);
+for(const hash of ['#tenk-unknown','#tenk-GeRC02-extra','#%broken']){focusContext.location.hash=hash;focusUI.restore();
+  assert.match(status.textContent,/Unavailable/);for(const link of contextLinks){assert.equal(link.href,undefined);assert.equal(link.attrs['aria-disabled'],'true');}}
+focusContext.location.hash='';focusUI.restore();assert.equal(focus.textContent,'All four cases');assert.equal(contextLinks[0].href,'generic-events');
+for(const link of contextLinks.slice(2)){assert.equal(link.hidden,true);assert.equal(link.href,undefined);}
+focusContext.location.hash='#tenk-GeRC02';focusUI.restore();
+assert.equal(contextLinks[2].hidden,false);assert.equal(contextLinks[2].href,cases.GeRC02.result);
+assert.equal(contextLinks[3].hidden,false);assert.equal(contextLinks[3].href,cases.GeRC02.files);
 let value=null,clears=0,gateRequests=0;
 const gate=c.selectionGate(()=>{value=null;clears++;});
 const runGate=(...args)=>{gateRequests++;return gate.run(...args);};

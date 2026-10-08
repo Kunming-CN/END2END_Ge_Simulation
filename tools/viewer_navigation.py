@@ -23,7 +23,9 @@ ORIGINAL_SOURCES={'tools/geometry_events.html':'b6322ea76fc067a0df0596978dae027d
  'tools/geometry_events.py':'8473e9c6ae0ec8866ac0d720fa55a9cab4766c158d764fd30266668bdf8e05ca',
  'tools/hit_event_view.py':'7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e'}
 SOURCES=('tools/viewer_navigation.py','tools/viewer_navigation.js',
-         'tools/unified_event_viewer.html','tools/unified_event_viewer.js','tools/site_restructure.py')
+         'tools/unified_event_viewer.html','tools/unified_event_viewer.js','tools/site_restructure.py','tools/site_routes.py')
+RESPONSE_BASE='examples/cs137-10k'
+RESPONSE_PUBLICATION_PIN='554eece013b193baf48310f5dfb62379d63663fa1ac29a83866428ab52805eec'
 RING_BASE='examples/cs137-10k-rings'
 RING_KIND='ring_saved_publication_v1'
 RING_MODELS=('GeRC02','KMRC01_candidate')
@@ -39,7 +41,11 @@ TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
  '1cec34532d0166bff8ead1f6d9c3a9d4234bdea9789b32aec06bec78c8cd85d6',
  # Verified before this four-model source upgrade; never derived from a new
  # self-declared adapter inventory.
- '27ec5778f811eae44a70f91106056567cd4bf07d0d503c2e4526ee4cc900941a'})
+ '27ec5778f811eae44a70f91106056567cd4bf07d0d503c2e4526ee4cc900941a',
+ # Exact accepted 8ef88bd publication receipt, before shared-route navigation.
+ '5453b82d3d8e019ffa79e408dcac4901a9188301406c66b5e61d2f9890ab9fc1',
+ # Authenticated local 76a8596f stage before the bounded browser corrections.
+ '387e4034bd43932320c53c202bf49d0a805b9d3b61a210f2695baaeb06072e4d'})
 
 def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def require(ok,message):
@@ -131,13 +137,49 @@ def ring_records(site,manifest):
     out[RING_BASE+'/manifest.json']={'sha256':sha(path),'bytes':path.stat().st_size}
     return out
 
+def response_records(site):
+    """Expose only existing, checked files from the frozen AK02/SAP22 publication."""
+    if site is None:return {}
+    site=Path(site);publication=site/RESPONSE_BASE/'publication.json'
+    if not publication.exists():return {}
+    require(sha(publication)==RESPONSE_PUBLICATION_PIN,'Original response publication changed')
+    m=read(publication);out={RESPONSE_BASE+'/publication.json':{'sha256':sha(publication),'bytes':publication.stat().st_size}}
+    require(m['kind']=='native_publication_v1' and m['status']=='completed_with_native_failures',
+            'Original response publication status changed')
+    for name in ('AK02','SAP22'):
+        for file in ('signals.csv','scalars.csv'):
+            rel=name+'/response/'+file
+            if rel not in m['files']:continue
+            record=m['files'][rel];path=site/RESPONSE_BASE/rel
+            require(sha(path)==record['sha256'] and path.stat().st_size==record['bytes'],
+                    'Original response asset changed: '+rel)
+            out[RESPONSE_BASE+'/'+rel]=record
+    return out
+
 def config(site=None):
+    from site_routes import case_result_path, spectrum_path, event_view_path, relative_url
     out={'assembly':{'base':'../examples/cs137-10k-geometry/','sha256':PINS['examples/cs137-10k-geometry/manifest.json']},
          'positive':{'base':'../examples/cs137-10k-hits/','sha256':PINS['examples/cs137-10k-hits/manifest.json']}}
+    responses=response_records(site)
+    out['case_routes']={name:{'result':relative_url(case_result_path(name),MAIN_PAGE),
+        'model':name,
+        'label':{'GeRC02':'GeRC02 · Li50min','KMRC01_candidate':'KMRC01 · candidate'}.get(name,name),
+        'files':relative_url(case_result_path(name)+'#data-files',MAIN_PAGE),
+        'spectrum':relative_url(spectrum_path(name),MAIN_PAGE),
+        'events':relative_url(event_view_path(name),MAIN_PAGE),
+        'original_files':{key:{'href':'../'+path,**responses[path]}
+            for key,file in (('savedSignals','signals.csv'),('savedScalars','scalars.csv'))
+            if (path:=RESPONSE_BASE+'/'+name+'/response/'+file) in responses}}
+        for name in ('AK02','SAP22')+RING_MODELS}
     m=ring_bundle(site) if site is not None else None
     if m is not None:
         binding={'base':'../'+RING_BASE+'/','sha256':sha(Path(site)/RING_BASE/'manifest.json'),'kind':RING_KIND}
         out['models']={name:{'assembly':dict(binding),'positive':dict(binding)} for name in RING_MODELS}
+        for name in RING_MODELS:
+            out['case_routes'][name]['original_files']={key:{'href':'../'+RING_BASE+'/'+file,**m['files'][file]}
+                for key,file in (('savedSignals',name+'/response/signals.csv'),
+                    ('savedScalars',name+'/response/scalars.jsonl'),('savedCurrent',name+'/response/readout-input.csv'))
+                if file in m['files']}
     return out
 
 def render(site,page=MAIN_PAGE):
@@ -146,8 +188,8 @@ def render(site,page=MAIN_PAGE):
     binding=PAGES[page];common=(ROOT/'tools/viewer_navigation.js').read_text(encoding='utf-8')
     if binding['role']=='canonical':
         text=(ROOT/binding['source']).read_text(encoding='utf-8')
-        from site_restructure import navigation, dataset_navigation
-        text=replace(text,'__PRIMARY_NAVIGATION__',navigation('../')+dataset_navigation('tenk','../'))
+        from site_routes import page_navigation
+        text=replace(text,'__PRIMARY_NAVIGATION__',page_navigation(MAIN_PAGE,dataset='tenk'))
         text=replace(text,'__VIEWER_NAVIGATION__',common)
         text=replace(text,'__VIEWER_CONFIG__',json.dumps(config(site),separators=(',',':')))
         return replace(text,'__VIEWER_CONTROLLER__',(ROOT/'tools/unified_event_viewer.js').read_text(encoding='utf-8'))
@@ -179,7 +221,7 @@ def assemble(site):
         write(site/dest,render(site,dest));pages[dest]={**binding,'sha256':sha(site/dest)}
     frozen()
     m={'kind':'unified_geant4_reader_v1','original_files':original,'original_sources':ORIGINAL_SOURCES,
-       'adapter_sources':FROZEN,'pages':pages,'new_simulations':0,
+       'adapter_sources':FROZEN,'pages':pages,'saved_response_files':response_records(site),'new_simulations':0,
        'scope':'Earlier 10k/model saved radiation records; all primaries including zeros; assembly groups are return context only.'}
     if rings is not None:
         m['saved_ring_files']=ring_records(site,rings)
@@ -204,7 +246,8 @@ def validate(site,current=False):
     require(m['kind']=='unified_geant4_reader_v1','Wrong display manifest')
     previous=not current and sha(manifest_path) in TRUSTED_PREVIOUS_UNIFIED_MANIFESTS
     require(set(m['adapter_sources'])==set(SOURCES) or
-            (previous and set(m['adapter_sources'])==set(SOURCES)-{'tools/site_restructure.py'}),
+            (previous and set(m['adapter_sources']) in (set(SOURCES)-{'tools/site_routes.py'},
+                set(SOURCES)-{'tools/site_restructure.py','tools/site_routes.py'})),
             'Adapter source inventory mismatch')
     known_current=m['adapter_sources']==FROZEN
     require(known_current or (not current and sha(manifest_path) in TRUSTED_PREVIOUS_UNIFIED_MANIFESTS),
@@ -212,6 +255,7 @@ def validate(site,current=False):
     if current or known_current:
         rings=ring_bundle(site)
         require(m.get('saved_ring_files',{})==ring_records(site,rings),'Saved ring file binding mismatch')
+        require(m.get('saved_response_files',{})==response_records(site),'Saved response file binding mismatch')
     require(set(m['pages'])==set(PAGES),'Reader route inventory mismatch')
     require({p.name for p in (site/'viewers').iterdir()}=={'manifest.json','events.html','geant4-assembly.html','ge-positive.html'},'Reader file inventory mismatch')
     if current:frozen()

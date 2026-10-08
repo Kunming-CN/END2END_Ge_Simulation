@@ -114,7 +114,7 @@ function modelOptions(name){
   if(!names.includes(name)){const unavailable=option(name,name+' · saved data unavailable');unavailable.disabled=true;options.push(unavailable);}
   $('model').replaceChildren(...options);$('model').value=name;
 }
-function clearModelLinks(){for(const id of ['savedResponse','savedResponseReport','savedSignals','savedCurrent']){$(id).removeAttribute('href');$(id).hidden=true;}$('modelNotes').textContent='';$('responseLinks').hidden=true;}
+function clearModelLinks(){for(const id of ['savedResponse','savedResponseReport','savedSignals','savedScalars','savedCurrent']){$(id).removeAttribute('href');$(id).hidden=true;}$('modelNotes').textContent='';$('responseLinks').hidden=true;}
 function clearGroup(){viewer.group=null;$('group').replaceChildren();$('group').disabled=true;$('evidence').replaceChildren();$('evidenceRaw').textContent='';}
 function clearOverlay(){clearGroup();viewer.data=null;viewer.events=new Map();viewer.evidence=new Map();$('representatives').replaceChildren();}
 function clearPrimary(){viewer.primary=null;$('records').textContent='';clearGroup();}
@@ -126,7 +126,7 @@ function identityText(){
 }
 function writeHistory(action){
   if(action==='none'||viewer.requested.invalid)return;
-  const next=viewerHistoryTarget(viewer.requested,location.pathname,location.search),state={viewer:1,category:viewer.category};
+  const next=viewerHistoryTarget(viewer.requested,location.pathname,location.search,location.hash||''),state={viewer:1,category:viewer.category};
   if(action==='replace')history.replaceState(state,'',next.target);
   else if(next.changed||history.state?.category!==viewer.category)history.pushState(state,'',next.target);
 }
@@ -145,14 +145,16 @@ function showScene(scene,manifest,name){
     const title=document.createElement('span');title.textContent=labels[v.name]||'Holder: '+v.original_path.split('/').pop();title.style.color=color(v);
     const small=document.createElement('small');small.textContent=v.name+' · '+v.material+' · '+v.solid_type;label.append(check,title,small);$('volumes').append(label);}
   const entry=manifest.models[name];$('originals').href=bundlePath('assembly',entry.originals,name);clearModelLinks();
+  const routes=VIEWER_CONFIG.case_routes?.[name];requireViewer(routes,'No maintained case routes are bound for '+name+'.');
+  for(const [id,path]of [['savedResponse',routes.result],['savedResponseReport',routes.files]]){
+    $(id).href=path;$(id).hidden=false;
+  }
+  for(const [id,record]of Object.entries(routes.original_files)){$(id).href=record.href;$(id).hidden=false;}
+  $('responseLinks').hidden=false;
   if(ringModels.includes(name)){
     $('modelNotes').textContent=name==='GeRC02'?
       'GeRC02: the original 30 min annealing model is preserved; this saved 10K case is the independent 50 min variant. Functional engineering example; Li CCE remains unvalidated.':
       'KMRC01 candidate: raw native signals remain signed and negative. This saved response uses fixed −1 electronics wiring and a separate negative injection calibration; original rejections remain available. No eventwise gain or charge rectification.';
-    for(const [id,file]of [['savedResponse',entry.response],['savedResponseReport',entry.response_report],
-      ['savedSignals',name+'/response/signals.csv'],['savedCurrent',name+'/response/readout-input.csv']])
-      if(manifest.files[file]){$(id).href=bundlePath('assembly',file,name);$(id).hidden=false;}
-    $('responseLinks').hidden=false;
   }
   $('census').textContent=scene.event_index.event_count+' primaries; '+scene.event_index.ge_hit_ids.length+' Ge-positive; '+scene.event_index.zero_ge_primaries+' zero-Ge';
   $('provenance').textContent=exactJSON({model:name,scenario:scene.scenario,raw_lh5_sha256:scene.raw_lh5_sha256,originals_sha256:scene.originals_sha256,
@@ -203,6 +205,9 @@ function normalizeRequest(identity){
 async function applySelection(identity,options={}){
   const r=normalizeRequest(identity),ticket=++viewer.generation,previousModel=viewer.requested.model,previousScene=viewer.scene,previousMode=mode;
   viewer.requested=r;clearPrimary();viewer.overlayError='';$('overlayStatus').textContent='';$('status').className='';
+  const routes=VIEWER_CONFIG.case_routes?.[r.model];
+  updateCaseNavigation(r.invalid?null:routes,routes?'Focused case: '+routes.label:r.model,
+    r.invalid?'Unavailable request: '+r.invalid:(!routes?'Case routes unavailable for '+r.model:''));
   if(previousModel!==r.model){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');clearModelLinks();}
   modelOptions(r.model);$('view').value=r.view;if(r.event!==null)$('eid').value=String(r.event);identityText();
   if(r.invalid){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');clearModelLinks();$('status').textContent='Unavailable request: '+r.invalid+(options.rejectedInput===undefined?' Query: '+location.search:'');$('status').className='error';draw();return false;}
@@ -240,7 +245,12 @@ async function applySelection(identity,options={}){
   refreshDetails();draw();return true;
 }
 function requestSelection(identity,options={}){pendingSelection=applySelection(identity,options);return pendingSelection;}
-function selectModel(name){return requestSelection({...viewer.requested,model:name,invalid:''});}
+function selectModel(name){
+  const same=name===viewer.requested.model;
+  if(!same)viewer.category='all';
+  return requestSelection({...viewer.requested,model:name,event:same?viewer.requested.event:null,
+    group:same?viewer.requested.group:null,invalid:''});
+}
 function selectEvent(id,groupId=null){return requestSelection({...viewer.requested,event:id,group:groupId,invalid:''});}
 function setView(view){return requestSelection({...viewer.requested,view,invalid:''});}
 function filterCategory(){viewer.category=$('category').value;return requestSelection({...viewer.requested});}

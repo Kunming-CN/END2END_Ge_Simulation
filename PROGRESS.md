@@ -1,73 +1,76 @@
 # Current handoff
 
 Updated:2026-10-08 UTC. Read this before starting work.
-Retained prior display/science history: [verifiedb2e9d76](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/b2e9d7629ec42c4d241e5ef310a56bf1db1c208a/PROGRESS.md).
+Prior accepted site/science history: [8ef88bd](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/8ef88bd86500f0cf4ea5e2998cd9cd19deedf5f5/PROGRESS.md).
 
-## Student site and saved-plot milestone
+## Navigation correction from the supplied105-page audit
 
-Owner requested every public page/link and plot inspected individually, then
-coherent routes replacing confusing dataset jumps and duplicate entrances. Input:
-104 HTML pages,490 original PNG/SVG assets and embedded saved charts. Output:
-four shared task routes, dataset-first results, compact detector pages and readable
-saved-data derivatives. No radiation, SSD, electronics replay, environment or
-physical-input change. Stop at accepted publication and owned process/lease closure.
+Owner supplied GeSignal_navigation_review_2026-10-08.md and
+page_disposition_105.md from Desktop. Their corrected recommendations govern;
+old tree-only/deduplicate-all-links/directory-migration proposals are superseded.
+Input: exact8ef88bd saved site,105 HTML pages and retained scientific records.
+Output: one formal reading target per task, fixed ownership and case-preserving
+views, all existing addresses and independent archives. No simulations or
+scientific-input/environment changes. Stop at tested publication and lease closure.
 
-Start verified HEAD/origin/main/live mainb2e9d76; prior lease released, prior scope
-clean and no scientific workers. Actual root/audit/development/review sessions
-verified Sol6.1/ultra in this project. Manual lease owner student-site-audit-v1-root;
-automatic heartbeat stays PAUSED. Closure authority is
-.local/student-site-audit-v1/COMPLETE.json and actual .local/autonomy/state.json,
-Git and owned processes: read those before resuming, never infer unfinished work
-from an old chat or this static source handoff.
+Start verified HEAD/origin/live main8ef88bd, previous round closed, no science
+workers. Root and required development/review sessions verified Sol6.1/ultra.
+Lease: student-navigation-v2-root; automatic heartbeat remains PAUSED.
+Current execution authority: .local/student-navigation-v2/ROUND.json,
+.local/autonomy/state.json, actual Git and owned processes. Do not repeat work
+because a chat/session failed. Local acceptance passed; live publication is IN PROGRESS;
+manual_ready remains false until the actual checks and closure below finish.
 
-Accepted implementation and local checks: buildc42925be,1691 files,105 HTML,
-3238 local links; standalone tools/check_site.py passes.131 distinct focused tests
-pass. Two scoped independent AI reviews plus NEW third review accepted direction,
-details and practical value. INT01 corrected exact model-download checks to the
-technical page; targeted follow-ups retained the original finding. Initial build
-cancelled before installation. A test-only inventory correction preserves every
-original file by SHA256 and validates the one new archive receipt; cancelled huge
-byte-dictionary output and temporary fixture were closed, logs retained.
+Implemented: small display-only route registry shared by existing generators;
+Results/Detectors/Run locally/Methods, fixed breadcrumbs and one local view group.
+Home/README lead to Results; four datasets remain distinct. Four existing10K
+charge-readout pages directly embed all64 exact saved SVGs and scalar settings,
+with accurate trace limits, one ZIP action and an exact member list. GeRC model
+30min versus run Li50min and KM original0/231 versus fixed wiring stay separate.
+Geometry switches retain geometry; all17 models share four labels, GeGI studies
+retain their own scope/return. Guide has four normal steps plus folded advanced
+routes.1M preview belongs to1M. NativeLi/lithium are distinct Methods displays;
+producer archives/bindings are frozen.30 formal pages indexable;105 remain public.
 
-ROUTES.json covers104 pages/2675 static hrefs, all local targets/anchors valid.
-DETECTOR-BROWSER.json and OTHER-PAGES-BROWSER.json actually visited all104 pages.
-PLOTS.json:490/490 originals individually inspected (401 full-resolution PNGs,
-89 actually rendered SVGs), plus17 geometry thumbnails. All490 original hashes
-unchanged. OTHER-PLOTS.json:172/172 requested rendered inline charts on13 pages,
-plus4 focused teaching charts;4 hidden templates excluded. Representative scale/
-hide/restore controls passed on all four maintained spectrum pages. No additional
-scientific sign/unit/census defect found.
+One integrated AI review cycle completed: two scoped independent reviews and a
+NEW third reviewer, then concrete finding exchange. Only verified browser fixes
+received targeted follow-up. Initial local build76a8596f was not published.
+Browser found wrong original-report aliases, missing dynamic result/file entries,
+narrow-screen long-text/channel-grid overflow, and overlapping anchor edits that
+made AK02/SAP22 waveform regions ZIP links. All corrected at source; the last
+fix passed8 focused tests and all4 actual report/64SVG preservation checks.
+Cancelled intermediate exporters/logs remain recorded; no science restarted.
+Final build efcc9418105e75ae0a7165e44883cbe9cc90939a1cd103707dd22138684476e5
+installed after both candidate validations. Standalone check_site passes:
+1692 files,105 HTML,984568334 payload bytes;3275 legacy href/src/poster refs,
+3323 typed references:1272 navigation including fragments,753 downloads,
+1265 media,33 metadata. These are references, not individually clicked links.
+STATIC-NAVIGATION-ACCEPTED.json enumerates every page/reference and fixed parents,
+query/fragment preserved, zero missing internal targets/anchors or parent cycles.
+PAGE-DISPOSITIONS.json preserves all105 supplied requirements with per-page proof.
 
-Verified display repairs: GeGI strip dashboard legends and position annotation/
-coincident IDs; two SVG derivatives from pinned existing public CSVs preserve
-3302 signed vertices, four positions and original zero-tie estimator. Originals
-remain linked.276 event previews keep original images with readable time-unit
-caption;48 close-camera previews link full geometry;20 GeGI previews expose exact
-selected channel IDs. Earlier native Li study has one wide Methods view: all56
-original SVGs and table remain verbatim. Browser opened all14 rows/56 plots;
-1126px curves and22.52px ticks on desktop;390px screen retains600px charts with
-individual scrolling and no whole-page overflow. Two new GeGI SVGs visually pass.
-FINAL-DISPLAY-BROWSER.json and FINAL-ROUTES-BROWSER.json record changed-route checks.
-All90 changed/new routes accepted. Two initial million-spectrum observations used
-cached prior DOMs; explicit refresh passed without source/build changes. Both
-observations and focused rechecks remain recorded; zero unresolved route findings.
+BROWSER.json final_local:105 distinct pages actually visited;91 maintained pages
+checked at390px, one Primary/breadcrumb/local group, no whole-page overflow or
+visible broken image. All64 direct SVGs opened, readable bounds/units checked,
+no waveform download anchors and exactly one ZIP action per case. Existing490
+original-image and172 inline-chart pixel audit reused with exact hashes. Final
+SAP22 direct report; GeRC Li50min result->spectra->events61/group0->Back/Forward/
+Reload; all4 case/file routes; all-case hidden placeholders;1M original archive
+and distinct response navigation; Guide four chapters pass. Stable controller
+checks also retain same-model identity, cross-model valid first record, aliases
+query/hash, zero/9999, invalid10000/model/repeated-key/missing-primary-group,
+geometry switch and both GeGI study returns. Invalid requests stay unavailable.
 
-Main entrance: results/index.html. Dataset anchors #teaching/#gamma/#tenk/#million
-name different studies before waveform/spectrum/3D/file choices. Global navigation:
-Run / Saved results / Detectors / Help. spectra/pipeline.html remains the main
-200-event bare-detector teaching reader; cryostat gamma has40 different events and
-geometry, never mapped IDs. TenK and1M counts/scopes stay separate. Detector
-geometry/gallery/technical pages have distinct roles; downloads and canonical
-contacts stay on technical. Old URLs/fragments/reports remain accessible.
-
-Public diff:93 changed presentation files and5 purposeful new display files;
-zero removed files or unexpected scientific changes. All original numerical data,
-images, meshes, models, configurations, locks, producer/export bindings and unique
-failures remain unchanged. Original sparse signals and full-window archival limits
-remain explicit.68 videos were present, not individually played. External checks:
-9 retrieved,1 challenge,12 unconfirmed retrievals; not declared dead. Direct
-file:// UI testing is tool-policy blocked; embedded source/data checks are separate
-from actual offline browser or fresh-machine acceptance. No Download action used.
+Final independent artifact comparison:1581 baseline non-HTML assets and12 frozen
+original HTML files unchanged by SHA256;47 tracked model/configuration/lock files
+unchanged. No removed public files.93 maintained presentation HTML and5 receipts/
+discovery files changed; one lithium display receipt added. Source freeze matches.
+No raw computation, unique failure, original hash binding, seed or physics change.
+External links,68 video playback, direct file:// and fresh-machine installation
+remain outside this runtime proof; prior retrieval limits retained, never called
+all-online success. No Download control used for acceptance; downloads verified
+by public bytes and contracts. Final live exact-byte check and Git/lease closure
+are still pending in ROUND/state; do not claim ready until COMPLETE.json exists.
 
 ## Retained delivery and next bounded work
 

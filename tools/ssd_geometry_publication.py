@@ -35,16 +35,20 @@ def validate_asset(directory,model,expected_asset=None):
 def viewer_html(model,asset):
     require(TEMPLATE.is_file(),'Viewer template missing')
     text=TEMPLATE.read_text(encoding='utf-8')
-    from site_restructure import navigation
+    from site_routes import page_navigation
     require(text.count('<body>')==1,'Geometry viewer body anchor')
-    text=text.replace('<body>','<body>'+navigation('../../'),1)
+    require(text.count('__PAGE_NAVIGATION__')==1,'Geometry navigation placeholder')
+    text=text.replace('__PAGE_NAVIGATION__',page_navigation('detectors/'+model+'/geometry.html',model=model).replace('<a ','<a target="_top" '))
     scene=f'geometry/{asset}/scene.json'; manifest=f'geometry/{asset}/manifest.json'
     require(text.count('__MODEL__')>=1 and text.count('__SCENE__')>=1 and text.count('__MANIFEST__')==1,'Viewer template placeholders')
     choices=''.join('<option value="'+escape(m)+'"'+(' selected' if m==model else '')+'>'+escape(m)+'</option>' for m in GC.catalog())
     item=GC.catalog()[model]
+    qualification='<p class="note">Recorded model status: '+escape(item.get('status','Saved model'))+'.</p>'
+    if model=='GeRC02':
+        qualification+='<p class="note">Catalog geometry uses the original 30-minute GeRC02 model. The saved Cs137 10K case uses a separate Li50min operating variant.</p>'
     rows=''.join('<tr><td>'+str(c['id'])+'</td><td>'+escape(c['name'])+'</td><td>'+str(c['potential_V'])+'</td></tr>' for c in item['contacts'])
     key='<details><summary>Static contact key and signed potentials (V)</summary><p>Saved catalog reference readout contact: '+str(item['readout_contact_id'])+'. This is geometry metadata, not proof of LBNL full-chain support.</p><table><thead><tr><th>ID</th><th>Name</th><th>V</th></tr></thead><tbody>'+rows+'</tbody></table></details>'
-    return text.replace('__CONTACT_KEY__',key).replace('__READOUT__',str(item['readout_contact_id'])).replace('__MODELS__',choices).replace('__MODEL__',model).replace('__SCENE__',scene).replace('__MANIFEST__',manifest)
+    return text.replace('__MODEL_QUALIFICATION__',qualification).replace('__CONTACT_KEY__',key).replace('__READOUT__',str(item['readout_contact_id'])).replace('__MODELS__',choices).replace('__MODEL__',model).replace('__SCENE__',scene).replace('__MANIFEST__',manifest)
 def assemble(source,site):
     source=Path(source).resolve();site=Path(site); export=read(source/'export.json')
     require(export['kind']=='ssd_geometry_export','Wrong geometry export');records={}

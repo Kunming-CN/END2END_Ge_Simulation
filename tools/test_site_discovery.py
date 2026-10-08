@@ -44,7 +44,7 @@ class DiscoveryTests(unittest.TestCase):
         self.assertIn('shared Cs137, Am241 and Ba133 local workflows',scenario)
         self.assertIn('Legacy AK02/SAP22 CLI support',scenario)
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
+        self.temp = tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1] / '.local')
         self.addCleanup(self.temp.cleanup)
         self.site = Path(self.temp.name)
         for path in ('index.html', 'guide.html', 'results/index.html'):

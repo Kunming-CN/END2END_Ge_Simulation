@@ -1,10 +1,12 @@
 """Search metadata for maintained landing pages; never touch saved science bundles."""
+import hashlib
 import json
 import re
 from html import escape
 from html.parser import HTMLParser
 from pathlib import Path
 from xml.etree import ElementTree as ET
+import site_routes as routes
 
 SITE_URL = 'https://kunming-cn.github.io/END2END_Ge_Simulation/'
 PROJECT_NAME = 'GeSignal'
@@ -19,6 +21,9 @@ LEGACY_WITHOUT_SUPPORT = {'186b9008a790683486598e48e6b86ede2b1d9119008c191cc5fed
 # allow only this hash-bound snapshot while the publisher stages the repair.
 LEGACY_IMPLICIT_HEAD = {'c257d2f120d5d446664f049af057f085baa2e389fe9b45ba19466bc7d794a858'}
 NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
+# Exactly the published snapshot before the navigation milestone. This is an
+# admission for checked rollback/staging, never a generic old sitemap allowance.
+NAVIGATION_PREDECESSOR = 'c42925be9072fd25c20229539d4351cd5c39aa043c46f1bd27f5c65bcfe6e404'
 LANDINGS = {
     'index.html': 'Saved HPGe detector engineering simulations: Geant4/remage radiation deposits, SSD charge transport and electronics readout. Browse results or choose a local workflow.',
     'guide.html': 'Windows setup and supported local HPGe simulation workflows. Saved browsing, new radiation runs and private-input engineering examples have separate requirements.',
@@ -47,14 +52,34 @@ HISTORICAL_DESCRIPTIONS = {
 
 def landing_descriptions(site):
     site = Path(site)
-    descriptions = dict(LANDINGS)
+    descriptions = {}
+    for path in routes.FIXED:
+        record = routes.page_record(path)
+        selected = (record['role'] in {'home', 'hub', 'guide', 'dataset'}
+                    or record['role'] == 'method' and record['owner'] == 'site_restructure')
+        if selected:
+            # Selection belongs to the route registry; descriptions describe
+            # those existing content pages without adding wrapper entrances.
+            descriptions[path] = LANDINGS[path]
+    for model in routes.CASE_MODELS:
+        path = routes.case_result_path(model)
+        record = routes.page_record(path)
+        if record['role'] != 'case' or record['owner'] != 'ring_site':
+            raise ValueError('Discovery case route has no maintained report owner')
+        label = 'GeRC02 Li50min' if model == 'GeRC02' else 'KMRC01 candidate' if model == 'KMRC01_candidate' else model
+        descriptions[path] = (f'{label} saved 10K Cs137 engineering case: directly readable charge, '
+                              'readout, calibration settings and retained data. No measured-spectrum '
+                              'fit or calibrated charge-collection claim.')
     catalog = site / 'models/catalog.json'
     if catalog.is_file():
         for item in json.loads(catalog.read_text(encoding='utf-8'))['detectors']:
             ident = item['id']
             if not re.fullmatch(r'[A-Za-z0-9_-]+', ident):
                 raise ValueError('Unsafe discovery detector ID')
-            descriptions[f'detectors/{ident}/index.html'] = (
+            path = f'detectors/{ident}/index.html'
+            if routes.page_record(path)['role'] != 'detector':
+                raise ValueError('Discovery catalog route is not a detector overview')
+            descriptions[path] = (
                 f'{ident} HPGe model: saved geometry, contact information, field and response galleries, '
                 'original configuration and provenance. Model viewing is not experimental validation.')
     return {path: description for path, description in sorted(descriptions.items())
@@ -131,7 +156,20 @@ class Metadata(HTMLParser):
             self.head_open = False
 
 
-def validate(site):
+def snapshot_identity(site):
+    """Recompute the predecessor identity for direct standalone validation."""
+    entries = []
+    for path in sorted(Path(site).rglob('*')):
+        if path.is_file() and path.name != 'site-manifest.json':
+            data = path.read_bytes()
+            entries.append({'path': path.relative_to(site).as_posix(), 'bytes': len(data),
+                            'sha256': hashlib.sha256(data).hexdigest()})
+    entries.sort(key=lambda row: row['path'])
+    encoded = json.dumps(entries, sort_keys=True, separators=(',', ':')).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def validate(site, snapshot_build_id=None):
     """Optional on historical snapshots; strict once the sitemap is installed."""
     site = Path(site)
     if not (site / SITEMAP).exists():
@@ -141,6 +179,15 @@ def validate(site):
     descriptions = landing_descriptions(site)
     manifest = site / 'site-manifest.json'
     build_id = json.loads(manifest.read_bytes()).get('build_id') if manifest.is_file() else None
+    # The complete check_site census can supply the freshly recomputed digest.
+    # Direct callers compute it before granting this exact old discovery layout.
+    predecessor = build_id == NAVIGATION_PREDECESSOR
+    if predecessor:
+        identity = snapshot_build_id if snapshot_build_id is not None else snapshot_identity(site)
+        predecessor = identity == NAVIGATION_PREDECESSOR
+    if predecessor:
+        descriptions = {path: description for path, description in descriptions.items()
+                        if routes.page_record(path)['role'] != 'case'}
     historical = HISTORICAL_DESCRIPTIONS.get(build_id, {})
     has_license = (site / 'LICENSE').is_file()
     if has_license and (site / 'LICENSE').read_bytes() != SOFTWARE_LICENSE.read_bytes():

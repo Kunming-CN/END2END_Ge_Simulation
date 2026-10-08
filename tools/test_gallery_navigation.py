@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import patch
 
 import site_detector_pages as D
@@ -42,14 +43,15 @@ class GalleryTests(unittest.TestCase):
         with patch('ssd_geometry_publication.refresh_viewers'):
             N.apply(self.site)
 
-    def test_all17_cards_use_reviewed_types_original_fullsize_lazy_contained_images(self):
+    def test_all17_cards_use_reviewed_types_one_overview_target_lazy_contained_images(self):
         self.structure();html=(self.site/'detectors/index.html').read_text();parser=Elements();parser.feed(html)
         images=[attrs for tag,attrs in parser.tags if tag=='img']
         self.assertEqual(len(images),17);self.assertEqual(set(D.TYPE_LABELS),{i['id'] for i in self.catalog['detectors']})
         cards=re.findall(r'<article class="card">.*?</article>',html,re.S);self.assertEqual(len(cards),17)
         for item,card in zip(sorted(self.catalog['detectors'],key=lambda i:(i['id'] not in D.control_capabilities(),self.catalog['detectors'].index(i))),cards):
             model=item['id'];poster=f'{model}/runs/{D.RUN}/01_geometry.png'
-            self.assertIn('href="'+poster+'"',card);self.assertIn('src="'+poster+'"',card)
+            self.assertNotIn('href="'+poster+'"',card);self.assertIn('src="'+poster+'"',card)
+            self.assertEqual(set(re.findall(r'href="([^"]+)"',card)),{model+'/index.html'})
             self.assertIn('loading="lazy"',card);self.assertIn('object-fit:contain',card)
             self.assertIn(D.TYPE_LABELS[model],unescape(card));self.assertNotIn('class="tag"',card)
             self.assertNotIn(item['status'],unescape(card))
@@ -82,7 +84,7 @@ class GalleryTests(unittest.TestCase):
     def test_catalog_presentation_rejects_changed_authority_and_model_binding(self):
         refs=('scenarios/catalog-presentation.json','scenarios/detector-capabilities.json',
               'models/catalog.json','transport/cryostat_nominal.json')
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory(dir=ROOT/'.local') as directory:
             root=Path(directory)
             for ref in refs:
                 path=root/ref;path.parent.mkdir(parents=True,exist_ok=True)
@@ -102,7 +104,7 @@ class GalleryTests(unittest.TestCase):
 
     def test_three_actions_ring_context_and_no_stale_pending_claim(self):
         self.structure();home=(self.site/'index.html').read_text();results=(self.site/'results/index.html').read_text()
-        self.assertEqual(re.findall(r'<article class="card"><h2>(.*?)</h2>',home),['Browse','Setup','Use'])
+        self.assertEqual(re.findall(r'<article class="card"><h2>(.*?)</h2>',home),['Results','Detectors','Run locally','Methods'])
         self.assertNotIn('pending saved results',results)
         scenario=(self.site/'scenarios/lbnl-cs137/index.html').read_text()
         self.assertIn('Control offers 10 separate detector configurations',scenario)
@@ -115,37 +117,101 @@ class GalleryTests(unittest.TestCase):
         for retained in ('5,068,800 nodes','id="saved-output"','<img src="saved.png">'):self.assertIn(retained,corrected)
         self.assertEqual(D.archive_notebook(corrected),corrected)
         self.assertIn('Run all cells in order',self.notebook)
+        self.assertEqual(corrected.count('aria-label="Primary"'),1)
+        self.assertEqual(corrected.count('aria-label="Breadcrumb"'),1)
+        self.assertIn('href="gallery.html">Return to GeGI saved fields &amp; signals',corrected)
 
-    def test_four_wrappers_keep_raw_report_bytes_and_one_distinct_zip_per_case(self):
+    def test_detector_views_and_saved_studies_keep_one_shared_navigation(self):
+        self.structure()
+        for item in self.catalog['detectors']:
+            model=item['id'];folder=self.site/'detectors'/model
+            for name in ('index.html','gallery.html','technical.html'):
+                text=(folder/name).read_text()
+                self.assertEqual(text.count('aria-label="Primary"'),1,(model,name))
+                self.assertEqual(text.count('aria-label="Breadcrumb"'),1,(model,name))
+                self.assertEqual(text.count('aria-label="Detector views"'),1,(model,name))
+                for label in ('Overview','Geometry','Saved fields &amp; signals','Model &amp; files'):
+                    self.assertIn(label,text)
+                self.assertNotIn('aria-label="Detector pages"',text)
+            overview=(folder/'index.html').read_text()
+            self.assertLess(overview.index('id="ssd-interactive-geometry"'),overview.index('id="saved-studies"'))
+            self.assertIn(item['status'],unescape(overview))
+        gegi=(self.site/'detectors/GeGI_3D/index.html').read_text()
+        studies=re.search(r'<section id="saved-studies".*?</section>',gegi,re.S).group(0)
+        for target in ('strip_explorer.html','supplement.html'):
+            self.assertIn('href="'+target+'"',studies)
+        for name in ('index.html','technical.html'):
+            text=(self.site/'detectors/GeRC02'/name).read_text()
+            self.assertIn('original 30-minute',text)
+            self.assertIn('separate Li50min operating variant',text)
+
+    def test_strip_reader_navigation_preserves_exact_scripts_and_scientific_body(self):
+        original=(ROOT/'docs/detectors/GeGI_3D/strip_explorer.html').read_text(encoding='utf-8')
+        repaired=D.strip_navigation(original)
+        self.assertEqual(repaired,D.strip_navigation(repaired))
+        self.assertEqual(repaired.count('aria-label="Primary"'),1)
+        self.assertEqual(repaired.count('aria-label="Breadcrumb"'),1)
+        self.assertIn('href="gallery.html">Return to GeGI saved fields &amp; signals',repaired)
+        self.assertEqual(original[original.index('<main>'):],repaired[repaired.index('<main>'):])
+
+    def test_saved_supplement_keeps_exact_scientific_elements_and_anchors(self):
+        original=(ROOT/'docs/detectors/GeGI_3D/supplement.html').read_text(encoding='utf-8')
+        repaired=D.archive_notebook(original)
+        for pattern in (r'<img\b[^>]*>',r'<svg\b[^>]*>.*?</svg>',r'<table\b[^>]*>.*?</table>',r'<script\b[^>]*>.*?</script>'):
+            self.assertEqual(re.findall(pattern,original,re.S),re.findall(pattern,repaired,re.S))
+        original_ids=set(re.findall(r'\bid="([^"]+)"',original))
+        self.assertTrue(original_ids<=set(re.findall(r'\bid="([^"]+)"',repaired)))
+        self.assertEqual(repaired,D.archive_notebook(repaired))
+
+    def test_four_direct_reports_keep_raw_bytes_and_one_primary_case_action(self):
         self.structure();items=[];raw={}
         for model in R.ALL_MODELS:
             base='examples/cs137-10k'+('-rings' if model in R.RING_MODELS else '')+'/'+model
             counts=dict(zero_deposit_primaries=9999,groups=1,accepted=1,native_failed_groups=0,readout_rejected=0)
             items.append(dict(model=model,label=model,note='Separate saved engineering fixture.',counts=counts,base=base))
             folder=self.site/base/'response';folder.mkdir(parents=True)
-            report='<!doctype html>\r\n<title>Original frozen report</title><p>−0.0001, null, 10000 original IDs</p>'.encode('utf-8')
+            report=('<!doctype html>\r\n<title>Original frozen report</title><h1>Saved response</h1>'
+                    '<p>−0.0001, null, 10000 original IDs</p><details><summary>Event 1 / group 0</summary>'
+                    '<svg viewBox="0 0 600 205"><polyline points="0,-1 2,0"/></svg></details>').encode('utf-8')
             (folder/'summary.html').write_bytes(report);raw[base+'/response/summary.html']=hashlib.sha256(report).hexdigest()
+            (folder/'run.json').write_text(json.dumps({'counts':counts}))
+            with zipfile.ZipFile(folder/'ledgers.zip','w') as bundle:
+                for name in ('truth.jsonl','scalars.jsonl','endpoints.jsonl','histograms.json','traces.jsonl','run.json'):
+                    bundle.writestr(name,b'{}\n')
+            if model=='KMRC01_candidate':
+                (folder/'original-native').mkdir();(folder/'original-native/summary.html').write_text('<p>Original readout: 0/231 accepted.</p>')
         with patch.object(R,'cases',return_value=items):R.apply(self.site)
         for case in items:
             html=(self.site/'results/cs137-10k'/case['model']/'charge-readout.html').read_text()
-            self.assertIn('← Four-detector 10K results',html);self.assertIn('<iframe',html)
-            self.assertIn('src="../../../'+case['base']+'/response/summary.html"',html)
+            self.assertIn('Saved response',html);self.assertIn('<svg viewBox="0 0 600 205">',html)
+            self.assertNotIn('<iframe',html);self.assertNotIn('Waveforms and calibration record',html)
+            self.assertIn('Original saved charge/readout report',html)
             self.assertEqual(html.count('href="../../../'+case['base']+'/response/ledgers.zip"'),1)
         hub=(self.site/'results/cs137-10k/index.html').read_text()
-        self.assertEqual(hub.count('Download complete ledgers (ZIP)'),4)
-        self.assertEqual(len(set(re.findall(r'href="([^"]+ledgers.zip)"',hub))),4)
+        cards=re.findall(r'<article class="card">.*?</article>',hub,re.S)
+        self.assertEqual(len(cards),4);self.assertTrue(all(card.count('<a ')==1 for card in cards))
+        self.assertNotIn('ledgers.zip',hub)
         for name,digest in raw.items():self.assertEqual(hashlib.sha256((self.site/name).read_bytes()).hexdigest(),digest)
-        front=(self.site/'index.html').read_text();self.assertLess(front.index('current-ring-10k'),front.index('<h2>Browse</h2>'))
+        for case in items:
+            detector=(self.site/'detectors'/case['model']/'index.html').read_text()
+            self.assertLess(detector.index('saved-studies'),detector.index('current-ring-10k'))
 
     def test_english_guide_keeps_anchors_and_source_recipe_and_correct_build_check(self):
         guide=(ROOT/'tools/site_guide.html').read_text();parser=Elements();parser.feed(guide)
         anchors={attrs['id'] for _,attrs in parser.tags if 'id' in attrs}
-        expected={'local-routes','browse','setup','local-control','control-electronics','validation','choose','electronics','results','replay','native-readout','source-preparation','recovery','workspace','downloads','advanced-title'}
+        expected={'local-routes','browse','setup','local-control','saved-analysis','control-recovery','control-electronics','validation','choose','electronics','results','replay','native-readout','source-preparation','recovery','workspace','downloads','advanced-title'}
         self.assertTrue(expected<=anchors);self.assertIsNone(re.search('[\u3400-\u9fff]',guide))
         self.assertIn('Check environment</strong> reports file readiness',guide)
         self.assertIn('Check plan</strong> to verify its current build, source, runtime and settings',guide)
         self.assertIn('Run.cmd setup -BuildPortableSourceExporter',guide)
         self.assertIn('legacy exporter, not Control',guide)
+        contents=re.search(r'<nav aria-label="Guide contents">.*?</nav>',guide,re.S).group(0)
+        self.assertEqual(re.findall(r'href="([^"]+)"',contents),['#setup','#local-control','#saved-analysis','#control-recovery'])
+        positions=[guide.index('<section id="'+name+'"') for name in ('setup','local-control','saved-analysis','control-recovery')]
+        self.assertEqual(positions,sorted(positions))
+        advanced=re.search(r'<section id="advanced-routes".*?</section>',guide,re.S).group(0)
+        for name in ('choose','replay','source-preparation','recovery','workspace'):
+            self.assertIn('<details id="'+name+'">',advanced)
         draft=(ROOT/'.local/product-delivery-v1/english-guide-draft/GUIDE.html')
         # The recipe is public source syntax; its private preparation copy is
         # optional. A public checkout still checks all required recipe commands.

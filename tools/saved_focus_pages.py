@@ -22,16 +22,20 @@ DISPLAY_BASES={
              'html':'gamma.html','stamp':{'bytes':5464306,'sha256':'1858fd960a395615736c3a91d2806c4f32778ba58950f68c46dadaa660b2b5c9'}},
     'teaching':{'receipt':'3a0a5fdbfde1e00c20c810e197f7e27bbdad854e241759bd8bf42ec438079ae3',
                 'html':'pipeline.html','stamp':{'bytes':9805279,'sha256':'6b97584824ef8237fccc44c24255eec44b8233242a3264fffd46f36cd5a7277f'}}}
-DISPLAY_SOURCES=(JS,'tools/saved_focus_pages.py','tools/site_restructure.py',
+DISPLAY_SOURCES=(JS,'tools/saved_focus_pages.py','tools/site_restructure.py','tools/site_routes.py',
                  'tools/gamma_complete_showcase.py','tools/gamma_complete_showcase.html',
                  TEMPLATE,'tools/pipeline_demo.py')
 
-# Accepted b2e9d76 display receipts. Only these exact prior derivatives may be
+# Accepted b2e9d76 and 8ef88bd display receipts. Only these exact prior derivatives may be
 # read during the next presentation upgrade; science still reconstructs the
 # immutable original receipt above. Rehashed edits are never a historical basis.
 PREVIOUS_DISPLAY_RECEIPTS={
-    'gamma':frozenset({'725c852d635021b0aef16f9b651c56ebdd16fb9f7e13a7737101ea78fa4b11e7'}),
-    'teaching':frozenset({'30ea3de554ed4408e4aac06c2f54fd178e886aa7ae9a737d73ed210b7b052bc3'})}
+    'gamma':frozenset({'725c852d635021b0aef16f9b651c56ebdd16fb9f7e13a7737101ea78fa4b11e7',
+                       'b7b90f6e14bd88b903e0e7bb761384c51c2b0e2b863dbe7e29d2ed29b14d0eba',
+                       # Authenticated first local build 76a8596f; never published.
+                       '0f660aeeaa0954a4c12ea5193d8cbe8bf6fc17e5e050cfc791bcaf7e646c49a4'}),
+    'teaching':frozenset({'a96863b38712c40efd87372accd0276bdbdeada68370c5e6b46a983abf526800'})}
+PRESERVED_TEACHING_HTML={'bytes':9810837,'sha256':'71d898465740d2ad4eb098cc5cc1d27c494f38c0151e634dfc067bf53f147bf7'}
 
 def display_sources():
     return {n:S.sha((ROOT/n).read_bytes()) for n in DISPLAY_SOURCES}
@@ -41,7 +45,7 @@ def historical_display(family,raw):
 
 def validate_display_binding(family,manifest):
     extension=manifest['display_upgrade'];base=DISPLAY_BASES[family]
-    current=extension==dict(kind='saved_plot_display_v1',science_calls=0,
+    current=family!='teaching' and extension==dict(kind='saved_plot_display_v1',science_calls=0,
         original_receipt_sha256=base['receipt'],sources=display_sources())
     previous=S.sha(S.canonical(manifest)) in PREVIOUS_DISPLAY_RECEIPTS[family]
     S.require(current or previous,'Unknown saved display upgrade binding')
@@ -51,29 +55,26 @@ def validate_display_binding(family,manifest):
     return current
 
 def display_render(family,data):
-    from site_restructure import navigation, dataset_navigation
+    from site_routes import page_navigation
     if family=='gamma':
         from gamma_complete_showcase import render as original_render
-        body=original_render(data).decode('utf-8');up='../../'
+        body=original_render(data).decode('utf-8')
         call='SavedFocusPlots.gammaPanels(r,m.display_edges[String(activeId)])'
         S.require(body.count(call)==1,'Gamma saved settings anchor')
         body=body.replace(call,'SavedFocusPlots.gammaPanels(r,m.display_edges[String(activeId)],{ionisation_energy_eV:m.report.ionisation_energy_eV,time_step_ns:m.report.calibration.time_step_ns})',1)
+        old='<a href="../../results/index.html">← Saved results</a>'
+        S.require(body.count(old)==1,'Gamma saved return anchor')
+        body=body.replace(old,'',1)
         context='<p style="margin:12px 24px">Additional cryostat example: 20 gamma primaries per detector. Different geometry and event IDs from the 100-primary teaching example.</p>'
-        context+=dataset_navigation('gamma',up)
     else:
-        body=render(data).decode('utf-8');up='../'
-        context='<p style="margin:12px 24px"><strong>Main teaching example.</strong> 100 side-on gamma primaries per detector in bare geometry. <a href="gamma-native/gamma.html">Additional cryostat example: 20 primaries per detector</a>.</p>'
-        context+=dataset_navigation('teaching',up)
-        old='href="../index.html">← Detector library</a>'
-        S.require(body.count(old)==1,'Teaching dataset return anchor')
-        body=body.replace(old,'href="../results/index.html#teaching">← Teaching dataset</a>',1)
+        raise ValueError('Original teaching reader is frozen; upgrade its spectrum derivative')
     anchor='<header>'
     S.require(body.count(anchor)==1,'Saved reader header anchor')
-    bar='<div style="padding:12px 24px;background:#fff;color:#173047"><a href="'+up+'index.html">GeSignal home</a>'+navigation(up)+'</div>'+context
+    bar='<div style="padding:12px 24px;background:#fff;color:#173047">'+page_navigation('examples/gamma-native/gamma.html')+'</div>'+context
     return body.replace(anchor,bar+anchor,1).encode('utf-8')
 
 def upgrade_displays(site):
-    """Update only two saved HTML displays and receipts before spectrum rendering."""
+    """Update gamma navigation; preserve the exact teaching source for its derivative."""
     from gamma_publication import validate_bundle as validate_gamma
     site=Path(site);expected=display_sources()
     for family,directory,receipt in (
@@ -84,6 +85,15 @@ def upgrade_displays(site):
         # The earlier six-response format remains an unchanged saved archive.
         if family=='gamma' and S.decode(path.read_bytes()).get('kind')!='saved_gamma_complete_publication_v1':continue
         data=validate_gamma(directory) if family=='gamma' else validate(directory)
+        if family=='teaching':
+            # The maintained spectrum reader owns teaching navigation. Its saved
+            # source stays exactly at the accepted 8ef88bd display and receipt.
+            raw=(directory/'pipeline.html').read_bytes()
+            S.require({'bytes':len(raw),'sha256':S.sha(raw)}==PRESERVED_TEACHING_HTML,
+                      'Original teaching reader differs from accepted display')
+            S.require(S.sha(path.read_bytes()) in PREVIOUS_DISPLAY_RECEIPTS['teaching'],
+                      'Unknown preserved teaching display receipt')
+            continue
         raw=path.read_bytes();manifest=S.decode(raw)
         if 'display_upgrade' not in manifest:
             S.require(historical_display(family,raw),'Unknown initial saved display receipt')
@@ -128,8 +138,11 @@ def validate(directory):
     raw=(directory/'data.json').read_bytes();S.require(S.sha(raw)==manifest['original_data_sha256'],'Original teaching numerical bytes')
     data=S.decode(raw)
     if 'display_upgrade' in manifest:
-        if validate_display_binding('teaching',manifest):
-            S.require((directory/'pipeline.html').read_bytes()==display_render('teaching',data),'Exact upgraded teaching display')
+        S.require(S.sha((directory/'pipeline-display.json').read_bytes()) in PREVIOUS_DISPLAY_RECEIPTS['teaching'],
+                  'Unknown preserved teaching display receipt')
+        validate_display_binding('teaching',manifest)
+        S.require(manifest['files']['pipeline.html']==PRESERVED_TEACHING_HTML,
+                  'Original teaching reader differs from accepted display')
     elif not historical_display('teaching',(directory/'pipeline-display.json').read_bytes()):
         S.require((directory/'pipeline.html').read_bytes()==render(data),'Exact focused teaching template/data')
         S.require(manifest['template_sha256']==S.sha((ROOT/TEMPLATE).read_bytes()) and manifest['javascript_sha256']==S.sha((ROOT/JS).read_bytes()),'Frozen presentation sources')
@@ -140,6 +153,10 @@ def assemble(target):
     if not source.exists():return False
     validate(source);target=Path(target)
     S.require((target/'data.json').read_bytes()==(source/'data.json').read_bytes(),'Staged teaching numerical data differs')
+    if (target/'pipeline-display.json').is_file():
+        receipt=(target/'pipeline-display.json').read_bytes()
+        if S.sha(receipt) in PREVIOUS_DISPLAY_RECEIPTS['teaching']:
+            validate(target);return True
     for n in FILES:shutil.copyfile(source/n,target/n)
     validate(target);return True
 

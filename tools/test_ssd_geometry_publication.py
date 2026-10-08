@@ -25,6 +25,24 @@ class GeometryPublicationTests(unittest.TestCase):
         m='AK02';root=self.site/'detectors'/m/'geometry';asset=next(root.iterdir())
         scene=asset/'scene.json';scene.write_bytes(scene.read_bytes()+b' ')
         with self.assertRaisesRegex(ValueError,'scene hash'):P.validate_site(self.site)
+    def test_geometry_switch_keeps_task_and_navigation_for_every_model(self):
+        for model in P.GC.catalog():
+            text=P.viewer_html(model,'0'*64)
+            self.assertEqual(text.count('aria-label="Primary"'),1)
+            self.assertEqual(text.count('aria-label="Breadcrumb"'),1)
+            self.assertEqual(text.count('aria-label="Detector views"'),1)
+            for label in ('Overview','Geometry','Saved fields &amp; signals','Model &amp; files'):
+                self.assertIn(label,text)
+            handler=text[text.index("document.getElementById('model-select').addEventListener"):]
+            self.assertIn("encodeURIComponent(e.target.value)+'/geometry.html'",handler)
+            self.assertIn('window.top.location.href=destination.href',handler)
+            self.assertIn('location.href=destination.href',handler)
+            self.assertNotIn("new URL('index.html'",handler)
+            self.assertIn('target="_top"',text)
+            self.assertIn('Recorded model status:',text)
+            if model=='GeRC02':
+                self.assertIn('original 30-minute',text)
+                self.assertIn('separate Li50min',text)
     def test_repeat_publication_reuses_content_addressed_assets(self):
         first=P.assemble(self.source,self.site); second=P.assemble(self.source,self.site)
         self.assertEqual(first,second); self.assertEqual(P.validate_site(self.site),{m:first[m]['asset_id'] for m in P.MODELS})

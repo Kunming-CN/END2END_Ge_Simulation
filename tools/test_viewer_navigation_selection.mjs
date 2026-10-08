@@ -10,10 +10,13 @@ const assembly=read(path.join(assemblyRoot,'manifest.json')),positive=read(path.
 // Exercise current sources against the protected saved payloads without a site
 // build or copying/regenerating science. Python tests separately cover render().
 const sourceMode=process.argv.includes('--source');
+const caseRoutes=Object.fromEntries(['AK02','SAP22','GeRC02','KMRC01_candidate'].map(model=>[model,{model,label:model,
+  result:'../results/cs137-10k/'+model+'/charge-readout.html',files:'../results/cs137-10k/'+model+'/charge-readout.html#data-files',
+  spectrum:'../spectra/cs137-10k.html#tenk-'+model,events:'events.html?model='+model+'&view=positive',original_files:{}}]));
 const sourceHTML=sourceMode?fs.readFileSync('tools/unified_event_viewer.html','utf8')
   .replace('__VIEWER_NAVIGATION__',()=>fs.readFileSync('tools/viewer_navigation.js','utf8'))
   .replace('__VIEWER_CONFIG__',()=>JSON.stringify({assembly:{base:'../examples/cs137-10k-geometry/',sha256:sha(fs.readFileSync(path.join(assemblyRoot,'manifest.json')))},
-    positive:{base:'../examples/cs137-10k-hits/',sha256:sha(fs.readFileSync(path.join(positiveRoot,'manifest.json')))}}))
+    positive:{base:'../examples/cs137-10k-hits/',sha256:sha(fs.readFileSync(path.join(positiveRoot,'manifest.json')))},case_routes:caseRoutes}))
   .replace('__VIEWER_CONTROLLER__',()=>fs.readFileSync('tools/unified_event_viewer.js','utf8')):null;
 const oracles=new Map(),chunks=new Map();let scalarComparisons=0;
 function exact(a,b,p='value'){

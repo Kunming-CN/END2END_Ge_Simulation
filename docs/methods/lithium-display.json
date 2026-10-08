@@ -1,0 +1,78 @@
+{
+  "components": {
+    "pre": [
+      "ffcffa2aa2c4581d74477fa5be2c7f28912cd421f5fe778c3b941fe49fb99592",
+      "3de8919efc6a62639c61e6f7c887a0c45d6f79d13525a15539fd0d8a1eed269f"
+    ],
+    "script": [],
+    "svg": [
+      "57600fa254ebbb3de8dd5984ea05eced89fc8660f62e34dc78941aa0d4a575fa",
+      "53d548932287c13b7983458d122ed4756385619be9f8906698665503643256e0",
+      "a01dda8e88b48a6a944d473b1939b2508820752b86989e1b146c09d3864936a0",
+      "88084dc40557ab016dae28df776059729277fcf8e4713df19b295a098df91802"
+    ],
+    "table": [
+      "ee29b4dcaf1d0d53016301b1258141dcd1f5f9246239225e886504b8ae847dd8",
+      "8325d30f0eb03d8c9ecac405492e0668f9c51af19437dd9af6ed2f4d2829c3b2",
+      "398f6a6dd1e615a846cdb7f0557b2aa194622af3a5f99afea428d73a83119cbe",
+      "2af18ab18cd720a37d4f2b88ad1dc521a8c9dbe8f425318a79373cc448b750e9",
+      "8dbffeeae31d61b2bf22a448069c670f7958487bc3af037ce13d5765350ac4b2",
+      "e07f4a481a0388e41bac976bda84e69c21ece0db5cf1969d41e7de3c6fe349d1",
+      "8d6a9740f9c00bbcece32008e4d037de5f29aa53ec0cc24329050954c51ffb88",
+      "48ef315225acf4a665ed8c01db55efcbd21a04b7240f9c12d4355d7fa7006a26",
+      "ad5345ec6148bab4a2289f7c7b83bc2e5495aea08afcac3e1ab01622cafe20fb",
+      "aa16ced1c19fee7abf2d63c21072dd3f5f3a6dadc802a4ec73aba36cad65d7df",
+      "c833c06ffd599447fdb748174dabd066450b00dbfec0facb20c5ee1cfec4995b"
+    ]
+  },
+  "kind": "saved_lithium_navigation_v1",
+  "original_files": {
+    "axes-comparisons.csv": {
+      "bytes": 452,
+      "sha256": "422b8e89c0d683300f2313c2d6689a8d235c14a8b08d0f70010e9131707fd95e"
+    },
+    "axes-profiles.csv": {
+      "bytes": 2153555,
+      "sha256": "c4d586d7c7a854f1753beafc7e44bd3435ff85d549c36b5d0d98986e4de49b52"
+    },
+    "depth-scan.csv": {
+      "bytes": 8880,
+      "sha256": "4650f35b0f652f43d72b968592af05751f9706eee99c27a4666cdce35df8017f"
+    },
+    "endpoint-audit.csv": {
+      "bytes": 674049,
+      "sha256": "0588e50da4957cd3c3d619755b8d3d2a9f5ba236f47fd75084957de5c9e770d5"
+    },
+    "profiles.csv": {
+      "bytes": 330791,
+      "sha256": "48c04fd519821a45cbc4bab3b58be4f8c2315044f4195c37667d423467910046"
+    },
+    "summary.json": {
+      "bytes": 10157386,
+      "sha256": "c5e1b2c85406f077cb692ac6e99dd1c9affe7cb6632a3098f96a86708e0d022c"
+    },
+    "transition-comparisons.csv": {
+      "bytes": 693,
+      "sha256": "761b44c04c6e21c889b72691c8ad9ec1f2a10ae957362bfe07b81093e281b5fe"
+    },
+    "transition-profiles.csv": {
+      "bytes": 1510484,
+      "sha256": "e0c597b5d176ecde8fcdd15dca5eb2fa843f609b5299e07251c0f548912d4165"
+    }
+  },
+  "original_html_sha256": "ea19caf13d0bc1dc90c2dd5e676f6a0c5ed83043c5c53c14da1a975546a78742",
+  "output": {
+    "lithium/lithium.html": {
+      "bytes": 6318228,
+      "sha256": "76b480606362b7eb2de2f2e982f084db9399a6025531f839622324812c745480"
+    }
+  },
+  "science_calls": 0,
+  "sources": {
+    "tools/lithium_report.py": "410dbd4314d3720c13ff249bfc30253983e4857681937f01f780eccb22fc3e03",
+    "tools/pipeline_demo.py": "48d77d0cdd43b2f61fee7b367ec4a47b32a29e338301e88bb7c3a606f61ef785",
+    "tools/saved_archive_display.py": "c215f43221d2f879603cfd11ff1d095f55c610aec35af27847bf0663f693ccfd",
+    "tools/site_restructure.py": "a7abbde9cc65575ac4cc9920e1e853c74afe86bc447e878e9c96af0d07184d93",
+    "tools/site_routes.py": "3436a77ab16dbf89b70cceb4a4e37fdf0f3c828cadaf27fc286143ff1abf5d1c"
+  }
+}
