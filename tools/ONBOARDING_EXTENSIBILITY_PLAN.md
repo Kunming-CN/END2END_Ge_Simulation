@@ -1,56 +1,30 @@
 # New-student usability and scenario extensibility plan
 
-Owner request, 2026-09-29 local. **Planned, not implemented or accepted.**
-This adds M8-M11 after the current M4-M7 roadmap. It does not reopen the deferred
-M3 preamplifier, hardware-filter, noise or optimum-resolution work.
+Current owner disposition,2026-10-07: the second-computer M8/M9 acceptance task
+is removed from the delivery backlog. Develop usable shared workflows and improve
+setup/use from actual student feedback. This does not certify an untested fresh
+installation, and does not authorize installs/new environments on this computer.
+The [original plan and history](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/cb285557f9d1458a0314da4e7e02da93700ae677/tools/ONBOARDING_EXTENSIBILITY_PLAN.md)
+remain preserved. M3 preamplifier/noise and deeper physical validation stay separate.
 
-Two existing Astra reviewers independently discussed this plan and exchanged
-findings. They are planning advisers, NOT the two future project-naive testers.
-The future tests require new threads without this project's history.
+M4/bounded M5 and M10 local Control are delivered with recorded limits. M6 retained
+the installed readers; unavailable reboost/simflow remains deferred. The current
+cryostat admits ten configurations and Cs137/Am241/Ba133 through shared backends,
+with exact counts, serial batches, boundary Stop/Resume and saved analysis access.
+Gamma remains fixed20; Co60 admission and seven larger models remain unchanged.
+See PROGRESS.md for actual scope and receipts. Further M11 extensions are bounded
+one at a time, without model/source configuration copies or mandatory research gates.
 
-## Current owner disposition (2026-09-30)
-
-Owner update (2026-10-01): skip deferred M8/M9 and proceed directly to M10,
-then M11. This explicitly supersedes the earlier ordering paragraphs below.
-M8/M9 remain deferred acceptance items, not prerequisites for local UI work.
-The first M10 delivery is the bounded native AK02/SAP22 local-control route;
-generic radiation runs, arbitrary source/geometry editing and fresh-machine
-acceptance remain separate work. Use the existing backend without new installs.
-
-Current follow-up (2026-10-01): M7a's bounded SAP22 native-readout and checkpoint
-recovery is delivered alongside the retained AK02 route; see
-[its checked private-input scope](NATIVE_READOUT_INTEGRATION.md).
-The separate saved-site organization milestone below is delivered after local
-checks, AI reviews and actual peer discussion; normal publication and exact live
-verification pass. Its unchanged Windows staging cleanup is corrected and
-regression-tested without scientific changes. Neither delivery reopens
-fresh-machine trials or changes the later M8-M11 delivery order.
-
-M8 and M9 are DEFERRED until a second computer is available and the owner reopens
-them. Fresh-machine installation aspects of M7 are also not attempted on this
-working computer. No new-student clones, environment installs or global settings
-changes are authorized by the current development request. M10/M11 remain later
-planned backend/UI/extension work, without claiming deferred novice acceptance.
-M4 and bounded engineering M5 are delivered; their accepted limits remain.
-M6's installed-interface assessment retains the existing readers; the unavailable
-reboost/simflow operation is deferred, not accepted. See
-[the M6 decision](M6_INTERFACE_ASSESSMENT.md). The requested useful M7 adapter
-is delivered within its recorded engineering scope.
-Preserve one working
-project and synchronize its tracked source/configuration/lockfiles with GitHub.
-The two regular agents now use GPT-6.1-Sol Ultra. Each completed milestone also
-receives a fresh third-party Sol Ultra detail AND goal/direction review.
+Use existing engines/environment, keep one working project, and synchronize tracked
+source/configuration/lockfiles with GitHub. Development and substantive integrated
+reviews use actual gpt-6.1-sol/ultra settings; follow AGENTS.md for review frequency.
 
 ## Delivery order and terms
 
-Do not reopen completed M4 or bounded M5. The optional M6 assessment has a
-recorded keep-current decision; proceed to one useful M7 physically checked
-adapter. Fresh-machine reproduction waits for the second computer. Report
-blocked optional items and their disposition explicitly; never call a deferred
-item complete or let an unbounded research topic silently replace the roadmap.
-Current order: M10 mouse-driven control, then M11 extension proofs. M8 discovery
-trials and M9 novice improvements await the second computer. Freeze one release
-per acceptance milestone; deferred acceptance is never reported as completed.
+Do not reopen completed M4 or bounded M5. Current priority is usable Control,
+accurate public entry and one useful extension at a time. Actual student feedback
+starts concrete fixes; it is not a future-device delivery prerequisite. Preserve
+failed/partial evidence and report only validation actually performed.
 
 - **No source code required:** a student can install documented prerequisites,
   select a supported preset, enter settings through prompts, run and inspect
@@ -67,7 +41,7 @@ per acceptance milestone; deferred acceptance is never reported as completed.
 Owner addition, 2026-09-30: the public pages are cleaner, but links and information
 still feel scattered. Plan a separate saved-display milestone using existing
 generators and the single maintained Windows guide. It can proceed on this
-computer; it is not the deferred fresh-user or installation acceptance.
+computer using saved inputs; it does not claim fresh-installation acceptance.
 
 - Keep a clear main route from the homepage to detector overview or current
   results, then event/geometry details. Consolidate competing or repeated links
@@ -90,61 +64,20 @@ Build with `tools/build_site.py`, publish through the approved workflow, verify
 the live build, and synchronize tracked local/GitHub sources. Read saved data;
 no physics rerun, precision reduction or rebaseline is part of this task.
 
-## M8 - Two genuinely new-student trials (DEFERRED)
+## Student feedback and no-source-edit use
 
-When reopened, create two NEW sessions using the then-authorized model policy, and separate source-only checkout
-and output roots. Give a neutral task and public GitHub URL/user guide only.
-Launch from a neutral authorized working directory and check automatic instruction
-injection, so project AGENTS/history cannot silently provide the solution.
-Do not supply maintainer hints, internal handoffs, prior reviews, private .local
-results, field caches or answers. Exclude those from the permitted trial inputs.
-One trial can follow the documented download route; the other the documented
-Git route. The novice should not need Git if a download route is advertised.
+The owner removed the planned second-computer trials. Keep one maintained guide
+for Browse / Setup / Run / Analyze and fix concrete student-reported blockers
+through existing components. Useful reports identify OS, project revision, selected
+detector/source/count, failing step and exact error or run name. Do not ask students
+to publish private paths, credentials or large raw inputs. Missing installation
+evidence stays unperformed; never replace it with a simulated success claim.
 
-Before starting, fix supported OS/runtime expectations, event/disk/time ceilings,
-permitted installation actions, pass conditions and assistance policy. Inventory
-preinstalled runtimes. A clean checkout on the owner's configured computer is
-NOT fresh-machine installation evidence; test that separately in an authorized
-independent environment. Do not create VMs or install system tools implicitly.
-
-Each tester must discover the project purpose, locate setup, prepare permitted
-prerequisites, configure a small supported run, execute it, find/interpret output,
-and exercise documented inspect/stop/resume behavior. Missing capabilities stay
-missing. Record commands/clicks, screenshots, errors, elapsed setup/run/interaction
-time separately, source/dependency identities, result receipts and help requests.
-Writing source, undocumented repairs, borrowed private data or covert help means
-that attempted workflow failed the no-code criterion; retain the evidence.
-
-Also critique the GitHub landing page, menus and reachable pages: purpose and
-first action, duplicate/outdated instructions, clutter/history, failed links,
-example-vs-calculation distinction, supported-vs-viewable models and limitations.
-
-Deliver two independent reports with reproducible blocker/major/minor findings,
-then exchange them. Neither self-reported success nor an exit0 is sufficient:
-verify the run's actual stage/census completion and correct output identity.
-Developers fix outside the frozen trial. A now-informed tester's retry is regression
-evidence; a new discovery test needs another new thread. These are AI usability
-proxies, not claims of human-student testing or universal OS support.
-
-## M9 - No-source-edit workflow and clear public entry (DEFERRED)
-
-Repair observed M8 blockers through the existing backend/menu and one maintained
-user guide. Keep README short: Browse results / Install / Run / Inspect; separate
-one-time setup from everyday use. Keep engineering history and detailed caveats
-reachable but out of the beginner's main path; retain original evidence/archive
-links instead of deleting unique results. Do not create competing tutorials.
-
-Provide supported presets with named units, defaults, plain error messages,
-configuration save/load, preflight, progress, safe stop/resume and result opening.
-A student should not edit a schema file to select ordinary supported settings.
-Unsupported combinations must be disabled or explained before computation.
-
-Acceptance: a supported small example and one saved-configuration variation run
-using only the guide/menu, with no source/config-file hand editing or hidden inputs.
-The student can find results and explain what completed, failed or remains assumed.
-Tests include spaces/non-ASCII checkout paths where supported, missing dependencies,
-invalid settings, interruption and repeat output-name refusal. Report unsupported
-platform/path cases honestly. Keep failure evidence and measured interaction counts.
+Ordinary supported settings should use Control without source/config-file editing.
+Preserve explicit dependency checks, units/defaults, progress, safe boundary
+Stop/Resume and saved results. Unsupported combinations must be explained before
+computation. Reproduce a reported issue with the smallest necessary case, retain
+its failure, and stop after a verified useful fix. No new feedback platform is needed.
 
 ## M10 - Mouse-driven local execution interface
 

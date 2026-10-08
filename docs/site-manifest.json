@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "build_id": "01dfa893e13a2b64652eb2ef86b2b24b4fe91e8a9b7a50b1156c183a75d0f85b",
+  "build_id": "fe097919205046bd7fa37338d0749e34b358de805d36f163ddf1e75fd4875e22",
   "file_count": 1686,
-  "total_bytes": 982905095,
+  "total_bytes": 982909165,
   "html_pages": 104,
-  "local_links_checked": 3153,
+  "local_links_checked": 3155,
   "files": [
     {
       "path": ".nojekyll",
@@ -8173,13 +8173,13 @@
     },
     {
       "path": "guide.html",
-      "bytes": 31359,
-      "sha256": "533571a67ece5b6531591b5cb1b865897a57cf0d68b0b53c7443205193bb90e3"
+      "bytes": 35120,
+      "sha256": "b592204d07ecd18e80c773a7a5a4d218009856219538483b6ef5341341a03566"
     },
     {
       "path": "index.html",
-      "bytes": 71539,
-      "sha256": "5eb25b9a98c5c2dd8764d8bc8f74103dcbe4d63b056b2f595dc96775879d8b16"
+      "bytes": 71605,
+      "sha256": "2e8a0793f33895d64f3e4ba796aa175e9a8cbc56e0fcc1124cd52e6f98fe66f2"
     },
     {
       "path": "learn/index.html",
@@ -8383,8 +8383,8 @@
     },
     {
       "path": "scenarios/lbnl-cs137/index.html",
-      "bytes": 10610,
-      "sha256": "0bc3c694629dea2b97848f1df3953e68328bda222a7a470e47d50387b878be92"
+      "bytes": 10853,
+      "sha256": "6ca54667351cfa59c3f2054d116a0625a243fdad4340670e73c0dc278e0e1089"
     },
     {
       "path": "sitemap.xml",

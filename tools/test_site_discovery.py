@@ -41,7 +41,7 @@ class DiscoveryTests(unittest.TestCase):
         for name in ('AK02','SAP22','GeRC02 Li50min','KMRC01 candidate'):self.assertIn(name,description)
         self.assertNotIn('Earlier',description)
         scenario=D.LANDINGS['scenarios/lbnl-cs137/index.html']
-        self.assertIn('four Control configurations',scenario)
+        self.assertIn('shared Cs137, Am241 and Ba133 local workflows',scenario)
         self.assertIn('Legacy AK02/SAP22 CLI support',scenario)
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()

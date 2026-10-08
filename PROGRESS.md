@@ -1,95 +1,88 @@
 # Current handoff
 
-Updated: 2026-10-08 UTC. Read this before starting work.
-The complete accepted counts/batches/Control milestone and preserved failures are
-[at verified e489faf](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/e489faf5b808f51412b85d305245d17270d1a8bf/PROGRESS.md).
+Updated:2026-10-08 UTC. Read this before starting work.
+The previous accepted analysis interface and retained engineering history are
+[at verified cb28555](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/cb285557f9d1458a0314da4e7e02da93700ae677/PROGRESS.md).
 
-## Completed bounded work: student analysis guidance
+## Delivered bounded work: cautious public student entry
 
-Direct owner request: explain next plan and continue, with usable core first and
-no rabbit holes/repeated broad reviews/useless artifacts. Actual baseline HEAD,
-origin/main and live GitHub main were all e489faf5b808f51412b85d305245d17270d1a8bf;
-worktree was clean, prior owned lease released, Windows/Linux science absent.
-Root and UI developer actual sessions are gpt-6.1-sol/ultra in this project.
-Automatic scheduler remains PAUSED. This manually authorized round uses owner
-`student-analysis-v1-root`; its terminal receipt records actual lease/Git closure.
+Direct owner authorization: continue development without per-round prompts,
+remove the second-computer acceptance task, and cautiously improve GitHub and
+related pages. Second-PC M8/M9 is removed from active rules/roadmaps/state;
+use actual student feedback. This is removal, not completed fresh-installation
+validation. No new environment/install/global PATH/WSL/package/reset is authorized.
 
-Read-only inventory found the saved v3 access already complete: raw radiation,
-all event-ledger chunks, full signed native signals, endpoints, scalars/traces,
-readout settings and independent calibration in response/run.json are available.
-Do not invent another backend, export format or wrapper for these working paths.
-The concrete usability gap is v3's unclassified filename list and lack of visible
-selected-event filter/unit guidance.
+Start verified HEAD/origin/main/live main cb285557f9d1458a0314da4e7e02da93700ae677,
+clean worktree, manual_ready, prior lease released and no Windows/Linux scientific
+workers. Root actual latest turn is gpt-6.1-sol/ultra in this project. Manual owner
+student-pages-v1-root holds .local/autonomy/round.lock; scheduler stays PAUSED.
 
-Input: the existing protected Control interface and retained completed
-`.local/runs/batch-AK01-cs137-500-v2/` results. Output: the existing analysis panel
-explains file purposes by stage, keeps every existing link/hash, and shows current
-saved batch/global/local/group filters and precise raw/normalized units. No
-source/detector/model/scientific configuration, API, solver, backend or lock change.
-No automatic Download/Export or browser settings action.
+Input: existing README, maintained tools/site_guide.html, current catalog/source/
+batch contracts and checked saved docs snapshot. Output: accurate short student
+browse/setup/run/analyze entry, existing guide/hub labels and feedback channel.
+Concrete stale text says20/500 where v3 admits exact positive counts, omits serial
+batches and boundary Stop/Resume, and conflates raw LH5/normalized units. Fix
+existing maintained sources; no layout/framework/backend/physics redesign.
 
-Delivered in tools/local_workflow.html/js and the existing JavaScript contracts:
-five stage-purpose groups, all22 selected-batch artifact links plus3 parent links,
-and live saved run/batch/local/global/group guidance. No next-run form leakage or
-stale page guidance. Raw evtid is local; derived joins use global initial ID and
-group only where that record type carries it. CSV scalars/endpoints identities
-are decoded from record_json. Charge samples are in signals.csv, current in
-traces.jsonl. Raw row indices are zero-based within their source table. Manifest
-column units/transforms govern raw data; creation/deposition/group-relative/drift
-times remain distinct. Signed values, zeros and unknown null results are retained.
+Delivered: accurate README, guide count/source table, boundary Stop/Resume and
+saved-analysis sections; homepage analysis link; scenario hub and search summary;
+student GitHub Issues feedback. The residual Control setup_limit is a copy-only
+change; its source hash changes under existing strict provenance. Completed500
+saved access is terminal_artifacts_verified; no old stopped/active job is pending.
+Do not rehash old plans or loosen resume gates after source updates.
 
-Acceptance passed: existing pure+saved Node suite with retained zero0,
-positive188/group0 and batch1 global250/local0, null/negative/unavailable fixtures,
-and event/group/page/run changes. Real local-browser checks passed the retained
-positive plots, both batch file lists and selection guidance. One authenticated
-in-memory raw-file read matched saved bytes; no browser Download/Export, Save As
-or browser-setting action occurred. An optional test initially assumed a server
-attachment header; that assumption was corrected without backend changes.
+Existing site/restructure/discovery/hierarchy/contacts checks passed. Initial two
+suites used Windows GBK default and failed text decoding; only those two were
+retried with child-only UTF8, retaining failures in SOFTWARE-CHECKS.log. One
+focused independent Sol6.1/ultra content/link check accepted the scope and narrow
+corrections; no substantive implementation/physics review repeated.
 
-Two scoped AI reviews and one NEW independent Sol6.1/ultra direction/detail/value
-review accepted this integrated scope. The two charge/current and nested-CSV
-wording findings were corrected and specifically rechecked; concrete findings
-were exchanged. No broad repeat, new science or environment change. The owned
-preview and browser tab are closed; Windows/Linux checks found no science workers.
-This milestone stops here. Software/UI acceptance is not second-PC student testing.
+tools/build_site.py --restructure and tools/check_site.py passed. Installed build:
+fe097919205046bd7fa37338d0749e34b358de805d36f163ddf1e75fd4875e22.
+Exactly guide.html, index.html and scenarios/lbnl-cs137/index.html changed, plus
+the generated manifest. All other1683 payloads have unchanged bytes/hashes,
+including scientific data/model/downloads. File count1686, net4070 bytes and3155
+checked local links. The existing exact-old-build metadata allowance retains
+its one known prior description; rehashed/unsealed stale metadata remains refused.
+No new calculation, installation, environment, schema or numerical change.
 
-## Retained completed engineering boundaries
+Evidence: .local/student-pages-v1. Final COMPLETE is authoritative only after
+Git/process/lease and exact live-publication closure; inspect it rather than
+assuming deployment from local checks. Public pages remain saved browsing and
+the single maintained setup authority, using existing components. Stop this
+bounded content milestone after real closure; no further broad review needed.
 
-M15b/M15c terminal authority:
-`.local/student-batches-v1/execution-v1/COMPLETE.json`. Exact positive counts and
-serial10000 cap, one shared field/injection, real boundary Stop/Resume and lazy
-Control pages are accepted. Actual500AK01/Cs137 two250 batches:4 accepted,
-496 zero primaries,0 native/readout failures; first-batch/shared bytes and73
-protected originals unchanged. The v1 preflight and v2 Windows receipt-name
-collision are unique preserved failures, not rewritten successes. No recompute.
-Two accepted native bridge sources retain exact mixed/CRLF bytes through explicit
-Git attributes; never normalize their acceptance bindings casually.
+## Retained completed outcomes
 
-Ten original-cryostat configurations are runnable through the shared existing
-engines; Cs137/Am241/Ba133 admitted, Gamma fixed20 and Co60 gate unchanged. Seven
-larger models await a larger cryostat; no bare world or model resizing. Prior
-five-model500 science, KL01 native failures and original million-decay campaign
-remain unchanged. Engineering/software acceptance does not establish efficiency,
-physical resolution, PDE/CCE convergence or experimental agreement. M5 stays closed.
+Analysis UI terminal receipt: .local/student-analysis-v1/COMPLETE.json. Five
+file-purpose groups keep all22 batch artifacts plus3 parent links. Saved local/
+global/group joins, CSV record_json identities and units/time guidance passed
+pure+saved contracts, actual browser checks and one scoped AI review set. No
+science rerun, backend/exporter or environment was needed.
 
-## Evidence, closure and next task
+M15b/M15c terminal receipt: .local/student-batches-v1/execution-v1/COMPLETE.json.
+Exact positive counts, serial10000 cap, one field/injection and sealed-boundary
+Stop/Resume accepted on500AK01/Cs137 in two250 batches:4 accepted,496 zero,
+0 native/readout failures. First-batch/shared bytes and73 originals retained.
+The v1 preflight and v2 Windows receipt-name collision remain unique failures;
+producer/consumer bindings and mixed/CRLF native source bytes stay exact.
 
-Evidence root is `.local/student-analysis-v1/`: AGENT-SETTINGS.json records actual
-launch contexts; SOURCE-FREEZE.json, SAVED-ACCEPTANCE.json, UI-BROWSER-CHECKS.json
-and three review receipts retain the tested bindings and concrete corrections.
-COMPLETE.json is authoritative only after actual Git/process/lease closure;
-inspect it and current state before another round. Preserve unique failures.
+Ten current-cryostat configurations share existing engines. Cs137/Am241/Ba133
+admitted; Gamma fixed20 and Co60 gate unchanged. Seven larger models wait for a
+larger cryostat, never resized or placed in a replacement world. Five-model500,
+KL01 native failures and original million-decay science remain unchanged.
+Engineering acceptance is not efficiency, physical resolution, PDE/CCE convergence
+or experimental agreement. M5 stays closed; deeper research remains separate.
 
-The setup authority remains tools/site_guide.html; README stays short. This local
-UI/source milestone does not rebuild or change the old checked saved website.
-Only the existing UI/tests and ownership/handoff documents changed. The normal
-commit/push and live main/source/config/model/lock byte check are recorded in the
-terminal receipt, together with release of the owned lease.
-M8/M9 second-computer acceptance still awaits the owner's device. No installation,
-new environment, PATH/WSL/global packages or reset. Next bounded task: inspect the
-existing source anchor/GPS contract for one useful explicit position adjustment
-in the same cryostat, then define inputs/checks before adding controls. An isotropic
-point source has no useful angle control by itself. Use a shared transform, never
-copied detector/source combinations; retain the nominal default. Profile a delay
-only when it actually blocks students. Larger cryostat and deeper physical
-research remain separate future milestones.
+## Subsequent work
+
+The maintained Windows setup authority remains tools/site_guide.html and README
+stays a short entry. Student-reported setup/use issues receive concrete bounded
+fixes as they arrive; no second-device milestone blocks delivery.
+
+After this owner-prioritized page work, inspect existing source anchor/GPS for one
+useful explicit position adjustment in the same cryostat. Define placement checks,
+units/effective-input receipts and one small preselected acceptance first. Use
+one shared transform and retain the nominal default. An isotropic point source
+alone has no useful angle control. Optimize only an actual measured blocking delay;
+larger cryostat and deeper physical research remain future separate milestones.

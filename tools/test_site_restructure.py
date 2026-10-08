@@ -51,7 +51,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('guide.html#choose',scenario)
         self.assertIn('guide.html#local-routes',scenario)
         self.assertNotIn('Run.cmd run',scenario)
-        self.assertIn('Cs137 supports 20 or 500 initial decays per case',scenario)
+        self.assertIn('Cs137, Am241 and Ba133 accept an exact positive initial-nucleus count',scenario)
         self.assertIn('Control offers 10 separate detector configurations',scenario)
         self.assertIn('not redistributed',scenario)
 
@@ -69,10 +69,10 @@ class SiteStructureTests(unittest.TestCase):
                 if tag=='details':self.closed.pop()
         root=self.fixture(with_results=True);S.apply(root)
         home=(root/'index.html').read_text();parser=HomeLinks();parser.feed(home)
-        self.assertEqual(len(parser.links),20);self.assertEqual(len(set(parser.links)),14)
+        self.assertEqual(len(parser.links),21);self.assertEqual(len(set(parser.links)),15)
         self.assertEqual(parser.outside,['index.html','results/index.html','detectors/index.html','guide.html#setup',
                                         'guide.html#local-control','results/index.html','detectors/index.html',
-                                        'guide.html#setup','guide.html#local-control'])
+                                        'guide.html#setup','guide.html#local-control','guide.html#saved-analysis'])
         for href in ('learn/index.html','methods/index.html','examples/pipeline.html','results/cs137-10k/index.html',
                      'downloads/all-models.zip','https://github.com/Kunming-CN/END2END_Ge_Simulation'):
             self.assertIn(href,parser.links);self.assertNotIn(href,parser.outside)

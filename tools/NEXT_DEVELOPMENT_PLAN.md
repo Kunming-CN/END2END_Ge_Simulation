@@ -43,7 +43,16 @@ no Geant4/SSD rerun or browser download/settings action. Two scoped plus NEW
 independent AI reviews closed two descriptive findings with targeted rechecks.
 The usable analysis path is delivered; stop expanding it.
 
-## Next bounded task: useful source positioning
+## Delivered bounded task: public student entry
+
+Correct actual stale counts/recovery/analysis units in the GitHub README, maintained
+Windows guide and existing hubs. Keep one setup authority and unchanged scientific
+results/URLs. Build only the saved-site navigation mode, validate links/manifest
+and verify the deployed snapshot. Local checks and one focused copy/link review passed; the terminal receipt binds
+the exact live deployment. Stop after these concrete usability fixes.
+This owner-requested page maintenance precedes source positioning.
+
+## Subsequent bounded task: useful source positioning
 
 Inspect existing nominal anchor, remage GPS and admitted-source contract first.
 Input: one admitted source and detector in the present cryostat. Intended output:
@@ -85,8 +94,8 @@ No invented ETA or unmeasured speedup; record scientific compute separately from
 coding/review/tool time. Update the maintained setup authority only when required;
 build/check saved website and live publication only for an actual site change.
 
-M5 is closed. M8/M9 second-computer acceptance remains deferred until the owner
-provides it. Automatic heartbeat stays PAUSED. No installations, extra environment,
+M5 is closed. The owner removed second-computer acceptance from the active plan
+on2026-10-07; improve setup/use from actual student feedback as it arrives. Automatic heartbeat stays PAUSED. No installations, extra environment,
 global PATH/WSL/packages, new million campaign, raw-data publication or reset credits.
 New window: read current handoff and actual state; verify model/effort, root, Git,
 terminal receipts, real workers and lease. Resume only the next authorized bounded

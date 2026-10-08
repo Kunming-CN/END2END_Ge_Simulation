@@ -18,7 +18,8 @@ The website contains saved results, not an online solver.
 
 After following the guide, double-click `Control.cmd`. Choose one of ten
 configurations available in the current cryostat. Cs137, Am241 and Ba133 share
-the same selection and run workflow, with 20 or 500 initial nuclei. The fixed
+the same selection and run workflow: enter an exact positive initial-nucleus
+count, then review the checked serial batches of at most 10,000 nuclei each. The fixed
 662 keV gamma beam retains its 20-primary AK02/SAP22 route; Co60 remains unavailable
 under its unchanged source-admission gate.
 
@@ -29,9 +30,18 @@ Bipolar_reference_3D and KL01_3D—completed fixed 500-decay Cs137 cases on the
 existing Windows/WSL computer. Native failures, readout rejections and zero events
 remain visible; these are engineering checks, not experimental qualification.
 
+Use **Stop at next boundary** and **Resume saved settings** for a checked decay
+run. Completed batches stay available in **Explore events**. Open
+**Reproduce or analyze this saved run** for files grouped by purpose and the
+selected batch, primary and pulse-group filters. See the
+[saved-result guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#saved-analysis).
+
 All 17 models remain browsable. Seven require a future larger cryostat; Control
-shows their specific dimension limits. Fresh-clone and second-computer setup
-remain unvalidated. ParaView is not a student runtime prerequisite.
+shows their specific dimension limits. Setup has been checked on the existing
+Windows/WSL computer; fresh-machine portability remains unvalidated.
+[Student feedback](https://github.com/Kunming-CN/END2END_Ge_Simulation/issues)
+will guide further fixes; include your OS/revision, detector/source/count and
+the failing step or exact error. ParaView is not a student runtime prerequisite.
 
 ## Project layout
 
@@ -59,7 +69,8 @@ Current energy spectra use **step histograms**, default **Log**, with **Linear /
 | Choose a workflow | [Local routes](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#local-routes) |
 | Prepare a supported Control case | [Windows setup checklist](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup) — follow this first |
 | Use `Control.cmd` on a prepared computer | [Local simulation application](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#local-control) |
-| Inspect or continue a run | [Status, inspection and generic resume](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#results) — interrupted native-stage group recovery remains unavailable |
+| Inspect or continue a Control run | [Stop and resume saved settings](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#control-recovery) — completed boundaries are reused; uncertain partial stages require inspection |
+| Analyze a saved run | [Saved files and event identities](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#saved-analysis) — raw radiation, complete ledgers, signed charge and independently calibrated readout |
 | Browse local files | [Optional local workspace index](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#workspace) |
 
 ### Existing-input advanced routes

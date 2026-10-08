@@ -70,8 +70,10 @@ reviews. Re-review only specific verified corrections; tiny documentation edits 
 not need another review cycle. Fix verified blockers; bring material alternative directions or useful
 ideas to the owner rather than silently broadening work. These are AI reviews.
 
-M8/M9 newcomer/no-code acceptance is deferred until the owner provides a second
-computer. Do not run installation experiments, create novice environments or alter
+Owner update (2026-10-07): remove M8/M9 second-computer acceptance from the active
+delivery plan. Improve the maintained setup/use route from actual student feedback;
+do not wait for another computer or claim unperformed installation validation.
+Do not run installation experiments, create novice environments or alter
 system PATH/WSL/global packages on the current machine. Keep tracked local code,
 configuration and lockfiles synchronized with GitHub; retain machine-specific
 paths, private inputs, caches and raw scientific outputs locally and identified.

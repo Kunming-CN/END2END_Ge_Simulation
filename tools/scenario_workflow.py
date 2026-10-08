@@ -440,7 +440,7 @@ def catalog(root=ROOT):
             'sources':sources,
             'electronics_defaults':default,'electronics_keys':list(SETTINGS),
             'numerics':'16 parcels; native seed 2609261; 2 ns grid; 10,000 ns cap; CPU; one or two Julia threads.',
-            'setup_limit':'Fresh runs require the portable source exporter and, for additional models, the catalog source exporter, built explicitly in the installed project environment. Fresh-clone and second-computer acceptance remain deferred.',
+            'setup_limit':'Fresh runs require the portable source exporter and, for additional models, the catalog source exporter, built explicitly in the installed project environment. Setup evidence covers the existing Windows/WSL computer; student feedback guides further fixes.',
             'setup_guide':'https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup'}
 
 
