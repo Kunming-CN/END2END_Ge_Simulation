@@ -18,8 +18,10 @@ views. Original reports remain available as explicitly linked archived displays;
 their file hashes, numerical downloads, publication receipts and source generators
 are unchanged. Old incoming links can still open those unchanged originals.
 
-There are four truth plots, four response overlays, ten 10k stage spectra and one
-homepage response preview. The teaching route shows six illustrative Cs137 signals;
+There are four truth plots, four response overlays, twenty 10k stage spectra and two
+million-overview response previews (AK02 and SAP22). The current exact two-model
+seal rejects removal of either preview, including rehashed edits. The teaching
+route shows six illustrative Cs137 signals;
 it is not a spectrum or the complete event population. `teaching_examples.py` and
 `teaching_examples.html` read pinned, completed scalar/trace/truth ledgers and full
 native charge CSVs, and retain exact identities, signs, units, deposit rows and flags.

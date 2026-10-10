@@ -1,7 +1,38 @@
 # Current handoff
 
-Updated: 2026-10-08 UTC. Read this before starting work.
+Updated: 2026-10-10 (owner client date). Read this before starting work.
 Prior accepted teaching/navigation/science history: [0cf58d3](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/0cf58d343f49b144150fd88698d1cacc277a62ee/PROGRESS.md).
+
+## Current round: plan evaluation only
+
+Owner requested evaluation, deletion/modification/addition and a detailed updated
+plan for their next review. Verified clean HEAD/origin/live main 7259bf7, manual
+ready, prior terminal completion, no active project/science workers or round lease.
+Root and one read-only planning agent verified actual Sol6.1/Ultra/project settings.
+Input: accepted receipts/current source contracts and old plans. Output: one active
+roadmap in tools/NEXT_DEVELOPMENT_PLAN.md; ONBOARDING_EXTENSIBILITY_PLAN.md now keeps
+contracts and delivered limits rather than duplicating a future backlog. Corrected
+stale preview/stage-plot counts in SPECTRUM_DISPLAY.md against the current manifest.
+No implementation,
+science, dependency, public docs/build/deployment or preamp changes this round.
+
+Remove completed M10/analysis/site work and mandatory larger-cryostat demonstration
+from new delivery prerequisites; M5 stays closed and second-PC acceptance stays
+removed. Next proposal: one shared source/capsule angular-pose milestone through
+existing CLI/Control, strict old/new pose provenance and focused geometry/control
+checks, then one fixed SAP22/Cs137/+30deg/500/seed26092631 acceptance, no retries or
+all-combination campaign. Details, failure stop and compute ceiling are in the plan.
+Student blockers, display regressions and measured optimization are conditional
+maintenance, not speculative stages. Co60 is an optional saved-evidence admission
+assessment; its current gate/failure/inputs remain unchanged.
+
+Stop this round after documentation checks, diff review, Git synchronization and
+own lease closure; give the owner the detailed plan for evaluation. Do not start
+the angular feature or another website audit inside this planning turn. Automatic
+heartbeat remains PAUSED. Documentation links/diff and exact allowed-file scope
+are checked; one read-only direction assessment avoided a full implementation
+review cycle. Private .local/student-plan-refresh-v1/COMPLETE.json and autonomy
+state record final Git synchronization and owned lease closure.
 
 ## Both-detector 1M overview and fresh site coverage
 
@@ -77,6 +108,6 @@ Seven oversized detectors await a future larger cryostat. Second-computer delive
 was removed; act on actual student feedback. Deeper Li/calibration/GeRC research
 remains separate. No new environment, global PATH/WSL changes or reset credits.
 
-Next separate bounded feature remains shared source/capsule angular displacement
-along the nominal outer cylinder; use the exact prior handoff geometry and stop
-bounds linked above. Do not start it inside this website correction.
+Next proposed bounded feature is source/capsule angular displacement; the current
+plan above supplies exact inputs, validation and stop bounds. It remains a separate
+implementation round after the owner evaluates this planning update.
