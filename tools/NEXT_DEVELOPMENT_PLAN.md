@@ -126,6 +126,50 @@ These are options or response policies, not mandatory stages to complete first.
 | Owner wants another common isotope after the angle feature | First do a read-only Co60 admission assessment from its retained trial: distinguish valid below-threshold event rejection from source/timing/processing invalidity. Existing zero-rejection admission remains unchanged during assessment. | Evidence-based adopt/keep/defer recommendation. Gate changes or a new calculation are a separate reviewed decision, never a retry until pass. |
 | Measured run/UI delay blocks actual use | Profile the slow stage and use existing preparation/lazy access before changing concurrency. Parallel independent runs only with measured memory headroom, separate roots/seeds and no competing writers. | Measured improvement without provenance/numeric changes; no promised speedup or parallel field solves without headroom. |
 
+## Deferred to November 2026: publish real laboratory measurements
+
+Owner addition, 2026-10-10: the laboratory has further detectors, and both those
+and the detectors already represented on GitHub have measured energy spectra,
+I-V and C-V data. Add public student access after the owner supplies the complete
+measurement files/metadata. Earliest execution: next month (November 2026); this
+entry schedules no automatic work and does not start implementation/publication.
+It is independent of source-angle delivery and of any new cryostat/solver admission.
+
+**Outcome:** students can find a real detector's measured spectrum, I-V and C-V
+curves, inspect measurement conditions and access the published original data.
+Reuse the current detector overview/Results routes and one shared dataset template;
+do not create another website, competing entrance or bespoke page per detector.
+A measurement-only laboratory detector can have a public record without claiming
+its geometry is already an executable simulation model.
+
+**Inputs after delivery by owner:** original numerical files and available original
+plots, a stable physical-detector identity, measurement date/provenance, units and
+measurement conditions. Map physical specimens to existing catalog models only
+when that relationship is confirmed; do not infer identity from similar names.
+For spectra record channel/energy calibration, acquisition/live time where known,
+source/placement, bias/temperature/readout and background/subtraction status.
+For I-V retain signed bias/current, units, temperature and sweep conditions; for
+C-V retain bias/capacitance, units, temperature, test frequency and AC amplitude.
+Preserve supplied uncertainty/calibration records; missing information is labelled
+unknown, not invented or treated as experimentally validated. Public inputs are the
+owner-provided releasable measurements/metadata, excluding unrelated private files.
+
+**Output:** one versioned measurement record per physical detector/campaign, with
+original file hashes, conditions, numerical data links and checked plots. Keep
+measured data visibly distinct from simulated/derived results. Background removal,
+normalization, calibration or other processing has explicit inputs/method/version
+and retains the original data. Do not silently alter curves or retune simulation.
+
+**First acceptance and stop:** begin with one complete detector dataset containing
+all three measurements; check plotted numbers/axis units, identity, conditions,
+original-file access and desktop/narrow/live display through existing publication
+checks. Then register further complete datasets through that same template, with
+only their data/metadata checks, not new code/adapters/reviews per specimen. Stop
+at readable, traceable publication of the supplied agreed batch. No new Geant4/SSD
+run, forced simulation overlay, global parameter fit or waveform/experimental
+agreement claim is required. Any later comparison/calibration study is separate.
+Until November and complete inputs arrive, retain this item as deferred.
+
 ## Removed prerequisites and deferred research
 
 - Remove a new M10 prototype, generic M5b, mandatory new-cryostat M11 demonstration,
@@ -133,8 +177,8 @@ These are options or response policies, not mandatory stages to complete first.
   These were complete, inappropriate for this cryostat, or lacked a concrete need.
 - Seven oversized detectors require a future larger cryostat with real dimensions,
   materials and mappings; never shrink them or change the selected world silently.
-- M3 experimental preamp/ORTEC/noise, Li/depletion/transition accuracy, measured
-  calibration and deeper GeRC work remain separate research lanes. The owner's
+- M3 experimental preamp/ORTEC/noise, Li/depletion/transition accuracy, experimental
+  calibration fitting and deeper GeRC work remain separate research lanes. The owner's
   current preamp-display instruction is to leave it unchanged.
 - No new million campaign, all-combination transport/SSD campaign, installation,
   backend/framework migration, global PATH/WSL/package change or reset credits.

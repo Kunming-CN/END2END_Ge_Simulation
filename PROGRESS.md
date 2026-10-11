@@ -3,6 +3,21 @@
 Updated: 2026-10-10 (owner client date). Read this before starting work.
 Prior accepted teaching/navigation/science history: [0cf58d3](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/0cf58d343f49b144150fd88698d1cacc277a62ee/PROGRESS.md).
 
+## Current addition: deferred laboratory measurements
+
+Owner requests public measured energy spectra and I-V/C-V data for current and
+additional laboratory detectors, after providing complete inputs next month.
+Added a November2026 deferred item to tools/NEXT_DEVELOPMENT_PLAN.md: shared
+existing detector/Results routes, physical-specimen identity, original files/hashes,
+measurement conditions/units and explicit measured-versus-simulated labels. Start
+with one complete three-measurement dataset, then reuse its template for the supplied
+batch. Publication needs no cryostat/simulation admission or new physics campaign;
+parameter fitting remains separate. No implementation or measurement upload now.
+Verified clean local/origin/live main8f18b4c, manual ready and no project workers or
+lease; actual root Sol6.1/Ultra retained. This small documentation addition uses
+link/diff/scope checks, no repeated broad review or science. Final Git/lease closure
+is retained in .local/measurement-plan-v1/COMPLETE.json and autonomy state.
+
 ## Current round: plan evaluation only
 
 Owner requested evaluation, deletion/modification/addition and a detailed updated
