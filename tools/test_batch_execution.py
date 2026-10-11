@@ -46,16 +46,28 @@ class Execution(unittest.TestCase):
                 source_sha256={'fixture.txt':W.sha(self.root/'fixture.txt')}))
         return value
 
-    def check(self,selection=None):
+    def check(self,selection=None,*,bootstrap_angle=False):
         selection=selection or self.selection
-        acceptance=dict(kind='bounded_batch_acceptance_v1',batch_cap=2,primary_count=selection['primary_count'],selection_sha256=W.digest(selection)) if selection['primary_count']<=500 else None
+        acceptance=dict(kind='bounded_batch_acceptance_v1',batch_cap=2,primary_count=selection['primary_count'],selection_sha256=W.digest(selection)) if selection['primary_count']<=500 and not bootstrap_angle else None
         with patch.object(D,'operating',return_value=self.operating),patch.object(D,'presets',return_value=self.sources),patch.object(D,'anchors',return_value=D.anchors(W.ROOT)),patch.object(D,'capability',return_value={'accepted':True}):
-            return E.check(selection,root=self.root,acceptance=acceptance,**self.readers)
+            return E.check(selection,root=self.root,acceptance=acceptance,bootstrap_angle=bootstrap_angle,**self.readers)
 
-    def angular_check(self,selection=None):
+    def angular_check(self,selection=None,*,bootstrap_angle=False):
         resolver=E.pose_module().resolve
         with patch.object(E.pose_module(),'resolve',side_effect=lambda angle,root:resolver(angle,W.ROOT)):
-            return self.check(selection)
+            return self.check(selection,bootstrap_angle=bootstrap_angle)
+
+    def precision_selection(self):
+        # Exact original GUI scalar types are part of the fixed byte binding.
+        electronics=dict(self.settings,feedback_tau_us=50,pole_zero_tau_us=50,gain=20,adc_full_scale_V=10)
+        return dict(self.selection,name='source-angle-sap22-cs137-precise-v1',detector='SAP22',angle_deg=30,
+            primary_count=500,seed=26092631,electronics=electronics)
+
+    def precision_admit(self,plan,root,**authority):
+        resolver=E.pose_module().resolve
+        with patch.object(E.pose_module(),'resolve',side_effect=lambda angle,root:resolver(angle,W.ROOT)), \
+                patch.object(D,'operating',return_value=self.operating),patch.object(D,'presets',return_value=self.sources):
+            return E.admit(plan,root,**authority,**self.readers)
 
     def angular_saved_plan(self,plan):
         plan=copy.deepcopy(plan);plan['execution_enabled']=True  # Recorded pre-guard schema, never an admission.
@@ -267,7 +279,8 @@ class Execution(unittest.TestCase):
         seal=W.read(E.stage_receipt(self.directory,'geometry'))
         self.assertTrue(seal['recovered_terminal_worker']);self.assertEqual(seal['result']['source_pose'],self.plan['resolved']['source_pose'])
 
-    def test_nonzero_check_is_preview_and_forged_execution_is_refused(self):
+    @patch.object(E,'ANGULAR_EXECUTION_READY',False)
+    def test_pending_nonzero_check_is_preview_and_forged_execution_is_refused(self):
         plan=self.angular_check(dict(self.selection,angle_deg=30))
         self.assertFalse(plan['execution_enabled'])
         with self.assertRaisesRegex(W.ControlError,'Nonzero-angle execution is unavailable'):
@@ -277,6 +290,145 @@ class Execution(unittest.TestCase):
             with self.assertRaisesRegex(W.ControlError,'Nonzero-angle execution is unavailable'):
                 E.admit(plan,self.root)
         self.assertTrue(self.angular_check(dict(self.selection,angle_deg=0))['execution_enabled'])
+
+    @patch.object(E,'ANGULAR_EXECUTION_READY',False)
+    def test_precision_bootstrap_is_explicit_and_preserves_fixed_settings(self):
+        selection=self.precision_selection()
+        self.assertEqual(W.digest(selection),E.ANGLE_PRECISION_SELECTION_SHA256)
+        preview=self.angular_check(selection)
+        self.assertFalse(preview['execution_enabled']);self.assertNotIn('angle_acceptance_only',preview['resolved'])
+        plan=self.angular_check(selection,bootstrap_angle=True)
+        self.assertTrue(plan['execution_enabled'])
+        self.assertEqual(plan['resolved']['angle_acceptance_only'],E.angle_acceptance(selection,True))
+        self.assertEqual(plan['resolved']['batching'],E.partition(500,26092631))
+        self.assertIsNone(plan['resolved']['acceptance_only'])
+        for key in ('selection','source_pose','source_position_global_mm','numerics','operating_model','profile',
+                    'electronics_configuration','runtime_identity','source_sha256','transport_plan'):
+            self.assertEqual(plan['resolved'][key],preview['resolved'][key],key)
+        self.assertIsNone(plan['resolved']['electronics_configuration']['expected_primary_count'])
+        self.assertEqual(self.precision_admit(plan,self.root,bootstrap_angle=True),plan)
+        for resume in (False,True):
+            with self.subTest(resume=resume),self.assertRaisesRegex(W.ControlError,'Nonzero-angle execution is unavailable'):
+                self.precision_admit(plan,self.root,resume=resume)
+        with self.assertRaisesRegex(W.ControlError,'Nonzero-angle execution is unavailable'):
+            E.execute(plan,root=self.root,executor=lambda *args:self.fail('science invoked'))
+        self.assertFalse(W.run_path(selection['name'],self.root).exists())
+
+    def test_precision_bootstrap_refuses_changed_selection_before_transport(self):
+        selection=self.precision_selection()
+        edits=(('detector','AK02'),('source','am241_point_decay_v1'),('cryostat','other'),('pose','plus5mm'),
+            ('primary_count',499),('seed',26092632),('angle_deg',-30),('angle_deg',30.0),
+            ('name','source-angle-sap22-cs137-v1'),('threads',1),('electronics',dict(selection['electronics'],gain=21)))
+        readers=dict(self.readers,transport_reader=lambda *args:self.fail('transport invoked'))
+        for key,value in edits:
+            with self.subTest(key=key,value=value),self.assertRaisesRegex(W.ControlError,'unchanged SAP22'):
+                E.check(dict(selection,**{key:value}),root=self.root,bootstrap_angle=True,**readers)
+        for value in (1,'true',None,{},[]):
+            with self.subTest(value=value),self.assertRaisesRegex(W.ControlError,'Boolean process keyword'):
+                E.check(selection,root=self.root,bootstrap_angle=value,**readers)
+        acceptance=dict(kind='bounded_batch_acceptance_v1',batch_cap=2,primary_count=500,selection_sha256=W.digest(selection))
+        with self.assertRaisesRegex(W.ControlError,'original exact-count partition'):
+            E.check(selection,root=self.root,bootstrap_angle=True,acceptance=acceptance,**readers)
+
+    @patch.object(E,'ANGULAR_EXECUTION_READY',False)
+    def test_precision_marker_and_source_edits_do_not_authorize_execution(self):
+        plan=self.angular_check(self.precision_selection(),bootstrap_angle=True)
+        resolver=E.pose_module().resolve
+        edits=(('marker',lambda r:r['angle_acceptance_only'].update(selection_sha256='f'*64)),
+            ('omitted',lambda r:r.pop('angle_acceptance_only')),
+            ('numerics',lambda r:r['numerics'].update(drift_dt_ns=3)),
+            ('electronics',lambda r:r['electronics_configuration'].update(gain=99)),
+            ('source',lambda r:r['source_sha256'].update({'fixture.txt':'f'*64})))
+        for label,edit in edits:
+            with self.subTest(label=label):
+                changed=copy.deepcopy(plan);edit(changed['resolved']);changed['configuration_sha256']=W.digest(changed['resolved'])
+                with self.assertRaisesRegex(W.ControlError,'Nonzero-angle execution is unavailable'):
+                    self.precision_admit(changed,self.root)
+                with self.assertRaisesRegex(W.ControlError,'does not reconstruct'):
+                    self.precision_admit(changed,self.root,bootstrap_angle=True)
+        changed=copy.deepcopy(plan);changed['resolved']['angle_acceptance_only']['prior_failed_parent_ref']='other'
+        changed['configuration_sha256']=W.digest(changed['resolved'])
+        with patch.object(E.pose_module(),'resolve',side_effect=lambda angle,root:resolver(angle,W.ROOT)), \
+                self.assertRaisesRegex(W.ControlError,'acceptance binding changed'):
+            E.saved_plan(changed,self.root)
+        (self.root/'fixture.txt').write_text('changed implementation source')
+        with self.assertRaisesRegex(W.ControlError,'does not reconstruct'):
+            self.precision_admit(plan,self.root,bootstrap_angle=True)
+
+    @patch.object(E,'ANGULAR_EXECUTION_READY',False)
+    def test_precision_resume_requires_keyword_and_reuses_terminal_geometry(self):
+        self.plan=self.angular_check(self.precision_selection(),bootstrap_angle=True)
+        self.directory=W.run_path(self.plan['resolved']['selection']['name'],self.root)
+        def crash(stage,*args):
+            result=self.worker(stage,*args)
+            if stage=='geometry':raise RuntimeError('controller lost terminal geometry')
+            return result
+        with self.assertRaisesRegex(RuntimeError,'lost terminal geometry'):
+            E.execute(self.plan,root=self.root,bootstrap_angle=True,executor=crash,
+                admitter=self.precision_admit,lease=lambda r:nullcontext())
+        shared=E.stage_base(self.directory,'geometry');saved=W.read(shared/'prepared.json')
+        original={p:W.sha(p) for p in shared.rglob('*') if p.is_file()}
+        with self.assertRaisesRegex(W.ControlError,'Nonzero-angle execution is unavailable'):
+            E.execute(self.plan,root=self.root,resume=True,executor=lambda *args:self.fail('science invoked'),
+                admitter=self.precision_admit,lease=lambda r:nullcontext())
+        verified=E.subprocess.CompletedProcess(args=[],returncode=0,stdout=W.encoded(saved),stderr=b'')
+        with patch.object(E.subprocess,'run',return_value=verified) as transport_verifier:
+            final=E.execute(self.plan,root=self.root,resume=True,bootstrap_angle=True,executor=self.worker,
+                admitter=self.precision_admit,lease=lambda r:nullcontext())
+        transport_verifier.assert_called_once();self.assertEqual(final['completed_primary_count'],500)
+        self.assertEqual(final['status'],'completed_with_native_failures')
+        self.assertEqual(self.calls.count(('geometry',None)),1)
+        self.assertEqual(self.calls.count(('native_preparation',None)),1)
+        self.assertTrue(all(W.sha(p)==digest for p,digest in original.items()))
+        seal=W.read(E.stage_receipt(self.directory,'geometry'));self.assertTrue(seal['recovered_terminal_worker'])
+        calls=list(self.calls)
+        resolver=E.pose_module().resolve
+        with patch.object(E.pose_module(),'resolve',side_effect=lambda angle,root:resolver(angle,W.ROOT)):
+            E.execute(self.plan,root=self.root,resume=True,bootstrap_angle=True,executor=self.worker,
+                admitter=self.precision_admit,lease=lambda r:nullcontext())
+        self.assertEqual(self.calls,calls)
+
+    def test_ordinary_shared_angle_check_and_admission_are_enabled(self):
+        self.assertTrue(E.ANGULAR_EXECUTION_READY)
+        for model in (*W.MODELS,'AK01','SAP16','SAP17','Bipolar_reference_3D','KL01_3D'):
+            for angle in (-30,30):
+                with self.subTest(model=model,angle=angle):
+                    selection=dict(self.selection,detector=model,angle_deg=angle)
+                    plan=self.angular_check(selection)
+                    self.assertTrue(plan['execution_enabled']);self.assertNotIn('angle_acceptance_only',plan['resolved'])
+                    self.assertEqual(self.precision_admit(plan,self.root),plan)
+        # Ordinary source/count/seed rules remain shared; the literal bootstrap
+        # is still confined to its original immutable new acceptance selection.
+        selection=dict(self.selection,detector='SAP22',angle_deg=30,name='ordinary-angle',primary_count=601,seed=43)
+        plan=self.angular_check(selection);self.assertTrue(plan['execution_enabled'])
+        self.assertEqual(self.precision_admit(plan,self.root),plan)
+        with self.assertRaisesRegex(W.ControlError,'unchanged SAP22'):
+            self.precision_admit(plan,self.root,bootstrap_angle=True)
+        bootstrap=self.angular_check(self.precision_selection(),bootstrap_angle=True)
+        with self.assertRaisesRegex(W.ControlError,'does not reconstruct'):
+            self.precision_admit(bootstrap,self.root)
+        with self.assertRaisesRegex(W.ControlError,'[Gg]amma'):
+            self.angular_check(dict(self.selection,source=W.GAMMA,pose='plus5mm',angle_deg=30))
+
+    def test_ordinary_angle_admission_refuses_rehashed_pose_marker_and_source_edits(self):
+        plan=self.angular_check(dict(self.selection,detector='SAP22',angle_deg=30))
+        edits=(('angle',lambda r:r['selection'].update(angle_deg=-30)),
+            ('position',lambda r:r['source_position_global_mm'].__setitem__(0,99)),
+            ('orientation',lambda r:r['source_pose']['capsule_axis_global'].__setitem__(0,99)),
+            ('marker',lambda r:r.update(angle_acceptance_only=E.angle_acceptance(self.precision_selection(),True))),
+            ('source',lambda r:r['source_sha256'].update({'fixture.txt':'f'*64})))
+        for label,edit in edits:
+            with self.subTest(label=label):
+                changed=copy.deepcopy(plan);edit(changed['resolved'])
+                changed['resolved']['acceptance_only']['selection_sha256']=W.digest(changed['resolved']['selection'])
+                changed['configuration_sha256']=W.digest(changed['resolved'])
+                with self.assertRaisesRegex(W.ControlError,'does not reconstruct'):
+                    self.precision_admit(changed,self.root)
+
+    def test_default_execute_preserves_legacy_injected_admitter_signature(self):
+        def legacy_admitter(plan,root,*,resume=False):return plan
+        result=E.execute(self.plan,root=self.root,executor=self.worker,admitter=legacy_admitter,lease=lambda r:nullcontext())
+        self.assertEqual(result['completed_primary_count'],3)
 
     def test_crash_after_stage_and_after_batch_seal_reuses_terminal_work(self):
         def crash(stage,batch,stamp):

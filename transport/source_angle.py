@@ -23,7 +23,8 @@ import workflow_batches as B
 
 KIND = 'source_angle_checked_plan_v1'
 PREPARED_KIND = 'source_angle_prepared_v1'
-ADAPTER = 'shared_source_angle_v1'
+ADAPTER = 'shared_source_angle_precise_gps_v2'
+GPS_PRECISION_CONTRACT = 'angular_gps_double_precision_mm_v2'
 WINDOWS_ROOT = None
 REFS = ('transport/source_angle.py', 'transport/source_pose.py',
         'transport/angle_exporter_setup.py', 'transport/angle_exporter/CMakeLists.txt',
@@ -75,6 +76,7 @@ def check(selection):
     return {'kind': KIND, 'schema_version': 1, 'selection': selection, 'source_pose': pose,
             'source_position_global_mm': pose['position_global_mm'], 'geometry_screen': screen,
             'source_contract': source, 'source_mode': mode, 'operating_model': operating,
+            'gps_precision_contract': GPS_PRECISION_CONTRACT,
             'model_contract': geometry.get('model_contract'), 'runtime': build['runtime'],
             'decay_data': data, 'source_sha256': pins,
             'exporter_ref': X.EXPORTER_REF, 'exporter_sha256': build['exporter']['sha256'],
@@ -141,9 +143,25 @@ def validate_report(report, checked, geometry):
         C.validate_report(report,geometry['model_contract'],geometry['probes'])
 
 
+def precise_gps_macro(text):
+    """Set native unit-conversion formatting immediately before the GPS centre.
+
+    Earlier physics commands keep their original behavior. Legacy zero/Gamma
+    producers never call this additive angular helper.
+    """
+    marker = '/gps/pos/centre '
+    lines = text.splitlines(keepends=True)
+    indices = [i for i,line in enumerate(lines) if line.startswith(marker)]
+    h.require(len(indices) == 1 and '/control/useDoublePrecision' not in text,
+              'Angular macro needs one original GPS centre command.')
+    lines.insert(indices[0], '/control/useDoublePrecision true\n')
+    return ''.join(lines)
+
+
 def macro(meta):
     report = meta['geometry_checks']
-    return cs.macro_text(report,meta['primary_count'],meta['source_position_global_mm']) if meta['source_mode'] == 'cs137_legacy' else D.macro_text(report,meta['primary_count'],meta['source_contract'],meta['source_position_global_mm'])
+    text = cs.macro_text(report,meta['primary_count'],meta['source_position_global_mm']) if meta['source_mode'] == 'cs137_legacy' else D.macro_text(report,meta['primary_count'],meta['source_contract'],meta['source_position_global_mm'])
+    return precise_gps_macro(text)
 
 
 def model_contract(selection, output, prepare=False):
@@ -169,6 +187,7 @@ def metadata(selection, checked, geometry, report, contract, elapsed, files):
          'source_id':selection['source'],'source_contract':checked['source_contract'],'source_mode':mode,
          'source_pdg':cs.ION if mode == 'cs137_legacy' else checked['source_contract']['pdg'],
          'primary_count':selection['primary_count'],'seed':selection['seed'],'source_pose':checked['source_pose'],
+         'gps_precision_contract':checked['gps_precision_contract'],
          'source_position_global_mm':checked['source_position_global_mm'], 'placement_contract':DW.anchors(h.ROOT),
          'clock_policy':'remage_initial_decay_secondaries_zero','daughter_lifetime_limit_ns':-1 if mode == 'cs137_legacy' else 100000,
          'coordinate_transform':DW.anchors(h.ROOT)['coordinate_transform'],'grouping_policy':dict(cs.POLICY),

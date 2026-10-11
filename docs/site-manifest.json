@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "build_id": "b1014bbfc64eabd9c164e0748c8a10a1cf884aed55770ec67d06e45deeb68379",
+  "build_id": "c51891201950c5e25ce2d2b26760e8f093a0c1f252c5c485e2f879f2bf85800a",
   "file_count": 1693,
-  "total_bytes": 976851708,
+  "total_bytes": 976851825,
   "html_pages": 105,
   "local_links_checked": 3276,
   "resource_references_checked": 3324,
@@ -8195,8 +8195,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 38485,
-      "sha256": "c60cf8abffa95b499a690741c3d09e4644d8d6e4a70316c63f0207f144319038"
+      "bytes": 38602,
+      "sha256": "65996fcf43849cc0aedffdc4e1d3e1d73e2d754fb2900395836b340dd57f2bbc"
     },
     {
       "path": "index.html",

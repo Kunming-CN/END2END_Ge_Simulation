@@ -119,7 +119,7 @@ class WorkflowController:
                 'catalog_models_file_ready':catalog_ready,
                 'angular_source_file_ready':angle_ready,
                 'ready_for_config_check':ready_for_config_check,'science_calls':0,
-                'note':'File readiness only. Run.cmd setup -BuildPortableSourceExporter builds the original exporter; Run.cmd setup -BuildCatalogSourceExporter builds the common model exporter; Run.cmd setup -BuildAngleSourceExporter builds angular geometry support. These use the existing locked environment. Nonzero-angle execution is pending end-to-end acceptance. Check verifies current build/runtime identities; opening Control installs or builds nothing.',
+                'note':'File readiness only. Run.cmd setup -BuildPortableSourceExporter builds the original exporter; Run.cmd setup -BuildCatalogSourceExporter builds the common model exporter; Run.cmd setup -BuildAngleSourceExporter builds angular geometry support. These use the existing locked environment. '+('Angular execution is available after a successful Check plan. ' if B.ANGULAR_EXECUTION_READY else 'Nonzero-angle execution is pending end-to-end acceptance. ')+'Check verifies current build/runtime identities; opening Control installs or builds nothing.',
                 'guide':W.catalog(self.root)['setup_guide']}
 
     def check(self,config):

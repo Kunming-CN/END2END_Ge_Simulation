@@ -151,6 +151,8 @@ transport/catalog_exporter/CMakeLists.txt text eol=lf
 # Preserve the acceptance-bound mixed endings in this additive native source.
 transport/cryostat_angle_export.cc -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 transport/angle_exporter/CMakeLists.txt text eol=lf
+transport/test_gps_precision.cc text eol=lf
+transport/test_gps_precision/CMakeLists.txt text eol=lf
 
 # Preserve the exact native bridge bytes already bound by batch acceptance.
 simulation/batch_decay_stream.jl -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

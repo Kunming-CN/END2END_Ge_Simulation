@@ -25,6 +25,12 @@ function run(code){return vm.runInContext(code,context);}
 run(`catalog={electronics_keys:Object.keys(labels),electronics_defaults:{},sources:[{id:'mono_gamma_662_axis_v1',label:'Gamma',pose:'plus5mm',pose_label:'+5 mm along global y',counts:[20],fixed_seed:26092631,details:'One 662 keV gamma per primary; fixed global −y beam, time zero.',count_unit:'initial gamma primaries'},{id:'cs137_point_decay_v1',label:'Cs137',pose:'nominal',pose_label:'Nominal source anchor',counts:[20,500],details:'One initial Cs137 decay per primary; isolated pulse windows retain daughter timing.',count_unit:'initial Cs137 decays',fixed_seed:null}],cryostats:[{id:'lbnl_modular_nominal_v1',available:true}],detectors:[{id:'AK02',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'SAP22',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'GeRC02',available:true,sources:['cs137_point_decay_v1'],operating_label:'Li50min +240 V'},{id:'KMRC01_candidate',available:true,sources:['cs137_point_decay_v1'],operating_label:'−370 V; fixed −1 wiring'}]};`);
 run(`catalog.sources.find(s=>s.id==='cs137_point_decay_v1').source_angle={enabled:true,min_deg:-30,max_deg:30,version:'source_capsule_angular_pose_v1',convention:'Degrees from global +y toward +x around global z at x=0,y=1.473 mm; engineering placement'};
 const sourcePose30={kind:'source_capsule_angular_pose_v1',schema_version:1,angle_deg:30,position_global_mm:[17.8,32.303504374726016,.290],capsule_rotation_local_to_global:[[.8660254037844387,0,.5],[-.5,0,.8660254037844387],[0,-1,0]],capsule_axis_global:[.5,.8660254037844387,0],coordinate_convention:'Degrees from global +y toward +x around global z at x=0,y=1.473 mm; engineering placement',anchors_sha256:'8'.repeat(64)};`);
+get('source').value='cs137_point_decay_v1';run('angleFields()');
+assert.match(get('angle-limit').textContent,/Nonzero-angle Run is unavailable/);
+run("catalog.sources.find(s=>s.id==='cs137_point_decay_v1').source_angle.nonzero_execution_ready=true;angleFields()");
+assert.match(get('angle-limit').textContent,/Supported source angle:.*Run uses the checked pose/);
+assert.doesNotMatch(get('angle-limit').textContent,/Run is unavailable/);
+run("catalog.sources.find(s=>s.id==='cs137_point_decay_v1').source_angle.nonzero_execution_ready=false");
 // A primary's delayed groups and zero primaries are all independently selectable.
 run(`result={job:{name:'fixture'},records:[
  {record_kind:'decay',event_id:7,deposited_energy_keV:4,pulse_count:2,zero_deposit:false},

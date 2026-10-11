@@ -142,7 +142,12 @@ def validate_batch(batch):
 
 def macro(shared,batch):
     report=cs.load(P.safe_path(h.ROOT,shared['geometry_report_ref'],True))
-    return cs.macro_text(report,batch['primary_count'],shared['source_position_global_mm']) if shared['source_mode']=='cs137_legacy' else D.macro_text(report,batch['primary_count'],shared['source_contract'],shared['source_position_global_mm'])
+    text=cs.macro_text(report,batch['primary_count'],shared['source_position_global_mm']) if shared['source_mode']=='cs137_legacy' else D.macro_text(report,batch['primary_count'],shared['source_contract'],shared['source_position_global_mm'])
+    if 'source_pose' in shared:
+        import source_angle as A
+        h.require(shared['gps_precision_contract']==A.GPS_PRECISION_CONTRACT,'Angular GPS precision contract changed')
+        return A.precise_gps_macro(text)
+    return text
 
 def raw_events(path,shared,batch):
     meta=copy.deepcopy(shared);meta.update(primary_count=batch['primary_count'],seed=batch['radiation_seed'])

@@ -88,6 +88,9 @@ class SourceAngleTests(unittest.TestCase):
         self.assertIn('/gps/ion 55 137',macro)
         self.assertNotIn('/gps/ang/direction',macro)
         self.assertIn(' '.join(format(v,'.17g') for v in meta['source_position_global_mm']),macro)
+        original=A.cs.macro_text(report,500,meta['source_position_global_mm'])
+        self.assertEqual(macro.replace('/control/useDoublePrecision true\n',''),original)
+        self.assertIn('/control/useDoublePrecision true\n/gps/pos/centre ',macro)
 
     def test_event_reader_delegates_without_changing_raw_ledger(self):
         event = {'event_id':0,'global_decay_id':0,'steps':[], 'vtx':[{'time':0}], 'tracks':[{'time':900001.25}]}

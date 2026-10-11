@@ -3,8 +3,9 @@
 Updated: 2026-10-11. This is the single active delivery roadmap.
 [Onboarding and extension contracts](ONBOARDING_EXTENSIBILITY_PLAN.md) retain the
 longer-lived boundaries; [PROGRESS.md](../PROGRESS.md) records actual delivery.
-The source-angle round below is now a guarded geometry preview with a retained
-failed fixed acceptance. It enables no nonzero execution or automatic continuation.
+The source-angle feature below is now delivered through shared Check/Run, with a
+new bounded positive acceptance and the earlier failed realization retained.
+No further science campaign or automatic continuation is queued.
 
 ## Outcome and verified starting point
 
@@ -33,105 +34,43 @@ and the latest two-model correction with 703 exact live files. These scopes are
 not a fresh physics validation of every image. Reuse completed evidence; do not
 queue another full-site audit without a concrete change or defect.
 
-## Current source/capsule-angle milestone and bounded follow-up
-
-Delivered 2026-10-11: shared versioned pose, capsule-only exporter, exact zero
-compatibility, native +/-30 geometry checks, CLI/Control preview/provenance and
-explicit locked-runtime setup. The sole fixed SAP22/Cs137/+30deg/500/seed26092631
-trial completed radiation but failed strict GPS vertex identity: y32.3035mm versus
-planned32.303504374726018mm, -4.374726nm. One native preparation, no charge/readout
-groups, no full-chain acceptance. Raw/failed evidence stays immutable locally.
-Nonzero Check returns execution_enabled=false with no Start token; Run is disabled
-and backend admission rejects forged flags. Zero/Gamma admission stays unchanged.
-
-Next bounded correction: use the existing Geant4 /control/useDoublePrecision true
-before angular GPS commands in a new version, then test native command conversion
-without radiation and keep the unchanged position gate. A separately justified
-bounded acceptance is required before enabling nonzero execution. No retry or new
-science is part of the current round; never relabel its already simulated positions.
-The original intended workflow and acceptance below remain its unfulfilled target.
+## Source/capsule-angle milestone: delivered, stop condition met
 
 **User outcome:** select an admitted radioactive source, compatible detector and
-angle in Control; Check plan shows the effective pose, Run uses that same pose,
-and saved results preserve it. The cryostat and detector mounting stay fixed.
+angle in Control; Check resolves the effective pose and enables Run through the
+shared CLI/backend. New saved artifacts retain that pose, all primary IDs and
+original stage provenance. The cryostat and detector mounting stay fixed.
 
-**Inputs:** scenarios/placement-anchors.json, source-presets.json, the current
-cryostat, detector capability/model descriptors, existing shared exporters,
-CLI/Control configuration, batch execution and stage validators. Existing saved
-contracts are fixed-position; introduce an explicit supported pose/version for
-new runs rather than rebasing old receipts or loosening their validators.
+The shared resolver, capsule-only native exporter and +/-30deg geometry checks
+were accepted in the prior milestone. Zero and legacy Gamma keep their original
+macros/admission. Ten compatible descriptors share the engineering route; neither
+seventeen viewable models nor thirty source/model choices are physical validations.
+Nominal engineering pose remains
+`p(theta)=[35.6*sin(theta), 1.473+35.6*cos(theta), 0.290] mm`, with degrees from +y
+toward +x around global z at x=0/y=1.473mm and fixed crystal/spacer/materials.
 
-**Nominal geometry:** global-z axis at x=0/y=1.473 mm, outer radius 35.1 mm,
-source-centre radius 35.6 mm and z=0.290 mm. Degrees from +y toward +x:
-`p(theta)=[35.6*sin(theta), 1.473+35.6*cos(theta), 0.290] mm`.
-Capsule/fill use separate `Rz(-theta)*Rx(-90 deg)` placement; never rotate the
-crystal/spacer through the existing shared rotation. This is engineering geometry,
-not a measured source survey or an experimental efficiency claim.
+The new precise-GPS adapter uses /control/useDoublePrecision true immediately
+before the angular centre. Its native command-only test reproduces the earlier
+4.374726nm error, then passes three poses with zero difference and unchanged
+1e-10mm identity tolerance, generating no events. Original failed data stay
+immutable; their already simulated trajectories were never repaired or relabelled.
 
-### 1. Resolve one shared pose
+One new fixed SAP22/Cs137/+30deg/500/seed26092631 acceptance completed one field
+preparation and one radiation trial. It retained493 zero-deposit primaries and
+accepted seven positive pulse groups with zero native failures/readout rejections/
+saturation. Bias, temperature, native physics, electronics and independent injection
+calibration stayed fixed; only the run name changed. No trial or campaign retry
+is queued. This is functional engineering acceptance, not experimental angular
+efficiency, calibrated CCE, physical resolution or global numerical convergence.
 
-Add the smallest angle/pose resolver using the recorded anchor, units and rotation
-convention. Detector selection, source identity and pose remain independent.
-Angle zero must produce the exact nominal position and original physical setup;
-legacy Gamma keeps its fixed 20-primary/+5 mm position and -y direction.
+Focused tests and three required independent AI reviews passed. Real Control
+Check/Run availability was verified without another browser science launch; the
+new saved case was inspected through the existing backend, not fabricated as a
+GUI history record. See PROGRESS.md and .local/source-angle-precision-v1/COMPLETE.json
+for exact final evidence, publication, Git and owned session/lease closure.
+The milestone stop condition is met; next work requires a concrete trigger below.
 
-Output: one resolved source/capsule/fill pose and explicit capability/version,
-consumed by preparation, macro generation, configuration and provenance. Establish
-safe angle support against actual solids/placements before advertising a range.
-Containment/overlap failures must be refused before transport, with a clear reason.
-No arbitrary uploads, axial translation, capsule material editing or new cryostat.
-
-### 2. Wire the existing CLI and Control
-
-Add one degree-valued angle field, zero default, and a readable position/orientation
-preview from the same resolved inputs. Preserve chosen detector/source/angle through
-Check, Run, Stop/Resume and reopening results. Ordinary use requires no source or
-configuration editing. Add only the guide/help text this new control needs.
-
-Output: shared CLI/GUI effective configuration and source macro; saved results show
-angle, position, coordinate convention and provenance. Existing fixed-pose jobs stay
-readable/resumable. A changed physical pose requires new transport; do not relabel
-an old run. Fields/charge/calibration reuse requires the existing strict applicable
-contracts, not merely an unchanged detector name. No per-model bespoke adapter.
-
-### 3. Validate geometry, identity and controls before one calculation
-
-Focused checks cover theta=0 and both signs of representative nonzero angles,
-source inside fill, tangent radial placement, capsule/fill rotation, unchanged
-cryostat/crystal/spacer/material/contact/readout, GPS vertex and source identity.
-Compare checked inputs with actual exported native geometry/macro, including the
-existing independent overlap checks; a pretty preview is not acceptance.
-
-Use software/geometry checks for the shared route and admitted model/source
-choices; do not run thirty physical combinations. Check CLI/Control parity,
-invalid angle/refusal, pose-sensitive reuse, saved input inspection and recovery
-binding. Browser checks cover this new control and affected previews/results only;
-never click Download/Save As or change browser settings.
-
-### 4. Run one bounded nonzero-angle acceptance and deliver
-
-Predeclare one SAP22/Cs137 case at +30 degrees, 500 initial nuclei, seed 26092631,
-in one new owned output root, after geometry checks. Maximum: one new 500-nucleus
-transport trial; compute native charge only for its actual eligible pulse groups.
-Use existing preparation/cache where its verified bindings allow; at most one
-necessary native field preparation. Keep all initial identities, zero primaries,
-multiple groups, delays, caps, signed/null signals and readout rejection records.
-Independent injection calibration and truth Edep/readout Erec stay distinct.
-
-Acceptance requires a completed traceable new-pose run with at least one genuine
-positive accepted full-chain signal, exact input/placement identity and event census,
-plus the focused tests and actual Control/CLI behavior above. If the fixed case has
-no accepted positive signal or fails, retain that outcome and report the concrete
-reason; do not repeat with different seeds/counts/gain or disguise it as a pass.
-Any further science would need a separately justified bounded plan.
-
-Stop after one integrated tested milestone, the required two scoped AI reviews and
-NEW independent direction/details review, fixes for verified blockers, relevant
-checks, synchronized Git and owned worker/lease closure. Re-review only specific
-corrections. Run the site build/local/live checks only if public site output actually
-changes. No second source/model campaign is required to finish this feature.
-
-## Conditional work after or alongside that milestone
+## Conditional work after the delivered milestone
 
 These are options or response policies, not mandatory stages to complete first.
 

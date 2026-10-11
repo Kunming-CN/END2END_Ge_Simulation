@@ -53,6 +53,24 @@ class Source(unittest.TestCase):
         self.assertEqual(actual['primary_count'],20)
         self.assertEqual(selection['angle_deg'],30)
         self.assertEqual(selection['primary_count'],25001)
+    def test_angular_macros_only_add_precision_before_centre(self):
+        import source_angle as A
+        report={'volumes':[]}
+        for angle in (-30,7.125,30):
+            for source in (W.CS,'am241_point_decay_v1','ba133_point_decay_v1'):
+                contract=S.C.source_preset(source)
+                shared=dict(geometry_report_ref='unused',source_mode='cs137_legacy' if source==W.CS else 'registered_decay',
+                    source_position_global_mm=A.Pose.resolve(angle)['position_global_mm'],source_contract=contract,
+                    source_pose=A.Pose.resolve(angle),gps_precision_contract=A.GPS_PRECISION_CONTRACT)
+                original=S.cs.macro_text(report,self.batch['primary_count'],shared['source_position_global_mm']) if source==W.CS else S.D.macro_text(report,self.batch['primary_count'],contract,shared['source_position_global_mm'])
+                with patch.object(S.cs,'load',return_value=report),patch.object(S.P,'safe_path',return_value=Path('unused')):
+                    actual=S.macro(shared,self.batch)
+                self.assertEqual(actual.replace('/control/useDoublePrecision true\n',''),original)
+                lines=actual.splitlines();index=next(i for i,line in enumerate(lines) if line.startswith('/gps/pos/centre '))
+                self.assertEqual(lines[index-1],'/control/useDoublePrecision true')
+                self.assertEqual(actual.count('/control/useDoublePrecision true'),1)
+        with self.assertRaises(ValueError):A.precise_gps_macro('/run/beamOn 500\n')
+        with self.assertRaises(ValueError):A.precise_gps_macro('/gps/pos/centre 1 2 3 mm\n/gps/pos/centre 1 2 3 mm\n')
     def test_angular_events_keep_raw_rows_and_global_identity(self):
         import source_angle as A
         event=dict(event_id=0,global_decay_id=0,steps=[dict(raw_row_index=8,time_ns=1200.25,energy_keV=0.01)])

@@ -145,6 +145,10 @@ class Jobs(unittest.TestCase):
                 path=self.root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'fixture')
             self.assertTrue(self.controller.setup()['angular_source_file_ready'])
             self.assertIn('-BuildAngleSourceExporter',self.controller.setup()['note'])
+            with patch.object(J.B,'ANGULAR_EXECUTION_READY',True):
+                self.assertIn('Angular execution is available',self.controller.setup()['note'])
+            with patch.object(J.B,'ANGULAR_EXECUTION_READY',False):
+                self.assertIn('Nonzero-angle execution is pending',self.controller.setup()['note'])
 
     def test_check_does_not_launch_or_create_run(self):
         result=self.controller.check(self.config)

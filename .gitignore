@@ -213,6 +213,11 @@
 !simulation/batch_native_response.jl
 !simulation/test_batch_native.jl
 
+# Command-only regression; generated native build and results stay local.
+!transport/test_gps_precision.cc
+!transport/test_gps_precision/
+!transport/test_gps_precision/CMakeLists.txt
+
 # Keep this final: only the reviewed PR template may enter .github.
 !/.github/
 /.github/**

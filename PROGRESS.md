@@ -1,100 +1,85 @@
 # Current handoff
 
 Updated: 2026-10-11. Read this before starting work.
-Prior accepted history and measurement plan: [4f7e8153](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/4f7e8153b9dd9bec9421e25fedcac4f57dca8c7e/PROGRESS.md).
+Prior guarded delivery and immutable failed-acceptance history:
+[75ece0e1](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/75ece0e195d4c2d8d0acff090f765ca57023028d/PROGRESS.md).
 
-## Source/capsule angle: guarded preview delivered; calculation acceptance failed
+## Source/capsule angle: shared execution accepted
 
-Owner requested prior-chat/plan continuation. Baseline local/origin/live main
-4f7e8153, actual root and all implementation/review agents Sol6.1/Ultra/project
-launches verified. One owned manual lease; automatic heartbeat remains PAUSED.
-Scope: shared angular pose in existing CLI/Control and one predeclared
-SAP22/Cs137/+30deg/500 initial nuclei/seed26092631 trial, at most one native field
-preparation. No existing science rerun, installation, global settings or resets.
+Owner authorized autonomous continuation without per-round prompting. Actual root
+and all development/review agents were verified as Sol6.1/Ultra/project launches.
+One owned manual lease; automatic heartbeat remains PAUSED. This milestone fixes
+GPS command precision, then completes one SAP22/Cs137/+30deg/500 initial nuclei/
+seed26092631/two-Julia-thread engineering acceptance. No additional campaign,
+installation, global settings, resets or Li/PDE research prerequisite.
 
-The versioned resolver and capsule-only native exporter retain the cryostat,
-crystal/spacer, materials and canonical models. Original/new zero-angle reports
-and GDML are byte-identical. Native zero/+30/-30 containment and overlap checks
-passed; all18 fixed volumes/probes remain unchanged. Ten compatible descriptors
-share this route; this is not30 model/source physical acceptances.
-Zero and legacy Gamma keep their original geometry/configuration/admission.
+The additive angular adapter is shared_source_angle_precise_gps_v2 with contract
+angular_gps_double_precision_mm_v2. It inserts /control/useDoublePrecision true
+immediately before the angular GPS centre; earlier physics commands, legacy zero
+and Gamma macros keep their exact behavior. The command-only native regression
+uses pinned Geant4 11.3.2, generates zero events and tests -30/+30/13.25deg. Default
+formatting reproduces the original 4.374726nm failure; precise formatting gives
+zero position difference at the unchanged 1e-10mm gate. The original failed native
+test attempt and original failed radiation trial remain labelled and preserved.
 
-Control/CLI Check resolves the same angle, position, rotation, convention and
-anchor hash. Real browser Check, geometry-boundary Stop and Resume retained the
-same exact plan and reused sealed geometry. Exact saved GUI/shared CLI checker
-canonical equality passed at configuration ac5e1198375e387a69aa8af672db1e16437fa2f6bf65a1c279900d8db793f98e.
-The separately authored initial CLI file used integral floats versus GUI integers:
-equal numerical settings but distinct byte-bound hashes. Public CLI correctly
-refuses Check on an existing output; read-only allow_existing reconstruction
-proved equality. Historical source-version changes still refuse executable reuse;
-do not promise arbitrary old-job resume after code changes.
+New output: .local/runs/source-angle-sap22-cs137-precise-v1, terminal completed.
+All500 IDs0..499 remain: 493 zero-deposit primaries and seven pulse groups, all
+accepted with positive ADC and Erec; zero native failures, readout rejections or
+saturation. Independent saved-HDF5 verification finds zero position difference
+for all500 initial vertices. Raw rows, daughter delays, signed charge, endpoint/
+partial-charge/cap flags and truth Edep versus readout Erec remain distinct.
+Only the run name differs from the original fixed configuration: stored78K,
+runtime77K/+700V, count, seed, native settings, electronics and independent500keV
+synthetic injection calibration are unchanged. This is one low-statistics
+functional engineering case, not angular-efficiency/all-combination validation,
+experimental agreement, physical resolution, calibrated CCE or grid convergence.
 
-The sole radiation trial completed500 initial decays, then strict original raw
-vertex validation failed: planned y32.303504374726018mm versus actual32.3035mm,
-delta -4.374726nm, unchanged tolerance1e-10mm. Tagged Geant4 11.3.2 GPS converts
-explicit mm to default cm and formats the converted vector with six significant
-digits unless double-precision command formatting is enabled. This is a physical
-placement identity failure, not a missing particle census or a chat interruption.
-Raw LH5/macro/logs, failed receipts and field state are retained permanently.
-No native charge/readout groups were computed; no positive full-chain acceptance
-or calibrated CCE is claimed. One independent synthetic injection calibration was
-prepared, without changing gain or truth. No second radiation/field solve.
+Measured core times: native field preparation62.401s, injection calibration0.196s,
+remage child6.834s, native drift/charge21.543s and electronics3.263s. Transport
+helper39.974s and response solve/replay/readout/export32.969s include additional
+work. Parent startup/orchestration stage times are separately retained in run.json;
+coding, review, browser and publication wall time is not detector compute time.
+Exactly one new field preparation and one500-nucleus radiation trial were used.
 
-Recorded computation: potential36.249s, weighting13.017s, electric field23.232s,
-CPU field2.237s; native preparation75.219s, process peak RSS897454080B.
-Remage child wall7.609s; its own log reports500 events and0.00035407s/event.
-Stage orchestration/check/startup times are separate: geometry47.736s,
-native preparation108.862s. Coding/review/browser/publication wall is not detector
-computation time. Stored78K/runtime77K/+700V and original electronics remain.
+After terminal acceptance and source freeze, ordinary shared nonzero Check/Run
+was enabled. Catalog capability/help and backend admission share one authority;
+pose reconstruction and deliberately rehashed edits remain independently checked.
+The explicit development bootstrap admits only the literal fixed selection and
+cannot be authorized by a saved JSON marker. Exact executed batch_execution.py is
+archived separately from the later enabled source. Completed saved inspection
+passes without changing science; source-version changes still refuse executable
+reuse. Do not promise arbitrary historical Resume after implementation changes.
 
-Nonzero Check now returns execution_enabled=false and no Start token/reservation;
-Control retains the pose preview and disables Run. Backend independently refuses
-nonzero execution, including forged enabled flags. Explicit
-Run.cmd setup -BuildAngleSourceExporter uses the existing locked runtime and
-verifies its existing build receipt; readiness does not block zero routes.
-The maintained guide labels this preview-only status and failed acceptance.
-Only the owned failed reservation was reconciled after sealed-prefix inspection
-and all three recorded worker identities ended; original job/science bytes remain.
+Real protected Control Check at +30deg/500 resolves the exact source/capsule pose
+and enables Run. The actual full-chain trial used the shared CLI backend; browser
+Run was not clicked a second time and no GUI job record was fabricated for it.
+Saved new science was inspected independently through the existing backend, not
+replayed in the browser. Existing Gamma completion recovery was read-only. No
+Download/Save As, owner browser setting change or original-tab modification.
 
-Evidence: .local/source-angle-v1/ROUND.json, original DISPATCH-SOURCE-FREEZE.json,
-geometry/COMPLETE.json, STOPPED-PREFIX.json, FAILED-ACCEPTANCE.json,
-RAW-POSITION-DIAGNOSTIC.json, CLI-BACKEND-GUI-PARITY.json and
-FAILED-DISPATCH-INSPECTION.json. GUARDED-SOURCE-FREEZE.json binds later software
-separately from executed science. Native88/transport8/batch-source7 passed;
-final guard batch13/protected protocol28/jobs23 and Node control checks passed.
-The stale five-versus-ten catalog assertion was corrected against the accepted
-baseline; original failed/sandbox attempts remain labelled in their local logs.
+Evidence: .local/source-angle-precision-v1/ACCEPTANCE.json,
+RAW-POSITION-VERIFIED.json, PRIOR-FAILURE-PRESERVED.json, INSPECT-COMPLETED.json,
+ENABLED-SAVED-ACCEPTANCE.json, BROWSER.json/jpg, DISPATCH-SOURCE-FREEZE.json and
+FINAL-SOURCE-FREEZE.json. Final17 source hashes are separate from nine science
+artifact hashes. Native command regression, macro8, transport angle8, batch20,
+protected protocol28, jobs23, focused setup1 and Node UI tests passed. Publication
+and contacts60 passed. Preserved write/read/sandbox failures did not rerun science.
 
-Two scoped independent AI reviews, then a NEW independent details/direction/value
-review were launched and actual settings verified. Initial findings exchanged
-only after independent opinions. Confirmed blockers: failed angular acceptance,
-missing setup route and unguarded execution advertising. Guard/setup corrections
-passed focused recheck; no full repeated physics/review audit. Actual browser
-confirmed preview-only +30deg/500, Gamma locked0, the original saved event census
-and pose retained, and390px layout with no page overflow; no downloads or console
-errors. Publication guard33/contact27 passed; the original contact-test sandbox
-failure remains in its log. build_site.py --restructure and check_site.py passed
-the sealed1693-file/105-page snapshot, build b1014bbfc64eabd9c164e0748c8a10a1cf884aed55770ec67d06e45deeb68379.
-Only guide.html changed; all1692 other payload files are byte-identical. New
-angular exporter sources retain exact tested bytes across checkouts: its C++
-source keeps three original CRLF endings, and CMake keeps LF. Final Git
-synchronization, mandatory live check and owned lease/session
-closure are recorded in .local/source-angle-v1/COMPLETE.json; it is the terminal
-authority. Delivery is guarded software preview; physical acceptance remains failed.
+Two scoped independent AI reviews, followed by a NEW independent details/direction/
+value review, found no confirmed blockers. Initial opinions were saved before
+concrete finding exchange; only the setup-text correction and final browser scope
+received focused follow-up. These are AI reviews, not independent certification.
+Publication, exact payload comparison, Git synchronization, mandatory live check
+and owned session/lease closure are recorded in this round's COMPLETE.json, the
+terminal authority. Build only through tools/build_site.py; never edit docs/ by hand.
 
 ## Next bounded work and retained limits
 
-First fix angular GPS command precision in a new source version using existing
-/control/useDoublePrecision true before GPS pose setup; establish it with a native
-command-only software test and unchanged identity tolerance. It cannot repair
-already simulated trajectories. Only a separately justified bounded new acceptance
-may reopen nonzero Run; this round's one500 trial ceiling is consumed.
-Do not relabel the failed realization, loosen the gate or change seeds/counts/gain.
-Global Li/PDE/CCE accuracy audits remain separate, not a functional gate.
-
-Existing ten compatible configurations, six Cs137 teaching examples, both AK02
-and SAP22 million overviews and retained raw campaigns remain accepted.
-Seven oversized models await a future cryostat. M5 is closed; second-computer
-acceptance is removed. Act on concrete student feedback rather than another broad
-site audit. Measured spectrum/I-V/C-V publication stays deferred to November2026
-and complete owner inputs; no measurement or fitting work started here.
+Source-angle functional delivery is closed; do not repeat this trial or older
+science/reviews merely to recover a chat. Act on a concrete student blocker next.
+Ten compatible configurations and six teaching examples remain accepted; seven
+oversized models await a future cryostat. Global Li/PDE/CCE accuracy is separate.
+Second-computer acceptance remains removed. The conditional roadmap is maintained
+in tools/NEXT_DEVELOPMENT_PLAN.md. Measured spectrum/I-V/C-V publication remains
+deferred to November2026 and complete owner inputs; no measurement/fitting work
+or recurring continuation was started here.

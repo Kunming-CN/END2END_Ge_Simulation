@@ -395,12 +395,13 @@ def catalog(root=ROOT):
     registry=read(Path(root)/'scenarios/detector-capabilities.json')
     capabilities={d['model_id']:d for d in registry['detectors']}
     from decay_workflow import source_catalog
+    from batch_execution import ANGULAR_EXECUTION_READY
     sources=source_catalog(root)
     # Angle support is additive to the admitted isotope identities. Check binds
     # the effective pose; preparation independently checks native solids.
     for source in sources:
         source['source_angle']={'enabled':source['available'] and source['id']!=GAMMA,
-            'nonzero_execution_ready':False,
+            'nonzero_execution_ready':source['available'] and source['id']!=GAMMA and ANGULAR_EXECUTION_READY,
             'min_deg':-30,'max_deg':30,'version':'source_capsule_angular_pose_v1',
             'convention':'Degrees from global +y toward +x around global z at x=0,y=1.473 mm; engineering placement'}
     # Attempt metadata describes withheld qualification; it cannot admit a source.
