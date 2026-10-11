@@ -59,10 +59,56 @@ def transport_check(selection,root=W.ROOT):
     require(result.returncode==0,'Batch transport readiness failed: '+result.stderr.decode('utf-8',errors='replace')[-2000:])
     return W.decode_json(result.stdout.decode('utf-8-sig'))
 
+def pose_module():
+    """Pure shared geometry resolver; no worker or runtime probe."""
+    transport=str(W.ROOT/'transport')
+    if transport not in sys.path:sys.path.insert(0,transport)
+    import source_pose
+    return source_pose
+
+def selection_angle(selection):
+    return pose_module().angle(selection) if 'angle_deg' in selection else 0
+
+def validate_source_pose(resolved,root=W.ROOT):
+    """Reconstruct new angular authority, including deliberately rehashed edits.
+
+    Legacy receipts have no angular marker and retain their existing checks.
+    """
+    selection=resolved['selection'];transport=resolved['transport_plan']
+    marked=('angle_deg' in selection or 'source_pose' in resolved or 'source_pose' in transport or
+        'angle_geometry_plan' in transport or 'transport/source_pose.py' in resolved['source_sha256'])
+    if not marked:return
+    require(type(selection) is dict and set(selection) in (W.FIELDS,W.FIELDS|{'angle_deg'}),
+        'Saved angular selection fields changed.')
+    angle=selection_angle(selection)
+    require(B.typed_equal(transport.get('selection'),selection),'Saved source pose selection changed.')
+    if angle==0:
+        require('source_pose' not in resolved and 'source_pose' not in transport and 'angle_geometry_plan' not in transport and
+            'transport/source_pose.py' not in resolved['source_sha256'],
+            'Zero angle must retain the exact legacy physical pose.')
+        require(B.typed_equal(resolved.get('source_position_global_mm'),[0,37.073,.290]),
+            'Zero-angle source position differs from its legacy nominal anchor.')
+        return
+    require(selection['source']!=W.GAMMA and selection['pose']=='nominal','Angular source requires an admitted nominal decay source.')
+    expected=pose_module().resolve(angle,root)
+    require(B.typed_equal(resolved.get('source_pose'),expected) and
+        B.typed_equal(transport.get('source_pose'),expected) and
+        B.typed_equal(resolved.get('source_position_global_mm'),expected['position_global_mm']),
+        'Saved source angle, position or orientation differs from the resolved anchor pose.')
+    angular=transport.get('angle_geometry_plan')
+    bounded=copy.deepcopy(selection);bounded['primary_count']=20
+    require(type(angular) is dict and B.typed_equal(angular.get('source_pose'),expected) and
+        B.typed_equal(angular.get('selection'),bounded),'Angular geometry plan changed its bounded source selection or pose.')
+    hashes=angular.get('source_sha256')
+    require(type(hashes) is dict and hashes and
+        all(B.typed_equal(resolved['source_sha256'].get(ref),digest) for ref,digest in hashes.items()),
+        'Angular geometry source hashes differ from the parent plan.')
+
 def check(config,*,root=W.ROOT,allow_existing=False,acceptance=None,transport_reader=transport_check,
           validate_settings=W.settings_check,pin_reader=None,runtime_reader=W.runtime_identity):
     """Fresh executable v3 check. Saved v2 preview bytes are never upgraded."""
-    require(type(config) is dict and set(config)==W.FIELDS,'Unsupported batch configuration fields.')
+    require(type(config) is dict and set(config) in (W.FIELDS,W.FIELDS|{'angle_deg'}),'Unsupported batch configuration fields.')
+    angle=selection_angle(config)
     W.run_path(config['name'],root);require(allow_existing or not W.run_path(config['name'],root).exists(),'Output exists; choose a new name.')
     require(config['source']!=W.GAMMA,'Gamma uses its preserved v1 20-primary route; arbitrary-count gamma native consumption is not admitted.')
     cap=B.BATCH_CAP
@@ -77,7 +123,7 @@ def check(config,*,root=W.ROOT,allow_existing=False,acceptance=None,transport_re
     require(type(transport) is dict and transport.get('kind')=='batch_transport_checked_v1' and
         B.typed_equal(transport.get('selection'),config) and transport.get('geometry_preparation_count')==20,
         'Batch readiness changed its selection or geometry-only surrogate.')
-    bounded=copy.deepcopy(config);bounded['primary_count']=20
+    bounded=copy.deepcopy(config);bounded.pop('angle_deg',None);bounded['primary_count']=20
     if config['detector'] in W.MODELS:
         old=W.check(bounded,root=root,validate_settings=validate_settings,pin_reader=pin_reader,
             runtime_reader=runtime_reader,portable_reader=lambda c,r:transport['legacy_geometry_plan'],allow_existing=True)
@@ -93,15 +139,31 @@ def check(config,*,root=W.ROOT,allow_existing=False,acceptance=None,transport_re
         from decay_workflow import operating
         resolved['operating_model']=operating(config['detector'],root)
     resolved.update(batching=batching,execution_rules=copy.deepcopy(RULES),transport_plan=transport,acceptance_only=acceptance)
+    if angle!=0:
+        expected=pose_module().resolve(angle,root)
+        require(B.typed_equal(transport.get('source_pose'),expected),'Batch readiness changed its effective source pose.')
+        resolved['source_pose']=copy.deepcopy(expected)
+        resolved['source_position_global_mm']=copy.deepcopy(expected['position_global_mm'])
+        angular=transport.get('angle_geometry_plan')
+        require(type(angular) is dict and type(angular.get('source_sha256')) is dict and angular['source_sha256'],
+            'Angular geometry readiness has no source hash authority.')
+        resolved['source_sha256'].update(angular['source_sha256'])
     if pin_reader is None:
         if config['detector'] in W.MODELS:
             from decay_workflow import source_pins
             resolved['source_sha256'].update(source_pins(config['detector'],root))
         resolved['source_sha256'].update({name:W.sha(Path(root)/name) for name in NEW_SOURCES})
-    return {'kind':KIND,'schema_version':VERSION,'status':'checked_configuration','science_calls':0,'execution_enabled':True,
+    validate_source_pose(resolved,root)
+    # The fixed angular pilot failed its unchanged raw vertex identity gate.
+    # Keep the resolved preview reviewable; it is not a new execution admission.
+    return {'kind':KIND,'schema_version':VERSION,'status':'checked_configuration','science_calls':0,'execution_enabled':angle==0,
         'resolved':resolved,'configuration_sha256':W.digest(resolved)}
 
 def admit(plan,root=W.ROOT,*,resume=False,**readers):
+    require(type(plan) is dict and type(plan.get('resolved')) is dict and type(plan['resolved'].get('selection')) is dict,
+        'Unsupported executable batch plan.')
+    require(selection_angle(plan.get('resolved',{}).get('selection',{}))==0,
+        'Nonzero-angle execution is unavailable: the fixed pilot failed source-position identity; end-to-end acceptance is pending.')
     require(type(plan) is dict and set(plan)=={'kind','schema_version','status','science_calls','execution_enabled','resolved','configuration_sha256'} and
         plan['kind']==KIND and type(plan['schema_version']) is int and plan['schema_version']==VERSION and plan['status']=='checked_configuration' and
         type(plan['science_calls']) is int and plan['science_calls']==0 and plan['execution_enabled'] is True,'Unsupported executable batch plan; preview is not a Start token.')
@@ -116,11 +178,12 @@ def catalog_operating(mc):
         'annealing_time_minutes':None,'qualification':mc['qualification'],
         'calibration':'independent 500 keV injection through recorded fixed wiring'}
 
-def saved_plan(plan):
+def saved_plan(plan,root=W.ROOT):
     require(plan['kind']==KIND and plan['schema_version']==VERSION and plan['execution_enabled'] is True and
         W.digest(plan['resolved'])==plan['configuration_sha256'],'Saved executable plan changed.')
     r=plan['resolved'];validate_partition(r['batching']);require(B.typed_equal(r['execution_rules'],RULES),'Saved execution rules changed.')
     require(r['selection']['primary_count']==r['batching']['primary_count'] and r['selection']['seed']==r['batching']['master_seed'],'Saved count/seed binding changed.')
+    validate_source_pose(r,root)
 
 def stage_base(directory,stage,batch=None):
     if stage=='geometry':return Path(directory)/'shared/transport'
@@ -194,6 +257,10 @@ def validate_output(stage,plan,directory,batch,result):
     if stage=='geometry':
         require(result.get('kind')=='batch_shared_transport_prepared_v1' and result.get('status')=='complete' and
             B.typed_equal(result.get('checked_transport'),plan['resolved']['transport_plan']),'Shared geometry does not bind its checked selection.')
+        if 'source_pose' in plan['resolved']:
+            require(B.typed_equal(result.get('source_pose'),plan['resolved']['source_pose']) and
+                B.typed_equal(result.get('source_position_global_mm'),plan['resolved']['source_position_global_mm']),
+                'Shared geometry changed its effective source position or orientation.')
         for ref,digest in result['files_sha256'].items():require(W.sha(safe_path(directory.parents[2],ref))==digest,'Shared geometry bytes changed.')
     if stage in ('native_preparation','response'):
         root=directory.parents[2]
@@ -416,7 +483,7 @@ def execute(plan,*,root=W.ROOT,resume=False,dispatch_id=None,executor=worker,adm
             receipt.update(status='failed',error=str(error),failed_utc=W.utc(),resume_allowed=False);W.write(directory/'run.json',receipt);raise
 
 def inspect(name,root=W.ROOT):
-    directory=W.run_path(name,root);plan=W.read(directory/'resolved-config.json');saved_plan(plan);receipt=W.read(directory/'run.json')
+    directory=W.run_path(name,root);plan=W.read(directory/'resolved-config.json');saved_plan(plan,root);receipt=W.read(directory/'run.json')
     require(receipt['kind']==KIND and receipt['configuration_sha256']==plan['configuration_sha256'] and B.typed_equal(receipt['resolved'],plan['resolved']),'Saved parent settings changed.')
     for stage in SHARED:
         if stage_receipt(directory,stage).exists():verify_stage(stage,plan,directory,None)
@@ -434,7 +501,7 @@ def request_stop(name,root=W.ROOT):
     W.write(directory/'STOP.json',{'requested_utc':W.utc()},fresh=True);return {'status':'stop_requested'}
 
 def event_page(name,batch_index,offset=0,limit=50,root=W.ROOT):
-    directory=W.run_path(name,root);plan=W.read(directory/'resolved-config.json');saved_plan(plan);batch=batch_at(plan['resolved']['batching'],batch_index)
+    directory=W.run_path(name,root);plan=W.read(directory/'resolved-config.json');saved_plan(plan,root);batch=batch_at(plan['resolved']['batching'],batch_index)
     B.exact_integer(offset,0,batch['primary_count']-1,'Page offset');B.exact_integer(limit,1,100,'Page limit')
     base=batch_directory(directory,batch_index);require((base/'batch-complete.json').is_file(),'Only sealed terminal batches have event pages.')
     response=verify_stage('response',plan,directory,batch);require(W.read(base/'batch-complete.json')['stage_receipt_sha256']['response']==W.sha(stage_receipt(directory,'response',batch)),'Batch response receipt changed.')
@@ -458,7 +525,7 @@ def event_page(name,batch_index,offset=0,limit=50,root=W.ROOT):
             for record in (verify_stage(stage,plan,directory,batch),) for ref,stamp in record['artifacts'].items()]}
 
 def focused_waveforms(name,batch_index,global_primary_id,group_id,root=W.ROOT):
-    directory=W.run_path(name,root);plan=W.read(directory/'resolved-config.json');batch=batch_at(plan['resolved']['batching'],batch_index)
+    directory=W.run_path(name,root);plan=W.read(directory/'resolved-config.json');saved_plan(plan,root);batch=batch_at(plan['resolved']['batching'],batch_index)
     B.exact_integer(global_primary_id,batch['global_initial_offset'],batch['global_initial_offset']+batch['primary_count']-1,'Global primary ID');B.exact_integer(group_id,0,B.MAX_SAFE_INTEGER,'Group ID')
     verified=verify_stage('response',plan,directory,batch);base=batch_directory(directory,batch_index);require((base/'batch-complete.json').is_file(),'Only sealed batches have focused waveforms.')
     require(W.read(base/'batch-complete.json')['stage_receipt_sha256']['response']==W.sha(stage_receipt(directory,'response',batch)),'Batch response receipt changed.')
@@ -477,7 +544,7 @@ def focused_waveforms(name,batch_index,global_primary_id,group_id,root=W.ROOT):
     raise ControlError('This pulse has no retained display trace; full signed signals remain in its sealed artifacts.','batch_waveform_unavailable')
 
 def artifact(name,file,root=W.ROOT):
-    directory=W.run_path(name,root);plan=W.read(directory/'resolved-config.json');saved_plan(plan);path=safe_path(directory,file)
+    directory=W.run_path(name,root);plan=W.read(directory/'resolved-config.json');saved_plan(plan,root);path=safe_path(directory,file)
     require(type(file) is str and '.pending-' not in file,'Unsafe artifact path.')
     matched=False
     pattern=re.fullmatch(r'batches/b([0-9]{10})/(.+)',file)

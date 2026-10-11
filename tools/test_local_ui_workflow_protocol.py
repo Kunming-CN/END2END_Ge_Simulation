@@ -222,6 +222,69 @@ class Protocol(unittest.TestCase):
             self.server.workflow_controller._launcher.assert_not_called()
         self.assertFalse((root/W.BASE).exists());self.assertFalse((root/J.STATE).exists())
 
+    def test_checked_angle_preview_and_saved_job_pose_are_protected_and_preserved(self):
+        root=self.server.controller.root
+        pose=J.B.pose_module().resolve(30,W.ROOT)
+        selection=dict(name='angle-fixture',cryostat=W.CRYOSTAT,detector='SAP22',source=W.CS,pose='nominal',
+            primary_count=500,seed=26092631,threads=2,electronics={},angle_deg=30)
+        plan=dict(kind=J.B.CHECKED_KIND,schema_version=3,status='checked_configuration',science_calls=0,execution_enabled=True,
+            resolved=dict(selection=selection,source_pose=pose,source_position_global_mm=pose['position_global_mm'],batching={'batch_count':1}),
+            configuration_sha256='saved-angle-authority')
+        resolver=Mock(side_effect=lambda config,root:copy.deepcopy(plan))
+        controller=J.WorkflowController(root,batch_resolver=resolver,launcher=Mock())
+        self.server.workflow_controller=controller
+        request={'kind':'local_scenario_batch_request_v2','schema_version':2,'selection':selection}
+        for headers in ({'X-Control-Token':''},{'Origin':'https://evil.example'},{'Sec-Fetch-Site':'cross-site'}):
+            self.assertEqual(self.request('POST','/api/workflow/check-batches',{'request':request},headers)[0],403)
+        resolver.assert_not_called()
+        status,raw,_=self.request('POST','/api/workflow/check-batches',{'request':request})
+        self.assertEqual(status,200);checked=json.loads(raw)
+        self.assertEqual(checked['resolved']['source_pose'],pose)
+        self.assertFalse(W.run_path(selection['name'],root).exists());controller._launcher.assert_not_called()
+        with patch.object(controller,'_launch',side_effect=controller._view):
+            status,raw,_=self.request('POST','/api/workflow/start',{'check_id':checked['check_id']})
+        self.assertEqual(status,200);started=json.loads(raw)
+        self.assertEqual(started['source_pose'],pose);self.assertEqual(started['selection']['angle_deg'],30)
+        self.assertEqual(started['source_position_global_mm'],pose['position_global_mm'])
+        # Public values are copies of the saved checked plan, not mutable controls.
+        started['source_pose']['angle_deg']=-30
+        controller=J.WorkflowController(root,batch_resolver=resolver,launcher=Mock());self.server.workflow_controller=controller
+        status,raw,_=self.request();self.assertEqual(status,200)
+        reopened=json.loads(raw)['jobs'][0]
+        self.assertEqual(reopened['source_pose'],pose);self.assertEqual(reopened['selection']['angle_deg'],30)
+        for headers in ({'X-Control-Token':''},{'Host':'evil.example'},{'Origin':'https://evil.example'},{'Sec-Fetch-Site':'cross-site'}):
+            self.assertEqual(self.request(headers=headers)[0],403)
+        controller._launcher.assert_not_called()
+
+    def test_pending_angular_check_issues_no_start_token_or_reservation(self):
+        root=self.server.controller.root
+        selection=dict(name='pending-angle',cryostat=W.CRYOSTAT,detector='SAP22',source=W.CS,pose='nominal',
+            primary_count=500,seed=26092631,threads=2,electronics={},angle_deg=30)
+        pose=J.B.pose_module().resolve(30,W.ROOT)
+        plan=dict(kind=J.B.CHECKED_KIND,schema_version=3,status='checked_configuration',science_calls=0,
+            execution_enabled=False,resolved=dict(selection=selection,source_pose=pose))
+        controller=J.WorkflowController(root,batch_resolver=Mock(return_value=plan),launcher=Mock())
+        self.server.workflow_controller=controller
+        request={'kind':'local_scenario_batch_request_v2','schema_version':2,'selection':selection}
+        status,raw,_=self.request('POST','/api/workflow/check-batches',{'request':request})
+        self.assertEqual(status,200);reply=json.loads(raw)
+        self.assertFalse(reply['execution_enabled']);self.assertNotIn('check_id',reply)
+        self.assertEqual(reply['resolved']['source_pose'],pose)
+        self.assertEqual(controller._checks,{});self.assertEqual(controller._jobs,[])
+        status,_,_=self.request('POST','/api/workflow/start',{'check_id':'forged'})
+        self.assertNotEqual(status,200);controller._launcher.assert_not_called()
+
+    def test_legacy_saved_job_exposes_original_position_without_inventing_angle(self):
+        root=self.server.controller.root
+        controller=J.WorkflowController(root,launcher=Mock())
+        selection={'name':'legacy-pose','source':W.GAMMA,'pose':'plus5mm'}
+        controller._jobs=[dict(id='a'*32,name=selection['name'],status='stopped',created_utc='synthetic',driver=None,mode='run',
+            plan=dict(kind=W.KIND,configuration_sha256='original',resolved=dict(selection=selection,source_position_global_mm=[0,42.073,.290])))]
+        self.server.workflow_controller=controller
+        status,raw,_=self.request();self.assertEqual(status,200);job=json.loads(raw)['jobs'][0]
+        self.assertIsNone(job['source_pose']);self.assertEqual(job['source_position_global_mm'],[0,42.073,.290])
+        self.assertNotIn('angle_deg',job['selection']);controller._launcher.assert_not_called()
+
     def test_origin_host_and_token_refused_before_backend(self):
         for headers in ({'X-Control-Token':''},{'Host':'evil.example'},{'Origin':'https://evil.example'},
                         {'Sec-Fetch-Site':'cross-site'},{'Origin':None}):

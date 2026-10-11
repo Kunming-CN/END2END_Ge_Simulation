@@ -1,10 +1,10 @@
 # Next development plan
 
-Updated: 2026-10-10 (owner client date). This is the single active delivery roadmap.
+Updated: 2026-10-11. This is the single active delivery roadmap.
 [Onboarding and extension contracts](ONBOARDING_EXTENSIBILITY_PLAN.md) retain the
 longer-lived boundaries; [PROGRESS.md](../PROGRESS.md) records actual delivery.
-This revision is planning only, for the owner's next evaluation. It does not start
-implementation, simulations, publication or an automatic continuation schedule.
+The source-angle round below is now a guarded geometry preview with a retained
+failed fixed acceptance. It enables no nonzero execution or automatic continuation.
 
 ## Outcome and verified starting point
 
@@ -33,7 +33,23 @@ and the latest two-model correction with 703 exact live files. These scopes are
 not a fresh physics validation of every image. Reuse completed evidence; do not
 queue another full-site audit without a concrete change or defect.
 
-## One next implementation milestone: source/capsule angle
+## Current source/capsule-angle milestone and bounded follow-up
+
+Delivered 2026-10-11: shared versioned pose, capsule-only exporter, exact zero
+compatibility, native +/-30 geometry checks, CLI/Control preview/provenance and
+explicit locked-runtime setup. The sole fixed SAP22/Cs137/+30deg/500/seed26092631
+trial completed radiation but failed strict GPS vertex identity: y32.3035mm versus
+planned32.303504374726018mm, -4.374726nm. One native preparation, no charge/readout
+groups, no full-chain acceptance. Raw/failed evidence stays immutable locally.
+Nonzero Check returns execution_enabled=false with no Start token; Run is disabled
+and backend admission rejects forged flags. Zero/Gamma admission stays unchanged.
+
+Next bounded correction: use the existing Geant4 /control/useDoublePrecision true
+before angular GPS commands in a new version, then test native command conversion
+without radiation and keep the unchanged position gate. A separately justified
+bounded acceptance is required before enabling nonzero execution. No retry or new
+science is part of the current round; never relabel its already simulated positions.
+The original intended workflow and acceptance below remain its unfulfilled target.
 
 **User outcome:** select an admitted radioactive source, compatible detector and
 angle in Control; Check plan shows the effective pose, Run uses that same pose,

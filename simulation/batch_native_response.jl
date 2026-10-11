@@ -19,7 +19,9 @@ function expected_operating(mc)
         "annealing_time_minutes"=>nothing,"qualification"=>mc["qualification"],"calibration"=>"independent 500 keV injection through recorded fixed wiring")
 end
 function validate_selection(s)
-    R.check(s isa AbstractDict && Set(keys(s))==Set(("name","cryostat","detector","source","pose","primary_count","seed","threads","electronics")),"Wrong batch selection fields")
+    fields=Set(("name","cryostat","detector","source","pose","primary_count","seed","threads","electronics"))
+    R.check(s isa AbstractDict && Set(keys(s)) in (fields,union(fields,Set(["angle_deg"]))),"Wrong batch selection fields")
+    B.angle(s)
     R.check(s["name"] isa String && occursin(r"^[A-Za-z0-9_-]{1,48}$",s["name"]) && s["cryostat"]=="lbnl_modular_nominal_v1" && s["pose"]=="nominal","Unsupported batch run/cryostat/pose")
     R.check(s["detector"] in (keys(D.SIGNED_BIAS)...,ADDED_MODELS...) && B.integer(s["primary_count"]) && 1<=s["primary_count"]<=B.MAX_SAFE_INTEGER,"Unsupported batch model/count")
     R.check(B.integer(s["threads"]) && s["threads"] in (1,2) && Threads.nthreads()==s["threads"] && B.integer(s["seed"]) && 1<=s["seed"]<=2_147_483_646,"Wrong batch threads/seed")
@@ -35,6 +37,7 @@ function options(args)
     R.check(E.hashfile(shared)==d["shared_prepared_sha256"] && E.hashfile(profile)==d["profile_sha256"],"Changed shared preparation/profile")
     p=JSON.parsefile(shared);mc=p["model_contract"];op=d["operating_model"]
     R.check(p["kind"]=="batch_shared_transport_prepared_v1" && p["status"]=="complete" && p["producer_adapter"]==S.ADAPTER && p["model_id"]==s["detector"] && p["source_id"]==s["source"] && p["checked_transport"]["selection"]==s,"Shared transport selection differs")
+    B.source_pose(p,s,E.hashfile(S.relative_file("scenarios/placement-anchors.json")))
     S.source(p["source_contract"],p["source_mode"])
     S.model_contract(mc);R.check(p["geometry_checks"]["overlaps_passed"]===true && p["geometry_checks"]["source_inside_fill"]===true,"Unchecked shared cryostat geometry")
     for (r,h) in p["files_sha256"];R.check(E.hashfile(S.relative_file(r))==h,"Changed shared transport file: "*r);end

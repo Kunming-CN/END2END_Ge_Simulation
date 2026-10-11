@@ -6,6 +6,37 @@ function batch(offset=10000;index=1,count=2)
     Dict("batch_index"=>index,"global_initial_offset"=>offset,"primary_count"=>count,
         "local_initial_primary_id_range"=>[0,count-1],"global_initial_primary_id_range"=>[offset,offset+count-1],"radiation_seed"=>260926)
 end
+@testset "Angular source is bound to native capsule and fixed anchor" begin
+    s=Dict{String,Any}("source"=>"cs137_point_decay_v1","angle_deg"=>30)
+    position=[17.8,1.473+17.8sqrt(3),0.290];axis=[0.5,sqrt(3)/2,0.0]
+    rotation=[[sqrt(3)/2,0.0,0.5],[-0.5,0.0,sqrt(3)/2],[0.0,-1.0,0.0]]
+    pose=Dict{String,Any}("kind"=>B.POSE_KIND,"schema_version"=>1,"angle_deg"=>30,
+        "position_global_mm"=>position,"capsule_rotation_local_to_global"=>rotation,"capsule_axis_global"=>axis,
+        "coordinate_convention"=>B.POSE_CONVENTION,"anchors_sha256"=>"a"^64)
+    volumes=[Dict("original_path"=>"/world/nominal_capsule","material"=>"G4_Al","translation_global_mm"=>copy(position),"rotation_local_to_global"=>deepcopy(rotation)),
+        Dict("original_path"=>"/world/nominal_capsule/nominal_source_fill","material"=>"G4_POLYETHYLENE","translation_global_mm"=>copy(position),"rotation_local_to_global"=>deepcopy(rotation))]
+    p=Dict("source_pose"=>pose,"source_position_global_mm"=>copy(position),
+        "checked_transport"=>Dict("source_pose"=>deepcopy(pose),"angle_geometry_plan"=>Dict("source_pose"=>deepcopy(pose))),
+        "geometry_checks"=>Dict("source_inside_fill"=>true,"overlaps_passed"=>true,"volumes"=>volumes))
+    @test B.source_pose(p,s,"a"^64)==pose
+    for angle in (true,"30",NaN,Inf,30.01,-30.01)
+        @test_throws ArgumentError B.angle(Dict("angle_deg"=>angle))
+    end
+    @test_throws ArgumentError B.angle(Dict("source"=>"mono_gamma_662_axis_v1","angle_deg"=>1))
+    @test B.source_pose(Dict("source_position_global_mm"=>[0,37.073,0.290]),Dict(),"a"^64)===nothing
+    for edit in ("source_position","rotation","native_position","native_material","anchor","angle","check_binding")
+        bad=deepcopy(p);selection=deepcopy(s)
+        if edit=="source_position";bad["source_position_global_mm"][1]+=1
+        elseif edit=="rotation";bad["source_pose"]["capsule_rotation_local_to_global"][1][1]+=0.01
+        elseif edit=="native_position";bad["geometry_checks"]["volumes"][2]["translation_global_mm"][1]+=1
+        elseif edit=="native_material";bad["geometry_checks"]["volumes"][1]["material"]="G4_AIR"
+        elseif edit=="anchor";bad["source_pose"]["anchors_sha256"]="b"^64
+        elseif edit=="angle";selection["angle_deg"]=-30
+        else;bad["checked_transport"]["source_pose"]["angle_deg"]=-30
+        end
+        @test_throws ArgumentError B.source_pose(bad,selection,"a"^64)
+    end
+end
 @testset "Native configuration validates before exclusive output reservation" begin
     # This executes the actual prepare boundary, without loading or solving a model.
     parent=joinpath(BN.Q.ROOT,".local/student-batches-v1/execution-v1")

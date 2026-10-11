@@ -36,6 +36,12 @@ function inspect(path)
     check(S.integer(m["primary_count"]) && m["primary_count"]==n && m["global_decay_id_range"]==[0,n-1] && m["global_initial_id_range"]==[o,o+n-1],"Incomplete batch identity range")
     preparedpath=relative_file(m["shared_prepared_ref"]);pin!(pins,preparedpath,m["shared_prepared_sha256"]);p=JSON.parsefile(preparedpath)
     check(p["kind"]=="batch_shared_transport_prepared_v1" && p["status"]=="complete" && p["source_mode"]==m["source_mode"],"Wrong shared transport preparation")
+    pose=C.source_pose(p,p["checked_transport"]["selection"],S.hashfile(relative_file("scenarios/placement-anchors.json")))
+    if pose===nothing
+        check(!haskey(m,"source_pose"),"Legacy stream cannot carry an angular pose")
+    else
+        check(m["source_pose"]==pose && m["source_position_global_mm"]==pose["position_global_mm"],"Stream angular source pose differs from shared geometry")
+    end
     source(m["source_contract"],m["source_mode"],pins)
     for k in ("source_id","source_contract","model_id","model_sha256","model_contract","coordinate_transform","clock_policy","grouping_policy")
         check(m[k]==p[k],"Batch/shared preparation mismatch: "*k)

@@ -26,6 +26,7 @@ def selection_request(selection):
         'source_mode':selection['source'],'source_pose':selection['pose'],'primary_count':20,'seed':selection['seed']}
 
 def legacy_check(selection):
+    selection={k:v for k,v in selection.items() if k!='angle_deg'}
     if selection['detector'] not in W.MODELS:
         C.WINDOWS_ROOT=WINDOWS_ROOT
         bounded=copy.deepcopy(selection);bounded['primary_count']=20
@@ -41,25 +42,43 @@ def legacy_check(selection):
     return P.check(request,WINDOWS_ROOT)
 
 def check(selection):
-    h.require(type(selection) is dict and set(selection)==W.FIELDS and
+    h.require(type(selection) is dict and set(selection) in (W.FIELDS,W.FIELDS|{'angle_deg'}) and
         selection['cryostat']==W.CRYOSTAT and selection['pose']=='nominal' and
         type(selection['threads']) is int and selection['threads'] in (1,2) and
         (selection['source']==W.CS or (DW.is_source(selection['source'],h.ROOT) and DW.capability(DW.preset(selection['source'],h.ROOT),h.ROOT) is not None)),
         'Batch source/detector has no admitted nominal connector')
     B.partition(selection['primary_count'],selection['seed'])
+    angle=selected_angle(selection)
     legacy=legacy_check(selection)
-    return {'kind':'batch_transport_checked_v1','schema_version':1,'selection':selection,
+    checked={'kind':'batch_transport_checked_v1','schema_version':1,'selection':selection,
         'geometry_preparation_count':20,'legacy_geometry_plan':legacy,
         'adapter_sha256':h.sha256(Path(__file__)),'runtime':legacy['runtime']}
+    if angle:
+        import source_angle as A
+        A.WINDOWS_ROOT=WINDOWS_ROOT
+        bounded=copy.deepcopy(selection);bounded['primary_count']=20
+        checked['angle_geometry_plan']=A.check(bounded)
+        checked['source_pose']=checked['angle_geometry_plan']['source_pose']
+    return checked
+
+
+def selected_angle(selection):
+    if 'angle_deg' not in selection:return 0
+    import source_pose as Pose
+    return Pose.angle(selection)
 
 def prepare(selection,output,checked):
     h.require(check(selection)==checked,'Transport checked plan changed')
     out=h.local_path(output);h.require(not out.exists(),'Preserve existing shared preparation')
     out.mkdir(parents=True);legacy=out/'legacy';request=selection_request(selection)
     original=checked['legacy_geometry_plan']
-    if selection['detector'] not in W.MODELS:
+    if selected_angle(selection):
+        import source_angle as A
+        A.WINDOWS_ROOT=WINDOWS_ROOT
+        meta=A.prepare(checked['angle_geometry_plan']['selection'],legacy,checked['angle_geometry_plan'])
+    elif selection['detector'] not in W.MODELS:
         C.WINDOWS_ROOT=WINDOWS_ROOT
-        bounded=copy.deepcopy(selection);bounded['primary_count']=20
+        bounded={k:copy.deepcopy(v) for k,v in selection.items() if k!='angle_deg'};bounded['primary_count']=20
         meta=C.prepare(bounded,legacy,original)
     elif selection['source']!=W.CS:
         meta=D.prepare(request,legacy,original)
@@ -97,7 +116,11 @@ def read_shared(path):
     h.require(B.typed_equal(checked,m['checked_transport']),'Shared runtime/source authority changed')
     legacy=P.safe_path(h.ROOT,m['legacy_prepared_ref'],True).parent
     s=checked['selection']
-    if s['detector'] not in W.MODELS:
+    if selected_angle(s):
+        import source_angle as A
+        A.WINDOWS_ROOT=WINDOWS_ROOT
+        meta=A.read_prepared(legacy)[1]
+    elif s['detector'] not in W.MODELS:
         C.WINDOWS_ROOT=WINDOWS_ROOT;meta=C.read_prepared(legacy)[1]
     elif s['source']!=W.CS:
         D.WINDOWS_ROOT=WINDOWS_ROOT;meta=D.read_prepared(legacy)[1]
@@ -123,7 +146,10 @@ def macro(shared,batch):
 
 def raw_events(path,shared,batch):
     meta=copy.deepcopy(shared);meta.update(primary_count=batch['primary_count'],seed=batch['radiation_seed'])
-    reader=C.events if shared['model_id'] not in W.MODELS else cs.iter_decays if shared['source_mode']=='cs137_legacy' else D.iter_decays
+    if 'source_pose' in shared:
+        import source_angle as A
+        reader=A.events
+    else:reader=C.events if shared['model_id'] not in W.MODELS else cs.iter_decays if shared['source_mode']=='cs137_legacy' else D.iter_decays
     for event in reader(path,meta):
         local=event['event_id'];h.require(local==event['global_decay_id'],'Changed raw local identity')
         event.update(batch_index=batch['batch_index'],local_initial_id=local,global_initial_id=batch['global_initial_offset']+local)
@@ -188,6 +214,8 @@ def extract(directory):
         processes=list(cs.table_rows(raw['processes']));aliases=cs.step_aliases(raw,shared['material_tables'])
         tables={key:{'rows':len(next(iter(raw[key].values()))),'columns':{name:{'dtype':str(ds.dtype),'units':cs.scalar(ds.attrs.get('units',''))} for name,ds in raw[key].items()}} for key in ('vtx','particles','tracks','processes',*shared['material_tables'])}
     m={key:shared[key] for key in ('model_id','model_sha256','model_contract','source_id','source_contract','source_mode','coordinate_transform','grouping_policy','clock_policy','source_sha256','unscored_volumes')}
+    if 'source_pose' in shared:
+        m.update(source_pose=shared['source_pose'],source_position_global_mm=shared['source_position_global_mm'])
     if shared['source_mode']=='cs137_legacy':m['decay_photon_line_window_keV']=shared['decay_photon_line_window_keV']
     m.update(kind=KIND,status='complete',producer_adapter=ADAPTER,primary_count=count,batch=batch,
         global_decay_id_range=[0,count-1],global_initial_id_range=batch['global_initial_primary_id_range'],
@@ -218,6 +246,9 @@ def verify_stream(directory):
     d,p,shared,batch=read_batch(directory);m=cs.load(d/'stream/manifest.json');run=cs.load(d/'run.json')
     verify_radiation(d)
     expected={key:shared[key] for key in ('model_id','model_sha256','model_contract','source_id','source_contract','source_mode','coordinate_transform','grouping_policy','clock_policy','source_sha256','unscored_volumes')}
+    if 'source_pose' in shared:
+        expected.update(source_pose=shared['source_pose'],source_position_global_mm=shared['source_position_global_mm'])
+    else:h.require('source_pose' not in m,'Legacy fixed stream cannot carry an angular pose')
     if shared['source_mode']=='cs137_legacy':expected['decay_photon_line_window_keV']=shared['decay_photon_line_window_keV']
     expected.update(kind=KIND,status='complete',producer_adapter=ADAPTER,primary_count=batch['primary_count'],batch=batch,
         global_decay_id_range=[0,batch['primary_count']-1],global_initial_id_range=batch['global_initial_primary_id_range'],

@@ -112,10 +112,14 @@ class WorkflowController:
         backend=catalog_backend()
         catalog_ready=safe_path(self.root,backend.EXPORTER_REF).is_file() and safe_path(self.root,backend.BUILD_REF).is_file()
         checks.append({'label':'Common model geometry exporter and build receipt','available':catalog_ready})
+        angle_ready=all(safe_path(self.root,ref).is_file() for ref in
+            ('.local/m2a/angle-source-build-v1/cryostat_angle_export','.local/m2a/angle-source-build-v1/exporter-build.json'))
+        checks.append({'label':'Angular source geometry exporter and build receipt (preview; execution pending)','available':angle_ready})
         return {'status':'file_readiness_only','checks':checks,'runtime_identity':runtime,'portable_source':portable,
                 'catalog_models_file_ready':catalog_ready,
+                'angular_source_file_ready':angle_ready,
                 'ready_for_config_check':ready_for_config_check,'science_calls':0,
-                'note':'File readiness only. Run.cmd setup -BuildPortableSourceExporter builds the original exporter; Run.cmd setup -BuildCatalogSourceExporter builds the common model exporter. Both use the existing locked environment. Check verifies current build/runtime identities; opening Control installs or builds nothing.',
+                'note':'File readiness only. Run.cmd setup -BuildPortableSourceExporter builds the original exporter; Run.cmd setup -BuildCatalogSourceExporter builds the common model exporter; Run.cmd setup -BuildAngleSourceExporter builds angular geometry support. These use the existing locked environment. Nonzero-angle execution is pending end-to-end acceptance. Check verifies current build/runtime identities; opening Control installs or builds nothing.',
                 'guide':W.catalog(self.root)['setup_guide']}
 
     def check(self,config):
@@ -145,6 +149,9 @@ class WorkflowController:
     def check_batches(self,request):
         with self._lock:
             self._idle();plan=self._batch_resolver(W.preview_request(request),root=self.root)
+            if (plan.get('kind')==B.CHECKED_KIND and plan.get('schema_version')==3 and
+                plan.get('execution_enabled') is False and B.selection_angle(plan.get('resolved',{}).get('selection',{}))!=0):
+                return plan  # No Start token, reservation or computation for an unaccepted pose.
             W.require(plan.get('kind')==B.CHECKED_KIND and plan.get('schema_version')==3 and
                       plan.get('execution_enabled') is True,'A runnable versioned batch plan is required.')
             check_id=secrets.token_hex(32);self._checks[check_id]=copy.deepcopy(plan)
@@ -301,6 +308,8 @@ class WorkflowController:
     def _view(self,job):
         out={k:copy.deepcopy(job[k]) for k in ('id','name','status','created_utc')}
         out['selection']=copy.deepcopy(job['plan']['resolved']['selection'])
+        out['source_pose']=copy.deepcopy(job['plan']['resolved'].get('source_pose'))
+        out['source_position_global_mm']=copy.deepcopy(job['plan']['resolved'].get('source_position_global_mm'))
         out['configuration_sha256']=job['plan']['configuration_sha256']
         out['output']=W.BASE+'/'+job['name'];out['error']=job.get('error');out['stages']={}
         out['workflow_kind']=job['plan'].get('kind')

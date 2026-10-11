@@ -44,6 +44,25 @@ class Source(unittest.TestCase):
         shared.update(source_mode='registered_decay',source_contract={'isotope':'Am241'})
         with patch.object(S.cs,'load',return_value=report),patch.object(S.P,'safe_path',return_value=Path('unused')),patch.object(S.D,'macro_text',return_value='Am241 literal') as macro:
             S.macro(shared,self.batch);self.assertEqual(macro.call_args.args,(report,5001,shared['source_contract'],shared['source_position_global_mm']))
+    def test_angle_selection_preserves_original_bounded_preparation_inputs(self):
+        selection=dict(self.selection,angle_deg=30)
+        with patch.object(S.C,'check',return_value={'route':'catalog'}) as reader:
+            S.legacy_check(selection)
+        actual=reader.call_args.args[0]
+        self.assertNotIn('angle_deg',actual)
+        self.assertEqual(actual['primary_count'],20)
+        self.assertEqual(selection['angle_deg'],30)
+        self.assertEqual(selection['primary_count'],25001)
+    def test_angular_events_keep_raw_rows_and_global_identity(self):
+        import source_angle as A
+        event=dict(event_id=0,global_decay_id=0,steps=[dict(raw_row_index=8,time_ns=1200.25,energy_keV=0.01)])
+        original=copy.deepcopy(event)
+        shared=dict(model_id='SAP22',source_mode='cs137_legacy',source_pose={'angle_deg':30})
+        with patch.object(A,'events',return_value=iter([event])) as reader:
+            row=next(S.raw_events('unused',shared,self.batch))
+        self.assertEqual(reader.call_args.args[1]['source_pose'],shared['source_pose'])
+        self.assertEqual(row['global_initial_id'],20000)
+        self.assertTrue(B.typed_equal({key:row[key] for key in original},original))
     def test_invalid_rehashed_ranges_bool_and_unsafe_global_offset_refused(self):
         for key,value in (('primary_count',True),('batch_index',1.),('global_initial_offset',B.MAX_SAFE_INTEGER),('local_initial_primary_id_range',[False,5000]),('global_initial_primary_id_range',[20000,25001])):
             batch=copy.deepcopy(self.batch);batch[key]=value

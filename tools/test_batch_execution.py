@@ -29,7 +29,7 @@ class Execution(unittest.TestCase):
                 max_window_ns=1000000,require_all_events=True,tail_shaping_constants=20,trace_max_points=600),'physics_sha256':'c'*64}
 
     def transport(self,selection,root):
-        bounded=copy.deepcopy(selection);bounded['primary_count']=20
+        bounded=copy.deepcopy(selection);bounded.pop('angle_deg',None);bounded['primary_count']=20
         if selection['detector'] in W.MODELS:
             legacy=dict(kind=('sap18_source_checked_plan_v1' if selection['detector']==W.SAP18 else 'portable_source_checked_plan_v1') if selection['source']==W.CS else 'decay_source_checked_plan_v1',schema_version=1,
                 request=W.portable_request(bounded),portable_source_sha256={},runtime={})
@@ -38,13 +38,30 @@ class Execution(unittest.TestCase):
             mc=dict(self.model,model_id=selection['detector'],model_ref='models/'+selection['detector']+'.yaml',model_sha256='e'*64,
                 wiring_factor=1,bias_span_V=2000,stored_temperature_K=78,runtime_temperature_K=78,placement={'blocking_reasons':[]})
             legacy=dict(kind='catalog_source_checked_v1',selection=bounded,model_contract=mc,source_position_global_mm=[0,37.073,.290],source_sha256={},runtime={})
-        return dict(kind='batch_transport_checked_v1',schema_version=1,selection=copy.deepcopy(selection),geometry_preparation_count=20,legacy_geometry_plan=legacy,runtime={})
+        value=dict(kind='batch_transport_checked_v1',schema_version=1,selection=copy.deepcopy(selection),geometry_preparation_count=20,legacy_geometry_plan=legacy,runtime={})
+        if E.selection_angle(selection)!=0:
+            pose=E.pose_module().resolve(selection['angle_deg'],W.ROOT)
+            angular_selection=copy.deepcopy(selection);angular_selection['primary_count']=20
+            value.update(source_pose=pose,angle_geometry_plan=dict(selection=angular_selection,source_pose=copy.deepcopy(pose),
+                source_sha256={'fixture.txt':W.sha(self.root/'fixture.txt')}))
+        return value
 
     def check(self,selection=None):
         selection=selection or self.selection
         acceptance=dict(kind='bounded_batch_acceptance_v1',batch_cap=2,primary_count=selection['primary_count'],selection_sha256=W.digest(selection)) if selection['primary_count']<=500 else None
         with patch.object(D,'operating',return_value=self.operating),patch.object(D,'presets',return_value=self.sources),patch.object(D,'anchors',return_value=D.anchors(W.ROOT)),patch.object(D,'capability',return_value={'accepted':True}):
             return E.check(selection,root=self.root,acceptance=acceptance,**self.readers)
+
+    def angular_check(self,selection=None):
+        resolver=E.pose_module().resolve
+        with patch.object(E.pose_module(),'resolve',side_effect=lambda angle,root:resolver(angle,W.ROOT)):
+            return self.check(selection)
+
+    def angular_saved_plan(self,plan):
+        plan=copy.deepcopy(plan);plan['execution_enabled']=True  # Recorded pre-guard schema, never an admission.
+        resolver=E.pose_module().resolve
+        with patch.object(E.pose_module(),'resolve',side_effect=lambda angle,root:resolver(angle,W.ROOT)):
+            return E.saved_plan(plan,self.root)
 
     def execute(self,*,resume=False,worker=None,after_seal=None):
         return E.execute(self.plan,root=self.root,resume=resume,executor=worker or self.worker,
@@ -69,6 +86,8 @@ class Execution(unittest.TestCase):
         base.mkdir(parents=True)
         if stage=='geometry':
             result=dict(kind='batch_shared_transport_prepared_v1',status='complete',checked_transport=plan['resolved']['transport_plan'],model_contract=self.model,files_sha256={})
+            if 'source_pose' in plan['resolved']:
+                result.update(source_pose=copy.deepcopy(plan['resolved']['source_pose']),source_position_global_mm=copy.deepcopy(plan['resolved']['source_position_global_mm']))
             W.write(base/'prepared.json',result);return result
         if stage=='native_preparation':
             request=E.native_request(plan,directory,root);W.write(directory/'native-prepare-request.json',request)
@@ -133,6 +152,59 @@ class Execution(unittest.TestCase):
                 selection=dict(self.selection,detector=model,source=source)
                 p=self.check(selection);self.assertEqual(p['resolved']['selection'],selection);self.assertTrue(p['execution_enabled'])
 
+    def test_angle_uses_shared_pose_and_preserves_legacy_bounded_settings(self):
+        self.assertNotIn('source_pose',self.plan['resolved'])
+        zero=self.angular_check(dict(self.selection,angle_deg=0))
+        self.assertEqual(zero['resolved']['selection']['angle_deg'],0)
+        self.assertNotIn('source_pose',zero['resolved'])
+        for model in ('AK02','AK01'):
+            baseline=self.check(dict(self.selection,detector=model))
+            for angle in (-30,30):
+                with self.subTest(model=model,angle=angle):
+                    selection=dict(self.selection,detector=model,angle_deg=angle);plan=self.angular_check(selection)
+                    resolved=plan['resolved'];pose=E.pose_module().resolve(angle,W.ROOT)
+                    self.assertEqual(resolved['selection'],selection)
+                    self.assertEqual(resolved['source_pose'],pose)
+                    self.assertEqual(resolved['source_position_global_mm'],pose['position_global_mm'])
+                    for key in ('numerics','electronics_configuration','operating_model','profile','runtime_identity'):
+                        self.assertEqual(resolved[key],baseline['resolved'][key],key)
+                    self.assertEqual(resolved['transport_plan']['legacy_geometry_plan'],baseline['resolved']['transport_plan']['legacy_geometry_plan'])
+                    self.assertNotEqual(plan['configuration_sha256'],baseline['configuration_sha256'])
+                    self.angular_saved_plan(plan)
+
+    def test_invalid_angle_refused_before_transport_and_gamma_route_stays_fixed(self):
+        for angle in (True,False,'30',None,float('nan'),float('inf'),float('-inf'),361,-361,10**400,[],{}):
+            with self.subTest(angle=angle),patch.object(E,'transport_check',side_effect=AssertionError('worker invoked')):
+                readers=dict(self.readers,transport_reader=lambda *args:self.fail('transport invoked'))
+                with self.assertRaises(W.ControlError):E.check(dict(self.selection,angle_deg=angle),root=self.root,**readers)
+        with self.assertRaisesRegex(W.ControlError,'[Gg]amma'):
+            self.angular_check(dict(self.selection,source=W.GAMMA,pose='plus5mm',angle_deg=30))
+        with self.assertRaises(W.ControlError):self.angular_check(dict(self.selection,angle_deg=30,arbitrary_position_mm=[0,0,0]))
+
+    def test_transport_pose_mismatch_refused_and_rehashed_pose_edits_refused(self):
+        selection=dict(self.selection,angle_deg=30)
+        original=self.transport
+        def changed_transport(s,root):
+            transport=original(s,root);transport['source_pose']['position_global_mm'][0]+=1;return transport
+        with patch.dict(self.readers,{'transport_reader':changed_transport}),self.assertRaisesRegex(W.ControlError,'effective source pose'):
+            self.angular_check(selection)
+        plan=self.angular_check(selection)
+        for label,edit in (
+                ('angle',lambda r:r['selection'].update(angle_deg=-30)),
+                ('position',lambda r:r['source_position_global_mm'].__setitem__(0,99)),
+                ('orientation',lambda r:r['source_pose']['capsule_axis_global'].__setitem__(0,99)),
+                ('transport',lambda r:r['transport_plan']['source_pose'].update(angle_deg=-30)),
+                ('geometry',lambda r:r['transport_plan']['angle_geometry_plan']['source_pose'].update(angle_deg=-30)),
+                ('hashes',lambda r:r['transport_plan']['angle_geometry_plan']['source_sha256'].update({'fixture.txt':'e'*64})),
+                ('omitted',lambda r:r.pop('source_pose'))):
+            with self.subTest(label=label):
+                bad=copy.deepcopy(plan);edit(bad['resolved']);bad['configuration_sha256']=W.digest(bad['resolved'])
+                with self.assertRaises(W.ControlError):self.angular_saved_plan(bad)
+                with patch.object(E,'check',return_value=plan),self.assertRaises(W.ControlError):E.admit(bad,self.root)
+        zero=self.angular_check(dict(self.selection,angle_deg=0));zero['resolved']['source_position_global_mm']=[10,37.073,.290]
+        zero['configuration_sha256']=W.digest(zero['resolved'])
+        with self.assertRaisesRegex(W.ControlError,'nominal anchor'):self.angular_saved_plan(zero)
+
     def test_rehashed_plan_edits_refused_and_preview_not_start_token(self):
         for key,value in (('numerics',{'parcels':1}),('execution_rules',dict(E.RULES,independent_calibrations=3)),('electronics_configuration',dict(self.plan['resolved']['electronics_configuration'],gain=99))):
             bad=copy.deepcopy(self.plan);bad['resolved'][key]=value;bad['configuration_sha256']=W.digest(bad['resolved'])
@@ -165,6 +237,46 @@ class Execution(unittest.TestCase):
         self.assertEqual(self.calls.count(('response',0)),1)
         seal=W.read(E.stage_receipt(self.directory,'response',E.batch_at(self.plan['resolved']['batching'],0)))
         self.assertTrue(seal['recovered_terminal_worker']);self.assertIsNone(seal['elapsed_seconds'])
+
+    def test_angular_recovery_retains_pose_and_rehashed_prepared_pose_is_refused(self):
+        self.plan=self.angular_check(dict(self.selection,angle_deg=30))
+        # Exercise retained pre-guard saved geometry contracts with fake workers.
+        # Production admission stays closed; no test transport/field solve runs.
+        self.plan['execution_enabled']=True
+        admission=patch.object(E,'admit',return_value=self.plan);admission.start();self.addCleanup(admission.stop)
+        def crash(stage,*args):
+            result=self.worker(stage,*args)
+            if stage=='geometry':raise RuntimeError('controller lost terminal geometry')
+            return result
+        with self.assertRaisesRegex(RuntimeError,'lost terminal geometry'):self.execute(worker=crash)
+        shared=E.stage_base(self.directory,'geometry');saved=W.read(shared/'prepared.json')
+        for key,edit in (('source_pose',lambda r:r['source_pose'].update(angle_deg=-30)),
+                         ('source_position',lambda r:r['source_position_global_mm'].__setitem__(0,99))):
+            with self.subTest(key=key):
+                changed=copy.deepcopy(saved);edit(changed)
+                with self.assertRaisesRegex(W.ControlError,'effective source'):E.validate_output('geometry',self.plan,self.directory,None,changed)
+        resolver=E.pose_module().resolve
+        verified=E.subprocess.CompletedProcess(args=[],returncode=0,stdout=W.encoded(saved),stderr=b'')
+        with patch.object(E.pose_module(),'resolve',side_effect=lambda angle,root:resolver(angle,W.ROOT)), \
+                patch.object(E.subprocess,'run',return_value=verified) as transport_verifier:
+            final=self.execute(resume=True)
+        transport_verifier.assert_called_once()
+        self.assertEqual(final['status'],'completed_with_native_failures')
+        self.assertEqual(self.calls.count(('geometry',None)),1)
+        self.assertEqual(W.read(shared/'prepared.json'),saved)
+        seal=W.read(E.stage_receipt(self.directory,'geometry'))
+        self.assertTrue(seal['recovered_terminal_worker']);self.assertEqual(seal['result']['source_pose'],self.plan['resolved']['source_pose'])
+
+    def test_nonzero_check_is_preview_and_forged_execution_is_refused(self):
+        plan=self.angular_check(dict(self.selection,angle_deg=30))
+        self.assertFalse(plan['execution_enabled'])
+        with self.assertRaisesRegex(W.ControlError,'Nonzero-angle execution is unavailable'):
+            E.admit(plan,self.root)
+        plan['execution_enabled']=True
+        with patch.object(E,'check',side_effect=AssertionError('reconstruction must not run')):
+            with self.assertRaisesRegex(W.ControlError,'Nonzero-angle execution is unavailable'):
+                E.admit(plan,self.root)
+        self.assertTrue(self.angular_check(dict(self.selection,angle_deg=0))['execution_enabled'])
 
     def test_crash_after_stage_and_after_batch_seal_reuses_terminal_work(self):
         def crash(stage,batch,stamp):

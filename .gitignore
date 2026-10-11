@@ -52,6 +52,13 @@
 !transport/smoke.mac
 !transport/check_smoke.py
 # Never include local test profiles, raw caches or runtime bytecode.
+!transport/source_pose.py
+!transport/source_angle.py
+!transport/test_source_angle.py
+!transport/cryostat_angle_export.cc
+!transport/angle_exporter_setup.py
+!transport/angle_exporter/
+!transport/angle_exporter/CMakeLists.txt
 .local/
 **/__pycache__/
 **/*.pyc

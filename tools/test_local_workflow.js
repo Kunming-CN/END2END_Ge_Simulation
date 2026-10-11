@@ -23,6 +23,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/focused_plots.js','utf8'),context);
 vm.runInContext(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),context);
 function run(code){return vm.runInContext(code,context);}
 run(`catalog={electronics_keys:Object.keys(labels),electronics_defaults:{},sources:[{id:'mono_gamma_662_axis_v1',label:'Gamma',pose:'plus5mm',pose_label:'+5 mm along global y',counts:[20],fixed_seed:26092631,details:'One 662 keV gamma per primary; fixed global −y beam, time zero.',count_unit:'initial gamma primaries'},{id:'cs137_point_decay_v1',label:'Cs137',pose:'nominal',pose_label:'Nominal source anchor',counts:[20,500],details:'One initial Cs137 decay per primary; isolated pulse windows retain daughter timing.',count_unit:'initial Cs137 decays',fixed_seed:null}],cryostats:[{id:'lbnl_modular_nominal_v1',available:true}],detectors:[{id:'AK02',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'SAP22',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'GeRC02',available:true,sources:['cs137_point_decay_v1'],operating_label:'Li50min +240 V'},{id:'KMRC01_candidate',available:true,sources:['cs137_point_decay_v1'],operating_label:'−370 V; fixed −1 wiring'}]};`);
+run(`catalog.sources.find(s=>s.id==='cs137_point_decay_v1').source_angle={enabled:true,min_deg:-30,max_deg:30,version:'source_capsule_angular_pose_v1',convention:'Degrees from global +y toward +x around global z at x=0,y=1.473 mm; engineering placement'};
+const sourcePose30={kind:'source_capsule_angular_pose_v1',schema_version:1,angle_deg:30,position_global_mm:[17.8,32.303504374726016,.290],capsule_rotation_local_to_global:[[.8660254037844387,0,.5],[-.5,0,.8660254037844387],[0,-1,0]],capsule_axis_global:[.5,.8660254037844387,0],coordinate_convention:'Degrees from global +y toward +x around global z at x=0,y=1.473 mm; engineering placement',anchors_sha256:'8'.repeat(64)};`);
 // A primary's delayed groups and zero primaries are all independently selectable.
 run(`result={job:{name:'fixture'},records:[
  {record_kind:'decay',event_id:7,deposited_energy_keV:4,pulse_count:2,zero_deposit:false},
@@ -68,8 +70,9 @@ assert.match(html,/Deposition time, particle creation time and carrier drift tim
 assert.doesNotMatch(html,/Energy uses keV; positions use mm/);
 assert.match(html,/Check environment inspects installed files\. Check plan validates the selected source, runtime and settings/);
 assert.match(html,/<details id="legacy-recovery">/);
-for(const id of ['cryostat','detector','source','pose','count','threads','seed','name','use-peak-gate','event','group'])assert.match(html,new RegExp('<label for="'+id+'"'));
-for(const [id,value]of Object.entries({name:'fixture',cryostat:'lbnl_modular_nominal_v1',detector:'AK02',source:'mono_gamma_662_axis_v1',pose:'plus5mm',count:'20',seed:'26092631',threads:'2'}))get(id).value=value;
+for(const id of ['cryostat','detector','source','pose','angle-deg','count','threads','seed','name','use-peak-gate','event','group'])assert.match(html,new RegExp('<label for="'+id+'"'));
+assert.match(html,/id="angle-deg" type="number" min="-30" max="30" step="any" value="0"/);
+for(const [id,value]of Object.entries({name:'fixture',cryostat:'lbnl_modular_nominal_v1',detector:'AK02',source:'mono_gamma_662_axis_v1',pose:'plus5mm','angle-deg':'0',count:'20',seed:'26092631',threads:'2'}))get(id).value=value;
 for(const key of run('Object.keys(labels)'))get('setting-'+key).value=key==='peak_policy'?'signed_input_positive_peak':key.startsWith('peak_gate_')?'':1;
 get('setting-peak_gate_start_ns').value='100';get('setting-peak_gate_end_ns').value='2000';
 assert.equal(run('config().electronics.peak_gate_start_ns'),null);
@@ -80,6 +83,27 @@ run("checked={check_id:'old'};invalidate();");assert.equal(run('checked'),null);
 assert.equal(run('importedConfig(config()).seed'),26092631);
 assert.throws(()=>run('importedConfig({...config(),seed:42})'),/unavailable/);
 assert.throws(()=>run('importedConfig({...config(),extra:1})'),/fields/);
+// Zero-angle export retains the exact legacy selection shape; only admitted
+// decay sources can import or submit a bounded nonzero angle.
+assert.equal(run("Object.hasOwn(config(),'angle_deg')"),false);
+assert.equal(run("Object.hasOwn(importedConfig({...config(),angle_deg:0}),'angle_deg')"),false);
+for(const bad of [true,'30',null,30,-30])assert.throws(()=>run(`importedConfig({...config(),angle_deg:${JSON.stringify(bad)}})`),/angle/);
+get('source').value='cs137_point_decay_v1';run('sourceChanged();');
+assert.equal(get('angle-deg').disabled,false);assert.match(get('angle-limit').textContent,/-30° to 30°.*engineering placement/);
+assert.equal(get('angle-deg').value,'0');assert.equal(run("Object.hasOwn(config(),'angle_deg')"),false);
+for(const angle of [30,-30]){get('angle-deg').value=String(angle);run('invalidate();');assert.equal(run('config().angle_deg'),angle);assert.equal(run('importedRequest(batchRequest(config())).angle_deg'),angle);assert.equal(get('start').disabled,true);}
+for(const bad of [true,'30',null,30.0001,-30.0001])assert.throws(()=>run(`importedRequest(batchRequest({...config(),angle_deg:${JSON.stringify(bad)}}))`),/angle/);
+for(const bad of ['NaN','Infinity','-Infinity'])assert.throws(()=>run(`importedRequest(batchRequest({...config(),angle_deg:${bad}}))`),/angle/);
+for(const bad of ['', 'NaN','31','-31']){get('angle-deg').value=bad;assert.throws(()=>run('config()'),/angle/);}
+get('angle-deg').value='30';run('invalidate();');assert.match(get('source-pose-preview').textContent,/Check plan to resolve/);
+run('showPose({selection:config(),source_pose:sourcePose30,source_position_global_mm:sourcePose30.position_global_mm});');
+assert.match(get('source-pose-preview').textContent,/Checked effective source pose · angle 30°.*capsule axis/);
+assert.ok(get('source-pose-preview').textContent.includes(run('sourcePose30.position_global_mm.join(", ")')));
+assert.deepEqual(JSON.parse(get('source-pose-identity').textContent).source_pose,JSON.parse(run('JSON.stringify(sourcePose30)')));
+assert.equal(JSON.parse(get('source-pose-identity').textContent).source_pose.anchors_sha256,'8'.repeat(64));
+get('angle-deg').value='-30';run('invalidate();');assert.match(get('source-pose-preview').textContent,/Check plan to resolve/);assert.equal(get('source-pose-identity').textContent,'No checked source pose.');
+get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');assert.equal(get('angle-deg').value,'0');assert.equal(get('angle-deg').disabled,true);assert.equal(run("Object.hasOwn(config(),'angle_deg')"),false);
+assert.equal(get('count').value,'20');assert.equal(get('seed').value,'26092631');
 // Ring changes visibly remove unavailable gamma; imports cannot bypass this.
 get('detector').value='KMRC01_candidate';run('detectorChanged();');
 assert.equal(get('source').children.length,1);assert.equal(get('source').value,'cs137_point_decay_v1');
@@ -167,6 +191,14 @@ run("renderLegacy({gamma:{jobs:[]}});");assert.equal(get('legacy-recovery').open
 run('renderJobs({busy:false,jobs:[]});');
 // Editing the next setup never relabels the immutable run whose stages are shown.
 run("const savedJob={name:'saved-sap-gamma',configuration_sha256:'a'.repeat(64),selection:{detector:'SAP22',source:'mono_gamma_662_axis_v1',primary_count:20,electronics:{gain:21}},stages:{geometry:{status:'completed',elapsed_seconds:7.62}}};showRun(savedJob);");
+assert.match(get('saved-source-pose').textContent,/Selected run source pose · legacy fixed pose/);
+run("const angledJob={...savedJob,name:'saved-sap-angle',configuration_sha256:'7'.repeat(64),selection:{...savedJob.selection,source:'cs137_point_decay_v1',angle_deg:30},source_pose:sourcePose30,source_position_global_mm:sourcePose30.position_global_mm};showRun(angledJob);");
+const immutablePose=get('saved-source-pose').textContent,immutablePlan=get('run-plan').textContent;
+assert.match(immutablePose,/angle 30°.*17.8/);assert.equal(JSON.parse(immutablePlan).source_pose.anchors_sha256,'8'.repeat(64));
+get('source').value='cs137_point_decay_v1';run('sourceChanged();');get('angle-deg').value='-30';run('invalidate();');
+assert.equal(get('saved-source-pose').textContent,immutablePose);assert.equal(get('run-plan').textContent,immutablePlan);
+run('showRun({...angledJob,source_pose:null,source_position_global_mm:undefined});');assert.match(get('saved-source-pose').textContent,/recorded angle 30°; resolved pose unavailable/);assert.doesNotMatch(get('saved-source-pose').textContent,/legacy fixed/);
+run('showRun(savedJob);');
 get('detector').value='AK02';get('source').value='cs137_point_decay_v1';run('sourceChanged();');
 assert.match(get('setup-preview').textContent,/Current setup · AK02 · Cs137/);
 assert.match(get('selected').textContent,/Selected run · saved-sap-gamma · SAP22 · Gamma/);
@@ -289,6 +321,34 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(run('artifactRequests[0].url'),/download=1/);
   assert.doesNotMatch(run('artifactRequests[1].url'),/download=/);
   assert.equal(run("artifactRequests[0].options.headers['X-Control-Token']"),'fixture');
+  // The same checked nonzero pose reaches Start and remains attached to saved
+  // Stop/Resume work when the next form changes. No real worker is launched.
+  get('detector').value='SAP22';get('source').value='cs137_point_decay_v1';run('sourceChanged();');get('angle-deg').value='30';run('invalidate();');
+  run("let resolveAngleCheck,angleCheckRequests=[];api=(path,body)=>{angleCheckRequests.push({path,body});return new Promise(resolve=>resolveAngleCheck=resolve);};");
+  const staleAngleCheck=run("$('check').onclick()");assert.equal(run('angleCheckRequests[0].body.request.selection.angle_deg'),30);
+  get('angle-deg').value='-30';run("invalidate();resolveAngleCheck({kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:true,check_id:'stale-angle',resolved:{selection:{angle_deg:30},source_pose:sourcePose30,batching:{batch_count:1}}});");await staleAngleCheck;
+  assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);assert.match(get('source-pose-preview').textContent,/Check plan to resolve/);
+  get('angle-deg').value='30';run('invalidate();');
+  const pendingAngle=run("$('check').onclick()");run("resolveAngleCheck({kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:false,resolved:{selection:config(),source_pose:sourcePose30,source_position_global_mm:sourcePose30.position_global_mm,batching:{batch_count:1}}});");await pendingAngle;
+  assert.equal(get('start').disabled,true);assert.equal(run('checked.execution_enabled'),false);
+  assert.match(get('notice').textContent,/Nonzero-angle execution is unavailable/);
+  assert.match(get('source-pose-preview').textContent,/angle 30°/);
+  const callsBeforePendingStart=run('angleCheckRequests.length');await run("$('start').onclick()");assert.equal(run('angleCheckRequests.length'),callsBeforePendingStart);
+  const checkedAngle=run("$('check').onclick()");run("resolveAngleCheck({kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:true,check_id:'checked-angle',resolved:{selection:config(),source_pose:sourcePose30,source_position_global_mm:sourcePose30.position_global_mm,batching:{batch_count:1}}});");await checkedAngle;
+  assert.equal(run('checked.resolved.selection.angle_deg'),30);assert.match(get('source-pose-preview').textContent,/Checked effective source pose · angle 30°/);
+  run("let angleActionCalls=[];const angleStartedJob={...angledJob,id:'angle-job',status:'stopped',execution_contract:'serial_batches_v3',batching:{batch_count:1}};api=async(path,body)=>{angleActionCalls.push({path,body});return path==='/api/workflow/state'?{busy:false,jobs:[angleStartedJob]}:path==='/api/state'?{gamma:{jobs:[]}}:angleStartedJob;};");
+  await run("$('start').onclick()");
+  assert.equal(run('angleActionCalls[0].path'),'/api/workflow/start');assert.deepEqual(JSON.parse(run('JSON.stringify(angleActionCalls[0].body)')),{check_id:'checked-angle'});
+  assert.match(get('saved-source-pose').textContent,/angle 30°/);get('angle-deg').value='-30';run('invalidate();');assert.match(get('saved-source-pose').textContent,/angle 30°/);
+  const resumeAngle=get('runs').children[0].children.find(n=>n.textContent==='Resume saved settings');assert.ok(resumeAngle);await resumeAngle.onclick();
+  assert.deepEqual(JSON.parse(run("JSON.stringify(angleActionCalls.find(c=>c.path==='/api/workflow/resume').body)")),{name:'saved-sap-angle'});assert.equal(get('angle-deg').value,'-30');assert.match(get('saved-source-pose').textContent,/angle 30°/);
+  // Loading/exporting retains the optional angle; legacy explicit zero is
+  // normalized without mutating the imported object or replacing a bad setup.
+  run("const angleImport={...config(),angle_deg:30};$('import').files=[{size:100,text:async()=>JSON.stringify(batchRequest(angleImport))}];");
+  await run("$('import').onchange()");assert.equal(get('angle-deg').value,'30');assert.equal(run('batchRequest(config()).selection.angle_deg'),30);
+  run("$('import').files=[{size:100,text:async()=>JSON.stringify(batchRequest({...angleImport,angle_deg:true}))}];");await run("$('import').onchange()");assert.equal(get('angle-deg').value,'30');assert.match(get('notice').textContent,/source angle is unavailable/);
+  run("const zeroImport={...angleImport,angle_deg:0};const normalizedZero=importedConfig(zeroImport,true);");assert.equal(run('zeroImport.angle_deg'),0);assert.equal(run("Object.hasOwn(normalizedZero,'angle_deg')"),false);
+  get('angle-deg').value='0';run('invalidate();');
   run("let resolveCheck;api=()=>new Promise(resolve=>resolveCheck=resolve);");
   const pending=run("$('check').onclick()");
   get('detector').value='SAP22';run("invalidate();resolveCheck({check_id:'old',resolved:{selection:{detector:'AK02'}}});");
@@ -392,5 +452,5 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run("pollReplies[2].resolve({busy:false,jobs:[]});pollReplies[3].resolve({jobs:[]});");await newPoll;
   run("pollReplies[0].resolve({busy:true,jobs:[]});pollReplies[1].resolve({jobs:[]});");await oldPoll;
   assert.equal(run('active'),false);
-  console.log('Browser exact count/Gamma, batch Stop/Resume selection, paged boundary IDs/null/signs, stale Check/report/page/poll/focus, four saved plots and recovery contracts passed.');
+  console.log('Browser source-angle/legacy Gamma, exact counts, checked/saved pose, batch Stop/Resume selection, paged boundary IDs/null/signs, stale Check/report/page/poll/focus, four saved plots and recovery contracts passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

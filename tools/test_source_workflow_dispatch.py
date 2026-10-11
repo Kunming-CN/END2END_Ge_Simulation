@@ -59,21 +59,26 @@ class SourceDispatch(unittest.TestCase):
                 self.assertEqual(W.portable_stage(directory,resolved,'event_ledger',self.root),{'verified':True})
             stage.assert_called_once_with(directory,resolved,'event_ledger',self.root)
 
-    def test_catalog_preserves_seventeen_views_five_connectors_and_shared_sources(self):
+    def test_catalog_preserves_seventeen_views_ten_connectors_and_source_admission(self):
         catalog=W.catalog()
         self.assertEqual(len(catalog['detectors']),17)
         available=[d for d in catalog['detectors'] if d['available']]
-        self.assertEqual({d['id'] for d in available},set(W.MODELS))
+        self.assertEqual({d['id'] for d in available},set(W.MODELS)|{'AK01','SAP16','SAP17','Bipolar_reference_3D','KL01_3D'})
         sources={s['id']:s for s in catalog['sources']}
         generic={id for id,s in sources.items() if s['source_contract']['adapter']=='shared_decay_source_v1'}
         self.assertEqual(generic,{'am241_point_decay_v1','co60_point_decay_v1','ba133_point_decay_v1'})
         for detector in available:
-            self.assertTrue(generic.issubset(detector['sources']))
+            if detector['id'] in W.MODELS:self.assertTrue(generic.issubset(detector['sources']))
+            else:
+                self.assertEqual(set(detector['sources']),{W.CS,'am241_point_decay_v1','ba133_point_decay_v1'})
+                self.assertNotIn('co60_point_decay_v1',detector['sources'])
         for source in sources.values():
             self.assertTrue(source['label'])
             self.assertTrue(source['details'])
             self.assertTrue(source['count_unit'])
             self.assertEqual(source['counts'],source['source_contract']['counts'])
+            self.assertEqual(source['source_angle']['enabled'],source['available'] and source['id']!=W.GAMMA)
+            self.assertEqual([source['source_angle']['min_deg'],source['source_angle']['max_deg']],[-30,30])
         self.assertEqual(sources[W.GAMMA]['fixed_seed'],26092631)
         self.assertEqual(sources['am241_point_decay_v1']['position_global_mm'],[0,37.073,.290])
 

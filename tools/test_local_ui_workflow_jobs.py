@@ -136,10 +136,15 @@ class Jobs(unittest.TestCase):
         portable=SimpleNamespace(file_readiness=lambda root:{'available':True})
         with patch.dict('sys.modules',{'scenario_source_portable':portable}),patch.object(W,'runtime_identity',return_value={}),patch.object(W,'source_pins',return_value={}),patch.object(W,'catalog',return_value={'setup_guide':'fixture'}),patch.object(J,'catalog_backend',return_value=backend):
             reply=self.controller.setup()
+            self.assertFalse(reply['angular_source_file_ready'])
             self.assertTrue(reply['ready_for_config_check']);self.assertFalse(reply['catalog_models_file_ready']);self.assertEqual(reply['science_calls'],0)
             for relative in (backend.EXPORTER_REF,backend.BUILD_REF):
                 path=self.root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'fixture')
             self.assertTrue(self.controller.setup()['catalog_models_file_ready'])
+            for relative in ('.local/m2a/angle-source-build-v1/cryostat_angle_export','.local/m2a/angle-source-build-v1/exporter-build.json'):
+                path=self.root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'fixture')
+            self.assertTrue(self.controller.setup()['angular_source_file_ready'])
+            self.assertIn('-BuildAngleSourceExporter',self.controller.setup()['note'])
 
     def test_check_does_not_launch_or_create_run(self):
         result=self.controller.check(self.config)
