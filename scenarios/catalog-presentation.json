@@ -6,7 +6,7 @@
   "authority_sha256": {
     "models/catalog.json": "ac5edd4c976a37cfcc80a8e507ac9347246a942ac843ed2ecc683079f220653b",
     "transport/cryostat_nominal.json": "9cad951c14213ac64d1e0c83c6ee44e7f4b9990d80979fd5bae35797daaf0edb",
-    "scenarios/detector-capabilities.json": "131cac88fd9e2c5089ca5414953b14bf87cb360348bb926a4d90e670ad5528d5"
+    "scenarios/detector-capabilities.json": "4965842fdea773efcfa85c9a5fad0be8a1200a241046162899896169a5572317"
   },
   "catalog_adapter": {
     "counts": [

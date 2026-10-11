@@ -1,85 +1,102 @@
 # Current handoff
 
 Updated: 2026-10-11. Read this before starting work.
-Prior guarded delivery and immutable failed-acceptance history:
-[75ece0e1](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/75ece0e195d4c2d8d0acff090f765ca57023028d/PROGRESS.md).
+Immutable prior source-angle delivery and earlier failure history:
+[6db59a35](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/6db59a355994b9385df615f316f410b6954daa0e/PROGRESS.md).
 
-## Source/capsule angle: shared execution accepted
+## Co60 admission and student software delivery
 
-Owner authorized autonomous continuation without per-round prompting. Actual root
-and all development/review agents were verified as Sol6.1/Ultra/project launches.
-One owned manual lease; automatic heartbeat remains PAUSED. This milestone fixes
-GPS command precision, then completes one SAP22/Cs137/+30deg/500 initial nuclei/
-seed26092631/two-Julia-thread engineering acceptance. No additional campaign,
-installation, global settings, resets or Li/PDE research prerequisite.
+Owner authorized examining the rejected saved Co60 event, admitting the source
+if rejection was a valid threshold decision, and removing genuinely disposable
+files while separating student software downloads from website showcase data.
+Actual root and implementation/review launches use Sol6.1/Ultra in this project.
+One owned manual lease; automatic heartbeat remains PAUSED. No new radiation,
+field, drift or electronics calculation, installation or global setting change.
 
-The additive angular adapter is shared_source_angle_precise_gps_v2 with contract
-angular_gps_double_precision_mm_v2. It inserts /control/useDoublePrecision true
-immediately before the angular GPS centre; earlier physics commands, legacy zero
-and Gamma macros keep their exact behavior. The command-only native regression
-uses pinned Geant4 11.3.2, generates zero events and tests -30/+30/13.25deg. Default
-formatting reproduces the original 4.374726nm failure; precise formatting gives
-zero position difference at the unchanged 1e-10mm gate. The original failed native
-test attempt and original failed radiation trial remain labelled and preserved.
+The original source-co60-500-v1 receipt and its55 bound artifacts were checked
+without rerunning. All500 primary IDs remain:491 zero-Ge-deposit primaries and
+nine pulse groups, eight accepted and one below_threshold. Native failures and
+saturation are zero. Independent raw HDF5 audit covers500 initial vertices,
+4476 tracks and258 Ge steps, preserving identities, daughter times and transforms.
+Event475 has20 positive Ge deposits totaling50.710485860141176keV. Its640
+electron/hole endpoints all reach contact2; signed final charge is
+-1.877074826913113e-10keV and peak5.3920507972411144e-11V, with ADC0 and Erec null.
+No cap, noncontact stop, window rejection or saturation was hidden.
 
-New output: .local/runs/source-angle-sap22-cs137-precise-v1, terminal completed.
-All500 IDs0..499 remain: 493 zero-deposit primaries and seven pulse groups, all
-accepted with positive ADC and Erec; zero native failures, readout rejections or
-saturation. Independent saved-HDF5 verification finds zero position difference
-for all500 initial vertices. Raw rows, daughter delays, signed charge, endpoint/
-partial-charge/cap flags and truth Edep versus readout Erec remain distinct.
-Only the run name differs from the original fixed configuration: stored78K,
-runtime77K/+700V, count, seed, native settings, electronics and independent500keV
-synthetic injection calibration are unchanged. This is one low-statistics
-functional engineering case, not angular-efficiency/all-combination validation,
-experimental agreement, physical resolution, calibrated CCE or grid convergence.
+The old rule withheld a source for any readout rejection. The shared admission
+now allows only explicitly audited below_threshold rejections with pinned
+portable proof, while still requiring positive accepted groups, zero native
+failures/saturation and unchanged inputs/calibration. Models, seeds, electronics
+thresholds and event census remain unchanged; rejected events stay rejected.
+The original withheld-source receipt stays historical. This is functional
+engineering admission, not proof of physically accurate same-contact collection,
+calibrated CCE, experimental spectrum agreement or numerical convergence.
 
-Measured core times: native field preparation62.401s, injection calibration0.196s,
-remage child6.834s, native drift/charge21.543s and electronics3.263s. Transport
-helper39.974s and response solve/replay/readout/export32.969s include additional
-work. Parent startup/orchestration stage times are separately retained in run.json;
-coding, review, browser and publication wall time is not detector compute time.
-Exactly one new field preparation and one500-nucleus radiation trial were used.
+Cs137, Am241, Ba133 and Co60 now use shared Check/Run across ten compatible
+configurations. Forty source/model choices are factorized software coverage,
+not forty independently calculated or experimentally validated combinations.
+Seventeen catalog models remain viewable; seven need a larger cryostat.
+The accepted source/capsule-angle implementation and its original failed trial
+are unchanged. Do not repeat completed trials merely to recover a chat.
 
-After terminal acceptance and source freeze, ordinary shared nonzero Check/Run
-was enabled. Catalog capability/help and backend admission share one authority;
-pose reconstruction and deliberately rehashed edits remain independently checked.
-The explicit development bootstrap admits only the literal fixed selection and
-cannot be authorized by a saved JSON marker. Exact executed batch_execution.py is
-archived separately from the later enabled source. Completed saved inspection
-passes without changing science; source-version changes still refuse executable
-reuse. Do not promise arbitrary historical Resume after implementation changes.
+GitHub's checked baseline contains2153 files/983336296 source bytes, including
+1694 website files/977193229 bytes. Software outside docs is459 files/6143067
+bytes. docs/ remains tracked for existing Pages publication, but export-ignore
+excludes it from source ZIP archives. README and the maintained guide recommend
+the software ZIP; an ordinary full clone still downloads website/history.
+Dependencies and required upstream setup inputs remain a separate setup step.
+No repository history rewriting or website/science deletion was performed.
 
-Real protected Control Check at +30deg/500 resolves the exact source/capsule pose
-and enables Run. The actual full-chain trial used the shared CLI backend; browser
-Run was not clicked a second time and no GUI job record was fabricated for it.
-Saved new science was inspected independently through the existing backend, not
-replayed in the browser. Existing Gamma completion recovery was read-only. No
-Download/Save As, owner browser setting change or original-tab modification.
+Cleanup deleted49 exact ignored, regenerable tools/transport bytecode files,
+totaling1596020 bytes; retained tracked source hashes were checked. The last cache
+had regenerated and its current bytes were separately verified before deletion.
+Imports can recreate bytecode; this is a deletion record, not lasting disk savings.
+Original campaigns, numerical caches, failed attempts and review evidence stay
+permanent under tools/DATA_RETENTION.md. There were no verified tracked-source
+deletion candidates. No broad recursive cleanup is authorized by this result.
 
-Evidence: .local/source-angle-precision-v1/ACCEPTANCE.json,
-RAW-POSITION-VERIFIED.json, PRIOR-FAILURE-PRESERVED.json, INSPECT-COMPLETED.json,
-ENABLED-SAVED-ACCEPTANCE.json, BROWSER.json/jpg, DISPATCH-SOURCE-FREEZE.json and
-FINAL-SOURCE-FREEZE.json. Final17 source hashes are separate from nine science
-artifact hashes. Native command regression, macro8, transport angle8, batch20,
-protected protocol28, jobs23, focused setup1 and Node UI tests passed. Publication
-and contacts60 passed. Preserved write/read/sandbox failures did not rerun science.
+Round evidence is .local/co60-software-delivery-v1/: LAUNCH.json,
+SAVED-CO60-AUDIT.json, ADMISSION-SOURCE-FREEZE.json, ADMISSION-TESTS.json,
+ROOT-TESTS/ROOT-RETEST/ROOT-SPECIFIC-RETEST and PROTOCOL-RUNTIME-RETEST.log,
+CLEANUP-INVENTORY/CLEANUP-DONE.json, software/ and reviews/.
+The baseline candidate archive explicitly does not validate uncommitted source.
+Windows filesystem/connection failures and their targeted successful retries
+are retained; no numerical calculation was repeated to fix derived evidence.
+The exact accepted prior Gamma display receipt was authenticated against6db59a35
+and added as a historical presentation basis after the source text changed.
+Original scientific receipt reconstruction and refusal of rehashed edits remain
+strict; the failed first build is retained and only the derivative exporter retries.
+The five other exact prior archive/reader/discovery records were authenticated
+against the same baseline. The accepted derivative changes seven presentation
+files and the top-level manifest; all1,686 other files, including numerical data,
+models and media, are byte-identical. No scientific record fields were changed.
 
-Two scoped independent AI reviews, followed by a NEW independent details/direction/
-value review, found no confirmed blockers. Initial opinions were saved before
-concrete finding exchange; only the setup-text correction and final browser scope
-received focused follow-up. These are AI reviews, not independent certification.
-Publication, exact payload comparison, Git synchronization, mandatory live check
-and owned session/lease closure are recorded in this round's COMPLETE.json, the
-terminal authority. Build only through tools/build_site.py; never edit docs/ by hand.
+The37 focused admission cases and132 broader unique cases passed, including
+targeted Windows filesystem/runtime retries. The42 reader-binding cases and33
+publication cases passed. Archive-display checks retained one unavailable
+historical-fixture skip (eight passed); all13 discovery cases passed after a
+fixture selection correction. The unchanged full portable-source suite is not
+claimed passing because earlier host/dependency failures remain recorded.
+The two scoped independent AI reviews and new third goal/detail review, all
+Sol6.1/Ultra, found no confirmed blockers; concrete findings and specific verified
+correction checks were exchanged and preserved. These are AI reviews.
+
+Actual protected browser Check passed for SAP22/Co60/500/seed26092631/two threads
+at zero angle and enabled Run. The existing Gamma verification-required hold was
+cleared with actual read-only saved verification. Run/Download/Save As were not
+clicked, original owner tab/settings were untouched and the owned server closed.
+
+Final test, browser, independent-review, final-commit archive, actual GitHub ZIP,
+publication/live comparison and owned lease/session closure belong in this
+round's COMPLETE.json. Only a terminal COMPLETE receipt establishes delivery
+and synchronization. Build through tools/build_site.py; never edit docs/.
 
 ## Next bounded work and retained limits
 
-Source-angle functional delivery is closed; do not repeat this trial or older
-science/reviews merely to recover a chat. Act on a concrete student blocker next.
-Ten compatible configurations and six teaching examples remain accepted; seven
-oversized models await a future cryostat. Global Li/PDE/CCE accuracy is separate.
-Second-computer acceptance remains removed. The conditional roadmap is maintained
-in tools/NEXT_DEVELOPMENT_PLAN.md. Measured spectrum/I-V/C-V publication remains
-deferred to November2026 and complete owner inputs; no measurement/fitting work
-or recurring continuation was started here.
+Development and bounded source/browser/review acceptance are closed. Complete
+only final publication/download synchronization if COMPLETE.json is absent.
+Act next on a concrete student setup/run/data blocker. No new science campaign,
+second-computer prerequisite or open-ended global Li/PDE/CCE audit is queued.
+tools/NEXT_DEVELOPMENT_PLAN.md remains the conditional roadmap. Real laboratory
+spectrum/I-V/C-V publication remains deferred to November2026 and complete owner
+inputs; no measurement/fitting work or recurring continuation was started here.

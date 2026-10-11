@@ -11,16 +11,25 @@ The website contains saved results, not an online solver.
 - [Selected signals](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html) — six representative saved Cs137 examples, from deposits to peak ADC.
 - [Saved results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) — complete datasets, detector views and analysis files.
 - [Run locally](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html) — the maintained Windows preparation and Control guide.
+- [Download software only (ZIP)](https://github.com/Kunming-CN/END2END_Ge_Simulation/archive/refs/heads/main.zip) — source, detector models and pinned configuration; saved website data are excluded.
 - [Contributing](CONTRIBUTING.md) — propose changes or report a problem.
 
 ## Run one local example
 
+For a student run, download the software ZIP and extract it. Browse the saved
+results on the website; they are not required to calculate your own events.
+Developers should use the guide's sparse, blobless Git checkout. A normal full
+clone still includes the website and repository history. An offline website
+copy is a separate optional download through the documented Git route.
+
 After following the guide, double-click `Control.cmd`. Choose one of ten
-configurations available in the current cryostat. Cs137, Am241 and Ba133 share
+configurations available in the current cryostat. Cs137, Am241, Ba133 and Co60 share
 the same selection and run workflow: enter an exact positive initial-nucleus
 count, then review the checked serial batches of at most 10,000 nuclei each. The fixed
-662 keV gamma beam retains its 20-primary AK02/SAP22 route; Co60 remains unavailable
-under its unchanged source-admission gate.
+662 keV gamma beam retains its 20-primary AK02/SAP22 route. Co60 admission uses
+its saved 500-decay trial: eight accepted pulses and one verified below-threshold
+rejection. Rejected events remain in the ledger with no reconstructed energy;
+the detector, charge model, electronics threshold and calibration are unchanged.
 
 **Check environment** inspects installed files. **Check plan** verifies the selected
 source, build, runtime and settings before **Run simulation**. Changing the form

@@ -32,9 +32,18 @@ class CatalogWorkflowTests(unittest.TestCase):
             s=copy.deepcopy(self.selection);s[key]=value
             with self.subTest(key=key,value=value),self.assertRaises(W.ControlError):self.check(s)
     def test_held_source_is_not_admitted(self):
-        s=copy.deepcopy(self.selection);s['source']='co60_point_decay_v1'
-        with patch.object(D,'presets',return_value=self.sources),patch.object(D,'capability',return_value=None),self.assertRaises(W.ControlError):
+        s=copy.deepcopy(self.selection);s['source']='fixture_unadmitted_decay'
+        sources=self.sources+[dict(D.preset('co60_point_decay_v1'),id=s['source'])]
+        with patch.object(D,'presets',return_value=sources),patch.object(D,'capability',return_value=None),self.assertRaises(W.ControlError):
             C.check(s,root=self.root,validate_settings=self.effective,transport_reader=self.transport)
+    def test_reviewed_co60_admitted_by_common_catalog_check(self):
+        s=copy.deepcopy(self.selection);s['source']='co60_point_decay_v1'
+        accepted=D.capability(D.preset(s['source']))
+        with patch.object(D,'presets',return_value=self.sources),patch.object(D,'capability',return_value=accepted):
+            plan=C.check(s,root=self.root,validate_settings=self.effective,transport_reader=self.transport,
+                pin_reader=lambda *_:{},runtime_reader=self.runtime)
+        self.assertEqual(plan['resolved']['source_contract']['id'],s['source'])
+        self.assertEqual(accepted['acceptance']['readout_rejection_reasons'],{'below_threshold':1})
     def test_rehashed_settings_numerics_and_geometry_mismatch_refused(self):
         p=self.check()
         for mutate in (lambda r:r['numerics'].update(runtime_temperature_K=77),lambda r:r['model_contract'].update(bias_span_V=1),lambda r:r['electronics_configuration'].update(gain=99)):

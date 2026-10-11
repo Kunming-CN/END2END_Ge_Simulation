@@ -70,8 +70,8 @@ class SourceDispatch(unittest.TestCase):
         for detector in available:
             if detector['id'] in W.MODELS:self.assertTrue(generic.issubset(detector['sources']))
             else:
-                self.assertEqual(set(detector['sources']),{W.CS,'am241_point_decay_v1','ba133_point_decay_v1'})
-                self.assertNotIn('co60_point_decay_v1',detector['sources'])
+                self.assertEqual(set(detector['sources']),{W.CS,*generic})
+                self.assertIn('co60_point_decay_v1',detector['sources'])
         for source in sources.values():
             self.assertTrue(source['label'])
             self.assertTrue(source['details'])
@@ -95,7 +95,7 @@ class SourceDispatch(unittest.TestCase):
             for model in W.MODELS:
                 c=dict(self.config,source=source['id'],detector=model)
                 with self.subTest(source=source['id'],model=model):
-                    plan=W.check(c,root=W.ROOT,bootstrap_source=True,
+                    plan=W.check(c,root=W.ROOT,
                         validate_settings=lambda *_:copy.deepcopy(validated),
                         pin_reader=lambda *_:{'public-source.py':'a'*64},
                         runtime_reader=lambda *_:{'python_sha256':'b'*64,'julia_sha256':'c'*64},

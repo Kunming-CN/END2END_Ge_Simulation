@@ -7,11 +7,19 @@ REGISTRY='scenarios/source-presets.json'
 ANCHORS='scenarios/placement-anchors.json'
 ADAPTER='shared_decay_source_v1'
 SOURCES=(REGISTRY,ANCHORS,'tools/decay_workflow.py','transport/decay_source.py',
-         'simulation/decay_stream.jl','simulation/workflow_decay_response.jl')
+         'simulation/decay_stream.jl','simulation/workflow_decay_response.jl',
+         'scenarios/source-acceptance/co60-threshold-v1.json')
 POLICY={'primary_threshold_ns':1e27,'reset_initial_children_to_zero':True,
         'ground_secondary_lifetime_cap_ns':100000,'nucleus_limits':'unrestricted_default',
         'initial_nucleus_count_per_event':1}
 HEX=re.compile('[0-9a-f]{64}\\Z')
+# Reviewed saved-trial records are the portable authority. Rehashing invented
+# counts or replacing a completed receipt must not admit a source.
+ACCEPTANCE_SHA256={
+    'am241_point_decay_v1':'2a2e1d04ed503c557277a3647211e99fe73e680006a1fd2f65a7429c16b09429',
+    'ba133_point_decay_v1':'42fa7abeaa4971bd9d71e15d44c5f923a4a4ade1ef27b7c4b2fe488ede7c3d8c',
+    'co60_point_decay_v1':'8063e105953542ef5f7f87b6182e7e4d2fb6b85a8a6dfd20e02c16c066bb58af',
+}
 def presets(root=W.ROOT):
     value=W.read(Path(root)/REGISTRY)
     W.require(set(value)=={'kind','schema_version','presets'} and value['kind']=='radioactive_source_presets_v1' and
@@ -104,18 +112,71 @@ def prepare_model(model,output):
 def expected_acceptance(p,value):
     keys={'status','detector','primary_count','seed','accepted_groups','native_failed_groups','readout_rejected',
           'saturated_groups','configuration_sha256','complete_sha256','source_contract_sha256','run_ref'}
+    threshold_keys={'readout_rejection_reasons','threshold_evidence_ref','threshold_evidence_sha256'}
+    if type(value) is not dict:return False
+    rejected=value.get('readout_rejected')
+    if type(rejected) is not int or rejected<0:return False
+    if rejected:
+        keys|=threshold_keys
+        if (value.get('readout_rejection_reasons')!={'below_threshold':rejected} or
+            value.get('threshold_evidence_ref')!='scenarios/source-acceptance/'+p['isotope'].lower()+'-threshold-v1.json' or
+            type(value.get('threshold_evidence_sha256')) is not str or not HEX.fullmatch(value['threshold_evidence_sha256'])):return False
     return (type(value) is dict and set(value)==keys and value['status']=='accepted' and
         value['detector']=='SAP22' and type(value['primary_count']) is int and value['primary_count']==500 and
         type(value['seed']) is int and value['seed']==26092631 and type(value['accepted_groups']) is int and value['accepted_groups']>0 and
-        all(type(value[k]) is int and value[k]==0 for k in ('native_failed_groups','readout_rejected','saturated_groups')) and
+        all(type(value[k]) is int and value[k]==0 for k in ('native_failed_groups','saturated_groups')) and
         all(type(value[k]) is str and HEX.fullmatch(value[k]) for k in ('configuration_sha256','complete_sha256','source_contract_sha256')) and
-        value['source_contract_sha256']==W.digest(p) and value['run_ref']==W.BASE+'/source-'+p['isotope'].lower()+'-500-v1')
+        value['source_contract_sha256']==W.digest(p) and value['run_ref']==W.BASE+'/source-'+p['isotope'].lower()+'-500-v1' and
+        W.digest(value)==ACCEPTANCE_SHA256.get(p['id']))
+
+def threshold_evidence(p,acceptance,root=W.ROOT):
+    """Validate the reviewed portable threshold decision, without local science."""
+    if acceptance['readout_rejected']==0:return
+    path=W.safe_path(Path(root),acceptance['threshold_evidence_ref'])
+    W.require(path.is_file() and W.sha(path)==acceptance['threshold_evidence_sha256'],
+              'Source threshold evidence is missing or changed.')
+    proof=W.read(path)
+    W.require(proof.get('kind')=='bounded_source_threshold_acceptance_v1' and proof.get('source_id')==p['id'] and
+        type(proof.get('science_calls')) is int and proof['science_calls']==0 and
+        all(proof.get(k)==acceptance[k] for k in ('source_contract_sha256','configuration_sha256','complete_sha256',
+            'primary_count','accepted_groups','native_failed_groups','readout_rejected','saturated_groups')) and
+        proof.get('rejection_reasons')==acceptance['readout_rejection_reasons'] and
+        proof.get('groups')==acceptance['accepted_groups']+acceptance['readout_rejected'],
+        'Source threshold evidence changed its receipt or census.')
+    records=proof.get('threshold_rejections')
+    W.require(type(records) is list and len(records)==acceptance['readout_rejected'], 'Missing threshold event provenance.')
+    seen=set();cal=proof['calibration'];lsb=cal['adc_lsb_V']
+    for record in records:
+        required={'event_id','global_decay_id','group_id','origin_time_ns','raw_row_indices','deposited_energy_keV',
+            'final_induced_keV','native_min_charge_keV','native_max_charge_keV','transport_flags','peak_V','threshold_V',
+            'adc_code','reconstructed_energy_keV','rejection_reason','below_threshold','saturated','window_limited',
+            'gate_limited','charge_clipped_at_window','truth_record_sha256','pulse_record_sha256','trace_record_sha256','endpoint_records_sha256'}
+        W.require(type(record) is dict and required<=set(record),'Missing threshold raw-row/charge/readout provenance.')
+        key=(record['event_id'],record['group_id'])
+        rows=record['raw_row_indices'];flags=record['transport_flags']
+        W.require(all(type(record[k]) is int for k in ('event_id','global_decay_id','group_id','adc_code')) and
+            0<=record['event_id']<acceptance['primary_count'] and record['global_decay_id']==record['event_id'] and
+            record['group_id']>=0 and key not in seen and type(rows) is list and rows and
+            all(type(i) is int and i>=0 for i in rows) and len(set(rows))==len(rows) and
+            all(type(record[k]) in (int,float) and math.isfinite(record[k]) for k in
+                ('origin_time_ns','deposited_energy_keV','final_induced_keV','native_min_charge_keV','native_max_charge_keV','peak_V','threshold_V')) and
+            record['origin_time_ns']>=0 and record['deposited_energy_keV']>0 and
+            0<=record['peak_V']<record['threshold_V'] and record['adc_code']==math.floor(record['peak_V']/lsb) and
+            record['reconstructed_energy_keV'] is None and record['rejection_reason']=='below_threshold' and
+            record['below_threshold'] is True and all(record[k] is False for k in ('saturated','window_limited','gate_limited','charge_clipped_at_window')) and
+            type(flags) is dict and set(flags)=={'carrier_parcels','geometric_contacts','step_limits','stopped_without_contact'} and
+            all(type(v) is int and v>=0 for v in flags.values()) and flags['carrier_parcels']>0 and
+            all(type(record[k]) is str and HEX.fullmatch(record[k]) for k in
+                ('truth_record_sha256','pulse_record_sha256','trace_record_sha256','endpoint_records_sha256')),
+            'Recorded rejection is not a complete engineering threshold decision.')
+        seen.add(key)
 def capability(p,root=W.ROOT):
     v=W.read(Path(root)/'scenarios/detector-capabilities.json').get('source_adapters',{}).get(p['id'])
     if v is None:return None
     W.require(type(v) is dict and set(v)=={'adapter','detectors','counts','pose','acceptance'} and v['adapter']==ADAPTER and
         v['detectors']==list(W.MODELS) and v['counts']==p['counts'] and v['pose']==p['pose'] and
         expected_acceptance(p,v['acceptance']),'Source capability lacks genuine bounded acceptance metadata.')
+    threshold_evidence(p,v['acceptance'],root)
     return v
 def source_catalog(root=W.ROOT):
     result=[]

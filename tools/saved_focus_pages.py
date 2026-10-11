@@ -37,7 +37,9 @@ PREVIOUS_DISPLAY_RECEIPTS={
                        '61e4b6ceaba49298bb5e30bfe23b405802fdf3b810a69d78eefc8f8222bf6719','725c852d635021b0aef16f9b651c56ebdd16fb9f7e13a7737101ea78fa4b11e7',
                        'b7b90f6e14bd88b903e0e7bb761384c51c2b0e2b863dbe7e29d2ed29b14d0eba',
                        # Authenticated first local build 76a8596f; never published.
-                       '0f660aeeaa0954a4c12ea5193d8cbe8bf6fc17e5e050cfc791bcaf7e646c49a4'}),
+                       '0f660aeeaa0954a4c12ea5193d8cbe8bf6fc17e5e050cfc791bcaf7e646c49a4',
+                       # Exact accepted 6db59a35 display before Co60/source download updates.
+                       'a271d710183982a50a2ab6117765d9543e8eb7f2847ddf356e8c92298e174b72'}),
     'teaching':frozenset({'a96863b38712c40efd87372accd0276bdbdeada68370c5e6b46a983abf526800'})}
 PRESERVED_TEACHING_HTML={'bytes':9810837,'sha256':'71d898465740d2ad4eb098cc5cc1d27c494f38c0151e634dfc067bf53f147bf7'}
 

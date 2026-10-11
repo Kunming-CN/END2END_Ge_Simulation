@@ -3,8 +3,9 @@
 Updated: 2026-10-11. This is the single active delivery roadmap.
 [Onboarding and extension contracts](ONBOARDING_EXTENSIBILITY_PLAN.md) retain the
 longer-lived boundaries; [PROGRESS.md](../PROGRESS.md) records actual delivery.
-The source-angle feature below is now delivered through shared Check/Run, with a
-new bounded positive acceptance and the earlier failed realization retained.
+The source-angle feature is delivered through shared Check/Run. Co60 admission
+now reuses its audited saved threshold rejection, with original failures retained.
+Student software ZIPs exclude the retained website showcase directory.
 No further science campaign or automatic continuation is queued.
 
 ## Outcome and verified starting point
@@ -21,7 +22,8 @@ save its exact effective inputs and source/model/software hashes for analysis.
 |---|---|
 | M4 / bounded M5 recovery | Closed; original success and failed attempts remain separate. No general M5b prerequisite. |
 | Optional M6 interface pilot | Existing installed readers retained; unavailable reboost/simflow deferred. No installation or backend migration. |
-| Local Control / ten compatible configurations | Shared engines, admitted Cs137/Am241/Ba133, exact counts, serial batches, stage-boundary Stop/Resume and lazy saved analysis are delivered. This is not thirty independently run physical validations. |
+| Local Control / ten compatible configurations | Shared engines, admitted Cs137/Am241/Ba133/Co60, exact counts, serial batches, stage-boundary Stop/Resume and lazy saved analysis are delivered. Forty factorized source/model choices are not forty independently run physical validations. |
+| Student software download | GitHub source ZIP excludes docs/ while Pages retains showcase files. Full clone/history still includes website data; dependencies/upstream inputs require documented setup. Final archive/live checks are recorded in the current COMPLETE.json. |
 | Larger detector models | Seven viewable models do not fit this cryostat; future larger-cryostat work, not adapters to finish now. |
 | Analysis and beginner route | Raw radiation, ledger, signed charge, readout, calibration/settings and stable identities are accessible; README is a short entry and tools/site_guide.html is the one setup authority. |
 | Saved plots, teaching and navigation | Accepted saved-data/site work; six representative later Cs137 examples replace the old teaching default. Preamp behavior remains unchanged. Existing reports/URLs/full event ledgers remain accessible. |
@@ -44,7 +46,7 @@ original stage provenance. The cryostat and detector mounting stay fixed.
 The shared resolver, capsule-only native exporter and +/-30deg geometry checks
 were accepted in the prior milestone. Zero and legacy Gamma keep their original
 macros/admission. Ten compatible descriptors share the engineering route; neither
-seventeen viewable models nor thirty source/model choices are physical validations.
+seventeen viewable models nor forty source/model choices are physical validations.
 Nominal engineering pose remains
 `p(theta)=[35.6*sin(theta), 1.473+35.6*cos(theta), 0.290] mm`, with degrees from +y
 toward +x around global z at x=0/y=1.473mm and fixed crystal/spacer/materials.
@@ -78,7 +80,7 @@ These are options or response policies, not mandatory stages to complete first.
 |---|---|---|
 | Real student cannot set up, run, stop/resume or find data | Reproduce the specific blocker through the existing dependency check, Control and guide; use saved cases first. A true core blocker takes priority over a new feature. | Verified fix for that report; no speculative setup rewrite, new environment or second-PC gate. |
 | An affected page/control or a new concrete display defect | Reuse existing exact-bin, selected-identity, expected-model, original-byte and route tests. The SAP22-removal/rehash regression already exists. Add only a missing regression tied to the defect; inspect affected plots on desktop/narrow layout and live after publishing. | Correct display with data/units/populations unchanged, no repeated 105-page or physics campaign. |
-| Owner wants another common isotope after the angle feature | First do a read-only Co60 admission assessment from its retained trial: distinguish valid below-threshold event rejection from source/timing/processing invalidity. Existing zero-rejection admission remains unchanged during assessment. | Evidence-based adopt/keep/defer recommendation. Gate changes or a new calculation are a separate reviewed decision, never a retry until pass. |
+| Owner requests another isotope | Reuse the shared source assets and inspect a bounded trial's identity/timing/energy and processing evidence. Co60 is already admitted through pinned below-threshold evidence; do not repeat its original calculation. | Retain rejected events and strict native/saturation/provenance checks. No seed/threshold retuning or retry-until-pass policy. |
 | Measured run/UI delay blocks actual use | Profile the slow stage and use existing preparation/lazy access before changing concurrency. Parallel independent runs only with measured memory headroom, separate roots/seeds and no competing writers. | Measured improvement without provenance/numeric changes; no promised speedup or parallel field solves without headroom. |
 
 ## Deferred to November 2026: publish real laboratory measurements

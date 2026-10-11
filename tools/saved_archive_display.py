@@ -19,7 +19,9 @@ PREVIOUS_RECEIPTS=frozenset({
     # Exact accepted 5c21a3e display before the teaching-route update.
     'c694ac4c70d01bcc6c57692d78911d24ae93146c96e8bb50695064f99e0ed833','d3a1b4b03629ed01ac9fb6967197aaf41c088ad16bae5d8ed09a282b998402ec',
     # Authenticated first local build 76a8596f; never published.
-    '3cf2560a5ffeb398227377daed4e36bcc272379422ddb5c2b12543b363e1b723'})
+    '3cf2560a5ffeb398227377daed4e36bcc272379422ddb5c2b12543b363e1b723',
+    # Exact accepted 6db59a35 display before Co60/source download updates.
+    '8562c1de121ab1ffe2ff1a8f9df8cf8e175e1d9c53c8b72c5eb4707c54e46e6e'})
 LITHIUM_PAGE='lithium/lithium.html'
 LITHIUM_MANIFEST='methods/lithium-display.json'
 LITHIUM_ORIGINAL_SHA='ea19caf13d0bc1dc90c2dd5e676f6a0c5ed83043c5c53c14da1a975546a78742'
@@ -32,7 +34,9 @@ PREVIOUS_LITHIUM_RECEIPTS=frozenset({
     # Exact accepted 5c21a3e display; original science remains pinned.
     'c7b03c3132201a94c7811bb813e217bcbbe911f299bded28f74e972a5cd5a301',
     # Authenticated first local build 76a8596f; never published.
-    'c9ce86c38f85bf5bc2353e5c725531ac7936c733df3fd4a760c605bc6b81050c'})
+    'c9ce86c38f85bf5bc2353e5c725531ac7936c733df3fd4a760c605bc6b81050c',
+    # Exact accepted 6db59a35 navigation; scientific files stay exact.
+    'e8206a3147ee4e01d1e89d9377efd97e41b9147e25aebdba001b39ab0710ac9d'})
 
 def require(ok,message):
     if not ok: raise ValueError(message)

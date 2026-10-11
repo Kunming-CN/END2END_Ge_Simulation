@@ -35,6 +35,8 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '4945d697ae27217b3c4ff008d247445af43a6f44c5a327a845a3e48aa20b5675',
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
+ # Exact accepted 6db59a35 reader before Co60/source download updates.
+ '7d61a001ff10dd56b50f879fda464edb455e27dcd464aaeaed8f9b76bef0bdc0',
  # Exact accepted0cf58d3 display before the1M overview correction.
  'e6d35df5c14b3de717f8e58235038301ba1384fe2e92260946c8cc7a86b45d92',
  # Exact accepted 5c21a3e display; current exports retain strict source checks.

@@ -7,6 +7,14 @@ The beginner instructions have one authority: `tools/site_guide.html`, published
 as `guide.html`. Keep README short and link to that guide rather than adding
 another complete installation recipe.
 
+Student software downloads use the current branch's GitHub source ZIP. The
+`docs` export-ignore attribute excludes the generated website from Git archives;
+it does not delete the site or change the existing main:/docs Pages deployment.
+Keep the original models, relative includes, source, lockfiles and licenses in
+that archive. `tools/test_software_archive.py` checks the archive contract without
+installing dependencies or starting science. Full Git clones still retain the
+website and history; developers use the guide's sparse, blobless checkout.
+
 Exact-count campaigns use `tools/batch_execution.py`, `transport/batch_source.py`
 and the additive `simulation/batch_native_contract.jl`, `batch_native_response.jl`
 and `batch_decay_stream.jl` bridge. The existing workflow CLI and Control delegate
@@ -64,13 +72,17 @@ user action. Do not add a second exporter or mutate scientific records for label
 | Local file/result index | `tools/build_local_dashboard.py`, `local_paths.py`, `open_workspace.ps1` |
 
 Shared-source admission uses one source registry and independent detector contracts.
-Am241 and Ba133 are promoted through the fixed positive source gate; Co60 remains unavailable
-because its terminal 500-primary trial retained one below-threshold rejection.
+Am241, Ba133 and Co60 are admitted through bounded positive source acceptance.
+Co60 uses the original completed 500-primary trial after a read-only audit of
+event475's near-zero signed charge and below-threshold readout. The event remains
+rejected, ADC0/Erec null, with original deposits, endpoints and hashes preserved.
 Every accepted `source_adapters` entry binds the source contract, SAP22/500/seed
-26092631 acceptance, positive accepted-group count, zero native failures/readout
-rejects/saturation, resolved configuration hash, COMPLETE hash and run reference.
-Do not loosen the gate, retune science or rewrite original receipts to enable a
-preset. All three case geometries are byte-identical; five-model compatibility is
+26092631 acceptance, positive accepted-group count, zero native failures and
+saturation, resolved configuration hash, COMPLETE hash and run reference.
+Explicitly checked below-threshold rejections may pass source admission; all
+other rejections, inconsistent census or provenance still fail. Keep thresholds,
+calibration and original receipts unchanged. All three case geometries are
+byte-identical; five-model compatibility is
 software factorization, not fifteen actual science acceptances.
 
 
@@ -80,7 +92,7 @@ Cs137/500 public CLI Check/Run/Inspect cases retained all 2,500 original primari
 2,485 zero-deposit primaries, nine accepted groups, three KL01 native failures
 with null unknown charge/readout and three below-threshold readout rejections.
 These fixed cases plus the already accepted source contracts are factorized
-software support, not thirty actual model/source science acceptances. The current
+software support, not forty actual model/source science acceptances. The current
 handoff records exact receipts, actual grids/whole-process RSS, focused review
 corrections and publication state. Never rerun physics for this presentation update.
 

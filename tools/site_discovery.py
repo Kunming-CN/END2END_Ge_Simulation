@@ -33,13 +33,17 @@ LANDINGS = {
     'results/cs137-1m/index.html': 'Saved AK02 and SAP22 Cs137 engineering results, with one million initial decays per detector. No measured-spectrum fit or calibrated charge-collection claim.',
     'results/cs137-10k/index.html': 'Saved four-case Cs137 10K engineering results: AK02, SAP22, GeRC02 Li50min and KMRC01 candidate. Events, spectra, charge/readout and complete ledgers retain every initial decay.',
     'methods/index.html': 'HPGe simulation methods, original model provenance and numerical, calibration and experimental limitations of the saved engineering results.',
-    'scenarios/lbnl-cs137/index.html': 'Nominal LBNL cryostat with shared Cs137, Am241 and Ba133 local workflows, compatible detector choices and saved batch analysis. Legacy AK02/SAP22 CLI support and model viewing are separate.',
+    'scenarios/lbnl-cs137/index.html': 'Nominal LBNL cryostat with shared Cs137, Am241, Ba133 and Co60 local workflows, compatible detector choices and saved batch analysis. Legacy AK02/SAP22 CLI support and model viewing are separate.',
 }
 
 # The exact preceding saved snapshot must validate before normal restructuring.
 # This permits only its two known old descriptions. check_site still binds the
 # entire snapshot to this build digest; rehashed edits cannot retain admission.
 HISTORICAL_DESCRIPTIONS = {
+    # Exact accepted 6db59a35 snapshot before the fourth source was admitted.
+    'c51891201950c5e25ce2d2b26760e8f093a0c1f252c5c485e2f879f2bf85800a': {
+        'scenarios/lbnl-cs137/index.html': 'Nominal LBNL cryostat with shared Cs137, Am241 and Ba133 local workflows, compatible detector choices and saved batch analysis. Legacy AK02/SAP22 CLI support and model viewing are separate.',
+    },
     '7b51300b9a439f311c33b75219758b07fb73e27ad6dbe9ff6ebb5fd300521ca3': {
         'results/cs137-10k/index.html': 'Earlier saved AK02 and SAP22 10k Cs137 engineering campaign, including event and response viewers. This is separate from the current million-decay campaign.',
         'scenarios/lbnl-cs137/index.html': 'Nominal LBNL Cs137 scenario and AK02/SAP22 execution boundaries, source assumptions and detector selection. Additional models require independent integration.',
@@ -189,6 +193,10 @@ def validate(site, snapshot_build_id=None):
         descriptions = {path: description for path, description in descriptions.items()
                         if routes.page_record(path)['role'] != 'case'}
     historical = HISTORICAL_DESCRIPTIONS.get(build_id, {})
+    if build_id == 'c51891201950c5e25ce2d2b26760e8f093a0c1f252c5c485e2f879f2bf85800a':
+        identity = snapshot_build_id if snapshot_build_id is not None else snapshot_identity(site)
+        if identity != build_id:
+            historical = {}
     has_license = (site / 'LICENSE').is_file()
     if has_license and (site / 'LICENSE').read_bytes() != SOFTWARE_LICENSE.read_bytes():
         raise ValueError('Published software LICENSE differs from maintained source')

@@ -25,7 +25,9 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
     '122e6ee7f6e303decb97181b7a8f4054b9a51f3381c3f9fb30c86f647a471370',
     # Authenticated local 76a8596f stage before browser-found navigation fixes;
     # an intermediate build, not a claim of accepted public publication.
-    '36ba63613061e1354d73e6716b528d2cd089eaccea2dd7f090e5633be50326e9'})
+    '36ba63613061e1354d73e6716b528d2cd089eaccea2dd7f090e5633be50326e9',
+    # Exact accepted 6db59a35 display before Co60/source download updates.
+    '9ff3931b15ad180663874c3482fbfce746fbe3d194bb8bb66fb84b9bcc912259'})
 
 def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 LOADED_GENERATORS={rel:sha(ROOT/rel) for rel in GENERATORS}

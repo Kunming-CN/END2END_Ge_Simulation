@@ -12,7 +12,7 @@ import site_discovery as D
 
 class DiscoveryTests(unittest.TestCase):
     def test_exact_previous_snapshot_migrates_but_rehashed_stale_text_fails(self):
-        old=next(iter(D.HISTORICAL_DESCRIPTIONS.values()))
+        old=D.HISTORICAL_DESCRIPTIONS['7b51300b9a439f311c33b75219758b07fb73e27ad6dbe9ff6ebb5fd300521ca3']
         for path in old:
             p=self.site/path;p.parent.mkdir(parents=True,exist_ok=True)
             p.write_text('<html><head><title>Saved</title></head><body>Saved</body></html>')
@@ -41,7 +41,7 @@ class DiscoveryTests(unittest.TestCase):
         for name in ('AK02','SAP22','GeRC02 Li50min','KMRC01 candidate'):self.assertIn(name,description)
         self.assertNotIn('Earlier',description)
         scenario=D.LANDINGS['scenarios/lbnl-cs137/index.html']
-        self.assertIn('shared Cs137, Am241 and Ba133 local workflows',scenario)
+        self.assertIn('shared Cs137, Am241, Ba133 and Co60 local workflows',scenario)
         self.assertIn('Legacy AK02/SAP22 CLI support',scenario)
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1] / '.local')

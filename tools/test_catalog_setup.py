@@ -40,7 +40,7 @@ class CatalogSetup(unittest.TestCase):
         args=json.loads(call.stdout.decode().strip().splitlines()[-1])
         self.assertEqual(args,['--distribution','Ubuntu-24.04','--cd',str(ROOT/'transport'),'--exec','bash','./workflow.sh','python','-B','./catalog_exporter_setup.py','build','--windows-root',str(ROOT)])
         source=SCRIPT.read_text(encoding='utf-8')
-        self.assertIn("'setup'{if($BuildCatalogSourceExporter){Build-CatalogSourceExporter;exit 0};if($BuildPortableSourceExporter){Build-PortableSourceExporter;exit 0}",source)
+        self.assertIn("'setup'{if($BuildAngleSourceExporter){Build-AngleSourceExporter;exit 0};if($BuildCatalogSourceExporter){Build-CatalogSourceExporter;exit 0};if($BuildPortableSourceExporter){Build-PortableSourceExporter;exit 0}",source)
         self.assertIn('--locked --no-install', (ROOT/'transport/workflow.sh').read_text())
 
 if __name__=='__main__':unittest.main()

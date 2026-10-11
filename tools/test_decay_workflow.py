@@ -35,10 +35,50 @@ class SourceCoreTests(unittest.TestCase):
         with patch.object(W,'read',side_effect=lambda path: {} if Path(path).name=='detector-capabilities.json' else reader(path)):
             self.assertIsNone(D.capability(p))
         self.assertFalse(D.expected_acceptance(p,{}))
-        good={'status':'accepted','detector':'SAP22','primary_count':500,'seed':26092631,'accepted_groups':1,
-              'native_failed_groups':0,'readout_rejected':0,'saturated_groups':0,'configuration_sha256':'a'*64,
-              'complete_sha256':'b'*64,'source_contract_sha256':W.digest(p),'run_ref':'.local/runs/source-am241-500-v1'}
+        good=W.read(W.ROOT/'scenarios/detector-capabilities.json')['source_adapters'][p['id']]['acceptance']
         self.assertTrue(D.expected_acceptance(p,good))
-        for key,value in [('accepted_groups',0),('native_failed_groups',1),('seed',1),('primary_count',20),('source_contract_sha256','c'*64)]:
+        for key,value in [('accepted_groups',0),('accepted_groups',999),('native_failed_groups',1),('seed',1),('primary_count',20),('source_contract_sha256','c'*64),('complete_sha256','f'*64)]:
             changed=dict(good);changed[key]=value;self.assertFalse(D.expected_acceptance(p,changed))
+
+    def test_reviewed_co60_retains_threshold_and_admits_engineering_use(self):
+        p=D.preset('co60_point_decay_v1');cap=D.capability(p);a=cap['acceptance']
+        self.assertTrue(D.expected_acceptance(p,a))
+        self.assertEqual(a['accepted_groups'],8);self.assertEqual(a['readout_rejected'],1)
+        self.assertEqual(a['readout_rejection_reasons'],{'below_threshold':1})
+        proof=W.read(W.ROOT/a['threshold_evidence_ref']);record=proof['threshold_rejections'][0]
+        self.assertEqual((record['event_id'],record['group_id']),(475,0))
+        self.assertIsNone(record['reconstructed_energy_keV']);self.assertLess(record['final_induced_keV'],0)
+        self.assertEqual(proof['primary_count'],500);self.assertEqual(proof['zero_deposit_primaries'],491)
+        self.assertEqual(proof['groups'],proof['accepted_groups']+proof['readout_rejected'])
+        for source in ('am241_point_decay_v1','ba133_point_decay_v1'):
+            self.assertEqual(D.capability(D.preset(source))['acceptance']['readout_rejected'],0)
+
+    def test_co60_nonthreshold_failure_and_rehashed_metadata_are_refused(self):
+        p=D.preset('co60_point_decay_v1');original=D.capability(p)['acceptance']
+        mutations=[('native_failed_groups',1),('saturated_groups',1),('accepted_groups',0),('accepted_groups',9),
+            ('readout_rejected',0),('readout_rejection_reasons',{'saturated':1}),
+            ('readout_rejection_reasons',{'negative_input':1}),('complete_sha256','f'*64),
+            ('threshold_evidence_sha256','f'*64)]
+        for key,value in mutations:
+            changed=copy.deepcopy(original);changed[key]=value
+            with self.subTest(key=key,value=value):self.assertFalse(D.expected_acceptance(p,changed))
+        missing=copy.deepcopy(original);missing.pop('threshold_evidence_ref')
+        self.assertFalse(D.expected_acceptance(p,missing))
+
+    def test_co60_missing_raw_provenance_or_rehashed_evidence_is_refused(self):
+        p=D.preset('co60_point_decay_v1');registry=W.read(W.ROOT/'scenarios/detector-capabilities.json')
+        a=registry['source_adapters'][p['id']]['acceptance'];proof=W.read(W.ROOT/a['threshold_evidence_ref']);reader=W.read
+        for key in ('raw_row_indices','truth_record_sha256','pulse_record_sha256','trace_record_sha256','endpoint_records_sha256'):
+            edited=copy.deepcopy(proof);edited['threshold_rejections'][0].pop(key)
+            rehashed=copy.deepcopy(registry)
+            rehashed['source_adapters'][p['id']]['acceptance']['threshold_evidence_sha256']=W.digest(edited)
+            with self.subTest(key=key),patch.object(W,'read',side_effect=lambda path:rehashed if Path(path).name=='detector-capabilities.json' else reader(path)):
+                with self.assertRaises(W.ControlError):D.capability(p)
+            # The semantic gate also refuses missing provenance if a caller
+            # supplies a newly hashed proof, before relying on reviewed pins.
+            changed=dict(a,threshold_evidence_sha256=W.digest(edited))
+            with patch.object(W,'sha',return_value=changed['threshold_evidence_sha256']),patch.object(W,'read',return_value=edited):
+                with self.assertRaises(W.ControlError):D.threshold_evidence(p,changed)
+        with patch.object(Path,'is_file',return_value=False):
+            with self.assertRaises(W.ControlError):D.capability(p)
 if __name__=='__main__':unittest.main()

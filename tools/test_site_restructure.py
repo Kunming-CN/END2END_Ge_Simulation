@@ -63,7 +63,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('guide.html#choose',scenario)
         self.assertIn('guide.html',scenario)
         self.assertNotIn('Run.cmd run',scenario)
-        self.assertIn('Cs137, Am241 and Ba133',scenario)
+        self.assertIn('Cs137, Am241, Ba133 and Co60',scenario)
         self.assertIn('Control offers 10 separate detector configurations',scenario)
         self.assertIn('not redistributed',scenario)
 

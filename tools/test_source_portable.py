@@ -186,8 +186,8 @@ class PathAndParameterFixtures(unittest.TestCase):
         runtime={'prefix':'/locked/prefix','executables':{'ninja':{'ref':'bin/ninja'}}};recipe={'compiler':'/locked/prefix/bin/c++'}
         fields={'CMAKE_HOME_DIRECTORY':str(adapter.ROOT/'transport'),'CMAKE_CACHEFILE_DIR':str(adapter.ROOT/adapter.BUILD_REF),
                 'CMAKE_GENERATOR':'Ninja','CMAKE_BUILD_TYPE':'Release','CMAKE_CXX_COMPILER':recipe['compiler'],
-                'CMAKE_MAKE_PROGRAM':'/locked/prefix/bin/ninja','CMAKE_EXPORT_COMPILE_COMMANDS':'ON',
-                'CMAKE_PROJECT_NAME':'m2a_geometry_probe','Geant4_DIR':'/locked/prefix/lib/cmake/Geant4',
+                'CMAKE_MAKE_PROGRAM':str(Path(runtime['prefix'])/'bin/ninja'),'CMAKE_EXPORT_COMPILE_COMMANDS':'ON',
+                'CMAKE_PROJECT_NAME':'m2a_geometry_probe','Geant4_DIR':str(Path(runtime['prefix'])/'lib/cmake/Geant4'),
                 **adapter.build_flags(runtime['prefix']),'CMAKE_CXX_STANDARD_LIBRARIES':'-Wl,--script,foreign.ld'}
         with patch.object(adapter,'cache_fields',return_value=fields),self.assertRaisesRegex(ValueError,'CMAKE_CXX_STANDARD_LIBRARIES'):
             adapter.build_semantics(recipe,runtime)
