@@ -76,8 +76,9 @@ errors. Publication guard33/contact27 passed; the original contact-test sandbox
 failure remains in its log. build_site.py --restructure and check_site.py passed
 the sealed1693-file/105-page snapshot, build b1014bbfc64eabd9c164e0748c8a10a1cf884aed55770ec67d06e45deeb68379.
 Only guide.html changed; all1692 other payload files are byte-identical. New
-angular C++/CMake sources retain LF across Windows/WSL without changing tested
-bytes. Final Git synchronization, mandatory live check and owned lease/session
+angular exporter sources retain exact tested bytes across checkouts: its C++
+source keeps three original CRLF endings, and CMake keeps LF. Final Git
+synchronization, mandatory live check and owned lease/session
 closure are recorded in .local/source-angle-v1/COMPLETE.json; it is the terminal
 authority. Delivery is guarded software preview; physical acceptance remains failed.
 
