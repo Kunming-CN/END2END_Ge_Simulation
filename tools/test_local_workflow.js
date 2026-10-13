@@ -174,6 +174,25 @@ run("renderJobs({busy:true,jobs:[{id:'b',name:'ring-ended',status:'dispatch_unce
 assert.ok(!get('runs').children[0].children.some(n=>n.textContent==='Finalize saved results'));
 run('renderJobs({busy:false,jobs:[]});');
 // The read-only saved completion action remains visible beside uncertain work.
+run("const launchFailure={id:'not-created',name:'not-created',status:'dispatch_uncertain',execution_contract:'serial_batches_v3',can_inspect_failure:false,can_recover_launch:true,error:'Original preparation error',selection:{detector:'AK02',source:'cs137_point_decay_v1',primary_count:500},stages:{}};renderJobs({busy:true,jobs:[launchFailure]});");
+assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Recover not-launched failure'));
+assert.ok(!get('runs').children[0].children.some(n=>n.textContent==='Verify existing completion'||n.textContent==='Inspect denied launch'));
+assert.ok(get('runs').children[0].children.some(n=>/process creation was never invoked/.test(n.textContent)));
+assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Original preparation error'));
+run("renderJobs({busy:true,jobs:[{...launchFailure,can_recover_launch:false}]});");
+assert.ok(!get('runs').children[0].children.some(n=>n.textContent==='Recover not-launched failure'));
+assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Verify existing completion'));
+run("renderJobs({busy:false,jobs:[{...launchFailure,status:'launch_failed',can_recover_launch:false}]});");
+assert.ok(get('runs').children[0].children.some(n=>/No calculation started.*new run name/.test(n.textContent)));
+assert.ok(!get('runs').children[0].children.some(n=>n.textContent==='Resume saved settings'||n.textContent==='Recover not-launched failure'));
+assert.match(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),/api\('\/api\/workflow\/recover-launch',\{name:job.name\}\)/);
+run("renderJobs({busy:true,jobs:[{...launchFailure,status:'stopped',can_recover_launch:false,can_verify_saved_execution:true}]});");
+assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Verify saved execution'));
+assert.ok(get('runs').children[0].children.some(n=>/CLI Resume.*new sealed boundary/.test(n.textContent)));
+assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Resume saved settings'));
+run("renderJobs({busy:false,jobs:[{...launchFailure,status:'launch_failed',can_recover_launch:false,can_verify_saved_execution:false}]});");
+assert.ok(!get('runs').children[0].children.some(n=>n.textContent==='Verify saved execution'));
+run('renderJobs({busy:false,jobs:[]});');
 run("renderJobs({busy:true,jobs:[]});renderLegacy({gamma:{busy:true,jobs:[{id:'old',label:'old-completion',status:'verification-required',blocks_new_work:true,can_verify:true}]}});");
 assert.ok(get('legacy-runs').children[0].children.some(n=>n.textContent==='Verify saved completion'));
 assert.match(get('legacy-notice').textContent,/Before starting another calculation.*Verify saved completion/);

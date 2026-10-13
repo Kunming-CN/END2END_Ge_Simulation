@@ -1,100 +1,79 @@
 # Current handoff
 
 Updated: 2026-10-13. Read this before starting work.
-Immutable prior Co60/software delivery and retained earlier history:
-[82824413](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/828244131be24c663eae4f646b181ae0fdf2f619/PROGRESS.md).
-Immutable initial software audit:
-[28472988](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/2847298875e6407bd2607f7ba93bf5558af0ea67/PROGRESS.md).
+Immutable prior audit/desktop-scope handoff:
+[cfd832ad](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/cfd832ad753fbbde0dca50bf14dddb3c82fa29c1/PROGRESS.md).
+That record links the accepted Co60/software delivery and earlier science history.
 
-Owner clarification, 2026-10-13: the software and supporting interface are for
-desktop computers. Mobile adaptation and phone acceptance are removed from the
-active plan. Preserve earlier phone-width audit evidence as history, not a future
-improvement requirement or gate. Desktop keyboard/mouse, plot readability and
-workflow clarity remain in scope.
+## Authorized continuation
 
-## Owner-requested software audit and pulse-shape plan
+The owner authorized completing the executable tools/NEXT_DEVELOPMENT_PLAN.md
+without reminders or per-round approval. The existing heartbeat is ACTIVE,
+checks every30minutes and targets this chat. Saved configuration was verified;
+future unattended execution has not yet been observed. Local continuation needs
+the computer and Codex app running. Work only on desktop use; phone adaptation
+and phone acceptance are excluded. Complete one useful tested milestone at a time.
+Inspect real Git/process/lease/checkpoint state before a round, acquire the owned
+lease only from ready, and never duplicate existing workers or completed science.
 
-The owner approved adding staged pulse-shape development, then requested a
-strict whole-software audit, a knowledgeable defender and importance-ranked
-improvements, explicitly including the interface. This round changes planning
-and records only. No radiation, field, drift or electronics calculation,
-installation, application implementation, global setting or automation change.
-Automatic continuation remains PAUSED.
+## STRICT-01 delivered: safe pre-worker launch-failure recovery
 
-Three actual new AI agents launched with explicit gpt-6.1-sol/ultra: strict
-adversarial auditor, independent software defender, and new independent
-goal/detail adjudicator. They first reviewed separately, then exchanged concrete
-findings and counterarguments. Launch settings are recorded; the current tools
-do not independently expose live model/effort introspection. These are AI reviews,
-not human certification or an exhaustive audit of every file/condition.
+Control now preserves per-dispatch intent and preparation/Popen boundaries.
+Only sealed proof that Popen was never invoked enables Recover not-launched
+failure. Recovery rereads durable ownership under the shared execution lease;
+original plan, error and logs remain. Old opaque failures, unknown workers,
+Popen-entered exceptions, changed evidence and unexpected output still block.
+A failed new run retains its name; both GUI and ordinary CLI require a new one.
 
-The maintained tools/NEXT_DEVELOPMENT_PLAN.md now includes PSD1 full saved-waveform
-features, PSD2 explicit waveform acquisition and PSD3 a bounded A/E/classifier
-comparison. Event census, signed signals, independent calibration, label/split
-integrity, sample uncertainty and inconclusive results remain explicit. A small
-engineering example is not classifier-performance evidence. Real laboratory
-spectrum/I-V/C-V publication remains deferred to November2026 and complete owner
-inputs; original AK02/SAP22 measured waveforms were not saved.
+Failed Resume restores only an independently verified unchanged stopped seal,
+including the original legacy/catalog checkpoint inventory. A later ordinary CLI
+Resume may finish or stop at a new boundary; use Verify saved execution in Control
+afterward. Full saved inspection, matching configuration, known-ended supervisor,
+shared lease and unchanged before/after receipts produce a separate control
+boundary authority. Original launch journals stay byte-identical. Partial,
+unknown, active or corrupt output cannot settle the reservation.
+Routine polling/admission checks control authority and receipt stamps, not the
+whole raw campaign; original Verify/Resume/artifact entries retain deep checks.
 
-Confirmed audit priorities, still unimplemented:
+Acceptance: initial159 Python regressions, Node UI contracts and shared source-pin
+closure checks passed. Three independent new Sol6.1/Ultra AI initial reviews found
+three related risks: nonbatch checkpoint omission, later CLI Resume lockout and
+CLI failed-name reuse. Those were fixed; affected72 regressions and final45 scoped
+retests passed (overlapping executions, not117 unique tests). All three targeted
+AI rechecks accepted the frozen9-file correction, with independent small probes.
+Launch settings are explicit; live model introspection is unavailable. These
+are software reviews, not human certification or physical validation.
 
-1. STRICT-01/P1: proven pre-worker batch launch failure lacks a safe supported
-   reconciliation, blocking later Control and ordinary CLI work across reopen.
-   Do not clear unknown workers merely because driver is null.
-2. STRICT-02/P2: generic-isotope histogram normalization is incorrectly named
-   for660-663keV photons; actual source-specific denominator arithmetic is retained.
-   Correct a versioned interpretation/new export without rewriting old science.
-3. STRICT-03/P2: unchanged2.5s polling replaces run/recovery controls and loses
-   keyboard focus. Root confirmed Show stages BUTTON to BODY in actual Chrome.
-4. UI-PRIMARY-CONTRAST/P2: enabled ordinary16px white-on-#008a96 CSS has4.137284:1
-   contrast; observed disabled screenshots are exempt, not the claimed failure.
-5. UI-ANGLE-READINESS/P3: environment-check label says preview/execution pending
-   while the current angular admission note/capability correctly permits Check/Run.
+Root used real desktop Codex IAB for keyboard Recovery and the new Verify action,
+then reload/reopened-controller and shared CLI admission checks. Isolated fixtures
+injected launch preparation failure and, for Verify, scientific receipt/inspection;
+journal, lease, process checks, persistence and authority were real. No browser
+Run, Resume, Download or Save As was clicked. No scientific worker launched.
+Owned tabs/servers are closed; initial failures and all scientific results remain.
 
-Active interface improvements: clear desktop blocking reasons/next actions,
-selected-run/settings context and pulse/status hints in primary selection.
-Earlier320/390px plot/form observations are historical only; do not carry them
-into the implementation queue or treat them as measured desktop defects.
-Root checked public home/results/teaching/guide/geometry/stage-spectra and local
-model eligibility, environment/invalid-input prompts, saved zero-event browsing
-and keyboard focus. Scoped320/390px pages had no page-level horizontal overflow.
-Run/Download/Save As and scientific Stop/Resume were not activated.
+Evidence: `.local/strict01-recovery-v1/`, including initial/final source freezes,
+implementation COMPLETE/CORRECTIONS, three independent INITIAL/CROSS/FINAL records,
+original reproductions, browser DOM/screenshots and terminal COMPLETE.json.
+Do not repeat successful physics, suites or reviews merely to recover a reply.
+No models, simulation/transport producers, profiles, environment or generated
+docs were changed. New shared plans pin workflow_launch.py; old receipts are
+not rewritten. This is local software delivery; no site rebuild/publication.
 
-Evidence is `.local/software-audit-v1/`: LAUNCH/SOURCE-FREEZE, independent initial
-records, strict reproductions/cross-review, defender response, third adjudication,
-ui/browser-evidence, ui/routes-evidence, a checked narrow-plot screenshot and a
-preserved blank Control capture (not visual acceptance evidence). The initial
-socket-restricted browser failure and successful protected loopback retry remain
-recorded; no security/browser settings changed. Original science, frozen code,
-models and generated public files remain unchanged. No full suite, physics,
-fresh-machine or screen-reader acceptance is claimed. Phone acceptance is out of scope.
+## Next bounded work and retained limits
 
-The new terminal COMPLETE.json must record final documentation checks/source
-preservation, normal Git synchronization and owned lease/server closure. Do not
-repeat the audit or physics merely to recover an interrupted reply.
+Next is STRICT-02: versioned source-aware diagnostic-window normalization names
+for generic-isotope exports/merge. Preserve historical raw bytes and Cs137
+contracts; use synthetic/zero-denominator/rehash checks, no radiation rerun.
+Then STRICT-03 polling/focus, enabled-button contrast, angle-readiness wording,
+desktop context/selection improvements, and PSD1 -> PSD2 -> PSD3 in plan order.
+Conditional student/resource work needs a concrete trigger; do not expand it.
 
-## Accepted software baseline and retained limits
-
-Prior Co60/software delivery is completed at82824413 with its terminal receipt in
-`.local/co60-software-delivery-v1/COMPLETE.json`. Ten compatible configurations
-share Cs137/Am241/Ba133/Co60; forty choices are factorized software coverage, not
-forty physical validations. Seventeen models are viewable; seven need a larger
-cryostat. Source/capsule angle and the checked student software ZIP are delivered.
-Source ZIP excludes docs; ordinary full clone/history still includes website data.
-Dependencies and exact upstream setup inputs remain a separate preparation step.
-
-Co60 retains all500 original primaries,491 zero deposits, eight accepted groups
-and one audited below-threshold rejection with ADC0/Erec null. Same-contact charge
-accuracy, calibrated CCE, physical resolution, experimental agreement and global
-numerical convergence remain unvalidated; no retuning or fabricated waveform.
-All completed campaigns, caches and unique failed attempts remain permanent under
-tools/DATA_RETENTION.md; no further broad cleanup or radiation rerun is authorized.
-
-## Next bounded work
-
-Use the ranked audit in tools/NEXT_DEVELOPMENT_PLAN.md. First implement only the
-safe proven-not-launched reconciliation for STRICT-01, with targeted mock/race and
-existing sealed-recovery checks. Other confirmed fixes follow by priority; then
-PSD1 starts from one full-resolution saved engineering case. This audit authorizes
-no new science campaign, classifier training or recurring continuation. Follow
-actual student blockers; keep physical accuracy research separate from delivery.
+Ten compatible configurations share four admitted sources; seventeen viewable
+models and forty factorized choices are not forty physical validations. Co60
+retains its500 original primaries/491 zeros and original threshold rejection.
+Saved engineering waveforms do not establish calibrated CCE, physical resolution,
+experimental agreement or global convergence. Old AK02/SAP22 measured waveforms
+were not saved; spectrum data cannot substitute for waveform validation.
+November2026 measured spectrum/I-V/C-V publication still needs the date and
+complete owner-provided releasable inputs/metadata. Keep it deferred meanwhile.
+All completed campaigns/caches/unique failures remain permanent science data.

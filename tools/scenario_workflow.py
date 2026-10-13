@@ -156,7 +156,7 @@ def source_pins(detector, root=ROOT, *, portable=False):
              'transport/cryostat_nominal.json', 'transport/cryostat-source.json',
              'transport/pixi.toml', 'transport/pixi.lock', 'transport/CMakeLists.txt',
              EXPORTER, 'tools/scenario_workflow.py', 'tools/workflow_settings.ps1',
-             'tools/workflow_inspection.py', 'tools/decay_validation.py',
+             'tools/workflow_inspection.py', 'tools/workflow_launch.py', 'tools/decay_validation.py',
              'tools/workflow_recovery.py',
              'tools/electronics_settings.ps1', 'tools/electronics_execution.ps1',
              'tools/native_run_validation.ps1', 'tools/local_ui_jobs.py',
@@ -457,15 +457,30 @@ def verify_pins(resolved, root=ROOT):
         require(sha(safe_path(root,name))==value, 'Input or source changed after Check: '+name)
 
 
-def verify_dispatch_reservations(plan,root=ROOT,dispatch_id=None):
+def verify_dispatch_reservations(plan,root=ROOT,dispatch_id=None,*,_not_launched_id=None):
     """A dead outer process does not release an uncertain GUI dispatch."""
     state=safe_path(root,'.local/local-control-v1/workflow-jobs.json')
     matching=False
+    retiring=False
+    require(_not_launched_id is None or (plan is None and dispatch_id is None),
+            'Launch reconciliation cannot be combined with a scientific dispatch.')
     if state.exists():
         saved=read(state)
         require(saved.get('kind')=='local_workflow_jobs_v1' and type(saved.get('jobs')) is list,
                 'Saved workflow reservations need inspection.')
         for job in saved['jobs']:
+            if job.get('id')==_not_launched_id and _not_launched_id is not None:
+                import workflow_launch as L
+                require(job.get('status')=='dispatch_uncertain','The not-launched reservation changed.')
+                L.verify_failure(job,root,_recovered=(L.directory(job,root)/'recovery.json').exists())
+                retiring=True;continue
+            if job.get('status')=='launch_failed' or job.get('launch_recovery_sha256'):
+                import workflow_launch as L
+                L.verify_retirement(job,root)
+                requested=plan.get('resolved',{}).get('selection',{}).get('name') if type(plan) is dict else None
+                require(not (job.get('status')=='launch_failed' and type(requested) is str and
+                        requested.casefold()==job['name'].casefold()),
+                        'A preserved not-launched failure reserves this name; choose a different unused run name.')
             if job.get('status') not in ('dispatch_uncertain','running','stop_requested'):
                 require(identity_ended(job.get('driver')),'A saved workflow driver is active or its lifetime is unknown.')
             if job.get('status') in ('dispatch_uncertain','running','stop_requested'):
@@ -489,6 +504,7 @@ def verify_dispatch_reservations(plan,root=ROOT,dispatch_id=None):
                         'The GUI driver identity is not committed or cannot be verified.')
                 matching=True
     require(dispatch_id is None or matching,'The GUI dispatch has no matching durable reservation.')
+    require(_not_launched_id is None or retiring,'The not-launched dispatch has no durable reservation.')
     for filename in ('jobs.json','gamma-jobs.json'):
         path=safe_path(root,'.local/local-control-v1/'+filename)
         if not path.exists():continue

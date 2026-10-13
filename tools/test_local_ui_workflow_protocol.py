@@ -156,6 +156,19 @@ class Protocol(unittest.TestCase):
         self.assertEqual(self.request('POST','/api/workflow/start',{'check_id':'checked'})[0],200)
         self.workflow.start.assert_called_once_with(check_id='checked')
 
+    def test_not_launched_recovery_is_closed_protected_and_does_not_start(self):
+        route='/api/workflow/recover-launch'
+        for data in ({'name':'failed','driver':None},{'name':True},{'name':[]},'null'):
+            self.assertEqual(self.request('POST',route,data)[0],400)
+        for headers in ({'X-Control-Token':''},{'Origin':None},{'Origin':'https://evil.example'}, {'Sec-Fetch-Site':'cross-site'}):
+            self.assertEqual(self.request('POST',route,{'name':'failed'},headers)[0],403)
+        self.workflow.recover_launch.assert_not_called()
+        self.workflow.recover_launch.return_value={'name':'failed','status':'launch_failed','error':'Original error retained'}
+        status,raw,_=self.request('POST',route,{'name':'failed'})
+        self.assertEqual(status,200);self.assertEqual(json.loads(raw)['error'],'Original error retained')
+        self.workflow.recover_launch.assert_called_once_with(name='failed')
+        self.workflow.start.assert_not_called();self.workflow.resume.assert_not_called()
+
     def test_batch_preview_route_is_closed_authenticated_and_read_only(self):
         self.workflow.preview_batches.return_value={'kind':'local_scenario_batch_preview_v2',
             'schema_version':2,'science_calls':0,'execution_enabled':False}

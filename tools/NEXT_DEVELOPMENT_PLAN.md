@@ -6,9 +6,12 @@ longer-lived boundaries; [PROGRESS.md](../PROGRESS.md) records actual delivery.
 The source-angle feature is delivered through shared Check/Run. Co60 admission
 now reuses its audited saved threshold rejection, with original failures retained.
 Student software ZIPs exclude the retained website showcase directory.
-No further science campaign or automatic continuation is queued. The owner has
-approved adding the staged pulse-shape analysis plan below; this records future
-work, not authorization to start a new calculation or classifier campaign.
+Owner authorization, 2026-10-13: continue the executable development below
+without reminders or per-round approval, with automatic continuation in this
+chat. Complete one bounded, tested milestone at a time in audit-priority order,
+then the desktop improvements and PSD1/PSD2/PSD3. Reuse saved science; this does
+not authorize another radiation/field campaign, installations or missing-input
+experimental claims. Conditional work remains conditional.
 
 Owner clarification, 2026-10-13: this software is for desktop computers.
 Develop and accept the local application and its supporting website for desktop
@@ -97,7 +100,8 @@ Owner addition, 2026-10-10: the laboratory has further detectors, and both those
 and the detectors already represented on GitHub have measured energy spectra,
 I-V and C-V data. Add public student access after the owner supplies the complete
 measurement files/metadata. Earliest execution: next month (November 2026); this
-entry schedules no automatic work and does not start implementation/publication.
+entry remains deferred until November and complete owner inputs. The authorized
+continuation may then implement the agreed publication if both conditions hold.
 It is independent of source-angle delivery and of any new cryostat/solver admission.
 
 **Outcome:** students can find a real detector's measured spectrum, I-V and C-V
@@ -186,8 +190,10 @@ engineering example establishes the feature workflow, not classifier performance
 single peak ADC code, not waveform digitization. The original AK02/SAP22 measured
 pulse waveforms were not saved; energy spectra alone cannot validate pulse-shape
 classification. PSD1 may use a clearly labelled saved engineering example despite
-unresolved physical accuracy gates. PSD2/PSD3 remain later stages; no installation,
-backend migration, new science run or recurring continuation starts with this plan.
+unresolved physical accuracy gates. PSD2/PSD3 remain later stages. The owner's
+subsequent continuation authorization covers their bounded implementation and
+acceptance in order; no installation, backend migration or new radiation/field
+campaign is included.
 
 ## Software audit priorities: owner request, 2026-10-13
 
@@ -206,13 +212,13 @@ electronics/calibration/ADC, event census/provenance, source/model admission,
 Stop/Resume/process ownership, setup/archive/portability, saved publication,
 interface/navigation/accessibility, resources/tests and maintenance complexity.
 No radiation, field, drift or electronics calculation was repeated. No Run,
-Download or Save As was clicked. No application implementation is changed here.
+Download or Save As was clicked. The initial audit itself changed no application implementation; subsequent delivery is recorded in PROGRESS.md.
 Private evidence is retained in `.local/software-audit-v1/`; original science and
 public saved numerical/media/model files remain unchanged.
 
 | Order | Confirmed issue and evidence | Small useful correction and necessary acceptance |
 |---|---|---|
-| 1 / P1 / STRICT-01 | A batch launcher failure before worker creation becomes durable `dispatch_uncertain`, blocking later Control and ordinary CLI work across reopen. The existing failure inspector excludes batches. Actual controller/mock reproduction confirms the no-child case. | Record launch lifecycle and add a closed reconciliation under the shared lease for a proven not-launched attempt. Preserve job/plan/error/logs. `driver=null` alone is insufficient: post-spawn/callback/persistence races, unknown workers and partial scientific output remain blocking. Verify pre-spawn failure/reopen recovery plus refusal of those unsafe cases; retain sealed Stop/Resume behaviour. |
+| Delivered / STRICT-01 | Proven pre-Popen preparation failures now have an explicit supported recovery; old opaque/Popen-entered failures stay blocked. | Shared journal/lease/persistent reread and CLI name reservation preserve original evidence. Failed Resume needs the original sealed checkpoint; later CLI completion/new stop is settled by explicit Verify and a checked control authority. Initial159 regressions, overlapping72/45 correction runs, Node contracts, desktop fixture acceptance and three independent AI targeted rechecks passed. See current PROGRESS.md and `.local/strict01-recovery-v1/COMPLETE.json`. |
 | 2 / P2 / STRICT-02 | Am241/Ba133/Co60 histogram CSV/JSON calls a source-specific diagnostic-window denominator `per_emitted_660_663_keV_photon`. Actual saved outputs confirm the wrong name; the denominator arithmetic and raw counts are not thereby changed. | Add a versioned source-aware diagnostic-window normalization descriptor and correct new generic export/merge semantics. Keep original science bytes and legacy Cs137 contracts; expose historical aliases explicitly through checked interpretation if needed. Synthetic source/zero-denominator/rehashed-edit cases suffice; no physics rerun. |
 | 3 / P2 / STRICT-03 | Every2.5s poll replaces run/recovery controls even for unchanged state. Actual Chrome keyboard focus changed from Show stages to BODY without other page input. | Keep stable keyed controls or skip unchanged renders; preserve focus/caret and pending-action state when replacement is necessary. Check two unchanged polls, meaningful status changes, keyboard activation and stale-selection guards. No duplicated science or wrong-event result was demonstrated. |
 | 4 / P2 / UI-PRIMARY-CONTRAST | Enabled primary-button CSS uses ordinary16px white text on `#008a96`, contrast4.137284:1. The observed disabled button is exempt and is not the claimed failure. | Adjust only the enabled UI foreground/background to meet ordinary-text4.5:1; retain visible focus, disabled distinction and categorical detector colors. Check computed enabled styling and a focused real-browser view. See [W3C contrast criterion](https://www.w3.org/TR/WCAG22/#contrast-minimum). |

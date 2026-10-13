@@ -393,6 +393,7 @@ class Handler(BaseHTTPRequestHandler):
                              '/api/workflow/stop':({'name'},'stop'),
                              '/api/workflow/resume':({'name'},'resume'),
                              '/api/workflow/inspect-failure':({'name'},'inspect_failure'),
+                             '/api/workflow/recover-launch':({'name'},'recover_launch'),
                              '/api/workflow/continue-prefix':({'name','new_name'},'continue_prefix'),
                              '/api/workflow/finalize-results':({'name'},'finalize_results'),
                              '/api/workflow/verify':({'name'},'verify')}

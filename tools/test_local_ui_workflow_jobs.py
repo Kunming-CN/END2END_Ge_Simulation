@@ -83,7 +83,7 @@ class Jobs(unittest.TestCase):
         plan=self.batch_plan();self.controller._batch_resolver=lambda config,root:copy.deepcopy(plan)
         checked=self.controller.check_batches({'kind':'local_scenario_batch_request_v2','schema_version':2,'selection':plan['resolved']['selection']})
         with patch.object(self.controller,'_launch',return_value={}):self.controller.start(checked['check_id'])
-        job=self.controller._jobs[0];job['driver']={'pid':999998,'identity':'saved'}
+        job=self.controller._jobs[0];job['driver']={'pid':999998,'identity':'saved'};self.controller._persist()
         receipt={'status':'stopped','configuration_sha256':'original','resume_allowed':True,'verification':'sealed_prefix_verified'}
         with patch.object(J.B,'inspect',return_value=receipt),patch.object(W,'process_identity',return_value='unknown'),self.assertRaises(W.ControlError):self.controller.verify(job['name'])
         with patch.object(J.B,'inspect',return_value=receipt),patch.object(W,'process_identity',return_value=None):
@@ -197,7 +197,7 @@ class Jobs(unittest.TestCase):
     def test_verify_and_busy_keep_unknown_creation_identity_blocked(self):
         checked=self.controller.check(self.config)
         with patch.object(self.controller,'_launch',return_value={}):self.controller.start(checked['check_id'])
-        job=self.controller._jobs[0];job['driver']={'pid':999998,'identity':'saved-creation'}
+        job=self.controller._jobs[0];job['driver']={'pid':999998,'identity':'saved-creation'};self.controller._persist()
         receipt={'status':'completed','configuration_sha256':'original'}
         for identity in ('unknown','saved-creation'):
             with self.subTest(identity=identity),patch.object(W,'inspect',return_value=receipt),patch.object(W,'process_identity',return_value=identity),self.assertRaises(W.ControlError):self.controller.verify(job['name'])

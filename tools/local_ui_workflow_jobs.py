@@ -17,6 +17,7 @@ import batch_execution as B
 import workflow_inspection as I
 import workflow_recovery as R
 import workflow_finalize as F
+import workflow_launch as L
 import saved_waveforms
 import saved_focus_waveforms
 from saved_terminal import Verifier
@@ -47,7 +48,7 @@ class WorkflowController:
             seen=set()
             for job in self._jobs:
                 W.require(type(job) is dict and re.fullmatch('[0-9a-f]{32}',str(job.get('id',''))) and
-                          job.get('status') in (*ACTIVE,*W.TERMINAL,'stopped','inspected_failure','verified_transport') and
+                          job.get('status') in (*ACTIVE,*W.TERMINAL,'stopped','inspected_failure','verified_transport','launch_failed') and
                           job['id'] not in seen and type(job.get('created_utc')) is str and
                           job.get('mode') in ('run','resume','continue') and type(job.get('plan')) is dict and
                           job.get('name')==job['plan'].get('resolved',{}).get('selection',{}).get('name'),
@@ -61,15 +62,22 @@ class WorkflowController:
                           'Invalid saved workflow process identity.')
                 if job['status'] in ACTIVE:
                     job['status']='dispatch_uncertain'
-                    job['error']='A prior driver may have nested workers. Inspect existing receipts; no replacement will be launched.'
+                    if not job.get('launch_failure_sha256'):
+                        job['error']='A prior driver may have nested workers. Inspect existing receipts; no replacement will be launched.'
         else:self._jobs=[]
 
     def set_peer_busy(self,probe):self._peer_busy=probe
 
     def own_busy(self):
         with self._lock:
-            return (self._active is not None or any(j['status'] in ACTIVE or not W.identity_ended(j.get('driver')) for j in self._jobs) or
+            return (self._active is not None or any(j['status'] in ACTIVE or not W.identity_ended(j.get('driver')) or
+                    not self._valid_retirement(j) for j in self._jobs) or
                     (self._entry_thread!=threading.get_ident() and W.lease_busy(self.root)))
+
+    def _valid_retirement(self,job):
+        if job['status']!='launch_failed' and not job.get('launch_recovery_sha256'):return True
+        try:L.verify_retirement(job,self.root);return True
+        except (OSError,ValueError,KeyError,TypeError,ControlError):return False
 
     @contextmanager
     def scientific_entry(self):
@@ -182,6 +190,7 @@ class WorkflowController:
                  'created_utc':W.utc(),'driver':None,'mode':'run'}
             with W.execution_lease(self.root):
                 W.verify_dispatch_reservations(plan,self.root)
+                L.reserve(job,self.root)
                 self._jobs.append(job);self._persist();self._checks.pop(check_id)
             return self._launch(job)
 
@@ -191,13 +200,35 @@ class WorkflowController:
 
     def _spawn(self,argv,log,on_spawn):
         env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1')
-        with log.open('xb') as stream:
+        try:stream=log.open('xb')
+        except BaseException as error:
+            on_spawn.preparation_failed(error);raise
+        with stream:
+            # Persist uncertainty BEFORE entering Popen. Even Popen OSError can
+            # follow child creation; exception class is never nonlaunch proof.
+            on_spawn.before_popen()
             p=subprocess.Popen(argv,cwd=self.root,env=env,stdin=subprocess.DEVNULL,stdout=stream,stderr=subprocess.STDOUT,
                                shell=False,creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
+            on_spawn.popen_returned()
             on_spawn(p.pid,process_identity(p.pid));return p.wait()
 
     def _work(self,job):
+        launch_lease=None;launcher_entered=False;preparing=False
+        def release_launch_lease():
+            nonlocal launch_lease
+            if launch_lease is not None:
+                lease=launch_lease;launch_lease=None;lease.__exit__(None,None,None)
         try:
+            # Keep reconciliation/CLI excluded until the durable irreversible
+            # boundary, or until pre-Popen failure evidence is sealed. The child
+            # must be able to acquire this same lease for its identity handshake.
+            lease=W.execution_lease(self.root);lease.__enter__();launch_lease=lease
+            with self._lock:
+                saved=W.read(self._state_path)
+                current=next((j for j in saved['jobs'] if j.get('id')==job['id']),None)
+                W.require(current and current['status'] in ACTIVE and W.encoded(current)==W.encoded(job),
+                          'The durable launch reservation changed before worker preparation.')
+                L.event(job,self.root,'preparing');preparing=True
             plan_path=safe_path(self.root,STATE+'/workflow-plans/'+job['id']+'.json')
             if job['mode'] in ('run','continue'):W.write(plan_path,job['plan'],fresh=True)
             log=safe_path(self.root,STATE+'/workflow-logs/'+job['id']+'.log');log.parent.mkdir(parents=True,exist_ok=True)
@@ -209,7 +240,18 @@ class WorkflowController:
             def spawned(pid,identity):
                 with self._lock:
                     job.update(driver={'pid':pid,'identity':identity},status='running');self._persist()
+                release_launch_lease()
+            def before_popen():
+                L.event(job,self.root,'popen-entered')
+                release_launch_lease()
+            spawned.before_popen=before_popen
+            spawned.popen_returned=lambda:L.event(job,self.root,'popen-returned')
+            def preparation_failed(error):
+                with self._lock:L.failure(job,self.root,error,managed_launcher=True)
+            spawned.preparation_failed=preparation_failed
+            L.event(job,self.root,'launcher');launcher_entered=True
             code=self._launcher(argv,log,spawned)
+            release_launch_lease()
             with self._lock:
                 directory=W.run_path(job['name'],self.root)
                 receipt=W.read(directory/'run.json') if (directory/'run.json').exists() else None
@@ -222,8 +264,13 @@ class WorkflowController:
                     if not self._catalog_job(job) and not self._batch_job(job):I.capture(job,self.root)
                 self._persist()
         except BaseException as error:
-            with self._lock:job.update(status='dispatch_uncertain',error=str(error));self._persist()
+            with self._lock:
+                if preparing and not launcher_entered:
+                    try:L.failure(job,self.root,error)
+                    except (OSError,ValueError,KeyError,TypeError,ControlError):pass
+                job.update(status='dispatch_uncertain',error=str(error));self._persist()
         finally:
+            release_launch_lease()
             with self._lock:self._active=None
 
     def stop(self,name):
@@ -246,20 +293,38 @@ class WorkflowController:
             # New dispatch/log identity; selected settings are the preserved plan.
             with W.execution_lease(self.root):
                 W.verify_dispatch_reservations(job['plan'],self.root)
+                for key in ('launch_intent_sha256','launch_failure_sha256','launch_recovery_sha256','launch_verified_boundary'):
+                    job.pop(key,None)
                 job.update(id=secrets.token_hex(16),status='dispatch_uncertain',driver=None,mode='resume')
+                L.reserve(job,self.root)
                 self._persist()
             return self._launch(job)
 
     def verify(self,name):
         with self._lock:
-            job=next((j for j in self._jobs if j['name']==name),None);W.require(job is not None,'Unknown owned run.')
-            receipt=self._inspect(job)
-            W.require(receipt['configuration_sha256']==job['plan']['configuration_sha256'],'Saved run differs from owned plan.')
-            stopped=self._batch_job(job) and receipt.get('status')=='stopped' and receipt.get('resume_allowed') is True and receipt.get('verification')=='sealed_prefix_verified'
-            W.require(receipt['status'] in W.TERMINAL or stopped,'Run has no verified completion or saved batch boundary; incomplete evidence is retained.')
-            driver=job.get('driver')
-            W.require(W.identity_ended(driver),'Owned driver is active or its lifetime is unknown.')
-            job.update(status=receipt['status']);job.pop('error',None);self._persist();return self._view(job)
+            W.require(self._active is None and not self._peer_busy(),'Wait for active work before verifying saved execution.')
+            with W.execution_lease(self.root):
+                saved=W.read(self._state_path)
+                W.require(saved.get('kind')=='local_workflow_jobs_v1' and type(saved.get('jobs')) is list,
+                          'Saved launch reservations are unsupported.')
+                job=next((j for j in saved['jobs'] if j.get('name')==name),None);W.require(job is not None,'Unknown owned run.')
+                recovered=bool(job.get('launch_recovery_sha256'))
+                inspected_stamps=L.boundary_stamps(job,self.root)[1] if recovered else None
+                receipt=self._inspect(job)
+                W.require(receipt['configuration_sha256']==job['plan']['configuration_sha256'],'Saved run differs from owned plan.')
+                stopped=receipt.get('status')=='stopped' and (self._batch_job(job) and receipt.get('resume_allowed') is True and
+                        receipt.get('verification')=='sealed_prefix_verified' or recovered and not self._batch_job(job))
+                if stopped and not self._batch_job(job):W.verify_checkpoint(W.run_path(name,self.root),receipt,self.root)
+                W.require(receipt['status'] in W.TERMINAL or stopped,'Run has no verified completion or saved boundary; incomplete evidence is retained.')
+                W.require(W.identity_ended(job.get('driver')),'Owned driver is active or its lifetime is unknown.')
+                if recovered:
+                    W.require(job['mode']=='resume' and (stopped or receipt.get('verification')=='terminal_artifacts_verified'),
+                              'A recovered Resume needs independent saved-output verification.')
+                    L.known_ended(receipt.get('supervisor'))
+                    job['launch_verified_boundary']=L.supersede(job,receipt,self.root,inspected_stamps=inspected_stamps)
+                job.update(status=receipt['status']);job.pop('error',None)
+                self._jobs=saved['jobs'];self._persist()
+            return self._view(job)
 
     def inspect_failure(self,name):
         with self._lock:
@@ -270,6 +335,35 @@ class WorkflowController:
             with W.execution_lease(self.root):
                 stamp=I.inspect_failure(job,self.root)
                 job.update(status='inspected_failure',inspection_sha256=stamp);job.pop('error',None);self._persist()
+            return self._view(job)
+
+    def recover_launch(self,name):
+        with self._lock:
+            W.require(self._active is None and not self._peer_busy(),
+                      'Wait for active work before checking a not-launched failure.')
+            with W.execution_lease(self.root):
+                # Reload under the shared lease: another reopened controller may
+                # already have settled this attempt. Never overwrite its state.
+                saved=W.read(self._state_path)
+                W.require(saved.get('kind')=='local_workflow_jobs_v1' and type(saved.get('jobs')) is list,
+                          'Saved launch reservations are unsupported.')
+                job=next((j for j in saved['jobs'] if j.get('name')==name),None)
+                W.require(job,'Unknown owned run.')
+                if job.get('launch_recovery_sha256'):
+                    L.verify_retirement(job,self.root)
+                else:
+                    W.require(job['status']=='dispatch_uncertain','Only a proved not-launched failure can be recovered.')
+                    W.verify_dispatch_reservations(None,self.root,_not_launched_id=job['id'])
+                    if job['mode']=='resume':
+                        receipt=self._inspect(job)
+                        W.require(receipt.get('status')=='stopped' and receipt.get('configuration_sha256')==job['plan']['configuration_sha256'] and
+                                  (not self._batch_job(job) or receipt.get('resume_allowed') is True and receipt.get('verification')=='sealed_prefix_verified'),
+                                  'The unchanged stopped boundary is not independently verified.')
+                        if not self._batch_job(job):W.verify_checkpoint(W.run_path(name,self.root),receipt,self.root)
+                    stamp,status=L.retire(job,self.root)
+                    job.update(status=status,launch_recovery_sha256=stamp)
+                    self._jobs=saved['jobs'];self._persist()
+                self._jobs=saved['jobs']
             return self._view(job)
 
     def finalize_results(self,name):
@@ -302,6 +396,7 @@ class WorkflowController:
                 job={'id':secrets.token_hex(16),'name':new_name,'status':'dispatch_uncertain','plan':plan,
                      'created_utc':W.utc(),'driver':None,'mode':'continue','transport_parent':name}
                 parent.update(status='verified_transport',prefix_authority_sha256=stamp);parent.pop('error',None)
+                L.reserve(job,self.root)
                 self._jobs.append(job);self._persist()
             return self._launch(job)
 
@@ -317,6 +412,11 @@ class WorkflowController:
         out['can_inspect_failure']=not self._catalog_job(job) and not self._batch_job(job)
         out['can_continue_prefix']=out['can_inspect_failure'] and R.eligible_name(job['name']) and job['status']=='dispatch_uncertain'
         out['can_finalize_results']=False
+        out['can_recover_launch']=False
+        out['can_verify_saved_execution']=job['mode']=='resume' and bool(job.get('launch_recovery_sha256')) and self._active is None
+        if job['status']=='dispatch_uncertain' and self._active is None and job.get('launch_failure_sha256'):
+            try:L.verify_failure(job,self.root,_recovered=(L.directory(job,self.root)/'recovery.json').exists());out['can_recover_launch']=True
+            except (OSError,ValueError,KeyError,TypeError,ControlError):pass
         out['logs']=[]
         if self._batch_job(job):out['batching']=copy.deepcopy(job['plan']['resolved']['batching'])
         directory=W.run_path(job['name'],self.root)

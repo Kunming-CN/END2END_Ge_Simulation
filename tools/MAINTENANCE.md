@@ -31,6 +31,14 @@ transforms are recorded in the stream manifest; they differ from normalized
 detector-local fields. Viewing is read-only and download requires an explicit
 user action. Do not add a second exporter or mutate scientific records for labels.
 
+Control launch-failure evidence belongs to `tools/workflow_launch.py` and
+`local_ui_workflow_jobs.py`, under `.local/local-control-v1/workflow-launches/`.
+Recovery requires a sealed pre-Popen failure; old opaque failures remain blocked.
+Keep the shared CLI reservation checks aligned with Control. Preserve original
+intent, failure and recovery records when a later independently verified receipt
+supersedes the restored stopped boundary. These are control records, not science
+completion or calibration evidence.
+
 ## Source ownership
 
 | Area | Edit these sources |
