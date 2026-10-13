@@ -3,6 +3,14 @@
 Updated: 2026-10-13. Read this before starting work.
 Immutable prior Co60/software delivery and retained earlier history:
 [82824413](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/828244131be24c663eae4f646b181ae0fdf2f619/PROGRESS.md).
+Immutable initial software audit:
+[28472988](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/2847298875e6407bd2607f7ba93bf5558af0ea67/PROGRESS.md).
+
+Owner clarification, 2026-10-13: the software and supporting interface are for
+desktop computers. Mobile adaptation and phone acceptance are removed from the
+active plan. Preserve earlier phone-width audit evidence as history, not a future
+improvement requirement or gate. Desktop keyboard/mouse, plot readability and
+workflow clarity remain in scope.
 
 ## Owner-requested software audit and pulse-shape plan
 
@@ -43,10 +51,10 @@ Confirmed audit priorities, still unimplemented:
 5. UI-ANGLE-READINESS/P3: environment-check label says preview/execution pending
    while the current angular admission note/capability correctly permits Check/Run.
 
-Measured interface improvements: narrow plot axes, a long Control form and better
-signal/status hints in primary selection. At320px a251px plot scales560-unit SVG
-text; at390px Check is about2061px down the initial form. These are usability
-improvements, not evidence of changed counts, lost science or normative font limits.
+Active interface improvements: clear desktop blocking reasons/next actions,
+selected-run/settings context and pulse/status hints in primary selection.
+Earlier320/390px plot/form observations are historical only; do not carry them
+into the implementation queue or treat them as measured desktop defects.
 Root checked public home/results/teaching/guide/geometry/stage-spectra and local
 model eligibility, environment/invalid-input prompts, saved zero-event browsing
 and keyboard focus. Scoped320/390px pages had no page-level horizontal overflow.
@@ -59,7 +67,7 @@ preserved blank Control capture (not visual acceptance evidence). The initial
 socket-restricted browser failure and successful protected loopback retry remain
 recorded; no security/browser settings changed. Original science, frozen code,
 models and generated public files remain unchanged. No full suite, physics,
-fresh-machine, screen-reader or real-phone acceptance is claimed.
+fresh-machine or screen-reader acceptance is claimed. Phone acceptance is out of scope.
 
 The new terminal COMPLETE.json must record final documentation checks/source
 preservation, normal Git synchronization and owned lease/server closure. Do not

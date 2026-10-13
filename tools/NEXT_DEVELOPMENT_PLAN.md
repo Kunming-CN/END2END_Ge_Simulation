@@ -10,6 +10,12 @@ No further science campaign or automatic continuation is queued. The owner has
 approved adding the staged pulse-shape analysis plan below; this records future
 work, not authorization to start a new calculation or classifier campaign.
 
+Owner clarification, 2026-10-13: this software is for desktop computers.
+Develop and accept the local application and its supporting website for desktop
+use, including keyboard/mouse operation, readable plots and desktop window sizes.
+Mobile adaptation and phone acceptance are out of scope. Earlier320/390px audit
+observations remain historical evidence, not an active improvement queue or gate.
+
 ## Outcome and verified starting point
 
 A student selects a compatible detector and admitted source in the existing
@@ -81,7 +87,7 @@ These are options or response policies, not mandatory stages to complete first.
 | Trigger | Small useful action | Acceptance and stop |
 |---|---|---|
 | Real student cannot set up, run, stop/resume or find data | Reproduce the specific blocker through the existing dependency check, Control and guide; use saved cases first. A true core blocker takes priority over a new feature. | Verified fix for that report; no speculative setup rewrite, new environment or second-PC gate. |
-| An affected page/control or a new concrete display defect | Reuse existing exact-bin, selected-identity, expected-model, original-byte and route tests. The SAP22-removal/rehash regression already exists. Add only a missing regression tied to the defect; inspect affected plots on desktop/narrow layout and live after publishing. | Correct display with data/units/populations unchanged, no repeated 105-page or physics campaign. |
+| An affected page/control or a new concrete display defect | Reuse existing exact-bin, selected-identity, expected-model, original-byte and route tests. The SAP22-removal/rehash regression already exists. Add only a missing regression tied to the defect; inspect affected plots in desktop windows and live after publishing. | Correct display with data/units/populations unchanged, no repeated 105-page or physics campaign. |
 | Owner requests another isotope | Reuse the shared source assets and inspect a bounded trial's identity/timing/energy and processing evidence. Co60 is already admitted through pinned below-threshold evidence; do not repeat its original calculation. | Retain rejected events and strict native/saturation/provenance checks. No seed/threshold retuning or retry-until-pass policy. |
 | Measured run/UI delay blocks actual use | Profile the slow stage and use existing preparation/lazy access before changing concurrency. Parallel independent runs only with measured memory headroom, separate roots/seeds and no competing writers. | Measured improvement without provenance/numeric changes; no promised speedup or parallel field solves without headroom. |
 
@@ -121,7 +127,7 @@ and retains the original data. Do not silently alter curves or retune simulation
 
 **First acceptance and stop:** begin with one complete detector dataset containing
 all three measurements; check plotted numbers/axis units, identity, conditions,
-original-file access and desktop/narrow/live display through existing publication
+original-file access and desktop/live display through existing publication
 checks. Then register further complete datasets through that same template, with
 only their data/metadata checks, not new code/adapters/reviews per specimen. Stop
 at readable, traceable publication of the supplied agreed batch. No new Geant4/SSD
@@ -190,7 +196,8 @@ importance-ranked improvements, explicitly including the interface. Three new
 Sol6.1/Ultra AI agents ran independent initial reviews, then exchanged concrete
 findings; a new third reviewer adjudicated details and direction. Root inspected
 the actual public site and protected local Control in Chrome, including keyboard
-focus,390px Control and320px public pages. Source/mock checks and retained
+focus and historical390px Control/320px public-page observations. The owner has
+removed phone adaptation/acceptance from subsequent work. Source/mock checks and retained
 artifacts support the audit; it is not exhaustive correctness, security, fresh
 installation, experimental or numerical-convergence certification.
 
@@ -211,16 +218,14 @@ public saved numerical/media/model files remain unchanged.
 | 4 / P2 / UI-PRIMARY-CONTRAST | Enabled primary-button CSS uses ordinary16px white text on `#008a96`, contrast4.137284:1. The observed disabled button is exempt and is not the claimed failure. | Adjust only the enabled UI foreground/background to meet ordinary-text4.5:1; retain visible focus, disabled distinction and categorical detector colors. Check computed enabled styling and a focused real-browser view. See [W3C contrast criterion](https://www.w3.org/TR/WCAG22/#contrast-minimum). |
 | 5 / P3 / UI-ANGLE-READINESS | Check environment still labels the angular exporter "preview; execution pending" while its note and current capability state correctly allow angular execution after Check. | Use neutral file-readiness wording or one flag-derived status. Check accepted/pending source states and preserve backend admission; this is stale wording, not an angular-geometry failure. |
 
-**Measured interface improvements after core fixes:** at320px the teaching plot
-is251px wide with a560-unit SVG viewBox;16-unit tick text scales to about7.17CSSpx.
-Improve narrow-screen axes/units or provide an explicit readable enlarged view,
-keeping every numerical value and current selection. This is a readability
-improvement, not a claimed normative minimum-font violation. At390px Control's
-Check action appears about2061px down the initial form; collapse secondary prose
-or retain a compact action/status summary without hiding effective settings or
-scientific limits. Bare numeric primary options can gain recorded pulse/status
-annotations or an explicit signal-finding filter while retaining the full census.
-These are bounded interface improvements, not a new frontend or general redesign.
+**Desktop interface improvements after core fixes:** improve visible blocking
+reasons and specific next actions, keep the selected run and effective settings
+clear, and add recorded pulse/status hints or an explicit signal-finding filter
+to bare numeric primary options while retaining the full census. Assess plot
+readability and action placement in actual desktop windows; do not transfer the
+earlier phone-width measurements into desktop defect claims. Keep the existing
+frontend and retained scientific limits. Phone layout/axes/form-density work is
+removed from the active plan; its audit records remain historical.
 
 **Later conditional engineering gaps:** add measured resource/storage preflight
 when a real run requires it; preserve lazy serial batching. A small portable
