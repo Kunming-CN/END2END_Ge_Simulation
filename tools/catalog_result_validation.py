@@ -22,6 +22,13 @@ def response_census(directory,resolved,report):
         and math.isclose(cal['volts_per_keV'],cal['peak_V']/500,rel_tol=1e-12),'Independent signed injection calibration is invalid.')
     rows=iter(json_lines(out/'scalars.jsonl'));sentinel=object()
     counts={key:0 for key in ('initial_primaries','initial_decays','zero_deposit_primaries','groups','accepted','rejected','native_failed_groups','readout_rejected','line_photons','decay_photons')}
+    named=None
+    selected=resolved['selection'].get('source')
+    if selected not in (None,W.CS,W.GAMMA):
+        import histogram_normalization as H
+        contract=resolved.get('source_contract',resolved.get('decay_source_contract'))
+        normal=H.descriptor(selected,contract)
+        named={line['name']:0 for line in normal['diagnostic_lines']}
     for eid,(source,truth) in enumerate(itertools.zip_longest(source_events(base),json_lines(out/'truth.jsonl'),fillvalue=sentinel)):
         W.require(source is not sentinel and truth is not sentinel and source==truth,'Native result changed or omitted original source truth.')
         W.require(type(source['event_id']) is int and source['event_id']==source['global_decay_id']==eid,'Source primary identities are not complete and ordered.')
@@ -36,6 +43,7 @@ def response_census(directory,resolved,report):
             and primary['material_energy_keV']==source['material_energy_keV'],'Response primary raw identity or deposition/photon census changed.')
         counts['initial_primaries']+=1;counts['initial_decays']+=1;counts['zero_deposit_primaries']+=zero
         counts['line_photons']+=source['line_photon_count'];counts['decay_photons']+=source['decay_photon_count']
+        if named is not None:H.add_diagnostic_event(named,source)
         byrow={step['raw_row_index']:step for step in source['steps']}
         for group in source['pulse_groups']:
             pulse=next(rows,sentinel);W.require(pulse is not sentinel and pulse['record_kind']=='pulse'
@@ -54,4 +62,6 @@ def response_census(directory,resolved,report):
     W.require(next(rows,sentinel) is sentinel,'Unexpected or duplicated response scalar record.')
     W.require(counts['initial_primaries']==resolved['selection']['primary_count'] and all(type(report['counts'][key]) is int and report['counts'][key]==value for key,value in counts.items()),
         'Response summary disagrees with independent complete primary/group census.')
+    if named is not None:
+        H.check_diagnostic_counts(named,report['counts']);counts['line_photon_counts']=named
     return counts

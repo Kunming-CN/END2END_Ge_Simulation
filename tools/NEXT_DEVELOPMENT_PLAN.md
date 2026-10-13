@@ -219,7 +219,7 @@ public saved numerical/media/model files remain unchanged.
 | Order | Confirmed issue and evidence | Small useful correction and necessary acceptance |
 |---|---|---|
 | Delivered / STRICT-01 | Proven pre-Popen preparation failures now have an explicit supported recovery; old opaque/Popen-entered failures stay blocked. | Shared journal/lease/persistent reread and CLI name reservation preserve original evidence. Failed Resume needs the original sealed checkpoint; later CLI completion/new stop is settled by explicit Verify and a checked control authority. Initial159 regressions, overlapping72/45 correction runs, Node contracts, desktop fixture acceptance and three independent AI targeted rechecks passed. See current PROGRESS.md and `.local/strict01-recovery-v1/COMPLETE.json`. |
-| 2 / P2 / STRICT-02 | Am241/Ba133/Co60 histogram CSV/JSON calls a source-specific diagnostic-window denominator `per_emitted_660_663_keV_photon`. Actual saved outputs confirm the wrong name; the denominator arithmetic and raw counts are not thereby changed. | Add a versioned source-aware diagnostic-window normalization descriptor and correct new generic export/merge semantics. Keep original science bytes and legacy Cs137 contracts; expose historical aliases explicitly through checked interpretation if needed. Synthetic source/zero-denominator/rehashed-edit cases suffice; no physics rerun. |
+| Delivered / STRICT-02 | New Am241/Ba133/Co60 JSON schema2/descriptor1 and CSV use the selected source's closed diagnostic windows and `per_emitted_diagnostic_window_photon`. Historical aliases/bytes and Cs137/gamma contracts remain. | Shared export/merge and actual validators check source/window/CSV semantics and truth-derived named counts. Catalog accounting, active-validator wiring and report-only version downgrade findings were corrected. Initial47 Python/84 actual exporter checks; affected10/7 overlapping Python runs,61 actual catalog checks,7 cross-language views and three scoped AI final rechecks passed. Reuse `.local/strict02-normalization-v1/COMPLETE.json`; no physics rerun. |
 | 3 / P2 / STRICT-03 | Every2.5s poll replaces run/recovery controls even for unchanged state. Actual Chrome keyboard focus changed from Show stages to BODY without other page input. | Keep stable keyed controls or skip unchanged renders; preserve focus/caret and pending-action state when replacement is necessary. Check two unchanged polls, meaningful status changes, keyboard activation and stale-selection guards. No duplicated science or wrong-event result was demonstrated. |
 | 4 / P2 / UI-PRIMARY-CONTRAST | Enabled primary-button CSS uses ordinary16px white text on `#008a96`, contrast4.137284:1. The observed disabled button is exempt and is not the claimed failure. | Adjust only the enabled UI foreground/background to meet ordinary-text4.5:1; retain visible focus, disabled distinction and categorical detector colors. Check computed enabled styling and a focused real-browser view. See [W3C contrast criterion](https://www.w3.org/TR/WCAG22/#contrast-minimum). |
 | 5 / P3 / UI-ANGLE-READINESS | Check environment still labels the angular exporter "preview; execution pending" while its note and current capability state correctly allow angular execution after Check. | Use neutral file-readiness wording or one flag-derived status. Check accepted/pending source states and preserve backend admission; this is stale wording, not an angular-geometry failure. |
@@ -241,10 +241,11 @@ feedback through the existing guide. Physical CCE/noise/experimental agreement,
 missing measured waveforms and independent off-device backup verification remain
 declared limits, not newly proven software defects or prerequisites for PSD1.
 
-The next bounded implementation is STRICT-01. This audit only records issues and
-acceptance; it does not implement fixes, resume automation or start PSD/science.
-Use the ranked list for subsequent work and review only verified corrections or
-newly affected risks, without repeating this full audit.
+STRICT-01 and STRICT-02 are delivered; the next bounded implementation is
+STRICT-03. The initial audit remains historical evidence. Authorized automatic
+continuation implements the remaining ranked desktop corrections and then PSD
+stages; review only verified corrections or newly affected risks, without
+repeating the full audit or completed science.
 
 ## Removed prerequisites and deferred research
 
@@ -267,7 +268,9 @@ compute bounds and stop before each implementation. Preserve unique failures,
 scientific inputs and original source bindings. Measure science separately from
 coding/review/publication time; do not invent an ETA.
 
-Automatic heartbeat remains PAUSED. This revision only updates the plan for owner
-assessment. Later work starts from current PROGRESS, actual Git/remote/processes,
-terminal receipts and the owned lease; never replay completed work after a chat
-failure. Existing publication/capability checks remain mandatory where applicable.
+Automatic heartbeat is ACTIVE; this STRICT-02 round received its actual trigger
+on2026-10-13. Subsequent work starts from current PROGRESS, actual Git/remote/
+processes, terminal receipts and the owned lease; never replay completed work
+after a chat failure. Existing publication/capability checks remain mandatory
+where applicable. Stop extending scope when all executable authorized work is
+complete; retain missing-input and physical-validation conditions explicitly.

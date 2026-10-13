@@ -137,7 +137,39 @@ function group_hist!(hist,edep,q,r,eion)
         addhist!(hist,label,value)
     end
 end
-function export_hist(out,hist,counts,cal)
+function histogram_exact(a,b)
+    if a isa AbstractDict && b isa AbstractDict
+        return Set(keys(a))==Set(keys(b)) && all(histogram_exact(a[k],b[k]) for k in keys(a))
+    elseif a isa AbstractVector && b isa AbstractVector
+        return length(a)==length(b) && all(histogram_exact(x,y) for (x,y) in zip(a,b))
+    end
+    typeof(a)==typeof(b) && isequal(a,b)
+end
+function histogram_normalization(source_id,source_contract)
+    source_id in (nothing,"cs137_point_decay_v1","mono_gamma_662_axis_v1") && return nothing
+    path=joinpath(Q.ROOT,"scenarios","source-presets.json")
+    presets=filter(p->p["id"]==source_id,JSON.parsefile(path)["presets"])
+    R.check(length(presets)==1,"Unknown histogram source")
+    p=only(presets)
+    R.check(p["adapter"]=="shared_decay_source_v1" && histogram_exact(source_contract,p),
+        "Histogram source contract differs from the selected registry preset")
+    Dict("kind"=>"source_diagnostic_photon_normalization_v1","schema_version"=>1,
+        "source_id"=>source_id,"isotope"=>p["isotope"],"source_registry_ref"=>"scenarios/source-presets.json",
+        "source_registry_sha256"=>E.hashfile(path),"diagnostic_lines"=>deepcopy(p["diagnostic_lines"]),
+        "window_interval"=>"closed [lower, upper] keV","aggregation"=>"sum_of_named_window_photon_counts",
+        "denominator_count_key"=>"line_photons","value_key"=>"per_emitted_diagnostic_window_photon",
+        "qualification"=>"diagnostic photon counts only; not branching intensity, activity or efficiency")
+end
+function export_hist(out,hist,counts,cal;source_id=nothing,source_contract=nothing)
+    normalization=histogram_normalization(source_id,source_contract)
+    photon_key=normalization===nothing ? "per_emitted_660_663_keV_photon" : normalization["value_key"]
+    if normalization!==nothing
+        lines=get(counts,"line_photon_counts",nothing)
+        R.check(lines isa AbstractDict && Set(keys(lines))==Set(x["name"] for x in normalization["diagnostic_lines"]) &&
+            all(x->x isa Integer && !(x isa Bool) && x>=0,values(lines)) &&
+            counts["line_photons"] isa Integer && !(counts["line_photons"] isa Bool) && counts["line_photons"]==sum(values(lines)),
+            "Diagnostic photon denominator differs from named-window counts")
+    end
     rows=Any[]
     for stage in sort!(collect(keys(hist))), bin in sort!(collect(keys(hist[stage])))
         n=hist[stage][bin]
@@ -145,13 +177,15 @@ function export_hist(out,hist,counts,cal)
             "upper_keV"=>bin==1000 ? nothing : -1000+5(bin+1),"count"=>n,
             "per_initial_primary"=>n/counts["initial_primaries"],
             "per_initial_decay"=>counts["initial_decays"]===nothing ? nothing : n/counts["initial_decays"],
-            "per_emitted_660_663_keV_photon"=>counts["line_photons"]===nothing || counts["line_photons"]==0 ? nothing : n/counts["line_photons"],
+            photon_key=>counts["line_photons"]===nothing || counts["line_photons"]==0 ? nothing : n/counts["line_photons"],
             "per_accepted_pulse"=>counts["accepted"]==0 ? nothing : n/counts["accepted"]))
     end
-    E.save(joinpath(out,"histograms.json"),Dict("bins"=>rows,"width_keV"=>5,"normalization_denominators"=>counts,
-        "note"=>"Raw stage counts with distinct denominators, not efficiencies or physical resolution; Erec contains accepted pulses only."))
+    document=Dict{String,Any}("bins"=>rows,"width_keV"=>5,"normalization_denominators"=>counts,
+        "note"=>"Raw stage counts with distinct denominators, not efficiencies or physical resolution; Erec contains accepted pulses only.")
+    normalization!==nothing && merge!(document,Dict("schema_version"=>2,"normalization"=>normalization))
+    E.save(joinpath(out,"histograms.json"),document)
     open(joinpath(out,"histograms.csv"),"w") do io
-        keys=("stage","bin","lower_keV","upper_keV","count","per_initial_primary","per_initial_decay","per_emitted_660_663_keV_photon","per_accepted_pulse")
+        keys=("stage","bin","lower_keV","upper_keV","count","per_initial_primary","per_initial_decay",photon_key,"per_accepted_pulse")
         println(io,join(keys,',')); for r in rows; println(io,join([E.csvcell(r[k]) for k in keys],',')); end
     end
 end

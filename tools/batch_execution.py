@@ -8,6 +8,7 @@ import copy, csv, hashlib, html, itertools, json, math, os, re, subprocess, sys,
 from pathlib import Path
 import scenario_workflow as W
 import workflow_batches as B
+import histogram_normalization as H
 from local_ui_jobs import ControlError, process_identity, safe_path
 
 CHECKED_KIND='local_scenario_batch_execution_v3'
@@ -21,7 +22,7 @@ TERMINAL=W.TERMINAL
 STAGES=('geometry','native_preparation','radiation','event_ledger','response','results')
 SHARED=('geometry','native_preparation')
 BATCH_STAGES=('radiation','event_ledger','response')
-NEW_SOURCES=('tools/batch_execution.py','tools/workflow_batches.py','transport/batch_source.py','simulation/batch_native_response.jl','simulation/batch_decay_stream.jl','simulation/batch_native_contract.jl','simulation/catalog_native_model.jl','simulation/catalog_decay_stream.jl','simulation/catalog_native_response.jl')
+NEW_SOURCES=('tools/batch_execution.py','tools/workflow_batches.py','tools/histogram_normalization.py','tools/catalog_result_validation.py','transport/batch_source.py','simulation/batch_native_response.jl','simulation/batch_decay_stream.jl','simulation/batch_native_contract.jl','simulation/catalog_native_model.jl','simulation/catalog_decay_stream.jl','simulation/catalog_native_response.jl')
 RULES={'contract':'exact_count_serial_parent_v3','native_seed_rule':'SHA256(seed/global_initial_id/raw_row_index/parcel_index); native temporary event_id only',
     'geometry_preparations':1,'field_solutions':1,'independent_calibrations':1,
     'stop_rule':'sealed_stage_or_batch_boundary','resume_rule':'fully_checked_terminal_stage_receipts_only',
@@ -326,6 +327,11 @@ def validate_output(stage,plan,directory,batch,result):
         from catalog_result_validation import response_census
         bounded=copy.deepcopy(plan['resolved']);bounded['selection']['primary_count']=batch['primary_count']
         response_census(batch_directory(directory,batch['batch_index']),bounded,result)
+        source,contract=histogram_source(plan)
+        if source!=W.CS:
+            require(result.get('source_id')==source and B.typed_equal(result.get('source_contract'),contract),
+                'Batch response histogram source differs from the selected source.')
+            H.validate(W.read(base/'histograms.json'),counts,source,contract,result['source_sha256'],csv_path=base/'histograms.csv')
         for file in ('truth.jsonl','scalars.jsonl','traces.jsonl','endpoints.jsonl'):
             for row in stream_jsonl(base/file):
                 local=row.get('local_initial_id')
@@ -338,7 +344,11 @@ def validate_output(stage,plan,directory,batch,result):
         prefix=checked_prefix(plan,directory)
         for key,value in prefix.items():require(result.get(key)==value,'Result count/chain changed.')
         for ref,digest in result['artifacts'].items():require(W.sha(safe_path(base,ref))==digest,'Result artifact changed.')
-        require(B.typed_equal(W.read(base/'histograms.json'),aggregate_histograms(plan,directory,prefix['counts'])),'Merged histogram changed its fixed bins or accounting.')
+        h=W.read(base/'histograms.json');source,contract=histogram_source(plan)
+        interpreted=H.validate(h,prefix['counts'],source,contract,plan['resolved']['source_sha256'],merged=True,csv_path=base/'histograms.csv')
+        legacy=source!=W.CS and interpreted['histogram_schema_version']==1
+        require(B.typed_equal(h,aggregate_histograms(plan,directory,prefix['counts'],legacy_output=legacy)),
+            'Merged histogram changed its fixed bins or accounting.')
 
 def completed_result(stage,plan,directory,batch,root):
     """Recover a worker's checked terminal bytes after controller interruption."""
@@ -394,38 +404,49 @@ def checked_prefix(plan,directory):
         chain=W.digest({'previous':chain,'batch_index':batch['batch_index'],'batch_sha256':W.sha(path)});completed+=1;primaries+=batch['primary_count']
     return {'completed_batch_count':completed,'completed_primary_count':primaries,'counts':counts,'batch_receipt_chain_sha256':chain}
 
-HISTOGRAM_STAGES={'deposited_per_decay','deposited_per_group','native_terminal_charge','window_charge','preamp_charge_equivalent','analog_shaped_equivalent','accepted_peak_ADC'}
-HISTOGRAM_NOTE='Raw stage counts with distinct denominators, not efficiencies or physical resolution; Erec contains accepted pulses only.'
-def histogram_row(stage,bin,count,counts):
-    return {'stage':stage,'bin':bin,'lower_keV':None if bin==-1 else -1000+5*bin,
-        'upper_keV':None if bin==1000 else -1000+5*(bin+1),'count':count,
-        'per_initial_primary':count/counts['initial_primaries'],
-        'per_initial_decay':None if counts.get('initial_decays') is None else count/counts['initial_decays'],
-        'per_emitted_660_663_keV_photon':None if not counts.get('line_photons') else count/counts['line_photons'],
-        'per_accepted_pulse':None if not counts['accepted'] else count/counts['accepted']}
+HISTOGRAM_STAGES=H.STAGES
+HISTOGRAM_NOTE=H.NOTE
+def histogram_row(stage,bin,count,counts,value_key=H.LEGACY_KEY):
+    return H.row(stage,bin,count,counts,value_key)
 
-def aggregate_histograms(plan,directory,counts):
+def histogram_source(plan):
+    r=plan['resolved'];source=r['selection']['source']
+    if source==W.CS:return source,None
+    contract=r.get('decay_source_contract',r.get('source_contract'))
+    require(contract is not None,'Generic histogram has no selected source contract.')
+    return source,contract
+
+def aggregate_histograms(plan,directory,counts,*,legacy_output=False):
+    source,contract=histogram_source(plan);normal=H.descriptor(source,contract)
+    require(not legacy_output or H.legacy_authority(plan['resolved']['source_sha256'],merged=True),
+        'Historical merge interpretation requires its known original exporter.')
+    value_key=H.DIAGNOSTIC_KEY if normal is not None and not legacy_output else H.LEGACY_KEY
     totals={}
     for batch in iter_batches(plan['resolved']['batching']):
         base=batch_directory(directory,batch['batch_index']);require((base/'batch-complete.json').is_file(),'Histogram merge requires every terminal batch.')
         report=W.read(base/'response/run.json');h=W.read(base/'response/histograms.json')
-        require(h['width_keV']==5 and h['normalization_denominators']==report['counts'],'Histogram bins/denominators changed.')
-        seen=set()
+        require(report.get('source_id',source)==source and
+            (normal is None or B.typed_equal(report.get('source_contract'),contract)),
+            'Batch histogram source differs from the selected source.')
+        H.validate(h,report['counts'],source,contract,report.get('source_sha256'),
+            csv_path=base/'response/histograms.csv' if normal is not None or (base/'response/histograms.csv').exists() else None)
         for row in h['bins']:
             stage,bin,n=row['stage'],row['bin'],row['count'];key=(stage,bin)
-            require(stage in HISTOGRAM_STAGES and type(bin) is int and -1<=bin<=1000 and type(n) is int and n>0 and key not in seen,'Invalid/repeated histogram bin.')
-            require(row==histogram_row(stage,bin,n,report['counts']),'Histogram boundaries or normalized values changed.')
-            seen.add(key);totals[key]=totals.get(key,0)+n
-    return {'bins':[histogram_row(stage,bin,n,counts) for (stage,bin),n in sorted(totals.items())],
+            totals[key]=totals.get(key,0)+n
+    result={'bins':[histogram_row(stage,bin,n,counts,value_key) for (stage,bin),n in sorted(totals.items())],
         'width_keV':5,'normalization_denominators':counts,'note':HISTOGRAM_NOTE}
+    H.attach(result,None if legacy_output else normal)
+    H.validate(result,counts,source,contract,plan['resolved']['source_sha256'],merged=True)
+    return result
 
 def export_results(plan,directory):
     prefix=checked_prefix(plan,directory);s=plan['resolved']['selection'];base=Path(directory)/'results';base.mkdir(exist_ok=False)
     merged=aggregate_histograms(plan,directory,prefix['counts']);W.write(base/'histograms.json',merged,fresh=True)
-    fields=('stage','bin','lower_keV','upper_keV','count','per_initial_primary','per_initial_decay','per_emitted_660_663_keV_photon','per_accepted_pulse')
+    fields=H.fields(merged.get('normalization',{}).get('value_key',H.LEGACY_KEY))
     with (base/'histograms.csv').open('x',encoding='utf-8',newline='') as stream:
         writer=csv.DictWriter(stream,fieldnames=fields);writer.writeheader();writer.writerows(merged['bins'])
-    (base/'index.html').write_text('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Batch results</title><h1>'+html.escape(s['detector'])+' · '+html.escape(s['source'])+'</h1><p>'+str(s['primary_count'])+' original primaries retained, including zeros and failures. Native signed signals and independent injection calibration remain separate from radiation truth.</p><p>Engineering example; no physical resolution, calibrated CCE or experimental fit.</p><p><a href="results.json">Settings and counts</a> · <a href="histograms.csv">Merged stage histograms</a></p><p>Original complete event ledgers and signed signals remain in each sealed batch folder.</p></html>',encoding='utf-8')
+    photon_note='' if 'normalization' not in merged else '<p>Photon normalization uses the sum of counts in the selected source\'s closed diagnostic windows, not a decay branching intensity or efficiency. <a href="histograms.json">Source and exact windows (JSON)</a>.</p>'
+    (base/'index.html').write_text('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Batch results</title><h1>'+html.escape(s['detector'])+' · '+html.escape(s['source'])+'</h1><p>'+str(s['primary_count'])+' original primaries retained, including zeros and failures. Native signed signals and independent injection calibration remain separate from radiation truth.</p><p>Engineering example; no physical resolution, calibrated CCE or experimental fit.</p><p><a href="results.json">Settings and counts</a> · <a href="histograms.csv">Merged stage histograms</a></p>'+photon_note+'<p>Original complete event ledgers and signed signals remain in each sealed batch folder.</p></html>',encoding='utf-8')
     result={'kind':'batch_parent_results_v1','status':'complete','configuration_sha256':plan['configuration_sha256'],**prefix,
         'artifacts':{name:W.sha(base/name) for name in ('histograms.json','histograms.csv','index.html')}}
     W.write(base/'results.json',result,fresh=True);return result
@@ -519,6 +540,10 @@ def inspect(name,root=W.ROOT):
         require(prefix['completed_batch_count']==plan['resolved']['batching']['batch_count'] and prefix['completed_primary_count']==plan['resolved']['selection']['primary_count'],'Incomplete parent count.')
         W.verify_inventory(directory,complete['fixed_artifacts']);verify_stage('results',plan,directory,None);receipt['verification']='terminal_artifacts_verified'
     else:receipt['verification']='sealed_prefix_verified';receipt.update(prefix)
+    if stage_receipt(directory,'results').exists() and plan['resolved']['selection']['source']!=W.CS:
+        source,contract=histogram_source(plan)
+        receipt['histogram_normalization_interpretation']=H.validate(W.read(directory/'results/histograms.json'),prefix['counts'],
+            source,contract,plan['resolved']['source_sha256'],merged=True,csv_path=directory/'results/histograms.csv')
     return receipt
 
 def request_stop(name,root=W.ROOT):

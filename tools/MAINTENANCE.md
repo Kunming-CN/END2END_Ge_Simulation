@@ -121,6 +121,19 @@ promoted-source browser selections passed; current review/synchronization status
 is recorded in PROGRESS.md. Own-PC reproduction requires documented runtimes and
 pinned upstream inputs; fresh-machine acceptance remains deferred.
 
+Generic-isotope histogram semantics belong to `tools/histogram_normalization.py`
+and the shared `simulation/native_response.jl` exporter. New Am241/Ba133/Co60
+JSON uses histogram schema2 and normalization descriptor1; CSV uses
+`per_emitted_diagnostic_window_photon`. The descriptor pins the selected source,
+closed diagnostic windows and their summed photon count. This is a diagnostic
+denominator, not branching intensity, activity or efficiency. Active single-run,
+catalog and batch validation check JSON/CSV semantics and named counts against
+original source-event truth. Preserve the legacy Cs137/gamma export shape.
+Unversioned generic aliases require the exact known historical producer identity;
+inspection interprets them without rewriting saved bytes. Unknown versions fail
+closed. Pure exporter/caller checks are in `simulation/test_histogram_export.jl`
+and the focused catalog accounting regression; these do not run SSD or radiation.
+
 The registry's `dataset_lifetime_evidence` annotations describe half-lives. For
 example, Np237's 59.54 keV level in the Am241 record has half-life 67.2 ns,
 corresponding to mean lifetime about 96.94911 ns. The runtime daughter cap uses the

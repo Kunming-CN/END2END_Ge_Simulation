@@ -133,4 +133,37 @@ class CatalogWorkflowTests(unittest.TestCase):
         edited=copy.deepcopy(source);edited[-1]['event_id']=18;save_rows(out/'truth.jsonl',edited)
         with self.assertRaises(W.ControlError):V.response_census(base,resolved,report)
 
+    def test_generic_named_photon_census_is_independent_of_rehashed_response_map(self):
+        for source_id in ('ba133_point_decay_v1','co60_point_decay_v1'):
+            with self.subTest(source=source_id):
+                base=self.root/source_id;out=base/'response';stream=base/'transport/stream'
+                out.mkdir(parents=True);stream.mkdir(parents=True);p=D.preset(source_id)
+                names=[x['name'] for x in p['diagnostic_lines']];source=[];scalars=[]
+                for eid,lines in enumerate(({names[0]:2,names[1]:1},{names[0]:3,names[1]:0})):
+                    n=sum(lines.values())
+                    event=dict(event_id=eid,global_decay_id=eid,steps=[],pulse_groups=[],line_photon_counts=lines,
+                        line_photon_count=n,decay_photon_count=n,material_energy_keV={'G4_Ge':0.})
+                    source.append(event);scalars.append(dict(record_kind='decay',event_id=eid,global_decay_id=eid,
+                        zero_deposit=True,pulse_count=0,deposited_energy_keV=0.,raw_row_indices=[],
+                        line_photon_count=n,decay_photon_count=n,material_energy_keV=event['material_energy_keV']))
+                def save(path,rows):path.write_bytes(b''.join(W.encoded(row)+b'\n' for row in rows))
+                save(stream/'events.jsonl',source);W.write(stream/'manifest.json',{'chunks':[{'file':'events.jsonl'}]})
+                save(out/'truth.jsonl',source);save(out/'scalars.jsonl',scalars)
+                cal={'energy_keV':500,'time_step_ns':2,'ionisation_energy_eV':2.95,
+                    'charge_C':500000/2.95*1.602176634e-19,'peak_V':1.,'volts_per_keV':.002}
+                counts=dict(initial_primaries=2,initial_decays=2,zero_deposit_primaries=2,groups=0,accepted=0,
+                    rejected=0,native_failed_groups=0,readout_rejected=0,line_photons=6,decay_photons=6,
+                    line_photon_counts={names[0]:5,names[1]:1})
+                report=dict(counts=counts,calibration=cal,ionisation_energy_eV=2.95)
+                resolved={'selection':{'primary_count':2,'source':source_id},'source_contract':p}
+                self.assertEqual(V.response_census(base,resolved,report),counts)
+                raw_hashes={path:W.sha(path) for path in (stream/'events.jsonl',out/'truth.jsonl')}
+                for case in ('swap','total'):
+                    changed=copy.deepcopy(report)
+                    if case=='swap':changed['counts']['line_photon_counts']={names[0]:1,names[1]:5}
+                    else:changed['counts'].update(line_photon_counts={names[0]:6,names[1]:1},line_photons=7)
+                    W.write(out/'run.json',changed);W.sha(out/'run.json')
+                    with self.assertRaises(W.ControlError):V.response_census(base,resolved,W.read(out/'run.json'))
+                    self.assertTrue(all(W.sha(path)==digest for path,digest in raw_hashes.items()))
+
 if __name__=='__main__':unittest.main()

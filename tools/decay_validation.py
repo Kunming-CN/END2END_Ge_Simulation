@@ -61,4 +61,10 @@ def response(directory,resolved,report,root=W.ROOT,*,historical=False):
         for line in (out/'traces.jsonl').read_text(encoding='utf-8').splitlines():
             t=W.decode_json(line)['trace'];W.require(t['raw_native_induced_charge_fC']==[-v for v in t['induced_charge_fC']] and
                 t['raw_native_current_nA']==[-v for v in t['current_nA']],'Native trace signs changed.')
+    import histogram_normalization as H
+    interpreted=H.validate(W.read(out/'histograms.json'),report['counts'],resolved['selection']['source'],
+        resolved['decay_source_contract'],actual['source_sha256'],csv_path=out/'histograms.csv',root=root)
+    named={line['name']:0 for line in interpreted['normalization']['diagnostic_lines']}
+    for event in source:H.add_diagnostic_event(named,event)
+    H.check_diagnostic_counts(named,report['counts'])
     return report

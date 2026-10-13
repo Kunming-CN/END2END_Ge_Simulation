@@ -293,7 +293,7 @@ function run(o,a,request; process_response=process_ring, source_names=SOURCES, s
         a.ion ? stream_api.recheck(a.stream) : R.load_input(a.input)
         R.check(all(E.hashfile(joinpath(@__DIR__,n))==h for (n,h) in sources),"Consumer source changed")
         Q.verify_model_files()
-        export_hist(out,hist,counts,cal)
+        export_hist(out,hist,counts,cal;source_id=get(report,"source_id",nothing),source_contract=get(report,"source_contract",nothing))
         report["status"]=counts["native_failed_groups"]>0 ? "completed_with_native_failures" : "completed_provisional_native_response"
         progress_writer(out,started,"completed",report["status"],counts,d["primary_count"])
         names=vcat(collect(files),["request-input.json","profile.json","profile-input.json","readout-config.json","input-contract.json","input-prepared.json","histograms.json","histograms.csv"])

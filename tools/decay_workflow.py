@@ -6,7 +6,7 @@ from ring_workflow import energy_sum_matches
 REGISTRY='scenarios/source-presets.json'
 ANCHORS='scenarios/placement-anchors.json'
 ADAPTER='shared_decay_source_v1'
-SOURCES=(REGISTRY,ANCHORS,'tools/decay_workflow.py','transport/decay_source.py',
+SOURCES=(REGISTRY,ANCHORS,'tools/decay_workflow.py','tools/histogram_normalization.py','tools/workflow_batches.py','transport/decay_source.py',
          'simulation/decay_stream.jl','simulation/workflow_decay_response.jl',
          'scenarios/source-acceptance/co60-threshold-v1.json')
 POLICY={'primary_threshold_ns':1e27,'reset_initial_children_to_zero':True,

@@ -1,79 +1,100 @@
 # Current handoff
 
 Updated: 2026-10-13. Read this before starting work.
-Immutable prior audit/desktop-scope handoff:
-[cfd832ad](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/cfd832ad753fbbde0dca50bf14dddb3c82fa29c1/PROGRESS.md).
-That record links the accepted Co60/software delivery and earlier science history.
+Immutable prior STRICT-01 handoff:
+[21c4ec2f](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/21c4ec2f8f619d121566aa9b501d68efee9a0fe9/PROGRESS.md).
+That record links the desktop audit and accepted earlier science history.
 
 ## Authorized continuation
 
-The owner authorized completing the executable tools/NEXT_DEVELOPMENT_PLAN.md
+The owner authorized completing executable tools/NEXT_DEVELOPMENT_PLAN.md
 without reminders or per-round approval. The existing heartbeat is ACTIVE,
 checks every30minutes and targets this chat. Saved configuration was verified;
-future unattended execution has not yet been observed. Local continuation needs
-the computer and Codex app running. Work only on desktop use; phone adaptation
-and phone acceptance are excluded. Complete one useful tested milestone at a time.
-Inspect real Git/process/lease/checkpoint state before a round, acquire the owned
-lease only from ready, and never duplicate existing workers or completed science.
+this round actually received its2026-10-13T22:49:55.612Z trigger. Local continuation
+needs the computer and Codex app running. Desktop only: phone adaptation and
+phone acceptance are excluded. Complete one useful tested milestone at a time.
+Inspect real Git/process/lease/checkpoint state before a round; start only from
+ready with an owned exclusive lease. Never duplicate workers or completed science.
 
-## STRICT-01 delivered: safe pre-worker launch-failure recovery
+## STRICT-02 delivered: source-aware histogram normalization
 
-Control now preserves per-dispatch intent and preparation/Popen boundaries.
-Only sealed proof that Popen was never invoked enables Recover not-launched
-failure. Recovery rereads durable ownership under the shared execution lease;
-original plan, error and logs remain. Old opaque failures, unknown workers,
-Popen-entered exceptions, changed evidence and unexpected output still block.
-A failed new run retains its name; both GUI and ordinary CLI require a new one.
+New Am241/Ba133/Co60 raw and merged histograms use JSON schema2, normalization
+descriptor1 and CSV/row key per_emitted_diagnostic_window_photon. Metadata pins
+the selected full source contract, unchanged registry hash, named closed keV
+windows and the sum of their photon counts. This is a diagnostic denominator,
+not branching intensity, source activity or efficiency. Numerical bin/count/ratio
+arithmetic, units, event selection, calibration, signed signals and nulls stay
+unchanged. Preserve the exact legacy Cs137/gamma export shape.
 
-Failed Resume restores only an independently verified unchanged stopped seal,
-including the original legacy/catalog checkpoint inventory. A later ordinary CLI
-Resume may finish or stop at a new boundary; use Verify saved execution in Control
-afterward. Full saved inspection, matching configuration, known-ended supervisor,
-shared lease and unchanged before/after receipts produce a separate control
-boundary authority. Original launch journals stay byte-identical. Partial,
-unknown, active or corrupt output cannot settle the reservation.
-Routine polling/admission checks control authority and receipt stamps, not the
-whole raw campaign; original Verify/Resume/artifact entries retain deep checks.
+Historical generic files retain their wrong original column name and bytes;
+checked interpretation recognizes only the exact recorded old exporter/merger
+identities and labels the alias explicitly. Unknown unversioned producers fail
+closed. New generic result indexes link the exact source/window JSON. Active
+single-run, catalog and batch paths use one shared JSON/CSV semantics checker;
+existing source-event truth independently verifies named photon maps and totals.
+New checked plans pin the helper, typed-equality and direct census dependencies.
 
-Acceptance: initial159 Python regressions, Node UI contracts and shared source-pin
-closure checks passed. Three independent new Sol6.1/Ultra AI initial reviews found
-three related risks: nonbatch checkpoint omission, later CLI Resume lockout and
-CLI failed-name reuse. Those were fixed; affected72 regressions and final45 scoped
-retests passed (overlapping executions, not117 unique tests). All three targeted
-AI rechecks accepted the frozen9-file correction, with independent small probes.
+Three new Sol6.1/Ultra AI initial reviews found two integration blockers: the
+ordinary dispatcher uses decay_validation.response, not the old duplicate
+D.response; the catalog caller lacked its named-window count map. Both were
+corrected. Cross-review added truth-derived map verification. A scoped recheck
+then found a report-only old-hash claim could wrongly authorize schema downgrade.
+Version admission now uses reconstructed, envelope-bound request source pins;
+native short-name report claims cannot override that independent authority.
+Original failing specimens/receipts and each source freeze remain preserved.
+
+Acceptance: initial47 Python cases,84 actual Julia exporter checks and10
+cross-language/retained views passed. Unchanged portions were reused. Corrections
+passed10 affected Python cases,61 actual catalog initializer/accounting/export-call
+checks and7 cross-language views; the last authority fix passed7 affected Python
+cases and refused the unchanged original failing specimen. Test executions overlap;
+these are not summed unique-test counts. Julia checks use actual source function
+bodies/caller statements and existing Readout serialization, without loading SSD.
+
+All three scoped final AI rechecks accepted the latest15-file source freeze.
+Reviewers distinguish their independent small probes from inspected/reused suite
+receipts. Root verified19 retained science files plus3 original request authorities,
+all1694 docs files,20 models,50 transport and16 scenario files unchanged. Numerical
+inputs, readout and environment/lockfiles remain intact. No radiation, field,
+drift, calibration or electronics worker ran. No browser/download acceptance or
+public-site deployment is claimed for this source-only milestone.
 Launch settings are explicit; live model introspection is unavailable. These
-are software reviews, not human certification or physical validation.
+are AI software/semantics reviews, not human certification or physical validation.
 
-Root used real desktop Codex IAB for keyboard Recovery and the new Verify action,
-then reload/reopened-controller and shared CLI admission checks. Isolated fixtures
-injected launch preparation failure and, for Verify, scientific receipt/inspection;
-journal, lease, process checks, persistence and authority were real. No browser
-Run, Resume, Download or Save As was clicked. No scientific worker launched.
-Owned tabs/servers are closed; initial failures and all scientific results remain.
+Evidence: .local/strict02-normalization-v1/; latest freeze is
+implementation/source-freeze-2.json. Reuse implementation COMPLETE, CORRECTIONS,
+CORRECTIONS-2 and three INITIAL/CROSS/FINAL/FINAL-2 records. Initial sandbox/test-
+harness failures and the workflow receipt-publication failure remain; the latter
+recovered its already finished receipt without repeating tests. Do not rerun
+completed suites, reviews or physics merely to recover a reply. Git synchronization,
+source-archive acceptance and owned lease closure are in the root COMPLETE.json.
 
-Evidence: `.local/strict01-recovery-v1/`, including initial/final source freezes,
-implementation COMPLETE/CORRECTIONS, three independent INITIAL/CROSS/FINAL records,
-original reproductions, browser DOM/screenshots and terminal COMPLETE.json.
-Do not repeat successful physics, suites or reviews merely to recover a reply.
-No models, simulation/transport producers, profiles, environment or generated
-docs were changed. New shared plans pin workflow_launch.py; old receipts are
-not rewritten. This is local software delivery; no site rebuild/publication.
+## Previous delivery retained
+
+STRICT-01 is accepted at21c4ec2f: sealed pre-Popen preparation failures have
+explicit recovery under the shared lease; old opaque/Popen-entered failures stay
+blocked. Failed names remain reserved. Failed Resume needs its original stopped
+seal; later CLI completion/new stop can be settled through explicit Verify.
+Original launch journals/errors/checkpoints remain. Routine polls check control
+boundary authority and stamps; Verify/Resume/artifact entries retain deep checks.
+Reuse the prior three AI reviews, regressions and real desktop IAB fixture evidence
+in .local/strict01-recovery-v1/COMPLETE.json; no repeated science is required.
 
 ## Next bounded work and retained limits
 
-Next is STRICT-02: versioned source-aware diagnostic-window normalization names
-for generic-isotope exports/merge. Preserve historical raw bytes and Cs137
-contracts; use synthetic/zero-denominator/rehash checks, no radiation rerun.
-Then STRICT-03 polling/focus, enabled-button contrast, angle-readiness wording,
-desktop context/selection improvements, and PSD1 -> PSD2 -> PSD3 in plan order.
-Conditional student/resource work needs a concrete trigger; do not expand it.
+Next is STRICT-03: unchanged2.5s polling must preserve run/recovery controls and
+keyboard focus/caret; meaningful updates retain selection and pending-action
+safety. Use desktop browser fixtures, two unchanged polls and affected Node/UI
+contracts, without Run/Resume/Download/Save As or science. Then enabled-button
+contrast, angle-readiness wording, desktop context/selection improvements and
+PSD1 -> PSD2 -> PSD3 in plan order. Conditional work needs its concrete trigger.
 
 Ten compatible configurations share four admitted sources; seventeen viewable
 models and forty factorized choices are not forty physical validations. Co60
-retains its500 original primaries/491 zeros and original threshold rejection.
+retains500 original primaries/491 zeros and its original threshold rejection.
 Saved engineering waveforms do not establish calibrated CCE, physical resolution,
 experimental agreement or global convergence. Old AK02/SAP22 measured waveforms
-were not saved; spectrum data cannot substitute for waveform validation.
+were not saved; spectra cannot substitute for waveform validation.
 November2026 measured spectrum/I-V/C-V publication still needs the date and
 complete owner-provided releasable inputs/metadata. Keep it deferred meanwhile.
 All completed campaigns/caches/unique failures remain permanent science data.

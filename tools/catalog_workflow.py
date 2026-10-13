@@ -183,6 +183,10 @@ def validate_stage(directory,stage,resolved,root=W.ROOT,*,semantic=True):
         expected=copy.deepcopy(resolved['electronics_configuration']);expected['expected_primary_count']=s['primary_count']
         W.require(W.read(directory/'response/readout-config.json')==expected,'Generated readout config differs beyond expected_primary_count; rehashed edits are refused.')
         for name,digest in r['artifacts'].items():W.require(W.sha(safe_path(directory/'response',name))==digest,'Native response artifact changed.')
+        if s['source']!=W.CS:
+            import histogram_normalization as H
+            H.validate(W.read(directory/'response/histograms.json'),counts,s['source'],resolved['source_contract'],
+                r['source_sha256'],csv_path=directory/'response/histograms.csv',root=root)
         if semantic:response_census(directory,resolved,r)
         return W.inventory(directory/'response')
     return W.inventory(directory,exclude=('run.json','COMPLETE.json','STOP.json')) if stage=='results' else {}

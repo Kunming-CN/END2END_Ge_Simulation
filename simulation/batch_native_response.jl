@@ -216,7 +216,7 @@ function response(o)
         R.check(C.field_fingerprint(sim,config.contact)==prep["field_fingerprint"],"Response modified shared native fields")
         unchanged(o);S.recheck(stream)
         R.check(E.hashfile(o.request)==report["request_sha256"] && E.hashfile(S.relative_file(d["native_preparation_ref"]))==d["native_preparation_sha256"],"Response request/preparation changed")
-        NR.export_hist(out,hist,counts,state.calibration);append!(files,["histograms.json","histograms.csv","profile.json","readout-config.json"])
+        NR.export_hist(out,hist,counts,state.calibration;source_id=m["source_id"],source_contract=m["source_contract"]);append!(files,["histograms.json","histograms.csv","profile.json","readout-config.json"])
         report["artifacts"]=Dict(n=>E.hashfile(joinpath(out,n)) for n in files);report["artifact_bytes"]=Dict(n=>filesize(joinpath(out,n)) for n in files)
         report["status"]=counts["native_failed_groups"]>0 ? "completed_with_native_failures" : "completed_provisional_native_response"
         W.progress(out,start,"completed",report["status"],counts,b["primary_count"])
