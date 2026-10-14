@@ -11,7 +11,7 @@ The website contains saved results, not an online solver.
 - [Selected signals](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html) — six representative saved Cs137 examples, from deposits to peak ADC.
 - [Saved results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) — complete datasets, detector views and analysis files.
 - [Run locally](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html) — the maintained Windows preparation and Control guide.
-- [Download software only (ZIP)](https://github.com/Kunming-CN/END2END_Ge_Simulation/archive/refs/heads/main.zip) — source, detector models and pinned configuration; saved website data are excluded.
+- [Download source without saved results (ZIP)](https://github.com/Kunming-CN/END2END_Ge_Simulation/archive/refs/heads/main.zip) — source, detector models and pinned configuration; saved website data are excluded.
 - [Contributing](CONTRIBUTING.md) — propose changes or report a problem.
 
 ## Run one local example

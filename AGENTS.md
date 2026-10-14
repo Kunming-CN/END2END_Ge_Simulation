@@ -1,5 +1,41 @@
 # Project working rules
 
+## Owner correction — 2026-10-14 (current authority)
+
+This update supersedes every older AI-review requirement below and in plans,
+automation prompts or historical handoffs. Do not launch extra review agents,
+physics/workflow/third-party review rounds, peer debates, direction committees,
+or repeated broad audits. Ordinary development checks remain: run only tests
+relevant to a concrete change, check required units/identities, inspect the diff,
+and deliver. Do not use review counts as evidence of user value.
+
+The priority is student use: software-only download, configure compatible
+cryostat/detector/source with the mouse, run/stop/resume, and find actual data.
+Do not make another canned engineering demo the next delivery. Reuse completed
+work and upstream remage/SSD functions; do not rebuild already accepted features.
+Phone work and second-computer acceptance are excluded. Address actual feedback.
+
+New student-facing result/analysis outputs must not contain a per-event parade
+of zero-input records or fabricated zero waveforms. Keep initial/zero/nonzero/
+failed/rejected totals, original nonzero IDs, denominators and seeds so filtering
+does not alter efficiency. Existing original scientific ledgers/campaigns remain
+unchanged; changing new storage formats is a separate explicit implementation.
+Do not delete old scientific originals as part of temporary-file cleanup.
+
+Remove proven disposable assistant-generated AI review files, browser fixtures/
+screenshots, duplicate software ZIPs and synthetic acceptance scratch, retaining
+one compact cleanup manifest. Preserve production dependencies, canonical models,
+raw transport/native/readout data, unique physical failures, user inputs, chat
+histories and installed environments. A filename containing example or test is
+not proof it is disposable: production currently imports/hashes several of them.
+Never follow a junction/reparse point during cleanup. Verify absolute deletion
+paths and delete only the explicit owned candidates. Do not generate more report
+piles or save complete chat transcript copies for this reconciliation.
+
+Automatic continuation remains paused while this owner-directed correction is
+being delivered. Any future resume uses the corrected plan and no-review policy,
+not stale PSD3/audit instructions. Do not re-enable it without an owner request.
+
 Work only in this project unless a recorded input dependency needs a read-only check.
 
 1. Read the compact PROGRESS.md handoff first, then only relevant README/source sections. Complete one milestone-sized task at a time. The current handoff governs delivery order; older stage notes are historical accuracy guidance, not automatic blockers.
@@ -16,7 +52,7 @@ Work only in this project unless a recorded input dependency needs a read-only c
 
 ## Keep active context short
 
-PROGRESS.md is the single current handoff; its immutable-history link preserves the full prior log. Do not append another full round transcript. Read debug output by bounded ranges and exact fields. Write long evidence to local files, not repeated terminal/chat dumps. Close owned idle sessions after each round; never clear global shell history, chat records, authentication stores or scientific evidence. Use focused reviewers for substantive implementation changes, not simple cleanup.
+PROGRESS.md is the single current handoff; its immutable-history link preserves the full prior log. Do not append another full round transcript. Read debug output by bounded ranges and exact fields. Write long evidence to local files, not repeated terminal/chat dumps. Close owned idle sessions after each round; never clear global shell history, chat records, authentication stores or scientific evidence. Use only directly relevant developer checks; no additional reviewers.
 
 ## Publication and onboarding ownership
 
@@ -60,16 +96,6 @@ Do not change global user configuration, install another environment, enable Fas
 or separately billed APIs, or consume reset/banked reset credits. Only the owner
 may use reset credits. Keep all task files in the existing project/evidence root.
 
-Owner update (2026-10-07): review once per integrated, tested substantive milestone,
-not after each small edit. Run two scoped independent reviews in parallel for
-physics/electronics and data/workflow integrity, then add a NEW third-party reviewer
-using the same Sol 6.1 Ultra setting, independent of implementation and initial
-peer conclusions. The third review covers details AND whether the goal, direction,
-complexity and user value are appropriate. Exchange concrete findings after initial
-reviews. Re-review only specific verified corrections; tiny documentation edits do
-not need another review cycle. Fix verified blockers; bring material alternative directions or useful
-ideas to the owner rather than silently broadening work. These are AI reviews.
-
 Owner update (2026-10-07): remove M8/M9 second-computer acceptance from the active
 delivery plan. Improve the maintained setup/use route from actual student feedback;
 do not wait for another computer or claim unperformed installation validation.
@@ -92,11 +118,13 @@ Use the shared simulation/run.jl for both CPU and optional CUDA. CPU remains ins
 
 transport/ keeps the Pixi manifest/lock and toy installation checks; large environments belong to Pixi’s detached Linux cache. Preserve cryostat-source.json provenance and locally cached upstream bytes. No LBNL geometry or drift/recombination validation may be inferred from the toy Ge-box smoke test. Keep coupling pending until geometry/units/event mapping are independently checked.
 
-## M2 scope and independent review
+## M2 scientific scope
 
 AK02 (Anupama ICPC2) is the Li-contact primary case; SAP22 is a non-Li cross-check, not a matched-geometry experimental control. Defer new GeGI work. Preserve original 78 K / +500 V and +700 V snapshots; first reproduce them, with any nominal 77 K override explicit and consistently recorded. No invented experimental holder/source positions or uncalibrated lifetime claims.
 Read-only research elsewhere under My Drive is authorized; never edit unrelated files. Keep raw transport energy separate from charge response; no double Li loss. Preserve event IDs, deposition times, transforms, zero-deposit primaries and incomplete-collection flags.
-After bounded implementation/testing, use two separate read-only review sessions: (1) HPGe and electronics, (2) particle transport and event integrity. Give both the same tested diff/evidence, add the independent third-party goal/direction review specified above, then exchange findings for cross-review. Summarize confirmed issues and resolutions in PROGRESS.md. These are AI reviewers, not human certification. Never claim independent agents ran unless launched.
+After bounded implementation/testing, perform only directly relevant developer
+checks and record actual limitations. The 2026-10-14 owner correction prohibits
+extra AI reviewers and peer-review rounds; older reviewer receipts are history.
 
 ## Successive authorized rounds
 

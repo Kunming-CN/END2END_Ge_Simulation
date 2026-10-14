@@ -1,5 +1,12 @@
 # Local workspace organization
 
+Owner correction (2026-10-14): extra AI-review files, browser acceptance scratch,
+duplicate software archives and the two all-ineligible PSD demo derivatives were
+removed by explicit request. The exact cleanup is recorded once in
+`.local/autonomy/cleanup.json`. Older receipts may reference these removed artifacts;
+they are historical records, not instructions to recreate them. Original scientific
+data and unique physical failures remain permanent. No extra review rounds follow.
+
 Double-click `Open_Workspace.cmd` at the project root. It refreshes a local-only
 index at `.local/workspace/index.html` and opens it. The index groups saved results,
 current runs, canonical models/code, references, and preserved review/diagnostic
@@ -19,15 +26,13 @@ evidence. It never starts or resumes a simulation and performs no deletion.
   retained failed attempts; preserve their receipts, hashes and original bytes.
   Preserve original archives, compact records, inputs, fields and checkpoints.
 - `.local/runs/`: ordinary launcher runs. Opening a result is not a resume action.
-- `.local/psd-features/<configurationSHA>/bundle`: immutable checked saved full-resolution
-  feature derivatives, with every original primary, exact source/input/profile hashes
-  and selection reasons. Preserve original runs and failed feature attempts. Viewing
-  a feature bundle verifies saved data without starting a simulation/export or
-  establishing detector-physics validation.
-- `.local/waveform-acquisition/<configurationSHA>/bundle`: separate checked synthetic
-  waveform-ADC derivatives, joining the exact PSD1 source and preserving old signals,
-  calibrated Erec, all identities/invalid reasons and model/source/seed settings.
-  Preserve older and failed derivatives; opening a panel is a read-only verification.
+- `.local/psd-features/<configurationSHA>/bundle` and
+  `.local/waveform-acquisition/<configurationSHA>/bundle`: advanced saved-data
+  derivatives. The unusable zero-selected-group demos were explicitly removed;
+  missing bundles should show unavailable, not trigger another export or simulation.
+  Future product outputs follow the planned nonzero-record storage contract with
+  count/denominator/identity provenance. Original runs and unique scientific failure
+  evidence remain unchanged; a working derivative is not detector-physics validation.
 - `.local/reference-docs/`: private documents, including `presentations/`.
 - Other `.local/` folders: retained development, publication and review evidence.
   An unfamiliar name or failed result is never automatic permission to delete it.
@@ -37,9 +42,10 @@ evidence. It never starts or resumes a simulation and performs no deletion.
 The loose root presentation is moved only after project-code reference checks,
 with an exact original/destination/hash record in the current round's
 `reference-move.json`. Its bytes and modification time are verified after the move.
-No original scientific directory, installed package cache, authentication data,
-review history or unfinished run is moved or removed. No desktop/systemwide cleanup
-is performed. Local indexing is not an independent backup or proof of cloud sync.
+No original scientific directory, installed package cache, authentication data or
+unfinished run is moved or removed. The owner-requested cleanup uses exact owned
+file paths and excludes browser account databases; it is not systemwide deletion.
+Local indexing is not an independent backup or proof of cloud sync.
 
 ## What stays primary, archived or regenerable
 
@@ -52,7 +58,8 @@ visible through the inventory and links.
 |---|---|---|
 | Permanent science and inputs | `.local/cs137-1m/`, `.local/cs137-1m-native/`, `.local/peak-native-delivery/`, `.local/transport/LBNL/` | Keep original bytes, identities, raw archives, caches and checkpoints |
 | Current final derivatives | `.local/native-final-analysis-v3/`, `.local/native-final-report-v2/` | Promote their final results; retain provenance |
-| Historical evidence | `.local/native-final-analysis-v1/`, `-v2/`, `.local/native-final-report-v1/`, earlier reviews and failed attempts | Archive in navigation only; do not relocate hash/path-bound evidence |
+| Historical science evidence | `.local/native-final-analysis-v1/`, `-v2/`, `.local/native-final-report-v1/`, unique physical failures | Archive in navigation only; do not relocate hash/path-bound science |
+| Proven disposable development files | Owned browser fixtures/screenshots, duplicate software ZIPs, unused review text, synthetic scratch | Explicitly classify and remove by checked exact paths; retain one cleanup receipt |
 | Regenerable index | `.local/workspace/index.html`, `.local/workspace/inventory.json` | Rebuild with `Open_Workspace.cmd`; these are not scientific records |
 | Unclassified or browser scratch | Other `.local/` entries | Inspect dependencies and unique evidence before any cleanup; no deletion by age/name |
 

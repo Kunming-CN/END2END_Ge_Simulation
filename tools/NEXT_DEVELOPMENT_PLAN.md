@@ -1,320 +1,188 @@
 # Next development plan
 
-Updated: 2026-10-13. This is the single active delivery roadmap.
-[Onboarding and extension contracts](ONBOARDING_EXTENSIBILITY_PLAN.md) retain the
-longer-lived boundaries; [PROGRESS.md](../PROGRESS.md) records actual delivery.
-The source-angle feature is delivered through shared Check/Run. Co60 admission
-now reuses its audited saved threshold rejection, with original failures retained.
-Student software ZIPs exclude the retained website showcase directory.
-Owner authorization, 2026-10-13: continue the executable development below
-without reminders or per-round approval, with automatic continuation in this
-chat. Complete one bounded, tested milestone at a time in audit-priority order,
-then the desktop improvements and PSD1/PSD2/PSD3. Reuse saved science; this does
-not authorize another radiation/field campaign, installations or missing-input
-experimental claims. Conditional work remains conditional.
+Owner correction: 2026-10-14. This is the current plan, replacing the automatic
+PSD3/reviewer-heavy queue. Earlier history is preserved in Git at be145f9210d22e2449e6d66f03d9108dc9a3851d;
+do not recreate a pile of historical planning files.
 
-Owner clarification, 2026-10-13: this software is for desktop computers.
-Develop and accept the local application and its supporting website for desktop
-use, including keyboard/mouse operation, readable plots and desktop window sizes.
-Mobile adaptation and phone acceptance are out of scope. Earlier320/390px audit
-observations remain historical evidence, not an active improvement queue or gate.
+## User outcome and working rules
 
-## Outcome and verified starting point
+A student downloads the software, configures the documented existing environment,
+opens Control, selects the current cryostat, a compatible detector and source,
+enters the primary count, runs/stops/resumes, and finds each stage's real data.
+The public website separately presents selected saved simulation and later measured
+results. All product UI and beginner-facing text remain English. Desktop only.
 
-A student selects a compatible detector and admitted source in the existing
-cryostat, runs one end-to-end job through Control, and traces any saved stage.
-Keep the pinned remage 1.1.0/Geant4 11.3.2, SSD 0.11.8 and separate readout
-engines. Keep one world,
-shared detector/source assets and resolved placements; do not store a manually
-maintained configuration/geometry copy for every combination. A run must still
-save its exact effective inputs and source/model/software hashes for analysis.
+No extra AI reviews, independent physics/workflow/third-party review agents, peer
+debates, direction committees or repeated broad audits. The owner revoked those
+requirements on 2026-10-14. Necessary developer checks are bounded to the change:
+run the directly relevant existing tests or one meaningful operation, inspect the
+diff, report actual failures, commit and push. Tiny documentation changes do not
+rerun physics or a broad test suite. Once the useful outcome works, stop that item.
 
-| Delivered or disposed scope | Evidence and limit; remove from new-work queue |
-|---|---|
-| M4 / bounded M5 recovery | Closed; original success and failed attempts remain separate. No general M5b prerequisite. |
-| Optional M6 interface pilot | Existing installed readers retained; unavailable reboost/simflow deferred. No installation or backend migration. |
-| Local Control / ten compatible configurations | Shared engines, admitted Cs137/Am241/Ba133/Co60, exact counts, serial batches, stage-boundary Stop/Resume and lazy saved analysis are delivered. Forty factorized source/model choices are not forty independently run physical validations. |
-| Student software download | GitHub source ZIP excludes docs/ while Pages retains showcase files. Full clone/history still includes website data; dependencies/upstream inputs require documented setup. Final archive/live checks are recorded in the current COMPLETE.json. |
-| Larger detector models | Seven viewable models do not fit this cryostat; future larger-cryostat work, not adapters to finish now. |
-| Analysis and beginner route | Raw radiation, ledger, signed charge, readout, calibration/settings and stable identities are accessible; README is a short entry and tools/site_guide.html is the one setup authority. |
-| Saved plots, teaching and navigation | Accepted saved-data/site work; six representative later Cs137 examples replace the old teaching default. Preamp behavior remains unchanged. Existing reports/URLs/full event ledgers remain accessible. |
-| Both-detector million overview | AK02 and SAP22 shown together; SAP22 data were never deleted. Accepted at 7259bf7 with actual browser/live checks. |
-| Second-computer acceptance | Removed by owner; act on real student feedback without claiming unperformed fresh installation. |
+Use the existing remage/SSD/readout engines, shared model/source/scene definitions,
+Control and pinned environments. No per-combination adapters, second frontend,
+new installations, system PATH/WSL/global package changes, billed API or resets.
+Reuse completed radiation/fields/charge and prior applicable acceptance. New physics
+only when a changed physical input requires it, with a small stated case; never
+rerun a campaign because a chat failed or a review could be repeated.
 
-Website evidence includes the accepted earlier 105-page/64-direct-SVG audit and
-retained 490-image/172-inline-chart coverage, then the six-example 24-plot checks,
-and the latest two-model correction with 703 exact live files. These scopes are
-not a fresh physics validation of every image. Reuse completed evidence; do not
-queue another full-site audit without a concrete change or defect.
+## Chat reconciliation and accepted work
 
-## Source/capsule-angle milestone: delivered, stop condition met
+Six owner chats belonging to this project were retrieved through all pages, including
+older chats outside the recent sidebar list. User and assistant messages were read;
+repeated scheduled prompts are historical automation content, superseded here.
+Internal execution/subagent sessions are not separate owner requests. Original chat
+histories remain in the app; no transcript copies were saved into the project.
 
-**User outcome:** select an admitted radioactive source, compatible detector and
-angle in Control; Check resolves the effective pose and enables Run through the
-shared CLI/backend. New saved artifacts retain that pose, all primary IDs and
-original stage provenance. The cryostat and detector mounting stay fixed.
+The consistent owner requests were: student use first; a clean extensible common
+workflow; configurable compatible detector/source/cryostat; arbitrary exact primary
+count with batches up to10000; reliable stop/resume and data access; newest useful
+representative teaching signals; readable plots and simple navigation; software
+separate from saved showcase data; remove useless generated files and repeated audits.
+Later explicit decisions: seven oversized detectors await a real larger cryostat;
+no phone work or second-computer prerequisite; keep current preamp unchanged;
+November measurements require complete owner data; newest instruction removes extra
+reviews and zero-input clutter from new product outputs.
 
-The shared resolver, capsule-only native exporter and +/-30deg geometry checks
-were accepted in the prior milestone. Zero and legacy Gamma keep their original
-macros/admission. Ten compatible descriptors share the engineering route; neither
-seventeen viewable models nor forty source/model choices are physical validations.
-Nominal engineering pose remains
-`p(theta)=[35.6*sin(theta), 1.473+35.6*cos(theta), 0.290] mm`, with degrees from +y
-toward +x around global z at x=0/y=1.473mm and fixed crystal/spacer/materials.
+Do not list accepted work as new development:10 compatible catalog models in the
+existing cryostat, four isotope sources(Cs137/Am241/Ba133/Co60), legacy662keV gamma
+route, shared scene/source assembly, batch counts and stop/resume, file provenance,
+source/capsule angles within the accepted range, four-model10K display, AK02+SAP22
+million-transport display, and the concrete recovery/normalization/focus/contrast
+fixes already delivered. Availability is not experimental accuracy or proof that
+all detector/source combinations have been physically rerun.
 
-The new precise-GPS adapter uses /control/useDoublePrecision true immediately
-before the angular centre. Its native command-only test reproduces the earlier
-4.374726nm error, then passes three poses with zero difference and unchanged
-1e-10mm identity tolerance, generating no events. Original failed data stay
-immutable; their already simulated trajectories were never repaired or relabelled.
+The added feature/acquisition code is retained as reusable advanced code, not the
+next primary product delivery. Its two all-ineligible500-event demo exports were
+removed during cleanup; no four-pulse classifier claim or new demo campaign follows.
+Existing original scientific inputs and completed results remain unchanged.
 
-One new fixed SAP22/Cs137/+30deg/500/seed26092631 acceptance completed one field
-preparation and one radiation trial. It retained493 zero-deposit primaries and
-accepted seven positive pulse groups with zero native failures/readout rejections/
-saturation. Bias, temperature, native physics, electronics and independent injection
-calibration stayed fixed; only the run name changed. No trial or campaign retry
-is queued. This is functional engineering acceptance, not experimental angular
-efficiency, calibrated CCE, physical resolution or global numerical convergence.
+## Ordered work
 
-Focused tests and three required independent AI reviews passed. Real Control
-Check/Run availability was verified without another browser science launch; the
-new saved case was inspected through the existing backend, not fabricated as a
-GUI history record. See PROGRESS.md and .local/source-angle-precision-v1/COMPLETE.json
-for exact final evidence, publication, Git and owned session/lease closure.
-The milestone stop condition is met; next work requires a concrete trigger below.
+### P0 — Correct process and remove proven waste (current cleanup)
 
-## Conditional work after the delivered milestone
+Remove old AI-review requirements from AGENTS and the saved continuation prompt.
+Delete only confirmed assistant-generated review text, browser fixtures/screenshots,
+synthetic acceptance scratch, duplicate-purpose source ZIP/unpacked copies and the
+two all-ineligible feature/acquisition demo bundles. Keep one compact deletion manifest
+under .local/autonomy/cleanup.json, not separate reports for each category.
 
-These are options or response policies, not mandatory stages to complete first.
+Keep canonical models/includes, software environments/lockfiles, raw radiation/native/
+readout outputs, original ledgers, fields/checkpoints, unique physical failures and
+owner inputs. Keep app chat histories, credentials and browser account data. Check
+absolute deletion paths and do not follow junctions. File name alone is not enough.
 
-| Trigger | Small useful action | Acceptance and stop |
-|---|---|---|
-| Real student cannot set up, run, stop/resume or find data | Reproduce the specific blocker through the existing dependency check, Control and guide; use saved cases first. A true core blocker takes priority over a new feature. | Verified fix for that report; no speculative setup rewrite, new environment or second-PC gate. |
-| An affected page/control or a new concrete display defect | Reuse existing exact-bin, selected-identity, expected-model, original-byte and route tests. The SAP22-removal/rehash regression already exists. Add only a missing regression tied to the defect; inspect affected plots in desktop windows and live after publishing. | Correct display with data/units/populations unchanged, no repeated 105-page or physics campaign. |
-| Owner requests another isotope | Reuse the shared source assets and inspect a bounded trial's identity/timing/energy and processing evidence. Co60 is already admitted through pinned below-threshold evidence; do not repeat its original calculation. | Retain rejected events and strict native/saturation/provenance checks. No seed/threshold retuning or retry-until-pass policy. |
-| Measured run/UI delay blocks actual use | Profile the slow stage and use existing preparation/lazy access before changing concurrency. Parallel independent runs only with measured memory headroom, separate roots/seeds and no competing writers. | Measured improvement without provenance/numeric changes; no promised speedup or parallel field solves without headroom. |
+Done when confirmed candidates are removed, the retained original roots remain,
+only one current plan/handoff governs development, and the process launches no extra
+reviewers. Automation stays PAUSED; update its prompt but do not re-enable it without
+an owner request. No new physics or environment for cleanup.
 
-## Deferred to November 2026: publish real laboratory measurements
+### P1 — Deliver a genuine student software package
 
-Owner addition, 2026-10-10: the laboratory has further detectors, and both those
-and the detectors already represented on GitHub have measured energy spectra,
-I-V and C-V data. Add public student access after the owner supplies the complete
-measurement files/metadata. Earliest execution: next month (November 2026); this
-entry remains deferred until November and complete owner inputs. The authorized
-continuation may then implement the agreed publication if both conditions hold.
-It is independent of source-angle delivery and of any new cryostat/solver admission.
+The current GitHub source ZIP excludes docs but still includes development material;
+it is not yet a minimal student runtime package. Make one maintained packaging
+manifest from actual runtime dependencies:launchers, required Python/Julia code,
+models and relative includes, scenario/source definitions, lockfiles, licenses and
+one setup/use guide. Exclude saved results, developer tests/reports, browser fixtures,
+publication tooling, unused canned demos and local caches.
 
-**Outcome:** students can find a real detector's measured spectrum, I-V and C-V
-curves, inspect measurement conditions and access the published original data.
-Reuse the current detector overview/Results routes and one shared dataset template;
-do not create another website, competing entrance or bespoke page per detector.
-A measurement-only laboratory detector can have a public record without claiming
-its geometry is already an executable simulation model.
+First remove the unnecessary dependency between production provenance and test/demo
+source files, preserving versioned old-result interpretation. Current production
+hashes test_native_li_example.jl,test_readout.jl,test_native_response.jl,
+test_native_stream.jl,test_readout_profiles.jl,test_gamma_native_example.jl and
+tools/test_gamma_native_example.py; Control also imports gamma_complete_example,
+site_detector_pages and site_fragments. Do not blindly delete them by name. Extract
+shared runtime functions only where needed, update imports/pins together, and leave
+useful tests in developer source rather than the student package.
 
-**Inputs after delivery by owner:** original numerical files and available original
-plots, a stable physical-detector identity, measurement date/provenance, units and
-measurement conditions. Map physical specimens to existing catalog models only
-when that relationship is confirmed; do not infer identity from similar names.
-For spectra record channel/energy calibration, acquisition/live time where known,
-source/placement, bias/temperature/readout and background/subtraction status.
-For I-V retain signed bias/current, units, temperature and sweep conditions; for
-C-V retain bias/capacitance, units, temperature, test frequency and AC amplitude.
-Preserve supplied uncertainty/calibration records; missing information is labelled
-unknown, not invented or treated as experimentally validated. Public inputs are the
-owner-provided releasable measurements/metadata, excluding unrelated private files.
+Change the student download to this package and maintain the existing setup route.
+Check package member paths and required-file/import completeness in the current
+configured environment; do not create a new novice installation. Stop when the
+package contains the real running dependencies and no showcase/test/report baggage.
+A full developer clone may retain website/source/history; it is a distinct route.
 
-**Output:** one versioned measurement record per physical detector/campaign, with
-original file hashes, conditions, numerical data links and checked plots. Keep
-measured data visibly distinct from simulated/derived results. Background removal,
-normalization, calibration or other processing has explicit inputs/method/version
-and retains the original data. Do not silently alter curves or retune simulation.
+### P2 — Implement zero-input storage and selection policy
 
-**First acceptance and stop:** begin with one complete detector dataset containing
-all three measurements; check plotted numbers/axis units, identity, conditions,
-original-file access and desktop/live display through existing publication
-checks. Then register further complete datasets through that same template, with
-only their data/metadata checks, not new code/adapters/reviews per specimen. Stop
-at readable, traceable publication of the supplied agreed batch. No new Geant4/SSD
-run, forced simulation overlay, global parameter fit or waveform/experimental
-agreement claim is required. Any later comparison/calibration study is separate.
-Until November and complete inputs arrive, retain this item as deferred.
+For NEW analysis/result exports store nonzero-deposit event records and their actual
+signals; do not create a per-zero-event JSON/CSV/waveform payload. Preserve total
+initial primaries, zero/nonzero/failed/rejected counts, exposure/denominator, original
+nonzero IDs, batch offsets, seeds and exact settings. A missing or failed signal is
+null with a reason, never a fabricated zero waveform. Nonzero readout-rejected and
+native-failed events are retained, not confused with zero deposition.
 
-## Owner-approved plan: pulse-shape analysis before machine learning
+Use one common filter/storage contract in writer, exporter and Control. Default
+browsing selects a real saved nonzero signal, with concise count summaries. Historical
+raw scientific archives remain unchanged and readable; do not destroy them to make
+new output small. Teaching pages keep a few representative signals from newer
+completed data rather than giant zero-event lists. Check a saved small mixed case
+for nonzero IDs, zero count, failure/null/negative-sign behavior and unchanged energy
+and efficiency denominator; no Geant4/SSD rerun solely for this format change.
 
-Owner addition, 2026-10-13, inspired by Yuan-Ru "Leon" Lin's APS DNP presentation,
-*Supervised Learning Engine for Energy and Pulse-shape* (2026-10-13, slides13-24).
-The useful direction is a reproducible waveform/feature workflow with an A/E
-baseline, followed by a bounded classifier comparison. Slide16 reports about9%
-multi-site survival at90% single-site acceptance for both the real-data classifier
-and production A/E; slides17/24 describe simulation-trained classification as
-future work. Do not cite this presentation as proof of a simulation-training gain.
-The private presentation is a reference, not a public repository input.
+### P3 — Close the actual student desktop workflow
 
-**User outcome:** a student traces one event from deposition topology through
-signed charge/current and electronics to reproducible pulse-shape features,
-then compares event selections without losing the original event census.
-Keep the existing remage/SSD/readout engines, Control and saved-analysis route.
-Real student blockers take priority, and November measurement publication remains
-independent. Implement one complete stage at a time; do not make machine learning
-or global Li/PDE/CCE research a prerequisite for the first engineering example.
+Keep a single main route:select scene/detector/source -> enter count/settings ->
+check -> run -> inspect results. Remove unused fixed-example controls and empty/demo
+result panels from the normal route; retain advanced analysis only where it can
+operate on the student's own run. Display only useful stage state, progress and
+blocking reason; move hashes/full logs/old jobs to optional details.
 
-| Stage | Concrete inputs and outputs | Necessary acceptance and stop |
-|---|---|---|
-| Delivered / PSD1: saved-waveform features | One completed small case with full-resolution signed charge data, stable event/deposit identities, endpoint flags, exact electronics/calibration and source hashes. Produce a shared feature export and existing-viewer access to A/E, rise time and linked topology. | Independently recompute selected features with recorded units, polarity, filter, alignment and crossing definitions; preserve every event and selection reason. Stop at one traceable teaching/engineering case. No new radiation/field solve or all-model campaign. |
-| Delivered / PSD2: explicit waveform acquisition | After PSD1 acceptance, add a separate versioned waveform-acquisition profile with sampling rate, ADC range/bits, record/trigger window, bandwidth and explicit noise assumptions/seeds. Consume full-resolution signals, with independent injection calibration. | Verify sampling, time origin, clipping/window flags, charge/energy response and uncertainty with bounded injections. Preserve frozen peak-ADC regression and current preamp display. Stop at one reproducible synthetic acquisition example; do not claim a measured hardware model. |
-| PSD3: bounded classifier comparison | After usable waveform export and explicit label/split contracts, compare A/E with a small autoencoder plus classifier. Retain dataset/model/preprocessing hashes and all selection/split records. | On an independent test set compare background survival at the same signal acceptance, with sample counts and uncertainty. Keep variants of one original event in one split; fit preprocessing/calibration only on permitted training/calibration data. Stop at the measured comparison, whether or not machine learning improves it. Real-data performance requires actual recorded waveforms. |
+Check actual selected settings drive the backend; edits invalidate old checks;
+current setup differs clearly from the selected saved run. Reopen/stop/resume reuses
+finished stages, shared fields and independent calibration. Results lead with the
+nonzero event, four readable signal plots, spectrum and stage-specific original-file
+links with units/identity mapping. All UI stays English, mouse/keyboard desktop use.
 
-**PSD1 delivered:** one shared full-census JSON/CSV extractor, declared signed
-10ns current/rise/topology profile and lazy existing Control access are tested.
-All500 primaries/496zeros/4groups and full native signals/calibration/identities
-remain. The four actual groups are ineligible (cap/incomplete/tail reasons), so
-canonical A/A-over-E/rise stay null and observations remain provisional. Original-
-CSV math/BFS/lossless500 acceptance,15synthetic/7focused HTTP/controller/finalNode,
-10actual desktop observations and two scoped plus a NEW blind third AI review/
-exchange passed. This accepts feature traceability, not classifier/hardware/
-physical accuracy. See current PROGRESS and .local/psd-features-v1/COMPLETE.json.
-CSV nested records require explicit field capacity; strict future source updates
-need preserved derivative/version decisions. Stop PSD1 expansion; PSD2 delivery is recorded below.
+Use existing applicable acceptance and one targeted operation for changed paths;
+no repeat10-model/all-source simulation matrix, broad UI audit or synthetic demo
+passed off as ordinary student use. Stop at the usable documented path; subsequent
+student feedback supplies concrete fixes.
 
-**PSD2 delivered:** a separate versioned signed acquisition exporter/strict reader
-reuses the original Readout transition and complete PSD1 input; the existing lazy
-Control panel verifies saved data without execution/export. Default100MHz10ns,
-bipolar14bit±0.1V, external group-origin/reset-zero[-1000,10000]ns, causal10MHz
-single pole, sampled iid noise RMS0/seed20261014 and independent500keV injection
-are explicit synthetic assumptions. All500 primaries/496zeros/4groups remain;
-1101 ADC samples/group, original10002ns native support and old Erec/preamp retained.
-All4 source-invalid groups stay canonical-null/0selected with window flags and
-provisional observed candidates. Bounded initial plus targeted Julia/Python,
-protected HTTP/controller/Node, ONE independent original-CSV/convolution/injection
-check and actual desktop saved-data acceptance passed. Two scoped AI INITIALs,
-a NEW third independent of peer reports/findings, and concrete exchange accepted;
-third saw administrative accepted status, so full administrative blinding is not
-claimed. See PROGRESS and .local/psd-acquisition-v1/COMPLETE.json. Stop PSD2 expansion;
-PSD3 first declares population/independent labels/grouped splits/adequacy/inconclusive.
-This engineering example provides no physical/hardware/classifier accuracy proof.
+### P4 — Add only the remaining useful configuration options
 
-**Feature and label integrity:** define A as a declared filtered current-peak
-observable and E as independently calibrated reconstructed energy; keep truth
-Edep separately. Specify signed electrode/polarity convention rather than silently
-rectifying pulses. Zero/invalid energies, native failures, incomplete endpoints,
-threshold rejection and saturation retain explicit status and null unavailable
-features. Display traces are bounded/downsampled and must not be used as the
-full-resolution feature or training input. A native parcel fluctuation is numerical
-sampling, not physical noise or measured resolution.
+Keep the shared current cryostat, detector and source anchors; no duplicated files
+for every combination. The accepted source-angle function is already implemented,
+so do not rebuild it. Add genuinely requested missing monoenergetic gamma energy/
+position options through the same configuration/backend, with units and saved resolved
+placement. Check geometry/overlap and one bounded case only where transport changes.
+Do not expose sliders that the actual backend ignores or admit oversize detectors.
 
-Single-site/multi-site truth requires a recorded spatial clustering rule and
-sensitivity check, not a Geant4 step/deposit count. Calibration peak selections
-are labelled proxies with contamination limits, not perfect truth. An A/E-derived
-label or training selection cannot independently demonstrate superiority to A/E;
-retain such selection and possible bias explicitly. Additional isotope/source
-admission is separate work, not silently bundled into PSD1.
+The seven larger models wait for the larger cryostat's real dimensions/materials/
+mounting data. Reuse remage's existing interfaces; adopting paper advice is not a
+new framework/solver/upgrade project. Stop each option when it actually works and
+is documented, without an extra direction-review round.
 
-Before PSD3, declare the evaluation population, sample adequacy and inconclusive
-result rule. Choose architecture/hyperparameters and selection thresholds using
-training/validation or separate calibration data; inspect the final held-out test
-only for the declared evaluation, without tuning to its result. A seven-pulse
-engineering example establishes the feature workflow, not classifier performance.
+### P5 — Maintain useful website presentation and later pulse analysis
 
-**Current input limits:** existing readout is analog preamp/shaping followed by a
-single peak ADC code, not waveform digitization. The original AK02/SAP22 measured
-pulse waveforms were not saved; energy spectra alone cannot validate pulse-shape
-classification. PSD1 may use a clearly labelled saved engineering example despite
-unresolved physical accuracy gates. PSD2 now has a separate synthetic acquisition export; PSD3 remains next. The owner's
-subsequent continuation authorization covers their bounded implementation and
-acceptance in order; no installation, backend migration or new radiation/field
-campaign is included.
+The website remains saved-results presentation, separate from student runtime files.
+Fix named actual broken plots/links/selection issues from the existing supplied
+navigation plan; do not restart a whole-site redesign. Keep dataset-first navigation,
+both AK02/SAP22 million results and all four10K models, current representative signals,
+readable axes and source identities. Current preamp model/display stays unchanged.
+Use maintained generators; test/check only affected publication scope through the
+existing build path when publishing. No phone acceptance or physics rerun for layout.
 
-## Software audit priorities: owner request, 2026-10-13
+The PPT-inspired A/E/rise/acquisition/classifier direction remains a later application
+on usable independently labelled data, after P1-P3. Do not automatically start PSD3
+on the removed0-selected-group demo. Define population/labels/event-grouped splits/
+minimum sample adequacy before a small comparison; report insufficient data honestly.
+No A/E-derived training label called independent validation, invented metrics,
+missing measured waveforms or growing ML environment as a delivery prerequisite.
 
-The owner requested an adversarial audit, evidence-based software defence and
-importance-ranked improvements, explicitly including the interface. Three new
-Sol6.1/Ultra AI agents ran independent initial reviews, then exchanged concrete
-findings; a new third reviewer adjudicated details and direction. Root inspected
-the actual public site and protected local Control in Chrome, including keyboard
-focus and historical390px Control/320px public-page observations. The owner has
-removed phone adaptation/acceptance from subsequent work. Source/mock checks and retained
-artifacts support the audit; it is not exhaustive correctness, security, fresh
-installation, experimental or numerical-convergence certification.
+### P6 — November real measurement publication (external input)
 
-Coverage included source/geometry/units/timing, native charge/endpoints/failures,
-electronics/calibration/ADC, event census/provenance, source/model admission,
-Stop/Resume/process ownership, setup/archive/portability, saved publication,
-interface/navigation/accessibility, resources/tests and maintenance complexity.
-No radiation, field, drift or electronics calculation was repeated. No Run,
-Download or Save As was clicked. The initial audit itself changed no application implementation; subsequent delivery is recorded in PROGRESS.md.
-Private evidence is retained in `.local/software-audit-v1/`; original science and
-public saved numerical/media/model files remain unchanged.
+When the owner supplies complete releasable energy spectra,I-V,C-V and metadata,
+add one detector's actual measurement using the existing detector/result structure:
+conditions, units, acquisition/calibration/background information, uncertainty,
+original files and simulation/measurement distinction. Then reuse that template.
+No forced simulation overlay, parameter fit or waveform accuracy claim; original
+AK02/SAP22 measured pulse waveforms were not saved. Missing input blocks only this
+item, not software packaging/storage/desktop delivery.
 
-| Order | Confirmed issue and evidence | Small useful correction and necessary acceptance |
-|---|---|---|
-| Delivered / STRICT-01 | Proven pre-Popen preparation failures now have an explicit supported recovery; old opaque/Popen-entered failures stay blocked. | Shared journal/lease/persistent reread and CLI name reservation preserve original evidence. Failed Resume needs the original sealed checkpoint; later CLI completion/new stop is settled by explicit Verify and a checked control authority. Initial159 regressions, overlapping72/45 correction runs, Node contracts, desktop fixture acceptance and three independent AI targeted rechecks passed. See current PROGRESS.md and `.local/strict01-recovery-v1/COMPLETE.json`. |
-| Delivered / STRICT-02 | New Am241/Ba133/Co60 JSON schema2/descriptor1 and CSV use the selected source's closed diagnostic windows and `per_emitted_diagnostic_window_photon`. Historical aliases/bytes and Cs137/gamma contracts remain. | Shared export/merge and actual validators check source/window/CSV semantics and truth-derived named counts. Catalog accounting, active-validator wiring and report-only version downgrade findings were corrected. Initial47 Python/84 actual exporter checks; affected10/7 overlapping Python runs,61 actual catalog checks,7 cross-language views and three scoped AI final rechecks passed. Reuse `.local/strict02-normalization-v1/COMPLETE.json`; no physics rerun. |
-| Delivered / STRICT-03 | Desktop polling retains run/configuration/action controls, focus/caret, expanded receipts and selected primary/group; Continue reads current visible input. Equivalent Verify labels now share one mutually exclusive operation identity. | Node contracts and initial real1280x720 IAB synthetic-state acceptance passed; two endpoints logged18 identical timer polls. Three independent AI initials found the Verify alias; corrective contracts and three scoped final rechecks passed. Reuse unchanged-function browser evidence; final Verify cases are Node/mock, not a latest-hash whole-browser rerun. See `.local/strict03-focus-v1/COMPLETE.json`; no science rerun. |
-| Delivered / UI-PRIMARY-CONTRAST | Ordinary16px white primary-button text now uses independent #007d8a background/border, contrast4.883219:1 instead of4.137284:1, exceeding the ordinary-text4.5:1 requirement. Brand accent, disabled opacity, focus rule, categorical colors and layout remain. | Actual1280x720 IAB computed enabled style and Tab focus passed; setting edit naturally disables Run. Protected synthetic Check/setup fixture activated no execution/download. Reuse `.local/desktop-readiness-v1/COMPLETE.json`. |
-| Delivered / UI-ANGLE-READINESS | Check environment uses the neutral Angular source geometry exporter and build receipt label; stale preview/execution-pending suffix removed. | Existing readiness test and8 exact baseline/current output cases passed; all other fields, file/execution gates and accepted/pending notes stay identical. Real desktop synthetic label display passed. Two presentation literals only; earlier substantive reviews reused. |
+## Completion and stop
 
-**Desktop readiness/context delivered:** Run explains its actual blocking reason
-and next action without changing the original admission predicates. Next-run controls
-and selected saved-run pipeline/exact settings are distinct. Setting edits clear
-owned Check success, including repeated held checks; unrelated errors remain.
-Integrated Node contracts,11 actual desktop synthetic-state cases, one fresh
-W1 held-recheck/edit/stale-rejection/poll case and three scoped AI final rechecks
-passed. See current PROGRESS.md and `.local/desktop-feedback-v1/COMPLETE.json`.
-This is local UI/contract acceptance, not installation or physical validation.
-
-**Desktop primary hints and plot placement delivered:** all original IDs/order/
-option values, default waveform and selected primary/group remain. Shared saved-
-record hints distinguish zeros, native failures, accepted/rejected/saturated/mixed
-or unavailable readout; scalar acceptance never invents a trace. Actual desktop
-SVGs now use one fullwidth column:1280x720 tick text increased from6.973px to
-14.232px, with original data/units/renderers/camera and eight controls unchanged.
-Integrated Node contracts, bounded actual saved-data/explicit synthetic desktop
-cases and two scoped plus a NEW independent third AI review/exchange passed.
-Browser coverage is four complete authentic pages350/500 originals and one real
-waveform, with separate SYNTHETIC101 status pages; no full500 browser/physical-
-validation claim. See `.local/desktop-primary-hints-v1/COMPLETE.json`. The desktop
-queue is complete at this acceptance; proceed to PSD1 without more cosmetic work.
-
-**Later conditional engineering gaps:** add measured resource/storage preflight
-when a real run requires it; preserve lazy serial batching. A small portable
-regression/CI tier would help maintain the growing source-bound legacy surface;
-it is not another installation/physics campaign. Resolve actual student setup
-feedback through the existing guide. Physical CCE/noise/experimental agreement,
-missing measured waveforms and independent off-device backup verification remain
-declared limits, not newly proven software defects or prerequisites for PSD1.
-
-STRICT-01/02/03, primary-button contrast, angle wording and desktop readiness/context
-are delivered, along with full-census primary hints and readable desktop plots.
-PSD1 features and PSD2 separate synthetic waveform acquisition are delivered; next is PSD3.
-The initial audit remains historical evidence. Authorized automatic
-continuation implements the remaining ranked desktop corrections and then PSD
-stages; review only verified corrections or newly affected risks, without
-repeating the full audit or completed science.
-
-## Removed prerequisites and deferred research
-
-- Remove a new M10 prototype, generic M5b, mandatory new-cryostat M11 demonstration,
-  repeated website reorganizations and duplicate analysis/help systems from delivery.
-  These were complete, inappropriate for this cryostat, or lacked a concrete need.
-- Seven oversized detectors require a future larger cryostat with real dimensions,
-  materials and mappings; never shrink them or change the selected world silently.
-- M3 experimental preamp/ORTEC/noise, Li/depletion/transition accuracy, experimental
-  calibration fitting and deeper GeRC work remain separate research lanes. The owner's
-  current preamp-display instruction is to leave it unchanged.
-- No new million campaign, all-combination transport/SSD campaign, installation,
-  backend/framework migration, global PATH/WSL/package change or reset credits.
-
-## Working and maintenance rules
-
-Use one existing project/environment and meaningful run outputs, not duplicate
-reports or speculative scaffolding. State concrete inputs, outputs, acceptance,
-compute bounds and stop before each implementation. Preserve unique failures,
-scientific inputs and original source bindings. Measure science separately from
-coding/review/publication time; do not invent an ETA.
-
-Automatic heartbeat is ACTIVE; this PSD1 round received its actual
-2026-10-14T02:59:59.177Z trigger. Subsequent work starts from current PROGRESS, actual Git/remote/
-processes, terminal receipts and the owned lease; never replay completed work
-after a chat failure. Existing publication/capability checks remain mandatory
-where applicable. Stop extending scope when all executable authorized work is
-complete; retain missing-input and physical-validation conditions explicitly.
+After each useful change:one related developer verification, concise PROGRESS update,
+normal commit/push, close owned idle tools and release the owned lease. No extra
+reviewers or new evidence directories. Do not manufacture work when the usable
+requested outcome is complete. Do not call software/data presentation validated
+physical detector response. Report implemented, tested and input-dependent items
+separately; retain scientific identities, signs, nulls, units and independent gain.

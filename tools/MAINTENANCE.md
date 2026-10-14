@@ -7,7 +7,9 @@ The beginner instructions have one authority: `tools/site_guide.html`, published
 as `guide.html`. Keep README short and link to that guide rather than adding
 another complete installation recipe.
 
-Student software downloads use the current branch's GitHub source ZIP. The
+The current download is the branch source ZIP without saved website results.
+A minimal student runtime package is the first item in NEXT_DEVELOPMENT_PLAN;
+do not call the current development-source ZIP a finished runtime-only package. The
 `docs` export-ignore attribute excludes the generated website from Git archives;
 it does not delete the site or change the existing main:/docs Pages deployment.
 Keep the original models, relative includes, source, lockfiles and licenses in
