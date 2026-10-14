@@ -1,0 +1,17 @@
+{
+  "kind": "synthetic_waveform_acquisition_profile_v1",
+  "schema_version": 1,
+  "name": "synthetic-preamp-100MHz-bipolar-v1",
+  "sampling_rate_Hz": 100000000.0,
+  "adc": {"bits": 14, "minimum_V": -0.1, "maximum_V": 0.1},
+  "record_window_ns": [-1000.0, 10000.0],
+  "trigger": {
+    "kind": "external_group_origin",
+    "offset_ns": 0.0,
+    "prehistory": "isolated_reset_zero_before_group_origin"
+  },
+  "bandwidth": {"kind": "causal_single_pole_lowpass", "cutoff_Hz": 10000000.0},
+  "noise": {"kind": "postfilter_sampled_iid_gaussian_voltage", "rms_V": 0.0, "root_seed_uint64": "20261014"},
+  "measurement_polarity": -1,
+  "calibration": {"kind": "independent_delta_charge_injection", "energy_keV": 500.0}
+}

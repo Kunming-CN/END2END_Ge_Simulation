@@ -161,7 +161,7 @@ or global Li/PDE/CCE research a prerequisite for the first engineering example.
 | Stage | Concrete inputs and outputs | Necessary acceptance and stop |
 |---|---|---|
 | Delivered / PSD1: saved-waveform features | One completed small case with full-resolution signed charge data, stable event/deposit identities, endpoint flags, exact electronics/calibration and source hashes. Produce a shared feature export and existing-viewer access to A/E, rise time and linked topology. | Independently recompute selected features with recorded units, polarity, filter, alignment and crossing definitions; preserve every event and selection reason. Stop at one traceable teaching/engineering case. No new radiation/field solve or all-model campaign. |
-| PSD2: explicit waveform acquisition | After PSD1 acceptance, add a separate versioned waveform-acquisition profile with sampling rate, ADC range/bits, record/trigger window, bandwidth and explicit noise assumptions/seeds. Consume full-resolution signals, with independent injection calibration. | Verify sampling, time origin, clipping/window flags, charge/energy response and uncertainty with bounded injections. Preserve frozen peak-ADC regression and current preamp display. Stop at one reproducible synthetic acquisition example; do not claim a measured hardware model. |
+| Delivered / PSD2: explicit waveform acquisition | After PSD1 acceptance, add a separate versioned waveform-acquisition profile with sampling rate, ADC range/bits, record/trigger window, bandwidth and explicit noise assumptions/seeds. Consume full-resolution signals, with independent injection calibration. | Verify sampling, time origin, clipping/window flags, charge/energy response and uncertainty with bounded injections. Preserve frozen peak-ADC regression and current preamp display. Stop at one reproducible synthetic acquisition example; do not claim a measured hardware model. |
 | PSD3: bounded classifier comparison | After usable waveform export and explicit label/split contracts, compare A/E with a small autoencoder plus classifier. Retain dataset/model/preprocessing hashes and all selection/split records. | On an independent test set compare background survival at the same signal acceptance, with sample counts and uncertainty. Keep variants of one original event in one split; fit preprocessing/calibration only on permitted training/calibration data. Stop at the measured comparison, whether or not machine learning improves it. Real-data performance requires actual recorded waveforms. |
 
 **PSD1 delivered:** one shared full-census JSON/CSV extractor, declared signed
@@ -174,7 +174,24 @@ CSV math/BFS/lossless500 acceptance,15synthetic/7focused HTTP/controller/finalNo
 exchange passed. This accepts feature traceability, not classifier/hardware/
 physical accuracy. See current PROGRESS and .local/psd-features-v1/COMPLETE.json.
 CSV nested records require explicit field capacity; strict future source updates
-need preserved derivative/version decisions. Stop PSD1 expansion; proceed PSD2.
+need preserved derivative/version decisions. Stop PSD1 expansion; PSD2 delivery is recorded below.
+
+**PSD2 delivered:** a separate versioned signed acquisition exporter/strict reader
+reuses the original Readout transition and complete PSD1 input; the existing lazy
+Control panel verifies saved data without execution/export. Default100MHz10ns,
+bipolar14bit±0.1V, external group-origin/reset-zero[-1000,10000]ns, causal10MHz
+single pole, sampled iid noise RMS0/seed20261014 and independent500keV injection
+are explicit synthetic assumptions. All500 primaries/496zeros/4groups remain;
+1101 ADC samples/group, original10002ns native support and old Erec/preamp retained.
+All4 source-invalid groups stay canonical-null/0selected with window flags and
+provisional observed candidates. Bounded initial plus targeted Julia/Python,
+protected HTTP/controller/Node, ONE independent original-CSV/convolution/injection
+check and actual desktop saved-data acceptance passed. Two scoped AI INITIALs,
+a NEW third independent of peer reports/findings, and concrete exchange accepted;
+third saw administrative accepted status, so full administrative blinding is not
+claimed. See PROGRESS and .local/psd-acquisition-v1/COMPLETE.json. Stop PSD2 expansion;
+PSD3 first declares population/independent labels/grouped splits/adequacy/inconclusive.
+This engineering example provides no physical/hardware/classifier accuracy proof.
 
 **Feature and label integrity:** define A as a declared filtered current-peak
 observable and E as independently calibrated reconstructed energy; keep truth
@@ -202,7 +219,7 @@ engineering example establishes the feature workflow, not classifier performance
 single peak ADC code, not waveform digitization. The original AK02/SAP22 measured
 pulse waveforms were not saved; energy spectra alone cannot validate pulse-shape
 classification. PSD1 may use a clearly labelled saved engineering example despite
-unresolved physical accuracy gates. PSD2/PSD3 remain later stages. The owner's
+unresolved physical accuracy gates. PSD2 now has a separate synthetic acquisition export; PSD3 remains next. The owner's
 subsequent continuation authorization covers their bounded implementation and
 acceptance in order; no installation, backend migration or new radiation/field
 campaign is included.
@@ -268,7 +285,7 @@ declared limits, not newly proven software defects or prerequisites for PSD1.
 
 STRICT-01/02/03, primary-button contrast, angle wording and desktop readiness/context
 are delivered, along with full-census primary hints and readable desktop plots.
-PSD1 saved full-resolution waveform features are delivered; next is PSD2, then PSD3.
+PSD1 features and PSD2 separate synthetic waveform acquisition are delivered; next is PSD3.
 The initial audit remains historical evidence. Authorized automatic
 continuation implements the remaining ranked desktop corrections and then PSD
 stages; review only verified corrections or newly affected risks, without

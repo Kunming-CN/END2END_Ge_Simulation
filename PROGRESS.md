@@ -1,108 +1,113 @@
 # Current handoff
 
-Updated: 2026-10-13. Read this before starting work.
-Immutable prior delivered desktop handoff:
-[5aac3ccc](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/5aac3cccc3add0110b2bf56f2d556beb47971469/PROGRESS.md).
+Updated: 2026-10-14. Read this first, then relevant sources only.
+Immutable prior handoff: [PSD1 and earlier history](https://github.com/kunming-cn/END2END_Ge_Simulation/blob/1f20011fc0dab79fd3df12719f89987871534315/PROGRESS.md).
 It links STRICT01/02/03, desktop controls/contrast/plots, audits and permanent science.
 
 ## Authorized automatic continuation
 
 The owner authorized all executable tools/NEXT_DEVELOPMENT_PLAN.md work without
-reminders or per-round approval. Existing heartbeat ACTIVE every30minutes; actual
-trigger2026-10-14T02:59:59.177Z. Computer/app must be running. Desktop only;
-no phone development or acceptance. Inspect exact terminal/source hashes, Git/
-remote, actual processes and ownership before acquiring only from explicit ready
-without another holder. Never duplicate workers/science or remove unknown locks.
+reminders or per-round approval. Desktop only; no phone development or acceptance.
+Live automation tool view and saved configuration confirm heartbeat `automation`
+ACTIVE every30minutes, targeting this chat; configuration unchanged. Local execution
+needs powered computer, running Codex and available project. Earlier actual heartbeat
+2026-10-14T02:59:59.177Z is evidence, not guaranteed uninterrupted later execution.
 
-## PSD1 saved full-resolution feature workflow delivered
+Before a round read AGENTS/this handoff/plan; inspect exact terminal/source hashes,
+actual Git/remote/processes and ownership. Start only from explicit ready without
+another holder; acquire exclusive lease before writes. Never remove unknown locks
+or duplicate workers/science after chat interruption. Current root owner is
+psd-acquisition-v1-root; final terminal/state/lease closure governs next admission.
 
-One shared exporter/reader and versioned signed-current profile add a lazy
-selected-primary/group feature panel to existing Control. The advanced command
-`python tools/psd_features.py --run .local/runs/<saved-name>` uses the existing
-configured Python and defaults to .local/psd-features/<configurationSHA>/bundle.
-It refuses an existing output; separate analyses need explicit fresh output.
-Control requires an owned completed saved job and checks its exact configuration/
-original provenance. Opening the panel verifies saved records, without simulation,
-calibration, export, registry writes or execution admission. Missing bundles have
-an unavailable explanation. Run/page/primary/group/local/origin/profile/bundle
-identities and stale generations protect the current selection.
+## PSD2 separate synthetic acquisition delivered
 
-The completed AK01/Cs137500 engineering case retains all500 original primaries,
-496zeros,4groups and20008 signed native charge samples (5002/group,2ns spacing,
-0..10002ns). JSON/CSV retain original truth/scalars/deposits/endpoints, global and
-local identities, times, signs/nulls/zeros, calibration/settings/software/seeds.
-A uses fixed +1 polarity and10ns centered physical-width current averaging on
-complete support within0..10000ns. Current is exact adjacent signed charge change
-converted using original2.95eV ionisation energy. Rise uses first linear upward
-10/90 crossings of the signed observed window span. The raw10002ns endpoint is
-retained separately. Erec stays from the separate500keV injection calibration;
-truth Edep never sets event gain or replaces the feature denominator.
+One additive Julia module reuses the original Readout five-state transition;
+one shared Python exporter/strict reader consumes checked full-resolution PSD1.
+Advanced command: `python tools/waveform_acquisition.py --run .local/runs/<saved-name>`.
+Default .local/waveform-acquisition/<configurationSHA>/bundle refuses overwrite;
+other analyses require a fresh explicit derivative. Existing lazy Control verifies
+an owned completed run's saved bundle with protected GET, without Julia/calibration/
+simulation/export/registry writes. Missing data has an unavailable explanation.
+Run/config/global/group/batch/local/origin/profile/source/bundle and stale-response
+identities bind the current selection. Original peak ADC/Erec/preamp stays unchanged.
 
-All4actual groups have native step limits, incomplete endpoints and possible
-truncated tails despite accepted readout. Canonical A/A-over-E/rise remain null;
-provisional signed observed peaks/rise and original flags are explicit. These
-observations do not prove complete collection or physical resolution. Positive-
-energy detector-local deposition points use inclusive single-link clustering at
-1mm with0.5/1/2mm sensitivity; counts188=3/2/1,203=1/1/1,371=1/1/1,445=2/2/1.
-These are spatial-step proxies, not independently established SS/MS truth.
+Default100MHz/10ns, bipolar14bit ADC[-0.1,0.1)V, record[-1000,10000]ns relative
+to original group origin, external trigger with assumed isolated reset-zero prehistory,
+causal10MHz single lowpass pole, sampled iid Gaussian voltage RMS0V/root seed20261014.
+Positive saved signed charge gives negative preamp voltage; fixed -1 polarity applies
+only to measurement. The pole uses exact within-native-bin CSA forcing. ADC floor/
+clamp/code-centres, clipping, finite support, edge peaks, zero-code offset, numerical
+quantization/noise bounds and peak winner bias are explicit. A separate noiseless500keV
+delta-charge injection sets one new gain per frontend; event Edep never sets gain.
+Finite one-pole attenuation does not establish alias-free sampling or measured noise.
 
-## Acceptance and retained evidence
+ONE actual export retains all500 primaries/496zeros/4groups from AK01/Cs137500,
+references exact PSD1/raw truth/endpoints/20008 signed charge samples/settings/
+calibration/seeds/units/identities, and adds1101 samples per group. Native input
+0..10002ns remains complete; record ends10000ns so window truncation is flagged.
+All4 groups retain native cap/incomplete endpoint/possible tail truncation;
+canonical acquisition energies remain null/selected_groups0. Computable observed
+energy is provisional, separate from old Erec and physical CCE/resolution claims.
 
-Writers stopped before source/raw freeze and the ONE actual feature export,
-measured2.0498014s. Existing physics/calibration never reran. Core15synthetic tests,
-7focused protected-HTTP/controller tests and affected finalNode passed. An
-independent original-CSV interval-sum/crossing/BFS checker confirmed every500
-lossless JSON/CSV record, all original maps/flags/settings/calibration and full
-native arrays. Maximum current arithmetic difference4.55e-13nA within declared
-1e-12absolute/5e-12relative tolerances; timing matches with1e-8ns tolerance.
+## Acceptance, AI review and evidence
 
-Actual desktop accepted10observations/6protected featureGETs: lazy closedpanel,
-zero0/100,188summary/group0, global250/local0 across batches, linked30deposits and
-nohorizontaloverflow at default1265x720 document client dimensions. Authentic300
-original page records and one4plot waveform reuse the byte-exact prior saved
-fixture payload; next-run catalog is explicitly SYNTHETIC. This is engineering
-reader/UI acceptance, not a new normal Control registry entry or full500browser
-coverage. Tab10/service28272/exec27431 closed; noPOST/download/SaveAs/science.
+All core/viewer/checker/helper writers exited before source-freeze-1.json:
+source_pins MAP45source/108raw/22retained. Canonical manifest SHA256
+39e509eee8b6850a133849ca49ceb353a50c2eac9caad81e43a94bec6e10cae5.
+Actual electronics subprocess8.1346295s,4frontends/2new batch calibrations, existing
+Julia1.13.0 threads1/BLAS1/offline. This is not detector compute or development/review
+wall time. Original radiation/fields/native drift/old readout/calibration never reran.
 
-Two scoped independent Sol6.1/Ultra AI INITIALs then a NEW blind third reviewed
-the frozen tested milestone, followed by concrete exchange. All3 accepted with
-no verified blocker or material disagreement; initial test/pin evidence was
-reused after exchange, with no source correction or extra recheck/test cycle.
-Direction/size/value fit one traceable teaching workflow; stop expanding PSD1.
-Explicit requested model/effort are recorded; live provider introspection was
-unavailable. These are AI reviews, not human/installation/physical certification.
+Acceptance reuses132 initial Julia assertions plus2 targeted ADC-boundary assertions;
+Python12/13 initial cases plus corrected noisy-negative expectation on its preserved
+fixture and targeted ADC/schema/serialization checks (14 accepted cases). This is
+not a final-source whole-suite rerun claim. Four controller/three protected HTTP
+cases and affected final Node contracts passed. ONE independent raw-CSV/Gauss8 causal
+convolution/analytic injection checker verifies all500 lossless JSON/CSV joins,
+old preamp/Erec, codes/clipping/timing/calibration and source provenance. Maximum
+preamp/filter differences2.65e-14V satisfy unchanged1e-12V absolute/1e-10relative
+bounds;100/500/1000keV analytic ADC responses satisfy quantization bounds. No new
+Julia/export ran for that check; default noise0 is not hardware-resolution evidence.
 
-Evidence root .local/psd-features-v1: COMPLETE.json, EXPORT-1.json, source-freeze-1,
-source-freeze-2 (source_pins MAP), ROOT-INTEGRATION/REVIEW-ACCEPTANCE/integrity/diff/
-archive/Git records, implementation/viewer test receipts, input-audit contract/
-ACCEPTANCE-2, browser observations/screenshots and3 INITIAL/CROSS records.
-EXPORT-1 records the exact canonical derivative path and manifest binding.
-Freeze2 changes ONLY a private checker CSV field-capacity repair; production/data
-stay bound to original freeze1. Initial module-discovery/hand-expected-midpoint,
-sandbox socket-denial, wording assertion, CSV131072-limit, root hash-schema and
-review receipt/process-tool failures remain preserved. No numeric gate was
-loosened or source/science changed to force a pass. All1694docs,20models,93simulation,
-50transport,16scenario files,108raw and22retained science/request pins stayed exact.
-Local source-only milestone; no site build or fresh installation claimed.
+Actual desktop:lazy closed0GET, zero0,188group0/summary and batch1global250/local0;
+4protected acquisition GETs, three signed1101-point series and1265px document with
+no horizontal overflow. Three authentic saved pages300/500 and one original four-plot
+waveform reuse a read-only mirrored owned completed job; next-run catalog explicitly
+SYNTHETIC. No normal-registry new adoption/full500 browser/install/hardware/physics
+claim. Owned tab1/service13140/exec73818 closed;0POST/Download/SaveAs/Run/export on GET.
+
+Two scoped independent INITIALs then a NEW third reviewed details/direction/complexity/
+student value, then exchanged concrete findings. All accepted without a verified blocker
+or material conflict; no post-review source correction or repeated test cycle.
+All agents explicitly requested gpt-6.1-sol/ultra; provider live introspection unavailable.
+Third read no peer reports/findings before INITIAL but saw their administrative accepted
+status during ownership checking; do not call this completely blinded. These are AI
+source/evidence reviews, not human certification. Stop expanding this PSD2 example.
+
+Evidence .local/psd-acquisition-v1: LAUNCH/BASELINE/RETAINED/AUTOMATION-CHECK,
+source-freeze-1, implementation/viewer receipts, SAVED-EXPORT, input-audit ACCEPTANCE-1
+and corrected execution receipt, browser ACCEPTANCE/OBSERVATIONS/acquisition-desktop.png,
+ROOT-INTEGRITY/PROCESS-CHECK, reviews and final Git/archive/COMPLETE records.
+Initial Julia syntax/Python fixture/expectation, ADC boundary, sandbox socket/CIM,
+browser summary-role locator and receipt-only recording failures stay preserved.
+No gate loosened; all1694docs/20models/93old simulation/50transport/16scenarios and
+science input bytes unchanged. Two new Julia modules are deliberate additions.
+Local source milestone; no site rebuild or fresh installation claimed.
 
 ## Next bounded milestone and retained limits
 
-PSD1 is delivered; next PSD2: one separate versioned synthetic waveform-acquisition
-profile/export with explicit sampling, ADC/trigger/window/bandwidth/noise/seeds and
-independent injection calibration. Consume full-resolution signals; preserve the
-old peak-ADC/preamp regression, all events/invalid reasons and source bindings.
-Stop at a reproducible engineering acquisition example, no hardware claim.
-Then PSD3 bounded/inconclusive comparison with declared labels/population/splits;
-this actual4-ineligible-group case supplies NO classifier-performance evidence.
+Confirm final Git/terminal/owned lease closure before another automatic round.
+Next PSD3 first declares evaluation population, independent label provenance,
+grouped train/validation/test splits, minimum sample adequacy and inconclusive rule.
+Only then make the bounded A/E versus small autoencoder/classifier comparison that
+eligible independent inputs permit. Actual4-ineligible-group case supplies NO
+classifier-performance evidence; do not invent labels/metrics/test data, tune to
+held-out data, clear invalid flags or start another physical campaign to manufacture it.
 
-Lossless CSV record_json needs explicit parser capacity above Python's131072
-field default; no precision sampling is allowed. Future extractor changes need
-an explicit preserved derivative/version decision. Whole-bundle GET integrity
-verification remains bounded here; optimize only after actual measured user delay.
-November spectrum/I-V/C-V needs complete owner inputs; original AK02/SAP22
-measured waveforms were not saved. Retain CCE/resolution/experiment/global-
-convergence limits, immutable campaigns/caches/unique failures and independent
-calibration. No installation/globalconfig/reset use; no new science campaign.
-Stop scope expansion when executable plan finishes. Terminal/Git/owned lease
-closure is authoritative before the next automatic round; never infer a rerun
-from chat failure or stale handoff.
+Original AK02/SAP22 measured waveforms were not saved. November spectrum/I-V/C-V
+publication needs complete owner inputs/metadata. Keep CCE/resolution, measured
+waveform/hardware/experiment/global convergence/backup conditions explicit without
+blocking unrelated executable work. Strict source binding needs preserved derivative/
+version decisions; lossless CSV needs sufficient parser capacity. No new environments,
+frameworks/installs/global configuration/resets or expanded science campaigns.
+Stop scope extension once all executable authorized plan work is complete.

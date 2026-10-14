@@ -863,5 +863,73 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run('showRun(savedJob);featurePending[3].resolve(featureReply(372,null,featureZero));');await anotherRunFeature;
   assert.equal(get('feature-content').children.length,0);assert.equal(run('result'),null);
   get('feature-panel').open=false;get('feature-panel').ontoggle();
+  // PSD2 is an additive saved-only lane: no export action, original signed
+  // voltages and source-invalid energies stay distinct from observations.
+  assert.match(html,/<details id="acquisition-panel"><summary>Saved synthetic waveform acquisition<\/summary>/);
+  assert.doesNotMatch(html,/id="(?:export|run|download)-acquisition"/);
+  run(`const acquisitionProfile={kind:'synthetic_waveform_acquisition_profile_v1',schema_version:1,name:'synthetic-preamp-fixture',sampling_rate_Hz:1e8,adc:{bits:14,minimum_V:-.1,maximum_V:.1},record_window_ns:[-10,10],trigger:{kind:'external_group_origin',offset_ns:0,prehistory:'isolated_reset_zero_before_group_origin'},bandwidth:{kind:'causal_single_pole_lowpass',cutoff_Hz:1e7},noise:{kind:'postfilter_sampled_iid_gaussian_voltage',rms_V:0,root_seed_uint64:'20261014'},measurement_polarity:-1,calibration:{kind:'independent_delta_charge_injection',energy_keV:500}};
+    const acquisitionTrace={time_since_origin_ns:[-10,0,10],signed_preamp_V:[0,-.003,-.001],bandwidth_limited_preamp_V:[0,-.002,-.001],noise_V:[0,0,0],noisy_voltage_V:[0,-.002,-.001],adc_code:[8192,8028,8110],adc_center_V:[0,-.002,-.001]};
+    const acquisitionGroup={...featureGroup,acquisition:{status:'provisional',selection:{valid:false,reasons:['source_feature_invalid','native_step_limit','incomplete_endpoint']},flags:{record_truncates_native_window:true,adc_lower_clipped:false},acquisition_energy_keV:null,observed:{provisional:true,acquisition_energy_keV:4.1,peak_adc_excursion_V:.002,peak_time_since_origin_ns:0,baseline_adc_center_V:0},trace:acquisitionTrace,uncertainty:{quantization_excursion_bound_keV:.01,single_sample_noise_sigma_energy_keV:0,simultaneous_noise_confidence:.99,simultaneous_noise_bound_keV:0,peak_noise_winner_bias_possible:false,conditional_on_no_clipping:true,physical_energy_resolution:false},metadata:{native_time_step_ns:2,native_window_end_ns:20,input_sample_count:11,input_final_charge_keV:-.004,trigger_origin_time_ns:42,derived_noise_seed_uint64:'26092631',measurement_polarity:-1,calibration_id:1}}};
+    const acquisitionZero={...featureZero,acquisition_energy_keV:null,acquisition_selection:{valid:false,reasons:['zero_deposit']}};
+    function acquisitionReply(id=371,group=0,record=acquisitionGroup){return {kind:'local_saved_waveform_acquisition_v1',name:featureJob.name,configuration_sha256:featureJob.configuration_sha256,primary_id:id,group_id:group,available:true,profile_sha256:'e'.repeat(64),bundle_sha256:'f'.repeat(64),source_features_manifest_sha256:'c'.repeat(64),source_profile_sha256:'b'.repeat(64),profile:acquisitionProfile,record,calibrations:[{batch_index:1,calibration:{method:'independent_delta_charge_injection',energy_keV:500,volts_per_keV:.00001,quantization_half_lsb_energy_keV:.6}}],counts:{primaries:500,pulse_groups:4,selected_groups:0},provenance:{profile_sha256:'e'.repeat(64),run_ref:'.local/runs/feature-saved',source_features_ref:'.local/psd-features/'+featureJob.configuration_sha256+'/bundle',source_features_manifest_sha256:'c'.repeat(64),source_profile_sha256:'b'.repeat(64)}};}
+    const acquisitionRequests=[];api=async path=>{acquisitionRequests.push(path);return acquisitionReply();};
+    $('acquisition-panel').open=false;showRun(featureJob);result={job:featureJob,records:featureRows,traces:[]};$('event').value='371';showEvent(1);`);
+  assert.equal(run('acquisitionRequests.length'),0);
+  get('acquisition-panel').open=true;await run('loadAcquisition()');
+  assert.match(run('acquisitionRequests[0]'),/workflow\/acquisition\?name=feature-saved&primary=371&group=0$/);
+  assert.match(get('acquisition-status').textContent,/primary 371 · group 0.*selection invalid/);
+  assert.match(featureText(get('acquisition-content')),/Original peak-ADC Erec · keV 3.9.*Waveform acquisition energy · keV Unavailable/s);
+  assert.match(featureText(get('acquisition-content')),/Provisional observed acquisition measurements/);
+  assert.match(featureText(get('acquisition-content')),/Observed candidate energy · keV 4.1/);
+  assert.match(featureText(get('acquisition-content')),/numerical bounds, not physical energy resolution/);
+  assert.match(featureText(get('acquisition-content')),/100 MHz sampling \(10 ns\).*bipolar ADC -0.1…0.1 V, 14 bits/);
+  assert.match(featureText(get('acquisition-content')),/isolated reset-zero prehistory.*causal single-pole low-pass.*10 MHz/s);
+  assert.match(featureText(get('acquisition-content')),/Gaussian voltage noise RMS 0 V.*root seed 20261014/);
+  assert.match(featureText(get('acquisition-content')),/Independent 500 keV charge injection.*truth Edep never sets gain/);
+  assert.match(featureText(get('acquisition-content')),/ADC center voltage retains the original preamp sign/);
+  const acquiredFigure=get('acquisition-content').children.find(n=>n.tagName==='figure');
+  const acquiredSvg=acquiredFigure.children.find(n=>n.tagName==='svg');
+  assert.ok(acquiredSvg.children.filter(n=>n.tagName==='path'&&n['data-series']).every(n=>!n.d.includes('NaN')));
+  assert.ok(acquiredSvg.children.some(n=>n.tagName==='text'&&n.textContent==='-10.0'));
+  assert.equal(run('JSON.stringify(featureRows)'),run('featureRowsBefore'));
+  assert.equal(get('event').value,'371');assert.equal(get('group').value,'1');
+  for(const mutation of ["primary_id:121","group_id:1","configuration_sha256:'d'.repeat(64)","profile_sha256:'d'.repeat(64)","bundle_sha256:'d'.repeat(64)","source_features_manifest_sha256:'d'.repeat(64)","source_profile_sha256:'d'.repeat(64)"]){
+    assert.throws(()=>run(`acquisitionIdentity({...acquisitionReply(),${mutation}},featureSelection())`),/differ|changed/);
+  }
+  for(const mutation of ["global_initial_id:121","event_id:371","batch_index:0","local_initial_id:371","origin_time_ns:43"]){
+    assert.throws(()=>run(`acquisitionIdentity(acquisitionReply(371,0,{...acquisitionGroup,${mutation}}),featureSelection())`),/differ/);
+  }
+  assert.throws(()=>run(`acquisitionIdentity(acquisitionReply(371,0,{...acquisitionGroup,acquisition:{...acquisitionGroup.acquisition,acquisition_energy_keV:0}}),featureSelection())`),/Invalid saved acquisition/);
+  assert.throws(()=>run(`acquisitionIdentity(acquisitionReply(371,0,{...acquisitionGroup,acquisition:{...acquisitionGroup.acquisition,selection:{valid:true,reasons:[]}}}),featureSelection())`),/Invalid saved acquisition/);
+  assert.throws(()=>run(`acquisitionIdentity(acquisitionReply(371,0,{...acquisitionGroup,acquisition:{...acquisitionGroup.acquisition,trace:{...acquisitionTrace,adc_code:[0,-1,2]}}}),featureSelection())`),/ADC code/);
+  assert.throws(()=>run(`acquisitionIdentity(acquisitionReply(371,0,{...acquisitionGroup,acquisition:{...acquisitionGroup.acquisition,trace:{...acquisitionTrace,time_since_origin_ns:[-10,0,9]}}}),featureSelection())`),/sample/);
+  run(`api=async path=>{acquisitionRequests.push(path);return acquisitionReply(372,null,acquisitionZero);};$('event').value='372';showEvent();`);
+  await Promise.resolve();await Promise.resolve();
+  assert.match(run('acquisitionRequests.at(-1)'),/primary=372$/);assert.doesNotMatch(run('acquisitionRequests.at(-1)'),/group=/);
+  assert.match(featureText(get('acquisition-content')),/zero_deposit.*Truth Edep · keV 0.*Waveform acquisition energy · keV Unavailable/s);
+  assert.match(featureText(get('acquisition-content')),/No acquisition waveform is fabricated/);
+  assert.equal(get('acquisition-content').children.filter(n=>n.tagName==='figure').length,0);
+  run(`const failedAcquisition={...acquisitionGroup,Erec_keV:null,acquisition:{...acquisitionGroup.acquisition,status:'unavailable',trace:null,observed:null,selection:{valid:false,reasons:['native_transport_failed']}}};api=async()=>acquisitionReply(371,0,failedAcquisition);$('event').value='371';showEvent(1);`);
+  await Promise.resolve();await Promise.resolve();
+  assert.match(featureText(get('acquisition-content')),/native_transport_failed.*Original peak-ADC Erec · keV Unavailable.*Waveform acquisition energy · keV Unavailable/s);
+  assert.match(featureText(get('acquisition-content')),/Unknown samples and energies remain null/);
+  assert.equal(get('acquisition-content').children.filter(n=>n.tagName==='figure').length,0);
+  run(`api=async()=>({kind:'local_saved_waveform_acquisition_v1',name:featureJob.name,configuration_sha256:featureJob.configuration_sha256,primary_id:371,group_id:0,available:false,profile_sha256:null,bundle_sha256:null,source_features_manifest_sha256:null,source_profile_sha256:null,note:'Saved acquisition unavailable; no export starts.'});`);
+  await run('loadAcquisition()');assert.equal(get('acquisition-content').children.length,0);
+  assert.equal(get('acquisition-status').textContent,'Saved acquisition unavailable; no export starts.');
+  run(`let acquisitionPending=[];api=path=>new Promise(resolve=>acquisitionPending.push({path,resolve}));`);
+  const staleAcquisition=run('loadAcquisition()');
+  get('event').value='372';run('showEvent();acquisitionPending[1].resolve(acquisitionReply(372,null,acquisitionZero));');
+  await Promise.resolve();await Promise.resolve();
+  run('acquisitionPending[0].resolve(acquisitionReply());');await staleAcquisition;
+  assert.match(get('acquisition-status').textContent,/Saved primary 372 · primary summary/);
+  const closedAcquisition=run('loadAcquisition()');get('acquisition-panel').open=false;get('acquisition-panel').ontoggle();
+  run('acquisitionPending[2].resolve(acquisitionReply(372,null,acquisitionZero));');await closedAcquisition;
+  assert.equal(get('acquisition-content').children.length,0);
+  get('acquisition-panel').open=true;const differentRunAcquisition=run('loadAcquisition()');
+  run('showRun(savedJob);acquisitionPending[3].resolve(acquisitionReply(372,null,acquisitionZero));');await differentRunAcquisition;
+  assert.equal(get('acquisition-content').children.length,0);assert.equal(run('result'),null);
+  get('acquisition-panel').open=false;get('acquisition-panel').ontoggle();
   console.log('Browser saved PSD1 lazy eligibility/null/sign/topology/hash/selection/stale-response contracts, full-census hints and saved refresh/focus, source-angle/legacy Gamma, exact counts, checked/saved pose, batch Stop/Resume selection, paged boundary IDs/null/signs, stale Check/report/page/poll/focus, four saved plots and recovery contracts passed.');
+  console.log('Saved PSD2 read-only lazy profile/source/bundle/global/group identity, signed full samples, null invalid/zero/failure energies and stale closed/run/selection guards passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

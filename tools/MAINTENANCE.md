@@ -64,10 +64,24 @@ JSON for full nested records and retain all values. Strict extractor-source
 binding requires an explicit preserved new derivative after a source change;
 never overwrite or silently rebaseline an older bundle.
 
+Waveform acquisition is a separate additive stage in
+`simulation/waveform_acquisition.jl` and `tools/waveform_acquisition.py`, using the
+existing Readout state transition and `waveform_acquisition_profile.json`.
+`python tools/waveform_acquisition.py --run .local/runs/<saved-name>` requires an
+already checked PSD1 bundle and defaults to
+`.local/waveform-acquisition/<configurationSHA>/bundle`; it refuses overwrite.
+It preserves the old peak ADC, Erec, preamp display, full signed inputs and source
+ineligibility. The existing Control acquisition panel verifies a saved bundle
+and starts no Julia, calibration, simulation or export on GET. The separate
+independent injection, bipolar waveform ADC, external trigger/reset prehistory,
+finite record, causal bandwidth and noise assumptions are explicit engineering
+settings, with no measured hardware or physical-resolution claim.
+
 ## Source ownership
 
 | Area | Edit these sources |
 |---|---|
+| Separate synthetic waveform acquisition | `simulation/waveform_acquisition.jl`, `test_waveform_acquisition.jl`; `tools/waveform_acquisition.py`, profile and tests; existing Control read-only viewer sources. Original Readout and PSD1 inputs stay immutable. |
 | Saved full-resolution waveform features | `tools/psd_features.py`, `psd_feature_profile.json`, `test_psd_features.py`; protected read-only Control integration in `local_ui.py`, `local_ui_workflow_jobs.py`, `local_workflow.html/js`. Canonical bundles stay under `.local/psd-features/`; no waveform ADC or classifier claim. |
 | Home, hubs and navigation | `tools/site_restructure.py`, `site_routes.py`, `site_previews.py`; Results / Detectors / Run locally / Methods share fixed ownership, breadcrumbs and context-aware dataset views. Saved-result anchors `#teaching`, `#gamma`, `#tenk`, `#million` keep different studies distinct. |
 | Search descriptions, canonical landing URLs and sitemap | `tools/site_discovery.py` selects indexable formal routes from `site_routes.py`; generated only by `build_site.py` |

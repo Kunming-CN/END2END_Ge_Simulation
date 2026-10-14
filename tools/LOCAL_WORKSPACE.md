@@ -24,6 +24,10 @@ evidence. It never starts or resumes a simulation and performs no deletion.
   and selection reasons. Preserve original runs and failed feature attempts. Viewing
   a feature bundle verifies saved data without starting a simulation/export or
   establishing detector-physics validation.
+- `.local/waveform-acquisition/<configurationSHA>/bundle`: separate checked synthetic
+  waveform-ADC derivatives, joining the exact PSD1 source and preserving old signals,
+  calibrated Erec, all identities/invalid reasons and model/source/seed settings.
+  Preserve older and failed derivatives; opening a panel is a read-only verification.
 - `.local/reference-docs/`: private documents, including `presentations/`.
 - Other `.local/` folders: retained development, publication and review evidence.
   An unfamiliar name or failed result is never automatic permission to delete it.

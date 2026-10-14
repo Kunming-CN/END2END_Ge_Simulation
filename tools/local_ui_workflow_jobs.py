@@ -38,6 +38,11 @@ def psd_backend():
     return psd_features
 
 
+def acquisition_backend():
+    import waveform_acquisition
+    return waveform_acquisition
+
+
 class WorkflowController:
     def __init__(self,root=None,*,coordination_lock=None,peer_busy=None,resolver=None,catalog_resolver=None,batch_resolver=None,launcher=None):
         self.root=Path(root or W.ROOT);self._lock=coordination_lock or threading.RLock()
@@ -527,6 +532,47 @@ class WorkflowController:
                          bundle_sha256=hashlib.sha256(backend.encoded(bundle)).hexdigest(),profile=bundle['profile'],
                          record=record,provenance=provenance,counts=bundle['counts'],
                          note='Saved full-resolution waveform derivation. Feature eligibility is separate from readout acceptance and physical validation.')
+            return reply
+
+    def acquisition(self,name,primary_id,group_id=None):
+        """Verify an existing acquisition bundle; no simulation or export on GET."""
+        with self._lock:
+            W.run_path(name,self.root)
+            W.require(type(primary_id) is int and 0<=primary_id<=9007199254740991 and
+                      (group_id is None or type(group_id) is int and 0<=group_id<=9007199254740991),
+                      'Invalid exact acquisition identity.')
+            job=next((j for j in self._jobs if j['name']==name),None)
+            W.require(job and job['status'] in W.TERMINAL,'Use a completed owned run for saved acquisition.')
+            config_sha=job['plan']['configuration_sha256']
+            W.require(type(config_sha) is str and re.fullmatch('[0-9a-f]{64}',config_sha),
+                      'Saved acquisition configuration identity is unsupported.')
+            backend=acquisition_backend()
+            directory=safe_path(self.root,'.local/waveform-acquisition/'+config_sha+'/bundle')
+            W.require(Path(backend.default_bundle_dir(self.root,config_sha))==directory,
+                      'Saved acquisition directory differs from the canonical configuration.')
+            reply={'kind':'local_saved_waveform_acquisition_v1','name':name,'configuration_sha256':config_sha,
+                   'primary_id':primary_id,'group_id':group_id,'available':False,
+                   'profile_sha256':None,'bundle_sha256':None,'source_features_manifest_sha256':None,'source_profile_sha256':None,
+                   'note':'Saved acquisition is unavailable for this run. Opening this panel does not export data or start a simulation.'}
+            if not directory.is_dir():return reply
+            try:
+                bundle=backend.load_bundle(directory,expected_config_sha256=config_sha,root=self.root,verify_inputs=True)
+                provenance=bundle['provenance']
+                W.require(provenance['run_ref']==W.BASE+'/'+name,'Saved acquisition inputs belong to another saved run.')
+                W.require(provenance['source_features_ref']=='.local/psd-features/'+config_sha+'/bundle',
+                          'Saved acquisition source features differ from the canonical configuration.')
+                for key in ('profile_sha256','source_features_manifest_sha256','source_profile_sha256'):
+                    W.require(type(provenance[key]) is str and re.fullmatch('[0-9a-f]{64}',provenance[key]),
+                              'Saved acquisition source or profile identity is unsupported.')
+                record=backend.get_record(bundle,primary_id,group_id)
+            except (OSError,ValueError,KeyError,TypeError,ControlError) as error:
+                raise ControlError('Saved acquisition could not be verified for this configuration and selection.') from error
+            reply.update(available=True,profile_sha256=provenance['profile_sha256'],
+                         bundle_sha256=hashlib.sha256(backend.encoded(bundle)).hexdigest(),
+                         source_features_manifest_sha256=provenance['source_features_manifest_sha256'],
+                         source_profile_sha256=provenance['source_profile_sha256'],profile=bundle['profile'],
+                         calibrations=bundle['calibrations'],record=record,provenance=provenance,counts=bundle['counts'],
+                         note='Saved synthetic acquisition with independent injection calibration. Original feature and readout eligibility remain distinct.')
             return reply
 
     def waveforms(self,name,primary_id,group_id):
