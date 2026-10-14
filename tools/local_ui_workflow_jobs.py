@@ -122,7 +122,7 @@ class WorkflowController:
         checks.append({'label':'Common model geometry exporter and build receipt','available':catalog_ready})
         angle_ready=all(safe_path(self.root,ref).is_file() for ref in
             ('.local/m2a/angle-source-build-v1/cryostat_angle_export','.local/m2a/angle-source-build-v1/exporter-build.json'))
-        checks.append({'label':'Angular source geometry exporter and build receipt (preview; execution pending)','available':angle_ready})
+        checks.append({'label':'Angular source geometry exporter and build receipt','available':angle_ready})
         return {'status':'file_readiness_only','checks':checks,'runtime_identity':runtime,'portable_source':portable,
                 'catalog_models_file_ready':catalog_ready,
                 'angular_source_file_ready':angle_ready,
