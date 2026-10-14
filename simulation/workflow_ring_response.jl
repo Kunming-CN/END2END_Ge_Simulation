@@ -125,7 +125,7 @@ function run(o,a,request; process_response=process_ring, source_names=SOURCES, s
         "--dt-ns","2","--min-grid-mm","0.05","--max-iterations","50000","--output",o["output"]])
     sources=Dict(n=>E.hashfile(joinpath(@__DIR__,n)) for n in source_names)
     out=Q.reserve_output(cfg.output); started=time(); hist=Dict{String,Dict{Int,Int}}()
-    counts=Dict{String,Any}("initial_primaries"=>0,"initial_decays"=>a.ion ? 0 : nothing,"zero_deposit_primaries"=>0,"groups"=>0,"accepted"=>0,
+    counts=Dict{String,Any}("initial_primaries"=>0,"initial_decays"=>a.ion ? 0 : nothing,"zero_deposit_primaries"=>0,"nonzero_primaries"=>0,"groups"=>0,"accepted"=>0,
         "rejected"=>0,"readout_rejected"=>0,"native_failed_groups"=>0,"saturated"=>0,"native_charge_samples"=>0,"analog_samples"=>0,
         "line_photons"=>a.ion ? 0 : nothing,"decay_photons"=>a.ion ? 0 : nothing)
     report=Dict{String,Any}("kind"=>report_kind,"status"=>"running","environment"=>env,
@@ -196,22 +196,23 @@ function run(o,a,request; process_response=process_ring, source_names=SOURCES, s
         println(tc,"event_id,global_decay_id,record_json"); println(signals,"event_id,global_decay_id,group_id,time_since_origin_ns,induced_equivalent_energy_keV")
         function consume(e)
             id=e["event_id"]; globalid=a.ion ? e["global_decay_id"] : nothing
-            println(tj,JSON.json(e)); println(tc,join(E.csvcell.((id,globalid,e)),','))
             energy=sum((s["energy_keV"] for s in e["steps"]);init=0.)
             gs=event_groups(e,a.ion)
-            counts["initial_primaries"]+=1; counts["zero_deposit_primaries"]+=energy==0
+            counts["initial_primaries"]+=1; counts["zero_deposit_primaries"]+=energy==0;counts["nonzero_primaries"]+=energy>0
             if a.ion; counts["initial_decays"]+=1; counts["line_photons"]+=e["line_photon_count"]; counts["decay_photons"]+=e["decay_photon_count"]; end
             if haskey(d,"source_id"); for (name,n) in e["line_photon_counts"]; counts["line_photon_counts"][name]+=n; end; end
+            addhist!(hist,a.ion ? "deposited_per_decay" : "deposited_per_primary",energy)
+            if energy==0
+                R.check(isempty(gs),"Zero-deposit primary has pulse groups")
+                progress_writer(out,started,stage,"running",counts,d["primary_count"])
+                return
+            end
+            println(tj,JSON.json(e)); println(tc,join(E.csvcell.((id,globalid,e)),','))
             scalar!(sj,sc,Dict("record_kind"=>a.ion ? "decay" : "primary","event_id"=>id,"global_decay_id"=>globalid,"group_id"=>nothing,
-                "deposited_energy_keV"=>energy,"pulse_count"=>length(gs),"zero_deposit"=>energy==0,
+                "deposited_energy_keV"=>energy,"pulse_count"=>length(gs),"zero_deposit"=>false,
                 "raw_row_indices"=>[s["raw_row_index"] for s in e["steps"]],
                 "line_photon_count"=>get(e,"line_photon_count",nothing),"decay_photon_count"=>get(e,"decay_photon_count",nothing),
                 "material_energy_keV"=>get(e,"material_energy_keV",nothing),"full_energy_closure"=>nothing))
-            addhist!(hist,a.ion ? "deposited_per_decay" : "deposited_per_primary",energy)
-            if !a.ion && energy==0 && policy=="all"
-                # Zero-charge primary trace, explicitly no pulse/group identity.
-                for t in (0.,N.DT); println(signals,join(E.csvcell.((id,globalid,nothing,t,0.)),',')); end
-            end
             byrow=Dict(s["raw_row_index"]=>s for s in e["steps"])
             for g in gs
                 gid=g["group_id"]; origin=g["origin_time_ns"]; steps=[byrow[i] for i in g["row_indices"]]
@@ -286,6 +287,8 @@ function run(o,a,request; process_response=process_ring, source_names=SOURCES, s
         stage="final_integrity"
         R.check(counts["initial_primaries"]==d["primary_count"] && counts["accepted"]+counts["rejected"]==counts["groups"],"Output census mismatch")
         R.check(counts["rejected"]==counts["native_failed_groups"]+counts["readout_rejected"],"Rejection census mismatch")
+        report["event_storage"]=NR.storage_descriptor(counts)
+        R.check(report["event_storage"]["nonzero_primaries"]==counts["nonzero_primaries"],"Stored nonzero census mismatch")
         R.check(N.field_fingerprint(sim)==report["field_fingerprint"],"Response changed shared fields")
         R.check(E.hashfile(a.input)==a.inputhash && E.hashfile(o["profile"])==a.profile.sha256,"Input/profile changed")
         P.validate_resolved(JSON.parsefile(joinpath(out,"readout-config.json")),a.profile.profile,d["primary_count"])

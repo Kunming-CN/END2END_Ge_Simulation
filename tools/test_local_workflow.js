@@ -762,7 +762,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   artifact=async(name,file)=>{if(name!==hintJob.name)throw Error('Hint fixture run differs');if(file==='response/run.json')return {json:async()=>({source_id:hintJob.selection.source,artifacts:{'summary.html':'c'.repeat(64)}})};if(file==='COMPLETE.json')return {json:async()=>({configuration_sha256:hintJob.configuration_sha256,artifacts:{'response/summary.html':{sha256:'c'.repeat(64)}}})};if(file==='response/scalars.jsonl')return {text:async()=>hintRows.map(r=>JSON.stringify(r)).join('\\n')};if(file==='response/traces.jsonl')return {text:async()=>hintTraces.map(r=>JSON.stringify(r)).join('\\n')};throw Error('Unexpected hint artifact');};
   api=async path=>{hintFocusRequests.push(path);throw Error('Synthetic saved waveform intentionally unavailable');};`);
   await run('openResult(hintJob)');
-  assert.deepEqual(get('event').children.map(o=>o.value),[...hintLabels.keys()]);
+  assert.deepEqual(get('event').children.map(o=>o.value),[...hintLabels.keys()].filter(id=>!['12','2'].includes(id)));
   for(const option of get('event').children)assert.equal(option.textContent,hintLabels.get(option.value));
   assert.equal(get('event').value,'5');assert.equal(get('group').value,'1');
   assert.equal(run('JSON.stringify([result.records,result.traces])'),run('hintBefore'));
@@ -931,5 +931,12 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.equal(get('acquisition-content').children.length,0);assert.equal(run('result'),null);
   get('acquisition-panel').open=false;get('acquisition-panel').ontoggle();
   console.log('Browser saved PSD1 lazy eligibility/null/sign/topology/hash/selection/stale-response contracts, full-census hints and saved refresh/focus, source-angle/legacy Gamma, exact counts, checked/saved pose, batch Stop/Resume selection, paged boundary IDs/null/signs, stale Check/report/page/poll/focus, four saved plots and recovery contracts passed.');
+  run(`const sparseJobP2={name:'sparse-page',configuration_sha256:'9'.repeat(64)};const sparsePageP2={kind:'local_batch_event_page_v1',name:sparseJobP2.name,configuration_sha256:sparseJobP2.configuration_sha256,batch_index:1,offset:0,limit:100,batch_sha256:'8'.repeat(64),batch_offset:100,batch_primary_count:100,pagination_kind:'stored_nonzero_events_v1',available_record_count:2,nonzero_record_count:2,efficiency_denominator:100,counts:{initial_primaries:100,zero_deposit_primaries:98},next_offset:null,traces:[],records:[24,52].map(id=>({batch_index:1,local_initial_id:id,global_initial_id:100+id,primary:{zero_deposit:false},truth:{steps:[{energy_keV:1}]},pulse_groups:[]}))};`);
+  assert.equal(run('pageIdentity(sparsePageP2,sparseJobP2,1,0).records[0].global_initial_id'),124);
+  assert.throws(()=>run('pageIdentity({...sparsePageP2,efficiency_denominator:2},sparseJobP2,1,0)'),/denominator/);
+  assert.throws(()=>run('pageIdentity({...sparsePageP2,records:[...sparsePageP2.records].reverse()},sparseJobP2,1,0)'),/identity/);
+  assert.throws(()=>run('pageIdentity({...sparsePageP2,records:sparsePageP2.records.map(r=>({...r,primary:{zero_deposit:true}}))},sparseJobP2,1,0)'),/identity/);
+  assert.equal(run('pageIdentity({...sparsePageP2,available_record_count:0,nonzero_record_count:0,counts:{initial_primaries:100,zero_deposit_primaries:100},records:[]},sparseJobP2,1,0).records.length'),0);
+  console.log('P2 nonzero original-ID gaps, full initial denominator, zero exclusion, out-of-order refusal and all-zero empty pages passed.');
   console.log('Saved PSD2 read-only lazy profile/source/bundle/global/group identity, signed full samples, null invalid/zero/failure energies and stale closed/run/selection guards passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

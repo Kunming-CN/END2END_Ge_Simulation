@@ -9,6 +9,7 @@ from pathlib import Path
 import scenario_workflow as W
 import workflow_batches as B
 import histogram_normalization as H
+import nonzero_events as N
 from local_ui_jobs import ControlError, process_identity, safe_path
 
 CHECKED_KIND='local_scenario_batch_execution_v3'
@@ -22,7 +23,7 @@ TERMINAL=W.TERMINAL
 STAGES=('geometry','native_preparation','radiation','event_ledger','response','results')
 SHARED=('geometry','native_preparation')
 BATCH_STAGES=('radiation','event_ledger','response')
-NEW_SOURCES=('tools/batch_execution.py','tools/workflow_batches.py','tools/histogram_normalization.py','tools/catalog_result_validation.py','transport/batch_source.py','simulation/batch_native_response.jl','simulation/batch_decay_stream.jl','simulation/batch_native_contract.jl','simulation/catalog_native_model.jl','simulation/catalog_decay_stream.jl','simulation/catalog_native_response.jl')
+NEW_SOURCES=('tools/batch_execution.py','tools/workflow_batches.py','tools/histogram_normalization.py','tools/catalog_result_validation.py','tools/nonzero_events.py','transport/batch_source.py','simulation/batch_native_response.jl','simulation/batch_decay_stream.jl','simulation/batch_native_contract.jl','simulation/catalog_native_model.jl','simulation/catalog_decay_stream.jl','simulation/catalog_native_response.jl')
 RULES={'contract':'exact_count_serial_parent_v3','native_seed_rule':'SHA256(seed/global_initial_id/raw_row_index/parcel_index); native temporary event_id only',
     'geometry_preparations':1,'field_solutions':1,'independent_calibrations':1,
     'stop_rule':'sealed_stage_or_batch_boundary','resume_rule':'fully_checked_terminal_stage_receipts_only',
@@ -305,18 +306,23 @@ def validate_output(stage,plan,directory,batch,result):
         require(active==['/run/beamOn '+str(batch['primary_count'])],'Effective macro must contain exactly one literal planned beamOn.')
     if stage=='event_ledger':
         require(result.get('batch')==batch and result.get('primary_count')==batch['primary_count'],'Batch stream census mismatch.')
-        count=0
-        for chunk in result['chunks']:
-            require(chunk['first_global_decay_id']==count and Path(chunk['file']).name==chunk['file'],'Stream chunk identity changed.')
-            path=base/chunk['file'];require(W.sha(path)==chunk['sha256'],'Stream chunk bytes changed.');n=0
-            for row in stream_jsonl(path):
-                require(type(row.get('local_initial_id')) is int and row['event_id']==row['global_decay_id']==row['local_initial_id']==count and row['global_initial_id']==batch['global_initial_offset']+count and row['batch_index']==batch['batch_index'],'Complete initial ledger has missing/changed raw/global IDs.')
-                count+=1;n+=1
-            require(n==chunk['count'],'Chunk row census changed.')
-        require(count==batch['primary_count'],'Initial ledger is incomplete; zeros/failures must remain.')
+        policy=N.storage(result,initial_primaries=batch['primary_count'])
+        if policy is not None:N.initial_summary(result)
+        def source_rows():
+            for chunk in result['chunks']:
+                require(Path(chunk['file']).name==chunk['file'],'Stream chunk identity changed.')
+                path=base/chunk['file'];require(W.sha(path)==chunk['sha256'],'Stream chunk bytes changed.');n=0
+                for row in stream_jsonl(path):
+                    if n==0:require(type(chunk['first_global_decay_id']) is int and chunk['first_global_decay_id']==row['event_id'],'Stream first original ID changed.')
+                    n+=1;yield row
+                require(type(chunk['count']) is int and n==chunk['count'] and n>0,'Chunk row census changed.')
+        for row in N.source_sequence(source_rows(),policy,batch['primary_count']):
+            local=row.get('local_initial_id')
+            require(type(local) is int and row['event_id']==row['global_decay_id']==local and row['global_initial_id']==batch['global_initial_offset']+local and row['batch_index']==batch['batch_index'],'Initial ledger has changed raw/global IDs.')
     if stage=='response':
         require(result.get('status') in ('completed_provisional_native_response','completed_with_native_failures'),'Native response is not terminal.')
         counts=result['counts'];require(counts['initial_primaries']==batch['primary_count'] and counts['accepted']+counts['rejected']==counts['groups'] and counts['rejected']==counts['native_failed_groups']+counts['readout_rejected'],'Native/readout census mismatch.')
+        N.storage(result,counts,initial_primaries=batch['primary_count'])
         prep=W.read(directory/'shared/native/preparation.json')
         require(B.typed_equal(result.get('batch'),batch) and result.get('native_preparation_sha256')==W.sha(directory/'shared/native/preparation.json') and
             result.get('independent_calibration_calls')==0 and result.get('calibration_calls')==0 and result.get('new_field_solution') is False and
@@ -343,6 +349,10 @@ def validate_output(stage,plan,directory,batch,result):
             result.get('configuration_sha256')==plan['configuration_sha256'],'Results do not bind this parent.')
         prefix=checked_prefix(plan,directory)
         for key,value in prefix.items():require(result.get(key)==value,'Result count/chain changed.')
+        if 'event_storage' in result:
+            policy=N.storage(result,initial_primaries=prefix['counts']['initial_primaries'])
+            require(B.typed_equal(policy,N.descriptor(prefix['counts']['initial_primaries'],prefix['counts']['zero_deposit_primaries'])),
+                'Result storage summary changed its full initial or zero census.')
         for ref,digest in result['artifacts'].items():require(W.sha(safe_path(base,ref))==digest,'Result artifact changed.')
         h=W.read(base/'histograms.json');source,contract=histogram_source(plan)
         interpreted=H.validate(h,prefix['counts'],source,contract,plan['resolved']['source_sha256'],merged=True,csv_path=base/'histograms.csv')
@@ -446,8 +456,10 @@ def export_results(plan,directory):
     with (base/'histograms.csv').open('x',encoding='utf-8',newline='') as stream:
         writer=csv.DictWriter(stream,fieldnames=fields);writer.writeheader();writer.writerows(merged['bins'])
     photon_note='' if 'normalization' not in merged else '<p>Photon normalization uses the sum of counts in the selected source\'s closed diagnostic windows, not a decay branching intensity or efficiency. <a href="histograms.json">Source and exact windows (JSON)</a>.</p>'
-    (base/'index.html').write_text('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Batch results</title><h1>'+html.escape(s['detector'])+' · '+html.escape(s['source'])+'</h1><p>'+str(s['primary_count'])+' original primaries retained, including zeros and failures. Native signed signals and independent injection calibration remain separate from radiation truth.</p><p>Engineering example; no physical resolution, calibrated CCE or experimental fit.</p><p><a href="results.json">Settings and counts</a> · <a href="histograms.csv">Merged stage histograms</a></p>'+photon_note+'<p>Original complete event ledgers and signed signals remain in each sealed batch folder.</p></html>',encoding='utf-8')
+    policy=N.descriptor(prefix['counts']['initial_primaries'],prefix['counts']['zero_deposit_primaries'])
+    (base/'index.html').write_text('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Batch results</title><h1>'+html.escape(s['detector'])+' · '+html.escape(s['source'])+'</h1><p>'+str(s['primary_count'])+' initial primaries: '+str(policy['zero_deposit_primaries'])+' zero-deposit and '+str(policy['nonzero_primaries'])+' nonzero-deposit. The full initial count remains the efficiency denominator. Native failures and readout rejections are retained with the nonzero events; signed signals and independent injection calibration remain separate from radiation truth.</p><p>Engineering example; no physical resolution, calibrated CCE or experimental fit.</p><p><a href="results.json">Settings and counts</a> · <a href="histograms.csv">Merged stage histograms</a></p>'+photon_note+'<p>Raw radiation files and original nonzero event identities remain in each sealed batch folder. Unknown failed signals remain null.</p></html>',encoding='utf-8')
     result={'kind':'batch_parent_results_v1','status':'complete','configuration_sha256':plan['configuration_sha256'],**prefix,
+        'event_storage':policy,
         'artifacts':{name:W.sha(base/name) for name in ('histograms.json','histograms.csv','index.html')}}
     W.write(base/'results.json',result,fresh=True);return result
 
@@ -552,24 +564,34 @@ def request_stop(name,root=W.ROOT):
 
 def event_page(name,batch_index,offset=0,limit=50,root=W.ROOT):
     directory=W.run_path(name,root);plan=W.read(directory/'resolved-config.json');saved_plan(plan,root);batch=batch_at(plan['resolved']['batching'],batch_index)
-    B.exact_integer(offset,0,batch['primary_count']-1,'Page offset');B.exact_integer(limit,1,100,'Page limit')
+    B.exact_integer(limit,1,100,'Page limit')
     base=batch_directory(directory,batch_index);require((base/'batch-complete.json').is_file(),'Only sealed terminal batches have event pages.')
     response=verify_stage('response',plan,directory,batch);require(W.read(base/'batch-complete.json')['stage_receipt_sha256']['response']==W.sha(stage_receipt(directory,'response',batch)),'Batch response receipt changed.')
-    end=min(batch['primary_count'],offset+limit);scalars=iter(stream_jsonl(base/'response/scalars.jsonl'));pending=next(scalars,None);records=[]
+    counts=response['result']['counts'];policy=N.storage(response['result'],counts,initial_primaries=batch['primary_count'])
+    available=batch['primary_count']-counts['zero_deposit_primaries']
+    B.exact_integer(offset,0,max(0,available-1),'Nonzero page offset')
+    end=min(available,offset+limit);scalars=iter(stream_jsonl(base/'response/scalars.jsonl'));pending=next(scalars,None);records=[];ordinal=0
     for truth in stream_jsonl(base/'response/truth.jsonl'):
         local=truth['local_initial_id'];parts=[];primary=None
         while pending is not None and pending['local_initial_id']==local:
             if pending.get('group_id') is None:primary=pending
             else:parts.append(pending)
             pending=next(scalars,None)
-        if offset<=local<end:records.append({'global_initial_id':truth['global_initial_id'],'local_initial_id':local,'batch_index':batch_index,'truth':truth,'primary':primary,'pulse_groups':parts})
-        if local>=end-1:break
+        if not N.has_nonzero_deposit(truth):continue
+        if offset<=ordinal<end:records.append({'global_initial_id':truth['global_initial_id'],'local_initial_id':local,'batch_index':batch_index,'truth':truth,'primary':primary,'pulse_groups':parts})
+        ordinal+=1
+        if ordinal>=end:break
     traces=[]
+    selected_ids={record['local_initial_id'] for record in records}
     for trace in stream_jsonl(base/'response/traces.jsonl'):
-        if offset<=trace['local_initial_id']<end:traces.append({k:v for k,v in trace.items() if k!='trace'})
+        if trace['local_initial_id'] in selected_ids:traces.append({k:v for k,v in trace.items() if k!='trace'})
     return {'kind':'local_batch_event_page_v1','name':name,'configuration_sha256':plan['configuration_sha256'],'batch_index':batch_index,
-        'batch_offset':batch['global_initial_offset'],'batch_primary_count':batch['primary_count'],'offset':offset,'limit':limit,
-        'next_offset':end if end<batch['primary_count'] else None,'complete':end==batch['primary_count'],'records':records,'traces':traces,
+        'batch_offset':batch['global_initial_offset'],'batch_primary_count':batch['primary_count'],'radiation_seed':batch['radiation_seed'],'offset':offset,'limit':limit,
+        'pagination_kind':'stored_nonzero_events_v1','selection':'nonzero_deposit','event_storage':policy,
+        'storage_kind':N.KIND if policy is not None else 'historical_dense_v1',
+        'stored_record_count':available if policy is not None else batch['primary_count'],
+        'nonzero_record_count':available,'available_record_count':available,'efficiency_denominator':batch['primary_count'],'counts':counts,
+        'next_offset':end if end<available else None,'complete':end==available,'records':records,'traces':traces,
         'batch_sha256':W.sha(base/'batch-complete.json'),'response_summary_sha256':W.sha(base/'response/run.json'),
         'artifacts':[{'file':record['base']+'/'+ref,**stamp} for stage in BATCH_STAGES
             for record in (verify_stage(stage,plan,directory,batch),) for ref,stamp in record['artifacts'].items()]}

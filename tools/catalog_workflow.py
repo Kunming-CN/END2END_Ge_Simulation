@@ -14,7 +14,7 @@ KIND='local_catalog_workflow_v1'
 STAGES=W.STAGES
 EXPORTER_REF='.local/m2a/catalog-source-build-v1/cryostat_catalog_export'
 BUILD_REF='.local/m2a/catalog-source-build-v1/exporter-build.json'
-SOURCES=('tools/catalog_workflow.py','tools/catalog_result_validation.py','transport/catalog_geometry.py','transport/catalog_source.py','transport/cryostat_catalog_export.cc',
+SOURCES=('tools/catalog_workflow.py','tools/catalog_result_validation.py','tools/nonzero_events.py','transport/catalog_geometry.py','transport/catalog_source.py','transport/cryostat_catalog_export.cc',
     'transport/catalog_exporter/CMakeLists.txt','transport/catalog_exporter_setup.py','simulation/catalog_native_model.jl','simulation/catalog_native_response.jl','simulation/catalog_decay_stream.jl')
 _MODEL_CACHE={}
 

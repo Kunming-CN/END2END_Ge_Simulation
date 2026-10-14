@@ -110,6 +110,13 @@ function event_groups(e,ion)
     rows=[s["raw_row_index"] for s in e["steps"] if s["energy_keV"]>0]
     isempty(rows) ? Any[] : [Dict("group_id"=>0,"origin_time_ns"=>e["primary_time_ns"],"row_indices"=>rows)]
 end
+function storage_descriptor(counts)
+    n=counts["initial_primaries"];z=counts["zero_deposit_primaries"]
+    integer(x)=x isa Integer && !(x isa Bool)
+    R.check(integer(n) && integer(z) && 0<=z<=n<=9_007_199_254_740_991,"Invalid completed storage census")
+    Dict("kind"=>"nonzero_deposit_v1","initial_primaries"=>n,"zero_deposit_primaries"=>z,
+        "nonzero_primaries"=>n-z,"efficiency_denominator"=>n)
+end
 const SCALAR_COLUMNS=("record_kind","event_id","global_decay_id","group_id","origin_time_ns",
     "deposited_energy_keV","final_induced_keV","accepted","rejection_reason","record_json")
 function scalar!(jsonl,csv,record)
@@ -121,12 +128,14 @@ function endpoint!(jsonl,csv,record)
     keys=("event_id","global_decay_id","group_id","raw_row_index","parcel_index","seed_uint64","record_json")
     println(csv,join([E.csvcell(k=="record_json" ? record : get(record,k,nothing)) for k in keys],','))
 end
-function addhist!(hist,stage,x)
+function addhist!(hist,stage,x;weight=1)
     x===nothing && return
     R.check(E.finite(x),"Nonfinite histogram value")
+    R.check(weight isa Integer && !(weight isa Bool) && weight>=0,"Invalid histogram count")
+    weight==0 && return
     # Fixed width, bounded memory; under/overflow remain explicit and counted.
     k=x< -1000 ? -1 : x>=4000 ? 1000 : floor(Int,(x+1000)/5)
-    counts=get!(hist,stage,Dict{Int,Int}()); counts[k]=get(counts,k,0)+1
+    counts=get!(hist,stage,Dict{Int,Int}()); counts[k]=get(counts,k,0)+weight
 end
 function group_hist!(hist,edep,q,r,eion)
     addhist!(hist,"deposited_per_group",edep)
@@ -220,7 +229,7 @@ function run(o,a)
         "--dt-ns","2","--min-grid-mm","0.05","--max-iterations","50000","--output",o["output"]])
     sources=Dict(n=>E.hashfile(joinpath(@__DIR__,n)) for n in SOURCES)
     out=Q.reserve_output(cfg.output); started=time(); hist=Dict{String,Dict{Int,Int}}()
-    counts=Dict{String,Any}("initial_primaries"=>0,"initial_decays"=>a.ion ? 0 : nothing,"zero_deposit_primaries"=>0,"groups"=>0,"accepted"=>0,
+    counts=Dict{String,Any}("initial_primaries"=>0,"initial_decays"=>a.ion ? 0 : nothing,"zero_deposit_primaries"=>0,"nonzero_primaries"=>0,"groups"=>0,"accepted"=>0,
         "rejected"=>0,"readout_rejected"=>0,"native_failed_groups"=>0,"saturated"=>0,"native_charge_samples"=>0,"analog_samples"=>0,
         "line_photons"=>a.ion ? 0 : nothing,"decay_photons"=>a.ion ? 0 : nothing)
     report=Dict{String,Any}("kind"=>"native_response_v1","status"=>"running","environment"=>env,
@@ -273,21 +282,21 @@ function run(o,a)
         println(tc,"event_id,global_decay_id,record_json"); println(signals,"event_id,global_decay_id,group_id,time_since_origin_ns,induced_equivalent_energy_keV")
         function consume(e)
             id=e["event_id"]; globalid=a.ion ? e["global_decay_id"] : nothing
-            println(tj,JSON.json(e)); println(tc,join(E.csvcell.((id,globalid,e)),','))
             energy=sum((s["energy_keV"] for s in e["steps"]);init=0.)
             gs=event_groups(e,a.ion)
-            counts["initial_primaries"]+=1; counts["zero_deposit_primaries"]+=energy==0
+            counts["initial_primaries"]+=1; counts["zero_deposit_primaries"]+=energy==0;counts["nonzero_primaries"]+=energy>0
             if a.ion; counts["initial_decays"]+=1; counts["line_photons"]+=e["line_photon_count"]; counts["decay_photons"]+=e["decay_photon_count"]; end
+            addhist!(hist,a.ion ? "deposited_per_decay" : "deposited_per_primary",energy)
+            if energy==0
+                R.check(isempty(gs),"Zero-deposit primary has pulse groups")
+                return
+            end
+            println(tj,JSON.json(e)); println(tc,join(E.csvcell.((id,globalid,e)),','))
             scalar!(sj,sc,Dict("record_kind"=>a.ion ? "decay" : "primary","event_id"=>id,"global_decay_id"=>globalid,"group_id"=>nothing,
-                "deposited_energy_keV"=>energy,"pulse_count"=>length(gs),"zero_deposit"=>energy==0,
+                "deposited_energy_keV"=>energy,"pulse_count"=>length(gs),"zero_deposit"=>false,
                 "raw_row_indices"=>[s["raw_row_index"] for s in e["steps"]],
                 "line_photon_count"=>get(e,"line_photon_count",nothing),"decay_photon_count"=>get(e,"decay_photon_count",nothing),
                 "material_energy_keV"=>get(e,"material_energy_keV",nothing),"full_energy_closure"=>nothing))
-            addhist!(hist,a.ion ? "deposited_per_decay" : "deposited_per_primary",energy)
-            if !a.ion && energy==0 && policy=="all"
-                # Zero-charge primary trace, explicitly no pulse/group identity.
-                for t in (0.,N.DT); println(signals,join(E.csvcell.((id,globalid,nothing,t,0.)),',')); end
-            end
             byrow=Dict(s["raw_row_index"]=>s for s in e["steps"])
             for g in gs
                 gid=g["group_id"]; origin=g["origin_time_ns"]; steps=[byrow[i] for i in g["row_indices"]]
@@ -361,6 +370,8 @@ function run(o,a)
         stage="final_integrity"
         R.check(counts["initial_primaries"]==d["primary_count"] && counts["accepted"]+counts["rejected"]==counts["groups"],"Output census mismatch")
         R.check(counts["rejected"]==counts["native_failed_groups"]+counts["readout_rejected"],"Rejection census mismatch")
+        report["event_storage"]=storage_descriptor(counts)
+        R.check(report["event_storage"]["nonzero_primaries"]==counts["nonzero_primaries"],"Stored nonzero census mismatch")
         R.check(N.field_fingerprint(sim)==report["field_fingerprint"],"Response changed shared fields")
         R.check(E.hashfile(a.input)==a.inputhash && E.hashfile(o["profile"])==a.profile.sha256,"Input/profile changed")
         P.validate_resolved(JSON.parsefile(joinpath(out,"readout-config.json")),a.profile.profile,d["primary_count"])

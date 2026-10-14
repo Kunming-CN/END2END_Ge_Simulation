@@ -34,6 +34,8 @@ function inspect(path)
     check(m["kind"]==KIND && m["status"]=="complete" && m["producer_adapter"]==ADAPTER,"Incomplete/wrong batch stream")
     b=C.descriptor(m["batch"]);n=b["primary_count"];o=b["global_initial_offset"]
     check(S.integer(m["primary_count"]) && m["primary_count"]==n && m["global_decay_id_range"]==[0,n-1] && m["global_initial_id_range"]==[o,o+n-1],"Incomplete batch identity range")
+    storage=C.event_storage(m)
+    storage!==nothing && C.initial_summary(m)
     preparedpath=relative_file(m["shared_prepared_ref"]);pin!(pins,preparedpath,m["shared_prepared_sha256"]);p=JSON.parsefile(preparedpath)
     check(p["kind"]=="batch_shared_transport_prepared_v1" && p["status"]=="complete" && p["source_mode"]==m["source_mode"],"Wrong shared transport preparation")
     pose=C.source_pose(p,p["checked_transport"]["selection"],S.hashfile(relative_file("scenarios/placement-anchors.json")))
@@ -71,19 +73,69 @@ function inspect(path)
     for (i,row) in enumerate(m["processes"])
         check(row["raw_row_index"]==i-1 && Set(keys(row))==union(Set(keys(tables["processes"]["columns"])),Set(["raw_row_index"])),"Changed process row")
     end
-    expected=0;names=Set{String}()
+    expected=0;previous=-1;names=Set{String}()
     for chunk in m["chunks"]
         name=chunk["file"];check(basename(name)==name && !(name in names) && endswith(name,".jsonl"),"Unsafe/repeated batch chunk")
-        check(S.integer(chunk["count"]) && 1<=chunk["count"]<=100 && chunk["first_global_decay_id"]==expected,"Changed extraction chunk mapping")
+        firstid=chunk["first_global_decay_id"]
+        check(S.integer(chunk["count"]) && 1<=chunk["count"]<=100 && S.integer(firstid) &&
+            (storage===nothing ? firstid==expected : previous<firstid<n),"Changed extraction chunk mapping")
         push!(names,name);S.pin!(pins,joinpath(base,name),chunk["sha256"]);expected+=chunk["count"]
+        previous=firstid
     end
-    check(expected==n,"Incomplete batch chunk census")
+    check(expected==(storage===nothing ? n : storage["nonzero_primaries"]),"Incomplete batch chunk census")
     (path=path,manifest=m,prepared=p,pins=pins)
 end
 function foreach_decay(f,input)
     # Reuse the original all-raw-row source validator, on one parsed record at a time.
     api=input.manifest["source_mode"]=="registered_decay" ? D : S
     b=input.manifest["batch"]
-    api.foreach_decay(e->begin C.identity(e,b);f(e);end,input)
+    C.event_storage(input.manifest)===nothing && return api.foreach_decay(e->begin C.identity(e,b);f(e);end,input)
+    foreach_nonzero(f,input,api,b)
+end
+function foreach_nonzero(f,input,api,b)
+    m=input.manifest;storage=C.event_storage(m);summary=C.initial_summary(m)
+    previous=-1;stored=0;nextrow=Dict(t=>0 for t in ("vtx","particles","tracks","stp/germanium"))
+    photons=0;lines=0;named=get(summary,"line_photon_counts",nothing);namedseen=named===nothing ? nothing : Dict(k=>0 for k in keys(named))
+    for chunk in m["chunks"]
+        path=joinpath(dirname(input.path),chunk["file"]);check(S.hashfile(path)==chunk["sha256"],"Sparse chunk changed after inspection");count=0
+        open(path) do io
+            for line in eachline(io)
+                check(count<chunk["count"] && sizeof(line)<=100_000_000,"Extra/oversized sparse record")
+                e=JSON.parse(line);ids=C.identity(e,b);eid=ids["event_id"]
+                check(previous<eid && (count!=0 || eid==chunk["first_global_decay_id"]),"Reordered/repeated sparse initial identity")
+                check(any(s->S.finite(s["energy_keV"]) && s["energy_keV"]>0,e["steps"]),"Sparse source retained zero deposition")
+                # Omitted primaries create raw-row gaps. Within every retained event,
+                # the original validator still requires exact contiguous original rows.
+                counters=copy(nextrow)
+                for table in keys(counters)
+                    rows=table=="stp/germanium" ? [s["raw"] for s in e["steps"]] : e[table]
+                    isempty(rows) && continue
+                    firstrow=first(rows)["raw_row_index"]
+                    check(S.integer(firstrow) && nextrow[table]<=firstrow && firstrow+length(rows)<=m["raw_tables"][table]["rows"],"Sparse raw row is repeated or outside original table")
+                    table in ("vtx","particles") && check(firstrow==eid,"Sparse initial raw row changed")
+                    counters[table]=firstrow
+                end
+                api.validate_record!(e,eid,m,counters);nextrow=counters
+                p=input.prepared;v=only(e["vtx"])
+                check(isapprox(1000 .* [v[a] for a in ("xloc","yloc","zloc")],Float64.(p["source_position_global_mm"]);rtol=0,atol=1e-10),"Changed sparse source anchor")
+                materials=p["material_tables"]
+                check(Set(keys(e["material_energy_keV"]))==Set(values(materials)),"Missing/extra sparse material sum")
+                gemat=materials["stp/germanium"]
+                if Base.count(==(gemat),values(materials))==1
+                    ge=sum((s["energy_keV"] for s in e["steps"]);init=0.)
+                    check(isapprox(ge,e["material_energy_keV"][gemat];atol=1e-9,rtol=1e-12),"Sparse Ge material/deposit ledger mismatch")
+                end
+                photons+=e["decay_photon_count"];lines+=e["line_photon_count"]
+                namedseen!==nothing && foreach(k->namedseen[k]+=e["line_photon_counts"][k],keys(namedseen))
+                f(e);previous=eid;stored+=1;count+=1
+            end
+        end
+        check(count==chunk["count"] && S.hashfile(path)==chunk["sha256"],"Truncated/changed sparse chunk")
+    end
+    check(stored==storage["nonzero_primaries"] && photons<=summary["decay_photons"] && lines<=summary["line_photons"],"Sparse record/initial photon census mismatch")
+    namedseen!==nothing && check(all(namedseen[k]<=named[k] for k in keys(named)),"Sparse named photons exceed initial census")
+    # Complete raw rows are retained in the separately hash-bound original LH5.
+    # Python extraction verifies this sparse selection and summary against that raw source.
+    m["primary_count"]
 end
 end

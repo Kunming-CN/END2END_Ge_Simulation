@@ -36,8 +36,10 @@ the detector, charge model, electronics threshold and calibration are unchanged.
 source, build, runtime and settings before **Run simulation**. Changing the form
 invalidates its check. The five additional models—AK01, SAP16, SAP17,
 Bipolar_reference_3D and KL01_3D—completed fixed 500-decay Cs137 cases on the
-existing Windows/WSL computer. Native failures, readout rejections and zero events
-remain visible; these are engineering checks, not experimental qualification.
+existing Windows/WSL computer. New results store nonzero-deposit events and real
+signals, retaining failures/rejections, original IDs and full initial/zero counts.
+Zero-input records and artificial zero waveforms are omitted; efficiency denominators
+stay unchanged. These are engineering checks, not experimental qualification.
 
 Use **Stop at next boundary** and **Resume saved settings** for a checked decay
 run. Completed batches stay available in **Explore events**. Open

@@ -107,6 +107,14 @@ A full developer clone may retain website/source/history; it is a distinct route
 
 ### P2 — Implement zero-input storage and selection policy
 
+Completed in the current P2 milestone: one actual100-primary SAP22/Cs137/+30deg
+run completed with97zero/3nonzero, IDs24/52/54,3accepted groups. New truth/scalars
+and normalized/analysis records are nonzero-only; full counts/denominator and raw
+LH5 remain. Actual new and historical pages/feature export passed. Current
+.local/nonzero-storage-p2/COMPLETE.json governs final source/asset evidence.
+Do not rerun the100 case or spend the unused400-primary allowance automatically.
+Next is P3 after P2 Git/public asset closure.
+
 For NEW analysis/result exports store nonzero-deposit event records and their actual
 signals; do not create a per-zero-event JSON/CSV/waveform payload. Preserve total
 initial primaries, zero/nonzero/failed/rejected counts, exposure/denominator, original

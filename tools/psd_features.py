@@ -5,7 +5,8 @@ CLI: python tools/psd_features.py --run .local/runs/NAME
 Default output: .local/psd-features/<configuration SHA256>/bundle.
 The output directory must not exist; failed derivatives are retained. Reader API:
 load_bundle(path, expected_config_sha256=None, root=None) and
-get_record(bundle, primary_id, group_id=None). All primaries remain in records.
+get_record(bundle, primary_id, group_id=None). New records retain nonzero-deposit
+primaries; the complete initial census remains explicit in event_storage/counts.
 """
 from __future__ import annotations
 
@@ -22,11 +23,12 @@ import re
 import sys
 
 import scenario_workflow as W
+import nonzero_events as N
 from local_ui_jobs import ControlError, safe_path
 
 KIND = 'saved_waveform_psd_features_v1'
 PROFILE_KIND = 'saved_waveform_psd_profile_v1'
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 DEFAULT_PROFILE = Path(__file__).with_name('psd_feature_profile.json')
 ELEMENTARY_CHARGE_C = 1.602176634e-19  # exact SI elementary charge
 SIGNAL_COLUMNS = ['event_id', 'global_decay_id', 'batch_index', 'local_initial_id',
@@ -35,11 +37,12 @@ SIGNAL_COLUMNS = ['event_id', 'global_decay_id', 'batch_index', 'local_initial_i
 CSV_COLUMNS = ['global_initial_id', 'batch_index', 'local_initial_id', 'event_id',
                'global_decay_id', 'truth_Edep_keV', 'Erec_keV', 'selection_valid',
                'selection_reasons_json', 'pulse_count', 'record_json']
-SOURCE_REFS = ['tools/psd_features.py', 'tools/scenario_workflow.py',
+LEGACY_SOURCE_REFS = ['tools/psd_features.py', 'tools/scenario_workflow.py',
                'tools/batch_execution.py', 'tools/workflow_batches.py',
                'tools/catalog_result_validation.py', 'tools/local_ui_jobs.py']
-DEFINITIONS = {
-    'kind': KIND, 'schema_version': SCHEMA_VERSION,
+SOURCE_REFS = LEGACY_SOURCE_REFS + ['tools/nonzero_events.py']
+LEGACY_DEFINITIONS = {
+    'kind': KIND, 'schema_version': 1,
     'scope': 'Saved engineering observables; no calibrated CCE, physical resolution, acquisition waveform ADC, classifier or experimental validation.',
     'census': 'One record per original primary, in original global order; no event selection removes a record. Every original truth step, scalar, pulse group and endpoint is retained.',
     'A': 'Signed current from adjacent full-resolution native charge differences on [t_i,t_i+1), in nA. A is max(polarity * centered physical-width box average), evaluated at original interval midpoints with complete support inside the declared analysis window. No absolute value, edge padding, shrinking or display traces.',
@@ -53,6 +56,10 @@ DEFINITIONS = {
     'elementary_charge_C': ELEMENTARY_CHARGE_C,
     'csv_columns': CSV_COLUMNS,
 }
+DEFINITIONS = {**LEGACY_DEFINITIONS, 'schema_version': SCHEMA_VERSION,
+    'census': 'One record per nonzero-deposit original primary, in original global order, selected only by original step energy_keV != 0. Nonzero failures/rejections and every retained truth step, scalar, pulse group and endpoint remain unchanged. event_storage preserves initial/zero/nonzero totals and the full initial efficiency denominator.',
+    'csv': 'One nonzero-deposit original primary per row. Numeric scalars use round-trip JSON spelling; unavailable values are literal null, booleans true/false. record_json contains the complete matching JSON record without numeric precision reduction.',
+    'event_storage_kind': N.KIND}
 
 
 def require(condition, message):
@@ -351,14 +358,22 @@ def read_signals(path, group_keys):
     return samples
 
 
-def build_records(directory, receipt, profile):
+def build_records(directory, receipt, profile, *, nonzero_only=False):
     records = []; summaries = []; consumed = set()
-    for response in response_directories(directory, receipt):
+    if 'batching' in receipt['resolved']:
+        import batch_execution as E
+        batches = list(E.iter_batches(receipt['resolved']['batching']))
+    else:
+        batches = [{'primary_count': receipt['resolved']['selection']['primary_count'], 'global_initial_offset': 0}]
+    for response, batch in zip(response_directories(directory, receipt), batches):
         for name in ('run.json', 'truth.jsonl', 'scalars.jsonl', 'endpoints.jsonl', 'signals.csv', 'readout-config.json', 'profile.json'):
             path = response / name
             require(path.is_file(), 'Unsupported saved response schema: required ' + name + ' is unavailable.')
             consumed.add(path)
         report = read_json(response / 'run.json'); summaries.append(report)
+        initial = batch['primary_count']; offset = batch['global_initial_offset']
+        policy = N.storage(report, report.get('counts'), initial_primaries=initial)
+        require(nonzero_only or policy is None, 'Historical full-census feature schema cannot read a sparse response.')
         wiring = report.get('operating_model', receipt['resolved'].get('operating_model', {})).get('wiring_factor')
         if wiring is not None:
             require(profile['polarity'] == wiring, 'Explicit feature polarity differs from the saved fixed readout wiring.')
@@ -386,9 +401,17 @@ def build_records(directory, receipt, profile):
             require(all(endpoint.get(k) == pulses[key].get(k) for k in ('event_id', 'global_decay_id', 'batch_index', 'local_initial_id', 'global_initial_id') if k in endpoint), 'Endpoint identity differs from group.')
             endpoints.setdefault(key, []).append(endpoint)
         samples = read_signals(response / 'signals.csv', pulses)
-        for truth in truths:
+        previous = offset - 1
+        for position, truth in enumerate(truths):
             pid = identity(truth); require(pid in primary_scalars, 'Original truth primary has no retained scalar.')
+            require(previous < pid < offset + initial and (policy is not None or pid == offset + position),
+                    'Original primary order/range is incomplete, repeated or reordered.')
+            previous = pid
+            nonzero = N.has_nonzero_deposit(truth)
+            require(policy is None or nonzero, 'Sparse response retained a zero-deposit primary.')
             primary = primary_scalars.pop(pid)
+            require(type(primary.get('zero_deposit')) is bool and primary['zero_deposit'] is (not nonzero),
+                    'Original scalar zero-deposit flag differs from deposit truth.')
             require(primary['raw_row_indices'] == [s['raw_row_index'] for s in truth['steps']], 'Original primary raw row census differs.')
             groups = []
             for group in truth['pulse_groups']:
@@ -400,16 +423,62 @@ def build_records(directory, receipt, profile):
             if not groups and not reasons: reasons.append('no_pulse_groups')
             for group in groups:
                 reasons.extend('group_' + str(group['group_id']) + ':' + reason for reason in group['selection']['reasons'])
-            records.append({'global_initial_id': pid, 'event_id': primary['event_id'], 'global_decay_id': primary['global_decay_id'],
+            record = {'global_initial_id': pid, 'event_id': primary['event_id'], 'global_decay_id': primary['global_decay_id'],
                             'batch_index': primary.get('batch_index'), 'local_initial_id': primary.get('local_initial_id', primary['event_id']),
                             'truth_Edep_keV': primary['deposited_energy_keV'],
                             'Erec_keV': groups[0]['Erec_keV'] if len(groups) == 1 else None,
                             'truth': truth, 'primary': primary, 'pulse_groups': groups,
-                            'selection': {'valid': bool(groups) and not reasons, 'reasons': reasons}})
+                            'selection': {'valid': bool(groups) and not reasons, 'reasons': reasons}}
+            if not nonzero_only or nonzero:
+                records.append(record)
+        expected = initial if policy is None else policy['nonzero_primaries']
+        require(len(truths) == expected, 'Response truth differs from its complete initial/nonzero census.')
         require(not primary_scalars and not pulses and not endpoints and not samples, 'Response contains unmatched scalar, endpoint or signal identities.')
     count = receipt['resolved']['selection']['primary_count']
-    require([r['global_initial_id'] for r in records] == list(range(count)), 'Full-census original primary order is incomplete.')
+    policy = N.descriptor(count, count-len(records)) if nonzero_only else None
+    validate_record_census(records, policy, count)
     return records, summaries, consumed
+
+
+def validate_record_census(records, policy, initial):
+    require(type(records) is list, 'Feature records must be an array.')
+    previous = -1
+    for position, record in enumerate(records):
+        pid = exact_id(record['global_initial_id'], 'Global original primary ID')
+        require(previous < pid < initial and (policy is not None or pid == position),
+                'Feature export removed, reordered or duplicated original primaries.')
+        if policy is not None:
+            require(N.has_nonzero_deposit(record['truth']) and record['primary']['zero_deposit'] is False,
+                    'Nonzero feature storage retained a zero-input record.')
+        previous = pid
+    require(len(records) == (initial if policy is None else policy['nonzero_primaries']),
+            'Feature record count differs from its complete initial/nonzero census.')
+
+
+def record_counts(records, policy=None):
+    groups = [g for r in records for g in r['pulse_groups']]
+    result = {'primaries': len(records), 'zero_deposit_primaries': sum(r['primary']['zero_deposit'] for r in records),
+              'pulse_groups': len(groups), 'selected_groups': sum(g['selection']['valid'] for g in groups)}
+    if policy is not None:
+        N.validate_storage(policy)
+        failed = sum(g['saved_scalar'].get('status') == 'native_transport_failed' for g in groups)
+        readout_rejected = sum(g['saved_scalar'].get('status') != 'native_transport_failed'
+                              and not g['saved_scalar']['accepted'] for g in groups)
+        result.update({key: policy[key] for key in ('initial_primaries', 'zero_deposit_primaries', 'nonzero_primaries', 'efficiency_denominator')})
+        result.update(primaries=policy['initial_primaries'], stored_primaries=len(records),
+                      native_failed_groups=failed, readout_rejected_groups=readout_rejected,
+                      rejected_groups=failed+readout_rejected, analysis_rejected_groups=len(groups)-result['selected_groups'])
+    return result
+
+
+def bundle_storage(bundle):
+    initial = bundle['provenance']['resolved_configuration']['selection']['primary_count']
+    policy = N.storage(bundle, bundle.get('counts'), initial_primaries=initial)
+    if policy is not None:
+        validate_record_census(bundle['records'], policy, initial)
+        return policy
+    validate_record_census(bundle['records'], None, initial)
+    return N.descriptor(initial, sum(not N.has_nonzero_deposit(r['truth']) for r in bundle['records']))
 
 
 def csv_bytes(records):
@@ -431,7 +500,7 @@ def default_bundle_dir(root, config_sha256):
 
 
 def export_bundle(run_dir, out_dir, profile_path=None, *, root=None):
-    """Create one full-census bundle; never overwrite a prior or failed derivative."""
+    """Create one nonzero-deposit bundle; never overwrite a prior derivative."""
     directory = Path(run_dir).resolve(); root = Path(root or directory.parents[2]).resolve()
     out = Path(out_dir).absolute()
     require(out.is_relative_to(root / '.local') and not out.is_relative_to(directory), 'Derived output must stay under project .local outside original science root.')
@@ -441,16 +510,15 @@ def export_bundle(run_dir, out_dir, profile_path=None, *, root=None):
     profile_path = Path(profile_path or DEFAULT_PROFILE)
     profile_bytes = profile_path.read_bytes(); profile = validate_profile(W.decode_json(profile_bytes.decode('utf-8')))
     receipt = inspect_saved_run(directory, root)
-    records, summaries, consumed = build_records(directory, receipt, profile)
+    records, summaries, consumed = build_records(directory, receipt, profile, nonzero_only=True)
+    policy = N.descriptor(receipt['resolved']['selection']['primary_count'], receipt['resolved']['selection']['primary_count']-len(records))
     consumed.update(directory / name for name in ('run.json', 'resolved-config.json', 'COMPLETE.json'))
     consumed.update(path for path in (directory / 'shared/native/preparation.json',) if path.is_file())
     input_pins = {path.relative_to(root).as_posix(): stamp(path) for path in sorted(consumed)}
     definitions = encoded(DEFINITIONS)
     dataset = {'kind': KIND, 'schema_version': SCHEMA_VERSION, 'configuration_sha256': receipt['configuration_sha256'],
-               'profile': profile, 'records': records,
-               'counts': {'primaries': len(records), 'zero_deposit_primaries': sum(r['primary']['zero_deposit'] for r in records),
-                          'pulse_groups': sum(len(r['pulse_groups']) for r in records),
-                          'selected_groups': sum(g['selection']['valid'] for r in records for g in r['pulse_groups'])},
+               'profile': profile, 'records': records, 'event_storage': policy,
+               'counts': record_counts(records, policy),
                'provenance': {'run_ref': directory.relative_to(root).as_posix(), 'run_kind': receipt['kind'], 'run_status': receipt['status'],
                               'resolved_configuration': receipt['resolved'], 'response_summaries': summaries,
                               'input_artifacts': input_pins, 'extractor_sources': source_pins,
@@ -466,7 +534,7 @@ def export_bundle(run_dir, out_dir, profile_path=None, *, root=None):
     out.mkdir(parents=True, exist_ok=False)
     manifest = {'kind': KIND, 'schema_version': SCHEMA_VERSION, 'status': 'complete',
                 'configuration_sha256': receipt['configuration_sha256'], 'run_ref': dataset['provenance']['run_ref'],
-                'counts': dataset['counts'], 'input_artifacts': input_pins, 'extractor_sources': source_pins,
+                'counts': dataset['counts'], 'event_storage': policy, 'input_artifacts': input_pins, 'extractor_sources': source_pins,
                 'profile_sha256': dataset['provenance']['profile_sha256'],
                 'schema_template_sha256': dataset['provenance']['schema_template_sha256'],
                 'artifacts': {name: {'sha256': hashlib.sha256(blob).hexdigest(), 'bytes': len(blob)} for name, blob in blobs.items()}}
@@ -491,8 +559,10 @@ def load_bundle(bundle_dir, expected_config_sha256=None, *, root=None, verify_in
     require(directory.is_relative_to(root / '.local'), 'Feature bundle must stay in this project .local root.')
     directory = safe_path(root, directory.relative_to(root).as_posix())
     complete = read_json(directory / 'COMPLETE.json'); manifest = read_json(directory / 'manifest.json')
+    version = manifest.get('schema_version')
     require(complete.get('kind') == manifest.get('kind') == KIND and complete.get('status') == manifest.get('status') == 'complete'
-            and type(complete.get('schema_version')) is int and complete['schema_version'] == manifest.get('schema_version') == SCHEMA_VERSION
+            and type(complete.get('schema_version')) is int and complete['schema_version'] == version
+            and type(version) is int and version in (1, SCHEMA_VERSION)
             and complete.get('manifest_sha256') == sha(directory / 'manifest.json')
             and complete.get('configuration_sha256') == manifest.get('configuration_sha256'), 'Feature completion/manifest binding changed.')
     if expected_config_sha256 is not None:
@@ -500,20 +570,27 @@ def load_bundle(bundle_dir, expected_config_sha256=None, *, root=None, verify_in
     require(set(manifest['artifacts']) == {'features.json', 'features.csv', 'profile.json', 'schema.json'}, 'Feature artifact census changed.')
     for name, expected in manifest['artifacts'].items():
         require(stamp(safe_path(directory, name)) == expected, 'Feature artifact bytes changed: ' + name)
-    require((directory / 'schema.json').read_bytes() == encoded(DEFINITIONS) and
+    definitions = LEGACY_DEFINITIONS if version == 1 else DEFINITIONS
+    require((directory / 'schema.json').read_bytes() == encoded(definitions) and
             manifest['schema_template_sha256'] == sha(directory / 'schema.json'), 'Feature schema definitions differ from this required reader version.')
     profile = validate_profile(read_json(directory / 'profile.json'))
     require(manifest['profile_sha256'] == sha(directory / 'profile.json'), 'Feature profile binding changed.')
-    require(set(manifest['extractor_sources']) == set(SOURCE_REFS), 'Feature source provenance is incomplete.')
+    source_refs = LEGACY_SOURCE_REFS if version == 1 else SOURCE_REFS
+    require(set(manifest['extractor_sources']) == set(source_refs), 'Feature source provenance is incomplete.')
     for ref, expected in manifest['extractor_sources'].items():
         require(stamp(safe_path(root, ref)) == expected, 'Current feature reader/source differs from exported source: ' + ref)
     data = read_json(directory / 'features.json'); provenance = data['provenance']
-    require(data.get('kind') == KIND and type(data.get('schema_version')) is int and data['schema_version'] == SCHEMA_VERSION
+    require(data.get('kind') == KIND and type(data.get('schema_version')) is int and data['schema_version'] == version
             and data['configuration_sha256'] == manifest['configuration_sha256'] and data['profile'] == profile
             and data['counts'] == manifest['counts'], 'Feature required dataset schema/configuration/counts changed.')
     for key in ('input_artifacts', 'extractor_sources', 'profile_sha256', 'schema_template_sha256', 'run_ref'):
         require(provenance.get(key) == manifest.get(key), 'Feature provenance binding changed: ' + key)
     require(provenance.get('science_calls') == 0 and provenance.get('calibration_calls') == 0, 'Saved-only derivation provenance changed.')
+    expected_count = provenance['resolved_configuration']['selection']['primary_count']
+    policy = N.storage(data, data['counts'], initial_primaries=expected_count)
+    manifest_policy = N.storage(manifest, manifest['counts'], initial_primaries=expected_count)
+    require(policy == manifest_policy and ((version == 1 and policy is None) or (version == SCHEMA_VERSION and policy is not None)),
+            'Feature schema/event-storage identity changed.')
     run = safe_path(root, provenance['run_ref']); require(run == W.run_path(run.name, root), 'Invalid saved input root identity.')
     require(all(ref.startswith(provenance['run_ref'] + '/') for ref in manifest['input_artifacts']), 'Input artifact is outside selected saved run.')
     require({provenance['run_ref'] + '/' + n for n in ('run.json', 'resolved-config.json', 'COMPLETE.json')} <= set(manifest['input_artifacts']), 'Saved run authority pins are incomplete.')
@@ -523,17 +600,13 @@ def load_bundle(bundle_dir, expected_config_sha256=None, *, root=None, verify_in
         original = read_json(run / 'run.json'); plan = read_json(run / 'resolved-config.json')
         require(original['configuration_sha256'] == plan['configuration_sha256'] == manifest['configuration_sha256']
                 and original['resolved'] == plan['resolved'] == provenance['resolved_configuration'], 'Original selected saved configuration identity changed.')
-        rebuilt_records, rebuilt_summaries, consumed = build_records(run, original, profile)
+        rebuilt_records, rebuilt_summaries, consumed = build_records(run, original, profile, nonzero_only=policy is not None)
         require(data['records'] == rebuilt_records and provenance['response_summaries'] == rebuilt_summaries,
                 'Feature raw values/flags/census differ from original full-resolution saved inputs.')
         require(all(path.relative_to(root).as_posix() in manifest['input_artifacts'] for path in consumed),
                 'Feature consumed input inventory is incomplete.')
-    records = data['records']; expected_count = provenance['resolved_configuration']['selection']['primary_count']
-    require(type(records) is list and [r['global_initial_id'] for r in records] == list(range(expected_count)), 'Feature export removed, reordered or duplicated original primaries.')
-    counts = {'primaries': len(records), 'zero_deposit_primaries': sum(r['primary']['zero_deposit'] for r in records),
-              'pulse_groups': sum(len(r['pulse_groups']) for r in records),
-              'selected_groups': sum(g['selection']['valid'] for r in records for g in r['pulse_groups'])}
-    require(counts == manifest['counts'], 'Feature primary/group selection census changed.')
+    records = data['records']; validate_record_census(records, policy, expected_count)
+    require(record_counts(records, policy) == manifest['counts'], 'Feature primary/group selection census changed.')
     for record in records:
         require(identity(record['truth']) == identity(record['primary']) == record['global_initial_id']
                 and record['truth_Edep_keV'] == record['primary']['deposited_energy_keV']
@@ -563,8 +636,8 @@ def load_bundle(bundle_dir, expected_config_sha256=None, *, root=None, verify_in
 
 def get_record(bundle, primary_id, group_id=None):
     pid = exact_id(primary_id, 'Selected primary ID')
-    require(pid < len(bundle['records']) and bundle['records'][pid]['global_initial_id'] == pid, 'Selected original primary is unavailable.')
-    primary = bundle['records'][pid]
+    primary = next((r for r in bundle['records'] if r['global_initial_id'] == pid), None)
+    require(primary is not None, 'Selected original primary is unavailable.')
     if group_id is None:
         return primary
     gid = exact_id(group_id, 'Selected pulse group ID')

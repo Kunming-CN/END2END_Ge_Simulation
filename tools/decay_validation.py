@@ -7,6 +7,7 @@ from pathlib import Path
 import math
 from decay_workflow import W, request, ledger
 from ring_workflow import energy_sum_matches
+import nonzero_events as N
 def response(directory,resolved,report,root=W.ROOT,*,historical=False):
     base=Path(directory);out=base/'response';actual=W.read(base/'decay-request.json')
     W.require(actual==request(directory,resolved,root,historical=historical),'Response request authority changed.')
@@ -32,12 +33,18 @@ def response(directory,resolved,report,root=W.ROOT,*,historical=False):
             cal['wiring_factor']==-1 and inj['calibration']==cal and inj['input_is_independent_of_event_truth'] is True,
             'Negative wiring lost independent signed injection.')
     else:W.require(not (out/'negative-injection.json').exists(),'Positive detector has unexpected negative injection.')
-    source=ledger(directory,resolved,root,historical=historical)
+    full_source=ledger(directory,resolved,root,historical=historical)
+    policy=N.storage(report,report['counts'],initial_primaries=resolved['selection']['primary_count'])
+    source=list(N.nonzero_events(full_source)) if policy is not None else full_source
+    if policy is not None:
+        from catalog_result_validation import response_census
+        response_census(directory,resolved,report)
     truths=[W.decode_json(v) for v in (out/'truth.jsonl').read_text(encoding='utf-8').splitlines()]
     W.require(source==truths,'Native response changed source truth.')
     rows=[W.decode_json(v) for v in (out/'scalars.jsonl').read_text(encoding='utf-8').splitlines()]
     primaries=[v for v in rows if v['record_kind']=='decay'];pulses=[v for v in rows if v['record_kind']=='pulse']
-    W.require([v['event_id'] for v in primaries]==list(range(len(source))) and len(primaries)==resolved['selection']['primary_count'],
+    W.require([v['event_id'] for v in primaries]==([v['event_id'] for v in source] if policy is not None else list(range(len(source))))
+        and len(primaries)==(policy['nonzero_primaries'] if policy is not None else resolved['selection']['primary_count']),
         'Response lost zero or nonzero primaries.')
     expected={(e['event_id'],g['group_id']):(e,g) for e in source for g in e['pulse_groups']}
     W.require(len(pulses)==len(expected) and {(v['event_id'],v['group_id']) for v in pulses}==set(expected),'Pulse identity changed.')
@@ -65,6 +72,6 @@ def response(directory,resolved,report,root=W.ROOT,*,historical=False):
     interpreted=H.validate(W.read(out/'histograms.json'),report['counts'],resolved['selection']['source'],
         resolved['decay_source_contract'],actual['source_sha256'],csv_path=out/'histograms.csv',root=root)
     named={line['name']:0 for line in interpreted['normalization']['diagnostic_lines']}
-    for event in source:H.add_diagnostic_event(named,event)
+    for event in full_source:H.add_diagnostic_event(named,event)
     H.check_diagnostic_counts(named,report['counts'])
     return report

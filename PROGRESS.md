@@ -1,95 +1,101 @@
 # Current handoff
 
-Updated: 2026-10-14. Read this first, then the relevant sources only.
-Immutable earlier handoff: [Owner correction and chat reconciliation](https://github.com/kunming-cn/END2END_Ge_Simulation/blob/33fdb05e20d2983ba46f26fb06403df7713561ec/PROGRESS.md).
+Updated: 2026-10-14. Read this first, then relevant sources only.
+Immutable prior handoff: [P1 student runtime delivery](https://github.com/kunming-cn/END2END_Ge_Simulation/blob/fc5b14f7ac8647c954a478717bca55e012a6aa25/PROGRESS.md).
+It links owner chat reconciliation, prior accepted work and permanent science.
 
-## Current owner authority
+## Owner authority and continuation
 
-No extra AI review agents, peer debates, third-party/direction reviews or broad
-repeated audits. Student use and the corrected tools/NEXT_DEVELOPMENT_PLAN.md
-queue govern delivery. Desktop only; reuse the existing remage/SSD/readout
-engines and environment. No installs/global changes, resets, phone work or
-second-computer prerequisite. The owner on2026-10-14 approved starting and
-updating/resuming the scheduled task; the actual heartbeat is ACTIVE with the
-new student-first/no-review prompt, not the old PSD3 queue.
+The corrected heartbeat is ACTIVE, student-first and no-extra-review. Never launch
+AI reviewers, debates, third-party/direction checks or repeated broad audits.
+Use only directly relevant developer checks. Desktop only; existing remage/SSD/
+readout/environment. No installs, system settings, reset/banked credits, phone
+work or second-computer gate. No duplicate worker or completed-science rerun after
+a chat failure. Read actual state/locks/processes/terminal before continuing.
 
-## P1 student runtime package implemented and checked
+## P2 nonzero storage implemented and actually exercised
 
-The explicit tools/student_runtime_manifest.json and build_student_runtime.py
-produce END2END-Ge-Student.zip from exact Git bytes. The candidate has168 members:
-167 required source/model/config/license/guide files plus PACKAGE.json, about
-761 KB compressed. It excludes saved website/results, developer tests/reports,
-publication tools and standalone demonstration entry points. PACKAGE.json binds
-source commit, member source/package hashes, Git blobs and the sole derived guide.
-That guide removes historical developer routes/navigation placeholders and points
-saved-website links online. Run.cmd remains because student setup uses it.
+New normalized batch chunks, four shared native response writers' truth/scalars,
+and PSD1/PSD2 schema-2 JSON/CSV store only nonzero-deposit primaries. Zero-input
+placeholder signals are removed. Original nonzero IDs, all actual signal samples
+(including numeric zeros), signed values, native failures/readout rejections and
+unknown null quantities remain. No energy calibration or physics algorithm changed.
 
-New runtime provenance no longer requires developer test files. Marked native/
-readout source inventory v2 contains runtime code; historical unmarked v1 retains
-its original strict interpretation. Shared lightweight model labels and waveform
-reads replace website-generator imports. The normal desktop fixed saved-example
-button/handler is removed; the optional old API remains unavailable without its
-archive tooling/data and never skips validation when those resources exist.
+The common nonzero_deposit_v1 descriptor records initial/zero/nonzero counts and
+the full initial efficiency denominator. Sparse batch initial_summary retains all
+photon diagnostics from the raw LH5, independently verified against that source.
+The raw radiation file stays complete. Old unmarked dense inputs and old analysis
+schema1 keep their strict original rules; old scientific files are not rewritten.
 
-Actual isolated package checking found and fixed a first-use crash: before the
-pinned LBNL upstream files are acquired, Control now browses17 models/5 sources,
-shows setup_required/missing files, and refuses all runs. Existing corrupted
-upstream/canonical files still fail. Backend geometry checks remain strict; no
-cryostat dimensions or inputs were fabricated. Original ten-model compatibility
-is existing configured-machine evidence, not a fresh installation claim.
+Control pages both formats by nonzero-event ordinal while displaying original
+local/global IDs. The current UI validates gaps/order, batch offsets and full
+counts, excludes zero options, preserves nonzero failed/rejected choices and
+handles all-zero pages without a fake event/waveform. Source guide and README
+explain nonzero offset and retained denominators; generated docs was not rebuilt.
 
-transport/geometry_probe.cc had an existing CRLF checkout/Git-LF mismatch with
-its pinned accepted SHA256. Its -text rule now preserves the original existing
-CRLF bytes matching74b6afef5854e446dfbfa79acc9e79e910c2707e02bda69da8177c30eee81977;
-no geometry logic, pin or physics input was changed.
+Exactly ONE real run: .local/runs/student-sap22-cs137-100-nonzero-v1. SAP22/Cs137,
++30deg, fixed radiation seed26092631, one Julia thread,100 initial primaries.
+Same pre-existing accepted geometry/model/electronics; no seed/physics retuning.
+Completed end to end:97zero,3nonzero original IDs24/52/54,3groups accepted,
+0native failures/readout rejections/saturation. Truth has3 rows; scalars have
+3primary+3pulse rows; signals have380 real native samples and no fake zero-event
+rows. Raw source94 photons/88line photons and denominator100 are retained.
 
-Developer checks:18 scenario,2 saved-focus,7 old-gamma API,3 source-inventory,
-4 missing-input/integrity and4 packaging cases; existing Node UI contract,
-PowerShell v1/v2/unknown-version contract and five Julia pure syntax parses.
-Only affected sandbox-denied/corrected cases were rerun. The candidate Control
-server actually started from an isolated unpacked package and served HTML/JS,
-protected catalog and empty state; unauthenticated catalog was refused. It was
-closed and its temporary unpacked directory removed. First localhost connection
-was sandbox-denied; the same unchanged acceptance passed with local permission.
-No Geant4, SSD, field/native transport, readout calculation or installation ran.
+The complete workflow took233.5s. Recorded remage body3.67881s; radiation stage
+21.71918s including startup/I/O/validation. One field/calibration preparation
+35.75s, with potential16.54749s/electric10.73266s/weighting5.81483s. Preparation
+contains one field solve and one independent injection calibration, reused within
+the run. No supported cross-run field cache was present; none was invented.
+This is a software acceptance, not experimental/physical-resolution validation.
+Do not repeat it or expand to500 just because that was the cap.
 
-The corrected Codex continuation builds a versioned student-runtime-<commit>
-GitHub Release and latest stable ZIP link using the existing GitHub CLI. A first
-push containing a GitHub Actions workflow was refused because the login lacks
-workflow scope; that unpushed workflow was removed, without changing permissions.
-README and the
-maintained source guide now use that route. The saved public website snapshot was
-not rebuilt here; its generated guide refresh follows normal publication later.
-Final committed ZIP, actual public asset verification and source pins are recorded
-in .local/student-runtime-p1/COMPLETE.json before the round may return ready.
-Keep one current ZIP and compact receipts, not old unpacked/test/report copies.
+Actual page passed the shipped JS validator with original IDs and denominator100.
+Actual PSD1 export/load has schema2,3records and full100/97/3 census, derived only
+from this frozen completed run (no new physics). An actual historical500 case
+read as7nonzero/493zero/denominator500, with its checked receipt bytes unchanged.
 
-## Next bounded work: P2 zero-input storage
+Developer checks:107Julia storage/writer assertions;6Julia syntax parses;
+transport mixed/allzero/old contract/tampering writer checks;5new workflow and
+7affected legacy cases;8Python AST files;18PSD1+16PSD2 functional cases; existing
+Node contract plus sparse ID/denominator/empty cases; actual data page integration;
+PowerShell validator syntax. Sandbox hardlink denials were retried unchanged with
+permission. WindowsApps alias and readonly synthetic cleanup failures did not
+change gates or science; owned scratch was removed. No extra AI reviews ran.
 
-Implement one shared writer/export/Control contract for NEW outputs: store only
-nonzero-deposit event records and real signals, while preserving initial/zero/
-nonzero/failed/rejected counts, efficiency denominator, original IDs, batch offsets,
-settings and seeds. Nonzero failures/rejections remain; unknowns stay null and
-signed signals remain signed. Historical raw scientific archives stay unchanged.
-This format and default selection change has NOT yet been implemented.
+Evidence: one .local/nonzero-storage-p2/COMPLETE.json with source_pins map,
+selection.json and checked-plan.json; original run holds authoritative scientific
+stages/results. All implementation writers stopped and source hashes froze before
+the actual run and saved-data export. Do not create another report collection.
 
-The owner explicitly permits an actual small end-to-end software check for P2:
-start100 initial events, at most500 total new primaries, one detector/source,
-reuse existing geometry/fields when applicable, record exact settings/seed and
-retain failures. Do not change seeds/physics repeatedly to force a pass or expand
-a campaign. This software acceptance is not physical/experimental validation.
+## Student package and publication
 
-After P2, close the main student desktop workflow and only the concrete remaining
-configuration/site issues. Accepted model/source/batch/angle/recovery/focus fixes
-are not new work. PPT-inspired classifiers follow usable independently labelled
-inputs; do not restart the removed zero-selected-group demo. November spectrum/
-I-V/C-V needs complete owner inputs/metadata; missing input blocks only that item.
+P1 packaging remains accepted. The manifest adds only nonzero_events.py; candidate
+169members (168source+PACKAGE), approximately771KB. Runtime imports, Julia includes,
+canonical models and frozen setup pins pass. Build only from the final Git commit,
+publish immutable student-runtime-<commit> with existing gh CLI, set latest and
+verify actual public ZIP bytes/embedded commit. No GitHub Actions/auth changes.
+The exact final commit/asset check belongs in current P2 COMPLETE before ready;
+one current ZIP/receipt remains in .local/student-runtime-p1. Models, original
+inputs, environment locks and saved public docs remain unchanged.
 
-## Continuation ownership
+## Next bounded task: P3 desktop workflow
 
-Current milestone owner:student-runtime-p1-root. Admission after this round uses
-its actual COMPLETE/source pins and .local/autonomy/state.json. An ACTIVE timer
-must skip while a supervisor/worker/lock holds this round; never start competing
-writers or delete unknown locks. On completion verify normal Git synchronization,
-close owned idle services, release only the owned lease and leave ready with P2
-next. No extra reviewers or repeated physics after a chat interruption.
+Finish only concrete remaining student workflow issues using current actual data:
+select/configure/check/run/stop/resume/results, hide unused/empty advanced panels,
+lead with useful plots/spectrum and stage-specific files, and separate next setup
+from selected saved settings. Reuse prior accepted recovery/focus/readiness and
+batch evidence. Do not repeat model/source/angle features or a full UI audit.
+No new physics merely to rediscover this completed100 case. A CLI result is not
+an ordinary owned Control run; do not forge adoption/ownership or claim untested
+browser operation. Prefer existing actual records and targeted changed-path checks.
+
+PPT-inspired ML needs sufficient independently labelled inputs; no automatic old
+PSD3 demo. November measured spectrum/I-V/C-V needs complete owner inputs and
+blocks only that item. Follow the remaining current development plan in order.
+
+## Round closure
+
+Current owner nonzero-storage-p2-root. On later admission inspect actual current
+P2 COMPLETE/source hashes, Git/remote, processes and absent owned lease. ACTIVE
+automation skips while another round holds the lock. Finalize current publication,
+close owned idle workers, release only its lease and leave ready with P3 next.

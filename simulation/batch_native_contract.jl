@@ -4,8 +4,36 @@ using SHA, Serialization
 const SEED_RULE="native_global_initial_row_parcel_sha256_v1"
 const MAX_SAFE_INTEGER=9_007_199_254_740_991
 const MAX_CACHE_BYTES=512*1024^2
+const EVENT_STORAGE_KIND="nonzero_deposit_v1"
 check(x,m)=x || throw(ArgumentError(m))
 integer(x)=x isa Integer && !(x isa Bool)
+function event_storage(m)
+    !haskey(m,"event_storage") && return nothing # Historical streams keep their strict dense contract.
+    s=m["event_storage"]
+    fields=Set(("kind","initial_primaries","zero_deposit_primaries","nonzero_primaries","efficiency_denominator"))
+    check(s isa AbstractDict && Set(keys(s))==fields && s["kind"]==EVENT_STORAGE_KIND,"Unsupported event storage contract")
+    check(all(k->integer(s[k]) && 0<=s[k]<=MAX_SAFE_INTEGER,setdiff(fields,Set(["kind"]))),"Invalid event storage counts")
+    n=m["primary_count"]
+    check(s["initial_primaries"]==s["efficiency_denominator"]==n && s["zero_deposit_primaries"]+s["nonzero_primaries"]==n,"Changed initial-primary storage denominator")
+    s
+end
+function initial_summary(m)
+    storage=event_storage(m);check(storage!==nothing,"Sparse source needs a storage contract")
+    s=get(m,"initial_summary",nothing)
+    fields=Set(("initial_primaries","initial_decays","zero_deposit_primaries","nonzero_primaries","line_photons","decay_photons"))
+    named=m["source_mode"]=="registered_decay"
+    expected=named ? union(fields,Set(["line_photon_counts"])) : fields
+    check(s isa AbstractDict && Set(keys(s))==expected && all(k->integer(s[k]) && s[k]>=0,fields),"Invalid sparse initial summary")
+    check(all(s[k]==storage[k] for k in ("initial_primaries","zero_deposit_primaries","nonzero_primaries")) &&
+        s["initial_decays"]==s["initial_primaries"],"Changed sparse initial census")
+    if named
+        lines=s["line_photon_counts"]
+        names=Set(x["name"] for x in m["source_contract"]["diagnostic_lines"])
+        check(lines isa AbstractDict && Set(keys(lines))==names && all(v->integer(v) && v>=0,values(lines)) &&
+            sum(values(lines);init=0)==s["line_photons"],"Changed sparse named-photon census")
+    end
+    s
+end
 const POSE_KIND="source_capsule_angular_pose_v1"
 const POSE_CONVENTION="degrees from global +y toward +x about axis x=0,y=1.473mm; local +z follows outward radius; z fixed"
 function angle(s)

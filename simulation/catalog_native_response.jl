@@ -46,7 +46,7 @@ end
 function run(o,a,request)
     d=a.document;mc=request["model_contract"];cfg=C.config(mc,o["output"]);c=P.for_census(a.profile.profile,d["primary_count"])
     out=Q.reserve_output(o["output"]);started=time();stage="field_solve";hist=Dict{String,Dict{Int,Int}}();handles=IO[]
-    counts=Dict{String,Any}("initial_primaries"=>0,"initial_decays"=>0,"zero_deposit_primaries"=>0,"groups"=>0,"accepted"=>0,"rejected"=>0,"readout_rejected"=>0,"native_failed_groups"=>0,"saturated"=>0,"native_charge_samples"=>0,"analog_samples"=>0,"line_photons"=>0,"decay_photons"=>0)
+    counts=Dict{String,Any}("initial_primaries"=>0,"initial_decays"=>0,"zero_deposit_primaries"=>0,"nonzero_primaries"=>0,"groups"=>0,"accepted"=>0,"rejected"=>0,"readout_rejected"=>0,"native_failed_groups"=>0,"saturated"=>0,"native_charge_samples"=>0,"analog_samples"=>0,"line_photons"=>0,"decay_photons"=>0)
     d["source_mode"]=="registered_decay" && (counts["line_photon_counts"]=Dict(x["name"]=>0 for x in d["source_contract"]["diagnostic_lines"]))
     report=Dict{String,Any}("kind"=>"catalog_native_response_v1","status"=>"running","model_id"=>d["model_id"],"source_id"=>d["source_id"],"source_contract"=>d["source_contract"],"model_sha256"=>d["model_sha256"],"model_contract"=>mc,"source_lh5_sha256"=>d["source_lh5_sha256"],"input_sha256"=>E.hashfile(a.stream.path),"request_sha256"=>E.hashfile(o["request"]),"configuration_sha256"=>request["configuration_sha256"],"environment"=>Q.environment("cpu"),"readout_environment"=>E.environment(),"source_sha256"=>request["source_sha256"],"temperature_K"=>mc["runtime_temperature_K"],"stored_temperature_K"=>mc["stored_temperature_K"],"contact_potentials_V"=>mc["contact_potentials_V"],"readout_contact_id"=>mc["readout_contact_id"],"bias_V"=>mc["bias_span_V"],"signed_operating_bias_V"=>mc["wiring_factor"]*mc["bias_span_V"],"wiring_factor"=>mc["wiring_factor"],"geometry_checks"=>a.geometry,"counts"=>counts,"calibration"=>a.calibration,"independent_calibration_calls"=>1,"calibration_calls"=>1,"calibration_seconds"=>a.calibration_seconds,"profile"=>a.profile.profile,"profile_sha256"=>a.profile.sha256,"ionisation_energy_eV"=>a.eion,"new_field_solution"=>true,"numerics"=>request["numerics"],"parcels"=>16,"seed_family"=>2609261,"seed_rule"=>"legacy SHA256(seed/raw local event_id/raw_row_index/parcel_index), first8 bytes big-endian UInt64; single-run catalog contract","native_failure_policy"=>"record","diffusion"=>true,"end_drift_when_no_field"=>false,"self_repulsion"=>false,"drift_dt_ns"=>N.DT,"nominal_drift_cap_ns"=>N.HORIZON_NS,"units"=>Dict("charge"=>"fC","current"=>"nA","voltage"=>"V","energy"=>"keV","time"=>"ns"),"grouping_policy"=>d["grouping_policy"],"ledger"=>d["ledger"],"limitations"=>W.LIMITATIONS)
     files=["scalars.jsonl","scalars.csv","endpoints.jsonl","endpoints.csv","truth.jsonl","truth.csv","traces.jsonl","signals.csv"]
@@ -64,12 +64,18 @@ function run(o,a,request)
         failures=Ref{Union{Nothing,IO}}(nothing)
         function consume(e)
             id=e["event_id"];globalid=e["global_decay_id"];gs=e["pulse_groups"];energy=sum((s["energy_keV"] for s in e["steps"]);init=0.)
-            println(tj,JSON.json(e));println(tc,join(E.csvcell.((id,globalid,e)),','))
-            counts["initial_primaries"]+=1;counts["initial_decays"]+=1;counts["zero_deposit_primaries"]+=energy==0;counts["line_photons"]+=e["line_photon_count"];counts["decay_photons"]+=e["decay_photon_count"]
+            counts["initial_primaries"]+=1;counts["initial_decays"]+=1;counts["zero_deposit_primaries"]+=energy==0;counts["nonzero_primaries"]+=energy>0;counts["line_photons"]+=e["line_photon_count"];counts["decay_photons"]+=e["decay_photon_count"]
             if haskey(counts,"line_photon_counts")
                 for (k,v) in e["line_photon_counts"];counts["line_photon_counts"][k]+=v;end
             end
-            NR.scalar!(sj,sc,Dict("record_kind"=>"decay","event_id"=>id,"global_decay_id"=>globalid,"group_id"=>nothing,"deposited_energy_keV"=>energy,"pulse_count"=>length(gs),"zero_deposit"=>energy==0,"raw_row_indices"=>[s["raw_row_index"] for s in e["steps"]],"line_photon_count"=>e["line_photon_count"],"decay_photon_count"=>e["decay_photon_count"],"material_energy_keV"=>e["material_energy_keV"],"full_energy_closure"=>nothing));NR.addhist!(hist,"deposited_per_decay",energy)
+            NR.addhist!(hist,"deposited_per_decay",energy)
+            if energy==0
+                R.check(isempty(gs),"Zero-deposit primary has pulse groups")
+                progress(out,started,stage,"running",counts,d["primary_count"])
+                return
+            end
+            println(tj,JSON.json(e));println(tc,join(E.csvcell.((id,globalid,e)),','))
+            NR.scalar!(sj,sc,Dict("record_kind"=>"decay","event_id"=>id,"global_decay_id"=>globalid,"group_id"=>nothing,"deposited_energy_keV"=>energy,"pulse_count"=>length(gs),"zero_deposit"=>false,"raw_row_indices"=>[s["raw_row_index"] for s in e["steps"]],"line_photon_count"=>e["line_photon_count"],"decay_photon_count"=>e["decay_photon_count"],"material_energy_keV"=>e["material_energy_keV"],"full_energy_closure"=>nothing))
             byrow=Dict(s["raw_row_index"]=>s for s in e["steps"])
             for g in gs
                 gid=g["group_id"];origin=g["origin_time_ns"];steps=[byrow[i] for i in g["row_indices"]]
@@ -98,6 +104,8 @@ function run(o,a,request)
         for io in handles;close(io);end;empty!(handles)
         report["native_drift_and_charge_seconds"]=native_s;report["electronics_seconds"]=electronics_s;report["replay_readout_export_seconds"]=time()-replay_start
         stage="final_integrity";R.check(counts["initial_primaries"]==d["primary_count"] && counts["accepted"]+counts["rejected"]==counts["groups"] && counts["rejected"]==counts["native_failed_groups"]+counts["readout_rejected"],"Output census mismatch")
+        report["event_storage"]=NR.storage_descriptor(counts)
+        R.check(report["event_storage"]["nonzero_primaries"]==counts["nonzero_primaries"],"Stored nonzero census mismatch")
         R.check(C.field_fingerprint(a.sim,cfg.contact)==report["field_fingerprint"],"Response altered selected fields");S.recheck(a.stream);P.validate_resolved(JSON.parsefile(joinpath(out,"readout-config.json")),a.profile.profile,d["primary_count"])
         for (ref,h) in request["source_sha256"];R.check(E.hashfile(C.relative_file(ref))==h,"Consumer source changed");end
         R.check(E.hashfile(o["request"])==report["request_sha256"] && E.hashfile(o["profile"])==a.profile.sha256,"Request/profile changed during processing")

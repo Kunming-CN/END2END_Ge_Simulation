@@ -195,12 +195,18 @@ def response(directory,resolved,report,root=W.ROOT,*,historical=False):
     else:
         W.require(cal['method']=='single delta-charge injection at t=0; sampled analog peak; fixed across events' and not (out/'negative-injection.json').exists(),
                   'Ge ring requires the original independent positive calibration.')
+    import nonzero_events as N
+    policy=N.storage(report,report['counts'],initial_primaries=s['primary_count'])
+    if policy is not None:
+        from catalog_result_validation import response_census
+        response_census(directory,resolved,report)
     records=[W.decode_json(line) for line in (out/'scalars.jsonl').read_text(encoding='utf-8').splitlines()]
     pulses=[r for r in records if r['record_kind']=='pulse']
     truths=[W.decode_json(line) for line in (out/'truth.jsonl').read_text(encoding='utf-8').splitlines()]
     primaries=[r for r in records if r['record_kind']=='decay']
-    W.require(len(records)==len(primaries)+len(pulses) and len(primaries)==len(truths)==s['primary_count'] and
-              [r['event_id'] for r in primaries]==[e['event_id'] for e in truths]==list(range(s['primary_count'])),
+    expected_ids=[e['event_id'] for e in N.nonzero_events(ledger(directory,resolved,root,historical=historical))] if policy is not None else list(range(s['primary_count']))
+    W.require(len(records)==len(primaries)+len(pulses) and len(primaries)==len(truths)==len(expected_ids) and
+              [r['event_id'] for r in primaries]==[e['event_id'] for e in truths]==expected_ids,
               'Ring primary summary census differs from original truth.')
     for primary,event in zip(primaries,truths):
         W.require(type(primary['event_id']) is int and type(primary['global_decay_id']) is int and type(primary['pulse_count']) is int and
@@ -215,10 +221,11 @@ def response(directory,resolved,report,root=W.ROOT,*,historical=False):
     counts=report['counts'];failed=sum(r.get('status')=='native_transport_failed' for r in pulses)
     W.require(all(type(counts[k]) is int and counts[k]>=0 for k in ('initial_primaries','initial_decays','zero_deposit_primaries','line_photons',
               'decay_photons','groups','accepted','rejected','native_failed_groups','readout_rejected')),'Ring census values must be nonnegative integer counts.')
-    W.require([counts[k] for k in ('initial_primaries','initial_decays','zero_deposit_primaries','line_photons','decay_photons')]==
-              [len(truths),len(truths),sum(all(v['energy_keV']==0 for v in e['steps']) for e in truths),
-               sum(e['line_photon_count'] for e in truths),sum(e['decay_photon_count'] for e in truths)],
-              'Ring primary/zero/photon aggregate census differs from truth.')
+    if policy is None:
+        W.require([counts[k] for k in ('initial_primaries','initial_decays','zero_deposit_primaries','line_photons','decay_photons')]==
+                  [len(truths),len(truths),sum(all(v['energy_keV']==0 for v in e['steps']) for e in truths),
+                   sum(e['line_photon_count'] for e in truths),sum(e['decay_photon_count'] for e in truths)],
+                  'Ring primary/zero/photon aggregate census differs from truth.')
     accepted=sum(r['accepted'] is True for r in pulses);rejected=len(pulses)-accepted
     W.require([counts[k] for k in ('groups','accepted','rejected','native_failed_groups','readout_rejected')]==
               [len(pulses),accepted,rejected,failed,rejected-failed], 'Ring scalar failure/readout rejection census differs from its receipt.')

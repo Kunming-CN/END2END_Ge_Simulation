@@ -6,6 +6,7 @@ import decay_validation as V
 import scenario_workflow as W
 import decay_workflow as D
 import histogram_normalization as H
+import nonzero_events as N
 class ResponseValidationTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.base=Path(self.tmp.name)
@@ -98,6 +99,35 @@ class ResponseValidationTests(unittest.TestCase):
         with patch.object(H,'validate',wraps=H.validate) as checked:
             inventory=self.validate(self.pulse,route=True)
         checked.assert_called_once();self.assertIn('histograms.json',inventory)
+
+    def test_marked_sparse_route_keeps_original_id_and_full_photon_denominator(self):
+        self.prepare(self.pulse)
+        nonzero=copy.deepcopy(self.truth[0]);nonzero.update(event_id=1,global_decay_id=1,material_energy_keV={'G4_Ge':10})
+        self.truth=[dict(nonzero,event_id=eid,global_decay_id=eid,steps=[],pulse_groups=[],material_energy_keV={'G4_Ge':0})
+                    if eid!=1 else nonzero for eid in range(3)]
+        self.resolved['selection']['primary_count']=3
+        self.report['ionisation_energy_eV']=2.95
+        self.report['counts'].update(initial_primaries=3,initial_decays=3,zero_deposit_primaries=2,nonzero_primaries=1,
+            line_photons=3,decay_photons=3,line_photon_counts={'Np237_59.54092':3})
+        self.report['event_storage']=N.descriptor(3,2)
+        primary=dict(self.primary,event_id=1,global_decay_id=1,group_id=None,line_photon_count=1,decay_photon_count=1,
+                     material_energy_keV=nonzero['material_energy_keV'])
+        pulse=dict(self.pulse,event_id=1,global_decay_id=1,readout={'accepted':True})
+        stream=self.base/'transport/stream';stream.mkdir()
+        def save(path,rows):path.write_bytes(b''.join(W.encoded(row)+b'\n' for row in rows))
+        save(stream/'events.jsonl',self.truth);W.write(stream/'manifest.json',{'chunks':[{'file':'events.jsonl'}]})
+        save(self.out/'truth.jsonl',[nonzero]);save(self.out/'scalars.jsonl',[primary,pulse])
+        save(self.out/'traces.jsonl',[]);save(self.out/'endpoints.jsonl',[])
+        h=W.read(self.out/'histograms.json');h['normalization_denominators']=self.report['counts']
+        h['bins']=[H.row(row['stage'],row['bin'],row['count'],self.report['counts'],H.DIAGNOSTIC_KEY) for row in h['bins']]
+        W.write(self.out/'histograms.json',h);self.write_csv(h,H.DIAGNOSTIC_KEY)
+        W.write(self.out/'readout-config.json',dict(self.resolved['electronics_configuration'],expected_primary_count=3))
+        self.reseal()
+        inventory=self.validate(pulse,route=True,refresh=False)
+        self.assertIn('scalars.jsonl',inventory)
+        self.assertEqual(W.read(self.out/'run.json')['event_storage']['efficiency_denominator'],3)
+        before=W.sha(stream/'events.jsonl');self.validate(pulse,route=True,refresh=False)
+        self.assertEqual(W.sha(stream/'events.jsonl'),before)
 
     def test_actual_route_refuses_three_rehashed_contract_corruptions(self):
         for case in ('window','csv','stripped'):

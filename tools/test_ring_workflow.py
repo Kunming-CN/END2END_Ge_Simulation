@@ -15,6 +15,7 @@ from unittest.mock import patch
 import scenario_workflow as W
 import ring_workflow as R
 import ring_model_contract as M
+import nonzero_events as N
 
 
 class Rings(unittest.TestCase):
@@ -25,7 +26,7 @@ class Rings(unittest.TestCase):
         cls.runtime=W.runtime_identity(1)
 
     def setUp(self):
-        base=W.ROOT/'.local/product-delivery-v1/implementation-tests';base.mkdir(parents=True,exist_ok=True)
+        base=W.ROOT/'.local/nonzero-storage-p2/test-work';base.mkdir(parents=True,exist_ok=True)
         self.temp=tempfile.TemporaryDirectory(dir=base);self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
         self.config={'name':'ring-contract-fixture','cryostat':W.CRYOSTAT,'detector':'GeRC02','source':W.CS,'pose':'nominal',
             'primary_count':20,'seed':26100241,'threads':1,'electronics':copy.deepcopy(self.validated['profile']['settings'])}
@@ -174,6 +175,26 @@ class Rings(unittest.TestCase):
         envelope=W.read(directory/'response/workflow-ring-response.json')
         report['wiring_factor']=1;W.write(directory/'response/run.json',report);envelope['wiring_factor']=1;envelope['native_report_sha256']=W.sha(directory/'response/run.json');W.write(directory/'response/workflow-ring-response.json',envelope)
         with self.assertRaises(W.ControlError):R.response(directory,plan['resolved'],report,self.root)
+
+    def test_marked_sparse_ring_preserves_full_census_and_native_signs(self):
+        directory,plan,report,rows=self.readout();out=directory/'response'
+        truth=[W.decode_json(line) for line in (out/'truth.jsonl').read_text().splitlines()]
+        kept=list(N.nonzero_events(truth));ids={event['event_id'] for event in kept}
+        rows=[row for row in rows if row['event_id'] in ids]
+        for row in rows:
+            if row['record_kind']=='pulse':row['readout']['accepted']=row['accepted']
+        def save(path,values):path.write_bytes(b''.join(W.encoded(value)+b'\n' for value in values))
+        save(out/'truth.jsonl',kept);save(out/'scalars.jsonl',rows);save(out/'endpoints.jsonl',[])
+        report['ionisation_energy_eV']=report['calibration']['ionisation_energy_eV']
+        report['counts']['nonzero_primaries']=1;report['event_storage']=N.descriptor(20,19)
+        W.write(out/'run.json',report)
+        envelope=W.read(out/'workflow-ring-response.json');envelope.update(counts=report['counts'],native_report_sha256=W.sha(out/'run.json'))
+        W.write(out/'workflow-ring-response.json',envelope)
+        source=directory/'transport/stream/chunk-00000.jsonl';before=W.sha(source)
+        R.response(directory,plan['resolved'],report,self.root)
+        self.assertEqual(report['counts']['initial_primaries'],20)
+        self.assertEqual(next(row for row in rows if row['record_kind']=='pulse')['final_induced_keV'],-1)
+        self.assertEqual(W.sha(source),before)
 
     def test_km_rehashed_trace_rectification_refused(self):
         directory,plan,report,rows=self.readout();path=directory/'response/traces.jsonl';values=[W.decode_json(v) for v in path.read_text().splitlines()];values[0]['trace']['raw_native_current_nA']=[1,0]

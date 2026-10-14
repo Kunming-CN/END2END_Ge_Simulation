@@ -9,6 +9,7 @@ import io
 import json
 from pathlib import Path
 import shutil
+import stat
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -148,10 +149,10 @@ class KnownSignals(unittest.TestCase):
 
 class SyntheticBundle(unittest.TestCase):
     def setUp(self):
-        evidence = P.W.ROOT / '.local/psd-features-v1/implementation/synthetic-tests'
+        evidence = P.W.ROOT / '.local/nonzero-storage-p2/synthetic-tests'
         evidence.mkdir(parents=True, exist_ok=True)
         self.root = Path(tempfile.mkdtemp(prefix='SYNTHETIC-', dir=evidence))
-        # Retain synthetic artifacts/failures as local evidence; no deletion.
+        self.addCleanup(self.cleanup_owned_fixture)
         for ref in P.SOURCE_REFS:
             dest = self.root/ref; dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(P.W.ROOT/ref, dest)
@@ -191,6 +192,14 @@ class SyntheticBundle(unittest.TestCase):
     def write(self, path, value):
         path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(P.encoded(value))
 
+    def cleanup_owned_fixture(self):
+        expected = (P.W.ROOT/'.local/nonzero-storage-p2/synthetic-tests').resolve()
+        self.assertTrue(self.root.resolve().is_relative_to(expected))
+        for path in [self.root, *self.root.rglob('*')]:
+            self.assertFalse(path.is_symlink() or path.is_junction())
+            path.chmod(path.stat().st_mode | stat.S_IWRITE)
+        shutil.rmtree(self.root)
+
     def write_lines(self, name, rows):
         (self.response/name).write_bytes(b''.join(P.encoded(x) for x in rows))
 
@@ -206,23 +215,78 @@ class SyntheticBundle(unittest.TestCase):
         complete = P.read_json(self.out/'COMPLETE.json'); complete['manifest_sha256'] = P.sha(self.out/'manifest.json')
         self.write(self.out/'COMPLETE.json', complete)
 
-    def test_complete_census_zero_rows_seeds_and_lossless_csv(self):
+    def test_complete_census_nonzero_storage_seeds_and_lossless_csv(self):
         manifest = self.export(); bundle = P.load_bundle(self.out, self.receipt['configuration_sha256'], root=self.root)
-        self.assertEqual(manifest['counts'], {'primaries': 2, 'zero_deposit_primaries': 1, 'pulse_groups': 1, 'selected_groups': 1})
-        zero = P.get_record(bundle, 0)
-        self.assertEqual(zero['selection']['reasons'], ['zero_deposit']); self.assertIsNone(zero['Erec_keV'])
-        self.assertEqual(zero['truth']['steps'][0]['raw_row_index'], 9)
+        self.assertEqual(manifest['event_storage'], P.N.descriptor(2, 1))
+        self.assertEqual(manifest['counts']['primaries'], 2)
+        self.assertEqual(manifest['counts']['efficiency_denominator'], 2)
+        self.assertEqual(manifest['counts']['zero_deposit_primaries'], 1)
+        self.assertEqual(manifest['counts']['stored_primaries'], 1)
+        self.assertEqual([r['global_initial_id'] for r in bundle['records']], [1])
+        with self.assertRaises(P.ControlError): P.get_record(bundle, 0)
         self.assertEqual(len(P.get_record(bundle, 1)['truth']['steps']), 2)
         pulse = P.get_record(bundle, 1, 0)
         self.assertEqual(pulse['raw_row_indices'], [1])
         self.assertEqual(pulse['endpoints'][0]['seed_uint64'], '18446744073709551615')
         with (self.out/'features.csv').open(encoding='utf-8', newline='') as stream:
             rows = list(csv.DictReader(stream))
-        self.assertEqual(rows[0]['Erec_keV'], 'null'); self.assertEqual(rows[0]['selection_valid'], 'false')
+        self.assertEqual(rows[0]['Erec_keV'], '8.0'); self.assertEqual(rows[0]['selection_valid'], 'true')
         self.assertEqual([json.loads(row['record_json']) for row in rows], bundle['records'])
         with self.assertRaises(P.ControlError): P.get_record(bundle, 0, 0)
         with self.assertRaises(P.ControlError): P.load_bundle(self.out, 'f'*64, root=self.root)
         with self.assertRaises(P.ControlError): self.export()
+
+    def test_marked_sparse_native_source_retains_original_ids_and_denominator(self):
+        original_pins = {name: P.stamp(self.response/name) for name in ('truth.jsonl', 'scalars.jsonl', 'signals.csv')}
+        self.write_lines('truth.jsonl', [self.nonzero])
+        self.write_lines('scalars.jsonl', [r for r in P.json_lines(self.response/'scalars.jsonl') if r['global_initial_id'] == 1])
+        policy = P.N.descriptor(2, 1)
+        self.write(self.response/'run.json', {**self.report, 'event_storage': policy, 'counts': {
+            'initial_primaries': 2, 'zero_deposit_primaries': 1, 'nonzero_primaries': 1}})
+        preserved = {name: P.stamp(self.response/name) for name in original_pins}
+        self.export(); data = P.load_bundle(self.out, root=self.root)
+        self.assertEqual(data['event_storage'], policy)
+        self.assertEqual([r['global_initial_id'] for r in data['records']], [1])
+        self.assertEqual(data['counts']['selected_groups']/data['counts']['efficiency_denominator'], .5)
+        self.assertEqual(preserved, {name: P.stamp(self.response/name) for name in preserved})
+        altered = P.read_json(self.out/'features.json'); altered['event_storage']['efficiency_denominator'] = 1
+        self.write(self.out/'features.json', altered); self.rehash('features.json')
+        with self.assertRaises(P.ControlError): P.load_bundle(self.out, root=self.root, verify_inputs=False)
+
+    def test_nonzero_native_failure_and_readout_rejection_are_stored(self):
+        rows = P.json_lines(self.response/'scalars.jsonl')
+        failed, _ = group_fixture(failed=True); rows[-1] = failed
+        self.write_lines('scalars.jsonl', rows); self.write_lines('endpoints.jsonl', [])
+        (self.response/'signals.csv').write_text(','.join(P.SIGNAL_COLUMNS)+'\n', encoding='utf-8')
+        self.export(); data = P.load_bundle(self.out, root=self.root)
+        self.assertEqual(data['counts']['native_failed_groups'], 1)
+        self.assertEqual(data['counts']['rejected_groups'], 1)
+        self.assertEqual(data['counts']['readout_rejected_groups'], 0)
+        group = P.get_record(data, 1, 0)
+        self.assertIsNone(group['signal']); self.assertIsNone(group['Erec_keV'])
+        self.assertEqual(group['saved_scalar']['native_error'], failed['native_error'])
+
+    def test_historical_unmarked_bundle_keeps_strict_full_census(self):
+        self.export()
+        dense, summaries, _ = P.build_records(self.run, self.receipt, profile())
+        data = P.read_json(self.out/'features.json'); manifest = P.read_json(self.out/'manifest.json')
+        for value in (data, manifest):
+            value['schema_version'] = 1; value.pop('event_storage'); value['counts'] = P.record_counts(dense)
+        data['records'] = dense
+        for value in (manifest, data['provenance']):
+            value['extractor_sources'].pop('tools/nonzero_events.py')
+        schema = P.encoded(P.LEGACY_DEFINITIONS); (self.out/'schema.json').write_bytes(schema)
+        for value in (manifest, data['provenance']): value['schema_template_sha256'] = hashlib.sha256(schema).hexdigest()
+        self.write(self.out/'features.json', data); (self.out/'features.csv').write_bytes(P.csv_bytes(dense))
+        manifest['artifacts'] = {name: P.stamp(self.out/name) for name in manifest['artifacts']}
+        self.write(self.out/'manifest.json', manifest)
+        complete = P.read_json(self.out/'COMPLETE.json'); complete.update(schema_version=1, manifest_sha256=P.sha(self.out/'manifest.json'))
+        self.write(self.out/'COMPLETE.json', complete)
+        legacy = P.load_bundle(self.out, root=self.root)
+        self.assertEqual(P.get_record(legacy, 0)['selection']['reasons'], ['zero_deposit'])
+        data['records'] = data['records'][1:]; data['counts'] = P.record_counts(data['records'])
+        self.write(self.out/'features.json', data); self.rehash('features.json')
+        with self.assertRaises(P.ControlError): P.load_bundle(self.out, root=self.root, verify_inputs=False)
 
     def test_derivative_tamper_and_rehashed_schema_or_raw_changes_rejected(self):
         self.export(); before = (self.out/'features.json').read_bytes()
@@ -230,7 +294,7 @@ class SyntheticBundle(unittest.TestCase):
         with self.assertRaises(P.ControlError): P.load_bundle(self.out, root=self.root)
         (self.out/'features.json').write_bytes(before)
         data = P.read_json(self.out/'features.json')
-        data['records'][1]['pulse_groups'][0]['signal']['induced_equivalent_energy_keV'][-1] = 100
+        data['records'][0]['pulse_groups'][0]['signal']['induced_equivalent_energy_keV'][-1] = 100
         self.write(self.out/'features.json', data); self.rehash('features.json')
         with self.assertRaises(P.ControlError): P.load_bundle(self.out, root=self.root)
 
@@ -241,7 +305,7 @@ class SyntheticBundle(unittest.TestCase):
 
     def test_rehashed_null_feature_and_selection_changes_rejected(self):
         self.export(); data = P.read_json(self.out/'features.json')
-        data['records'][0]['selection'] = {'valid': True, 'reasons': []}
+        data['records'][0]['selection'] = {'valid': False, 'reasons': ['invented_reason']}
         self.write(self.out/'features.json', data); self.rehash('features.json')
         with self.assertRaises(P.ControlError): P.load_bundle(self.out, root=self.root, verify_inputs=False)
 
@@ -291,7 +355,7 @@ class SyntheticBundle(unittest.TestCase):
                                  'induced_equivalent_energy_keV': time})
         self.out = P.default_bundle_dir(self.root, self.receipt['configuration_sha256'])
         self.export(); data = P.load_bundle(self.out, root=self.root)
-        self.assertEqual([r['global_initial_id'] for r in data['records']], [0, 1, 2])
+        self.assertEqual([r['global_initial_id'] for r in data['records']], [1, 2])
         later = P.get_record(data, 2, 0)
         self.assertEqual(later['event_id'], 0); self.assertEqual(later['global_decay_id'], 0)
         self.assertEqual(later['local_initial_id'], 0); self.assertEqual(later['batch_index'], 1)

@@ -4,7 +4,8 @@ CLI: python tools/waveform_acquisition.py --run .local/runs/NAME [--julia EXE]
 This runs bounded electronics and independent injection only, never detector,
 field, SSD or radiation calculations. Canonical PSD1 is required and unchanged.
 Output defaults to .local/waveform-acquisition/<configurationSHA>/bundle and must
-not exist. Reader load_bundle/get_record joins all original PSD1 records without
+not exist. New bundles store nonzero-deposit primaries and explicit initial census.
+Reader load_bundle/get_record joins retained original PSD1 records without
 Julia or execution. The new acquisition_energy_keV never replaces original Erec.
 """
 from __future__ import annotations
@@ -29,11 +30,12 @@ from local_ui_jobs import ControlError, safe_path
 
 KIND = 'saved_waveform_acquisition_v1'
 PROFILE_KIND = 'synthetic_waveform_acquisition_profile_v1'
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 DEFAULT_PROFILE = Path(__file__).with_name('waveform_acquisition_profile.json')
 SOURCE_REFS = P.SOURCE_REFS + ['tools/waveform_acquisition.py', 'simulation/waveform_acquisition.jl',
     'simulation/readout.jl', 'simulation/readout_profiles.jl', 'simulation/readout_demo.json',
     'simulation/Project.toml', 'simulation/Manifest.toml']
+LEGACY_SOURCE_REFS = [ref for ref in SOURCE_REFS if ref != 'tools/nonzero_events.py']
 PROFILE_KEYS = {'kind', 'schema_version', 'name', 'sampling_rate_Hz', 'adc', 'record_window_ns',
                 'trigger', 'bandwidth', 'noise', 'measurement_polarity', 'calibration'}
 CSV_COLUMNS = ['global_initial_id', 'zero_deposit', 'acquisition_energy_keV', 'selection_valid', 'record_json']
@@ -43,7 +45,7 @@ read_json = P.read_json
 sha = P.sha
 stamp = P.stamp
 finite = P.finite
-DEFINITIONS = {
+LEGACY_DEFINITIONS = {
     'kind': KIND, 'schema_version': 1,
     'scope': 'Synthetic teaching/engineering acquisition; no measured hardware, physical noise/resolution, Li CCE or experimental validation.',
     'census': 'Every original primary and group is retained. Exact PSD1 manifest/artifacts and per-record hashes bind lossless original truth, scalars, endpoints, full charge, settings and calibration; reader joins them without execution.',
@@ -60,6 +62,9 @@ DEFINITIONS = {
     'serialization': 'UTF-8 sorted-key compact round-trip JSON, no NaN, one trailing LF; lossless CSV record_json mirrors each compact census record. Required source/schema/profile hashes and exact original PSD1 bindings are validated independently of rehashed derived manifests.',
     'csv_columns': CSV_COLUMNS,
 }
+DEFINITIONS = {**LEGACY_DEFINITIONS, 'schema_version': SCHEMA_VERSION,
+    'census': 'One record per nonzero-deposit original primary, selected only by original step energy_keV != 0, retaining nonzero failures/rejections. event_storage preserves initial/zero/nonzero totals and the complete initial efficiency denominator. Exact PSD1 manifest/artifacts and per-record hashes bind original truth, scalars, endpoints, signed charge, settings and calibration; reader joins them without execution.',
+    'event_storage_kind': P.N.KIND}
 
 
 def require(condition, message):
@@ -211,12 +216,13 @@ def source_bundle(root, config_sha):
     return path, data, pins
 
 
-def build_request(source, root, profile):
+def build_request(source, root, profile, *, nonzero_only=False):
     run = safe_path(root, source['provenance']['run_ref']); receipt = read_json(run/'run.json')
     batches = []
     for index, response in enumerate(P.response_directories(run, receipt)):
         summary = source['provenance']['response_summaries'][index]; batch = summary.get('batch', {}).get('batch_index')
-        groups = [g for r in source['records'] for g in r['pulse_groups'] if g['batch_index'] == batch and g['signal'] is not None]
+        groups = [g for r in source['records'] if not nonzero_only or P.N.has_nonzero_deposit(r['truth'])
+                  for g in r['pulse_groups'] if g['batch_index'] == batch and g['signal'] is not None]
         dt = summary['calibration']['time_step_ns']
         require(all(g['signal']['time_since_origin_ns'][1]-g['signal']['time_since_origin_ns'][0] == dt for g in groups), 'Saved native and calibration grids disagree.')
         config = read_json(response/'readout-config.json'); original_profile = read_json(response/'profile.json')
@@ -259,11 +265,13 @@ def run_numerical(request, output, root, julia_executable=None):
         'frontend_calls': len(result['groups']), 'calibration_calls': len(result['calibrations'])}
 
 
-def compact_records(source, numerical, profile):
+def compact_records(source, numerical, profile, *, nonzero_only=False):
     results = {(g['global_initial_id'], g['group_id']): g['acquisition'] for g in numerical['groups']}
     require(len(results) == len(numerical['groups']), 'Duplicate acquisition group output.')
     calibrations = {c['batch_index']: c['calibration'] for c in numerical['calibrations']}; records = []
     for original in source['records']:
+        if nonzero_only and not P.N.has_nonzero_deposit(original['truth']):
+            continue
         groups = []
         for group in original['pulse_groups']:
             key = (group['global_initial_id'], group['group_id'])
@@ -287,11 +295,23 @@ def compact_records(source, numerical, profile):
     return records
 
 
-def counts(records):
-    return {'primaries': len(records), 'zero_deposit_primaries': sum(r['zero_deposit'] for r in records),
+def counts(records, policy=None):
+    groups = [g for r in records for g in r['pulse_groups']]
+    result = {'primaries': len(records), 'zero_deposit_primaries': sum(r['zero_deposit'] for r in records),
         'pulse_groups': sum(len(r['pulse_groups']) for r in records),
-        'acquired_groups': sum(g['acquisition']['trace'] is not None for r in records for g in r['pulse_groups']),
-        'selected_groups': sum(g['acquisition']['selection']['valid'] for r in records for g in r['pulse_groups'])}
+        'acquired_groups': sum(g['acquisition']['trace'] is not None for g in groups),
+        'selected_groups': sum(g['acquisition']['selection']['valid'] for g in groups)}
+    if policy is not None:
+        P.N.validate_storage(policy)
+        require(len(records) == policy['nonzero_primaries'] and all(r['zero_deposit'] is False for r in records),
+                'Acquisition records differ from the complete nonzero census.')
+        result.update({key: policy[key] for key in ('initial_primaries', 'zero_deposit_primaries', 'nonzero_primaries', 'efficiency_denominator')})
+        result.update(primaries=policy['initial_primaries'], stored_primaries=len(records),
+            native_failed_groups=sum(g['acquisition']['status'] == 'native_transport_failed' for g in groups),
+            unavailable_groups=len(groups)-result['acquired_groups'],
+            acquisition_rejected_groups=sum(g['acquisition']['trace'] is not None and not g['acquisition']['selection']['valid'] for g in groups),
+            rejected_groups=len(groups)-result['selected_groups'])
+    return result
 
 
 def csv_bytes(records):
@@ -319,31 +339,32 @@ def export_bundle(run_dir, out_dir=None, profile_path=None, *, root=None, julia_
     out = safe_path(root, out.relative_to(root).as_posix()); require(not out.exists(), 'Acquisition output exists; preserve it and use a fresh derivative root.')
     profile_path = Path(profile_path or DEFAULT_PROFILE); profile_bytes = profile_path.read_bytes(); profile = validate_profile(P.W.decode_json(profile_bytes.decode('utf-8')))
     source_refs = {ref: stamp(safe_path(root, ref)) for ref in SOURCE_REFS}; input_pins = source['provenance']['input_artifacts']
-    request = build_request(source, root, profile)
+    policy = P.bundle_storage(source)
+    request = build_request(source, root, profile, nonzero_only=True)
     out.mkdir(parents=True, exist_ok=False)
     try:
         numerical, execution = run_numerical(request, out, root, julia_executable)
-        numerical_equal(numerical['profile'], profile); records = compact_records(source, numerical, profile)
+        numerical_equal(numerical['profile'], profile); records = compact_records(source, numerical, profile, nonzero_only=True)
         schema = encoded(DEFINITIONS)
         provenance = {'run_ref': source['provenance']['run_ref'], 'source_features_ref': source_path.relative_to(root).as_posix(),
             'source_features_manifest_sha256': source_pins['manifest.json']['sha256'], 'source_features_artifacts': source_pins,
             'source_profile_sha256': source['provenance']['profile_sha256'], 'input_artifacts': input_pins, 'extractor_sources': source_refs,
             'profile_sha256': hashlib.sha256(profile_bytes).hexdigest(), 'schema_template_sha256': hashlib.sha256(schema).hexdigest(),
             'python_version': platform.python_version(), 'execution': execution}
-        data = {'kind': KIND, 'schema_version': 1, 'configuration_sha256': config_sha, 'profile': profile, 'counts': counts(records),
+        data = {'kind': KIND, 'schema_version': SCHEMA_VERSION, 'event_storage': policy, 'configuration_sha256': config_sha, 'profile': profile, 'counts': counts(records, policy),
             'calibrations': numerical['calibrations'], 'records': records, 'provenance': provenance}
         require(source_refs == {ref: stamp(safe_path(root, ref)) for ref in SOURCE_REFS}, 'Acquisition source changed during export; preserve derivative and retry only after source freeze.')
         require(source_pins == {name: stamp(source_path/name) for name in source_pins} and input_pins == {ref: stamp(safe_path(root, ref)) for ref in input_pins}, 'Original saved input/PSD1 changed during export.')
         require(profile_path.read_bytes() == profile_bytes, 'Acquisition profile changed during export.')
         blobs = {'acquisition.json': encoded(data), 'acquisition.csv': csv_bytes(records), 'profile.json': profile_bytes, 'schema.json': schema, 'execution.json': encoded(execution)}
-        manifest = {'kind': KIND, 'schema_version': 1, 'status': 'complete', 'configuration_sha256': config_sha, 'counts': data['counts'],
+        manifest = {'kind': KIND, 'schema_version': SCHEMA_VERSION, 'event_storage': policy, 'status': 'complete', 'configuration_sha256': config_sha, 'counts': data['counts'],
             **{k: provenance[k] for k in ('run_ref', 'source_features_ref', 'source_features_manifest_sha256', 'source_features_artifacts', 'source_profile_sha256', 'input_artifacts', 'extractor_sources', 'profile_sha256', 'schema_template_sha256')},
             'artifacts': {name: {'sha256': hashlib.sha256(blob).hexdigest(), 'bytes': len(blob)} for name, blob in blobs.items()},
             'numerical_artifacts': {name: stamp(out/name) for name in ('request.json', 'numerical.json', 'julia.log')}}
         for name, blob in blobs.items():
             with (out/name).open('xb') as stream: stream.write(blob)
         with (out/'manifest.json').open('xb') as stream: stream.write(encoded(manifest))
-        with (out/'COMPLETE.json').open('xb') as stream: stream.write(encoded({'kind': KIND, 'schema_version': 1, 'status': 'complete', 'configuration_sha256': config_sha, 'manifest_sha256': sha(out/'manifest.json')}))
+        with (out/'COMPLETE.json').open('xb') as stream: stream.write(encoded({'kind': KIND, 'schema_version': SCHEMA_VERSION, 'status': 'complete', 'configuration_sha256': config_sha, 'manifest_sha256': sha(out/'manifest.json')}))
         load_bundle(out, config_sha, root=root)
         return manifest
     except BaseException as error:
@@ -362,30 +383,40 @@ def load_bundle(bundle_dir, expected_config_sha256=None, *, root=None, verify_in
     require(directory.is_relative_to(root/'.local'), 'Acquisition bundle must stay under project .local.')
     directory = safe_path(root, directory.relative_to(root).as_posix())
     complete = read_json(directory/'COMPLETE.json'); manifest = read_json(directory/'manifest.json')
+    version = manifest.get('schema_version')
     require(complete.get('kind') == manifest.get('kind') == KIND and complete.get('status') == manifest.get('status') == 'complete'
-        and type(complete.get('schema_version')) is int and complete['schema_version'] == manifest.get('schema_version') == 1
+        and type(complete.get('schema_version')) is int and complete['schema_version'] == version
+        and type(version) is int and version in (1, SCHEMA_VERSION)
         and complete.get('manifest_sha256') == sha(directory/'manifest.json') and complete.get('configuration_sha256') == manifest.get('configuration_sha256'), 'Acquisition completion/manifest identity changed.')
     config_sha = manifest['configuration_sha256']
     if expected_config_sha256 is not None: require(config_sha == expected_config_sha256, 'Acquisition belongs to another selected configuration.')
     require(set(manifest['artifacts']) == {'acquisition.json', 'acquisition.csv', 'profile.json', 'schema.json', 'execution.json'}
         and set(manifest['numerical_artifacts']) == {'request.json', 'numerical.json', 'julia.log'}, 'Acquisition artifact census changed.')
     for name, pin in {**manifest['artifacts'], **manifest['numerical_artifacts']}.items(): require(stamp(directory/name) == pin, 'Acquisition artifact bytes changed: '+name)
-    require((directory/'schema.json').read_bytes() == encoded(DEFINITIONS) and manifest['schema_template_sha256'] == sha(directory/'schema.json'), 'Acquisition required schema/template changed.')
+    definitions = LEGACY_DEFINITIONS if version == 1 else DEFINITIONS
+    require((directory/'schema.json').read_bytes() == encoded(definitions) and manifest['schema_template_sha256'] == sha(directory/'schema.json'), 'Acquisition required schema/template changed.')
     profile = validate_profile(read_json(directory/'profile.json')); require(manifest['profile_sha256'] == sha(directory/'profile.json'), 'Acquisition profile binding changed.')
-    require(set(manifest['extractor_sources']) == set(SOURCE_REFS), 'Acquisition source provenance incomplete.')
+    source_refs = LEGACY_SOURCE_REFS if version == 1 else SOURCE_REFS
+    require(set(manifest['extractor_sources']) == set(source_refs), 'Acquisition source provenance incomplete.')
     for ref, pin in manifest['extractor_sources'].items(): require(stamp(safe_path(root, ref)) == pin, 'Current acquisition source differs from export: '+ref)
     source_path, source, source_pins = source_bundle(root, config_sha)
     require(manifest['source_features_ref'] == source_path.relative_to(root).as_posix() and manifest['source_features_artifacts'] == source_pins
         and manifest['source_features_manifest_sha256'] == source_pins['manifest.json']['sha256'] and manifest['source_profile_sha256'] == source['provenance']['profile_sha256']
         and manifest['run_ref'] == source['provenance']['run_ref'] and manifest['input_artifacts'] == source['provenance']['input_artifacts'], 'Original PSD1/run/profile/raw binding changed.')
     data = read_json(directory/'acquisition.json'); provenance = data['provenance']
-    require(set(data) == {'kind', 'schema_version', 'configuration_sha256', 'profile', 'counts', 'calibrations', 'records', 'provenance'}
+    fields = {'kind', 'schema_version', 'configuration_sha256', 'profile', 'counts', 'calibrations', 'records', 'provenance'}
+    if version == SCHEMA_VERSION: fields.add('event_storage')
+    require(set(data) == fields
         and (directory/'acquisition.json').read_bytes() == encoded(data), 'Acquisition required schema/serialization changed.')
-    require(data.get('kind') == KIND and type(data.get('schema_version')) is int and data['schema_version'] == 1 and data['configuration_sha256'] == config_sha
+    require(data.get('kind') == KIND and type(data.get('schema_version')) is int and data['schema_version'] == version and data['configuration_sha256'] == config_sha
         and data['profile'] == profile and data['counts'] == manifest['counts'], 'Acquisition required dataset fields changed.')
     for key in ('run_ref', 'source_features_ref', 'source_features_manifest_sha256', 'source_features_artifacts', 'source_profile_sha256', 'input_artifacts', 'extractor_sources', 'profile_sha256', 'schema_template_sha256'):
         require(provenance.get(key) == manifest.get(key), 'Acquisition provenance binding changed: '+key)
-    request = build_request(source, root, profile); require(read_json(directory/'request.json') == request, 'Numerical request differs from original full native inputs/settings.')
+    policy = P.N.storage(data, data['counts'])
+    manifest_policy = P.N.storage(manifest, manifest['counts'])
+    require(policy == manifest_policy and ((version == 1 and policy is None and P.N.storage(source) is None)
+        or (version == SCHEMA_VERSION and policy == P.bundle_storage(source))), 'Acquisition schema/event-storage source census changed.')
+    request = build_request(source, root, profile, nonzero_only=policy is not None); require(read_json(directory/'request.json') == request, 'Numerical request differs from original full native inputs/settings.')
     numerical = read_json(directory/'numerical.json'); execution = read_json(directory/'execution.json')
     require(set(numerical) == {'kind', 'schema_version', 'profile', 'calibrations', 'groups', 'software'} and provenance['execution'] == execution
         and numerical['profile'] == profile and numerical['kind'] == KIND and numerical['schema_version'] == 1, 'Acquisition numerical/execution identity changed.')
@@ -412,11 +443,11 @@ def load_bundle(bundle_dir, expected_config_sha256=None, *, root=None, verify_in
             original = P.get_record(source, g['global_initial_id'], g['group_id'])
             require((g['global_initial_id'], g['group_id']) in group_results, 'Acquisition original group lost.')
             numerical_equal(group_results[(g['global_initial_id'], g['group_id'])], reference_acquire(original, batch['frontend_config'], batch['ionisation_energy_eV'], profile, cal['calibration']), 'group')
-    expected_records = compact_records(source, numerical, profile)
-    require(data['records'] == expected_records and counts(expected_records) == manifest['counts'], 'Acquisition raw identities/census/flags/selection changed.')
+    expected_records = compact_records(source, numerical, profile, nonzero_only=policy is not None)
+    require(data['records'] == expected_records and counts(expected_records, policy) == manifest['counts'], 'Acquisition raw identities/census/flags/selection changed.')
     require((directory/'acquisition.csv').read_bytes() == csv_bytes(expected_records), 'Acquisition CSV differs from full-precision JSON records.')
     # Enrich only the returned view. Saved compact records remain bound joins.
-    joined = copy.deepcopy(source['records'])
+    joined = copy.deepcopy([r for r in source['records'] if policy is None or P.N.has_nonzero_deposit(r['truth'])])
     for original, derived in zip(joined, expected_records):
         original['acquisition_energy_keV'] = derived['acquisition_energy_keV']; original['acquisition_selection'] = derived['selection']
         for old_group, new_group in zip(original['pulse_groups'], derived['pulse_groups']): old_group['acquisition'] = new_group['acquisition']

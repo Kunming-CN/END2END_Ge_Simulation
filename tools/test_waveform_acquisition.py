@@ -1,7 +1,7 @@
 """PSD2 bounded known-signal and original-binding tests, SYNTHETIC fixtures only.
 
 One Julia child exports one fixture; all reader/tamper tests are saved-only.
-Synthetic files and failures remain under the PSD2 implementation evidence root.
+Owned synthetic fixtures are removed after the checks.
 """
 import copy
 import csv
@@ -10,6 +10,7 @@ import json
 import math
 from pathlib import Path
 import shutil
+import stat
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -89,9 +90,10 @@ class KnownSignal(unittest.TestCase):
 class SavedSynthetic(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        evidence = P.W.ROOT/'.local/psd-acquisition-v1/implementation/synthetic-tests'
+        evidence = P.W.ROOT/'.local/nonzero-storage-p2/synthetic-tests'
         evidence.mkdir(parents=True, exist_ok=True)
         cls.root = Path(tempfile.mkdtemp(prefix='SYNTHETIC-', dir=evidence))
+        cls.addClassCleanup(cls.cleanup_owned_fixture)
         for ref in A.SOURCE_REFS:
             destination = cls.root/ref; destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(P.W.ROOT/ref, destination)
@@ -154,6 +156,15 @@ class SavedSynthetic(unittest.TestCase):
         cls.bundle = A.load_bundle(cls.output, cls.config_sha, root=cls.root)
         cls.source = P.load_bundle(source_out, cls.config_sha, root=cls.root)
 
+    @classmethod
+    def cleanup_owned_fixture(cls):
+        expected = (P.W.ROOT/'.local/nonzero-storage-p2/synthetic-tests').resolve()
+        if not cls.root.resolve().is_relative_to(expected): raise AssertionError('Owned fixture escaped its root.')
+        for path in [cls.root, *cls.root.rglob('*')]:
+            if path.is_symlink() or path.is_junction(): raise AssertionError('Refuse to follow a fixture reparse point.')
+            path.chmod(path.stat().st_mode | stat.S_IWRITE)
+        shutil.rmtree(cls.root)
+
     def tamper_copy(self, suffix):
         target = self.root/'.local'/('TAMPER-'+suffix)
         shutil.copytree(self.output, target); return target
@@ -169,13 +180,18 @@ class SavedSynthetic(unittest.TestCase):
 
     def test_census_original_join_energy_and_native_failure_null(self):
         self.assertEqual(self.bundle['counts']['primaries'], 4); self.assertEqual(self.bundle['counts']['zero_deposit_primaries'], 1)
+        self.assertEqual(self.bundle['event_storage'], P.N.descriptor(4, 1))
+        self.assertEqual(self.bundle['counts']['efficiency_denominator'], 4)
+        self.assertEqual(self.bundle['counts']['nonzero_primaries'], 3)
+        self.assertEqual(self.bundle['counts']['native_failed_groups'], 1)
+        self.assertEqual([r['global_initial_id'] for r in self.bundle['records']], [1, 2, 3])
         self.assertEqual(self.bundle['counts']['pulse_groups'], 4); self.assertEqual(self.bundle['counts']['acquired_groups'], 3)
         for original, joined in zip(self.source['records'], self.bundle['records']):
             self.assertEqual(original['truth'], joined['truth']); self.assertEqual(original['primary'], joined['primary'])
             self.assertEqual(original['Erec_keV'], joined['Erec_keV'])
             for og, jg in zip(original['pulse_groups'], joined['pulse_groups']):
                 self.assertEqual({k: v for k, v in jg.items() if k != 'acquisition'}, og)
-        self.assertEqual(A.get_record(self.bundle, 0)['pulse_groups'], [])
+        with self.assertRaises(A.ControlError): A.get_record(self.bundle, 0)
         failed = A.get_record(self.bundle, 2, 0)['acquisition']
         self.assertEqual(failed['status'], 'native_transport_failed'); self.assertIsNone(failed['trace']); self.assertIsNone(failed['observed'])
         self.assertIsNone(failed['acquisition_energy_keV'])
@@ -217,11 +233,66 @@ class SavedSynthetic(unittest.TestCase):
 
     def test_deliberately_rehashed_source_join_or_census_fails(self):
         directory = self.tamper_copy('JOIN')
-        data = A.read_json(directory/'acquisition.json'); data['records'][1]['source_record_sha256'] = '0'*64
-        data['records'][1]['acquisition_energy_keV'] = data['records'][1]['pulse_groups'][0]['acquisition']['observed']['acquisition_energy_keV']*10
+        data = A.read_json(directory/'acquisition.json'); data['records'][0]['source_record_sha256'] = '0'*64
+        data['records'][0]['acquisition_energy_keV'] = data['records'][0]['pulse_groups'][0]['acquisition']['observed']['acquisition_energy_keV']*10
         (directory/'acquisition.json').write_bytes(A.encoded(data)); (directory/'acquisition.csv').write_bytes(A.csv_bytes(data['records']))
         self.rehash(directory, ('acquisition.json', 'acquisition.csv'))
         with self.assertRaisesRegex(A.ControlError, 'raw identities/census'): A.load_bundle(directory, self.config_sha, root=self.root)
+
+    def test_rehashed_storage_denominator_cannot_change_efficiency(self):
+        directory = self.tamper_copy('DENOMINATOR')
+        data = A.read_json(directory/'acquisition.json'); manifest = A.read_json(directory/'manifest.json')
+        for value in (data, manifest): value['event_storage']['efficiency_denominator'] = 3
+        (directory/'acquisition.json').write_bytes(A.encoded(data)); (directory/'manifest.json').write_bytes(A.encoded(manifest))
+        self.rehash(directory, ('acquisition.json',))
+        with self.assertRaises(A.ControlError): A.load_bundle(directory, self.config_sha, root=self.root)
+
+    def test_historical_unmarked_acquisition_requires_original_dense_census(self):
+        # Build the historical saved schema from the same synthetic originals;
+        # reuse the existing numerical output because its zero primary has no groups.
+        source_path = P.default_bundle_dir(self.root, self.config_sha)
+        names = ('features.json', 'features.csv', 'profile.json', 'schema.json', 'manifest.json', 'COMPLETE.json')
+        before = {name: (source_path/name).read_bytes() for name in names}
+        try:
+            dense, _, _ = P.build_records(self.run_dir, P.read_json(self.run_dir/'run.json'), P.read_json(self.root/'.local/source-profile.json'))
+            source = P.read_json(source_path/'features.json'); sm = P.read_json(source_path/'manifest.json')
+            for value in (source, sm):
+                value['schema_version'] = 1; value.pop('event_storage'); value['counts'] = P.record_counts(dense)
+            source['records'] = dense
+            schema = P.encoded(P.LEGACY_DEFINITIONS); (source_path/'schema.json').write_bytes(schema)
+            for value in (source['provenance'], sm):
+                value['extractor_sources'].pop('tools/nonzero_events.py')
+                value['schema_template_sha256'] = hashlib.sha256(schema).hexdigest()
+            (source_path/'features.json').write_bytes(P.encoded(source)); (source_path/'features.csv').write_bytes(P.csv_bytes(dense))
+            sm['artifacts'] = {name: P.stamp(source_path/name) for name in sm['artifacts']}
+            (source_path/'manifest.json').write_bytes(P.encoded(sm))
+            complete = P.read_json(source_path/'COMPLETE.json'); complete.update(schema_version=1, manifest_sha256=P.sha(source_path/'manifest.json'))
+            (source_path/'COMPLETE.json').write_bytes(P.encoded(complete))
+            source = P.load_bundle(source_path, root=self.root)
+            directory = self.tamper_copy('LEGACY-DENSE'); data = A.read_json(directory/'acquisition.json'); manifest = A.read_json(directory/'manifest.json')
+            records = A.compact_records(source, A.read_json(directory/'numerical.json'), self.profile)
+            for value in (data, manifest):
+                value['schema_version'] = 1; value.pop('event_storage'); value['counts'] = A.counts(records)
+            data['records'] = records
+            schema = A.encoded(A.LEGACY_DEFINITIONS); (directory/'schema.json').write_bytes(schema)
+            for value in (data['provenance'], manifest):
+                value['extractor_sources'].pop('tools/nonzero_events.py')
+                value['schema_template_sha256'] = hashlib.sha256(schema).hexdigest()
+                value['source_features_artifacts'] = {name: A.stamp(source_path/name) for name in names}
+                value['source_features_manifest_sha256'] = A.sha(source_path/'manifest.json')
+            (directory/'acquisition.json').write_bytes(A.encoded(data)); (directory/'acquisition.csv').write_bytes(A.csv_bytes(records))
+            (directory/'manifest.json').write_bytes(A.encoded(manifest))
+            complete = A.read_json(directory/'COMPLETE.json'); complete['schema_version'] = 1
+            (directory/'COMPLETE.json').write_bytes(A.encoded(complete))
+            self.rehash(directory, ('schema.json', 'acquisition.json', 'acquisition.csv'))
+            legacy = A.load_bundle(directory, self.config_sha, root=self.root)
+            self.assertEqual(A.get_record(legacy, 0)['pulse_groups'], [])
+            data['records'] = records[1:]
+            (directory/'acquisition.json').write_bytes(A.encoded(data)); (directory/'acquisition.csv').write_bytes(A.csv_bytes(data['records']))
+            self.rehash(directory, ('acquisition.json', 'acquisition.csv'))
+            with self.assertRaises(A.ControlError): A.load_bundle(directory, self.config_sha, root=self.root)
+        finally:
+            for name, blob in before.items(): (source_path/name).write_bytes(blob)
 
     def test_deliberately_rehashed_old_frontend_request_fails(self):
         directory = self.tamper_copy('FRONTEND')

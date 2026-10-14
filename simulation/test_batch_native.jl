@@ -2,9 +2,49 @@
 using Test, SHA, Serialization
 include("batch_native_response.jl")
 const BN=BatchNativeResponse;const B=BatchNativeContract;const N=BN.N
+@testset "Versioned nonzero storage keeps the initial denominator" begin
+    counts=Dict("initial_primaries"=>100,"zero_deposit_primaries"=>97,"nonzero_primaries"=>3)
+    storage=BN.NR.storage_descriptor(counts)
+    @test storage==Dict("kind"=>"nonzero_deposit_v1","initial_primaries"=>100,
+        "zero_deposit_primaries"=>97,"nonzero_primaries"=>3,"efficiency_denominator"=>100)
+    m=Dict("primary_count"=>100,"event_storage"=>storage)
+    @test B.event_storage(m)===storage
+    @test B.event_storage(Dict("primary_count"=>100))===nothing
+    @test BN.NR.storage_descriptor(Dict("initial_primaries"=>100,"zero_deposit_primaries"=>100))["nonzero_primaries"]==0
+    for (key,value) in (("kind","future_v1"),("nonzero_primaries",4),("efficiency_denominator",3),
+        ("zero_deposit_primaries",true),("initial_primaries",100.0))
+        bad=deepcopy(m);bad["event_storage"][key]=value
+        @test_throws ArgumentError B.event_storage(bad)
+    end
+    @test_throws ArgumentError BN.NR.storage_descriptor(Dict("initial_primaries"=>10,"zero_deposit_primaries"=>11))
+end
 function batch(offset=10000;index=1,count=2)
     Dict("batch_index"=>index,"global_initial_offset"=>offset,"primary_count"=>count,
         "local_initial_primary_id_range"=>[0,count-1],"global_initial_primary_id_range"=>[offset,offset+count-1],"radiation_seed"=>260926)
+end
+@testset "Sparse all-zero stream keeps counts without fabricated records" begin
+    b=batch(10000;count=100)
+    summary=Dict{String,Any}("initial_primaries"=>100,"initial_decays"=>100,"zero_deposit_primaries"=>100,
+        "nonzero_primaries"=>0,"line_photons"=>30,"decay_photons"=>120)
+    m=Dict("primary_count"=>100,"batch"=>b,"source_mode"=>"cs137_legacy","chunks"=>Any[],
+        "initial_summary"=>summary,"event_storage"=>BN.NR.storage_descriptor(summary))
+    @test B.initial_summary(m)===summary
+    calls=Ref(0);input=(manifest=m,path="unused",prepared=Dict())
+    @test BN.S.foreach_decay(_->calls[]+=1,input)==100
+    @test calls[]==0
+    bad=deepcopy(m);bad["initial_summary"]["initial_decays"]=99
+    @test_throws ArgumentError B.initial_summary(bad)
+    bad=deepcopy(m);bad["event_storage"]=BN.NR.storage_descriptor(Dict("initial_primaries"=>100,"zero_deposit_primaries"=>99))
+    bad["initial_summary"]["zero_deposit_primaries"]=99;bad["initial_summary"]["nonzero_primaries"]=1
+    @test_throws ArgumentError BN.S.foreach_decay(_->calls[]+=1,(manifest=bad,path="unused",prepared=Dict()))
+    m["source_mode"]="registered_decay";m["source_contract"]=Dict("diagnostic_lines"=>[Dict("name"=>"line")])
+    summary["line_photon_counts"]=Dict("line"=>30)
+    @test B.initial_summary(m)===summary
+    summary["line_photon_counts"]["line"]=29
+    @test_throws ArgumentError B.initial_summary(m)
+    hist=Dict{String,Dict{Int,Int}}();BN.NR.addhist!(hist,"deposited_per_decay",0.;weight=100)
+    @test hist["deposited_per_decay"]==Dict(200=>100)
+    @test_throws ArgumentError BN.NR.addhist!(hist,"deposited_per_decay",0.;weight=true)
 end
 @testset "Angular source is bound to native capsule and fixed anchor" begin
     s=Dict{String,Any}("source"=>"cs137_point_decay_v1","angle_deg"=>30)

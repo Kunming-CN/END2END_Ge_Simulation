@@ -160,13 +160,22 @@ function response(o)
     state,prep=load_state(o);sim=state.sim;config=cfg(d,o.output);profile=P.load(o.profile_path);c=P.for_census(profile.profile,b["primary_count"])
     R.check(profile.profile["settings"]==d["selection"]["electronics"],"Response electronics differs")
     geometry(o,sim);S.foreach_decay(e->R.validate_deposits(Dict("events"=>[e]),sim),stream);S.recheck(stream)
-    out=Q.reserve_output(o.output);start=time();report=bindings(o);counts=Dict{String,Any}(k=>0 for k in ("initial_primaries","initial_decays","zero_deposit_primaries","groups","accepted","rejected","readout_rejected","native_failed_groups","saturated","native_charge_samples","analog_samples","line_photons","decay_photons"))
+    out=Q.reserve_output(o.output);start=time();report=bindings(o);counts=Dict{String,Any}(k=>0 for k in ("initial_primaries","initial_decays","zero_deposit_primaries","nonzero_primaries","groups","accepted","rejected","readout_rejected","native_failed_groups","saturated","native_charge_samples","analog_samples","line_photons","decay_photons"))
     m["source_mode"]=="registered_decay" && (counts["line_photon_counts"]=Dict(x["name"]=>0 for x in m["source_contract"]["diagnostic_lines"]))
+    storage=B.event_storage(m)
+    if storage!==nothing
+        summary=B.initial_summary(m);z=summary["zero_deposit_primaries"]
+        counts["initial_primaries"]=z;counts["initial_decays"]=z;counts["zero_deposit_primaries"]=z
+        for k in ("line_photons","decay_photons","line_photon_counts")
+            haskey(summary,k) && (counts[k]=deepcopy(summary[k]))
+        end
+    end
     merge!(report,Dict("kind"=>"batch_native_response_v1","status"=>"running","batch"=>b,"request_sha256"=>E.hashfile(o.request),"input_sha256"=>d["stream_sha256"],"source_lh5_sha256"=>m["source_lh5_sha256"],"native_preparation_sha256"=>d["native_preparation_sha256"],"state_sha256"=>prep["state_sha256"],"counts"=>counts,
         "model_id"=>m["model_id"],"model_sha256"=>m["model_sha256"],"source_id"=>m["source_id"],"source_contract"=>m["source_contract"],"grouping_policy"=>m["grouping_policy"],"ledger"=>m["ledger"],"calibration"=>state.calibration,"ionisation_energy_eV"=>state.eion,
         "new_field_solution"=>false,"field_solution_calls"=>0,"independent_calibration_calls"=>0,"calibration_calls"=>0,"shared_preparation_calibration_calls"=>1,"field_fingerprint"=>prep["field_fingerprint"],"original_field_timings"=>prep["field_timings"],"original_calibration_seconds"=>prep["calibration_seconds"],
         "seed_family"=>2609261,"seed_rule"=>B.SEED_RULE,"parcels"=>16,"native_failure_policy"=>"record","diffusion"=>true,"end_drift_when_no_field"=>false,"self_repulsion"=>false,"units"=>Dict("charge"=>"fC","current"=>"nA","voltage"=>"V","energy"=>"keV","time"=>"ns"),"limitations"=>W.LIMITATIONS))
     hist=Dict{String,Dict{Int,Int}}();handles=IO[];files=String[];native_s=0.;electronics_s=0.;stage="native_and_readout"
+    storage!==nothing && NR.addhist!(hist,"deposited_per_decay",0.;weight=storage["zero_deposit_primaries"])
     function opened(name)
         push!(files,name);io=open(joinpath(out,name),"w");push!(handles,io);io
     end
@@ -176,13 +185,22 @@ function response(o)
         println(sc,join(NR.SCALAR_COLUMNS,','));println(ec,"event_id,global_decay_id,group_id,raw_row_index,parcel_index,seed_uint64,record_json");println(signals,"event_id,global_decay_id,batch_index,local_initial_id,global_initial_id,group_id,time_since_origin_ns,induced_equivalent_energy_keV")
         function consume(e)
             ids=B.identity(e,b);energy=sum((x["energy_keV"] for x in e["steps"]);init=0.);gs=e["pulse_groups"]
-            println(tj,JSON.json(e));counts["initial_primaries"]+=1;counts["initial_decays"]+=1;counts["zero_deposit_primaries"]+=energy==0
-            counts["line_photons"]+=e["line_photon_count"];counts["decay_photons"]+=e["decay_photon_count"]
-            if haskey(counts,"line_photon_counts")
+            counts["initial_primaries"]+=1;counts["initial_decays"]+=1;counts["zero_deposit_primaries"]+=energy==0;counts["nonzero_primaries"]+=energy>0
+            if storage===nothing
+                counts["line_photons"]+=e["line_photon_count"];counts["decay_photons"]+=e["decay_photon_count"]
+            end
+            if storage===nothing && haskey(counts,"line_photon_counts")
                 for (k,v) in e["line_photon_counts"];counts["line_photon_counts"][k]+=v;end
             end
-            rec=merge(Dict("record_kind"=>"decay","group_id"=>nothing,"deposited_energy_keV"=>energy,"pulse_count"=>length(gs),"zero_deposit"=>energy==0,"raw_row_indices"=>[x["raw_row_index"] for x in e["steps"]],"line_photon_count"=>e["line_photon_count"],"decay_photon_count"=>e["decay_photon_count"],"material_energy_keV"=>e["material_energy_keV"],"full_energy_closure"=>nothing),ids)
-            NR.scalar!(sj,sc,rec);NR.addhist!(hist,"deposited_per_decay",energy);byrow=Dict(x["raw_row_index"]=>x for x in e["steps"])
+            NR.addhist!(hist,"deposited_per_decay",energy)
+            if energy==0
+                R.check(isempty(gs),"Zero-deposit primary has pulse groups")
+                W.progress(out,start,stage,"running",counts,b["primary_count"])
+                return
+            end
+            println(tj,JSON.json(e))
+            rec=merge(Dict("record_kind"=>"decay","group_id"=>nothing,"deposited_energy_keV"=>energy,"pulse_count"=>length(gs),"zero_deposit"=>false,"raw_row_indices"=>[x["raw_row_index"] for x in e["steps"]],"line_photon_count"=>e["line_photon_count"],"decay_photon_count"=>e["decay_photon_count"],"material_energy_keV"=>e["material_energy_keV"],"full_energy_closure"=>nothing),ids)
+            NR.scalar!(sj,sc,rec);byrow=Dict(x["raw_row_index"]=>x for x in e["steps"])
             for g in gs
                 steps=[byrow[i] for i in g["row_indices"]];event=B.native_event_input(e,g,b);t0=time();attempt=W.guarded_attempt(()->N.native_event(event,sim,config,16,2609261),"record");native_s+=time()-t0
                 counts["groups"]+=1
@@ -212,6 +230,9 @@ function response(o)
         S.foreach_decay(consume,stream)
         for io in handles;close(io);end;empty!(handles)
         R.check(counts["initial_primaries"]==b["primary_count"] && counts["accepted"]+counts["rejected"]==counts["groups"] && counts["rejected"]==counts["native_failed_groups"]+counts["readout_rejected"],"Batch output census mismatch")
+        report["event_storage"]=NR.storage_descriptor(counts)
+        R.check(report["event_storage"]["nonzero_primaries"]==counts["nonzero_primaries"],"Stored nonzero census mismatch")
+        storage!==nothing && R.check(report["event_storage"]==storage,"Response changed source initial/nonzero census")
         P.validate_resolved(JSON.parsefile(joinpath(out,"readout-config.json")),profile.profile,b["primary_count"])
         R.check(C.field_fingerprint(sim,config.contact)==prep["field_fingerprint"],"Response modified shared native fields")
         unchanged(o);S.recheck(stream)

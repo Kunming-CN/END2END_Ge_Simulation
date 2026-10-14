@@ -15,6 +15,7 @@ sys.path.insert(0,str(h.ROOT/'tools'))
 import scenario_workflow as W
 import workflow_batches as B
 import decay_workflow as DW
+import nonzero_events as NZ
 
 KIND='radioactive_decay_batch_stream_v1'
 ADAPTER='shared_decay_batch_source_v1'
@@ -198,23 +199,74 @@ def run(shared_path,batch,output):
     return receipt
 
 def iter_stream(path):
-    path=h.local_path(path);m=cs.load(path);expected=0
+    path=h.local_path(path);m=cs.load(path);expected=0;previous=-1;stored=0
     h.require(m['kind']==KIND and m['status']=='complete','Wrong stream')
+    policy=NZ.storage(m,initial_primaries=m['primary_count'])
+    if policy is not None:NZ.initial_summary(m)
     for chunk in m['chunks']:
-        h.require(Path(chunk['file']).name==chunk['file'] and chunk['first_global_decay_id']==expected,'Unsafe/reordered stream chunk')
+        first=chunk['first_global_decay_id']
+        h.require(Path(chunk['file']).name==chunk['file'] and type(first) is int and
+            (first==expected if policy is None else previous<first<m['primary_count']), 'Unsafe/reordered stream chunk')
+        h.require(type(chunk['count']) is int and 1<=chunk['count']<=100,'Invalid stream chunk count')
         f=path.parent/chunk['file'];h.require(h.sha256(f)==chunk['sha256'],'Stream chunk changed');n=0
         with f.open(encoding='utf-8') as stream:
             for line in stream:
-                e=W.decode_json(line);h.require(e['event_id']==e['global_decay_id']==e['local_initial_id']==expected and e['global_initial_id']==m['batch']['global_initial_offset']+expected and e['batch_index']==m['batch']['batch_index'],'Stream identity changed')
-                expected+=1;n+=1;yield e
+                e=W.decode_json(line);eid=e['event_id']
+                h.require(type(eid) is int and previous<eid<m['primary_count'] and
+                    all(type(e[k]) is int for k in ('global_decay_id','local_initial_id','global_initial_id','batch_index')) and
+                    eid==e['global_decay_id']==e['local_initial_id'] and
+                    e['global_initial_id']==m['batch']['global_initial_offset']+eid and e['batch_index']==m['batch']['batch_index'],'Stream identity changed')
+                h.require((eid==expected) if policy is None else NZ.has_nonzero_deposit(e),'Historical census changed or sparse stream retained zero deposition')
+                if n==0:h.require(eid==first,'Chunk first identity changed')
+                previous=eid;expected+=1;stored+=1;n+=1;yield e
         h.require(n==chunk['count'],'Chunk count changed')
-    h.require(expected==m['primary_count'],'Incomplete stream census')
+    h.require(stored==(m['primary_count'] if policy is None else policy['nonzero_primaries']),'Incomplete stream census')
+
+def empty_initial_summary(shared):
+    summary={k:0 for k in ('initial_primaries','initial_decays','zero_deposit_primaries','nonzero_primaries','line_photons','decay_photons')}
+    if shared['source_mode']=='registered_decay':
+        summary['line_photon_counts']={x['name']:0 for x in shared['source_contract']['diagnostic_lines']}
+    return summary
+
+def summarize_initial(summary,event):
+    nonzero=NZ.has_nonzero_deposit(event)
+    summary['initial_primaries']+=1;summary['initial_decays']+=1
+    summary['zero_deposit_primaries']+=not nonzero;summary['nonzero_primaries']+=nonzero
+    summary['line_photons']+=event['line_photon_count'];summary['decay_photons']+=event['decay_photon_count']
+    if 'line_photon_counts' in summary:
+        h.require(set(event['line_photon_counts'])==set(summary['line_photon_counts']),'Named photon census changed')
+        for name,value in event['line_photon_counts'].items():summary['line_photon_counts'][name]+=value
+    return nonzero
+
+def write_nonzero_chunks(events,destination,shared,chunk_size=100):
+    """Keep nonzero original records; retain omitted initial events only as counts."""
+    h.require(type(chunk_size) is int and 1<=chunk_size<=100,'Chunk size must be 1..100')
+    destination=h.local_path(destination);h.require(not destination.exists(),'Stream output exists');destination.mkdir()
+    chunks=[];summary=empty_initial_summary(shared);stream=None;part=None
+    def seal():
+        stream.flush();os.fsync(stream.fileno());stream.close()
+        final=part.with_suffix('');os.link(part,final);part.unlink();chunks[-1]['sha256']=h.sha256(final)
+    try:
+        for e in events:
+            eid=e['event_id']
+            h.require(eid==e['global_decay_id']==summary['initial_primaries'],'Duplicate/missing raw initial identity')
+            if not summarize_initial(summary,e):continue
+            if stream is None or chunks[-1]['count']==chunk_size:
+                if stream is not None:seal()
+                name=f'decays-{eid:08d}.jsonl';part=destination/(name+'.partial');stream=part.open('x',encoding='utf-8',newline='\n')
+                chunks.append({'file':name,'first_global_decay_id':eid,'count':0})
+            stream.write(json.dumps(e,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n');chunks[-1]['count']+=1
+        if stream is not None:seal()
+    finally:
+        if stream is not None and not stream.closed:stream.close()
+    return chunks,summary
 
 def extract(directory):
     import h5py
     d,p,shared,batch=read_batch(directory);run=cs.load(d/'run.json')
     h.require(run['status']=='complete' and run['source_lh5_sha256']==h.sha256(d/'truth.lh5') and run['prepared_sha256']==h.sha256(d/'batch-prepared.json'),'Unsealed radiation')
-    chunks,count=cs.write_chunks(raw_events(d/'truth.lh5',shared,batch),d/'stream',100)
+    chunks,summary=write_nonzero_chunks(raw_events(d/'truth.lh5',shared,batch),d/'stream',shared)
+    count=summary['initial_primaries'];h.require(count==batch['primary_count'],'Incomplete raw initial census')
     with h5py.File(d/'truth.lh5','r') as raw:
         processes=list(cs.table_rows(raw['processes']));aliases=cs.step_aliases(raw,shared['material_tables'])
         tables={key:{'rows':len(next(iter(raw[key].values()))),'columns':{name:{'dtype':str(ds.dtype),'units':cs.scalar(ds.attrs.get('units',''))} for name,ds in raw[key].items()}} for key in ('vtx','particles','tracks','processes',*shared['material_tables'])}
@@ -223,6 +275,7 @@ def extract(directory):
         m.update(source_pose=shared['source_pose'],source_position_global_mm=shared['source_position_global_mm'])
     if shared['source_mode']=='cs137_legacy':m['decay_photon_line_window_keV']=shared['decay_photon_line_window_keV']
     m.update(kind=KIND,status='complete',producer_adapter=ADAPTER,primary_count=count,batch=batch,
+        event_storage=NZ.descriptor(count,summary['zero_deposit_primaries']),initial_summary=summary,
         global_decay_id_range=[0,count-1],global_initial_id_range=batch['global_initial_primary_id_range'],
         shared_prepared_ref=p['shared_prepared_ref'],shared_prepared_sha256=p['shared_prepared_sha256'],
         source_lh5='../truth.lh5',source_lh5_sha256=run['source_lh5_sha256'],run_ref=(d/'run.json').relative_to(h.ROOT).as_posix(),run_sha256=h.sha256(d/'run.json'),
@@ -261,7 +314,18 @@ def verify_stream(directory):
         run_ref=(d/'run.json').relative_to(h.ROOT).as_posix(),macro_ref=(d/'run.mac').relative_to(h.ROOT).as_posix(),
         macro_sha256=h.sha256(d/'run.mac'),units={'energy':'keV','length':'mm','time':'ns'},raw_track_energy_unit='MeV',raw_position_unit='m')
     h.require(all(B.typed_equal(m.get(key),value) for key,value in expected.items()) and m['run_sha256']==h.sha256(d/'run.json') and m['source_lh5_sha256']==h.sha256(d/'truth.lh5'),'Rehashed stream binding/policy changed')
-    for a,b in itertools.zip_longest(raw_events(d/'truth.lh5',shared,batch),iter_stream(d/'stream/manifest.json')):h.require(a==b,'Stream changed original raw rows')
+    policy=NZ.storage(m,initial_primaries=batch['primary_count'])
+    summary=empty_initial_summary(shared)
+    def expected_events():
+        for event in raw_events(d/'truth.lh5',shared,batch):
+            nonzero=summarize_initial(summary,event)
+            if policy is None or nonzero:yield event
+    for a,b in itertools.zip_longest(expected_events(),iter_stream(d/'stream/manifest.json')):
+        h.require(B.typed_equal(a,b),'Stream changed original nonzero raw rows')
+    if policy is not None:
+        NZ.initial_summary(m)
+        h.require(B.typed_equal(policy,NZ.descriptor(summary['initial_primaries'],summary['zero_deposit_primaries'])) and
+            B.typed_equal(m['initial_summary'],summary),'Rehashed sparse counts/photon denominators changed')
     return m
 
 def main(argv=None):

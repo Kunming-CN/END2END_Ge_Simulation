@@ -16,7 +16,7 @@
     "control_and_common_runtime": [
       "tools/local_ui.ps1", "tools/local_ui.py", "tools/local_ui_jobs.py",
       "tools/local_ui_gamma_jobs.py", "tools/local_ui_scenarios.py",
-      "tools/local_ui_workflow_jobs.py", "tools/local_workflow.html",
+      "tools/local_ui_workflow_jobs.py", "tools/nonzero_events.py", "tools/local_workflow.html",
       "tools/local_workflow.js", "tools/focused_plots.js", "tools/model_type_labels.py",
       "tools/scenario_workflow.py", "tools/catalog_workflow.py",
       "tools/catalog_result_validation.py", "tools/ring_workflow.py",

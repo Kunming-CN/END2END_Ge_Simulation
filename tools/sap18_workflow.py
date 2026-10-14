@@ -134,9 +134,14 @@ def response(directory,resolved,report,root=W.ROOT,*,historical=False):
         math.isclose(c['charge_C'],500000/c['ionisation_energy_eV']*1.602176634e-19,rel_tol=1e-12) and
         math.isclose(c['volts_per_keV'],c['peak_V']/500,rel_tol=1e-12),'SAP18 requires one independent negative injection.')
     truths=[W.decode_json(v) for v in (out/'truth.jsonl').read_text(encoding='utf-8').splitlines()]
+    import nonzero_events as N
+    policy=N.storage(report,report['counts'],initial_primaries=resolved['selection']['primary_count'])
+    if policy is not None:
+        from catalog_result_validation import response_census
+        response_census(directory,resolved,report)
     records=[W.decode_json(v) for v in (out/'scalars.jsonl').read_text(encoding='utf-8').splitlines()]
     primaries=[r for r in records if r['record_kind']=='decay'];pulses=[r for r in records if r['record_kind']=='pulse']
-    W.require(len(primaries)==len(truths)==resolved['selection']['primary_count'],'SAP18 response census mismatch.')
+    W.require(len(primaries)==len(truths)==(policy['nonzero_primaries'] if policy is not None else resolved['selection']['primary_count']),'SAP18 response census mismatch.')
     expected={(e['event_id'],g['group_id']):(e,g) for e in truths for g in e['pulse_groups']}
     W.require(len(pulses)==len(expected) and {(p['event_id'],p['group_id']) for p in pulses}==set(expected),'SAP18 group identity census changed.')
     for p,e in zip(primaries,truths):

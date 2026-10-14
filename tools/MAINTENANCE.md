@@ -27,6 +27,15 @@ state. A full developer clone retains website/source/history. The GitHub source
 ZIP still excludes `docs` through export-ignore; `tools/test_software_archive.py`
 keeps checking that distinct development-source archive contract.
 
+New student result storage uses `nonzero_events.py` and the matching native
+`nonzero_deposit_v1` descriptor. Normalized batch chunks and response truth/scalars
+contain only nonzero-deposit primaries, keeping all original nonzero failures and
+readout rejections; raw LH5 stays complete. `initial_summary` carries full photon
+and zero counts, so sparse row counts never replace the original denominator.
+Old unmarked inputs retain strict dense validation. `batch_execution.event_page`
+paginates nonzero records for both formats without changing old data; the UI
+checks original sparse IDs, global offsets and the full initial census.
+
 Exact-count campaigns use `tools/batch_execution.py`, `transport/batch_source.py`
 and the additive `simulation/batch_native_contract.jl`, `batch_native_response.jl`
 and `batch_decay_stream.jl` bridge. The existing workflow CLI and Control delegate
@@ -61,7 +70,10 @@ Saved waveform features belong to `tools/psd_features.py` and its versioned
 `psd_feature_profile.json`, tested by `test_psd_features.py`. After source writers
 have stopped, the advanced saved-data command
 `python tools/psd_features.py --run .local/runs/<saved-name>` exports one immutable
-full-census JSON/CSV bundle to `.local/psd-features/<configurationSHA>/bundle`.
+schema-2 nonzero-only JSON/CSV bundle to `.local/psd-features/<configurationSHA>/bundle`.
+The shared `nonzero_events.py` descriptor preserves full initial/zero/nonzero totals
+and denominator, while records retain original sparse IDs. Historical unmarked
+schema-1 bundles keep their original strict dense interpretation.
 An existing output is refused; retain failed derivatives and choose an explicit
 fresh `--output` for a separately recorded analysis. Control's selected-event
 Saved waveform features panel reads that checked bundle lazily; opening it

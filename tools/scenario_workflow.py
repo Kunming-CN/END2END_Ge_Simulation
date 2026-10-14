@@ -157,6 +157,7 @@ def source_pins(detector, root=ROOT, *, portable=False):
              'transport/pixi.toml', 'transport/pixi.lock', 'transport/CMakeLists.txt',
              EXPORTER, 'tools/scenario_workflow.py', 'tools/model_type_labels.py', 'tools/workflow_settings.ps1',
              'tools/workflow_inspection.py', 'tools/workflow_launch.py', 'tools/decay_validation.py',
+             'tools/nonzero_events.py', 'tools/catalog_result_validation.py',
              'tools/workflow_recovery.py',
              'tools/electronics_settings.ps1', 'tools/electronics_execution.ps1',
              'tools/native_run_validation.ps1', 'tools/local_ui_jobs.py',
@@ -728,6 +729,8 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
         require(r['status'] in ('completed_provisional_native_response',*TERMINAL), 'Response is not terminal.')
         require(r['model_id']==s['detector'] and r['counts']['initial_primaries']==s['primary_count'], 'Response detector/census mismatch.')
         c=r['counts'];require(c['accepted']+c['rejected']==c['groups'] and c['rejected']==c['native_failed_groups']+c['readout_rejected'],'Response accounting mismatch.')
+        import nonzero_events as N
+        event_storage=N.storage(r,c,initial_primaries=s['primary_count'])
         require(r['stored_temperature_K']==78 and r['temperature_K']==77 and r['bias_V']==resolved['numerics']['bias_V']
                 and r['parcels']==16 and r['seed_family']==2609261,'Response operating settings differ from selection.')
         if generic:
@@ -746,14 +749,18 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
         else:
             require(r['input_sha256']==sha(t/'stream/manifest.json') and
                     r['profile_sha256']==sha(directory/'electronics/profile.json'), 'Cs137 response input/profile binding mismatch.')
-            records=[decode_json(line) for line in (directory/'response/scalars.jsonl').read_text(encoding='utf-8').splitlines()]
-            primaries=[e for e in records if e['record_kind']=='decay'];pulses=[e for e in records if e['record_kind']=='pulse']
-            require([e['event_id'] for e in primaries]==list(range(s['primary_count'])) and len(pulses)==c['groups'],'Cs137 original primary/group ledger mismatch.')
-            truths=[decode_json(line) for line in (directory/'response/truth.jsonl').read_text(encoding='utf-8').splitlines()]
-            source=[]
-            for chunk in read(t/'stream/manifest.json')['chunks']:
-                source.extend(decode_json(line) for line in safe_path(t/'stream',chunk['file']).read_text(encoding='utf-8').splitlines())
-            require(encoded(source)==encoded(truths),'Cs137 response changed original truth records.')
+            if event_storage is not None:
+                from catalog_result_validation import response_census
+                response_census(directory,resolved,r)
+            else:
+                records=[decode_json(line) for line in (directory/'response/scalars.jsonl').read_text(encoding='utf-8').splitlines()]
+                primaries=[e for e in records if e['record_kind']=='decay'];pulses=[e for e in records if e['record_kind']=='pulse']
+                require([e['event_id'] for e in primaries]==list(range(s['primary_count'])) and len(pulses)==c['groups'],'Cs137 original primary/group ledger mismatch.')
+                truths=[decode_json(line) for line in (directory/'response/truth.jsonl').read_text(encoding='utf-8').splitlines()]
+                source=[]
+                for chunk in read(t/'stream/manifest.json')['chunks']:
+                    source.extend(decode_json(line) for line in safe_path(t/'stream',chunk['file']).read_text(encoding='utf-8').splitlines())
+                require(encoded(source)==encoded(truths),'Cs137 response changed original truth records.')
             if s['detector']==SAP18:
                 from sap18_workflow import response
                 response(directory,resolved,r,root,historical=historical)

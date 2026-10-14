@@ -134,6 +134,16 @@ function Test-NRResponse {
   $countNames=@('accepted','analog_samples','decay_photons','groups','initial_decays','initial_primaries','line_photons','native_charge_samples','native_failed_groups','readout_rejected','rejected','saturated','zero_deposit_primaries')
   foreach($key in $countNames){Assert-NRInteger $r.counts.$key ('counts.'+$key)}
   Assert-NREqual $r.counts.initial_decays $Events 'response census';Assert-NREqual $r.counts.initial_primaries $Events 'primary census'
+  if($r.PSObject.Properties.Name -contains 'event_storage'){
+    $storage=$r.event_storage
+    Assert-NREqual @($storage.PSObject.Properties.Name|Sort-Object) @('efficiency_denominator','initial_primaries','kind','nonzero_primaries','zero_deposit_primaries') 'event storage inventory'
+    Assert-NREqual $storage.kind 'nonzero_deposit_v1' 'event storage kind'
+    foreach($key in @('initial_primaries','zero_deposit_primaries','nonzero_primaries','efficiency_denominator')){Assert-NRInteger $storage.$key ('event storage '+$key)}
+    Assert-NREqual $storage.initial_primaries $Events 'event storage initial census'
+    Assert-NREqual $storage.zero_deposit_primaries $r.counts.zero_deposit_primaries 'event storage zero census'
+    Assert-NREqual $storage.nonzero_primaries ($Events-$r.counts.zero_deposit_primaries) 'event storage nonzero census'
+    Assert-NREqual $storage.efficiency_denominator $Events 'event storage denominator'
+  }
   Assert-NREqual ($r.counts.accepted+$r.counts.rejected) $r.counts.groups 'accepted/rejected partition'
   Assert-NREqual ($r.counts.native_failed_groups+$r.counts.readout_rejected) $r.counts.rejected 'failure/rejection partition'
   Assert-NR ($r.counts.zero_deposit_primaries -le $Events -and $r.counts.line_photons -le $r.counts.decay_photons) 'Response count bounds'

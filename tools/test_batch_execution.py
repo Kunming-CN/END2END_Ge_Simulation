@@ -7,10 +7,11 @@ import batch_execution as E
 import scenario_workflow as W
 import workflow_batches as B
 import decay_workflow as D
+import nonzero_events as N
 
 class Execution(unittest.TestCase):
     def setUp(self):
-        base=W.ROOT/'.local/student-batches-v1/execution-v1/test-work';base.mkdir(parents=True,exist_ok=True)
+        base=W.ROOT/'.local/nonzero-storage-p2/test-work';base.mkdir(parents=True,exist_ok=True)
         self.temp=tempfile.TemporaryDirectory(dir=base);self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
         (self.root/'fixture.txt').write_text('source fixture')
         self.settings=W.read(W.ROOT/'simulation/native_readout_profile.json')['settings']
@@ -81,7 +82,7 @@ class Execution(unittest.TestCase):
 
     def rows(self,batch):
         for local in range(batch['primary_count']):
-            globalid=batch['global_initial_offset']+local;nonzero=globalid in (0,2)
+            globalid=batch['global_initial_offset']+local;nonzero=globalid in getattr(self,'nonzero_ids',(0,2))
             step=dict(raw_row_index=0,energy_keV=500.,time_ns=120.)
             group=dict(group_id=0,origin_time_ns=120.,row_indices=[0],horizon_ns=100000.)
             yield dict(event_id=local,global_decay_id=local,batch_index=batch['batch_index'],local_initial_id=local,global_initial_id=globalid,
@@ -115,8 +116,13 @@ class Execution(unittest.TestCase):
             result=dict(status='complete',number_of_simulated_events=batch['primary_count'],initial_ledger_count=batch['primary_count'])
             W.write(base/'run.json',result);return result
         if stage=='event_ledger':
-            self.write_lines(base/'chunk.jsonl',self.rows(batch))
-            result=dict(batch=batch,primary_count=batch['primary_count'],chunks=[dict(file='chunk.jsonl',first_global_decay_id=0,count=batch['primary_count'],sha256=W.sha(base/'chunk.jsonl'))])
+            rows=list(self.rows(batch));stored=list(N.nonzero_events(rows)) if getattr(self,'sparse_source',False) else rows
+            self.write_lines(base/'chunk.jsonl',stored)
+            result=dict(batch=batch,primary_count=batch['primary_count'],chunks=[dict(file='chunk.jsonl',first_global_decay_id=stored[0]['event_id'],count=len(stored),sha256=W.sha(base/'chunk.jsonl'))] if stored else [])
+            if getattr(self,'sparse_source',False):
+                policy=N.descriptor(batch['primary_count'],len(rows)-len(stored))
+                result.update(event_storage=policy,initial_summary={key:policy[key] for key in ('initial_primaries','zero_deposit_primaries','nonzero_primaries')})
+                result['initial_summary'].update(initial_decays=batch['primary_count'],line_photons=batch['primary_count'],decay_photons=batch['primary_count'])
             W.write(base/'manifest.json',result);return result
         request=E.native_request(plan,directory,root,batch);W.write(E.batch_directory(directory,batch['batch_index'])/'native-request.json',request)
         prep=W.read(directory/'shared/native/preparation.json');scalars=[];counts=dict(initial_primaries=batch['primary_count'],initial_decays=batch['primary_count'],zero_deposit_primaries=0,
@@ -132,15 +138,22 @@ class Execution(unittest.TestCase):
                 raw_row_indices=[s['raw_row_index'] for s in truth['steps']],line_photon_count=1,decay_photon_count=1,material_energy_keV=truth['material_energy_keV']))
             histogram('deposited_per_decay',energy)
             for group in truth['pulse_groups']:
-                failed=truth['global_initial_id']==2;counts['groups']+=1;counts['accepted']+=not failed;counts['rejected']+=failed;counts['native_failed_groups']+=failed
-                scalar=dict(ids,record_kind='pulse',group_id=0,group=group,origin_time_ns=120.,raw_row_indices=[0],deposited_energy_keV=500.,accepted=not failed,
-                    final_induced_keV=-400.,transport_flags={},charge_end_ns=240.,native_any_negative_charge=True,native_min_charge_keV=-400.,native_max_charge_keV=0.,readout={'accepted':True})
+                failed=truth['global_initial_id']==2;readout_rejected=not failed and truth['global_initial_id'] in getattr(self,'readout_rejected_ids',())
+                accepted=not failed and not readout_rejected
+                counts['groups']+=1;counts['accepted']+=accepted;counts['rejected']+=not accepted;counts['native_failed_groups']+=failed;counts['readout_rejected']+=readout_rejected
+                scalar=dict(ids,record_kind='pulse',group_id=0,group=group,origin_time_ns=120.,raw_row_indices=[0],deposited_energy_keV=500.,accepted=accepted,
+                    final_induced_keV=-400.,transport_flags={},charge_end_ns=240.,native_any_negative_charge=True,native_min_charge_keV=-400.,native_max_charge_keV=0.,readout={'accepted':accepted})
                 if failed:
                     scalar.update(status='native_transport_failed',rejection_reason='native_transport_failed',native_error={'type':'NativeBoundaryStall','raw':'exact error'})
                     for key in ('readout','final_induced_keV','transport_flags','charge_end_ns','native_any_negative_charge','native_min_charge_keV','native_max_charge_keV','endpoints','current_nA','induced_charge_fC'):scalar[key]=None
                 scalars.append(scalar);histogram('deposited_per_group',500.)
                 if not failed:histogram('native_terminal_charge',-400.)
-        self.write_lines(base/'truth.jsonl',self.rows(batch));self.write_lines(base/'scalars.jsonl',scalars)
+        if getattr(self,'sparse_response',False):
+            counts['nonzero_primaries']=batch['primary_count']-counts['zero_deposit_primaries']
+            kept={row['event_id'] for row in N.nonzero_events(self.rows(batch))}
+            scalars=[row for row in scalars if row['event_id'] in kept]
+        truth=N.nonzero_events(self.rows(batch)) if getattr(self,'sparse_response',False) else self.rows(batch)
+        self.write_lines(base/'truth.jsonl',truth);self.write_lines(base/'scalars.jsonl',scalars)
         self.write_lines(base/'traces.jsonl',[]);self.write_lines(base/'endpoints.jsonl',[])
         W.write(base/'readout-config.json',dict(plan['resolved']['electronics_configuration'],expected_primary_count=batch['primary_count']))
         W.write(base/'histograms.json',dict(width_keV=5,normalization_denominators=counts,bins=[E.histogram_row(stage,bin,n,counts) for (stage,bin),n in sorted(bins.items())]))
@@ -149,7 +162,85 @@ class Execution(unittest.TestCase):
             model_contract=self.model,request_sha256=W.sha(E.batch_directory(directory,batch['batch_index'])/'native-request.json'),counts=counts,
             independent_calibration_calls=0,calibration_calls=0,new_field_solution=False,calibration=prep['calibration'],field_fingerprint=prep['field_fingerprint'],ionisation_energy_eV=2.96,
             artifacts={p.name:W.sha(p) for p in base.iterdir()})
+        if getattr(self,'sparse_response',False):result['event_storage']=N.descriptor(counts['initial_primaries'],counts['zero_deposit_primaries'])
         W.write(base/'run.json',result);return result
+
+    def test_sparse_new_response_full_denominator_and_original_ids(self):
+        self.sparse_response=True;self.sparse_source=True;self.nonzero_ids=(0,2,3);self.readout_rejected_ids=(3,)
+        self.selection['primary_count']=4;self.plan=self.check();result=self.execute()
+        self.assertEqual(result['counts']['initial_primaries'],4)
+        self.assertEqual(result['counts']['zero_deposit_primaries'],1)
+        self.assertEqual(result['counts']['nonzero_primaries'],3)
+        self.assertEqual(result['counts']['native_failed_groups'],1)
+        self.assertEqual(result['counts']['readout_rejected'],1)
+        page=E.event_page('fixture',1,0,1,self.root)
+        self.assertEqual(page['batch_offset'],2);self.assertEqual(page['efficiency_denominator'],2)
+        self.assertEqual(page['records'][0]['global_initial_id'],2)
+        self.assertIsNone(page['records'][0]['pulse_groups'][0]['readout'])
+        self.assertEqual(page['next_offset'],1);self.assertEqual(page['available_record_count'],2)
+        last=E.event_page('fixture',1,1,1,self.root)
+        self.assertEqual(last['records'][0]['global_initial_id'],3)
+        self.assertEqual(last['records'][0]['pulse_groups'][0]['final_induced_keV'],-400.)
+        self.assertFalse(last['records'][0]['pulse_groups'][0]['accepted'])
+        self.assertIsNone(last['next_offset'])
+        hist=W.read(self.directory/'results/histograms.json')
+        self.assertEqual(sum(row['count'] for row in hist['bins'] if row['stage']=='deposited_per_decay'),4)
+        for row in hist['bins']:self.assertEqual(row['per_initial_primary'],row['count']/4)
+        self.assertEqual(W.read(self.directory/'results/results.json')['event_storage']['efficiency_denominator'],4)
+
+    def test_sparse_response_accepts_complete_historical_input_without_rewriting(self):
+        self.sparse_response=True;self.execute()
+        source=E.batch_directory(self.directory,0)/'transport/stream/chunk.jsonl';before=W.sha(source)
+        page=E.event_page('fixture',0,root=self.root)
+        self.assertEqual(page['stored_record_count'],1)
+        self.assertEqual(page['batch_primary_count'],2)
+        self.assertEqual(len(list(E.stream_jsonl(source))),2)
+        self.assertEqual(W.sha(source),before)
+
+    def test_historical_page_filters_zeros_without_rewriting_dense_ledger(self):
+        self.nonzero_ids=(1,);self.execute()
+        dense=E.batch_directory(self.directory,0)/'response/truth.jsonl';before=W.sha(dense)
+        page=E.event_page('fixture',0,root=self.root)
+        self.assertEqual([row['global_initial_id'] for row in page['records']],[1])
+        self.assertEqual(page['stored_record_count'],2);self.assertEqual(page['nonzero_record_count'],1)
+        self.assertIsNone(page['event_storage']);self.assertEqual(W.sha(dense),before)
+        empty=E.event_page('fixture',1,root=self.root)
+        self.assertEqual(empty['records'],[]);self.assertEqual(empty['available_record_count'],0)
+        self.assertIsNone(empty['next_offset'])
+
+    def test_sparse_rehashed_summary_and_zero_record_edits_are_refused(self):
+        self.sparse_response=True;self.sparse_source=True;self.execute()
+        batch=E.batch_at(self.plan['resolved']['batching'],0);base=E.batch_directory(self.directory,0)
+        report=W.read(base/'response/run.json')
+        for change in (dict(report,event_storage=dict(report['event_storage'],efficiency_denominator=1)),
+                       dict(report,counts=dict(report['counts'],nonzero_primaries=2))):
+            with self.assertRaises(W.ControlError):E.validate_output('response',self.plan,self.directory,batch,change)
+        signals=base/'response/signals.csv'
+        signals.write_text('event_id,global_decay_id,batch_index,local_initial_id,global_initial_id,group_id,time_since_origin_ns,induced_equivalent_energy_keV\n0,0,0,0,99,0,0,-400\n',encoding='utf-8')
+        report['artifacts']['signals.csv']=W.sha(signals)
+        with self.assertRaisesRegex(W.ControlError,'batch/global identity'):E.validate_output('response',self.plan,self.directory,batch,report)
+        signals.unlink();report['artifacts'].pop('signals.csv')
+        traces=base/'response/traces.jsonl';traces.write_bytes(W.encoded(dict(event_id=False,group_id=0))+b'\n')
+        report['artifacts']['traces.jsonl']=W.sha(traces)
+        with self.assertRaisesRegex(W.ControlError,'uncomputed or zero-input'):E.validate_output('response',self.plan,self.directory,batch,report)
+        traces.write_bytes(b'');report['artifacts']['traces.jsonl']=W.sha(traces)
+        zero=list(self.rows(batch))[1]
+        (base/'response/truth.jsonl').write_bytes(W.encoded(list(self.rows(batch))[0])+b'\n'+W.encoded(zero)+b'\n')
+        report['artifacts']['truth.jsonl']=W.sha(base/'response/truth.jsonl')
+        with self.assertRaisesRegex(W.ControlError,'truth record'):E.validate_output('response',self.plan,self.directory,batch,report)
+
+    def test_sparse_all_zero_batch_has_only_census_and_no_event_payload(self):
+        self.sparse_response=True;self.sparse_source=True;self.nonzero_ids=();result=self.execute()
+        self.assertEqual(result['counts']['initial_primaries'],3)
+        self.assertEqual(result['counts']['zero_deposit_primaries'],3)
+        self.assertEqual(result['counts']['nonzero_primaries'],0)
+        page=E.event_page('fixture',0,root=self.root)
+        self.assertEqual(page['records'],[]);self.assertEqual(page['traces'],[])
+        self.assertEqual(page['stored_record_count'],0);self.assertEqual(page['efficiency_denominator'],2)
+        self.assertEqual(page['radiation_seed'],42);self.assertIsNone(page['next_offset'])
+        out=E.batch_directory(self.directory,0)/'response'
+        for name in ('truth.jsonl','scalars.jsonl','traces.jsonl','endpoints.jsonl'):
+            self.assertEqual((out/name).read_bytes(),b'')
 
     def test_partition_exact_defaults_and_acceptance_cap(self):
         for n,sizes in ((1,[1]),(499,[499]),(500,[500]),(9999,[9999]),(10000,[10000]),(10001,[10000,1]),(25001,[10000,10000,5001])):
