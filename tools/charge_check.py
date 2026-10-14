@@ -25,6 +25,7 @@ MAX_LINE = 2 * 1024 * 1024
 MAX_ROWS = 2_000_000
 ARTIFACTS = set('endpoints.csv endpoints.jsonl histograms.csv histograms.json input-contract.json input-prepared.json profile-input.json profile.json readout-config.json scalars.csv scalars.jsonl signals.csv summary.html traces.jsonl truth.csv truth.jsonl'.split())
 SOURCES = set('Manifest.toml Project.toml native_boundary_guard.jl native_li_example.jl native_response.jl native_response_guarded.jl native_stream.jl readout.jl readout_demo.json readout_profiles.jl replay.jl run.jl test_native_response.jl test_native_stream.jl test_readout_profiles.jl'.split())
+RUNTIME_SOURCES = SOURCES - set('test_native_response.jl test_native_stream.jl test_readout_profiles.jl'.split())
 STREAM_SOURCES = set('CMakeLists.txt cryostat-source.json cryostat_export.cc cryostat_nominal.json cs137.py handoff.py pixi.lock pixi.toml'.split())
 GROUPING = dict(activity_live_time_pileup_claim=False, horizon_ns=100000,
                 interval='[origin, origin+horizon)', name='nominal_isolated_windows_v1',
@@ -49,6 +50,13 @@ class Rejected(Exception):
 def require(value, detail, code='inconsistent_saved_data'):
     if not value:
         raise Rejected(code, detail)
+
+
+def consumer_sources(report):
+    """Keep original saved inventories strict; new producers pin runtime code only."""
+    version = report.get('source_inventory_version', 1)
+    require(type(version) is int and version in (1, 2), 'Unsupported native source inventory version')
+    return SOURCES if version == 1 else RUNTIME_SOURCES
 
 
 def object_value(value, label):
@@ -808,7 +816,7 @@ def inspect_detector(reader, run, parent, model, result):
                                 recorded_readout_environment=report['readout_environment'], boundary_guard=report['boundary_guard'],
                                 model_sha256=report['model_sha256'], input_sha256=report['input_sha256'],
                                 original_source_lh5_sha256=report['source_lh5_sha256'], profile_sha256=report['profile_sha256'])
-    comparisons = source_inventory(reader, report['source_sha256'], 'simulation/', SOURCES)
+    comparisons = source_inventory(reader, report['source_sha256'], 'simulation/', consumer_sources(report))
     manifest, transport_sources = check_inputs(reader, base, report, model, parent['events_per_model'])
     result['provenance']['original_transport_sources'] = manifest['source_sha256']
     comparisons += transport_sources

@@ -1,76 +1,95 @@
 # Current handoff
 
 Updated: 2026-10-14. Read this first, then the relevant sources only.
-Immutable earlier handoff: [Delivered PSD2 and previous history](https://github.com/kunming-cn/END2END_Ge_Simulation/blob/be145f9210d22e2449e6d66f03d9108dc9a3851d/PROGRESS.md).
+Immutable earlier handoff: [Owner correction and chat reconciliation](https://github.com/kunming-cn/END2END_Ge_Simulation/blob/33fdb05e20d2983ba46f26fb06403df7713561ec/PROGRESS.md).
 
-## Owner correction and current outcome
+## Current owner authority
 
-The owner explicitly prohibited all extra AI reviews on 2026-10-14 and requested
-all project chats be read, a detailed corrected plan, and removal of useless
-assistant-generated files. This supersedes the old two-reviewer/third-reviewer
-requirements and automatic PSD3 queue. No review agents, debates, direction
-committees or repeated broad audits. Use bounded directly relevant developer
-checks, inspect the diff, and deliver the useful workflow.
+No extra AI review agents, peer debates, third-party/direction reviews or broad
+repeated audits. Student use and the corrected tools/NEXT_DEVELOPMENT_PLAN.md
+queue govern delivery. Desktop only; reuse the existing remage/SSD/readout
+engines and environment. No installs/global changes, resets, phone work or
+second-computer prerequisite. The owner on2026-10-14 approved starting and
+updating/resuming the scheduled task; the actual heartbeat is ACTIVE with the
+new student-first/no-review prompt, not the old PSD3 queue.
 
-All six owner project chats were retrieved through every page and read, including
-user requests and assistant replies; no transcript copies were saved. The priority
-is student software download and actual desktop operation, not another fixed demo.
-tools/NEXT_DEVELOPMENT_PLAN.md is the detailed current queue. Desktop only; keep
-the existing remage/SSD/readout engines and environment. No installs/global setting
-changes, resets, phone work, second-computer prerequisite or repeated science.
+## P1 student runtime package implemented and checked
 
-## Cleanup completed in this correction
+The explicit tools/student_runtime_manifest.json and build_student_runtime.py
+produce END2END-Ge-Student.zip from exact Git bytes. The candidate has168 members:
+167 required source/model/config/license/guide files plus PACKAGE.json, about
+761 KB compressed. It excludes saved website/results, developer tests/reports,
+publication tools and standalone demonstration entry points. PACKAGE.json binds
+source commit, member source/package hashes, Git blobs and the sole derived guide.
+That guide removes historical developer routes/navigation placeholders and points
+saved-website links online. Run.cmd remains because student setup uses it.
 
-Removed 855 project-local disposable files (59,564,216 bytes) and 14 explicitly
-owned old screenshot/browser-acceptance files outside the project (919,434 bytes).
-These include browser fixtures, synthetic test scratch, duplicate-purpose source
-ZIPs/unpacked copies, extra AI-review text, and two all-ineligible PSD1/acquisition
-demo bundles. The latter had zero selected groups and were derived examples, not
-original scientific runs. One deletion/provenance receipt is kept at
-.local/autonomy/cleanup.json; do not create another report collection.
+New runtime provenance no longer requires developer test files. Marked native/
+readout source inventory v2 contains runtime code; historical unmarked v1 retains
+its original strict interpretation. Shared lightweight model labels and waveform
+reads replace website-generator imports. The normal desktop fixed saved-example
+button/handler is removed; the optional old API remains unavailable without its
+archive tooling/data and never skips validation when those resources exist.
 
-Canonical models/includes, completed transport/native/readout originals, raw
-event ledgers, fields/checkpoints, unique physical failures, owner documents,
-installed environments, chat histories and browser account data remain. Runtime
-code named example/test was not blindly deleted: some is imported or included in
-production provenance. Removing unnecessary runtime dependencies is part of P1.
-Old receipts that reference deliberately deleted scratch/demo artifacts are
-historical, not current ready-state admission evidence.
+Actual isolated package checking found and fixed a first-use crash: before the
+pinned LBNL upstream files are acquired, Control now browses17 models/5 sources,
+shows setup_required/missing files, and refuses all runs. Existing corrupted
+upstream/canonical files still fail. Backend geometry checks remain strict; no
+cryostat dimensions or inputs were fabricated. Original ten-model compatibility
+is existing configured-machine evidence, not a fresh installation claim.
 
-## Next work and what is still unimplemented
+transport/geometry_probe.cc had an existing CRLF checkout/Git-LF mismatch with
+its pinned accepted SHA256. Its -text rule now preserves the original existing
+CRLF bytes matching74b6afef5854e446dfbfa79acc9e79e910c2707e02bda69da8177c30eee81977;
+no geometry logic, pin or physics input was changed.
 
-P1: produce a genuine student runtime package and download route. The existing
-GitHub source ZIP excludes the saved website, but still contains development
-material; it is not yet the requested minimal software package. Decouple
-unnecessary test/demo provenance dependencies before excluding those files.
+Developer checks:18 scenario,2 saved-focus,7 old-gamma API,3 source-inventory,
+4 missing-input/integrity and4 packaging cases; existing Node UI contract,
+PowerShell v1/v2/unknown-version contract and five Julia pure syntax parses.
+Only affected sandbox-denied/corrected cases were rerun. The candidate Control
+server actually started from an isolated unpacked package and served HTML/JS,
+protected catalog and empty state; unauthenticated catalog was refused. It was
+closed and its temporary unpacked directory removed. First localhost connection
+was sandbox-denied; the same unchanged acceptance passed with local permission.
+No Geant4, SSD, field/native transport, readout calculation or installation ran.
 
-P2: change NEW result storage/export/selection to retain nonzero records and real
-signals with original IDs, while preserving initial/zero/nonzero/failed/rejected
-counts, efficiency denominators, settings and seeds. Failed/unknown signals stay
-null, and nonzero rejected events remain. Historical raw archives are unchanged.
-The actual new zero-input filter/storage format has NOT been implemented here.
+The corrected Codex continuation builds a versioned student-runtime-<commit>
+GitHub Release and latest stable ZIP link using the existing GitHub CLI. A first
+push containing a GitHub Actions workflow was refused because the login lacks
+workflow scope; that unpushed workflow was removed, without changing permissions.
+README and the
+maintained source guide now use that route. The saved public website snapshot was
+not rebuilt here; its generated guide refresh follows normal publication later.
+Final committed ZIP, actual public asset verification and source pins are recorded
+in .local/student-runtime-p1/COMPLETE.json before the round may return ready.
+Keep one current ZIP and compact receipts, not old unpacked/test/report copies.
 
-P3: finish the main select/configure/check/run/stop/resume/results desktop route,
-hide unused fixed-demo/empty panels, and expose readable real data and file links.
-Then address remaining useful source controls, specific website issues and later
-pulse-analysis applications in the existing plan. Do not restart accepted model,
-source, batch, angle, recovery, normalization, focus or contrast work.
+## Next bounded work: P2 zero-input storage
 
-The previous PSD1/PSD2 reusable source remains advanced code. Its four saved
-ineligible groups cannot establish classifier performance; do not automatically
-start PSD3 or manufacture labels/statistics with another campaign. Original
-AK02/SAP22 measured waveforms were not saved. November spectrum/I-V/C-V work needs
-complete owner inputs/metadata and blocks only that item.
+Implement one shared writer/export/Control contract for NEW outputs: store only
+nonzero-deposit event records and real signals, while preserving initial/zero/
+nonzero/failed/rejected counts, efficiency denominator, original IDs, batch offsets,
+settings and seeds. Nonzero failures/rejections remain; unknowns stay null and
+signed signals remain signed. Historical raw scientific archives stay unchanged.
+This format and default selection change has NOT yet been implemented.
 
-## Continuation state
+The owner explicitly permits an actual small end-to-end software check for P2:
+start100 initial events, at most500 total new primaries, one detector/source,
+reuse existing geometry/fields when applicable, record exact settings/seed and
+retain failures. Do not change seeds/physics repeatedly to force a pass or expand
+a campaign. This software acceptance is not physical/experimental validation.
 
-The existing heartbeat automation is PAUSED. Its prompt now follows the corrected
-student-first plan and prohibits extra AI reviews; do not re-enable it without
-an owner request. No new feature round was started during this correction.
+After P2, close the main student desktop workflow and only the concrete remaining
+configuration/site issues. Accepted model/source/batch/angle/recovery/focus fixes
+are not new work. PPT-inspired classifiers follow usable independently labelled
+inputs; do not restart the removed zero-selected-group demo. November spectrum/
+I-V/C-V needs complete owner inputs/metadata; missing input blocks only that item.
 
-On later continuation, inspect actual Git/processes and .local/autonomy/state.json.
-The current terminal/source receipt is .local/autonomy/cleanup.json, not the old
-PSD2 source freeze containing removed private helpers. Start an automatic round
-only from explicit ready with no holder, and acquire its own lease before writes.
-Never delete unknown locks or restart completed physics because a chat failed.
-Commit useful changes normally, push without force, and stop for conflicts.
+## Continuation ownership
+
+Current milestone owner:student-runtime-p1-root. Admission after this round uses
+its actual COMPLETE/source pins and .local/autonomy/state.json. An ACTIVE timer
+must skip while a supervisor/worker/lock holds this round; never start competing
+writers or delete unknown locks. On completion verify normal Git synchronization,
+close owned idle services, release only the owned lease and leave ready with P2
+next. No extra reviewers or repeated physics after a chat interruption.

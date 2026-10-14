@@ -3,6 +3,8 @@ using Test, JSON
 include("native_response.jl")
 const A=NativeResponse; const N=A.N; const E=A.E
 @testset "Native consumer identity and additive CLI" begin
+    @test A.SOURCE_INVENTORY_VERSION==2
+    @test all(!startswith(name,"test_") for name in A.SOURCES)
     o=A.options(["--input","events.json","--inspect"])
     @test o["parcels"]==16 && o["seed"]==2609261 && o["trace-examples"]==4
     @test o["native-failure-policy"]=="abort"

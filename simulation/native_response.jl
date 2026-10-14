@@ -8,7 +8,8 @@ const N=NativeLiExample; const R=N.R; const Q=N.Q; const E=N.E
 const P=ReadoutProfiles; const S=NativeStream
 const SOURCES=("native_response.jl","native_stream.jl","readout_profiles.jl",
     "native_li_example.jl","readout.jl","replay.jl","run.jl","readout_demo.json",
-    "Project.toml","Manifest.toml","test_readout_profiles.jl","test_native_stream.jl","test_native_response.jl")
+    "Project.toml","Manifest.toml")
+const SOURCE_INVENTORY_VERSION=2 # Runtime-only sources; unmarked saved reports use the original v1 inventory.
 const HELP="""
 NativeResponse: provisional native SSD -> synthetic CSA -> analog shaper -> peak ADC.
   --input FILE       checked JSONv1 mono-gamma events OR completed Cs137 manifest
@@ -228,6 +229,7 @@ function run(o,a)
         "model_id"=>d["model_id"],"model_sha256"=>d["model_sha256"],"temperature_K"=>77,
         "stored_temperature_K"=>a.stored,"bias_V"=>a.bias,"geometry_checks"=>a.geometry,
         "profile"=>a.profile.profile,"profile_sha256"=>a.profile.sha256,"source_sha256"=>sources,
+        "source_inventory_version"=>SOURCE_INVENTORY_VERSION,
         "parcels"=>o["parcels"],"seed_family"=>o["seed"],"seed_rule"=>"SHA256(seed/global_event_id/raw_row_index/parcel_index), first8 bytes big-endian UInt64; no chunk/group index",
         "diffusion"=>true,"end_drift_when_no_field"=>false,"self_repulsion"=>false,
         "drift_dt_ns"=>N.DT,"nominal_drift_cap_ns"=>N.HORIZON_NS,"counts"=>counts,

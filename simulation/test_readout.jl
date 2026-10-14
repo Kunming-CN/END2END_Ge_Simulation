@@ -263,7 +263,8 @@ mktempdir(joinpath(R.ROOT,".local")) do root
         @test persisted["provenance"]["source_lh5_sha256"]==f.truth["source_lh5_sha256"]
         @test persisted["provenance"]["transport"]["seed"]==12345
         @test persisted["provenance"]["readout_environment"]==R.environment()
-        @test persisted["provenance"]["test_source_sha256"]==TEST_RECEIPT["source_sha256"]["test_readout.jl"]
+        @test persisted["provenance"]["source_inventory_version"]==2
+        @test !haskey(persisted["provenance"],"test_source_sha256")
         @test all(e->e["current_balance"]["passed"] && haskey(e,"window_limited"),persisted["events"])
         @test !occursin(R.ROOT,read(joinpath(out,"run.json"),String))
         before=R.hashfile(joinpath(out,"run.json"))

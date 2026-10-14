@@ -306,6 +306,18 @@ class ChargeTests(unittest.TestCase):
         d=r['detectors'][0];self.assertEqual(d['stored_samples'],6);self.assertEqual(d['counts']['zero_deposit_primaries'],1)
         self.assertEqual(d['groups'][0]['final_induced_keV'],-2);self.assertTrue(d['groups'][0]['nonzero_negative_samples_present'])
 
+    def test_runtime_source_inventory_without_developer_tests(self):
+        r=read(self.base/'run.json');r['source_inventory_version']=2
+        r['source_sha256']={n:h for n,h in r['source_sha256'].items() if n in cc.RUNTIME_SOURCES}
+        save(self.base/'run.json',r);refresh(self.root)
+        result=self.inspect();self.assertTrue(result['storage_complete'],result)
+        self.assertTrue(result['producer_compatible'],result)
+        r['source_sha256']['test_native_response.jl']='0'*64
+        save(self.base/'run.json',r);refresh(self.root);self.rejected()
+
+    def test_unknown_source_inventory_version_is_rejected(self):
+        self.change_report(source_inventory_version=3);self.rejected()
+
     def test_public_cli_json_and_read_only(self):
         r=self.command('charge-check','-Name','synthetic','-Json');self.assertEqual(r.returncode,0,r.stderr)
         self.assertTrue(json.loads(r.stdout)['storage_complete'])

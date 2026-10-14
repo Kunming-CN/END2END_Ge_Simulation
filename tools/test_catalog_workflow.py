@@ -1,11 +1,42 @@
 """Focused shared catalog contracts; injected stages never run science."""
-import copy,json,tempfile,unittest
+import copy,json,shutil,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
 import scenario_workflow as W
 import catalog_workflow as C
 import decay_workflow as D
 import catalog_result_validation as V
+
+
+class CatalogBrowseSetupTests(unittest.TestCase):
+    def setUp(self):
+        base=W.ROOT/'.local/product-delivery-v1/implementation-tests';base.mkdir(parents=True,exist_ok=True)
+        self.temp=tempfile.TemporaryDirectory(dir=base);self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
+        shutil.copytree(W.ROOT/'models',self.root/'models')
+        (self.root/'transport').mkdir()
+        for name in ('cryostat-source.json','cryostat_nominal.json','catalog_geometry.py','handoff.py'):
+            shutil.copyfile(W.ROOT/'transport'/name,self.root/'transport'/name)
+
+    def test_missing_upstream_keeps_metadata_and_blocks_execution(self):
+        with patch('subprocess.run',side_effect=AssertionError('Browse must not launch a worker')):
+            summaries=C.local_model_summaries(self.root);capabilities=C.catalog_capabilities(self.root)
+        self.assertEqual(len(summaries),17)
+        self.assertTrue(all(m['placement']['status']=='setup_required' for m in summaries))
+        self.assertTrue(all(not m['available'] and m['block_code']=='setup_required' for m in capabilities.values()))
+        self.assertIn('chamber.tg',capabilities['AK02']['reason'])
+        from catalog_geometry import cavity_contract
+        with self.assertRaises(FileNotFoundError):cavity_contract(self.root)
+
+    def test_changed_present_upstream_is_not_hidden_by_missing_files(self):
+        cache=self.root/'.local/transport/LBNL';cache.mkdir(parents=True)
+        (cache/'chamber.tg').write_text('corrupt test-only input',encoding='utf-8')
+        with self.assertRaisesRegex(W.ControlError,'Pinned cryostat input changed'):
+            C.local_model_summaries(self.root)
+
+    def test_changed_model_is_rejected_before_setup(self):
+        (self.root/'models/AK02.yaml').write_text('corrupt test-only model',encoding='utf-8')
+        with self.assertRaisesRegex(W.ControlError,'Canonical browse model bytes changed'):
+            C.local_model_summaries(self.root)
 
 class CatalogWorkflowTests(unittest.TestCase):
     def setUp(self):

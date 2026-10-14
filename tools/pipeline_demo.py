@@ -150,7 +150,7 @@ def inventory(directory):
 def source_inventory():
     names = ["tools/pipeline_demo.py", "transport/handoff.py", "transport/run.sh",
              "transport/pixi.toml", "transport/pixi.lock", "simulation/run.jl",
-             "simulation/replay.jl", "simulation/readout.jl", "simulation/test_readout.jl", "simulation/readout_demo.json",
+             "simulation/replay.jl", "simulation/readout.jl", "simulation/readout_demo.json",
              "simulation/Project.toml", "simulation/Manifest.toml"]
     # run.jl verifies the complete small, versioned model distribution.
     names += [p.relative_to(ROOT).as_posix() for p in (ROOT / "models").rglob("*") if p.is_file()]
@@ -445,8 +445,13 @@ def validate_provenance(base, model, charge, truth, readout, manifest):
     expected.update({key: sources[name] for key, name in {
         "model_sha256": f"models/{model}.yaml", "model_catalog_sha256": "models/catalog.json",
         "readout_source_sha256": "simulation/readout.jl",
-        "manifest_sha256": "simulation/Manifest.toml", "charge_manifest_sha256": "simulation/Manifest.toml",
-        "test_source_sha256": "simulation/test_readout.jl"}.items()})
+        "manifest_sha256": "simulation/Manifest.toml", "charge_manifest_sha256": "simulation/Manifest.toml"}.items()})
+    source_version = readout["provenance"].get("source_inventory_version", 1)
+    require(type(source_version) is int and source_version in (1, 2), "unsupported readout source inventory version")
+    if source_version == 1:
+        expected["test_source_sha256"] = sources["simulation/test_readout.jl"]
+    else:
+        expected["source_inventory_version"] = 2
     expected["config_sha256"] = manifest["readout_config"]["effective_sha256"]
     runtime = manifest["runtime_environment"]
     require(set(runtime) == {"julia_version", "json_version", "json_source_sha256"} and

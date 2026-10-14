@@ -45,7 +45,16 @@ def local_model_summaries(root=W.ROOT):
     transport=str(root/'transport')
     if transport not in sys.path:sys.path.insert(0,transport)
     from catalog_geometry import cavity_contract,placement_screen
-    cavity=cavity_contract(root);result=[]
+    # A software-only install can browse before the guide's upstream download.
+    # Verify every file that exists, even when a sibling is absent; corruption
+    # never becomes an ordinary missing-setup status.
+    upstream=W.read(root/'transport/cryostat-source.json');missing=[]
+    for item in upstream['files']:
+        ref='.local/transport/LBNL/'+item['name'];path=safe_path(root,ref)
+        if not path.exists():missing.append(item['name']);continue
+        W.require(path.is_file() and W.sha(path)==item['sha256'],'Pinned cryostat input changed: '+item['name'])
+    cavity=None if missing else cavity_contract(root);result=[]
+    setup_reason=('Download the pinned LBNL cryostat inputs using the setup guide; missing: '+', '.join(missing)+'.') if missing else None
     for entry in catalog['detectors']:
         path=root/'models'/entry['model'];W.require(W.sha(path)==entry['model_sha256'],'Canonical browse model bytes changed.')
         match=re.search(r'^\s+temperature:\s*([0-9]+(?:\.[0-9]+)?)\s*$',path.read_text(encoding='utf-8'),re.M)
@@ -53,7 +62,9 @@ def local_model_summaries(root=W.ROOT):
         contacts={str(c['id']):c['potential_V'] for c in entry['contacts']};selected=contacts[str(entry['readout_contact_id'])]
         deltas=[v-selected for k,v in contacts.items() if k!=str(entry['readout_contact_id']) and v!=selected]
         W.require(deltas and (all(v>0 for v in deltas) or all(v<0 for v in deltas)),'Mixed bias levels require explicit readout wiring.')
-        result.append({'model_id':entry['id'],'placement':placement_screen(entry['bounds_mm'],cavity),
+        placement=({'status':'setup_required','blocking_reasons':[setup_reason]} if missing
+                   else placement_screen(entry['bounds_mm'],cavity))
+        result.append({'model_id':entry['id'],'placement':placement,
             'contact_potentials_V':contacts,'readout_contact_id':entry['readout_contact_id'],'stored_temperature_K':temperature,
             'runtime_temperature_K':temperature,'bias_span_V':max(contacts.values())-min(contacts.values()),'wiring_factor':1 if deltas[0]>0 else -1})
     return result
@@ -75,17 +86,19 @@ def catalog_capabilities(root=W.ROOT,reader=local_model_summaries):
         W.require(W.read(registry).get('catalog_adapter')==CATALOG_POLICY,'Common catalog capability policy changed.')
     for model in entries:
         id=model['model_id'];placement=model['placement'];blocked=placement['blocking_reasons'];old=id in W.MODELS
+        missing_inputs=placement.get('status')=='setup_required'
         reasons=list(blocked)
         if not old and not reasons and not ready:reasons.append(setup_reason)
         contacts=model['contact_potentials_V'];readout=model['readout_contact_id']
         result[id]={'workflow_kind':W.KIND if old else KIND,'available':not reasons,'reason':' '.join(reasons) if reasons else None,
-            'block_code':'cryostat_size' if blocked else 'setup_required' if reasons else None,'assemblies':[W.CRYOSTAT],
+            'block_code':'setup_required' if missing_inputs else 'cryostat_size' if blocked else 'setup_required' if reasons else None,
+            'setup_required':missing_inputs,'assemblies':[W.CRYOSTAT],
             'operating_label':f"Original {model['stored_temperature_K']:g} K; readout contact {readout}; bias span {model['bias_span_V']:g} V; native signed signal and fixed {model['wiring_factor']:+d} input wiring. Exact canonical model; unchanged nominal cryostat placement.",
             'parameter_summary':[{'label':'Original model temperature','value':model['stored_temperature_K'],'unit':'K'},
                 {'label':'Readout contact','value':readout},{'label':'Readout contact potential','value':contacts[str(readout)],'unit':'V'},
                 {'label':'Contact count','value':len(contacts)},{'label':'Bias span','value':model['bias_span_V'],'unit':'V'}],
             'checks':[{'label':'Canonical model inputs','status':'complete','detail':'Geometry, carrier model, temperature, contact voltages and selected readout are present.'},
-                {'label':'Original cryostat dimensions','status':'blocked' if blocked else 'compatible_envelope','detail':' '.join(blocked) if blocked else 'Fits the fixed cavity envelope; native full overlap and shape checks are required by every run.'}]}
+                {'label':'Original cryostat dimensions','status':'setup_required' if missing_inputs else 'blocked' if blocked else 'compatible_envelope','detail':' '.join(blocked) if blocked else 'Fits the fixed cavity envelope; native full overlap and shape checks are required by every run.'}]}
     return result
 
 def check(selection,*,root=W.ROOT,allow_existing=False,validate_settings=W.settings_check,

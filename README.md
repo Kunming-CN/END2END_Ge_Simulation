@@ -11,12 +11,13 @@ The website contains saved results, not an online solver.
 - [Selected signals](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html) — six representative saved Cs137 examples, from deposits to peak ADC.
 - [Saved results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) — complete datasets, detector views and analysis files.
 - [Run locally](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html) — the maintained Windows preparation and Control guide.
-- [Download source without saved results (ZIP)](https://github.com/Kunming-CN/END2END_Ge_Simulation/archive/refs/heads/main.zip) — source, detector models and pinned configuration; saved website data are excluded.
+- [Download student software (ZIP)](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip) — Control runtime, detector models, pinned configuration and guide; saved results, demonstrations and development material are excluded.
 - [Contributing](CONTRIBUTING.md) — propose changes or report a problem.
 
-## Run one local example
+## Run your simulation
 
-For a student run, download the software ZIP and extract it. Browse the saved
+For a student run, download the student software ZIP, extract it and open
+`tools/site_guide.html`. Browse the saved
 results on the website; they are not required to calculate your own events.
 Developers should use the guide's sparse, blobless Git checkout. A normal full
 clone still includes the website and repository history. An offline website

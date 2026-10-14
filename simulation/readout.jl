@@ -358,7 +358,7 @@ function run(input,truth,configfile,output)
             "prepared_sha256"=>d["provenance"]["prepared_sha256"],"transport_run_sha256"=>d["provenance"]["run_sha256"],
             "model_catalog_sha256"=>hashfile(joinpath(ROOT,"models","catalog.json")),
             "readout_source_sha256"=>hashfile(@__FILE__),"config_sha256"=>hashfile(configfile),
-            "test_source_sha256"=>hashfile(joinpath(@__DIR__,"test_readout.jl")),"readout_environment"=>env,
+            "source_inventory_version"=>2,"readout_environment"=>env,
             "manifest_sha256"=>hashfile(joinpath(@__DIR__,"Manifest.toml")),
             "charge_source_sha256"=>Dict(k=>r["source_code_sha256"][k] for k in ("run.jl","replay.jl")),
             "charge_manifest_sha256"=>r["environment_manifest_sha256"])

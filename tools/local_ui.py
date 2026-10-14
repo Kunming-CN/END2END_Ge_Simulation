@@ -66,8 +66,7 @@ class SavedGammaOpenError(RuntimeError):
 def open_saved_gamma_example():
     """Check the fixed completed bundle, then request its existing offline viewer."""
     try:
-        from gamma_publication import validate_bundle
-        from gamma_showcase import no_links
+        from saved_waveform_edges import no_links
         completed_root = no_links(ROOT / '.local/gamma-complete-v1')
         if completed_root.exists():
             # A partial private run is evidence to inspect, never a fallback trigger.
@@ -81,6 +80,12 @@ def open_saved_gamma_example():
             else:
                 bundle = no_links(ROOT / '.local/m11d-gamma-showcase-v1/bundle')
                 require_complete = False
+        # This optional developer/archive route is unavailable in the student
+        # runtime package. Never load website tooling until its bundle exists.
+        if not bundle.is_dir() or not safe_path(ROOT, 'tools/gamma_publication.py').is_file():
+            raise SavedGammaUnavailable('Saved original example is unavailable in this installation')
+        from importlib import import_module
+        validate_bundle = import_module('gamma_publication').validate_bundle
         data = validate_bundle(bundle)
         counts = data['science']['source']['counts']
         is_complete=data.get('kind')=='saved_gamma_complete_showcase_v1'

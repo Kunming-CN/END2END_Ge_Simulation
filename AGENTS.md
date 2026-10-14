@@ -32,9 +32,13 @@ Never follow a junction/reparse point during cleanup. Verify absolute deletion
 paths and delete only the explicit owned candidates. Do not generate more report
 piles or save complete chat transcript copies for this reconciliation.
 
-Automatic continuation remains paused while this owner-directed correction is
-being delivered. Any future resume uses the corrected plan and no-review policy,
-not stale PSD3/audit instructions. Do not re-enable it without an owner request.
+Owner continuation update (2026-10-14): start the corrected plan and restore the
+updated scheduled task. It must use the student-first/no-extra-review queue, not
+stale PSD3/audit instructions. P2 permits a small actual software acceptance run:
+start with 100 initial events, cap total new primaries at 500 and use one detector/
+source combination. Reuse existing geometry/fields when applicable, record the
+configuration/seed, and preserve failures; no enlarged campaign or repeated
+seed changes to manufacture a pass.
 
 Work only in this project unless a recorded input dependency needs a read-only check.
 

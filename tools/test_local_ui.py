@@ -436,11 +436,21 @@ class SavedGammaHelper(unittest.TestCase):
         base=U.ROOT/'.local/product-delivery-v1/implementation-tests';base.mkdir(parents=True,exist_ok=True)
         self.temp=tempfile.TemporaryDirectory(dir=base);self.addCleanup(self.temp.cleanup)
         root_patch=patch.object(U,'ROOT',Path(self.temp.name));root_patch.start();self.addCleanup(root_patch.stop)
+        (U.ROOT/'tools').mkdir()
+        (U.ROOT/'tools/gamma_publication.py').write_text('# optional validator presence fixture',encoding='utf-8')
+
+    def test_runtime_without_optional_validator_is_unavailable_before_import(self):
+        (U.ROOT/'.local/m11d-gamma-showcase-v1/bundle').mkdir(parents=True)
+        (U.ROOT/'tools/gamma_publication.py').unlink()
+        with patch('importlib.import_module') as imported,patch.object(U.webbrowser,'open') as opened:
+            with self.assertRaises(U.SavedGammaUnavailable):U.open_saved_gamma_example()
+        imported.assert_not_called();opened.assert_not_called()
 
     def test_fixed_target_opens_only_after_completed_validation(self):
         import gamma_publication as G
         sequence = []
         bundle = U.ROOT / '.local/m11d-gamma-showcase-v1/bundle'
+        bundle.mkdir(parents=True)
         def checked(path):
             self.assertEqual(path, bundle); sequence.append('validated')
             return checked_saved_fixture()
@@ -456,6 +466,7 @@ class SavedGammaHelper(unittest.TestCase):
 
     def test_invalid_checked_census_never_opens(self):
         import gamma_publication as G
+        (U.ROOT/'.local/m11d-gamma-showcase-v1/bundle').mkdir(parents=True)
         bad = [None, {}, {'science':{}}]
         for value in (None, '40', 40.0, True, 39):
             item = checked_saved_fixture(); item['science']['source']['counts']['radiation_primaries'] = value
@@ -503,7 +514,9 @@ class SavedGammaHelper(unittest.TestCase):
             with patch.object(G,'validate_bundle',side_effect=ValueError('Invalid private evidence')) as validator, \
                  patch.object(U.webbrowser,'open') as opener:
                 with self.assertRaises(U.SavedGammaUnavailable):U.open_saved_gamma_example()
-            validator.assert_called_once_with(bundle);opener.assert_not_called()
+            if exists:validator.assert_called_once_with(bundle)
+            else:validator.assert_not_called()
+            opener.assert_not_called()
 
     def test_public_snapshot_requires_complete40_not_original6(self):
         import gamma_publication as G

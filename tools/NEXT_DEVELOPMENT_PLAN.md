@@ -59,7 +59,7 @@ Existing original scientific inputs and completed results remain unchanged.
 
 ## Ordered work
 
-### P0 — Correct process and remove proven waste (current cleanup)
+### P0 — Correct process and remove proven waste (completed at 33fdb05)
 
 Remove old AI-review requirements from AGENTS and the saved continuation prompt.
 Delete only confirmed assistant-generated review text, browser fixtures/screenshots,
@@ -74,26 +74,30 @@ absolute deletion paths and do not follow junctions. File name alone is not enou
 
 Done when confirmed candidates are removed, the retained original roots remain,
 only one current plan/handoff governs development, and the process launches no extra
-reviewers. Automation stays PAUSED; update its prompt but do not re-enable it without
-an owner request. No new physics or environment for cleanup.
+reviewers. The owner subsequently authorized continuation and an updated active
+scheduled task on2026-10-14; use only this corrected queue. No new physics or
+environment was needed for cleanup.
 
 ### P1 — Deliver a genuine student software package
 
-The current GitHub source ZIP excludes docs but still includes development material;
-it is not yet a minimal student runtime package. Make one maintained packaging
+Implementation and bounded package acceptance completed in the current P1 milestone.
+The final committed/public ZIP receipt is .local/student-runtime-p1/COMPLETE.json;
+only its terminal publication check permits automatic handoff to P2. Do not repeat
+P1 packaging work when that receipt and source pins are complete.
+
+The developer GitHub source ZIP excludes docs but still includes development material;
+it remains distinct from the new student runtime release. Maintain one packaging
 manifest from actual runtime dependencies:launchers, required Python/Julia code,
 models and relative includes, scenario/source definitions, lockfiles, licenses and
 one setup/use guide. Exclude saved results, developer tests/reports, browser fixtures,
 publication tooling, unused canned demos and local caches.
 
-First remove the unnecessary dependency between production provenance and test/demo
-source files, preserving versioned old-result interpretation. Current production
-hashes test_native_li_example.jl,test_readout.jl,test_native_response.jl,
-test_native_stream.jl,test_readout_profiles.jl,test_gamma_native_example.jl and
-tools/test_gamma_native_example.py; Control also imports gamma_complete_example,
-site_detector_pages and site_fragments. Do not blindly delete them by name. Extract
-shared runtime functions only where needed, update imports/pins together, and leave
-useful tests in developer source rather than the student package.
+P1 removed the unnecessary new-run dependency between production provenance and
+developer test files, preserving historical v1 interpretation and runtime-only v2
+inventories. Shared model labels and saved-waveform helpers also removed Control
+imports of website generation code. Keep useful tests in developer source and
+historical validators, outside the student ZIP. Runtime modules named example are
+still real dependencies; do not delete them by filename.
 
 Change the student download to this package and maintain the existing setup route.
 Check package member paths and required-file/import completeness in the current
@@ -116,7 +120,11 @@ raw scientific archives remain unchanged and readable; do not destroy them to ma
 new output small. Teaching pages keep a few representative signals from newer
 completed data rather than giant zero-event lists. Check a saved small mixed case
 for nonzero IDs, zero count, failure/null/negative-sign behavior and unchanged energy
-and efficiency denominator; no Geant4/SSD rerun solely for this format change.
+and efficiency denominator. Owner update2026-10-14 also permits one actual small
+end-to-end software acceptance: start100 initial events, cap total new primaries
+at500, one detector/source combination, reuse existing geometry/fields when
+applicable, record settings/seed and preserve failures. This is a bounded software
+check, not new physical validation or a reason to expand a campaign.
 
 ### P3 — Close the actual student desktop workflow
 

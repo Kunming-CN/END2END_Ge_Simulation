@@ -111,8 +111,10 @@ function Test-NRStream([string]$Root,[string]$Directory,[string]$Model,[int]$Eve
   Assert-NREqual $next $Events 'total chunk census';Assert-NREqual $m.global_decay_id_range @(0,($Events-1)) 'global event range'
   return $m
 }
-function Get-NRConsumerSources([string]$Contract='guarded'){
-  $names=@('Manifest.toml','Project.toml','native_li_example.jl','native_response.jl','native_stream.jl','readout.jl','readout_demo.json','readout_profiles.jl','replay.jl','run.jl','test_native_response.jl','test_native_stream.jl','test_readout_profiles.jl')
+function Get-NRConsumerSources([string]$Contract='guarded',[int]$SourceInventoryVersion=2){
+  Assert-NR ($SourceInventoryVersion -in @(1,2)) 'Unsupported native source inventory version'
+  $names=@('Manifest.toml','Project.toml','native_li_example.jl','native_response.jl','native_stream.jl','readout.jl','readout_demo.json','readout_profiles.jl','replay.jl','run.jl')
+  if($SourceInventoryVersion -eq 1){$names+=@('test_native_response.jl','test_native_stream.jl','test_readout_profiles.jl')}
   if($Contract -eq 'guarded'){$names+=@('native_response_guarded.jl','native_boundary_guard.jl')}
   return $names
 }
@@ -139,7 +141,12 @@ function Test-NRResponse {
   $artifacts=@('endpoints.csv','endpoints.jsonl','histograms.csv','histograms.json','input-contract.json','input-prepared.json','profile-input.json','profile.json','readout-config.json','scalars.csv','scalars.jsonl','signals.csv','summary.html','traces.jsonl','truth.csv','truth.jsonl')
   if($r.counts.native_failed_groups -gt 0){$artifacts+=,'native-failures.jsonl'}
   Assert-NRMap $Root $Directory $r.artifacts $artifacts
-  Assert-NRMap $Root (Join-Path $Root 'simulation') $r.source_sha256 (Get-NRConsumerSources $Contract)
+  $sourceVersion=1
+  if($r.PSObject.Properties.Name -contains 'source_inventory_version'){
+    Assert-NRInteger $r.source_inventory_version 'source inventory version' 1
+    $sourceVersion=$r.source_inventory_version
+  }
+  Assert-NRMap $Root (Join-Path $Root 'simulation') $r.source_sha256 (Get-NRConsumerSources $Contract $sourceVersion)
   Assert-NREqual @($r.artifact_bytes.PSObject.Properties.Name|Sort-Object) @($artifacts|Sort-Object) 'artifact byte inventory'
   foreach($name in $artifacts){
     Assert-NRInteger $r.artifact_bytes.$name ('artifact bytes '+$name)

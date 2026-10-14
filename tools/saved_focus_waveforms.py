@@ -7,15 +7,14 @@ import math
 from pathlib import Path
 import re
 
-import gamma_complete_example as G
-import gamma_showcase as S
+import saved_waveform_edges as S
 import scenario_workflow as W
 from local_ui_jobs import safe_path
 
 SIDECARS='.local/product-delivery-v1/display-derived'
 SOURCES=('simulation/saved_control_edge.jl','simulation/saved_collection_edge.jl','simulation/readout.jl',
     'simulation/readout_profiles.jl','simulation/readout_demo.json','simulation/Project.toml','simulation/Manifest.toml',
-    'tools/saved_focus_waveforms.py')
+    'tools/saved_focus_waveforms.py','tools/saved_waveform_edges.py')
 
 def rows(path,raw=None):return [W.decode_json(line) for line in (path.read_bytes() if raw is None else raw).decode('utf-8-sig').splitlines() if line.strip()]
 def key(r):return (r['event_id'],r['global_decay_id'],r['group_id'])
@@ -80,7 +79,7 @@ def project(directory,name,configuration_sha256,primary_id,group_id,root=W.ROOT)
             W.require(len(matches)==1,'External derivative exact group binding');edge=matches[0]
             W.require(edge['retained_original_parity']['passed'] is True,'Saved retained preamp parity')
             reply['sidecar_manifest_sha256']=manifest_hash;reply['sidecar_data_sha256']=data_hash
-    focus=min(rd['readout_end_ns'],G.focus_end(t,q));peak={'t':rd['peak_time_ns'],'v':rd['peak_V']}
+    focus=min(rd['readout_end_ns'],S.focus_end(t,q));peak={'t':rd['peak_time_ns'],'v':rd['peak_V']}
     shaped=trace['shaped_V'];last=max([peak['t'],*[time for time,v in zip(trace['time_ns'],shaped) if abs(v)>=abs(peak['v'])*.01]]) if peak['v'] else 1000
     shaper=min(rd['readout_end_ns'],2*math.ceil((last+max(100,last*.06))/2))
     reply['panels']=[
@@ -108,7 +107,7 @@ def build(name,root=W.ROOT):
     groups=[]
     for r in records:
         if r['record_kind']!='pulse' or r['readout'] is None:continue
-        t,q=charges[key(r)];trace=traces.get(key(r));stop=G.focus_end(t,q)
+        t,q=charges[key(r)];trace=traces.get(key(r));stop=S.focus_end(t,q)
         W.require(stop<=20000 and stop<=r['readout']['readout_end_ns'],'Dense camera exceeds explicit bound; preserve sparse view')
         groups.append(dict(identity={k:r[k] for k in ('event_id','global_decay_id','group_id','origin_time_ns')},raw_row_indices=r['raw_row_indices'],
             time_ns=t,charge_keV=q,readout=r['readout'],stop_ns=stop,original_trace=None if trace is None else trace['trace']))
@@ -118,8 +117,9 @@ def build(name,root=W.ROOT):
     frozen=W.read(Path(root)/'.local/product-delivery-v1/implementation/m14b/SOURCE-FREEZE.json')
     W.require(frozen['status']=='frozen_after_writer_exit' and all(frozen['files'][n]['sha256']==h for n,h in source_pins.items()),'Display sources must be frozen before replay')
     target.mkdir(parents=True);W.write(target/'request.json',request,fresh=True)
-    exe=G.G.julia_executable();args=[exe,'--startup-file=no','--project='+str(Path(root)/'simulation'),'--threads=1','--compiled-modules=existing',str(Path(root)/'simulation/saved_control_edge.jl'),'--request',str(target/'request.json'),'--output',str(target/'traces.json')]
-    call=G.G.child(args,str(root),1);(target/'worker.log').write_text(call.pop('output'),encoding='utf-8');W.write(target/'child.json',call,fresh=True)
+    from gamma_native_example import julia_executable, child
+    exe=julia_executable();args=[exe,'--startup-file=no','--project='+str(Path(root)/'simulation'),'--threads=1','--compiled-modules=existing',str(Path(root)/'simulation/saved_control_edge.jl'),'--request',str(target/'request.json'),'--output',str(target/'traces.json')]
+    call=child(args,str(root),1);(target/'worker.log').write_text(call.pop('output'),encoding='utf-8');W.write(target/'child.json',call,fresh=True)
     W.require(call['exit_code']==0,'Saved electronics derivative failed; evidence retained')
     W.inspect(name,root);W.write(target/'COMPLETE.json',dict(kind='saved_control_edge_sidecar_v1',status='completed',name=name,configuration_sha256=config_hash,
         complete_sha256=complete_hash,artifacts=W.inventory(target),source_pins=source_pins),fresh=True)

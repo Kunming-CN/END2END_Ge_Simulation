@@ -7,15 +7,25 @@ The beginner instructions have one authority: `tools/site_guide.html`, published
 as `guide.html`. Keep README short and link to that guide rather than adding
 another complete installation recipe.
 
-The current download is the branch source ZIP without saved website results.
-A minimal student runtime package is the first item in NEXT_DEVELOPMENT_PLAN;
-do not call the current development-source ZIP a finished runtime-only package. The
-`docs` export-ignore attribute excludes the generated website from Git archives;
-it does not delete the site or change the existing main:/docs Pages deployment.
-Keep the original models, relative includes, source, lockfiles and licenses in
-that archive. `tools/test_software_archive.py` checks the archive contract without
-installing dependencies or starting science. Full Git clones still retain the
-website and history; developers use the guide's sparse, blobless checkout.
+Student downloads use the latest GitHub Release asset `END2END-Ge-Student.zip`,
+built from the explicit `tools/student_runtime_manifest.json` by
+`tools/build_student_runtime.py`. The release tag identifies its source commit;
+`PACKAGE.json` binds each shipped file to its source and packaged bytes. Only the
+guide has a recorded student/offline rendering: remove website navigation and
+historical developer routes, and point saved-website links online. Runtime source,
+models and lockfiles keep exact Git bytes. No developer tests, publication tools,
+saved results or standalone demonstration entry points belong in this package.
+
+The corrected Codex continuation publishes a versioned latest release whenever
+runtime delivery changes: build and verify the committed ZIP, create an immutable
+`student-runtime-<commit>` release with the existing GitHub CLI, and verify the
+actual public asset's commit and bytes. Do not create GitHub workflows or change
+OAuth scopes: the current login lacks workflow permission. The current ZIP and one compact
+delivery receipt stay under `.local/student-runtime-p1/`. Creating or opening the
+package does not install dependencies, start science or require private autonomy
+state. A full developer clone retains website/source/history. The GitHub source
+ZIP still excludes `docs` through export-ignore; `tools/test_software_archive.py`
+keeps checking that distinct development-source archive contract.
 
 Exact-count campaigns use `tools/batch_execution.py`, `transport/batch_source.py`
 and the additive `simulation/batch_native_contract.jl`, `batch_native_response.jl`

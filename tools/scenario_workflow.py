@@ -155,7 +155,7 @@ def source_pins(detector, root=ROOT, *, portable=False):
     names = {'models/catalog.json', 'models/'+entry['model'],
              'transport/cryostat_nominal.json', 'transport/cryostat-source.json',
              'transport/pixi.toml', 'transport/pixi.lock', 'transport/CMakeLists.txt',
-             EXPORTER, 'tools/scenario_workflow.py', 'tools/workflow_settings.ps1',
+             EXPORTER, 'tools/scenario_workflow.py', 'tools/model_type_labels.py', 'tools/workflow_settings.ps1',
              'tools/workflow_inspection.py', 'tools/workflow_launch.py', 'tools/decay_validation.py',
              'tools/workflow_recovery.py',
              'tools/electronics_settings.ps1', 'tools/electronics_execution.ps1',
@@ -165,8 +165,7 @@ def source_pins(detector, root=ROOT, *, portable=False):
     names.update('simulation/'+n for n in (
         'run.jl','replay.jl','readout.jl','readout_profiles.jl','native_li_example.jl',
         'native_stream.jl','native_response.jl','native_response_guarded.jl','native_boundary_guard.jl',
-        'gamma_native_example.jl','scenario_response.jl','test_native_response.jl',
-        'test_native_stream.jl','test_readout_profiles.jl','test_gamma_native_example.jl'))
+        'gamma_native_example.jl','scenario_response.jl'))
     names.update(('simulation/Project.toml','simulation/Manifest.toml',
                   'simulation/native_readout_profile.json','simulation/readout_demo.json'))
     names.update('transport/'+n for n in ('cs137.py','handoff.py','scenario_prepare.py',
@@ -188,7 +187,7 @@ def source_pins(detector, root=ROOT, *, portable=False):
     if detector in RINGS:
         names.update(('tools/ring_workflow.py','tools/ring_model_contract.py','transport/ring_cs137.py'))
         names.update('simulation/'+n for n in ('ring_stream.jl','ring_response.jl','ring_polarity.jl','workflow_ring_response.jl'))
-        names.difference_update(('simulation/scenario_response.jl','simulation/gamma_native_example.jl','simulation/test_gamma_native_example.jl'))
+        names.difference_update(('simulation/scenario_response.jl','simulation/gamma_native_example.jl'))
     else:
         names.update('scenarios/assets/'+n+'.json' for n in (detector,GAMMA))
         names.add('scenarios/m11a-'+detector.lower()+'-mono_gamma_662_axis_v1-plus5mm.json')
@@ -411,7 +410,7 @@ def catalog(root=ROOT):
             source['reason']=attempt['reason'];source['attempt']=attempt
     generic=[s['id'] for s in sources if s['source_contract']['adapter']=='shared_decay_source_v1']
     from ring_workflow import LABELS
-    from site_detector_pages import TYPE_LABELS
+    from model_type_labels import TYPE_LABELS
     detectors=[]
     for model in read(Path(root)/'models/catalog.json')['detectors']:
         id=model['id'];ring=registry.get('control_adapters',{}).get(id)
@@ -438,7 +437,7 @@ def catalog(root=ROOT):
     admitted_sources=[source['id'] for source in sources if source['available'] and source['id']!=GAMMA]
     for detector in detectors:
         detector['workflow_kind']=KIND
-        if detector['id'] not in MODELS:
+        if detector['id'] not in MODELS or additions[detector['id']].get('setup_required'):
             detector.update(additions[detector['id']])
             detector['sources']=admitted_sources if detector['available'] else []
     # Registry values are the execution dispatch table, not user-supplied commands.

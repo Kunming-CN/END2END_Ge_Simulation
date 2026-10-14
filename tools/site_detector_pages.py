@@ -5,31 +5,12 @@ import re
 from html import escape
 from pathlib import Path
 from site_fragments import remove_sections, ids
+from model_type_labels import TYPE_LABELS
 
 RUN='20260922_suite_v3'
 MANAGED={'featured-detector-navigation','ssd-interactive-geometry','saved-gallery-intro'}
 SIGNAL_AXIS_NOTE='Horizontal signal axis: physical time (ns). Open the image or Signal CSV for original signed values.'
 CAMERA_CLOSE_MODELS={'Bipolar_reference_3D','KL01_3D','ICPC_48A_reference'}
-TYPE_LABELS={
-    'AK01':'Inverted coaxial point-contact (ICPC)',
-    'AK02':'Inverted coaxial point-contact (ICPC)',
-    'BEGe_GD32B_reference':'Broad energy germanium (BEGe)',
-    'BEGe_reference':'Broad energy germanium (BEGe)',
-    'Bipolar_reference_3D':'Planar detector',
-    'COAX_ANG2_reference':'Coaxial detector',
-    'GeGI_3D':'Double-sided strip detector',
-    'GeRC02':'Ring-contact detector',
-    'ICPC_48A_reference':'Inverted coaxial point-contact (ICPC)',
-    'ICPC_large_reference':'Inverted coaxial point-contact (ICPC)',
-    'KL01_3D':'Planar detector',
-    'KMRC01_candidate':'Ring-contact detector',
-    'PPC_PONaMa1_reference':'Point-contact detector (PPC)',
-    'SAP16':'Inverted coaxial point-contact (ICPC)',
-    'SAP17':'Inverted coaxial point-contact (ICPC)',
-    'SAP18_ring08_scenario':'Ring-contact detector',
-    'SAP22':'Inverted coaxial point-contact (ICPC)',
-}
-
 def navigation_block(path, *, context=''):
     """A replaceable display fragment, separate from the saved scientific body."""
     from site_routes import page_navigation

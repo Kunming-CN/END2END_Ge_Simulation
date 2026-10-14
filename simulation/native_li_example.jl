@@ -111,10 +111,11 @@ function main(args=ARGS)
     sim,temp=R.setup_simulation("AK02";temperature=77.0)
     R.geometry_check(prepared,sim); R.validate_deposits(document,sim)
     cfg=Q.parse_args(["--model","AK02","--position-mm","3,0,5","--precision","64","--dt-ns","2","--min-grid-mm","0.05","--max-iterations","50000","--output",requested])
-    sources=Dict(n=>Q.sha256file(joinpath(@__DIR__,n)) for n in ("run.jl","replay.jl","readout.jl","native_li_example.jl","test_native_li_example.jl","readout_demo.json"))
+    sources=Dict(n=>Q.sha256file(joinpath(@__DIR__,n)) for n in ("run.jl","replay.jl","readout.jl","native_li_example.jl","readout_demo.json"))
     inputhash=Q.sha256file(input); out=Q.reserve_output(cfg.output); started=time()
     report=Dict{String,Any}("schema_version"=>1,"status"=>"running","scope"=>"Selected native-RCC engineering demonstration, not full-census replay or physical CCE validation",
         "environment"=>env,"input_sha256"=>inputhash,"source_lh5_sha256"=>document["source_lh5_sha256"],"source_code_sha256"=>sources,
+        "source_inventory_version"=>2,
         "model_id"=>"AK02","model_sha256"=>document["model_sha256"],"selected_event_ids"=>IDS,
         "source_primary_count"=>document["primary_count"],"unprocessed_event_ids"=>[e["event_id"] for e in document["events"] if !(e["event_id"] in IDS)],
         "original_selected_events"=>selected,"temperature_K"=>77,"bias_V"=>500,"stored_temperature_K"=>temp,
