@@ -259,6 +259,14 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception:
                     return self.reject(503, 'Saved geometry preview is unavailable. Open the public saved geometry.')
                 return self.send_data(200, body, 'image/png')
+            if parts.path == '/api/workflow/result-options':
+                query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
+                if (parts.fragment or set(query)!={'name'} or any(len(v)!=1 for v in query.values()) or
+                        self.server.workflow_controller is None):
+                    raise ValueError('Invalid saved result options request')
+                name=query['name'][0]
+                workflow.run_path(name,self.server.controller.root)
+                return self.send_data(200,self.server.workflow_controller.result_options(name))
             if parts.path in ('/api/workflow/features','/api/workflow/acquisition'):
                 import re
                 acquisition=parts.path.endswith('/acquisition')

@@ -52,6 +52,14 @@ transforms are recorded in the stream manifest; they differ from normalized
 detector-local fields. Viewing is read-only and download requires an explicit
 user action. Do not add a second exporter or mutate scientific records for labels.
 
+Control's protected `result-options` read reports saved spectrum paths and the
+presence of canonical feature/acquisition completion files for an owned run.
+Presence is only a display hint; opening an advanced export still verifies its
+existing inputs and identities. The desktop spectrum reads the verified saved
+histogram through the existing artifact route, retaining raw bin counts and the
+full initial census. A selected sealed batch is labelled separately from a full
+run. No analysis export or simulation starts when results are opened.
+
 Control launch-failure evidence belongs to `tools/workflow_launch.py` and
 `local_ui_workflow_jobs.py`, under `.local/local-control-v1/workflow-launches/`.
 Recovery requires a sealed pre-Popen failure; old opaque failures remain blocked.

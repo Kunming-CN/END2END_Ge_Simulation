@@ -499,6 +499,30 @@ class WorkflowController:
             W.require(reply.get('configuration_sha256')==job['plan']['configuration_sha256'],'Saved waveform differs from the owned plan.')
             return reply
 
+    def result_options(self,name):
+        """Read saved result presence; opening each export still verifies its inputs."""
+        with self._lock:
+            directory=W.run_path(name,self.root)
+            job=next((j for j in self._jobs if j['name']==name),None)
+            W.require(job and (job['status'] in W.TERMINAL or
+                      self._batch_job(job) and job['status']=='stopped'),
+                      'Use a completed owned run or stopped owned batch for saved results.')
+            config_sha=job['plan']['configuration_sha256']
+            W.require(type(config_sha) is str and re.fullmatch('[0-9a-f]{64}',config_sha),
+                      'Saved result configuration identity is unsupported.')
+            reply={'kind':'local_saved_result_options_v1','name':name,'configuration_sha256':config_sha,
+                   'feature_export_present':False,'acquisition_export_present':False,
+                   'spectrum_file':None,'spectrum_scope':None}
+            if job['status']=='stopped':return reply
+            for key,base in (('feature_export_present','.local/psd-features/'),
+                             ('acquisition_export_present','.local/waveform-acquisition/')):
+                reply[key]=safe_path(self.root,base+config_sha+'/bundle/COMPLETE.json').is_file()
+            spectrum='results/histograms.json' if self._batch_job(job) else 'response/histograms.json'
+            if safe_path(directory,spectrum).is_file():
+                self.artifact(name,spectrum)
+                reply.update(spectrum_file=spectrum,spectrum_scope='full_run')
+            return reply
+
     def features(self,name,primary_id,group_id=None):
         """Verify a pre-exported derivative; no simulation, export or write on GET."""
         with self._lock:

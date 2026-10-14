@@ -33,6 +33,9 @@ const context=vm.createContext({document:fixtureDocument,DOMParser:Parser,
 vm.runInContext(fs.readFileSync(__dirname+'/focused_plots.js','utf8'),context);
 vm.runInContext(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),context);
 function run(code){return vm.runInContext(code,context);}
+function descendants(n){return n.children.flatMap(child=>[child,...descendants(child)]);}
+// Older contracts isolate optional availability traffic; changed-path tests restore the actual request.
+run(`const originalResultOptionsRequest=resultOptionsRequest;resultOptionsRequest=async job=>({kind:'local_saved_result_options_v1',name:job.name,configuration_sha256:job.configuration_sha256,feature_export_present:false,acquisition_export_present:false,spectrum_file:null,spectrum_scope:null});`);
 run(`catalog={electronics_keys:Object.keys(labels),electronics_defaults:{},sources:[{id:'mono_gamma_662_axis_v1',label:'Gamma',pose:'plus5mm',pose_label:'+5 mm along global y',counts:[20],fixed_seed:26092631,details:'One 662 keV gamma per primary; fixed global −y beam, time zero.',count_unit:'initial gamma primaries'},{id:'cs137_point_decay_v1',label:'Cs137',pose:'nominal',pose_label:'Nominal source anchor',counts:[20,500],details:'One initial Cs137 decay per primary; isolated pulse windows retain daughter timing.',count_unit:'initial Cs137 decays',fixed_seed:null}],cryostats:[{id:'lbnl_modular_nominal_v1',available:true}],detectors:[{id:'AK02',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'SAP22',available:true,sources:['mono_gamma_662_axis_v1','cs137_point_decay_v1']},{id:'GeRC02',available:true,sources:['cs137_point_decay_v1'],operating_label:'Li50min +240 V'},{id:'KMRC01_candidate',available:true,sources:['cs137_point_decay_v1'],operating_label:'−370 V; fixed −1 wiring'}]};`);
 run(`catalog.sources.find(s=>s.id==='cs137_point_decay_v1').source_angle={enabled:true,min_deg:-30,max_deg:30,version:'source_capsule_angular_pose_v1',convention:'Degrees from global +y toward +x around global z at x=0,y=1.473 mm; engineering placement'};
 const sourcePose30={kind:'source_capsule_angular_pose_v1',schema_version:1,angle_deg:30,position_global_mm:[17.8,32.303504374726016,.290],capsule_rotation_local_to_global:[[.8660254037844387,0,.5],[-.5,0,.8660254037844387],[0,-1,0]],capsule_axis_global:[.5,.8660254037844387,0],coordinate_convention:'Degrees from global +y toward +x around global z at x=0,y=1.473 mm; engineering placement',anchors_sha256:'8'.repeat(64)};`);
@@ -130,7 +133,7 @@ assert.match(html,/<h2>Selected saved run · pipeline<\/h2>/);
 assert.match(html,/Selected saved-run settings · exact recorded inputs/);
 assert.match(html,/id="start"[^>]+aria-describedby="run-readiness"/);
 assert.match(html,/id="run-readiness"[^>]+role="status"[^>]+aria-live="polite"/);
-assert.match(html,/<details id="legacy-recovery">/);
+assert.match(html,/<details id="legacy-recovery" hidden>/);
 for(const id of ['cryostat','detector','source','pose','angle-deg','count','threads','seed','name','use-peak-gate','event','group'])assert.match(html,new RegExp('<label for="'+id+'"'));
 assert.match(html,/id="angle-deg" type="number" min="-30" max="30" step="any" value="0"/);
 for(const [id,value]of Object.entries({name:'fixture',cryostat:'lbnl_modular_nominal_v1',detector:'AK02',source:'mono_gamma_662_axis_v1',pose:'plus5mm','angle-deg':'0',count:'20',seed:'26092631',threads:'2'}))get(id).value=value;
@@ -267,7 +270,7 @@ assert.equal(get('legacy-notice').hidden,false);
 assert.match(get('legacy-notice').textContent,/needs verification or inspection/);
 run("renderLegacy({gamma:{jobs:[]}});");assert.equal(get('legacy-notice').hidden,true);
 get('legacy-recovery').open=true;
-run("renderLegacy({gamma:{jobs:[]}});");assert.equal(get('legacy-recovery').open,true);
+run("renderLegacy({gamma:{jobs:[]}});");assert.equal(get('legacy-recovery').open,false);assert.equal(get('legacy-recovery').hidden,true);
 run('renderJobs({busy:false,jobs:[]});');
 // STRICT-03: surviving controls retain actual node identity, keyboard focus,
 // typed continuation text/caret and opened details through unchanged polls and
@@ -367,10 +370,10 @@ assert.equal(run("importedConfig({...config(),seed:17}).seed"),17);
 for(const bad of [true,500.0+0.5,'500'])assert.throws(()=>run(`importedConfig({...config(),primary_count:${JSON.stringify(bad)}})`),/unavailable/);
 run("showRun(savedJob);");assert.match(get('selected').textContent,/saved-sap-gamma.*Gamma/);
 run(`savedArtifacts(savedJob,{artifacts:{'resolved-config.json':{sha256:'1'.repeat(64),bytes:101},'transport/truth.lh5':{sha256:'2'.repeat(64),bytes:202},'transport/stream/events-00000.jsonl':{sha256:'3'.repeat(64),bytes:303},'response/scalars.jsonl':{sha256:'4'.repeat(64),bytes:404},'response/calibration.json':{sha256:'5'.repeat(64),bytes:505},'unrelated.json':{sha256:'6'.repeat(64),bytes:606}}});`);
-const artifactButtons=get('saved-artifacts').children.flatMap(row=>row.children).filter(n=>n.tagName==='button').map(n=>n.textContent);
+const artifactButtons=descendants(get('saved-artifacts')).filter(n=>n.tagName==='button').map(n=>n.textContent);
 for(const name of ['COMPLETE.json','transport/truth.lh5','transport/stream/events-00000.jsonl','response/scalars.jsonl','response/calibration.json'])assert.ok(artifactButtons.includes('Download '+name),name);
 assert.ok(!artifactButtons.includes('Download unrelated.json'));
-assert.ok(get('saved-artifacts').children.flatMap(row=>row.children).some(n=>/202 bytes.*SHA256/.test(n.textContent)));
+assert.ok(descendants(get('saved-artifacts')).some(n=>/202 bytes.*SHA256/.test(n.textContent)));
 get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
 // Exact decimal input rejects coercion and preserves the legacy Gamma contract.
 assert.match(html,/<input id="count" type="text" inputmode="numeric"/);
@@ -408,10 +411,10 @@ assert.match(get('plots').children[0].textContent,/No saved waveform/);
 run(`showEvent(0);`);assert.match(get('analysis-filter').textContent,/global_initial_id = 10000.*group_id is null in scalars/);
 // Grouped file explanations preserve every supplied artifact reference and stamp.
 run(`const inventoryPage=batchFixture(1,0);inventoryPage.artifacts=['transport/truth.lh5','transport/run.mac','transport/run.json','transport/stream/manifest.json','transport/stream/decays-00000000.jsonl','response/truth.jsonl','response/signals.csv','response/endpoints.jsonl','response/scalars.jsonl','response/traces.jsonl','response/run.json','response/readout-config.json','response/profile.json','receipts/response.json','other-saved-stage.json'].map((ref,i)=>({file:'batches/b0000000001/'+ref,bytes:100+i,sha256:String(i%10).repeat(64)}));const inventoryBefore=JSON.stringify(inventoryPage);batchArtifacts(batchJob,inventoryPage);`);
-const allArtifactNodes=get('saved-artifacts').children.flatMap(row=>row.children||[]),allArtifactButtons=allArtifactNodes.filter(n=>n.tagName==='button');
+const allArtifactNodes=descendants(get('saved-artifacts')),allArtifactButtons=allArtifactNodes.filter(n=>n.tagName==='button');
 const inventory=JSON.parse(run('JSON.stringify(inventoryPage.artifacts)'));
 assert.equal(allArtifactButtons.length,inventory.length+3);
-for(const stamp of inventory){assert.equal(allArtifactButtons.filter(n=>n.textContent==='Download '+stamp.file).length,1);assert.ok(allArtifactNodes.some(n=>n.textContent===stamp.bytes+' bytes · SHA256 '+stamp.sha256));}
+for(const stamp of inventory){assert.equal(allArtifactButtons.filter(n=>n.textContent==='Download '+stamp.file).length,1);assert.ok(allArtifactNodes.some(n=>n.textContent===stamp.file+' · '+stamp.bytes+' bytes · SHA256 '+stamp.sha256));}
 assert.equal(run('JSON.stringify(inventoryPage)'),run('inventoryBefore'));
 assert.ok(allArtifactNodes.some(n=>/independent injection calibration/.test(n.textContent)));
 assert.ok(allArtifactNodes.some(n=>/each column’s units, coordinate transforms/.test(n.textContent)));
@@ -435,13 +438,13 @@ if(process.env.GESIGNAL_TEST_SAVED_ROOT){
     assert.equal(get('result-data').children[0].children[0].children[0].textContent,global===188?'297.89953951910127':'0');
     if(global===188){assert.equal(get('result-data').children[0].children[1].children[0].textContent,'295.65372418710035');assert.match(get('analysis-filter').textContent,/group_id = 0/);}
     else{assert.match(get('analysis-filter').textContent,/group_id is null/);assert.match(get('analysis-state').textContent,/Zero deposition/);assert.equal(get('result-data').children[0].children[2].children[0].textContent,'Unavailable');}
-    const nodes=get('saved-artifacts').children.flatMap(n=>n.children||[]),buttons=nodes.filter(n=>n.tagName==='button');assert.equal(buttons.length,stamps.length+3);
+    const nodes=descendants(get('saved-artifacts')),buttons=nodes.filter(n=>n.tagName==='button');assert.equal(buttons.length,stamps.length+3);
     const header=file=>fs.readFileSync(path.join(savedRoot,base,'response',file),'utf8').split(/\r?\n/,1)[0].split(',');
     const signalColumns=header('signals.csv');assert.ok(signalColumns.includes('global_initial_id'));assert.ok(signalColumns.includes('induced_equivalent_energy_keV'));assert.ok(!signalColumns.includes('current_nA'));
     for(const file of ['scalars.csv','endpoints.csv']){const columns=header(file);assert.ok(!columns.includes('global_initial_id'));assert.ok(columns.includes('record_json'));}
     assert.match(get('analysis-filter').textContent,/decode record_json to read global_initial_id/);
     const descriptions=nodes.filter(n=>n.tagName==='p').map(n=>n.textContent).join(' ');assert.doesNotMatch(descriptions,/signals\.csv[^.]*current/);assert.match(descriptions,/traces\.jsonl[^.]*current/);
-    for(const stamp of stamps){assert.equal(buttons.filter(n=>n.textContent==='Download '+stamp.file).length,1);assert.ok(nodes.some(n=>n.textContent===stamp.bytes+' bytes · SHA256 '+stamp.sha256));}
+    for(const stamp of stamps){assert.equal(buttons.filter(n=>n.textContent==='Download '+stamp.file).length,1);assert.ok(nodes.some(n=>n.textContent===stamp.file+' · '+stamp.bytes+' bytes · SHA256 '+stamp.sha256));}
     assert.equal(JSON.parse(get('event-record').textContent)[0].raw_truth.global_initial_id,global);
   }
   console.log('Retained AK01/Cs137500 zero0, positive188/group0 and batch1 global250/local0 saved-analysis contracts passed.');
@@ -793,7 +796,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   // Saved PSD1 features remain lazy, tied to exact global/group identities and
   // source/profile/bundle hashes. Invalid/capped candidates are separate from
   // canonical null features; signed values, zeros and the census stay intact.
-  assert.match(html,/<details id="feature-panel"><summary>Saved waveform features and deposition topology<\/summary>/);
+  assert.match(html,/<details id="feature-panel" hidden><summary>Saved waveform features and deposition topology<\/summary>/);
   assert.match(html,/existing verified export; opening it verifies saved data without starting a simulation or export/);
   run(`const featureJob={...batchJob,name:'feature-saved',configuration_sha256:'a'.repeat(64)};
     const featureRows=[{record_kind:'decay',global_initial_id:371,event_id:121,batch_index:1,local_initial_id:121,pulse_count:1,deposited_energy_keV:4},
@@ -806,7 +809,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
     api=async path=>{featureRequests.push(path);return featureReply();};
     $('feature-panel').open=false;showRun(featureJob);result={job:featureJob,records:featureRows,traces:[]};$('event').value='371';showEvent(1);`);
   assert.equal(run('featureRequests.length'),0);
-  get('feature-panel').open=true;await run('loadFeatures()');
+  get('feature-panel').hidden=false;get('feature-panel').open=true;await run('loadFeatures()');
   assert.match(run('featureRequests[0]'),/workflow\/features\?name=feature-saved&primary=371&group=0$/);
   assert.match(get('feature-status').textContent,/primary 371 · group 0.*selection invalid/);
   const featureText=n=>String(n.textContent||'')+' '+n.children.map(featureText).join(' ');
@@ -829,6 +832,8 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run(`api=async()=>({kind:'local_saved_psd_features_v1',name:featureJob.name,configuration_sha256:featureJob.configuration_sha256,primary_id:372,group_id:null,available:false,profile_sha256:null,bundle_sha256:null,note:'Saved features are unavailable. No calculation runs.'});`);
   await run('loadFeatures()');assert.equal(get('feature-content').children.length,0);
   assert.equal(get('feature-status').textContent,'Saved features are unavailable. No calculation runs.');
+  assert.equal(get('feature-panel').hidden,true);
+  get('feature-panel').hidden=false;get('feature-panel').open=true;
   // A genuine native failure retains null observations, never a zero current.
   run(`const failedFeature={...featureGroup,selection:{valid:false,reasons:['native_transport_failed','readout_unavailable','full_signal_unavailable']},Erec_keV:null,observed:null};api=async()=>featureReply(371,0,failedFeature);$('event').value='371';showEvent(1);`);
   await Promise.resolve();await Promise.resolve();
@@ -850,6 +855,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(featureText(get('feature-content')),/signed polarity -1/);
   // An old group response cannot replace a newer zero-primary response, a
   // different run, or a panel that the student closed while GET was pending.
+  get('feature-panel').hidden=false;get('feature-panel').open=true;
   run(`let featurePending=[];api=path=>new Promise(resolve=>featurePending.push({path,resolve}));`);
   const oldFeature=run('loadFeatures()');
   get('event').value='372';run('showEvent();featurePending[1].resolve(featureReply(372,null,featureZero));');
@@ -859,13 +865,13 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   const closedFeature=run('loadFeatures()');get('feature-panel').open=false;get('feature-panel').ontoggle();
   run('featurePending[2].resolve(featureReply(372,null,featureZero));');await closedFeature;
   assert.equal(get('feature-content').children.length,0);
-  get('feature-panel').open=true;const anotherRunFeature=run('loadFeatures()');
+  get('feature-panel').hidden=false;get('feature-panel').open=true;const anotherRunFeature=run('loadFeatures()');
   run('showRun(savedJob);featurePending[3].resolve(featureReply(372,null,featureZero));');await anotherRunFeature;
   assert.equal(get('feature-content').children.length,0);assert.equal(run('result'),null);
   get('feature-panel').open=false;get('feature-panel').ontoggle();
   // PSD2 is an additive saved-only lane: no export action, original signed
   // voltages and source-invalid energies stay distinct from observations.
-  assert.match(html,/<details id="acquisition-panel"><summary>Saved synthetic waveform acquisition<\/summary>/);
+  assert.match(html,/<details id="acquisition-panel" hidden><summary>Saved synthetic waveform acquisition<\/summary>/);
   assert.doesNotMatch(html,/id="(?:export|run|download)-acquisition"/);
   run(`const acquisitionProfile={kind:'synthetic_waveform_acquisition_profile_v1',schema_version:1,name:'synthetic-preamp-fixture',sampling_rate_Hz:1e8,adc:{bits:14,minimum_V:-.1,maximum_V:.1},record_window_ns:[-10,10],trigger:{kind:'external_group_origin',offset_ns:0,prehistory:'isolated_reset_zero_before_group_origin'},bandwidth:{kind:'causal_single_pole_lowpass',cutoff_Hz:1e7},noise:{kind:'postfilter_sampled_iid_gaussian_voltage',rms_V:0,root_seed_uint64:'20261014'},measurement_polarity:-1,calibration:{kind:'independent_delta_charge_injection',energy_keV:500}};
     const acquisitionTrace={time_since_origin_ns:[-10,0,10],signed_preamp_V:[0,-.003,-.001],bandwidth_limited_preamp_V:[0,-.002,-.001],noise_V:[0,0,0],noisy_voltage_V:[0,-.002,-.001],adc_code:[8192,8028,8110],adc_center_V:[0,-.002,-.001]};
@@ -875,7 +881,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
     const acquisitionRequests=[];api=async path=>{acquisitionRequests.push(path);return acquisitionReply();};
     $('acquisition-panel').open=false;showRun(featureJob);result={job:featureJob,records:featureRows,traces:[]};$('event').value='371';showEvent(1);`);
   assert.equal(run('acquisitionRequests.length'),0);
-  get('acquisition-panel').open=true;await run('loadAcquisition()');
+  get('acquisition-panel').hidden=false;get('acquisition-panel').open=true;await run('loadAcquisition()');
   assert.match(run('acquisitionRequests[0]'),/workflow\/acquisition\?name=feature-saved&primary=371&group=0$/);
   assert.match(get('acquisition-status').textContent,/primary 371 · group 0.*selection invalid/);
   assert.match(featureText(get('acquisition-content')),/Original peak-ADC Erec · keV 3.9.*Waveform acquisition energy · keV Unavailable/s);
@@ -917,6 +923,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run(`api=async()=>({kind:'local_saved_waveform_acquisition_v1',name:featureJob.name,configuration_sha256:featureJob.configuration_sha256,primary_id:371,group_id:0,available:false,profile_sha256:null,bundle_sha256:null,source_features_manifest_sha256:null,source_profile_sha256:null,note:'Saved acquisition unavailable; no export starts.'});`);
   await run('loadAcquisition()');assert.equal(get('acquisition-content').children.length,0);
   assert.equal(get('acquisition-status').textContent,'Saved acquisition unavailable; no export starts.');
+  get('acquisition-panel').hidden=false;get('acquisition-panel').open=true;
   run(`let acquisitionPending=[];api=path=>new Promise(resolve=>acquisitionPending.push({path,resolve}));`);
   const staleAcquisition=run('loadAcquisition()');
   get('event').value='372';run('showEvent();acquisitionPending[1].resolve(acquisitionReply(372,null,acquisitionZero));');
@@ -926,7 +933,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   const closedAcquisition=run('loadAcquisition()');get('acquisition-panel').open=false;get('acquisition-panel').ontoggle();
   run('acquisitionPending[2].resolve(acquisitionReply(372,null,acquisitionZero));');await closedAcquisition;
   assert.equal(get('acquisition-content').children.length,0);
-  get('acquisition-panel').open=true;const differentRunAcquisition=run('loadAcquisition()');
+  get('acquisition-panel').hidden=false;get('acquisition-panel').open=true;const differentRunAcquisition=run('loadAcquisition()');
   run('showRun(savedJob);acquisitionPending[3].resolve(acquisitionReply(372,null,acquisitionZero));');await differentRunAcquisition;
   assert.equal(get('acquisition-content').children.length,0);assert.equal(run('result'),null);
   get('acquisition-panel').open=false;get('acquisition-panel').ontoggle();
@@ -939,4 +946,75 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.equal(run('pageIdentity({...sparsePageP2,available_record_count:0,nonzero_record_count:0,counts:{initial_primaries:100,zero_deposit_primaries:100},records:[]},sparseJobP2,1,0).records.length'),0);
   console.log('P2 nonzero original-ID gaps, full initial denominator, zero exclusion, out-of-order refusal and all-zero empty pages passed.');
   console.log('Saved PSD2 read-only lazy profile/source/bundle/global/group identity, signed full samples, null invalid/zero/failure energies and stale closed/run/selection guards passed.');
+  // P3 availability uses presence hints only; opening a panel still uses the
+  // existing exact bundle verifier. No empty panel or old async result survives.
+  assert.ok(html.indexOf('id="plots"')<html.indexOf('<h3>Saved stage files</h3>'));
+  assert.ok(html.indexOf('<h3>Saved stage files</h3>')<html.indexOf('id="feature-panel"'));
+  assert.match(html,/<details id="spectrum-panel" hidden>/);
+  run(`resultOptionsRequest=originalResultOptionsRequest;
+    const optionJob={...batchJob,name:'result-options-saved',selection:{...batchJob.selection,primary_count:100}};
+    const optionsReply=(job=optionJob,flags={})=>({kind:'local_saved_result_options_v1',name:job.name,configuration_sha256:job.configuration_sha256,feature_export_present:false,acquisition_export_present:false,spectrum_file:'results/histograms.json',spectrum_scope:'full_run',...flags});
+    showRun(optionJob);result={job:optionJob,records:[],traces:[]};
+    const optionPaths=[];api=async path=>{optionPaths.push(path);return optionsReply(optionJob,{feature_export_present:true});};`);
+  await run('loadResultOptions(result)');
+  assert.deepEqual(JSON.parse(run('JSON.stringify(optionPaths)')),['/api/workflow/result-options?name=result-options-saved']);
+  assert.equal(get('feature-panel').hidden,false);assert.equal(get('feature-panel').open,false);
+  assert.equal(get('acquisition-panel').hidden,true);assert.equal(get('spectrum-panel').hidden,false);
+  assert.equal(get('spectrum-content').children.length,0);
+  for(const mutation of ["name:'other'","configuration_sha256:'0'.repeat(64)","feature_export_present:1","spectrum_file:'../histograms.json'","spectrum_scope:'selected_batch'","spectrum_file:null"]){
+    assert.throws(()=>run(`resultOptionsIdentity(optionsReply(optionJob,{${mutation}}),optionJob)`),/identities differ/);
+  }
+  run(`const spectrumCounts={initial_primaries:100,zero_deposit_primaries:97,nonzero_primaries:3,groups:3,accepted:2,native_failed_groups:0,readout_rejected:1,saturated:0};
+    const histogramRow=(stage,bin,count)=>({stage,bin,count,lower_keV:bin===-1?null:-1000+5*bin,upper_keV:bin===1000?null:-1000+5*(bin+1)});
+    const spectrumHistogram={width_keV:5,normalization_denominators:spectrumCounts,bins:[histogramRow('deposited_per_decay',-1,1),histogramRow('deposited_per_decay',200,97),histogramRow('deposited_per_decay',1000,2),histogramRow('accepted_peak_ADC',-1,1),histogramRow('accepted_peak_ADC',212,1)]};
+    const histogramBefore=JSON.stringify(spectrumHistogram),spectrumFiles=[];artifact=async(name,file)=>{spectrumFiles.push({name,file});return {json:async()=>spectrumHistogram};};`);
+  get('spectrum-panel').open=true;await run('loadSpectrum()');
+  assert.deepEqual(JSON.parse(run('JSON.stringify(spectrumFiles)')),[{name:'result-options-saved',file:'results/histograms.json'}]);
+  assert.match(get('spectrum-status').textContent,/Full saved run.*100 initial primaries \(efficiency denominator\).*97 zero-deposit.*3 nonzero-deposit.*3 pulse groups.*2 accepted/);
+  const spectrumText=featureText(get('spectrum-content'));
+  assert.match(spectrumText,/Truth deposited energy Edep.*Peak-ADC reconstructed energy Erec/s);
+  assert.match(spectrumText,/underflow.*1.*overflow.*2.*not selected: 0 of 100 initial primaries/s);
+  assert.match(spectrumText,/not selected: 1 of 3 pulse groups/);
+  assert.match(spectrumText,/Native failed groups: 0.*readout rejected: 1.*saturated: 0/);
+  const spectrumFigures=descendants(get('spectrum-content')).filter(n=>n.tagName==='figure');
+  assert.equal(spectrumFigures.length,2);
+  for(const figure of spectrumFigures){const svg=figure.children.find(n=>n.tagName==='svg'),curve=svg.children.find(n=>n['data-series']);assert.ok(svg.children.some(n=>n.tagName==='text'&&n.textContent==='-1000'));assert.ok(svg.children.some(n=>n.tagName==='text'&&n.textContent==='4000'));assert.ok(!curve.d.includes('NaN'));assert.equal((curve.d.match(/H/g)||[]).length,1000);assert.ok(curve.d.includes('V167H'));}
+  assert.equal(run('JSON.stringify(spectrumHistogram)'),run('histogramBefore'));
+  assert.throws(()=>run('histogramData({...spectrumHistogram,normalization_denominators:{...spectrumCounts,initial_primaries:3}},100)'),/census/);
+  assert.throws(()=>run('histogramData({...spectrumHistogram,bins:[...spectrumHistogram.bins,spectrumHistogram.bins[0]]},100)'),/repeated/);
+  assert.throws(()=>run('histogramData({...spectrumHistogram,bins:spectrumHistogram.bins.map(r=>({...r,lower_keV:0}))},100)'),/bins/);
+  assert.throws(()=>run('histogramData({...spectrumHistogram,normalization_denominators:{...spectrumCounts,accepted:3}},100)'),/totals/);
+  assert.equal(run('histogramData({...spectrumHistogram,normalization_denominators:{...spectrumCounts,nonzero_primaries:undefined}},100).series[1].notSelected'),1);
+  // Batch fallback reads a complete sealed-batch histogram, never the page rows.
+  run(`const fallbackFile='batches/b0000000001/response/histograms.json';result.page={batch_index:1,batch_primary_count:100,batch_sha256:'8'.repeat(64),records:[{global_initial_id:124}],artifacts:[{file:fallbackFile,bytes:10,sha256:'9'.repeat(64)}]};
+    api=async()=>optionsReply(optionJob,{spectrum_file:null,spectrum_scope:null});`);
+  await run('loadResultOptions(result)');get('spectrum-panel').open=true;await run('loadSpectrum()');
+  assert.match(get('spectrum-status').textContent,/Selected sealed batch 1.*100 initial primaries/);
+  assert.doesNotMatch(get('spectrum-status').textContent,/Full saved run/);
+  assert.equal(run('spectrumFiles.at(-1).file'),run('fallbackFile'));
+  run(`$('plots').replaceChildren(node('p','Existing four native plots remain usable'));api=async()=>{throw Error('Route unavailable');};`);
+  await run('loadResultOptions(result)');
+  assert.equal(get('feature-panel').hidden,true);assert.equal(get('acquisition-panel').hidden,true);
+  assert.equal(get('spectrum-content').children.length,0);assert.equal(run('result.spectrum.scope'),'selected_batch');
+  assert.match(get('result-options-status').textContent,/Reopen Control to retry/);
+  assert.equal(get('plots').children[0].textContent,'Existing four native plots remain usable');
+  run(`api=async()=>optionsReply(optionJob,{name:'wrong-run'});`);await run('loadResultOptions(result)');
+  assert.equal(get('spectrum-panel').hidden,true);assert.equal(get('spectrum-content').children.length,0);
+  run(`const optionPending=[];api=()=>new Promise(resolve=>optionPending.push(resolve));`);
+  const oldOptions=run('loadResultOptions(result)'),newOptions=run('loadResultOptions(result)');
+  run('optionPending[1](optionsReply());');await newOptions;
+  run('optionPending[0](optionsReply(optionJob,{feature_export_present:true,acquisition_export_present:true}));');await oldOptions;
+  assert.equal(get('feature-panel').hidden,true);assert.equal(get('acquisition-panel').hidden,true);
+  run(`const spectrumPending=[];artifact=()=>new Promise(resolve=>spectrumPending.push(resolve));`);
+  get('spectrum-panel').open=true;const oldSpectrum=run('loadSpectrum()');
+  get('spectrum-panel').open=false;get('spectrum-panel').ontoggle();run('spectrumPending[0]({json:async()=>spectrumHistogram});');await oldSpectrum;
+  assert.equal(get('spectrum-content').children.length,0);
+  get('spectrum-panel').open=true;const runSpectrum=run('loadSpectrum()');
+  run('showRun(savedJob);spectrumPending[1]({json:async()=>spectrumHistogram});');await runSpectrum;
+  assert.equal(get('spectrum-panel').hidden,true);assert.equal(get('feature-panel').hidden,true);assert.equal(get('acquisition-panel').hidden,true);
+  assert.equal(get('spectrum-content').children.length,0);
+  const runOptions=run(`result={job:savedJob,records:[],traces:[]};loadResultOptions(result)`);
+  run('showRun(optionJob);optionPending[2](optionsReply(savedJob,{feature_export_present:true}));');await runOptions;
+  assert.equal(get('feature-panel').hidden,true);assert.equal(get('result-options-status').textContent,'');
+  console.log('P3 visible stage files/optional hashes, sparse-ledger census copy, lazy availability, full-run/sealed-batch raw signed-domain spectra, under/overflow/not-selected accounting and closed/run/stale/error guards passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

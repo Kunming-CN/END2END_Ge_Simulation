@@ -42,9 +42,11 @@ Zero-input records and artificial zero waveforms are omitted; efficiency denomin
 stay unchanged. These are engineering checks, not experimental qualification.
 
 Use **Stop at next boundary** and **Resume saved settings** for a checked decay
-run. Completed batches stay available in **Explore events**. Open
-**Reproduce or analyze this saved run** for files grouped by purpose and the
-selected batch, primary and pulse-group filters. See the
+run. Completed batches stay available in **Explore events**. **Saved stage files**
+groups original files by purpose and shows the selected batch, primary and pulse
+group. **Saved energy spectrum · raw counts** reads the existing histogram and
+labels whether it covers the full run or one sealed batch. Advanced waveform
+panels appear only when a saved export is present. See the
 [saved-result guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#saved-analysis).
 
 All 17 models remain browsable. Seven require a future larger cryostat; Control

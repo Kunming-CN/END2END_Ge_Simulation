@@ -1,5 +1,6 @@
 """Owned plan/start/reopen tests. Every scientific launch is mocked."""
 import copy
+import stat
 from pathlib import Path
 import tempfile
 import threading
@@ -33,6 +34,93 @@ class Jobs(unittest.TestCase):
         plan['resolved']['selection'].update(source=W.CS,primary_count=25001)
         plan['resolved']['batching']={'batch_count':3}
         return plan
+
+    def result_job(self,*,batch=False,status='completed'):
+        plan=self.batch_plan() if batch else copy.deepcopy(self.plan)
+        plan['configuration_sha256']='a'*64
+        job={'name':self.config['name'],'status':status,'plan':plan}
+        self.controller._jobs=[job]
+        return job
+
+    def test_result_options_absent_exports_create_nothing_and_run_no_writers(self):
+        job=self.result_job()
+        before=list(self.root.rglob('*'))
+        with (patch.object(W,'write') as write,patch.object(self.controller,'_persist') as persist,
+              patch.object(self.controller,'_launch') as launch,patch.object(J,'psd_backend') as features,
+              patch.object(J,'acquisition_backend') as acquisition,patch.object(self.controller,'artifact') as artifact):
+            reply=self.controller.result_options(job['name'])
+        self.assertEqual(reply,{'kind':'local_saved_result_options_v1','name':job['name'],
+            'configuration_sha256':'a'*64,'feature_export_present':False,'acquisition_export_present':False,
+            'spectrum_file':None,'spectrum_scope':None})
+        self.assertEqual(list(self.root.rglob('*')),before)
+        for method in (write,persist,launch,features,acquisition,artifact):method.assert_not_called()
+
+    def test_result_options_detect_only_canonical_finished_export_paths(self):
+        job=self.result_job()
+        feature=J.safe_path(self.root,'.local/psd-features/'+'a'*64+'/bundle/COMPLETE.json')
+        acquisition=J.safe_path(self.root,'.local/waveform-acquisition/'+'a'*64+'/bundle/COMPLETE.json')
+        for path in (feature,acquisition):path.parent.mkdir(parents=True)
+        self.assertFalse(self.controller.result_options(job['name'])['feature_export_present'])
+        self.assertFalse(self.controller.result_options(job['name'])['acquisition_export_present'])
+        feature.write_text('{}');acquisition.write_text('{}')
+        with patch.object(J,'psd_backend') as features,patch.object(J,'acquisition_backend') as loader:
+            reply=self.controller.result_options(job['name'])
+        self.assertTrue(reply['feature_export_present']);self.assertTrue(reply['acquisition_export_present'])
+        features.assert_not_called();loader.assert_not_called()
+        feature.unlink();other=J.safe_path(self.root,'.local/psd-features/'+'b'*64+'/bundle/COMPLETE.json')
+        other.parent.mkdir(parents=True);other.write_text('{}')
+        self.assertFalse(self.controller.result_options(job['name'])['feature_export_present'])
+
+    def test_result_options_full_spectrum_uses_existing_artifact_verification(self):
+        for batch,file in ((True,'results/histograms.json'),(False,'response/histograms.json')):
+            job=self.result_job(batch=batch)
+            path=J.safe_path(W.run_path(job['name'],self.root),file)
+            path.parent.mkdir(parents=True,exist_ok=True);path.write_text('{}')
+            with patch.object(self.controller,'artifact',return_value=(b'{}','application/json')) as artifact:
+                reply=self.controller.result_options(job['name'])
+            artifact.assert_called_once_with(job['name'],file)
+            self.assertEqual(reply['spectrum_file'],file);self.assertEqual(reply['spectrum_scope'],'full_run')
+            with patch.object(self.controller,'artifact',side_effect=J.ControlError('Changed saved artifact.')):
+                with self.assertRaisesRegex(J.ControlError,'Changed saved artifact'):
+                    self.controller.result_options(job['name'])
+
+    def test_result_options_stopped_batches_do_not_offer_root_spectrum_or_exports(self):
+        job=self.result_job(batch=True,status='stopped')
+        for relative in ('.local/psd-features/'+'a'*64+'/bundle/COMPLETE.json',
+                         '.local/waveform-acquisition/'+'a'*64+'/bundle/COMPLETE.json',
+                         W.BASE+'/'+job['name']+'/results/histograms.json'):
+            path=J.safe_path(self.root,relative);path.parent.mkdir(parents=True,exist_ok=True);path.write_text('{}')
+        with patch.object(self.controller,'artifact') as artifact:
+            reply=self.controller.result_options(job['name'])
+        self.assertFalse(reply['feature_export_present']);self.assertFalse(reply['acquisition_export_present'])
+        self.assertIsNone(reply['spectrum_file']);self.assertIsNone(reply['spectrum_scope'])
+        artifact.assert_not_called()
+
+    def test_result_options_refuse_unowned_cli_nonterminal_and_malformed_config(self):
+        job=self.result_job()
+        for name in ('missing','../private','CON',True):
+            with self.assertRaises(J.ControlError):self.controller.result_options(name)
+        for status in ('running','dispatch_uncertain','stop_requested','stopped','launch_failed'):
+            job['status']=status
+            with self.assertRaises(J.ControlError):self.controller.result_options(job['name'])
+        job['status']='completed'
+        for config in ('../private','A'*64,None,True):
+            job['plan']['configuration_sha256']=config
+            with self.assertRaises(J.ControlError):self.controller.result_options(job['name'])
+        cli=W.run_path('unowned-cli',self.root);cli.mkdir(parents=True);(cli/'COMPLETE.json').write_text('{}')
+        with self.assertRaises(J.ControlError):self.controller.result_options('unowned-cli')
+
+    def test_result_options_reject_linked_export_and_spectrum_paths(self):
+        job=self.result_job()
+        original=Path.lstat
+        for linked in (self.root/'.local/psd-features'/('a'*64)/'bundle/COMPLETE.json',
+                       self.root/'.local/waveform-acquisition'/('a'*64)/'bundle',
+                       W.run_path(job['name'],self.root)/'response/histograms.json'):
+            def lstat(path):
+                if path==linked:return SimpleNamespace(st_mode=stat.S_IFREG,st_file_attributes=0x400)
+                return original(path)
+            with patch.object(Path,'lstat',lstat),self.assertRaisesRegex(J.ControlError,'reparse'):
+                self.controller.result_options(job['name'])
 
     def test_batch_check_start_route_reopen_and_changed_authority(self):
         plan=self.batch_plan();self.controller._batch_resolver=lambda config,root:copy.deepcopy(plan)

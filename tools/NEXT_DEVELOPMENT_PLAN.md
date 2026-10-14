@@ -136,6 +136,14 @@ check, not new physical validation or a reason to expand a campaign.
 
 ### P3 — Close the actual student desktop workflow
 
+Implemented and checked in the current P3 milestone. Saved stage files are visible
+below the existing signal plots; saved raw-count spectra distinguish a full run
+from a selected sealed batch. Empty advanced exports stay hidden and exact hashes
+remain optional details. Current .local/desktop-workflow-p3/COMPLETE.json governs
+Git/package/public asset closure before P4. Existing control/recovery/plot acceptance
+is reused; no new radiation/SSD calculation was needed. An already open old Control
+backend must be reopened to load new routes; its process and lock were preserved.
+
 Keep a single main route:select scene/detector/source -> enter count/settings ->
 check -> run -> inspect results. Remove unused fixed-example controls and empty/demo
 result panels from the normal route; retain advanced analysis only where it can

@@ -1,101 +1,90 @@
 # Current handoff
 
 Updated: 2026-10-14. Read this first, then relevant sources only.
-Immutable prior handoff: [P1 student runtime delivery](https://github.com/kunming-cn/END2END_Ge_Simulation/blob/fc5b14f7ac8647c954a478717bca55e012a6aa25/PROGRESS.md).
-It links owner chat reconciliation, prior accepted work and permanent science.
+Immutable prior handoff: [P2 storage and actual acceptance](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/c3706ff2c8333e1ab014ce3dcae2ffd65e0b6bd0/PROGRESS.md).
+It links P1 packaging, owner chat reconciliation and permanent science.
 
 ## Owner authority and continuation
 
-The corrected heartbeat is ACTIVE, student-first and no-extra-review. Never launch
-AI reviewers, debates, third-party/direction checks or repeated broad audits.
-Use only directly relevant developer checks. Desktop only; existing remage/SSD/
-readout/environment. No installs, system settings, reset/banked credits, phone
-work or second-computer gate. No duplicate worker or completed-science rerun after
-a chat failure. Read actual state/locks/processes/terminal before continuing.
+The corrected heartbeat is ACTIVE every30minutes and follows the current plan.
+No extra AI reviewers, audits, debates or direction committees. Use only directly
+relevant developer checks. Desktop only; existing remage/SSD/readout/environments.
+No installs, global changes, billed API, reset/banked credits or second-computer gate.
+Read actual state, owned locks, Git, processes and terminal evidence before resuming.
+Include pvpython.exe in process inspection: Control uses the existing ParaView Python.
+An idle owner Control server is not permission to terminate it or delete its lock.
 
-## P2 nonzero storage implemented and actually exercised
+## P3 desktop results implemented and checked
 
-New normalized batch chunks, four shared native response writers' truth/scalars,
-and PSD1/PSD2 schema-2 JSON/CSV store only nonzero-deposit primaries. Zero-input
-placeholder signals are removed. Original nonzero IDs, all actual signal samples
-(including numeric zeros), signed values, native failures/readout rejections and
-unknown null quantities remain. No energy calibration or physics algorithm changed.
+The existing configure/check/run/stop/resume and four signed waveform plots are
+reused. Saved stage files now has a visible heading below plots, grouped by stage
+with selected batch/local/global/group mapping and units. File sizes, hashes and
+waveform identities are optional details. Ledger copy distinguishes new sparse
+nonzero rows from historical dense rows and complete raw radiation/census.
 
-The common nonzero_deposit_v1 descriptor records initial/zero/nonzero counts and
-the full initial efficiency denominator. Sparse batch initial_summary retains all
-photon diagnostics from the raw LH5, independently verified against that source.
-The raw radiation file stays complete. Old unmarked dense inputs and old analysis
-schema1 keep their strict original rules; old scientific files are not rewritten.
+A protected read-only result-options route requires an owned completed run or
+stopped batch. It detects canonical completed feature/acquisition exports; empty
+advanced panels stay hidden. Presence is only a display hint: opening an export
+still verifies its source and selection. Run changes clear old state; late replies
+cannot relabel another run, batch or closed panel. No export or calculation on GET.
 
-Control pages both formats by nonzero-event ordinal while displaying original
-local/global IDs. The current UI validates gaps/order, batch offsets and full
-counts, excludes zero options, preserves nonzero failed/rejected choices and
-handles all-zero pages without a fake event/waveform. Source guide and README
-explain nonzero offset and retained denominators; generated docs was not rebuilt.
+Saved energy spectrum reads verified existing histogram JSON through the artifact
+route. Full-run and selected-sealed-batch labels remain distinct, independent of
+the event page. Truth per initial primary and accepted reconstructed pulse energy
+are separate raw-count series with signed energy domain, original5keV bins,
+underflow/overflow/not-selected accounting and complete initial/zero/nonzero census.
+No fit, normalization, new gain, signal change or physical-validation claim.
 
-Exactly ONE real run: .local/runs/student-sap22-cs137-100-nonzero-v1. SAP22/Cs137,
-+30deg, fixed radiation seed26092631, one Julia thread,100 initial primaries.
-Same pre-existing accepted geometry/model/electronics; no seed/physics retuning.
-Completed end to end:97zero,3nonzero original IDs24/52/54,3groups accepted,
-0native failures/readout rejections/saturation. Truth has3 rows; scalars have
-3primary+3pulse rows; signals have380 real native samples and no fake zero-event
-rows. Raw source94 photons/88line photons and denominator100 are retained.
+Checks:6new controller cases and3protected HTTP cases passed; unchanged localhost
+tests needed permission after sandbox WinError10013. Existing workflow Node and
+focused-plot contracts plus new availability/spectrum/lifecycle cases passed.
+Actual shipped histogram reader checked new100 (97zero/3nonzero/3accepted) and
+historical owned500 (496zero/4nonzero/4accepted). Direct new controller read of the
+owned500 verified its full saved histogram. Diff whitespace check passed.
 
-The complete workflow took233.5s. Recorded remage body3.67881s; radiation stage
-21.71918s including startup/I/O/validation. One field/calibration preparation
-35.75s, with potential16.54749s/electric10.73266s/weighting5.81483s. Preparation
-contains one field solve and one independent injection calibration, reused within
-the run. No supported cross-run field cache was present; none was invented.
-This is a software acceptance, not experimental/physical-resolution validation.
-Do not repeat it or expand to500 just because that was the cap.
+One actual browser operation used the already open owner Control, PID16004,
+port11204. Its old Python backend lacks the new route; the updated frontend showed
+the reopen message and verified selected-batch fallback: batch0,250initial,
+248zero/2nonzero/2accepted, not the100-row event page. Spectrum and visible stage
+files rendered; empty advanced panels were hidden. No Download/Save As, settings,
+scientific execution or registry adoption. The temporary check tab was closed.
+The owner service/lock was retained; reopening Control loads the new backend.
+Do not describe this old-service operation as full new-backend browser acceptance.
 
-Actual page passed the shipped JS validator with original IDs and denominator100.
-Actual PSD1 export/load has schema2,3records and full100/97/3 census, derived only
-from this frozen completed run (no new physics). An actual historical500 case
-read as7nonzero/493zero/denominator500, with its checked receipt bytes unchanged.
+No new physics in P3. Six pinned existing-owned-run receipt/config/histogram files
+remain byte-identical. One compact .local/desktop-workflow-p3/COMPLETE.json records
+source pins, checks and package closure; no new audit/report or fixture collection.
 
-Developer checks:107Julia storage/writer assertions;6Julia syntax parses;
-transport mixed/allzero/old contract/tampering writer checks;5new workflow and
-7affected legacy cases;8Python AST files;18PSD1+16PSD2 functional cases; existing
-Node contract plus sparse ID/denominator/empty cases; actual data page integration;
-PowerShell validator syntax. Sandbox hardlink denials were retried unchanged with
-permission. WindowsApps alias and readonly synthetic cleanup failures did not
-change gates or science; owned scratch was removed. No extra AI reviews ran.
+## Completed P2 and student package
 
-Evidence: one .local/nonzero-storage-p2/COMPLETE.json with source_pins map,
-selection.json and checked-plan.json; original run holds authoritative scientific
-stages/results. All implementation writers stopped and source hashes froze before
-the actual run and saved-data export. Do not create another report collection.
+P2 actual100-primary SAP22/Cs137/+30deg run remains
+.local/runs/student-sap22-cs137-100-nonzero-v1:97zero,IDs24/52/54,3accepted,
+0native failures/rejections. Full census, raw LH5, seeds, nulls/signs and independent
+calibration remain. Do not repeat it or spend unused400 allowance automatically.
+P2 source/evidence is .local/nonzero-storage-p2/COMPLETE.json; historical500 reads
+and frozen analysis export are retained. No science or original models changed.
 
-## Student package and publication
+Build the current ZIP from the final Git commit with build_student_runtime.py,
+publish immutable student-runtime-<shortSHA> using existing gh and set latest.
+Verify actual public ZIP hash/embedded commit. Keep one current ZIP/receipt in
+.local/student-runtime-p1. Current P3 COMPLETE governs terminal Git/asset evidence
+before ready. No workflow-scope/auth changes. README/maintained guide now explain
+P3; generated public docs is unchanged and waits for normal P5 publication.
 
-P1 packaging remains accepted. The manifest adds only nonzero_events.py; candidate
-169members (168source+PACKAGE), approximately771KB. Runtime imports, Julia includes,
-canonical models and frozen setup pins pass. Build only from the final Git commit,
-publish immutable student-runtime-<commit> with existing gh CLI, set latest and
-verify actual public ZIP bytes/embedded commit. No GitHub Actions/auth changes.
-The exact final commit/asset check belongs in current P2 COMPLETE before ready;
-one current ZIP/receipt remains in .local/student-runtime-p1. Models, original
-inputs, environment locks and saved public docs remain unchanged.
+## Next bounded task
 
-## Next bounded task: P3 desktop workflow
-
-Finish only concrete remaining student workflow issues using current actual data:
-select/configure/check/run/stop/resume/results, hide unused/empty advanced panels,
-lead with useful plots/spectrum and stage-specific files, and separate next setup
-from selected saved settings. Reuse prior accepted recovery/focus/readiness and
-batch evidence. Do not repeat model/source/angle features or a full UI audit.
-No new physics merely to rediscover this completed100 case. A CLI result is not
-an ordinary owned Control run; do not forge adoption/ownership or claim untested
-browser operation. Prefer existing actual records and targeted changed-path checks.
-
-PPT-inspired ML needs sufficient independently labelled inputs; no automatic old
-PSD3 demo. November measured spectrum/I-V/C-V needs complete owner inputs and
-blocks only that item. Follow the remaining current development plan in order.
+P4: inspect the genuinely missing requested monoenergetic gamma energy/position
+options, using the existing shared configuration/backend and saved units/placement.
+Do not rebuild accepted models, sources, batches, angle controls or recovery.
+No invented larger cryostat or new framework. Only changed transport can justify
+a separately stated bounded check; completed P2 is not an automatic physics budget.
+P5 named website improvements use maintained generators and existing saved data.
+ML needs sufficient independently labelled inputs; no automatic PSD3 demo.
+November measured spectrum/I-V/C-V awaits complete owner inputs, blocking only P6.
 
 ## Round closure
 
-Current owner nonzero-storage-p2-root. On later admission inspect actual current
-P2 COMPLETE/source hashes, Git/remote, processes and absent owned lease. ACTIVE
-automation skips while another round holds the lock. Finalize current publication,
-close owned idle workers, release only its lease and leave ready with P3 next.
+Current owner desktop-workflow-p3-root. Finish normal commit/push and verified
+student Release, then release only this round's lock and leave ready for P4.
+Skip unchanged/running state quietly; never launch competing workers. Preserve the
+existing owner Control process and its separate server lock.

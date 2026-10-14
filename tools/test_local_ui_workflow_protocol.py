@@ -43,6 +43,39 @@ class Protocol(unittest.TestCase):
         connection.request(method,route,body=body,headers=values);r=connection.getresponse()
         result=(r.status,r.read(),dict(r.getheaders()));connection.close();return result
 
+    def test_saved_result_options_exact_get_is_read_only(self):
+        reply={'kind':'local_saved_result_options_v1','name':'saved','configuration_sha256':'a'*64,
+               'feature_export_present':False,'acquisition_export_present':True,
+               'spectrum_file':'results/histograms.json','spectrum_scope':'full_run'}
+        self.workflow.result_options.return_value=reply
+        status,body,headers=self.request(route='/api/workflow/result-options?name=saved')
+        self.assertEqual(status,200);self.assertEqual(json.loads(body),reply)
+        self.assertEqual(headers['Cache-Control'],'no-store')
+        self.workflow.result_options.assert_called_once_with('saved')
+        for method in ('start','check','check_batches','finalize_results','verify','features','acquisition','artifact'):
+            getattr(self.workflow,method).assert_not_called()
+        self.assertEqual(self.request('POST','/api/workflow/result-options?name=saved',{})[0],404)
+
+    def test_saved_result_options_requires_session_not_download_cookie(self):
+        route='/api/workflow/result-options?name=saved'
+        for headers in ({'X-Control-Token':None},{'Host':'evil.example'},
+                {'Origin':'https://evil.example'},{'Sec-Fetch-Site':'cross-site'},
+                {'X-Control-Token':None,'Sec-Fetch-Site':'same-origin',
+                 'Cookie':self.server.workflow_download_cookie+'='+self.server.workflow_download_token}):
+            self.assertEqual(self.request(route=route,headers=headers)[0],403)
+        self.workflow.result_options.assert_not_called()
+
+    def test_saved_result_options_rejects_query_aliases_duplicates_and_unsafe_names(self):
+        prefix='/api/workflow/result-options?'
+        for query in ('','name=','run=saved','name=saved&name=other','name=saved&file=run.json',
+                      'name=saved&primary=0','name=saved#x','name=../private',
+                      'name=C%3A%5Cprivate','name=CON','name='+'a'*49):
+            self.assertEqual(self.request(route=prefix+query)[0],400,query)
+        self.workflow.result_options.assert_not_called()
+        self.assertEqual(self.request(route='/api/workflow/result-options/?name=saved')[0],404)
+        self.workflow.result_options.side_effect=W.ControlError('Use a completed owned run.')
+        self.assertEqual(self.request(route=prefix+'name=unowned')[0],400)
+
     def test_catalog_inspection_metadata_preserves_all17_and_execution_boundary(self):
         catalog = W.catalog()
         source = W.read(W.ROOT/'models/catalog.json')['detectors']
