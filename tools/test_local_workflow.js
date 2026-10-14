@@ -2,10 +2,10 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 class Element {
-  constructor(tag='div'){this.tagName=tag;this.children=[];this.parentElement=null;this.rootConnected=false;this.value='';this.checked=false;this.disabled=false;this._textContent='';this.dataset={};this.style={};this.open=false;this.selectionStart=null;this.selectionEnd=null;this.selectionDirection=null;this.focusLosses=0;this.moves=0;}
+  constructor(tag='div'){this.tagName=tag;this.children=[];this.parentElement=null;this.rootConnected=false;this.value='';this.checked=false;this.disabled=false;this._textContent='';this.textWrites=0;this.dataset={};this.style={};this.open=false;this.selectionStart=null;this.selectionEnd=null;this.selectionDirection=null;this.focusLosses=0;this.moves=0;}
   get isConnected(){return this.rootConnected||this.parentElement?.isConnected===true;}
   get textContent(){return this._textContent;}
-  set textContent(text){for(const n of [...this.children])this.removeChild(n);this._textContent=text;}
+  set textContent(text){this.textWrites++;for(const n of [...this.children])this.removeChild(n);this._textContent=text;}
   contains(n){return n===this||this.children.some(child=>child.contains?.(n));}
   insertBefore(n,before){if(n.parentElement){n.moves++;n.parentElement.removeChild(n);}const index=before===null?this.children.length:this.children.indexOf(before);assert.ok(index>=0);this.children.splice(index,0,n);n.parentElement=this;return n;}
   removeChild(n){const index=this.children.indexOf(n);assert.ok(index>=0);if(this.isConnected&&n.contains?.(fixtureDocument.activeElement)){fixtureDocument.activeElement.focusLosses++;fixtureDocument.activeElement=fixtureDocument.body;}this.children.splice(index,1);n.parentElement=null;return n;}
@@ -86,6 +86,12 @@ assert.match(html,/raw_tables.*columns; those units are authoritative/);
 assert.match(html,/Deposition time, particle creation time and carrier drift time describe different stages/);
 assert.doesNotMatch(html,/Energy uses keV; positions use mm/);
 assert.match(html,/Check environment inspects installed files\. Check plan validates the selected source, runtime and settings/);
+assert.match(html,/<h2>Next-run setup<\/h2>/);
+assert.match(html,/Editing them clears its checked plan; the selected saved run and its events keep their recorded settings/);
+assert.match(html,/<h2>Selected saved run · pipeline<\/h2>/);
+assert.match(html,/Selected saved-run settings · exact recorded inputs/);
+assert.match(html,/id="start"[^>]+aria-describedby="run-readiness"/);
+assert.match(html,/id="run-readiness"[^>]+role="status"[^>]+aria-live="polite"/);
 assert.match(html,/<details id="legacy-recovery">/);
 for(const id of ['cryostat','detector','source','pose','angle-deg','count','threads','seed','name','use-peak-gate','event','group'])assert.match(html,new RegExp('<label for="'+id+'"'));
 assert.match(html,/id="angle-deg" type="number" min="-30" max="30" step="any" value="0"/);
@@ -503,6 +509,75 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.equal(run('pendingActions.size'),0);
   run('renderJobs({busy:false,jobs:[]});renderLegacy({gamma:{jobs:[]}});showRun(savedJob);');
   console.log('STRICT-03 two polls, Enter/Space Show stages, pending Resume/Recover/Verify/legacy Verify, removal/reappearance, current continuation input and denied action contracts passed.');
+  // Desktop feedback follows the normal Check -> edit -> recheck path. Status
+  // polls preserve the latest real action error and the selected saved record.
+  get('detector').value='SAP22';get('source').value='cs137_point_decay_v1';run('sourceChanged();');get('angle-deg').value='0';run('invalidate();');
+  run(`const feedbackJob={...savedJob,id:'feedback-saved',status:'stopped',can_verify_saved_execution:true};
+  let feedbackState={busy:false,jobs:[feedbackJob]},feedbackResolve,feedbackReject,feedbackCalls=[];
+  api=(path,body)=>{feedbackCalls.push({path,body});if(path==='/api/workflow/state')return Promise.resolve(feedbackState);if(path==='/api/state')return Promise.resolve({gamma:{jobs:[]}});if(path==='/api/workflow/verify')return Promise.reject(Error('Saved verification fixture error'));return new Promise((resolve,reject)=>{feedbackResolve=resolve;feedbackReject=reject;});};
+  renderJobs(feedbackState);showRun(feedbackJob);
+  result={job:feedbackJob,records:[{record_kind:'decay',event_id:7,deposited_energy_keV:4,pulse_count:1},{record_kind:'pulse',event_id:7,group_id:3,origin_time_ns:5000,deposited_energy_keV:4,final_induced_keV:-4,readout:null},{record_kind:'decay',event_id:8,deposited_energy_keV:0,pulse_count:0,zero_deposit:true}],traces:[]};$('event').value='7';showEvent(1);`);
+  const feedbackResult=run('result'),feedbackSaved=run('JSON.stringify(selectedRun)'),feedbackPlan=get('run-plan').textContent,feedbackRecord=get('event-record').textContent;
+  const feedbackButton=get('check');feedbackButton.tagName='button';feedbackButton.focus();
+  assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/Run unavailable.*Check plan for the current setup/);
+  const feedbackCheck=feedbackButton.pressKey('Enter');
+  assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/current action is pending.*Wait/);
+  assert.equal(run('feedbackCalls.at(-1).path'),'/api/workflow/check-batches');assert.equal(run('feedbackCalls.at(-1).body.request.selection.detector'),'SAP22');
+  const pendingFeedbackCalls=run('feedbackCalls.length');await feedbackButton.click();await run("$('start').onclick()");assert.equal(run('feedbackCalls.length'),pendingFeedbackCalls);
+  // Model the browser moving focus to body when a focused button disables.
+  fixtureDocument.activeElement=fixtureDocument.body;
+  run("const feedbackReply=()=>({kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:true,check_id:'feedback-checked',resolved:{selection:config(),batching:{batch_count:1}}});feedbackResolve(feedbackReply());");await feedbackCheck;
+  assert.equal(fixtureDocument.activeElement,feedbackButton);assert.equal(get('start').disabled,false);assert.match(get('run-readiness').textContent,/Ready to Run with the checked next-run configuration/);
+  assert.match(get('notice').textContent,/Exact count checked.*Run uses this checked plan/);
+  const readyWrites=get('run-readiness').textWrites;await run('poll()');await run('poll()');assert.equal(get('run-readiness').textWrites,readyWrites);
+  get('name').value='feedback-next-edited';run('invalidate();');
+  assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);assert.match(get('notice').textContent,/earlier checked plan is cleared.*Check plan again/);assert.doesNotMatch(get('notice').textContent,/Run uses this checked plan/);
+  assert.match(get('run-readiness').textContent,/editing settings clears any earlier check/);
+  assert.equal(run('result'),feedbackResult);assert.equal(run('JSON.stringify(selectedRun)'),feedbackSaved);assert.equal(get('run-plan').textContent,feedbackPlan);assert.equal(get('event-record').textContent,feedbackRecord);assert.equal(get('event').value,'7');assert.equal(get('group').value,'1');
+  assert.equal(get('result-data').children[0].children[1].children[0].textContent,'-4');assert.equal(get('result-data').children[0].children[2].children[0].textContent,'Unavailable');assert.equal(run('result.records.length'),3);assert.equal(run('result.records[2].zero_deposit'),true);
+  feedbackButton.focus();const movedFocusCheck=feedbackButton.pressKey('Enter');get('event').focus();run('feedbackResolve(feedbackReply());');await movedFocusCheck;
+  assert.equal(fixtureDocument.activeElement,get('event'));assert.equal(get('start').disabled,false);
+  const feedbackVerify=findButton(get('runs').children[0],'Verify saved execution');await feedbackVerify.click();
+  assert.match(get('notice').textContent,/Saved verification fixture error/);assert.equal(get('notice').className,'notice error');assert.ok(run('checked'));
+  await run('poll()');await run('poll()');get('setting-gain').value='4';run('invalidate();');
+  assert.equal(get('notice').textContent,'Saved verification fixture error');assert.equal(get('notice').className,'notice error');assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
+  const failedFeedbackCheck=run("$('check').onclick()");run("feedbackReject(Error('Current Check fixture error'));");await failedFeedbackCheck;
+  await run('poll()');await run('poll()');assert.equal(get('notice').textContent,'Current Check fixture error');assert.equal(get('notice').className,'notice error');assert.equal(run('checked'),null);
+  const importFeedbackCheck=run("$('check').onclick()");run('feedbackResolve(feedbackReply());');await importFeedbackCheck;
+  run("$('import').files=[{size:100,text:async()=>JSON.stringify({...config(),extra:true})}];");await run("$('import').onchange()");
+  assert.match(get('notice').textContent,/Configuration fields do not match/);const importFailure=get('notice').textContent;assert.ok(run('checked'));
+  await run('poll()');await run('poll()');get('name').value='feedback-after-import';run('invalidate();');assert.equal(get('notice').textContent,importFailure);assert.equal(get('notice').className,'notice error');assert.equal(get('start').disabled,true);
+  const informationFeedbackCheck=run("$('check').onclick()");run('feedbackResolve(feedbackReply());');await informationFeedbackCheck;
+  run("notice('Saved operation information retained.');");get('name').value='feedback-after-info';run('invalidate();');assert.equal(get('notice').textContent,'Saved operation information retained.');
+  // W1: a recheck clears authorization before an edit. Its old owned success
+  // must still clear immediately, even when the obsolete held request rejects.
+  const retryBaseCheck=run("$('check').onclick()");run('feedbackResolve(feedbackReply());');await retryBaseCheck;
+  assert.match(get('notice').textContent,/Exact count checked.*Run uses this checked plan/);assert.equal(run('noticeIsCheckedPlan'),true);
+  feedbackButton.focus();const rejectedRetryCheck=feedbackButton.pressKey('Enter');
+  assert.equal(run('checked'),null);assert.equal(run('busy'),true);assert.equal(get('start').disabled,true);assert.equal(run('noticeIsCheckedPlan'),true);
+  get('name').value='feedback-held-retry-reject';get('name').focus();run('invalidate();');
+  assert.equal(run('noticeIsCheckedPlan'),false);assert.match(get('notice').textContent,/earlier checked plan is cleared.*Check plan again/);assert.doesNotMatch(get('notice').textContent,/Run uses this checked plan/);assert.equal(get('start').disabled,true);
+  const clearedRetryNotice=get('notice').textContent;run("feedbackReject(Error('Obsolete held Check rejection'));");await rejectedRetryCheck;await run('poll()');
+  assert.equal(run('checked'),null);assert.equal(run('busy'),false);assert.equal(get('start').disabled,true);assert.equal(get('notice').textContent,clearedRetryNotice);assert.equal(fixtureDocument.activeElement,get('name'));
+  assert.match(get('run-readiness').textContent,/Run unavailable.*Check plan for the current setup/);
+  const successRetryBaseCheck=run("$('check').onclick()");run('feedbackResolve(feedbackReply());');await successRetryBaseCheck;
+  assert.equal(get('start').disabled,false);feedbackButton.focus();const successfulRetryCheck=feedbackButton.pressKey('Enter');run('const staleFeedbackReply=feedbackReply();');
+  get('name').value='feedback-held-retry-success';get('name').focus();run('invalidate();');assert.doesNotMatch(get('notice').textContent,/Run uses this checked plan/);assert.equal(run('noticeIsCheckedPlan'),false);
+  run('feedbackResolve(staleFeedbackReply);');await successfulRetryCheck;await run('poll()');
+  assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);assert.match(get('notice').textContent,/Selection changed while Check was pending/);assert.doesNotMatch(get('notice').textContent,/Run uses this checked plan/);assert.equal(fixtureDocument.activeElement,get('name'));
+  console.log('W1 repeated Check: held edit immediately clears old owned success; obsolete rejection and successful reply retain disabled Run, generation fences and current name focus; poll never revives the old notice.');
+  const activeFeedbackCheck=run("$('check').onclick()");run('feedbackResolve(feedbackReply());');await activeFeedbackCheck;
+  run('feedbackState={...feedbackState,busy:true};');await run('poll()');assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/existing work is active or needs inspection.*Review Runs/);
+  const activeFeedbackCalls=run('feedbackCalls.length');await run("$('start').onclick()");await run("$('check').onclick()");assert.equal(run('feedbackCalls.length'),activeFeedbackCalls);
+  run('feedbackState={...feedbackState,busy:false};');await run('poll()');assert.equal(get('start').disabled,false);assert.match(get('run-readiness').textContent,/Ready to Run/);
+  get('detector').value='large-model';run('detectorChanged();');assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/View only.*Radius 40 mm.*larger cryostat.*compute-supported/);
+  get('detector').value='SAP22';run('detectorChanged();');run('currentSource().available=false;controls();');assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/combination is unavailable.*compute-supported/);
+  run('delete currentSource().available;catalog.cryostats[0].available=false;controls();');assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/combination is unavailable/);run('catalog.cryostats[0].available=true;controls();');
+  // An edited view-only choice cannot receive focus when a stale Check ends.
+  feedbackButton.focus();const revokedFeedbackCheck=feedbackButton.pressKey('Enter');get('detector').value='large-model';run('detectorChanged();');fixtureDocument.activeElement=fixtureDocument.body;
+  run('feedbackResolve(feedbackReply());');await revokedFeedbackCheck;assert.equal(feedbackButton.disabled,true);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);assert.equal(run('checked'),null);
+  get('detector').value='SAP22';run('detectorChanged();');
+  console.log('Desktop readiness: normal Check/Enter, edit invalidation, unchanged status writes, action/Check/import error ownership, moved/revoked focus, active/view-only/unavailable gates and exact saved settings/signs/nulls/zeros passed.');
   // Every Download requests exact bytes; viewing keeps the default route.
   run("let artifactRequests=[];fetch=async(url,options)=>{artifactRequests.push({url,options});return {ok:true,blob:async()=>({})};};");
   await run("download('fixture','response/summary.html')");
@@ -520,6 +595,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   get('angle-deg').value='30';run('invalidate();');
   const pendingAngle=run("$('check').onclick()");run("resolveAngleCheck({kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:false,resolved:{selection:config(),source_pose:sourcePose30,source_position_global_mm:sourcePose30.position_global_mm,batching:{batch_count:1}}});");await pendingAngle;
   assert.equal(get('start').disabled,true);assert.equal(run('checked.execution_enabled'),false);
+  assert.match(get('run-readiness').textContent,/checked plan does not authorize execution.*nonzero-angle acceptance is pending.*Check plan again/);
   assert.match(get('notice').textContent,/Nonzero-angle execution is unavailable/);
   assert.match(get('source-pose-preview').textContent,/angle 30°/);
   const callsBeforePendingStart=run('angleCheckRequests.length');await run("$('start').onclick()");assert.equal(run('angleCheckRequests.length'),callsBeforePendingStart);

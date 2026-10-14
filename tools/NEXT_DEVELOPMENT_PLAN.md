@@ -224,17 +224,21 @@ public saved numerical/media/model files remain unchanged.
 | Delivered / UI-PRIMARY-CONTRAST | Ordinary16px white primary-button text now uses independent #007d8a background/border, contrast4.883219:1 instead of4.137284:1, exceeding the ordinary-text4.5:1 requirement. Brand accent, disabled opacity, focus rule, categorical colors and layout remain. | Actual1280x720 IAB computed enabled style and Tab focus passed; setting edit naturally disables Run. Protected synthetic Check/setup fixture activated no execution/download. Reuse `.local/desktop-readiness-v1/COMPLETE.json`. |
 | Delivered / UI-ANGLE-READINESS | Check environment uses the neutral Angular source geometry exporter and build receipt label; stale preview/execution-pending suffix removed. | Existing readiness test and8 exact baseline/current output cases passed; all other fields, file/execution gates and accepted/pending notes stay identical. Real desktop synthetic label display passed. Two presentation literals only; earlier substantive reviews reused. |
 
-**Desktop interface improvements after core fixes:** improve visible blocking
-reasons and specific next actions, keep the selected run and effective settings
-clear, and add recorded pulse/status hints or an explicit signal-finding filter
-to bare numeric primary options while retaining the full census. A recorded desktop
-starting case after a checked-name edit: Run correctly disables, but the old
-Exact count checked / Run uses this checked plan notice remains. Clear that stale
-feedback while preserving current Check/admission fences. Assess plot
-readability and action placement in actual desktop windows; do not transfer the
-earlier phone-width measurements into desktop defect claims. Keep the existing
-frontend and retained scientific limits. Phone layout/axes/form-density work is
-removed from the active plan; its audit records remain historical.
+**Desktop readiness/context delivered:** Run explains its actual blocking reason
+and next action without changing the original admission predicates. Next-run controls
+and selected saved-run pipeline/exact settings are distinct. Setting edits clear
+owned Check success, including repeated held checks; unrelated errors remain.
+Integrated Node contracts,11 actual desktop synthetic-state cases, one fresh
+W1 held-recheck/edit/stale-rejection/poll case and three scoped AI final rechecks
+passed. See current PROGRESS.md and `.local/desktop-feedback-v1/COMPLETE.json`.
+This is local UI/contract acceptance, not installation or physical validation.
+
+**Remaining desktop interface improvements:** add recorded pulse/status hints or
+an explicit signal-finding filter to bare numeric primary options while retaining
+the full census. Assess plot readability and action placement in actual desktop
+windows. Reuse the existing frontend and retained scientific limits; do not transfer
+earlier phone-width observations into desktop defect claims. Phone layout/axes/
+form-density work is removed from the active plan; historical records remain.
 
 **Later conditional engineering gaps:** add measured resource/storage preflight
 when a real run requires it; preserve lazy serial batching. A small portable
@@ -244,8 +248,9 @@ feedback through the existing guide. Physical CCE/noise/experimental agreement,
 missing measured waveforms and independent off-device backup verification remain
 declared limits, not newly proven software defects or prerequisites for PSD1.
 
-STRICT-01/02/03, primary-button contrast and angle-readiness wording are delivered.
-Next is the planned desktop workflow/context/selection improvement, then PSD.
+STRICT-01/02/03, primary-button contrast, angle wording and desktop readiness/context
+are delivered. Next is full-census primary pulse/status hints and desktop plot/action
+placement, then PSD.
 The initial audit remains historical evidence. Authorized automatic
 continuation implements the remaining ranked desktop corrections and then PSD
 stages; review only verified corrections or newly affected risks, without
@@ -272,8 +277,8 @@ compute bounds and stop before each implementation. Preserve unique failures,
 scientific inputs and original source bindings. Measure science separately from
 coding/review/publication time; do not invent an ETA.
 
-Automatic heartbeat is ACTIVE; this desktop-readiness round received its actual
-2026-10-14T00:36:57.067Z trigger. Subsequent work starts from current PROGRESS, actual Git/remote/
+Automatic heartbeat is ACTIVE; this desktop-feedback round received its actual
+2026-10-14T01:06:57.533Z trigger. Subsequent work starts from current PROGRESS, actual Git/remote/
 processes, terminal receipts and the owned lease; never replay completed work
 after a chat failure. Existing publication/capability checks remain mandatory
 where applicable. Stop extending scope when all executable authorized work is
