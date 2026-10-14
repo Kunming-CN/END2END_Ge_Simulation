@@ -19,6 +19,11 @@ evidence. It never starts or resumes a simulation and performs no deletion.
   retained failed attempts; preserve their receipts, hashes and original bytes.
   Preserve original archives, compact records, inputs, fields and checkpoints.
 - `.local/runs/`: ordinary launcher runs. Opening a result is not a resume action.
+- `.local/psd-features/<configurationSHA>/bundle`: immutable checked saved full-resolution
+  feature derivatives, with every original primary, exact source/input/profile hashes
+  and selection reasons. Preserve original runs and failed feature attempts. Viewing
+  a feature bundle verifies saved data without starting a simulation/export or
+  establishing detector-physics validation.
 - `.local/reference-docs/`: private documents, including `presentations/`.
 - Other `.local/` folders: retained development, publication and review evidence.
   An unfamiliar name or failed result is never automatic permission to delete it.

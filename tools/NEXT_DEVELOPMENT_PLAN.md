@@ -160,9 +160,21 @@ or global Li/PDE/CCE research a prerequisite for the first engineering example.
 
 | Stage | Concrete inputs and outputs | Necessary acceptance and stop |
 |---|---|---|
-| PSD1: saved-waveform features | One completed small case with full-resolution signed charge data, stable event/deposit identities, endpoint flags, exact electronics/calibration and source hashes. Produce a shared feature export and existing-viewer access to A/E, rise time and linked topology. | Independently recompute selected features with recorded units, polarity, filter, alignment and crossing definitions; preserve every event and selection reason. Stop at one traceable teaching/engineering case. No new radiation/field solve or all-model campaign. |
+| Delivered / PSD1: saved-waveform features | One completed small case with full-resolution signed charge data, stable event/deposit identities, endpoint flags, exact electronics/calibration and source hashes. Produce a shared feature export and existing-viewer access to A/E, rise time and linked topology. | Independently recompute selected features with recorded units, polarity, filter, alignment and crossing definitions; preserve every event and selection reason. Stop at one traceable teaching/engineering case. No new radiation/field solve or all-model campaign. |
 | PSD2: explicit waveform acquisition | After PSD1 acceptance, add a separate versioned waveform-acquisition profile with sampling rate, ADC range/bits, record/trigger window, bandwidth and explicit noise assumptions/seeds. Consume full-resolution signals, with independent injection calibration. | Verify sampling, time origin, clipping/window flags, charge/energy response and uncertainty with bounded injections. Preserve frozen peak-ADC regression and current preamp display. Stop at one reproducible synthetic acquisition example; do not claim a measured hardware model. |
 | PSD3: bounded classifier comparison | After usable waveform export and explicit label/split contracts, compare A/E with a small autoencoder plus classifier. Retain dataset/model/preprocessing hashes and all selection/split records. | On an independent test set compare background survival at the same signal acceptance, with sample counts and uncertainty. Keep variants of one original event in one split; fit preprocessing/calibration only on permitted training/calibration data. Stop at the measured comparison, whether or not machine learning improves it. Real-data performance requires actual recorded waveforms. |
+
+**PSD1 delivered:** one shared full-census JSON/CSV extractor, declared signed
+10ns current/rise/topology profile and lazy existing Control access are tested.
+All500 primaries/496zeros/4groups and full native signals/calibration/identities
+remain. The four actual groups are ineligible (cap/incomplete/tail reasons), so
+canonical A/A-over-E/rise stay null and observations remain provisional. Original-
+CSV math/BFS/lossless500 acceptance,15synthetic/7focused HTTP/controller/finalNode,
+10actual desktop observations and two scoped plus a NEW blind third AI review/
+exchange passed. This accepts feature traceability, not classifier/hardware/
+physical accuracy. See current PROGRESS and .local/psd-features-v1/COMPLETE.json.
+CSV nested records require explicit field capacity; strict future source updates
+need preserved derivative/version decisions. Stop PSD1 expansion; proceed PSD2.
 
 **Feature and label integrity:** define A as a declared filtered current-peak
 observable and E as independently calibrated reconstructed energy; keep truth
@@ -256,7 +268,7 @@ declared limits, not newly proven software defects or prerequisites for PSD1.
 
 STRICT-01/02/03, primary-button contrast, angle wording and desktop readiness/context
 are delivered, along with full-census primary hints and readable desktop plots.
-Next is PSD1 saved full-resolution waveform features, then PSD2 and PSD3.
+PSD1 saved full-resolution waveform features are delivered; next is PSD2, then PSD3.
 The initial audit remains historical evidence. Authorized automatic
 continuation implements the remaining ranked desktop corrections and then PSD
 stages; review only verified corrections or newly affected risks, without
@@ -283,8 +295,8 @@ compute bounds and stop before each implementation. Preserve unique failures,
 scientific inputs and original source bindings. Measure science separately from
 coding/review/publication time; do not invent an ETA.
 
-Automatic heartbeat is ACTIVE; this desktop-primary-hints round received its actual
-2026-10-14T01:53:58.259Z trigger. Subsequent work starts from current PROGRESS, actual Git/remote/
+Automatic heartbeat is ACTIVE; this PSD1 round received its actual
+2026-10-14T02:59:59.177Z trigger. Subsequent work starts from current PROGRESS, actual Git/remote/
 processes, terminal receipts and the owned lease; never replay completed work
 after a chat failure. Existing publication/capability checks remain mandatory
 where applicable. Stop extending scope when all executable authorized work is

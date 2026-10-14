@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 from contextlib import contextmanager
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -30,6 +31,11 @@ CATALOG_KIND='local_catalog_workflow_v1'
 def catalog_backend():
     import catalog_workflow
     return catalog_workflow
+
+
+def psd_backend():
+    import psd_features
+    return psd_features
 
 
 class WorkflowController:
@@ -486,6 +492,41 @@ class WorkflowController:
             W.require(job and self._batch_job(job) and job['status'] in (*W.TERMINAL,'stopped'),'Use a sealed owned event batch.')
             reply=B.focused_waveforms(name,batch_index,primary_id,group_id,self.root)
             W.require(reply.get('configuration_sha256')==job['plan']['configuration_sha256'],'Saved waveform differs from the owned plan.')
+            return reply
+
+    def features(self,name,primary_id,group_id=None):
+        """Verify a pre-exported derivative; no simulation, export or write on GET."""
+        with self._lock:
+            W.run_path(name,self.root)
+            W.require(type(primary_id) is int and 0<=primary_id<=9007199254740991 and
+                      (group_id is None or type(group_id) is int and 0<=group_id<=9007199254740991),
+                      'Invalid exact feature identity.')
+            job=next((j for j in self._jobs if j['name']==name),None)
+            W.require(job and job['status'] in W.TERMINAL,'Use a completed owned run for saved features.')
+            config_sha=job['plan']['configuration_sha256']
+            W.require(type(config_sha) is str and re.fullmatch('[0-9a-f]{64}',config_sha),
+                      'Saved feature configuration identity is unsupported.')
+            backend=psd_backend()
+            directory=safe_path(self.root,'.local/psd-features/'+config_sha+'/bundle')
+            W.require(Path(backend.default_bundle_dir(self.root,config_sha))==directory,
+                      'Saved feature directory differs from the canonical configuration.')
+            reply={'kind':'local_saved_psd_features_v1','name':name,'configuration_sha256':config_sha,
+                   'primary_id':primary_id,'group_id':group_id,'available':False,
+                   'profile_sha256':None,'bundle_sha256':None,
+                   'note':'Saved features are unavailable for this run. Opening this panel does not export features or start a simulation.'}
+            if not directory.is_dir():return reply
+            try:
+                bundle=backend.load_bundle(directory,expected_config_sha256=config_sha,root=self.root,verify_inputs=True)
+                record=backend.get_record(bundle,primary_id,group_id)
+            except (OSError,ValueError,KeyError,TypeError,ControlError) as error:
+                raise ControlError('Saved features could not be verified for this configuration and selection.') from error
+            provenance=bundle['provenance']
+            W.require(provenance['run_ref']==W.BASE+'/'+name,
+                      'Saved feature inputs belong to another saved run.')
+            reply.update(available=True,profile_sha256=provenance['profile_sha256'],
+                         bundle_sha256=hashlib.sha256(backend.encoded(bundle)).hexdigest(),profile=bundle['profile'],
+                         record=record,provenance=provenance,counts=bundle['counts'],
+                         note='Saved full-resolution waveform derivation. Feature eligibility is separate from readout acceptance and physical validation.')
             return reply
 
     def waveforms(self,name,primary_id,group_id):

@@ -45,10 +45,30 @@ keep the one Verify operation stable across its mutually exclusive labels.
 Current visible input, surviving keyboard focus and pending requests must stay
 consistent through status changes. Browser fixtures are UI evidence, not science.
 
+Saved waveform features belong to `tools/psd_features.py` and its versioned
+`psd_feature_profile.json`, tested by `test_psd_features.py`. After source writers
+have stopped, the advanced saved-data command
+`python tools/psd_features.py --run .local/runs/<saved-name>` exports one immutable
+full-census JSON/CSV bundle to `.local/psd-features/<configurationSHA>/bundle`.
+An existing output is refused; retain failed derivatives and choose an explicit
+fresh `--output` for a separately recorded analysis. Control's selected-event
+Saved waveform features panel reads that checked bundle lazily; opening it
+checks saved-data integrity and starts no simulation or export. Full-resolution
+signed native charge is the feature input; bounded display traces are not. Canonical unavailable features
+stay null with selection reasons, while provisional observations, all original
+identities/deposits/endpoints, calibration and hashes remain visible. Spatial
+clusters are threshold-dependent step-position proxies, not SS/MS truth.
+The CSV keeps a full `record_json` field; Python readers must explicitly set
+`csv.field_size_limit` to a bounded size sufficient for that saved file. Use the
+JSON for full nested records and retain all values. Strict extractor-source
+binding requires an explicit preserved new derivative after a source change;
+never overwrite or silently rebaseline an older bundle.
+
 ## Source ownership
 
 | Area | Edit these sources |
 |---|---|
+| Saved full-resolution waveform features | `tools/psd_features.py`, `psd_feature_profile.json`, `test_psd_features.py`; protected read-only Control integration in `local_ui.py`, `local_ui_workflow_jobs.py`, `local_workflow.html/js`. Canonical bundles stay under `.local/psd-features/`; no waveform ADC or classifier claim. |
 | Home, hubs and navigation | `tools/site_restructure.py`, `site_routes.py`, `site_previews.py`; Results / Detectors / Run locally / Methods share fixed ownership, breadcrumbs and context-aware dataset views. Saved-result anchors `#teaching`, `#gamma`, `#tenk`, `#million` keep different studies distinct. |
 | Search descriptions, canonical landing URLs and sitemap | `tools/site_discovery.py` selects indexable formal routes from `site_routes.py`; generated only by `build_site.py` |
 | Detector overview/gallery/technical levels | `tools/site_detector_pages.py` |

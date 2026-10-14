@@ -790,5 +790,78 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(get('analysis-filter').textContent,/evtid = 9999 in batch 1.*global_initial_id = 19999/);
   assert.equal(run('JSON.stringify(result.page)'),run('hintPageBefore'));
   assert.ok(JSON.parse(run('JSON.stringify(hintPageRequests)')).every(path=>/workflow\/events\?.*batch=1&offset=9998&limit=100/.test(path)));
-  console.log('Browser full-census primary hints and saved refresh/focus, source-angle/legacy Gamma, exact counts, checked/saved pose, batch Stop/Resume selection, paged boundary IDs/null/signs, stale Check/report/page/poll/focus, four saved plots and recovery contracts passed.');
+  // Saved PSD1 features remain lazy, tied to exact global/group identities and
+  // source/profile/bundle hashes. Invalid/capped candidates are separate from
+  // canonical null features; signed values, zeros and the census stay intact.
+  assert.match(html,/<details id="feature-panel"><summary>Saved waveform features and deposition topology<\/summary>/);
+  assert.match(html,/existing verified export; opening it verifies saved data without starting a simulation or export/);
+  run(`const featureJob={...batchJob,name:'feature-saved',configuration_sha256:'a'.repeat(64)};
+    const featureRows=[{record_kind:'decay',global_initial_id:371,event_id:121,batch_index:1,local_initial_id:121,pulse_count:1,deposited_energy_keV:4},
+      {record_kind:'pulse',global_initial_id:371,event_id:121,batch_index:1,local_initial_id:121,group_id:0,origin_time_ns:42,deposited_energy_keV:4,final_induced_keV:-.003,readout:{accepted:true,reconstructed_energy_keV:3.9}},
+      {record_kind:'decay',global_initial_id:372,event_id:122,batch_index:1,local_initial_id:122,pulse_count:0,deposited_energy_keV:0,zero_deposit:true}];
+    const featureRowsBefore=JSON.stringify(featureRows),featureRequests=[];
+    const featureGroup={global_initial_id:371,event_id:121,batch_index:1,local_initial_id:121,group_id:0,origin_time_ns:42,truth_Edep_keV:4,Erec_keV:3.9,selection:{valid:false,reasons:['native_step_limit','incomplete_endpoint']},features:{A_nA:null,A_over_E_nA_per_keV:null,charge_rise_10_90_ns:null},observed:{signed_filtered_current_peak_nA:-.003,native_signed_current_at_peak_nA:-.003,peak_time_since_origin_ns:12,signed_charge_change_keV:-.004,t10_ns:null,t90_ns:null,charge_rise_10_90_ns:null,sample_count:5001,flags:['nonpositive_signed_observed_span']},deposits:[{raw_row_index:7,energy_keV:4,position_mm:[1,2,3]}],endpoints:[{raw_row_index:7,endpoint:{step_limit_reached:true}}],saved_scalar:{transport_flags:{step_limits:1},readout:{accepted:true,reconstructed_energy_keV:3.9}},raw_row_indices:[7],topology:{cluster_count:2,nominal_threshold_mm:1,proxy_label:'multi_point_cluster_proxy',limitation:'Spatial step positions are a proxy only.',sensitivity:[{threshold_mm:.5,cluster_count:3},{threshold_mm:1,cluster_count:2},{threshold_mm:2,cluster_count:1}]}};
+    const featureZero={global_initial_id:372,event_id:122,batch_index:1,local_initial_id:122,truth_Edep_keV:0,Erec_keV:null,pulse_groups:[],selection:{valid:false,reasons:['zero_deposit']}};
+    function featureReply(id=371,group=0,record=featureGroup){return {kind:'local_saved_psd_features_v1',name:featureJob.name,configuration_sha256:featureJob.configuration_sha256,primary_id:id,group_id:group,available:true,profile_sha256:'b'.repeat(64),bundle_sha256:'c'.repeat(64),profile:{kind:'saved_waveform_psd_profile_v1',schema_version:1,name:'signed-current-10ns-observed-charge-v1',polarity:1,current_filter:{width_ns:10},analysis_window_ns:[0,10000]},record,counts:{primaries:500,pulse_groups:4,selected_groups:0},provenance:{profile_sha256:'b'.repeat(64),run_ref:'.local/runs/feature-saved'}};}
+    api=async path=>{featureRequests.push(path);return featureReply();};
+    $('feature-panel').open=false;showRun(featureJob);result={job:featureJob,records:featureRows,traces:[]};$('event').value='371';showEvent(1);`);
+  assert.equal(run('featureRequests.length'),0);
+  get('feature-panel').open=true;await run('loadFeatures()');
+  assert.match(run('featureRequests[0]'),/workflow\/features\?name=feature-saved&primary=371&group=0$/);
+  assert.match(get('feature-status').textContent,/primary 371 · group 0.*selection invalid/);
+  const featureText=n=>String(n.textContent||'')+' '+n.children.map(featureText).join(' ');
+  assert.match(featureText(get('feature-content')),/native_step_limit · incomplete_endpoint/);
+  assert.match(featureText(get('feature-content')),/Provisional observed signed waveform measurements/);
+  assert.match(featureText(get('feature-content')),/A\/E · nA\/keV Unavailable/);
+  assert.match(featureText(get('feature-content')),/Filtered current peak · declared polarity · nA -0\.003/);
+  assert.match(featureText(get('feature-content')),/0\.5 mm → 3 clusters · 1 mm → 2 clusters · 2 mm → 1 clusters/);
+  assert.match(featureText(get('feature-content')),/position_mm.*1,.*2,.*3/s);
+  assert.match(featureText(get('feature-content')),/not physical single-site\/multi-site truth/);
+  assert.match(featureText(get('feature-content')),/analysis 0…10000 ns since group origin/);
+  assert.equal(run('JSON.stringify(featureRows)'),run('featureRowsBefore'));
+  assert.equal(get('event').value,'371');assert.equal(get('group').value,'1');
+  run(`api=async path=>{featureRequests.push(path);return featureReply(372,null,featureZero);};$('event').value='372';showEvent();`);
+  await Promise.resolve();await Promise.resolve();
+  assert.match(run('featureRequests.at(-1)'),/primary=372$/);assert.doesNotMatch(run('featureRequests.at(-1)'),/group=/);
+  assert.match(featureText(get('feature-content')),/zero_deposit.*Truth Edep · keV 0.*Saved calibrated Erec · keV Unavailable/s);
+  assert.match(featureText(get('feature-content')),/no saved pulse group/);
+  assert.doesNotMatch(featureText(get('feature-content')),/Filtered current peak · declared polarity/);
+  run(`api=async()=>({kind:'local_saved_psd_features_v1',name:featureJob.name,configuration_sha256:featureJob.configuration_sha256,primary_id:372,group_id:null,available:false,profile_sha256:null,bundle_sha256:null,note:'Saved features are unavailable. No calculation runs.'});`);
+  await run('loadFeatures()');assert.equal(get('feature-content').children.length,0);
+  assert.equal(get('feature-status').textContent,'Saved features are unavailable. No calculation runs.');
+  // A genuine native failure retains null observations, never a zero current.
+  run(`const failedFeature={...featureGroup,selection:{valid:false,reasons:['native_transport_failed','readout_unavailable','full_signal_unavailable']},Erec_keV:null,observed:null};api=async()=>featureReply(371,0,failedFeature);$('event').value='371';showEvent(1);`);
+  await Promise.resolve();await Promise.resolve();
+  assert.match(featureText(get('feature-content')),/native_transport_failed.*readout_unavailable.*full_signal_unavailable/);
+  assert.match(featureText(get('feature-content')),/Filtered current peak · declared polarity · nA Unavailable/);
+  assert.doesNotMatch(featureText(get('feature-content')),/Filtered current peak · declared polarity · nA 0/);
+  for(const mutation of ["primary_id:121","group_id:1","configuration_sha256:'d'.repeat(64)","profile_sha256:'d'.repeat(64)","bundle_sha256:'d'.repeat(64)"]){
+    assert.throws(()=>run(`featureIdentity({...featureReply(),${mutation}},featureSelection())`),/differ|changed/);
+  }
+  for(const mutation of ["global_initial_id:121","event_id:371","batch_index:0","local_initial_id:371","origin_time_ns:43"]){
+    assert.throws(()=>run(`featureIdentity(featureReply(371,0,{...featureGroup,${mutation}}),featureSelection())`),/differ/);
+  }
+  assert.throws(()=>run('featureIdentity(featureReply(371,0,{...featureGroup,features:{...featureGroup.features,A_nA:0}}),featureSelection())'),/Invalid saved selection/);
+  // Polarity-oriented A candidates and their original signed filtered value
+  // have different labels; a -1 profile never silently rectifies the signal.
+  run(`const inverseReply=featureReply(371,0,{...featureGroup,observed:{...featureGroup.observed,signed_filtered_current_peak_nA:.003,native_signed_current_at_peak_nA:-.003,declared_polarity:-1}});inverseReply.profile={...inverseReply.profile,polarity:-1};$('feature-content').replaceChildren();renderFeatures(inverseReply,featureSelection());`);
+  assert.match(featureText(get('feature-content')),/Filtered current peak · declared polarity · nA 0\.003/);
+  assert.match(featureText(get('feature-content')),/Filtered current at peak · original sign · nA -0\.003/);
+  assert.match(featureText(get('feature-content')),/signed polarity -1/);
+  // An old group response cannot replace a newer zero-primary response, a
+  // different run, or a panel that the student closed while GET was pending.
+  run(`let featurePending=[];api=path=>new Promise(resolve=>featurePending.push({path,resolve}));`);
+  const oldFeature=run('loadFeatures()');
+  get('event').value='372';run('showEvent();featurePending[1].resolve(featureReply(372,null,featureZero));');
+  await Promise.resolve();await Promise.resolve();
+  run('featurePending[0].resolve(featureReply());');await oldFeature;
+  assert.match(get('feature-status').textContent,/Saved primary 372 · primary summary/);
+  const closedFeature=run('loadFeatures()');get('feature-panel').open=false;get('feature-panel').ontoggle();
+  run('featurePending[2].resolve(featureReply(372,null,featureZero));');await closedFeature;
+  assert.equal(get('feature-content').children.length,0);
+  get('feature-panel').open=true;const anotherRunFeature=run('loadFeatures()');
+  run('showRun(savedJob);featurePending[3].resolve(featureReply(372,null,featureZero));');await anotherRunFeature;
+  assert.equal(get('feature-content').children.length,0);assert.equal(run('result'),null);
+  get('feature-panel').open=false;get('feature-panel').ontoggle();
+  console.log('Browser saved PSD1 lazy eligibility/null/sign/topology/hash/selection/stale-response contracts, full-census hints and saved refresh/focus, source-angle/legacy Gamma, exact counts, checked/saved pose, batch Stop/Resume selection, paged boundary IDs/null/signs, stale Check/report/page/poll/focus, four saved plots and recovery contracts passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

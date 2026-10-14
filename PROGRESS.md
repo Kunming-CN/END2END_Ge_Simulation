@@ -1,90 +1,108 @@
 # Current handoff
 
 Updated: 2026-10-13. Read this before starting work.
-Immutable prior desktop-readiness/context handoff:
-[9a4966f4](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/9a4966f47cd43bedbd949f64808a3c1822377517/PROGRESS.md).
-It links STRICT01/02/03, contrast/angle wording, older audits and permanent science.
+Immutable prior delivered desktop handoff:
+[5aac3ccc](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/5aac3cccc3add0110b2bf56f2d556beb47971469/PROGRESS.md).
+It links STRICT01/02/03, desktop controls/contrast/plots, audits and permanent science.
 
 ## Authorized automatic continuation
 
 The owner authorized all executable tools/NEXT_DEVELOPMENT_PLAN.md work without
 reminders or per-round approval. Existing heartbeat ACTIVE every30minutes; actual
-trigger2026-10-14T01:53:58.259Z. Computer/app must be running. Desktop only;
+trigger2026-10-14T02:59:59.177Z. Computer/app must be running. Desktop only;
 no phone development or acceptance. Inspect exact terminal/source hashes, Git/
 remote, actual processes and ownership before acquiring only from explicit ready
 without another holder. Never duplicate workers/science or remove unknown locks.
 
-## Full-census hints and readable desktop plots delivered
+## PSD1 saved full-resolution feature workflow delivered
 
-Standalone and batch primary options retain every original ID, order, value,
-default waveform choice and current primary/group selection. Shared read-only
-helpers add concise recorded/reported group and readout hints: zero deposition,
-known zero input, native failure, accepted/rejected/saturated/mixed or unavailable/
-unknown readout. Scalar acceptance or a saved-trace flag alone never invents a
-waveform. Readout acceptance is not complete collection or physical validation.
-Raw identities, deposits, signs/nulls/zeros, flags, settings and calibration remain.
+One shared exporter/reader and versioned signed-current profile add a lazy
+selected-primary/group feature panel to existing Control. The advanced command
+`python tools/psd_features.py --run .local/runs/<saved-name>` uses the existing
+configured Python and defaults to .local/psd-features/<configurationSHA>/bundle.
+It refuses an existing output; separate analyses need explicit fresh output.
+Control requires an owned completed saved job and checks its exact configuration/
+original provenance. Opening the panel verifies saved records, without simulation,
+calibration, export, registry writes or execution admission. Missing bundles have
+an unavailable explanation. Run/page/primary/group/local/origin/profile/bundle
+identities and stale generations protect the current selection.
 
-Actual1280x720 desktop SVGs were390.5px wide in two columns;10-unit ticks in the
-unchanged560-unit viewBox scaled to6.973px. One fullwidth column now gives797px
-SVGs/14.232px ticks, no horizontal overflow. All four plot renderers, original
-samples/current bins/units/peak and camera rules are byte-identical. Eight camera
-controls and keyboard full-window/focus actions remain. A short explanation says
-all primaries stay selectable and hints describe saved records. Desktop uses
-vertical scrolling for the four readable panels; no phone acceptance was done.
+The completed AK01/Cs137500 engineering case retains all500 original primaries,
+496zeros,4groups and20008 signed native charge samples (5002/group,2ns spacing,
+0..10002ns). JSON/CSV retain original truth/scalars/deposits/endpoints, global and
+local identities, times, signs/nulls/zeros, calibration/settings/software/seeds.
+A uses fixed +1 polarity and10ns centered physical-width current averaging on
+complete support within0..10000ns. Current is exact adjacent signed charge change
+converted using original2.95eV ionisation energy. Rise uses first linear upward
+10/90 crossings of the signed observed window span. The raw10002ns endpoint is
+retained separately. Erec stays from the separate500keV injection calibration;
+truth Edep never sets event gain or replaces the feature denominator.
 
-The integrated Node suite passed once at0.1519148s/v24.19.0. Its JS/test bytes
-remain exact after only the two HTML literals; current corrected HTML passed
-actual browser acceptance. Existing stable focus, stale-generation, current-input,
-shared Verify, source/count/pose and scientific record contracts remain passed.
-Optional real-data suite mode was not run; no broader unchanged tests were repeated.
+All4actual groups have native step limits, incomplete endpoints and possible
+truncated tails despite accepted readout. Canonical A/A-over-E/rise remain null;
+provisional signed observed peaks/rise and original flags are explicit. These
+observations do not prove complete collection or physical resolution. Positive-
+energy detector-local deposition points use inclusive single-link clustering at
+1mm with0.5/1/2mm sensitivity; counts188=3/2/1,203=1/1/1,371=1/1/1,445=2/2/1.
+These are spatial-step proxies, not independently established SS/MS truth.
 
-Corrected actual IAB retained17 observations: four full authentic AK01 pages
-with350 served originals out of its original500/496zeros/4groups; real188/group0
-with all four saved plots and exact metrics; zero100/249/250; raw local0/evtid0
-with global250; keyboard selection/camera and same-run/page/primary/group refresh.
-Separate explicitly SYNTHETIC101 pages kept native-failure null charge/readout,
-rejected signed-0.003, accepted scalar without invented waveform and finalzero.
-Only188 real waveform was frozen: page200's auto-default203 GET was intentionally
-absent/refused, then zero249 and final188 restored. Favicon403 is also retained.
-No POST/Check/execution/recovery/download/export/SaveAs/import action was activated.
-Tabs8/9, services3444/19444 and owned exec sessions53313/38641 closed.
+## Acceptance and retained evidence
 
-Before saved-data derivation, stopped writers and13 source/92 raw pins were
-recorded. Corrected browser reused the identical3,799,860-byte payload; no second
-derivation or simulation. Initial private logger WinError5 aborted one GET; a
-bounded known Windows-sharing-denial retry repaired only that evidence writer.
-Mock recovery/exhaustion/unexpected-error probes passed, with injected denials
-separate. Initial helper/preparation/freeze/request evidence and optional KL01/
-Co60 inspector feasibility failures remain; omitted cases were not altered.
-DOM/locator/receipt/diff-checker harness errors are retained and repaired without
-repeating completed UI or scientific work.
+Writers stopped before source/raw freeze and the ONE actual feature export,
+measured2.0498014s. Existing physics/calibration never reran. Core15synthetic tests,
+7focused protected-HTTP/controller tests and affected finalNode passed. An
+independent original-CSV interval-sum/crossing/BFS checker confirmed every500
+lossless JSON/CSV record, all original maps/flags/settings/calibration and full
+native arrays. Maximum current arithmetic difference4.55e-13nA within declared
+1e-12absolute/5e-12relative tolerances; timing matches with1e-8ns tolerance.
 
-Two scoped independent AI INITIALs then a NEW independent third reviewed the
-same frozen tested milestone; concrete findings were exchanged after initials.
-All three accepted with no verified blocker or material disagreement; initial
-probes/retained evidence were reused after exchange, with no further code changes
-or repeated test/review execution. Vertical scrolling is the readability tradeoff.
-Explicit Sol6.1/Ultra requested; live provider introspection unavailable. These
-are AI source/engineering-UI reviews, not physical or installation certification.
+Actual desktop accepted10observations/6protected featureGETs: lazy closedpanel,
+zero0/100,188summary/group0, global250/local0 across batches, linked30deposits and
+nohorizontaloverflow at default1265x720 document client dimensions. Authentic300
+original page records and one4plot waveform reuse the byte-exact prior saved
+fixture payload; next-run catalog is explicitly SYNTHETIC. This is engineering
+reader/UI acceptance, not a new normal Control registry entry or full500browser
+coverage. Tab10/service28272/exec27431 closed; noPOST/download/SaveAs/science.
 
-Evidence: .local/desktop-primary-hints-v1/COMPLETE.json; source-freeze-1 and
-implementation first-test receipts; browser pre-derivation pins/DERIVATION-BINDING/
-initial and correction freezes/OBSERVATIONS/BROWSER-ACCEPTANCE/screenshots;
-review-physics/workflow/independent INITIAL/CROSS records; root integrity/diff/
-review/archive/Git and owned lease closure. All1694 docs, frozen model/engine files and22
-retained science/request pins plus92 browser raw pins stayed exact. Local source-
-only milestone; no site build, fresh installation or physical validation claimed.
+Two scoped independent Sol6.1/Ultra AI INITIALs then a NEW blind third reviewed
+the frozen tested milestone, followed by concrete exchange. All3 accepted with
+no verified blocker or material disagreement; initial test/pin evidence was
+reused after exchange, with no source correction or extra recheck/test cycle.
+Direction/size/value fit one traceable teaching workflow; stop expanding PSD1.
+Explicit requested model/effort are recorded; live provider introspection was
+unavailable. These are AI reviews, not human/installation/physical certification.
+
+Evidence root .local/psd-features-v1: COMPLETE.json, EXPORT-1.json, source-freeze-1,
+source-freeze-2 (source_pins MAP), ROOT-INTEGRATION/REVIEW-ACCEPTANCE/integrity/diff/
+archive/Git records, implementation/viewer test receipts, input-audit contract/
+ACCEPTANCE-2, browser observations/screenshots and3 INITIAL/CROSS records.
+EXPORT-1 records the exact canonical derivative path and manifest binding.
+Freeze2 changes ONLY a private checker CSV field-capacity repair; production/data
+stay bound to original freeze1. Initial module-discovery/hand-expected-midpoint,
+sandbox socket-denial, wording assertion, CSV131072-limit, root hash-schema and
+review receipt/process-tool failures remain preserved. No numeric gate was
+loosened or source/science changed to force a pass. All1694docs,20models,93simulation,
+50transport,16scenario files,108raw and22retained science/request pins stayed exact.
+Local source-only milestone; no site build or fresh installation claimed.
 
 ## Next bounded milestone and retained limits
 
-Desktop queue is complete at this bounded acceptance. Next is PSD1: one traceable
-saved full-resolution signed-waveform feature export/viewer path, preserving every
-event and reason, independently calibrated Erec versus separate truth Edep,
-declared current filtering/polarity/units/rise crossings and topology rule. Stop at
-one engineering teaching case, no new radiation/field run or classifier claim.
-Then PSD2 explicit synthetic acquisition and PSD3 bounded/inconclusive comparison
-in plan order. November spectrum/I-V/C-V needs complete owner inputs; original
-AK02/SAP22 measured waveforms were not saved. Retain calibrated CCE/resolution/
-experiment/global-convergence limits, immutable campaigns/caches/unique failures,
-all seeds/units/raw inputs and independent calibration. No installation/global
-config/reset use. Stop scope expansion when executable plan finishes.
+PSD1 is delivered; next PSD2: one separate versioned synthetic waveform-acquisition
+profile/export with explicit sampling, ADC/trigger/window/bandwidth/noise/seeds and
+independent injection calibration. Consume full-resolution signals; preserve the
+old peak-ADC/preamp regression, all events/invalid reasons and source bindings.
+Stop at a reproducible engineering acquisition example, no hardware claim.
+Then PSD3 bounded/inconclusive comparison with declared labels/population/splits;
+this actual4-ineligible-group case supplies NO classifier-performance evidence.
+
+Lossless CSV record_json needs explicit parser capacity above Python's131072
+field default; no precision sampling is allowed. Future extractor changes need
+an explicit preserved derivative/version decision. Whole-bundle GET integrity
+verification remains bounded here; optimize only after actual measured user delay.
+November spectrum/I-V/C-V needs complete owner inputs; original AK02/SAP22
+measured waveforms were not saved. Retain CCE/resolution/experiment/global-
+convergence limits, immutable campaigns/caches/unique failures and independent
+calibration. No installation/globalconfig/reset use; no new science campaign.
+Stop scope expansion when executable plan finishes. Terminal/Git/owned lease
+closure is authoritative before the next automatic round; never infer a rerun
+from chat failure or stale handoff.

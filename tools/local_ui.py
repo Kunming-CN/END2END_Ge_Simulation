@@ -254,6 +254,19 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception:
                     return self.reject(503, 'Saved geometry preview is unavailable. Open the public saved geometry.')
                 return self.send_data(200, body, 'image/png')
+            if parts.path == '/api/workflow/features':
+                import re
+                query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
+                if (parts.fragment or set(query) not in ({'name','primary'},{'name','primary','group'}) or
+                        any(len(v)!=1 for v in query.values()) or self.server.workflow_controller is None):
+                    raise ValueError('Invalid exact saved feature request')
+                values={k:v[0] for k,v in query.items()}
+                for key in ('primary','group'):
+                    if key in values and (not re.fullmatch(r'0|[1-9][0-9]{0,15}',values[key]) or int(values[key])>9007199254740991):
+                        raise ValueError('Invalid exact saved feature identity')
+                workflow.run_path(values['name'],self.server.controller.root)
+                return self.send_data(200,self.server.workflow_controller.features(
+                    values['name'],int(values['primary']),int(values['group']) if 'group' in values else None))
             if parts.path in ('/api/workflow/events','/api/workflow/batch-waveforms'):
                 import re
                 query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)

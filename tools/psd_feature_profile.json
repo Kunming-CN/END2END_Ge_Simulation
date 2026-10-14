@@ -1,0 +1,17 @@
+{
+  "kind": "saved_waveform_psd_profile_v1",
+  "schema_version": 1,
+  "name": "signed-current-10ns-observed-charge-v1",
+  "polarity": 1,
+  "analysis_window_ns": [0.0, 10000.0],
+  "current_filter": {"kind": "centered_boxcar_complete_support", "width_ns": 10.0},
+  "rise_fractions": [0.1, 0.9],
+  "topology": {
+    "point_rule": "position_mm",
+    "coordinate_system": "detector_local_mm",
+    "energy_rule": "energy_keV > 0",
+    "cluster_rule": "single_link_euclidean_inclusive",
+    "nominal_threshold_mm": 1.0,
+    "sensitivity_thresholds_mm": [0.5, 1.0, 2.0]
+  }
+}
