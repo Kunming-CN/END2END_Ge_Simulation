@@ -220,7 +220,7 @@ public saved numerical/media/model files remain unchanged.
 |---|---|---|
 | Delivered / STRICT-01 | Proven pre-Popen preparation failures now have an explicit supported recovery; old opaque/Popen-entered failures stay blocked. | Shared journal/lease/persistent reread and CLI name reservation preserve original evidence. Failed Resume needs the original sealed checkpoint; later CLI completion/new stop is settled by explicit Verify and a checked control authority. Initial159 regressions, overlapping72/45 correction runs, Node contracts, desktop fixture acceptance and three independent AI targeted rechecks passed. See current PROGRESS.md and `.local/strict01-recovery-v1/COMPLETE.json`. |
 | Delivered / STRICT-02 | New Am241/Ba133/Co60 JSON schema2/descriptor1 and CSV use the selected source's closed diagnostic windows and `per_emitted_diagnostic_window_photon`. Historical aliases/bytes and Cs137/gamma contracts remain. | Shared export/merge and actual validators check source/window/CSV semantics and truth-derived named counts. Catalog accounting, active-validator wiring and report-only version downgrade findings were corrected. Initial47 Python/84 actual exporter checks; affected10/7 overlapping Python runs,61 actual catalog checks,7 cross-language views and three scoped AI final rechecks passed. Reuse `.local/strict02-normalization-v1/COMPLETE.json`; no physics rerun. |
-| 3 / P2 / STRICT-03 | Every2.5s poll replaces run/recovery controls even for unchanged state. Actual Chrome keyboard focus changed from Show stages to BODY without other page input. | Keep stable keyed controls or skip unchanged renders; preserve focus/caret and pending-action state when replacement is necessary. Check two unchanged polls, meaningful status changes, keyboard activation and stale-selection guards. No duplicated science or wrong-event result was demonstrated. |
+| Delivered / STRICT-03 | Desktop polling retains run/configuration/action controls, focus/caret, expanded receipts and selected primary/group; Continue reads current visible input. Equivalent Verify labels now share one mutually exclusive operation identity. | Node contracts and initial real1280x720 IAB synthetic-state acceptance passed; two endpoints logged18 identical timer polls. Three independent AI initials found the Verify alias; corrective contracts and three scoped final rechecks passed. Reuse unchanged-function browser evidence; final Verify cases are Node/mock, not a latest-hash whole-browser rerun. See `.local/strict03-focus-v1/COMPLETE.json`; no science rerun. |
 | 4 / P2 / UI-PRIMARY-CONTRAST | Enabled primary-button CSS uses ordinary16px white text on `#008a96`, contrast4.137284:1. The observed disabled button is exempt and is not the claimed failure. | Adjust only the enabled UI foreground/background to meet ordinary-text4.5:1; retain visible focus, disabled distinction and categorical detector colors. Check computed enabled styling and a focused real-browser view. See [W3C contrast criterion](https://www.w3.org/TR/WCAG22/#contrast-minimum). |
 | 5 / P3 / UI-ANGLE-READINESS | Check environment still labels the angular exporter "preview; execution pending" while its note and current capability state correctly allow angular execution after Check. | Use neutral file-readiness wording or one flag-derived status. Check accepted/pending source states and preserve backend admission; this is stale wording, not an angular-geometry failure. |
 
@@ -241,8 +241,8 @@ feedback through the existing guide. Physical CCE/noise/experimental agreement,
 missing measured waveforms and independent off-device backup verification remain
 declared limits, not newly proven software defects or prerequisites for PSD1.
 
-STRICT-01 and STRICT-02 are delivered; the next bounded implementation is
-STRICT-03. The initial audit remains historical evidence. Authorized automatic
+STRICT-01, STRICT-02 and STRICT-03 are delivered; the next bounded correction
+is enabled primary-button contrast, followed by angle-readiness wording. The initial audit remains historical evidence. Authorized automatic
 continuation implements the remaining ranked desktop corrections and then PSD
 stages; review only verified corrections or newly affected risks, without
 repeating the full audit or completed science.
@@ -268,7 +268,7 @@ compute bounds and stop before each implementation. Preserve unique failures,
 scientific inputs and original source bindings. Measure science separately from
 coding/review/publication time; do not invent an ETA.
 
-Automatic heartbeat is ACTIVE; this STRICT-02 round received its actual trigger
+Automatic heartbeat is ACTIVE; this STRICT-03 round received its actual trigger
 on2026-10-13. Subsequent work starts from current PROGRESS, actual Git/remote/
 processes, terminal receipts and the owned lease; never replay completed work
 after a chat failure. Existing publication/capability checks remain mandatory

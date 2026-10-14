@@ -39,6 +39,12 @@ intent, failure and recovery records when a later independently verified receipt
 supersedes the restored stopped boundary. These are control records, not science
 completion or calibration evidence.
 
+Polled desktop run/recovery controls belong to `local_workflow.js`, checked by
+`test_local_workflow.js`. Retain controls by run/configuration and logical action;
+keep the one Verify operation stable across its mutually exclusive labels.
+Current visible input, surviving keyboard focus and pending requests must stay
+consistent through status changes. Browser fixtures are UI evidence, not science.
+
 ## Source ownership
 
 | Area | Edit these sources |

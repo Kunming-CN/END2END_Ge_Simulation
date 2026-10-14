@@ -2,12 +2,21 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 class Element {
-  constructor(tag='div'){this.tagName=tag;this.children=[];this.value='';this.checked=false;this.disabled=false;this.textContent='';this.isConnected=true;this.dataset={};this.style={};this.open=false;}
-  append(...nodes){this.children.push(...nodes);if(this.tagName==='select'&&this.children.length&&this.value==='')this.value=this.children[0].value;}
-  replaceChildren(...nodes){this.children=[];this.value='';this.append(...nodes);}
+  constructor(tag='div'){this.tagName=tag;this.children=[];this.parentElement=null;this.rootConnected=false;this.value='';this.checked=false;this.disabled=false;this._textContent='';this.dataset={};this.style={};this.open=false;this.selectionStart=null;this.selectionEnd=null;this.selectionDirection=null;this.focusLosses=0;this.moves=0;}
+  get isConnected(){return this.rootConnected||this.parentElement?.isConnected===true;}
+  get textContent(){return this._textContent;}
+  set textContent(text){for(const n of [...this.children])this.removeChild(n);this._textContent=text;}
+  contains(n){return n===this||this.children.some(child=>child.contains?.(n));}
+  insertBefore(n,before){if(n.parentElement){n.moves++;n.parentElement.removeChild(n);}const index=before===null?this.children.length:this.children.indexOf(before);assert.ok(index>=0);this.children.splice(index,0,n);n.parentElement=this;return n;}
+  removeChild(n){const index=this.children.indexOf(n);assert.ok(index>=0);if(this.isConnected&&n.contains?.(fixtureDocument.activeElement)){fixtureDocument.activeElement.focusLosses++;fixtureDocument.activeElement=fixtureDocument.body;}this.children.splice(index,1);n.parentElement=null;return n;}
+  append(...nodes){for(const n of nodes)this.insertBefore(n,null);if(this.tagName==='select'&&this.children.length&&this.value==='')this.value=this.children[0].value;}
+  replaceChildren(...nodes){for(const n of [...this.children])this.removeChild(n);this._textContent='';this.value='';this.append(...nodes);}
   addEventListener(name,fn){this['on'+name]=fn;}
   scrollIntoView(){}
-  click(){this.clicked=true;}
+  focus(){if(this.isConnected&&!this.disabled)fixtureDocument.activeElement=this;}
+  setSelectionRange(start,end,direction='none'){this.selectionStart=start;this.selectionEnd=end;this.selectionDirection=direction;}
+  click(){if(this.disabled)return;this.clicked=true;return this.onclick?.();}
+  pressKey(key){if(fixtureDocument.activeElement!==this)return;if(this.tagName==='button'&&['Enter',' '].includes(key))return this.click();if(this.tagName==='summary'&&['Enter',' '].includes(key))this.parentElement.open=!this.parentElement.open;}
   setAttribute(name,value){this[name]=value;}
   removeAttribute(name){delete this[name];}
 }
@@ -15,8 +24,10 @@ const svgNs='http://www.w3.org/2000/svg';
 function xml(tag,attrs={},children=[]){return {nodeType:1,localName:tag,prefix:null,namespaceURI:null,attributes:Object.entries(attrs).map(([name,value])=>({name,value,prefix:null})),childNodes:children};}
 const svgDocument={doctype:null,documentElement:xml('svg',{role:'img',viewBox:'0 0 600 205'},[xml('polyline',{points:'55,160 565,35',fill:'none',stroke:'currentColor','stroke-width':'1.7'}),xml('text',{x:'5',y:'35'},[{nodeType:3,nodeValue:'-0.003'}])]),getElementsByTagName:()=>[]};
 class Parser{parseFromString(){return svgDocument;}}
-const elements=new Map(),get=id=>{if(!elements.has(id))elements.set(id,new Element(['cryostat','detector','source','pose','threads','event','group'].includes(id)?'select':'div'));return elements.get(id);};
-const context=vm.createContext({document:{getElementById:get,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>{const n=new Element(tag);n.namespaceURI=ns;return n;},createTextNode:text=>({textContent:text})},DOMParser:Parser,
+const elements=new Map(),get=id=>{if(!elements.has(id)){const find=n=>n.id===id?n:n.children?.map(find).find(Boolean);for(const root of elements.values()){const found=find(root);if(found)return found;}const root=new Element(['cryostat','detector','source','pose','threads','event','group'].includes(id)?'select':'div');root.rootConnected=true;elements.set(id,root);}return elements.get(id);};
+const fixtureDocument={getElementById:get,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>{const n=new Element(tag);n.namespaceURI=ns;return n;},createTextNode:text=>({textContent:text})};
+fixtureDocument.body=new Element('body');fixtureDocument.body.rootConnected=true;fixtureDocument.activeElement=fixtureDocument.body;
+const context=vm.createContext({document:fixtureDocument,DOMParser:Parser,
   location:{hash:'#fixture',pathname:'/'},sessionStorage:{getItem:()=>'',setItem:()=>{}},history:{replaceState:()=>{}},
   URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL:()=>{}},URLSearchParams,TextDecoder,Uint8Array,fetch:()=>new Promise(()=>{}),setInterval:()=>{},setTimeout:()=>{}});
 vm.runInContext(fs.readFileSync(__dirname+'/focused_plots.js','utf8'),context);
@@ -214,6 +225,62 @@ run("renderLegacy({gamma:{jobs:[]}});");assert.equal(get('legacy-notice').hidden
 get('legacy-recovery').open=true;
 run("renderLegacy({gamma:{jobs:[]}});");assert.equal(get('legacy-recovery').open,true);
 run('renderJobs({busy:false,jobs:[]});');
+// STRICT-03: surviving controls retain actual node identity, keyboard focus,
+// typed continuation text/caret and opened details through unchanged polls and
+// meaningful updates. This substitute models removal/reinsertion focus loss;
+// actual browser keyboard/timer acceptance is recorded separately.
+run(`const focusJob={id:'focus-a',name:'focus-a',configuration_sha256:'9'.repeat(64),status:'stopped',can_continue_prefix:true,can_verify_saved_execution:true,selection:{detector:'AK02',source:'cs137_point_decay_v1',primary_count:500},stages:{geometry:{status:'completed',elapsed_seconds:1}}};
+const otherFocusJob={...focusJob,id:'focus-b',name:'focus-b',configuration_sha256:'8'.repeat(64),can_continue_prefix:false};
+const focusState={busy:false,jobs:[otherFocusJob,focusJob]};renderJobs(focusState);`);
+const findButton=(card,label)=>card.children.find(n=>n.tagName==='button'&&n.textContent===label);
+const focusedCard=get('runs').children[0],stagesButton=findButton(focusedCard,'Show stages');
+stagesButton.focus();const unchangedMoves=stagesButton.moves;
+for(let i=0;i<2;i++){
+  run('renderJobs(JSON.parse(JSON.stringify(focusState)));');
+  assert.equal(get('runs').children[0],focusedCard);assert.equal(findButton(focusedCard,'Show stages'),stagesButton);
+  assert.equal(fixtureDocument.activeElement,stagesButton);assert.equal(stagesButton.moves,unchangedMoves);assert.equal(stagesButton.focusLosses,0);
+}
+const stageDetails=focusedCard.children.find(n=>n.tagName==='details'),stageSummary=stageDetails.children[0];
+stageSummary.focus();stageSummary.pressKey(' ');assert.equal(stageDetails.open,true);
+run('renderJobs({...focusState,jobs:[otherFocusJob,{...focusJob,error:"new diagnostic",stages:{geometry:{status:"completed",elapsed_seconds:2}}}]});');
+assert.equal(fixtureDocument.activeElement,stageSummary);assert.equal(stageDetails.open,true);
+assert.equal(stageDetails.children[0],stageSummary);assert.match(stageDetails.children.at(-1).textContent,/"elapsed_seconds": 2/);
+const continuationInput=focusedCard.children.find(n=>n.tagName==='label').children[0];
+continuationInput.value='typed-new-run';continuationInput.oninput();continuationInput.focus();continuationInput.setSelectionRange(2,8,'backward');
+run('renderJobs({...focusState,busy:true,jobs:[otherFocusJob,{...focusJob,status:"dispatch_uncertain",can_recover_launch:true,error:"preparation failure"}]});');
+assert.equal(fixtureDocument.activeElement,continuationInput);assert.equal(continuationInput.value,'typed-new-run');
+assert.deepEqual([continuationInput.selectionStart,continuationInput.selectionEnd,continuationInput.selectionDirection],[2,8,'backward']);
+assert.equal(get('continue-name-focus-a'),continuationInput);assert.equal(get('start').disabled,true);assert.equal(get('check').disabled,true);
+assert.ok(findButton(focusedCard,'Recover not-launched failure'));assert.equal(findButton(focusedCard,'Resume saved settings'),undefined);
+// A list reorder must restore the same surviving input if moving its card
+// detaches focus. Removing an unavailable action must not focus another action.
+run('renderJobs({...focusState,jobs:[focusJob,otherFocusJob]});renderJobs(focusState);');
+assert.equal(get('runs').children[0],focusedCard);assert.equal(fixtureDocument.activeElement,continuationInput);
+assert.deepEqual([continuationInput.selectionStart,continuationInput.selectionEnd,continuationInput.selectionDirection],[2,8,'backward']);
+const removedResume=findButton(focusedCard,'Resume saved settings');removedResume.focus();
+run('renderJobs({...focusState,busy:true,jobs:[otherFocusJob,{...focusJob,status:"running"}]});');
+assert.equal(removedResume.isConnected,false);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);
+assert.ok(findButton(focusedCard,'Stop after current stage'));assert.equal(findButton(focusedCard,'Resume saved settings'),undefined);
+// Polled status/receipt changes never switch the selected saved primary/group
+// or manufacture values for a signed response with unavailable readout.
+run(`showRun(focusJob);result={job:focusJob,records:[{record_kind:'decay',event_id:7,deposited_energy_keV:4,pulse_count:1},{record_kind:'pulse',event_id:7,group_id:3,origin_time_ns:5000,deposited_energy_keV:4,final_induced_keV:-4,readout:null}],traces:[]};$('event').value='7';showEvent(1);`);
+const selectedFocusResult=run('result'),focusRecord=get('event-record').textContent;
+get('event').focus();
+run('renderJobs({...focusState,jobs:[otherFocusJob,{...focusJob,stages:{geometry:{status:"completed",elapsed_seconds:3}}}]});renderLegacy({gamma:{jobs:[]}});');
+assert.equal(run('selectedJob'),'focus-a');assert.equal(run('result'),selectedFocusResult);
+assert.equal(get('event').value,'7');assert.equal(get('group').value,'1');assert.equal(get('event-record').textContent,focusRecord);
+assert.equal(fixtureDocument.activeElement,get('event'));assert.equal(get('result-data').children[0].children[1].children[0].textContent,'-4');
+assert.equal(get('result-data').children[0].children[2].children[0].textContent,'Unavailable');
+run("const legacyFocusState={gamma:{jobs:[{id:'legacy-focus',label:'legacy-focus',status:'verification-required',blocks_new_work:true,can_verify:true}]}};renderLegacy(legacyFocusState);");
+const legacyCard=get('legacy-runs').children[0],legacyVerify=findButton(legacyCard,'Verify saved completion');legacyVerify.focus();
+for(let i=0;i<2;i++){run('renderLegacy(JSON.parse(JSON.stringify(legacyFocusState)));');assert.equal(get('legacy-runs').children[0],legacyCard);assert.equal(findButton(legacyCard,'Verify saved completion'),legacyVerify);assert.equal(fixtureDocument.activeElement,legacyVerify);assert.equal(legacyVerify.moves,0);}
+run('renderLegacy({gamma:{jobs:[{...legacyFocusState.gamma.jobs[0],label:"updated display label",error:{message:"new saved diagnostic"}}]}});');
+assert.equal(fixtureDocument.activeElement,legacyVerify);assert.equal(findButton(legacyCard,'Verify saved completion'),legacyVerify);
+assert.equal(legacyCard.children[0].textContent,'Saved gamma · updated display label');
+run('renderLegacy({gamma:{jobs:[{...legacyFocusState.gamma.jobs[0],can_verify:false}]}});');
+assert.equal(legacyVerify.isConnected,false);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);
+run('renderLegacy({gamma:{jobs:[]}});renderJobs({busy:false,jobs:[]});');
+console.log('STRICT-03 unchanged renders, meaningful updates, reorder, focus/caret, details, current permission and saved primary/group contracts passed.');
 // Editing the next setup never relabels the immutable run whose stages are shown.
 run("const savedJob={name:'saved-sap-gamma',configuration_sha256:'a'.repeat(64),selection:{detector:'SAP22',source:'mono_gamma_662_axis_v1',primary_count:20,electronics:{gain:21}},stages:{geometry:{status:'completed',elapsed_seconds:7.62}}};showRun(savedJob);");
 assert.match(get('saved-source-pose').textContent,/Selected run source pose · legacy fixed pose/);
@@ -339,6 +406,103 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
 
 // A delayed old Check reply cannot enable Start for a changed current selection.
 (async()=>{
+  // Two actual poll() calls, then native-like keyboard activation of the safe
+  // Show stages action. API replacements below are local in-memory fixtures.
+  run(`let strictState=JSON.parse(JSON.stringify(focusState)),strictLegacyState={gamma:{jobs:[]}},strictPollCalls=[];api=async(path,body)=>{strictPollCalls.push({path,body});if(path==='/api/workflow/state')return strictState;if(path==='/api/state')return strictLegacyState;throw Error('Unexpected fixture action');};renderJobs(strictState);`);
+  const pollCard=get('runs').children[0],keyboardStages=findButton(pollCard,'Show stages');keyboardStages.focus();
+  for(let i=0;i<2;i++){await run('poll()');assert.equal(get('runs').children[0],pollCard);assert.equal(findButton(pollCard,'Show stages'),keyboardStages);assert.equal(fixtureDocument.activeElement,keyboardStages);assert.equal(keyboardStages.moves,0);}
+  assert.equal(run('strictPollCalls.length'),4);
+  await keyboardStages.pressKey('Enter');assert.equal(run('selectedJob'),'focus-a');assert.equal(fixtureDocument.activeElement,keyboardStages);assert.equal(keyboardStages.disabled,false);
+  assert.ok(JSON.parse(run('JSON.stringify(strictPollCalls)')).every(c=>['/api/workflow/state','/api/state'].includes(c.path)));
+  run('strictState={...strictState,jobs:[otherFocusJob,{...focusJob,stages:{geometry:{status:"completed",elapsed_seconds:22}},error:"updated receipt"}]};');
+  await run('poll()');await keyboardStages.pressKey(' ');
+  assert.equal(run('selectedRun.stages.geometry.elapsed_seconds'),22);assert.equal(findButton(pollCard,'Show stages'),keyboardStages);
+  // Pending operations cannot be repeated or revived by unrelated polls.
+  // Even disappearance/reappearance of the same logical action stays pending;
+  // the original removed button never transfers focus to the new action node.
+  run(`let strictActionCalls=[],strictResolveAction,strictRejectAction;api=async(path,body)=>{if(path==='/api/workflow/state')return strictState;if(path==='/api/state')return strictLegacyState;strictActionCalls.push({path,body});return new Promise((resolve,reject)=>{strictResolveAction=resolve;strictRejectAction=reject;});};`);
+  const pendingResume=findButton(pollCard,'Resume saved settings');pendingResume.focus();const resumeOperation=pendingResume.pressKey('Enter');
+  assert.equal(pendingResume.disabled,true);assert.equal(run('strictActionCalls.length'),1);
+  run('strictState={...strictState,busy:true};');await run('poll()');await pendingResume.click();
+  assert.equal(pendingResume.disabled,true);assert.equal(run('strictActionCalls.length'),1);assert.equal(get('start').disabled,true);assert.equal(get('check').disabled,true);
+  run('strictState={busy:true,jobs:[otherFocusJob,{...focusJob,status:"running"}]};');await run('poll()');
+  assert.equal(pendingResume.isConnected,false);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);
+  run('strictState={busy:false,jobs:[otherFocusJob,{...focusJob,error:"new polling diagnostic"}]};');await run('poll()');
+  const returnedResume=findButton(pollCard,'Resume saved settings');assert.notEqual(returnedResume,pendingResume);assert.equal(returnedResume.disabled,true);await returnedResume.click();assert.equal(run('strictActionCalls.length'),1);
+  run('strictResolveAction({});');await resumeOperation;assert.equal(returnedResume.disabled,false);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(strictActionCalls[0])')),{path:'/api/workflow/resume',body:{name:'focus-a'}});
+  run('strictState={busy:true,jobs:[otherFocusJob,{...focusJob,status:"dispatch_uncertain",can_recover_launch:true}]};');await run('poll()');
+  const pendingRecover=findButton(pollCard,'Recover not-launched failure');pendingRecover.focus();const recoverOperation=pendingRecover.pressKey('Enter');
+  await run('poll()');await pendingRecover.click();assert.equal(pendingRecover.disabled,true);assert.equal(run('strictActionCalls.length'),2);
+  run('strictState={busy:true,jobs:[otherFocusJob,{...focusJob,status:"dispatch_uncertain",can_recover_launch:false,can_inspect_failure:false}]};');await run('poll()');
+  assert.equal(pendingRecover.isConnected,false);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);assert.ok(findButton(pollCard,'Verify saved execution'));assert.equal(findButton(pollCard,'Verify existing completion'),undefined);
+  run('strictState={busy:false,jobs:[otherFocusJob,{...focusJob,status:"launch_failed",can_verify_saved_execution:false,can_continue_prefix:false}]};strictResolveAction(strictState.jobs[1]);');await recoverOperation;
+  assert.equal(findButton(pollCard,'Recover not-launched failure'),undefined);assert.equal(findButton(pollCard,'Resume saved settings'),undefined);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(strictActionCalls[1])')),{path:'/api/workflow/recover-launch',body:{name:'focus-a'}});
+  for(const [label,stateCode,expectedPath]of [
+    ['Verify saved execution','{...focusJob}','/api/workflow/verify'],
+    ['Verify existing completion','{...focusJob,status:"dispatch_uncertain",can_recover_launch:false,can_verify_saved_execution:false,can_inspect_failure:false}','/api/workflow/verify']
+  ]){
+    run(`strictState={busy:false,jobs:[otherFocusJob,${stateCode}]};`);await run('poll()');const verify=findButton(pollCard,label);assert.ok(verify);verify.focus();const verification=verify.pressKey('Enter'),count=run('strictActionCalls.length');
+    await run('poll()');await run('poll()');assert.equal(findButton(pollCard,label),verify);assert.equal(verify.disabled,true);await verify.click();assert.equal(run('strictActionCalls.length'),count);
+    run('strictResolveAction(strictState.jobs[1]);');await verification;assert.equal(verify.disabled,false);assert.equal(fixtureDocument.activeElement,verify);
+    assert.deepEqual(JSON.parse(run(`JSON.stringify(strictActionCalls[${count-1}])`)),{path:expectedPath,body:{name:'focus-a'}});
+  }
+  // PHYS-01/W1/IND: both Verify presentations operate on the same endpoint and
+  // run identity. They are mutually exclusive and share one pending action key.
+  const verifyLabels=['Verify saved execution','Verify existing completion'];
+  const onlyVerify=(card,label)=>{const present=card.children.filter(n=>n.tagName==='button'&&verifyLabels.includes(n.textContent));assert.equal(present.length,1);assert.equal(present[0].textContent,label);return present[0];};
+  run('strictState={busy:false,jobs:[otherFocusJob,{...focusJob,status:"dispatch_uncertain",can_recover_launch:false,can_verify_saved_execution:true,can_inspect_failure:true}]};');await run('poll()');
+  const savedVerify=onlyVerify(pollCard,'Verify saved execution'),sharedVerifyKey=savedVerify.runActionKey;assert.match(sharedVerifyKey,/\/action:workflow-verify$/);assert.ok(findButton(pollCard,'Inspect denied launch'));
+  savedVerify.focus();const savedVerifyOperation=savedVerify.pressKey('Enter'),savedVerifyCount=run('strictActionCalls.length');
+  for(const savedAllowed of [false,true,false]){
+    run(`strictState.jobs[1]={...strictState.jobs[1],can_verify_saved_execution:${savedAllowed}};`);await run('poll()');
+    const currentVerify=onlyVerify(pollCard,savedAllowed?'Verify saved execution':'Verify existing completion');assert.equal(currentVerify,savedVerify);assert.equal(currentVerify.runActionKey,sharedVerifyKey);assert.equal(currentVerify.disabled,true);
+    await currentVerify.click();await currentVerify.onclick();assert.equal(run('strictActionCalls.length'),savedVerifyCount);assert.ok(findButton(pollCard,'Inspect denied launch'));
+  }
+  run('strictResolveAction(strictState.jobs[1]);');await savedVerifyOperation;assert.equal(onlyVerify(pollCard,'Verify existing completion'),savedVerify);assert.equal(savedVerify.disabled,false);assert.equal(run('pendingActions.size'),0);
+  assert.match(get('notice').textContent,/Saved execution verified/);assert.deepEqual(JSON.parse(run('JSON.stringify(strictActionCalls.at(-1))')),{path:'/api/workflow/verify',body:{name:'focus-a'}});
+  const fallbackVerify=onlyVerify(pollCard,'Verify existing completion');fallbackVerify.focus();const fallbackVerifyOperation=fallbackVerify.pressKey('Enter'),fallbackVerifyCount=run('strictActionCalls.length');
+  for(const savedAllowed of [true,false,true]){
+    run(`strictState.jobs[1]={...strictState.jobs[1],can_verify_saved_execution:${savedAllowed}};`);await run('poll()');
+    const currentVerify=onlyVerify(pollCard,savedAllowed?'Verify saved execution':'Verify existing completion');assert.equal(currentVerify,fallbackVerify);assert.equal(currentVerify.runActionKey,sharedVerifyKey);assert.equal(currentVerify.disabled,true);await currentVerify.click();assert.equal(run('strictActionCalls.length'),fallbackVerifyCount);
+  }
+  run('strictRejectAction(Error("fixture shared Verify rejected"));');await fallbackVerifyOperation;
+  assert.equal(onlyVerify(pollCard,'Verify saved execution'),fallbackVerify);assert.equal(fallbackVerify.disabled,false);assert.equal(run('pendingActions.size'),0);assert.match(get('notice').textContent,/fixture shared Verify rejected/);
+  // Withdrawing both Verify permissions removes that action. Recovery/Inspect
+  // retain their original permissions; a later Verify keeps its pending key
+  // until completion and never inherits focus from the removed action node.
+  fallbackVerify.focus();const revokedVerifyOperation=fallbackVerify.pressKey('Enter'),revokedVerifyCount=run('strictActionCalls.length');
+  run('strictState.jobs[1]={...strictState.jobs[1],can_verify_saved_execution:false,can_recover_launch:true};');await run('poll()');
+  assert.equal(pollCard.children.filter(n=>verifyLabels.includes(n.textContent)).length,0);assert.equal(fallbackVerify.isConnected,false);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);assert.ok(findButton(pollCard,'Recover not-launched failure'));assert.equal(findButton(pollCard,'Inspect denied launch'),undefined);
+  run('strictState.jobs[1]={...strictState.jobs[1],can_recover_launch:false,can_inspect_failure:true};');await run('poll()');
+  const reappearedVerify=onlyVerify(pollCard,'Verify existing completion');assert.notEqual(reappearedVerify,fallbackVerify);assert.equal(reappearedVerify.runActionKey,sharedVerifyKey);assert.equal(reappearedVerify.disabled,true);await reappearedVerify.click();assert.equal(run('strictActionCalls.length'),revokedVerifyCount);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);assert.ok(findButton(pollCard,'Inspect denied launch'));
+  run('strictState.jobs[1]={...strictState.jobs[1],can_recover_launch:true};');await run('poll()');assert.equal(reappearedVerify.isConnected,false);assert.equal(reappearedVerify.disabled,true);
+  run('strictResolveAction(strictState.jobs[1]);');await revokedVerifyOperation;
+  assert.equal(pollCard.children.filter(n=>verifyLabels.includes(n.textContent)).length,0);assert.equal(run('pendingActions.size'),0);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);assert.equal(reappearedVerify.disabled,true);assert.ok(findButton(pollCard,'Recover not-launched failure'));
+  console.log('STRICT-03 shared Verify identity: exclusive presentation, both held label directions, single POST, success/rejection, revocation/reappearance and original Recover/Inspect permissions passed.');
+  run('strictState={busy:false,jobs:[otherFocusJob,focusJob]};');await run('poll()');
+  const disappearingCard=get('runs').children[1],disappearingResume=findButton(disappearingCard,'Resume saved settings');disappearingResume.focus();const disappearingOperation=disappearingResume.pressKey('Enter'),disappearingCount=run('strictActionCalls.length');
+  run('strictState={busy:false,jobs:[focusJob]};');await run('poll()');assert.equal(disappearingCard.isConnected,false);
+  run('strictState={busy:false,jobs:[otherFocusJob,focusJob]};');await run('poll()');
+  const reappearingResume=findButton(get('runs').children[1],'Resume saved settings');assert.notEqual(reappearingResume,disappearingResume);assert.equal(reappearingResume.disabled,true);await reappearingResume.click();assert.equal(run('strictActionCalls.length'),disappearingCount);
+  run('strictResolveAction({});');await disappearingOperation;assert.equal(reappearingResume.disabled,false);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);
+  run('strictState={busy:false,jobs:[otherFocusJob,focusJob]};');await run('poll()');
+  const currentContinuation=pollCard.children.find(n=>n.tagName==='label').children[0];currentContinuation.focus();await run('poll()');
+  currentContinuation.value='after-poll-input';currentContinuation.oninput();currentContinuation.setSelectionRange(4,9);
+  const continueButton=findButton(pollCard,'Continue from verified transport');const continuationOperation=continueButton.click();
+  assert.deepEqual(JSON.parse(run('JSON.stringify(strictActionCalls.at(-1))')),{path:'/api/workflow/continue-prefix',body:{name:'focus-a',new_name:'after-poll-input'}});
+  run('strictResolveAction(strictState.jobs[1]);');await continuationOperation;assert.equal(fixtureDocument.activeElement,currentContinuation);assert.deepEqual([currentContinuation.selectionStart,currentContinuation.selectionEnd],[4,9]);
+  currentContinuation.value='';currentContinuation.oninput();await run('poll()');assert.equal(currentContinuation.value,'');
+  const emptyContinuation=continueButton.click();assert.deepEqual(JSON.parse(run('JSON.stringify(strictActionCalls.at(-1))')),{path:'/api/workflow/continue-prefix',body:{name:'focus-a',new_name:''}});
+  run('strictRejectAction(Error("empty name refused by fixture"));');await emptyContinuation;assert.equal(currentContinuation.value,'');
+  run('strictLegacyState=JSON.parse(JSON.stringify(legacyFocusState));');await run('poll()');const currentLegacyVerify=findButton(get('legacy-runs').children[0],'Verify saved completion');currentLegacyVerify.focus();const legacyOperation=currentLegacyVerify.pressKey('Enter'),legacyCount=run('strictActionCalls.length');
+  await run('poll()');await currentLegacyVerify.click();assert.equal(currentLegacyVerify.disabled,true);assert.equal(run('strictActionCalls.length'),legacyCount);
+  run('strictRejectAction(Error("fixture verification refused"));');await legacyOperation;assert.equal(currentLegacyVerify.disabled,false);assert.equal(fixtureDocument.activeElement,currentLegacyVerify);assert.match(get('notice').textContent,/fixture verification refused/);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(strictActionCalls.at(-1))')),{path:'/api/gamma-verify',body:{job_id:'legacy-focus'}});
+  assert.equal(run('pendingActions.size'),0);
+  run('renderJobs({busy:false,jobs:[]});renderLegacy({gamma:{jobs:[]}});showRun(savedJob);');
+  console.log('STRICT-03 two polls, Enter/Space Show stages, pending Resume/Recover/Verify/legacy Verify, removal/reappearance, current continuation input and denied action contracts passed.');
   // Every Download requests exact bytes; viewing keeps the default route.
   run("let artifactRequests=[];fetch=async(url,options)=>{artifactRequests.push({url,options});return {ok:true,blob:async()=>({})};};");
   await run("download('fixture','response/summary.html')");
