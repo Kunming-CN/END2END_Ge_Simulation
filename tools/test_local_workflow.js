@@ -76,6 +76,44 @@ run(`const ringRows=[{record_kind:'decay',event_id:0,deposited_energy_keV:0,puls
  {record_kind:'pulse',event_id:2,group_id:0,deposited_energy_keV:4,final_induced_keV:-3.9,readout:{reconstructed_energy_keV:4}}];`);
 assert.deepEqual(JSON.parse(run("JSON.stringify(firstSavedWaveform(ringRows,[{event_id:2,group_id:0}]))")),{id:2,groupIndex:1});
 assert.equal(run('firstSavedWaveform(ringRows,[])'),null);
+// Primary hints describe loaded records without filtering, sorting, inventing
+// zeros, or equating a scalar group count/readout acceptance with a waveform.
+run(`const hintRows=[
+ {record_kind:'decay',event_id:12,pulse_count:0,zero_deposit:true,deposited_energy_keV:0},
+ {record_kind:'decay',event_id:5,pulse_count:1,deposited_energy_keV:4},
+ {record_kind:'pulse',event_id:5,group_id:0,deposited_energy_keV:4,final_induced_keV:-3.9,readout:{accepted:true,reconstructed_energy_keV:4}},
+ {record_kind:'pulse',event_id:7,group_id:0,deposited_energy_keV:4,status:'native_transport_failed',native_error:{exact_error:'retained'},final_induced_keV:null,accepted:false,readout:null},
+ {initial_primary_id:2,event_id:91,zero_ge:true,truth_ge_edep_keV:0,readout:{accepted:false,rejection_reason:'below_threshold',trace:{}}},
+ {initial_primary_id:9,event_id:92,zero_ge:false,truth_ge_edep_keV:4,status:'native_completed',readout:{accepted:false,rejection_reason:'below_threshold'}},
+ {record_kind:'pulse',event_id:20,group_id:0,deposited_energy_keV:4,readout:{accepted:false,rejection_reason:'saturated',saturated:true}},
+ {record_kind:'decay',event_id:14,pulse_count:2,deposited_energy_keV:4},
+ {record_kind:'pulse',event_id:14,group_id:0,deposited_energy_keV:2,readout:{accepted:true}},
+ {record_kind:'pulse',event_id:14,group_id:1,deposited_energy_keV:2,readout:{accepted:false,rejection_reason:'negative_input'}},
+ {event_id:31,truth_ge_edep_keV:null,trace_saved:true,final_induced_keV:null,readout:null},
+ {record_kind:'decay',event_id:32,pulse_count:3,deposited_energy_keV:4},
+ {record_kind:'decay',event_id:33,pulse_count:0,deposited_energy_keV:0},
+ {record_kind:'pulse',event_id:34,group_id:0,deposited_energy_keV:4,readout:{reconstructed_energy_keV:null}},
+ {record_kind:'pulse',event_id:35,group_id:0,deposited_energy_keV:2,status:'native_failed',readout:null},
+ {record_kind:'pulse',event_id:35,group_id:1,deposited_energy_keV:2,readout:{accepted:true}},
+ {record_kind:'pulse',event_id:36,group_id:0,deposited_energy_keV:2,readout:{accepted:true}},
+ {record_kind:'pulse',event_id:36,group_id:1,deposited_energy_keV:2,readout:{accepted:false,saturated:true}},
+ {record_kind:'pulse',event_id:37,group_id:0,deposited_energy_keV:2,readout:{accepted:true}},
+ {record_kind:'pulse',event_id:37,group_id:1,deposited_energy_keV:2,readout:null},
+ {event_id:38,truth_ge_edep_keV:4,readout:{accepted:true,trace:{}},trace_saved:true},
+ {record_kind:'pulse',event_id:39,group_id:0,deposited_energy_keV:4,readout:null}
+];const hintTraces=[{event_id:5,group_id:0},{initial_primary_id:32,group_id:0}];
+const hintBefore=JSON.stringify([hintRows,hintTraces]);const hintIds=[...new Set(hintRows.map(recordPrimary))];
+const hintOptions=primaryOptions(hintIds,hintRows,hintTraces);options('event',hintOptions);`);
+assert.deepEqual(get('event').children.map(o=>o.value),['12','5','7','2','9','20','14','31','32','33','34','35','36','37','38','39']);
+assert.equal(get('event').children.length,run('hintIds.length'));
+assert.ok(get('event').children.every(o=>o.disabled===false));
+const hintLabels=new Map(get('event').children.map(o=>[o.value,o.textContent]));
+for(const [id,label]of Object.entries({12:'zero deposition',5:'1 group · readout accepted · waveform saved',7:'1 group · native failure',2:'known zero input · readout rejected',9:'1 group · readout rejected',20:'1 group · readout saturated',14:'2 groups · mixed readout',31:'pulse status unknown · readout unavailable',32:'3 reported groups',33:'0 reported groups',34:'1 group · readout status unknown',35:'2 groups · mixed; native failure',36:'2 groups · mixed readout; saturation',37:'2 groups · readout partly unavailable',38:'pulse status unknown · readout accepted',39:'1 group · readout unavailable'}))assert.equal(hintLabels.get(id),id+' · '+label);
+assert.equal(run('JSON.stringify([hintRows,hintTraces])'),run('hintBefore'));
+assert.deepEqual(JSON.parse(run('JSON.stringify(firstSavedWaveform(hintRows,hintTraces))')),{id:5,groupIndex:1});
+assert.equal(run('primaryHint(primaryRecords(hintRows,5),[])'),'1 group · readout accepted');
+assert.equal(run("primaryHint([{initial_primary_id:40,zero_ge:false,truth_ge_edep_keV:4,status:'native_failed',readout:null}],[])"),'1 group · native failure');
+assert.doesNotMatch(hintLabels.get('31')+hintLabels.get('32')+hintLabels.get('33')+hintLabels.get('38'),/waveform saved|zero deposition|known zero input/);
 // Every selected field and both gate boundaries are part of the checked data.
 run('electronics();');
 for(const label of get('electronics').children)assert.equal(label.htmlFor,label.children[0].id);
@@ -352,6 +390,7 @@ function batchFixture(batch,offset,count=1){const globalOffset=batch*10000;retur
 `);
 for(const [batch,local,global]of [[0,9999,9999],[1,0,10000],[1,9999,19999],[2,0,20000]]){
   assert.equal(run(`flatBatchRecords(pageIdentity(batchFixture(${batch},${local}),batchJob,${batch},${local}))[1].global_initial_id`),global);
+  assert.deepEqual(JSON.parse(run(`JSON.stringify(primaryOptions([${global}],flatBatchRecords(batchFixture(${batch},${local})),[]))`)),[{id:String(global),label:global+' · 1 group · native failure'}]);
 }
 assert.throws(()=>run('pageIdentity({...batchFixture(1,0),name:"wrong"},batchJob,1,0)'),/identities/);
 assert.throws(()=>run('pageIdentity({...batchFixture(1,0),batch_index:2},batchJob,1,0)'),/identities/);
@@ -717,5 +756,39 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run("pollReplies[2].resolve({busy:false,jobs:[]});pollReplies[3].resolve({jobs:[]});");await newPoll;
   run("pollReplies[0].resolve({busy:true,jobs:[]});pollReplies[1].resolve({jobs:[]});");await oldPoll;
   assert.equal(run('active'),false);
-  console.log('Browser source-angle/legacy Gamma, exact counts, checked/saved pose, batch Stop/Resume selection, paged boundary IDs/null/signs, stale Check/report/page/poll/focus, four saved plots and recovery contracts passed.');
+  // Both option-building paths preserve census/default, then the chosen primary,
+  // group and focus when the same saved run is reopened with hints.
+  run(`const hintJob={...savedJob,name:'primary-hints-saved'};const hintFocusRequests=[];
+  artifact=async(name,file)=>{if(name!==hintJob.name)throw Error('Hint fixture run differs');if(file==='response/run.json')return {json:async()=>({source_id:hintJob.selection.source,artifacts:{'summary.html':'c'.repeat(64)}})};if(file==='COMPLETE.json')return {json:async()=>({configuration_sha256:hintJob.configuration_sha256,artifacts:{'response/summary.html':{sha256:'c'.repeat(64)}}})};if(file==='response/scalars.jsonl')return {text:async()=>hintRows.map(r=>JSON.stringify(r)).join('\\n')};if(file==='response/traces.jsonl')return {text:async()=>hintTraces.map(r=>JSON.stringify(r)).join('\\n')};throw Error('Unexpected hint artifact');};
+  api=async path=>{hintFocusRequests.push(path);throw Error('Synthetic saved waveform intentionally unavailable');};`);
+  await run('openResult(hintJob)');
+  assert.deepEqual(get('event').children.map(o=>o.value),[...hintLabels.keys()]);
+  for(const option of get('event').children)assert.equal(option.textContent,hintLabels.get(option.value));
+  assert.equal(get('event').value,'5');assert.equal(get('group').value,'1');
+  assert.equal(run('JSON.stringify([result.records,result.traces])'),run('hintBefore'));
+  get('event').value='14';get('event').onchange();get('group').value='2';get('group').onchange();
+  assert.match(get('analysis-selection').textContent,/initial primary ID 14.*pulse group 1/);
+  const hintSelectedRecord=get('event-record').textContent;get('event').focus();
+  await run('openResult(hintJob)');
+  assert.equal(get('event').value,'14');assert.equal(get('group').value,'2');
+  assert.equal(fixtureDocument.activeElement,get('event'));assert.equal(get('event-record').textContent,hintSelectedRecord);
+  assert.equal(get('event').children.find(o=>o.value==='14').textContent,'14 · 2 groups · mixed readout');
+  assert.equal(run('JSON.stringify([result.records,result.traces])'),run('hintBefore'));
+  assert.ok(JSON.parse(run('JSON.stringify(hintFocusRequests)')).every(path=>/workflow-file\/focus\?/.test(path)));
+  run(`const hintPage=batchFixture(1,9998,2);hintPage.records[0].primary={record_kind:'decay',event_id:9998,pulse_count:0,deposited_energy_keV:0,zero_deposit:true};hintPage.records[0].pulse_groups=[];const hintPageBefore=JSON.stringify(hintPage),hintPageRequests=[];
+  api=async path=>{hintPageRequests.push(path);return JSON.parse(hintPageBefore);};`);
+  // Use the existing page controls at a local/global end-of-batch boundary.
+  run(`showRun(batchJob);result={job:batchJob,page:null,records:[],traces:[]};$('batch-index').value='1';$('page-offset').value='9998';`);
+  await run('loadBatchPage()');
+  assert.deepEqual(get('event').children.map(o=>({value:o.value,label:o.textContent})),[{value:'19998',label:'19998 · zero deposition'},{value:'19999',label:'19999 · 1 group · native failure'}]);
+  get('event').value='19999';get('event').onchange();get('group').value='1';get('group').onchange();get('event').focus();
+  const hintBoundaryRecord=get('event-record').textContent;
+  await run('openBatchResult(batchJob)');
+  assert.equal(get('batch-index').value,'1');assert.equal(get('page-offset').value,'9998');assert.equal(get('event').value,'19999');assert.equal(get('group').value,'1');
+  assert.equal(fixtureDocument.activeElement,get('event'));assert.equal(get('event-record').textContent,hintBoundaryRecord);
+  assert.match(get('analysis-selection').textContent,/batch 1.*global initial ID 19999.*local initial ID 9999.*pulse group 0/);
+  assert.match(get('analysis-filter').textContent,/evtid = 9999 in batch 1.*global_initial_id = 19999/);
+  assert.equal(run('JSON.stringify(result.page)'),run('hintPageBefore'));
+  assert.ok(JSON.parse(run('JSON.stringify(hintPageRequests)')).every(path=>/workflow\/events\?.*batch=1&offset=9998&limit=100/.test(path)));
+  console.log('Browser full-census primary hints and saved refresh/focus, source-angle/legacy Gamma, exact counts, checked/saved pose, batch Stop/Resume selection, paged boundary IDs/null/signs, stale Check/report/page/poll/focus, four saved plots and recovery contracts passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

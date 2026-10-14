@@ -233,12 +233,18 @@ W1 held-recheck/edit/stale-rejection/poll case and three scoped AI final recheck
 passed. See current PROGRESS.md and `.local/desktop-feedback-v1/COMPLETE.json`.
 This is local UI/contract acceptance, not installation or physical validation.
 
-**Remaining desktop interface improvements:** add recorded pulse/status hints or
-an explicit signal-finding filter to bare numeric primary options while retaining
-the full census. Assess plot readability and action placement in actual desktop
-windows. Reuse the existing frontend and retained scientific limits; do not transfer
-earlier phone-width observations into desktop defect claims. Phone layout/axes/
-form-density work is removed from the active plan; historical records remain.
+**Desktop primary hints and plot placement delivered:** all original IDs/order/
+option values, default waveform and selected primary/group remain. Shared saved-
+record hints distinguish zeros, native failures, accepted/rejected/saturated/mixed
+or unavailable readout; scalar acceptance never invents a trace. Actual desktop
+SVGs now use one fullwidth column:1280x720 tick text increased from6.973px to
+14.232px, with original data/units/renderers/camera and eight controls unchanged.
+Integrated Node contracts, bounded actual saved-data/explicit synthetic desktop
+cases and two scoped plus a NEW independent third AI review/exchange passed.
+Browser coverage is four complete authentic pages350/500 originals and one real
+waveform, with separate SYNTHETIC101 status pages; no full500 browser/physical-
+validation claim. See `.local/desktop-primary-hints-v1/COMPLETE.json`. The desktop
+queue is complete at this acceptance; proceed to PSD1 without more cosmetic work.
 
 **Later conditional engineering gaps:** add measured resource/storage preflight
 when a real run requires it; preserve lazy serial batching. A small portable
@@ -249,8 +255,8 @@ missing measured waveforms and independent off-device backup verification remain
 declared limits, not newly proven software defects or prerequisites for PSD1.
 
 STRICT-01/02/03, primary-button contrast, angle wording and desktop readiness/context
-are delivered. Next is full-census primary pulse/status hints and desktop plot/action
-placement, then PSD.
+are delivered, along with full-census primary hints and readable desktop plots.
+Next is PSD1 saved full-resolution waveform features, then PSD2 and PSD3.
 The initial audit remains historical evidence. Authorized automatic
 continuation implements the remaining ranked desktop corrections and then PSD
 stages; review only verified corrections or newly affected risks, without
@@ -277,8 +283,8 @@ compute bounds and stop before each implementation. Preserve unique failures,
 scientific inputs and original source bindings. Measure science separately from
 coding/review/publication time; do not invent an ETA.
 
-Automatic heartbeat is ACTIVE; this desktop-feedback round received its actual
-2026-10-14T01:06:57.533Z trigger. Subsequent work starts from current PROGRESS, actual Git/remote/
+Automatic heartbeat is ACTIVE; this desktop-primary-hints round received its actual
+2026-10-14T01:53:58.259Z trigger. Subsequent work starts from current PROGRESS, actual Git/remote/
 processes, terminal receipts and the owned lease; never replay completed work
 after a chat failure. Existing publication/capability checks remain mandatory
 where applicable. Stop extending scope when all executable authorized work is

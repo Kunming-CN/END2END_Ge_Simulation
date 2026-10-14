@@ -1,85 +1,90 @@
 # Current handoff
 
 Updated: 2026-10-13. Read this before starting work.
-Immutable prior desktop-readiness handoff:
-[b0a0fffc](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/b0a0fffcc21bb5c34e8915390a20ed6667687840/PROGRESS.md).
-That record links STRICT-01/02/03, the initial audit and permanent science history.
+Immutable prior desktop-readiness/context handoff:
+[9a4966f4](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/9a4966f47cd43bedbd949f64808a3c1822377517/PROGRESS.md).
+It links STRICT01/02/03, contrast/angle wording, older audits and permanent science.
 
-## Authorized continuation
+## Authorized automatic continuation
 
 The owner authorized all executable tools/NEXT_DEVELOPMENT_PLAN.md work without
-reminders or per-round approval. The existing heartbeat is ACTIVE every30minutes
-in this chat; this round received2026-10-14T01:06:57.533Z. The computer/app must
-be running. Desktop only; no phone development or acceptance. Inspect actual
-Git/processes/checkpoints/terminal hashes/state and ownership before work. Start
-only from explicit ready without another holder; acquire the owned exclusive lease.
-Never duplicate workers or completed science. Release only the owned lease.
+reminders or per-round approval. Existing heartbeat ACTIVE every30minutes; actual
+trigger2026-10-14T01:53:58.259Z. Computer/app must be running. Desktop only;
+no phone development or acceptance. Inspect exact terminal/source hashes, Git/
+remote, actual processes and ownership before acquiring only from explicit ready
+without another holder. Never duplicate workers/science or remove unknown locks.
 
-## Desktop readiness/context delivered
+## Full-census hints and readable desktop plots delivered
 
-Run now has a persistent reason and next action from its original disabled gate:
-pending action, active/inspection-held work, unavailable/view-only setup, missing
-Check, non-executable checked plan or ready. Same text is not reassigned on polls.
-Left controls configure the next run; selected saved-run pipeline and exact
-recorded settings have distinct labels. Saved JSON, selection, events, signed
-values, nulls, zeros, primary/group identities and scientific interfaces remain.
+Standalone and batch primary options retain every original ID, order, value,
+default waveform choice and current primary/group selection. Shared read-only
+helpers add concise recorded/reported group and readout hints: zero deposition,
+known zero input, native failure, accepted/rejected/saturated/mixed or unavailable/
+unknown readout. Scalar acceptance or a saved-trace flag alone never invents a
+waveform. Readout acceptance is not complete collection or physical validation.
+Raw identities, deposits, signs/nulls/zeros, flags, settings and calibration remain.
 
-An owned Check success is cleared when current settings change, including during
-a second held Check after authorization was already cleared. Unrelated operation
-errors/information remain. After an edit, stale rejection cannot replace current feedback and stale success
-cannot authorize Run. Check restores the same available button only if it began
-focused and current focus is body; another focused control or revoked availability
-is respected. Deliberate focus movement ending on body is not separately tracked;
-this retains the existing action-guard boundary.
+Actual1280x720 desktop SVGs were390.5px wide in two columns;10-unit ticks in the
+unchanged560-unit viewBox scaled to6.973px. One fullwidth column now gives797px
+SVGs/14.232px ticks, no horizontal overflow. All four plot renderers, original
+samples/current bins/units/peak and camera rules are byte-identical. Eight camera
+controls and keyboard full-window/focus actions remain. A short explanation says
+all primaries stay selectable and hints describe saved records. Desktop uses
+vertical scrolling for the four readable panels; no phone acceptance was done.
 
-Integrated Node contracts passed on first execution; the verified notice correction
-then passed the affected suite once. Existing generation, pending, current-input,
-shared Verify, census/group/sign/null/zero contracts passed too. Optional real
-saved-data mode was not run. No physics, installation or experimental validation.
+The integrated Node suite passed once at0.1519148s/v24.19.0. Its JS/test bytes
+remain exact after only the two HTML literals; current corrected HTML passed
+actual browser acceptance. Existing stable focus, stale-generation, current-input,
+shared Verify, source/count/pose and scientific record contracts remain passed.
+Optional real-data suite mode was not run; no broader unchanged tests were repeated.
 
-Eleven original actual IAB desktop1280x720 synthetic-state cases passed: unchecked,
-ready Enter/focus, edit clears success, view-only, active/inspection-held, Check
-error/edit retention, held Check/stale success with moved name focus, and pending
-angle refusing execution. Exact synthetic saved SAP22/Ba133 settings stayed fixed.
-After correction, one fresh actual success -> held recheck -> name edit -> stale
-mock rejection sequence retained disabled Run, cleared notice and name focus
-through44 successful state polls. Reuse the unaffected eleven earlier cases.
-Six total mock Check requests; no Run/Resume/Stop/Continue/Recover/Verify/Explore/
-Download/Export/Save As/import activation. Tabs6/7 and services12092/10592 closed.
-Expected fixture400, automatic favicon403 and unavailable geometry503 are recorded.
-Synthetic pending-angle text retains historical pilot wording, not a new failure.
+Corrected actual IAB retained17 observations: four full authentic AK01 pages
+with350 served originals out of its original500/496zeros/4groups; real188/group0
+with all four saved plots and exact metrics; zero100/249/250; raw local0/evtid0
+with global250; keyboard selection/camera and same-run/page/primary/group refresh.
+Separate explicitly SYNTHETIC101 pages kept native-failure null charge/readout,
+rejected signed-0.003, accepted scalar without invented waveform and finalzero.
+Only188 real waveform was frozen: page200's auto-default203 GET was intentionally
+absent/refused, then zero249 and final188 restored. Favicon403 is also retained.
+No POST/Check/execution/recovery/download/export/SaveAs/import action was activated.
+Tabs8/9, services3444/19444 and owned exec sessions53313/38641 closed.
 
-Two independent scoped AI INITIAL reviews and a NEW independent third completed
-before source corrections. Workflow W1 and third DFI-01 identified the same notice
-ownership defect; physics independently reproduced it after concrete exchange.
-Minimal correction removes only the transient checked-object condition. Three
-scoped FINAL rechecks accepted it; broad unchanged reviews/science were reused.
-Explicit Sol6.1/Ultra launches; live introspection unavailable. Third declared
-handoff/background exposure before its INITIAL and no peer/root finding exposure.
-These are AI reviews, not human certification.
+Before saved-data derivation, stopped writers and13 source/92 raw pins were
+recorded. Corrected browser reused the identical3,799,860-byte payload; no second
+derivation or simulation. Initial private logger WinError5 aborted one GET; a
+bounded known Windows-sharing-denial retry repaired only that evidence writer.
+Mock recovery/exhaustion/unexpected-error probes passed, with injected denials
+separate. Initial helper/preparation/freeze/request evidence and optional KL01/
+Co60 inspector feasibility failures remain; omitted cases were not altered.
+DOM/locator/receipt/diff-checker harness errors are retained and repaired without
+repeating completed UI or scientific work.
 
-Evidence: .local/desktop-feedback-v1/COMPLETE.json; implementation/source-freeze-1,
-CORRECTIONS/initial preserved receipts; browser and browser-correction freezes,
-BROWSER-ACCEPTANCE/OBSERVATIONS/metrics/screenshots; review-physics/workflow/
-independent INITIAL/CROSS/FINAL; ROOT-FINAL-INTEGRITY and archive/Git receipts.
-Two receipt-writing/count assertions and neutralization failure are retained;
-they were corrected without repeating successful UI/tests or scientific work.
-Models/backend, all1694 docs and22 retained science/request files stayed exact.
-Source-only local application delivery; no site rebuild or fresh setup claim.
+Two scoped independent AI INITIALs then a NEW independent third reviewed the
+same frozen tested milestone; concrete findings were exchanged after initials.
+All three accepted with no verified blocker or material disagreement; initial
+probes/retained evidence were reused after exchange, with no further code changes
+or repeated test/review execution. Vertical scrolling is the readability tradeoff.
+Explicit Sol6.1/Ultra requested; live provider introspection unavailable. These
+are AI source/engineering-UI reviews, not physical or installation certification.
 
-## Next bounded work and retained limits
+Evidence: .local/desktop-primary-hints-v1/COMPLETE.json; source-freeze-1 and
+implementation first-test receipts; browser pre-derivation pins/DERIVATION-BINDING/
+initial and correction freezes/OBSERVATIONS/BROWSER-ACCEPTANCE/screenshots;
+review-physics/workflow/independent INITIAL/CROSS records; root integrity/diff/
+review/archive/Git and owned lease closure. All1694 docs, frozen model/engine files and22
+retained science/request pins plus92 browser raw pins stayed exact. Local source-
+only milestone; no site build, fresh installation or physical validation claimed.
 
-Next: full-census primary pulse/status hints and desktop plot/action placement,
-then PSD1 -> PSD2 -> PSD3 in plan order. STRICT01/02/03 and contrast/angle wording
-are already delivered. Do not repeat completed rounds or broaden physical runs.
-Current terminal receipt/state record Git synchronization and owned lease closure.
+## Next bounded milestone and retained limits
 
-Ten compatible configurations/four sources and seventeen viewable models do not
-establish forty physical validations. Preserve Co60's500 primaries/491 zeros,
-all original events/deposits/flags, units, seeds and independent calibration.
-Engineering waveforms do not establish calibrated CCE, physical resolution,
-experiment agreement or global convergence. AK02/SAP22 measured waveforms were
-never saved. November2026 measured spectrum/I-V/C-V still needs complete owner-
-provided releasable inputs/metadata; keep deferred without blocking independent
-work. Completed campaigns/caches/unique failures remain permanent. Stop expansion
-when executable plan work finishes; retain physical/external-input conditions.
+Desktop queue is complete at this bounded acceptance. Next is PSD1: one traceable
+saved full-resolution signed-waveform feature export/viewer path, preserving every
+event and reason, independently calibrated Erec versus separate truth Edep,
+declared current filtering/polarity/units/rise crossings and topology rule. Stop at
+one engineering teaching case, no new radiation/field run or classifier claim.
+Then PSD2 explicit synthetic acquisition and PSD3 bounded/inconclusive comparison
+in plan order. November spectrum/I-V/C-V needs complete owner inputs; original
+AK02/SAP22 measured waveforms were not saved. Retain calibrated CCE/resolution/
+experiment/global-convergence limits, immutable campaigns/caches/unique failures,
+all seeds/units/raw inputs and independent calibration. No installation/global
+config/reset use. Stop scope expansion when executable plan finishes.
