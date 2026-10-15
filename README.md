@@ -27,7 +27,10 @@ After following the guide, double-click `Control.cmd`. Choose one of ten
 configurations available in the current cryostat. Cs137, Am241, Ba133 and Co60 share
 the same selection and run workflow: enter an exact positive initial-nucleus
 count, then review the checked serial batches of at most 10,000 nuclei each. The fixed
-662 keV gamma beam retains its 20-primary AK02/SAP22 route. Co60 admission uses
+monoenergetic gamma beam retains its 20-primary AK02/SAP22 route. Enter a positive
+energy in keV and select the existing nominal or +5 mm source anchor; the saved
+configuration records both. Historical 662 keV/+5 mm results remain unchanged.
+Co60 admission uses
 its saved 500-decay trial: eight accepted pulses and one verified below-threshold
 rejection. Rejected events remain in the ledger with no reconstructed energy;
 the detector, charge model, electronics threshold and calibration are unchanged.

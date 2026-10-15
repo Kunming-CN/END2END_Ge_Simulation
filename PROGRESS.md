@@ -1,90 +1,96 @@
 # Current handoff
 
 Updated: 2026-10-14. Read this first, then relevant sources only.
-Immutable prior handoff: [P2 storage and actual acceptance](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/c3706ff2c8333e1ab014ce3dcae2ffd65e0b6bd0/PROGRESS.md).
-It links P1 packaging, owner chat reconciliation and permanent science.
+Immutable prior handoff: [P3 desktop results](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/bdea6a97f1c3f12f80fdfeb0d18a5d96bd4f6300/PROGRESS.md).
+It links P2 actual acceptance, P1 packaging and permanent scientific history.
 
-## Owner authority and continuation
+## Owner authority
 
-The corrected heartbeat is ACTIVE every30minutes and follows the current plan.
-No extra AI reviewers, audits, debates or direction committees. Use only directly
-relevant developer checks. Desktop only; existing remage/SSD/readout/environments.
-No installs, global changes, billed API, reset/banked credits or second-computer gate.
-Read actual state, owned locks, Git, processes and terminal evidence before resuming.
-Include pvpython.exe in process inspection: Control uses the existing ParaView Python.
-An idle owner Control server is not permission to terminate it or delete its lock.
+Corrected heartbeat ACTIVE every30minutes; current student-first plan governs.
+No extra AI reviewers/audits/debates. Only directly relevant developer checks.
+Desktop only, existing remage/SSD/readout/environments. No installs, global/auth
+changes, billed API, resets/banked credits or second-computer gate. Inspect real
+Git/state/owned locks/processes/terminal before starting; include pvpython.exe.
+Never terminate an owner Control or remove its separate server lock.
 
-## P3 desktop results implemented and checked
+## P4 shared gamma options implemented and checked
 
-The existing configure/check/run/stop/resume and four signed waveform plots are
-reused. Saved stage files now has a visible heading below plots, grouped by stage
-with selected batch/local/global/group mapping and units. File sizes, hashes and
-waveform identities are optional details. Ledger copy distinguishes new sparse
-nonzero rows from historical dense rows and complete raw radiation/census.
+The existing AK02/SAP22 twenty-primary gamma path now takes positive finite energy
+in keV and the existing nominal/+5mm anchors. Beam direction remains global[0,-1,0],
+timezero, seed26092631. UI edits invalidate Check; config import/export and saved
+energy/placement stay separate from next-run controls. Other models/counts/angles
+were not enabled. Canonical source assets, model/bias/temperature and locks remain.
 
-A protected read-only result-options route requires an owned completed run or
-stopped batch. It detects canonical completed feature/acquisition exports; empty
-advanced panels stay hidden. Presence is only a display hint: opening an export
-still verifies its source and selection. Run changes clear old state; late replies
-cannot relabel another run, batch or closed panel. No export or calculation on GET.
+New portable_gamma_source_configuration_v1 binds effective energy/placement to the
+frozen662keV canonical preset. Explicit new marker streams and native responses
+store only nonzero original IDs, retaining full initial/zero/nonzero counts and
+original denominator; signed samples, nonzero failures/rejections and nulls remain.
+Allzero stream has no eventfile. Unmarked historical662/+5 retains strict old rules.
+No per-event gain or physics kernel changed; independent injection remains separate.
 
-Saved energy spectrum reads verified existing histogram JSON through the artifact
-route. Full-run and selected-sealed-batch labels remain distinct, independent of
-the event page. Truth per initial primary and accepted reconstructed pulse energy
-are separate raw-count series with signed energy domain, original5keV bins,
-underflow/overflow/not-selected accounting and complete initial/zero/nonzero census.
-No fit, normalization, new gain, signal change or physical-validation claim.
+Transport reuses the existing compiled exporter without rebuilding. Only the exact
+recorded historical Python producer/source map is admitted for its build receipt;
+compile inputs, recipe/runtime/binary still checked. Current execution separately
+binds updated gamma reader/shared nonzero policy. Original exporter receipt SHA
+c4f62196851efe9f80f5f9996d3cf7fe2b29b76aca49b661c5a4963575aec734 unchanged.
+Scenario caller now verifies current source_inventory rather than historical build
+PINNED. Student packager statically reads that same21-pin map without Python
+execution; changed current gamma/probe/nonzero bytes remain rejected.
 
-Checks:6new controller cases and3protected HTTP cases passed; unchanged localhost
-tests needed permission after sandbox WinError10013. Existing workflow Node and
-focused-plot contracts plus new availability/spectrum/lifecycle cases passed.
-Actual shipped histogram reader checked new100 (97zero/3nonzero/3accepted) and
-historical owned500 (496zero/4nonzero/4accepted). Direct new controller read of the
-owned500 verified its full saved histogram. Diff whitespace check passed.
+Relevant checks passed: workflow21+gamma5Python,19pure Julia assertions; existing
+workflow Node with new controls/import/saved identities; transport45unaffected
+cases plus corrected/affected3checks (includes mocked sparse/allzero run-export-read).
+The first transport case exception mismatch was corrected and targeted rechecked.
+Known sandbox hardlink/WSL denials retried unchanged with permission. Two package
+source/tamper/static-inventory cases passed; candidate169-member closure passed.
+No source test claimed real physics; one exact ignored Julia developer test is
+intentionally retained in Git and excluded from runtime ZIP.
 
-One actual browser operation used the already open owner Control, PID16004,
-port11204. Its old Python backend lacks the new route; the updated frontend showed
-the reopen message and verified selected-batch fallback: batch0,250initial,
-248zero/2nonzero/2accepted, not the100-row event page. Spectrum and visible stage
-files rendered; empty advanced panels were hidden. No Download/Save As, settings,
-scientific execution or registry adoption. The temporary check tab was closed.
-The owner service/lock was retained; reopening Control loads the new backend.
-Do not describe this old-service operation as full new-backend browser acceptance.
+## Actual bounded source acceptance
 
-No new physics in P3. Six pinned existing-owned-run receipt/config/histogram files
-remain byte-identical. One compact .local/desktop-workflow-p3/COMPLETE.json records
-source pins, checks and package closure; no new audit/report or fixture collection.
+.local/runs/student-sap22-gamma-1000-nominal-v1/transport completed exactly20
+initial gamma primaries, SAP22/1000keV/nominal global[0,37.073,0.29]mm, fixedseed.
+18zero/2nonzero original IDs7/16; normalized eventfile stores2 rows, raw LH5 retains
+all20. Every raw primary energy/momentum/time/position and current source marker,
+geometry/overlap and stream bindings verified. Actual gamma-request.json retains
+2input events and full20/18/2 descriptor; no fabricated zero input.
 
-## Completed P2 and student package
+Measured remage body3.76150s; full radiation check/I/O stage25.67329s, geometry
+preparation28.03798s, saved export20.59734s, native-input verification13.38537s.
+Available RAM3.56GiB after owned tests exited; acceptance used transport only.
+No SSD field/drift/readout execution, physical accuracy/CCE or experiment claim.
+This is a CLI source acceptance, not a Control-owned end-to-end run. It has no
+workflow run.json/COMPLETE: transport/run.json is authoritative. Do not launch a
+fresh full run into it or repeat completed radiation; preserve this actual data.
 
-P2 actual100-primary SAP22/Cs137/+30deg run remains
-.local/runs/student-sap22-cs137-100-nonzero-v1:97zero,IDs24/52/54,3accepted,
-0native failures/rejections. Full census, raw LH5, seeds, nulls/signs and independent
-calibration remain. Do not repeat it or spend unused400 allowance automatically.
-P2 source/evidence is .local/nonzero-storage-p2/COMPLETE.json; historical500 reads
-and frozen analysis export are retained. No science or original models changed.
+The first prepare argument was rejected before any geometry/events for an unsafe
+request reference; corrected to the existing project-relative interface. No
+scientific retry occurred. One compact .local/gamma-options-p4/COMPLETE.json holds
+source/retention/check/package evidence and references the real scientific stages.
 
-Build the current ZIP from the final Git commit with build_student_runtime.py,
-publish immutable student-runtime-<shortSHA> using existing gh and set latest.
-Verify actual public ZIP hash/embedded commit. Keep one current ZIP/receipt in
-.local/student-runtime-p1. Current P3 COMPLETE governs terminal Git/asset evidence
-before ready. No workflow-scope/auth changes. README/maintained guide now explain
-P3; generated public docs is unchanged and waits for normal P5 publication.
+## Concrete next desktop fix
 
-## Next bounded task
+Old Gamma job e730045b87b94b4dade4b073d3ec60c5 is terminal but its current-code
+verification fails, causing the owner Control peer gate to block independent new
+runs. This is not a running scientific worker. Besides P4's gamma reader change,
+FOUR untouched producer mismatches already existed at pre-P4 Git bdea6a97:
+native_li_example.jl, native_response.jl, readout.jl, charge_check.py.
+Do not whitelist those older sources, rebase original maps or rerun old science.
+Fix only read-only verification/worker-lifetime separation and its reopen state,
+using actual process/terminal evidence; retain blocked unverified old downloads and
+original error. This one named issue precedes P5; no broad review or recovery scope.
 
-P4: inspect the genuinely missing requested monoenergetic gamma energy/position
-options, using the existing shared configuration/backend and saved units/placement.
-Do not rebuild accepted models, sources, batches, angle controls or recovery.
-No invented larger cryostat or new framework. Only changed transport can justify
-a separately stated bounded check; completed P2 is not an automatic physics budget.
-P5 named website improvements use maintained generators and existing saved data.
-ML needs sufficient independently labelled inputs; no automatic PSD3 demo.
-November measured spectrum/I-V/C-V awaits complete owner inputs, blocking only P6.
+## Retention, publication and remaining work
 
-## Round closure
+P2 actual100 SAP22/Cs137/+30deg remains .local/runs/student-sap22-cs137-100-nonzero-v1,
+97zero/IDs24/52/54/3accepted; do not repeat or spend unused400 allowance. P3 files,
+lazy saved spectra and conditional advanced panels remain accepted. Old scientific
+originals/campaigns/models/cache and exact compile/preset/model pins stay unchanged.
 
-Current owner desktop-workflow-p3-root. Finish normal commit/push and verified
-student Release, then release only this round's lock and leave ready for P4.
-Skip unchanged/running state quietly; never launch competing workers. Preserve the
-existing owner Control process and its separate server lock.
+Finalize current P4 formal Git ZIP/immutable student-runtime-<SHA> Release, latest
+public download hash/embedded commit and clean Git before ready. Keep one ZIP and
+compact receipt in .local/student-runtime-p1; no Actions/auth-scope changes. README
+and maintained guide updated; generated docs awaits normal P5 publication.
+After the named desktop gate fix, P5 only actual saved-site issues/usable labelled
+analysis. No automatic PSD3 demo/ML without independent adequate labels. November
+spectra/I-V/C-V require complete owner inputs, blocking only P6.

@@ -60,6 +60,15 @@ histogram through the existing artifact route, retaining raw bin counts and the
 full initial census. A selected sealed batch is labelled separately from a full
 run. No analysis export or simulation starts when results are opened.
 
+Monoenergetic gamma options use the same portable source and scenario response
+path for AK02/SAP22. `gamma_source_configuration` binds the effective energy and
+existing named anchor separately from the frozen 662keV preset. New marked streams
+and responses use the shared nonzero census descriptor; raw LH5 stays complete.
+Unmarked historical inputs keep their fixed662keV/+5mm interpretation. A Python
+option upgrade may admit only the exact recorded earlier build producer/source
+map while independently checking unchanged compile inputs, recipe, runtime and
+exporter binary. Do not rewrite the original exporter receipt or silently rebuild.
+
 Control launch-failure evidence belongs to `tools/workflow_launch.py` and
 `local_ui_workflow_jobs.py`, under `.local/local-control-v1/workflow-launches/`.
 Recovery requires a sealed pre-Popen failure; old opaque failures remain blocked.

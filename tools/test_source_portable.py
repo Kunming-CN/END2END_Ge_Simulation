@@ -41,13 +41,36 @@ class FiniteRequests(unittest.TestCase):
             with self.subTest(changes=changes), self.assertRaises(ValueError):
                 adapter.closed_request(self.request(**changes))
 
-    def test_only_two_fixed_gamma_tuples(self):
+    def test_gamma_named_poses_and_optional_energy(self):
         for detector in ("AK02", "SAP22"):
-            adapter.closed_request(self.request(detector=detector, source_mode=adapter.GAMMA, source_pose="plus5mm"))
-        for changes in ({"detector": "KMRC01_candidate"}, {"detector": "GeRC02_Li50min"}, {"source_pose": "nominal"}, {"primary_count": 500}, {"seed": 26100342}):
+            for pose in ("nominal", "plus5mm"):
+                adapter.closed_request(self.request(detector=detector, source_mode=adapter.GAMMA, source_pose=pose))
+                adapter.closed_request(self.request(detector=detector, source_mode=adapter.GAMMA, source_pose=pose, gamma_energy_keV=1000))
+        for changes in ({"detector": "KMRC01_candidate"}, {"detector": "GeRC02_Li50min"}, {"source_pose": "arbitrary"}, {"primary_count": 500}, {"seed": 26100342}, {"position_mm": [0, 37, 0]}):
             value = self.request(**{"source_mode": adapter.GAMMA, "source_pose": "plus5mm", **changes})
             with self.subTest(changes=changes), self.assertRaises(ValueError):
                 adapter.closed_request(value)
+
+    def test_invalid_energy_and_cs_energy_refused(self):
+        for energy in (0, -1, True, "1000", None, float("nan"), float("inf"), 10 ** 1000):
+            with self.subTest(energy=energy), self.assertRaises(ValueError):
+                adapter.closed_request(self.request(source_mode=adapter.GAMMA, source_pose="plus5mm", gamma_energy_keV=energy))
+        with self.assertRaises(ValueError):
+            adapter.closed_request(self.request(gamma_energy_keV=662))
+
+    def test_original_plan_and_explicit_effective_options(self):
+        _, _, source, gamma, *_ = adapter.helpers()
+        request = self.request(source_mode=adapter.GAMMA, source_pose="plus5mm")
+        baseline = source.check(adapter.ROOT / "scenarios/m11a-ak02-mono_gamma_662_axis_v1-plus5mm.json")
+        self.assertEqual(adapter.resolve_gamma_plan(request), baseline)
+        self.assertFalse(adapter.gamma_options(request))
+        for energy, pose in ((662, "plus5mm"), (1000, "nominal"), (662.5, "plus5mm")):
+            plan = adapter.resolve_gamma_plan({**request, "gamma_energy_keV": energy, "source_pose": pose})
+            self.assertEqual(plan["assets"], baseline["assets"])
+            self.assertEqual(plan["input_sha256"], baseline["input_sha256"])
+            self.assertEqual(plan["instance"]["source"], baseline["instance"]["source"])
+            self.assertEqual(plan["gamma_source_configuration"], gamma.source_configuration(energy, pose))
+            self.assertEqual(plan["source_position_global_mm"], source.POSES[pose])
 
     def test_original_signed_ring_and_seed_command(self):
         value = self.request(detector="KMRC01_candidate", primary_count=500, seed=26100342)
@@ -64,7 +87,7 @@ class BuildAndBindingFixtures(unittest.TestCase):
         self.recipe = {"configure_argv": ["cmake", "fixed-configure"], "build_argv": ["cmake", "fixed-target"], "cwd": "/mnt/d/student/clone", "generator": "Ninja", "target": "cryostat_export", "compiler": "/locked/prefix/bin/c++"}
         self.semantics = {"cache_identity": {"CMAKE_HOME_DIRECTORY": "/mnt/d/student/clone/transport"}, "compiler_identity": {"sha256": "b" * 64}, "linker_identity": {"sha256": "c" * 64}, "target_compile_argv": ["c++", "fixed"], "evidence_sha256": {"file": "d" * 64}}
         self.receipt = {"kind": "portable_source_exporter_build_v1", "schema_version": 1, "status": "complete", "adapter_version": 1,
-                        "producer_sha256": self.producer, "project_identity": self.identity, "source_sha256": dict(adapter.PINNED), "runtime": self.runtime,
+                        "producer_sha256": self.producer, "project_identity": self.identity, "source_sha256": adapter.source_inventory(), "runtime": self.runtime,
                         "build": {**self.recipe, **self.semantics, "configure_returncode": 0, "build_returncode": 0, "configure_wall_s": 0.5, "build_wall_s": 1.5},
                         "exporter": {"ref": adapter.EXPORTER_REF, "bytes": 91000, "sha256": "e" * 64}}
 
@@ -88,6 +111,18 @@ class BuildAndBindingFixtures(unittest.TestCase):
             value["source_sha256"][ref] = "f" * 64
             with self.subTest(ref=ref), self.assertRaises(ValueError):
                 self.validate(value)
+
+    def test_exact_historical_python_build_reuse_without_rebase(self):
+        old = copy.deepcopy(self.receipt)
+        old.update(producer_sha256=adapter.HISTORICAL_BUILD_PRODUCER, source_sha256=dict(adapter.PINNED))
+        self.validate(old)
+        for mutate in (lambda v: v.update(producer_sha256="f" * 64),
+                       lambda v: v["source_sha256"].update({"transport/scenario_transport.py": adapter.GAMMA_TRANSPORT_SHA256}),
+                       lambda v: v["source_sha256"].update({"transport/cryostat_export.cc": "f" * 64}),
+                       lambda v: v["source_sha256"].update({"transport/pixi.lock": "f" * 64})):
+            changed = copy.deepcopy(old); mutate(changed)
+            with self.assertRaises(ValueError):
+                self.validate(changed)
 
     def test_rehashed_recipe_and_target_overrides_refused(self):
         for key, replacement in (("configure_argv", ["cmake", "-DEXTRA=1"]), ("target", "foreign"), ("compiler", "/foreign/compiler"), ("target_compile_argv", ["c++", "-include", "injection.h"])):
@@ -153,7 +188,9 @@ class PathAndParameterFixtures(unittest.TestCase):
         self.assertEqual(adapter.BUILD_REF, '.local/m2a/scenario-source-portable-build-v1')
 
     def test_actual_frozen_read_only_sources_match_admitted_pins(self):
-        self.assertEqual(adapter.canonical_sources(), adapter.PINNED)
+        self.assertEqual(adapter.canonical_sources(), adapter.source_inventory())
+        self.assertEqual({k: v for k, v in adapter.canonical_sources().items() if k not in ("transport/scenario_transport.py", "tools/nonzero_events.py")},
+                         {k: v for k, v in adapter.PINNED.items() if k != "transport/scenario_transport.py"})
 
     def test_recorded_locked_package_tuples_and_metadata_mutations(self):
         packages=adapter.locked_packages()
@@ -214,7 +251,7 @@ class BuildRunner(unittest.TestCase):
         base=adapter.ROOT/'.local/product-delivery-v1/m14a3-implementation/fixtures';base.mkdir(parents=True,exist_ok=True)
         self.temp=tempfile.TemporaryDirectory(dir=base);self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)/'alternate-clone';self.root.mkdir()
         self.h=adapter.helpers()[0]
-        for ref in (*adapter.PINNED,adapter.ADAPTER_REF):
+        for ref in (*adapter.source_inventory(),adapter.ADAPTER_REF):
             target=self.root/ref;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(adapter.ROOT/ref,target)
         self.identity={'windows_root':str(self.root),'linux_root':str(self.root),'compiled_project_local':str(self.root/'.local')}
         self.runtime={'kind':'synthetic-build-runtime','prefix':str(self.root/'locked-prefix'),'executables':{'ninja':{'ref':'bin/ninja'}}}
@@ -276,17 +313,21 @@ class BuildRunner(unittest.TestCase):
 
 
 class PairedPreparation(unittest.TestCase):
+    gamma_changes = {}
+
     def setUp(self):
         self.base=adapter.ROOT/'.local/product-delivery-v1/m14a3-implementation/fixtures'
         self.base.mkdir(parents=True,exist_ok=True)
         self.temp=tempfile.TemporaryDirectory(dir=self.base);self.addCleanup(self.temp.cleanup)
         self.directory=Path(self.temp.name)/'prepared'
-        self.request={'detector':'AK02','source_mode':adapter.GAMMA,'source_pose':'plus5mm','primary_count':20,'seed':26092631}
+        self.request={'detector':'AK02','source_mode':adapter.GAMMA,'source_pose':'plus5mm','primary_count':20,'seed':26092631, **self.gamma_changes}
         self.h,self.cs,self.s,self.gamma,self.ring,self.models=adapter.helpers()
         self.checked={'request':self.request,'execution_contract':{'kind':adapter.EXECUTION_KIND,'version':1,'source_mode':adapter.GAMMA,
                       'exporter_sha256':'f'*64},'portable_source_sha256':{adapter.ADAPTER_REF:adapter.digest(adapter.adapter_path())},
                       'runtime':{'kind':'synthetic-no-runtime'},'upstream_sha256':self.cs.upstream_hashes(),
-                      'gamma_plan':self.s.check(adapter.ROOT/'scenarios/m11a-ak02-mono_gamma_662_axis_v1-plus5mm.json')}
+                      'gamma_plan':adapter.resolve_gamma_plan(self.request)}
+        if adapter.gamma_options(self.request):
+            self.checked['gamma_source_configuration'] = self.checked['gamma_plan']['gamma_source_configuration']
         for target,name,value in ((adapter,'validate_checked_plan',lambda *a:copy.deepcopy(self.checked)),
                                   (adapter,'recheck_runtime_data',lambda *a:0),
                                   (self.s,'frozen_inventory',lambda *a:{'transport/scenario_prepare.py':adapter.PINNED['transport/scenario_prepare.py']})):
@@ -330,7 +371,7 @@ class PairedPreparation(unittest.TestCase):
 
     def test_rehashed_material_pose_count_seed_and_marker_refused(self):
         for target,mutate in (('geometry-report.json',lambda v:v['volumes'][16].update(material='G4_AIR')),
-                              ('geometry-report.json',lambda v:v['volumes'][19]['translation_global_mm'].__setitem__(1,37.073)),
+                              ('geometry-report.json',lambda v:v['volumes'][19]['translation_global_mm'].__setitem__(1,v['volumes'][19]['translation_global_mm'][1]+1)),
                               ('resolved-instance.json',lambda v:v['instance'].update(primary_count=500)),
                               ('resolved-instance.json',lambda v:v['instance'].update(seed=1)),
                               ('prepared.json',lambda v:v['execution_contract'].update(kind='legacy')),
@@ -346,6 +387,74 @@ class PairedPreparation(unittest.TestCase):
             value=adapter.load(path);value.update(edits);path.write_text(adapter.text(value),encoding='utf-8')
             with self.subTest(edits=edits),self.assertRaises(ValueError):adapter.read_prepared(self.directory,'D:\\mock\\clone')
             path.write_bytes(original)
+
+
+class OptionPreparation(PairedPreparation):
+    gamma_changes = {'gamma_energy_keV': 1000, 'source_pose': 'nominal'}
+
+    def test_bound_effective_marker_macro_and_canonical_asset(self):
+        _, meta, checked, _, _ = adapter.read_prepared(self.directory, 'D:\\mock\\clone')
+        marker = self.gamma.source_configuration(1000, 'nominal')
+        self.assertEqual(meta['gamma_source_configuration'], marker)
+        self.assertEqual(checked['gamma_source_configuration'], marker)
+        self.assertEqual(meta['assets']['source']['kinetic_energy_keV'], 662)
+        macro = (self.directory / 'run.mac').read_text(encoding='utf-8')
+        self.assertEqual(macro.count('/gps/ene/mono 1000 keV'), 1)
+        self.assertIn('/gps/direction 0 -1 0\n', macro)
+        self.assertIn('/gps/time 0 ns\n', macro)
+        self.assertIn('/run/beamOn 20\n', macro)
+
+    def test_rehashed_effective_options_refused(self):
+        path = self.directory / 'prepared.json'; original = path.read_bytes()
+        for field, value in (('energy_keV', 662), ('source_pose', 'plus5mm'), ('direction_global', [0, 1, 0]),
+                             ('position_global_mm', [0, 37, 0]), ('time_ns', 1), ('schema_version', True)):
+            data = adapter.load(path); data['gamma_source_configuration'][field] = value
+            path.write_text(adapter.text(data), encoding='utf-8'); self.rehash()
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                adapter.read_prepared(self.directory, 'D:\\mock\\clone')
+            path.write_bytes(original); self.rehash()
+
+    def test_mocked_run_sparse_extract_reader_and_all_zero(self):
+        import h5py
+        import test_scenario_transport as fixture
+        meta = adapter.load(self.directory / 'prepared.json')
+        def transport(command, **kwargs):
+            raw_path = kwargs['cwd'] / 'truth.lh5'
+            fixture.raw_fixture(raw_path, meta)
+            with h5py.File(raw_path, 'r+') as raw:
+                for table, mask in (('particles', slice(None)), ('tracks', raw['tracks/parent_trackid'][:] == 0)):
+                    raw[table + '/ekin'][mask] = 1.0
+                    raw[table + '/py'][mask] = -1.0
+            kwargs['stdout'].write('Synthetic radiation fixture; remage never ran.\n')
+            return types.SimpleNamespace(returncode=0)
+        with patch.object(adapter.subprocess, 'run', side_effect=transport) as dispatch:
+            run = adapter.run(self.directory, 'D:\\mock\\clone')
+            self.assertEqual(dispatch.call_count, 1)
+        self.assertEqual(run['gamma_source_configuration'], meta['gamma_source_configuration'])
+        manifest = adapter.extract(self.directory, 'D:\\mock\\clone')
+        self.assertEqual(manifest['event_storage'], adapter.gamma_storage(20, 18)[0])
+        self.assertEqual(manifest['initial_summary'], adapter.gamma_storage(20, 18)[1])
+        self.assertEqual(manifest['primary_count'], 20)
+        self.assertEqual(manifest['chunks'][0]['count'], 2)
+        rows = (self.directory / 'stream' / manifest['chunks'][0]['file']).read_text(encoding='utf-8').splitlines()
+        self.assertEqual([json.loads(line)['initial_primary_id'] for line in rows], [0, 2])
+        self.assertEqual(adapter.read_stream(self.directory, 'D:\\mock\\clone'), manifest)
+        # These are owned synthetic fixtures, so a second fixture derivative is
+        # deliberately prepared from the same full census with all Ge rows zero.
+        owned_stream = (self.directory / 'stream').resolve()
+        self.assertTrue(owned_stream.is_relative_to((adapter.ROOT / '.local').resolve()))
+        self.assertFalse(owned_stream.is_symlink())
+        shutil.rmtree(owned_stream)
+        with h5py.File(self.directory / 'truth.lh5', 'r+') as raw:
+            raw['stp/germanium/edep'][:] = 0
+        run['source_lh5_sha256'] = adapter.digest(self.directory / 'truth.lh5')
+        run['validation'] = adapter.actual_probe(self.directory / 'truth.lh5', meta, self.request)
+        (self.directory / 'run.json').write_text(adapter.text(run), encoding='utf-8')
+        zero = adapter.extract(self.directory, 'D:\\mock\\clone')
+        self.assertEqual(zero['event_storage'], adapter.gamma_storage(20, 20)[0])
+        self.assertEqual(zero['chunks'], [])
+        self.assertEqual(set(adapter.file_inventory(self.directory / 'stream')), {'manifest.json', 'extract-receipt.json'})
+        self.assertEqual(adapter.read_stream(self.directory, 'D:\\mock\\clone'), zero)
 
 
 class RawAndStream(unittest.TestCase):
@@ -385,6 +494,75 @@ class RawAndStream(unittest.TestCase):
                        lambda e:e[0]['tracks'][1].update(parent_trackid=99)):
             changed=copy.deepcopy(self.events);mutate(changed);self.save(changed)
             with self.subTest(mutate=mutate),self.assertRaises(ValueError):adapter.validate_stream_events(self.directory,self.meta,self.request,self.chunks)
+
+    def test_effective_energy_pose_primary_and_root_validation(self):
+        self.fixture(); import h5py
+        marker = self.gamma.source_configuration(1000, 'nominal')
+        self.meta.update(gamma_source_configuration=marker, source_position_global_mm=marker['position_global_mm'])
+        raw_path = self.directory / 'truth.lh5'
+        with h5py.File(raw_path, 'r+') as raw:
+            root_mask = raw['tracks/parent_trackid'][:] == 0
+            for table, mask in (('particles', slice(None)), ('tracks', root_mask)):
+                for field, value in (('ekin', 1.0), ('px', 0.0), ('py', -1.0), ('pz', 0.0)):
+                    raw[table + '/' + field][mask] = value
+            for table, mask in (('vtx', slice(None)), ('tracks', root_mask)):
+                for field, value in zip(('xloc', 'yloc', 'zloc'), marker['position_global_mm']):
+                    raw[table + '/' + field][mask] = value / 1000
+        events = list(self.gamma.iter_events(raw_path, self.meta))
+        policy, _ = adapter.gamma_storage(20, 18)
+        self.chunks[0]['count'] = 2
+        self.save([event for event in events if not event['zero_ge']])
+        self.assertEqual(adapter.validate_stream_events(self.directory, self.meta, self.request, self.chunks, policy), 20)
+        self.assertEqual(events[0]['particles'][0]['ekin'], 1.0)
+        self.assertEqual(self.gamma.validate_actual_probe(raw_path, self.meta)['initial_gamma_primaries'], 20)
+        with self.assertRaises(ValueError):
+            adapter.validate_stream_events(self.directory, self.meta, self.request, self.chunks)
+        for wrong_policy in (adapter.gamma_storage(20, 17)[0], adapter.gamma_storage(19, 17)[0]):
+            with self.assertRaises(ValueError):
+                adapter.validate_stream_events(self.directory, self.meta, self.request, self.chunks, wrong_policy)
+        self.save([events[0], events[1]])
+        with self.assertRaises(ValueError):
+            adapter.validate_stream_events(self.directory, self.meta, self.request, self.chunks, policy)
+        self.save([events[0], events[2]])
+        for ref, wrong in (('particles/ekin', .662), ('tracks/py', -.662), ('vtx/yloc', .042073),
+                           ('tracks/yloc', .042073), ('vtx/time', 1.0), ('particles/particle', 11)):
+            with h5py.File(raw_path, 'r+') as raw:
+                original = raw[ref][0]; raw[ref][0] = wrong
+            with self.subTest(ref=ref), self.assertRaises(ValueError):
+                list(self.gamma.iter_events(raw_path, self.meta))
+            with h5py.File(raw_path, 'r+') as raw:
+                raw[ref][0] = original
+        unmarked = {key: value for key, value in self.meta.items() if key != 'gamma_source_configuration'}
+        with self.assertRaisesRegex(ValueError, 'unmarked gamma source pose'):
+            list(self.gamma.iter_events(raw_path, unmarked))
+        for mutate in (lambda v: v.update(kind='foreign'), lambda v: v.update(energy_keV=True),
+                       lambda v: v.update(energy_keV=662), lambda v: v.update(direction_global=[0, 1, 0]),
+                       lambda v: v.update(position_global_mm=[0, 42.073, .290]),
+                       lambda v: v['canonical_preset'].update(sha256='f' * 64),
+                       lambda v: v['units'].update(energy='MeV')):
+            changed = copy.deepcopy(self.meta); mutate(changed['gamma_source_configuration'])
+            with self.assertRaises(ValueError):
+                list(self.gamma.iter_events(raw_path, changed))
+
+    def test_sparse_first_original_id_and_all_zero_census(self):
+        self.fixture(); import h5py
+        self.meta['gamma_source_configuration'] = self.gamma.source_configuration(662, 'plus5mm')
+        raw_path = self.directory / 'truth.lh5'
+        with h5py.File(raw_path, 'r+') as raw:
+            raw['stp/germanium/edep'][0] = 0
+        events = list(self.gamma.iter_events(raw_path, self.meta))
+        self.name = 'events-00000002.jsonl'
+        self.chunks = [{'file': self.name, 'count': 1, 'first_initial_primary_id': 2}]
+        self.save([events[2]])
+        self.assertEqual(adapter.validate_stream_events(self.directory, self.meta, self.request, self.chunks, adapter.gamma_storage(20, 19)[0]), 20)
+        self.chunks[0]['first_initial_primary_id'] = 0
+        with self.assertRaises(ValueError):
+            adapter.validate_stream_events(self.directory, self.meta, self.request, self.chunks, adapter.gamma_storage(20, 19)[0])
+        with h5py.File(raw_path, 'r+') as raw:
+            raw['stp/germanium/edep'][2] = 0
+        self.assertEqual(adapter.validate_stream_events(self.directory, self.meta, self.request, [], adapter.gamma_storage(20, 20)[0]), 20)
+        with self.assertRaises(ValueError):
+            adapter.validate_stream_events(self.directory, self.meta, self.request, [], adapter.gamma_storage(20, 19)[0])
 
     def test_delayed_cs_groups_zero_ids_raw_rows_rehashed(self):
         self.fixture(False);self.assertEqual(adapter.validate_stream_events(self.directory,self.meta,self.request,self.chunks),20)

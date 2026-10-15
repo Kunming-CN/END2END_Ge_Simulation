@@ -45,6 +45,8 @@ CODE = tuple('simulation/' + n for n in (
     'tools/gamma_native_example.py', 'tools/test_gamma_native_example.py',
     'tools/GAMMA_NATIVE_EXAMPLE.md', 'tools/charge_check.py', 'tools/replay_readout.py')
 SIGNAL_COLUMNS = ['initial_primary_id', 'time_since_initial_primary_ns', 'induced_equivalent_energy_keV']
+GAMMA_CANONICAL = {'id':'mono_gamma_662_axis_v1','version':1,'ref':'scenarios/assets/mono_gamma_662_axis_v1.json',
+    'sha256':'b9c3990f835fe094d6482e2fe8b6cfb13e2419e3abe5b7f6902cd28f340fc6e9'}
 FAILURES = ('Noncontact endpoint outside crystal', 'Invalid waveform support')
 LIMITATIONS = [
     'Low-statistics nominal engineering integration; selected3 of20 initial gammas per model, not a spectrum or efficiency prediction.',
@@ -122,8 +124,43 @@ def local(reader, name):
     return reader.path(name)
 
 
+def gamma_source_configuration(m, prepared):
+    """Explicit effective source only; unmarked originals retain 662/+5 mm."""
+    source=m['assets']['source']
+    C.equal([source['id'],source['pdg'],source['kinetic_energy_keV'],source['direction_global'],source['time_ns'],source['clock_policy']],
+        ['mono_gamma_662_axis_v1',22,662,[0,-1,0],0,'synthetic_primary_time_zero'],'canonical gamma preset')
+    marker=m.get('gamma_source_configuration')
+    if marker is None:
+        C.require('gamma_source_configuration' not in m and 'gamma_source_configuration' not in prepared,
+            'invalid or missing effective gamma source marker')
+        C.equal(m['source_position_global_mm'],[0,42.073,.290],'historical gamma +5 mm pose')
+        return 662
+    C.fields(marker, 'kind schema_version canonical_preset energy_keV source_pose position_global_mm direction_global time_ns units'.split(),
+        'effective gamma source')
+    C.equal([marker['kind'],marker['schema_version']],['portable_gamma_source_configuration_v1',1],'effective gamma source kind/version')
+    C.require(type(marker['schema_version']) is int,'effective gamma source typed version')
+    energy=marker['energy_keV'];C.require(type(energy) in (int,float) and math.isfinite(energy) and energy>0,'positive finite gamma energy')
+    canonical=GAMMA_CANONICAL
+    exact(marker['canonical_preset'],canonical,'unchanged canonical gamma reference')
+    exact(prepared['instance']['source'],canonical,'prepared canonical gamma reference')
+    poses={'nominal':[0,37.073,.290],'plus5mm':[0,42.073,.290]}
+    C.require(marker['source_pose'] in poses,'effective gamma named source pose')
+    C.equal(marker['position_global_mm'],poses[marker['source_pose']],'effective gamma source anchor')
+    C.equal([marker['direction_global'],marker['time_ns'],marker['units']],
+        [[0,-1,0],0,{'energy':'keV','length':'mm','time':'ns','direction':'dimensionless'}],'effective gamma units/direction/time')
+    C.require(type(marker['time_ns']) is int,'effective gamma primary time type')
+    exact(marker,prepared.get('gamma_source_configuration'),'prepared effective gamma marker')
+    C.equal([prepared['instance']['source_pose'],prepared['source_position_global_mm'],m['source_position_global_mm']],
+        [marker['source_pose'],marker['position_global_mm'],marker['position_global_mm']],'effective gamma prepared placement')
+    return energy
+
+
 def validate_events(events, m, prepared):
-    C.equal(len(events), 20, 'full gamma census')
+    source_energy=gamma_source_configuration(m,prepared)
+    import nonzero_events as N
+    policy=N.storage(m,initial_primaries=20)
+    C.require((policy is not None)==('gamma_source_configuration' in m),'effective gamma source requires explicit nonzero storage')
+    C.equal(len(events), 20 if policy is None else policy['nonzero_primaries'], 'full gamma stored census')
     C.equal(m['units'], dict(energy='keV', length='mm', time='ns'), 'gamma derived units')
     C.equal([m['raw_track_energy_unit'], m['raw_position_unit']], ['MeV', 'm'], 'gamma raw units')
     tr = m['coordinate_transform']; rot = tr['rotation_local_to_global']; shift = tr['translation_global_mm']
@@ -131,16 +168,22 @@ def validate_events(events, m, prepared):
     C.equal(shift, [0, 1.45, 0.29], 'accepted gamma translation')
     counters = {k: 0 for k in ('vtx', 'particles', 'tracks', *m['material_tables'])}
     process_ids = {r['procid'] for r in m['processes']}
-    for eid, e in enumerate(events):
+    previous=-1
+    for index, e in enumerate(events):
         C.fields(e, 'event_id initial_primary_id vtx particles tracks material_rows steps truth_ge_edep_keV zero_ge material_energy_keV'.split(), 'gamma event')
-        C.integer(e['event_id'], 'event ID', eid, eid); C.integer(e['initial_primary_id'], 'initial ID', eid, eid)
+        eid=e['event_id'];C.integer(eid,'event ID',previous+1,19);C.integer(e['initial_primary_id'], 'initial ID', eid, eid)
+        if policy is None:C.equal(eid,index,'historical complete gamma IDs')
+        else:C.require(N.has_nonzero_deposit(e),'sparse gamma retained zero-input event')
+        previous=eid
         C.equal(set(e['material_rows']), set(m['material_tables']), 'all physical materials retained')
         tables = dict(vtx=e['vtx'], particles=e['particles'], tracks=e['tracks'], **e['material_rows'])
         for table, rows in tables.items():
             spec = m['raw_tables'][table]
             for row in rows:
                 C.fields(row, {*spec['columns'], 'raw_row_index'}, 'raw row columns')
-                C.integer(row['raw_row_index'], 'raw index', counters[table], counters[table]); counters[table] += 1
+                rawindex=row['raw_row_index']
+                C.integer(rawindex, 'raw index', counters[table], counters[table] if policy is None else m['raw_tables'][table]['rows']-1)
+                counters[table]=rawindex+1
                 C.integer(row['evtid'], 'raw event', eid, eid)
                 for name, descriptor in spec['columns'].items():
                     if descriptor['dtype'].startswith(('int', 'uint')):
@@ -150,9 +193,9 @@ def validate_events(events, m, prepared):
         v, p = e['vtx'], e['particles']
         C.require(len(v) == len(p) == 1 and v[0]['n_part'] == 1 and p[0]['vertexid'] == 0, 'one initial gamma')
         C.equal(v[0]['time'], 0.0, 'gamma primary time zero'); C.equal(p[0]['particle'], 22, 'gamma PDG')
-        for a, expected in zip(('px', 'py', 'pz'), (0.0, -0.662, 0.0)):
+        for a, expected in zip(('px', 'py', 'pz'), (0.0, -source_energy/1000, 0.0)):
             C.close(p[0][a], expected, 'gamma direction/momentum', absolute=1e-12)
-        C.close(p[0]['ekin'], 0.662, 'initial raw MeV', absolute=1e-12)
+        C.close(p[0]['ekin'], source_energy/1000, 'initial raw MeV', absolute=1e-12)
         for a, expected in zip(('xloc', 'yloc', 'zloc'), m['source_position_global_mm']):
             C.close(1000 * v[0][a], expected, 'initial source position', absolute=1e-10)
         tracks = {t['trackid']: t for t in e['tracks']}
@@ -177,7 +220,7 @@ def validate_events(events, m, prepared):
                 C.require(row['edep'] >= 0 and row['time'] >= 0 and row['time'] + 1e-12 >= t['time'], 'deposit energy/birth time')
                 sums.setdefault(material, []).append(row['edep'])
         C.equal(e['material_energy_keV'], {k: math.fsum(v) for k, v in sums.items()}, 'all material energy sums')
-        C.require(math.fsum(e['material_energy_keV'].values()) <= 662 + 1e-7, 'recorded-only energy bound')
+        C.require(math.fsum(e['material_energy_keV'].values()) <= source_energy + 1e-7, 'recorded-only energy bound')
         raw_ge = e['material_rows']['stp/germanium']; C.equal(len(e['steps']), len(raw_ge), 'whole Ge rows, including zeros')
         for s, raw in zip(e['steps'], raw_ge):
             C.fields(s, 'raw_row_index energy_keV time_ns track_id parent_track_id particle_pdg global_position_m position_mm pre_position_mm post_position_mm boundary_classifications'.split(), 'derived Ge step')
@@ -195,7 +238,14 @@ def validate_events(events, m, prepared):
         energy = math.fsum(r['edep'] for r in raw_ge)
         exact(energy, e['truth_ge_edep_keV'], 'raw truth Ge energy')
         C.require(type(e['zero_ge']) is bool and e['zero_ge'] == (energy == 0), 'true zero semantics')
-    for table, n in counters.items(): C.equal(n, m['raw_tables'][table]['rows'], 'complete raw table census')
+    if policy is None:
+        for table, n in counters.items(): C.equal(n, m['raw_tables'][table]['rows'], 'complete raw table census')
+    else:
+        C.require(m['raw_tables']['vtx']['rows']==m['raw_tables']['particles']['rows']==20,'full raw gamma primary census')
+        summary=m.get('initial_summary')
+        C.fields(summary,'initial_primaries initial_gamma_primaries zero_deposit_primaries nonzero_primaries'.split(),'full gamma initial summary')
+        N.validate_storage(policy,summary,initial_primaries=20)
+        C.integer(summary['initial_gamma_primaries'],'initial gamma primaries',20,20)
 
 
 def load_inputs(root=ROOT):

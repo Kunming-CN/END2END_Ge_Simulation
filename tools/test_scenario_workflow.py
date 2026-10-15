@@ -41,7 +41,7 @@ class Workflow(unittest.TestCase):
         c=copy.deepcopy(self.config);c['threads']=1;self.assertEqual(self.check(c)['resolved']['selection']['threads'],1)
 
     def test_unsupported_selections_and_types_fail_before_pins(self):
-        for key,value in [('detector','GeRC02'),('cryostat','other'),('source','Am241'),('pose','nominal'),
+        for key,value in [('detector','GeRC02'),('cryostat','other'),('source','Am241'),('pose','arbitrary'),
                           ('primary_count',500),('seed',42),('threads',True),('primary_count',20.0),('seed',True),('name','../escape'),('name','CON')]:
             c=copy.deepcopy(self.config);c[key]=value
             with self.subTest(key=key,value=value),self.assertRaises(W.ControlError):self.check(c)
@@ -152,6 +152,33 @@ class Workflow(unittest.TestCase):
         c=copy.deepcopy(self.config);c['electronics']['shaping_tau_us']=49.9999
         with self.assertRaises(W.ControlError):self.check(c)
         c['electronics']['shaping_tau_us']=49.9998;self.check(c)
+
+    def test_gamma_effective_energy_and_existing_anchor_are_bound(self):
+        legacy=self.check()
+        c=copy.deepcopy(self.config);c.update(gamma_energy_keV=1000,pose='nominal')
+        current=self.check(c)
+        self.assertNotEqual(legacy['configuration_sha256'],current['configuration_sha256'])
+        self.assertEqual(current['resolved']['source_position_global_mm'],[0,37.073,.290])
+        self.assertEqual(W.portable_request(c)['gamma_energy_keV'],1000)
+        self.assertNotIn('gamma_energy_keV',W.portable_request(self.config))
+        for energy in (0,-1,True,'1000',None,float('nan'),float('inf')):
+            bad=copy.deepcopy(c);bad['gamma_energy_keV']=energy
+            with self.subTest(energy=energy),self.assertRaises(W.ControlError):self.check(bad)
+        c.update(source=W.CS,pose='nominal')
+        with self.assertRaises(W.ControlError):self.check(c)
+
+    def test_gamma_options_cannot_use_legacy_source_dispatch(self):
+        c=copy.deepcopy(self.config);c['gamma_energy_keV']=662
+        plan=self.check(c)
+        with self.assertRaises(W.ControlError):
+            W.stage_commands(W.run_path(c['name'],self.root),plan['resolved'],self.root,{'JULIA_EXE':'not-launched'})
+
+    def test_gamma_catalog_exposes_only_supported_controls(self):
+        catalog=W.catalog();source=next(s for s in catalog['sources'] if s['id']==W.GAMMA)
+        self.assertEqual(source['gamma_controls']['source_poses'],['nominal','plus5mm'])
+        self.assertEqual(source['gamma_controls']['fixed_primary_count'],20)
+        self.assertEqual(source['gamma_controls']['fixed_seed'],26092631)
+        self.assertEqual(source['gamma_controls']['direction_global'],[0,-1,0])
 
 
 if __name__=='__main__':unittest.main()

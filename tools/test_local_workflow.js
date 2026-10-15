@@ -330,7 +330,7 @@ run('renderLegacy({gamma:{jobs:[]}});renderJobs({busy:false,jobs:[]});');
 console.log('STRICT-03 unchanged renders, meaningful updates, reorder, focus/caret, details, current permission and saved primary/group contracts passed.');
 // Editing the next setup never relabels the immutable run whose stages are shown.
 run("const savedJob={name:'saved-sap-gamma',configuration_sha256:'a'.repeat(64),selection:{detector:'SAP22',source:'mono_gamma_662_axis_v1',primary_count:20,electronics:{gain:21}},stages:{geometry:{status:'completed',elapsed_seconds:7.62}}};showRun(savedJob);");
-assert.match(get('saved-source-pose').textContent,/Selected run source pose · legacy fixed pose/);
+assert.match(get('saved-source-pose').textContent,/Selected run source pose · 662 keV · legacy source anchor/);
 run("const angledJob={...savedJob,name:'saved-sap-angle',configuration_sha256:'7'.repeat(64),selection:{...savedJob.selection,source:'cs137_point_decay_v1',angle_deg:30},source_pose:sourcePose30,source_position_global_mm:sourcePose30.position_global_mm};showRun(angledJob);");
 const immutablePose=get('saved-source-pose').textContent,immutablePlan=get('run-plan').textContent;
 assert.match(immutablePose,/angle 30°.*17.8/);assert.equal(JSON.parse(immutablePlan).source_pose.anchors_sha256,'8'.repeat(64));
@@ -340,10 +340,10 @@ run('showRun({...angledJob,source_pose:null,source_position_global_mm:undefined}
 run('showRun(savedJob);');
 get('detector').value='AK02';get('source').value='cs137_point_decay_v1';run('sourceChanged();');
 assert.match(get('setup-preview').textContent,/Current setup · AK02 · Cs137/);
-assert.match(get('selected').textContent,/Selected run · saved-sap-gamma · SAP22 · Gamma/);
+assert.match(get('selected').textContent,/Selected run · saved-sap-gamma · SAP22 · Monoenergetic gamma beam · 662 keV/);
 assert.match(get('run-plan').textContent,/"gain": 21/);
 run('renderJobs({busy:false,jobs:[{...savedJob,id:"saved",status:"completed"}]});');
-assert.match(get('selected').textContent,/SAP22 · Gamma/);
+assert.match(get('selected').textContent,/SAP22 · Monoenergetic gamma beam · 662 keV/);
 get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
 // The native SVG namespace is supplied without changing saved attribute strings.
 const rendered=run("safeSvg('<svg/>')");assert.equal(rendered.namespaceURI,svgNs);
@@ -368,7 +368,7 @@ assert.match(get('source-details').textContent,/Am241.*daughter timing/);assert.
 assert.match(get('source-identity').textContent,/95/);assert.equal(get('seed').disabled,false);
 assert.equal(run("importedConfig({...config(),seed:17}).seed"),17);
 for(const bad of [true,500.0+0.5,'500'])assert.throws(()=>run(`importedConfig({...config(),primary_count:${JSON.stringify(bad)}})`),/unavailable/);
-run("showRun(savedJob);");assert.match(get('selected').textContent,/saved-sap-gamma.*Gamma/);
+run("showRun(savedJob);");assert.match(get('selected').textContent,/saved-sap-gamma.*Monoenergetic gamma beam · 662 keV/);
 run(`savedArtifacts(savedJob,{artifacts:{'resolved-config.json':{sha256:'1'.repeat(64),bytes:101},'transport/truth.lh5':{sha256:'2'.repeat(64),bytes:202},'transport/stream/events-00000.jsonl':{sha256:'3'.repeat(64),bytes:303},'response/scalars.jsonl':{sha256:'4'.repeat(64),bytes:404},'response/calibration.json':{sha256:'5'.repeat(64),bytes:505},'unrelated.json':{sha256:'6'.repeat(64),bytes:606}}});`);
 const artifactButtons=descendants(get('saved-artifacts')).filter(n=>n.tagName==='button').map(n=>n.textContent);
 for(const name of ['COMPLETE.json','transport/truth.lh5','transport/stream/events-00000.jsonl','response/scalars.jsonl','response/calibration.json'])assert.ok(artifactButtons.includes('Download '+name),name);
@@ -387,6 +387,47 @@ assert.throws(()=>run('importedConfig(config())'),/unavailable/);
 for(const bad of [true,500.5,'500',0,9007199254740992])assert.throws(()=>run(`importedRequest(batchRequest({...config(),primary_count:${JSON.stringify(bad)}}))`),/unavailable/);
 assert.throws(()=>run('importedRequest({...batchRequest(config()),extra:true})'),/fields/);
 get('count').value='500';get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
+// Gamma options are offered only when the backend advertises both existing
+// anchors. New typed selections bind energy; legacy inputs still resolve 662.
+assert.match(html,/<div id="gamma-controls" hidden>/);
+assert.match(html,/<label for="gamma-energy-keV">Gamma energy · keV<input id="gamma-energy-keV" type="number" min="0" step="any" value="662"/);
+assert.equal(get('gamma-controls').hidden,true);assert.equal(get('gamma-energy-keV').disabled,true);
+assert.equal(run("Object.hasOwn(config(),'gamma_energy_keV')"),false);
+run(`const gammaControls={enabled:true,energy_keV:{default:662,minimum_exclusive:0},source_poses:['nominal','plus5mm'],fixed_primary_count:20,fixed_seed:26092631,direction_global:[0,-1,0],time_ns:0,units:{energy:'keV',length:'mm',time:'ns'},scope:'AK02 and SAP22; existing source anchors only'};
+catalog.sources.find(s=>s.id==='mono_gamma_662_axis_v1').gamma_controls=gammaControls;sourceChanged();`);
+assert.equal(get('gamma-controls').hidden,false);assert.equal(get('gamma-energy-keV').disabled,false);
+assert.deepEqual(get('pose').children.map(o=>o.value),['nominal','plus5mm']);assert.equal(get('pose').value,'plus5mm');
+assert.equal(get('gamma-energy-keV').value,'662');assert.equal(run('config().gamma_energy_keV'),662);
+get('gamma-energy-keV').value='1000';get('pose').value='nominal';run("checked={check_id:'earlier-gamma'};invalidate();");
+assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
+assert.equal(run('config().gamma_energy_keV'),1000);assert.equal(run('config().pose'),'nominal');
+assert.equal(run('config().primary_count'),20);assert.equal(run('config().seed'),26092631);
+assert.match(get('setup-preview').textContent,/Monoenergetic gamma beam · 1000 keV · nominal anchor/);
+for(const bad of ['', 'NaN', 'Infinity', '-Infinity', '0', '-1']){get('gamma-energy-keV').value=bad;assert.throws(()=>run('config()'),/Gamma energy.*finite positive.*keV/);}
+get('gamma-energy-keV').value='1000';
+for(const bad of [true,'1000',null,0,-1])assert.throws(()=>run(`importedConfig({...config(),gamma_energy_keV:${JSON.stringify(bad)}})`),/gamma energy/);
+for(const bad of ['NaN','Infinity','-Infinity'])assert.throws(()=>run(`importedConfig({...config(),gamma_energy_keV:${bad}})`),/gamma energy/);
+assert.throws(()=>run("importedConfig({...config(),pose:'unsupported'})"),/unavailable/);
+run("const legacyGammaInput={...config(),pose:'plus5mm'};delete legacyGammaInput.gamma_energy_keV;const legacyGammaBefore=JSON.stringify(legacyGammaInput);const legacyGammaNormalized=importedConfig(legacyGammaInput);");
+assert.equal(run('legacyGammaNormalized.gamma_energy_keV'),662);assert.equal(run('JSON.stringify(legacyGammaInput)'),run('legacyGammaBefore'));
+run(`const gammaMarker={kind:'portable_gamma_source_configuration_v1',schema_version:1,energy_keV:1000,source_pose:'nominal',position_global_mm:[0,37.073,.290],direction_global:[0,-1,0],time_ns:0,units:{energy:'keV',length:'mm',time:'ns',direction:'dimensionless'}};
+const changedGammaJob={...savedJob,name:'saved-1000-gamma',configuration_sha256:'6'.repeat(64),selection:{...config(),detector:'SAP22'},gamma_source_configuration:gammaMarker,source_position_global_mm:gammaMarker.position_global_mm};
+showPose({selection:config(),source_position_global_mm:gammaMarker.position_global_mm,gamma_source_configuration:gammaMarker});showRun(changedGammaJob);`);
+assert.match(get('source-pose-preview').textContent,/1000 keV · nominal anchor.*global \[0, 37.073, 0.29\] mm.*beam \[0, -1, 0\].*creation time 0 ns/);
+assert.equal(JSON.parse(get('source-pose-identity').textContent).gamma_source_configuration.energy_keV,1000);
+assert.match(get('selected').textContent,/saved-1000-gamma.*Monoenergetic gamma beam · 1000 keV/);
+const frozenGammaPlan=get('run-plan').textContent,frozenGammaPose=get('saved-source-pose').textContent;
+get('gamma-energy-keV').value='1500';get('pose').value='plus5mm';run('invalidate();');
+assert.equal(get('run-plan').textContent,frozenGammaPlan);assert.equal(get('saved-source-pose').textContent,frozenGammaPose);
+assert.match(get('selected').textContent,/1000 keV/);assert.doesNotMatch(get('selected').textContent,/1500 keV/);
+run('showRun(savedJob);');assert.match(get('selected').textContent,/662 keV/);assert.equal(run("Object.hasOwn(savedJob.selection,'gamma_energy_keV')"),false);
+get('source').value='cs137_point_decay_v1';run('sourceChanged();');
+assert.equal(get('gamma-controls').hidden,true);assert.equal(get('gamma-energy-keV').disabled,true);
+assert.equal(run("Object.hasOwn(config(),'gamma_energy_keV')"),false);assert.equal(run("Object.hasOwn(batchRequest(config()).selection,'gamma_energy_keV')"),false);
+assert.throws(()=>run('importedConfig({...config(),gamma_energy_keV:1000})'),/gamma energy/);
+assert.throws(()=>run('importedRequest(batchRequest({...config(),gamma_energy_keV:1000}))'),/gamma energy/);
+get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');get('gamma-energy-keV').value='662';
+console.log('Gamma backend-gated energy/anchor controls, typed finite positive inputs, legacy 662 import, gamma-only payloads, fixed count/seed and immutable saved energy/placement passed.');
 // Per-batch pages retain boundary identities, signs, raw deposits and null failures.
 run(`const batchJob={name:'batch-saved',configuration_sha256:'d'.repeat(64),execution_contract:'serial_batches_v3',status:'completed',selection:{detector:'AK01',source:'cs137_point_decay_v1',primary_count:25001},batching:{batch_count:3},stages:{}};
 function batchFixture(batch,offset,count=1){const globalOffset=batch*10000;return {kind:'local_batch_event_page_v1',name:batchJob.name,configuration_sha256:batchJob.configuration_sha256,batch_index:batch,batch_offset:globalOffset,batch_primary_count:10000,offset,limit:100,next_offset:offset+count<10000?offset+count:null,batch_sha256:'e'.repeat(64),response_summary_sha256:'f'.repeat(64),traces:[],artifacts:[{file:'batches/b'+String(batch).padStart(10,'0')+'/response/scalars.jsonl',bytes:404,sha256:'4'.repeat(64)}],records:Array.from({length:count},(_,i)=>({batch_index:batch,global_initial_id:globalOffset+offset+i,local_initial_id:offset+i,truth:{steps:[{energy_keV:4,time_ns:500000,raw_row_index:12}]},primary:{record_kind:'decay',event_id:offset+i,pulse_count:1,deposited_energy_keV:4},pulse_groups:[{record_kind:'pulse',event_id:offset+i,group_id:0,origin_time_ns:500000,final_induced_keV:-.003,deposited_energy_keV:4,readout:null,status:'native_transport_failed'}]}))};}
@@ -1017,4 +1058,38 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run('showRun(optionJob);optionPending[2](optionsReply(savedJob,{feature_export_present:true}));');await runOptions;
   assert.equal(get('feature-panel').hidden,true);assert.equal(get('result-options-status').textContent,'');
   console.log('P3 visible stage files/optional hashes, sparse-ledger census copy, lazy availability, full-run/sealed-batch raw signed-domain spectra, under/overflow/not-selected accounting and closed/run/stale/error guards passed.');
+  // The single-run Gamma endpoint receives the actual energy/anchor, imports
+  // retain that identity, and a changed input cannot revive an earlier Check.
+  run(`busy=false;active=false;api=()=>new Promise(()=>{});`);
+  get('detector').value='SAP22';get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
+  get('gamma-energy-keV').value='1000';get('pose').value='nominal';get('name').value='gamma-options';run('invalidate();');
+  run(`const gammaCalls=[];let gammaCheckResolve;
+    api=(path,body)=>{gammaCalls.push({path,body});if(path==='/api/workflow/check')return new Promise(resolve=>gammaCheckResolve=resolve);return new Promise(()=>{});};
+    const checkedGammaReply=()=>({check_id:'checked-1000-gamma',resolved:{selection:config(),source_position_global_mm:gammaMarker.position_global_mm,gamma_source_configuration:{...gammaMarker,energy_keV:config().gamma_energy_keV,source_pose:config().pose}}});`);
+  const gammaCheck=run("$('check').onclick()");
+  assert.equal(run('gammaCalls.at(-1).path'),'/api/workflow/check');
+  assert.equal(run('gammaCalls.at(-1).body.config.gamma_energy_keV'),1000);assert.equal(run('gammaCalls.at(-1).body.config.pose'),'nominal');
+  run('gammaCheckResolve(checkedGammaReply());');await gammaCheck;
+  assert.equal(get('start').disabled,false);assert.match(get('source-pose-preview').textContent,/1000 keV · nominal anchor/);
+  const frozenCheckedGamma=run('JSON.stringify(checked.resolved.selection)');
+  get('gamma-energy-keV').value='1200';run('invalidate();');assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
+  run(`const gammaImport=JSON.parse(${JSON.stringify(frozenCheckedGamma)});$('import').files=[{size:100,text:async()=>JSON.stringify(gammaImport)}];`);
+  await run("$('import').onchange()");
+  assert.equal(get('gamma-energy-keV').value,'1000');assert.equal(get('pose').value,'nominal');assert.equal(run('config().gamma_energy_keV'),1000);assert.equal(run('checked'),null);
+  run(`const legacyGammaImport={...gammaImport};delete legacyGammaImport.gamma_energy_keV;$('import').files=[{size:100,text:async()=>JSON.stringify(legacyGammaImport)}];`);
+  await run("$('import').onchange()");assert.equal(get('gamma-energy-keV').value,'662');assert.equal(run('config().gamma_energy_keV'),662);assert.equal(get('pose').value,'nominal');
+  const staleGammaCheck=run("$('check').onclick()");run('const obsoleteGammaReply=checkedGammaReply();');
+  get('gamma-energy-keV').value='1000';run('invalidate();gammaCheckResolve(obsoleteGammaReply);');await staleGammaCheck;
+  assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);assert.match(get('notice').textContent,/Selection changed while Check was pending/);
+  // Sparse gamma native cases preserve original IDs, full count context, and
+  // failed/null signals. Historical zero cases are excluded only from browsing.
+  run(`const sparseGammaReport={cases:[{initial_primary_id:3,event_id:31,zero_ge:false,status:'native_failed',truth_ge_edep_keV:4,final_induced_keV:null,readout:null},{initial_primary_id:17,event_id:170,zero_ge:false,status:'native_completed',truth_ge_edep_keV:15,final_induced_keV:-14,readout:{accepted:false,reconstructed_energy_keV:null}}],counts:{initial_primaries:20,zero_deposit_primaries:18,nonzero_primaries:2},artifacts:{'summary.html':'c'.repeat(64)}};
+    artifact=async(name,file)=>({json:async()=>file==='response/run.json'?sparseGammaReport:{configuration_sha256:changedGammaJob.configuration_sha256,artifacts:{'response/summary.html':{sha256:'c'.repeat(64)}}}});
+    resultOptionsRequest=async job=>({kind:'local_saved_result_options_v1',name:job.name,configuration_sha256:job.configuration_sha256,feature_export_present:false,acquisition_export_present:false,spectrum_file:null,spectrum_scope:null});`);
+  await run('openResult(changedGammaJob)');
+  assert.deepEqual(get('event').children.map(o=>o.value),['3','17']);assert.equal(run('result.report.counts.initial_primaries'),20);
+  assert.match(get('result-heading').textContent,/1000 keV.*20 original primaries/);assert.match(get('plots').children[0].textContent,/No saved waveform/);
+  assert.equal(run('result.records[0].readout'),null);assert.equal(get('result-data').children[0].children[1].children[0].textContent,'Unavailable');
+  assert.deepEqual(JSON.parse(run('JSON.stringify(selectablePrimaryIds([{initial_primary_id:0,event_id:0,zero_ge:true},...sparseGammaReport.cases]))')),[3,17]);
+  console.log('Gamma Check/import/changed-Check identity and sparse native original IDs/counts/failure nulls passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

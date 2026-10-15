@@ -416,6 +416,8 @@ class WorkflowController:
         out['selection']=copy.deepcopy(job['plan']['resolved']['selection'])
         out['source_pose']=copy.deepcopy(job['plan']['resolved'].get('source_pose'))
         out['source_position_global_mm']=copy.deepcopy(job['plan']['resolved'].get('source_position_global_mm'))
+        if 'gamma_source_configuration' in job['plan']['resolved']:
+            out['gamma_source_configuration']=copy.deepcopy(job['plan']['resolved']['gamma_source_configuration'])
         out['configuration_sha256']=job['plan']['configuration_sha256']
         out['output']=W.BASE+'/'+job['name'];out['error']=job.get('error');out['stages']={}
         out['workflow_kind']=job['plan'].get('kind')

@@ -62,6 +62,11 @@ PACKAGE_NAMES = ("python", "numpy", "h5py", "pyyaml", "remage", "geant4", "geant
                  "gxx_impl_linux-64", "binutils_impl_linux-64")
 BUILD_KEYS = {"kind", "schema_version", "status", "adapter_version", "producer_sha256",
               "project_identity", "source_sha256", "runtime", "build", "exporter"}
+# Preserve the original successful build receipt and all compiled-input pins.
+# This one Python-only option upgrade is separately pinned at execution time.
+HISTORICAL_BUILD_PRODUCER = "b99bfc20ece50e0a87fc22bdb78effea049d27a90fb1b8a1311bcf0e29305f4d"
+GAMMA_TRANSPORT_SHA256 = "906c8c83a7c40d0e1fafef3ca7149c5efd418fe4a3a003befca714fed7ed88de"
+NONZERO_STORAGE_SHA256 = "a28ae48e426defe7c03b2f8d2398afcf2ca35dbd26c28fa00670101e1240a2c8"
 
 
 def require(ok, message):
@@ -148,9 +153,15 @@ def recheck_map(values, root=ROOT):
         require(digest(safe_path(root, ref, True)) == sha, "changed source/artifact: " + ref)
 
 
+def source_inventory():
+    return {**PINNED, "transport/scenario_transport.py": GAMMA_TRANSPORT_SHA256,
+            "tools/nonzero_events.py": NONZERO_STORAGE_SHA256}
+
+
 def canonical_sources():
-    recheck_map(PINNED)
-    return dict(PINNED)
+    sources = source_inventory()
+    recheck_map(sources)
+    return sources
 
 
 def adapter_path():
@@ -175,17 +186,46 @@ def helpers():
 
 
 def closed_request(value):
-    require(type(value) is dict and set(value) == {"detector", "source_mode", "source_pose", "primary_count", "seed"}, "unsupported request keys")
+    keys = {"detector", "source_mode", "source_pose", "primary_count", "seed"}
+    require(type(value) is dict and set(value) in (keys, keys | {"gamma_energy_keV"}), "unsupported request keys")
     require(type(value["detector"]) is str and value["detector"] in DETECTORS, "unsupported detector")
     require(type(value["source_mode"]) is str and value["source_mode"] in (CS137, GAMMA), "unsupported source mode")
     require(type(value["primary_count"]) is int and type(value["seed"]) is int
             and 0 < value["seed"] < 2147483647, "invalid primary count/seed")
     if value["source_mode"] == GAMMA:
-        exact([value["detector"] in ("AK02", "SAP22"), value["source_pose"], value["primary_count"], value["seed"]],
-              [True, "plus5mm", 20, 26092631], "unsupported fixed gamma tuple")
+        require(type(value["source_pose"]) is str and value["source_pose"] in ("nominal", "plus5mm"), "unsupported named gamma source pose")
+        exact([value["detector"] in ("AK02", "SAP22"), value["primary_count"], value["seed"]],
+              [True, 20, 26092631], "unsupported fixed gamma tuple")
+        energy = value.get("gamma_energy_keV", 662)
+        require(type(energy) in (int, float), "gamma energy must be finite positive keV")
+        try:
+            valid_energy = math.isfinite(energy) and energy > 0
+        except OverflowError:
+            valid_energy = False
+        require(valid_energy, "gamma energy must be finite positive keV")
     else:
+        require("gamma_energy_keV" not in value, "gamma energy applies only to monoenergetic gamma")
         require(value["source_pose"] == "nominal" and value["primary_count"] in (20, 500), "unsupported Cs137 tuple")
     return dict(value)
+
+
+def gamma_options(request):
+    return request["source_mode"] == GAMMA and ("gamma_energy_keV" in request or request["source_pose"] != "plus5mm")
+
+
+def resolve_gamma_plan(request):
+    """Resolve frozen assets, then apply only the named pose and explicit energy."""
+    _, _, s, gamma, *_ = helpers()
+    config = ROOT / f"scenarios/m11a-{request['detector'].lower()}-mono_gamma_662_axis_v1-plus5mm.json"
+    resolved = s.check(config)
+    exact([resolved["instance"]["primary_count"], resolved["instance"]["seed"], resolved["instance"]["source_pose"]],
+          [20, 26092631, "plus5mm"], "canonical gamma config changed")
+    if gamma_options(request):
+        marker = gamma.source_configuration(request.get("gamma_energy_keV", 662), request["source_pose"])
+        exact(resolved["instance"]["source"], marker["canonical_preset"], "original gamma preset changed")
+        resolved = {**resolved, "instance": {**resolved["instance"], "source_pose": request["source_pose"]},
+                    "source_position_global_mm": marker["position_global_mm"], "gamma_source_configuration": marker}
+    return resolved
 
 
 def model_id(request):
@@ -491,14 +531,21 @@ def build_exporter(windows_root):
         h.publish_json(destination / "build-attempt.json", attempt)
 
 
+def validate_build_binding(value, producer):
+    if value.get("producer_sha256") == HISTORICAL_BUILD_PRODUCER:
+        exact(value["source_sha256"], PINNED, "historical build sources changed; no old-version rebase")
+    else:
+        exact(value["source_sha256"], source_inventory(), "rehashing cannot admit changed canonical source")
+        require(value["producer_sha256"] == producer, "build producer changed")
+
+
 def validate_build_receipt(value, identity, runtime, producer, recipe, semantics):
     require(type(value) is dict and set(value) == BUILD_KEYS, "unsupported build receipt keys")
     exact([value["kind"], value["schema_version"], value["status"], value["adapter_version"]],
           ["portable_source_exporter_build_v1", 1, "complete", VERSION], "incomplete/unknown build receipt")
     exact(value["project_identity"], identity, "foreign project build receipt")
-    exact(value["source_sha256"], PINNED, "rehashing cannot admit changed canonical source")
+    validate_build_binding(value, producer)
     exact(value["runtime"], runtime, "foreign build runtime/lock identity")
-    require(value["producer_sha256"] == producer, "build producer changed")
     expected_build = {**recipe, **semantics}
     require(set(value["build"]) == set(expected_build) | {"configure_returncode", "build_returncode", "configure_wall_s", "build_wall_s"}, "unsupported build recipe keys")
     for key, expected in expected_build.items():
@@ -539,12 +586,11 @@ def read_build_receipt(windows_root):
 def file_readiness(root=ROOT):
     """Windows UI file check only; the WSL Check independently proves runtime/build."""
     root = Path(root).resolve()
-    recheck_map(PINNED, root)
+    recheck_map(source_inventory(), root)
     value = load(safe_path(root, BUILD_RECEIPT_REF, True))
     require(set(value) == BUILD_KEYS and value["kind"] == "portable_source_exporter_build_v1" and
             value["schema_version"] == 1 and value["status"] == "complete" and value["adapter_version"] == VERSION, "incomplete portable build receipt")
-    exact(value["source_sha256"], PINNED, "canonical build sources changed")
-    require(value["producer_sha256"] == digest(safe_path(root, ADAPTER_REF, True)), "portable build producer changed")
+    validate_build_binding(value, digest(safe_path(root, ADAPTER_REF, True)))
     normalize = lambda v: v.replace("/", "\\").rstrip("\\")
     require(normalize(value["project_identity"]["windows_root"]) == normalize(str(root)), "foreign Windows build root")
     binary = safe_path(root, EXPORTER_REF, True)
@@ -580,10 +626,7 @@ def check(request, windows_root):
     marker, portable = execution_binding(request, build)
     h, cs, s, gamma, ring, models = helpers()
     if request["source_mode"] == GAMMA:
-        config = ROOT / f"scenarios/m11a-{request['detector'].lower()}-mono_gamma_662_axis_v1-plus5mm.json"
-        resolved = s.check(config)
-        exact([resolved["instance"]["primary_count"], resolved["instance"]["seed"], resolved["instance"]["source_pose"]],
-              [20, 26092631, "plus5mm"], "canonical gamma config changed")
+        resolved = resolve_gamma_plan(request)
     else:
         resolved = None
         if ring_case(request):
@@ -591,9 +634,12 @@ def check(request, windows_root):
             ring.scenario()
         else:
             h.load_model(model_id(request))
-    return {"kind": "portable_source_checked_plan_v1", "schema_version": 1, "request": request,
+    result = {"kind": "portable_source_checked_plan_v1", "schema_version": 1, "request": request,
             "execution_contract": marker, "portable_source_sha256": portable, "canonical_source_sha256": canonical_sources(),
             "upstream_sha256": cs.upstream_hashes(), "runtime": build["runtime"], "gamma_plan": resolved}
+    if gamma_options(request):
+        result["gamma_source_configuration"] = resolved["gamma_source_configuration"]
+    return result
 
 
 def validate_checked_plan(saved, request, windows_root):
@@ -722,6 +768,7 @@ def metadata_for(directory, checked, report, model_contract, elapsed, files):
     if request["source_mode"] == GAMMA:
         config = ROOT / f"scenarios/m11a-{model.lower()}-mono_gamma_662_axis_v1-plus5mm.json"
         return {**common, "kind": s.KIND, "schema_version": 1, "status": "prepared", "instance": plan["instance"], "assets": plan["assets"],
+                **({"gamma_source_configuration": plan["gamma_source_configuration"]} if gamma_options(request) else {}),
                 "source_position_global_mm": source, "source_pose_status": "native geometry checked for this preparation; nominal engineering pose",
                 "stages": {"geometry": "geometry_checked", "source_macro": "source_macro_prepared", "transport": "transport_not_executed", "charge": "charge_not_executed", "readout": "readout_not_executed"},
                 "source_sha256": s.frozen_inventory(config, ROOT / EXPORTER_REF), "legacy_source_sha256": cs.source_hashes(),
@@ -729,7 +776,7 @@ def metadata_for(directory, checked, report, model_contract, elapsed, files):
                 "overlap_seed": 26092632, "overlap_samples": 10000, "grouping_policy": {**cs.POLICY, "horizon_ns": scenario["group_horizon_ns"]},
                 "energy_closure": None, "activity_Bq": None,
                 "assumptions": [scenario["status"], "baseline nominal top reference: " + scenario["top_assumption"],
-                    "selected pose plus5mm; plus5mm is 5 mm beyond the nominal capsule/source centre along global +y",
+                    "selected pose " + request["source_pose"] + "; plus5mm is 5 mm beyond the nominal capsule/source centre along global +y",
                     "source point and capsule/fill move together; capsule axis global +y", "overlap sampling is not geometry convergence",
                     "planned count/seed/macro are inputs; no emitted event census or raw quantities exist"],
                 "unknowns": scenario["unknowns"], "omitted": scenario["omitted"],
@@ -801,7 +848,7 @@ def prepare(request, output, windows_root, checked_plan):
         report = load(output / "geometry-report.json")
         validate_geometry(report, request, scenario, plan, probes)
         require((output / "geometry.gdml").is_file(), "native geometry missing")
-        macro = s.source_macro(report, plan) if plan else cs.macro_text(report, request["primary_count"], source)
+        macro = gamma.source_macro(report, plan) if plan else cs.macro_text(report, request["primary_count"], source)
         h.write_new(output / "run.mac", macro)
         require(all(digest(output / ref) == sha for ref, sha in inputs.items()), "prepared input changed during geometry")
         validate_checked_plan(checked, request, windows_root)
@@ -843,7 +890,7 @@ def read_prepared(directory, windows_root):
     exact((directory / "probe-points.txt").read_text(encoding="utf-8"), probe_text(probes), "rehashed probes changed")
     exact((directory / "parameters.txt").read_text(encoding="utf-8"), parameter_text(scenario, source, request["source_mode"] == GAMMA), "rehashed native parameters changed")
     exact(load(directory / ("resolved-instance.json" if plan else "scenario.json")), plan or scenario, "rehashed source/pose/resolved scenario changed")
-    expected_macro = s.source_macro(report, plan) if plan else cs.macro_text(report, request["primary_count"], source)
+    expected_macro = gamma.source_macro(report, plan) if plan else cs.macro_text(report, request["primary_count"], source)
     exact((directory / "run.mac").read_text(encoding="utf-8"), expected_macro, "rehashed macro/count/seed/clock changed")
     model_contract = None
     if ring_case(request):
@@ -892,6 +939,8 @@ def run(directory, windows_root):
                "status": "failed", "prepared_sha256": pins["prepared.json"], "command": command(request),
                "runtime": runtime, "execution_contract": checked["execution_contract"], "portable_source_sha256": checked["portable_source_sha256"],
                "transport_source_sha256": helpers()[3].producer_hashes() if request["source_mode"] == GAMMA else meta["source_sha256"]}
+    if gamma_options(request):
+        receipt["gamma_source_configuration"] = meta["gamma_source_configuration"]
     start = time.perf_counter()
     try:
         recheck_prepared_pins(directory, pins)
@@ -924,8 +973,12 @@ def read_complete_run(directory, windows_root, *, with_stream=False):
     directory, meta, checked, runtime, pins = read_prepared(directory, windows_root)
     request = checked["request"]
     receipt = load(directory / "run.json")
-    require(set(receipt) == {"kind", "status", "prepared_sha256", "command", "runtime", "execution_contract", "portable_source_sha256",
-                            "transport_source_sha256", "remage_wall_s", "returncode", "source_lh5_sha256", "validation", "data_recheck_wall_s", "total_wall_s"}, "unsupported complete run keys")
+    expected_keys = {"kind", "status", "prepared_sha256", "command", "runtime", "execution_contract", "portable_source_sha256",
+                     "transport_source_sha256", "remage_wall_s", "returncode", "source_lh5_sha256", "validation", "data_recheck_wall_s", "total_wall_s"}
+    if gamma_options(request):
+        expected_keys.add("gamma_source_configuration")
+        exact(receipt.get("gamma_source_configuration"), meta["gamma_source_configuration"], "run gamma source options changed")
+    require(set(receipt) == expected_keys, "unsupported complete run keys")
     expected_kind = "scenario_gamma_transport_run_v1" if request["source_mode"] == GAMMA else "portable_cs137_transport_run_v1"
     exact([receipt["kind"], receipt["status"], receipt["returncode"], receipt["prepared_sha256"]],
           [expected_kind, "complete", 0, pins["prepared.json"]], "run incomplete/unpaired")
@@ -963,35 +1016,77 @@ def raw_metadata(raw, meta, request):
         return tables, origins, list(cs.table_rows(source["processes"])), cs.step_aliases(source, meta["material_tables"])
 
 
-def validate_stream_events(directory, meta, request, chunks):
-    """Compare all saved records with the unchanged raw iterator, including zeros."""
+def gamma_storage(initial, zero):
+    policy = importlib.import_module("nonzero_events").descriptor(initial, zero)
+    summary = {"initial_primaries": initial, "initial_gamma_primaries": initial,
+               "zero_deposit_primaries": zero, "nonzero_primaries": initial - zero}
+    return policy, summary
+
+
+def validate_stream_events(directory, meta, request, chunks, event_storage=None):
+    """Compare saved rows with full raw truth; omit only explicit new gamma zeros."""
     _, cs, _, gamma, *_ = helpers()
-    raw_events = iter(gamma.iter_events(directory / "truth.lh5", meta) if request["source_mode"] == GAMMA else cs.iter_decays(directory / "truth.lh5", meta))
+    sparse = request["source_mode"] == GAMMA and "gamma_source_configuration" in meta
+    nonzero = importlib.import_module("nonzero_events") if sparse else None
+    if sparse:
+        try:
+            nonzero.validate_storage(event_storage, initial_primaries=request["primary_count"])
+        except nonzero.ControlError as error:
+            raise ValueError(str(error)) from error
+    else:
+        require(event_storage is None, "historical source stream does not admit sparse storage")
+    full_raw = gamma.iter_events(directory / "truth.lh5", meta) if request["source_mode"] == GAMMA else cs.iter_decays(directory / "truth.lh5", meta)
+    census = {"initial": 0, "zero": 0}
+    def admitted_raw():
+        for event in full_raw:
+            census["initial"] += 1
+            if sparse:
+                keep = nonzero.has_nonzero_deposit(event)
+                require(event["zero_ge"] is (not keep), "gamma zero label differs from original deposits")
+                census["zero"] += int(not keep)
+                if not keep:
+                    continue
+            yield event
+    raw_events = iter(admitted_raw())
     expected, seen = 0, set()
+    require(type(chunks) is list and (not sparse or len(chunks) <= 1), "unsupported stream chunk census")
     for chunk in chunks:
         first_key = "first_initial_primary_id" if request["source_mode"] == GAMMA else "first_global_decay_id"
         require(type(chunk) is dict and set(chunk) == {"file", "count", first_key, "sha256"}, "unsupported stream chunk keys")
         name = safe_ref(chunk["file"])
         require("/" not in name and name.endswith(".jsonl") and name not in seen, "foreign/repeated stream chunk")
-        require(type(chunk["count"]) is int and 1 <= chunk["count"] <= 100 and type(chunk[first_key]) is int and chunk[first_key] == expected, "stream chunk census changed")
+        require(type(chunk["count"]) is int and 1 <= chunk["count"] <= 100 and type(chunk[first_key]) is int
+                and (sparse or chunk[first_key] == expected), "stream chunk census changed")
         if request["source_mode"] == GAMMA:
-            require(name == "events-00000000.jsonl" and chunk["count"] == 20 and expected == 0, "gamma chunk changed")
+            if sparse:
+                require(name == f"events-{chunk[first_key]:08d}.jsonl" and chunk["count"] == event_storage["nonzero_primaries"]
+                        and 0 <= chunk[first_key] < request["primary_count"] and expected == 0, "sparse gamma chunk changed")
+            else:
+                require(name == "events-00000000.jsonl" and chunk["count"] == 20 and expected == 0, "gamma chunk changed")
         else:
             require(name == f"decays-{expected:08d}.jsonl", "decay chunk name changed")
         path = safe_path(directory / "stream", name, True)
         require(digest(path) == chunk["sha256"], "saved stream bytes changed")
         rows = path.read_text(encoding="utf-8").splitlines()
         require(len(rows) == chunk["count"], "saved stream lost/added original primary")
-        for line in rows:
+        for row_number, line in enumerate(rows):
             # Parsing uses the same duplicate/nonfinite-key protections as receipts.
             event = json.loads(line, object_pairs_hook=json_pairs, parse_constant=bad_constant, parse_float=finite_float)
             actual = next(raw_events, None)
             require(actual is not None, "saved stream exceeds raw primary census")
+            if sparse and row_number == 0:
+                require(actual["initial_primary_id"] == chunk[first_key], "sparse gamma chunk first original ID changed")
             exact(event, actual, "rehashed event/raw identity, group, delay or zero changed")
             expected += 1
         seen.add(name)
-    require(expected == request["primary_count"] and next(raw_events, None) is None, "incomplete original stream census")
-    return expected
+    require(next(raw_events, None) is None and census["initial"] == request["primary_count"], "incomplete original raw stream census")
+    if sparse:
+        policy, _ = gamma_storage(census["initial"], census["zero"])
+        exact(event_storage, policy, "sparse gamma census differs from full raw truth")
+        require(expected == policy["nonzero_primaries"], "incomplete sparse gamma event census")
+    else:
+        require(expected == request["primary_count"], "incomplete original stream census")
+    return census["initial"]
 
 
 def read_stream(directory, windows_root):
@@ -999,9 +1094,9 @@ def read_stream(directory, windows_root):
     request = checked["request"]
     manifest = load(safe_path(directory, "stream/manifest.json", True))
     chunks = manifest["chunks"]
-    count = validate_stream_events(directory, meta, request, chunks)
+    count = validate_stream_events(directory, meta, request, chunks, manifest.get("event_storage"))
     tables, origins, processes, aliases = raw_metadata(directory / "truth.lh5", meta, request)
-    expected = stream_metadata(meta, checked, pins, chunks, count, tables, origins, processes, aliases)
+    expected = stream_metadata(meta, checked, pins, chunks, count, tables, origins, processes, aliases, run_receipt["validation"])
     exact(manifest, expected, "rehashed stream/raw/source/units metadata changed")
     receipt = load(safe_path(directory, "stream/extract-receipt.json", True))
     require(set(receipt) == {"kind", "status", "run_sha256", "execution_contract", "portable_source_sha256", "manifest_sha256", "wall_s"}, "unsupported extraction receipt")
@@ -1033,15 +1128,23 @@ def extract(directory, windows_root, chunk_size=100):
         if request["source_mode"] == GAMMA:
             destination.mkdir()
             part = destination / "events-00000000.jsonl.partial"
-            count = 0
+            count, stored, first_id = 0, 0, None
+            nonzero = importlib.import_module("nonzero_events") if gamma_options(request) else None
             with part.open("x", encoding="utf-8", newline="\n") as stream:
                 for event in gamma.iter_events(raw, meta):
                     require(event["event_id"] == event["initial_primary_id"] == count, "missing/duplicate gamma primary")
-                    stream.write(json.dumps(event, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n")
                     count += 1
+                    if nonzero and not nonzero.has_nonzero_deposit(event):
+                        require(event["zero_ge"] is True, "gamma zero label differs from original deposits")
+                        continue
+                    if first_id is None:
+                        first_id = event["initial_primary_id"]
+                    stream.write(json.dumps(event, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n")
+                    stored += 1
                 stream.flush(); os.fsync(stream.fileno())
             require(count == 20, "incomplete gamma census")
-            chunks = [{"file": "events-00000000.jsonl", "count": 20, "first_initial_primary_id": 0, "sha256": digest(part)}]
+            chunks = ([{"file": f"events-{first_id:08d}.jsonl", "count": stored,
+                        "first_initial_primary_id": first_id, "sha256": digest(part)}] if stored else [])
         else:
             chunks, count = cs.write_chunks(cs.iter_decays(raw, meta), destination, chunk_size)
             require(count == request["primary_count"], "incomplete original decay census")
@@ -1050,10 +1153,12 @@ def extract(directory, windows_root, chunk_size=100):
         validate_checked_plan(checked, request, windows_root)
         recheck_runtime_data(runtime, request["source_mode"])
         exact(actual_probe(raw, meta, request), run_receipt["validation"], "extracted census differs from recorded raw validation")
-        manifest = stream_metadata(meta, checked, pins, chunks, count, tables, origins, processes, aliases)
+        manifest = stream_metadata(meta, checked, pins, chunks, count, tables, origins, processes, aliases, run_receipt["validation"])
         if request["source_mode"] == GAMMA:
-            final = destination / chunks[0]["file"]
-            os.link(part, final); part.unlink()
+            if chunks:
+                final = destination / chunks[0]["file"]
+                os.link(part, final)
+            part.unlink()
         h.publish_json(destination / "manifest.json", manifest)
         receipt["manifest_sha256"] = digest(destination / "manifest.json")
         receipt["status"] = "complete"
@@ -1069,7 +1174,7 @@ def extract(directory, windows_root, chunk_size=100):
         h.publish_json(destination / "extract-receipt.json", receipt)
 
 
-def stream_metadata(meta, checked, pins, chunks, count, tables, origins, processes, aliases):
+def stream_metadata(meta, checked, pins, chunks, count, tables, origins, processes, aliases, validation=None):
     h, cs, s, gamma, ring, models = helpers()
     request = checked["request"]
     shared = {"status": "complete", "primary_count": count, "model_id": meta["model_id"],
@@ -1078,12 +1183,21 @@ def stream_metadata(meta, checked, pins, chunks, count, tables, origins, process
               "units": {"energy": "keV", "length": "mm", "time": "ns"}, "raw_track_energy_unit": "MeV", "raw_position_unit": "m",
               "unscored_volumes": meta["unscored_volumes"], "execution_contract": checked["execution_contract"], "portable_source_sha256": checked["portable_source_sha256"]}
     if request["source_mode"] == GAMMA:
+        sparse = {}
+        if gamma_options(request):
+            require(type(validation) is dict and validation.get("initial_gamma_primaries") == count, "missing checked full gamma census")
+            policy, summary = gamma_storage(count, validation["zero_ge_primaries"])
+            require(sum(chunk["count"] for chunk in chunks) == policy["nonzero_primaries"], "sparse gamma chunk census differs from raw truth")
+            sparse = {"event_storage": policy, "initial_summary": summary}
         return {**shared, "kind": gamma.KIND, "schema_version": 1, "initial_primary_id_range": [0, 19], "source_count_unit": "initial synthetic gamma primaries",
+                **sparse,
+                **({"gamma_source_configuration": meta["gamma_source_configuration"]} if gamma_options(request) else {}),
                 "assets": meta["assets"], "source_position_global_mm": meta["source_position_global_mm"], "seed": 26092631, "threads": 1,
                 "physics": {"EM": "Livermore", "default_production_cut_mm": 0.1, "sensitive_production_cut_mm": 0.01},
                 "stored_temperature_K": meta["assets"]["detector"]["temperature_K"], "stored_contacts": meta["assets"]["detector"]["contacts"], "readout_contact_id": 1,
                 "transport_source_sha256": gamma.producer_hashes(), "prepared_source_sha256": meta["source_sha256"],
-                "detector_origins": origins, "material_tables": meta["material_tables"], "clock_policy": "synthetic_primary_time_zero", "normalization": meta["assets"]["source"]["normalization"],
+                "detector_origins": origins, "material_tables": meta["material_tables"], "clock_policy": "synthetic_primary_time_zero",
+                "normalization": ("per one synthetic " + format(gamma.effective_energy_keV(meta), ".17g") + " keV incident gamma; no decay/activity normalization") if gamma_options(request) else meta["assets"]["source"]["normalization"],
                 "ledger": {"kind": "recorded-only", "full_energy_closure": None, "activity_Bq": None,
                     "limitations": ["unscored world/escape energy", "births and scored STEP chords are not full trajectories", "20 primaries, low statistics", "nominal geometry, not as-built"]},
                 "geometry_unknowns": meta["unknowns"], "omitted_hardware": meta["omitted"],

@@ -65,6 +65,35 @@ function typed_equal(a,b)
     typeof(a)===typeof(b) && isequal(a,b)
 end
 
+function effective_gamma_source(m,prepared)
+    source=m["assets"]["source"]
+    check(source["id"]=="mono_gamma_662_axis_v1" && source["pdg"]===22 &&
+        source["kinetic_energy_keV"]==662 && source["direction_global"]==[0,-1,0] &&
+        source["time_ns"]===0 && source["clock_policy"]=="synthetic_primary_time_zero","Canonical gamma preset changed")
+    if !haskey(m,"gamma_source_configuration")
+        check(!haskey(prepared,"gamma_source_configuration") && m["source_position_global_mm"]==[0,42.073,.290],
+            "Unmarked gamma retains historical 662 keV / +5 mm source")
+        return 662
+    end
+    marker=m["gamma_source_configuration"]
+    check(marker isa AbstractDict && Set(keys(marker))==Set(("kind","schema_version","canonical_preset","energy_keV",
+        "source_pose","position_global_mm","direction_global","time_ns","units")),"Effective gamma marker fields")
+    energy=marker["energy_keV"]
+    check(energy isa Real && !(energy isa Bool) && isfinite(energy) && energy>0,"Positive finite gamma energy required")
+    canonical=Dict("id"=>"mono_gamma_662_axis_v1","version"=>1,"ref"=>"scenarios/assets/mono_gamma_662_axis_v1.json",
+        "sha256"=>"b9c3990f835fe094d6482e2fe8b6cfb13e2419e3abe5b7f6902cd28f340fc6e9")
+    check(marker["kind"]=="portable_gamma_source_configuration_v1" && marker["schema_version"]===1 &&
+        typed_equal(marker["canonical_preset"],canonical) && typed_equal(prepared["instance"]["source"],canonical),"Effective gamma preset/version identity")
+    pose=marker["source_pose"];check(pose in ("nominal","plus5mm"),"Effective gamma named anchor")
+    position=pose=="nominal" ? [0,37.073,.290] : [0,42.073,.290]
+    check(marker["position_global_mm"]==position && marker["direction_global"]==[0,-1,0] && marker["time_ns"]===0 &&
+        marker["units"]==Dict("energy"=>"keV","length"=>"mm","time"=>"ns","direction"=>"dimensionless"),"Effective gamma placement/direction/time/units")
+    check(typed_equal(marker,get(prepared,"gamma_source_configuration",nothing)) &&
+        prepared["instance"]["source_pose"]==pose && prepared["source_position_global_mm"]==position && m["source_position_global_mm"]==position,
+        "Effective gamma prepared source binding")
+    energy
+end
+
 function pins(request)
     for (name,h) in request["pins"]
         check(!isabspath(name) && !(".." in splitpath(name)),"Unsafe gamma pin")
@@ -122,7 +151,8 @@ end
 
 # Only native_fn is inside the reviewed two-ArgumentError boundary. Tests inject
 # every calculation function; no cache, native drift or electronics is needed.
-function event_response(event,policy,native_fn,process_fn,flags_fn)
+function event_response(event,policy,native_fn,process_fn,flags_fn;allow_zero=true)
+    check(allow_zero || !event["zero_ge"],"Sparse gamma response cannot fabricate a zero-input waveform")
     id=event["initial_primary_id"]
     base=Dict{String,Any}("initial_primary_id"=>id,"event_id"=>event["event_id"],
         "primary_time_ns"=>0.0,"clock_policy"=>"synthetic_primary_time_zero",

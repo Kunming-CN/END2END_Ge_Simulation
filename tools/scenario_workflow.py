@@ -30,6 +30,7 @@ SETTINGS = ('shaping_tau_us', 'gain', 'threshold_V', 'adc_bits', 'adc_full_scale
             'feedback_capacitance_pF', 'feedback_tau_us', 'pole_zero_tau_us',
             'peak_policy', 'peak_gate_start_ns', 'peak_gate_end_ns')
 FIELDS = {'name','cryostat','detector','source','pose','primary_count','seed','threads','electronics'}
+GAMMA_OPTION = 'gamma_energy_keV'
 CRYOSTAT = 'lbnl_modular_nominal_v1'
 CS = 'cs137_point_decay_v1'
 GAMMA = 'mono_gamma_662_axis_v1'
@@ -178,7 +179,7 @@ def source_pins(detector, root=ROOT, *, portable=False):
         from importlib import import_module
         sys.path.insert(0,str(ROOT/'transport')) if str(ROOT/'transport') not in sys.path else None
         adapter=import_module('scenario_source_portable')
-        adapter.recheck_map(adapter.PINNED,root)
+        adapter.recheck_map(adapter.source_inventory(),root)
         names.discard(EXPORTER)
         names.update((PORTABLE_ADAPTER,PORTABLE_BUILD+'/exporter-build.json',PORTABLE_BUILD+'/cryostat_export',PORTABLE_BUILD+'/build-attempt.json'))
         receipt_path=safe_path(root,PORTABLE_BUILD+'/exporter-build.json')
@@ -209,9 +210,34 @@ def runtime_identity(threads):
 
 
 def portable_request(selection):
-    return {'detector':'GeRC02_Li50min' if selection['detector']=='GeRC02' else selection['detector'],
+    value={'detector':'GeRC02_Li50min' if selection['detector']=='GeRC02' else selection['detector'],
             'source_mode':selection['source'],'source_pose':selection['pose'],
             'primary_count':selection['primary_count'],'seed':selection['seed']}
+    if GAMMA_OPTION in selection:value[GAMMA_OPTION]=selection[GAMMA_OPTION]
+    return value
+
+
+def configuration_fields(selection):
+    return (type(selection) is dict and
+            (set(selection)==FIELDS or selection.get('source')==GAMMA and set(selection)==FIELDS|{GAMMA_OPTION}))
+
+
+def gamma_selection(selection):
+    require(selection['pose'] in ('nominal','plus5mm'),'Gamma supports the existing nominal and +5 mm source anchors only.')
+    if GAMMA_OPTION in selection:
+        value=selection[GAMMA_OPTION]
+        require(type(value) in (int,float) and math.isfinite(value) and value>0,'Gamma energy must be a finite positive value in keV.')
+    return selection.get(GAMMA_OPTION,662)
+
+
+def gamma_configuration(selection, marker):
+    from gamma_native_example import GAMMA_CANONICAL
+    expected={'kind':'portable_gamma_source_configuration_v1','schema_version':1,
+        'canonical_preset':GAMMA_CANONICAL,'energy_keV':gamma_selection(selection),
+        'source_pose':selection['pose'],'position_global_mm':[0,42.073,.290] if selection['pose']=='plus5mm' else [0,37.073,.290],
+        'direction_global':[0,-1,0],'time_ns':0,'units':{'energy':'keV','length':'mm','time':'ns','direction':'dimensionless'}}
+    require(type(marker) is dict and encoded(marker)==encoded(expected),'Effective gamma source differs from the exact selected energy/anchor contract.')
+    return marker
 
 
 def portable_command(root=ROOT):
@@ -262,7 +288,7 @@ def portable_stage(directory,resolved,stage,root=ROOT):
 def _resolve(config, *, root=ROOT, validate_settings=settings_check, pin_reader=None,
              runtime_reader=runtime_identity, portable_reader=portable_check, allow_existing=False,
              batch_preview=False):
-    require(type(config) is dict and set(config)==FIELDS, 'Unsupported or missing configuration fields.')
+    require(configuration_fields(config), 'Unsupported or missing configuration fields.')
     run_path(config['name'],root)
     require(config['cryostat']==CRYOSTAT, 'This cryostat has no executable adapter yet.')
     require(config['detector'] in MODELS, 'This detector has no selectable new-run connector yet.')
@@ -270,15 +296,16 @@ def _resolve(config, *, root=ROOT, validate_settings=settings_check, pin_reader=
     require(config['detector'] not in (*RINGS,SAP18) or config['source']==CS,'Ring connectors currently support Cs137 only; select its nominal source.')
     require(type(config['threads']) is int and config['threads'] in (1,2), 'Choose one or two Julia threads.')
     require(type(config['seed']) is int and 0<config['seed']<2147483647, 'Seed must be an integer between 1 and 2147483646.')
+    if config['source']==GAMMA:gamma_selection(config)
     if batch_preview:
         import workflow_batches as B
         batching=B.partition(config['primary_count'],config['seed'])
-        require(config['pose']==('plus5mm' if config['source']==GAMMA else 'nominal'),
+        require(config['pose'] in (('nominal','plus5mm') if config['source']==GAMMA else ('nominal',)),
                 'This source position has no adapter yet.')
     elif config['source']==GAMMA:
         require(type(config['primary_count']) is int, 'Primary count must be an integer.')
-        require(config['pose']=='plus5mm' and config['primary_count']==20 and config['seed']==26092631,
-                'This gamma adapter uses +5 mm, 20 primaries and radiation seed 26092631.')
+        require(config['primary_count']==20 and config['seed']==26092631,
+                'This gamma adapter uses 20 primaries and radiation seed 26092631.')
     else:
         require(type(config['primary_count']) is int, 'Primary count must be an integer.')
         require(config['pose']=='nominal' and config['primary_count'] in (20,500),
@@ -289,14 +316,14 @@ def _resolve(config, *, root=ROOT, validate_settings=settings_check, pin_reader=
     if config['source']==CS:
         gate=validated['configuration']['peak_gate_end_ns']
         require(gate is None or gate<=99998,'Cs137 peak gate must end within its half-open 100000 ns pulse window (last analog sample 99998 ns).')
-    else:
+    elif GAMMA_OPTION not in config and config['pose']=='plus5mm':
         c=validated['configuration'];zero_samples=2+math.ceil(20000*c['shaping_tau_us']/2)
         require(zero_samples<=c['max_samples_per_event'] and (zero_samples-1)*2<=c['max_window_ns'],
                 'The gamma known-zero two-sample input plus shaping tail exceeds the inherited limits.')
     resolved = {'selection':config, 'profile':validated['profile'],
                 'electronics_configuration':validated['configuration'],
                 'electronics_physics_sha256':validated['physics_sha256'],
-                'source_position_global_mm':[0,42.073,0.290] if config['source']==GAMMA else [0,37.073,0.290],
+                'source_position_global_mm':[0,42.073,0.290] if config['source']==GAMMA and config['pose']=='plus5mm' else [0,37.073,0.290],
                 'source_kind':'synthetic_gamma' if config['source']==GAMMA else 'radioactive_decay',
                 'source_count_unit':'initial gamma primaries' if config['source']==GAMMA else 'initial Cs137 decays',
                 'numerics':{'parcels':16,'native_seed_family':2609261,'drift_dt_ns':2,
@@ -311,6 +338,9 @@ def _resolve(config, *, root=ROOT, validate_settings=settings_check, pin_reader=
                 portable['request']==portable_request(config),'Portable source Check returned an unsupported tuple.')
         resolved['portable_source_plan']=portable
         resolved['source_sha256'].update(portable['portable_source_sha256'])
+        if config['source']==GAMMA and (GAMMA_OPTION in config or config['pose']=='nominal'):
+            marker=gamma_configuration(config,portable.get('gamma_source_configuration'))
+            resolved['gamma_source_configuration']=marker
     if config['detector']==SAP18:
         from sap18_workflow import operating
         resolved['operating_model']=operating()
@@ -404,6 +434,11 @@ def catalog(root=ROOT):
             'nonzero_execution_ready':source['available'] and source['id']!=GAMMA and ANGULAR_EXECUTION_READY,
             'min_deg':-30,'max_deg':30,'version':'source_capsule_angular_pose_v1',
             'convention':'Degrees from global +y toward +x around global z at x=0,y=1.473 mm; engineering placement'}
+        if source['id']==GAMMA:
+            source['gamma_controls']={'enabled':source['available'],'energy_keV':{'default':662,'minimum_exclusive':0},
+                'source_poses':['nominal','plus5mm'],'fixed_primary_count':20,'fixed_seed':26092631,
+                'direction_global':[0,-1,0],'time_ns':0,'units':{'energy':'keV','length':'mm','time':'ns'},
+                'scope':'AK02 and SAP22; existing source anchors only'}
     # Attempt metadata describes withheld qualification; it cannot admit a source.
     for source in sources:
         attempt=registry.get('source_attempts',{}).get(source['id'])
@@ -575,6 +610,7 @@ def verify_inventory(directory, files):
 
 def gamma_request(directory, resolved, root=ROOT,*,historical=False):
     from gamma_native_example import validate_events
+    import nonzero_events as N
     transport=directory/'transport'; m=read(transport/'stream/manifest.json')
     prepared=read(transport/'prepared.json'); run=read(transport/'run.json')
     if resolved.get('portable_source_plan') is not None:
@@ -589,13 +625,31 @@ def gamma_request(directory, resolved, root=ROOT,*,historical=False):
             and m['coordinate_transform']==prepared['coordinate_transform'], 'Gamma prepared/run identity changed.')
     require(m['assets']['source']['id']==GAMMA and m['source_position_global_mm']==resolved['source_position_global_mm'],
             'Gamma source differs from selected tuple.')
+    selection=resolved['selection'];marker=m.get('gamma_source_configuration')
+    options=GAMMA_OPTION in selection or selection['pose']=='nominal'
+    if options:
+        gamma_configuration(selection,marker)
+        require(resolved.get('portable_source_plan') is not None,'Sparse gamma requires independent portable raw-LH5 source verification.')
+        require(encoded(marker)==encoded(resolved.get('gamma_source_configuration')) and
+                encoded(marker)==encoded(prepared.get('gamma_source_configuration')) and
+                encoded(marker)==encoded(run.get('gamma_source_configuration')),
+                'Gamma effective source marker differs between checked, prepared, radiation and event ledger.')
+    else:
+        require(all('gamma_source_configuration' not in x for x in (resolved,m,prepared,run)),
+                'Historical default gamma interpretation gained an effective-source marker.')
     if not historical:
         for mapping in (m['prepared_source_sha256'],m['transport_source_sha256']):
             for name,value in mapping.items(): require(sha(safe_path(root,name))==value,'Gamma producer changed: '+name)
-    chunks=m['chunks'];require(len(chunks)==1 and chunks[0]['count']==20,'Unsupported gamma chunks.')
-    chunk=safe_path(transport/'stream',chunks[0]['file'])
-    require(sha(chunk)==chunks[0]['sha256'],'Gamma chunk changed.')
-    events=[decode_json(line) for line in chunk.read_text(encoding='utf-8').splitlines()]
+    event_storage=N.storage(m,initial_primaries=20)
+    require((event_storage is not None)==(marker is not None),'Gamma source storage policy differs from its effective source contract.')
+    chunks=m['chunks'];stored_count=20 if event_storage is None else event_storage['nonzero_primaries']
+    require(len(chunks)==(1 if stored_count else 0) and sum(c['count'] for c in chunks)==stored_count,'Unsupported gamma stored chunks.')
+    events=[];chunk_pins={}
+    for item in chunks:
+        chunk=safe_path(transport/'stream',item['file'])
+        require(sha(chunk)==item['sha256'],'Gamma chunk changed.')
+        events.extend(decode_json(line) for line in chunk.read_text(encoding='utf-8').splitlines())
+        chunk_pins[chunk.relative_to(Path(root)).as_posix()]=item['sha256']
     validate_events(events,m,prepared)
     profile=resolved['profile']; config=dict(resolved['electronics_configuration'],expected_primary_count=20)
     relative=lambda p: p.relative_to(Path(root)).as_posix()
@@ -603,14 +657,72 @@ def gamma_request(directory, resolved, root=ROOT,*,historical=False):
               relative(transport/'run.json'):sha(transport/'run.json'),
               relative(transport/'truth.lh5'):m['source_lh5_sha256'],
               relative(transport/'stream/manifest.json'):sha(transport/'stream/manifest.json'),
-              relative(chunk):sha(chunk), relative(directory/'electronics/profile.json'):sha(directory/'electronics/profile.json')}
+              **chunk_pins, relative(directory/'electronics/profile.json'):sha(directory/'electronics/profile.json')}
     if resolved.get('portable_source_plan') is not None:
         bindings.update({relative(transport/'portable-plan.json'):sha(transport/'portable-plan.json'),
                          relative(transport/'runtime/runtime.json'):sha(transport/'runtime/runtime.json')})
-    return {'kind':'local_scenario_gamma_request_v1','model_id':m['model_id'],'source_manifest':m,
+    value={'kind':'local_scenario_gamma_request_v1','model_id':m['model_id'],'source_manifest':m,
             'prepared':prepared,'events':events,'readout_config':config,'profile':profile,
             'configuration_sha256':digest(resolved),'threads':resolved['selection']['threads'],
             'pins':{**resolved['source_sha256'],**bindings}}
+    if event_storage is not None:value.update(event_storage=event_storage,gamma_source_configuration=marker)
+    return value
+
+
+def gamma_response_census(directory, request, report, event_storage):
+    """Check new sparse saved products against full-census-bound source truth."""
+    import csv
+    import nonzero_events as N
+    from gamma_native_example import exact, FAILURES
+    output=Path(directory)/'response';cases=report['cases'];counts=report['counts']
+    require(event_storage==request.get('event_storage') and
+            encoded(report.get('gamma_source_configuration'))==encoded(request.get('gamma_source_configuration')),
+            'Gamma response changed its effective source or storage census.')
+    if event_storage is None:return
+    N.validate_storage(event_storage,counts,initial_primaries=20)
+    require(len(cases)==event_storage['nonzero_primaries'] and counts['groups']==len(cases) and
+            counts['processed_primaries']==20 and counts['unprocessed_primaries']==0,
+            'Gamma sparse response changed its complete primary/group census.')
+    calibration=report['calibration'];eion=report['ionisation_energy_eV']
+    require(report['calibration_calls']==1 and calibration['energy_keV']==500 and calibration['time_step_ns']==2 and
+            calibration['ionisation_energy_eV']==eion and
+            math.isclose(calibration['charge_C'],500000/eion*1.602176634e-19,rel_tol=1e-12) and
+            math.isclose(calibration['volts_per_keV'],calibration['peak_V']/500,rel_tol=1e-12),
+            'Gamma independent injection calibration differs from its fixed 500 keV input.')
+    expected_signals=[];expected_traces=[];accepted=failed=rejected=0
+    for event,case in zip(request['events'],cases):
+        require(not case['zero_ge'] and N.has_nonzero_deposit(event),'Sparse gamma output retained a zero-input record.')
+        if case['status']=='native_failed':
+            failed+=1
+            require(all(case[key] is None for key in ('native','transport_flags','charge_input','final_induced_keV','charge_end_ns','readout')) and
+                    case['error']['type']=='ArgumentError' and case['error']['message'] in FAILURES,
+                    'Gamma native failure fabricated a response or lost its exact failure.')
+        else:
+            require(case['status']=='native_completed' and case['readout'] is not None and type(case['readout']['accepted']) is bool,
+                    'Gamma completed response lost its readout decision.')
+            accepted+=case['readout']['accepted'];rejected+=not case['readout']['accepted']
+            charge=case['charge_input'];t=charge['time_since_initial_primary_ns'];q=charge['induced_equivalent_energy_keV']
+            require(len(t)==len(q)>1 and t[0]==q[0]==0 and all(type(x) in (int,float) and math.isfinite(x) for x in (*t,*q)) and
+                    all(b-a==2 for a,b in zip(t,t[1:])) and q[-1]==case['final_induced_keV'] and t[-1]==case['charge_end_ns'],
+                    'Gamma saved signed charge grid/endpoints differ from its native response.')
+            exact(case['native']['times'],t,'gamma original native time');exact(case['native']['signal'],q,'gamma original signed native signal')
+            expected_signals.extend([case['initial_primary_id'],x,y] for x,y in zip(t,q))
+            expected_traces.append({'event_id':case['event_id'],'group_id':0,'origin_time_ns':0.0,'trace':case['readout']['trace']})
+        exact(read(output/('event-'+str(case['event_id'])+'.json')),case,'gamma original event response')
+    require([counts['accepted'],counts['native_failed_groups'],counts['readout_rejected'],counts['rejected']]==
+            [accepted,failed,rejected,failed+rejected],'Gamma sparse accepted/failed/rejected census changed.')
+    rows=lambda name:[decode_json(line) for line in (output/name).read_text(encoding='utf-8').splitlines()]
+    exact(rows('truth.jsonl'),request['events'],'gamma complete original nonzero truth')
+    exact(rows('scalars.jsonl'),cases,'gamma complete nonzero scalar census')
+    exact(rows('traces.jsonl'),expected_traces,'gamma actual signed saved traces')
+    with (output/'signals.csv').open(encoding='utf-8',newline='') as stream:
+        reader=csv.reader(stream)
+        require(next(reader,None)==['initial_primary_id','time_since_initial_primary_ns','induced_equivalent_energy_keV'],
+                'Gamma signed signal units/identity header changed.')
+        actual=[[int(row[0]),float(row[1]),float(row[2])] for row in reader]
+    exact(actual,expected_signals,'gamma full signed samples with no zero/failure waveform')
+    require({p.name for p in output.glob('event-*.json')}=={'event-'+str(case['event_id'])+'.json' for case in cases},
+            'Gamma result retained an unexpected zero-input event file.')
 
 
 def stage_commands(directory,resolved,root=ROOT,environment=None):
@@ -636,6 +748,8 @@ def stage_commands(directory,resolved,root=ROOT,environment=None):
         if s['detector'] in RINGS:
             response=julia+[str(Path(root)/'simulation/workflow_ring_response.jl'),'--request',str(directory/'ring-request.json'),'--output',str(directory/'response')]
     else:
+        require(GAMMA_OPTION not in s and s['pose']=='plus5mm' or resolved.get('portable_source_plan') is not None,
+                'Gamma options require the checked shared portable source backend.')
         prepare=wsl+['python','-B','./scenario_prepare.py','prepare','--config',
                     '../scenarios/m11a-'+s['detector'].lower()+'-mono_gamma_662_axis_v1-plus5mm.json',
                     '--output','../'+transport,'--exporter','../'+EXPORTER]
@@ -713,7 +827,9 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
         return {n:{'sha256':sha(t/n),'bytes':(t/n).stat().st_size} for n in ('run.json','truth.lh5','run.log')}
     if stage=='event_ledger':
         m=read(t/'stream/manifest.json');require(m['status']=='complete' and m['primary_count']==s['primary_count'] and m['model_id']==s['detector'], 'Extracted event census mismatch.')
-        require(sum(c['count'] for c in m['chunks'])==s['primary_count'],'Incomplete event chunks.')
+        import nonzero_events as N
+        storage=N.storage(m,initial_primaries=s['primary_count']) if s['source']==GAMMA else None
+        require(sum(c['count'] for c in m['chunks'])==(s['primary_count'] if storage is None else storage['nonzero_primaries']),'Incomplete event chunks.')
         for c in m['chunks']: require(sha(safe_path(t/'stream',c['file']))==c['sha256'],'Changed event chunk.')
         require(m['prepared_sha256']==sha(t/'prepared.json') and m['run_sha256']==sha(t/'run.json') and m['source_lh5_sha256']==sha(t/'truth.lh5'),'Ledger source bindings changed.')
         if s['source']==GAMMA: gamma_request(directory,resolved,root,historical=historical)
@@ -740,12 +856,13 @@ def validate_stage(directory,stage,resolved,root=ROOT,*,historical=False):
             require(r['request_sha256']==sha(directory/'gamma-request.json') and
                     r['configuration_sha256']==digest(resolved),'Gamma request/configuration binding mismatch.')
             request=gamma_request(directory,resolved,root,historical=historical)
-            require(len(r['cases'])==s['primary_count'],'Gamma result lost original primaries.')
+            require(len(r['cases'])==len(request['events']),'Gamma result lost original stored primaries.')
             for event,case in zip(request['events'],r['cases']):
                 require(case['event_id']==event['event_id'] and case['initial_primary_id']==event['initial_primary_id']
                         and case['truth_ge_edep_keV']==event['truth_ge_edep_keV'] and case['zero_ge']==event['zero_ge']
                         and case['raw_row_indices']==[step['raw_row_index'] for step in event['steps']],
                         'Gamma response changed truth or row identity.')
+            gamma_response_census(directory,request,r,event_storage)
         else:
             require(r['input_sha256']==sha(t/'stream/manifest.json') and
                     r['profile_sha256']==sha(directory/'electronics/profile.json'), 'Cs137 response input/profile binding mismatch.')
@@ -789,11 +906,20 @@ def saved_plan(plan,root=ROOT):
     require(set(plan)=={'kind','status','science_calls','resolved','configuration_sha256'} and plan['kind']==KIND and plan['status']=='checked_configuration' and plan['science_calls']==0 and
             digest(plan['resolved'])==plan['configuration_sha256'],'Saved plan authority changed.')
     r=plan['resolved'];s=r['selection'];run_path(s['name'])
-    require(set(s)==FIELDS and s['detector'] in MODELS and s['cryostat']==CRYOSTAT and s['source'] in (CS,GAMMA) and
+    require(configuration_fields(s) and s['detector'] in MODELS and s['cryostat']==CRYOSTAT and s['source'] in (CS,GAMMA) and
             (s['detector'] not in (*RINGS,SAP18) or s['source']==CS),'Saved tuple is unsupported.')
     require(type(s['threads']) is int and s['threads'] in (1,2) and type(s['seed']) is int and 0<s['seed']<2147483647 and type(s['primary_count']) is int and
-            (s['source']==GAMMA and [s['pose'],s['primary_count'],s['seed']]==['plus5mm',20,26092631] or s['source']==CS and s['pose']=='nominal' and s['primary_count'] in (20,500)),
+            (s['source']==GAMMA and s['pose'] in ('nominal','plus5mm') and [s['primary_count'],s['seed']]==[20,26092631] or s['source']==CS and s['pose']=='nominal' and s['primary_count'] in (20,500)),
             'Saved source/count/runtime selection is unsupported.')
+    if s['source']==GAMMA:
+        gamma_selection(s)
+        if GAMMA_OPTION in s or s['pose']=='nominal':
+            gamma_configuration(s,r.get('gamma_source_configuration'))
+            require(type(r.get('portable_source_plan')) is dict and
+                    encoded(r['portable_source_plan'].get('gamma_source_configuration'))==encoded(r['gamma_source_configuration']) and
+                    encoded(r['portable_source_plan'].get('request'))==encoded(portable_request(s)),
+                    'Saved effective gamma source has no exact portable checked request.')
+        else:require('gamma_source_configuration' not in r,'Historical default gamma source interpretation changed.')
     expected_numerics={'parcels':16,'native_seed_family':2609261,'drift_dt_ns':2,'drift_cap_ns':10000,'stored_temperature_K':78,
         'runtime_temperature_K':77,'bias_V':{'AK02':500,'SAP22':700,'GeRC02':240,'KMRC01_candidate':370,SAP18:380}[s['detector']],'native_failure_policy':'record','models_serial':True,'stages_serial':True}
     if s['detector']==SAP18:
@@ -802,7 +928,7 @@ def saved_plan(plan,root=ROOT):
     elif s['detector'] in RINGS:
         from ring_workflow import operating
         require(encoded(r.get('operating_model'))==encoded(operating(s['detector'])),'Saved ring operating variant/wiring changed.')
-    require(encoded(r['numerics'])==encoded(expected_numerics) and r['source_position_global_mm']==([0,42.073,.290] if s['source']==GAMMA else [0,37.073,.290]) and
+    require(encoded(r['numerics'])==encoded(expected_numerics) and r['source_position_global_mm']==([0,42.073,.290] if s['source']==GAMMA and s['pose']=='plus5mm' else [0,37.073,.290]) and
             r['source_kind']==('synthetic_gamma' if s['source']==GAMMA else 'radioactive_decay'),'Saved source/operating settings changed.')
     require(set(s['electronics'])==set(SETTINGS) and s['electronics']['peak_policy'] in ('signed_input_positive_peak','legacy_reject_negative_input') and
             all(type(v) in (int,float) and math.isfinite(v) for k,v in s['electronics'].items() if k!='peak_policy' and v is not None),
@@ -850,6 +976,10 @@ def result_page(directory,receipt):
     r=read(directory/'response/run.json'); s=receipt['resolved']['selection']
     body='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>GeSignal local results</title><style>body{font:16px/1.6 system-ui;max-width:960px;margin:30px auto;padding:20px;color:#17364a}pre{white-space:pre-wrap;overflow-wrap:anywhere}a{color:#007d8f}details{padding:12px;border:1px solid #ccd;border-radius:10px;margin:12px 0}</style><h1>'+html.escape(s['detector'])+' · '+html.escape(s['source'])+'</h1><p>Original primary count: '+str(s['primary_count'])+'. Every original ID, zero and recorded failure is retained.</p><pre>'+html.escape(json.dumps(r['counts'],indent=2))+'</pre><p>Truth Edep, induced charge and reconstructed energy remain separate. Calibration uses an independent 500 keV charge injection.</p><details><summary>Settings and stage evidence</summary><pre>'+html.escape(json.dumps(receipt['resolved']['selection'],indent=2))+'</pre></details><p>Run data and stage logs are available in the application. Synthetic isolated readout; engineering example.</p></html>'
     body=body.replace('</html>','<p><a href="response/summary.html">Open saved event waveforms</a> · <a href="response/scalars.csv">All event scalars</a> · <a href="response/truth.jsonl">Original radiation truth</a> · <a href="resolved-config.json">Exact checked settings</a> · <a href="run.json">Stage receipts</a></p></html>')
+    if 'event_storage' in r:
+        body=body.replace('Every original ID, zero and recorded failure is retained.',
+            'Zero-deposit primaries remain in the full census and denominator; saved response rows retain original nonzero IDs and recorded failures.')
+        body=body.replace('All event scalars','Stored nonzero event scalars').replace('Original radiation truth','Nonzero radiation truth; full raw radiation is retained')
     (directory/'index.html').write_text(body,encoding='utf-8')
 
 

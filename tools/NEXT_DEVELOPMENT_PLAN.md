@@ -163,6 +163,22 @@ student feedback supplies concrete fixes.
 
 ### P4 — Add only the remaining useful configuration options
 
+Implemented in the current P4 milestone: positive finite gamma energy in keV and
+the existing nominal/+5mm anchors on the same AK02/SAP22 twenty-primary route.
+The original662keV preset stays frozen; new effective-source markers bind actual
+energy/placement and new marked streams/responses omit zero-input rows while
+keeping full census/denominator. One actual1000keV/nominal SAP22 transport check
+completed20 primaries:18zero/2nonzero, original IDs7/16. Geometry, raw radiation,
+sparse export and actual native-request binding passed; SSD/fields/readout were
+not rerun. Current .local/gamma-options-p4/COMPLETE.json governs publication.
+
+Concrete next desktop fix before P5: an old completed Gamma verification compares
+its recorded producers with changed live source files, and the owner Control
+gate can block an independent new run despite no scientific worker. Four source
+mismatches already predate P4. Preserve old hashes/artifacts and keep unverified
+old downloads blocked; separate a read-only verification failure from actual
+worker lifetime. No broad historical audit, old-source admission or physics rerun.
+
 Keep the shared current cryostat, detector and source anchors; no duplicated files
 for every combination. The accepted source-angle function is already implemented,
 so do not rebuild it. Add genuinely requested missing monoenergetic gamma energy/

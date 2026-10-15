@@ -25,18 +25,40 @@ function validate(d)
     tr=m["coordinate_transform"]
     check(tr["rotation_local_to_global"]==[[1,0,0],[0,0,1],[0,-1,0]] &&
           tr["translation_global_mm"]==[0,1.45,0.29],"Unadmitted gamma transform")
-    source=m["assets"]["source"]
-    check(source["id"]=="mono_gamma_662_axis_v1" && source["pdg"]===22 &&
-          source["kinetic_energy_keV"]==662 && source["direction_global"]==[0,-1,0] &&
-          m["clock_policy"]=="synthetic_primary_time_zero" &&
-          m["source_position_global_mm"]==[0,42.073,0.290],"Gamma source/clock mismatch")
+    energy=G.effective_gamma_source(m,prepared)
+    check(m["clock_policy"]=="synthetic_primary_time_zero","Gamma source clock mismatch")
+    sparse=haskey(m,"gamma_source_configuration")
+    if sparse
+        check(G.typed_equal(get(d,"gamma_source_configuration",nothing),m["gamma_source_configuration"]),"Request effective gamma marker binding")
+        policy=get(d,"event_storage",nothing)
+        check(policy isa AbstractDict && G.typed_equal(policy,B.storage_descriptor(policy)) && policy["initial_primaries"]===20,
+            "Sparse gamma complete census/denominator")
+        check(G.typed_equal(policy,get(m,"event_storage",nothing)),"Source/request sparse gamma census differs")
+        summary=m["initial_summary"]
+        check(Set(keys(summary))==Set(("initial_primaries","initial_gamma_primaries","zero_deposit_primaries","nonzero_primaries")) &&
+            summary["initial_gamma_primaries"]===20 &&
+            all(summary[key]===policy[key] for key in ("initial_primaries","zero_deposit_primaries","nonzero_primaries")),"Gamma full initial summary")
+    else
+        check(!haskey(d,"event_storage") && !haskey(d,"gamma_source_configuration"),"Historical gamma response interpretation changed")
+    end
     check(m["assets"]["detector"]["model_sha256"]==G.DETECTOR_PINS[model].model &&
           m["stored_temperature_K"]==78,"Gamma canonical model mismatch")
     check(d["threads"] in (1,2) && Threads.nthreads()==d["threads"],"Requested Julia threads mismatch")
-    events=d["events"];check(length(events)==20,"All gamma IDs are required")
+    events=d["events"];check(length(events)==(sparse ? d["event_storage"]["nonzero_primaries"] : 20),"Gamma stored event census")
+    previous=-1
     for (i,event) in enumerate(events)
-        check(event["event_id"]===i-1 && event["initial_primary_id"]===i-1,"Missing/duplicate gamma ID")
+        id=event["event_id"]
+        check(id isa Integer && !(id isa Bool) && event["initial_primary_id"]===id && previous<id<20 &&
+            (sparse || id==i-1),"Missing/duplicate gamma original ID")
+        previous=id
         check(event["zero_ge"] isa Bool && event["zero_ge"]==(event["truth_ge_edep_keV"]==0),"Gamma zero identity mismatch")
+        check(!sparse || !event["zero_ge"],"Sparse gamma retained zero-input event")
+        particles=event["particles"];vtx=event["vtx"]
+        check(length(particles)==length(vtx)==1 && particles[1]["particle"]===22 && vtx[1]["time"]==0 &&
+            isapprox(particles[1]["ekin"],energy/1000;atol=1e-12,rtol=0) &&
+            all(isapprox(particles[1][axis],expected;atol=1e-12,rtol=0) for (axis,expected) in zip(("px","py","pz"),(0.,-energy/1000,0.))) &&
+            all(isapprox(1000vtx[1][axis],expected;atol=1e-10,rtol=0) for (axis,expected) in zip(("xloc","yloc","zloc"),m["source_position_global_mm"])),
+            "Gamma initial energy/momentum/position differs from its effective source")
         check(length(event["steps"])==length(event["material_rows"]["stp/germanium"]),"Ge row census mismatch")
         for step in event["steps"]
             check(step["time_ns"]>=0 && step["energy_keV"]>=0,"Invalid deposition energy/time")
@@ -60,11 +82,19 @@ function consumed_ledger(d,request)
     directory=dirname(request);transport=joinpath(directory,"transport")
     m=JSON.parsefile(joinpath(transport,"stream","manifest.json"));prepared=JSON.parsefile(joinpath(transport,"prepared.json"))
     check(G.typed_equal(m,d["source_manifest"]) && G.typed_equal(prepared,d["prepared"]),"Request differs from the bound original gamma ledger")
-    chunks=m["chunks"];check(length(chunks)==1 && chunks[1]["count"]===20,"Unsupported gamma chunk census")
-    file=chunks[1]["file"];check(!isabspath(file) && !(".." in splitpath(file)),"Unsafe gamma ledger chunk")
-    path=realpath(joinpath(transport,"stream",file))
-    check(Q.childof(path,realpath(joinpath(transport,"stream"))) && hashfile(path)==chunks[1]["sha256"],"Original gamma chunk changed")
-    events=[JSON.parse(line) for line in eachline(path)]
+    chunks=m["chunks"];stored=haskey(d,"event_storage") ? d["event_storage"]["nonzero_primaries"] : 20
+    check(length(chunks)==(stored==0 ? 0 : 1) && sum((chunk["count"] for chunk in chunks);init=0)==stored,"Unsupported gamma stored chunk census")
+    events=Any[]
+    for chunk in chunks
+        file=chunk["file"];check(!isabspath(file) && !(".." in splitpath(file)),"Unsafe gamma ledger chunk")
+        path=realpath(joinpath(transport,"stream",file))
+        check(Q.childof(path,realpath(joinpath(transport,"stream"))) && hashfile(path)==chunk["sha256"],"Original gamma chunk changed")
+        append!(events,[JSON.parse(line) for line in eachline(path)])
+    end
+    if haskey(d,"event_storage")
+        check(G.typed_equal(m["event_storage"],d["event_storage"]) && length(events)==stored && all(e->!e["zero_ge"],events),
+            "Sparse gamma request changed the complete original/nonzero census")
+    end
     check(G.typed_equal(events,d["events"]),"Request changed original gamma rows, coordinates, times or identities")
     check(G.typed_equal(JSON.parsefile(joinpath(directory,"electronics","profile.json")),d["profile"]),"Request differs from the selected electronics profile")
 end
@@ -103,6 +133,10 @@ function run(request,out)
             "Field iteration gates are not grid/PDE/CCE convergence; numerical parcel variation is not physical resolution.",
             "Analog time samples are not waveform ADC samples; recorded material ledger does not establish full energy closure."],
         "runtime"=>G.runtime(),"cases"=>Any[],"units"=>Dict("charge"=>"fC","current"=>"nA","voltage"=>"V","energy"=>"keV","time"=>"ns"))
+    sparse=haskey(d,"event_storage")
+    if sparse
+        report["event_storage"]=d["event_storage"];report["gamma_source_configuration"]=d["gamma_source_configuration"]
+    end
     stage="electric_and_weighting_fields"
     try
         E.save(joinpath(out,"profile.json"),d["profile"]);E.save(joinpath(out,"readout-config.json"),c)
@@ -123,7 +157,7 @@ function run(request,out)
                     native_input=Dict("event_id"=>event["event_id"],"primary_time_ns"=>0.,"steps"=>event["steps"])
                     rec=G.event_response(event,"record",
                         ()->Base.invokelatest(N.native_event,native_input,sim,cfg,16,2609261),
-                        (t,q)->P.process(t,q,c,eion,cal,M),N.flags)
+                        (t,q)->P.process(t,q,c,eion,cal,M),N.flags;allow_zero=!sparse)
                     check(N.field_fingerprint(sim)==report["field_fingerprint"],"Native response changed shared fields")
                     push!(report["cases"],rec);E.save(joinpath(out,"event-"*string(event["event_id"])*".json"),rec)
                     if rec["charge_input"]!==nothing
@@ -139,15 +173,17 @@ function run(request,out)
         failures=count(e->e["status"]=="native_failed",cases)
         accepted=count(e->e["readout"]!==nothing && e["readout"]["accepted"],cases)
         readout_rejected=count(e->!e["zero_ge"] && e["readout"]!==nothing && !e["readout"]["accepted"],cases)
+        zeros=sparse ? d["event_storage"]["zero_deposit_primaries"] : count(e->e["zero_ge"],d["events"])
         report["counts"]=Dict("initial_primaries"=>20,"initial_decays"=>nothing,
-            "zero_deposit_primaries"=>count(e->e["zero_ge"],d["events"]),"groups"=>groups,
+            "zero_deposit_primaries"=>zeros,"groups"=>groups,
             "accepted"=>accepted,"rejected"=>failures+readout_rejected,"native_failed_groups"=>failures,
             "readout_rejected"=>readout_rejected,"processed_primaries"=>20,"unprocessed_primaries"=>0,
             "line_photons"=>nothing,"decay_photons"=>nothing)
+        if sparse;report["counts"]["nonzero_primaries"]=groups;end
         check(accepted+failures+readout_rejected==groups,"Gamma response accounting mismatch")
         pins(d);check(hashfile(request)==report["request_sha256"],"Request changed")
-        report["native_drift_and_charge_seconds"]=sum(e["native_seconds"] for e in cases)
-        report["electronics_seconds"]=sum(e["electronics_seconds"] for e in cases)
+        report["native_drift_and_charge_seconds"]=sum((e["native_seconds"] for e in cases);init=0.0)
+        report["electronics_seconds"]=sum((e["electronics_seconds"] for e in cases);init=0.0)
         report["status"]=failures>0 ? "completed_with_native_failures" : "completed"
         progress(out,stage,"completed";completed=20,total=20)
         # Presentation uses the existing signed four-plot renderer; no second plot engine.
@@ -184,6 +220,7 @@ function run(request,out)
             end
         end
         hist=Dict{String,Dict{Int,Int}}()
+        if sparse;B.addhist!(hist,"deposited_per_primary",0.;weight=zeros);end
         for rec in cases
             B.addhist!(hist,"deposited_per_primary",rec["truth_ge_edep_keV"])
             rec["readout"]===nothing && continue

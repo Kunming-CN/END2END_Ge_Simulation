@@ -105,6 +105,37 @@ def manifest_paths(manifest):
     return sorted(paths)
 
 
+def frozen_sources(syntax, name):
+    """Read a constant map/return expression without executing packaged Python."""
+    assigned = {target.id: node.value for node in syntax.body if isinstance(node, ast.Assign)
+                for target in node.targets if isinstance(target, ast.Name)}
+    def constant(node, seen=()):
+        if isinstance(node, ast.Name):
+            require(node.id in assigned and node.id not in seen, 'Invalid frozen source constant.')
+            return constant(assigned[node.id], (*seen, node.id))
+        if isinstance(node, ast.Dict):
+            value = {}
+            for key, item in zip(node.keys, node.values):
+                if key is None:
+                    unpacked = constant(item, seen)
+                    require(type(unpacked) is dict, 'Invalid frozen source map unpacking.')
+                    value.update(unpacked)
+                else:
+                    value[ast.literal_eval(key)] = constant(item, seen)
+            return value
+        return ast.literal_eval(node)
+    if name in assigned:
+        value = constant(assigned[name], (name,))
+    else:
+        functions = [node for node in syntax.body if isinstance(node, ast.FunctionDef) and node.name == name]
+        require(len(functions) == 1 and len(functions[0].body) == 1 and
+                isinstance(functions[0].body[0], ast.Return), 'Frozen source inventory must be a static return.')
+        value = constant(functions[0].body[0].value)
+    require(type(value) is dict and value and all(type(ref) is str and type(digest) is str and
+            re.fullmatch('[0-9a-f]{64}', digest) for ref, digest in value.items()), 'Invalid frozen source inventory.')
+    return value
+
+
 def dependencies(manifest, bodies):
     """Small source-closure checks, plus explicit launcher/data dependencies."""
     modules = {PurePosixPath(p).stem: p for p in bodies if p.endswith('.py')}
@@ -120,15 +151,13 @@ def dependencies(manifest, bodies):
         if path.endswith('.py'):
             syntax = ast.parse(body.decode('utf-8-sig'), filename=path)
             checks['python_files'] += 1
+            contract = manifest.get('source_hash_contracts', {}).get(path)
+            if contract:
+                for ref, digest in frozen_sources(syntax, contract).items():
+                    require(ref in bodies and sha(bodies[ref]) == digest,
+                            'Missing/changed frozen runtime source: ' + path + ' -> ' + ref)
+                    checks['frozen_source_pins'] += 1
             for node in ast.walk(syntax):
-                variable = manifest.get('source_hash_contracts', {}).get(path)
-                if variable and isinstance(node, ast.Assign) and any(
-                        isinstance(target, ast.Name) and target.id == variable for target in node.targets):
-                    pins = ast.literal_eval(node.value)
-                    for ref, digest in pins.items():
-                        require(ref in bodies and sha(bodies[ref]) == digest,
-                                'Missing/changed frozen runtime source: ' + path + ' -> ' + ref)
-                        checks['frozen_source_pins'] += 1
                 names = ([a.name.split('.')[0] for a in node.names] if isinstance(node, ast.Import) else
                          [(node.module or '').split('.')[0]] if isinstance(node, ast.ImportFrom) else [])
                 for name in names:

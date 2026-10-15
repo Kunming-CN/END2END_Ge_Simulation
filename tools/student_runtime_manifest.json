@@ -8,7 +8,7 @@
     "derivation": "standalone_guide_v1"
   },
   "external_python_modules": ["h5py", "numpy", "yaml"],
-  "source_hash_contracts": {"transport/scenario_source_portable.py": "PINNED"},
+  "source_hash_contracts": {"transport/scenario_source_portable.py": "source_inventory"},
   "groups": {
     "launchers_and_rights": [
       "Control.cmd", "Run.cmd", "LICENSE", "THIRD_PARTY_NOTICES.md", "CITATION.cff"

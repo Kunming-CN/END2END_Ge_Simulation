@@ -3,6 +3,7 @@
 No installations, workers, browser downloads or physical calculations are run.
 The temporary unpacked directory is owned by this test and removed on exit.
 """
+import ast
 import copy
 from pathlib import Path
 import subprocess
@@ -44,16 +45,25 @@ class StudentRuntimePackage(unittest.TestCase):
                 self.assertIn('id="saved-analysis"', guide)
 
     def test_frozen_probe_and_missing_dependency_are_rejected(self):
-        bodies = dict(self.bodies)
-        bodies['transport/geometry_probe.cc'] += b'\n'
-        with self.assertRaisesRegex(ValueError, 'frozen runtime source'):
-            package.dependencies(self.manifest, bodies)
+        for ref in ('transport/geometry_probe.cc', 'transport/scenario_transport.py', 'tools/nonzero_events.py'):
+            bodies = dict(self.bodies); bodies[ref] += b'\n'
+            with self.assertRaisesRegex(ValueError, 'frozen runtime source'):
+                package.dependencies(self.manifest, bodies)
         bodies = dict(self.bodies); del bodies['simulation/readout.jl']
         with self.assertRaisesRegex(ValueError, 'Missing Julia include'):
             package.dependencies(self.manifest, bodies)
         bodies = dict(self.bodies); del bodies['tools/scenario_workflow.py']
         with self.assertRaisesRegex(ValueError, 'Missing local/undeclared Python import'):
             package.dependencies(self.manifest, bodies)
+
+    def test_frozen_runtime_inventory_never_executes_python(self):
+        source = ast.parse(self.bodies['transport/scenario_source_portable.py'].decode())
+        pins = package.frozen_sources(source, 'source_inventory')
+        self.assertEqual(pins['transport/scenario_transport.py'], package.sha(self.bodies['transport/scenario_transport.py']))
+        self.assertEqual(pins['tools/nonzero_events.py'], package.sha(self.bodies['tools/nonzero_events.py']))
+        dynamic = ast.parse('def source_inventory():\n    return subprocess.check_output(["not-a-command"])\n')
+        with self.assertRaises(ValueError):
+            package.frozen_sources(dynamic, 'source_inventory')
 
     def test_tampered_source_and_unlisted_members_are_rejected(self):
         for extra in (False, True):

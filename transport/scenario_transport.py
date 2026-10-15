@@ -27,6 +27,56 @@ POSITIONS = {axis + suffix for suffix in ("", "_pre", "_post") for axis in ("xlo
 STEP_INTS = {"evtid", "parent_trackid", "particle", "trackid"}
 UIDS = {f"det{i+1:03d}": "/stp/" + entry[0] for i, entry in enumerate(s.LEDGER) if i}
 COMMAND = ["remage", "--flat-output", "-t", "1", "--rand-seed", "26092631", "-o", "truth.lh5", "-g", "geometry.gdml", "--", "run.mac"]
+GAMMA_PRESET = {"id": "mono_gamma_662_axis_v1", "version": 1,
+                "ref": "scenarios/assets/mono_gamma_662_axis_v1.json",
+                "sha256": "b9c3990f835fe094d6482e2fe8b6cfb13e2419e3abe5b7f6902cd28f340fc6e9"}
+
+
+def source_configuration(energy_keV, source_pose):
+    """Explicit effective options; the exact original 662-keV asset stays frozen."""
+    h.require(type(energy_keV) in (int, float), "gamma energy must be finite positive keV")
+    try:
+        valid_energy = math.isfinite(energy_keV) and energy_keV > 0
+    except OverflowError:
+        valid_energy = False
+    h.require(valid_energy, "gamma energy must be finite positive keV")
+    h.require(type(source_pose) is str and source_pose in s.POSES, "unsupported named gamma source pose")
+    return {"kind": "portable_gamma_source_configuration_v1", "schema_version": 1,
+            "canonical_preset": dict(GAMMA_PRESET), "energy_keV": energy_keV,
+            "source_pose": source_pose, "position_global_mm": list(s.POSES[source_pose]),
+            "direction_global": [0, -1, 0], "time_ns": 0,
+            "units": {"energy": "keV", "length": "mm", "time": "ns", "direction": "dimensionless"}}
+
+
+def effective_energy_keV(meta):
+    """Validate options before using them; unmarked historical data stays 662/+5 mm."""
+    if "gamma_source_configuration" not in meta:
+        s.exact(meta["source_position_global_mm"], s.POSES["plus5mm"], "unmarked gamma source pose changed")
+        return 662
+    marker = meta["gamma_source_configuration"]
+    h.require(type(marker) is dict, "invalid gamma source configuration")
+    expected = source_configuration(marker.get("energy_keV"), marker.get("source_pose"))
+    s.exact(marker, expected, "unknown/mixed gamma source configuration")
+    s.exact(meta["source_position_global_mm"], marker["position_global_mm"], "gamma source position/options mismatch")
+    if "assets" in meta:
+        s.exact(meta["assets"]["source"], s.asset_records()[GAMMA_PRESET["id"]], "canonical gamma asset changed")
+    if "instance" in meta:
+        s.exact(meta["instance"]["source"], GAMMA_PRESET, "canonical gamma preset changed")
+        s.exact(meta["instance"]["source_pose"], marker["source_pose"], "gamma instance pose/options mismatch")
+    return marker["energy_keV"]
+
+
+def source_macro(report, plan):
+    """Reuse the canonical common macro; replace only its monoenergetic command."""
+    original = s.source_macro(report, plan)
+    energy = effective_energy_keV(plan)
+    if "gamma_source_configuration" not in plan:
+        return original
+    command = "/gps/ene/mono 662 keV"
+    lines = original.splitlines()
+    h.require(lines.count(command) == 1, "unexpected canonical monoenergetic command")
+    lines[lines.index(command)] = "/gps/ene/mono " + format(energy, ".17g") + " keV"
+    return "\n".join(lines) + "\n"
 
 
 def checked_text(path, pins):
@@ -131,13 +181,15 @@ def columns(table, integers, floats, strings=()):
         h.require(table[name].dtype.kind in "OSU", "wrong string type")
 
 
-def gamma(rows, position):
+def gamma(rows, position, energy_keV=662):
     v, p = rows["vtx"], rows["particles"]
     h.require(len(v) == len(p) == 1 and v[0]["n_part"] == 1 and p[0]["vertexid"] == 0, "missing/duplicate primary")
     h.require(v[0]["time"] == 0 and p[0]["particle"] == 22, "wrong gamma identity/clock")
-    expected = [0, -0.662, 0]
+    energy_MeV = energy_keV / 1000
+    h.require(math.isfinite(energy_MeV) and energy_MeV > 0, "gamma energy cannot be represented in raw MeV")
+    expected = [0, -energy_MeV, 0]
     for particle in (p[0], *[t for t in rows["tracks"] if t["parent_trackid"] == 0]):
-        h.require(particle["particle"] == 22 and math.isclose(particle["ekin"], 0.662, rel_tol=0, abs_tol=1e-12)
+        h.require(particle["particle"] == 22 and math.isclose(particle["ekin"], energy_MeV, rel_tol=0, abs_tol=1e-12)
                   and h.np.allclose([particle[a] for a in ("px", "py", "pz")], expected, rtol=0, atol=1e-12), "wrong gamma energy/momentum")
     h.require(h.np.allclose([1000 * v[0][a] for a in ("xloc", "yloc", "zloc")], position, rtol=0, atol=1e-10), "wrong source position/units")
 
@@ -182,6 +234,7 @@ def tracks(rows, process_names, position):
 
 def iter_events(path, meta):
     import h5py
+    energy_keV = effective_energy_keV(meta)
     materials = meta["material_tables"]
     with h5py.File(path, "r") as raw:
         h.require(set(raw) == {"detector_origins", "vtx", "particles", "tracks", "processes", "stp", "number_of_simulated_events"}, "raw table census mismatch")
@@ -211,7 +264,7 @@ def iter_events(path, meta):
                 for row in records:
                     h.require(row["raw_row_index"] == counters[table], "lost/repeated raw row")
                     counters[table] += 1
-            gamma(rows, meta["source_position_global_mm"])
+            gamma(rows, meta["source_position_global_mm"], energy_keV)
             by_id = tracks(rows["tracks"], names, meta["source_position_global_mm"])
             sums, steps = {}, []
             for table, material in materials.items():
