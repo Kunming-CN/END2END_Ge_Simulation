@@ -1,70 +1,67 @@
 # Current handoff
 
 Updated: 2026-10-14. Read this first, then relevant sources only.
-Immutable prior handoff: [P4 gamma configuration and actual source acceptance](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/429c40ea92ff88753ac6c10f1fef438795c7f04b/PROGRESS.md).
-It links P3/P2/P1 and permanent scientific history; do not repeat those deliveries.
+Immutable prior handoff: [Desktop history gate delivery](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/759f0f9578dcc4cfb23f7dc435c49e17ef87ccdc/PROGRESS.md).
+It links P4/P3/P2/P1 and permanent scientific history; do not repeat those deliveries.
 
 ## Owner authority
 
-Corrected heartbeat ACTIVE every30minutes; current student-first plan governs.
-No extra AI reviewers/audits/debates. Only directly relevant developer checks.
-Desktop only, existing remage/SSD/readout/environments. No installs, global/auth
-changes, billed API, resets/banked credits or second-computer gate. Inspect real
-Git/state/owned locks/processes/terminal first, including pvpython.exe. Never
-terminate an owner Control or remove its server lock. No current science rerun.
+Student-first corrected heartbeat; no extra AI reviewers/audits/debates. Only
+change-related developer checks. Desktop only, existing environments and engines.
+No installations, global/auth changes, billed APIs, resets/banked credits, phone
+or second-computer gate. Inspect real Git/state/locks/processes before writes;
+never remove unknown locks or terminate an owner Control. Missing chat context
+is not a reason to rerun physics, reopen accepted features or repeat tests.
 
-## Completed desktop history gate fix
+## P5 public guide synchronization
 
-Old Gamma output verification is now separate from scientific worker lifetime.
-A known ended job awaiting/failed current-source verification no longer blocks
-an independent new configuration/run. Its old download capability stays closed,
-errors remain visible and reopening preserves the lifetime distinction. Active
-checks/drivers, unknown driver identities and uncertain dispatches still block.
-A dead driver or terminal-looking files alone never retire uncertain workers.
-The synchronous successful science return is persisted before read-only checking;
-failed verification/persistence does not revive known ended science or clear an
-unresolved dispatch. Strict original source/artifact validators are unchanged.
+The public guide still linked the full developer source ZIP. Its maintained
+source already contains the proper student-runtime download and accepted gamma
+energy/anchor, sparse-result and actual data-file instructions. The normal
+build_site.py --restructure path refreshes this checked saved snapshot, without
+physics or hand edits to docs. Candidate build f0ba36e77f7cc7634a49360d393f42cbb7b8395b8b2feb7df13c097f2d0ecf0b
+has1693files/976854747bytes. Only guide.html and three presentation receipts differ;
+all1531 retained scientific/data/media artifacts remain exact. Gamma, Li curves,
+preamp and representative signal HTML are unchanged. Both million campaigns and
+all four10K models remain available.
 
-Actual old job e730045b87b94b4dade4b073d3ec60c5 had lost its ended classification
-through the previous read-only verifier. One exact local metadata reconciliation
-used its original successful run+verification log, bound completed receipts and
-artifacts, ended driver, no project workers, an exclusive Control server lease
-and idle scientific lease. No generic old-source admission was added. Its previous
-job metadata, hashes and original log prefix are retained in the compact receipt.
+Two initial read-only old-snapshot checks exposed presentation receipt drift
+from P1's removal of a developer-test dependency in pipeline_demo.py. Three exact
+published8282441 display receipts were added to existing historical display sets.
+Original export/science receipt reconstruction, file/summary/plot hashes and
+rehashed-edit rejection remain strict. No old scientific producer admission,
+model/solver/config change or scientific rerun. Both failed checks stopped before
+staging/rewriting docs and remain recorded in the one compact current receipt.
 
-Actual current-code verification still fails backend_refused as expected. After
-reopening: not busy/not blocking, unverified, no downloadable files, original error
-preserved. Its protected download remains refused. A real fresh SAP22/1000keV/
-nominal20-primary configuration Check succeeded with science_calls=0; no output
-was created or primary launched. All22 old scientific files and original diagnostic
-log prefix remain byte-identical. This is software acceptance, not new physics.
+Relevant tests:33 publication tests,8 site-structure tests and1 targeted Gamma
+receipt tamper regression passed. Archive checks completed9tests:8passed/1optional
+historical local fixture skipped; actual immutable native/Li receipts separately
+verified. No extra AI reviewer. One ordinary development test worker used explicit
+gpt-6.1-sol/ultra. Source writers exited before the final frozen derived build.
 
-Relevant checks:34 injected Gamma controller tests passed, including failed saved
-verification/persistence/reopen/peer checks and uncertain/live worker exclusion;
-two protected loopback regressions passed. Sandbox socket denial was retried
-unchanged with permission. No extra AI reviewer, Julia, Geant4 or SSD execution.
-One development agent used explicit gpt-6.1-sol/ultra. Source/acceptance/release
-closure is .local/gamma-history-gate/COMPLETE.json; inspect it before continuing.
+Current closure authority: .local/autonomy/public-guide-p5.json. Require its
+completed local check_site and exact live --url verification before accepting
+publication; preserve/resume current work if interrupted, rather than regenerate
+or rerun science. It records final Git/push and owned-lock/session release.
+Student runtime files/config/guide source did not change this round. Its immutable
+student-runtime-759f0f9578dc release and verified ZIP remain current; display modules
+and developer tests are excluded from the student package. Do not rebuild/release
+an identical package for this website-only commit.
 
-## Retention, publication and next bounded work
+## Completion boundary and preserved work
 
-P4 gamma options released at429c40ea; its20-primary1000keV/nominal SAP22 transport
-is permanent .local/runs/student-sap22-gamma-1000-nominal-v1/transport:
-18zero/2nonzero IDs7/16. No SSD/field/readout rerun. Do not launch a fresh workflow
-into that source-only directory. P2 actual100 SAP22/Cs137/+30deg remains
-.local/runs/student-sap22-cs137-100-nonzero-v1:97zero/IDs24/52/54/3accepted.
-Do not repeat it or automatically spend unused400. All old science/models/preset/
-compiled exporter receipts remain unchanged; never admit old changed source maps.
+Once the P5 receipt is completed, all currently independent executable items in
+tools/NEXT_DEVELOPMENT_PLAN.md are delivered. Stop adding work; unchanged heartbeats
+stay quiet. New actual student feedback can authorize a concrete follow-up.
+November measured spectra/I-V/C-V plus complete metadata, larger cryostat dimensions/
+materials/mounting, and adequate independent labels for later pulse classification
+remain input-dependent. No fabricated measurements/waveforms/labels or automatic
+PSD3/ML/demo campaign. These pending inputs do not negate the usable software.
 
-Finalize this fix as a formal Git commit and versioned student-runtime-<SHA>
-Release/latest; build/verify from commit and actually check public ZIP hash,
-embedded commit and receipt. Keep one current ZIP/receipt in
-.local/student-runtime-p1, no Actions/auth changes or duplicate unpacked packages.
-
-Then P5: synchronize the maintained student download/setup/configuration guide
-into generated public pages using the normal saved-snapshot build/publication
-route, and fix only named actual saved-site issues. Do not rebuild already accepted
-software or start a broad audit/redesign. Keep both million and four10K datasets,
-current representative signals/preamp unchanged. No phone/physics rerun. No PSD3
-or ML demo without adequate independent labels. November spectra/I-V/C-V need
-complete owner inputs, blocking only P6; missing measured waveforms are not saved.
+P4 source-only20-primary SAP22/1000keV/nominal data remain permanent at
+.local/runs/student-sap22-gamma-1000-nominal-v1/transport:18zero/IDs7,16;
+no SSD/field/readout rerun and no fresh workflow into that directory. P2 actual100
+SAP22/Cs137/+30deg remains .local/runs/student-sap22-cs137-100-nonzero-v1:
+97zero/IDs24,52,54/3accepted. Do not spend unused400 or repeat completed science.
+All original campaigns, unique failures, frozen models, exporter and preset pins,
+full original ledgers and failed old Gamma verification remain preserved.

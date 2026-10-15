@@ -31,6 +31,9 @@ DISPLAY_SOURCES=(JS,'tools/saved_focus_pages.py','tools/site_restructure.py','to
 # immutable original receipt above. Rehashed edits are never a historical basis.
 PREVIOUS_DISPLAY_RECEIPTS={
     'gamma':frozenset({
+                       # Exact published 8282441 display before the student-runtime
+                       # dependency split in pipeline_demo.py; science is unchanged.
+                       '28f540ff076193caa1a0cfd011abdaccdd90e872d4ff862e2ab5e967975394ab',
                        # Exact accepted0cf58d3 display before the1M overview correction.
                        'ddd701de0f1f93aaf6e8af9436bfbaf5672f0e1e1caa15d1abd3fdd59997fb9b',
                        # Exact accepted 5c21a3e display before teaching selection.

@@ -14,6 +14,8 @@ MANIFEST='methods/native-li-display.json'
 SOURCES=('tools/saved_archive_display.py','tools/site_restructure.py','tools/site_routes.py')
 LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in SOURCES}
 PREVIOUS_RECEIPTS=frozenset({
+    # Exact published 8282441 display before the student-runtime source split.
+    '45bf373ec10211121c26e52f02303e9d3f257ec2bd7918e53e09ab8595c19e79',
     # Exact accepted0cf58d3 presentation; original science stays pinned.
     '3d400e4b337f545bae7031579342d2b35f4c6113075ea3b4159d0522c6b75f46',
     # Exact accepted 5c21a3e display before the teaching-route update.
@@ -29,6 +31,8 @@ LITHIUM_SUMMARY_SHA='c5e1b2c85406f077cb692ac6e99dd1c9affe7cb6632a3098f96a86708e0
 LITHIUM_SOURCES=SOURCES+('tools/lithium_report.py','tools/pipeline_demo.py')
 LITHIUM_LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in LITHIUM_SOURCES}
 PREVIOUS_LITHIUM_RECEIPTS=frozenset({
+    # Exact published 8282441 navigation; original lithium data remain pinned.
+    '128f053791a04cc03fa960b9d503cf387158122f746c8b82bfe20db52d7dbd57',
     # Exact accepted0cf58d3 presentation; original science stays pinned.
     '4518901f0d09f72df85959c25bdfe17a57ff65b1c76ebf1fa257117d89d78c68',
     # Exact accepted 5c21a3e display; original science remains pinned.

@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "build_id": "43bc6d27e8160acabd2a299c972824c9de59adcbdf5dca176a21f6b9eef9ca9a",
+  "build_id": "f0ba36e77f7cc7634a49360d393f42cbb7b8395b8b2feb7df13c097f2d0ecf0b",
   "file_count": 1693,
-  "total_bytes": 976853208,
+  "total_bytes": 976854747,
   "html_pages": 105,
   "local_links_checked": 3276,
   "resource_references_checked": 3324,
@@ -8161,7 +8161,7 @@
     {
       "path": "examples/gamma-native/publication.json",
       "bytes": 24399,
-      "sha256": "28f540ff076193caa1a0cfd011abdaccdd90e872d4ff862e2ab5e967975394ab"
+      "sha256": "816823a34a3f3390a69b902d19c0222fdc35f1b2e7caef4f967a1b72ea4469bc"
     },
     {
       "path": "examples/native-li/comparison.html",
@@ -8195,8 +8195,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 39828,
-      "sha256": "c8a6656058be4c3307220aa9368eba17e85823431d47f88998a97e2006a4fda3"
+      "bytes": 41367,
+      "sha256": "f709be01de7f2d009333829683f8edab2115ee8a43bd6ce7f0bd5f6b2ff11f51"
     },
     {
       "path": "index.html",
@@ -8271,12 +8271,12 @@
     {
       "path": "methods/lithium-display.json",
       "bytes": 3346,
-      "sha256": "128f053791a04cc03fa960b9d503cf387158122f746c8b82bfe20db52d7dbd57"
+      "sha256": "d17eec05ec3c0105ae32e6b23b7a4fc2b49d45549089cfccc2271d2a368e2e29"
     },
     {
       "path": "methods/native-li-display.json",
       "bytes": 4991,
-      "sha256": "45bf373ec10211121c26e52f02303e9d3f257ec2bd7918e53e09ab8595c19e79"
+      "sha256": "0124bcc84c49c9881ee11d0a8463ef5651ce8261a52fc725ffaa3f2e41482efd"
     },
     {
       "path": "methods/native-li.html",

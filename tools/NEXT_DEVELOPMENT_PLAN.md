@@ -197,10 +197,12 @@ is documented, without an extra direction-review round.
 ### P5 — Maintain useful website presentation and later pulse analysis
 
 The website remains saved-results presentation, separate from student runtime files.
-Next bounded item: publish the maintained student download/setup/configuration
-guide through the normal saved-snapshot build, bringing generated public pages
-in sync with the already released software and source guide. Check the actual
-current links before edits; fix only concrete mismatches. No new whole-site audit.
+P5 publication milestone synchronizes the maintained student download/setup/
+configuration guide through the normal saved-snapshot build. Only the guide and
+three exact historical display-source receipts change; all1531 saved data/media
+artifacts and scientific HTML remain exact. Current .local/autonomy/public-guide-p5.json
+is authoritative for local/live publication completion. Once its status is completed,
+this executable item is delivered; no new whole-site audit or redesign follows.
 Fix named actual broken plots/links/selection issues from the existing supplied
 navigation plan; do not restart a whole-site redesign. Keep dataset-first navigation,
 both AK02/SAP22 million results and all four10K models, current representative signals,
@@ -226,6 +228,12 @@ AK02/SAP22 measured pulse waveforms were not saved. Missing input blocks only th
 item, not software packaging/storage/desktop delivery.
 
 ## Completion and stop
+
+After the P5 public-guide receipt reaches completed, all currently independent
+executable P0-P5 work is delivered. Leave input-dependent P5 pulse classification,
+P6 measurements and larger-cryostat geometry pending, without inventing new work.
+Unchanged scheduled wakeups remain quiet; do not repeat accepted checks or rebuild
+identical student ZIPs. New concrete owner feedback/input can reopen its own item.
 
 After each useful change:one related developer verification, concise PROGRESS update,
 normal commit/push, close owned idle tools and release the owned lease. No extra
