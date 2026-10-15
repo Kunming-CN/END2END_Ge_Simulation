@@ -172,12 +172,15 @@ completed20 primaries:18zero/2nonzero, original IDs7/16. Geometry, raw radiation
 sparse export and actual native-request binding passed; SSD/fields/readout were
 not rerun. Current .local/gamma-options-p4/COMPLETE.json governs publication.
 
-Concrete next desktop fix before P5: an old completed Gamma verification compares
-its recorded producers with changed live source files, and the owner Control
-gate can block an independent new run despite no scientific worker. Four source
-mismatches already predate P4. Preserve old hashes/artifacts and keep unverified
-old downloads blocked; separate a read-only verification failure from actual
-worker lifetime. No broad historical audit, old-source admission or physics rerun.
+Named desktop follow-up completed: saved Gamma current-source verification is
+separate from known ended scientific workers, including failed verification and
+reopening. Active/unknown/uncertain workers still block; unverified old downloads
+stay refused and strict source checks remain. One exact historical local metadata
+repair used original successful run/verification logs, bound terminal artifacts
+and actual idle process/lease evidence. The real old verification still fails;
+a fresh configuration Check succeeds without science. All22 original files and
+old log prefix remain unchanged. See .local/gamma-history-gate/COMPLETE.json.
+No broad historical audit, old-source admission or physics rerun was performed.
 
 Keep the shared current cryostat, detector and source anchors; no duplicated files
 for every combination. The accepted source-angle function is already implemented,
@@ -194,6 +197,10 @@ is documented, without an extra direction-review round.
 ### P5 — Maintain useful website presentation and later pulse analysis
 
 The website remains saved-results presentation, separate from student runtime files.
+Next bounded item: publish the maintained student download/setup/configuration
+guide through the normal saved-snapshot build, bringing generated public pages
+in sync with the already released software and source guide. Check the actual
+current links before edits; fix only concrete mismatches. No new whole-site audit.
 Fix named actual broken plots/links/selection issues from the existing supplied
 navigation plan; do not restart a whole-site redesign. Keep dataset-first navigation,
 both AK02/SAP22 million results and all four10K models, current representative signals,

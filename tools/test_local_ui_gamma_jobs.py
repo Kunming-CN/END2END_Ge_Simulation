@@ -56,6 +56,8 @@ class Runner:
         self.run_release = threading.Event(); self.run_release.set()
         self.check_entered = threading.Event()
         self.check_release = threading.Event(); self.check_release.set()
+        self.verify_entered = threading.Event()
+        self.verify_release = threading.Event(); self.verify_release.set()
         self.fail_mode = None
         self.report_bytes = b'{"fixture":true}'
         self.before_run = None
@@ -77,6 +79,7 @@ class Runner:
             folder = finished_fixture(cwd, output, threads, self.report_bytes)
             result = dict(status='completed', output=str(folder), native_calls=4, injection_calibrations=2)
         else:
+            self.verify_entered.set(); self.verify_release.wait(3)
             result = VERIFIED.copy()
         if self.fail_mode == mode:
             return {'exit_code': 2, 'output': 'private native failure C:/private/input'}
@@ -98,7 +101,7 @@ class GammaJobs(unittest.TestCase):
         self.controller = G.GammaController(self.root, self.runner, identity_probe=lambda pid: None)
 
     def tearDown(self):
-        self.runner.run_release.set(); self.runner.check_release.set()
+        self.runner.run_release.set(); self.runner.check_release.set(); self.runner.verify_release.set()
         self.controller.wait_for_idle()
         self.temp.cleanup()
 
@@ -108,6 +111,23 @@ class GammaJobs(unittest.TestCase):
         state = self.controller.wait_for_idle()
         self.assertEqual(state['jobs'][0]['status'], 'completed')
         return self.controller._find(response['job']['id'])
+
+    def readonly_peer(self, gamma):
+        (self.root / 'tools/scenario_cli.ps1').write_bytes(b'# injected check fixture only')
+        calls = []
+        def runner(argv, *, cwd, env, on_output, on_spawn):
+            self.assertIn('-DryRun', argv)
+            self.assertNotIn('-Resume', argv)
+            calls.append(argv.copy())
+            result = dict(kind=C.KIND, schema_version=1, status='planned', verification_final=True,
+                scientific_workers_launched=0, read_only=True, findings=[],
+                selected_census=dict(initial_primaries=3, zero_ge_primaries=1, nonzero_primaries=2, groups=2))
+            return dict(exit_code=0, output=json.dumps(result))
+        peer = C.Controller(self.root, runner, identity_probe=lambda pid: None, lock_probe=lambda path: False,
+                            coordination_lock=gamma._lock, peer_busy=gamma.own_busy)
+        gamma.set_peer_busy(peer.own_busy)
+        self.enterContext(patch.object(peer, '_environment', return_value=dict(os.environ)))
+        return peer, calls
 
     def test_default_check_bound_threads_and_fixed_serial_run_argv(self):
         checked = self.controller.check()
@@ -318,11 +338,13 @@ class GammaJobs(unittest.TestCase):
         reopened = G.GammaController(self.root, self.runner, identity_probe=lambda pid: None)
         state_bytes = (self.root / C.STATE / 'gamma-jobs.json').read_bytes()
         for _ in range(2):
-            self.assertTrue(reopened.snapshot()['busy'])
+            self.assertFalse(reopened.snapshot()['busy'])
             observed = reopened.snapshot()['jobs'][0]
             self.assertEqual(observed['status'], 'verification-required')
             self.assertTrue(observed['can_verify']); self.assertFalse(observed['verified'])
+            self.assertFalse(observed['blocks_new_work'])
             self.assertEqual(observed['files'], [])
+            with self.assertRaises(C.ControlError): reopened.download(job['id'], 'run.json')
         self.assertEqual(len(self.runner.calls), before)
         self.assertEqual((self.root / C.STATE / 'gamma-jobs.json').read_bytes(), state_bytes)
         checked = reopened.verify(job['id'])
@@ -331,9 +353,23 @@ class GammaJobs(unittest.TestCase):
         self.assertFalse(reopened.own_busy())
         self.assertEqual(self.runner.calls[-1][0], 'verify')
 
-    def test_completed_reload_missing_or_corrupt_receipts_retains_verification_hold(self):
+    def test_completed_reload_allows_new_check_and_start_without_verifying_old_downloads(self):
+        old = self.completed()
+        before = len(self.runner.calls)
+        reopened = G.GammaController(self.root, self.runner, identity_probe=lambda pid: None)
+        checked = reopened.check()
+        response = reopened.start(checked['check_id'])
+        reopened.wait_for_idle()
+        self.assertNotEqual(response['job']['id'], old['id'])
+        self.assertEqual([call[0] for call in self.runner.calls[before:]], ['check', 'run', 'verify'])
+        observed = next(job for job in reopened.snapshot()['jobs'] if job['id'] == old['id'])
+        self.assertEqual(observed['status'], 'verification-required')
+        self.assertTrue(observed['can_verify']); self.assertFalse(observed['verified'])
+        self.assertFalse(observed['blocks_new_work']); self.assertEqual(observed['files'], [])
+        with self.assertRaises(C.ControlError): reopened.download(old['id'], 'run.json')
+
+    def test_completed_reload_missing_or_corrupt_receipts_only_blocks_downloads(self):
         job = self.completed()
-        unused_ticket = self.controller.check()['check_id']
         folder = self.controller._path(job)
         original_complete = (folder / 'COMPLETE.json').read_bytes()
         original_run = (folder / 'run.json').read_bytes()
@@ -341,6 +377,7 @@ class GammaJobs(unittest.TestCase):
         before = len(self.runner.calls)
         for damage in ('missing_complete', 'corrupt_run'):
             with self.subTest(damage=damage):
+                (self.root / C.STATE / 'gamma-jobs.json').write_bytes(state_bytes)
                 (folder / 'COMPLETE.json').write_bytes(original_complete)
                 (folder / 'run.json').write_bytes(original_run)
                 if damage == 'missing_complete':
@@ -354,12 +391,15 @@ class GammaJobs(unittest.TestCase):
                 self.assertEqual(observed['files'], [])
                 self.assertIsNone(observed['complete_sha256']); self.assertIsNone(observed['run_sha256'])
                 self.assertFalse(reopened._jobs[0]['uncertain'])
-                self.assertTrue(reopened.snapshot()['busy'])
-                with self.assertRaises(C.ControlError): reopened.check()
-                with self.assertRaises(C.ControlError): reopened.start(unused_ticket)
+                self.assertFalse(observed['blocks_new_work']); self.assertFalse(reopened.snapshot()['busy'])
+                reopened._guard_idle()
                 with self.assertRaises(C.ControlError): reopened.verify(job['id'])
+                with self.assertRaises(C.ControlError): reopened.download(job['id'], 'run.json')
                 self.assertEqual(len(self.runner.calls), before)
                 self.assertEqual((self.root / C.STATE / 'gamma-jobs.json').read_bytes(), state_bytes)
+                self.assertEqual(reopened.check()['status'], 'checked_no_execution')
+                self.assertEqual(self.runner.calls[-1][0], 'check')
+                before += 1
 
     def test_can_verify_ignores_unrelated_peer_but_excludes_own_uncertain_jobs(self):
         job = self.completed()
@@ -387,12 +427,11 @@ class GammaJobs(unittest.TestCase):
         before_runs = [call[0] for call in self.runner.calls].count('run')
         reopened = G.GammaController(self.root, self.runner, identity_probe=lambda pid: None)
         snapshot = reopened.snapshot()
-        self.assertTrue(snapshot['busy'])
+        self.assertFalse(snapshot['busy'])
         self.assertTrue(all(j['can_verify'] and j['status'] == 'verification-required' for j in snapshot['jobs']))
         self.assertTrue(all(not j['uncertain'] for j in reopened._jobs))
         reopened.verify(first['id'])
-        self.assertTrue(reopened.snapshot()['busy'])
-        with self.assertRaises(C.ControlError): reopened.check()
+        self.assertFalse(reopened.snapshot()['busy']); reopened._guard_idle()
         reopened.verify(second['id'])
         self.assertFalse(reopened.snapshot()['busy'])
         self.assertEqual([call[0] for call in self.runner.calls].count('run'), before_runs)
@@ -405,11 +444,17 @@ class GammaJobs(unittest.TestCase):
         self.controller._active = None; self.controller._checking = True
         with self.assertRaises(C.ControlError): self.controller.verify(job['id'])
         self.controller._checking = False
+        before = len(self.runner.calls)
         for identity in ('unknown', 'fixture-driver'):
             job['child'] = dict(pid=123, identity='fixture-driver')
             self.controller._identity_probe = lambda pid: identity
             self.assertFalse(self.controller.snapshot()['jobs'][0]['can_verify'])
+            self.assertTrue(self.controller.snapshot()['jobs'][0]['blocks_new_work'])
+            self.assertTrue(self.controller.own_busy())
             with self.assertRaises(C.ControlError): self.controller.verify(job['id'])
+            with self.assertRaises(C.ControlError): self.controller.check()
+            with self.assertRaises(C.ControlError): self.controller._guard_idle()
+        self.assertEqual(len(self.runner.calls), before)
         job['child'] = None
         with self.assertRaises(C.ControlError): self.controller.verify('f' * 32)
         self.controller._path(job, 'COMPLETE.json').unlink()
@@ -422,6 +467,177 @@ class GammaJobs(unittest.TestCase):
         self.assertEqual(len(self.runner.calls), before)
         self.assertFalse(self.controller.snapshot()['checking'])
         self.assertFalse(self.controller.snapshot()['jobs'][0]['verified'])
+        self.assertFalse(job['uncertain']); self.assertFalse(self.controller.own_busy())
+        self.assertFalse(self.controller.snapshot()['jobs'][0]['blocks_new_work'])
+
+    def test_failed_saved_verification_preserves_ended_lifetime_error_and_peer_check(self):
+        job = self.completed(); before = len(self.runner.calls)
+        self.runner.fail_mode = 'verify'
+        with self.assertRaises(C.ControlError) as refusal: self.controller.verify(job['id'])
+        self.assertEqual(refusal.exception.code, 'backend_refused')
+        observed = self.controller.snapshot()['jobs'][0]
+        self.assertEqual(observed['status'], 'blocked')
+        self.assertEqual(observed['error'], dict(code='backend_refused', message=G.ERRORS['backend_refused']))
+        self.assertFalse(job['uncertain']); self.assertFalse(observed['blocks_new_work'])
+        self.assertFalse(observed['verified']); self.assertEqual(observed['files'], [])
+        self.assertFalse(self.controller.own_busy())
+        state_path = self.root / C.STATE / 'gamma-jobs.json'
+        state = C.read_json(state_path)
+        self.assertFalse(state['jobs'][0]['uncertain'])
+        self.assertEqual(state['jobs'][0]['error'], observed['error'])
+        state_bytes = state_path.read_bytes()
+        reopened = G.GammaController(self.root, self.runner, identity_probe=lambda pid: None)
+        recovered = reopened.snapshot()['jobs'][0]
+        self.assertEqual(recovered['status'], 'verification-required')
+        self.assertEqual(recovered['error'], observed['error'])
+        self.assertFalse(reopened._jobs[0]['uncertain']); self.assertFalse(recovered['blocks_new_work'])
+        self.assertTrue(recovered['can_verify']); self.assertFalse(recovered['verified'])
+        self.assertEqual(recovered['files'], [])
+        self.assertEqual(state_path.read_bytes(), state_bytes)
+        with self.assertRaises(C.ControlError): reopened.download(job['id'], 'run.json')
+        peer, peer_calls = self.readonly_peer(reopened)
+        checked = peer.check('independent-new-check', 'SAP22')
+        self.assertEqual(checked['status'], 'planned')
+        self.assertEqual(checked['scientific_workers_launched'], 0)
+        self.assertEqual(len(peer_calls), 1); self.assertIn('-DryRun', peer_calls[0])
+        self.assertFalse((self.root / C.BASE / 'independent-new-check').exists())
+        self.assertEqual(reopened.check()['status'], 'checked_no_execution')
+        self.assertEqual([call[0] for call in self.runner.calls[before:]], ['verify', 'check'])
+        persisted = C.read_json(state_path)['jobs'][0]
+        self.assertFalse(persisted['uncertain']); self.assertEqual(persisted['error'], observed['error'])
+        twice_reopened = G.GammaController(self.root, self.runner, identity_probe=lambda pid: None)
+        self.assertFalse(twice_reopened.own_busy())
+        self.assertEqual(twice_reopened.snapshot()['jobs'][0]['error'], observed['error'])
+
+    def test_synchronous_run_success_then_verify_failure_does_not_revive_workers(self):
+        self.runner.fail_mode = 'verify'
+        self.runner.verify_release.clear()
+        response = self.controller.start(self.controller.check()['check_id'])
+        try:
+            self.assertTrue(self.runner.verify_entered.wait(2))
+            persisted = C.read_json(self.root / C.STATE / 'gamma-jobs.json')['jobs'][0]
+            self.assertEqual(persisted['status'], 'verification-required')
+            self.assertFalse(persisted['uncertain'])
+            reopened = G.GammaController(self.root, self.runner, identity_probe=lambda pid: 'fixture-driver')
+            self.assertFalse(reopened._jobs[0]['uncertain']); self.assertTrue(reopened.own_busy())
+            self.assertTrue(reopened.snapshot()['jobs'][0]['blocks_new_work'])
+            with self.assertRaises(C.ControlError): reopened.check()
+            reopened._identity_probe = lambda pid: None
+            self.assertFalse(reopened.own_busy()); self.assertFalse(reopened._jobs[0]['uncertain'])
+            self.assertEqual(reopened.check()['status'], 'checked_no_execution')
+            self.assertEqual([call[0] for call in self.runner.calls].count('run'), 1)
+        finally:
+            self.runner.verify_release.set()
+        observed = self.controller.wait_for_idle()['jobs'][0]
+        job = self.controller._find(response['job']['id'])
+        self.assertEqual(observed['status'], 'blocked')
+        self.assertEqual(observed['error']['code'], 'backend_refused')
+        self.assertFalse(job['uncertain']); self.assertFalse(observed['blocks_new_work'])
+        self.assertFalse(observed['verified']); self.assertEqual(observed['files'], [])
+        self.assertFalse(self.controller.own_busy()); self.controller._guard_idle()
+        self.assertEqual([call[0] for call in self.runner.calls], ['check', 'run', 'verify', 'check'])
+        reopened = G.GammaController(self.root, self.runner, identity_probe=lambda pid: None)
+        self.assertFalse(reopened.own_busy()); self.assertFalse(reopened._jobs[0]['uncertain'])
+        self.assertEqual(reopened.snapshot()['jobs'][0]['error'], observed['error'])
+
+    def test_readonly_verify_unknown_or_live_driver_blocks_new_work_until_return(self):
+        job = self.completed(); before = len(self.runner.calls)
+        peer, peer_calls = self.readonly_peer(self.controller)
+        self.runner.verify_entered.clear(); self.runner.verify_release.clear()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            verification = pool.submit(self.controller.verify, job['id'])
+            try:
+                self.assertTrue(self.runner.verify_entered.wait(2))
+                self.assertFalse(job['uncertain'])
+                persisted = C.read_json(self.root / C.STATE / 'gamma-jobs.json')['jobs'][0]
+                self.assertFalse(persisted['uncertain'])
+                for identity in ('unknown', 'fixture-driver'):
+                    self.controller._identity_probe = lambda pid: identity
+                    observed = self.controller.snapshot()
+                    self.assertTrue(observed['checking']); self.assertTrue(observed['busy'])
+                    self.assertTrue(observed['jobs'][0]['blocks_new_work'])
+                    self.assertFalse(observed['jobs'][0]['can_verify'])
+                    with self.assertRaises(C.ControlError): self.controller.check()
+                    with self.assertRaises(C.ControlError): peer.check('blocked-check', 'SAP22')
+                    with self.assertRaises(C.ControlError): self.controller._guard_idle()
+                    state_bytes = (self.root / C.STATE / 'gamma-jobs.json').read_bytes()
+                    reopened = G.GammaController(self.root, self.runner, identity_probe=lambda pid: identity)
+                    self.assertFalse(reopened._jobs[0]['uncertain'])
+                    self.assertTrue(reopened.own_busy()); self.assertTrue(reopened.snapshot()['jobs'][0]['blocks_new_work'])
+                    with self.assertRaises(C.ControlError): reopened.check()
+                    self.assertEqual((self.root / C.STATE / 'gamma-jobs.json').read_bytes(), state_bytes)
+                    reopened._identity_probe = lambda pid: None
+                    self.assertFalse(reopened.own_busy()); reopened._guard_idle()
+                    self.assertFalse(reopened.snapshot()['jobs'][0]['blocks_new_work'])
+                    self.assertTrue(reopened.snapshot()['jobs'][0]['can_verify'])
+                    self.assertFalse(reopened.snapshot()['jobs'][0]['verified'])
+                    with self.assertRaises(C.ControlError): reopened.download(job['id'], 'run.json')
+                self.assertEqual(peer_calls, [])
+            finally:
+                self.runner.verify_release.set()
+            result = verification.result(timeout=3)
+        self.assertEqual(result['scientific_workers_launched'], 0)
+        self.assertFalse(self.controller.own_busy())
+        self.assertEqual([call[0] for call in self.runner.calls[before:]], ['verify'])
+
+    def test_uncertain_terminal_files_failed_verify_remain_blocking_until_success(self):
+        self.runner.fail_mode = 'run'
+        response = self.controller.start(self.controller.check()['check_id'])
+        self.controller.wait_for_idle()
+        job_id = response['job']['id']; before = len(self.runner.calls)
+        reopened = G.GammaController(self.root, self.runner, identity_probe=lambda pid: None)
+        self.assertTrue(reopened._terminal_receipts(reopened._find(job_id)))
+        self.assertTrue(reopened._find(job_id)['uncertain']); self.assertTrue(reopened.own_busy())
+        self.assertTrue(reopened.snapshot()['jobs'][0]['can_verify'])
+        self.runner.fail_mode = 'verify'
+        with self.assertRaises(C.ControlError): reopened.verify(job_id)
+        observed = reopened.snapshot()['jobs'][0]
+        self.assertEqual(observed['status'], 'blocked'); self.assertEqual(observed['error']['code'], 'backend_refused')
+        self.assertTrue(reopened._find(job_id)['uncertain']); self.assertTrue(observed['blocks_new_work'])
+        self.assertFalse(observed['verified']); self.assertEqual(observed['files'], [])
+        persisted = C.read_json(self.root / C.STATE / 'gamma-jobs.json')['jobs'][0]
+        self.assertTrue(persisted['uncertain'])
+        twice_reopened = G.GammaController(self.root, self.runner, identity_probe=lambda pid: None)
+        self.assertTrue(twice_reopened._find(job_id)['uncertain']); self.assertTrue(twice_reopened.own_busy())
+        self.assertEqual(twice_reopened.snapshot()['jobs'][0]['error'], observed['error'])
+        with self.assertRaises(C.ControlError): twice_reopened.check()
+        with self.assertRaises(C.ControlError): twice_reopened.download(job_id, 'run.json')
+        self.runner.fail_mode = None
+        self.assertEqual(twice_reopened.verify(job_id)['scientific_workers_launched'], 0)
+        self.assertFalse(twice_reopened._find(job_id)['uncertain']); self.assertFalse(twice_reopened.own_busy())
+        self.assertEqual([call[0] for call in self.runner.calls[before:]], ['verify', 'verify'])
+
+    def test_verify_final_persistence_failure_restores_prior_lifetime_and_reopen(self):
+        job = self.completed()
+        state_path = self.root / C.STATE / 'gamma-jobs.json'
+        for uncertain in (False, True):
+            with self.subTest(uncertain=uncertain):
+                job.update(status='verification-required', uncertain=uncertain, child=None)
+                job.pop('complete_sha256', None); job.pop('run_sha256', None)
+                self.controller._persist()
+                before = len(self.runner.calls); persist = self.controller._persist
+                calls = 0
+                def fail_final():
+                    nonlocal calls
+                    calls += 1
+                    if job['status'] == 'completed':
+                        raise OSError('fixture final verify persistence failure')
+                    persist()
+                with patch.object(self.controller, '_persist', side_effect=fail_final):
+                    with self.assertRaises(OSError): self.controller.verify(job['id'])
+                self.assertGreaterEqual(calls, 3)
+                self.assertEqual([call[0] for call in self.runner.calls[before:]], ['verify'])
+                observed = self.controller.snapshot()['jobs'][0]
+                self.assertFalse(self.controller.snapshot()['checking'])
+                self.assertEqual(observed['status'], 'blocked')
+                self.assertFalse(observed['verified']); self.assertEqual(observed['files'], [])
+                self.assertEqual(job['uncertain'], uncertain)
+                self.assertEqual(observed['blocks_new_work'], uncertain)
+                self.assertIsNone(observed['complete_sha256']); self.assertIsNone(observed['run_sha256'])
+                self.assertEqual(C.read_json(state_path)['jobs'][0]['uncertain'], uncertain)
+                reopened = G.GammaController(self.root, self.runner, identity_probe=lambda pid: None)
+                self.assertEqual(reopened._find(job['id'])['uncertain'], uncertain)
+                self.assertEqual(reopened.own_busy(), uncertain)
 
     def test_public_blocking_flag_matches_existing_guard_not_failed_label(self):
         completed=self.completed()
@@ -442,7 +658,8 @@ class GammaJobs(unittest.TestCase):
             with self.assertRaises(C.ControlError):self.controller._guard_idle()
         failed.update(uncertain=False,child=None);completed['status']='verification-required'
         public=self.controller._public_job(completed)
-        self.assertTrue(public['blocks_new_work']);self.assertTrue(public['can_verify'])
+        self.assertFalse(public['blocks_new_work']);self.assertTrue(public['can_verify'])
+        self.assertFalse(self.controller.own_busy());self.controller._guard_idle()
         self.assertEqual(len(self.runner.calls),before)
 
     def test_rehashed_policy_or_threads_receipt_refused_after_cli_claim(self):

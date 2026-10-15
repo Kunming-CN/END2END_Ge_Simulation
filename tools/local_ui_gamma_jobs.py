@@ -2,7 +2,8 @@
 
 No stop/resume/adoption path exists. A dead Python driver cannot prove that its
 unrecorded Julia child stopped. Uncertain dispatches remain blocking, including
-after reopening, until an explicit check of existing terminal receipts succeeds.
+after reopening. Revalidation of known completed work is a separate, read-only
+operation; a failed source check must not revive its scientific workers.
 """
 from __future__ import annotations
 
@@ -143,12 +144,13 @@ class GammaController:
                 known_completion = ((job['status'] == 'completed' and not job['uncertain'] and
                     all(isinstance(job.get(key), str) and SHA.fullmatch(job[key])
                         for key in ('complete_sha256', 'run_sha256'))) or
-                    (job['status'] == 'verification-required' and not job['uncertain']))
+                    (job['status'] in ('verification-required', 'blocked') and not job['uncertain']))
                 job.pop('complete_sha256', None)
                 job.pop('run_sha256', None)
-                if (known_completion or self._terminal_receipts(job)) and not self._driver_live(job):
-                    job.update(status='verification-required', uncertain=not known_completion,
-                               error={'code': 'verification_required', 'message': ERRORS['verification_required']})
+                if known_completion or (self._terminal_receipts(job) and not self._driver_live(job)):
+                    job.update(status='verification-required', uncertain=not known_completion)
+                    if not isinstance(job.get('error'), dict) or job['error'].get('code') not in ERRORS:
+                        job['error'] = {'code': 'verification_required', 'message': ERRORS['verification_required']}
                 elif job['uncertain'] or job['status'] in ('dispatch-uncertain', 'running') or self._driver_live(job):
                     job.update(status='blocked', uncertain=True,
                                error={'code': 'uncertain_dispatch', 'message': ERRORS['uncertain_dispatch']})
@@ -191,15 +193,16 @@ class GammaController:
         """No recursive peer call; uncertainty outlives a dead driver PID."""
         with self._lock:
             return (self._active is not None or self._checking or
-                    any(j['uncertain'] or j['status'] == 'verification-required' or
-                        self._driver_live(j) for j in self._jobs))
+                    any(self._blocks_new_work(j) for j in self._jobs))
+
+    def _blocks_new_work(self, job):
+        return self._active == job['id'] or job['uncertain'] or self._driver_live(job)
 
     def _guard_idle(self):
         if self._active is not None or self._checking or self._peer_busy():
             raise refused('busy')
         for job in self._jobs:
-            if (self._driver_live(job) or job['uncertain'] or
-                    job['status'] == 'verification-required'):
+            if self._blocks_new_work(job):
                 raise refused('busy')
 
     def _verification_idle(self, job):
@@ -393,6 +396,7 @@ class GammaController:
         job.pop('error', None)
 
     def _work(self, job):
+        scientific_run_completed = False
         try:
             result = self._command('run', job=job)
             if (set(result) != {'status', 'output', 'native_calls', 'injection_calibrations'} or
@@ -401,6 +405,12 @@ class GammaController:
                     type(result.get('native_calls')) is not int or result['native_calls'] != 4 or
                     type(result.get('injection_calibrations')) is not int or result['injection_calibrations'] != 2):
                 raise refused('invalid_backend_receipt')
+            # The valid synchronous run return establishes ended scientific
+            # workers. Subsequent receipt revalidation cannot undo that fact.
+            scientific_run_completed = True
+            with self._lock:
+                job.update(status='verification-required', uncertain=False)
+                self._persist()
             verified = self._command('verify', job=job)
             with self._lock:
                 self._bind_verified(job, verified)
@@ -410,7 +420,8 @@ class GammaController:
                 code = getattr(error, 'code', 'controller_failed')
                 if code not in ERRORS:
                     code = 'controller_failed'
-                job.update(status='failed', uncertain=True,
+                job.update(status='blocked' if scientific_run_completed else 'failed',
+                           uncertain=not scientific_run_completed,
                            error={'code': code, 'message': ERRORS[code]}, updated_at=utc_now(),
                            elapsed_seconds=max(0.0, time.time() - job['started_seconds']))
                 job.pop('complete_sha256', None)
@@ -428,9 +439,12 @@ class GammaController:
             if not self._terminal_receipts(job):
                 raise refused('incomplete_output')
             self._checking = True
+            prior_uncertainty = job['uncertain']
             job.pop('complete_sha256', None)
             job.pop('run_sha256', None)
-            job.update(status='verification-required', uncertain=True)
+            # Preserve scientific lifetime, including an unresolved dispatch.
+            # This mode only reads saved files and launches no scientific child.
+            job.update(status='verification-required')
             try:
                 self._persist()
             except BaseException:
@@ -448,8 +462,10 @@ class GammaController:
                 code = getattr(error, 'code', 'controller_failed')
                 if code not in ERRORS:
                     code = 'controller_failed'
-                job.update(status='blocked', uncertain=True,
+                job.update(status='blocked', uncertain=prior_uncertainty,
                            error={'code': code, 'message': ERRORS[code]}, updated_at=utc_now())
+                job.pop('complete_sha256', None)
+                job.pop('run_sha256', None)
                 self._persist()
             raise
         finally:
@@ -495,7 +511,7 @@ class GammaController:
             calculation_seconds=run['orchestration_seconds'] if run and finite_seconds(run.get('orchestration_seconds')) else None,
             progress=dict(completed_models=completed, current_model=current, stage=stage),
             can_verify=bool(can_verify),
-            blocks_new_work=bool(self._driver_live(job) or job['uncertain'] or job['status']=='verification-required'),
+            blocks_new_work=bool(self._blocks_new_work(job)),
             verified=verified, files=list(FILES) if verified else [],
             complete_sha256=job.get('complete_sha256') if verified else None,
             run_sha256=job.get('run_sha256') if verified else None, error=safe_error)

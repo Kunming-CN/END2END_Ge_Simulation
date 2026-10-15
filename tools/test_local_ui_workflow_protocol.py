@@ -524,9 +524,8 @@ class Protocol(unittest.TestCase):
                 patch.object(R,'compatible',return_value=[]), \
                 patch.object(R,'release',return_value='a'*64), \
                 patch.object(workflow,'_launch',side_effect=workflow._view) as dispatch:
-            self.assertTrue(workflow.own_busy());self.assertTrue(gamma.own_busy())
+            self.assertTrue(workflow.own_busy());self.assertFalse(gamma.own_busy())
             self.assertTrue(gamma.snapshot()['jobs'][0]['can_verify'])
-            self.assertEqual(self.request('POST','/api/workflow/continue-prefix',body)[0],400)
             inspection.assert_not_called()
             self.assertEqual(self.request('POST','/api/gamma-start',{'check_id':'unchecked'})[0],400)
             status,raw,_=self.request('POST','/api/gamma-verify',{'job_id':old['id']})
@@ -539,6 +538,37 @@ class Protocol(unittest.TestCase):
             self.assertEqual(parent['status'],'verified_transport')
             self.assertEqual(workflow._jobs[1]['mode'],'continue')
         self.assertFalse(W.run_path(body['new_name'],root).exists())
+        self.assertEqual(original_files,{p.relative_to(folder).as_posix():p.read_bytes() for p in folder.rglob('*') if p.is_file()})
+
+    def test_failed_saved_gamma_verification_does_not_block_new_configuration_check(self):
+        root=self.server.controller.root;lock=threading.RLock();runner=Runner()
+        gamma=G.GammaController(root,runner,identity_probe=lambda pid:None,coordination_lock=lock)
+        old={'id':'e'*32,'output':G.BASE+'/ui-gamma-'+'e'*32,'threads':2,
+             'status':'completed','uncertain':False,'child':None,'started_seconds':time.time(),
+             'created_at':G.utc_now(),'updated_at':G.utc_now()}
+        folder=finished_fixture(root,old['output'])
+        old.update(complete_sha256=W.sha(folder/'COMPLETE.json'),run_sha256=W.sha(folder/'run.json'))
+        gamma._jobs=[old];gamma._persist()
+        gamma=G.GammaController(root,runner,identity_probe=lambda pid:None,coordination_lock=lock)
+        self.server.gamma_controller=gamma;runner.fail_mode='verify'
+        original_files={p.relative_to(folder).as_posix():p.read_bytes() for p in folder.rglob('*') if p.is_file()}
+        with patch.object(G,'gamma_environment',return_value={}):
+            self.assertEqual(self.request('POST','/api/gamma-verify',{'job_id':old['id']})[0],400)
+        self.assertEqual([call[0] for call in runner.calls],['verify'])
+        gamma=G.GammaController(root,runner,identity_probe=lambda pid:None,coordination_lock=lock)
+        self.server.gamma_controller=gamma
+        plan={'kind':W.KIND,'status':'checked_configuration','science_calls':0}
+        resolver=Mock(return_value=plan)
+        workflow=J.WorkflowController(root,resolver=resolver,coordination_lock=lock,peer_busy=gamma.own_busy)
+        self.server.workflow_controller=workflow;gamma.set_peer_busy(workflow.own_busy)
+        state=gamma.snapshot();self.assertFalse(state['busy'])
+        self.assertFalse(state['jobs'][0]['blocks_new_work']);self.assertFalse(state['jobs'][0]['verified'])
+        self.assertEqual(state['jobs'][0]['error']['code'],'backend_refused')
+        self.assertEqual(state['jobs'][0]['files'],[])
+        with self.assertRaises(G.ControlError):gamma.download(old['id'],'run.json')
+        status,raw,_=self.request('POST','/api/workflow/check',{'config':{'name':'fresh'}})
+        self.assertEqual(status,200);self.assertEqual(json.loads(raw)['science_calls'],0)
+        resolver.assert_called_once_with({'name':'fresh'},root=root)
         self.assertEqual(original_files,{p.relative_to(folder).as_posix():p.read_bytes() for p in folder.rglob('*') if p.is_file()})
 
 
