@@ -1,5 +1,26 @@
 # Project working rules
 
+## Owner extension — 2026-10-17 GeGI integration
+
+Build a dedicated GeGI cryostat at the same assembly level as LBNL, accepting
+only the exact GeGI detector. Use the supplied dimensional references and Ge-STAR
+presentations read-only, with primary online references where needed. Integrate
+actual configurable transport, multichannel charge/readout, Compton cones and
+directional imaging in the existing desktop workflow. Keep truth-assisted and
+signal-derived reconstruction explicitly distinct. Test figures may be published
+through the existing website generator; do not bundle precomputed demonstrations
+in the student software. This authorization supersedes old instructions to defer
+GeGI and the completed P0-P5 stop boundary for this new feature only.
+
+Plan small complete milestones, reuse existing solvers and saved applicable data,
+measure before scaling simulations, and parallelize independent implementation
+while bounded calculations run. Simple development tasks may use gpt-6.1-sol;
+difficult geometry/reconstruction tasks may use gpt-6-astra, both explicit ultra.
+No additional AI review rounds. Ask only for genuinely blocking missing inputs;
+record nominal assumptions without claiming as-built or experimental validation.
+Synchronize completed source, student release and requested website results with
+GitHub. All prior data-retention, environment and no-reset safeguards remain.
+
 ## Owner correction — 2026-10-14 (current authority)
 
 This update supersedes every older AI-review requirement below and in plans,

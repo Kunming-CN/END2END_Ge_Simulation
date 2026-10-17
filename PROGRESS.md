@@ -1,67 +1,74 @@
 # Current handoff
 
-Updated: 2026-10-14. Read this first, then relevant sources only.
-Immutable prior handoff: [Desktop history gate delivery](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/759f0f9578dcc4cfb23f7dc435c49e17ef87ccdc/PROGRESS.md).
-It links P4/P3/P2/P1 and permanent scientific history; do not repeat those deliveries.
+Updated: 2026-10-17. GeGI-only cryostat and multichannel Compton workflow are
+implemented and tested in GeSignal Control. Prior P0-P5 remain delivered; their
+handoff is preserved at commit666947fa22d879eae69252d25ec91345d24665cd.
 
-## Owner authority
+## Current delivery
 
-Student-first corrected heartbeat; no extra AI reviewers/audits/debates. Only
-change-related developer checks. Desktop only, existing environments and engines.
-No installations, global/auth changes, billed APIs, resets/banked credits, phone
-or second-computer gate. Inspect real Git/state/locks/processes before writes;
-never remove unknown locks or terminate an owner Control. Missing chat context
-is not a reason to rerun physics, reopen accepted features or repeat tests.
+Root owns .local/autonomy/round.lock as gegi-integration-root. Implementation
+workers are finished. No extra AI review agents were used. Release/site closure
+is in progress; inspect .local/gegi-integration/delivery.json and actual processes
+before continuing. Never repeat completed physics because of a chat interruption.
 
-## P5 public guide synchronization
+The dedicated gegi_cryostat_v1 accepts only frozen GeGI_3D. Measured front layers
+are1.6mm and0.8mm with8.1mm crystal-to-external-front distance. The owner accepted
+explicit nominal side/rear dimensions and gap split; alloys use pure Al. Missing
+holders/cold finger and full hardware geometry remain declared approximations.
+Private manuals/slides stay private. Canonical92.3K/-879V and0V inputs are unchanged.
 
-The public guide still linked the full developer source ZIP. Its maintained
-source already contains the proper student-runtime download and accepted gamma
-energy/anchor, sparse-result and actual data-file instructions. The normal
-build_site.py --restructure path refreshes this checked saved snapshot, without
-physics or hand edits to docs. Candidate build f0ba36e77f7cc7634a49360d393f42cbb7b8395b8b2feb7df13c097f2d0ecf0b
-has1693files/976854747bytes. Only guide.html and three presentation receipts differ;
-all1531 retained scientific/data/media artifacts remain exact. Gamma, Li curves,
-preamp and representative signal HTML are unchanged. Both million campaigns and
-all four10K models remain available.
+The shared lifecycle now handles configurable gamma energy/position, check/run/
+stop/resume,34-electrode signed signals, independent readout calibration, channel
+plots, strip matching, candidate Compton cones and directional backprojection.
+X/Y energies are not double counted. Depth uses an independent simulated central
+pixel timing table; no measured per-pixel calibration, range or resolution claim.
+Both kinematically valid orders are retained without source-direction selection.
 
-Two initial read-only old-snapshot checks exposed presentation receipt drift
-from P1's removal of a developer-test dependency in pipeline_demo.py. Three exact
-published8282441 display receipts were added to existing historical display sets.
-Original export/science receipt reconstruction, file/summary/plot hashes and
-rehashed-edit rejection remain strict. No old scientific producer admission,
-model/solver/config change or scientific rerun. Both failed checks stopped before
-staging/rewriting docs and remain recorded in the one compact current receipt.
+## Actual evidence
 
-Relevant tests:33 publication tests,8 site-structure tests and1 targeted Gamma
-receipt tamper regression passed. Archive checks completed9tests:8passed/1optional
-historical local fixture skipped; actual immutable native/Li receipts separately
-verified. No extra AI reviewer. One ordinary development test worker used explicit
-gpt-6.1-sol/ultra. Source writers exited before the final frozen derived build.
+.local/runs/gegi-100-pilot-v1:100initial/100zero/0nonzero. Actual stage-boundary
+stop/resume reused radiation. Empty results contain no fabricated waveforms.
+.local/runs/gegi-5000-imaging-v1:completed,5000initial/4958zero/42nonzero,
+874positive Ge steps; seed26101702,662keV isotropic source at[30,0,100]mm.
+All42 events retain34 channels;0native failures,2native endpoint flags,38readout
+accepted and4readout rejected. Imaging accepts1event(ID2950), rejects41 with
+reasons, produces1cone. Image integral is1.0. One cone is not source localization.
 
-Current closure authority: .local/autonomy/public-guide-p5.json. Require its
-completed local check_site and exact live --url verification before accepting
-publication; preserve/resume current work if interrupted, rather than regenerate
-or rerun science. It records final Git/push and owned-lock/session release.
-Student runtime files/config/guide source did not change this round. Its immutable
-student-runtime-759f0f9578dc release and verified ZIP remain current; display modules
-and developer tests are excluded from the student package. Do not rebuild/release
-an identical package for this website-only commit.
+The exact existing34-potential Float32 native field cache was reused (hashf75280e7
+f21b1a1a06c2a6623aed62873065ca72db02bb1f93a61b9b853b90e8). Fresh-field policy
+usesFloat64. Neither a fresh solve nor grid/experimental validation is claimed.
+A transient permission error replacing a large progress file was fixed with
+bounded atomic-write retries and compact progress.20completed event/checkpoint
+hashes and all radiation bytes were reused unchanged. The original failure,
+original producer, and explicit storage-only rebind remain in
+.local/gegi-integration/storage-failure-original; no new primaries during recovery.
 
-## Completion boundary and preserved work
+Relevant checks:21shared workflow,6imaging,4protected Control,JS regressions,
+5software-package,6saved-publication,33site,15native helper+5model/request and
+20checkpoint checks passed. Native overlaps:8volumes/10000samples each passed.
+Actual browser verified compatible selection, blocked mismatches, checked source,
+empty results, original nonzero IDs,34channel switching and real cone/map display.
+CLI-data display used a labelled temporary read-only fixture, not forged UI ownership.
 
-Once the P5 receipt is completed, all currently independent executable items in
-tools/NEXT_DEVELOPMENT_PLAN.md are delivered. Stop adding work; unchanged heartbeats
-stay quiet. New actual student feedback can authorize a concrete follow-up.
-November measured spectra/I-V/C-V plus complete metadata, larger cryostat dimensions/
-materials/mounting, and adequate independent labels for later pulse classification
-remain input-dependent. No fabricated measurements/waveforms/labels or automatic
-PSD3/ML/demo campaign. These pending inputs do not negate the usable software.
+## Current owner extension and remaining closure
 
-P4 source-only20-primary SAP22/1000keV/nominal data remain permanent at
-.local/runs/student-sap22-gamma-1000-nominal-v1/transport:18zero/IDs7,16;
-no SSD/field/readout rerun and no fresh workflow into that directory. P2 actual100
-SAP22/Cs137/+30deg remains .local/runs/student-sap22-cs137-100-nonzero-v1:
-97zero/IDs24,52,54/3accepted. Do not spend unused400 or repeat completed science.
-All original campaigns, unique failures, frozen models, exporter and preset pins,
-full original ledgers and failed old Gamma verification remain preserved.
+The owner added a two-position source-separation test. Running serial bounded
+5000primary runs gegi-source-left-v1 and gegi-source-right-v1 at[-40,0,40] and
+[40,0,40]mm,662keV,seeds26101703/26101704. Inspect their actual receipts and
+.local/gegi-integration/delivery.json; never restart completed radiation.
+A real transient-recrossing defect was identified in the old2950Y28charge:
+first50%crossing22.24ns,last79.33ns. New native source uses the last upward
+crossing for both independent calibration and events;18targeted tests passed.
+Old100/5000outputs remain unchanged. Website comparison will use cone vertices
+on explicit knownz=40mm plane, plus directional maps; no recovered range claim.
+
+
+Finish existing website build, required local/live checks, commit/push, build and
+verify immutable latest student ZIP from formal source commit. No test data or
+publication fixtures go in the student package. Close owned servers and remove
+only owned disposable scratch; retain scientific runs and unique failure records.
+Update this handoff/delivery/state, release this owned lock and leave ready.
+
+Original campaigns/models are unchanged. Further mechanical fidelity and hardware
+calibration require actual dimensions, channel mapping and measured calibration.
+No automatic larger campaign, PSD3, phone work, new environment or review rounds.

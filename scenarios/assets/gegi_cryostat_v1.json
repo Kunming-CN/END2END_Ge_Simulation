@@ -1,0 +1,39 @@
+{
+  "id": "gegi_cryostat_v1",
+  "kind": "cryostat_asset",
+  "schema_version": 1,
+  "version": 1,
+  "compatible_detectors": ["GeGI_3D"],
+  "coordinate_convention": "Canonical crystal centre is global origin; detector front is +z; millimetres.",
+  "scope": "GeGI front-layer dimensions with an explicitly nominal cylindrical side/rear enclosure; not an as-built cryostat or calibrated efficiency model.",
+  "measured_front": {
+    "crystal_front_z_mm": 5.5,
+    "crystal_to_outer_front_mm": 8.1,
+    "outer_cover_thickness_mm": 1.6,
+    "outer_cover_material_label": "7075 aluminium",
+    "inner_shield_thickness_mm": 0.8,
+    "inner_shield_material_label": "6061 aluminium",
+    "rear_shield_thickness_mm": 1.0,
+    "source": "Owner-held PHDS GeGI5-CryostatMaterials- 20200204, page 1, section L-L; dimensions in mm. Drawings are not distributed."
+  },
+  "nominal_enclosure": {
+    "outer_radius_mm": 60.0,
+    "outer_rear_z_mm": -66.4,
+    "outer_side_thickness_mm": 1.6,
+    "outer_rear_thickness_mm": 1.6,
+    "inner_shield_radius_mm": 55.0,
+    "inner_shield_rear_z_mm": -60.0,
+    "inner_shield_side_thickness_mm": 0.8,
+    "crystal_to_inner_shield_gap_mm": 3.2,
+    "inner_to_outer_cover_gap_mm": 2.5,
+    "basis": "Explicit modelling choices for missing side/rear dimensions and the undimensioned split of the 5.7 mm total front vacuum gap; these values are not surveyed dimensions."
+  },
+  "radiation_material": {
+    "geant4_material": "G4_Al",
+    "approximation": "Both named aluminium alloys are represented as pure aluminium at Geant4 NIST density. Alloy composition is not supplied and is not invented."
+  },
+  "world": {"material": "G4_AIR", "half_width_mm": 2500.0},
+  "omitted": ["internal holder and thermal links", "cryocooler", "electronics and instrument body", "screws and flange details", "source capsule and shielding", "finite contact metallisation and dead layers"],
+  "public_reference": "https://phdsco.com/products/gegi",
+  "supported_stages": ["check", "prepare", "transport"]
+}

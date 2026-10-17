@@ -24,7 +24,7 @@ const svgNs='http://www.w3.org/2000/svg';
 function xml(tag,attrs={},children=[]){return {nodeType:1,localName:tag,prefix:null,namespaceURI:null,attributes:Object.entries(attrs).map(([name,value])=>({name,value,prefix:null})),childNodes:children};}
 const svgDocument={doctype:null,documentElement:xml('svg',{role:'img',viewBox:'0 0 600 205'},[xml('polyline',{points:'55,160 565,35',fill:'none',stroke:'currentColor','stroke-width':'1.7'}),xml('text',{x:'5',y:'35'},[{nodeType:3,nodeValue:'-0.003'}])]),getElementsByTagName:()=>[]};
 class Parser{parseFromString(){return svgDocument;}}
-const elements=new Map(),get=id=>{if(!elements.has(id)){const find=n=>n.id===id?n:n.children?.map(find).find(Boolean);for(const root of elements.values()){const found=find(root);if(found)return found;}const root=new Element(['cryostat','detector','source','pose','threads','event','group'].includes(id)?'select':'div');root.rootConnected=true;elements.set(id,root);}return elements.get(id);};
+const elements=new Map(),get=id=>{if(!elements.has(id)){const find=n=>n.id===id?n:n.children?.map(find).find(Boolean);for(const root of elements.values()){const found=find(root);if(found)return found;}const root=new Element(['cryostat','detector','source','pose','threads','event','group','gegi-event','gegi-channel'].includes(id)?'select':'div');root.rootConnected=true;elements.set(id,root);}return elements.get(id);};
 const fixtureDocument={getElementById:get,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>{const n=new Element(tag);n.namespaceURI=ns;return n;},createTextNode:text=>({textContent:text})};
 fixtureDocument.body=new Element('body');fixtureDocument.body.rootConnected=true;fixtureDocument.activeElement=fixtureDocument.body;
 const context=vm.createContext({document:fixtureDocument,DOMParser:Parser,
@@ -1092,4 +1092,50 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.equal(run('result.records[0].readout'),null);assert.equal(get('result-data').children[0].children[1].children[0].textContent,'Unavailable');
   assert.deepEqual(JSON.parse(run('JSON.stringify(selectablePrimaryIds([{initial_primary_id:0,event_id:0,zero_ge:true},...sparseGammaReport.cases]))')),[3,17]);
   console.log('Gamma Check/import/changed-Check identity and sparse native original IDs/counts/failure nulls passed.');
+  // GeGI selects its own cryostat and finite source contract. Saved multichannel
+  // results use their original IDs; channel failure never invents a zero trace.
+  run(`catalog.cryostats.push({id:'gegi_cryostat_v1',label:'GeGI cryostat',available:true});
+    catalog.sources.push({id:'gegi_mono_gamma_v1',label:'GeGI monoenergetic gamma',available:true});
+    catalog.detectors=catalog.detectors.filter(d=>d.id!=='GeGI_3D');
+    catalog.detectors.push({id:'GeGI_3D',label:'GeGI',available:true,workflow_kind:'local_gegi_workflow_v1',assemblies:['gegi_cryostat_v1'],sources:['gegi_mono_gamma_v1'],model:{contacts:[],assumptions:[]}});
+    busy=false;active=false;$('cryostat').value='lbnl_modular_nominal_v1';$('detector').value='GeGI_3D';detectorChanged();`);
+  assert.equal(run('executableSelection()'),false);assert.equal(get('start').disabled,true);assert.equal(get('cryostat').disabled,false);
+  get('cryostat').value='gegi_cryostat_v1';run('cryostatChanged();');
+  assert.equal(get('detector').value,'GeGI_3D');assert.equal(get('pose').value,'custom');assert.equal(get('count').value,'100');assert.equal(get('seed').value,'26101701');
+  assert.equal(run('batchSelection()'),false);assert.equal(get('gegi-source-controls').hidden,false);
+  run(`for(const [axis,value]of [['x','0'],['y','10'],['z','100']])$('gegi-source-'+axis).value=value;
+    $('threads').value='1';$('name').value='gegi-dom';$('gamma-energy-keV').value='662';
+    for(const key of catalog.electronics_keys)$('setting-'+key).value=key==='peak_policy'?'signed_input_positive_peak':key.startsWith('peak_gate_')?'':'1';
+    $('use-peak-gate').checked=false;
+    const gegiSubmitted=config();const gegiRoutes=[];api=async(path,data)=>{gegiRoutes.push(path);return {kind:'local_gegi_workflow_v1',status:'checked_configuration',check_id:'gegi-check',resolved:{selection:data.config},configuration_sha256:'e'.repeat(64)}};`);
+  await run("$('check').onclick()");
+  assert.deepEqual(JSON.parse(run('JSON.stringify(gegiRoutes)')),['/api/workflow/check-gegi']);
+  assert.equal(run('checked.check_id'),'gegi-check');assert.equal(get('start').disabled,false);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(config().source_position_mm)')),[0,10,100]);
+  assert.equal(run('importedConfig(gegiSubmitted).primary_count'),100);
+  assert.throws(()=>run("importedConfig({...gegiSubmitted,cryostat:'lbnl_modular_nominal_v1'})"),/imported GeGI setup/);
+  assert.throws(()=>run("importedConfig({...gegiSubmitted,primary_count:10001})"),/imported GeGI setup/);
+  assert.throws(()=>run("importedConfig({...gegiSubmitted,source_position_mm:[0,'1',100]})"),/imported GeGI setup/);
+  run(`const gegiJob={name:'gegi-dom',workflow_kind:'local_gegi_workflow_v1',status:'completed',configuration_sha256:'e'.repeat(64),selection:gegiSubmitted,stages:{}};
+    const gegiSaved={kind:'gegi_multichannel_results_v1',name:'gegi-dom',configuration_sha256:'e'.repeat(64),counts:{initial_primaries:100,zero_deposit_primaries:99,nonzero_primaries:1,native_failed_groups:0},channels:Array.from({length:34},(_,i)=>({id:i+1,name:'strip '+(i+1),family:i<17?'X':'Y',potential_V:i<17?-879:0,wiring_factor:i<17?1:-1})),events:[{event_id:37,truth_edep_keV:20,status:'native_completed',channels:[{contact_id:1,reconstructed_energy_keV:19.5,trace:{time_ns:[0,2],charge_fC:[0,-.01],current_nA:[0,-5],preamp_V:[0,-.001],shaped_V:[0,.001]}},{contact_id:2,reconstructed_energy_keV:null,trace:null,rejection_reason:'native failure'}],sites:[]}],imaging:{method:'Signal-derived backprojection',azimuth_deg:[-180,0,180],elevation_deg:[-90,90],values:[[0,1,0],[0,0,0]],cones:[{event_id:37,opening_angle_deg:45}],accepted_events:1,rejected_events:0,ambiguous_events:0,limitations:['Sparse acceptance data.']},limitations:['Engineering model.']};
+    api=async(path)=>{if(path.startsWith('/api/workflow/gegi-results?'))return gegiSaved;throw Error('Unexpected GeGI request '+path);};`);
+  await run('openResult(gegiJob)');
+  assert.equal(get('result').hidden,true);assert.equal(get('gegi-result').hidden,false);
+  assert.deepEqual(get('gegi-event').children.map(n=>n.value),['37']);assert.equal(get('gegi-channel').children.length,34);
+  assert.equal(get('gegi-plots').children.length,4);assert.match(get('gegi-counts').textContent,/100 initial.*99 zero-deposit.*1 stored nonzero/);
+  assert.match(get('gegi-event-summary').textContent,/19.5 keV.*X and Y energies are not added/);
+  get('gegi-channel').value='2';run('showGeGIEvent();');
+  assert.equal(get('gegi-plots').children.length,1);assert.match(get('gegi-plots').children[0].textContent,/Failed quantities remain unknown/);
+  get('gegi-imaging-panel').open=true;run('showGeGIImaging();');assert.equal(get('gegi-imaging').children[0].children.filter(n=>n.tagName==='rect').length,6);
+  assert.match(get('gegi-cones').textContent,/opening_angle_deg/);
+  assert.throws(()=>run("gegiIdentity({...gegiSaved,configuration_sha256:'f'.repeat(64)},gegiJob)"),/identities differ/);
+  assert.throws(()=>run("gegiIdentity({...gegiSaved,events:[{event_id:0,truth_edep_keV:0,channels:[]}]},gegiJob)"),/nonzero event census/);
+  run("gegiSaved.events.push({event_id:49,truth_edep_keV:7,status:'native_failed',channels:null});gegiSaved.counts.nonzero_primaries=2;gegiSaved.counts.zero_deposit_primaries=98;gegiSaved.counts.native_failed_groups=1;");
+  await run('openResult(gegiJob)');get('gegi-event').value='49';run('showGeGIEvent();');
+  assert.match(get('gegi-event-summary').textContent,/primary 49.*native_failed.*Unavailable/);
+  assert.match(get('gegi-plots').children[0].textContent,/Failed quantities remain unknown/);
+  assert.match(get('gegi-event-record').textContent,/"channel": null/);
+  assert.throws(()=>run("gegiIdentity({...gegiSaved,events:[{event_id:49,truth_edep_keV:7,status:'native_completed',channels:null}]},gegiJob)"),/nonzero event census/);
+  run("showRun({...changedGammaJob,name:'returned-lbnl'});");assert.equal(get('gegi-result').hidden,true);
+  console.log('GeGI cryostat/source admission, exact saved IDs/channels, null failure traces and imaging projection passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

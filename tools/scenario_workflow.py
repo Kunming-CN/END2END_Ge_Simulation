@@ -477,7 +477,13 @@ def catalog(root=ROOT):
             detector.update(additions[detector['id']])
             detector['sources']=admitted_sources if detector['available'] else []
     # Registry values are the execution dispatch table, not user-supplied commands.
-    return {'kind':KIND,'cryostats':[{'id':CRYOSTAT,'label':'LBNL modular cryostat','available':True},
+    import gegi_workflow as G
+    gegi=G.catalog_entries(root)
+    for detector in detectors:
+        if detector['id']=='GeGI_3D':detector.update(gegi['detector'])
+        else:detector.setdefault('assemblies',[CRYOSTAT])
+    sources.append(gegi['source'])
+    return {'kind':KIND,'cryostats':[{'id':CRYOSTAT,'label':'LBNL modular cryostat','available':True},gegi['cryostat'],
             {'id':'lbnl_monolithic_candidate','label':'LBNL monolithic cryostat','available':False,'reason':'Transport and charge adapters are pending.'}],
             'detectors':detectors,
             'sources':sources,
@@ -992,7 +998,8 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
         # Only the maintained explicit catalog adapter may supply hooks. This
         # is not a user-loaded plugin or a relaxation of legacy v1 admission.
         import catalog_workflow as catalog_adapter
-        require(workflow is catalog_adapter and not continuation and not bootstrap_source,'Unsupported workflow adapter.')
+        import gegi_workflow as gegi_adapter
+        require(workflow in (catalog_adapter,gegi_adapter) and not continuation and not bootstrap_source,'Unsupported workflow adapter.')
         plan=workflow.admit(plan,root,resume=resume);kind=workflow.KIND;stage_validator=workflow.validate_stage
     resolved=plan['resolved'];s=resolved['selection'];directory=run_path(s['name'],root)
     with execution_lease(root):
@@ -1000,7 +1007,7 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
         # A lost outer lease cannot establish that a nested WSL/Julia child ended.
         for previous in (Path(root)/BASE).glob('*/run.json'):
             prior=read(previous)
-            if prior.get('kind') in (KIND,'local_catalog_workflow_v1') and previous.parent!=directory:
+            if prior.get('kind') in (KIND,'local_catalog_workflow_v1','local_gegi_workflow_v1') and previous.parent!=directory:
                 from workflow_inspection import verified_retirement
                 retired=verified_retirement(previous.parent,root)
                 if not retired:
@@ -1052,12 +1059,13 @@ def execute(plan, *, root=ROOT, resume=False, executor=command,dispatch_id=None,
                 if (directory/'STOP.json').exists():
                     receipt['status']='stopped';stopped_checkpoint(directory,receipt,root);return receipt
                 if stage=='results':
-                    observed=time.perf_counter();started=utc();result_page(directory,receipt)
+                    observed=time.perf_counter();started=utc()
+                    (getattr(workflow,'result_page',result_page) if workflow is not None else result_page)(directory,receipt)
                     require((directory/'index.html').stat().st_size>0,'Results page was not created.')
                     receipt['stages'][stage]={'status':'completed','started_utc':started,'elapsed_seconds':time.perf_counter()-observed,
                         'artifacts':{'index.html':{'sha256':sha(directory/'index.html'),'bytes':(directory/'index.html').stat().st_size}},'finished_utc':utc()};continue
                 if stage=='response' and workflow is not None:
-                    write(directory/'catalog-request.json',workflow.native_request(directory,resolved,root),fresh=True)
+                    write(directory/getattr(workflow,'REQUEST_FILE','catalog-request.json'),workflow.native_request(directory,resolved,root),fresh=True)
                 elif stage=='response' and 'decay_source_contract' in resolved:
                     from decay_workflow import request as decay_request
                     write(directory/'decay-request.json',decay_request(directory,resolved,root),fresh=True)
@@ -1112,7 +1120,7 @@ def inspect(name,root=ROOT):
 
 
 def main(argv=None):
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('catalog','check','preview-batches','run','continue','resume','inspect','stop','finalize-results','check-catalog','run-catalog','resume-catalog','inspect-catalog','check-batches','run-batches','resume-batches','inspect-batches','stop-batches'))
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('catalog','check','preview-batches','run','continue','resume','inspect','stop','finalize-results','check-catalog','run-catalog','resume-catalog','inspect-catalog','check-gegi','run-gegi','resume-gegi','inspect-gegi','stop-gegi','check-batches','run-batches','resume-batches','inspect-batches','stop-batches'))
     p.add_argument('--config');p.add_argument('--plan');p.add_argument('--name');p.add_argument('--dispatch-id',help=argparse.SUPPRESS);p.add_argument('--acceptance',help=argparse.SUPPRESS);p.add_argument('--bootstrap-source',action='store_true',help='Explicit CLI-only first source acceptance; does not enable the browser.');a=p.parse_args(argv)
     require(not a.bootstrap_source or a.action in ('check','run','resume'),'Source bootstrap is only available for explicit CLI Check, Run or Resume.')
     require(not a.acceptance or a.action=='check-batches','Acceptance-only batch cap is available only for an explicit bounded batch Check.')
@@ -1126,6 +1134,13 @@ def main(argv=None):
         elif a.action=='resume-batches':require(a.name,'--name is required.');value=E.execute(read(run_path(a.name)/'resolved-config.json'),resume=True,dispatch_id=a.dispatch_id)
         elif a.action=='inspect-batches':require(a.name,'--name is required.');value=E.inspect(a.name)
         else:require(a.name,'--name is required.');value=E.request_stop(a.name)
+    elif a.action in ('check-gegi','run-gegi','resume-gegi','inspect-gegi','stop-gegi'):
+        import gegi_workflow as G
+        if a.action=='check-gegi':require(a.config,'--config is required.');value=G.check(read(Path(a.config)))
+        elif a.action=='run-gegi':require(a.plan,'--plan is required.');value=G.execute(read(Path(a.plan)),dispatch_id=a.dispatch_id)
+        elif a.action=='resume-gegi':require(a.name,'--name is required.');value=G.execute(read(run_path(a.name)/'resolved-config.json'),resume=True,dispatch_id=a.dispatch_id)
+        elif a.action=='stop-gegi':require(a.name,'--name is required.');value=G.request_stop(a.name)
+        else:require(a.name,'--name is required.');value=G.inspect(a.name)
     elif a.action in ('check-catalog','run-catalog','resume-catalog','inspect-catalog'):
         import catalog_workflow as C
         if a.action=='check-catalog':require(a.config,'--config is required.');value=C.check(read(Path(a.config)))

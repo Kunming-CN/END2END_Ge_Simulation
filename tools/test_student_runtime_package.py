@@ -98,15 +98,17 @@ def forbidden(*args,**kwargs):raise AssertionError('Browsing may not start a pro
 subprocess.Popen=forbidden
 import local_ui,scenario_workflow,catalog_workflow,saved_focus_waveforms
 catalog=scenario_workflow.catalog()
-assert len(catalog['detectors'])==17 and len(catalog['sources'])==5
-assert all(not item['available'] and item['block_code']=='setup_required' for item in catalog['detectors'])
+assert len(catalog['detectors'])==17 and len(catalog['sources'])==6
+assert all(not item['available'] and item['block_code']=='setup_required' for item in catalog['detectors'] if item['id']!='GeGI_3D')
+gegi=next(item for item in catalog['detectors'] if item['id']=='GeGI_3D')
+assert gegi['available'] and gegi['assemblies']==['gegi_cryostat_v1'] and gegi['sources']==['gegi_mono_gamma_v1']
 summaries=catalog_workflow.local_model_summaries()
 assert len(summaries)==17 and all(item['placement']['status']=='setup_required' for item in summaries)
 assert not set(('site_detector_pages','site_fragments','gamma_publication','gamma_showcase','gamma_complete_showcase')) & set(sys.modules)
 try:local_ui.open_saved_gamma_example()
 except local_ui.SavedGammaUnavailable:pass
 else:raise AssertionError('Unbundled historical example must be unavailable')
-print('Isolated student Control imports and 17-model/5-source browsing passed; missing upstream inputs block execution; no child process.')
+print('Isolated student Control imports and 17-model/6-source browsing passed; missing LBNL originals block that assembly; GeGI uses bundled geometry; no child process.')
 """
             arguments = [sys.executable]
             if Path(sys.executable).name.lower() == 'pvpython.exe':

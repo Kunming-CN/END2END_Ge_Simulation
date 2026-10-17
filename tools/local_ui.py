@@ -267,6 +267,13 @@ class Handler(BaseHTTPRequestHandler):
                 name=query['name'][0]
                 workflow.run_path(name,self.server.controller.root)
                 return self.send_data(200,self.server.workflow_controller.result_options(name))
+            if parts.path == '/api/workflow/gegi-results':
+                query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
+                if (parts.fragment or set(query)!={'name'} or any(len(v)!=1 for v in query.values()) or
+                        self.server.workflow_controller is None):
+                    raise ValueError('Invalid saved GeGI results request')
+                workflow.run_path(query['name'][0],self.server.controller.root)
+                return self.send_data(200,self.server.workflow_controller.gegi_results(query['name'][0]))
             if parts.path in ('/api/workflow/features','/api/workflow/acquisition'):
                 import re
                 acquisition=parts.path.endswith('/acquisition')
@@ -415,6 +422,7 @@ class Handler(BaseHTTPRequestHandler):
             data = decode_json(self.rfile.read(size).decode('utf-8'))
             workflow_routes={'/api/workflow/check':({'config'},'check'),
                              '/api/workflow/check-catalog':({'config'},'check_catalog'),
+                             '/api/workflow/check-gegi':({'config'},'check_gegi'),
                              '/api/workflow/preview-batches':({'request'},'preview_batches'),
                              '/api/workflow/check-batches':({'request'},'check_batches'),
                              '/api/workflow/start':({'check_id'},'start'),
@@ -429,7 +437,7 @@ class Handler(BaseHTTPRequestHandler):
                 keys,method=workflow_routes[self.path]
                 if type(data) is not dict or set(data)!=keys or self.server.workflow_controller is None:
                     raise ValueError('Unsupported workflow input fields')
-                if method in ('check','check_catalog','preview_batches','check_batches'):
+                if method in ('check','check_catalog','check_gegi','preview_batches','check_batches'):
                     if type(data['request' if method in ('preview_batches','check_batches') else 'config']) is not dict:raise ValueError('Configuration must be a JSON object')
                 elif any(type(v) is not str for v in data.values()):
                     raise ValueError('Workflow identities must be strings')

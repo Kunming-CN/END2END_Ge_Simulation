@@ -1,5 +1,53 @@
 # Next development plan
 
+## Active owner extension — GeGI (2026-10-17)
+
+Owner extension during delivery: test two equal-energy point sources at different
+positions for spatial separation. Fixed first acceptance:5000primaries each at
+[-40,0,40] and[40,0,40]mm,662keV,seeds26101703/26101704,serial CPU with reused
+fields. Use source-independent cone reconstruction with corrected last-rising
+charge timing; compare individual and mixed maps. For this near-field case,
+backproject each cone from its actual vertex onto an explicitly imposedz=40mm
+plane. Keep this assumed plane distinct from measured range or3Dlocalization.
+Do not increase statistics solely to manufacture separation. Record whether the
+bounded sample actually resolves the sources; preserve inconclusive outcomes.
+
+Steps1–5 are implemented and tested. Step6 is in release/publication closure.
+Actual acceptance:100initial zero-only pilot with stop/resume, then5000initial
+photons,42nonzero events and1signal-derived cone. This verifies the software
+workflow, not experimental accuracy or source localization.
+
+P0-P5 below remain delivered. The owner now requests a GeGI-only cryostat and
+multichannel Compton workflow in the existing desktop software. This section is
+the current executable queue; no old audit/PSD/demo work is reopened.
+
+1. Establish the dimension/material/coordinate/channel contract from supplied
+   GeGI schematics/manual and relevant Ge-STAR presentations, checking primary
+   online references. Preserve frozen GeGI YAML. Identify explicit nominal
+   mechanical/electronics assumptions and any truly blocking missing input.
+2. Add a separate cryostat asset restricted to GeGI; reuse Geant4/remage, geometry
+   exports and the current lifecycle. Check native overlaps and identity/units,
+   then one small transport pilot with recorded seed and bounded resources.
+3. Reuse SSD for actual grouped deposits and all relevant electrodes; preserve
+   signed induced signals, independent electronics calibration and channel IDs.
+   Reuse applicable fields, checkpoint completed work and retain nonzero failures.
+4. Reconstruct candidate interactions from channels with explicit pairing/depth/
+   ordering ambiguities. Export valid Compton cones and a directional sky map;
+   distinguish simulated response reconstruction from truth-assisted diagnostics.
+   No fabricated depth, unknown range, laboratory calibration or precision claim.
+5. Integrate compatible selection, check/run/stop/resume, actual channel plots,
+   cones/map and file access in existing Control. Check changed paths only.
+   Publish useful pilot plots on the website, never as student package fixtures.
+6. Freeze producers, validate derived outputs, update this plan/PROGRESS, commit
+   and push normally; build and verify the immutable student release, and use the
+   existing generated-site publication checks. Remove only owned useless scratch.
+
+Done when a user can select GeGI cryostat + GeGI, configure a source, run the
+recorded chain, inspect real channel/cone/map outputs and resume completed stages;
+incompatible detectors are refused independently by the backend. Scientific
+limitations and event/selection census remain visible. Larger event counts follow
+measured pilot cost and useful imaging statistics, not an unbounded campaign.
+
 Owner correction: 2026-10-14. This is the current plan, replacing the automatic
 PSD3/reviewer-heavy queue. Earlier history is preserved in Git at be145f9210d22e2449e6d66f03d9108dc9a3851d;
 do not recreate a pile of historical planning files.

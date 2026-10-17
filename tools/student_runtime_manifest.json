@@ -29,7 +29,8 @@
       "tools/electronics_settings.ps1", "tools/electronics_execution.ps1",
       "tools/native_run_validation.ps1", "tools/run_native_campaign.ps1",
       "tools/inspect_native_run.ps1", "tools/verify_native_pilot.ps1",
-      "tools/native_recovery.ps1", "tools/recover_native_run.ps1"
+      "tools/native_recovery.ps1", "tools/recover_native_run.ps1",
+      "tools/gegi_workflow.py", "tools/gegi_response.py", "tools/gegi_imaging.py"
     ],
     "saved_data_and_readout_runtime": [
       "tools/charge_check.py", "tools/charge_check.ps1", "tools/replay_readout.py",
@@ -61,7 +62,8 @@
       "simulation/native_checkpoint_batch.jl", "simulation/native_groups.jl",
       "simulation/native_readout_groups.jl", "simulation/saved_control_edge.jl",
       "simulation/saved_collection_edge.jl", "simulation/waveform_acquisition.jl",
-      "simulation/gpu/Project.toml", "simulation/gpu/Manifest.toml"
+      "simulation/gpu/Project.toml", "simulation/gpu/Manifest.toml",
+      "simulation/gegi_response.jl", "simulation/gegi_signal_helpers.jl"
     ],
     "radiation_runtime_and_locks": [
       "transport/pixi.toml", "transport/pixi.lock", "transport/.pixi/config.toml",
@@ -76,7 +78,8 @@
       "transport/catalog_geometry.py", "transport/catalog_source.py", "transport/batch_source.py",
       "transport/source_pose.py", "transport/source_angle.py",
       "transport/Run.cmd", "transport/run.sh", "transport/workflow.sh",
-      "transport/prepare.sh", "transport/gamma.sh", "transport/experiment.json"
+      "transport/prepare.sh", "transport/gamma.sh", "transport/experiment.json",
+      "transport/gegi_source.py", "transport/gegi_geometry.py"
     ],
     "canonical_models_and_includes": [
       "models/catalog.json", "models/AK01.yaml", "models/AK02.yaml", "models/SAP22.yaml",
@@ -98,13 +101,15 @@
       "scenarios/m11a-sap22-mono_gamma_662_axis_v1-plus5mm.json",
       "scenarios/assets/AK02.json", "scenarios/assets/SAP22.json",
       "scenarios/assets/lbnl_modular_nominal_v1.json",
-      "scenarios/assets/cs137_point_decay_v1.json", "scenarios/assets/mono_gamma_662_axis_v1.json"
+      "scenarios/assets/cs137_point_decay_v1.json", "scenarios/assets/mono_gamma_662_axis_v1.json",
+      "scenarios/assets/gegi_cryostat_v1.json"
     ],
     "guide_and_package_contract": [
       "tools/site_guide.html", "tools/student_runtime_manifest.json"
     ]
   },
   "entrypoint_dependencies": {
+    "tools/gegi_workflow.py": ["simulation/gegi_response.jl", "simulation/gegi_signal_helpers.jl", "transport/gegi_source.py", "transport/gegi_geometry.py", "scenarios/assets/gegi_cryostat_v1.json"],
     "Control.cmd": ["tools/local_ui.ps1"],
     "tools/local_ui.ps1": ["tools/local_ui.py"],
     "tools/local_ui.py": ["tools/local_workflow.html", "tools/local_workflow.js", "tools/focused_plots.js"],

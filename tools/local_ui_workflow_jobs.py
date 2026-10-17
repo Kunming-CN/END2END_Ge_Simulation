@@ -27,10 +27,16 @@ from local_ui_jobs import ControlError, process_identity, safe_path
 STATE='.local/local-control-v1'
 ACTIVE=('dispatch_uncertain','running','stop_requested')
 CATALOG_KIND='local_catalog_workflow_v1'
+GEGI_KIND='local_gegi_workflow_v1'
 
 def catalog_backend():
     import catalog_workflow
     return catalog_workflow
+
+
+def gegi_backend():
+    import gegi_workflow
+    return gegi_workflow
 
 
 def psd_backend():
@@ -44,10 +50,11 @@ def acquisition_backend():
 
 
 class WorkflowController:
-    def __init__(self,root=None,*,coordination_lock=None,peer_busy=None,resolver=None,catalog_resolver=None,batch_resolver=None,launcher=None):
+    def __init__(self,root=None,*,coordination_lock=None,peer_busy=None,resolver=None,catalog_resolver=None,batch_resolver=None,gegi_resolver=None,launcher=None):
         self.root=Path(root or W.ROOT);self._lock=coordination_lock or threading.RLock()
         self._peer_busy=peer_busy or (lambda:False);self._resolver=resolver or W.check
         self._catalog_resolver=catalog_resolver
+        self._gegi_resolver=gegi_resolver
         self._batch_resolver=batch_resolver or B.check
         self._launcher=launcher or self._spawn;self._checks={};self._active=None;self._entry_thread=None
         self._saved_verifier=Verifier(self.root)
@@ -165,6 +172,18 @@ class WorkflowController:
     @staticmethod
     def _catalog_job(job):return job['plan'].get('kind')==CATALOG_KIND
 
+    def check_gegi(self,config):
+        with self._lock:
+            self._idle();resolver=self._gegi_resolver or gegi_backend().check
+            plan=resolver(config,root=self.root)
+            W.require(plan.get('kind')==GEGI_KIND and plan.get('status')=='checked_configuration',
+                      'A checked GeGI configuration is required.')
+            check_id=secrets.token_hex(32);self._checks[check_id]=copy.deepcopy(plan)
+            return dict(plan,check_id=check_id)
+
+    @staticmethod
+    def _gegi_job(job):return job['plan'].get('kind')==GEGI_KIND
+
     def check_batches(self,request):
         with self._lock:
             self._idle();plan=self._batch_resolver(W.preview_request(request),root=self.root)
@@ -180,19 +199,19 @@ class WorkflowController:
     def _batch_job(job):return job['plan'].get('kind')==B.CHECKED_KIND
 
     def _inspect(self,job):
-        return (B.inspect if self._batch_job(job) else catalog_backend().inspect if self._catalog_job(job) else W.inspect)(job['name'],self.root)
+        return (B.inspect if self._batch_job(job) else gegi_backend().inspect if self._gegi_job(job) else catalog_backend().inspect if self._catalog_job(job) else W.inspect)(job['name'],self.root)
 
     def start(self,check_id):
         with self._lock:
             W.require(type(check_id) is str and check_id in self._checks,'Check this configuration before Start.')
             plan=self._checks[check_id]
-            W.require(plan.get('kind') in (W.KIND,CATALOG_KIND,B.CHECKED_KIND),'A preview is not an execution Check token.')
+            W.require(plan.get('kind') in (W.KIND,CATALOG_KIND,GEGI_KIND,B.CHECKED_KIND),'A preview is not an execution Check token.')
             if self._batch_job({'plan':plan}):
                 W.require(plan.get('schema_version')==3 and plan.get('execution_enabled') is True,
                           'Batch execution requires a runnable versioned checked plan.')
             self._idle()
             # Reconstruct the complete trusted plan; rehashed browser edits are not authority.
-            resolver=self._batch_resolver if plan.get('kind')==B.CHECKED_KIND else (self._catalog_resolver or catalog_backend().check) if plan.get('kind')==CATALOG_KIND else self._resolver
+            resolver=self._batch_resolver if plan.get('kind')==B.CHECKED_KIND else (self._gegi_resolver or gegi_backend().check) if plan.get('kind')==GEGI_KIND else (self._catalog_resolver or catalog_backend().check) if plan.get('kind')==CATALOG_KIND else self._resolver
             actual=resolver(plan['resolved']['selection'],root=self.root)
             W.require(W.encoded(actual)==W.encoded(plan),'Inputs, settings or runtime changed after Check.')
             name=plan['resolved']['selection']['name']
@@ -243,7 +262,7 @@ class WorkflowController:
             plan_path=safe_path(self.root,STATE+'/workflow-plans/'+job['id']+'.json')
             if job['mode'] in ('run','continue'):W.write(plan_path,job['plan'],fresh=True)
             log=safe_path(self.root,STATE+'/workflow-logs/'+job['id']+'.log');log.parent.mkdir(parents=True,exist_ok=True)
-            mode=job['mode']+'-batches' if self._batch_job(job) else job['mode']+'-catalog' if self._catalog_job(job) else job['mode']
+            mode=job['mode']+'-batches' if self._batch_job(job) else job['mode']+'-gegi' if self._gegi_job(job) else job['mode']+'-catalog' if self._catalog_job(job) else job['mode']
             argv=[sys.executable,'-B',str(self.root/'tools/scenario_workflow.py'),mode]
             if Path(sys.executable).name.casefold()=='pvpython.exe':argv[1:1]=['--no-mpi','--disable-registry']
             argv+=['--plan',str(plan_path)] if job['mode'] in ('run','continue') else ['--name',job['name']]
@@ -272,7 +291,7 @@ class WorkflowController:
                     job['status']=receipt['status'];job.pop('error',None)
                 else:
                     job.update(status='dispatch_uncertain',error='The workflow did not return verified terminal or stopped stages. Retain output and inspect possible nested workers.')
-                    if not self._catalog_job(job) and not self._batch_job(job):I.capture(job,self.root)
+                    if not self._catalog_job(job) and not self._batch_job(job) and not self._gegi_job(job):I.capture(job,self.root)
                 self._persist()
         except BaseException as error:
             with self._lock:
@@ -300,7 +319,7 @@ class WorkflowController:
         with self._lock:
             self._idle();job=next((j for j in self._jobs if j['name']==name),None)
             W.require(job and job['status']=='stopped','Only this interface\'s stage-boundary stopped runs can resume.')
-            (B.admit if self._batch_job(job) else catalog_backend().admit if self._catalog_job(job) else W.admit)(job['plan'],self.root,resume=True)
+            (B.admit if self._batch_job(job) else gegi_backend().admit if self._gegi_job(job) else catalog_backend().admit if self._catalog_job(job) else W.admit)(job['plan'],self.root,resume=True)
             # New dispatch/log identity; selected settings are the preserved plan.
             with W.execution_lease(self.root):
                 W.verify_dispatch_reservations(job['plan'],self.root)
@@ -341,7 +360,7 @@ class WorkflowController:
         with self._lock:
             W.require(self._active is None and not W.lease_busy(self.root),'Wait for active work before inspecting a failed launch.')
             job=next((j for j in self._jobs if j['name']==name),None)
-            W.require(job and not self._catalog_job(job) and not self._batch_job(job) and job['status']=='dispatch_uncertain',
+            W.require(job and not self._catalog_job(job) and not self._batch_job(job) and not self._gegi_job(job) and job['status']=='dispatch_uncertain',
                       'Only a recognized legacy denied launch can use this failure inspector.')
             with W.execution_lease(self.root):
                 stamp=I.inspect_failure(job,self.root)
@@ -422,7 +441,7 @@ class WorkflowController:
         out['output']=W.BASE+'/'+job['name'];out['error']=job.get('error');out['stages']={}
         out['workflow_kind']=job['plan'].get('kind')
         out['execution_contract']='serial_batches_v3' if self._batch_job(job) else 'legacy_v1'
-        out['can_inspect_failure']=not self._catalog_job(job) and not self._batch_job(job)
+        out['can_inspect_failure']=not self._catalog_job(job) and not self._batch_job(job) and not self._gegi_job(job)
         out['can_continue_prefix']=out['can_inspect_failure'] and R.eligible_name(job['name']) and job['status']=='dispatch_uncertain'
         out['can_finalize_results']=False
         out['can_recover_launch']=False
@@ -478,9 +497,11 @@ class WorkflowController:
                 mime='text/html; charset=utf-8' if file.endswith('.html') else 'text/plain; charset=utf-8' if file.endswith(('.csv','.jsonl')) else 'application/octet-stream' if file.endswith(('.lh5','.h5','.jld2')) else 'application/json; charset=utf-8'
                 return path.read_bytes(),mime
             W.require(job['status'] in W.TERMINAL,'Verify completed results before downloading.')
-            (catalog_backend().inspect(name,self.root) if self._catalog_job(job) else self._saved_verifier.inspect(name))
+            (gegi_backend().inspect(name,self.root) if self._gegi_job(job) else catalog_backend().inspect(name,self.root) if self._catalog_job(job) else self._saved_verifier.inspect(name))
             complete=W.read(directory/'COMPLETE.json');W.require(file in complete['artifacts'] or file=='COMPLETE.json','Unsupported result artifact.')
-            path=safe_path(directory,file);W.require(path.stat().st_size<=64*1024*1024,'Artifact exceeds the browser size limit.')
+            path=safe_path(directory,file)
+            limit=256*1024*1024 if self._gegi_job(job) and file=='response/results.json' else 64*1024*1024
+            W.require(path.stat().st_size<=limit,'Artifact exceeds the browser size limit; use its retained local path: '+str(path))
             mime='text/html; charset=utf-8' if file.endswith('.html') else 'text/plain; charset=utf-8' if file.endswith(('.csv','.jsonl')) else 'application/json; charset=utf-8'
             return path.read_bytes(),mime
 
@@ -524,6 +545,18 @@ class WorkflowController:
                 self.artifact(name,spectrum)
                 reply.update(spectrum_file=spectrum,spectrum_scope='full_run')
             return reply
+
+    def gegi_results(self,name):
+        """Read verified saved multichannel results; a GET starts no calculation."""
+        with self._lock:
+            job=next((j for j in self._jobs if j['name']==name),None)
+            W.require(job and self._gegi_job(job) and job['status'] in W.TERMINAL,
+                      'Use a completed owned GeGI run for multichannel results.')
+            reply=gegi_backend().result_view(name,self.root)
+            W.require(reply.get('kind')=='gegi_multichannel_results_v1', 'Unsupported saved GeGI result view.')
+            W.require(reply.get('configuration_sha256')==job['plan']['configuration_sha256'],
+                      'Saved GeGI results differ from the owned configuration.')
+            return dict(reply,name=name)
 
     def features(self,name,primary_id,group_id=None):
         """Verify a pre-exported derivative; no simulation, export or write on GET."""
@@ -612,5 +645,5 @@ class WorkflowController:
             self.artifact(name,'response/summary.html')
             job=next(j for j in self._jobs if j['name']==name)
             reply=saved_focus_waveforms.project(W.run_path(name,self.root),name,job['plan']['configuration_sha256'],primary_id,group_id,self.root)
-            (catalog_backend().inspect(name,self.root) if self._catalog_job(job) else self._saved_verifier.inspect(name))
+            (gegi_backend().inspect(name,self.root) if self._gegi_job(job) else catalog_backend().inspect(name,self.root) if self._catalog_job(job) else self._saved_verifier.inspect(name))
             return reply

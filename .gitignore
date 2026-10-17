@@ -53,6 +53,13 @@
 !transport/check_smoke.py
 # Never include local test profiles, raw caches or runtime bytecode.
 !transport/source_pose.py
+# GeGI runtime: source only; native fields and reference documents stay local.
+!transport/gegi_geometry.py
+!transport/gegi_source.py
+!simulation/gegi_response.jl
+!simulation/gegi_signal_helpers.jl
+!simulation/test_gegi_signals.jl
+!simulation/test_gegi_checkpoints.jl
 !transport/source_angle.py
 !transport/test_source_angle.py
 !transport/cryostat_angle_export.cc
