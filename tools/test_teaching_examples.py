@@ -1,5 +1,6 @@
 """Focused saved-data and rendering contracts for the curated teaching reader."""
 import copy
+import hashlib
 import json
 import math
 import os
@@ -140,6 +141,28 @@ class TeachingExamplesTests(unittest.TestCase):
         embedded = re.search(r'<script id="teaching-data" type="application/json">(.*?)</script>',
                              self.html, re.S).group(1)
         self.assertEqual(json.loads(embedded), self.payload)
+
+    def test_previous_navigation_admission_still_reconstructs_science(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / ".local", prefix="teaching-contract-") as directory:
+            site = Path(directory)
+            (site / "spectra").mkdir()
+            previous = copy.deepcopy(self.payload)
+            previous["provenance"]["generator_sha256"] = {"previous": "0" * 64}
+            data, page = teaching.canonical(previous).encode(), b"exact previous display"
+            (site / teaching.DATA).write_bytes(data)
+            (site / teaching.PAGE).write_bytes(page)
+            hashes = tuple(hashlib.sha256(b).hexdigest() for b in (data, page))
+            with patch.object(teaching, "PREVIOUS_DISPLAY", hashes), patch.object(
+                    teaching, "build_payload", return_value=self.payload):
+                self.assertEqual(teaching.validate(site)["generators"], previous["provenance"]["generator_sha256"])
+                changed = copy.deepcopy(self.payload)
+                changed["cases"][0]["saved_trace"]["trace"]["preamp_V"][1] += 0.001
+                with patch.object(teaching, "build_payload", return_value=changed):
+                    with self.assertRaisesRegex(ValueError, "scientific content changed"):
+                        teaching.validate(site)
+                (site / teaching.PAGE).write_bytes(page + b"changed")
+                with self.assertRaisesRegex(ValueError, "source bindings changed"):
+                    teaching.validate(site)
 
     def test_actual_template_switches_all_six_cases_and_preserves_sparse_analog(self):
         self.assertTrue(NODE, "Set TEACHING_NODE to the existing Node executable")

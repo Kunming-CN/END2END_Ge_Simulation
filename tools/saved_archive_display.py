@@ -14,6 +14,8 @@ MANIFEST='methods/native-li-display.json'
 SOURCES=('tools/saved_archive_display.py','tools/site_restructure.py','tools/site_routes.py')
 LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in SOURCES}
 PREVIOUS_RECEIPTS=frozenset({
+    # Exact cb52f02 Git bytes before dedicated GeGI assembly navigation.
+    '0124bcc84c49c9881ee11d0a8463ef5651ce8261a52fc725ffaa3f2e41482efd',
     # Exact published 8282441 display before the student-runtime source split.
     '45bf373ec10211121c26e52f02303e9d3f257ec2bd7918e53e09ab8595c19e79',
     # Exact accepted0cf58d3 presentation; original science stays pinned.
@@ -31,6 +33,8 @@ LITHIUM_SUMMARY_SHA='c5e1b2c85406f077cb692ac6e99dd1c9affe7cb6632a3098f96a86708e0
 LITHIUM_SOURCES=SOURCES+('tools/lithium_report.py','tools/pipeline_demo.py')
 LITHIUM_LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in LITHIUM_SOURCES}
 PREVIOUS_LITHIUM_RECEIPTS=frozenset({
+    # Exact cb52f02 Git bytes before dedicated GeGI assembly navigation.
+    'd17eec05ec3c0105ae32e6b23b7a4fc2b49d45549089cfccc2271d2a368e2e29',
     # Exact published 8282441 navigation; original lithium data remain pinned.
     '128f053791a04cc03fa960b9d503cf387158122f746c8b82bfe20db52d7dbd57',
     # Exact accepted0cf58d3 presentation; original science stays pinned.

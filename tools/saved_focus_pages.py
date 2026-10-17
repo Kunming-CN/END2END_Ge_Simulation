@@ -31,6 +31,8 @@ DISPLAY_SOURCES=(JS,'tools/saved_focus_pages.py','tools/site_restructure.py','to
 # immutable original receipt above. Rehashed edits are never a historical basis.
 PREVIOUS_DISPLAY_RECEIPTS={
     'gamma':frozenset({
+                       # Exact cb52f02 Git bytes before dedicated GeGI navigation.
+                       '816823a34a3f3390a69b902d19c0222fdc35f1b2e7caef4f967a1b72ea4469bc',
                        # Exact published 8282441 display before the student-runtime
                        # dependency split in pipeline_demo.py; science is unchanged.
                        '28f540ff076193caa1a0cfd011abdaccdd90e872d4ff862e2ab5e967975394ab',

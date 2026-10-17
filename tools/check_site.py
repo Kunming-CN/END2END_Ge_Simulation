@@ -130,7 +130,8 @@ def validate(site, require_manifest=True, require_models=False):
         native_response_payload = relative=='examples/cs137-1m-response/groups.csv.gz'
         ledger_zip = relative in ('examples/cs137-10k/AK02/response/ledgers.zip', 'examples/cs137-10k/SAP22/response/ledgers.zip')
         ring_payload = relative.startswith('examples/cs137-10k-rings/') and (f.suffix.lower() in {'.zip', '.gz', '.jsonl'} or relative == 'examples/cs137-10k-rings/README.txt')
-        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in {'sitemap.xml', 'LICENSE'} and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload and not ring_payload:
+        gegi_assembly_payload = relative in {'assemblies/gegi/viewer.js', 'assemblies/gegi/geometry.gdml'}
+        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in {'sitemap.xml', 'LICENSE'} and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload and not ring_payload and not gegi_assembly_payload:
             raise ValueError(f'Unapproved public file: {relative}')
         data = f.read_bytes()
         if relative == 'LICENSE':
@@ -161,7 +162,7 @@ def validate(site, require_manifest=True, require_models=False):
         total += len(data)
         entries.append({'path': relative, 'bytes': len(data),
                         'sha256': hashlib.sha256(data).hexdigest()})
-        if relative == 'LICENSE' or f.suffix.lower() in {'.html', '.json', '.md', '.svg', '.csv', '.yaml', '.txt', '.xml'}:
+        if relative == 'LICENSE' or gegi_assembly_payload or f.suffix.lower() in {'.html', '.json', '.md', '.svg', '.csv', '.yaml', '.txt', '.xml'}:
             text = data.decode('utf-8-sig')
             if PRIVATE_PATH.search(text) or CREDENTIAL.search(text):
                 raise ValueError(f'Local path or possible credential: {relative}')
@@ -173,6 +174,9 @@ def validate(site, require_manifest=True, require_models=False):
                 pages[relative] = parser
     if total > MAX_PUBLIC_SITE_BYTES:
         raise ValueError('Site exceeded the GitHub Pages publication budget (1 GB).')
+    if (site/'assemblies/gegi/manifest.json').is_file():
+        from gegi_assembly import validate_bundle as validate_gegi_assembly
+        validate_gegi_assembly(site/'assemblies/gegi')
     names = {entry['path'] for entry in entries} | {MANIFEST}
     links = 0
     counts = dict(resource_references_checked=0, page_navigation_checked=0,

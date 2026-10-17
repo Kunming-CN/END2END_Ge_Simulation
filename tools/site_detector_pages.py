@@ -117,6 +117,7 @@ def apply(site, write_page):
     catalog=json.loads((site/'models/catalog.json').read_text(encoding='utf-8'))
     capabilities=execution_capabilities()
     control_ids=control_capabilities(capabilities)
+    dedicated_ids=dedicated_control_capabilities(capabilities)
     catalog_control=catalog_control_capabilities(capabilities)
     report=site/"examples/cs137-1m-response/summary.json"
     campaign_models=set(json.loads(report.read_text())["models"]) if report.is_file() else set()
@@ -149,12 +150,23 @@ def apply(site, write_page):
                    f'<a href="../../downloads/{model}.zip">Model ZIP with includes</a>')
         supported=model in control_ids
         run_note=(f'<p>Control supports {escape(model)} in the nominal LBNL modular cryostat. '
+                  '<a href="../../scenarios/lbnl-cs137/index.html">Assembly and compatibility</a>. '
                   'Use the <a href="../../guide.html#local-control">Control instructions</a> '
                   'after <a href="../../guide.html#setup">setup</a>. '
                   'Fresh-machine reproduction remains unvalidated.</p>' if supported else
                   '<p>This model is available for browsing and needs a future larger cryostat.</p><p>'+escape(catalog_control[model]['reason'])+'</p>')
-        special=('<p><a href="strip_explorer.html">Saved 34-channel strip study</a> · '
-                 '<a href="supplement.html">Earlier supplementary study</a></p>' if model=='GeGI_3D' else '')
+        if model in dedicated_ids:
+            run_note=('<p>Control supports the exact <code>GeGI_3D</code> model only in the dedicated '
+                      '<a href="../../assemblies/gegi/index.html">GeGI cryostat</a>. It is incompatible '
+                      'with the LBNL assembly. The other detector models cannot use the GeGI cryostat.</p>'
+                      '<p>Use the <a href="../../guide.html#gegi-workflow">GeGI workflow guide</a> for '
+                      'configurable gamma transport, 34-electrode signed charge/readout and signal-derived '
+                      'Compton cones and directional maps. Canonical 92.3 K and −879/0 V remain unchanged. '
+                      'Mechanical approximations and simulated depth calibration do not establish hardware '
+                      'or experimental validation.</p>')
+        special=('<details><summary>Earlier GeGI studies</summary><p><a href="strip_explorer.html">'
+                 'Saved 34-channel strip study</a> · <a href="supplement.html">Earlier supplementary study'
+                 '</a>. These retain their original settings and are separate from the current cryostat workflow.</p></details>' if model=='GeGI_3D' else '')
         legacy_ids=set(ids(strip_navigation_block(cleaned)))-MANAGED-{'contact-legend','native-cs137-10k','saved-signal-axis-note'}
         aliases=('<details class="panel"><summary>Earlier saved gallery sections</summary>'+''.join(
             f'<p id="{escape(i,quote=True)}"><a href="gallery.html#{escape(i,quote=True)}">Open saved gallery detail</a></p>'
@@ -209,7 +221,7 @@ def apply(site, write_page):
     return delivered
 
 def control_capabilities(capabilities=None):
-    """Read reviewed Control adapters separately from the legacy CLI flags."""
+    """Read LBNL Control support; the dedicated GeGI assembly is separate."""
     capabilities=execution_capabilities() if capabilities is None else capabilities
     root=Path(__file__).resolve().parents[1]
     adapters=json.loads((root/'scenarios/detector-capabilities.json').read_text())['control_adapters']
@@ -220,8 +232,22 @@ def control_capabilities(capabilities=None):
     return {model for model,row in capabilities.items() if row['lbnl_execution_implemented']}|set(adapters)|{model for model,row in catalog.items() if row['available']}
 
 
+def dedicated_control_capabilities(capabilities=None, root=None):
+    """Bind the dedicated display choice to the implemented exact GeGI model."""
+    from gegi_workflow import CRYOSTAT, DETECTOR, MODEL_SHA, catalog_entries
+    root=Path(root or Path(__file__).resolve().parents[1])
+    capabilities=execution_capabilities() if capabilities is None else capabilities
+    asset=json.loads((root/'scenarios/assets/gegi_cryostat_v1.json').read_text(encoding='utf-8'))
+    entry=catalog_entries(root)['detector']
+    if (asset.get('id')!=CRYOSTAT or asset.get('compatible_detectors')!=[DETECTOR] or
+            DETECTOR not in capabilities or capabilities[DETECTOR]['model_sha256']!=MODEL_SHA or
+            entry.get('id')!=DETECTOR or entry.get('assemblies')!=[CRYOSTAT] or not entry.get('available')):
+        raise ValueError('Dedicated GeGI presentation binding changed')
+    return {DETECTOR}
+
+
 def catalog_control_capabilities(capabilities,root=None):
-    """Validate the reviewed display snapshot; backend admission is independent."""
+    """Validate the LBNL display snapshot; backend admission is independent."""
     root=Path(root or Path(__file__).resolve().parents[1])
     data=json.loads((root/'scenarios/catalog-presentation.json').read_text(encoding='utf-8'))
     expected={'models/catalog.json','transport/cryostat_nominal.json','scenarios/detector-capabilities.json'}

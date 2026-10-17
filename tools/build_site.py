@@ -480,6 +480,10 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
     # Tiny failure fixtures used by publication tests intentionally omit the model catalog.
     # Real builds still require models/catalog.json in the final validator below.
     if (OUT / 'models' / 'catalog.json').is_file():
+        # A saved native geometry derivative, never a radiation/SSD calculation.
+        # Install before navigation so the assembly is a normal supported route.
+        from gegi_assembly import publish as publish_gegi_assembly
+        publish_gegi_assembly(OUT)
         apply_site_structure(OUT)
         from ring_site import apply as apply_ring_pages
         apply_ring_pages(OUT)

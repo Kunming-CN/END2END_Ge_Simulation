@@ -80,9 +80,10 @@ def apply(site):
     execution_ids={key for key,row in capabilities.items() if row['lbnl_execution_implemented']}
     control_ids=detector_pages.control_capabilities(capabilities)
     catalog_control=detector_pages.catalog_control_capabilities(capabilities)
+    dedicated_ids=detector_pages.dedicated_control_capabilities(capabilities)
     control_count=len(control_ids)
     control_choices=', '.join(escape(item['id']) for item in catalog['detectors'] if item['id'] in control_ids)
-    blocked_count=sum(not row['available'] for row in catalog_control.values())
+    blocked_count=sum(not row['available'] and model not in dedicated_ids for model,row in catalog_control.items())
     require(len(catalog.get('detectors',[]))>=2,'Detector catalog missing')
 
     response=site/'examples/cs137-1m-response/summary.json'
@@ -98,15 +99,31 @@ def apply(site):
         from gamma_publication import validate_bundle as validate_gamma_showcase, completed as gamma_completed
         validate_gamma_showcase(gamma)
     completed_gamma=has_gamma and gamma_completed(gamma)
+    has_gegi=(site/'examples/gegi/publication.json').is_file()
+    gegi_description='GeGI dedicated cryostat · configurable gamma transport, 34-electrode charge/readout and signal-derived Compton cones and directional maps.'
+    if has_gegi:
+        from gegi_publication import validate_bundle as validate_gegi_showcase
+        validate_gegi_showcase(site/'examples/gegi')
+        saved=read(site/'examples/gegi/summary.json')
+        image=saved['imaging']
+        gegi_description+=(f' Saved denominator: {saved["counts"]["initial_primaries"]:,} initial emitted gammas; '
+                           f'{image["accepted_events"]:,} imaging-accepted events, {image["ambiguous_events"]:,} ambiguous.')
+        if (saved.get('kind')=='gegi_saved_source_comparison_v1' and
+                saved['counts']['initial_primaries']==10000 and
+                image['accepted_events']==5 and image['ambiguous_events']==4):
+            gegi_description+=' This earlier two-position sample is inconclusive for reliable source separation.'
 
     home=f'''<section class="hero"><p class="muted">HPGe radiation-to-readout simulation</p><h1>GeSignal</h1>
 <p>Explore how radiation deposits become charge signals and an energy measurement: Geant4/remage → SolidStateDetectors.jl → preamplifier → shaping → peak ADC.</p>
 <p>The public website contains saved engineering results. Run new simulations locally with Control.</p></section>
 <section class="grid"><article class="card"><h2>Results</h2><p><a href="results/index.html">Choose a saved dataset →</a></p><p>Read saved waveforms, spectra, events and traceable data.</p></article>
 <article class="card"><h2>Detectors</h2><p><a href="detectors/index.html">Explore 17 detector models →</a></p><p>Inspect geometry, saved fields and signals, or original model settings.</p></article>
-<article class="card"><h2>Run locally</h2><p><a href="guide.html">Prepare your computer and use Control →</a></p><p>Choose one of {control_count} configurations available in the current cryostat.</p></article>
+<article class="card"><h2>Assemblies</h2><p><a href="assemblies/index.html">Compare the LBNL and GeGI cryostats →</a></p><p>Inspect assembly geometry and compatible detectors.</p></article>
+<article class="card"><h2>Run locally</h2><p><a href="guide.html">Prepare your computer and use Control →</a></p><p>{control_count} LBNL configurations plus the exact GeGI model in its dedicated cryostat.</p></article>
 <article class="card"><h2>Methods</h2><p><a href="methods/index.html">Understand the pipeline and its limits →</a></p><p>Read the physical assumptions and saved diagnostic studies.</p></article></section>
 <section class="panel" id="pipeline-example"><span id="native-cs137-10k"></span><span id="current-ring-10k"></span><p>Saved results are engineering simulations. Fresh-machine setup remains unvalidated.</p></section>'''
+    if has_gegi:
+        home+='<section class="panel"><h2>GeGI Compton imaging</h2><p>'+gegi_description+'</p><p><a href="examples/gegi/index.html">Open saved GeGI signals and imaging →</a></p></section>'
     write_page(site/'index.html','GeSignal',home,0,fold_footer=True)
 
     curated_teaching=(site/'spectra/teaching-examples.json').is_file()
@@ -122,13 +139,21 @@ def apply(site):
     write_page(site/'learn/index.html','Pipeline explanation · GeSignal',learn,1)
 
     featured_items=[x for x in catalog['detectors'] if x['id'] in control_ids]
-    other_items=[x for x in catalog['detectors'] if x['id'] not in control_ids]
+    dedicated_items=[x for x in catalog['detectors'] if x['id'] in dedicated_ids]
+    other_items=[x for x in catalog['detectors'] if x['id'] not in control_ids|dedicated_ids]
     det=('''<section class="hero"><p class="muted">Detector library</p><h1>Explore detector models</h1>
 <p>Choose a detector to inspect its geometry, saved fields and signals. All 17 model definitions retain their original settings and provenance.</p></section>
 <p id="current-ring-10k">Model definitions and saved studies are distinct; each model page identifies its available studies.</p>
-<h2>Control configurations</h2><p>'''+str(control_count)+''' supported local configurations. GeRC02 uses a separate Li50min operating variant; its library geometry is the original 30-minute model.</p><div class="grid">'''+detector_cards({'detectors':featured_items})+'''</div>
+<h2>LBNL cryostat · Control configurations</h2><p>'''+str(control_count)+''' supported local configurations in the <a href="../scenarios/lbnl-cs137/index.html">LBNL modular cryostat</a>. GeRC02 uses a separate Li50min operating variant; its library geometry is the original 30-minute model.</p><div class="grid">'''+detector_cards({'detectors':featured_items})+'''</div>
+<h2>GeGI dedicated cryostat</h2><p>The <a href="../assemblies/gegi/index.html">GeGI cryostat</a> supports only the exact GeGI_3D model. It is a separate assembly at the same level as LBNL, with 34-electrode readout and Compton imaging.</p><div class="grid">'''+detector_cards({'detectors':dedicated_items})+'''</div>
 <h2>More detector models</h2><p>These '''+str(blocked_count)+''' models need a future larger cryostat. Their pages show the actual dimension limits; all remain available for browsing.</p><div class="grid">'''+detector_cards({'detectors':other_items})+'''</div>''')
     write_page(site/'detectors/index.html','Detectors · GeSignal',det,1)
+    assemblies=('''<section class="hero"><p class="muted">Cryostat assemblies</p><h1>Choose a compatible assembly</h1>
+<p>LBNL and GeGI are separate cryostats. Detector selection never changes the assembly automatically. All 17 detector models remain browsable; six oversized models currently have no supported assembly.</p></section>
+<div class="grid"><article class="card"><h2>LBNL modular cryostat</h2><p>'''+str(control_count)+''' compatible detector configurations with nominal source placement. Original upstream geometry provenance and model-specific limits remain explicit.</p><p><a href="../scenarios/lbnl-cs137/index.html">Assembly and compatibility →</a></p><p><a href="../viewers/events.html?model=AK02&amp;view=assembly">Rotate the saved LBNL assembly →</a></p></article>
+<article class="card"><h2>GeGI cryostat</h2><p>Exact GeGI_3D only. Measured front layers and nominal side/rear enclosure; no other detector can be inserted.</p><p><a href="gegi/index.html">Rotate the GeGI assembly and inspect dimensions →</a></p><p><a href="../detectors/GeGI_3D/index.html">GeGI detector and workflow →</a></p></article></div>
+<p><a href="../detectors/index.html">Browse detectors</a> · <a href="../guide.html#local-control">Configure and run locally</a> · <a href="../results/index.html">Read saved results</a></p>''')
+    write_page(site/'assemblies/index.html','Assemblies · GeSignal',assemblies,1)
     def result_panel(ident,title,description,links,available=True,extra=''):
         actions=(' · '.join(f'<a href="{url}">{label}</a>' for url,label in links)
                  if available else 'This dataset is unavailable in this snapshot.')
@@ -136,6 +161,9 @@ def apply(site):
                 f'<h2>{title}</h2><p>{description}</p><p>{actions}</p>'+extra+'</section>')
     results='''<section class="hero"><p class="muted">Choose the dataset first</p><h1>Saved results</h1>
 <p>Start with selected teaching signals or open a full saved study. Every primary ID belongs to its source detector case; complete studies retain zeros and unavailable responses.</p></section>'''
+    results+=result_panel('gegi','GeGI · multichannel Compton imaging',gegi_description,
+        (('../examples/gegi/index.html','Open saved GeGI signals and imaging →'),),has_gegi,
+        '<p>Signal-derived reconstruction is separate from known source positions and transport truth. A plane projection assumes its stated source plane; it does not recover source distance.</p>')
     teaching_present=(site/'examples/data.json').is_file()
     results+=result_panel('teaching','Start here · six representative Cs137 signals' if curated_teaching else 'Main teaching example · 200 gamma primaries',
         'A selected view of the completed four-case Cs137 10K study: near-line, low-energy, partial-deposition, separated-position, capped and fixed-wiring signals. The six examples are illustrative, not a statistical sample.' if curated_teaching else 'AK02 and SAP22 · 100 side-on primaries per detector · bare geometry. Start here to follow one event from radiation deposits to an energy measurement.',
@@ -194,7 +222,7 @@ def apply(site):
     methods='''<section class="hero"><p class="muted">Principles, assumptions and limits</p><h1>Methods & limitations</h1>
 <p>The radiation, semiconductor and electronics stages retain distinct quantities and identities. These saved engineering examples do not establish experimental agreement or calibrated charge-collection efficiency.</p></section>
 <div class="grid"><article class="card"><h2>Radiation to readout</h2><p>Deposits, charge, preamplifier, shaping and peak ADC.</p><a href="../learn/index.html">Read pipeline explanation →</a></article>
-<article class="card"><h2>Nominal cryostat and source</h2><p>Geometry, compatibility, source placement and physical assumptions.</p><a href="../scenarios/lbnl-cs137/index.html">Read scenario assumptions →</a></article>
+<article class="card"><h2>Cryostats and sources</h2><p>LBNL and GeGI assembly geometry, compatibility, source placement and physical assumptions.</p><a href="../assemblies/index.html">Read assembly assumptions →</a></article>
 <article class="card"><h2>Li-region diagnostics</h2><p>Native diffusion, endpoints and grid sensitivity; unresolved limits remain explicit.</p><a href="../lithium/lithium.html">Open saved diagnostics →</a></article>
 <article class="card"><h2>Native Li through electronics</h2><p>Earlier selected-event provisional response, preserved independently of other studies.</p><a href="../examples/native-li/comparison.html">Open selected study →</a></article></div>'''
     if (site/'examples/native-li/comparison.html').is_file():
@@ -215,8 +243,13 @@ def apply(site):
 <section class="panel"><h2>Source and material assumptions</h2><p>Radiation transport records deposits, positions, creation times and identities. SSD then calculates drift and induced charge; deposition time is not drift time. Source selection does not justify changing material, gain, event census or detector parameters.</p>
 <p>The supported local source definitions are Cs137, Am241, Ba133 and Co60. Co60 admission reuses its completed 500-decay trial, including one verified below-threshold rejection retained with null reconstructed energy. Thresholds, calibration and original science remain unchanged. The separate fixed 662 keV gamma beam uses 20 primaries for AK02/SAP22. It is not an isotope-decay campaign.</p>
 <details><summary>Original geometry provenance</summary><p>The pinned LBNL source files are not redistributed because no explicit license was found in the pinned upstream tree. The <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/transport/cryostat-source.json">upstream manifest</a> identifies the exact inputs. The maintained <a href="../../guide.html">local guide</a> explains preparation and use.</p></details></section>'''
-    caprows=''.join('<tr><td><a href="../../detectors/'+escape(m['id'])+'/index.html">'+escape(m['id'])+'</a></td><td>'+str(len(m.get('contacts',[])))+'</td><td>'+('Implemented' if m['id'] in execution_ids else 'Not integrated')+'</td><td>'+('Available in current cryostat' if m['id'] in control_ids else 'Needs larger cryostat: '+escape(catalog_control[m['id']]['reason']))+'</td></tr>' for m in catalog['detectors'])
-    scenario+='<section class="panel"><h2>Physical compatibility</h2><p>Control offers '+str(control_count)+' separate detector configurations in the current cryostat; its shared catalog and ring routes are distinct from the legacy <code>Run.cmd</code> adapter. GeRC02 Li50min uses the separate operating variant, while the library retains the original 30-minute model. KM retains its candidate qualification, −370 V bias and fixed −1 electronics wiring.</p><details><summary>All model capabilities and legacy commands</summary><p>The older generic adapter selects AK02, SAP22 or both; both means separate serial cases. See the <a href="../../guide.html#choose">legacy commands</a>. All 17 catalog models can be viewed; '+str(blocked_count)+' require a future larger cryostat because of the recorded dimensions. Complete canonical inputs and original settings are retained. Runtime Check plan independently verifies actual setup, geometry, source and readout before Run.</p><table><thead><tr><th>Model</th><th>Contacts</th><th>Legacy Run.cmd</th><th>Control</th></tr></thead><tbody>'+caprows+'</tbody></table></details></section>'
+    def assembly_support(model):
+        if model in control_ids:return 'Available in the LBNL cryostat'
+        if model in dedicated_ids:
+            return 'LBNL incompatible; available only in the <a href="../../assemblies/gegi/index.html">dedicated GeGI cryostat</a>'
+        return 'Needs larger cryostat: '+escape(catalog_control[model]['reason'])
+    caprows=''.join('<tr><td><a href="../../detectors/'+escape(m['id'])+'/index.html">'+escape(m['id'])+'</a></td><td>'+str(len(m.get('contacts',[])))+'</td><td>'+('Implemented' if m['id'] in execution_ids else 'Not integrated')+'</td><td>'+assembly_support(m['id'])+'</td></tr>' for m in catalog['detectors'])
+    scenario+='<section class="panel"><h2>Physical compatibility</h2><p>Control offers '+str(control_count)+' separate detector configurations in the LBNL cryostat; its shared catalog and ring routes are distinct from the legacy <code>Run.cmd</code> adapter. The exact GeGI_3D has its own <a href="../../assemblies/gegi/index.html">dedicated GeGI cryostat</a> and is incompatible with LBNL. GeRC02 Li50min uses the separate operating variant, while the library retains the original 30-minute model. KM retains its candidate qualification, −370 V bias and fixed −1 electronics wiring.</p><p><a href="../../viewers/events.html?model=AK02&amp;view=assembly">Rotate saved LBNL assembly</a> · <a href="../../assemblies/index.html">Compare cryostat assemblies</a></p><details><summary>All model capabilities and legacy commands</summary><p>The older generic adapter selects AK02, SAP22 or both; both means separate serial cases. See the <a href="../../guide.html#choose">legacy commands</a>. All 17 catalog models can be viewed; '+str(blocked_count)+' require a future larger cryostat because of the recorded dimensions. Complete canonical inputs and original settings are retained. Runtime Check plan independently verifies actual setup, geometry, source and readout before Run.</p><table><thead><tr><th>Model</th><th>Contacts</th><th>Legacy Run.cmd</th><th>Control assembly</th></tr></thead><tbody>'+caprows+'</tbody></table></details></section>'
     write_page(site/'scenarios/lbnl-cs137/index.html','Nominal LBNL cryostat · GeSignal',scenario,2)
 
     (site/'guide.html').write_text((Path(__file__).resolve().parent/'site_guide.html').read_text(encoding='utf-8').replace('__PAGE_NAVIGATION__',page_navigation('guide.html')),encoding='utf-8',newline='\n')

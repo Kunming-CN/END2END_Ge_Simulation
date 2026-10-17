@@ -48,7 +48,7 @@ class GalleryTests(unittest.TestCase):
         images=[attrs for tag,attrs in parser.tags if tag=='img']
         self.assertEqual(len(images),17);self.assertEqual(set(D.TYPE_LABELS),{i['id'] for i in self.catalog['detectors']})
         cards=re.findall(r'<article class="card">.*?</article>',html,re.S);self.assertEqual(len(cards),17)
-        for item,card in zip(sorted(self.catalog['detectors'],key=lambda i:(i['id'] not in D.control_capabilities(),self.catalog['detectors'].index(i))),cards):
+        for item,card in zip(sorted(self.catalog['detectors'],key=lambda i:(0 if i['id'] in D.control_capabilities() else 1 if i['id'] in D.dedicated_control_capabilities() else 2,self.catalog['detectors'].index(i))),cards):
             model=item['id'];poster=f'{model}/runs/{D.RUN}/01_geometry.png'
             self.assertNotIn('href="'+poster+'"',card);self.assertIn('src="'+poster+'"',card)
             self.assertEqual(set(re.findall(r'href="([^"]+)"',card)),{model+'/index.html'})
@@ -70,15 +70,23 @@ class GalleryTests(unittest.TestCase):
         self.assertEqual(generic,{'AK02','SAP22'})
         self.assertEqual(D.control_capabilities(),{'AK02','SAP22','GeRC02','KMRC01_candidate','SAP18_ring08_scenario','AK01','SAP16','SAP17','Bipolar_reference_3D','KL01_3D'})
         self.assertIn('Control supports GeRC02',(self.site/'detectors/GeRC02/index.html').read_text())
-        self.assertIn('needs a future larger cryostat',(self.site/'detectors/GeGI_3D/index.html').read_text())
+        self.assertEqual(D.dedicated_control_capabilities(),{'GeGI_3D'})
+        for name in ('index.html','technical.html'):
+            gegi=(self.site/'detectors/GeGI_3D'/name).read_text()
+            self.assertIn('exact <code>GeGI_3D</code>',gegi)
+            self.assertIn('assemblies/gegi/index.html',gegi)
+            self.assertIn('incompatible',gegi)
+            self.assertNotIn('needs a future larger cryostat',gegi)
         presentation=D.catalog_control_capabilities(D.execution_capabilities())
         blocked={model for model,row in presentation.items() if not row['available']}
         self.assertEqual(len(blocked),7)
-        for model in blocked:
+        self.assertIn('GeGI_3D',blocked) # This snapshot is LBNL-specific.
+        self.assertFalse(D.execution_capabilities()['GeGI_3D']['lbnl_execution_implemented'])
+        for model in blocked-{'GeGI_3D'}:
             page=unescape((self.site/'detectors'/model/'index.html').read_text())
             self.assertIn(presentation[model]['reason'],page)
             self.assertNotIn('not integrated',page)
-        self.assertIn('7 models need a future larger cryostat',(self.site/'detectors/index.html').read_text())
+        self.assertIn('6 models need a future larger cryostat',(self.site/'detectors/index.html').read_text())
 
 
     def test_catalog_presentation_rejects_changed_authority_and_model_binding(self):
@@ -102,9 +110,25 @@ class GalleryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'authority bytes changed'):
                 D.catalog_control_capabilities(cap,root)
 
+    def test_dedicated_gegi_requires_exact_asset_detector_and_model(self):
+        with tempfile.TemporaryDirectory(dir=ROOT/'.local') as directory:
+            root=Path(directory);asset=root/'scenarios/assets/gegi_cryostat_v1.json'
+            asset.parent.mkdir(parents=True)
+            original=(ROOT/'scenarios/assets/gegi_cryostat_v1.json').read_bytes()
+            asset.write_bytes(original);cap=D.execution_capabilities()
+            self.assertEqual(D.dedicated_control_capabilities(cap,root),{'GeGI_3D'})
+            self.assertNotIn('GeGI_3D',D.control_capabilities(cap))
+            data=json.loads(original);data['compatible_detectors'].append('AK02')
+            asset.write_text(json.dumps(data),encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'GeGI presentation binding'):
+                D.dedicated_control_capabilities(cap,root)
+            asset.write_bytes(original);cap['GeGI_3D']['model_sha256']='0'*64
+            with self.assertRaisesRegex(ValueError,'GeGI presentation binding'):
+                D.dedicated_control_capabilities(cap,root)
+
     def test_three_actions_ring_context_and_no_stale_pending_claim(self):
         self.structure();home=(self.site/'index.html').read_text();results=(self.site/'results/index.html').read_text()
-        self.assertEqual(re.findall(r'<article class="card"><h2>(.*?)</h2>',home),['Results','Detectors','Run locally','Methods'])
+        self.assertEqual(re.findall(r'<article class="card"><h2>(.*?)</h2>',home),['Results','Detectors','Assemblies','Run locally','Methods'])
         self.assertNotIn('pending saved results',results)
         scenario=(self.site/'scenarios/lbnl-cs137/index.html').read_text()
         self.assertIn('Control offers 10 separate detector configurations',scenario)

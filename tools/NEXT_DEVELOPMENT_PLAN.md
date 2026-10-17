@@ -1,5 +1,108 @@
 # Next development plan
 
+## Active owner campaign — GeGI website and 10M (2026-10-17)
+
+This window (01a14bca-3953-7c13-80a1-687a9a571455) is the sole supervisor.
+The owner explicitly authorizes 10,000,000 TOTAL formal initial events, superseding
+older GeGI no-expansion statements below; preparation pilots are separately counted.
+No extra AI reviews, new environment, global changes, paid API or resets.
+
+1. First synchronize website generators with delivered GeGI capabilities: dedicated
+   cryostat geometry/section/native 3D at Assemblies, home/catalog/Results/guide links,
+   exact LBNL versus GeGI compatibility. Simplify normal routes and demote historical
+   duplication without deleting unique science or breaking retained URLs. Build only
+   with build_site.py, test/check, publish and verify live desktop navigation/3D.
+2. Prepare source-blind reconstruction: collection/induction, strip pairing, timing
+   depth and ordering. Quantify central-pixel calibration bias with existing evidence
+   and independent model injections only as needed. Record omissions (charge sharing,
+   cross talk/noise) and limit conclusions. Never select candidates with source truth.
+3. Integrate the existing true isotope decay source into GeGI, then implement shared
+   batch arithmetic, streaming nonzero response, one losslessly stored copy of signals,
+   atomic completion and exact resume. Preserve old runs/fields/failures unchanged.
+4. Measure representative pilots, including initial/source denominator, nonzero and
+   imaging rates, wall time, peak memory, compressed bytes. Verify stop/resume and that
+   sealed radiation/response chunks do not rerun. Freeze configuration, code/model
+   hashes, seed schedule, cuts and metrics BEFORE production starts.
+5. Launch a detached, bounded full-chain worker. The existing automation ID automation
+   is migrated to this window every 30 minutes. Healthy monitoring reads compact state
+   and exits immediately; faults resume only affected unfinished stages. Do not run
+   competing supervisors or restart healthy workers on one unchanged observation.
+6. Analyze all formal groups, publish spectra/real multichannel signals/directional
+   and explicit assumed-plane images through existing generators, verify necessary
+   student ZIP updates, synchronize Git, then disable monitoring and release own lock.
+
+### Draft allocation — not yet frozen or launched
+
+Coordinates are mm from crystal center; +z is front; theta is from +z and phi
+from +x toward +y. All points are 56.568542 mm away. Isotropic emission, no
+collimator or inferred source activity. Existing geometry assumptions are retained.
+
+| Group | Source and denominator | Position mm | phi / theta | Formal quota | Master seed | Purpose |
+|---|---|---|---|---:|---:|---|
+| gamma-left | 662 keV mono gamma; initial photons | (-40,0,40) | 180 / 45 deg | 2,000,000 | 261017101 | Equal-energy spatial control |
+| gamma-right | 662 keV mono gamma; initial photons | (40,0,40) | 0 / 45 deg | 2,000,000 | 261017102 | Paired equal-energy control |
+| cs137-left | Existing pinned Cs137 decay model; initial decays | (-40,0,40) | 180 / 45 deg | 3,000,000 | 261017103 | True-decay spectrum and isotope mixture |
+| co60-right | Existing pinned Co60 decay model; initial decays | (40,0,40) | 0 / 45 deg | 3,000,000 | 261017104 | Distinct-energy cascade and spatial mixture |
+
+Each group uses workflow_batches partition/seed rules (at most 10,000 initial
+primaries per transport batch); validate cross-group seed uniqueness before freeze.
+Group-resolved photon/decay denominators remain distinct in mixtures; 10M is their
+administrative total, not a common photon efficiency denominator. Mixtures are
+linear sums of independent acquisitions, without inter-source pile-up. Preserve
+within-decay cascade/delayed timing and finite electronics-window semantics.
+Both isotope groups use the identical union of661.657/1173.228/1332.492keV
+windows (half-width max(5keV,2%)); source labels cannot discard cross-isotope
+continuum contributions. Both gamma control groups use662keV.
+Fixed analysis:5deg directional bins/kernel, assumedz40mm plane with2mm bins
+over[-120,120]mm; blind top-two peaks at least20deg/20mm apart with connecting
+valley at most0.8 of the lower peak. Evaluate truth matching only afterward, with
+predeclared15deg/15mm engineering tolerances. Require20accepted groups/component
+for a separation conclusion, never as a pilot launch gate. Optional200primary-
+cluster Poisson resamples use seed261017201 and require a measured cost budget.
+
+Acceptance is computational completion with exact full census, nonzero failures,
+rejections, signed units, fixed source-blind reconstruction and reproducible hashes.
+Before production freeze the scientific report definitions: image peak angular and
+assumed z=40 mm plane bias, fixed energy windows, acceptance/rejection rates,
+uncertainty/resampling rule and an objective two-peak/valley separation criterion.
+A failure to separate is a valid scientific result; do not change seeds/cuts after
+seeing maps. Direction and imposed-plane projection do not establish source range
+or genuine 3D localization. No measured detector validation is claimed.
+
+Measured recovery resources: about 155 GB free disk, 3.46 GB Windows physical memory
+free at initial check; WSL 6.92 GB available after start. Re-measure before workers.
+The old JSON format is not admitted for 10M. No production start until measured
+compressed storage + bounded temporary space + reserve fit available disk and
+memory. Current priority remains the website milestone above.
+
+Preparation evidence (no new primaries yet): source-blind reconstruction changes
+pass14 targeted tests and retain original accepted IDs2714 /3170,3998,4046,4468.
+All kinematically valid pair/order candidates remain; pixel calibration is strict
+with no fallback to central truth. Fixed independent pixel/offset calibration
+is completed:256pixels,216available/40unavailable,175diagnostic injections. Native
+cache reused, no field solve. Protocol-only type failure occurred after saved
+completion; exact failed producer/request are retained and the reply is repaired.
+All11pilot checkpoints were reused, then2980new evaluations completed in158.298s,
+peak native RSS2453430272bytes (startup36.505s separate). The table hash is
+61f59e2fcdd43aa0f04d6a49a6e59c448bc6059057207a8bcd80d46074d29694.
+Of175fixed diagnostics,124pixel and106central estimates are supported;51remain
+outside support. On the same106points, median|residual| is0.132588mm pixel versus
+0.168900mm central; maxima0.485043/0.566306mm. Remaining intrapixel bias and strict
+no-extrapolation limits persist; this is not measured resolution or a global bound. Saved single-cloud
+diagnostics (108 in-envelope cases) span -1.369..+1.133mm central-table residual;
+this selected diagnostic is not a resolution or global error bound. Basis:
+[Amman & Luke2000](https://escholarship.org/uc/item/1x55j4h9),
+[Sleator et al.2019](https://arxiv.org/html/1911.02992v1), and
+[Rogers et al.2026](https://arxiv.org/html/2602.02442v1).
+Actual GeGI timing is still ideal-charge crossing, not those instruments' hardware.
+The proposed transactional store retains one exact full native input and every
+electronics scalar, hashes deterministic display traces for replay, and preserves
+unknown failures. A12-existing-event bitwise round trip occupies843776bytes;
+exact all34-channel electronics replay passed on a saved nonzero event without
+drift. Four500-initial-event pilots use seeds261017301..304, separate from formal
+10M; actual isotope cost and full-chain stop/resume remain pending.
+Preparation authority: .local/gegi-10m/preparation.json. No formal production yet.
+
 ## Delivered owner extension — GeGI (2026-10-17)
 
 Owner extension during delivery: test two equal-energy point sources at different

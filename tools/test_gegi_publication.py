@@ -73,6 +73,21 @@ class GeGIPublication(unittest.TestCase):
         self.assertIn('No zero waveform is fabricated',(target/'index.html').read_text())
         self.assertNotIn('<polyline',(target/'index.html').read_text())
 
+    def test_assembly_navigation_preserves_science_and_is_repeatable(self):
+        target=self.assemble()
+        science={name:(target/name).read_bytes() for name in ('summary.json','selected-channel.json')}
+        assembly=self.site/'assemblies/gegi/index.html';assembly.parent.mkdir(parents=True)
+        assembly.write_text('<html>Saved actual assembly</html>')
+        P.link_current(self.site)
+        first={p.name:p.read_bytes() for p in target.iterdir()}
+        P.link_current(self.site)
+        self.assertEqual(first,{p.name:p.read_bytes() for p in target.iterdir()})
+        self.assertEqual(science,{name:(target/name).read_bytes() for name in science})
+        self.assertIn(b'../../assemblies/gegi/index.html',first['index.html'])
+        self.assertIn(b'../../results/index.html#gegi',first['index.html'])
+        self.assertEqual(first['index.html'].count(b'id="page-navigation"'),1)
+        P.validate_bundle(target)
+
     def test_native_failure_has_unknown_channels_and_is_skipped_for_plot_selection(self):
         self.payload['events'].insert(0,{'event_id':2,'truth_edep_keV':4.,'status':'native_failed','channels':None})
         self.payload['counts'].update(zero_deposit_primaries=98,nonzero_primaries=2,native_failed_groups=1)

@@ -29,7 +29,7 @@ class RoutesTests(unittest.TestCase):
     def test_primary_tasks_do_not_select_a_dataset(self):
         for up in ('','../','../../','../../../'):
             self.assertEqual(hrefs(Structure.navigation(up)),[up+'results/index.html',
-                up+'detectors/index.html',up+'guide.html',up+'methods/index.html'])
+                up+'detectors/index.html',up+'assemblies/index.html',up+'guide.html',up+'methods/index.html'])
             self.assertNotIn('Waveforms',Structure.navigation(up))
             self.assertNotIn('Spectra',Structure.navigation(up))
 
@@ -51,7 +51,7 @@ class RoutesTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'Unknown saved dataset'):
             Structure.dataset_navigation('arbitrary')
 
-    def test_catalog_has_four_explicit_dataset_entries(self):
+    def test_catalog_has_explicit_dataset_entries(self):
         with tempfile.TemporaryDirectory(dir=ROOT/'.local') as tmp:
             site=Path(tmp)
             (site/'index.html').write_text('fixture',encoding='utf8')
@@ -71,8 +71,9 @@ class RoutesTests(unittest.TestCase):
                 Structure.apply(site)
             text=(site/'results/index.html').read_text(encoding='utf8')
             panels={m.group(1):m.group(2) for m in re.finditer(
-                r'<section id="(teaching|gamma|tenk|million)"[^>]*>(.*?)</section>',text,re.S)}
-            self.assertEqual(set(panels),{'teaching','gamma','tenk','million'})
+                r'<section id="(gegi|teaching|gamma|tenk|million)"[^>]*>(.*?)</section>',text,re.S)}
+            self.assertEqual(set(panels),{'gegi','teaching','gamma','tenk','million'})
+            self.assertIn('unavailable in this snapshot',panels['gegi'])
             self.assertIn('bare geometry',panels['teaching'])
             self.assertIn('Different geometry and event IDs',panels['gamma'])
             self.assertIn('four separate cases',panels['tenk'])
@@ -137,7 +138,7 @@ class RouteTests(unittest.TestCase):
 
     def test_all_current_pages_have_independent_registry_ownership(self):
         records = R.registry(Path(__file__).resolve().parents[1] / 'docs')
-        self.assertEqual(len(records), 105)
+        self.assertEqual(len(records),len(list((Path(__file__).resolve().parents[1]/'docs').rglob('*.html'))))
         self.assertEqual(sum(row['role'] == 'archive' for row in records.values()), 12)
         self.assertEqual(sum(row['role'] == 'alias' for row in records.values()), 2)
         for path, record in records.items():
@@ -146,10 +147,13 @@ class RouteTests(unittest.TestCase):
                 while record['parent_id']:
                     self.assertNotIn(record['path'], seen)
                     seen.add(record['path'])
-                    record = records[record['parent_id']]
+                    record = records.get(record['parent_id']) or R.page_record(record['parent_id'])
         km = records['examples/cs137-10k-rings/KMRC01_candidate/response/original-native/summary.html']
         self.assertEqual(km['role'], 'archive')
         self.assertEqual(km['parent_id'], R.case_result_path('KMRC01_candidate'))
+        self.assertEqual(R.page_record('assemblies/gegi/index.html')['parent_id'],'assemblies/index.html')
+        self.assertEqual(R.page_record('scenarios/lbnl-cs137/index.html')['parent_id'],'assemblies/index.html')
+        self.assertEqual(R.page_record('examples/gegi/index.html')['parent_id'],'results/index.html')
 
     def test_relative_query_fragment_and_absolute_project_identity(self):
         expected = dict(path='viewers/events.html', query='model=GeRC02&view=positive',
@@ -247,7 +251,7 @@ class RouteTests(unittest.TestCase):
             report = A.audit(self.site)
         self.assertTrue(any('parent_cycle' in row for row in report['failures']))
 
-    def test_thirty_indexable_content_routes_exclude_aliases_and_archives(self):
+    def test_indexable_content_routes_exclude_aliases_and_archives(self):
         catalog = json.loads((Path(__file__).resolve().parents[1] / 'docs/models/catalog.json').read_text(encoding='utf-8'))
         selected = list(D.LANDINGS) + [R.case_result_path(model) for model in R.CASE_MODELS]
         selected += [f'detectors/{row["id"]}/index.html' for row in catalog['detectors']]
@@ -258,7 +262,7 @@ class RouteTests(unittest.TestCase):
             self.write(path, '<html>Protected content</html>')
         before = {path: (self.site / path).read_bytes() for path in ('viewers/events.html', *R.ALIASES, 'examples/cs137-1m/report.html', 'spectra/cs137-10k.html')}
         D.assemble(self.site)
-        self.assertEqual(len(D.landing_descriptions(self.site)), 30)
+        self.assertEqual(len(D.landing_descriptions(self.site)),32)
         self.assertEqual(set(D.landing_descriptions(self.site)), set(selected))
         for path, content in before.items():
             self.assertEqual((self.site / path).read_bytes(), content)

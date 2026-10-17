@@ -27,11 +27,11 @@ class SiteStructureTests(unittest.TestCase):
         return root
     def result_panels(self,html):
         panels={m.group(1):m.group(2) for m in re.finditer(
-            r'<section id="(teaching|gamma|tenk|million)"[^>]*>(.*?)</section>',html,re.S)}
-        self.assertEqual(list(panels),['teaching','gamma','tenk','million'])
+            r'<section id="(gegi|teaching|gamma|tenk|million)"[^>]*>(.*?)</section>',html,re.S)}
+        self.assertEqual(list(panels),['gegi','teaching','gamma','tenk','million'])
         return panels
 
-    def test_four_primary_tasks_and_dataset_entries(self):
+    def test_primary_tasks_and_dataset_entries(self):
         root=self.fixture()
         with patch('gamma_showcase.validate_bundle') as checked:
             result=S.apply(root)
@@ -39,16 +39,16 @@ class SiteStructureTests(unittest.TestCase):
         home=(root/'index.html').read_text()
         self.assertEqual(result['detectors'],2)
         for label in S.PRIMARY:self.assertIn(label,home)
-        self.assertEqual(home.count('<article class="card">'),4)
+        self.assertEqual(home.count('<article class="card">'),5)
         self.assertNotIn('href="downloads/all-models.zip"',home)
         self.assertRegex(home,r'<section class="grid">\s*<article class="card"><h2>Results</h2>')
         primary=re.search(r'<nav aria-label="Primary"[^>]*>(.*?)</nav>',home).group(1)
         self.assertEqual(re.findall(r'href="([^"]+)"',primary),
-                         ['results/index.html','detectors/index.html','guide.html','methods/index.html'])
-        self.assertEqual(re.findall(r'>([^<]+)</a>',primary),['Results','Detectors','Run locally','Methods'])
+                         ['results/index.html','detectors/index.html','assemblies/index.html','guide.html','methods/index.html'])
+        self.assertEqual(re.findall(r'>([^<]+)</a>',primary),['Results','Detectors','Assemblies','Run locally','Methods'])
         self.assertIn('use Control',home)
         for p in ('learn/index.html','detectors/index.html','results/index.html',
-                  'methods/index.html','scenarios/lbnl-cs137/index.html'):
+                  'methods/index.html','scenarios/lbnl-cs137/index.html','assemblies/index.html'):
             self.assertTrue((root/p).is_file(),p)
         learn=(root/'learn/index.html').read_text()
         self.assertEqual(learn.count('../spectra/pipeline.html'),1)
@@ -57,7 +57,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('../spectra/pipeline.html',panels['teaching'])
         self.assertNotIn('../examples/data.json',panels['teaching'])
         self.assertEqual(panels['teaching'].count('<a '),1)
-        for ident in ('gamma','tenk','million'):
+        for ident in ('gegi','gamma','tenk','million'):
             self.assertIn('unavailable in this snapshot',panels[ident])
         scenario=(root/'scenarios/lbnl-cs137/index.html').read_text()
         self.assertIn('guide.html#choose',scenario)
@@ -83,12 +83,12 @@ class SiteStructureTests(unittest.TestCase):
         home=(root/'index.html').read_text();parser=HomeLinks();parser.feed(home)
         # Visible task entrances lead to the dataset catalog; legacy destinations
         # remain available without implying that their saved event IDs match.
-        for href in ('index.html','results/index.html','detectors/index.html','guide.html','methods/index.html'):
+        for href in ('index.html','results/index.html','detectors/index.html','assemblies/index.html','guide.html','methods/index.html'):
             self.assertIn(href,parser.outside)
         for href in ('spectra/pipeline.html','spectra/cs137-10k.html','viewers/events.html','results/cs137-10k/index.html','downloads/all-models.zip'):
             self.assertNotIn(href,parser.links)
         self.assertIn('Choose a saved dataset',home)
-        self.assertIn('one of 10 configurations available in the current cryostat',home)
+        self.assertIn('10 LBNL configurations plus the exact GeGI model in its dedicated cryostat',home)
         self.assertIn('Fresh-machine setup remains unvalidated',home)
         self.assertNotIn('Methods and retained links',home)
         for anchor in ('pipeline-example','native-cs137-10k','current-ring-10k'):
@@ -119,7 +119,7 @@ class SiteStructureTests(unittest.TestCase):
 
     def test_repeat_application_is_idempotent(self):
         root=self.fixture(with_results=True);S.apply(root)
-        owned=('index.html','learn/index.html','detectors/index.html','results/index.html','results/cs137-1m/index.html','results/cs137-10k/index.html','methods/index.html','scenarios/lbnl-cs137/index.html')
+        owned=('index.html','learn/index.html','detectors/index.html','assemblies/index.html','results/index.html','results/cs137-1m/index.html','results/cs137-10k/index.html','methods/index.html','scenarios/lbnl-cs137/index.html')
         first={p:(root/p).read_bytes() for p in owned};S.apply(root)
         self.assertEqual(first,{p:(root/p).read_bytes() for p in owned})
 
@@ -166,7 +166,7 @@ class SiteStructureTests(unittest.TestCase):
         S.apply(root)
         panels=self.result_panels((root/'results/index.html').read_text())
         self.assertIn('../spectra/pipeline.html',panels['teaching'])
-        for ident in ('gamma','tenk','million'):
+        for ident in ('gegi','gamma','tenk','million'):
             self.assertIn('unavailable in this snapshot',panels[ident])
             self.assertNotRegex(panels[ident],r'<a\b')
         self.assertNotIn('Saved campaigns',(root/'scenarios/lbnl-cs137/index.html').read_text())
@@ -201,5 +201,28 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('Successful processing does not establish calibrated charge-collection efficiency',guide)
         self.assertIn('not Control\'s <code>-BuildPortableSourceExporter</code>',guide)
         self.assertNotIn('Electronics-only replay is still NOT_IMPLEMENTED',guide)
+
+    def test_gegi_saved_counts_are_visible_without_rewriting_saved_bundle(self):
+        root=self.fixture();saved=root/'examples/gegi';saved.mkdir(parents=True)
+        payload={'kind':'gegi_saved_source_comparison_v1','counts':{'initial_primaries':10000},
+                 'imaging':{'accepted_events':5,'ambiguous_events':4}}
+        (saved/'summary.json').write_text(json.dumps(payload),encoding='utf-8')
+        (saved/'publication.json').write_bytes(b'checked fixture')
+        (saved/'index.html').write_bytes(b'<html>immutable saved science</html>\r\n')
+        before={p.name:p.read_bytes() for p in saved.iterdir()}
+        with patch('gegi_publication.validate_bundle') as checked:
+            S.apply(root)
+        checked.assert_called_once_with(saved)
+        self.assertEqual(before,{p.name:p.read_bytes() for p in saved.iterdir()})
+        home=(root/'index.html').read_text(encoding='utf-8')
+        results=(root/'results/index.html').read_text(encoding='utf-8')
+        for text in (home,self.result_panels(results)['gegi']):
+            for value in ('10,000 initial emitted gammas','5 imaging-accepted events, 4 ambiguous',
+                          'inconclusive for reliable source separation','examples/gegi/index.html'):
+                self.assertIn(value,text)
+        assemblies=(root/'assemblies/index.html').read_text(encoding='utf-8')
+        for href in ('../scenarios/lbnl-cs137/index.html','gegi/index.html',
+                     '../viewers/events.html?model=AK02&amp;view=assembly'):
+            self.assertIn(href,assemblies)
 
 if __name__=='__main__':unittest.main(verbosity=2)

@@ -217,11 +217,35 @@ def validate_bundle(directory):
 def link_current(site):
     site=Path(site)
     if not (site/'examples/gegi/publication.json').is_file():return
-    validate_bundle(site/'examples/gegi')
+    target=site/'examples/gegi'
+    record=validate_bundle(target)
+    # Upgrade only the navigation of the checked saved HTML. Numerical JSON and
+    # original producer/input identities remain byte-for-byte unchanged.
+    if (site/'assemblies/gegi/index.html').is_file():
+        from site_routes import page_navigation
+        page=target/'index.html';text=page.read_text(encoding='utf-8')
+        section=('<section id="gegi-assembly-entry"><h2>Dedicated GeGI cryostat assembly</h2>'
+            '<p><a href="../../assemblies/gegi/index.html">View the cryostat preview, cross-section and interactive 3D assembly</a>. '
+            'The exact GeGI detector runs in <code>gegi_cryostat_v1</code>; it does not fit LBNL. '
+            'Known front-window dimensions and nominal side/rear geometry are identified separately.</p>'
+            '<p><a href="../../results/index.html#gegi">All saved GeGI results and their limits</a> · '
+            '<a href="../../guide.html#gegi-workflow">Run the 34-channel workflow locally</a></p></section>')
+        text=re.sub(r'<section id="gegi-assembly-entry">.*?</section>','',text,flags=re.S)
+        # The saved report has one original top-level nav. The shared block is
+        # replaced as a whole on subsequent builds for deterministic output.
+        text=re.sub(r'<!-- page-navigation:start -->.*?<!-- page-navigation:end -->','',text,count=1,flags=re.S)
+        text=re.sub(r'(<body>)\s*<nav>.*?</nav>',r'\1',text,count=1,flags=re.S)
+        text=text.replace('<body>','<body>'+page_navigation('examples/gegi/index.html')+section,1)
+        page.write_bytes(public(text.encode('utf-8')))
+        record['artifacts']['index.html']=sha(page)
+        record['navigation_source_sha256']={name:sha(Path(__file__).parent/name)
+            for name in ('gegi_publication.py','site_routes.py')}
+        (target/'publication.json').write_bytes(encoded(record))
+        validate_bundle(target)
     path=site/'detectors/GeGI_3D/index.html'
     if not path.exists():return
     text=path.read_text(encoding='utf-8');text=re.sub(r'<section id="gegi-control-results">.*?</section>','',text,flags=re.S)
-    section='<section id="gegi-control-results"><h2>GeGI cryostat and multichannel software run</h2><p><a href="../../examples/gegi/index.html">Inspect the actual saved acceptance run: cryostat layers, electrode signals and signal-derived Compton imaging</a>. Full emitted counts, original nonzero IDs, cuts and modelling limits remain explicit.</p></section>'
+    section='<section id="gegi-control-results"><h2>GeGI multichannel results</h2><p><a href="../../examples/gegi/index.html">Inspect actual saved electrode signals, cones and single-source / mixed spatial maps</a>. Full emitted counts, original nonzero IDs, cuts and modelling limits remain explicit.</p></section>'
     require('<main' in text,'GeGI detector page lacks its main content.')
     text=re.sub(r'(<main\b[^>]*>)',lambda m:m[1]+section,text,count=1)
     path.write_text(text,encoding='utf-8',newline='\n')

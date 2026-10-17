@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 720" role="img" aria-label="GeGI native mesh section y equals zero, with front detail">
+<title>GeGI native mesh section y equals zero, with front detail</title><rect width="100%" height="100%" fill="#101925"/>
+<g font-family="system-ui,sans-serif" fill="#edf4fb">
+<text x="30" y="40" font-size="25">GeGI cross-section · y = 0 · millimetres</text>
+<text x="30" y="72" font-size="17" fill="#b9cadd">Exact plane intersections of the saved native mesh. +z points upward.</text>
+<path d="M 143.00000,244.86000 L 143.00000,219.56000" fill="none" stroke="#ca9bff" stroke-width="2" opacity="1"/>
+<path d="M 143.00000,219.56000 L 143.00000,194.26000" fill="none" stroke="#ca9bff" stroke-width="2" opacity="1"/>
+<path d="M 557.00000,244.86000 L 557.00000,219.56000" fill="none" stroke="#ca9bff" stroke-width="2" opacity="1"/>
+<path d="M 557.00000,219.56000 L 557.00000,194.26000" fill="none" stroke="#ca9bff" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,244.86000 L 143.00000,244.86000" fill="none" stroke="#ca9bff" stroke-width="2" opacity="1"/>
+<path d="M 143.00000,194.26000 L 350.00000,194.26000" fill="none" stroke="#ca9bff" stroke-width="2" opacity="1"/>
+<path d="M 471.25779,244.86000 L 350.00000,244.86000" fill="none" stroke="#ca9bff" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,194.26000 L 471.25779,194.26000" fill="none" stroke="#ca9bff" stroke-width="2" opacity="1"/>
+<path d="M 521.48441,244.86000 L 471.25779,244.86000" fill="none" stroke="#ca9bff" stroke-width="2" opacity="1"/>
+<path d="M 471.25779,194.26000 L 521.48441,194.26000" fill="none" stroke="#ca9bff" stroke-width="2" opacity="1"/>
+<path d="M 557.00000,244.86000 L 521.48441,244.86000" fill="none" stroke="#ca9bff" stroke-width="2" opacity="1"/>
+<path d="M 521.48441,194.26000 L 557.00000,194.26000" fill="none" stroke="#ca9bff" stroke-width="2" opacity="1"/>
+<path d="M 626.00000,164.36000 L 626.00000,157.00000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 74.00000,157.00000 L 74.00000,164.36000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,157.00000 L 626.00000,157.00000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,157.00000 L 74.00000,157.00000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,164.36000 L 626.00000,164.36000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 74.00000,164.36000 L 350.00000,164.36000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 626.00000,517.64000 L 626.00000,164.36000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 74.00000,164.36000 L 74.00000,517.64000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 618.64000,164.36000 L 618.64000,517.64000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 81.36000,517.64000 L 81.36000,164.36000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 626.00000,164.36000 L 618.64000,164.36000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 81.36000,164.36000 L 74.00000,164.36000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 618.64000,517.64000 L 626.00000,517.64000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 74.00000,517.64000 L 81.36000,517.64000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 626.00000,525.00000 L 626.00000,517.64000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 74.00000,517.64000 L 74.00000,525.00000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,517.64000 L 626.00000,517.64000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,517.64000 L 74.00000,517.64000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,525.00000 L 626.00000,525.00000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 74.00000,525.00000 L 350.00000,525.00000" fill="none" stroke="#79c9ee" stroke-width="2" opacity="1"/>
+<path d="M 603.00000,179.54000 L 603.00000,175.86000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 97.00000,175.86000 L 97.00000,179.54000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,175.86000 L 603.00000,175.86000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,175.86000 L 97.00000,175.86000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,179.54000 L 603.00000,179.54000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 97.00000,179.54000 L 350.00000,179.54000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 603.00000,490.96000 L 603.00000,179.54000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 97.00000,179.54000 L 97.00000,490.96000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 599.32000,179.54000 L 599.32000,490.96000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 100.68000,490.96000 L 100.68000,179.54000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 603.00000,179.54000 L 599.32000,179.54000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 100.68000,179.54000 L 97.00000,179.54000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 599.32000,490.96000 L 603.00000,490.96000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 97.00000,490.96000 L 100.68000,490.96000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 603.00000,495.56000 L 603.00000,490.96000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 97.00000,490.96000 L 97.00000,495.56000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,490.96000 L 603.00000,490.96000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,490.96000 L 97.00000,490.96000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 350.00000,495.56000 L 603.00000,495.56000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 97.00000,495.56000 L 350.00000,495.56000" fill="none" stroke="#efc972" stroke-width="2" opacity="1"/>
+<path d="M 635.20000,157.00000 L 655.00000,157.00000" fill="none" stroke="#7a8d9e" stroke-width="0.8" opacity="1"/>
+<text x="665" y="162.00" font-size="16">z = 13.6 outer front</text>
+<path d="M 635.20000,194.26000 L 655.00000,194.26000" fill="none" stroke="#7a8d9e" stroke-width="0.8" opacity="1"/>
+<text x="665" y="199.26" font-size="16">z = 5.5 crystal front</text>
+<path d="M 635.20000,244.86000 L 655.00000,244.86000" fill="none" stroke="#7a8d9e" stroke-width="0.8" opacity="1"/>
+<text x="665" y="249.86" font-size="16">z = −5.5 crystal rear</text>
+<path d="M 635.20000,495.56000 L 655.00000,495.56000" fill="none" stroke="#7a8d9e" stroke-width="0.8" opacity="1"/>
+<text x="665" y="500.56" font-size="16">z = −60 inner rear</text>
+<path d="M 635.20000,525.00000 L 655.00000,525.00000" fill="none" stroke="#7a8d9e" stroke-width="0.8" opacity="1"/>
+<text x="665" y="530.00" font-size="16">z = −66.4 outer rear</text>
+<text x="45" y="565" font-size="20">Front detail (z expanded 5× relative to x)</text>
+<path d="M 170.00000,685.00000 L 350.00000,685.00000" fill="none" stroke="#ca9bff" stroke-width="2.4" opacity="1"/>
+<path d="M 350.00000,685.00000 L 455.44156,685.00000" fill="none" stroke="#ca9bff" stroke-width="2.4" opacity="1"/>
+<path d="M 455.44156,685.00000 L 499.11688,685.00000" fill="none" stroke="#ca9bff" stroke-width="2.4" opacity="1"/>
+<path d="M 499.11688,685.00000 L 530.00000,685.00000" fill="none" stroke="#ca9bff" stroke-width="2.4" opacity="1"/>
+<path d="M 590.00000,607.00000 L 590.00000,587.80000" fill="none" stroke="#79c9ee" stroke-width="2.4" opacity="1"/>
+<path d="M 110.00000,587.80000 L 110.00000,607.00000" fill="none" stroke="#79c9ee" stroke-width="2.4" opacity="1"/>
+<path d="M 350.00000,587.80000 L 590.00000,587.80000" fill="none" stroke="#79c9ee" stroke-width="2.4" opacity="1"/>
+<path d="M 350.00000,587.80000 L 110.00000,587.80000" fill="none" stroke="#79c9ee" stroke-width="2.4" opacity="1"/>
+<path d="M 350.00000,607.00000 L 590.00000,607.00000" fill="none" stroke="#79c9ee" stroke-width="2.4" opacity="1"/>
+<path d="M 110.00000,607.00000 L 350.00000,607.00000" fill="none" stroke="#79c9ee" stroke-width="2.4" opacity="1"/>
+<path d="M 570.00000,646.60000 L 570.00000,637.00000" fill="none" stroke="#efc972" stroke-width="2.4" opacity="1"/>
+<path d="M 130.00000,637.00000 L 130.00000,646.60000" fill="none" stroke="#efc972" stroke-width="2.4" opacity="1"/>
+<path d="M 350.00000,637.00000 L 570.00000,637.00000" fill="none" stroke="#efc972" stroke-width="2.4" opacity="1"/>
+<path d="M 350.00000,637.00000 L 130.00000,637.00000" fill="none" stroke="#efc972" stroke-width="2.4" opacity="1"/>
+<path d="M 350.00000,646.60000 L 570.00000,646.60000" fill="none" stroke="#efc972" stroke-width="2.4" opacity="1"/>
+<path d="M 130.00000,646.60000 L 350.00000,646.60000" fill="none" stroke="#efc972" stroke-width="2.4" opacity="1"/>
+<text x="620" y="592.80" font-size="16" fill="#79c9ee">Outer cover: 1.6 mm</text>
+<text x="620" y="642.00" font-size="16" fill="#efc972">Inner shield: 0.8 mm</text>
+<text x="620" y="690.00" font-size="16" fill="#ca9bff">Crystal front; total standoff 8.1 mm</text>
+<text x="45" y="120" font-size="17" fill="#efc972">Nominal gaps: crystal → shield 3.2 mm; shield → cover 2.5 mm.</text>
+</g></svg>

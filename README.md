@@ -10,6 +10,7 @@ The website contains saved results, not an online solver.
 
 - [Selected signals](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html) — six representative saved Cs137 examples, from deposits to peak ADC.
 - [Saved results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) — complete datasets, detector views and analysis files.
+- [Cryostat assemblies](https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/index.html) — LBNL and GeGI geometry, compatible detectors and physical assumptions.
 - [Run locally](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html) — the maintained Windows preparation and Control guide.
 - [Download student software (ZIP)](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip) — Control runtime, detector models, pinned configuration and guide; saved results, demonstrations and development material are excluded.
 - [Contributing](CONTRIBUTING.md) — propose changes or report a problem.
@@ -23,8 +24,9 @@ Developers should use the guide's sparse, blobless Git checkout. A normal full
 clone still includes the website and repository history. An offline website
 copy is a separate optional download through the documented Git route.
 
-After following the guide, double-click `Control.cmd`. Choose one of ten
-configurations available in the current cryostat. Cs137, Am241, Ba133 and Co60 share
+After following the guide, double-click `Control.cmd`. Choose a compatible cryostat
+and detector: ten configurations use the LBNL assembly; the exact `GeGI_3D` uses
+its dedicated GeGI cryostat. In the LBNL assembly, Cs137, Am241, Ba133 and Co60 share
 the same selection and run workflow: enter an exact positive initial-nucleus
 count, then review the checked serial batches of at most 10,000 nuclei each. The fixed
 monoenergetic gamma beam retains its 20-primary AK02/SAP22 route. Enter a positive
@@ -52,8 +54,18 @@ labels whether it covers the full run or one sealed batch. Advanced waveform
 panels appear only when a saved export is present. See the
 [saved-result guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#saved-analysis).
 
-All 17 models remain browsable. Seven require a future larger cryostat; Control
-shows their specific dimension limits. Setup has been checked on the existing
+GeGI supports configurable isotropic gamma energy and position, 34-electrode signed
+signals, independent readout calibration, Compton cones and directional imaging.
+Use the [GeGI guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#gegi-workflow)
+and [assembly view](https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/gegi/index.html).
+The [earlier two-position result](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/gegi/index.html)
+had five imaging-accepted events, four ambiguous, from 10,000 initial gammas; it was
+inconclusive for reliable source separation. This software workflow is not measured
+depth or angular-resolution calibration.
+
+All 17 models remain browsable. Six require a future larger cryostat; Control
+shows their specific dimension limits. GeGI is incompatible with LBNL and accepts
+no other detector in its dedicated cryostat. Setup has been checked on the existing
 Windows/WSL computer; fresh-machine portability remains unvalidated.
 [Student feedback](https://github.com/Kunming-CN/END2END_Ge_Simulation/issues)
 will guide further fixes; include your OS/revision, detector/source/count and

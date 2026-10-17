@@ -9,6 +9,7 @@ from html import escape
 from pathlib import Path
 
 PRIMARY = (("results/index.html", "Results"), ("detectors/index.html", "Detectors"),
+           ("assemblies/index.html", "Assemblies"),
            ("guide.html", "Run locally"), ("methods/index.html", "Methods"))
 CASE_MODELS = ("AK02", "SAP22", "GeRC02", "KMRC01_candidate")
 DATASETS = {
@@ -21,10 +22,13 @@ FIXED = {
     "index.html": ("GeSignal", None, "Home", "home", "site_restructure"),
     "results/index.html": ("Results", "index.html", "Results", "hub", "site_restructure"),
     "detectors/index.html": ("Detectors", "index.html", "Detectors", "hub", "site_restructure"),
+    "assemblies/index.html": ("Assemblies", "index.html", "Assemblies", "hub", "site_restructure"),
+    "assemblies/gegi/index.html": ("GeGI cryostat", "assemblies/index.html", "Assemblies", "assembly", "gegi_assembly_publication"),
     "guide.html": ("Run locally", "index.html", "Run locally", "guide", "site_guide"),
     "methods/index.html": ("Methods", "index.html", "Methods", "hub", "site_restructure"),
     "learn/index.html": ("Pipeline", "methods/index.html", "Methods", "method", "site_restructure"),
-    "scenarios/lbnl-cs137/index.html": ("Nominal LBNL cryostat", "methods/index.html", "Methods", "method", "site_restructure"),
+    "scenarios/lbnl-cs137/index.html": ("Nominal LBNL cryostat", "assemblies/index.html", "Assemblies", "assembly", "site_restructure"),
+    "examples/gegi/index.html": ("GeGI Compton imaging", "results/index.html", "Results", "reader", "gegi_publication"),
     "methods/native-li.html": ("Saved native Li study", "methods/index.html", "Methods", "method", "saved_archive_display"),
     "lithium/lithium.html": ("Lithium diagnostics", "methods/index.html", "Methods", "method", "saved_archive_display"),
     "results/cs137-10k/index.html": ("Cs137 10K", "results/index.html", "Results", "dataset", "ring_site"),

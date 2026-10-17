@@ -29,6 +29,8 @@ LANDINGS = {
     'guide.html': 'Windows setup and supported local HPGe simulation workflows. Saved browsing, new radiation runs and private-input engineering examples have separate requirements.',
     'learn/index.html': 'Follow radiation deposits through SSD electron and hole transport, preamplifier, shaping and peak ADC. Saved engineering examples retain units and limitations.',
     'detectors/index.html': 'Explore 17 saved HPGe detector models, contacts and original configurations. Viewing a model does not establish LBNL execution support or experimental validation.',
+    'assemblies/index.html': 'Compare the LBNL modular cryostat and dedicated GeGI cryostat, supported detector configurations, assembly geometry and explicit engineering assumptions.',
+    'assemblies/gegi/index.html': 'Inspect the dedicated GeGI cryostat with the exact GeGI_3D detector: measured front layers, nominal side and rear dimensions, materials, coordinate conventions and compatibility limits.',
     'results/index.html': 'Browse saved Cs137 campaigns and bounded HPGe engineering examples. Deposited energy, reconstructed energy, zero events and unavailable responses remain separate.',
     'results/cs137-1m/index.html': 'Saved AK02 and SAP22 Cs137 engineering results, with one million initial decays per detector. No measured-spectrum fit or calibrated charge-collection claim.',
     'results/cs137-10k/index.html': 'Saved four-case Cs137 10K engineering results: AK02, SAP22, GeRC02 Li50min and KMRC01 candidate. Events, spectra, charge/readout and complete ledgers retain every initial decay.',
@@ -59,7 +61,7 @@ def landing_descriptions(site):
     descriptions = {}
     for path in routes.FIXED:
         record = routes.page_record(path)
-        selected = (record['role'] in {'home', 'hub', 'guide', 'dataset'}
+        selected = (record['role'] in {'home', 'hub', 'guide', 'dataset', 'assembly'}
                     or record['role'] == 'method' and record['owner'] == 'site_restructure')
         if selected:
             # Selection belongs to the route registry; descriptions describe

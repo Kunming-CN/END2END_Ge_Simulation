@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gdml>
+  <define />
+  <materials />
+  <solids>
+    <box name="catalog_solid_2" lunit="mm" x="90" y="90" z="11" />
+    <multiUnion name="catalog_solid_3">
+      <multiUnionNode name="catalog_solid_3_node">
+        <solid ref="catalog_solid_2" />
+        <position name="catalog_solid_3_position" unit="mm" x="0" y="0" z="0" />
+        <rotation name="catalog_solid_3_rotation" unit="deg" x="0" y="0" z="0" />
+      </multiUnionNode>
+    </multiUnion>
+    <box name="catalog_solid_4" lunit="mm" x="90" y="90" z="11" />
+    <multiUnion name="catalog_solid_5">
+      <multiUnionNode name="catalog_solid_5_node">
+        <solid ref="catalog_solid_4" />
+        <position name="catalog_solid_5_position" unit="mm" x="0" y="0" z="0" />
+        <rotation name="catalog_solid_5_rotation" unit="deg" x="0" y="0" z="45" />
+      </multiUnionNode>
+    </multiUnion>
+    <intersection name="catalog_solid_6">
+      <first ref="catalog_solid_3" />
+      <second ref="catalog_solid_5" />
+      <position name="catalog_solid_6_position" unit="mm" x="0" y="0" z="0" />
+      <rotation name="catalog_solid_6_rotation" unit="deg" x="0" y="0" z="0" />
+    </intersection>
+    <box name="world_solid" x="5000" y="5000" z="5000" lunit="mm" />
+    <tube name="cryostat_vacuum_solid" rmin="0" rmax="60" z="80" startphi="0" deltaphi="360" aunit="deg" lunit="mm" />
+    <tube name="outer_front_solid" rmin="0" rmax="60" z="1.5999999999999996" startphi="0" deltaphi="360" aunit="deg" lunit="mm" />
+    <tube name="outer_side_solid" rmin="58.399999999999999" rmax="60" z="76.800000000000011" startphi="0" deltaphi="360" aunit="deg" lunit="mm" />
+    <tube name="outer_rear_solid" rmin="0" rmax="60" z="1.5999999999999943" startphi="0" deltaphi="360" aunit="deg" lunit="mm" />
+    <tube name="inner_front_solid" rmin="0" rmax="55" z="0.80000000000000071" startphi="0" deltaphi="360" aunit="deg" lunit="mm" />
+    <tube name="inner_side_solid" rmin="54.200000000000003" rmax="55" z="67.700000000000003" startphi="0" deltaphi="360" aunit="deg" lunit="mm" />
+    <tube name="inner_rear_solid" rmin="0" rmax="55" z="1" startphi="0" deltaphi="360" aunit="deg" lunit="mm" />
+  </solids>
+  <structure>
+    <volume name="germanium">
+      <materialref ref="G4_Ge" />
+      <solidref ref="catalog_solid_6" />
+    </volume>
+    <volume name="outer_front">
+      <materialref ref="G4_Al" />
+      <solidref ref="outer_front_solid" />
+    </volume>
+    <volume name="outer_side">
+      <materialref ref="G4_Al" />
+      <solidref ref="outer_side_solid" />
+    </volume>
+    <volume name="outer_rear">
+      <materialref ref="G4_Al" />
+      <solidref ref="outer_rear_solid" />
+    </volume>
+    <volume name="inner_front">
+      <materialref ref="G4_Al" />
+      <solidref ref="inner_front_solid" />
+    </volume>
+    <volume name="inner_side">
+      <materialref ref="G4_Al" />
+      <solidref ref="inner_side_solid" />
+    </volume>
+    <volume name="inner_rear">
+      <materialref ref="G4_Al" />
+      <solidref ref="inner_rear_solid" />
+    </volume>
+    <volume name="cryostat_vacuum">
+      <materialref ref="G4_Galactic" />
+      <solidref ref="cryostat_vacuum_solid" />
+      <physvol name="germanium" copynumber="0">
+        <volumeref ref="germanium" />
+        <position name="catalog_position" unit="mm" x="0" y="0" z="26.400000000000002" />
+        <rotation name="catalog_rotation" unit="deg" x="0" y="0" z="0" />
+      </physvol>
+      <physvol name="outer_front" copynumber="0">
+        <volumeref ref="outer_front" />
+        <position name="outer_front_position" unit="mm" x="0" y="0" z="39.200000000000003" />
+      </physvol>
+      <physvol name="outer_side" copynumber="0">
+        <volumeref ref="outer_side" />
+        <position name="outer_side_position" unit="mm" x="0" y="0" z="-3.5527136788005009e-15" />
+      </physvol>
+      <physvol name="outer_rear" copynumber="0">
+        <volumeref ref="outer_rear" />
+        <position name="outer_rear_position" unit="mm" x="0" y="0" z="-39.200000000000003" />
+      </physvol>
+      <physvol name="inner_front" copynumber="0">
+        <volumeref ref="inner_front" />
+        <position name="inner_front_position" unit="mm" x="0" y="0" z="35.5" />
+      </physvol>
+      <physvol name="inner_side" copynumber="0">
+        <volumeref ref="inner_side" />
+        <position name="inner_side_position" unit="mm" x="0" y="0" z="1.2500000000000036" />
+      </physvol>
+      <physvol name="inner_rear" copynumber="0">
+        <volumeref ref="inner_rear" />
+        <position name="inner_rear_position" unit="mm" x="0" y="0" z="-33.099999999999994" />
+      </physvol>
+    </volume>
+    <volume name="world">
+      <materialref ref="G4_AIR" />
+      <solidref ref="world_solid" />
+      <physvol name="cryostat_vacuum" copynumber="0">
+        <volumeref ref="cryostat_vacuum" />
+        <position name="cryostat_vacuum_position" unit="mm" x="0" y="0" z="-26.400000000000002" />
+      </physvol>
+    </volume>
+  </structure>
+  <setup name="Default" version="1.0">
+    <world ref="world" />
+  </setup>
+</gdml>
