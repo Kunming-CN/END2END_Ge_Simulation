@@ -115,15 +115,23 @@ the first sealed chunk retained exact hashes/timestamps. Actual saved-data analy
 passed with26nonzero/25readout accepted/0imaging, inconclusive. No formal primaries
 are part of qualification. An explicit analysis-only producer/reader version record
 allows the terminal-native-failure reporting correction without science reruns.
-Preparation authority: .local/gegi-10m/preparation.json. Formal campaign first launch
-in .local/gegi-10m/campaign completed its first10k transport, then stopped at a
-contact-domain precondition.58valid groups and all transport are preserved. Exact
-failure/null handling and explicit versioned recovery are being finalized, without
-changing seeds/cuts or repeating physics. Planned1000chunks,total10M. Frozen plan SHA256
-3cfcf66a0e732a086396ad54e4f4c4be3c398444cfccd3bd6d81500ea18ba828; source
-commit9cd3f6c80ad77663d9cb74aa3777c65f97689195. Criteria and seeds remain fixed.
-Read compact progress and actual process identities; healthy monitors exit immediately.
-Final analysis/figures and final publication remain pending; do not declare completion.
+Preparation authority: .local/gegi-10m/preparation.json. Formal campaign is running
+in .local/gegi-10m/campaign:1000chunks,total10M. First10k transport completed;
+contact-domain event1188/group0 then stopped native processing after58saved groups.
+The exact failure is retained with27rows/truth379.37764922113564keV and unknown
+response null, without coordinate adjustment. Explicit versioned recovery is
+complete in .local/gegi-10m/recovery-contact-v1: all58event blobs/2012arrays and
+17transport file hashes/timestamps remained unchanged. Actual resumed processing
+passed the failed event and reached131saved groups at23:23UTC. This is a partial
+native count, not a completed formal chunk. Source commit96a814057ea40a57079116de8efd5da75bffc3fa;
+current plan SHA25669c7a222025747be46c9585fd6200f201f33aa501c0f655fbb47d6d3ad9f783e.
+The original frozen plan3cfcf66a... and producer9cd3f6c... remain in the recovery
+archive. Only explicit failure recording/source identity changed; criteria,
+allocations, seeds, physical inputs and calibration remain fixed.48Julia assertions
+and58targeted recovery/response/analysis/publication tests passed. Existing student
+release remains current because no packaged source changed. Read compact progress
+and actual process identities; healthy monitors exit immediately. Final analysis,
+figures and final publication remain pending; do not declare the10M task complete.
 
 ## Delivered owner extension — GeGI (2026-10-17)
 
