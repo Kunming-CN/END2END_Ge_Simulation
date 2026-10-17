@@ -75,7 +75,7 @@ The old JSON format is not admitted for 10M. No production start until measured
 compressed storage + bounded temporary space + reserve fit available disk and
 memory. Current priority remains the website milestone above.
 
-Preparation evidence (no new primaries yet): source-blind reconstruction changes
+Preparation evidence: source-blind reconstruction changes
 pass14 targeted tests and retain original accepted IDs2714 /3170,3998,4046,4468.
 All kinematically valid pair/order candidates remain; pixel calibration is strict
 with no fallback to central truth. Fixed independent pixel/offset calibration
@@ -99,8 +99,18 @@ The proposed transactional store retains one exact full native input and every
 electronics scalar, hashes deterministic display traces for replay, and preserves
 unknown failures. A12-existing-event bitwise round trip occupies843776bytes;
 exact all34-channel electronics replay passed on a saved nonzero event without
-drift. Four500-initial-event pilots use seeds261017301..304, separate from formal
-10M; actual isotope cost and full-chain stop/resume remain pending.
+drift. Four500-initial-event pilots with seeds261017301..304 completed, separate
+from formal10M: nonzero counts26/28/20/41, native failures0, readout rejections0/1/0/1,
+imaging accepted0/0/1/1 in table order. All34-channel electronics replay matches
+exactly in each group. Measured native/store seconds27.705/14.134/35.287/73.355;
+transport-driver seconds44.570/45.739/42.395/45.271; resident startup35.687s separate,
+peak working set2,489,167,872bytes. Direct small-sample scaling is roughly10days,
+not a production completion-time guarantee; revise from actual chunk timings.
+Measured lossless storage projection76,135,237,900bytes; selected1.5x allowance,
+temporary overlap and20GiB reserve require136,080,158,804bytes versus about155GB
+free. The2x budget correctly fails and is not admitted. Gzip round trips preserve
+all pilot originals. Four100-initial-event stop/resume qualification groups use
+fixed seeds261017401..404; no formal primaries are part of qualification.
 Preparation authority: .local/gegi-10m/preparation.json. No formal production yet.
 
 ## Delivered owner extension — GeGI (2026-10-17)

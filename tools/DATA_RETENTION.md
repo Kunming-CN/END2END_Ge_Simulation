@@ -16,6 +16,16 @@ These files and the reproducibility snapshot currently occupy the same physical 
 
 ## Permitted follow-up
 
+Preserve `.local/gegi-10m/` calibration, four-source pilots, actual stop/resume
+qualification, formal campaign and their unique failures as scientific records.
+The formal campaign retains each completed chunk's original transport and sparse
+stream as verified lossless gzip archives, exact signed native arrays in SQLite,
+all readout scalars, deterministic replay hashes, source/model/configuration pins,
+seeds, full denominators, original nonzero IDs and null failure quantities.
+Only the new chunk's uncompressed transport/stream copies may be replaced after
+round-trip verification and durable `DONE.json`; this never permits deleting old
+campaign originals. Analysis/publication derivatives do not authorize physics reruns.
+
 The October 17 GeGI runs `.local/runs/gegi-100-pilot-v1/`,
 `gegi-5000-imaging-v1/`, `gegi-source-left-v1/` and `gegi-source-right-v1/`
 are completed scientific records. Preserve their raw radiation, sparse nonzero

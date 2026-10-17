@@ -16,6 +16,9 @@ KIND = 'local_gegi_workflow_v1'
 CRYOSTAT = 'gegi_cryostat_v1'
 DETECTOR = 'GeGI_3D'
 SOURCE = 'gegi_mono_gamma_v1'
+CS137 = 'cs137_point_decay_v1'
+CO60 = 'co60_point_decay_v1'
+DECAY_SOURCES = (CS137, CO60)
 REQUEST_FILE = 'gegi-request.json'
 STAGES = W.STAGES
 MODEL_SHA = '4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04'
@@ -62,17 +65,23 @@ def query(args, root=W.ROOT, runner=subprocess.run):
 
 
 def validate_selection(selection):
-    W.require(type(selection) is dict and set(selection) == FIELDS, 'Unsupported GeGI configuration fields.')
+    W.require(type(selection) is dict and (set(selection)==FIELDS or
+              selection.get('source') in DECAY_SOURCES and set(selection)==FIELDS-{'gamma_energy_keV'}),
+              'Unsupported GeGI configuration fields.')
     W.require(selection['cryostat'] == CRYOSTAT and selection['detector'] == DETECTOR,
               'The GeGI cryostat accepts only the GeGI detector.')
-    W.require(selection['source'] == SOURCE and selection['pose'] == 'custom', 'Choose the GeGI point gamma source.')
+    W.require(selection['source'] in (SOURCE,*DECAY_SOURCES) and selection['pose'] == 'custom',
+              'Choose the GeGI gamma, registered Cs137 or registered Co60 point source.')
     W.require(type(selection['primary_count']) is int and 1 <= selection['primary_count'] <= 10000,
-              'GeGI runs accept 1–10000 emitted gamma rays.')
+              'Each GeGI batch accepts 1–10000 emitted gammas or initial isotope nuclei.')
     W.require(type(selection['seed']) is int and 0 < selection['seed'] < 2147483647, 'Invalid radiation seed.')
     W.require(type(selection['threads']) is int and selection['threads'] in (1, 2), 'Use one or two Julia threads.')
-    energy = selection['gamma_energy_keV']
-    W.require(type(energy) in (int, float) and math.isfinite(energy) and 1 <= energy <= 10000,
-              'GeGI gamma energy must be between 1 and 10000 keV.')
+    energy = selection.get('gamma_energy_keV')
+    if selection['source']==SOURCE:
+        W.require(type(energy) in (int, float) and math.isfinite(energy) and 1 <= energy <= 10000,
+                  'GeGI gamma energy must be between 1 and 10000 keV.')
+    else:
+        W.require(energy is None, 'Isotope decay energies come from the registered nuclear data, not a mono-gamma energy.')
     p = selection['source_position_mm']
     W.require(type(p) is list and len(p) == 3 and all(type(x) in (int, float) and math.isfinite(x) for x in p),
               'Source position needs three finite coordinates in mm.')
@@ -176,7 +185,7 @@ def validate_stage(directory, stage, resolved, root=W.ROOT):
         counts = value['counts']
         W.require(counts == r['counts'] and counts['initial_primaries'] == resolved['selection']['primary_count']
                   and counts['zero_deposit_primaries']+counts['nonzero_primaries'] == counts['initial_primaries'],
-                  'GeGI emitted/zero/nonzero census changed.')
+                  'GeGI initial/zero/nonzero census changed.')
         events = value['events']
         W.require(len(events) == counts['nonzero_primaries'] and len({e['event_id'] for e in events}) == len(events),
                   'GeGI nonzero identity census changed.')

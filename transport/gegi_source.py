@@ -1,4 +1,4 @@
-"""Bounded GeGI isotropic gamma transport in the existing locked remage runtime.
+"""Bounded GeGI gamma or registered-ion transport in the locked remage runtime.
 
 Preparation performs native geometry overlap checks without radiation. Radiation
 is serial so the established bounded LH5 readers preserve every original row.
@@ -19,12 +19,17 @@ import time
 
 import handoff as h
 import cs137 as cs
+import decay_source as decay
 import catalog_geometry as C
 import gegi_geometry as G
 import scenario_source_portable as P
 import scenario_transport as T
 
 SOURCE = 'gegi_mono_gamma_v1'
+CS137 = 'cs137_point_decay_v1'
+CO60 = 'co60_point_decay_v1'
+DECAY_SOURCES = (CS137, CO60)
+REGISTRY = 'scenarios/source-presets.json'
 ADAPTER = 'gegi_source_v1'
 KIND = 'gegi_event_stream_v1'
 FIELDS = {'name', 'cryostat', 'detector', 'source', 'pose', 'primary_count', 'seed',
@@ -52,7 +57,8 @@ def source_pins():
             'transport/catalog_geometry.py', 'transport/handoff.py', 'transport/cs137.py',
             'transport/scenario_transport.py', 'transport/scenario_prepare.py',
             'transport/scenario_source_portable.py', 'models/GeGI_3D.yaml', 'models/catalog.json',
-            'transport/pixi.toml', 'transport/pixi.lock', 'transport/workflow.sh')
+            'transport/pixi.toml', 'transport/pixi.lock', 'transport/workflow.sh',
+            'transport/decay_source.py', 'tools/decay_workflow.py', REGISTRY)
     return {ref: h.sha256(h.ROOT/ref) for ref in refs}
 
 
@@ -86,32 +92,98 @@ def runtime_snapshot():
             'python_sha256': h.sha256(sys.executable), 'python_version': platform.python_version()}
 
 
+def registered_preset(source_id):
+    """Keep the registered nuclear physics; GeGI owns only its point placement."""
+    h.require(source_id in DECAY_SOURCES, 'Unsupported GeGI isotope source')
+    rows=[p for p in decay.D.presets(h.ROOT) if p['id']==source_id]
+    h.require(len(rows)==1, 'Missing or duplicate registered GeGI isotope')
+    preset=rows[0]
+    if source_id==CS137:
+        h.require(preset['adapter']=='legacy_cs137_v1' and preset['isotope']=='Cs137'
+                  and preset['count_unit']=='initial Cs137 decays', 'Registered Cs137 identity changed')
+    else:
+        decay.D.validate_source(preset)
+        h.require(preset['isotope']=='Co60' and preset['pdg']==1000270600
+                  and preset['count_unit']=='initial Co60 decays', 'Registered Co60 identity changed')
+    return preset
+
+
+def source_contract(selection, cryostat):
+    screen=G.source_screen(selection['source_position_mm'], cryostat)
+    if selection['source']==SOURCE:
+        return {'id': SOURCE, 'particle': 'gamma', 'pdg': 22, 'distribution': 'point',
+                'angular_policy': 'isotropic_4pi', 'energy_keV': selection['gamma_energy_keV'],
+                'position_global_mm': selection['source_position_mm'], 'time_ns': 0,
+                'particles_per_primary': 1, 'normalization': 'per emitted monoenergetic gamma; no activity or decay claim',
+                'count_unit': 'emitted gamma', 'source_geometry_screen': screen}
+    preset=registered_preset(selection['source'])
+    legacy=selection['source']==CS137
+    return {'id':preset['id'], 'mode':'cs137_legacy' if legacy else 'registered_decay',
+            'registered_preset':preset, 'registry_ref':REGISTRY,
+            'particle':'ion', 'pdg':cs.ION if legacy else preset['pdg'],
+            'Z':55 if legacy else preset['Z'], 'A':137 if legacy else preset['A'],
+            'ground_daughter_pdg':1000561370 if legacy else preset['ground_daughter_pdg'],
+            'kinetic_energy_keV':0, 'primary_excitation_keV':0,
+            'distribution':'point', 'position_global_mm':selection['source_position_mm'], 'time_ns':0,
+            'angular_policy':'unpolarized radioactive decay; Geant4 cascade, no directed beam',
+            'initial_nuclei_per_primary':1, 'count_unit':preset['count_unit'],
+            'normalization':'per initial '+preset['isotope']+' nucleus, including every zero-deposit primary; gamma count is not decay count; no activity/live-time claim',
+            'clock_policy':'remage_initial_decay_secondaries_zero',
+            'daughter_lifetime_limit_ns':-1 if legacy else preset['nuclear_policy']['ground_secondary_lifetime_cap_ns'],
+            'grouping_policy':dict(cs.POLICY),
+            'diagnostic_lines':[{'name':'Ba137_661.7','window_keV':list(cs.LINE)}] if legacy else preset['diagnostic_lines'],
+            'photon_diagnostic_policy':('radioactive-decay-created photons only' if legacy else
+                                        'all source-descendant secondary photons, matching the shared registered-decay reader'),
+            'diagnostic_line_policy':'diagnostics only; no event/photon filtering or branching-intensity claim',
+            'source_geometry_screen':screen}
+
+
+def isotope_data(source, runtime):
+    """Reuse the existing dataset checks and bind them to this locked prefix."""
+    if source['id']==SOURCE:
+        return None
+    if source['id']!=CS137:
+        return decay.installed_data(source['registered_preset'], runtime)
+    result={'source_id':CS137, 'required_files':cs.installed_data(), 'datasets':{}}
+    prefix=Path(runtime['prefix']).resolve()
+    packages={'G4RADIOACTIVEDATA':'geant4-data-radioactivedecay',
+              'G4LEVELGAMMADATA':'geant4-data-photonevaporation', 'G4ENSDFSTATEDATA':'geant4-data-ensdfstate'}
+    for variable, package in packages.items():
+        directory=Path(os.environ[variable]).resolve()
+        h.require(directory.is_dir() and directory.is_relative_to(prefix), 'Decay dataset outside locked prefix')
+        result['datasets'][variable]={'directory':str(directory), 'package':runtime['packages'][package]}
+    return result
+
+
 def check(selection):
-    h.require(type(selection) is dict and set(selection) == FIELDS, 'Unsupported GeGI selection fields')
+    h.require(type(selection) is dict and (set(selection)==FIELDS or
+              selection.get('source') in DECAY_SOURCES and set(selection)==FIELDS-{'gamma_energy_keV'}),
+              'Unsupported GeGI selection fields')
     h.require(type(selection['name']) is str and re.fullmatch(r'[A-Za-z0-9_-]{1,48}', selection['name'])
               and not re.fullmatch(r'(?i)(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])', selection['name']),
               'Invalid GeGI run name')
     h.require(selection['cryostat'] == 'gegi_cryostat_v1' and selection['detector'] == G.MODEL
-              and selection['source'] == SOURCE and selection['pose'] == 'custom',
-              'GeGI requires its own cryostat, canonical detector and gamma source')
+              and selection['source'] in (SOURCE, *DECAY_SOURCES) and selection['pose'] == 'custom',
+              'GeGI requires its own cryostat, canonical detector and supported point source')
     h.require(type(selection['primary_count']) is int and 1 <= selection['primary_count'] <= 10000
               and type(selection['seed']) is int and 0 < selection['seed'] < 2147483647
               and type(selection['threads']) is int and selection['threads'] in (1, 2),
               'Unsupported GeGI count, seed or thread count')
-    energy = selection['gamma_energy_keV']
-    h.require(type(energy) in (int, float) and math.isfinite(energy) and 1 <= energy <= 10000,
-              'Gamma energy must be a finite 1–10000 keV value')
+    energy = selection.get('gamma_energy_keV')
+    if selection['source']==SOURCE:
+        h.require(type(energy) in (int, float) and math.isfinite(energy) and 1 <= energy <= 10000,
+                  'Gamma energy must be a finite 1–10000 keV value')
+    else:
+        h.require(energy is None, 'Isotope decay energies come from Geant4 nuclear data, not a mono-gamma energy')
     h.require(type(selection['electronics']) is dict, 'Electronics settings must be retained as an object')
     model, cryostat = G.load_model(), G.load_cryostat()
-    screen = G.source_screen(selection['source_position_mm'], cryostat)
-    source = {'id': SOURCE, 'particle': 'gamma', 'pdg': 22, 'distribution': 'point',
-              'angular_policy': 'isotropic_4pi', 'energy_keV': energy,
-              'position_global_mm': selection['source_position_mm'], 'time_ns': 0,
-              'particles_per_primary': 1, 'normalization': 'per emitted monoenergetic gamma; no activity or decay claim',
-              'source_geometry_screen': screen}
-    return {'kind': 'gegi_source_checked_v1', 'schema_version': 1, 'selection': selection,
+    source = source_contract(selection, cryostat)
+    result = {'kind': 'gegi_source_checked_v1', 'schema_version': 1, 'selection': selection,
             'model_contract': model, 'cryostat_contract': cryostat, 'source_contract': source,
             'coordinate_transform': G.TRANSFORM, 'runtime': runtime_snapshot(), 'source_sha256': source_pins()}
+    if selection['source'] in DECAY_SOURCES:
+        result['decay_data']=isotope_data(source,result['runtime'])
+    return result
 
 
 def material_tables(cryostat):
@@ -122,6 +194,16 @@ def macro(checked, geometry_only=False):
     selection = checked['selection']
     report = {'volumes': [{'name': 'germanium', 'copy_number': 0},
                           *G.layout(checked['cryostat_contract'])['parts']]}
+    if selection['source'] in DECAY_SOURCES and not geometry_only:
+        source=checked['source_contract']
+        text=(cs.macro_text(report, selection['primary_count'], selection['source_position_mm'])
+              if selection['source']==CS137 else
+              decay.macro_text(report, selection['primary_count'], source['registered_preset'], selection['source_position_mm']))
+        # Geant4's unit messenger must retain the requested arbitrary point.
+        text=text.replace('/gps/pos/centre ', '/control/useDoublePrecision true\n/gps/pos/centre ', 1)
+        return ('# GeGI registered at-rest decay; canonical semiconductor and cryostat.\n'
+                '/RMG/Manager/Randomization/RandomEngine JamesRandom\n'
+                '/RMG/Manager/Randomization/Seed '+str(selection['seed'])+'\n'+text)
     # Keep the existing remage output precision/identity settings and explicitly
     # replace only the ion generator and decay-only clock commands.
     lines = cs.macro_text(report, selection['primary_count'], selection['source_position_mm']).splitlines()
@@ -173,6 +255,8 @@ def prepare(selection, output, checked):
         h.write_new(d/'run.mac', macro(checked))
         h.publish_json(d/'model-contract.json', checked['model_contract'])
         h.publish_json(d/'cryostat.json', checked['cryostat_contract'])
+        if 'decay_data' in checked:
+            h.publish_json(d/'decay-data.json',checked['decay_data'])
         runtime = checked['runtime']; prefix = Path(runtime['prefix'])
         emlow = Path(os.environ.get('G4LEDATA', '/missing')).resolve()
         h.require(emlow.is_relative_to(prefix), 'EMLOW dataset is outside the locked environment')
@@ -195,7 +279,7 @@ def prepare(selection, output, checked):
         meta = {'kind': 'gegi_source_prepared_v1', 'schema_version': 1, 'status': 'complete',
                 'producer_adapter': ADAPTER, 'selection': selection, 'model_id': G.MODEL,
                 'model_sha256': G.MODEL_SHA, 'model_contract': checked['model_contract'],
-                'source_id': SOURCE, 'source_contract': checked['source_contract'],
+                'source_id': selection['source'], 'source_contract': checked['source_contract'],
                 'cryostat_contract': checked['cryostat_contract'], 'primary_count': selection['primary_count'],
                 'seed': selection['seed'], 'random_engine': 'CLHEP::HepJamesRandom', 'transport_threads': 1,
                 'source_position_global_mm': selection['source_position_mm'], 'coordinate_transform': G.TRANSFORM,
@@ -204,6 +288,7 @@ def prepare(selection, output, checked):
                     'default_production_cut_mm': .1, 'sensitive_production_cut_mm': .01,
                     'cut_note': 'Range production cuts, not a universal tracking-energy threshold'},
                 'files_sha256': {p.name: h.sha256(p) for p in d.iterdir() if p.is_file()}}
+        meta.update(decay_metadata(checked))
         h.require(check(selection) == checked, 'GeGI inputs/runtime changed during preparation')
         h.publish_json(d/'prepared.json', meta)
         receipt['status'] = 'complete'
@@ -223,12 +308,13 @@ def read_prepared(directory):
         h.require(h.sha256(P.safe_path(d, ref, True)) == sha, 'Prepared GeGI artifact changed: '+ref)
     authority = {'producer_adapter': ADAPTER, 'selection': checked['selection'], 'model_id': G.MODEL,
                  'model_sha256': G.MODEL_SHA, 'model_contract': checked['model_contract'],
-                 'source_id': SOURCE, 'source_contract': checked['source_contract'],
+                 'source_id': checked['selection']['source'], 'source_contract': checked['source_contract'],
                  'cryostat_contract': checked['cryostat_contract'], 'primary_count': checked['selection']['primary_count'],
                  'seed': checked['selection']['seed'], 'random_engine': 'CLHEP::HepJamesRandom', 'transport_threads': 1,
                  'source_position_global_mm': checked['selection']['source_position_mm'],
                  'coordinate_transform': G.TRANSFORM, 'material_tables': material_tables(checked['cryostat_contract']),
                  'source_sha256': checked['source_sha256'], 'runtime': checked['runtime']}
+    authority.update(decay_metadata(checked))
     h.require(all(meta.get(k) == v for k, v in authority.items()), 'Rehashed GeGI preparation policy changed')
     h.require((d/'geometry.gdml').read_text() == G.gdml_text(checked['model_contract'], checked['cryostat_contract'])
               and (d/'run.mac').read_text() == macro(checked) and (d/'geometry.mac').read_text() == macro(checked, True),
@@ -237,7 +323,77 @@ def read_prepared(directory):
     h.require(receipt['status'] == 'complete' and receipt['returncode'] == 0
               and receipt['command'] == command(checked, True), 'Incomplete geometry preparation')
     geometry_log_check(d, checked)
+    if 'decay_data' in checked:
+        h.require(load(d/'decay-data.json')==checked['decay_data'], 'Rehashed GeGI isotope data evidence changed')
     return d, meta, checked
+
+
+def decay_metadata(checked):
+    source=checked['source_contract']
+    if source['id']==SOURCE:
+        return {}
+    return {'source_mode':source['mode'], 'source_pdg':source['pdg'],
+            'source_count_unit':source['count_unit'], 'clock_policy':source['clock_policy'],
+            'daughter_lifetime_limit_ns':source['daughter_lifetime_limit_ns'],
+            'grouping_policy':source['grouping_policy'], 'decay_data':checked['decay_data']}
+
+
+def primary_tracks(rows, names, meta):
+    source=meta['source_contract'];position=meta['source_position_global_mm']
+    vertices,particles=rows['vtx'],rows['particles']
+    h.require(len(vertices)==len(particles)==1 and vertices[0]['n_part']==1
+              and vertices[0]['time']==0 and particles[0]['vertexid']==0,
+              'Missing/duplicate GeGI primary or changed initial GPS clock')
+    vertex=[1000*vertices[0][a] for a in ('xloc','yloc','zloc')]
+    h.require(h.np.allclose(vertex,position,rtol=0,atol=1e-9), 'Wrong actual source position/units')
+    G.source_screen(vertex,meta['cryostat_contract'])
+    if source['id']==SOURCE:
+        by_id=T.tracks(rows['tracks'],names,position)
+        root=next(t for t in rows['tracks'] if t['parent_trackid']==0)
+        energy=source['energy_keV']/1000
+        for p in (particles[0],root):
+            h.require(p['particle']==22 and math.isclose(p['ekin'],energy,rel_tol=1e-12,abs_tol=1e-12)
+                      and math.isclose(math.sqrt(sum(p[a]**2 for a in ('px','py','pz'))),energy,
+                                       rel_tol=1e-12,abs_tol=1e-12), 'Wrong gamma energy/identity/momentum')
+        h.require(all(math.isclose(root[a],particles[0][a],rel_tol=1e-12,abs_tol=1e-12)
+                      for a in ('px','py','pz')), 'Primary/root gamma direction differs')
+        return by_id
+    p=particles[0]
+    h.require(p['particle']==source['pdg'] and p['ekin']==0 and all(p[a]==0 for a in ('px','py','pz')),
+              'Wrong GeGI at-rest initial isotope identity/energy/momentum')
+    if source['id']==CS137:
+        by_id=cs.validate_decay_tracks(rows['tracks'],names)
+        root=next(t for t in rows['tracks'] if t['parent_trackid']==0)
+        h.require(any(t['parent_trackid']==root['trackid'] and t['particle']//10==100056137
+                      for t in rows['tracks']), 'Missing intended Cs137 barium daughter')
+        for track in rows['tracks']:
+            if abs(track['particle'])>=1000000000:
+                h.require(track['particle']//10 in (cs.ION//10,100056137), 'Unexpected Cs137 descendant nuclear family')
+            parent=track['parent_trackid']
+            h.require(parent in (0,root['trackid']) or track['time']>=by_id[parent]['time'],
+                      'Cs137 descendant birth precedes parent')
+    else:
+        h.require(source['id']==CO60, 'Unsupported GeGI decay reader')
+        by_id=decay.validate_tracks(rows['tracks'],names,source['registered_preset'])
+        root=next(t for t in rows['tracks'] if t['parent_trackid']==0)
+    h.require(h.np.allclose([1000*root[a] for a in ('xloc','yloc','zloc')],position,rtol=0,atol=1e-9)
+              and all(root[a]==0 for a in ('px','py','pz')), 'At-rest ion root position/momentum differs from GPS primary')
+    return by_id
+
+
+def decay_record(eid, steps, tracks, names, source):
+    legacy=source['id']==CS137
+    photons=[{'raw_row_index':t['raw_row_index'], 'track_id':t['trackid'],
+              'parent_track_id':t['parent_trackid'], 'time_ns':t['time'],
+              'energy_keV':t['ekin']*1000, 'creation_process':names[t['procid']]}
+             for t in tracks if t['particle']==22 and t['parent_trackid']!=0
+             and (not legacy or 'radioactivedecay' in names[t['procid']].lower())]
+    lines={line['name']:sum(line['window_keV'][0]<=p['energy_keV']<=line['window_keV'][1]
+                            for p in photons) for line in source['diagnostic_lines']}
+    return {'global_decay_id':eid, 'source_id':source['id'], 'decay_photons':photons,
+            'decay_photon_count':len(photons), 'line_photon_counts':lines,
+            'line_photon_count':sum(lines.values()),
+            'pulse_groups':cs.group_deposits(steps,source['grouping_policy']['horizon_ns'])}
 
 
 def events(path, meta):
@@ -248,7 +404,6 @@ def events(path, meta):
     """
     import h5py
     count = meta['primary_count']; materials = meta['material_tables']
-    position = meta['source_position_global_mm']; energy = meta['source_contract']['energy_keV']/1000
     with h5py.File(path, 'r') as raw:
         h.require(set(raw) == {'detector_origins', 'vtx', 'particles', 'tracks', 'processes', 'stp',
                               'number_of_simulated_events'}, 'Unsupported raw GeGI table census')
@@ -276,20 +431,7 @@ def events(path, meta):
         for eid in range(count):
             rows = {key: cursor.take(eid) for key, cursor in cursors.items()}
             vertices, particles = rows['vtx'], rows['particles']
-            h.require(len(vertices) == len(particles) == 1 and vertices[0]['n_part'] == 1
-                      and vertices[0]['time'] == 0 and particles[0]['vertexid'] == 0,
-                      'Missing/duplicate GeGI primary or changed clock')
-            vertex = [1000*vertices[0][a] for a in ('xloc','yloc','zloc')]
-            h.require(h.np.allclose(vertex, position, rtol=0, atol=1e-9), 'Wrong actual source position/units')
-            G.source_screen(vertex, meta['cryostat_contract'])
-            by_id = T.tracks(rows['tracks'], names, position)
-            roots = [t for t in rows['tracks'] if t['parent_trackid'] == 0]
-            for p in (particles[0], roots[0]):
-                h.require(p['particle'] == 22 and math.isclose(p['ekin'], energy, rel_tol=1e-12, abs_tol=1e-12)
-                          and math.isclose(math.sqrt(sum(p[a]**2 for a in ('px','py','pz'))), energy,
-                                           rel_tol=1e-12, abs_tol=1e-12), 'Wrong gamma energy/identity/momentum')
-            h.require(all(math.isclose(roots[0][a], particles[0][a], rel_tol=1e-12, abs_tol=1e-12)
-                          for a in ('px','py','pz')), 'Primary/root gamma direction differs')
+            by_id = primary_tracks(rows,names,meta)
             sums = {}; steps = []
             for table, material in materials.items():
                 values = []
@@ -316,18 +458,29 @@ def events(path, meta):
                               'parent_track_id': row['parent_trackid'], 'pdg': row['particle'],
                               'particle_pdg': row['particle'], 'boundary_classifications': labels})
             edep = math.fsum(s['energy_keV'] for s in steps)
-            yield {'event_id': eid, 'initial_primary_id': eid, 'energy_keV': edep, 'truth_edep_keV': edep,
+            event = {'event_id': eid, 'initial_primary_id': eid, 'energy_keV': edep, 'truth_edep_keV': edep,
                    'steps': steps, 'primary': particles[0], 'vertex': vertices[0], 'tracks': rows['tracks'],
                    'material_energy_keV': {m: math.fsum(values) for m, values in sums.items()}}
+            if meta['source_id'] in DECAY_SOURCES:
+                event.update(decay_record(eid,steps,rows['tracks'],names,meta['source_contract']))
+            yield event
         h.require(all(cursor.next is None for cursor in cursors.values()), 'Unconsumed raw GeGI rows')
 
 
 def census(path, meta):
     totals = {'initial_primaries': 0, 'zero_deposit_primaries': 0, 'nonzero_primaries': 0,
               'positive_ge_rows': 0, 'nonzero_event_ids': []}
+    if meta['source_id'] in DECAY_SOURCES:
+        totals.update(initial_decays=0,pulse_groups=0,decay_photons=0,line_photons=0,
+                      line_photon_counts={line['name']:0 for line in meta['source_contract']['diagnostic_lines']})
     for event in events(path, meta):
         totals['initial_primaries'] += 1
         totals['positive_ge_rows'] += len(event['steps'])
+        if meta['source_id'] in DECAY_SOURCES:
+            totals['initial_decays']+=1
+            totals['pulse_groups']+=len(event['pulse_groups'])
+            totals['decay_photons']+=event['decay_photon_count'];totals['line_photons']+=event['line_photon_count']
+            for name,value in event['line_photon_counts'].items():totals['line_photon_counts'][name]+=value
         if event['steps']:
             totals['nonzero_primaries'] += 1
             totals['nonzero_event_ids'].append(event['event_id'])
@@ -387,10 +540,11 @@ def stream_contract(d, meta, run_receipt):
     storage = {'kind': 'nonzero_deposit_v1', 'initial_primaries': meta['primary_count'],
                'zero_deposit_primaries': counts['zero_deposit_primaries'],
                'nonzero_primaries': counts['nonzero_primaries'], 'efficiency_denominator': meta['primary_count']}
-    return {'kind': KIND, 'schema_version': 1, 'status': 'complete', 'producer_adapter': ADAPTER,
+    result = {'kind': KIND, 'schema_version': 1, 'status': 'complete', 'producer_adapter': ADAPTER,
             'model_id': G.MODEL, 'model_sha256': G.MODEL_SHA, 'model_contract': meta['model_contract'],
-            'source_id': SOURCE, 'source_contract': meta['source_contract'], 'cryostat_contract': meta['cryostat_contract'],
+            'source_id': meta['source_id'], 'source_contract': meta['source_contract'], 'cryostat_contract': meta['cryostat_contract'],
             'coordinate_transform': G.TRANSFORM, 'primary_count': meta['primary_count'],
+            'source_count_unit':meta['source_contract']['count_unit'],
             'seed': meta['seed'], 'random_engine': meta['random_engine'], 'counts': counts,
             'zero_deposit_primaries': counts['zero_deposit_primaries'], 'nonzero_primaries': counts['nonzero_primaries'],
             'event_storage': storage, 'events_file': 'events.jsonl', 'units': {'energy': 'keV', 'length': 'mm', 'time': 'ns'},
@@ -402,6 +556,11 @@ def stream_contract(d, meta, run_receipt):
             'energy_closure': None, 'limitations': ['World-air deposits and final escape energies are not scored; full energy closure is not claimed.',
                 'Track rows are birth records; pre/post Ge steps are chords, not complete trajectories.',
                 'Dimensioned front layers plus nominal body; pure-Al alloy approximation; source is unencapsulated.']}
+    if meta['source_id'] in DECAY_SOURCES:
+        result.update({key:meta[key] for key in ('source_mode','source_pdg','clock_policy',
+                                               'daughter_lifetime_limit_ns','grouping_policy')})
+        result['limitations'].append('Conditional isolated 100 µs reset windows retain delayed deposits in separate pulse groups; no activity, pileup or live-time acquisition model.')
+    return result
 
 
 def extract(directory):

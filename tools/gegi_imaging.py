@@ -1,6 +1,6 @@
 """Signal-derived two-site Compton backprojection, without truth ordering/positions.
 
-The central-pixel depth table is an independent SSD timing approximation. A sky
+Independent SSD depth tables remain simulated timing approximations. A sky
 map identifies direction, not source distance; angular smoothing is a display
 kernel, not a measured resolution. Ambiguities and rejected nonzero events remain.
 """
@@ -50,6 +50,8 @@ def depth_from_timing(delta_ns, table):
         return None
     if not all(finite(x) for x in depths+times):
         return None
+    if not all(b > a for a, b in zip(depths, depths[1:])):
+        return None
     diffs = [b-a for a, b in zip(times, times[1:])]
     if not (all(d > 0 for d in diffs) or all(d < 0 for d in diffs)):
         return None
@@ -62,25 +64,90 @@ def depth_from_timing(delta_ns, table):
     return None
 
 
-def collected(channel, wiring):
+def pixel_depth_table(table, x, y):
+    """Resolve a declared pixel calibration without using interaction truth.
+
+    Pixel schema v1 has ``pixels['X_ID:Y_ID']`` entries containing contact_ids,
+    depth_mm, ctd_ns and status. Its timing_method is inherited by each entry.
+    A missing/invalid pixel never falls back to a central-pixel table.
+    """
+    if not isinstance(table, dict):
+        return None, None, 'depth_calibration_unavailable'
+    pixel_mode = (table.get('per_pixel_calibration') is True or 'pixels' in table
+                  or table.get('kind') == 'gegi_pixel_simulated_depth_v1')
+    selected = table
+    if pixel_mode:
+        if table.get('kind') != 'gegi_pixel_simulated_depth_v1' or table.get('per_pixel_calibration') is not True:
+            return None, None, 'invalid_pixel_depth_calibration'
+        pixels = table.get('pixels')
+        key = f"{x['contact_id']}:{y['contact_id']}"
+        selected = pixels.get(key) if isinstance(pixels, dict) else None
+        if not isinstance(selected, dict):
+            return None, None, 'pixel_depth_calibration_missing'
+        if (selected.get('contact_ids') != [x['contact_id'], y['contact_id']]
+                or selected.get('status') != 'available_model_approximation'):
+            return None, None, 'invalid_pixel_depth_calibration'
+    elif table.get('status', 'available_model_approximation') != 'available_model_approximation':
+        return None, None, 'depth_calibration_unavailable'
+    timing = selected.get('timing_method', table.get('timing_method'))
+    if (pixel_mode and not isinstance(timing, str)) or (timing is not None and
+            (x.get('timing_method') != timing or y.get('timing_method') != timing)):
+        return None, None, 'depth_timing_method_mismatch'
+    # Validate the entire relation, independently of the observed event timing.
+    times = selected.get('ctd_ns')
+    if not isinstance(times, list) or not times or depth_from_timing(times[0], selected) is None:
+        return None, None, 'invalid_pixel_depth_calibration' if pixel_mode else 'depth_calibration_unavailable'
+    method = ('strip_centres_and_independent_pixel_timing' if pixel_mode else
+              'strip_centres_and_independent_central_pixel_timing')
+    return selected, method, None
+
+
+def photopeak_windows(energy_or_windows):
+    """Fixed line hypotheses; never infer a line from emitted/deposited truth."""
+    if finite(energy_or_windows) and energy_or_windows > 0:
+        return [{'line_energy_keV': energy_or_windows,
+                 'half_width_keV': max(5.0, 0.02*energy_or_windows)}]
+    if not isinstance(energy_or_windows, list) or not energy_or_windows:
+        raise ValueError('Provide a positive gamma energy or explicit photopeak windows')
+    result = []
+    for window in energy_or_windows:
+        if (not isinstance(window, dict) or set(window) != {'line_energy_keV', 'half_width_keV'}
+                or not finite(window['line_energy_keV']) or window['line_energy_keV'] <= 0
+                or not finite(window['half_width_keV']) or not 0 < window['half_width_keV'] < window['line_energy_keV']):
+            raise ValueError('Invalid fixed photopeak window')
+        result.append(dict(window))
+    return result
+
+
+def terminal_collection(channel, wiring):
     final = channel.get('final_induced_keV')
+    return (channel.get('collection_candidate') is True
+            and finite(final) and final*wiring >= MIN_COLLECTED_KEV)
+
+
+def collected(channel, wiring):
     energy = channel.get('reconstructed_energy_keV')
-    return (channel.get('accepted') is True and channel.get('collection_candidate') is True
-            and finite(final) and final*wiring >= MIN_COLLECTED_KEV
+    return (channel.get('accepted') is True and terminal_collection(channel, wiring)
             and finite(energy) and energy >= MIN_COLLECTED_KEV)
 
 
 def reconstruct_event(event, channels, table, emission_energy_keV):
     """Never reads event.truth_edep_keV, original hit positions, or known source pose."""
+    windows = photopeak_windows(emission_energy_keV)
     result = {'event_id': event['event_id'], 'status': 'rejected', 'reason': None, 'sites': [], 'cones': []}
     if event.get('status') != 'completed' or not isinstance(event.get('channels'), list):
         result['reason'] = 'native_response_incomplete'
         return result
     meta = {c['id']: c for c in channels}
+    collectors = [c for c in event['channels'] if c.get('contact_id') in meta
+                  and terminal_collection(c, meta[c['contact_id']]['wiring_factor'])]
     hits = [c for c in event['channels'] if c.get('contact_id') in meta
             and collected(c, meta[c['contact_id']]['wiring_factor'])]
-    if any(c['contact_id'] in (17, 34) for c in hits):
+    if any(c['contact_id'] in (17, 34) for c in collectors):
         result['reason'] = 'guard_collection'
+        return result
+    if any(not collected(c, meta[c['contact_id']]['wiring_factor']) for c in collectors):
+        result['reason'] = 'collecting_strip_readout_rejected'
         return result
     xs = sorted((c for c in hits if 1 <= c['contact_id'] <= 16), key=lambda c: c['contact_id'])
     ys = sorted((c for c in hits if 18 <= c['contact_id'] <= 33), key=lambda c: c['contact_id'])
@@ -93,45 +160,79 @@ def reconstruct_event(event, channels, table, emission_energy_keV):
                max(PAIR_ABS_KEV, PAIR_REL*max(x['reconstructed_energy_keV'], y['reconstructed_energy_keV']))
                for x, y in zip(xs, permutation)):
             assignments.append(permutation)
-    if len(assignments) != 1:
-        result['reason'] = 'ambiguous_strip_pairing' if assignments else 'strip_energy_mismatch'
+    if not assignments:
+        result['reason'] = 'strip_energy_mismatch'
         return result
-    sites = []
-    for x, y in zip(xs, assignments[0]):
-        tx, ty = x.get('t50_ns'), y.get('t50_ns')
-        z = depth_from_timing(tx-ty if finite(tx) and finite(ty) else None, table)
-        if z is None:
-            result['reason'] = 'timing_outside_depth_calibration'
-            return result
-        # Each face measures the same deposited energy. Average matched faces;
-        # summing faces would double count the event.
-        energy = (x['reconstructed_energy_keV']+y['reconstructed_energy_keV'])/2
-        sites.append({'position_mm': [(x['contact_id']-8.5)*PITCH_MM,
-                                      (y['contact_id']-25.5)*PITCH_MM, z],
-                      'energy_keV': energy, 'x_contact': x['contact_id'], 'y_contact': y['contact_id'],
-                      'ctd_ns': tx-ty, 'method': 'strip_centres_and_independent_central_pixel_timing'})
-    result['sites'] = sites
-    total = sum(s['energy_keV'] for s in sites)
-    if abs(total-emission_energy_keV) > max(5.0, 0.02*emission_energy_keV):
+    # Each face measures the same event energy. Never sum the two faces.
+    total = sum(c['reconstructed_energy_keV'] for c in xs+ys)/2
+    matches = [w['line_energy_keV'] for w in windows if abs(total-w['line_energy_keV']) <= w['half_width_keV']]
+    if not matches:
         result['reason'] = 'outside_configured_photopeak_window'
         return result
-    candidates = []
-    for order in ((0, 1), (1, 0)):
-        value = cone(sites[order[0]], sites[order[1]])
-        if value is not None:
-            value.update(event_id=event['event_id'], order=list(order))
-            candidates.append(value)
-    if not candidates:
-        result['reason'] = 'no_kinematically_valid_order'
+    candidates, hypotheses, rejected_pairings = [], [], []
+    for index, assignment in enumerate(assignments):
+        sites, reason = [], None
+        for x, y in zip(xs, assignment):
+            relation, method, reason = pixel_depth_table(table, x, y)
+            if reason:
+                break
+            tx, ty = x.get('t50_ns'), y.get('t50_ns')
+            z = depth_from_timing(tx-ty if finite(tx) and finite(ty) else None, relation)
+            if z is None:
+                reason = 'timing_outside_depth_calibration'
+                break
+            # Strip coordinates come from the versioned detector metadata.
+            # The fallback preserves legacy records that predate those fields.
+            px = meta[x['contact_id']].get('strip_center_mm', (x['contact_id']-8.5)*PITCH_MM)
+            py = meta[y['contact_id']].get('strip_center_mm', (y['contact_id']-25.5)*PITCH_MM)
+            if not finite(px) or not finite(py):
+                reason = 'invalid_strip_coordinates'
+                break
+            sites.append({'position_mm': [px, py, z],
+                          'energy_keV': (x['reconstructed_energy_keV']+y['reconstructed_energy_keV'])/2,
+                          'x_contact': x['contact_id'], 'y_contact': y['contact_id'],
+                          'ctd_ns': tx-ty, 'method': method})
+        pair_cones = []
+        if reason is None:
+            for order in ((0, 1), (1, 0)):
+                value = cone(sites[order[0]], sites[order[1]])
+                if value is not None:
+                    value.update(event_id=event['event_id'], pairing_index=index, order=list(order))
+                    pair_cones.append(value)
+            if not pair_cones:
+                reason = 'no_kinematically_valid_order'
+        if reason:
+            rejected_pairings.append({'pairing_index': index, 'reason': reason,
+                                      'contact_pairs': [[x['contact_id'], y['contact_id']] for x, y in zip(xs, assignment)]})
+        else:
+            hypotheses.append({'pairing_index': index, 'sites': sites, 'valid_order_count': len(pair_cones)})
+            candidates.extend(pair_cones)
+    result['rejected_pairings'] = rejected_pairings
+    calibration_failures = [p for p in rejected_pairings if p['reason'] != 'no_kinematically_valid_order']
+    if calibration_failures:
+        # Missing support is not evidence that an alternative pairing is right.
+        # Do not manufacture a unique solution by dropping an uncalibrated one.
+        reasons = {p['reason'] for p in calibration_failures}
+        result['reason'] = next(iter(reasons)) if len(reasons) == 1 else 'incomplete_strip_pairing_calibration'
         return result
+    if not candidates:
+        reasons = {p['reason'] for p in rejected_pairings}
+        result['reason'] = next(iter(reasons)) if len(reasons) == 1 else 'no_valid_strip_pairing_hypothesis'
+        return result
+    # Uniform hypothesis weights are a declared convention, not a calibrated
+    # posterior probability. No source direction or truth ordering breaks ties.
     for candidate in candidates:
         candidate['weight'] = 1/len(candidates)
-    result.update(status='accepted', reason=None, cones=candidates, ordering_ambiguous=len(candidates)>1)
+    result.update(status='accepted', reason=None, cones=candidates,
+                  sites=hypotheses[0]['sites'] if len(hypotheses) == 1 else [],
+                  paired_site_hypotheses=hypotheses, pairing_ambiguous=len(hypotheses)>1,
+                  photopeak_matches_keV=matches,
+                  ordering_ambiguous=any(p['valid_order_count'] > 1 for p in hypotheses))
     return result
 
 
 def backproject(cones, *, step_deg=5, sigma_deg=KERNEL_SIGMA_DEG):
-    """Equal probability per candidate; normalize over actual solid angle."""
+    """Declared candidate weights; normalize over actual solid angle."""
     if step_deg <= 0 or sigma_deg <= 0:
         raise ValueError('Positive angular bin and kernel required')
     azimuth = [float(i) for i in range(-180, 180, step_deg)]
@@ -160,7 +261,8 @@ def backproject(cones, *, step_deg=5, sigma_deg=KERNEL_SIGMA_DEG):
 
 def analyze(payload, selection):
     table = payload.get('depth_calibration')
-    reconstructed = [reconstruct_event(e, payload['channels'], table, selection['gamma_energy_keV']) for e in payload['events']]
+    windows = photopeak_windows(selection.get('photopeak_windows', selection.get('gamma_energy_keV')))
+    reconstructed = [reconstruct_event(e, payload['channels'], table, windows) for e in payload['events']]
     cones = [c for event in reconstructed for c in event['cones']]
     rejected = {}
     for event, derived in zip(payload['events'], reconstructed):
@@ -169,17 +271,21 @@ def analyze(payload, selection):
             rejected[derived['reason']] = rejected.get(derived['reason'], 0)+1
     accepted = sum(e['status'] == 'accepted' for e in reconstructed)
     image = backproject(cones)
-    image.update(method='signal_derived_two_site_compton_backprojection_v1',
+    image.update(method='signal_derived_two_site_compton_backprojection_v2',
                  coordinate_system='detector_xyz; +z front; azimuth atan2(y,x); elevation asin(z)',
                  cones=cones, accepted_events=accepted, rejected_events=len(reconstructed)-accepted,
-                 ambiguous_events=sum(e.get('ordering_ambiguous', False) for e in reconstructed),
+                 ambiguous_events=sum(e.get('ordering_ambiguous', False) or e.get('pairing_ambiguous', False) for e in reconstructed),
+                 ordering_ambiguous_events=sum(e.get('ordering_ambiguous', False) for e in reconstructed),
+                 pairing_ambiguous_events=sum(e.get('pairing_ambiguous', False) for e in reconstructed),
                  rejection_counts=rejected, initial_primaries=payload['counts']['initial_primaries'],
                  selection={'minimum_collected_energy_keV': MIN_COLLECTED_KEV, 'strip_pair_absolute_tolerance_keV': PAIR_ABS_KEV,
-                            'strip_pair_relative_tolerance': PAIR_REL, 'photopeak_half_width_keV': max(5., .02*selection['gamma_energy_keV'])},
-                 limitations=['Simulation-derived central-pixel timing-to-depth table; no per-pixel laboratory depth calibration.',
-                              'Strip-centre transverse positions; charge sharing, unresolved same-strip sites and ambiguous strip pairs are excluded.',
-                              'Only two resolved interactions and configured-line photopeak events are imaged; failed and rejected events remain in results.',
-                              'Both valid orders are retained with equal weights, without selecting by the known source direction.',
+                            'strip_pair_relative_tolerance': PAIR_REL, 'photopeak_windows': windows,
+                            'photopeak_half_width_keV': windows[0]['half_width_keV'] if len(windows) == 1 else None},
+                 limitations=['Simulation-derived timing-to-depth tables; per-pixel tables are used only when explicitly supplied, otherwise the legacy central-pixel approximation applies. No laboratory depth calibration.',
+                              'Strip-centre transverse positions; unresolved same-strip sites and charge-sharing decompositions are excluded.',
+                              'Only two resolved interactions and fixed configured-line photopeak windows are imaged; failed and rejected events remain in results.',
+                              'All valid strip-pair/order hypotheses are retained with equal cone weights summing to one per event; weights are not calibrated probabilities.',
+                              'No hypothesis is selected using source direction, true interaction positions, ordering or emitted energy.',
                               'Directional backprojection only; source distance and activity are not reconstructed.',
                               '5-degree smoothing is an explicit imaging kernel, not a measured angular resolution; Doppler broadening and measured electronics noise are not modeled.'])
     payload['imaging'] = image

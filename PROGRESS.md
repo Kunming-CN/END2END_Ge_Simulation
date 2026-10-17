@@ -2,29 +2,37 @@
 
 ## Active takeover — 2026-10-17
 
-Owner authorized this window to repair GeGI website navigation/assembly first, then
-prepare and execute a total 10M full-chain campaign. The current plan is the new
-active section of tools/NEXT_DEVELOPMENT_PLAN.md; older stop statements are history.
-Git recovered clean at cb52f02; existing GeGI results and fields remain complete.
-No project simulation was running. Own lock: .local/autonomy/gegi-10m.lock, owner
-gegi-10m-root, thread 01a14bca-3953-7c13-80a1-687a9a571455. Existing automation
-automation migrated here and its actual ACTIVE / 30-minute configuration verified.
-Website generators/navigation and native GeGI cryostat views are implemented;
-final display-only rebuild/check passed after correcting static cut-plane lines.
-Live publication/student guide release are not yet verified. Existing saved science
-and LBNL compatibility flags remain unchanged; historical pages retain their URLs.
-Source-blind reconstruction, resident response, sparse lossless stores, campaign
-orchestration and analysis are implemented with targeted checks, not yet a tested
-production chain. Exact saved native-to-electronics replay passed all34 channels.
-Independent pixel calibration is computationally complete:256pixels,216available,
-40unavailable,175fixed offset/depth diagnostics, existing field cache only. Its
-status reply had a wrapper type error after saving; reply fixed and reuse the
-hash-checked calibration (no repeated injections). See .local/gegi-10m/preparation.json
-and pixel-calibration/run.json. Formal10M remains draft; no new radiation primaries
-or formal campaign launched at that checkpoint. Four500-event pilots are now
-running (fixed seeds261017301..304). Next: publish website, measure actual
-gamma/isotope pilots and stop/resume, freeze budget/cuts/seeds, detached launch.
-Read actual state/locks/processes before resuming; preserve completed science.
+Sole supervisor:01a14bca-3953-7c13-80a1-687a9a571455; ownergegi-10m-root,
+.local/autonomy/gegi-10m.lock. Existing automationautomation is ACTIVE every30min
+and targets this window; inspect actual workers/state before any continuation.
+The current authorization and frozen comparison design are in the active section
+of tools/NEXT_DEVELOPMENT_PLAN.md. No extra reviewers, resets or old-science reruns.
+
+Website milestone published at59f9d008c4ae: dedicated native GeGI cryostat3D,
+preview/section, correct compatibility and shared simplified navigation. Exact
+live check passed709files plus all8assemblyassets; desktop navigation, rotation,
+zoom and section verified. No numerical reruns. Student guide releasestudent-runtime-
+59f9d008c4ae has177verified members,824958bytes; actual public ZIPsha256
+758d9cfda79069fbd785365ca871b7b1b6d532fc71b3ac8faeb6414359d53d90.
+Evidence: .local/gegi-website/live-check.json and
+.local/student-runtime-p1/COMPLETE.json. Historical result URLs and LBNL
+compatibility flags are preserved.
+
+Independent simulated pixel-depth calibration complete:216/256available,40strictly
+unavailable;175fixed offset/depth diagnostics, exact existing field cache only.
+Protocol-only reply failure was repaired after saved completion; retained valid
+calibration was reused. Four500-initial gamma-left/right,Cs137/Co60 pilots complete:
+115nonzero,0native failures,2readout rejections,2imaging accepted. Acceptance and
+exact replay passed; not experimental validation or a separation demonstration.
+Measured compressed projection76.14GB;1.5x allowance+temporary+20GiB reserve
+requires136.08GB versus about155GBfree. No formal10M primaries launched yet.
+Actual400-initial stop/resume qualification is running: first100sealed and stopped,
+then resumed; verify terminal receipt and unchanged firstchunk before formalfreeze.
+Authoritative evidence:.local/gegi-10m/{preparation,acceptance,lifecycle}.json;
+qualification/progress.json and COMPLETE.json take precedence over this text.
+Next: finish lifecycle, commit tested runtime, freeze total10M and launch detached;
+healthy30min monitoring must read compact state and exit immediately. Final maps
+and publication remain after formal completion, not a reason to hold workers idle.
 
 ## Prior delivered milestone (retained evidence)
 

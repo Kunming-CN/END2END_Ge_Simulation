@@ -60,6 +60,9 @@
 !simulation/gegi_signal_helpers.jl
 !simulation/test_gegi_signals.jl
 !simulation/test_gegi_checkpoints.jl
+!simulation/gegi_campaign_response.jl
+!simulation/gegi_pixel_calibration.jl
+!transport/test_gegi_source.py
 !transport/source_angle.py
 !transport/test_source_angle.py
 !transport/cryostat_angle_export.cc

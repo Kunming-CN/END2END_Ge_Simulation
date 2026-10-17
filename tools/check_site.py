@@ -364,6 +364,7 @@ def verify_live(url, report):
                       or entry['path']=='detectors/geometry-index.json')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('spectra/')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('viewers/')})
+    selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('assemblies/')})
     selected.update({entry['path']:entry for entry in entries
                      if entry['path'].startswith('detectors/GeGI_3D/display/')})
     for suffix in ('.png', '.svg', '.csv', '.mp4', '.webm', '.json', '.md'):
