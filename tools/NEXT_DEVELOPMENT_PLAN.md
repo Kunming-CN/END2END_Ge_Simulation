@@ -3,19 +3,21 @@
 ## Active owner extension — GeGI (2026-10-17)
 
 Owner extension during delivery: test two equal-energy point sources at different
-positions for spatial separation. Fixed first acceptance:5000primaries each at
+positions for spatial separation. Completed bounded acceptance:5000primaries each at
 [-40,0,40] and[40,0,40]mm,662keV,seeds26101703/26101704,serial CPU with reused
 fields. Use source-independent cone reconstruction with corrected last-rising
 charge timing; compare individual and mixed maps. For this near-field case,
 backproject each cone from its actual vertex onto an explicitly imposedz=40mm
 plane. Keep this assumed plane distinct from measured range or3Dlocalization.
-Do not increase statistics solely to manufacture separation. Record whether the
-bounded sample actually resolves the sources; preserve inconclusive outcomes.
+Do not increase statistics solely to manufacture separation. The left source
+yielded253nonzero/1imaging event; the right231nonzero/4imaging events. Four of the
+five accepted events have ordering ambiguity. Spatial separation is inconclusive,
+not demonstrated; this bounded test is complete and does not authorize more runs.
 
 Steps1–5 are implemented and tested. Step6 is in release/publication closure.
 Actual acceptance:100initial zero-only pilot with stop/resume, then5000initial
-photons,42nonzero events and1signal-derived cone. This verifies the software
-workflow, not experimental accuracy or source localization.
+photons,42nonzero events and1signal-derived cone, plus the two-position test above.
+This verifies the software workflow, not experimental accuracy or source localization.
 
 P0-P5 below remain delivered. The owner now requests a GeGI-only cryostat and
 multichannel Compton workflow in the existing desktop software. This section is
@@ -87,7 +89,7 @@ workflow; configurable compatible detector/source/cryostat; arbitrary exact prim
 count with batches up to10000; reliable stop/resume and data access; newest useful
 representative teaching signals; readable plots and simple navigation; software
 separate from saved showcase data; remove useless generated files and repeated audits.
-Later explicit decisions: seven oversized detectors await a real larger cryostat;
+Later explicit decisions: six oversized detectors await a real larger cryostat;
 no phone work or second-computer prerequisite; keep current preamp unchanged;
 November measurements require complete owner data; newest instruction removes extra
 reviews and zero-input clutter from new product outputs.
@@ -237,7 +239,7 @@ position options through the same configuration/backend, with units and saved re
 placement. Check geometry/overlap and one bounded case only where transport changes.
 Do not expose sliders that the actual backend ignores or admit oversize detectors.
 
-The seven larger models wait for the larger cryostat's real dimensions/materials/
+The six larger models wait for the larger cryostat's real dimensions/materials/
 mounting data. Reuse remage's existing interfaces; adopting paper advice is not a
 new framework/solver/upgrade project. Stop each option when it actually works and
 is documented, without an extra direction-review round.

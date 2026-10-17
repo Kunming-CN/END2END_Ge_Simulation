@@ -6,9 +6,9 @@ handoff is preserved at commit666947fa22d879eae69252d25ec91345d24665cd.
 
 ## Current delivery
 
-Root owns .local/autonomy/round.lock as gegi-integration-root. Implementation
-workers are finished. No extra AI review agents were used. Release/site closure
-is in progress; inspect .local/gegi-integration/delivery.json and actual processes
+Root owns .local/autonomy/round.lock as gegi-integration-root. Core implementation
+and scientific workers are finished. No extra AI review agents were used. Release/site
+closure is in progress; inspect .local/gegi-integration/delivery.json and actual processes
 before continuing. Never repeat completed physics because of a chat interruption.
 
 The dedicated gegi_cryostat_v1 accepts only frozen GeGI_3D. Measured front layers
@@ -44,7 +44,7 @@ original producer, and explicit storage-only rebind remain in
 .local/gegi-integration/storage-failure-original; no new primaries during recovery.
 
 Relevant checks:21shared workflow,6imaging,4protected Control,JS regressions,
-5software-package,6saved-publication,33site,15native helper+5model/request and
+5software-package,8saved-publication,33site,18native helper+5model/request and
 20checkpoint checks passed. Native overlaps:8volumes/10000samples each passed.
 Actual browser verified compatible selection, blocked mismatches, checked source,
 empty results, original nonzero IDs,34channel switching and real cone/map display.
@@ -52,18 +52,29 @@ CLI-data display used a labelled temporary read-only fixture, not forged UI owne
 
 ## Current owner extension and remaining closure
 
-The owner added a two-position source-separation test. Running serial bounded
-5000primary runs gegi-source-left-v1 and gegi-source-right-v1 at[-40,0,40] and
-[40,0,40]mm,662keV,seeds26101703/26101704. Inspect their actual receipts and
-.local/gegi-integration/delivery.json; never restart completed radiation.
+The two-position source-separation test completed serially with 5000 primaries
+each at [-40,0,40] and [40,0,40] mm, 662 keV, seeds 26101703/26101704.
+gegi-source-left-v1: 4747 zero / 253 nonzero / 1 imaging accepted (ambiguous).
+gegi-source-right-v1: 4769 zero / 231 nonzero / 4 imaging accepted (3 ambiguous).
+Both have zero native failures; native endpoint flags are 7 and 4 respectively.
+Native response took 158.139 s and 119.436 s; response plus imaging took 203.039 s
+and 161.989 s. These are computation times, not development/publication wall time.
+Only 5 accepted events cannot establish reliable spatial separation. Do not extend
+the campaign or change seeds to manufacture success. Exact receipts, full sparse
+records and original radiation remain in these roots and delivery.json.
 A real transient-recrossing defect was identified in the old2950Y28charge:
 first50%crossing22.24ns,last79.33ns. New native source uses the last upward
 crossing for both independent calibration and events;18targeted tests passed.
-Old100/5000outputs remain unchanged. Website comparison will use cone vertices
-on explicit knownz=40mm plane, plus directional maps; no recovered range claim.
+Old100/5000outputs remain unchanged. Website comparison uses cone vertices
+on explicit assumed z=40mm plane, plus directional maps; no recovered range claim.
+The mixed plane integral is5.0 from9weighted candidate cones. All484nonzero IDs
+are qualified by source run; all10000initial primaries remain the denominator.
 
 
-Finish existing website build, required local/live checks, commit/push, build and
+The generated website passed local validation and actual browser display. Its
+1691 earlier files remain byte-identical; only guide/GeGI entry changed and four
+GeGI result files were added. Build b8767e91ba1538756293c4c7cee3f63521d9c215f5a57604829e98a2c55a756d.
+Finish required live checks, commit/push, build and
 verify immutable latest student ZIP from formal source commit. No test data or
 publication fixtures go in the student package. Close owned servers and remove
 only owned disposable scratch; retain scientific runs and unique failure records.

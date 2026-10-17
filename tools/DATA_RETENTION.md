@@ -16,6 +16,15 @@ These files and the reproducibility snapshot currently occupy the same physical 
 
 ## Permitted follow-up
 
+The October 17 GeGI runs `.local/runs/gegi-100-pilot-v1/`,
+`gegi-5000-imaging-v1/`, `gegi-source-left-v1/` and `gegi-source-right-v1/`
+are completed scientific records. Preserve their raw radiation, sparse nonzero
+native/readout records, checkpoints, configurations, seeds and completion hashes.
+The two-source test is inconclusive for spatial separation; do not delete or rerun
+it to obtain a more favorable image. `.local/gegi-integration/storage-failure-original/`
+and the timing-recrossing diagnostic retain unique failures and original producer
+versions. A changed display or export does not authorize radiation or SSD reruns.
+
 Preserve `.local/ring-cs137-v1/` as permanent ring-campaign science, including the
 original 500-decay transport containers, streams, effective-model contracts,
 native endpoints/signed signals, readout records, stage logs/configuration and

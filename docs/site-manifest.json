@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "build_id": "f0ba36e77f7cc7634a49360d393f42cbb7b8395b8b2feb7df13c097f2d0ecf0b",
-  "file_count": 1693,
-  "total_bytes": 976854747,
-  "html_pages": 105,
-  "local_links_checked": 3276,
-  "resource_references_checked": 3324,
-  "page_navigation_checked": 1273,
-  "fragments_checked": 71,
-  "downloads_checked": 753,
+  "build_id": "b8767e91ba1538756293c4c7cee3f63521d9c215f5a57604829e98a2c55a756d",
+  "file_count": 1697,
+  "total_bytes": 980499492,
+  "html_pages": 106,
+  "local_links_checked": 3282,
+  "resource_references_checked": 3332,
+  "page_navigation_checked": 1278,
+  "fragments_checked": 73,
+  "downloads_checked": 756,
   "media_references_checked": 1265,
   "metadata_references_checked": 33,
   "other_references_checked": 0,
@@ -1970,8 +1970,8 @@
     },
     {
       "path": "detectors/GeGI_3D/index.html",
-      "bytes": 6106,
-      "sha256": "bdb9f11eca89f0084bc9ca0ce9e081e8c7b91ead17269573c8c66e3b90c38c21"
+      "bytes": 6452,
+      "sha256": "f98f38543cc50f7a933b247f1b33f647cb98367ddf47d1cebac7db523350339f"
     },
     {
       "path": "detectors/GeGI_3D/octagon_geometry.png",
@@ -8164,6 +8164,26 @@
       "sha256": "816823a34a3f3390a69b902d19c0222fdc35f1b2e7caef4f967a1b72ea4469bc"
     },
     {
+      "path": "examples/gegi/index.html",
+      "bytes": 2613676,
+      "sha256": "779a7017dde98b9a093d61b06555af529cd10a9995e54b9343f2b33c156410ce"
+    },
+    {
+      "path": "examples/gegi/publication.json",
+      "bytes": 1783,
+      "sha256": "54f3b2aca1103e3e397f5647d88fc18a2423806beeffe8dc7a65578f1ec2bf8e"
+    },
+    {
+      "path": "examples/gegi/selected-channel.json",
+      "bytes": 186617,
+      "sha256": "64b8cc598a92c3dfd0117647275e03c62610f028bef45f085600148b6013911d"
+    },
+    {
+      "path": "examples/gegi/summary.json",
+      "bytes": 840148,
+      "sha256": "16dd34ebb1b8effff7975a36fb99c7dcedc50bdcc3a1905a98dfbdad5ebacba8"
+    },
+    {
       "path": "examples/native-li/comparison.html",
       "bytes": 512196,
       "sha256": "8fcbe7c037f2246dc4d3e7a6e2830988bd02220e8bc25a0b452eda04c250c6b4"
@@ -8195,8 +8215,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 41367,
-      "sha256": "f709be01de7f2d009333829683f8edab2115ee8a43bd6ce7f0bd5f6b2ff11f51"
+      "bytes": 43542,
+      "sha256": "1a41de49e53d48a0e7e164e844e9d09eb7c380387456a8beaa33d345fd52c10c"
     },
     {
       "path": "index.html",

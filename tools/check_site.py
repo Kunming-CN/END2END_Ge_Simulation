@@ -352,7 +352,7 @@ def verify_live(url, report):
                      if entry['path'].startswith(('models/', 'downloads/'))})
     # The public campaign is an auditable dataset, not just HTML; verify every file.
     selected.update({entry['path']: entry for entry in entries
-                     if entry['path'].startswith(('examples/cs137-10k/', 'examples/cs137-10k-geometry/', 'examples/cs137-10k-hits/', 'examples/cs137-10k-rings/', 'examples/cs137-1m/', 'examples/cs137-1m-response/', 'examples/gamma-native/'))})
+                     if entry['path'].startswith(('examples/cs137-10k/', 'examples/cs137-10k-geometry/', 'examples/cs137-10k-hits/', 'examples/cs137-10k-rings/', 'examples/cs137-1m/', 'examples/cs137-1m-response/', 'examples/gamma-native/', 'examples/gegi/'))})
     # Interactive geometry requires every scene, manifest and active pointer online.
     selected.update({entry['path']: entry for entry in entries
                      if entry['path'].startswith('detectors/') and
