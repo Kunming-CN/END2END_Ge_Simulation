@@ -29,6 +29,7 @@ FIXED = {
     "learn/index.html": ("Pipeline", "methods/index.html", "Methods", "method", "site_restructure"),
     "scenarios/lbnl-cs137/index.html": ("Nominal LBNL cryostat", "assemblies/index.html", "Assemblies", "assembly", "site_restructure"),
     "examples/gegi/index.html": ("GeGI Compton imaging", "results/index.html", "Results", "reader", "gegi_publication"),
+    "results/gegi-campaign/index.html": ("GeGI formal campaign", "results/index.html", "Results", "reader", "gegi_campaign_publication"),
     "methods/native-li.html": ("Saved native Li study", "methods/index.html", "Methods", "method", "saved_archive_display"),
     "lithium/lithium.html": ("Lithium diagnostics", "methods/index.html", "Methods", "method", "saved_archive_display"),
     "results/cs137-10k/index.html": ("Cs137 10K", "results/index.html", "Results", "dataset", "ring_site"),

@@ -27,7 +27,12 @@ RECEIPT = WORK / 'assembly-native-receipt.json'
 EXE = WORK / 'build/gegi_scene'
 KIND = 'gegi_saved_assembly_v1'
 # Exact inspected predecessor, retained solely for a display-only rebuild.
-PREVIOUS_BUNDLES = frozenset({'ab4339cd06c9732730ae39e83dd70bcbab172e648caec656bf0884dfd9f47570'})
+PREVIOUS_BUNDLES = frozenset({
+    'ab4339cd06c9732730ae39e83dd70bcbab172e648caec656bf0884dfd9f47570',
+    # Published59f9d00: exact live-verified assembly remains valid when an
+    # unrelated formal-results route is registered; all assets stay hash-bound.
+    '6a725558513bc6761450cd6fbee4e14ca11b91a66eb160f80c422f7520923081',
+})
 ASSET = 'scenarios/assets/gegi_cryostat_v1.json'
 SOURCE_FILES = ('tools/gegi_assembly.py', 'tools/gegi_assembly.html', 'tools/gegi_assembly.js',
                 'tools/gegi_scene.cc', 'tools/gegi_mesh.hh', 'tools/gegi_scene/CMakeLists.txt', 'tools/geant4_scene/scene.cc',
@@ -247,7 +252,10 @@ def inspect_native():
 
 
 def saved_native():
-    sources = frozen(); prepared, report, asset, pins = inputs(); receipt = read(RECEIPT)
+    # Reading an immutable saved native scene does not regenerate its display.
+    # A new display build still requires its own exact current freeze below.
+    sources = {'kind': KIND, 'source_sha256': source_hashes()}
+    prepared, report, asset, pins = inputs(); receipt = read(RECEIPT)
     # Rendering/portable-publish changes can reuse an unchanged native export.
     # Retain its ORIGINAL full freeze and receipt; check every native build input.
     native_freeze = NATIVE_FREEZE if NATIVE_FREEZE.exists() else FREEZE
@@ -386,6 +394,7 @@ def section_svg(scene):
 
 
 def build():
+    frozen()
     sources, native, prepared, report, asset, pins = saved_native()
     checked(BUNDLE, WORK, new=True)
     scene = public_scene(native, prepared, report, asset, pins)

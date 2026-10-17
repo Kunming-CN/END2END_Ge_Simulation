@@ -23,6 +23,7 @@ import gegi_event_store as S
 KIND = 'gegi_campaign_analysis_v1'
 LINES = (661.657, 1173.228, 1332.492)
 SOURCE_REFS = ('tools/gegi_campaign_analysis.py', 'tools/gegi_imaging.py', 'tools/gegi_event_store.py')
+ANALYSIS_REF = 'tools/gegi_campaign_analysis.py'
 COUNT_FIELDS = ('initial_primaries', 'zero_deposit_primaries', 'nonzero_primaries', 'pulse_groups',
                 'native_failed_groups', 'native_flagged_groups', 'readout_accepted_groups', 'readout_rejected_groups',
                 'imaging_accepted_groups', 'imaging_rejected_groups', 'native_failed_primaries',
@@ -513,6 +514,34 @@ def source_hashes(root):
     return {ref: sha(Path(root)/ref) for ref in SOURCE_REFS}
 
 
+def validate_analysis_revision(plan, *, root=None, allow_analysis_revision=False):
+    """Admit only an explicitly requested consumer revision; producer pins stay exact."""
+    import gegi_campaign as C
+    root = Path(root) if root is not None else Path(__file__).resolve().parents[1]
+    require(type(allow_analysis_revision) is bool, 'Analysis revision opt-in must be boolean')
+    require(plan.get('analysis_criteria') == criteria(), 'Campaign criteria changed after freeze')
+    frozen = plan.get('source_sha256')
+    require(type(frozen) is dict and set(C.SOURCES).union(SOURCE_REFS) <= set(frozen),
+            'Frozen analysis/producer source inventory is incomplete')
+    current = {}
+    for ref, expected in frozen.items():
+        require(type(expected) is str and len(expected) == 64 and all(c in '0123456789abcdef' for c in expected),
+                'Invalid frozen source hash')
+        path = C.W.safe_path(root, ref); C.no_links(path)
+        current[ref] = sha(path)
+        if ref != ANALYSIS_REF:
+            require(current[ref] == expected, 'Frozen producer source changed: '+ref)
+    changed = current[ANALYSIS_REF] != frozen[ANALYSIS_REF]
+    require(not changed or allow_analysis_revision,
+            'Analysis source differs from the frozen campaign; explicit --allow-analysis-revision is required')
+    producers = {ref: value for ref, value in frozen.items() if ref != ANALYSIS_REF}
+    return {'kind': 'gegi_analysis_revision_v1', 'allowed': allow_analysis_revision, 'applied': changed,
+            'permitted_source_ref': ANALYSIS_REF, 'original_analysis_sha256': frozen[ANALYSIS_REF],
+            'current_analysis_sha256': current[ANALYSIS_REF], 'producer_source_pin_count': len(producers),
+            'producer_source_sha256_digest': S.sha(S.encoded(producers)),
+            'policy': 'Only the analysis consumer file may differ with explicit opt-in; every producer source hash and frozen analysis criterion remains exact. Frozen plans and saved science are never rewritten.'}
+
+
 def _stamp(path):
     stat = Path(path).stat()
     return stat.st_size, stat.st_mtime_ns
@@ -525,7 +554,7 @@ def sealed_chunks(directory, plan, *, allow_partial=False):
     complete = read(complete_path) if complete_path.exists() else None
     require(allow_partial or complete is not None, 'Full analysis requires campaign COMPLETE; use explicit partial analysis for sealed chunks only')
     if complete is not None:
-        require(complete.get('kind') == C.KIND and complete.get('status') == 'completed'
+        require(complete.get('kind') == C.KIND and complete.get('status') in ('completed', 'completed_with_native_failures')
                 and complete.get('plan_sha256') == sha(directory/'plan.json')
                 and complete.get('physics_sha256') == plan['physics_sha256']
                 and complete.get('initial_primaries') == plan['total_initial_primaries'], 'Campaign completion identity differs')
@@ -625,7 +654,7 @@ def bootstrap_peaks(ledger_path, groups, *, cost_receipt, budget_seconds, root=N
                            'No claim of a measured detector resolution or calibration uncertainty.']}
 
 
-def analyze(campaign, output, *, root=None, allow_partial=False, bootstrap=False,
+def analyze(campaign, output, *, root=None, allow_partial=False, allow_analysis_revision=False, bootstrap=False,
             bootstrap_cost_receipt=None, bootstrap_budget_seconds=None):
     import gegi_campaign as C
     import numpy as np
@@ -634,9 +663,8 @@ def analyze(campaign, output, *, root=None, allow_partial=False, bootstrap=False
     require(output != campaign and not output.is_relative_to(campaign/'chunks') and not output.exists(),
             'Analysis needs a new derivative directory outside immutable chunks')
     plan = C.read_plan(campaign, root=root, verify=False)
-    require(plan['analysis_criteria'] == criteria(), 'Campaign criteria changed after freeze')
+    revision = validate_analysis_revision(plan, root=root, allow_analysis_revision=allow_analysis_revision)
     pins = source_hashes(root)
-    require(all(plan['source_sha256'].get(ref) == value for ref, value in pins.items()), 'Analysis source differs from the frozen campaign')
     require(not bootstrap or bootstrap_cost_receipt is not None and bootstrap_budget_seconds is not None,
             'Bootstrap is opt-in and requires a measured cost receipt plus explicit seconds budget')
     accumulator = Accumulator(plan['groups']); input_records = []; output.mkdir(parents=True)
@@ -675,7 +703,8 @@ def analyze(campaign, output, *, root=None, allow_partial=False, bootstrap=False
         denominators[g['count_unit']] = denominators.get(g['count_unit'], 0)+g['initial_primary_denominator']
     summary = {'kind': KIND, 'status': 'complete' if complete else 'partial_sealed_chunks',
         'campaign_id': plan['campaign_id'], 'plan_sha256': sha(campaign/'plan.json'), 'physics_sha256': plan['physics_sha256'],
-        'criteria': criteria(), 'source_sha256': pins, 'numpy_version': np.__version__, 'inputs': input_records,
+        'criteria': criteria(), 'source_sha256': pins, 'analysis_revision': revision,
+        'numpy_version': np.__version__, 'inputs': input_records,
         'initial_denominators_by_unit': denominators, 'processed_initial_records': processed,
         'planned_initial_records': plan['total_initial_primaries'], 'groups': groups, 'mixtures': pairs,
         'count_scope': 'Group accepted/rejected counts partition every nonzero pulse group; primary outcome sets can overlap when a primary has multiple groups. Zeros remain in initial denominators only.',
@@ -690,12 +719,14 @@ def analyze(campaign, output, *, root=None, allow_partial=False, bootstrap=False
             'Mixtures combine independent equal-initial-source yields without inter-source pileup; photon and isotope-decay denominators remain separate.'],
         'bootstrap': {'requested': bootstrap, 'status': 'pending_explicit_run' if bootstrap else 'not_requested'}}
     require(source_hashes(root) == pins, 'Analysis source changed while processing')
+    require(validate_analysis_revision(plan, root=root, allow_analysis_revision=allow_analysis_revision) == revision,
+            'Analysis/producer source changed while processing')
     bodies = {'summary.json': summary, 'maps.json': {'kind': KIND, 'criteria': criteria(), 'groups': maps, 'mixtures': pair_maps}}
     for name, value in bodies.items():
         with (output/name).open('xb') as stream: stream.write(encoded(value))
     def seal_output():
         manifest = {'kind': KIND, 'status': summary['status'], 'plan_sha256': summary['plan_sha256'],
-                    'source_sha256': pins, 'radiation_calls': 0, 'field_solves': 0,
+                    'source_sha256': pins, 'analysis_revision': revision, 'radiation_calls': 0, 'field_solves': 0,
                     'files': {p.name: {'sha256': sha(p), 'bytes': p.stat().st_size} for p in sorted(output.iterdir())
                               if p.is_file() and p.name != 'manifest.json'}}
         (output/'manifest.json').write_bytes(encoded(manifest))
@@ -719,6 +750,8 @@ if __name__ == '__main__':
     parser.add_argument('action', choices=('criteria', 'analyze', 'bootstrap-cost'))
     parser.add_argument('--campaign', type=Path); parser.add_argument('--output', type=Path)
     parser.add_argument('--allow-partial', action='store_true'); parser.add_argument('--bootstrap', action='store_true')
+    parser.add_argument('--allow-analysis-revision', action='store_true',
+                        help='Admit only a changed analysis consumer; record both hashes and keep all producer/criteria pins exact')
     parser.add_argument('--bootstrap-cost-receipt', type=Path); parser.add_argument('--bootstrap-budget-seconds', type=float)
     parser.add_argument('--accepted-groups', type=int)
     args = parser.parse_args()
@@ -734,5 +767,6 @@ if __name__ == '__main__':
     else:
         require(args.campaign is not None and args.output is not None, 'Campaign and new derivative output directory are required')
         summary = analyze(args.campaign, args.output, allow_partial=args.allow_partial, bootstrap=args.bootstrap,
+            allow_analysis_revision=args.allow_analysis_revision,
             bootstrap_cost_receipt=args.bootstrap_cost_receipt, bootstrap_budget_seconds=args.bootstrap_budget_seconds)
         print(json.dumps({'kind': KIND, 'status': summary['status'], 'processed_initial_records': summary['processed_initial_records']}))

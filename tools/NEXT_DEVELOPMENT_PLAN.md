@@ -110,7 +110,11 @@ Measured lossless storage projection76,135,237,900bytes; selected1.5x allowance,
 temporary overlap and20GiB reserve require136,080,158,804bytes versus about155GB
 free. The2x budget correctly fails and is not admitted. Gzip round trips preserve
 all pilot originals. Four100-initial-event stop/resume qualification groups use
-fixed seeds261017401..404; no formal primaries are part of qualification.
+fixed seeds261017401..404. All400 completed after a stop at100 and resume;
+the first sealed chunk retained exact hashes/timestamps. Actual saved-data analysis
+passed with26nonzero/25readout accepted/0imaging, inconclusive. No formal primaries
+are part of qualification. An explicit analysis-only producer/reader version record
+allows the terminal-native-failure reporting correction without science reruns.
 Preparation authority: .local/gegi-10m/preparation.json. No formal production yet.
 
 ## Delivered owner extension — GeGI (2026-10-17)

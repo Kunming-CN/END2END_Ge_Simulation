@@ -263,6 +263,9 @@ def validate(site, require_manifest=True, require_models=False):
     if ring_bundle.exists():
         from ring_publication import validate_bundle as validate_rings
         validate_rings(ring_bundle)
+    if (site/'results/gegi-campaign/publication.json').exists():
+        from gegi_campaign_publication import validate_bundle as validate_gegi_campaign
+        validate_gegi_campaign(site/'results/gegi-campaign')
     if (site/"spectra/manifest.json").exists():
         from spectrum_display import validate as validate_spectrum_display
         validate_spectrum_display(site)
@@ -365,6 +368,7 @@ def verify_live(url, report):
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('spectra/')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('viewers/')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('assemblies/')})
+    selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('results/gegi-campaign/')})
     selected.update({entry['path']:entry for entry in entries
                      if entry['path'].startswith('detectors/GeGI_3D/display/')})
     for suffix in ('.png', '.svg', '.csv', '.mp4', '.webm', '.json', '.md'):

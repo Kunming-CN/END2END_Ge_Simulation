@@ -412,7 +412,7 @@ def build_gamma_export(source):
     if (OUT/'examples/data.json').is_file():assemble_teaching_focus(OUT/'examples')
 
 
-def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None):
+def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None, gegi_campaign_bundle=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -429,7 +429,13 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         old = validate(DESTINATION)
     if OUT.exists():
         remove_generated(OUT)
-    if gegi_results is not None:
+    if gegi_campaign_bundle is not None:
+        from gegi_campaign_publication import install_bundle
+        if old is None:
+            validate(DESTINATION)
+        shutil.copytree(DESTINATION,OUT);(OUT/MANIFEST).unlink()
+        install_bundle(gegi_campaign_bundle,OUT)
+    elif gegi_results is not None:
         from gegi_publication import assemble as assemble_gegi
         if old is None:
             validate(DESTINATION)
@@ -503,6 +509,8 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         link_gegi_results(OUT)
         from site_discovery import assemble as assemble_discovery
         assemble_discovery(OUT)
+    from gegi_campaign_publication import link_current as link_gegi_campaign
+    link_gegi_campaign(OUT)
     normalize_text_outputs(OUT)
     return install_snapshot(old)
 
@@ -563,11 +571,12 @@ if __name__ == '__main__':
     parser.add_argument('--ring-results',type=Path,help='Copy complete saved GeRC02/KMRC01 10K results and refresh all four current cases; no computation')
     parser.add_argument('--gegi-results',type=Path,nargs='+',help='Render one or two completed checked GeGI runs onto the saved website; no scientific work')
     parser.add_argument('--gegi-plane-z-mm',type=float,help='Explicit assumed source plane for a two-run comparison; does not infer range')
+    parser.add_argument('--gegi-campaign-bundle',type=Path,help='Copy a completed compact formal GeGI campaign public bundle; no analysis or physics')
     parser.add_argument('--finish-staged',action='store_true',help='Fully validate and install an existing generated stage after a publication-only failure; no regeneration')
     args=parser.parse_args()
-    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
+    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_campaign_bundle)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
     if args.finish_staged:
         finish_staged()
     else:
         if args.gegi_plane_z_mm is not None and args.gegi_results is None: parser.error('--gegi-plane-z-mm requires --gegi-results')
-        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm)
+        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle)

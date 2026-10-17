@@ -26,11 +26,16 @@ calibration was reused. Four500-initial gamma-left/right,Cs137/Co60 pilots compl
 exact replay passed; not experimental validation or a separation demonstration.
 Measured compressed projection76.14GB;1.5x allowance+temporary+20GiB reserve
 requires136.08GB versus about155GBfree. No formal10M primaries launched yet.
-Actual400-initial stop/resume qualification is running: first100sealed and stopped,
-then resumed; verify terminal receipt and unchanged firstchunk before formalfreeze.
+Actual 400-initial stop/resume qualification passed: first 100 sealed/stopped,
+remaining 300 resumed; first-chunk hashes and timestamps unchanged. Saved-data
+analysis passed (26 nonzero, 25 accepted readouts, 0 imaging; inconclusive).
+An explicit analysis-only revision preserves all 38 producer pins after repairing
+terminal native-failure handling; no science rerun.
 Authoritative evidence:.local/gegi-10m/{preparation,acceptance,lifecycle}.json;
 qualification/progress.json and COMPLETE.json take precedence over this text.
-Next: finish lifecycle, commit tested runtime, freeze total10M and launch detached;
+Current runtime release: student-runtime-429ebcd78e69, actual ZIP 829262 bytes,
+SHA256 70c990f3f0cfeeb2f49aa38abd1093b16b371d135e62067d7feb61be000fbb37.
+Next: freeze total 10M and launch detached;
 healthy30min monitoring must read compact state and exit immediately. Final maps
 and publication remain after formal completion, not a reason to hold workers idle.
 

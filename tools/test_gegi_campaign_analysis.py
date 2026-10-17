@@ -184,7 +184,7 @@ class SealedStreaming(unittest.TestCase):
 
     def tearDown(self): self.temp.cleanup()
 
-    def fixture(self):
+    def fixture(self, failed=False, source_pin_overrides=None):
         import gegi_campaign as C
         import workflow_batches as B
         campaign = self.folder/'campaign'; campaign.mkdir()
@@ -197,6 +197,7 @@ class SealedStreaming(unittest.TestCase):
                                      'reserve_bytes': 20*1024**3,
                                      'evidence': {'ref': '.local/synthetic-acceptance.json', 'sha256': '8'*64}},
                     acceptance={'ref': '.local/synthetic-acceptance.json', 'sha256': '8'*64})
+        plan['source_sha256'].update(source_pin_overrides or {})
         plan['physics_sha256'] = C.physics_sha256(plan)
         (campaign/'plan.json').write_bytes(A.encoded(plan))
         (campaign/'FROZEN.json').write_bytes(A.encoded({'kind': C.KIND, 'plan_sha256': A.sha(campaign/'plan.json'), 'physics_sha256': plan['physics_sha256']}))
@@ -205,20 +206,38 @@ class SealedStreaming(unittest.TestCase):
         saved['photopeak_windows_sha256'] = ident['photopeak_windows_sha256']
         for channel in saved['channels']: channel['trace'] = {'time_ns': [0., 1.], 'value': [0., 1.]}
         signals = {i: {'time_ns': [0., 1.], 'signed_induced_keV': [0., 1.]} for i in range(1, 35)}
-        response = {'kind': C.RESPONSE_KIND, 'status': 'completed', 'counts': counts(),
+        terminal = 'completed_with_native_failures' if failed else 'completed'
+        response = {'kind': C.RESPONSE_KIND, 'status': terminal, 'counts': counts(failed=failed),
             'store_identity_sha256': S.sha(S.encoded(ident)), 'calibration_sha256': ident['calibration_sha256'],
             'photopeak_windows_sha256': ident['photopeak_windows_sha256'], 'readout_recipe_sha256': 'c'*64}
         store = S.Store(folder/'events.sqlite', ident, create=True)
-        store.append(3, 0, saved, signals, '1'*64); store.seal(response); store.close()
+        store.append(3, 0, saved, signals, '1'*64)
+        if failed:
+            unknown = event(primary=3, pulse=1, failed=True)
+            unknown['photopeak_windows_sha256'] = ident['photopeak_windows_sha256']
+            store.append(3, 1, unknown, None, '2'*64)
+        store.seal(response); store.close()
         (folder/'response.json').write_bytes(A.encoded(response))
         done = {'kind': C.DONE_KIND, 'identity': ident, 'response': response,
                 'artifacts': {name: {'sha256': A.sha(folder/name), 'bytes': (folder/name).stat().st_size}
                               for name in ('events.sqlite', 'response.json')}}
         (folder/'DONE.json').write_bytes(A.encoded(done))
-        (campaign/'COMPLETE.json').write_bytes(A.encoded({'kind': C.KIND, 'status': 'completed', 'plan_sha256': A.sha(campaign/'plan.json'),
-            'initial_primaries': 10, 'groups': {g['id']: counts()},
+        (campaign/'COMPLETE.json').write_bytes(A.encoded({'kind': C.KIND, 'status': terminal, 'plan_sha256': A.sha(campaign/'plan.json'),
+            'initial_primaries': 10, 'groups': {g['id']: counts(failed=failed)},
             'physics_sha256': plan['physics_sha256'], 'chunks': {'0': A.sha(folder/'DONE.json')}}))
         return campaign, folder, plan
+
+    def test_completed_with_native_failure_retains_unknown_energy_and_denominator(self):
+        campaign, folder, _ = self.fixture(failed=True)
+        original = A.sha(folder/'events.sqlite')
+        result = A.analyze(campaign, self.folder/'analysis', root=ROOT)
+        self.assertEqual(result['status'], 'complete')
+        self.assertEqual(result['processed_initial_records'], 10)
+        group_result = result['groups']['gamma-left']
+        self.assertEqual(group_result['counts']['native_failed_groups'], 1)
+        self.assertEqual(group_result['counts']['nonzero_primaries'], 1)
+        self.assertEqual(group_result['unknown_readout_energy_groups'], 1)
+        self.assertEqual(A.sha(folder/'events.sqlite'), original)
 
     def test_full_sealed_scalar_path_never_loads_arrays_or_reconstructs(self):
         campaign, folder, _ = self.fixture(); old = A.sha(folder/'events.sqlite')
@@ -232,6 +251,37 @@ class SealedStreaming(unittest.TestCase):
         manifest = A.read(self.folder/'analysis/manifest.json')
         self.assertEqual(set(manifest['files']), {'summary.json', 'maps.json', 'cones.jsonl'})
         self.assertEqual(manifest['radiation_calls'], 0)
+        self.assertEqual(manifest['analysis_revision'], result['analysis_revision'])
+        self.assertFalse(result['analysis_revision']['allowed'])
+        self.assertFalse(result['analysis_revision']['applied'])
+
+    def test_analysis_revision_requires_explicit_opt_in_and_records_exact_hashes(self):
+        campaign, folder, _ = self.fixture(source_pin_overrides={A.ANALYSIS_REF: '0'*64})
+        originals = {p: (A.sha(p), p.stat().st_mtime_ns) for p in
+                     (campaign/'plan.json', campaign/'FROZEN.json', campaign/'COMPLETE.json', folder/'DONE.json', folder/'events.sqlite')}
+        output = self.folder/'analysis'
+        with self.assertRaisesRegex(ValueError, 'explicit --allow-analysis-revision'):
+            A.analyze(campaign, output, root=ROOT)
+        self.assertFalse(output.exists())
+        result = A.analyze(campaign, output, root=ROOT, allow_analysis_revision=True)
+        revision = result['analysis_revision']
+        self.assertTrue(revision['allowed']); self.assertTrue(revision['applied'])
+        self.assertEqual(revision['original_analysis_sha256'], '0'*64)
+        self.assertEqual(revision['current_analysis_sha256'], A.sha(ROOT/A.ANALYSIS_REF))
+        self.assertEqual(A.read(output/'manifest.json')['analysis_revision'], revision)
+        self.assertEqual(originals, {p: (A.sha(p), p.stat().st_mtime_ns) for p in originals})
+
+    def test_revision_does_not_admit_any_producer_or_criteria_change(self):
+        _, _, plan = self.fixture(source_pin_overrides={A.ANALYSIS_REF: '0'*64})
+        for ref in ('tools/gegi_imaging.py', 'tools/gegi_event_store.py', 'transport/gegi_geometry.py'):
+            changed = copy.deepcopy(plan); changed['source_sha256'][ref] = '1'*64
+            with self.subTest(ref=ref), self.assertRaisesRegex(ValueError, 'Frozen producer source changed'):
+                A.validate_analysis_revision(changed, root=ROOT, allow_analysis_revision=True)
+        changed = copy.deepcopy(plan); changed['analysis_criteria']['kernel_sigma_deg'] = 6.
+        with self.assertRaisesRegex(ValueError, 'criteria changed'):
+            A.validate_analysis_revision(changed, root=ROOT, allow_analysis_revision=True)
+        with self.assertRaisesRegex(ValueError, 'must be boolean'):
+            A.validate_analysis_revision(plan, root=ROOT, allow_analysis_revision='yes')
 
     def test_unsealed_or_tampered_scalar_data_fail_closed(self):
         campaign, folder, plan = self.fixture()
