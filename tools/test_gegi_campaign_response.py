@@ -149,6 +149,49 @@ class AdapterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'scalar mismatch'):
             C.verify_replayed_channels({'channels': [saved]}, bad)
 
+    def test_prior_recipe_is_sealed_without_reprocessing_or_rewriting_old_group(self):
+        import gegi_campaign_analysis as A
+        self.worker.ready['source_code_sha256']={'gegi_campaign_response.jl':'b'*64}
+        old_recipe=copy.deepcopy(self.worker.recipe());old_recipe['source_code_sha256']['gegi_campaign_response.jl']='a'*64
+        raw={'event_id':2,'vertex':{'time':0.},'steps':[step(4,10.)]};stream=self.root/'events.jsonl';stream.write_bytes(S.encoded(raw)+b'\n')
+        C.write(self.root/'manifest.json',{'kind':'gegi_event_stream_v1','events_file':'events.jsonl','events_sha256':C.file_sha(stream),
+            'model_sha256':'m'*64,'source_id':'gamma','primary_count':5,'zero_deposit_primaries':4,'nonzero_primaries':1})
+        table={'kind':'gegi_pixel_simulated_depth_v1','per_pixel_calibration':True,'model_sha256':'m'*64,
+            'field_cache_sha256':'f'*64,'drift_numerics':{'dt':1.},'calibration_source_sha256':{}}
+        C.write(self.root/'calibration.json',table)
+        calibration={'ref':str(self.root/'calibration.json'),'sha256':C.file_sha(self.root/'calibration.json')}
+        windows=[{'line_energy_keV':662.,'half_width_keV':13.24}]
+        identity={'source_group':'gamma','chunk_index':0,'campaign_initial_offset':0,'native_request_sha256':'r'*64,
+            'calibration_sha256':calibration['sha256'],'photopeak_windows_sha256':S.sha(S.encoded(windows))}
+        context={k:identity[k] for k in ('source_group','chunk_index','campaign_initial_offset')}
+        context['root']=str(self.root.relative_to(C.ROOT)).replace('\\','/')
+        group=next(C.pulse_groups(raw,'gamma',context));input_sha=S.sha(S.encoded(group))
+        event={'event_id':2,'group_id':0,'status':'native_failed','channels':None,
+            'readout_recipe_sha256':S.sha(S.encoded(old_recipe)),'readout_summary':{'accepted':False,'energy_keV':None},
+            'reconstruction':{'status':'rejected','cones':[]}}
+        store=S.Store(self.root/'events.sqlite',identity,create=True)
+        store.append(2,0,event,None,input_sha);saved,_=store.read(2,0)
+        original=store.db.execute('SELECT metadata FROM events').fetchone()[0];store.close()
+        prior={'kind':'gegi_prior_recipe_provenance_v1','revision':{'ref':'.local/synthetic/revision.json','sha256':'c'*64},
+            'original_store_sha256':C.file_sha(self.root/'events.sqlite'),
+            'recipes':{event['readout_recipe_sha256']:old_recipe},
+            'events':[{'event_id':2,'group_id':0,'input_sha256':input_sha,'metadata_sha256':S.sha(S.encoded(saved)),
+                       'readout_recipe_sha256':event['readout_recipe_sha256']}],
+            'wrapper_source_change':{'name':'gegi_campaign_response.jl','old_sha256':'a'*64,'new_sha256':'b'*64}}
+        self.worker.command=lambda *a,**kw:self.fail('Preserved group must not execute drift')
+        result=self.worker.run_chunk(self.root/'manifest.json',self.root/'events.sqlite',identity,
+            calibration=calibration,photopeak_windows=windows,receipt_path=self.root/'response.json',prior_recipe_provenance=prior)
+        self.assertEqual(result['prior_recipe_provenance'],prior)
+        self.assertEqual(A.response_recipe_for_event(result,saved),old_recipe)
+        store=S.Store(self.root/'events.sqlite',identity)
+        try:
+            self.assertEqual(store.db.execute('SELECT metadata FROM events').fetchone()[0],original)
+            self.assertEqual(json.loads(store.db.execute('SELECT body FROM completion').fetchone()[0]),result)
+        finally:store.close()
+        changed=copy.deepcopy(result);changed['readout_recipe']['readout_config']['gain']=9
+        changed['readout_recipe_sha256']=S.sha(S.encoded(changed['readout_recipe']))
+        with self.assertRaisesRegex(ValueError,'physics/configuration'):A.response_recipe_for_event(changed,saved)
+
     def test_sparse_chunk_counts_groups_and_unique_primaries_and_seals(self):
         event = self.event();stream = self.root/'events.jsonl'
         stream.write_bytes(S.encoded(event)+b'\n')

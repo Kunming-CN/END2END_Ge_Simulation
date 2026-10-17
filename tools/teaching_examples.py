@@ -30,6 +30,12 @@ PREVIOUS_DISPLAY = (
     "b19522bc7680b5a95a6193cb42f5e8a9fa48cf5d1070ee133254499779b291f7",
     "150932ba5c6235ff98066bb80edb3c44d31a363801b56b0b01953b9bed7f2cbf",
 )
+# Exact published59f9d008c4ae Git bytes. Both files must match; validation still
+# rebuilds every scientific value and changes only the historical generator map.
+PUBLISHED_PREVIOUS_DISPLAYS = frozenset({(
+    "3292448d1e0f4fbe57db7b9ca475e176bf8a0467677fcf80a242a91d3c6ca185",
+    "6531f87cbac6507352d6a6e20fc32e983fef85e849086ce56a9a37faddcfa4da",
+)})
 FOLDERS = {
     "AK02": "examples/cs137-10k/AK02/response",
     "SAP22": "examples/cs137-10k/SAP22/response",
@@ -335,7 +341,8 @@ def validate(site):
     payload = build_payload(site)
     html = render(payload)
     data_bytes, page_bytes = (site / DATA).read_bytes(), (site / PAGE).read_bytes()
-    if (hashlib.sha256(data_bytes).hexdigest(), hashlib.sha256(page_bytes).hexdigest()) == PREVIOUS_DISPLAY:
+    saved_hashes = (hashlib.sha256(data_bytes).hexdigest(), hashlib.sha256(page_bytes).hexdigest())
+    if saved_hashes == PREVIOUS_DISPLAY or saved_hashes in PUBLISHED_PREVIOUS_DISPLAYS:
         previous = json.loads(data_bytes)
         previous_generators = previous["provenance"]["generator_sha256"]
         previous["provenance"]["generator_sha256"] = payload["provenance"]["generator_sha256"]

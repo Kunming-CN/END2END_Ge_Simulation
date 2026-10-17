@@ -36,7 +36,8 @@ class CampaignPublication(unittest.TestCase):
             self.channels.append({'contact_id':i,'accepted':True,'reconstructed_energy_keV':10.,
                 'final_induced_keV':20. if i in (1,2,18,19) else 0.,'trace':trace})
         recipe={'channels':[{'id':i} for i in range(1,35)],'readout_config':{},'electronics_calibration':{},
-                'ionisation_energy_eV':2.96,'drift_dt_ns':1.,'source_code_sha256':{}}
+                'ionisation_energy_eV':2.96,'drift_dt_ns':1.,
+                'source_code_sha256':{'gegi_campaign_response.jl':'1'*64}}
         self.recipe_sha=W.digest(recipe);inputs=[];groups={};maps={};complete_groups={};chunk_hashes={}
         for chunk in C.chunks(self.plan):
             key=chunk['source_group'];g=next(x for x in self.plan['groups'] if x['id']==key)
@@ -151,6 +152,37 @@ class CampaignPublication(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'Store changed'):
             P.representative(self.campaign,group,self.base/'refused',replayer=never)
         never.assert_not_called()
+
+    def test_representative_preserves_verified_prior_recipe_after_failure_policy_repair(self):
+        from contextlib import closing
+        import sqlite3
+        group=copy.deepcopy(self.summary['groups']['gamma-left'])
+        database=self.campaign/group['representative']['store_ref']
+        done=W.read(database.parent/'DONE.json');response=done['response']
+        old_recipe=copy.deepcopy(response['readout_recipe']);old_sha=W.digest(old_recipe)
+        with A.scalar_store(database,done['identity'],response) as store:
+            event,_=store.read(9,0)
+            input_sha=store.db.execute('SELECT input_sha256 FROM events WHERE primary_id=9 AND group_id=0').fetchone()[0]
+        response['readout_recipe']['source_code_sha256']['gegi_campaign_response.jl']='2'*64
+        response['readout_recipe_sha256']=W.digest(response['readout_recipe'])
+        response['prior_recipe_provenance']={
+            'kind':'gegi_prior_recipe_provenance_v1','revision':{'ref':'revisions/failure-policy-v2.json','sha256':'3'*64},
+            'original_store_sha256':W.sha(database),'recipes':{old_sha:old_recipe},
+            'events':[{'event_id':9,'group_id':0,'input_sha256':input_sha,
+                       'metadata_sha256':W.digest(event),'readout_recipe_sha256':old_sha}],
+            'wrapper_source_change':{'name':'gegi_campaign_response.jl','old_sha256':'1'*64,'new_sha256':'2'*64}}
+        with closing(sqlite3.connect(database)) as db:
+            with db:
+                db.execute('UPDATE completion SET body=? WHERE singleton=1',(S.encoded(response),))
+        digest=W.sha(database);done['artifacts']['events.sqlite']['sha256']=digest
+        W.write(database.parent/'DONE.json',done);group['representative']['store_sha256']=digest
+        def replay(request,output,log,**kwargs):
+            self.assertEqual(W.read(request)['source_code_sha256'],old_recipe['source_code_sha256'])
+            return self.fake_replay(request,output,log,**kwargs)
+        record,_=P.representative(self.campaign,group,self.base/'prior-recipe-replay',replayer=replay)
+        self.assertEqual(record['readout_recipe_sha256'],old_sha)
+        self.assertEqual(record['readout_source_code_sha256'],old_recipe['source_code_sha256'])
+        self.assertEqual(record['replay']['channels'],34)
 
     def test_publication_uses_verified_explicit_revision_and_refuses_forged_metadata(self):
         original=copy.deepcopy(self.summary['analysis_revision'])

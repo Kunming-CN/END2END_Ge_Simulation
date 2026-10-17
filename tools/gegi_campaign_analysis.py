@@ -514,6 +514,28 @@ def source_hashes(root):
     return {ref: sha(Path(root)/ref) for ref in SOURCE_REFS}
 
 
+def response_recipe_for_event(response, event):
+    """Select a recorded recipe without rewriting a preserved pre-recovery row."""
+    recipe = response['readout_recipe']; current = S.sha(S.encoded(recipe))
+    require(response['readout_recipe_sha256'] == current, 'Current readout recipe hash changed')
+    wanted = event['readout_recipe_sha256']
+    if wanted == current:
+        return recipe
+    prior = response.get('prior_recipe_provenance')
+    require(type(prior) is dict and prior.get('kind') == 'gegi_prior_recipe_provenance_v1', 'Unadmitted prior readout recipe')
+    old = prior.get('recipes', {}).get(wanted)
+    require(type(old) is dict and S.sha(S.encoded(old)) == wanted, 'Prior readout recipe hash changed')
+    change = prior['wrapper_source_change']; name = change['name']
+    require(name == 'gegi_campaign_response.jl' and old['source_code_sha256'].get(name) == change['old_sha256']
+            and recipe['source_code_sha256'].get(name) == change['new_sha256'], 'Prior recipe wrapper lineage differs')
+    expected = copy.deepcopy(old); expected['source_code_sha256'][name] = change['new_sha256']
+    require(expected == recipe, 'Recovery changed readout physics/configuration or other source pins')
+    matches = [r for r in prior['events'] if (r['event_id'], r['group_id']) == (event['event_id'], event['group_id'])]
+    require(len(matches) == 1 and matches[0]['readout_recipe_sha256'] == wanted and
+            matches[0]['metadata_sha256'] == S.sha(S.encoded(event)), 'Prior event metadata/version binding changed')
+    return old
+
+
 def validate_analysis_revision(plan, *, root=None, allow_analysis_revision=False):
     """Admit only an explicitly requested consumer revision; producer pins stay exact."""
     import gegi_campaign as C
@@ -547,7 +569,7 @@ def _stamp(path):
     return stat.st_size, stat.st_mtime_ns
 
 
-def sealed_chunks(directory, plan, *, allow_partial=False):
+def sealed_chunks(directory, plan, *, allow_partial=False, root=None):
     """Verify only the scalar subset needed here; do not rescan large raw archives."""
     import gegi_campaign as C
     directory = Path(directory); complete_path = directory/'COMPLETE.json'
@@ -571,6 +593,13 @@ def sealed_chunks(directory, plan, *, allow_partial=False):
         response = read(folder/'response.json')
         require(done['response'] == response and response.get('status') in ('completed', 'completed_with_native_failures')
                 and response['store_identity_sha256'] == S.sha(S.encoded(identity)), 'Sealed response identity changed')
+        if 'recovery' in plan:
+            import gegi_campaign_recovery as R
+            require(response.get('prior_recipe_provenance') == R.prior_provenance(plan, chunk,
+                    root=Path(root) if root is not None else Path(__file__).resolve().parents[1]),
+                    'Recovered response recipe ledger differs from frozen revision')
+        else:
+            require('prior_recipe_provenance' not in response, 'Unexpected prior recipe provenance')
         for name in ('events.sqlite', 'response.json'):
             path = folder/name; record = done['artifacts'][name]
             require(path.is_file() and path == path.resolve() and path.stat().st_size == record['bytes'] and sha(path) == record['sha256'],
@@ -670,7 +699,7 @@ def analyze(campaign, output, *, root=None, allow_partial=False, allow_analysis_
     accumulator = Accumulator(plan['groups']); input_records = []; output.mkdir(parents=True)
     ledger_path = output/'cones.jsonl'
     with ledger_path.open('xb') as ledger:
-        for chunk, folder, done, done_hash in sealed_chunks(campaign, plan, allow_partial=allow_partial):
+        for chunk, folder, done, done_hash in sealed_chunks(campaign, plan, allow_partial=allow_partial, root=root):
             database = folder/'events.sqlite'; before = _stamp(database); identity = done['identity']
             store_ref = database.relative_to(campaign).as_posix(); response = done['response']
             require(response['calibration_sha256'] == identity['calibration_sha256']
@@ -679,8 +708,9 @@ def analyze(campaign, output, *, root=None, allow_partial=False, allow_analysis_
                 def records():
                     for primary_id, pulse_id in store.keys():
                         event, signals = store.read(primary_id, pulse_id, with_signals=False)
-                        require(signals is None and event['readout_recipe_sha256'] == response['readout_recipe_sha256'],
-                                'Unexpected signal load or changed fixed readout recipe')
+                        require(signals is None, 'Unexpected signal load')
+                        if event['readout_recipe_sha256'] != response['readout_recipe_sha256']:
+                            response_recipe_for_event(response, event)
                         yield primary_id, pulse_id, event
                 accumulator.consume(chunk['source_group'], records(), declared_counts=response['counts'], identity=identity,
                     store_ref=store_ref, store_sha256=done['artifacts']['events.sqlite']['sha256'], ledger=ledger)
@@ -704,6 +734,7 @@ def analyze(campaign, output, *, root=None, allow_partial=False, allow_analysis_
     summary = {'kind': KIND, 'status': 'complete' if complete else 'partial_sealed_chunks',
         'campaign_id': plan['campaign_id'], 'plan_sha256': sha(campaign/'plan.json'), 'physics_sha256': plan['physics_sha256'],
         'criteria': criteria(), 'source_sha256': pins, 'analysis_revision': revision,
+        'source_recovery_sha256': plan.get('recovery', {}).get('sha256'),
         'numpy_version': np.__version__, 'inputs': input_records,
         'initial_denominators_by_unit': denominators, 'processed_initial_records': processed,
         'planned_initial_records': plan['total_initial_primaries'], 'groups': groups, 'mixtures': pairs,
@@ -716,6 +747,7 @@ def analyze(campaign, output, *, root=None, allow_partial=False, allow_analysis_
             'Line membership uses fixed-gain readout energy only. Unknown failed/rejected energies are not assigned to isotope windows.',
             'Every isotope contributes to every observed-energy window when selected; source labels never remove continuum contamination.',
             'All candidate cones are preserved with equal weights per accepted pulse group; source truth never chooses a candidate.',
+            'For an explicit source recovery, preserved groups keep their original wrapper/readout recipe hashes; exact event metadata selects the bound prior recipe.',
             'Mixtures combine independent equal-initial-source yields without inter-source pileup; photon and isotope-decay denominators remain separate.'],
         'bootstrap': {'requested': bootstrap, 'status': 'pending_explicit_run' if bootstrap else 'not_requested'}}
     require(source_hashes(root) == pins, 'Analysis source changed while processing')
@@ -726,7 +758,8 @@ def analyze(campaign, output, *, root=None, allow_partial=False, allow_analysis_
         with (output/name).open('xb') as stream: stream.write(encoded(value))
     def seal_output():
         manifest = {'kind': KIND, 'status': summary['status'], 'plan_sha256': summary['plan_sha256'],
-                    'source_sha256': pins, 'analysis_revision': revision, 'radiation_calls': 0, 'field_solves': 0,
+                    'source_sha256': pins, 'analysis_revision': revision,
+                    'source_recovery_sha256': summary['source_recovery_sha256'], 'radiation_calls': 0, 'field_solves': 0,
                     'files': {p.name: {'sha256': sha(p), 'bytes': p.stat().st_size} for p in sorted(output.iterdir())
                               if p.is_file() and p.name != 'manifest.json'}}
         (output/'manifest.json').write_bytes(encoded(manifest))

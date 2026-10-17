@@ -138,7 +138,8 @@ def representative(campaign,group,output,*,root=ROOT,replayer=replay_only):
     require(event['native_signals']=={str(c['contact_id']):c['native_signals'] for c in rep['channels']},
             'Representative native channel references changed')
     output=Path(output);output.mkdir(parents=True)
-    recipe=response['readout_recipe'];request={**recipe,'native_signals':native,'horizon_ns':event.get('readout_horizon_ns')}
+    recipe=A.response_recipe_for_event(response,event)
+    request={**recipe,'native_signals':native,'horizon_ns':event.get('readout_horizon_ns')}
     request_path=output/'input.json';result_path=output/'output.json'
     W.write(request_path,request,fresh=True)
     result=replayer(request_path,result_path,output/'replay.log',root=root)
@@ -148,6 +149,8 @@ def representative(campaign,group,output,*,root=ROOT,replayer=replay_only):
               'source_global_initial_id','campaign_initial_id')},'selection_rule':rep['selection_rule'],
             'unambiguous':rep['unambiguous'],'readout_energy_keV':rep['readout_energy_keV'],
             'native_reference_channels':rep['channels'],'replay':check,
+            'readout_recipe_sha256':event['readout_recipe_sha256'],
+            'readout_source_code_sha256':recipe['source_code_sha256'],
             'replay_input_sha256':sha(request_path),'replay_output_sha256':sha(result_path),
             'primary_time_ns':event['input_group']['primary_time_ns'],
             'group_origin_time_ns':event['input_group']['group_origin_time_ns'],

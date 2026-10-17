@@ -322,7 +322,8 @@ class ResidentWorker:
         output.unlink();path.unlink()
         return verified
 
-    def run_chunk(self, manifest_path, store_path, store_identity, *, calibration, photopeak_windows, receipt_path):
+    def run_chunk(self, manifest_path, store_path, store_identity, *, calibration, photopeak_windows, receipt_path,
+                  prior_recipe_provenance=None):
         manifest_path = Path(manifest_path).resolve()
         manifest = read(manifest_path);manifest_sha256 = file_sha(manifest_path)
         require(manifest['kind'] == 'gegi_event_stream_v1' and manifest['events_file'] == 'events.jsonl', 'Unsupported sparse manifest')
@@ -347,11 +348,21 @@ class ResidentWorker:
         store_path = Path(store_path)
         store = S.Store(store_path, store_identity, create=not store_path.exists())
         try:
+            if prior_recipe_provenance is not None:
+                from gegi_campaign_analysis import response_recipe_for_event
+                check_response={'readout_recipe':self.recipe(),'readout_recipe_sha256':S.sha(S.encoded(self.recipe())),
+                                'prior_recipe_provenance':prior_recipe_provenance}
+                for record in prior_recipe_provenance['events']:
+                    require(store.has(record['event_id'],record['group_id'],record['input_sha256']),
+                            'Recovery lost a preserved native group')
+                    old,_=store.read(record['event_id'],record['group_id'],with_signals=False)
+                    response_recipe_for_event(check_response,old)
             existing = store.db.execute('SELECT body FROM completion WHERE singleton=1').fetchone()
             if existing:
                 result = json.loads(existing[0])
                 require(result['input_manifest_sha256'] == manifest_sha256 and
-                        result['store_identity_sha256'] == S.sha(S.encoded(store_identity)), 'Sealed response identity changed')
+                        result['store_identity_sha256'] == S.sha(S.encoded(store_identity)) and
+                        result.get('prior_recipe_provenance') == prior_recipe_provenance, 'Sealed response identity changed')
                 for key in store.keys():
                     store.read(*key, with_signals=True)
             else:
@@ -402,6 +413,7 @@ class ResidentWorker:
                     'count_scope': 'Readout/imaging group acceptance and rejection partition all nonzero groups. Unique-primary outcome sets mean at least one group with that outcome and may overlap.',
                     'transport_counts': manifest.get('counts'), 'source_id': source_id,
                     'native_request_sha256': self.request_sha256, 'new_field_solve': False}
+                if prior_recipe_provenance is not None:result['prior_recipe_provenance']=prior_recipe_provenance
                 store.seal(result)
         finally:
             store.close()

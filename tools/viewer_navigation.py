@@ -35,6 +35,8 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '4945d697ae27217b3c4ff008d247445af43a6f44c5a327a845a3e48aa20b5675',
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
+ # Exact published59f9d008c4ae Git manifest before the optional campaign route.
+ 'd44b2095341d3ed08eccd8e89320fe82cfb361d8d077ef8c30ab48599e68b3ee',
  # Exact cb52f02 Git bytes, before adding dedicated GeGI assembly navigation.
  'b748e1b35a7d38938fe0e6588dbf9c1dd5cdc81d49884f52879a55dbe41e4ffe',
  # Exact accepted 6db59a35 reader before Co60/source download updates.
@@ -260,7 +262,7 @@ def validate(site,current=False):
     known_current=m['adapter_sources']==FROZEN
     require(known_current or (not current and sha(manifest_path) in TRUSTED_PREVIOUS_UNIFIED_MANIFESTS),
             'Unknown adapter source binding; preserve the saved display instead of resealing it')
-    if current or known_current:
+    if current or known_current or sha(manifest_path)=='d44b2095341d3ed08eccd8e89320fe82cfb361d8d077ef8c30ab48599e68b3ee':
         rings=ring_bundle(site)
         require(m.get('saved_ring_files',{})==ring_records(site,rings),'Saved ring file binding mismatch')
         require(m.get('saved_response_files',{})==response_records(site),'Saved response file binding mismatch')

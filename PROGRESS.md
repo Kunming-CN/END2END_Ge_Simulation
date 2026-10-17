@@ -1,43 +1,63 @@
 # Current handoff
 
-## Active takeover — 2026-10-17
+## Active GeGI 10M campaign — 2026-10-17
 
-Sole supervisor:01a14bca-3953-7c13-80a1-687a9a571455; ownergegi-10m-root,
-.local/autonomy/gegi-10m.lock. Existing automationautomation is ACTIVE every30min
-and targets this window; inspect actual workers/state before any continuation.
-The current authorization and frozen comparison design are in the active section
-of tools/NEXT_DEVELOPMENT_PLAN.md. No extra reviewers, resets or old-science reruns.
+Formal full-chain campaign is undergoing a targeted recovery in .local/gegi-10m/campaign.
+Its first10k transport completed; native processing stopped at event1188/group0
+with an initial point on a contact. Preserve the exact error/input and58committed
+groups; no row nudging, dropping or invented charge. Both original workers exited.
+Read compact progress.json and actual process identities before any action. Original
+plan SHA256: 3cfcf66a0e732a086396ad54e4f4c4be3c398444cfccd3bd6d81500ea18ba828.
+Original source commit: 9cd3f6c80ad77663d9cb74aa3777c65f97689195. Initial supervisor PID9076,
+creation identity134367516460831596; do not rely on PID alone after interruption.
+The resumed single resident native worker must reuse the exact field cache; no field solves. The
+1000 chunks total 10M initial events: 2M gamma-left, 2M gamma-right, 3M Cs137-left,
+3M Co60-right. Photon and decay denominators stay separate. Preparation2400 is
+excluded. Allocation, fixed seeds/cuts and criteria are in NEXT_DEVELOPMENT_PLAN.
 
-Website milestone published at59f9d008c4ae: dedicated native GeGI cryostat3D,
-preview/section, correct compatibility and shared simplified navigation. Exact
-live check passed709files plus all8assemblyassets; desktop navigation, rotation,
-zoom and section verified. No numerical reruns. Student guide releasestudent-runtime-
-59f9d008c4ae has177verified members,824958bytes; actual public ZIPsha256
-758d9cfda79069fbd785365ca871b7b1b6d532fc71b3ac8faeb6414359d53d90.
-Evidence: .local/gegi-website/live-check.json and
-.local/student-runtime-p1/COMPLETE.json. Historical result URLs and LBNL
-compatibility flags are preserved.
+This chat 01a14bca-3953-7c13-80a1-687a9a571455 owns .local/autonomy/gegi-10m.lock
+as gegi-10m-root. Automation automation is verified ACTIVE every30min and targets
+this chat. Healthy monitoring reads compact status and exits; no agents or loops.
+Do not restart healthy workers. Resume only affected unfinished stages after a
+concrete failure, checking child identities first. No resets, extra reviewers,
+new environments, or old-science reruns. Keep own lock until final delivery.
 
-Independent simulated pixel-depth calibration complete:216/256available,40strictly
-unavailable;175fixed offset/depth diagnostics, exact existing field cache only.
-Protocol-only reply failure was repaired after saved completion; retained valid
-calibration was reused. Four500-initial gamma-left/right,Cs137/Co60 pilots complete:
-115nonzero,0native failures,2readout rejections,2imaging accepted. Acceptance and
-exact replay passed; not experimental validation or a separation demonstration.
-Measured compressed projection76.14GB;1.5x allowance+temporary+20GiB reserve
-requires136.08GB versus about155GBfree. No formal10M primaries launched yet.
-Actual 400-initial stop/resume qualification passed: first 100 sealed/stopped,
-remaining 300 resumed; first-chunk hashes and timestamps unchanged. Saved-data
-analysis passed (26 nonzero, 25 accepted readouts, 0 imaging; inconclusive).
-An explicit analysis-only revision preserves all 38 producer pins after repairing
-terminal native-failure handling; no science rerun.
-Authoritative evidence:.local/gegi-10m/{preparation,acceptance,lifecycle}.json;
-qualification/progress.json and COMPLETE.json take precedence over this text.
-Current runtime release: student-runtime-429ebcd78e69, actual ZIP 829262 bytes,
-SHA256 70c990f3f0cfeeb2f49aa38abd1093b16b371d135e62067d7feb61be000fbb37.
-Next: freeze total 10M and launch detached;
-healthy30min monitoring must read compact state and exit immediately. Final maps
-and publication remain after formal completion, not a reason to hold workers idle.
+Website milestone59f9d008c4ae is live: native GeGI cryostat3D, preview/section,
+correct compatibility and simplified shared navigation. Exact live checks passed
+709files plus all8assemblyassets; desktop navigation/rotation/zoom/section verified.
+Historical URLs/data and LBNL compatibility flags remain unchanged. Evidence:
+.local/gegi-website/live-check.json. Current student-runtime-429ebcd78e69 is verified:
+829262bytes,177members, SHA256
+70c990f3f0cfeeb2f49aa38abd1093b16b371d135e62067d7feb61be000fbb37.
+Actual tag/latest downloads and receipt match; .local/student-runtime-p1/COMPLETE.json.
+
+Preparation passed: independent simulated depth table216available/40unavailable;
+175fixed diagnostics; protocol-only reply failure preserved and valid calibration
+reused. Four500 pilots:115nonzero,0native failures,2readout rejections,2imaging.
+Actual400 stop/resume: first100sealed/stopped, remaining300 resumed, first chunk
+hashes/timestamps unchanged. Saved analysis:26nonzero,25readout accepted,0imaging,
+inconclusive. Analysis-only version correction retains all38 producer pins and
+original data. Evidence: .local/gegi-10m/{preparation,acceptance,lifecycle}.json and
+qualification-analysis/manifest.json. Small tests are not experimental validation.
+
+Measured compressed projection76.14GB;1.5x allowance+temporary+20GiB reserve needs
+136.08GB, with about155GB free at launch. Native peak2.49GB; Windows free6.53GB.
+Rough pilot scaling is about10days, not a guarantee; update from actual chunks.
+The exact contact-start error now retains a full native_failed/null record; all
+other unexpected errors remain fatal.48targeted Julia assertions passed, without
+physics. Explicit source-revision recovery preserves original plan/request/Store,
+unchanged58event/array blobs, all transport bytes and original acceptance evidence.
+Preparation/migration evidence: .local/gegi-10m/failure-contact-v1/manifest.json.
+58targeted campaign/recovery/response/analysis/publication tests passed, including
+exact prior-recipe provenance and interrupted recovery.33site tests and
+all1705local publication files pass. Published docs and packaged student sources
+are unchanged. Actual version rebind/resume remains pending until source freeze.
+No source changes to frozen producers while running. Final analysis/publication
+is still pending. After COMPLETE, use gegi_campaign_analysis.py then the frozen
+gegi_campaign_publication.py exporter (SHA256eb66f8e1ed7838d73fbddbaf236b8c0ee1235a3d3521e32d5b0c5eac641e0f43),
+normal build_site.py --gegi-campaign-bundle, relevant checks/live verification,
+Git sync, then disable automation and release the owned lock. The exporter is
+implemented/tested; no formal figures have yet been exported or published.
 
 ## Prior delivered milestone (retained evidence)
 

@@ -337,6 +337,31 @@ class CampaignTests(unittest.TestCase):
         with C.locked(self.directory,resume=True,reader=reused) as owner:self.assertEqual(owner['process_start_identity'],'current-start')
         self.assertFalse(lock.exists());self.assertEqual(C.read(self.directory/'recovered-lock.json')['prior_owner'],old)
 
+    def test_owned_lock_cleanup_retries_and_retains_owner_if_removal_fails(self):
+        self.freeze();path=self.directory/'.worker.lock';path.mkdir()
+        owner={'pid':123,'process_start_identity':'dead','token':'owned'};C.write(path/'owner.json',owner)
+        if os.name=='nt':path.chmod(C.stat.S_IREAD)
+        original=Path.rmdir;calls=[]
+        def transient(p):
+            if p==path:
+                calls.append(1)
+                if len(calls)==1:raise PermissionError('temporary owned directory denial')
+            return original(p)
+        with patch.object(Path,'rmdir',transient),patch.object(C.time,'sleep'):
+            C.release_owned_lock(path,owner)
+        self.assertEqual(len(calls),2);self.assertFalse(path.exists())
+        path.mkdir();C.write(path/'owner.json',owner)
+        with patch.object(Path,'rmdir',side_effect=PermissionError('persistent denial')),patch.object(C.time,'sleep'):
+            with self.assertRaisesRegex(PermissionError,'persistent denial'):C.release_owned_lock(path,owner,attempts=2)
+        self.assertEqual(C.read(path/'owner.json'),owner)
+        self.assertEqual(C.read(self.directory/'.worker.lock.cleanup-failure.json')['owner'],owner)
+
+    def test_anonymous_empty_lock_is_never_adopted(self):
+        self.freeze();path=self.directory/'.worker.lock';path.mkdir()
+        with self.assertRaisesRegex(ValueError,'Unrecognized campaign lock'):
+            with C.locked(self.directory,resume=True,reader=lambda pid:None):pass
+        self.assertEqual(list(path.iterdir()),[])
+
     def test_orphan_child_identity_blocks_resume_and_unknown_launch_is_preserved(self):
         plan=self.freeze();first=next(C.chunks(plan));folder=C.chunk_path(self.directory,first);folder.mkdir(parents=True)
         C.progress(self.directory,plan,'running_transport',{},first)

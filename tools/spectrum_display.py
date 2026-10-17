@@ -18,6 +18,8 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+    # Exact published59f9d008c4ae Git manifest before the optional campaign route.
+    '946b5c71657183f51251a0436d5c42d941bc60fd6e870556293cdfc5df3fb877',
     # Exact cb52f02 Git bytes, before adding dedicated GeGI assembly navigation.
     '937099d8f86014f5c45bd2749fea35a8eb9364832bd3105ac12aced259e70765',
     # Exact accepted0cf58d3 display before restoring both campaign previews.

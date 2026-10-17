@@ -31,7 +31,7 @@ No extra AI reviews, new environment, global changes, paid API or resets.
    and explicit assumed-plane images through existing generators, verify necessary
    student ZIP updates, synchronize Git, then disable monitoring and release own lock.
 
-### Draft allocation — not yet frozen or launched
+### Frozen allocation — formal campaign launched 2026-10-17
 
 Coordinates are mm from crystal center; +z is front; theta is from +z and phi
 from +x toward +y. All points are 56.568542 mm away. Isotropic emission, no
@@ -115,7 +115,15 @@ the first sealed chunk retained exact hashes/timestamps. Actual saved-data analy
 passed with26nonzero/25readout accepted/0imaging, inconclusive. No formal primaries
 are part of qualification. An explicit analysis-only producer/reader version record
 allows the terminal-native-failure reporting correction without science reruns.
-Preparation authority: .local/gegi-10m/preparation.json. No formal production yet.
+Preparation authority: .local/gegi-10m/preparation.json. Formal campaign first launch
+in .local/gegi-10m/campaign completed its first10k transport, then stopped at a
+contact-domain precondition.58valid groups and all transport are preserved. Exact
+failure/null handling and explicit versioned recovery are being finalized, without
+changing seeds/cuts or repeating physics. Planned1000chunks,total10M. Frozen plan SHA256
+3cfcf66a0e732a086396ad54e4f4c4be3c398444cfccd3bd6d81500ea18ba828; source
+commit9cd3f6c80ad77663d9cb74aa3777c65f97689195. Criteria and seeds remain fixed.
+Read compact progress and actual process identities; healthy monitors exit immediately.
+Final analysis/figures and final publication remain pending; do not declare completion.
 
 ## Delivered owner extension — GeGI (2026-10-17)
 

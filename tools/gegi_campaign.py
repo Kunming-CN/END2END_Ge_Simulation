@@ -222,6 +222,9 @@ def verify_inputs(plan,root=ROOT):
 
 
 def verify_acceptance(plan,root=ROOT):
+    if 'recovery' in plan:
+        import gegi_campaign_recovery as R
+        plan=R.original_plan(plan,root)
     value=read(bound_file(root,plan['acceptance']))
     return verify_acceptance_value(plan,value,root)
 
@@ -484,6 +487,9 @@ def budget_from_acceptance(plan,acceptance,*,multiplier,reserve_bytes=DEFAULT_DI
 
 
 def verify_resource_budget(plan,root=ROOT):
+    if 'recovery' in plan:
+        import gegi_campaign_recovery as R
+        plan=R.original_plan(plan,root)
     budget=plan['resource_budget']
     require(budget['evidence']==plan['acceptance'],'Disk budget must bind the actual accepted pilot measurements')
     measurement=verify_storage_measurement(plan,budget['evidence'],budget['storage_measurement'],root=root) if 'storage_measurement' in budget else None
@@ -500,6 +506,9 @@ def available_disk_bytes(path):
 
 
 def required_launch_disk_bytes(plan,totals,*,root=ROOT):
+    if 'recovery' in plan:
+        import gegi_campaign_recovery as R
+        plan=R.original_plan(plan,root)
     budget=plan['resource_budget']
     measurement=read(reference(root,budget['storage_measurement']['ref'])) if 'storage_measurement' in budget else None
     baseline,_=storage_projection(plan,read(reference(root,budget['evidence']['ref'])),measurement)
@@ -586,9 +595,14 @@ def identity(pid):
     except (OSError,ValueError):return 'unknown'
 
 
-def inactive_children(directory,*,reader=identity):
+def inactive_children(directory,*,reader=identity,root=ROOT):
     """A dead supervisor does not prove its native/WSL children have exited."""
     directory=Path(directory);records=[directory/'native-spool/worker-process.json']
+    if (directory/'plan.json').exists():
+        plan=read(directory/'plan.json')
+        if 'recovery' in plan:
+            import gegi_campaign_recovery as R
+            records.append(R.spool_path(directory,plan,root)/'worker-process.json')
     progress_path=directory/'progress.json'
     if progress_path.exists():
         current=read(progress_path).get('current_chunk')
@@ -603,6 +617,32 @@ def inactive_children(directory,*,reader=identity):
         require(actual not in ('unknown',value['process_start_identity']), 'A prior native/transport child is live or its identity is unknown')
 
 
+def release_owned_lock(path,owner,*,attempts=5):
+    """Retry exact owned cleanup; never leave an anonymous empty lock on failure."""
+    path=Path(path);owner_path=path/'owner.json';last=None
+    for attempt in range(attempts):
+        no_links(path);no_links(owner_path)
+        require(path.is_dir() and {p.name for p in path.iterdir()}=={'owner.json'} and read(owner_path)==owner,
+                'Lock ownership changed before cleanup')
+        try:
+            # Windows can mark an ordinary owned directory read-only. Clear only
+            # that attribute on this exact lock and owner, never global permissions.
+            if os.name=='nt':
+                for item in (path,owner_path):
+                    info=item.stat()
+                    if getattr(info,'st_file_attributes',0)&stat.FILE_ATTRIBUTE_READONLY:
+                        item.chmod(info.st_mode|stat.S_IWRITE)
+            owner_path.unlink();path.rmdir();return
+        except OSError as error:
+            last=error
+            if path.exists() and not owner_path.exists():
+                with owner_path.open('xb') as out:
+                    out.write(W.encoded(owner)+b'\n');out.flush();os.fsync(out.fileno())
+            if attempt+1<attempts:time.sleep(.05*(attempt+1))
+    write(path.parent/(path.name+'.cleanup-failure.json'),{'owner':owner,'error':str(last),'recorded_utc':utc()})
+    raise last
+
+
 @contextmanager
 def locked(directory,*,resume=False,reader=identity,name='.worker.lock'):
     path=Path(directory)/name;token=secrets.token_hex(16)
@@ -613,14 +653,20 @@ def locked(directory,*,resume=False,reader=identity,name='.worker.lock'):
         require(actual not in ('unknown',old['process_start_identity']),'Campaign worker is already live or its identity is unknown')
         require(resume,'Dead campaign owner preserved; explicit resume is required')
         write(Path(directory)/'recovered-lock.json',{'prior_owner':old,'observed_identity':actual,'recovered_utc':utc()})
-        (path/'owner.json').unlink();path.rmdir()
+        release_owned_lock(path,old)
     path.mkdir();owner={'pid':os.getpid(),'process_start_identity':reader(os.getpid()),'token':token,'created_utc':utc()}
     require(owner['process_start_identity'] not in (None,'unknown'),'Cannot establish worker process creation identity')
     write(path/'owner.json',owner,fresh=True)
+    failed=False
     try:yield owner
+    except BaseException:
+        failed=True
+        raise
     finally:
         if path.exists() and read(path/'owner.json').get('token')==token:
-            (path/'owner.json').unlink();path.rmdir()
+            try:release_owned_lock(path,owner)
+            except OSError:
+                if not failed:raise
 
 
 def progress(directory,plan,status,totals,current,*,error=None):
@@ -785,6 +831,11 @@ def seal_chunk(directory,plan,chunk,response,*,root=ROOT):
             and counts['zero_deposit_primaries']==transport['zero_deposit_primaries']
             and counts['nonzero_primaries']==transport['nonzero_primaries'], 'Response initial census changed')
     require(response==read(folder/'response.json'), 'Response receipt is not durably saved')
+    if 'recovery' in plan:
+        import gegi_campaign_recovery as R
+        require(response.get('prior_recipe_provenance')==R.prior_provenance(plan,chunk,root=root),
+                'Response prior-recipe lineage differs from the frozen recovery')
+    else:require('prior_recipe_provenance' not in response,'Unexpected response recipe recovery')
     from gegi_event_store import Store,encoded
     store=Store(folder/'events.sqlite',expected)
     try:
@@ -870,7 +921,7 @@ def add_counts(totals,group,counts):
 def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_factory=None):
     directory=local(directory,root);plan=read_plan(directory,root=root)
     require(type(max_chunks) is int and max_chunks>=0,'Invalid chunk bound')
-    inactive_children(directory)
+    inactive_children(directory,root=root)
     with locked(directory,resume=resume):
         if (directory/'COMPLETE.json').exists():return verify_complete(directory,plan)
         marker=directory/'STOP.json'
@@ -902,7 +953,11 @@ def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_fa
                     progress(directory,plan,'running',totals,None);continue
                 if worker is None:
                     progress(directory,plan,'starting_native',totals,current)
-                    worker=worker_factory(bound_file(root,plan['native_request']),directory/'native-spool')
+                    if 'recovery' in plan:
+                        import gegi_campaign_recovery as R
+                        spool=R.spool_path(directory,plan,root)
+                    else:spool=directory/'native-spool'
+                    worker=worker_factory(bound_file(root,plan['native_request']),spool)
                     startup=time.perf_counter()
                     ready=worker.start()
                     require(ready.get('new_field_solve') is False and ready.get('field_cache_sha256')==
@@ -919,8 +974,13 @@ def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_fa
                 transport_elapsed=time.perf_counter()-transport_started
                 progress(directory,plan,'running_native',totals,current)
                 native_started=time.perf_counter()
+                extra={}
+                if 'recovery' in plan:
+                    import gegi_campaign_recovery as R
+                    prior=R.prior_provenance(plan,chunk,root=root)
+                    if prior is not None:extra['prior_recipe_provenance']=prior
                 response=worker.run_chunk(manifest,folder/'events.sqlite',chunk_identity(directory,plan,chunk),
-                    calibration=plan['calibration'],photopeak_windows=group['photopeak_windows'],receipt_path=folder/'response.json')
+                    calibration=plan['calibration'],photopeak_windows=group['photopeak_windows'],receipt_path=folder/'response.json',**extra)
                 write(folder/'timings.json',{'transport_driver_wall_s':transport_elapsed,
                     'native_response_and_store_wall_s':time.perf_counter()-native_started,
                     'scope':'Measured orchestration stages. Transport driver includes checks/preparation/extraction; pure remage timing remains in transport/run.json. Native stage includes drift/readout/imaging/storage.'})
@@ -967,7 +1027,7 @@ def launch(directory,*,resume=False,root=ROOT,spawn=subprocess.Popen,reader=iden
             owner=read(lock);actual=reader(owner['pid'])
             if actual==owner['process_start_identity']:return {**owner,'status':'already_running'}
             require(actual!='unknown','Campaign worker identity is unknown; inspect it before launch')
-        inactive_children(directory,reader=reader)
+        inactive_children(directory,reader=reader,root=root)
         prior=directory/'launcher.json'
         if prior.exists():
             old=read(prior)

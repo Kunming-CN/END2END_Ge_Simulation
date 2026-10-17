@@ -11,6 +11,11 @@ const check=G.check
 const KIND="gegi_campaign_response_request_v1"
 const PROTOCOL="gegi_campaign_response_protocol_v1"
 const GROUP_HORIZON_NS=100000.0
+const NATIVE_FAILURE_POLICY="gegi_campaign_native_domain_errors_v2"
+# The contact-start precondition cannot provide a trustworthy charge response.
+# Preserve the whole group as unknown; never move or discard its deposit rows.
+const RECORDED_NATIVE_ARGUMENT_ERRORS=("Noncontact endpoint outside crystal",
+    "Invalid waveform support","Deposit starts on a GeGI contact")
 
 function sources()
     names=unique([collect(G.SOURCES);"gegi_pixel_calibration.jl";"gegi_campaign_response.jl";"Project.toml";"Manifest.toml"])
@@ -76,6 +81,9 @@ function initialize(requestpath,out)
     ready=Dict("protocol"=>PROTOCOL,"status"=>"ready","request_sha256"=>requestsha,
         "source_code_sha256"=>frozen,"source_sha256"=>req["source_sha256"],"model_sha256"=>G.MODEL_HASH,
         "profile_sha256"=>req["profile_sha256"],
+        "native_failure_policy"=>Dict("version"=>NATIVE_FAILURE_POLICY,
+            "recorded_argument_errors"=>collect(RECORDED_NATIVE_ARGUMENT_ERRORS),
+            "failed_group_response"=>"unknown/null; complete input rows retained","unexpected_errors"=>"abort"),
         "field_cache_sha256"=>req["field_cache"]["sha256"],"field_cache"=>req["field_cache"],
         "new_field_solve"=>false,"fields"=>report["fields"],"channels"=>channels,"readout_config"=>readout,
         "drift_numerics"=>Dict(string(k)=>getproperty(cfg,k) for k in propertynames(cfg)),
@@ -150,7 +158,7 @@ function replay_payload(req)
         horizon_ns=get(req,"horizon_ns",nothing)),"source_code_sha256"=>sources(),"drift_executed"=>false)
 end
 
-function process_group(ctx,command)
+function process_group(ctx,command;event_processor=G.process_event)
     text=command["group_json"];digest=command["input_sha256"]
     check(digest==bytes2hex(sha256(text)) && occursin(r"^[0-9a-f]{64}$",digest),"Group transport bytes changed")
     group=JSON.parse(text);id=group["event_id"];gid=group["group_id"]
@@ -180,18 +188,19 @@ function process_group(ctx,command)
         G.save(inputpath,group)
     end
     event=try
-        value=G.process_event(working,ctx.sim,ctx.cfg,ctx.channels,ctx.readout,ctx.cal,ctx.matrix,ctx.eion,ctx.n,signalpath)
+        value=event_processor(working,ctx.sim,ctx.cfg,ctx.channels,ctx.readout,ctx.cal,ctx.matrix,ctx.eion,ctx.n,signalpath)
         if horizon!==nothing
             native=read_native(signalpath,ctx.channels)
             value["channels"]=replay_channels(native,ctx.channels,ctx.readout,ctx.eion,ctx.cal,ctx.matrix;horizon_ns=horizon)
         end
         value
     catch err
-        known=err isa ArgumentError && err.msg in ("Noncontact endpoint outside crystal","Invalid waveform support")
+        known=err isa ArgumentError && err.msg in RECORDED_NATIVE_ARGUMENT_ERRORS
         failure=Dict("event_id"=>id,"status"=>known ? "native_failed" : "unexpected_failure",
             "channels"=>nothing,"truth_edep_keV"=>sum(s["energy_keV"] for s in group["steps"]),
             "steps"=>group["steps"],"error"=>sprint(showerror,err),"exception_type"=>string(typeof(err)),
-            "signals_ref"=>nothing,"signals_sha256"=>nothing)
+            "signals_ref"=>nothing,"signals_sha256"=>nothing,"transport_flags"=>nothing,
+            "native_failure_policy"=>NATIVE_FAILURE_POLICY,"native_domain_error"=>known ? err.msg : nothing)
         if !known
             failure["input_group"]=group;G.save(eventpath,failure);rethrow()
         end
