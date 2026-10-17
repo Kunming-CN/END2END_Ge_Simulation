@@ -1,6 +1,6 @@
 # Next development plan
 
-## Active owner extension — GeGI (2026-10-17)
+## Delivered owner extension — GeGI (2026-10-17)
 
 Owner extension during delivery: test two equal-energy point sources at different
 positions for spatial separation. Completed bounded acceptance:5000primaries each at
@@ -14,14 +14,17 @@ yielded253nonzero/1imaging event; the right231nonzero/4imaging events. Four of t
 five accepted events have ordering ambiguity. Spatial separation is inconclusive,
 not demonstrated; this bounded test is complete and does not authorize more runs.
 
-Steps1–5 are implemented and tested. Step6 is in release/publication closure.
+Steps1–6 are delivered. Software release student-runtime-6040230dc3ff is latest;
+the actual downloaded ZIP/commit/hash and706live website files were verified.
+The current compact receipt is .local/gegi-integration/delivery.json. No further
+GeGI simulation, reviewer round or publication expansion is automatically queued.
 Actual acceptance:100initial zero-only pilot with stop/resume, then5000initial
 photons,42nonzero events and1signal-derived cone, plus the two-position test above.
 This verifies the software workflow, not experimental accuracy or source localization.
 
 P0-P5 below remain delivered. The owner now requests a GeGI-only cryostat and
 multichannel Compton workflow in the existing desktop software. This section is
-the current executable queue; no old audit/PSD/demo work is reopened.
+the completed delivery scope; no old audit/PSD/demo work is reopened.
 
 1. Establish the dimension/material/coordinate/channel contract from supplied
    GeGI schematics/manual and relevant Ge-STAR presentations, checking primary

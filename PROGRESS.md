@@ -1,15 +1,15 @@
 # Current handoff
 
 Updated: 2026-10-17. GeGI-only cryostat and multichannel Compton workflow are
-implemented and tested in GeSignal Control. Prior P0-P5 remain delivered; their
+implemented, tested and published in GeSignal Control. Prior P0-P5 remain delivered; their
 handoff is preserved at commit666947fa22d879eae69252d25ec91345d24665cd.
 
 ## Current delivery
 
-Root owns .local/autonomy/round.lock as gegi-integration-root. Core implementation
-and scientific workers are finished. No extra AI review agents were used. Release/site
-closure is in progress; inspect .local/gegi-integration/delivery.json and actual processes
-before continuing. Never repeat completed physics because of a chat interruption.
+Functional delivery is complete. Implementation and scientific workers are finished;
+no extra AI review agents were used. .local/gegi-integration/delivery.json records
+final Git/publication/ownership closure. Inspect it and actual state before any
+continuation. Never repeat completed physics because of a chat interruption.
 
 The dedicated gegi_cryostat_v1 accepts only frozen GeGI_3D. Measured front layers
 are1.6mm and0.8mm with8.1mm crystal-to-external-front distance. The owner accepted
@@ -50,7 +50,7 @@ Actual browser verified compatible selection, blocked mismatches, checked source
 empty results, original nonzero IDs,34channel switching and real cone/map display.
 CLI-data display used a labelled temporary read-only fixture, not forged UI ownership.
 
-## Current owner extension and remaining closure
+## Two-position acceptance and publication
 
 The two-position source-separation test completed serially with 5000 primaries
 each at [-40,0,40] and [40,0,40] mm, 662 keV, seeds 26101703/26101704.
@@ -71,15 +71,21 @@ The mixed plane integral is5.0 from9weighted candidate cones. All484nonzero IDs
 are qualified by source run; all10000initial primaries remain the denominator.
 
 
-The generated website passed local validation and actual browser display. Its
+The generated website passed local validation, actual browser display and exact
+live verification of706files. Its
 1691 earlier files remain byte-identical; only guide/GeGI entry changed and four
 GeGI result files were added. Build b8767e91ba1538756293c4c7cee3f63521d9c215f5a57604829e98a2c55a756d.
-Finish required live checks, commit/push, build and
-verify immutable latest student ZIP from formal source commit. No test data or
-publication fixtures go in the student package. Close owned servers and remove
-only owned disposable scratch; retain scientific runs and unique failure records.
-Update this handoff/delivery/state, release this owned lock and leave ready.
+Student release student-runtime-6040230dc3ff is latest, built from formal commit
+6040230dc3ffe68e06ae2e46151e4d68d4c6771a. Its actual downloaded824755-byte ZIP
+matches SHA256 2b4263461810ec83a06583801ae353fc1f34355ecc0d9db3fed3d834d3d1e09e
+and PACKAGE.json source identity. It contains176source files, no saved test data,
+publication tools or field caches. Keep only the current ZIP/compact receipt.
+The GeGI page is https://kunming-cn.github.io/END2END_Ge_Simulation/examples/gegi/index.html.
+Owned temporary servers and browser tabs are closed; disposable reference renders,
+browser fixtures and publication candidates were removed. Scientific data and
+unique failures remain protected by tools/DATA_RETENTION.md.
 
 Original campaigns/models are unchanged. Further mechanical fidelity and hardware
 calibration require actual dimensions, channel mapping and measured calibration.
-No automatic larger campaign, PSD3, phone work, new environment or review rounds.
+No independent executable work remains. Leave autonomy ready and skip unchanged
+wakeups. No automatic larger campaign, PSD3, phone work, new environment or reviews.
