@@ -9,6 +9,13 @@ an explicit proportional quota amendment after a safe completed-chunk stop.
 This supersedes earlier10M allocation text. Preparation2400 is separately counted.
 No extra AI reviews, new environment, global changes, paid API or resets.
 
+Latest owner steering2026-10-18: finish the current1M/100chunk simulation, then
+pause before aggregate analysis and publication. At valid COMPLETE and worker
+exit, preserve data/receipts/hashes, record paused_after_simulation and PAUSE the
+existing monitoring automation. Keep this chat's supervisor lock as paused
+ownership. Do not mark the overall project complete; step6 below is deferred
+until the owner explicitly requests resumption. Healthy workers continue now.
+
 1. First synchronize website generators with delivered GeGI capabilities: dedicated
    cryostat geometry/section/native 3D at Assemblies, home/catalog/Results/guide links,
    exact LBNL versus GeGI compatibility. Simplify normal routes and demote historical
@@ -29,7 +36,8 @@ No extra AI reviews, new environment, global changes, paid API or resets.
    is migrated to this window every 30 minutes. Healthy monitoring reads compact state
    and exits immediately; faults resume only affected unfinished stages. Do not run
    competing supervisors or restart healthy workers on one unchanged observation.
-6. Analyze all formal groups, publish spectra/real multichannel signals/directional
+6. DEFERRED until explicit owner resume: analyze all formal groups, publish
+   spectra/real multichannel signals/directional
    and explicit assumed-plane images through existing generators, verify necessary
    student ZIP updates, synchronize Git, then disable monitoring and release own lock.
 

@@ -2,6 +2,15 @@
 
 ## Active GeGI 1M campaign — saved Co60 reader repair2026-10-18
 
+Owner steering2026-10-18: finish the currently running1M/100chunk full-chain
+simulation, then PAUSE before final aggregate analysis, bootstrap, figure export
+or website publication. Do not stop healthy workers now. At valid COMPLETE,
+check terminal quota/receipt and worker exit, preserve all data/failures/hashes,
+mark state paused_after_simulation and set automation automation to PAUSED.
+Retain this chat's supervisor lock as paused ownership; do not mark the overall
+project complete. Resume analysis/publication only on an explicit owner request.
+This supersedes the earlier automatic post-COMPLETE publication instructions.
+
 The owner reduced TOTAL10M to1M and confirmed independent acquisitions with linear
 mixtures; simultaneous-source/pileup work is deferred. Exactly100chunks:200k662keV
 photons left,200k right,300k initial Cs137 decays left,300k initial Co60 decays right.
@@ -102,7 +111,8 @@ review/physics acceptance was run. Tag and latest actual bytes both match.
 Preparation calibration216available/40unavailable and175fixed diagnostics, four500
 pilots and actual400stop/resume all remain accepted; do not repeat them.
 
-Final analysis/publication is PENDING and requires COMPLETE for1M/100chunks.
+Final analysis/publication is DEFERRED until the owner explicitly resumes after
+COMPLETE for1M/100chunks. The following are retained requirements for that later work.
 Use frozen gegi_campaign_analysis.py and gegi_campaign_publication.py (exporter
 SHA256f0e8e78163bfaf153ec27e2304457165648b725f726261120acd95a3e43d158b).
 Aggregate exact native errors as well as stage/rejection counts; disclose the
@@ -111,8 +121,9 @@ failures means processing complete, not physical validation. Fixed metrics and
 optional bootstrap cost gate remain; inconclusive separation is valid. Direction/
 assumedz40mm plane maps do not establish range/true3D or simultaneous-source pileup.
 Freeze relevant writers and hashes before export; build via build_site.py only,
-run affected checks/live desktop verification, synchronize Git, then disable this
-monitor and release only this chat's lock. Until then the overall task is unfinished.
+run affected checks/live desktop verification and synchronize Git after the owner
+resumes. For now disable this monitor after valid simulation COMPLETE and retain
+this chat's paused ownership lock. The overall task remains unfinished.
 Never change frozen producer files while healthy workers run. Re-export affected
 derivatives instead of rerunning valid upstream science. All .local/gegi-10m data
 and original failures/models remain permanent.
