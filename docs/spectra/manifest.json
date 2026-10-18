@@ -23,15 +23,15 @@
     "examples/cs137-10k-rings/KMRC01_candidate/response/histograms.json": "11cfbed9fd93db18528a1a73f25a298fa554fd70c9f3136203468970a5c053e3"
   },
   "generators": {
-    "tools/spectrum_display.py": "93232fc044a7c1705c3d90f4f2c00f91dab6eb33f1b867ab4d6f090cbfdb10d5",
+    "tools/spectrum_display.py": "21c4ea1f825a222f97ce3a7056fbe07e9c868b8e80766f8478015c4d44c37ff0",
     "tools/spectrum_plot.py": "f00dbf5efdb393f03eebd501cb71a74bbd268fc3f0cff240de9a7eb54948a29c",
     "tools/spectrum_controls.js": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
-    "tools/viewer_navigation.py": "0807727ddd33ed85a22c70ac3b9eb4c3945e77cfd31f2de58165ac972a3342c4",
+    "tools/viewer_navigation.py": "a1ac6656bcd55344e62e1cae5a04e51b0299ab6ba1bb9979998c7b493b5009ae",
     "tools/viewer_navigation.js": "a09e5ecb04bd5f6d4e1a24c2debf40bb9a0bfc882784cc146c8915dee7704ff5",
     "tools/ring_site.py": "0de35a96611bcf99975210f43804269141a2ab318da7819e5d392e40c762c5ac",
     "tools/site_restructure.py": "3492896db073fa380418e095cfb01ff284f3d6498add500257812be3e15ddbd4",
-    "tools/site_routes.py": "7115b950795a22c3bef80ff27335bfaa5359086f8cb062e4921d6699133bd1b0",
-    "tools/teaching_examples.py": "c6c5b79bb9de71986159f3b14e8a24f21d56e428b400cc4b00b68d1cf24d0cac",
+    "tools/site_routes.py": "a962475145d29d4f9880228d1df4aedea757aa5fa90f25b4f90ed8273ae17cd9",
+    "tools/teaching_examples.py": "45e53a79902d4f08d50761ad71e4920cc4982e4501df15c69ebfe81c35356ec7",
     "tools/teaching_examples.html": "1a9a36942eb0f96185da05dcad3272796c6d2cd847ff0d6b3df4ee832e588649",
     "tools/focused_plots.js": "230c98bb7f41a5437f483aa9e168b8476a06b9d6ac4a782ba7681ce442ba49eb"
   },

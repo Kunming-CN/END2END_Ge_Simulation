@@ -19,7 +19,7 @@ all19failed-chunk files, original plan/FROZEN/failed run and five source snapsho
 are preserved in .local/gegi-10m/failure-transport-recoil-v1. Manifest SHA256
 e07729b3bc7ffefcd11a05ce5c64680d4424030e91440db48f028fd60b15b536.
 
-The bounded reader fix accepts only a material-matched natural ground-state ion
+The bounded reader fix (source7d9ba1ec4100d44c0225fbd36e6d8218d263349f) accepts only a material-matched natural ground-state ion
 from exact conv,with a common gamma parent and complete e-/e+/ion birth evidence;
 original initial-ion/daughter/ancestry/clock/lifetime checks remain strict. Unscored
 air material requires the existing exact world/outer-envelope geometry; no steps
@@ -38,15 +38,27 @@ transport/gegi_source.py's source SHA; numeric physics values are typed-identica
 That provenance binding changes request/physics identity hashes and requires a
 new explicitly selected spool.70sealed chunks keep their original identities
 (5from69c7…,12from3e28…,53from3539…),hashes and timestamps. No Store rebind.
-Actual transaction/resume is pending this source commit; do not infer it ran.
+Actual recovery-transport-recoil-v1/application.json is COMPLETE (SHA256
+14d0a477b9aca0af6f139a68f67a7cc5bf536eb08007b5056963e04971062872).
+Current plan0ef776b56b699285ffe5ac803bdd759402bca4a15825c2602c7f2ff659ade7d1;
+revision10003188f2418f5f4075cb6de5593a5f3ddd3324dfe298842d6a3e8c95d66f36.
+Detached resume12:24:09UTC:supervisor35276/creation134367998495017122,
+Julia16060/134367998582498119. Both actual identities verified. New request
+06470249694b2c9e656f5ec6d8aa3be3f7e9b4dceb33d1ee2cca049a5c59bb83,
+spool native-spool-transport-06470249694b selected with T.spool_path,not oldR.
+Execution-check.json SHAd5cedd6d6d91a857dc6ff3fde6653740098e55b08cdabb68d8f07e86afe00505
+verified all70sealed hashes/mtimes, unchanged raw/log/macro/geometry and29new
+saved groups; sample primary13has34actual native and34readout channels (accepted). This partial count is
+not additional sealed initials. Status running_native,error null; no old replay.
 Predecessor plan3539fab2594dd848ae9989490ed9fa80d8c74400abd9c8a2cb7a74c78ded8ae5
 and quota producer90a82eda5b24262b3cfc7b843a8a8b5ed21d102d remain historical.
 The completed quota-1m-v1 amendment retained17then-sealed chunks/170k without rerun.
 
 This chat01a14bca-3953-7c13-80a1-687a9a571455 retains its gegi-10m-root lock.
-Same-chat automation automation remains ACTIVE every30min. While recovering,
-inspect actual transaction/process state before any resume; never start a second
-supervisor. Healthy running_native OR running_transport checks use compact status,
+Same-chat automation automation remains ACTIVE every30min; actual TOML target,
+interval and new plan/source/process identities were verified. The monitor must
+resolve new native metadata through T.spool_path. Never start a second supervisor.
+Healthy running_native OR running_transport checks use compact status,
 creation identities/error/disk and exit quietly. Unknown identity is not death.
 No agents during healthy monitoring; no new environment/global changes/resets.
 
@@ -69,13 +81,23 @@ resume153.78GBdisk/5.13GBphysical memory were free; native measured peak2.49GB.
 Original10M disk/time projections are history, not the current required quota.
 Low disk stops safely, never deletes science. Update actual speed as groups finish.
 
-Website milestone59f9d008c4ae is live: dedicated GeGI cryostat3D/preview/section,
-correct compatibility and simplified navigation.709live files plus8assembly assets
-and actual desktop manipulation were verified. No website artifact changed here.
-Current student-runtime-429ebcd78e69 actual tag/latest ZIP remains verified:
-829262bytes/177members/SHA256
-70c990f3f0cfeeb2f49aa38abd1093b16b371d135e62067d7feb61be000fbb37.
-No packaged runtime/guide changed, so this maintainer quota edit needs no new ZIP.
+Website milestone59f9d008c4ae remains live: dedicated GeGI cryostat3D/preview/
+section,correct compatibility and simplified navigation. Prior actual desktop
+manipulation/navigation evidence remains applicable. Normal build_site.py
+--restructure refreshed15display-generator source-pin fields in9derived files;
+structural comparison proved unchanged scientific values and visual HTML except
+embedded provenance hashes. No saved numerical result was regenerated. Build
+65ef3b2ac765a593475a521d3f53f878d50547c80c47e295bf34feacaac62f8c:
+1705files/108HTML/3453links/980977902bytes.33test_site.py checks and check_site.py
+pass; deployment/live-manifest verification follows this generated-docs push.
+
+Student-runtime-7d9ba1ec4100 is published and actual public tag/latest ZIP plus
+receipt are byte-verified:830821bytes/177members/SHA256
+ ef254b0327aaa02ed88aec1660363f1c3afe9690a8c5fa646eeaaadc959517f7.
+Source7d9ba1ec4100d44c0225fbd36e6d8218d263349f. Runtime includes the GeGI reader
+fix; maintainer tools/precomputed data remain excluded. Delivery is the existing
+.local/student-runtime-p1/COMPLETE.json. No installation/browser download/extra
+review/physics acceptance was run. Tag and latest actual bytes both match.
 Preparation calibration216available/40unavailable and175fixed diagnostics, four500
 pilots and actual400stop/resume all remain accepted; do not repeat them.
 

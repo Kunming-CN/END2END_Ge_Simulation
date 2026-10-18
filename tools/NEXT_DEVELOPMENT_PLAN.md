@@ -82,7 +82,7 @@ Owner quota amendment applied: .local/gegi-10m/quota-1m-v1/application.json.
 The same .local/gegi-10m/campaign directory retains all17sealed chunks/170k,
 old native failures, cache and identities. Exactly20/20/30/30effective chunks use
 unchanged per-group seed/local-ID prefixes; no science rerun or Store rebind.
-Current plan SHA2563539fab2594dd848ae9989490ed9fa80d8c74400abd9c8a2cb7a74c78ded8ae5;
+Quota predecessor plan SHA2563539fab2594dd848ae9989490ed9fa80d8c74400abd9c8a2cb7a74c78ded8ae5;
 quota producer90a82eda5b24262b3cfc7b843a8a8b5ed21d102d.69targeted tests passed.
 Detached execution resumed with same request/spool; actual identities are in
 PROGRESS/launcher records. Same-chat30min automation targets1M. Owner confirmed
@@ -90,6 +90,22 @@ the independent-acquisition/linear-mixture model; complex simultaneous-source an
 pileup work is deferred. Final acceptance requires1M/100chunks and publication.
 Effective remaining disk budget at170k is32.26GB including reserve, versus153.78GB
 free before resume; original10M resource projection below is historical.
+
+Co60 saved-reader repair applied2026-10-18 after70sealed/700k: the first10k
+Co60 radiation completed,then census misidentified conv material target recoils.
+Original raw/failed receipts/source snapshots remain failure-transport-recoil-v1.
+Only strict material/parent/pair/clock reader validation changed.25reader+69campaign
+integration+4newtransaction+5student-package tests passed. Saved10k census is
+9259zero/741nonzero; raw bytes and timestamps unchanged. The explicit
+recovery-transport-recoil-v1/application.json is complete; all70seals retain their
+original identities/hash/mtime. No radiation/oldnative replay. New request changes
+only the reader source pin,with numerical physics values typed-identical.
+Current plan SHA2560ef776b56b699285ffe5ac803bdd759402bca4a15825c2602c7f2ff659ade7d1;
+reader source7d9ba1ec4100d44c0225fbd36e6d8218d263349f. Actual background resume and
+new native-spool-transport-06470249694b are verified in the single PROGRESS/state.
+Resolve the resident through gegi_campaign_transport_recovery.T.spool_path when
+transport_revision exists; old R.spool_path is historical. Same-chat automation
+now binds this version. No new algorithm/pilot/seed/cut change is queued.
 
 Historical preparation and original10M recovery evidence (retained unchanged):
 

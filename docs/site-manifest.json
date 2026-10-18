@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "build_id": "e26cdaf857c448adf829f9830180317ed70fa88c85329b9512963b05fd30211f",
+  "build_id": "65ef3b2ac765a593475a521d3f53f878d50547c80c47e295bf34feacaac62f8c",
   "file_count": 1705,
   "total_bytes": 980977902,
   "html_pages": 108,
@@ -8201,7 +8201,7 @@
     {
       "path": "examples/gamma-native/publication.json",
       "bytes": 24399,
-      "sha256": "24c179ff81b51472d8d05e2df4e6759b87de3112a03276716181e4b735cf89b2"
+      "sha256": "178387c3855f119d6c7a9faddd514588efec59fad8d3c82aed031e60a9b8eb0f"
     },
     {
       "path": "examples/gegi/index.html",
@@ -8211,7 +8211,7 @@
     {
       "path": "examples/gegi/publication.json",
       "bytes": 1985,
-      "sha256": "461e59d3424eb267383e29a0f2e4adb3903131accd4d23fae955a8789043f913"
+      "sha256": "1ea144af2f52c66af024f7c04ce50a3c241ff216eec7dfb7778c87f6e6e5df56"
     },
     {
       "path": "examples/gegi/selected-channel.json",
@@ -8331,12 +8331,12 @@
     {
       "path": "methods/lithium-display.json",
       "bytes": 3346,
-      "sha256": "565303ade2090462d7b00717fb9c60c64254f6340adc7c6a65d1fbb7ca7669fd"
+      "sha256": "b084405cf24b715b808cf458e70b8cf6285393d71a60d20982e05001e952c74e"
     },
     {
       "path": "methods/native-li-display.json",
       "bytes": 4991,
-      "sha256": "af0d6a3ece0a5ee5079112adb4854bdd6a598b1e8e543d1eb402e5459f26d011"
+      "sha256": "ea9f28fe0dd84a31c0a8e50c3068f359b488a28c80d6df67c5b0e56e9f738fb4"
     },
     {
       "path": "methods/native-li.html",
@@ -8496,7 +8496,7 @@
     {
       "path": "spectra/manifest.json",
       "bytes": 7929,
-      "sha256": "946b5c71657183f51251a0436d5c42d941bc60fd6e870556293cdfc5df3fb877"
+      "sha256": "1577dcb84ad3905fef1ee166abe22ace408acabf78234bc79bdd10ea4615d9af"
     },
     {
       "path": "spectra/million-response.html",
@@ -8511,12 +8511,12 @@
     {
       "path": "spectra/pipeline.html",
       "bytes": 1042519,
-      "sha256": "6531f87cbac6507352d6a6e20fc32e983fef85e849086ce56a9a37faddcfa4da"
+      "sha256": "5990252c64bb984dd828a9c0776e41428c7d790048429bedfba30c7959b59b2c"
     },
     {
       "path": "spectra/teaching-examples.json",
       "bytes": 1012868,
-      "sha256": "3292448d1e0f4fbe57db7b9ca475e176bf8a0467677fcf80a242a91d3c6ca185"
+      "sha256": "f87717b45224669e85c4d1278ec2fd990fe5568a40ec9364ea75ccc68c61d873"
     },
     {
       "path": "viewers/events.html",
@@ -8536,7 +8536,7 @@
     {
       "path": "viewers/manifest.json",
       "bytes": 81162,
-      "sha256": "d44b2095341d3ed08eccd8e89320fe82cfb361d8d077ef8c30ab48599e68b3ee"
+      "sha256": "e1bb2a61a3eb9f61ce7f794d254292aee4d9bb1678d0a91269495006973c89ca"
     }
   ]
 }
