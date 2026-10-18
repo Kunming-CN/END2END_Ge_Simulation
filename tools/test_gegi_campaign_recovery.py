@@ -118,9 +118,10 @@ class RecoveryTests(unittest.TestCase):
         recipe=copy.deepcopy(self.f.recipe)
         recipe['source_code_sha256']['gegi_campaign_response.jl']=C.sha(self.root/R.WRAPPER)
         identity=C.chunk_identity(self.directory,predecessor,self.chunk,root=self.root)
+        n=self.chunk['batch']['primary_count']
         response={'kind':C.RESPONSE_KIND,'status':'completed',
             'input_manifest_sha256':C.sha(self.folder/'transport/stream/manifest.json'),
-            'store_identity_sha256':C.digest(identity),'counts':{'initial_primaries':2,'zero_deposit_primaries':1,'nonzero_primaries':1},
+            'store_identity_sha256':C.digest(identity),'counts':{'initial_primaries':n,'zero_deposit_primaries':n-1,'nonzero_primaries':1},
             'calibration_sha256':predecessor['calibration']['sha256'],'photopeak_windows_sha256':identity['photopeak_windows_sha256'],
             'native_request_sha256':predecessor['native_request']['sha256'],'new_field_solve':False,
             'source_id':C.selection_for(predecessor,self.chunk)['source'],

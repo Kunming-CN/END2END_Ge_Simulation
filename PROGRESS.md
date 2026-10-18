@@ -1,6 +1,18 @@
 # Current handoff
 
-## Active GeGI 10M campaign — 2026-10-18
+## Active GeGI 1M quota amendment — owner update2026-10-17
+
+The owner reduced TOTAL10M to1M and requested continued execution. New quotas:
+200k gamma-left,200k gamma-right,300k Cs137-left,300k Co60-right, keeping original
+photon/decay denominators, seeds, geometry, calibration and selection. A safe
+completed-chunk stop finished with170k sealed; both old workers exited at01:24UTC.
+All17sealed chunks fit the new200k left-source quota. No unfinished chunk remains.
+Quota amendment implementation passed69targeted tests; source is frozen. Actual
+prepare/apply/resume follows the source commit; no new physics run or Store edit.
+This chat owns the explicit quota amendment. Do not resume the old10M plan or
+launch another supervisor while .local/autonomy/state.json is reducing_quota.
+All old science, failures and hashes remain protected. The following is the
+pre-amendment running state; actual process/progress records take precedence.
 
 The formal full-chain campaign is RUNNING after two explicit native-failure
 recoveries in .local/gegi-10m/campaign. Actual progress/process identities prevail.

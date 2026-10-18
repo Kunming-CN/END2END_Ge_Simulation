@@ -222,7 +222,10 @@ def verify_inputs(plan,root=ROOT):
 
 
 def verify_acceptance(plan,root=ROOT):
-    if 'recovery' in plan:
+    if 'quota_amendment' in plan:
+        import gegi_campaign_quota as Q
+        plan=Q.original_plan(plan,root)
+    elif 'recovery' in plan:
         import gegi_campaign_recovery as R
         plan=R.original_plan(plan,root)
     value=read(bound_file(root,plan['acceptance']))
@@ -487,7 +490,10 @@ def budget_from_acceptance(plan,acceptance,*,multiplier,reserve_bytes=DEFAULT_DI
 
 
 def verify_resource_budget(plan,root=ROOT):
-    if 'recovery' in plan:
+    if 'quota_amendment' in plan:
+        import gegi_campaign_quota as Q
+        plan=Q.original_plan(plan,root)
+    elif 'recovery' in plan:
         import gegi_campaign_recovery as R
         plan=R.original_plan(plan,root)
     budget=plan['resource_budget']
@@ -506,18 +512,23 @@ def available_disk_bytes(path):
 
 
 def required_launch_disk_bytes(plan,totals,*,root=ROOT):
-    if 'recovery' in plan:
+    effective=plan
+    if 'quota_amendment' in plan:
+        import gegi_campaign_quota as Q
+        plan=Q.original_plan(plan,root)
+    elif 'recovery' in plan:
         import gegi_campaign_recovery as R
         plan=R.original_plan(plan,root)
     budget=plan['resource_budget']
     measurement=read(reference(root,budget['storage_measurement']['ref'])) if 'storage_measurement' in budget else None
     baseline,_=storage_projection(plan,read(reference(root,budget['evidence']['ref'])),measurement)
     remaining=0
-    for group in plan['groups']:
+    for group in effective['groups']:
         n=group['primary_count'];done=totals.get(group['id'],{}).get('initial_primaries',0)
         require(type(done) is int and 0<=done<=n,'Invalid completed count in disk projection')
         if measurement is None:
-            remaining+=(baseline[group['id']]*(n-done)+n-1)//n
+            original_n=next(g['primary_count'] for g in plan['groups'] if g['id']==group['id'])
+            remaining+=(baseline[group['id']]*(n-done)+original_n-1)//original_n
         else:
             sample=next(r for r in measurement['groups'] if r['source_group']==group['id'])
             payload=sum(v['archive']['bytes'] for v in sample['archives'].values())+sample['native_store_bytes']+sample['other_variable_bytes']
@@ -744,7 +755,10 @@ def file_inventory(directory,excluded=()):
 
 def chunk_identity(directory,plan,chunk,*,root=ROOT):
     plan_sha=sha(Path(directory)/'plan.json')
-    if 'recovery' in plan:
+    if 'quota_amendment' in plan:
+        import gegi_campaign_quota as Q
+        plan,plan_sha=Q.chunk_origin(directory,plan,chunk,root=root)
+    elif 'recovery' in plan:
         import gegi_campaign_recovery as R
         plan,plan_sha=R.chunk_origin(directory,plan,chunk,root=root)
     group=next(g for g in plan['groups'] if g['id']==chunk['source_group'])

@@ -1,10 +1,12 @@
 # Next development plan
 
-## Active owner campaign — GeGI website and 10M (2026-10-17)
+## Active owner campaign — GeGI website and 1M (owner reduction2026-10-17)
 
 This window (01a14bca-3953-7c13-80a1-687a9a571455) is the sole supervisor.
-The owner explicitly authorizes 10,000,000 TOTAL formal initial events, superseding
-older GeGI no-expansion statements below; preparation pilots are separately counted.
+The owner reduced the campaign from10,000,000 to1,000,000 TOTAL formal initial
+events and requested continued execution. Preserve all completed science; apply
+an explicit proportional quota amendment after a safe completed-chunk stop.
+This supersedes earlier10M allocation text. Preparation2400 is separately counted.
 No extra AI reviews, new environment, global changes, paid API or resets.
 
 1. First synchronize website generators with delivered GeGI capabilities: dedicated
@@ -31,7 +33,7 @@ No extra AI reviews, new environment, global changes, paid API or resets.
    and explicit assumed-plane images through existing generators, verify necessary
    student ZIP updates, synchronize Git, then disable monitoring and release own lock.
 
-### Frozen allocation — formal campaign launched 2026-10-17
+### Owner-reduced allocation — original campaign launched2026-10-17
 
 Coordinates are mm from crystal center; +z is front; theta is from +z and phi
 from +x toward +y. All points are 56.568542 mm away. Isotropic emission, no
@@ -39,14 +41,14 @@ collimator or inferred source activity. Existing geometry assumptions are retain
 
 | Group | Source and denominator | Position mm | phi / theta | Formal quota | Master seed | Purpose |
 |---|---|---|---|---:|---:|---|
-| gamma-left | 662 keV mono gamma; initial photons | (-40,0,40) | 180 / 45 deg | 2,000,000 | 261017101 | Equal-energy spatial control |
-| gamma-right | 662 keV mono gamma; initial photons | (40,0,40) | 0 / 45 deg | 2,000,000 | 261017102 | Paired equal-energy control |
-| cs137-left | Existing pinned Cs137 decay model; initial decays | (-40,0,40) | 180 / 45 deg | 3,000,000 | 261017103 | True-decay spectrum and isotope mixture |
-| co60-right | Existing pinned Co60 decay model; initial decays | (40,0,40) | 0 / 45 deg | 3,000,000 | 261017104 | Distinct-energy cascade and spatial mixture |
+| gamma-left | 662 keV mono gamma; initial photons | (-40,0,40) | 180 / 45 deg | 200,000 | 261017101 | Equal-energy spatial control |
+| gamma-right | 662 keV mono gamma; initial photons | (40,0,40) | 0 / 45 deg | 200,000 | 261017102 | Paired equal-energy control |
+| cs137-left | Existing pinned Cs137 decay model; initial decays | (-40,0,40) | 180 / 45 deg | 300,000 | 261017103 | True-decay spectrum and isotope mixture |
+| co60-right | Existing pinned Co60 decay model; initial decays | (40,0,40) | 0 / 45 deg | 300,000 | 261017104 | Distinct-energy cascade and spatial mixture |
 
 Each group uses workflow_batches partition/seed rules (at most 10,000 initial
 primaries per transport batch); validate cross-group seed uniqueness before freeze.
-Group-resolved photon/decay denominators remain distinct in mixtures; 10M is their
+Group-resolved photon/decay denominators remain distinct in mixtures; 1M is their
 administrative total, not a common photon efficiency denominator. Mixtures are
 linear sums of independent acquisitions, without inter-source pile-up. Preserve
 within-decay cascade/delayed timing and finite electronics-window semantics.
@@ -71,10 +73,18 @@ or genuine 3D localization. No measured detector validation is claimed.
 
 Measured recovery resources: about 155 GB free disk, 3.46 GB Windows physical memory
 free at initial check; WSL 6.92 GB available after start. Re-measure before workers.
-The old JSON format is not admitted for 10M. No production start until measured
+The old JSON format is not admitted for this campaign. No production start until measured
 compressed storage + bounded temporary space + reserve fit available disk and
 memory. The website milestone is delivered; current work is formal campaign
 recovery and completion, then saved-data analysis/publication.
+
+Owner quota amendment is in progress: retain the same .local/gegi-10m/campaign
+path and all native failures, cache and sealed chunks; use20/20/30/30chunks for
+the reduced four groups. Safe boundary stop completed with170k sealed and both
+old workers exited. The
+maintained handoff and eventual amendment receipt provide actual execution state.
+
+Historical preparation and original10M recovery evidence (retained unchanged):
 
 Preparation evidence: source-blind reconstruction changes
 pass14 targeted tests and retain original accepted IDs2714 /3170,3998,4046,4468.
