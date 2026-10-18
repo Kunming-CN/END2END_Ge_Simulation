@@ -89,7 +89,8 @@ structural comparison proved unchanged scientific values and visual HTML except
 embedded provenance hashes. No saved numerical result was regenerated. Build
 65ef3b2ac765a593475a521d3f53f878d50547c80c47e295bf34feacaac62f8c:
 1705files/108HTML/3453links/980977902bytes.33test_site.py checks and check_site.py
-pass; deployment/live-manifest verification follows this generated-docs push.
+pass; check_site.py --url verified711actual live files and the exact manifest.
+Pages buildbfcb3bb16e69c3eabedf2aacfccbe5fa92794c56 is built,error null.
 
 Student-runtime-7d9ba1ec4100 is published and actual public tag/latest ZIP plus
 receipt are byte-verified:830821bytes/177members/SHA256
