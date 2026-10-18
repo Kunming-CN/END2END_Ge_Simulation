@@ -93,7 +93,7 @@ def saved_inputs(campaign,analysis,*,root=ROOT):
                 record['radiation_seed']==chunk['batch']['radiation_seed'] and
                 sha(ordinary(folder/'DONE.json'))==record['done_sha256']==complete['chunks'][str(index)],'Analysis input chunk seal changed')
         done=read(folder/'DONE.json')
-        require(done['identity']==C.chunk_identity(campaign,plan,chunk) and
+        require(done['identity']==C.chunk_identity(campaign,plan,chunk,root=root) and
                 done['artifacts']['events.sqlite']['sha256']==record['store_sha256'] and
                 record['store_ref']==(folder/'events.sqlite').relative_to(campaign).as_posix(),'Analysis Store reference changed')
     for key,group in summary['groups'].items():

@@ -11,11 +11,11 @@ const check=G.check
 const KIND="gegi_campaign_response_request_v1"
 const PROTOCOL="gegi_campaign_response_protocol_v1"
 const GROUP_HORIZON_NS=100000.0
-const NATIVE_FAILURE_POLICY="gegi_campaign_native_domain_errors_v2"
+const NATIVE_FAILURE_POLICY="gegi_campaign_native_domain_errors_v3"
 # The contact-start precondition cannot provide a trustworthy charge response.
 # Preserve the whole group as unknown; never move or discard its deposit rows.
 const RECORDED_NATIVE_ARGUMENT_ERRORS=("Noncontact endpoint outside crystal",
-    "Invalid waveform support","Deposit starts on a GeGI contact")
+    "Invalid waveform support","Deposit starts on a GeGI contact","Invalid native signed charge")
 
 function sources()
     names=unique([collect(G.SOURCES);"gegi_pixel_calibration.jl";"gegi_campaign_response.jl";"Project.toml";"Manifest.toml"])
@@ -201,6 +201,11 @@ function process_group(ctx,command;event_processor=G.process_event)
             "steps"=>group["steps"],"error"=>sprint(showerror,err),"exception_type"=>string(typeof(err)),
             "signals_ref"=>nothing,"signals_sha256"=>nothing,"transport_flags"=>nothing,
             "native_failure_policy"=>NATIVE_FAILURE_POLICY,"native_domain_error"=>known ? err.msg : nothing)
+        if known && err.msg=="Invalid native signed charge"
+            failure["native_waveform_failure"]=Dict("failed_invariant"=>"undetermined",
+                "checked_invariants"=>["sample_count >= 2","all signed samples finite","initial signed sample exactly zero"],
+                "native_samples_available"=>false)
+        end
         if !known
             failure["input_group"]=group;G.save(eventpath,failure);rethrow()
         end

@@ -73,7 +73,8 @@ Measured recovery resources: about 155 GB free disk, 3.46 GB Windows physical me
 free at initial check; WSL 6.92 GB available after start. Re-measure before workers.
 The old JSON format is not admitted for 10M. No production start until measured
 compressed storage + bounded temporary space + reserve fit available disk and
-memory. Current priority remains the website milestone above.
+memory. The website milestone is delivered; current work is formal campaign
+recovery and completion, then saved-data analysis/publication.
 
 Preparation evidence: source-blind reconstruction changes
 pass14 targeted tests and retain original accepted IDs2714 /3170,3998,4046,4468.
@@ -115,7 +116,7 @@ the first sealed chunk retained exact hashes/timestamps. Actual saved-data analy
 passed with26nonzero/25readout accepted/0imaging, inconclusive. No formal primaries
 are part of qualification. An explicit analysis-only producer/reader version record
 allows the terminal-native-failure reporting correction without science reruns.
-Preparation authority: .local/gegi-10m/preparation.json. Formal campaign is running
+Preparation authority: .local/gegi-10m/preparation.json. Formal campaign is paused
 in .local/gegi-10m/campaign:1000chunks,total10M. First10k transport completed;
 contact-domain event1188/group0 then stopped native processing after58saved groups.
 The exact failure is retained with27rows/truth379.37764922113564keV and unknown
@@ -130,7 +131,18 @@ archive. Only explicit failure recording/source identity changed; criteria,
 allocations, seeds, physical inputs and calibration remain fixed.48Julia assertions
 and58targeted recovery/response/analysis/publication tests passed. Existing student
 release remains current because no packaged source changed. Read compact progress
-and actual process identities; healthy monitors exit immediately. Final analysis,
+and actual process identities; healthy monitors exit immediately. At23:50UTC a
+second failure (Invalid native signed charge) stopped chunk5 after five sealed
+chunks/50,000initial photons. Preserve that prefix and the40groups/1392arrays in
+the partial sixth chunk. The original failure is retained in
+.local/gegi-10m/failure-native-charge-v1. One bounded replay of the failed group
+reached an already recognized outside-crystal endpoint error; it did not reproduce
+the exact charge error or establish which original waveform invariant failed.
+The original response is unknown. The second explicit recovery will record only
+this exact ArgumentError as native_failed/null, retaining all rows and all prior
+source versions; underlying SSD numerical behavior is not claimed fixed.
+No source, seed, cut, calibration or completed scientific data may be changed.
+Final analysis,
 figures and final publication remain pending; do not declare the10M task complete.
 
 ## Delivered owner extension — GeGI (2026-10-17)

@@ -2,12 +2,19 @@
 
 ## Active GeGI 10M campaign — 2026-10-17
 
-The formal full-chain campaign is RUNNING after explicit contact-failure recovery
-in .local/gegi-10m/campaign. Actual progress/process identities override this note.
+The formal full-chain campaign is STOPPED on a second native failure; targeted
+diagnosis and preserved-chunk recovery are active in this same chat. At23:50UTC,
+gamma-left chunk5 stopped with ArgumentError: Invalid native signed charge.
+Five sealed chunks contain50,000initial photons; both old workers have exited.
+The sixth chunk has40committed groups/1392arrays. Preserve them and its completed
+transport. Failure snapshot: .local/gegi-10m/failure-native-charge-v1/manifest.json
+(SHA256995ae6700c1cc7d98c911cba41ff1667b7feaede1e00b5f89b65fc9bd375d051).
+Do not start a competing worker or rerun sealed chunks. Actual progress/process
+identities override this note. Active plan remains the first recovery version:
 Current plan SHA256:69c7a222025747be46c9585fd6200f201f33aa501c0f655fbb47d6d3ad9f783e.
 Recovery source commit:96a814057ea40a57079116de8efd5da75bffc3fa.
-Supervisor PID8260, creation identity134367528758621052; resident Julia PID21404,
-identity134367528773322149. Never rely on PID alone. Current spool is selected by
+Exited supervisor PID8260, creation identity134367528758621052; exited Julia PID21404,
+identity134367528773322149. Never rely on PID alone. Prior spool is selected by
 plan.recovery: native-spool-recovery-8cafa6f5193d. One worker reuses exact fields.
 
 This chat01a14bca-3953-7c13-80a1-687a9a571455 owns .local/autonomy/gegi-10m.lock
@@ -34,8 +41,20 @@ Actual recovery check at23:23UTC: all58old event blobs and2012native arrays are
 unchanged, all17transport files retain SHA/mtime, failed1188is retained/null,
 and131groups through originalID2717 are stored. These are partial native counts,
 not sealed initial-event completion. execution-check.json is the evidence. Never
-reapply completed recovery or rerun valid upstream data. Subsequent failures need
-new explicit affected-stage handling; this helper is intentionally one-revision.
+reapply completed recovery or rerun valid upstream data. The second revision keeps
+the sealed prefix under its original identity and preserves every existing Store
+blob. Policyv3 adds only the exact Invalid native signed charge ArgumentError;
+74software assertions passed. The original failed waveform invariant is unknown.
+One bounded diagnostic (38.867s process wall,2.433GB peak, reused cache) instead
+hit the existing outside-crystal endpoint guard. It did not reproduce the original
+error or fix underlying numerical behavior. Retained original event801 will be
+imported as native_failed/null without another drift attempt; its full21rows and
+truth368.52480403127805keV remain. This preserves the known failure even if native
+memory behavior varies. All incomplete native statuses are excluded by existing
+readout/imaging checks. No seeds, cuts, calibration or physical source changed.
+Second-revision recovery/import validation:64targeted Python tests passed,
+including zero native calls for the imported failure, idempotent resume, changed
+evidence rejection, and both prior recipe versions. Migration is pending.
 
 Website milestone59f9d008c4ae is live: actual GeGI cryostat3D, preview/section,
 correct compatibility and simplified Results/Detectors/Assemblies/Run/Methods

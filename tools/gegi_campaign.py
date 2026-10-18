@@ -602,7 +602,7 @@ def inactive_children(directory,*,reader=identity,root=ROOT):
         plan=read(directory/'plan.json')
         if 'recovery' in plan:
             import gegi_campaign_recovery as R
-            records.append(R.spool_path(directory,plan,root)/'worker-process.json')
+            records.extend(path/'worker-process.json' for path in R.spool_paths(directory,plan,root))
     progress_path=directory/'progress.json'
     if progress_path.exists():
         current=read(progress_path).get('current_chunk')
@@ -742,9 +742,13 @@ def file_inventory(directory,excluded=()):
     return result
 
 
-def chunk_identity(directory,plan,chunk):
+def chunk_identity(directory,plan,chunk,*,root=ROOT):
+    plan_sha=sha(Path(directory)/'plan.json')
+    if 'recovery' in plan:
+        import gegi_campaign_recovery as R
+        plan,plan_sha=R.chunk_origin(directory,plan,chunk,root=root)
     group=next(g for g in plan['groups'] if g['id']==chunk['source_group'])
-    return {'campaign_plan_sha256':sha(Path(directory)/'plan.json'),'physics_sha256':plan['physics_sha256'],
+    return {'campaign_plan_sha256':plan_sha,'physics_sha256':plan['physics_sha256'],
             'raw_initial_id_base':plan['raw_initial_id_base'],
             **chunk,'native_request_sha256':plan['native_request']['sha256'],
             'calibration_sha256':plan['calibration']['sha256'], 'photopeak_windows_sha256':digest(group['photopeak_windows']),
@@ -796,9 +800,9 @@ def completed_response(folder,expected):
     return result
 
 
-def verify_done(directory,plan,chunk):
+def verify_done(directory,plan,chunk,*,root=ROOT):
     folder=chunk_path(directory,chunk);done=read(folder/'DONE.json')
-    require(done.get('kind')==DONE_KIND and done.get('identity')==chunk_identity(directory,plan,chunk), 'Sealed chunk identity changed')
+    require(done.get('kind')==DONE_KIND and done.get('identity')==chunk_identity(directory,plan,chunk,root=root), 'Sealed chunk identity changed')
     require(done['response']['status'] in ('completed','completed_with_native_failures') and
             done['response']['counts']['initial_primaries']==chunk['batch']['primary_count'],'Sealed chunk denominator changed')
     require(done['response']==read(folder/'response.json'),'Sealed response receipt changed')
@@ -817,7 +821,7 @@ def verify_done(directory,plan,chunk):
 
 def seal_chunk(directory,plan,chunk,response,*,root=ROOT):
     folder=chunk_path(directory,chunk);require(not (folder/'DONE.json').exists(),'Completed chunk is immutable')
-    expected=chunk_identity(directory,plan,chunk);counts=response['counts']
+    expected=chunk_identity(directory,plan,chunk,root=root);counts=response['counts']
     transport=verify_transport_binding(folder,selection_for(plan,chunk))
     require(response.get('kind')==RESPONSE_KIND and response.get('status') in ('completed','completed_with_native_failures')
             and response.get('store_identity_sha256')==digest(expected)
@@ -835,7 +839,9 @@ def seal_chunk(directory,plan,chunk,response,*,root=ROOT):
         import gegi_campaign_recovery as R
         require(response.get('prior_recipe_provenance')==R.prior_provenance(plan,chunk,root=root),
                 'Response prior-recipe lineage differs from the frozen recovery')
-    else:require('prior_recipe_provenance' not in response,'Unexpected response recipe recovery')
+        require(response.get('saved_native_failure')==R.saved_failure(plan,chunk,root=root),
+                'Response saved-failure admission differs from the frozen recovery')
+    else:require('prior_recipe_provenance' not in response and 'saved_native_failure' not in response,'Unexpected response recovery')
     from gegi_event_store import Store,encoded
     store=Store(folder/'events.sqlite',expected)
     try:
@@ -852,7 +858,7 @@ def seal_chunk(directory,plan,chunk,response,*,root=ROOT):
     write(timing_path,timings)
     done={'kind':DONE_KIND,'identity':expected,'completed_utc':utc(),'response':response,
           'archives':archives,'artifacts':file_inventory(folder,{'DONE.json',*originals})}
-    write(folder/'DONE.json',done,fresh=True);verify_done(directory,plan,chunk)
+    write(folder/'DONE.json',done,fresh=True);verify_done(directory,plan,chunk,root=root)
     # Only these new, explicit campaign originals are replaced, after a verified
     # gzip round trip and durable DONE. Archives retain every original byte.
     for ref in originals:local(folder/ref,root).unlink()
@@ -923,7 +929,7 @@ def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_fa
     require(type(max_chunks) is int and max_chunks>=0,'Invalid chunk bound')
     inactive_children(directory,root=root)
     with locked(directory,resume=resume):
-        if (directory/'COMPLETE.json').exists():return verify_complete(directory,plan)
+        if (directory/'COMPLETE.json').exists():return verify_complete(directory,plan,root=root)
         marker=directory/'STOP.json'
         if marker.exists():
             require(resume and read(marker)['plan_sha256']==sha(directory/'plan.json'),'Stop is pending; use explicit resume')
@@ -937,7 +943,7 @@ def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_fa
             for chunk in chunks(plan):
                 folder=chunk_path(directory,chunk);current=chunk
                 if (folder/'DONE.json').exists():
-                    done=verify_done(directory,plan,chunk);add_counts(totals,chunk['source_group'],done['response']['counts']);continue
+                    done=verify_done(directory,plan,chunk,root=root);add_counts(totals,chunk['source_group'],done['response']['counts']);continue
                 if marker.exists() or max_chunks and new>=max_chunks:
                     return progress(directory,plan,'stopped',totals,None)
                 budget=plan['resource_budget']
@@ -946,7 +952,7 @@ def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_fa
                 for ref,value in plan['source_sha256'].items():require(sha(Path(root)/ref)==value,'Frozen source changed: '+ref)
                 group=next(g for g in plan['groups'] if g['id']==chunk['source_group'])
                 selected=selection_for(plan,chunk)
-                response=completed_response(folder,chunk_identity(directory,plan,chunk))
+                response=completed_response(folder,chunk_identity(directory,plan,chunk,root=root))
                 if response is not None:
                     done=seal_chunk(directory,plan,chunk,response,root=root)
                     add_counts(totals,chunk['source_group'],done['response']['counts']);new+=1
@@ -979,7 +985,9 @@ def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_fa
                     import gegi_campaign_recovery as R
                     prior=R.prior_provenance(plan,chunk,root=root)
                     if prior is not None:extra['prior_recipe_provenance']=prior
-                response=worker.run_chunk(manifest,folder/'events.sqlite',chunk_identity(directory,plan,chunk),
+                    saved_failure=R.saved_failure(plan,chunk,root=root)
+                    if saved_failure is not None:extra['saved_native_failure']=saved_failure
+                response=worker.run_chunk(manifest,folder/'events.sqlite',chunk_identity(directory,plan,chunk,root=root),
                     calibration=plan['calibration'],photopeak_windows=group['photopeak_windows'],receipt_path=folder/'response.json',**extra)
                 write(folder/'timings.json',{'transport_driver_wall_s':transport_elapsed,
                     'native_response_and_store_wall_s':time.perf_counter()-native_started,
@@ -1002,10 +1010,10 @@ def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_fa
             if worker is not None:worker.close()
 
 
-def verify_complete(directory,plan):
+def verify_complete(directory,plan,*,root=ROOT):
     complete=read(Path(directory)/'COMPLETE.json');totals={};records={}
     for chunk in chunks(plan):
-        done=verify_done(directory,plan,chunk);add_counts(totals,chunk['source_group'],done['response']['counts'])
+        done=verify_done(directory,plan,chunk,root=root);add_counts(totals,chunk['source_group'],done['response']['counts'])
         records[str(chunk['chunk_index'])]=sha(chunk_path(directory,chunk)/'DONE.json')
     require(complete['kind']==KIND and complete['status'] in ('completed','completed_with_native_failures') and complete['physics_sha256']==plan['physics_sha256']
             and complete['plan_sha256']==sha(Path(directory)/'plan.json')

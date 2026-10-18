@@ -27,7 +27,9 @@ if ARGS != ["--protocol-only"]
 @testset "Exact domain errors retain complete unknown groups; others abort" begin
     for error in (ArgumentError.(C.RECORDED_NATIVE_ARGUMENT_ERRORS)...,
                   ArgumentError("Positive deposit outside GeGI crystal"),
-                  ErrorException("Deposit starts on a GeGI contact"))
+                  ErrorException("Deposit starts on a GeGI contact"),
+                  ErrorException("Invalid native signed charge"),
+                  ArgumentError("Invalid native signed charge: nonfinite"))
         mktempdir(joinpath(C.G.ROOT,".local")) do folder
             steps=[Dict("raw_row_index"=>1339,"energy_keV"=>1.25,"position_mm"=>[0.,0.,0.],"time_ns"=>100.),
                    Dict("raw_row_index"=>1340,"energy_keV"=>2.5,"position_mm"=>[1.,0.,0.],"time_ns"=>105.)]
@@ -58,6 +60,10 @@ if ARGS != ["--protocol-only"]
                 @test receipt["signals_path"]===nothing && receipt["signals_sha256"]===nothing
                 @test event["native_failure_policy"]==C.NATIVE_FAILURE_POLICY && event["native_domain_error"]==error.msg
                 @test event["error"]==sprint(showerror,error)
+                if error.msg=="Invalid native signed charge"
+                    @test event["native_waveform_failure"]["failed_invariant"]=="undetermined"
+                    @test event["native_waveform_failure"]["native_samples_available"]===false
+                end
                 @test isfile(receiptpath) && C.G.hashfile(eventpath)==receipt["event_sha256"]
                 @test all(isfile,receipt["retained_failure_paths"])
                 repeated=C.process_group(ctx,command;event_processor=failing_processor)

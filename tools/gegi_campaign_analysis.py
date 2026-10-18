@@ -556,6 +556,11 @@ def validate_analysis_revision(plan, *, root=None, allow_analysis_revision=False
     changed = current[ANALYSIS_REF] != frozen[ANALYSIS_REF]
     require(not changed or allow_analysis_revision,
             'Analysis source differs from the frozen campaign; explicit --allow-analysis-revision is required')
+    if 'recovery' in plan:
+        import gegi_campaign_recovery as R
+        # Current producer pins were checked above, including explicit consumer revision.
+        # Verify every historical edge without comparing old pins to today's files.
+        R.original_plan(plan,root,_audit_current=False)
     producers = {ref: value for ref, value in frozen.items() if ref != ANALYSIS_REF}
     return {'kind': 'gegi_analysis_revision_v1', 'allowed': allow_analysis_revision, 'applied': changed,
             'permitted_source_ref': ANALYSIS_REF, 'original_analysis_sha256': frozen[ANALYSIS_REF],
@@ -586,7 +591,8 @@ def sealed_chunks(directory, plan, *, allow_partial=False, root=None):
         if not done_path.exists():
             require(allow_partial and complete is None, 'Completed campaign has an unsealed chunk')
             continue
-        done_hash = sha(done_path); done = read(done_path); identity = C.chunk_identity(directory, plan, chunk)
+        done_hash = sha(done_path); done = read(done_path); identity = C.chunk_identity(directory, plan, chunk,
+            root=Path(root) if root is not None else Path(__file__).resolve().parents[1])
         require(done.get('kind') == C.DONE_KIND and done.get('identity') == identity, 'Sealed chunk identity changed')
         if complete is not None:
             require(complete['chunks'][str(chunk['chunk_index'])] == done_hash, 'Completed chunk seal changed')
@@ -598,8 +604,11 @@ def sealed_chunks(directory, plan, *, allow_partial=False, root=None):
             require(response.get('prior_recipe_provenance') == R.prior_provenance(plan, chunk,
                     root=Path(root) if root is not None else Path(__file__).resolve().parents[1]),
                     'Recovered response recipe ledger differs from frozen revision')
+            require(response.get('saved_native_failure') == R.saved_failure(plan, chunk,
+                    root=Path(root) if root is not None else Path(__file__).resolve().parents[1]),
+                    'Recovered saved-failure admission differs from frozen revision')
         else:
-            require('prior_recipe_provenance' not in response, 'Unexpected prior recipe provenance')
+            require('prior_recipe_provenance' not in response and 'saved_native_failure' not in response, 'Unexpected response recovery provenance')
         for name in ('events.sqlite', 'response.json'):
             path = folder/name; record = done['artifacts'][name]
             require(path.is_file() and path == path.resolve() and path.stat().st_size == record['bytes'] and sha(path) == record['sha256'],

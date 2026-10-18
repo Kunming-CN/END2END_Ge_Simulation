@@ -265,23 +265,40 @@ class ResidentWorker:
                     'Unowned or linked native spool path')
         return expected
 
-    def process_group(self, group, store, *, calibration=None, photopeak_windows=None, calibration_sha256=None):
+    def process_group(self, group, store, *, calibration=None, photopeak_windows=None, calibration_sha256=None,
+                      saved_native_failure=None):
         body = S.encoded(group)
         digest = S.sha(body)
         primary_id, group_id = group['event_id'], group['group_id']
+        imported=None
+        if saved_native_failure is not None:
+            import gegi_campaign_recovery as R
+            imported=R.load_saved_failure(saved_native_failure,group,root=ROOT)
         if store.has(primary_id, group_id, digest):
-            return store.read(primary_id, group_id)[0]
-        receipt = self.command('process', group_json=body.decode('utf-8'), input_sha256=digest)
-        require(receipt['input_sha256'] == digest and receipt['event_id'] == primary_id and receipt['group_id'] == group_id,
-                'Native group identity changed')
-        paths = self._spool_paths(receipt, digest)
-        require(file_sha(paths['event_path']) == receipt['event_sha256'], 'Native event spool changed')
-        event = read(paths['event_path'])
-        require(event['input_group'] == group and event['input_event_sha256'] == digest, 'Original group provenance changed')
+            saved=store.read(primary_id, group_id)[0]
+            if imported is not None:
+                require(saved.get('saved_native_failure')==saved_native_failure and saved['status']=='native_failed'
+                        and saved['channels'] is None and saved['native_signals'] is None and saved['error']==imported['error'],
+                        'Saved failure import changed on resume')
+            return saved
         native = None
-        if receipt['signals_path'] is not None:
-            require(file_sha(paths['signals_path']) == receipt['signals_sha256'], 'Native signal spool changed')
-            native = S.native_csv(paths['signals_path'], event['channels'])
+        if imported is not None:
+            event=copy.deepcopy(imported)
+            event.update(status='native_failed',group_id=group_id,input_event_sha256=digest,
+                         input_steps=group['steps'],saved_native_failure=saved_native_failure)
+            for key in ('source_id','global_decay_id','initial_primary_id','root','source_group','chunk_index','campaign_initial_offset'):
+                if key in group:event[key]=group[key]
+        else:
+            receipt = self.command('process', group_json=body.decode('utf-8'), input_sha256=digest)
+            require(receipt['input_sha256'] == digest and receipt['event_id'] == primary_id and receipt['group_id'] == group_id,
+                    'Native group identity changed')
+            paths = self._spool_paths(receipt, digest)
+            require(file_sha(paths['event_path']) == receipt['event_sha256'], 'Native event spool changed')
+            event = read(paths['event_path'])
+            require(event['input_group'] == group and event['input_event_sha256'] == digest, 'Original group provenance changed')
+            if receipt['signals_path'] is not None:
+                require(file_sha(paths['signals_path']) == receipt['signals_sha256'], 'Native signal spool changed')
+                native = S.native_csv(paths['signals_path'], event['channels'])
         require((event['status'] == 'native_failed') == (native is None), 'Unknown native signals must remain null')
         event['readout_summary'] = readout_summary(event)
         if calibration is not None:
@@ -323,7 +340,7 @@ class ResidentWorker:
         return verified
 
     def run_chunk(self, manifest_path, store_path, store_identity, *, calibration, photopeak_windows, receipt_path,
-                  prior_recipe_provenance=None):
+                  prior_recipe_provenance=None,saved_native_failure=None):
         manifest_path = Path(manifest_path).resolve()
         manifest = read(manifest_path);manifest_sha256 = file_sha(manifest_path)
         require(manifest['kind'] == 'gegi_event_stream_v1' and manifest['events_file'] == 'events.jsonl', 'Unsupported sparse manifest')
@@ -362,7 +379,8 @@ class ResidentWorker:
                 result = json.loads(existing[0])
                 require(result['input_manifest_sha256'] == manifest_sha256 and
                         result['store_identity_sha256'] == S.sha(S.encoded(store_identity)) and
-                        result.get('prior_recipe_provenance') == prior_recipe_provenance, 'Sealed response identity changed')
+                        result.get('prior_recipe_provenance') == prior_recipe_provenance and
+                        result.get('saved_native_failure') == saved_native_failure, 'Sealed response identity changed')
                 for key in store.keys():
                     store.read(*key, with_signals=True)
             else:
@@ -381,8 +399,11 @@ class ResidentWorker:
                         seen.add(eid)
                         for group in pulse_groups(event, source_id, context):
                             gid = group['group_id'];keys.add((eid, gid))
+                            extra={}
+                            if saved_native_failure is not None and (eid,gid)==(saved_native_failure['event_id'],saved_native_failure['group_id']):
+                                extra['saved_native_failure']=saved_native_failure
                             saved = self.process_group(group, store, calibration=table, photopeak_windows=windows,
-                                                       calibration_sha256=calibration['sha256'])
+                                                       calibration_sha256=calibration['sha256'],**extra)
                             counters['pulse_groups'] += 1
                             if saved['status'] == 'native_failed':
                                 counters['native_failed_groups'] += 1;outcomes['native_failed'].add(eid)
@@ -395,6 +416,10 @@ class ResidentWorker:
                             if replay_receipt is None and saved.get('channels') is not None:
                                 replay_receipt = self.verify_saved_group(store, eid, gid)
                 require(len(seen) == nonzero and set(store.keys()) == keys, 'Sparse primary/group census changed')
+                if saved_native_failure is not None:
+                    key=(saved_native_failure['event_id'],saved_native_failure['group_id'])
+                    require(key in keys and store.read(*key)[0].get('saved_native_failure')==saved_native_failure,
+                            'Admitted original failure was not retained in the completed chunk')
                 require(file_sha(stream) == manifest['events_sha256'] and file_sha(manifest_path) == manifest_sha256,
                         'Transport inputs changed during response')
                 for name, ids in outcomes.items():
@@ -414,6 +439,7 @@ class ResidentWorker:
                     'transport_counts': manifest.get('counts'), 'source_id': source_id,
                     'native_request_sha256': self.request_sha256, 'new_field_solve': False}
                 if prior_recipe_provenance is not None:result['prior_recipe_provenance']=prior_recipe_provenance
+                if saved_native_failure is not None:result['saved_native_failure']=saved_native_failure
                 store.seal(result)
         finally:
             store.close()
