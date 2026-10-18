@@ -78,11 +78,18 @@ compressed storage + bounded temporary space + reserve fit available disk and
 memory. The website milestone is delivered; current work is formal campaign
 recovery and completion, then saved-data analysis/publication.
 
-Owner quota amendment is in progress: retain the same .local/gegi-10m/campaign
-path and all native failures, cache and sealed chunks; use20/20/30/30chunks for
-the reduced four groups. Safe boundary stop completed with170k sealed and both
-old workers exited. The
-maintained handoff and eventual amendment receipt provide actual execution state.
+Owner quota amendment applied: .local/gegi-10m/quota-1m-v1/application.json.
+The same .local/gegi-10m/campaign directory retains all17sealed chunks/170k,
+old native failures, cache and identities. Exactly20/20/30/30effective chunks use
+unchanged per-group seed/local-ID prefixes; no science rerun or Store rebind.
+Current plan SHA2563539fab2594dd848ae9989490ed9fa80d8c74400abd9c8a2cb7a74c78ded8ae5;
+quota producer90a82eda5b24262b3cfc7b843a8a8b5ed21d102d.69targeted tests passed.
+Detached execution resumed with same request/spool; actual identities are in
+PROGRESS/launcher records. Same-chat30min automation targets1M. Owner confirmed
+the independent-acquisition/linear-mixture model; complex simultaneous-source and
+pileup work is deferred. Final acceptance requires1M/100chunks and publication.
+Effective remaining disk budget at170k is32.26GB including reserve, versus153.78GB
+free before resume; original10M resource projection below is historical.
 
 Historical preparation and original10M recovery evidence (retained unchanged):
 
@@ -126,8 +133,8 @@ the first sealed chunk retained exact hashes/timestamps. Actual saved-data analy
 passed with26nonzero/25readout accepted/0imaging, inconclusive. No formal primaries
 are part of qualification. An explicit analysis-only producer/reader version record
 allows the terminal-native-failure reporting correction without science reruns.
-Preparation authority: .local/gegi-10m/preparation.json. Formal campaign is running
-in .local/gegi-10m/campaign:1000chunks,total10M. First10k transport completed;
+Preparation authority: .local/gegi-10m/preparation.json. Original formal campaign
+was launched in .local/gegi-10m/campaign:1000chunks,total10M before owner reduction. First10k transport completed;
 contact-domain event1188/group0 then stopped native processing after58saved groups.
 The exact failure is retained with27rows/truth379.37764922113564keV and unknown
 response null, without coordinate adjustment. Explicit versioned recovery is
@@ -156,13 +163,13 @@ Recovery2 is applied in .local/gegi-10m/recovery-native-charge-v1; its execution
 check preserves all5sealed chunks,40prior group blobs,1392arrays and17transport
 files. Event801/group0 is imported from original failure evidence without drift
 replay. Actual resumed partial count129groups through originalID2656 at00:13:57UTC
-is not sealed initial completion. Current plan SHA256:
+is not sealed initial completion. Pre-quota second-recovery plan SHA256:
 3e28f5a40f2be830d775dad01994aed694bacffb84408c1bb88acc7c6c7227f6;
 producer619093442162ecd3904a63bc54935e07c93a87c2.74Julia assertions and64targeted
 Python tests passed. Same-chat30min automation is verified ACTIVE; healthy checks
 exit quietly. Current process identities are in PROGRESS and launcher records.
 Final analysis,
-figures and final publication remain pending; do not declare the10M task complete.
+figures and final publication remain pending; do not declare the effective1M task complete.
 
 ## Delivered owner extension — GeGI (2026-10-17)
 

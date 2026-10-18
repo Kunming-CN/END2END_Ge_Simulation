@@ -1,95 +1,93 @@
 # Current handoff
 
-## Active GeGI 1M quota amendment — owner update2026-10-17
+## Active GeGI 1M campaign — owner reduction2026-10-17
 
-The owner reduced TOTAL10M to1M and requested continued execution. New quotas:
-200k gamma-left,200k gamma-right,300k Cs137-left,300k Co60-right, keeping original
-photon/decay denominators, seeds, geometry, calibration and selection. A safe
-completed-chunk stop finished with170k sealed; both old workers exited at01:24UTC.
-All17sealed chunks fit the new200k left-source quota. No unfinished chunk remains.
-Quota amendment implementation passed69targeted tests; source is frozen. Actual
-prepare/apply/resume follows the source commit; no new physics run or Store edit.
-This chat owns the explicit quota amendment. Do not resume the old10M plan or
-launch another supervisor while .local/autonomy/state.json is reducing_quota.
-All old science, failures and hashes remain protected. The following is the
-pre-amendment running state; actual process/progress records take precedence.
+The owner reduced TOTAL10M to1M and confirmed the existing independent-acquisition,
+linear-mixture model; complex simultaneous-source/pileup work is deferred. Formal
+campaign is RUNNING in the same .local/gegi-10m/campaign historical directory.
+Actual progress/process identities prevail. Current plan SHA256:
+3539fab2594dd848ae9989490ed9fa80d8c74400abd9c8a2cb7a74c78ded8ae5.
+Current quota producer:90a82eda5b24262b3cfc7b843a8a8b5ed21d102d.
+Supervisor PID2484, creation134367606974651999; Julia PID14340,
+creation134367607004594878. Both actual identities verified after detached launch.
+Same native request ae476cdc9349bddec75c36c87fb9538224cfdf8b848618d393aea983b663db29
+and spool native-spool-recovery-843b1271056a are reused; no new field solve.
 
-The formal full-chain campaign is RUNNING after two explicit native-failure
-recoveries in .local/gegi-10m/campaign. Actual progress/process identities prevail.
-Current plan SHA256:3e28f5a40f2be830d775dad01994aed694bacffb84408c1bb88acc7c6c7227f6.
-Current producer commit:619093442162ecd3904a63bc54935e07c93a87c2.
-Supervisor PID36236, creation identity134367559201803262; Julia PID20816,
-identity134367559221787871. Both actual identities verified after detached launch.
-Current spool from plan.recovery: native-spool-recovery-843b1271056a.
+Exactly100chunks/1,000,000formal initials:200k gamma-left,200k gamma-right,
+300k Cs137-left,300k Co60-right. Photon/initial-decay denominators remain separate;
+preparation2400 is excluded. Current sealed prefix17chunks/170,000photons counts
+as17%of the reduced campaign. Next chunk is left b17, followed by b18/b19 and
+then the right-source group. Keep all original seed prefixes/calibration/cuts.
+The four groups are two comparisons: equal-energy left/right control and Cs137/
+Co60 isotope mixture. They do not model four real simultaneous physical sources.
+
+Safe boundary stop retained170k and verified old supervisor36236/Julia20816 both
+exited. The explicit owner quota amendment is applied at
+.local/gegi-10m/quota-1m-v1/application.json. amendment.json binds predecessor
+plan/FROZEN/STOP/progress, both native-recovery versions and all17sealed inventories.
+Old chunks keep exact original identities/hashes/mtimes; no Store was rebound or
+rewritten. New group offsets are0/200k/400k/700k. Original source_commit and
+revision.recovery_source_commit remain historical; quota_amendment source_commit
+identifies the active maintainer revision. Never reapply the finished amendment.
+Actual execution-check.json at01:34:20UTC verified all17sealed byte/mtime and
+identity records, all seed/local-ID prefixes, and original801failure unchanged.
+New b17 had80saved groups through rawID1704; sample18has actual nonzero input and
+all34native/readout channels. This partial count is not extra sealed initials.
+69targeted quota/campaign/recovery/response/analysis/publication tests passed,
+including interrupted apply, unchanged seed/local-ID prefixes, ancestor identities,
+and the original1.5x disk safety ratio. No science rerun or extra reviewer.
 
 This chat01a14bca-3953-7c13-80a1-687a9a571455 owns .local/autonomy/gegi-10m.lock
-as gegi-10m-root. Automation automation is verified ACTIVE every30min targeting
-this chat/root and current plan. Read compact state; healthy checks exit quietly.
-A sandbox identity unknown is not a dead worker; use authorized process access
-when necessary. No competing supervisor, repeated agents, long polling or resets.
-Retain this lock/monitor until final delivery, not merely until physics completes.
+as gegi-10m-root; keep this legacy owner/path for continuity. Automation automation
+is ACTIVE every30min for this same chat/root, now targeting1M/100chunks. Healthy
+running_native OR running_transport checks read compact progress, process creation
+identities, concrete errors and disk, then exit quietly. Unknown process identity
+is not death; use authorized process access when necessary. No long polling,
+competing supervisor, routine agents, global changes, new environment or resets.
 
-1000chunks total10M:2M gamma-left,2M gamma-right,3M Cs137-left,3M Co60-right.
-Keep photon/initial-decay denominators separate; preparation2400 is excluded.
-Coordinates, fixed seeds/cuts and metrics are in NEXT_DEVELOPMENT_PLAN. Mixtures
-are independent linear sums without inter-source pileup or a true3D claim.
-Five sealed chunks currently account for50,000initial gamma-left photons (0.5%).
-At00:13:57UTC the sixth chunk had129stored groups through originalID2656 after
-resume; partial response counts are not additional sealed initial completion.
+Permanent native-failure history: failure-contact-v1/recovery-contact-v1 preserve
+original contact failure1188/group0 and58event blobs/2012arrays. Second failure
+and single bounded diagnostic remain in failure-native-charge-v1; its original
+charge invariant is unobservable and underlying SSD numerical behavior is not
+fixed. recovery-native-charge-v1 preserved5then-sealed chunks and40partial group
+blobs/1392arrays. Original event801/group0 keeps21rows, truth368.52480403127805keV,
+original error SHA8e21dc3277ffcf53afd594279065bd33d0631e06dd27a0b8c7307ac3dda2a37a,
+native_failed/null and drift_replayed:false. It must not be simulated again for a
+different result. Existing incomplete native statuses are rejected by readout and
+imaging. Policyv3 records only exact admitted ArgumentErrors; unknown errors abort.
+Both prior recoveries and their execution-check.json remain authoritative. No
+repeat diagnostics, seed changes or relaxed selection are queued.
 
-Recovery1: original contact-start failure1188/group0 and original producers remain
-in .local/gegi-10m/failure-contact-v1; recovery-contact-v1/application.json binds
-its identity migration. All58prior event blobs/2012arrays were preserved. Do not
-reapply it. Original plan/source_commit remain historical in the revision chain.
-Recovery2: chunk5 failed on Invalid native signed charge at23:50UTC. Preserve
-.local/gegi-10m/failure-native-charge-v1, including original error, full21rows,
-truth368.52480403127805keV and the single bounded diagnostic. Its original failing
-waveform invariant is unobservable. The diagnostic instead hit the existing
-outside-crystal endpoint guard; it did not reproduce the exact original error or
-fix underlying SSD numerical behavior. Cache reused;38.867s process wall,2.433GB
-peak, no new radiation/field solve. No further diagnostic retry is queued.
+Effective remaining disk requirement at170k:32,260,755,421bytes, including original
+1.5x data allowance,402,465,474temporary bytes and21,474,836,480reserve. Before
+resume153.78GBdisk/5.13GBphysical memory were free; native measured peak2.49GB.
+Original10M disk/time projections are history, not the current required quota.
+Low disk stops safely, never deletes science. Update actual speed as groups finish.
 
-Recovery2 is applied at .local/gegi-10m/recovery-native-charge-v1/application.json.
-Its execution-check.json verifies all5sealed chunks retain exact hashes/mtimes,
-all40partial event blobs/1392arrays and17transport files retain original bytes.
-Original event801/group0 is imported as native_failed/null, drift_replayed:false;
-its original error is retained without another drift attempt. Both readout and
-imaging reject it. Future exact Invalid native signed charge ArgumentErrors use
-policyv3; other unknown errors still abort. No seeds, cuts, calibration, physical
-inputs or original native helper changed. Different source/recipe versions remain
-explicit. Existing incomplete-native readout/imaging rejection remains unchanged.
-Validation:74targeted Julia assertions and64Python campaign/recovery/adapter/
-analysis/publication tests passed. No extra reviewers. The two-generation helper
-is bounded to these exact failures/preserved prefix, not arbitrary rebaselining.
-
-Website milestone59f9d008c4ae is live: actual GeGI cryostat3D, preview/section,
-correct compatibility and simplified Results/Detectors/Assemblies/Run/Methods
-navigation.709live files plus all8assembly assets and desktop rotation/zoom/section
-were verified. Historical URLs/science and LBNL flags remain. Earlier33site tests,
-8focused checks and1705local files passed; no website artifact changed here.
-Current student-runtime-429ebcd78e69 actual tag/latest ZIP bytes are verified:
-829262bytes,177members,SHA256
+Website milestone59f9d008c4ae is live: dedicated GeGI cryostat3D/preview/section,
+correct compatibility and simplified navigation.709live files plus8assembly assets
+and actual desktop manipulation were verified. No website artifact changed here.
+Current student-runtime-429ebcd78e69 actual tag/latest ZIP remains verified:
+829262bytes/177members/SHA256
 70c990f3f0cfeeb2f49aa38abd1093b16b371d135e62067d7feb61be000fbb37.
-No packaged source changed, so this maintainer-only repair needs no new ZIP.
+No packaged runtime/guide changed, so this maintainer quota edit needs no new ZIP.
+Preparation calibration216available/40unavailable and175fixed diagnostics, four500
+pilots and actual400stop/resume all remain accepted; do not repeat them.
 
-Preparation passed: independent simulated depth table216available/40unavailable,
-175fixed diagnostics. Four500pilots:115nonzero,0native failures,2readout rejections,
-2imaging. Actual400stop/resume kept the first100sealed unchanged and resumed300;
-saved analysis26nonzero/25readout accepted/0imaging is inconclusive. No repeat.
-Measured compressed projection76.14GB;1.5x allowance+temporary+20GiB reserve needs
-136.08GB. Before latest resume6.35GB physical memory was free; after verification
-152.92GB disk was free. Resident measured peak about2.49GB. Rough pilot10days is
-not a guarantee; use actual progress. Low disk stops safely, never deletes science.
-
-Final analysis/publication is PENDING and requires COMPLETE. Use frozen
-gegi_campaign_analysis.py and gegi_campaign_publication.py (exporter SHA256
-f0e8e78163bfaf153ec27e2304457165648b725f726261120acd95a3e43d158b), aggregate exact native error messages
-from retained scalar records as well as stage/rejection counts, and report failed
-or inconclusive separation honestly. No formal10M figures are yet published.
-Freeze relevant writers, export saved data, build_site.py --gegi-campaign-bundle,
+Final analysis/publication is PENDING and requires COMPLETE for1M/100chunks.
+Use frozen gegi_campaign_analysis.py and gegi_campaign_publication.py (exporter
+SHA256f0e8e78163bfaf153ec27e2304457165648b725f726261120acd95a3e43d158b).
+Aggregate exact native errors as well as stage/rejection counts; disclose the
+owner quota reduction and all numerical/calibration limits. Completed_with_native_
+failures means processing complete, not physical validation. Fixed metrics and
+optional bootstrap cost gate remain; inconclusive separation is valid. Direction/
+assumedz40mm plane maps do not establish range/true3D or simultaneous-source pileup.
+Freeze relevant writers and hashes before export; build via build_site.py only,
 run affected checks/live desktop verification, synchronize Git, then disable this
-monitor and release only this chat's lock. Do not change frozen sources while the
-healthy campaign runs. Re-export affected derivatives rather than rerunning science.
+monitor and release only this chat's lock. Until then the overall task is unfinished.
+Never change frozen producer files while healthy workers run. Re-export affected
+derivatives instead of rerunning valid upstream science. All .local/gegi-10m data
+and original failures/models remain permanent.
 
 ## Prior delivered milestone (retained evidence)
 
