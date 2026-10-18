@@ -84,7 +84,79 @@ class SharedDecayTests(unittest.TestCase):
         params=[d.P.parameter_text(s,s['source']['position_global_mm'],False) for s in mounts]
         self.assertEqual(params,[params[0]]*3)
         self.assertEqual([s['coordinate_transform'] for s in mounts],[mounts[0]['coordinate_transform']]*3)
-    def test_original_build_bound_inputs_match_public_pins(self):
-        # The protected public adapter map is independent of ignored milestone evidence.
-        d.P.recheck_map(d.P.PINNED,h.ROOT)
+    def test_current_build_bound_inputs_preserve_historical_pins(self):
+        # The adapter deliberately keeps its original build map while the
+        # current authority includes the admitted gamma/storage revisions.
+        d.P.recheck_map(d.P.source_inventory(),h.ROOT)
+        self.assertEqual(d.P.PINNED['transport/scenario_transport.py'],
+                         'a417048e496cb5f0aee4ecac755404cee80cc8b38d2235f3b4b305ae62eae6ac')
+        self.assertEqual(d.P.source_inventory()['transport/scenario_transport.py'],
+                         d.P.GAMMA_TRANSPORT_SHA256)
+class ConversionRecoilTests(unittest.TestCase):
+    def fixture(self,pdg=1000320700):
+        def row(tid,parent,particle,procid=1,time=0.,energy=0.):
+            return dict(evtid=0,trackid=tid,parent_trackid=parent,particle=particle,
+                        procid=procid,time=time,ekin=energy,xloc=0.,yloc=0.,zloc=0.)
+        tracks=[row(1,0,1000270600,-1),row(2,1,1000280600),row(3,2,22,time=3.,energy=1.332514),
+                row(4,3,11,2,3.2,.2),row(5,3,-11,2,3.2,.1105),row(6,3,pdg,2,3.2,.000005)]
+        return tracks,{1:'RadioactiveDecay',2:'conv',3:'compt'},d.D.preset('co60_point_decay_v1',h.ROOT)
+
+    def check(self,tracks,names,p,material='G4_Ge'):
+        return d.validate_tracks(tracks,names,p,target_material_for_track=lambda t:material)
+
+    def test_all_known_natural_targets_are_supported_without_changing_tracks(self):
+        for material,isotopes in d.CONVERSION_TARGET_ISOTOPES.items():
+            for z,a in isotopes:
+                with self.subTest(material=material,Z=z,A=a):
+                    tracks,names,p=self.fixture(1000000000+10000*z+10*a);original=copy.deepcopy(tracks)
+                    byid=self.check(tracks,names,p,material)
+                    self.assertEqual(tracks,original);self.assertIs(byid[6],tracks[-1])
+
+    def test_shared_reader_without_explicit_material_evidence_remains_strict(self):
+        tracks,names,p=self.fixture()
+        with self.assertRaisesRegex(ValueError,'Unexpected descendant nuclear family'):
+            d.validate_tracks(tracks,names,p)
+        for material in (None,'G4_Cu','G4_Al','G4_AIR'):
+            with self.subTest(material=material),self.assertRaises(ValueError):
+                self.check(tracks,names,p,material)
+
+    def test_false_conversion_evidence_is_rejected(self):
+        mutations={
+            'wrong process':lambda t,n:t[-1].update(procid=3),
+            'near process name':lambda t,n:n.update({2:'conv-other'}),
+            'non gamma parent':lambda t,n:t[2].update(particle=11),
+            'missing pair':lambda t,n:t.pop(4),
+            'extra conversion product':lambda t,n:t.append(dict(t[-1],trackid=7)),
+            'pair position':lambda t,n:t[3].update(xloc=1e-12),
+            'pair clock':lambda t,n:t[3].update(time=3.21),
+            'pair event':lambda t,n:t[3].update(evtid=1),
+            'anti nucleus':lambda t,n:t[-1].update(particle=-1000320700),
+            'isomer':lambda t,n:t[-1].update(particle=1000320701),
+            'hyper nucleus':lambda t,n:t[-1].update(particle=1010320700),
+            'unnatural isotope':lambda t,n:t[-1].update(particle=1000320710),
+            'different element':lambda t,n:t[-1].update(particle=1000130270),
+            'below pair threshold':lambda t,n:t[2].update(ekin=.661657),
+            'energy excess':lambda t,n:t[3].update(ekin=2.),
+            'nonfinite energy':lambda t,n:t[3].update(ekin=float('inf')),
+            'nonfinite birth':lambda t,n:t[-1].update(xloc=float('nan')),
+        }
+        for name,mutate in mutations.items():
+            tracks,names,p=self.fixture();mutate(tracks,names)
+            with self.subTest(name=name),self.assertRaises(ValueError):self.check(tracks,names,p)
+
+    def test_conversion_does_not_bypass_source_graph_or_clock_rules(self):
+        mutations={
+            'root':lambda t:t[0].update(particle=22),
+            'daughter':lambda t:t[1].update(particle=1000280610),
+            'initial clock':lambda t:t[1].update(time=.1),
+            'missing ancestor':lambda t:t[2].update(parent_trackid=99),
+            'cycle':lambda t:t[2].update(parent_trackid=6),
+            'parent clock':lambda t:t[2].update(time=4.),
+            'ground daughter cap':lambda t:t[2].update(time=100001.),
+        }
+        for name,mutate in mutations.items():
+            tracks,names,p=self.fixture();mutate(tracks)
+            with self.subTest(name=name),self.assertRaises(ValueError):self.check(tracks,names,p)
+
+
 if __name__=='__main__':unittest.main()

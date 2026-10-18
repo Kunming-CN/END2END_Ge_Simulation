@@ -222,7 +222,10 @@ def verify_inputs(plan,root=ROOT):
 
 
 def verify_acceptance(plan,root=ROOT):
-    if 'quota_amendment' in plan:
+    if 'transport_revision' in plan:
+        import gegi_campaign_transport_recovery as T
+        plan=T.original_plan(plan,root)
+    elif 'quota_amendment' in plan:
         import gegi_campaign_quota as Q
         plan=Q.original_plan(plan,root)
     elif 'recovery' in plan:
@@ -490,7 +493,10 @@ def budget_from_acceptance(plan,acceptance,*,multiplier,reserve_bytes=DEFAULT_DI
 
 
 def verify_resource_budget(plan,root=ROOT):
-    if 'quota_amendment' in plan:
+    if 'transport_revision' in plan:
+        import gegi_campaign_transport_recovery as T
+        plan=T.original_plan(plan,root)
+    elif 'quota_amendment' in plan:
         import gegi_campaign_quota as Q
         plan=Q.original_plan(plan,root)
     elif 'recovery' in plan:
@@ -513,7 +519,10 @@ def available_disk_bytes(path):
 
 def required_launch_disk_bytes(plan,totals,*,root=ROOT):
     effective=plan
-    if 'quota_amendment' in plan:
+    if 'transport_revision' in plan:
+        import gegi_campaign_transport_recovery as T
+        plan=T.original_plan(plan,root)
+    elif 'quota_amendment' in plan:
         import gegi_campaign_quota as Q
         plan=Q.original_plan(plan,root)
     elif 'recovery' in plan:
@@ -611,6 +620,9 @@ def inactive_children(directory,*,reader=identity,root=ROOT):
     directory=Path(directory);records=[directory/'native-spool/worker-process.json']
     if (directory/'plan.json').exists():
         plan=read(directory/'plan.json')
+        if 'transport_revision' in plan:
+            import gegi_campaign_transport_recovery as T
+            records.append(T.spool_path(directory,plan,root)/'worker-process.json')
         if 'recovery' in plan:
             import gegi_campaign_recovery as R
             records.extend(path/'worker-process.json' for path in R.spool_paths(directory,plan,root))
@@ -755,7 +767,10 @@ def file_inventory(directory,excluded=()):
 
 def chunk_identity(directory,plan,chunk,*,root=ROOT):
     plan_sha=sha(Path(directory)/'plan.json')
-    if 'quota_amendment' in plan:
+    if 'transport_revision' in plan:
+        import gegi_campaign_transport_recovery as T
+        plan,plan_sha=T.chunk_origin(directory,plan,chunk,root=root)
+    elif 'quota_amendment' in plan:
         import gegi_campaign_quota as Q
         plan,plan_sha=Q.chunk_origin(directory,plan,chunk,root=root)
     elif 'recovery' in plan:
@@ -973,7 +988,10 @@ def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_fa
                     progress(directory,plan,'running',totals,None);continue
                 if worker is None:
                     progress(directory,plan,'starting_native',totals,current)
-                    if 'recovery' in plan:
+                    if 'transport_revision' in plan:
+                        import gegi_campaign_transport_recovery as T
+                        spool=T.spool_path(directory,plan,root)
+                    elif 'recovery' in plan:
                         import gegi_campaign_recovery as R
                         spool=R.spool_path(directory,plan,root)
                     else:spool=directory/'native-spool'

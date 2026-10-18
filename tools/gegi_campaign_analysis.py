@@ -556,7 +556,10 @@ def validate_analysis_revision(plan, *, root=None, allow_analysis_revision=False
     changed = current[ANALYSIS_REF] != frozen[ANALYSIS_REF]
     require(not changed or allow_analysis_revision,
             'Analysis source differs from the frozen campaign; explicit --allow-analysis-revision is required')
-    if 'quota_amendment' in plan:
+    if 'transport_revision' in plan:
+        import gegi_campaign_transport_recovery as T
+        T.original_plan(plan,root,_audit_current=False)
+    elif 'quota_amendment' in plan:
         import gegi_campaign_quota as Q
         Q.original_plan(plan,root,_audit_current=False)
     elif 'recovery' in plan:
@@ -748,6 +751,7 @@ def analyze(campaign, output, *, root=None, allow_partial=False, allow_analysis_
         'criteria': criteria(), 'source_sha256': pins, 'analysis_revision': revision,
         'source_recovery_sha256': plan.get('recovery', {}).get('sha256'),
         'quota_amendment_sha256': plan.get('quota_amendment', {}).get('sha256'),
+        'transport_revision_sha256': plan.get('transport_revision', {}).get('sha256'),
         'numpy_version': np.__version__, 'inputs': input_records,
         'initial_denominators_by_unit': denominators, 'processed_initial_records': processed,
         'planned_initial_records': plan['total_initial_primaries'], 'groups': groups, 'mixtures': pairs,
@@ -774,6 +778,7 @@ def analyze(campaign, output, *, root=None, allow_partial=False, allow_analysis_
                     'source_sha256': pins, 'analysis_revision': revision,
                     'source_recovery_sha256': summary['source_recovery_sha256'], 'radiation_calls': 0, 'field_solves': 0,
                     'quota_amendment_sha256': summary['quota_amendment_sha256'],
+                    'transport_revision_sha256': summary['transport_revision_sha256'],
                     'files': {p.name: {'sha256': sha(p), 'bytes': p.stat().st_size} for p in sorted(output.iterdir())
                               if p.is_file() and p.name != 'manifest.json'}}
         (output/'manifest.json').write_bytes(encoded(manifest))

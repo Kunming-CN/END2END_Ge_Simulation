@@ -16,7 +16,8 @@ class Fixture(CampaignTests):
     def pilots(self,plan):
         wrapper=self.root/R.WRAPPER;wrapper.parent.mkdir(exist_ok=True);wrapper.write_bytes(b'ORIGINAL WRAPPER')
         request_path=self.root/plan['native_request']['ref'];request=C.read(request_path)
-        request['source_sha256']={R.WRAPPER:C.sha(wrapper)};C.write(request_path,request)
+        request['source_sha256']={R.WRAPPER:C.sha(wrapper),
+            'transport/gegi_source.py':C.sha(self.root/'transport/gegi_source.py')};C.write(request_path,request)
         plan['native_request']=self.binding(request_path)
         accepted=super().pilots(plan);path=self.root/accepted['ref'];value=C.read(path)
         self.recipe={'source_code_sha256':{'gegi_campaign_response.jl':C.sha(wrapper)},'fixed_gain':2.}

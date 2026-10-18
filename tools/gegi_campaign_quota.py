@@ -40,7 +40,7 @@ def effective_plan(old):
     return result
 
 
-def original_plan(plan,root=C.ROOT,*,require_applied=True,_audit_current=True):
+def original_plan(plan,root=C.ROOT,*,require_applied=True,_audit_current=True,_plan_sha256=None):
     """Prove the exact subset and return the original acceptance/budget basis."""
     root=Path(root);record=_record(plan,root)
     old=C.validate_plan(C.read(C.bound_file(root,record['predecessor_plan'])),frozen=True)
@@ -73,7 +73,7 @@ def original_plan(plan,root=C.ROOT,*,require_applied=True,_audit_current=True):
     if require_applied:
         applied=C.read(C.reference(root,record['application_ref']))
         require(applied.get('status')=='complete' and applied.get('quota_amendment')==plan['quota_amendment'] and
-                applied.get('new_plan_sha256')==C.sha(C.reference(root,record['campaign_ref'])/'plan.json'),
+                applied.get('new_plan_sha256')==(_plan_sha256 or C.sha(C.reference(root,record['campaign_ref'])/'plan.json')),
                 'Quota amendment transaction is not complete')
     return baseline
 

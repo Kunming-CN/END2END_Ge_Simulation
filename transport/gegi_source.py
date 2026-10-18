@@ -338,6 +338,40 @@ def decay_metadata(checked):
             'grouping_policy':source['grouping_policy'], 'decay_data':checked['decay_data']}
 
 
+def conversion_target_material(track, rows, meta):
+    """Birth-material evidence for the bounded GeGI target-recoil exception.
+
+    Scored material needs the unchanged first-step birth time/pre-position and
+    track identity. World air is unscored: infer only its exact analytic region,
+    strictly inside the world box and outside the whole cryostat envelope.
+    Missing/ambiguous material evidence inside that envelope remains unknown.
+    """
+    axes=('xloc','yloc','zloc')
+    born=[]
+    for table,material in meta['material_tables'].items():
+        steps=[r for r in rows[table] if r['trackid']==track['trackid']]
+        if not steps:
+            continue
+        first=min(steps,key=lambda r:r['raw_row_index'])
+        if (first['evtid']==track['evtid'] and first['particle']==track['particle'] and
+                first['parent_trackid']==track['parent_trackid'] and first['time']==track['time'] and
+                all(first[a+'_pre']==track[a] for a in axes)):
+            born.append(material)
+    if born:
+        return born[0] if len(born)==1 else None
+    cryostat=meta['cryostat_contract']
+    if cryostat['world']['material']!='G4_AIR':
+        return None
+    position=[1000*track[a] for a in axes]
+    world=cryostat['world']['half_width_mm'];assembly=G.layout(cryostat)
+    z0,z1=assembly['vacuum_z_bounds_mm']
+    if (all(math.isfinite(v) and abs(v)<world for v in position) and
+            (math.hypot(*position[:2])>assembly['vacuum_radius_mm'] or
+             position[2]<z0 or position[2]>z1)):
+        return 'G4_AIR'
+    return None
+
+
 def primary_tracks(rows, names, meta):
     source=meta['source_contract'];position=meta['source_position_global_mm']
     vertices,particles=rows['vtx'],rows['particles']
@@ -361,6 +395,7 @@ def primary_tracks(rows, names, meta):
     p=particles[0]
     h.require(p['particle']==source['pdg'] and p['ekin']==0 and all(p[a]==0 for a in ('px','py','pz')),
               'Wrong GeGI at-rest initial isotope identity/energy/momentum')
+    target_material=lambda track:conversion_target_material(track,rows,meta)
     if source['id']==CS137:
         by_id=cs.validate_decay_tracks(rows['tracks'],names)
         root=next(t for t in rows['tracks'] if t['parent_trackid']==0)
@@ -368,13 +403,16 @@ def primary_tracks(rows, names, meta):
                       for t in rows['tracks']), 'Missing intended Cs137 barium daughter')
         for track in rows['tracks']:
             if abs(track['particle'])>=1000000000:
-                h.require(track['particle']//10 in (cs.ION//10,100056137), 'Unexpected Cs137 descendant nuclear family')
+                h.require(track['particle']//10 in (cs.ION//10,100056137) or
+                    decay.is_gamma_conversion_target_recoil(track,by_id,names,target_material(track)),
+                    'Unexpected Cs137 descendant nuclear family')
             parent=track['parent_trackid']
             h.require(parent in (0,root['trackid']) or track['time']>=by_id[parent]['time'],
                       'Cs137 descendant birth precedes parent')
     else:
         h.require(source['id']==CO60, 'Unsupported GeGI decay reader')
-        by_id=decay.validate_tracks(rows['tracks'],names,source['registered_preset'])
+        by_id=decay.validate_tracks(rows['tracks'],names,source['registered_preset'],
+                                    target_material_for_track=target_material)
         root=next(t for t in rows['tracks'] if t['parent_trackid']==0)
     h.require(h.np.allclose([1000*root[a] for a in ('xloc','yloc','zloc')],position,rtol=0,atol=1e-9)
               and all(root[a]==0 for a in ('px','py','pz')), 'At-rest ion root position/momentum differs from GPS primary')

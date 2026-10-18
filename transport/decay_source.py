@@ -13,6 +13,49 @@ KIND='radioactive_decay_stream_v1'
 ADAPTER='shared_decay_source_v1'
 PREPARED_KIND='decay_source_prepared_v1'
 WINDOWS_ROOT=None
+
+# Natural target isotopes in Geant4 v11.3.2 G4NistElementBuilder.cc and
+# G4NistMaterialBuilder.cc (G4_AIR contains C/N/O/Ar). These are not decay families.
+CONVERSION_TARGET_ISOTOPES={
+    'G4_Ge':frozenset((32,a) for a in (70,72,73,74,76)),
+    'G4_Al':frozenset(((13,27),)),
+    'G4_AIR':frozenset((z,a) for z,aa in ((6,(12,13)),(7,(14,15)),
+                                        (8,(16,17,18)),(18,(36,38,40))) for a in aa),
+}
+# Exact electron rest energy in the locked runtime's CLHEP PhysicalConstants.h.
+ELECTRON_MASS_MEV=0.510998910
+
+
+def is_gamma_conversion_target_recoil(track,byid,process_names,target_material):
+    """Recognize the pinned 5D model's e-/e+/ground-state target final state.
+
+    The caller must independently establish the birth material. This only
+    recognizes a foreign target nucleus; it never replaces ancestry/clock checks
+    or changes any track, deposit, decay denominator or source-family allowance.
+    """
+    pdg=track['particle'];z=(pdg//10000)%1000;a=(pdg//10)%1000
+    if (pdg!=1000000000+10000*z+10*a or not 0<z<=a or
+            (z,a) not in CONVERSION_TARGET_ISOTOPES.get(target_material,()) or
+            process_names.get(track['procid'])!='conv'):
+        return False
+    parent=byid.get(track['parent_trackid'])
+    if (parent is None or parent['particle']!=22 or
+            not math.isfinite(parent['ekin']) or parent['ekin']<=2*ELECTRON_MASS_MEV):
+        return False
+    products=[t for t in byid.values() if t['parent_trackid']==parent['trackid']
+              and process_names.get(t['procid'])=='conv']
+    if len(products)!=3 or {t['particle'] for t in products}!={11,-11,pdg}:
+        return False
+    birth=('evtid','time','xloc','yloc','zloc')
+    if (not all(math.isfinite(track[k]) for k in birth) or
+            track['evtid']!=parent['evtid'] or track['time']<parent['time'] or
+            not all(all(t[k]==track[k] for k in birth) and math.isfinite(t['ekin'])
+                    and t['ekin']>=0 for t in products)):
+        return False
+    # A gamma may have lost energy before conversion. Its birth energy is only
+    # an upper bound, not a claim of local energy closure from unscored steps.
+    energy=math.fsum(t['ekin'] for t in products)+2*ELECTRON_MASS_MEV
+    return energy<=parent['ekin']+1e-9*max(1.,parent['ekin'])
 def generic_source_hashes():
     refs=(D.REGISTRY,D.ANCHORS,'transport/decay_source.py','tools/decay_workflow.py',
           'tools/ring_workflow.py','tools/ring_model_contract.py','tools/sap18_workflow.py',
@@ -174,7 +217,7 @@ def read_prepared(directory):
     report=cs.load(d/'geometry-report.json');validate_geometry(report,m['model_id'],mount,probes)
     h.require((d/'run.mac').read_text()==macro_text(report,m['primary_count'],s,m['source_position_global_mm']),'Exact source macro changed')
     return d,m,checked
-def validate_tracks(tracks,process_names,p):
+def validate_tracks(tracks,process_names,p,*,target_material_for_track=None):
     byid={}
     for t in tracks:
         h.require(type(t['trackid']) is int and t['trackid']>0 and t['trackid'] not in byid and
@@ -195,7 +238,10 @@ def validate_tracks(tracks,process_names,p):
         parent=t['parent_trackid']
         h.require(parent==0 or parent==root['trackid'] or t['time']>=byid[parent]['time'],'Child precedes parent')
         if abs(t['particle'])>=1000000000:
-            h.require(t['particle']//10 in families or t['particle'] in allowed,'Unexpected descendant nuclear family')
+            h.require(t['particle']//10 in families or t['particle'] in allowed or
+                (target_material_for_track is not None and is_gamma_conversion_target_recoil(
+                    t,byid,process_names,target_material_for_track(t))),
+                'Unexpected descendant nuclear family')
         if parent and byid[parent]['particle']==p['ground_daughter_pdg'] and 'radioactivedecay' in process_names[t['procid']].lower():
             h.require(t['time']<=p['nuclear_policy']['ground_secondary_lifetime_cap_ns'],'Delayed ground-daughter chain escaped cap')
     return byid

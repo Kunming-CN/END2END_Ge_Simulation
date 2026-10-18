@@ -1,49 +1,54 @@
 # Current handoff
 
-## Active GeGI 1M campaign — owner reduction2026-10-17
+## Active GeGI 1M campaign — saved Co60 reader repair2026-10-18
 
-The owner reduced TOTAL10M to1M and confirmed the existing independent-acquisition,
-linear-mixture model; complex simultaneous-source/pileup work is deferred. Formal
-campaign is RUNNING in the same .local/gegi-10m/campaign historical directory.
-Actual progress/process identities prevail. Current plan SHA256:
-3539fab2594dd848ae9989490ed9fa80d8c74400abd9c8a2cb7a74c78ded8ae5.
-Current quota producer:90a82eda5b24262b3cfc7b843a8a8b5ed21d102d.
-Supervisor PID2484, creation134367606974651999; Julia PID14340,
-creation134367607004594878. Both actual identities verified after detached launch.
-Same native request ae476cdc9349bddec75c36c87fb9538224cfdf8b848618d393aea983b663db29
-and spool native-spool-recovery-843b1271056a are reused; no new field solve.
+The owner reduced TOTAL10M to1M and confirmed independent acquisitions with linear
+mixtures; simultaneous-source/pileup work is deferred. Exactly100chunks:200k662keV
+photons left,200k right,300k initial Cs137 decays left,300k initial Co60 decays right.
+Photon/decay denominators stay separate; preparation2400 is excluded. Historical
+path remains .local/gegi-10m/campaign; its name does not authorize10M.
 
-Exactly100chunks/1,000,000formal initials:200k gamma-left,200k gamma-right,
-300k Cs137-left,300k Co60-right. Photon/initial-decay denominators remain separate;
-preparation2400 is excluded. Current sealed prefix17chunks/170,000photons counts
-as17%of the reduced campaign. Next chunk is left b17, followed by b18/b19 and
-then the right-source group. Keep all original seed prefixes/calibration/cuts.
-The four groups are two comparisons: equal-energy left/right control and Cs137/
-Co60 isotope mixture. They do not model four real simultaneous physical sources.
+70chunks/700,000formal initials are sealed. The first Co60 chunk's Geant4 run also
+completed all10,000decays/returncode0, but post-transport census rejected two valid
+conv target recoils (Ge70 event3891,Al27 event8716) as foreign decay descendants.
+Supervisor2484/creation134367606974651999,Julia14340/134367607004594878 and transport
+child16640 have exited; actual identities and WSL process list were checked.
+No radiation or saved native event is to be repeated. Original raw36052362bytes,
+SHA303c14cc42a0318f4aa358f8a4836f68e1c1000e2f3d1d077cbf7411e165130e,
+all19failed-chunk files, original plan/FROZEN/failed run and five source snapshots
+are preserved in .local/gegi-10m/failure-transport-recoil-v1. Manifest SHA256
+e07729b3bc7ffefcd11a05ce5c64680d4424030e91440db48f028fd60b15b536.
 
-Safe boundary stop retained170k and verified old supervisor36236/Julia20816 both
-exited. The explicit owner quota amendment is applied at
-.local/gegi-10m/quota-1m-v1/application.json. amendment.json binds predecessor
-plan/FROZEN/STOP/progress, both native-recovery versions and all17sealed inventories.
-Old chunks keep exact original identities/hashes/mtimes; no Store was rebound or
-rewritten. New group offsets are0/200k/400k/700k. Original source_commit and
-revision.recovery_source_commit remain historical; quota_amendment source_commit
-identifies the active maintainer revision. Never reapply the finished amendment.
-Actual execution-check.json at01:34:20UTC verified all17sealed byte/mtime and
-identity records, all seed/local-ID prefixes, and original801failure unchanged.
-New b17 had80saved groups through rawID1704; sample18has actual nonzero input and
-all34native/readout channels. This partial count is not extra sealed initials.
-69targeted quota/campaign/recovery/response/analysis/publication tests passed,
-including interrupted apply, unchanged seed/local-ID prefixes, ancestor identities,
-and the original1.5x disk safety ratio. No science rerun or extra reviewer.
+The bounded reader fix accepts only a material-matched natural ground-state ion
+from exact conv,with a common gamma parent and complete e-/e+/ion birth evidence;
+original initial-ion/daughter/ancestry/clock/lifetime checks remain strict. Unscored
+air material requires the existing exact world/outer-envelope geometry; no steps
+are invented.25direct reader tests pass. Original10k read-only census passes:
+9259zero/741nonzero,21532positiveGe rows,741groups; raw SHA/size/mtime unchanged.
+69campaign/quota/native-recovery/response/analysis/publication tests pass;4new
+transport-revision transaction tests and the final WSL-root interface test pass.
+5student package tests pass. A stale test now checks the already-admitted current
+source_inventory while explicitly retaining the original historical PINNED value;
+production pin definitions were not changed. No additional AI review or physics.
 
-This chat01a14bca-3953-7c13-80a1-687a9a571455 owns .local/autonomy/gegi-10m.lock
-as gegi-10m-root; keep this legacy owner/path for continuity. Automation automation
-is ACTIVE every30min for this same chat/root, now targeting1M/100chunks. Healthy
-running_native OR running_transport checks read compact progress, process creation
-identities, concrete errors and disk, then exit quietly. Unknown process identity
-is not death; use authorized process access when necessary. No long polling,
-competing supervisor, routine agents, global changes, new environment or resets.
+Explicit transport-reader revision is implemented in
+ tools/gegi_campaign_transport_recovery.py:prepare→saved-data revalidate→apply.
+It must bind this failure and all70sealed inventories. New request changes only
+transport/gegi_source.py's source SHA; numeric physics values are typed-identical.
+That provenance binding changes request/physics identity hashes and requires a
+new explicitly selected spool.70sealed chunks keep their original identities
+(5from69c7…,12from3e28…,53from3539…),hashes and timestamps. No Store rebind.
+Actual transaction/resume is pending this source commit; do not infer it ran.
+Predecessor plan3539fab2594dd848ae9989490ed9fa80d8c74400abd9c8a2cb7a74c78ded8ae5
+and quota producer90a82eda5b24262b3cfc7b843a8a8b5ed21d102d remain historical.
+The completed quota-1m-v1 amendment retained17then-sealed chunks/170k without rerun.
+
+This chat01a14bca-3953-7c13-80a1-687a9a571455 retains its gegi-10m-root lock.
+Same-chat automation automation remains ACTIVE every30min. While recovering,
+inspect actual transaction/process state before any resume; never start a second
+supervisor. Healthy running_native OR running_transport checks use compact status,
+creation identities/error/disk and exit quietly. Unknown identity is not death.
+No agents during healthy monitoring; no new environment/global changes/resets.
 
 Permanent native-failure history: failure-contact-v1/recovery-contact-v1 preserve
 original contact failure1188/group0 and58event blobs/2012arrays. Second failure

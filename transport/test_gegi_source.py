@@ -129,7 +129,8 @@ class GeGILH5(unittest.TestCase):
                     row=dict(evtid=eid,trackid=tid,parent_trackid=parent,particle=11,edep=energy,time=time)
                     row.update({axis+suffix:0. for suffix in ('','_pre','_post') for axis in ('xloc','yloc','zloc')})
                     row.update({name:0.001 for name in ('dist_to_surf','dist_to_surf_pre','dist_to_surf_post')});steps.append(row)
-        bundle={'vertices':vertices,'particles':particles,'tracks':tracks,'steps':steps}
+        processes=[{'procid':1,'name':'RadioactiveDecay'},{'procid':2,'name':'compt'}]
+        bundle={'vertices':vertices,'particles':particles,'tracks':tracks,'steps':steps,'processes':processes}
         if mutate:mutate(bundle)
         with self.h5py.File(self.path,'w') as raw:
             raw.create_dataset('number_of_simulated_events',data=2,dtype='i8')
@@ -140,7 +141,7 @@ class GeGILH5(unittest.TestCase):
             self.table(raw,'particles',particles,{'evtid','particle','vertexid'},{a:'MeV' for a in ('ekin','px','py','pz')})
             self.table(raw,'tracks',tracks,{'evtid','parent_trackid','particle','procid','trackid'},
                        {'time':'ns',**{a:'m' for a in ('xloc','yloc','zloc')},**{a:'MeV' for a in ('ekin','px','py','pz')}})
-            self.table(raw,'processes',[{'procid':1,'name':'RadioactiveDecay'},{'procid':2,'name':'compt'}],{'procid'},strings=('name',))
+            self.table(raw,'processes',processes,{'procid'},strings=('name',))
             floats={'edep':'keV','time':'ns',**{a:'m' for a in S.T.POSITIONS},
                     **{a:'m' for a in ('dist_to_surf','dist_to_surf_pre','dist_to_surf_post')}}
             self.table(raw,'stp/germanium',steps,S.T.STEP_INTS,floats)
@@ -170,6 +171,78 @@ class GeGILH5(unittest.TestCase):
         self.assertEqual(counts['initial_decays'],2);self.assertEqual(counts['decay_photons'],4)
         self.assertEqual(counts['line_photon_counts'],{'Ni60_1173.239':2,'Ni60_1332.514':2})
         self.assertEqual(counts['pulse_groups'],1)
+
+    def add_conversion(self,bundle,pdg=1000320700,point=(0.,0.,0.),scored=True):
+        """Synthetic pair final state, not a generated/calibrated decay spectrum."""
+        gamma=next(t for t in bundle['tracks'] if t['evtid']==1 and t['trackid']==4)
+        gamma['ekin']=gamma['pz']=1.332514
+        bundle['processes'].append({'procid':3,'name':'conv'})
+        for tid,particle,energy in ((7,11,.2),(8,-11,.1105),(9,pdg,.000005)):
+            row=dict(gamma,trackid=tid,parent_trackid=4,particle=particle,procid=3,
+                     time=gamma['time']+.2,ekin=energy,px=0.,py=0.,pz=0.)
+            row.update(zip(('xloc','yloc','zloc'),point));bundle['tracks'].append(row)
+        if scored:
+            step=dict(bundle['steps'][-1],trackid=9,parent_trackid=4,particle=pdg,
+                      time=row['time'],edep=.005)
+            step.update({axis+suffix:v for suffix in ('','_pre','_post')
+                         for axis,v in zip(('xloc','yloc','zloc'),point)})
+            bundle['steps'].append(step)
+
+    def test_conversion_recoil_keeps_rows_energy_and_initial_denominators_for_both_readers(self):
+        for source in (S.CS137,S.CO60):
+            meta=self.fixture(source,self.add_conversion);events=list(S.events(self.path,meta))
+            self.assertEqual([e['event_id'] for e in events],[0,1])
+            self.assertEqual([t['trackid'] for t in events[1]['tracks']][-3:],[7,8,9])
+            self.assertEqual(events[1]['steps'][-1]['particle_pdg'],1000320700)
+            self.assertEqual(events[1]['steps'][-1]['energy_keV'],.005)
+            self.assertEqual(events[1]['steps'][-1]['raw_row_index'],2)
+            self.assertEqual(events[1]['truth_edep_keV'],120.005)
+            counts=S.census(self.path,meta)
+            self.assertEqual((counts['initial_decays'],counts['zero_deposit_primaries'],
+                              counts['nonzero_primaries'],counts['positive_ge_rows']),(2,1,1,3))
+
+    def test_world_air_conversion_needs_geometric_material_evidence(self):
+        for source in (S.CS137,S.CO60):
+            for z,a in S.decay.CONVERSION_TARGET_ISOTOPES['G4_AIR']:
+                pdg=1000000000+10000*z+10*a
+                meta=self.fixture(source,lambda b:self.add_conversion(b,pdg,(.1,0.,0.),False))
+                events=list(S.events(self.path,meta))
+                self.assertEqual(events[1]['tracks'][-1]['particle'],pdg)
+                self.assertEqual(len(events[1]['steps']),2)  # No fabricated air step.
+                self.assertEqual(events[1]['truth_edep_keV'],120.)
+        layout=S.G.layout(meta['cryostat_contract']);world=meta['cryostat_contract']['world']['half_width_mm']/1000
+        invalid_points=[(0.,0.,0.),(0.,0.,-.006),
+                        (layout['vacuum_radius_mm']/1000,0.,0.),(world,0.,0.),(world+.001,0.,0.)]
+        for point in invalid_points:
+            with self.subTest(point=point):
+                meta=self.fixture(S.CO60,lambda b:self.add_conversion(b,1000070140,point,False))
+                with self.assertRaisesRegex(ValueError,'Unexpected descendant nuclear family'):
+                    list(S.events(self.path,meta))
+        for pdg in (1000060140,1000070141,1000320700):
+            meta=self.fixture(S.CO60,lambda b:self.add_conversion(b,pdg,(.1,0.,0.),False))
+            with self.subTest(pdg=pdg),self.assertRaises(ValueError):list(S.events(self.path,meta))
+        meta=self.fixture(S.CO60,lambda b:self.add_conversion(b,1000070140,(.1,0.,0.),False))
+        meta['cryostat_contract']['world']['material']='G4_Galactic'
+        with self.assertRaises(ValueError):list(S.events(self.path,meta))
+
+    def test_scored_material_requires_exact_birth_step_and_supported_isotope(self):
+        mutations={
+            'missing birth step':lambda b:b['steps'].pop(),
+            'wrong birth prepoint':lambda b:b['steps'][-1].update(xloc_pre=1e-12),
+            'wrong birth time':lambda b:b['steps'][-1].update(time=b['steps'][-1]['time']+.001),
+            'wrong birth identity':lambda b:b['steps'][-1].update(parent_trackid=2),
+            'wrong material isotope':lambda b:(b['tracks'][-1].update(particle=1000130270),
+                                               b['steps'][-1].update(particle=1000130270)),
+            'missing positron':lambda b:b['tracks'].pop(-2),
+            'wrong creator':lambda b:b['processes'][-1].update(name='compt'),
+        }
+        for source in (S.CS137,S.CO60):
+            for name,mutate in mutations.items():
+                def prepare(bundle):
+                    self.add_conversion(bundle);mutate(bundle)
+                with self.subTest(source=source,name=name):
+                    meta=self.fixture(source,prepare)
+                    with self.assertRaises(ValueError):list(S.events(self.path,meta))
 
     def test_sparse_extraction_keeps_counts_and_groups_without_zero_event_records(self):
         meta=self.fixture();counts=S.census(self.path,meta)
