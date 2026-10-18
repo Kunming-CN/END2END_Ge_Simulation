@@ -116,7 +116,7 @@ the first sealed chunk retained exact hashes/timestamps. Actual saved-data analy
 passed with26nonzero/25readout accepted/0imaging, inconclusive. No formal primaries
 are part of qualification. An explicit analysis-only producer/reader version record
 allows the terminal-native-failure reporting correction without science reruns.
-Preparation authority: .local/gegi-10m/preparation.json. Formal campaign is paused
+Preparation authority: .local/gegi-10m/preparation.json. Formal campaign is running
 in .local/gegi-10m/campaign:1000chunks,total10M. First10k transport completed;
 contact-domain event1188/group0 then stopped native processing after58saved groups.
 The exact failure is retained with27rows/truth379.37764922113564keV and unknown
@@ -125,7 +125,7 @@ complete in .local/gegi-10m/recovery-contact-v1: all58event blobs/2012arrays and
 17transport file hashes/timestamps remained unchanged. Actual resumed processing
 passed the failed event and reached131saved groups at23:23UTC. This is a partial
 native count, not a completed formal chunk. Source commit96a814057ea40a57079116de8efd5da75bffc3fa;
-current plan SHA25669c7a222025747be46c9585fd6200f201f33aa501c0f655fbb47d6d3ad9f783e.
+first-recovery plan SHA25669c7a222025747be46c9585fd6200f201f33aa501c0f655fbb47d6d3ad9f783e.
 The original frozen plan3cfcf66a... and producer9cd3f6c... remain in the recovery
 archive. Only explicit failure recording/source identity changed; criteria,
 allocations, seeds, physical inputs and calibration remain fixed.48Julia assertions
@@ -138,10 +138,19 @@ the partial sixth chunk. The original failure is retained in
 .local/gegi-10m/failure-native-charge-v1. One bounded replay of the failed group
 reached an already recognized outside-crystal endpoint error; it did not reproduce
 the exact charge error or establish which original waveform invariant failed.
-The original response is unknown. The second explicit recovery will record only
+The original response is unknown. The second explicit recovery records only
 this exact ArgumentError as native_failed/null, retaining all rows and all prior
 source versions; underlying SSD numerical behavior is not claimed fixed.
-No source, seed, cut, calibration or completed scientific data may be changed.
+No physical source, seed, cut, calibration or completed scientific data changed.
+Recovery2 is applied in .local/gegi-10m/recovery-native-charge-v1; its execution
+check preserves all5sealed chunks,40prior group blobs,1392arrays and17transport
+files. Event801/group0 is imported from original failure evidence without drift
+replay. Actual resumed partial count129groups through originalID2656 at00:13:57UTC
+is not sealed initial completion. Current plan SHA256:
+3e28f5a40f2be830d775dad01994aed694bacffb84408c1bb88acc7c6c7227f6;
+producer619093442162ecd3904a63bc54935e07c93a87c2.74Julia assertions and64targeted
+Python tests passed. Same-chat30min automation is verified ACTIVE; healthy checks
+exit quietly. Current process identities are in PROGRESS and launcher records.
 Final analysis,
 figures and final publication remain pending; do not declare the10M task complete.
 

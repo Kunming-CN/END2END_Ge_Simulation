@@ -1,93 +1,83 @@
 # Current handoff
 
-## Active GeGI 10M campaign — 2026-10-17
+## Active GeGI 10M campaign — 2026-10-18
 
-The formal full-chain campaign is STOPPED on a second native failure; targeted
-diagnosis and preserved-chunk recovery are active in this same chat. At23:50UTC,
-gamma-left chunk5 stopped with ArgumentError: Invalid native signed charge.
-Five sealed chunks contain50,000initial photons; both old workers have exited.
-The sixth chunk has40committed groups/1392arrays. Preserve them and its completed
-transport. Failure snapshot: .local/gegi-10m/failure-native-charge-v1/manifest.json
-(SHA256995ae6700c1cc7d98c911cba41ff1667b7feaede1e00b5f89b65fc9bd375d051).
-Do not start a competing worker or rerun sealed chunks. Actual progress/process
-identities override this note. Active plan remains the first recovery version:
-Current plan SHA256:69c7a222025747be46c9585fd6200f201f33aa501c0f655fbb47d6d3ad9f783e.
-Recovery source commit:96a814057ea40a57079116de8efd5da75bffc3fa.
-Exited supervisor PID8260, creation identity134367528758621052; exited Julia PID21404,
-identity134367528773322149. Never rely on PID alone. Prior spool is selected by
-plan.recovery: native-spool-recovery-8cafa6f5193d. One worker reuses exact fields.
+The formal full-chain campaign is RUNNING after two explicit native-failure
+recoveries in .local/gegi-10m/campaign. Actual progress/process identities prevail.
+Current plan SHA256:3e28f5a40f2be830d775dad01994aed694bacffb84408c1bb88acc7c6c7227f6.
+Current producer commit:619093442162ecd3904a63bc54935e07c93a87c2.
+Supervisor PID36236, creation identity134367559201803262; Julia PID20816,
+identity134367559221787871. Both actual identities verified after detached launch.
+Current spool from plan.recovery: native-spool-recovery-843b1271056a.
 
 This chat01a14bca-3953-7c13-80a1-687a9a571455 owns .local/autonomy/gegi-10m.lock
-as gegi-10m-root. Automation automation is verified ACTIVE every30min, targeting
-this chat/root and current plan. Healthy checks read compact state and exit;
-no continuous polling or agents. Keep the lock until final delivery. No resets,
-extra reviewers, new environments or reruns merely because a chat interrupts.
+as gegi-10m-root. Automation automation is verified ACTIVE every30min targeting
+this chat/root and current plan. Read compact state; healthy checks exit quietly.
+A sandbox identity unknown is not a dead worker; use authorized process access
+when necessary. No competing supervisor, repeated agents, long polling or resets.
+Retain this lock/monitor until final delivery, not merely until physics completes.
 
 1000chunks total10M:2M gamma-left,2M gamma-right,3M Cs137-left,3M Co60-right.
 Keep photon/initial-decay denominators separate; preparation2400 is excluded.
-Allocation, fixed seeds/cuts and criteria are in NEXT_DEVELOPMENT_PLAN. Mixtures
-are independent linear sums, without inter-source pileup or a true3D claim.
+Coordinates, fixed seeds/cuts and metrics are in NEXT_DEVELOPMENT_PLAN. Mixtures
+are independent linear sums without inter-source pileup or a true3D claim.
+Five sealed chunks currently account for50,000initial gamma-left photons (0.5%).
+At00:13:57UTC the sixth chunk had129stored groups through originalID2656 after
+resume; partial response counts are not additional sealed initial completion.
 
-First10k transport completed, then native event1188/group0 hit an SSD contact
-precondition. Preserve full27rows/truth379.37764922113564keV; do not nudge/drop
-coordinates or fabricate charge. Exact error now records native_failed/null;
-other unexpected errors remain fatal. Original wrapper/request/plan/Store/error
-are retained in .local/gegi-10m/failure-contact-v1. Explicit recovery transaction:
-.local/gegi-10m/recovery-contact-v1/application.json. Original source commit and
-plan remain there; original source_commit in active plan is historical, while
-revision.recovery_source_commit and source_sha256 identify the repaired code.
+Recovery1: original contact-start failure1188/group0 and original producers remain
+in .local/gegi-10m/failure-contact-v1; recovery-contact-v1/application.json binds
+its identity migration. All58prior event blobs/2012arrays were preserved. Do not
+reapply it. Original plan/source_commit remain historical in the revision chain.
+Recovery2: chunk5 failed on Invalid native signed charge at23:50UTC. Preserve
+.local/gegi-10m/failure-native-charge-v1, including original error, full21rows,
+truth368.52480403127805keV and the single bounded diagnostic. Its original failing
+waveform invariant is unobservable. The diagnostic instead hit the existing
+outside-crystal endpoint guard; it did not reproduce the exact original error or
+fix underlying SSD numerical behavior. Cache reused;38.867s process wall,2.433GB
+peak, no new radiation/field solve. No further diagnostic retry is queued.
 
-Actual recovery check at23:23UTC: all58old event blobs and2012native arrays are
-unchanged, all17transport files retain SHA/mtime, failed1188is retained/null,
-and131groups through originalID2717 are stored. These are partial native counts,
-not sealed initial-event completion. execution-check.json is the evidence. Never
-reapply completed recovery or rerun valid upstream data. The second revision keeps
-the sealed prefix under its original identity and preserves every existing Store
-blob. Policyv3 adds only the exact Invalid native signed charge ArgumentError;
-74software assertions passed. The original failed waveform invariant is unknown.
-One bounded diagnostic (38.867s process wall,2.433GB peak, reused cache) instead
-hit the existing outside-crystal endpoint guard. It did not reproduce the original
-error or fix underlying numerical behavior. Retained original event801 will be
-imported as native_failed/null without another drift attempt; its full21rows and
-truth368.52480403127805keV remain. This preserves the known failure even if native
-memory behavior varies. All incomplete native statuses are excluded by existing
-readout/imaging checks. No seeds, cuts, calibration or physical source changed.
-Second-revision recovery/import validation:64targeted Python tests passed,
-including zero native calls for the imported failure, idempotent resume, changed
-evidence rejection, and both prior recipe versions. Migration is pending.
+Recovery2 is applied at .local/gegi-10m/recovery-native-charge-v1/application.json.
+Its execution-check.json verifies all5sealed chunks retain exact hashes/mtimes,
+all40partial event blobs/1392arrays and17transport files retain original bytes.
+Original event801/group0 is imported as native_failed/null, drift_replayed:false;
+its original error is retained without another drift attempt. Both readout and
+imaging reject it. Future exact Invalid native signed charge ArgumentErrors use
+policyv3; other unknown errors still abort. No seeds, cuts, calibration, physical
+inputs or original native helper changed. Different source/recipe versions remain
+explicit. Existing incomplete-native readout/imaging rejection remains unchanged.
+Validation:74targeted Julia assertions and64Python campaign/recovery/adapter/
+analysis/publication tests passed. No extra reviewers. The two-generation helper
+is bounded to these exact failures/preserved prefix, not arbitrary rebaselining.
 
 Website milestone59f9d008c4ae is live: actual GeGI cryostat3D, preview/section,
 correct compatibility and simplified Results/Detectors/Assemblies/Run/Methods
 navigation.709live files plus all8assembly assets and desktop rotation/zoom/section
-were verified. Historical URLs/science and LBNL flags remain. Later source-only
-compatibility correction admits exact published display receipts;33site tests,
-8focused checks and all1705local files pass. No docs changed in the recovery.
+were verified. Historical URLs/science and LBNL flags remain. Earlier33site tests,
+8focused checks and1705local files passed; no website artifact changed here.
 Current student-runtime-429ebcd78e69 actual tag/latest ZIP bytes are verified:
 829262bytes,177members,SHA256
 70c990f3f0cfeeb2f49aa38abd1093b16b371d135e62067d7feb61be000fbb37.
-No packaged source changed since that release, so no duplicate software release.
+No packaged source changed, so this maintainer-only repair needs no new ZIP.
 
 Preparation passed: independent simulated depth table216available/40unavailable,
-175fixed diagnostics; valid calibration reused after a protocol-only repair.
-Four500pilots:115nonzero,0native failures,2readout rejections,2imaging. Actual400
-stop/resume kept first100sealed unchanged and resumed300. Saved analysis26nonzero,
-25readout accepted,0imaging is inconclusive. This is not experimental validation.
-Recovery validation:48Julia assertions and58targeted campaign/recovery/response/
-analysis/publication tests. Prior rows retain original recipe/source versions;
-all physical fields, electronics, calibration, allocations, seeds and cuts match.
-
+175fixed diagnostics. Four500pilots:115nonzero,0native failures,2readout rejections,
+2imaging. Actual400stop/resume kept the first100sealed unchanged and resumed300;
+saved analysis26nonzero/25readout accepted/0imaging is inconclusive. No repeat.
 Measured compressed projection76.14GB;1.5x allowance+temporary+20GiB reserve needs
-136.08GB, about154.8GB free after resume. Native pilot peak2.49GB. Rough pilot
-scaling about10days is not a guarantee; update from actual chunks. Never edit
-frozen producer files while healthy workers run. Low disk stops safely; no data
-cleanup or larger campaign is implied.
+136.08GB. Before latest resume6.35GB physical memory was free; after verification
+152.92GB disk was free. Resident measured peak about2.49GB. Rough pilot10days is
+not a guarantee; use actual progress. Low disk stops safely, never deletes science.
 
-Final analysis/publication is PENDING. After COMPLETE, use the current frozen
+Final analysis/publication is PENDING and requires COMPLETE. Use frozen
 gegi_campaign_analysis.py and gegi_campaign_publication.py (exporter SHA256
-eb66f8e1ed7838d73fbddbaf236b8c0ee1235a3d3521e32d5b0c5eac641e0f43), then normal
-build_site.py --gegi-campaign-bundle, relevant checks/live desktop verification,
-Git sync, and only then disable automation/release own lock. Report native failures
-and inconclusive separation honestly. No formal10M figures are yet published.
+f0e8e78163bfaf153ec27e2304457165648b725f726261120acd95a3e43d158b), aggregate exact native error messages
+from retained scalar records as well as stage/rejection counts, and report failed
+or inconclusive separation honestly. No formal10M figures are yet published.
+Freeze relevant writers, export saved data, build_site.py --gegi-campaign-bundle,
+run affected checks/live desktop verification, synchronize Git, then disable this
+monitor and release only this chat's lock. Do not change frozen sources while the
+healthy campaign runs. Re-export affected derivatives rather than rerunning science.
 
 ## Prior delivered milestone (retained evidence)
 
