@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STATE = '.local/local-control-v1'
 STATIC = {'/': ('local_workflow.html', 'text/html; charset=utf-8'),
           '/focused_plots.js': ('focused_plots.js', 'text/javascript; charset=utf-8'),
+          '/gegi_signal_journey.js': ('gegi_signal_journey.js', 'text/javascript; charset=utf-8'),
           '/local_workflow.js': ('local_workflow.js', 'text/javascript; charset=utf-8'),
           '/local_ui.js': ('local_workflow.js', 'text/javascript; charset=utf-8')}
 FILES = {'run.json', 'COMPLETE.json', 'manifest.json', 'worker/report.json',

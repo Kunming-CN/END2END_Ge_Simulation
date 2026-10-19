@@ -1,52 +1,36 @@
 # Next development plan
 
-## Owner campaign — GeGI 1M complete, paused before final analysis
+## Owner campaign — GeGI 1M final analysis and student delivery resumed
 
-Current state: all100chunks/1M completed2026-10-18at19:40Chicago, terminal
-completed_with_native_failures. Exact quotas,100DONE hashes/receipts and42source
-pins checked; supervisor/Julia exited. Monitoring automation is PAUSED and own
-chat ownership lock retained. Final analysis/publication require explicit owner
-resume; no further science or export is automatically authorized during pause.
-See the single PROGRESS/state and original campaign COMPLETE for bindings.
+Owner resume2026-10-19 supersedes the pause below. Finish step6 using the completed
+1M saved artifacts. Full100chunk artifact/hash verification passed without science
+recomputation. Read real GeGI/Ge-STAR test presentations privately; derive a useful
+signal-to-interaction-to-Compton-cone-to-map walkthrough with actual saved events,
+all candidate ambiguity and failures. Share the viewer with the configurable student
+workflow, expose stage data/images and update the maintained environment/use guide.
+Keep frozen physics/cuts/metrics; any analysis-only revision binds old and new hashes.
+Acceptance: frozen-count analysis and accurate limits, affected tests, actual desktop
+workflow/result inspection, generated website/live verification, updated software-only
+release with public byte verification, and normal Git sync. Then end monitoring and
+release only this chat's ownership lock. No new simulations or extra review rounds.
 
-This window (01a14bca-3953-7c13-80a1-687a9a571455) is the sole supervisor.
-The owner reduced the campaign from10,000,000 to1,000,000 TOTAL formal initial
-events and requested continued execution. Preserve all completed science; apply
-an explicit proportional quota amendment after a safe completed-chunk stop.
-This supersedes earlier10M allocation text. Preparation2400 is separately counted.
-No extra AI reviews, new environment, global changes, paid API or resets.
+Current execution: simulation and fullhashverification COMPLETE; finalanalysis and
+200conditionalbootstrapreplicates COMPLETE. Frozenmixtureseparation failed.
+Latestownersteering: replace old5000/two5000 publicGeGIdisplay with1Mresults, keeping
+originalscience; add source-kind inference and distance qualification. Source-kind
+inference is a separately labelled posthoc saved-spectrum diagnostic, never an
+inputlabel echoed as an inference. The fixedz40plane cannot yield measuredrange.
 
-Latest owner steering2026-10-18: finish the current1M/100chunk simulation, then
-pause before aggregate analysis and publication. At valid COMPLETE and worker
-exit, preserve data/receipts/hashes, record paused_after_simulation and PAUSE the
-existing monitoring automation. Keep this chat's supervisor lock as paused
-ownership. Do not mark the overall project complete; step6 below is deferred
-until the owner explicitly requests resumption. Healthy workers continue now.
-
-1. First synchronize website generators with delivered GeGI capabilities: dedicated
-   cryostat geometry/section/native 3D at Assemblies, home/catalog/Results/guide links,
-   exact LBNL versus GeGI compatibility. Simplify normal routes and demote historical
-   duplication without deleting unique science or breaking retained URLs. Build only
-   with build_site.py, test/check, publish and verify live desktop navigation/3D.
-2. Prepare source-blind reconstruction: collection/induction, strip pairing, timing
-   depth and ordering. Quantify central-pixel calibration bias with existing evidence
-   and independent model injections only as needed. Record omissions (charge sharing,
-   cross talk/noise) and limit conclusions. Never select candidates with source truth.
-3. Integrate the existing true isotope decay source into GeGI, then implement shared
-   batch arithmetic, streaming nonzero response, one losslessly stored copy of signals,
-   atomic completion and exact resume. Preserve old runs/fields/failures unchanged.
-4. Measure representative pilots, including initial/source denominator, nonzero and
-   imaging rates, wall time, peak memory, compressed bytes. Verify stop/resume and that
-   sealed radiation/response chunks do not rerun. Freeze configuration, code/model
-   hashes, seed schedule, cuts and metrics BEFORE production starts.
-5. Launch a detached, bounded full-chain worker. The existing automation ID automation
-   is migrated to this window every 30 minutes. Healthy monitoring reads compact state
-   and exits immediately; faults resume only affected unfinished stages. Do not run
-   competing supervisors or restart healthy workers on one unchanged observation.
-6. DEFERRED until explicit owner resume: analyze all formal groups, publish
-   spectra/real multichannel signals/directional
-   and explicit assumed-plane images through existing generators, verify necessary
-   student ZIP updates, synchronize Git, then disable monitoring and release own lock.
+Remaining milestone:
+1. Freeze publication/sharedviewer and separate source-inference consumer.
+2. Export only checked saved artifacts; show34channels, candidateambiguity,
+   fixedmaps, failures and uncertainty. Do not reruntransport/nativephysics.
+3. Update student's configurablemonoγ workflow/guide/package with actualstage
+   files and eventjourney. IsotopeControl remains gated until delayedpulsegrouping
+   is shared; do not confuse formal nuclearcampaign support with standaloneGUI.
+4. Generate website, retireoldsmall-sampleentry, requiredtests/diff, commit/push,
+   actualdesktop and livechecks, exactpublicsoftwarebytes. Thenpausemonitor and
+   releaseonlythischat'slock. No extraAIreviews or reset.
 
 ### Owner-reduced allocation — original campaign launched2026-10-17
 
