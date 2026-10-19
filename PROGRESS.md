@@ -1,6 +1,25 @@
 # Current handoff
 
-## Active GeGI 1M campaign — saved Co60 reader repair2026-10-18
+## GeGI 1M simulation complete — PAUSED at owner request2026-10-18
+
+Simulation COMPLETE at2026-10-19T00:40:29.608369UTC (Oct18,19:40Chicago):
+100sealed chunks/1,000,000formal initials with exact200k/200kphotons and
+300k/300kCs137/Co60decays. COMPLETE SHA256
+44e40e50dbc3f86517bb144de9a82a920ded30c839201cecca9986b5adfafc29.
+Terminal status completed_with_native_failures:426native-failed pulse groups
+retained; this is processing completion, not physical validation. The monitor
+verified all100DONE hashes/response receipts, exact grouped census/quotas,42
+frozen source hashes and actual supervisor/Julia exit (Julia rc0). Original
+source lineage remains5/12/53/30chunks across the four recorded plan versions.
+No raw/archive/waveform rescan or final analysis/export was started. Full saved-
+artifact verification remains required before future analysis/publication.
+
+State and owned supervisor lock are paused_after_simulation. Existing automation
+automation is actually PAUSED, same chat/30min configuration retained. Producer
+worker lock exited normally; the chat ownership lock and all science/failures
+remain. Final analysis, bootstrap, figures and website publication await an
+explicit owner resume. Overall project is NOT complete. The700k repair details
+below are historical checkpoint evidence, not current progress.
 
 Owner steering2026-10-18: finish the currently running1M/100chunk full-chain
 simulation, then PAUSE before final aggregate analysis, bootstrap, figure export
@@ -17,7 +36,8 @@ photons left,200k right,300k initial Cs137 decays left,300k initial Co60 decays 
 Photon/decay denominators stay separate; preparation2400 is excluded. Historical
 path remains .local/gegi-10m/campaign; its name does not authorize10M.
 
-70chunks/700,000formal initials are sealed. The first Co60 chunk's Geant4 run also
+At the saved repair checkpoint70chunks/700,000formal initials were sealed.
+The first Co60 chunk's Geant4 run also
 completed all10,000decays/returncode0, but post-transport census rejected two valid
 conv target recoils (Ge70 event3891,Al27 event8716) as foreign decay descendants.
 Supervisor2484/creation134367606974651999,Julia14340/134367607004594878 and transport
@@ -64,7 +84,7 @@ and quota producer90a82eda5b24262b3cfc7b843a8a8b5ed21d102d remain historical.
 The completed quota-1m-v1 amendment retained17then-sealed chunks/170k without rerun.
 
 This chat01a14bca-3953-7c13-80a1-687a9a571455 retains its gegi-10m-root lock.
-Same-chat automation automation remains ACTIVE every30min; actual TOML target,
+Same-chat automation automation is PAUSED after valid1M COMPLETE; actual TOML target,
 interval and new plan/source/process identities were verified. The monitor must
 resolve new native metadata through T.spool_path. Never start a second supervisor.
 Healthy running_native OR running_transport checks use compact status,
