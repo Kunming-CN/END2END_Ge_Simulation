@@ -25,7 +25,7 @@ const svgNs='http://www.w3.org/2000/svg';
 function xml(tag,attrs={},children=[]){return {nodeType:1,localName:tag,prefix:null,namespaceURI:null,attributes:Object.entries(attrs).map(([name,value])=>({name,value,prefix:null})),childNodes:children};}
 const svgDocument={doctype:null,documentElement:xml('svg',{role:'img',viewBox:'0 0 600 205'},[xml('polyline',{points:'55,160 565,35',fill:'none',stroke:'currentColor','stroke-width':'1.7'}),xml('text',{x:'5',y:'35'},[{nodeType:3,nodeValue:'-0.003'}])]),getElementsByTagName:()=>[]};
 class Parser{parseFromString(){return svgDocument;}}
-const elements=new Map(),get=id=>{if(!elements.has(id)){const find=n=>n.id===id?n:n.children?.map(find).find(Boolean);for(const root of elements.values()){const found=find(root);if(found)return found;}const root=new Element(['cryostat','detector','source','pose','threads','event','group','gegi-event','gegi-channel'].includes(id)?'select':'div');root.rootConnected=true;elements.set(id,root);}return elements.get(id);};
+const elements=new Map(),get=id=>{if(!elements.has(id)){const find=n=>n.id===id?n:n.children?.map(find).find(Boolean);for(const root of elements.values()){const found=find(root);if(found)return found;}const root=new Element(['cryostat','detector','source','pose','threads','event','group','gegi-event','gegi-channel','gegi-saved-campaign','gegi-saved-calibration','gegi-saved-job'].includes(id)?'select':'div');root.rootConnected=true;elements.set(id,root);}return elements.get(id);};
 const fixtureDocument={getElementById:get,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>{const n=new Element(tag);n.namespaceURI=ns;return n;},createTextNode:text=>({textContent:text})};
 fixtureDocument.body=new Element('body');fixtureDocument.body.rootConnected=true;fixtureDocument.activeElement=fixtureDocument.body;
 const context=vm.createContext({document:fixtureDocument,DOMParser:Parser,
@@ -1195,4 +1195,42 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run("showRun({...changedGammaJob,name:'returned-lbnl'});");assert.equal(get('gegi-result').hidden,true);
   assert.equal(get('gegi-journey').children.length,0);
   console.log('GeGI cryostat/source admission, exact saved IDs/channels, null failure traces and imaging projection passed.');
+  run(`const standaloneV3Fixture=JSON.parse(JSON.stringify(componentFixture));
+    standaloneV3Fixture.reconstruction_algorithm={kind:'gegi_standalone_saved_reconstruction_v3'};
+    for(const event of standaloneV3Fixture.events)event.reconstruction={kind:'gegi_saved_signal_hypotheses_v3',status:'unidentifiable',reason:'independent_waveform_templates_unavailable',hypotheses:[],candidates:[],cones:[],paired_site_hypotheses:[]};
+    standaloneV3Fixture.imaging={method:'gegi_standalone_saved_reconstruction_v3',status:'unsupported_independent_waveform_templates',accepted_events:0,rejected_events:2,ambiguous_events:0,conditional_candidate_groups:0,validated_recovered_groups:0,cones:[],azimuth_deg:[],elevation_deg:[],values:null,limitations:[]};
+    api=async()=>standaloneV3Fixture;`);
+  await run('openResult(gegiJob)');get('gegi-imaging-panel').open=true;run('showGeGIImaging();');
+  assert.match(get('gegi-limitations').textContent,/Shared signed-waveform.*unsupported without compatible independent/);
+  assert.match(get('gegi-event-summary').textContent,/Shared reconstruction: unidentifiable.*independent_waveform_templates_unavailable/);
+  assert.match(get('gegi-imaging-status').textContent,/unsupported independent waveform templates.*0 conditional candidate groups.*0 validated recovered groups/);
+  assert.equal(descendants(get('gegi-imaging')).filter(n=>n.tagName==='svg').length,0);
+  assert.ok(get('gegi-imaging').children.some(n=>n.textContent.includes('No source map is created')));
+  console.log('New standalone shared-waveform unsupported-calibration status preserves signals and presents no fabricated depth or source image.');
+  // New saved-store processing uses a separate protected shared-data action.
+  // Its counters are not accepted as a promise of recovered/validated events.
+  run(`busy=active=false;const savedStoreCalls=[];
+    const savedStoreInventory={kind:'gegi_saved_options_v1',campaigns:[{id:'a'.repeat(64),label:'Imported sealed campaign'}],calibrations:[{id:'b'.repeat(64),label:'Saved independent templates'}],jobs:[]};
+    let savedStoreState={name:'derived',campaign_id:'a'.repeat(64),calibration_id:'',status:'running',output_path:'.local/gegi-saved-reconstruction/derived',progress:{chunks:3,counts:{pulse_groups:17,conditional_candidate_groups:2,validated_recovered_groups:0}}};
+    api=async(path,data)=>{savedStoreCalls.push({path,data});if(path==='/api/workflow/gegi-saved/options')return savedStoreInventory;if(path==='/api/workflow/state')return{busy:savedStoreState.status==='running',jobs:[]};if(path==='/api/state')return{jobs:[]};if(path.startsWith('/api/workflow/gegi-saved/state?'))return savedStoreState;if(path==='/api/workflow/gegi-saved/reprocess')return savedStoreState;if(path==='/api/workflow/gegi-saved/stop')return{...savedStoreState,status:'stop_requested'};if(path.startsWith('/api/workflow/gegi-saved/file?'))return{kind:'fixture_identity',new_radiation_calls:0};throw Error('Unexpected saved processing route '+path);};`);
+  await run('refreshSavedGeGI()');
+  assert.equal(get('gegi-saved-campaign').value,'a'.repeat(64));assert.equal(get('gegi-saved-calibration').value,'');
+  assert.equal(get('gegi-saved-start').disabled,false);assert.match(get('gegi-saved-status').textContent,/1 completed sealed campaigns/);
+  get('gegi-saved-name').value='derived';await run('reprocessSavedGeGI(false)');await run('pollSavedGeGI()');
+  const newRequest=JSON.parse(run("JSON.stringify(savedStoreCalls.find(c=>c.path==='/api/workflow/gegi-saved/reprocess').data)"));
+  assert.deepEqual(newRequest,{campaign_id:'a'.repeat(64),calibration_id:'',name:'derived',resume:false});
+  assert.equal(get('gegi-saved-start').disabled,true);assert.equal(get('gegi-saved-stop').disabled,false);
+  assert.match(get('gegi-saved-status').textContent,/3 completed chunks.*17 original pulse groups.*2 conditional candidate groups.*0 validated recovered groups/);
+  assert.match(get('gegi-saved-path').textContent,/\.local\/gegi-saved-reconstruction\/derived/);
+  await get('gegi-saved-files').children[0].click();assert.match(get('gegi-saved-record').textContent,/fixture_identity.*\n.*new_radiation_calls/s);
+  await get('gegi-saved-stop').click();assert.match(get('gegi-saved-status').textContent,/stop requested/);assert.equal(get('gegi-saved-stop').disabled,true);
+  run("active=false;savedStoreState={...savedStoreState,status:'stopped_saved_reconstruction'};showSavedGeGI(savedStoreState);");
+  get('gegi-saved-name').value='changed-form';get('gegi-saved-campaign').value='another-choice';
+  await run('reprocessSavedGeGI(true)');
+  const resumeRequest=JSON.parse(run("JSON.stringify(savedStoreCalls.filter(c=>c.path==='/api/workflow/gegi-saved/reprocess').at(-1).data)"));
+  assert.deepEqual(resumeRequest,{campaign_id:'a'.repeat(64),calibration_id:'',name:'derived',resume:true});
+  assert.ok(JSON.parse(run('JSON.stringify(savedStoreCalls)')).every(c=>c.path.startsWith('/api/workflow/gegi-saved/')||['/api/workflow/state','/api/state'].includes(c.path)));
+  run(`let staleSavedFail;api=()=>new Promise((resolve,reject)=>staleSavedFail=reject);savedGeGIJob={name:'obsolete'};const staleSavedPoll=pollSavedGeGI();savedGeGIJob={name:'current'};++savedGeGIGeneration;$('gegi-saved-status').textContent='Current selection';staleSavedFail(Error('Obsolete failure'));`);
+  await run('staleSavedPoll');assert.equal(get('gegi-saved-status').textContent,'Current selection');
+  console.log('Saved GeGI sealed-store/optional-bank requests, exact resume identity, bounded counters, protected summaries, Stop and stale-selection guards passed; no science routes.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

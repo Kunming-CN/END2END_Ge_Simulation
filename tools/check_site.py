@@ -130,7 +130,8 @@ def validate(site, require_manifest=True, require_models=False):
         native_response_payload = relative=='examples/cs137-1m-response/groups.csv.gz'
         ledger_zip = relative in ('examples/cs137-10k/AK02/response/ledgers.zip', 'examples/cs137-10k/SAP22/response/ledgers.zip')
         ring_payload = relative.startswith('examples/cs137-10k-rings/') and (f.suffix.lower() in {'.zip', '.gz', '.jsonl'} or relative == 'examples/cs137-10k-rings/README.txt')
-        gegi_assembly_payload = relative in {'assemblies/gegi/viewer.js', 'assemblies/gegi/geometry.gdml'}
+        gegi_assembly_payload = relative in {'assemblies/gegi/viewer.js', 'assemblies/gegi/geometry.gdml',
+                                             'assemblies/gegi/gegi_signal_journey.js'}
         gegi_campaign_script = relative == 'results/gegi-campaign/gegi_signal_journey.js'
         if gegi_campaign_script and not (site/'results/gegi-campaign/publication.json').is_file():
             raise ValueError('GeGI journey script requires a complete hash-bound campaign bundle')

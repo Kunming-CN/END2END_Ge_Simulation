@@ -58,6 +58,7 @@ class WorkflowController:
         self._batch_resolver=batch_resolver or B.check
         self._launcher=launcher or self._spawn;self._checks={};self._active=None;self._entry_thread=None
         self._saved_verifier=Verifier(self.root)
+        self._saved_gegi_control=None
         path=safe_path(self.root,STATE+'/workflow-jobs.json')
         self._state_path=path
         if path.exists():
@@ -557,6 +558,24 @@ class WorkflowController:
             W.require(reply.get('configuration_sha256')==job['plan']['configuration_sha256'],
                       'Saved GeGI results differ from the owned configuration.')
             return dict(reply,name=name)
+
+    def _gegi_saved(self):
+        with self._lock:
+            if self._saved_gegi_control is None:
+                from gegi_saved_control import SavedGeGIControl
+                self._saved_gegi_control=SavedGeGIControl(self)
+            return self._saved_gegi_control
+
+    def gegi_saved_options(self):return self._gegi_saved().options()
+
+    def gegi_saved_state(self,name):return self._gegi_saved().state(name)
+
+    def reprocess_gegi_saved(self,campaign_id,calibration_id,name,resume):
+        return self._gegi_saved().start(campaign_id,calibration_id,name,resume=resume)
+
+    def stop_gegi_saved(self,name):return self._gegi_saved().stop(name)
+
+    def gegi_saved_artifact(self,name,file):return self._gegi_saved().artifact(name,file)
 
     def features(self,name,primary_id,group_id=None):
         """Verify a pre-exported derivative; no simulation, export or write on GET."""

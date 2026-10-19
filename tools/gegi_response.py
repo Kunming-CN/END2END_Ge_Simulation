@@ -3,12 +3,26 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import time
 
 import scenario_workflow as W
-import gegi_imaging as imaging
+import gegi_standalone_reconstruction as reconstruction
+
+
+def preserve_native_results(output,expected):
+    """Keep exact pre-reconstruction bytes without overwriting prior evidence."""
+    source=W.safe_path(output,'results.json');target=W.safe_path(output,'native-results.json')
+    if target.exists():
+        W.require(W.sha(target)==expected,'Existing native-results.json differs; preserve and inspect it.')
+    else:
+        with source.open('rb') as original,target.open('xb') as saved:
+            shutil.copyfileobj(original,saved,length=1024*1024);saved.flush();os.fsync(saved.fileno())
+    W.require(W.sha(source)==W.sha(target)==expected,'Native result changed while preserving original bytes.')
+    return {'file':'native-results.json','sha256':expected,
+            'scope':'Exact native worker result bytes before derived reconstruction fields were added.'}
 
 
 def run(request_path, output, *, resume_native=False):
@@ -38,13 +52,18 @@ def run(request_path, output, *, resume_native=False):
     W.require(receipt['configuration_sha256'] == payload['configuration_sha256'] == request['configuration_sha256'],
               'GeGI native response changed configuration identity.')
     native_hash = W.sha(output/'results.json')
-    imaging.analyze(payload, request['selection'])
+    W.require(receipt['artifacts']['results.json']==native_hash, 'Native standalone result bytes differ from their worker receipt.')
+    receipt['native_results']=preserve_native_results(output,native_hash)
+    receipt['artifacts']['native-results.json']=native_hash
+    reconstruction.analyze(payload, output, receipt, request=request)
     W.write(output/'results.json', payload)
     receipt['imaging'] = {'method': payload['imaging']['method'],
-                          'source_sha256': W.sha(W.ROOT/'tools/gegi_imaging.py'),
+                          'source_sha256': W.sha(W.ROOT/'tools/gegi_standalone_reconstruction.py'),
+                          'source_files_sha256': reconstruction.source_hashes(),
                           'input_native_results_sha256': native_hash,
                           'accepted_events': payload['imaging']['accepted_events'],
-                          'scope': 'Derived only from calibrated channel energies and timing; truth positions/order not used.'}
+                          'status':payload['imaging']['status'],
+                          'scope': 'Shared saved-waveform conditional reconstruction. No compatible independent waveform bank is supplied by this standalone worker; depth and source imaging remain unsupported. Fixed readout energies and diagnostic timings are preserved.'}
     receipt['artifacts']['results.json'] = W.sha(output/'results.json')
     receipt['response_and_imaging_elapsed_seconds'] = time.perf_counter()-started
     W.write(output/'run.json', receipt)

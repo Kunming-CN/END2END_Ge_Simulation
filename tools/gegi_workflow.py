@@ -25,6 +25,8 @@ MODEL_SHA = '4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04'
 FIELDS = W.FIELDS | {'gamma_energy_keV', 'source_position_mm'}
 CACHE_BASE = 'Additional_Simulations/Visualization_3D/detectors/GeGI_3D/runs/20260922_suite_v3'
 SOURCES = ('tools/gegi_workflow.py', 'tools/gegi_response.py', 'tools/gegi_imaging.py',
+           'tools/gegi_standalone_reconstruction.py', 'tools/gegi_signal_reconstruction.py', 'tools/gegi_event_store.py',
+           'tools/gegi_calibration_admission.py',
            'tools/scenario_workflow.py', 'tools/local_ui_jobs.py',
            'simulation/gegi_response.jl', 'simulation/gegi_signal_helpers.jl',
            'simulation/run.jl', 'simulation/replay.jl', 'simulation/readout.jl', 'simulation/readout_profiles.jl',
@@ -243,8 +245,8 @@ def request_stop(name, root=W.ROOT):
 def result_page(directory, receipt):
     value = W.read(Path(directory)/'response/results.json')
     body = '<!doctype html><html lang="en"><meta charset="utf-8"><title>GeGI results</title><style>body{font:16px/1.6 system-ui;max-width:960px;margin:40px auto;color:#193c50}pre{white-space:pre-wrap}a{color:#006a83}</style><h1>GeGI multichannel results</h1>'
-    body += '<p>Open this run in GeSignal Control for individual electrode signals and the directional Compton map.</p><pre>'+html.escape(json.dumps(value['counts'], indent=2))+'</pre>'
-    body += '<p>32 strips and 2 guards retain signed signals. Zero-deposit primaries remain in the total denominator. Imaging is a simulation reconstruction with explicit pairing, depth and ordering limits.</p>'
+    body += '<p>Open this run in GeSignal Control for individual electrode signals and the saved reconstruction status.</p><pre>'+html.escape(json.dumps(value['counts'], indent=2))+'</pre>'
+    body += '<p>32 strips and 2 guards retain signed signals. Zero-deposit primaries remain in the total denominator. New standalone runs require a compatible independent saved waveform calibration for depth; no source map is created from the historical timing estimator. Fixed energy readout and original timing diagnostics remain available.</p>'
     for label, path in [('Channel results and reconstructed cones', 'response/results.json'), ('Run evidence', 'run.json'),
                         ('Checked settings', 'resolved-config.json'), ('Original radiation', 'transport/truth.lh5')]:
         body += '<p><a href="'+path+'">'+label+'</a></p>'

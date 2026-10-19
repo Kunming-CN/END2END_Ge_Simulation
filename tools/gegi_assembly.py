@@ -19,26 +19,26 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / '.local/gegi-website'
 SAVED = ROOT / '.local/runs/gegi-source-left-v1/transport'
-BUNDLE = WORK / 'assembly'
-FREEZE = WORK / 'assembly-source-freeze.json'
+BUNDLE = WORK / 'assembly-signal-v3'
+FREEZE = WORK / 'assembly-signal-v3-source-freeze.json'
 NATIVE_FREEZE = WORK / 'assembly-native-source-freeze.json'
 NATIVE = WORK / 'build/gegi-scene-native.json'
 RECEIPT = WORK / 'assembly-native-receipt.json'
 EXE = WORK / 'build/gegi_scene'
 KIND = 'gegi_saved_assembly_v1'
-# Exact inspected predecessor, retained solely for a display-only rebuild.
-PREVIOUS_BUNDLES = frozenset({
-    'ab4339cd06c9732730ae39e83dd70bcbab172e648caec656bf0884dfd9f47570',
-    # Published59f9d00: exact live-verified assembly remains valid when an
-    # unrelated formal-results route is registered; all assets stay hash-bound.
-    '6a725558513bc6761450cd6fbee4e14ca11b91a66eb160f80c422f7520923081',
-})
+# Exactly the current public six-file predecessor may be staged by build_site
+# before this saved-data display is copied. No generic stale-source exemption.
+PREVIOUS_BUNDLES = frozenset({'6a725558513bc6761450cd6fbee4e14ca11b91a66eb160f80c422f7520923081'})
+EVENTS = ROOT / '.local/gegi-10m/reconstruction-v3/assembly-events.json'
+EVENTS_SHA256 = '4ceebc1c3d8c63479db1ced63edc230387de8a983934ef62d4a73d57499f8210'
 ASSET = 'scenarios/assets/gegi_cryostat_v1.json'
 SOURCE_FILES = ('tools/gegi_assembly.py', 'tools/gegi_assembly.html', 'tools/gegi_assembly.js',
+                'tools/gegi_signal_journey.js',
                 'tools/gegi_scene.cc', 'tools/gegi_mesh.hh', 'tools/gegi_scene/CMakeLists.txt', 'tools/geant4_scene/scene.cc',
                 'tools/site_routes.py', 'tools/site_discovery.py')
 INPUT_FILES = ('geometry.gdml', 'geometry-report.json', 'geometry.log', 'prepared.json', 'run.json')
-PUBLIC_FILES = ('index.html', 'viewer.js', 'scene.json', 'preview.svg', 'cross-section.svg', 'geometry.gdml')
+LEGACY_PUBLIC_FILES = ('index.html', 'viewer.js', 'scene.json', 'preview.svg', 'cross-section.svg', 'geometry.gdml')
+PUBLIC_FILES = (*LEGACY_PUBLIC_FILES, 'event-data.json', 'gegi_signal_journey.js')
 IDENTITY = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 COLORS = {'outer': '#79c9ee', 'inner': '#efc972', 'germanium': '#ca9bff', 'cryostat_vacuum': '#6d91ad'}
 LABELS = {'cryostat_vacuum': 'Vacuum envelope', 'germanium': 'GeGI crystal',
@@ -130,8 +130,9 @@ def inputs():
 
 def freeze():
     inputs()
+    saved_events()
     WORK.mkdir(parents=True, exist_ok=True)
-    value = {'kind': KIND, 'source_sha256': source_hashes()}
+    value = {'kind': KIND, 'source_sha256': source_hashes(), 'saved_events_sha256': EVENTS_SHA256}
     if FREEZE.exists():
         require(read(FREEZE) == value, 'Existing source freeze differs; preserve it and diagnose changed source')
     else:
@@ -141,8 +142,61 @@ def freeze():
 
 def frozen():
     value = read(FREEZE)
-    require(value == {'kind': KIND, 'source_sha256': source_hashes()}, 'Exporter changed after source freeze')
+    require(value == {'kind': KIND, 'source_sha256': source_hashes(), 'saved_events_sha256': EVENTS_SHA256},
+            'Exporter changed after source freeze')
+    saved_events()
     return value
+
+
+def validate_events(data):
+    """Validate exact scored-chord semantics; never invent missing trajectory legs."""
+    require(data.get('kind') == 'gegi_saved_path_display_v1' and isinstance(data.get('records'), list),
+            'Invalid saved GeGI event display')
+    seen = set()
+    for record in data['records']:
+        identity, radiation = record['original_identity'], record['radiation']
+        required = ('chunk_index', 'raw_primary_id', 'pulse_group_id', 'campaign_initial_id')
+        require(all(type(identity.get(k)) is int and identity[k] >= 0 for k in required),
+                'Missing original saved-event identity')
+        key = tuple(identity[k] for k in required)
+        require(key not in seen, 'Duplicate original saved event'); seen.add(key)
+        require(radiation['event_id'] == identity['raw_primary_id']
+                and radiation.get('scope') == 'positive_energy_Ge_scored_step_chords_only',
+                'Saved radiation identity or scored-chord scope differs')
+        require(isinstance(radiation.get('segments'), list) and isinstance(radiation.get('births'), list),
+                'Saved steps and creation vertices must be explicit')
+        rows = set()
+        for row in radiation['segments']:
+            for name in ('pre_mm', 'post_mm', 'position_mm'):
+                require(isinstance(row.get(name), list) and len(row[name]) == 3
+                        and all(type(x) in (int, float) and math.isfinite(x) for x in row[name]),
+                        'Invalid saved mm coordinate')
+            require(all(type(row.get(k)) is int for k in ('track_id', 'parent_track_id', 'particle_pdg', 'raw_row_index'))
+                    and row['raw_row_index'] >= 0 and row['raw_row_index'] not in rows,
+                    'Invalid or duplicated original step row')
+            rows.add(row['raw_row_index'])
+            require(type(row.get('energy_keV')) in (int, float) and math.isfinite(row['energy_keV'])
+                    and row['energy_keV'] > 0 and type(row.get('time_ns')) in (int, float)
+                    and math.isfinite(row['time_ns']), 'Invalid saved deposited energy or time')
+        # This exact display payload contains no available signal counterpart.
+        # Future signal attachment requires a new bound derivative, with an exact
+        # same-original-identity contract; never borrow a representative waveform.
+        require(record.get('signal_event') is None, 'This saved display has no bound signal counterpart')
+        require(radiation['births'] == [], 'This saved derivative has no track-birth records')
+        require(all(re.fullmatch(r'[a-f0-9]{64}', record['provenance'].get(k, ''))
+                    for k in ('metadata_sha256', 'store_sha256')), 'Saved event provenance missing')
+    return data
+
+
+def saved_events():
+    body = EVENTS.read_bytes()
+    require(hashlib.sha256(body).hexdigest() == EVENTS_SHA256, 'Saved event display input changed')
+    return validate_events(json.loads(body)), body
+
+
+def inline_json(value):
+    """Safe application/json text: no HTML closing tag can terminate the block."""
+    return encoded(value).decode().replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
 
 
 def close(a, b, tolerance=1e-8):
@@ -396,6 +450,7 @@ def section_svg(scene):
 def build():
     frozen()
     sources, native, prepared, report, asset, pins = saved_native()
+    events, event_bytes = saved_events()
     checked(BUNDLE, WORK, new=True)
     scene = public_scene(native, prepared, report, asset, pins)
     provenance = {'kind': KIND, 'input_files': pins, 'source_sha256': sources['source_sha256'],
@@ -409,6 +464,12 @@ def build():
                   'scope': asset['scope'], 'omitted': asset['omitted'],
                   'software': {'geant4': prepared['runtime']['packages']['geant4']['version'],
                                'remage_geometry_check': prepared['runtime']['packages']['remage']['version']},
+                  'display_revision': 'saved_scored_segments_v3',
+                  'saved_event_display': {'sha256': EVENTS_SHA256, 'record_count': len(events['records']),
+                    'scored_segment_count': sum(len(r['radiation']['segments']) for r in events['records']),
+                    'signal_counterparts_attached': 0, 'units': {'position': 'mm', 'energy': 'keV', 'time': 'ns'},
+                    'scope': 'Exact positive-energy germanium scored-step chords. Not complete tracks through unscored material.',
+                    'selection': 'Saved representative identities for transport display only; no source-labelled signal reconstruction.'},
                   'radiation_calls': 0, 'field_solves': 0}
     rows = '<tr><td>GeGI crystal</td><td>Octagonal; x/y bounds ±45</td><td>−5.5 to +5.5</td><td>Frozen detector model</td></tr>'
     for p in report['geometry']['parts']:
@@ -420,14 +481,19 @@ def build():
     tags = (f'<meta name="description" content="{html.escape(site_discovery.LANDINGS[route], quote=True)}">'
             f'<link rel="canonical" href="{site_discovery.canonical(route)}">')
     page = page.replace('<title>', tags+'<title>', 1).replace('__NAV__', site_routes.page_navigation(route))
+    event_marker = '<script type="application/json" id="event-data"></script>'
+    require(page.count(event_marker) == 1, 'Expected exactly one saved-event JSON insertion point')
     page = page.replace('__ROWS__', rows).replace('__PROVENANCE__', html.escape(json.dumps(provenance, indent=2))).replace(
-        '__SCENE__', encoded(scene).decode().replace('<', '\\u003c'))
+        '__SCENE__', inline_json(scene)).replace(event_marker,
+        '<script type="application/json" id="event-data">'+inline_json(events)+'</script>')
     bodies = {'index.html': page.encode(), 'viewer.js': (ROOT/'tools/gegi_assembly.js').read_bytes(),
               'scene.json': encoded(scene), 'preview.svg': preview_svg(scene), 'cross-section.svg': section_svg(scene),
-              'geometry.gdml': (SAVED/'geometry.gdml').read_bytes()}
+              'geometry.gdml': (SAVED/'geometry.gdml').read_bytes(), 'event-data.json': event_bytes,
+              'gegi_signal_journey.js': (ROOT/'tools/gegi_signal_journey.js').read_bytes()}
     for body in bodies.values():
         public(body)
-    require(saved_native()[0] == sources and inputs()[3] == pins, 'Frozen inputs changed while rendering')
+    require(saved_native()[0] == sources and inputs()[3] == pins and saved_events()[1] == event_bytes,
+            'Frozen inputs changed while rendering')
     BUNDLE.mkdir()
     for name, body in bodies.items():
         write(BUNDLE/name, body, public_output=True)
@@ -439,10 +505,12 @@ def build():
 
 def validate_bundle(bundle=BUNDLE):
     bundle = Path(bundle); manifest = read(bundle/'manifest.json')
+    legacy = sha(bundle/'manifest.json') in PREVIOUS_BUNDLES
     require(manifest['kind'] == KIND and manifest['status'] == 'complete' and
             manifest['assembly_volume_count'] == 8 and manifest['radiation_calls'] == manifest['field_solves'] == 0,
             'Incomplete GeGI assembly publication')
-    require(set(manifest['files']) == set(PUBLIC_FILES), 'Unexpected assembly file set')
+    require(set(manifest['files']) == set(LEGACY_PUBLIC_FILES if legacy else PUBLIC_FILES),
+            'Unexpected assembly file set')
     for name, record in manifest['files'].items():
         require(info(bundle/name) == record, 'Saved assembly artifact changed: '+name)
         public((bundle/name).read_bytes())
@@ -450,8 +518,22 @@ def validate_bundle(bundle=BUNDLE):
     require(sha(bundle/'geometry.gdml') == manifest['input_files']['geometry.gdml']['sha256'], 'Published GDML differs')
     scene = read(bundle/'scene.json')
     require(len(scene['volumes']) == 8 and {v['name'] for v in scene['volumes']} == set(LABELS), 'Public assembly census differs')
-    require(manifest['source_sha256'] == source_hashes() or sha(bundle/'manifest.json') in PREVIOUS_BUNDLES,
+    require(manifest['source_sha256'] == source_hashes() or legacy,
             'Public assembly exporter source differs')
+    if not legacy:
+        events = validate_events(read(bundle/'event-data.json'))
+        require(sha(bundle/'event-data.json') == EVENTS_SHA256
+                and manifest['saved_event_display']['sha256'] == EVENTS_SHA256
+                and manifest['saved_event_display']['record_count'] == len(events['records'])
+                and manifest['saved_event_display']['scored_segment_count'] == sum(len(r['radiation']['segments']) for r in events['records'])
+                and manifest['saved_event_display']['signal_counterparts_attached'] == 0,
+                'Saved event display provenance differs')
+        page = (bundle/'index.html').read_text(encoding='utf-8')
+        embedded = re.findall(r'<script type="application/json" id="event-data">(.*?)</script>', page, re.S)
+        require(len(embedded) == 1 and json.loads(embedded[0]) == events, 'Embedded and downloadable saved events differ')
+        require('<script src="gegi_signal_journey.js"></script>' in page, 'Shared signal viewer missing')
+        require(sha(bundle/'gegi_signal_journey.js') == manifest['source_sha256']['tools/gegi_signal_journey.js'],
+                'Shared signal viewer differs from source freeze')
     if bundle == BUNDLE:
         sources, native, prepared, report, asset, pins = saved_native()
         require(scene == public_scene(native, prepared, report, asset, pins) and manifest['input_files'] == pins,
@@ -470,13 +552,13 @@ def publish(site_output, bundle=None):
     else:
         manifest = validate_bundle(bundle)
         target.mkdir(parents=True, exist_ok=True)
-        for name in (*PUBLIC_FILES, 'manifest.json'):
+        for name in (*manifest['files'], 'manifest.json'):
             checked(target/name, target)
             shutil.copyfile(bundle/name, target/name)
         require(validate_bundle(target) == manifest, 'Copied GeGI assembly differs')
     return {'kind': KIND, 'page': 'assemblies/gegi/index.html', 'assembly_volume_count': 8,
             'geometry_sha256': manifest['input_files']['geometry.gdml']['sha256'],
-            'files': ['assemblies/gegi/'+name for name in (*PUBLIC_FILES, 'manifest.json')]}
+            'files': ['assemblies/gegi/'+name for name in (*manifest['files'], 'manifest.json')]}
 
 
 if __name__ == '__main__':

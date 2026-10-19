@@ -268,6 +268,20 @@ class Handler(BaseHTTPRequestHandler):
                 name=query['name'][0]
                 workflow.run_path(name,self.server.controller.root)
                 return self.send_data(200,self.server.workflow_controller.result_options(name))
+            if parts.path == '/api/workflow/gegi-saved/options':
+                if parts.query or parts.fragment or self.server.workflow_controller is None:
+                    raise ValueError('Invalid saved GeGI input inventory request')
+                return self.send_data(200,self.server.workflow_controller.gegi_saved_options())
+            if parts.path in ('/api/workflow/gegi-saved/state','/api/workflow/gegi-saved/file'):
+                query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
+                keys={'name','file'} if parts.path.endswith('/file') else {'name'}
+                if parts.fragment or set(query)!=keys or any(len(v)!=1 for v in query.values()) or self.server.workflow_controller is None:
+                    raise ValueError('Invalid saved GeGI derivative request')
+                workflow.run_path(query['name'][0])
+                if 'file' in keys:
+                    body=self.server.workflow_controller.gegi_saved_artifact(query['name'][0],query['file'][0])
+                    return self.send_data(200,body,'application/json; charset=utf-8')
+                return self.send_data(200,self.server.workflow_controller.gegi_saved_state(query['name'][0]))
             if parts.path == '/api/workflow/gegi-results':
                 query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
                 if (parts.fragment or set(query)!={'name'} or any(len(v)!=1 for v in query.values()) or
@@ -421,6 +435,18 @@ class Handler(BaseHTTPRequestHandler):
             if not 1 <= size <= 4096:
                 raise ValueError('Request size must be 1..4096 bytes')
             data = decode_json(self.rfile.read(size).decode('utf-8'))
+            if self.path == '/api/workflow/gegi-saved/reprocess':
+                if type(data) is not dict or set(data)!={'campaign_id','calibration_id','name','resume'} or \
+                        any(type(data[k]) is not str for k in ('campaign_id','calibration_id','name')) or \
+                        type(data['resume']) is not bool or self.server.workflow_controller is None:
+                    raise ValueError('Choose saved GeGI input identities, derivative name and explicit resume flag')
+                workflow.run_path(data['name'])
+                return self.send_data(200,self.server.workflow_controller.reprocess_gegi_saved(**data))
+            if self.path == '/api/workflow/gegi-saved/stop':
+                if type(data) is not dict or set(data)!={'name'} or type(data['name']) is not str or self.server.workflow_controller is None:
+                    raise ValueError('Choose one running saved GeGI derivative')
+                workflow.run_path(data['name'])
+                return self.send_data(200,self.server.workflow_controller.stop_gegi_saved(data['name']))
             workflow_routes={'/api/workflow/check':({'config'},'check'),
                              '/api/workflow/check-catalog':({'config'},'check_catalog'),
                              '/api/workflow/check-gegi':({'config'},'check_gegi'),

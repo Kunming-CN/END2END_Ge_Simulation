@@ -543,6 +543,9 @@ def export(campaign,analysis,output,*,exporter_sha256,root=ROOT,replayer=replay_
 
 def validate_bundle(directory):
     directory=Path(directory);ordinary(directory/'publication.json');record=read(directory/'publication.json')
+    if record.get('kind')=='gegi_saved_publication_v3':
+        from gegi_saved_publication import validate_public
+        return validate_public(directory)
     require(record.get('kind')==KIND and record.get('status')=='complete' and record.get('route')==ROUTE and
             record.get('radiation_calls')==record.get('field_solves')==record.get('native_drift_calls')==0,
             'Incomplete or unsupported campaign publication')
@@ -566,8 +569,24 @@ def validate_bundle(directory):
 def install_bundle(bundle,site):
     record=validate_bundle(bundle);target=Path(site)/Path(ROUTE).parent
     if target.exists():
+        previous=validate_bundle(target)
+        previous_sha=sha(target/'publication.json')
+        if previous_sha==sha(Path(bundle)/'publication.json'):
+            return target
+        require(record.get('kind')=='gegi_saved_publication_v3' and
+                record.get('replaces_public_manifest_sha256')==previous_sha,
+                'Preserve a different existing formal campaign bundle without an explicit replacement binding')
+        # Only the validated generated-site inventory is replaced. The original
+        # scientific publication bundle remains untouched at its saved location.
+        for name in previous['artifacts']:
+            path=ordinary(target/name)
+            require(path.resolve().parent==target.resolve(),'Escaped generated publication member')
+            if name not in record['artifacts']:
+                path.unlink()
+        for name in record['artifacts']:
+            shutil.copyfile(Path(bundle)/name,target/name)
+        shutil.copyfile(Path(bundle)/'publication.json',target/'publication.json')
         validate_bundle(target)
-        require(sha(target/'publication.json')==sha(Path(bundle)/'publication.json'),'Preserve a different existing formal campaign bundle')
         return target
     target.parent.mkdir(parents=True,exist_ok=True);shutil.copytree(bundle,target);validate_bundle(target)
     return target
@@ -584,7 +603,7 @@ def link_current(site):
         href=posixpath.relpath(ROUTE,posixpath.dirname(relative) or '.')
         section=('<section id="gegi-formal-campaign"><h2>GeGI formal campaign</h2><p>'+
             f'{record["initial_records"]:,} completed initial records; source-specific photon/decay denominators, fixed-gain spectra, '+
-            'blind direction and assumed-plane maps, failures and fixed metric conclusions.</p><p><a href="'+href+
+            'saved signal processing, joint conditional maps and explicit unresolved cases.</p><p><a href="'+href+
             '">Explore signals, Compton cones and the completed campaign →</a>.</p></section>')
         text=re.sub(r'<section id="gegi-formal-campaign">.*?</section>','',path.read_text(encoding='utf-8'),flags=re.S)
         require('</main>' in text or '</body>' in text,'Maintained page has no insertion boundary')

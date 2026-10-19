@@ -1,84 +1,91 @@
 # Current handoff
 
-## GeGI 1M analysis, website and student delivery — complete2026-10-19
+## GeGI saved-data correction — delivery in progress
 
-The owner explicitly resumed final analysis, educational signal→interaction→cone→map
-views, GitHub website publication and traceable student software. Latest additions:
-retire the old5000/two5000 public GeGI display after replacement, retain original
-science; infer source species from saved signal spectra and report range only where
-supported. The former pause is superseded. No new radiation or native drift.
+Owner authorized full-chain signal/readout/software correction and GitHub display
+using existing data, local private GeGI slides and primary literature. No new
+Geant4, SSD drift, fields, calibration injections or campaign. Automation remains
+PAUSED. Chat01a14bca-3953-7c13-80a1-687a9a571455 / gegi-10m-root owns
+.local/autonomy/gegi-diagnosis.lock. Do not launch a competing supervisor.
 
-The sole supervisor is chat01a14bca-3953-7c13-80a1-687a9a571455, ownergegi-10m-root.
-Automation automation is PAUSED after verified delivery. No automatic next work.
-Final owned-lock release is recorded in .local/autonomy/state.json after Git sync.
-Do not repeat completed simulations, analysis, bootstrap, exports or recovery.
+Current numerical work is complete; remaining work is source/package/site delivery
+and live checks. Actual protected desktop student controls were verified. Do not rerun completed processing. All implementation writers are frozen; new publication export is COMPLETE.
 
-Simulation:100sealed chunks/1,000,000formal initials completed2026-10-19T00:40:29Z.
-Quotas:200kleft/200kright662keVinitialphotons,300kCs137/300kCo60initialdecays;
-preparation2400excluded. Photon/decay denominators remain distinct. Historical path
-.local/gegi-10m/campaign does not authorize10M. COMPLETE SHA256
-44e40e50dbc3f86517bb144de9a82a920ded30c839201cecca9986b5adfafc29;
-plan SHA2560ef776b56b699285ffe5ac803bdd759402bca4a15825c2602c7f2ff659ade7d1.
-Root C.verify_complete passed2026-10-19T21:22:28Z in14.16s: all100artifact/archive
-hashes, identities and quotas. Actual campaign processes exited; no science rerun.
+## Results and limits
 
-Final analysis is complete at .local/gegi-10m/analysis-final-v2. Explicit analysis-
-only revision binds original/newsource; all41producerpins and frozencriteria exact.
-Newanalysis SHA eaf6b86fe339f0c0a86760c80e20ddd4052f9ae18296dfb286b7ce33272a54e3.
-426nativefailed pulse groups:272contact,149noncontactendpointoutside,5invalidsignedcharge;
-708imagingaccepted groups. Both mixtures FAIL frozen source-separation criteria.
-Two visible peaks do not establish correct source locations. Most plane maxima
-are on the map boundary. Cs137 nominalplanepeak neartruth is not stable under
-conditionalresampling.200primary-cluster bootstrap replicates completed79.886s,
-seed261017201; finite-sample variation only, nothardware/modeluncertainty.
+Immutable original campaign .local/gegi-10m/campaign completed100chunks/1M;
+400k initial photons and600k initial decays are separate denominators; preparation
+2400excluded. Four acquisitions occupy only two positions, with two mono662keV
+sources and Cs137/Co60. It is not four distinct nuclides or four source positions.
+COMPLETE SHA44e40e50dbc3f86517bb144de9a82a920ded30c839201cecca9986b5adfafc29;
+plan SHA0ef776b56b699285ffe5ac803bdd759402bca4a15825c2602c7f2ff659ade7d1.
+100artifact/archive hashes and quotas verified previously; all scienceworkers exited.
+All original fields, requests/spools,3failure/recoverygenerations and quota records
+are permanent. Event801/group0 original21rows retain native_failed/null; no replay.
 
-All implementation writers are frozen. Saved-data export completed at
-.local/gegi-10m/publication-final-v2 with exporterSHA
-86cd938213643d518b9af194e917ea193a545c168a003660df64b0da423dd7df.
-Separate source-inference-v1/report.json confirms Co60-compatible doublet and
-three ambiguous661.7keV single-line groups; all distance estimates remainnull.
-Classifier uses only fixed-gain spectra, no source/truth labels.
-StandaloneControl remains configurablemonoγ; isotope campaign uses anchoredpulse
-backend and is NOT yet launchable through standaloneGeGI. Do not expose an unsafe
-isotope menu or silently change frozenproducer.34channels, originalIDs, nullfailures,
-allcandidatecones and protectedstagefiles share the newviewer; no canned data inZIP.
+Diagnosis .local/gegi-10m/diagnosis-rejected-v1 is immutable.39,683strict2x2rejects:
+30,696one-strip/face,5,819one-face-merged,2,787three-plus-strip,381no-hit.
+4,184truth-diagnostic priority candidates are NOT recovered events. Finite-square
+per-cone normalization was proved to amplify miss-cone tails into boundary peaks.
+Event984042 has two50%crossings; oldlast-crossing depth was wrong. Truth remains
+posthoc diagnostic only, never candidate selection, ordering or weight input.
 
-Verified this round:18analysis tests;10legacyretirement and10navigation tests;
-studentJS actualcomponent contracts and4protectedControl tests;5package tests.
-RealdesktopControl dedicatedGeGI selection and Checkplan passed with no simulation
-and no consoleerrors. 12publication and10sourceinference tests passed; actualreport adapter checked.
-Website test_site:34passed. ActualstudentControlCheckplan passed withoutscience.
+Shared tools/gegi_signal_reconstruction.py fits signed saved waveforms with bounded
+sparse X/Y matching, conditional depth templates and sequence hypotheses. No forced
+2x2 interaction rule or last-crossing depth fallback. Unknown or incomplete native
+responses remain explicit, and missing calibration yields unsupported/null imaging.
+The available independent bank saves selected X/Y waveforms, not complete34channel
+response bases. Charge sharing, same-pixel multiplicity and cascade ambiguity remain
+unresolved; no proprietary GeGI or experimental calibration equivalence is claimed.
 
-Website snapshot generated and fully validated by check_site.validate before and
-after sealing: buildfb268b4f081c93a81306d7892126d68f8393b98b27e0fa60e0e46bab3a6fd41f,
-1742files/109pages/3496local links. Formalpublicbundle36artifacts,7398672bytes;
-manifestSHA67aee794d57c7d0f34ea8715af684421a1a5a0ef11b05a975907230501dd1c12.
-Old5000/two5000 entry now redirects; both original datafiles remain byte-identical.
-Local desktop passed34-channel/signed guard traces, rotatablecone, representative
-accumulation, fullmaps/spectra and source/range limits; no browser errors.
-Authenticated legacy display receipts were refreshed only for presentation binding.
-Eight targeted binding tests passed (oneobsoletefixture skipped); site34passed.
-Published website commit:ecc398b4799051bd868fb5731f8826bfb0867257.
-Live check_site --url passed747exact-byte files for the same snapshot; actual
-public desktop verified old-entry redirect, conecontrols, source-truth defaultoff,
-guide and softwarelink, with zero browsererrors. All source/results pushed normally.
-Current result:https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-campaign/index.html
-No automatic next task. Delivery is functional, not validated source localization:
-bothmixtures failed, distance remainsunidentified and662keV species ambiguous.
-Future radial/3D inference, reconstruction improvement, measured calibration and
-standaloneisotopeGUI need separate bounded implementation; do not change frozen
-results or treat source setup as the inferred answer.
+Full saved processing .local/gegi-10m/reconstruction-v3/full-signal is COMPLETE:
+57,613groups/100chunks in337.197s;1,944,358scalar channels checked;426nativefailed
+retained (subset of1,896native_response_incomplete).434conditional groups/837cones,
+including284of the original39,683strictrejects. Validated recovered groups=0.
+Summary SHAf4d653c8a6a79f2b47a8c8ccbc494fd0dea20e030d585b3ddbeedd9f3ae343ca.
+Executed runner preserved under reconstruction-v3/source-bindings; later admission-
+only source revision must be explicit, not a silent source rebaseline or rerun.
 
-Permanent science: entire.local/gegi-10m including originalrequests/spools, three
-failure/recoverygenerations, quota-1m-v1 and originalfields. Quotaapplication and
-transport-recoil migration alreadycomplete; NEVER reapply. Event801/group0 original
-21rows retainednative_failed/null, drift_replayed:false. Bottom-levelSSD numerical
-issue remains unresolved. No seed/cut/gainchanges to force separation, no true3D,
-no simultaneous-sourcepileup, no experimentalresolution claim. Sourceslidesprivate.
+joint-signal/report.json selects162groups/393candidates using common measured-energy
+windows without acquisition labels. Finite-vertex angular likelihood retains
+unresolved candidate mass and background, with no finite-square normalization.
+Pooled assumedz40mm modes(-42,-2)/(42,2)mm; posthoc evaluation finds2.83mm distance
+from known positions, but this is NOT resolution or validated general localization.
+The661.657keV layer still misses the right source;1173layer secondary peak reaches
+an edge and1332layer has19groups. Weightedmedian angularresidual22.162deg; only33.22%
+of total groupmass within15deg. Different162/708populations cannot establish an
+accuracy/efficiency improvement. Range/activity remainnull. No true3D or pileupclaim.
+Report SHA855fd81aefe107b191f51a826fb5d9d0ecaed446ee9f525a2549425b927b113d;
+evaluation SHA8c19858e696ec648329ca0107bb362780fee28c0d393d7386121a0d798f7cb2b.
 
-Prior detailed handoff and all earlier milestones are immutable in Git:
-https://github.com/kunming-cn/END2END_Ge_Simulation/blob/4ef5c47a8d65c2a01b031ded43bd43e3656b998c/PROGRESS.md
-Current studentrelease: student-runtime-94245299c565,178members/844088bytes,
-ZIP SHA403f56b5a3ff22d403f0d66636b5e6363ce1bc8eafbdc35ad56aed710b1f149e.
-Versioned/latest publicbytes, receipt and remotecommit all verified; noinstall.
-.local/student-runtime-p1/COMPLETE.json is deliveryauthority.
+Independent analytic circuit check of4saved events/136channels passed: peakvoltage
+error<9.2e-14V, exactADCcodes and fixedenergygain. This verifies the implemented
+nominal circuit, not the real instrument transferfunction. No new native replay.
+Sourcekind: Co60-compatible doublet;661.7keV alone ambiguous. Setup56.57mmcenter/
+26.4mmcoverclearance is not inferred distance. Full34channel calibration, measured
+noise/crosstalk/electronics and calibrated sensitivity remain needed for accuracy.
+
+## Software and publication
+
+New student paths share reconstruction, explicit calibration identity admission,
+protected saved-campaign discovery, separate derivatives and chunk stop/resume.
+Standalone production must not create old timing-derived maps; absent compatible
+independent bank => unsupported depth/map. Preserve exact native result bytes.
+No canned science in ZIP. Existing environments unchanged; use maintained guide.
+Assembly saved-view bundle .local/gegi-website/assembly-signal-v3 contains214real
+positive-energy Ge STEPchords from4original1Mevents, not complete particle tracks.
+Old5000science retained privately; old public entries redirect to current results.
+
+New saved publication .local/gegi-10m/reconstruction-v3/publication is complete;
+only tools/build_site.py may replace generated docs. Source/test/package commit,
+normal push, release-byte verification, generated-site check and live website checks
+remain pending. test_site passed34tests. New/oldpublication tests11/12, signal12,
+jointimaging18, assembly16, savedrunner4, standalone8, admission4, controller7 and
+studentpackage5 passed; final package dependency closure186members passed. Desktop
+student saved-input discovery/calibration selection verified; noRun/Download clicked. No new simulation after delivery; future four-nuclide run requires
+owner decision and measured small acceptance/cost evidence before another1M.
+
+Prior detailed handoff is immutable in Git:
+https://github.com/kunming-cn/END2END_Ge_Simulation/blob/e58169bdff6e9230da0167de3f1fe85a6b2d285c/PROGRESS.md
+Student release authority: .local/student-runtime-p1/COMPLETE.json (prior release
+student-runtime-94245299c565 until the new committed package is verified/published).

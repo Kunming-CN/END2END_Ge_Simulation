@@ -1,6 +1,9 @@
 """Targeted saved-geometry export checks; no transport or field solver calls."""
 import copy
+import json
 from pathlib import Path
+import re
+import shutil
 import tempfile
 import unittest
 from unittest import mock
@@ -23,6 +26,57 @@ class SavedGeGIAssembly(unittest.TestCase):
                 G.public(value)
         self.assertEqual(G.public(b'{"length_mm":8.1,"source":"geometry.gdml"}'),
                          b'{"length_mm":8.1,"source":"geometry.gdml"}')
+
+    def test_inline_event_json_cannot_close_its_script_element(self):
+        value = {'label': '</script><script>alert("saved")</script>&', 'value': 1.2345678901234567}
+        safe = G.inline_json(value)
+        self.assertNotIn('<', safe)
+        self.assertNotIn('&', safe)
+        self.assertEqual(json.loads(safe), value)
+
+    def test_shared_journey_is_a_frozen_public_asset(self):
+        self.assertIn('tools/gegi_signal_journey.js', G.SOURCE_FILES)
+        self.assertIn('gegi_signal_journey.js', G.PUBLIC_FILES)
+        self.assertIn('event-data.json', G.PUBLIC_FILES)
+        self.assertEqual(G.BUNDLE.name, 'assembly-signal-v3')
+        self.assertEqual(G.FREEZE.name, 'assembly-signal-v3-source-freeze.json')
+        self.assertEqual(G.NATIVE_FREEZE.name, 'assembly-native-source-freeze.json')
+
+    @unittest.skipUnless(G.EVENTS.is_file(), 'Saved local event display is not in clean clones')
+    def test_actual_saved_chords_and_null_signal_contract(self):
+        events, body = G.saved_events()
+        self.assertEqual(G.sha(G.EVENTS), G.EVENTS_SHA256)
+        self.assertEqual(len(events['records']), 4)
+        self.assertEqual(sum(len(r['radiation']['segments']) for r in events['records']), 214)
+        self.assertTrue(all(r['signal_event'] is None for r in events['records']))
+        changed = copy.deepcopy(events)
+        changed['records'][0]['radiation']['segments'][0]['pre_mm'][0] = None
+        with self.assertRaisesRegex(ValueError, 'coordinate'):
+            G.validate_events(changed)
+        changed = copy.deepcopy(events)
+        changed['records'][0]['signal_event'] = {'channels': [], 'original_identity': {'raw_primary_id': 9}}
+        with self.assertRaisesRegex(ValueError, 'signal counterpart'):
+            G.validate_events(changed)
+        changed = copy.deepcopy(events)
+        changed['records'][0]['radiation']['event_id'] += 1
+        with self.assertRaisesRegex(ValueError, 'identity'):
+            G.validate_events(changed)
+
+    @unittest.skipUnless((G.WORK/'assembly/manifest.json').is_file(), 'Legacy display is local-only')
+    def test_only_exact_known_six_file_predecessor_is_accepted(self):
+        previous = G.WORK/'assembly'
+        manifest = G.validate_bundle(previous)
+        self.assertEqual(set(manifest['files']), set(G.LEGACY_PUBLIC_FILES))
+        with tempfile.TemporaryDirectory(dir=G.WORK) as temp:
+            target = Path(temp)
+            self.assertTrue(target.resolve().is_relative_to(G.WORK.resolve()))
+            for name in (*G.LEGACY_PUBLIC_FILES, 'manifest.json'):
+                shutil.copyfile(previous/name, target/name)
+            changed = copy.deepcopy(manifest)
+            changed['source_sha256']['tools/gegi_assembly.py'] = '0'*64
+            (target/'manifest.json').write_bytes(G.encoded(changed))
+            with self.assertRaises(ValueError):
+                G.validate_bundle(target)
 
     def test_native_section_is_interpolated_in_millimetres(self):
         volume = {'vertices_global_mm': [[0, -2, 0], [4, 2, 0], [0, 2, 4]], 'triangles': [[0, 1, 2]]}
@@ -68,6 +122,12 @@ class SavedGeGIAssembly(unittest.TestCase):
     def test_checked_bundle_and_copied_byte_tampering(self):
         manifest = G.validate_bundle()
         self.assertEqual(manifest['assembly_volume_count'], 8)
+        self.assertEqual(manifest['saved_event_display']['scored_segment_count'], 214)
+        self.assertEqual(manifest['saved_event_display']['signal_counterparts_attached'], 0)
+        page = (G.BUNDLE/'index.html').read_text(encoding='utf-8')
+        embedded = re.findall(r'<script type="application/json" id="event-data">(.*?)</script>', page, re.S)
+        self.assertEqual(len(embedded), 1)
+        self.assertEqual(json.loads(embedded[0]), G.read(G.BUNDLE/'event-data.json'))
         with tempfile.TemporaryDirectory(dir=G.WORK) as temp:
             site = Path(temp)
             G.publish(site)

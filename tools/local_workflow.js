@@ -5,6 +5,7 @@ if(token)sessionStorage.setItem('ge-control-token',token);history.replaceState(n
 let catalog=null,checked=null,noticeIsCheckedPlan=false,busy=false,active=false,selectedJob=null,selectedRun=null,result=null,selectionVersion=0,resultGeneration=0,plotGeneration=0;
 let modelPreviewGeneration=0,modelPreviewUrl=null,importGeneration=0,pageGeneration=0,pollGeneration=0,featureGeneration=0,acquisitionGeneration=0,resultOptionsGeneration=0,spectrumGeneration=0;
 let gegiResult=null,gegiGeneration=0,gegiJourney=null;
+let savedGeGIOptions=null,savedGeGIJob=null,savedGeGIBusy=false,savedGeGIGeneration=0;
 const continuationNames=new Map();
 const pendingActions=new Map();
 const stageNames={native_preparation:'Fields and injection calibration',geometry:'Geometry and source',radiation:'Radiation transport',event_ledger:'Event ledger',response:'Fields, charge, calibration and readout',results:'Verified results'};
@@ -40,7 +41,7 @@ function config(){const electronics={};for(const key of catalog.electronics_keys
 function invalidate(){selectionVersion++;checked=null;$('checked-plan').textContent=executableSelection()?'Selection changed. Check the new plan.':'No run plan for this setup. '+(currentDetector()?.reason||'Read the selected model’s configuration requirements.');if(noticeIsCheckedPlan)notice('Selection changed. The earlier checked plan is cleared. Check plan again before Run.');showSelection();showPose();controls();}
 function controls(){const runnable=executableSelection(),blocked=busy||active||!runnable||!checked||checked.execution_enabled===false;for(const id of ['check','save'])$(id).disabled=busy||active||!runnable;$('load').disabled=busy||active;$('start').disabled=blocked;
 const readiness=busy?'Run unavailable while the current action is pending. Wait for it to finish.':active?'Run unavailable while existing work is active or needs inspection. Review Runs and Previous saved jobs and recovery; wait for running work or use the available verification action.':!runnable?'Run unavailable. '+(currentDetector()?.available!==true?'View only · '+(currentDetector()?.reason||'No computation connector is available for this model.'):'This detector, source or cryostat combination is unavailable.')+' Choose a compute-supported combination in the current cryostat.':!checked?'Run unavailable. Check plan for the current setup; editing settings clears any earlier check.':checked.execution_enabled===false?'Run unavailable. This checked plan does not authorize execution; nonzero-angle acceptance is pending. Use an admitted zero-angle setup and Check plan again, or wait for execution support.':'Ready to Run with the checked next-run configuration. Editing settings requires another Check plan.';if($('run-readiness').textContent!==readiness)$('run-readiness').textContent=readiness;
-for(const id of ['source','pose','count','threads','name','use-peak-gate'])$(id).disabled=!runnable;$('cryostat').disabled=busy||active;$('angle-deg').disabled=!runnable||!angleCapability()||gegiSelection();$('gamma-energy-keV').disabled=!runnable||!gammaCapability()&&!gegiSelection();for(const axis of ['x','y','z'])$('gegi-source-'+axis).disabled=!runnable||!gegiSelection();$('seed').disabled=!runnable||!batchSelection()&&currentSource()?.fixed_seed!=null;for(const key of catalog?.electronics_keys||[])$('setting-'+key).disabled=!runnable||key.startsWith('peak_gate_')&&!$('use-peak-gate').checked;}
+for(const id of ['source','pose','count','threads','name','use-peak-gate'])$(id).disabled=!runnable;$('cryostat').disabled=busy||active;$('angle-deg').disabled=!runnable||!angleCapability()||gegiSelection();$('gamma-energy-keV').disabled=!runnable||!gammaCapability()&&!gegiSelection();for(const axis of ['x','y','z'])$('gegi-source-'+axis).disabled=!runnable||!gegiSelection();$('seed').disabled=!runnable||!batchSelection()&&currentSource()?.fixed_seed!=null;for(const key of catalog?.electronics_keys||[])$('setting-'+key).disabled=!runnable||key.startsWith('peak_gate_')&&!$('use-peak-gate').checked;savedGeGIControls();}
 function sourceLabel(id){return id==='mono_gamma_662_axis_v1'?'Monoenergetic gamma beam':catalog?.sources.find(s=>s.id===id)?.label||id;}
 function savedSourceLabel(selection){return sourceLabel(selection.source)+(['mono_gamma_662_axis_v1','gegi_mono_gamma_v1'].includes(selection.source)?' · '+savedGammaEnergy(selection)+' keV':'');}
 function detectorChanged(){const previous=$('source').value,original=currentDetector();if(!original)return;const d=detectorFits(original)?original:{...original,available:false,sources:[],reason:'This detector requires a different cryostat. Select a compatible cryostat.'},sources=catalog.sources.filter(s=>d.sources.includes(s.id)).map(s=>({...s,label:sourceLabel(s.id)}));options('source',sources);$('source').value=sources.some(s=>s.id===previous)?previous:sources[0]?.id||'';if(gegiSelection()&&previous!=='gegi_mono_gamma_v1'){$('count').value='100';$('seed').value='26101701';}$('operating-details').textContent=d.operating_label||'';$('numerics').textContent=gegiSelection()?'GeGI numerical, seed and field-cache settings are recorded in the checked plan. Each native drift realization supplies all 34 contact signals.':catalog.numerics||'';showModel(d);sourceChanged();}
@@ -130,7 +131,58 @@ function renderJobs(state){
   }
   syncRunList($('runs'),cards,'No runs created in this application.');controls();
 }
-async function poll(){const generation=++pollGeneration;try{const [state,legacy]=await Promise.all([api('/api/workflow/state'),api('/api/state')]);if(generation!==pollGeneration)return;renderJobs(state);renderLegacy(legacy);}catch(e){if(generation===pollGeneration)notice(e.message,true);}}
+async function poll(){const generation=++pollGeneration;try{const [state,legacy]=await Promise.all([api('/api/workflow/state'),api('/api/state')]);if(generation!==pollGeneration)return;renderJobs(state);renderLegacy(legacy);if(savedGeGIJob)void pollSavedGeGI();}catch(e){if(generation===pollGeneration)notice(e.message,true);}}
+
+function savedGeGIControls(){
+  const hasInput=!!savedGeGIOptions?.campaigns?.some(c=>c.id===$('gegi-saved-campaign').value),status=savedGeGIJob?.status;
+  $('gegi-saved-start').disabled=savedGeGIBusy||busy||active||!hasInput;
+  $('gegi-saved-resume').disabled=savedGeGIBusy||busy||active||!['interrupted','failed','stopped_saved_reconstruction'].includes(status);
+  $('gegi-saved-stop').disabled=savedGeGIBusy||status!=='running';
+  $('gegi-saved-refresh').disabled=savedGeGIBusy;
+}
+function showSavedGeGI(job){
+  savedGeGIJob=job;const progress=job.progress||{},counts=job.summary?.counts||progress.counts||{};
+  $('gegi-saved-status').className='notice '+(job.status==='failed'?'error':'');
+  $('gegi-saved-status').textContent=job.name+' · '+job.status.replaceAll('_',' ')+(progress.chunks!==undefined?' · '+progress.chunks+' completed chunks':'')+(counts.pulse_groups!==undefined?' · '+counts.pulse_groups+' original pulse groups':'')+(counts.conditional_candidate_groups!==undefined?' · '+counts.conditional_candidate_groups+' conditional candidate groups':'')+(counts.validated_recovered_groups!==undefined?' · '+counts.validated_recovered_groups+' validated recovered groups':'')+(job.error?' · '+job.error:'');
+  $('gegi-saved-path').textContent='Saved derivative folder: '+job.output_path+'. Chunk files retain original nonzero IDs; original campaign counts and failures remain in the summary.';
+  $('gegi-saved-record').textContent=JSON.stringify(job,null,2);$('gegi-saved-files').replaceChildren();
+  for(const file of ['identity.json','progress.json',...(job.summary?['summary.json','COMPLETE.json']:[])]){
+    const b=node('button','Open '+file);b.onclick=async()=>{try{const value=await api('/api/workflow/gegi-saved/file?'+new URLSearchParams({name:job.name,file}));if(savedGeGIJob?.name===job.name)$('gegi-saved-record').textContent=JSON.stringify(value,null,2);}catch(e){$('gegi-saved-status').textContent=e.message;}};$('gegi-saved-files').append(b);
+  }
+  savedGeGIControls();
+}
+async function pollSavedGeGI(){
+  if(!savedGeGIJob)return;const name=savedGeGIJob.name,generation=++savedGeGIGeneration;
+  try{const job=await api('/api/workflow/gegi-saved/state?'+new URLSearchParams({name}));if(generation===savedGeGIGeneration&&savedGeGIJob?.name===name)showSavedGeGI(job);}
+  catch(e){if(generation===savedGeGIGeneration)$('gegi-saved-status').textContent=e.message;}
+}
+async function refreshSavedGeGI(){
+  savedGeGIBusy=true;savedGeGIControls();
+  try{
+    const value=await api('/api/workflow/gegi-saved/options');if(value.kind!=='gegi_saved_options_v1'||!Array.isArray(value.campaigns)||!Array.isArray(value.calibrations)||!Array.isArray(value.jobs))throw Error('Unsupported saved GeGI inventory.');
+    savedGeGIOptions=value;const selectedCampaign=$('gegi-saved-campaign').value,selectedCalibration=$('gegi-saved-calibration').value,selectedJob=savedGeGIJob?.name;
+    options('gegi-saved-campaign',value.campaigns);options('gegi-saved-calibration',[{id:'',label:'None · unsupported depth remains unknown'},...value.calibrations]);
+    if(value.campaigns.some(c=>c.id===selectedCampaign))$('gegi-saved-campaign').value=selectedCampaign;
+    if(value.calibrations.some(c=>c.id===selectedCalibration))$('gegi-saved-calibration').value=selectedCalibration;
+    options('gegi-saved-job',[{id:'',label:'Choose a saved derivative'},...value.jobs.map(j=>({id:j.name,label:j.name+' · '+j.status.replaceAll('_',' ')}))]);
+    if(selectedJob&&value.jobs.some(j=>j.name===selectedJob))$('gegi-saved-job').value=selectedJob;
+    if(!savedGeGIJob)$('gegi-saved-status').textContent=value.campaigns.length+' completed sealed campaigns and '+value.calibrations.length+' saved template folders available. '+(value.campaigns.length?'Choose inputs and a new derivative name.':'Import saved campaign stores into the named input folder; no example data are bundled.');
+  }catch(e){$('gegi-saved-status').textContent=e.message;}
+  finally{savedGeGIBusy=false;savedGeGIControls();}
+}
+async function reprocessSavedGeGI(resume=false){
+  savedGeGIBusy=true;savedGeGIControls();
+  try{
+    const request=resume?{campaign_id:savedGeGIJob.campaign_id,calibration_id:savedGeGIJob.calibration_id,name:savedGeGIJob.name,resume:true}:{campaign_id:$('gegi-saved-campaign').value,calibration_id:$('gegi-saved-calibration').value,name:$('gegi-saved-name').value,resume:false};
+    const job=await api('/api/workflow/gegi-saved/reprocess',request);showSavedGeGI(job);await poll();await refreshSavedGeGI();
+  }catch(e){$('gegi-saved-status').textContent=e.message;}
+  finally{savedGeGIBusy=false;savedGeGIControls();}
+}
+$('gegi-saved-refresh').onclick=refreshSavedGeGI;
+$('gegi-saved-campaign').onchange=$('gegi-saved-calibration').onchange=savedGeGIControls;
+$('gegi-saved-start').onclick=()=>reprocessSavedGeGI(false);$('gegi-saved-resume').onclick=()=>reprocessSavedGeGI(true);
+$('gegi-saved-stop').onclick=async()=>{savedGeGIBusy=true;savedGeGIControls();try{showSavedGeGI(await api('/api/workflow/gegi-saved/stop',{name:savedGeGIJob.name}));}catch(e){$('gegi-saved-status').textContent=e.message;}finally{savedGeGIBusy=false;savedGeGIControls();}};
+$('gegi-saved-job').onchange=()=>{const job=savedGeGIOptions?.jobs.find(j=>j.name===$('gegi-saved-job').value);++savedGeGIGeneration;if(job){showSavedGeGI(job);void pollSavedGeGI();}else{savedGeGIJob=null;$('gegi-saved-record').textContent='No derivative selected.';$('gegi-saved-files').replaceChildren();$('gegi-saved-path').textContent='';savedGeGIControls();}};
 
 function importedGeGIConfig(c,batched){
   const fields=['name','cryostat','detector','source','pose','primary_count','seed','threads','electronics','gamma_energy_keV','source_position_mm'];
@@ -183,7 +235,7 @@ async function openGeGIResult(job){
   if(generation!==gegiGeneration||selectedJob!==job.name)return;
   gegiResult={job,data};$('gegi-result-heading').textContent=job.name+' · '+savedSourceLabel(job.selection)+' · source detector xyz ['+job.selection.source_position_mm.join(', ')+'] mm';
   const c=data.counts;$('gegi-counts').textContent=c.initial_primaries+(job.selection.source==='gegi_mono_gamma_v1'?' initial gamma primaries':' initial isotope nuclei')+' · '+c.zero_deposit_primaries+' zero-deposit · '+data.events.length+' stored nonzero events · '+metricValue(c.native_failed_groups)+' native failures'+(c.accepted_nonzero_primaries!==undefined?' · '+c.accepted_nonzero_primaries+' readout accepted · '+c.rejected_nonzero_primaries+' readout rejected':'')+'. Initial primaries remain the efficiency denominator.';
-  $('gegi-limitations').textContent=(data.limitations||[]).join(' ');
+  $('gegi-limitations').textContent=(data.reconstruction_algorithm?.kind==='gegi_standalone_saved_reconstruction_v3'?'Shared signed-waveform reconstruction. New standalone runs keep depth and imaging unsupported without compatible independent waveform templates. ':'Historical saved reconstruction; displayed maps remain experimental legacy results. ')+(data.limitations||[]).join(' ');
   options('gegi-event',data.events.map(e=>({id:String(e.event_id),label:'Primary '+e.event_id+' · '+e.truth_edep_keV+' keV deposited'})));
   options('gegi-channel',data.channels.map(c=>({id:String(c.id),label:c.name+' · contact '+c.id+' · '+c.potential_V+' V'})));
   if(prior&&data.events.some(e=>String(e.event_id)===prior.event))$('gegi-event').value=prior.event;
@@ -204,6 +256,7 @@ function showGeGIEvent(preserveJourney=false){
   if(!preserveJourney)gegiSignalJourney(context,event);gegiEventFiles(context,event);
   if(!event){$('gegi-event-summary').textContent='No nonzero deposits in this run. Counts and the original denominator remain above.';$('gegi-event-record').textContent='';$('gegi-truth-record').textContent='';$('gegi-event-filter').textContent='No saved nonzero primary selected.';$('gegi-cones').textContent='No selected event.';return;}
   const channel=(event.channels||[]).find(c=>c.contact_id===id);$('gegi-event-summary').textContent='Original primary '+event.event_id+' · truth Edep '+event.truth_edep_keV+' keV · '+(event.status||'recorded')+' · '+(meta?.name||'channel '+id)+' reconstructed energy '+metricValue(channel?.reconstructed_energy_keV)+' keV'+(channel?.rejection_reason?' · '+channel.rejection_reason:'')+'. Each strip family measures the same deposited energy; X and Y energies are not added together.';
+  if(event.reconstruction?.kind==='gegi_saved_signal_hypotheses_v3')$('gegi-event-summary').textContent+=' Shared reconstruction: '+event.reconstruction.status+' · '+(event.reconstruction.reason||'Read saved hypotheses')+'. Conditional candidates are not validated recovered events.';
   $('gegi-event-filter').textContent=context.job.name+' · original primary '+event.event_id+' · contact '+id+'. Raw LH5: evtid = '+event.event_id+'; normalized transport/stream/events.jsonl and response/results.json: event_id = '+event.event_id+'. Channel records: contact_id = '+id+'. Transport deposits use detector position_mm (mm), energy_keV (keV) and time_ns (ns); charge/readout plots use their saved local time origin in ns.';
   $('gegi-event-record').textContent=JSON.stringify({event_id:event.event_id,status:event.status,reconstruction:event.reconstruction??null,channel:channel||null},null,2);
   $('gegi-truth-record').textContent=JSON.stringify({purpose:'Transport truth for evaluation only; not used to select a reconstructed strip pairing or scatter order.',event_id:event.event_id,truth_edep_keV:event.truth_edep_keV,primary_time_ns:event.primary_time_ns??null,steps:event.steps??null,transport_flags:event.transport_flags??null},null,2);
@@ -211,7 +264,12 @@ function showGeGIEvent(preserveJourney=false){
   const cones=(context.data.imaging.cones||[]).filter(c=>c.event_id===event.event_id);$('gegi-cones').textContent=cones.length?JSON.stringify(cones,null,2):'No accepted Compton cone for this event. '+(event.reconstruction?.reason||event.rejection_reason||'Read the saved candidate and ambiguity counts.');
 }
 function showGeGIImaging(){
-  const image=gegiResult?.data.imaging;if(!image||!$('gegi-imaging-panel').open)return;const target=$('gegi-imaging');target.replaceChildren();$('gegi-imaging-status').textContent=(image.method||'Recorded Compton reconstruction')+' · '+metricValue(image.accepted_events)+' accepted events · '+metricValue(image.rejected_events)+' rejected · '+metricValue(image.ambiguous_events)+' ambiguous. '+(image.limitations||[]).join(' ');
+  const image=gegiResult?.data.imaging;if(!image||!$('gegi-imaging-panel').open)return;const target=$('gegi-imaging');target.replaceChildren();
+  if(image.method==='gegi_standalone_saved_reconstruction_v3'){
+    $('gegi-imaging-status').textContent='Shared signed-waveform reconstruction · '+(image.status||'unsupported').replaceAll('_',' ')+' · '+metricValue(image.conditional_candidate_groups)+' conditional candidate groups · '+metricValue(image.validated_recovered_groups)+' validated recovered groups. '+(image.limitations||[]).join(' ');
+    target.append(node('p','No source map is created from unsupported depth or unvalidated conditional hypotheses. Fixed energy readout, all electrode signals and the exact saved reconstruction reason remain available.','muted'));return;
+  }
+  $('gegi-imaging-status').textContent='Saved legacy map · experimental reconstruction. '+(image.method||'Recorded Compton reconstruction')+' · '+metricValue(image.accepted_events)+' accepted events · '+metricValue(image.rejected_events)+' rejected · '+metricValue(image.ambiguous_events)+' ambiguous. '+(image.limitations||[]).join(' ');
   const x=image.azimuth_deg,y=image.elevation_deg,values=image.values;if(!Array.isArray(x)||!x.length||!Array.isArray(y)||!y.length||!Array.isArray(values)||values.length!==y.length||!x.every(Number.isFinite)||!y.every(Number.isFinite)||values.some(row=>!Array.isArray(row)||row.length!==x.length||!row.every(v=>Number.isFinite(v)&&v>=0))){target.append(node('p','No saved direction map is available. Candidate counts and cone records are retained.','muted'));return;}
   let maximum=0;for(const row of values)for(const v of row)maximum=Math.max(maximum,v);
   const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 720 380');svg.setAttribute('role','img');svg.setAttribute('aria-label','Compton backprojection, azimuth and elevation in detector coordinates');

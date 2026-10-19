@@ -1,5 +1,58 @@
 # Next development plan
 
+## Active saved-data correction — owner authorized2026-10-19
+
+The owner has read the diagnosis and now authorizes detailed algorithm/software
+correction and GitHub presentation using saved data. NO new Geant4, SSD drift,
+field or calibration simulations. Automation stays PAUSED; this chat owns the
+retained diagnosis lock. Original campaign, analysis and diagnosis remain immutable.
+
+Current milestone: a shared, reference-informed saved-signal reconstruction path,
+with complete accounting, evidence-based uncertainty and an anonymous pooled map,
+then student software and concise website delivery. Read private GeGI slides and
+primary cross-strip Ge papers; distinguish GeGI evidence from related instruments.
+Do not claim proprietary hardware equivalence or measured resolution without inputs.
+
+1. Correct signal interpretation/strip matching and multisite ambiguity from signed
+   saved34-channel signals and independent saved calibration. Use a fixed bounded
+   development/holdout set first; measure before all57,613groups. Do not force2x2
+   strips to mean2interactions. Preserve failed/null records and original denominators.
+2. Implement finite-vertex response without finite-square per-cone normalization;
+   marginalize candidates and include incompatible/background handling. Test field-
+   of-view invariance, coordinate/energy bookkeeping and uncertainty propagation.
+   Detector sensitivity not calibrated from data must remain explicit, not invented.
+3. Process the full saved dataset once these checks pass. Joint energy-position
+   inference must not use source labels, truth vertices/order, or known source positions.
+   Truth is held-out evaluation only. Fixed-plane maps do not measure range; profile
+   range only where the data/model identify it. No cosmetic sharpening as a substitute.
+4. Integrate the same processing into the student workflow and traceable stage views;
+   one pooled map, useful energy layers, pulse→strip→cone explanation, actual scored
+   track segments. No canned results in student ZIP, no private PPT images online.
+5. Freeze implementation writers before new hash-bound derivative export. Run affected
+   tests plus website checks, inspect diff, update this compact handoff, normal commit/
+   push. Verify live site and software bytes when package sources change. Stop after
+   this saved-data/software delivery; four-real-nuclide simulation remains deferred.
+
+Implementation status: saved-data numerical processing and shared student paths
+are complete; source/package/site delivery is now the only active work.57,613groups
+processed in337.197s;434conditionalgroups,284from old strictrejects,162selectedfor
+jointmap. Validatedrecovery=0. Pooledmodes near both positions do not clear the
+failed661.7keV same-energy separation. Exact outcome/limits are in PROGRESS.md.
+The matching existing bank passed100sealedchunk/3request-generation compatibility;
+full34channel independent response/noise/crosstalk calibration remains missing.
+Do not rerun the dataset to incorporate admission-only code or improve a plot.
+After delivery stop: another simulation/costpilot needs the owner's decision.
+
+Known baseline:39,683strict2x2 rejects;4,184truth-diagnostic priority candidates are
+NOT recovered events. Old708accepted contain unresolved multisite cases. Boundary
+normalization defect is proved, but removing it alone is not validated localization.
+Evidence: .local/gegi-10m/diagnosis-rejected-v1/diagnosis-and-plan.html.
+Initial compute bounds:200fixed saved groups/15min; imaging708groups coarsegrid
+30min/4GiB batch bound. No new physical cost pilot. Existing1Msealed-stage sum24.10h
+(20.98hresponse/store,3.08htransport); prospective four-nuclide cost is unmeasured.
+
+Old delivery plan below is historical and does not resume automatic simulation.
+
 ## Owner campaign — GeGI 1M delivery completed
 
 Owner resume2026-10-19 supersedes the pause below. Finish step6 using the completed
