@@ -31,6 +31,9 @@ DISPLAY_SOURCES=(JS,'tools/saved_focus_pages.py','tools/site_restructure.py','to
 # immutable original receipt above. Rehashed edits are never a historical basis.
 PREVIOUS_DISPLAY_RECEIPTS={
     'gamma':frozenset({
+                       # Exact bfcb3bb published receipt, byte-matched against
+                       # installed docs and current Git before the GeGI 1M routes.
+                       '178387c3855f119d6c7a9faddd514588efec59fad8d3c82aed031e60a9b8eb0f',
                        # Exact published59f9d008c4ae receipt, verified against Git
                        # before the optional formal-campaign route was registered.
                        '24c179ff81b51472d8d05e2df4e6759b87de3112a03276716181e4b735cf89b2',

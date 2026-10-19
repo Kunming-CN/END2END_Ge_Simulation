@@ -71,8 +71,8 @@
   "sources": {
     "tools/lithium_report.py": "410dbd4314d3720c13ff249bfc30253983e4857681937f01f780eccb22fc3e03",
     "tools/pipeline_demo.py": "19d1469ef604b2f75d0b79e74a4c45a8da25c8ec92bd16439637f5957f77f276",
-    "tools/saved_archive_display.py": "cbf0da5f02b2106c977f3aa358f439c70cff297074d8fec592d2b8939156a077",
-    "tools/site_restructure.py": "3492896db073fa380418e095cfb01ff284f3d6498add500257812be3e15ddbd4",
+    "tools/saved_archive_display.py": "e5f7640c55e0bba94185c14d2190f120cacabc2e3e8ba6538036634e60b9bcc8",
+    "tools/site_restructure.py": "8f92a4113f87252536c85dd94e1a23b77ea4f372754758a12e595df424284532",
     "tools/site_routes.py": "a962475145d29d4f9880228d1df4aedea757aa5fa90f25b4f90ed8273ae17cd9"
   }
 }

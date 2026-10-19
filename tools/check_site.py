@@ -131,7 +131,10 @@ def validate(site, require_manifest=True, require_models=False):
         ledger_zip = relative in ('examples/cs137-10k/AK02/response/ledgers.zip', 'examples/cs137-10k/SAP22/response/ledgers.zip')
         ring_payload = relative.startswith('examples/cs137-10k-rings/') and (f.suffix.lower() in {'.zip', '.gz', '.jsonl'} or relative == 'examples/cs137-10k-rings/README.txt')
         gegi_assembly_payload = relative in {'assemblies/gegi/viewer.js', 'assemblies/gegi/geometry.gdml'}
-        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in {'sitemap.xml', 'LICENSE'} and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload and not ring_payload and not gegi_assembly_payload:
+        gegi_campaign_script = relative == 'results/gegi-campaign/gegi_signal_journey.js'
+        if gegi_campaign_script and not (site/'results/gegi-campaign/publication.json').is_file():
+            raise ValueError('GeGI journey script requires a complete hash-bound campaign bundle')
+        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in {'sitemap.xml', 'LICENSE'} and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload and not ring_payload and not gegi_assembly_payload and not gegi_campaign_script:
             raise ValueError(f'Unapproved public file: {relative}')
         data = f.read_bytes()
         if relative == 'LICENSE':
@@ -162,7 +165,7 @@ def validate(site, require_manifest=True, require_models=False):
         total += len(data)
         entries.append({'path': relative, 'bytes': len(data),
                         'sha256': hashlib.sha256(data).hexdigest()})
-        if relative == 'LICENSE' or gegi_assembly_payload or f.suffix.lower() in {'.html', '.json', '.md', '.svg', '.csv', '.yaml', '.txt', '.xml'}:
+        if relative == 'LICENSE' or gegi_assembly_payload or gegi_campaign_script or f.suffix.lower() in {'.html', '.json', '.md', '.svg', '.csv', '.yaml', '.txt', '.xml'}:
             text = data.decode('utf-8-sig')
             if PRIVATE_PATH.search(text) or CREDENTIAL.search(text):
                 raise ValueError(f'Local path or possible credential: {relative}')

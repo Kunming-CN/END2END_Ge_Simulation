@@ -21,16 +21,17 @@ originalscience; add source-kind inference and distance qualification. Source-ki
 inference is a separately labelled posthoc saved-spectrum diagnostic, never an
 inputlabel echoed as an inference. The fixedz40plane cannot yield measuredrange.
 
-Remaining milestone:
-1. Freeze publication/sharedviewer and separate source-inference consumer.
-2. Export only checked saved artifacts; show34channels, candidateambiguity,
-   fixedmaps, failures and uncertainty. Do not reruntransport/nativephysics.
-3. Update student's configurablemonoγ workflow/guide/package with actualstage
-   files and eventjourney. IsotopeControl remains gated until delayedpulsegrouping
-   is shared; do not confuse formal nuclearcampaign support with standaloneGUI.
-4. Generate website, retireoldsmall-sampleentry, requiredtests/diff, commit/push,
-   actualdesktop and livechecks, exactpublicsoftwarebytes. Thenpausemonitor and
-   releaseonlythischat'slock. No extraAIreviews or reset.
+Delivery status:
+1. COMPLETE: frozen analysis, source inference and compact publication; 200 bounded
+   conditional bootstrap replicates. No radiation/native drift rerun.
+2. COMPLETE: 34-channel shared viewer, signal-to-cone/map explanation, originalIDs,
+   failures and uncertainty. Actual desktop result interactions passed.
+3. COMPLETE: student-runtime-94245299c565 software-only release and guide; public
+   versioned/latestZIP andreceipt exact bytes verified. Standalone GeGI remains
+   configurablemonoγ; isotopeGUI is gated until delayed-pulse grouping is shared.
+4. IN PROGRESS: generate website and replace old5000/two5000 public entry;
+   requiredsitechecks/diff, normalcommit/push, livecheck and actualdesktop review.
+   Then pause monitor and release only this chat's lock. No extra AI reviews/reset.
 
 ### Owner-reduced allocation — original campaign launched2026-10-17
 

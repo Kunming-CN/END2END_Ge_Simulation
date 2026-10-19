@@ -277,6 +277,19 @@ class PublicationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'Unapproved public file'):
             validate(self.site,require_manifest=False)
 
+    def test_gegi_journey_script_requires_bound_bundle_and_exact_route(self):
+        bundle=self.site/'results/gegi-campaign';bundle.mkdir(parents=True)
+        script=bundle/'gegi_signal_journey.js';script.write_text('/* synthetic file-policy fixture */')
+        with self.assertRaisesRegex(ValueError,'complete hash-bound campaign bundle'):
+            validate(self.site,require_manifest=False)
+        (bundle/'publication.json').write_text('{}')
+        with patch('gegi_campaign_publication.validate_bundle',return_value={}) as gate:
+            validate(self.site,require_manifest=False)
+            gate.assert_called_once_with(bundle)
+        (bundle/'unbound.js').write_text('/* not an approved public route */')
+        with self.assertRaisesRegex(ValueError,'Unapproved public file'):
+            validate(self.site,require_manifest=False)
+
     def test_url_boundaries(self):
         self.assertEqual(local_target('detectors/A/index.html', '../../index.html'), 'index.html')
         self.assertIsNone(local_target('index.html', 'https://example.org/'))

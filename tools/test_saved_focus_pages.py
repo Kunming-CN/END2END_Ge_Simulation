@@ -7,6 +7,13 @@ import saved_focus_pages as F
 import gamma_showcase as S
 
 class TeachingFocusTests(unittest.TestCase):
+    def test_installed_gamma_receipt_is_an_authenticated_current_or_previous_display(self):
+        raw=(F.ROOT/'docs/examples/gamma-native/publication.json').read_bytes()
+        manifest=S.decode(raw)
+        current=F.validate_display_binding('gamma',manifest)
+        if not current:self.assertIn(S.sha(raw),F.PREVIOUS_DISPLAY_RECEIPTS['gamma'])
+        self.assertEqual(S.canonical(manifest),raw)
+
     def test_historical_gamma_display_requires_exact_receipt_and_original_science(self):
         manifest=S.decode((F.ROOT/'docs/examples/gamma-native/publication.json').read_bytes())
         # Derive from the saved scientific receipt, independently of the latest

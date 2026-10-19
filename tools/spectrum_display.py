@@ -18,6 +18,9 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+    # Exact bfcb3bb published manifest, byte-matched to installed docs and Git
+    # before the GeGI 1M navigation change; all saved input checks remain strict.
+    '1577dcb84ad3905fef1ee166abe22ace408acabf78234bc79bdd10ea4615d9af',
     # Exact published59f9d008c4ae Git manifest before the optional campaign route.
     '946b5c71657183f51251a0436d5c42d941bc60fd6e870556293cdfc5df3fb877',
     # Exact cb52f02 Git bytes, before adding dedicated GeGI assembly navigation.

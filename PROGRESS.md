@@ -31,7 +31,7 @@ are on the map boundary. Cs137 nominalplanepeak neartruth is not stable under
 conditionalresampling.200primary-cluster bootstrap replicates completed79.886s,
 seed261017201; finite-sample variation only, nothardware/modeluncertainty.
 
-All implementation writers are frozen. Root export is running at
+All implementation writers are frozen. Saved-data export completed at
 .local/gegi-10m/publication-final-v2 with exporterSHA
 86cd938213643d518b9af194e917ea193a545c168a003660df64b0da423dd7df.
 Separate source-inference-v1/report.json confirms Co60-compatible doublet and
@@ -46,14 +46,19 @@ Verified this round:18analysis tests;10legacyretirement and10navigation tests;
 studentJS actualcomponent contracts and4protectedControl tests;5package tests.
 RealdesktopControl dedicatedGeGI selection and Checkplan passed with no simulation
 and no consoleerrors. 12publication and10sourceinference tests passed; actualreport adapter checked.
-Website test_site:33passed. ActualstudentControlCheckplan passed withoutscience.
+Website test_site:34passed. ActualstudentControlCheckplan passed withoutscience.
 
-Next: finish boundedsourceinference (661.7compatible may beCs137ORmonoγ;Co60needs
-bothlines; distance remainsnull forfixedplaneanalysis), freeze/exportsavedresults,
-realdesktop34channel/cone/mapinspection, buildonlyvia build_site.py, requiredsite
-checks/diff, commit/push, newsoftware-onlyrelease and publicexactbyteverification,
-livecheck_site --url and desktopverification. Retireoldpublicsmall-sampleentry via
-redirect. Only afterdelivery: compacthandoff, pausemonitor, releaseownlock.
+Website snapshot generated and fully validated by check_site.validate before and
+after sealing: buildfb268b4f081c93a81306d7892126d68f8393b98b27e0fa60e0e46bab3a6fd41f,
+1742files/109pages/3496local links. Formalpublicbundle36artifacts,7398672bytes;
+manifestSHA67aee794d57c7d0f34ea8715af684421a1a5a0ef11b05a975907230501dd1c12.
+Old5000/two5000 entry now redirects; both original datafiles remain byte-identical.
+Local desktop passed34-channel/signed guard traces, rotatablecone, representative
+accumulation, fullmaps/spectra and source/range limits; no browser errors.
+Authenticated legacy display receipts were refreshed only for presentation binding.
+Eight targeted binding tests passed (oneobsoletefixture skipped); site34passed.
+Next: normalcommit/push, livecheck_site --url and actual desktop/publicredirect
+verification. Then compacthandoff, pausemonitor and releaseonlythischat'slock.
 
 Permanent science: entire.local/gegi-10m including originalrequests/spools, three
 failure/recoverygenerations, quota-1m-v1 and originalfields. Quotaapplication and

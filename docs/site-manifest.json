@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
-  "build_id": "65ef3b2ac765a593475a521d3f53f878d50547c80c47e295bf34feacaac62f8c",
-  "file_count": 1705,
-  "total_bytes": 980977902,
-  "html_pages": 108,
-  "local_links_checked": 3453,
-  "resource_references_checked": 3505,
-  "page_navigation_checked": 1438,
-  "fragments_checked": 78,
-  "downloads_checked": 760,
-  "media_references_checked": 1271,
+  "build_id": "fb268b4f081c93a81306d7892126d68f8393b98b27e0fa60e0e46bab3a6fd41f",
+  "file_count": 1742,
+  "total_bytes": 985774165,
+  "html_pages": 109,
+  "local_links_checked": 3496,
+  "resource_references_checked": 3552,
+  "page_navigation_checked": 1452,
+  "fragments_checked": 80,
+  "downloads_checked": 763,
+  "media_references_checked": 1300,
   "metadata_references_checked": 35,
-  "other_references_checked": 1,
+  "other_references_checked": 2,
   "files": [
     {
       "path": ".nojekyll",
@@ -2010,8 +2010,8 @@
     },
     {
       "path": "detectors/GeGI_3D/index.html",
-      "bytes": 6845,
-      "sha256": "c2fa231be88f74ff28958e03e479f76b5a732cf055c4538fed3bfa62d6cf04fa"
+      "bytes": 6924,
+      "sha256": "b9474fc09e1320f0726147b5068362a114fb3b322e44890b8de50f66f5b422b7"
     },
     {
       "path": "detectors/GeGI_3D/octagon_geometry.png",
@@ -2490,8 +2490,8 @@
     },
     {
       "path": "detectors/GeGI_3D/technical.html",
-      "bytes": 8456,
-      "sha256": "a41c9319f759eaf828080b43d06448cf7e323512d39a8d045bbdbb3eda2111e1"
+      "bytes": 8837,
+      "sha256": "f40602b9a6c806f612613657945b07cae57cb1fd9ff6c8c8f5788a0ea67819e5"
     },
     {
       "path": "detectors/GeRC02/config/source.json",
@@ -8201,17 +8201,17 @@
     {
       "path": "examples/gamma-native/publication.json",
       "bytes": 24399,
-      "sha256": "178387c3855f119d6c7a9faddd514588efec59fad8d3c82aed031e60a9b8eb0f"
+      "sha256": "89d565fe6090ec8d2f77a91fcad688eb5b946bb46130cec0747e0502e5bd27e8"
     },
     {
       "path": "examples/gegi/index.html",
-      "bytes": 2615680,
-      "sha256": "5d12729eb1db8603b3f55c929a4edecadda786ee9b727a4bea2aa61328cd1c94"
+      "bytes": 2108,
+      "sha256": "bce394d1158280db7687f31c5523ed8b21052f9e9e0537ac8a21baaaa3b62a06"
     },
     {
       "path": "examples/gegi/publication.json",
-      "bytes": 1985,
-      "sha256": "1ea144af2f52c66af024f7c04ce50a3c241ff216eec7dfb7778c87f6e6e5df56"
+      "bytes": 2348,
+      "sha256": "dbb753d207d18cd27c002bf7017981fbf04e994daf8ed2847ef29c796a5e741e"
     },
     {
       "path": "examples/gegi/selected-channel.json",
@@ -8255,13 +8255,13 @@
     },
     {
       "path": "guide.html",
-      "bytes": 44266,
-      "sha256": "fa34613bb3d398f234000c16aa5e8d0f272bdbef9b595970b3e11feca327660b"
+      "bytes": 46704,
+      "sha256": "9462d32ecf15ef83d352f2fc28e60a59dd0c1c2f1a7ddbc04b3419e2fdec29d4"
     },
     {
       "path": "index.html",
-      "bytes": 6181,
-      "sha256": "da9d916c9d409dab201fc4adf1b61c0a284fbbd4509f793c485356cc4fa1ffce"
+      "bytes": 6641,
+      "sha256": "c9b7b052920976570aa9f9bf77ac7a84983895b3492eb95c11b348c1045c332b"
     },
     {
       "path": "learn/index.html",
@@ -8331,12 +8331,12 @@
     {
       "path": "methods/lithium-display.json",
       "bytes": 3346,
-      "sha256": "b084405cf24b715b808cf458e70b8cf6285393d71a60d20982e05001e952c74e"
+      "sha256": "c414d1aa0ec033750df20902a95e77a88cb9b173ece4c9761c13aa7732aabd6b"
     },
     {
       "path": "methods/native-li-display.json",
       "bytes": 4991,
-      "sha256": "ea9f28fe0dd84a31c0a8e50c3068f359b488a28c80d6df67c5b0e56e9f738fb4"
+      "sha256": "cf9b5ebb1237891ff595dd6651af5d69ac727b09887163222d9c8320adf2705f"
     },
     {
       "path": "methods/native-li.html",
@@ -8474,9 +8474,194 @@
       "sha256": "967f5905198eaa9850a5f9d1ba670c4f12e00939eb4523314d6fa22fd1d08135"
     },
     {
+      "path": "results/gegi-campaign/bootstrap-summary.json",
+      "bytes": 4067,
+      "sha256": "40f91951ab20e5f079dc7ad8a84cfcc4b3c020f0208d3e86fb7783242804be12"
+    },
+    {
+      "path": "results/gegi-campaign/configuration.json",
+      "bytes": 5132,
+      "sha256": "a2eba004b10b43d9ace2a1ac5a5527a0670a482725ffaf464ef09dc10b91867f"
+    },
+    {
+      "path": "results/gegi-campaign/gegi_signal_journey.js",
+      "bytes": 29747,
+      "sha256": "a32901eeceb2a8f76966236e63ab9b6b78c38c19250d5a1b414397c406b57a95"
+    },
+    {
+      "path": "results/gegi-campaign/index.html",
+      "bytes": 6020307,
+      "sha256": "72ea3375071ff414e0ae207d6bcbd7476dfe2fff655b232dea6b4aac1c08dda5"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-0-1173.228.png",
+      "bytes": 41649,
+      "sha256": "624c250ae8e2a417ceb9126dc0b00916f846f35c233f8ae527b019c42d7db4b5"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-0-1332.492.png",
+      "bytes": 41481,
+      "sha256": "ae009086f065de827ca280bde801a37e54faa70b50d2fd1fc82ccc85e158540f"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-0-661.657.png",
+      "bytes": 32459,
+      "sha256": "5d524bd12d2b1d8603ac238f4209713a8ee17c7e00c6a647fa3faa1f0f3b4829"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-0-all.png",
+      "bytes": 39118,
+      "sha256": "a2ea7bedea9ada62e863ceb04f4b41e8b2d4fbf42708d00a5a17dbf4e5c090ef"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-1-1173.228.png",
+      "bytes": 21739,
+      "sha256": "1882b7553e9d75cc75dcf924c80aa087836cdaa1ab2863d3850ec17c75a432af"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-1-1332.492.png",
+      "bytes": 21840,
+      "sha256": "712c56e1336bfe1fc6e3bee5df65df594a7e44cab8a701f55ec6b1ec52460e33"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-1-661.657.png",
+      "bytes": 44082,
+      "sha256": "450421395e3e5b9b64d048784ca1cca3e9cf338016445964b70a7d86fcf0cfb7"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-1-all.png",
+      "bytes": 43721,
+      "sha256": "98aed2f80472f4aad4ee6fd3fc05c82bf2b32f55d9dff322d214fef43548cab3"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-2-1173.228.png",
+      "bytes": 21943,
+      "sha256": "0d3b08c98a9c81ef1203f6d51ec2800174d99a95407094021b44308656231dbf"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-2-1332.492.png",
+      "bytes": 21968,
+      "sha256": "98416b268de317428a61bd13c0bd2cdf41604367e5fa5a915ee15274107493f4"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-2-661.657.png",
+      "bytes": 44558,
+      "sha256": "14ca80bdf62963eefd7536828c45f3ede815ffc1ad9ebc0fdac5c9b823b360bd"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-2-all.png",
+      "bytes": 43840,
+      "sha256": "586f715e861a71f4d0225ce6d97e70044e26209be60d8f67431fadd97b03611b"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-3-1173.228.png",
+      "bytes": 21907,
+      "sha256": "bb79a4ffe8735bf644a247a156ea7347dc1146ee687ecec2eaab25055cf28a25"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-3-1332.492.png",
+      "bytes": 21895,
+      "sha256": "e1f8bf16541f6869eff9306d8c24b4489ed2366fcc6dc0d9950c91fe9456f5a2"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-3-661.657.png",
+      "bytes": 44924,
+      "sha256": "cad5c8532b75532f31aa10f6fe18408b0a00765528f286778fb82d23ea369814"
+    },
+    {
+      "path": "results/gegi-campaign/map-groups-3-all.png",
+      "bytes": 44217,
+      "sha256": "3c3815688af1f5505a7ca81c8e6f16b8b0214a5222b49d832e6ac120b83a3b9f"
+    },
+    {
+      "path": "results/gegi-campaign/map-mixtures-0-1173.228.png",
+      "bytes": 42983,
+      "sha256": "7f78f67399d5c8c0dec074fc6327888e0a9a3423504f3d05eed7dc477bde6808"
+    },
+    {
+      "path": "results/gegi-campaign/map-mixtures-0-1332.492.png",
+      "bytes": 42803,
+      "sha256": "698cdd35f833bbc1b866d74013a2c9161f0d8183dbccb9f79ca00804904421cb"
+    },
+    {
+      "path": "results/gegi-campaign/map-mixtures-0-661.657.png",
+      "bytes": 40864,
+      "sha256": "6de6d562d14b11097e7b7e066c718a61038f3813ff5354b862275f318adf2911"
+    },
+    {
+      "path": "results/gegi-campaign/map-mixtures-0-all.png",
+      "bytes": 42068,
+      "sha256": "0dd4d4031b90feed229ba20a947f4540d6a1e82d1154e8214075aa55e03fe7e5"
+    },
+    {
+      "path": "results/gegi-campaign/map-mixtures-1-1173.228.png",
+      "bytes": 22957,
+      "sha256": "231bad7ae802cc18ad0c64cd8ba2682d6938ecabdeb4acf9c53d37d2bdad91e8"
+    },
+    {
+      "path": "results/gegi-campaign/map-mixtures-1-1332.492.png",
+      "bytes": 22979,
+      "sha256": "0d1799725182b296ae582041c1f747cc437bb49a5f932202368261850d3508d1"
+    },
+    {
+      "path": "results/gegi-campaign/map-mixtures-1-661.657.png",
+      "bytes": 44114,
+      "sha256": "80689537ed736ddb20acaa7df3ddce90a0e2d315cdd1796add184ac81898d719"
+    },
+    {
+      "path": "results/gegi-campaign/map-mixtures-1-all.png",
+      "bytes": 43411,
+      "sha256": "e568bc04ce86a93881d10ae3493e16fcd839ece420cd9fe3b1e4257f54d1a1aa"
+    },
+    {
+      "path": "results/gegi-campaign/publication.json",
+      "bytes": 7001,
+      "sha256": "67aee794d57c7d0f34ea8715af684421a1a5a0ef11b05a975907230501dd1c12"
+    },
+    {
+      "path": "results/gegi-campaign/representatives.json",
+      "bytes": 91463,
+      "sha256": "41a79e0d7fcba312e598fe12727564b9ec583c77dc16a3352fb71a5e85e81fef"
+    },
+    {
+      "path": "results/gegi-campaign/signals-co60-right.png",
+      "bytes": 38658,
+      "sha256": "4fe3da7e548a14b28a4f50dc5bb400158127d52d3f1be3626647bdb503b026d7"
+    },
+    {
+      "path": "results/gegi-campaign/signals-cs137-left.png",
+      "bytes": 37730,
+      "sha256": "1fbfd6a4e13ef2a8c1d445f01a7901f989d6264e5565f8538c08d1fbdac1e021"
+    },
+    {
+      "path": "results/gegi-campaign/signals-gamma-left.png",
+      "bytes": 38916,
+      "sha256": "3b66dfa28fde363a99cdf3376aa8fe14aa324eafc2b489ed044f00f040f103d0"
+    },
+    {
+      "path": "results/gegi-campaign/signals-gamma-right.png",
+      "bytes": 38065,
+      "sha256": "06b1a76ad1f88919fd21c63802c892efba1bff7efe20f98a1b8267cd363f3cfc"
+    },
+    {
+      "path": "results/gegi-campaign/source-assessment.json",
+      "bytes": 40319,
+      "sha256": "cf1c54fff116a9184919c5e0e51ce16515822a15a0d05de48de5532a2d78c2b2"
+    },
+    {
+      "path": "results/gegi-campaign/spectra.png",
+      "bytes": 24141,
+      "sha256": "45777535b13f6225bd7bd1883da7e465ba37c37fed5ed26a590ec27291c924b4"
+    },
+    {
+      "path": "results/gegi-campaign/summary.json",
+      "bytes": 176607,
+      "sha256": "f0c63e691559e863db2c5aaba8af74405bbf974aefcbc1fc965a58eae824583a"
+    },
+    {
       "path": "results/index.html",
-      "bytes": 7220,
-      "sha256": "eba538c135a3b1c069226dc26360c894368ab5460143f0dd3f5e54f80b025131"
+      "bytes": 7661,
+      "sha256": "09f936e1ba409302b30241cbd39a94bb78c2a99b454fa7181896c42a5b9d3414"
     },
     {
       "path": "scenarios/lbnl-cs137/index.html",
@@ -8496,7 +8681,7 @@
     {
       "path": "spectra/manifest.json",
       "bytes": 7929,
-      "sha256": "1577dcb84ad3905fef1ee166abe22ace408acabf78234bc79bdd10ea4615d9af"
+      "sha256": "434e98c77f685e7b13cc047a9a9a16696e906962cdd35ccd6988e081abd5978e"
     },
     {
       "path": "spectra/million-response.html",
@@ -8536,7 +8721,7 @@
     {
       "path": "viewers/manifest.json",
       "bytes": 81162,
-      "sha256": "e1bb2a61a3eb9f61ce7f794d254292aee4d9bb1678d0a91269495006973c89ca"
+      "sha256": "0ce8330f3a246620d7d9f501a8232c8c461f5dfbb95c2bd33b0955a380f809e3"
     }
   ]
 }

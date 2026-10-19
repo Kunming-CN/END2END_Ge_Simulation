@@ -35,6 +35,9 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '4945d697ae27217b3c4ff008d247445af43a6f44c5a327a845a3e48aa20b5675',
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
+ # Exact bfcb3bb published manifest, byte-matched to installed docs and Git
+ # before the GeGI 1M navigation change; saved dataset checks remain strict.
+ 'e1bb2a61a3eb9f61ce7f794d254292aee4d9bb1678d0a91269495006973c89ca',
  # Exact published59f9d008c4ae Git manifest before the optional campaign route.
  'd44b2095341d3ed08eccd8e89320fe82cfb361d8d077ef8c30ab48599e68b3ee',
  # Exact cb52f02 Git bytes, before adding dedicated GeGI assembly navigation.
