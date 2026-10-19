@@ -28,7 +28,7 @@ def event(primary=3, pulse=0, failed=False):
                           'signed_induced_keV': {'sha256': 'f'*64, 'count': 2}} for i in range(1, 35)}
     return {'event_id': primary, 'group_id': pulse, 'status': 'native_failed' if failed else 'completed',
             'channels': None if failed else channels, 'native_signals': None if failed else references,
-            'native_error': 'retained synthetic failure' if failed else None,
+            'error': 'retained synthetic failure' if failed else None,
             'calibration_sha256': 'a'*64, 'photopeak_windows_sha256': 'b'*64, 'readout_recipe_sha256': 'c'*64,
             'truth_edep_keV': 9999., 'readout_summary': {'accepted': not failed, 'energy_keV': None if failed else 662.,
                                                        'reason': 'native_failed' if failed else None},
@@ -124,12 +124,48 @@ class FixedMetrics(unittest.TestCase):
         self.assertEqual(g['counts']['readout_accepted_primaries'], 1)
         self.assertEqual(g['counts']['readout_rejected_primaries'], 1)
         self.assertEqual(g['unknown_readout_energy_groups'], 1)
+        self.assertEqual(g['native_error_counts'], {'retained synthetic failure': 1})
+        self.assertEqual(g['exclusive_stage_counts']['native_failed'], 1)
+        self.assertEqual(g['exclusive_stage_counts']['readout_rejected_after_native_completion'], 0)
         self.assertEqual(g['spectrum']['counts'][331], 1); self.assertEqual(g['spectrum']['overflow'], 0)
         self.assertIsNone(bad['readout_summary']['energy_keV']); self.assertIsNone(bad['channels'])
         stored = json.loads(ledger.getvalue()); self.assertEqual(stored['raw_primary_id'], 3)
         self.assertEqual(stored['source_global_initial_id'], 103); self.assertEqual(stored['campaign_initial_id'], 503)
         self.assertEqual(g['line_counts']['661.657']['readout_selected_groups'], 1)
         self.assertEqual(len(g['representative']['channels']), 34)
+
+    def test_exact_errors_and_exclusive_stages_do_not_double_count_upstream_failures(self):
+        records = [event(primary=i, failed=i < 2) for i in range(6)]
+        records[0]['error'] = 'ArgumentError: first saved error'
+        records[1]['error'] = 'ArgumentError: first saved error\n  exact retained detail'
+        for i in (2, 3, 4):
+            records[i]['reconstruction'].update(status='rejected', reason='saved imaging rejection', cones=[])
+        records[2]['status'] = 'step_limit'
+        for i in (2, 3):
+            records[i]['readout_summary'].update(accepted=False, energy_keV=None,
+                reason='native_response_incomplete' if i == 2 else 'collecting_channel_readout_rejected')
+        declared = counts()
+        declared.update(zero_deposit_primaries=4, nonzero_primaries=6, pulse_groups=6,
+            native_failed_groups=2, native_failed_primaries=2, native_flagged_groups=1, native_flagged_primaries=1,
+            readout_accepted_groups=2, readout_accepted_primaries=2, readout_rejected_groups=4,
+            readout_rejected_primaries=4, imaging_accepted_groups=1, imaging_accepted_primaries=1,
+            imaging_rejected_groups=5, imaging_rejected_primaries=5)
+        acc = A.Accumulator([group()])
+        acc.consume('left', [(e['event_id'], 0, e) for e in records], declared_counts=declared, identity=identity(),
+                    store_ref='chunks/left/b000000/events.sqlite', store_sha256='0'*64)
+        result = acc.results()[0]['left']
+        self.assertEqual(result['native_error_counts'], {records[i]['error']: 1 for i in (0, 1)})
+        self.assertEqual(result['exclusive_stage_counts'], {'native_failed': 2, 'native_flagged': 1,
+            'readout_rejected_after_native_completion': 1, 'imaging_rejected_after_readout_acceptance': 1,
+            'imaging_accepted': 1})
+        self.assertEqual(sum(result['readout_rejection_reasons'].values()), 4)
+        self.assertEqual(sum(result['rejection_reasons'].values()), 5)
+        self.assertEqual(result['spectrum']['selected_readout_groups'], 2)
+
+    def test_native_failure_without_exact_saved_error_is_rejected(self):
+        for error in (None, '', '   ', 123):
+            with self.subTest(error=error), self.assertRaisesRegex(ValueError, 'exact saved error'):
+                A.outcome(dict(event(failed=True), error=error))
 
     def test_mixture_retains_acceptance_yields_not_unit_area(self):
         groups, maps = {}, {}
@@ -237,6 +273,9 @@ class SealedStreaming(unittest.TestCase):
         self.assertEqual(group_result['counts']['native_failed_groups'], 1)
         self.assertEqual(group_result['counts']['nonzero_primaries'], 1)
         self.assertEqual(group_result['unknown_readout_energy_groups'], 1)
+        self.assertEqual(group_result['native_error_counts'], {'retained synthetic failure': 1})
+        self.assertEqual(group_result['exclusive_stage_counts']['native_failed'], 1)
+        self.assertEqual(group_result['exclusive_stage_counts']['imaging_accepted'], 1)
         self.assertEqual(A.sha(folder/'events.sqlite'), original)
 
     def test_full_sealed_scalar_path_never_loads_arrays_or_reconstructs(self):

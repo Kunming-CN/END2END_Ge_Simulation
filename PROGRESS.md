@@ -31,10 +31,12 @@ are on the map boundary. Cs137 nominalplanepeak neartruth is not stable under
 conditionalresampling.200primary-cluster bootstrap replicates completed79.886s,
 seed261017201; finite-sample variation only, nothardware/modeluncertainty.
 
-Current writers: root integration/publication; gegi_analysis new separate posthoc
-source-inference module/test/report; gegi_explainer publication/sharedviewer plus
-bootstrap/inference presentation. Studentagent finished local_workflow.html/js,
-site_guide.html and JS tests. Wait for finalwriterhashes before export.
+All implementation writers are frozen. Root export is running at
+.local/gegi-10m/publication-final-v2 with exporterSHA
+86cd938213643d518b9af194e917ea193a545c168a003660df64b0da423dd7df.
+Separate source-inference-v1/report.json confirms Co60-compatible doublet and
+three ambiguous661.7keV single-line groups; all distance estimates remainnull.
+Classifier uses only fixed-gain spectra, no source/truth labels.
 StandaloneControl remains configurablemonoγ; isotope campaign uses anchoredpulse
 backend and is NOT yet launchable through standaloneGeGI. Do not expose an unsafe
 isotope menu or silently change frozenproducer.34channels, originalIDs, nullfailures,
@@ -43,8 +45,8 @@ allcandidatecones and protectedstagefiles share the newviewer; no canned data in
 Verified this round:18analysis tests;10legacyretirement and10navigation tests;
 studentJS actualcomponent contracts and4protectedControl tests;5package tests.
 RealdesktopControl dedicatedGeGI selection and Checkplan passed with no simulation
-and no consoleerrors. Finalpublication tests pending newinference integration.
-Website test_site is running separately; inspect its actual completion.
+and no consoleerrors. 12publication and10sourceinference tests passed; actualreport adapter checked.
+Website test_site:33passed. ActualstudentControlCheckplan passed withoutscience.
 
 Next: finish boundedsourceinference (661.7compatible may beCs137ORmonoγ;Co60needs
 bothlines; distance remainsnull forfixedplaneanalysis), freeze/exportsavedresults,
@@ -62,5 +64,7 @@ no simultaneous-sourcepileup, no experimentalresolution claim. Sourceslidespriva
 
 Prior detailed handoff and all earlier milestones are immutable in Git:
 https://github.com/kunming-cn/END2END_Ge_Simulation/blob/4ef5c47a8d65c2a01b031ded43bd43e3656b998c/PROGRESS.md
-Current studentrelease untilreplaced: student-runtime-7d9ba1ec4100;
+Current studentrelease: student-runtime-94245299c565,178members/844088bytes,
+ZIP SHA403f56b5a3ff22d403f0d66636b5e6363ce1bc8eafbdc35ad56aed710b1f149e.
+Versioned/latest publicbytes, receipt and remotecommit all verified; noinstall.
 .local/student-runtime-p1/COMPLETE.json is deliveryauthority.

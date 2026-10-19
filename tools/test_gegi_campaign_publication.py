@@ -1,6 +1,11 @@
 """Tiny synthetic saved-artifact fixtures only; no science or real site build."""
 import copy
+import json
+import math
 from pathlib import Path
+import re
+import shutil
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import Mock,patch
@@ -47,7 +52,15 @@ class CampaignPublication(unittest.TestCase):
                 'input_group':{'primary_time_ns':0.,'group_origin_time_ns':10000000.},'readout_horizon_ns':100000.,
                 'readout_recipe_sha256':self.recipe_sha,'calibration_sha256':'a'*64,
                 'photopeak_windows_sha256':identity['photopeak_windows_sha256'],
-                'reconstruction':{'status':'accepted','ordering_ambiguous':False,'pairing_ambiguous':False},
+                'reconstruction':{'status':'accepted','ordering_ambiguous':False,'pairing_ambiguous':False,
+                    'paired_site_hypotheses':[{'pairing_index':0,'valid_order_count':1,'sites':[
+                        {'x_contact':1,'y_contact':18,'position_mm':[0.,0.,0.],'energy_keV':300.,'ctd_ns':2.,'method':'synthetic_unit_fixture'},
+                        {'x_contact':2,'y_contact':19,'position_mm':[10.,0.,0.],'energy_keV':362.,'ctd_ns':3.,'method':'synthetic_unit_fixture'}]}],
+                    'cones':[{'vertex_mm':[0.,0.,0.],'axis':[-1.,0.,0.],
+                        'half_angle_deg':math.degrees(math.acos(1-510.99895069*(1/362.-1/662.))),
+                        'cos_theta':1-510.99895069*(1/362.-1/662.),
+                        'scatter_energy_keV':300.,'absorbed_energy_keV':362.,'site_separation_mm':10.,
+                        'weight':1.,'pairing_index':0,'order':[0,1]}]},
                 'readout_summary':{'accepted':True,'energy_keV':662.}}
             native={i:{'time_ns':[0.,1.,2.],'signed_induced_keV':[0.,.1,.2]} for i in range(1,35)}
             counts={name:0 for name in A.COUNT_FIELDS}
@@ -103,16 +116,16 @@ class CampaignPublication(unittest.TestCase):
             'analysis_revision':self.summary.get('analysis_revision'),
             'source_sha256':self.summary['source_sha256'],'radiation_calls':0,'field_solves':0,
             'files':{name:{'sha256':W.sha(self.analysis/name),'bytes':(self.analysis/name).stat().st_size}
-                     for name in ('summary.json','maps.json','cones.jsonl')}})
+                     for name in ('summary.json','maps.json','cones.jsonl','bootstrap.json') if (self.analysis/name).is_file()}})
 
     def fake_replay(self,request,output,log,**kwargs):
         value={'drift_executed':False,'channels':copy.deepcopy(self.channels)}
         W.write(output,value);Path(log).write_text('Synthetic test replay; no Julia or physics.')
         return value
 
-    def export(self):
+    def export(self,**kwargs):
         with patch.object(C,'read_plan',return_value=self.plan):
-            return P.export(self.campaign,self.analysis,self.output,exporter_sha256=W.sha(P.__file__),replayer=self.fake_replay)
+            return P.export(self.campaign,self.analysis,self.output,exporter_sha256=W.sha(P.__file__),replayer=self.fake_replay,**kwargs)
 
     def test_complete_compact_bundle_preserves_denominators_clock_and_signal_identity(self):
         target=self.export();record=P.validate_bundle(target)
@@ -122,9 +135,19 @@ class CampaignPublication(unittest.TestCase):
         self.assertEqual(len(reps['co60-right']['native_reference_channels']),34)
         public=W.read(target/'summary.json');self.assertEqual(public['groups']['co60-right']['transport_denominators']['decay_photons'],17)
         self.assertEqual(public['groups']['gamma-left']['spectrum']['counts'][331],1)
-        self.assertNotIn('store_ref',public['inputs'][0]);page=(target/'index.html').read_text()
-        for text in ('661.657','1173.228','1332.492','inconclusive','earlier','100 µs','not a recovered distance'):
+        self.assertNotIn('store_ref',public['inputs'][0]);page=(target/'index.html').read_text(encoding='utf-8')
+        for text in ('661.657','1173.228','1332.492','inconclusive','100 µs','not a recovered distance',
+                     'gegi_signal_journey.js','no inter-source pileup'):
             self.assertIn(text.lower(),page.lower())
+        self.assertNotIn('../../examples/gegi/index.html',page)
+        self.assertNotIn('earlier 10k',page.lower())
+        self.assertNotIn('channels',reps['co60-right'])
+        embedded=json.loads(re.search(r'<script type="application/json" id="gegi-journey-data">(.*?)</script>',page,re.S)[1])
+        representative=embedded['groups']['co60-right']['representative']
+        self.assertEqual(len(representative['channels']),34)
+        self.assertEqual(representative['channels'][0]['trace']['charge_fC'][1],-.1234567890123456)
+        self.assertEqual(representative['reconstruction']['cones'][0]['weight'],1.)
+        self.assertEqual((target/'gegi_signal_journey.js').read_bytes(),(P.ROOT/P.DISPLAY_SOURCE).read_bytes())
         self.assertFalse(any(p.suffix in ('.sqlite','.jsonl') for p in target.iterdir()))
 
     def test_partial_tampered_analysis_or_exporter_is_refused_before_output(self):
@@ -152,6 +175,110 @@ class CampaignPublication(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'Store changed'):
             P.representative(self.campaign,group,self.base/'refused',replayer=never)
         never.assert_not_called()
+
+    def test_signal_png_respects_each_channels_exact_display_time_grid(self):
+        replay={'channels':copy.deepcopy(self.channels)}
+        replay['channels'][1]['trace']['time_ns']=[0.,.25,3.]
+        destination=self.base/'individual-times.png'
+        P.signal_figure(replay,destination,'Synthetic channel-grid check')
+        self.assertTrue(destination.is_file())
+
+    def test_shared_display_math_matches_frozen_candidate_weights_and_maps(self):
+        node=shutil.which('node')
+        self.assertIsNotNone(node,'Existing Node runtime is required for the shared display check')
+        import gegi_imaging as I
+        first={'position_mm':[2.,-3.,1.],'energy_keV':300.}
+        second={'position_mm':[13.,5.,-1.],'energy_keV':362.}
+        cones=[I.cone(first,second),I.cone(second,first)]
+        for cone in cones:cone['weight']=.5
+        script=('const J=require('+json.dumps(str(P.ROOT/P.DISPLAY_SOURCE))+');'+
+            'const c='+json.dumps(cones)+';'+
+            'const ev={reconstruction:{status:"accepted",cones:c},sites:[{truth:"ignored"}]};'+
+            'const before=JSON.stringify(ev);const valid=J.validCones(ev);'+
+            'const bad={reconstruction:{status:"accepted",cones:[c[0],{...c[1],weight:0}]}};'+
+            'console.log(JSON.stringify({ray:J.coneRay(c[0],73),direction:J.directionMap(valid),plane:J.planeMap(valid),'+
+            'unchanged:before===JSON.stringify(ev),retained:valid.length,malformed:J.validCones(bad).length}));')
+        result=subprocess.run([node,'-e',script],capture_output=True,text=True,check=True)
+        display=json.loads(result.stdout);ray=display['ray'];cone=cones[0]
+        self.assertTrue(display['unchanged']);self.assertEqual(display['retained'],2);self.assertEqual(display['malformed'],0)
+        self.assertAlmostEqual(sum(v*v for v in ray),1.,places=12)
+        self.assertAlmostEqual(sum(a*b for a,b in zip(ray,cone['axis'])),math.cos(math.radians(cone['half_angle_deg'])),places=12)
+        for actual,expected in ((display['direction'],I.backproject(cones)),(display['plane'],A.plane_backproject(cones))):
+            delta=max(abs(a-b) for ar,br in zip(actual['values'],expected['values']) for a,b in zip(ar,br))
+            self.assertLess(delta,2e-12)
+        self.assertAlmostEqual(sum(sum(row)*area for row,area in zip(display['direction']['values'],display['direction']['areas'])),1.,places=12)
+        self.assertAlmostEqual(sum(map(sum,display['plane']['values']))*4.,1.,places=12)
+
+    def test_exact_native_failure_and_exclusive_counts_are_readable_and_escaped(self):
+        group=self.summary['groups']['gamma-left']
+        group['native_error_counts']={'ArgumentError: <exact & saved>':2}
+        group['exclusive_stage_counts']={'native_failed':2,'imaging_accepted':1}
+        page=P.render(self.summary,[],{}).decode()
+        self.assertIn('Exact saved native error',page)
+        self.assertIn('ArgumentError: &lt;exact &amp; saved&gt;',page)
+        self.assertIn('First unsuccessful stage / accepted outcome (exclusive)',page)
+        self.assertNotIn('ArgumentError: <exact & saved>',page)
+
+    def test_checked_bootstrap_is_compact_conditional_peak_variation(self):
+        n=A.criteria()['bootstrap']['resamples']
+        groups={key:{kind:[{'replicate':i,'accepted_groups':1,'bias':float(i),
+            'peak':{'x_mm':119. if i%2==0 else 0.,'y_mm':0.} if kind=='plane' else {'azimuth_deg':0.}}
+            for i in range(n)] for kind in ('direction','plane')} for key in self.summary['groups']}
+        saved={'kind':'gegi_campaign_bootstrap_v1','policy':A.criteria()['bootstrap'],'groups':groups,
+               'runtime_seconds':1.25,'limitations':['Synthetic conditional peak variation; no hardware uncertainty.']}
+        W.write(self.analysis/'bootstrap.json',saved)
+        self.summary['bootstrap']={'requested':True,'status':'complete','output':'bootstrap.json'}
+        W.write(self.analysis/'summary.json',self.summary);self.seal_analysis()
+        target=self.export();record=P.validate_bundle(target);report=W.read(target/'bootstrap-summary.json')
+        value=report['groups']['gamma-left']['plane']
+        self.assertEqual(report['source_bootstrap_sha256'],W.sha(self.analysis/'bootstrap.json'))
+        for name,expected in {'p2_5':4.975,'p50':99.5,'p97_5':194.025}.items():
+            self.assertAlmostEqual(value['peak_offset_percentiles'][name],expected,places=12)
+        self.assertEqual(value['within_fixed_localization_tolerance_replicates'],16)
+        self.assertEqual(value['finite_plane_boundary_peak_replicates'],100)
+        self.assertNotIn('bootstrap.json',record['artifacts'])
+        page=(target/'index.html').read_text(encoding='utf-8')
+        self.assertIn('Conditional finite-sample peak variation',page)
+        self.assertIn('No resampled mixture-separation probability was computed',page)
+        (self.analysis/'bootstrap.json').write_bytes(b'{}')
+        with patch.object(C,'read_plan',return_value=self.plan),self.assertRaisesRegex(ValueError,'Analysis artifact changed'):
+            P.saved_inputs(self.campaign,self.analysis)
+
+    def test_source_assessment_is_bound_to_same_analysis_and_never_reports_assumed_range(self):
+        def item(evaluations):
+            return {'spectral_inference':{'status':'ambiguous','interpretation':'A line is supported; source identity remains ambiguous.',
+                'candidate_components':[{'id':'line','label':'Cs137/Ba137m or monoenergetic 662 keV','status':'ambiguous',
+                    'reason':'A single line cannot identify its production mechanism.','alternatives':['monoenergetic gamma']}],
+                'line_evidence':[{'line_energy_keV':661.657,'peak_bin_center_keV':663.,'signal_counts':3.,
+                    'continuum_estimate_counts':1.,'net_excess_counts':2.,'status':'synthetic screening only'}],
+                'limitations':['Not a calibrated detection significance.']},
+                'distance':{'status':'not_identified_by_saved_analysis','distance_mm':None,'assumed_plane_z_mm':40.,
+                    'reason':'The source plane is assumed; range has not been fitted.'},'imaging_evaluation':evaluations}
+        folder=self.base/'source-inference';folder.mkdir();path=folder/'report.json'
+        provenance={'analysis_manifest_sha256':W.sha(self.analysis/'manifest.json'),'summary_sha256':W.sha(self.analysis/'summary.json'),
+            'maps_sha256':W.sha(self.analysis/'maps.json'),'cones_sha256':W.sha(self.analysis/'cones.jsonl'),
+            'plan_sha256':self.summary['plan_sha256'],'validation_scope':'Synthetic saved-input contract only.'}
+        report={'kind':'gegi_source_inference_v1','provenance':provenance,
+            'groups':{key:item(g['evaluations']) for key,g in self.summary['groups'].items()},
+            'mixtures':{key:item(g['evaluations']) for key,g in self.summary['mixtures'].items()},'references':[]}
+        W.write(path,report)
+        manifest={'kind':report['kind'],'status':'complete_posthoc_diagnostic','provenance':provenance,
+            'source_sha256':{'tools/gegi_campaign_publication.py':W.sha(P.__file__)},
+            'files':{'report.json':{'sha256':W.sha(path),'bytes':path.stat().st_size}}}
+        W.write(folder/'manifest.json',manifest)
+        target=self.export(source_assessment=path);P.validate_bundle(target)
+        self.assertEqual(W.read(target/'source-assessment.json'),report)
+        page=(target/'index.html').read_text(encoding='utf-8')
+        self.assertIn('No source distance is identified',page)
+        self.assertIn('Cs137/Ba137m or monoenergetic 662 keV',page)
+        self.assertIn('not an exhaustive nuclide search',page)
+        inputs={'analysis_manifest_sha256':provenance['analysis_manifest_sha256'],
+            **{name+'.json_sha256':provenance[name+'_sha256'] for name in ('summary','maps')},
+            'cones.jsonl_sha256':provenance['cones_sha256']}
+        report['provenance']['summary_sha256']='0'*64;W.write(path,report)
+        manifest['files']['report.json']={'sha256':W.sha(path),'bytes':path.stat().st_size};W.write(folder/'manifest.json',manifest)
+        with self.assertRaisesRegex(ValueError,'different saved analysis'):
+            P.source_report(path,self.summary,inputs)
 
     def test_representative_preserves_verified_prior_recipe_after_failure_policy_repair(self):
         from contextlib import closing
@@ -229,7 +356,7 @@ class CampaignPublication(unittest.TestCase):
              patch.object(V,'assemble'),patch.object(P,'export',side_effect=AssertionError('Build cannot export/replay')):
             result=B.build(gegi_campaign_bundle=target)
         self.assertEqual(result,'mock-staged');P.validate_bundle(out/'results/gegi-campaign')
-        self.assertIn('gegi-campaign/index.html',(out/'index.html').read_text())
+        self.assertIn('gegi-campaign/index.html',(out/'index.html').read_text(encoding='utf-8'))
 
 
 if __name__=='__main__':unittest.main()

@@ -202,6 +202,23 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('not Control\'s <code>-BuildPortableSourceExporter</code>',guide)
         self.assertNotIn('Electronics-only replay is still NOT_IMPLEMENTED',guide)
 
+    def test_gegi_formal_campaign_takes_over_public_entries(self):
+        root=self.fixture();saved=root/'examples/gegi';saved.mkdir(parents=True)
+        (saved/'publication.json').write_bytes(b'legacy fixture')
+        formal=root/'results/gegi-campaign';formal.mkdir(parents=True)
+        (formal/'publication.json').write_bytes(b'formal fixture')
+        (formal/'summary.json').write_text(json.dumps({'processed_initial_records':1000000,
+            'groups':{'a':{'counts':{'imaging_accepted_groups':708,'native_failed_groups':426}}}}))
+        with patch('gegi_campaign_publication.validate_bundle') as checked,patch('gegi_publication.validate_bundle') as old:
+            S.apply(root)
+        checked.assert_called_once_with(formal);old.assert_not_called()
+        for path in ('index.html','results/index.html'):
+            text=(root/path).read_text(encoding='utf-8')
+            self.assertIn('1,000,000 initial records',text)
+            self.assertIn('708 imaging-accepted pulse groups',text)
+            self.assertIn('results/gegi-campaign/index.html',text)
+            self.assertNotIn('examples/gegi/index.html',text)
+
     def test_gegi_saved_counts_are_visible_without_rewriting_saved_bundle(self):
         root=self.fixture();saved=root/'examples/gegi';saved.mkdir(parents=True)
         payload={'kind':'gegi_saved_source_comparison_v1','counts':{'initial_primaries':10000},

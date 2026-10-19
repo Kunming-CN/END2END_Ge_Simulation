@@ -99,9 +99,20 @@ def apply(site):
         from gamma_publication import validate_bundle as validate_gamma_showcase, completed as gamma_completed
         validate_gamma_showcase(gamma)
     completed_gamma=has_gamma and gamma_completed(gamma)
-    has_gegi=(site/'examples/gegi/publication.json').is_file()
+    has_formal_gegi=(site/'results/gegi-campaign/publication.json').is_file()
+    has_gegi=has_formal_gegi or (site/'examples/gegi/publication.json').is_file()
+    gegi_route='results/gegi-campaign/index.html' if has_formal_gegi else 'examples/gegi/index.html'
     gegi_description='GeGI dedicated cryostat · configurable gamma transport, 34-electrode charge/readout and signal-derived Compton cones and directional maps.'
-    if has_gegi:
+    if has_formal_gegi:
+        from gegi_campaign_publication import validate_bundle as validate_formal_gegi
+        validate_formal_gegi(site/'results/gegi-campaign')
+        saved=read(site/'results/gegi-campaign/summary.json')
+        accepted=sum(g['counts']['imaging_accepted_groups'] for g in saved['groups'].values())
+        failed=sum(g['counts']['native_failed_groups'] for g in saved['groups'].values())
+        gegi_description+=(f' Completed {saved["processed_initial_records"]:,} initial records across four acquisitions; '
+                           f'{accepted:,} imaging-accepted pulse groups and {failed:,} retained native failures. '
+                           'Photon and isotope-decay denominators remain separate. Follow a real signal through candidate cones to the final map.')
+    elif has_gegi:
         from gegi_publication import validate_bundle as validate_gegi_showcase
         validate_gegi_showcase(site/'examples/gegi')
         saved=read(site/'examples/gegi/summary.json')
@@ -123,7 +134,7 @@ def apply(site):
 <article class="card"><h2>Methods</h2><p><a href="methods/index.html">Understand the pipeline and its limits →</a></p><p>Read the physical assumptions and saved diagnostic studies.</p></article></section>
 <section class="panel" id="pipeline-example"><span id="native-cs137-10k"></span><span id="current-ring-10k"></span><p>Saved results are engineering simulations. Fresh-machine setup remains unvalidated.</p></section>'''
     if has_gegi:
-        home+='<section class="panel"><h2>GeGI Compton imaging</h2><p>'+gegi_description+'</p><p><a href="examples/gegi/index.html">Open saved GeGI signals and imaging →</a></p></section>'
+        home+='<section class="panel"><h2>GeGI Compton imaging</h2><p>'+gegi_description+'</p><p><a href="'+gegi_route+'">Open saved GeGI signals and imaging →</a></p></section>'
     write_page(site/'index.html','GeSignal',home,0,fold_footer=True)
 
     curated_teaching=(site/'spectra/teaching-examples.json').is_file()
@@ -162,7 +173,7 @@ def apply(site):
     results='''<section class="hero"><p class="muted">Choose the dataset first</p><h1>Saved results</h1>
 <p>Start with selected teaching signals or open a full saved study. Every primary ID belongs to its source detector case; complete studies retain zeros and unavailable responses.</p></section>'''
     results+=result_panel('gegi','GeGI · multichannel Compton imaging',gegi_description,
-        (('../examples/gegi/index.html','Open saved GeGI signals and imaging →'),),has_gegi,
+        (('../'+gegi_route,'Open saved GeGI signals and imaging →'),),has_gegi,
         '<p>Signal-derived reconstruction is separate from known source positions and transport truth. A plane projection assumes its stated source plane; it does not recover source distance.</p>')
     teaching_present=(site/'examples/data.json').is_file()
     results+=result_panel('teaching','Start here · six representative Cs137 signals' if curated_teaching else 'Main teaching example · 200 gamma primaries',

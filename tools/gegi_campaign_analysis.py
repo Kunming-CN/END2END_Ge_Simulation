@@ -335,6 +335,8 @@ def outcome(event):
     require(not readout['accepted'] or energy is not None, 'Accepted readout lacks fixed-gain energy')
     failed = event['status'] == 'native_failed'
     if failed:
+        require(type(event.get('error')) is str and bool(event['error'].strip()),
+                'Native failure lacks its exact saved error')
         require(event.get('channels') is None and event.get('native_signals') is None and energy is None
                 and not readout['accepted'] and reco['status'] == 'rejected', 'Native failure was fabricated as known signal/energy')
     cones = reco.get('cones')
@@ -372,7 +374,10 @@ class Accumulator:
         require(len(self.groups) == len(groups), 'Repeated source-group identity')
         self.data = {}
         for g in groups:
-            self.data[g['id']] = {'counts': Counter(), 'native_status_counts': Counter(), 'rejection_reasons': Counter(),
+            self.data[g['id']] = {'counts': Counter(), 'native_status_counts': Counter(), 'native_error_counts': Counter(),
+                'exclusive_stage_counts': Counter({name: 0 for name in ('native_failed', 'native_flagged',
+                    'readout_rejected_after_native_completion', 'imaging_rejected_after_readout_acceptance', 'imaging_accepted')}),
+                'rejection_reasons': Counter(),
                 'readout_rejection_reasons': Counter(), 'ambiguous_groups': 0, 'candidate_cones': 0,
                 'unknown_readout_energy_groups': 0, 'plane_unmapped_weight': 0., 'representative': None, 'transport_denominators': {},
                 'spectrum': {'edges_keV': [2.*i for i in range(2001)], 'counts': [0]*2000,
@@ -397,6 +402,18 @@ class Accumulator:
                     event.get('photopeak_windows_sha256') == identity['photopeak_windows_sha256'], 'Scalar calibration/selection identity changed')
             flags = outcome(event); observed['pulse_groups'] += 1; primary_sets['nonzero'].add(primary_id)
             data['native_status_counts'][event['status']] += 1
+            if flags['native_failed']:
+                data['native_error_counts'][event['error']] += 1
+                stage = 'native_failed'
+            elif flags['native_flagged']:
+                stage = 'native_flagged'
+            elif flags['readout_rejected']:
+                stage = 'readout_rejected_after_native_completion'
+            elif flags['imaging_rejected']:
+                stage = 'imaging_rejected_after_readout_acceptance'
+            else:
+                stage = 'imaging_accepted'
+            data['exclusive_stage_counts'][stage] += 1
             for name, flag in flags.items():
                 if flag:
                     observed[name+'_groups'] += 1; primary_sets[name].add(primary_id)
@@ -457,6 +474,10 @@ class Accumulator:
     def results(self):
         maps, groups = {}, {}
         for key, data in self.data.items():
+            require(sum(data['native_error_counts'].values()) == data['counts']['native_failed_groups'],
+                    'Exact native error histogram does not match failure count')
+            require(sum(data['exclusive_stage_counts'].values()) == data['counts']['pulse_groups'],
+                    'Exclusive stage accounting does not cover every pulse group')
             g = self.groups[key]; maps[key] = {name: serializable_maps(value) for name, value in data['maps'].items()}
             groups[key] = {name: dict(value) if isinstance(value, Counter) else value for name, value in data.items() if name != 'maps'}
             groups[key]['line_counts'] = {k: dict(v) for k, v in data['line_counts'].items()}
@@ -756,7 +777,8 @@ def analyze(campaign, output, *, root=None, allow_partial=False, allow_analysis_
         'initial_denominators_by_unit': denominators, 'processed_initial_records': processed,
         'planned_initial_records': plan['total_initial_primaries'], 'groups': groups, 'mixtures': pairs,
         'count_scope': 'Group accepted/rejected counts partition every nonzero pulse group; primary outcome sets can overlap when a primary has multiple groups. Zeros remain in initial denominators only.',
-        'failure_record_policy': 'Original native errors and unknown null channel/readout fields remain in the sealed scalar Store, addressed by unchanged primary and pulse-group IDs; no zero waveform is generated.',
+        'failure_record_policy': 'Exact saved native error strings are counted without normalization in native_error_counts. Original errors and unknown null channel/readout fields remain in the sealed scalar Store, addressed by unchanged primary and pulse-group IDs; no zero waveform is generated.',
+        'stage_accounting_policy': 'exclusive_stage_counts partitions pulse groups by the first unsuccessful stage or imaging acceptance. Existing readout/imaging rejection totals and reasons include upstream native failures and flags; they are not independent electronics failures. Initial zeros remain in denominators only.',
         'validation_scope': 'Frozen plan, DONE identities, full Store/response hashes and sealed scalar completion; raw radiation archives are not decompressed or rescanned.',
         'limitations': ['Nominal cryostat and simulated pixel timing calibration; no experimental localization, range, activity or efficiency validation.',
             '5-degree kernel and 15-degree/15-mm truth-matching tolerances are fixed engineering analysis settings, not measured detector resolution.',

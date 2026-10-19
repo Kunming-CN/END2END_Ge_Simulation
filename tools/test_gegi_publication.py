@@ -73,6 +73,24 @@ class GeGIPublication(unittest.TestCase):
         self.assertIn('No zero waveform is fabricated',(target/'index.html').read_text())
         self.assertNotIn('<polyline',(target/'index.html').read_text())
 
+    def test_formal_campaign_retires_small_sample_display_but_preserves_science(self):
+        target=self.assemble()
+        science={name:(target/name).read_bytes() for name in ('summary.json','selected-channel.json')}
+        original=P.sha(target/'index.html')
+        formal=self.site/'results/gegi-campaign';formal.mkdir(parents=True)
+        (formal/'publication.json').write_bytes(b'checked formal fixture')
+        with patch('gegi_campaign_publication.validate_bundle',return_value={'initial_records':1000000}):
+            P.link_current(self.site)
+            first={p.name:p.read_bytes() for p in target.iterdir()}
+            P.link_current(self.site)
+        self.assertEqual(first,{p.name:p.read_bytes() for p in target.iterdir()})
+        self.assertEqual(science,{name:(target/name).read_bytes() for name in science})
+        self.assertIn(b'url=../../results/gegi-campaign/index.html',first['index.html'])
+        self.assertNotIn(b'<svg',first['index.html'])
+        record=P.validate_bundle(target)
+        self.assertEqual(record['retired_display']['original_index_sha256'],original)
+        self.assertNotIn('gegi-control-results',(self.site/'detectors/GeGI_3D/index.html').read_text())
+
     def test_assembly_navigation_preserves_science_and_is_repeatable(self):
         target=self.assemble()
         science={name:(target/name).read_bytes() for name in ('summary.json','selected-channel.json')}

@@ -219,6 +219,35 @@ def link_current(site):
     if not (site/'examples/gegi/publication.json').is_file():return
     target=site/'examples/gegi'
     record=validate_bundle(target)
+    formal=site/'results/gegi-campaign'
+    if (formal/'publication.json').is_file():
+        from gegi_campaign_publication import validate_bundle as validate_formal
+        from site_routes import page_navigation
+        validate_formal(formal)
+        page=target/'index.html'
+        record.setdefault('retired_display',{'original_index_sha256':sha(page),
+            'reason':'Owner requested replacement of the small-sample GeGI display by the completed formal campaign.',
+            'replacement':'results/gegi-campaign/index.html'})
+        text=('<!doctype html><html lang="en"><head><meta charset="utf-8">'
+              '<meta name="viewport" content="width=device-width,initial-scale=1">'
+              '<meta http-equiv="refresh" content="0;url=../../results/gegi-campaign/index.html">'
+              '<title>GeGI results have moved</title></head><body>'+
+              page_navigation('examples/gegi/index.html')+
+              '<main><h1>GeGI results have moved</h1><p><a href="../../results/gegi-campaign/index.html">'
+              'Open the completed 1M campaign: signals, Compton cones and maps</a>.</p>'
+              '<p>The earlier small-sample display has been retired. Original scientific records remain preserved.</p>'
+              '</main></body></html>\n')
+        page.write_bytes(public(text.encode('utf-8')))
+        record['artifacts']['index.html']=sha(page)
+        record['retired_display']['replacement_manifest_sha256']=sha(formal/'publication.json')
+        record['navigation_source_sha256']={name:sha(Path(__file__).parent/name)
+            for name in ('gegi_publication.py','site_routes.py')}
+        (target/'publication.json').write_bytes(encoded(record));validate_bundle(target)
+        detector=site/'detectors/GeGI_3D/index.html'
+        if detector.is_file():
+            text=re.sub(r'<section id="gegi-control-results">.*?</section>','',detector.read_text(encoding='utf-8'),flags=re.S)
+            detector.write_text(text,encoding='utf-8',newline='\n')
+        return
     # Upgrade only the navigation of the checked saved HTML. Numerical JSON and
     # original producer/input identities remain byte-for-byte unchanged.
     if (site/'assemblies/gegi/index.html').is_file():
