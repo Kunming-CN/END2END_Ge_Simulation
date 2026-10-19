@@ -1,6 +1,6 @@
 # Next development plan
 
-## Owner campaign — GeGI 1M final analysis and student delivery resumed
+## Owner campaign — GeGI 1M delivery completed
 
 Owner resume2026-10-19 supersedes the pause below. Finish step6 using the completed
 1M saved artifacts. Full100chunk artifact/hash verification passed without science
@@ -29,9 +29,14 @@ Delivery status:
 3. COMPLETE: student-runtime-94245299c565 software-only release and guide; public
    versioned/latestZIP andreceipt exact bytes verified. Standalone GeGI remains
    configurablemonoγ; isotopeGUI is gated until delayed-pulse grouping is shared.
-4. IN PROGRESS: generate website and replace old5000/two5000 public entry;
-   requiredsitechecks/diff, normalcommit/push, livecheck and actualdesktop review.
-   Then pause monitor and release only this chat's lock. No extra AI reviews/reset.
+4. COMPLETE: generated website replaces old5000/two5000 entry while retaining data.
+   Site34tests, fullsnapshot validation,747liveexact-byte files and actualdesktop
+   checks passed; source/results pushed. Monitor PAUSED; ownedlock released only
+   after finalhandoff sync. No automatic next task or further calculation.
+
+Scientific limits remain: mixture localization failed, distance was not inferred,
+661.7keV line is not unique isotope identification, standaloneisotopeGUI is gated.
+Delivery completion does not resolve these physics/reconstruction limitations.
 
 ### Owner-reduced allocation — original campaign launched2026-10-17
 

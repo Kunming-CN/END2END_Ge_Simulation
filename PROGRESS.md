@@ -1,6 +1,6 @@
 # Current handoff
 
-## GeGI 1M analysis and student delivery — active2026-10-19
+## GeGI 1M analysis, website and student delivery — complete2026-10-19
 
 The owner explicitly resumed final analysis, educational signal→interaction→cone→map
 views, GitHub website publication and traceable student software. Latest additions:
@@ -9,8 +9,9 @@ science; infer source species from saved signal spectra and report range only wh
 supported. The former pause is superseded. No new radiation or native drift.
 
 The sole supervisor is chat01a14bca-3953-7c13-80a1-687a9a571455, ownergegi-10m-root.
-Its lock remains .local/autonomy/gegi-10m.lock; automation automation is ACTIVE,
-30minutes, same chat. Do not duplicate active writers or start competing workers.
+Automation automation is PAUSED after verified delivery. No automatic next work.
+Final owned-lock release is recorded in .local/autonomy/state.json after Git sync.
+Do not repeat completed simulations, analysis, bootstrap, exports or recovery.
 
 Simulation:100sealed chunks/1,000,000formal initials completed2026-10-19T00:40:29Z.
 Quotas:200kleft/200kright662keVinitialphotons,300kCs137/300kCo60initialdecays;
@@ -57,8 +58,16 @@ Local desktop passed34-channel/signed guard traces, rotatablecone, representativ
 accumulation, fullmaps/spectra and source/range limits; no browser errors.
 Authenticated legacy display receipts were refreshed only for presentation binding.
 Eight targeted binding tests passed (oneobsoletefixture skipped); site34passed.
-Next: normalcommit/push, livecheck_site --url and actual desktop/publicredirect
-verification. Then compacthandoff, pausemonitor and releaseonlythischat'slock.
+Published website commit:ecc398b4799051bd868fb5731f8826bfb0867257.
+Live check_site --url passed747exact-byte files for the same snapshot; actual
+public desktop verified old-entry redirect, conecontrols, source-truth defaultoff,
+guide and softwarelink, with zero browsererrors. All source/results pushed normally.
+Current result:https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-campaign/index.html
+No automatic next task. Delivery is functional, not validated source localization:
+bothmixtures failed, distance remainsunidentified and662keV species ambiguous.
+Future radial/3D inference, reconstruction improvement, measured calibration and
+standaloneisotopeGUI need separate bounded implementation; do not change frozen
+results or treat source setup as the inferred answer.
 
 Permanent science: entire.local/gegi-10m including originalrequests/spools, three
 failure/recoverygenerations, quota-1m-v1 and originalfields. Quotaapplication and
