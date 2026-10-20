@@ -1,8 +1,9 @@
-"""Freeze an event-disjoint saved-signal sample, then evaluate it post hoc.
+"""Freeze an event-disjoint sample, then evaluate saved or new signal hypotheses.
 
 The freeze command reads only the existing reconstruction derivative. Truth and
 original native metadata are opened only by the separate evaluate command. No
-fit, transport, drift, source pose, or calibration generation is called here.
+transport, drift, source pose, or calibration generation is called here. An
+explicit calibration and single frozen split enable saved-waveform fitting.
 """
 from __future__ import annotations
 import argparse
@@ -237,6 +238,27 @@ def sequence_truth(event, sites, direct):
     return [anchor_cells[i] for i in sorted(range(len(times)), key=times.__getitem__)], None
 
 
+def evaluate_reconstruction(result, sites, direct, cells, truth_order, unknown):
+    """Apply the same posthoc metrics to baseline and candidate hypotheses."""
+    candidate_indices = {c['hypothesis_index'] for c in result['candidates']}
+    hrows = [{'hypothesis_index': h['hypothesis_index'], **evaluate_hypothesis(h, sites, direct, cells)}
+             for h in result['hypotheses'] if h['hypothesis_index'] in candidate_indices]
+    candidates = []
+    hypotheses_by_index = {h['hypothesis_index']: h for h in result['hypotheses']}
+    evaluated_by_index = {h['hypothesis_index']: h for h in hrows}
+    for c in result['candidates']:
+        h = hypotheses_by_index[c['hypothesis_index']]
+        predicted = [(h['sites'][i]['x_contact'], h['sites'][i]['y_contact']) for i in c['order']]
+        status = ('unknown' if truth_order is None or set(predicted) != set(truth_order) or len(predicted) != len(truth_order)
+                  else 'correct' if predicted == truth_order else 'wrong')
+        candidates.append({'hypothesis_index': c['hypothesis_index'], 'order': c['order'],
+            'prior_weight': c['prior_weight'], 'sequence_status': status,
+            'endpoint_pairing_matches': evaluated_by_index[c['hypothesis_index']]['endpoint_pairing_matches'],
+            'false_gamma_anchor_splitting': evaluated_by_index[c['hypothesis_index']]['false_gamma_anchor_splitting'],
+            'sequence_unknown_reason': unknown if truth_order is None else 'unmatched_anchor_cells' if status == 'unknown' else None})
+    return hrows, candidates
+
+
 def summarize(rows):
     counts = Counter(); residuals = defaultdict(list); sequence = Counter(); hypotheses = Counter()
     for row in rows:
@@ -284,28 +306,57 @@ def summarize(rows):
             'sequence': dict(sequence), 'errors': {k: describe(v) for k, v in residuals.items()}}
 
 
-def evaluate(campaign, reconstruction, output):
-    """Read frozen selections before accessing original metadata/truth."""
+def evaluate(campaign, reconstruction, output, *, frozen_manifest=None, split=None,
+             calibration=None, response_mode='selected_pair'):
+    """Read one frozen selection; fit allowlisted signals before truth evaluation.
+
+    Without a calibration this retains the original posthoc path. Candidate runs
+    require a single split and a fresh output directory; no sample is reselected.
+    """
     import gegi_rejection_diagnostic as D
     import gegi_signal_reconstruction as R
     import gegi_signal_recovery as C
+    import gegi_calibration_admission as A
     from gegi_saved_reconstruction import sealed_chunks
-    started = time.perf_counter(); manifest_path = output/'split-manifest.json'
+    started = time.perf_counter()
+    campaign=Path(campaign);reconstruction=Path(reconstruction);output=Path(output)
+    candidate_run=calibration is not None
+    if split not in (None, 'development', 'holdout') or response_mode not in ('selected_pair', 'all34'):
+        raise ValueError('Use development/holdout and an explicit supported response mode')
+    if not candidate_run and response_mode != 'selected_pair':
+        raise ValueError('A candidate response mode requires an explicit calibration bank')
+    if candidate_run:
+        calibration=Path(calibration)
+        if split is None:
+            raise ValueError('Candidate evaluation requires one frozen development or holdout split')
+        if output.exists():
+            raise FileExistsError('Candidate evaluation needs a separate new output directory')
+        if any(output.resolve().is_relative_to(path.resolve()) for path in (campaign,reconstruction,calibration)):
+            raise ValueError('Candidate output must be outside immutable inputs')
+    manifest_path = Path(frozen_manifest) if frozen_manifest is not None else output/'split-manifest.json'
     source_refs = ('tools/gegi_recovery_validation.py', 'tools/gegi_signal_recovery.py',
                    'tools/gegi_rejection_diagnostic.py', 'tools/gegi_signal_reconstruction.py',
                    'tools/gegi_campaign_response.py', 'tools/gegi_imaging.py')
+    if candidate_run:
+        source_refs += ('tools/gegi_calibration_admission.py', 'tools/gegi_saved_reconstruction.py',
+                        'tools/gegi_event_store.py', 'tools/scenario_workflow.py')
     source_hashes = {ref: sha(ROOT/ref) for ref in source_refs}
     manifest = read(manifest_path); check_disjoint(manifest['groups'])
     if manifest['reconstruction_complete_sha256'] != sha(reconstruction/'COMPLETE.json'):
         raise ValueError('Frozen reconstruction identity changed')
     frozen_hash = sha(manifest_path)
-    selected = {tuple(g['group_key']): g for g in manifest['groups']}
+    selected = {tuple(g['group_key']): g for g in manifest['groups'] if split is None or g['split']==split}
+    if not selected:
+        raise ValueError('Frozen split contains no selected groups')
     saved = {group_key(r): r for r in records(reconstruction) if group_key(r) in selected}
     if set(saved) != set(selected):
         raise ValueError('Frozen group missing from reconstruction')
     _, chunks = sealed_chunks(campaign)
     chunk_map = {index: (seal, done) for index, seal, done in chunks}
-    rows = []; native_bindings = {}
+    admission=A.campaign(campaign,calibration) if candidate_run else None
+    bank=R.TemplateBank(calibration,response_mode=response_mode) if candidate_run else None
+    output.mkdir(parents=True,exist_ok=not candidate_run)
+    rows = []; native_bindings = {};new_fit_calls=0
     for key, selection in sorted(selected.items()):
         record = saved[key]; identity = record['original_identity']; index, pid, gid = key
         if identity['metadata_sha256'] != selection['metadata_sha256']:
@@ -322,30 +373,27 @@ def evaluate(campaign, reconstruction, output):
         original_exact = all(classification['spectroscopy'].get(k) == v for k, v in event['readout_summary'].items())
         if not original_exact or not repeated_exact:
             raise ValueError('Reused spectroscopy or repeated classification changed')
+        if candidate_run:
+            # No event, endpoints, tracks, truth energy or source pose enters the fit.
+            candidate_result=R.reconstruct_observables(observed,bank)
+            candidate_classification=C.classify_observables(observed,reconstruction=candidate_result)
+            candidate_repeated=C.classify_observables(observed,reconstruction=candidate_result)
+            candidate_exact=encoded(candidate_classification['spectroscopy'])==encoded(classification['spectroscopy'])
+            candidate_repeated_exact=encoded(candidate_classification)==encoded(candidate_repeated)
+            if not candidate_exact or not candidate_repeated_exact:
+                raise ValueError('Candidate changed the original fixed spectroscopy or classification')
+            # all34 has an explicit counter; the legacy result has one fit per
+            # hypothesis except its explicit pre-fit site-budget rejection.
+            new_fit_calls+=(candidate_result['fit_calls'] if response_mode=='all34' else
+                sum(h.get('reason')!='site_budget_exceeded' for h in candidate_result['hypotheses']))
         process_manifest = seal.parent/'transport/stream/manifest.json'
         names = {t['procid']: t['name'] for t in read(process_manifest)['processes']}
         topology_result, endpoint_known = posthoc_topology(event, names)
         sites, sites1, compton, spread, shared, direct, cells, length = topology_result
-        result = record['reconstruction']; candidate_indices = {c['hypothesis_index'] for c in result['candidates']}
-        hrows = []
-        for h in result['hypotheses']:
-            if h['hypothesis_index'] in candidate_indices:
-                hrows.append({'hypothesis_index': h['hypothesis_index'], **evaluate_hypothesis(h, sites, direct, cells)})
+        result = record['reconstruction']
         truth_order, unknown = (sequence_truth(event, sites, direct) if endpoint_known else
                                 (None, 'native_endpoint_topology_incomplete'))
-        candidates = []
-        hypotheses_by_index = {h['hypothesis_index']: h for h in result['hypotheses']}
-        evaluated_by_index = {h['hypothesis_index']: h for h in hrows}
-        for c in result['candidates']:
-            h = hypotheses_by_index[c['hypothesis_index']]
-            predicted = [(h['sites'][i]['x_contact'], h['sites'][i]['y_contact']) for i in c['order']]
-            status = ('unknown' if truth_order is None or set(predicted) != set(truth_order) or len(predicted) != len(truth_order)
-                      else 'correct' if predicted == truth_order else 'wrong')
-            candidates.append({'hypothesis_index': c['hypothesis_index'], 'order': c['order'],
-                               'prior_weight': c['prior_weight'], 'sequence_status': status,
-                               'endpoint_pairing_matches': evaluated_by_index[c['hypothesis_index']]['endpoint_pairing_matches'],
-                               'false_gamma_anchor_splitting': evaluated_by_index[c['hypothesis_index']]['false_gamma_anchor_splitting'],
-                               'sequence_unknown_reason': unknown if truth_order is None else 'unmatched_anchor_cells' if status == 'unknown' else None})
+        hrows,candidates=evaluate_reconstruction(result,sites,direct,cells,truth_order,unknown)
         spectroscopy = classification.get('spectroscopy', {})
         erec = spectroscopy.get('energy_keV') if spectroscopy.get('accepted') else None
         terminal = classification.get('terminal_charge_diagnostic', {}).get('mean_keV_equivalent')
@@ -368,6 +416,13 @@ def evaluate(campaign, reconstruction, output):
                      'adc_x_minus_y_energy_keV': face_difference,
                      'hypotheses': hrows, 'candidates': candidates,
                      'unsupported_hypothesis_mass': result.get('unsupported_hypothesis_mass')})
+        if candidate_run:
+            hnew,cnew=evaluate_reconstruction(candidate_result,sites,direct,cells,truth_order,unknown)
+            rows[-1].update(candidate_reconstruction=candidate_result,candidate_evaluation={
+                'classification':candidate_classification,'hypotheses':hnew,'candidates':cnew,
+                'original_spectroscopy_exact_match':candidate_exact,
+                'repeated_classification_exact_match':candidate_repeated_exact,
+                'unsupported_hypothesis_mass':candidate_result.get('unsupported_hypothesis_mass')})
         native_bindings[str(index)] = {'events_store_sha256_from_seal': done['artifacts']['events.sqlite']['sha256'],
                                       'seal_sha256': sha(seal), 'process_manifest_sha256': sha(process_manifest)}
     if sha(manifest_path) != frozen_hash:
@@ -376,7 +431,7 @@ def evaluate(campaign, reconstruction, output):
         raise ValueError('Evaluation implementation changed during evaluation')
     report = {'kind': KIND, 'stage': 'posthoc_evaluation_completed', 'split_manifest_sha256': frozen_hash,
               'source_sha256': source_hashes, 'original_bindings': native_bindings,
-              'counts': {'groups': len(rows), 'events': len(manifest['assignments'])},
+              'counts': {'groups': len(rows), 'events': len({g['campaign_initial_id'] for g in selected.values()})},
               'by_split': {split: summarize([r for r in rows if r['split'] == split]) for split in ('development', 'holdout')},
               'by_split_reason': {split: {reason: summarize([r for r in rows if r['split'] == split and r['frozen_reason'] == reason])
                                         for reason in sorted({r['frozen_reason'] for r in rows if r['split'] == split})}
@@ -390,9 +445,24 @@ def evaluate(campaign, reconstruction, output):
                               'stage_energy': 'Native terminal mean charge-equivalent minus input deposition, peak-ADC energy minus native terminal mean, and signed ADC X-minus-Y face difference are separate. Native terminal is not a new ADC calibration. Failed/incomplete stages remain null.',
                               'incomplete_native': 'Raw failure steps and partial endpoint outputs do not provide a completed endpoint reference. Gamma anchors are still computed from the unchanged original input ledger; endpoint sharing and sequence are unknown.',
                               'sample': 'Stratified diagnostic sample, not campaign efficiency; zero-primary denominators remain in original campaign.'},
-              'elapsed_seconds': time.perf_counter()-started, 'new_physics_calls': 0, 'new_fit_calls': 0,
+              'elapsed_seconds': time.perf_counter()-started, 'new_physics_calls': 0, 'new_fit_calls': new_fit_calls,
               'new_calibration_calls': 0}
-    write_new(output/'evaluation-groups.json', {'split_manifest_sha256': frozen_hash, 'groups': rows})
+    group_output={'split_manifest_sha256': frozen_hash, 'groups': rows}
+    if candidate_run:
+        bindings=dict(bank.bindings)
+        for ref,expected in bindings.items():
+            if sha(bank.root/ref)!=expected:
+                raise ValueError('Candidate calibration changed during evaluation: '+ref)
+        candidate_rows=[{**row,**row['candidate_evaluation']} for row in rows]
+        report.update(stage='candidate_evaluation_completed',selected_split=split,response_mode=response_mode,
+            calibration_sha256=bank.sha256,calibration_admission=admission,calibration_bindings=bindings,
+            calibration_ref=str(bank.root),frozen_manifest_ref=str(manifest_path),
+            comparison={'baseline':summarize(rows),'candidate':summarize(candidate_rows),
+                'reason_transitions':dict(Counter((saved[group_key(row)]['reconstruction'].get('reason') or
+                    saved[group_key(row)]['reconstruction']['status'])+' -> '+
+                    (row['candidate_reconstruction'].get('reason') or row['candidate_reconstruction']['status']) for row in rows))})
+        group_output['selection']={'split':split,'groups':list(selected.values())}
+    write_new(output/'evaluation-groups.json', group_output)
     report['evaluation_groups_sha256'] = sha(output/'evaluation-groups.json')
     write_new(output/'report.json', report)
     return report
@@ -404,11 +474,16 @@ if __name__ == '__main__':
     p.add_argument('--reconstruction', type=Path, required=True)
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--campaign', type=Path)
+    p.add_argument('--frozen-manifest', type=Path, help='Existing frozen split-manifest.json; never reselects')
+    p.add_argument('--split', choices=('development','holdout'))
+    p.add_argument('--calibration', type=Path, help='Explicit saved bank enables new signal reconstruction')
+    p.add_argument('--response-mode', choices=('selected_pair','all34'), default='selected_pair')
     a = p.parse_args()
     if a.stage == 'freeze':
         r = freeze(a.reconstruction, a.output)
     else:
         if a.campaign is None:
             p.error('evaluate requires --campaign')
-        r = evaluate(a.campaign, a.reconstruction, a.output)
+        r = evaluate(a.campaign, a.reconstruction, a.output,frozen_manifest=a.frozen_manifest,
+                     split=a.split,calibration=a.calibration,response_mode=a.response_mode)
     print(json.dumps({k: r[k] for k in ('kind', 'stage', 'counts')}, indent=2))

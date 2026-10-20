@@ -1,6 +1,6 @@
 # Current handoff
 
-## GeGI forward response: local boundary cause verified; full34 pilot complete — 2026-10-20
+## GeGI full34 reference complete; joint-fit development — 2026-10-20
 
 Priority: correct the small radiation -> charge ->34-channel signal -> electronics
 -> inverse reconstruction chain before larger campaigns. Truth/known source is
@@ -76,17 +76,30 @@ Request436a6089...f3da2, toolc99b9b9d...ae506, worker8d2bf5e9...d1274,
 COMPLETE5c359317...410e07. Evidence calibration/full34-pilot/results. No new field
 or transport; exactly15drifts. Exit/PID37752 recorded complete; do not recalculate.
 
-Next: prepare bounded full34 bank on the ORIGINAL2991 independent-record grid,
-reusing these15responses (including exact coordinate duplicates), preserving all
-old2727selectedXY/264excluded records. Missing neighbor templates now block a
-meaningful full-channel joint fit; three pixels alone cannot test competing pixel
-pairings. Use existing K.build/checkpoints, same inputs, one worker/thread,300s
-wall cap, at most original2991attempts, no retry/field/transport. Warm pilot suggests
-roughly300MB and short per-record compute, but whole-grid/IO cost remains measured
-only after execution. Do not silently expand positions or invent missing responses.
-Agent full_channel_capture is preparing the smallest reusable runner/request,
-NOT executing. Then verify original-pair parity and34endpoint accounting before
-joint signal fitting and the frozen holdout. Do not tune cuts against holdout.
+Full ORIGINAL2991-record bank now COMPLETED,223.531s/2.630GB,481.31MB including
+validation evidence. Same K.build and frozen inputs;15pilot points reused in18
+checkpoint paths,2973new records/2709new drifts, no field/transport/retry.
+K.build162.013s; new injection internal time sum140.127s (not total runtime).
+All2991record hashes and old selectedXY/status/timing/endpoints verified exact.
+2727full34 records/92718waveforms;264geometry exclusions and176incomplete retained.
+All2551complete responses have zero native endpoint and ideal-contact residual;
+face-sum roundoff3.05176e-5keV.216available/40unavailable pixels,175diagnostics.
+Requestc613a268...7159e; COMPLETEb107d0a1...96821; validationbe5f420f...57ba5.
+Evidence calibration/full34-bank/results/{COMPLETE,verification,runtime}.json.
+All originals remain unchanged; geometric completeness is not hardware validation.
+
+Joint-fit opt-in all34 implemented; default selected_pair unchanged.18targeted
+fit tests and9evaluation tests passed. Frozen200development evaluated19.720s,
+95fit calls, all200original spectroscopy values exact. Candidate groups20->33
+(13new,20retained,0lost), conditional hypotheses22->55; wrong pairs3/22->24/55,
+false splits1/22->6/55. Matched depth medianabs .142586mm(n49)->.504093mm(n124);
+site-energy medianabs .352914->.612713keV, max258.035->517.563keV. Sequence
+correct/wrong/unknown2/2/40->3/4/242. Different conditional populations are explicit.
+Evidence validation/full34-development/{report,evaluation-groups}.json; source
+37c133c4...ec4fd. This candidate FAILED development quality; no holdout run or
+production promotion. Global energy scaling may hide weak-channel errors: inspect
+that concrete mechanism, preserve this failed result, then change only the affected
+normalization and test it. Independent template bank is complete and reusable.
 
 ### Saved-data and publication baselines — already delivered
 

@@ -1,6 +1,9 @@
 """Targeted contracts for the frozen event split and posthoc error accounting."""
 import copy
+from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
 import numpy as np
 import gegi_recovery_validation as V
 
@@ -89,6 +92,138 @@ class ValidationTests(unittest.TestCase):
         event['status'] = 'completed'
         with self.assertRaises(KeyError):
             V.posthoc_topology(event, {4: 'compt'})
+
+
+class CandidateValidationTests(unittest.TestCase):
+    """Tiny mocked groups exercise the runner, never the numerical fitter."""
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory(prefix='gegi-validation-contract-',dir=V.ROOT/'.local')
+        self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
+        self.campaign=self.root/'campaign';self.reconstruction=self.root/'saved'
+        self.calibration=self.root/'calibration';self.calibration.mkdir();self.reconstruction.mkdir()
+        V.write_new(self.reconstruction/'COMPLETE.json',{'synthetic':True})
+        V.write_new(self.calibration/'identity.json',{'synthetic':True})
+        V.write_new(self.root/'COMPLETE.json',{'synthetic_bank_seal':True})
+        self.seal=self.campaign/'chunks/g0/b0/DONE.json';self.seal.parent.mkdir(parents=True)
+        V.write_new(self.seal,{'synthetic':True})
+        process=self.seal.parent/'transport/stream/manifest.json';process.parent.mkdir(parents=True)
+        V.write_new(process,{'processes':[]})
+        self.spectrum={'accepted':True,'energy_keV':10.,'x_energy_keV':10.,'y_energy_keV':10.,'face_compatible':True}
+        self.classification={'spectroscopy':self.spectrum,'supported_imaging':False,
+            'terminal_charge_diagnostic':{'mean_keV_equivalent':10.}}
+        self.old={'status':'ambiguous','reason':'old_reason','hypotheses':[self.hypothesis(0,1)],
+            'candidates':[{'hypothesis_index':0,'order':[0],'prior_weight':1.}], 'unsupported_hypothesis_mass':0.}
+        self.new={'status':'ambiguous','reason':'new_reason','fit_calls':3,
+            'hypotheses':[self.hypothesis(0,2),{'hypothesis_index':1,'status':'unsupported'},
+                          {'hypothesis_index':2,'status':'unsupported'}],
+            'candidates':[{'hypothesis_index':0,'order':[0],'prior_weight':1.}], 'unsupported_hypothesis_mass':0.}
+        self.groups=[{**view(7,group=0),'metadata_sha256':'7:0','split':'development'},
+                     {**view(7,group=1),'metadata_sha256':'7:1','split':'development'},
+                     {**view(8,group=0),'metadata_sha256':'8:0','split':'holdout'}]
+        self.frozen=self.root/'frozen.json'
+        self.manifest={'reconstruction_complete_sha256':V.sha(self.reconstruction/'COMPLETE.json'),
+            'groups':self.groups,'assignments':[{'campaign_initial_id':7,'split':'development'},
+                                             {'campaign_initial_id':8,'split':'holdout'}]}
+        V.write_new(self.frozen,self.manifest)
+        self.saved=[{'original_identity':{'chunk_index':0,'raw_primary_id':g['group_key'][1],
+            'pulse_group_id':g['group_key'][2],'campaign_initial_id':g['campaign_initial_id'],
+            'metadata_sha256':g['metadata_sha256']},'native_status':'completed','reconstruction':self.old}
+            for g in self.groups]
+        self.channels=[{'id':1,'wiring_factor':1},{'id':18,'wiring_factor':-1}]
+        self.done={'response':{'readout_recipe':{'channels':self.channels}},
+            'artifacts':{'events.sqlite':{'sha256':'synthetic-store'}}}
+        self.bank=type('Bank',(),{'root':self.calibration,'sha256':'synthetic-table',
+            'bindings':{'identity.json':V.sha(self.calibration/'identity.json'),
+                        '../COMPLETE.json':V.sha(self.root/'COMPLETE.json')}})()
+        self.trace=[]
+
+    @staticmethod
+    def hypothesis(index,x):
+        return {'hypothesis_index':index,'sites':[{'x_contact':x,'y_contact':18,
+            'position_mm':[0.,0.,1.],'energy_keV':10.}]}
+
+    def run_fixture(self, output, *, candidate=True, corrupt_spectrum=False):
+        import gegi_signal_reconstruction as R
+        import gegi_signal_recovery as C
+        import gegi_calibration_admission as A
+        self.trace=[]
+        def saved_group(path,pid,gid):
+            return {'event_id':pid,'group_id':gid,'campaign_initial_offset':0,'status':'completed',
+                'readout_summary':copy.deepcopy(self.spectrum),'truth_secret':[999,999,999],
+                'input_steps':[{'energy_keV':10.}], 'channels':[{'contact_id':1},{'contact_id':18}]}, {}, f'{pid}:{gid}'
+        def fit(observed,bank):
+            self.assertIs(bank,self.bank)
+            self.assertEqual(set(observed),{'event_id','pulse_group_id','status','channels','native'})
+            self.assertNotIn('truth_secret',observed)
+            self.trace.append(('fit',observed['event_id'],observed['pulse_group_id']))
+            return copy.deepcopy(self.new)
+        def classify(observed,reconstruction):
+            result=copy.deepcopy(self.classification)
+            if corrupt_spectrum and reconstruction.get('fit_calls') is not None:
+                result['spectroscopy']['energy_keV']=11.
+            return result
+        def truth(event,names):
+            if candidate:
+                self.assertEqual(self.trace[-1],('fit',event['event_id'],event['group_id']))
+            self.trace.append(('truth',event['event_id'],event['group_id']))
+            cells={(1,18):(10.,np.array([0.,0.,0.]))}
+            return ([{'energy':10.,'processes':{'compt'}}],[],False,False,False,0.,cells,1),True
+        with patch.object(V,'records',side_effect=lambda p:iter(copy.deepcopy(self.saved))), \
+             patch('gegi_saved_reconstruction.sealed_chunks',return_value=({},[(0,self.seal,self.done)])), \
+             patch.object(R,'read_saved_group',side_effect=saved_group) as reader, \
+             patch.object(R,'TemplateBank',return_value=self.bank) as constructor, \
+             patch.object(R,'reconstruct_observables',side_effect=fit) as reconstructor, \
+             patch.object(A,'campaign',return_value={'status':'compatible_saved_response_identity'}) as admission, \
+             patch.object(C,'classify_observables',side_effect=classify), \
+             patch.object(V,'posthoc_topology',side_effect=truth), \
+             patch.object(V,'sequence_truth',return_value=(None,'synthetic_unknown')):
+            kwargs={'frozen_manifest':self.frozen,'split':'development','calibration':self.calibration,
+                    'response_mode':'all34'} if candidate else {}
+            report=V.evaluate(self.campaign,self.reconstruction,output,**kwargs)
+            if candidate:
+                constructor.assert_called_once_with(self.calibration,response_mode='all34')
+                admission.assert_called_once_with(self.campaign,self.calibration)
+                self.assertEqual(reconstructor.call_count,2)
+                self.assertEqual([c.args[1:] for c in reader.call_args_list],[(7,0),(7,1)])
+            else:
+                constructor.assert_not_called();admission.assert_not_called();reconstructor.assert_not_called()
+            return report
+
+    def test_single_frozen_split_fits_before_truth_and_saves_paired_metrics(self):
+        output=self.root/'candidate-development'
+        report=self.run_fixture(output)
+        self.assertEqual(report['counts'],{'groups':2,'events':1})
+        self.assertEqual(report['new_fit_calls'],6)
+        self.assertEqual(report['stage'],'candidate_evaluation_completed')
+        self.assertEqual(self.trace,[('fit',7,0),('truth',7,0),('fit',7,1),('truth',7,1)])
+        self.assertEqual(report['comparison']['baseline']['conditional_hypothesis_counts']['pairing_matches'],2)
+        self.assertEqual(report['comparison']['candidate']['conditional_hypothesis_counts']['pairing_mismatches'],2)
+        self.assertEqual(report['comparison']['reason_transitions'],{'old_reason -> new_reason':2})
+        saved=V.read(output/'evaluation-groups.json')
+        self.assertEqual(saved['selection'],{'split':'development','groups':self.groups[:2]})
+        self.assertTrue(all(row['candidate_reconstruction']==self.new for row in saved['groups']))
+        self.assertIn('../COMPLETE.json',report['calibration_bindings'])
+        before=(output/'report.json').read_bytes()
+        with self.assertRaises(FileExistsError):
+            V.evaluate(self.campaign,self.reconstruction,output,frozen_manifest=self.frozen,
+                       split='development',calibration=self.calibration,response_mode='all34')
+        self.assertEqual((output/'report.json').read_bytes(),before)
+
+    def test_default_remains_posthoc_without_bank_or_new_fits(self):
+        output=self.root/'legacy';output.mkdir();V.write_new(output/'split-manifest.json',self.manifest)
+        report=self.run_fixture(output,candidate=False)
+        self.assertEqual(report['stage'],'posthoc_evaluation_completed')
+        self.assertEqual(report['new_fit_calls'],0)
+        self.assertEqual(report['counts'],{'groups':3,'events':2})
+        self.assertNotIn('comparison',report)
+        self.assertNotIn('selection',V.read(output/'evaluation-groups.json'))
+
+    def test_candidate_spectroscopy_change_aborts_before_truth(self):
+        output=self.root/'bad-candidate'
+        with self.assertRaisesRegex(ValueError,'original fixed spectroscopy'):
+            self.run_fixture(output,corrupt_spectrum=True)
+        self.assertEqual(self.trace,[('fit',7,0)])
+        self.assertFalse((output/'report.json').exists())
 
 
 if __name__ == '__main__':

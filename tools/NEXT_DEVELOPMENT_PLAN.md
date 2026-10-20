@@ -22,7 +22,7 @@ failed stage on the same saved events; do not tune a source map to known positio
 |---|---|---|---|
 | Detector and radiation | PHDS current specification:90 mm diameter,11 mm thickness,32 strip elements [R1]. IAEA GeGI-4 report pp15-16 describes a different generation:10 mm thickness,16x16strips,5mm pitch/0.5mm gaps [R2]. | Exact versioned GeGI model; dedicated nominal cryostat. Livermore EM, Geant4 11.3.2/remage1.1.0; 0.1mm global/0.01mm sensitive production range cuts. Holder, contact/dead-layer detail and source capsule omitted. | Identify the apparatus/configuration used in the comparison. Reuse existing geometry and energy-ledger checks. Unknown passive material blocks absolute-efficiency claims; it is not a reason to rewrite the frozen geometry or restart transport. |
 | Fields and carrier motion | Timing-to-depth depends on bias, impurity, temperature, geometry and readout [R3]. A related detector's fitted parameters cannot determine GeGI values. | Canonical92.3 K,−879V/0V, constant−5e9cm^-3, ADL2016/Bruyneel2016; reused Float32 field cache. Deterministic point charges,1ns steps,1000 ns limit; no diffusion/self-repulsion. | Distinguish observed spread from electron tracks versus omitted cloud diffusion. Preserve incomplete endpoints/charge; evaluate saved position/charge errors before proposing changed carrier physics. No retuning these inputs against the map. |
-| Induced signals | Collection and neighbor transients carry different information; full multichannel signal bases are used in related segmented-Ge methods [R5]. | Campaign stores all34 signed native signals and deposition delays. Calibration computed only selected X/Y:2,727 signal records plus264 geometry exclusions; no full drift paths saved. | Original array/hash, polarity and charge/current checks are reusable. Full34 calibration is absent, not merely unexported. First measure which current candidate failures depend on missing neighbor response; do not synthesize missing templates. |
+| Induced signals | Collection and neighbor transients carry different information; full multichannel signal bases are used in related segmented-Ge methods [R5]. | Campaign stores all34 signed native signals and deposition delays. Original calibration computed selected X/Y:2,727 signal records plus264 geometry exclusions. New original-grid bank retains full34 signals; original paths were not saved. | Original array/hash, polarity and charge/current checks are reusable. The original missing channels cannot be exported. Original-grid full-response reference and original-pair parity are complete; use the recorded responses without synthesizing missing templates. |
 | Electronics and observable timing | Manufacturer describes32raw preamp outputs and an imaging/spectroscopy clock of50MSPS for current options [R1]. Exact generation/filter/firmware still needs matching. | Profile synthetic-signed-14bit-v1:ideal CSA Cf0.6pF, feedback/PZ50us, shaping0.5us, gain20,1mV threshold,14bit0–10V positive peak ADC.1ns is numerical integration. No measured noise/crosstalk or continuous baseline. | Highest-priority correspondence gap. Keep native charge, preamp, shaped peak, ADC energy and timing pickoff separate. Reuse analytic4-group/136-channel check (peak error<9.2e-14V, exactADC). It checks the nominal circuit, not actual GeGI filtering or hardware sampling. Do not set integration dt to20ns just from a clock specification. |
 | Pulse grouping and spectroscopy | Same-decay gamma multiplicity and hardware coincidence/trigger selection must be represented consistently. The private July14slides distinguish full-detector, pixel-total and simulated-active-area spectra. | Decay pulses use100 us anchored half-open windows with reset electronics; no inter-primary pileup. Fixed calibrated collecting-channel sums include guards; X/Y are averaged. Noncollecting induced peaks are excluded. | First compare like-for-like spectra and event denominators. On the frozen 400-events, require exact old-energy preservation, then report Erec−Edep, bias/tails, face mismatch and missing/failure counts. Pulse-group energy is not necessarily one photon's incident energy. |
 | Position, pairing and sequence | GeGI depth uses charge-arrival differences [R2]; calibrated timing/depth and separate energy/crosstalk/pairing stages are established in related work [R3, R4]. | Selected-pair native-waveform fits on0–250ns,0.25mm interpolated depths; ≤4strips/face,≤4sites,≤64hypotheses,2keV/2% compatibility. Charge pixels may differ from photon interactions. Same-pixel and cascade multiplicity unresolved. | Use fixed development/holdout events to quantify wrong/missingX/Ypairs, false splitting, matched position/depth error and sequence unknowns. Thresholds/tolerances are compatibility choices, not measured resolution. No promotion of conditional candidates unless these errors pass predefined, physically justified criteria. |
@@ -42,35 +42,17 @@ has been promoted to validated imaging. The original energy values are preserved
 Three development cases independently match the nominal circuit, exposing a
 transient-to-positive-peak bias and a separate guard terminal-charge inconsistency.
 
-1. Saved endpoint query is complete: guard event723606's86contacts are correct,
-   but geometric contact endpoints interpolate contact and noncontact grid nodes.
-   ExactFloat32 endpoint algebra reproduces all34saved terminalvalues (0.0keVerror).
-   Approved3row path capture c514ed87e5b0 is complete in37.343s. Same-path native
-   replay matches all102waveforms bit-for-bit. Geometric Dirichlet1/0 assignment
-   fails continuity (guard34:0.905912 just outside ->1 on contact), despite fixing
-   terminal charge; do not apply it to production. Native XY spacing is1.17187mm,
-   versus0.0375002mm in Z. Prepare a two-level localXY weighting-potential test on
-   guard34 only, reusing original paths and unchanged Z/geometry/electric field.
-   Original request83d4e680 was amended by the owner to remove memory gates;
-   amended request218b4685 ran once. First-level5,744,640node solve returns
-   max update3.5464764e-6 after55.326s, above fixed1e-6 acceptance; total77.031s.
-   Pilot stops and preserves failure/field; second-level6,776,528nodes NOT run.
-   Saved-state analysis reduces the3electron endpoint deficits8.38-9.41% to
-   0-.4894%, without forcing contact values. This is an unconverged diagnostic.
-   Approved continuation374f9bde ran once from the saved first grid: solve67.279s,
-   total89.531s; returned1.1622906e-6>1e-6, second grid again NOT run. Do not
-   weaken the gate or infer the exact native stop reason from incomplete logs.
-   The strict local native-loop trace completed both grids under unchanged1e-6
-   full-update gate: level8 300steps/19.241s and level16 5000steps/232.813s;
-   combined275.984s. Exact inputs, fields, waveforms and history remain pinned.
-   Level16 removes the three WP34 endpoint deficits without value substitution,
-   but level16-level8 waveform maximum differences remain .126-.418keV.
-   Next small complete check: propagate these saved signals through unchanged
-   readout/timing and inspect whether the same grid gives correct boundary support
-   for the opposite guard and noncollecting channels. Their old spurious terminal
-   signals prohibit promoting a WP34-only patch to full34 production. Reuse native
-   SSD and saved paths; bound any required channel solves, save resumable states.
-   Do not repeat passed tests, old drifts, transport or unchanged publication.
+1. Guard boundary diagnosis is complete on3saved paths: native coarse-grid
+   interpolation explains the lost terminal charge. Forced contact1/0 substitution
+   was rejected. Native local-grid solves for WP34(two levels) and WP17/20(level16)
+   pass unchanged1e-6full-update gates; WP17/34 terminals match ideal collection and
+   WP20's false terminal signal disappears while transients remain. See PROGRESS.md
+   for exact costs, hashes and retained failed attempts. These3of34local potentials
+   do not establish global field/waveform convergence. Do not patch production with
+   only the corrected guards or rerun the same diagnostic.
+   The existing fine-grid interpolation support is correct at all6captured endpoints.
+   Saved WP34 readout differences are below the1.24558keV ADC step; equal ADC codes
+   do not prove equal analog response or timing. No gates were tuned to this result.
    Dirichlet contact values follow the weighting-potential model[R6].
 2. Use the owner's forward/inverse approach: validate interaction -> signed34-channel
    signal -> readout first, then infer positions/energies/multiplicity by explaining
@@ -93,19 +75,34 @@ Stop only for a concrete missing input or work outside the authorized bounded
 full-chain repair. Do not request another per-round approval. The full34 basis and actual hardware transfer remain
 separate requirements. No arbitrary resolution target or extra AI review rounds.
 
-### Conditional calibration option, not the first action
+### Next saved-data milestone — full34 basis and joint signal fit
 
-If saved-event diagnosis establishes the missing34-channel basis as the blocker,
-the prepared bounded proposal is15 fixed 500 keV injections (3 pixels×5 depths), reuse
-exact model/cache/environment, save all34 signed signals and explicit failures;
-no new field solve or transport. Stop after15 attempts and measure startup,
-per-injection time and bytes. Existing selected-pair bank call took158.298s;
-an earlier cold startup took34.155s. These are historical two-channel timings,
-not an estimate of full 34-channel cost. Full34cost remains unmeasured. The proposal is
-recorded in signal-recovery-v1/calibration/inventory.json; latest bounded autonomy
-covers it only if the identified blocker makes it necessary.
-It would test template completeness, not establish hardware equivalence or resolve
-omitted diffusion/noise. Do not launch it merely because this option is recorded.
+The original2991-record full34 bank is complete in223.531s:2727full responses,
+264geometry exclusions;2551complete and176incomplete responses retain original
+status.15completed pilot points were imported into18exact-coordinate checkpoints;
+2709new drifts, no fields/transport. All2991selected-pair results/status/endpoints
+and exact file hashes verified. Known complete endpoint identities match exactly;
+face-sum roundoff3.05176e-5keV.216available pixels,40unavailable,175diagnostics.
+Reuse calibration/full34-bank/results; full evidence and pins are in PROGRESS.md.
+Do not rerun this bank or replace its original field with a partial local patch.
+
+The all34 joint-fit mode is implemented and its18targeted tests pass; production
+still defaults to selected_pair. It fits all signed channels including zero-terminal
+neighbor transients, uses one observed ADC energy-flow scale, and applies the fixed
+maximum-channel diagnostic envelope. No per-event truth gain, source-position fit,
+or fabricated missing waveform. Sparse energy allocation/same-pixel multiplicity
+and physical electronics identification remain explicit limits.
+
+The first frozen200development comparison is complete19.720s/95fits. It fails:
+candidate groups20->33 but wrong pairs3/22->24/55, false splits1/22->6/55,
+matched depth medianabs .142586mm(n49)->.504093mm(n124). All spectroscopy values
+remain exact. Preserve validation/full34-development as failed development evidence;
+do not run holdout or promote this version. Inspect the common-total normalization
+that may hide low-energy collecting-channel errors, repair that specific mechanism,
+and test using the same fixed development sample. Keep all34 neighbor transients
+and the old production mode. Do not tune arbitrary thresholds against event truth.
+Only after a supported development result evaluate the frozen holdout once, with
+unchanged cuts. Report recovery/error changes before saved-data/software release.
 
 ### Reference scope and reuse
 

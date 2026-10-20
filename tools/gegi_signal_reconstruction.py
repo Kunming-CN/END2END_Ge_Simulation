@@ -1,9 +1,9 @@
 """Saved-signal GeGI reconstruction, independent of source labels and event truth.
 
 This is a bounded, conditional inverse model, not validated detector performance.
-Selected-X/Y independent injection waveforms constrain depth jointly; threshold
-crossings are diagnostics only. Missing cross-induction templates and charge-track
-sharing remain explicit. No transport, field, drift, or injection code is called.
+Independent injection waveforms constrain depth jointly; threshold crossings are
+diagnostics only. Default selected-pair and explicit full34 modes retain their
+template coverage limits. No transport, field, drift, or injection code is called.
 
 Primary method context (COSI parameters are NOT GeGI parameters):
 https://arxiv.org/html/1911.02992v1
@@ -25,6 +25,10 @@ import gegi_signal_recovery as U
 
 KIND = 'gegi_saved_signal_hypotheses_v3'
 FIT_GRID_NS = np.arange(0., 252., 2.)
+ALL34_IDS = list(range(1, 35))
+ALL34_COVERAGE = {'kind': 'gegi_all34_signed_induced_v1', 'contact_ids': ALL34_IDS,
+    'time_unit': 'ns', 'signal_unit': 'keV', 'polarity': 'native_signed_before_wiring'}
+ALL34_METHOD = 'joint_signed_all34_waveform_template_fit'
 LIMITATIONS = [
     'Simulation-derived independent injections, not laboratory calibration.',
     'Only the selected X/Y injection signals were saved; induction on other strips is not modelled.',
@@ -50,6 +54,20 @@ def _wave(signal, wiring=1):
             or not np.isfinite(q).all() or not np.all(np.diff(t) > 0)):
         raise ValueError('Invalid signed native waveform')
     return t, q
+
+
+def _response_cost(delta, all34):
+    return (np.max(np.mean(delta**2, axis=-1), axis=-1) if all34
+            else np.mean(delta**2, axis=(1, 2)))
+
+
+def _all34_observed_waves(observed):
+    channels = observed['channels']
+    if (len(channels) != 34 or {c['contact_id'] for c in channels} != set(ALL34_IDS)
+            or set(observed['native']) != set(ALL34_IDS)
+            or any(c['wiring_factor'] != (1 if c['contact_id'] <= 17 else -1) for c in channels)):
+        raise ValueError('all34 observations require every channel and original fixed wiring')
+    return {cid: _wave(observed['native'][cid], 1 if cid <= 17 else -1) for cid in ALL34_IDS}
 
 
 def read_saved_group(path, event_id, group_id):
@@ -120,8 +138,11 @@ def signal_diagnostics(observed):
 
 
 class TemplateBank:
-    """Lazy, checksum-bound selected-pair waveforms from already saved injections."""
-    def __init__(self, calibration_dir):
+    """Saved independent responses; all34 requires an explicit opt-in and full seal."""
+    def __init__(self, calibration_dir, response_mode='selected_pair'):
+        if response_mode not in ('selected_pair', 'all34'):
+            raise ValueError('Unknown response mode; use selected_pair or all34')
+        self.response_mode = response_mode
         self.root = Path(calibration_dir).resolve()
         raw = (self.root / 'depth-calibration.json').read_bytes()
         self.table = json.loads(raw)
@@ -133,6 +154,80 @@ class TemplateBank:
         self.cache = {}
         self.bindings = {}
         self.error_envelope = None
+        if response_mode == 'all34':
+            self._admit_all34()
+
+    def _admit_all34(self):
+        if (self.identity.get('signal_coverage') != ALL34_COVERAGE
+                or self.table.get('signal_coverage') != ALL34_COVERAGE):
+            raise ValueError('all34 requires native signed coverage in identity and table')
+        if ([c['id'] for c in self.channels] != ALL34_IDS
+                or any(c['wiring_factor'] != (1 if c['id'] <= 17 else -1) for c in self.channels)):
+            raise ValueError('all34 channel identities or fixed wiring convention changed')
+        if (self.identity['injection_energy_keV'] != 500 or self.table['injection_energy_keV'] != 500
+                or self.identity['depth_mm'] != list(range(-5, 6))
+                or self.table['depth_mm'] != self.identity['depth_mm']):
+            raise ValueError('all34 independent energy or fixed depth grid changed')
+        complete_path = self.root.parent/'COMPLETE.json'
+        if not complete_path.is_file():
+            raise ValueError('all34 requires sealed COMPLETE; partial-bank fallback is forbidden')
+        complete = json.loads(complete_path.read_bytes())
+        if (complete.get('status') != 'completed_original_grid_full34_bank'
+                or complete.get('selected_pair_mismatches') != 0):
+            raise ValueError('all34 requires completed capture with zero selected-pair mismatches')
+        raw = (self.root/'run.json').read_bytes(); run = json.loads(raw)
+        if _sha(raw) != complete['bank_run_sha256'] or run['status'] != 'completed':
+            raise ValueError('all34 requires a completed sealed bank')
+        for ref in ('identity.json', 'depth-calibration.json', 'depth-diagnostics.json'):
+            if _sha((self.root/ref).read_bytes()) != run['artifacts'][ref]:
+                raise ValueError('all34 bank artifact hash changed: '+ref)
+        outer_path = self.root.parent/'identity.json'; outer_raw = outer_path.read_bytes()
+        outer = json.loads(outer_raw)
+        if (_sha(outer_raw) != complete['bundle_identity_sha256']
+                or outer['calibration_identity_sha256'] != self.table['identity_sha256']
+                or outer['request_sha256'] != complete['request_sha256']):
+            raise ValueError('all34 bundle identity changed')
+        manifest_path = self.root.parent/'validation.jsonl'; raw = manifest_path.read_bytes()
+        if _sha(raw) != complete['validation_sha256']:
+            raise ValueError('all34 exact-record manifest changed')
+        records = [json.loads(line) for line in raw.splitlines() if line]
+        self.record_sha256 = {r['record_ref']: r['record_sha256'] for r in records}
+        diagnostics = json.loads((self.root/'depth-diagnostics.json').read_bytes())
+        self._all34_diagnostics = diagnostics
+        regular = [r['record_ref'] for pixel in self.table['pixels'].values() for r in pixel['rows']]
+        diagnostic = [r['record_ref'] for r in diagnostics['rows']]
+        expected = regular+diagnostic
+        if (complete['validated_records'] != len(records)
+                or complete['full34_records']+complete['excluded_records'] != len(records)
+                or len(records) != len(self.record_sha256) or len(expected) != len(set(expected))
+                or set(expected) != set(self.record_sha256)
+                or len(regular) != len(self.identity['pixel_order'])*len(self.identity['depth_mm'])
+                or len(diagnostic) != math.prod(len(self.identity[k]) for k in
+                    ('diagnostic_pixels', 'diagnostic_depth_mm', 'diagnostic_offsets_pitch_fraction'))
+                or diagnostics['identity_sha256'] != self.table['identity_sha256']
+                or diagnostics['total_fixed_injections'] != len(diagnostic)):
+            raise ValueError('all34 regular/diagnostic record coverage is incomplete')
+        for path in (complete_path, self.root/'run.json', outer_path, manifest_path,
+                     self.root/'identity.json', self.root/'depth-calibration.json', self.root/'depth-diagnostics.json'):
+            self.bindings[str(path.relative_to(self.root)) if path.is_relative_to(self.root)
+                          else '../'+path.name] = _sha(path.read_bytes())
+
+    def response(self, row, grid):
+        if self.response_mode == 'all34':
+            if row.get('signal_coverage') != ALL34_COVERAGE:
+                raise ValueError('all34 injection lacks native signed coverage')
+            signals = row.get('channel_signals')
+            if not isinstance(signals, list) or [s['contact_id'] for s in signals] != ALL34_IDS:
+                raise ValueError('all34 injection must contain every channel exactly once')
+            waves = [_wave(s, 1 if s['contact_id'] <= 17 else -1) for s in signals]
+        else:
+            waves = [_wave(row['signals'][f], w) for f, w in (('X', 1), ('Y', -1))]
+        energy = row['injection_energy_keV']
+        if not math.isfinite(energy) or energy <= 0:
+            raise ValueError('Independent injection energy must be positive and finite')
+        if self.response_mode == 'all34' and energy != self.identity['injection_energy_keV']:
+            raise ValueError('all34 injection energy differs from the fixed independent input')
+        return np.asarray([np.interp(grid, t, q, left=0, right=q[-1])/energy for t, q in waves])
 
     def record(self, ref):
         path = (self.root / ref).resolve()
@@ -140,8 +235,14 @@ class TemplateBank:
             raise ValueError('Calibration reference escaped root')
         raw = path.read_bytes()
         record = json.loads(raw)
-        if (record['identity_sha256'] != self.table['identity_sha256']
-                or _sha(_canonical(record['payload'])) != record['payload_sha256']):
+        if self.response_mode == 'all34':
+            # Julia and Python render tiny floating values differently. The sealed
+            # wrapper already checked native payload SHA; use its exact file SHA.
+            valid = (ref in self.record_sha256 and _sha(raw) == self.record_sha256[ref]
+                and record.get('kind') == 'gegi_independent_injection_checkpoint_v1')
+        else:
+            valid = _sha(_canonical(record['payload'])) == record['payload_sha256']
+        if record['identity_sha256'] != self.table['identity_sha256'] or not valid:
             raise ValueError('Independent injection checksum changed')
         self.bindings[ref] = _sha(raw)
         return record['payload']
@@ -165,11 +266,7 @@ class TemplateBank:
             return None
         out = []
         for row in rows:
-            pair = []
-            for face, wiring in (('X', 1), ('Y', -1)):
-                t, q = _wave(row['signals'][face], wiring)
-                pair.append(np.interp(grid, t, q, left=0, right=q[-1]) / row['injection_energy_keV'])
-            out.append(pair)
+            out.append(self.response(row, grid))
         return np.asarray(out)
 
     def calibrate_discrepancy(self):
@@ -180,7 +277,9 @@ class TemplateBank:
         """
         if self.error_envelope is not None:
             return self.error_envelope
-        report = json.loads((self.root / 'depth-diagnostics.json').read_bytes())
+        all34 = self.response_mode == 'all34'
+        report = (self._all34_diagnostics if all34
+                  else json.loads((self.root / 'depth-diagnostics.json').read_bytes()))
         residuals, channel_residuals, errors, excluded = [], [], [], 0
         for r in report['rows']:
             row = self.record(r['record_ref'])
@@ -188,16 +287,14 @@ class TemplateBank:
                 excluded += 1
                 continue
             grid = FIT_GRID_NS
-            target = np.asarray([np.interp(grid, *_wave(row['signals'][f], w), left=0,
-                right=_wave(row['signals'][f], w)[1][-1]) for f, w in (('X', 1), ('Y', -1))])
-            target /= row['injection_energy_keV']
+            target = self.response(row, grid)
             options = self.templates(*row['contact_ids'], grid)
             # Piecewise interpolation of complete waveforms, not threshold times.
             fine = np.concatenate([options[i:i+1]*(1-f)+options[i+1:i+2]*f
                 for i in range(len(options)-1) for f in (0., .25, .5, .75)] + [options[-1:]])
-            costs = np.mean((fine-target)**2, axis=(1, 2))
+            costs = _response_cost(fine-target, all34)
             best = int(np.argmin(costs))
-            residuals.append(float(np.sqrt(costs[best])))
+            residuals.append(float(np.sqrt(np.mean((fine[best]-target)**2) if all34 else costs[best])))
             channel_residuals.append(float(np.sqrt(np.mean((fine[best]-target)**2, axis=1)).max()))
             errors.append(float(abs(-5 + .25*best-row['position_mm'][2])))
         if not residuals:
@@ -206,6 +303,11 @@ class TemplateBank:
             'max_channel_normalized_rms': max(channel_residuals),
             'diagnostic_count': len(residuals), 'excluded_count': excluded,
             'scope': 'Maximum on saved fixed independent diagnostic injections; not a confidence level.'}
+        if all34:
+            self.error_envelope.update(response_mode='all34',
+                normalization='Every channel divided by the same independent injection energy.',
+                objective='maximum channel normalized RMS; no dilution by averaging34 channels',
+                fixed_diagnostic_count=len(report['rows']))
         return self.error_envelope
 
 
@@ -251,10 +353,14 @@ def energy_flows(xs, ys, max_hypotheses=64, max_sites=4):
     return flows, bookkeeping
 
 
-def _fit_flow(flow, observations, bank, envelope):
-    ids = sorted({cid for x, y, _ in flow for cid in (x, y)})
+def _fit_flow(flow, observations, bank, envelope, *, all34_waves=None):
+    all34 = getattr(bank, 'response_mode', 'selected_pair') == 'all34'
+    if all34 and envelope.get('response_mode') != 'all34':
+        raise ValueError('all34 fit requires the matching all34 diagnostic envelope')
+    ids = ALL34_IDS if all34 else sorted({cid for x, y, _ in flow for cid in (x, y)})
     index = {cid: i for i, cid in enumerate(ids)}
-    waves = {cid: _wave(observations['native'][cid], 1 if cid <= 17 else -1) for cid in ids}
+    waves = (all34_waves if all34_waves is not None else _all34_observed_waves(observations)) if all34 else {
+        cid: _wave(observations['native'][cid], 1 if cid <= 17 else -1) for cid in ids}
     # Fixed window also used for independent diagnostics prevents plateau-length
     # dilution of residuals. Reject activity beyond it instead of silently cropping.
     grid = FIT_GRID_NS
@@ -262,9 +368,13 @@ def _fit_flow(flow, observations, bank, envelope):
         if np.any(np.abs(q[t > grid[-1]]-q[-1]) > max(1e-7, abs(q[-1])*1e-8)):
             return {'status': 'unsupported', 'reason': 'delayed_waveform_outside_template_support'}
     target = np.asarray([np.interp(grid, *waves[cid], left=0, right=waves[cid][1][-1]) for cid in ids])
-    # Each collected channel is measured relative to its own terminal charge.
-    # A high-energy neighbour must not hide a low-energy channel's wrong shape.
-    scales = np.asarray([waves[cid][1][-1] for cid in ids])
+    # Selected-pair retains its per-terminal scale. Full34 shares the observed
+    # energy-flow total, preserving signed zero-terminal neighbour responses.
+    total_energy = sum(e for _, _, e in flow)
+    scales = (np.full(34, total_energy) if all34
+              else np.asarray([waves[cid][1][-1] for cid in ids]))
+    if all34 and (not math.isfinite(total_energy) or total_energy <= 0):
+        raise ValueError('all34 energy-flow scale must be positive and finite')
     if not np.all(scales > 0):
         return {'status': 'unsupported', 'reason': 'nonpositive_collected_terminal_charge'}
     target /= scales[:, None]
@@ -275,9 +385,12 @@ def _fit_flow(flow, observations, bank, envelope):
             return {'status': 'unsupported', 'reason': 'pixel_template_unavailable', 'pixel': [x, y]}
         fine = np.concatenate([options[i:i+1]*(1-f)+options[i+1:i+2]*f
             for i in range(len(options)-1) for f in (0., .25, .5, .75)] + [options[-1:]])
-        full = np.zeros((len(fine), len(ids), len(grid)))
-        full[:, index[x], :] = fine[:, 0, :] * e/scales[index[x]]
-        full[:, index[y], :] = fine[:, 1, :] * e/scales[index[y]]
+        if all34:
+            full = fine * (e/total_energy)
+        else:
+            full = np.zeros((len(fine), len(ids), len(grid)))
+            full[:, index[x], :] = fine[:, 0, :] * e/scales[index[x]]
+            full[:, index[y], :] = fine[:, 1, :] * e/scales[index[y]]
         bases.append(full)
     # Three deterministic starts guard against one coordinate-descent minimum.
     fits = []
@@ -288,19 +401,21 @@ def _fit_flow(flow, observations, bank, envelope):
             previous = choices.copy()
             for k, base in enumerate(bases):
                 residual = target-model+base[choices[k]]
-                costs = np.mean((base-residual)**2, axis=(1, 2))
+                costs = _response_cost(base-residual, all34)
                 new = int(np.argmin(costs)); model += base[new]-base[choices[k]]; choices[k] = new
             if choices == previous: break
-        fits.append((float(np.mean((target-model)**2)), choices, model))
+        objective = float(np.max(np.mean((target-model)**2, axis=1))) if all34 else float(np.mean((target-model)**2))
+        fits.append((objective, choices, model))
     cost, choices, model = min(fits, key=lambda f: f[0])
-    rms = math.sqrt(cost)
+    rms = math.sqrt(float(np.mean((target-model)**2))) if all34 else math.sqrt(cost)
     channel_rms = np.sqrt(np.mean((target-model)**2, axis=1))
     sites = []
     metadata = {c['contact_id']: c for c in observations['channels']}
     for k, ((x, y, energy), base) in enumerate(zip(flow, bases)):
         residual = target-model+base[choices[k]]
-        costs = np.mean((base-residual)**2, axis=(1, 2))
-        compatible = np.flatnonzero(costs <= cost + envelope['normalized_rms']**2 + 1e-15)
+        costs = _response_cost(base-residual, all34)
+        profile_envelope = envelope['max_channel_normalized_rms'] if all34 else envelope['normalized_rms']
+        compatible = np.flatnonzero(costs <= cost + profile_envelope**2 + 1e-15)
         lo, hi = -5+.25*int(compatible[0]), -5+.25*int(compatible[-1])
         z = -5+.25*choices[k]
         sx, sy = metadata[x], metadata[y]
@@ -312,14 +427,20 @@ def _fit_flow(flow, observations, bank, envelope):
             'position_covariance_mm2': np.diag([sx['strip_pitch_mm']**2/12, sy['strip_pitch_mm']**2/12, sz**2]).tolist(),
             'energy_sigma_keV': None,
             'energy_compatibility_scale_keV': max(I.PAIR_ABS_KEV, I.PAIR_REL*energy),
-            'method': 'joint_signed_selected_pair_waveform_template_fit'})
-    gate = envelope.get('max_channel_normalized_rms', envelope['normalized_rms'])
-    return {'status': 'conditional_fit' if max(channel_rms) <= gate+1e-12 else 'model_mismatch',
+            'method': ALL34_METHOD if all34 else 'joint_signed_selected_pair_waveform_template_fit'})
+    gate = envelope['max_channel_normalized_rms'] if all34 else envelope.get('max_channel_normalized_rms', envelope['normalized_rms'])
+    result = {'status': 'conditional_fit' if max(channel_rms) <= gate+1e-12 else 'model_mismatch',
         'normalized_rms': rms, 'diagnostic_envelope': envelope['normalized_rms'], 'sites': sites,
         'channel_normalized_rms': {str(cid): float(v) for cid, v in zip(ids, channel_rms)},
         'max_channel_diagnostic_envelope': gate, 'fit_window_ns': [0., float(grid[-1])],
         'start_solutions_depth_mm': [[-5+.25*c for c in f[1]] for f in fits],
         'depth_profile_holds_other_sites_fixed': True}
+    if all34:
+        result.update(response_mode='all34', method=ALL34_METHOD, global_energy_scale_keV=total_energy,
+            max_channel_normalized_rms=float(max(channel_rms)),
+            normalization='All34 target channels and summed site responses share observed ADC energy-flow total.',
+            objective='maximum channel normalized RMS; finite diagnostic envelope, not noise or confidence')
+    return result
 
 
 def sequence_candidates(sites):
@@ -362,12 +483,18 @@ def _reconstruct_observables(observed, bank, *, max_strips=4, max_sites=4, max_h
         'status': 'unidentifiable', 'reason': None, 'energy_keV': None, 'hypotheses': [], 'candidates': [],
         'calibration_sha256': bank.sha256 if bank is not None else None, 'truth_used': False, 'source_label_used': False,
         'imaging_accepted': False, 'limitations': LIMITATIONS}
+    all34 = getattr(bank, 'response_mode', 'selected_pair') == 'all34'
+    if all34:
+        out.update(response_mode='all34', method=ALL34_METHOD, fit_calls=0,
+            limitations=[x for x in LIMITATIONS if not x.startswith('Only the selected X/Y')]+[
+                'All34 templates use a common observed-energy scale; low-energy sites can remain hidden below the finite diagnostic envelope.'])
     if observed['status'] != 'completed' or observed['channels'] is None or observed['native'] is None:
         out.update(status='native_failed_or_incomplete', reason='native_response_incomplete')
         return out
     if bank is None:
         out['reason'] = 'independent_waveform_templates_unavailable'
         return out
+    all34_waves = _all34_observed_waves(observed) if all34 else None
     out['signed_signal_diagnostics'] = signal_diagnostics(observed)
     collectors = [c for c in observed['channels'] if I.terminal_collection(c, c['wiring_factor'])]
     if any(c['contact_id'] in (17, 34) for c in collectors):
@@ -390,7 +517,9 @@ def _reconstruct_observables(observed, bank, *, max_strips=4, max_sites=4, max_h
         if len(flow) > max_sites:
             fit = {'status': 'unsupported', 'reason': 'site_budget_exceeded'}
         else:
-            fit = _fit_flow(flow, observed, bank, envelope)
+            if all34:
+                out['fit_calls'] += 1
+            fit = _fit_flow(flow, observed, bank, envelope, all34_waves=all34_waves)
         fit.update(hypothesis_index=index, energy_flow=[list(v) for v in flow])
         out['hypotheses'].append(fit)
         if fit['status'] == 'conditional_fit':

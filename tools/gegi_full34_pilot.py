@@ -213,8 +213,13 @@ def execute(digest):
             W.require(W.sha(W.safe_path(ROOT, ref)) == expected, 'Pinned input/source changed: '+ref)
     W.require(W.sha(request['environment']['julia_executable']) == request['environment']['julia_executable_sha256'],
               'Pinned Julia executable changed.')
+    return launch(path, request, digest, JULIA_WORKER, 'completed_fixed15_full34_forward_pilot')
+
+
+def launch(path, request, digest, worker_source, completed_status):
+    """One 300-second worker; shared by the fixed pilot and full-bank recorder."""
     output = path.parent/'results';output.mkdir()  # One attempt; preserve any existing partial directory.
-    worker = output/'full34-worker.jl';worker.write_bytes(JULIA_WORKER.encode('utf-8'))
+    worker = output/'full34-worker.jl';worker.write_bytes(worker_source.encode('utf-8'))
     (output/'bound-request.json').write_bytes(path.read_bytes())
     env = dict(os.environ, JULIA_PKG_OFFLINE='true', JULIA_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', OMP_NUM_THREADS='1')
     command = [request['environment']['julia_executable'], '--startup-file=no', '--compiled-modules=existing',
@@ -242,7 +247,7 @@ def execute(digest):
                 stop = 'manual_stop';child.kill();break
             time.sleep(.1)
         code = child.wait()
-    result = {'status': 'completed_fixed15_full34_forward_pilot' if code == 0 else 'failed_or_stopped_preserve_partial',
+    result = {'status': completed_status if code == 0 else 'failed_or_stopped_preserve_partial',
         'returncode': code, 'stop_reason': stop, 'elapsed_seconds': time.monotonic()-started,
         'peak_working_set_bytes': peak, 'available_physical_before_bytes': before,
         'memory_policy': request['memory_policy'], 'request_sha256': digest, 'runner_sha256': W.sha(__file__),
