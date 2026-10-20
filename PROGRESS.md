@@ -106,10 +106,18 @@ allcorrect/mixed/allwrong candidate groups17/3/0 (old17/2/1). Same39cells from19
 shared hypotheses: depthmedianabs .142586->.219220mm;7improve,16worse,16tie;
 site energies all39identical. All200spectroscopy exact. V2 also NOT promoted.
 Evidence validation/full34-development-v2; Rsource4bd6df22...86922c, evaluator
-4d3cbba0...c3bcc4. Next bounded saved-data diagnosis compares full34 residuals at
-old versus v2 depths, testing whether the minimax fit objective sacrifices depth
-information. No new physics, no holdout, no threshold tuning or production change.
-Independent template bank is complete and reusable.
+4d3cbba0...c3bcc4. Saved19-hypothesis objective diagnosis(2.683s) found6minimax/aggregate tradeoffs
+and7v2solutions worse on BOTH metrics than existing olddepths (no newfit/physics).
+Restoring original least-squares optimization, retaining max-channel acceptance,
+passed20fit tests. V3dev16.170s/95fits:24candidate groups(19retained,5new,1lost),
+wrongpairs8/30, false splits1/30; groupallcorrect/mixed/allwrong18/4/2. Shared46
+cells: depthmedianabs .142586->.133164mm;7improve,3worse,36tie; all46energiesexact.
+All200spectroscopy exact. Best-RMS conditional pairing stillwrong3/24groups;
+no best-only promotion. V3also not accepted as imaging recovery; holdout untouched.
+Evidence validation/full34-development-v3; Rsourceb9b30355...02be4a. Next fixed
+3case diagnosis(720929,727922,752677) distinguishes missing true support, energy
+allocation bias, and waveform mismatch using saved results; truth only posthoc.
+Independent template bank is complete and reusable; no new physical computation.
 
 ### Saved-data and publication baselines — already delivered
 

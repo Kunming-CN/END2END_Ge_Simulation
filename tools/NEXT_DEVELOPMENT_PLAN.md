@@ -93,16 +93,29 @@ maximum-channel diagnostic envelope. No per-event truth gain, source-position fi
 or fabricated missing waveform. Sparse energy allocation/same-pixel multiplicity
 and physical electronics identification remain explicit limits.
 
-The first frozen200development comparison is complete19.720s/95fits. It fails:
-candidate groups20->33 but wrong pairs3/22->24/55, false splits1/22->6/55,
-matched depth medianabs .142586mm(n49)->.504093mm(n124). All spectroscopy values
-remain exact. Preserve validation/full34-development as failed development evidence;
-do not run holdout or promote this version. Inspect the common-total normalization
-that may hide low-energy collecting-channel errors, repair that specific mechanism,
-and test using the same fixed development sample. Keep all34 neighbor transients
-and the old production mode. Do not tune arbitrary thresholds against event truth.
-Only after a supported development result evaluate the frozen holdout once, with
-unchanged cuts. Report recovery/error changes before saved-data/software release.
+The first frozen200development comparison failed: candidate groups20->33 but
+wrong pairs3/22->24/55. The total-energy residual scale hid weak collectors.
+A targeted weighting correction restores positive-terminal scales for collectors,
+retaining total-energy scales for neighbors; fixed gain and175diagnostic inputs
+remain unchanged. V2development16.623s/95fits still does not improve the baseline:
+20candidate groups,4/24wrong pairs; same39cells depthmedian .142586->.219220mm,
+7improve/16worse/16tie. All200spectroscopy values are exact. Both failed versions
+are retained in validation/full34-development and full34-development-v2.
+
+The same-model objective diagnosis is complete:6minimax/aggregate tradeoffs and
+7solutions worse on both metrics than known saved depths. Restored least-squares
+optimization with separate max-channel acceptance;20targetedfit tests pass.
+V3development improves shared46cell depthmedian .142586->.133164mm, but has
+8/30wrong conditional pairs (best-RMS pair wrong3/24groups). No imaging promotion;
+all200old spectroscopy values exact. Preserve all three derived versions.
+
+Next isolate the3remaining best-RMS errors (developmentIDs720929,727922,752677):
+is the true endpoint-cell support absent from ADC energy-flow enumeration, rejected
+by the full34 waveform model, or still indistinguishable? Use existing signals and
+fits; truth only independent diagnosis, no source-position input or newphysics.
+Decide the next small energy/template change from this evidence, without tuning
+arbitrary cuts. Keep holdout unused and production selected_pair unchanged until
+an integrated development result supports validation and release.
 
 ### Reference scope and reuse
 
@@ -135,12 +148,13 @@ Complete GeGI operation/service manual and matching raw experimental electronics
 configuration are still missing. Manufacturer datasheets do not supply the full
 transfer function. Supervisor owns decisions; ordinary retrieval/development uses
 6.1-sol, Astra only for necessary complex analysis. Reuse completed retrieval,
-checks and publication. The only new physics in this continuation is the approved
-3original-deposit drift capture; the subsequent boundary comparison uses saved paths.
+checks and publication. Completed bounded calculations include3original-deposit
+path captures, local WP17/20/34solves and the original-grid full34 reference bank.
+All are retained; current inverse-model diagnosis uses saved data only.
 
 ## Completed delivery retained
 
-The 1M campaign, reconstruction-v3, student-runtime-47685df9f40a and published
-website remain the accepted prior delivery. PROGRESS.md contains their exact
+The 1M campaign, reconstruction-v3, student-runtime-1b88d5e7c2a7 and website
+4466b8a remain the prior delivered baseline. PROGRESS.md contains their exact
 receipts, hashes, tested scope and unresolved scientific limits. Do not rerun them
 to resume this work. Earlier plans remain in Git at commit d94f82e.

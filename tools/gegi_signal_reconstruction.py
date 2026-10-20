@@ -57,9 +57,8 @@ def _wave(signal, wiring=1):
     return t, q
 
 
-def _response_cost(delta, all34):
-    return (np.max(np.mean(delta**2, axis=-1), axis=-1) if all34
-            else np.mean(delta**2, axis=(1, 2)))
+def _response_cost(delta):
+    return np.mean(delta**2, axis=(1, 2))
 
 
 def _all34_observed_waves(observed):
@@ -304,9 +303,9 @@ class TemplateBank:
                     raise ValueError('all34 diagnostic requires positive collected terminal charge')
                 target = target/scales[:, None]
                 fine = fine/scales[None, :, None]
-            costs = _response_cost(fine-target, all34)
+            costs = _response_cost(fine-target)
             best = int(np.argmin(costs))
-            residuals.append(float(np.sqrt(np.mean((fine[best]-target)**2) if all34 else costs[best])))
+            residuals.append(float(np.sqrt(costs[best])))
             channel_residuals.append(float(np.sqrt(np.mean((fine[best]-target)**2, axis=1)).max()))
             errors.append(float(abs(-5 + .25*best-row['position_mm'][2])))
         if not residuals:
@@ -319,7 +318,7 @@ class TemplateBank:
             self.error_envelope.update(response_mode='all34',
                 residual_weighting=ALL34_WEIGHTING,
                 normalization='Same residual scale for data and model: positive wired terminal on selected collectors; fixed injection energy on other channels. Template gain is unchanged.',
-                objective='maximum channel normalized RMS; no dilution by averaging34 channels',
+                objective='least-squares fit across all channels/time; acceptance uses maximum channel RMS on the fixed diagnostics',
                 fixed_diagnostic_count=len(report['rows']))
         return self.error_envelope
 
@@ -416,21 +415,20 @@ def _fit_flow(flow, observations, bank, envelope, *, all34_waves=None):
             previous = choices.copy()
             for k, base in enumerate(bases):
                 residual = target-model+base[choices[k]]
-                costs = _response_cost(base-residual, all34)
+                costs = _response_cost(base-residual)
                 new = int(np.argmin(costs)); model += base[new]-base[choices[k]]; choices[k] = new
             if choices == previous: break
-        objective = float(np.max(np.mean((target-model)**2, axis=1))) if all34 else float(np.mean((target-model)**2))
+        objective = float(np.mean((target-model)**2))
         fits.append((objective, choices, model))
     cost, choices, model = min(fits, key=lambda f: f[0])
-    rms = math.sqrt(float(np.mean((target-model)**2))) if all34 else math.sqrt(cost)
+    rms = math.sqrt(cost)
     channel_rms = np.sqrt(np.mean((target-model)**2, axis=1))
     sites = []
     metadata = {c['contact_id']: c for c in observations['channels']}
     for k, ((x, y, energy), base) in enumerate(zip(flow, bases)):
         residual = target-model+base[choices[k]]
-        costs = _response_cost(base-residual, all34)
-        profile_envelope = envelope['max_channel_normalized_rms'] if all34 else envelope['normalized_rms']
-        compatible = np.flatnonzero(costs <= cost + profile_envelope**2 + 1e-15)
+        costs = _response_cost(base-residual)
+        compatible = np.flatnonzero(costs <= cost + envelope['normalized_rms']**2 + 1e-15)
         lo, hi = -5+.25*int(compatible[0]), -5+.25*int(compatible[-1])
         z = -5+.25*choices[k]
         sx, sy = metadata[x], metadata[y]
@@ -456,7 +454,7 @@ def _fit_flow(flow, observations, bank, envelope, *, all34_waves=None):
             channel_residual_scales_keV={str(cid): float(v) for cid, v in zip(ids, scales)},
             max_channel_normalized_rms=float(max(channel_rms)),
             normalization='Data and complete summed model share each channel scale: positive wired terminal for flow collectors; observed ADC energy-flow total for other channels. Residual weighting, not gain correction.',
-            objective='maximum channel normalized RMS; finite diagnostic envelope, not noise or confidence')
+            objective='least-squares weighted fit across all channels/time; separate maximum-channel acceptance gate; finite diagnostic envelope, not noise or confidence')
     return result
 
 

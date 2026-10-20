@@ -182,6 +182,45 @@ class All34Tests(unittest.TestCase):
         self.assertEqual(result['channel_residual_scales_keV']['13'], 488.)
         self.assertEqual(result['channel_residual_scales_keV']['2'], 500.)
 
+    def test_least_squares_resolves_depth_hidden_by_flat_max_channel_objective(self):
+        envelope = G.TemplateBank(self.make_bank(), response_mode='all34').calibrate_discrepancy()
+
+        class PlateauBank:
+            response_mode = 'all34'
+            def templates(self, x, y, grid):
+                unit = np.clip((grid-45)/20, 0, 1)
+                bipolar = np.interp(grid, TIME, BIPOLAR)
+                responses = np.zeros((11, 34, len(grid)))
+                responses[:, [x-1, y-1]] = unit
+                for i, z in enumerate(range(-5, 6)):
+                    responses[i, x-1] += .0005*(z-1.25)*bipolar
+                return responses
+
+        bank = PlateauBank();grid = G.FIT_GRID_NS
+        target = np.zeros((34, len(grid)))
+        target[[3, 20]] = np.clip((grid-45)/20, 0, 1)
+        target[1] = .008*np.interp(grid, TIME, BIPOLAR)
+        options = bank.templates(4, 21, grid)
+        fine = np.concatenate([options[i:i+1]*(1-f)+options[i+1:i+2]*f
+            for i in range(10) for f in (0., .25, .5, .75)]+[options[-1:]])
+        delta = fine-target
+        minimax = np.max(np.mean(delta**2, axis=2), axis=1)
+        np.testing.assert_array_equal(minimax, np.full(41, minimax[0]))
+        self.assertEqual(int(np.argmin(minimax)), 0)  # v2 first-index depth=-5.
+        self.assertEqual(int(np.argmin(G._response_cost(delta))), 25)  # depth=1.25.
+        observation = observed()
+        observation['native'] = {cid: {'time_ns': grid.tolist(),
+            'signed_induced_keV': (500*target[cid-1]*(1 if cid <= 17 else -1)).tolist()} for cid in G.ALL34_IDS}
+        for channel in observation['channels']:
+            cid = channel['contact_id'];collecting = cid in (4, 21)
+            channel.update(accepted=collecting, collection_candidate=collecting,
+                reconstructed_energy_keV=500. if collecting else None,
+                final_induced_keV=500*target[cid-1, -1]*(1 if cid <= 17 else -1))
+        result = G._fit_flow([(4, 21, 500.)], observation, bank, envelope)
+        self.assertEqual(result['status'], 'conditional_fit')
+        self.assertEqual(result['sites'][0]['position_mm'][2], 1.25)
+        self.assertEqual(result['start_solutions_depth_mm'], [[1.25]]*3)
+
     def test_full_reconstruction_counts_actual_fits_and_keeps_native_failure_null(self):
         bank = G.TemplateBank(self.make_bank(), response_mode='all34')
         result = G.reconstruct_observables(observed(), bank)
