@@ -1,4 +1,4 @@
-"""Pending owner-approved two-level localXY weighting-potential34 CPU pilot.
+"""Pending owner-approved fixed localXY weighting-potential34 continuation.
 
 No calculation runs on import. Execution requires the exact approved request
 SHA256. Pure grid construction is independently testable without Julia.
@@ -156,12 +156,23 @@ function main(reqpath,out)
         SSD.check_grid(grid);check(prod(size(grid))<=7_000_000,"Node cap exceeded")
         check(collect(size(grid))==level["shape"],"Explicit shape mismatch")
         check(grid_digest(axes)==level["grid_float32_le_sha256"],"Explicit grid hash mismatch")
-        save(joinpath(dir,"grid.json"),level);stage(out,"resample_original_WP34",index)
-        # Each level starts from ORIGINAL, never from the preceding solved level.
-        sim.weighting_potentials[34]=original[grid]
+        save(joinpath(dir,"grid.json"),level)
+        if index==8
+            stage(out,"load_saved_unconverged_WP34",index)
+            seed=deserialize(req["level8_continuation_seed"]["absolute_ref"])
+            check(eltype(seed.data)==Float32 && size(seed.data)==size(grid),"Continuation seed shape or precision changed")
+            check(all(seed.grid.axes[k].ticks==grid.axes[k].ticks for k in 1:3),"Continuation seed grid ticks changed")
+            sim.weighting_potentials[34]=seed
+            initial_state="pinned saved unconverged level8 WP34 loaded directly"
+        else
+            stage(out,"resample_original_WP34",index)
+            # Level16 starts from ORIGINAL, never from continued level8.
+            sim.weighting_potentials[34]=original[grid]
+            initial_state="original WP34 resampled independently"
+        end
         serialize(joinpath(dir,"starting-WP34.jls"),sim.weighting_potentials[34])
         stage(out,"CPU_solve_WP34",index);started=time_ns()
-        last_update=SSD.update_till_convergence!(sim,SSD.WeightingPotential,34,Float32(1e-6);
+        last_update=SSD.update_till_convergence!(sim,SSD.WeightingPotential,34,Float32(1e-7);
             n_iterations_between_checks=100,max_n_iterations=10000,use_nthreads=1,sor_consts=Float32(1.4),
             depletion_handling=false,not_only_paint_contacts=true,paint_contacts=true,
             device_array_type=Array,verbose=true)
@@ -170,7 +181,8 @@ function main(reqpath,out)
         converged=isfinite(last_update) && last_update<=Float32(1e-6)
         receipt=Dict("last_update"=>isfinite(last_update) ? Float64(last_update) : nothing,
             "last_update_raw"=>string(last_update),"converged"=>converged,"solve_seconds"=>elapsed,
-            "iterations_performed"=>nothing,"max_n_iterations"=>10000,"initial_state"=>"original WP34 resampled independently",
+            "iterations_performed"=>nothing,"max_n_iterations"=>10000,"initial_state"=>initial_state,
+            "internal_convergence_limit"=>1e-7,"external_acceptance_last_update_limit"=>1e-6,
             "solver_scope"=>"Last-update stopping gate only, not PDE/grid/global detector validation")
         save(joinpath(dir,"solver.json"),receipt)
         check(converged,"WP34 unconverged; preserve returned state and stop without another solve")
@@ -210,7 +222,7 @@ def execute(request_path, approval_sha):
     if approval_sha != digest:
         raise ValueError('Explicit human approval must bind this exact request SHA256')
     request = json.loads(request_path.read_bytes())
-    if request['kind'] != 'gegi_single_guard34_local_grid_pilot_v1' or request['contact_id'] != 34:
+    if request['kind'] != 'gegi_single_guard34_local_grid_continuation_v1' or request['contact_id'] != 34:
         raise ValueError('Unsupported or enlarged weighting-potential scope')
     expected = {'maximum_new_WP34_solves': 2, 'maximum_total_wall_seconds': 300, 'threads': 1,
                 'maximum_nodes_per_level': 7000000}
@@ -225,7 +237,7 @@ def execute(request_path, approval_sha):
         available_before = available_memory()
     except OSError:
         available_before = None
-    output = request_path.parent/'results'; output.resolve().relative_to((ROOT/'.local').resolve()); output.mkdir()
+    output = request_path.parent/'results-continuation'; output.resolve().relative_to((ROOT/'.local').resolve()); output.mkdir()
     (output/'approved-request.json').write_bytes(request_path.read_bytes())
     worker = output/'WP34-worker.jl'; worker.write_text(JULIA_WORKER, encoding='utf-8')
     env = os.environ.copy(); env.update(JULIA_PKG_OFFLINE='true', JULIA_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', OMP_NUM_THREADS='1')
