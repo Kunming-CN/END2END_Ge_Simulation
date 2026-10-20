@@ -118,22 +118,39 @@ path phi and hashes: validation/boundary-grid-pilot/saved-state-analysis/analysi
 SHA79f2dacb...f3444a; script SHA69eaf589...6587dd. This supports a local-grid cause
 of guard signal error; retain the unvalidated status and original failure receipt.
 
-Next scientific step: prepare bounded continuation from the saved first-level WP34,
-then the same second grid278x277x88 (6,776,528nodes). Preserve external1e-6 acceptance;
-use tighter native stopping1e-7 rather than weakening the gate. Fixed request
-request-continuation.json SHA374f9bde...37ed7b is prepared (same pilot directory);
-tool SHAcba08545...4a47db at21bb6b4,3grid tests and Python/Julia parsers pass. At most
-2solves/300s, one process/thread, memory measured only, no retries. Owner decision
-is pending; the memory amendment does not authorize this new continuation.
-Do not restart original drift/transport or repeat completed stage tests/publication.
+Owner-approved continuation request374f9bde...37ed7b executed once from the saved
+first-level field. Runnercba08545...4a47db at21bb6b4; new outputs stay in
+results-continuation, retaining original failure. Total89.531s/solve67.279s,
+peak1.943GB. Native stopping1e-7 returns1.1622906e-6, still above unchanged external
+1e-6 acceptance. The first level failed again; second level NOT started, no retry.
+No production repair. A33line local loop now reuses native SSD setup/kernel/update
+and painting, records both red/black half maxima every100steps and actual counts/
+stop reason, and accepts only full_max<=1e-6 (no std-based early stop). Python AST
+and Julia parser pass; no runtime test yet. Request-strict-stop.json SHA8f20c397...
+6b0910 is prepared in the same pilot root; tool SHAab252653...7bb89. It binds latest
+level8 seed109791c6...c3968 and unchanged level16 grid,2solves/300s, no retries,
+memory recorded only. New owner decision pending; old approvals do not cover it.
+
+Owner question on past cost is resolved by actual campaign receipts and pinned
+source:100/100response.json say new_field_solve=false;5resident loads reuse cache
+f75280e7...53b90e8. Loading occurs once per resident initialize, outside event/chunk
+loops. Five startup totals28.821-38.342s sum160.649s (includes Julia/package load,
+hash/cache reads and possible compilation; no separate deserialize measurement).
+100retained chunk timing records sum native_response_and_store75,541.740s=20.984h,
+transport_driver11,102.995s=3.084h, verified_archive112.602s. These cross recovered
+request generations and are stage sums, not one final calendar runtime. Drift,
+34signal generation, electronics and IO were not separately timed; do not invent
+shares or call the entire20.984h drift. Actual response helperSHA b249bea matches
+current source for all100;5early resident records use an older resident version,
+but their receipts/logs also establish cache reuse. Saved reconstruction-v3 took
+337.197s without native computation; publication verification called no physics.
+Code anchors:simulation/gegi_response.jl:90,144,149,220;
+simulation/gegi_campaign_response.jl:76,191,235;tools/gegi_campaign.py:989,1010.
+
 Full34 independent templates and exact hardware transfer remain unresolved; the
 15point calibration option is still conditional, not the next calculation.
-
-Ownership: current manual owner gegi-saved-recovery-20261020 retains
-.local/autonomy/gegi-saved-recovery.lock/owner.json and old diagnosis ownership.
-Field worker21916 and saved-state analysis exited; automatic monitoring staysPAUSED.
-Current manual ownership is retained inactive while awaiting the explicit
-continuation decision; no active field calculation.
+Ownership retains current/old records; field worker34296 exited. Automatic
+monitoring staysPAUSED. The stopping trace/request are prepared; no new solve launched.
 
 ## Prior GeGI saved-data correction — delivered history
 

@@ -56,10 +56,15 @@ transient-to-positive-peak bias and a separate guard terminal-charge inconsisten
    Pilot stops and preserves failure/field; second-level6,776,528nodes NOT run.
    Saved-state analysis reduces the3electron endpoint deficits8.38-9.41% to
    0-.4894%, without forcing contact values. This is an unconverged diagnostic.
-   Prepare continuation from the saved first grid and the same second grid, with
-   native stop1e-7 and unchanged external1e-6 gate; at most2solves/300s, one
-   process/thread, memory recorded only. Obtain owner approval for this new
-   bounded calculation; do not rerun drift/transport/calibration or old tests.
+   Approved continuation374f9bde ran once from the saved first grid: solve67.279s,
+   total89.531s; returned1.1622906e-6>1e-6, second grid again NOT run. Do not
+   weaken the gate or infer the exact native stop reason from incomplete logs.
+   A33line local loop now reuses native SSD setup/kernel/update/painting and records
+   actual100step checks and both red/black maxima, accepting full_max<=1e-6 only.
+   Prepared request8f20c397...6b0910: latest saved first-level seed, unchanged second
+   grid,2solves/300s/one process/thread; memory measured only, no automatic retry.
+   Parser checks pass but no new runtime test. Owner decision is pending. No new
+   transport/drift/calibration or repeated old tests/publication.
    Dirichlet contact values follow the weighting-potential model[R6].
 2. Use the owner's forward/inverse approach: validate interaction -> signed34-channel
    signal -> readout first, then infer positions/energies/multiplicity by explaining

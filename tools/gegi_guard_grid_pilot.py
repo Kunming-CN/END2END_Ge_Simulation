@@ -119,6 +119,39 @@ function waveform(sim,recorded)
     w=SSD.get_signal(sim,recorded.drift_paths,SSD.flatview(recorded.energies),34;Δt=1u"ns",signal_unit=u"keV")
     Float64.(ustrip.(u"keV",w.signal))
 end
+function update_native_history!(sim,history_path,deadline)
+    wp=sim.weighting_potentials[34]
+    pcs=SSD.PotentialCalculationSetup(sim.detector,wp.grid,sim.medium,wp.data,ones(Float32,size(wp.data));
+        sor_consts=1.4f0,weighting_potential_contact_id=34,use_nthreads=1,
+        not_only_paint_contacts=true,paint_contacts=true,point_types=missing)
+    ndrange=size(pcs.potential)[1:3].-2
+    kernel=SSD.get_sor_kernel(SSD.Cartesian,SSD._ka_get_backend(pcs.potential),Val(false))
+    inner=view(pcs.potential,(2:size(pcs.potential,k)-1 for k in 1:3)...,:)
+    before=similar(inner);c=Inf32;native_c=Inf32;n=0;reason="iteration_cap"
+    check(!ispath(history_path),"Preserve existing iteration history")
+    open(history_path,"w") do io
+        for iteration in 1:10000
+            if time()>=deadline;reason="300_second_total_budget";break;end
+            iteration%100==0 && copyto!(before,inner)
+            SSD.update!(pcs,kernel,ndrange;use_nthreads=1,depletion_handling=Val(false),
+                is_weighting_potential=Val(true),only2d=Val(false))
+            n=iteration
+            if iteration%100==0
+                before .-= inner
+                halves=[maximum(abs,view(before,:,:,:,k)) for k in axes(before,4)]
+                native_c=first(halves);c=maximum(halves)
+                JSON.print(io,Dict("iterations"=>n,"native_half1_max"=>isfinite(native_c) ? Float64(native_c) : nothing,
+                    "full_max"=>isfinite(c) ? Float64(c) : nothing,"half_maxima"=>[isfinite(x) ? Float64(x) : nothing for x in halves],
+                    "definition"=>"One complete native update at every100th step; original native metric is half1; full_max includes both halves"))
+                println(io);flush(io)
+                if !isfinite(c);reason="nonfinite_update";break;end
+                if c<=1f-6;reason="absolute_full_max_gate";break;end
+            end
+        end
+    end
+    sim.weighting_potentials[34]=SSD.WeightingPotential(SSD.ElectricPotentialArray(pcs),wp.grid)
+    c,n,reason,native_c
+end
 function main(reqpath,out)
     req=JSON.parsefile(reqpath);check(Threads.nthreads()==1,"Use one thread")
     check(req["contact_id"]==34 && length(req["levels"])==2,"Enlarged solver scope")
@@ -159,6 +192,7 @@ function main(reqpath,out)
         save(joinpath(dir,"grid.json"),level)
         if index==8
             stage(out,"load_saved_unconverged_WP34",index)
+            check(req["level8_continuation_seed"]["absolute_ref"]==joinpath(dirname(reqpath),"results-continuation","level-8","solved-WP34.jls"),"Bind the latest saved level8 seed in a new request")
             seed=deserialize(req["level8_continuation_seed"]["absolute_ref"])
             check(eltype(seed.data)==Float32 && size(seed.data)==size(grid),"Continuation seed shape or precision changed")
             check(all(seed.grid.axes[k].ticks==grid.axes[k].ticks for k in 1:3),"Continuation seed grid ticks changed")
@@ -172,17 +206,17 @@ function main(reqpath,out)
         end
         serialize(joinpath(dir,"starting-WP34.jls"),sim.weighting_potentials[34])
         stage(out,"CPU_solve_WP34",index);started=time_ns()
-        last_update=SSD.update_till_convergence!(sim,SSD.WeightingPotential,34,Float32(1e-7);
-            n_iterations_between_checks=100,max_n_iterations=10000,use_nthreads=1,sor_consts=Float32(1.4),
-            depletion_handling=false,not_only_paint_contacts=true,paint_contacts=true,
-            device_array_type=Array,verbose=true)
+        history=joinpath(dir,"update-history.jsonl")
+        last_update,iterations,stop_reason,native_update=update_native_history!(sim,history,parse(Float64,ENV["GEGI_WP34_DEADLINE_UNIX"]))
         elapsed=(time_ns()-started)/1e9
         serialize(joinpath(dir,"solved-WP34.jls"),sim.weighting_potentials[34])
         converged=isfinite(last_update) && last_update<=Float32(1e-6)
         receipt=Dict("last_update"=>isfinite(last_update) ? Float64(last_update) : nothing,
             "last_update_raw"=>string(last_update),"converged"=>converged,"solve_seconds"=>elapsed,
-            "iterations_performed"=>nothing,"max_n_iterations"=>10000,"initial_state"=>initial_state,
-            "internal_convergence_limit"=>1e-7,"external_acceptance_last_update_limit"=>1e-6,
+            "iterations_performed"=>iterations,"max_n_iterations"=>10000,"initial_state"=>initial_state,
+            "stop_reason"=>stop_reason,"native_half1_last_update"=>isfinite(native_update) ? Float64(native_update) : nothing,
+            "update_history_sha256"=>hashfile(history),"absolute_full_max_limit"=>1e-6,
+            "external_acceptance_last_update_limit"=>1e-6,
             "solver_scope"=>"Last-update stopping gate only, not PDE/grid/global detector validation")
         save(joinpath(dir,"solver.json"),receipt)
         check(converged,"WP34 unconverged; preserve returned state and stop without another solve")
@@ -222,7 +256,7 @@ def execute(request_path, approval_sha):
     if approval_sha != digest:
         raise ValueError('Explicit human approval must bind this exact request SHA256')
     request = json.loads(request_path.read_bytes())
-    if request['kind'] != 'gegi_single_guard34_local_grid_continuation_v1' or request['contact_id'] != 34:
+    if request['kind'] != 'gegi_single_guard34_strict_stop_v1' or request['contact_id'] != 34:
         raise ValueError('Unsupported or enlarged weighting-potential scope')
     expected = {'maximum_new_WP34_solves': 2, 'maximum_total_wall_seconds': 300, 'threads': 1,
                 'maximum_nodes_per_level': 7000000}
@@ -237,7 +271,7 @@ def execute(request_path, approval_sha):
         available_before = available_memory()
     except OSError:
         available_before = None
-    output = request_path.parent/'results-continuation'; output.resolve().relative_to((ROOT/'.local').resolve()); output.mkdir()
+    output = request_path.parent/'results-strict-stop'; output.resolve().relative_to((ROOT/'.local').resolve()); output.mkdir()
     (output/'approved-request.json').write_bytes(request_path.read_bytes())
     worker = output/'WP34-worker.jl'; worker.write_text(JULIA_WORKER, encoding='utf-8')
     env = os.environ.copy(); env.update(JULIA_PKG_OFFLINE='true', JULIA_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', OMP_NUM_THREADS='1')
@@ -250,6 +284,7 @@ def execute(request_path, approval_sha):
     getmem.argtypes = [ctypes.c_void_p, ctypes.POINTER(PMC), ctypes.c_ulong]; getmem.restype = ctypes.c_int
     started = time.monotonic(); peak = None; missing_memory_samples = 0; stop = None
     with (output/'worker.log').open('x', encoding='utf-8') as log:
+        env['GEGI_WP34_DEADLINE_UNIX'] = str(time.time()+300)
         child = subprocess.Popen(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
                                  creationflags=subprocess.CREATE_NO_WINDOW)
         while child.poll() is None:
