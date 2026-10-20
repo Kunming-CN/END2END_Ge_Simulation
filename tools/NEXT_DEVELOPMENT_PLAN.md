@@ -8,10 +8,12 @@ SSD drift, fields, calibration injections or campaign. Automation stays PAUSED.
 Existing originals and all failure/recovery evidence are permanent. The owner must
 explicitly decide any future simulation after seeing this delivery and its limits.
 
-The numerical implementation, saved-data processing, student integration and runtime
-release are complete. Final website generation/live verification and Git handoff
-are the remaining work. Use PROGRESS.md and .local/autonomy/state.json for exact
-current artifacts. Do not restart already completed processing or source agents.
+The authorized saved-data implementation and delivery are complete: numerical
+processing, student runtime release, generated website,731public-file byte checks
+and actual desktop website verification. Remaining scientific limits are below;
+they are not cleared by a functioning software pipeline. Use PROGRESS.md and
+.local/autonomy/state.json for exact current artifacts. Do not restart completed
+processing or source agents. Further calibration/simulation awaits owner decision.
 
 ## Implemented path and acceptance
 

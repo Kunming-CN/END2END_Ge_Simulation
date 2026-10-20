@@ -1,6 +1,6 @@
 # Current handoff
 
-## GeGI saved-data correction — delivery in progress
+## GeGI saved-data correction — authorized delivery complete
 
 Owner authorized full-chain signal/readout/software correction and GitHub display
 using existing data, local private GeGI slides and primary literature. No new
@@ -8,9 +8,11 @@ Geant4, SSD drift, fields, calibration injections or campaign. Automation remain
 PAUSED. Chat01a14bca-3953-7c13-80a1-687a9a571455 / gegi-10m-root owns
 .local/autonomy/gegi-diagnosis.lock. Do not launch a competing supervisor.
 
-Numerical work, student release and website generation are complete; publication
-and live checks remain. Actual protected desktop student controls were verified. Do not rerun
-completed processing. All implementation writers are frozen; public export is COMPLETE.
+Numerical work, student release, website publication and live checks are complete.
+Actual protected desktop student controls and public pages were verified. Do not
+rerun completed processing. Scientific localization limits below remain unresolved;
+this delivery does not mark the overall scientific project complete. No automatic
+next calculation. Retain the inactive owned diagnosis-lock record and all data.
 
 ## Results and limits
 
@@ -81,7 +83,10 @@ New saved publication .local/gegi-10m/reconstruction-v3/publication is complete;
 only tools/build_site.py may replace generated docs. Source/test/package commit
 47685df9f40a0b05e33d884bae85642a06fe87f3 was pushed and release bytes verified.
 Generated snapshot passed both check_site.validate gates in build_site and the
-standalone tools/check_site.py command. Live website verification remains pending. test_site passed35tests
+standalone tools/check_site.py command. check_site.py --url verified731public
+files byte-for-byte. Actual desktop checks passed: pooled map, energy layers,
+historical teaching cone rotation, assembly event switching/cutaway/front view,
+and old5000entry redirect. Both pages had no browser warnings/errors. test_site passed35tests
 (9.840s including byte-exact GeGI export regression). New/oldpublication tests11/12, signal12,
 jointimaging18, assembly16, savedrunner4, standalone8, admission4, controller7 and
 studentpackage5 passed; final package dependency closure186members passed. Desktop
@@ -103,4 +108,6 @@ publisher, with recovery recorded under publication/build-recovery.json. The
 existing stage was validated and installed; no repeated science or source export.
 Site build5080f24f65738b52018a675cf4f309a07a643048c9344e077fba627f0b364a2d:
 1,726files/985,090,719bytes/109HTMLpages,3,479local links checked. Source and
-generated diff inspected; prior scientific datasets unchanged.
+generated diff inspected; prior scientific datasets unchanged. Website commit
+b408c8d3ae242a317a8388050247c52d073e7f5a pushed and Pages built; live verification
+completed2026-10-20UTC. Evidence: reconstruction-v3/publication/live-verification.json.
