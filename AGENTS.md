@@ -1,5 +1,15 @@
 # Project working rules
 
+## Owner update — 2026-10-20 bounded repair autonomy
+
+The owner said "不需要每次等我审核，你继续就行" after the bounded GeGI
+field-validation requests. Proceed autonomously with necessary small calculations,
+development and publication within the existing full-chain repair objective;
+do not ask for approval every round. Keep each calculation bounded, measured and
+restartable, preserving originals and failures. This supersedes the per-calculation
+approval gate for this repair. Large-sample campaigns remain after full-chain
+validation; monitoring stays PAUSED and no reset is authorized.
+
 ## Owner update — 2026-10-20 planning, evidence and token use
 
 The supervisor owns the full-chain plan and critical decisions. Use gpt-6.1-sol

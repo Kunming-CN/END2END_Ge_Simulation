@@ -1,6 +1,6 @@
 # Current handoff
 
-## Guard grid effect established; first level not converged — 2026-10-20
+## Guard grid defect localized; two local levels completed — 2026-10-20
 
 Owner priority: establish a correct GeGI radiation -> charge ->34-channel signal
 -> electronics -> inverse reconstruction chain before larger samples. The forward
@@ -8,9 +8,11 @@ response should explain known simulated interactions, then infer unknown events
 from signals alone; source positions remain independent image evaluation. Reuse
 saved data, keep the frozen holdout independent, and do not tune to source maps.
 Use bounded6.1-sol ultra development tasks; no extra AI review agents. Automatic
-monitoring stays PAUSED. No new transport or calibration is approved. Owner approved
-3fixed original-deposit drift captures (complete), then the bounded2levelWP34
-grid pilot below. Original campaign/v3 science and failure records remain unchanged.
+monitoring stays PAUSED. Latest owner instruction "不需要每次等我审核，你继续就行"
+authorizes necessary bounded small repair calculations/development/publication
+without per-round approval, superseding the old individual calculation gates.
+Large campaigns remain after full-chain validation. Memory is measured only.
+Original campaign/v3 science and failure records remain unchanged.
 
 Frozen400 evaluation COMPLETE in17.234s:200development/200holdout, stratified by
 10reasons, original-event-separated. All400 reproduce original spectroscopy
@@ -123,13 +125,27 @@ first-level field. Runnercba08545...4a47db at21bb6b4; new outputs stay in
 results-continuation, retaining original failure. Total89.531s/solve67.279s,
 peak1.943GB. Native stopping1e-7 returns1.1622906e-6, still above unchanged external
 1e-6 acceptance. The first level failed again; second level NOT started, no retry.
-No production repair. A33line local loop now reuses native SSD setup/kernel/update
+No production repair. A33line local loop reuses native SSD setup/kernel/update
 and painting, records both red/black half maxima every100steps and actual counts/
-stop reason, and accepts only full_max<=1e-6 (no std-based early stop). Python AST
-and Julia parser pass; no runtime test yet. Request-strict-stop.json SHA8f20c397...
-6b0910 is prepared in the same pilot root; tool SHAab252653...7bb89. It binds latest
-level8 seed109791c6...c3968 and unchanged level16 grid,2solves/300s, no retries,
-memory recorded only. New owner decision pending; old approvals do not cover it.
+stop reason, and accepts only full_max<=1e-6 (no std-based early stop).
+Request-strict-stop.json SHA8f20c397...6b0910/toolSHAab252653...7bb89 executed once
+with owner approval, reusing the latest saved first-level seed. Results-strict-stop
+completed in275.984s, peak2.019GB. Level8:300steps/19.241s/max9.23871994e-7;
+level16:5000steps/232.813s/max9.53674316e-7. Both accepted unchanged update gate.
+COMPLETE SHA46d94c69...e0bcd4; actual workerSHA94ffb394...0d4c. Both fields,
+waveforms and native iteration histories hash-verified; prior failures retained.
+No new drift, electric-field solve or calibration in this comparison.
+
+Saved Python comparison (0.016s), grid-comparison/summary.json SHA9e16cb99...045:
+level16 electron phi34=1 and hole phi34=0 for all3paths, without contact substitution.
+Native terminal minus Edep is only+1.33/+2.77/+1.83e-6keV (Float32 scale, not ADC
+resolution). Level16-level8 full waveform max/RMS differences in row order
+10191/10186/10185: .418079/.163822, .126453/.064184, .292114/.202977keV.
+Only WP34 and3local paths were tested; terminal equality is not waveform/global
+convergence. Inspect propagation through unchanged readout/timing and common-grid
+boundary support for other channels next. Old noncollecting channels still have
+spurious terminal signals (up to1.83544keV on channel20 in these3paths); replacing
+WP34 alone is not a full34 production repair. Never force charge to truth.
 
 Owner question on past cost is resolved by actual campaign receipts and pinned
 source:100/100response.json say new_field_solve=false;5resident loads reuse cache
@@ -149,8 +165,9 @@ simulation/gegi_campaign_response.jl:76,191,235;tools/gegi_campaign.py:989,1010.
 
 Full34 independent templates and exact hardware transfer remain unresolved; the
 15point calibration option is still conditional, not the next calculation.
-Ownership retains current/old records; field worker34296 exited. Automatic
-monitoring staysPAUSED. The stopping trace/request are prepared; no new solve launched.
+Ownership retains current/old records; strict-stop worker41096 exited. Automatic
+monitoring staysPAUSED. Bounded multichannel repair proceeds under latest autonomy;
+no new campaign or reset. Production fields and student package remain unchanged.
 
 ## Prior GeGI saved-data correction — delivered history
 

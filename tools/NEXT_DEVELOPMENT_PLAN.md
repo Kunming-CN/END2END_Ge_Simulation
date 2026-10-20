@@ -5,9 +5,10 @@
 Owner resumed evidence/planning after correcting the priority: establish a correct
 small radiation -> charge ->34-channel signal ->readout ->reconstruction workflow
 before recovery refinements and large samples. Automatic monitoring stays PAUSED.
-No new transport or calibration calculation is authorized. The owner approved the
-3fixed original-deposit drift captures (complete) and separately approved the
-fixed2levelWP34 grid pilot below. No additional drift or other field calculation.
+Latest owner instruction "不需要每次等我审核，你继续就行" authorizes necessary
+bounded small repair calculations, development and publication without per-round
+approval. Preserve prior results/failures and measure costs; large campaigns stay
+after full-chain validation, memory measured only, no resets.
 
 The present chain is integrated, but its synthetic electronics and conditional
 inverse model are not an identified GeGI instrument response. Existing numerical
@@ -59,12 +60,17 @@ transient-to-positive-peak bias and a separate guard terminal-charge inconsisten
    Approved continuation374f9bde ran once from the saved first grid: solve67.279s,
    total89.531s; returned1.1622906e-6>1e-6, second grid again NOT run. Do not
    weaken the gate or infer the exact native stop reason from incomplete logs.
-   A33line local loop now reuses native SSD setup/kernel/update/painting and records
-   actual100step checks and both red/black maxima, accepting full_max<=1e-6 only.
-   Prepared request8f20c397...6b0910: latest saved first-level seed, unchanged second
-   grid,2solves/300s/one process/thread; memory measured only, no automatic retry.
-   Parser checks pass but no new runtime test. Owner decision is pending. No new
-   transport/drift/calibration or repeated old tests/publication.
+   The strict local native-loop trace completed both grids under unchanged1e-6
+   full-update gate: level8 300steps/19.241s and level16 5000steps/232.813s;
+   combined275.984s. Exact inputs, fields, waveforms and history remain pinned.
+   Level16 removes the three WP34 endpoint deficits without value substitution,
+   but level16-level8 waveform maximum differences remain .126-.418keV.
+   Next small complete check: propagate these saved signals through unchanged
+   readout/timing and inspect whether the same grid gives correct boundary support
+   for the opposite guard and noncollecting channels. Their old spurious terminal
+   signals prohibit promoting a WP34-only patch to full34 production. Reuse native
+   SSD and saved paths; bound any required channel solves, save resumable states.
+   Do not repeat passed tests, old drifts, transport or unchanged publication.
    Dirichlet contact values follow the weighting-potential model[R6].
 2. Use the owner's forward/inverse approach: validate interaction -> signed34-channel
    signal -> readout first, then infer positions/energies/multiplicity by explaining
@@ -83,11 +89,11 @@ transient-to-positive-peak bias and a separate guard terminal-charge inconsisten
    does not require rebuilding unchanged student packages or website figures.
 
 Continue authorized saved-data/software work without routine milestone approval.
-Stop only for a concrete missing input or the explicit boundary on new physical/
-calibration calculations. The full34 basis and actual hardware transfer remain
+Stop only for a concrete missing input or work outside the authorized bounded
+full-chain repair. Do not request another per-round approval. The full34 basis and actual hardware transfer remain
 separate requirements. No arbitrary resolution target or extra AI review rounds.
 
-### Conditional calibration option, not yet authorized or first action
+### Conditional calibration option, not the first action
 
 If saved-event diagnosis establishes the missing34-channel basis as the blocker,
 the prepared bounded proposal is15 fixed 500 keV injections (3 pixels×5 depths), reuse
@@ -96,7 +102,8 @@ no new field solve or transport. Stop after15 attempts and measure startup,
 per-injection time and bytes. Existing selected-pair bank call took158.298s;
 an earlier cold startup took34.155s. These are historical two-channel timings,
 not an estimate of full 34-channel cost. Full34cost remains unmeasured. The proposal is
-recorded in signal-recovery-v1/calibration/inventory.json and requires owner approval.
+recorded in signal-recovery-v1/calibration/inventory.json; latest bounded autonomy
+covers it only if the identified blocker makes it necessary.
 It would test template completeness, not establish hardware equivalence or resolve
 omitted diffusion/noise. Do not launch it merely because this option is recorded.
 
