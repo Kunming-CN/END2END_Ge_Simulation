@@ -105,6 +105,9 @@ SHAf776c878...547e20;3pure grid tests and Python/embedded Julia parser checks pa
 without evaluating Julia science code. CPU solve cost remains unmeasured.
 Limits: one CPUthread/process, two solves,300s total,7M nodes per level, no retries;
 startup free memory3.5GB, stop below768MiB free or above3GB worker working set.
+At22:02UTC the repeated preflight has2,599,731,200B free, below3.5GB;0workers and
+0field solves launched. Retain approval and await memory; do not loosen the gate
+or close unrelated user programs. Source/diagnostic tooling is pushed atafa79b5.
 No new transport, drift or calibration. Reuse these same paths for endpoint,
 waveform and spatial-continuity comparisons; retain timeout/nonconvergence as failures.
 Earlier memory-blocked capture preflights remain preserved. Missing full34
@@ -114,8 +117,9 @@ before any new drift/calibration. Keep one compact handoff.
 
 Ownership: current manual owner gegi-saved-recovery-20261020 uses
 .local/autonomy/gegi-saved-recovery.lock/owner.json. Old diagnosis ownership is retained
-inactive, never deleted. Current manual ownership is active for diagnostic/tool
-preparation; no science workers were running at21:57UTC. Automatic monitoring staysPAUSED.
+inactive, never deleted. Current manual ownership is retained inactive while
+waiting for memory; state.json records approved_WP34_waiting_memory. No science
+worker was launched. Automatic monitoring staysPAUSED.
 
 ## Prior GeGI saved-data correction — delivered history
 
