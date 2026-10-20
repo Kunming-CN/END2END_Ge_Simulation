@@ -144,6 +144,44 @@ class All34Tests(unittest.TestCase):
         self.assertAlmostEqual(envelope['normalized_rms']*np.sqrt(34), expected)
         self.assertEqual(envelope['response_mode'], 'all34')
 
+    def test_weak_collector_mismatch_hidden_by_total_energy_is_rejected(self):
+        envelope = G.TemplateBank(self.make_bank(), response_mode='all34').calibrate_discrepancy()
+
+        class ImbalancedBank:
+            response_mode = 'all34'
+            def templates(self, x, y, grid):
+                response = np.zeros((34, len(grid)))
+                response[[x-1, y-1]] = np.clip((grid-45)/20, 0, 1)
+                if (x, y) == (4, 24):
+                    response[x-1] += .1*np.interp(grid, TIME, BIPOLAR)
+                return np.repeat(response[None], 11, axis=0)
+
+        bank = ImbalancedBank()
+        right = [(4, 21, 6.), (7, 24, 6.), (13, 29, 488.)]
+        wrong = [(4, 24, 6.), (7, 21, 6.), (13, 29, 488.)]
+        grid = G.FIT_GRID_NS
+        target = sum(e*bank.templates(x, y, grid)[0] for x, y, e in right)
+        wrong_model = sum(e*bank.templates(x, y, grid)[0] for x, y, e in wrong)
+        # The v1 total-only normalization admits this unchanged wrong model.
+        total_only_rms = np.sqrt(np.mean(((target-wrong_model)/500.)**2, axis=1)).max()
+        self.assertLess(total_only_rms, envelope['max_channel_normalized_rms'])
+        observation = observed()
+        observation['native'] = {cid: {'time_ns': grid.tolist(),
+            'signed_induced_keV': (target[cid-1]*(1 if cid <= 17 else -1)).tolist()} for cid in G.ALL34_IDS}
+        totals = {cid: sum(e for x, y, e in right if cid in (x, y)) for cid in G.ALL34_IDS}
+        for channel in observation['channels']:
+            cid = channel['contact_id']; collecting = totals[cid] > 0
+            channel.update(accepted=collecting, collection_candidate=collecting,
+                reconstructed_energy_keV=totals[cid] if collecting else None,
+                final_induced_keV=target[cid-1, -1]*(1 if cid <= 17 else -1))
+        self.assertEqual(G._fit_flow(right, observation, bank, envelope)['status'], 'conditional_fit')
+        result = G._fit_flow(wrong, observation, bank, envelope)
+        self.assertEqual(result['status'], 'model_mismatch')
+        self.assertGreater(result['channel_normalized_rms']['4'], envelope['max_channel_normalized_rms'])
+        self.assertEqual(result['channel_residual_scales_keV']['4'], 6.)
+        self.assertEqual(result['channel_residual_scales_keV']['13'], 488.)
+        self.assertEqual(result['channel_residual_scales_keV']['2'], 500.)
+
     def test_full_reconstruction_counts_actual_fits_and_keeps_native_failure_null(self):
         bank = G.TemplateBank(self.make_bank(), response_mode='all34')
         result = G.reconstruct_observables(observed(), bank)

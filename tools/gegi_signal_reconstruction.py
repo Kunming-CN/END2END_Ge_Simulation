@@ -29,6 +29,7 @@ ALL34_IDS = list(range(1, 35))
 ALL34_COVERAGE = {'kind': 'gegi_all34_signed_induced_v1', 'contact_ids': ALL34_IDS,
     'time_unit': 'ns', 'signal_unit': 'keV', 'polarity': 'native_signed_before_wiring'}
 ALL34_METHOD = 'joint_signed_all34_waveform_template_fit'
+ALL34_WEIGHTING = 'collecting_terminal_else_flow_total'
 LIMITATIONS = [
     'Simulation-derived independent injections, not laboratory calibration.',
     'Only the selected X/Y injection signals were saved; induction on other strips is not modelled.',
@@ -292,6 +293,17 @@ class TemplateBank:
             # Piecewise interpolation of complete waveforms, not threshold times.
             fine = np.concatenate([options[i:i+1]*(1-f)+options[i+1:i+2]*f
                 for i in range(len(options)-1) for f in (0., .25, .5, .75)] + [options[-1:]])
+            if all34:
+                # Responses retain the fixed injection gain. Weight both sides
+                # of each residual by this diagnostic's observed terminal scale.
+                scales = np.ones(34)
+                for cid in row['contact_ids']:
+                    scales[cid-1] = _wave(row['channel_signals'][cid-1],
+                        1 if cid <= 17 else -1)[1][-1]/row['injection_energy_keV']
+                if not np.all(scales > 0):
+                    raise ValueError('all34 diagnostic requires positive collected terminal charge')
+                target = target/scales[:, None]
+                fine = fine/scales[None, :, None]
             costs = _response_cost(fine-target, all34)
             best = int(np.argmin(costs))
             residuals.append(float(np.sqrt(np.mean((fine[best]-target)**2) if all34 else costs[best])))
@@ -305,7 +317,8 @@ class TemplateBank:
             'scope': 'Maximum on saved fixed independent diagnostic injections; not a confidence level.'}
         if all34:
             self.error_envelope.update(response_mode='all34',
-                normalization='Every channel divided by the same independent injection energy.',
+                residual_weighting=ALL34_WEIGHTING,
+                normalization='Same residual scale for data and model: positive wired terminal on selected collectors; fixed injection energy on other channels. Template gain is unchanged.',
                 objective='maximum channel normalized RMS; no dilution by averaging34 channels',
                 fixed_diagnostic_count=len(report['rows']))
         return self.error_envelope
@@ -357,6 +370,8 @@ def _fit_flow(flow, observations, bank, envelope, *, all34_waves=None):
     all34 = getattr(bank, 'response_mode', 'selected_pair') == 'all34'
     if all34 and envelope.get('response_mode') != 'all34':
         raise ValueError('all34 fit requires the matching all34 diagnostic envelope')
+    if all34 and envelope.get('residual_weighting') != ALL34_WEIGHTING:
+        raise ValueError('all34 fit requires the matching residual weighting')
     ids = ALL34_IDS if all34 else sorted({cid for x, y, _ in flow for cid in (x, y)})
     index = {cid: i for i, cid in enumerate(ids)}
     waves = (all34_waves if all34_waves is not None else _all34_observed_waves(observations)) if all34 else {
@@ -368,11 +383,11 @@ def _fit_flow(flow, observations, bank, envelope, *, all34_waves=None):
         if np.any(np.abs(q[t > grid[-1]]-q[-1]) > max(1e-7, abs(q[-1])*1e-8)):
             return {'status': 'unsupported', 'reason': 'delayed_waveform_outside_template_support'}
     target = np.asarray([np.interp(grid, *waves[cid], left=0, right=waves[cid][1][-1]) for cid in ids])
-    # Selected-pair retains its per-terminal scale. Full34 shares the observed
-    # energy-flow total, preserving signed zero-terminal neighbour responses.
+    # Collected channels retain their positive-terminal residual weight. Other
+    # full34 channels share the observed energy total, preserving bipolar signals.
     total_energy = sum(e for _, _, e in flow)
-    scales = (np.full(34, total_energy) if all34
-              else np.asarray([waves[cid][1][-1] for cid in ids]))
+    collecting_ids = {cid for x, y, _ in flow for cid in (x, y)}
+    scales = np.asarray([waves[cid][1][-1] if cid in collecting_ids else total_energy for cid in ids])
     if all34 and (not math.isfinite(total_energy) or total_energy <= 0):
         raise ValueError('all34 energy-flow scale must be positive and finite')
     if not np.all(scales > 0):
@@ -386,7 +401,7 @@ def _fit_flow(flow, observations, bank, envelope, *, all34_waves=None):
         fine = np.concatenate([options[i:i+1]*(1-f)+options[i+1:i+2]*f
             for i in range(len(options)-1) for f in (0., .25, .5, .75)] + [options[-1:]])
         if all34:
-            full = fine * (e/total_energy)
+            full = fine * e/scales[None, :, None]
         else:
             full = np.zeros((len(fine), len(ids), len(grid)))
             full[:, index[x], :] = fine[:, 0, :] * e/scales[index[x]]
@@ -437,8 +452,10 @@ def _fit_flow(flow, observations, bank, envelope, *, all34_waves=None):
         'depth_profile_holds_other_sites_fixed': True}
     if all34:
         result.update(response_mode='all34', method=ALL34_METHOD, global_energy_scale_keV=total_energy,
+            residual_weighting=ALL34_WEIGHTING,
+            channel_residual_scales_keV={str(cid): float(v) for cid, v in zip(ids, scales)},
             max_channel_normalized_rms=float(max(channel_rms)),
-            normalization='All34 target channels and summed site responses share observed ADC energy-flow total.',
+            normalization='Data and complete summed model share each channel scale: positive wired terminal for flow collectors; observed ADC energy-flow total for other channels. Residual weighting, not gain correction.',
             objective='maximum channel normalized RMS; finite diagnostic envelope, not noise or confidence')
     return result
 
@@ -487,7 +504,7 @@ def _reconstruct_observables(observed, bank, *, max_strips=4, max_sites=4, max_h
     if all34:
         out.update(response_mode='all34', method=ALL34_METHOD, fit_calls=0,
             limitations=[x for x in LIMITATIONS if not x.startswith('Only the selected X/Y')]+[
-                'All34 templates use a common observed-energy scale; low-energy sites can remain hidden below the finite diagnostic envelope.'])
+                'All34 residuals use collected-terminal weights and total-energy neighbour weights; subthreshold or same-pixel sites can remain hidden below the finite diagnostic envelope.'])
     if observed['status'] != 'completed' or observed['channels'] is None or observed['native'] is None:
         out.update(status='native_failed_or_incomplete', reason='native_response_incomplete')
         return out

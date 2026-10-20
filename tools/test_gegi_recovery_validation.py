@@ -93,6 +93,37 @@ class ValidationTests(unittest.TestCase):
         with self.assertRaises(KeyError):
             V.posthoc_topology(event, {4: 'compt'})
 
+    def test_paired_residuals_match_stable_hypothesis_and_cell_not_population_order(self):
+        def residual(cell,depth,energy,position):
+            return {'cell':cell,'abs_depth_mm':depth,'abs_energy_error_keV':energy,'position_3d_mm':position}
+        def hypothesis(index,pairing,residuals=()):
+            return {'hypothesis_index':index,'endpoint_pairing_matches':pairing,'matched_cell_residuals':list(residuals)}
+        def row(old,new):
+            return {'candidates':[{}] if old else [],'hypotheses':old,
+                'candidate_evaluation':{'candidates':[{}] if new else [],'hypotheses':new}}
+        old=[hypothesis(7,True,[residual([1,18],4.,1.,5.),residual([2,19],2.,2.,3.)]),
+             hypothesis(3,True,[residual([1,18],999.,999.,999.)])]
+        new=[hypothesis(9,False,[residual([1,18],777.,777.,777.)]),
+             hypothesis(7,True,[residual([2,19],2.,1.,4.),residual([1,18],1.,3.,2.)])]
+        rows=[row(old,new),row([], [hypothesis(2,None)]),row([hypothesis(2,False)],[]),row([],[])]
+        paired=V.paired_comparison(rows)
+        self.assertEqual(paired['candidate_group_transitions'],{'new':1,'retained':1,'lost':1,'no_candidate':1})
+        self.assertEqual(paired['candidate_pairing_classes']['baseline'],
+            {'all_correct':1,'mixed':0,'all_wrong':1,'none':2,'unknown':0})
+        self.assertEqual(paired['candidate_pairing_classes']['candidate'],
+            {'all_correct':0,'mixed':1,'all_wrong':0,'none':2,'unknown':1})
+        errors=paired['paired_residuals']
+        self.assertEqual(errors['shared_conditional_hypotheses'],1)
+        self.assertEqual(errors['shared_hypothesis_cells'],2)
+        depth=errors['errors']['abs_depth_mm']
+        self.assertEqual((depth['baseline']['n'],depth['baseline']['mean']), (2,3.))
+        self.assertEqual((depth['candidate']['n'],depth['candidate']['mean']), (2,1.5))
+        self.assertEqual((depth['improved'],depth['worse'],depth['tied']), (1,0,1))
+        for key in ('abs_energy_error_keV','position_3d_mm'):
+            self.assertEqual(tuple(errors['errors'][key][k] for k in ('improved','worse','tied')), (1,1,0))
+        self.assertEqual(rows[0]['candidate_pairing_class'],{'baseline':'all_correct','candidate':'mixed'})
+        self.assertEqual(rows[1]['candidate_pairing_class']['candidate'],'unknown')
+
 
 class CandidateValidationTests(unittest.TestCase):
     """Tiny mocked groups exercise the runner, never the numerical fitter."""
@@ -199,9 +230,16 @@ class CandidateValidationTests(unittest.TestCase):
         self.assertEqual(report['comparison']['baseline']['conditional_hypothesis_counts']['pairing_matches'],2)
         self.assertEqual(report['comparison']['candidate']['conditional_hypothesis_counts']['pairing_mismatches'],2)
         self.assertEqual(report['comparison']['reason_transitions'],{'old_reason -> new_reason':2})
+        self.assertEqual(report['comparison']['candidate_group_transitions'],{'new':0,'retained':2,'lost':0,'no_candidate':0})
+        self.assertEqual(report['comparison']['candidate_pairing_classes']['baseline']['all_correct'],2)
+        self.assertEqual(report['comparison']['candidate_pairing_classes']['candidate']['all_wrong'],2)
+        self.assertEqual(report['comparison']['paired_residuals']['shared_conditional_hypotheses'],2)
+        self.assertEqual(report['comparison']['paired_residuals']['shared_hypothesis_cells'],0)
+        self.assertEqual(report['comparison']['paired_residuals']['errors']['abs_depth_mm']['baseline'],{'n':0})
         saved=V.read(output/'evaluation-groups.json')
         self.assertEqual(saved['selection'],{'split':'development','groups':self.groups[:2]})
         self.assertTrue(all(row['candidate_reconstruction']==self.new for row in saved['groups']))
+        self.assertTrue(all(row['candidate_pairing_class']=={'baseline':'all_correct','candidate':'all_wrong'} for row in saved['groups']))
         self.assertIn('../COMPLETE.json',report['calibration_bindings'])
         before=(output/'report.json').read_bytes()
         with self.assertRaises(FileExistsError):

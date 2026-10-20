@@ -97,9 +97,19 @@ site-energy medianabs .352914->.612713keV, max258.035->517.563keV. Sequence
 correct/wrong/unknown2/2/40->3/4/242. Different conditional populations are explicit.
 Evidence validation/full34-development/{report,evaluation-groups}.json; source
 37c133c4...ec4fd. This candidate FAILED development quality; no holdout run or
-production promotion. Global energy scaling may hide weak-channel errors: inspect
-that concrete mechanism, preserve this failed result, then change only the affected
-normalization and test it. Independent template bank is complete and reusable.
+production promotion. The total-energy normalization hid weak collecting-channel errors (e.g.6.1keV
+of491keV); fixed by using each collector's positive terminal as residual weight,
+while neighbors use totalADCflow energy. Both data/model share weights; gain stays
+fixed.19fit tests and10evaluation tests passed. V2dev completed16.623s/95fits:
+20candidate groups (17retained,3new,3lost), wrongpairs4/24, false splits1/24;
+allcorrect/mixed/allwrong candidate groups17/3/0 (old17/2/1). Same39cells from19
+shared hypotheses: depthmedianabs .142586->.219220mm;7improve,16worse,16tie;
+site energies all39identical. All200spectroscopy exact. V2 also NOT promoted.
+Evidence validation/full34-development-v2; Rsource4bd6df22...86922c, evaluator
+4d3cbba0...c3bcc4. Next bounded saved-data diagnosis compares full34 residuals at
+old versus v2 depths, testing whether the minimax fit objective sacrifices depth
+information. No new physics, no holdout, no threshold tuning or production change.
+Independent template bank is complete and reusable.
 
 ### Saved-data and publication baselines — already delivered
 

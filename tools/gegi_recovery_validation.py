@@ -306,6 +306,43 @@ def summarize(rows):
             'sequence': dict(sequence), 'errors': {k: describe(v) for k, v in residuals.items()}}
 
 
+def paired_comparison(rows):
+    """Classify each group's ambiguity and compare identical hypothesis/cell pairs."""
+    transitions=Counter({k:0 for k in ('new','retained','lost','no_candidate')})
+    classes={label:Counter({k:0 for k in ('all_correct','mixed','all_wrong','none','unknown')})
+             for label in ('baseline','candidate')}
+    metrics=('abs_depth_mm','abs_energy_error_keV','position_3d_mm')
+    paired={key:[] for key in metrics};shared_hypotheses=0;shared_cells=0
+    for row in rows:
+        new=row['candidate_evaluation'];old_present=bool(row['candidates']);new_present=bool(new['candidates'])
+        transitions['retained' if old_present and new_present else 'lost' if old_present else
+                    'new' if new_present else 'no_candidate']+=1
+        row['candidate_pairing_class']={}
+        for label,hypotheses in (('baseline',row['hypotheses']),('candidate',new['hypotheses'])):
+            matches=[h['endpoint_pairing_matches'] for h in hypotheses]
+            category=('none' if not matches else 'unknown' if any(m is None for m in matches) else
+                      'all_correct' if all(matches) else 'all_wrong' if not any(matches) else 'mixed')
+            row['candidate_pairing_class'][label]=category;classes[label][category]+=1
+        old_by_index={h['hypothesis_index']:h for h in row['hypotheses']}
+        new_by_index={h['hypothesis_index']:h for h in new['hypotheses']}
+        for index in sorted(old_by_index.keys() & new_by_index.keys()):
+            shared_hypotheses+=1
+            old_cells={tuple(r['cell']):r for r in old_by_index[index]['matched_cell_residuals']}
+            new_cells={tuple(r['cell']):r for r in new_by_index[index]['matched_cell_residuals']}
+            for cell in sorted(old_cells.keys() & new_cells.keys()):
+                shared_cells+=1
+                for key in metrics:paired[key].append((old_cells[cell][key],new_cells[cell][key]))
+    return {'candidate_group_transitions':dict(transitions),
+        'candidate_pairing_classes':{label:dict(values) for label,values in classes.items()},
+        'paired_residuals':{'shared_conditional_hypotheses':shared_hypotheses,
+            'shared_hypothesis_cells':shared_cells,
+            'errors':{key:{'baseline':describe([a for a,b in values]),'candidate':describe([b for a,b in values]),
+                'improved':int(sum(b<a for a,b in values)),'worse':int(sum(b>a for a,b in values)),
+                'tied':int(sum(b==a for a,b in values))} for key,values in paired.items()},
+            'scope':'Same original group, stable energy-flow hypothesis_index and matched endpoint cell only. Smaller errors improve; ties use exact numeric equality. Conditional pairs are not independent events or validated recoveries.'},
+        'pairing_class_scope':'One class per group from its conditional hypotheses: unknown if any pairing is unknown; mixed means known correct and wrong alternatives. No candidates is none; all_correct does not validate photon multiplicity or imaging.'}
+
+
 def evaluate(campaign, reconstruction, output, *, frozen_manifest=None, split=None,
              calibration=None, response_mode='selected_pair'):
     """Read one frozen selection; fit allowlisted signals before truth evaluation.
@@ -457,7 +494,7 @@ def evaluate(campaign, reconstruction, output, *, frozen_manifest=None, split=No
         report.update(stage='candidate_evaluation_completed',selected_split=split,response_mode=response_mode,
             calibration_sha256=bank.sha256,calibration_admission=admission,calibration_bindings=bindings,
             calibration_ref=str(bank.root),frozen_manifest_ref=str(manifest_path),
-            comparison={'baseline':summarize(rows),'candidate':summarize(candidate_rows),
+            comparison={'baseline':summarize(rows),'candidate':summarize(candidate_rows),**paired_comparison(rows),
                 'reason_transitions':dict(Counter((saved[group_key(row)]['reconstruction'].get('reason') or
                     saved[group_key(row)]['reconstruction']['status'])+' -> '+
                     (row['candidate_reconstruction'].get('reason') or row['candidate_reconstruction']['status']) for row in rows))})
