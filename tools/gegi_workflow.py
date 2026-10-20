@@ -25,7 +25,7 @@ MODEL_SHA = '4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04'
 FIELDS = W.FIELDS | {'gamma_energy_keV', 'source_position_mm'}
 CACHE_BASE = 'Additional_Simulations/Visualization_3D/detectors/GeGI_3D/runs/20260922_suite_v3'
 SOURCES = ('tools/gegi_workflow.py', 'tools/gegi_response.py', 'tools/gegi_imaging.py',
-           'tools/gegi_standalone_reconstruction.py', 'tools/gegi_signal_reconstruction.py', 'tools/gegi_event_store.py',
+           'tools/gegi_standalone_reconstruction.py', 'tools/gegi_signal_reconstruction.py', 'tools/gegi_signal_recovery.py', 'tools/gegi_event_store.py',
            'tools/gegi_calibration_admission.py',
            'tools/scenario_workflow.py', 'tools/local_ui_jobs.py',
            'simulation/gegi_response.jl', 'simulation/gegi_signal_helpers.jl',

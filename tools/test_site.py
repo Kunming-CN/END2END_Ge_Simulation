@@ -17,6 +17,21 @@ from check_site import MANIFEST, local_target, validate
 import export_models as models
 
 class PublicationTests(unittest.TestCase):
+    def test_gegi_replacement_allows_history_only_for_predecessor(self):
+        import build_site as builder
+        project=self.site/'gegi-replacement';docs=project/'docs';stage=project/'.local/site-build'
+        docs.mkdir(parents=True);(docs/'index.html').write_text('<html><body>saved</body></html>')
+        (docs/MANIFEST).write_text('{}')
+        def gate(folder,**kwargs):
+            return {'build_id':'old' if folder==docs else 'new','files':[]}
+        with patch.multiple(builder,ROOT=project,DESTINATION=docs,OUT=stage), \
+             patch.object(builder,'validate',side_effect=gate) as checked, \
+             patch('gegi_campaign_publication.install_bundle') as install, redirect_stdout(io.StringIO()):
+            builder.build(gegi_campaign_bundle=project/'candidate')
+        install.assert_called_once_with(project/'candidate',stage)
+        self.assertEqual(checked.call_args_list,[unittest.mock.call(docs,allow_historical_gegi_sources=True),
+            unittest.mock.call(stage,require_manifest=False,require_models=True),unittest.mock.call(stage)])
+
     def test_restructure_reuses_checked_input_and_keeps_both_candidate_checks(self):
         import build_site as builder
         for has_previous in (False,True):

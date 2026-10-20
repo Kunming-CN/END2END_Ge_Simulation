@@ -1202,10 +1202,15 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
     api=async()=>standaloneV3Fixture;`);
   await run('openResult(gegiJob)');get('gegi-imaging-panel').open=true;run('showGeGIImaging();');
   assert.match(get('gegi-limitations').textContent,/Shared signed-waveform.*unsupported without compatible independent/);
-  assert.match(get('gegi-event-summary').textContent,/Shared reconstruction: unidentifiable.*independent_waveform_templates_unavailable/);
-  assert.match(get('gegi-imaging-status').textContent,/unsupported independent waveform templates.*0 conditional candidate groups.*0 validated recovered groups/);
+  assert.match(get('gegi-event-summary').textContent,/Reconstruction: independent waveform templates unavailable/);
+  assert.match(get('gegi-imaging-status').textContent,/0 groups with conditional imaging candidates.*0 validated recovered groups.*Pulse energy remains available/);
   assert.equal(descendants(get('gegi-imaging')).filter(n=>n.tagName==='svg').length,0);
   assert.ok(get('gegi-imaging').children.some(n=>n.textContent.includes('No source map is created')));
+  run(`standaloneV3Fixture.events[0].reconstruction.signal_use={spectroscopy:{accepted:true,energy_keV:150},conditional_candidate_count:0,guard:{collecting_ids:[17]},adjacent_strip_pairs:[[4,5]]};$('gegi-event').value=String(standaloneV3Fixture.events[0].event_id);showGeGIEvent();`);
+  assert.match(get('gegi-event-summary').textContent,/Pulse-group energy: 150 keV.*including collecting guards.*no supported candidate.*Guard collection.*Adjacent strips are retained separately/);
+  run(`standaloneV3Fixture.events[1].reconstruction.signal_use={spectroscopy:{accepted:false,energy_keV:null,reason:'native_response_incomplete'},conditional_candidate_count:0,guard:{collecting_ids:[]},adjacent_strip_pairs:[]};$('gegi-event').value=String(standaloneV3Fixture.events[1].event_id);showGeGIEvent();`);
+  assert.match(get('gegi-event-summary').textContent,/Pulse-group energy: unavailable.*native response incomplete/);
+  assert.doesNotMatch(get('gegi-event-summary').textContent,/Pulse-group energy: 0/);
   console.log('New standalone shared-waveform unsupported-calibration status preserves signals and presents no fabricated depth or source image.');
   // New saved-store processing uses a separate protected shared-data action.
   // Its counters are not accepted as a promise of recovered/validated events.

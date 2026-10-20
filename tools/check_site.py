@@ -104,7 +104,7 @@ def local_target(page, url):
     return target['path'] if target is not None else None
 
 
-def validate(site, require_manifest=True, require_models=False):
+def validate(site, require_manifest=True, require_models=False, *, allow_historical_gegi_sources=False):
     """Check the complete snapshot and return its deterministic file inventory."""
     site = Path(site).resolve()
     if not (site / 'index.html').is_file():
@@ -269,7 +269,10 @@ def validate(site, require_manifest=True, require_models=False):
         validate_rings(ring_bundle)
     if (site/'results/gegi-campaign/publication.json').exists():
         from gegi_campaign_publication import validate_bundle as validate_gegi_campaign
-        validate_gegi_campaign(site/'results/gegi-campaign')
+        if allow_historical_gegi_sources:
+            validate_gegi_campaign(site/'results/gegi-campaign',allow_historical_sources=True)
+        else:
+            validate_gegi_campaign(site/'results/gegi-campaign')
     if (site/"spectra/manifest.json").exists():
         from spectrum_display import validate as validate_spectrum_display
         validate_spectrum_display(site)

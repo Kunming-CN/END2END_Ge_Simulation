@@ -25,7 +25,7 @@ SOURCE_FILES = ('tools/gegi_saved_publication.py', 'tools/gegi_signal_journey.js
 PRIVATE = re.compile(r'[A-Za-z]:[\\/]+Users[\\/]|/mnt/[a-z]/|/home/[^/\s]+/|file:///|\.local[\\/]', re.I)
 TEXT_NAMES = {'index.html', 'summary.json', 'configuration.json', 'representatives.json',
               'source-assessment.json', 'gegi_signal_journey.js', 'imaging-summary.json'}
-OPTIONAL_TEXT_NAMES = {'evaluation-summary.json'}
+OPTIONAL_TEXT_NAMES = {'evaluation-summary.json', 'recovery-summary.json'}
 
 
 def require(ok, message):
@@ -266,6 +266,202 @@ def _journey(previous_public):
     return payload
 
 
+def _recovery_summary(directory, reconstruction, imaging, summary, inputs):
+    """Admit finished evidence; publish only named aggregate fields, never rows/paths."""
+    directory = Path(directory); reconstruction = Path(reconstruction)
+    names = ('validation/report.json', 'validation/split-manifest.json', 'validation/evaluation-groups.json',
+             'peak-diagnostic/report.json', 'peak-diagnostic/COMPLETE.json', 'calibration/inventory.json',
+             'calibration/inputs.jsonl', 'signal-use-v2/summary.json', 'signal-use-v2/identity.json',
+             'signal-use-v2/COMPLETE.json', 'validation/readout-diagnosis.json', 'validation/endpoint-weights.json')
+    bindings = {name: sha(directory/name) for name in names}
+    validation, split = [read(directory/name) for name in names[:2]]
+    groups = read(directory/'validation/evaluation-groups.json')
+    rec_complete, rec_summary = inputs['reconstruction_complete_sha256'], inputs['reconstruction_summary_sha256']
+    require(validation.get('kind') == split.get('kind') == 'gegi_saved_recovery_validation_v1'
+            and validation.get('stage') == 'posthoc_evaluation_completed'
+            and split.get('stage') == 'frozen_before_truth_evaluation', 'Recovery validation is unfinished')
+    require(split['reconstruction_complete_sha256'] == rec_complete and split['reconstruction_summary_sha256'] == rec_summary
+            and validation['split_manifest_sha256'] == bindings['validation/split-manifest.json']
+            and validation['evaluation_groups_sha256'] == bindings['validation/evaluation-groups.json']
+            and groups['split_manifest_sha256'] == bindings['validation/split-manifest.json'],
+            'Recovery validation does not bind the frozen reconstruction/split')
+    require(all(validation[k] == 0 for k in ('new_calibration_calls','new_fit_calls','new_physics_calls'))
+            and split['selection_truth_used'] is False and split['selection_source_labels_used'] is False,
+            'Recovery evidence must retain saved-only, truth-blind selection')
+    require(validation['counts'] == {'events':400,'groups':400} and split['counts'] ==
+            {'events':400,'groups':400,'groups_by_split':{'development':200,'holdout':200}}
+            and len(groups['groups']) == len(split['groups']) == len(split['assignments']) == 400,
+            'Recovery frozen400-group census changed')
+    assignments = {r['campaign_initial_id']: r['split'] for r in split['assignments']}
+    require(len(assignments) == 400 and Counter(assignments.values()) == {'development':200,'holdout':200}
+            and all(assignments[r['campaign_initial_id']] == r['split'] for r in split['groups']),
+            'Recovery split leaks or duplicates original events')
+    sample = {}
+    for name in ('development','holdout'):
+        row = validation['by_split'][name]; counts = row['counts']
+        require(counts['groups'] == counts['original_spectroscopy_exact_match_groups'] == 200
+                and counts['classified_imaging_supported_groups'] == 0,
+                'Recovery sample changed original energy or promoted unsupported imaging')
+        sample[name] = {'groups':200, 'original_energy_exact_matches':200,
+            'conditional_hypotheses': {k:row['conditional_hypothesis_counts'][k] for k in
+                ('conditional_hypotheses','pairing_mismatches','pairing_known','false_splitting','splitting_known')},
+            'sequence_candidates': {k:row['sequence'][k] for k in ('correct','wrong','unknown')},
+            'conditional_cell_abs_depth_mm': {k:row['errors']['abs_depth_mm'][k] for k in ('n','median','p90','max')}}
+    use = read(directory/'signal-use-v2/summary.json'); complete = read(directory/'signal-use-v2/COMPLETE.json')
+    identity = read(directory/'signal-use-v2/identity.json')
+    require(use.get('kind') == identity.get('kind') == complete.get('kind') == 'gegi_saved_signal_use_v1'
+            and use.get('status') == complete.get('status') == 'completed_signal_use_classification'
+            and complete['summary_sha256'] == bindings['signal-use-v2/summary.json']
+            and complete['identity_sha256'] == bindings['signal-use-v2/identity.json'], 'Signal-use completion binding changed')
+    require(use['campaign_complete_sha256'] == identity['campaign_complete_sha256'] == summary['campaign_complete_sha256']
+            and use['reconstruction_complete_sha256'] == identity['reconstruction_complete_sha256'] == rec_complete
+            and use['reconstruction_summary_sha256'] == identity['reconstruction_summary_sha256'] == rec_summary,
+            'Signal-use evidence belongs to a different campaign/reconstruction')
+    require(all(use[k] == 0 for k in ('new_calibration_calls','new_field_calls','new_native_calls','new_radiation_calls',
+            'repeated_waveform_fits','new_energy_reconstructions','new_validated_imaging_recoveries'))
+            and use['spectroscopy_matches_original_readout'] is True, 'Signal-use evidence altered saved reconstruction')
+    categories = {k:use['categories'][k] for k in
+                  ('spectroscopy_only','ambiguous_imaging','failed_or_incomplete','unresolved_signal')}
+    require(set(use['categories']) == set(categories) and sum(categories.values()) == use['counts']['pulse_groups'] == 57613
+            and use['counts']['conditional_candidate_groups'] == summary['counts']['conditional_candidate_groups'],
+            'Signal-use classification census or conditional candidates changed')
+    totals = Counter(); indexes = set()
+    for chunk in complete['chunks']:
+        require(chunk['chunk_index'] not in indexes, 'Duplicate signal-use chunk')
+        indexes.add(chunk['chunk_index']); totals.update(chunk['counts'])
+    require(len(indexes) == 100 and dict(totals) == use['counts'], 'Signal-use chunk totals differ from summary')
+    calibration = read(directory/'calibration/inventory.json')
+    require(calibration.get('status') == 'complete_full34_responses_absent'
+            and calibration['counts']['injection_records'] == 2991 and calibration['counts']['full34_records'] == 0
+            and calibration['saved_drift_trajectories']['present'] is False
+            and calibration['input_manifest']['sha256'] == bindings['calibration/inputs.jsonl'],
+            'Calibration inventory is incomplete or changed')
+    bank = [json.loads(line) for line in ordinary(directory/'calibration/inputs.jsonl').read_bytes().splitlines()]
+    require(any(r['ref'].endswith('/pixel-calibration/depth-calibration.json') and
+                r['sha256'] == read(reconstruction/'identity.json')['calibration_sha256'] for r in bank),
+            'Calibration inventory does not describe the reconstruction bank')
+    peak = read(directory/'peak-diagnostic/report.json'); peak_complete = read(directory/'peak-diagnostic/COMPLETE.json')
+    provenance = peak['provenance']; saved = provenance['saved_input_sha256']
+    require(peak.get('kind') == 'gegi_saved_peak_diagnostic_v1' and peak['group_count'] == 19
+            and len(peak['selected_original_ids']) == 19 and peak['candidate_count'] == 58
+            and peak_complete['files']['report.json'] == bindings['peak-diagnostic/report.json']
+            and provenance['baseline_report_sha256'] == inputs['joint_imaging_report_sha256']
+            and saved['COMPLETE.json'] == rec_complete and saved['summary.json'] == rec_summary
+            and provenance['truth_used'] is False and provenance['source_labels_used'] is False
+            and provenance['new_transport_drift_fields_or_calibration'] == 0,
+            'Peak diagnostic does not bind the unchanged saved map')
+    require(imaging['spectral_layers']['1332.49_keV']['group_count'] == 19,
+            'Peak diagnostic energy-layer census changed')
+    diagnosis = read(directory/'validation/readout-diagnosis.json')
+    require(diagnosis.get('kind') == 'gegi_frozen_development_saved_readout_diagnosis_v1'
+            and diagnosis['evaluation_report_sha256'] == bindings['validation/report.json']
+            and diagnosis['split_manifest_sha256'] == bindings['validation/split-manifest.json']
+            and diagnosis['evaluation_groups_sha256'] == bindings['validation/evaluation-groups.json']
+            and all(diagnosis[k] == 0 for k in ('new_calibration_calls','new_fit_calls','new_native_calls','new_transport_calls')),
+            'Readout diagnosis does not bind frozen saved-only development evidence')
+    checked = [r['independent_circuit_check'] for r in diagnosis['selected_groups']]
+    require(len(checked) == 3 and all(r['split'] == 'development' for r in diagnosis['selected_groups'])
+            and sum(r['channels_checked'] for r in checked) == 102
+            and all(r['all_ADC_codes_equal'] and r['all_fixed_energy_gains_equal'] for r in checked),
+            'Development circuit identity check failed')
+    endpoint = read(directory/'validation/endpoint-weights.json')
+    endpoint_diagnosis = diagnosis['saved_field_endpoint_diagnosis']; accepted = endpoint_diagnosis['acceptance']
+    guard_identity = diagnosis['selected_groups'][2]['original_identity']
+    require(endpoint_diagnosis['endpoint_result_sha256'] == bindings['validation/endpoint-weights.json']
+            and endpoint.get('kind') == 'gegi_saved_endpoint_weight_result_v1'
+            and endpoint['original_bindings']['metadata_sha256'] == guard_identity['metadata_sha256']
+            and all(guard_identity[k] == v for k,v in endpoint['original_identity'].items())
+            and accepted['all_contact_mappings_identical'] is True
+            and accepted['contact_endpoint_mappings_compared'] == 86
+            and accepted['saved_native_terminal_values_compared'] == 34
+            and accepted['max_abs_prediction_error_keV'] == endpoint['max_abs_prediction_error_keV'] == 0
+            and endpoint['native_precision_bits'] == 32
+            and all(endpoint[k] == 0 for k in ('new_calibration_calls','new_drift_calls','new_field_solves'))
+            and all(accepted[k] == 0 for k in ('new_drift_calls','new_field_solves','new_injection_calls')),
+            'Saved endpoint diagnosis identity, terminal agreement or no-new-physics binding changed')
+    transient, _, guard = diagnosis['findings']
+    result = {'kind':'gegi_public_saved_recovery_evidence_v1', 'input_sha256':bindings,
+        'campaign_complete_sha256':summary['campaign_complete_sha256'],
+        'reconstruction_complete_sha256':rec_complete, 'reconstruction_summary_sha256':rec_summary,
+        'classification': {'groups':57613,'categories':categories,
+            'overlapping_signal_features': {k:use['counts'][k] for k in
+                ('spectroscopy_groups','guard_collection_groups','guard_transient_groups','adjacent_strip_groups','native_failed_groups')},
+            'new_energy_reconstructions':0,'new_validated_imaging_recoveries':0},
+        'frozen_stratified_sample':sample,
+        'calibration': {'injections':2991,'full34_responses':0,
+            'records_by_stored_channel_count':calibration['counts']['records_by_stored_channel_count'],
+            'saved_drift_trajectories_present':calibration['saved_drift_trajectories']['present']},
+        'peak_diagnostic': {'energy_keV':peak['energy_center_keV'],'groups':19,'candidates':58,'grid':peak['grid'],
+            'baseline_peaks':[{k:p[k] for k in ('position_mm','on_image_edge')} for p in peak['baseline']['blind_peaks']],
+            'leave_one_group_out':[{k:p[k] for k in ('position_mm','omissions_with_displayed_mode_within_8_mm',
+                'nearest_displayed_mode_distance_mm_min_max')} for p in peak['leave_one_group_out_summary']],
+            'grid_iteration_cases':len(peak['grid_iteration_sensitivity'])},
+        'readout_diagnosis': {'development_groups':3,'channels_checked':102,'ADC_codes_equal':True,'fixed_gains_equal':True,
+            'maximum_peak_absolute_error_V':max(r['max_peak_absolute_error_V'] for r in checked),
+            'collecting_strip_transient':{k:transient['evidence'][k] for k in
+                ('mean_ADC_minus_terminal_keV','X_strip_9_terminal_keV','X_strip_9_charge_transient_max_keV','X_strip_9_analog_peak_energy_keV')},
+            'guard_terminal':{k:guard['evidence'][k] for k in ('mean_native_terminal_deficit_keV','deposition_keV')},
+            'guard_contact_endpoints':sum(diagnosis['selected_groups'][2]['endpoint_status_counts'].values()),
+            'saved_field_endpoint_diagnosis': {'contact_mappings_identical':True,'contact_endpoints':86,
+                'native_terminal_values_compared':34,'max_abs_prediction_error_keV':0.0,'native_precision_bits':32,
+                'own_guard_weighting_potential_bounds':{k:endpoint_diagnosis['bounds'][k] for k in
+                    ('electron_guard34_own_phi_min','electron_guard34_own_phi_max','hole_guard17_own_phi_min','hole_guard17_own_phi_max')},
+                'new_drift_calls':0,'new_field_solves':0,'new_injection_calls':0}}}
+    public(encoded(result))
+    return result, {directory/name:digest for name,digest in bindings.items()}
+
+
+def _recovery_html(evidence):
+    if evidence is None:
+        return ''
+    c = evidence['classification']; n = c['categories']; sample = evidence['frozen_stratified_sample']
+    parts = ['<section id="saved-evidence"><h2>What the saved-data checks establish</h2>',
+        f'<p>All {c["groups"]:,} saved groups now have a use category: <strong>{n["spectroscopy_only"]:,} spectroscopy only</strong>, '
+        f'{n["ambiguous_imaging"]:,} with ambiguous imaging hypotheses, {n["failed_or_incomplete"]:,} failed or incomplete, '
+        f'and {n["unresolved_signal"]:,} unresolved. Original readout energies are retained. No new validated imaging recovery is claimed.</p>',
+        '<p>A frozen stratified sample of 400 original events was divided before truth evaluation into 200 development and 200 holdout events. '
+        'All 400 original energy records match exactly. This diagnostic sample does not estimate campaign efficiency.</p>',
+        '<details><summary>Pairing, splitting and sequence checks</summary><table><tr><th>Posthoc check</th><th>Development</th><th>Holdout</th></tr>']
+    features = c['overlapping_signal_features']
+    parts.insert(2, '<details><summary>Guard and adjacent-strip signal features</summary>'
+        f'<p>Spectroscopy is usable in {features["spectroscopy_groups"]:,} groups, including the ambiguous imaging category. '
+        f'Terminal guard collection appears in {features["guard_collection_groups"]:,} groups, guard transients in {features["guard_transient_groups"]:,}, '
+        f'and adjacent strips in {features["adjacent_strip_groups"]:,}. These feature counts overlap and must not be added to the use categories.</p></details>')
+    def row(label, values):
+        return '<tr><td>'+label+'</td>'+''.join('<td>'+html.escape(str(v))+'</td>' for v in values)+'</tr>'
+    parts.append(row('Pairing mismatches / checked conditional hypotheses', [f'{r["conditional_hypotheses"]["pairing_mismatches"]}/{r["conditional_hypotheses"]["pairing_known"]}' for r in sample.values()]))
+    parts.append(row('False splits / checked conditional hypotheses', [f'{r["conditional_hypotheses"]["false_splitting"]}/{r["conditional_hypotheses"]["splitting_known"]}' for r in sample.values()]))
+    parts.append(row('Sequence candidates: correct / wrong / unknown', [' / '.join(str(r['sequence_candidates'][k]) for k in ('correct','wrong','unknown')) for r in sample.values()]))
+    parts.append(row('Matched conditional cells; median / 90th-percentile absolute depth error (mm)', [f'{r["conditional_cell_abs_depth_mm"]["n"]}; {r["conditional_cell_abs_depth_mm"]["median"]:.3f} / {r["conditional_cell_abs_depth_mm"]["p90"]:.3f}' for r in sample.values()]))
+    parts += ['</table><p>Hypotheses and sequence candidates are not independent events. Pairing compares native endpoint cells; sequence correctness is known only for uniquely traceable single-photon anchors. '
+        'Depth errors apply only to matched conditional cells, not all events or experimental resolution. Unknown sequence cases stay unknown.</p></details>']
+    p = evidence['peak_diagnostic']; keep = p['leave_one_group_out']
+    parts += [f'<details><summary>The 1332.492-keV layer: {p["groups"]} groups, {p["candidates"]} conditional candidates</summary>'
+        '<p>The two maxima near (38, −2) and (46, 18) mm use the imposed z = 40 mm plane. '
+        f'After omitting each group in turn, a displayed mode stays within 8 mm of these positions in {keep[0]["omissions_with_displayed_mode_within_8_mm"]}/19 and {keep[1]["omissions_with_displayed_mode_within_8_mm"]}/19 cases. '
+        f'{p["grid_iteration_cases"]} saved grid/iteration cases test numerical sensitivity. These maxima do not identify two Co-60 sources or establish resolution.</p></details>']
+    d = evidence['readout_diagnosis']; t = d['collecting_strip_transient']; g = d['guard_terminal']
+    endpoint = d['saved_field_endpoint_diagnosis']; phi = endpoint['own_guard_weighting_potential_bounds']
+    parts += ['<details><summary>Where the energy interpretation needs work</summary>'
+        f'<p>An independent analytic check reproduces all {d["channels_checked"]} channel ADC codes and fixed gains in three development groups. '
+        f'In the transient case, a strip ends at {t["X_strip_9_terminal_keV"]:.3f} keV charge-equivalent after a {t["X_strip_9_charge_transient_max_keV"]:.3f} keV transient; '
+        f'its shaped positive peak is {t["X_strip_9_analog_peak_energy_keV"]:.3f} keV-equivalent. The mean-face ADC sum exceeds terminal charge by {t["mean_ADC_minus_terminal_keV"]:.3f} keV. '
+        'Separately timed strip maxima therefore cannot automatically be interpreted as collected pixel energies.</p>'
+        f'<p>The guard case has {d["guard_contact_endpoints"]} contact endpoints but a {abs(g["mean_native_terminal_deficit_keV"]):.3f} keV mean terminal deficit. '
+        'The saved-field check establishes the cause for this event: Cartesian interpolation mixes contact and neighboring noncontact grid nodes. '
+        'The contact nodes have own-electrode weighting potential 1, but the continuous endpoints interpolate below 1: '
+        f'electron guard {phi["electron_guard34_own_phi_min"]:.5f}–{phi["electron_guard34_own_phi_max"]:.5f}; '
+        f'hole guard {phi["hole_guard17_own_phi_min"]:.5f}–{phi["hole_guard17_own_phi_max"]:.5f} (dimensionless). '
+        f'All {endpoint["contact_endpoints"]} contact identities agree, and the original Float32 endpoint algebra reproduces all '
+        f'{endpoint["native_terminal_values_compared"]} saved terminal values with exactly 0.0 keV error. '
+        'This diagnoses one development event without new drift, field solves or injections. A waveform correction remains unvalidated; do not force final charge to deposited energy.</p></details>',
+        '<p><strong>Next operation:</strong> use the forward response of charge transport and the declared circuit to constrain the inverse signal model, including induced transients. '
+        'The original 2,991 calibration records contain selected X/Y signals and no complete 34-channel response basis or saved drift trajectories. '
+        'A supported inverse model needs that missing response information; original energies, maps and uncertainty remain intact.</p>'
+        '<p><a href="recovery-summary.json">Aggregate evidence and exact input hashes</a></p></section>']
+    return ''.join(parts)
+
+
 def _render(summary, imaging, control, figures, journey):
     esc = lambda value: html.escape(str(value),quote=True)
     n = summary['counts']; selected = imaging['group_count']
@@ -278,7 +474,7 @@ def _render(summary, imaging, control, figures, journey):
             (1_000_000,'original initial records'),(n['pulse_groups'],'saved nonzero pulse groups'),
             (n['conditional_candidate_groups'],'groups with conditional signal hypotheses'),(0,'validated recovered groups')) )+'</div>',
         '<p class="limits">Processing is complete; source localization is not experimentally validated. Range and activity remain unknown. The saved calibration covers selected X/Y pairs, not the full 34-channel response to each injection; unexplained induction and charge sharing remain explicit.</p>',
-        '<nav class="local"><a href="#new-map">New pooled result</a><a href="#control">Original 708 control</a><a href="#spectra">Spectra</a><a href="#journey">Signals to a cone</a><a href="#accounting">Accounting</a></nav>',
+        '<nav class="local"><a href="#new-map">New pooled result</a>'+('<a href="#saved-evidence">Saved-data checks</a>' if summary.get('saved_recovery_evidence') else '')+'<a href="#control">Original 708 control</a><a href="#spectra">Spectra</a><a href="#journey">Signals to a cone</a><a href="#accounting">Accounting</a></nav>',
         '<section id="new-map"><h2>New pooled result</h2>']
     if selected:
         evaluation=summary['posthoc_evaluation']
@@ -309,7 +505,8 @@ def _render(summary, imaging, control, figures, journey):
         for item in layers:
             htmlparts += ['<figure><img src="'+esc(item['file'])+'" alt="Conditional energy layer '+esc(item['layer'])+'"><figcaption>'+esc(item['layer'])+' · '+str(item['groups'])+' groups. Energy label, not isotope identification.</figcaption></figure>']
         htmlparts += ['</div></details>']
-    htmlparts += ['</section><section id="control"><p class="tag">Separate control · original reconstruction</p><h2>Original 708 groups with corrected finite-vertex imaging</h2><details><summary>Inspect the separate original-reconstruction control</summary>',
+    htmlparts += ['</section>', _recovery_html(summary.get('saved_recovery_evidence')),
+        '<section id="control"><p class="tag">Separate control · original reconstruction</p><h2>Original 708 groups with corrected finite-vertex imaging</h2><details><summary>Inspect the separate original-reconstruction control</summary>',
         '<p>The same 708 previously accepted groups are pooled using all their original cone alternatives. This control changes the image response; it does not repair their old strip/depth reconstruction or count them as newly recovered events.</p>',
         '<img src="map-legacy-control.png" alt="Separate control: original 708 groups with finite-vertex conditional imaging">',
         '<p class="caption">All four acquisitions, no acquisition equalization, no truth overlay. Conditional source mass per grid cell; neither calibrated activity nor a probability of a true source location.</p>',
@@ -343,10 +540,12 @@ def _render(summary, imaging, control, figures, journey):
     return ''.join(htmlparts).encode('utf-8')
 
 
-def export_saved(reconstruction, imaging, legacy_control, previous_public, output, *, root=ROOT, readout_checks=None, evaluation=None):
+def export_saved(reconstruction, imaging, legacy_control, previous_public, output, *, root=ROOT, readout_checks=None, evaluation=None, recovery_evidence=None, replace_public_manifest_sha256=None):
     output = Path(output).resolve(); root = Path(root).resolve()
     require(not output.exists(), 'Preserve existing publication; use a new explicit output')
     pins = _source_pins(root)
+    replacement = PREVIOUS_MANIFEST if replace_public_manifest_sha256 is None else replace_public_manifest_sha256
+    require(isinstance(replacement,str) and re.fullmatch(r'[0-9a-f]{64}',replacement), 'Invalid explicit public replacement hash')
     summary, image, control, previous, inputs = _saved_inputs(reconstruction,imaging,legacy_control,previous_public)
     selected = image['group_count']
     require((image.get('source_mass') is not None) == (selected > 0), 'Empty imaging selection must not have a source map')
@@ -357,6 +556,10 @@ def export_saved(reconstruction, imaging, legacy_control, previous_public, outpu
     accuracy=_evaluation_summary(evaluation,imaging,reconstruction,image) if evaluation is not None else None
     if accuracy is not None:
         inputs['posthoc_evaluation_sha256']=sha(evaluation)
+    recovery, recovery_bindings = None, {}
+    if recovery_evidence is not None:
+        recovery, recovery_bindings = _recovery_summary(recovery_evidence,reconstruction,image,summary,inputs)
+        inputs['saved_recovery_evidence_sha256'] = hashlib.sha256(encoded(recovery)).hexdigest()
     target = output/'public'; target.mkdir(parents=True)
     figures = []
     for family, report, filename in (('new',image,'map-new-pooled.png'),('control',control,'map-legacy-control.png')):
@@ -385,6 +588,8 @@ def export_saved(reconstruction, imaging, legacy_control, previous_public, outpu
         'limitations':summary['limitations'],'input_sha256':inputs,'figures':figures}
     if accuracy is not None:
         public_summary['posthoc_evaluation']=accuracy
+    if recovery is not None:
+        public_summary['saved_recovery_evidence']=recovery
     if readout_checks is not None:
         public_summary['readout_check']=_readout_summary(readout_checks)
         inputs['readout_check_sha256']=sha(readout_checks)
@@ -394,6 +599,8 @@ def export_saved(reconstruction, imaging, legacy_control, previous_public, outpu
         'gegi_signal_journey.js':ordinary(root/SOURCE_FILES[1]).read_bytes()}
     if accuracy is not None:
         bodies['evaluation-summary.json']=encoded(accuracy)
+    if recovery is not None:
+        bodies['recovery-summary.json']=encoded(recovery)
     for name in ('configuration.json','representatives.json','source-assessment.json'):
         bodies[name]=ordinary(Path(previous_public)/name).read_bytes()
     for name,body in bodies.items():
@@ -406,8 +613,9 @@ def export_saved(reconstruction, imaging, legacy_control, previous_public, outpu
             and sha(_report_path(legacy_control))==inputs['legacy_control_report_sha256'], 'Saved input changed during export')
     if accuracy is not None:
         require(sha(evaluation)==inputs['posthoc_evaluation_sha256'], 'Posthoc evaluation changed during export')
+    require(all(sha(path)==digest for path,digest in recovery_bindings.items()), 'Recovery evidence changed during export')
     manifest={'kind':KIND,'status':'complete','route':ROUTE,'initial_records':1_000_000,
-        'replaces_public_manifest_sha256':PREVIOUS_MANIFEST,'input_sha256':inputs,
+        'replaces_public_manifest_sha256':replacement,'input_sha256':inputs,
         'source_sha256':pins,'exporter_sha256':pins[SOURCE_FILES[0]],'pillow_version':PILLOW_VERSION,
         'radiation_calls':0,'native_drift_calls':0,'field_solves':0,'electronics_replays':0,'reconstruction_calls':0,
         'artifact_scope':'Saved aggregate maps plus unchanged historical34channel teaching signals; no raw science or private slides.',
@@ -419,16 +627,24 @@ def export_saved(reconstruction, imaging, legacy_control, previous_public, outpu
     return manifest
 
 
-def validate_public(directory, *, root=ROOT):
+def validate_public(directory, *, root=ROOT, allow_historical_sources=False):
     directory=Path(directory); manifest=read(directory/'publication.json')
     require(manifest.get('kind')==KIND and manifest.get('status')=='complete' and manifest.get('route')==ROUTE,
             'Incomplete or unsupported saved publication')
-    require(manifest.get('initial_records')==1_000_000 and manifest.get('replaces_public_manifest_sha256')==PREVIOUS_MANIFEST,
+    require(manifest.get('initial_records')==1_000_000
+            and isinstance(manifest.get('replaces_public_manifest_sha256'),str)
+            and re.fullmatch(r'[0-9a-f]{64}',manifest['replaces_public_manifest_sha256'])
+            and manifest['input_sha256'].get('previous_public_manifest_sha256')==PREVIOUS_MANIFEST,
             'Wrong campaign denominator or replacement binding')
     require(all(manifest.get(k)==0 for k in ('radiation_calls','native_drift_calls','field_solves','electronics_replays','reconstruction_calls')),
             'Publication must not execute simulation or analysis')
-    require(manifest['source_sha256']==_source_pins(root) and manifest['exporter_sha256']==manifest['source_sha256'][SOURCE_FILES[0]],
-            'Saved publication source pins changed')
+    pins=manifest['source_sha256']
+    require(set(pins)==set(SOURCE_FILES) and all(isinstance(v,str) and re.fullmatch(r'[0-9a-f]{64}',v) for v in pins.values())
+            and manifest['exporter_sha256']==pins[SOURCE_FILES[0]], 'Saved publication source provenance changed')
+    # An installed predecessor keeps its original recorded source identity. New
+    # exports and candidates always require the currently frozen implementation.
+    if not allow_historical_sources:
+        require(pins==_source_pins(root), 'Saved publication source pins changed')
     names=set(manifest['artifacts']); actual={p.name for p in directory.iterdir()}
     require(TEXT_NAMES <= names and {'spectra.png','map-legacy-control.png','map-legacy-backprojection.png'} <= names
             and actual==names|{'publication.json'}, 'Unexpected or missing public artifact')
@@ -451,6 +667,10 @@ def validate_public(directory, *, root=ROOT):
         require('evaluation-summary.json' in names and summary['posthoc_evaluation']==read(directory/'evaluation-summary.json')
                 and summary['posthoc_evaluation']['bindings']['imaging_report_sha256']==manifest['input_sha256']['joint_imaging_report_sha256'],
                 'Published accuracy evidence is missing or changed')
+    if 'saved_recovery_evidence' in summary:
+        require('recovery-summary.json' in names and summary['saved_recovery_evidence']==read(directory/'recovery-summary.json')
+                and sha(directory/'recovery-summary.json')==manifest['input_sha256']['saved_recovery_evidence_sha256'],
+                'Published saved recovery evidence is missing or changed')
     public((directory/'publication.json').read_bytes())
     return manifest
 
@@ -461,5 +681,7 @@ if __name__=='__main__':
         parser.add_argument('--'+name,required=True)
     parser.add_argument('--readout-checks')
     parser.add_argument('--evaluation')
+    parser.add_argument('--recovery-evidence', help='Finished saved-data recovery evidence directory; aggregate export only')
+    parser.add_argument('--replace-public-manifest-sha256', help='Exact installed public manifest to replace; teaching inputs remain independently bound')
     args=parser.parse_args()
-    export_saved(args.reconstruction,args.imaging,args.legacy_control,args.previous_public,args.output,readout_checks=args.readout_checks,evaluation=args.evaluation)
+    export_saved(args.reconstruction,args.imaging,args.legacy_control,args.previous_public,args.output,readout_checks=args.readout_checks,evaluation=args.evaluation,recovery_evidence=args.recovery_evidence,replace_public_manifest_sha256=args.replace_public_manifest_sha256)

@@ -20,6 +20,33 @@ def finite(x):
     return type(x) in (int, float) and math.isfinite(x)
 
 
+
+def readout_summary(event):
+    """Fixed-calibration face sums; opposite faces are averaged, never added."""
+    result = {'accepted': False, 'energy_keV': None, 'x_energy_keV': None, 'y_energy_keV': None,
+              'significant_collecting_channel_ids': [], 'reason': None,
+              'scope': 'All above-threshold collecting channels, including guards; imaging separately vetoes guards.'}
+    channels = event.get('channels')
+    if event.get('status') != 'completed' or not isinstance(channels, list):
+        result['reason'] = 'native_response_incomplete'
+        return result
+    hits = [c for c in channels if c.get('collection_candidate') is True]
+    result['significant_collecting_channel_ids'] = [c['contact_id'] for c in hits]
+    if any(c.get('accepted') is not True or not finite(c.get('reconstructed_energy_keV')) for c in hits):
+        result['reason'] = 'collecting_channel_readout_rejected'
+        return result
+    xs = [c for c in hits if 1 <= c['contact_id'] <= 17]
+    ys = [c for c in hits if 18 <= c['contact_id'] <= 34]
+    if not xs or not ys:
+        result['reason'] = 'requires_collection_on_both_faces'
+        return result
+    ex = sum(c['reconstructed_energy_keV'] for c in xs)
+    ey = sum(c['reconstructed_energy_keV'] for c in ys)
+    result.update(accepted=True, energy_keV=(ex+ey)/2, x_energy_keV=ex, y_energy_keV=ey,
+                  face_energy_difference_keV=ex-ey)
+    return result
+
+
 def norm(v):
     return math.sqrt(sum(x*x for x in v))
 

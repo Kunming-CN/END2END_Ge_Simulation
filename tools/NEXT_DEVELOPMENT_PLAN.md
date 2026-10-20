@@ -31,30 +31,39 @@ simulation/gegi_response.jl:93,138,205; simulation/readout.jl:95,128;
 transport/cs137.py:23; tools/gegi_campaign_response.py:53,89;
 tools/gegi_signal_reconstruction.py:254,325,359. Preserve original generation pins.
 
-### Next bounded execution and stop condition
+### Current execution and acceptance
 
-1. Reuse the frozen 400-event manifest (200 development/200 holdout, original-event
-   separation) and original readout/native stores. Finish the existing evaluation
-   without changing reconstruction or selection. Report stage quantities and
-   wrong-pair/splitting/position/sequence errors, separating unknown truth matches.
-   No complete campaign fit, new injection or physics run is needed for this step.
-2. From those errors select the earliest concrete failure and one repair. If the
-   failure is an implementation defect, correct and test that path. If it is an
-   unidentified hardware response or missing calibration, specify the required
-   input/computation before proceeding; do not substitute a plausible instrument.
-3. Freeze an integrated small-case acceptance before processing affected saved
-   derivatives. Require identity/unit/sign/energy bookkeeping, explicit failures,
-   no truth leakage, exact fixed-gain preservation and held-out error accounting.
-   Numerical tolerances use existing analytic/quantization bounds; physical energy,
-   position and timing criteria must come from matching data/specification. Do not
-   invent an arbitrary resolution target to declare success.
-4. Only after this acceptance update student software and publish relevant results.
-   Large-sample radiation is a later decision based on residual statistical need.
+The frozen400-event evaluation and full saved signal-use export are complete; see
+PROGRESS.md for exact denominators/errors and local evidence paths. No candidate
+has been promoted to validated imaging. The original energy values are preserved.
+Three development cases independently match the nominal circuit, exposing a
+transient-to-positive-peak bias and a separate guard terminal-charge inconsistency.
 
-Stop this milestone once the evidence map and next diagnostic are concrete; do not
-expand into a literature survey or another general review. The planning/evidence
-map above is complete. The400-event evaluation is the next execution milestone;
-its manifest already exists, but no completed evaluation result exists yet.
+1. Saved endpoint query is complete: guard event723606's86contacts are correct,
+   but geometric contact endpoints interpolate contact and noncontact grid nodes.
+   ExactFloat32 endpoint algebra reproduces all34saved terminalvalues (0.0keVerror).
+   Before changing the producer, prepare a bounded3original-deposit path-capture
+   request for owner approval. Compare original/candidate boundary interpolation
+   along the same complete paths; terminal-only forcing is not acceptance.
+2. Use the owner's forward/inverse approach: validate interaction -> signed34-channel
+   signal -> readout first, then infer positions/energies/multiplicity by explaining
+   observed signals through that same response. Geant4 truth can establish/check
+   response models in development; held-out reconstruction takes only observables,
+   and known source positions remain independent image evaluation. Do not replace
+   the inverse problem with source-position memorization or forced strip merging.
+3. Address transient response in energy allocation. Independent per-strip positive
+   ADC peaks need not equal final collected charge; adding these peaks can bias
+   energy and pairing even when the nominal circuit is numerically correct. A
+   new estimator must be explicit, preserve the original readout, use a fixed
+   calibration and be tested on the frozen holdout without retuning its cuts.
+4. Deliver the tested signal-use/software changes and aggregate diagnosis through
+   the existing student release and website. This delivery exposes useful spectra
+   and current errors; it does not claim the full inverse model has passed.
+
+Continue authorized saved-data/software work without routine milestone approval.
+Stop only for a concrete missing input or the explicit boundary on new physical/
+calibration calculations. The full34 basis and actual hardware transfer remain
+separate requirements. No arbitrary resolution target or extra AI review rounds.
 
 ### Conditional calibration option, not yet authorized or first action
 

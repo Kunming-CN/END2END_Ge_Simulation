@@ -61,6 +61,10 @@ class Standalone(unittest.TestCase):
         self.assertEqual(payload['events'][1]['reconstruction']['status'],'native_failed_or_incomplete')
         self.assertIsNone(payload['imaging']['values']);self.assertEqual(payload['imaging']['cones'],[])
         self.assertEqual(payload['imaging']['validated_recovered_groups'],0)
+        self.assertEqual(payload['signal_use_counts'],{'spectroscopy_only':1,'failed_or_incomplete':1})
+        use=payload['events'][0]['reconstruction']['signal_use']
+        self.assertTrue(use['spectroscopy']['accepted'])
+        self.assertIsNone(payload['events'][1]['reconstruction']['signal_use']['spectroscopy']['energy_keV'])
         self.assertEqual(before,{p.relative_to(response):W.sha(p) for p in response.rglob('*') if p.is_file()})
 
     def test_csv_hash_wiring_and_terminal_charge_changes_are_refused(self):

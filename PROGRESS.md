@@ -1,41 +1,82 @@
 # Current handoff
 
-## Full-chain evidence/planning milestone complete — 2026-10-20
+## Full-chain saved-data diagnosis and software delivery — active 2026-10-20
 
-Owner resumed work with full-chain correctness first and strict token discipline.
-The evidence/implementation/gap/acceptance table and ordered next task are now in
-tools/NEXT_DEVELOPMENT_PLAN.md. One 6.1-sol read-only source-mapping task was used;
-no new Astra agents, physical calculations, calibration or reconstruction fits.
-Automatic monitoring stays PAUSED. Original campaign/v3 delivery remains unchanged.
+Owner priority: establish a correct GeGI radiation -> charge ->34-channel signal
+-> electronics -> inverse reconstruction chain before larger samples. The forward
+response should explain known simulated interactions, then infer unknown events
+from signals alone; source positions remain independent image evaluation. Reuse
+saved data, keep the frozen holdout independent, and do not tune to source maps.
+Use bounded6.1-sol ultra development tasks; no extra AI review agents. Automatic
+monitoring stays PAUSED. No new transport, field solve or calibration is approved. Owner subsequently
+approved only3fixed original-deposit drift captures; they have not started. Original campaign/v3 science and failure records remain unchanged.
 
-Main finding: current electronics is synthetic-signed-14bit-v1, not an identified
-GeGI hardware transfer. Its existing 4-group/136-channel numerical circuit check
-passed; reuse it. Need align full-detector/pixel spectra, signal/timing/trigger
-observables and model generation before interpreting acceptance or source maps.
-Carrier model uses deterministic point charges without diffusion; full 34-channel campaign
-signals exist but the independent calibration saved only X/Y and no drift paths.
-These are established model gaps, not proof of a single cause for all bad events.
+Frozen400 evaluation COMPLETE in17.234s:200development/200holdout, stratified by
+10reasons, original-event-separated. All400 reproduce original spectroscopy
+exactly. Each split has160complete endpoint references/40unknown. Development/
+holdout pairing errors3/22 and5/24hypotheses; false splits1/22 and2/24; depth median
+absolute errors0.143/0.100mm on49/50matched cell-hypothesis pairs. Sequence correct/
+wrong/unknown2/2/40 and2/6/40. These selected conditional metrics are neither detector
+efficiency nor spatial resolution. Validated imaging recoveries remain0.
 
-Private reference-index.json under .local/gegi-10m/signal-recovery-v1 records
-18 PPTs / 283 slides and 4 targeted PDFs. July 14 plots and IAEA p16 were visually checked.
-Older GeGI-4 (10 mm), current manufacturer (11 mm), other strip/ring/PAGe/GIPR systems must
-remain distinct. Full GeGI manual and matched hardware configuration still missing.
+Saved readout diagnosis:102channels from3development groups match the analytic
+nominal circuit (peak error<1e-13V, exactADC/gain). Event976317: positive transient
+peak raises mean ADC energy12.745keV over terminal charge; X9ends15.511keV but
+transient reaches271.113keV and the shaped analog peak corresponds to43.381keV. Event30057 is mainly quantization.
+Guard event723606: all86endpoints marked contact but mean terminal charge is45.904keV
+below deposited energy. Saved-field query establishes contact-boundary interpolation: continuous guard
+endpoints mix contact/noncontact grid nodes, yielding own-electrode values below1.
+All86contact identities are correct; originalFloat32 algebra reproduces all34
+saved terminal charges exactly (max error0.0keV). Query18.05s,1.679GBpeak memory;
+no new drift/solve/injection. Waveform continuity/correction remains unvalidated.
+Never force its charge toEdep or treat contact flags as charge-conservation proof.
 
-Next bounded task: finish existing frozen 400-event evaluation (200 development,
-200 holdout); quantify stage energy, position, pairing, splitting and sequence errors
-without changing cuts or rerunning fits. Then choose the earliest concrete repair.
-15 full 34-channel injections are a conditional proposal only; no approval or execution yet.
+Saved signal-use derivative COMPLETE: signal-recovery-v1/signal-use-v2,104.083s,
+57,613original groups.55,591existing spectroscopy groups (55,157spectroscopy-only),
+434unchanged conditional candidate groups,1,896incomplete (including426nativefailed),
+126unresolved complete signals.11,206guard collection,17,568guard transient,
+12,680adjacent-strip groups; flags overlap.55,170spectroscopy groups meet the existing
+face-compatibility screen. Every original readout summary matched exactly. No fits,
+new cones or new energy reconstructions. Keep failed first derivative signal-use/
+and log: GoogleDrive denied replacing progress.json after44chunks; second export
+writes completion artifacts once and reports progress tostdout.
 
-Previous recovery WIP remains uncommitted and incompletely integrated: signal-use
-classification/shared-entry wiring and dedicated inventory/peak/evaluation tools.
-Six signal-use and twelve existing signal tests passed previously; do not repeat
-unaffected tests. Peak attribution is complete; 400-event evaluation is not. No new
-student release or website publication. Retain failed inventory-write evidence.
-Old diagnosis ownership remains intact; current manual ownership record is
-.local/autonomy/gegi-saved-recovery.lock/owner.json. Check its state/processes
-before further execution; do not start automatic monitoring.
+Runtime changes in this milestone: shared signal-use reporting, separate energy and
+imaging explanations in Control, no adjacent-strip merging, preserved null failures.
+The identical readout_summary function moved from campaign orchestration into the
+existing imaging helper so the student package does not pull campaign/recovery
+runners. AST equivalence and all57,613original energy values checked. Relevant tests:
+signal-use7, shared signal12, campaign response9, saved reconstruction4, standalone8,
+package5, saved-use exporter2; browser contract script passed. Original400evaluation
+used pre-relocation source hashes; exact producer math is unchanged. Export source
+snapshots live in signal-use-v2/source-bindings. Publication integration passes18exporter tests plus36site tests. Historical
+installed-artifact validation is separate from strict current candidate admission;
+explicit replacement binds the installed manifest. Source commit/student release
+and website deployment are being completed; see the delivery receipt before
+claiming publication.
 
-## GeGI saved-data correction — authorized delivery complete
+Existing completed evidence: calibration/inventory.json confirms2,727selectedX/Y
+signal checkpoints +264excluded records; full34responses were not computed and drift
+paths were not saved. Peak-diagnostic confirms the19-group1332keV layer's second
+maximum disappears locally in3/19leave-one-out cases; existing40iterations had not
+converged. Keep these results; no repeat analysis. reference-index.json records private
+18PPTs/283slides and4targetedPDFs. Current electronics is synthetic-signed-14bit-v1,
+not a matched GeGI hardware transfer; distinguish10mmGeGI-4 from11mmcurrent models.
+
+Next: finish source/student/site delivery with required checks. The owner approved
+exact3row path-capture request c514ed87e5b0 on2026-10-20 (original rows10191,10186,10185). Initial preflight blocked
+on memory (available2,376,425,472B < required2,505,788,093B);0workers/0drifts.
+Keep limits and approval, inspect headroom after owned publication processes exit.
+These paths are needed to compare original and candidate boundary treatment without repeating drift or forcing terminalcharge. Missing full34
+independent templates and exact hardware transfer remain explicit. The15pointfull34
+injection proposal is conditional only; present necessity/scale/cost for owner decision
+before any new drift/calibration. Keep one compact handoff.
+
+Ownership: current manual owner gegi-saved-recovery-20261020 uses
+.local/autonomy/gegi-saved-recovery.lock/owner.json. Old diagnosis ownership is retained
+inactive, never deleted. state.json remains active_saved_data_development; monitorPAUSED.
+
+## Prior GeGI saved-data correction — delivered history
 
 Owner authorized full-chain signal/readout/software correction and GitHub display
 using existing data, local private GeGI slides and primary literature. No new

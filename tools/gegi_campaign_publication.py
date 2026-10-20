@@ -541,11 +541,11 @@ def export(campaign,analysis,output,*,exporter_sha256,root=ROOT,replayer=replay_
     return target
 
 
-def validate_bundle(directory):
+def validate_bundle(directory, *, allow_historical_sources=False):
     directory=Path(directory);ordinary(directory/'publication.json');record=read(directory/'publication.json')
     if record.get('kind')=='gegi_saved_publication_v3':
         from gegi_saved_publication import validate_public
-        return validate_public(directory)
+        return validate_public(directory,allow_historical_sources=allow_historical_sources)
     require(record.get('kind')==KIND and record.get('status')=='complete' and record.get('route')==ROUTE and
             record.get('radiation_calls')==record.get('field_solves')==record.get('native_drift_calls')==0,
             'Incomplete or unsupported campaign publication')
@@ -569,7 +569,7 @@ def validate_bundle(directory):
 def install_bundle(bundle,site):
     record=validate_bundle(bundle);target=Path(site)/Path(ROUTE).parent
     if target.exists():
-        previous=validate_bundle(target)
+        previous=validate_bundle(target,allow_historical_sources=True)
         previous_sha=sha(target/'publication.json')
         if previous_sha==sha(Path(bundle)/'publication.json'):
             return target

@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ('tools/gegi_saved_reconstruction.py', 'tools/gegi_signal_reconstruction.py',
            'tools/gegi_event_store.py', 'tools/gegi_imaging.py',
            'tools/gegi_calibration_admission.py', 'tools/scenario_workflow.py')
+SOURCES += ('tools/gegi_signal_recovery.py',)
 
 
 def read(path):
@@ -197,6 +198,8 @@ def process(campaign, calibration, output, *, resume=False):
                     count['conditional_candidate_groups']+=bool(result['candidates'])
                     count['conditional_candidates']+=len(result['candidates'])
                     count['validated_recovered_groups']+=bool(result['imaging_accepted'])
+                    count['spectroscopy_groups']+=bool(result['signal_use']['spectroscopy']['accepted'])
+                    count['spectroscopy_only_groups']+=result['signal_use']['category']=='spectroscopy_only'
                     reject[result.get('reason') or result['status']]+=1
                     if result['candidates']:
                         change[event['reconstruction'].get('reason') or event['reconstruction']['status']]+=1

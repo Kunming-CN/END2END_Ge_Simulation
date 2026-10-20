@@ -17,6 +17,7 @@ import sys
 
 import gegi_event_store as S
 import gegi_imaging as I
+from gegi_imaging import readout_summary
 import scenario_workflow as W
 from local_ui_jobs import process_identity
 
@@ -84,32 +85,6 @@ def pulse_groups(event, source_id, context):
             if key in event:
                 result[key] = event[key]
         yield result
-
-
-def readout_summary(event):
-    """Fixed-calibration face sums; opposite faces are averaged, never added."""
-    result = {'accepted': False, 'energy_keV': None, 'x_energy_keV': None, 'y_energy_keV': None,
-              'significant_collecting_channel_ids': [], 'reason': None,
-              'scope': 'All above-threshold collecting channels, including guards; imaging separately vetoes guards.'}
-    channels = event.get('channels')
-    if event.get('status') != 'completed' or not isinstance(channels, list):
-        result['reason'] = 'native_response_incomplete'
-        return result
-    hits = [c for c in channels if c.get('collection_candidate') is True]
-    result['significant_collecting_channel_ids'] = [c['contact_id'] for c in hits]
-    if any(c.get('accepted') is not True or not I.finite(c.get('reconstructed_energy_keV')) for c in hits):
-        result['reason'] = 'collecting_channel_readout_rejected'
-        return result
-    xs = [c for c in hits if 1 <= c['contact_id'] <= 17]
-    ys = [c for c in hits if 18 <= c['contact_id'] <= 34]
-    if not xs or not ys:
-        result['reason'] = 'requires_collection_on_both_faces'
-        return result
-    ex = sum(c['reconstructed_energy_keV'] for c in xs)
-    ey = sum(c['reconstructed_energy_keV'] for c in ys)
-    result.update(accepted=True, energy_keV=(ex+ey)/2, x_energy_keV=ex, y_energy_keV=ey,
-                  face_energy_difference_keV=ex-ey)
-    return result
 
 
 def verify_store_roundtrip(store, primary_id, group_id, event, signals, input_sha256):

@@ -418,21 +418,25 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
     local.mkdir(exist_ok=True)
     previous = local / 'site-previous'
     old = None
+    def checked_predecessor():
+        if gegi_campaign_bundle is not None:
+            return validate(DESTINATION,allow_historical_gegi_sources=True)
+        return validate(DESTINATION)
     if previous.exists():
         # Reuse this exact checked snapshot in the branch below.
-        old = validate(DESTINATION)
+        old = checked_predecessor()
         remove_generated(previous)
     if DESTINATION.is_symlink() or OUT.is_symlink():
         raise RuntimeError('Publication directories must not be symlinks.')
     if (DESTINATION / MANIFEST).exists() and old is None:
         # Protect unknown files and hand edits: fix the source instead of losing work.
-        old = validate(DESTINATION)
+        old = checked_predecessor()
     if OUT.exists():
         remove_generated(OUT)
     if gegi_campaign_bundle is not None:
         from gegi_campaign_publication import install_bundle
         if old is None:
-            validate(DESTINATION)
+            checked_predecessor()
         shutil.copytree(DESTINATION,OUT);(OUT/MANIFEST).unlink()
         install_bundle(gegi_campaign_bundle,OUT)
     elif gegi_results is not None:

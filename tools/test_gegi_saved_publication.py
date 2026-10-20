@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+import shutil
 from pathlib import Path
 import tempfile
 import unittest
@@ -166,8 +167,38 @@ class SavedPublicationTests(unittest.TestCase):
         self.export();target=self.root/'export/public'
         m=P.read(target/'publication.json');m['source_sha256'][P.SOURCE_FILES[0]]='0'*64
         put(target/'publication.json',m)
-        with self.assertRaisesRegex(ValueError,'source pins changed'):
+        with self.assertRaisesRegex(ValueError,'source pins changed|source provenance changed'):
             P.validate_public(target)
+
+    def test_historical_sources_keep_old_bytes_and_census_checked(self):
+        self.export(); target=self.root/'export/public'
+        changed={**P._source_pins(P.ROOT),P.SOURCE_FILES[0]:'f'*64}
+        with patch.object(P,'_source_pins',return_value=changed):
+            with self.assertRaisesRegex(ValueError,'source pins changed'):
+                P.validate_public(target)
+            P.validate_public(target,allow_historical_sources=True)
+            (target/'spectra.png').write_bytes(b'tampered historical artifact')
+            with self.assertRaisesRegex(ValueError,'artifact hash changed'):
+                P.validate_public(target,allow_historical_sources=True)
+
+    def test_explicit_replacement_admits_old_sources_but_requires_current_candidate(self):
+        import gegi_campaign_publication as campaign
+        self.export(); old=self.root/'export/public'; previous=P.sha(old/'publication.json')
+        site=self.root/'site'; installed=site/'results/gegi-campaign'
+        shutil.copytree(old,installed)
+        changed={**P._source_pins(P.ROOT),P.SOURCE_FILES[0]:'f'*64}
+        with patch.object(P,'_source_pins',return_value=changed):
+            with self.assertRaisesRegex(ValueError,'source pins changed'):
+                campaign.install_bundle(old,site)
+            P.export_saved(self.rec,self.image,self.control,self.old,self.root/'replacement',
+                           replace_public_manifest_sha256=previous)
+            candidate=self.root/'replacement/public'
+            campaign.install_bundle(candidate,site)
+            record=P.validate_public(installed)
+            self.assertEqual(record['source_sha256'],changed)
+            self.assertEqual(record['replaces_public_manifest_sha256'],previous)
+            self.assertEqual(record['input_sha256']['previous_public_manifest_sha256'],P.PREVIOUS_MANIFEST)
+            self.assertEqual((installed/'spectra.png').read_bytes(),(old/'spectra.png').read_bytes())
 
     def test_incomplete_processing_cannot_be_exported(self):
         self.complete['status']='running_saved_reconstruction';put(self.rec/'COMPLETE.json',self.complete)
@@ -185,11 +216,147 @@ class SavedPublicationTests(unittest.TestCase):
             P.map_figure(bad,self.root/'bad.png','invalid')
 
     def test_no_unrequested_science_reader_imports(self):
-        source=Path(P.__file__).read_text()
+        source=Path(P.__file__).read_text(encoding='utf-8')
         self.assertNotIn('import gegi_campaign_analysis',source)
         self.assertNotIn('import gegi_signal_reconstruction',source)
         self.assertNotIn('sqlite3',source)
         self.assertNotIn('subprocess',source)
+
+    def recovery_fixture(self):
+        root = self.root/'recovery'; inputs = {'reconstruction_complete_sha256':P.sha(self.rec/'COMPLETE.json'),
+            'reconstruction_summary_sha256':P.sha(self.rec/'summary.json'),
+            'joint_imaging_report_sha256':P.sha(self.image/'report.json')}
+        assignments = [{'campaign_initial_id':i,'split':'development' if i<200 else 'holdout'} for i in range(400)]
+        split = {'kind':'gegi_saved_recovery_validation_v1','stage':'frozen_before_truth_evaluation',
+            'reconstruction_complete_sha256':inputs['reconstruction_complete_sha256'],
+            'reconstruction_summary_sha256':inputs['reconstruction_summary_sha256'],
+            'selection_truth_used':False,'selection_source_labels_used':False,
+            'counts':{'events':400,'groups':400,'groups_by_split':{'development':200,'holdout':200}},
+            'assignments':assignments,'groups':assignments}
+        split_sha = put(root/'validation/split-manifest.json',split)
+        groups_sha = put(root/'validation/evaluation-groups.json',{'split_manifest_sha256':split_sha,'groups':[{}]*400})
+        report = {'kind':split['kind'],'stage':'posthoc_evaluation_completed','counts':{'events':400,'groups':400},
+            'new_calibration_calls':0,'new_fit_calls':0,'new_physics_calls':0,
+            'split_manifest_sha256':split_sha,'evaluation_groups_sha256':groups_sha,'by_split':{}}
+        for name,n,m,f,c,w,u,cells in (('development',22,3,1,2,2,40,49),('holdout',24,5,2,2,6,40,50)):
+            report['by_split'][name] = {'counts':{'groups':200,'original_spectroscopy_exact_match_groups':200,
+                'classified_imaging_supported_groups':0},'conditional_hypothesis_counts':{'conditional_hypotheses':n,
+                'pairing_mismatches':m,'pairing_known':n,'false_splitting':f,'splitting_known':n},
+                'sequence':{'correct':c,'wrong':w,'unknown':u},'errors':{'abs_depth_mm':{'n':cells,'median':.1,'p90':.4,'max':2.}}}
+        report_sha = put(root/'validation/report.json',report)
+        identity = {'kind':'gegi_saved_signal_use_v1','campaign_complete_sha256':self.summary['campaign_complete_sha256'],
+            'reconstruction_complete_sha256':inputs['reconstruction_complete_sha256'],
+            'reconstruction_summary_sha256':inputs['reconstruction_summary_sha256']}
+        counts = {'pulse_groups':57613,'conditional_candidate_groups':0,'spectroscopy_groups':50000,
+            'guard_collection_groups':100,'guard_transient_groups':200,'adjacent_strip_groups':300,'native_failed_groups':426}
+        use = {**identity,'status':'completed_signal_use_classification','counts':counts,
+            'categories':{'spectroscopy_only':50000,'ambiguous_imaging':0,'failed_or_incomplete':1896,'unresolved_signal':5717},
+            'new_calibration_calls':0,'new_field_calls':0,'new_native_calls':0,'new_radiation_calls':0,
+            'repeated_waveform_fits':0,'new_energy_reconstructions':0,'new_validated_imaging_recoveries':0,
+            'spectroscopy_matches_original_readout':True}
+        put(root/'signal-use-v2/COMPLETE.json',{'kind':identity['kind'],'status':use['status'],
+            'summary_sha256':put(root/'signal-use-v2/summary.json',use),
+            'identity_sha256':put(root/'signal-use-v2/identity.json',identity),
+            'chunks':[{'chunk_index':i,'counts':counts if i==0 else {}} for i in range(100)]})
+        put(self.rec/'identity.json',{'calibration_sha256':'c'*64})
+        manifest = root/'calibration/inputs.jsonl'
+        put(manifest,{'ref':'.local/gegi-10m/pixel-calibration/depth-calibration.json','sha256':'c'*64})
+        put(root/'calibration/inventory.json',{'status':'complete_full34_responses_absent',
+            'counts':{'injection_records':2991,'full34_records':0,'records_by_stored_channel_count':{'2':2727,'0':264}},
+            'input_manifest':{'sha256':P.sha(manifest)},'saved_drift_trajectories':{'present':False}})
+        peaks = [{'position_mm':[38.,-2.,40.],'on_image_edge':False},{'position_mm':[46.,18.,40.],'on_image_edge':False}]
+        peak = {'kind':'gegi_saved_peak_diagnostic_v1','group_count':19,'candidate_count':58,'selected_original_ids':list(range(19)),
+            'energy_center_keV':1332.492,'grid':{'assumed_z_mm':40.,'step_mm':4.,'extent_mm':120.},
+            'baseline':{'blind_peaks':peaks},'grid_iteration_sensitivity':[{}]*12,
+            'leave_one_group_out_summary':[{'position_mm':p['position_mm'],'omissions_with_displayed_mode_within_8_mm':n,
+                'nearest_displayed_mode_distance_mm_min_max':[0.,22.]} for p,n in zip(peaks,(19,16))],
+            'provenance':{'baseline_report_sha256':inputs['joint_imaging_report_sha256'],
+                'saved_input_sha256':{'COMPLETE.json':inputs['reconstruction_complete_sha256'],
+                    'summary.json':inputs['reconstruction_summary_sha256']},
+                'truth_used':False,'source_labels_used':False,'new_transport_drift_fields_or_calibration':0}}
+        put(root/'peak-diagnostic/COMPLETE.json',{'files':{'report.json':put(root/'peak-diagnostic/report.json',peak)}})
+        circuit = {'channels_checked':34,'all_ADC_codes_equal':True,'all_fixed_energy_gains_equal':True,'max_peak_absolute_error_V':1e-13}
+        evidence = {'kind':'gegi_frozen_development_saved_readout_diagnosis_v1','evaluation_report_sha256':report_sha,
+            'split_manifest_sha256':split_sha,'evaluation_groups_sha256':groups_sha,
+            'new_calibration_calls':0,'new_fit_calls':0,'new_native_calls':0,'new_transport_calls':0,
+            'selected_groups':[{'split':'development','independent_circuit_check':circuit,'endpoint_status_counts':{'contact':86}}]*3,
+            'findings':[{'evidence':{'mean_ADC_minus_terminal_keV':12.745,'X_strip_9_terminal_keV':15.511,
+                'X_strip_9_charge_transient_max_keV':271.113,'X_strip_9_analog_peak_energy_keV':43.381}}, {},
+                {'evidence':{'mean_native_terminal_deficit_keV':-45.904,'deposition_keV':1094.729}}]}
+        guard_identity = {'campaign_initial_id':723606,'metadata_sha256':'d'*64}
+        evidence['selected_groups'][2]['original_identity'] = guard_identity
+        endpoint = {'kind':'gegi_saved_endpoint_weight_result_v1','original_identity':{'campaign_initial_id':723606},
+            'original_bindings':{'metadata_sha256':'d'*64},'native_precision_bits':32,'max_abs_prediction_error_keV':0.0,
+            'new_calibration_calls':0,'new_drift_calls':0,'new_field_solves':0}
+        evidence['saved_field_endpoint_diagnosis'] = {'endpoint_result_sha256':put(root/'validation/endpoint-weights.json',endpoint),
+            'acceptance':{'all_contact_mappings_identical':True,'contact_endpoint_mappings_compared':86,
+                'saved_native_terminal_values_compared':34,'max_abs_prediction_error_keV':0.0,
+                'new_drift_calls':0,'new_field_solves':0,'new_injection_calls':0},
+            'bounds':{'electron_guard34_own_phi_min':.90593,'electron_guard34_own_phi_max':.94087,
+                'hole_guard17_own_phi_min':.96870,'hole_guard17_own_phi_max':1.0}}
+        put(root/'validation/readout-diagnosis.json',evidence)
+        image = {**self.new,'spectral_layers':{'1332.49_keV':{'group_count':19}}}
+        return root, inputs, image
+
+    def test_recovery_aggregates_exclude_private_rows_and_keep_unknowns(self):
+        root, inputs, image = self.recovery_fixture()
+        report=P.read(root/'validation/report.json');report['private_notes']='C:/Users/private/account'
+        digest=put(root/'validation/report.json',report)
+        diagnosis=P.read(root/'validation/readout-diagnosis.json');diagnosis['evaluation_report_sha256']=digest
+        diagnosis['findings'][0]['diagnosis']='C:/Users/private/source';put(root/'validation/readout-diagnosis.json',diagnosis)
+        recovery, bindings=P._recovery_summary(root,self.rec,image,self.summary,inputs)
+        P.public(P.encoded(recovery))
+        self.assertEqual(recovery['frozen_stratified_sample']['holdout']['sequence_candidates']['unknown'],40)
+        page=P._recovery_html(recovery)
+        self.assertIn('3/22',page);self.assertIn('5/24',page)
+        self.assertIn('2 / 6 / 40',page);self.assertIn('271.113',page)
+        self.assertIn('reproduces all 34 saved terminal values with exactly 0.0 keV error',page)
+        self.assertIn('A waveform correction remains unvalidated',page)
+        self.assertNotIn('cause is not yet established',page)
+        self.assertNotIn('C:/Users',page)
+        self.assertEqual(len(bindings),12)
+
+    def test_recovery_endpoint_diagnosis_changed_result_refused(self):
+        root, inputs, image=self.recovery_fixture()
+        path=root/'validation/endpoint-weights.json';endpoint=P.read(path)
+        endpoint['max_abs_prediction_error_keV']=1.0;put(path,endpoint)
+        with self.assertRaisesRegex(ValueError,'endpoint diagnosis identity'):
+            P._recovery_summary(root,self.rec,image,self.summary,inputs)
+
+    def test_recovery_different_campaign_and_repeated_fits_refused(self):
+        root, inputs, image=self.recovery_fixture()
+        path=root/'signal-use-v2/summary.json';use=P.read(path);use['campaign_complete_sha256']='x'*64
+        seal=P.read(root/'signal-use-v2/COMPLETE.json');seal['summary_sha256']=put(path,use)
+        put(root/'signal-use-v2/COMPLETE.json',seal)
+        with self.assertRaisesRegex(ValueError,'different campaign'):
+            P._recovery_summary(root,self.rec,image,self.summary,inputs)
+        use['campaign_complete_sha256']=self.summary['campaign_complete_sha256'];use['repeated_waveform_fits']=1
+        seal['summary_sha256']=put(path,use);put(root/'signal-use-v2/COMPLETE.json',seal)
+        with self.assertRaisesRegex(ValueError,'altered saved reconstruction'):
+            P._recovery_summary(root,self.rec,image,self.summary,inputs)
+
+    def test_recovery_split_overlap_and_wrong_census_refused(self):
+        root, inputs, image=self.recovery_fixture();path=root/'validation/split-manifest.json';split=P.read(path)
+        split['assignments'][1]['campaign_initial_id']=0
+        split_sha=put(path,split)
+        report=P.read(root/'validation/report.json');report['split_manifest_sha256']=split_sha
+        groups=P.read(root/'validation/evaluation-groups.json');groups['split_manifest_sha256']=split_sha
+        report['evaluation_groups_sha256']=put(root/'validation/evaluation-groups.json',groups)
+        put(root/'validation/report.json',report)
+        with self.assertRaisesRegex(ValueError,'split leaks or duplicates'):
+            P._recovery_summary(root,self.rec,image,self.summary,inputs)
+
+    def test_optional_recovery_artifact_is_bound_in_public_bundle(self):
+        evidence={'kind':'gegi_public_saved_recovery_evidence_v1'}
+        with patch.object(P,'_recovery_summary',return_value=(evidence,{})), patch.object(P,'_recovery_html',return_value='<p>Saved evidence</p>'):
+            result=self.export(recovery_evidence=self.root/'recovery')
+        target=self.root/'export/public'
+        self.assertEqual(P.read(target/'recovery-summary.json'),evidence)
+        self.assertIn('saved_recovery_evidence_sha256',result['input_sha256'])
+        self.assertNotIn('map-new-pooled.png',result['artifacts'])
+        (target/'recovery-summary.json').write_bytes(b'{}')
+        with self.assertRaisesRegex(ValueError,'artifact hash changed'):
+            P.validate_public(target)
 
 
 if __name__=='__main__':

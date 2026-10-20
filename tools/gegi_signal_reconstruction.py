@@ -21,6 +21,7 @@ import zlib
 import numpy as np
 import gegi_event_store as S
 import gegi_imaging as I
+import gegi_signal_recovery as U
 
 KIND = 'gegi_saved_signal_hypotheses_v3'
 FIT_GRID_NS = np.arange(0., 252., 2.)
@@ -355,7 +356,7 @@ def sequence_candidates(sites):
     return result
 
 
-def reconstruct_observables(observed, bank, *, max_strips=4, max_sites=4, max_hypotheses=64):
+def _reconstruct_observables(observed, bank, *, max_strips=4, max_sites=4, max_hypotheses=64):
     """Return explicit ambiguity; candidates are NEVER unconditional acceptance."""
     out = {'kind': KIND, 'event_id': observed['event_id'], 'pulse_group_id': observed['pulse_group_id'],
         'status': 'unidentifiable', 'reason': None, 'energy_keV': None, 'hypotheses': [], 'candidates': [],
@@ -412,6 +413,12 @@ def reconstruct_observables(observed, bank, *, max_strips=4, max_sites=4, max_hy
         out['reason'] = 'no_supported_conditional_sequence'
     out['unsupported_hypothesis_mass'] = max(0., 1-sum(c['prior_weight'] for c in out['candidates']))
     return out
+
+
+def reconstruct_observables(observed, bank, **kwargs):
+    result = _reconstruct_observables(observed, bank, **kwargs)
+    result['signal_use'] = U.classify_observables(observed, result)
+    return result
 
 
 def reconstruct_event(event, native, channels, bank, **kwargs):

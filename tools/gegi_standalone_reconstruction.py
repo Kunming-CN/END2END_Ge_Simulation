@@ -19,6 +19,7 @@ ROOT=Path(__file__).resolve().parents[1]
 KIND='gegi_standalone_saved_reconstruction_v3'
 SOURCES=('tools/gegi_standalone_reconstruction.py','tools/gegi_signal_reconstruction.py',
          'tools/gegi_event_store.py','tools/gegi_imaging.py','tools/gegi_calibration_admission.py')
+SOURCES += ('tools/gegi_signal_recovery.py',)
 LIMITATIONS=[
     'Conditional modeled signal reconstruction, not validated detector performance.',
     'Without a compatible independent saved waveform bank, depth and source imaging remain unsupported.',
@@ -87,7 +88,7 @@ def analyze(payload,response,receipt,*,request=None,calibration=None):
     W.require(calibration is None or request is not None,'Explicit independent calibration needs its original native request.')
     bank=compatible_bank(calibration,request,receipt,channels) if calibration else None
     bank_pins={name:W.sha(W.safe_path(bank.root,name)) for name in ('identity.json','depth-calibration.json')} if bank else {}
-    frozen=source_hashes();reasons=Counter();candidate_groups=0;candidate_count=0
+    frozen=source_hashes();reasons=Counter();candidate_groups=0;candidate_count=0;uses=Counter()
     for event in events:
         result=reconstruct_event_csv(event,channels,response,receipt['artifacts'],bank)
         # Never relabel conditional v3 hypotheses as accepted legacy cones.
@@ -96,6 +97,7 @@ def analyze(payload,response,receipt,*,request=None,calibration=None):
         if 'reconstruction' in event:event.setdefault('legacy_reconstruction',copy.deepcopy(event['reconstruction']))
         event['reconstruction']=result;reasons[result.get('reason') or result['status']]+=1
         candidate_groups+=bool(result['candidates']);candidate_count+=len(result['candidates'])
+        uses[result['signal_use']['category']]+=1
     if 'imaging' in payload:payload.setdefault('legacy_imaging',copy.deepcopy(payload['imaging']))
     payload['imaging']={'method':KIND,'status':'conditional_hypotheses_only' if bank else 'unsupported_independent_waveform_templates',
         'reason':'No unconditional source image is justified by the available response model.',
@@ -109,6 +111,7 @@ def analyze(payload,response,receipt,*,request=None,calibration=None):
         'calibration_sha256':bank.sha256 if bank else None,
         'template_bindings':bank.bindings if bank else {},'new_radiation_calls':0,'new_native_calls':0,
         'new_field_calls':0,'new_calibration_calls':0}
+    payload['signal_use_counts']=dict(uses)
     payload['limitations']=list(dict.fromkeys(payload.get('limitations',[])+LIMITATIONS))
     if bank:
         W.require(all(W.sha(W.safe_path(bank.root,ref))==digest for ref,digest in {**bank_pins,**bank.bindings}.items()),
