@@ -5,7 +5,9 @@
 Owner resumed evidence/planning after correcting the priority: establish a correct
 small radiation -> charge ->34-channel signal ->readout ->reconstruction workflow
 before recovery refinements and large samples. Automatic monitoring stays PAUSED.
-No new transport, drift, field solve or calibration calculation is authorized.
+No new transport, field solve or calibration calculation is authorized. The owner
+approved only the3fixed original-deposit drift captures described below; the first
+memory preflight launched no worker. Retain that approval and the original limits.
 
 The present chain is integrated, but its synthetic electronics and conditional
 inverse model are not an identified GeGI instrument response. Existing numerical
@@ -42,8 +44,8 @@ transient-to-positive-peak bias and a separate guard terminal-charge inconsisten
 1. Saved endpoint query is complete: guard event723606's86contacts are correct,
    but geometric contact endpoints interpolate contact and noncontact grid nodes.
    ExactFloat32 endpoint algebra reproduces all34saved terminalvalues (0.0keVerror).
-   Before changing the producer, prepare a bounded3original-deposit path-capture
-   request for owner approval. Compare original/candidate boundary interpolation
+   Before changing the producer, execute the approved3original-deposit path-capture
+   request c514ed87e5b0 when its memory preflight passes. Compare original/candidate boundary interpolation
    along the same complete paths; terminal-only forcing is not acceptance.
 2. Use the owner's forward/inverse approach: validate interaction -> signed34-channel
    signal -> readout first, then infer positions/energies/multiplicity by explaining

@@ -31,6 +31,17 @@ saved terminal charges exactly (max error0.0keV). Query18.05s,1.679GBpeak memory
 no new drift/solve/injection. Waveform continuity/correction remains unvalidated.
 Never force its charge toEdep or treat contact flags as charge-conservation proof.
 
+Fixed face-sum readout diagnostic COMPLETE: all17signed channels per face, including
+guard, summed before the unchanged linear electronics/fixed500keV gain. Development
+12.228s and single holdout11.896s;5targeted tests passed. Holdout keeps153/200valid
+and47unknown, the same as the original. Paired absolute error mean1.837->1.035keV,
+P905.012->2.052, max18.070->5.360; median0.695->0.877worsens.55improve/51worsen/47tie.
+Face difference P909.840->0keV. This isolates positive-strip-transient bias but does
+not fix upstream guard loss or remaining ballistic deficit; no production change.
+It requires complete waveform access, unavailable from per-channel peak ADC alone.
+Evidence validation/face-sum-readout/report.json SHA d7eb4c76...72c669; executed and
+current tool SHA fee590c4...aa15e1. Do not tune thresholds against this holdout.
+
 Saved signal-use derivative COMPLETE: signal-recovery-v1/signal-use-v2,104.083s,
 57,613original groups.55,591existing spectroscopy groups (55,157spectroscopy-only),
 434unchanged conditional candidate groups,1,896incomplete (including426nativefailed),
@@ -51,9 +62,12 @@ package5, saved-use exporter2; browser contract script passed. Original400evalua
 used pre-relocation source hashes; exact producer math is unchanged. Export source
 snapshots live in signal-use-v2/source-bindings. Publication integration passes18exporter tests plus36site tests. Historical
 installed-artifact validation is separate from strict current candidate admission;
-explicit replacement binds the installed manifest. Source commit/student release
-and website deployment are being completed; see the delivery receipt before
-claiming publication.
+explicit replacement binds the installed manifest. Source1b88d5e is committed/pushed. Student release student-runtime-1b88d5e7c2a7
+is public and its892,170bytes/SHA b4407954...e5d9e were independently downloaded
+and verified against the exact committed package. .local/student-runtime-p1/COMPLETE.json
+is current. Websitepublication-v3 built successfully; build b13a16e7540c,
+1,727files/985,104,763bytes. Required36site tests and final local check pass;
+website commit/deployment and exact live verification are pending.
 
 Existing completed evidence: calibration/inventory.json confirms2,727selectedX/Y
 signal checkpoints +264excluded records; full34responses were not computed and drift

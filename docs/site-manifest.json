@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "build_id": "5080f24f65738b52018a675cf4f309a07a643048c9344e077fba627f0b364a2d",
-  "file_count": 1726,
-  "total_bytes": 985090719,
+  "build_id": "b13a16e7540cb0ef96d5186d03412a8744b05ad21b815c1e4cc0cacc1f4b91e8",
+  "file_count": 1727,
+  "total_bytes": 985104763,
   "html_pages": 109,
-  "local_links_checked": 3479,
-  "resource_references_checked": 3535,
-  "page_navigation_checked": 1452,
-  "fragments_checked": 80,
-  "downloads_checked": 764,
+  "local_links_checked": 3480,
+  "resource_references_checked": 3537,
+  "page_navigation_checked": 1453,
+  "fragments_checked": 81,
+  "downloads_checked": 765,
   "media_references_checked": 1281,
   "metadata_references_checked": 35,
   "other_references_checked": 3,
@@ -8221,7 +8221,7 @@
     {
       "path": "examples/gegi/publication.json",
       "bytes": 2348,
-      "sha256": "1405d512d83b5ea5d61339d4531870425198c3c6512196dc7eadb5830c59ccb0"
+      "sha256": "f53d6a9340696a62edd1e0bc5812ba2ad734eed8a3591124a442b9e782ed33da"
     },
     {
       "path": "examples/gegi/selected-channel.json",
@@ -8265,8 +8265,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 50700,
-      "sha256": "c34d67108b92012f8679aa7b964fb9018c1e5872c52c1720f4c16b3e33e2d984"
+      "bytes": 51301,
+      "sha256": "65e83a139deca13ed31c802459427a3d2038f3ff4440b8919bd26539aeb12762"
     },
     {
       "path": "index.html",
@@ -8505,8 +8505,8 @@
     },
     {
       "path": "results/gegi-campaign/index.html",
-      "bytes": 5971890,
-      "sha256": "c381816e81d656a9babac6d737289be207ca17d4528e4dfbf6b3a4ff2e946200"
+      "bytes": 5976001,
+      "sha256": "fb13d768555550d607ad0297c905061074267d35433b914c11be10d7b9ee6265"
     },
     {
       "path": "results/gegi-campaign/map-control-energy-0.png",
@@ -8555,8 +8555,13 @@
     },
     {
       "path": "results/gegi-campaign/publication.json",
-      "bytes": 3768,
-      "sha256": "b02b3399a3d8adf05ed1404922fed76691f23caaefc13f7c574f0934b9d7e2ba"
+      "bytes": 3983,
+      "sha256": "f2245a8b895fab9f46dc3bc52370cd8d85b0aba55db0b9e44844cb6c867ad96f"
+    },
+    {
+      "path": "results/gegi-campaign/recovery-summary.json",
+      "bytes": 4495,
+      "sha256": "40769d7590a61f2fce378aa33337dc5c70714ff33785925df05a5304a31ad964"
     },
     {
       "path": "results/gegi-campaign/representatives.json",
@@ -8575,8 +8580,8 @@
     },
     {
       "path": "results/gegi-campaign/summary.json",
-      "bytes": 24675,
-      "sha256": "be3da9c65f88c84e92568cbae0992e009d8468da4092172f1a0d31d5742e7967"
+      "bytes": 29297,
+      "sha256": "98f9847052c89ab53aad60d570710a0023c99ce219ddfe38defff9d0ac3bee15"
     },
     {
       "path": "results/index.html",
