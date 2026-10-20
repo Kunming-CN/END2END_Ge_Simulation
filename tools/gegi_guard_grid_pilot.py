@@ -128,7 +128,6 @@ function main(reqpath,out)
     end
     cache=req["field_cache"]["absolute_ref"]
     check(hashfile(cache)==req["field_cache"]["sha256"],"Original cache changed")
-    check(Sys.free_memory()>=ceil(Int,1.25*filesize(cache))+768*1024^2,"Insufficient post-import reserve")
     stage(out,"deserialize_original_cache",0);sim=deserialize(cache)
     check(SSD.get_precision_type(sim)==Float32 && SSD.get_coordinate_system(sim)==SSD.Cartesian,"Original state type changed")
     check(sim.detector.semiconductor.charge_trapping_model isa SSD.NoChargeTrappingModel,"Original no-trapping model changed")
@@ -214,15 +213,18 @@ def execute(request_path, approval_sha):
     if request['kind'] != 'gegi_single_guard34_local_grid_pilot_v1' or request['contact_id'] != 34:
         raise ValueError('Unsupported or enlarged weighting-potential scope')
     expected = {'maximum_new_WP34_solves': 2, 'maximum_total_wall_seconds': 300, 'threads': 1,
-                'prelaunch_available_physical_bytes': 3500000000, 'minimum_running_available_bytes': 805306368,
-                'maximum_working_set_bytes': 3000000000, 'maximum_nodes_per_level': 7000000}
+                'maximum_nodes_per_level': 7000000}
     if request['resource_caps'] != expected:
         raise ValueError('Approved resource limits changed')
+    if request['memory_policy'] != 'measure_only_not_a_launch_or_stop_condition':
+        raise ValueError('Unsupported memory policy')
     for ref, expected_sha in request['input_file_sha256'].items():
         if sha(ROOT/ref) != expected_sha:
             raise ValueError('Pinned input/source changed: '+ref)
-    if available_memory() < 3500000000:
-        raise ValueError('Requires3.5GB available physical memory; no worker started')
+    try:
+        available_before = available_memory()
+    except OSError:
+        available_before = None
     output = request_path.parent/'results'; output.resolve().relative_to((ROOT/'.local').resolve()); output.mkdir()
     (output/'approved-request.json').write_bytes(request_path.read_bytes())
     worker = output/'WP34-worker.jl'; worker.write_text(JULIA_WORKER, encoding='utf-8')
@@ -234,23 +236,24 @@ def execute(request_path, approval_sha):
             ('peak', 'working', 'qpp', 'qp', 'qpnp', 'qnp', 'pagefile', 'peak_pagefile', 'private')]
     getmem = ctypes.windll.psapi.GetProcessMemoryInfo
     getmem.argtypes = [ctypes.c_void_p, ctypes.POINTER(PMC), ctypes.c_ulong]; getmem.restype = ctypes.c_int
-    started = time.monotonic(); peak = 0; stop = None
+    started = time.monotonic(); peak = None; missing_memory_samples = 0; stop = None
     with (output/'worker.log').open('x', encoding='utf-8') as log:
         child = subprocess.Popen(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
                                  creationflags=subprocess.CREATE_NO_WINDOW)
         while child.poll() is None:
             memory = PMC(); memory.cb = ctypes.sizeof(memory)
-            if not getmem(ctypes.c_void_p(int(child._handle)), ctypes.byref(memory), memory.cb):
-                stop = 'cannot_measure_process_memory'; child.kill(); break
-            peak = max(peak, memory.peak)
+            if getmem(ctypes.c_void_p(int(child._handle)), ctypes.byref(memory), memory.cb):
+                peak = max(peak or 0, memory.peak)
+            else:
+                missing_memory_samples += 1
             if time.monotonic()-started >= 300:
                 stop = '300_second_total_budget'; child.kill(); break
-            if available_memory() < 768*1024**2 or memory.working > 3000000000:
-                stop = 'physical_reserve_or_working_set_cap'; child.kill(); break
             time.sleep(.1)
         code = child.wait()
     receipt = {'returncode': code, 'stop_reason': stop, 'elapsed_seconds': time.monotonic()-started,
-               'peak_working_set_bytes': peak, 'request_sha256': digest, 'runner_sha256': sha(__file__),
+               'peak_working_set_bytes': peak, 'available_physical_before_bytes': available_before,
+               'unavailable_process_memory_samples': missing_memory_samples,
+               'memory_policy': request['memory_policy'], 'request_sha256': digest, 'runner_sha256': sha(__file__),
                'worker_sha256': sha(worker), 'automatic_retry': False,
                'status': 'completed_local_pilot' if code == 0 else 'failed_or_stopped_preserve_partial'}
     (output/'runtime.json').write_text(json.dumps(receipt, indent=2)+'\n', encoding='utf-8')

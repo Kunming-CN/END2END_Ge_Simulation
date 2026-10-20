@@ -1,6 +1,6 @@
 # Current handoff
 
-## Guard-path diagnosis complete; local grid pilot approved — 2026-10-20
+## Guard grid effect established; first level not converged — 2026-10-20
 
 Owner priority: establish a correct GeGI radiation -> charge ->34-channel signal
 -> electronics -> inverse reconstruction chain before larger samples. The forward
@@ -95,31 +95,41 @@ converged. Keep these results; no repeat analysis. reference-index.json records 
 18PPTs/283slides and4targetedPDFs. Current electronics is synthetic-signed-14bit-v1,
 not a matched GeGI hardware transfer; distinguish10mmGeGI-4 from11mmcurrent models.
 
-Next scientific step: execute the approved guard34 weighting-potential comparison on two
-locally refined XY grids, preserving Z, model and original cache. New field solves
-were separately approved; the3-drift approval is fully consumed. Fixed
-request validation/boundary-grid-pilot/request.json SHA83d4e680...f2a5a2 is frozen;
-the explicit owner reply is retained alongside it in approval.json.
-Grids256x255x88/278x277x88 contain5,744,640/6,776,528nodes. Tool264lines,
-SHAf776c878...547e20;3pure grid tests and Python/embedded Julia parser checks pass,
-without evaluating Julia science code. CPU solve cost remains unmeasured.
-Limits: one CPUthread/process, two solves,300s total,7M nodes per level, no retries;
-startup free memory3.5GB, stop below768MiB free or above3GB worker working set.
-At22:02UTC the repeated preflight has2,599,731,200B free, below3.5GB;0workers and
-0field solves launched. Retain approval and await memory; do not loosen the gate
-or close unrelated user programs. Source/diagnostic tooling is pushed atafa79b5.
-No new transport, drift or calibration. Reuse these same paths for endpoint,
-waveform and spatial-continuity comparisons; retain timeout/nonconvergence as failures.
-Earlier memory-blocked capture preflights remain preserved. Missing full34
-independent templates and exact hardware transfer remain explicit. The15pointfull34
-injection proposal is conditional only; present necessity/scale/cost for owner decision
-before any new drift/calibration. Keep one compact handoff.
+Guard34 pilot executed once after the owner removed all artificial memory gates.
+Original request83d4e680...f2a5a2/approval remain; request-owner-memory.json
+SHA218b4685...f15e19 binds the amendment and unchanged scientific inputs. Runner
+SHA8ff17dd8...b023dc;3grid tests and Python/Julia parsers pass. Total77.031s,
+peak1.958GB; first grid256x255x88 (5,744,640nodes) solve55.326s returns
+max update3.5464764e-6 > fixed1e-6 gate. The pilot stopped, second grid was NOT run.
+Keep results/failure.json, solver.json and saved23MB WP34. Native SSD can stop on
+small variation of recent updates or iteration cap; the exact reason/count was
+not returned. Do not infer that10,000iterations were completed. No memory stop.
+Original857MB cache SHA remainsf75280e7...53b90e8; no production fields changed.
 
-Ownership: current manual owner gegi-saved-recovery-20261020 uses
-.local/autonomy/gegi-saved-recovery.lock/owner.json. Old diagnosis ownership is retained
-inactive, never deleted. Current manual ownership is retained inactive while
-waiting for memory; state.json records approved_WP34_waiting_memory. No science
-worker was launched. Automatic monitoring staysPAUSED.
+One saved-state analysis completed in12.828s, loading only the23MB WP34 and paths;
+no new solve/drift. Three original channel34 waveforms reproduce bit-for-bit.
+Electron endpoint phi34 original -> first grid: row10191 .91622633->1;
+10186 .90592694->.99657255;10185 .90608597->.99510586. Remaining deficits are
+0/.342745%/.489414%, versus original8.38-9.41%. Near-end lambda.999->1 samples
+change .99999672->1, .99653792->.99657255, .99508107->.99510586 without forced
+contact values. These discrete samples and an unconverged local solve do not
+validate continuity, grid convergence or production repair. Complete waveforms,
+path phi and hashes: validation/boundary-grid-pilot/saved-state-analysis/analysis.json
+SHA79f2dacb...f3444a; script SHA69eaf589...6587dd. This supports a local-grid cause
+of guard signal error; retain the unvalidated status and original failure receipt.
+
+Next scientific step: prepare bounded continuation from the saved first-level WP34,
+then the same second grid278x277x88 (6,776,528nodes). Preserve external1e-6 acceptance;
+use tighter native stopping1e-7 rather than weakening the gate. New solves require
+owner approval after concrete scope/cost; none are approved by the memory amendment.
+Do not restart original drift/transport or repeat completed stage tests/publication.
+Full34 independent templates and exact hardware transfer remain unresolved; the
+15point calibration option is still conditional, not the next calculation.
+
+Ownership: current manual owner gegi-saved-recovery-20261020 retains
+.local/autonomy/gegi-saved-recovery.lock/owner.json and old diagnosis ownership.
+Field worker21916 exited; automatic monitoring staysPAUSED. Manual work currently
+prepares the next bounded request; no active field calculation.
 
 ## Prior GeGI saved-data correction — delivered history
 

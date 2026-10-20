@@ -50,13 +50,16 @@ transient-to-positive-peak bias and a separate guard terminal-charge inconsisten
    terminal charge; do not apply it to production. Native XY spacing is1.17187mm,
    versus0.0375002mm in Z. Prepare a two-level localXY weighting-potential test on
    guard34 only, reusing original paths and unchanged Z/geometry/electric field.
-   Fixed request83d4e680...f2a5a2:5,744,640/6,776,528nodes,3pure grid tests and
-   Python/Julia parser checks passed. One process/thread, at most2solves/300s;
-   startup free3.5GB,
-   stop below768MiB free or above3GB working set. Report actual solver convergence,
-   endpoint error, continuity and level differences; no automatic retry or repair
-   promotion. Owner approved the fixed request after receiving scale/resource caps
-   and the unmeasured CPU cost; execute when the original memory gate passes.
+   Original request83d4e680 was amended by the owner to remove memory gates;
+   amended request218b4685 ran once. First-level5,744,640node solve returns
+   max update3.5464764e-6 after55.326s, above fixed1e-6 acceptance; total77.031s.
+   Pilot stops and preserves failure/field; second-level6,776,528nodes NOT run.
+   Saved-state analysis reduces the3electron endpoint deficits8.38-9.41% to
+   0-.4894%, without forcing contact values. This is an unconverged diagnostic.
+   Prepare continuation from the saved first grid and the same second grid, with
+   native stop1e-7 and unchanged external1e-6 gate; at most2solves/300s, one
+   process/thread, memory recorded only. Obtain owner approval for this new
+   bounded calculation; do not rerun drift/transport/calibration or old tests.
    Dirichlet contact values follow the weighting-potential model[R6].
 2. Use the owner's forward/inverse approach: validate interaction -> signed34-channel
    signal -> readout first, then infer positions/energies/multiplicity by explaining
