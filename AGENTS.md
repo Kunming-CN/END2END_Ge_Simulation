@@ -1,5 +1,20 @@
 # Project working rules
 
+## Owner update — 2026-10-20 product language and implementation pace
+
+Use direct, useful language in the GitHub website, software and guides. Explain
+results, controls and next actions. State material assumptions, sample counts and
+uncertainty once where they affect interpretation; put detailed methods and
+provenance in the relevant detail view. Remove repetitive disclaimers, defensive
+justifications and internal workflow commentary from the main user journey.
+
+Keep implementation small and concrete. Validate external inputs and scientific
+stage boundaries, then reuse the validated result. Add checks for identified
+failure modes; avoid duplicate validation in hot paths, speculative compatibility
+layers, broad exception handling, silent fallbacks and unnecessary approval steps.
+Preserve units, original data, failure/null accounting and necessary reproducibility
+checks. Simplification must retain accurate scientific meaning and actionable errors.
+
 ## Owner extension — 2026-10-17 GeGI integration
 
 Build a dedicated GeGI cryostat at the same assembly level as LBNL, accepting

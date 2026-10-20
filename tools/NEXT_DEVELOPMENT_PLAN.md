@@ -1,5 +1,41 @@
 # Current development plan
 
+## Next saved-data milestone — new-chat continuation
+
+Prepared at the owner's request on 2026-10-20; not started. An owner-sent
+continuation prompt starts this work. Reuse the completed diagnosis and correction
+artifacts rather than repeating them. Keep automatic monitoring PAUSED.
+
+1. Refine existing event classifications into spectroscopy, supported imaging,
+   ambiguous and failed/incomplete responses. Prioritize merged/shared strips,
+   same-pixel ambiguity, guard collection versus induced transients, and mixed
+   photons from one decay. These categories come from different passes and must
+   not be added as disjoint populations. Truth is isolated for posthoc evaluation.
+2. Inspect original calibration outputs for already-saved full34channel responses.
+   Export existing information when present. If genuinely absent, specify the
+   missing calibration inputs and a bounded cost proposal for owner approval;
+   do not manufacture templates or start new drift/injection calculations.
+3. Freeze a small stratified development/holdout set separated by original event.
+   Implement supported recovery and assess energy/position/sequence errors,
+   false splitting and false pairing alongside recovered counts. Inspect the
+   1332.49keV layer's19groups: per-group contributions to the peaks near(38,-2)
+   and(46,18)mm, leave-one-group-out stability and bounded grid/iteration checks.
+   These are local maxima, not an inferred count of Co60 sources. Reuse saved
+   signals/candidates; no source-position input to reconstruction.
+4. Only after the fixed acceptance passes, reprocess affected saved derivatives,
+   update shared student processing and publish through the existing generator.
+   Explain event use, waveform-to-cone reconstruction and joint energy/spatial
+   results with readable uncertainty and traceable detail. Keep source count,
+   isotope evidence and assumed plane distinct. No source-range claim from z40mm.
+
+Acceptance is recovery with checked errors and no concealed regression, not a
+larger accepted count or a prettier map. The measured old full-signal pass took
+337.197s; new fitting/calibration costs are unmeasured and require bounded timing.
+New Geant4, SSD drift, field solves, calibration injections and another1M are
+outside this milestone. Review specific changes and reuse applicable checks;
+no extra AI-review rounds. Apply AGENTS.md's direct product language and simple
+implementation rules. Record current work in this plan and PROGRESS.md in place.
+
 ## Authorized milestone: saved-data GeGI corrections
 
 Use the completed1M campaign to correct signal/readout/reconstruction, deliver

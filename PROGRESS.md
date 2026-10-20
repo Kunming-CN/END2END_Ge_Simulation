@@ -1,5 +1,15 @@
 # Current handoff
 
+## New-chat handoff — 2026-10-20
+
+Owner requested a continuation prompt and concise product language/code. The next
+saved-data milestone is specified in tools/NEXT_DEVELOPMENT_PLAN.md; it has not
+started. Start it when the owner sends the continuation instruction in the new chat.
+The existing diagnosis lock records inactive ownership (active_worker=false).
+Verify actual writers before recording a handover; retain its original ownership
+evidence. Automation stays PAUSED. New simulation/calibration remains unapproved.
+The owner language/implementation preference is recorded in AGENTS.md.
+
 ## GeGI saved-data correction — authorized delivery complete
 
 Owner authorized full-chain signal/readout/software correction and GitHub display
