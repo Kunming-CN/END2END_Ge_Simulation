@@ -1,126 +1,108 @@
 # Current development plan
 
-## Next saved-data milestone — new-chat continuation
+## Active milestone — establish the GeGI full-chain reference, 2026-10-20
 
-Prepared at the owner's request on 2026-10-20; not started. An owner-sent
-continuation prompt starts this work. Reuse the completed diagnosis and correction
-artifacts rather than repeating them. Keep automatic monitoring PAUSED.
+Owner resumed evidence/planning after correcting the priority: establish a correct
+small radiation -> charge ->34-channel signal ->readout ->reconstruction workflow
+before recovery refinements and large samples. Automatic monitoring stays PAUSED.
+No new transport, drift, field solve or calibration calculation is authorized.
 
-1. Refine existing event classifications into spectroscopy, supported imaging,
-   ambiguous and failed/incomplete responses. Prioritize merged/shared strips,
-   same-pixel ambiguity, guard collection versus induced transients, and mixed
-   photons from one decay. These categories come from different passes and must
-   not be added as disjoint populations. Truth is isolated for posthoc evaluation.
-2. Inspect original calibration outputs for already-saved full34channel responses.
-   Export existing information when present. If genuinely absent, specify the
-   missing calibration inputs and a bounded cost proposal for owner approval;
-   do not manufacture templates or start new drift/injection calculations.
-3. Freeze a small stratified development/holdout set separated by original event.
-   Implement supported recovery and assess energy/position/sequence errors,
-   false splitting and false pairing alongside recovered counts. Inspect the
-   1332.49keV layer's19groups: per-group contributions to the peaks near(38,-2)
-   and(46,18)mm, leave-one-group-out stability and bounded grid/iteration checks.
-   These are local maxima, not an inferred count of Co60 sources. Reuse saved
-   signals/candidates; no source-position input to reconstruction.
-4. Only after the fixed acceptance passes, reprocess affected saved derivatives,
-   update shared student processing and publish through the existing generator.
-   Explain event use, waveform-to-cone reconstruction and joint energy/spatial
-   results with readable uncertainty and traceable detail. Keep source count,
-   isotope evidence and assumed plane distinct. No source-range claim from z40mm.
+The present chain is integrated, but its synthetic electronics and conditional
+inverse model are not an identified GeGI instrument response. Existing numerical
+circuit checks passed. Neither those checks nor low imaging acceptance locate all
+remaining errors. First align observable definitions and localize the earliest
+failed stage on the same saved events; do not tune a source map to known positions.
 
-Acceptance is recovery with checked errors and no concealed regression, not a
-larger accepted count or a prettier map. The measured old full-signal pass took
-337.197s; new fitting/calibration costs are unmeasured and require bounded timing.
-New Geant4, SSD drift, field solves, calibration injections and another1M are
-outside this milestone. Review specific changes and reuse applicable checks;
-no extra AI-review rounds. Apply AGENTS.md's direct product language and simple
-implementation rules. Record current work in this plan and PROGRESS.md in place.
+### Evidence-to-implementation map
 
-## Authorized milestone: saved-data GeGI corrections
+| Stage | Physical/instrument evidence | Current saved implementation | Gap and next acceptance |
+|---|---|---|---|
+| Detector and radiation | PHDS current specification:90 mm diameter,11 mm thickness,32 strip elements [R1]. IAEA GeGI-4 report pp15-16 describes a different generation:10 mm thickness,16x16strips,5mm pitch/0.5mm gaps [R2]. | Exact versioned GeGI model; dedicated nominal cryostat. Livermore EM, Geant4 11.3.2/remage1.1.0; 0.1mm global/0.01mm sensitive production range cuts. Holder, contact/dead-layer detail and source capsule omitted. | Identify the apparatus/configuration used in the comparison. Reuse existing geometry and energy-ledger checks. Unknown passive material blocks absolute-efficiency claims; it is not a reason to rewrite the frozen geometry or restart transport. |
+| Fields and carrier motion | Timing-to-depth depends on bias, impurity, temperature, geometry and readout [R3]. A related detector's fitted parameters cannot determine GeGI values. | Canonical92.3 K,−879V/0V, constant−5e9cm^-3, ADL2016/Bruyneel2016; reused Float32 field cache. Deterministic point charges,1ns steps,1000 ns limit; no diffusion/self-repulsion. | Distinguish observed spread from electron tracks versus omitted cloud diffusion. Preserve incomplete endpoints/charge; evaluate saved position/charge errors before proposing changed carrier physics. No retuning these inputs against the map. |
+| Induced signals | Collection and neighbor transients carry different information; full multichannel signal bases are used in related segmented-Ge methods [R5]. | Campaign stores all34 signed native signals and deposition delays. Calibration computed only selected X/Y:2,727 signal records plus264 geometry exclusions; no full drift paths saved. | Original array/hash, polarity and charge/current checks are reusable. Full34 calibration is absent, not merely unexported. First measure which current candidate failures depend on missing neighbor response; do not synthesize missing templates. |
+| Electronics and observable timing | Manufacturer describes32raw preamp outputs and an imaging/spectroscopy clock of50MSPS for current options [R1]. Exact generation/filter/firmware still needs matching. | Profile synthetic-signed-14bit-v1:ideal CSA Cf0.6pF, feedback/PZ50us, shaping0.5us, gain20,1mV threshold,14bit0–10V positive peak ADC.1ns is numerical integration. No measured noise/crosstalk or continuous baseline. | Highest-priority correspondence gap. Keep native charge, preamp, shaped peak, ADC energy and timing pickoff separate. Reuse analytic4-group/136-channel check (peak error<9.2e-14V, exactADC). It checks the nominal circuit, not actual GeGI filtering or hardware sampling. Do not set integration dt to20ns just from a clock specification. |
+| Pulse grouping and spectroscopy | Same-decay gamma multiplicity and hardware coincidence/trigger selection must be represented consistently. The private July14slides distinguish full-detector, pixel-total and simulated-active-area spectra. | Decay pulses use100 us anchored half-open windows with reset electronics; no inter-primary pileup. Fixed calibrated collecting-channel sums include guards; X/Y are averaged. Noncollecting induced peaks are excluded. | First compare like-for-like spectra and event denominators. On the frozen 400-events, require exact old-energy preservation, then report Erec−Edep, bias/tails, face mismatch and missing/failure counts. Pulse-group energy is not necessarily one photon's incident energy. |
+| Position, pairing and sequence | GeGI depth uses charge-arrival differences [R2]; calibrated timing/depth and separate energy/crosstalk/pairing stages are established in related work [R3, R4]. | Selected-pair native-waveform fits on0–250ns,0.25mm interpolated depths; ≤4strips/face,≤4sites,≤64hypotheses,2keV/2% compatibility. Charge pixels may differ from photon interactions. Same-pixel and cascade multiplicity unresolved. | Use fixed development/holdout events to quantify wrong/missingX/Ypairs, false splitting, matched position/depth error and sequence unknowns. Thresholds/tolerances are compatibility choices, not measured resolution. No promotion of conditional candidates unless these errors pass predefined, physically justified criteria. |
+| Imaging and performance | Comparison requires the same sample selection, acquisition and normalization; source positions are independent evaluation only. |434 conditional groups; 162 selected map groups.1332.492 keV layer has19 groups / 58 sequences. Existing fitted-plane map uses z40mm and cannot measure range. | Reuse finished peak attribution: second mode loses a nearby maximum in3/19 leave-one-out runs; 40 iterations not converged under tested objective. Fix stage-level errors first. Map peak count/brightness is not source count, efficiency or validation. |
 
-Use the completed1M campaign to correct signal/readout/reconstruction, deliver
-shared student software and replace the GitHub presentation. No new radiation,
-SSD drift, fields, calibration injections or campaign. Automation stays PAUSED.
-Existing originals and all failure/recovery evidence are permanent. The owner must
-explicitly decide any future simulation after seeing this delivery and its limits.
+Source anchors: transport/gegi_source.py:287; scenarios/assets/gegi_cryostat_v1.json:8;
+models/GeGI_3D.yaml:25; simulation/gegi_signal_helpers.jl:27;
+simulation/gegi_response.jl:93,138,205; simulation/readout.jl:95,128;
+transport/cs137.py:23; tools/gegi_campaign_response.py:53,89;
+tools/gegi_signal_reconstruction.py:254,325,359. Preserve original generation pins.
 
-The authorized saved-data implementation and delivery are complete: numerical
-processing, student runtime release, generated website,731public-file byte checks
-and actual desktop website verification. Remaining scientific limits are below;
-they are not cleared by a functioning software pipeline. Use PROGRESS.md and
-.local/autonomy/state.json for exact current artifacts. Do not restart completed
-processing or source agents. Further calibration/simulation awaits owner decision.
+### Next bounded execution and stop condition
 
-## Implemented path and acceptance
+1. Reuse the frozen 400-event manifest (200 development/200 holdout, original-event
+   separation) and original readout/native stores. Finish the existing evaluation
+   without changing reconstruction or selection. Report stage quantities and
+   wrong-pair/splitting/position/sequence errors, separating unknown truth matches.
+   No complete campaign fit, new injection or physics run is needed for this step.
+2. From those errors select the earliest concrete failure and one repair. If the
+   failure is an implementation defect, correct and test that path. If it is an
+   unidentified hardware response or missing calibration, specify the required
+   input/computation before proceeding; do not substitute a plausible instrument.
+3. Freeze an integrated small-case acceptance before processing affected saved
+   derivatives. Require identity/unit/sign/energy bookkeeping, explicit failures,
+   no truth leakage, exact fixed-gain preservation and held-out error accounting.
+   Numerical tolerances use existing analytic/quantization bounds; physical energy,
+   position and timing criteria must come from matching data/specification. Do not
+   invent an arbitrary resolution target to declare success.
+4. Only after this acceptance update student software and publish relevant results.
+   Large-sample radiation is a later decision based on residual statistical need.
 
-1. Independently check the implemented nominal readout circuit against analytic
-   charge-to-shaper response and fixed ADC gain. Preserve signed34channel native
-   signals, charge/current accounting, raw IDs, zero/failed census and denominators.
-   This is numerical verification, not a measured GeGI electronics calibration.
-2. Use shared source/truth-blind waveform interpretation, bounded sparse X/Y energy
-   allocations, independent saved depth templates and ambiguous sequence hypotheses.
-   Remove strict2x2-interaction equivalence and last-crossing depth fallback. Preserve
-   unresolved charge sharing, same-pixel multiplicity and cascade possibilities.
-3. Check the independent bank against every original sealed request generation:
-   exact model, serialized field cache, channels, native sources/environment and
-   drift grid. Reused field precision differs from a fresh-solve precision request;
-   the actual serialized cache identity controls compatibility. No bank => unknown
-   depth/map. An admission-only source revision preserves the executed source and
-   completed results without another full processing run.
-4. Reconstruct finite-vertex conditional angular likelihood with candidate
-   marginalization, unresolved mass and background. Do not normalize each cone's
-   tiny in-frame tail to unity. Verify field-of-view overlap and coordinate/energy
-   contracts. Known source positions are held-out evaluation only. Detector
-   sensitivity/noise not calibrated from independent data must remain unknown.
-5. Student Control uses the same shared processing, protected saved-input discovery,
-   separate derivatives, chunk stop/resume and traceable original files. New
-   standalone GeGI runs retain native-results.json and no longer generate source
-   maps from the historical timing estimator. No canned campaign enters the ZIP.
-6. Publish one pooled map with energy layers and clear signal-to-cone explanation.
-   Keep the old708group control separate, with no claimed efficiency comparison.
-   Assembly viewer uses214saved scored Ge segments; never call them full paths
-   through unscored materials. Private slides are not uploaded. Old5000examples
-   remain private and their former public entries redirect to the current result.
-7. Build only through the maintained generator, verify tests and exact public
-   runtime bytes, check live site and actual desktop pages, update this same handoff
-   and push normally. Stop after this delivery; no automatic next simulation.
+Stop this milestone once the evidence map and next diagnostic are concrete; do not
+expand into a literature survey or another general review. The planning/evidence
+map above is complete. The400-event evaluation is the next execution milestone;
+its manifest already exists, but no completed evaluation result exists yet.
 
-## Results that the delivery must not hide
+### Conditional calibration option, not yet authorized or first action
 
-57,613pulse groups reprocessed in337.197s,100sealed chunks,434conditionalgroups;
-284came from39,683oldstrictrejects, but validatedrecoveries=0.426nativefailures are
-retained.162groups/393candidates enter the shared measured-energy-window map.
-Pooled assumedz40mm peaks lie near the two known positions, but the661.7keV layer
-still misses the right source.1173keV has a secondary edge maximum;1332keV has only
-19groups. Weightedmedian angularresidual22.162deg and33.22%masswithin15deg do not
-establish detector resolution. Range/activity remainnull. Four acquisitions are
-only two nuclides plus two monoenergetic gamma datasets at two positions.
+If saved-event diagnosis establishes the missing34-channel basis as the blocker,
+the prepared bounded proposal is15 fixed 500 keV injections (3 pixels×5 depths), reuse
+exact model/cache/environment, save all34 signed signals and explicit failures;
+no new field solve or transport. Stop after15 attempts and measure startup,
+per-injection time and bytes. Existing selected-pair bank call took158.298s;
+an earlier cold startup took34.155s. These are historical two-channel timings,
+not an estimate of full 34-channel cost. Full34cost remains unmeasured. The proposal is
+recorded in signal-recovery-v1/calibration/inventory.json and requires owner approval.
+It would test template completeness, not establish hardware equivalence or resolve
+omitted diffusion/noise. Do not launch it merely because this option is recorded.
 
-Available saved injections retain selected X/Y waveforms, not the full34channel
-response basis. Reliable neighbor-transient depth/substrip inference and multi-hit
-separation need independent complete response data. Related strip-Ge papers guide
-the architecture; proprietary GeGI hardware algorithms and measured calibration
-are not available, so equivalence cannot be promised. Existing data cannot recover
-unmeasured channels or identify every ambiguous interaction by software alone.
+### Reference scope and reuse
 
-## Future work, only after an owner decision
+Private index: .local/gegi-10m/signal-recovery-v1/reference-index.json. It records
+18 PPTs / 283 slides plus 4 targeted localPDFs, hashes and selected text. July 14 GeGI slides 3/4
+plots were visually inspected; original source documents are read-only and private.
+Slides3–5 separate measured spectra, normalized BP/SOE maps and a truth-selected
+two-interaction demonstration. These are distinct validation targets. The February
+strip deck contains toy/other-device studies and must not set GeGI parameters.
+The PHDS 2024 deck mainly concerns ring-contact detectors; the plant-imaging PhaseII
+report concerns GIPR/coded aperture. Keep both out of GeGI electronics parameter
+claims. The IAEA report's GeGI-4dimensions must not silently replace current11 mm.
 
-First complete the independent34channel response/calibration and measured-noise/
-crosstalk specification, then pass fixed blind signal/position/sequence acceptance.
-Retain current failures as regressions; do not tune to known sources. A four-real-
-nuclide design needs four explicit source positions and distinguishable gamma
-spectra, consistent correlated decay handling and efficiency denominators. Directed
-sampling must carry proper probability/weight accounting; do not independently
-collimate decay daughters or claim isotropic efficiencies from unweighted cones.
-Closer placement increases charge-processing load and near-field effects; it is
-not automatically a net computational saving. Range needs an identifiable response
-or external measurement, not an imposed plane or source-input echo.
+- [R1 PHDS GeGI specifications and options](https://phdsco.com/products/gegi).
+- R2 IAEA,2016Technology Demonstration Workshop on Gamma Imaging, external version
+  2017-03-02, pp15–17; exact local PDF and hash in the private index. This is not
+  automatically the manufacturer's separately linked2015workshop report.
+- [R3 Rogers et al.,2026, per-pixel depth calibration](https://arxiv.org/html/2602.02442v1):
+  SSD-to-readout timing calibration with measured distributions; COSI parameters
+  and resolution figures are not GeGI values.
+- [R4 Sleator et al.,2019, simulation benchmarking](https://arxiv.org/html/1911.02992v1):
+  measured/simulated events share energy, crosstalk, pairing, depth and reconstruction.
+- [R5 PHDS,2019, PAGe signal-basis development](https://science.osti.gov/-/media/np/pdf/sbir-sttr/SBIR-STTR-2019/Posters/Kiser_20190816-PixelArrayGermanium-Poster-MK-forWeb.pdf):
+  related pixel detector, not evidence of GeGI's proprietary algorithm.
 
-No new cost pilot is authorized now. Historical sealed-stage compute was24.10h
-(20.98hresponse/store,3.08htransport); failed attempts and development time are
-excluded. Current saved-data processing cost is measured above. Costs/yields of a
-changed four-nuclide geometry or full34channel calibration are unmeasured; establish
-those with a bounded owner-approved acceptance before another1M.
+Complete GeGI operation/service manual and matching raw experimental electronics
+configuration are still missing. Manufacturer datasheets do not supply the full
+transfer function. Supervisor owns decisions; ordinary retrieval/development uses
+6.1-sol, Astra only for necessary complex analysis. This milestone used one
+read-only 6.1-sol source-mapping task, reused old checks, and ran no new physics,
+calibration, reconstruction fit or whole-campaign processing.
 
-Prior plans and milestones remain immutable in Git:
-https://github.com/kunming-cn/END2END_Ge_Simulation/blob/47685df9f40a0b05e33d884bae85642a06fe87f3/tools/NEXT_DEVELOPMENT_PLAN.md
+## Completed delivery retained
+
+The 1M campaign, reconstruction-v3, student-runtime-47685df9f40a and published
+website remain the accepted prior delivery. PROGRESS.md contains their exact
+receipts, hashes, tested scope and unresolved scientific limits. Do not rerun them
+to resume this work. Earlier plans remain in Git at commit d94f82e.

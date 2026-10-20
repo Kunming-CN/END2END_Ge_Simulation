@@ -1,5 +1,18 @@
 # Project working rules
 
+## Owner update — 2026-10-20 planning, evidence and token use
+
+The supervisor owns the full-chain plan and critical decisions. Use gpt-6.1-sol
+for ordinary retrieval, organization and development; reserve gpt-6-astra for
+necessary complex analysis/planning. Avoid multiple Astra workers, redundant
+context reads and repeated checks. Scope each delegated task to one concrete
+deliverable and reuse completed evidence. No additional AI review rounds.
+Prioritize the owner's private GeGI/Ge-STAR presentations and detector data
+analyses, supplemented by manufacturer specifications/manuals/reports and primary
+literature. Map evidence to the exact detector/version and simulation stage;
+related detectors inform methods, not GeGI parameter values. Establish a correct
+small complete simulation workflow before recovery refinements or large samples.
+
 ## Owner update — 2026-10-20 product language and implementation pace
 
 Use direct, useful language in the GitHub website, software and guides. Explain

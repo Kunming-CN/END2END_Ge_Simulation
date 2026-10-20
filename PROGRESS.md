@@ -1,14 +1,39 @@
 # Current handoff
 
-## New-chat handoff — 2026-10-20
+## Full-chain evidence/planning milestone complete — 2026-10-20
 
-Owner requested a continuation prompt and concise product language/code. The next
-saved-data milestone is specified in tools/NEXT_DEVELOPMENT_PLAN.md; it has not
-started. Start it when the owner sends the continuation instruction in the new chat.
-The existing diagnosis lock records inactive ownership (active_worker=false).
-Verify actual writers before recording a handover; retain its original ownership
-evidence. Automation stays PAUSED. New simulation/calibration remains unapproved.
-The owner language/implementation preference is recorded in AGENTS.md.
+Owner resumed work with full-chain correctness first and strict token discipline.
+The evidence/implementation/gap/acceptance table and ordered next task are now in
+tools/NEXT_DEVELOPMENT_PLAN.md. One 6.1-sol read-only source-mapping task was used;
+no new Astra agents, physical calculations, calibration or reconstruction fits.
+Automatic monitoring stays PAUSED. Original campaign/v3 delivery remains unchanged.
+
+Main finding: current electronics is synthetic-signed-14bit-v1, not an identified
+GeGI hardware transfer. Its existing 4-group/136-channel numerical circuit check
+passed; reuse it. Need align full-detector/pixel spectra, signal/timing/trigger
+observables and model generation before interpreting acceptance or source maps.
+Carrier model uses deterministic point charges without diffusion; full 34-channel campaign
+signals exist but the independent calibration saved only X/Y and no drift paths.
+These are established model gaps, not proof of a single cause for all bad events.
+
+Private reference-index.json under .local/gegi-10m/signal-recovery-v1 records
+18 PPTs / 283 slides and 4 targeted PDFs. July 14 plots and IAEA p16 were visually checked.
+Older GeGI-4 (10 mm), current manufacturer (11 mm), other strip/ring/PAGe/GIPR systems must
+remain distinct. Full GeGI manual and matched hardware configuration still missing.
+
+Next bounded task: finish existing frozen 400-event evaluation (200 development,
+200 holdout); quantify stage energy, position, pairing, splitting and sequence errors
+without changing cuts or rerunning fits. Then choose the earliest concrete repair.
+15 full 34-channel injections are a conditional proposal only; no approval or execution yet.
+
+Previous recovery WIP remains uncommitted and incompletely integrated: signal-use
+classification/shared-entry wiring and dedicated inventory/peak/evaluation tools.
+Six signal-use and twelve existing signal tests passed previously; do not repeat
+unaffected tests. Peak attribution is complete; 400-event evaluation is not. No new
+student release or website publication. Retain failed inventory-write evidence.
+Old diagnosis ownership remains intact; current manual ownership record is
+.local/autonomy/gegi-saved-recovery.lock/owner.json. Check its state/processes
+before further execution; do not start automatic monitoring.
 
 ## GeGI saved-data correction — authorized delivery complete
 
