@@ -147,6 +147,28 @@ boundary support for other channels next. Old noncollecting channels still have
 spurious terminal signals (up to1.83544keV on channel20 in these3paths); replacing
 WP34 alone is not a full34 production repair. Never force charge to truth.
 
+Readout propagation reuses stored500keV calibration, originalelectronics and Y34
+wiring:9isolated deposit pulses, no new injection/field/drift. Compute3.253s,
+whole process8.969s. Level16-level8 analog-energy differences -.000646/.093451/
+.291724keV; maximum t50/t90 changes .309/.527ns (ideal charge, not hardware).
+All three ADC codes unchanged75/21/47;1.24558keVLSB hides sub-LSB differences,
+not a convergence pass. readout-comparison.json SHA713c9c69...80d45.
+Read-only common-grid check confirms all34oldgrids identical and all originalticks
+retained; all6endpoints have four interpolation support nodes on the right contact.
+multichannel-grid.json SHAa74b1dc8...11678. Fixed17/20 pilot now dispatched under
+bounded autonomy: requestae68e935...6491, toolcf977b6d...da4b0, driver18b958d1...8ae0b,
+2solves/600s/one thread, samelevel16/1e-6full-updategate, no memory cap or retry.
+No new drift or electric-field computation; originals retained. Wait for terminal
+receipt in results-channels-17-20 before interpretation or another solve.
+
+Future calibration recording implemented: one native_deposit call requests1:34,
+channel_signals preserves native signs/IDs/ns/keV, signals.X/Y and timing unchanged.
+New identity/table describes requested coverage; successful response records actual
+coverage, excluded/failed records retain nulls. Old selected-only records cannot
+resume into the new writer and are unchanged. No missing old responses recovered.
+Software-only stub test117checks, oldinventory4tests and package5tests pass; no
+physical injection was used. Student release for this change is pending below.
+
 Owner question on past cost is resolved by actual campaign receipts and pinned
 source:100/100response.json say new_field_solve=false;5resident loads reuse cache
 f75280e7...53b90e8. Loading occurs once per resident initialize, outside event/chunk

@@ -649,3 +649,26 @@ is fabricated. `native_failed_groups` and `readout_rejected` are separate counts
 and a run with any failed groups has status `completed_with_native_failures`.
 Native/analog histograms exclude unavailable values rather than filling zeros;
 truth histograms and initial-decay denominators remain complete.
+
+## GeGI independent pixel-calibration records
+
+`gegi_pixel_calibration.jl` records each future native injection through one drift
+and all 34 contact responses, including both guards. Each `channel_signals` entry
+contains `contact_id`, `time_ns` and the original `signed_induced_keV` before
+wiring. `signal_coverage` declares contact IDs 1–34, ns/keV units and the native
+sign convention. The existing `signals.X/Y`, selected contact IDs and ideal-charge
+timing remain available with the same mathematics. An incomplete collection can
+retain all 34 signals while remaining invalid for timing; geometry exclusions
+and native failures retain null signals and null actual coverage.
+
+New identity/table coverage declares the requested recording scope; inspect each
+checkpoint's status and actual coverage before using a full response. Identity,
+source and payload hashes bind resumable records. Existing selected-X/Y-only
+calibrations are retained as originals and cannot resume into this writer; their
+missing channels have not been reconstructed. The recording change does not
+validate the saved fields or detector response. Its software-only contract test
+uses a fake native response and never loads SSD or performs an injection:
+
+```powershell
+julia --startup-file=no --compiled-modules=existing --threads=1 --project=simulation tools/test_gegi_pixel_calibration.jl
+```

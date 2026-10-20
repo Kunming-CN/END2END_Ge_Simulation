@@ -7,6 +7,10 @@ const H=G.H
 const SSD=G.SSD
 const check=G.check
 const TIMING_METHOD="ideal_charge_last_rising_constant_fraction_terminal_v2"
+const SIGNAL_CONTACT_IDS=1:34
+signal_coverage()=Dict("kind"=>"gegi_all34_signed_induced_v1",
+    "contact_ids"=>collect(SIGNAL_CONTACT_IDS),"time_unit"=>"ns","signal_unit"=>"keV",
+    "polarity"=>"native_signed_before_wiring")
 const DEPTHS=collect(-5.0:1.0:5.0)
 # Fixed before campaign data are read: centre, four axial edges and two cut corners.
 const DIAGNOSTIC_PIXELS=((9,26),(1,26),(16,26),(9,18),(9,33),(3,20),(14,31))
@@ -68,12 +72,14 @@ function injection(sim,cfg,xid,yid,xyz,energy)
         "injection_energy_keV"=>energy,"valid"=>false,"ctd_ns"=>nothing,
         "X_t50_ns"=>nothing,"Y_t50_ns"=>nothing,"endpoints"=>nothing,
         "X_final_induced_keV"=>nothing,"Y_final_induced_keV"=>nothing,
-        "timing_method"=>TIMING_METHOD,"signals"=>nothing)
+        "timing_method"=>TIMING_METHOD,"signals"=>nothing,
+        "channel_signals"=>nothing,"signal_coverage"=>nothing)
     if !(point in sim.detector.semiconductor) || any(c->point in c.geometry,sim.detector.contacts)
         row["status"]="excluded_geometry"
         return row
     end
-    waves,endpoints=G.native_deposit(sim,xyz,energy,cfg;ids=(xid,yid))
+    waves,endpoints=G.native_deposit(sim,xyz,energy,cfg;ids=SIGNAL_CONTACT_IDS)
+    check(Set(keys(waves))==Set(SIGNAL_CONTACT_IDS),"Incomplete GeGI 34-contact native response")
     tx=H.crossing_time(waves[xid].times,waves[xid].charge)
     ty=H.crossing_time(waves[yid].times,-waves[yid].charge)
     # With the frozen negative-X bias, holes collect on X and electrons on Y.
@@ -86,6 +92,9 @@ function injection(sim,cfg,xid,yid,xyz,energy)
         "valid"=>valid,"ctd_ns"=>valid ? tx-ty : nothing,
         "X_t50_ns"=>tx,"Y_t50_ns"=>ty,"endpoints"=>endpoints,
         "X_final_induced_keV"=>xfinal,"Y_final_induced_keV"=>yfinal,
+        "signal_coverage"=>signal_coverage(),
+        "channel_signals"=>[Dict("contact_id"=>id,"time_ns"=>waves[id].times,
+            "signed_induced_keV"=>waves[id].charge) for id in SIGNAL_CONTACT_IDS],
         "signals"=>Dict("X"=>Dict("time_ns"=>waves[xid].times,"signed_induced_keV"=>waves[xid].charge),
                         "Y"=>Dict("time_ns"=>waves[yid].times,"signed_induced_keV"=>waves[yid].charge))))
     row
@@ -97,6 +106,16 @@ function checkpoint_injection(sim,cfg,xid,yid,xyz,energy,path,identity_sha256)
         check(row["position_mm"]==xyz && row["contact_ids"]==[xid,yid] &&
             row["injection_energy_keV"]==energy,"Independent injection coordinates changed")
         check(row["status"]!="unexpected_failure","Prior unexpected injection failure retained at "*path)
+        check(haskey(row,"channel_signals") && haskey(row,"signal_coverage"),
+            "Checkpoint lacks full34 coverage metadata; retain the selected-X/Y original and use a new calibration directory")
+        if row["signals"]===nothing
+            check(row["channel_signals"]===nothing && row["signal_coverage"]===nothing,
+                "Unavailable injection must retain null channel signals and coverage")
+        else
+            check(row["signal_coverage"]==signal_coverage() && row["channel_signals"] isa AbstractVector &&
+                [s["contact_id"] for s in row["channel_signals"]]==collect(SIGNAL_CONTACT_IDS),
+                "Checkpoint does not contain the full34 signed native response")
+        end
         return row,true
     end
     started=time();rss_before=Sys.maxrss()
@@ -108,6 +127,7 @@ function checkpoint_injection(sim,cfg,xid,yid,xyz,energy,path,identity_sha256)
             "status"=>known ? "native_failed" : "unexpected_failure","valid"=>false,
             "ctd_ns"=>nothing,"X_t50_ns"=>nothing,"Y_t50_ns"=>nothing,"endpoints"=>nothing,
             "X_final_induced_keV"=>nothing,"Y_final_induced_keV"=>nothing,"signals"=>nothing,
+            "channel_signals"=>nothing,"signal_coverage"=>nothing,
             "timing_method"=>TIMING_METHOD,"error"=>sprint(showerror,err),"exception_type"=>string(typeof(err)),
             "execution_seconds"=>time()-started,"process_peak_rss_bytes_before"=>rss_before,
             "process_peak_rss_bytes_after"=>Sys.maxrss())
@@ -157,8 +177,13 @@ end
 Build a source-independent 16 x 16 pixel-centre timing map using already loaded
 fields and GeGIResponse.native_deposit. `field_cache` is the exact checked cache
 descriptor (`ref`, `sha256`, `model_sha256`) used to load `sim`; it is read-only.
-No field solve, event data, source pose or campaign seed is used. Every injection
-has a checksum-bound resumable record containing both signed signals/endpoints.
+No field solve, event data, source pose or campaign seed is used. Each successful
+native response has a checksum-bound resumable record containing all 34 signed
+contact signals/endpoints from one drift. `signals.X/Y` and timing retain the
+selected pair; `channel_signals` stores explicit contact IDs, ns and signed keV
+before wiring. Excluded/failed responses keep signals and actual coverage null.
+Identity/table coverage declares the requested recording scope. Old selected-X/Y
+records remain read-only originals; they cannot resume into this full34 writer.
 
 Returns `(status, calibration, calibration_path, diagnostics_path)`. On a requested
 stop, calibration is nothing; calling again with identical inputs resumes records.
@@ -188,6 +213,7 @@ function build(sim,cfg,channels,out;field_cache,injection_energy_keV=500.,stop_r
         "field_precision_bits"=>8sizeof(SSD.get_precision_type(sim)),"depth_mm"=>DEPTHS,
         "pixel_order"=>[collect(p) for p in pixel_order],
         "injection_energy_keV"=>Float64(injection_energy_keV),"timing_method"=>TIMING_METHOD,
+        "signal_coverage"=>signal_coverage(),
         "diagnostic_pixels"=>[collect(p) for p in DIAGNOSTIC_PIXELS],
         "diagnostic_depth_mm"=>collect(DIAGNOSTIC_DEPTHS),
         "diagnostic_offsets_pitch_fraction"=>[collect(p) for p in DIAGNOSTIC_OFFSETS],
@@ -254,6 +280,7 @@ function build(sim,cfg,channels,out;field_cache,injection_energy_keV=500.,stop_r
             "model_sha256"=>G.MODEL_HASH,"field_cache_sha256"=>field_cache["sha256"],
             "drift_numerics"=>identity["numerics"],"calibration_source_sha256"=>sources,
             "measured_calibration"=>false,"timing_method"=>TIMING_METHOD,"pixels"=>pixels,
+            "signal_coverage"=>signal_coverage(),
             "identity_sha256"=>identity_sha256,"injection_energy_keV"=>Float64(injection_energy_keV),
             "depth_mm"=>DEPTHS,"method"=>"Independent fixed pixel-centre injections; CTD=t50_X-t50_Y; last rising 50% of terminal polarity-corrected induced charge",
             "limitations"=>["Pixel-centre simulated calibration, not hardware calibration or a depth-resolution measurement.",

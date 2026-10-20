@@ -69,7 +69,7 @@ def grid_hash(axes):
     return hashlib.sha256(struct.pack('<III', *(len(a) for a in axes)) + b''.join(axis_bytes(a) for a in axes)).hexdigest()
 
 
-JULIA_WORKER = r'''
+JULIA_HELPERS = r'''
 # Authorized only by an exact request SHA bound by the Python parent.
 using SolidStateDetectors, Serialization, JSON, SHA, Unitful, LinearAlgebra
 const SSD=SolidStateDetectors
@@ -96,7 +96,7 @@ function grid_digest(axes)
     for ticks in axes;write(io,reinterpret(UInt8,Float32.(ticks)));end
     bytes2hex(sha256(take!(io)))
 end
-function path_values(sim,wp,recorded)
+function path_values(sim,wp,recorded;phi_key="phi34")
     itp=SSD.interpolated_scalarfield(wp);p=only(recorded.drift_paths)
     paths=Dict("electron"=>(p.e_path,p.timestamps_e),"hole"=>(p.h_path,p.timestamps_h));result=Dict()
     for (species,(points,times)) in paths
@@ -108,30 +108,31 @@ function path_values(sim,wp,recorded)
         for lambda in (0.,.5,.9,.99,.999,1.)
             q=lambda==0 ? a : lambda==1 ? b : a+Float32(lambda)*(b-a)
             push!(samples,Dict("lambda"=>lambda,"contact_ids"=>contacts(sim,q),
-                "phi34"=>Float64(SSD.get_interpolation(itp,q,SSD.Cartesian))))
+                phi_key=>Float64(SSD.get_interpolation(itp,q,SSD.Cartesian))))
         end
-        result[species]=Dict("phi34"=>phi,"timestamps_s"=>Float64.(times),"contact_ids"=>ids,
-            "last_segment_samples"=>samples,"endpoint_phi34"=>last(phi))
+        result[species]=Dict(phi_key=>phi,"timestamps_s"=>Float64.(times),"contact_ids"=>ids,
+            "last_segment_samples"=>samples,"endpoint_"*phi_key=>last(phi))
     end
     result
 end
-function waveform(sim,recorded)
-    w=SSD.get_signal(sim,recorded.drift_paths,SSD.flatview(recorded.energies),34;Δt=1u"ns",signal_unit=u"keV")
+function waveform(sim,recorded,contact_id=34)
+    w=SSD.get_signal(sim,recorded.drift_paths,SSD.flatview(recorded.energies),contact_id;Δt=1u"ns",signal_unit=u"keV")
     Float64.(ustrip.(u"keV",w.signal))
 end
-function update_native_history!(sim,history_path,deadline)
-    wp=sim.weighting_potentials[34]
+function update_native_history!(sim,history_path,deadline;contact_id=34,budget_seconds=300)
+    wp=sim.weighting_potentials[contact_id]
     pcs=SSD.PotentialCalculationSetup(sim.detector,wp.grid,sim.medium,wp.data,ones(Float32,size(wp.data));
-        sor_consts=1.4f0,weighting_potential_contact_id=34,use_nthreads=1,
+        sor_consts=1.4f0,weighting_potential_contact_id=contact_id,use_nthreads=1,
         not_only_paint_contacts=true,paint_contacts=true,point_types=missing)
     ndrange=size(pcs.potential)[1:3].-2
     kernel=SSD.get_sor_kernel(SSD.Cartesian,SSD._ka_get_backend(pcs.potential),Val(false))
     inner=view(pcs.potential,(2:size(pcs.potential,k)-1 for k in 1:3)...,:)
     before=similar(inner);c=Inf32;native_c=Inf32;n=0;reason="iteration_cap"
     check(!ispath(history_path),"Preserve existing iteration history")
+    try
     open(history_path,"w") do io
         for iteration in 1:10000
-            if time()>=deadline;reason="300_second_total_budget";break;end
+            if time()>=deadline;reason=string(budget_seconds)*"_second_total_budget";break;end
             iteration%100==0 && copyto!(before,inner)
             SSD.update!(pcs,kernel,ndrange;use_nthreads=1,depletion_handling=Val(false),
                 is_weighting_potential=Val(true),only2d=Val(false))
@@ -149,9 +150,14 @@ function update_native_history!(sim,history_path,deadline)
             end
         end
     end
-    sim.weighting_potentials[34]=SSD.WeightingPotential(SSD.ElectricPotentialArray(pcs),wp.grid)
+    finally
+        sim.weighting_potentials[contact_id]=SSD.WeightingPotential(SSD.ElectricPotentialArray(pcs),wp.grid)
+    end
     c,n,reason,native_c
 end
+'''
+
+JULIA_WORKER = JULIA_HELPERS + r'''
 function main(reqpath,out)
     req=JSON.parsefile(reqpath);check(Threads.nthreads()==1,"Use one thread")
     check(req["contact_id"]==34 && length(req["levels"])==2,"Enlarged solver scope")
@@ -256,9 +262,17 @@ def execute(request_path, approval_sha):
     if approval_sha != digest:
         raise ValueError('Explicit human approval must bind this exact request SHA256')
     request = json.loads(request_path.read_bytes())
-    if request['kind'] != 'gegi_single_guard34_strict_stop_v1' or request['contact_id'] != 34:
+    if request['kind'] == 'gegi_single_guard34_strict_stop_v1' and request['contact_id'] == 34:
+        budget, output_name, worker_name = 300, 'results-strict-stop', 'WP34-worker.jl'
+        worker_source, solve_key = JULIA_WORKER, 'maximum_new_WP34_solves'
+    elif (request['kind'] == 'gegi_fixed_channels_17_20_level16_v1' and request['contact_ids'] == [17, 20]
+          and len(request['levels']) == 1 and request['levels'][0]['central_subdivisions'] == 16):
+        from gegi_channel_grid_pilot import JULIA_WORKER as channel_worker
+        budget, output_name, worker_name = 600, 'results-channels-17-20', 'WP-channels-worker.jl'
+        worker_source, solve_key = channel_worker, 'maximum_new_WP_solves'
+    else:
         raise ValueError('Unsupported or enlarged weighting-potential scope')
-    expected = {'maximum_new_WP34_solves': 2, 'maximum_total_wall_seconds': 300, 'threads': 1,
+    expected = {solve_key: 2, 'maximum_total_wall_seconds': budget, 'threads': 1,
                 'maximum_nodes_per_level': 7000000}
     if request['resource_caps'] != expected:
         raise ValueError('Approved resource limits changed')
@@ -271,9 +285,9 @@ def execute(request_path, approval_sha):
         available_before = available_memory()
     except OSError:
         available_before = None
-    output = request_path.parent/'results-strict-stop'; output.resolve().relative_to((ROOT/'.local').resolve()); output.mkdir()
+    output = request_path.parent/output_name; output.resolve().relative_to((ROOT/'.local').resolve()); output.mkdir()
     (output/'approved-request.json').write_bytes(request_path.read_bytes())
-    worker = output/'WP34-worker.jl'; worker.write_text(JULIA_WORKER, encoding='utf-8')
+    worker = output/worker_name; worker.write_text(worker_source, encoding='utf-8')
     env = os.environ.copy(); env.update(JULIA_PKG_OFFLINE='true', JULIA_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', OMP_NUM_THREADS='1')
     command = [request['environment']['julia_executable'], '--startup-file=no', '--compiled-modules=existing', '--threads=1',
                '--project='+str(ROOT/'simulation'), str(worker), str(request_path), str(output)]
@@ -284,7 +298,7 @@ def execute(request_path, approval_sha):
     getmem.argtypes = [ctypes.c_void_p, ctypes.POINTER(PMC), ctypes.c_ulong]; getmem.restype = ctypes.c_int
     started = time.monotonic(); peak = None; missing_memory_samples = 0; stop = None
     with (output/'worker.log').open('x', encoding='utf-8') as log:
-        env['GEGI_WP34_DEADLINE_UNIX'] = str(time.time()+300)
+        env['GEGI_WP34_DEADLINE_UNIX'] = str(time.time()+budget)
         child = subprocess.Popen(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
                                  creationflags=subprocess.CREATE_NO_WINDOW)
         while child.poll() is None:
@@ -293,8 +307,8 @@ def execute(request_path, approval_sha):
                 peak = max(peak or 0, memory.peak)
             else:
                 missing_memory_samples += 1
-            if time.monotonic()-started >= 300:
-                stop = '300_second_total_budget'; child.kill(); break
+            if time.monotonic()-started >= budget:
+                stop = f'{budget}_second_total_budget'; child.kill(); break
             time.sleep(.1)
         code = child.wait()
     receipt = {'returncode': code, 'stop_reason': stop, 'elapsed_seconds': time.monotonic()-started,
