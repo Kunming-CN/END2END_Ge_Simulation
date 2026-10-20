@@ -5,9 +5,9 @@
 Owner resumed evidence/planning after correcting the priority: establish a correct
 small radiation -> charge ->34-channel signal ->readout ->reconstruction workflow
 before recovery refinements and large samples. Automatic monitoring stays PAUSED.
-No new transport, field solve or calibration calculation is authorized. The owner
-approved only the3fixed original-deposit drift captures described below; the first
-memory preflight launched no worker. Retain that approval and the original limits.
+No new transport or calibration calculation is authorized. The owner approved the
+3fixed original-deposit drift captures (complete) and separately approved the
+fixed2levelWP34 grid pilot below. No additional drift or other field calculation.
 
 The present chain is integrated, but its synthetic electronics and conditional
 inverse model are not an identified GeGI instrument response. Existing numerical
@@ -44,9 +44,20 @@ transient-to-positive-peak bias and a separate guard terminal-charge inconsisten
 1. Saved endpoint query is complete: guard event723606's86contacts are correct,
    but geometric contact endpoints interpolate contact and noncontact grid nodes.
    ExactFloat32 endpoint algebra reproduces all34saved terminalvalues (0.0keVerror).
-   Before changing the producer, execute the approved3original-deposit path-capture
-   request c514ed87e5b0 when its memory preflight passes. Compare original/candidate boundary interpolation
-   along the same complete paths; terminal-only forcing is not acceptance.
+   Approved3row path capture c514ed87e5b0 is complete in37.343s. Same-path native
+   replay matches all102waveforms bit-for-bit. Geometric Dirichlet1/0 assignment
+   fails continuity (guard34:0.905912 just outside ->1 on contact), despite fixing
+   terminal charge; do not apply it to production. Native XY spacing is1.17187mm,
+   versus0.0375002mm in Z. Prepare a two-level localXY weighting-potential test on
+   guard34 only, reusing original paths and unchanged Z/geometry/electric field.
+   Fixed request83d4e680...f2a5a2:5,744,640/6,776,528nodes,3pure grid tests and
+   Python/Julia parser checks passed. One process/thread, at most2solves/300s;
+   startup free3.5GB,
+   stop below768MiB free or above3GB working set. Report actual solver convergence,
+   endpoint error, continuity and level differences; no automatic retry or repair
+   promotion. Owner approved the fixed request after receiving scale/resource caps
+   and the unmeasured CPU cost; execute when the original memory gate passes.
+   Dirichlet contact values follow the weighting-potential model[R6].
 2. Use the owner's forward/inverse approach: validate interaction -> signed34-channel
    signal -> readout first, then infer positions/energies/multiplicity by explaining
    observed signals through that same response. Geant4 truth can establish/check
@@ -58,9 +69,10 @@ transient-to-positive-peak bias and a separate guard terminal-charge inconsisten
    energy and pairing even when the nominal circuit is numerically correct. A
    new estimator must be explicit, preserve the original readout, use a fixed
    calibration and be tested on the frozen holdout without retuning its cuts.
-4. Deliver the tested signal-use/software changes and aggregate diagnosis through
-   the existing student release and website. This delivery exposes useful spectra
-   and current errors; it does not claim the full inverse model has passed.
+4. The tested signal-use/software changes and aggregate diagnosis are delivered:
+   student-runtime-1b88d5e7c2a7, website4466b8a,732live files verified. Further
+   production changes require a validated forward response; diagnostic-only code
+   does not require rebuilding unchanged student packages or website figures.
 
 Continue authorized saved-data/software work without routine milestone approval.
 Stop only for a concrete missing input or the explicit boundary on new physical/
@@ -103,13 +115,16 @@ claims. The IAEA report's GeGI-4dimensions must not silently replace current11 m
   measured/simulated events share energy, crosstalk, pairing, depth and reconstruction.
 - [R5 PHDS,2019, PAGe signal-basis development](https://science.osti.gov/-/media/np/pdf/sbir-sttr/SBIR-STTR-2019/Posters/Kiser_20190816-PixelArrayGermanium-Poster-MK-forWeb.pdf):
   related pixel detector, not evidence of GeGI's proprietary algorithm.
+- [R6 SolidStateDetectors.jl, weighting potentials](https://juliaphysics.github.io/SolidStateDetectors.jl/main/man/weighting_potentials/):
+  Laplace problem with selected-contact1/other-contact0; use the pinned installed
+  SSD0.11.8 source for exact execution semantics, not the latest API documentation.
 
 Complete GeGI operation/service manual and matching raw experimental electronics
 configuration are still missing. Manufacturer datasheets do not supply the full
 transfer function. Supervisor owns decisions; ordinary retrieval/development uses
-6.1-sol, Astra only for necessary complex analysis. This milestone used one
-read-only 6.1-sol source-mapping task, reused old checks, and ran no new physics,
-calibration, reconstruction fit or whole-campaign processing.
+6.1-sol, Astra only for necessary complex analysis. Reuse completed retrieval,
+checks and publication. The only new physics in this continuation is the approved
+3original-deposit drift capture; the subsequent boundary comparison uses saved paths.
 
 ## Completed delivery retained
 

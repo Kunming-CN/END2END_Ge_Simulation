@@ -1,0 +1,264 @@
+"""Pending owner-approved two-level localXY weighting-potential34 CPU pilot.
+
+No calculation runs on import. Execution requires the exact approved request
+SHA256. Pure grid construction is independently testable without Julia.
+"""
+from __future__ import annotations
+import argparse
+import bisect
+import ctypes
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import struct
+import subprocess
+import time
+from gegi_boundary_path_pilot import sha, available_memory
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def float32(value):
+    return struct.unpack('<f', struct.pack('<f', value))[0]
+
+
+def axis_bytes(ticks):
+    return struct.pack('<'+'f'*len(ticks), *ticks)
+
+
+def graded_axis(original, positions, subdivisions, *, negative_parity=False):
+    if subdivisions not in (8, 16) or len(original) < 3 or any(b <= a for a, b in zip(original, original[1:])):
+        raise ValueError('Invalid fixed grid definition')
+    cells = [bisect.bisect_right(original, p)-1 for p in positions]
+    if not cells or len(set(cells)) != 1 or not 0 <= cells[0] < len(original)-1:
+        raise ValueError('Three endpoints must share one original interval inside the grid')
+    central = cells[0]; counts = {central: subdivisions}; distance = 1
+    division = subdivisions//2
+    while division > 1:
+        for index in (central-distance, central+distance):
+            if not 0 <= index < len(original)-1:
+                raise ValueError('Taper would leave original axis; reject rather than clip')
+            counts[index] = division
+        distance += 1; division //= 2
+    parity = None
+    if negative_parity:
+        index = central-distance
+        if not 0 <= index < len(original)-1:
+            raise ValueError('Parity interval would leave original axis')
+        counts[index] = 2
+        parity = {'original_interval_zero_based': index,
+                  'original_interval_m': [original[index], original[index+1]],
+                  'inserted_midpoint_m': float32((original[index]+original[index+1])/2),
+                  'reason': 'SSD Cartesian X node count must be even; one midpoint in the negative interval adjacent to the outermost taper'}
+    result = [original[0]]
+    for index, (a, b) in enumerate(zip(original, original[1:])):
+        n = counts.get(index, 1)
+        result.extend(float32(a+(b-a)*j/n) for j in range(1, n))
+        result.append(b)
+    if any(b <= a for a, b in zip(result, result[1:])) or not set(original).issubset(result):
+        raise ValueError('Float32 insertion lost original ticks or strict ordering')
+    return {'ticks_m': result, 'float32_le_sha256': hashlib.sha256(axis_bytes(result)).hexdigest(),
+            'central_original_interval_zero_based': central,
+            'subdivisions_by_original_interval_zero_based': {str(k): v for k, v in sorted(counts.items())},
+            'parity_midpoint': parity}
+
+
+def grid_hash(axes):
+    return hashlib.sha256(struct.pack('<III', *(len(a) for a in axes)) + b''.join(axis_bytes(a) for a in axes)).hexdigest()
+
+
+JULIA_WORKER = r'''
+# Authorized only by an exact request SHA bound by the Python parent.
+using SolidStateDetectors, Serialization, JSON, SHA, Unitful, LinearAlgebra
+const SSD=SolidStateDetectors
+BLAS.set_num_threads(1)
+check(ok,message)=ok || throw(ArgumentError(message))
+hashfile(p)=open(io->bytes2hex(sha256(io)),p)
+function save(path,value)
+    check(!ispath(path),"Preserve existing artifact")
+    open(path*".pending","w") do io;JSON.print(io,value,2);println(io);end
+    mv(path*".pending",path)
+end
+function stage(out,status,level)
+    path=joinpath(out,"progress.json")
+    open(path*".pending","w") do io;JSON.print(io,Dict("status"=>status,"level"=>level));println(io);end
+    mv(path*".pending",path;force=true)
+end
+axis_copy(axis::SSD.DiscreteAxis{T,BL,BR},ticks) where {T,BL,BR}=SSD.DiscreteAxis{T,BL,BR}(axis.interval,T.(ticks))
+contacts(sim,p)=[c.id for c in sim.detector.contacts if p in c.geometry]
+bits_equal(a::Vector{T},b::Vector{T}) where T=reinterpret(UInt8,a)==reinterpret(UInt8,b)
+function grid_digest(axes)
+    check(ENDIAN_BOM==0x04030201,"Grid hash requires recorded little-endian format")
+    io=IOBuffer()
+    for ticks in axes;write(io,UInt32(length(ticks)));end
+    for ticks in axes;write(io,reinterpret(UInt8,Float32.(ticks)));end
+    bytes2hex(sha256(take!(io)))
+end
+function path_values(sim,wp,recorded)
+    itp=SSD.interpolated_scalarfield(wp);p=only(recorded.drift_paths)
+    paths=Dict("electron"=>(p.e_path,p.timestamps_e),"hole"=>(p.h_path,p.timestamps_h));result=Dict()
+    for (species,(points,times)) in paths
+        ids=[contacts(sim,x) for x in points]
+        phi=Float64[SSD.get_interpolation(itp,x,SSD.Cartesian) for x in points]
+        indexes=[i for i in 1:length(points)-1 if isempty(ids[i]) && !isempty(ids[i+1])]
+        check(!isempty(indexes),"No fixed noncontact-contact segment")
+        i=last(indexes);a=points[i];b=points[i+1];samples=Any[]
+        for lambda in (0.,.5,.9,.99,.999,1.)
+            q=lambda==0 ? a : lambda==1 ? b : a+Float32(lambda)*(b-a)
+            push!(samples,Dict("lambda"=>lambda,"contact_ids"=>contacts(sim,q),
+                "phi34"=>Float64(SSD.get_interpolation(itp,q,SSD.Cartesian))))
+        end
+        result[species]=Dict("phi34"=>phi,"timestamps_s"=>Float64.(times),"contact_ids"=>ids,
+            "last_segment_samples"=>samples,"endpoint_phi34"=>last(phi))
+    end
+    result
+end
+function waveform(sim,recorded)
+    w=SSD.get_signal(sim,recorded.drift_paths,SSD.flatview(recorded.energies),34;Δt=1u"ns",signal_unit=u"keV")
+    Float64.(ustrip.(u"keV",w.signal))
+end
+function main(reqpath,out)
+    req=JSON.parsefile(reqpath);check(Threads.nthreads()==1,"Use one thread")
+    check(req["contact_id"]==34 && length(req["levels"])==2,"Enlarged solver scope")
+    pkgroot=dirname(dirname(pathof(SSD)))
+    for (ref,digest) in req["SSD_science_source_sha256"]
+        check(hashfile(joinpath(pkgroot,"src",ref))==digest,"Installed science source changed")
+    end
+    cache=req["field_cache"]["absolute_ref"]
+    check(hashfile(cache)==req["field_cache"]["sha256"],"Original cache changed")
+    check(Sys.free_memory()>=ceil(Int,1.25*filesize(cache))+768*1024^2,"Insufficient post-import reserve")
+    stage(out,"deserialize_original_cache",0);sim=deserialize(cache)
+    check(SSD.get_precision_type(sim)==Float32 && SSD.get_coordinate_system(sim)==SSD.Cartesian,"Original state type changed")
+    check(sim.detector.semiconductor.charge_trapping_model isa SSD.NoChargeTrappingModel,"Original no-trapping model changed")
+    original=sim.weighting_potentials[34];check(size(original.data)==(240,240,88),"Original guard grid changed")
+    oldEP=sim.electric_potential;oldEF=sim.electric_field
+    otherWP=[sim.weighting_potentials[cid] for cid in 1:33]
+    recorded=Dict();baseline=Dict();previous=Dict()
+    for row in req["path_rows"]
+        key=string(row["raw_row_index"]);recorded[key]=deserialize(row["paths_jls"])
+        native=JSON.parsefile(row["original_channel34_json"]);q=waveform(sim,recorded[key])
+        check(bits_equal(q,Float64.(native["signed_induced_keV"])),"Original saved path channel34 not bitexact")
+        baseline[key]=Dict("waveform_keV"=>q,"time_ns"=>native["time_ns"],
+            "potentials"=>path_values(sim,original,recorded[key]))
+    end
+    save(joinpath(out,"baseline.json"),baseline);completed=Any[]
+    for level in req["levels"]
+        index=level["central_subdivisions"];dir=joinpath(out,"level-"*string(index));mkdir(dir)
+        axes=level["axes_ticks_m"]
+        check(Float32.(axes[3])==original.grid.axes[3].ticks,"Z refinement is forbidden")
+        for k in 1:3
+            ticks=Float32.(axes[k])
+            check(bytes2hex(sha256(reinterpret(UInt8,ticks)))==level["axis_float32_le_sha256"][k],"Axis hash changed")
+            check(all(t->t in ticks,original.grid.axes[k].ticks),"Original ticks removed")
+        end
+        grid=SSD.CartesianGrid3D{Float32}((axis_copy(original.grid.axes[1],axes[1]),axis_copy(original.grid.axes[2],axes[2]),original.grid.axes[3]))
+        SSD.check_grid(grid);check(prod(size(grid))<=7_000_000,"Node cap exceeded")
+        check(collect(size(grid))==level["shape"],"Explicit shape mismatch")
+        check(grid_digest(axes)==level["grid_float32_le_sha256"],"Explicit grid hash mismatch")
+        save(joinpath(dir,"grid.json"),level);stage(out,"resample_original_WP34",index)
+        # Each level starts from ORIGINAL, never from the preceding solved level.
+        sim.weighting_potentials[34]=original[grid]
+        serialize(joinpath(dir,"starting-WP34.jls"),sim.weighting_potentials[34])
+        stage(out,"CPU_solve_WP34",index);started=time_ns()
+        last_update=SSD.update_till_convergence!(sim,SSD.WeightingPotential,34,Float32(1e-6);
+            n_iterations_between_checks=100,max_n_iterations=10000,use_nthreads=1,sor_consts=Float32(1.4),
+            depletion_handling=false,not_only_paint_contacts=true,paint_contacts=true,
+            device_array_type=Array,verbose=true)
+        elapsed=(time_ns()-started)/1e9
+        serialize(joinpath(dir,"solved-WP34.jls"),sim.weighting_potentials[34])
+        converged=isfinite(last_update) && last_update<=Float32(1e-6)
+        receipt=Dict("last_update"=>isfinite(last_update) ? Float64(last_update) : nothing,
+            "last_update_raw"=>string(last_update),"converged"=>converged,"solve_seconds"=>elapsed,
+            "iterations_performed"=>nothing,"max_n_iterations"=>10000,"initial_state"=>"original WP34 resampled independently",
+            "solver_scope"=>"Last-update stopping gate only, not PDE/grid/global detector validation")
+        save(joinpath(dir,"solver.json"),receipt)
+        check(converged,"WP34 unconverged; preserve returned state and stop without another solve")
+        rows=Dict()
+        for row in req["path_rows"]
+            key=string(row["raw_row_index"]);q=waveform(sim,recorded[key]);base=baseline[key]["waveform_keV"]
+            check(length(q)==length(base),"Fixed path waveform grid changed")
+            rows[key]=Dict("time_ns"=>baseline[key]["time_ns"],"signed_induced_keV"=>q,
+                "minus_original_keV"=>q-base,"minus_previous_level_keV"=>haskey(previous,key) ? q-previous[key] : nothing,
+                "potentials"=>path_values(sim,sim.weighting_potentials[34],recorded[key]))
+            previous[key]=q
+        end
+        save(joinpath(dir,"path-waveforms.json"),rows)
+        check(sim.electric_potential===oldEP && sim.electric_field===oldEF && all(sim.weighting_potentials[cid]===otherWP[cid] for cid in 1:33),
+            "Unrelated field state was replaced")
+        save(joinpath(dir,"COMPLETE.json"),Dict("status"=>"completed_local_WP34_level","solver"=>receipt,
+            "solved_WP_sha256"=>hashfile(joinpath(dir,"solved-WP34.jls")),"path_waveforms_sha256"=>hashfile(joinpath(dir,"path-waveforms.json"))))
+        push!(completed,receipt);stage(out,"level_completed",index);GC.gc()
+    end
+    check(hashfile(cache)==req["field_cache"]["sha256"],"Original cache bytes changed")
+    save(joinpath(out,"COMPLETE.json"),Dict("status"=>"completed_local_two_level_WP34_pilot","levels"=>completed,
+        "request_sha256"=>hashfile(reqpath),"global_validation"=>false,"new_drift_calls"=>0,
+        "new_Epotential_or_Efield_solves"=>0,"new_calibration_calls"=>0))
+end
+check(length(ARGS)==2,"Pass approved request and new output root")
+try
+    main(ARGS[1],ARGS[2])
+catch err
+    save(joinpath(ARGS[2],"failure.json"),Dict("status"=>"failed_stop","error"=>sprint(showerror,err),"automatic_retry"=>false))
+    rethrow()
+end
+'''
+
+
+def execute(request_path, approval_sha):
+    request_path = Path(request_path).resolve(); digest = sha(request_path)
+    if approval_sha != digest:
+        raise ValueError('Explicit human approval must bind this exact request SHA256')
+    request = json.loads(request_path.read_bytes())
+    if request['kind'] != 'gegi_single_guard34_local_grid_pilot_v1' or request['contact_id'] != 34:
+        raise ValueError('Unsupported or enlarged weighting-potential scope')
+    expected = {'maximum_new_WP34_solves': 2, 'maximum_total_wall_seconds': 300, 'threads': 1,
+                'prelaunch_available_physical_bytes': 3500000000, 'minimum_running_available_bytes': 805306368,
+                'maximum_working_set_bytes': 3000000000, 'maximum_nodes_per_level': 7000000}
+    if request['resource_caps'] != expected:
+        raise ValueError('Approved resource limits changed')
+    for ref, expected_sha in request['input_file_sha256'].items():
+        if sha(ROOT/ref) != expected_sha:
+            raise ValueError('Pinned input/source changed: '+ref)
+    if available_memory() < 3500000000:
+        raise ValueError('Requires3.5GB available physical memory; no worker started')
+    output = request_path.parent/'results'; output.resolve().relative_to((ROOT/'.local').resolve()); output.mkdir()
+    (output/'approved-request.json').write_bytes(request_path.read_bytes())
+    worker = output/'WP34-worker.jl'; worker.write_text(JULIA_WORKER, encoding='utf-8')
+    env = os.environ.copy(); env.update(JULIA_PKG_OFFLINE='true', JULIA_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', OMP_NUM_THREADS='1')
+    command = [request['environment']['julia_executable'], '--startup-file=no', '--compiled-modules=existing', '--threads=1',
+               '--project='+str(ROOT/'simulation'), str(worker), str(request_path), str(output)]
+    class PMC(ctypes.Structure):
+        _fields_ = [('cb', ctypes.c_ulong), ('faults', ctypes.c_ulong)] + [(k, ctypes.c_size_t) for k in
+            ('peak', 'working', 'qpp', 'qp', 'qpnp', 'qnp', 'pagefile', 'peak_pagefile', 'private')]
+    getmem = ctypes.windll.psapi.GetProcessMemoryInfo
+    getmem.argtypes = [ctypes.c_void_p, ctypes.POINTER(PMC), ctypes.c_ulong]; getmem.restype = ctypes.c_int
+    started = time.monotonic(); peak = 0; stop = None
+    with (output/'worker.log').open('x', encoding='utf-8') as log:
+        child = subprocess.Popen(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                 creationflags=subprocess.CREATE_NO_WINDOW)
+        while child.poll() is None:
+            memory = PMC(); memory.cb = ctypes.sizeof(memory)
+            if not getmem(ctypes.c_void_p(int(child._handle)), ctypes.byref(memory), memory.cb):
+                stop = 'cannot_measure_process_memory'; child.kill(); break
+            peak = max(peak, memory.peak)
+            if time.monotonic()-started >= 300:
+                stop = '300_second_total_budget'; child.kill(); break
+            if available_memory() < 768*1024**2 or memory.working > 3000000000:
+                stop = 'physical_reserve_or_working_set_cap'; child.kill(); break
+            time.sleep(.1)
+        code = child.wait()
+    receipt = {'returncode': code, 'stop_reason': stop, 'elapsed_seconds': time.monotonic()-started,
+               'peak_working_set_bytes': peak, 'request_sha256': digest, 'runner_sha256': sha(__file__),
+               'worker_sha256': sha(worker), 'automatic_retry': False,
+               'status': 'completed_local_pilot' if code == 0 else 'failed_or_stopped_preserve_partial'}
+    (output/'runtime.json').write_text(json.dumps(receipt, indent=2)+'\n', encoding='utf-8')
+    return receipt
+
+
+if __name__ == '__main__':
+    p = argparse.ArgumentParser(description=__doc__); p.add_argument('--request', type=Path, required=True)
+    p.add_argument('--owner-approved-request-sha256', required=True); a = p.parse_args()
+    result = execute(a.request, a.owner_approved_request_sha256)
+    print(json.dumps(result, indent=2)); raise SystemExit(0 if result['returncode'] == 0 else 1)

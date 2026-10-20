@@ -1,6 +1,6 @@
 # Current handoff
 
-## Full-chain saved-data milestone delivered; path capture awaits memory — 2026-10-20
+## Guard-path diagnosis complete; local grid pilot approved — 2026-10-20
 
 Owner priority: establish a correct GeGI radiation -> charge ->34-channel signal
 -> electronics -> inverse reconstruction chain before larger samples. The forward
@@ -8,8 +8,9 @@ response should explain known simulated interactions, then infer unknown events
 from signals alone; source positions remain independent image evaluation. Reuse
 saved data, keep the frozen holdout independent, and do not tune to source maps.
 Use bounded6.1-sol ultra development tasks; no extra AI review agents. Automatic
-monitoring stays PAUSED. No new transport, field solve or calibration is approved. Owner subsequently
-approved only3fixed original-deposit drift captures; they have not started. Original campaign/v3 science and failure records remain unchanged.
+monitoring stays PAUSED. No new transport or calibration is approved. Owner approved
+3fixed original-deposit drift captures (complete), then the bounded2levelWP34
+grid pilot below. Original campaign/v3 science and failure records remain unchanged.
 
 Frozen400 evaluation COMPLETE in17.234s:200development/200holdout, stratified by
 10reasons, original-event-separated. All400 reproduce original spectroscopy
@@ -28,8 +29,23 @@ below deposited energy. Saved-field query establishes contact-boundary interpola
 endpoints mix contact/noncontact grid nodes, yielding own-electrode values below1.
 All86contact identities are correct; originalFloat32 algebra reproduces all34
 saved terminal charges exactly (max error0.0keV). Query18.05s,1.679GBpeak memory;
-no new drift/solve/injection. Waveform continuity/correction remains unvalidated.
+no new drift/solve/injection in that endpoint query. Waveform correction remains unvalidated.
 Never force its charge toEdep or treat contact flags as charge-conservation proof.
+
+Approved capture c514ed87e5b0 completed exactly3original rows10191/10186/10185 in
+37.343s, one process/thread, no retry. Results are under
+validation/boundary-path-pilot/results; COMPLETE SHA50ead54a...832c50. Endpoint
+positions, sample counts, contact IDs and all34terminal signals exactly reproduce
+the original records. Full native paths and every34-channel sample are retained.
+The separate same-path diagnostic took24.615s, peak1.605GB; no new drift or solve.
+All102original waveforms reproduce bit-for-bit. Setting geometric-contact samples
+to exact Dirichlet1/0 restores terminal charge but fails spatial continuity:
+row10186 electron guard34 changes from0.905912 just outside to1 at the contact.
+Maximum waveform changes are7.980/2.718/5.944keV for the3rows. This candidate is
+rejected for production. Diagnostic report SHA9e887c96...adbf9 and source
+gegi_saved_path_boundary.jl SHAf4f8c3af...da0af. Native guard grids are240x240x88;
+local XY spacing1.17187mm versus Z0.0375002mm motivates a bounded XY mesh test,
+not a claim that refinement is already a validated repair.
 
 Fixed face-sum readout diagnostic COMPLETE: all17signed channels per face, including
 guard, summed before the unchanged linear electronics/fixed500keV gain. Development
@@ -79,21 +95,27 @@ converged. Keep these results; no repeat analysis. reference-index.json records 
 18PPTs/283slides and4targetedPDFs. Current electronics is synthetic-signed-14bit-v1,
 not a matched GeGI hardware transfer; distinguish10mmGeGI-4 from11mmcurrent models.
 
-Next scientific step: execute the approved exact3row path-capture request
-c514ed87e5b0 (original rows10191,10186,10185) when its original memory gate passes.
-All publication/diagnostic processes exited. Final preflight at21:22UTC still fails:
-available835,387,392B < required2,505,788,093B;0workers/0drifts. Earlier blocked
-preflights remain in validation/boundary-path-pilot/preflight.json. Keep the existing
-approval, resource limits and no-retry rule; do not close unrelated user programs.
-These paths are needed to compare original and candidate boundary treatment without repeating drift or forcing terminalcharge. Missing full34
+Next scientific step: execute the approved guard34 weighting-potential comparison on two
+locally refined XY grids, preserving Z, model and original cache. New field solves
+were separately approved; the3-drift approval is fully consumed. Fixed
+request validation/boundary-grid-pilot/request.json SHA83d4e680...f2a5a2 is frozen;
+the explicit owner reply is retained alongside it in approval.json.
+Grids256x255x88/278x277x88 contain5,744,640/6,776,528nodes. Tool264lines,
+SHAf776c878...547e20;3pure grid tests and Python/embedded Julia parser checks pass,
+without evaluating Julia science code. CPU solve cost remains unmeasured.
+Limits: one CPUthread/process, two solves,300s total,7M nodes per level, no retries;
+startup free memory3.5GB, stop below768MiB free or above3GB worker working set.
+No new transport, drift or calibration. Reuse these same paths for endpoint,
+waveform and spatial-continuity comparisons; retain timeout/nonconvergence as failures.
+Earlier memory-blocked capture preflights remain preserved. Missing full34
 independent templates and exact hardware transfer remain explicit. The15pointfull34
 injection proposal is conditional only; present necessity/scale/cost for owner decision
 before any new drift/calibration. Keep one compact handoff.
 
 Ownership: current manual owner gegi-saved-recovery-20261020 uses
 .local/autonomy/gegi-saved-recovery.lock/owner.json. Old diagnosis ownership is retained
-inactive, never deleted. Current ownership is retained inactive while waiting for
-memory; state.json is manual_waiting_for_memory and automatic monitoring staysPAUSED.
+inactive, never deleted. Current manual ownership is active for diagnostic/tool
+preparation; no science workers were running at21:57UTC. Automatic monitoring staysPAUSED.
 
 ## Prior GeGI saved-data correction — delivered history
 
