@@ -120,16 +120,20 @@ of guard signal error; retain the unvalidated status and original failure receip
 
 Next scientific step: prepare bounded continuation from the saved first-level WP34,
 then the same second grid278x277x88 (6,776,528nodes). Preserve external1e-6 acceptance;
-use tighter native stopping1e-7 rather than weakening the gate. New solves require
-owner approval after concrete scope/cost; none are approved by the memory amendment.
+use tighter native stopping1e-7 rather than weakening the gate. Fixed request
+request-continuation.json SHA374f9bde...37ed7b is prepared (same pilot directory);
+tool SHAcba08545...4a47db at21bb6b4,3grid tests and Python/Julia parsers pass. At most
+2solves/300s, one process/thread, memory measured only, no retries. Owner decision
+is pending; the memory amendment does not authorize this new continuation.
 Do not restart original drift/transport or repeat completed stage tests/publication.
 Full34 independent templates and exact hardware transfer remain unresolved; the
 15point calibration option is still conditional, not the next calculation.
 
 Ownership: current manual owner gegi-saved-recovery-20261020 retains
 .local/autonomy/gegi-saved-recovery.lock/owner.json and old diagnosis ownership.
-Field worker21916 exited; automatic monitoring staysPAUSED. Manual work currently
-prepares the next bounded request; no active field calculation.
+Field worker21916 and saved-state analysis exited; automatic monitoring staysPAUSED.
+Current manual ownership is retained inactive while awaiting the explicit
+continuation decision; no active field calculation.
 
 ## Prior GeGI saved-data correction — delivered history
 
