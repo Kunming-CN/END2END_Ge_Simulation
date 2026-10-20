@@ -1,6 +1,6 @@
 # Current handoff
 
-## Full-chain saved-data diagnosis and software delivery — active 2026-10-20
+## Full-chain saved-data milestone delivered; path capture awaits memory — 2026-10-20
 
 Owner priority: establish a correct GeGI radiation -> charge ->34-channel signal
 -> electronics -> inverse reconstruction chain before larger samples. The forward
@@ -66,8 +66,10 @@ explicit replacement binds the installed manifest. Source1b88d5e is committed/pu
 is public and its892,170bytes/SHA b4407954...e5d9e were independently downloaded
 and verified against the exact committed package. .local/student-runtime-p1/COMPLETE.json
 is current. Websitepublication-v3 built successfully; build b13a16e7540c,
-1,727files/985,104,763bytes. Required36site tests and final local check pass;
-website commit/deployment and exact live verification are pending.
+1,727files/985,104,763bytes. Required36site tests and final local check pass.
+Website commit4466b8a deployed;732live files match exact lengths/hashes. The same
+commit includes the separate tested face-sum diagnostic; student runtime remains
+the exact1b88d5e package because production code did not change afterward.
 
 Existing completed evidence: calibration/inventory.json confirms2,727selectedX/Y
 signal checkpoints +264excluded records; full34responses were not computed and drift
@@ -77,10 +79,12 @@ converged. Keep these results; no repeat analysis. reference-index.json records 
 18PPTs/283slides and4targetedPDFs. Current electronics is synthetic-signed-14bit-v1,
 not a matched GeGI hardware transfer; distinguish10mmGeGI-4 from11mmcurrent models.
 
-Next: finish source/student/site delivery with required checks. The owner approved
-exact3row path-capture request c514ed87e5b0 on2026-10-20 (original rows10191,10186,10185). Initial preflight blocked
-on memory (available2,376,425,472B < required2,505,788,093B);0workers/0drifts.
-Keep limits and approval, inspect headroom after owned publication processes exit.
+Next scientific step: execute the approved exact3row path-capture request
+c514ed87e5b0 (original rows10191,10186,10185) when its original memory gate passes.
+All publication/diagnostic processes exited. Final preflight at21:22UTC still fails:
+available835,387,392B < required2,505,788,093B;0workers/0drifts. Earlier blocked
+preflights remain in validation/boundary-path-pilot/preflight.json. Keep the existing
+approval, resource limits and no-retry rule; do not close unrelated user programs.
 These paths are needed to compare original and candidate boundary treatment without repeating drift or forcing terminalcharge. Missing full34
 independent templates and exact hardware transfer remain explicit. The15pointfull34
 injection proposal is conditional only; present necessity/scale/cost for owner decision
@@ -88,7 +92,8 @@ before any new drift/calibration. Keep one compact handoff.
 
 Ownership: current manual owner gegi-saved-recovery-20261020 uses
 .local/autonomy/gegi-saved-recovery.lock/owner.json. Old diagnosis ownership is retained
-inactive, never deleted. state.json remains active_saved_data_development; monitorPAUSED.
+inactive, never deleted. Current ownership is retained inactive while waiting for
+memory; state.json is manual_waiting_for_memory and automatic monitoring staysPAUSED.
 
 ## Prior GeGI saved-data correction — delivered history
 
