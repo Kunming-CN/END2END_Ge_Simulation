@@ -1,195 +1,124 @@
 # Current handoff
 
-## Guard grid defect localized; two local levels completed — 2026-10-20
+## GeGI forward response: local boundary cause verified; full34 pilot complete — 2026-10-20
 
-Owner priority: establish a correct GeGI radiation -> charge ->34-channel signal
--> electronics -> inverse reconstruction chain before larger samples. The forward
-response should explain known simulated interactions, then infer unknown events
-from signals alone; source positions remain independent image evaluation. Reuse
-saved data, keep the frozen holdout independent, and do not tune to source maps.
-Use bounded6.1-sol ultra development tasks; no extra AI review agents. Automatic
-monitoring stays PAUSED. Latest owner instruction "不需要每次等我审核，你继续就行"
-authorizes necessary bounded small repair calculations/development/publication
-without per-round approval, superseding the old individual calculation gates.
-Large campaigns remain after full-chain validation. Memory is measured only.
-Original campaign/v3 science and failure records remain unchanged.
+Priority: correct the small radiation -> charge ->34-channel signal -> electronics
+-> inverse reconstruction chain before larger campaigns. Truth/known source is
+independent evaluation, never a signal correction or image-fitting input.
+Latest owner: "不需要每次等我审核，你继续就行" authorizes necessary bounded repair
+calculations/development/publication without per-round approval. Memory measured
+only. Monitoring PAUSED; no resets or new large campaign. Root owns the existing
+gegi-saved-recovery lock; retain old inactive ownership. No science worker running.
+Use bounded6.1-sol ultra development tasks, no extra AI reviews. Detailed earlier
+guard chronology is retained at Git09eae20:PROGRESS.md and immutable local receipts.
 
-Frozen400 evaluation COMPLETE in17.234s:200development/200holdout, stratified by
-10reasons, original-event-separated. All400 reproduce original spectroscopy
-exactly. Each split has160complete endpoint references/40unknown. Development/
-holdout pairing errors3/22 and5/24hypotheses; false splits1/22 and2/24; depth median
-absolute errors0.143/0.100mm on49/50matched cell-hypothesis pairs. Sequence correct/
-wrong/unknown2/2/40 and2/6/40. These selected conditional metrics are neither detector
-efficiency nor spatial resolution. Validated imaging recoveries remain0.
+### Completed physical localization — reuse, do not repeat
 
-Saved readout diagnosis:102channels from3development groups match the analytic
-nominal circuit (peak error<1e-13V, exactADC/gain). Event976317: positive transient
-peak raises mean ADC energy12.745keV over terminal charge; X9ends15.511keV but
-transient reaches271.113keV and the shaped analog peak corresponds to43.381keV. Event30057 is mainly quantization.
-Guard event723606: all86endpoints marked contact but mean terminal charge is45.904keV
-below deposited energy. Saved-field query establishes contact-boundary interpolation: continuous guard
-endpoints mix contact/noncontact grid nodes, yielding own-electrode values below1.
-All86contact identities are correct; originalFloat32 algebra reproduces all34
-saved terminal charges exactly (max error0.0keV). Query18.05s,1.679GBpeak memory;
-no new drift/solve/injection in that endpoint query. Waveform correction remains unvalidated.
-Never force its charge toEdep or treat contact flags as charge-conservation proof.
+Saved circuit checks:102channels/3development groups match nominal analog circuit
+(<1e-13V, exactADC/gain). Event976317 has positive-transient peak bias: meanADC
+12.745keV above terminal charge; X9terminal15.511/transient271.113/analogpeak43.381keV.
+Guard event723606 has86geometric contact endpoints yet mean terminal loss45.904keV.
+OriginalFloat32 endpoint algebra exactly explains all34terminal signals: native
+Cartesian interpolation mixes contact/noncontact nodes near the guard boundary.
+Contact membership alone does not establish complete induced charge.
 
-Approved capture c514ed87e5b0 completed exactly3original rows10191/10186/10185 in
-37.343s, one process/thread, no retry. Results are under
-validation/boundary-path-pilot/results; COMPLETE SHA50ead54a...832c50. Endpoint
-positions, sample counts, contact IDs and all34terminal signals exactly reproduce
-the original records. Full native paths and every34-channel sample are retained.
-The separate same-path diagnostic took24.615s, peak1.605GB; no new drift or solve.
-All102original waveforms reproduce bit-for-bit. Setting geometric-contact samples
-to exact Dirichlet1/0 restores terminal charge but fails spatial continuity:
-row10186 electron guard34 changes from0.905912 just outside to1 at the contact.
-Maximum waveform changes are7.980/2.718/5.944keV for the3rows. This candidate is
-rejected for production. Diagnostic report SHA9e887c96...adbf9 and source
-gegi_saved_path_boundary.jl SHAf4f8c3af...da0af. Native guard grids are240x240x88;
-local XY spacing1.17187mm versus Z0.0375002mm motivates a bounded XY mesh test,
-not a claim that refinement is already a validated repair.
+Only3original rows10191/10186/10185 were recaptured,37.343s, retaining full paths
+and34signed signals. All102original waveforms replay bit-for-bit. Direct geometric
+Dirichlet1/0 replacement is REJECTED: row10186 jumps .905912->1 at the surface.
+Original240x240x88 grid has local XY1.17187mm versus Z.0375002mm. No old raw bytes
+or production field changed. Capture and diagnostics: validation/boundary-path-pilot.
+Original cacheSHA f75280e7...53b90e8; modelSHA4b6c71c1...5c04, SSD0.11.8/Julia1.13.0.
 
-Fixed face-sum readout diagnostic COMPLETE: all17signed channels per face, including
-guard, summed before the unchanged linear electronics/fixed500keV gain. Development
-12.228s and single holdout11.896s;5targeted tests passed. Holdout keeps153/200valid
-and47unknown, the same as the original. Paired absolute error mean1.837->1.035keV,
-P905.012->2.052, max18.070->5.360; median0.695->0.877worsens.55improve/51worsen/47tie.
-Face difference P909.840->0keV. This isolates positive-strip-transient bias but does
-not fix upstream guard loss or remaining ballistic deficit; no production change.
-It requires complete waveform access, unavailable from per-channel peak ADC alone.
-Evidence validation/face-sum-readout/report.json SHA d7eb4c76...72c669; executed and
-current tool SHA fee590c4...aa15e1. Do not tune thresholds against this holdout.
+Local WP34 grids preserve originalticks/Z, 256x255x88 and278x277x88. Native-stop
+attempts returned3.54648e-6 and1.16229e-6; failures/seeds retained, no inferred
+iteration counts. Strict trace uses native SSD CPU kernel/setup/painting, checks
+both red/black halves, no std-based stop, unchanged full-update1e-6gate.
+results-strict-stop completed275.984s/2.019GB: level8 300steps/19.241s/9.23872e-7;
+level16 5000steps/232.813s/9.53674e-7. COMPLETE46d94c69...e0bcd4. Both fields,
+waveforms/history verified. Level16 gives electronphi34=1,holephi34=0 on3paths;
+terminal error against Edep+1.33/+2.77/+1.83e-6keV (Float32 scale, not resolution).
+Level16-level8 max/RMS waveform differences .418079/.163822, .126453/.064184,
+.292114/.202977keV. Saved readout:9isolated pulses,3.253s computation/8.969s total;
+analog-energy differences -.000646/.093451/.291724keV, max t50/t90 shift .309/.527ns.
+Codes75/21/47 unchanged because1.24558keV ADC step hides smaller changes, not a
+waveform-convergence pass. Timing is ideal charge, not hardware timing.
 
-Saved signal-use derivative COMPLETE: signal-recovery-v1/signal-use-v2,104.083s,
-57,613original groups.55,591existing spectroscopy groups (55,157spectroscopy-only),
-434unchanged conditional candidate groups,1,896incomplete (including426nativefailed),
-126unresolved complete signals.11,206guard collection,17,568guard transient,
-12,680adjacent-strip groups; flags overlap.55,170spectroscopy groups meet the existing
-face-compatibility screen. Every original readout summary matched exactly. No fits,
-new cones or new energy reconstructions. Keep failed first derivative signal-use/
-and log: GoogleDrive denied replacing progress.json after44chunks; second export
-writes completion artifacts once and reports progress tostdout.
+Same level16 geometry gives correct4-corner support at all6saved endpoints.
+New WP17/20 pilot completed464.234s/2.089GB, no drift/EP/transport/calibration:
+WP17 5000steps/224.530s/9.53674e-7; WP20 4900steps/215.493s/9.98378e-7.
+All6original baseline waveforms bitexact; both fields/history/output hashes verified.
+WP17 terminal now+E within Float32 rounding. WP20 old−1.83544/−.51123/−1.10700keV
+terminals become0; nonzero transients remain (positive maxima8.748/2.450/5.227keV).
+Requestae68e935...6491, COMPLETEe63430df...01f3, summary204284c9...9b9ad.
+Evidence: validation/boundary-grid-pilot/results-channels-17-20 and grid-comparison.
+Only3local paths and3of34WP tested; other31WP/electric drift fields unchanged.
+This identifies a defect and local remedy, not full-detector production validation.
 
-Runtime changes in this milestone: shared signal-use reporting, separate energy and
-imaging explanations in Control, no adjacent-strip merging, preserved null failures.
-The identical readout_summary function moved from campaign orchestration into the
-existing imaging helper so the student package does not pull campaign/recovery
-runners. AST equivalence and all57,613original energy values checked. Relevant tests:
-signal-use7, shared signal12, campaign response9, saved reconstruction4, standalone8,
-package5, saved-use exporter2; browser contract script passed. Original400evaluation
-used pre-relocation source hashes; exact producer math is unchanged. Export source
-snapshots live in signal-use-v2/source-bindings. Publication integration passes18exporter tests plus36site tests. Historical
-installed-artifact validation is separate from strict current candidate admission;
-explicit replacement binds the installed manifest. Source1b88d5e is committed/pushed. Student release student-runtime-1b88d5e7c2a7
-is public and its892,170bytes/SHA b4407954...e5d9e were independently downloaded
-and verified against the exact committed package. .local/student-runtime-p1/COMPLETE.json
-is current. Websitepublication-v3 built successfully; build b13a16e7540c,
-1,727files/985,104,763bytes. Required36site tests and final local check pass.
-Website commit4466b8a deployed;732live files match exact lengths/hashes. The same
-commit includes the separate tested face-sum diagnostic; student runtime remains
-the exact1b88d5e package because production code did not change afterward.
+### Full34 reference and immediate next work
 
-Existing completed evidence: calibration/inventory.json confirms2,727selectedX/Y
-signal checkpoints +264excluded records; full34responses were not computed and drift
-paths were not saved. Peak-diagnostic confirms the19-group1332keV layer's second
-maximum disappears locally in3/19leave-one-out cases; existing40iterations had not
-converged. Keep these results; no repeat analysis. reference-index.json records private
-18PPTs/283slides and4targetedPDFs. Current electronics is synthetic-signed-14bit-v1,
-not a matched GeGI hardware transfer; distinguish10mmGeGI-4 from11mmcurrent models.
+Future pixel calibration now calls native_deposit once with1:34 and saves native
+signed channel_signals/IDs/ns/keV; existing signals.X/Y and timing unchanged.
+New identity/table records requested coverage, successful rows actual coverage;
+excluded/failed rows remainnull. Old selected-only checkpoints stay intact and
+cannot resume into the new writer. Source09eae20 pushed; software stub117checks,
+oldinventory4tests, package5tests passed without physics. This developer bank
+producer is absent from the student manifest; shipped payload unchanged, so keep
+student1b88d5e and website4466b8a (no identical-package release).
 
-Guard34 pilot executed once after the owner removed all artificial memory gates.
-Original request83d4e680...f2a5a2/approval remain; request-owner-memory.json
-SHA218b4685...f15e19 binds the amendment and unchanged scientific inputs. Runner
-SHA8ff17dd8...b023dc;3grid tests and Python/Julia parsers pass. Total77.031s,
-peak1.958GB; first grid256x255x88 (5,744,640nodes) solve55.326s returns
-max update3.5464764e-6 > fixed1e-6 gate. The pilot stopped, second grid was NOT run.
-Keep results/failure.json, solver.json and saved23MB WP34. Native SSD can stop on
-small variation of recent updates or iteration cap; the exact reason/count was
-not returned. Do not infer that10,000iterations were completed. No memory stop.
-Original857MB cache SHA remainsf75280e7...53b90e8; no production fields changed.
+Fixed15 full34 pilot COMPLETED:3pixels(9,26),(1,26),(3,20), five depths−4.5/−2.5/0/
+2.5/4.5mm,500keV; original cache/model/native parameters. All15old X/Y waveforms,
+timing/endpoints bitexact;510actual signed waveforms saved. Every channel terminal
+matches original endpoint algebra and ideal contact values exactly. Each face
+sum−500keV=3.05176e-5keV (Float32 rounding). No correction/normalization applied.
+39.093s/2.151GB/2.22MB; startup23.980s, first capture12.293s includes compilation,
+other14capture .005-.008s (one .053s); internal native sum10.498s, capture sum12.427s.
+Request436a6089...f3da2, toolc99b9b9d...ae506, worker8d2bf5e9...d1274,
+COMPLETE5c359317...410e07. Evidence calibration/full34-pilot/results. No new field
+or transport; exactly15drifts. Exit/PID37752 recorded complete; do not recalculate.
 
-One saved-state analysis completed in12.828s, loading only the23MB WP34 and paths;
-no new solve/drift. Three original channel34 waveforms reproduce bit-for-bit.
-Electron endpoint phi34 original -> first grid: row10191 .91622633->1;
-10186 .90592694->.99657255;10185 .90608597->.99510586. Remaining deficits are
-0/.342745%/.489414%, versus original8.38-9.41%. Near-end lambda.999->1 samples
-change .99999672->1, .99653792->.99657255, .99508107->.99510586 without forced
-contact values. These discrete samples and an unconverged local solve do not
-validate continuity, grid convergence or production repair. Complete waveforms,
-path phi and hashes: validation/boundary-grid-pilot/saved-state-analysis/analysis.json
-SHA79f2dacb...f3444a; script SHA69eaf589...6587dd. This supports a local-grid cause
-of guard signal error; retain the unvalidated status and original failure receipt.
+Next: prepare bounded full34 bank on the ORIGINAL2991 independent-record grid,
+reusing these15responses (including exact coordinate duplicates), preserving all
+old2727selectedXY/264excluded records. Missing neighbor templates now block a
+meaningful full-channel joint fit; three pixels alone cannot test competing pixel
+pairings. Use existing K.build/checkpoints, same inputs, one worker/thread,300s
+wall cap, at most original2991attempts, no retry/field/transport. Warm pilot suggests
+roughly300MB and short per-record compute, but whole-grid/IO cost remains measured
+only after execution. Do not silently expand positions or invent missing responses.
+Agent full_channel_capture is preparing the smallest reusable runner/request,
+NOT executing. Then verify original-pair parity and34endpoint accounting before
+joint signal fitting and the frozen holdout. Do not tune cuts against holdout.
 
-Owner-approved continuation request374f9bde...37ed7b executed once from the saved
-first-level field. Runnercba08545...4a47db at21bb6b4; new outputs stay in
-results-continuation, retaining original failure. Total89.531s/solve67.279s,
-peak1.943GB. Native stopping1e-7 returns1.1622906e-6, still above unchanged external
-1e-6 acceptance. The first level failed again; second level NOT started, no retry.
-No production repair. A33line local loop reuses native SSD setup/kernel/update
-and painting, records both red/black half maxima every100steps and actual counts/
-stop reason, and accepts only full_max<=1e-6 (no std-based early stop).
-Request-strict-stop.json SHA8f20c397...6b0910/toolSHAab252653...7bb89 executed once
-with owner approval, reusing the latest saved first-level seed. Results-strict-stop
-completed in275.984s, peak2.019GB. Level8:300steps/19.241s/max9.23871994e-7;
-level16:5000steps/232.813s/max9.53674316e-7. Both accepted unchanged update gate.
-COMPLETE SHA46d94c69...e0bcd4; actual workerSHA94ffb394...0d4c. Both fields,
-waveforms and native iteration histories hash-verified; prior failures retained.
-No new drift, electric-field solve or calibration in this comparison.
+### Saved-data and publication baselines — already delivered
 
-Saved Python comparison (0.016s), grid-comparison/summary.json SHA9e16cb99...045:
-level16 electron phi34=1 and hole phi34=0 for all3paths, without contact substitution.
-Native terminal minus Edep is only+1.33/+2.77/+1.83e-6keV (Float32 scale, not ADC
-resolution). Level16-level8 full waveform max/RMS differences in row order
-10191/10186/10185: .418079/.163822, .126453/.064184, .292114/.202977keV.
-Only WP34 and3local paths were tested; terminal equality is not waveform/global
-convergence. Inspect propagation through unchanged readout/timing and common-grid
-boundary support for other channels next. Old noncollecting channels still have
-spurious terminal signals (up to1.83544keV on channel20 in these3paths); replacing
-WP34 alone is not a full34 production repair. Never force charge to truth.
+Original1M campaign complete100chunks (400kphotons+600kdecays;2400prep excluded).
+57,613signal groups,434conditional/837cones; map162groups/393candidates. 1,896
+incomplete including426nativefailed. Validated imaging recoveries remain0.
+Frozen400=200dev/200holdout across10reasons, event-separated: all oldenergiesexact;
+160complete/40unknown each; ADC155/153. Pair errors3/22 vs5/24; false splits1/22
+vs2/24; depthmedianabs .143/.100mm(n49/50); sequencecorrect/wrong/unknown2/2/40
+vs2/6/40. Conditional selected metrics, not detector efficiency or resolution.
+Saved-use-v2 completed104.083s:55,591spectroscopy (55,157only),434conditional,
+1,896incomplete,126unresolved; all57,613energiesexact. Guards collection11,206,
+transient17,568, adjacent12,680 (overlap). Preserve failed first export as evidence.
+Fixed face-sum diagnostic (17signed channels/face before unchanged electronics)
+holdout153valid/47unknown; absmean1.837->1.035keV,P905.012->2.052,max18.070->5.360,
+median.695->.877worse;55improve/51worsen/47tie. Full waveforms required, not peakADC.
+Not production. Do not re-execute old400, electronics, face-sum or map attribution.
+1332.492keV layer19groups/58sequences: secondary maximum vanishes3/19LOO;
+40iterations not converged. Private18PPT/283slides+4PDF index already researched.
+Synthetic electronics still not a measured GeGI transfer; no calibrated diffusion/
+noise/crosstalk or detector efficiency inferred. Originalcanonical physics unchanged.
 
-Readout propagation reuses stored500keV calibration, originalelectronics and Y34
-wiring:9isolated deposit pulses, no new injection/field/drift. Compute3.253s,
-whole process8.969s. Level16-level8 analog-energy differences -.000646/.093451/
-.291724keV; maximum t50/t90 changes .309/.527ns (ideal charge, not hardware).
-All three ADC codes unchanged75/21/47;1.24558keVLSB hides sub-LSB differences,
-not a convergence pass. readout-comparison.json SHA713c9c69...80d45.
-Read-only common-grid check confirms all34oldgrids identical and all originalticks
-retained; all6endpoints have four interpolation support nodes on the right contact.
-multichannel-grid.json SHAa74b1dc8...11678. Fixed17/20 pilot now dispatched under
-bounded autonomy: requestae68e935...6491, toolcf977b6d...da4b0, driver18b958d1...8ae0b,
-2solves/600s/one thread, samelevel16/1e-6full-updategate, no memory cap or retry.
-No new drift or electric-field computation; originals retained. Wait for terminal
-receipt in results-channels-17-20 before interpretation or another solve.
+100/100campaign receipts new_field_solve=false.5resident cache loads total160.649s;
+fields loaded once per resident, never per event. Retained100chunk stage sums:
+native_response_and_store75,541.740s(20.984h), transport_driver11,102.995s(3.084h).
+These span recovered generations; not one calendar runtime or pure drift cost.
+Saved-v3 reconstruction337.197s, no native calculation. No need rediscover this.
 
-Future calibration recording implemented: one native_deposit call requests1:34,
-channel_signals preserves native signs/IDs/ns/keV, signals.X/Y and timing unchanged.
-New identity/table describes requested coverage; successful response records actual
-coverage, excluded/failed records retain nulls. Old selected-only records cannot
-resume into the new writer and are unchanged. No missing old responses recovered.
-Software-only stub test117checks, oldinventory4tests and package5tests pass; no
-physical injection was used. Student release for this change is pending below.
-
-Owner question on past cost is resolved by actual campaign receipts and pinned
-source:100/100response.json say new_field_solve=false;5resident loads reuse cache
-f75280e7...53b90e8. Loading occurs once per resident initialize, outside event/chunk
-loops. Five startup totals28.821-38.342s sum160.649s (includes Julia/package load,
-hash/cache reads and possible compilation; no separate deserialize measurement).
-100retained chunk timing records sum native_response_and_store75,541.740s=20.984h,
-transport_driver11,102.995s=3.084h, verified_archive112.602s. These cross recovered
-request generations and are stage sums, not one final calendar runtime. Drift,
-34signal generation, electronics and IO were not separately timed; do not invent
-shares or call the entire20.984h drift. Actual response helperSHA b249bea matches
-current source for all100;5early resident records use an older resident version,
-but their receipts/logs also establish cache reuse. Saved reconstruction-v3 took
-337.197s without native computation; publication verification called no physics.
-Code anchors:simulation/gegi_response.jl:90,144,149,220;
-simulation/gegi_campaign_response.jl:76,191,235;tools/gegi_campaign.py:989,1010.
-
-Full34 independent templates and exact hardware transfer remain unresolved; the
-15point calibration option is still conditional, not the next calculation.
-Ownership retains current/old records; strict-stop worker41096 exited. Automatic
-monitoring staysPAUSED. Bounded multichannel repair proceeds under latest autonomy;
-no new campaign or reset. Production fields and student package remain unchanged.
+Student release1b88d5e7c2a7 verified public SHA b4407954...e5d9e,892170bytes/187members.
+Website4466b8a/buildb13a16e7540c:1727files/985104763bytes,36tests and732live hashes
+passed. Do not rebuild unchanged website or runtime for diagnostic-only work.
+Detailed receipts/source bindings remain in .local and earlier Git history.
 
 ## Prior GeGI saved-data correction — delivered history
 
