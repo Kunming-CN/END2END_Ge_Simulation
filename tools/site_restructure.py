@@ -107,11 +107,20 @@ def apply(site):
         from gegi_campaign_publication import validate_bundle as validate_formal_gegi
         validate_formal_gegi(site/'results/gegi-campaign')
         saved=read(site/'results/gegi-campaign/summary.json')
-        accepted=sum(g['counts']['imaging_accepted_groups'] for g in saved['groups'].values())
-        failed=sum(g['counts']['native_failed_groups'] for g in saved['groups'].values())
-        gegi_description+=(f' Completed {saved["processed_initial_records"]:,} initial records across four acquisitions; '
-                           f'{accepted:,} imaging-accepted pulse groups and {failed:,} retained native failures. '
-                           'Photon and isotope-decay denominators remain separate. Follow a real signal through candidate cones to the final map.')
+        if saved.get('kind')=='gegi_saved_publication_v3':
+            counts=saved['counts']
+            gegi_description=(f'Completed {saved["initial_records"]:,} initial records across four acquisitions at two positions. '
+                f'{counts["conditional_candidate_groups"]:,} conditional signal groups; '
+                f'{saved["selected_conditional_imaging_groups"]:,} selected for the joint map; '
+                f'{counts["native_failed_groups"]:,} retained native failures. '
+                'Same-energy source separation remains unresolved; conditional candidates are not validated recoveries. '
+                'Explore the joint map, energy layers and signal-to-cone explanation. Photon/decay denominators remain separate.')
+        else:
+            accepted=sum(g['counts']['imaging_accepted_groups'] for g in saved['groups'].values())
+            failed=sum(g['counts']['native_failed_groups'] for g in saved['groups'].values())
+            gegi_description+=(f' Completed {saved["processed_initial_records"]:,} initial records across four acquisitions; '
+                               f'{accepted:,} imaging-accepted pulse groups and {failed:,} retained native failures. '
+                               'Photon and isotope-decay denominators remain separate. Follow a real signal through candidate cones to the final map.')
     elif has_gegi:
         from gegi_publication import validate_bundle as validate_gegi_showcase
         validate_gegi_showcase(site/'examples/gegi')

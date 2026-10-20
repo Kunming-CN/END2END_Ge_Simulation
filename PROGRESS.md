@@ -8,8 +8,9 @@ Geant4, SSD drift, fields, calibration injections or campaign. Automation remain
 PAUSED. Chat01a14bca-3953-7c13-80a1-687a9a571455 / gegi-10m-root owns
 .local/autonomy/gegi-diagnosis.lock. Do not launch a competing supervisor.
 
-Current numerical work is complete; remaining work is source/package/site delivery
-and live checks. Actual protected desktop student controls were verified. Do not rerun completed processing. All implementation writers are frozen; new publication export is COMPLETE.
+Numerical work, student release and website generation are complete; publication
+and live checks remain. Actual protected desktop student controls were verified. Do not rerun
+completed processing. All implementation writers are frozen; public export is COMPLETE.
 
 ## Results and limits
 
@@ -77,9 +78,11 @@ positive-energy Ge STEPchords from4original1Mevents, not complete particle track
 Old5000science retained privately; old public entries redirect to current results.
 
 New saved publication .local/gegi-10m/reconstruction-v3/publication is complete;
-only tools/build_site.py may replace generated docs. Source/test/package commit,
-normal push, release-byte verification, generated-site check and live website checks
-remain pending. test_site passed34tests. New/oldpublication tests11/12, signal12,
+only tools/build_site.py may replace generated docs. Source/test/package commit
+47685df9f40a0b05e33d884bae85642a06fe87f3 was pushed and release bytes verified.
+Generated snapshot passed both check_site.validate gates in build_site and the
+standalone tools/check_site.py command. Live website verification remains pending. test_site passed35tests
+(9.840s including byte-exact GeGI export regression). New/oldpublication tests11/12, signal12,
 jointimaging18, assembly16, savedrunner4, standalone8, admission4, controller7 and
 studentpackage5 passed; final package dependency closure186members passed. Desktop
 student saved-input discovery/calibration selection verified; noRun/Download clicked. No new simulation after delivery; future four-nuclide run requires
@@ -87,5 +90,17 @@ owner decision and measured small acceptance/cost evidence before another1M.
 
 Prior detailed handoff is immutable in Git:
 https://github.com/kunming-cn/END2END_Ge_Simulation/blob/e58169bdff6e9230da0167de3f1fe85a6b2d285c/PROGRESS.md
-Student release authority: .local/student-runtime-p1/COMPLETE.json (prior release
-student-runtime-94245299c565 until the new committed package is verified/published).
+Student release authority: .local/student-runtime-p1/COMPLETE.json. Current release
+student-runtime-47685df9f40a:186members/889438bytes, SHA256
+701628355c56460530712ca408da19b71c36d4465002bce3e35e715003a6d18f. Versioned/latest
+public ZIP, receipt bytes and remote tag commit verified; no install.
+New public manifest b02b3399a3d8adf05ed1404922fed76691f23caaefc13f7c574f0934b9d7e2ba.
+Publication-only old-summary navigation mismatch fixed;11targeted hub tests passed.
+Exact predecessor display receipts were matched to committed47685df bytes;6targeted
+tamper/original-data binding tests passed. Generic CRLF normalization changed only
+one staged event-file terminator; exact original bundle bytes restored through the
+publisher, with recovery recorded under publication/build-recovery.json. The
+existing stage was validated and installed; no repeated science or source export.
+Site build5080f24f65738b52018a675cf4f309a07a643048c9344e077fba627f0b364a2d:
+1,726files/985,090,719bytes/109HTMLpages,3,479local links checked. Source and
+generated diff inspected; prior scientific datasets unchanged.

@@ -873,11 +873,11 @@
     "tools/hit_event_view.py": "7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e"
   },
   "adapter_sources": {
-    "tools/viewer_navigation.py": "befd6d2389fd6867db6e331b0eb0b851ddbb3278743bdecc1856fda0c092f7a5",
+    "tools/viewer_navigation.py": "83c290181a5f422a4273248d071904a3859e55a6fd9ec91df545f5fb0a0327d1",
     "tools/viewer_navigation.js": "a09e5ecb04bd5f6d4e1a24c2debf40bb9a0bfc882784cc146c8915dee7704ff5",
     "tools/unified_event_viewer.html": "9764b036e5162cc3d47945327736653f3681a51a5242c7305e519e06d5731da2",
     "tools/unified_event_viewer.js": "117e6a400e6dbf6b1a6ffa32e8226215658c07f90ef4a1505ecdf35d2a08bb8e",
-    "tools/site_restructure.py": "8f92a4113f87252536c85dd94e1a23b77ea4f372754758a12e595df424284532",
+    "tools/site_restructure.py": "23d4c19b94039dcbb92950f74a9d1f031f8826ba4444aefcf29a88a06212e2b5",
     "tools/site_routes.py": "a962475145d29d4f9880228d1df4aedea757aa5fa90f25b4f90ed8273ae17cd9"
   },
   "pages": {

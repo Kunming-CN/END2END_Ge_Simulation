@@ -14,6 +14,8 @@ MANIFEST='methods/native-li-display.json'
 SOURCES=('tools/saved_archive_display.py','tools/site_restructure.py','tools/site_routes.py')
 LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in SOURCES}
 PREVIOUS_RECEIPTS=frozenset({
+    # Exact 47685df Git/public bytes before the conditional GeGI hub schema.
+    'cf9b5ebb1237891ff595dd6651af5d69ac727b09887163222d9c8320adf2705f',
     # Exact bfcb3bb published receipt, byte-matched to installed docs and Git
     # before the GeGI 1M navigation change; original science still reconstructs.
     'ea9f28fe0dd84a31c0a8e50c3068f359b488a28c80d6df67c5b0e56e9f738fb4',
@@ -38,6 +40,8 @@ LITHIUM_SUMMARY_SHA='c5e1b2c85406f077cb692ac6e99dd1c9affe7cb6632a3098f96a86708e0
 LITHIUM_SOURCES=SOURCES+('tools/lithium_report.py','tools/pipeline_demo.py')
 LITHIUM_LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in LITHIUM_SOURCES}
 PREVIOUS_LITHIUM_RECEIPTS=frozenset({
+    # Exact 47685df Git/public bytes before the conditional GeGI hub schema.
+    'c414d1aa0ec033750df20902a95e77a88cb9b173ece4c9761c13aa7732aabd6b',
     # Exact bfcb3bb published bytes before the GeGI 1M navigation change.
     'b084405cf24b715b808cf458e70b8cf6285393d71a60d20982e05001e952c74e',
     # Exact published59f9d008c4ae Git receipt; original files still reconstruct.

@@ -95,6 +95,17 @@ class PublicationTests(unittest.TestCase):
             builder.normalize_text_outputs(folder)
             self.assertEqual(ring.read_bytes(), body)
 
+    def test_hash_bound_gegi_bundles_keep_exact_line_endings(self):
+        import build_site as builder
+        for relative in ('assemblies/gegi/event-data.json', 'results/gegi-campaign/summary.json'):
+            with self.subTest(relative=relative):
+                target=self.site/relative; target.parent.mkdir(parents=True,exist_ok=True)
+                body=b'{"saved":true}\r\n'; target.write_bytes(body)
+                ordinary=self.site/'navigation.json'; ordinary.write_bytes(body)
+                builder.normalize_text_outputs(self.site)
+                self.assertEqual(target.read_bytes(),body)
+                self.assertEqual(ordinary.read_bytes(),body.replace(b'\r\n',b'\n'))
+
     def setUp(self):
         local = Path(__file__).resolve().parents[1] / '.local'
         local.mkdir(exist_ok=True)

@@ -219,6 +219,22 @@ class SiteStructureTests(unittest.TestCase):
             self.assertIn('results/gegi-campaign/index.html',text)
             self.assertNotIn('examples/gegi/index.html',text)
 
+    def test_conditional_gegi_summary_never_becomes_imaging_acceptance(self):
+        root=self.fixture();formal=root/'results/gegi-campaign';formal.mkdir(parents=True)
+        (formal/'publication.json').write_bytes(b'formal fixture')
+        (formal/'summary.json').write_text(json.dumps({'kind':'gegi_saved_publication_v3',
+            'initial_records':1000000,'selected_conditional_imaging_groups':162,
+            'counts':{'conditional_candidate_groups':434,'native_failed_groups':426}}))
+        original=(formal/'summary.json').read_bytes()
+        with patch('gegi_campaign_publication.validate_bundle'):
+            S.apply(root)
+        text=(root/'results/index.html').read_text(encoding='utf-8')
+        self.assertIn('434 conditional signal groups',text)
+        self.assertIn('162 selected for the joint map',text)
+        self.assertIn('Same-energy source separation remains unresolved',text)
+        self.assertNotIn('imaging-accepted',text)
+        self.assertEqual((formal/'summary.json').read_bytes(),original)
+
     def test_gegi_saved_counts_are_visible_without_rewriting_saved_bundle(self):
         root=self.fixture();saved=root/'examples/gegi';saved.mkdir(parents=True)
         payload={'kind':'gegi_saved_source_comparison_v1','counts':{'initial_primaries':10000},

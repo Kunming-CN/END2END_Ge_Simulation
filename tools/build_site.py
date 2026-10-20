@@ -393,7 +393,7 @@ def build_native_response_export(source):
 def normalize_text_outputs(folder):
     # Historical receipts and all native-bundle bytes are already hash-bound.
     for output in folder.rglob('*'):
-        if output.relative_to(folder).parts[:2] in (('examples', 'cs137-10k'), ('examples', 'cs137-10k-geometry'), ('examples', 'cs137-10k-hits'), ('examples', 'cs137-10k-rings'), ('examples', 'cs137-1m'), ('examples', 'cs137-1m-response'), ('examples', 'gamma-native')):
+        if output.relative_to(folder).parts[:2] in (('examples', 'cs137-10k'), ('examples', 'cs137-10k-geometry'), ('examples', 'cs137-10k-hits'), ('examples', 'cs137-10k-rings'), ('examples', 'cs137-1m'), ('examples', 'cs137-1m-response'), ('examples', 'gamma-native'), ('assemblies', 'gegi'), ('results', 'gegi-campaign')):
             continue
         if output.is_file() and output.suffix in {'.html', '.json', '.md', '.svg'}:
             data = output.read_bytes()

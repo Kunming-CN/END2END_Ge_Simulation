@@ -35,6 +35,8 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '4945d697ae27217b3c4ff008d247445af43a6f44c5a327a845a3e48aa20b5675',
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
+ # Exact 47685df Git/public bytes before the conditional GeGI hub schema.
+ '0ce8330f3a246620d7d9f501a8232c8c461f5dfbb95c2bd33b0955a380f809e3',
  # Exact bfcb3bb published manifest, byte-matched to installed docs and Git
  # before the GeGI 1M navigation change; saved dataset checks remain strict.
  'e1bb2a61a3eb9f61ce7f794d254292aee4d9bb1678d0a91269495006973c89ca',
@@ -265,7 +267,9 @@ def validate(site,current=False):
     known_current=m['adapter_sources']==FROZEN
     require(known_current or (not current and sha(manifest_path) in TRUSTED_PREVIOUS_UNIFIED_MANIFESTS),
             'Unknown adapter source binding; preserve the saved display instead of resealing it')
-    if current or known_current or sha(manifest_path)=='d44b2095341d3ed08eccd8e89320fe82cfb361d8d077ef8c30ab48599e68b3ee':
+    if current or known_current or sha(manifest_path) in (
+            'd44b2095341d3ed08eccd8e89320fe82cfb361d8d077ef8c30ab48599e68b3ee',
+            '0ce8330f3a246620d7d9f501a8232c8c461f5dfbb95c2bd33b0955a380f809e3'):
         rings=ring_bundle(site)
         require(m.get('saved_ring_files',{})==ring_records(site,rings),'Saved ring file binding mismatch')
         require(m.get('saved_response_files',{})==response_records(site),'Saved response file binding mismatch')
