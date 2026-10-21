@@ -1,6 +1,6 @@
 # Current handoff
 
-## GeGI full34 reference complete; lateral-response validation — 2026-10-20
+## GeGI lateral-response milestone completed; paused — 2026-10-20
 
 Priority: correct the small radiation -> charge ->34-channel signal -> electronics
 -> inverse reconstruction chain before larger campaigns. Truth/known source is
@@ -11,6 +11,10 @@ only. Monitoring PAUSED; no resets or new large campaign. Root owns the existing
 gegi-saved-recovery lock; retain old inactive ownership. No science worker running.
 Use bounded6.1-sol ultra development tasks, no extra AI reviews. Detailed earlier
 guard chronology is retained at Git09eae20:PROGRESS.md and immutable local receipts.
+Latest owner asked to pause after this stage. Saved-grid diagnosis is complete;
+this milestone is synchronized and the supervisor is paused. Retain inactive
+ownership and all results. No next drift, inverse work or automatic continuation
+may start until the owner resumes.
 
 ### Completed physical localization — reuse, do not repeat
 
@@ -145,6 +149,32 @@ late activity. Report62cf4f28...21ad97e. Windows hard-link report publication fa
 all bound inputs/source rechecked, exact completed pending bytes copied with
 exclusive creation, pending preserved; no physics/analysis repeated. Next locate
 transient interpolation errors before inverse changes; holdout remains untouched.
+Saved residual diagnosis1.285s (04af82d2...8b8c): neighbour RMS median14.361->
+8.215keV improves, collector RMS9.534->10.744 worsens; all80largest point errors
+are collectors, all terminal/250ns errors0. PureXY z0 also worsens16/16. Shifted
+collection fronts are averaged at the same time; both timing and shape may matter.
+All476native endtimes equal max(endpoint.samples-1)*1ns, arrival range6..162ns.
+Saved-only candidate uses one common all-channel time warp through predicted
+electron/hole arrival times from training endpoints, then spatial interpolation.
+Reject order-crossing/invalid knots explicitly; no validation time used to predict,
+no new physics or inverse fit. Three focused tests pass; all80points compared in
+2.356s with no exclusions. Max-channel RMS median14.361(centre)->10.744(spatial)
+->9.734(timewarp)keV; max-point-error median40.377->59.974->35.986keV, worst37.269.
+Timewarp improves64 and ties16 against spatial interpolation for both metrics.
+But collector RMS vs centre worsens56/80 (median9.534->9.734keV); pureXY z0 is
+unchanged by this warp. Predicted electron arrival absmax.5ns, hole0; terminal
+errors0. Forward shape approximation remains unresolved; no imaging promotion.
+Timing reportdcd37420...0de1f, sourcec2222043...e171c. Holdout and production remain
+unchanged. Final saved-grid diagnosis(80915787...3fb6f), no cache load or physics:
+all34WP axes/ticks identical; pitch-based XY stencil crosses native cells. Target
+(11,26),z0,offset(-.2,-.2) lies in X[11.171832,12.343702]mm and Y[1.296870,2.468740]mm.
+Four corners are inside its nominal pitch box; actual SSD contact/semiconductor
+membership and electric-field axes were not in saved evidence and remain unknown.
+This is a concrete interpolation hypothesis, not proof of full-waveform bilinearity.
+On resumption: first check those missing native geometry/axis facts, then consider
+one four-corner reference test before enlarging a bank or changing inverse fits.
+No new injection request was prepared. This entire stage adds0validated imaging
+recoveries; student software and website remain on the already verified versions.
 
 ### Saved-data and publication baselines — already delivered
 

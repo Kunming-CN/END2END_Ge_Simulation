@@ -2,6 +2,11 @@
 
 ## Active milestone — establish the GeGI full-chain reference, 2026-10-20
 
+Owner requested a pause after the current lateral-forward milestone. Capture,
+saved-waveform comparisons and saved-grid diagnosis are complete; now paused.
+The next work below is recorded for resumption, not automatic authorization to run
+while paused. Automatic monitoring remains PAUSED.
+
 Owner resumed evidence/planning after correcting the priority: establish a correct
 small radiation -> charge ->34-channel signal ->readout ->reconstruction workflow
 before recovery refinements and large samples. Automatic monitoring stays PAUSED.
@@ -124,10 +129,24 @@ All476complete in51.547s,44imports exact; endpoint/ideal-contact residual0.
 All80independent points compared with no late activity or exclusions. Trilinear
 max-channel RMS improves80/80 (median14.361->10.744keV), but pointwise maximum
 error worsens64/80 (median40.377->59.974keV). Preserve this mixed result; no promotion.
-Next locate transient interpolation errors from these saved waveforms before an
-inverse change. No event-truth positions/source input or arbitrary cut tuning.
+Saved-waveform diagnosis localizes the increase to collector fronts, including
+pureXY z0; neighbour RMS improves, all terminal errors0. One shared
+34-channel time warp through training-predicted carrier arrival times was tested:
+all80supported, max-channel RMS median9.734keV, max-point-error median35.986keV.
+It improves64/ties16 versus spatial interpolation; pureXY z0 remains unchanged.
+Collector RMS still worsens56/80 against centre-only, so the forward model is not
+accepted for production. Retain all80comparisons and explicit order-crossing checks.
+No validation arrival-time input, new physics, event-truth/source input or cut tuning.
 Keep holdout unused and production selected_pair unchanged until an integrated
 development result supports validation and release.
+
+Saved-grid diagnosis confirms the coarse pitch-based stencil crosses multiple
+native WP cells (all34WP axes identical). For the fixed z0 validation point, four
+native-cell corners are identified, but native geometry membership and electric
+field axes were not saved. On owner resumption, verify these facts first and
+consider one four-corner test to distinguish grid-cell sampling from drift-path
+effects. No new injection request exists; no bank expansion or inverse work while
+paused. This is a hypothesis to test, not a completed forward-model correction.
 
 ### Reference scope and reuse
 
