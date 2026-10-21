@@ -109,13 +109,25 @@ V3development improves shared46cell depthmedian .142586->.133164mm, but has
 8/30wrong conditional pairs (best-RMS pair wrong3/24groups). No imaging promotion;
 all200old spectroscopy values exact. Preserve all three derived versions.
 
-Next isolate the3remaining best-RMS errors (developmentIDs720929,727922,752677):
-is the true endpoint-cell support absent from ADC energy-flow enumeration, rejected
-by the full34 waveform model, or still indistinguishable? Use existing signals and
-fits; truth only independent diagnosis, no source-position input or newphysics.
-Decide the next small energy/template change from this evidence, without tuning
-arbitrary cuts. Keep holdout unused and production selected_pair unchanged until
-an integrated development result supports validation and release.
+The3case diagnosis is complete.720929 has an enumerated correct support rejected
+by the waveform model; its worst cell is localized but off-center by .566/1.364mm.
+727922 has nearly indistinguishable correct/wrong supports (RMS differs2.54%).
+752677 needs five cells beyond the four-site cap, with rank-deficient energy
+allocation. Sub-keV allocation differences in the first two cases do not establish
+ADC bias as the dominant cause. Reuse saved support and cell-detail diagnostics.
+
+Lateral response capture completed on all four candidate pixels {11,12}x{24,26}.
+Fixed nine XY training offsets (-.4/0/.4 pitch)x11depths per pixel plus80 independent
+positions (+/-.2 pitch each axis, five depths). Reuse44center responses, maximum
+432new drifts/300s/one thread; original fields, no transport/field solve or retry.
+All476complete in51.547s,44imports exact; endpoint/ideal-contact residual0.
+All80independent points compared with no late activity or exclusions. Trilinear
+max-channel RMS improves80/80 (median14.361->10.744keV), but pointwise maximum
+error worsens64/80 (median40.377->59.974keV). Preserve this mixed result; no promotion.
+Next locate transient interpolation errors from these saved waveforms before an
+inverse change. No event-truth positions/source input or arbitrary cut tuning.
+Keep holdout unused and production selected_pair unchanged until an integrated
+development result supports validation and release.
 
 ### Reference scope and reuse
 

@@ -1,6 +1,6 @@
 # Current handoff
 
-## GeGI full34 reference complete; joint-fit development — 2026-10-20
+## GeGI full34 reference complete; lateral-response validation — 2026-10-20
 
 Priority: correct the small radiation -> charge ->34-channel signal -> electronics
 -> inverse reconstruction chain before larger campaigns. Truth/known source is
@@ -114,10 +114,37 @@ wrongpairs8/30, false splits1/30; groupallcorrect/mixed/allwrong18/4/2. Shared46
 cells: depthmedianabs .142586->.133164mm;7improve,3worse,36tie; all46energiesexact.
 All200spectroscopy exact. Best-RMS conditional pairing stillwrong3/24groups;
 no best-only promotion. V3also not accepted as imaging recovery; holdout untouched.
-Evidence validation/full34-development-v3; Rsourceb9b30355...02be4a. Next fixed
-3case diagnosis(720929,727922,752677) distinguishes missing true support, energy
-allocation bias, and waveform mismatch using saved results; truth only posthoc.
-Independent template bank is complete and reusable; no new physical computation.
+Evidence validation/full34-development-v3; Rsourceb9b30355...02be4a. Three-case
+saved support diagnosis completed without fits/physics (0.188s plus0.066s detail).
+720929: correct two-cell support already enumerated, rejected maxRMS.0573591>
+.0452905; cell-energy errors -.8152/+.2962keV. Worst cell(12,24) is localized
+(sigma-z .000907mm), but offset +.565924/-1.364385mm from pixel center. Current
+templates contain only pixel centers; lateral response is the next concrete gap.
+727922: correct four-cell support passes; wrong support has only2.54% lower RMS.
+752677: true five-cell support exceeds max_sites4 and has incidence rank4, so its
+energy split is underdetermined. Multiple photons/anchors remain distinct from
+charge cells. These cases do not support large ADC bias as their main cause.
+Evidence: full34-development-v3/support-diagnostic.json (aa92b097...db0c) and
+support-cell-detail.json (f1c6acb3...d9). Truth was independent diagnosis only.
+
+Fixed lateral pilot completed on all four observable candidate pixels {11,12}x
+{24,26}, not only true pairs. Training: nine XY offsets (-.4/0/.4 pitch each axis)
+x11 original depths per pixel; reuse44 verified center records. Validation:
+four independent offsets (+/-.2 pitch each axis)x five fixed depths per pixel.
+All476completed=44exact imports+432new drifts,16184waveforms;51.547s/2.467GB,
+new native internal time sum12.020s. One process/thread,300s cap, no retry, fields
+or radiation; original cache and500keV gain. All endpoint algebra/ideal-contact
+residuals0; face roundoff3.05176e-5keV. All checkpoint/diagnostic hashes verified.
+Request4bc8497f...9c70b, COMPLETE0843dd96...8660, evidence calibration/
+full34-lateral-pilot/results. No real-event truth coordinates in reference inputs.
+Independent80point forward comparison2.529s: all80max-channel RMS improve,
+median14.361->10.744keV,P9016.677->11.393,max16.722->11.396. However maximum
+pointwise error worsens64/80, median40.377->59.974keV,max54.477->68.381. This is
+a mixed forward result, not validation/promotion. All80compared; no exclusion or
+late activity. Report62cf4f28...21ad97e. Windows hard-link report publication failed;
+all bound inputs/source rechecked, exact completed pending bytes copied with
+exclusive creation, pending preserved; no physics/analysis repeated. Next locate
+transient interpolation errors before inverse changes; holdout remains untouched.
 
 ### Saved-data and publication baselines — already delivered
 
