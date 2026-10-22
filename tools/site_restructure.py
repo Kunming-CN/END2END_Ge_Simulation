@@ -100,6 +100,52 @@ def teaching_preview(site):
         '<div class="grid">'+plots+'</div><p>Original signed samples in the first 5 µs. '
         'Synthetic electronics and retained native cap flags; this example does not establish calibrated charge collection.</p></section>')
 
+def defer_gegi_journey(directory, text, record):
+    """Move the exact historical payload to its existing, deferred script asset."""
+    import hashlib
+    directory=Path(directory)
+    embedded=re.search(r'<script type="application/json" id="gegi-journey-data">(.*?)</script>',text,re.S)
+    if embedded is None:
+        require(record.get('deferred_historical_journey') is not None,
+                'Missing saved historical journey payload')
+        return text
+    payload=embedded[1]
+    json.loads(payload)
+    script=directory/'gegi_signal_journey.js'
+    original=script.read_bytes()
+    require(original==(Path(__file__).parent/'gegi_signal_journey.js').read_bytes(),
+            'Historical journey script changed before deferred export')
+    mount=('<script>GeGISignalJourney.mount(document.getElementById("gegi-signal-journey"),'
+           'JSON.parse(document.getElementById("gegi-journey-data").textContent),{scope:"student"});</script>')
+    require(text.count(mount)==1 and text.count('<script src="gegi_signal_journey.js"></script>')==1,
+            'Historical journey initialization changed')
+    # A normal script element also works for a downloaded file:// directory.
+    # Neither the payload nor its 34-channel renderer is loaded before expansion.
+    deferred=original+('\n/* Deferred exact saved historical payload. */\n'
+        'globalThis.mountGeGIHistoricalJourney=function(host){return GeGISignalJourney.mount(host,'
+        +payload+',{scope:"student"});};\n').encode('utf-8')
+    script.write_bytes(deferred)
+    record['deferred_historical_journey']={
+        'payload_bytes':len(payload.encode('utf-8')),
+        'payload_sha256':hashlib.sha256(payload.encode('utf-8')).hexdigest(),
+        'renderer_sha256':hashlib.sha256(original).hexdigest(),
+        'load_on':'first historical teaching details expansion'}
+    record['artifacts']['gegi_signal_journey.js']={
+        'bytes':len(deferred),'sha256':hashlib.sha256(deferred).hexdigest()}
+    loader='''<script>(function(){
+const host=document.getElementById('gegi-signal-journey'),panel=host.closest('details');let loading=false,ready=false;
+function load(){if(!panel.open||loading||ready)return;loading=true;host.textContent='Loading saved historical signals…';
+const script=document.createElement('script');script.src='gegi_signal_journey.js?display=__JOURNEY_SCRIPT_SHA__';
+script.onload=function(){try{mountGeGIHistoricalJourney(host);ready=true;}catch(error){failed();}};
+script.onerror=failed;function failed(){loading=false;script.remove();host.replaceChildren();
+const retry=document.createElement('button');retry.type='button';retry.textContent='Retry loading historical signals';retry.onclick=load;host.append(retry);}
+document.head.append(script);}
+panel.addEventListener('toggle',load);load();
+})();</script>'''.replace('__JOURNEY_SCRIPT_SHA__',record['artifacts']['gegi_signal_journey.js']['sha256'])
+    text=text.replace(embedded[0],'').replace('<script src="gegi_signal_journey.js"></script>','').replace(mount,loader)
+    return text
+
+
 def refresh_gegi_reading_order(site):
     """A display layer over the exact saved aggregate bundle; no analysis."""
     import hashlib
@@ -110,6 +156,7 @@ def refresh_gegi_reading_order(site):
     if record.get('kind')!='gegi_saved_publication_v3':return
     validate_public(directory)
     path=directory/'index.html';text=path.read_text(encoding='utf-8')
+    text=defer_gegi_journey(directory,text,record)
     text=re.sub(r'<!-- page-navigation:start -->.*?<!-- page-navigation:end -->',
                 lambda _:page_navigation('results/gegi-campaign/index.html'),text,count=1,flags=re.S)
     blocks={}
@@ -232,7 +279,7 @@ def apply(site):
     write_page(site/'detectors/index.html','Detectors · GeSignal',det,1)
     assemblies=('''<section class="hero"><p class="muted">Cryostat assemblies</p><h1>Choose a compatible assembly</h1>
 <p>LBNL and GeGI are separate cryostats. Detector selection never changes the assembly automatically. All 17 detector models remain browsable; six oversized models currently have no supported assembly.</p></section>
-<div class="grid"><article class="card"><h2>LBNL modular cryostat</h2><p>'''+str(control_count)+''' compatible detector configurations with nominal source placement. Original upstream geometry provenance and model-specific limits remain explicit.</p><p><a href="../scenarios/lbnl-cs137/index.html">Assembly and compatibility →</a></p><p><a href="../viewers/events.html?model=AK02&amp;view=assembly">Rotate the saved LBNL assembly →</a></p></article>
+<div class="grid"><article class="card"><h2>LBNL modular cryostat</h2><p>'''+str(control_count)+''' compatible detector configurations with nominal source placement. Original upstream geometry provenance and model-specific limits remain explicit.</p><p><a href="../scenarios/lbnl-cs137/index.html">Assembly and compatibility →</a></p><p><a href="../viewers/events.html?model=AK02&amp;view=geometry">Rotate the saved LBNL assembly →</a></p></article>
 <article class="card"><h2>GeGI cryostat</h2><p>Exact GeGI_3D only. Measured front layers and nominal side/rear enclosure; no other detector can be inserted.</p><p><a href="gegi/index.html">Rotate the GeGI assembly and inspect dimensions →</a></p><p><a href="../detectors/GeGI_3D/index.html">GeGI detector and workflow →</a></p></article></div>
 <p><a href="../detectors/index.html">Browse detectors</a> · <a href="../guide.html#local-control">Configure and run locally</a> · <a href="../results/index.html">Read saved results</a></p>''')
     write_page(site/'assemblies/index.html','Assemblies · GeSignal',assemblies,1)
@@ -263,7 +310,7 @@ def apply(site):
         'AK02 and SAP22 · 20 primaries per detector · nominal cryostat. A separate monoenergetic source and event namespace.',
         (('../examples/gamma-native/gamma.html','Open cryostat gamma example →'),),has_gamma,
         '<details><summary>Processing and collection scope</summary><p>'+gamma_caption+'</p></details>' if has_gamma else '')
-    results+='<details><summary>Historical teaching archive</summary><p><a href="../examples/pipeline.html">Earlier bare-detector study · 200 initial gamma primaries</a>. Its records have a separate event namespace.</p><p><a href="../examples/gegi/index.html">Earlier GeGI two-position study · historical identity and original settings</a></p></details>'
+    results+='<details><summary>Historical teaching archive</summary><p><a data-original-report href="../examples/pipeline.html">Earlier bare-detector study · 200 initial gamma primaries</a>. Its records have a separate event namespace.</p><p><a href="../examples/gegi/index.html">Earlier GeGI two-position study · historical identity and original settings</a></p></details>'
     results+='<p><a href="../guide.html#saved-analysis">Help with settings, event identities and data files</a>. Saved engineering results do not establish experimental spectrum agreement or calibrated charge-collection efficiency.</p>'
     write_page(site/'results/index.html','Results · GeSignal',results,1)
 
@@ -334,7 +381,7 @@ def apply(site):
             return 'LBNL incompatible; available only in the <a href="../../assemblies/gegi/index.html">dedicated GeGI cryostat</a>'
         return 'Needs larger cryostat: '+escape(catalog_control[model]['reason'])
     caprows=''.join('<tr><td><a href="../../detectors/'+escape(m['id'])+'/index.html">'+escape(m['id'])+'</a></td><td>'+str(len(m.get('contacts',[])))+'</td><td>'+('Implemented' if m['id'] in execution_ids else 'Not integrated')+'</td><td>'+assembly_support(m['id'])+'</td></tr>' for m in catalog['detectors'])
-    scenario+='<section class="panel"><h2>Physical compatibility</h2><p>Control offers '+str(control_count)+' separate detector configurations in the LBNL cryostat; its shared catalog and ring routes are distinct from the legacy <code>Run.cmd</code> adapter. The exact GeGI_3D has its own <a href="../../assemblies/gegi/index.html">dedicated GeGI cryostat</a> and is incompatible with LBNL. GeRC02 Li50min uses the separate operating variant, while the library retains the original 30-minute model. KM retains its candidate qualification, −370 V bias and fixed −1 electronics wiring.</p><p><a href="../../viewers/events.html?model=AK02&amp;view=assembly">Rotate saved LBNL assembly</a> · <a href="../../assemblies/index.html">Compare cryostat assemblies</a></p><details><summary>All model capabilities and legacy commands</summary><p>The older generic adapter selects AK02, SAP22 or both; both means separate serial cases. See the <a href="../../guide.html#choose">legacy commands</a>. All 17 catalog models can be viewed; '+str(blocked_count)+' require a future larger cryostat because of the recorded dimensions. Complete canonical inputs and original settings are retained. Runtime Check plan independently verifies actual setup, geometry, source and readout before Run.</p><table><thead><tr><th>Model</th><th>Contacts</th><th>Legacy Run.cmd</th><th>Control assembly</th></tr></thead><tbody>'+caprows+'</tbody></table></details></section>'
+    scenario+='<section class="panel"><h2>Physical compatibility</h2><p>Control offers '+str(control_count)+' separate detector configurations in the LBNL cryostat; its shared catalog and ring routes are distinct from the legacy <code>Run.cmd</code> adapter. The exact GeGI_3D has its own <a href="../../assemblies/gegi/index.html">dedicated GeGI cryostat</a> and is incompatible with LBNL. GeRC02 Li50min uses the separate operating variant, while the library retains the original 30-minute model. KM retains its candidate qualification, −370 V bias and fixed −1 electronics wiring.</p><p><a href="../../viewers/events.html?model=AK02&amp;view=geometry">Rotate saved LBNL assembly</a> · <a href="../../assemblies/index.html">Compare cryostat assemblies</a></p><details><summary>All model capabilities and legacy commands</summary><p>The older generic adapter selects AK02, SAP22 or both; both means separate serial cases. See the <a href="../../guide.html#choose">legacy commands</a>. All 17 catalog models can be viewed; '+str(blocked_count)+' require a future larger cryostat because of the recorded dimensions. Complete canonical inputs and original settings are retained. Runtime Check plan independently verifies actual setup, geometry, source and readout before Run.</p><table><thead><tr><th>Model</th><th>Contacts</th><th>Legacy Run.cmd</th><th>Control assembly</th></tr></thead><tbody>'+caprows+'</tbody></table></details></section>'
     write_page(site/'scenarios/lbnl-cs137/index.html','Nominal LBNL cryostat · GeSignal',scenario,2)
 
     (site/'guide.html').write_text((Path(__file__).resolve().parent/'site_guide.html').read_text(encoding='utf-8').replace('__PAGE_NAVIGATION__',page_navigation('guide.html')),encoding='utf-8',newline='\n')

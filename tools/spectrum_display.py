@@ -18,6 +18,9 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+    # Exact 376bd39 public/HEAD manifest before event-preserving spectrum links;
+    # all eleven generator hashes match that Git snapshot, with origins intact.
+    'cbeeee6c95b8c5b8825cd40e15911d076ab845b1c23cc0ebad069454ce722023',
     # Exact checked Git/public snapshot before selected-case spectrum views.
     # Matched to HEAD bytes; saved numerical/source bindings remain mandatory.
     '57f2ca5e1cb8a6e4711e7930670b02a3509f56e0e7e94eafd58f8f77b1f8b12b',
@@ -153,7 +156,10 @@ def rewrite_links(text,source_page,destination_page):
             return match.group(0)
         target=posixpath.normpath(posixpath.join(posixpath.dirname(source_page),parts.path))
         if not preserve_original:
-            target=ROUTES.get(target,target)
+            # The 200-primary bare-gamma archive is a separate study from the
+            # current six Cs137 10K examples, so it has no same-study alias.
+            if target != 'examples/pipeline.html':
+                target=ROUTES.get(target,target)
             target=VIEWER_ROUTES.get(target,target)
         relative=posixpath.relpath(target,posixpath.dirname(destination_page) or '.')
         value=urlunsplit(('', '',relative,parts.query,parts.fragment))
@@ -215,8 +221,9 @@ def source_inventory(site):
     return tuple(ROUTES)+DATA_SOURCES+RECEIPTS+source_files(site)
 
 def case_context(rows,page):
+    from ring_site import CASE_VARIANTS
     from site_routes import case_result_path, event_view_path, spectrum_path, relative_url
-    return {row['model']:{'model':row['model'],'label':row['label'],
+    return {row['model']:{'study':'cs137-10k','model':row['model'],'variant':CASE_VARIANTS[row['model']],'label':row['label'],
         'result':relative_url(case_result_path(row['model']),page),
         'files':relative_url(case_result_path(row['model'])+'#data-files',page),
         'events':relative_url(event_view_path(row['model']),page),
@@ -228,7 +235,8 @@ def spectrum_focus(rows,page,context=None,prefix='tenk'):
         '<div class="spectrum-selection"><label>Detector case <select id="spectrum-case" data-prefix="'+prefix+'">'
         +''.join('<option value="'+html.escape(row['model'],quote=True)+'">'+html.escape(row['label'])+'</option>' for row in rows)
         +'<option value="compare">Compare all '+str(len(rows))+' detector cases</option></select></label>'
-        '<p id="spectrum-focus" role="status" aria-live="polite">Selected case: '+html.escape(rows[0]['label'])+'.</p></div>'
+        '<p id="spectrum-focus" role="status" aria-live="polite">Selected case: '+html.escape(rows[0]['label'])+'.</p>'
+        + ('<p id="spectrum-return-context" hidden><a id="spectrum-return-event"></a> · <a id="spectrum-return-3d">This event in 3D</a></p>' if prefix=='tenk' else '') + '</div>'
         '<noscript><p>JavaScript enables detector selection. All saved detector cases are listed below.</p></noscript>'
         '<script id="spectrum-case-context" type="application/json">'+payload+'</script>')
 
@@ -253,7 +261,7 @@ def four_detector_spectra(site,specs):
         body+=('<section id="tenk-'+model+'" data-spectrum-model="'+model+'"><h2>'+html.escape(row['label'])+'</h2><p>'+html.escape(row['note'])+'</p><p>'
                + f'{c["zero_deposit_primaries"]:,} zero-Ge decays; {c["groups"]:,} groups; {c["accepted"]:,} accepted; '
                + f'{c["native_failed_groups"]:,} native failures; {c["readout_rejected"]:,} electronics rejects.</p><p>'
-               + f'<a href="{relative_url(case_result_path(model),"spectra/cs137-10k.html")}">Charge and readout</a> · <a href="{base}/response/histograms.json">Exact bins</a> · '
+               + f'<a data-spectrum-case-link="result" data-case-model="{model}" data-base-href="{relative_url(case_result_path(model),"spectra/cs137-10k.html")}" href="{relative_url(case_result_path(model),"spectra/cs137-10k.html")}">Charge and readout</a> · <a href="{base}/response/histograms.json">Exact bins</a> · '
                + f'<a href="{base}/response/ledgers.zip">Complete ledger archive</a></p>')
         for (stage,label),spec in zip(STAGES,specs[i*len(STAGES):(i+1)*len(STAGES)],strict=True):
             if stage in ('deposited_per_group','accepted_peak_ADC'):

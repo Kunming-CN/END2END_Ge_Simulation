@@ -35,6 +35,8 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '4945d697ae27217b3c4ff008d247445af43a6f44c5a327a845a3e48aa20b5675',
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
+ # Exact 376bd39 manifest, byte matched to Git before geometry/context repair.
+ '35f2d69c400f4b94308558b2a869595556acb7bf985c2e3c339c072b669dcbc3',
  # Exact a37cf4d deployed viewer, authenticated before the event-identity repair.
  '4f5e42c2e3ce3635e6007b2e1f66ece1022cb5dabaf7d655f73c3522381fe77d',
  # Exact 47685df Git/public bytes before the conditional GeGI hub schema.
@@ -174,9 +176,10 @@ def response_records(site):
     return out
 
 def config(site=None):
-    from site_routes import case_result_path, spectrum_path, event_view_path, relative_url
+    from site_routes import case_result_path, spectrum_path, event_view_path, relative_url, assembly_navigation
     out={'assembly':{'base':'../examples/cs137-10k-geometry/','sha256':PINS['examples/cs137-10k-geometry/manifest.json']},
          'positive':{'base':'../examples/cs137-10k-hits/','sha256':PINS['examples/cs137-10k-hits/manifest.json']}}
+    out['geometry_navigation']=assembly_navigation(MAIN_PAGE)
     responses=response_records(site)
     out['case_routes']={name:{'result':relative_url(case_result_path(name),MAIN_PAGE),
         'model':name,

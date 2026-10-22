@@ -102,7 +102,7 @@ def page_record(path):
         if path.startswith("examples/native-li/"):
             parent, section = "methods/native-li.html", "Methods"
         elif path == "examples/pipeline.html":
-            parent, section = "spectra/pipeline.html", "Results"
+            parent, section = "results/index.html", "Results"
         elif path.startswith("examples/cs137-1m"):
             parent, section = "results/cs137-1m/index.html", "Results"
         elif path.startswith("examples/cs137-10k"):
@@ -122,11 +122,12 @@ def registry(site):
     return {p.relative_to(site).as_posix(): page_record(p.relative_to(site).as_posix())
             for p in sorted(site.rglob("*.html"))}
 
-def primary_navigation(current_path):
+def primary_navigation(current_path, *, section=None):
     record = page_record(current_path)
+    section=record['section'] if section is None else section
     return '<nav aria-label="Primary">' + ''.join(
         f'<a href="{escape(relative_url(path, current_path), quote=True)}"'
-        + (' aria-current="page"' if path == current_path else ' aria-current="true"' if record['section'] == label else '')
+        + (' aria-current="page"' if path == current_path else ' aria-current="true"' if section == label else '')
         + f'>{label}</a>' for path, label in PRIMARY) + '</nav>'
 
 def breadcrumbs(current_path):
@@ -202,6 +203,16 @@ def page_navigation(path, dataset=None, model=None, model_label=None):
     local = dataset_navigation(dataset, path, model, model_label) if dataset else detector_navigation(path) if re.fullmatch(r'detectors/[^/]+/[^/]+\.html', path) else ''
     return ('<!-- page-navigation:start --><div id="page-navigation"><style id="site-navigation-style">' + NAV_STYLE + '</style>' + primary_navigation(path)
             + breadcrumbs(path) + local + '</div><!-- page-navigation:end -->')
+
+
+def assembly_navigation(path):
+    """The shared viewer's geometry-only mode belongs to Assemblies."""
+    trail='<nav aria-label="Breadcrumb"><ol>'+''.join(
+        '<li><a href="'+escape(relative_url(target,path),quote=True)+'">'+label+'</a></li>'
+        for target,label in (('index.html','GeSignal'),('assemblies/index.html','Assemblies'))
+    )+'<li><span aria-current="page">LBNL cryostat geometry</span></li></ol></nav>'
+    return ('<div id="page-navigation"><style id="site-navigation-style">'+NAV_STYLE+'</style>'
+            +primary_navigation(path,section='Assemblies')+trail+'</div>')
 
 def footer(current_path):
     return ('<footer><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">GitHub</a> · '

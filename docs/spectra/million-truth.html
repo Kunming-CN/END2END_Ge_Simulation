@@ -124,13 +124,43 @@
     return model?{model,compare:false,invalid:''}:
       {model:null,compare:false,invalid:'Unavailable spectrum case: '+id+'. Choose a saved detector case.'};
   }
+  function caseIdentity(search,cases,prefix){
+    const identity={model:null,event:null,group:null,study:null,variant:null,invalid:''};
+    if(prefix!=='tenk'||!search)return identity;
+    const q=new URLSearchParams(search),allowed=['study','model','variant','event','group'];
+    for(const key of q.keys())if(!allowed.includes(key)||q.getAll(key).length!==1)identity.invalid='Unknown or repeated saved-event parameter.';
+    const model=q.get('model'),entry=cases[model];
+    if(!entry){identity.invalid='Unavailable saved-event model.';return identity;}
+    identity.model=model;identity.study=entry.study;identity.variant=entry.variant;
+    if(q.has('study')&&q.get('study')!==entry.study)identity.invalid='Unavailable study for this spectrum page.';
+    if(q.has('variant')&&q.get('variant')!==entry.variant)identity.invalid='Unavailable model variant for this saved case.';
+    for(const key of ['event','group'])if(q.has(key)){
+      const raw=q.get(key),value=Number(raw);
+      if(!/^(0|[1-9][0-9]*)$/.test(raw)||!Number.isSafeInteger(value)||(key==='event'&&value>9999))identity.invalid='Invalid saved '+key+'.';
+      else identity[key]=value;
+    }
+    if(identity.group!==null&&identity.event===null)identity.invalid='A pulse group requires a primary event ID.';
+    return identity;
+  }
+  function identityLink(href,identity){
+    if(!href||!identity.model)return href;
+    const [address,fragment]=href.split('#'),[path,search]=address.split('?'),q=new URLSearchParams(search||'');
+    for(const key of ['study','model','variant'])q.set(key,identity[key]);
+    for(const key of ['event','group']){q.delete(key);if(identity[key]!==null)q.set(key,String(identity[key]));}
+    return path+'?'+q+(fragment?'#'+fragment:'');
+  }
   function installCaseSelection(){
     const select=document.getElementById('spectrum-case'),payload=document.getElementById('spectrum-case-context');
     if(!select||!payload)return null;
     const cases=JSON.parse(payload.textContent),prefix=select.dataset.prefix,status=document.getElementById('spectrum-focus');
     function restore(){
-      const state=caseSelection(global.location.hash,cases,prefix),entry=state.model?cases[state.model]:null;
-      const label=state.invalid||(entry?'Selected case: '+entry.label+'.':'Comparison: all '+Object.keys(cases).length+' independent detector cases.');
+      const identity=caseIdentity(global.location.search,cases,prefix);
+      const state=caseSelection(global.location.hash||(identity.model?'#'+prefix+'-'+identity.model:''),cases,prefix);
+      if(identity.invalid)state.invalid=identity.invalid;
+      if(identity.model&&!state.compare&&state.model!==identity.model)state.invalid='Spectrum model differs from the saved-event identity. Choose a detector case to start a new selection.';
+      const entry=state.model?cases[state.model]:null,origin=identity.event!==null?cases[identity.model]:null;
+      const context=state.invalid?null:(state.compare?origin:entry);
+      const label=state.invalid||(entry?'Selected case: '+entry.label+'.':'Comparison: all '+Object.keys(cases).length+' independent detector cases.')+(origin?' Return context: '+identity.model+' event '+identity.event+(identity.group===null?'':' / group '+identity.group)+'.':'');
       select.value=state.compare?'compare':state.model||'';select.setAttribute('aria-invalid',String(Boolean(state.invalid)));
       status.textContent=label;status.className=state.invalid?'error':'';
       for(const section of document.querySelectorAll('[data-spectrum-model]'))
@@ -139,24 +169,47 @@
       for(const node of document.querySelectorAll('[data-context-label]'))node.textContent=label;
       for(const node of document.querySelectorAll('[data-context-link]')){
         const key=node.dataset.contextLink;
-        let href=entry?.[key]||node.dataset.baseHref;
-        if(!entry&&prefix==='million'&&key==='files')href=Object.values(cases)[0].files;
+        let href=context?.[key]||node.dataset.baseHref;
+        if(!context&&prefix==='million'&&key==='files')href=Object.values(cases)[0].files;
+        if(context&&identity.model&&context.model===identity.model)href=identityLink(href,identity);
         if(state.compare&&['spectrum','truth','response'].includes(key)&&href)href=href.split('#')[0]+'#compare';
-        if(state.invalid||(!entry&&['result','files'].includes(key)&&prefix==='tenk'))href=null;
+        if(state.invalid||(!context&&['result','files'].includes(key)&&prefix==='tenk'))href=null;
         if(href){node.href=href;node.hidden=false;node.removeAttribute('aria-disabled');}
         else{node.removeAttribute('href');node.setAttribute('aria-disabled','true');node.hidden=!state.invalid&&['result','files'].includes(key);}
       }
-      if(!global.location.hash&&global.history?.replaceState)
-        global.history.replaceState(global.history.state,'',global.location.pathname+(global.location.search||'')+'#'+prefix+'-'+state.model);
+      for(const node of document.querySelectorAll('[data-spectrum-case-link]')){
+        const own=identity.model===node.dataset.caseModel&&!state.invalid;
+        node.href=own?identityLink(node.dataset.baseHref,identity):node.dataset.baseHref;
+      }
+      const returns=document.getElementById('spectrum-return-context');
+      if(returns){
+        returns.hidden=Boolean(state.invalid)||!origin;
+        const link=document.getElementById('spectrum-return-event'),events=document.getElementById('spectrum-return-3d');
+        if(origin&&!state.invalid){link.href=identityLink(origin.result,identity);link.textContent='Return to '+identity.model+' event '+identity.event+(identity.group===null?'':' / group '+identity.group);events.href=identityLink(origin.events,identity);}
+        else{link.removeAttribute('href');events.removeAttribute('href');}
+      }
+      if(!state.invalid&&global.history?.replaceState){
+        const fragment=global.location.hash||'#'+prefix+'-'+state.model;
+        const path=global.location.pathname+(global.location.search||'')+fragment;
+        const canonical=identity.model?identityLink(path,identity):path;
+        if(canonical!==global.location.pathname+(global.location.search||'')+global.location.hash)global.history.replaceState(global.history.state,'',canonical);
+      }
       return state;
     }
     select.addEventListener('change',()=>{
-      global.location.hash=select.value==='compare'?'#compare':'#'+prefix+'-'+select.value;restore();
+      let search=global.location.search||'';
+      if(prefix==='tenk'&&select.value!=='compare'){
+        const identity=caseIdentity(search,cases,prefix),entry=cases[select.value];
+        if(identity.invalid||(identity.model&&identity.model!==select.value))
+          search='?'+new URLSearchParams({study:entry.study,model:entry.model,variant:entry.variant});
+      }
+      const hash=select.value==='compare'?'#compare':'#'+prefix+'-'+select.value;
+      global.history.pushState(global.history.state,'',global.location.pathname+search+hash);restore();
     });
     global.addEventListener('hashchange',restore);global.addEventListener('popstate',restore);restore();
     return {restore};
   }
-  global.SpectrumUI={geometry,validate,attach,update,presentation,caseSelection,installCaseSelection};
+  global.SpectrumUI={geometry,validate,attach,update,presentation,caseSelection,caseIdentity,identityLink,installCaseSelection};
   if(typeof document!=='undefined'){
     const init=()=>{document.querySelectorAll('.spectrum-panel').forEach(attach);global.spectrumNavigation=installCaseSelection();};
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();

@@ -18,12 +18,18 @@
       "bytes": 93151
     },
     "report.html": {
-      "sha256": "4de4b264f6df246982b3991bb1cedf3d5eefcf26aa9726e1379e0e511f135b77",
-      "bytes": 52506
+      "sha256": "4fdf244498d4a49e2837dcf0f882c7b94d33179ed4810b74a1d728ab7128369d",
+      "bytes": 52753
     },
     "summary.json": {
       "sha256": "33bd7a9558ab16f5c9d7e6950e8aab83f5ce15168ae51bdaaf1357067f934904",
       "bytes": 4304
     }
+  },
+  "archive_navigation": {
+    "kind": "million_response_archive_navigation_v1",
+    "science_calls": 0,
+    "original_publication_sha256": "b2cbd14d37ba5b1bb0e15d39efb28808f06b63e14d6de04bd947e5ccac24cff5",
+    "source_sha256": "cfd01a0f80a1add272c5c879e7f14a88e4a5364d4944feaa9488898ae711a0ac"
   }
 }

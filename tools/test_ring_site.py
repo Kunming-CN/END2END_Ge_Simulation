@@ -134,6 +134,9 @@ class RingSiteTests(unittest.TestCase):
         members['native-failures.jsonl'] = b'{"error":"ArgumentError: Invalid waveform support"}\n'
         with zipfile.ZipFile(folder / 'ledgers.zip', 'w') as bundle:
             for name, content in members.items(): bundle.writestr(name, content)
+        scalar_name = 'scalars.jsonl' if model in R.RING_MODELS else 'scalars.csv'
+        (folder / scalar_name).write_bytes(members['scalars.jsonl'] if model in R.RING_MODELS else
+            ('event_id,group_id\n' + ''.join(f'{213+i},0\n' for i in range(traces))).encode())
         self.put(base + '/response/native-failures.json', {'groups': 1, 'charge': None})
         if model == 'KMRC01_candidate':
             old = folder / 'original-native/summary.html'; old.parent.mkdir()
@@ -245,9 +248,10 @@ SavedFocusPlots:{focusEnd:()=>10,shaperEnd:()=>20,draw:(host,panels)=>{host.chil
 vm.runInContext(input.navigation,c);vm.runInContext(input.controller,c);
 (async()=>{
  assert.match(get('selected-identity').textContent,/primary 698/);assert.match(get('selected-status').textContent,/No published full waveform/);assert.equal(requests.length,0);assert.equal(get('selected-plots').children.length,0);
- assert.equal(get('selected-summary').children[0].textContent,'Truth deposited energy: '+input.config.pulses.find(p=>p.event_id===698).deposited_energy_keV+' keV');assert.match(get('selected-3d').href,/event=698&group=0/);assert.equal(get('selected-teaching').hidden,true);
+ assert.equal(get('selected-summary').children.length,3);assert.equal(get('selected-summary').children[0].textContent,'Truth deposited energy: 661.657 keV');assert.match(get('selected-3d').href,/event=698&group=0/);assert.equal(get('selected-teaching').hidden,true);
+ assert.ok(get('selected-summary').children.every(n=>!n.textContent.includes('row IDs')&&!n.textContent.includes('Group origin')));
  location.search='?study=cs137-10k&model=AK02&variant=AK02&event=213&group=0';await listeners.get('popstate')();assert.match(get('selected-status').textContent,/Matching saved waveform: primary 213/);assert.equal(get('selected-plots').children.length,4);assert.equal(requests.length,1);
- get('selected-details').open=true;get('selected-details').ontoggle();const exact=JSON.parse(get('selected-record').textContent);assert.deepEqual(exact.saved_trace,JSON.parse(input.raw));assert.equal(exact.pulse.event_id,213);
+ get('selected-details').open=true;get('selected-details').ontoggle();const exact=JSON.parse(get('selected-record').textContent);assert.deepEqual(exact.saved_trace,JSON.parse(input.raw));assert.equal(exact.pulse.event_id,213);assert.deepEqual(exact.pulse,input.config.pulses.find(p=>p.event_id===213));assert.match(get('selected-sampling').textContent,/retained original analog samples/);assert.doesNotMatch(get('selected-status').textContent,/samples:/);
  location.search='?study=cs137-10k&model=AK02&variant=AK02&event=698&group=0';await listeners.get('popstate')();assert.equal(get('selected-plots').children.length,0);assert.match(get('selected-status').textContent,/No published full waveform/);assert.equal(requests.length,1);assert.equal(JSON.parse(get('selected-record').textContent).saved_trace,null);
  location.search='?model=SAP22&event=213&group=0';await listeners.get('popstate')();assert.match(get('selected-status').textContent,/does not match this saved case/);assert.equal(get('selected-plots').children.length,0);assert.equal(requests.length,1);
  console.log('Actual AK02 primary698 scalar-only; primary213 exact matching trace; back restores698 without waveform; cross-case refused');
@@ -259,6 +263,16 @@ vm.runInContext(input.navigation,c);vm.runInContext(input.controller,c);
             'navigation': (root / 'tools/viewer_navigation.js').read_text(encoding='utf-8'),
             'controller': R.READOUT_CONTROLLER}), text=True, encoding='utf-8', capture_output=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_selected_and_lower_scalar_actions_share_the_existing_case_ledger(self):
+        for model in R.ALL_MODELS:
+            case, _ = self.report_fixture(model, traces=1)
+            body = R.saved_report(self.site, case)
+            config = json.loads(re.search(r'<script id="saved-response-data" type="application/json">(.*?)</script>', body, re.S).group(1))
+            name = 'scalars.jsonl' if model in R.RING_MODELS else 'scalars.csv'
+            self.assertTrue(config['scalar_url'].endswith('/' + name))
+            self.assertTrue((self.site / case['base'] / 'response' / name).is_file())
+            self.assertIn('href="' + config['scalar_url'] + '">All primary and pulse scalars', body)
 
     def test_case_cards_have_one_primary_report_action_and_studies_insert_after_geometry(self):
         case, _ = self.report_fixture()

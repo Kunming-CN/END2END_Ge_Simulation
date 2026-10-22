@@ -196,7 +196,7 @@ def current_results(site,model,campaign_models):
         base='examples/cs137-10k'+('-rings' if model in {'GeRC02','KMRC01_candidate'} else '')+'/'+model
         if (site/base/'response/run.json').is_file():
             label='GeRC02 Li50min' if model=='GeRC02' else model
-            links.append('<p><a href="../../results/cs137-10k/'+model+'/charge-readout.html">'+escape(label)+' · Cs137 10K charge and readout</a>.</p>')
+            links.append('<p id="current-ring-10k"><a href="../../results/cs137-10k/'+model+'/charge-readout.html">'+escape(label)+' · Cs137 10K charge and readout</a>.</p>')
     if model in campaign_models:
         links.append('<p id="native-cs137-10k"><a href="../../results/cs137-1m/index.html">Separate Cs137 1M campaign · '+escape(model)+'</a>.</p>')
     return ('<section id="current-model-results" class="panel"><h2>Source-campaign results</h2>'+''.join(links)+'</section>' if links else '')

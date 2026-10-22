@@ -14,6 +14,8 @@ MANIFEST='methods/native-li-display.json'
 SOURCES=('tools/saved_archive_display.py','tools/site_restructure.py','tools/site_routes.py')
 LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in SOURCES}
 PREVIOUS_RECEIPTS=frozenset({
+    # Exact 376bd39 installed/Git display before archive-navigation correction.
+    '2e29d0c95d8b7e37a52588c3bcb0731f1076b5064bee8bbcda34a442c13bfe7b',
     # Exact a37cf4d deployed display before the October22 navigation repair.
     '9e6ab1c7b76a0074cddcce08dbae3e58e91fcb86879ec1e2328faaeda964410e',
     # Exact 47685df Git/public bytes before the conditional GeGI hub schema.
@@ -42,6 +44,8 @@ LITHIUM_SUMMARY_SHA='c5e1b2c85406f077cb692ac6e99dd1c9affe7cb6632a3098f96a86708e0
 LITHIUM_SOURCES=SOURCES+('tools/lithium_report.py','tools/pipeline_demo.py')
 LITHIUM_LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in LITHIUM_SOURCES}
 PREVIOUS_LITHIUM_RECEIPTS=frozenset({
+    # Exact 376bd39 installed/Git display before archive-navigation correction.
+    '45af1ea51538e3ed8c3f99aabc1416c8c9ecd317068fb57bf6e5bf355385f475',
     # Exact a37cf4d deployed navigation; original numeric files stay pinned.
     '1049a2de750e411ac12fb979d47390956c59bcb597f5fbf3156faad12f4ca7b8',
     # Exact 47685df Git/public bytes before the conditional GeGI hub schema.

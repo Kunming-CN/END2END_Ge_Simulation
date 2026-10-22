@@ -244,11 +244,19 @@ class GalleryTests(unittest.TestCase):
                     '<svg viewBox="0 0 600 205"><polyline points="0,-1 2,0"/></svg></details>').encode('utf-8')
             (folder/'summary.html').write_bytes(report);raw[base+'/response/summary.html']=hashlib.sha256(report).hexdigest()
             (folder/'run.json').write_text(json.dumps({'counts':counts}))
+            (folder/('scalars.jsonl' if model in R.RING_MODELS else 'scalars.csv')).write_text('{}\n' if model in R.RING_MODELS else 'record_kind,event_id,pulse_group_id\n',encoding='utf-8')
             with zipfile.ZipFile(folder/'ledgers.zip','w') as bundle:
                 for name in ('truth.jsonl','scalars.jsonl','endpoints.jsonl','histograms.json','traces.jsonl','run.json'):
-                    bundle.writestr(name,b'{}\n')
+                    row=({'record_kind':'pulse','event_id':1,'group_id':0} if name=='scalars.jsonl' else
+                         {'event_id':1,'group_id':0} if name=='traces.jsonl' else {})
+                    bundle.writestr(name,(json.dumps(row)+'\n').encode('utf-8'))
             if model=='KMRC01_candidate':
                 (folder/'original-native').mkdir();(folder/'original-native/summary.html').write_text('<p>Original readout: 0/231 accepted.</p>')
+        D.apply(self.site,N.write_page)
+        for case in items:
+            page=self.site/'detectors'/case['model']/'index.html'
+            text=page.read_text(encoding='utf-8')
+            page.write_text(text.replace('<h2>Historical SSD study</h2>','<h2>Historical SSD study</h2><section id="current-ring-10k"><p>Earlier duplicated current case</p></section>'),encoding='utf-8')
         with patch.object(R,'cases',return_value=items):R.apply(self.site)
         for case in items:
             html=(self.site/'results/cs137-10k'/case['model']/'charge-readout.html').read_text()
@@ -263,7 +271,15 @@ class GalleryTests(unittest.TestCase):
         for name,digest in raw.items():self.assertEqual(hashlib.sha256((self.site/name).read_bytes()).hexdigest(),digest)
         for case in items:
             detector=(self.site/'detectors'/case['model']/'index.html').read_text()
-            self.assertLess(detector.index('saved-studies'),detector.index('current-ring-10k'))
+            self.assertLess(detector.index('current-model-results'),detector.index('saved-studies'))
+            historical=re.search(r'<section id="saved-studies".*?</section>',detector,re.S).group(0)
+            target='../../results/cs137-10k/'+case['model']+'/charge-readout.html'
+            self.assertEqual(detector.count('href="'+target+'"'),1)
+            self.assertEqual(detector.count('id="current-ring-10k"'),1)
+            self.assertNotIn(target,historical);self.assertNotIn('Earlier duplicated current case',detector)
+        before={(self.site/'detectors'/case['model']/'index.html').as_posix():(self.site/'detectors'/case['model']/'index.html').read_bytes() for case in items}
+        with patch.object(R,'cases',return_value=items):R.apply(self.site)
+        for path,body in before.items():self.assertEqual(Path(path).read_bytes(),body)
 
     def test_english_guide_keeps_anchors_and_source_recipe_and_correct_build_check(self):
         guide=(ROOT/'tools/site_guide.html').read_text();parser=Elements();parser.feed(guide)

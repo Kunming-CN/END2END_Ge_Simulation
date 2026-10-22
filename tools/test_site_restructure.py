@@ -5,6 +5,31 @@ from html.parser import HTMLParser
 import site_restructure as S
 
 class SiteStructureTests(unittest.TestCase):
+    def test_historical_gegi_payload_is_exact_and_only_loaded_on_expansion(self):
+        import hashlib
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]/'.local') as tmp:
+            root=Path(tmp);script=root/'gegi_signal_journey.js'
+            original=(Path(S.__file__).parent/'gegi_signal_journey.js').read_bytes();script.write_bytes(original)
+            payload='{"records": [1.2345678901234567, null], "identity": "historical"}'
+            text=('<details><summary>Historical signals</summary><div id="gegi-signal-journey"></div></details>'
+                  '<script type="application/json" id="gegi-journey-data">'+payload+'</script>'
+                  '<script src="gegi_signal_journey.js"></script>'
+                  '<script>GeGISignalJourney.mount(document.getElementById("gegi-signal-journey"),'
+                  'JSON.parse(document.getElementById("gegi-journey-data").textContent),{scope:"student"});</script>')
+            record={'artifacts':{}}
+            result=S.defer_gegi_journey(root,text,record)
+            self.assertNotIn('gegi-journey-data',result)
+            self.assertNotIn(payload,result)
+            self.assertIn('if(!panel.open||loading||ready)return',result)
+            self.assertNotIn('<script src="gegi_signal_journey.js">',result)
+            self.assertIn('panel.addEventListener(\'toggle\',load)',result)
+            moved=script.read_bytes()
+            self.assertTrue(moved.startswith(original))
+            self.assertIn(payload.encode(),moved)
+            self.assertEqual(record['deferred_historical_journey']['payload_sha256'],hashlib.sha256(payload.encode()).hexdigest())
+            self.assertEqual(S.defer_gegi_journey(root,result,record),result)
+            self.assertEqual(script.read_bytes(),moved)
+
     def fixture(self,with_results=False):
         t=tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]/'.local'); self.addCleanup(t.cleanup); root=Path(t.name)
         (root/'models').mkdir(); (root/'detectors/AK02').mkdir(parents=True);(root/'detectors/SAP22').mkdir(parents=True)
@@ -255,7 +280,7 @@ class SiteStructureTests(unittest.TestCase):
                 self.assertIn(value,text)
         assemblies=(root/'assemblies/index.html').read_text(encoding='utf-8')
         for href in ('../scenarios/lbnl-cs137/index.html','gegi/index.html',
-                     '../viewers/events.html?model=AK02&amp;view=assembly'):
+                     '../viewers/events.html?model=AK02&amp;view=geometry'):
             self.assertIn(href,assemblies)
 
 if __name__=='__main__':unittest.main(verbosity=2)

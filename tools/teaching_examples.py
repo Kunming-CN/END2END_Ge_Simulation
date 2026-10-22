@@ -33,6 +33,10 @@ PREVIOUS_DISPLAY = (
 # Exact published59f9d008c4ae Git bytes. Both files must match; validation still
 # rebuilds every scientific value and changes only the historical generator map.
 PUBLISHED_PREVIOUS_DISPLAYS = frozenset({(
+    # Exact 376bd39 files before the historical/assembly navigation correction.
+    "c2c8d7d6584e5d6c55031c6335456a1101be13784032392ba909e57a0bcae733",
+    "9a3489a3772b8e9bc33e4a713370ff2d51e623cb15ab83e751c32a772aeb811e",
+),(
     # Exact a37cf4d public data/page pair; scientific payload is rebuilt below.
     "f87717b45224669e85c4d1278ec2fd990fe5568a40ec9364ea75ccc68c61d873",
     "5990252c64bb984dd828a9c0776e41428c7d790048429bedfba30c7959b59b2c",

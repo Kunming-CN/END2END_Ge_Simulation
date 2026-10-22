@@ -31,6 +31,8 @@ DISPLAY_SOURCES=(JS,'tools/saved_focus_pages.py','tools/site_restructure.py','to
 # immutable original receipt above. Rehashed edits are never a historical basis.
 PREVIOUS_DISPLAY_RECEIPTS={
     'gamma':frozenset({
+                       # Exact 376bd39 installed/Git display before archive identities.
+                       'c0e18347410fd3a0780c78aa6f0b404d496bdba4e65eb793e30e618d9c15e617',
                        # Exact 47685df Git/public bytes before the conditional GeGI hub schema.
                        '89d565fe6090ec8d2f77a91fcad688eb5b946bb46130cec0747e0502e5bd27e8',
                        # Exact bfcb3bb published receipt, byte-matched against
@@ -55,6 +57,41 @@ PREVIOUS_DISPLAY_RECEIPTS={
                        'a271d710183982a50a2ab6117765d9543e8eb7f2847ddf356e8c92298e174b72'}),
     'teaching':frozenset({'a96863b38712c40efd87372accd0276bdbdeada68370c5e6b46a983abf526800'})}
 PRESERVED_TEACHING_HTML={'bytes':9810837,'sha256':'71d898465740d2ad4eb098cc5cc1d27c494f38c0151e634dfc067bf53f147bf7'}
+TEACHING_ARCHIVE_TEXT=(
+    ('<title>From photon to pulse · HPGe pipeline</title>',
+     '<title>Historical bare-detector teaching study · 200 initial gamma primaries</title>'),
+    ('<strong>Main teaching example.</strong> 100 side-on gamma primaries per detector in bare geometry.',
+     '<strong>Historical bare-detector teaching study · 200 initial gamma primaries.</strong> '
+     '100 side-on gamma primaries per detector in bare geometry.'),
+    ('<strong>Teaching gamma · 200 primaries total (100 per detector) · bare geometry</strong>',
+     '<strong>Historical teaching gamma · 200 primaries total (100 per detector) · bare geometry</strong>'),
+    ('<a href="../results/index.html#teaching">Saved results</a>',
+     '<a href="../results/index.html">Results and historical studies</a>'),
+    ('<a href="../spectra/pipeline.html">Waveforms and spectrum</a>',
+     '<a href="../spectra/pipeline.html">Independent Cs137 10K study · selected signals</a>'),
+    ('<a href="../learn/index.html">Pipeline explanation</a>',
+     '<a href="../learn/index.html">Independent Cs137 10K study · signal explanation</a>'),
+    ('<a href="../results/index.html#teaching">← Teaching dataset</a>',
+     '<a href="../results/index.html">← Results and historical studies</a>'))
+
+def teaching_archive_original(raw):
+    """Recover only the exact accepted teaching display, including every sample."""
+    if {'bytes':len(raw),'sha256':S.sha(raw)}==PRESERVED_TEACHING_HTML:return raw
+    text=raw.decode('utf-8')
+    for original,current in TEACHING_ARCHIVE_TEXT:
+        S.require(text.count(current)==1,'Historical teaching navigation anchor changed')
+        text=text.replace(current,original,1)
+    original=text.encode('utf-8')
+    S.require({'bytes':len(original),'sha256':S.sha(original)}==PRESERVED_TEACHING_HTML,
+              'Original teaching reader differs from accepted display')
+    return original
+
+def teaching_archive_render(raw):
+    text=teaching_archive_original(raw).decode('utf-8')
+    for original,current in TEACHING_ARCHIVE_TEXT:
+        S.require(text.count(original)==1,'Original teaching navigation anchor changed')
+        text=text.replace(original,current,1)
+    return text.encode('utf-8')
 
 def display_sources():
     return {n:S.sha((ROOT/n).read_bytes()) for n in DISPLAY_SOURCES}
@@ -64,7 +101,7 @@ def historical_display(family,raw):
 
 def validate_display_binding(family,manifest):
     extension=manifest['display_upgrade'];base=DISPLAY_BASES[family]
-    current=family!='teaching' and extension==dict(kind='saved_plot_display_v1',science_calls=0,
+    current=extension==dict(kind='saved_plot_display_v1',science_calls=0,
         original_receipt_sha256=base['receipt'],sources=display_sources())
     previous=S.sha(S.canonical(manifest)) in PREVIOUS_DISPLAY_RECEIPTS[family]
     S.require(current or previous,'Unknown saved display upgrade binding')
@@ -93,7 +130,7 @@ def display_render(family,data):
     return body.replace(anchor,bar+anchor,1).encode('utf-8')
 
 def upgrade_displays(site):
-    """Update gamma navigation; preserve the exact teaching source for its derivative."""
+    """Migrate saved navigation while reconstructing each exact science receipt."""
     from gamma_publication import validate_bundle as validate_gamma
     site=Path(site);expected=display_sources()
     for family,directory,receipt in (
@@ -105,18 +142,13 @@ def upgrade_displays(site):
         if family=='gamma' and S.decode(path.read_bytes()).get('kind')!='saved_gamma_complete_publication_v1':continue
         data=validate_gamma(directory) if family=='gamma' else validate(directory)
         if family=='teaching':
-            # The maintained spectrum reader owns teaching navigation. Its saved
-            # source stays exactly at the accepted 8ef88bd display and receipt.
             raw=(directory/'pipeline.html').read_bytes()
-            S.require({'bytes':len(raw),'sha256':S.sha(raw)}==PRESERVED_TEACHING_HTML,
-                      'Original teaching reader differs from accepted display')
-            S.require(S.sha(path.read_bytes()) in PREVIOUS_DISPLAY_RECEIPTS['teaching'],
-                      'Unknown preserved teaching display receipt')
-            continue
+            html=teaching_archive_render(raw)
         raw=path.read_bytes();manifest=S.decode(raw)
         if 'display_upgrade' not in manifest:
             S.require(historical_display(family,raw),'Unknown initial saved display receipt')
-        html=display_render(family,data);name=DISPLAY_BASES[family]['html']
+        if family=='gamma':html=display_render(family,data)
+        name=DISPLAY_BASES[family]['html']
         manifest['files'][name]={'bytes':len(html),'sha256':S.sha(html)}
         manifest['display_upgrade']=dict(kind='saved_plot_display_v1',science_calls=0,
             original_receipt_sha256=DISPLAY_BASES[family]['receipt'],sources=expected)
@@ -125,6 +157,8 @@ def upgrade_displays(site):
         (directory/name).write_bytes(html);path.write_bytes(S.canonical(manifest))
         if family=='gamma':validate_gamma(directory)
         else:validate(directory)
+    from native_response_publication import upgrade_archive_navigation
+    upgrade_archive_navigation(site/'examples/cs137-1m-response')
 
 def render(data):
     template=(ROOT/TEMPLATE).read_text(encoding='utf-8')
@@ -157,11 +191,13 @@ def validate(directory):
     raw=(directory/'data.json').read_bytes();S.require(S.sha(raw)==manifest['original_data_sha256'],'Original teaching numerical bytes')
     data=S.decode(raw)
     if 'display_upgrade' in manifest:
-        S.require(S.sha((directory/'pipeline-display.json').read_bytes()) in PREVIOUS_DISPLAY_RECEIPTS['teaching'],
-                  'Unknown preserved teaching display receipt')
-        validate_display_binding('teaching',manifest)
-        S.require(manifest['files']['pipeline.html']==PRESERVED_TEACHING_HTML,
-                  'Original teaching reader differs from accepted display')
+        current=validate_display_binding('teaching',manifest)
+        html=(directory/'pipeline.html').read_bytes()
+        if current:
+            S.require(html==teaching_archive_render(html),'Historical teaching navigation differs')
+        else:
+            S.require(manifest['files']['pipeline.html']==PRESERVED_TEACHING_HTML,
+                      'Original teaching reader differs from accepted display')
     elif not historical_display('teaching',(directory/'pipeline-display.json').read_bytes()):
         S.require((directory/'pipeline.html').read_bytes()==render(data),'Exact focused teaching template/data')
         S.require(manifest['template_sha256']==S.sha((ROOT/TEMPLATE).read_bytes()) and manifest['javascript_sha256']==S.sha((ROOT/JS).read_bytes()),'Frozen presentation sources')
@@ -174,7 +210,8 @@ def assemble(target):
     S.require((target/'data.json').read_bytes()==(source/'data.json').read_bytes(),'Staged teaching numerical data differs')
     if (target/'pipeline-display.json').is_file():
         receipt=(target/'pipeline-display.json').read_bytes()
-        if S.sha(receipt) in PREVIOUS_DISPLAY_RECEIPTS['teaching']:
+        manifest=S.decode(receipt)
+        if 'display_upgrade' in manifest:
             validate(target);return True
     for n in FILES:shutil.copyfile(source/n,target/n)
     validate(target);return True

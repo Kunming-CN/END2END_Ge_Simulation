@@ -1,25 +1,27 @@
 # Current handoff
 
-## Website audit core delivery — 2026-10-22
+## Website navigation and compact display — 2026-10-22
 
-Owner requested source-level website changes from the supplied 33-task / 110-page
-workbook, with a compact default UI and no additional AI review rounds. Implemented:
-exact 10K study/model/variant/primary/group links and unavailable-waveform state;
-shareable teaching selection; one-case spectrum views; lossless on-demand saved
-waveforms (4/4/4/231); current/historical GeGI separation; unique study cards;
-short homepage/README/Results/Methods and first-run guide; 17-model gallery
-readability, source-specific temperatures, GeRC02 variants, geometry axes/mm scale.
-Generated build `af7d8f4362f8`: 109 pages / 992,761,812 bytes,
-3,510 local links and88 fragments checked. Website fixtures36 and navigation29
-tests passed; actual selected-event/trace checks are retained in the delivery receipt.
-Original numerical models, radiation, charge, readout values and science archives
-remain unchanged. No physics or package installation. Science and monitoring stay
-PAUSED. Publication execution/status is recorded in
-`.local/site-audit-20261022/delivery.json`; source extraction and bounded build
-failure/recovery logs are retained beside it. Reuse the generated stage if needed.
-Remaining later work includes the frozen 200-primary archive's own legacy heading,
-full historical-gallery event filtering, a geometry-only LBNL landing, and lazy
-splitting of large historical/advanced payloads. These are not claimed completed.
+Owner follow-up identified five concrete gaps after published376bd39: event context
+through spectra, two dynamic scalar URLs,200-primary archive identity, old1M-to10K
+links, and current10K cards duplicated under historical detector studies. Source
+repairs are implemented and frozen. Saved readout main content now shows three
+energy quantities; exact rows/times/samples remain in details. LBNL uses the shared
+viewer in geometry-only mode, with an explicit study entrance. GeGI's exact
+5,957,207-byte historical payload moves to its existing script asset and loads
+only after expansion; current maps, counts and scientific limitations stay visible.
+
+Targeted event/DOM/history/scalar/archive checks passed; archive suite17pass/1old
+fixture skip, site fixtures36, shared-navigation31. Deferred-load and duplicate
+application checks preserve exact payload bytes. Generated build `964d5a74286e`:109pages/992,786,594bytes,3,506local links.
+Both final snapshot validations passed. Publication/live status belongs to the
+continuation receipt; do not infer deployment from a successful local build.
+`.local/site-audit-20261022/continuation.json` owns source pins and this delivery's
+build/live status. The prior published milestone is retained in `delivery.json`.
+No physics, original scientific changes, student ZIP rebuild or extra AI review.
+Science and monitoring remain PAUSED. Remaining later work: full historical-gallery
+event filtering and historical-report duplicate download labels; not all33 audit
+items are claimed closed.
 
 
 ## GeGI lateral-response milestone completed; paused — 2026-10-20

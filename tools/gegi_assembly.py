@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / '.local/gegi-website'
 SAVED = ROOT / '.local/runs/gegi-source-left-v1/transport'
 BUNDLE = WORK / 'assembly-signal-v3'
-DISPLAY_BUNDLE = WORK / 'assembly-display-audit-20261022'
+DISPLAY_BUNDLE = WORK / 'assembly-display-navigation-20261022'
 FREEZE = WORK / 'assembly-signal-v3-source-freeze.json'
 NATIVE_FREEZE = WORK / 'assembly-native-source-freeze.json'
 NATIVE = WORK / 'build/gegi-scene-native.json'
@@ -33,7 +33,10 @@ KIND = 'gegi_saved_assembly_v1'
 PREVIOUS_BUNDLES = frozenset({'6a725558513bc6761450cd6fbee4e14ca11b91a66eb160f80c422f7520923081'})
 # Exact eight-file saved publication before the 2026-10-22 presentation audit.
 # Its file/event/native-source checks remain mandatory under current sources.
-PRESENTATION_PREDECESSORS = frozenset({'bae59d7ee0916648e41792c8732f81e682b87939efc706ce5c0116667a53dd1d'})
+PRESENTATION_PREDECESSORS = frozenset({
+    'bae59d7ee0916648e41792c8732f81e682b87939efc706ce5c0116667a53dd1d',
+    # Exact 376bd39 deployed display, byte matched to Git before route changes.
+    '95c3b88535ee6698f88e4184f735c3c1e14b2667fb89a18d8d7107e092c31f5b'})
 EVENTS = ROOT / '.local/gegi-10m/reconstruction-v3/assembly-events.json'
 EVENTS_SHA256 = '4ceebc1c3d8c63479db1ced63edc230387de8a983934ef62d4a73d57499f8210'
 ASSET = 'scenarios/assets/gegi_cryostat_v1.json'

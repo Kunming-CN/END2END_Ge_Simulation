@@ -116,7 +116,9 @@ class LithiumDisplayTests(unittest.TestCase):
                         for p in (self.site/'lithium').iterdir() if p.name!='lithium.html'}
         receipt=D.upgrade_lithium_display(self.site)
         raw=(self.site/D.LITHIUM_PAGE).read_bytes()
-        self.assertEqual(raw.replace(page_navigation(D.LITHIUM_PAGE).encode('utf-8'),b'',1),self.original)
+        expected=self.original.replace(b'href="../index.html">Back to the detector library',
+            b'href="../detectors/index.html">Back to the detector library',1)
+        self.assertEqual(raw.replace(page_navigation(D.LITHIUM_PAGE).encode('utf-8'),b'',1),expected)
         self.assertEqual(receipt['components'],D.scientific_components(self.original.decode('utf-8')))
         self.assertEqual(raw.count(b'id="page-navigation"'),1)
         self.assertEqual(original_files,{p.name:(p.read_bytes(),p.stat().st_mtime_ns)

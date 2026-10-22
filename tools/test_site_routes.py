@@ -154,6 +154,15 @@ class RouteTests(unittest.TestCase):
         self.assertEqual(R.page_record('assemblies/gegi/index.html')['parent_id'],'assemblies/index.html')
         self.assertEqual(R.page_record('scenarios/lbnl-cs137/index.html')['parent_id'],'assemblies/index.html')
         self.assertEqual(R.page_record('examples/gegi/index.html')['parent_id'],'results/index.html')
+        self.assertEqual(R.page_record('examples/pipeline.html')['parent_id'],'results/index.html')
+
+    def test_geometry_navigation_has_only_assembly_identity(self):
+        nav=R.assembly_navigation('viewers/events.html')
+        self.assertIn('href="../assemblies/index.html" aria-current="true"',nav)
+        self.assertIn('LBNL cryostat geometry',nav)
+        self.assertNotIn('Cs137',nav)
+        self.assertNotIn('data-context-link',nav)
+        self.assertEqual(nav.count('aria-label="Primary"'),1)
 
     def test_relative_query_fragment_and_absolute_project_identity(self):
         expected = dict(path='viewers/events.html', query='model=GeRC02&view=positive',

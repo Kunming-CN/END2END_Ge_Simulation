@@ -6,6 +6,8 @@ const viewer={generation:0,requested:parseViewerQuery(location.search),scene:nul
 const RING_KIND='ring_saved_publication_v1',ringModels=['GeRC02','KMRC01_candidate'];
 const sceneCache=new Map(),positiveCache=new Map(),chunkCache=new Map(),manifestCache=new Map();
 let mode=null,pendingSelection=null;
+const eventNavigationHTML=$('page-navigation')?.outerHTML;
+let navigationMode='events';
 let yaw=.55,pitch=-.2,zoom=1,panX=0,panY=0,center=[0,0,0],radius=1,panMode=false,visible=new Set();
 const labels={ledger_0_PV:'World air',ledger_1:'Flange',ledger_2:'Outer Al wall / endCap',ledger_3:'Outer hollow',ledger_4:'Inner Al shield',ledger_5:'Inner vacuum',ledger_6:'Holder: stage',ledger_7:'Holder: backStage',ledger_12:'Holder: BN block',ledger_13:'Holder: lower indium',ledger_14:'Holder: copper plate',ledger_15:'Holder: upper indium',germanium:'Germanium crystal',ledger_17:'Nominal BN spacer',ledger_18:'Nominal Al source capsule',ledger_19:'Nominal source fill'};
 const color=v=>v.name==='germanium'?'#c697ff':v.material==='G4_Al'?'#a9c2d5':v.material==='G4_Cu'?'#d78d5e':v.material==='boron_nitride'?'#7fdcae':v.material==='G4_Galactic'?'#5c7593':'#ddd290';
@@ -121,14 +123,16 @@ function clearPrimary(){viewer.primary=null;$('records').textContent='';clearGro
 function identityText(){
   const r=viewer.requested;
   if(r.invalid){$('identity').textContent='Requested: '+r.model+'; unavailable identity: '+r.invalid;return;}
+  if(r.view==='geometry'){$('identity').textContent=(r.model==='GeRC02'?'GeRC02 Li50min scene':r.model)+' · nominal LBNL assembly · global coordinates in mm.';return;}
   $('identity').textContent='Saved study: '+SAVED_STUDY+' / '+SAVED_VARIANTS[r.model]+'. Requested: '+r.model+(r.event===null?' (recorded initial default)':', original primary '+r.event)+
     (r.group===null?'':', group '+r.group)+(r.view==='assembly'&&r.group!==null?' (return-navigation context only; no pulse group is selected).':'; '+r.view+' view.');
 }
 function selectionRoutes(){
   const r=viewer.requested,routes=VIEWER_CONFIG.case_routes?.[r.model];
+  if(r.view==='geometry')return null;
   if(!routes||r.invalid)return routes;
   const result={...routes};
-  for(const kind of ['result','files','events'])if(routes[kind]){
+  for(const kind of ['result','files','events','spectrum'])if(routes[kind]){
     const [path,fragment]=routes[kind].split('#');
     result[kind]=path.split('?')[0]+'?'+savedSelectionQuery(r)+(kind==='events'?'&view='+r.view:'')+(fragment?'#'+fragment:'');
   }
@@ -150,9 +154,27 @@ function writeHistory(action){
 }
 function applyMode(view){
   if(mode===view)return;mode=view;
-  for(const id of ['shells','steps','births'])$(id).checked=view==='assembly';
+  $('shells').checked=view==='assembly'||view==='geometry';
+  for(const id of ['steps','births'])$(id).checked=view==='assembly';
   $('overlay').checked=view==='positive';$('detail').checked=false;
   $('category').disabled=view==='assembly';
+}
+function pageMode(view){
+  const geometry=view==='geometry',next=geometry?'geometry':'events';
+  if(navigationMode!==next&&eventNavigationHTML){
+    requireViewer(!geometry||VIEWER_CONFIG.geometry_navigation,'Assembly navigation is unavailable.');
+    $('page-navigation').outerHTML=geometry?VIEWER_CONFIG.geometry_navigation:eventNavigationHTML;navigationMode=next;
+  }
+  document.title=geometry?'LBNL cryostat geometry · GeSignal':'GeSignal event viewer';
+  $('viewer-title').textContent=geometry?'LBNL cryostat geometry':'GeSignal event viewer';
+  for(const id of ['event-context','event-controls','group-controls','modelNotes','event-color-key','event-layers','overlay-controls','detailLimit','event-record-note','recordPanel','evidencePanel','event-evidence','archive-viewers','event-loading-note','overlay-loading-note','event-provenance-note'])$(id).hidden=geometry;
+  $('geometry-provenance-note').hidden=!geometry;
+  $('geometry-context').hidden=!geometry;$('volume-panel').open=geometry;
+  canvas.setAttribute('aria-label',geometry?'Rotatable nominal LBNL cryostat geometry in global millimetres':'Recorded radiation assembly and pulse-group overlay');
+  if(geometry){
+    $('geometry-study').href='events.html?'+savedSelectionQuery({model:viewer.requested.model})+'&view=positive';
+    $('responseLinks').hidden=true;
+  }
 }
 function showScene(scene,manifest,name){
   viewer.scene=scene;viewer.assemblyManifest=manifest;
@@ -163,6 +185,11 @@ function showScene(scene,manifest,name){
     const title=document.createElement('span');title.textContent=labels[v.name]||'Holder: '+v.original_path.split('/').pop();title.style.color=color(v);
     const small=document.createElement('small');small.textContent=v.name+' · '+v.material+' · '+v.solid_type;label.append(check,title,small);$('volumes').append(label);}
   const entry=manifest.models[name];$('originals').href=bundlePath('assembly',entry.originals,name);clearModelLinks();
+  if(viewer.requested.view==='geometry'){
+    $('geometry-scene').href=bundlePath('assembly',entry.scene,name);$('census').textContent='';
+    $('provenance').textContent=exactJSON({model:name,scene_variant:entry.variant_id,physical_length_unit:'mm',coordinate_transform:scene.coordinate_transform,
+      scene_sha256:manifest.files[entry.scene].sha256,originals_sha256:scene.originals_sha256,omissions:scene.omissions});return;
+  }
   const routes=VIEWER_CONFIG.case_routes?.[name];requireViewer(routes,'No maintained case routes are bound for '+name+'.');
   updateResponseLinks();
   for(const [id,record]of Object.entries(routes.original_files)){$(id).href=record.href;$(id).hidden=false;}
@@ -224,7 +251,8 @@ async function applySelection(identity,options={}){
   const r=normalizeRequest(identity),ticket=++viewer.generation,previousModel=viewer.requested.model,previousScene=viewer.scene,previousMode=mode;
   viewer.requested=r;clearPrimary();viewer.overlayError='';$('overlayStatus').textContent='';$('status').className='';
   const routes=VIEWER_CONFIG.case_routes?.[r.model];
-  updateCaseNavigation(r.invalid?null:routes,routes?'Focused case: '+routes.label:r.model,
+  pageMode(r.view);
+  if(r.view!=='geometry')updateCaseNavigation(r.invalid?null:routes,routes?'Focused case: '+routes.label:r.model,
     r.invalid?'Unavailable request: '+r.invalid:(!routes?'Case routes unavailable for '+r.model:''));
   if(previousModel!==r.model){viewer.scene=null;clearOverlay();$('provenance').textContent='';$('census').textContent='';$('volumes').replaceChildren();$('originals').removeAttribute('href');clearModelLinks();}
   modelOptions(r.model);$('view').value=r.view;if(r.event!==null)$('eid').value=String(r.event);identityText();
@@ -234,7 +262,11 @@ async function applySelection(identity,options={}){
   try{
     $('status').textContent='Loading '+r.model+' saved assembly / primary…';
     const {manifest,scene}=await loadScene(r.model);if(!current())return false;
-    if(viewer.scene!==scene)showScene(scene,manifest,r.model);else viewer.assemblyManifest=manifest;
+    if(viewer.scene!==scene||previousMode!==r.view)showScene(scene,manifest,r.model);else viewer.assemblyManifest=manifest;
+    if(r.view==='geometry'){
+      clearOverlay();$('status').textContent='Saved geometry loaded. Select a study to add radiation events.';
+      refreshDetails();if(previousScene!==scene||previousMode!==mode)fit();else draw();return true;
+    }
     if(r.event===null){r.event=scene.event_index.ge_hit_ids[0]??0;viewer.requested={...r};$('eid').value=String(r.event);writeHistory(options.history==='none'?'none':'replace');identityText();}
     const primary=await loadPrimary(r.model,scene,r.event);if(!current())return false;
     viewer.primary=primary;const rows=primary.tables['stp/germanium'],energy=rows.reduce((s,row)=>s+row.edep,0);
@@ -264,13 +296,15 @@ async function applySelection(identity,options={}){
 }
 function requestSelection(identity,options={}){pendingSelection=applySelection(identity,options);return pendingSelection;}
 function selectModel(name){
+  if(viewer.requested.view==='geometry')return requestSelection({model:name,event:null,group:null,view:'geometry',invalid:''});
   const same=name===viewer.requested.model;
   if(!same)viewer.category='all';
   return requestSelection({...viewer.requested,...savedCaseIdentity(name),event:same?viewer.requested.event:null,
     group:same?viewer.requested.group:null,invalid:''});
 }
 function selectEvent(id,groupId=null){return requestSelection({...viewer.requested,event:id,group:groupId,invalid:''});}
-function setView(view){return requestSelection({...viewer.requested,view,invalid:''});}
+function setView(view){return requestSelection(view==='geometry'?{model:viewer.requested.model,event:null,group:null,view,invalid:''}:
+  {...viewer.requested,...savedCaseIdentity(viewer.requested.model),view,invalid:''});}
 function filterCategory(){viewer.category=$('category').value;return requestSelection({...viewer.requested});}
 function restoreViewerHistory(){
   viewer.category=history.state?.viewer===1&&categories.includes(history.state.category)?history.state.category:'all';
@@ -315,18 +349,18 @@ function draw(){
     if($('steps').checked)chord(row,ge?'#ffed76':'#ffb063',1.8);
     if(ge&&row.edep>0&&$('deposits').checked&&viewer.requested.view==='assembly')dot(position(row),'#ffed76',2.5);}
     if($('births').checked)for(const row of primary.tables.tracks)dot(position(row),'#6ee4ff',2);}
-  if($('overlay').checked)for(const event of viewer.events.values())if(!viewer.group||event.event_id!==primary?.event_id)drawPositive(event);
+  if(viewer.requested.view!=='geometry'&&$('overlay').checked)for(const event of viewer.events.values())if(!viewer.group||event.event_id!==primary?.event_id)drawPositive(event);
   if(primary&&$('detail').checked){let count=0,total=0;ctx.globalAlpha=.5;
     for(const [name,rows]of Object.entries(primary.tables))if(name.startsWith('stp/'))for(const row of rows){total++;if(count++<DETAIL_CAP)chord(row,'#8ca3b8');}
     ctx.globalAlpha=1;$('detailLimit').textContent='Optional detail: '+Math.min(total,DETAIL_CAP)+' / '+total+' recorded STEP chords drawn (cap '+DETAIL_CAP+'); every original row remains in the raw panel.';
   }else $('detailLimit').textContent='Optional detail caps drawing only; original rows and event census are never capped.';
   if(primary&&viewer.group)drawPositive(primary,true);
-  dot(viewer.scene.source_position_global_mm,'#ffe169',5);const p=projected(viewer.scene.source_position_global_mm);ctx.fillStyle='#ffe169';ctx.font='13px system-ui';ctx.fillText('Source (+y / curved wall)',p[0]+9,p[1]-8);
+  if(viewer.requested.view!=='geometry'){dot(viewer.scene.source_position_global_mm,'#ffe169',5);const p=projected(viewer.scene.source_position_global_mm);ctx.fillStyle='#ffe169';ctx.font='13px system-ui';ctx.fillText('Source (+y / curved wall)',p[0]+9,p[1]-8);}
   const origin=projected([0,0,0]);for(const [q,c,text]of [[[15,0,0],'#ff8080','+x'],[[0,15,0],'#85ef9a','+y'],[[0,0,15],'#86b6ff','+z']]){const point=projected(q);line(origin,point,c,2);ctx.fillStyle=c;ctx.fillText(text,point[0]+3,point[1]-3);}
 }
 function fit(view='default'){
   yaw=view==='front'?0:view==='side'?Math.PI/2:.55;pitch=view==='default'?-.2:0;zoom=1;panX=panY=0;
-  if(viewer.scene){const pts=viewer.scene.volumes.filter(v=>visible.has(v.name)&&(v.name==='germanium'||$('shells').checked)).flatMap(v=>v.vertices_global_mm);pts.push(viewer.scene.source_position_global_mm);
+  if(viewer.scene){const pts=viewer.scene.volumes.filter(v=>visible.has(v.name)&&(v.name==='germanium'||$('shells').checked)).flatMap(v=>v.vertices_global_mm);if(viewer.requested.view!=='geometry')pts.push(viewer.scene.source_position_global_mm);
     const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];for(const p of pts)for(let a=0;a<3;a++){lo[a]=Math.min(lo[a],p[a]);hi[a]=Math.max(hi[a],p[a]);}
     center=lo.map((v,i)=>(v+hi[i])/2);radius=1;for(const p of pts)radius=Math.max(radius,Math.hypot(...p.map((v,i)=>v-center[i])));}
   draw();

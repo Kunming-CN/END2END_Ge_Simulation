@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import shutil
+import os
 import subprocess
 import tempfile
 import unittest
@@ -12,6 +13,7 @@ from pathlib import Path
 import spectrum_display as D
 import spectrum_plot as P
 ROOT=Path(__file__).resolve().parents[1]
+NODE=os.environ.get('SPECTRUM_NODE') or shutil.which('node')
 
 def toy(counts,edges=None):
     edges=edges or list(range(len(counts)+1))
@@ -354,6 +356,11 @@ class NavigationCorrectionTests(unittest.TestCase):
         active='<a class="data-original-report" href="../../examples/cs137-10k/comparison.html#original">Current view</a>'
         self.assertIn('href="../../spectra/cs137-10k.html#original"',D.rewrite_links(active,'results/cs137-10k/index.html','results/cs137-10k/index.html'))
 
+    def test_independent_200_primary_archive_has_no_six_cs137_case_alias(self):
+        for marker in ('', 'data-original-report '):
+            original='<a '+marker+'href="../examples/pipeline.html?model=AK02#event-0">200-primary bare gamma</a>'
+            self.assertEqual(D.rewrite_links(original,'learn/index.html','learn/index.html'),original)
+
     def test_postmapper_preserves_marked_hub_archives_and_maps_active_links(self):
         with tempfile.TemporaryDirectory(dir=ROOT/'.local/student-navigation-v2',prefix='archive-navigation-') as tmp:
             site=Path(tmp)
@@ -405,26 +412,26 @@ class NavigationCorrectionTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,error):module.validate(site)
 
 class JavaScriptTests(unittest.TestCase):
-    @unittest.skipUnless(shutil.which('node'),'Node needed for saved-case selection')
+    @unittest.skipUnless(NODE,'Node needed for saved-case selection')
     def test_selected_case_comparison_history_refresh_and_million_links(self):
         script='''import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 const code=fs.readFileSync(process.argv[1],'utf8');
-function setup(prefix,models,hash){
- const cases=Object.fromEntries(models.map(model=>[model,{model,label:model,
+function setup(prefix,models,hash,search=''){
+ const cases=Object.fromEntries(models.map(model=>[model,{study:'cs137-10k',model,variant:model==='GeRC02'?'GeRC02_Li50min':model,label:model,
    spectrum:'cs137-10k.html#tenk-'+model,result:'result/'+model,files:'files/'+model,
+   events:'events.html?model='+model+'&view=positive',
    truth:'million-truth.html#million-'+model,response:'million-response.html#million-'+model}]));
  const node=(dataset={})=>({dataset,hidden:false,textContent:'',attrs:{},listeners:{},
    setAttribute(k,v){this.attrs[k]=v;},removeAttribute(k){delete this.attrs[k];delete this[k];},addEventListener(k,fn){this.listeners[k]=fn;}});
- const select=node({prefix}),status=node(),payload=node(),focus=node(),context=node(),listeners={};
+ const select=node({prefix}),status=node(),payload=node(),focus=node(),context=node(),listeners={},returnBox=node(),returnEvent=node(),return3D=node();
  payload.textContent=JSON.stringify(cases);
  const sections=models.map(spectrumModel=>node({spectrumModel}));
- const links=['spectrum','result','files','truth','response'].map(contextLink=>node({contextLink,baseHref:contextLink+'.html'}));
- const location={hash,pathname:'/spectra/test.html',search:''},history={state:null,
-   replaceState(_s,_t,url){location.hash=url.slice(url.indexOf('#'));}};
- const document={readyState:'complete',getElementById:id=>({'spectrum-case':select,'spectrum-focus':status,'spectrum-case-context':payload})[id],
-   querySelectorAll:q=>({'.spectrum-panel':[],'[data-spectrum-model]':sections,'[data-dataset]':[context],'[data-context-label]':[focus],'[data-context-link]':links})[q]||[]};
- const c=vm.createContext({document,location,history,addEventListener:(k,fn)=>listeners[k]=fn});vm.runInContext(code,c);
- return {c,location,select,sections,links,status,listeners};
+ const links=['spectrum','result','files','truth','response','events'].map(contextLink=>node({contextLink,baseHref:contextLink+'.html'})),caseLinks=models.map(model=>node({spectrumCaseLink:'result',caseModel:model,baseHref:cases[model].result}));
+ const location={hash,pathname:'/spectra/test.html',search},move=url=>{const u=new URL(url,'https://test.invalid');location.hash=u.hash;location.search=u.search;},history={state:null,replaceState(_s,_t,url){move(url);},pushState(_s,_t,url){move(url);}};
+ const document={readyState:'complete',getElementById:id=>({'spectrum-case':select,'spectrum-focus':status,'spectrum-case-context':payload,'spectrum-return-context':returnBox,'spectrum-return-event':returnEvent,'spectrum-return-3d':return3D})[id],
+   querySelectorAll:q=>({'.spectrum-panel':[],'[data-spectrum-model]':sections,'[data-dataset]':[context],'[data-context-label]':[focus],'[data-context-link]':links,'[data-spectrum-case-link]':caseLinks})[q]||[]};
+ const c=vm.createContext({document,location,history,URLSearchParams,addEventListener:(k,fn)=>listeners[k]=fn});vm.runInContext(code,c);
+ return {c,location,select,sections,links,status,listeners,returnBox,returnEvent,return3D,caseLinks};
 }
 const models=['AK02','SAP22','GeRC02','KMRC01_candidate'];
 let v=setup('tenk',models,'');assert.equal(v.location.hash,'#tenk-AK02');
@@ -439,11 +446,21 @@ v.location.hash='#tenk-missing';v.listeners.popstate();assert.ok(v.sections.ever
 for(const model of ['AK02','SAP22']){v=setup('million',['AK02','SAP22'],'#million-'+model);
  assert.deepEqual(v.sections.map(s=>s.hidden),['AK02','SAP22'].map(m=>m!==model));
  assert.equal(v.links[3].href,'million-truth.html#million-'+model);assert.equal(v.links[4].href,'million-response.html#million-'+model);}
+const original='?study=cs137-10k&model=AK02&variant=AK02&event=698&group=0';
+v=setup('tenk',models,'#tenk-AK02',original);
+for(const link of [v.links[1],v.links[2],v.links[5],v.caseLinks[0],v.returnEvent,v.return3D]){const q=new URL(link.href,'https://test.invalid').searchParams;assert.equal(q.get('study'),'cs137-10k');assert.equal(q.get('model'),'AK02');assert.equal(q.get('variant'),'AK02');assert.equal(q.get('event'),'698');assert.equal(q.get('group'),'0');}
+assert.equal(v.returnEvent.textContent,'Return to AK02 event 698 / group 0');assert.equal(v.returnBox.hidden,false);
+v.select.value='compare';v.select.listeners.change();assert.equal(new URLSearchParams(v.location.search).get('event'),'698');assert.equal(v.returnBox.hidden,false);assert.ok(v.sections.every(s=>!s.hidden));
+assert.equal(setup('tenk',models,v.location.hash,v.location.search).returnEvent.textContent,'Return to AK02 event 698 / group 0');
+v.select.value='AK02';v.select.listeners.change();assert.equal(new URLSearchParams(v.location.search).get('event'),'698');
+v.select.value='SAP22';v.select.listeners.change();let changed=new URLSearchParams(v.location.search);assert.equal(changed.get('model'),'SAP22');assert.equal(changed.get('variant'),'SAP22');assert.equal(changed.has('event'),false);assert.equal(changed.has('group'),false);assert.equal(v.returnBox.hidden,true);
+v.location.search=original;v.location.hash='#tenk-AK02';v.listeners.popstate();assert.equal(v.returnEvent.textContent,'Return to AK02 event 698 / group 0');assert.equal(v.returnBox.hidden,false);
+for(const bad of ['?study=cs137-1m&model=AK02&event=698&group=0','?model=GeRC02&variant=GeRC02_Li30min&event=61&group=0','?model=AK02&event=698&group=1.5']){v=setup('tenk',models,'#tenk-AK02',bad);assert.ok(v.sections.every(s=>s.hidden));assert.match(v.status.textContent,/Unavailable|Invalid|differs/);assert.equal(v.returnBox.hidden,true);}
 console.log('Saved-case selection, explicit comparison, history and refresh passed');'''
-        result=subprocess.run(['node','--input-type=module','-e',script,str(ROOT/'tools/spectrum_controls.js')],capture_output=True,text=True,timeout=20,check=True)
+        result=subprocess.run([NODE,'--input-type=module','-e',script,str(ROOT/'tools/spectrum_controls.js')],capture_output=True,text=True,timeout=20,check=True)
         self.assertIn('passed',result.stdout)
 
-    @unittest.skipUnless(shutil.which('node'),'Node needed for browser-math parity')
+    @unittest.skipUnless(NODE,'Node needed for browser-math parity')
     def test_js_log_linear_parity(self):
         source=(ROOT/'tools/spectrum_controls.js').read_text()
         self.assertNotIn('Math.log1p',source)
@@ -454,7 +471,7 @@ const context={};vm.createContext(context);vm.runInContext(fs.readFileSync(proce
 const data=JSON.parse(process.argv[2]);const before=JSON.stringify(data);
 const out=data.map(s=>['log','linear'].flatMap(mode=>[[true,true],[true,false],[false,true],[false,false]].map(mask=>{const g=context.SpectrumUI.geometry(s,mode,mask);return {paths:g.paths,ticks:g.ticks,low:g.low,high:g.high};})));
 if(JSON.stringify(data)!==before)throw Error('Mutated bins');process.stdout.write(JSON.stringify(out));'''
-        result=subprocess.run(['node','--input-type=module','-e',script,str(ROOT/'tools/spectrum_controls.js'),json.dumps(fixtures)],capture_output=True,text=True,timeout=20,check=True)
+        result=subprocess.run([NODE,'--input-type=module','-e',script,str(ROOT/'tools/spectrum_controls.js'),json.dumps(fixtures)],capture_output=True,text=True,timeout=20,check=True)
         actual=json.loads(result.stdout)
         for s,states in zip(fixtures,actual):
             cases=[(mode,mask) for mode in ('log','linear') for mask in ([True,True],[True,False],[False,True],[False,False])]

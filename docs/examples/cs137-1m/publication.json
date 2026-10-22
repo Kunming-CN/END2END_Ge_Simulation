@@ -33,7 +33,8 @@
     }
   },
   "native_response_extension": {
-    "publication_sha256": "b2cbd14d37ba5b1bb0e15d39efb28808f06b63e14d6de04bd947e5ccac24cff5",
-    "original_truth_artifacts_modified": false
+    "publication_sha256": "7aa6dfac01facd9322b101eb0b394a1fccb93de2184b57bc7e7a00f0b698d50a",
+    "original_truth_artifacts_modified": false,
+    "original_response_publication_sha256": "b2cbd14d37ba5b1bb0e15d39efb28808f06b63e14d6de04bd947e5ccac24cff5"
   }
 }

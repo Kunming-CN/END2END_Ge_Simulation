@@ -20,7 +20,9 @@ function parseViewerQuery(search, options = {}) {
   if(q.has('study'))state.study=q.get('study');
   if(q.has('variant'))state.variant=q.get('variant');
   if (!legacy && q.has('view')) state.view = q.get('view');
-  if (!['assembly','positive'].includes(state.view)) state.invalid = 'Unknown view.';
+  if (!['assembly','positive','geometry'].includes(state.view)) state.invalid = 'Unknown view.';
+  if(state.view==='geometry'&&['study','variant','event','group'].some(key=>q.has(key)))
+    state.invalid='Geometry view accepts only model and view; saved-event identity belongs to the radiation viewer.';
   for (const key of ['event','group']) if (q.has(key)) {
     const raw = q.get(key), value = Number(raw);
     if (!/^(0|[1-9][0-9]*)$/.test(raw) || !Number.isSafeInteger(value) || (key === 'event' && value > 9999))

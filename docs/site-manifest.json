@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
-  "build_id": "af7d8f4362f84ee7571cba420581207051f64416305acce82189a7711ce578bd",
+  "build_id": "964d5a74286eca0df9ae337199089837d836ec9ee0d9779ef73991519fc8f78a",
   "file_count": 1970,
-  "total_bytes": 992761812,
+  "total_bytes": 992786594,
   "html_pages": 109,
-  "local_links_checked": 3510,
-  "resource_references_checked": 3567,
-  "page_navigation_checked": 1480,
-  "fragments_checked": 88,
+  "local_links_checked": 3506,
+  "resource_references_checked": 3563,
+  "page_navigation_checked": 1477,
+  "fragments_checked": 86,
   "downloads_checked": 768,
   "media_references_checked": 1281,
   "metadata_references_checked": 35,
-  "other_references_checked": 3,
+  "other_references_checked": 2,
   "files": [
     {
       "path": ".nojekyll",
@@ -46,12 +46,12 @@
     {
       "path": "assemblies/gegi/index.html",
       "bytes": 229247,
-      "sha256": "de6e06554f55a464611210fa7391f24eb44fcd7ee454b4d8d774fd32facf8e78"
+      "sha256": "3fd7922e2a352cee35b2b8dbcfe069cb32a7bae9e3bcf678d54321e050b5302f"
     },
     {
       "path": "assemblies/gegi/manifest.json",
       "bytes": 13541,
-      "sha256": "95c3b88535ee6698f88e4184f735c3c1e14b2667fb89a18d8d7107e092c31f5b"
+      "sha256": "3a8ca29af5d05e8b8bdbd077aca4f8b605bacb07b763346221f9fd87818ddc06"
     },
     {
       "path": "assemblies/gegi/preview.svg",
@@ -71,7 +71,7 @@
     {
       "path": "assemblies/index.html",
       "bytes": 5290,
-      "sha256": "097f22f6176b7a434bf3869df498a9e9476c13e5a8a7dfc11ce093bd010b6a44"
+      "sha256": "d3db437275fda8d1db2e8db5ffe16724810474395d2ed7873c0d0e4421ef2c4e"
     },
     {
       "path": "detectors/AK01/config/source.json",
@@ -430,8 +430,8 @@
     },
     {
       "path": "detectors/AK02/index.html",
-      "bytes": 6485,
-      "sha256": "dbd863be054d288c65b9aaf84fbf59f6e665193ea65b3243d47f499fc2686fb7"
+      "bytes": 6306,
+      "sha256": "b48901d744634ada356c6d982a680b65f56d603d4b32580c247688d9658a723a"
     },
     {
       "path": "detectors/AK02/runs/20260922_suite_v3/01_geometry.png",
@@ -2535,8 +2535,8 @@
     },
     {
       "path": "detectors/GeRC02/index.html",
-      "bytes": 6599,
-      "sha256": "e497e18288e0f08b594b9d531b64aa17d06a0a19c5151e73b6f06900187a2c2c"
+      "bytes": 6371,
+      "sha256": "1238609b6db298f9ccd4a069dca9f55fd7e7d49bee09f6370ce4b353b7add8a3"
     },
     {
       "path": "detectors/GeRC02/runs/20260922_suite_v3/01_geometry.png",
@@ -3795,8 +3795,8 @@
     },
     {
       "path": "detectors/KMRC01_candidate/index.html",
-      "bytes": 6564,
-      "sha256": "94b8d18e497d7676bd6b83ecc4a6967f5108ef10f49e81c85bb5810d3ade26e2"
+      "bytes": 6270,
+      "sha256": "d8c9f1d9f456b848846c98a4834f205f1b356661a4c776d28d49f72fd7a0174b"
     },
     {
       "path": "detectors/KMRC01_candidate/runs/20260922_suite_v3/01_geometry.png",
@@ -5380,8 +5380,8 @@
     },
     {
       "path": "detectors/SAP22/index.html",
-      "bytes": 6519,
-      "sha256": "a4c8a95593506c03a245d819dc87f1bed08bbae2180b7d16fbae6f8f4ce33fc0"
+      "bytes": 6316,
+      "sha256": "13072361347c4a02c99cbe480bd31f7241cc3b2c4cd5a60e259f73af478c910b"
     },
     {
       "path": "detectors/SAP22/runs/20260922_suite_v3/01_geometry.png",
@@ -8130,13 +8130,13 @@
     },
     {
       "path": "examples/cs137-1m-response/publication.json",
-      "bytes": 1154,
-      "sha256": "b2cbd14d37ba5b1bb0e15d39efb28808f06b63e14d6de04bd947e5ccac24cff5"
+      "bytes": 1454,
+      "sha256": "7aa6dfac01facd9322b101eb0b394a1fccb93de2184b57bc7e7a00f0b698d50a"
     },
     {
       "path": "examples/cs137-1m-response/report.html",
-      "bytes": 52506,
-      "sha256": "4de4b264f6df246982b3991bb1cedf3d5eefcf26aa9726e1379e0e511f135b77"
+      "bytes": 52753,
+      "sha256": "4fdf244498d4a49e2837dcf0f882c7b94d33179ed4810b74a1d728ab7128369d"
     },
     {
       "path": "examples/cs137-1m-response/summary.json",
@@ -8165,8 +8165,8 @@
     },
     {
       "path": "examples/cs137-1m/publication.json",
-      "bytes": 1399,
-      "sha256": "e829d66bbf4f315d6dc8b26db921932a7112f98bc08d5cae42eddb9a5553003d"
+      "bytes": 1511,
+      "sha256": "01d3b22ca520266ca62363425efa45491a233c0bc55a08b79f2cacc5b0c6ea46"
     },
     {
       "path": "examples/cs137-1m/report.html",
@@ -8211,7 +8211,7 @@
     {
       "path": "examples/gamma-native/publication.json",
       "bytes": 24399,
-      "sha256": "c0e18347410fd3a0780c78aa6f0b404d496bdba4e65eb793e30e618d9c15e617"
+      "sha256": "8ba30d9cb452f0e4661acb90bc1766d7246f2fd4a43c77e1e9b0370915e05bcc"
     },
     {
       "path": "examples/gegi/index.html",
@@ -8221,7 +8221,7 @@
     {
       "path": "examples/gegi/publication.json",
       "bytes": 2348,
-      "sha256": "6bc608605175e2c4a23915688bca2b24873bed9cd576fbd46bba24291c67689c"
+      "sha256": "eaa9d5f27c35e004933451ad3e8684aacb1912c1b33e740ac6827fc38598ce99"
     },
     {
       "path": "examples/gegi/selected-channel.json",
@@ -8255,13 +8255,13 @@
     },
     {
       "path": "examples/pipeline-display.json",
-      "bytes": 1587,
-      "sha256": "a96863b38712c40efd87372accd0276bdbdeada68370c5e6b46a983abf526800"
+      "bytes": 1677,
+      "sha256": "250f804846bd66593f6f1ade176a06b60bd4303ab43bc34d5c57d37ddb4b88aa"
     },
     {
       "path": "examples/pipeline.html",
-      "bytes": 9810837,
-      "sha256": "71d898465740d2ad4eb098cc5cc1d27c494f38c0151e634dfc067bf53f147bf7"
+      "bytes": 9810997,
+      "sha256": "ab2f473328e03fadbc4036613b37993be46254d5d5770f976b152636efec3760"
     },
     {
       "path": "guide.html",
@@ -8341,12 +8341,12 @@
     {
       "path": "methods/lithium-display.json",
       "bytes": 3346,
-      "sha256": "45af1ea51538e3ed8c3f99aabc1416c8c9ecd317068fb57bf6e5bf355385f475"
+      "sha256": "8f4856b4c4f5b82958ed52dbe3b05fe8126ee28b72b1053791945adaa52df581"
     },
     {
       "path": "methods/native-li-display.json",
       "bytes": 4991,
-      "sha256": "2e29d0c95d8b7e37a52588c3bcb0731f1076b5064bee8bbcda34a442c13bfe7b"
+      "sha256": "a8754fcb37378568daeeb46e1e329002fa9407e9ad9c746021cb7dcf5ecdf22c"
     },
     {
       "path": "methods/native-li.html",
@@ -8455,8 +8455,8 @@
     },
     {
       "path": "results/cs137-10k/AK02/charge-readout.html",
-      "bytes": 504262,
-      "sha256": "8f2d51931a391ab8a73fb555a5585b59d6eacf27d5885a70c7243742c3e18191"
+      "bytes": 505394,
+      "sha256": "8c50e4ab1690b88c64b4647a753bd248c4389b41f4324b9d2fe53daf4181230f"
     },
     {
       "path": "results/cs137-10k/AK02/traces/213-0.json.gz",
@@ -8480,8 +8480,8 @@
     },
     {
       "path": "results/cs137-10k/GeRC02/charge-readout.html",
-      "bytes": 1049177,
-      "sha256": "292ed747dc4887cd402ed90ad5ae69ba312a2f8378730c476991eb6194f9a27f"
+      "bytes": 1050311,
+      "sha256": "3ce3adbac781b88648ae1e83f0ec79b4460c7a12ced3bee0cdb37a04e8dfccad"
     },
     {
       "path": "results/cs137-10k/GeRC02/traces/61-0.json.gz",
@@ -8505,8 +8505,8 @@
     },
     {
       "path": "results/cs137-10k/KMRC01_candidate/charge-readout.html",
-      "bytes": 1592828,
-      "sha256": "c9037b4fa6b68e4e0702555f9edbd81ce396721d163748c9d72aa583c93d6d5b"
+      "bytes": 1593962,
+      "sha256": "ace7878a68045538980d67c2e55477ab62e3ef6807d9ff3a1df3f03d12452d6a"
     },
     {
       "path": "results/cs137-10k/KMRC01_candidate/traces/1071-0.json.gz",
@@ -9665,8 +9665,8 @@
     },
     {
       "path": "results/cs137-10k/SAP22/charge-readout.html",
-      "bytes": 485098,
-      "sha256": "f25df9dea4d647636c60242f4f6ea8e186a0878ecfb4d8787b542410c85f3950"
+      "bytes": 486230,
+      "sha256": "3b3dada862d15aabffe07e91129fe1960f63067dc16e9776a8e77a7fc537d461"
     },
     {
       "path": "results/cs137-10k/SAP22/traces/155-0.json.gz",
@@ -9710,8 +9710,8 @@
     },
     {
       "path": "results/gegi-campaign/gegi_signal_journey.js",
-      "bytes": 29747,
-      "sha256": "a32901eeceb2a8f76966236e63ab9b6b78c38c19250d5a1b414397c406b57a95"
+      "bytes": 5987114,
+      "sha256": "db9ed3b51dbe02f30d41b45d8e3e0ca3110f83682ccfdd13b9b2139692bea193"
     },
     {
       "path": "results/gegi-campaign/imaging-summary.json",
@@ -9720,8 +9720,8 @@
     },
     {
       "path": "results/gegi-campaign/index.html",
-      "bytes": 5976725,
-      "sha256": "cc0e3dcd5f2da1cb832d85f446ef5d757cdc9d07fd9dbb4f4c36aba31ce6baea"
+      "bytes": 20094,
+      "sha256": "0bba209eacf671dca30cb2755d64d652d3046fca2851fab830442c6c85a41e74"
     },
     {
       "path": "results/gegi-campaign/map-control-energy-0.png",
@@ -9770,8 +9770,8 @@
     },
     {
       "path": "results/gegi-campaign/publication.json",
-      "bytes": 4104,
-      "sha256": "d03c56448508ea7c8b8ab9bd5e5691f5dbbe913ee0f01ee00387a45cd115363b"
+      "bytes": 4385,
+      "sha256": "27ddbc1e0e5ca1e1ced5fc14fee74634dafc6a826d5b8ac6986cc5065fe0d759"
     },
     {
       "path": "results/gegi-campaign/recovery-summary.json",
@@ -9800,13 +9800,13 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 7578,
-      "sha256": "99acd682bd48a47a7b1707403773d943b079df791d59172e10ef0d6397de8e04"
+      "bytes": 7600,
+      "sha256": "0adac6719c28ec8027a61b83f396a3137b1116a0905c58feafd1e8cabe640624"
     },
     {
       "path": "scenarios/lbnl-cs137/index.html",
       "bytes": 11762,
-      "sha256": "b7cf39f3264438374e609ee6c71327cd15662c812eacbc488098eabc40c8d5c4"
+      "sha256": "42caa4cbcd138edaf60bba123f411479c63737a6eda0aab462ca34e6ae3bc224"
     },
     {
       "path": "sitemap.xml",
@@ -9815,53 +9815,53 @@
     },
     {
       "path": "spectra/cs137-10k.html",
-      "bytes": 296302,
-      "sha256": "2b4af8ffe0ccc9ce26e35379bd5b27ae82fe7036084183f14d44910a5aadaba2"
+      "bytes": 301186,
+      "sha256": "70c0ea0c311f0622313e1d38fd06ee3f23820c0d0b578a6edab6335729598a57"
     },
     {
       "path": "spectra/manifest.json",
       "bytes": 7566,
-      "sha256": "cbeeee6c95b8c5b8825cd40e15911d076ab845b1c23cc0ebad069454ce722023"
+      "sha256": "0b3981c063e7426c5f4fd4a28085964dcd55bc1af3b097425a6c9c1298bd06e6"
     },
     {
       "path": "spectra/million-response.html",
-      "bytes": 166495,
-      "sha256": "45900e30e8fbafe6c15f2611265dba61ecd91e970aa86b5c5910247e49cdba75"
+      "bytes": 170708,
+      "sha256": "8a9878e0628bd464f74f42b35c3b73f3ae69f5f6315ea45ee6f418e2b66d823d"
     },
     {
       "path": "spectra/million-truth.html",
-      "bytes": 273463,
-      "sha256": "29cce76c02c219da3f69719b3ebd4deab745d15013edefc2558659c9650efb41"
+      "bytes": 277542,
+      "sha256": "7b46d388cc990410e5121718f5ab448add3ac4c1a643eebfa5f3b09a1c750902"
     },
     {
       "path": "spectra/pipeline.html",
       "bytes": 1046562,
-      "sha256": "9a3489a3772b8e9bc33e4a713370ff2d51e623cb15ab83e751c32a772aeb811e"
+      "sha256": "45ea52b7c0252518591c810b4ee062b12511dae5f32554d2f5a492097f1cc56c"
     },
     {
       "path": "spectra/teaching-examples.json",
       "bytes": 1012868,
-      "sha256": "c2c8d7d6584e5d6c55031c6335456a1101be13784032392ba909e57a0bcae733"
+      "sha256": "253a6e49c4439187df79520dee15d4dfe059ae11304bcd7e36f3fafdd18e0e18"
     },
     {
       "path": "viewers/events.html",
-      "bytes": 51939,
-      "sha256": "17ed9b765252f5cfa678bd872af0a26a81f109343a0d25bf081e5264b7a3f99e"
+      "bytes": 57533,
+      "sha256": "6d5ac92ff8970cb04d24cf83086518f428fb4606f63fba16abdd2b0fe946683c"
     },
     {
       "path": "viewers/ge-positive.html",
-      "bytes": 7336,
-      "sha256": "b6c783e4f5702e6bcd1f2058bfc123ef2a258bdc0ed27af8c1f37acee45fcf53"
+      "bytes": 7554,
+      "sha256": "4fe90680ee84c9906e18655e4b95449b3a867fcae83686fed173c0d421ebff30"
     },
     {
       "path": "viewers/geant4-assembly.html",
-      "bytes": 7334,
-      "sha256": "1adeb0ea26057aefebc4e0919e5af18bc649f3b93291dbe5a777f47ac40e25b1"
+      "bytes": 7552,
+      "sha256": "25c74c26f84452741835ff711977126a80ccdd264d0f672edc62212203efe26b"
     },
     {
       "path": "viewers/manifest.json",
       "bytes": 81162,
-      "sha256": "35f2d69c400f4b94308558b2a869595556acb7bf985c2e3c339c072b669dcbc3"
+      "sha256": "bfaaa2373df476d2f95e1cf1b266c600119a6692bda40173bde3ca01db17b4c3"
     }
   ]
 }

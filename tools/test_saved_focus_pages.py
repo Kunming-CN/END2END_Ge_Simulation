@@ -1,5 +1,8 @@
 """Read-only teaching source and focused template checks; never exports."""
 import copy
+from pathlib import Path
+import shutil
+import tempfile
 import unittest
 from unittest.mock import patch
 import pipeline_demo as P
@@ -53,5 +56,44 @@ class TeachingFocusTests(unittest.TestCase):
         self.assertIn('SavedFocusPlots',html);self.assertIn('Full saved window',html)
         self.assertNotIn('src="http',html)
         S.exact(S.decode(original),data,'Every original teaching value')
+
+class TeachingArchiveTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory(dir=F.ROOT/'.local')
+        self.addCleanup(self.temp.cleanup);self.site=Path(self.temp.name)
+        directory=self.site/'examples';directory.mkdir()
+        for name in F.FILES:shutil.copyfile(F.ROOT/'docs/examples'/name,directory/name)
+        self.directory=directory
+
+    def test_historical_identity_and_cross_study_links_preserve_all_saved_values(self):
+        original=(self.directory/'pipeline.html').read_bytes()
+        data=(self.directory/'data.json').read_bytes()
+        F.upgrade_displays(self.site)
+        raw=(self.directory/'pipeline.html').read_bytes();text=raw.decode('utf-8')
+        self.assertIn('Historical bare-detector teaching study · 200 initial gamma primaries',text)
+        self.assertNotIn('Main teaching example',text)
+        self.assertNotIn('>Waveforms and spectrum</a>',text)
+        self.assertIn('Independent Cs137 10K study · selected signals</a>',text)
+        self.assertIn('Independent Cs137 10K study · signal explanation</a>',text)
+        self.assertEqual(F.teaching_archive_original(raw),F.teaching_archive_original(original))
+        self.assertEqual((self.directory/'data.json').read_bytes(),data)
+        F.validate(self.directory)
+        receipt=(self.directory/'pipeline-display.json').read_bytes()
+        F.upgrade_displays(self.site)
+        self.assertEqual((self.directory/'pipeline.html').read_bytes(),raw)
+        self.assertEqual((self.directory/'pipeline-display.json').read_bytes(),receipt)
+
+    def test_rehashed_changes_cannot_replace_the_frozen_teaching_archive(self):
+        F.upgrade_displays(self.site)
+        page=self.directory/'pipeline.html';raw=page.read_bytes()+b' '
+        page.write_bytes(raw)
+        path=self.directory/'pipeline-display.json';manifest=S.decode(path.read_bytes())
+        manifest['files']['pipeline.html']={'bytes':len(raw),'sha256':S.sha(raw)}
+        path.write_bytes(S.canonical(manifest))
+        with self.assertRaisesRegex(ValueError,'Original teaching reader differs'):
+            F.validate(self.directory)
+        with self.assertRaisesRegex(ValueError,'Original teaching reader differs'):
+            F.upgrade_displays(self.site)
+        self.assertEqual(page.read_bytes(),raw)
 
 if __name__=='__main__':unittest.main()
