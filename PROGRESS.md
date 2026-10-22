@@ -1,5 +1,29 @@
 # Current handoff
 
+## Active continuous development — 2026-10-22
+
+Owner explicitly requires automatic continuation through planned milestones until
+a concrete decision needs them. Same supervisor resumed after clean Git/no workers;
+old ownership retained, monitoring PAUSED. No large campaign, resets or extra review.
+
+Saved-only single-site inverse is complete. Each of80independent waveforms searched
+all80available cells across4pixels; fit inputs are waveform+training bank only.
+All80pixels correct, no unsupported/boundary hits. 3Derror median/max0.010570/0.023088mm;
+absolute energy error median/max0.025188/0.102807keV. Max-channel RMS median/max
+0.348528/0.471818keV. Pilot4fits reused; full evaluation35.339s, no new physics.
+Three targeted tests passed (truth isolation, independent317keV gain, zero-weight
+corners/order rejection). Evidence: validation/native-inverse-single-site/result.json,
+5184c58e...abe23a. Ideal34-charge inputs and sparse80-cell coverage only.
+
+Current: eight fixed equal-energy two-site mixtures from saved independent waves,
+all800cell-pair centers/two X/Y matchings, fixed8refinements per matching. No true
+positions, energy or matching supplied to fit. Report pairing and site errors;
+two-site restriction does not test false splitting or same-pixel multiplicity.
+Parallel: remove duplicate finite-window readout, keep old/new saved outputs exact
+and admit only the proven exact native-source pair for old calibration reuse.
+The68saved-electronics assertions passed; remaining failure/source checks underway.
+Neither change has yet been promoted as validated detector efficiency/imaging.
+
 ## GeGI native-cell forward milestone completed — 2026-10-22
 
 Owner resumed development after the lateral-forward milestone. Root owns direction

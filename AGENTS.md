@@ -1,5 +1,15 @@
 # Project working rules
 
+## Owner update — 2026-10-22 continuous planned development
+
+Continue automatically through the existing full-chain repair and software plan.
+Deliver and record milestones, then start the next authorized step without waiting
+for routine confirmation. Stop only when a concrete decision requires the owner.
+Keep calculations bounded and originals intact; monitoring remains PAUSED and
+large-sample campaigns remain after full-chain validation. No resets or extra AI
+review rounds. Root owns direction/quality; gpt-6.1-sol ultra handles concrete
+development tasks with simple code and direct writing.
+
 ## Owner update — 2026-10-20 bounded repair autonomy
 
 The owner said "不需要每次等我审核，你继续就行" after the bounded GeGI

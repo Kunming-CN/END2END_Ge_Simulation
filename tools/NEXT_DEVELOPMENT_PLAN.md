@@ -208,6 +208,13 @@ claims. The IAEA report's GeGI-4dimensions must not silently replace current11 m
 - [R6 SolidStateDetectors.jl, weighting potentials](https://juliaphysics.github.io/SolidStateDetectors.jl/main/man/weighting_potentials/):
   Laplace problem with selected-contact1/other-contact0; use the pinned installed
   SSD0.11.8 source for exact execution semantics, not the latest API documentation.
+- [R7 POSEIDON final report, section5.2, p9](https://tuhat.helsinki.fi/ws/portalfiles/portal/379859820/POSEIDON_NKS_Final_Report.pdf):
+  Helsinki used a90mm x11mm GeGI with16strips perface, strip list-mode data in20ns
+  windows and a120ns coincidence selection for Cs137 Compton imaging. This supports
+  a32-strip timestamp/charge observable contract, but does not specify raw-waveform
+  availability, analog transfer, ADC resolution, guard readout or our unit's firmware.
+  The120ns experimental coincidence cut is distinct from our100us decay grouping;
+  do not substitute one for the other or infer a waveform sampler from timestamps.
 
 Complete GeGI operation/service manual and matching raw experimental electronics
 configuration are still missing. Manufacturer datasheets do not supply the full
