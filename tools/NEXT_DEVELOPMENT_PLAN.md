@@ -4,7 +4,8 @@
 
 Owner explicitly resumed manual development on2026-10-22 after the completed
 lateral-forward milestone. Native-cell forward validation and transport-only SSD
-preselection assessment below are now complete; next is a saved-only inverse check. Root owns
+preselection assessment and fixed single/two-site inverse checks are complete. Next is
+saved real-event applicability and physically defined coverage. Root owns
 direction/quality; gpt-6.1-sol ultra implements small concrete changes without
 speculative abstractions or repetitive checks/prose. Automatic monitoring stays
 PAUSED; the old pause record is retained, not an active manual-work block.
@@ -157,15 +158,35 @@ max-channel RMS median0.399042keV, max-point-error median/max1.63221/2.19316keV.
 All64nonzero-depth cases improve; z0 changes are roundoff only. The existing
 timewarp uses training endpoint times, not validation endpoints or real-event truth.
 
-Next smallest complete workflow: invert the saved signals using these available
-cells without revealing true position/cell to the fit. First single-site position
-and energy, then competing two-site X/Y pairings. Reuse existing fitting helpers,
-report unsupported-domain coverage and errors, and identify any actually missing
-support before adding calibration points. No new physics is needed for this first
-check. Native ideal-charge inference remains distinct from actual hardware-observable
-inference; guard-field and readout correspondence gaps above remain open. Preserve
-all candidate pairings and failures; holdout stays out of tuning. Integrate/release
-only after inverse errors and the selected readout observables are validated.
+The saved-only inverse milestone is complete:80single-site inputs all select the
+correct pixel,3Derror median/max0.010570/0.023088mm. Eight fixed equal-energy paired
+mixtures select the nominal correct pairing, but two middle-depth cases are nearly
+degenerate. Both competing matchings and all coarse hypotheses are retained.
+These are ideal-charge sparse-domain results, not validated detector accuracy.
+Exact source/input hashes, costs and targeted tests are in PROGRESS.md.
+
+Saved real-event applicability is complete.720929 selects the correct support but
+RMS12.1504keV and position errors0.9404/3.2749mm expose sparse-domain limits.
+727922 has observable unmodeledY28/31/32 and four sites;752677 needs five. Neither
+is recovered. The middle-depthcase3 pairing difference is comparable to saved
+interpolation discrepancy. Preserve these results; no threshold/noise claim follows.
+
+Next smallest complete workflow: fill the contiguous interior native-grid region
+selected by observedX11/12 xY24/26 geometry, then apply the unchanged two-site
+search to720929.5148interior corners,378imports/4770new; one worker/thread,300s cap,
+no transport/fields.312contact-face starts remain excluded. Warm saved capture mean
+0.00766s/point implies36.54s for new captures, plus24.89s startup/12.21s first call
+and unmeasured overhead; this is an estimate, not a promise. Retain all response
+statuses and mark mixed-collector cells unsupported. Use all coarse hypotheses,
+fixed8refinements per matching, no true position or gain input. Holdout remains unused.
+
+After supported-domain tests, connect the same forward model to explicitly chosen
+readout observables, then address variable site count and same-pixel ambiguity.
+Do not choose raw34charge as if it were known measured input. Owner export format
+is unknown; owner says SDSMT/Noomen may provide it and a brief request email is drafted. Nominal-model development continues
+with that limitation explicit. Only after this integrated development validation
+may the frozen holdout support promotion/reprocessing and new public science figures.
+Guard-field completeness remains the separate unresolved numerical stage above.
 
 Owner's efficiency suggestion was checked against all57,613saved groups. Zero-only
 preselection already removes942,395primaries. Single-row/single-position cuts save0.
@@ -178,9 +199,11 @@ A3saved-group benchmark confirms redundant unbounded readout before the retained
 100us readout. Six timed evaluations:6.990s versus6.410s finite-only,8.30%electronics
 time saved, final outputs deeply identical. Two groups had original finite windows;
 the mono-gamma group's finite branch is explicitly counterfactual. No campaign
-speedup inferred. After the frozen forward test, remove this duplicate computation
-with targeted native-signal/readout parity and preserve old calibration provenance;
-do not rerun transport or drift to test an electronics-only change.
+speedup inferred. The duplicate is now removed:68saved-electronics assertions,
+74failure-policy assertions and6calibration-admission tests pass. Historical calibration
+is retained through one proven exact source-pair bridge, with other identities strict.
+Student release cd31f32390d8 is published; public bytes/latest link verified. No science
+rerun was needed, and no unrelated website-science regeneration is required.
 
 ### Reference scope and reuse
 
@@ -190,6 +213,10 @@ plots were visually inspected; original source documents are read-only and priva
 Slides3–5 separate measured spectra, normalized BP/SOE maps and a truth-selected
 two-interaction demonstration. These are distinct validation targets. The February
 strip deck contains toy/other-device studies and must not set GeGI parameters.
+A focused three-deck check confirms that July14measured z is source placement,
+not event depth; Sept24readout-chain figures are proposed/schematic; Oct27shaping
+settings belong to the USD_9-14-18C_KM_Li_2501 hybrid detector, not GeGI. No indexed
+owner-specific acquisition schema or raw waveform export is established.
 The PHDS 2024 deck mainly concerns ring-contact detectors; the plant-imaging PhaseII
 report concerns GIPR/coded aperture. Keep both out of GeGI electronics parameter
 claims. The IAEA report's GeGI-4dimensions must not silently replace current11 mm.
