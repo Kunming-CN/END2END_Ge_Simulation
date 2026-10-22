@@ -61,8 +61,32 @@ error rates. Unknown groups:83multiple recorded photon trackIDs,29shared-cell
 anchors,1anchor spanning strips. Secondary photons also have distinct trackIDs;
 this does not yet establish multiple independent emitted photons.
 1332.492keV has18groups:2both orders,16unknown (13multiple-track,3shared-cell).
-Preserve current labels; next resolve the photon ancestry in the saved diagnostic
-ledger before interpreting physical multiplicity. No truth enters reconstruction.
+Saved ancestry resolves152/153groups to one earliest gamma lineage, including82of
+the83multiple-track groups; no missing parents/cycles.1332.492keV has17single-lineage
+groups and one two-lineage group995246. Secondary phot/eBrem processes explain most
+new photon IDs. Preserve the old strict labels; unknown does not mean invalid.
+Lineage evidence:`validation/two-site-map-evaluation/continued/lineage-summary.json`,
+SHA4c2f203c341b0d6f286a4c0e899b500c6e69c424d531dcd07cd4791c211281bc;
+bound reproduction code is beside it. Parent-gamma reference is now complete:
+row ancestry maps to the first recorded child birth under the earliest gamma;
+birthXYZ/time/process define each interaction.82groups have two dominant uniquely
+mapped interactions (2correct-only,75both orders,5wrong-only);71remain unknown
+(66not exactly2dominant interactions,4cell ambiguity,1two roots).1/5keV sensitivity
+gives the same reference count. All407direct-root gamma rows remain explicitly
+unassigned to interactions: median/max per-group energy0.19441/0.51656keV.
+No identity conflicts; root/interaction energy closure errors<=9.10e-13keV.
+Three targeted tests passed;3cached+150new metadata reads,1.738s wall. No waves,
+fits, maps or physics. Result:`validation/root-gamma-interaction/evaluation/result.json`,
+SHAd4aeb98b66a7fc7a6e87096cfa57deec2f1ee9459dd3fa256d89046039093a69.
+Root birth energy is not detector-entry energy; two dominant interactions do not
+prove full absorption. Old strict labels and all reconstruction inputs are intact.
+Four old wrong-only groups are excluded by cos(theta)<-1, not coincident positions;
+diagnosis SHA4e8a2f311b27ae021f59ea9a72dd6086761b07033a895a8d9a072fbc319a244e
+(`two-site-map-evaluation/continued/wrong-order-diagnosis.json`). Three have Ge
+deposition below root birth energy:879908/906665/913963.235273 and newly identified
+278717 both deposit their662keV root energy, so these two need targeted transport-
+versus-free-electron-kinematics diagnosis before changing any reconstruction cut.
+No noise, escape or Doppler mechanism is asserted from these counts alone.
 Evidence:`validation/two-site-map-evaluation/continued/result.json`, SHA
 20035307ef632c8259805c5ac8adb47a031f41230897a14e6fdaf0b28b76fca0.
 An initial5.819sattempt stopped at102groups on a progress-file replacement error;

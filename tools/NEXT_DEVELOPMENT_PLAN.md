@@ -9,8 +9,9 @@ and fixedK1024optimization on one development event are complete. The transport-
 gamma-anchor prefilter has been tested and rejected. Explicit two-site selection
 after reconstruction, the affected map and student release are complete. Exact153map-
 group evaluation exposes sequence/vertex ambiguity despite matched charge-cell pairs.
-Next distinguish descendant photons from independently emitted photons using the
-saved ancestry ledger, then define the affected reconstruction test. Root owns
+Saved ancestry shows152/153groups have one earliest gamma lineage; the parent-gamma
+interaction reference is complete. Next isolate why two662keV fully deposited
+groups fail the free-electron Compton energy relation before changing a cut. Root owns
 direction/quality; gpt-6.1-sol ultra implements small concrete changes without
 speculative abstractions or repetitive checks/prose. Automatic monitoring stays
 PAUSED; the old pause record is retained, not an active manual-work block.
@@ -213,9 +214,20 @@ absolute-energy errors1.412926mm/0.135299mm/0.366593keV. Strict sequence group c
 are1correct-only,35both,4wrong-only,113unknown-only. Multiple recorded photon trackIDs
 explain83unknowns, shared-cell anchors29, strip-spanning anchor1. Distinct trackIDs
 include secondary photons and cannot yet be interpreted as independent decay photons.
-Next use the preserved ancestor links to distinguish these cases without changing
-selection, thresholds or labels. Then assess whether a root-photon interaction
-reference is supported by the saved records. Truth remains evaluation-only; no
+Preserved ancestor links show152/153single-lineage groups, including82of83with
+multiple photon IDs; no missing/cyclic ancestors.1332.492keV has17single-lineage
+groups and one two-lineage group995246. First-child birth attribution is complete:
+82groups have two dominant uniquely mapped parent interactions (2correct-only,
+75both,5wrong-only),71unknown; the1keV and5keV reference counts agree.407direct-root
+gamma deposit rows remain explicit, below0.517keV per group; no guessed birthtime.
+Three tests pass;153metadata records (3cached),1.738s wall, no physics or fits.
+The three old wrong-only groups879908/906665/913963 have deposited energy below
+root birth energy.235273 and newly identified278717 deposit their full662keV;
+next compare their saved interaction energies, creation identities and geometry
+with the free-electron relation and exact Geant4 model. Do not widen cuts or call
+the discrepancy noise/escape/Doppler without the supporting evidence.
+Distinguish two interactions from full absorption and preserve the strict labels.
+Truth remains evaluation-only; no
 truth-selected production map or pre-SSD filtering follows from this diagnosis.
 The1332.492keV layer has2groups with both orders and16unknowns, so the two bright
 spots cannot establish two sources. Exact evidence/retained failure in PROGRESS.md.
