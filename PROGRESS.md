@@ -42,10 +42,34 @@ error rates. The two known development groups each retain both orders. Charge ce
 are not proven photon vertices. No additional recovery is validated.
 Evidence:`validation/two-site-output/result.json`, SHA
 2a54be02d09a57ab2d314864b4f199bb0e4b4dac01d72864e16695448a8d326f.
-Only the changed map input is now being recomputed, once with the same40iteration,
-z40mm settings and no plane profiling. No physics, waveform fitting or old-map rerun.
-Student packaging follows this runtime change; website figures remain pending the
-reconstruction validation. The nominal waveform inverse remains diagnostic.
+The changed map was computed once with the same40iteration,z40mm settings and no
+plane profiling:7.876s wall/2.047s map+checks.1332.492keV retains peaks at(38,-2,40)
+and(46,18,40)mm; no convergence claim or new leave-one-out study. Report SHA
+bc6c4d33db93b96f066eb86df6c79a2a0cd540870e10296ab350642ee3a1e59d.
+Map comparison SHA9ca6b42833682905e6b41d19653575a5e1bc47423c3ac5fd1cf1bb2e78e9eb8c.
+Only8frozen400groups intersect the153mapgroups (6development/2holdout); all4holdout
+wrong-only groups lie outside the existing map energy windows. No escape mechanism
+is inferred from that. Exact153map-group posthoc evaluation is now complete:
+153metadata reads,8prior metric rows reused,145supplemental evaluations (not a new
+holdout). All153conditional hypotheses match the endpoint-cell pairs; anchor-count
+false splitting0. Across306matched cells, median3D/depth/absolute-energy errors
+are1.412926mm/0.135299mm/0.366593keV. Photon-vertex error is separately available
+for80sites in40groups: median1.424950mm; it is not the charge-centroid error.
+Strict order classes:1correct-only,35both orders,4wrong-only,113unknown-only.
+Candidate labels36correct/39wrong/212unknown are alternatives, not hard-choice
+error rates. Unknown groups:83multiple recorded photon trackIDs,29shared-cell
+anchors,1anchor spanning strips. Secondary photons also have distinct trackIDs;
+this does not yet establish multiple independent emitted photons.
+1332.492keV has18groups:2both orders,16unknown (13multiple-track,3shared-cell).
+Preserve current labels; next resolve the photon ancestry in the saved diagnostic
+ledger before interpreting physical multiplicity. No truth enters reconstruction.
+Evidence:`validation/two-site-map-evaluation/continued/result.json`, SHA
+20035307ef632c8259805c5ac8adb47a031f41230897a14e6fdaf0b28b76fca0.
+An initial5.819sattempt stopped at102groups on a progress-file replacement error;
+the closed checkpoint and failed source remain. A targeted continuation read only
+the remaining51metadata records in5.206s wall/4.932s internal. Two boundary tests
+passed; no physics, waveform fits or maps. Student release is complete below;
+website figures await reconstruction validation. The inverse remains diagnostic.
 
 Hardware correspondence: the July14 GeGI slides show measured spectra/maps, not
 raw strip-energy/time or waveform export definitions. Its simulated interaction
@@ -58,9 +82,19 @@ and are not needed for this GeGI interface. Actual.bin sample/schema/units and
 software version remain needed. The verified manufacturer manual describes a
 processed DataStream schema, but duplicates type1 and leaves GlobalTime units
 unspecified; do not implement a guessed parser. Private reference-index SHA
-474106619a52369b9718944928e6bda69fadc4a061550caa2f681fef3783d436.
+fc0647fcedeb19d52f73af5e8808f15941400a54b1a0227479ead06c1b9ebb0b.
 Root handles the concise reply draft; no email was sent. Do not infer waveform
 sampling from a50MSPS clock specification.
+Noomen's follow-up confirms paired N42 products: Full Detector/All Events,256pixel
+spectra/Pixel Total, and32channel spectra. Their binary-selected pixel map agrees
+well by their report; exact population/selection definitions are pending PHDS.
+All N42 products are cumulative histograms without individual-event XYZ or
+deposited-energy records; event-level information exists only for.bin single/two
+site records. Experimental reconstructed coordinates are not independent truth,
+and measured/simulated events are compared statistically, not paired one-to-one.
+Next experimental input is a matched.bin/N42 acquisition plus selection/settings,
+not BEGe waveforms. Verify map reproduction before comparing matched spectral
+populations; do not assume all totals share a denominator. No sample is received yet.
 
 After current-plan validation, publish actual reconstructed sky-direction Compton
 circles with summed intensity, or correctly labeled cone intersections on a chosen
@@ -79,13 +113,15 @@ Evidence: `signal-recovery-v1/validation/readout-single-pass/validation.json`,
 SHA1d13ac42d4506318edc2038121f2a8709da7375e499084c66b7f94622836ec96.
 No transport, drift, field or calibration calls were used for this repair.
 
-Source commit `cd31f32390d8724d5ca17ff44cbb6bd23ff1b8f8` is pushed. Latest student
-release `student-runtime-cd31f32390d8`:895444bytes/187members, SHA256
-`7abfbca8f013202398d04123e8208e28c46cc0158537066fffb6dbeacc41a17e`.
-Five package tests passed. Public versioned/latest assets, embedded commit, receipt,
+Latest source/runtime commit `bf951bf70627447d13301c4a746cc570224a3ba8` is pushed.
+Student release `student-runtime-bf951bf70627`:896097bytes/187members, SHA256
+`7a58fe67c3ff9fa8367d80071d4df8c254c00167d160c5675c34726d29accefa`.
+It adds the optional two-site saved-imaging CLI and retains the prior readout fix.
+Five package tests passed6.594s; build2.507s. Public versioned/latest assets, embedded commit, receipt,
 remote tag/main and actual public-guide download link verified. Developer inverse
 prototypes are excluded. Authority: `.local/student-runtime-p1/COMPLETE.json`.
 No installation or scientific rerun; current ZIP only, compact previous delivery retained.
+Delivery receipt SHA8f5f8bf0323af8e9abed69e3b8b283f61cf5f3d0bcaf971bfeda450939139d22.
 
 Website content is unchanged by this readout repair; its latest-download link serves
 the new verified software. Prior homepage delivery `044eaae02a674a8ad5e996f24a4a28b374ad435d`

@@ -7,8 +7,10 @@ lateral-forward milestone. Native-cell forward validation and transport-only SSD
 preselection assessment, fixed single/two-site inverse checks, region applicability
 and fixedK1024optimization on one development event are complete. The transport-only
 gamma-anchor prefilter has been tested and rejected. Explicit two-site selection
-after reconstruction and saved-error accounting are implemented/tested; finish the
-affected-map calculation and software release, then address sequence/vertex ambiguity. Root owns
+after reconstruction, the affected map and student release are complete. Exact153map-
+group evaluation exposes sequence/vertex ambiguity despite matched charge-cell pairs.
+Next distinguish descendant photons from independently emitted photons using the
+saved ancestry ledger, then define the affected reconstruction test. Root owns
 direction/quality; gpt-6.1-sol ultra implements small concrete changes without
 speculative abstractions or repetitive checks/prose. Automatic monitoring stays
 PAUSED; the old pause record is retained, not an active manual-work block.
@@ -197,13 +199,26 @@ zero-only skipping, and do not continue arbitrary multiplicity-cut searches.
 The saved-imaging entry now supports explicit two-site selection after reconstruction,
 preserving original priors, excluded ambiguity, IDs and all denominators;7tests pass.
 Saved selection414groups/647candidates has map input153/287, including18/36 in the
-1332.492keV layer. All layer inputs changed. Recompute this input once with the old
-settings; no waveform fit, physics, repeated old map, or holdout-based cut tuning.
+1332.492keV layer. One changed-input map with the old settings is complete:7.876s
+wall, no waveform fits or physics. Its1332.492keV peak positions remain(38,-2,40)
+and(46,18,40)mm; removing longer candidate sequences did not remove the second mode.
 Frozen candidate-pairing mismatches are0/15 and0/16, but sequencing and photon-vertex
 identity remain unresolved. Wrong-order alternatives are not hard-choice errors.
 Exact errors and counts are in PROGRESS.md and validation/two-site-output/result.json.
-The waveform inverse remains a scoped development diagnostic. Deliver the changed
-runtime through the student package; do not publish new performance claims.
+The changed runtime is delivered as student-runtime-bf951bf70627 with public bytes
+verified. The waveform inverse remains a scoped development diagnostic.
+Exact153map-group posthoc evaluation reused8prior metric rows and adds145supplemental
+groups, never a new holdout. Endpoint pairing153/153; matched-cell median3D/depth/
+absolute-energy errors1.412926mm/0.135299mm/0.366593keV. Strict sequence group classes
+are1correct-only,35both,4wrong-only,113unknown-only. Multiple recorded photon trackIDs
+explain83unknowns, shared-cell anchors29, strip-spanning anchor1. Distinct trackIDs
+include secondary photons and cannot yet be interpreted as independent decay photons.
+Next use the preserved ancestor links to distinguish these cases without changing
+selection, thresholds or labels. Then assess whether a root-photon interaction
+reference is supported by the saved records. Truth remains evaluation-only; no
+truth-selected production map or pre-SSD filtering follows from this diagnosis.
+The1332.492keV layer has2groups with both orders and16unknowns, so the two bright
+spots cannot establish two sources. Exact evidence/retained failure in PROGRESS.md.
 
 After this saved-data check, connect the same forward model to explicitly chosen
 readout observables, then address variable site count and same-pixel ambiguity.
@@ -213,7 +228,19 @@ multi-site events and waveforms are currently unavailable. BEGe3820waveforms are
 offered for another detector and are not needed for the current GeGI interface.
 Obtain an actual.bin sample, schema, units and software version before a parser.
 The manufacturer manual gives processed DataStream fields with duplicate type1
-and unspecified GlobalTime units; do not guess those definitions. Nominal-model
+and unspecified GlobalTime units; do not guess those definitions. Noomen's owner-
+provided follow-up confirms corresponding N42 Full Detector/All Events,256pixel,
+Pixel Total and32channel spectra. Their selected binary events reproduce the pixel
+map well, but PHDS population definitions remain under discussion; no quantitative
+agreement or common denominator is established. Prioritize a paired.bin/N42 sample
+from the same acquisition and their selection settings: reproduce the pixel map,
+then compare matching pixel/channel/total spectra. Do not assume that All Events,
+Pixel Total and the binary1/2site populations coincide or sum channels as independent
+deposited energies. All N42 products are cumulative histograms, with no per-event
+XYZ or deposition energies; those are available only in single/two-site.bin records.
+Measured positions are processed observables, not independent truth. Compare
+simulation/measurement distributions, not individual unrelated events. Keep live/
+real time and normalization explicit. Nominal-model
 development continues with that limit explicit. Only after integrated development validation
 may the frozen holdout support promotion/reprocessing and new public science figures.
 Guard-field completeness remains the separate unresolved numerical stage above.
@@ -237,7 +264,8 @@ the mono-gamma group's finite branch is explicitly counterfactual. No campaign
 speedup inferred. The duplicate is now removed:68saved-electronics assertions,
 74failure-policy assertions and6calibration-admission tests pass. Historical calibration
 is retained through one proven exact source-pair bridge, with other identities strict.
-Student release cd31f32390d8 is published; public bytes/latest link verified. No science
+The readout repair first shipped as cd31f32390d8 and is retained in bf951bf70627;
+public bytes/latest link are verified. No science
 rerun was needed, and no unrelated website-science regeneration is required.
 
 ### Reference scope and reuse
@@ -280,7 +308,7 @@ claims. The IAEA report's GeGI-4dimensions must not silently replace current11 m
   do not substitute one for the other or infer a waveform sampler from timestamps.
 
 The GeGI manufacturer manual is verified in the private reference-index.json,
-SHA474106619a52369b9718944928e6bda69fadc4a061550caa2f681fef3783d436.
+SHAfc0647fcedeb19d52f73af5e8808f15941400a54b1a0227479ead06c1b9ebb0b.
 Its processed DataStream schema does not resolve the duplicate type1 or GlobalTime
 unit; the actual sample/version and matching electronics transfer remain needed.
 Supervisor owns decisions; ordinary retrieval/development uses
