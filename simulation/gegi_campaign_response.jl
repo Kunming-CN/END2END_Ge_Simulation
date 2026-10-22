@@ -111,40 +111,8 @@ end
 
 """Replay only the shared electronics/timing recipe from complete native inputs."""
 function replay_channels(native,channels,readout,eion,cal,matrix;horizon_ns=nothing)
-    rows=Any[]
-    for ch in channels
-        id=ch["id"];w=native[id];t=w.times;q=w.charge;wired=ch["wiring_factor"].*q
-        result=P.process(t,wired,readout,eion,cal,matrix;horizon_ns=horizon_ns)
-        check(result["current_balance"]["passed"],"Current/charge identity failed in electronics replay")
-        collecting=last(wired)>=readout["threshold_V"]/cal["volts_per_keV"]
-        tx=collecting ? H.crossing_time(t,wired,0.5) : nothing
-        t90=collecting ? H.crossing_time(t,wired,0.9) : nothing
-        result["contact_id"]=id;result["final_induced_keV"]=last(q)
-        result["final_wired_induced_keV"]=last(wired);result["collection_candidate"]=collecting
-        result["t50_ns"]=tx;result["t90_ns"]=t90
-        result["timing_method"]=K.TIMING_METHOD
-        if horizon_ns!==nothing
-            result["native_t50_ns"]=tx;result["native_t90_ns"]=t90
-            result["timing_window_ns"]=horizon_ns
-            result["t50_outside_window"]=tx!==nothing && tx>=horizon_ns
-            result["t90_outside_window"]=t90!==nothing && t90>=horizon_ns
-            result["t50_outside_window"] && (result["t50_ns"]=nothing)
-            result["t90_outside_window"] && (result["t90_ns"]=nothing)
-        end
-        trace=result["trace"]
-        trace["wired_induced_charge_fC"]=trace["induced_charge_fC"]
-        trace["signed_induced_charge_fC"]=ch["wiring_factor"].*trace["induced_charge_fC"]
-        trace["charge_fC"]=trace["signed_induced_charge_fC"]
-        trace["signed_induced_current_nA"]=ch["wiring_factor"].*trace["current_nA"]
-        result["trace_conventions"]=Dict("charge_fC"=>"Raw signed SSD induced charge before fixed family wiring",
-            "current_nA"=>"Current after fixed family wiring; original integration bin, not display-point interval",
-            "preamp_V"=>"Signed preamplifier output driven by fixed-wiring current",
-            "shaped_V"=>"Signed shaper voltage with configured electronics inversion",
-            "wired_induced_charge_fC"=>"Charge after fixed X=+1/Y=-1 wiring")
-        result["wiring_factor"]=ch["wiring_factor"]
-        push!(rows,result)
-    end
-    rows
+    [G.channel_response(native[ch["id"]].times,native[ch["id"]].charge,ch,readout,eion,cal,matrix;
+        horizon_ns=horizon_ns) for ch in channels]
 end
 
 function replay_payload(req)
@@ -171,7 +139,7 @@ function process_group(ctx,command;event_processor=G.process_event)
     if horizon!==nothing
         check(all(s->0<=s["time_ns"]-origin<horizon,group["steps"]),"Deposit outside original half-open group")
     end
-    working=Dict("event_id"=>id,"primary_time_ns"=>origin,"steps"=>group["steps"])
+    working=Dict("event_id"=>id,"primary_time_ns"=>origin,"steps"=>group["steps"],"readout_horizon_ns"=>horizon)
     G.validate_event(working,ctx.n)
     stem="g-"*digest;eventpath=joinpath(ctx.out,stem*".json");signalpath=joinpath(ctx.out,stem*"-signals.csv")
     inputpath=joinpath(ctx.out,stem*"-input.json");receiptpath=joinpath(ctx.out,stem*"-receipt.json")
@@ -188,12 +156,7 @@ function process_group(ctx,command;event_processor=G.process_event)
         G.save(inputpath,group)
     end
     event=try
-        value=event_processor(working,ctx.sim,ctx.cfg,ctx.channels,ctx.readout,ctx.cal,ctx.matrix,ctx.eion,ctx.n,signalpath)
-        if horizon!==nothing
-            native=read_native(signalpath,ctx.channels)
-            value["channels"]=replay_channels(native,ctx.channels,ctx.readout,ctx.eion,ctx.cal,ctx.matrix;horizon_ns=horizon)
-        end
-        value
+        event_processor(working,ctx.sim,ctx.cfg,ctx.channels,ctx.readout,ctx.cal,ctx.matrix,ctx.eion,ctx.n,signalpath)
     catch err
         known=err isa ArgumentError && err.msg in RECORDED_NATIVE_ARGUMENT_ERRORS
         failure=Dict("event_id"=>id,"status"=>known ? "native_failed" : "unexpected_failure",

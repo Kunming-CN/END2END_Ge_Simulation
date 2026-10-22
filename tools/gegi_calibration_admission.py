@@ -13,6 +13,12 @@ ROOT=Path(__file__).resolve().parents[1]
 KIND='gegi_saved_calibration_admission_v1'
 SHARED_NATIVE=('gegi_response.jl','gegi_signal_helpers.jl','run.jl','replay.jl',
                'readout.jl','readout_profiles.jl','readout_demo.json')
+# One verified readout-only refactor. All source bytes before the new shared
+# channel helper and after process_event are identical to Git 7690255; this
+# includes native numerics, field loading and native_deposit. Other pins stay exact.
+GEGI_READOUT_SOURCE_PAIR=frozenset((
+    'b249bea43f855123f67dfab204eeb47562fefdf9a73294cc02cc203327bde495',
+    '31fc44e2de8614328381cfa92964f6e60ebb4bb36d8e2bf725d35d772c9650d7'))
 
 
 def _identity(calibration):
@@ -43,11 +49,22 @@ def _match(identity,request,channels,*,field_precision,native_sources,manifest_s
     W.require(manifest_sha256 and environment.get('manifest_sha256')==manifest_sha256 and
               (julia_version is None or environment.get('julia_version')==julia_version),
               'Independent templates differ from the pinned native environment.')
-    W.require(all(native_sources.get(k) and native_sources[k]==sources.get(k) for k in SHARED_NATIVE),
+    changed=[k for k in SHARED_NATIVE if not native_sources.get(k) or native_sources[k]!=sources.get(k)]
+    bridge=None
+    if changed==['gegi_response.jl'] and frozenset((native_sources['gegi_response.jl'],
+                                                 sources.get('gegi_response.jl'))) == GEGI_READOUT_SOURCE_PAIR:
+        bridge={'kind':'gegi_single_pass_readout_source_bridge_v1','source':'gegi_response.jl',
+            'native_sha256':native_sources['gegi_response.jl'],'calibration_sha256':sources['gegi_response.jl'],
+            'baseline_git':'7690255',
+            'unchanged_native_prefix_sha256':'20319a790f8762137172d804f31fdd7ee4f2b5496049a07647d7fa4c04f11403',
+            'unchanged_main_suffix_sha256':'0204a43c1fda0e20c417fecf9c95d29cc93584d0b2844eb3600415f6b7a626a2',
+            'scope':'Identical native producer; shared electronics/annotation helper removes the discarded unbounded readout.'}
+    W.require(not changed or bridge is not None,
               'Independent template/native carrier or readout implementation differs.')
     for name in ('Manifest.toml','Project.toml'):
         expected=native_sources.get(name) or request.get('source_sha256',{}).get('simulation/'+name)
         if expected:W.require(sources.get(name)==expected,'Independent template/native environment source differs: '+name)
+    return bridge
 
 
 def standalone(calibration,request,receipt,channels):
@@ -59,12 +76,13 @@ def standalone(calibration,request,receipt,channels):
     W.require(actual.get('cache_sha256')==field.get('sha256') and actual.get('precision_bits') in (32,64),
               'Standalone native field identity or precision is unavailable.')
     environment=receipt.get('environment') or {}
-    _match(identity,request,channels,field_precision=actual['precision_bits'],
+    bridge=_match(identity,request,channels,field_precision=actual['precision_bits'],
         native_sources=receipt.get('source_code_sha256') or {},
         manifest_sha256=environment.get('environment_manifest_sha256'),julia_version=environment.get('julia_version'))
     return {**report,'status':'compatible_saved_response_identity','model_sha256':identity['model_sha256'],
         'field_cache_sha256':field['sha256'],'field_precision_bits':actual['precision_bits'],
         'channel_count':len(channels),'drift_dt_ns':identity['numerics']['dt'],
+        **({'source_compatibility_bridges':[bridge]} if bridge else {}),
         'max_steps':identity['numerics']['max_steps'],'scope':'Compatibility only; no experimental or complete-response validation.'}
 
 
@@ -97,7 +115,7 @@ def campaign(campaign,calibration,*,root=ROOT):
               complete.get('plan_sha256')==plan_sha,'Original campaign plan/completion binding changed.')
     requests=_native_requests(plan,root);request_sha=plan['native_request']['sha256']
     W.require(request_sha in requests,'Original campaign native request is missing.')
-    identity,report=_identity(calibration);seen=set();used=set()
+    identity,report=_identity(calibration);seen=set();used=set();bridges=[]
     for seal in (campaign/'chunks').glob('*/b*/DONE.json'):
         seal=W.safe_path(campaign,seal.relative_to(campaign).as_posix());done=W.read(seal)
         index=done['identity']['chunk_index']
@@ -122,8 +140,9 @@ def campaign(campaign,calibration,*,root=ROOT):
                   source.get('Project.toml')==request['source_sha256'].get('simulation/Project.toml') and
                   all(source.get(k)==request['source_sha256'].get('simulation/'+k) for k in SHARED_NATIVE),
                   'Campaign native software/environment source pins differ from the original request.')
-        _match(identity,request,recipe['channels'],field_precision=None,native_sources=source,
+        bridge=_match(identity,request,recipe['channels'],field_precision=None,native_sources=source,
                manifest_sha256=source.get('Manifest.toml'))
+        if bridge and bridge not in bridges:bridges.append(bridge)
     W.require(seen and {str(i) for i in seen}==set(complete['chunks']),'Campaign sealed chunk census is incomplete.')
     return {**report,'status':'compatible_saved_response_identity','campaign_complete_sha256':W.sha(campaign/'COMPLETE.json'),
         'native_request_sha256':request_sha,'original_native_request_variants_checked':sorted(used),
@@ -131,5 +150,8 @@ def campaign(campaign,calibration,*,root=ROOT):
         'field_cache_sha256':identity['field_cache']['sha256'],'field_precision_bits':identity['field_precision_bits'],
         'field_precision_basis':'Same serialized field-cache SHA256 and same native loader. Requested fresh-solve precision is a separate setting.',
         'channel_count':34,'drift_dt_ns':identity['numerics']['dt'],'max_steps':identity['numerics']['max_steps'],
-        'sealed_chunks_checked':len(seen),'native_environment_basis':'Exact locked Manifest/Project and native source hashes; no new runtime or field inspection.',
+        'sealed_chunks_checked':len(seen),'native_environment_basis':
+            ('Exact locked Manifest/Project and native source hashes with the explicit readout-only source bridge; no new runtime or field inspection.'
+             if bridges else 'Exact locked Manifest/Project and native source hashes; no new runtime or field inspection.'),
+        **({'source_compatibility_bridges':bridges} if bridges else {}),
         'scope':'Compatibility only; no experimental or complete-response validation.'}

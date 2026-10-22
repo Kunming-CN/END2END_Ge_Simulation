@@ -202,6 +202,39 @@ function validate_event(event,n)
     check(total>0,"Zero primary belongs only in the sparse event census")
     total,Float64(t0)
 end
+"""Shared signed-channel electronics and timing, with an optional isolated horizon."""
+function channel_response(t,q,ch,readout,eion,cal,matrix;horizon_ns=nothing)
+    wired=ch["wiring_factor"].*q
+    result=P.process(t,wired,readout,eion,cal,matrix;horizon_ns=horizon_ns)
+    check(result["current_balance"]["passed"],"Current/charge identity failed")
+    collecting=last(wired)>=readout["threshold_V"]/cal["volts_per_keV"]
+    tx=collecting ? H.crossing_time(t,wired,0.5) : nothing
+    t90=collecting ? H.crossing_time(t,wired,0.9) : nothing
+    result["contact_id"]=ch["id"];result["final_induced_keV"]=last(q)
+    result["final_wired_induced_keV"]=last(wired);result["collection_candidate"]=collecting
+    result["t50_ns"]=tx;result["t90_ns"]=t90
+    result["timing_method"]="ideal_charge_last_rising_constant_fraction_terminal_v2"
+    if horizon_ns!==nothing
+        result["native_t50_ns"]=tx;result["native_t90_ns"]=t90
+        result["timing_window_ns"]=horizon_ns
+        result["t50_outside_window"]=tx!==nothing && tx>=horizon_ns
+        result["t90_outside_window"]=t90!==nothing && t90>=horizon_ns
+        result["t50_outside_window"] && (result["t50_ns"]=nothing)
+        result["t90_outside_window"] && (result["t90_ns"]=nothing)
+    end
+    trace=result["trace"]
+    trace["wired_induced_charge_fC"]=trace["induced_charge_fC"]
+    trace["signed_induced_charge_fC"]=ch["wiring_factor"].*trace["induced_charge_fC"]
+    trace["charge_fC"]=trace["signed_induced_charge_fC"]
+    trace["signed_induced_current_nA"]=ch["wiring_factor"].*trace["current_nA"]
+    result["trace_conventions"]=Dict("charge_fC"=>"Raw signed SSD induced charge before fixed family wiring",
+        "current_nA"=>"Current after fixed family wiring; original integration bin, not display-point interval",
+        "preamp_V"=>"Signed preamplifier output driven by fixed-wiring current",
+        "shaped_V"=>"Signed shaper voltage with configured electronics inversion",
+        "wired_induced_charge_fC"=>"Charge after fixed X=+1/Y=-1 wiring")
+    result["wiring_factor"]=ch["wiring_factor"]
+    result
+end
 function process_event(event,sim,cfg,channels,readout,cal,matrix,eion,n,signalfile)
     energy,t0=validate_event(event,n);components=[Any[] for _ in 1:34];outcomes=Any[]
     for (idx,step) in enumerate(event["steps"])
@@ -218,28 +251,10 @@ function process_event(event,sim,cfg,channels,readout,cal,matrix,eion,n,signalfi
     open(signalfile,"w") do io
         println(io,"contact_id,time_ns,signed_induced_keV,wired_induced_keV")
         for ch in channels
-            id=ch["id"];t,q=R.causal_sum(components[id],cfg.dt);wired=ch["wiring_factor"].*q
-            result=E.process_event(t,wired,readout,eion,cal,matrix)
-            check(result["current_balance"]["passed"],"Current/charge identity failed")
-            terminal_cut=readout["threshold_V"]/cal["volts_per_keV"]
-            collecting=last(wired)>=terminal_cut
-            result["contact_id"]=id; result["final_induced_keV"]=last(q)
-            result["final_wired_induced_keV"]=last(wired);result["collection_candidate"]=collecting
-            result["t50_ns"]=collecting ? H.crossing_time(t,wired,0.5) : nothing
-            result["t90_ns"]=collecting ? H.crossing_time(t,wired,0.9) : nothing
-            result["timing_method"]="ideal_charge_last_rising_constant_fraction_terminal_v2"
-            trace=result["trace"]
-            trace["wired_induced_charge_fC"]=trace["induced_charge_fC"]
-            trace["signed_induced_charge_fC"]=ch["wiring_factor"].*trace["induced_charge_fC"]
-            trace["charge_fC"]=trace["signed_induced_charge_fC"]
-            trace["signed_induced_current_nA"]=ch["wiring_factor"].*trace["current_nA"]
-            result["trace_conventions"]=Dict("charge_fC"=>"Raw signed SSD induced charge before fixed family wiring",
-                "current_nA"=>"Current after fixed family wiring; original integration bin, not display-point interval",
-                "preamp_V"=>"Signed preamplifier output driven by fixed-wiring current",
-                "shaped_V"=>"Signed shaper voltage with configured electronics inversion",
-                "wired_induced_charge_fC"=>"Charge after fixed X=+1/Y=-1 wiring")
-            result["wiring_factor"]=ch["wiring_factor"]
-            for k in eachindex(t);println(io,id,',',t[k],',',q[k],',',wired[k]);end
+            id=ch["id"];t,q=R.causal_sum(components[id],cfg.dt)
+            result=channel_response(t,q,ch,readout,eion,cal,matrix;
+                horizon_ns=get(event,"readout_horizon_ns",nothing))
+            for k in eachindex(t);println(io,id,',',t[k],',',q[k],',',ch["wiring_factor"]*q[k]);end
             push!(rows,result)
         end
     end

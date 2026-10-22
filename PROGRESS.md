@@ -15,14 +15,25 @@ Three targeted tests passed (truth isolation, independent317keV gain, zero-weigh
 corners/order rejection). Evidence: validation/native-inverse-single-site/result.json,
 5184c58e...abe23a. Ideal34-charge inputs and sparse80-cell coverage only.
 
-Current: eight fixed equal-energy two-site mixtures from saved independent waves,
-all800cell-pair centers/two X/Y matchings, fixed8refinements per matching. No true
-positions, energy or matching supplied to fit. Report pairing and site errors;
-two-site restriction does not test false splitting or same-pixel multiplicity.
-Parallel: remove duplicate finite-window readout, keep old/new saved outputs exact
-and admit only the proven exact native-source pair for old calibration reuse.
-The68saved-electronics assertions passed; remaining failure/source checks underway.
-Neither change has yet been promoted as validated detector efficiency/imaging.
+Eight fixed equal-energy prompt two-site mixtures are complete (800coarse hypotheses,
+8refinements per matching). Nominal pairing8/8, 16site position error median/max
+0.013053/0.023088mm; absolute energy error0.020678/0.056917keV. Two middle-depth
+mixtures remain nearly degenerate between pairings; no robust discrimination or
+false-split claim. Four targeted tests passed. Saved-only3.902s incl2pilot reuses;
+validation/native-inverse-pair/result.json,aeb71408...cc903. Developer sources frozen.
+
+Finite-window readout now runs once through the shared channel helper. Old/new
+saved outputs, native CSV bytes and group metadata are exact:68electronics and
+74failure-policy assertions plus6calibration-admission tests passed. Old calibration
+is reusable only through the exact verified old/new source-hash pair; other pins
+remain strict. validation/readout-single-pass/validation.json,1d13ac42...ec96.
+No new science calls. Student package publication is next.
+
+Current: apply the frozen inverse to the two relevant saved development groups;
+retain ambiguous alternatives, quantify supported-domain errors before expansion.
+The five-site case remains outside this restricted model. Also quantify the two
+middle-depth pairing separations. No holdout tuning or production imaging promotion;
+validated new imaging recovery remains0. Software/site delivery continues in parallel.
 
 ## GeGI native-cell forward milestone completed — 2026-10-22
 

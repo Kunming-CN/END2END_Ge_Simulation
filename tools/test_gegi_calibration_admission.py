@@ -50,7 +50,58 @@ class Admission(unittest.TestCase):
         self.assertEqual(len(result['original_native_request_variants_checked']),2)
         self.assertEqual(result['channel_count'],34);self.assertEqual(result['field_precision_bits'],32)
         self.assertEqual(result['drift_dt_ns'],1.);self.assertEqual(result['max_steps'],1001)
+        self.assertNotIn('source_compatibility_bridges',result)
         self.assertIsNone(A.campaign(self.campaign,None,root=self.root))
+
+    def test_only_the_verified_readout_source_pair_bridges_unchanged_native_inputs(self):
+        old,new=sorted(A.GEGI_READOUT_SOURCE_PAIR)
+        for native_hash,bank_hash in ((old,new),(new,old)):
+            identity=copy.deepcopy(self.identity);identity['source_sha256']['gegi_response.jl']=bank_hash
+            self.save_bank(identity)
+            source=copy.deepcopy(identity['source_sha256']);source['gegi_response.jl']=native_hash
+            receipt={'model_sha256':self.request['model_sha256'],'channels':self.channels,
+                'fields':{'cache_sha256':'e'*64,'precision_bits':32},'source_code_sha256':source,
+                'environment':{'environment_manifest_sha256':'c'*64,'julia_version':'1.13.0'}}
+            result=A.standalone(self.bank,self.request,receipt,self.channels)
+            bridge,=result['source_compatibility_bridges']
+            self.assertEqual(bridge['native_sha256'],native_hash)
+            self.assertEqual(bridge['calibration_sha256'],bank_hash)
+            for mutate in (lambda x:x['source_code_sha256'].update({'gegi_response.jl':'0'*64}),
+                           lambda x:x['source_code_sha256'].update({'gegi_signal_helpers.jl':'0'*64}),
+                           lambda x:x['source_code_sha256'].update({'readout.jl':'0'*64}),
+                           lambda x:x['fields'].update(cache_sha256='0'*64),
+                           lambda x:x['environment'].update(environment_manifest_sha256='0'*64)):
+                changed=copy.deepcopy(receipt);mutate(changed)
+                with self.assertRaises(W.ControlError):A.standalone(self.bank,self.request,changed,self.channels)
+            for key,value in (('drift_dt_ns',2.),('drift_cap_ns',1001.)):
+                changed=copy.deepcopy(self.request);changed['numerics'][key]=value
+                with self.assertRaises(W.ControlError):A.standalone(self.bank,changed,receipt,self.channels)
+
+    def test_campaign_reports_the_bridge_without_rewriting_bank_or_source_pins(self):
+        old,new=sorted(A.GEGI_READOUT_SOURCE_PAIR)
+        identity=copy.deepcopy(self.identity);identity['source_sha256']['gegi_response.jl']=old
+        self.save_bank(identity);original_bank=(self.bank/'identity.json').read_bytes()
+        source=copy.deepcopy(identity['source_sha256']);source['gegi_response.jl']=new
+        request=copy.deepcopy(self.request);request['source_sha256']={'simulation/'+k:v for k,v in source.items()}
+        request_path=self.dataset/'bridged-request.json';W.write(request_path,request)
+        folder=self.dataset/'bridged-campaign';plan={'native_request':{
+            'ref':request_path.relative_to(self.root).as_posix(),'sha256':W.sha(request_path)},'model_sha256':'d'*64}
+        W.write(folder/'plan.json',plan)
+        recipe={'channels':self.channels,'drift_dt_ns':1.,'source_code_sha256':source}
+        done={'identity':{'chunk_index':0,'model_sha256':'d'*64,'native_request_sha256':W.sha(request_path)},
+            'response':{'native_request_sha256':W.sha(request_path),'new_field_solve':False,
+                'readout_recipe':recipe,'readout_recipe_sha256':W.digest(recipe)}}
+        seal=folder/'chunks/g0/b000/DONE.json';W.write(seal,done)
+        W.write(folder/'COMPLETE.json',{'kind':'gegi_campaign_plan_v1','status':'completed',
+            'plan_sha256':W.sha(folder/'plan.json'),'chunks':{'0':W.sha(seal)}})
+        result=A.campaign(folder,self.bank,root=self.root)
+        self.assertEqual(len(result['source_compatibility_bridges']),1)
+        self.assertEqual((self.bank/'identity.json').read_bytes(),original_bank)
+        # Even a deliberately rehashed recipe/seal cannot change an original request pin.
+        done['response']['readout_recipe']['source_code_sha256']['readout.jl']='0'*64
+        done['response']['readout_recipe_sha256']=W.digest(done['response']['readout_recipe']);W.write(seal,done)
+        complete=W.read(folder/'COMPLETE.json');complete['chunks']['0']=W.sha(seal);W.write(folder/'COMPLETE.json',complete)
+        with self.assertRaisesRegex(W.ControlError,'source pins differ'):A.campaign(folder,self.bank,root=self.root)
 
     def test_rehashed_incompatible_bank_metadata_are_rejected(self):
         for mutate in (lambda x:x.update(model_sha256='0'*64),lambda x:x['field_cache'].update(sha256='0'*64),
