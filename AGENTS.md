@@ -1,5 +1,30 @@
 # Project working rules
 
+## Owner clarification — 2026-10-22 site selection after readout
+
+The owner recognized that pre-SSD screening may lose events because interaction
+information changes during signal formation/readout. The completed saved-data
+study rejects the greater-than-two gamma-anchor rule: it would remove many
+existing two-site candidates. Keep zero-deposit skipping; do not enable this
+nonzero-event prefilter or keep trying arbitrary multiplicity cuts. Apply the
+single/two-site output scope after signal reconstruction, preserving ambiguity,
+excluded alternatives, original identities and denominators. Prioritize the
+readout/reconstruction chain; timing savings require measured implementation work.
+
+## Owner update — 2026-10-22 ImagerPro single/two-site scope
+
+The owner requests a simulation mode targeting only the single-site and two-site
+event classes recorded by GeGI ImagerPro, skipping other events before SSD to save
+drift and downstream work. For this requested mode, this supersedes the generic
+all-nonzero-events target scope; preserved scientific originals remain unchanged.
+Validate a transport-only prefilter against the retained saved full chain before
+production use. Retain original IDs, initial/zero/nonzero/failure denominators,
+exclusions and an explicit unknown class; measure false rejection and a cost proxy.
+Transport deposited rows are not recorded or reconstructed sites: steps can merge,
+and low/lost charge complicates multiplicity. Do not use a greater-than-two-row
+shortcut. Export limitations do not establish hardware efficiency. Root owns
+acceptance; this validation requires no new physics campaign.
+
 ## Owner update — 2026-10-22 continuous planned development
 
 Continue automatically through the existing full-chain repair and software plan.

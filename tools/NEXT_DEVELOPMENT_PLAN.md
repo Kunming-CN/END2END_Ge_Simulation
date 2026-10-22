@@ -4,8 +4,10 @@
 
 Owner explicitly resumed manual development on2026-10-22 after the completed
 lateral-forward milestone. Native-cell forward validation and transport-only SSD
-preselection assessment and fixed single/two-site inverse checks are complete. Next is
-saved real-event applicability and physically defined coverage. Root owns
+preselection assessment, fixed single/two-site inverse checks, region applicability
+and fixedK1024optimization on one development event are complete. The transport-only
+gamma-anchor prefilter has been tested and rejected. Next is explicit two-site
+selection after reconstruction and saved-error accounting. Root owns
 direction/quality; gpt-6.1-sol ultra implements small concrete changes without
 speculative abstractions or repetitive checks/prose. Automatic monitoring stays
 PAUSED; the old pause record is retained, not an active manual-work block.
@@ -179,18 +181,42 @@ The first dense inverse retained1383840coarse alternatives across3410supported
 cells (110carrier-order-flip cells unsupported).8-mixture parity passed.720929
 keeps the correct pairing, RMS12.1504->2.75436keV and site errors0.312/0.603mm,
 but its centroid-cell pair ranks240th and was pruned byK8. Preserve this result.
-Next reuse all saved coarse arrays and16refinements, taking fixed1024candidates
-per matching by observed cost, same optimizer/steps; max2016new refinements/120s.
-No new physics, truth-based candidate selection or holdout use. Report budget and
-objective/error changes; a lower objective is not experimental validation.
+The fixed1024budget is complete:2032new+16reused refinements,69.181s, correct
+pairing and RMS0.267866keV; site-centroid errors0.0073225/0.0515993mm, opposite
+matching RMS93.1220keV. Result: `.local/gegi-10m/signal-recovery-v1/validation/native-region-720929-k1024/result.json`,
+SHAa61c5c160c5f621c7676be660d82fe25406f779892b846de5e05ea93894f9e69.
+The centroid-cell pair was refined; one Z-boundary site remains. No new physics,
+Gram/parity rerun or holdout use. One development event is not validated recovery.
 
-After supported-domain tests, connect the same forward model to explicitly chosen
+The requested pre-SSD study is complete: >2contributing gamma anchors would drop
+14743of57613groups, including228of414groups with existing two-site candidates.
+These are conditional signal-model comparisons, not measured hardware labels.
+The owner agrees prefiltering is not practical here. Reject this rule, retain
+zero-only skipping, and do not continue arbitrary multiplicity-cut searches.
+Use the single/two-site scope after signal reconstruction. Add explicit two-site
+selection to the existing saved-imaging entry, preserving original prior weights,
+excluded ambiguity, IDs and initial/zero/nonzero/failure denominators. Evaluate
+saved pairing/position/energy/splitting metrics and affected map inputs. Reuse
+unchanged maps; no new waveform fit or physics, and no holdout-based cut tuning.
+The waveform inverse remains a scoped development diagnostic.
+
+After this saved-data check, connect the same forward model to explicitly chosen
 readout observables, then address variable site count and same-pixel ambiguity.
-Do not choose raw34charge as if it were known measured input. Owner export format
-is unknown; owner says SDSMT/Noomen may provide it and a brief request email is drafted. Nominal-model development continues
-with that limitation explicit. Only after this integrated development validation
+Do not choose raw34charge as if it were measured input. Owner-provided email from
+Juergen Reichenbacher confirms ImagerPro exports single-site/two-site events as.bin;
+multi-site events and waveforms are currently unavailable. BEGe3820waveforms are
+offered for another detector and are not needed for the current GeGI interface.
+Obtain an actual.bin sample, schema, units and software version before a parser.
+The manufacturer manual gives processed DataStream fields with duplicate type1
+and unspecified GlobalTime units; do not guess those definitions. Nominal-model
+development continues with that limit explicit. Only after integrated development validation
 may the frozen holdout support promotion/reprocessing and new public science figures.
 Guard-field completeness remains the separate unresolved numerical stage above.
+After current-plan validation, the owner's screenshot guides a website task using
+actual reconstructed sky-direction Compton circles and summed intensity, or
+correctly labeled cone intersections on a chosen plane. Not every plane intersection
+is a circle. No fabricated cones, smoothing as validation or imagegen; no site/package
+build in the present milestone.
 
 Owner's efficiency suggestion was checked against all57,613saved groups. Zero-only
 preselection already removes942,395primaries. Single-row/single-position cuts save0.
@@ -220,7 +246,8 @@ strip deck contains toy/other-device studies and must not set GeGI parameters.
 A focused three-deck check confirms that July14measured z is source placement,
 not event depth; Sept24readout-chain figures are proposed/schematic; Oct27shaping
 settings belong to the USD_9-14-18C_KM_Li_2501 hybrid detector, not GeGI. No indexed
-owner-specific acquisition schema or raw waveform export is established.
+owner-specific raw waveform export is established; the newer owner correspondence
+above now defines the available processed.bin event classes.
 The PHDS 2024 deck mainly concerns ring-contact detectors; the plant-imaging PhaseII
 report concerns GIPR/coded aperture. Keep both out of GeGI electronics parameter
 claims. The IAEA report's GeGI-4dimensions must not silently replace current11 mm.
@@ -247,9 +274,11 @@ claims. The IAEA report's GeGI-4dimensions must not silently replace current11 m
   The120ns experimental coincidence cut is distinct from our100us decay grouping;
   do not substitute one for the other or infer a waveform sampler from timestamps.
 
-Complete GeGI operation/service manual and matching raw experimental electronics
-configuration are still missing. Manufacturer datasheets do not supply the full
-transfer function. Supervisor owns decisions; ordinary retrieval/development uses
+The GeGI manufacturer manual is verified in the private reference-index.json,
+SHA474106619a52369b9718944928e6bda69fadc4a061550caa2f681fef3783d436.
+Its processed DataStream schema does not resolve the duplicate type1 or GlobalTime
+unit; the actual sample/version and matching electronics transfer remain needed.
+Supervisor owns decisions; ordinary retrieval/development uses
 6.1-sol, Astra only for necessary complex analysis. Reuse completed retrieval,
 checks and publication. Completed bounded calculations include3original-deposit
 path captures, local WP17/20/34solves and the original-grid full34 reference bank.

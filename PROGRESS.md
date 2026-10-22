@@ -14,18 +14,47 @@ Detailed preceding handoff is preserved in Git at
 [cd31f32390d8](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/cd31f32390d8724d5ca17ff44cbb6bd23ff1b8f8/PROGRESS.md).
 All local scientific originals and failed attempts remain permanent.
 
-Current task: correct coarse-center pruning using a fixed1024candidates per
-matching, chosen solely by saved costs. Reuse all16completed refinements and all
-1383840coarse alternatives; same8coordinate steps/NNLS and waveform-only inputs.
-At most2016new refinements,120s whole worker, checkpoints/no automatic retry.
-This is a development optimization-budget change; holdout and physics unchanged.
+Fixed1024candidate refinement per matching is complete on development event720929:
+2032new+16reused refinements,69.181s, no new physics. Correct pairing; waveform
+RMS2.754360->0.267866keV, site-centroid errors0.0073225/0.0515993mm; opposite
+matching RMS93.1220keV. This is one ideal-charge development diagnostic, not
+validated recovery. The optimization worker exited; overall project is incomplete.
+The transport-only single/two-site prefilter study is complete and the tested rule
+is rejected. On57613groups, >2gamma anchors would screen14743groups/679107positive
+rows (47.67%row-work proxy), including228of414groups with existing two-site
+imaging candidates. Those are conditional candidates, not measured hardware truth.
+Seven targeted tests passed; the saved scan took40.475s with no physics/fitting.
+Result: `validation/single-two-site-prefilter/result.json`, SHA
+4c009b3321170346cf8e7a6695f7248150811562f36fe0c55112918e6a66b114.
+All IDs, per-chunk decisions and denominators are retained. Unknown ancestry would
+be kept; none occurred. Fixed development/holdout comparison did not tune the rule.
+Owner agrees prefiltering is not practical here. Keep zero-only skipping.
+Next: an explicit two-site imaging selection AFTER reconstruction, preserving
+candidate prior weights and excluded ambiguity; evaluate saved errors and affected
+map inputs without repeating fits or unchanged maps. No new physics. The waveform
+inverse remains diagnostic; single charge-cell hypotheses are not proven single
+photon interactions.
 
 Hardware correspondence: the July14 GeGI slides show measured spectra/maps, not
 raw strip-energy/time or waveform export definitions. Its simulated interaction
 positions and assumed/physical source depths are not measured event DOI. Sept24
 chain slides are schematic; Oct27 hybrid-detector shaping settings are not GeGI.
-Owner says the detector is at SDSMT; raw details may need Noomen. A short request
-email was drafted, not sent. Raw format remains unknown; nominal-model work continues. Do not infer waveform sampling from a50MSPS clock specification.
+Owner-provided email from Juergen Reichenbacher establishes that GeGI ImagerPro
+currently records only single-site and two-site events as.bin; multi-site events
+and waveforms are unavailable. Offered BEGe3820waveforms are a different detector
+and are not needed for this GeGI interface. Actual.bin sample/schema/units and
+software version remain needed. The verified manufacturer manual describes a
+processed DataStream schema, but duplicates type1 and leaves GlobalTime units
+unspecified; do not implement a guessed parser. Private reference-index SHA
+474106619a52369b9718944928e6bda69fadc4a061550caa2f681fef3783d436.
+Root handles the concise reply draft; no email was sent. Do not infer waveform
+sampling from a50MSPS clock specification.
+
+After current-plan validation, publish actual reconstructed sky-direction Compton
+circles with summed intensity, or correctly labeled cone intersections on a chosen
+plane, following the owner's screenshot. Plane intersections are not always
+circles. This is a sequenced presentation task: no fabricated cones or smoothing
+as validation. No site/package build is part of this record delivery.
 
 ## Latest tested software and public delivery
 
@@ -122,6 +151,16 @@ All paths below are under `.local/gegi-10m/signal-recovery-v1/`.
   pair ranks240th, outsideK8. Search0.828s, load24.399s, prep1.859s, store1.607s;
   total42.440s includes reporting pause. A pre-fit loader provenance bug/failure
   was retained and fixed; prior8-fit parity and physics were not repeated.
+
+- FixedK1024 optimization: `validation/native-region-720929-k1024/result.json`,
+  SHAa61c5c160c5f621c7676be660d82fe25406f779892b846de5e05ea93894f9e69.
+  Reuses1383840coarse alternatives and16pinned refinements;2032new give2048total,
+  exactly1024per matching in69.181s. RMS0.267866keV versusK8's2.754360keV;
+  opposite matching93.1220keV. Site centroid errors0.0073225/0.0515993mm,
+  energy errors-0.0807374/-0.0426575keV; one Z-boundary site remains. The true
+  centroid-cell pair was refined. No Gram/parity/physics rerun; checkpointed
+  candidates and the pre-refinement arithmetic-admission failure are retained.
+  One development event only; no global-optimum, hardware or validated-recovery claim.
 
 Reuse frozen tools/results; no need to repeat these calibrations or fit checks.
 Code source hashes and complete input bindings are in the corresponding receipts.
