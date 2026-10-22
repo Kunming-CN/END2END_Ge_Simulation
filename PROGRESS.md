@@ -1,348 +1,186 @@
 # Current handoff
 
-## Active work — 2026-10-22
+## Current milestone — 2026-10-22
 
-Owner requires continuous development until a concrete decision is needed. Root owns
-scientific direction; ordinary implementation uses gpt-6.1-sol ultra. No additional
-AI review. Monitoring remains PAUSED, no resets or large campaign. Necessary small
-repair calculations are authorized, bounded, measured and restartable.
+Finish publication of actual Compton cone intersections, angular density and the
+saved conditional map. Root owns direction; ordinary implementation is gpt-6.1-sol
+ultra. No additional AI reviews, resets, large campaigns or repeated broad checks.
+The owner explicitly stopped further two-bright-spot investigation: the current
+1332.492 keV layer has 18 groups. State limited statistics and move on.
 
-Same supervisor owns `.local/autonomy/gegi-saved-recovery.lock`; prior ownership
-and pause records retained. Actual process/Git inspection preceded continuation.
-Current state is `.local/autonomy/state.json`. Do not start a second supervisor.
-Detailed preceding handoff is preserved in Git at
-[cd31f32390d8](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/cd31f32390d8724d5ca17ff44cbb6bd23ff1b8f8/PROGRESS.md).
-All local scientific originals and failed attempts remain permanent.
+The same manual supervisor owns `.local/autonomy/gegi-saved-recovery.lock` as
+`gegi-saved-recovery-20261020`; previous ownership and pause records are retained.
+Automatic monitoring stays PAUSED. Bounded repair development/calculations and
+publication are authorized without repeated permission. Check actual processes,
+receipts and `.local/autonomy/state.json` before resuming; do not duplicate workers.
+All original science, failed attempts and identities remain permanent.
 
-Fixed1024candidate refinement per matching is complete on development event720929:
-2032new+16reused refinements,69.181s, no new physics. Correct pairing; waveform
-RMS2.754360->0.267866keV, site-centroid errors0.0073225/0.0515993mm; opposite
-matching RMS93.1220keV. This is one ideal-charge development diagnostic, not
-validated recovery. The optimization worker exited; overall project is incomplete.
-The transport-only single/two-site prefilter study is complete and the tested rule
-is rejected. On57613groups, >2gamma anchors would screen14743groups/679107positive
-rows (47.67%row-work proxy), including228of414groups with existing two-site
-imaging candidates. Those are conditional candidates, not measured hardware truth.
-Seven targeted tests passed; the saved scan took40.475s with no physics/fitting.
-Result: `validation/single-two-site-prefilter/result.json`, SHA
-4c009b3321170346cf8e7a6695f7248150811562f36fe0c55112918e6a66b114.
-All IDs, per-chunk decisions and denominators are retained. Unknown ancestry would
-be kept; none occurred. Fixed development/holdout comparison did not tune the rule.
-Owner agrees prefiltering is not practical here. Keep zero-only skipping.
-The explicit two-site imaging option AFTER reconstruction is implemented and its
-7targeted tests pass. `gegi_joint_imaging.py --reconstructed-directory --two-site-only`
-preserves original priors, excluded ambiguity and all denominators; default behavior
-is unchanged. Saved selection took4.630s:434groups/837candidates become414/647;
-the map input162/393 becomes153/287, and1332.492keV19/58 becomes18/36.
-Frozen200+200 evaluation: pairing mismatch0/15development and0/16holdout candidate
-hypotheses; false splitting1/15 and0/16. Matched-cell median depth errors0.121431/
-0.097902mm, absolute energy errors0.302211/0.401364keV. Candidate sequence labels
-correct/wrong/unknown are2/2/21 and2/6/17; these are alternatives, not hard-choice
-error rates. The two known development groups each retain both orders. Charge cells
-are not proven photon vertices. No additional recovery is validated.
-Evidence:`validation/two-site-output/result.json`, SHA
-2a54be02d09a57ab2d314864b4f199bb0e4b4dac01d72864e16695448a8d326f.
-The changed map was computed once with the same40iteration,z40mm settings and no
-plane profiling:7.876s wall/2.047s map+checks.1332.492keV retains peaks at(38,-2,40)
-and(46,18,40)mm; no convergence claim or new leave-one-out study. Report SHA
-bc6c4d33db93b96f066eb86df6c79a2a0cd540870e10296ab350642ee3a1e59d.
-Map comparison SHA9ca6b42833682905e6b41d19653575a5e1bc47423c3ac5fd1cf1bb2e78e9eb8c.
-Only8frozen400groups intersect the153mapgroups (6development/2holdout); all4holdout
-wrong-only groups lie outside the existing map energy windows. No escape mechanism
-is inferred from that. Exact153map-group posthoc evaluation is now complete:
-153metadata reads,8prior metric rows reused,145supplemental evaluations (not a new
-holdout). All153conditional hypotheses match the endpoint-cell pairs; anchor-count
-false splitting0. Across306matched cells, median3D/depth/absolute-energy errors
-are1.412926mm/0.135299mm/0.366593keV. Photon-vertex error is separately available
-for80sites in40groups: median1.424950mm; it is not the charge-centroid error.
-Strict order classes:1correct-only,35both orders,4wrong-only,113unknown-only.
-Candidate labels36correct/39wrong/212unknown are alternatives, not hard-choice
-error rates. Unknown groups:83multiple recorded photon trackIDs,29shared-cell
-anchors,1anchor spanning strips. Secondary photons also have distinct trackIDs;
-this does not yet establish multiple independent emitted photons.
-1332.492keV has18groups:2both orders,16unknown (13multiple-track,3shared-cell).
-Saved ancestry resolves152/153groups to one earliest gamma lineage, including82of
-the83multiple-track groups; no missing parents/cycles.1332.492keV has17single-lineage
-groups and one two-lineage group995246. Secondary phot/eBrem processes explain most
-new photon IDs. Preserve the old strict labels; unknown does not mean invalid.
-Lineage evidence:`validation/two-site-map-evaluation/continued/lineage-summary.json`,
-SHA4c2f203c341b0d6f286a4c0e899b500c6e69c424d531dcd07cd4791c211281bc;
-bound reproduction code is beside it. Parent-gamma reference is now complete:
-row ancestry maps to the first recorded child birth under the earliest gamma;
-birthXYZ/time/process define each interaction.82groups have two dominant uniquely
-mapped interactions (2correct-only,75both orders,5wrong-only);71remain unknown
-(66not exactly2dominant interactions,4cell ambiguity,1two roots).1/5keV sensitivity
-gives the same reference count. All407direct-root gamma rows remain explicitly
-unassigned to interactions: median/max per-group energy0.19441/0.51656keV.
-No identity conflicts; root/interaction energy closure errors<=9.10e-13keV.
-Three targeted tests passed;3cached+150new metadata reads,1.738s wall. No waves,
-fits, maps or physics. Result:`validation/root-gamma-interaction/evaluation/result.json`,
-SHAd4aeb98b66a7fc7a6e87096cfa57deec2f1ee9459dd3fa256d89046039093a69.
-Root birth energy is not detector-entry energy; two dominant interactions do not
-prove full absorption. Old strict labels and all reconstruction inputs are intact.
-Four old wrong-only groups are excluded by cos(theta)<-1, not coincident positions;
-diagnosis SHA4e8a2f311b27ae021f59ea9a72dd6086761b07033a895a8d9a072fbc319a244e
-(`two-site-map-evaluation/continued/wrong-order-diagnosis.json`). Three have Ge
-deposition below root birth energy:879908/906665/913963.235273 and newly identified
-278717 both deposit their662keV root energy, so these two need targeted transport-
-versus-free-electron-kinematics diagnosis before changing any reconstruction cut.
-The two-event metadata diagnosis is complete: using deposited energies still gives
-free-electron cos(theta)=-1.550391/-1.131631; the inconsistency predates readout.
-No duplicate/merged birth keys or cross-cell descendant allocation was found.
-235273has a later photon STEP start off the two-birth chord;278717's local incoming
-STEP differs slightly from the initial direction. Initial-direction angles therefore
-are not proven local scattering angles. Macro/log verify Livermore/Geant4 11.3.2;
-the exact-version upstream model includes Doppler sampling, but these records alone
-do not establish the cause of each event. No cut/model changed. Evidence:
-`validation/two-site-map-evaluation/continued/full-energy-diagnosis.json`, SHA
-386521326905836b6b7a5ecff65cdeef34eac0cbcaacf39ff1927521a728c0fb;2original metadata
-records are cached beside it. Original zero-deposit STEP records were recovered
-from two small raw archives without radiation reruns:4root steps(2positive/2zero)
-for235273and3(2positive/1zero) for278717. Unique adjacent STEP chords at the Compton
-births give local cos(theta)=-0.646475000028/-0.899038091256. STEP lacks processID,
-per-step energy and momentum; do not label an individual zero step Rayleigh.
-Evidence:`two-site-map-evaluation/continued/raw-step-lookup.json`, SHA
-3b9400e294ab6cd69fdbc52fb093fa0181406921479c7b5d5adb52caf226ea5c;0.392s internal.
-The free-electron energy/angle mismatch is present before SSD/readout. Next inspect
-the installed Geant4 Doppler/shell data and upstream sampler for reuse in a bounded
-angular-response reference. Existing Geant4 11.3.2/G4EMLOW8.6.1 and native C++
-toolchain are now verified. Ge has8shell profiles on31momentum points; binding
-energies/occupancies and installed file/package hashes are recorded in
-`validation/geant4-doppler-data/availability.json`, SHA
-4998a6d481879da6ac585a63f7c18c819f84351bf7b30a4bf33cfaa8c33d087d.
-Direct native Compton sampling completed:30000Livermore+3000Klein–Nishina
-control samples, fixed seeds;3.227s compile/1.233s sample process. At662/1173.228/
-1332.492keV, respectively125/106/74of10000Livermore samples fall below the free-
-electron cosine domain. All3000controls stay inside, maxcos error6.67e-16;
-all33000energy closures<=1.04e-13keV. Valid-domain absolute angular-error medians
-are1.125/0.744/0.672degrees;95th percentiles10.267/7.664/6.766degrees. No detector
-transport/SSD. Atomic relaxation was off with binding energy locally deposited;
-this isolates the model, not original event-by-event transport or detector
-efficiency. COMPLETE SHAce02d38a16b9c19f28f0520549c6a776e9af595b345aaa203f0320825096c5ee
-in `validation/bound-electron-response/native-sampler/`; all raw samples retained.
-The order-accounting repair is validated: weight all site orders before the
-approximate kinematic screen, retaining unsupported orders as unresolved mass.
-All18affected-module tests pass. Saved400/153comparison took5.828s: candidate
-mass14.25->10.822917(development),14.5->10.701389(holdout); map123.666667->115.833333.
-Map identities/energies and all287candidate nonweight fields are exact;19of153groups
-change weights. Both200group splits retain20native failures/40noncomplete groups;
-280original missing-mass records in the545group union remain missing. No candidates
-added/removed, errors unchanged, no validated new recovery. Result SHA
-27e7788afa17712cfc5d2ff51ce3aa11f13710e237516dde1e4666620de0ceab in
-`validation/order-prior-preservation/evaluation/`; content verification SHA
-4b58d409c6983e292fb8a6a1d399ce5bd0724749ce71a028c877143d7af18b3e.
-An initial wrong-directory invocation scanned0groups; its failed-start record is
-preserved. The corrected input is `reconstruction-v3/full-signal`. Next apply only
-weights to all saved candidate groups, reuse the153map input, and release software.
-No new angular kernel, changed cut or recovery promotion.
-Evidence:`validation/two-site-map-evaluation/continued/result.json`, SHA
-20035307ef632c8259805c5ac8adb47a031f41230897a14e6fdaf0b28b76fca0.
-An initial5.819sattempt stopped at102groups on a progress-file replacement error;
-the closed checkpoint and failed source remain. A targeted continuation read only
-the remaining51metadata records in5.206s wall/4.932s internal. Two boundary tests
-passed; no physics, waveform fits or maps. Student release is complete below;
-website figures await reconstruction validation. The inverse remains diagnostic.
+Detailed preceding evidence is preserved at
+[2bf8b5e5fabb](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/2bf8b5e5fabb610e330109c0c20a9c0cb5f2327d/PROGRESS.md).
+Paths below are relative to `.local/gegi-10m/signal-recovery-v1/` unless specified.
+Use the receipt hashes and existing tests; do not rerun completed physics to recover
+context. `tools/NEXT_DEVELOPMENT_PLAN.md` retains the stage/evidence map.
 
-Hardware correspondence: the July14 GeGI slides show measured spectra/maps, not
-raw strip-energy/time or waveform export definitions. Its simulated interaction
-positions and assumed/physical source depths are not measured event DOI. Sept24
-chain slides are schematic; Oct27 hybrid-detector shaping settings are not GeGI.
-Owner-provided email from Juergen Reichenbacher establishes that GeGI ImagerPro
-currently records only single-site and two-site events as.bin; multi-site events
-and waveforms are unavailable. Offered BEGe3820waveforms are a different detector
-and are not needed for this GeGI interface. Actual.bin sample/schema/units and
-software version remain needed. The verified manufacturer manual describes a
-processed DataStream schema, but duplicates type1 and leaves GlobalTime units
-unspecified; do not implement a guessed parser. Private reference-index SHA
-fc0647fcedeb19d52f73af5e8808f15941400a54b1a0227479ead06c1b9ebb0b.
-Root handles the concise reply draft; no email was sent. Do not infer waveform
-sampling from a50MSPS clock specification.
-Noomen's follow-up confirms paired N42 products: Full Detector/All Events,256pixel
-spectra/Pixel Total, and32channel spectra. Their binary-selected pixel map agrees
-well by their report; exact population/selection definitions are pending PHDS.
-All N42 products are cumulative histograms without individual-event XYZ or
-deposited-energy records; event-level information exists only for.bin single/two
-site records. Experimental reconstructed coordinates are not independent truth,
-and measured/simulated events are compared statistically, not paired one-to-one.
-Next experimental input is a matched.bin/N42 acquisition plus selection/settings,
-not BEGe waveforms. Verify map reproduction before comparing matched spectral
-populations; do not assume all totals share a denominator. No sample is received yet.
+## Tested software and current publication
 
-After current-plan validation, publish actual reconstructed sky-direction Compton
-circles with summed intensity, or correctly labeled cone intersections on a chosen
-plane, following the owner's screenshot. Plane intersections are not always
-circles. This is a sequenced presentation task: no fabricated cones or smoothing
-as validation. No site/package build is part of this record delivery.
+Student release `student-runtime-2bf8b5e5fabb` is public and verified: 896158 bytes,
+187 members, ZIP SHA256
+`4b2790f41a6be34b65a6431a063ec154e44c7ae8f3e6359c46eeb5e1bd773038`.
+It contains single-pass readout, optional post-reconstruction two-site selection,
+and repaired order weights. Five package tests passed; versioned/latest public
+bytes, embedded source commit, receipt and guide link agree. No installation test.
+Receipt: `.local/student-runtime-p1/COMPLETE.json`, SHA
+`f9c413b38da08d13ac4bc4092867628d5c8f07f454098f725ead758302138b7b`.
+Do not rebuild this runtime for website-only edits.
 
-## Latest tested software and public delivery
+Website publication is in progress using `tools/gegi_saved_publication.py` and
+`tools/build_site.py`. Four selectable layers show actual cone-plane curves,
+saved angular backprojection and saved conditional image; default1332 has18groups/
+36candidate orders. Plane z=40mm, XY units mm. Root inspected the three default
+PNGs. No smoothing, new fits, physics or source-truth overlay. Old snapshots remain.
+The initial build failed at the historical teaching loader interface; docs were
+not replaced. The exporter now uses the existing exact mount/deferred loader.
+Intermediate bundles/build failures are retained. Final generator uses the existing
+section/nav/anchor layout; the pinned historical site tools remain unchanged.
+Final bundle: `validation/order-prior-preservation/publication/final/`.
+21 exporter tests and36 final-source site tests passed, plus the affected complete
+page transformation and six control-switch checks. Browser/CDP timed out; real
+browser control/viewport acceptance is not claimed. Final build/local/live checks
+are pending. Failures and exact checks are in publication/validation.json.
+Root owns final commit/push/live verification; no hand edits to docs.
 
-Finite-window GeGI readout now runs once through a shared channel helper. Native
-signals, final electronics outputs and group metadata remain identical on the
-saved regression.68electronics and74failure-policy assertions plus6calibration
-admission tests passed. Historical calibration reuse admits only one exact proven
-old/new G-source pair; other native/environment/model/field pins remain strict.
-Evidence: `signal-recovery-v1/validation/readout-single-pass/validation.json`,
-SHA1d13ac42d4506318edc2038121f2a8709da7375e499084c66b7f94622836ec96.
-No transport, drift, field or calibration calls were used for this repair.
+## Latest saved-data repair
 
-Latest source/runtime commit `bf951bf70627447d13301c4a746cc570224a3ba8` is pushed.
-Student release `student-runtime-bf951bf70627`:896097bytes/187members, SHA256
-`7a58fe67c3ff9fa8367d80071d4df8c254c00167d160c5675c34726d29accefa`.
-It adds the optional two-site saved-imaging CLI and retains the prior readout fix.
-Five package tests passed6.594s; build2.507s. Public versioned/latest assets, embedded commit, receipt,
-remote tag/main and actual public-guide download link verified. Developer inverse
-prototypes are excluded. Authority: `.local/student-runtime-p1/COMPLETE.json`.
-No installation or scientific rerun; current ZIP only, compact previous delivery retained.
-Delivery receipt SHA8f5f8bf0323af8e9abed69e3b8b283f61cf5f3d0bcaf971bfeda450939139d22.
+The approximate free-electron kinematic screen previously redistributed all mass
+to surviving site orders. Equal engineering priors are now assigned before that
+screen; unsupported orders retain unresolved mass. This is not a calibrated
+posterior or additional signal recovery. All18 reconstruction tests pass.
 
-Website content is unchanged by this readout repair; its latest-download link serves
-the new verified software. Prior homepage delivery `044eaae02a674a8ad5e996f24a4a28b374ad435d`
-is complete: build `14090ab9454b0c088785e33080308e27b488ee94982694c5f15878f55175903e`,
-109pages/3505links,975live artifacts verified, desktop/mobile checks. Receipt:
-`.local/site-audit-20261022/homepage.json`. Do not rebuild or retest unchanged site
-science solely to resume work. New scientific figures require validated results
-and normal build_site/test_site/check_site/live checks; never hand-edit docs.
+Fixed200development+200holdout and153map checks preserve IDs, energies, candidates
+and all nonweight fields. The545group union contains280 original missing-mass
+records, still missing. Result:
+`validation/order-prior-preservation/evaluation/result.json`, SHA
+`27e7788afa17712cfc5d2ff51ce3aa11f13710e237516dde1e4666620de0ceab`.
+The initial wrong-directory failure scanned0groups and remains recorded.
 
-## Saved native response and inverse evidence
+The repair has been applied to all434candidate groups/837candidates in a sparse
+new derivative. 212groups/323candidate weights decrease; total candidate mass
+338.583333 ->262.149306, unresolved95.416667 ->171.850694. All nonweight values
+match; all545validated subset records match. Original57613group census retained.
+Application plus one changed map took7.054s; map+checks1.581s. Current two-site map
+uses153groups/287orders:661/1173/1332layers113/22/18groups. The1332layer is exactly
+unchanged. Maps retain the fixed40iteration budget; no convergence claim or more
+peak/plane/leave-one-out work. Population result SHA
+`e0e6bc42b165e47537dd2a739a828630ca9209b7b64bfdbb3359974dc7433878`,
+map SHA`181e261b6e978cc4b1cfb0d7e7859665122c69dae2c7c187871be8bfbb8b9162`,
+in `validation/order-prior-preservation/population/`.
 
-All paths below are under `.local/gegi-10m/signal-recovery-v1/`.
+Publication evaluation reuses the153group saved posthoc labels/geometry with exact
+new candidate keys/weights; no raw truth reads. Strict36correct/39wrong/212unknown
+candidate alternatives remain unchanged; these are not hard-choice error rates.
+Weighted median charge-centroid3D/absZ/absE errors1.439274mm/0.149247mm/0.373420keV.
+Photon-vertex error is separately1.432634mm on80sites. Original unweighted metrics
+remain exact. Angular errors are null because the old angle-array order cannot be
+proven; do not guess the mapping. Only6development+2holdout groups overlap the153;
+145 supplemental groups are posthoc, not a new holdout. Evaluation SHA
+`ce0d6d1ff3558250e71ca2b90c5e5a24d75448c128c57a7d6c836e23f61cec4a`.
+No additional validated imaging recoveries.
 
-- Original-grid full34 bank: `calibration/full34-bank/results`,2991records:
-  2727responses (2551complete/176incomplete) and264geometry exclusions.2709new
-  drifts223.531s; original selected-pair values/status/endpoints exactly preserved.
-  216pixels available,40unavailable. Original missing channels could not be exported.
-- Lateral references: `calibration/full34-lateral-pilot/results`,476complete,
-  44imports+432new drifts51.547s;396training+80independent validation positions,
-  four pixels {11,12}x{24,26}. Old pitch interpolation/timewarp left large front errors.
-- Native-cell bank: `calibration/native-cell-bank`,378complete supports,
-  4imports+374new drifts44.843s; no transport/fields. COMPLETE SHA
-  `9558d3533446380a82667cd8ad6dfec0fe0d12442553d97e42e8201ee787de73`.
-  All endpoint identities/ideal-contact differences0.54corners retain a recorded
-  -1ULP X-coordinate offset through the unchanged Float32 mm interface; actual
-  coordinates determine weights.324exact corners;60exact/20rounded validation cases.
-- Saved common-carrier timewarp: all80supported, max-channel RMS median0.399042keV;
-  maximum point error median/max1.63221/2.19316keV. Terminal differences<=1.14e-13keV.
-  Uses training arrival times only. `results/timing-comparison.json`,
-  SHA953a45ade227f2d2fa290c66de282fd05ed2290a41590cdd3a7bc204f1ef787c.
-- Single-site inverse: `validation/native-inverse-single-site/result.json`,
-  SHA5184c58e8b80d56241b4abd11a86f2d74c17d0b671832700adfe00f8dbabe23a.
-  Each80waveforms searches all80cells/4pixels; waveform+training bank only.
-  80/80pixels correct,0unsupported/boundary.3Derror median/max0.010570/0.023088mm;
-  absolute energy error0.025188/0.102807keV.35.339s with4pilot fits reused.
-  Three targeted tests include independent317keV gain and truth isolation.
-- Two-site inverse: `validation/native-inverse-pair/result.json`,
-  SHAaeb714087bd816e59d04b540e9ff98c5f44823384ecfe46d7ffc9fb393acc903.
-  Eight fixed equal-energy prompt mixtures;800coarse hypotheses,8refinements per
-  matching. Nominal8/8pairings correct.16site position errors median/max
-  0.013053/0.023088mm; absolute energy0.020678/0.056917keV.3.902s with2pilot fits
-  reused;4targeted tests. Cases3/7 near-degenerate between matchings. No claim of
-  robust hardware discrimination, global optimum, false splitting or same-pixel
-  multiplicity. Both inverse tools are ideal-charge sparse-domain diagnostics.
+## Reusable full-chain evidence
 
-- Saved real-event applicability: `validation/native-inverse-applicability/result.json`,
-  SHAa019a603b00c4656c4365825f01ff896f839c304877d67274a942373b9ef81d3.
-  720929 selects correct pairing but waveform RMS12.1504keV, position errors
-  0.9404/3.2749mm; both sites hit sparse-domain boundaries.727922 has observed
-  unmodeled Y28/31/32 and four truth cells; RMS176.4474keV, not recovered.752677
-  not fitted. A downstream CRLF parsing failure is retained; continuation reused
-  the completed720929 fit. Total two fits, no physics; continuation2.020s.
-  z0case3 opposite-pairing max-channel separation0.004412keV is comparable to
-  saved interpolation residual0.005749keV; case7 is larger (0.053296/0.006295keV).
-  These are deterministic discrepancies, not noise estimates or acceptance cuts.
+- Native Geant4 model test:11.3.2/G4EMLOW8.6.1,30000Livermore plus3000Klein–Nishina
+  controls, fixed seeds. Free-electron-domain failures125/106/74of10000 at662/
+  1173.228/1332.492keV; controls0. Energy closure <=1.04e-13keV. Compile3.227s,
+  sample process1.233s. Atomic relaxation off, binding energy local: model diagnostic,
+  not detector transport or original event replay. COMPLETE SHA
+  `ce02d38a16b9c19f28f0520549c6a776e9af595b345aaa203f0320825096c5ee`,
+  `validation/bound-electron-response/native-sampler/`. Do not widen cuts from this.
+- Transport-only >2gamma-anchor prefilter rejected: it would remove14743of57613
+  groups, including228of414current two-site candidate groups. Seven tests; saved
+  scan40.475s. Keep zero-only skipping. Post-reconstruction `--two-site-only` has
+  seven passing tests and preserves excluded ambiguity/denominators.
+- Fixed400baseline pairing errors3/22development,5/24holdout; optional two-site
+  selection0/15,0/16 with false splits1/15,0/16. These are conditional hypotheses,
+  not validated hardware recovery. Source truth never enters the inverse.
+-153map posthoc:306matched charge cells, unweighted median3D/absZ/absE errors
+  1.412926mm/0.135299mm/0.366593keV;80photon vertices in40groups median1.424950mm.
+  Parent ancestry gives152single-gamma-lineage groups. First-child attribution
+  resolves82groups to two dominant interactions:2correct-only/75both/5wrong-only,
+  71unknown;1/5keV sensitivity unchanged.407direct-root deposits remain unassigned,
+  max per-group energy0.51656keV. `validation/root-gamma-interaction/evaluation/`.
+- Native cell bank:378training points and80independent validation cases. Single-site
+  inverse80/80pixels; median/max3D0.010570/0.023088mm. Eight fixed ideal two-site
+  mixtures8/8nominal pairings, but cases3/7 nearly degenerate. Raw ideal charge,
+  sparse domain, no hardware discrimination claim. All relevant tests already pass.
+- Region bank5148records:378imports+4770new drifts,145s, no fields/transport/failures.
+  `calibration/native-region-bank/`. Fixed development720929 K1024 refinement:
+  2032new+16reused,69.181s; RMS2.754360 ->0.267866keV, correct pairing, centroid
+  errors0.0073225/0.0515993mm; opposite pairing93.1220keV. One development case,
+  not validated recovery/global optimum. `validation/native-region-720929-k1024/`.
+- Full34 original-grid bank:2991points =2551complete+176incomplete+264exclusions;
+  original selected-pair parity passes. Original calibration lacked other channels;
+  it could not supply them by export. Failed full34 inverse v1/v2/v3 remain retained.
+- Guard diagnosis identifies coarse weighting-grid interpolation on3saved paths.
+  WP17/20/34 local refinements pass unchanged1e-6update gates. These3potentials do
+  not establish all34/global convergence; do not splice them into production or
+  force endpoint1/0. Original paths, waveforms and failed solves remain preserved.
+- Existing fields are reused per native worker, not solved per event. Five resident
+  loads160.649s. SSD0.11.8/Julia1.13Float32,92.3K,-879/0V,-5e9cm^-3,ADL/Bruyneel,
+  1ns/max1000steps, no diffusion/self-repulsion. Preserve canonical hashes.
+- Single-pass electronics repair:68electronics+74failure-policy assertions and
+  6calibration tests pass. Saved benchmark3groups×2:6.990 ->6.410s, exact outputs;
+  electronics-only8.30%, not campaign speedup. Nominal circuit tests do not identify
+  actual GeGI filtering, noise, ADC, timing or guard observability.
 
-- Interior region bank: `calibration/native-region-bank`,5148completed records,
-  378unchanged-payload imports+4770new drifts in145.000s, no failures/fields/transport.
-  All175032signals/10296contact endpoints verified, actual collectors all match.
-  Native endpoint algebra0;8points retain ideal-contact deviations up to0.026642keV,
-  uncorrected. Native internal28.126s; capture/store/diagnostics74.018s; saved-file
-  verification34.698s.312contact-face starts omitted;4719exact/429rounded points,
-  maximum1ULP. COMPLETE SHA
-  `2a6f723eb9c93a92e4029bbc7112c15bae7c05e80e9109ddd6c6bdbebdf3fab1`,
-  summary SHA8bc72dbc95097a103e9e8336b44cc4ff212ad115169a3946d6daa2f215e39068.
-  Region defined by observed strip geometry, not event truth. Julia exited.
+## Original campaign and experimental correspondence
 
-- Dense region inversion: `validation/native-region-720929/result.json`,
-  SHA02716a816be3c70cfb0bf27fcf9a5f3dc81d6efe93841a841542e3418837e0ac.
-  3410supported/110carrier-order-flip cells;1383840coarse alternatives saved
-  losslessly. Eight-mixture/all-coarse parity passed4.711s, no physics.
-  Correct pairing; RMS12.1504->2.75436keV; max-channel RMS11.40534keV.
-  Site centroid errors0.312386/0.602666mm, energy+0.152881/-0.087176keV.
-  Both sites hit cell boundaries. True centroid cells now supported, but their
-  pair ranks240th, outsideK8. Search0.828s, load24.399s, prep1.859s, store1.607s;
-  total42.440s includes reporting pause. A pre-fit loader provenance bug/failure
-  was retained and fixed; prior8-fit parity and physics were not repeated.
+`.local/gegi-10m/campaign` is complete and permanent:1Mprimaries/100chunks,
+400kgammas+600kdecays;942395zero,57605nonzero primaries ->57613pulse groups.
+The old `.local/gegi-10m/reconstruction-v3` baseline has434conditional groups/
+837cones,162mapgroups/393orders. Its original1332layer19/58 is historical.
+55591spectroscopy groups,1896incomplete including426native failures,126unresolved.
+Keep original nulls/failures, all identities, seeds and denominators. These counts
+are not validated detector efficiency. The fixed development/holdout split remains.
 
-- FixedK1024 optimization: `validation/native-region-720929-k1024/result.json`,
-  SHAa61c5c160c5f621c7676be660d82fe25406f779892b846de5e05ea93894f9e69.
-  Reuses1383840coarse alternatives and16pinned refinements;2032new give2048total,
-  exactly1024per matching in69.181s. RMS0.267866keV versusK8's2.754360keV;
-  opposite matching93.1220keV. Site centroid errors0.0073225/0.0515993mm,
-  energy errors-0.0807374/-0.0426575keV; one Z-boundary site remains. The true
-  centroid-cell pair was refined. No Gram/parity/physics rerun; checkpointed
-  candidates and the pre-refinement arithmetic-admission failure are retained.
-  One development event only; no global-optimum, hardware or validated-recovery claim.
+Owner-provided Juergen/Noomen emails establish that ImagerPro exports single-site
+and two-site .bin events, not multisite or waveforms. N42 FullDetector/AllEvents,
+256pixel/PixelTotal and32channel spectra are cumulative: no individualXYZ/dE.
+Their selected binary events reportedly reproduce the pixel map; exact population
+rules still awaitPHDS. Experimental reconstructed positions are not independent
+truth. Do not assume all spectral totals and binary events have one denominator.
+BEGe3820waveforms are not needed. Reply draft was delivered; no email was sent.
 
-Reuse frozen tools/results; no need to repeat these calibrations or fit checks.
-Code source hashes and complete input bindings are in the corresponding receipts.
+Read-only local My Drive search found0.n42 and1736.bin files, all simulation/software
+artifacts, in4.416s. Two inaccessible paths are project test folders. This is not
+cloud-wide absence; prior G:Ge-STAR search was reused. Receipt
+`reference-index.experimental-data-search.json`, SHA
+`f8ea3f7a23c5034f316fe52b52efc407fd5706f8e173ee307a71f7a0c3181748`.
+Private PPT/manual index is `reference-index.json`; do not publish its source files
+or private paths. The manual duplicates DataStream type1 and omits GlobalTime units:
+no guessed binary parser. Need matched.bin/N42, format/version, acquisition/source
+settings and selections. Reproduce the experimental pixel map before comparing
+matching spectra; no event-by-event pairing to unrelated simulated events.
 
-## Original campaign and failed recovery attempts
+The nominal readout bridge is now complete on the fixed8two-site cases. It uses16
+original full-duration34-channel records, each with complete carrier endpoints,
+existing causal summation/Julia channel_response and the saved global calibration.
+No truncated inverse prediction enters readout. Full support90–155ns plus the
+existing20shaping-constant/10000ns electronics tail; no new injection or physics.
+All272channels and IDs retained:32expected collectors accepted, ADC energy minus
+250keV expectation -0.261049 to+0.984532keV. Of240noncollectors,18also have positive
+peaks above threshold (up to7.096972keV equivalent), while none passes terminal-
+charge collection classification;222below-threshold energies stay null. All current
+balances pass, no saturation/window limit. Peak times319–1764ns are separate from
+ideal charge t50 times13.269–119.460ns. Terminal charge/t50 are native diagnostics,
+not established .bin observables. Positive peak ADC alone cannot identify collection.
+Three targeted tests pass; one Julia1thread/BLAS1 execution,15.931s total, exit0.
+No inverse fits or production change. `validation/native-pair-readout/result.json`,
+SHA`300991905ca16f5a2c69e5a0dd058bd8eea0e9fc55925dfc1c08d9ae66f2be70`;
+COMPLETE SHA`b84a29cd13c08fb9b13df7a63975214814a4c658b31533945b7ba448de883c98`.
 
-`.local/gegi-10m/campaign` is complete:1Minitial primaries/100chunks,400kgammas+
-600kdecays;2400preparation primaries excluded.942395zero primaries were already
-skipped downstream;57605nonzero primaries produce57613pulse groups.
-434conditional groups/837cones; current map162groups/393candidates. These are
-not validated detector efficiency.1896incomplete groups include426native failures.
-Keep all original identities, null/failure accounting and raw results unchanged.
-
-Latest corrected baseline `.local/gegi-10m/reconstruction-v3`; saved-use-v2 counts:
-55591spectroscopy groups (55157spectroscopy-only),434conditional,1896incomplete,
-126unresolved. Old reconstructed energies exactly preserved. Frozen400events split
-200development/200holdout by event. Baseline wrong pairings dev3/22,holdout5/24;
-false splits1/22,2/24; depth median errors0.143/0.100mm.
-
-Full34 v1/v2/v3 development attempts failed promotion and remain retained. V3:
-24groups/30hypotheses,8wrong pairs/1false split; best-RMS choice wrong3/24groups.
-Three-case diagnosis:720929 correct support rejected by off-centre waveform model;
-727922 nearly tied supports;752677 five cells/rank-deficient energy allocation.
-No source-position/true-interaction information may enter reconstruction.
-
-1332.492keV double-peak attribution is complete:19groups/58sequences; secondary
-peak loses nearby maximum in3/19leave-one-out runs.40iterations not converged under
-tested objective. Reuse evidence; do not infer two sources or tune to true positions.
-
-## Remaining physical boundaries and compute findings
-
-Original fields are reused, not solved per event:100native receipts report no new
-field solves; five resident loads totaled160.649s. Original cache SHA
-`f75280e7f21b1a1a06c2a6623aed62873065ca72db02bb1f93a61b9b853b90e8`.
-SSD0.11.8/Julia1.13Float32,92.3K,-879/0V,-5e9cm^-3,ADL/Bruyneel,1ns/max1000steps;
-no diffusion/self-repulsion. Do not silently alter canonical model/fields/physics.
-
-Guard diagnosis on3saved paths identifies coarse weighting-grid interpolation.
-Local WP17/20/34refinements passed unchanged1e-6full-update gates and corrected
-terminal inconsistencies; all original paths/waves and failed solves remain.
-A forced endpoint1/0 patch was rejected. These three potentials do not establish
-all34/global convergence and must not be spliced into production as a full repair.
-
-Synthetic readout numerical checks pass, but actual GeGI transfer/filter/noise,
-ADC, timing extraction and guard observability remain unidentified. Keep native
-charge, preamp, shaped peak and ADC energy distinct. Neighbor positive peaks can
-bias energy allocations. Same-pixel/multi-photon multiplicity and multi-deposit
-charge topology need explicit support; a running pipeline is not experimental validation.
-
-The requested transport preselection study is complete on all57613groups:
-single-row/single-position cuts save0. One-gamma-anchor restriction retains29875
-groups/29.13%positive-row work proxy, but loses28758accepted spectroscopy groups
-and4conditional imaging groups. Default remains zero-only. Evidence:
-`validation/transport-prefilter-feasibility.json`,SHAbab9e90b...45ac1ffb.
-
-Saved electronics benchmark:3groups x2repeats,6.990s->6.410s (8.30%), exact final
-outputs. One finite-window case is counterfactual. This is electronics-only timing,
-not whole-campaign speedup. Evidence:`validation/readout-duplicate-benchmark/result.json`,
-SHA098be9b3...b6bc60d. Prior aggregate native/drift/readout/IO75541.740s and transport
-driver11102.995s are stage totals, not pure SSD or Geant4 measurements.
-
-Read `tools/NEXT_DEVELOPMENT_PLAN.md` for the scientific queue and source map.
-Private PPT/PDF index:`signal-recovery-v1/reference-index.json`; primary references
-R1-R7 are in that plan. Keep user inputs private, originals/failures permanent,
-and public wording direct. Large samples follow a correct small full-chain workflow.
+Next: finish website deployment and exact live verification. The next experimental
+milestone is a matched.bin/N42 acquisition with format/settings: reproduce its
+selected pixel map and compare matching spectra. Preserve the demonstrated peak/
+collection ambiguity; do not invent hardware timing, use native terminal charge as
+measured input, or expand the inverse/campaign before defining the actual observable
+contract. No more two-bright-spot work and no large campaign yet.

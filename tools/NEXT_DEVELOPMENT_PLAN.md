@@ -2,21 +2,21 @@
 
 ## Active milestone — establish the GeGI full-chain reference, 2026-10-20
 
-Owner explicitly resumed manual development on2026-10-22 after the completed
-lateral-forward milestone. Native-cell forward validation and transport-only SSD
-preselection assessment, fixed single/two-site inverse checks, region applicability
-and fixedK1024optimization on one development event are complete. The transport-only
-gamma-anchor prefilter has been tested and rejected. Explicit two-site selection
-after reconstruction, the affected map and student release are complete. Exact153map-
-group evaluation exposes sequence/vertex ambiguity despite matched charge-cell pairs.
-Saved ancestry shows152/153groups have one earliest gamma lineage; the parent-gamma
-interaction reference is complete. Two662keV fully deposited groups violate the
-free-electron relation even before readout. Their original zero-deposit STEP records
-have been recovered without transport reruns. Next inspect installed Geant4 bound-
-electron response data for a small independently testable angular response. Root owns
-direction/quality; gpt-6.1-sol ultra implements small concrete changes without
-speculative abstractions or repetitive checks/prose. Automatic monitoring stays
-PAUSED; the old pause record is retained, not an active manual-work block.
+The native forward/inverse diagnostics, transport preselection assessment, explicit
+two-site selection and order-weight repair are complete. The tested transport-only
+prefilter is rejected; keep zero-only skipping. A bounded native Geant4 model test
+also confirms that bound-electron scattering can violate the free-electron energy
+relation. Do not repeat these studies or infer detector efficiency from their counts.
+The repaired student software is released. Finish the actual Compton display and
+its publication checks, then connect the nominal forward model to readout quantities
+and compare like-for-like experimental products when available. Root owns direction;
+gpt-6.1-sol ultra implements concrete changes. Monitoring stays PAUSED.
+
+Owner clarification,2026-10-22: stop pursuing the two bright spots. Label the18group
+1332keV layer as limited statistics and keep it out of the critical path. No more
+peak attribution, leave-one-out, source-plane or convergence investigations for
+this display. Complete the current publication and return to the readout and
+reconstruction workflow and matched experimental data.
 
 Owner resumed evidence/planning after correcting the priority: establish a correct
 small radiation -> charge ->34-channel signal ->readout ->reconstruction workflow
@@ -42,7 +42,7 @@ failed stage on the same saved events; do not tune a source map to known positio
 | Electronics and observable timing | Manufacturer describes32raw preamp outputs and an imaging/spectroscopy clock of50MSPS for current options [R1]. Exact generation/filter/firmware still needs matching. | Profile synthetic-signed-14bit-v1:ideal CSA Cf0.6pF, feedback/PZ50us, shaping0.5us, gain20,1mV threshold,14bit0–10V positive peak ADC.1ns is numerical integration. No measured noise/crosstalk or continuous baseline. | Highest-priority correspondence gap. Keep native charge, preamp, shaped peak, ADC energy and timing pickoff separate. Reuse analytic4-group/136-channel check (peak error<9.2e-14V, exactADC). It checks the nominal circuit, not actual GeGI filtering or hardware sampling. Do not set integration dt to20ns just from a clock specification. |
 | Pulse grouping and spectroscopy | Same-decay gamma multiplicity and hardware coincidence/trigger selection must be represented consistently. The private July14slides distinguish full-detector, pixel-total and simulated-active-area spectra. | Decay pulses use100 us anchored half-open windows with reset electronics; no inter-primary pileup. Fixed calibrated collecting-channel sums include guards; X/Y are averaged. Noncollecting induced peaks are excluded. | First compare like-for-like spectra and event denominators. On the frozen 400-events, require exact old-energy preservation, then report Erec−Edep, bias/tails, face mismatch and missing/failure counts. Pulse-group energy is not necessarily one photon's incident energy. |
 | Position, pairing and sequence | GeGI depth uses charge-arrival differences [R2]; calibrated timing/depth and separate energy/crosstalk/pairing stages are established in related work [R3, R4]. | Selected-pair native-waveform fits on0–250ns,0.25mm interpolated depths; ≤4strips/face,≤4sites,≤64hypotheses,2keV/2% compatibility. Charge pixels may differ from photon interactions. Same-pixel and cascade multiplicity unresolved. | Use fixed development/holdout events to quantify wrong/missingX/Ypairs, false splitting, matched position/depth error and sequence unknowns. Thresholds/tolerances are compatibility choices, not measured resolution. No promotion of conditional candidates unless these errors pass predefined, physically justified criteria. |
-| Imaging and performance | Comparison requires the same sample selection, acquisition and normalization; source positions are independent evaluation only. |434 conditional groups; 162 selected map groups.1332.492 keV layer has19 groups / 58 sequences. Existing fitted-plane map uses z40mm and cannot measure range. | Reuse finished peak attribution: second mode loses a nearby maximum in3/19 leave-one-out runs; 40 iterations not converged under tested objective. Fix stage-level errors first. Map peak count/brightness is not source count, efficiency or validation. |
+| Imaging and performance | Comparison requires the same sample selection, acquisition and normalization; source positions are independent evaluation only. |434 conditional groups; current two-site map153groups/287sequences.1332.492keV has18groups/36sequences. The imposed plane is z40mm and does not measure range. | Publish saved cone intersections and density with counts and units. Limited statistics; no further peak studies. Fix stage-level errors first. Map brightness is not detector efficiency. |
 
 Source anchors: transport/gegi_source.py:287; scenarios/assets/gegi_cryostat_v1.json:8;
 models/GeGI_3D.yaml:25; simulation/gegi_signal_helpers.jl:27;
@@ -91,7 +91,7 @@ Stop only for a concrete missing input or work outside the authorized bounded
 full-chain repair. Do not request another per-round approval. The full34 basis and actual hardware transfer remain
 separate requirements. No arbitrary resolution target or extra AI review rounds.
 
-### Next bounded milestone — deliver preserved order uncertainty
+### Next bounded milestone — publish Compton overlays and repaired weights
 
 The installed Geant4 11.3.2 / G4EMLOW8.6.1 provides the Ge Doppler profiles,
 shell occupancies/binding energies and native sampling APIs. Reuse that model;
@@ -104,12 +104,21 @@ No additional native sampling is part of this milestone.
 
 The order-accounting repair and18tests pass: equal weights are assigned before the
 approximate kinematic screen, so unsupported orders retain unresolved mass. Fixed
-200+200 and153map checks pass with unchanged identities/energies/candidates. Next
-apply the same repair to all existing candidate-bearing groups, preserving the full
-original census and immutable input. Reuse tested400/153results; run only the changed
-map once with identical settings, then build and verify the student release. This
-changes confidence accounting, not recovery counts; no new angular kernel, fitted
-resolution, cut changes, calibrated posterior claim or new physics campaign.
+200+200 and153map checks pass with unchanged identities/energies/candidates. All434
+candidate groups/837candidates are now processed, including the exact545validated
+subset, with full original census retained. One changed map is complete;1332keV
+inputs/results remain exact. Student release2bf8b5e is verified. This changes
+confidence accounting, not recovery counts; no new angular kernel, fitted resolution,
+cut changes, calibrated posterior claim or new physics campaign.
+
+Next show the actual153group/287candidate cone-plane intersections at the existing
+z40mm plane, summed angular density and saved conditional map. Reuse the old local
+overlay clipping/plot functions and the existing publication generator. Bind the
+new weight derivative explicitly; reuse existing153posthoc geometry/labels with
+new weights, without raw-data reads or fitting. Keep the old snapshot intact.
+State counts, units, assumed plane and iteration limit once near the figures;
+details hold provenance. Run focused exporter checks and required site/live tests,
+then publish. No made-up circles, image smoothing as validation or new UI framework.
 
 ### Saved-data progress — full34 basis and joint signal fit
 
@@ -288,11 +297,27 @@ real time and normalization explicit. Nominal-model
 development continues with that limit explicit. Only after integrated development validation
 may the frozen holdout support promotion/reprocessing and new public science figures.
 Guard-field completeness remains the separate unresolved numerical stage above.
-After current-plan validation, the owner's screenshot guides a website task using
-actual reconstructed sky-direction Compton circles and summed intensity, or
-correctly labeled cone intersections on a chosen plane. Not every plane intersection
-is a circle. No fabricated cones, smoothing as validation or imagegen; no site/package
-build in the present milestone.
+The current website milestone uses actual cone-plane intersections and saved angular
+density. Its acceptance is defined above; no additional reconstruction is required.
+
+The visible local My Drive filename search is complete: no .n42 and no experimental
+.bin candidates. The 1736 .bin hits are simulation/software artifacts; two inaccessible
+paths are project test folders. This does not establish cloud-wide absence. Reuse
+`reference-index.experimental-data-search.json` under the local recovery directory.
+The experimental comparison needs a matched .bin/N42 acquisition, format/version,
+source geometry, exposure and event selections. Do not build a guessed binary parser.
+The nominal readout bridge is complete on8fixed two-site cases, using16full-duration
+saved records and existing Julia electronics/global calibration. All272channels are
+retained.32expected collectors pass, but18of240noncollectors also produce positive
+peaks above threshold, up to7.097keV equivalent. None of those18passes terminal-charge
+collection classification; that native diagnostic is not an established experimental
+observable. Peak time and ideal charge-arrival time remain distinct. Three targeted
+tests pass; one15.931s run, no physics/calibration injection/inverse fit. Evidence:
+`validation/native-pair-readout/result.json`, SHA
+`300991905ca16f5a2c69e5a0dd058bd8eea0e9fc55925dfc1c08d9ae66f2be70`.
+This closes the small nominal signal-to-readout bridge. Use the actual paired files
+to establish the event/product contract before extending multiplicity searches or
+reprocessing the campaign. Do not invent unavailable hardware timing/waveforms.
 
 Owner's efficiency suggestion was checked against all57,613saved groups. Zero-only
 preselection already removes942,395primaries. Single-row/single-position cuts save0.
