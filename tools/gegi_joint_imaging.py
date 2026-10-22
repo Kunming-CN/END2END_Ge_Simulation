@@ -577,12 +577,14 @@ def _file_sha(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def read_reconstructed(input_dir, centers_keV=(661.657, 1173.228, 1332.492)):
+def read_reconstructed(input_dir, centers_keV=(661.657, 1173.228, 1332.492), *, two_site_only=False):
     """Verify/stream the completed saved-signal derivative and select by energy.
 
     Identity/denominators are retained separately. source_group, truth positions,
     old rejection reasons and native ancestry never enter the selection rule.
     Non-photopeak hypotheses remain intact in the immutable input derivative.
+    Optional two-site selection uses reconstructed candidate order length only;
+    original priors stay unchanged. These charge cells need not be photon vertices.
     """
     input_dir = Path(input_dir).resolve()
     complete_path, summary_path = input_dir/'COMPLETE.json', input_dir/'summary.json'
@@ -594,6 +596,7 @@ def read_reconstructed(input_dir, centers_keV=(661.657, 1173.228, 1332.492)):
             or _file_sha(input_dir/'identity.json') != complete['identity_sha256']):
         raise ValueError('Changed saved-signal summary or identity')
     selected, counts, seen = [], Counter(), set()
+    site_selection = []
     bindings = {'COMPLETE.json': _file_sha(complete_path), 'summary.json': complete['summary_sha256'],
                 'identity.json': complete['identity_sha256']}
     for chunk in complete['chunks']:
@@ -624,6 +627,12 @@ def read_reconstructed(input_dir, centers_keV=(661.657, 1173.228, 1332.492)):
                 counts['native_failed_groups'] += original.get('native_status') == 'native_failed'
                 if original.get('native_status') == 'native_failed' and candidates:
                     raise ValueError('Native failure cannot supply signal-derived candidates')
+                if two_site_only:
+                    counts['native_incomplete_groups'] += original.get('native_status') != 'completed'
+                    single = sum(h.get('status') == 'conditional_fit' and len(h.get('sites', [])) == 1
+                                 for h in reconstruction.get('hypotheses', []))
+                    counts['single_site_conditional_fit_groups'] += bool(single)
+                    counts['single_site_conditional_fit_hypotheses'] += single
                 if not candidates:
                     counts['without_supported_candidates'] += 1
                     continue
@@ -631,8 +640,33 @@ def read_reconstructed(input_dir, centers_keV=(661.657, 1173.228, 1332.492)):
                 if energy is None or not math.isfinite(energy) or energy <= 0:
                     raise ValueError('Candidate-bearing group lacks positive fixed-readout energy')
                 in_window = any(abs(energy-center) <= max(5., .02*center) for center in centers_keV)
+                if two_site_only:
+                    if any(len(c['order']) < 2 for c in candidates):
+                        raise ValueError('A Compton candidate must have at least two reconstructed sites')
+                    kept = [c for c in candidates if len(c['order']) == 2]
+                    excluded = [c for c in candidates if len(c['order']) > 2]
+                    counts['original_conditional_candidates'] += len(candidates)
+                    counts['two_site_candidates'] += len(kept)
+                    counts['excluded_multisite_candidates'] += len(excluded)
+                    counts['mixed_candidate_groups'] += bool(kept and excluded)
+                    counts['all_candidates_excluded_groups'] += not kept
+                    if in_window:
+                        counts['selected_original_conditional_groups'] += 1
+                        counts['selected_original_candidates'] += len(candidates)
+                        counts['selected_excluded_multisite_candidates'] += len(excluded)
+                        counts['selected_mixed_candidate_groups'] += bool(kept and excluded)
+                        counts['selected_all_candidates_excluded_groups'] += not kept
+                    site_selection.append({'campaign_initial_id': identity['campaign_initial_id'],
+                        'pulse_group_id': identity['pulse_group_id'], 'energy_keV': energy,
+                        'in_measured_energy_windows': in_window, 'original_candidates': len(candidates),
+                        'retained_two_site_candidates': len(kept), 'excluded_multisite_candidates': len(excluded),
+                        'retained_prior_mass': math.fsum(c['prior_weight'] for c in kept),
+                        'excluded_prior_mass': math.fsum(c['prior_weight'] for c in excluded)})
+                    candidates = kept
                 if not in_window:
                     counts['candidate_groups_outside_measured_energy_windows'] += 1
+                    continue
+                if not candidates:
                     continue
                 counts['selected_conditional_groups'] += 1
                 counts['selected_candidates'] += len(candidates)
@@ -646,7 +680,10 @@ def read_reconstructed(input_dir, centers_keV=(661.657, 1173.228, 1332.492)):
             raise ValueError('Saved-signal chunk changed during read')
     if counts['nonzero_pulse_groups'] != summary['counts']['pulse_groups']:
         raise ValueError('Full saved-signal group census differs from summary')
-    return selected, {'counts': dict(counts), 'input_sha256': bindings,
+    if two_site_only:
+        counts.setdefault('selected_conditional_groups', 0)
+        counts.setdefault('selected_candidates', 0)
+    accounting = {'counts': dict(counts), 'input_sha256': bindings,
                       'original_initial_denominators': summary['original_initial_denominators'],
                       'selection': {'kind': 'fixed_readout_energy_windows_and_supported_conditional_hypotheses',
                                     'centers_keV': list(centers_keV), 'halfwidth_rule': 'max(5 keV, 2% of center)',
@@ -654,15 +691,21 @@ def read_reconstructed(input_dir, centers_keV=(661.657, 1173.228, 1332.492)):
                                     'outside_window_candidates': 'Retained in hash-bound saved-signal input; not treated as fully absorbed line events.',
                                     'selected_groups_are_validated_recovered_events': False},
                       'limits': summary.get('limitations', [])}
+    if two_site_only:
+        accounting['selection']['two_site_only'] = True
+        accounting['selection']['candidate_rule'] = 'len(candidate.order)==2 after signal reconstruction'
+        accounting['selection']['candidate_priors_renormalized'] = False
+        accounting['two_site_selection'] = site_selection
+    return selected, accounting
 
 
 def run_reconstructed(input_dir, output_dir, settings=ResponseSettings(), extent_mm=120., step_mm=4.,
-                      z_mm=40., iterations=40, profile=True):
+                      z_mm=40., iterations=40, profile=True, *, two_site_only=False):
     """Publication/student adapter for completed v3 saved-signal chunks."""
     if Path(output_dir).exists():
         raise FileExistsError('Preserve existing derivative')
     source_sha = _file_sha(__file__)
-    records, accounting = read_reconstructed(input_dir)
+    records, accounting = read_reconstructed(input_dir, two_site_only=two_site_only)
     events = prepare_events(records, settings)
     if not events:
         report = {'kind': 'gegi_joint_conditional_imaging_v3', 'group_count': 0,
@@ -692,10 +735,15 @@ def main():
     parser.add_argument('--no-profile', action='store_true')
     parser.add_argument('--reconstructed-directory', action='store_true',
                         help='Input is a completed saved-signal directory; apply source-blind fixed energy windows')
+    parser.add_argument('--two-site-only', action='store_true',
+                        help='Keep only reconstructed two-site candidates, preserving original priors; requires --reconstructed-directory')
     args = parser.parse_args()
+    if args.two_site_only and not args.reconstructed_directory:
+        parser.error('--two-site-only requires --reconstructed-directory')
     runner = run_reconstructed if args.reconstructed_directory else run_saved
+    selection = {'two_site_only': args.two_site_only} if args.reconstructed_directory else {}
     report = runner(args.input, args.output, extent_mm=args.extent_mm, step_mm=args.step_mm,
-                       z_mm=args.plane_z_mm, iterations=args.iterations, profile=not args.no_profile)
+                       z_mm=args.plane_z_mm, iterations=args.iterations, profile=not args.no_profile, **selection)
     print(json.dumps({k: report.get(k) for k in ('group_count', 'background_fraction', 'blind_peaks', 'elapsed_seconds', 'provenance')}, indent=2))
 
 

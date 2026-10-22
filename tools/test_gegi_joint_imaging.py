@@ -7,6 +7,7 @@ import math
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 import numpy as np
 
@@ -204,12 +205,13 @@ class JointImagingTests(unittest.TestCase):
         self.assertEqual(len(G.blind_peaks(gaussian, points)), 1)
 
     @staticmethod
-    def make_derivative(root):
+    def make_derivative(root, records=None):
         root = Path(root)
         (root/'chunks').mkdir()
-        records = []
-        for i, energy in enumerate([662., 800., 1173., 1332., None]):
-            records.append({'original_identity': {'campaign_initial_id': i+100, 'pulse_group_id': 0,
+        if records is None:
+            records = []
+            for i, energy in enumerate([662., 800., 1173., 1332., None]):
+                records.append({'original_identity': {'campaign_initial_id': i+100, 'pulse_group_id': 0,
                                                    'source_group': 'untrusted-label'},
                             'native_status': 'native_failed' if energy is None else 'completed',
                             'reconstruction': {'energy_keV': energy, 'candidates': [] if energy is None else [candidate()]}})
@@ -220,8 +222,8 @@ class JointImagingTests(unittest.TestCase):
             path.write_text(json.dumps(obj), encoding='utf-8')
             return hashlib.sha256(path.read_bytes()).hexdigest()
         digest = G._file_sha(root/'chunks/000.jsonl.gz')
-        receipt_sha = write('chunks/000.json', {'sha256': digest, 'counts': {'pulse_groups': 5}})
-        summary_sha = write('summary.json', {'counts': {'pulse_groups': 5},
+        receipt_sha = write('chunks/000.json', {'sha256': digest, 'counts': {'pulse_groups': len(records)}})
+        summary_sha = write('summary.json', {'counts': {'pulse_groups': len(records)},
                             'original_initial_denominators': {'independent_acquisition': {'initials': 1000}}, 'limitations': ['conditional']})
         identity_sha = write('identity.json', {'kind': 'fixture'})
         write('COMPLETE.json', {'status': 'completed_conditional_reconstruction',
@@ -241,6 +243,8 @@ class JointImagingTests(unittest.TestCase):
             self.assertEqual(accounting['original_initial_denominators']['independent_acquisition']['initials'], 1000)
             self.assertTrue(all('source_group' not in r for r in records))
             self.assertFalse(accounting['selection']['selected_groups_are_validated_recovered_events'])
+            self.assertEqual((records, accounting), G.read_reconstructed(folder, two_site_only=False))
+            self.assertNotIn('two_site_selection', accounting)
 
     def test_saved_derivative_adapter_rejects_changed_chunks(self):
         scratch = Path(__file__).resolve().parents[1]/'.local'
@@ -251,6 +255,77 @@ class JointImagingTests(unittest.TestCase):
                 stream.write(b'changed')
             with self.assertRaisesRegex(ValueError, 'Changed saved-signal chunk'):
                 G.read_reconstructed(folder)
+
+    def test_two_site_selection_preserves_priors_and_unresolved_mass(self):
+        scratch = Path(__file__).resolve().parents[1]/'.local'
+        two = {**candidate(prior=.25), 'order': [0, 1]}
+        three = {**candidate(prior=.5), 'order': [0, 1, 2]}
+        original = {'original_identity': {'campaign_initial_id': 100, 'pulse_group_id': 0,
+                    'source_group': 'ignored-truth-label'}, 'native_status': 'completed',
+                    'truth_position_mm': [999, 999, 999],
+                    'reconstruction': {'energy_keV': 662., 'candidates': [two, three],
+                        'hypotheses': [{'status': 'conditional_fit', 'sites': [{}]}]}}
+        with tempfile.TemporaryDirectory(prefix='joint-imaging-test-', dir=scratch) as folder:
+            self.make_derivative(folder, [original])
+            records, accounting = G.read_reconstructed(folder, two_site_only=True)
+            self.assertEqual(records[0]['candidates'], [two])
+            self.assertEqual(accounting['counts']['mixed_candidate_groups'], 1)
+            self.assertEqual(accounting['counts']['single_site_conditional_fit_groups'], 1)
+            event = G.prepare_events(records)[0]
+            self.assertEqual(event.unresolved_mass, .75)
+            point = np.array([[20., 30., 40.]])
+            expected = .25*G.candidate_response(event.candidates[0], point)+.75/math.pi
+            np.testing.assert_array_equal(G.event_response(event, point), expected)
+            self.assertFalse(accounting['selection']['truth_used'])
+            self.assertFalse(accounting['selection']['candidate_priors_renormalized'])
+            self.assertNotIn('truth_position_mm', records[0])
+            self.assertNotIn('source_group', records[0])
+
+    def test_two_site_selection_excludes_three_only_preserving_denominators_failures(self):
+        scratch = Path(__file__).resolve().parents[1]/'.local'
+        original = {'original_identity': {'campaign_initial_id': 100, 'pulse_group_id': 0},
+            'native_status': 'completed', 'reconstruction': {'energy_keV': 662.,
+                'candidates': [{**candidate(), 'order': [0, 1, 2]}]}}
+        failure = {'original_identity': {'campaign_initial_id': 101, 'pulse_group_id': 0},
+            'native_status': 'native_failed', 'reconstruction': {'energy_keV': None, 'candidates': []}}
+        with tempfile.TemporaryDirectory(prefix='joint-imaging-test-', dir=scratch) as folder:
+            self.make_derivative(folder, [original, failure])
+            records, accounting = G.read_reconstructed(folder, two_site_only=True)
+            self.assertEqual(records, [])
+            self.assertEqual(accounting['counts']['selected_candidates'], 0)
+            self.assertEqual(accounting['counts']['all_candidates_excluded_groups'], 1)
+            self.assertEqual(accounting['counts']['selected_all_candidates_excluded_groups'], 1)
+            self.assertEqual(accounting['counts']['nonzero_pulse_groups'], 2)
+            self.assertEqual(accounting['counts']['native_failed_groups'], 1)
+            self.assertEqual(accounting['original_initial_denominators']['independent_acquisition']['initials'], 1000)
+            with mock.patch.object(G, '_reconstruct_with_checks', side_effect=AssertionError('No optimizer expected')):
+                report = G.run_reconstructed(folder, Path(folder)/'empty-output', two_site_only=True)
+            self.assertEqual(report['group_count'], 0)
+            self.assertEqual(report['saved_signal_accounting']['counts']['nonzero_pulse_groups'], 2)
+
+    def test_two_site_cli_requires_reconstructed_directory(self):
+        with mock.patch('sys.argv', ['gegi_joint_imaging.py', '--input', 'unused', '--output', 'unused',
+                                    '--two-site-only']), mock.patch('sys.stderr'):
+            with self.assertRaises(SystemExit) as raised:
+                G.main()
+        self.assertEqual(raised.exception.code, 2)
+
+    def test_saved_two_site_evaluation_projection_and_jsonl_boundary(self):
+        import gegi_two_site_output_study as T
+        row = {'candidates': [{'order': [0, 1], 'hypothesis_index': 3, 'prior_weight': .25},
+                {'order': [0, 1, 2], 'hypothesis_index': 4, 'prior_weight': .5}],
+            'hypotheses': [{'hypothesis_index': 3}, {'hypothesis_index': 4}]}
+        before = copy.deepcopy(row)
+        result = T.two_site_evaluation(row)
+        self.assertEqual(result['hypotheses'], [{'hypothesis_index': 3}])
+        self.assertEqual(result['unsupported_hypothesis_mass'], .75)
+        self.assertEqual(row, before)
+        scratch = Path(__file__).resolve().parents[1]/'.local'
+        with tempfile.TemporaryDirectory(prefix='joint-imaging-test-', dir=scratch) as folder:
+            path = Path(folder)/'selection.jsonl.gz'
+            T.compressed_rows(path, [result, result])
+            with gzip.open(path, 'rt', encoding='utf-8') as stream:
+                self.assertEqual([json.loads(line) for line in stream], [result, result])
 
 
 if __name__ == '__main__':

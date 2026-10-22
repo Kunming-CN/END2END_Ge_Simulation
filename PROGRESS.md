@@ -29,11 +29,23 @@ Result: `validation/single-two-site-prefilter/result.json`, SHA
 All IDs, per-chunk decisions and denominators are retained. Unknown ancestry would
 be kept; none occurred. Fixed development/holdout comparison did not tune the rule.
 Owner agrees prefiltering is not practical here. Keep zero-only skipping.
-Next: an explicit two-site imaging selection AFTER reconstruction, preserving
-candidate prior weights and excluded ambiguity; evaluate saved errors and affected
-map inputs without repeating fits or unchanged maps. No new physics. The waveform
-inverse remains diagnostic; single charge-cell hypotheses are not proven single
-photon interactions.
+The explicit two-site imaging option AFTER reconstruction is implemented and its
+7targeted tests pass. `gegi_joint_imaging.py --reconstructed-directory --two-site-only`
+preserves original priors, excluded ambiguity and all denominators; default behavior
+is unchanged. Saved selection took4.630s:434groups/837candidates become414/647;
+the map input162/393 becomes153/287, and1332.492keV19/58 becomes18/36.
+Frozen200+200 evaluation: pairing mismatch0/15development and0/16holdout candidate
+hypotheses; false splitting1/15 and0/16. Matched-cell median depth errors0.121431/
+0.097902mm, absolute energy errors0.302211/0.401364keV. Candidate sequence labels
+correct/wrong/unknown are2/2/21 and2/6/17; these are alternatives, not hard-choice
+error rates. The two known development groups each retain both orders. Charge cells
+are not proven photon vertices. No additional recovery is validated.
+Evidence:`validation/two-site-output/result.json`, SHA
+2a54be02d09a57ab2d314864b4f199bb0e4b4dac01d72864e16695448a8d326f.
+Only the changed map input is now being recomputed, once with the same40iteration,
+z40mm settings and no plane profiling. No physics, waveform fitting or old-map rerun.
+Student packaging follows this runtime change; website figures remain pending the
+reconstruction validation. The nominal waveform inverse remains diagnostic.
 
 Hardware correspondence: the July14 GeGI slides show measured spectra/maps, not
 raw strip-energy/time or waveform export definitions. Its simulated interaction

@@ -6,8 +6,9 @@ Owner explicitly resumed manual development on2026-10-22 after the completed
 lateral-forward milestone. Native-cell forward validation and transport-only SSD
 preselection assessment, fixed single/two-site inverse checks, region applicability
 and fixedK1024optimization on one development event are complete. The transport-only
-gamma-anchor prefilter has been tested and rejected. Next is explicit two-site
-selection after reconstruction and saved-error accounting. Root owns
+gamma-anchor prefilter has been tested and rejected. Explicit two-site selection
+after reconstruction and saved-error accounting are implemented/tested; finish the
+affected-map calculation and software release, then address sequence/vertex ambiguity. Root owns
 direction/quality; gpt-6.1-sol ultra implements small concrete changes without
 speculative abstractions or repetitive checks/prose. Automatic monitoring stays
 PAUSED; the old pause record is retained, not an active manual-work block.
@@ -193,12 +194,16 @@ The requested pre-SSD study is complete: >2contributing gamma anchors would drop
 These are conditional signal-model comparisons, not measured hardware labels.
 The owner agrees prefiltering is not practical here. Reject this rule, retain
 zero-only skipping, and do not continue arbitrary multiplicity-cut searches.
-Use the single/two-site scope after signal reconstruction. Add explicit two-site
-selection to the existing saved-imaging entry, preserving original prior weights,
-excluded ambiguity, IDs and initial/zero/nonzero/failure denominators. Evaluate
-saved pairing/position/energy/splitting metrics and affected map inputs. Reuse
-unchanged maps; no new waveform fit or physics, and no holdout-based cut tuning.
-The waveform inverse remains a scoped development diagnostic.
+The saved-imaging entry now supports explicit two-site selection after reconstruction,
+preserving original priors, excluded ambiguity, IDs and all denominators;7tests pass.
+Saved selection414groups/647candidates has map input153/287, including18/36 in the
+1332.492keV layer. All layer inputs changed. Recompute this input once with the old
+settings; no waveform fit, physics, repeated old map, or holdout-based cut tuning.
+Frozen candidate-pairing mismatches are0/15 and0/16, but sequencing and photon-vertex
+identity remain unresolved. Wrong-order alternatives are not hard-choice errors.
+Exact errors and counts are in PROGRESS.md and validation/two-site-output/result.json.
+The waveform inverse remains a scoped development diagnostic. Deliver the changed
+runtime through the student package; do not publish new performance claims.
 
 After this saved-data check, connect the same forward model to explicitly chosen
 readout observables, then address variable site count and same-pixel ambiguity.
