@@ -873,31 +873,31 @@
     "tools/hit_event_view.py": "7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e"
   },
   "adapter_sources": {
-    "tools/viewer_navigation.py": "83c290181a5f422a4273248d071904a3859e55a6fd9ec91df545f5fb0a0327d1",
-    "tools/viewer_navigation.js": "a09e5ecb04bd5f6d4e1a24c2debf40bb9a0bfc882784cc146c8915dee7704ff5",
-    "tools/unified_event_viewer.html": "9764b036e5162cc3d47945327736653f3681a51a5242c7305e519e06d5731da2",
-    "tools/unified_event_viewer.js": "117e6a400e6dbf6b1a6ffa32e8226215658c07f90ef4a1505ecdf35d2a08bb8e",
-    "tools/site_restructure.py": "23d4c19b94039dcbb92950f74a9d1f031f8826ba4444aefcf29a88a06212e2b5",
-    "tools/site_routes.py": "a962475145d29d4f9880228d1df4aedea757aa5fa90f25b4f90ed8273ae17cd9"
+    "tools/viewer_navigation.py": "86d922245862da31fb775910d707c70a213936d3396d60d9fc342c3a70e71057",
+    "tools/viewer_navigation.js": "2d15886bb99323edecaf9d8beba2ffb38b4fe3e9dff76f7c7fb0b3f4e8433099",
+    "tools/unified_event_viewer.html": "e7ee8475215c56e2f038ea564919dc44cea63616cd47cee4d2f1ca6b4d876856",
+    "tools/unified_event_viewer.js": "21474d0f7a0cac784ed4f8a83dc52938d5cb0f4e43892771e17941b237c24423",
+    "tools/site_restructure.py": "a1159ea1389a9e643d69d64925824640e79ebbc7928be1859774e2364c0abb73",
+    "tools/site_routes.py": "9f94a01d08f6c56149a25ecf87a17f829cd0e07943fd5fe0ef0bf31dbd5d6d37"
   },
   "pages": {
     "viewers/events.html": {
       "source": "tools/unified_event_viewer.html",
       "view": "assembly",
       "role": "canonical",
-      "sha256": "dae2714f275e654381566284be6b1829dca77d3ce528021d679a4168f965a469"
+      "sha256": "17ed9b765252f5cfa678bd872af0a26a81f109343a0d25bf081e5264b7a3f99e"
     },
     "viewers/geant4-assembly.html": {
       "source": "examples/cs137-10k-geometry/geometry.html",
       "view": "assembly",
       "role": "alias",
-      "sha256": "9e0fa08dfeb51edb711e7d69a21992902174e4c2f92d992cd598b671a724ce82"
+      "sha256": "1adeb0ea26057aefebc4e0919e5af18bc649f3b93291dbe5a777f47ac40e25b1"
     },
     "viewers/ge-positive.html": {
       "source": "examples/cs137-10k-hits/hit_event_view.html",
       "view": "positive",
       "role": "alias",
-      "sha256": "3723dcaf004f97b2c3f46f3ab29ecb2eef17a3b3b674ae0e54812da5bbbfd1fe"
+      "sha256": "b6c783e4f5702e6bcd1f2058bfc123ef2a258bdc0ed27af8c1f37acee45fcf53"
     }
   },
   "saved_response_files": {

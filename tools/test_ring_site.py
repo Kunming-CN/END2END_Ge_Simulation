@@ -5,6 +5,9 @@ import tempfile
 import unittest
 import re
 import zipfile
+import os
+import shutil
+import subprocess
 
 import ring_site as R
 import spectrum_display as S
@@ -120,7 +123,14 @@ class RingSiteTests(unittest.TestCase):
         (folder / 'summary.html').write_bytes(report.encode('utf-8'))
         self.put(base + '/response/run.json', {'counts': case['counts']})
         members = {name: b'{}\n' for name in ('truth.jsonl', 'scalars.jsonl', 'endpoints.jsonl', 'histograms.json', 'run.json')}
-        members['traces.jsonl'] = b'{}\n' * traces
+        members['traces.jsonl'] = b''.join((json.dumps({'event_id': 213+i, 'group_id': 0,
+            'trace': {'time_ns': [0, 2], 'current_nA': [0, -1], 'induced_charge_fC': [0, -2],
+                      'preamp_V': [0, 1], 'shaped_V': [0, 0.5]}}) + '\n').encode() for i in range(traces))
+        members['scalars.jsonl'] = b''.join((json.dumps({'record_kind': 'pulse', 'event_id': 213+i,
+            'group_id': 0, 'deposited_energy_keV': 2.0, 'final_induced_keV': -2.0,
+            'raw_row_indices': [4], 'origin_time_ns': 0, 'readout': {'accepted': True,
+            'reconstructed_energy_keV': 2.1, 'original_sample_count': 2,
+            'peak_time_ns': 2, 'peak_V': 0.5}}) + '\n').encode() for i in range(traces))
         members['native-failures.jsonl'] = b'{"error":"ArgumentError: Invalid waveform support"}\n'
         with zipfile.ZipFile(folder / 'ledgers.zip', 'w') as bundle:
             for name, content in members.items(): bundle.writestr(name, content)
@@ -174,6 +184,81 @@ class RingSiteTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Incomplete response archive'):
             R.saved_report(self.site, case)
         self.assertEqual((self.site / case['base'] / 'response/summary.html').read_bytes(), original.encode('utf-8'))
+
+    def test_selected_trace_files_are_exact_original_records_and_identity_is_explicit(self):
+        case, _ = self.report_fixture('KMRC01_candidate', traces=231)
+        body = R.saved_report(self.site, case)
+        config = json.loads(re.search(r'<script id="saved-response-data" type="application/json">(.*?)</script>', body, re.S).group(1))
+        self.assertEqual(config['variant'], 'KMRC01_candidate')
+        self.assertEqual(len(config['traces']), 231)
+        self.assertEqual(config['trace_keys'][0], [213, 0])
+        with zipfile.ZipFile(self.site / case['base'] / 'response/ledgers.zip') as bundle:
+            for line in bundle.open('traces.jsonl'):
+                trace = json.loads(line); key = f'{trace["event_id"]}/{trace["group_id"]}'
+                path = self.site / 'results/cs137-10k/KMRC01_candidate' / config['traces'][key]['path']
+                self.assertEqual(R.gzip.decompress(path.read_bytes()), line)
+                self.assertEqual(path.read_bytes(), R.gzip.compress(line, compresslevel=9, mtime=0))
+                self.assertEqual(R.sha(path), config['traces'][key]['sha256'])
+                self.assertEqual(path.stat().st_size, config['traces'][key]['bytes'])
+                self.assertEqual(len(line), config['traces'][key]['uncompressed_bytes'])
+                self.assertEqual(R.hashlib.sha256(line).hexdigest(), config['traces'][key]['uncompressed_sha256'])
+        self.assertIn('No published full waveform for this exact primary', body)
+        self.assertIn('Saved model examples · selecting one changes the primary and group', body)
+        self.assertIn('saved.event_id!==event||saved.group_id!==group', body)
+        with zipfile.ZipFile(self.site / case['base'] / 'response/ledgers.zip') as bundle:
+            first_raw = next(iter(bundle.open('traces.jsonl')))
+        legacy = self.site / 'results/cs137-10k/KMRC01_candidate/traces/213-0.json'
+        legacy.write_bytes(first_raw)
+        R.saved_report(self.site, case)
+        self.assertFalse(legacy.exists())
+        legacy.write_bytes(b'unrecognized retained failure evidence')
+        with self.assertRaisesRegex(ValueError, 'Unrecognized earlier generated trace; preserved'):
+            R.saved_report(self.site, case)
+        self.assertEqual(legacy.read_bytes(), b'unrecognized retained failure evidence')
+
+    def test_actual_primary_698_never_substitutes_trace_213_and_history_restores_selection(self):
+        node = os.environ.get('TEACHING_NODE') or shutil.which('node')
+        if not node:
+            self.skipTest('Node runtime unavailable')
+        root = Path(__file__).resolve().parents[1]
+        with zipfile.ZipFile(root / 'docs/examples/cs137-10k/AK02/response/ledgers.zip') as archive:
+            pulses = [p for line in archive.open('scalars.jsonl') if
+                      (p := json.loads(line)).get('record_kind') == 'pulse' and p['event_id'] in (213, 698)]
+            raw = next(line for line in archive.open('traces.jsonl') if json.loads(line)['event_id'] == 213)
+        self.assertEqual({p['event_id'] for p in pulses}, {213, 698})
+        packed = R.gzip.compress(raw, compresslevel=9, mtime=0)
+        config = {'model': 'AK02', 'variant': 'AK02', 'pulses': pulses, 'trace_keys': [[213, 0]],
+                  'scalar_url': 'scalar.csv', 'teaching': [[213, 0]],
+                  'traces': {'213/0': {'path': 'traces/213-0.json.gz', 'sha256': R.hashlib.sha256(packed).hexdigest(),
+                                     'bytes': len(packed), 'uncompressed_sha256': R.hashlib.sha256(raw).hexdigest(),
+                                     'uncompressed_bytes': len(raw)}}}
+        runtime = r'''
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),{webcrypto}=require('node:crypto');
+const input=JSON.parse(fs.readFileSync(0,'utf8'));
+class Element{constructor(){this.children=[];this.value='';this.textContent='';this.hidden=false;this.open=false;}append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this.children=nodes;}removeAttribute(name){delete this[name];}}
+const nodes=new Map(),get=id=>{if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);};get('saved-response-data').textContent=JSON.stringify(input.config);
+const location={pathname:'/results/cs137-10k/AK02/charge-readout.html',search:'?study=cs137-10k&model=AK02&variant=AK02&event=698&group=0',hash:''},listeners=new Map(),requests=[];
+const move=url=>location.search=new URL(url,'https://test.invalid').search,history={replaceState:(_,__,url)=>move(url),pushState:(_,__,url)=>move(url)};
+const c=vm.createContext({document:{getElementById:get,createElement:()=>new Element(),querySelectorAll:()=>[]},URLSearchParams,location,history,crypto:webcrypto,Uint8Array,TextDecoder,Blob,Response,DecompressionStream,
+addEventListener:(name,fn)=>listeners.set(name,fn),fetch:async path=>{requests.push(path);const packed=Buffer.from(input.packed,'base64');return {ok:true,arrayBuffer:async()=>packed.buffer.slice(packed.byteOffset,packed.byteOffset+packed.byteLength)};},
+SavedFocusPlots:{focusEnd:()=>10,shaperEnd:()=>20,draw:(host,panels)=>{host.children=panels;}}});
+vm.runInContext(input.navigation,c);vm.runInContext(input.controller,c);
+(async()=>{
+ assert.match(get('selected-identity').textContent,/primary 698/);assert.match(get('selected-status').textContent,/No published full waveform/);assert.equal(requests.length,0);assert.equal(get('selected-plots').children.length,0);
+ assert.equal(get('selected-summary').children[0].textContent,'Truth deposited energy: '+input.config.pulses.find(p=>p.event_id===698).deposited_energy_keV+' keV');assert.match(get('selected-3d').href,/event=698&group=0/);assert.equal(get('selected-teaching').hidden,true);
+ location.search='?study=cs137-10k&model=AK02&variant=AK02&event=213&group=0';await listeners.get('popstate')();assert.match(get('selected-status').textContent,/Matching saved waveform: primary 213/);assert.equal(get('selected-plots').children.length,4);assert.equal(requests.length,1);
+ get('selected-details').open=true;get('selected-details').ontoggle();const exact=JSON.parse(get('selected-record').textContent);assert.deepEqual(exact.saved_trace,JSON.parse(input.raw));assert.equal(exact.pulse.event_id,213);
+ location.search='?study=cs137-10k&model=AK02&variant=AK02&event=698&group=0';await listeners.get('popstate')();assert.equal(get('selected-plots').children.length,0);assert.match(get('selected-status').textContent,/No published full waveform/);assert.equal(requests.length,1);assert.equal(JSON.parse(get('selected-record').textContent).saved_trace,null);
+ location.search='?model=SAP22&event=213&group=0';await listeners.get('popstate')();assert.match(get('selected-status').textContent,/does not match this saved case/);assert.equal(get('selected-plots').children.length,0);assert.equal(requests.length,1);
+ console.log('Actual AK02 primary698 scalar-only; primary213 exact matching trace; back restores698 without waveform; cross-case refused');
+})().catch(error=>{console.error(error);process.exitCode=1;});
+'''
+        import base64
+        result = subprocess.run([node, '-e', runtime], input=json.dumps({'config': config,
+            'raw': raw.decode(), 'packed': base64.b64encode(packed).decode('ascii'),
+            'navigation': (root / 'tools/viewer_navigation.js').read_text(encoding='utf-8'),
+            'controller': R.READOUT_CONTROLLER}), text=True, encoding='utf-8', capture_output=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_case_cards_have_one_primary_report_action_and_studies_insert_after_geometry(self):
         case, _ = self.report_fixture()

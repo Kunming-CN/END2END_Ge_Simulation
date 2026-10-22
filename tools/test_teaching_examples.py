@@ -12,6 +12,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import zipfile
+import gzip
 
 import teaching_examples as teaching
 
@@ -64,6 +65,21 @@ class TeachingExamplesTests(unittest.TestCase):
         self.assertLess(km["pulse"]["final_induced_keV"], 0)
         self.assertEqual(self.payload["models"]["KMRC01_candidate"]["wiring"]["factor"], -1)
         self.assertTrue(km["pulse"]["readout"]["accepted"])
+
+    def test_all_six_examples_link_to_the_same_saved_3d_pulse_group(self):
+        saved = {}
+        for case in self.payload['cases']:
+            model = case['model']
+            if model not in saved:
+                folder = SITE / ('examples/cs137-10k-rings' if model in ('GeRC02', 'KMRC01_candidate')
+                                 else 'examples/cs137-10k-hits')
+                manifest = json.loads((folder / 'manifest.json').read_text(encoding='utf-8'))
+                selected = folder / manifest['models'][model]['selected']
+                saved[model] = json.loads(gzip.decompress(selected.read_bytes()))
+            primary = next(e for e in saved[model]['evidence'] if e['event_id'] == case['event_id'])
+            group = next(g for g in primary['groups'] if g['group_id'] == case['group_id'])
+            self.assertEqual(group['ge_raw_row_indices'], case['pulse']['raw_row_indices'])
+            self.assertAlmostEqual(group['ge_energy_keV'], case['pulse']['deposited_energy_keV'], delta=2e-10)
 
     def test_current_boundary_keeps_sign_tail_and_original_zero_bin(self):
         times, charge = [0, 2, 4, 6], [0, -10, -4, 2]
@@ -174,10 +190,15 @@ const input=JSON.parse(fs.readFileSync(0,"utf8"));
 class Element{constructor(tag){this.tag=tag;this.children=[];this.attributes={};this.style={};this.textContent="";this.selectedIndex=0;this.open=false;this.hidden=false;}append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this.children=[...nodes];}setAttribute(name,value){this.attributes[name]=String(value);}}
 const nodes=new Map(),document={getElementById(id){if(!nodes.has(id))nodes.set(id,new Element("div"));return nodes.get(id);},createElement:tag=>new Element(tag),createElementNS:(_,tag)=>new Element(tag)};
 document.getElementById("teaching-data").textContent=JSON.stringify(input.payload);
-const context=vm.createContext({document});vm.runInContext(input.renderer,context);
+const listeners=new Map(),location={pathname:'/spectra/pipeline.html',search:'?study=cs137-10k&model=SAP22&variant=SAP22&event=155&group=0&stage=preamp',hash:''};
+const history={pushState(_,__,url){location.search=new URL(url,'https://test.invalid').search;},replaceState(_,__,url){location.search=new URL(url,'https://test.invalid').search;}};
+const context=vm.createContext({document,URLSearchParams,location,history,addEventListener:(name,fn)=>listeners.set(name,fn)});context.window=context;vm.runInContext(input.renderer,context);
 const captured=[],originalDraw=context.SavedFocusPlots.draw;
 context.SavedFocusPlots.draw=(host,panels,clock)=>{captured.push({panels,clock});originalDraw(host,panels,clock);};
 vm.runInContext(input.app,context);
+assert.equal(document.getElementById('example-select').selectedIndex,1);
+assert.equal(document.getElementById('stage-select').value,'preamp');
+assert.equal(document.getElementById('plots').children.filter(n=>!n.hidden).length,1);
 const walk=node=>[node,...node.children.flatMap(walk)];
 for(let i=0;i<input.payload.cases.length;i++){
  const selector=document.getElementById("example-select");selector.selectedIndex=i;selector.onchange();
@@ -195,10 +216,19 @@ for(let i=0;i<input.payload.cases.length;i++){
  assert.deepEqual(Array.from(panels[1].current_from_charge.values),native.map(v=>v*factor));
  const preamp=host.children[2],button=walk(preamp).find(n=>n.tag==="button"&&n.textContent==="Full saved window");button.onclick();
  const range=walk(preamp).find(n=>n.tag==="small");assert.match(range.textContent,/600 displayed samples/);
- assert.equal(document.getElementById("case-report").href,"../results/cs137-10k/"+item.model+"/charge-readout.html");
+ const report=new URL(document.getElementById("case-report").href,'https://test.invalid/spectra/pipeline.html');
+ assert.equal(report.pathname,"/results/cs137-10k/"+item.model+"/charge-readout.html");
+ assert.equal(report.searchParams.get('study'),'cs137-10k');assert.equal(report.searchParams.get('event'),String(item.event_id));assert.equal(report.searchParams.get('group'),String(item.group_id));
+ assert.equal(document.getElementById('case-3d').href.includes('event='+item.event_id+'&group='+item.group_id+'&view=positive'),true);
  document.getElementById("exact-details").open=true;document.getElementById("exact-details").ontoggle();
  const exact=JSON.parse(document.getElementById("exact-json").textContent);assert.equal(exact.selected_case.event_id,item.event_id);assert.equal(exact.selected_case.model,item.model);
+ const saved=new URLSearchParams(location.search);assert.equal(saved.get('event'),String(item.event_id));assert.equal(saved.get('group'),String(item.group_id));
 }
+location.search='?study=cs137-10k&model=GeRC02&variant=GeRC02_Li50min&event=69&group=0&stage=shaper';listeners.get('popstate')();
+assert.equal(document.getElementById('example-select').selectedIndex,3);assert.equal(document.getElementById('stage-select').value,'shaper');assert.equal(document.getElementById('content').hidden,false);
+listeners.get('pageshow')();assert.equal(document.getElementById('example-select').selectedIndex,3);
+location.search='?study=cs137-10k&model=AK02&variant=AK02&event=698&group=0';listeners.get('popstate')();assert.equal(document.getElementById('content').hidden,true);assert.match(document.getElementById('error').textContent,/No curated teaching waveform/);
+location.search='?study=cs137-10k&model=GeRC02&variant=GeRC02_Li30min&event=61&group=0';listeners.get('popstate')();assert.equal(document.getElementById('content').hidden,true);assert.match(document.getElementById('error').textContent,/variant is unavailable/);
 console.log("six selections / 24 plots / exact sparse preamp and shaper / fixed wiring passed");
 '''
         result = subprocess.run([NODE, "-e", runtime], input=json.dumps({

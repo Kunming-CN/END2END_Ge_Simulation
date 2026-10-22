@@ -595,20 +595,14 @@ def install_bundle(bundle,site):
 def link_current(site):
     site=Path(site);target=site/Path(ROUTE).parent
     if not (target/'publication.json').exists():return
-    record=validate_bundle(target)
+    validate_bundle(target)
     for relative in ('index.html','results/index.html','detectors/GeGI_3D/index.html','detectors/GeGI_3D/technical.html'):
         path=site/relative
         if not path.is_file():continue
-        import posixpath
-        href=posixpath.relpath(ROUTE,posixpath.dirname(relative) or '.')
-        section=('<section id="gegi-formal-campaign"><h2>GeGI formal campaign</h2><p>'+
-            f'{record["initial_records"]:,} completed initial records; source-specific photon/decay denominators, fixed-gain spectra, '+
-            'saved signal processing, joint conditional maps and explicit unresolved cases.</p><p><a href="'+href+
-            '">Explore signals, Compton cones and the completed campaign →</a>.</p></section>')
+        # These routes are owned by the site/model templates. Remove the old
+        # appended card; adding another here put content after their footer.
         text=re.sub(r'<section id="gegi-formal-campaign">.*?</section>','',path.read_text(encoding='utf-8'),flags=re.S)
-        require('</main>' in text or '</body>' in text,'Maintained page has no insertion boundary')
-        marker='</main>' if '</main>' in text else '</body>'
-        path.write_bytes((text.replace(marker,section+marker,1)).encode('utf-8'))
+        path.write_bytes(text.encode('utf-8'))
 
 
 if __name__=='__main__':

@@ -67,11 +67,73 @@ def detector_cards(catalog):
     for item in catalog['detectors']:
         ident=item['id']; require(re.fullmatch(r'[A-Za-z0-9_-]+',ident) is not None,'Unsafe detector ID')
         kind=detector_pages.TYPE_LABELS[ident];poster=f'{ident}/runs/{detector_pages.RUN}/01_geometry.png'
+        capability=detector_pages.catalog_model_summary(ident)
         rows.append(f'<article class="card"><a href="{escape(ident)}/index.html" aria-label="{escape(ident)} detector overview">'
                     f'<img loading="lazy" style="width:100%;height:220px;object-fit:contain" src="{escape(poster)}" '
                     f'alt="{escape(ident)} {escape(kind)}, saved geometry"></a>'
-                    f'<h2><a href="{escape(ident)}/index.html">{escape(ident)}</a></h2><p>{escape(kind)}</p></article>')
+                    f'<h2><a href="{escape(ident)}/index.html">{escape(ident)}</a></h2><p>{escape(kind)}</p>'
+                    f'<p><strong>{escape(capability["label"])}</strong></p><p>{escape(capability["detail"])}</p>'
+                    f'<p>Model status: {escape(item.get("status","saved model"))}. Public studies and validation limits are listed on its overview.</p></article>')
     return ''.join(rows)
+
+def teaching_preview(site):
+    """A small preview of actual saved samples; the teaching page owns details."""
+    source=Path(site)/'spectra/teaching-examples.json'
+    if not source.is_file():
+        return ''
+    case=read(source)['cases'][0]
+    trace=case['saved_trace']['trace']
+    def curve(times,values,label,unit):
+        pairs=[(float(t),float(v)) for t,v in zip(times,values) if 0<=t<=5000]
+        require(len(pairs)>1,'Teaching preview needs retained original samples')
+        lo=min(0.,min(v for _,v in pairs));hi=max(0.,max(v for _,v in pairs));span=hi-lo or 1.
+        points=' '.join(f'{40+270*t/5000:.5g},{135-105*(v-lo)/span:.5g}' for t,v in pairs)
+        return (f'<figure><svg viewBox="0 0 330 180" role="img" aria-label="{label}, {unit}; first 5 microseconds of saved samples">'
+                f'<text x="14" y="19">{label} ({unit})</text><path d="M40 30V135H310" fill="none" stroke="#9aaebb"/>'
+                f'<polyline points="{points}" fill="none" stroke="#087f91" stroke-width="2"/>'
+                '<text x="40" y="160">0</text><text x="250" y="160">5 µs</text></svg></figure>')
+    plots=curve(trace['time_ns'],trace['induced_charge_fC'],'Induced charge','fC')+curve(trace['time_ns'],trace['shaped_V'],'Shaped signal','V')
+    edep=case['pulse']['deposited_energy_keV'];erec=case['pulse']['readout']['reconstructed_energy_keV']
+    return ('<section class="panel" id="pipeline-example"><h2>One saved event, from deposits to energy</h2>'
+        f'<p>Cs137 10K · {escape(case["model"])}'+(' Li50min' if case['model']=='GeRC02' else '')+f' · primary {case["event_id"]} · pulse group {case["group_id"]}. '
+        f'Deposited energy {edep:.3f} keV → reconstructed energy {erec:.3f} keV.</p>'
+        '<div class="grid">'+plots+'</div><p>Original signed samples in the first 5 µs. '
+        'Synthetic electronics and retained native cap flags; this example does not establish calibrated charge collection.</p></section>')
+
+def refresh_gegi_reading_order(site):
+    """A display layer over the exact saved aggregate bundle; no analysis."""
+    import hashlib
+    from gegi_saved_publication import validate_public, encoded, public
+    directory=Path(site)/'results/gegi-campaign'
+    if not (directory/'publication.json').is_file():return
+    record=read(directory/'publication.json')
+    if record.get('kind')!='gegi_saved_publication_v3':return
+    validate_public(directory)
+    path=directory/'index.html';text=path.read_text(encoding='utf-8')
+    text=re.sub(r'<!-- page-navigation:start -->.*?<!-- page-navigation:end -->',
+                lambda _:page_navigation('results/gegi-campaign/index.html'),text,count=1,flags=re.S)
+    blocks={}
+    for ident in ('new-map','spectra','journey','saved-evidence'):
+        pattern=r'<section id="'+ident+r'">.*?</section>'
+        match=re.search(pattern,text,re.S)
+        if match:
+            blocks[ident]=match[0];text=text[:match.start()]+text[match.end():]
+    require(all(ident in blocks for ident in ('new-map','spectra','journey')),'Saved GeGI reading sections missing')
+    # Diagnostics remain available, after the scientific result and example.
+    evidence=blocks.get('saved-evidence','')
+    if evidence:
+        evidence=evidence.replace('<section id="saved-evidence">','<details id="saved-evidence"><summary>Technical evidence and historical implementation notes</summary>',1)
+        evidence=evidence.rsplit('</section>',1)[0]+'</details>'
+    nav=re.search(r'<nav class="local">.*?</nav>',text,re.S)
+    require(nav is not None,'Saved GeGI local navigation missing')
+    ordered=''.join(blocks[ident] for ident in ('new-map','spectra','journey'))+evidence
+    text=text[:nav.end()]+ordered+text[nav.end():]
+    text=text.replace('<p><strong>Next operation:</strong>', '<p><strong>Historical development note at export:</strong>')
+    body=public(text.encode('utf-8'));path.write_bytes(body)
+    record['artifacts']['index.html']={'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest()}
+    record['display_source_sha256']={'tools/site_restructure.py':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+    (directory/'publication.json').write_bytes(public(encoded(record)))
+    validate_public(directory)
 def apply(site):
     site=Path(site)
     require((site/'index.html').is_file(),'Site snapshot missing index')
@@ -136,14 +198,17 @@ def apply(site):
     home=f'''<section class="hero"><p class="muted">HPGe radiation-to-readout simulation</p><h1>GeSignal</h1>
 <p>Explore how radiation deposits become charge signals and an energy measurement: Geant4/remage → SolidStateDetectors.jl → preamplifier → shaping → peak ADC.</p>
 <p>The public website contains saved engineering results. Run new simulations locally with Control.</p></section>
-<section class="grid"><article class="card"><h2>Results</h2><p><a href="results/index.html">Choose a saved dataset →</a></p><p>Read saved waveforms, spectra, events and traceable data.</p></article>
-<article class="card"><h2>Detectors</h2><p><a href="detectors/index.html">Explore 17 detector models →</a></p><p>Inspect geometry, saved fields and signals, or original model settings.</p></article>
-<article class="card"><h2>Assemblies</h2><p><a href="assemblies/index.html">Compare the LBNL and GeGI cryostats →</a></p><p>Inspect assembly geometry and compatible detectors.</p></article>
-<article class="card"><h2>Run locally</h2><p><a href="guide.html">Prepare your computer and use Control →</a></p><p>{control_count} LBNL configurations plus the exact GeGI model in its dedicated cryostat.</p></article>
-<article class="card"><h2>Methods</h2><p><a href="methods/index.html">Understand the pipeline and its limits →</a></p><p>Read the physical assumptions and saved diagnostic studies.</p></article></section>
-<section class="panel" id="pipeline-example"><span id="native-cs137-10k"></span><span id="current-ring-10k"></span><p>Saved results are engineering simulations. Fresh-machine setup remains unvalidated.</p></section>'''
+<p><a class="button" href="spectra/pipeline.html">Follow one signal →</a> · <a href="results/index.html">Browse all results</a> · <a href="guide.html">Run locally</a></p>
+<span id="native-cs137-10k"></span><span id="current-ring-10k"></span>'''
+    home+=teaching_preview(site) or '<section id="pipeline-example"><h2>Follow a saved signal</h2><p>The teaching page retains each example’s study and event identity.</p></section>'
+    home+='<section class="cards" aria-label="Representative studies">'
+    if has_10k:
+        home+='<article class="card"><h2>Compare detector responses</h2><p>Four independent Cs137 10K cases: deposits, signed charge, electronics and spectra. Different geometries; no matched Li-only experimental control.</p><a href="results/cs137-10k/index.html">Choose a detector case →</a></article>'
+    if has_1m:
+        home+='<article class="card"><h2>Study larger-sample spectra</h2><p>AK02 and SAP22: 1,000,000 initial decays per detector in two independent runs. Ensemble spectra and scalar records; full waveforms are not available for every event.</p><a href="results/cs137-1m/index.html">Open the 1M study →</a></article>'
     if has_gegi:
-        home+='<section class="panel"><h2>GeGI Compton imaging</h2><p>'+gegi_description+'</p><p><a href="'+gegi_route+'">Open saved GeGI signals and imaging →</a></p></section>'
+        home+='<article class="card"><h2>GeGI Compton imaging</h2><p>'+gegi_description+'</p><a href="'+gegi_route+'">Open saved GeGI signals and imaging →</a></article>'
+    home+='</section>'
     write_page(site/'index.html','GeSignal',home,0,fold_footer=True)
 
     curated_teaching=(site/'spectra/teaching-examples.json').is_file()
@@ -152,10 +217,7 @@ def apply(site):
         learn_example=learn_example.replace('Follow one saved bare-detector gamma event through deposits, charge, preamplifier, shaper and peak ADC.','Compare six representative signals selected from the completed Cs137 10K cryostat cases. Each retains its source event, charge, electronics settings and limitations.')
     if has_gamma:
         gamma_caption='Follow all 40 original primaries: 29 known zero inputs and 11 positive primaries. Native failures keep unknown charge and readout null. Collection-edge and full-window views preserve signed signals and original caps; independent synthetic injection calibration and unresolved collection limits remain explicit.' if completed_gamma else 'Follow 40 truth events and six selected responses: four positive responses and two selected true zeros. The other 34 responses stay unknown/unprocessed. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.'
-    learn=('''<section class="hero"><p class="muted">Pipeline explanation</p><h1>Radiation → charge → electronics</h1>
-<p>Geant4/remage records where radiation deposits energy. SolidStateDetectors.jl transports electron/hole charge and calculates electrode signals. The electronics stage applies preamplifier, shaping and peak-ADC response.</p></section>
-'''+learn_example+'''
-<section class="panel"><h2>Important separation</h2><p>Geant4 deposition time is not carrier drift time. Deposited energy, induced charge, analog voltage, ADC code and reconstructed energy are retained as separate quantities.</p></section>''')
+    learn='''<meta http-equiv="refresh" content="0;url=../spectra/pipeline.html"><section class="hero"><h1>Signal walkthrough</h1><p>The explanation and six saved signals now share one teaching page.</p><p><a href="../spectra/pipeline.html">Continue to the six signal examples →</a></p></section>'''
     write_page(site/'learn/index.html','Pipeline explanation · GeSignal',learn,1)
 
     featured_items=[x for x in catalog['detectors'] if x['id'] in control_ids]
@@ -181,17 +243,10 @@ def apply(site):
                 f'<h2>{title}</h2><p>{description}</p><p>{actions}</p>'+extra+'</section>')
     results='''<section class="hero"><p class="muted">Choose the dataset first</p><h1>Saved results</h1>
 <p>Start with selected teaching signals or open a full saved study. Every primary ID belongs to its source detector case; complete studies retain zeros and unavailable responses.</p></section>'''
-    results+=result_panel('gegi','GeGI · multichannel Compton imaging',gegi_description,
-        (('../'+gegi_route,'Open saved GeGI signals and imaging →'),),has_gegi,
-        '<p>Signal-derived reconstruction is separate from known source positions and transport truth. A plane projection assumes its stated source plane; it does not recover source distance.</p>')
     teaching_present=(site/'examples/data.json').is_file()
     results+=result_panel('teaching','Start here · six representative Cs137 signals' if curated_teaching else 'Main teaching example · 200 gamma primaries',
         'A selected view of the completed four-case Cs137 10K study: near-line, low-energy, partial-deposition, separated-position, capped and fixed-wiring signals. The six examples are illustrative, not a statistical sample.' if curated_teaching else 'AK02 and SAP22 · 100 side-on primaries per detector · bare geometry. Start here to follow one event from radiation deposits to an energy measurement.',
         (('../spectra/pipeline.html','Open teaching example →'),),teaching_present)
-    results+=result_panel('gamma','Cryostat gamma · 40 primaries',
-        'AK02 and SAP22 · 20 primaries per detector · nominal cryostat. Saved waveforms and event ledger. A separate monoenergetic source and event namespace.' if curated_teaching else 'AK02 and SAP22 · 20 primaries per detector · nominal cryostat. Saved waveforms and event ledger. Different geometry and event IDs from the teaching example.',
-        (('../examples/gamma-native/gamma.html','Open cryostat gamma example →'),),has_gamma,
-        '<details><summary>Processing and collection scope</summary><p>'+gamma_caption+'</p></details>' if has_gamma else '')
     tenk_description=('AK02, SAP22, GeRC02 Li50min and KMRC01 candidate · 10,000 initial Cs137 decays in each of four separate cases. Charge/readout, stage spectra, radiation events and complete scalar ledgers.' if has_rings else
                       'AK02 and SAP22 · 10,000 initial Cs137 decays per detector in two separate cases.')
     results+=result_panel('tenk','Cs137 10K · '+('four detector cases' if has_rings else 'two detector cases'),tenk_description,
@@ -200,6 +255,15 @@ def apply(site):
     results+=result_panel('million','Cs137 1M · two detector cases',
         'AK02 and SAP22 · one million initial decays per detector · nominal cryostat. Available views are ensemble truth/response spectra and complete scalar group records.',
         (('cs137-1m/index.html','Open 1M campaign →'),),has_1m)
+    results+=result_panel('gegi','GeGI · multichannel Compton imaging',gegi_description,
+        (('../'+gegi_route,'Open saved GeGI signals and imaging →'),),has_gegi,
+        '<p>Conditional reconstruction on an imposed plane; same-energy separation remains unresolved and validated recoveries remain zero.</p>')
+    results+='<h2>Other teaching studies</h2>'
+    results+=result_panel('gamma','Cryostat gamma · 40 primaries',
+        'AK02 and SAP22 · 20 primaries per detector · nominal cryostat. A separate monoenergetic source and event namespace.',
+        (('../examples/gamma-native/gamma.html','Open cryostat gamma example →'),),has_gamma,
+        '<details><summary>Processing and collection scope</summary><p>'+gamma_caption+'</p></details>' if has_gamma else '')
+    results+='<details><summary>Historical teaching archive</summary><p><a href="../examples/pipeline.html">Earlier bare-detector study · 200 initial gamma primaries</a>. Its records have a separate event namespace.</p><p><a href="../examples/gegi/index.html">Earlier GeGI two-position study · historical identity and original settings</a></p></details>'
     results+='<p><a href="../guide.html#saved-analysis">Help with settings, event identities and data files</a>. Saved engineering results do not establish experimental spectrum agreement or calibrated charge-collection efficiency.</p>'
     write_page(site/'results/index.html','Results · GeSignal',results,1)
 
@@ -216,10 +280,7 @@ def apply(site):
 <details><summary>Original saved reports</summary><p><a data-original-report href="../../examples/cs137-1m/report.html">Original deposition-truth report</a> · <a data-original-report href="../../examples/cs137-1m-response/report.html">Original response report</a></p></details>
 <p>Public scalar records do not contain every full waveform, private field cache or original LH5 file.</p></section>
 <section class="panel"><h2>Counting rules</h2><p>One million refers to initial Cs137 decays <strong>per detector</strong>. Positive deposits are grouped in isolated 100 µs reset windows; this is not an activity/live-time/pileup acquisition model. Native failures remain unknown responses and electronics rejection remains a separate outcome.</p></section>'''
-        from spectrum_display import homepage_preview
-        preview=homepage_preview(site)
-        if preview is not None:
-            body+='<section class="panel"><h2>AK02 and SAP22 · saved response spectra</h2><p>Both separate one-million-decay cases are shown below. Each plot retains its own deposited-truth and accepted-ADC population; they are not merged or normalized.</p>'+preview+'</section>'
+        body+='<p>Two independent runs; 1,000,000 initial decays per detector. Full plots are in the spectrum views above. AK02 and SAP22 have different geometries.</p>'
         write_page(site/'results/cs137-1m/index.html','Cs137 1M results · GeSignal',body,2)
 
     else:
@@ -241,10 +302,14 @@ def apply(site):
         write_page(site/'results/cs137-10k/index.html','Cs137 10k results unavailable · GeSignal',body,2)
     methods='''<section class="hero"><p class="muted">Principles, assumptions and limits</p><h1>Methods & limitations</h1>
 <p>The radiation, semiconductor and electronics stages retain distinct quantities and identities. These saved engineering examples do not establish experimental agreement or calibrated charge-collection efficiency.</p></section>
-<div class="grid"><article class="card"><h2>Radiation to readout</h2><p>Deposits, charge, preamplifier, shaping and peak ADC.</p><a href="../learn/index.html">Read pipeline explanation →</a></article>
+<section class="panel"><h2>Radiation deposits</h2><p>Geant4/remage tracks the radiation and records deposited energy E<sub>dep</sub> in keV, positions in mm, creation/deposition times in ns and original primary/track identities. A primary may miss the crystal, interact more than once or produce delayed daughter deposits. Keep deposits belonging to one primary and pulse group together.</p></section>
+<section class="panel"><h2>Semiconductor charge and induction</h2><p>SolidStateDetectors.jl transports the generated electrons and holes in the detector electric field. Electrode weighting potentials determine the signed induced charge through the Shockley–Ramo relation. Charge in fC and current in nA belong to this stage; deposition time is not carrier drift time. Incomplete collection, guards and numerical termination flags remain part of the result.</p></section>
+<section class="panel"><h2>Electronics and reconstructed energy</h2><p>A fixed wiring convention passes the signed current to a preamplifier, analog shaper and peak ADC. Voltages are in V. Reconstructed energy E<sub>rec</sub> in keV uses an independent injection calibration shared across events, never an event-by-event match to E<sub>dep</sub>. Threshold, clipping and rejection can make energy unavailable; an unknown response is not zero.</p><p><a href="../spectra/pipeline.html">Follow these stages in six saved signals →</a></p></section>
+<section class="panel"><h2>Counts, identity and validation</h2><p>Initial primaries or decays, nonzero primaries, pulse groups and accepted readout groups are distinct populations. Each plot names its denominator and selection. Event numbers only identify a record together with its study, independent run, model/variant and pulse group. Engineering completion, numerical convergence and agreement with measurement are separate claims; these examples are not measured detector calibration.</p><p>Plot display rounding does not change stored values or histogram bins. Each study retains exact settings, seeds, failure/null accounting and downloadable records.</p></section>
+<div class="grid">
 <article class="card"><h2>Cryostats and sources</h2><p>LBNL and GeGI assembly geometry, compatibility, source placement and physical assumptions.</p><a href="../assemblies/index.html">Read assembly assumptions →</a></article>
-<article class="card"><h2>Li-region diagnostics</h2><p>Native diffusion, endpoints and grid sensitivity; unresolved limits remain explicit.</p><a href="../lithium/lithium.html">Open saved diagnostics →</a></article>
-<article class="card"><h2>Native Li through electronics</h2><p>Earlier selected-event provisional response, preserved independently of other studies.</p><a href="../examples/native-li/comparison.html">Open selected study →</a></article></div>'''
+<article class="card"><h2>Local configuration and data</h2><p>Choose compatible models and read a saved result using the maintained guide.</p><a href="../guide.html#saved-analysis">Read the saved-data guide →</a></article></div>
+<details><summary>Advanced and historical Li studies</summary><p>Native diffusion, endpoints and grid sensitivity retain unresolved numerical limits.</p><p><a href="../lithium/lithium.html">Li-region diagnostics</a> · <a href="../examples/native-li/comparison.html">Open selected study →</a></p></details>'''
     if (site/'examples/native-li/comparison.html').is_file():
         from saved_archive_display import assemble as assemble_archive_display
         assemble_archive_display(site)
@@ -276,6 +341,7 @@ def apply(site):
     from ssd_geometry_publication import refresh_viewers
     refresh_viewers(site)
     apply_detector_pages(site,write_page)
+    refresh_gegi_reading_order(site)
     return {'status':'applied','detectors':len(catalog['detectors']),
             'response_present':response.exists(),'truth_present':truth.exists()}
 

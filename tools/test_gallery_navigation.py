@@ -110,6 +110,51 @@ class GalleryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'authority bytes changed'):
                 D.catalog_control_capabilities(cap,root)
 
+    def test_model_labels_name_the_actual_assembly_and_variant(self):
+        cap=D.execution_capabilities();catalog=D.catalog_control_capabilities(cap);dedicated=D.dedicated_control_capabilities(cap)
+        rows={model:D.catalog_model_summary(model,cap,catalog,dedicated) for model in cap}
+        self.assertEqual(sum(r['label']=='Run in LBNL cryostat' for r in rows.values()),10)
+        self.assertEqual(sum(r['label']=='Run in GeGI cryostat' for r in rows.values()),1)
+        self.assertEqual(sum(r['assembly_href'] is None for r in rows.values()),6)
+        self.assertIn('Li50min',rows['GeRC02']['detail']);self.assertIn('30-minute',rows['GeRC02']['detail'])
+        self.assertEqual(rows['GeGI_3D']['assembly_href'],'assemblies/gegi/index.html')
+
+    def test_technical_settings_apply_only_to_the_relevant_model_and_download(self):
+        manifest=self.site/'examples/cs137-10k-rings/manifest.json'
+        manifest.parent.mkdir(parents=True);manifest.write_text('{}')
+        run=manifest.parent/'GeRC02/response/run.json';run.parent.mkdir(parents=True);run.write_text('{}')
+        D.apply(self.site,N.write_page)
+        for item in self.catalog['detectors']:
+            text=(self.site/'detectors'/item['id']/'technical.html').read_text()
+            self.assertEqual('LBNL AK02/SAP22 campaign' in text,item['id'] in {'AK02','SAP22'})
+        text=(self.site/'detectors/GeRC02/technical.html').read_text()
+        self.assertIn('Original YAML · 30-minute baseline',text)
+        self.assertIn('Model ZIP with includes · 30-minute baseline',text)
+        self.assertIn('280 °C anneal for 50 minutes',text)
+        self.assertIn('the stored YAML remains 78 K',text)
+        self.assertIn('cs137-10k/GeRC02/charge-readout.html#data-files',text)
+        overview=(self.site/'detectors/GeRC02/index.html').read_text()
+        self.assertLess(overview.index('current-model-results'),overview.index('saved-studies'))
+        self.assertIn('GeRC02 Li50min · Cs137 10K charge and readout',overview)
+
+    def test_all17_gallery_descriptions_preserve_every_saved_media_target_and_script(self):
+        galleries=list((ROOT/'docs/detectors').glob('*/gallery.html'));self.assertEqual(len(galleries),17)
+        for gallery in galleries:
+            original=gallery.read_text(encoding='utf-8');model=gallery.parent.name
+            described=D.gallery_presentation(original,model)
+            before=Elements();before.feed(original);after=Elements();after.feed(described)
+            media=lambda parser:[(tag,{k:v for k,v in attrs.items() if k!='alt'}) for tag,attrs in parser.tags if tag in {'img','video','source'}]
+            self.assertEqual(media(before),media(after),model)
+            self.assertTrue(all(attrs.get('alt','').strip() for tag,attrs in after.tags if tag=='img'),model)
+            self.assertTrue(set(re.findall(r'\bid="([^"]+)"',original))<=set(re.findall(r'\bid="([^"]+)"',described)),model)
+            self.assertEqual(re.findall(r'<script\b[^>]*>.*?</script>',original,re.S),re.findall(r'<script\b[^>]*>.*?</script>',described,re.S))
+            self.assertIn('Fixed single-site control',described)
+            self.assertIn('Saved example ID: <code>fixed</code>',described)
+            self.assertEqual(described,D.gallery_presentation(described,model))
+            header=D.gallery_header(described,model)
+            self.assertIn('header #page-navigation a{color:#a8dcff}',header)
+            self.assertEqual(header,D.gallery_header(header,model))
+
     def test_dedicated_gegi_requires_exact_asset_detector_and_model(self):
         with tempfile.TemporaryDirectory(dir=ROOT/'.local') as directory:
             root=Path(directory);asset=root/'scenarios/assets/gegi_cryostat_v1.json'

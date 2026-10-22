@@ -28,7 +28,7 @@ class SiteStructureTests(unittest.TestCase):
     def result_panels(self,html):
         panels={m.group(1):m.group(2) for m in re.finditer(
             r'<section id="(gegi|teaching|gamma|tenk|million)"[^>]*>(.*?)</section>',html,re.S)}
-        self.assertEqual(list(panels),['gegi','teaching','gamma','tenk','million'])
+        self.assertEqual(list(panels),['teaching','tenk','million','gegi','gamma'])
         return panels
 
     def test_primary_tasks_and_dataset_entries(self):
@@ -39,19 +39,19 @@ class SiteStructureTests(unittest.TestCase):
         home=(root/'index.html').read_text()
         self.assertEqual(result['detectors'],2)
         for label in S.PRIMARY:self.assertIn(label,home)
-        self.assertEqual(home.count('<article class="card">'),5)
+        self.assertEqual(home.count('<article class="card">'),0)
         self.assertNotIn('href="downloads/all-models.zip"',home)
-        self.assertRegex(home,r'<section class="grid">\s*<article class="card"><h2>Results</h2>')
+        self.assertIn('href="spectra/pipeline.html">Follow one signal',home)
         primary=re.search(r'<nav aria-label="Primary"[^>]*>(.*?)</nav>',home).group(1)
         self.assertEqual(re.findall(r'href="([^"]+)"',primary),
                          ['results/index.html','detectors/index.html','assemblies/index.html','guide.html','methods/index.html'])
         self.assertEqual(re.findall(r'>([^<]+)</a>',primary),['Results','Detectors','Assemblies','Run locally','Methods'])
-        self.assertIn('use Control',home)
+        self.assertIn('with Control',home)
         for p in ('learn/index.html','detectors/index.html','results/index.html',
                   'methods/index.html','scenarios/lbnl-cs137/index.html','assemblies/index.html'):
             self.assertTrue((root/p).is_file(),p)
         learn=(root/'learn/index.html').read_text()
-        self.assertEqual(learn.count('../spectra/pipeline.html'),1)
+        self.assertEqual(learn.count('href="../spectra/pipeline.html"'),1)
         self.assertNotIn('../examples/gamma-native/gamma.html',learn)
         panels=self.result_panels((root/'results/index.html').read_text())
         self.assertIn('../spectra/pipeline.html',panels['teaching'])
@@ -85,11 +85,11 @@ class SiteStructureTests(unittest.TestCase):
         # remain available without implying that their saved event IDs match.
         for href in ('index.html','results/index.html','detectors/index.html','assemblies/index.html','guide.html','methods/index.html'):
             self.assertIn(href,parser.outside)
-        for href in ('spectra/pipeline.html','spectra/cs137-10k.html','viewers/events.html','results/cs137-10k/index.html','downloads/all-models.zip'):
+        for href in ('spectra/cs137-10k.html','viewers/events.html','downloads/all-models.zip'):
             self.assertNotIn(href,parser.links)
-        self.assertIn('Choose a saved dataset',home)
-        self.assertIn('10 LBNL configurations plus the exact GeGI model in its dedicated cryostat',home)
-        self.assertIn('Fresh-machine setup remains unvalidated',home)
+        self.assertIn('spectra/pipeline.html',parser.outside)
+        self.assertIn('results/cs137-10k/index.html',parser.outside)
+        self.assertIn('1,000,000 initial decays per detector',home)
         self.assertNotIn('Methods and retained links',home)
         for anchor in ('pipeline-example','native-cs137-10k','current-ring-10k'):
             self.assertIn('id="'+anchor+'"',home)
@@ -109,7 +109,7 @@ class SiteStructureTests(unittest.TestCase):
         results=(root/'results/index.html').read_text()
         panels=self.result_panels(results)
         self.assertIn('bare geometry',panels['teaching'])
-        self.assertIn('Different geometry and event IDs',panels['gamma'])
+        self.assertIn('separate monoenergetic source and event namespace',panels['gamma'])
         self.assertIn('two separate cases',panels['tenk'])
         self.assertIn('cs137-10k/index.html',panels['tenk'])
         self.assertIn('cs137-1m/index.html',panels['million'])
@@ -140,7 +140,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertNotIn('../examples/gamma-native/gamma.html',panels['teaching'])
         learn=(root/'learn/index.html').read_text()
         self.assertNotIn('../examples/gamma-native/gamma.html',learn)
-        self.assertEqual(learn.count('../spectra/pipeline.html'),1)
+        self.assertEqual(learn.count('href="../spectra/pipeline.html"'),1)
         self.assertEqual((root/'learn/index.html').read_bytes(),before['learn/index.html'])
         self.assertNotIn('pending saved results',results)
         for wording in ('40 truth events','six selected responses','four positive responses',
@@ -206,7 +206,7 @@ class SiteStructureTests(unittest.TestCase):
         root=self.fixture();saved=root/'examples/gegi';saved.mkdir(parents=True)
         (saved/'publication.json').write_bytes(b'legacy fixture')
         formal=root/'results/gegi-campaign';formal.mkdir(parents=True)
-        (formal/'publication.json').write_bytes(b'formal fixture')
+        (formal/'publication.json').write_bytes(b'{}')
         (formal/'summary.json').write_text(json.dumps({'processed_initial_records':1000000,
             'groups':{'a':{'counts':{'imaging_accepted_groups':708,'native_failed_groups':426}}}}))
         with patch('gegi_campaign_publication.validate_bundle') as checked,patch('gegi_publication.validate_bundle') as old:
@@ -217,11 +217,11 @@ class SiteStructureTests(unittest.TestCase):
             self.assertIn('1,000,000 initial records',text)
             self.assertIn('708 imaging-accepted pulse groups',text)
             self.assertIn('results/gegi-campaign/index.html',text)
-            self.assertNotIn('examples/gegi/index.html',text)
+            if path=='index.html':self.assertNotIn('examples/gegi/index.html',text)
 
     def test_conditional_gegi_summary_never_becomes_imaging_acceptance(self):
         root=self.fixture();formal=root/'results/gegi-campaign';formal.mkdir(parents=True)
-        (formal/'publication.json').write_bytes(b'formal fixture')
+        (formal/'publication.json').write_bytes(b'{}')
         (formal/'summary.json').write_text(json.dumps({'kind':'gegi_saved_publication_v3',
             'initial_records':1000000,'selected_conditional_imaging_groups':162,
             'counts':{'conditional_candidate_groups':434,'native_failed_groups':426}}))

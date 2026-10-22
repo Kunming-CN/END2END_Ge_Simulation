@@ -155,12 +155,14 @@ class SavedDisplayTests(unittest.TestCase):
                 self.assertEqual(actual[:len(expected)],expected)
                 old=D.component_hashes(before);new=D.component_hashes(after)
                 self.assertEqual(old['charts'][:len(expected)],new['charts'])
-                self.assertEqual(old['script'],new['script']);self.assertEqual(old['style'],new['style'])
+                self.assertEqual(old['style'],new['style'])
                 continue
-            self.assertEqual(D.component_hashes(before),D.component_hashes(after),destination)
+            self.assertEqual(D.component_hashes(before)['charts'],D.component_hashes(after)['charts'],destination)
             self.assertEqual(D.embedded_specs(before),D.embedded_specs(after),destination)
-            for expression in (r'<script\b[^>]*>.*?</script>',r'<table\b[^>]*>.*?</table>'):
-                self.assertEqual(re.findall(expression,before,re.S),re.findall(expression,after,re.S),destination)
+            # Shared controls and table presentation may change. Every original
+            # scientific table remains byte-exact, including precision details.
+            for table in re.findall(r'<table\b[^>]*>.*?</table>',before,re.S):
+                self.assertIn(table,after,destination)
     def test_repeat_is_byte_and_mtime_exact(self):
         before={p.name:(p.read_bytes(),p.stat().st_mtime_ns) for p in (self.site/'spectra').iterdir()}
         D.assemble(self.site)
@@ -297,6 +299,43 @@ class SavedDisplayTests(unittest.TestCase):
             self.assertNotIn('href="../'+row['base']+'/response/summary.html"',page)
         for label in ('Primary','Breadcrumb','Dataset views'):
             self.assertEqual(page.count('aria-label="'+label+'"'),1)
+        self.assertIn('Compare all 4 detector cases',page)
+        self.assertEqual(page.count('data-spectrum-model='),4)
+        self.assertEqual(page.count('class="main-spectrum"'),8)
+        self.assertNotIn('<details open>',page)
+
+    def test_million_views_keep_two_independent_runs_and_exact_source_tables(self):
+        for name in ('truth','response'):
+            page=(self.site/f'spectra/million-{name}.html').read_text(encoding='utf-8')
+            self.assertIn('1,000,000 initial decays per detector',page)
+            self.assertIn('Two independent detector runs',page)
+            self.assertNotIn('<h1>Two million',page)
+            self.assertEqual(page.count('data-spectrum-model='),2)
+            state=json.loads(re.search(r'<script id="spectrum-case-context" type="application/json">(.*?)</script>',page,re.S).group(1))
+            for model in ('AK02','SAP22'):
+                self.assertEqual(state[model]['truth'],'million-truth.html#million-'+model)
+                self.assertEqual(state[model]['response'],'million-response.html#million-'+model)
+        truth=(self.site/'spectra/million-truth.html').read_text(encoding='utf-8')
+        self.assertEqual(truth.count('class="source-precision"'),2)
+        original=(self.site/'examples/cs137-1m/report.html').read_text(encoding='utf-8')
+        for table in re.findall(r'<table\b[^>]*>.*?</table>',original,re.S):
+            self.assertIn(table,truth)
+
+    def test_campaign_shell_links_to_plots_without_embedding_them(self):
+        home=self.site/D.PREVIEW_PATH;prior=home.read_bytes() if home.exists() else None
+        mp=self.site/'spectra/manifest.json';saved=mp.read_bytes()
+        try:
+            home.parent.mkdir(parents=True,exist_ok=True)
+            home.write_text('<html><a href="../../spectra/million-truth.html">Truth</a><a href="../../spectra/million-response.html">Response</a></html>',encoding='utf-8')
+            finalized=D.finalize(self.site)
+            self.assertIn('campaign_shell',finalized);self.assertNotIn('campaign_preview',finalized)
+            D.validate(self.site,require_current_generators=True,require_home=True)
+            home.write_text(home.read_text().replace('million-response.html','unavailable.html'),encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'destination missing'):D.validate_home(self.site,finalized,True)
+        finally:
+            mp.write_bytes(saved)
+            if prior is None:home.unlink(missing_ok=True)
+            else:home.write_bytes(prior)
 
 class NavigationCorrectionTests(unittest.TestCase):
     def test_archive_marker_preserves_record_but_rebases_relative_path(self):
@@ -366,6 +405,44 @@ class NavigationCorrectionTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,error):module.validate(site)
 
 class JavaScriptTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('node'),'Node needed for saved-case selection')
+    def test_selected_case_comparison_history_refresh_and_million_links(self):
+        script='''import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const code=fs.readFileSync(process.argv[1],'utf8');
+function setup(prefix,models,hash){
+ const cases=Object.fromEntries(models.map(model=>[model,{model,label:model,
+   spectrum:'cs137-10k.html#tenk-'+model,result:'result/'+model,files:'files/'+model,
+   truth:'million-truth.html#million-'+model,response:'million-response.html#million-'+model}]));
+ const node=(dataset={})=>({dataset,hidden:false,textContent:'',attrs:{},listeners:{},
+   setAttribute(k,v){this.attrs[k]=v;},removeAttribute(k){delete this.attrs[k];delete this[k];},addEventListener(k,fn){this.listeners[k]=fn;}});
+ const select=node({prefix}),status=node(),payload=node(),focus=node(),context=node(),listeners={};
+ payload.textContent=JSON.stringify(cases);
+ const sections=models.map(spectrumModel=>node({spectrumModel}));
+ const links=['spectrum','result','files','truth','response'].map(contextLink=>node({contextLink,baseHref:contextLink+'.html'}));
+ const location={hash,pathname:'/spectra/test.html',search:''},history={state:null,
+   replaceState(_s,_t,url){location.hash=url.slice(url.indexOf('#'));}};
+ const document={readyState:'complete',getElementById:id=>({'spectrum-case':select,'spectrum-focus':status,'spectrum-case-context':payload})[id],
+   querySelectorAll:q=>({'.spectrum-panel':[],'[data-spectrum-model]':sections,'[data-dataset]':[context],'[data-context-label]':[focus],'[data-context-link]':links})[q]||[]};
+ const c=vm.createContext({document,location,history,addEventListener:(k,fn)=>listeners[k]=fn});vm.runInContext(code,c);
+ return {c,location,select,sections,links,status,listeners};
+}
+const models=['AK02','SAP22','GeRC02','KMRC01_candidate'];
+let v=setup('tenk',models,'');assert.equal(v.location.hash,'#tenk-AK02');
+assert.deepEqual(v.sections.map(s=>s.hidden),[false,true,true,true]);
+for(const model of models){v.select.value=model;v.select.listeners.change();
+ assert.equal(v.location.hash,'#tenk-'+model);assert.deepEqual(v.sections.map(s=>s.hidden),models.map(m=>m!==model));
+ v.location.hash='#tenk-'+model;v.listeners.popstate();assert.equal(v.select.value,model);
+ assert.equal(setup('tenk',models,v.location.hash).select.value,model);}
+v.location.hash='#compare';v.listeners.hashchange();assert.equal(v.select.value,'compare');assert.ok(v.sections.every(s=>!s.hidden));
+assert.equal(v.links[0].href,'spectrum.html#compare');assert.equal(v.links[1].href,undefined);
+v.location.hash='#tenk-missing';v.listeners.popstate();assert.ok(v.sections.every(s=>s.hidden));assert.match(v.status.textContent,/Unavailable/);
+for(const model of ['AK02','SAP22']){v=setup('million',['AK02','SAP22'],'#million-'+model);
+ assert.deepEqual(v.sections.map(s=>s.hidden),['AK02','SAP22'].map(m=>m!==model));
+ assert.equal(v.links[3].href,'million-truth.html#million-'+model);assert.equal(v.links[4].href,'million-response.html#million-'+model);}
+console.log('Saved-case selection, explicit comparison, history and refresh passed');'''
+        result=subprocess.run(['node','--input-type=module','-e',script,str(ROOT/'tools/spectrum_controls.js')],capture_output=True,text=True,timeout=20,check=True)
+        self.assertIn('passed',result.stdout)
+
     @unittest.skipUnless(shutil.which('node'),'Node needed for browser-math parity')
     def test_js_log_linear_parity(self):
         source=(ROOT/'tools/spectrum_controls.js').read_text()

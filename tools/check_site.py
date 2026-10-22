@@ -4,7 +4,9 @@ Usage: python tools/check_site.py [--site docs] [--write-manifest]
 Only Python 3.10+ standard-library modules are required.
 """
 import argparse
+import gzip
 import hashlib
+import io
 import json
 import posixpath
 import re
@@ -130,14 +132,26 @@ def validate(site, require_manifest=True, require_models=False, *, allow_histori
         native_response_payload = relative=='examples/cs137-1m-response/groups.csv.gz'
         ledger_zip = relative in ('examples/cs137-10k/AK02/response/ledgers.zip', 'examples/cs137-10k/SAP22/response/ledgers.zip')
         ring_payload = relative.startswith('examples/cs137-10k-rings/') and (f.suffix.lower() in {'.zip', '.gz', '.jsonl'} or relative == 'examples/cs137-10k-rings/README.txt')
+        readout_trace = re.fullmatch(r'results/cs137-10k/(AK02|SAP22|GeRC02|KMRC01_candidate)/traces/(\d+)-(\d+)\.json\.gz',relative)
         gegi_assembly_payload = relative in {'assemblies/gegi/viewer.js', 'assemblies/gegi/geometry.gdml',
                                              'assemblies/gegi/gegi_signal_journey.js'}
         gegi_campaign_script = relative == 'results/gegi-campaign/gegi_signal_journey.js'
         if gegi_campaign_script and not (site/'results/gegi-campaign/publication.json').is_file():
             raise ValueError('GeGI journey script requires a complete hash-bound campaign bundle')
-        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in {'sitemap.xml', 'LICENSE'} and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload and not ring_payload and not gegi_assembly_payload and not gegi_campaign_script:
+        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in {'sitemap.xml', 'LICENSE'} and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload and not ring_payload and not readout_trace and not gegi_assembly_payload and not gegi_campaign_script:
             raise ValueError(f'Unapproved public file: {relative}')
         data = f.read_bytes()
+        if readout_trace:
+            with gzip.GzipFile(fileobj=io.BytesIO(data)) as stream:
+                raw=stream.read(2_000_001)
+            if len(raw)>2_000_000:
+                raise ValueError('Saved waveform exceeds its bounded display record: '+relative)
+            text=raw.decode('utf-8')
+            if PRIVATE_PATH.search(text) or CREDENTIAL.search(text):
+                raise ValueError('Private data in saved waveform: '+relative)
+            trace=json.loads(text)
+            if (str(trace.get('event_id'))!=readout_trace[2] or str(trace.get('group_id'))!=readout_trace[3]):
+                raise ValueError('Saved waveform identity differs from its path: '+relative)
         if relative == 'LICENSE':
             from site_discovery import SOFTWARE_LICENSE
             if data != SOFTWARE_LICENSE.read_bytes():
@@ -376,6 +390,8 @@ def verify_live(url, report):
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('viewers/')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('assemblies/')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('results/gegi-campaign/')})
+    selected.update({entry['path']:entry for entry in entries
+                     if entry['path'].startswith('results/cs137-10k/') and '/traces/' in entry['path']})
     selected.update({entry['path']:entry for entry in entries
                      if entry['path'].startswith('detectors/GeGI_3D/display/')})
     for suffix in ('.png', '.svg', '.csv', '.mp4', '.webm', '.json', '.md'):

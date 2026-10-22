@@ -1,103 +1,49 @@
 # GeSignal — HPGe Radiation-to-Readout Simulation
 
-The END2END germanium detector project; its repository and website addresses stay unchanged.
+Explore how radiation deposits become signed detector signals and an energy
+measurement: **Geant4/remage → SolidStateDetectors.jl → preamplifier → analog
+shaper → peak ADC**. The website displays saved engineering results; new
+simulations run locally.
 
-Explore how radiation deposits become an energy measurement:
-**Geant4/remage → SSD charge transport → preamplifier → shaping → peak ADC.**
-The website contains saved results, not an online solver.
+## Explore a result
 
-## Start here
+- [Follow one signal](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html) — six saved Cs137 examples with deposits, charge, electronics and original event identities.
+- [Browse all studies](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) — four-detector Cs137 10K comparison, two independent 1M-decay cases and GeGI multichannel imaging.
+- [Inspect detector models](https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/index.html) and [cryostat assemblies](https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/index.html).
 
-- [Selected signals](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html) — six representative saved Cs137 examples, from deposits to peak ADC.
-- [Saved results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) — complete datasets, detector views and analysis files.
-- [Cryostat assemblies](https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/index.html) — LBNL and GeGI geometry, compatible detectors and physical assumptions.
-- [Run locally](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html) — the maintained Windows preparation and Control guide.
-- [Download student software (ZIP)](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip) — Control runtime, detector models, pinned configuration and guide; saved results, demonstrations and development material are excluded.
-- [Contributing](CONTRIBUTING.md) — propose changes or report a problem.
+![GeGI conditional Compton reconstruction on the imposed z=40 mm plane](docs/results/gegi-campaign/map-new-pooled.png)
 
-## Run your simulation
+The [current GeGI study](https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-campaign/index.html)
+contains 1,000,000 initial records across four independent acquisitions at two
+positions. Photon and nuclear-decay denominators remain separate. This is a
+conditional reconstruction on an imposed plane: same-energy source separation
+remains unresolved, and validated imaging recoveries remain zero.
 
-For a student run, download the student software ZIP, extract it and open
-`tools/site_guide.html`. Browse the saved
-results on the website; they are not required to calculate your own events.
-Developers should use the guide's sparse, blobless Git checkout. A normal full
-clone still includes the website and repository history. An offline website
-copy is a separate optional download through the documented Git route.
+## Run locally
 
-After following the guide, double-click `Control.cmd`. Choose a compatible cryostat
-and detector: ten configurations use the LBNL assembly; the exact `GeGI_3D` uses
-its dedicated GeGI cryostat. In the LBNL assembly, Cs137, Am241, Ba133 and Co60 share
-the same selection and run workflow: enter an exact positive initial-nucleus
-count, then review the checked serial batches of at most 10,000 nuclei each. The fixed
-monoenergetic gamma beam retains its 20-primary AK02/SAP22 route. Enter a positive
-energy in keV and select the existing nominal or +5 mm source anchor; the saved
-configuration records both. Historical 662 keV/+5 mm results remain unchanged.
-Co60 admission uses
-its saved 500-decay trial: eight accepted pulses and one verified below-threshold
-rejection. Rejected events remain in the ledger with no reconstructed energy;
-the detector, charge model, electronics threshold and calibration are unchanged.
+[Download the student software ZIP](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip),
+extract it and open `tools/site_guide.html`. The maintained
+[Windows guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html)
+continues from preparation through **Control.cmd**, model/source selection,
+**Check environment**, **Check plan**, **Run**, and saved results.
 
-**Check environment** inspects installed files. **Check plan** verifies the selected
-source, build, runtime and settings before **Run simulation**. Changing the form
-invalidates its check. The five additional models—AK01, SAP16, SAP17,
-Bipolar_reference_3D and KL01_3D—completed fixed 500-decay Cs137 cases on the
-existing Windows/WSL computer. New results store nonzero-deposit events and real
-signals, retaining failures/rejections, original IDs and full initial/zero counts.
-Zero-input records and artificial zero waveforms are omitted; efficiency denominators
-stay unchanged. These are engineering checks, not experimental qualification.
+All 17 models can be browsed. Local execution requires a compatible cryostat;
+GeGI has its own dedicated assembly. Canonical model inputs, study-specific
+operating variants and experimental validation are distinct. Setup was checked
+on the existing Windows/WSL computer; fresh-machine portability remains unvalidated.
+The student ZIP contains software, models and the guide; saved website studies
+are a separate optional download.
 
-Use **Stop at next boundary** and **Resume saved settings** for a checked decay
-run. Completed batches stay available in **Explore events**. **Saved stage files**
-groups original files by purpose and shows the selected batch, primary and pulse
-group. **Saved energy spectrum · raw counts** reads the existing histogram and
-labels whether it covers the full run or one sealed batch. Advanced waveform
-panels appear only when a saved export is present. See the
-[saved-result guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#saved-analysis).
+## References and contributions
 
-GeGI supports configurable isotropic gamma energy and position, 34-electrode signed
-signals, independent readout calibration, Compton cones and directional imaging.
-Use the [GeGI guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#gegi-workflow)
-and [assembly view](https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/gegi/index.html).
-The [earlier two-position result](https://kunming-cn.github.io/END2END_Ge_Simulation/examples/gegi/index.html)
-had five imaging-accepted events, four ambiguous, from 10,000 initial gammas; it was
-inconclusive for reliable source separation. This software workflow is not measured
-depth or angular-resolution calibration.
+Use [Methods](https://kunming-cn.github.io/END2END_Ge_Simulation/methods/index.html)
+for stage definitions, counting rules and scientific limits. The
+[maintenance guide](tools/MAINTENANCE.md) records source ownership, while
+[PROGRESS.md](PROGRESS.md) is the current development handoff. Historical studies
+retain their own identities and do not silently become newer datasets.
 
-All 17 models remain browsable. Six require a future larger cryostat; Control
-shows their specific dimension limits. GeGI is incompatible with LBNL and accepts
-no other detector in its dedicated cryostat. Setup has been checked on the existing
-Windows/WSL computer; fresh-machine portability remains unvalidated.
-[Student feedback](https://github.com/Kunming-CN/END2END_Ge_Simulation/issues)
-will guide further fixes; include your OS/revision, detector/source/count and
-the failing step or exact error. ParaView is not a student runtime prerequisite.
-
-## Project layout
-
-| Location | Purpose |
-|---|---|
-| `models/`, `scenarios/` | Original detector definitions and reviewed scenario capabilities |
-| `simulation/`, `transport/` | SSD/electronics and Geant4/remage implementations with pinned environments |
-| `tools/` | Maintained launch, publication and regression utilities |
-| `docs/` | Generated public website and saved examples; not the editable source |
-| `.local/` | Local runs, permanent science and private evidence; never blanket-delete |
-
-<details>
-<summary>Reference links: saved examples, local workflows and developer notes</summary>
-
-The website's [Results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) page owns saved-study selection. The [local guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html) owns preparation, Control, analysis and advanced existing-input routes. Public reports are engineering examples; private-input replay requires compatible local data.
-
-### Developer and validation notes
-
-The [validation record](tools/LAUNCHER_ACCEPTANCE.md) separates instrumented saved-input regression, installation checks and unfinished portability claims. Canonical parameters, zero-deposit events, signed signals and unavailable responses remain explicit. Measured pulse waveforms were not retained; future experimental comparison uses the available spectra.
-
-Use the [local workspace guide](tools/LOCAL_WORKSPACE.md) for file retention. The complete roadmap and current handoff are in [PROGRESS.md](PROGRESS.md).
-Use the [maintenance guide](tools/MAINTENANCE.md) for source ownership and publication.
-
-Advanced component references: [SSD/CPU/GPU](simulation/README.md), [transport and earlier workflows](transport/README.md), [physics references](simulation/PHYSICS.md). These are not competing beginner setup routes.
-
-</details>
-
-To propose a change, see [Contributing](CONTRIBUTING.md). Cite the software with
-[CITATION.cff](CITATION.cff). Original project software and maintained-source
-documentation use the [MIT License](LICENSE);
-[third-party and data rights](THIRD_PARTY_NOTICES.md) remain separate.
+[Report a problem or suggest a change](https://github.com/Kunming-CN/END2END_Ge_Simulation/issues),
+or read [Contributing](CONTRIBUTING.md). Cite the software with
+[CITATION.cff](CITATION.cff). Original software and maintained-source documentation
+use the [MIT License](LICENSE); [third-party and data rights](THIRD_PARTY_NOTICES.md)
+remain separate.

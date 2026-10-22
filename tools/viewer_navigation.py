@@ -35,6 +35,8 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '4945d697ae27217b3c4ff008d247445af43a6f44c5a327a845a3e48aa20b5675',
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
+ # Exact a37cf4d deployed viewer, authenticated before the event-identity repair.
+ '4f5e42c2e3ce3635e6007b2e1f66ece1022cb5dabaf7d655f73c3522381fe77d',
  # Exact 47685df Git/public bytes before the conditional GeGI hub schema.
  '0ce8330f3a246620d7d9f501a8232c8c461f5dfbb95c2bd33b0955a380f809e3',
  # Exact bfcb3bb published manifest, byte-matched to installed docs and Git

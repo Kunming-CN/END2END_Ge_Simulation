@@ -91,9 +91,52 @@
     panel.querySelector('.spectrum-data').textContent=JSON.stringify(s);
     render(panel);
   }
-  global.SpectrumUI={geometry,validate,attach,update,presentation};
+  function caseSelection(hash,cases,prefix){
+    const first=Object.keys(cases)[0];check(first,'Missing saved detector cases');
+    if(!hash||hash==='#')return {model:first,compare:false,invalid:''};
+    let id;
+    try{id=decodeURIComponent(hash.slice(1));}
+    catch{return {model:null,compare:false,invalid:'Unavailable spectrum case: malformed fragment.'};}
+    if(id==='compare')return {model:null,compare:true,invalid:''};
+    const model=Object.keys(cases).find(key=>id===prefix+'-'+key);
+    return model?{model,compare:false,invalid:''}:
+      {model:null,compare:false,invalid:'Unavailable spectrum case: '+id+'. Choose a saved detector case.'};
+  }
+  function installCaseSelection(){
+    const select=document.getElementById('spectrum-case'),payload=document.getElementById('spectrum-case-context');
+    if(!select||!payload)return null;
+    const cases=JSON.parse(payload.textContent),prefix=select.dataset.prefix,status=document.getElementById('spectrum-focus');
+    function restore(){
+      const state=caseSelection(global.location.hash,cases,prefix),entry=state.model?cases[state.model]:null;
+      const label=state.invalid||(entry?'Selected case: '+entry.label+'.':'Comparison: all '+Object.keys(cases).length+' independent detector cases.');
+      select.value=state.compare?'compare':state.model||'';select.setAttribute('aria-invalid',String(Boolean(state.invalid)));
+      status.textContent=label;status.className=state.invalid?'error':'';
+      for(const section of document.querySelectorAll('[data-spectrum-model]'))
+        section.hidden=Boolean(state.invalid)||(!state.compare&&section.dataset.spectrumModel!==state.model);
+      for(const node of document.querySelectorAll('[data-dataset]'))node.dataset.model=state.model||'';
+      for(const node of document.querySelectorAll('[data-context-label]'))node.textContent=label;
+      for(const node of document.querySelectorAll('[data-context-link]')){
+        const key=node.dataset.contextLink;
+        let href=entry?.[key]||node.dataset.baseHref;
+        if(!entry&&prefix==='million'&&key==='files')href=Object.values(cases)[0].files;
+        if(state.compare&&['spectrum','truth','response'].includes(key)&&href)href=href.split('#')[0]+'#compare';
+        if(state.invalid||(!entry&&['result','files'].includes(key)&&prefix==='tenk'))href=null;
+        if(href){node.href=href;node.hidden=false;node.removeAttribute('aria-disabled');}
+        else{node.removeAttribute('href');node.setAttribute('aria-disabled','true');node.hidden=!state.invalid&&['result','files'].includes(key);}
+      }
+      if(!global.location.hash&&global.history?.replaceState)
+        global.history.replaceState(global.history.state,'',global.location.pathname+(global.location.search||'')+'#'+prefix+'-'+state.model);
+      return state;
+    }
+    select.addEventListener('change',()=>{
+      global.location.hash=select.value==='compare'?'#compare':'#'+prefix+'-'+select.value;restore();
+    });
+    global.addEventListener('hashchange',restore);global.addEventListener('popstate',restore);restore();
+    return {restore};
+  }
+  global.SpectrumUI={geometry,validate,attach,update,presentation,caseSelection,installCaseSelection};
   if(typeof document!=='undefined'){
-    const init=()=>document.querySelectorAll('.spectrum-panel').forEach(attach);
+    const init=()=>{document.querySelectorAll('.spectrum-panel').forEach(attach);global.spectrumNavigation=installCaseSelection();};
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   }
 })(globalThis);

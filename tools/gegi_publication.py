@@ -230,12 +230,17 @@ def link_current(site):
             'replacement':'results/gegi-campaign/index.html'})
         text=('<!doctype html><html lang="en"><head><meta charset="utf-8">'
               '<meta name="viewport" content="width=device-width,initial-scale=1">'
-              '<meta http-equiv="refresh" content="0;url=../../results/gegi-campaign/index.html">'
-              '<title>GeGI results have moved</title></head><body>'+
+              '<title>Historical GeGI two-position study</title></head><body>'+
               page_navigation('examples/gegi/index.html')+
-              '<main><h1>GeGI results have moved</h1><p><a href="../../results/gegi-campaign/index.html">'
+              '<main><h1>Historical GeGI two-position study</h1>'
+              '<p>This address originally displayed 10,000 initial monoenergetic gamma primaries: five imaging-accepted events, four ambiguous. '
+              'It was inconclusive for reliable source separation. It is a different dataset from the later campaign.</p>'
+              '<p><a href="summary.json">Original study counts and settings</a> · '
+              '<a href="selected-channel.json">Original saved signal records</a></p>'
+              '<p><a href="../../results/gegi-campaign/index.html">'
               'Open the completed 1M campaign: signals, Compton cones and maps</a>.</p>'
-              '<p>The earlier small-sample display has been retired. Original scientific records remain preserved.</p>'
+              '<p>The current campaign has 1,000,000 initial records across four independent acquisitions. '
+              'Its photon and nuclear-decay denominators, selection and reconstruction differ from this historical sample.</p>'
               '</main></body></html>\n')
         page.write_bytes(public(text.encode('utf-8')))
         record['artifacts']['index.html']=sha(page)

@@ -1,11 +1,24 @@
 // Requested identity is distinct from a verified primary or pulse group.
+const SAVED_STUDY = 'cs137-10k';
+const SAVED_VARIANTS = {AK02:'AK02',SAP22:'SAP22',GeRC02:'GeRC02_Li50min',KMRC01_candidate:'KMRC01_candidate'};
+function savedCaseIdentity(model) {return {study:SAVED_STUDY,model,variant:SAVED_VARIANTS[model]};}
+function savedSelectionQuery(identity) {
+  const q=new URLSearchParams(savedCaseIdentity(identity.model));
+  if(identity.event!==null&&identity.event!==undefined)q.set('event',String(identity.event));
+  if(identity.group!==null&&identity.group!==undefined)q.set('group',String(identity.group));
+  return q.toString();
+}
 function parseViewerQuery(search, options = {}) {
   const legacy = options.legacy === true, q = new URLSearchParams(search);
   const state = {model:'AK02',event:null,group:null,view:options.view || 'assembly',invalid:''};
-  const allowed = legacy ? ['model','event','group'] : ['model','event','group','view'];
+  const allowed = legacy ? ['model','event','group'] : ['study','model','variant','event','group','view'];
   for (const key of q.keys()) if (!allowed.includes(key) || q.getAll(key).length !== 1)
     state.invalid = 'Unknown or repeated query parameter.';
   if (q.has('model')) {state.model = q.get('model');if (!(legacy ? ['AK02','SAP22'] : ['AK02','SAP22','GeRC02','KMRC01_candidate']).includes(state.model))state.invalid = 'Unknown model.';}
+  if(q.has('study')&&q.get('study')!==SAVED_STUDY)state.invalid='Unavailable study; this viewer contains saved Cs137 10K cases.';
+  if(q.has('variant')&&q.get('variant')!==SAVED_VARIANTS[state.model])state.invalid='Unavailable model variant for this saved study.';
+  if(q.has('study'))state.study=q.get('study');
+  if(q.has('variant'))state.variant=q.get('variant');
   if (!legacy && q.has('view')) state.view = q.get('view');
   if (!['assembly','positive'].includes(state.view)) state.invalid = 'Unknown view.';
   for (const key of ['event','group']) if (q.has(key)) {
@@ -20,6 +33,8 @@ function parseViewerQuery(search, options = {}) {
 function canonicalViewerQuery(identity) {
   if (identity.invalid) throw Error(identity.invalid);
   const q = new URLSearchParams({model:identity.model});
+  if(identity.study!==undefined)q.set('study',identity.study);
+  if(identity.variant!==undefined)q.set('variant',identity.variant);
   if (identity.event !== null) q.set('event', String(identity.event));
   if (identity.group !== null) q.set('group', String(identity.group));
   q.set('view', identity.view);

@@ -121,8 +121,26 @@ function clearPrimary(){viewer.primary=null;$('records').textContent='';clearGro
 function identityText(){
   const r=viewer.requested;
   if(r.invalid){$('identity').textContent='Requested: '+r.model+'; unavailable identity: '+r.invalid;return;}
-  $('identity').textContent='Requested: '+r.model+(r.event===null?' (recorded initial default)':', original primary '+r.event)+
+  $('identity').textContent='Saved study: '+SAVED_STUDY+' / '+SAVED_VARIANTS[r.model]+'. Requested: '+r.model+(r.event===null?' (recorded initial default)':', original primary '+r.event)+
     (r.group===null?'':', group '+r.group)+(r.view==='assembly'&&r.group!==null?' (return-navigation context only; no pulse group is selected).':'; '+r.view+' view.');
+}
+function selectionRoutes(){
+  const r=viewer.requested,routes=VIEWER_CONFIG.case_routes?.[r.model];
+  if(!routes||r.invalid)return routes;
+  const result={...routes};
+  for(const kind of ['result','files','events'])if(routes[kind]){
+    const [path,fragment]=routes[kind].split('#');
+    result[kind]=path.split('?')[0]+'?'+savedSelectionQuery(r)+(kind==='events'?'&view='+r.view:'')+(fragment?'#'+fragment:'');
+  }
+  return result;
+}
+function updateResponseLinks(){
+  const routes=selectionRoutes();if(!routes||viewer.requested.invalid)return;
+  for(const [id,path]of [['savedResponse',routes.result],['savedResponseReport',routes.files]]){$(id).href=path;$(id).hidden=false;}
+  updateCaseNavigation(routes,'Saved study: '+SAVED_STUDY+' / '+SAVED_VARIANTS[viewer.requested.model]);
+  const r=viewer.requested;
+  $('responseIdentity').textContent='Charge and readout opens this exact saved case'+(r.event===null?'':', primary '+r.event)+
+    (r.group===null?'':', group '+r.group)+'. A missing published waveform is shown explicitly; another event is never substituted.';
 }
 function writeHistory(action){
   if(action==='none'||viewer.requested.invalid)return;
@@ -146,9 +164,7 @@ function showScene(scene,manifest,name){
     const small=document.createElement('small');small.textContent=v.name+' · '+v.material+' · '+v.solid_type;label.append(check,title,small);$('volumes').append(label);}
   const entry=manifest.models[name];$('originals').href=bundlePath('assembly',entry.originals,name);clearModelLinks();
   const routes=VIEWER_CONFIG.case_routes?.[name];requireViewer(routes,'No maintained case routes are bound for '+name+'.');
-  for(const [id,path]of [['savedResponse',routes.result],['savedResponseReport',routes.files]]){
-    $(id).href=path;$(id).hidden=false;
-  }
+  updateResponseLinks();
   for(const [id,record]of Object.entries(routes.original_files)){$(id).href=record.href;$(id).hidden=false;}
   $('responseLinks').hidden=false;
   if(ringModels.includes(name)){
@@ -199,6 +215,8 @@ function resolveGroup(){
 }
 function normalizeRequest(identity){
   const q=new URLSearchParams({model:identity.model,view:identity.view});
+  if(identity.study!==undefined)q.set('study',identity.study);
+  if(identity.variant!==undefined)q.set('variant',identity.variant);
   if(identity.event!==null)q.set('event',String(identity.event));if(identity.group!==null)q.set('group',String(identity.group));
   const r=parseViewerQuery('?'+q);if(identity.invalid)r.invalid=identity.invalid;return r;
 }
@@ -221,7 +239,7 @@ async function applySelection(identity,options={}){
     const primary=await loadPrimary(r.model,scene,r.event);if(!current())return false;
     viewer.primary=primary;const rows=primary.tables['stp/germanium'],energy=rows.reduce((s,row)=>s+row.edep,0);
     $('status').textContent=r.model+' primary '+r.event+' · '+rows.length+' recorded Ge steps · '+energy.toPrecision(8)+' keV Ge Edep · '+primary.tables.tracks.length+' creation vertices. '+(energy>0?'Ge-positive primary.':'Zero-Ge primary retained.');
-    refreshDetails();if(previousScene!==scene||previousMode!==mode)fit();else draw();
+    updateResponseLinks();refreshDetails();if(previousScene!==scene||previousMode!==mode)fit();else draw();
   }catch(error){if(!current())return false;clearPrimary();$('status').textContent='Assembly unavailable: '+error.message;$('status').className='error';draw();return false;}
   if(r.view==='positive'||$('overlay').checked){
     let positiveLoaded=false;
@@ -233,7 +251,7 @@ async function applySelection(identity,options={}){
       const oldCategory=viewer.category;$('category').replaceChildren(option('all','All saved groups'),...Object.entries(positive.manifest.category_labels).map(([k,label])=>option(k,label)));
       $('category').value=oldCategory;representativeButtons();resolveGroup();
       $('overlayStatus').textContent='All '+viewer.events.size+' saved Ge-positive primaries available; '+(viewer.group?'highlight: group '+viewer.group.group_id+'.':'no pulse group selected.');
-      if(viewer.group&&r.group===null){viewer.requested.group=viewer.group.group_id;identityText();writeHistory(options.history==='none'?'none':'replace');}
+      if(viewer.group&&r.group===null){viewer.requested.group=viewer.group.group_id;identityText();writeHistory(options.history==='none'?'none':'replace');updateResponseLinks();}
     }catch(error){if(!current())return false;clearGroup();viewer.overlayError=error.message;
       // A group/category miss keeps the checked full overlay population. A load
       // failure clears all positive data, never the independently checked assembly.
@@ -248,7 +266,7 @@ function requestSelection(identity,options={}){pendingSelection=applySelection(i
 function selectModel(name){
   const same=name===viewer.requested.model;
   if(!same)viewer.category='all';
-  return requestSelection({...viewer.requested,model:name,event:same?viewer.requested.event:null,
+  return requestSelection({...viewer.requested,...savedCaseIdentity(name),event:same?viewer.requested.event:null,
     group:same?viewer.requested.group:null,invalid:''});
 }
 function selectEvent(id,groupId=null){return requestSelection({...viewer.requested,event:id,group:groupId,invalid:''});}

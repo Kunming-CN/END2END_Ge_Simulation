@@ -31,29 +31,50 @@ button:disabled{opacity:.45}.stage{position:relative;min-height:450px;border:1px
 <details><summary>Static contact key and signed potentials (V)</summary><p>Saved catalog reference readout contact: 1. This is geometry metadata, not proof of LBNL full-chain support.</p><table><thead><tr><th>ID</th><th>Name</th><th>V</th></tr></thead><tbody><tr><td>1</td><td>Readout p+</td><td>0</td></tr><tr><td>2</td><td>Outer n+</td><td>1050</td></tr></tbody></table></details>
 <p id="display-policy" class="note"></p>
 <div class="stage"><img id="poster" src="runs/20260922_suite_v3/01_geometry.png" alt="PPC_PONaMa1_reference saved detector geometry"><canvas id="view" tabindex="0" aria-label="PPC_PONaMa1_reference rotatable detector geometry" hidden></canvas></div>
+<p id="physical-bounds" class="note">Model coordinates and the interactive scale use millimetres. Original mesh bounds appear when the scene loads.</p>
 <p id="status" class="note" aria-live="polite">Loading static geometry…</p>
 <details class="note"><summary>Scene files and provenance</summary><a href="geometry/2e1973b09a68ee17efdc35e3c5b82b017bee5036ec8d4e92179215c89222c9fc/manifest.json">Scene provenance</a> · <a href="geometry/2e1973b09a68ee17efdc35e3c5b82b017bee5036ec8d4e92179215c89222c9fc/scene.json">Scene JSON</a></details>
 <script>
 const sceneUrl="geometry/2e1973b09a68ee17efdc35e3c5b82b017bee5036ec8d4e92179215c89222c9fc/scene.json",canvas=document.getElementById('view'),ctx=canvas.getContext('2d'),poster=document.getElementById('poster'),status=document.getElementById('status');
 const activate=document.getElementById('activate'),buttons=[...document.querySelectorAll('.controls button:not(#activate)')];
-let scene=null,layers=[],active=false,drag=null,rx=-0.45,ry=0.65,zoom=1,panX=0,panY=0,center=[0,0,0],radius=1;
+let scene=null,layers=[],active=false,drag=null,rx=-0.45,ry=0.65,zoom=1,panX=0,panY=0,center=[0,0,0],radius=1,physicalBounds=null;
 function transformed(layer,p){let t=layer.display_transform,s=t.scale,d=t.translation_mm;return [p[0]*s[0]+d[0],p[1]*s[1]+d[1],p[2]*s[2]+d[2]]}
 function prepare(){
  layers=scene.layers.map(x=>({...x,visible:true,points:x.vertices_mm.map(p=>transformed(x,p))}));
- let all=layers.flatMap(x=>x.points),mins=[0,1,2].map(i=>Math.min(...all.map(p=>p[i]))),maxs=[0,1,2].map(i=>Math.max(...all.map(p=>p[i])));
+ let all=scene.layers.flatMap(x=>x.vertices_mm),mins=[0,1,2].map(i=>Math.min(...all.map(p=>p[i]))),maxs=[0,1,2].map(i=>Math.max(...all.map(p=>p[i])));
+ physicalBounds={min:mins,max:maxs,extent:mins.map((v,i)=>maxs[i]-v)};
  center=mins.map((v,i)=>(v+maxs[i])/2);radius=Math.max(...maxs.map((v,i)=>v-mins[i]))/2||1;
+ const number=v=>Number(v.toPrecision(6)).toString();
+ document.getElementById('physical-bounds').textContent='Original mesh bounds (mm): '+['x','y','z'].map((axis,i)=>axis+' ['+number(mins[i])+', '+number(maxs[i])+']').join(' · ')+'. Extents x × y × z: '+physicalBounds.extent.map(number).join(' × ')+' mm. These surface bounds are independent of contact display styling; they are not active-volume or dead-layer measurements.';
  const box=document.getElementById('layers');box.textContent='';
  const pick=document.getElementById('contact-select');pick.textContent='';layers.filter(l=>l.contact).forEach(l=>{let opt=document.createElement('option');opt.value=l.id;opt.textContent=l.label;pick.append(opt)});pick.value='contact:'+pick.dataset.readout;pick.disabled=false;
  layers.forEach(l=>{let label=document.createElement('label'),cb=document.createElement('input'),sw=document.createElement('span');cb.type='checkbox';cb.checked=true;l.checkbox=cb;cb.addEventListener('change',()=>{l.visible=cb.checked;draw()});let rgb=l.style.rgb.map(x=>Math.round(x*255));sw.className='swatch';sw.style.background='rgb('+rgb.join(',')+')';label.append(cb,sw,document.createTextNode(l.label));box.append(label)});
 }
 function resize(){let r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2),w=Math.max(320,Math.round(r.width*d)),h=Math.max(300,Math.round(r.height*d));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}}
-function rot(p){let x=p[0]-center[0],y=p[1]-center[1],z=p[2]-center[2],cx=Math.cos(rx),sx=Math.sin(rx),cy=Math.cos(ry),sy=Math.sin(ry),y1=y*cx-z*sx,z1=y*sx+z*cx;return [x*cy+z1*sy,y1,-x*sy+z1*cy]}
+function rotVector(p){let [x,y,z]=p,cx=Math.cos(rx),sx=Math.sin(rx),cy=Math.cos(ry),sy=Math.sin(ry),y1=y*cx-z*sx,z1=y*sx+z*cx;return [x*cy+z1*sy,y1,-x*sy+z1*cy]}
+function rot(p){return rotVector(p.map((v,i)=>v-center[i]))}
+function scaleLength(limit){const power=10**Math.floor(Math.log10(limit));return [5,2,1].find(n=>n*power<=limit)*power}
+function drawReference(scale){
+ const unit=Math.min(devicePixelRatio||1,2),base=[65*unit,canvas.height-52*unit],length=32*unit;
+ ctx.fillStyle='rgba(255,255,255,.94)';ctx.fillRect(8*unit,canvas.height-112*unit,canvas.width-16*unit,104*unit);
+ ctx.font=(12*unit)+'px system-ui';ctx.textAlign='left';ctx.fillStyle='#183047';ctx.fillText('View axes',16*unit,canvas.height-92*unit);
+ for(const [vector,label,color] of [[[1,0,0],'+x','#aa3030'],[[0,1,0],'+y','#167244'],[[0,0,1],'+z','#245cbd']]){
+  const direction=rotVector(vector),end=[base[0]+direction[0]*length,base[1]-direction[1]*length],projected=Math.hypot(direction[0],direction[1]);
+  ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=2*unit;ctx.beginPath();ctx.moveTo(...base);ctx.lineTo(...end);ctx.stroke();
+  if(projected>.15){const angle=Math.atan2(end[1]-base[1],end[0]-base[0]);ctx.beginPath();ctx.moveTo(...end);ctx.lineTo(end[0]-6*unit*Math.cos(angle-.4),end[1]-6*unit*Math.sin(angle-.4));ctx.moveTo(...end);ctx.lineTo(end[0]-6*unit*Math.cos(angle+.4),end[1]-6*unit*Math.sin(angle+.4));ctx.stroke();ctx.fillText(label,end[0]+(direction[0]<-.1?-18:4)*unit,end[1]+(direction[1]<-.1?13:-4)*unit);}
+  else{ctx.beginPath();ctx.arc(...base,4*unit,0,2*Math.PI);ctx.stroke();if(direction[2]>0){ctx.beginPath();ctx.arc(...base,1.5*unit,0,2*Math.PI);ctx.fill();}else{ctx.beginPath();ctx.moveTo(base[0]-3*unit,base[1]-3*unit);ctx.lineTo(base[0]+3*unit,base[1]+3*unit);ctx.moveTo(base[0]-3*unit,base[1]+3*unit);ctx.lineTo(base[0]+3*unit,base[1]-3*unit);ctx.stroke();}ctx.fillText(label+(direction[2]>0?' toward':' away'),16*unit,canvas.height-18*unit);}
+ }
+ const mm=scaleLength(110*unit/scale),width=mm*scale,x=canvas.width-140*unit,y=canvas.height-40*unit;
+ ctx.fillStyle='#183047';ctx.strokeStyle='#183047';ctx.lineWidth=2*unit;ctx.fillText('Scale (mm)',x,canvas.height-92*unit);ctx.fillText(Number(mm.toPrecision(3))+' mm',x,y-13*unit);
+ ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+width,y);ctx.moveTo(x,y-5*unit);ctx.lineTo(x,y+5*unit);ctx.moveTo(x+width,y-5*unit);ctx.lineTo(x+width,y+5*unit);ctx.stroke();
+}
 function draw(){
  if(!scene)return;resize();ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
  let scale=Math.min(canvas.width,canvas.height)*0.39/radius*zoom,faces=[];
  layers.forEach(l=>{if(!l.visible)return;let pts=l.points.map(p=>rot(p));l.faces.forEach(f=>faces.push({l:l,pts:pts,face:f,z:f.reduce((s,i)=>s+pts[i][2],0)/f.length}))});
  faces.sort((a,b)=>a.z-b.z);
  faces.forEach(o=>{let rgb=o.l.style.rgb.map(x=>Math.round(x*255));ctx.beginPath();o.face.forEach((idx,j)=>{let p=o.pts[idx],x=canvas.width/2+p[0]*scale+panX,y=canvas.height/2-p[1]*scale+panY;j?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.fillStyle='rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+','+o.l.style.opacity+')';ctx.fill();ctx.strokeStyle='rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+',0.45)';ctx.lineWidth=.45;ctx.stroke()});
+ drawReference(scale);
 }
 fetch(sceneUrl).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(s=>{
  scene=s;document.getElementById('display-policy').textContent=s.display_note;rx=s.default_view.rotation_rad[0];ry=s.default_view.rotation_rad[1];zoom=s.default_view.zoom;prepare();poster.hidden=true;canvas.hidden=false;activate.disabled=false;buttons.forEach(b=>b.disabled=false);draw();

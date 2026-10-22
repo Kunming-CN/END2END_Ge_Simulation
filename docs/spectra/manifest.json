@@ -23,23 +23,23 @@
     "examples/cs137-10k-rings/KMRC01_candidate/response/histograms.json": "11cfbed9fd93db18528a1a73f25a298fa554fd70c9f3136203468970a5c053e3"
   },
   "generators": {
-    "tools/spectrum_display.py": "402f23ea23a9c278d704a6516f6ebfbc74228694967afbf8ef0db4bacc67f262",
+    "tools/spectrum_display.py": "869bdde2b1485a1037aefb789e2db5251fcbb160930ded53a979e677bf2e0716",
     "tools/spectrum_plot.py": "f00dbf5efdb393f03eebd501cb71a74bbd268fc3f0cff240de9a7eb54948a29c",
-    "tools/spectrum_controls.js": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
-    "tools/viewer_navigation.py": "83c290181a5f422a4273248d071904a3859e55a6fd9ec91df545f5fb0a0327d1",
-    "tools/viewer_navigation.js": "a09e5ecb04bd5f6d4e1a24c2debf40bb9a0bfc882784cc146c8915dee7704ff5",
-    "tools/ring_site.py": "0de35a96611bcf99975210f43804269141a2ab318da7819e5d392e40c762c5ac",
-    "tools/site_restructure.py": "23d4c19b94039dcbb92950f74a9d1f031f8826ba4444aefcf29a88a06212e2b5",
-    "tools/site_routes.py": "a962475145d29d4f9880228d1df4aedea757aa5fa90f25b4f90ed8273ae17cd9",
-    "tools/teaching_examples.py": "45e53a79902d4f08d50761ad71e4920cc4982e4501df15c69ebfe81c35356ec7",
-    "tools/teaching_examples.html": "1a9a36942eb0f96185da05dcad3272796c6d2cd847ff0d6b3df4ee832e588649",
+    "tools/spectrum_controls.js": "cbf0344e2a2c945c15e70972a289d202c2b8712c2d85febbf530515be027a81e",
+    "tools/viewer_navigation.py": "86d922245862da31fb775910d707c70a213936d3396d60d9fc342c3a70e71057",
+    "tools/viewer_navigation.js": "2d15886bb99323edecaf9d8beba2ffb38b4fe3e9dff76f7c7fb0b3f4e8433099",
+    "tools/ring_site.py": "189d821b597029f360fd5be7b5ff771b9eeaea3aa9bbd4276dc6b44940cdfeac",
+    "tools/site_restructure.py": "a1159ea1389a9e643d69d64925824640e79ebbc7928be1859774e2364c0abb73",
+    "tools/site_routes.py": "9f94a01d08f6c56149a25ecf87a17f829cd0e07943fd5fe0ef0bf31dbd5d6d37",
+    "tools/teaching_examples.py": "d327ca46c4affab877a387fb15b79b13b3ba30429121ffd982bb13dbdb7db31e",
+    "tools/teaching_examples.html": "c3fdd3a64d2ff4103e49a7fa8e34cc6fc27c9a92a41f105770b68033ccb579b4",
     "tools/focused_plots.js": "230c98bb7f41a5437f483aa9e168b8476a06b9d6ac4a782ba7681ce442ba49eb"
   },
   "pages": {
     "spectra/million-truth.html": {
       "source": "examples/cs137-1m/report.html",
       "source_sha256": "a04c9d0557f150d37fa2b381a445ef5315fbc2cd6dd3a0eccd38026fcd098f35",
-      "sha256": "8de916f301e3718532877b0d03a10275e90a1043b8cdc4c46a333bdb88b7c1df",
+      "sha256": "29cce76c02c219da3f69719b3ebd4deab745d15013edefc2558659c9650efb41",
       "specs_sha256": "83ee90ccfd3ce820518d94b44941d891dbe69458d74f66fcdce6520570ddb0e7",
       "plot_states": 4,
       "render_components": {
@@ -49,14 +49,14 @@
           "cb062b36be02be40a6075e9373a42a52709316df93968041556acb45f1ee58af",
           "454b92392d7bf1f49d36e12b5d13a125577fd52e5bf6af6805da0fcfe5073fae"
         ],
-        "script": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
+        "script": "cbf0344e2a2c945c15e70972a289d202c2b8712c2d85febbf530515be027a81e",
         "style": "72034d144998f59db6e8f788446c22986c474b294a182ef7e2d80b5992976203"
       }
     },
     "spectra/million-response.html": {
       "source": "examples/cs137-1m-response/report.html",
       "source_sha256": "4de4b264f6df246982b3991bb1cedf3d5eefcf26aa9726e1379e0e511f135b77",
-      "sha256": "5dc6807a5c85307785f89aa27b8c91cde5ce66b9be734945020d88748ae3a818",
+      "sha256": "45900e30e8fbafe6c15f2611265dba61ecd91e970aa86b5c5910247e49cdba75",
       "specs_sha256": "2c8660dbc4997b8a6348f3ab5d67f07349390db0ad2b8d4a113eb511011a0539",
       "plot_states": 4,
       "render_components": {
@@ -66,14 +66,14 @@
           "2b07b8ba1ef357e461c3340faeeb034620c9fa2a4827f4c32faa59e14107249e",
           "3a94af26958f056c9245dcc03913ca0c00c43d41d93e323845ca39facf2c78aa"
         ],
-        "script": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
+        "script": "cbf0344e2a2c945c15e70972a289d202c2b8712c2d85febbf530515be027a81e",
         "style": "72034d144998f59db6e8f788446c22986c474b294a182ef7e2d80b5992976203"
       }
     },
     "spectra/cs137-10k.html": {
       "source": "examples/cs137-10k/comparison.html",
       "source_sha256": "b94d57dbb9657f68dd8aa0043e8e88203c54a71c1bffae7f38c19e485c1247c4",
-      "sha256": "87c9131973b0361aa46629ec500ef55f21fa27800bdc1d46491072ef00acd835",
+      "sha256": "2b4af8ffe0ccc9ce26e35379bd5b27ae82fe7036084183f14d44910a5aadaba2",
       "specs_sha256": "58bb23a3aef770dc16e4c875888805d68083e02c7d539a86dbbcddabb7f4e1d1",
       "plot_states": 20,
       "render_components": {
@@ -99,7 +99,7 @@
           "b3d2107145a4a1eaebacca0138b490d20bffa78c31cf7e8123f7e3126a76953a",
           "cd7c509a00a23425c3de143b9baec9ff8ec57336a3fbe0074543ed698144d71f"
         ],
-        "script": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
+        "script": "cbf0344e2a2c945c15e70972a289d202c2b8712c2d85febbf530515be027a81e",
         "style": "72034d144998f59db6e8f788446c22986c474b294a182ef7e2d80b5992976203"
       }
     }
@@ -107,20 +107,15 @@
   "new_simulations": 0,
   "original_reports_modified": false,
   "scope": "Current views derived from saved results. Original reports and complete scientific bundles remain unchanged.",
-  "campaign_preview": {
+  "campaign_shell": {
     "path": "results/cs137-1m/index.html",
     "models": [
       "AK02",
       "SAP22"
     ],
-    "panel_sha256": "9234edab8691afb5de27c81441c16f2ff2dd08b8814ab73f5664307263fbf658",
-    "render_components": {
-      "charts": [
-        "1a299aebc85aeb53ca6977002bc15b2ddb687aa54515a9f2576c6db3c4368efe",
-        "2b07b8ba1ef357e461c3340faeeb034620c9fa2a4827f4c32faa59e14107249e"
-      ],
-      "script": "b980d063841c3f7a8f7f5ca4c32602b9bad59a138b6595e4684df48f031e6094",
-      "style": "72034d144998f59db6e8f788446c22986c474b294a182ef7e2d80b5992976203"
-    }
+    "spectrum_views": [
+      "spectra/million-truth.html",
+      "spectra/million-response.html"
+    ]
   }
 }

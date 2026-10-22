@@ -17,6 +17,7 @@ DATASETS = {
     "gamma": ("Cryostat gamma · nominal cryostat", "examples/gamma-native/gamma.html"),
     "tenk": ("Cs137 10K · four separate cryostat cases", "results/cs137-10k/index.html"),
     "million": ("Cs137 1M · two separate cryostat cases", "results/cs137-1m/index.html"),
+    "gegi": ("GeGI · four independent acquisitions at two positions", "results/gegi-campaign/index.html"),
 }
 FIXED = {
     "index.html": ("GeSignal", None, "Home", "home", "site_restructure"),
@@ -28,8 +29,8 @@ FIXED = {
     "methods/index.html": ("Methods", "index.html", "Methods", "hub", "site_restructure"),
     "learn/index.html": ("Pipeline", "methods/index.html", "Methods", "method", "site_restructure"),
     "scenarios/lbnl-cs137/index.html": ("Nominal LBNL cryostat", "assemblies/index.html", "Assemblies", "assembly", "site_restructure"),
-    "examples/gegi/index.html": ("GeGI Compton imaging", "results/index.html", "Results", "reader", "gegi_publication"),
-    "results/gegi-campaign/index.html": ("GeGI formal campaign", "results/index.html", "Results", "reader", "gegi_campaign_publication"),
+    "examples/gegi/index.html": ("Historical GeGI two-position study", "results/index.html", "Results", "archive", "gegi_publication"),
+    "results/gegi-campaign/index.html": ("GeGI signals and conditional imaging", "results/index.html", "Results", "reader", "gegi_saved_publication"),
     "methods/native-li.html": ("Saved native Li study", "methods/index.html", "Methods", "method", "saved_archive_display"),
     "lithium/lithium.html": ("Lithium diagnostics", "methods/index.html", "Methods", "method", "saved_archive_display"),
     "results/cs137-10k/index.html": ("Cs137 10K", "results/index.html", "Results", "dataset", "ring_site"),
@@ -166,15 +167,21 @@ def dataset_navigation(dataset, current_path, model=None, model_label=None):
         if model or dynamic:
             views.append((case_result_path(model) + '#data-files' if model else None, "Data & settings", 'files'))
     elif dataset == 'million':
-        views.extend((("spectra/million-truth.html", "Deposition spectra", None),
-                      ("spectra/million-response.html", "Response spectra", None),
+        views.extend((("spectra/million-truth.html", "Deposition spectra", 'truth'),
+                      ("spectra/million-response.html", "Response spectra", 'response'),
                       (home + '#data-files', "Data & settings", 'files')))
     elif dataset == 'teaching':
         views.append((home, "Six signal examples", None))
     elif dataset == 'gamma':
         views.append((home, "Waveforms & event ledger", None))
+    elif dataset == 'gegi':
+        views.extend(((home+'#new-map','Conditional image',None),
+                      (home+'#spectra','Energy spectra',None),
+                      (home+'#journey','Saved signal example',None),
+                      (home+'#accounting','Data & settings',None)))
     focus = ('Focused case: ' + (model_label or model)) if model and dataset == 'tenk' else 'All four cases' if dataset == 'tenk' else description
-    return (f'<section class="dataset-context" aria-label="Saved dataset" data-dataset="{dataset}" data-model="{escape(model or "", quote=True)}">'
+    study={'tenk':'cs137-10k','million':'cs137-1m','teaching':'cs137-10k-selected-signals','gamma':'gamma-native','gegi':'gegi-campaign'}[dataset]
+    return (f'<section class="dataset-context" aria-label="Saved dataset" data-study="{study}" data-dataset="{dataset}" data-model="{escape(model or "", quote=True)}">'
             f'<p><strong>{escape(description)}</strong></p><p data-context-label>{escape(focus)}</p>'
             '<nav aria-label="Dataset views">' + ''.join(_view(path, label, current_path, key) for path, label, key in views) + '</nav></section>')
 
@@ -189,6 +196,7 @@ def page_navigation(path, dataset=None, model=None, model_label=None):
                    'spectra/cs137-10k.html':'tenk', 'viewers/events.html':'tenk',
                    'spectra/million-truth.html':'million', 'spectra/million-response.html':'million',
                    'results/cs137-1m/index.html':'million'}.get(path)
+        if path=='results/gegi-campaign/index.html':dataset='gegi'
     if path.startswith('results/cs137-10k/') and path.endswith('/charge-readout.html'):
         dataset, model = 'tenk', path.split('/')[2]
     local = dataset_navigation(dataset, path, model, model_label) if dataset else detector_navigation(path) if re.fullmatch(r'detectors/[^/]+/[^/]+\.html', path) else ''

@@ -81,7 +81,22 @@ assert.equal(mounts.length,1);assert.equal(mounts[0].groups['Actual ID fixture']
 assert.match(get('event-identity').textContent,/campaign initial 39.*raw primary 9.*pulse group 0/);
 assert.match(get('event-status').textContent,/positive-energy Ge.*passive-material and zero-energy steps are absent/);
 assert.equal(get('births').checked,false);assert.equal(get('reconstructed').checked,false);assert.equal(get('journey-link').hidden,false);
+assert.equal(get('signal-journey').hidden,false);assert.equal(get('reconstructed-layer').hidden,false);
+get('reconstructed').checked=true;
+sandbox.GeGIAssemblyEvents.setPayload({kind:'gegi_saved_path_display_v1',records:[{...record,signal_event:null}]});
+assert.equal(mounts.length,1);assert.equal(get('signal-journey').hidden,true);assert.equal(get('journey-link').hidden,true);
+assert.equal(get('reconstructed').checked,false);assert.equal(get('reconstructed').disabled,true);
+assert.equal(get('reconstructed-layer').hidden,true);assert.equal(get('reconstructed-key').hidden,true);
+assert.match(get('event-status').textContent,/Radiation-only sample; no saved signal counterpart/);
 """)
+
+    def test_default_assembly_describes_radiation_only_samples_and_links_the_full_study(self):
+        template=(ROOT/'tools/gegi_assembly.html').read_text(encoding='utf-8')
+        self.assertIn('four built-in samples',template)
+        self.assertIn('<strong>radiation-only</strong>',template)
+        self.assertIn('../../results/gegi-campaign/index.html#event-journey',template)
+        self.assertNotIn('follow the same pulse group through its electrode signals',template)
+        self.assertIn('id="reconstructed-layer" hidden',template)
 
     @unittest.skipUnless((ROOT/'.local/gegi-10m/reconstruction-v3/assembly-events.json').is_file(),
                          'Saved local derived path display is not in clean student clones')

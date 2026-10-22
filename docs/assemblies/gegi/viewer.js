@@ -151,7 +151,7 @@ function fit(view='default'){
   center=lo.map((v,i)=>(v+hi[i])/2);radius=Math.max(...points.map(p=>Math.hypot(...p.map((v,i)=>v-center[i]))));draw();
 }
 for(const v of scene.volumes){const label=document.createElement('label');label.className='volume';const box=document.createElement('input');box.type='checkbox';box.checked=visible.has(v.name);box.setAttribute('aria-label',v.label);box.onchange=()=>{if(box.checked)visible.add(v.name);else visible.delete(v.name);draw();};const title=document.createElement('span');title.textContent=v.label;title.style.color=v.color;const small=document.createElement('small');small.textContent=v.material+' · '+v.basis;label.append(box,title,small);$('volumes').append(label);}
-function clearEvent(){selected=null;journey?.destroy();journey=null;$('event-records').replaceChildren();$('signal-journey').replaceChildren();$('event-identity').textContent='';$('journey-link').hidden=true;draw();}
+function clearEvent(){selected=null;journey?.destroy();journey=null;$('event-records').replaceChildren();$('signal-journey').replaceChildren();$('signal-journey').hidden=true;$('event-identity').textContent='';$('journey-link').hidden=true;$('reconstructed').checked=false;$('reconstructed').disabled=true;$('reconstructed-layer').hidden=$('reconstructed-key').hidden=true;draw();}
 const gate=selectionGate(clearEvent);
 function eventError(error){$('event-status').textContent='Saved display unavailable: '+error.message;}
 function showRecords(){
@@ -168,9 +168,11 @@ function chooseEvent(index){
   $('event-status').textContent=p.segments.length+' recorded '+(restricted?'positive-energy Ge':'scored')+' STEP chords · '+energy.toPrecision(8)+' keV '+(restricted?'selected pulse-group':'full-primary')+' truth Edep. '+(restricted?'Only the saved pulse-group Ge steps are available here; passive-material and zero-energy steps are absent. '+(postOnly?'Markers without a separate saved deposit position use the recorded post-step point.':'Markers use the original saved deposit positions.'):'The matched pulse group may contain a subset of these deposits.');
   $('previous-event').disabled=index===0;$('next-event').disabled=index===payload.records.length-1;
   const signal=selected.signal_event;
-  if(signal&&global.GeGISignalJourney?.mount){journey=global.GeGISignalJourney.mount($('signal-journey'),{groups:{[selected.label||id.source_group||'Selected event']:{representative:signal}},criteria:payload.criteria||{}});$('journey-link').hidden=false;}
-  else{const p=document.createElement('p');p.textContent=signal?'Saved signals are present. Load the shared GeGI signal walkthrough to inspect them.':'No saved signal record is attached to this radiation event. No waveform, reconstructed interaction or cone is invented.';$('signal-journey').append(p);}
-  $('reconstructed').disabled=!signal?.reconstruction;showRecords();draw();
+  if(signal&&global.GeGISignalJourney?.mount){journey=global.GeGISignalJourney.mount($('signal-journey'),{groups:{[selected.label||id.source_group||'Selected event']:{representative:signal}},criteria:payload.criteria||{}});$('journey-link').hidden=false;$('signal-journey').hidden=false;}
+  else if(signal){const p=document.createElement('p');p.textContent='Saved signals are present. Load the shared GeGI signal walkthrough to inspect them.';$('signal-journey').append(p);$('signal-journey').hidden=false;}
+  else $('event-status').textContent+=' Radiation-only sample; no saved signal counterpart is attached.';
+  const hasReconstruction=!!signal?.reconstruction;
+  $('reconstructed').disabled=!hasReconstruction;$('reconstructed-layer').hidden=$('reconstructed-key').hidden=!hasReconstruction;showRecords();draw();
 }
 function setPayload(value){
   validatePayload(value);payload=value;$('event-select').replaceChildren();

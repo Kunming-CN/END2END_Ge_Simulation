@@ -24,13 +24,14 @@ __PAGE_NAVIGATION__
 <section class="card">
 <h2 id="case-title"></h2><p id="case-explanation"></p>
 <div class="energy"><div><small>Truth Edep · group</small><strong id="edep"></strong><small>keV</small></div><div><small>Signed native induced equivalent</small><strong id="induced"></strong><small>keV</small></div><div><small>Accepted peak-ADC Erec</small><strong id="erec"></strong><small>keV</small></div></div>
-<dl class="facts" id="case-facts"></dl>
 <p class="flagline" id="case-flags"></p>
-<p class="fact-note">Native endpoint flags remain separate from electronics acceptance. A close energy match or a small remaining induced signal is not proof of calibrated Li collection efficiency.</p>
+<p class="source-links"><a id="case-3d">This primary and pulse group in 3D</a><a id="case-readout">This saved charge and readout event</a></p>
 </section>
+<section class="card selection"><label for="stage-select">Follow one signal stage</label><select id="stage-select"><option value="charge">1 · Native signed induced charge</option><option value="current">2 · Electronics-input current</option><option value="preamp">3 · Analog preamp</option><option value="shaper">4 · Analog shaper and peak ADC</option></select><p id="stage-explanation" aria-live="polite"></p></section>
 <div class="plots" id="plots" aria-label="Four saved signal stages"></div>
 <section class="card">
 <h2>Fixed settings and exact source records</h2>
+<details><summary>Event identity, sampling and transport settings</summary><dl class="facts" id="case-facts"></dl><p class="fact-note">Native endpoint flags remain separate from electronics acceptance. A close energy match or a small remaining induced signal is not proof of calibrated Li collection efficiency.</p></details>
 <p id="electronics-settings"></p><p class="muted">One independent synthetic injection sets the calibration slope across events. The numerical analog grid is followed by a peak ADC; it is not a waveform-digitizing acquisition. No new electronics replay is used in this page.</p>
 <div class="source-links"><a id="case-report">Case report</a><a id="case-files">Case data files</a><a id="source-csv">Full native charge CSV</a><a id="source-zip">Complete source ledgers ZIP</a><a id="source-run">Run settings JSON</a><a id="case-spectrum">All 10K stage spectra</a></div>
 <details id="deposits-details"><summary id="deposits-summary"></summary><p class="muted">All recorded semiconductor STEP rows of this initial decay remain below, including zero-energy rows. Pulse-group row IDs identify which positive deposits feed this group. Deposition delays are radiation creation/deposition times, not drift times.</p><div class="table-scroll"><table><thead><tr><th>Raw row</th><th>In group</th><th>Edep keV</th><th>Delay from group ns</th><th>x mm</th><th>y mm</th><th>z mm</th><th>Track</th><th>Parent</th><th>PDG</th></tr></thead><tbody id="deposit-rows"></tbody></table></div></details>
@@ -51,6 +52,32 @@ const fmt=v=>v===null||v===undefined?"Unavailable":Number(v).toLocaleString("en-
 const exact=v=>v===null||v===undefined?"Unavailable":String(v);
 function facts(items){const host=$("case-facts");host.replaceChildren();for(const[label,value]of items){const div=document.createElement("div"),dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=label;dd.textContent=value;div.append(dt,dd);host.append(div);}}
 function selected(){return data.cases[$("example-select").selectedIndex];}
+const variants={AK02:'AK02',SAP22:'SAP22',GeRC02:'GeRC02_Li50min',KMRC01_candidate:'KMRC01_candidate'},stages=['charge','current','preamp','shaper'];
+function selectionQuery(c){return new URLSearchParams({study:'cs137-10k',model:c.model,variant:variants[c.model],event:String(c.event_id),group:String(c.group_id)});}
+function writeSelection(replace=false){
+ if(typeof history==='undefined'||typeof location==='undefined')return;
+ const q=selectionQuery(selected());q.set('stage',$("stage-select").value||'charge');
+ const url=location.pathname+'?'+q+(location.hash||'');
+ if(replace)history.replaceState(null,'',url);else if(url!==location.pathname+location.search+(location.hash||''))history.pushState(null,'',url);
+}
+function restoreSelection(){
+ if(typeof location==='undefined'){$("stage-select").value='charge';render();return;}
+ const q=new URLSearchParams(location.search),allowed=['study','model','variant','event','group','stage'];
+ for(const key of q.keys())if(!allowed.includes(key)||q.getAll(key).length!==1)throw Error('Unknown or repeated selection parameter.');
+ if(q.has('study')&&q.get('study')!=='cs137-10k')throw Error('This page contains selected signals from the Cs137 10K study.');
+ const hasIdentity=['model','variant','event','group'].some(k=>q.has(k));
+ let index=0;
+ if(hasIdentity){
+  if(!q.has('model')||!q.has('event')||!q.has('group'))throw Error('A selected example needs model, primary event and pulse group.');
+  if(q.has('variant')&&q.get('variant')!==variants[q.get('model')])throw Error('This saved model variant is unavailable.');
+  for(const key of ['event','group'])if(!/^(0|[1-9][0-9]*)$/.test(q.get(key)))throw Error('Invalid '+key+'.');
+  index=data.cases.findIndex(c=>c.model===q.get('model')&&c.event_id===Number(q.get('event'))&&c.group_id===Number(q.get('group')));
+  if(index<0)throw Error('No curated teaching waveform exists for this exact case, primary and group. Open its charge/readout result for the saved scalar records.');
+ }
+ const stage=q.get('stage')||'charge';if(!stages.includes(stage))throw Error('Unknown signal stage.');
+ $("example-select").selectedIndex=index;$("stage-select").value=stage;$("content").hidden=false;$("error").hidden=true;render();writeSelection(true);
+}
+function showError(error){$("error").hidden=false;$("error").textContent='Saved example unavailable: '+error.message;$("content").hidden=true;}
 function details(){const c=selected(),m=data.models[c.model];$("exact-json").textContent=$("exact-details").open?JSON.stringify({selected_case:c,model_settings:m},null,2):"";$("provenance-json").textContent=$("provenance-details").open?JSON.stringify(data.provenance,null,2):"";if(!$("deposits-details").open){$("deposit-rows").replaceChildren();return;}const ids=new Set(c.pulse.raw_row_indices),body=$("deposit-rows");body.replaceChildren();for(const row of c.truth.steps){const tr=document.createElement("tr");for(const v of[row.raw_row_index,ids.has(row.raw_row_index)?"yes":"no",row.energy_keV,row.time_ns-c.pulse.origin_time_ns,...row.position_mm,row.track_id,row.parent_track_id,row.particle_pdg]){const td=document.createElement("td");td.textContent=exact(v);tr.append(td);}body.append(tr);}}
 function link(id,href){const node=$(id);node.href=href;}
 function render(){
@@ -58,7 +85,7 @@ const c=selected(),m=data.models[c.model],p=c.pulse,r=p.readout,t=c.saved_trace.
 const eion=m.calibration.ionisation_energy_eV,dt=m.calibration.time_step_ns,wiring=m.wiring.factor,chargeFactor=1000/eion*1.602176634e-19*1e15;
 const end=SavedFocusPlots.focusEnd(times,q),analogEnd=t.time_ns.at(-1),peak={t:r.peak_time_ns,v:r.peak_V};
 $("case-title").textContent=c.title;$("case-explanation").textContent=c.explanation;
-$("selection-note").textContent=c.model+" · initial decay "+c.event_id+" · group "+c.group_id+" · exact saved records";
+$("selection-note").textContent='Cs137 10K / '+variants[c.model]+" · initial decay "+c.event_id+" · group "+c.group_id+" · exact saved records";
 $("edep").textContent=fmt(p.deposited_energy_keV);$("induced").textContent=fmt(p.final_induced_keV);$("erec").textContent=r.accepted?fmt(r.reconstructed_energy_keV):"Not accepted";
 const photon=c.truth.decay_photons.map(v=>exact(v.energy_keV)+" keV").join(", ")||"No recorded decay photon";
 const s=m.settings;
@@ -74,19 +101,22 @@ const panels=[
 {title:"Saved analog shaper · V",time_ns:t.time_ns,values:t.shaped_V,full_end_ns:analogEnd,focus_end_ns:SavedFocusPlots.shaperEnd(t.time_ns,t.shaped_V,peak,analogEnd),peak,note:analogNote+"Gold marker: exact original sampled peak from the scalar ledger; accepted ADC and Erec stay unchanged."}
 ];
 SavedFocusPlots.draw($("plots"),panels,"Time since selected group origin · ns");
+const stage=$("stage-select").value||'charge',stageIndex=stages.indexOf(stage);
+Array.from($("plots").children).forEach((figure,i)=>figure.hidden=i!==stageIndex);
+$("stage-explanation").textContent=["Moving electrons and holes induce a signed electrode signal. The final induced charge can differ from deposited energy when transport remains incomplete.","Current is charge change per recorded time bin. Its sign follows the fixed electronics wiring; the KM example keeps negative native charge and applies its recorded −1 wiring.","The preamp integrates the electronics-input current through the saved feedback circuit. Its voltage polarity follows that circuit.","The analog shaper sets the sampled peak. One independent calibration converts the peak ADC code to reconstructed energy; it is fixed across events."][stageIndex];
 const config=m.readout_config;
 $("electronics-settings").textContent="Feedback "+exact(config.feedback_capacitance_pF)+" pF / "+exact(config.feedback_tau_us)+" µs; pole-zero "+exact(config.pole_zero_tau_us)+" µs; shaping "+exact(config.shaping_tau_us)+" µs; gain "+exact(config.gain)+"; "+exact(config.adc_bits)+"-bit peak ADC / "+exact(config.adc_full_scale_V)+" V; threshold "+exact(config.threshold_V)+" V. "+m.calibration.method+".";
 const folder="../"+m.source_folder;
-link("case-report","../results/cs137-10k/"+c.model+"/charge-readout.html");link("case-files","../results/cs137-10k/"+c.model+"/charge-readout.html#data-files");link("source-csv",folder+"/signals.csv");link("source-zip",folder+"/ledgers.zip");link("source-run",folder+"/run.json");link("case-spectrum","cs137-10k.html#tenk-"+c.model);
+const query=selectionQuery(c),caseURL="../results/cs137-10k/"+c.model+"/charge-readout.html?"+query;
+link("case-report",caseURL);link("case-readout",caseURL);link("case-files",caseURL+"#data-files");link("case-3d","../viewers/events.html?"+query+'&view=positive');link("source-csv",folder+"/signals.csv");link("source-zip",folder+"/ledgers.zip");link("source-run",folder+"/run.json");link("case-spectrum","cs137-10k.html#tenk-"+c.model);
 $("deposits-summary").textContent="All "+c.truth.steps.length+" semiconductor deposition rows and identities";
 details();
 }
 try{
 for(const c of data.cases){const option=document.createElement("option");option.value=c.model+"-"+c.event_id+"-"+c.group_id;option.textContent=c.title+" · "+c.model+" / "+c.event_id+" / "+c.group_id;$("example-select").append(option);}
-$("example-select").onchange=render;for(const id of["exact-details","deposits-details","provenance-details"])$(id).ontoggle=details;render();
-// Browser history can restore the select after scripts run; redraw from that restored choice.
-if(typeof window!=="undefined"&&typeof window.addEventListener==="function")window.addEventListener("pageshow",()=>window.requestAnimationFrame(render));
-}catch(error){$("error").hidden=false;$("error").textContent="Saved example unavailable: "+error.message;$("content").hidden=true;}
+$("example-select").onchange=()=>{$("content").hidden=false;$("error").hidden=true;render();writeSelection();};$("stage-select").onchange=()=>{render();writeSelection();};for(const id of["exact-details","deposits-details","provenance-details"])$(id).ontoggle=details;restoreSelection();
+if(typeof window!=="undefined"&&typeof window.addEventListener==="function")for(const event of ['popstate','pageshow'])window.addEventListener(event,()=>{try{restoreSelection();}catch(error){showError(error);}});
+}catch(error){showError(error);}
 })();
 </script>
 </body>

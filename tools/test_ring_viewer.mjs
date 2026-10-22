@@ -54,7 +54,9 @@ for(const name of ['GeRC02','KMRC01_candidate']){
     await v.run('selectEvent('+proof.event_id+','+group.group_id+')');checkIdentity(v,name,proof.event_id,group.group_id,'positive');
     exact(v.state().primary,ringPrimary(name,proof.event_id));exact(v.state().group,group);exact(JSON.parse(v.els.get('records').textContent),ringPrimary(name,proof.event_id));
     exact(JSON.parse(v.els.get('evidenceRaw').textContent).event,proof);groups++;}
-  assert.equal(v.els.get('savedResponse').href,'../results/cs137-10k/'+name+'/charge-readout.html');assert.equal(v.els.get('savedResponseReport').href,v.els.get('savedResponse').href+'#data-files');
+  const selected=new URL(v.els.get('savedResponse').href,'https://test.invalid/viewers/events.html');
+  assert.equal(selected.pathname,'/results/cs137-10k/'+name+'/charge-readout.html');assert.equal(selected.searchParams.get('study'),'cs137-10k');assert.equal(selected.searchParams.get('model'),name);assert.equal(selected.searchParams.get('event'),String(v.state().requested.event));assert.equal(selected.searchParams.get('group'),String(v.state().requested.group));
+  assert.equal(v.els.get('savedResponseReport').href,v.els.get('savedResponse').href+'#data-files');
   assert.equal(v.els.get('savedSignals').href,base+name+'/response/signals.csv');assert.equal(v.els.get('savedCurrent').href,base+name+'/response/readout-input.csv');
   assert.match(v.els.get('modelNotes').textContent,name==='GeRC02'?/original 30 min.*independent 50 min/:/candidate.*signed and negative.*fixed −1.*separate negative injection/);
   assert.ok(Object.is(v.state().primary.tables['stp/germanium'][0].xloc,-0));
@@ -81,7 +83,7 @@ for(const name of ['GeRC02','KMRC01_candidate']){
   assert.equal(v.els.get('model').value,name);assert.equal(v.els.get('model').children.at(-1).disabled,true);
   assert.equal(v.location.search,'?model='+name+'&event=560&group=7&view=positive');
   await v.run('selectModel("AK02")');checkIdentity(v,'AK02',213,0,'positive');assert.equal(v.state().primary.event_id,213);
-  assert.equal(v.els.get('responseLinks').hidden,false);assert.equal(v.els.get('savedResponse').href,'../results/cs137-10k/AK02/charge-readout.html');
+  assert.equal(v.els.get('responseLinks').hidden,false);assert.equal(new URL(v.els.get('savedResponse').href,'https://test.invalid/viewers/events.html').pathname,'/results/cs137-10k/AK02/charge-readout.html');
 }
 // Switch among all four real/mocked populations in one instance. Manifest cache
 // identity is a pinned bundle, never one shared mutable assembly/positive slot.

@@ -14,6 +14,8 @@ MANIFEST='methods/native-li-display.json'
 SOURCES=('tools/saved_archive_display.py','tools/site_restructure.py','tools/site_routes.py')
 LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in SOURCES}
 PREVIOUS_RECEIPTS=frozenset({
+    # Exact a37cf4d deployed display before the October22 navigation repair.
+    '9e6ab1c7b76a0074cddcce08dbae3e58e91fcb86879ec1e2328faaeda964410e',
     # Exact 47685df Git/public bytes before the conditional GeGI hub schema.
     'cf9b5ebb1237891ff595dd6651af5d69ac727b09887163222d9c8320adf2705f',
     # Exact bfcb3bb published receipt, byte-matched to installed docs and Git
@@ -40,6 +42,8 @@ LITHIUM_SUMMARY_SHA='c5e1b2c85406f077cb692ac6e99dd1c9affe7cb6632a3098f96a86708e0
 LITHIUM_SOURCES=SOURCES+('tools/lithium_report.py','tools/pipeline_demo.py')
 LITHIUM_LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in LITHIUM_SOURCES}
 PREVIOUS_LITHIUM_RECEIPTS=frozenset({
+    # Exact a37cf4d deployed navigation; original numeric files stay pinned.
+    '1049a2de750e411ac12fb979d47390956c59bcb597f5fbf3156faad12f4ca7b8',
     # Exact 47685df Git/public bytes before the conditional GeGI hub schema.
     'c414d1aa0ec033750df20902a95e77a88cb9b173ece4c9761c13aa7732aabd6b',
     # Exact bfcb3bb published bytes before the GeGI 1M navigation change.
@@ -164,7 +168,9 @@ def lithium_expected(site):
         producer.validate_bundle(checked)
     text=original.decode('utf-8');anchor='<body>'
     require(text.count(anchor)==1,'Original lithium body anchor changed')
-    output=text.replace(anchor,anchor+page_navigation(LITHIUM_PAGE),1).encode('utf-8')
+    output=text.replace(anchor,anchor+page_navigation(LITHIUM_PAGE),1)
+    output=output.replace('href="../index.html">Back to the detector library',
+                          'href="../detectors/index.html">Back to the detector library').encode('utf-8')
     components=scientific_components(text)
     require(scientific_components(output.decode('utf-8'))==components,'Lithium scientific components changed')
     require(files=={path.name:{'bytes':path.stat().st_size,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}

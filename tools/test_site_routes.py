@@ -75,7 +75,7 @@ class RoutesTests(unittest.TestCase):
             self.assertEqual(set(panels),{'gegi','teaching','gamma','tenk','million'})
             self.assertIn('unavailable in this snapshot',panels['gegi'])
             self.assertIn('bare geometry',panels['teaching'])
-            self.assertIn('Different geometry and event IDs',panels['gamma'])
+            self.assertIn('separate monoenergetic source and event namespace',panels['gamma'])
             self.assertIn('four separate cases',panels['tenk'])
             self.assertIn('one million initial decays per detector',panels['million'])
             self.assertNotIn('viewers/events.html',panels['million'])
@@ -139,7 +139,7 @@ class RouteTests(unittest.TestCase):
     def test_all_current_pages_have_independent_registry_ownership(self):
         records = R.registry(Path(__file__).resolve().parents[1] / 'docs')
         self.assertEqual(len(records),len(list((Path(__file__).resolve().parents[1]/'docs').rglob('*.html'))))
-        self.assertEqual(sum(row['role'] == 'archive' for row in records.values()), 12)
+        self.assertEqual(sum(row['role'] == 'archive' for row in records.values()), 13)
         self.assertEqual(sum(row['role'] == 'alias' for row in records.values()), 2)
         for path, record in records.items():
             with self.subTest(path=path):

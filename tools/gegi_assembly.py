@@ -2,6 +2,7 @@
 
 Freeze this exporter, build the restricted native inspector, then inspect/build.
 Ordinary site publication only validates and copies the completed saved bundle.
+refresh_presentation() updates an authenticated saved display without native work.
 """
 from __future__ import annotations
 import argparse
@@ -20,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / '.local/gegi-website'
 SAVED = ROOT / '.local/runs/gegi-source-left-v1/transport'
 BUNDLE = WORK / 'assembly-signal-v3'
+DISPLAY_BUNDLE = WORK / 'assembly-display-audit-20261022'
 FREEZE = WORK / 'assembly-signal-v3-source-freeze.json'
 NATIVE_FREEZE = WORK / 'assembly-native-source-freeze.json'
 NATIVE = WORK / 'build/gegi-scene-native.json'
@@ -29,6 +31,9 @@ KIND = 'gegi_saved_assembly_v1'
 # Exactly the current public six-file predecessor may be staged by build_site
 # before this saved-data display is copied. No generic stale-source exemption.
 PREVIOUS_BUNDLES = frozenset({'6a725558513bc6761450cd6fbee4e14ca11b91a66eb160f80c422f7520923081'})
+# Exact eight-file saved publication before the 2026-10-22 presentation audit.
+# Its file/event/native-source checks remain mandatory under current sources.
+PRESENTATION_PREDECESSORS = frozenset({'bae59d7ee0916648e41792c8732f81e682b87939efc706ce5c0116667a53dd1d'})
 EVENTS = ROOT / '.local/gegi-10m/reconstruction-v3/assembly-events.json'
 EVENTS_SHA256 = '4ceebc1c3d8c63479db1ced63edc230387de8a983934ef62d4a73d57499f8210'
 ASSET = 'scenarios/assets/gegi_cryostat_v1.json'
@@ -36,6 +41,10 @@ SOURCE_FILES = ('tools/gegi_assembly.py', 'tools/gegi_assembly.html', 'tools/geg
                 'tools/gegi_signal_journey.js',
                 'tools/gegi_scene.cc', 'tools/gegi_mesh.hh', 'tools/gegi_scene/CMakeLists.txt', 'tools/geant4_scene/scene.cc',
                 'tools/site_routes.py', 'tools/site_discovery.py')
+NATIVE_SOURCE_FILES = ('tools/gegi_scene.cc', 'tools/gegi_mesh.hh', 'tools/gegi_scene/CMakeLists.txt',
+                       'tools/geant4_scene/scene.cc')
+PRESERVED_DISPLAY_FILES = ('scene.json', 'event-data.json', 'geometry.gdml', 'preview.svg',
+                          'cross-section.svg', 'gegi_signal_journey.js')
 INPUT_FILES = ('geometry.gdml', 'geometry-report.json', 'geometry.log', 'prepared.json', 'run.json')
 LEGACY_PUBLIC_FILES = ('index.html', 'viewer.js', 'scene.json', 'preview.svg', 'cross-section.svg', 'geometry.gdml')
 PUBLIC_FILES = (*LEGACY_PUBLIC_FILES, 'event-data.json', 'gegi_signal_journey.js')
@@ -447,6 +456,25 @@ def section_svg(scene):
     return ('\n'.join(out)+'\n').encode()
 
 
+def render_page(scene, events, provenance, report):
+    """Render saved values through the current template and navigation only."""
+    rows = '<tr><td>GeGI crystal</td><td>Octagonal; x/y bounds ±45</td><td>−5.5 to +5.5</td><td>Frozen detector model</td></tr>'
+    for part in report['geometry']['parts']:
+        rows += f'<tr><td>{LABELS[part["name"]]}</td><td>{part["rmin_mm"]:g} to {part["rmax_mm"]:g}</td><td>{part["zmin_mm"]:g} to {part["zmax_mm"]:g}</td><td>{html.escape(part["basis"])}</td></tr>'
+    page = (ROOT/'tools/gegi_assembly.html').read_text(encoding='utf-8')
+    import site_routes
+    import site_discovery
+    route = 'assemblies/gegi/index.html'
+    tags = (f'<meta name="description" content="{html.escape(site_discovery.LANDINGS[route], quote=True)}">'
+            f'<link rel="canonical" href="{site_discovery.canonical(route)}">')
+    page = page.replace('<title>', tags+'<title>', 1).replace('__NAV__', site_routes.page_navigation(route))
+    event_marker = '<script type="application/json" id="event-data"></script>'
+    require(page.count(event_marker) == 1, 'Expected exactly one saved-event JSON insertion point')
+    return page.replace('__ROWS__', rows).replace('__PROVENANCE__', html.escape(json.dumps(provenance, indent=2))).replace(
+        '__SCENE__', inline_json(scene)).replace(event_marker,
+        '<script type="application/json" id="event-data">'+inline_json(events)+'</script>')
+
+
 def build():
     frozen()
     sources, native, prepared, report, asset, pins = saved_native()
@@ -471,21 +499,7 @@ def build():
                     'scope': 'Exact positive-energy germanium scored-step chords. Not complete tracks through unscored material.',
                     'selection': 'Saved representative identities for transport display only; no source-labelled signal reconstruction.'},
                   'radiation_calls': 0, 'field_solves': 0}
-    rows = '<tr><td>GeGI crystal</td><td>Octagonal; x/y bounds ±45</td><td>−5.5 to +5.5</td><td>Frozen detector model</td></tr>'
-    for p in report['geometry']['parts']:
-        rows += f'<tr><td>{LABELS[p["name"]]}</td><td>{p["rmin_mm"]:g} to {p["rmax_mm"]:g}</td><td>{p["zmin_mm"]:g} to {p["zmax_mm"]:g}</td><td>{html.escape(p["basis"])}</td></tr>'
-    page = (ROOT/'tools/gegi_assembly.html').read_text(encoding='utf-8')
-    import site_routes
-    import site_discovery
-    route = 'assemblies/gegi/index.html'
-    tags = (f'<meta name="description" content="{html.escape(site_discovery.LANDINGS[route], quote=True)}">'
-            f'<link rel="canonical" href="{site_discovery.canonical(route)}">')
-    page = page.replace('<title>', tags+'<title>', 1).replace('__NAV__', site_routes.page_navigation(route))
-    event_marker = '<script type="application/json" id="event-data"></script>'
-    require(page.count(event_marker) == 1, 'Expected exactly one saved-event JSON insertion point')
-    page = page.replace('__ROWS__', rows).replace('__PROVENANCE__', html.escape(json.dumps(provenance, indent=2))).replace(
-        '__SCENE__', inline_json(scene)).replace(event_marker,
-        '<script type="application/json" id="event-data">'+inline_json(events)+'</script>')
+    page = render_page(scene, events, provenance, report)
     bodies = {'index.html': page.encode(), 'viewer.js': (ROOT/'tools/gegi_assembly.js').read_bytes(),
               'scene.json': encoded(scene), 'preview.svg': preview_svg(scene), 'cross-section.svg': section_svg(scene),
               'geometry.gdml': (SAVED/'geometry.gdml').read_bytes(), 'event-data.json': event_bytes,
@@ -503,9 +517,69 @@ def build():
     return validate_bundle()
 
 
+def refresh_presentation(source_bundle, output_bundle):
+    """Create a new display bundle from the exact saved eight-file predecessor.
+
+    Only HTML, viewer code and presentation provenance are regenerated. Native
+    inspection, mesh construction, radiation and semiconductor work are absent.
+    """
+    source_bundle = Path(source_bundle)
+    predecessor_hash = sha(source_bundle/'manifest.json')
+    require(predecessor_hash in PRESENTATION_PREDECESSORS,
+            'Presentation refresh requires the exact authenticated saved predecessor')
+    original = validate_bundle(source_bundle)
+    output_bundle = checked(output_bundle, WORK, new=True)
+    sources = source_hashes()
+    require(sha(ROOT/'tools/gegi_signal_journey.js') == original['files']['gegi_signal_journey.js']['sha256'],
+            'Presentation refresh cannot change the saved signal journey')
+    provenance = {key: value for key, value in original.items() if key != 'files'}
+    provenance.update(source_sha256=sources, display_revision='presentation_audit_20261022',
+                      presentation_refresh={'kind': 'gegi_assembly_presentation_refresh_v1',
+                        'predecessor_manifest_sha256': predecessor_hash,
+                        'predecessor_manifest': original})
+    bodies = {name: (source_bundle/name).read_bytes() for name in PRESERVED_DISPLAY_FILES}
+    bodies['index.html'] = render_page(json.loads(bodies['scene.json']), json.loads(bodies['event-data.json']),
+                                       provenance, original['geometry_report']).encode()
+    bodies['viewer.js'] = (ROOT/'tools/gegi_assembly.js').read_bytes()
+    for body in bodies.values():
+        public(body)
+    require(source_hashes() == sources and sha(source_bundle/'manifest.json') == predecessor_hash
+            and all(info(source_bundle/name) == record for name, record in original['files'].items()),
+            'Saved bundle or presentation source changed while rendering')
+    output_bundle.mkdir()
+    for name in PUBLIC_FILES:
+        write(output_bundle/name, bodies[name], public_output=True)
+    require(source_hashes() == sources, 'Presentation source changed before manifest completion')
+    manifest = {**provenance, 'files': {name: info(output_bundle/name) for name in PUBLIC_FILES}}
+    write(output_bundle/'manifest.json', encoded(manifest), public_output=True)
+    return validate_bundle(output_bundle)
+
+
+def validate_presentation_refresh(manifest):
+    refresh = manifest.get('presentation_refresh')
+    if refresh is None:
+        return
+    require(set(refresh) == {'kind', 'predecessor_manifest_sha256', 'predecessor_manifest'}
+            and refresh['kind'] == 'gegi_assembly_presentation_refresh_v1', 'Unknown presentation refresh provenance')
+    original = refresh['predecessor_manifest']
+    require(refresh['predecessor_manifest_sha256'] in PRESENTATION_PREDECESSORS
+            and hashlib.sha256(encoded(original)).hexdigest() == refresh['predecessor_manifest_sha256'],
+            'Presentation predecessor manifest changed')
+    require(set(manifest) == set(original) | {'presentation_refresh'}
+            and manifest['display_revision'] == 'presentation_audit_20261022', 'Unexpected presentation refresh fields')
+    for key, value in original.items():
+        if key not in ('source_sha256', 'files', 'display_revision'):
+            require(manifest[key] == value, 'Presentation refresh changed saved provenance: '+key)
+    for name in PRESERVED_DISPLAY_FILES:
+        require(manifest['files'][name] == original['files'][name],
+                'Presentation refresh changed saved scientific artifact: '+name)
+
+
 def validate_bundle(bundle=BUNDLE):
     bundle = Path(bundle); manifest = read(bundle/'manifest.json')
-    legacy = sha(bundle/'manifest.json') in PREVIOUS_BUNDLES
+    manifest_hash = sha(bundle/'manifest.json')
+    legacy = manifest_hash in PREVIOUS_BUNDLES
+    predecessor = manifest_hash in PRESENTATION_PREDECESSORS
     require(manifest['kind'] == KIND and manifest['status'] == 'complete' and
             manifest['assembly_volume_count'] == 8 and manifest['radiation_calls'] == manifest['field_solves'] == 0,
             'Incomplete GeGI assembly publication')
@@ -518,8 +592,12 @@ def validate_bundle(bundle=BUNDLE):
     require(sha(bundle/'geometry.gdml') == manifest['input_files']['geometry.gdml']['sha256'], 'Published GDML differs')
     scene = read(bundle/'scene.json')
     require(len(scene['volumes']) == 8 and {v['name'] for v in scene['volumes']} == set(LABELS), 'Public assembly census differs')
-    require(manifest['source_sha256'] == source_hashes() or legacy,
+    current_sources = source_hashes()
+    require(manifest['source_sha256'] == current_sources or legacy or predecessor,
             'Public assembly exporter source differs')
+    require(all(manifest['source_sha256'][ref] == current_sources[ref] for ref in NATIVE_SOURCE_FILES),
+            'Saved assembly native exporter source differs')
+    validate_presentation_refresh(manifest)
     if not legacy:
         events = validate_events(read(bundle/'event-data.json'))
         require(sha(bundle/'event-data.json') == EVENTS_SHA256
@@ -534,7 +612,9 @@ def validate_bundle(bundle=BUNDLE):
         require('<script src="gegi_signal_journey.js"></script>' in page, 'Shared signal viewer missing')
         require(sha(bundle/'gegi_signal_journey.js') == manifest['source_sha256']['tools/gegi_signal_journey.js'],
                 'Shared signal viewer differs from source freeze')
-    if bundle == BUNDLE:
+        require(sha(bundle/'gegi_signal_journey.js') == current_sources['tools/gegi_signal_journey.js'],
+                'Saved signal journey source changed')
+    if bundle == BUNDLE and not predecessor:
         sources, native, prepared, report, asset, pins = saved_native()
         require(scene == public_scene(native, prepared, report, asset, pins) and manifest['input_files'] == pins,
                 'Public mesh differs from its native saved source')
@@ -544,7 +624,7 @@ def validate_bundle(bundle=BUNDLE):
 def publish(site_output, bundle=None):
     """Called by build_site.py; copies existing checked files without native work."""
     target = checked(Path(site_output)/'assemblies/gegi', Path(site_output))
-    bundle = BUNDLE if bundle is None else Path(bundle)
+    bundle = (DISPLAY_BUNDLE if DISPLAY_BUNDLE.exists() else BUNDLE) if bundle is None else Path(bundle)
     if bundle == BUNDLE and not bundle.exists():
         # A clean clone retains the hash-checked public bundle in the site tree.
         # Validation here reads source and public artifacts only, never .local data.

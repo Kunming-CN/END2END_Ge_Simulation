@@ -548,8 +548,8 @@ def install_snapshot(old):
     return summary
 
 
-def finish_staged():
-    """Retry final validation after a publication-only failure; no generation."""
+def finish_staged(refresh_readout=False):
+    """Retry a saved stage; optionally refresh the retained-waveform display."""
     paths = (OUT, DESTINATION)
     linked = any(item.is_symlink() or getattr(item, 'is_junction', lambda: False)()
                  for path in paths for item in (path, *path.parents))
@@ -557,6 +557,22 @@ def finish_staged():
         raise ValueError('A real generated stage and installed snapshot are required')
     if not (DESTINATION / MANIFEST).is_file() or (ROOT / '.local/site-previous').exists():
         raise ValueError('Inspect the installed snapshot or pending atomic swap before recovery')
+    if refresh_readout:
+        # The failed size-bound stage already contains every saved scientific
+        # artifact. Refresh only the lossless per-trace delivery and its views.
+        from ring_site import apply as refresh_readout_pages
+        from spectrum_display import assemble as refresh_spectra, route_current_pages, finalize
+        from site_discovery import assemble as refresh_discovery
+        from gegi_assembly import publish as refresh_assembly_display
+        from gegi_publication import link_current as refresh_historical_gegi
+        refresh_spectra(OUT)
+        refresh_readout_pages(OUT)
+        refresh_assembly_display(OUT)
+        refresh_historical_gegi(OUT)
+        route_current_pages(OUT)
+        finalize(OUT)
+        refresh_discovery(OUT)
+        normalize_text_outputs(OUT)
     old = validate(DESTINATION)
     return install_snapshot(old)
 
@@ -577,10 +593,12 @@ if __name__ == '__main__':
     parser.add_argument('--gegi-plane-z-mm',type=float,help='Explicit assumed source plane for a two-run comparison; does not infer range')
     parser.add_argument('--gegi-campaign-bundle',type=Path,help='Copy a completed compact formal GeGI campaign public bundle; no analysis or physics')
     parser.add_argument('--finish-staged',action='store_true',help='Fully validate and install an existing generated stage after a publication-only failure; no regeneration')
+    parser.add_argument('--refresh-staged-readout',action='store_true',help='With --finish-staged, refresh lossless saved-waveform delivery and its source-bound displays')
     args=parser.parse_args()
+    if args.refresh_staged_readout and not args.finish_staged:parser.error('--refresh-staged-readout requires --finish-staged')
     if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_campaign_bundle)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
     if args.finish_staged:
-        finish_staged()
+        finish_staged(refresh_readout=args.refresh_staged_readout)
     else:
         if args.gegi_plane_z_mm is not None and args.gegi_results is None: parser.error('--gegi-plane-z-mm requires --gegi-results')
         build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle)

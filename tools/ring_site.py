@@ -1,5 +1,7 @@
 """Current four-detector navigation over completed saved 10K publications."""
 import hashlib
+import gzip
+import stat
 import json
 import posixpath
 import re
@@ -12,6 +14,65 @@ from urllib.parse import urlsplit, urlunsplit
 RING_FOLDER = 'examples/cs137-10k-rings'
 RING_MODELS = ('GeRC02', 'KMRC01_candidate')
 ALL_MODELS = ('AK02', 'SAP22') + RING_MODELS
+CASE_VARIANTS = {'AK02': 'AK02', 'SAP22': 'SAP22', 'GeRC02': 'GeRC02_Li50min',
+                 'KMRC01_candidate': 'KMRC01_candidate'}
+
+READOUT_CONTROLLER = r'''(() => {
+'use strict';
+const data=JSON.parse(document.getElementById('saved-response-data').textContent),$=id=>document.getElementById(id);
+let generation=0,selectedPulse=null,selectedTrace=null;
+const query=(event,group)=>savedSelectionQuery({model:data.model,event,group});
+function exact(value){return value===null||value===undefined?'Unavailable':String(value);}
+function fail(message){$('selected-identity').textContent='Requested saved selection: '+location.search;$('selected-status').textContent=message;$('selected-summary').replaceChildren();$('selected-plots').replaceChildren();$('selected-record').textContent='';}
+function records(){if($('selected-details').open)$('selected-record').textContent=JSON.stringify({study:'cs137-10k',model:data.model,variant:data.variant,pulse:selectedPulse,saved_trace:selectedTrace},null,2);}
+function write(event,group,replace){const url=location.pathname+'?'+query(event,group)+(location.hash||'');if(replace)history.replaceState(null,'',url);else if(url!==location.pathname+location.search+(location.hash||''))history.pushState(null,'',url);}
+async function restore(replace=false){
+ const ticket=++generation;selectedPulse=null;selectedTrace=null;$('selected-plots').replaceChildren();$('selected-record').textContent='';$('selected-summary').replaceChildren();$('selected-3d').removeAttribute('href');$('selected-scalar-link').removeAttribute('href');$('selected-teaching').hidden=true;
+ const q=new URLSearchParams(location.search);if(!q.has('model'))q.set('model',data.model);
+ const identity=parseViewerQuery('?'+q);
+ if(identity.invalid||identity.model!==data.model){fail('Unavailable selection: '+(identity.invalid||'The requested model does not match this saved case.'));return;}
+ let event=identity.event,group=identity.group;
+ if(event===null){const first=data.trace_keys[0]||data.pulses.map(p=>[p.event_id,p.group_id])[0];event=first?.[0]??0;group=first?.[1]??null;}
+ const pulses=data.pulses.filter(p=>p.event_id===event);
+ if(group===null&&pulses.length)group=pulses[0].group_id;
+ const pulse=pulses.find(p=>p.group_id===group)||null;selectedPulse=pulse;
+ const key=event+'/'+group,trace=data.traces[key];
+ $('selected-event').value=data.pulses.some(p=>p.event_id===event&&p.group_id===group)?key:'';
+ $('selected-identity').textContent='Saved study: cs137-10k / '+data.variant+' · original primary '+event+(group===null?'':' · pulse group '+group);
+ const viewer='../../../viewers/events.html?'+query(event,group)+'&view='+(pulse?'positive':'assembly');
+ $('selected-3d').href=viewer;$('selected-scalar-link').href=data.scalar_url;
+ updateCaseNavigation({model:data.model,result:location.pathname+'?'+query(event,group),files:location.pathname+'?'+query(event,group)+'#data-files',events:viewer,spectrum:'../../../spectra/cs137-10k.html#tenk-'+data.model},'Saved study: cs137-10k / '+data.variant+' · primary '+event+(group===null?'':' · group '+group));
+ const teaching=data.teaching.some(k=>k[0]===event&&k[1]===group);$('selected-teaching').hidden=!teaching;
+ if(teaching)$('selected-teaching').href='../../../spectra/pipeline.html?'+query(event,group);
+ const list=$('selected-summary');list.replaceChildren();
+ if(pulse){for(const [label,value]of [['Truth deposited energy',exact(pulse.deposited_energy_keV)+' keV'],['Signed native induced equivalent',exact(pulse.final_induced_keV)+' keV'],['Peak-ADC reconstructed energy',pulse.readout?.accepted?exact(pulse.readout.reconstructed_energy_keV)+' keV':'Not accepted: '+exact(pulse.rejection_reason)],['Positive deposit row IDs',pulse.raw_row_indices.join(', ')],['Group origin',exact(pulse.origin_time_ns)+' ns']]){const p=document.createElement('p');p.textContent=label+': '+value;list.append(p);}}
+ else{const p=document.createElement('p');p.textContent='No matching saved pulse group. The original primary remains available in the 3D radiation records and the complete scalar ledger.';list.append(p);}
+ write(event,group,replace);
+ if(!trace){$('selected-status').textContent='No published full waveform for this exact primary'+(group===null?'':' / group '+group)+'. '+(pulse?'Its saved scalar response and deposit identity are shown above. ':'')+'Choose a separately labelled saved model example below to view a waveform.';records();return;}
+ $('selected-status').textContent='Loading the matching saved waveform…';
+ try{
+  const response=await fetch(trace.path);if(!response.ok)throw Error('HTTP '+response.status);
+  const packed=await response.arrayBuffer();if(!globalThis.crypto?.subtle)throw Error('SHA-256 requires HTTPS or localhost.');
+  const hash=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),n=>n.toString(16).padStart(2,'0')).join('');
+  if(packed.byteLength!==trace.bytes||await hash(packed)!==trace.sha256)throw Error('Saved waveform compressed size or SHA-256 mismatch.');
+  if(typeof DecompressionStream==='undefined')throw Error('Native gzip DecompressionStream is required.');
+  const bytes=await new Response(new Blob([packed]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+  if(bytes.byteLength!==trace.uncompressed_bytes||await hash(bytes)!==trace.uncompressed_sha256)throw Error('Saved waveform original size or SHA-256 mismatch.');
+  const saved=JSON.parse(new TextDecoder().decode(bytes));if(ticket!==generation)return;
+  if(saved.event_id!==event||saved.group_id!==group)throw Error('Saved waveform identity mismatch.');
+  selectedTrace=saved;const t=saved.trace,charge=saved.raw_native_induced_charge_fC||t.induced_charge_fC,end=t.time_ns.at(-1);
+  const note='Exact retained original analog samples: '+t.time_ns.length+' of '+pulse.readout.original_sample_count+'. Lines join retained samples; omitted samples are unavailable.';
+  const chargeEnd=SavedFocusPlots.focusEnd(t.time_ns,charge),peak={t:pulse.readout.peak_time_ns,v:pulse.readout.peak_V};
+  const panels=[['Native signed induced charge · fC',charge],['Electronics-input current · nA',t.current_nA],['Saved analog preamp · V',t.preamp_V],['Saved analog shaper · V',t.shaped_V]].map(([title,values],i)=>({title,time_ns:t.time_ns,values,full_end_ns:end,focus_end_ns:i===3?SavedFocusPlots.shaperEnd(t.time_ns,values,peak,end):Math.min(end,chargeEnd),...(i===3?{peak}:{}),note}));
+  SavedFocusPlots.draw($('selected-plots'),panels,'Time since selected group origin · ns');
+  $('selected-status').textContent='Matching saved waveform: primary '+event+' / group '+group+'. '+note+(data.model==='KMRC01_candidate'?' Negative native charge and fixed −1 electronics wiring remain separate.':'');records();
+ }catch(error){if(ticket===generation){selectedTrace=null;$('selected-status').textContent='Matching waveform unavailable: '+error.message;records();}}
+}
+for(const pulse of data.pulses){const option=document.createElement('option');option.value=pulse.event_id+'/'+pulse.group_id;option.textContent=data.variant+' · primary '+pulse.event_id+' / group '+pulse.group_id+(data.traces[option.value]?' · saved waveform':' · scalar only');$('selected-event').append(option);}
+$('selected-event').onchange=()=>{if(!$('selected-event').value)return;const [event,group]=$('selected-event').value.split('/').map(Number);write(event,group,false);restore();};
+$('selected-details').ontoggle=records;globalThis.addEventListener('popstate',()=>restore());globalThis.addEventListener('pageshow',()=>restore());
+restore(true);
+})();'''
 
 
 def require(ok, message):
@@ -262,6 +323,9 @@ def saved_report(site, case):
         names = bundle.namelist()
         require({'truth.jsonl', 'scalars.jsonl', 'endpoints.jsonl', 'histograms.json', 'traces.jsonl', 'run.json'} <= set(names),
                 'Incomplete response archive: ' + model)
+        trace_lines = [(line, json.loads(line)) for line in bundle.open('traces.jsonl') if line.strip()]
+        pulses = [record for line in bundle.open('scalars.jsonl') if line.strip()
+                  if (record := json.loads(line)).get('record_kind') == 'pulse']
         report = read(folder / 'run.json')
         if 'trace_examples' in report:
             traces = report['trace_examples']['source_trace_records']
@@ -269,9 +333,45 @@ def saved_report(site, case):
             require(keys == [[int(event), int(group)] for event, group in examples],
                     'Saved waveform display keys differ: ' + model)
         else:
-            with bundle.open('traces.jsonl') as stream:
-                traces = sum(1 for line in stream if line.strip())
-    scope = (f'<p id="waveform-scope">This report displays {len(examples)} saved pulse-group examples. '
+            traces = len(trace_lines)
+    require(traces == len(trace_lines), 'Saved trace record count differs: ' + model)
+    pulse_keys = {(pulse['event_id'], pulse['group_id']) for pulse in pulses}
+    require(len(pulse_keys) == len(pulses), 'Repeated saved pulse identity: ' + model)
+    trace_files = {}
+    destination = Path(site) / posixpath.dirname(current_path) / 'traces'
+    destination.mkdir(parents=True, exist_ok=True)
+    site_root = Path(site).absolute()
+    require(destination.absolute().is_relative_to(site_root), 'Saved trace destination outside site')
+    for parent in (destination.absolute(), *destination.absolute().parents):
+        require(not parent.is_symlink() and not (getattr(parent.stat(follow_symlinks=False),
+                'st_file_attributes', 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT),
+                'Saved trace destination uses a reparse point')
+        if parent == site_root:
+            break
+    for raw, trace in trace_lines:
+        require(type(trace.get('event_id')) is int and 0 <= trace['event_id'] <= 9999
+                and type(trace.get('group_id')) is int and trace['group_id'] >= 0,
+                'Invalid saved waveform identity: ' + model)
+        event, group = trace['event_id'], trace['group_id']; key = f'{event}/{group}'
+        require((event, group) in pulse_keys, 'Saved waveform has no matching pulse scalar: ' + model)
+        require(key not in trace_files, 'Repeated saved waveform identity: ' + model)
+        packed = gzip.compress(raw, compresslevel=9, mtime=0)
+        legacy = destination / f'{event}-{group}.json'
+        if legacy.exists() or legacy.is_symlink():
+            require(not legacy.is_symlink() and not (getattr(legacy.stat(follow_symlinks=False),
+                    'st_file_attributes', 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT)
+                    and legacy.is_file() and sha(legacy) == hashlib.sha256(raw).hexdigest(),
+                    'Unrecognized earlier generated trace; preserved: ' + legacy.name)
+            legacy.unlink()
+        target = destination / f'{event}-{group}.json.gz'
+        if not target.exists() or target.read_bytes() != packed:
+            target.write_bytes(packed)
+        trace_files[key] = {'path': f'traces/{event}-{group}.json.gz',
+                            'sha256': hashlib.sha256(packed).hexdigest(), 'bytes': len(packed),
+                            'uncompressed_sha256': hashlib.sha256(raw).hexdigest(),
+                            'uncompressed_bytes': len(raw)}
+    scope = (f'<p id="waveform-scope">{escape(case["label"])} has {traces} saved trace records. '
+             f'The original report displays {len(examples)} pulse-group examples. '
              f'The archive contains {traces} saved trace records in <code>traces.jsonl</code>; '
              'complete scalar, truth and endpoint ledgers do not imply complete waveforms for all 10,000 decays. '
              'Zero-Ge primaries and unavailable native responses retain their recorded identities and flags.</p>')
@@ -279,10 +379,34 @@ def saved_report(site, case):
     layout = ('<style>.saved-response-report{min-width:0}.saved-response-report figure{margin:16px 0;overflow-x:auto}'
               '.saved-response-report svg{width:100%;min-width:600px;height:auto}.saved-response-report pre{white-space:pre-wrap}'
               '.saved-response-report details{margin:18px 0}.saved-response-report summary{cursor:pointer;font-weight:600}'
-              '#data-files{margin-top:20px}</style>')
+              '#data-files{margin-top:20px}#selected-plots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}'
+              '#selected-plots figure{min-width:0;margin:8px 0}#selected-plots svg{max-width:100%;height:auto}'
+              '#selected-event{max-width:100%;padding:9px}#selected-identity{font-weight:650}'
+              '@media(max-width:750px){#selected-plots{grid-template-columns:1fr}}[hidden]{display:none!important}</style>')
+    variant = (report.get('model_contract') or {}).get('variant_id', CASE_VARIANTS[model])
+    require(variant == CASE_VARIANTS[model], 'Saved case variant changed: ' + model)
+    from teaching_examples import SELECTION
+    selection = dict(model=model, variant=variant, pulses=pulses, traces=trace_files,
+                     trace_keys=[[trace['event_id'], trace['group_id']] for _, trace in trace_lines],
+                     scalar_url=relative_url(case['base'] + '/response/scalars.csv', current_path),
+                     teaching=[[event, group] for selected_model, event, group, _, _ in SELECTION if selected_model == model])
+    selection_json = json.dumps(selection, ensure_ascii=True, allow_nan=False, separators=(',', ':')).replace('<', '\\u003c')
+    tools = Path(__file__).resolve().parent
+    selected = ('<section id="selected-response" class="panel"><h2>One saved event through charge and readout</h2>'
+                + scope + '<p id="selected-identity" aria-live="polite"></p><p id="selected-status" role="status"></p>'
+                '<div id="selected-summary"></div><p><a id="selected-3d">This original primary and deposits in 3D</a> · '
+                '<a id="selected-scalar-link">Complete scalar ledger</a> · <a id="selected-teaching" hidden>This event in the teaching signal chain</a></p>'
+                '<div id="selected-plots"></div><label for="selected-event">Saved model examples · selecting one changes the primary and group</label>'
+                '<p><select id="selected-event"><option value="">Requested event is not a saved pulse example</option></select></p>'
+                '<details id="selected-details"><summary>Exact selected pulse scalar and saved trace records</summary><pre id="selected-record"></pre></details>'
+                '<noscript>Open the complete scalar ledger, saved original report or response archive below.</noscript></section>')
+    scripts = ('<script id="saved-response-data" type="application/json">' + selection_json + '</script>'
+               '<script>' + (tools / 'viewer_navigation.js').read_text(encoding='utf-8') + '</script>'
+               '<script>' + (tools / 'focused_plots.js').read_text(encoding='utf-8') + '</script>'
+               '<script id="saved-response-controller">' + READOUT_CONTROLLER + '</script>')
     body = (layout + '<section class="hero"><p class="muted">Saved Cs137 campaign · 10,000 initial decays</p>'
             '<h1>' + escape(case['label']) + ' · charge and readout</h1><p>' + escape(case['note']) + '</p></section>'
-            '<section id="saved-waveforms" class="panel saved-response-report">' + scope + science + '</section>')
+            + selected + '<details id="saved-waveforms" class="panel saved-response-report"><summary>Complete original report, settings and saved examples</summary>' + science + '</details>')
     data = '<section id="data-files" class="panel"><h2>Data and settings</h2><p>'
     data += '<a class="button" href="' + escape(relative_url(case['base'] + '/response/ledgers.zip', current_path), quote=True) + '">Complete response archive (ZIP)</a></p>'
     data += ('<p>Contains complete primary/pulse scalars, deposition truth, native endpoints, exact stage histograms, '
@@ -314,7 +438,7 @@ def saved_report(site, case):
         data += ('<p><a href="' + escape(relative_url(old, current_path), quote=True) + '">Original KM native response: 0/231 accepted (archive)</a>. '
                  'The original positive-peak readout rejected all 231 groups. The current fixed −1 wiring is a separate derivative; '
                  'raw negative native charge is preserved. The ZIP retains the complete original HTML and native records.</p>')
-    return body + data + '</details></section>'
+    return body + data + '</details></section>' + scripts
 
 
 def apply(site):

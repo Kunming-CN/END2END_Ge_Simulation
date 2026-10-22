@@ -18,6 +18,9 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+    # Exact checked Git/public snapshot before selected-case spectrum views.
+    # Matched to HEAD bytes; saved numerical/source bindings remain mandatory.
+    '57f2ca5e1cb8a6e4711e7930670b02a3509f56e0e7e94eafd58f8f77b1f8b12b',
     # Exact 47685df Git/public bytes before the conditional GeGI hub schema.
     '434e98c77f685e7b13cc047a9a9a16696e906962cdd35ccd6988e081abd5978e',
     # Exact bfcb3bb published manifest, byte-matched to installed docs and Git
@@ -219,15 +222,15 @@ def case_context(rows,page):
         'events':relative_url(event_view_path(row['model']),page),
         'spectrum':relative_url(spectrum_path(row['model']),page)} for row in rows}
 
-def spectrum_focus(rows,page):
-    payload=json.dumps(case_context(rows,page),ensure_ascii=True,separators=(',',':')).replace('<','\\u003c')
-    common=(ROOT/'tools/viewer_navigation.js').read_text(encoding='utf-8')
-    return ('<label>Focus a saved case <select id="spectrum-case"><option value="">All four cases</option>'
+def spectrum_focus(rows,page,context=None,prefix='tenk'):
+    payload=json.dumps(context or case_context(rows,page),ensure_ascii=True,separators=(',',':')).replace('<','\\u003c')
+    return ('<style>[data-spectrum-model][hidden]{display:none!important}.spectrum-selection{margin:18px 0}#spectrum-case{font:inherit;max-width:100%;padding:8px}</style>'
+        '<div class="spectrum-selection"><label>Detector case <select id="spectrum-case" data-prefix="'+prefix+'">'
         +''.join('<option value="'+html.escape(row['model'],quote=True)+'">'+html.escape(row['label'])+'</option>' for row in rows)
-        +'</select></label><p id="spectrum-focus" role="status" aria-live="polite">All four cases.</p>'
-        '<script id="spectrum-case-context" type="application/json">'+payload+'</script>'
-        '<script id="spectrum-case-navigation">'+common+'\n'
-        'globalThis.spectrumNavigation=installSpectrumFocus(JSON.parse(document.getElementById("spectrum-case-context").textContent));</script>')
+        +'<option value="compare">Compare all '+str(len(rows))+' detector cases</option></select></label>'
+        '<p id="spectrum-focus" role="status" aria-live="polite">Selected case: '+html.escape(rows[0]['label'])+'.</p></div>'
+        '<noscript><p>JavaScript enables detector selection. All saved detector cases are listed below.</p></noscript>'
+        '<script id="spectrum-case-context" type="application/json">'+payload+'</script>')
 
 def four_detector_spectra(site,specs):
     from ring_site import cases
@@ -247,14 +250,16 @@ def four_detector_spectra(site,specs):
           +spectrum_focus(rows,'spectra/cs137-10k.html'))
     for i,row in enumerate(rows):
         c=row['counts'];base='../'+row['base'];model=row['model']
-        body+=('<section id="tenk-'+model+'"><h2>'+html.escape(row['label'])+'</h2><p>'+html.escape(row['note'])+'</p><p>'
+        body+=('<section id="tenk-'+model+'" data-spectrum-model="'+model+'"><h2>'+html.escape(row['label'])+'</h2><p>'+html.escape(row['note'])+'</p><p>'
                + f'{c["zero_deposit_primaries"]:,} zero-Ge decays; {c["groups"]:,} groups; {c["accepted"]:,} accepted; '
                + f'{c["native_failed_groups"]:,} native failures; {c["readout_rejected"]:,} electronics rejects.</p><p>'
                + f'<a href="{relative_url(case_result_path(model),"spectra/cs137-10k.html")}">Charge and readout</a> · <a href="{base}/response/histograms.json">Exact bins</a> · '
                + f'<a href="{base}/response/ledgers.zip">Complete ledger archive</a></p>')
         for (stage,label),spec in zip(STAGES,specs[i*len(STAGES):(i+1)*len(STAGES)],strict=True):
-            opened=' open' if stage=='accepted_peak_ADC' else ''
-            body+='<details'+opened+'><summary>'+html.escape(label)+'</summary>'+panel(spec)+'</details>'
+            if stage in ('deposited_per_group','accepted_peak_ADC'):
+                body+='<div class="main-spectrum"><h3>'+html.escape(label)+'</h3>'+panel(spec)+'</div>'
+            else:
+                body+='<details><summary>'+html.escape(label)+'</summary>'+panel(spec)+'</details>'
         body+='</section>'
     return (body+'<p>Nominal source/mounting, isolated electronics windows and synthetic injection calibration. '
             'No calibrated Li CCE, physical energy resolution or measured-spectrum fit is claimed.</p>'
@@ -281,7 +286,7 @@ def display_navigation(text,original,destination):
             text=text.replace(link,'',1)
         # These inherited examples belong to a separate saved campaign. They
         # never enter the 1M local-view menu.
-        extra+='<section id="other-datasets"><h2>Other datasets</h2><p>Switch to the earlier Cs137 10K dataset: '
+        extra+='<section id="other-datasets"><h2>Related study · Cs137 10K</h2><p>Switch to the earlier, independent Cs137 10K study: '
         extra+='<a href="../cs137-10k/comparison.html">10K stage spectra</a> · '
         extra+='<a href="../../viewers/events.html?model=AK02&amp;view=positive">10K radiation events (AK02 initially)</a>. '
         extra+='These event records are not from the million-decay campaign.</p></section>'
@@ -314,6 +319,59 @@ def display_navigation(text,original,destination):
             text=text.replace(old,'href="'+relative_url(case_result_path(model),original)+'"',1)
     return add_at_end(text,extra) if extra else text
 
+def compact_source_tables(text):
+    """Shorten only displayed source-energy text; retain exact rows and originals."""
+    def table(match):
+        original=match.group(0)
+        if 'Actual source family keV' not in original: return original
+        def row(found):
+            value=html.unescape(found.group(2))
+            try: number=float(value)
+            except ValueError: return found.group(0)
+            require(math.isfinite(number),'Invalid source-family energy')
+            return found.group(1)+'<span title="'+html.escape(value,quote=True)+'">'+format(number,'.6g')+'</span>'+found.group(3)
+        concise=re.sub(r'(<tr><td>)([^<]+)(</td>)',row,original)
+        return ('<details class="source-families"><summary>Source-family classification counts</summary>'
+                '<p>Source-family energies are shown to six significant digits. Every saved row and count is retained; '
+                'nearby displayed energies can belong to distinct saved rows.</p>'+concise+
+                '<details class="source-precision"><summary>Full-precision source energies and original counts</summary>'+original+'</details></details>')
+    return re.sub(r'<table\b[^>]*>.*?</table>',table,text,flags=re.S)
+
+def million_case_page(text,destination):
+    """Keep the two saved runs separate and show the selected detector's plots."""
+    truth=destination=='spectra/million-truth.html'
+    title='Cs137 · 1,000,000 initial decays per detector · '+('deposition spectra' if truth else 'response spectra')
+    text,n=re.subn(r'<title>.*?</title>','<title>'+title+'</title>',text,count=1,flags=re.S)
+    require(n==1,'Million-report title changed')
+    text,n=re.subn(r'<h1>.*?</h1>','<h1>'+title+'</h1>',text,count=1,flags=re.S)
+    require(n==1,'Million-report heading changed')
+    # The active study menu now supplies the completed response view directly.
+    text=re.sub(r'<section id="million-native-response"[^>]*>.*?</section>','',text,count=1,flags=re.S)
+    rows=[{'model':model,'label':model+' · 1,000,000 initial decays'} for model in ('AK02','SAP22')]
+    context={row['model']:{**row,
+        'truth':'million-truth.html#million-'+row['model'],
+        'response':'million-response.html#million-'+row['model'],
+        'files':'../results/cs137-1m/index.html#data-files'} for row in rows}
+    chooser=('<p>Two independent detector runs: AK02 and SAP22 each contain 1,000,000 initial Cs137 decays. '
+             'Select one run or compare both. Counts retain their initial-decay, pulse-group and accepted-response populations.</p>'
+             +spectrum_focus(rows,destination,context,prefix='million'))
+    end=text.index('</h1>')+len('</h1>');text=text[:end]+chooser+text[end:]
+    if truth:
+        starts=[text.index('<h2>'+model+'</h2>') for model in ('AK02','SAP22')]
+        end=text.index('<h2>Interpretation and provenance</h2>',starts[-1])
+        for model,start,stop in reversed(list(zip(('AK02','SAP22'),starts,starts[1:]+[end],strict=True))):
+            text=text[:start]+'<section id="million-'+model+'" data-spectrum-model="'+model+'">'+compact_source_tables(text[start:stop])+'</section>'+text[stop:]
+    else:
+        first=re.search(r'<h3>AK02:[^<]*</h3>',text);second=re.search(r'<h3>SAP22:[^<]*</h3>',text)
+        require(first is not None and second is not None,'Million response plot headings changed')
+        end=text.index('<h2>Transport diagnostics retained</h2>',second.start())
+        for model,start,stop in reversed((('AK02',first.start(),second.start()),('SAP22',second.start(),end))):
+            text=text[:start]+'<section id="million-'+model+'" data-spectrum-model="'+model+'">'+text[start:stop]+'</section>'+text[stop:]
+        start=text.index('<p class="note">',text.index('</h1>'));end=text.index('<h2>Spectrum comparison</h2>',start)
+        text=text[:start]+'<details><summary>Counts, failures and line candidates · both detector runs</summary>'+text[start:end]+'</details>'+text[end:]
+        text=re.sub(r'<p class="legend">.*?</p>','',text,count=1,flags=re.S)
+    return text
+
 def render_page(site,original,destination,specs):
     if destination=='spectra/cs137-10k.html':
         from ring_site import ring_manifest
@@ -332,6 +390,8 @@ def render_page(site,original,destination,specs):
         text=text.replace('No SSD, readout or noise has run for this campaign.','This page shows Geant4 deposition truth only. The completed native SSD/readout response is reported separately.')
         text=add_at_end(text,assets())
     text=rewrite_links(text,original,destination)
+    if destination.startswith('spectra/million-'):
+        text=million_case_page(text,destination)
     archive=posixpath.relpath(original,'spectra')
     note=('<aside class="spectrum-note"><strong>Updated spectrum display.</strong> Exact saved bins; default Log, optional Linear. No simulations rerun. '
           '<a data-original-report href="'+archive+'">Original report (archived presentation)</a> · <a href="manifest.json">Display provenance</a>'
@@ -362,14 +422,22 @@ def component_hashes(text):
 PREVIEW_PATH='results/cs137-1m/index.html'
 
 def home_component(site,path=PREVIEW_PATH):
-    """Retained API name; current compact preview belongs to its 1M campaign."""
+    """Read the study overview, including its optional older spectrum preview."""
     text=(Path(site)/path).read_text(encoding='utf-8')
     blocks=re.findall(r'<figure class="spectrum-panel".*?</figure>',text,re.S)
-    require(len(blocks) in (1,2),'Unexpected campaign spectrum preview inventory')
+    require(len(blocks) in (0,1,2),'Unexpected campaign spectrum preview inventory')
     return text,''.join(blocks)
 
 def validate_home(site,manifest,strict=False):
     # Older protected publications retain their existing homepage contract.
+    if 'campaign_shell' in manifest:
+        metadata=manifest['campaign_shell'];require(metadata=={'path':PREVIEW_PATH,'models':['AK02','SAP22'],
+            'spectrum_views':['spectra/million-truth.html','spectra/million-response.html']},'Campaign shell identity changed')
+        text,block=home_component(site,PREVIEW_PATH)
+        require(not block,'Campaign overview must link to dedicated spectrum views')
+        for path in metadata['spectrum_views']:
+            require(posixpath.relpath(path,posixpath.dirname(PREVIEW_PATH)) in text,'Campaign spectrum destination missing')
+        return
     key='campaign_preview' if 'campaign_preview' in manifest else 'homepage'
     metadata=manifest[key];path=metadata.get('path','index.html')
     if key=='campaign_preview':require(path==PREVIEW_PATH,'Campaign spectrum preview route changed')
@@ -386,7 +454,13 @@ def validate_home(site,manifest,strict=False):
 def finalize(site):
     site=Path(site);text,block=home_component(site);m=read(site/'spectra/manifest.json')
     m.pop('homepage',None)
-    m['campaign_preview']={'path':PREVIEW_PATH,'models':['AK02','SAP22'],'panel_sha256':hashlib.sha256(block.encode()).hexdigest(),'render_components':component_hashes(text)}
+    if block:
+        m.pop('campaign_shell',None)
+        m['campaign_preview']={'path':PREVIEW_PATH,'models':['AK02','SAP22'],'panel_sha256':hashlib.sha256(block.encode()).hexdigest(),'render_components':component_hashes(text)}
+    else:
+        m.pop('campaign_preview',None)
+        m['campaign_shell']={'path':PREVIEW_PATH,'models':['AK02','SAP22'],
+            'spectrum_views':['spectra/million-truth.html','spectra/million-response.html']}
     write_if_changed(site/'spectra/manifest.json',json.dumps(m,indent=2,allow_nan=False)+'\n')
     return validate(site,require_current_generators=True,require_home=True)
 
@@ -469,7 +543,7 @@ def validate(site,require_current_generators=False,require_home=False):
                 start=body.index('<script id="pipeline-data" type="application/json">')
                 return body[start:body.index('</script>',start)]
             require(payload(text)==payload((site/'examples/pipeline.html').read_text(encoding='utf-8')),'Pipeline event/waveform payload changed')
-    if require_home or 'homepage' in m or 'campaign_preview' in m:
+    if require_home or 'homepage' in m or 'campaign_preview' in m or 'campaign_shell' in m:
         validate_home(site,m,require_current_generators or same_generators)
     return m
 

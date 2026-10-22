@@ -92,7 +92,13 @@ function fold(v){v.els.get('recordPanel').open=true;v.els.get('evidencePanel').o
 function modelLinks(v,model){
   const ids=['savedSignals','savedScalars','savedCurrent'],e=config.case_routes[model];
   assert.equal(v.els.get('responseLinks').hidden,false);
-  assert.equal(v.els.get('savedResponse').href,e.result);assert.equal(v.els.get('savedResponseReport').href,e.files);
+  const selected=new URL(v.els.get('savedResponse').href,'https://test.invalid/viewers/events.html');
+  assert.equal(selected.pathname,new URL(e.result,'https://test.invalid/viewers/events.html').pathname);
+  assert.equal(selected.searchParams.get('study'),'cs137-10k');assert.equal(selected.searchParams.get('model'),model);
+  assert.equal(selected.searchParams.get('variant'),model==='GeRC02'?'GeRC02_Li50min':model);
+  assert.equal(selected.searchParams.get('event'),String(v.state().requested.event));
+  assert.equal(selected.searchParams.get('group'),v.state().requested.group===null?null:String(v.state().requested.group));
+  assert.equal(v.els.get('savedResponseReport').href,v.els.get('savedResponse').href+'#data-files');
   for(let i=0;i<ids.length;i++){
     const element=v.els.get(ids[i]),pin=e.original_files[ids[i]];assert.equal(element.hidden,!pin,model+'/'+ids[i]+'/visibility');
     if(pin){assert.equal(element.href,pin.href);const file=pin.href.startsWith(ringBase)?path.join(ringRoot,pin.href.slice(ringBase.length)):path.resolve(site,'viewers',pin.href);const b=bytes(file);assert.equal(sha(b),pin.sha256);assert.equal(b.length,pin.bytes);}

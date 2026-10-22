@@ -16,7 +16,7 @@
 #page-navigation li+li:before{content:"›";padding-right:7px;color:#526575}
 #page-navigation .dataset-context{padding:8px 0;border-top:1px solid #d7e0e7}
 #page-navigation p{margin:5px 0;overflow-wrap:anywhere}#page-navigation a:focus-visible{outline:3px solid #f8ad30}
-@media(max-width:600px){#page-navigation{font-size:14px}#page-navigation nav{gap:6px 12px}}</style><nav aria-label="Primary"><a href="../results/index.html" aria-current="true">Results</a><a href="../detectors/index.html">Detectors</a><a href="../assemblies/index.html">Assemblies</a><a href="../guide.html">Run locally</a><a href="../methods/index.html">Methods</a></nav><nav aria-label="Breadcrumb"><ol><li><a href="../index.html">GeSignal</a></li><li><a href="../results/index.html">Results</a></li><li><a href="../results/cs137-10k/index.html">Cs137 10K</a></li><li><span aria-current="page">3D radiation events</span></li></ol></nav><section class="dataset-context" aria-label="Saved dataset" data-dataset="tenk" data-model=""><p><strong>Cs137 10K · four separate cryostat cases</strong></p><p data-context-label>All four cases</p><nav aria-label="Dataset views"><a href="../results/cs137-10k/index.html">Detector cases</a><a hidden data-context-link="result" aria-disabled="true">Charge &amp; readout</a><a data-context-link="spectrum" data-base-href="../spectra/cs137-10k.html" href="../spectra/cs137-10k.html">Stage spectra</a><a data-context-link="events" data-base-href="events.html" href="events.html" aria-current="page">3D radiation events</a><a hidden data-context-link="files" aria-disabled="true">Data &amp; settings</a></nav></section></div><!-- page-navigation:end --><h1>GeSignal event viewer</h1>
+@media(max-width:600px){#page-navigation{font-size:14px}#page-navigation nav{gap:6px 12px}}</style><nav aria-label="Primary"><a href="../results/index.html" aria-current="true">Results</a><a href="../detectors/index.html">Detectors</a><a href="../assemblies/index.html">Assemblies</a><a href="../guide.html">Run locally</a><a href="../methods/index.html">Methods</a></nav><nav aria-label="Breadcrumb"><ol><li><a href="../index.html">GeSignal</a></li><li><a href="../results/index.html">Results</a></li><li><a href="../results/cs137-10k/index.html">Cs137 10K</a></li><li><span aria-current="page">3D radiation events</span></li></ol></nav><section class="dataset-context" aria-label="Saved dataset" data-study="cs137-10k" data-dataset="tenk" data-model=""><p><strong>Cs137 10K · four separate cryostat cases</strong></p><p data-context-label>All four cases</p><nav aria-label="Dataset views"><a href="../results/cs137-10k/index.html">Detector cases</a><a hidden data-context-link="result" aria-disabled="true">Charge &amp; readout</a><a data-context-link="spectrum" data-base-href="../spectra/cs137-10k.html" href="../spectra/cs137-10k.html">Stage spectra</a><a data-context-link="events" data-base-href="events.html" href="events.html" aria-current="page">3D radiation events</a><a hidden data-context-link="files" aria-disabled="true">Data &amp; settings</a></nav></section></div><!-- page-navigation:end --><h1>GeSignal event viewer</h1>
 <p class="note">Every saved model retains 10,000 initial primaries, including zeros. AK02 / SAP22 retain all 20,000 original primaries and 121 / 115 Ge-positive primaries. Checked GeRC02 and KMRC01 candidate bundles appear when included in this saved site. Candidate counts refer to pulse groups. Overlaid decays are independent, not simultaneous.</p>
 <div class="bar"><label>Model <select id="model"><option>AK02</option><option>SAP22</option></select></label><label>Primary ID <input id="eid" type="number" min="0" max="9999" value="0"></label><button id="show">Show primary</button><button id="prev">Previous Ge hit</button><button id="next">Next Ge hit</button><label>View <select id="view"><option value="assembly">Assembly context</option><option value="positive">Ge-positive overlay</option></select></label></div>
 <div class="bar"><label>Candidate filter <select id="category"><option value="all">All saved groups</option></select></label><label>Pulse group <select id="group" disabled></select></label><span id="census"></span></div>
@@ -29,16 +29,29 @@
 <p class="small">Chords join only one saved scored STEP pre/post pair. No joins cross unscored air or connect separate steps. These are radiation records and Edep, not SSD drift, charge, Erec or waveforms. Zero-Ge and missing/native-failed response do not remove a radiation primary.</p>
 <details id="recordPanel"><summary>Requested primary: all exact saved rows and units</summary><p class="small">Positions: m; STEP Edep: keV; Track kinetic energy/momentum: MeV; creation time: ns. PDG particle IDs and original zero-based raw_row_index remain exact.</p><pre id="records"></pre></details><details id="evidencePanel"><summary>Selected pulse group: exact saved evidence</summary><pre id="evidenceRaw"></pre></details>
 <details><summary>Settings, provenance and limitations</summary><pre id="provenance"></pre><p class="small">Nominal source above the curved Al wall, not an as-built survey. The selected scene records its exact source position in global mm; crystal local +z maps to global +y. Candidate classes are radiation-energy/ancestry/spatial screens, not calibrated PSD, CCE or experimental resolution. Group origin and relative delays are separate from drift time.</p></details></section>
-<aside><h2>Pulse-group evidence</h2><div id="evidence">Assembly view: group IDs are return-navigation context only.</div><div id="representatives" class="bar"></div><details><summary>Placed-volume visibility</summary><div id="volumes"></div></details><details id="responseLinks" hidden><summary>Case results, data and settings</summary><p><a id="savedResponse">Charge and readout</a> <a id="savedResponseReport">Data and settings</a></p><p><a id="originals">Exact GDML and run inputs</a></p><p><a id="savedScalars">Complete scalar ledger</a> <a id="savedSignals">Raw signed signal samples</a> <a id="savedCurrent">Electronics charge / current data</a></p><p class="small">A complete scalar ledger does not imply that every event waveform is published. <a href="manifest.json">Display provenance</a></p></details><details><summary>Earlier AK02/SAP22 viewers</summary><p class="small">These saved archive presentations cover the earlier AK02/SAP22 records. They do not provide the GeRC02 Li50min or KMRC01 candidate cases.</p><p><a href="../examples/cs137-10k-geometry/geometry.html">Earlier assembly viewer (archive)</a> · <a href="../examples/cs137-10k-hits/hit_event_view.html">Earlier Ge-positive viewer (archive)</a></p></details></aside></div></main>
+<aside><h2>Pulse-group evidence</h2><div id="evidence">Assembly view: group IDs are return-navigation context only.</div><div id="representatives" class="bar"></div><section id="responseLinks" hidden><h2>This saved event</h2><p id="responseIdentity" class="small"></p><p><a id="savedResponse">Charge and readout</a> <a id="savedResponseReport">Data and settings</a></p><details><summary>Case files and provenance</summary><p><a id="originals">Exact GDML and run inputs</a></p><p><a id="savedScalars">Complete scalar ledger</a> <a id="savedSignals">Raw signed signal samples</a> <a id="savedCurrent">Electronics charge / current data</a></p><p class="small"><a href="manifest.json">Display provenance</a></p></details></section><details><summary>Placed-volume visibility</summary><div id="volumes"></div></details><details><summary>Earlier AK02/SAP22 viewers</summary><p class="small">These saved archive presentations cover the earlier AK02/SAP22 records. They do not provide the GeRC02 Li50min or KMRC01 candidate cases.</p><p><a href="../examples/cs137-10k-geometry/geometry.html">Earlier assembly viewer (archive)</a> · <a href="../examples/cs137-10k-hits/hit_event_view.html">Earlier Ge-positive viewer (archive)</a></p></details></aside></div></main>
 <footer>No simulation runs here. Data load in 100-event chunks with at most two chunks cached. Serve the complete site over localhost HTTP for offline browsing; file:// fetch is unsupported. SHA-256 requires HTTPS or localhost, and the overlay requires native gzip DecompressionStream. The <a href="manifest.json">display manifest</a> binds each saved dataset and its original upstream attribution; no upstream relicensing grant is made.</footer>
 <script id="viewer-navigation">// Requested identity is distinct from a verified primary or pulse group.
+const SAVED_STUDY = 'cs137-10k';
+const SAVED_VARIANTS = {AK02:'AK02',SAP22:'SAP22',GeRC02:'GeRC02_Li50min',KMRC01_candidate:'KMRC01_candidate'};
+function savedCaseIdentity(model) {return {study:SAVED_STUDY,model,variant:SAVED_VARIANTS[model]};}
+function savedSelectionQuery(identity) {
+  const q=new URLSearchParams(savedCaseIdentity(identity.model));
+  if(identity.event!==null&&identity.event!==undefined)q.set('event',String(identity.event));
+  if(identity.group!==null&&identity.group!==undefined)q.set('group',String(identity.group));
+  return q.toString();
+}
 function parseViewerQuery(search, options = {}) {
   const legacy = options.legacy === true, q = new URLSearchParams(search);
   const state = {model:'AK02',event:null,group:null,view:options.view || 'assembly',invalid:''};
-  const allowed = legacy ? ['model','event','group'] : ['model','event','group','view'];
+  const allowed = legacy ? ['model','event','group'] : ['study','model','variant','event','group','view'];
   for (const key of q.keys()) if (!allowed.includes(key) || q.getAll(key).length !== 1)
     state.invalid = 'Unknown or repeated query parameter.';
   if (q.has('model')) {state.model = q.get('model');if (!(legacy ? ['AK02','SAP22'] : ['AK02','SAP22','GeRC02','KMRC01_candidate']).includes(state.model))state.invalid = 'Unknown model.';}
+  if(q.has('study')&&q.get('study')!==SAVED_STUDY)state.invalid='Unavailable study; this viewer contains saved Cs137 10K cases.';
+  if(q.has('variant')&&q.get('variant')!==SAVED_VARIANTS[state.model])state.invalid='Unavailable model variant for this saved study.';
+  if(q.has('study'))state.study=q.get('study');
+  if(q.has('variant'))state.variant=q.get('variant');
   if (!legacy && q.has('view')) state.view = q.get('view');
   if (!['assembly','positive'].includes(state.view)) state.invalid = 'Unknown view.';
   for (const key of ['event','group']) if (q.has(key)) {
@@ -53,6 +66,8 @@ function parseViewerQuery(search, options = {}) {
 function canonicalViewerQuery(identity) {
   if (identity.invalid) throw Error(identity.invalid);
   const q = new URLSearchParams({model:identity.model});
+  if(identity.study!==undefined)q.set('study',identity.study);
+  if(identity.variant!==undefined)q.set('variant',identity.variant);
   if (identity.event !== null) q.set('event', String(identity.event));
   if (identity.group !== null) q.set('group', String(identity.group));
   q.set('view', identity.view);
@@ -246,8 +261,26 @@ function clearPrimary(){viewer.primary=null;$('records').textContent='';clearGro
 function identityText(){
   const r=viewer.requested;
   if(r.invalid){$('identity').textContent='Requested: '+r.model+'; unavailable identity: '+r.invalid;return;}
-  $('identity').textContent='Requested: '+r.model+(r.event===null?' (recorded initial default)':', original primary '+r.event)+
+  $('identity').textContent='Saved study: '+SAVED_STUDY+' / '+SAVED_VARIANTS[r.model]+'. Requested: '+r.model+(r.event===null?' (recorded initial default)':', original primary '+r.event)+
     (r.group===null?'':', group '+r.group)+(r.view==='assembly'&&r.group!==null?' (return-navigation context only; no pulse group is selected).':'; '+r.view+' view.');
+}
+function selectionRoutes(){
+  const r=viewer.requested,routes=VIEWER_CONFIG.case_routes?.[r.model];
+  if(!routes||r.invalid)return routes;
+  const result={...routes};
+  for(const kind of ['result','files','events'])if(routes[kind]){
+    const [path,fragment]=routes[kind].split('#');
+    result[kind]=path.split('?')[0]+'?'+savedSelectionQuery(r)+(kind==='events'?'&view='+r.view:'')+(fragment?'#'+fragment:'');
+  }
+  return result;
+}
+function updateResponseLinks(){
+  const routes=selectionRoutes();if(!routes||viewer.requested.invalid)return;
+  for(const [id,path]of [['savedResponse',routes.result],['savedResponseReport',routes.files]]){$(id).href=path;$(id).hidden=false;}
+  updateCaseNavigation(routes,'Saved study: '+SAVED_STUDY+' / '+SAVED_VARIANTS[viewer.requested.model]);
+  const r=viewer.requested;
+  $('responseIdentity').textContent='Charge and readout opens this exact saved case'+(r.event===null?'':', primary '+r.event)+
+    (r.group===null?'':', group '+r.group)+'. A missing published waveform is shown explicitly; another event is never substituted.';
 }
 function writeHistory(action){
   if(action==='none'||viewer.requested.invalid)return;
@@ -271,9 +304,7 @@ function showScene(scene,manifest,name){
     const small=document.createElement('small');small.textContent=v.name+' · '+v.material+' · '+v.solid_type;label.append(check,title,small);$('volumes').append(label);}
   const entry=manifest.models[name];$('originals').href=bundlePath('assembly',entry.originals,name);clearModelLinks();
   const routes=VIEWER_CONFIG.case_routes?.[name];requireViewer(routes,'No maintained case routes are bound for '+name+'.');
-  for(const [id,path]of [['savedResponse',routes.result],['savedResponseReport',routes.files]]){
-    $(id).href=path;$(id).hidden=false;
-  }
+  updateResponseLinks();
   for(const [id,record]of Object.entries(routes.original_files)){$(id).href=record.href;$(id).hidden=false;}
   $('responseLinks').hidden=false;
   if(ringModels.includes(name)){
@@ -324,6 +355,8 @@ function resolveGroup(){
 }
 function normalizeRequest(identity){
   const q=new URLSearchParams({model:identity.model,view:identity.view});
+  if(identity.study!==undefined)q.set('study',identity.study);
+  if(identity.variant!==undefined)q.set('variant',identity.variant);
   if(identity.event!==null)q.set('event',String(identity.event));if(identity.group!==null)q.set('group',String(identity.group));
   const r=parseViewerQuery('?'+q);if(identity.invalid)r.invalid=identity.invalid;return r;
 }
@@ -346,7 +379,7 @@ async function applySelection(identity,options={}){
     const primary=await loadPrimary(r.model,scene,r.event);if(!current())return false;
     viewer.primary=primary;const rows=primary.tables['stp/germanium'],energy=rows.reduce((s,row)=>s+row.edep,0);
     $('status').textContent=r.model+' primary '+r.event+' · '+rows.length+' recorded Ge steps · '+energy.toPrecision(8)+' keV Ge Edep · '+primary.tables.tracks.length+' creation vertices. '+(energy>0?'Ge-positive primary.':'Zero-Ge primary retained.');
-    refreshDetails();if(previousScene!==scene||previousMode!==mode)fit();else draw();
+    updateResponseLinks();refreshDetails();if(previousScene!==scene||previousMode!==mode)fit();else draw();
   }catch(error){if(!current())return false;clearPrimary();$('status').textContent='Assembly unavailable: '+error.message;$('status').className='error';draw();return false;}
   if(r.view==='positive'||$('overlay').checked){
     let positiveLoaded=false;
@@ -358,7 +391,7 @@ async function applySelection(identity,options={}){
       const oldCategory=viewer.category;$('category').replaceChildren(option('all','All saved groups'),...Object.entries(positive.manifest.category_labels).map(([k,label])=>option(k,label)));
       $('category').value=oldCategory;representativeButtons();resolveGroup();
       $('overlayStatus').textContent='All '+viewer.events.size+' saved Ge-positive primaries available; '+(viewer.group?'highlight: group '+viewer.group.group_id+'.':'no pulse group selected.');
-      if(viewer.group&&r.group===null){viewer.requested.group=viewer.group.group_id;identityText();writeHistory(options.history==='none'?'none':'replace');}
+      if(viewer.group&&r.group===null){viewer.requested.group=viewer.group.group_id;identityText();writeHistory(options.history==='none'?'none':'replace');updateResponseLinks();}
     }catch(error){if(!current())return false;clearGroup();viewer.overlayError=error.message;
       // A group/category miss keeps the checked full overlay population. A load
       // failure clears all positive data, never the independently checked assembly.
@@ -373,7 +406,7 @@ function requestSelection(identity,options={}){pendingSelection=applySelection(i
 function selectModel(name){
   const same=name===viewer.requested.model;
   if(!same)viewer.category='all';
-  return requestSelection({...viewer.requested,model:name,event:same?viewer.requested.event:null,
+  return requestSelection({...viewer.requested,...savedCaseIdentity(name),event:same?viewer.requested.event:null,
     group:same?viewer.requested.group:null,invalid:''});
 }
 function selectEvent(id,groupId=null){return requestSelection({...viewer.requested,event:id,group:groupId,invalid:''});}

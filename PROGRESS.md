@@ -1,5 +1,27 @@
 # Current handoff
 
+## Website audit core delivery — 2026-10-22
+
+Owner requested source-level website changes from the supplied 33-task / 110-page
+workbook, with a compact default UI and no additional AI review rounds. Implemented:
+exact 10K study/model/variant/primary/group links and unavailable-waveform state;
+shareable teaching selection; one-case spectrum views; lossless on-demand saved
+waveforms (4/4/4/231); current/historical GeGI separation; unique study cards;
+short homepage/README/Results/Methods and first-run guide; 17-model gallery
+readability, source-specific temperatures, GeRC02 variants, geometry axes/mm scale.
+Generated build `af7d8f4362f8`: 109 pages / 992,761,812 bytes,
+3,510 local links and88 fragments checked. Website fixtures36 and navigation29
+tests passed; actual selected-event/trace checks are retained in the delivery receipt.
+Original numerical models, radiation, charge, readout values and science archives
+remain unchanged. No physics or package installation. Science and monitoring stay
+PAUSED. Publication execution/status is recorded in
+`.local/site-audit-20261022/delivery.json`; source extraction and bounded build
+failure/recovery logs are retained beside it. Reuse the generated stage if needed.
+Remaining later work includes the frozen 200-primary archive's own legacy heading,
+full historical-gallery event filtering, a geometry-only LBNL landing, and lazy
+splitting of large historical/advanced payloads. These are not claimed completed.
+
+
 ## GeGI lateral-response milestone completed; paused — 2026-10-20
 
 Priority: correct the small radiation -> charge ->34-channel signal -> electronics

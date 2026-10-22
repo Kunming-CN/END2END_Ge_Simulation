@@ -39,6 +39,11 @@ for(const model of ['GeRC02','KMRC01_candidate']){
   assert.equal(c.canonicalViewerQuery(saved),'model='+model+'&event=0&group=0&view=positive');
   assert.equal(alias('?model='+model+'&event=0&group=0','assembly').target,null);
 }
+const exactCase=query('?study=cs137-10k&model=GeRC02&variant=GeRC02_Li50min&event=69&group=0&view=positive');
+assert.equal(exactCase.invalid,'');assert.equal(exactCase.study,'cs137-10k');assert.equal(exactCase.variant,'GeRC02_Li50min');
+assert.deepEqual(query('?'+c.canonicalViewerQuery(exactCase)),exactCase);
+for(const request of ['?study=cs137-1m&model=AK02&event=213','?study=cs137-10k&study=cs137-10k','?model=GeRC02&variant=GeRC02_Li30min&event=61','?model=AK02&variant=SAP22&event=213'])assert.ok(query(request).invalid,request);
+assert.equal(c.savedSelectionQuery({model:'AK02',event:698,group:0}),'study=cs137-10k&model=AK02&variant=AK02&event=698&group=0');
 assert.throws(()=>c.canonicalViewerQuery({...identity,event:null}),/requires/);
 assert.throws(()=>c.canonicalViewerQuery({...identity,view:'unknown'}),/view/);
 assert.equal(target(identity,'/viewers/events.html','?'+canonical).changed,false);
