@@ -171,14 +171,18 @@ RMS12.1504keV and position errors0.9404/3.2749mm expose sparse-domain limits.
 is recovered. The middle-depthcase3 pairing difference is comparable to saved
 interpolation discrepancy. Preserve these results; no threshold/noise claim follows.
 
-Next smallest complete workflow: fill the contiguous interior native-grid region
-selected by observedX11/12 xY24/26 geometry, then apply the unchanged two-site
-search to720929.5148interior corners,378imports/4770new; one worker/thread,300s cap,
-no transport/fields.312contact-face starts remain excluded. Warm saved capture mean
-0.00766s/point implies36.54s for new captures, plus24.89s startup/12.21s first call
-and unmeasured overhead; this is an estimate, not a promise. Retain all response
-statuses and mark mixed-collector cells unsupported. Use all coarse hypotheses,
-fixed8refinements per matching, no true position or gain input. Holdout remains unused.
+The contiguous interior region bank is complete:5148records,378unchanged imports+
+4770new drifts,145.000s; no transport/fields/failures. All actual collectors match.
+Eight points retain ideal-contact differences up to0.026642keV, without correction.
+312contact-face starts remain omitted; no complete face/global convergence claim.
+The first dense inverse retained1383840coarse alternatives across3410supported
+cells (110carrier-order-flip cells unsupported).8-mixture parity passed.720929
+keeps the correct pairing, RMS12.1504->2.75436keV and site errors0.312/0.603mm,
+but its centroid-cell pair ranks240th and was pruned byK8. Preserve this result.
+Next reuse all saved coarse arrays and16refinements, taking fixed1024candidates
+per matching by observed cost, same optimizer/steps; max2016new refinements/120s.
+No new physics, truth-based candidate selection or holdout use. Report budget and
+objective/error changes; a lower objective is not experimental validation.
 
 After supported-domain tests, connect the same forward model to explicitly chosen
 readout observables, then address variable site count and same-pixel ambiguity.

@@ -14,13 +14,11 @@ Detailed preceding handoff is preserved in Git at
 [cd31f32390d8](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/cd31f32390d8724d5ca17ff44cbb6bd23ff1b8f8/PROGRESS.md).
 All local scientific originals and failed attempts remain permanent.
 
-Current task: capture the geometry-defined contiguous interior native-grid region
-for observed stripsX11/12 xY24/26, then reevaluate group720929 with the same fixed
-waveform-only two-site search.5148interior corners:378imports+4770new, one thread,
-300s worker cap; original fields, no transport/field solves.312contact-face nodes
-excluded explicitly. Preserve mixed-collector/boundary/partial responses; they are
-not automatically valid interpolation cells. No holdout or imaging promotion.
-Region fitter retains all coarse costs losslessly and fixed8refinements per matching.
+Current task: correct coarse-center pruning using a fixed1024candidates per
+matching, chosen solely by saved costs. Reuse all16completed refinements and all
+1383840coarse alternatives; same8coordinate steps/NNLS and waveform-only inputs.
+At most2016new refinements,120s whole worker, checkpoints/no automatic retry.
+This is a development optimization-budget change; holdout and physics unchanged.
 
 Hardware correspondence: the July14 GeGI slides show measured spectra/maps, not
 raw strip-energy/time or waveform export definitions. Its simulated interaction
@@ -102,6 +100,28 @@ All paths below are under `.local/gegi-10m/signal-recovery-v1/`.
   z0case3 opposite-pairing max-channel separation0.004412keV is comparable to
   saved interpolation residual0.005749keV; case7 is larger (0.053296/0.006295keV).
   These are deterministic discrepancies, not noise estimates or acceptance cuts.
+
+- Interior region bank: `calibration/native-region-bank`,5148completed records,
+  378unchanged-payload imports+4770new drifts in145.000s, no failures/fields/transport.
+  All175032signals/10296contact endpoints verified, actual collectors all match.
+  Native endpoint algebra0;8points retain ideal-contact deviations up to0.026642keV,
+  uncorrected. Native internal28.126s; capture/store/diagnostics74.018s; saved-file
+  verification34.698s.312contact-face starts omitted;4719exact/429rounded points,
+  maximum1ULP. COMPLETE SHA
+  `2a6f723eb9c93a92e4029bbc7112c15bae7c05e80e9109ddd6c6bdbebdf3fab1`,
+  summary SHA8bc72dbc95097a103e9e8336b44cc4ff212ad115169a3946d6daa2f215e39068.
+  Region defined by observed strip geometry, not event truth. Julia exited.
+
+- Dense region inversion: `validation/native-region-720929/result.json`,
+  SHA02716a816be3c70cfb0bf27fcf9a5f3dc81d6efe93841a841542e3418837e0ac.
+  3410supported/110carrier-order-flip cells;1383840coarse alternatives saved
+  losslessly. Eight-mixture/all-coarse parity passed4.711s, no physics.
+  Correct pairing; RMS12.1504->2.75436keV; max-channel RMS11.40534keV.
+  Site centroid errors0.312386/0.602666mm, energy+0.152881/-0.087176keV.
+  Both sites hit cell boundaries. True centroid cells now supported, but their
+  pair ranks240th, outsideK8. Search0.828s, load24.399s, prep1.859s, store1.607s;
+  total42.440s includes reporting pause. A pre-fit loader provenance bug/failure
+  was retained and fixed; prior8-fit parity and physics were not repeated.
 
 Reuse frozen tools/results; no need to repeat these calibrations or fit checks.
 Code source hashes and complete input bindings are in the corresponding receipts.
