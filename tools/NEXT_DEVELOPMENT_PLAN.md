@@ -91,7 +91,7 @@ Stop only for a concrete missing input or work outside the authorized bounded
 full-chain repair. Do not request another per-round approval. The full34 basis and actual hardware transfer remain
 separate requirements. No arbitrary resolution target or extra AI review rounds.
 
-### Next bounded milestone — publish Compton overlays and repaired weights
+### Delivered implementation — Compton overlays and repaired weights
 
 The installed Geant4 11.3.2 / G4EMLOW8.6.1 provides the Ge Doppler profiles,
 shell occupancies/binding energies and native sampling APIs. Reuse that model;
@@ -111,14 +111,15 @@ inputs/results remain exact. Student release2bf8b5e is verified. This changes
 confidence accounting, not recovery counts; no new angular kernel, fitted resolution,
 cut changes, calibrated posterior claim or new physics campaign.
 
-Next show the actual153group/287candidate cone-plane intersections at the existing
+The new website shows actual153group/287candidate cone-plane intersections at the existing
 z40mm plane, summed angular density and saved conditional map. Reuse the old local
 overlay clipping/plot functions and the existing publication generator. Bind the
 new weight derivative explicitly; reuse existing153posthoc geometry/labels with
 new weights, without raw-data reads or fitting. Keep the old snapshot intact.
 State counts, units, assumed plane and iteration limit once near the figures;
-details hold provenance. Run focused exporter checks and required site/live tests,
-then publish. No made-up circles, image smoothing as validation or new UI framework.
+details hold provenance. Focused exporter/control checks,36site tests and the two
+unchanged builder validators pass; root completes GitHub/live verification. Reuse
+these results. No made-up circles, image smoothing as validation or new UI framework.
 
 ### Saved-data progress — full34 basis and joint signal fit
 

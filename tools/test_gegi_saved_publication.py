@@ -1,7 +1,9 @@
 """Saved-only publication integrity and truthful zero-map contracts."""
 import copy
+import gzip
 import hashlib
 import json
+import math
 import shutil
 from pathlib import Path
 import tempfile
@@ -137,6 +139,83 @@ class SavedPublicationTests(unittest.TestCase):
         self.reseal()
         with self.assertRaisesRegex(ValueError,'Private path'):
             self.export()
+
+    def test_cone_plane_geometry_and_asymptote_clipping(self):
+        import numpy as np
+        cone={'axis':[0.,0.,1.], 'vertex_mm':[0.,0.,0.],
+            'half_angle_deg':30., 'cos_theta':math.cos(math.radians(30))}
+        paths,residual=P._cone_paths(cone,40.,30.)
+        self.assertEqual(len(paths),1)
+        self.assertLess(residual,1e-12)
+        self.assertTrue(np.allclose(np.linalg.norm(paths[0],axis=1),40*math.tan(math.radians(30)),atol=1e-10))
+        clipped=P._clipped_paths(np.array([[-2.,0.],[0.,0.],[99.,99.],[0.,1.],[2.,1.]]),
+            np.array([True,True,False,True,True]),1.)
+        self.assertEqual(len(clipped),2)
+        self.assertTrue(all(np.max(np.abs(p))<=1 for p in clipped))
+        with self.assertRaisesRegex(ValueError,'saved cone geometry'):
+            P._cone_paths({**cone,'cos_theta':0.},40.,30.)
+
+    def test_explicit_population_selection_is_hash_bound(self):
+        population=self.root/'population';population.mkdir()
+        records=[{'campaign_initial_id':i,'pulse_group_id':0,'energy_keV':662.,
+            'candidates':[{'order':[0,1],'prior_weight':.25}]*(1 if i<19 else 2)} for i in range(153)]
+        path=self.root/'selected.jsonl.gz'
+        with gzip.open(path,'wb') as stream:
+            for row in records:stream.write(P.encoded(row)+b'\n')
+        diagnostics=self.image/'event_diagnostics.jsonl'
+        diagnostics.write_bytes(b''.join(P.encoded({'event_id':r['campaign_initial_id'],
+            'pulse_group_id':0,'candidate_count':len(r['candidates'])})+b'\n' for r in records))
+        identity=put(population/'identity.json',{})
+        image={**self.new,'group_count':153,'provenance':{'map_input_sha256':P.sha(path),
+            'population_identity_sha256':identity}}
+        image_sha=put(self.image/'report.json',image)
+        report={'kind':'gegi_order_prior_population_v1','input_sha256':{
+            'reconstruction_complete':P.sha(self.rec/'COMPLETE.json'),'map_records':P.sha(path),
+            'old_map_records':'d'*64},'artifact_sha256':{'imaging/report.json':image_sha,
+            'imaging/event_diagnostics.jsonl':P.sha(diagnostics)},
+            'verification':{'map153_287_matches_population_exactly':True,'all434_nonweight_records_exactly_equal':True}}
+        digest=put(population/'result.json',report)
+        put(population/'COMPLETE.json',{'status':'completed_sparse_population_and_one_map',
+            'result_sha256':digest,'identity_sha256':identity})
+        result=P._population_inputs(population,path,self.rec,self.image/'report.json',image)
+        self.assertEqual(sum(len(r['candidates']) for r in result['records']),287)
+        with gzip.open(path,'ab') as stream:stream.write(b'{}\n')
+        with self.assertRaisesRegex(ValueError,'selection binding changed'):
+            P._population_inputs(population,path,self.rec,self.image/'report.json',image)
+
+    def test_default_small_energy_layer_and_null_angle_evidence_render(self):
+        layer={'id':'cone-layer-3','label':'1332.49_keV','title':'1332.49 keV',
+            'groups':18,'candidates':36,'visible_candidates':30,
+            'files':{'overlay':'overlay.png','density':'density.png','conditional':'conditional.png'}}
+        pooled={**layer,'id':'cone-layer-0','label':'pooled','title':'All selected energies','groups':153,'candidates':287}
+        display={'default_layer':layer['id'],'plane_z_mm':40.,'em_iterations':40,'layers':[pooled,layer]}
+        page=P._render_cone_page({'cone_plane_display':display,'posthoc_evaluation':{'pooled':{'finite_vertex':None}}},
+            {'group_count':153},{ }).decode()
+        self.assertIn('value="cone-layer-3" selected',page)
+        self.assertIn('18 groups · 36 candidate cones',page)
+        self.assertIn('Small sample; limited statistics.',page)
+        self.assertEqual(page.count('40 iterations'),1)
+        self.assertNotIn('truth_position',page)
+        page=P._render_cone_page({'cone_plane_display':display}, {'group_count':153},{},
+            {'groups':{'saved':{'representative':{'channels':[]}}}}).decode()
+        self.assertIn('id="gegi-journey-data"',page)
+        self.assertIn('id="historical-journey"',page)
+        for anchor in ('new-map','spectra','journey'):
+            self.assertIn('<section id="'+anchor+'">',page)
+        self.assertIn('<nav class="local">',page)
+        self.assertIn('<article class="cone-layer"',page)
+        from check_site import Links, resolve_reference
+        links=Links();links.feed(page)
+        for link in links.urls:
+            target=resolve_reference(P.ROUTE,link)
+            if target is not None and target['path']==P.ROUTE and target['fragment']:
+                self.assertIn(target['fragment'],links.anchors)
+        import site_restructure
+        target=self.root/'deferred-render';target.mkdir()
+        (target/'gegi_signal_journey.js').write_bytes((P.ROOT/'tools/gegi_signal_journey.js').read_bytes())
+        deferred=site_restructure.defer_gegi_journey(target,page,{'artifacts':{}})
+        self.assertNotIn('id="gegi-journey-data"',deferred)
+        self.assertIn("panel.addEventListener('toggle',load)",deferred)
 
     def test_completed_input_hash_change_rejected(self):
         (self.rec/'summary.json').write_bytes((self.rec/'summary.json').read_bytes()+b' ')

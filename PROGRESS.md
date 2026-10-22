@@ -2,8 +2,9 @@
 
 ## Current milestone — 2026-10-22
 
-Finish publication of actual Compton cone intersections, angular density and the
-saved conditional map. Root owns direction; ordinary implementation is gpt-6.1-sol
+The Compton display and fixed-case nominal readout bridge are implemented and
+locally validated. Root is completing deployment; exact live status/receipt is in
+`.local/autonomy/state.json`. Root owns direction; implementation is gpt-6.1-sol
 ultra. No additional AI reviews, resets, large campaigns or repeated broad checks.
 The owner explicitly stopped further two-bright-spot investigation: the current
 1332.492 keV layer has 18 groups. State limited statistics and move on.
@@ -33,7 +34,7 @@ Receipt: `.local/student-runtime-p1/COMPLETE.json`, SHA
 `f9c413b38da08d13ac4bc4092867628d5c8f07f454098f725ead758302138b7b`.
 Do not rebuild this runtime for website-only edits.
 
-Website publication is in progress using `tools/gegi_saved_publication.py` and
+Website publication uses `tools/gegi_saved_publication.py` and
 `tools/build_site.py`. Four selectable layers show actual cone-plane curves,
 saved angular backprojection and saved conditional image; default1332 has18groups/
 36candidate orders. Plane z=40mm, XY units mm. Root inspected the three default
@@ -42,12 +43,17 @@ The initial build failed at the historical teaching loader interface; docs were
 not replaced. The exporter now uses the existing exact mount/deferred loader.
 Intermediate bundles/build failures are retained. Final generator uses the existing
 section/nav/anchor layout; the pinned historical site tools remain unchanged.
-Final bundle: `validation/order-prior-preservation/publication/final/`.
+Final bundle: `validation/order-prior-preservation/publication/delivery/`.
 21 exporter tests and36 final-source site tests passed, plus the affected complete
 page transformation and six control-switch checks. Browser/CDP timed out; real
-browser control/viewport acceptance is not claimed. Final build/local/live checks
-are pending. Failures and exact checks are in publication/validation.json.
-Root owns final commit/push/live verification; no hand edits to docs.
+browser control/viewport acceptance is not claimed. The unchanged builder's two
+final check_site validators passed and atomically installed docs:109pages,
+3529links,84fragments,1978files. Build ID
+`2310f97ff2b7bc835bdc58b78283bb6f5795044a6cc48aedfe3c4d68d0ef12d8`;
+GeGI manifest`61f0de0d58d2a13fde43196022633f2f0b86975cc1e9cd032847c41335f81bd8`.
+The reused-stage builder took614.301s:210.720s predecessor,403.581s final validators/
+installation. No new physics. Failures/exact checks are in publication/validation.json.
+Root owns commit/push and exact live check; no hand edits to docs.
 
 ## Latest saved-data repair
 
