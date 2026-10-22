@@ -119,6 +119,31 @@ class GalleryTests(unittest.TestCase):
         self.assertIn('Li50min',rows['GeRC02']['detail']);self.assertIn('30-minute',rows['GeRC02']['detail'])
         self.assertEqual(rows['GeGI_3D']['assembly_href'],'assemblies/gegi/index.html')
 
+    def test_catalog_introduction_defines_shapes_and_separates_studies_from_local_choices(self):
+        cap=D.execution_capabilities();control=D.control_capabilities(cap);dedicated=D.dedicated_control_capabilities(cap)
+        text=D.catalog_introduction(cap,control,dedicated);parsed=Elements();parsed.feed(text)
+        for term in ('high-purity germanium','inverted coaxial point contact','small point electrode','ring-shaped electrode'):
+            self.assertIn(term,text)
+        self.assertIn('17 models',text);self.assertIn('10 configurations',text)
+        self.assertIn('GeGI_3D',text);self.assertIn('34 electrodes',text)
+        self.assertIn('4 published cases',text);self.assertIn('GeRC02 Li50min',text);self.assertIn('KMRC01 candidate',text)
+        self.assertIn('saved simulation data',text)
+        self.assertEqual(len(re.findall(r'<tr><th scope="row">',text)),4)
+        self.assertEqual({a['href'] for tag,a in parsed.tags if tag=='a'},
+                         {'../guide.html#local-control','../results/cs137-10k/index.html'})
+        self.assertNotIn('Supported',text);self.assertNotIn('Full Pipeline Supported',text)
+        self.assertEqual(text,D.catalog_introduction(cap,control,dedicated))
+
+    def test_catalog_introduction_reuses_passed_capabilities_and_derives_counts(self):
+        cap=D.execution_capabilities()
+        with patch.object(D,'execution_capabilities',side_effect=AssertionError('Repeated capability read')),\
+             patch.object(D,'control_capabilities',side_effect=AssertionError('Repeated Control read')),\
+             patch.object(D,'dedicated_control_capabilities',side_effect=AssertionError('Repeated dedicated read')):
+            text=D.catalog_introduction(cap,{'AK02','SAP22'},{'GeGI_3D'},up='../../')
+        self.assertIn('17 models',text);self.assertIn('2 configurations',text)
+        self.assertIn('../../guide.html#local-control',text)
+        self.assertIn('../../results/cs137-10k/index.html',text)
+
     def test_technical_settings_apply_only_to_the_relevant_model_and_download(self):
         manifest=self.site/'examples/cs137-10k-rings/manifest.json'
         manifest.parent.mkdir(parents=True);manifest.write_text('{}')

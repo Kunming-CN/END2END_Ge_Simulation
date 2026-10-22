@@ -47,7 +47,7 @@ def dataset_navigation(dataset,up='', *, model=None, model_label=None, current_p
     require(dataset in DATASETS,'Unknown saved dataset')
     return dataset_context(dataset,current_path or DATASETS[dataset][1],model,model_label)
 
-def write_page(path,title,body,depth=0,*,fold_footer=False,page_path=None,dataset=None,model=None,model_label=None,nav_html=None):
+def write_page(path,title,body,depth=0,*,fold_footer=False,page_path=None,dataset=None,model=None,model_label=None,nav_html=None,extra_style=''):
     path=Path(path); path.parent.mkdir(parents=True,exist_ok=True)
     up='../'*depth
     page_path=page_path or '/'.join(path.parts[-(depth+1):])
@@ -57,7 +57,7 @@ def write_page(path,title,body,depth=0,*,fold_footer=False,page_path=None,datase
         footer=footer.replace('<footer>','<footer><details><summary>More project resources</summary><p>',1).replace('</footer>','</p></details></footer>',1)
     html=(f'<!doctype html><html lang="en"><meta charset="utf-8">'
           f'<meta name="viewport" content="width=device-width,initial-scale=1">'
-          f'<title>{escape(title)}</title><style>{STYLE}</style><body><main class="wrap">'
+          f'<title>{escape(title)}</title><style>{STYLE}{extra_style}</style><body><main class="wrap">'
           f'<header class="top"><a href="{up}index.html"><strong>GeSignal</strong></a>'
           f'{nav}</header>{body}{footer}</main></body></html>')
     path.write_text(html,encoding='utf-8',newline='\n')
@@ -76,29 +76,52 @@ def detector_cards(catalog):
                     f'<p>Model status: {escape(item.get("status","saved model"))}. Public studies and validation limits are listed on its overview.</p></article>')
     return ''.join(rows)
 
-def teaching_preview(site):
-    """A small preview of actual saved samples; the teaching page owns details."""
-    source=Path(site)/'spectra/teaching-examples.json'
-    if not source.is_file():
-        return ''
-    case=read(source)['cases'][0]
-    trace=case['saved_trace']['trace']
-    def curve(times,values,label,unit):
-        pairs=[(float(t),float(v)) for t,v in zip(times,values) if 0<=t<=5000]
-        require(len(pairs)>1,'Teaching preview needs retained original samples')
-        lo=min(0.,min(v for _,v in pairs));hi=max(0.,max(v for _,v in pairs));span=hi-lo or 1.
-        points=' '.join(f'{40+270*t/5000:.5g},{135-105*(v-lo)/span:.5g}' for t,v in pairs)
-        return (f'<figure><svg viewBox="0 0 330 180" role="img" aria-label="{label}, {unit}; first 5 microseconds of saved samples">'
-                f'<text x="14" y="19">{label} ({unit})</text><path d="M40 30V135H310" fill="none" stroke="#9aaebb"/>'
-                f'<polyline points="{points}" fill="none" stroke="#087f91" stroke-width="2"/>'
-                '<text x="40" y="160">0</text><text x="250" y="160">5 µs</text></svg></figure>')
-    plots=curve(trace['time_ns'],trace['induced_charge_fC'],'Induced charge','fC')+curve(trace['time_ns'],trace['shaped_V'],'Shaped signal','V')
-    edep=case['pulse']['deposited_energy_keV'];erec=case['pulse']['readout']['reconstructed_energy_keV']
-    return ('<section class="panel" id="pipeline-example"><h2>One saved event, from deposits to energy</h2>'
-        f'<p>Cs137 10K · {escape(case["model"])}'+(' Li50min' if case['model']=='GeRC02' else '')+f' · primary {case["event_id"]} · pulse group {case["group_id"]}. '
-        f'Deposited energy {edep:.3f} keV → reconstructed energy {erec:.3f} keV.</p>'
-        '<div class="grid">'+plots+'</div><p>Original signed samples in the first 5 µs. '
-        'Synthetic electronics and retained native cap flags; this example does not establish calibrated charge collection.</p></section>')
+HOME_STYLE='''
+body{background:#f7fafb}.wrap{max-width:1180px}.top{padding-bottom:16px;border-bottom:1px solid #d7e0e7}
+.top>a{text-decoration:none;font-size:21px;color:#173047}.top nav a{background:transparent;font-size:14px;padding:8px}
+.home-hero{padding:30px 0 20px;max-width:900px}.home-hero .eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#526575;margin:0 0 12px}
+.home-hero h1{font-size:clamp(2rem,4vw,3rem);letter-spacing:-.035em;line-height:1.12;margin:0 0 16px;color:#102d40}
+.home-hero .lead{font-size:18px;line-height:1.6;max-width:760px;margin:0;color:#405d6c}
+.flow-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px}.flow-heading h2{font-size:19px;margin:10px 0 14px}.flow-heading small{color:#526575}
+.signal-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;list-style:none;padding:0;margin:0}
+.signal-flow>li{position:relative;padding:20px;background:#fff;border:1px solid #cfdee3;border-radius:12px;min-width:0}
+.signal-flow>li+li:before{content:'→';position:absolute;left:-18px;top:108px;font-size:23px;color:#007e89}
+.step-label{color:#00727e;font-size:12px;font-weight:750;letter-spacing:.07em;text-transform:uppercase}.signal-flow h3{font-size:21px;margin:5px 0 0}.engine{font-size:13px;color:#526575;margin:3px 0 8px}
+.signal-flow svg{display:block;width:100%;height:82px;color:#395967}.signal-flow svg text{font:15px system-ui}
+.signal-flow .explanation{font-size:15px;line-height:1.5;min-height:67px;margin:9px 0 14px}.quantity{font-size:14px;background:#edf6f7;border-radius:6px;padding:8px 10px;margin:0;color:#075663}
+.energy-key{margin:14px 0 26px;font-size:14px;color:#405d6c;max-width:920px}.energy-key strong{color:#173047}
+.path-heading{font-size:20px;margin:0 0 14px}.reader-paths{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.reader-paths article{display:flex;flex-direction:column;align-items:flex-start;border-top:3px solid #9ebcc5;padding:16px 0 2px;min-width:0}
+.reader-paths article:first-child{border-color:#008391}.reader-paths h3{font-size:20px;margin:8px 0}.reader-paths p{font-size:15px;color:#405d6c;line-height:1.55;margin:0 0 16px}.reader-paths .audience{font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin:0;color:#526575}
+.reader-paths a{margin-top:auto;font-weight:700;text-decoration:none;padding:9px 13px;background:#e5eef2;border-radius:6px}.reader-paths article:first-child a{background:#087b89;color:white}
+.home-scope{margin:28px 0 0;font-size:13px;color:#526575}footer{font-size:13px;margin-top:24px}
+@media(max-width:760px){.top{gap:10px}.top nav{gap:2px}.top nav a{padding:6px;font-size:13px}.home-hero{padding-top:24px}.home-hero .lead{font-size:16px}.signal-flow,.reader-paths{grid-template-columns:1fr}.signal-flow{gap:14px}.signal-flow>li{display:grid;grid-template-columns:100px minmax(0,1fr);column-gap:14px;padding:16px}.signal-flow .step-label,.signal-flow h3,.signal-flow .engine,.signal-flow .explanation,.signal-flow .quantity{grid-column:2}.signal-flow svg{grid-column:1;grid-row:1/6;align-self:center;height:98px}.signal-flow>li+li:before{display:none}.signal-flow .explanation{min-height:0;margin:7px 0 10px}.signal-flow h3{font-size:19px}.signal-flow .quantity{font-size:13px}.flow-heading small{font-size:11px}.reader-paths{gap:14px}.reader-paths p{margin-bottom:12px}}
+'''
+
+
+def homepage():
+    """An explanatory schematic and three tasks; data plots live in their studies."""
+    return '''<section class="home-hero"><p class="eyebrow">GeSignal · END2END_Ge_Simulation</p>
+<h1>From a gamma ray<br>to a measured energy.</h1>
+<p class="lead">Explore how a high-purity germanium (HPGe) detector turns a radiation interaction into an electrical signal — and how that signal becomes an energy measurement.</p></section>
+<section id="pipeline-example" aria-labelledby="signal-chain-title"><div class="flow-heading"><h2 id="signal-chain-title">One physical chain. Three simulation stages.</h2><small>Conceptual diagram</small></div>
+<ol class="signal-flow">
+<li><span class="step-label">01 · Interaction</span><h3>Radiation deposits energy</h3><p class="engine">Geant4 / remage</p>
+<svg viewBox="0 0 260 90" aria-hidden="true"><rect x="102" y="10" width="105" height="70" rx="16" fill="#e3eef8" stroke="#83a8bd"/><path d="M15 45H125L158 27L179 61" fill="none" stroke="#087b89" stroke-width="3"/><path d="m117 39 9 6-9 6" fill="none" stroke="#087b89" stroke-width="2"/><circle cx="126" cy="45" r="5" fill="#cd6d43"/><circle cx="158" cy="27" r="5" fill="#cd6d43"/><circle cx="179" cy="61" r="5" fill="#cd6d43"/><text x="35" y="31">γ</text><text x="217" y="50">Ge</text></svg>
+<p class="explanation">Track interactions in the crystal and record where, when and how much energy is deposited.</p><p class="quantity">Deposited energy · E<sub>dep</sub> [keV]</p></li>
+<li><span class="step-label">02 · Detector signal</span><h3>Charges drift and induce signal</h3><p class="engine">SolidStateDetectors.jl</p>
+<svg viewBox="0 0 260 90" aria-hidden="true"><rect x="27" y="12" width="206" height="66" rx="10" fill="#f1edf8" stroke="#b5a3c9"/><path d="M27 13v64M233 13v64" stroke="#795b9e" stroke-width="6"/><path d="M117 45H55m0 0 10-6m-10 6 10 6M143 45h62m0 0-10-6m10 6-10 6" stroke="#087b89" stroke-width="2" fill="none"/><circle cx="121" cy="45" r="13" fill="#dbeef0"/><circle cx="140" cy="45" r="13" fill="#e9dfef"/><text x="110" y="50">e⁻</text><text x="131" y="50">h⁺</text></svg>
+<p class="explanation">Transport electrons and holes in the electric field and calculate the charge induced on each electrode.</p><p class="quantity">Electrode charge · Q(t) [fC]</p></li>
+<li><span class="step-label">03 · Measurement</span><h3>Electronics reconstruct energy</h3><p class="engine">Preamplifier → shaper → peak ADC</p>
+<svg viewBox="0 0 260 90" aria-hidden="true"><g fill="#e5f2ee" stroke="#91b6ab"><rect x="5" y="22" width="70" height="46" rx="7"/><rect x="95" y="22" width="70" height="46" rx="7"/><rect x="185" y="22" width="70" height="46" rx="7"/></g><path d="M75 45h20m70 0h20" stroke="#087b89" stroke-width="2"/><g fill="#285c53" text-anchor="middle"><text x="40" y="51">Preamp</text><text x="130" y="51">Shape</text><text x="220" y="51">ADC</text></g></svg>
+<p class="explanation">Amplify and shape the signal. Convert the digitized peak to energy using a fixed calibration.</p><p class="quantity">Reconstructed energy · E<sub>rec</sub> [keV]</p></li>
+</ol><p class="energy-key"><strong>E<sub>dep</sub></strong> is energy left in the crystal. <strong>E<sub>rec</sub></strong> is energy inferred from the readout. Following both reveals how charge collection and electronics affect the measurement. ADC means analog-to-digital converter.</p></section>
+<section aria-labelledby="reader-paths-title"><h2 class="path-heading" id="reader-paths-title">Where would you like to start?</h2>
+<div class="reader-paths"><article><p class="audience">Learn · online · no installation</p><h3>Follow one signal</h3><p>Walk through six saved examples, from energy deposits to electrode signals and the final readout.</p><a href="spectra/pipeline.html">Learn the signal chain →</a></article>
+<article><p class="audience">Explore · online · no installation</p><h3>Browse simulation results</h3><p>Compare detector responses, study energy spectra and explore multichannel Compton imaging.</p><a href="results/index.html">Browse saved results →</a></article>
+<article><p class="audience">Run · Windows · local setup</p><h3>Run your own simulation</h3><p>Prepare the local environment, choose a compatible detector and source, then run with Control.</p><a href="guide.html">Set up and run locally →</a></article></div></section>
+<span id="native-cs137-10k"></span><span id="current-ring-10k"></span>
+<p class="home-scope">The online examples are saved simulations. Each study documents its model assumptions and validation limits.</p>'''
 
 def defer_gegi_journey(directory, text, record):
     """Move the exact historical payload to its existing, deferred script asset."""
@@ -242,21 +265,8 @@ def apply(site):
                 image['accepted_events']==5 and image['ambiguous_events']==4):
             gegi_description+=' This earlier two-position sample is inconclusive for reliable source separation.'
 
-    home=f'''<section class="hero"><p class="muted">HPGe radiation-to-readout simulation</p><h1>GeSignal</h1>
-<p>Explore how radiation deposits become charge signals and an energy measurement: Geant4/remage → SolidStateDetectors.jl → preamplifier → shaping → peak ADC.</p>
-<p>The public website contains saved engineering results. Run new simulations locally with Control.</p></section>
-<p><a class="button" href="spectra/pipeline.html">Follow one signal →</a> · <a href="results/index.html">Browse all results</a> · <a href="guide.html">Run locally</a></p>
-<span id="native-cs137-10k"></span><span id="current-ring-10k"></span>'''
-    home+=teaching_preview(site) or '<section id="pipeline-example"><h2>Follow a saved signal</h2><p>The teaching page retains each example’s study and event identity.</p></section>'
-    home+='<section class="cards" aria-label="Representative studies">'
-    if has_10k:
-        home+='<article class="card"><h2>Compare detector responses</h2><p>Four independent Cs137 10K cases: deposits, signed charge, electronics and spectra. Different geometries; no matched Li-only experimental control.</p><a href="results/cs137-10k/index.html">Choose a detector case →</a></article>'
-    if has_1m:
-        home+='<article class="card"><h2>Study larger-sample spectra</h2><p>AK02 and SAP22: 1,000,000 initial decays per detector in two independent runs. Ensemble spectra and scalar records; full waveforms are not available for every event.</p><a href="results/cs137-1m/index.html">Open the 1M study →</a></article>'
-    if has_gegi:
-        home+='<article class="card"><h2>GeGI Compton imaging</h2><p>'+gegi_description+'</p><a href="'+gegi_route+'">Open saved GeGI signals and imaging →</a></article>'
-    home+='</section>'
-    write_page(site/'index.html','GeSignal',home,0,fold_footer=True)
+    write_page(site/'index.html','GeSignal — HPGe Radiation-to-Readout Simulation',homepage(),0,
+               fold_footer=True,nav_html=primary_navigation('index.html'),extra_style=HOME_STYLE)
 
     curated_teaching=(site/'spectra/teaching-examples.json').is_file()
     learn_example='''<section class="panel"><h2>Main teaching example</h2><p>Follow one saved bare-detector gamma event through deposits, charge, preamplifier, shaper and peak ADC.</p><a class="button" href="../spectra/pipeline.html">Open the teaching example →</a></section>'''
@@ -272,7 +282,7 @@ def apply(site):
     other_items=[x for x in catalog['detectors'] if x['id'] not in control_ids|dedicated_ids]
     det=('''<section class="hero"><p class="muted">Detector library</p><h1>Explore detector models</h1>
 <p>Choose a detector to inspect its geometry, saved fields and signals. All 17 model definitions retain their original settings and provenance.</p></section>
-<p id="current-ring-10k">Model definitions and saved studies are distinct; each model page identifies its available studies.</p>
+<span id="current-ring-10k"></span>'''+detector_pages.catalog_introduction(capabilities, control_ids, dedicated_ids)+'''
 <h2>LBNL cryostat · Control configurations</h2><p>'''+str(control_count)+''' supported local configurations in the <a href="../scenarios/lbnl-cs137/index.html">LBNL modular cryostat</a>. GeRC02 uses a separate Li50min operating variant; its library geometry is the original 30-minute model.</p><div class="grid">'''+detector_cards({'detectors':featured_items})+'''</div>
 <h2>GeGI dedicated cryostat</h2><p>The <a href="../assemblies/gegi/index.html">GeGI cryostat</a> supports only the exact GeGI_3D model. It is a separate assembly at the same level as LBNL, with 34-electrode readout and Compton imaging.</p><div class="grid">'''+detector_cards({'detectors':dedicated_items})+'''</div>
 <h2>More detector models</h2><p>These '''+str(blocked_count)+''' models need a future larger cryostat. Their pages show the actual dimension limits; all remain available for browsing.</p><div class="grid">'''+detector_cards({'detectors':other_items})+'''</div>''')
@@ -348,7 +358,7 @@ def apply(site):
         body='''<section class="hero"><p class="muted">Campaign overview unavailable in this snapshot</p><h1>Cs137 · 10k initial decays per detector</h1><p>This stable overview URL is retained, but the checked 10k comparison is not included in this site snapshot. Use the Results page for currently available campaigns.</p></section>'''
         write_page(site/'results/cs137-10k/index.html','Cs137 10k results unavailable · GeSignal',body,2)
     methods='''<section class="hero"><p class="muted">Principles, assumptions and limits</p><h1>Methods & limitations</h1>
-<p>The radiation, semiconductor and electronics stages retain distinct quantities and identities. These saved engineering examples do not establish experimental agreement or calibrated charge-collection efficiency.</p></section>
+<p>Start with the physical chain: radiation deposits energy, moving charges induce electrode signals, and electronics turn those signals into a reconstructed energy.</p></section>
 <section class="panel"><h2>Radiation deposits</h2><p>Geant4/remage tracks the radiation and records deposited energy E<sub>dep</sub> in keV, positions in mm, creation/deposition times in ns and original primary/track identities. A primary may miss the crystal, interact more than once or produce delayed daughter deposits. Keep deposits belonging to one primary and pulse group together.</p></section>
 <section class="panel"><h2>Semiconductor charge and induction</h2><p>SolidStateDetectors.jl transports the generated electrons and holes in the detector electric field. Electrode weighting potentials determine the signed induced charge through the Shockley–Ramo relation. Charge in fC and current in nA belong to this stage; deposition time is not carrier drift time. Incomplete collection, guards and numerical termination flags remain part of the result.</p></section>
 <section class="panel"><h2>Electronics and reconstructed energy</h2><p>A fixed wiring convention passes the signed current to a preamplifier, analog shaper and peak ADC. Voltages are in V. Reconstructed energy E<sub>rec</sub> in keV uses an independent injection calibration shared across events, never an event-by-event match to E<sub>dep</sub>. Threshold, clipping and rejection can make energy unavailable; an unknown response is not zero.</p><p><a href="../spectra/pipeline.html">Follow these stages in six saved signals →</a></p></section>

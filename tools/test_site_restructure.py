@@ -66,7 +66,7 @@ class SiteStructureTests(unittest.TestCase):
         for label in S.PRIMARY:self.assertIn(label,home)
         self.assertEqual(home.count('<article class="card">'),0)
         self.assertNotIn('href="downloads/all-models.zip"',home)
-        self.assertIn('href="spectra/pipeline.html">Follow one signal',home)
+        self.assertIn('href="spectra/pipeline.html">Learn the signal chain',home)
         primary=re.search(r'<nav aria-label="Primary"[^>]*>(.*?)</nav>',home).group(1)
         self.assertEqual(re.findall(r'href="([^"]+)"',primary),
                          ['results/index.html','detectors/index.html','assemblies/index.html','guide.html','methods/index.html'])
@@ -113,12 +113,29 @@ class SiteStructureTests(unittest.TestCase):
         for href in ('spectra/cs137-10k.html','viewers/events.html','downloads/all-models.zip'):
             self.assertNotIn(href,parser.links)
         self.assertIn('spectra/pipeline.html',parser.outside)
-        self.assertIn('results/cs137-10k/index.html',parser.outside)
-        self.assertIn('1,000,000 initial decays per detector',home)
+        self.assertNotIn('results/cs137-10k/index.html',parser.outside)
+        self.assertNotIn('1,000,000 initial decays per detector',home)
         self.assertNotIn('Methods and retained links',home)
         for anchor in ('pipeline-example','native-cs137-10k','current-ring-10k'):
             self.assertIn('id="'+anchor+'"',home)
         self.assertIn('<summary>More project resources</summary>',home)
+
+    def test_home_explains_the_chain_without_cropped_scientific_plots(self):
+        home=S.homepage()
+        self.assertIn('END2END_Ge_Simulation',home)
+        self.assertIn('high-purity germanium (HPGe)',home)
+        self.assertIn('Conceptual diagram',home)
+        self.assertIn('Geant4 / remage',home)
+        self.assertIn('SolidStateDetectors.jl',home)
+        self.assertIn('analog-to-digital converter',home)
+        self.assertEqual(home.count('<svg '),3)
+        self.assertEqual(re.findall(r'<a href="([^"]+)"',home),
+                         ['spectra/pipeline.html','results/index.html','guide.html'])
+        self.assertNotIn('polyline',home)
+        self.assertNotIn('primary 61',home)
+        self.assertNotIn('first 5',home)
+        self.assertNotIn('half',home)
+        self.assertIn('Windows · local setup',home)
 
     def test_result_hubs_are_conditional(self):
         root=self.fixture(with_results=True);S.apply(root)
@@ -237,7 +254,7 @@ class SiteStructureTests(unittest.TestCase):
         with patch('gegi_campaign_publication.validate_bundle') as checked,patch('gegi_publication.validate_bundle') as old:
             S.apply(root)
         checked.assert_called_once_with(formal);old.assert_not_called()
-        for path in ('index.html','results/index.html'):
+        for path in ('results/index.html',):
             text=(root/path).read_text(encoding='utf-8')
             self.assertIn('1,000,000 initial records',text)
             self.assertIn('708 imaging-accepted pulse groups',text)
@@ -274,7 +291,8 @@ class SiteStructureTests(unittest.TestCase):
         self.assertEqual(before,{p.name:p.read_bytes() for p in saved.iterdir()})
         home=(root/'index.html').read_text(encoding='utf-8')
         results=(root/'results/index.html').read_text(encoding='utf-8')
-        for text in (home,self.result_panels(results)['gegi']):
+        self.assertNotIn('imaging-accepted events',home)
+        for text in (self.result_panels(results)['gegi'],):
             for value in ('10,000 initial emitted gammas','5 imaging-accepted events, 4 ambiguous',
                           'inconclusive for reliable source separation','examples/gegi/index.html'):
                 self.assertIn(value,text)

@@ -873,11 +873,11 @@
     "tools/hit_event_view.py": "7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e"
   },
   "adapter_sources": {
-    "tools/viewer_navigation.py": "5d743d2982dd808a5991f6ab44a83415233aa83d0828e36fcdd54456fe9c439a",
+    "tools/viewer_navigation.py": "ef9d51e000c9913bd11f565d3f0281931407688c295fd91c4bb384c595de2ecc",
     "tools/viewer_navigation.js": "f7f78206a9bad5f62a69c2a4c8e05ba66e533c32ed3f45b144b7e26c5df9dbd3",
     "tools/unified_event_viewer.html": "e3df7951bda9a0932fff094f7d7dc0242e9f71b14969a785db1983ecae2105c5",
     "tools/unified_event_viewer.js": "dc526f6634b5f43b09f153452aeeba3806b86f009e3381f6a026a7211ead0755",
-    "tools/site_restructure.py": "a2ba9c173895b502af6e698084f829d224eb718331399fbe43b731c6221c3533",
+    "tools/site_restructure.py": "ef796727af3908e066f7dd84f3f2fbc689dcd6257f5a7191772ff128299d08a6",
     "tools/site_routes.py": "f77f2c715da8530239093523c8eb613c9e13f8cf5440c33bc5254c2cbbd352cb"
   },
   "pages": {

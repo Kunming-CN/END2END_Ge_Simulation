@@ -1,46 +1,65 @@
 # GeSignal — HPGe Radiation-to-Readout Simulation
 
-Explore how radiation deposits become signed detector signals and an energy
-measurement: **Geant4/remage → SolidStateDetectors.jl → preamplifier → analog
-shaper → peak ADC**. The website displays saved engineering results; new
-simulations run locally.
+**GeSignal (`END2END_Ge_Simulation`)** follows radiation in high-purity germanium
+(HPGe) detectors from energy deposits to signed signals and an energy measurement:
+**Geant4/remage → SolidStateDetectors.jl → preamplifier → analog shaper → peak ADC**.
 
-## Explore a result
+> **[Open the GeSignal website →](https://kunming-cn.github.io/END2END_Ge_Simulation/)**
+> Explore saved simulations and detector models online, with no installation.
 
-- [Follow one signal](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html) — six saved Cs137 examples with deposits, charge, electronics and original event identities.
-- [Browse all studies](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) — four-detector Cs137 10K comparison, two independent 1M-decay cases and GeGI multichannel imaging.
-- [Inspect detector models](https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/index.html) and [cryostat assemblies](https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/index.html).
+## Start here
 
-![GeGI conditional Compton reconstruction on the imposed z=40 mm plane](docs/results/gegi-campaign/map-new-pooled.png)
-
-The [current GeGI study](https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-campaign/index.html)
-contains 1,000,000 initial records across four independent acquisitions at two
-positions. Photon and nuclear-decay denominators remain separate. This is a
-conditional reconstruction on an imposed plane: same-energy source separation
-remains unresolved, and validated imaging recoveries remain zero.
+| Your goal | Where to start |
+|---|---|
+| Learn the signal chain | [Follow one signal](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html): six saved Cs137 10K examples connect deposits, charge, electronics and original event identities. |
+| Explore saved results and geometry | [Browse studies](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html), including Cs137 10K, 1M and GeGI; inspect the [detector catalog](https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/index.html) and [cryostat assemblies](https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/index.html). |
+| Run a new simulation on your computer | Follow the [Windows setup and use guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html), then start the local Control interface. |
 
 ## Run locally
 
 [Download the student software ZIP](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip),
-extract it and open `tools/site_guide.html`. The maintained
-[Windows guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html)
-continues from preparation through **Control.cmd**, model/source selection,
-**Check environment**, **Check plan**, **Run**, and saved results.
+extract it and open `tools/site_guide.html`. After preparing the dependencies,
+start **Control.cmd** on that computer to choose a compatible cryostat, detector
+and source, check the plan, and run, stop or resume a simulation. The guide and
+local compatibility checks identify the supported combinations.
 
-All 17 models can be browsed. Local execution requires a compatible cryostat;
-GeGI has its own dedicated assembly. Canonical model inputs, study-specific
-operating variants and experimental validation are distinct. Setup was checked
-on the existing Windows/WSL computer; fresh-machine portability remains unvalidated.
-The student ZIP contains software, models and the guide; saved website studies
-are a separate optional download.
+The public website displays saved results. New simulations run locally through
+Control. The software ZIP contains code, models and the guide; saved website
+studies are a separate optional download.
+
+## Source map
+
+```text
+END2END_Ge_Simulation/
+├── transport/             # Geant4/remage radiation transport and deposit export
+├── simulation/            # Julia/SSD fields, carrier drift and electrode signals
+│   └── readout.jl         # Preamplifier, analog shaper and peak ADC
+├── scenarios/             # Source presets, compatibility and run configurations
+├── tools/                 # Local Control, orchestration, website generators and tests
+│   └── site_guide.html    # Maintained Windows setup and use guide
+├── models/                # Versioned SSD YAMLs, includes and provenance catalog
+└── docs/                  # Generated website — edit its maintained sources, not docs/
+```
+
+Use the [maintenance guide](tools/MAINTENANCE.md) to find each component's source
+owner and [PROGRESS.md](PROGRESS.md) for the current development handoff.
+
+<details>
+<summary>Scientific scope</summary>
+
+Saved studies are engineering simulations with their own inputs, event counts
+and validation limits. Deposited-energy truth (Edep) and readout-derived energy
+(Erec) describe different stages. Model geometry, compatible operating settings,
+numerical convergence and agreement with experiment must be assessed separately.
+Setup has been checked on the existing Windows/WSL computer; fresh-machine
+portability remains unvalidated.
+
+See [Methods](https://kunming-cn.github.io/END2END_Ge_Simulation/methods/index.html)
+for stage definitions, calibration, counting rules and study-specific limits.
+
+</details>
 
 ## References and contributions
-
-Use [Methods](https://kunming-cn.github.io/END2END_Ge_Simulation/methods/index.html)
-for stage definitions, counting rules and scientific limits. The
-[maintenance guide](tools/MAINTENANCE.md) records source ownership, while
-[PROGRESS.md](PROGRESS.md) is the current development handoff. Historical studies
-retain their own identities and do not silently become newer datasets.
 
 [Report a problem or suggest a change](https://github.com/Kunming-CN/END2END_Ge_Simulation/issues),
 or read [Contributing](CONTRIBUTING.md). Cite the software with

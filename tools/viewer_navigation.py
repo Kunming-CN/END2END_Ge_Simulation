@@ -35,6 +35,9 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '4945d697ae27217b3c4ff008d247445af43a6f44c5a327a845a3e48aa20b5675',
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
+ # Exact 5dfd5fa public/HEAD manifest before the homepage layout refresh;
+ # all six source pins match that Git snapshot and saved data remain checked.
+ 'bfaaa2373df476d2f95e1cf1b266c600119a6692bda40173bde3ca01db17b4c3',
  # Exact 376bd39 manifest, byte matched to Git before geometry/context repair.
  '35f2d69c400f4b94308558b2a869595556acb7bf985c2e3c339c072b669dcbc3',
  # Exact a37cf4d deployed viewer, authenticated before the event-identity repair.
@@ -273,6 +276,7 @@ def validate(site,current=False):
     require(known_current or (not current and sha(manifest_path) in TRUSTED_PREVIOUS_UNIFIED_MANIFESTS),
             'Unknown adapter source binding; preserve the saved display instead of resealing it')
     if current or known_current or sha(manifest_path) in (
+            'bfaaa2373df476d2f95e1cf1b266c600119a6692bda40173bde3ca01db17b4c3',
             'd44b2095341d3ed08eccd8e89320fe82cfb361d8d077ef8c30ab48599e68b3ee',
             '0ce8330f3a246620d7d9f501a8232c8c461f5dfbb95c2bd33b0955a380f809e3'):
         rings=ring_bundle(site)

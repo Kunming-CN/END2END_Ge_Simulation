@@ -185,6 +185,33 @@ def catalog_model_summary(model,capabilities=None,catalog_control=None,dedicated
     return {'label':'View model · larger cryostat needed','detail':'Model exceeds the nominal LBNL cavity.',
             'assembly_href':None}
 
+def catalog_introduction(capabilities=None,control_ids=None,dedicated_ids=None,*,up='../'):
+    """Explain model names and separate saved studies from checked local choices."""
+    from site_routes import CASE_MODELS
+    capabilities=execution_capabilities() if capabilities is None else capabilities
+    control_ids=control_capabilities(capabilities) if control_ids is None else control_ids
+    dedicated_ids=dedicated_control_capabilities(capabilities) if dedicated_ids is None else dedicated_ids
+    dedicated=' · '.join('<code>'+escape(model)+'</code> ('+str(capabilities[model]['contact_count'])+' electrodes)'
+                       for model in capabilities if model in dedicated_ids)
+    cases=' · '.join(escape('GeRC02 Li50min' if model=='GeRC02' else model.replace('_',' ')) for model in CASE_MODELS)
+    return ('<section id="catalog-introduction" class="panel"><h2>Detector shapes and available workflows</h2>'
+        '<p><strong>HPGe</strong> means <strong>high-purity germanium</strong>, the crystal material. '
+        '<strong>ICPC</strong> means <strong>inverted coaxial point contact</strong>: a small point electrode combined with a coaxial well. '
+        'A <strong>ring-contact</strong> detector has a ring-shaped electrode around the crystal. '
+        'Open a model’s geometry to compare the contact shapes.</p>'
+        '<table><thead><tr><th scope="col">What you want to do</th><th scope="col">Available choices</th>'
+        '<th scope="col">Where to start</th></tr></thead><tbody>'
+        '<tr><th scope="row">Browse online</th><td>'+str(len(capabilities))+' models</td>'
+        '<td>Saved geometry, contacts, fields and example signals; no installation.</td></tr>'
+        '<tr><th scope="row">Run locally · LBNL cryostat</th><td>'+str(len(control_ids))+' configurations</td>'
+        '<td><a href="'+escape(up+'guide.html#local-control',quote=True)+'">Windows setup and Control</a>; choose a compatible model and source.</td></tr>'
+        '<tr><th scope="row">Run locally · GeGI cryostat</th><td>'+dedicated+'</td>'
+        '<td>Dedicated GeGI assembly and multichannel workflow.</td></tr>'
+        '<tr><th scope="row">Published Cs137 10K data</th><td>'+str(len(CASE_MODELS))+' published cases</td>'
+        '<td><a href="'+escape(up+'results/cs137-10k/index.html',quote=True)+'">'+cases+'</a>.</td></tr>'
+        '</tbody></table><p class="note">The published cases contain saved simulation data. '
+        'Use the local configuration rows to choose new simulations.</p></section>')
+
 def current_results(site,model,campaign_models):
     """Offer only results present in this saved snapshot, with exact model scope."""
     links=[]

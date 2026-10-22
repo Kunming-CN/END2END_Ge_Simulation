@@ -1,27 +1,29 @@
 # Current handoff
 
-## Website navigation and compact display — 2026-10-22
+## Website homepage and student orientation — 2026-10-22
 
-Owner follow-up identified five concrete gaps after published376bd39: event context
-through spectra, two dynamic scalar URLs,200-primary archive identity, old1M-to10K
-links, and current10K cards duplicated under historical detector studies. Source
-repairs are implemented and frozen. Saved readout main content now shows three
-energy quantities; exact rows/times/samples remain in details. LBNL uses the shared
-viewer in geometry-only mode, with an explicit study entrance. GeGI's exact
-5,957,207-byte historical payload moves to its existing script asset and loads
-only after expansion; current maps, counts and scientific limitations stay visible.
+Owner rejected the cropped, unexplained homepage traces after5dfd5fa. Replaced
+that preview and research-status cards with a complete conceptual three-stage
+radiation→charge→readout diagram, explicit Edep/Q(t)/Erec outputs and three tasks:
+learn online, browse saved results online, or set up/run locally. The home header
+is compact and binds GeSignal to END2END_Ge_Simulation. Existing study/event URLs
+and the five primary modules remain. Full scientific plots stay in their studies.
+README removes its front-page conditional GeGI plot, highlights the website and
+adds the actual source tree; CONTRIBUTING adds a readable component map. Detector
+intro explains HPGe/ICPC/ring contacts and distinguishes17viewable models,
+10LBNLlocal configurations, dedicated GeGI and4published10K cases from current
+capability records. Methods now opens with the physics before validation scope.
 
-Targeted event/DOM/history/scalar/archive checks passed; archive suite17pass/1old
-fixture skip, site fixtures36, shared-navigation31. Deferred-load and duplicate
-application checks preserve exact payload bytes. Generated build `964d5a74286e`:109pages/992,786,594bytes,3,506local links.
-Both final snapshot validations passed. Publication/live status belongs to the
-continuation receipt; do not infer deployment from a successful local build.
-`.local/site-audit-20261022/continuation.json` owns source pins and this delivery's
-build/live status. The prior published milestone is retained in `delivery.json`.
-No physics, original scientific changes, student ZIP rebuild or extra AI review.
-Science and monitoring remain PAUSED. Remaining later work: full historical-gallery
-event filtering and historical-report duplicate download labels; not all33 audit
-items are claimed closed.
+Actual Chrome desktop and390px narrow layout inspected; no horizontal overflow;
+three stages/three tasks verified and viewport reset. Targeted checks:32navigation,
+3catalog helper,36site fixtures,26local documentation links/7site targets passed.
+Generated build `14090ab9454b`:109pages/3,505local links; both final
+snapshot validations passed. Publication/live state remains in the receipt. `.local/site-audit-20261022/homepage.json`
+owns build/commit/live status and screenshot evidence. The preceding published
+milestones/evidence remain in `delivery.json` and `continuation.json`; reuse them.
+No physics, scientific input/data edits, student ZIP rebuild or extra AI review.
+Science and monitoring remain PAUSED. Later: full historical-gallery filtering
+and historical-report duplicate download labels; not all33audit items are closed.
 
 
 ## GeGI lateral-response milestone completed; paused — 2026-10-20

@@ -18,6 +18,9 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+    # Exact 5dfd5fa public/HEAD manifest before the homepage layout refresh;
+    # all eleven source pins match that Git snapshot; saved origins stay exact.
+    '0b3981c063e7426c5f4fd4a28085964dcd55bc1af3b097425a6c9c1298bd06e6',
     # Exact 376bd39 public/HEAD manifest before event-preserving spectrum links;
     # all eleven generator hashes match that Git snapshot, with origins intact.
     'cbeeee6c95b8c5b8825cd40e15911d076ab845b1c23cc0ebad069454ce722023',

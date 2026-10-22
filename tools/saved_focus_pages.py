@@ -31,6 +31,8 @@ DISPLAY_SOURCES=(JS,'tools/saved_focus_pages.py','tools/site_restructure.py','to
 # immutable original receipt above. Rehashed edits are never a historical basis.
 PREVIOUS_DISPLAY_RECEIPTS={
     'gamma':frozenset({
+                       # Exact 5dfd5fa public/HEAD receipt before homepage layout.
+                       '8ba30d9cb452f0e4661acb90bc1766d7246f2fd4a43c77e1e9b0370915e05bcc',
                        # Exact 376bd39 installed/Git display before archive identities.
                        'c0e18347410fd3a0780c78aa6f0b404d496bdba4e65eb793e30e618d9c15e617',
                        # Exact 47685df Git/public bytes before the conditional GeGI hub schema.
@@ -55,7 +57,9 @@ PREVIOUS_DISPLAY_RECEIPTS={
                        '0f660aeeaa0954a4c12ea5193d8cbe8bf6fc17e5e050cfc791bcaf7e646c49a4',
                        # Exact accepted 6db59a35 display before Co60/source download updates.
                        'a271d710183982a50a2ab6117765d9543e8eb7f2847ddf356e8c92298e174b72'}),
-    'teaching':frozenset({'a96863b38712c40efd87372accd0276bdbdeada68370c5e6b46a983abf526800'})}
+    'teaching':frozenset({'a96863b38712c40efd87372accd0276bdbdeada68370c5e6b46a983abf526800',
+                         # Exact 5dfd5fa public/HEAD receipt with historical identity.
+                         '250f804846bd66593f6f1ade176a06b60bd4303ab43bc34d5c57d37ddb4b88aa'})}
 PRESERVED_TEACHING_HTML={'bytes':9810837,'sha256':'71d898465740d2ad4eb098cc5cc1d27c494f38c0151e634dfc067bf53f147bf7'}
 TEACHING_ARCHIVE_TEXT=(
     ('<title>From photon to pulse · HPGe pipeline</title>',
@@ -195,6 +199,10 @@ def validate(directory):
         html=(directory/'pipeline.html').read_bytes()
         if current:
             S.require(html==teaching_archive_render(html),'Historical teaching navigation differs')
+        elif S.sha(S.canonical(manifest))=='250f804846bd66593f6f1ade176a06b60bd4303ab43bc34d5c57d37ddb4b88aa':
+            # This exact published predecessor includes the reversible study
+            # labels. Recover and verify the complete original accepted HTML.
+            teaching_archive_original(html)
         else:
             S.require(manifest['files']['pipeline.html']==PRESERVED_TEACHING_HTML,
                       'Original teaching reader differs from accepted display')
