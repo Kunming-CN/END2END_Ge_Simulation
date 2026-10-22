@@ -1,5 +1,70 @@
 # Current handoff
 
+## GeGI native-cell forward milestone completed — 2026-10-22
+
+Owner resumed development after the lateral-forward milestone. Root owns direction
+and scientific decisions; gpt-6.1-sol ultra performs bounded implementation/data
+tasks with existing helpers, necessary boundary checks and concise prose. No extra
+AI review, large campaign or resets. Automatic monitoring remains PAUSED. Actual
+process inspection found no Python/Julia workers; same supervisor ownership resumed,
+old ownership/pause records retained. Website delivery below remains complete.
+
+Four native-cell corners completed42.719s/2.483GB, no transport/field solve.
+Actual electric-field and all34weighting-potential axes match; all4starts are
+interior/noncontact. At the fixed independent500keV z0 target, max-channel RMS
+falls14.394344(centre)/10.614474(pitch interpolation) to0.000522keV;
+max-point error36.124165/37.268822 to0.002200keV, terminal error0.
+This verifies one local response, not the full detector or an inverse algorithm.
+Evidence: calibration/native-cell-pilot/results; COMPLETEb9015721...aac25,
+comparison59150191...e0af. Original sources/inputs unchanged.
+
+The same80independent calibration targets now have378completed support records:
+374new drifts+4imports,44.843s/2.114GB, native injection time10.871s, no fields or
+transport. All corner terminal identities/ideal-contact differences are0.
+Native-grid-near interpolation improves every target against all3previous methods.
+Max-channel RMS median14.361(centre)/9.734(old timewarp)->1.499keV; largest1.675.
+Max-point error median40.377/35.986->14.743keV; largest16.933. Terminal difference
+<=1.14e-13keV.54corners have a recorded−1ULP X offset(−9.313e-10m) through the
+unchanged mm interface; actual-coordinate weights used,60exact/20rounded targets
+reported separately. Evidence: calibration/native-cell-bank/results;
+COMPLETE9558d353...787de73,comparison63f12430...f65d34.
+
+The saved common-carrier timewarp then reduces max-channel RMS median to0.399042keV
+and max-point-error median/max to1.63221/2.19316keV, all80supported. All64nonzero-z
+cases improve; z0 differences are roundoff(max3.18e-14keV worsening in4cases).
+Terminal/250ns errors<=1.137e-13keV. Predicted electron arrival median/max error
+0.2/0.5ns, hole~0/0.2ns; validation endpoints enter only posthoc evaluation.
+33weight vectors need roundoff-only closure(max1.874e-16), explicitly recorded.
+Saved comparison1.795s, no new physics/fits. Evidence: same results/timing-comparison.json,
+953a45ad...f1ef787c; local compare_timing.py is retained with its source bindings.
+
+Saved-only preselection study checked all57,613groups in31.476s. Existing pipeline
+already skips942,395zero-deposit primaries. Single-row/single-position cuts save0.
+One recorded gamma-anchor/no-direct-deposit predicate selects29,875groups and
+414,993/1,424,544positive rows(29.13%work proxy), but loses28,758currently accepted
+spectroscopy groups and4conditional imaging groups/8candidates. Keep zero-only
+default; imaging candidates are not validated physical eligibility. Result:
+validation/transport-prefilter-feasibility.json,bab9e90b...45ac1ffb.
+The redundant unbounded+finite electronics benchmark is complete:3saved groups,
+2timed repeats each,6.990s->6.410s(8.30%), all final outputs deeply identical.
+Cumulative allocations7.051GB->6.384GB; worker26.283s. One mono-gamma finite-window
+case is explicitly counterfactual; two original finite cases agree. No campaign
+speedup inferred. Evidence: validation/readout-duplicate-benchmark/result.json,
+098be9b3...b6bc60d. Production sources unchanged. Reuse all Oct20 evidence.
+
+Next bounded milestone: use the saved native-grid-near/time-aligned model for a
+small inverse check with unknown positions, first single-site then competing
+two-site X/Y pairings. Search all available candidate cells without giving the
+fit the true cell/source. Report supported-domain coverage, position/energy errors,
+wrong pairings and false splits; truth remains evaluation only. Preserve the
+fixed development/holdout split, existing native bank and all old failed candidates.
+Do not expand calibration or tune a map before this saved-only check establishes
+what extra coverage is needed. Guard-field repair and actual hardware observables
+remain separate unresolved stages. Validated imaging recovery count is still0;
+no new holdout/reprocessing/student ZIP/site science release in this milestone.
+The three developer tools and compact handoff are the source delivery. Monitoring
+stays PAUSED; no scientific worker remains after the completed receipts.
+
 ## Website homepage and student orientation — 2026-10-22
 
 Owner rejected the cropped, unexplained homepage traces after5dfd5fa. Replaced
@@ -22,7 +87,8 @@ snapshot validations passed. Publication/live state remains in the receipt. `.lo
 owns build/commit/live status and screenshot evidence. The preceding published
 milestones/evidence remain in `delivery.json` and `continuation.json`; reuse them.
 No physics, scientific input/data edits, student ZIP rebuild or extra AI review.
-Science and monitoring remain PAUSED. Later: full historical-gallery filtering
+This website stage left science and monitoring PAUSED; manual science resumed
+above, monitoring remains PAUSED. Later: full historical-gallery filtering
 and historical-report duplicate download labels; not all33audit items are closed.
 
 
@@ -37,10 +103,8 @@ only. Monitoring PAUSED; no resets or new large campaign. Root owns the existing
 gegi-saved-recovery lock; retain old inactive ownership. No science worker running.
 Use bounded6.1-sol ultra development tasks, no extra AI reviews. Detailed earlier
 guard chronology is retained at Git09eae20:PROGRESS.md and immutable local receipts.
-Latest owner asked to pause after this stage. Saved-grid diagnosis is complete;
-this milestone is synchronized and the supervisor is paused. Retain inactive
-ownership and all results. No next drift, inverse work or automatic continuation
-may start until the owner resumes.
+This completed stage was paused at owner request. The explicit Oct22 continuation
+above resumes manual development; its original data and pause history remain.
 
 ### Completed physical localization — reuse, do not repeat
 

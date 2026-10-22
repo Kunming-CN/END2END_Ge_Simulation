@@ -2,10 +2,12 @@
 
 ## Active milestone — establish the GeGI full-chain reference, 2026-10-20
 
-Owner requested a pause after the current lateral-forward milestone. Capture,
-saved-waveform comparisons and saved-grid diagnosis are complete; now paused.
-The next work below is recorded for resumption, not automatic authorization to run
-while paused. Automatic monitoring remains PAUSED.
+Owner explicitly resumed manual development on2026-10-22 after the completed
+lateral-forward milestone. Native-cell forward validation and transport-only SSD
+preselection assessment below are now complete; next is a saved-only inverse check. Root owns
+direction/quality; gpt-6.1-sol ultra implements small concrete changes without
+speculative abstractions or repetitive checks/prose. Automatic monitoring stays
+PAUSED; the old pause record is retained, not an active manual-work block.
 
 Owner resumed evidence/planning after correcting the priority: establish a correct
 small radiation -> charge ->34-channel signal ->readout ->reconstruction workflow
@@ -140,13 +142,45 @@ No validation arrival-time input, new physics, event-truth/source input or cut t
 Keep holdout unused and production selected_pair unchanged until an integrated
 development result supports validation and release.
 
-Saved-grid diagnosis confirms the coarse pitch-based stencil crosses multiple
-native WP cells (all34WP axes identical). For the fixed z0 validation point, four
-native-cell corners are identified, but native geometry membership and electric
-field axes were not saved. On owner resumption, verify these facts first and
-consider one four-corner test to distinguish grid-cell sampling from drift-path
-effects. No new injection request exists; no bank expansion or inverse work while
-paused. This is a hypothesis to test, not a completed forward-model correction.
+The Oct22four-corner test verifies interior/noncontact starts and identical electric
+and all34weighting-grid axes. At one fixed independent500keV z0 target, using its
+native-cell corners reduces max-channel RMS14.394344(centre)/10.614474(pitch)
+to0.000522keV and max-point error36.124165/37.268822 to0.002200keV; terminals match.
+Four new drifts took42.719s with no field solve. Reuse native-cell-pilot/results.
+The same80fixed targets now have378completed native-grid-near supports,4imported
+and374new drifts in44.843s. All80 improve against centre/pitch/old timewarp.
+Max-channel RMS median1.499keV(max1.675), max-point-error median14.743keV(max16.933),
+terminal error<=1.14e-13keV. Actual Float32 mm-to-m rounding is preserved in54corners;
+actual-coordinate weights and60exact/20rounded target summaries are recorded.
+The saved-only common-carrier timing comparison is complete: all80supported,
+max-channel RMS median0.399042keV, max-point-error median/max1.63221/2.19316keV.
+All64nonzero-depth cases improve; z0 changes are roundoff only. The existing
+timewarp uses training endpoint times, not validation endpoints or real-event truth.
+
+Next smallest complete workflow: invert the saved signals using these available
+cells without revealing true position/cell to the fit. First single-site position
+and energy, then competing two-site X/Y pairings. Reuse existing fitting helpers,
+report unsupported-domain coverage and errors, and identify any actually missing
+support before adding calibration points. No new physics is needed for this first
+check. Native ideal-charge inference remains distinct from actual hardware-observable
+inference; guard-field and readout correspondence gaps above remain open. Preserve
+all candidate pairings and failures; holdout stays out of tuning. Integrate/release
+only after inverse errors and the selected readout observables are validated.
+
+Owner's efficiency suggestion was checked against all57,613saved groups. Zero-only
+preselection already removes942,395primaries. Single-row/single-position cuts save0.
+One recorded gamma-anchor cut covers29,875groups/29.13%ofpositive deposit rows,
+but loses28,758accepted spectroscopy groups and4current conditional imaging groups.
+Keep the existing default. Row-work fraction is not elapsed-time savings; any
+future restricted imaging mode needs explicit selection and skipped identities.
+
+A3saved-group benchmark confirms redundant unbounded readout before the retained
+100us readout. Six timed evaluations:6.990s versus6.410s finite-only,8.30%electronics
+time saved, final outputs deeply identical. Two groups had original finite windows;
+the mono-gamma group's finite branch is explicitly counterfactual. No campaign
+speedup inferred. After the frozen forward test, remove this duplicate computation
+with targeted native-signal/readout parity and preserve old calibration provenance;
+do not rerun transport or drift to test an electronics-only change.
 
 ### Reference scope and reuse
 
