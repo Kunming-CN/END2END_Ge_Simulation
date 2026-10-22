@@ -6,10 +6,12 @@ from pathlib import Path
 import sqlite3
 import tempfile
 import unittest
+from unittest.mock import patch
 import zlib
 import numpy as np
 import gegi_event_store as S
 import gegi_signal_reconstruction as G
+import gegi_order_prior_preservation as P
 
 
 class Bank:
@@ -45,6 +47,71 @@ def fixture(sites):
 
 
 class ReconstructionTests(unittest.TestCase):
+    def _order_prior_result(self, energies, *, rank_deficient=0):
+        event, native, channels = fixture([(4, 21, sum(energies), -2)])
+        sites = [{'position_mm': [10.*i, 0., 0.], 'energy_keV': energy,
+                  'position_covariance_mm2': np.diag([10., 10., 10.]).tolist(),
+                  'energy_sigma_keV': None} for i, energy in enumerate(energies)]
+        flow = [(4, 21+i, energy) for i, energy in enumerate(energies)]
+        with patch.object(G, 'energy_flows', return_value=([flow], {'rank_deficient_supports': rank_deficient})), \
+                patch.object(G, '_fit_flow', return_value={'status': 'conditional_fit', 'sites': sites}):
+            return G.reconstruct_event(event, native, channels, Bank())
+
+    def _assert_order_prior_conservation(self, out):
+        self.assertAlmostEqual(sum(c['prior_weight'] for c in out['candidates'])+
+                               out['unsupported_hypothesis_mass'], 1.)
+        self.assertTrue(all(c['weight'] == c['prior_weight'] for c in out['candidates']))
+        expected = G.sequence_candidates(out['hypotheses'][0]['sites'])
+        extra = {'hypothesis_index', 'prior_weight', 'weight', 'uncertainty_scope'}
+        self.assertEqual([{k: v for k, v in c.items() if k not in extra} for c in out['candidates']], expected)
+
+    def test_order_prior_two_valid_orders_unchanged(self):
+        out = self._order_prior_result([200., 462.])
+        self.assertEqual([c['prior_weight'] for c in out['candidates']], [.5, .5])
+        self.assertEqual(out['unsupported_hypothesis_mass'], 0.)
+        self._assert_order_prior_conservation(out)
+
+    def test_order_prior_single_valid_order_keeps_other_half_unresolved(self):
+        out = self._order_prior_result([507.351, 153.809])
+        self.assertEqual([c['order'] for c in out['candidates']], [[1, 0]])
+        self.assertEqual(out['candidates'][0]['prior_weight'], .5)
+        self.assertEqual(out['unsupported_hypothesis_mass'], .5)
+        self._assert_order_prior_conservation(out)
+
+    def test_order_prior_all_site_permutations_precede_screening(self):
+        for energies in ([100., 150., 412.], [80., 100., 120., 362.]):
+            with self.subTest(sites=len(energies)):
+                out = self._order_prior_result(energies)
+                self.assertTrue(out['candidates'])
+                self.assertTrue(all(c['prior_weight'] == 1/G.math.factorial(len(energies))
+                                    for c in out['candidates']))
+                self._assert_order_prior_conservation(out)
+
+    def test_order_prior_retains_rank_deficient_aggregate_alternative(self):
+        out = self._order_prior_result([200., 462.], rank_deficient=7)
+        self.assertEqual(out['energy_bookkeeping']['rank_deficient_supports'], 7)
+        self.assertEqual([c['prior_weight'] for c in out['candidates']], [.25, .25])
+        self.assertEqual(out['unsupported_hypothesis_mass'], .5)
+        self._assert_order_prior_conservation(out)
+
+    def test_saved_order_prior_migration_matches_runtime_without_refit(self):
+        expected = self._order_prior_result([507.351, 153.809])
+        legacy = copy.deepcopy(expected)
+        legacy['candidates'][0].update(prior_weight=1., weight=1.)
+        legacy['unsupported_hypothesis_mass'] = 0.
+        legacy['candidate_weight_scope'] = 'Equal conditional candidates, not calibrated posterior probabilities.'
+        before = copy.deepcopy(legacy)
+        with patch.object(G, '_fit_flow', side_effect=AssertionError('Saved migration must not refit')), \
+                patch.object(G, 'sequence_candidates', side_effect=AssertionError('Saved migration must not rebuild candidates')):
+            self.assertEqual(P.migrate(legacy), expected)
+        self.assertEqual(legacy, before)
+
+    def test_saved_order_prior_migration_rejects_incomplete_site_order(self):
+        legacy = self._order_prior_result([200., 462.])
+        legacy['hypotheses'][0]['sites'].append(copy.deepcopy(legacy['hypotheses'][0]['sites'][0]))
+        with self.assertRaisesRegex(ValueError, 'complete conditional sites'):
+            P.migrate(legacy)
+
     def test_one_to_many_energy_bookkeeping(self):
         event, native, channels = fixture([(4, 21, 200, -2), (4, 29, 462, 3)])
         out = G.reconstruct_event(event, native, channels, Bank())

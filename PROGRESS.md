@@ -86,7 +86,55 @@ diagnosis SHA4e8a2f311b27ae021f59ea9a72dd6086761b07033a895a8d9a072fbc319a244e
 deposition below root birth energy:879908/906665/913963.235273 and newly identified
 278717 both deposit their662keV root energy, so these two need targeted transport-
 versus-free-electron-kinematics diagnosis before changing any reconstruction cut.
-No noise, escape or Doppler mechanism is asserted from these counts alone.
+The two-event metadata diagnosis is complete: using deposited energies still gives
+free-electron cos(theta)=-1.550391/-1.131631; the inconsistency predates readout.
+No duplicate/merged birth keys or cross-cell descendant allocation was found.
+235273has a later photon STEP start off the two-birth chord;278717's local incoming
+STEP differs slightly from the initial direction. Initial-direction angles therefore
+are not proven local scattering angles. Macro/log verify Livermore/Geant4 11.3.2;
+the exact-version upstream model includes Doppler sampling, but these records alone
+do not establish the cause of each event. No cut/model changed. Evidence:
+`validation/two-site-map-evaluation/continued/full-energy-diagnosis.json`, SHA
+386521326905836b6b7a5ecff65cdeef34eac0cbcaacf39ff1927521a728c0fb;2original metadata
+records are cached beside it. Original zero-deposit STEP records were recovered
+from two small raw archives without radiation reruns:4root steps(2positive/2zero)
+for235273and3(2positive/1zero) for278717. Unique adjacent STEP chords at the Compton
+births give local cos(theta)=-0.646475000028/-0.899038091256. STEP lacks processID,
+per-step energy and momentum; do not label an individual zero step Rayleigh.
+Evidence:`two-site-map-evaluation/continued/raw-step-lookup.json`, SHA
+3b9400e294ab6cd69fdbc52fb093fa0181406921479c7b5d5adb52caf226ea5c;0.392s internal.
+The free-electron energy/angle mismatch is present before SSD/readout. Next inspect
+the installed Geant4 Doppler/shell data and upstream sampler for reuse in a bounded
+angular-response reference. Existing Geant4 11.3.2/G4EMLOW8.6.1 and native C++
+toolchain are now verified. Ge has8shell profiles on31momentum points; binding
+energies/occupancies and installed file/package hashes are recorded in
+`validation/geant4-doppler-data/availability.json`, SHA
+4998a6d481879da6ac585a63f7c18c819f84351bf7b30a4bf33cfaa8c33d087d.
+Direct native Compton sampling completed:30000Livermore+3000Klein–Nishina
+control samples, fixed seeds;3.227s compile/1.233s sample process. At662/1173.228/
+1332.492keV, respectively125/106/74of10000Livermore samples fall below the free-
+electron cosine domain. All3000controls stay inside, maxcos error6.67e-16;
+all33000energy closures<=1.04e-13keV. Valid-domain absolute angular-error medians
+are1.125/0.744/0.672degrees;95th percentiles10.267/7.664/6.766degrees. No detector
+transport/SSD. Atomic relaxation was off with binding energy locally deposited;
+this isolates the model, not original event-by-event transport or detector
+efficiency. COMPLETE SHAce02d38a16b9c19f28f0520549c6a776e9af595b345aaa203f0320825096c5ee
+in `validation/bound-electron-response/native-sampler/`; all raw samples retained.
+The order-accounting repair is validated: weight all site orders before the
+approximate kinematic screen, retaining unsupported orders as unresolved mass.
+All18affected-module tests pass. Saved400/153comparison took5.828s: candidate
+mass14.25->10.822917(development),14.5->10.701389(holdout); map123.666667->115.833333.
+Map identities/energies and all287candidate nonweight fields are exact;19of153groups
+change weights. Both200group splits retain20native failures/40noncomplete groups;
+280original missing-mass records in the545group union remain missing. No candidates
+added/removed, errors unchanged, no validated new recovery. Result SHA
+27e7788afa17712cfc5d2ff51ce3aa11f13710e237516dde1e4666620de0ceab in
+`validation/order-prior-preservation/evaluation/`; content verification SHA
+4b58d409c6983e292fb8a6a1d399ce5bd0724749ce71a028c877143d7af18b3e.
+An initial wrong-directory invocation scanned0groups; its failed-start record is
+preserved. The corrected input is `reconstruction-v3/full-signal`. Next apply only
+weights to all saved candidate groups, reuse the153map input, and release software.
+No new angular kernel, changed cut or recovery promotion.
 Evidence:`validation/two-site-map-evaluation/continued/result.json`, SHA
 20035307ef632c8259805c5ac8adb47a031f41230897a14e6fdaf0b28b76fca0.
 An initial5.819sattempt stopped at102groups on a progress-file replacement error;

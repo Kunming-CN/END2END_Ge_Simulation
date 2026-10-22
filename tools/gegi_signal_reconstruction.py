@@ -539,18 +539,19 @@ def _reconstruct_observables(observed, bank, *, max_strips=4, max_sites=4, max_h
         out['hypotheses'].append(fit)
         if fit['status'] == 'conditional_fit':
             candidates = sequence_candidates(fit['sites'])
+            alternatives = len(flows) + int(bookkeeping['rank_deficient_supports'] > 0)
+            order_count = math.factorial(len(fit['sites']))
             for candidate in candidates:
                 candidate['hypothesis_index'] = index
-                # Keep an angular-uninformative alternative when a continuous
-                # energy allocation remains undetermined by the strip energies.
-                alternatives = len(flows) + int(bookkeeping['rank_deficient_supports'] > 0)
-                candidate['prior_weight'] = 1/(alternatives*len(candidates))
+                # Unsupported orders and undetermined continuous energy flows
+                # retain uninformative mass instead of boosting surviving cones.
+                candidate['prior_weight'] = 1/(alternatives*order_count)
                 candidate['weight'] = candidate['prior_weight']
                 candidate['uncertainty_scope'] = 'Strip-width and saved diagnostic-discrepancy scales. Energy sigma is unknown; 2keV/2% is only an energy compatibility tolerance.'
                 out['candidates'].append(candidate)
     if out['candidates']:
         out.update(status='ambiguous', reason='charge_sharing_and_photon_multiplicity_unresolved')
-        out['candidate_weight_scope'] = 'Equal conditional candidates, not calibrated posterior probabilities.'
+        out['candidate_weight_scope'] = 'Equal site-order priors before kinematic screening within equally weighted energy-flow alternatives; unsupported orders remain unresolved. Not calibrated posterior probabilities.'
     elif len(xs) == len(ys) == 1:
         out['reason'] = 'same_pixel_multiplicity_unidentifiable'
     else:

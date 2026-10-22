@@ -10,8 +10,10 @@ gamma-anchor prefilter has been tested and rejected. Explicit two-site selection
 after reconstruction, the affected map and student release are complete. Exact153map-
 group evaluation exposes sequence/vertex ambiguity despite matched charge-cell pairs.
 Saved ancestry shows152/153groups have one earliest gamma lineage; the parent-gamma
-interaction reference is complete. Next isolate why two662keV fully deposited
-groups fail the free-electron Compton energy relation before changing a cut. Root owns
+interaction reference is complete. Two662keV fully deposited groups violate the
+free-electron relation even before readout. Their original zero-deposit STEP records
+have been recovered without transport reruns. Next inspect installed Geant4 bound-
+electron response data for a small independently testable angular response. Root owns
 direction/quality; gpt-6.1-sol ultra implements small concrete changes without
 speculative abstractions or repetitive checks/prose. Automatic monitoring stays
 PAUSED; the old pause record is retained, not an active manual-work block.
@@ -89,7 +91,27 @@ Stop only for a concrete missing input or work outside the authorized bounded
 full-chain repair. Do not request another per-round approval. The full34 basis and actual hardware transfer remain
 separate requirements. No arbitrary resolution target or extra AI review rounds.
 
-### Next saved-data milestone — full34 basis and joint signal fit
+### Next bounded milestone — deliver preserved order uncertainty
+
+The installed Geant4 11.3.2 / G4EMLOW8.6.1 provides the Ge Doppler profiles,
+shell occupancies/binding energies and native sampling APIs. Reuse that model;
+do not write an approximate sampler or widen reconstruction cuts from two events.
+The fixed33000native samples are complete: Livermore free-electron-domain failures
+125/106/74of10000at662/1173.228/1332.492keV; all3000free-electron controls pass.
+Energy closure passes;3.227s compile,1.233s sample process. Atomic relaxation is off,
+binding energy local; this is a single-interaction model test, not detector data.
+No additional native sampling is part of this milestone.
+
+The order-accounting repair and18tests pass: equal weights are assigned before the
+approximate kinematic screen, so unsupported orders retain unresolved mass. Fixed
+200+200 and153map checks pass with unchanged identities/energies/candidates. Next
+apply the same repair to all existing candidate-bearing groups, preserving the full
+original census and immutable input. Reuse tested400/153results; run only the changed
+map once with identical settings, then build and verify the student release. This
+changes confidence accounting, not recovery counts; no new angular kernel, fitted
+resolution, cut changes, calibrated posterior claim or new physics campaign.
+
+### Saved-data progress — full34 basis and joint signal fit
 
 The original2991-record full34 bank is complete in223.531s:2727full responses,
 264geometry exclusions;2551complete and176incomplete responses retain original
@@ -223,9 +245,19 @@ gamma deposit rows remain explicit, below0.517keV per group; no guessed birthtim
 Three tests pass;153metadata records (3cached),1.738s wall, no physics or fits.
 The three old wrong-only groups879908/906665/913963 have deposited energy below
 root birth energy.235273 and newly identified278717 deposit their full662keV;
-next compare their saved interaction energies, creation identities and geometry
-with the free-electron relation and exact Geant4 model. Do not widen cuts or call
-the discrepancy noise/escape/Doppler without the supporting evidence.
+saved interaction energies also violate the free-electron relation. Birth identities
+are consistent. Original raw zero-deposit STEP chords are recovered: local Compton
+cos(theta)=-0.646475/-0.899038, whereas free-electron cos from deposited energies
+is-1.550391/-1.131631. Root step counts4/3; no radiation rerun. These STEP fields
+lack processID/kinetic energy/momentum, so individual zero-step process attribution
+is unavailable. Do not confuse initial direction or a multi-step chord with a local
+scattering direction. Next inspect the installed Doppler/shell data and upstream
+sampler for reuse before defining any new angular-response calculation or kernel.
+Geant4 v11.3.2's [Livermore physics constructor](https://github.com/Geant4/geant4/blob/v11.3.2/source/physics_lists/constructors/electromagnetic/src/G4EmLivermorePhysics.cc)
+registers the low-energy Compton model; its [implementation](https://github.com/Geant4/geant4/blob/v11.3.2/source/processes/electromagnetic/lowenergy/src/G4LivermoreComptonModel.cc)
+includes bound-electron Doppler sampling. The old11.2manual page is not the authority
+for this exact implementation. This source evidence does not uniquely attribute
+either saved event. Do not widen cuts or infer noise/escape/Doppler without support.
 Distinguish two interactions from full absorption and preserve the strict labels.
 Truth remains evaluation-only; no
 truth-selected production map or pre-SSD filtering follows from this diagnosis.
@@ -318,6 +350,12 @@ claims. The IAEA report's GeGI-4dimensions must not silently replace current11 m
   availability, analog transfer, ADC resolution, guard readout or our unit's firmware.
   The120ns experimental coincidence cut is distinct from our100us decay grouping;
   do not substitute one for the other or infer a waveform sampler from timestamps.
+- [R8 Lee and Lee,2004, Doppler broadening in pixellated semiconductor imaging](https://doi.org/10.1016/j.nuclphysa.2004.09.100):
+  the publisher abstract describes a662keV beam and90degree scattering measurement
+  with segmented Ge. It supports treating bound-electron broadening as a separate
+  angular-response contribution; the abstract supplies no GeGI resolution or tail
+  probability to copy. Exact current simulation behavior comes from Geant4 11.3.2
+  source and the installed G4EMLOW8.6.1 data, checked separately above.
 
 The GeGI manufacturer manual is verified in the private reference-index.json,
 SHAfc0647fcedeb19d52f73af5e8808f15941400a54b1a0227479ead06c1b9ebb0b.
