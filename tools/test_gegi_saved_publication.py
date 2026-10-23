@@ -93,6 +93,8 @@ class SavedPublicationTests(unittest.TestCase):
         self.assertEqual(P.validate_public(target),manifest)
         self.assertEqual(manifest['radiation_calls'],0)
         self.assertEqual(manifest['electronics_replays'],0)
+        with patch.object(P,'MAX_BUNDLE_BYTES',1), self.assertRaisesRegex(ValueError,'exceeds 1 bytes'):
+            P.validate_public(target)
 
     def test_supported_saved_candidates_render_dynamic_new_map(self):
         self.summary['counts'].update(conditional_candidate_groups=3,conditional_candidates=5)
@@ -216,6 +218,127 @@ class SavedPublicationTests(unittest.TestCase):
         deferred=site_restructure.defer_gegi_journey(target,page,{'artifacts':{}})
         self.assertNotIn('id="gegi-journey-data"',deferred)
         self.assertIn("panel.addEventListener('toggle',load)",deferred)
+
+    def all_event_fixture(self):
+        self.summary['counts'].update(conditional_candidate_groups=3,conditional_candidates=4)
+        receipt=P.read(self.rec/'chunks/000.json');receipt['counts'].update(conditional_candidate_groups=3,conditional_candidates=4)
+        self.complete['chunks'][0]['receipt_sha256']=put(self.rec/'chunks/000.json',receipt)
+        self.reseal()
+        population=self.root/'population';population.mkdir();all_root=self.root/'all-events'
+        def candidate(order,weight,index=0):
+            return {'order':order,'hypothesis_index':index,'prior_weight':weight,
+                'axis':[0.,0.,1.],'vertex_mm':[0.,0.,0.],'half_angle_deg':30.,'cos_theta':math.cos(math.radians(30))}
+        records=[{'campaign_initial_id':1,'pulse_group_id':0,'energy_keV':662.,
+                    'candidates':[candidate([0,1],.25),candidate([0,1,2],.125,1)]},
+                 {'campaign_initial_id':2,'pulse_group_id':0,'energy_keV':1173.228,
+                    'candidates':[candidate([0,1,2,3],.1)]},
+                 {'campaign_initial_id':3,'pulse_group_id':0,'energy_keV':300.,
+                    'candidates':[candidate([0,1],.5)]}]
+        all_root.mkdir();path=all_root/'records.jsonl';path.write_bytes(b''.join(P.encoded(r)+b'\n' for r in records))
+        subset=[{**records[0],'candidates':records[0]['candidates'][:1]},records[2]]
+        subset_path=self.root/'evaluation/map-records.jsonl.gz';subset_path.parent.mkdir()
+        with gzip.open(subset_path,'wb') as stream:
+            for row in subset:stream.write(P.encoded(row)+b'\n')
+        source=P.sha(P.ROOT/'tools/gegi_joint_imaging.py')
+        old_image={**copy.deepcopy(self.legacy),'group_count':2,'provenance':{
+            'source_sha256':source,'truth_used_for_reconstruction':False}}
+        old_image_path=population/'imaging/report.json';old_image_sha=put(old_image_path,old_image)
+        old_diagnostics=old_image_path.parent/'event_diagnostics.jsonl'
+        old_diagnostics.write_bytes(b''.join(P.encoded({'event_id':r['campaign_initial_id'],
+            'pulse_group_id':0,'candidate_count':len(r['candidates'])})+b'\n' for r in subset))
+        evaluation={'kind':'gegi_joint_signal_posthoc_truth_evaluation_v1','scope':'Exact fixture subset',
+            'bindings':{'imaging_report_sha256':old_image_sha,'saved_signal_complete_sha256':P.sha(self.rec/'COMPLETE.json'),
+                'imaging_event_diagnostics_sha256':P.sha(old_diagnostics),'imaging_source_sha256':source},
+            'selection_unchanged':True,'truth_used_in_imaging':False,'group_count':2,'candidate_count':2,
+            'selected_ids':[[1,0],[3,0]],'selected_id_census_sha256':'f'*64,'weighting':'original prior',
+            'residual_definition':'Existing subset only','groups':{},'pooled':{'saved_metric':2.5},
+            'energy_layers':{},'distance_mm':None,'activity_bq':None,'range_identified':False,'interpretation':[]}
+        eval_path=population/'imaging/evaluation.json';eval_sha=put(eval_path,evaluation)
+        self.image=all_root/'imaging'
+        image={**copy.deepcopy(self.legacy),'group_count':3,'em_iterations':40,
+            'provenance':{'input_sha256':P.sha(path),'source_sha256':source,'truth_used_for_reconstruction':False},
+            'spectral_layers':{label:{'group_count':1,'source_mass':self.legacy['source_mass'],
+                'angular_backprojection_per_rad':self.legacy['angular_backprojection_per_rad']}
+                for label in ('661.657_keV','1173.23_keV','other_energy')}}
+        image_sha=put(self.image/'report.json',image)
+        diagnostics=self.image/'event_diagnostics.jsonl';diagnostics.write_bytes(b''.join(P.encoded({
+            'event_id':r['campaign_initial_id'],'pulse_group_id':0,'candidate_count':len(r['candidates'])})+b'\n' for r in records))
+        identity=put(population/'identity.json',{})
+        report={'kind':'gegi_order_prior_population_v1','counts':{'all_saved_nonzero_groups':57613,
+            'candidate_bearing_groups':3,'candidates':4},'original_saved_reconstruction_counts':self.summary['counts'],
+            'input_sha256':{'reconstruction_complete':P.sha(self.rec/'COMPLETE.json'),'map_records':P.sha(subset_path)},
+            'artifact_sha256':{'groups.jsonl.gz':'c'*64,'imaging/report.json':old_image_sha,
+                'imaging/event_diagnostics.jsonl':P.sha(old_diagnostics)},
+            'verification':{'all434_nonweight_records_exactly_equal':True}}
+        report_sha=put(population/'result.json',report)
+        complete_sha=put(population/'COMPLETE.json',{'status':'completed_sparse_population_and_one_map',
+            'result_sha256':report_sha,'identity_sha256':identity})
+        census_sha=put(self.root/'selection-census.json',{'kind':'fixture_census'})
+        ids=[[1,0],[2,0],[3,0]]
+        selected={'kind':'gegi_all_saved_candidates_map_v1','status':'completed','group_count':3,'candidate_count':4,
+            'candidate_site_counts':{'2':2,'3':1,'4':1},'selection':{k:False for k in
+                ('energy_window_filter','site_count_filter','truth_used','source_labels_used')},
+            'all_candidates_and_priors_exactly_preserved':True,'candidate_priors_renormalized':False,
+            'candidate_prior_mass':.975,'uninformative_mass':2.025,'selected_ids':ids,
+            'selected_ids_sha256':hashlib.sha256(P.encoded(ids)).hexdigest(),
+            'selected_candidate_keys_sha256':hashlib.sha256(P.encoded(P._candidate_keys(records))).hexdigest(),
+            'spectral_layer_group_counts':{label:1 for label in image['spectral_layers']},
+            'bindings':{'parent_population_complete_sha256':complete_sha,'parent_population_result_sha256':report_sha,
+                'parent_sparse_records_sha256':'c'*64,'saved_signal_complete_sha256':P.sha(self.rec/'COMPLETE.json'),
+                'saved_signal_summary_sha256':P.sha(self.rec/'summary.json'),'selection_census_sha256':census_sha,
+                'projected_records_sha256':P.sha(path),'imaging_report_sha256':image_sha,
+                'imaging_event_diagnostics_sha256':P.sha(diagnostics),'imaging_source_sha256':source,
+                'subset_evaluation_sha256':eval_sha,'subset_imaging_report_sha256':old_image_sha,
+                'subset_event_diagnostics_sha256':P.sha(old_diagnostics),'subset_map_records_sha256':P.sha(subset_path)},
+            'reused_evaluation_subset':{'group_intersection_count':2,'candidate_key_intersection_count':2,
+                'groups_with_all_candidate_keys_in_existing_evaluation':1,
+                'groups_with_additional_unevaluated_candidate_keys':1,
+                'additional_unevaluated_candidates_in_intersecting_groups':1,
+                'groups_without_existing_evaluation':1,'unevaluated_candidate_keys':2,
+                'errors_scope':'Two saved keys only.'}}
+        selection_path=all_root/'map-selection.json';put(selection_path,selected)
+        return population,path,selection_path
+
+    def test_all_event_export_defaults_to_pooled_and_keeps_other_energy_and_subset(self):
+        population,path,selection=self.all_event_fixture()
+        manifest=self.export(order_prior_population=population,map_records=path,map_selection=selection)
+        target=self.root/'export/public';summary=P.read(target/'summary.json')
+        display=summary['cone_plane_display'];accuracy=summary['posthoc_evaluation']
+        self.assertEqual(display['default_layer'],'cone-layer-0')
+        self.assertEqual((display['layers'][0]['groups'],display['layers'][0]['candidates']),(3,4))
+        other=next(layer for layer in display['layers'] if layer['label']=='other_energy')
+        self.assertEqual(other['title'],'Other readout energies')
+        self.assertEqual(other['groups'],1)
+        self.assertEqual(accuracy['kind'],'gegi_saved_evaluation_coverage_v1')
+        self.assertEqual((accuracy['map_group_count'],accuracy['map_candidate_count']),(3,4))
+        self.assertEqual((accuracy['evaluated_subset']['group_count'],accuracy['evaluated_subset']['candidate_count']),(2,2))
+        self.assertEqual(accuracy['evaluated_subset']['pooled'],{'saved_metric':2.5})
+        self.assertNotIn('pooled',accuracy)
+        page=(target/'index.html').read_text(encoding='utf-8')
+        self.assertIn('value="cone-layer-0" selected',page)
+        self.assertIn('3 groups · 4 candidate cones',page)
+        self.assertIn('Saved evaluation subset: 2 groups / 2 candidate orders',page)
+        self.assertIn('subset_posthoc_evaluation_sha256',manifest['input_sha256'])
+        P.validate_public(target)
+        with patch.object(P,'MAX_ALL_EVENT_BUNDLE_BYTES',1), self.assertRaisesRegex(ValueError,'exceeds 1 bytes'):
+            P.validate_public(target)
+
+    def test_all_event_selection_rejects_filtering_and_changed_projected_records(self):
+        population,path,selection=self.all_event_fixture();selected=P.read(selection)
+        selected['selection']['site_count_filter']=True;put(selection,selected)
+        with self.assertRaisesRegex(ValueError,'selection contract'):
+            P._all_map_inputs(population,path,self.rec,self.image/'report.json',P.read(self.image/'report.json'),selection)
+        selected['selection']['site_count_filter']=False;put(selection,selected)
+        path.write_bytes(path.read_bytes()+b'{}\n')
+        with self.assertRaisesRegex(ValueError,'map-selection binding'):
+            P._all_map_inputs(population,path,self.rec,self.image/'report.json',P.read(self.image/'report.json'),selection)
+
+    def test_all_event_evaluation_rejects_incorrect_candidate_coverage(self):
+        population,path,selection=self.all_event_fixture()
+        migration=P._all_map_inputs(population,path,self.rec,self.image/'report.json',P.read(self.image/'report.json'),selection)
+        migration['selection']['reused_evaluation_subset']['additional_unevaluated_candidates_in_intersecting_groups']=0
+        with self.assertRaisesRegex(ValueError,'candidate-key coverage'):
+            P._evaluation_coverage(population/'imaging/evaluation.json',population,self.rec,migration)
 
     def test_completed_input_hash_change_rejected(self):
         (self.rec/'summary.json').write_bytes((self.rec/'summary.json').read_bytes()+b' ')

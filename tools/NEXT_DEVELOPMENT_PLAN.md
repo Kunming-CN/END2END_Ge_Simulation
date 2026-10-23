@@ -7,13 +7,20 @@ two-site selection and order-weight repair are complete. The tested transport-on
 prefilter is rejected; keep zero-only skipping. A bounded native Geant4 model test
 also confirms that bound-electron scattering can violate the free-electron energy
 relation. Do not repeat these studies or infer detector efficiency from their counts.
-The repaired student software is released. Finish the actual Compton display and
-its publication checks, then connect the nominal forward model to readout quantities
-and compare like-for-like experimental products when available. Root owns direction;
+The repaired student software is released. The153-group display and fixed8-case
+nominal readout bridge are delivered. The default Compton display now includes all
+434 saved candidate groups/837 candidates; finish GitHub/live verification, then
+compare like-for-like experimental products when available. Root owns direction;
 gpt-6.1-sol ultra implements concrete changes. Monitoring stays PAUSED.
 
-Owner clarification,2026-10-22: stop pursuing the two bright spots. Label the18group
-1332keV layer as limited statistics and keep it out of the critical path. No more
+Owner correction,2026-10-22: use all available saved conditional Compton candidates
+for the default image, with no energy-window or two-site-only filter. Keep optional
+energy views. Exact census434/837 vs previous153/287; candidate identities, weights
+and unresolved mass remain unchanged. Reuse the old evaluation only with its
+153-group/287-candidate coverage made explicit. No truth input or new physics.
+
+Owner clarification,2026-10-22: stop pursuing the two bright spots. Label the small
+1332keV layer as limited statistics (19all-site/18two-site groups). No more
 peak attribution, leave-one-out, source-plane or convergence investigations for
 this display. Complete the current publication and return to the readout and
 reconstruction workflow and matched experimental data.
@@ -42,7 +49,7 @@ failed stage on the same saved events; do not tune a source map to known positio
 | Electronics and observable timing | Manufacturer describes32raw preamp outputs and an imaging/spectroscopy clock of50MSPS for current options [R1]. Exact generation/filter/firmware still needs matching. | Profile synthetic-signed-14bit-v1:ideal CSA Cf0.6pF, feedback/PZ50us, shaping0.5us, gain20,1mV threshold,14bit0–10V positive peak ADC.1ns is numerical integration. No measured noise/crosstalk or continuous baseline. | Highest-priority correspondence gap. Keep native charge, preamp, shaped peak, ADC energy and timing pickoff separate. Reuse analytic4-group/136-channel check (peak error<9.2e-14V, exactADC). It checks the nominal circuit, not actual GeGI filtering or hardware sampling. Do not set integration dt to20ns just from a clock specification. |
 | Pulse grouping and spectroscopy | Same-decay gamma multiplicity and hardware coincidence/trigger selection must be represented consistently. The private July14slides distinguish full-detector, pixel-total and simulated-active-area spectra. | Decay pulses use100 us anchored half-open windows with reset electronics; no inter-primary pileup. Fixed calibrated collecting-channel sums include guards; X/Y are averaged. Noncollecting induced peaks are excluded. | First compare like-for-like spectra and event denominators. On the frozen 400-events, require exact old-energy preservation, then report Erec−Edep, bias/tails, face mismatch and missing/failure counts. Pulse-group energy is not necessarily one photon's incident energy. |
 | Position, pairing and sequence | GeGI depth uses charge-arrival differences [R2]; calibrated timing/depth and separate energy/crosstalk/pairing stages are established in related work [R3, R4]. | Selected-pair native-waveform fits on0–250ns,0.25mm interpolated depths; ≤4strips/face,≤4sites,≤64hypotheses,2keV/2% compatibility. Charge pixels may differ from photon interactions. Same-pixel and cascade multiplicity unresolved. | Use fixed development/holdout events to quantify wrong/missingX/Ypairs, false splitting, matched position/depth error and sequence unknowns. Thresholds/tolerances are compatibility choices, not measured resolution. No promotion of conditional candidates unless these errors pass predefined, physically justified criteria. |
-| Imaging and performance | Comparison requires the same sample selection, acquisition and normalization; source positions are independent evaluation only. |434 conditional groups; current two-site map153groups/287sequences.1332.492keV has18groups/36sequences. The imposed plane is z40mm and does not measure range. | Publish saved cone intersections and density with counts and units. Limited statistics; no further peak studies. Fix stage-level errors first. Map brightness is not detector efficiency. |
+| Imaging and performance | Comparison requires the same sample selection, acquisition and normalization; source positions are independent evaluation only. | All434 conditional groups/837sequences now enter the map with no added energy or site-count filter. Optional energy layers118/25/19/272other groups. The imposed plane is z40mm and does not measure range. | Publish pooled by default; show saved cone intersections and density with counts and units. Existing error evaluation covers153groups/287candidate keys only. No further peak studies. Map brightness is not detector efficiency. |
 
 Source anchors: transport/gegi_source.py:287; scenarios/assets/gegi_cryostat_v1.json:8;
 models/GeGI_3D.yaml:25; simulation/gegi_signal_helpers.jl:27;
@@ -111,15 +118,17 @@ inputs/results remain exact. Student release2bf8b5e is verified. This changes
 confidence accounting, not recovery counts; no new angular kernel, fitted resolution,
 cut changes, calibrated posterior claim or new physics campaign.
 
-The new website shows actual153group/287candidate cone-plane intersections at the existing
-z40mm plane, summed angular density and saved conditional map. Reuse the old local
-overlay clipping/plot functions and the existing publication generator. Bind the
-new weight derivative explicitly; reuse existing153posthoc geometry/labels with
-new weights, without raw-data reads or fitting. Keep the old snapshot intact.
-State counts, units, assumed plane and iteration limit once near the figures;
-details hold provenance. Focused exporter/control checks,36site tests and the two
-unchanged builder validators pass; root completes GitHub/live verification. Reuse
-these results. No made-up circles, image smoothing as validation or new UI framework.
+The all-event delivery shows434groups/837candidate cone-plane intersections at
+the existing z40mm plane, summed angular density and saved conditional map.
+Pooled is the default; all energy layers including272other-energy groups remain
+selectable. Existing clipping/plot functions and publication generator are reused.
+The153group/287candidate posthoc evaluation is an explicit subset;550candidate
+keys are outside it. State counts, units, fixed plane and the fully-absorbed-photon/
+charge-site assumptions near the figures; details hold provenance. No raw truth
+reads, new fitting or physics.24exporter/36site tests and2capacity-policy checks
+pass; the real generated-page transform and84anchors pass. The unchanged builder
+also passed both final validators (1981files/109pages). Root completes GitHub/live
+verification; reuse these targeted results and consult the current receipt.
 
 ### Saved-data progress — full34 basis and joint signal fit
 

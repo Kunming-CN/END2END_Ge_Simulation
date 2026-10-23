@@ -23,6 +23,7 @@ KIND = 'gegi_saved_publication_v3'
 ROUTE = 'results/gegi-campaign/index.html'
 PREVIOUS_MANIFEST = '67aee794d57c7d0f34ea8715af684421a1a5a0ef11b05a975907230501dd1c12'
 MAX_BUNDLE_BYTES = 8_000_000
+MAX_ALL_EVENT_BUNDLE_BYTES = 9_000_000
 SOURCE_FILES = ('tools/gegi_saved_publication.py', 'tools/gegi_signal_journey.js')
 PRIVATE = re.compile(r'[A-Za-z]:[\\/]+Users[\\/]|/mnt/[a-z]/|/home/[^/\s]+/|file:///|\.local[\\/]', re.I)
 TEXT_NAMES = {'index.html', 'summary.json', 'configuration.json', 'representatives.json',
@@ -90,7 +91,7 @@ def _previous(previous_public, expected=None):
     return manifest
 
 
-def _saved_inputs(reconstruction, imaging, legacy_control, previous_public, *, population=None, map_records=None):
+def _saved_inputs(reconstruction, imaging, legacy_control, previous_public, *, population=None, map_records=None, map_selection=None):
     reconstruction = Path(reconstruction)
     complete = read(reconstruction/'COMPLETE.json'); summary = read(reconstruction/'summary.json')
     require(complete.get('kind') == summary.get('kind') == 'gegi_saved_reconstruction_v3'
@@ -118,10 +119,12 @@ def _saved_inputs(reconstruction, imaging, legacy_control, previous_public, *, p
             'Unexpected completed imaging report')
     migration = None
     if population is not None:
-        migration = _population_inputs(population, map_records, reconstruction, image_path, image)
+        migration = (_all_map_inputs(population, map_records, reconstruction, image_path, image, map_selection)
+                     if map_selection is not None else
+                     _population_inputs(population, map_records, reconstruction, image_path, image))
         bindings = None
     else:
-        require(map_records is None, 'Map records require an explicit order-prior population')
+        require(map_records is None and map_selection is None, 'Map records require an explicit order-prior population')
         accounting = image['saved_signal_accounting']; bindings = accounting['input_sha256']
     require(bindings is None or (bindings['COMPLETE.json'] == sha(reconstruction/'COMPLETE.json')
             and bindings['summary.json'] == complete['summary_sha256']
@@ -208,6 +211,77 @@ def _population_inputs(population, map_records, reconstruction, image_path, imag
             'order_prior_population_complete_sha256': sha(population/'COMPLETE.json'),
             'selected_map_records_sha256': digest,
             'original_map_selection_sha256': report['input_sha256']['old_map_records']}}
+
+
+def _candidate_keys(records):
+    return sorted((r['campaign_initial_id'], r['pulse_group_id'], c['hypothesis_index'], tuple(c['order']))
+                  for r in records for c in r['candidates'])
+
+
+def _all_map_inputs(population, map_records, reconstruction, image_path, image, map_selection):
+    population, reconstruction, map_selection = Path(population), Path(reconstruction), Path(map_selection)
+    seal, report, selected = read(population/'COMPLETE.json'), read(population/'result.json'), read(map_selection)
+    require(seal.get('status') == 'completed_sparse_population_and_one_map'
+            and report.get('kind') == 'gegi_order_prior_population_v1'
+            and seal['result_sha256'] == sha(population/'result.json')
+            and seal['identity_sha256'] == sha(population/'identity.json'), 'Population completion binding changed')
+    require(selected.get('kind') == 'gegi_all_saved_candidates_map_v1' and selected.get('status') == 'completed'
+            and all(selected['selection'].get(k) is False for k in
+                    ('energy_window_filter','site_count_filter','truth_used','source_labels_used'))
+            and selected['all_candidates_and_priors_exactly_preserved'] is True
+            and selected['candidate_priors_renormalized'] is False, 'All-event selection contract changed')
+    require(map_records is not None, 'All-event selection requires its projected records')
+    bindings = selected['bindings']; digest = sha(map_records)
+    census_path = map_selection.parent.parent/'selection-census.json'
+    expected = {'parent_population_complete_sha256':sha(population/'COMPLETE.json'),
+        'parent_population_result_sha256':seal['result_sha256'],
+        'parent_sparse_records_sha256':report['artifact_sha256']['groups.jsonl.gz'],
+        'saved_signal_complete_sha256':sha(reconstruction/'COMPLETE.json'),
+        'saved_signal_summary_sha256':sha(reconstruction/'summary.json'),
+        'selection_census_sha256':sha(census_path), 'projected_records_sha256':digest,
+        'imaging_report_sha256':sha(image_path),
+        'imaging_event_diagnostics_sha256':sha(image_path.parent/'event_diagnostics.jsonl'),
+        'imaging_source_sha256':image['provenance']['source_sha256']}
+    require(all(bindings[k] == value for k,value in expected.items())
+            and image['provenance']['input_sha256'] == digest
+            and bindings['imaging_source_sha256'] == sha(ROOT/'tools/gegi_joint_imaging.py')
+            and report['input_sha256']['reconstruction_complete'] == expected['saved_signal_complete_sha256']
+            and bindings['subset_map_records_sha256'] == report['input_sha256']['map_records']
+            and bindings['subset_imaging_report_sha256'] == report['artifact_sha256']['imaging/report.json']
+            and bindings['subset_event_diagnostics_sha256'] == report['artifact_sha256']['imaging/event_diagnostics.jsonl']
+            and {k:v['group_count'] for k,v in image['spectral_layers'].items()}
+                == selected['spectral_layer_group_counts']
+            and report['verification']['all434_nonweight_records_exactly_equal'] is True,
+            'All-event map-selection binding changed')
+    records = [json.loads(line) for line in ordinary(map_records).read_text(encoding='utf-8').splitlines()]
+    census = [json.loads(line) for line in ordinary(image_path.parent/'event_diagnostics.jsonl').read_text(encoding='utf-8').splitlines()]
+    ids = sorted([[r['campaign_initial_id'],r['pulse_group_id']] for r in records]); keys = _candidate_keys(records)
+    require(len(records) == len({tuple(i) for i in ids}) == selected['group_count'] == image['group_count']
+            == report['counts']['candidate_bearing_groups']
+            and len(keys) == len(set(keys)) == selected['candidate_count'] == report['counts']['candidates']
+            and ids == selected['selected_ids']
+            and hashlib.sha256(encoded(ids)).hexdigest() == selected['selected_ids_sha256']
+            and hashlib.sha256(encoded(keys)).hexdigest() == selected['selected_candidate_keys_sha256']
+            and [(r['campaign_initial_id'],r['pulse_group_id'],len(r['candidates'])) for r in records]
+                == [(r['event_id'],r['pulse_group_id'],r['candidate_count']) for r in census],
+            'All-event selected identity or candidate census changed')
+    candidates = [c for r in records for c in r['candidates']]
+    require(dict(Counter(str(len(c['order'])) for c in candidates)) == selected['candidate_site_counts']
+            and all(len(c['order']) >= 2 and math.isfinite(c['prior_weight']) and 0 < c['prior_weight'] <= 1
+                    for c in candidates)
+            and all(sum(c['prior_weight'] for c in r['candidates']) <= 1+1e-12 for r in records)
+            and abs(sum(c['prior_weight'] for c in candidates)-selected['candidate_prior_mass']) < 1e-9
+            and abs(selected['candidate_prior_mass']+selected['uninformative_mass']-len(records)) < 1e-9,
+            'All-event candidate multiplicity or original prior mass changed')
+    return {'population':report, 'records':records, 'candidate_keys':keys, 'selection':selected,
+        'selection_path':map_selection, 'map_records_path':Path(map_records),
+        'bindings':{'order_prior_population_result_sha256':seal['result_sha256'],
+            'order_prior_population_identity_sha256':seal['identity_sha256'],
+            'order_prior_population_complete_sha256':expected['parent_population_complete_sha256'],
+            'selected_map_records_sha256':digest, 'map_selection_sha256':sha(map_selection),
+            'selection_census_sha256':bindings['selection_census_sha256'],
+            'selected_ids_sha256':selected['selected_ids_sha256'],
+            'selected_candidate_keys_sha256':selected['selected_candidate_keys_sha256']}}
 
 
 def _font(size):
@@ -311,6 +385,49 @@ def _evaluation_summary(path, imaging, reconstruction, image):
     if 'angular_metrics_unavailable_reason' in report:
         result['angular_metrics_unavailable_reason'] = report['angular_metrics_unavailable_reason']
     return result
+
+
+def _evaluation_coverage(path, population, reconstruction, migration):
+    population = Path(population); selected = migration['selection']; bindings = selected['bindings']
+    subset_image = population/'imaging/report.json'
+    subset_records = population.parent/'evaluation/map-records.jsonl.gz'
+    paths = {Path(path):bindings['subset_evaluation_sha256'],
+        subset_image:bindings['subset_imaging_report_sha256'],
+        subset_image.parent/'event_diagnostics.jsonl':bindings['subset_event_diagnostics_sha256'],
+        subset_records:bindings['subset_map_records_sha256']}
+    require(all(sha(p) == digest for p,digest in paths.items()), 'Reused evaluation subset binding changed')
+    accuracy = _evaluation_summary(path, subset_image, reconstruction, read(subset_image))
+    with gzip.open(ordinary(subset_records), 'rt', encoding='utf-8') as stream:
+        subset = [json.loads(line) for line in stream]
+    all_keys, subset_list = set(migration['candidate_keys']), _candidate_keys(subset)
+    subset_keys = set(subset_list)
+    all_groups = {key[:2] for key in all_keys}; subset_groups = {key[:2] for key in subset_keys}
+    intersection = all_groups & subset_groups
+    all_by_group = {group:{key for key in all_keys if key[:2] == group} for group in intersection}
+    subset_by_group = {group:{key for key in subset_keys if key[:2] == group} for group in intersection}
+    full = sum(all_by_group[group] <= subset_by_group[group] for group in intersection)
+    expected = {'group_intersection_count':len(intersection),
+        'candidate_key_intersection_count':len(all_keys & subset_keys),
+        'groups_with_all_candidate_keys_in_existing_evaluation':full,
+        'groups_with_additional_unevaluated_candidate_keys':len(intersection)-full,
+        'additional_unevaluated_candidates_in_intersecting_groups':sum(
+            len(all_by_group[group]-subset_by_group[group]) for group in intersection),
+        'groups_without_existing_evaluation':len(all_groups-subset_groups),
+        'unevaluated_candidate_keys':len(all_keys-subset_keys)}
+    coverage = selected['reused_evaluation_subset']
+    require(len(subset_list) == len(subset_keys) == accuracy['candidate_count']
+            and len(subset_groups) == accuracy['group_count']
+            and subset_keys <= all_keys
+            and all(coverage[k] == value for k,value in expected.items()),
+            'Reused evaluation candidate-key coverage changed')
+    migration['evaluation_binding_paths'] = paths
+    return {'kind':'gegi_saved_evaluation_coverage_v1',
+        'map_group_count':selected['group_count'], 'map_candidate_count':selected['candidate_count'],
+        'bindings':{'map_selection_sha256':migration['bindings']['map_selection_sha256'],
+            'imaging_report_sha256':bindings['imaging_report_sha256'],
+            **{k:bindings[k] for k in ('subset_evaluation_sha256','subset_imaging_report_sha256',
+                                      'subset_event_diagnostics_sha256','subset_map_records_sha256')}},
+        'coverage':coverage, 'evaluated_subset':accuracy}
 
 
 def _journey(previous_public):
@@ -608,13 +725,18 @@ def _cone_figure(records, report, path, title):
 
 
 def _cone_display(target, image, migration):
+    from types import SimpleNamespace
+    from gegi_joint_imaging import spectral_membership
     records = migration['records']; layers = []
-    specifications = [('pooled', 'All selected energies', records, image)]
-    for label, layer in image['spectral_layers'].items():
-        center = float(label.removesuffix('_keV'))
-        subset = [r for r in records if abs(r['energy_keV']-center) <= max(5., .02*center)]
+    memberships = spectral_membership([SimpleNamespace(energy_keV=r['energy_keV']) for r in records])
+    title = 'All usable saved events' if 'selection' in migration else 'All selected energies'
+    specifications = [('pooled', title, records, image)]
+    for label, layer in image.get('spectral_layers',{}).items():
+        require(label in memberships, 'Unknown saved energy layer')
+        subset = [r for r,keep in zip(records,memberships[label]) if keep]
         require(len(subset)==layer['group_count'], 'Cone display energy-layer census changed')
-        specifications.append((label,label.replace('_',' '),subset,{**image,**layer}))
+        title = 'Other readout energies' if label == 'other_energy' else label.replace('_',' ')
+        specifications.append((label,title,subset,{**image,**layer}))
     for number, (label,title,subset,report) in enumerate(specifications):
         filenames = {name:f'map-cone-{number}-{name}.png' for name in ('overlay','density','conditional')}
         if number == 0:
@@ -627,7 +749,7 @@ def _cone_display(target, image, migration):
             'candidates':sum(len(r['candidates']) for r in subset),'files':filenames,
             'candidate_prior_mass':sum(c['prior_weight'] for r in subset for c in r['candidates']),**geometry})
     return {'kind':'gegi_saved_cone_plane_display_v1','layers':layers,
-        'default_layer':next(l['id'] for l in layers if l['label'].startswith('1332.')),
+        'default_layer':'cone-layer-0',
         'plane_z_mm':image['grid']['assumed_z_mm'],'extent_mm':image['grid']['extent_mm'],
         'em_iterations':image['em_iterations'],'stop_status':'iteration_budget_reached',
         'input_sha256':migration['bindings'],'phi_segments_per_cone':16384,
@@ -639,6 +761,14 @@ def _cone_display(target, image, migration):
 def _render_cone_page(summary, imaging, control, journey=None):
     esc = lambda v:html.escape(str(v),quote=True)
     display = summary['cone_plane_display']; default = display['default_layer']
+    accuracy = summary.get('posthoc_evaluation',{})
+    evaluation_link = '<a href="evaluation-summary.json">Posthoc evaluation</a>'
+    if accuracy.get('kind') == 'gegi_saved_evaluation_coverage_v1':
+        coverage = accuracy['coverage']
+        evaluation_link = ('<a href="evaluation-summary.json">Saved evaluation subset: '
+            +str(coverage['group_intersection_count'])+' groups / '
+            +str(coverage['candidate_key_intersection_count'])+' candidate orders</a>; '
+            +str(coverage['unevaluated_candidate_keys'])+' other candidate orders are outside this evaluation')
     parts = ['<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
         '<title>GeGI Compton imaging · GeSignal</title><style>body{font:16px/1.55 system-ui;color:#172e43;background:#f6f9fc;max-width:1180px;margin:auto;padding:20px}h1{font-size:2.4rem;line-height:1.15}a{color:#075e9b}select{font:inherit;padding:8px 12px;border:1px solid #7797ac;border-radius:6px;background:white}.plots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:16px}figure{margin:0;background:white;border:1px solid #d3e0e9;border-radius:10px;overflow:hidden}img{display:block;width:100%;height:auto}figcaption{padding:12px}details{background:white;padding:14px 18px;border:1px solid #d3e0e9;border-radius:8px;margin:22px 0}summary{cursor:pointer;font-weight:650}.caption{color:#455f73}.status{padding:12px 16px;border-left:4px solid #087f91;background:#e7f2f6}[hidden]{display:none!important}code{overflow-wrap:anywhere}</style></head><body>',
         page_navigation(ROUTE),'<h1>GeGI Compton imaging</h1>',
@@ -658,11 +788,11 @@ def _render_cone_page(summary, imaging, control, journey=None):
             filename=layer['files'][name]
             parts.append('<figure><a href="'+filename+'"><img loading="lazy" src="'+filename+'" alt="'+esc(title+' for '+layer['title'])+'"></a><figcaption><strong>'+title+'</strong><br>'+caption+' <a href="'+filename+'">Full size</a></figcaption></figure>')
         parts.append('</div></article>')
-    parts += ['<p class="caption">Curves show cone-plane intersections on the fixed plane.</p>',
+    parts += ['<p class="caption">Each candidate assumes one fully absorbed photon and treats reconstructed charge sites as interactions.</p>',
         '<noscript><p>Choose the other energy layers with JavaScript enabled, or open <a href="cone-display.json">the figure list</a>.</p></noscript>',
         '<details id="accounting"><summary>Selection, uncertainty and saved evidence</summary><p>All '+str(imaging['group_count'])+' selected groups contribute '+str(sum(l['candidates'] for l in display['layers'][:1]))+' candidates. The original acquisition retains 1,000,000 initial records and 57,613 nonzero pulse groups. Unsupported site orders retain unresolved weight; surviving candidates are not renormalized to a full event.</p>',
         '<p>The saved conditional fit stopped at '+str(display['em_iterations'])+' iterations; convergence has not been established. Its finite angular response uses the saved position/discrepancy model. Source distance and source count remain unidentified; event recovery and laboratory resolution are not validated by these figures.</p>',
-        '<p><a href="evaluation-summary.json">Posthoc evaluation</a> · <a href="cone-display.json">Plot settings and input bindings</a> · <a href="imaging-summary.json">Imaging summary</a> · <a href="summary.json">Original denominators and accounting</a> · <a href="publication.json">Artifact hashes</a></p></details>',
+        '<p>'+evaluation_link+' · <a href="cone-display.json">Plot settings and input bindings</a> · <a href="imaging-summary.json">Imaging summary</a> · <a href="summary.json">Original denominators and accounting</a> · <a href="publication.json">Artifact hashes</a></p></details>',
         '</section><section id="spectra"><details><summary>Historical 708-group control and spectrum</summary><p>The control retains its previous reconstruction and input. Its population differs from the current signal-selected groups.</p><img loading="lazy" src="map-legacy-control.png" alt="Historical 708-group conditional control"><img loading="lazy" src="spectra.png" alt="Saved original spectra"></details></section>']
     if journey is not None:
         payload = json.dumps(journey,separators=(',',':'),ensure_ascii=True,allow_nan=False).replace('<','\\u003c').replace('>','\\u003e').replace('&','\\u0026')
@@ -753,23 +883,28 @@ def _render(summary, imaging, control, figures, journey):
     return ''.join(htmlparts).encode('utf-8')
 
 
-def export_saved(reconstruction, imaging, legacy_control, previous_public, output, *, root=ROOT, readout_checks=None, evaluation=None, recovery_evidence=None, replace_public_manifest_sha256=None, order_prior_population=None, map_records=None):
+def export_saved(reconstruction, imaging, legacy_control, previous_public, output, *, root=ROOT, readout_checks=None, evaluation=None, recovery_evidence=None, replace_public_manifest_sha256=None, order_prior_population=None, map_records=None, map_selection=None):
     output = Path(output).resolve(); root = Path(root).resolve()
     require(not output.exists(), 'Preserve existing publication; use a new explicit output')
     pins = _source_pins(root)
     replacement = PREVIOUS_MANIFEST if replace_public_manifest_sha256 is None else replace_public_manifest_sha256
     require(isinstance(replacement,str) and re.fullmatch(r'[0-9a-f]{64}',replacement), 'Invalid explicit public replacement hash')
     summary, image, control, previous, inputs, migration = _saved_inputs(reconstruction,imaging,legacy_control,previous_public,
-        population=order_prior_population,map_records=map_records)
+        population=order_prior_population,map_records=map_records,map_selection=map_selection)
     selected = image['group_count']
     require((image.get('source_mass') is not None) == (selected > 0), 'Empty imaging selection must not have a source map')
     require(control.get('source_mass') is not None, 'Missing legacy control map')
-    if evaluation is None and (_report_path(imaging).parent/'evaluation.json').is_file():
+    if evaluation is None and map_selection is not None:
+        evaluation = Path(order_prior_population)/'imaging/evaluation.json'
+    elif evaluation is None and (_report_path(imaging).parent/'evaluation.json').is_file():
         evaluation=_report_path(imaging).parent/'evaluation.json'
     require(not selected or evaluation is not None, 'Selected conditional imaging requires the finished posthoc evaluation')
-    accuracy=_evaluation_summary(evaluation,imaging,reconstruction,image) if evaluation is not None else None
+    accuracy = (_evaluation_coverage(evaluation,order_prior_population,reconstruction,migration)
+                if map_selection is not None else _evaluation_summary(evaluation,imaging,reconstruction,image)
+                ) if evaluation is not None else None
+    evaluation_key = 'subset_posthoc_evaluation_sha256' if map_selection is not None else 'posthoc_evaluation_sha256'
     if accuracy is not None:
-        inputs['posthoc_evaluation_sha256']=sha(evaluation)
+        inputs[evaluation_key]=sha(evaluation)
     recovery, recovery_bindings = None, {}
     if recovery_evidence is not None:
         recovery, recovery_bindings = _recovery_summary(recovery_evidence,reconstruction,image,summary,inputs)
@@ -808,6 +943,10 @@ def export_saved(reconstruction, imaging, legacy_control, previous_public, outpu
         'limitations':summary['limitations'],'input_sha256':inputs,'figures':figures}
     if accuracy is not None:
         public_summary['posthoc_evaluation']=accuracy
+    if map_selection is not None:
+        public_summary['map_selection'] = {k:migration['selection'][k] for k in
+            ('kind','status','group_count','candidate_count','candidate_site_counts','selection',
+             'selected_ids_sha256','selected_candidate_keys_sha256','candidate_prior_mass','uninformative_mass')}
     if display is not None:
         public_summary['cone_plane_display']=display
     if recovery is not None:
@@ -836,10 +975,14 @@ def export_saved(reconstruction, imaging, legacy_control, previous_public, outpu
             and sha(_report_path(imaging))==inputs['joint_imaging_report_sha256']
             and sha(_report_path(legacy_control))==inputs['legacy_control_report_sha256'], 'Saved input changed during export')
     if accuracy is not None:
-        require(sha(evaluation)==inputs['posthoc_evaluation_sha256'], 'Posthoc evaluation changed during export')
+        require(sha(evaluation)==inputs[evaluation_key], 'Posthoc evaluation changed during export')
     if migration is not None:
         require(sha(Path(order_prior_population)/'result.json')==inputs['order_prior_population_result_sha256']
                 and sha(map_records)==inputs['selected_map_records_sha256'], 'Order-prior display inputs changed during export')
+    if map_selection is not None:
+        require(sha(map_selection)==inputs['map_selection_sha256']
+                and all(sha(path)==digest for path,digest in migration['evaluation_binding_paths'].items()),
+                'All-event selection or reused evaluation changed during export')
     require(all(sha(path)==digest for path,digest in recovery_bindings.items()), 'Recovery evidence changed during export')
     manifest={'kind':KIND,'status':'complete','route':ROUTE,'initial_records':1_000_000,
         'replaces_public_manifest_sha256':replacement,'input_sha256':inputs,
@@ -882,7 +1025,8 @@ def validate_public(directory, *, root=ROOT, allow_historical_sources=False):
         require(p.stat().st_size==record['bytes'] and sha(p)==record['sha256'], 'Public artifact hash changed: '+name)
         if name in TEXT_NAMES|OPTIONAL_TEXT_NAMES:
             public(p.read_bytes())
-    require(total<=MAX_BUNDLE_BYTES, 'Saved publication exceeds8MB')
+    budget = MAX_ALL_EVENT_BUNDLE_BYTES if 'map_selection_sha256' in manifest['input_sha256'] else MAX_BUNDLE_BYTES
+    require(total<=budget, f'Saved publication exceeds {budget:,} bytes')
     summary=read(directory/'summary.json')
     require(summary['status']=='complete' and summary['initial_records']==1_000_000
             and summary['counts']['pulse_groups']==sum(summary['reasons'].values())==57613
@@ -894,17 +1038,36 @@ def validate_public(directory, *, root=ROOT, allow_historical_sources=False):
         require('evaluation-summary.json' in names and summary['posthoc_evaluation']==read(directory/'evaluation-summary.json')
                 and summary['posthoc_evaluation']['bindings']['imaging_report_sha256']==manifest['input_sha256']['joint_imaging_report_sha256'],
                 'Published accuracy evidence is missing or changed')
+        if 'map_selection' in summary:
+            accuracy=summary['posthoc_evaluation']; coverage=accuracy['coverage']; subset=accuracy['evaluated_subset']
+            require(accuracy['kind']=='gegi_saved_evaluation_coverage_v1'
+                    and accuracy['bindings']['map_selection_sha256']==manifest['input_sha256']['map_selection_sha256']
+                    and accuracy['map_group_count']==summary['map_selection']['group_count']
+                    and accuracy['map_candidate_count']==summary['map_selection']['candidate_count']
+                    and coverage['candidate_key_intersection_count']==subset['candidate_count']
+                    and coverage['group_intersection_count']==subset['group_count']
+                    and coverage['unevaluated_candidate_keys']+subset['candidate_count']==accuracy['map_candidate_count']
+                    and coverage['groups_without_existing_evaluation']+subset['group_count']==accuracy['map_group_count']
+                    and subset['bindings']['imaging_report_sha256']==accuracy['bindings']['subset_imaging_report_sha256'],
+                    'Published subset evaluation coverage changed')
     if 'saved_recovery_evidence' in summary:
         require('recovery-summary.json' in names and summary['saved_recovery_evidence']==read(directory/'recovery-summary.json')
                 and sha(directory/'recovery-summary.json')==manifest['input_sha256']['saved_recovery_evidence_sha256'],
                 'Published saved recovery evidence is missing or changed')
     if 'cone_plane_display' in summary:
         display=summary['cone_plane_display']
+        expected_groups, expected_candidates = (summary['map_selection']['group_count'],summary['map_selection']['candidate_count']) if 'map_selection' in summary else (153,287)
         require('cone-display.json' in names and display==read(directory/'cone-display.json')
                 and all(manifest['input_sha256'].get(k)==v for k,v in display['input_sha256'].items())
-                and display['layers'][0]['groups']==summary['selected_conditional_imaging_groups']==153
-                and display['layers'][0]['candidates']==287
+                and display['layers'][0]['groups']==summary['selected_conditional_imaging_groups']==expected_groups
+                and display['layers'][0]['candidates']==expected_candidates
                 and display['truth_or_source_markers'] is False, 'Cone display selection or input binding changed')
+        if 'map_selection' in summary:
+            require(summary['map_selection']['kind']=='gegi_all_saved_candidates_map_v1'
+                    and display['default_layer']=='cone-layer-0'
+                    and expected_groups==summary['counts']['conditional_candidate_groups']
+                    and expected_candidates==summary['counts']['conditional_candidates'],
+                    'All-event population or default layer changed')
         require(all(file in names for layer in display['layers'] for file in layer['files'].values()),
                 'Missing cone comparison figure')
     public((directory/'publication.json').read_bytes())
@@ -920,6 +1083,7 @@ if __name__=='__main__':
     parser.add_argument('--recovery-evidence', help='Finished saved-data recovery evidence directory; aggregate export only')
     parser.add_argument('--replace-public-manifest-sha256', help='Exact installed public manifest to replace; teaching inputs remain independently bound')
     parser.add_argument('--order-prior-population', help='Completed explicit prior-weight population derivative')
-    parser.add_argument('--map-records', help='Exact hash-bound selected153group candidate records')
+    parser.add_argument('--map-records', help='Exact hash-bound selected candidate records')
+    parser.add_argument('--map-selection', help='Completed explicit all-event map-selection receipt')
     args=parser.parse_args()
-    export_saved(args.reconstruction,args.imaging,args.legacy_control,args.previous_public,args.output,readout_checks=args.readout_checks,evaluation=args.evaluation,recovery_evidence=args.recovery_evidence,replace_public_manifest_sha256=args.replace_public_manifest_sha256,order_prior_population=args.order_prior_population,map_records=args.map_records)
+    export_saved(args.reconstruction,args.imaging,args.legacy_control,args.previous_public,args.output,readout_checks=args.readout_checks,evaluation=args.evaluation,recovery_evidence=args.recovery_evidence,replace_public_manifest_sha256=args.replace_public_manifest_sha256,order_prior_population=args.order_prior_population,map_records=args.map_records,map_selection=args.map_selection)

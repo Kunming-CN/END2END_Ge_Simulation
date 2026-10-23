@@ -2,12 +2,18 @@
 
 ## Current milestone — 2026-10-22
 
-The Compton display and fixed-case nominal readout bridge are implemented and
-locally validated. Root is completing deployment; exact live status/receipt is in
-`.local/autonomy/state.json`. Root owns direction; implementation is gpt-6.1-sol
+Owner correction: the default Compton image must include every usable saved
+candidate, not only a selected energy window or two-site subset. The census is
+434 groups/837 candidates (647 two-site,169 three-site,21 four-site candidates).
+All pass the existing candidate geometry/energy-angle checks. The tested display
+now includes that exact population; pooled is the default and energy layers are
+optional. No new transport, drift, fits or source-truth input. The previous153-group
+display and fixed-case nominal readout bridge are complete and verified. Exact
+live status/receipt is in `.local/autonomy/state.json`. Root owns direction;
+implementation is gpt-6.1-sol
 ultra. No additional AI reviews, resets, large campaigns or repeated broad checks.
-The owner explicitly stopped further two-bright-spot investigation: the current
-1332.492 keV layer has 18 groups. State limited statistics and move on.
+The owner explicitly stopped further two-bright-spot investigation. The all-site
+1332.492 keV layer has19groups (old two-site layer18). State limited statistics.
 
 The same manual supervisor owns `.local/autonomy/gegi-saved-recovery.lock` as
 `gegi-saved-recovery-20261020`; previous ownership and pause records are retained.
@@ -34,26 +40,45 @@ Receipt: `.local/student-runtime-p1/COMPLETE.json`, SHA
 `f9c413b38da08d13ac4bc4092867628d5c8f07f454098f725ead758302138b7b`.
 Do not rebuild this runtime for website-only edits.
 
-Website publication uses `tools/gegi_saved_publication.py` and
-`tools/build_site.py`. Four selectable layers show actual cone-plane curves,
-saved angular backprojection and saved conditional image; default1332 has18groups/
-36candidate orders. Plane z=40mm, XY units mm. Root inspected the three default
-PNGs. No smoothing, new fits, physics or source-truth overlay. Old snapshots remain.
-The initial build failed at the historical teaching loader interface; docs were
-not replaced. The exporter now uses the existing exact mount/deferred loader.
-Intermediate bundles/build failures are retained. Final generator uses the existing
-section/nav/anchor layout; the pinned historical site tools remain unchanged.
-Final bundle: `validation/order-prior-preservation/publication/delivery/`.
-21 exporter tests and36 final-source site tests passed, plus the affected complete
-page transformation and six control-switch checks. Browser/CDP timed out; real
-browser control/viewport acceptance is not claimed. The unchanged builder's two
-final check_site validators passed and atomically installed docs:109pages,
-3529links,84fragments,1978files. Build ID
-`2310f97ff2b7bc835bdc58b78283bb6f5795044a6cc48aedfe3c4d68d0ef12d8`;
-GeGI manifest`61f0de0d58d2a13fde43196022633f2f0b86975cc1e9cd032847c41335f81bd8`.
-The reused-stage builder took614.301s:210.720s predecessor,403.581s final validators/
-installation. No new physics. Failures/exact checks are in publication/validation.json.
-Root owns commit/push and exact live check; no hand edits to docs.
+Previous153-group website13d952b is pushed and live-verified:983live files,
+298.990s on2026-10-22T23:50Z. Receipt `validation/order-prior-preservation/publication/validation.json`.
+GeGI manifest `61f0de0d58d2a13fde43196022633f2f0b86975cc1e9cd032847c41335f81bd8`.
+Exporter21tests/site36tests, page transformation/anchors/controls and both unchanged
+builder validators passed. Browser/CDP timed out; real browser acceptance is not
+claimed. Preserve prior failed exports/builds. Reuse exact section/nav/teaching-loader
+interfaces; do not edit pinned historical site tools. Build only through build_site;
+no hand edits to docs or repeated standalone local full check after builder checks.
+
+All-candidate selection census: `validation/order-prior-preservation/selection-census.json`,
+SHA `08f48335f9797fff27488aa3e671ff51b2ecb649ef00a9dd14e135a5422be578`.
+One saved-only scan0.144s: all energies/all sites434/837; all energies/two-site414/647;
+three energy windows/all sites162/393; previous windows/two-site153/287. All837
+retain the one-fully-absorbed-photon/charge-pixels-as-interactions assumptions.
+Old153/287 error measurements cover only that explicit subset, not the full map.
+All-event map is complete at `validation/order-prior-preservation/all-events/`:
+map-selection SHA `6259e649a74ed53db59bbb29f4db2f87d964ce8edd42b8ae0f29e7fcd0fb2c47`,
+COMPLETE `5938b6cd64a784bc4fe7b6b0647ff9fdf2d2a9867a6a3f053eb58e96c63fb51b`.
+One existing map call4.508s/4.730s total;434groups/837candidates, energy layers
+118/25/19/272other. Exact candidate geometry/priors/IDs preserved, mass262.149306
+plus unresolved171.850694. Forty iterations, unchanged z40mm/extent120mm/step4mm.
+The old153/287 evaluation covers137groups fully and16partially (63new candidates
+there);281groups have no evaluation in that subset,550candidate keys are uncovered.
+No new truth reads, fits, physics or peak investigation. A source-key preflight
+failure executed0map calls; its original code/receipt are retained.
+All-event publisher is frozen and tested:24exporter tests,36site tests and2checks
+after the capacity-only9MB change (legacy remains8MB). Real page transformation
+and all84fragment references pass. Raw bundle8,249,774bytes/30artifacts; manifest
+`b366307f3d5bd2db98f1b3132e2d35d9e9a480abcb35dd697d38e21b8a825683`.
+All5views are retained; pooled default,780of837cone intersections enter the square.
+Root inspected all3pooled PNGs. The first8MB-bound export failure is retained;
+image bytes were reused exactly. Build/live receipts extend the single
+`validation/order-prior-preservation/all-events/publication/validation.json`.
+The unchanged builder passed its predecessor and both final validators, installing
+1981files/109pages with3538links and84fragments in673.274s. Build ID
+`220d8dfd1722b5fb8d31c7e59450a34619a20d4c74ac4203a7e862ef0137eeaa`;
+installed GeGI manifest `0934a92dc9a9593be3237069ee65b7ca991796b1d074423e55fefb881ca53130`.
+Root owns GitHub synchronization and exact live check; current execution/final
+receipts are in state.json and the publication validation.json above. No new runtime ZIP.
 
 ## Latest saved-data repair
 
@@ -184,7 +209,8 @@ No inverse fits or production change. `validation/native-pair-readout/result.jso
 SHA`300991905ca16f5a2c69e5a0dd058bd8eea0e9fc55925dfc1c08d9ae66f2be70`;
 COMPLETE SHA`b84a29cd13c08fb9b13df7a63975214814a4c658b31533945b7ba448de883c98`.
 
-Next: finish website deployment and exact live verification. The next experimental
+Delivery remaining: GitHub synchronization and exact deployed-byte verification;
+consult the current state/receipt before repeating either. The next experimental
 milestone is a matched.bin/N42 acquisition with format/settings: reproduce its
 selected pixel map and compare matching spectra. Preserve the demonstrated peak/
 collection ambiguity; do not invent hardware timing, use native terminal charge as
