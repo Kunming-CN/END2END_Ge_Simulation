@@ -18,6 +18,8 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js','tools/result_web_delivery.py')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+    # Exact 4391574 published display before shared viewer navigation changes.
+    '9fe651dff2fb607bbe5001c86df0e08211d11adf7d15db026c1957ca9b45542a',
     # Exact completed f4422554 UI stage before approved public payload retirement.
     # Scientific origins stay independently hash-checked below.
     '4ff2441d5f7c6d166d0bc0104b8cd4ea2ab87c7979131d73378d77d916d6590f',

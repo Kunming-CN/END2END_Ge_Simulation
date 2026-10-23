@@ -881,11 +881,11 @@
     "tools/hit_event_view.py": "7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e"
   },
   "adapter_sources": {
-    "tools/viewer_navigation.py": "a204f4b64509550cc6558c451e295dd6893305e88f1cd2e2c2bdf9865d501eb7",
-    "tools/viewer_navigation.js": "f7f78206a9bad5f62a69c2a4c8e05ba66e533c32ed3f45b144b7e26c5df9dbd3",
-    "tools/unified_event_viewer.html": "e3df7951bda9a0932fff094f7d7dc0242e9f71b14969a785db1983ecae2105c5",
-    "tools/unified_event_viewer.js": "c7d25642f3858eb838da89ed6fce0d42586d743f15a843f6dd06a069af561b44",
-    "tools/site_restructure.py": "fcf968d66e8cbe0fcd9124929145c346a9b081c38dc78324f4e0fc14b01e9d9f",
+    "tools/viewer_navigation.py": "e02cd07115a256db0ada7bac770fca93e7a92cb3263e4f1e591282d677c4889e",
+    "tools/viewer_navigation.js": "5f3f4c0062b4da291669bead6451fd611e30cd15061439695130269b5454709c",
+    "tools/unified_event_viewer.html": "d1efb91d1b63dcf349e60f4f9467c963e0fe20fbbffb4edd74ae614020993d95",
+    "tools/unified_event_viewer.js": "6701527fc01d29c7e502582a586b4ec5df9fe24802cefecd2973259726e011d7",
+    "tools/site_restructure.py": "b484f55894b9a82cc8ce465e8858d25a141a05d7836e608b9dfe0b17a04b95a8",
     "tools/site_routes.py": "f77f2c715da8530239093523c8eb613c9e13f8cf5440c33bc5254c2cbbd352cb",
     "tools/geometry_web_delivery.py": "5db8416cf15332012dc970b70422bb4b77d71176937e9cad1989603c6986cca9",
     "tools/result_web_delivery.py": "458e86ba482e7af4495e4f55732fdf7b20a2ec6092680f455b042fbecabfe716"
@@ -893,21 +893,21 @@
   "pages": {
     "viewers/events.html": {
       "source": "tools/unified_event_viewer.html",
-      "view": "assembly",
+      "view": "positive",
       "role": "canonical",
-      "sha256": "e1477f609308e5963b8fe044e9a976a5887def79ce14182933062e0a3424ae41"
+      "sha256": "84274b7d15a89403a0fb4f804568b416279c6a1d65edb2e92ac03c8fcc71dde2"
     },
     "viewers/geant4-assembly.html": {
       "source": "examples/cs137-10k-geometry/geometry.html",
       "view": "assembly",
       "role": "alias",
-      "sha256": "511b40021f295db8506590436bb45ba5ca43c123e89cfe3095acb13c799884a2"
+      "sha256": "973808d33169ca0ea23dc87af59e39a25131c7e0555ed0521355912a7a02525c"
     },
     "viewers/ge-positive.html": {
       "source": "examples/cs137-10k-hits/hit_event_view.html",
       "view": "positive",
       "role": "alias",
-      "sha256": "4fe90680ee84c9906e18655e4b95449b3a867fcae83686fed173c0d421ebff30"
+      "sha256": "4318d50d998aa2dc5514d3cc6b11b95bd325bffba29f838052ea41d322df1e1a"
     }
   },
   "saved_response_files": {

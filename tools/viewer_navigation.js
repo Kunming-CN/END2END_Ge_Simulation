@@ -10,7 +10,7 @@ function savedSelectionQuery(identity) {
 }
 function parseViewerQuery(search, options = {}) {
   const legacy = options.legacy === true, q = new URLSearchParams(search);
-  const state = {model:'AK02',event:null,group:null,view:options.view || 'assembly',invalid:''};
+  const state = {model:'AK02',event:null,group:null,view:options.view || 'positive',invalid:''};
   const allowed = legacy ? ['model','event','group'] : ['study','model','variant','event','group','view'];
   for (const key of q.keys()) if (!allowed.includes(key) || q.getAll(key).length !== 1)
     state.invalid = 'Unknown or repeated query parameter.';
@@ -20,9 +20,10 @@ function parseViewerQuery(search, options = {}) {
   if(q.has('study'))state.study=q.get('study');
   if(q.has('variant'))state.variant=q.get('variant');
   if (!legacy && q.has('view')) state.view = q.get('view');
-  if (!['assembly','positive','geometry'].includes(state.view)) state.invalid = 'Unknown view.';
-  if(state.view==='geometry'&&['study','variant','event','group'].some(key=>q.has(key)))
-    state.invalid='Geometry view accepts only model and view; saved-event identity belongs to the radiation viewer.';
+  // Earlier geometry links now open the same saved-event interface. Preserve
+  // every supplied identity; only the obsolete presentation mode is replaced.
+  if(state.view==='geometry')state.view='positive';
+  if (!['assembly','positive'].includes(state.view)) state.invalid = 'Unknown view.';
   for (const key of ['event','group']) if (q.has(key)) {
     const raw = q.get(key), value = Number(raw);
     if (!/^(0|[1-9][0-9]*)$/.test(raw) || !Number.isSafeInteger(value) || (key === 'event' && value > 9999))
@@ -39,7 +40,7 @@ function canonicalViewerQuery(identity) {
   if(identity.variant!==undefined)q.set('variant',identity.variant);
   if (identity.event !== null) q.set('event', String(identity.event));
   if (identity.group !== null) q.set('group', String(identity.group));
-  q.set('view', identity.view);
+  q.set('view', identity.view==='geometry'?'positive':identity.view);
   const result = parseViewerQuery('?'+q);
   if (result.invalid) throw Error(result.invalid);
   return q.toString();

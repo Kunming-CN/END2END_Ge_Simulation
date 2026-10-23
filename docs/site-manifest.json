@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "build_id": "1f967e0ed20616442aae17b556602e38d8a54ce6d931590a69b40d2e1de57c19",
+  "build_id": "5e2a7cdf9dc0fd029c76ae1520cf789113c77265d5a45e99163807eaf9dbf457",
   "file_count": 1872,
-  "total_bytes": 493123088,
+  "total_bytes": 493118530,
   "html_pages": 109,
   "local_links_checked": 3317,
   "resource_references_checked": 3370,
@@ -70,8 +70,8 @@
     },
     {
       "path": "assemblies/index.html",
-      "bytes": 5290,
-      "sha256": "d3db437275fda8d1db2e8db5ffe16724810474395d2ed7873c0d0e4421ef2c4e"
+      "bytes": 5295,
+      "sha256": "b401fac74e8d22a68222fb9e51c1536f9add2b2ac40ef972fc7a1571715119d9"
     },
     {
       "path": "detectors/AK01/config/source.json",
@@ -7791,12 +7791,12 @@
     {
       "path": "methods/lithium-display.json",
       "bytes": 3346,
-      "sha256": "2b8be418f6ab30ebcc28afcbc1152286778132f8b3b969e5f7b195987ab9ee50"
+      "sha256": "d5163baf688db10e9bead9320ec7506cfc5813a7dd92894fd819026fdfc38ac0"
     },
     {
       "path": "methods/native-li-display.json",
       "bytes": 4991,
-      "sha256": "7f41b0104c8d00bad791d4088b08872c353708807e3e6f74098048c136bb4dfb"
+      "sha256": "7c27c25e638996a046867a352ece229ca43d446f106d3a0302f82794572c113a"
     },
     {
       "path": "methods/native-li.html",
@@ -7905,8 +7905,8 @@
     },
     {
       "path": "results/cs137-10k/AK02/charge-readout.html",
-      "bytes": 505394,
-      "sha256": "8c50e4ab1690b88c64b4647a753bd248c4389b41f4324b9d2fe53daf4181230f"
+      "bytes": 505423,
+      "sha256": "e5ebcfd0ef484e56371d9388d9df2eca1096f012bdeb71b7e6063e6621953ab7"
     },
     {
       "path": "results/cs137-10k/AK02/traces/213-0.json.gz",
@@ -7930,8 +7930,8 @@
     },
     {
       "path": "results/cs137-10k/GeRC02/charge-readout.html",
-      "bytes": 1050220,
-      "sha256": "08375952ecd6dddd0d204bc8957454fdcd39cd21afd6dc357459569a161f7758"
+      "bytes": 1050249,
+      "sha256": "69696d2d3e0ec483318dba7ee36f0dd8587fdea6374e1542d77a6304a85735e5"
     },
     {
       "path": "results/cs137-10k/GeRC02/traces/61-0.json.gz",
@@ -7955,8 +7955,8 @@
     },
     {
       "path": "results/cs137-10k/KMRC01_candidate/charge-readout.html",
-      "bytes": 1593861,
-      "sha256": "85851fd21f1e74f65b314756ec6787fadb4e45414f1ec8049760c8b31b75eeeb"
+      "bytes": 1593890,
+      "sha256": "952b48916b5546de134bf6d65bcfdb9da78f3c57710d3ec6813a9726c559f176"
     },
     {
       "path": "results/cs137-10k/KMRC01_candidate/traces/1071-0.json.gz",
@@ -9115,8 +9115,8 @@
     },
     {
       "path": "results/cs137-10k/SAP22/charge-readout.html",
-      "bytes": 486230,
-      "sha256": "3b3dada862d15aabffe07e91129fe1960f63067dc16e9776a8e77a7fc537d461"
+      "bytes": 486259,
+      "sha256": "e3ae3ee58c586e53bcc9a7070d37348b2ee981e925be2c54ff728e1102004c3e"
     },
     {
       "path": "results/cs137-10k/SAP22/traces/155-0.json.gz",
@@ -9281,7 +9281,7 @@
     {
       "path": "results/gegi-campaign/publication.json",
       "bytes": 6324,
-      "sha256": "342e2029e53560a1d078565efbece6d72de8c30f24eb391d9eec0f0672bd98f1"
+      "sha256": "ab47c28287f6a1c9bd3fde640f40ed8787fd7ba9b25b2ae9b67a79c154491717"
     },
     {
       "path": "results/gegi-campaign/representatives.json",
@@ -9315,8 +9315,8 @@
     },
     {
       "path": "scenarios/lbnl-cs137/index.html",
-      "bytes": 11762,
-      "sha256": "42caa4cbcd138edaf60bba123f411479c63737a6eda0aab462ca34e6ae3bc224"
+      "bytes": 11766,
+      "sha256": "246b112857b092bf59e90081bbfe916cd87d188fe190a5251de42666f4cfec75"
     },
     {
       "path": "sitemap.xml",
@@ -9331,7 +9331,7 @@
     {
       "path": "spectra/manifest.json",
       "bytes": 7517,
-      "sha256": "9fe651dff2fb607bbe5001c86df0e08211d11adf7d15db026c1957ca9b45542a"
+      "sha256": "d5c0843eeb8ec25582c32e3c15f92fbf892efa7cdba354aaea9b9a52199767c3"
     },
     {
       "path": "spectra/million-response.html",
@@ -9355,23 +9355,23 @@
     },
     {
       "path": "viewers/events.html",
-      "bytes": 59160,
-      "sha256": "e1477f609308e5963b8fe044e9a976a5887def79ce14182933062e0a3424ae41"
+      "bytes": 54419,
+      "sha256": "84274b7d15a89403a0fb4f804568b416279c6a1d65edb2e92ac03c8fcc71dde2"
     },
     {
       "path": "viewers/ge-positive.html",
-      "bytes": 7554,
-      "sha256": "4fe90680ee84c9906e18655e4b95449b3a867fcae83686fed173c0d421ebff30"
+      "bytes": 7583,
+      "sha256": "4318d50d998aa2dc5514d3cc6b11b95bd325bffba29f838052ea41d322df1e1a"
     },
     {
       "path": "viewers/geant4-assembly.html",
-      "bytes": 7422,
-      "sha256": "511b40021f295db8506590436bb45ba5ca43c123e89cfe3095acb13c799884a2"
+      "bytes": 7451,
+      "sha256": "973808d33169ca0ea23dc87af59e39a25131c7e0555ed0521355912a7a02525c"
     },
     {
       "path": "viewers/manifest.json",
       "bytes": 81906,
-      "sha256": "66d0245ffa9d4ca163b63f1e3dd90129ea5b691618cc0195aa5c251df0557741"
+      "sha256": "ff294b3591524ef5c6fb2b7ebba0818c5b90132ace5f5453ff06ec2bff581a48"
     }
   ]
 }

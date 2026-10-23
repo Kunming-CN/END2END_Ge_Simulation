@@ -245,6 +245,19 @@ class SiteStructureTests(unittest.TestCase):
         first={p:(root/p).read_bytes() for p in owned};S.apply(root)
         self.assertEqual(first,{p:(root/p).read_bytes() for p in owned})
 
+    def test_assembly_entries_open_the_shared_saved_event_viewer(self):
+        root=self.fixture();S.apply(root)
+        for relative,prefix in (('assemblies/index.html','../'),
+                                ('scenarios/lbnl-cs137/index.html','../../')):
+            text=(root/relative).read_text()
+            self.assertIn('href="'+prefix+'viewers/events.html?model=AK02&amp;view=positive"',text)
+            self.assertNotIn('view=geometry',text)
+            parser=DisclosureScopes();parser.feed(text)
+            viewer_links=[href for href,closed in parser.links if 'viewers/events.html?' in href]
+            self.assertEqual(viewer_links,[prefix+'viewers/events.html?model=AK02&view=positive'])
+            self.assertNotIn('event=',viewer_links[0])
+            self.assertNotIn('group=',viewer_links[0])
+
     def test_retired_gamma_is_not_validated_promoted_or_modified_by_hub(self):
         root=self.fixture(with_results=True);S.apply(root)
         before={p.relative_to(root).as_posix():p.read_bytes() for p in root.rglob('*') if p.is_file()}
@@ -371,7 +384,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertNotIn('5 imaging-accepted events',results)
         assemblies=(root/'assemblies/index.html').read_text(encoding='utf-8')
         for href in ('../scenarios/lbnl-cs137/index.html','gegi/index.html',
-                     '../viewers/events.html?model=AK02&amp;view=geometry'):
+                     '../viewers/events.html?model=AK02&amp;view=positive'):
             self.assertIn(href,assemblies)
 
 if __name__=='__main__':unittest.main(verbosity=2)

@@ -60,6 +60,7 @@ class Readers(unittest.TestCase):
 
     def test_three_routes_deterministic_controller_and_data_binding(self):
         self.assertEqual(set(V.PAGES),{'viewers/events.html','viewers/ge-positive.html','viewers/geant4-assembly.html'})
+        self.assertEqual(V.PAGES[V.MAIN_PAGE]['view'],'positive')
         main=V.render(V.ROOT/'docs')
         self.assertEqual(main,V.render(V.ROOT/'docs','viewers/events.html'))
         scripts=re.findall(r'<script\b[^>]*id="([^"]+)"[^>]*>([\s\S]*?)</script>',main)
@@ -71,6 +72,12 @@ class Readers(unittest.TestCase):
                          'sha256':V.PINS['examples/cs137-10k-geometry/manifest.json']},
                          'positive':{'base':'../examples/cs137-10k-hits/',
                          'sha256':V.PINS['examples/cs137-10k-hits/manifest.json']}}
+        geometry=V.ROOT/'docs'/V.geometry_delivery.PREFIX
+        if V.read(geometry/'manifest.json').get('kind')==V.geometry_delivery.KIND:
+            original=V.geometry_delivery.source_manifest((geometry/'original-manifest.json').read_bytes())
+            expected_config['assembly'].update(sha256=V.sha(geometry/'manifest.json'),kind=V.geometry_delivery.KIND,
+                original_manifest_sha256=V.geometry_delivery.SOURCE_MANIFEST_SHA256,
+                campaign_run_sha256=original['campaign_run_sha256'])
         ring_manifest=V.ROOT/'docs/examples/cs137-10k-rings/manifest.json'
         if ring_manifest.is_file():
             expected_config['models']={model:{layer:{'base':'../examples/cs137-10k-rings/',

@@ -19,12 +19,11 @@ const caseRoutes=Object.fromEntries(['AK02','SAP22','GeRC02','KMRC01_candidate']
   result:'../results/cs137-10k/'+model+'/charge-readout.html',files:'../results/cs137-10k/'+model+'/charge-readout.html#data-files',
   spectrum:'../spectra/cs137-10k.html#tenk-'+model,events:'events.html?model='+model+'&view=positive',original_files:{}}]));
 const eventNavigation='<div id="page-navigation"><nav aria-label="Breadcrumb">Results / Cs137 10K / Radiation events</nav></div>';
-const geometryNavigation='<div id="page-navigation"><nav aria-label="Breadcrumb">Assemblies / LBNL cryostat geometry</nav></div>';
 const sourceHTML=sourceMode?fs.readFileSync('tools/unified_event_viewer.html','utf8')
   .replace('__PRIMARY_NAVIGATION__',eventNavigation)
   .replace('__VIEWER_NAVIGATION__',()=>fs.readFileSync('tools/viewer_navigation.js','utf8'))
   .replace('__VIEWER_CONFIG__',()=>JSON.stringify({assembly:assemblyBinding,
-    positive:{base:'../examples/cs137-10k-hits/',sha256:sha(fs.readFileSync(path.join(positiveRoot,'manifest.json')))},case_routes:caseRoutes,geometry_navigation:geometryNavigation}))
+    positive:{base:'../examples/cs137-10k-hits/',sha256:sha(fs.readFileSync(path.join(positiveRoot,'manifest.json')))},case_routes:caseRoutes}))
   .replace('__VIEWER_CONTROLLER__',()=>fs.readFileSync('tools/unified_event_viewer.js','utf8')):null;
 const oracles=new Map(),chunks=new Map();let scalarComparisons=0;
 function exact(a,b,p='value'){
@@ -49,7 +48,7 @@ function originalPrimary(model,id){
   return chunks.get(key).events[id-entry.first];
 }
 class Element{
-  constructor(tag='div'){this.tagName=tag;this.children=[];this._value='';this.checked=false;this.disabled=false;this.textContent='';this.dataset={};this.style={};this.clientWidth=800;this.clientHeight=600;this.open=false;this.attrs={};}
+  constructor(tag='div'){this.tagName=tag;this.children=[];this._value='';this.checked=false;this.disabled=false;this.hidden=false;this.textContent='';this.dataset={};this.style={};this.clientWidth=800;this.clientHeight=600;this.open=false;this.attrs={};}
   get value(){return this._value;}set value(v){this._value=String(v);}
   append(...els){this.children.push(...els);}replaceChildren(...els){this.children=[...els];this.textContent='';if(this.tagName==='select')this.value=els[0]?.value??'';}
   setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];if(k==='href')delete this.href;}
@@ -62,7 +61,7 @@ async function viewer(query,options={}){
     const e=new Element(m[1]);e.checked=/\bchecked\b/.test(m[0]);e.disabled=/\bdisabled\b/.test(m[0]);els.set(m[2],e);}
   if(els.has('page-navigation'))els.get('page-navigation').outerHTML=html.match(/<div id="page-navigation">[\s\S]*?<\/div>/)?.[0];
   els.get('category').value='all';els.get('model').value='AK02';
-  const location={pathname:'/viewers/events.html',search:query},requests=[],historyCalls=[],listeners=new Map();
+  const location={pathname:'/viewers/events.html',search:query,hash:options.hash||''},requests=[],historyCalls=[],listeners=new Map();
   const move=url=>{const u=new URL(url,'https://test.invalid');location.pathname=u.pathname;location.search=u.search;};
   const history={state:null,pushState(state,_title,url){this.state=state;historyCalls.push({kind:'push',state,url});move(url);},replaceState(state,_title,url){this.state=state;historyCalls.push({kind:'replace',state,url});move(url);}};
   const realFetch=async url=>{assert.ok(url.startsWith('../examples/'),'Unexpected data path '+url);
@@ -85,42 +84,38 @@ async function viewer(query,options={}){
 function identity(v,model,id,group,view){const s=v.state();assert.equal(s.requested.model,model);assert.equal(s.requested.event,id);assert.equal(s.requested.group,group);assert.equal(s.requested.view,view);assert.equal(s.primary?.event_id??null,id);assert.equal(s.scene.model,model);}
 function fold(v){v.els.get('recordPanel').open=true;v.els.get('evidencePanel').open=true;v.els.get('recordPanel').ontoggle();}
 function primary(v,model,id){exact(v.state().primary,originalPrimary(model,id),model+'/'+id+'/primary');}
-async function geometryChecks(){
-  const v=await viewer('?model=AK02&view=geometry');
-  assert.equal(v.state().requested.view,'geometry');assert.equal(v.state().requested.event,null);assert.equal(v.state().requested.group,null);
-  assert.equal(v.state().primary,null);assert.equal(v.state().group,null);assert.equal(v.state().overlayCount,0);
-  assert.equal(v.state().scene.model,'AK02');assert.equal(v.els.get('viewer-title').textContent,'LBNL cryostat geometry');
-  assert.match(v.els.get('page-navigation').outerHTML,/Assemblies/);assert.doesNotMatch(v.els.get('page-navigation').outerHTML,/Cs137 10K/);
-  for(const id of ['event-controls','group-controls','event-evidence','recordPanel','evidencePanel','event-color-key','overlay-controls','event-provenance-note'])assert.equal(v.els.get(id).hidden,true,id);
-  assert.equal(v.els.get('geometry-provenance-note').hidden,false);
-  assert.equal(v.els.get('geometry-context').hidden,false);assert.equal(v.els.get('volume-panel').open,true);
-  assert.ok(!v.requests.some(p=>/events-\d|selected\.json|cs137-10k-hits/.test(p)),'Geometry must not request a primary or overlay.');
-  assert.ok(!/primary|Edep|readout|Cs137/.test(v.els.get('identity').textContent));
-  const study=new URL(v.els.get('geometry-study').href,'https://test.invalid/viewers/events.html');
-  assert.equal(study.searchParams.get('study'),'cs137-10k');assert.equal(study.searchParams.get('model'),'AK02');assert.equal(study.searchParams.get('view'),'positive');assert.equal(study.searchParams.has('event'),false);
-  await v.run('selectModel("SAP22")');assert.equal(v.state().requested.view,'geometry');assert.equal(v.state().scene.model,'SAP22');assert.equal(v.state().primary,null);
-  assert.equal(v.state().requested.study,undefined);assert.equal(v.state().requested.variant,undefined);assert.equal(v.state().requested.event,null);
-  assert.ok(!v.requests.some(p=>/events-\d|selected\.json|cs137-10k-hits/.test(p)));
-  await v.run('setView("positive")');const first=oracle('SAP22').scene.event_index.ge_hit_ids[0];assert.equal(v.state().primary.event_id,first);assert.equal(v.els.get('event-evidence').hidden,false);
-  assert.match(v.els.get('page-navigation').outerHTML,/Cs137 10K/);
-  const routes=v.run('selectionRoutes()'),spectrum=new URL(routes.spectrum,'https://test.invalid/viewers/events.html');
-  for(const [key,value]of Object.entries({study:'cs137-10k',model:'SAP22',variant:'SAP22',event:String(first),group:String(v.state().requested.group)}))assert.equal(spectrum.searchParams.get(key),value,key);
-  assert.equal(spectrum.hash,'#tenk-SAP22');
-  await v.run('setView("geometry")');assert.equal(v.state().primary,null);assert.equal(v.state().group,null);assert.equal(v.state().overlayCount,0);
-  assert.equal(v.state().requested.study,undefined);assert.equal(v.els.get('responseLinks').hidden,true);
-  v.location.search='?model=AK02&event=213&group=0&view=positive';await v.run('restoreViewerHistory()');assert.equal(v.state().primary.event_id,213);
-  v.location.search='?model=SAP22&view=geometry';await v.run('restoreViewerHistory()');assert.equal(v.state().primary,null);assert.equal(v.state().scene.model,'SAP22');
-  const ringManifest=path.join(site,'examples/cs137-10k-rings/manifest.json');
-  if(fs.existsSync(ringManifest)){
-    const binding={base:'../examples/cs137-10k-rings/',sha256:sha(fs.readFileSync(ringManifest)),kind:'ring_saved_publication_v1'};
-    v.run('VIEWER_CONFIG.models ||= {};VIEWER_CONFIG.models.GeRC02='+JSON.stringify({assembly:binding,positive:binding})+';');
-    const start=v.requests.length;await v.run('selectModel("GeRC02")');assert.equal(v.state().primary,null);assert.equal(v.state().scene.model,'GeRC02');
-    assert.match(v.els.get('identity').textContent,/GeRC02 Li50min scene/);assert(v.els.get('model').children.some(e=>e.value==='GeRC02'&&/Li50min/.test(e.textContent)));
-    assert.ok(!v.requests.slice(start).some(p=>/events-\d|selected\.json/.test(p)));
+async function unifiedDefaultsChecks(){
+  assert.match(sourceHTML||fs.readFileSync(path.join(site,'viewers/events.html'),'utf8'),/id="shells"[^>]*checked>Cryostat<\/label>/);
+  for(const query of ['', '?model=AK02&view=geometry']){
+    const v=await viewer(query,{hash:'#recordPanel'});identity(v,'AK02',213,0,'positive');primary(v,'AK02',213);
+    assert.equal(v.state().group.group_id,0);assert.equal(v.state().overlayCount,121);assert.equal(v.els.get('shells').checked,true);
+    assert.equal(v.els.get('view').value,'positive');assert.equal(new URLSearchParams(v.location.search).get('view'),'positive');
+    assert.ok(v.historyCalls.every(call=>call.url.endsWith('#recordPanel')));
+    assert.match(v.els.get('page-navigation').outerHTML,/Cs137 10K/);
+    for(const id of ['geometry-context','geometry-study','geometry-scene','geometry-provenance-note'])assert.equal(v.els.has(id),false,id);
+    for(const id of ['event-controls','group-controls','event-evidence','recordPanel','evidencePanel','event-color-key','overlay-controls'])assert.equal(v.els.get(id).hidden,false,id);
+    assert.equal(v.els.get('responseLinks').hidden,false);
+    const next=oracle('AK02').scene.event_index.ge_hit_ids[1];
+    v.els.get('shells').checked=false;v.els.get('shells').onchange();await v.run('selectEvent('+next+')');
+    assert.equal(v.els.get('shells').checked,false);primary(v,'AK02',next);
+    await v.run('setView("assembly")');assert.equal(v.els.get('shells').checked,false);
+    await v.run('setView("positive")');assert.equal(v.els.get('shells').checked,false);
+    v.els.get('shells').checked=true;v.els.get('shells').onchange();assert.equal(v.els.get('shells').checked,true);
   }
+  const v=await viewer('?study=cs137-10k&model=SAP22&variant=SAP22&event=5930&group=0&view=geometry');
+  identity(v,'SAP22',5930,0,'positive');primary(v,'SAP22',5930);
+  assert.equal(v.state().requested.study,'cs137-10k');assert.equal(v.state().requested.variant,'SAP22');
+  await v.run('setView("geometry")');identity(v,'SAP22',5930,0,'positive');primary(v,'SAP22',5930);
+  await v.run('selectModel("AK02")');identity(v,'AK02',213,0,'positive');assert.equal(v.els.get('shells').checked,true);
+  v.location.search='?model=SAP22&event=5930&group=0&view=geometry';await v.run('restoreViewerHistory()');identity(v,'SAP22',5930,0,'positive');
+  const zero=await viewer('?model=AK02&event=0&group=0&view=geometry');
+  identity(zero,'AK02',0,0,'positive');primary(zero,'AK02',0);assert.equal(zero.state().group,null);
+  assert.equal(zero.state().primary.tables['stp/germanium'].length,0);
+  const missing=await viewer('?model=AK02&event=213&group=999&view=geometry');
+  identity(missing,'AK02',213,999,'positive');assert.equal(missing.state().group,null);primary(missing,'AK02',213);
 }
-if(process.argv.includes('--geometry-only')){
-  await geometryChecks();console.log(JSON.stringify({status:'passed',kind:'source geometry-mode and spectrum-identity targeted regression',numericalSourceWrites:0}));process.exit(0);
+if(process.argv.includes('--unified-defaults')){
+  await unifiedDefaultsChecks();console.log(JSON.stringify({status:'passed',kind:'unified event defaults, legacy geometry identities and cryostat toggles',numericalSourceWrites:0}));process.exit(0);
 }
 const results=[];let groups=0;
 for(const model of ['AK02','SAP22']){

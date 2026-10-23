@@ -1,5 +1,24 @@
 # Current handoff
 
+## Unified event viewer — 2026-10-23
+
+Owner removed the separate geometry-only interface. The default and legacy
+`view=geometry` links now use the existing positive-event reader; AK02 selects
+saved primary213/group0. The Cryostat checkbox starts on and preserves manual
+visibility changes when selecting another event. The two LBNL assembly entries
+use the same reader. Explicit assembly context remains a control in that reader.
+No scientific data, geometry coordinates, compressed delivery or runtime changed.
+
+Root accepted the source diff and directed gpt-6.1-sol ultra implementation.
+36publication tests,17entry-navigation tests, targeted default/legacy identity
+and visibility checks, query/history checks and the affected adapter test passed.
+Normal builder checks passed for snapshot
+5e2a7cdf9dc0fd029c76ae1520cf789113c77265d5a45e99163807eaf9dbf457.
+Browser acceptance confirmed the old link opens213/0with the full cryostat;
+manually hiding it stays effective on next event220/0. Every saved examples
+payload and all image/video/CSV/gzip/archive bytes are unchanged. Git and live
+publication status are in `.local/viewer-unification/receipt.json`.
+
 ## Completed cleanup milestone — 2026-10-23
 
 Owner approved P1/P2/P3 public removal, lossless10Kgeometry delivery and omission

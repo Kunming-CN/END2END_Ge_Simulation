@@ -8,7 +8,7 @@ let queryCases=0,aliasCases=0,historyCases=0;
 const query=(s,options={})=>{queryCases++;return plain(c.parseViewerQuery(s,options));};
 const alias=(s,view)=>{aliasCases++;return plain(c.legacyViewerTarget(s,view));};
 const target=(identity,pathname,search)=>{historyCases++;return plain(c.viewerHistoryTarget(identity,pathname,search));};
-assert.deepEqual(query(''),{model:'AK02',event:null,group:null,view:'assembly',invalid:''});
+assert.deepEqual(query(''),{model:'AK02',event:null,group:null,view:'positive',invalid:''});
 assert.deepEqual(query('?model=SAP22&event=0&group=0&view=positive'),{model:'SAP22',event:0,group:0,view:'positive',invalid:''});
 assert.equal(query('?event=9999').event,9999);
 for(const s of ['?event=','?event=-1','?event=10000','?event=1e2','?event=01','?event=1.5','?event=%2B1','?event=%201',
@@ -31,7 +31,7 @@ const identity={model:'AK02',event:213,group:0,view:'positive',invalid:''};
 const canonical=c.canonicalViewerQuery(identity);
 assert.equal(canonical,'model=AK02&event=213&group=0&view=positive');
 assert.deepEqual(query('?'+canonical),identity);
-assert.equal(c.canonicalViewerQuery(query('?event=0&group=0')),'model=AK02&event=0&group=0&view=assembly');
+assert.equal(c.canonicalViewerQuery(query('?event=0&group=0')),'model=AK02&event=0&group=0&view=positive');
 assert.throws(()=>c.canonicalViewerQuery({...identity,invalid:'unavailable'}),/unavailable/);
 assert.throws(()=>c.canonicalViewerQuery({...identity,model:'unknown'}),/model/);
 for(const model of ['GeRC02','KMRC01_candidate']){
@@ -44,8 +44,15 @@ assert.equal(exactCase.invalid,'');assert.equal(exactCase.study,'cs137-10k');ass
 assert.deepEqual(query('?'+c.canonicalViewerQuery(exactCase)),exactCase);
 for(const request of ['?study=cs137-1m&model=AK02&event=213','?study=cs137-10k&study=cs137-10k','?model=GeRC02&variant=GeRC02_Li30min&event=61','?model=AK02&variant=SAP22&event=213'])assert.ok(query(request).invalid,request);
 assert.equal(c.savedSelectionQuery({model:'AK02',event:698,group:0}),'study=cs137-10k&model=AK02&variant=AK02&event=698&group=0');
-const geometryCase=query('?model=GeRC02&view=geometry');assert.equal(geometryCase.invalid,'');assert.equal(geometryCase.event,null);assert.equal(geometryCase.group,null);assert.equal(c.canonicalViewerQuery(geometryCase),'model=GeRC02&view=geometry');
-for(const request of ['?model=AK02&view=geometry&event=0','?model=AK02&view=geometry&group=0','?model=AK02&view=geometry&study=cs137-10k','?model=GeRC02&view=geometry&variant=GeRC02_Li50min'])assert.ok(query(request).invalid,request);
+const geometryCase=query('?model=GeRC02&view=geometry');assert.equal(geometryCase.invalid,'');assert.equal(geometryCase.event,null);assert.equal(geometryCase.group,null);assert.equal(c.canonicalViewerQuery(geometryCase),'model=GeRC02&view=positive');
+for(const model of ['AK02','SAP22','GeRC02','KMRC01_candidate']){
+  const legacy=query('?model='+model+'&view=geometry&event=0&group=0');
+  assert.equal(legacy.invalid,'');assert.equal(legacy.model,model);assert.equal(legacy.view,'positive');assert.equal(legacy.event,0);assert.equal(legacy.group,0);
+}
+const legacyFull=query('?study=cs137-10k&model=GeRC02&variant=GeRC02_Li50min&event=69&group=0&view=geometry');
+assert.deepEqual(legacyFull,{...exactCase,view:'positive'});
+assert.equal(c.canonicalViewerQuery({...identity,view:'geometry'}),'model=AK02&event=213&group=0&view=positive');
+assert.ok(query('?model=AK02&view=geometry&group=0').invalid);
 assert.throws(()=>c.canonicalViewerQuery({...identity,event:null}),/requires/);
 assert.throws(()=>c.canonicalViewerQuery({...identity,view:'unknown'}),/view/);
 assert.equal(target(identity,'/viewers/events.html','?'+canonical).changed,false);

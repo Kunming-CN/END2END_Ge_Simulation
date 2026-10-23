@@ -14,7 +14,7 @@ ROUTES={'examples/cs137-10k-geometry/geometry.html':'viewers/geant4-assembly.htm
         'examples/cs137-10k-hits/hit_event_view.html':'viewers/ge-positive.html'}
 LEGACY_VIEWS={'examples/cs137-10k-geometry/geometry.html':'assembly',
               'examples/cs137-10k-hits/hit_event_view.html':'positive'}
-PAGES={MAIN_PAGE:{'source':'tools/unified_event_viewer.html','view':'assembly','role':'canonical'},
+PAGES={MAIN_PAGE:{'source':'tools/unified_event_viewer.html','view':'positive','role':'canonical'},
        'viewers/geant4-assembly.html':{'source':'examples/cs137-10k-geometry/geometry.html','view':'assembly','role':'alias'},
        'viewers/ge-positive.html':{'source':'examples/cs137-10k-hits/hit_event_view.html','view':'positive','role':'alias'}}
 PINS={'examples/cs137-10k-geometry/manifest.json':'e8d183af05e27f211b6464939d4c667b6d02855d68609a7627753d2f16edc379',
@@ -37,6 +37,8 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '4945d697ae27217b3c4ff008d247445af43a6f44c5a327a845a3e48aa20b5675',
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
+ # Exact 4391574 published bytes before unifying geometry links with events.
+ '66d0245ffa9d4ca163b63f1e3dd90129ea5b691618cc0195aa5c251df0557741',
  # Exact completed f4422554 site-build predecessor, byte-matched to its
  # recorded site manifest before lossless geometry delivery was introduced.
  '656132da1a570d466238554b79cf0f8aa79df97dac5ec32757fc7267f2495b6e',
@@ -205,7 +207,7 @@ def response_records(site):
     return out
 
 def config(site=None):
-    from site_routes import case_result_path, spectrum_path, event_view_path, relative_url, assembly_navigation
+    from site_routes import case_result_path, spectrum_path, event_view_path, relative_url
     out={'assembly':{'base':'../examples/cs137-10k-geometry/','sha256':PINS['examples/cs137-10k-geometry/manifest.json']},
          'positive':{'base':'../examples/cs137-10k-hits/','sha256':PINS['examples/cs137-10k-hits/manifest.json']}}
     # origins() is the byte-validation boundary; rendering selects its already
@@ -216,7 +218,6 @@ def config(site=None):
         out['assembly'].update(sha256=sha(geometry),kind=geometry_delivery.KIND,
             original_manifest_sha256=geometry_delivery.SOURCE_MANIFEST_SHA256,
             campaign_run_sha256=original['campaign_run_sha256'])
-    out['geometry_navigation']=assembly_navigation(MAIN_PAGE)
     responses=response_records(site)
     out['case_routes']={name:{'result':relative_url(case_result_path(name),MAIN_PAGE),
         'model':name,
@@ -327,7 +328,9 @@ def validate(site,current=False):
     require({p.name for p in (site/'viewers').iterdir()}=={'manifest.json','events.html','geant4-assembly.html','ge-positive.html'},'Reader file inventory mismatch')
     if current:frozen()
     for dest,binding in PAGES.items():
-        require(m['pages'][dest]=={**binding,'sha256':sha(site/dest)},'Changed display HTML or route binding')
+        expected_binding=dict(binding)
+        if previous and dest==MAIN_PAGE:expected_binding['view']='assembly'
+        require(m['pages'][dest]=={**expected_binding,'sha256':sha(site/dest)},'Changed display HTML or route binding')
         if current or known_current:require((site/dest).read_text(encoding='utf-8')==render(site,dest),'Nondeterministic reader')
     return m
 
