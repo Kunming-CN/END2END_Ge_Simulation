@@ -9,8 +9,8 @@ also confirms that bound-electron scattering can violate the free-electron energ
 relation. Do not repeat these studies or infer detector efficiency from their counts.
 The repaired student software is released. The153-group display and fixed8-case
 nominal readout bridge are delivered. The default Compton display now includes all
-434 saved candidate groups/837 candidates; finish GitHub/live verification, then
-compare like-for-like experimental products when available. Root owns direction;
+434 saved candidate groups/837 candidates, published as a4cc2c2 and live-verified
+on986files. Next compare like-for-like experimental products when available. Root owns direction;
 gpt-6.1-sol ultra implements concrete changes. Monitoring stays PAUSED.
 
 Owner correction,2026-10-22: use all available saved conditional Compton candidates
@@ -127,8 +127,8 @@ keys are outside it. State counts, units, fixed plane and the fully-absorbed-pho
 charge-site assumptions near the figures; details hold provenance. No raw truth
 reads, new fitting or physics.24exporter/36site tests and2capacity-policy checks
 pass; the real generated-page transform and84anchors pass. The unchanged builder
-also passed both final validators (1981files/109pages). Root completes GitHub/live
-verification; reuse these targeted results and consult the current receipt.
+also passed both final validators (1981files/109pages);986live files match. Preserve
+the first HTTP503 and successful remote-only retry. Reuse these completed results.
 
 ### Saved-data progress — full34 basis and joint signal fit
 

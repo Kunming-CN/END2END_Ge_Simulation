@@ -77,8 +77,11 @@ The unchanged builder passed its predecessor and both final validators, installi
 1981files/109pages with3538links and84fragments in673.274s. Build ID
 `220d8dfd1722b5fb8d31c7e59450a34619a20d4c74ac4203a7e862ef0137eeaa`;
 installed GeGI manifest `0934a92dc9a9593be3237069ee65b7ca991796b1d074423e55fefb881ca53130`.
-Root owns GitHub synchronization and exact live check; current execution/final
-receipts are in state.json and the publication validation.json above. No new runtime ZIP.
+Content commit a4cc2c2 is pushed and live-verified:986files,2026-10-23T00:32:57Z.
+The first --url check passed local validation, then hit HTTP503. Preserve that
+failure; unchanged verify_live passed on remote-only retry in104.098s using the
+same verified manifest. State.json and the single receipt above retain both attempts.
+No new runtime ZIP; subsequent handoff-only commits do not change published bytes.
 
 ## Latest saved-data repair
 
@@ -209,8 +212,8 @@ No inverse fits or production change. `validation/native-pair-readout/result.jso
 SHA`300991905ca16f5a2c69e5a0dd058bd8eea0e9fc55925dfc1c08d9ae66f2be70`;
 COMPLETE SHA`b84a29cd13c08fb9b13df7a63975214814a4c658b31533945b7ba448de883c98`.
 
-Delivery remaining: GitHub synchronization and exact deployed-byte verification;
-consult the current state/receipt before repeating either. The next experimental
+The all-event Compton display milestone is delivered; do not repeat its build,
+map or verification. The next experimental
 milestone is a matched.bin/N42 acquisition with format/settings: reproduce its
 selected pixel map and compare matching spectra. Preserve the demonstrated peak/
 collection ambiguity; do not invent hardware timing, use native terminal charge as
