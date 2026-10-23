@@ -115,7 +115,7 @@
   },
   "entrypoint_dependencies": {
     "tools/gegi_workflow.py": ["simulation/gegi_response.jl", "simulation/gegi_signal_helpers.jl", "transport/gegi_source.py", "transport/gegi_geometry.py", "scenarios/assets/gegi_cryostat_v1.json"],
-    "tools/gegi_saved_control.py": ["tools/gegi_saved_reconstruction.py", "tools/gegi_signal_reconstruction.py", "tools/gegi_joint_imaging.py", "tools/gegi_event_store.py", "tools/gegi_readout_checks.py", "tools/gegi_calibration_admission.py"],
+    "tools/gegi_saved_control.py": ["tools/gegi_saved_reconstruction.py", "tools/gegi_standalone_reconstruction.py", "tools/gegi_signal_reconstruction.py", "tools/gegi_joint_imaging.py", "tools/gegi_event_store.py", "tools/gegi_readout_checks.py", "tools/gegi_calibration_admission.py"],
     "tools/gegi_standalone_reconstruction.py": ["tools/gegi_signal_reconstruction.py", "tools/gegi_event_store.py", "tools/gegi_imaging.py", "tools/gegi_calibration_admission.py"],
     "Control.cmd": ["tools/local_ui.ps1"],
     "tools/local_ui.ps1": ["tools/local_ui.py"],

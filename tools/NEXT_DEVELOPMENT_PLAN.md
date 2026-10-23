@@ -19,7 +19,21 @@ downloads (93,832,509bytes); exact per-event waveform display files remain.
 Steps1–3 below are implemented and validated in snapshot1f967e0e: total
 publication493,496,065bytes including the manifest (before994,900,290bytes).
 The retained883media/CSV files and243waveform traces are byte-identical.
-Do not repeat cleanup or simulation; step4is the next development direction.
+Do not repeat cleanup or simulation.
+
+Owner update,2026-10-23: matched experimental files are not available and the
+owner explicitly defers that work. Steps4–5 remain deferred; missing measurements
+do not block this bounded software integration. The completed delivery connects
+completed standalone Control GeGI runs to the existing saved-signal reprocessing
+panel and event viewer. Reuse `gegi_standalone_reconstruction.postprocess` and its
+independent-template admission, preserve originals and original IDs/counts/nulls,
+and create one separate derivative. Keep campaign stop/resume unchanged; do not
+advertise standalone checkpointing that the current processor does not support.
+Accepted with adapter/HTTP/UI/package tests, an isolated synthetic browser flow,
+the real 100-primary all-zero run and complete real 34-channel event 45; originals unchanged.
+Student release status is in `.local/student-runtime-p1/COMPLETE.json`. The full
+42-event aggregate was not loaded under current memory pressure. No new page,
+inverse-model change, physics run, experiment parser or additional AI review.
 
 1. **Curate the public presentation.** Put the current GeGI result first, retain
    the six-signal teaching entry and separate10K/1M studies, fold earlier small

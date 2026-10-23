@@ -272,7 +272,7 @@ class Handler(BaseHTTPRequestHandler):
                 if parts.query or parts.fragment or self.server.workflow_controller is None:
                     raise ValueError('Invalid saved GeGI input inventory request')
                 return self.send_data(200,self.server.workflow_controller.gegi_saved_options())
-            if parts.path in ('/api/workflow/gegi-saved/state','/api/workflow/gegi-saved/file'):
+            if parts.path in ('/api/workflow/gegi-saved/state','/api/workflow/gegi-saved/file','/api/workflow/gegi-saved/results'):
                 query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
                 keys={'name','file'} if parts.path.endswith('/file') else {'name'}
                 if parts.fragment or set(query)!=keys or any(len(v)!=1 for v in query.values()) or self.server.workflow_controller is None:
@@ -281,6 +281,8 @@ class Handler(BaseHTTPRequestHandler):
                 if 'file' in keys:
                     body=self.server.workflow_controller.gegi_saved_artifact(query['name'][0],query['file'][0])
                     return self.send_data(200,body,'application/json; charset=utf-8')
+                if parts.path.endswith('/results'):
+                    return self.send_data(200,self.server.workflow_controller.gegi_saved_results(query['name'][0]))
                 return self.send_data(200,self.server.workflow_controller.gegi_saved_state(query['name'][0]))
             if parts.path == '/api/workflow/gegi-results':
                 query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)

@@ -577,6 +577,8 @@ class WorkflowController:
 
     def gegi_saved_artifact(self,name,file):return self._gegi_saved().artifact(name,file)
 
+    def gegi_saved_results(self,name):return self._gegi_saved().results(name)
+
     def features(self,name,primary_id,group_id=None):
         """Verify a pre-exported derivative; no simulation, export or write on GET."""
         with self._lock:

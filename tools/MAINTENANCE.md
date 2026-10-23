@@ -3,6 +3,14 @@
 The website and the local workflow have different jobs. The public site is a
 saved-results browser; `Control.cmd` is the primary local application. The older
 generic `Run.cmd` calculation route remains distinct.
+
+The existing saved-GeGI reprocessing panel also accepts completed standalone
+GeGI runs owned by Control. `gegi_saved_control.py` delegates those inputs to
+`gegi_standalone_reconstruction.postprocess`, writes a separate derivative, and
+opens it in the existing GeGI event viewer. Original signal/download links stay
+bound to the original run. Standalone processing has no stop/resume checkpoint;
+campaign processing retains its chunk-boundary stop/resume behavior. No original
+run is adopted or changed by this adapter, and no new physics is launched.
 The beginner instructions have one authority: `tools/site_guide.html`, published
 as `guide.html`. Keep README short and link to that guide rather than adding
 another complete installation recipe.

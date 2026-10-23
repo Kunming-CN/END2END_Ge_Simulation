@@ -1,5 +1,30 @@
 # Current handoff
 
+## Completed standalone saved-signal workflow — 2026-10-23
+
+Owner says experimental files are unavailable and explicitly defers alignment.
+Completed GeGI runs owned by Control now appear in the existing saved-signal
+panel. Reprocessing delegates to the unchanged standalone processor, writes a
+separate derivative, and opens it in the existing event viewer. Raw links retain
+the original run; original IDs/counts/signed signals/failure nulls are preserved.
+Campaign stop/resume remains available; standalone has no checkpoint boundary.
+Normal polling reads small metadata; large results load only when opened. No
+historical CLI ownership adoption, added page, inverse-model change or new physics.
+
+Root accepted the integrated change; gpt-6.1-sol ultra implemented it. Nine
+adapter tests, three authenticated HTTP tests, existing UI contracts and five
+package tests passed. An isolated synthetic owned-run browser case completed
+select -> reprocess -> existing viewer, preserving 100/98/2 and failed primary 49.
+Its full-workflow inspector was explicitly stubbed; real postprocess ran. Separate
+scientific checks passed on the real 100-primary all-zero run and complete real
+event 45 with 34 channels; source/original hashes were unchanged. The 108 MB,
+42-event aggregate was not loaded with only 0.79 GiB available. No installation test,
+extra AI review, new simulation or physical-validation claim.
+
+Current delivery/release evidence: `.local/standalone-saved-control/receipt.json`
+and `.local/student-runtime-p1/COMPLETE.json`. Experimental plan steps 4–5 remain
+deferred; do not request the unavailable acquisition or guess its parser.
+
 ## Unified event viewer — 2026-10-23
 
 Owner removed the separate geometry-only interface. The default and legacy
@@ -87,15 +112,17 @@ context. `tools/NEXT_DEVELOPMENT_PLAN.md` retains the stage/evidence map.
 
 ## Tested software and current publication
 
-Student release `student-runtime-2bf8b5e5fabb` is public and verified: 896158 bytes,
+Previous student release `student-runtime-2bf8b5e5fabb` was verified: 896158 bytes,
 187 members, ZIP SHA256
 `4b2790f41a6be34b65a6431a063ec154e44c7ae8f3e6359c46eeb5e1bd773038`.
 It contains single-pass readout, optional post-reconstruction two-site selection,
 and repaired order weights. Five package tests passed; versioned/latest public
 bytes, embedded source commit, receipt and guide link agree. No installation test.
-Receipt: `.local/student-runtime-p1/COMPLETE.json`, SHA
+Its receipt is retained in `.local/student-runtime-p1/release-history.json`, SHA
 `f9c413b38da08d13ac4bc4092867628d5c8f07f454098f725ead758302138b7b`.
-Do not rebuild this runtime for website-only edits.
+The standalone Control integration above updates the student runtime; its current
+public release is recorded in `.local/student-runtime-p1/COMPLETE.json`.
+Do not rebuild the runtime for website-only edits.
 
 Previous153-group website13d952b is pushed and live-verified:983live files,
 298.990s on2026-10-22T23:50Z. Receipt `validation/order-prior-preservation/publication/validation.json`.

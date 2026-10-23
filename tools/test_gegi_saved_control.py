@@ -98,6 +98,95 @@ class Adapter(unittest.TestCase):
         (directory/'summary.json').write_bytes(b'{}')
         with self.assertRaises(W.ControlError):self.control.state('sealed')
 
+    def standalone_fixture(self,*,owned=True):
+        from test_gegi_standalone_reconstruction import Standalone
+        run=self.root/W.BASE/'owned-gegi';response=run/'response'
+        payload,receipt,request=Standalone().native_fixture(response)
+        W.write(run/'gegi-request.json',request)
+        receipt['request_sha256']=W.sha(run/'gegi-request.json');W.write(response/'run.json',receipt)
+        W.write(run/'COMPLETE.json',{'kind':'local_gegi_workflow_v1','status':payload['status'],
+            'configuration_sha256':payload['configuration_sha256'],
+            'artifacts':{ref:{'sha256':W.sha(run/ref),'bytes':(run/ref).stat().st_size}
+                         for ref in ('response/results.json','response/run.json','gegi-request.json')}})
+        if owned:
+            self.workflow._jobs.append({'name':run.name,'status':payload['status'],
+                'plan':{'kind':'local_gegi_workflow_v1','configuration_sha256':payload['configuration_sha256']}})
+        return run,payload
+
+    def standalone_verifier(self):
+        return patch('gegi_workflow.inspect',return_value={'verification':'terminal_artifacts_verified',
+                                                        'configuration_sha256':'a'*64})
+
+    def test_owned_standalone_discovery_is_lightweight_and_excludes_unowned_runs(self):
+        run,_=self.standalone_fixture(owned=False)
+        self.assertFalse(any(c.get('input_kind')=='standalone' for c in self.control.options()['campaigns']))
+        self.workflow._jobs.append({'name':run.name,'status':'completed_with_native_failures',
+                                   'plan':{'kind':'local_gegi_workflow_v1','configuration_sha256':'a'*64}})
+        with patch.object(W,'sha',side_effect=AssertionError('Discovery must not hash saved signals/results')):
+            choices=self.control.options()['campaigns']
+        selected=next(c for c in choices if c.get('input_kind')=='standalone')
+        self.assertEqual(selected['source_run_name'],run.name)
+        self.assertFalse(selected['resume_supported']);self.assertFalse(selected['stop_supported'])
+        self.assertEqual(selected['counts']['initial_primaries'],100)
+
+    def test_real_postprocess_owned_fixture_preserves_signals_ids_nulls_and_result_api(self):
+        run,original=self.standalone_fixture();before=W.inventory(run)
+        choice=next(c for c in self.control.options()['campaigns'] if c.get('input_kind')=='standalone')
+        # The fixture supplies tiny real signed CSVs and a native-failure record.
+        # Only the unrelated full workflow-stage inspector is replaced; the real
+        # postprocess seal/event/CSV/wiring checks and reconstruction all execute.
+        with self.standalone_verifier() as verified, \
+             patch('gegi_response.subprocess.run',side_effect=AssertionError('No physics or subprocess allowed')):
+            job=self.control.start(choice['id'],'','standalone-derived')
+            self.assertFalse(job['resume_supported']);self.assertFalse(job['stop_supported'])
+            self.wait_finished()
+            state=self.control.state(job['name'])
+            self.assertEqual(state['status'],'completed_conditional_reconstruction',state)
+            self.assertEqual(state['files'],['identity.json','results.json','COMPLETE.json'])
+            self.assertEqual(state['summary']['counts']['initial_primaries'],100)
+            self.assertEqual(state['summary']['counts']['zero_deposit_primaries'],98)
+            self.assertEqual(state['summary']['counts']['nonzero_primaries'],2)
+            self.assertNotIn('pulse_groups',state['summary']['counts'])
+            result=self.control.results(job['name'])
+            self.assertEqual(result['name'],run.name);self.assertEqual(result['saved_derivative_name'],job['name'])
+            self.assertEqual(result['counts'],original['counts'])
+            self.assertEqual([e['event_id'] for e in result['events']],[17,49])
+            self.assertEqual(result['events'][0]['channels'],original['events'][0]['channels'])
+            self.assertEqual(result['events'][0]['signals_ref'],'events/17-signals.csv')
+            self.assertIsNone(result['events'][1]['channels']);self.assertIsNone(result['events'][1]['signals_ref'])
+            self.assertIsNone(result['imaging']['values']);self.assertEqual(result['imaging']['validated_recovered_groups'],0)
+            raw=json.loads(self.control.artifact(job['name'],'results.json'))
+            self.assertEqual(raw['events'],result['events'])
+            self.assertEqual(verified.call_args.args,(run.name,self.root))
+            for action in (lambda:self.control.stop(job['name']),
+                           lambda:self.control.start(choice['id'],'',job['name'],resume=True)):
+                with self.assertRaisesRegex(W.ControlError,'does not support|no stop boundary'):action()
+        self.assertEqual(before,W.inventory(run));self.assertFalse((run/'stop.request').exists())
+        self.assertEqual(self.calls,[])  # Campaign runner did not handle this input.
+
+    def test_standalone_incompatible_templates_rejected_before_worker(self):
+        self.standalone_fixture()
+        choice=next(c for c in self.control.options()['campaigns'] if c.get('input_kind')=='standalone')
+        with self.standalone_verifier(),patch.object(G.A,'standalone',side_effect=W.ControlError('Independent templates differ')) as admission:
+            with self.assertRaisesRegex(W.ControlError,'templates differ'):
+                self.control.start(choice['id'],self.tid,'incompatible')
+            admission.assert_called_once()
+        self.assertIsNone(self.workflow._active);self.assertFalse((self.root/G.OUTPUTS/'incompatible').exists())
+
+    def test_standalone_completed_output_recovers_but_rehashed_changes_fail(self):
+        self.standalone_fixture()
+        choice=next(c for c in self.control.options()['campaigns'] if c.get('input_kind')=='standalone')
+        with self.standalone_verifier():
+            self.control.start(choice['id'],'','standalone-sealed');self.wait_finished()
+            self.control.jobs['standalone-sealed']['status']='interrupted';self.control._persist()
+            restored=G.SavedGeGIControl(self.workflow)
+            self.assertEqual(restored.state('standalone-sealed')['status'],'completed_conditional_reconstruction')
+            directory=self.root/G.OUTPUTS/'standalone-sealed';path=directory/'results.json'
+            changed=W.read(path);changed['counts']['initial_primaries']=99;W.write(path,changed)
+            complete=W.read(directory/'COMPLETE.json');complete['files']['results.json']=W.sha(path)
+            W.write(directory/'COMPLETE.json',complete)
+            with self.assertRaisesRegex(W.ControlError,'completion receipt changed'):restored.results('standalone-sealed')
+
 
 class Protocol(unittest.TestCase):
     def setUp(self):
@@ -142,6 +231,17 @@ class Protocol(unittest.TestCase):
         self.workflow.gegi_saved_artifact.assert_called_once_with('derived','summary.json')
         self.assertEqual(self.request('/api/workflow/gegi-saved/file?name=derived&file=summary.json',headers={'X-Control-Token':None})[0],403)
         self.workflow.start.assert_not_called();self.workflow.check.assert_not_called()
+
+    def test_completed_derivative_result_get_is_closed_authenticated_and_read_only(self):
+        self.workflow.gegi_saved_results.return_value={'kind':'gegi_multichannel_results_v1',
+            'name':'original-gegi','saved_derivative_name':'derived','events':[]}
+        status,body=self.request('/api/workflow/gegi-saved/results?name=derived')
+        self.assertEqual(status,200);self.assertEqual(json.loads(body)['name'],'original-gegi')
+        self.workflow.gegi_saved_results.assert_called_once_with('derived')
+        for suffix in ('?name=derived&name=other','?name=derived&file=results.json','?name=../private','?name=CON',''):
+            self.assertEqual(self.request('/api/workflow/gegi-saved/results'+suffix)[0],400)
+        self.assertEqual(self.request('/api/workflow/gegi-saved/results?name=derived',headers={'X-Control-Token':None})[0],403)
+        self.workflow.reprocess_gegi_saved.assert_not_called();self.workflow.start.assert_not_called()
 
 
 if __name__=='__main__':unittest.main()
