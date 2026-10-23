@@ -24,8 +24,8 @@ and source, check the plan, and run, stop or resume a simulation. The guide and
 local compatibility checks identify the supported combinations.
 
 The public website displays saved results. New simulations run locally through
-Control. The software ZIP contains code, models and the guide; saved website
-studies are a separate optional download.
+Control. The software ZIP contains code, models and the guide. Browse saved studies
+online; their pages provide the available data downloads.
 
 ## Source map
 

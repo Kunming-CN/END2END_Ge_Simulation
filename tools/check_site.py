@@ -127,6 +127,11 @@ def validate(site, require_manifest=True, require_models=False, *, allow_histori
         if size > MAX_PUBLIC_FILE_BYTES or total + size > MAX_PUBLIC_SITE_BYTES:
             raise ValueError(f'GitHub publication size limit exceeded: {relative}; use complete lossless archives')
         geometry_file = relative.startswith('examples/cs137-10k-geometry/') and f.suffix.lower() in {'.zip','.txt'}
+        geometry_gzip = re.fullmatch(r'examples/cs137-10k-geometry/(?:(?:AK02|SAP22)/events-[0-9]{5}\.json|geometry\.html)\.gz', relative)
+        if geometry_gzip:
+            from geometry_web_delivery import KIND
+            if json.loads((site/'examples/cs137-10k-geometry/manifest.json').read_bytes()).get('kind') != KIND:
+                raise ValueError('Compressed geometry requires a complete lossless delivery manifest')
         hit_payload = relative in ('examples/cs137-10k-hits/AK02/selected.json.gz','examples/cs137-10k-hits/SAP22/selected.json.gz')
         million_payload = relative=='examples/cs137-1m/positive-groups.csv.gz'
         native_response_payload = relative=='examples/cs137-1m-response/groups.csv.gz'
@@ -138,7 +143,7 @@ def validate(site, require_manifest=True, require_models=False, *, allow_histori
         gegi_campaign_script = relative == 'results/gegi-campaign/gegi_signal_journey.js'
         if gegi_campaign_script and not (site/'results/gegi-campaign/publication.json').is_file():
             raise ValueError('GeGI journey script requires a complete hash-bound campaign bundle')
-        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in {'sitemap.xml', 'LICENSE'} and relative not in model_outputs and not ledger_zip and not geometry_file and not hit_payload and not million_payload and not native_response_payload and not ring_payload and not readout_trace and not gegi_assembly_payload and not gegi_campaign_script:
+        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in {'sitemap.xml', 'LICENSE'} and relative not in model_outputs and not ledger_zip and not geometry_file and not geometry_gzip and not hit_payload and not million_payload and not native_response_payload and not ring_payload and not readout_trace and not gegi_assembly_payload and not gegi_campaign_script:
             raise ValueError(f'Unapproved public file: {relative}')
         data = f.read_bytes()
         if readout_trace:
@@ -245,7 +250,11 @@ def validate(site, require_manifest=True, require_models=False, *, allow_histori
         validate_bundle(native_bundle)
     geometry_bundle = site/'examples/cs137-10k-geometry'
     if geometry_bundle.exists():
-        from geometry_publication import validate_bundle as validate_geometry
+        from geometry_web_delivery import KIND
+        if json.loads((geometry_bundle/'manifest.json').read_bytes()).get('kind') == KIND:
+            from geometry_web_delivery import validate as validate_geometry
+        else:
+            from geometry_publication import validate_bundle as validate_geometry
         validate_geometry(geometry_bundle)
     if (site/'examples/cs137-1m').exists():
         from million_publication import validate as validate_million
@@ -253,7 +262,12 @@ def validate(site, require_manifest=True, require_models=False, *, allow_histori
     if (site/'examples/cs137-1m-response').exists():
         from native_response_publication import validate as validate_native_response
         validate_native_response(site/'examples/cs137-1m-response')
-    if (site/'examples/gamma-native').exists():
+    from site_study_retirement import is_retired, validate as validate_retirement
+    if (site/'retired-studies.json').is_file():
+        validate_retirement(site)
+        from site_video_curation import validate as validate_video_curation
+        validate_video_curation(site)
+    if (site/'examples/gamma-native').exists() and not is_retired(site, 'examples/gamma-native/gamma.html'):
         from gamma_publication import validate_bundle as validate_gamma_showcase
         validate_gamma_showcase(site/'examples/gamma-native')
     if (site/'examples/pipeline-display.json').exists():
@@ -279,7 +293,10 @@ def validate(site, require_manifest=True, require_models=False, *, allow_histori
         validate_hits(hit_bundle)
     ring_bundle = site/'examples/cs137-10k-rings'
     if ring_bundle.exists():
-        from ring_publication import validate_bundle as validate_rings
+        if (ring_bundle/'web-delivery.json').is_file():
+            from result_web_delivery import validate_bundle as validate_rings
+        else:
+            from ring_publication import validate_bundle as validate_rings
         validate_rings(ring_bundle)
     if (site/'results/gegi-campaign/publication.json').exists():
         from gegi_campaign_publication import validate_bundle as validate_gegi_campaign

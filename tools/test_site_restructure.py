@@ -4,6 +4,19 @@ from unittest.mock import patch
 from html.parser import HTMLParser
 import site_restructure as S
 
+class DisclosureScopes(HTMLParser):
+    def __init__(self):
+        super().__init__();self.closed=[];self.ids={};self.links=[]
+    def handle_starttag(self,tag,attrs):
+        values=dict(attrs)
+        if tag=='details':
+            self.closed.append(values.get('id','details') if 'open' not in values else None)
+        scope=tuple(ident for ident in self.closed if ident)
+        if 'id' in values:self.ids[values['id']]=scope
+        if tag=='a':self.links.append((values['href'],scope))
+    def handle_endtag(self,tag):
+        if tag=='details':self.closed.pop()
+
 class SiteStructureTests(unittest.TestCase):
     def test_historical_gegi_payload_is_exact_and_only_loaded_on_expansion(self):
         import hashlib
@@ -41,6 +54,7 @@ class SiteStructureTests(unittest.TestCase):
         (root/'models/catalog.json').write_text(json.dumps(catalog),encoding='utf-8')
         (root/'examples').mkdir()
         (root/'examples/data.json').write_bytes(b'{"fixture":"saved teaching data"}\r\n')
+        (root/'spectra').mkdir();(root/'spectra/teaching-examples.json').write_text('{}')
         if with_results:
             (root/'examples/cs137-1m-response').mkdir(parents=True);(root/'examples/cs137-1m').mkdir(parents=True)
             summary={'totals':{'accepted':21672},'models':{
@@ -53,8 +67,74 @@ class SiteStructureTests(unittest.TestCase):
     def result_panels(self,html):
         panels={m.group(1):m.group(2) for m in re.finditer(
             r'<section id="(gegi|teaching|gamma|tenk|million)"[^>]*>(.*?)</section>',html,re.S)}
-        self.assertEqual(list(panels),['teaching','tenk','million','gegi','gamma'])
+        self.assertEqual(set(panels),{'gegi','teaching','tenk','million','gamma'})
         return panels
+
+    def test_current_gegi_and_campaigns_precede_collapsed_small_studies(self):
+        root=self.fixture(with_results=True)
+        rings=root/'examples/cs137-10k-rings';rings.mkdir();(rings/'manifest.json').write_text('{}')
+        formal=root/'results/gegi-campaign';formal.mkdir(parents=True)
+        (formal/'publication.json').write_text('{}')
+        summary={'kind':'gegi_saved_publication_v3','initial_records':1000000,
+                 'selected_conditional_imaging_groups':434,
+                 'counts':{'conditional_candidate_groups':434,'conditional_candidates':837,
+                           'native_failed_groups':426}}
+        (formal/'summary.json').write_text(json.dumps(summary))
+        original=(formal/'summary.json').read_bytes()
+        gamma=root/'examples/gamma-native';gamma.mkdir();(gamma/'gamma.html').write_bytes(b'original gamma')
+        with patch('gegi_campaign_publication.validate_bundle'),patch('gamma_showcase.validate_bundle'):
+            S.apply(root)
+        html=(root/'results/index.html').read_text();panels=self.result_panels(html)
+        self.assertEqual(list(panels),['gegi','teaching','tenk','million','gamma'])
+        self.assertIn('All 434 conditional signal groups · 837 candidate cones',panels['gegi'])
+        self.assertIn('energy layers are optional',panels['gegi'])
+        self.assertEqual(html.count('Same-energy source separation remains unresolved'),1)
+        self.assertIn('six representative Cs137 signals',panels['teaching'])
+        self.assertIn('four separate cases',panels['tenk'])
+        self.assertIn('one million initial decays per detector',panels['million'])
+        scope=DisclosureScopes();scope.feed(html)
+        for ident in ('gegi','teaching','tenk','million','current-ring-10k'):
+            self.assertEqual(scope.ids[ident],(),ident)
+        self.assertEqual(scope.ids['gamma'],('historical-studies',))
+        for href in ('../examples/pipeline.html','../examples/gegi/index.html',
+                     '../examples/gamma-native/gamma.html'):
+            self.assertNotIn(href,[url for url,closed in scope.links])
+        ids=re.findall(r'\bid="([^"]+)"',html)
+        self.assertEqual(len(ids),len(set(ids)))
+        self.assertEqual((formal/'summary.json').read_bytes(),original)
+        self.assertEqual((gamma/'gamma.html').read_bytes(),b'original gamma')
+
+    def test_bare_detector_never_replaces_missing_current_teaching(self):
+        root=self.fixture();(root/'spectra/teaching-examples.json').unlink();S.apply(root)
+        html=(root/'results/index.html').read_text();scope=DisclosureScopes();scope.feed(html)
+        self.assertEqual(scope.ids['teaching'],())
+        self.assertEqual(scope.ids['gamma'],('historical-studies',))
+        self.assertIn('unavailable in this snapshot',self.result_panels(html)['teaching'])
+        self.assertIn('have been retired',html)
+        self.assertNotIn('../examples/pipeline.html',html)
+
+    def test_catalog_folds_only_unavailable_models_and_keeps_all_seventeen(self):
+        root=self.fixture()
+        catalog=json.loads((Path(S.__file__).resolve().parents[1]/'models/catalog.json').read_text())
+        (root/'models/catalog.json').write_text(json.dumps(catalog))
+        S.apply(root)
+        html=(root/'detectors/index.html').read_text();scope=DisclosureScopes();scope.feed(html)
+        capabilities=S.detector_pages.execution_capabilities()
+        runnable=(S.detector_pages.control_capabilities(capabilities)|
+                  S.detector_pages.dedicated_control_capabilities(capabilities))
+        models=[item['id'] for item in catalog['detectors']]
+        self.assertEqual(len(models),17)
+        self.assertEqual(len(set(models)-runnable),6)
+        self.assertIn('6 more models · larger cryostat needed',html)
+        self.assertEqual(html.count('<article class="card">'),17)
+        for model in models:
+            scopes=[closed for href,closed in scope.links if href==model+'/index.html']
+            self.assertEqual(len(scopes),2,model)
+            expected=() if model in runnable else ('other-models',)
+            self.assertTrue(all(closed==expected for closed in scopes),model)
+            capability=S.detector_pages.catalog_model_summary(model)
+            self.assertIn(capability['label'],html)
+            self.assertIn(capability['detail'],html)
 
     def test_primary_tasks_and_dataset_entries(self):
         root=self.fixture()
@@ -82,7 +162,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('../spectra/pipeline.html',panels['teaching'])
         self.assertNotIn('../examples/data.json',panels['teaching'])
         self.assertEqual(panels['teaching'].count('<a '),1)
-        for ident in ('gegi','gamma','tenk','million'):
+        for ident in ('gegi','tenk','million'):
             self.assertIn('unavailable in this snapshot',panels[ident])
         scenario=(root/'scenarios/lbnl-cs137/index.html').read_text()
         self.assertIn('guide.html#choose',scenario)
@@ -150,8 +230,8 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('href="../../spectra/million-truth.html">Deposition spectra · AK02 &amp; SAP22',overview)
         results=(root/'results/index.html').read_text()
         panels=self.result_panels(results)
-        self.assertIn('bare geometry',panels['teaching'])
-        self.assertIn('separate monoenergetic source and event namespace',panels['gamma'])
+        self.assertIn('Six saved signals',panels['teaching'])
+        self.assertIn('have been retired',panels['gamma'])
         self.assertIn('two separate cases',panels['tenk'])
         self.assertIn('cs137-10k/index.html',panels['tenk'])
         self.assertIn('cs137-1m/index.html',panels['million'])
@@ -165,19 +245,19 @@ class SiteStructureTests(unittest.TestCase):
         first={p:(root/p).read_bytes() for p in owned};S.apply(root)
         self.assertEqual(first,{p:(root/p).read_bytes() for p in owned})
 
-    def test_checked_gamma_promotes_its_dataset_and_preserves_saved_bytes(self):
+    def test_retired_gamma_is_not_validated_promoted_or_modified_by_hub(self):
         root=self.fixture(with_results=True);S.apply(root)
         before={p.relative_to(root).as_posix():p.read_bytes() for p in root.rglob('*') if p.is_file()}
         gamma=root/'examples/gamma-native';gamma.mkdir(parents=True)
         (gamma/'gamma.html').write_bytes(b'synthetic checked fixture\r\n')
         with patch('gamma_showcase.validate_bundle') as checked:
             S.apply(root)
-        checked.assert_called_once_with(gamma)
+        checked.assert_not_called()
         results=(root/'results/index.html').read_text()
         panels=self.result_panels(results)
-        self.assertIn('20 primaries per detector',panels['gamma'])
+        self.assertIn('40-primary cryostat gamma',panels['gamma'])
         self.assertNotIn('Completed gamma',results)
-        self.assertEqual(results.count('../examples/gamma-native/gamma.html'),1)
+        self.assertNotIn('../examples/gamma-native/gamma.html',results)
         self.assertIn('../spectra/pipeline.html',panels['teaching'])
         self.assertNotIn('../examples/gamma-native/gamma.html',panels['teaching'])
         learn=(root/'learn/index.html').read_text()
@@ -185,21 +265,14 @@ class SiteStructureTests(unittest.TestCase):
         self.assertEqual(learn.count('href="../spectra/pipeline.html"'),1)
         self.assertEqual((root/'learn/index.html').read_bytes(),before['learn/index.html'])
         self.assertNotIn('pending saved results',results)
-        for wording in ('40 truth events','six selected responses','four positive responses',
-                        'two selected true zeros','34 responses stay unknown/unprocessed',
-                        'Small engineering sample','unresolved collection limits',
-                        'independent synthetic injection calibration'):
-            self.assertIn(wording,panels['gamma'])
         for name,raw in before.items():
             if name!='results/index.html':
                 self.assertEqual((root/name).read_bytes(),raw,name)
         self.assertEqual((gamma/'gamma.html').read_bytes(),b'synthetic checked fixture\r\n')
         invalid_before={p.relative_to(root).as_posix():p.read_bytes() for p in root.rglob('*') if p.is_file()}
-        with patch('gamma_showcase.validate_bundle',side_effect=ValueError('incomplete gamma')) as checked, \
-             patch.object(S,'write_page') as write:
-            with self.assertRaisesRegex(ValueError,'incomplete gamma'):S.apply(root)
-        checked.assert_called_once_with(gamma)
-        write.assert_not_called()
+        with patch('gamma_showcase.validate_bundle',side_effect=ValueError('retired gamma must not be read')) as checked:
+            S.apply(root)
+        checked.assert_not_called()
         self.assertEqual(invalid_before,{p.relative_to(root).as_posix():p.read_bytes()
                                        for p in root.rglob('*') if p.is_file()})
     def test_source_removal_replaces_owned_hubs_with_unavailable_pages(self):
@@ -208,7 +281,7 @@ class SiteStructureTests(unittest.TestCase):
         S.apply(root)
         panels=self.result_panels((root/'results/index.html').read_text())
         self.assertIn('../spectra/pipeline.html',panels['teaching'])
-        for ident in ('gegi','gamma','tenk','million'):
+        for ident in ('gegi','tenk','million'):
             self.assertIn('unavailable in this snapshot',panels[ident])
             self.assertNotRegex(panels[ident],r'<a\b')
         self.assertNotIn('Saved campaigns',(root/'scenarios/lbnl-cs137/index.html').read_text())
@@ -277,7 +350,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertNotIn('imaging-accepted',text)
         self.assertEqual((formal/'summary.json').read_bytes(),original)
 
-    def test_gegi_saved_counts_are_visible_without_rewriting_saved_bundle(self):
+    def test_retired_gegi_is_not_promoted_or_rewritten_by_hub(self):
         root=self.fixture();saved=root/'examples/gegi';saved.mkdir(parents=True)
         payload={'kind':'gegi_saved_source_comparison_v1','counts':{'initial_primaries':10000},
                  'imaging':{'accepted_events':5,'ambiguous_events':4}}
@@ -287,15 +360,15 @@ class SiteStructureTests(unittest.TestCase):
         before={p.name:p.read_bytes() for p in saved.iterdir()}
         with patch('gegi_publication.validate_bundle') as checked:
             S.apply(root)
-        checked.assert_called_once_with(saved)
+        checked.assert_not_called()
         self.assertEqual(before,{p.name:p.read_bytes() for p in saved.iterdir()})
         home=(root/'index.html').read_text(encoding='utf-8')
         results=(root/'results/index.html').read_text(encoding='utf-8')
         self.assertNotIn('imaging-accepted events',home)
-        for text in (self.result_panels(results)['gegi'],):
-            for value in ('10,000 initial emitted gammas','5 imaging-accepted events, 4 ambiguous',
-                          'inconclusive for reliable source separation','examples/gegi/index.html'):
-                self.assertIn(value,text)
+        text=self.result_panels(results)['gegi']
+        self.assertIn('unavailable in this snapshot',text)
+        self.assertNotIn('examples/gegi/index.html',results)
+        self.assertNotIn('5 imaging-accepted events',results)
         assemblies=(root/'assemblies/index.html').read_text(encoding='utf-8')
         for href in ('../scenarios/lbnl-cs137/index.html','gegi/index.html',
                      '../viewers/events.html?model=AK02&amp;view=geometry'):

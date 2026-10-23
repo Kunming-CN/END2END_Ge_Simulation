@@ -1,0 +1,72 @@
+{
+  "entry_pages": {
+    "examples/gamma-native/gamma.html": {
+      "bytes": 2248,
+      "current_dataset": "spectra/pipeline.html",
+      "sha256": "71817eaeccf216bc26efc7c5d1cf4fb04682bb00d67165c46930c6a1594749b6"
+    },
+    "examples/gegi/index.html": {
+      "bytes": 708,
+      "current_dataset": "results/gegi-campaign/index.html",
+      "sha256": "29c893c6a67693b0d208571848078504833990339527fc82433a3af704ee7ec1"
+    },
+    "examples/pipeline.html": {
+      "bytes": 2010,
+      "current_dataset": "spectra/pipeline.html",
+      "sha256": "e07b1c842031a264accee22edbba0dcf65715a495cb1e76c6bd8f1f9234d7c4b"
+    }
+  },
+  "former_public_files": {
+    "examples/data.json": {
+      "bytes": 9766838,
+      "sha256": "dfc87b1814fb1a0e2c2324469f5e81a8383e56c00969ce4e3148425fab8d08d6"
+    },
+    "examples/gamma-native/AK02-signals.csv": {
+      "bytes": 836427,
+      "sha256": "3761830408226e31fe71693284d1518c5bcf5f5575655b0b1244be5ebd94b15a"
+    },
+    "examples/gamma-native/SAP22-signals.csv": {
+      "bytes": 7699,
+      "sha256": "96b4ca3da9a8d58415af4b12a559307565a6e9157cc9a963088c8263ee1a9241"
+    },
+    "examples/gamma-native/data.json": {
+      "bytes": 5412764,
+      "sha256": "c96bec9da168cdd07c23b8748c0d3717bf9ace77f430246e38f7a23fd4a11f49"
+    },
+    "examples/gamma-native/gamma.html": {
+      "bytes": 5470913,
+      "sha256": "aed4753c96e6a9a9137e8825a072cbe74fed522b79f110b4e2e3224dbd045c21"
+    },
+    "examples/gamma-native/publication.json": {
+      "bytes": 24399,
+      "sha256": "dfb949f6cd5f33d058c43a81e846974610ba6f7e8c5dabe0732f7dcb24b2a1bb"
+    },
+    "examples/gegi/index.html": {
+      "bytes": 2534,
+      "sha256": "0c3525970d11416f800c5836c07138b57b83f666631c26ab580ed91fc839cee2"
+    },
+    "examples/gegi/publication.json": {
+      "bytes": 2348,
+      "sha256": "8ee7d5f410e26253450919abd685235b3d6847e2710de8591b8bfa12dff82017"
+    },
+    "examples/gegi/selected-channel.json": {
+      "bytes": 186617,
+      "sha256": "64b8cc598a92c3dfd0117647275e03c62610f028bef45f085600148b6013911d"
+    },
+    "examples/gegi/summary.json": {
+      "bytes": 840148,
+      "sha256": "16dd34ebb1b8effff7975a36fb99c7dcedc50bdcc3a1905a98dfbdad5ebacba8"
+    },
+    "examples/pipeline-display.json": {
+      "bytes": 1677,
+      "sha256": "92e554fe166f78603de56df185630e3068729bc9943df1c86d8c1dd6706d6cf9"
+    },
+    "examples/pipeline.html": {
+      "bytes": 9810997,
+      "sha256": "ab2f473328e03fadbc4036613b37993be46254d5d5770f976b152636efec3760"
+    }
+  },
+  "kind": "public_study_retirement_v1",
+  "new_simulations": 0,
+  "original_local_science_modified": false
+}

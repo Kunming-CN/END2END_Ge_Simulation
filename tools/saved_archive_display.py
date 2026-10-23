@@ -14,6 +14,10 @@ MANIFEST='methods/native-li-display.json'
 SOURCES=('tools/saved_archive_display.py','tools/site_restructure.py','tools/site_routes.py')
 LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in SOURCES}
 PREVIOUS_RECEIPTS=frozenset({
+    # Exact validated f4422554 navigation-only predecessor.
+    '3834a09856697215d50b5728d46ea4650200bb908622193a9aede81b316561b3',
+    # Exact 18d6b44 installed/Git receipt before results/catalog curation.
+    'aa0f4533bb5fbf31369842fd9e2a83d0eedad94f0676ba64bf813be24385c66f',
     # Exact 5dfd5fa public/HEAD receipt; original plots/components stay pinned.
     'a8754fcb37378568daeeb46e1e329002fa9407e9ad9c746021cb7dcf5ecdf22c',
     # Exact 376bd39 installed/Git display before archive-navigation correction.
@@ -46,6 +50,10 @@ LITHIUM_SUMMARY_SHA='c5e1b2c85406f077cb692ac6e99dd1c9affe7cb6632a3098f96a86708e0
 LITHIUM_SOURCES=SOURCES+('tools/lithium_report.py','tools/pipeline_demo.py')
 LITHIUM_LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in LITHIUM_SOURCES}
 PREVIOUS_LITHIUM_RECEIPTS=frozenset({
+    # Exact validated f4422554 predecessor; unchanged original scientific files.
+    'a9f527dfa38e87af233293d285ca19c32396364df55bb40a40521ee7cfb35c6f',
+    # Exact 18d6b44 installed/Git receipt; original numerical files stay pinned.
+    '59e89a056c0225381b96494532f00f1a1fb4788d463ede460765bfef3e8735b6',
     # Exact 5dfd5fa public/HEAD receipt; every original lithium file is checked.
     '8f4856b4c4f5b82958ed52dbe3b05fe8126ee28b72b1053791945adaa52df581',
     # Exact 376bd39 installed/Git display before archive-navigation correction.

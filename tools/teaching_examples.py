@@ -43,6 +43,11 @@ PUBLISHED_PREVIOUS_DISPLAYS = frozenset({(
 ),(
     "3292448d1e0f4fbe57db7b9ca475e176bf8a0467677fcf80a242a91d3c6ca185",
     "6531f87cbac6507352d6a6e20fc32e983fef85e849086ce56a9a37faddcfa4da",
+),(
+    # Exact accepted f442 data/page pair before two download-only ring ZIPs
+    # were omitted. Full-input validation still rebuilds all science below.
+    "253a6e49c4439187df79520dee15d4dfe059ae11304bcd7e36f3fafdd18e0e18",
+    "45ea52b7c0252518591c810b4ee062b12511dae5f32554d2f5a492097f1cc56c",
 )})
 FOLDERS = {
     "AK02": "examples/cs137-10k/AK02/response",
@@ -344,6 +349,9 @@ def assemble(site):
 
 def validate(site):
     site = Path(site)
+    from result_web_delivery import active, validate_teaching
+    if active(site):
+        return validate_teaching(site)
     require((site / DATA).is_file() and (site / PAGE).is_file(), "Partial teaching output")
     require(not (site / DATA).is_symlink() and not (site / PAGE).is_symlink(), "Linked teaching output")
     payload = build_payload(site)

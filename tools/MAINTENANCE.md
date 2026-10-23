@@ -7,6 +7,19 @@ The beginner instructions have one authority: `tools/site_guide.html`, published
 as `guide.html`. Keep README short and link to that guide rather than adding
 another complete installation recipe.
 
+Public delivery keeps browser-needed data separate from complete local science.
+`geometry_web_delivery.py` preserves every byte of the old AK02/SAP22 event
+bundle through gzip; its original manifest and unmodified scenes bind all20,000
+events. `result_web_delivery.py` omits only the two ring response ZIP downloads;
+the builder temporarily restores their exact local originals for generation,
+then retains plots, scalar ledgers and independent waveform display files online.
+Portable publication validation does not require those private build inputs.
+`site_video_curation.py` keeps single-site and simultaneous two-site MP4s for each
+of17models. `site_study_retirement.py` maintains three small compatibility entries
+for the approved retired teaching studies. The builder applies these policies
+on later publications; do not restore old payloads or edit `docs/` by hand.
+The compact local cleanup receipt is `.local/publication-cleanup/receipt.json`.
+
 Student downloads use the latest GitHub Release asset `END2END-Ge-Student.zip`,
 built from the explicit `tools/student_runtime_manifest.json` by
 `tools/build_student_runtime.py`. The release tag identifies its source commit;

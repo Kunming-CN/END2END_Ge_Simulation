@@ -8,6 +8,7 @@ import zipfile
 import os
 import shutil
 import subprocess
+from unittest.mock import patch
 
 import ring_site as R
 import spectrum_display as S
@@ -74,6 +75,46 @@ class RingSiteTests(unittest.TestCase):
         (self.site / R.RING_FOLDER / m['models']['GeRC02']['selected']).write_bytes(b'changed')
         with self.assertRaisesRegex(ValueError, 'source changed'):
             R.cases(self.site)
+
+    def test_marked_delivery_uses_validated_summary_stamp_and_keeps_original_manifest(self):
+        import result_web_delivery as delivery
+        original = self.fixture()
+        marker = self.put(R.RING_FOLDER + '/web-delivery.json', {'kind': delivery.KIND})
+        rewrites = {}
+        for model in R.RING_MODELS:
+            rel = model + '/response/summary.html'
+            path = self.site / R.RING_FOLDER / rel
+            path.write_bytes(b'<h1>Unchanged saved result</h1>Complete archive')
+            rewrites[rel] = {'delivered': {'sha256': R.sha(path), 'bytes': path.stat().st_size}}
+        with patch.object(delivery, 'validate_bundle', return_value={'html_rewrites': rewrites}) as checked:
+            self.assertEqual(R.ring_manifest(self.site), original)
+            checked.assert_called_once_with(marker.parent)
+        # Without the explicitly validated marker, changed HTML remains invalid.
+        marker.unlink()
+        with self.assertRaisesRegex(ValueError, 'source changed'):
+            R.ring_manifest(self.site)
+
+    def test_marked_delivery_never_authorizes_numeric_source_rewrites(self):
+        import result_web_delivery as delivery
+        self.fixture()
+        self.put(R.RING_FOLDER + '/web-delivery.json', {'kind': delivery.KIND})
+        rel = 'GeRC02/response/run.json'
+        path = self.site / R.RING_FOLDER / rel
+        report = R.read(path)
+        report['current_counts']['initial_primaries'] = 9999
+        self.put(R.RING_FOLDER + '/' + rel, report)
+        rewrites = {rel: {'delivered': {'sha256': R.sha(path), 'bytes': path.stat().st_size}}}
+        with patch.object(delivery, 'validate_bundle', return_value={'html_rewrites': rewrites}):
+            with self.assertRaisesRegex(ValueError, 'Unregistered ring page source rewrite'):
+                R.ring_manifest(self.site)
+
+    def test_unknown_delivery_marker_failure_is_not_ignored(self):
+        import result_web_delivery as delivery
+        self.fixture()
+        self.put(R.RING_FOLDER + '/web-delivery.json', {'kind': 'unknown'})
+        with patch.object(delivery, 'validate_bundle', side_effect=ValueError('Unknown result delivery binding')):
+            with self.assertRaisesRegex(ValueError, 'Unknown result delivery binding'):
+                R.ring_manifest(self.site)
 
     def test_four_case_counts_and_all_stage_bins_are_exact(self):
         self.fixture(); cases = R.cases(self.site); specs = S.tenk_specs(self.site)

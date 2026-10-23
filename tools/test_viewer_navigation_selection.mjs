@@ -5,8 +5,13 @@ import zlib from 'node:zlib';import {createHash,webcrypto} from 'node:crypto';
 import assert from 'node:assert/strict';
 const site=path.resolve(process.argv[2]||'docs');
 const read=p=>JSON.parse(fs.readFileSync(p,'utf8')),sha=b=>createHash('sha256').update(b).digest('hex');
-const assemblyRoot=path.join(site,'examples/cs137-10k-geometry'),positiveRoot=path.join(site,'examples/cs137-10k-hits');
+const geometryArg=process.argv.indexOf('--geometry-root');
+const assemblyRoot=geometryArg<0?path.join(site,'examples/cs137-10k-geometry'):path.resolve(process.argv[geometryArg+1]),positiveRoot=path.join(site,'examples/cs137-10k-hits');
 const assembly=read(path.join(assemblyRoot,'manifest.json')),positive=read(path.join(positiveRoot,'manifest.json'));
+const compressedGeometry=assembly.kind==='geometry_lossless_web_delivery_v1';
+const assemblyBinding={base:'../examples/cs137-10k-geometry/',sha256:sha(fs.readFileSync(path.join(assemblyRoot,'manifest.json'))),
+  ...(compressedGeometry?{kind:assembly.kind,original_manifest_sha256:assembly.original_manifest.sha256,
+    campaign_run_sha256:read(path.join(assemblyRoot,'original-manifest.json')).campaign_run_sha256}:{})};
 // Exercise current sources against the protected saved payloads without a site
 // build or copying/regenerating science. Python tests separately cover render().
 const sourceMode=process.argv.includes('--source');
@@ -18,7 +23,7 @@ const geometryNavigation='<div id="page-navigation"><nav aria-label="Breadcrumb"
 const sourceHTML=sourceMode?fs.readFileSync('tools/unified_event_viewer.html','utf8')
   .replace('__PRIMARY_NAVIGATION__',eventNavigation)
   .replace('__VIEWER_NAVIGATION__',()=>fs.readFileSync('tools/viewer_navigation.js','utf8'))
-  .replace('__VIEWER_CONFIG__',()=>JSON.stringify({assembly:{base:'../examples/cs137-10k-geometry/',sha256:sha(fs.readFileSync(path.join(assemblyRoot,'manifest.json')))},
+  .replace('__VIEWER_CONFIG__',()=>JSON.stringify({assembly:assemblyBinding,
     positive:{base:'../examples/cs137-10k-hits/',sha256:sha(fs.readFileSync(path.join(positiveRoot,'manifest.json')))},case_routes:caseRoutes,geometry_navigation:geometryNavigation}))
   .replace('__VIEWER_CONTROLLER__',()=>fs.readFileSync('tools/unified_event_viewer.js','utf8')):null;
 const oracles=new Map(),chunks=new Map();let scalarComparisons=0;
@@ -38,7 +43,8 @@ function oracle(model){
 }
 function originalPrimary(model,id){
   const entry=oracle(model).scene.event_index.chunks[Math.floor(id/100)],key=model+'/'+entry.file;
-  if(!chunks.has(key)){const bytes=fs.readFileSync(path.join(assemblyRoot,key));assert.equal(sha(bytes),entry.sha256);
+  if(!chunks.has(key)){let bytes=fs.readFileSync(path.join(assemblyRoot,key+(compressedGeometry?'.gz':'')));
+    if(compressedGeometry)bytes=zlib.gunzipSync(bytes);assert.equal(sha(bytes),entry.sha256);
     chunks.set(key,JSON.parse(bytes));if(chunks.size>2)chunks.delete(chunks.keys().next().value);}
   return chunks.get(key).events[id-entry.first];
 }
@@ -60,6 +66,8 @@ async function viewer(query,options={}){
   const move=url=>{const u=new URL(url,'https://test.invalid');location.pathname=u.pathname;location.search=u.search;};
   const history={state:null,pushState(state,_title,url){this.state=state;historyCalls.push({kind:'push',state,url});move(url);},replaceState(state,_title,url){this.state=state;historyCalls.push({kind:'replace',state,url});move(url);}};
   const realFetch=async url=>{assert.ok(url.startsWith('../examples/'),'Unexpected data path '+url);
+    const base='../examples/cs137-10k-geometry/';
+    if(url.startsWith(base)){const file=path.resolve(assemblyRoot,url.slice(base.length));assert.ok(file.startsWith(assemblyRoot+path.sep));return new Response(fs.readFileSync(file));}
     const file=path.resolve(site,'viewers',url);assert.ok(file.startsWith(path.join(site,'examples')+path.sep));return new Response(fs.readFileSync(file));};
   let intercept=options.fetch;
   const context={URL,URLSearchParams,TextDecoder,Uint8Array,Blob,Response,DecompressionStream:options.decoder||DecompressionStream,crypto:webcrypto,devicePixelRatio:1,
@@ -174,7 +182,7 @@ for(const query of ['?model=X','?event=-1','?event=10000','?event=01','?group=0'
 }
 for(const layer of ['model','event','positive'])for(const fail of [false,true]){
   const v=await viewer('?model=AK02&event=213&view=assembly');fold(v);const pending=[];
-  const oldChunk=oracle('AK02').scene.event_index.chunks[35].file;
+  const oldChunk=oracle('AK02').scene.event_index.chunks[35].file+(compressedGeometry?'.gz':'');
   const match=layer==='model'?url=>url.endsWith('/SAP22/scene.json'):layer==='event'?url=>url.endsWith('/AK02/'+oldChunk):url=>url.endsWith('/AK02/selected.json.gz');
   v.setFetch((url,real)=>match(url)?new Promise((resolve,reject)=>pending.push({url,resolve,reject,real})):real(url));
   const stale=layer==='model'?v.run('selectModel("SAP22")'):layer==='event'?v.run('selectEvent(3500)'):v.run('setView("positive")');
@@ -188,7 +196,14 @@ for(const layer of ['model','event','positive'])for(const fail of [false,true]){
 for(const failure of ['hash','gzip','census']){
   const entry=positive.models.AK02,bytes=fs.readFileSync(path.join(positiveRoot,entry.selected)),options={};
   if(failure==='hash')options.fetch=(url,real)=>url.endsWith('/AK02/selected.json.gz')?new Response(Buffer.concat([bytes,Buffer.from('tamper')])):real(url);
-  if(failure==='gzip')options.decoder=class{constructor(){throw Error('intentional unavailable gzip decoder');}};
+  if(failure==='gzip'){
+    if(!compressedGeometry)options.decoder=class{constructor(){throw Error('intentional unavailable gzip decoder');}};
+    else{
+      const corrupt=Buffer.from('intentional invalid gzip'),m=structuredClone(positive);m.files[entry.selected]={sha256:sha(corrupt),bytes:corrupt.length};
+      const manifest=Buffer.from(JSON.stringify(m));options.setup=run=>run('VIEWER_CONFIG.positive.sha256='+JSON.stringify(sha(manifest)));
+      options.fetch=(url,real)=>url.endsWith('/cs137-10k-hits/manifest.json')?new Response(manifest):url.endsWith('/AK02/selected.json.gz')?new Response(corrupt):real(url);
+    }
+  }
   if(failure==='census'){
     const data=JSON.parse(zlib.gunzipSync(bytes));data.event_ids=data.event_ids.slice(1);const corrupt=zlib.gzipSync(Buffer.from(JSON.stringify(data)));
     const m=structuredClone(positive);m.files[entry.selected].sha256=sha(corrupt);m.files[entry.selected].bytes=corrupt.length;const manifest=Buffer.from(JSON.stringify(m));
@@ -196,7 +211,7 @@ for(const failure of ['hash','gzip','census']){
     options.fetch=(url,real)=>url.endsWith('/cs137-10k-hits/manifest.json')?new Response(manifest):url.endsWith('/AK02/selected.json.gz')?new Response(corrupt):real(url);
   }
   const v=await viewer('?model=AK02&event=213&group=0&view=positive',options);identity(v,'AK02',213,0,'positive');primary(v,'AK02',213);
-  assert.equal(v.state().group,null);assert.equal(v.state().overlayCount,0);assert.ok(v.state().overlayError);assert.equal(v.els.get('evidenceRaw').textContent,'');
+  assert.equal(v.state().group,null);assert.equal(v.state().overlayCount,0);assert.ok(v.state().overlayError,failure+': '+v.els.get('overlayStatus').textContent);assert.equal(v.els.get('evidenceRaw').textContent,'');
   assert.equal(v.els.get('originals').href,'../examples/cs137-10k-geometry/'+assembly.models.AK02.originals);
 }
 {
@@ -221,4 +236,23 @@ let typedInputCases=0;
   v.els.get('eid').value='0';assert.equal(await v.els.get('show').onclick(),true);identity(v,'AK02',0,null,'positive');primary(v,'AK02',0);
   v.els.get('eid').value='213';assert.equal(await v.els.get('show').onclick(),true);identity(v,'AK02',213,0,'positive');primary(v,'AK02',213);
 }
-console.log(JSON.stringify({status:'passed',kind:'generated-script minimal-DOM saved-payload regression, not browser acceptance',sourceMode,site,groups,scalarComparisons,results,asyncCases:6,overlayFailureCases:3,historyAndAliases:true,typedInputCases,numericalSourceWrites:0},null,2));
+if(compressedGeometry){
+  for(const failure of ['download','original']){
+    const index=oracle('AK02').scene.event_index.chunks[0],name='AK02/'+index.file+'.gz',saved=fs.readFileSync(path.join(assemblyRoot,name)),options={};
+    if(failure==='download')options.fetch=(url,real)=>url.endsWith('/'+name)?new Response(Buffer.concat([saved,Buffer.from('changed')])):real(url);
+    else{
+      const changed=zlib.gzipSync(Buffer.concat([zlib.gunzipSync(saved),Buffer.from('\n')])),m=structuredClone(assembly);
+      m.files[name]={sha256:sha(changed),bytes:changed.length};const manifest=Buffer.from(JSON.stringify(m));
+      options.setup=run=>run('VIEWER_CONFIG.assembly.sha256='+JSON.stringify(sha(manifest)));
+      options.fetch=(url,real)=>url.endsWith('/cs137-10k-geometry/manifest.json')?new Response(manifest):url.endsWith('/'+name)?new Response(changed):real(url);
+    }
+    const v=await viewer('?model=AK02&event=0&view=assembly',options);
+    assert.equal(v.state().primary,null);assert.match(v.els.get('status').textContent,/SHA-256 mismatch/);
+  }
+  const html=fs.readFileSync(path.join(assemblyRoot,'geometry.html'),'utf8'),script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
+  for(const search of ['', '?model=SAP22&event=0&group=0','?event=1&event=2']){
+    let target;const c=vm.createContext({location:{search,hash:'#recordPanel',replace:value=>{target=value;}},document:{getElementById:()=>({})}});
+    vm.runInContext(script,c);assert.equal(target,'../../viewers/events.html'+search+(search?'&':'?')+'view=assembly#recordPanel');
+  }
+}
+console.log(JSON.stringify({status:'passed',kind:'generated-script minimal-DOM saved-payload regression, not browser acceptance',sourceMode,compressedGeometry,site,groups,scalarComparisons,results,asyncCases:6,overlayFailureCases:3,historyAndAliases:true,typedInputCases,numericalSourceWrites:0},null,2));

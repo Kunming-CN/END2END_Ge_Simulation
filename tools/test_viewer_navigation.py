@@ -210,6 +210,56 @@ class Readers(unittest.TestCase):
         mapped=V.route_links(malformed,'detectors/SAP22/index.html')
         self.assertIn('event=0&amp;event=1&amp;view=assembly&amp;view=positive',mapped)
 
+    def test_compressed_geometry_binding_preserves_original_campaign(self):
+        import geometry_web_delivery as delivery
+        with tempfile.TemporaryDirectory(dir=V.ROOT/'.local',prefix='geometry-binding-') as tmp:
+            site=Path(tmp);folder=site/delivery.PREFIX;folder.mkdir(parents=True)
+            source=V.ROOT/'docs'/delivery.PREFIX
+            original=source/('original-manifest.json' if (source/'original-manifest.json').is_file() else 'manifest.json')
+            raw=original.read_bytes();source_meta=delivery.source_manifest(raw)
+            (folder/'original-manifest.json').write_bytes(raw)
+            (folder/'manifest.json').write_text(json.dumps({'kind':delivery.KIND}),encoding='utf-8')
+            (folder/'geometry.html').write_bytes(delivery.REDIRECT)
+            binding=V.config(site)['assembly']
+            self.assertEqual(binding['kind'],delivery.KIND)
+            self.assertEqual(binding['campaign_run_sha256'],source_meta['campaign_run_sha256'])
+            self.assertEqual(binding['original_manifest_sha256'],delivery.SOURCE_MANIFEST_SHA256)
+            self.assertEqual(binding['sha256'],V.sha(folder/'manifest.json'))
+            alias=V.render(site,'viewers/geant4-assembly.html')
+            self.assertIn('legacyViewerTarget(location.search,"assembly")',alias)
+            self.assertNotIn('Original viewer (archive)',alias)
+            (folder/'original-manifest.json').write_bytes(raw+b'\n')
+            with self.assertRaisesRegex(ValueError,'Unknown original geometry manifest'):V.config(site)
+
+    def test_ring_download_omission_uses_validator_and_retained_records(self):
+        import result_web_delivery as delivery
+        with tempfile.TemporaryDirectory(dir=V.ROOT/'.local',prefix='ring-delivery-reader-') as tmp:
+            site=Path(tmp);folder=site/V.RING_BASE;folder.mkdir(parents=True)
+            source=V.ROOT/'docs'/V.RING_BASE
+            original=(source/'manifest.json').read_bytes();manifest=json.loads(original)
+            (folder/'manifest.json').write_bytes(original)
+            for model in V.RING_MODELS:
+                path=folder/manifest['models'][model]['scene'];path.parent.mkdir(parents=True,exist_ok=True)
+                path.write_bytes((source/manifest['models'][model]['scene']).read_bytes())
+            name='GeRC02/response/summary.html'
+            rewritten=delivery.stamp(b'checked delivered HTML')
+            receipt={'html_rewrites':{name:{'delivered':rewritten}}}
+            (folder/delivery.MARKER).write_text(json.dumps(receipt),encoding='utf-8')
+            # The delivery validator owns complete retained-byte/HTML checks;
+            # this test isolates dispatch and the viewer's resulting bindings.
+            with patch.object(delivery,'validate_bundle',return_value=receipt) as check:
+                parsed=V.ring_bundle(site);check.assert_called_once_with(folder)
+            self.assertEqual(parsed,manifest)
+            records=V.ring_records(site,parsed)
+            self.assertTrue(all(V.RING_BASE+'/'+key not in records for key in delivery.OMITTED))
+            self.assertEqual(records[V.RING_BASE+'/'+name],rewritten)
+            self.assertEqual(records[V.RING_BASE+'/'+delivery.MARKER]['sha256'],V.sha(folder/delivery.MARKER))
+            self.assertEqual(records[V.RING_BASE+'/GeRC02/scene.json'],manifest['files']['GeRC02/scene.json'])
+            with patch.object(delivery,'validate_bundle',side_effect=ValueError('retained bytes changed')):
+                with self.assertRaisesRegex(ValueError,'retained bytes changed'):V.ring_bundle(site)
+            (folder/delivery.MARKER).unlink()
+            with self.assertRaisesRegex(ValueError,'file inventory'):V.ring_bundle(site)
+
     def test_orphan_unified_page_invokes_site_guard(self):
         import check_site
         with tempfile.TemporaryDirectory(dir=V.ROOT/'.local',prefix='reader-test-') as tmp:

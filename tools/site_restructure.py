@@ -225,15 +225,9 @@ def apply(site):
     has_10k=(site/'examples/cs137-10k/comparison.html').exists()
     has_rings=(site/'examples/cs137-10k-rings/manifest.json').exists()
     has_hit_view=(site/'examples/cs137-10k-hits/hit_event_view.html').exists()
-    gamma=site/'examples/gamma-native'
-    has_gamma=gamma.exists()
-    if has_gamma:
-        from gamma_publication import validate_bundle as validate_gamma_showcase, completed as gamma_completed
-        validate_gamma_showcase(gamma)
-    completed_gamma=has_gamma and gamma_completed(gamma)
     has_formal_gegi=(site/'results/gegi-campaign/publication.json').is_file()
-    has_gegi=has_formal_gegi or (site/'examples/gegi/publication.json').is_file()
-    gegi_route='results/gegi-campaign/index.html' if has_formal_gegi else 'examples/gegi/index.html'
+    has_gegi=has_formal_gegi
+    gegi_route='results/gegi-campaign/index.html'
     gegi_description='GeGI dedicated cryostat · configurable gamma transport, 34-electrode charge/readout and signal-derived Compton cones and directional maps.'
     if has_formal_gegi:
         from gegi_campaign_publication import validate_bundle as validate_formal_gegi
@@ -241,39 +235,31 @@ def apply(site):
         saved=read(site/'results/gegi-campaign/summary.json')
         if saved.get('kind')=='gegi_saved_publication_v3':
             counts=saved['counts']
-            gegi_description=(f'Completed {saved["initial_records"]:,} initial records across four acquisitions at two positions. '
-                f'{counts["conditional_candidate_groups"]:,} conditional signal groups; '
-                f'{saved["selected_conditional_imaging_groups"]:,} selected for the joint map; '
+            groups=counts['conditional_candidate_groups']
+            selected=saved['selected_conditional_imaging_groups']
+            if selected==groups:
+                population=f'All {groups:,} conditional signal groups'
+                if 'conditional_candidates' in counts:
+                    population+=f' · {counts["conditional_candidates"]:,} candidate cones'
+                population+=' contribute to the pooled map; energy layers are optional. '
+            else:
+                population=(f'{groups:,} conditional signal groups; '
+                            f'{selected:,} selected for the joint map. ')
+            gegi_description=(population+
+                f'{saved["initial_records"]:,} initial records across four acquisitions at two positions; '
                 f'{counts["native_failed_groups"]:,} retained native failures. '
                 'Same-energy source separation remains unresolved; conditional candidates are not validated recoveries. '
-                'Explore the joint map, energy layers and signal-to-cone explanation. Photon/decay denominators remain separate.')
+                'Photon/decay denominators remain separate.')
         else:
             accepted=sum(g['counts']['imaging_accepted_groups'] for g in saved['groups'].values())
             failed=sum(g['counts']['native_failed_groups'] for g in saved['groups'].values())
             gegi_description+=(f' Completed {saved["processed_initial_records"]:,} initial records across four acquisitions; '
                                f'{accepted:,} imaging-accepted pulse groups and {failed:,} retained native failures. '
                                'Photon and isotope-decay denominators remain separate. Follow a real signal through candidate cones to the final map.')
-    elif has_gegi:
-        from gegi_publication import validate_bundle as validate_gegi_showcase
-        validate_gegi_showcase(site/'examples/gegi')
-        saved=read(site/'examples/gegi/summary.json')
-        image=saved['imaging']
-        gegi_description+=(f' Saved denominator: {saved["counts"]["initial_primaries"]:,} initial emitted gammas; '
-                           f'{image["accepted_events"]:,} imaging-accepted events, {image["ambiguous_events"]:,} ambiguous.')
-        if (saved.get('kind')=='gegi_saved_source_comparison_v1' and
-                saved['counts']['initial_primaries']==10000 and
-                image['accepted_events']==5 and image['ambiguous_events']==4):
-            gegi_description+=' This earlier two-position sample is inconclusive for reliable source separation.'
-
     write_page(site/'index.html','GeSignal — HPGe Radiation-to-Readout Simulation',homepage(),0,
                fold_footer=True,nav_html=primary_navigation('index.html'),extra_style=HOME_STYLE)
 
     curated_teaching=(site/'spectra/teaching-examples.json').is_file()
-    learn_example='''<section class="panel"><h2>Main teaching example</h2><p>Follow one saved bare-detector gamma event through deposits, charge, preamplifier, shaper and peak ADC.</p><a class="button" href="../spectra/pipeline.html">Open the teaching example →</a></section>'''
-    if curated_teaching:
-        learn_example=learn_example.replace('Follow one saved bare-detector gamma event through deposits, charge, preamplifier, shaper and peak ADC.','Compare six representative signals selected from the completed Cs137 10K cryostat cases. Each retains its source event, charge, electronics settings and limitations.')
-    if has_gamma:
-        gamma_caption='Follow all 40 original primaries: 29 known zero inputs and 11 positive primaries. Native failures keep unknown charge and readout null. Collection-edge and full-window views preserve signed signals and original caps; independent synthetic injection calibration and unresolved collection limits remain explicit.' if completed_gamma else 'Follow 40 truth events and six selected responses: four positive responses and two selected true zeros. The other 34 responses stay unknown/unprocessed. Small engineering sample with unresolved collection limits and independent synthetic injection calibration.'
     learn='''<meta http-equiv="refresh" content="0;url=../spectra/pipeline.html"><section class="hero"><h1>Signal walkthrough</h1><p>The explanation and six saved signals now share one teaching page.</p><p><a href="../spectra/pipeline.html">Continue to the six signal examples →</a></p></section>'''
     write_page(site/'learn/index.html','Pipeline explanation · GeSignal',learn,1)
 
@@ -285,7 +271,7 @@ def apply(site):
 <span id="current-ring-10k"></span>'''+detector_pages.catalog_introduction(capabilities, control_ids, dedicated_ids)+'''
 <h2>LBNL cryostat · Control configurations</h2><p>'''+str(control_count)+''' supported local configurations in the <a href="../scenarios/lbnl-cs137/index.html">LBNL modular cryostat</a>. GeRC02 uses a separate Li50min operating variant; its library geometry is the original 30-minute model.</p><div class="grid">'''+detector_cards({'detectors':featured_items})+'''</div>
 <h2>GeGI dedicated cryostat</h2><p>The <a href="../assemblies/gegi/index.html">GeGI cryostat</a> supports only the exact GeGI_3D model. It is a separate assembly at the same level as LBNL, with 34-electrode readout and Compton imaging.</p><div class="grid">'''+detector_cards({'detectors':dedicated_items})+'''</div>
-<h2>More detector models</h2><p>These '''+str(blocked_count)+''' models need a future larger cryostat. Their pages show the actual dimension limits; all remain available for browsing.</p><div class="grid">'''+detector_cards({'detectors':other_items})+'''</div>''')
+<details id="other-models" class="panel" style="margin:22px 0"><summary>'''+str(len(other_items))+''' more models · larger cryostat needed</summary><p>These models exceed the supported cryostat dimensions. Open a model to inspect its geometry and exact limits.</p><div class="grid">'''+detector_cards({'detectors':other_items})+'''</div></details>''')
     write_page(site/'detectors/index.html','Detectors · GeSignal',det,1)
     assemblies=('''<section class="hero"><p class="muted">Cryostat assemblies</p><h1>Choose a compatible assembly</h1>
 <p>LBNL and GeGI are separate cryostats. Detector selection never changes the assembly automatically. All 17 detector models remain browsable; six oversized models currently have no supported assembly.</p></section>
@@ -298,12 +284,13 @@ def apply(site):
                  if available else 'This dataset is unavailable in this snapshot.')
         return (f'<section id="{ident}" class="panel" data-dataset="{ident}" style="margin:16px 0">'
                 f'<h2>{title}</h2><p>{description}</p><p>{actions}</p>'+extra+'</section>')
-    results='''<section class="hero"><p class="muted">Choose the dataset first</p><h1>Saved results</h1>
-<p>Start with selected teaching signals or open a full saved study. Every primary ID belongs to its source detector case; complete studies retain zeros and unavailable responses.</p></section>'''
-    teaching_present=(site/'examples/data.json').is_file()
-    results+=result_panel('teaching','Start here · six representative Cs137 signals' if curated_teaching else 'Main teaching example · 200 gamma primaries',
-        'A selected view of the completed four-case Cs137 10K study: near-line, low-energy, partial-deposition, separated-position, capped and fixed-wiring signals. The six examples are illustrative, not a statistical sample.' if curated_teaching else 'AK02 and SAP22 · 100 side-on primaries per detector · bare geometry. Start here to follow one event from radiation deposits to an energy measurement.',
-        (('../spectra/pipeline.html','Open teaching example →'),),teaching_present)
+    results='''<section class="hero"><p class="muted">Saved studies and teaching signals</p><h1>Saved results</h1>
+<p>Open the current GeGI image, follow the signal chain, or explore a complete Cs137 campaign. Each study retains its own event identities, settings and denominators.</p></section>'''
+    results+=result_panel('gegi','GeGI · current saved Compton image' if has_formal_gegi else 'GeGI · saved Compton imaging',gegi_description,
+        (('../'+gegi_route,'Open saved GeGI signals and imaging →'),),has_gegi)
+    results+=result_panel('teaching','Learn the chain · six representative Cs137 signals',
+        'Six saved signals from the four-case Cs137 10K study, from deposits through charge, shaping and peak ADC. Illustrative examples, not a statistical sample.',
+        (('../spectra/pipeline.html','Open teaching example →'),),curated_teaching)
     tenk_description=('AK02, SAP22, GeRC02 Li50min and KMRC01 candidate · 10,000 initial Cs137 decays in each of four separate cases. Charge/readout, stage spectra, radiation events and complete scalar ledgers.' if has_rings else
                       'AK02 and SAP22 · 10,000 initial Cs137 decays per detector in two separate cases.')
     results+=result_panel('tenk','Cs137 10K · '+('four detector cases' if has_rings else 'two detector cases'),tenk_description,
@@ -312,16 +299,8 @@ def apply(site):
     results+=result_panel('million','Cs137 1M · two detector cases',
         'AK02 and SAP22 · one million initial decays per detector · nominal cryostat. Available views are ensemble truth/response spectra and complete scalar group records.',
         (('cs137-1m/index.html','Open 1M campaign →'),),has_1m)
-    results+=result_panel('gegi','GeGI · multichannel Compton imaging',gegi_description,
-        (('../'+gegi_route,'Open saved GeGI signals and imaging →'),),has_gegi,
-        '<p>Conditional reconstruction on an imposed plane; same-energy separation remains unresolved and validated recoveries remain zero.</p>')
-    results+='<h2>Other teaching studies</h2>'
-    results+=result_panel('gamma','Cryostat gamma · 40 primaries',
-        'AK02 and SAP22 · 20 primaries per detector · nominal cryostat. A separate monoenergetic source and event namespace.',
-        (('../examples/gamma-native/gamma.html','Open cryostat gamma example →'),),has_gamma,
-        '<details><summary>Processing and collection scope</summary><p>'+gamma_caption+'</p></details>' if has_gamma else '')
-    results+='<details><summary>Historical teaching archive</summary><p><a data-original-report href="../examples/pipeline.html">Earlier bare-detector study · 200 initial gamma primaries</a>. Its records have a separate event namespace.</p><p><a href="../examples/gegi/index.html">Earlier GeGI two-position study · historical identity and original settings</a></p></details>'
-    results+='<p><a href="../guide.html#saved-analysis">Help with settings, event identities and data files</a>. Saved engineering results do not establish experimental spectrum agreement or calibrated charge-collection efficiency.</p>'
+    results+='<details id="historical-studies" class="panel" style="margin:22px 0"><summary>Retired small studies</summary><section id="gamma" data-dataset="gamma"><h2>Earlier gamma and two-position examples</h2><p>The 200-primary bare-detector, 40-primary cryostat gamma and earlier GeGI two-position public bundles have been retired. Their scientific originals remain in the local workspace. Use the current GeGI study or six Cs137 teaching signals above; these are separate datasets.</p></section></details>'
+    results+='<p><a href="../guide.html#saved-analysis">Help with settings, event identities and data files</a></p>'
     write_page(site/'results/index.html','Results · GeSignal',results,1)
 
     if has_1m:

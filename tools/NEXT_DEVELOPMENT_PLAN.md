@@ -1,6 +1,94 @@
 # Current development plan
 
-## Active milestone — establish the GeGI full-chain reference, 2026-10-20
+## Current delivery order — 2026-10-23
+
+Root owns direction and acceptance; gpt-6.1-sol ultra implements one concrete
+deliverable at a time. No extra reviewers, new physics campaigns, reset use or
+repeated completed diagnostics. Monitoring stays PAUSED. The all434/837 GeGI
+publication and nominal8-case readout bridge below are delivered evidence.
+
+Owner approval on2026-10-23: implement P1/P2/P3 public removal, compress the old
+10K geometry data without reducing display quality, and omit unneeded raw
+downloads while retaining plots/statistics. Keep two representative MP4 clips
+per detector; retire the old200-primary teaching payload, gamma40 and oldGeGI
+public studies. Preserve local originals and exact browser-required scientific
+values. The navigation-only build f4422554 completed; do not repeat that milestone.
+Current implementation also removes only the two ring complete-response ZIP
+downloads (93,832,509bytes); exact per-event waveform display files remain.
+
+Steps1–3 below are implemented and validated in snapshot1f967e0e: total
+publication493,496,065bytes including the manifest (before994,900,290bytes).
+The retained883media/CSV files and243waveform traces are byte-identical.
+Do not repeat cleanup or simulation; step4is the next development direction.
+
+1. **Curate the public presentation.** Put the current GeGI result first, retain
+   the six-signal teaching entry and separate10K/1M studies, fold earlier small
+   integration studies and the six unsupported catalog models. Correct obsolete
+   download wording. Accept when existing fragments/links, all17models, exact
+   saved counts and scientific bytes survive, targeted tests and the normal
+   builder pass, and the deployed bytes match. This is presentation work; no
+   student-runtime rebuild or numerical rerun.
+2. **Reduce delivery size without dropping events.** Prioritize the active
+   `examples/cs137-10k-geometry/` event JSON:453,681,939bytes/209files. The maintained
+   viewer already reads gzip. Build one explicit lossless delivery derivative
+   from the preserved checked bundle, leaving the original producer and local
+   originals intact. Require decompressed byte/hash equality for every shard,
+   unchanged event IDs/counts/index ranges and scene geometry, working viewer
+   selection, strict derivative validation and a smaller measured publication.
+   Remove only replaced uncompressed PUBLIC delivery copies after those checks.
+   No event thinning, precision reduction or scientific-source rebaselining.
+3. **Retire superseded public teaching copies.** The old200-primary bare-detector
+   `examples/pipeline.html`, `data.json` and `pipeline-display.json` total
+   19,579,512bytes. They are a unique historical study, while the maintained
+   teaching route uses six signals from the four-case10K study. First decouple
+   the curated spectrum route from those old mandatory source bindings, preserve
+   the checked `.local/pipeline-showcase/` original, and provide a clear archive
+   pointer. Then omit those public copies through the builder. Retire the approved
+   gamma40 and oldGeGI public payloads as well; retain small compatibility links
+   where needed. Li diagnostics remain under Methods. No new archive portal.
+4. **Align experimental products before another inverse-model change.** The
+   required input is one matched ImagerPro `.bin`/N42 acquisition with detector,
+   format/software version, energy/position units, acquisition/source settings
+   and selection definitions. Start with metadata, counts and the experimental
+   pixel map; compare the matching spectra only when denominators are known.
+   No guessed binary parser or invented GlobalTime units. Native terminal charge
+   and t50 remain simulation diagnostics, not available measured inputs.
+5. **Make one justified readout/reconstruction change.** Once the observable
+   contract is known, use the existing fixed development/holdout split, saved
+   signed34-channel response and fixed independent calibration. Compare original
+   and changed energy/position/pairing outputs, including unknowns, exclusions
+   and failures. Accept a specific improvement against a predefined relevant
+   criterion; do not iterate cuts against the holdout or source image. Rebuild
+   the student release only if shipped code changes. Larger statistics follow
+   the small complete chain, not the reverse.
+
+### Public inventory and removal rationale
+
+Measured at18d6b44:1,982files/109HTMLpages,994,900,327bytes including the manifest;
+only5,099,673bytes remain under the project's1,000,000,000-byte cap. Navigation
+curation reduces reading burden, not this data volume. The homepage is already
+only10,753bytes; redesigning it does not address the dominant payload.
+
+| Public material | Decision and reason |
+|---|---|
+| Geometry event delivery,453.68MB | Keep every event; replace the uncompressed delivery with a checked lossless derivative. These200chunks still serve the active event viewer. |
+| Four-case10K data: rings211.37MB, AK02/SAP2250.93MB | Keep browser-required scientific data; omit only the two ring response ZIP downloads (93.83MB), retained locally. A1M campaign does not supersede these distinct event-level cases. |
+| Detector catalog/galleries,183.00MB | Keep exact models, geometry and unique saved studies; older galleries stay secondary. Six unsupported assemblies are a capability limit, not invalid model definitions. |
+| Old bare-detector teaching copy,19.58MB | Approved public retirement; preserve its unique200-primary local original and provenance. |
+| Gamma40,11.75MB; old GeGI,1.03MB | Approved public retirement; keep small compatibility entries and local originals. Smaller samples and older settings do not establish current GeGI performance. |
+| Li/native-Li,27.46MB | Keep under folded Methods. Unresolved numerical gates make these unsuitable as validated detector-response showcases; their failures remain useful evidence. |
+| Current GeGI,8.25MB;1M truth/response,11.93MB | Keep. Current GeGI includes all434groups/837conditional candidates; the1M campaigns retain separate ensemble statistics. |
+| Whole-file duplicates,1.77MB repeated bytes | Low priority. Most have distinct pinned dataset roles; deleting them breaks bundles for little space. No full website ZIP exists in docs or the current guide. External release assets were not inspected. |
+
+The completed geometry derivative measures95,117,298bytes versus453,681,939
+original bytes (79.034% smaller; gzip level6,mtime0). Every decompressed source
+byte and all20,000event identities passed verification; this is delivery
+compression, not a simulation speed claim. No old result has
+been declared physically wrong merely because of age. Permanent `.local/`
+campaigns, raw data, model/field originals and unique failures are never cleanup
+candidates. This section is the single current cleanup/size plan.
+
+## Delivered full-chain reference and remaining correspondence gaps
 
 The native forward/inverse diagnostics, transport preselection assessment, explicit
 two-site selection and order-weight repair are complete. The tested transport-only

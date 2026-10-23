@@ -412,6 +412,35 @@ def build_gamma_export(source):
     if (OUT/'examples/data.json').is_file():assemble_teaching_focus(OUT/'examples')
 
 
+def install_geometry_delivery():
+    """Install the approved lossless derivative into generated staging only."""
+    import geometry_web_delivery as delivery
+    target = OUT / delivery.PREFIX
+    if not target.exists():
+        return
+    current = json.loads((target/'manifest.json').read_bytes())
+    if current.get('kind') == delivery.KIND:
+        return
+    source = ROOT / '.local/publication-cleanup/geometry'
+    delivery.directory(OUT)
+    delivery.directory(target)
+    delivery.validate(source, check_events=False)
+    original = delivery.source_manifest((target/'manifest.json').read_bytes())
+    expected = set(original['files']) | {'manifest.json'}
+    if delivery.inventory(target) != expected:
+        raise ValueError('Unexpected files in staged original geometry')
+    retained = delivery.inventory(source)
+    for name in sorted(retained):
+        destination = target/name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source/name, destination)
+    for name in sorted(expected-retained):
+        destination = target/name
+        if not destination.absolute().is_relative_to(OUT.absolute()):
+            raise ValueError('Geometry removal outside generated stage')
+        destination.unlink()
+
+
 def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None, gegi_campaign_bundle=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
@@ -475,17 +504,25 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         build_export()
     else:
         build_campaign_export(campaign)
+    full_site = (OUT / 'models/catalog.json').is_file()
+    if full_site:
+        from site_study_retirement import apply as retire_studies
+        from result_web_delivery import materialize_for_build
+        retire_studies(OUT)
+        materialize_for_build(OUT)
+        install_geometry_delivery()
     if restructure:
         from saved_focus_pages import upgrade_displays
         upgrade_displays(OUT)
     from spectrum_display import assemble as assemble_spectra, ROUTES, route_current_pages
-    spectrum_sources_ready=all((OUT / p).is_file() for p in ROUTES)
+    from spectrum_display import teaching_available
+    spectrum_sources_ready=all((OUT / p).is_file() for p,target in ROUTES.items()
+                              if target != 'spectra/pipeline.html' or not teaching_available(OUT))
     if restructure and (OUT / "models" / "catalog.json").is_file() and not spectrum_sources_ready:
         raise ValueError("Current full-site spectrum sources are incomplete; preserve the previous snapshot")
     if spectrum_sources_ready:
         assemble_spectra(OUT)
     from viewer_navigation import assemble as assemble_readers, route_current_pages as route_readers
-    assemble_readers(OUT)
     from site_restructure import apply as apply_site_structure
     # Tiny failure fixtures used by publication tests intentionally omit the model catalog.
     # Real builds still require models/catalog.json in the final validator below.
@@ -502,10 +539,19 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
             assemble_plot_repairs(OUT)
             gallery=OUT/'detectors/GeGI_3D/gallery.html'
             gallery.write_text(patch_gallery(gallery.read_text(encoding='utf-8')),encoding='utf-8',newline='\n')
+        from site_video_curation import apply as curate_videos
+        video_receipt = curate_videos(OUT)
+        if video_receipt['removed']:
+            receipt_path = ROOT/'.local/publication-cleanup/videos.json'
+            receipt_path.write_text(json.dumps(video_receipt, indent=2)+'\n', encoding='utf-8', newline='\n')
     if (OUT / "spectra" / "manifest.json").is_file():
         route_current_pages(OUT)
         from spectrum_display import finalize as finalize_spectra
         finalize_spectra(OUT)
+    if full_site:
+        from result_web_delivery import finalize as finalize_result_delivery
+        finalize_result_delivery(OUT)
+    assemble_readers(OUT)
     if (OUT / 'viewers/manifest.json').is_file():
         route_readers(OUT)
     if (OUT / 'models/catalog.json').is_file():
@@ -558,6 +604,25 @@ def finish_staged(refresh_readout=False):
     if not (DESTINATION / MANIFEST).is_file() or (ROOT / '.local/site-previous').exists():
         raise ValueError('Inspect the installed snapshot or pending atomic swap before recovery')
     if refresh_readout:
+        from result_web_delivery import active as result_delivery_active
+        if result_delivery_active(OUT):
+            # Reuse complete delivered pages after a validator-only correction.
+            # Current validation must reproduce every saved spectrum/HTML byte.
+            from spectrum_display import GENERATORS, validate as validate_spectra
+            from site_discovery import assemble as refresh_discovery
+            path = OUT/'spectra/manifest.json'
+            before = path.read_bytes()
+            metadata = json.loads(before)
+            metadata['generators'] = {name: hashlib.sha256((ROOT/name).read_bytes()).hexdigest()
+                                      for name in GENERATORS}
+            try:
+                path.write_text(json.dumps(metadata,indent=2,allow_nan=False)+'\n',encoding='utf-8',newline='\n')
+                validate_spectra(OUT,require_current_generators=True,require_home=True)
+            except Exception:
+                path.write_bytes(before)
+                raise
+            refresh_discovery(OUT)
+            return install_snapshot(validate(DESTINATION))
         # The failed size-bound stage already contains every saved scientific
         # artifact. Refresh only the lossless per-trace delivery and its views.
         from ring_site import apply as refresh_readout_pages

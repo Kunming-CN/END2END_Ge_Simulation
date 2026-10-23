@@ -6,6 +6,7 @@ import posixpath
 import re
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
+import geometry_web_delivery as geometry_delivery
 
 ROOT=Path(__file__).resolve().parents[1]
 MAIN_PAGE='viewers/events.html'
@@ -23,7 +24,8 @@ ORIGINAL_SOURCES={'tools/geometry_events.html':'b6322ea76fc067a0df0596978dae027d
  'tools/geometry_events.py':'8473e9c6ae0ec8866ac0d720fa55a9cab4766c158d764fd30266668bdf8e05ca',
  'tools/hit_event_view.py':'7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e'}
 SOURCES=('tools/viewer_navigation.py','tools/viewer_navigation.js',
-         'tools/unified_event_viewer.html','tools/unified_event_viewer.js','tools/site_restructure.py','tools/site_routes.py')
+         'tools/unified_event_viewer.html','tools/unified_event_viewer.js','tools/site_restructure.py','tools/site_routes.py',
+         'tools/geometry_web_delivery.py','tools/result_web_delivery.py')
 RESPONSE_BASE='examples/cs137-10k'
 RESPONSE_PUBLICATION_PIN='554eece013b193baf48310f5dfb62379d63663fa1ac29a83866428ab52805eec'
 RING_BASE='examples/cs137-10k-rings'
@@ -35,6 +37,12 @@ TRUSTED_PREVIOUS_MANIFESTS=frozenset({
  '4945d697ae27217b3c4ff008d247445af43a6f44c5a327a845a3e48aa20b5675',
  '2c65448b9bf9ab1eaf603e22e091d061cd6ace669601c9442fb5194a77a23e12'})
 TRUSTED_PREVIOUS_UNIFIED_MANIFESTS=frozenset({
+ # Exact completed f4422554 site-build predecessor, byte-matched to its
+ # recorded site manifest before lossless geometry delivery was introduced.
+ '656132da1a570d466238554b79cf0f8aa79df97dac5ec32757fc7267f2495b6e',
+ # Exact 18d6b44 installed/Git snapshot before results/catalog curation.
+ # Original scene, event and scientific source checks remain mandatory.
+ 'a4f2bd27ea7d7ab418a0d69bdd3e450c3e9db9891924be9facc72260b480d6f8',
  # Exact 5dfd5fa public/HEAD manifest before the homepage layout refresh;
  # all six source pins match that Git snapshot and saved data remain checked.
  'bfaaa2373df476d2f95e1cf1b266c600119a6692bda40173bde3ca01db17b4c3',
@@ -85,8 +93,12 @@ def write(p,text):
 def origins(site,checked=False):
     site=Path(site);out={}
     for rel,expected in PINS.items():
-        require(sha(site/rel)==expected,'Original viewer manifest changed: '+rel)
         folder=posixpath.dirname(rel);m=read(site/rel)
+        compressed=rel==geometry_delivery.PREFIX+'/manifest.json' and m.get('kind')==geometry_delivery.KIND
+        if compressed:
+            m=geometry_delivery.validate(site/folder,check_events=checked)
+            expected=sha(site/rel)
+        else:require(sha(site/rel)==expected,'Original viewer manifest changed: '+rel)
         for name,record in m['files'].items():
             require(not name.startswith('/') and '\\' not in name and '..' not in Path(name).parts,'Unsafe original path')
             path=folder+'/'+name
@@ -96,7 +108,9 @@ def origins(site,checked=False):
     if checked:
         from geometry_publication import validate_bundle
         from hit_view_publication import validate
-        validate_bundle(site/'examples/cs137-10k-geometry');validate(site/'examples/cs137-10k-hits')
+        if read(site/(geometry_delivery.PREFIX+'/manifest.json')).get('kind')!=geometry_delivery.KIND:
+            validate_bundle(site/geometry_delivery.PREFIX)
+        validate(site/'examples/cs137-10k-hits')
     return out
 
 def route_links(text,page):
@@ -127,11 +141,15 @@ def ring_bundle(site):
         asset=folder/name
         require(asset.resolve().is_relative_to(folder.resolve()),'Saved ring path outside bundle')
     actual={p.relative_to(folder).as_posix() for p in folder.rglob('*') if p.is_file()}
-    require(actual==set(m['files'])|{'manifest.json'},'Saved ring file inventory mismatch')
-    for name,record in m['files'].items():
-        asset=folder/name
-        require(sha(asset)==record['sha256'] and asset.stat().st_size==record['bytes'],
-                'Saved ring asset changed: '+name)
+    if (folder/'web-delivery.json').is_file():
+        from result_web_delivery import validate_bundle as validate_delivery
+        validate_delivery(folder)
+    else:
+        require(actual==set(m['files'])|{'manifest.json'},'Saved ring file inventory mismatch')
+        for name,record in m['files'].items():
+            asset=folder/name
+            require(sha(asset)==record['sha256'] and asset.stat().st_size==record['bytes'],
+                    'Saved ring asset changed: '+name)
     for name,entry in m['models'].items():
         binding=entry['dataset_binding']
         binding_bytes=(json.dumps(binding,ensure_ascii=True,allow_nan=False,separators=(',',':'))+'\n').encode('utf-8')
@@ -155,6 +173,14 @@ def ring_bundle(site):
 def ring_records(site,manifest):
     if manifest is None:return {}
     out={RING_BASE+'/'+name:record for name,record in manifest['files'].items()}
+    folder=Path(site)/RING_BASE
+    if (folder/'web-delivery.json').is_file():
+        from result_web_delivery import MARKER, OMITTED
+        delivery=read(folder/MARKER)
+        for name in OMITTED:out.pop(RING_BASE+'/'+name)
+        for name,record in delivery['html_rewrites'].items():
+            out[RING_BASE+'/'+name]=record['delivered']
+        out[RING_BASE+'/'+MARKER]={'sha256':sha(folder/MARKER),'bytes':(folder/MARKER).stat().st_size}
     path=Path(site)/RING_BASE/'manifest.json'
     out[RING_BASE+'/manifest.json']={'sha256':sha(path),'bytes':path.stat().st_size}
     return out
@@ -182,6 +208,14 @@ def config(site=None):
     from site_routes import case_result_path, spectrum_path, event_view_path, relative_url, assembly_navigation
     out={'assembly':{'base':'../examples/cs137-10k-geometry/','sha256':PINS['examples/cs137-10k-geometry/manifest.json']},
          'positive':{'base':'../examples/cs137-10k-hits/','sha256':PINS['examples/cs137-10k-hits/manifest.json']}}
+    # origins() is the byte-validation boundary; rendering selects its already
+    # checked delivery without decompressing every shard again for each page.
+    geometry=Path(site)/geometry_delivery.PREFIX/'manifest.json' if site is not None else None
+    if geometry is not None and geometry.is_file() and read(geometry).get('kind')==geometry_delivery.KIND:
+        original=geometry_delivery.source_manifest((geometry.parent/'original-manifest.json').read_bytes())
+        out['assembly'].update(sha256=sha(geometry),kind=geometry_delivery.KIND,
+            original_manifest_sha256=geometry_delivery.SOURCE_MANIFEST_SHA256,
+            campaign_run_sha256=original['campaign_run_sha256'])
     out['geometry_navigation']=assembly_navigation(MAIN_PAGE)
     responses=response_records(site)
     out['case_routes']={name:{'result':relative_url(case_result_path(name),MAIN_PAGE),
@@ -217,8 +251,14 @@ def render(site,page=MAIN_PAGE):
         text=replace(text,'__VIEWER_CONFIG__',json.dumps(config(site),separators=(',',':')))
         return replace(text,'__VIEWER_CONTROLLER__',(ROOT/'tools/unified_event_viewer.js').read_text(encoding='utf-8'))
     original=binding['source'];template='tools/geometry_events.html' if binding['view']=='assembly' else 'tools/hit_event_view.html'
-    require(sha(site/original)==ORIGINAL_SOURCES[template],'Original HTML pin mismatch')
+    compressed=binding['view']=='assembly' and config(site)['assembly'].get('kind')==geometry_delivery.KIND
+    if compressed:
+        require((site/original).read_bytes()==geometry_delivery.REDIRECT,'Geometry redirect changed')
+    else:require(sha(site/original)==ORIGINAL_SOURCES[template],'Original HTML pin mismatch')
     view=json.dumps(binding['view'])
+    archive='' if compressed else ' · <a href="../'+original+'">Original viewer (archive)</a>'
+    fallback=('Use the event viewer link above to choose a saved event.' if compressed else
+              'This saved-link transition needs JavaScript. The original archived viewer remains available above.')
     # No renderer or data request lives in an alias. Invalid old queries stay
     # visible here; valid queries replace this history entry with the one reader.
     return ('<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
@@ -226,8 +266,8 @@ def render(site,page=MAIN_PAGE):
       '<link rel="canonical" href="https://kunming-cn.github.io/END2END_Ge_Simulation/viewers/events.html">'
       '<style>body{font:17px/1.5 system-ui;background:#0c1724;color:#e7f0fa;max-width:760px;margin:3rem auto;padding:1rem}a{color:#9edbff}a:focus-visible{outline:3px solid #ffd179}p{overflow-wrap:anywhere}</style></head><body>'
       '<h1>GeSignal event viewer</h1><p id="aliasStatus" role="status" aria-live="polite">Opening the saved event identity…</p>'
-      '<p><a href="events.html">Choose an event in the unified viewer</a> · <a href="../'+original+'">Original viewer (archive)</a></p>'
-      '<noscript>This saved-link transition needs JavaScript. The original archived viewer remains available above.</noscript>'
+      '<p><a href="events.html">Choose an event in the unified viewer</a>'+archive+'</p>'
+      '<noscript>'+fallback+'</noscript>'
       '<script id="viewer-navigation">'+common+'</script>\n<script id="viewer-alias">'
       'const alias=legacyViewerTarget(location.search,'+view+');'
       'if(alias.target)location.replace(alias.target+location.hash);'
@@ -268,9 +308,10 @@ def validate(site,current=False):
         return m
     require(m['kind']=='unified_geant4_reader_v1','Wrong display manifest')
     previous=not current and sha(manifest_path) in TRUSTED_PREVIOUS_UNIFIED_MANIFESTS
+    legacy_sources=set(SOURCES)-{'tools/geometry_web_delivery.py','tools/result_web_delivery.py'}
     require(set(m['adapter_sources'])==set(SOURCES) or
-            (previous and set(m['adapter_sources']) in (set(SOURCES)-{'tools/site_routes.py'},
-                set(SOURCES)-{'tools/site_restructure.py','tools/site_routes.py'})),
+            (previous and set(m['adapter_sources']) in (legacy_sources,legacy_sources-{'tools/site_routes.py'},
+                legacy_sources-{'tools/site_restructure.py','tools/site_routes.py'})),
             'Adapter source inventory mismatch')
     known_current=m['adapter_sources']==FROZEN
     require(known_current or (not current and sha(manifest_path) in TRUSTED_PREVIOUS_UNIFIED_MANIFESTS),

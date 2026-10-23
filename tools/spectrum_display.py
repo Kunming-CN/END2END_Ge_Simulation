@@ -16,8 +16,14 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/cs137-1m-response/report.html':'spectra/million-response.html',
         'examples/cs137-10k/comparison.html':'spectra/cs137-10k.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
-GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js')
+GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js','tools/result_web_delivery.py')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+    # Exact completed f4422554 UI stage before approved public payload retirement.
+    # Scientific origins stay independently hash-checked below.
+    '4ff2441d5f7c6d166d0bc0104b8cd4ea2ab87c7979131d73378d77d916d6590f',
+    # Exact 18d6b44 installed/Git snapshot before results/catalog curation.
+    # Only its display source binding is historical; every origin stays checked.
+    'd7105a3f50cbf150fce520f6075d38f31ccf29efca53850ef0207d92cd93f0ce',
     # Exact 5dfd5fa public/HEAD manifest before the homepage layout refresh;
     # all eleven source pins match that Git snapshot; saved origins stay exact.
     '0b3981c063e7426c5f4fd4a28085964dcd55bc1af3b097425a6c9c1298bd06e6',
@@ -219,9 +225,12 @@ DATA_SOURCES=('examples/cs137-1m/histograms.json','examples/cs137-1m-response/hi
               'examples/cs137-10k/AK02/response/histograms.json','examples/cs137-10k/SAP22/response/histograms.json','examples/data.json')
 RECEIPTS=('examples/cs137-1m/publication.json','examples/cs137-1m-response/publication.json','examples/cs137-10k/publication.json')
 
-def source_inventory(site):
+def source_inventory(site, *, legacy_teaching=True):
     from ring_site import source_files
-    return tuple(ROUTES)+DATA_SOURCES+RECEIPTS+source_files(site)
+    reports=tuple(path for path,target in ROUTES.items()
+                  if legacy_teaching or target!='spectra/pipeline.html')
+    data=tuple(path for path in DATA_SOURCES if legacy_teaching or path!='examples/data.json')
+    return reports+data+RECEIPTS+source_files(site)
 
 def case_context(rows,page):
     from ring_site import CASE_VARIANTS
@@ -384,10 +393,11 @@ def million_case_page(text,destination):
     return text
 
 def render_page(site,original,destination,specs):
+    from result_web_delivery import strip_archive_links
     if destination=='spectra/cs137-10k.html':
         from ring_site import ring_manifest
         if ring_manifest(site):
-            return four_detector_spectra(site,specs)
+            return strip_archive_links(four_detector_spectra(site,specs),destination)
     text=(site/original).read_text(encoding='utf-8')
     text=display_navigation(text,original,destination)
     if destination=='spectra/pipeline.html':
@@ -419,7 +429,7 @@ def render_page(site,original,destination,specs):
     if not n:  # The frozen reports use a valid implicit body.
         require('</style>' in text,'Implicit spectrum body/navigation anchor')
         text=text.replace('</style>','</style>'+bar,1)
-    return text
+    return strip_archive_links(text,destination)
 
 def component_hashes(text):
     charts=re.findall(r'<svg class="spectrum-chart".*?</svg>',text,re.S)
@@ -482,11 +492,13 @@ def teaching_available(site):
 def assemble(site):
     require_frozen_sources()
     site=Path(site)
-    if not any((site/p).is_file() for p in ROUTES): return None
-    require(all((site/p).is_file() for p in ROUTES),'Partial source spectrum report set')
-    sources=source_inventory(site)
-    origin={rel:sha(site/rel) for rel in sources}; pages={}
     curated=teaching_available(site)
+    reports=tuple(path for path,target in ROUTES.items()
+                  if not curated or target!='spectra/pipeline.html')
+    if not any((site/p).is_file() for p in reports): return None
+    require(all((site/p).is_file() for p in reports),'Partial source spectrum report set')
+    sources=source_inventory(site,legacy_teaching=not curated)
+    origin={rel:sha(site/rel) for rel in sources}; pages={}
     for original,destination in ROUTES.items():
         if curated and destination=='spectra/pipeline.html':
             continue
@@ -501,11 +513,11 @@ def assemble(site):
         assemble_teaching(site)
     require_frozen_sources()
     require(origin=={rel:sha(site/rel) for rel in sources},'Source reports or numeric data changed')
-    manifest={'kind':'saved_spectrum_display_v1','display_revision':4 if curated else 3,'teaching_examples':curated,'default_scale':'log','histogram_style':'step',
+    manifest={'kind':'saved_spectrum_display_v1','display_revision':5 if curated else 3,'teaching_examples':curated,'default_scale':'log','histogram_style':'step',
               'zero_count_policy':'gaps on true log axes; no pseudocounts',
               'origin_files':origin,'generators':{rel:sha(ROOT/rel) for rel in GENERATORS},
               'pages':pages,'new_simulations':0,'original_reports_modified':False,
-              'scope':'Current views derived from saved results. Original reports and complete scientific bundles remain unchanged.'}
+              'scope':'Current views derived from saved results. Scientific inputs remain unchanged; retired teaching archives are not inputs to the six selected signals.'}
     write_if_changed(site/'spectra/manifest.json',json.dumps(manifest,indent=2,allow_nan=False)+'\n')
     return validate(site,require_current_generators=True)
 
@@ -521,12 +533,12 @@ def validate(site,require_current_generators=False,require_home=False):
     require(set(m['pages'])==expected_pages,'Spectrum page inventory changed')
     expected_files={Path(p).name for p in ROUTES.values()}|{'manifest.json'}
     if curated:
-        require(m.get('display_revision')==4,'Curated teaching requires its own source binding')
+        require(m.get('display_revision') in (4,5),'Curated teaching requires its own source binding')
         expected_files.add('teaching-examples.json')
         from teaching_examples import validate as validate_teaching
         validate_teaching(site)
     require({p.name for p in folder.iterdir()}==expected_files,'Unexpected spectrum directory contents')
-    require(set(m['origin_files'])==set(source_inventory(site)),'Incomplete origin binding')
+    require(set(m['origin_files'])==set(source_inventory(site,legacy_teaching=m.get('display_revision')!=5)),'Incomplete origin binding')
     for rel,h in m['origin_files'].items(): require(sha(site/rel)==h,'Original spectrum source changed: '+rel)
     current={rel:sha(ROOT/rel) for rel in GENERATORS}
     same_generators=m['generators']==current
@@ -535,13 +547,13 @@ def validate(site,require_current_generators=False,require_home=False):
             'Unknown spectrum generator binding; preserve the checked saved display')
     if require_current_generators:
         require_frozen_sources()
-        require(same_generators and m.get('display_revision') in (3,4),'Candidate generator binding mismatch')
+        require(same_generators and m.get('display_revision') in (3,4,5),'Candidate generator binding mismatch')
     for destination,record in m['pages'].items():
         text=(site/destination).read_text(encoding='utf-8'); expected=READERS[destination](site)
         require(sha(site/destination)==record['sha256'],'Display HTML changed')
-        if m.get('display_revision') in (2,3,4):
+        if m.get('display_revision') in (2,3,4,5):
             require(component_hashes(text)==record['render_components'],'Static chart or controls changed')
-        if require_current_generators or (m.get('display_revision') in (2,3,4) and same_generators):
+        if require_current_generators or (m.get('display_revision') in (2,3,4,5) and same_generators):
             require(text==render_page(site,record['source'],destination,expected),'Rendered display differs from deterministic generator')
         require(record['specs_sha256']==digest(expected),'Spectrum reader/data mismatch')
         actual=embedded_specs(text)

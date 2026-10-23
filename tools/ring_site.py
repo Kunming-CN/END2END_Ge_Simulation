@@ -104,6 +104,13 @@ def ring_manifest(site):
     require(m['kind'] == 'ring_saved_publication_v1' and m['status'] == 'complete'
             and m['schema_version'] == 1 and set(m['models']) == set(RING_MODELS),
             'Only a complete two-ring publication enables current ring pages')
+    delivery = None
+    marker = folder / 'web-delivery.json'
+    if marker.exists() or marker.is_symlink():
+        from result_web_delivery import validate_bundle
+        # The exact complete manifest stays pinned. Its portable derivative
+        # validator permits only the registered ZIP omissions and anchor tags.
+        delivery = validate_bundle(folder)
     for model in RING_MODELS:
         item = m['models'][model]
         require(item['event_count'] == 10000 and item['counts']['initial_primaries'] == 10000,
@@ -114,8 +121,13 @@ def ring_manifest(site):
                     and '\\' not in rel and '..' not in Path(rel).parts,
                     'Unsafe ring page asset binding')
             path = folder / rel
-            require(sha(path) == m['files'][rel]['sha256']
-                    and path.stat().st_size == m['files'][rel]['bytes'],
+            expected = m['files'][rel]
+            if delivery is not None and rel in delivery['html_rewrites']:
+                require(field == 'response' and rel == model + '/response/summary.html',
+                        'Unregistered ring page source rewrite: ' + rel)
+                expected = delivery['html_rewrites'][rel]['delivered']
+            require(sha(path) == expected['sha256']
+                    and path.stat().st_size == expected['bytes'],
                     'Ring page source changed: ' + rel)
         report = read(folder / item['response_report'])
         require(report['current_counts'] == item['counts'], 'Ring page/current response census differs')
@@ -458,7 +470,8 @@ def saved_report(site, case):
         data += ('<p><a href="' + escape(relative_url(old, current_path), quote=True) + '">Original KM native response: 0/231 accepted (archive)</a>. '
                  'The original positive-peak readout rejected all 231 groups. The current fixed −1 wiring is a separate derivative; '
                  'raw negative native charge is preserved. The ZIP retains the complete original HTML and native records.</p>')
-    return body + data + '</details></section>' + scripts
+    from result_web_delivery import strip_archive_links
+    return strip_archive_links(body + data + '</details></section>' + scripts, current_path)
 
 
 def apply(site):

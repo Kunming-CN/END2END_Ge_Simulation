@@ -1,5 +1,43 @@
 # Current handoff
 
+## Completed cleanup milestone — 2026-10-23
+
+Owner approved P1/P2/P3 public removal, lossless10Kgeometry delivery and omission
+of raw downloads unnecessary for display. Root owns acceptance; gpt-6.1-sol ultra
+implemented the three concrete parts. No physics, resets, new environments or
+extra AI reviews. Monitoring stays PAUSED. Local scientific originals are intact.
+
+Validated snapshot1f967e0ed20616442aae17b556602e38d8a54ce6d931590a69b40d2e1de57c19:
+1,873files including manifest;493,496,065bytes versus994,900,290before cleanup.
+All109HTMLentrypoints remain valid, with three retired studies reduced to small
+compatibility entries.17models retain two original MP4s each;102duplicate/extra
+public movies removed, saving16,614,067bytes. Old200-primary teaching, gamma40
+and earlyGeGI payloads are retired publicly; exact local science remains.
+
+Geometry453,681,939 ->95,117,298bytes (79.034% smaller): all200chunks/20,000events,
+scene/index bytes and original identities retained. Two ring complete-response
+ZIPs (93,832,509bytes) stay local; all browser-required plots/scalars/waveforms
+remain online.883retainedmedia/CSV files and243waveform traces are byte-identical.
+The builder preserves these policies on future publication; portable validation
+requires no omitted private ZIPs. Do not rebuild the student runtime for this
+website-only milestone.
+
+36site tests passed plus targeted geometry/viewer/curation/retirement/delivery
+checks. Compressed viewer regression preserved236groups/972,019scalar comparisons.
+Real browser verified AK02event213->220,3Dpositive overlay, both1280x720MP4s through
+playback, and GeRC02primary61/group0charge/current/preamp/shaper plots. Normal
+final builder validators passed. First candidate's ringHTMLhash mismatch was
+fixed with5targeted tests; the existing generated stage was reused, not recomputed.
+All failure/resolution evidence and exact publication/live status are in the
+single `.local/publication-cleanup/receipt.json` and its named logs. No build or
+temporary preview server remains active after the local milestone.
+
+Next delivery order is in tools/NEXT_DEVELOPMENT_PLAN.md: presentation steps1–3
+are complete. Use a matched ImagerPro acquisition and documented observable
+contract before another inverse-model change. Preserve all434GeGIgroups/837
+candidates and the accepted nominal readout bridge; do not repeat completed
+physics or two-bright-spot investigations.
+
 ## Current milestone — 2026-10-22
 
 Owner correction: the default Compton image must include every usable saved

@@ -1,6 +1,6 @@
 {
   "kind": "saved_spectrum_display_v1",
-  "display_revision": 4,
+  "display_revision": 5,
   "teaching_examples": true,
   "default_scale": "log",
   "histogram_style": "step",
@@ -9,12 +9,10 @@
     "examples/cs137-1m/report.html": "a04c9d0557f150d37fa2b381a445ef5315fbc2cd6dd3a0eccd38026fcd098f35",
     "examples/cs137-1m-response/report.html": "4fdf244498d4a49e2837dcf0f882c7b94d33179ed4810b74a1d728ab7128369d",
     "examples/cs137-10k/comparison.html": "b94d57dbb9657f68dd8aa0043e8e88203c54a71c1bffae7f38c19e485c1247c4",
-    "examples/pipeline.html": "ab2f473328e03fadbc4036613b37993be46254d5d5770f976b152636efec3760",
     "examples/cs137-1m/histograms.json": "4fff0a89cc28164115b6c0ae3575adcf706b31d24f677264f90d80b9b1c406a3",
     "examples/cs137-1m-response/histograms.json": "04c0fa1693bd9ba02a00a76288c0b3974b5fa0c791504ce86294f6cd13769640",
     "examples/cs137-10k/AK02/response/histograms.json": "8cbdb6d7ba7ebbbfa4e95a270bb9db955c67d7063f1652e1383fcba459236ab1",
     "examples/cs137-10k/SAP22/response/histograms.json": "8305b71886e2f61594917110f267f7b8b7ab6de9a1afab9c004aaade684e026f",
-    "examples/data.json": "dfc87b1814fb1a0e2c2324469f5e81a8383e56c00969ce4e3148425fab8d08d6",
     "examples/cs137-1m/publication.json": "01d3b22ca520266ca62363425efa45491a233c0bc55a08b79f2cacc5b0c6ea46",
     "examples/cs137-1m-response/publication.json": "7aa6dfac01facd9322b101eb0b394a1fccb93de2184b57bc7e7a00f0b698d50a",
     "examples/cs137-10k/publication.json": "554eece013b193baf48310f5dfb62379d63663fa1ac29a83866428ab52805eec",
@@ -23,17 +21,18 @@
     "examples/cs137-10k-rings/KMRC01_candidate/response/histograms.json": "11cfbed9fd93db18528a1a73f25a298fa554fd70c9f3136203468970a5c053e3"
   },
   "generators": {
-    "tools/spectrum_display.py": "3b3e22a6ffb778a8b51fbf0edd107c7ff796c3679f5797e34d4cba7783d659a1",
+    "tools/spectrum_display.py": "12b8545e60010d4b07f0edec01da4f58f8dce1b265674974e7109449e9ebaa38",
     "tools/spectrum_plot.py": "f00dbf5efdb393f03eebd501cb71a74bbd268fc3f0cff240de9a7eb54948a29c",
     "tools/spectrum_controls.js": "804a9ea72a1347ebffa3d0a4caba64aa136ff3ab700190ca6a0e654f81601b5a",
-    "tools/viewer_navigation.py": "ef9d51e000c9913bd11f565d3f0281931407688c295fd91c4bb384c595de2ecc",
+    "tools/viewer_navigation.py": "a204f4b64509550cc6558c451e295dd6893305e88f1cd2e2c2bdf9865d501eb7",
     "tools/viewer_navigation.js": "f7f78206a9bad5f62a69c2a4c8e05ba66e533c32ed3f45b144b7e26c5df9dbd3",
-    "tools/ring_site.py": "75872726e47e26081a4b76c49cc88243d29927ae9f56343ea86253b67b894d0f",
-    "tools/site_restructure.py": "ef796727af3908e066f7dd84f3f2fbc689dcd6257f5a7191772ff128299d08a6",
+    "tools/ring_site.py": "417c88260f5eeac830995a7d2fa10e700ae3be08aa1d4b63830b55b5bf004334",
+    "tools/site_restructure.py": "fcf968d66e8cbe0fcd9124929145c346a9b081c38dc78324f4e0fc14b01e9d9f",
     "tools/site_routes.py": "f77f2c715da8530239093523c8eb613c9e13f8cf5440c33bc5254c2cbbd352cb",
-    "tools/teaching_examples.py": "980563271559af756e74ac77ed00e23b537cb0a983ebbece39be0e7e73eecff1",
+    "tools/teaching_examples.py": "d8550e168908144fcbc978e85dbd061028530f46b5ea76c50d2bb775d001ba08",
     "tools/teaching_examples.html": "c3fdd3a64d2ff4103e49a7fa8e34cc6fc27c9a92a41f105770b68033ccb579b4",
-    "tools/focused_plots.js": "230c98bb7f41a5437f483aa9e168b8476a06b9d6ac4a782ba7681ce442ba49eb"
+    "tools/focused_plots.js": "230c98bb7f41a5437f483aa9e168b8476a06b9d6ac4a782ba7681ce442ba49eb",
+    "tools/result_web_delivery.py": "458e86ba482e7af4495e4f55732fdf7b20a2ec6092680f455b042fbecabfe716"
   },
   "pages": {
     "spectra/million-truth.html": {
@@ -73,7 +72,7 @@
     "spectra/cs137-10k.html": {
       "source": "examples/cs137-10k/comparison.html",
       "source_sha256": "b94d57dbb9657f68dd8aa0043e8e88203c54a71c1bffae7f38c19e485c1247c4",
-      "sha256": "70c0ea0c311f0622313e1d38fd06ee3f23820c0d0b578a6edab6335729598a57",
+      "sha256": "04648552adabb691f64046bd05a9530dcd9477438a84c8e00d709b678c7e3764",
       "specs_sha256": "58bb23a3aef770dc16e4c875888805d68083e02c7d539a86dbbcddabb7f4e1d1",
       "plot_states": 20,
       "render_components": {
@@ -106,7 +105,7 @@
   },
   "new_simulations": 0,
   "original_reports_modified": false,
-  "scope": "Current views derived from saved results. Original reports and complete scientific bundles remain unchanged.",
+  "scope": "Current views derived from saved results. Scientific inputs remain unchanged; retired teaching archives are not inputs to the six selected signals.",
   "campaign_shell": {
     "path": "results/cs137-1m/index.html",
     "models": [

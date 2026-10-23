@@ -4,6 +4,7 @@ const DETAIL_CAP=2000, categories=['all','compact','compton1','compton2','full',
 const viewer={generation:0,requested:parseViewerQuery(location.search),scene:null,primary:null,group:null,
   assemblyManifest:null,positiveManifest:null,data:null,events:new Map(),evidence:new Map(),category:'all',overlayError:''};
 const RING_KIND='ring_saved_publication_v1',ringModels=['GeRC02','KMRC01_candidate'];
+const GEOMETRY_DELIVERY_KIND='geometry_lossless_web_delivery_v1';
 const sceneCache=new Map(),positiveCache=new Map(),chunkCache=new Map(),manifestCache=new Map();
 let mode=null,pendingSelection=null;
 const eventNavigationHTML=$('page-navigation')?.outerHTML;
@@ -26,7 +27,7 @@ function exactJSON(value){
 function requireViewer(ok,message){if(!ok)throw Error(message);}
 function option(value,label){const e=document.createElement('option');e.value=String(value);e.textContent=label;return e;}
 function paragraph(box,text){const p=document.createElement('p');p.textContent=text;box.append(p);}
-async function fetchJSON(path,expected){
+async function fetchJSON(path,expected,originalExpected){
   const response=await fetch(path);if(!response.ok)throw Error(path+': HTTP '+response.status);
   let bytes=await response.arrayBuffer();
   requireViewer(globalThis.crypto?.subtle,'SHA-256 requires HTTPS or localhost.');
@@ -34,7 +35,12 @@ async function fetchJSON(path,expected){
   requireViewer(hash===expected,'SHA-256 mismatch: '+path);
   if(path.endsWith('.gz')){
     requireViewer(typeof DecompressionStream!=='undefined','Native gzip DecompressionStream is required.');
-    bytes=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+    try{bytes=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();}
+    catch(error){throw Error('Cannot decompress saved gzip data: '+path,{cause:error});}
+  }
+  if(originalExpected){
+    const originalHash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
+    requireViewer(originalHash===originalExpected,'Original SHA-256 mismatch: '+path);
   }
   return JSON.parse(new TextDecoder().decode(bytes));
 }
@@ -42,6 +48,7 @@ function modelBinding(kind,name){
   const binding=ringModels.includes(name)?VIEWER_CONFIG.models?.[name]?.[kind]:VIEWER_CONFIG[kind];
   requireViewer(binding,'No completed saved 10K bundle is available for '+name+'. Requested identity is retained.');
   if(ringModels.includes(name))requireViewer(binding.kind===RING_KIND,'Unsupported saved ring binding.');
+  else requireViewer(!binding.kind||binding.kind===GEOMETRY_DELIVERY_KIND,'Unsupported saved geometry binding.');
   return binding;
 }
 function bundlePath(kind,file,name){return modelBinding(kind,name).base+file;}
@@ -50,7 +57,9 @@ async function savedManifest(kind,name){
   const binding=modelBinding(kind,name),key=binding.base+'|'+binding.sha256;
   if(!manifestCache.has(key))manifestCache.set(key,fetchJSON(binding.base+'manifest.json',binding.sha256)
     .then(m=>{requireViewer(m.status==='complete'&&m.schema_version===1&&(!binding.kind||m.kind===binding.kind),
-      'Unsupported '+kind+' manifest.');return m;})
+      'Unsupported '+kind+' manifest.');
+      if(binding.kind===GEOMETRY_DELIVERY_KIND)requireViewer(m.original_manifest?.sha256===binding.original_manifest_sha256,
+        'Original geometry manifest mismatch.');return m;})
     .catch(e=>{manifestCache.delete(key);throw e;}));
   return manifestCache.get(key);
 }
@@ -69,10 +78,18 @@ async function loadScene(name){
   }
   return {manifest,scene:sceneCache.get(key)};
 }
+function assemblyChunkSource(name,index,manifest){
+  const compressed=modelBinding('assembly',name).kind===GEOMETRY_DELIVERY_KIND;
+  const file=name+'/'+index.file+(compressed?'.gz':''),record=manifest.files[file];
+  requireViewer(record&&typeof record.sha256==='string','Missing saved assembly chunk: '+file);
+  if(!compressed)requireViewer(record.sha256===index.sha256,'Saved chunk/index checksum mismatch.');
+  return {file,sha256:record.sha256,originalSHA256:compressed?index.sha256:undefined};
+}
 async function loadPrimary(name,scene,id){
-  const index=scene.event_index.chunks[Math.floor(id/100)],file=name+'/'+index.file,key=bundleKey('assembly',name)+'/'+index.file;
+  const index=scene.event_index.chunks[Math.floor(id/100)];
+  const source=assemblyChunkSource(name,index,await assemblyManifest(name)),key=bundleKey('assembly',name)+'/'+source.file;
   let chunk=chunkCache.get(key);
-  if(!chunk){chunk=await fetchJSON(bundlePath('assembly',file,name),index.sha256);
+  if(!chunk){chunk=await fetchJSON(bundlePath('assembly',source.file,name),source.sha256,source.originalSHA256);
     requireViewer(chunk.model===name&&chunk.first===index.first&&chunk.events.length===index.count&&
       chunk.events.every((e,i)=>e.event_id===index.first+i),'Chunk event census mismatch.');}
   chunkCache.delete(key);chunkCache.set(key,chunk);while(chunkCache.size>2)chunkCache.delete(chunkCache.keys().next().value);
@@ -90,7 +107,8 @@ async function loadPositive(name,assembly,scene){
     entry.dataset_binding.model_id===name&&entry.dataset_binding.primary_count===10000&&
     typeof entry.dataset_binding_sha256==='string'&&/^[a-f0-9]{64}$/.test(entry.dataset_binding_sha256)&&
     entry.dataset_binding_sha256===assemblyEntry.dataset_binding_sha256:
-    manifest.input_pins.campaign_run===assembly.campaign_run_sha256;
+    manifest.input_pins.campaign_run===(assembly.kind===GEOMETRY_DELIVERY_KIND?
+      modelBinding('assembly',name).campaign_run_sha256:assembly.campaign_run_sha256);
   requireViewer(entry&&assemblyEntry&&bound&&
     entry.source_scene_sha256===assembly.files[assemblyEntry.scene].sha256&&
     manifest.files[entry.scene].sha256===entry.source_scene_sha256,'Positive/assembly campaign or scene mismatch.');

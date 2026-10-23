@@ -21,6 +21,25 @@ def toy(counts,edges=None):
         [{'label':'Counts','color':'#123456','counts':counts,'total':sum(counts),
           'underflow':0,'overflow':0,'exact_zero':0}],[edges[0],edges[-1]])
 
+def legacy_pipeline_fixture(site):
+    """Small synthetic parser fixture; independent of the retired public payload."""
+    data={'settings':{'energy_keV':662},'models':[
+        {'model_id':model,'events':[{'deposited_energy_keV':0,'reconstructed_energy_keV':None,'accepted':False},
+                                   {'deposited_energy_keV':500,'reconstructed_energy_keV':499,'accepted':True}]}
+        for model in ('AK02','SAP22')]}
+    payload=json.dumps(data)
+    page=('<html><body><div style="padding:12px 24px;background:#fff;color:#173047">'
+        '<a href="../index.html">GeSignal home</a><nav aria-label="Primary"></nav></div>'
+        '<section class="dataset-context" aria-label="Saved dataset"></section>'
+        '<a href="../index.html">← Detector library</a><h1>Synthetic legacy pipeline fixture</h1>'
+        '<p>Geant4 deposited-energy truth · Accepted peak-ADC reconstructed energy</p>'
+        '<div class="legend"><span id="truth-legend">Truth</span><span id="rec-legend">Reconstructed</span></div>'
+        '<svg id="histogram"></svg><script id="pipeline-data" type="application/json">'+payload+'</script>'
+        '<script>\n"use strict";\n    const a=bins(truth),b=bins(rec),svg=$("histogram")\n'
+        '    put("truth-legend","fixture");\n</script></body></html>')
+    (site/'examples/data.json').write_text(payload,encoding='utf-8')
+    (site/'examples/pipeline.html').write_text(page,encoding='utf-8')
+
 class RenderTests(unittest.TestCase):
     def test_isolated_narrow_peak_has_two_sides_and_headroom(self):
         counts=[0]*750;counts[662]=1000
@@ -107,7 +126,9 @@ class SavedDisplayTests(unittest.TestCase):
         cls.site=Path(cls.tmp.name)
         for rel in tuple(D.ROUTES)+D.DATA_SOURCES+D.RECEIPTS:
             target=cls.site/rel;target.parent.mkdir(parents=True,exist_ok=True)
-            shutil.copyfile(ROOT/'docs'/rel,target)
+            if rel not in ('examples/pipeline.html','examples/data.json'):
+                shutil.copyfile(ROOT/'docs'/rel,target)
+        legacy_pipeline_fixture(cls.site)
         cls.before={rel:D.sha(cls.site/rel) for rel in tuple(D.ROUTES)+D.DATA_SOURCES+D.RECEIPTS}
         cls.manifest=D.assemble(cls.site)
     @classmethod
@@ -170,6 +191,32 @@ class SavedDisplayTests(unittest.TestCase):
         D.assemble(self.site)
         after={p.name:(p.read_bytes(),p.stat().st_mtime_ns) for p in (self.site/'spectra').iterdir()}
         self.assertEqual(before,after)
+
+    def test_curated_display_never_requires_retired_pipeline_origins(self):
+        with tempfile.TemporaryDirectory(dir=ROOT/'.local',prefix='curated-spectrum-test-') as tmp:
+            site=Path(tmp)
+            for relative in D.source_inventory(self.site,legacy_teaching=False):
+                target=site/relative;target.parent.mkdir(parents=True,exist_ok=True)
+                shutil.copyfile(self.site/relative,target)
+            def teaching_output(path):
+                (path/'spectra/pipeline.html').write_text('<html>Isolated teaching interface fixture</html>')
+                (path/'spectra/teaching-examples.json').write_text('{}')
+            with patch.object(D,'teaching_available',return_value=True),\
+                 patch('teaching_examples.assemble',side_effect=teaching_output),\
+                 patch('teaching_examples.validate'):
+                result=D.assemble(site)
+                self.assertEqual(result['display_revision'],5)
+                for relative in ('examples/pipeline.html','examples/data.json'):
+                    self.assertNotIn(relative,result['origin_files'])
+                    self.assertFalse((site/relative).exists())
+                self.assertEqual(D.validate(site,require_current_generators=True),result)
+                # Reintroducing an obsolete page does not turn it into a source.
+                (site/'examples/pipeline.html').write_bytes(b'retirement stub')
+                self.assertEqual(D.assemble(site),result)
+                histogram=site/'examples/cs137-1m-response/histograms.json'
+                histogram.write_bytes(histogram.read_bytes()+b' ')
+                with self.assertRaisesRegex(ValueError,'Original spectrum source changed'):
+                    D.validate(site)
     def test_saved_bin_accounting(self):
         truth=D.truth_specs(self.site);response=D.response_specs(self.site)
         self.assertEqual(truth[0]['series'][0]['exact_zero'],987580)
@@ -401,7 +448,7 @@ class NavigationCorrectionTests(unittest.TestCase):
         # build. Isolate the receipt trust gate without repeating that scan.
         with patch.object(V,'origins',return_value=vm['original_files']):V.validate(site)
         for module,path,key,error in ((D,spectrum,'generators','Unknown spectrum generator binding'),
-                                      (V,viewer,'adapter_sources','Unknown adapter source')):
+                                      (V,viewer,'adapter_sources','Unknown adapter source|Adapter source inventory mismatch')):
             raw=module.read(path);changed=copy.deepcopy(raw);changed[key]['tools/site_routes.py']='0'*64
             changed_bytes=(json.dumps(changed,indent=2)+'\n').encode();changed_hash=module.hashlib.sha256(changed_bytes).hexdigest()
             read_original,sha_original=module.read,module.sha

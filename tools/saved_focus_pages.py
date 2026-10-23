@@ -31,6 +31,10 @@ DISPLAY_SOURCES=(JS,'tools/saved_focus_pages.py','tools/site_restructure.py','to
 # immutable original receipt above. Rehashed edits are never a historical basis.
 PREVIOUS_DISPLAY_RECEIPTS={
     'gamma':frozenset({
+                       # Exact validated f4422554 navigation-only predecessor.
+                       'dfb949f6cd5f33d058c43a81e846974610ba6f7e8c5dabe0732f7dcb24b2a1bb',
+                       # Exact 18d6b44 installed/Git receipt before results curation.
+                       'fc4559b7b4bb943e681b511ab214d51c26f9e03651260bb3cf850b53c7666b69',
                        # Exact 5dfd5fa public/HEAD receipt before homepage layout.
                        '8ba30d9cb452f0e4661acb90bc1766d7246f2fd4a43c77e1e9b0370915e05bcc',
                        # Exact 376bd39 installed/Git display before archive identities.
@@ -58,6 +62,10 @@ PREVIOUS_DISPLAY_RECEIPTS={
                        # Exact accepted 6db59a35 display before Co60/source download updates.
                        'a271d710183982a50a2ab6117765d9543e8eb7f2847ddf356e8c92298e174b72'}),
     'teaching':frozenset({'a96863b38712c40efd87372accd0276bdbdeada68370c5e6b46a983abf526800',
+                         # Exact validated f4422554 predecessor before public retirement.
+                         '92e554fe166f78603de56df185630e3068729bc9943df1c86d8c1dd6706d6cf9',
+                         # Exact 18d6b44 receipt; its archive labels reconstruct below.
+                         '01ee0d0df212e4bf8f62d09b58969988d40dccfcfdf8f4b0b64de7bd17a60e60',
                          # Exact 5dfd5fa public/HEAD receipt with historical identity.
                          '250f804846bd66593f6f1ade176a06b60bd4303ab43bc34d5c57d37ddb4b88aa'})}
 PRESERVED_TEACHING_HTML={'bytes':9810837,'sha256':'71d898465740d2ad4eb098cc5cc1d27c494f38c0151e634dfc067bf53f147bf7'}
@@ -199,7 +207,10 @@ def validate(directory):
         html=(directory/'pipeline.html').read_bytes()
         if current:
             S.require(html==teaching_archive_render(html),'Historical teaching navigation differs')
-        elif S.sha(S.canonical(manifest))=='250f804846bd66593f6f1ade176a06b60bd4303ab43bc34d5c57d37ddb4b88aa':
+        elif S.sha(S.canonical(manifest)) in {
+                '92e554fe166f78603de56df185630e3068729bc9943df1c86d8c1dd6706d6cf9',
+                '250f804846bd66593f6f1ade176a06b60bd4303ab43bc34d5c57d37ddb4b88aa',
+                '01ee0d0df212e4bf8f62d09b58969988d40dccfcfdf8f4b0b64de7bd17a60e60'}:
             # This exact published predecessor includes the reversible study
             # labels. Recover and verify the complete original accepted HTML.
             teaching_archive_original(html)
