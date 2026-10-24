@@ -101,7 +101,7 @@ def discover(root, *, standalone_names=()):
 class SavedGeGIControl:
     def __init__(self, workflow, *, runner=None, standalone_runner=None):
         self.workflow=workflow;self.root=Path(workflow.root);self.runner=runner;self.standalone_runner=standalone_runner
-        path=safe_path(self.root,STATE);self.jobs={}
+        path=safe_path(self.root,STATE);self.jobs={};self._readers={}
         if path.is_file():
             saved=W.read(path)
             W.require(saved.get('kind')=='gegi_saved_control_v1' and type(saved.get('jobs')) is list,
@@ -175,11 +175,14 @@ class SavedGeGIControl:
                       bound['original_input_sha256']['COMPLETE.json']==job['source_complete_sha256']==
                       W.sha(safe_path(self.root,job['campaign_path']+'/COMPLETE.json')),
                       'Standalone derivative belongs to a different original completion seal.')
-            if 'summary' not in job:
-                payload=self._standalone_results(job)
-                job['summary']=self._standalone_summary(payload['counts'],payload['imaging'],payload['signal_use_counts'])
             job.update(status=complete['status'],derivative_complete_sha256=W.sha(receipt),results_available=True,
                        files=['identity.json','results.json','COMPLETE.json'])
+            if 'summary' not in job:
+                # A completed processor receipt outranks an interrupted handoff.
+                # Recovery reads only bounded headers, never the full aggregate.
+                header=self._reader(job).summary()
+                job['summary']={'status':complete['status'],'counts':header['counts'],
+                                'signal_use_counts':header.get('signal_use_counts',{})}
             job.pop('error',None)
             return
         complete=W.read(receipt);summary=safe_path(directory,'summary.json');identity=safe_path(directory,'identity.json')
@@ -341,3 +344,33 @@ class SavedGeGIControl:
             self._verified_standalone(job)
             payload=self._standalone_results(job)
             return dict(payload,name=job['source_run_name'],saved_derivative_name=job['name'])
+
+    def _reader(self,job):
+        if job['name'] not in self._readers:
+            from gegi_result_reader import Reader
+            source=self._verified_standalone(job)
+            directory=safe_path(self.root,job['output_path'])
+            complete=W.read(safe_path(directory,'COMPLETE.json'))
+            reader=Reader(safe_path(directory,'results.json'),complete['files']['results.json'],
+                name=job['source_run_name'],configuration_sha256=job['configuration_sha256'],derivative=job['name'],
+                seal_paths=[safe_path(directory,ref) for ref in ('COMPLETE.json','identity.json')]+
+                           [safe_path(source,ref) for ref in ('COMPLETE.json','gegi-request.json','response/run.json')])
+            _,_,original=_standalone_metadata(source)
+            W.require(reader.index['header']['counts']==original['counts'] and
+                      reader.index['header']['channels']==original['channels'],
+                      'Standalone derivative original counts or electrode identities changed.')
+            self._readers[job['name']]=reader
+        return self._readers[job['name']]
+
+    def browse(self,name,original_name,part,*,event_id=None,results_sha256=None):
+        with self.workflow._lock:
+            job=self._job(name)
+            W.require(job.get('input_kind')=='standalone' and job.get('source_run_name')==original_name,
+                      'Choose a standalone derivative belonging to this original GeGI run.')
+            self._refresh_completion(job)
+            W.require(job['status']=='completed_conditional_reconstruction','Open a completed standalone GeGI derivative.')
+            reader=self._reader(job)
+            if part=='summary':return reader.summary(results_sha256)
+            if part=='event':return reader.event(event_id,results_sha256)
+            W.require(part=='imaging','Unknown standalone GeGI result view.')
+            return reader.imaging(results_sha256)

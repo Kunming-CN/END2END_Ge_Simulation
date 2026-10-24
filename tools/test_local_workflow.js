@@ -1122,7 +1122,18 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.throws(()=>run("importedConfig({...gegiSubmitted,source:'co60_point_decay_v1'})"),/imported GeGI setup/);
   run(`const gegiJob={name:'gegi-dom',workflow_kind:'local_gegi_workflow_v1',status:'completed',configuration_sha256:'e'.repeat(64),selection:gegiSubmitted,stages:{}};
     const gegiSaved={kind:'gegi_multichannel_results_v1',name:'gegi-dom',configuration_sha256:'e'.repeat(64),counts:{initial_primaries:100,zero_deposit_primaries:99,nonzero_primaries:1,native_failed_groups:0},channels:Array.from({length:34},(_,i)=>({id:i+1,name:'strip '+(i+1),family:i<17?'X':'Y',potential_V:i<17?-879:0,wiring_factor:i<17?1:-1})),events:[{event_id:37,truth_edep_keV:20,status:'native_completed',channels:[{contact_id:1,reconstructed_energy_keV:19.5,trace:{time_ns:[0,2],charge_fC:[0,-.01],current_nA:[0,-5],preamp_V:[0,-.001],shaped_V:[0,.001]}},{contact_id:2,reconstructed_energy_keV:null,trace:null,rejection_reason:'native failure'}],sites:[]}],imaging:{method:'Signal-derived backprojection',azimuth_deg:[-180,0,180],elevation_deg:[-90,90],values:[[0,1,0],[0,0,0]],cones:[{event_id:37,opening_angle_deg:45}],accepted_events:1,rejected_events:0,ambiguous_events:0,limitations:['Sparse acceptance data.']},limitations:['Engineering model.']};
-    api=async(path)=>{if(path.startsWith('/api/workflow/gegi-results?'))return gegiSaved;throw Error('Unexpected GeGI request '+path);};`);
+    gegiSaved.events[0].channels=gegiSaved.channels.map(meta=>gegiSaved.events[0].channels.find(c=>c.contact_id===meta.id)||{contact_id:meta.id,reconstructed_energy_keV:null,trace:null});
+    const gegiRequests=[];
+    function gegiFixtureReply(data,path){
+      gegiRequests.push(path);const q=new URLSearchParams(path.split('?')[1]);
+      const binding={name:data.name,configuration_sha256:data.configuration_sha256,saved_derivative_name:data.saved_derivative_name??null,results_sha256:data.saved_derivative_name?'d'.repeat(64):'a'.repeat(64)};
+      if(path.startsWith('/api/workflow/gegi-summary?'))return{kind:'gegi_multichannel_summary_v1',...binding,counts:data.counts,channels:data.channels,limitations:data.limitations,reconstruction_algorithm:data.reconstruction_algorithm,event_index:data.events.map(e=>({event_id:e.event_id,status:e.status,truth_edep_keV:e.truth_edep_keV})),imaging_available:!!data.imaging};
+      if(q.get('results_sha256')!==binding.results_sha256)throw Error('Fixture expected the opened result hash.');
+      if(path.startsWith('/api/workflow/gegi-event?'))return{kind:'gegi_multichannel_event_v1',...binding,event_id:Number(q.get('event')),event:data.events.find(e=>e.event_id===Number(q.get('event')))};
+      if(path.startsWith('/api/workflow/gegi-imaging?'))return{kind:'gegi_multichannel_imaging_v1',...binding,imaging:data.imaging};
+      throw Error('Unexpected GeGI request '+path);
+    }
+    api=async path=>gegiFixtureReply(gegiSaved,path);`);
   await run('openResult(gegiJob)');
   assert.equal(get('result').hidden,true);assert.equal(get('gegi-result').hidden,false);
   assert.deepEqual(get('gegi-event').children.map(n=>n.value),['37']);assert.equal(get('gegi-channel').children.length,34);
@@ -1130,9 +1141,15 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(get('gegi-event-summary').textContent,/19.5 keV.*X and Y energies are not added/);
   assert.match(get('gegi-event-filter').textContent,/evtid = 37.*event_id = 37.*contact_id = 1/);
   assert.match(get('gegi-truth-record').textContent,/evaluation only.*not used to select/);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(gegiRequests.map(p=>p.split("?")[0]))')),['/api/workflow/gegi-summary','/api/workflow/gegi-event']);
+  assert.equal(run('Object.hasOwn(gegiResult.data,"events")'),false);assert.equal(run('Object.hasOwn(gegiResult.data,"imaging")'),false);
+  assert.equal(run('gegiResult.event.channels.length'),34);assert.equal(run('gegiResult.imaging'),null);
+  const sameEventRequests=run('gegiRequests.length');
   get('gegi-channel').value='2';run('showGeGIEvent();');
   assert.equal(get('gegi-plots').children.length,1);assert.match(get('gegi-plots').children[0].textContent,/Failed quantities remain unknown/);
-  get('gegi-imaging-panel').open=true;run('showGeGIImaging();');assert.equal(get('gegi-imaging').children[0].children.filter(n=>n.tagName==='rect').length,6);
+  assert.equal(run('gegiRequests.length'),sameEventRequests);
+  get('gegi-imaging-panel').open=true;await run('showGeGIImaging();');assert.equal(get('gegi-imaging').children[0].children.filter(n=>n.tagName==='rect').length,6);
+  assert.equal(run('gegiRequests.filter(p=>p.startsWith("/api/workflow/gegi-imaging?")).length'),1);
   assert.match(get('gegi-cones').textContent,/opening_angle_deg/);
   // Shared journey receives signal records only. Truth deposits/known source
   // coordinates stay outside its candidate-selection interface.
@@ -1162,14 +1179,14 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   const selectedNativeFiles=descendants(get('gegi-event-files')).filter(n=>n.tagName==='button').map(n=>n.textContent);
   assert.deepEqual(selectedNativeFiles,['Download response/events/37.json','Download response/events/37-signals.csv']);
   assert.ok(descendants(get('gegi-event-files')).some(n=>n.textContent.includes('8'.repeat(64))));
-  assert.throws(()=>run("gegiIdentity({...gegiSaved,configuration_sha256:'f'.repeat(64)},gegiJob)"),/identities differ/);
-  assert.throws(()=>run("gegiIdentity({...gegiSaved,events:[{event_id:0,truth_edep_keV:0,channels:[]}]},gegiJob)"),/nonzero event census/);
+  assert.throws(()=>run("gegiIdentity(gegiFixtureReply({...gegiSaved,configuration_sha256:'f'.repeat(64)},'/api/workflow/gegi-summary?name=gegi-dom'),gegiJob)"),/identities differ/);
+  assert.throws(()=>run("gegiIdentity(gegiFixtureReply({...gegiSaved,events:[{event_id:0,truth_edep_keV:0,channels:[]}]},'/api/workflow/gegi-summary?name=gegi-dom'),gegiJob)"),/nonzero event census/);
   run("gegiSaved.events.push({event_id:49,truth_edep_keV:7,status:'native_failed',channels:null});gegiSaved.counts.nonzero_primaries=2;gegiSaved.counts.zero_deposit_primaries=98;gegiSaved.counts.native_failed_groups=1;");
-  await run('openResult(gegiJob)');get('gegi-event').value='49';run('showGeGIEvent();');
+  await run('openResult(gegiJob)');get('gegi-event').value='49';await run('loadGeGIEvent();');
   assert.match(get('gegi-event-summary').textContent,/primary 49.*native_failed.*Unavailable/);
   assert.match(get('gegi-plots').children[0].textContent,/Failed quantities remain unknown/);
   assert.match(get('gegi-event-record').textContent,/"channel": null/);
-  assert.throws(()=>run("gegiIdentity({...gegiSaved,events:[{event_id:49,truth_edep_keV:7,status:'native_completed',channels:null}]},gegiJob)"),/nonzero event census/);
+  assert.throws(()=>run("gegiEventIdentity(gegiFixtureReply({...gegiSaved,events:[{event_id:49,truth_edep_keV:7,status:'native_completed',channels:null}]},'/api/workflow/gegi-event?name=gegi-dom&event=49&results_sha256='+('a'.repeat(64))),gegiResult,49)"),/nonzero event census/);
   // Exercise the actual reusable component through the student adapter as well
   // as the isolated mount contract above. The fixture is display data only.
   vm.runInContext(fs.readFileSync(__dirname+'/gegi_signal_journey.js','utf8'),context);
@@ -1178,8 +1195,8 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
     componentEvent.channels=componentFixture.channels.map(meta=>componentEvent.channels.find(c=>c.contact_id===meta.id)||{contact_id:meta.id,accepted:false,reconstructed_energy_keV:null,trace:null});
     const componentSites=[{position_mm:[0,0,0],energy_keV:100,x_contact:1,y_contact:18,ctd_ns:0,method:'independent_test_calibration'},{position_mm:[0,0,10],energy_keV:562,x_contact:2,y_contact:19,ctd_ns:10,method:'independent_test_calibration'}];
     componentEvent.reconstruction={event_id:37,status:'accepted',sites:componentSites,paired_site_hypotheses:[{pairing_index:0,sites:componentSites,valid_order_count:1}],cones:[{event_id:37,vertex_mm:[0,0,0],axis:[0,0,-1],half_angle_deg:Math.acos(1-510.99895069*(1/562-1/662))*180/Math.PI,scatter_energy_keV:100,absorbed_energy_keV:562,site_separation_mm:10,weight:1,order:[0,1],pairing_index:0}]};
-    api=async()=>componentFixture;`);
-  await run('openResult(gegiJob)');get('gegi-event').value='37';get('gegi-channel').value='1';run('showGeGIEvent();');
+    api=async path=>gegiFixtureReply(componentFixture,path);`);
+  await run('openResult(gegiJob)');get('gegi-event').value='37';get('gegi-channel').value='1';await run('loadGeGIEvent();');
   const journeyNodes=()=>descendants(get('gegi-journey'));
   assert.ok(journeyNodes().some(n=>n.tagName==='select'&&n.children.length===34));
   assert.equal(journeyNodes().filter(n=>n.tagName==='polyline').length,4);
@@ -1189,7 +1206,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.ok(journeyNodes().filter(n=>n.tagName==='input'&&n.type==='range').length>=3);
   journeyStep(4).click();assert.ok(journeyNodes().some(n=>n.tagName==='svg'&&n['aria-label']==='Illustrative direction density'));
   assert.ok(journeyNodes().some(n=>n.textContent.includes('separate saved-run direction map')));
-  get('gegi-event').value='49';run('showGeGIEvent();');journeyStep(4).click();
+  get('gegi-event').value='49';await run('loadGeGIEvent();');journeyStep(4).click();
   assert.equal(journeyNodes().filter(n=>n.tagName==='svg').length,0);
   assert.ok(journeyNodes().some(n=>n.textContent.includes('No event map is fabricated')));
   run("showRun({...changedGammaJob,name:'returned-lbnl'});");assert.equal(get('gegi-result').hidden,true);
@@ -1199,8 +1216,8 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
     standaloneV3Fixture.reconstruction_algorithm={kind:'gegi_standalone_saved_reconstruction_v3'};
     for(const event of standaloneV3Fixture.events)event.reconstruction={kind:'gegi_saved_signal_hypotheses_v3',status:'unidentifiable',reason:'independent_waveform_templates_unavailable',hypotheses:[],candidates:[],cones:[],paired_site_hypotheses:[]};
     standaloneV3Fixture.imaging={method:'gegi_standalone_saved_reconstruction_v3',status:'unsupported_independent_waveform_templates',accepted_events:0,rejected_events:2,ambiguous_events:0,conditional_candidate_groups:0,validated_recovered_groups:0,cones:[],azimuth_deg:[],elevation_deg:[],values:null,limitations:[]};
-    api=async()=>standaloneV3Fixture;`);
-  await run('openResult(gegiJob)');get('gegi-imaging-panel').open=true;run('showGeGIImaging();');
+    api=async path=>gegiFixtureReply(standaloneV3Fixture,path);`);
+  await run('openResult(gegiJob)');get('gegi-imaging-panel').open=true;await run('showGeGIImaging();');
   assert.match(get('gegi-limitations').textContent,/Shared signed-waveform.*require compatible independent/);
   assert.match(get('gegi-event-summary').textContent,/Reconstruction: independent waveform templates unavailable/);
   assert.match(get('gegi-imaging-status').textContent,/0 groups with conditional imaging candidates.*0 validated recovered groups.*Pulse energy remains available/);
@@ -1208,7 +1225,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.ok(get('gegi-imaging').children.some(n=>n.textContent.includes('No source map is created')));
   run(`standaloneV3Fixture.events[0].reconstruction.signal_use={spectroscopy:{accepted:true,energy_keV:150},conditional_candidate_count:0,guard:{collecting_ids:[17]},adjacent_strip_pairs:[[4,5]]};$('gegi-event').value=String(standaloneV3Fixture.events[0].event_id);showGeGIEvent();`);
   assert.match(get('gegi-event-summary').textContent,/Pulse-group energy: 150 keV.*including collecting guards.*no supported candidate.*Guard collection.*Adjacent strips are retained separately/);
-  run(`standaloneV3Fixture.events[1].reconstruction.signal_use={spectroscopy:{accepted:false,energy_keV:null,reason:'native_response_incomplete'},conditional_candidate_count:0,guard:{collecting_ids:[]},adjacent_strip_pairs:[]};$('gegi-event').value=String(standaloneV3Fixture.events[1].event_id);showGeGIEvent();`);
+  run(`standaloneV3Fixture.events[1].reconstruction.signal_use={spectroscopy:{accepted:false,energy_keV:null,reason:'native_response_incomplete'},conditional_candidate_count:0,guard:{collecting_ids:[]},adjacent_strip_pairs:[]};$('gegi-event').value=String(standaloneV3Fixture.events[1].event_id);`);await run('loadGeGIEvent();');
   assert.match(get('gegi-event-summary').textContent,/Pulse-group energy: unavailable.*native response incomplete/);
   assert.doesNotMatch(get('gegi-event-summary').textContent,/Pulse-group energy: 0/);
   console.log('New standalone shared-waveform unsupported-calibration status preserves signals and presents no fabricated depth or source image.');
@@ -1244,7 +1261,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
     standaloneDerived.events[0].reconstruction.reason='saved_derivative_fixture';
     const unchangedStandalone=JSON.stringify(standaloneV3Fixture),standaloneDownloads=[];
     savedStoreState={name:'standalone-derived',campaign_id:standaloneInput.id,calibration_id:'b'.repeat(64),input_kind:'standalone',source_run_name:gegiJob.name,resume_supported:false,stop_supported:false,capability_note:'Standalone postprocess has no checkpoint or stop boundary.',status:'running',output_path:'.local/gegi-saved-reconstruction/standalone-derived',files:['identity.json']};
-    api=async(path,data)=>{savedStoreCalls.push({path,data});if(path==='/api/workflow/gegi-saved/options')return savedStoreInventory;if(path==='/api/workflow/state')return{busy:savedStoreState.status==='running',jobs:[gegiJob]};if(path==='/api/state')return{jobs:[]};if(path.startsWith('/api/workflow/gegi-saved/state?'))return savedStoreState;if(path==='/api/workflow/gegi-saved/reprocess')return savedStoreState;if(path.startsWith('/api/workflow/gegi-saved/results?'))return standaloneDerived;if(path.startsWith('/api/workflow/gegi-saved/file?'))return{kind:'fixture_identity',new_radiation_calls:0};throw Error('Unexpected standalone route '+path);};
+    api=async(path,data)=>{savedStoreCalls.push({path,data});if(path==='/api/workflow/gegi-saved/options')return savedStoreInventory;if(path==='/api/workflow/state')return{busy:savedStoreState.status==='running',jobs:[gegiJob]};if(path==='/api/state')return{jobs:[]};if(path.startsWith('/api/workflow/gegi-saved/state?'))return savedStoreState;if(path==='/api/workflow/gegi-saved/reprocess')return savedStoreState;if(['summary','event','imaging'].some(kind=>path.startsWith('/api/workflow/gegi-'+kind+'?')))return gegiFixtureReply(standaloneDerived,path);if(path.startsWith('/api/workflow/gegi-saved/file?'))return{kind:'fixture_identity',new_radiation_calls:0};throw Error('Unexpected standalone route '+path);};
     download=async(name,file)=>standaloneDownloads.push({name,file});`);
   await run('refreshSavedGeGI()');
   assert.equal(get('gegi-saved-campaign').children.length,2);
@@ -1266,7 +1283,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.equal(run('gegiResult.job.name'),'gegi-dom');assert.equal(run('gegiResult.data.saved_derivative_name'),'standalone-derived');
   assert.match(get('gegi-result-heading').textContent,/gegi-dom.*reconstruction standalone-derived/);
   assert.equal(get('gegi-result').hidden,false);assert.equal(get('result').hidden,true);
-  get('gegi-event').value='37';get('gegi-channel').value='1';run('showGeGIEvent();');
+  get('gegi-event').value='37';get('gegi-channel').value='1';await run('loadGeGIEvent();');
   assert.match(get('gegi-event-record').textContent,/saved_derivative_fixture/);
   assert.match(get('gegi-event-filter').textContent,/gegi-dom.*reconstruction derivative standalone-derived.*original primary 37/);
   assert.match(get('gegi-limitations').textContent,/Conditional candidates are not validated recovered events/);
@@ -1274,22 +1291,80 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.ok(originalSignal);await originalSignal.click();
   assert.deepEqual(JSON.parse(run('JSON.stringify(standaloneDownloads.at(-1))')),{name:'gegi-dom',file:'response/events/37-signals.csv'});
   assert.equal(run('JSON.stringify(standaloneV3Fixture)'),run('unchangedStandalone'));
-  run(`api=async path=>path==='/api/workflow/state'?{jobs:[gegiJob]}:{...standaloneDerived,saved_derivative_name:'different'};`);
+  run(`api=async path=>path==='/api/workflow/state'?{jobs:[gegiJob]}:gegiFixtureReply({...standaloneDerived,saved_derivative_name:'different'},path);`);
   await run('openSavedGeGIResult(savedGeGIJob)');assert.match(get('gegi-saved-status').textContent,/derivative identities differ/);
-  assert.equal(run('gegiResult.data.saved_derivative_name'),'standalone-derived');
+  assert.equal(run('gegiResult'),null);
   for(const fail of [false,true]){
-    run(`var finishLateDerivative;api=path=>path==='/api/workflow/state'?Promise.resolve({jobs:[gegiJob]}):new Promise((resolve,reject)=>finishLateDerivative=${fail?'reject':'resolve'});
+    run(`var finishLateDerivative;api=path=>path==='/api/workflow/state'?Promise.resolve({jobs:[gegiJob]}):path.startsWith('/api/workflow/gegi-summary?')&&path.includes('derivative=')?new Promise((resolve,reject)=>finishLateDerivative=${fail?'reject':'resolve'}):Promise.resolve(gegiFixtureReply(standaloneV3Fixture,path));
       var lateDerivativeOpen=openSavedGeGIResult(savedGeGIJob);`);
-    await run('openGeGIResult(gegiJob,standaloneV3Fixture)');get('gegi-saved-status').textContent='Original run selected';
-    run(fail?"finishLateDerivative(Error('Late derived failure'));":"finishLateDerivative(standaloneDerived);");
+    await run('openGeGIResult(gegiJob)');get('gegi-saved-status').textContent='Original run selected';
+    run(fail?"finishLateDerivative(Error('Late derived failure'));":"finishLateDerivative(gegiFixtureReply(standaloneDerived,'/api/workflow/gegi-summary?name=gegi-dom&derivative=standalone-derived'));");
     await run('lateDerivativeOpen');
-    assert.equal(run('gegiResult.data.saved_derivative_name'),undefined);
+    assert.equal(run('gegiResult.data.saved_derivative_name'),null);
     assert.equal(get('gegi-saved-status').textContent,'Original run selected');
   }
   run(`let rejectStaleDerivative;api=path=>path==='/api/workflow/state'?Promise.resolve({jobs:[gegiJob]}):new Promise((resolve,reject)=>rejectStaleDerivative=reject);
     const staleDerivativeOpen=openSavedGeGIResult(savedGeGIJob);savedGeGIJob={name:'current-other'};$('gegi-saved-status').textContent='Current derivative';rejectStaleDerivative(Error('Obsolete derivative failure'));`);
   await run('staleDerivativeOpen');assert.equal(get('gegi-saved-status').textContent,'Current derivative');
   console.log('Standalone saved GeGI inputs, optional templates, unsupported Stop/Resume, bound derived viewer and original-run signal downloads passed; no science routes.');
+  // The compact route contains the complete light census, never other events'
+  // waveforms. Only the selected aggregate event is kept, without modification.
+  run(`var demandApi=async path=>gegiFixtureReply(new URLSearchParams(path.split('?')[1]).has('derivative')?standaloneDerived:standaloneV3Fixture,path);api=demandApi;gegiRequests.length=0;`);
+  await run('openGeGIResult(gegiJob)');
+  assert.deepEqual(JSON.parse(run('JSON.stringify(gegiRequests.map(p=>p.split("?")[0]))')),['/api/workflow/gegi-summary','/api/workflow/gegi-event']);
+  assert.deepEqual(get('gegi-event').children.map(n=>n.value),['37','49']);
+  get('gegi-event').value='37';await get('gegi-event').onchange();
+  assert.equal(run('JSON.stringify(gegiResult.event)'),run('JSON.stringify(standaloneV3Fixture.events[0])'));
+  const demandChannelCount=run('gegiRequests.length');get('gegi-channel').value='2';get('gegi-channel').onchange();
+  assert.equal(run('gegiRequests.length'),demandChannelCount);
+  for(const fail of [false,true]){
+    run(`var finishDemandEvent;api=path=>path.includes('event=49')?new Promise((resolve,reject)=>finishDemandEvent=${fail?'reject':'resolve'}):demandApi(path);$('gegi-event').value='49';var obsoleteEvent=loadGeGIEvent();`);
+    assert.equal(run('gegiResult.event'),null);assert.equal(get('gegi-journey').children.length,0);
+    assert.equal(get('gegi-event-record').textContent,'');assert.equal(get('gegi-event-files').children.length,0);
+    assert.match(get('gegi-event-summary').textContent,/Loading saved primary 49/);
+    get('gegi-event').value='37';await get('gegi-event').onchange();
+    const currentEventText=get('gegi-event-summary').textContent;
+    run(fail?"finishDemandEvent(Error('Obsolete event error'));":"finishDemandEvent(gegiFixtureReply(standaloneV3Fixture,'/api/workflow/gegi-event?name=gegi-dom&event=49&results_sha256='+('a'.repeat(64))));");
+    await run('obsoleteEvent');assert.equal(run('gegiResult.event.event_id'),37);
+    assert.equal(get('gegi-event-summary').textContent,currentEventText);
+  }
+  // A new derivative is a different sealed context even for the same raw run.
+  run(`var finishOldRunEvent;api=path=>path.includes('event=49')&&!path.includes('derivative=')?new Promise(resolve=>finishOldRunEvent=resolve):demandApi(path);$('gegi-event').value='49';var oldRunContext=gegiResult;var oldRunEvent=loadGeGIEvent();`);
+  await run("openGeGIResult(gegiJob,null,'standalone-derived')");
+  assert.equal(run('oldRunContext.event'),null);assert.equal(run('oldRunContext.imaging'),null);
+  run("finishOldRunEvent(gegiFixtureReply(standaloneV3Fixture,'/api/workflow/gegi-event?name=gegi-dom&event=49&results_sha256='+('a'.repeat(64))));");await run('oldRunEvent');
+  assert.equal(run('gegiResult.data.saved_derivative_name'),'standalone-derived');
+  assert.equal(run('gegiResult.data.results_sha256'),'d'.repeat(64));
+  assert.ok(run("gegiRequests.filter(p=>p.includes('derivative=standalone-derived')&&p.startsWith('/api/workflow/gegi-event?')).every(p=>p.includes('results_sha256='+('d'.repeat(64))))"));
+  for(const [key,value]of [['name','other-run'],['configuration_sha256','f'.repeat(64)],['saved_derivative_name','other-derived'],['results_sha256','f'.repeat(64)]]){
+    assert.throws(()=>run(`gegiPartIdentity({...gegiFixtureReply(standaloneDerived,'/api/workflow/gegi-event?name=gegi-dom&derivative=standalone-derived&event=37&results_sha256='+('d'.repeat(64))),${key}:${JSON.stringify(value)}},gegiResult,'gegi_multichannel_event_v1')`),/differs from the opened run/);
+  }
+  assert.throws(()=>run("gegiEventIdentity({...gegiFixtureReply(standaloneDerived,'/api/workflow/gegi-event?name=gegi-dom&derivative=standalone-derived&event=37&results_sha256='+('d'.repeat(64))),event_id:49},gegiResult,37)"),/census or channel identities/);
+  run(`api=async path=>({...await demandApi(path),results_sha256:'f'.repeat(64)});$('gegi-event').value='37';`);await get('gegi-event').onchange();
+  assert.equal(run('gegiResult.event'),null);assert.match(get('gegi-event-summary').textContent,/Cannot load saved primary 37.*Reopen the results.*retry/);
+  run('api=demandApi');await get('gegi-event').onchange();
+  for(const switchRun of [false,true]){
+    run(`var finishDemandImage;api=path=>path.startsWith('/api/workflow/gegi-imaging?')?new Promise(resolve=>finishDemandImage=resolve):demandApi(path);$('gegi-imaging-panel').open=true;var obsoleteImage=showGeGIImaging();`);
+    assert.equal(run('gegiResult.imaging'),null);assert.match(get('gegi-imaging-status').textContent,/Loading saved run imaging/);
+    if(switchRun)await run('openGeGIResult(gegiJob)');else{get('gegi-imaging-panel').open=false;await get('gegi-imaging-panel').ontoggle();}
+    const currentImageText=get('gegi-imaging-status').textContent;
+    run("finishDemandImage(gegiFixtureReply(standaloneDerived,'/api/workflow/gegi-imaging?name=gegi-dom&derivative=standalone-derived&results_sha256='+('d'.repeat(64))));");await run('obsoleteImage');
+    assert.equal(run('gegiResult.imaging'),null);assert.equal(get('gegi-imaging-status').textContent,currentImageText);
+  }
+  run(`api=async path=>({...await demandApi(path),results_sha256:'f'.repeat(64)});$('gegi-imaging-panel').open=true;`);await get('gegi-imaging-panel').ontoggle();
+  assert.equal(run('gegiResult.imaging'),null);assert.match(get('gegi-imaging-status').textContent,/Cannot load saved run imaging.*Close and reopen/);
+  run('api=demandApi');await get('gegi-imaging-panel').ontoggle();
+  assert.equal(run('JSON.stringify(gegiResult.imaging)'),run('JSON.stringify(standaloneV3Fixture.imaging)'));
+  const cachedImageRequests=run('gegiRequests.length');get('gegi-imaging-panel').open=false;await get('gegi-imaging-panel').ontoggle();get('gegi-imaging-panel').open=true;await get('gegi-imaging-panel').ontoggle();
+  assert.equal(run('gegiRequests.length'),cachedImageRequests);
+  run(`var zeroGeGI={...standaloneV3Fixture,counts:{initial_primaries:100,zero_deposit_primaries:100,nonzero_primaries:0,native_failed_groups:0},events:[],imaging:null};api=async path=>gegiFixtureReply(zeroGeGI,path);gegiRequests.length=0;`);
+  await run('openGeGIResult(gegiJob)');assert.equal(run('gegiRequests.length'),1);assert.equal(run('gegiResult.event'),null);
+  assert.match(get('gegi-counts').textContent,/100 initial.*100 zero-deposit.*0 stored nonzero/);assert.match(get('gegi-event-summary').textContent,/No nonzero deposits/);
+  get('gegi-imaging-panel').open=true;await get('gegi-imaging-panel').ontoggle();assert.equal(run('gegiRequests.length'),1);
+  assert.match(get('gegi-imaging-status').textContent,/No saved run imaging/);
+  assert.throws(()=>run('gegiIdentity(standaloneV3Fixture,gegiJob)'),/summary and selected run identities/);
+  assert.throws(()=>run("gegiIdentity({...gegiFixtureReply(standaloneV3Fixture,'/api/workflow/gegi-summary?name=gegi-dom'),events:standaloneV3Fixture.events},gegiJob)"),/summary and selected run identities/);
+  console.log('GeGI demand loading: summary + one exact event, no channel refetch, lazy cached imaging, sealed identities, immediate clearing, late event/run/derivative/image guards and all-zero census passed; no bulk fallback.');
   run(`let staleSavedFail;api=()=>new Promise((resolve,reject)=>staleSavedFail=reject);savedGeGIJob={name:'obsolete'};const staleSavedPoll=pollSavedGeGI();savedGeGIJob={name:'current'};++savedGeGIGeneration;$('gegi-saved-status').textContent='Current selection';staleSavedFail(Error('Obsolete failure'));`);
   await run('staleSavedPoll');assert.equal(get('gegi-saved-status').textContent,'Current selection');
   console.log('Saved GeGI sealed-store/optional-bank requests, exact resume identity, bounded counters, protected summaries, Stop and stale-selection guards passed; no science routes.');

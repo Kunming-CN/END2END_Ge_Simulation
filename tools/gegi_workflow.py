@@ -234,6 +234,19 @@ def result_view(name, root=W.ROOT):
     return value
 
 
+def result_reader(name, root=W.ROOT):
+    """Verify the original run once, then index exact bounded result ranges."""
+    from gegi_result_reader import Reader
+    receipt=inspect(name,root)
+    W.require(receipt['status'] in W.TERMINAL,'GeGI results are available after the run completes.')
+    directory=W.run_path(name,root);complete=W.read(W.safe_path(directory,'COMPLETE.json'))
+    return Reader(W.safe_path(directory,'response/results.json'),
+        complete['artifacts']['response/results.json']['sha256'],name=name,
+        configuration_sha256=receipt['configuration_sha256'],
+        seal_paths=[W.safe_path(directory,ref) for ref in
+                    ('COMPLETE.json','run.json','resolved-config.json','gegi-request.json','response/run.json')])
+
+
 def request_stop(name, root=W.ROOT):
     directory = W.run_path(name, root)
     r = W.read(directory/'run.json')

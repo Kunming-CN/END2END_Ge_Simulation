@@ -7,6 +7,18 @@ deliverable at a time. No extra reviewers, new physics campaigns, reset use or
 repeated completed diagnostics. Monitoring stays PAUSED. The all434/837 GeGI
 publication and nominal8-case readout bridge below are delivered evidence.
 
+Delivered bounded-memory browsing in the existing GeGI Control viewer: summary
+and complete event index first, one exact selected event, whole-run imaging on
+expansion of its existing panel. Original runs and reconstruction derivatives
+read sealed aggregate byte ranges; native checkpoints alone lack the later
+reconstruction. Raw files, all events/precision/counts and download links remain.
+19 unique backend tests, frontend contracts, 5 package tests, all 42 actual saved
+events and a real-data browser workflow passed. Initial browser result payload
+was 2,600,336 bytes from the 107,972,753-byte aggregate; channel switching made no
+request. See `.local/gegi-demand-loading/receipt.json` for measured scope and
+student release status. Further work follows actual use feedback; do not add
+pages, run physics or reopen deferred experimental work merely to extend the plan.
+
 Owner approval on2026-10-23: implement P1/P2/P3 public removal, compress the old
 10K geometry data without reducing display quality, and omit unneeded raw
 downloads while retaining plots/statistics. Keep two representative MP4 clips
@@ -31,8 +43,9 @@ and create one separate derivative. Keep campaign stop/resume unchanged; do not
 advertise standalone checkpointing that the current processor does not support.
 Accepted with adapter/HTTP/UI/package tests, an isolated synthetic browser flow,
 the real 100-primary all-zero run and complete real 34-channel event 45; originals unchanged.
-Student release status is in `.local/student-runtime-p1/COMPLETE.json`. The full
-42-event aggregate was not loaded under current memory pressure. No new page,
+Student release status is in `.local/student-runtime-p1/COMPLETE.json`. This earlier
+milestone did not load the 42-event aggregate; the delivery above now verifies it
+through bounded reads. No new page,
 inverse-model change, physics run, experiment parser or additional AI review.
 
 1. **Curate the public presentation.** Put the current GeGI result first, retain

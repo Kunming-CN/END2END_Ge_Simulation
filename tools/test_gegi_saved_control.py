@@ -157,6 +157,17 @@ class Adapter(unittest.TestCase):
             self.assertIsNone(result['imaging']['values']);self.assertEqual(result['imaging']['validated_recovered_groups'],0)
             raw=json.loads(self.control.artifact(job['name'],'results.json'))
             self.assertEqual(raw['events'],result['events'])
+            summary=self.control.browse(job['name'],run.name,'summary')
+            self.assertNotIn('events',summary);self.assertEqual([e['event_id'] for e in summary['event_index']],[17,49])
+            self.assertEqual(summary['saved_derivative_name'],job['name'])
+            with patch.object(self.control,'_standalone_results',side_effect=AssertionError('No bulk JSON load')):
+                selected=self.control.browse(job['name'],run.name,'event',event_id=17,results_sha256=summary['results_sha256'])
+                self.assertEqual(selected['event'],result['events'][0])
+                failed=self.control.browse(job['name'],run.name,'event',event_id=49,results_sha256=summary['results_sha256'])
+                self.assertIsNone(failed['event']['channels'])
+                imaging=self.control.browse(job['name'],run.name,'imaging',results_sha256=summary['results_sha256'])
+                self.assertEqual(imaging['imaging'],result['imaging'])
+            with self.assertRaises(W.ControlError):self.control.browse(job['name'],'wrong-original','summary')
             self.assertEqual(verified.call_args.args,(run.name,self.root))
             for action in (lambda:self.control.stop(job['name']),
                            lambda:self.control.start(choice['id'],'',job['name'],resume=True)):

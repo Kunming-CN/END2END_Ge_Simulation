@@ -11,6 +11,16 @@ opens it in the existing GeGI event viewer. Original signal/download links stay
 bound to the original run. Standalone processing has no stop/resume checkpoint;
 campaign processing retains its chunk-boundary stop/resume behavior. No original
 run is adopted or changed by this adapter, and no new physics is launched.
+
+GeGI browsing uses `gegi_result_reader.py` to index the sealed aggregate in bounded
+memory. The summary provides counts and the full event index; event requests read
+one exact event, and the existing imaging panel loads its saved image separately.
+The in-memory byte ranges are bound to the original result hash and small seals.
+Both original runs and saved reconstruction derivatives use this reader; native
+event checkpoints alone do not include the aggregate's later reconstruction.
+Keep raw downloads and all scientific bytes unchanged. The existing bulk result
+route is retained for compatibility but is not used by the current viewer.
+
 The beginner instructions have one authority: `tools/site_guide.html`, published
 as `guide.html`. Keep README short and link to that guide rather than adding
 another complete installation recipe.

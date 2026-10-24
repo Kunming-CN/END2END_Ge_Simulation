@@ -4,7 +4,7 @@ const token=location.hash.slice(1)||sessionStorage.getItem('ge-control-token')||
 if(token)sessionStorage.setItem('ge-control-token',token);history.replaceState(null,'',location.pathname);
 let catalog=null,checked=null,noticeIsCheckedPlan=false,busy=false,active=false,selectedJob=null,selectedRun=null,result=null,selectionVersion=0,resultGeneration=0,plotGeneration=0;
 let modelPreviewGeneration=0,modelPreviewUrl=null,importGeneration=0,pageGeneration=0,pollGeneration=0,featureGeneration=0,acquisitionGeneration=0,resultOptionsGeneration=0,spectrumGeneration=0;
-let gegiResult=null,gegiGeneration=0,gegiJourney=null;
+let gegiResult=null,gegiGeneration=0,gegiJourney=null,gegiEventGeneration=0,gegiImagingGeneration=0;
 let savedGeGIOptions=null,savedGeGIJob=null,savedGeGIBusy=false,savedGeGIGeneration=0;
 const continuationNames=new Map();
 const pendingActions=new Map();
@@ -155,14 +155,14 @@ function showSavedGeGI(job){
   savedGeGIControls();
 }
 async function openSavedGeGIResult(job){
-  let generation=++gegiGeneration;
+  resetGeGIResult();let generation=gegiGeneration;
   try{
-    const [state,data]=await Promise.all([api('/api/workflow/state'),api('/api/workflow/gegi-saved/results?'+new URLSearchParams({name:job.name}))]);
+    const [state,data]=await Promise.all([api('/api/workflow/state'),api('/api/workflow/gegi-summary?'+new URLSearchParams({name:job.source_run_name,derivative:job.name}))]);
     if(generation!==gegiGeneration||savedGeGIJob?.name!==job.name)return;
     const source=state.jobs.find(j=>j.name===job.source_run_name&&j.workflow_kind==='local_gegi_workflow_v1');
     if(!source)throw Error('The original owned GeGI run is unavailable. Refresh saved inputs.');
     if(data.saved_derivative_name!==job.name)throw Error('Saved GeGI reconstruction and selected derivative identities differ.');
-    const opening=openGeGIResult(source,data);generation=gegiGeneration;await opening;
+    const opening=openGeGIResult(source,data,job.name);generation=gegiGeneration;await opening;
   }catch(e){if(generation===gegiGeneration&&savedGeGIJob?.name===job.name)$('gegi-saved-status').textContent=e.message;}
 }
 async function pollSavedGeGI(){
@@ -208,13 +208,26 @@ function importedGeGIConfig(c,batched){
   if((c.electronics.peak_gate_start_ns===null)!==(c.electronics.peak_gate_end_ns===null))throw Error('A peak gate requires both boundaries.');
   return {...c,source_position_mm:[...c.source_position_mm],electronics:{...c.electronics}};
 }
-function resetGeGIResult(){gegiGeneration++;gegiResult=null;gegiJourney?.destroy?.();gegiJourney=null;$('gegi-result').hidden=true;$('gegi-plots').replaceChildren();$('gegi-journey').replaceChildren();$('gegi-imaging').replaceChildren();$('gegi-event-record').textContent='';$('gegi-truth-record').textContent='';$('gegi-event-filter').textContent='';$('gegi-event-files').replaceChildren();}
-function gegiIdentity(reply,job){
-  if(reply?.kind!=='gegi_multichannel_results_v1'||reply.name!==job.name||reply.configuration_sha256!==job.configuration_sha256||!reply.counts||reply.counts.initial_primaries!==job.selection.primary_count||!Array.isArray(reply.channels)||reply.channels.length!==34||!Array.isArray(reply.events)||!reply.imaging)throw Error('Saved GeGI data and selected run identities differ.');
-  const ids=reply.events.map(e=>e.event_id);if(ids.some(id=>!Number.isSafeInteger(id)||id<0)||new Set(ids).size!==ids.length||reply.events.some(e=>!Number.isFinite(e.truth_edep_keV)||e.truth_edep_keV<=0||!(Array.isArray(e.channels)||e.channels===null&&e.status==='native_failed')))throw Error('Saved GeGI nonzero event census is invalid.');
+function resetGeGIResult(){gegiGeneration++;gegiEventGeneration++;gegiImagingGeneration++;if(gegiResult){gegiResult.event=null;gegiResult.imaging=null;}gegiResult=null;gegiJourney?.destroy?.();gegiJourney=null;$('gegi-result').hidden=true;$('gegi-plots').replaceChildren();$('gegi-journey').replaceChildren();$('gegi-imaging-panel').open=false;$('gegi-imaging').replaceChildren();$('gegi-imaging-status').textContent='';$('gegi-cones').textContent='';$('gegi-event-record').textContent='';$('gegi-truth-record').textContent='';$('gegi-event-filter').textContent='';$('gegi-event-files').replaceChildren();}
+function gegiIdentity(reply,job,derivative=null){
+  if(reply?.kind!=='gegi_multichannel_summary_v1'||reply.name!==job.name||reply.configuration_sha256!==job.configuration_sha256||reply.saved_derivative_name!==derivative||typeof reply.results_sha256!=='string'||!/^[a-f0-9]{64}$/.test(reply.results_sha256)||!reply.counts||reply.counts.initial_primaries!==job.selection.primary_count||!Array.isArray(reply.channels)||reply.channels.length!==34||!Array.isArray(reply.event_index)||typeof reply.imaging_available!=='boolean'||Object.hasOwn(reply,'events')||Object.hasOwn(reply,'imaging'))throw Error('Saved GeGI summary and selected run identities differ.');
+  const ids=reply.event_index.map(e=>e.event_id);if(ids.some(id=>!Number.isSafeInteger(id)||id<0)||new Set(ids).size!==ids.length||reply.event_index.some(e=>!Number.isFinite(e.truth_edep_keV)||e.truth_edep_keV<=0||Object.keys(e).some(key=>!['event_id','status','truth_edep_keV'].includes(key))))throw Error('Saved GeGI nonzero event census is invalid.');
   if(reply.counts.nonzero_primaries!==undefined&&reply.counts.nonzero_primaries!==ids.length)throw Error('Saved GeGI event count differs from its complete census.');
   if(reply.channels.some((c,i)=>c.id!==i+1)||reply.counts.zero_deposit_primaries+ids.length!==reply.counts.initial_primaries)throw Error('Saved GeGI electrode identities or initial census changed.');
   return reply;
+}
+function gegiPartIdentity(reply,context,kind){
+  const data=context.data;
+  if(reply?.kind!==kind||reply.name!==data.name||reply.configuration_sha256!==data.configuration_sha256||reply.saved_derivative_name!==data.saved_derivative_name||reply.results_sha256!==data.results_sha256)throw Error('Saved GeGI response differs from the opened run, derivative or sealed result. Reopen the results.');
+  return reply;
+}
+function gegiPartQuery(context,extra={}){
+  return new URLSearchParams({name:context.job.name,results_sha256:context.data.results_sha256,...(context.data.saved_derivative_name?{derivative:context.data.saved_derivative_name}:{}),...extra});
+}
+function gegiEventIdentity(reply,context,id){
+  gegiPartIdentity(reply,context,'gegi_multichannel_event_v1');const event=reply.event,index=context.data.event_index.find(e=>e.event_id===id);
+  if(reply.event_id!==id||!event||event.event_id!==id||!index||event.status!==index.status||event.truth_edep_keV!==index.truth_edep_keV||!(Array.isArray(event.channels)&&event.channels.length===34&&event.channels.every((c,i)=>c.contact_id===i+1)||event.channels===null&&event.status==='native_failed'))throw Error('Saved GeGI nonzero event census or channel identities differ from the selected event.');
+  return event;
 }
 function gegiArtifactEntry(job,file,stamp=null){
   const row=node('div');row.append(action('Download '+file,()=>download(job.name,file)));
@@ -243,20 +256,35 @@ function gegiSignalJourney(context,event){
   const group={representative,initial_primary_denominator:context.data.counts.initial_primaries,counts:context.data.counts};
   gegiJourney=shared.mount(target,{groups:{'Selected saved event':group}},{scope:'student',selectedContactId:Number($('gegi-channel').value),onChannelChange:id=>{$('gegi-channel').value=String(id);showGeGIEvent(true);}});
 }
-async function openGeGIResult(job,savedData=null){
+async function openGeGIResult(job,savedSummary=null,derivative=null){
   const prior=gegiResult?.job.name===job.name?{event:$('gegi-event').value,channel:$('gegi-channel').value}:null;
-  showRun(job);const generation=++gegiGeneration;resultGeneration++;plotGeneration++;result=null;resetResultOptions();$('result').hidden=true;$('gegi-result').hidden=true;
-  const data=gegiIdentity(savedData??await api('/api/workflow/gegi-results?'+new URLSearchParams({name:job.name})),job);
+  showRun(job);resetGeGIResult();const generation=gegiGeneration;resultGeneration++;plotGeneration++;result=null;resetResultOptions();$('result').hidden=true;
+  let reply;try{reply=savedSummary??await api('/api/workflow/gegi-summary?'+new URLSearchParams({name:job.name,...(derivative?{derivative}:{})}));}catch(e){if(generation!==gegiGeneration||selectedJob!==job.name)return;throw e;}
   if(generation!==gegiGeneration||selectedJob!==job.name)return;
-  gegiResult={job,data};$('gegi-result-heading').textContent=job.name+(data.saved_derivative_name?' · reconstruction '+data.saved_derivative_name:'')+' · '+savedSourceLabel(job.selection)+' · source detector xyz ['+job.selection.source_position_mm.join(', ')+'] mm';
-  const c=data.counts;$('gegi-counts').textContent=c.initial_primaries+(job.selection.source==='gegi_mono_gamma_v1'?' initial gamma primaries':' initial isotope nuclei')+' · '+c.zero_deposit_primaries+' zero-deposit · '+data.events.length+' stored nonzero events · '+metricValue(c.native_failed_groups)+' native failures'+(c.accepted_nonzero_primaries!==undefined?' · '+c.accepted_nonzero_primaries+' readout accepted · '+c.rejected_nonzero_primaries+' readout rejected':'')+'. Initial primaries remain the efficiency denominator.';
+  const data=gegiIdentity(reply,job,derivative);
+  gegiResult={job,data,event:null,imaging:null};$('gegi-result-heading').textContent=job.name+(data.saved_derivative_name?' · reconstruction '+data.saved_derivative_name:'')+' · '+savedSourceLabel(job.selection)+' · source detector xyz ['+job.selection.source_position_mm.join(', ')+'] mm';
+  const c=data.counts;$('gegi-counts').textContent=c.initial_primaries+(job.selection.source==='gegi_mono_gamma_v1'?' initial gamma primaries':' initial isotope nuclei')+' · '+c.zero_deposit_primaries+' zero-deposit · '+data.event_index.length+' stored nonzero events · '+metricValue(c.native_failed_groups)+' native failures'+(c.accepted_nonzero_primaries!==undefined?' · '+c.accepted_nonzero_primaries+' readout accepted · '+c.rejected_nonzero_primaries+' readout rejected':'')+'. Initial primaries remain the efficiency denominator.';
   $('gegi-limitations').textContent=(data.reconstruction_algorithm?.kind==='gegi_standalone_saved_reconstruction_v3'?'Shared signed-waveform reconstruction. Depth and imaging require compatible independent waveform templates. Conditional candidates are not validated recovered events. ':'Historical saved reconstruction; displayed maps remain experimental legacy results. ')+(data.limitations||[]).join(' ');
-  options('gegi-event',data.events.map(e=>({id:String(e.event_id),label:'Primary '+e.event_id+' · '+e.truth_edep_keV+' keV deposited'})));
+  options('gegi-event',data.event_index.map(e=>({id:String(e.event_id),label:'Primary '+e.event_id+' · '+e.truth_edep_keV+' keV deposited'})));
   options('gegi-channel',data.channels.map(c=>({id:String(c.id),label:c.name+' · contact '+c.id+' · '+c.potential_V+' V'})));
-  if(prior&&data.events.some(e=>String(e.event_id)===prior.event))$('gegi-event').value=prior.event;
+  if(prior&&data.event_index.some(e=>String(e.event_id)===prior.event))$('gegi-event').value=prior.event;
   if(prior&&data.channels.some(c=>String(c.id)===prior.channel))$('gegi-channel').value=prior.channel;
   gegiSavedFiles(job);
-  $('gegi-result').hidden=false;showGeGIEvent();if($('gegi-imaging-panel').open)showGeGIImaging();$('gegi-result').scrollIntoView({behavior:'smooth'});
+  $('gegi-result').hidden=false;$('gegi-result').scrollIntoView({behavior:'smooth'});await loadGeGIEvent();
+}
+function clearGeGIEvent(message){
+  if(gegiResult)gegiResult.event=null;gegiSignalJourney(gegiResult,null);$('gegi-plots').replaceChildren();$('gegi-event-files').replaceChildren();$('gegi-event-record').textContent='';$('gegi-truth-record').textContent='';$('gegi-event-filter').textContent='';$('gegi-cones').textContent='';$('gegi-event-summary').textContent=message;
+}
+async function loadGeGIEvent(){
+  const context=gegiResult;if(!context)return;const id=Number($('gegi-event').value),generation=++gegiEventGeneration;
+  clearGeGIEvent(context.data.event_index.length?'Loading saved primary '+id+'…':'No nonzero deposits in this run. Counts and the original denominator remain above.');
+  if(!context.data.event_index.length)return;
+  if(!context.data.event_index.some(e=>e.event_id===id)){$('gegi-event-summary').textContent='Select an offered original primary ID.';return;}
+  try{
+    const reply=await api('/api/workflow/gegi-event?'+gegiPartQuery(context,{event:String(id)}));
+    if(context!==gegiResult||generation!==gegiEventGeneration||Number($('gegi-event').value)!==id)return;
+    context.event=gegiEventIdentity(reply,context,id);showGeGIEvent();
+  }catch(e){if(context===gegiResult&&generation===gegiEventGeneration)$('gegi-event-summary').textContent='Cannot load saved primary '+id+': '+e.message+' Select another event or reopen results to retry.';}
 }
 function gegiTracePlot(trace,key,label,unit){
   const figure=node('figure',undefined,'plot'),times=trace?.time_ns,values=trace?.[key];figure.append(node('h3',label+' · '+unit));
@@ -267,9 +295,8 @@ function gegiTracePlot(trace,key,label,unit){
   for(const [x,y,text]of [[4,25,String(ymax)],[4,185,String(ymin)],[55,207,String(xmin)+' ns'],[555,207,String(xmax)+' ns']]){const t=document.createElementNS(ns,'text');t.setAttribute('x',x);t.setAttribute('y',y);t.textContent=text;svg.append(t);}figure.append(svg,node('figcaption','Saved signed samples; '+times.length+' original analog time points.','muted'));return figure;
 }
 function showGeGIEvent(preserveJourney=false){
-  const context=gegiResult;if(!context)return;const event=context.data.events.find(e=>String(e.event_id)===$('gegi-event').value),id=Number($('gegi-channel').value),meta=context.data.channels.find(c=>c.id===id);$('gegi-plots').replaceChildren();
+  const context=gegiResult;if(!context||!context.event)return;const event=context.event,id=Number($('gegi-channel').value),meta=context.data.channels.find(c=>c.id===id);$('gegi-plots').replaceChildren();
   if(!preserveJourney)gegiSignalJourney(context,event);gegiEventFiles(context,event);
-  if(!event){$('gegi-event-summary').textContent='No nonzero deposits in this run. Counts and the original denominator remain above.';$('gegi-event-record').textContent='';$('gegi-truth-record').textContent='';$('gegi-event-filter').textContent='No saved nonzero primary selected.';$('gegi-cones').textContent='No selected event.';return;}
   const channel=(event.channels||[]).find(c=>c.contact_id===id);$('gegi-event-summary').textContent='Original primary '+event.event_id+' · truth Edep '+event.truth_edep_keV+' keV · '+(event.status||'recorded')+' · '+(meta?.name||'channel '+id)+' reconstructed energy '+metricValue(channel?.reconstructed_energy_keV)+' keV'+(channel?.rejection_reason?' · '+channel.rejection_reason:'')+'. Each strip family measures the same deposited energy; X and Y energies are not added together.';
   const use=event.reconstruction?.signal_use;
   if(use){const spectrum=use.spectroscopy;$('gegi-event-summary').textContent+=' Pulse-group energy: '+(spectrum.accepted?metricValue(spectrum.energy_keV)+' keV (fixed-gain X/Y average, including collecting guards)':'unavailable · '+spectrum.reason.replaceAll('_',' '))+'. Imaging: '+(use.conditional_candidate_count?use.conditional_candidate_count+' conditional candidates':'no supported candidate')+'.';if(use.guard.collecting_ids.length)$('gegi-event-summary').textContent+=' Guard collection contributes energy without a strip position.';if(use.adjacent_strip_pairs.length)$('gegi-event-summary').textContent+=' Adjacent strips are retained separately; charge sharing and interaction count remain unresolved.';}
@@ -278,10 +305,27 @@ function showGeGIEvent(preserveJourney=false){
   $('gegi-event-record').textContent=JSON.stringify({event_id:event.event_id,status:event.status,reconstruction:event.reconstruction??null,channel:channel||null},null,2);
   $('gegi-truth-record').textContent=JSON.stringify({purpose:'Transport truth for evaluation only; not used to select a reconstructed strip pairing or scatter order.',event_id:event.event_id,truth_edep_keV:event.truth_edep_keV,primary_time_ns:event.primary_time_ns??null,steps:event.steps??null,transport_flags:event.transport_flags??null},null,2);
   if(!$('gegi-plots').hidden){if(channel?.trace)for(const [key,label,unit]of [['charge_fC','Induced charge','fC'],['current_nA','Induced current','nA'],['preamp_V','Preamplifier','V'],['shaped_V','Shaped signal','V']])$('gegi-plots').append(gegiTracePlot(channel.trace,key,label,unit));else $('gegi-plots').append(node('p','No saved native/readout waveform for this event and channel. Failed quantities remain unknown.','muted'));}
-  const cones=(context.data.imaging.cones||[]).filter(c=>c.event_id===event.event_id);$('gegi-cones').textContent=cones.length?JSON.stringify(cones,null,2):'No accepted Compton cone for this event. '+(event.reconstruction?.reason||event.rejection_reason||'Read the saved candidate and ambiguity counts.');
+  showGeGICones();
 }
-function showGeGIImaging(){
-  const image=gegiResult?.data.imaging;if(!image||!$('gegi-imaging-panel').open)return;const target=$('gegi-imaging');target.replaceChildren();
+function showGeGICones(){
+  const context=gegiResult,event=context?.event;if(!event){$('gegi-cones').textContent='No selected event loaded.';return;}
+  if(!context.imaging){$('gegi-cones').textContent='Open this panel to load the saved run image and selected-event cone records.';return;}
+  const cones=(context.imaging.cones||[]).filter(c=>c.event_id===event.event_id);$('gegi-cones').textContent=cones.length?JSON.stringify(cones,null,2):'No accepted Compton cone for this event. '+(event.reconstruction?.reason||event.rejection_reason||'Read the saved candidate and ambiguity counts.');
+}
+async function showGeGIImaging(){
+  const context=gegiResult;if(!context||!$('gegi-imaging-panel').open){++gegiImagingGeneration;return;}
+  if(context.imaging){renderGeGIImaging();showGeGICones();return;}
+  if(!context.data.imaging_available){$('gegi-imaging-status').textContent='No saved run imaging is available.';return;}
+  const generation=++gegiImagingGeneration;$('gegi-imaging').replaceChildren();$('gegi-imaging-status').textContent='Loading saved run imaging…';
+  try{
+    const reply=gegiPartIdentity(await api('/api/workflow/gegi-imaging?'+gegiPartQuery(context)),context,'gegi_multichannel_imaging_v1');
+    if(context!==gegiResult||generation!==gegiImagingGeneration||!$('gegi-imaging-panel').open)return;
+    if(!reply.imaging||typeof reply.imaging!=='object')throw Error('Saved GeGI imaging data are unavailable.');
+    context.imaging=reply.imaging;renderGeGIImaging();showGeGICones();
+  }catch(e){if(context===gegiResult&&generation===gegiImagingGeneration&&$('gegi-imaging-panel').open)$('gegi-imaging-status').textContent='Cannot load saved run imaging: '+e.message+' Close and reopen this panel to retry.';}
+}
+function renderGeGIImaging(){
+  const image=gegiResult?.imaging;if(!image||!$('gegi-imaging-panel').open)return;const target=$('gegi-imaging');target.replaceChildren();
   if(image.method==='gegi_standalone_saved_reconstruction_v3'){
     $('gegi-imaging-status').textContent=metricValue(image.conditional_candidate_groups)+' groups with conditional imaging candidates · '+metricValue(image.validated_recovered_groups)+' validated recovered groups. Pulse energy remains available when both faces have accepted readout, even if imaging is unresolved. Open an event to inspect its energy and saved signals.';
     target.append(node('p','No source map is created from unsupported depth or unvalidated conditional hypotheses. Fixed energy readout, all electrode signals and the exact saved reconstruction reason remain available.','muted'));return;
@@ -293,7 +337,7 @@ function showGeGIImaging(){
   for(let j=0;j<y.length;j++)for(let i=0;i<x.length;i++){const rect=document.createElementNS(ns,'rect'),fraction=maximum?values[j][i]/maximum:0;rect.setAttribute('x',55+620*i/x.length);rect.setAttribute('y',20+300*(y.length-j-1)/y.length);rect.setAttribute('width',620/x.length+.1);rect.setAttribute('height',300/y.length+.1);rect.setAttribute('fill','rgb('+Math.round(242-225*fraction)+','+Math.round(247-115*fraction)+','+Math.round(249-105*fraction)+')');svg.append(rect);}
   for(const [px,py,text]of [[55,345,'Azimuth '+x[0]+'°'],[525,345,String(x[x.length-1])+'°'],[4,25,String(y[y.length-1])+'°'],[4,320,String(y[0])+'°'],[55,372,'Elevation increases upward; detector +z is +90°.']]){const label=document.createElementNS(ns,'text');label.setAttribute('x',px);label.setAttribute('y',py);label.textContent=text;svg.append(label);}target.append(svg,node('p','Saved backprojection values; maximum '+maximum+'. This image uses reconstructed channel information. Truth deposit positions remain separate.','muted'));
 }
-$('gegi-event').onchange=()=>showGeGIEvent();$('gegi-channel').onchange=()=>showGeGIEvent();$('gegi-imaging-panel').ontoggle=showGeGIImaging;
+$('gegi-event').onchange=loadGeGIEvent;$('gegi-channel').onchange=()=>showGeGIEvent();$('gegi-imaging-panel').ontoggle=showGeGIImaging;
 async function openResult(job){if(job.workflow_kind==='local_gegi_workflow_v1')return openGeGIResult(job);if(job.execution_contract==='serial_batches_v3')return openBatchResult(job);const prior=result?.job.name===job.name&&result?.job.configuration_sha256===job.configuration_sha256?{id:Number($('event').value),groupIndex:Number($('group').value)}:null;showRun(job);resetResultOptions();const generation=++resultGeneration;plotGeneration++;result=null;$('plots').replaceChildren();$('result').hidden=true;try{const responses=await Promise.all([artifact(job.name,'response/run.json'),artifact(job.name,'COMPLETE.json')]);const [report,complete]=await Promise.all(responses.map(r=>r.json()));if(generation!==resultGeneration||selectedJob!==job.name)return;const summaryHash=complete.artifacts?.['response/summary.html']?.sha256;if(complete.configuration_sha256!==job.configuration_sha256||!summaryHash||report.artifacts?.['summary.html']!==summaryHash||report.source_id!==undefined&&report.source_id!==job.selection.source)throw Error('Saved result and selected run identities differ.');let records=[],traces=[];if(report.cases){records=report.cases;}else{const files=await Promise.all([artifact(job.name,'response/scalars.jsonl'),artifact(job.name,'response/traces.jsonl')]);const texts=await Promise.all(files.map(r=>r.text()));if(generation!==resultGeneration||selectedJob!==job.name)return;[records,traces]=texts.map(s=>s.trim().split('\n').filter(Boolean).map(JSON.parse));}if(generation!==resultGeneration||selectedJob!==job.name)return;result={job,report,records,traces,summaryHash};loadResultOptions(result);$('batch-navigation').hidden=true;savedArtifacts(job,complete);$('result').hidden=false;$('result-heading').textContent=job.name+' · '+job.selection.detector+' · '+savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' original primaries';const ids=selectablePrimaryIds(records);options('event',primaryOptions(ids,result.records,result.traces));const choice=prior&&ids.includes(prior.id)?prior:firstSavedWaveform(records,traces);if(choice)$('event').value=String(choice.id);if(ids.length)showEvent(choice?.groupIndex);else clearSavedSelection('No nonzero deposits in this run. Initial counts and denominator are retained.');$('result').scrollIntoView({behavior:'smooth'});}catch(e){if(generation===resultGeneration&&selectedJob===job.name)throw e;}}
 function resetSpectrum(){spectrumGeneration++;if(result)result.spectrum=null;$('spectrum-panel').hidden=true;$('spectrum-panel').open=false;$('spectrum-status').textContent='';$('spectrum-content').replaceChildren();}
 function resetResultOptions(){resultOptionsGeneration++;if(result)result.options=null;for(const id of ['feature-panel','acquisition-panel']){$(id).hidden=true;$(id).open=false;}resetFeatures();resetAcquisition();resetSpectrum();$('result-options-status').textContent='';}

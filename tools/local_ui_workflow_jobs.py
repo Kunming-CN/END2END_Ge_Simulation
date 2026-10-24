@@ -59,6 +59,7 @@ class WorkflowController:
         self._launcher=launcher or self._spawn;self._checks={};self._active=None;self._entry_thread=None
         self._saved_verifier=Verifier(self.root)
         self._saved_gegi_control=None
+        self._gegi_readers={}
         path=safe_path(self.root,STATE+'/workflow-jobs.json')
         self._state_path=path
         if path.exists():
@@ -558,6 +559,24 @@ class WorkflowController:
             W.require(reply.get('configuration_sha256')==job['plan']['configuration_sha256'],
                       'Saved GeGI results differ from the owned configuration.')
             return dict(reply,name=name)
+
+    def gegi_browse(self,name,part,*,event_id=None,derivative=None,results_sha256=None):
+        """Owned lightweight views; full inspection/indexing occurs once per open source."""
+        with self._lock:
+            W.require(part in ('summary','event','imaging'),'Unknown GeGI result view.')
+            job=next((j for j in self._jobs if j['name']==name),None)
+            W.require(job and self._gegi_job(job) and job['status'] in W.TERMINAL,
+                      'Use a completed owned GeGI run for multichannel results.')
+            if derivative is not None:
+                return self._gegi_saved().browse(derivative,name,part,event_id=event_id,results_sha256=results_sha256)
+            if name not in self._gegi_readers:
+                self._gegi_readers[name]=gegi_backend().result_reader(name,self.root)
+            reader=self._gegi_readers[name]
+            W.require(reader.identity['configuration_sha256']==job['plan']['configuration_sha256'],
+                      'Saved GeGI results differ from the owned configuration.')
+            if part=='summary':return reader.summary(results_sha256)
+            if part=='event':return reader.event(event_id,results_sha256)
+            return reader.imaging(results_sha256)
 
     def _gegi_saved(self):
         with self._lock:

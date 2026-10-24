@@ -1,5 +1,31 @@
 # Current handoff
 
+## Completed bounded-memory result browsing — 2026-10-23
+
+The existing GeGI viewer now reads summary/event index first, then one selected
+event's exact 34-channel signals and reconstruction. Full-run imaging loads when
+its existing panel opens. Original owned standalone runs and their reconstruction
+derivatives use the same viewer and sealed byte-range reader; original files,
+every event and numeric value remain intact. No physics/reconstruction change,
+new interface, dependency or extra AI review.
+
+Root accepted the integrated gpt-6.1-sol ultra implementation. 19 unique backend
+tests, frontend contracts and 5 package tests passed. All 42 actual saved events
+matched their original native fields and 34-channel arrays; source hashes stayed
+unchanged. The 107,972,753-byte aggregate was indexed with a 65,536-byte scan buffer.
+The separate read/compare process peaked at 50,450,432 bytes working set; this is
+not a browser-memory benchmark or comparison against the old reader.
+
+Real-browser acceptance used the production inspector/API and real saved data;
+only historical CLI ownership was simulated in memory in a temporary read-only
+session. Opening results transferred 2,600,336 bytes of summary + first event.
+Changing channel made no extra request; changing event read one event; imaging
+loaded once on expansion and was reused. No bulk-result route was available.
+The temporary server was closed. Current exact evidence and student-release
+status: `.local/gegi-demand-loading/receipt.json` and
+`.local/student-runtime-p1/COMPLETE.json`. Further development follows actual use
+feedback; experimental alignment remains deferred and monitoring remains PAUSED.
+
 ## Completed standalone saved-signal workflow — 2026-10-23
 
 Owner says experimental files are unavailable and explicitly defers alignment.

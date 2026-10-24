@@ -291,6 +291,26 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError('Invalid saved GeGI results request')
                 workflow.run_path(query['name'][0],self.server.controller.root)
                 return self.send_data(200,self.server.workflow_controller.gegi_results(query['name'][0]))
+            if parts.path in ('/api/workflow/gegi-summary','/api/workflow/gegi-event','/api/workflow/gegi-imaging'):
+                import re
+                part=parts.path.rsplit('-',1)[1]
+                query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
+                required={'name','event'} if part=='event' else {'name'}
+                if (parts.fragment or not required<=set(query) or
+                        not set(query)<=required|{'derivative','results_sha256'} or
+                        any(len(v)!=1 for v in query.values()) or self.server.workflow_controller is None):
+                    raise ValueError('Invalid bounded GeGI result request')
+                values={k:v[0] for k,v in query.items()}
+                workflow.run_path(values['name'],self.server.controller.root)
+                if 'derivative' in values:workflow.run_path(values['derivative'],self.server.controller.root)
+                if 'results_sha256' in values and not re.fullmatch('[0-9a-f]{64}',values['results_sha256']):
+                    raise ValueError('Invalid expected GeGI result SHA256')
+                event=values.get('event')
+                if event is not None and (not re.fullmatch(r'0|[1-9][0-9]{0,15}',event) or int(event)>9007199254740991):
+                    raise ValueError('Invalid original GeGI event ID')
+                return self.send_data(200,self.server.workflow_controller.gegi_browse(values['name'],part,
+                    event_id=int(event) if event is not None else None,derivative=values.get('derivative'),
+                    results_sha256=values.get('results_sha256')))
             if parts.path in ('/api/workflow/features','/api/workflow/acquisition'):
                 import re
                 acquisition=parts.path.endswith('/acquisition')
