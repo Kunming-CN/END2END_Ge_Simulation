@@ -80,7 +80,39 @@ end
 function config(c,out)
     Q.parse_args(["--model",c["model_id"],"--contact",string(c["readout_contact_id"]),"--position-mm","3,0,5","--precision","64","--dt-ns","2","--min-grid-mm","0.25","--max-iterations","50000","--output",out])
 end
-function resource_plan(sim,cfg;free_bytes=Sys.free_memory())
+function macos_memory_bytes(free_pages, inactive_pages, purgeable_pages, page_bytes)
+    free = UInt64(free_pages) * page_bytes
+    available = free + (UInt64(inactive_pages) + UInt64(purgeable_pages)) * page_bytes
+    (free=free, available=available, source="macOS Mach free + inactive + purgeable pages")
+end
+
+function macos_memory()
+    # HOST_VM_INFO returns vm_statistics as 32-bit words (Darwin mach/vm_statistics.h).
+    # Use upstream libuv's available-memory estimate. Julia 1.13.0's bundled
+    # Darwin libuv reports only free_count, which already includes speculative pages.
+    stats = Vector{Cuint}(undef, 15)
+    count = Ref{Cuint}(length(stats))
+    host = ccall(:mach_host_self, Cuint, ())
+    status = try
+        ccall(:host_statistics, Cint, (Cuint, Cint, Ptr{Cuint}, Ref{Cuint}), host, 2, stats, count)
+    finally
+        task = unsafe_load(cglobal(:mach_task_self_, Cuint))
+        ccall(:mach_port_deallocate, Cint, (Cuint, Cuint), task, host)
+    end
+    check(status == 0 && count[] >= 13,
+          "Unable to measure macOS memory availability (Mach status $status, $(count[]) words).")
+    macos_memory_bytes(stats[1], stats[3], stats[13], Sys.PAGESIZE)
+end
+
+function resource_plan(sim,cfg;free_bytes=nothing)
+    memory = if free_bytes !== nothing
+        (free=free_bytes, available=free_bytes, source="supplied free_bytes")
+    elseif Sys.isapple()
+        macos_memory()
+    else
+        free_bytes = Sys.free_memory()
+        (free=free_bytes, available=free_bytes, source="Sys.free_memory()")
+    end
     # SSD's own initial-grid construction allocates ticks only, without any field solve.
     ep=SSD.Grid(sim;max_tick_distance=cfg.max_grid*u"mm",for_weighting_potential=false)
     wp=SSD.Grid(sim;max_tick_distance=cfg.max_grid*u"mm",for_weighting_potential=true)
@@ -99,9 +131,12 @@ function resource_plan(sim,cfg;free_bytes=Sys.free_memory())
         field_multiplier=ep isa SSD.CylindricalGrid ? 36 : 1
         envelopes[string(mm)]=Dict("largest_axis_tick_envelope"=>[maximum(shape[i] for shape in bounds) for i in 1:3],"largest_grid_node_envelope"=>Int(envelope_nodes),"electric_field_phi_multiplier"=>field_multiplier,"estimated_working_byte_envelope"=>Int(192*envelope_nodes*field_multiplier))
     end
-    reserve=512*1024^2;available=max(BigInt(free_bytes)-reserve,0)
-    plan=Dict("initial_grid_shapes"=>shapes,"refinement_spacing_envelopes"=>envelopes,"largest_initial_grid_nodes"=>Int(nodes),"assumed_working_bytes_per_node"=>192,"estimated_initial_working_bytes"=>Int(estimated),"free_physical_bytes_at_check"=>free_bytes,"reserved_system_bytes"=>reserve,"initial_grid_guard_passed"=>estimated<=available,"min_tick_distance_mm"=>cfg.min_grid,"max_tick_distance_mm"=>cfg.max_grid,"scope"=>"SSD initial ticks only; 192 bytes/node is a working allowance, not measured memory. Spacing extrapolations retain narrow intervals and three parity ticks but are not upper bounds: adaptive/surface refinement can exceed them. Final actual grids and measured process peak RSS govern resource assessment. New engineering route uses portable 0.25/2 mm defaults; no grid-convergence claim.")
-    check(plan["initial_grid_guard_passed"],"Initial native grid estimate exceeds available physical-memory allowance; preserve settings and run evidence")
+    reserve=512*1024^2;available=max(BigInt(memory.available)-reserve,0)
+    check(estimated<=available,
+          "Initial native grid requires an estimated $estimated bytes. Available after the $reserve-byte system reserve: $available bytes. " *
+          "Measured $(memory.free) free bytes and estimated $(memory.available) available bytes ($(memory.source)). " *
+          "Free memory by closing other applications or use a computer with more available memory.")
+    plan=Dict("initial_grid_shapes"=>shapes,"refinement_spacing_envelopes"=>envelopes,"largest_initial_grid_nodes"=>Int(nodes),"assumed_working_bytes_per_node"=>192,"estimated_initial_working_bytes"=>Int(estimated),"free_physical_bytes_at_check"=>memory.free,"available_physical_bytes_at_check"=>memory.available,"memory_estimate_source"=>memory.source,"reserved_system_bytes"=>reserve,"initial_grid_guard_passed"=>true,"min_tick_distance_mm"=>cfg.min_grid,"max_tick_distance_mm"=>cfg.max_grid,"scope"=>"SSD initial ticks only; 192 bytes/node is a working allowance, not measured memory. Spacing extrapolations retain narrow intervals and three parity ticks but are not upper bounds: adaptive/surface refinement can exceed them. Final actual grids and measured process peak RSS govern resource assessment. New engineering route uses portable 0.25/2 mm defaults; no grid-convergence claim.")
     plan
 end
 function field_fingerprint(sim,contact)

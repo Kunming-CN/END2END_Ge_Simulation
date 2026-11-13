@@ -151,6 +151,25 @@ class SavedGeGIAssembly(unittest.TestCase):
                 with self.assertRaises(FileNotFoundError):
                     G.publish(site, bundle=site/'explicit-missing-bundle')
 
+    def test_exact_saved_navigation_display_keeps_original_source_and_native_checks(self):
+        bundle = G.ROOT/'docs/assemblies/gegi'
+        manifest = G.read(bundle/'manifest.json')
+        self.assertEqual(G.sha(bundle/'manifest.json'), G.SAVED_NAVIGATION_DISPLAY)
+        self.assertNotEqual(manifest['source_sha256'], G.source_hashes())
+        self.assertEqual(G.validate_bundle(bundle), manifest)
+        with tempfile.TemporaryDirectory(dir=G.WORK) as temp:
+            target = Path(temp)/'assembly'
+            shutil.copytree(bundle, target)
+            changed = copy.deepcopy(manifest)
+            changed['source_sha256']['tools/site_discovery.py'] = '0'*64
+            (target/'manifest.json').write_bytes(G.encoded(changed))
+            with self.assertRaisesRegex(ValueError, 'Public assembly exporter source differs'):
+                G.validate_bundle(target)
+        sources = dict(G.source_hashes(), **{G.NATIVE_SOURCE_FILES[0]: '0'*64})
+        with mock.patch.object(G, 'source_hashes', return_value=sources), \
+             self.assertRaisesRegex(ValueError, 'Saved assembly native exporter source differs'):
+            G.validate_bundle(bundle)
+
 
 if __name__ == '__main__':
     unittest.main()

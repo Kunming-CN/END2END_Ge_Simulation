@@ -26,7 +26,7 @@ NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
 NAVIGATION_PREDECESSOR = 'c42925be9072fd25c20229539d4351cd5c39aa043c46f1bd27f5c65bcfe6e404'
 LANDINGS = {
     'index.html': 'Saved HPGe detector engineering simulations: Geant4/remage radiation deposits, SSD charge transport and electronics readout. Browse results or choose a local workflow.',
-    'guide.html': 'Windows setup and supported local HPGe simulation workflows. Saved browsing, new radiation runs and private-input engineering examples have separate requirements.',
+    'guide.html': 'Windows and macOS setup for supported local HPGe simulation workflows. Browse saved results or run new radiation, charge and readout simulations.',
     'learn/index.html': 'Follow radiation deposits through SSD electron and hole transport, preamplifier, shaping and peak ADC. Saved engineering examples retain units and limitations.',
     'detectors/index.html': 'Explore 17 saved HPGe detector models, contacts and original configurations. Viewing a model does not establish LBNL execution support or experimental validation.',
     'assemblies/index.html': 'Compare the LBNL modular cryostat and dedicated GeGI cryostat, supported detector configurations, assembly geometry and explicit engineering assumptions.',
@@ -38,10 +38,13 @@ LANDINGS = {
     'scenarios/lbnl-cs137/index.html': 'Nominal LBNL cryostat with shared Cs137, Am241, Ba133 and Co60 local workflows, compatible detector choices and saved batch analysis. Legacy AK02/SAP22 CLI support and model viewing are separate.',
 }
 
-# The exact preceding saved snapshot must validate before normal restructuring.
-# This permits only its two known old descriptions. check_site still binds the
-# entire snapshot to this build digest; rehashed edits cannot retain admission.
+# Exact saved snapshots must validate before normal restructuring. Each may
+# retain only its recorded old descriptions while its content digest matches.
 HISTORICAL_DESCRIPTIONS = {
+    # Exact saved snapshot before the macOS setup guide was added.
+    '5e2a7cdf9dc0fd029c76ae1520cf789113c77265d5a45e99163807eaf9dbf457': {
+        'guide.html': 'Windows setup and supported local HPGe simulation workflows. Saved browsing, new radiation runs and private-input engineering examples have separate requirements.',
+    },
     # Exact accepted 6db59a35 snapshot before the fourth source was admitted.
     'c51891201950c5e25ce2d2b26760e8f093a0c1f252c5c485e2f879f2bf85800a': {
         'scenarios/lbnl-cs137/index.html': 'Nominal LBNL cryostat with shared Cs137, Am241 and Ba133 local workflows, compatible detector choices and saved batch analysis. Legacy AK02/SAP22 CLI support and model viewing are separate.',
@@ -195,7 +198,7 @@ def validate(site, snapshot_build_id=None):
         descriptions = {path: description for path, description in descriptions.items()
                         if routes.page_record(path)['role'] != 'case'}
     historical = HISTORICAL_DESCRIPTIONS.get(build_id, {})
-    if build_id == 'c51891201950c5e25ce2d2b26760e8f093a0c1f252c5c485e2f879f2bf85800a':
+    if historical:
         identity = snapshot_build_id if snapshot_build_id is not None else snapshot_identity(site)
         if identity != build_id:
             historical = {}

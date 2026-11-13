@@ -215,7 +215,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertNotIn('primary 61',home)
         self.assertNotIn('first 5',home)
         self.assertNotIn('half',home)
-        self.assertIn('Windows · local setup',home)
+        self.assertIn('Windows and macOS · local setup',home)
 
     def test_result_hubs_are_conditional(self):
         root=self.fixture(with_results=True);S.apply(root)

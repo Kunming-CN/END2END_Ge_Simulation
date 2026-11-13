@@ -1,17 +1,42 @@
 # Current handoff
 
-## macOS development status — 2026-11-13
+## Completed native macOS CPU support — 2026-11-13
 
-Owner authorized a synchronized native macOS CPU student version. Implementation
-is committed at `d8fdcc137d9833f33788c42a5790b06cf3a4e917` on
-`codex/macos-runtime`; that branch carries the current implementation handoff.
-Local checks passed: 170 affected runtime tests, 72 transport tests and five
-package tests. Actual Apple Silicon/Intel installation and bounded full-chain
-acceptance are pending in GitHub Actions run `43462246166`; both jobs remain
-queued as of 16:32 UTC. No macOS execution result is claimed. Main README now
-links the source and live test status; the current student release and published
-website remain unchanged until acceptance. This documentation-only update needs
-no simulation or unchanged-site rebuild. Monitoring remains PAUSED.
+Root accepted the shared Windows/macOS implementation by gpt-6.1-sol ultra.
+The student ZIP includes native `Setup.command` and `Control.command`, with one
+shared model/control/readout workflow and separate locked Mac transport packages.
+Windows/Linux locks, canonical models and original science remain unchanged.
+Local checks: 170 runtime tests, 72 transport tests, five package tests and 195
+catalog/resource assertions; existing three Windows exporter receipts still pass.
+
+At source `c1b92a8`, GitHub run `43466877974` completed the real CPU chain on
+macOS 15.8.2 arm64 and macOS 15.7.9 x86_64. Each used SAP22/Cs137, 100 initial
+events, radiation seed 26092631 and one Julia thread: 97 zero/3 nonzero events,
+3 accepted pulses, no native failures or readout rejects. Both verified all 195
+package files, launcher modes and geometry stop/resume with sealed-work reuse.
+No field caches or demonstrations were included in the package.
+
+The hosted checker then used the wrong batch directory after each successful
+run; its `/transport` path is corrected. Both original LH5 files and exact ledgers
+were rechecked from preserved data, followed by protected production Control
+HTTP spectrum/event/waveform checks on Windows. IDs 24/52/54 and waveform 24/0
+at 449.031879 keV passed, with unchanged originals and no new science. Finder,
+Safari and a physical student MacBook were not tested. This is bounded functional
+acceptance, not model convergence or experimental validation. Exact evidence:
+`.local/macos-port/hosted-43466877974/supplement-{arm64,x86_64}-final/acceptance-supplement.json`.
+Do not rerun completed science to turn the preserved hosted checker status green.
+
+An earlier arm64 attempt stopped before radiation because Julia 1.13.0 counted
+only free Mac pages. The fix uses Mach free + inactive + purgeable pages, keeping
+the original 512 MiB reserve, 192 bytes/node and physical settings. Original free
+and estimated available bytes are recorded separately. The failed attempt and
+superseded Intel setup remain under `.local/macos-port/hosted-43462246166/`.
+
+Homepage, guide and source are synchronized through PR #1 and the existing site
+builder. Exact source, student release, public-byte and live-site verification
+records are `.local/macos-port/receipt.json` and
+`.local/student-runtime-p1/COMPLETE.json`. Further work follows actual student
+feedback; monitoring remains PAUSED, with no resets or new campaign authorized.
 
 ## Completed bounded-memory result browsing — 2026-10-23
 

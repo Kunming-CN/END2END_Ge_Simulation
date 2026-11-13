@@ -1,0 +1,17 @@
+[workspace]
+name = "ge-detector-transport-macos"
+version = "0.1.0"
+description = "Pinned native macOS Geant4/remage environment"
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "osx-64"]
+
+[dependencies]
+python = "3.13.*"
+remage = "==1.1.0"
+geant4 = "==11.3.2"
+cmake = ">=3.28,<5"
+ninja = ">=1.12,<2"
+cxx-compiler = ">=1,<2"
+
+[tasks]
+versions = "remage --version && geant4-config --version"

@@ -19,10 +19,10 @@ SOURCES=('tools/catalog_workflow.py','tools/catalog_result_validation.py','tools
 _MODEL_CACHE={}
 
 def command(root=W.ROOT):
-    return ['wsl.exe','--distribution','Ubuntu-24.04','--cd',str(Path(root)/'transport'),'--exec','bash','./workflow.sh','python','-B','./catalog_source.py']
+    return W.transport_prefix(root)+['python','-B','./catalog_source.py']
 
 def query(args,root=W.ROOT,runner=subprocess.run):
-    result=runner(command(root)+args+['--windows-root',str(Path(root).resolve())],cwd=root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=120,shell=False,
+    result=runner(command(root)+args+W.transport_root_args(root),cwd=root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=120,shell=False,
         creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
     W.require(result.returncode==0,'Catalog source input/readiness check failed: '+result.stderr.decode('utf-8',errors='replace')[-2000:])
     return W.decode_json(result.stdout.decode('utf-8-sig'))
@@ -153,7 +153,7 @@ def native_request(directory,resolved,root=W.ROOT):
         'source_sha256':resolved['source_sha256'],'numerics':resolved['numerics']}
 
 def stage_commands(directory,resolved,root=W.ROOT):
-    base='../'+W.BASE+'/'+Path(directory).name;common=command(root);identity=['--windows-root',str(Path(root).resolve())];env=W.child_env(resolved['selection']['threads'])
+    base='../'+W.BASE+'/'+Path(directory).name;common=command(root);identity=W.transport_root_args(root);env=W.child_env(resolved['selection']['threads'])
     return {'geometry':common+['prepare','--selection',base+'/selection.json','--checked',base+'/source-checked.json','--output',base+'/transport',*identity],
         'radiation':common+['run','--directory',base+'/transport',*identity],
         'event_ledger':common+['extract','--directory',base+'/transport',*identity],

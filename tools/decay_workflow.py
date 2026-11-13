@@ -200,10 +200,9 @@ def source_pins(detector,root=W.ROOT):
         'simulation/sap18_stream.jl','simulation/sap18_polarity.jl')
     pins.update({r:W.sha(Path(root)/r) for r in names});return pins
 def _command(root=W.ROOT):
-    return ['wsl.exe','--distribution','Ubuntu-24.04','--cd',str(Path(root)/'transport'),'--exec',
-            'bash','./workflow.sh','python','-B','./decay_source.py']
+    return W.transport_prefix(root)+['python','-B','./decay_source.py']
 def query(args,root=W.ROOT):
-    r=subprocess.run(_command(root)+args+['--windows-root',str(Path(root).resolve())],
+    r=subprocess.run(_command(root)+args+W.transport_root_args(root),
         stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=120,shell=False,
         creationflags=subprocess.CREATE_NO_WINDOW if sys.platform=='win32' else 0)
     W.require(r.returncode==0,'Shared decay source check failed: '+r.stderr.decode('utf-8',errors='replace')[-2000:])
@@ -280,7 +279,7 @@ def portable_stage(directory,resolved,stage,root=W.ROOT):
     return value
 def stage_commands(directory,resolved,root=W.ROOT,environment=None):
     s=resolved['selection'];base='../'+W.BASE+'/'+s['name'];t=base+'/transport';common=_command(root)
-    identity=['--windows-root',str(Path(root).resolve())];env=environment or W.child_env(s['threads'])
+    identity=W.transport_root_args(root);env=environment or W.child_env(s['threads'])
     return {'geometry':common+['prepare','--request',base+'/portable-request.json','--checked-plan',base+'/portable-checked-plan.json','--output',t,*identity],
         'radiation':common+['run','--directory',t,*identity],
         'event_ledger':common+['extract','--directory',t,'--chunk-size','100',*identity],

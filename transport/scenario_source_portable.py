@@ -60,11 +60,22 @@ PACKAGE_NAMES = ("python", "numpy", "h5py", "pyyaml", "remage", "geant4", "geant
                  "geant4-data-radioactivedecay", "cmake", "ninja",
                  "gcc_linux-64", "gxx_linux-64", "gcc_impl_linux-64",
                  "gxx_impl_linux-64", "binutils_impl_linux-64")
+MACOS_MANIFEST = "transport/macos/pixi.toml"
+MACOS_LOCK = "transport/macos/pixi.lock"
+MACOS_PINS = {
+    "transport/macos/pixi.toml": "5ef1c31c6930ba95448d5f4db266e2f4956ae7dbc91e8b857ae7257189f431a9",
+    "transport/macos/pixi.lock": "a852f591b1708b122274f05ec8f4f33b9e36d143f11f06f0519799a503b062fe",
+}
+
+
+def project_root_argument(parser, *, required=True):
+    parser.add_argument("--project-root", "--windows-root", dest="windows_root", required=required)
 BUILD_KEYS = {"kind", "schema_version", "status", "adapter_version", "producer_sha256",
               "project_identity", "source_sha256", "runtime", "build", "exporter"}
 # Preserve the original successful build receipt and all compiled-input pins.
 # This one Python-only option upgrade is separately pinned at execution time.
 HISTORICAL_BUILD_PRODUCER = "b99bfc20ece50e0a87fc22bdb78effea049d27a90fb1b8a1311bcf0e29305f4d"
+PRE_MACOS_BUILD_PRODUCER = "229cc4159e7fc8c42328112b64e771d2c5bd7b36b7af94969bbeddcd4d14b375"
 GAMMA_TRANSPORT_SHA256 = "906c8c83a7c40d0e1fafef3ca7149c5efd418fe4a3a003befca714fed7ed88de"
 NONZERO_STORAGE_SHA256 = "a28ae48e426defe7c03b2f8d2398afcf2ca35dbd26c28fa00670101e1240a2c8"
 
@@ -160,6 +171,8 @@ def source_inventory():
 
 def canonical_sources():
     sources = source_inventory()
+    if platform.system() == "Darwin":
+        sources.update(MACOS_PINS)
     recheck_map(sources)
     return sources
 
@@ -241,14 +254,26 @@ def command(request):
             "-o", "truth.lh5", "-g", "geometry.gdml", "--", "run.mac"]
 
 
-def locked_packages():
-    canonical_sources()
+def macos_platform():
+    platform_id = {"arm64": "osx-arm64", "x86_64": "osx-64"}.get(platform.machine())
+    require(platform_id is not None, "unsupported macOS CPU architecture")
+    return platform_id
+
+
+def locked_packages(names=None):
     import yaml
-    lock = yaml.safe_load((ROOT / "transport/pixi.lock").read_bytes())
+    canonical_sources()
+    mac = platform.system() == "Darwin"
+    ref = MACOS_LOCK if mac else "transport/pixi.lock"
+    target = macos_platform() if mac else "linux-64"
+    if names is None:
+        names = (PACKAGE_NAMES[:-5] + ("clangxx", "clangxx_impl_" + target, "clangxx_" + target,
+                                        "ld64_" + target)) if mac else PACKAGE_NAMES
+    lock = yaml.safe_load((ROOT / ref).read_bytes())
     require(lock["version"] == 7, "unsupported frozen lock format")
-    urls = {p["conda"] for p in lock["environments"]["default"]["packages"]["linux-64"]}
+    urls = {p["conda"] for p in lock["environments"]["default"]["packages"][target]}
     packages = {}
-    for name in PACKAGE_NAMES:
+    for name in names:
         selected = [p for p in lock["packages"] if p.get("conda") in urls
                     and Path(p["conda"]).name.startswith(name + "-")
                     and re.fullmatch(re.escape(name) + r"-[^-]+-[^-]+\.(conda|tar\.bz2)", Path(p["conda"]).name)]
@@ -290,10 +315,12 @@ def executable(prefix, name, version=None):
 
 
 def runtime_snapshot():
-    require(platform.system() == "Linux", "portable source stages require existing locked WSL Linux runtime")
+    system = platform.system()
+    require(system in ("Linux", "Darwin"), "portable source stages require the locked transport runtime")
+    manifest = MACOS_MANIFEST if system == "Darwin" else "transport/pixi.toml"
     prefix = Path(sys.prefix).resolve()
     require(os.environ.get("CONDA_PREFIX") and Path(os.environ["CONDA_PREFIX"]).resolve() == prefix, "active locked prefix mismatch")
-    require(os.environ.get("PIXI_PROJECT_MANIFEST") and Path(os.environ["PIXI_PROJECT_MANIFEST"]).resolve() == ROOT / "transport/pixi.toml", "not the existing project Pixi runtime")
+    require(os.environ.get("PIXI_PROJECT_MANIFEST") and Path(os.environ["PIXI_PROJECT_MANIFEST"]).resolve() == ROOT / manifest, "not the existing project Pixi runtime")
     packages = {name: package_record(prefix, item) for name, item in locked_packages().items()}
     require(platform.python_version() == packages["python"]["version"], "Python version differs from lock")
     exes = {"python": {"ref": Path(sys.executable).resolve().relative_to(prefix).as_posix(), "sha256": digest(sys.executable), "version_output": platform.python_version(), "version_argv": None}}
@@ -301,7 +328,11 @@ def runtime_snapshot():
         exes[name] = executable(prefix, name, version)
     require(exes["ninja"]["version_output"] == packages["ninja"]["version"], "Ninja version differs from lock")
     require(exes["cmake"]["version_output"].splitlines()[0] == "cmake version " + packages["cmake"]["version"], "CMake version differs from lock")
-    return {"kind": "portable_locked_runtime_v1", "prefix": str(prefix), "lock_sha256": PINNED["transport/pixi.lock"], "packages": packages, "executables": exes}
+    lock_sha = MACOS_PINS[MACOS_LOCK] if system == "Darwin" else PINNED["transport/pixi.lock"]
+    runtime = {"kind": "portable_locked_runtime_v1", "prefix": str(prefix), "lock_sha256": lock_sha, "packages": packages, "executables": exes}
+    if system == "Darwin":
+        runtime["platform"] = macos_platform()
+    return runtime
 
 
 def recheck_runtime(saved):
@@ -309,6 +340,10 @@ def recheck_runtime(saved):
 
 
 def project_identity(windows_root):
+    if platform.system() == "Darwin":
+        require(type(windows_root) is str and Path(windows_root).is_absolute()
+                and Path(windows_root).resolve() == ROOT, "macOS project root differs from the launcher root")
+        return {"macos_root": str(ROOT), "compiled_project_local": str(ROOT / ".local")}
     require(type(windows_root) is str and re.match(r"^[A-Za-z]:[\\/]", windows_root), "canonical Windows root must be supplied by launcher")
     output = subprocess.run(["wslpath", "-w", str(ROOT)], text=True, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, check=True, shell=False).stdout.strip()
@@ -323,8 +358,10 @@ def build_recipe(runtime):
     ninja = str(prefix / runtime["executables"]["ninja"]["ref"])
     compiler = shutil.which(os.environ.get("CXX", ""))
     require(compiler is not None and Path(compiler).resolve().is_relative_to(prefix), "missing locked CXX compiler")
-    compiler = str(Path(compiler).resolve())
-    flags = build_flags(prefix)
+    native = runtime.get("platform") in ("osx-arm64", "osx-64")
+    # The activated clang++ name selects the C++ driver and destination architecture.
+    compiler = str(Path(compiler).absolute() if native else Path(compiler).resolve())
+    flags = macos_build_flags(prefix, runtime["platform"]) if native else build_flags(prefix)
     configure = [cmake, "-S", str(ROOT / "transport"), "-B", str(ROOT / BUILD_REF), "-G", "Ninja",
                  "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                  "-DCMAKE_CXX_COMPILER=" + compiler, "-DCMAKE_MAKE_PROGRAM=" + ninja,
@@ -343,6 +380,16 @@ def build_flags(prefix):
             "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
             "CMAKE_EXE_LINKER_FLAGS": "-Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,--allow-shlib-undefined -Wl,-rpath," + str(prefix / "lib") + " -Wl,-rpath-link," + str(prefix / "lib") + " -L" + str(prefix / "lib"),
             "CMAKE_EXE_LINKER_FLAGS_RELEASE": ""}
+
+
+def macos_build_flags(prefix, platform_id):
+    sdk = os.environ.get("SDKROOT", "")
+    require(bool(sdk) and Path(sdk).is_absolute() and Path(sdk).is_dir(), "Install the macOS Command Line Tools before building the exporters")
+    return {"CMAKE_CXX_FLAGS": "-stdlib=libc++", "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_EXE_LINKER_FLAGS": "", "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+            "CMAKE_OSX_SYSROOT": sdk,
+            "CMAKE_OSX_ARCHITECTURES": "arm64" if platform_id == "osx-arm64" else "x86_64",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "13.0", "CMAKE_BUILD_RPATH": str(prefix / "lib")}
 
 
 def cache_fields(path):
@@ -401,27 +448,69 @@ def build_semantics(recipe, runtime):
               "CMAKE_GENERATOR": "Ninja", "CMAKE_BUILD_TYPE": "Release", "CMAKE_CXX_COMPILER": recipe["compiler"],
               "CMAKE_MAKE_PROGRAM": str(Path(runtime["prefix"]) / runtime["executables"]["ninja"]["ref"]),
               "CMAKE_EXPORT_COMPILE_COMMANDS": "ON", "CMAKE_PROJECT_NAME": "m2a_geometry_probe",
-              "Geant4_DIR": str(Path(runtime["prefix"]) / "lib/cmake/Geant4"), **build_flags(runtime["prefix"])}
+              "Geant4_DIR": str(Path(runtime["prefix"]) / "lib/cmake/Geant4")}
+    native = runtime.get("platform") in ("osx-arm64", "osx-64")
+    prefix = Path(runtime["prefix"])
+    wanted.update(macos_build_flags(prefix, runtime["platform"]) if native else build_flags(prefix))
     exact({key: fields.get(key) for key in wanted}, wanted, "foreign/overridden CMake cache")
     for key in ("CMAKE_CXX_STANDARD_LIBRARIES", "CMAKE_CXX_COMPILER_ARG1", "CMAKE_TOOLCHAIN_FILE",
                 "CMAKE_CXX_COMPILER_LAUNCHER", "CMAKE_LINKER_LAUNCHER", "CMAKE_PROJECT_INCLUDE",
                 "CMAKE_PROJECT_INCLUDE_BEFORE", "CMAKE_USER_MAKE_RULES_OVERRIDE"):
         require(not fields.get(key), "extra CMake build override refused: " + key)
-    prefix = Path(runtime["prefix"])
     require(fields.get("Geant4_DIR") and Path(fields["Geant4_DIR"]).resolve().is_relative_to(prefix), "Geant4 configuration outside locked prefix")
-    require(fields.get("CMAKE_LINKER") and Path(fields["CMAKE_LINKER"]).resolve().is_relative_to(prefix), "linker outside locked prefix")
+    if not native:
+        require(fields.get("CMAKE_LINKER") and Path(fields["CMAKE_LINKER"]).resolve().is_relative_to(prefix), "linker outside locked prefix")
     commands = load(build / "compile_commands.json")
     selected = [item for item in commands if Path(item["file"]).resolve() == ROOT / "transport/cryostat_export.cc"]
     require(len(selected) == 1 and selected[0]["directory"] == str(build), "wrong cryostat_export compile target/root")
     argv = selected[0].get("arguments") or shlex.split(selected[0]["command"])
-    require(Path(argv[0]).resolve() == Path(recipe["compiler"]), "foreign compiler in target command")
+    require(Path(argv[0]).resolve() == Path(recipe["compiler"]).resolve(), "foreign compiler in target command")
     definitions = [arg for arg in argv if arg.startswith("-DPROJECT_LOCAL=")]
     exact(definitions, ['-DPROJECT_LOCAL="' + str(ROOT / ".local") + '"'], "wrong compiled PROJECT_LOCAL")
     require(argv.count("-c") == 1 and Path(argv[argv.index("-c") + 1]).resolve() == ROOT / "transport/cryostat_export.cc", "wrong compile source")
     require(argv.count("-o") == 1 and argv[argv.index("-o") + 1] == "CMakeFiles/cryostat_export.dir/cryostat_export.cc.o", "wrong target object")
+    if native:
+        link_argv = macos_link_command(build, recipe)
+    else:
+        validate_linux_compile_command(argv, definitions[0], prefix)
+        commands_text = (build / "target-commands.txt").read_text(encoding="utf-8")
+        require("cryostat_export.cc" in commands_text and "-o cryostat_export" in commands_text
+                and str(ROOT / "transport/cryostat_export.cc") in commands_text, "missing actual target compile/link evidence")
+        link_argv = validate_link_command(commands_text, recipe, runtime)
+    compiler_record = executable(prefix, recipe["compiler"])
+    compiler_files = list((build / "CMakeFiles").glob("*/CMakeCXXCompiler.cmake"))
+    require(len(compiler_files) == 1, "missing/ambiguous compiler identification")
+    compiler_text = compiler_files[0].read_text(encoding="utf-8")
+    compiler_id, compiler_package = ("Clang", "clangxx") if native else ("GNU", "gxx_impl_linux-64")
+    require(f'set(CMAKE_CXX_COMPILER_ID "{compiler_id}")' in compiler_text
+            and 'set(CMAKE_CXX_COMPILER_VERSION "' + runtime["packages"][compiler_package]["version"] + '")' in compiler_text, "compiler ID/version differs from lock")
+    evidence_files = ["CMakeCache.txt", "build.ninja", "CMakeFiles/rules.ninja", "compile_commands.json",
+                      "configure.log", "build.log", "target-commands.txt", compiler_files[0].relative_to(build).as_posix()]
+    identity = {"cache_identity": wanted, "compiler_identity": compiler_record,
+                "target_compile_argv": argv, "target_link_argv": link_argv,
+                "evidence_sha256": {BUILD_REF + "/" + ref: digest(safe_path(build, ref, True)) for ref in evidence_files}}
+    if not native:
+        identity["linker_identity"] = executable(prefix, fields["CMAKE_LINKER"])
+    return identity
+
+
+def macos_link_command(build, recipe):
+    lines = (build / "target-commands.txt").read_text(encoding="utf-8").splitlines()
+    commands = [shlex.split(line) for line in lines if "-o cryostat_export" in line]
+    require(len(commands) == 1, "missing macOS exporter link action")
+    argv = commands[0]
+    require(argv[:2] == [":", "&&"] and argv[-2:] == ["&&", ":"], "extra target link shell action")
+    argv = argv[2:-2]
+    require(Path(argv[0]).resolve() == Path(recipe["compiler"]).resolve()
+            and argv.count("CMakeFiles/cryostat_export.dir/cryostat_export.cc.o") == 1
+            and argv.count("-o") == 1 and argv[argv.index("-o") + 1] == "cryostat_export", "wrong macOS exporter link driver/object/output")
+    return argv
+
+
+def validate_linux_compile_command(argv, definition, prefix):
     require(not any(arg.startswith(("@", "-include", "-imacros", "-fplugin", "-specs=", "--sysroot=")) for arg in argv), "extra compiler injection refused")
     # These are the target definitions exported by the pinned Geant4/Qt build.
-    expected_definitions = {definitions[0], *["-D" + v for v in (
+    expected_definitions = {definition, *["-D" + v for v in (
         "G4LIB_BUILD_DLL", "G4UI_USE_QT", "G4VIS_USE_RAYTRACERX", "G4VIS_USE_TOOLSSG_QT_GLES",
         "G4VIS_USE_TOOLSSG_QT_ZB", "G4VIS_USE_TOOLSSG_X11_GLES", "G4VIS_USE_TOOLSSG_X11_ZB",
         "NDEBUG", "PTL_BUILD_DLL", "QT_CORE_LIB", "QT_GUI_LIB", "QT_NO_DEBUG", "QT_WIDGETS_LIB",
@@ -439,27 +528,15 @@ def build_semantics(recipe, runtime):
         else:
             require(arg in expected_definitions or arg in allowed_flags, "extra compiler option refused: " + arg)
             i += 1
-    commands_text = (build / "target-commands.txt").read_text(encoding="utf-8")
-    require("cryostat_export.cc" in commands_text and "-o cryostat_export" in commands_text
-            and str(ROOT / "transport/cryostat_export.cc") in commands_text, "missing actual target compile/link evidence")
-    link_argv = validate_link_command(commands_text, recipe, runtime)
-    compiler_record = executable(prefix, recipe["compiler"])
-    linker_record = executable(prefix, fields["CMAKE_LINKER"])
-    compiler_files = list((build / "CMakeFiles").glob("*/CMakeCXXCompiler.cmake"))
-    require(len(compiler_files) == 1, "missing/ambiguous compiler identification")
-    compiler_text = compiler_files[0].read_text(encoding="utf-8")
-    require('set(CMAKE_CXX_COMPILER_ID "GNU")' in compiler_text
-            and 'set(CMAKE_CXX_COMPILER_VERSION "' + runtime["packages"]["gxx_impl_linux-64"]["version"] + '")' in compiler_text, "compiler ID/version differs from lock")
-    evidence_files = ["CMakeCache.txt", "build.ninja", "CMakeFiles/rules.ninja", "compile_commands.json",
-                      "configure.log", "build.log", "target-commands.txt", compiler_files[0].relative_to(build).as_posix()]
-    return {"cache_identity": wanted, "compiler_identity": compiler_record, "linker_identity": linker_record,
-            "target_compile_argv": argv, "target_link_argv": link_argv,
-            "evidence_sha256": {BUILD_REF + "/" + ref: digest(safe_path(build, ref, True)) for ref in evidence_files}}
 
 
 def check_build_environment(runtime):
     """Accept only the pinned compiler's ordinary Pixi activation hints."""
     prefix = runtime["prefix"]
+    for variable in ("CMAKE_GENERATOR", "CMAKE_TOOLCHAIN_FILE", "CMAKE_PROJECT_INCLUDE", "CMAKE_PROJECT_INCLUDE_BEFORE"):
+        require(not os.environ.get(variable), "external build override refused: " + variable)
+    if runtime.get("platform") in ("osx-arm64", "osx-64"):
+        return
     expected = {"CMAKE_" + key: prefix + "/bin/x86_64-conda-linux-gnu-" + value
                 for key, value in (("AR", "ar"), ("CXX_COMPILER_AR", "gcc-ar"),
                                    ("C_COMPILER_AR", "gcc-ar"), ("RANLIB", "ranlib"),
@@ -476,8 +553,6 @@ def check_build_environment(runtime):
             require(key not in actual, "duplicate build activation hint")
             actual[key] = value
         exact(actual, expected, "external build override refused: CMAKE_ARGS")
-    for variable in ("CMAKE_GENERATOR", "CMAKE_TOOLCHAIN_FILE", "CMAKE_PROJECT_INCLUDE", "CMAKE_PROJECT_INCLUDE_BEFORE"):
-        require(not os.environ.get(variable), "external build override refused: " + variable)
     require(os.environ.get("CMAKE_PREFIX_PATH", "") in
             ("", prefix, prefix + ":" + prefix + "/x86_64-conda-linux-gnu/sysroot/usr"),
             "foreign build prefix override")
@@ -532,11 +607,14 @@ def build_exporter(windows_root):
 
 
 def validate_build_binding(value, producer):
-    if value.get("producer_sha256") == HISTORICAL_BUILD_PRODUCER:
+    if value.get("project_identity", {}).get("macos_root") is not None:
+        exact(value["source_sha256"], {**source_inventory(), **MACOS_PINS}, "macOS canonical build sources changed")
+        require(value["producer_sha256"] == producer, "macOS build producer changed")
+    elif value.get("producer_sha256") == HISTORICAL_BUILD_PRODUCER:
         exact(value["source_sha256"], PINNED, "historical build sources changed; no old-version rebase")
     else:
         exact(value["source_sha256"], source_inventory(), "rehashing cannot admit changed canonical source")
-        require(value["producer_sha256"] == producer, "build producer changed")
+        require(value["producer_sha256"] in (producer, PRE_MACOS_BUILD_PRODUCER), "build producer changed")
 
 
 def validate_build_receipt(value, identity, runtime, producer, recipe, semantics):
@@ -584,15 +662,19 @@ def read_build_receipt(windows_root):
 
 
 def file_readiness(root=ROOT):
-    """Windows UI file check only; the WSL Check independently proves runtime/build."""
+    """Control file check only; the transport Check independently proves runtime/build."""
     root = Path(root).resolve()
     recheck_map(source_inventory(), root)
     value = load(safe_path(root, BUILD_RECEIPT_REF, True))
     require(set(value) == BUILD_KEYS and value["kind"] == "portable_source_exporter_build_v1" and
             value["schema_version"] == 1 and value["status"] == "complete" and value["adapter_version"] == VERSION, "incomplete portable build receipt")
     validate_build_binding(value, digest(safe_path(root, ADAPTER_REF, True)))
-    normalize = lambda v: v.replace("/", "\\").rstrip("\\")
-    require(normalize(value["project_identity"]["windows_root"]) == normalize(str(root)), "foreign Windows build root")
+    if platform.system() == "Darwin":
+        recheck_map(MACOS_PINS, root)
+        exact(value["project_identity"], {"macos_root": str(root), "compiled_project_local": str(root / ".local")}, "foreign macOS build root")
+    else:
+        normalize = lambda v: v.replace("/", "\\").rstrip("\\")
+        require(normalize(value["project_identity"]["windows_root"]) == normalize(str(root)), "foreign Windows build root")
     binary = safe_path(root, EXPORTER_REF, True)
     exact(value["exporter"], {"ref": EXPORTER_REF, "bytes": binary.stat().st_size, "sha256": digest(binary)}, "portable exporter changed")
     evidence = value["build"]["evidence_sha256"]
@@ -1217,7 +1299,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     build = sub.add_parser("build-exporter")
-    build.add_argument("--windows-root", required=True)
+    project_root_argument(build)
     for name in ("check", "prepare"):
         item = sub.add_parser(name)
         if name == "check":
@@ -1227,14 +1309,14 @@ def main():
             item.add_argument("--stage", choices=("geometry", "radiation", "event_ledger"))
         else:
             item.add_argument("--request", required=True)
-        item.add_argument("--windows-root", required=True)
+        project_root_argument(item)
         if name == "prepare":
             item.add_argument("--checked-plan", required=True)
             item.add_argument("--output", required=True)
     for name in ("run", "extract"):
         item = sub.add_parser(name)
         item.add_argument("--directory", required=True)
-        item.add_argument("--windows-root", required=True)
+        project_root_argument(item)
     args = parser.parse_args()
     if args.command == "build-exporter":
         value = build_exporter(args.windows_root)

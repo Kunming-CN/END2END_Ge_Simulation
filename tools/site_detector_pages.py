@@ -204,7 +204,7 @@ def catalog_introduction(capabilities=None,control_ids=None,dedicated_ids=None,*
         '<tr><th scope="row">Browse online</th><td>'+str(len(capabilities))+' models</td>'
         '<td>Saved geometry, contacts, fields and example signals; no installation.</td></tr>'
         '<tr><th scope="row">Run locally · LBNL cryostat</th><td>'+str(len(control_ids))+' configurations</td>'
-        '<td><a href="'+escape(up+'guide.html#local-control',quote=True)+'">Windows setup and Control</a>; choose a compatible model and source.</td></tr>'
+        '<td><a href="'+escape(up+'guide.html#local-control',quote=True)+'">Setup and Control</a>; choose a compatible model and source.</td></tr>'
         '<tr><th scope="row">Run locally · GeGI cryostat</th><td>'+dedicated+'</td>'
         '<td>Dedicated GeGI assembly and multichannel workflow.</td></tr>'
         '<tr><th scope="row">Published Cs137 10K data</th><td>'+str(len(CASE_MODELS))+' published cases</td>'

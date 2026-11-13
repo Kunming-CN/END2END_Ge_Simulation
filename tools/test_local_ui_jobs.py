@@ -1,5 +1,6 @@
 """Finite mocked protocol acceptance; never launches PowerShell, Julia or physics."""
 import copy
+import errno
 import hashlib
 import json
 import os
@@ -13,6 +14,39 @@ import local_ui_jobs as J
 
 ROOT = Path(__file__).absolute().parent.parent
 CENSUS = dict(initial_primaries=3, zero_ge_primaries=1, nonzero_primaries=2, groups=2)
+
+
+class MacRuntimeTests(unittest.TestCase):
+    def test_creation_identity_preserves_microseconds_and_missing_status(self):
+        def probe(pid, flavor, arg, buffer, size):
+            self.assertEqual((flavor, arg, size), (3, 0, 136))
+            if pid == 27:
+                buffer._obj.start_seconds = 100
+                buffer._obj.start_microseconds = 19
+                return size
+            J.ctypes.set_errno(errno.ESRCH if pid == 28 else errno.EPERM)
+            return 0
+
+        with mock.patch.object(J.sys, 'platform', 'darwin'), mock.patch.object(J.ctypes, 'CDLL') as library:
+            library.return_value.proc_pidinfo.side_effect = probe
+            self.assertEqual(J.process_identity(27), 'mac:100.000019')
+            self.assertIsNone(J.process_identity(28))
+            self.assertEqual(J.process_identity(29), 'unknown')
+
+    def test_pinned_julia_native_fallback_and_explicit_selection(self):
+        parent = ROOT / '.local'
+        parent.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=parent) as temp, mock.patch.object(J.sys, 'platform', 'darwin'), \
+                mock.patch.object(J.platform, 'machine', return_value='arm64'):
+            julia = Path(temp) / 'juliaup/julia-1.13.0+0.aarch64.apple.darwin14/Julia-1.13.app/Contents/Resources/julia/bin/julia'
+            julia.parent.mkdir(parents=True)
+            julia.write_bytes(b'fixture')
+            julia.chmod(0o755)
+            env = {'JULIAUP_DEPOT_PATH': temp}
+            self.assertEqual(J.existing_julia_environment(env.copy())['JULIA_EXE'], str(julia))
+            self.assertEqual(J.existing_julia_environment(dict(env, JULIA_EXE=str(julia)))['JULIA_EXE'], str(julia))
+            with self.assertRaises(J.ControlError):
+                J.existing_julia_environment(dict(env, JULIA_EXE=str(julia)+'-missing'))
 
 
 def planned():

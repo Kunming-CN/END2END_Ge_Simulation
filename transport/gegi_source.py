@@ -59,11 +59,20 @@ def source_pins():
             'transport/scenario_source_portable.py', 'models/GeGI_3D.yaml', 'models/catalog.json',
             'transport/pixi.toml', 'transport/pixi.lock', 'transport/workflow.sh',
             'transport/decay_source.py', 'tools/decay_workflow.py', REGISTRY)
+    if platform.system() == 'Darwin':
+        refs += (*P.MACOS_PINS, 'transport/macos/workflow.sh')
     return {ref: h.sha256(h.ROOT/ref) for ref in refs}
 
 
 def runtime_snapshot():
     """Reuse installed package checks without the unrelated LBNL build closure."""
+    if platform.system() == 'Darwin':
+        runtime = P.runtime_snapshot()
+        return {'kind': 'gegi_locked_runtime_v1', 'platform': runtime['platform'],
+                'prefix': runtime['prefix'], 'lock_sha256': runtime['lock_sha256'],
+                'packages': {name: runtime['packages'][name] for name in PACKAGES},
+                'executables': {name: runtime['executables'][name] for name in ('remage', 'geant4-config')},
+                'python_sha256': h.sha256(sys.executable), 'python_version': platform.python_version()}
     import yaml
     h.require(platform.system() == 'Linux', 'Run GeGI transport in the existing locked WSL environment')
     prefix = Path(sys.prefix).resolve()
@@ -656,7 +665,7 @@ def main(argv=None):
     parser.add_argument('--selection-json'); parser.add_argument('--selection')
     parser.add_argument('--checked'); parser.add_argument('--output'); parser.add_argument('--directory')
     parser.add_argument('--stage', choices=('geometry','radiation','event_ledger'), default='event_ledger')
-    parser.add_argument('--windows-root')
+    P.project_root_argument(parser, required=False)
     args = parser.parse_args(argv)
     if args.windows_root:
         # Optional host identity is checked only; it is never a path-rewrite rule.

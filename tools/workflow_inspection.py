@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import scenario_workflow as W
 
 STATE='.local/local-control-v1'
@@ -66,6 +67,7 @@ def authority(job,root):
 
 
 def inventories(root,runner=subprocess.run):
+    W.require(sys.platform!='darwin','This recovery requires the original Windows and WSL project environment.')
     command=['powershell.exe','-NoProfile','-Command',"$ErrorActionPreference='Stop'; [Console]::OutputEncoding=[Text.UTF8Encoding]::new($false); @(Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,CreationDate,Name,CommandLine) | ConvertTo-Json -Depth 3 -Compress"]
     win=runner(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=30,shell=False,
                creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)

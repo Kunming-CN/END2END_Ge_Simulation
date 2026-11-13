@@ -1,5 +1,19 @@
 # Project working rules
 
+## Owner update — 2026-11-13 synchronized macOS student runtime
+
+Deliver native macOS CPU support using the shared Windows/Mac source and student
+release. Root directs gpt-6.1-sol ultra implementation and owns integrated
+acceptance. Continue automatically through development, bounded actual macOS
+testing and publication; ask only for a concrete external blocker. Prioritize
+the usable installation -> Control -> small full-chain run -> results workflow,
+then cooperative stop/resume. Keep code small and avoid speculative defensive
+layers or extra AI reviews. Preserve existing Windows environments and all
+scientific originals; no large campaign or Apple GPU implementation. Cloud
+macOS acceptance and its GitHub workflow are authorized for this milestone,
+superseding the historical no-workflow instruction. Never change account scopes
+or credentials without the owner's action. Monitoring remains PAUSED; no resets.
+
 ## Owner clarification — 2026-10-22 site selection after readout
 
 The owner recognized that pre-SSD screening may lose events because interaction

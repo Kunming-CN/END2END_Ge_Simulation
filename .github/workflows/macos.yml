@@ -1,0 +1,120 @@
+name: macOS student acceptance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/macos-runtime]
+    paths:
+      - '.github/workflows/macos.yml'
+      - 'Control.command'
+      - 'Setup.command'
+      - 'models/**'
+      - 'scenarios/**'
+      - 'simulation/**'
+      - 'tools/**'
+      - 'transport/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-student-acceptance
+  cancel-in-progress: false
+
+jobs:
+  student-run:
+    name: ${{ matrix.arch }} student run
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 80
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Check out runtime source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            models
+            scenarios
+            simulation
+            tools
+            transport
+
+      - name: Record host and interpreter
+        shell: bash
+        env:
+          EXPECT_ARCH: ${{ matrix.arch }}
+        run: |
+          EVIDENCE="$RUNNER_TEMP/macos-evidence"
+          echo "EVIDENCE=$EVIDENCE" >> "$GITHUB_ENV"
+          echo "STUDENT=$RUNNER_TEMP/Student Install/END2END-Ge-Student" >> "$GITHUB_ENV"
+          mkdir -p "$EVIDENCE"
+          {
+            sw_vers
+            uname -m
+            test "$(uname -m)" = "$EXPECT_ARCH"
+            xcode-select -p
+            xcrun --show-sdk-version
+            sysctl -n hw.memsize
+            df -h "$RUNNER_TEMP"
+            python3 --version
+          } | tee "$EVIDENCE/host.log"
+
+      - name: Install Juliaup
+        timeout-minutes: 8
+        uses: julia-actions/install-juliaup@ec16ad5cb2e4afb0ca4ea6895e35867a269769a7 # v2.2.2
+        with:
+          channel: '1.13.0'
+
+      - name: Install Pixi
+        timeout-minutes: 8
+        uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
+        with:
+          pixi-version: v0.81.0
+          run-install: false
+          cache: false
+
+      - name: Build and extract the student package
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          python3 -B tools/build_student_runtime.py build "$EVIDENCE/END2END-Ge-Student.zip" --receipt "$EVIDENCE/package.json" > "$EVIDENCE/package.log" 2>&1
+          unzip -q "$EVIDENCE/END2END-Ge-Student.zip" -d "$(dirname "$STUDENT")"
+
+      - name: Run student setup
+        timeout-minutes: 38
+        shell: bash
+        run: |
+          cd "$STUDENT"
+          bash ./Setup.command 2>&1 | tee "$EVIDENCE/setup.log"
+
+      - name: Run 100 primaries through Control
+        timeout-minutes: 23
+        shell: bash
+        run: |
+          python3 -B tools/macos_acceptance.py "$STUDENT" "$EVIDENCE" 2>&1 | tee "$EVIDENCE/acceptance.log"
+
+      - name: Preserve package, run and failure evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: macos-student-${{ matrix.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ env.EVIDENCE }}/
+            ${{ env.STUDENT }}/.local/runs/macos-student-acceptance/
+            ${{ env.STUDENT }}/.local/local-control-v1/workflow-logs/
+            ${{ env.STUDENT }}/.local/m2a/*-build-v1/*.log
+            ${{ env.STUDENT }}/.local/m2a/*-build-v1/*-build.json
+            ${{ env.STUDENT }}/.local/m2a/*-build-v1/build-attempt.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

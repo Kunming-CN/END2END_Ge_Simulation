@@ -18,6 +18,8 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js','tools/result_web_delivery.py')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+    # Exact validated 5b05f590 display before the macOS homepage wording.
+    'd5c0843eeb8ec25582c32e3c15f92fbf892efa7cdba354aaea9b9a52199767c3',
     # Exact 4391574 published display before shared viewer navigation changes.
     '9fe651dff2fb607bbe5001c86df0e08211d11adf7d15db026c1957ca9b45542a',
     # Exact completed f4422554 UI stage before approved public payload retirement.

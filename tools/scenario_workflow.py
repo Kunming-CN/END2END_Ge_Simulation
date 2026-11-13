@@ -42,6 +42,8 @@ TERMINAL = ('completed', 'completed_with_native_failures')
 EXPORTER = '.local/m2a/cs137-build-v1/cryostat_export'
 PORTABLE_ADAPTER = 'transport/scenario_source_portable.py'
 PORTABLE_BUILD = '.local/m2a/scenario-source-portable-build-v1'
+MAC_TRANSPORT_SOURCES = ('transport/macos/workflow.sh', 'transport/macos/pixi.toml',
+                         'transport/macos/pixi.lock', 'transport/macos/.pixi/config.toml')
 
 
 def require(ok, message):
@@ -113,6 +115,23 @@ def child_env(threads):
 
 def settings_check(settings, root=ROOT):
     require(type(settings) is dict and set(settings) == set(SETTINGS), 'All eleven electronics settings are required.')
+    if sys.platform == 'darwin':
+        from charge_check import ES_DEFAULTS, Rejected, profile_settings, settings_physics_hash
+        defaults = {}
+        for ref, expected in ES_DEFAULTS.items():
+            body = safe_path(root, ref).read_bytes()
+            require(hashlib.sha256(body).hexdigest() == expected, 'Frozen electronics defaults changed: '+ref)
+            defaults[ref] = decode_json(body.decode('utf-8-sig'))
+        profile = dict(defaults['simulation/native_readout_profile.json'], settings=settings)
+        try:
+            profile_settings(profile)
+        except Rejected as error:
+            raise ControlError('Invalid electronics settings. '+error.detail, 'workflow_refused') from error
+        configuration = defaults['simulation/readout_demo.json']
+        configuration.pop('max_total_samples')
+        configuration.update(settings, schema_version=2, expected_primary_count=None)
+        return {'status':'valid_configuration_only', 'profile':profile, 'configuration':configuration,
+                'physics_sha256':settings_physics_hash(configuration)}
     # Input is stdin data, not PowerShell source or an interpolated command.
     environment=dict(os.environ,PYTHONDONTWRITEBYTECODE='1')
     if os.name=='nt':
@@ -163,6 +182,8 @@ def source_pins(detector, root=ROOT, *, portable=False):
              'tools/electronics_settings.ps1', 'tools/electronics_execution.ps1',
              'tools/native_run_validation.ps1', 'tools/local_ui_jobs.py',
              'tools/gamma_native_example.py','tools/charge_check.py','tools/replay_readout.py'}
+    if sys.platform == 'darwin':
+        names.update(MAC_TRANSPORT_SOURCES)
     names.update('models/'+x for x in entry['dependencies'])
     names.update('simulation/'+n for n in (
         'run.jl','replay.jl','readout.jl','readout_profiles.jl','native_li_example.jl',
@@ -183,7 +204,7 @@ def source_pins(detector, root=ROOT, *, portable=False):
         names.discard(EXPORTER)
         names.update((PORTABLE_ADAPTER,PORTABLE_BUILD+'/exporter-build.json',PORTABLE_BUILD+'/cryostat_export',PORTABLE_BUILD+'/build-attempt.json'))
         receipt_path=safe_path(root,PORTABLE_BUILD+'/exporter-build.json')
-        require(receipt_path.is_file(),'Portable source exporter is not set up. Run.cmd setup -BuildPortableSourceExporter is the explicit build action.')
+        require(receipt_path.is_file(),'Portable source exporter is missing. Follow the setup guide to build it.')
         receipt=read(receipt_path)
         names.update(receipt['build']['evidence_sha256'])
     if detector in RINGS:
@@ -203,8 +224,16 @@ def source_pins(detector, root=ROOT, *, portable=False):
     return pins
 
 
-def runtime_identity(threads):
+def runtime_identity(threads, *, verify_version=True):
     env=child_env(threads)
+    if sys.platform == 'darwin' and verify_version:
+        message = 'Control requires Julia 1.13.0. Select the pinned installation in the setup guide.'
+        try:
+            call = subprocess.run([env['JULIA_EXE'], '--startup-file=no', '--version'],
+                                  env=env, capture_output=True, timeout=15)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise ControlError(message, 'unsupported_runtime') from error
+        require(call.returncode == 0 and call.stdout.strip() == b'julia version 1.13.0', message)
     return {'python_executable':sys.executable,'python_sha256':sha(sys.executable),
             'julia_executable':env['JULIA_EXE'],'julia_sha256':sha(env['JULIA_EXE'])}
 
@@ -240,13 +269,27 @@ def gamma_configuration(selection, marker):
     return marker
 
 
+def transport_prefix(root, *, exec_flag='--exec'):
+    transport_dir = str(Path(root)/'transport')
+    if sys.platform == 'darwin':
+        # Preserve the producer's transport cwd and pass argv without shell interpolation.
+        return ['/bin/bash', '-c', 'cd -- "$1" && shift && exec /bin/bash ./macos/workflow.sh "$@"',
+                'transport', transport_dir]
+    return ['wsl.exe', '--distribution', 'Ubuntu-24.04', '--cd', transport_dir,
+            exec_flag, 'bash', './workflow.sh']
+
+
+def transport_root_args(root):
+    flag = '--project-root' if sys.platform == 'darwin' else '--windows-root'
+    return [flag, str(Path(root).resolve())]
+
+
 def portable_command(root=ROOT):
-    return ['wsl.exe','--distribution','Ubuntu-24.04','--cd',str(Path(root)/'transport'),'--exec',
-            'bash','./workflow.sh','python','-B','./scenario_source_portable.py']
+    return transport_prefix(root)+['python','-B','./scenario_source_portable.py']
 
 
 def portable_query(arguments, root=ROOT, *, runner=subprocess.run):
-    result=runner(portable_command(root)+arguments+['--windows-root',str(Path(root).resolve())],
+    result=runner(portable_command(root)+arguments+transport_root_args(root),
                   stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=120,shell=False,
                   creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
     require(result.returncode==0,'Portable source setup/check failed: '+result.stderr.decode('utf-8',errors='replace')[-2000:])
@@ -489,8 +532,8 @@ def catalog(root=ROOT):
             'sources':sources,
             'electronics_defaults':default,'electronics_keys':list(SETTINGS),
             'numerics':'16 parcels; native seed 2609261; 2 ns grid; 10,000 ns cap; CPU; one or two Julia threads.',
-            'setup_limit':'Fresh runs require the portable source exporter and, for additional models, the catalog source exporter, built explicitly in the installed project environment. Setup evidence covers the existing Windows/WSL computer; student feedback guides further fixes.',
-            'setup_guide':'https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup'}
+            'setup_limit':'Fresh runs require the portable source exporter and, for additional models, the catalog source exporter. Use the setup guide to build them for this computer.',
+            'setup_guide':'https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup'+('-macos' if sys.platform=='darwin' else '')}
 
 
 def verify_pins(resolved, root=ROOT):
@@ -739,15 +782,15 @@ def stage_commands(directory,resolved,root=ROOT,environment=None):
     if s['detector']==SAP18:
         from sap18_workflow import stage_commands as sap18_commands
         return sap18_commands(directory,resolved,root,env)
-    wsl=['wsl.exe','--distribution','Ubuntu-24.04','--cd',str(Path(root)/'transport'),'--','bash','./workflow.sh']
+    transport_driver=transport_prefix(root,exec_flag='--')
     julia=[env['JULIA_EXE'],'--startup-file=no','--threads='+str(s['threads']),
            '--project='+str(Path(root)/'simulation')]
     if s['source']==CS:
         producer='./ring_cs137.py' if s['detector'] in RINGS else './cs137.py'
-        prepare=wsl+['python','-B',producer,'prepare','--model',s['detector'],'--output','../'+transport,
+        prepare=transport_driver+['python','-B',producer,'prepare','--model',s['detector'],'--output','../'+transport,
                      '--exporter','../'+EXPORTER,'--events',str(s['primary_count']),'--seed',str(s['seed'])]
-        radiation=wsl+['python','-B',producer,'run','--directory','../'+transport]
-        extract=wsl+['python','-B',producer,'extract','--directory','../'+transport,'--chunk-size','100']
+        radiation=transport_driver+['python','-B',producer,'run','--directory','../'+transport]
+        extract=transport_driver+['python','-B',producer,'extract','--directory','../'+transport,'--chunk-size','100']
         response=julia+[str(Path(root)/'simulation/native_response_guarded.jl'),'--input',transport+'/stream/manifest.json',
                  '--output',BASE+'/'+s['name']+'/response','--profile',BASE+'/'+s['name']+'/electronics/profile.json',
                  '--parcels','16','--seed','2609261','--trace-examples','16','--charge-csv','all','--native-failure-policy','record']
@@ -756,16 +799,16 @@ def stage_commands(directory,resolved,root=ROOT,environment=None):
     else:
         require(GAMMA_OPTION not in s and s['pose']=='plus5mm' or resolved.get('portable_source_plan') is not None,
                 'Gamma options require the checked shared portable source backend.')
-        prepare=wsl+['python','-B','./scenario_prepare.py','prepare','--config',
+        prepare=transport_driver+['python','-B','./scenario_prepare.py','prepare','--config',
                     '../scenarios/m11a-'+s['detector'].lower()+'-mono_gamma_662_axis_v1-plus5mm.json',
                     '--output','../'+transport,'--exporter','../'+EXPORTER]
-        radiation=wsl+['python','-B','./scenario_transport.py','run','--prepared','../'+transport]
-        extract=wsl+['python','-B','./scenario_transport.py','extract','--prepared','../'+transport]
+        radiation=transport_driver+['python','-B','./scenario_transport.py','run','--prepared','../'+transport]
+        extract=transport_driver+['python','-B','./scenario_transport.py','extract','--prepared','../'+transport]
         response=julia+[str(Path(root)/'simulation/scenario_response.jl'),'--request',str(directory/'gamma-request.json'),
                          '--output',str(directory/'response')]
     if resolved.get('portable_source_plan') is not None:
         shared=portable_command(root)
-        identity=['--windows-root',str(Path(root).resolve())]
+        identity=transport_root_args(root)
         prepare=shared+['prepare','--request',BASE+'/'+s['name']+'/portable-request.json',
                         '--checked-plan','../'+BASE+'/'+s['name']+'/portable-checked-plan.json',
                         '--output','../'+transport,*identity]

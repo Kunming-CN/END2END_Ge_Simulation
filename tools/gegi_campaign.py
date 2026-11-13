@@ -196,7 +196,8 @@ def chunk_path(directory,chunk):
 
 
 def source_pins(root):
-    return {ref:sha(Path(root)/ref) for ref in SOURCES}
+    sources = SOURCES+W.MAC_TRANSPORT_SOURCES if sys.platform == 'darwin' else SOURCES
+    return {ref:sha(Path(root)/ref) for ref in sources}
 
 
 def verify_inputs(plan,root=ROOT):
@@ -607,7 +608,7 @@ def read_plan(directory,*,root=ROOT,verify=True):
 
 
 def identity(pid):
-    if os.name=='nt':return process_identity(pid)
+    if os.name=='nt' or sys.platform=='darwin':return process_identity(pid)
     try:
         data=Path('/proc/%d/stat'%pid).read_text();boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip()
         return boot+':'+data[data.rindex(')')+2:].split()[19]
@@ -904,7 +905,7 @@ class Transport:
         record={'kind':'gegi_campaign_transport_child_v1','status':'launching','started_utc':utc()}
         write(record_path,record)
         with Path(log).open('ab') as output:
-            child=subprocess.Popen(G.command(self.root)+args+['--windows-root',str(self.root)],cwd=self.root,
+            child=subprocess.Popen(G.command(self.root)+args+W.transport_root_args(self.root),cwd=self.root,
                 stdout=output,stderr=subprocess.STDOUT,stdin=subprocess.DEVNULL,shell=False,
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
             record.update(status='running',pid=child.pid,process_start_identity=identity(child.pid));write(record_path,record)

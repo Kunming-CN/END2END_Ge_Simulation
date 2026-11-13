@@ -56,10 +56,10 @@ def iter_batches(d):
 def batch_directory(directory,index):return Path(directory)/'batches'/f'b{index:010d}'
 
 def transport_command(root=W.ROOT):
-    return ['wsl.exe','--distribution','Ubuntu-24.04','--cd',str(Path(root)/'transport'),'--exec','bash','./workflow.sh','python','-B','./batch_source.py']
+    return W.transport_prefix(root)+['python','-B','./batch_source.py']
 
 def transport_check(selection,root=W.ROOT):
-    command=transport_command(root)+['check','--request-json',W.encoded(selection).decode('utf-8'),'--windows-root',str(Path(root).resolve())]
+    command=transport_command(root)+['check','--request-json',W.encoded(selection).decode('utf-8'),*W.transport_root_args(root)]
     result=subprocess.run(command,cwd=root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=False,timeout=120,
         creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
     require(result.returncode==0,'Batch transport readiness failed: '+result.stderr.decode('utf-8',errors='replace')[-2000:])
@@ -249,7 +249,7 @@ def invoke(argv,directory,stage,root,threads):
 
 def worker(stage,plan,directory,batch=None,root=W.ROOT):
     directory=Path(directory);s=plan['resolved']['selection'];base=stage_base(directory,stage,batch);command=transport_command(root)
-    common=['--windows-root',str(Path(root).resolve())]
+    common=W.transport_root_args(root)
     if stage=='geometry':
         argv=command+['prepare','--request','../'+rel(directory/'selection.json',root),'--checked','../'+rel(directory/'transport-checked.json',root),'--output','../'+rel(base,root),*common]
     elif stage=='native_preparation':
@@ -375,7 +375,7 @@ def completed_result(stage,plan,directory,batch,root):
     if stage in ('geometry','radiation','event_ledger'):
         args=['verify','--stage',stage]
         args+=['--shared','../'+rel(base/'prepared.json',root)] if stage=='geometry' else ['--directory','../'+rel(base if stage=='radiation' else base.parent,root)]
-        call=subprocess.run(transport_command(root)+args+['--windows-root',str(Path(root).resolve())],cwd=root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=False,
+        call=subprocess.run(transport_command(root)+args+W.transport_root_args(root),cwd=root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=False,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
         require(call.returncode==0,'Retained terminal transport validation failed: '+call.stderr.decode('utf-8',errors='replace')[-2000:])
         require(B.typed_equal(result,W.decode_json(call.stdout.decode('utf-8-sig'))),'Retained terminal worker receipt changed.')

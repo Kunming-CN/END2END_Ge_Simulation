@@ -7,12 +7,10 @@
 > **[Open the GeSignal website →](https://kunming-cn.github.io/END2END_Ge_Simulation/)**
 > Explore saved simulations and detector models online, with no installation.
 
-**macOS update — 13 November 2026:** Native CPU support for Apple Silicon and
-Intel Macs is implemented on the [Mac development branch](https://github.com/Kunming-CN/END2END_Ge_Simulation/tree/codex/macos-runtime),
-including `Setup.command`, `Control.command` and the shared simulation workflow.
-[Follow the macOS installation and full-chain tests](https://github.com/Kunming-CN/END2END_Ge_Simulation/actions/runs/43462246166).
-Mac acceptance is still pending; the latest student download remains the Windows
-release until those checks pass.
+**macOS is supported:** Apple Silicon and Intel Macs use the same student
+software ZIP as Windows. Run `Setup.command` once, then open `Control.command`.
+Follow the [Mac setup guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup-macos)
+to prepare the dependencies and start your first simulation.
 
 ## Start here
 
@@ -20,13 +18,13 @@ release until those checks pass.
 |---|---|
 | Learn the signal chain | [Follow one signal](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html): six saved Cs137 10K examples connect deposits, charge, electronics and original event identities. |
 | Explore saved results and geometry | [Browse studies](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html), including Cs137 10K, 1M and GeGI; inspect the [detector catalog](https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/index.html) and [cryostat assemblies](https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/index.html). |
-| Run a new simulation on your computer | Follow the [Windows setup and use guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html), then start the local Control interface. |
+| Run a new simulation on your computer | Follow the [Windows and macOS setup guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html), then start the local Control interface. |
 
 ## Run locally
 
 [Download the student software ZIP](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip),
 extract it and open `tools/site_guide.html`. After preparing the dependencies,
-start **Control.cmd** on that computer to choose a compatible cryostat, detector
+start **Control.cmd** on Windows or **Control.command** on macOS to choose a compatible cryostat, detector
 and source, check the plan, and run, stop or resume a simulation. The guide and
 local compatibility checks identify the supported combinations.
 
@@ -43,7 +41,7 @@ END2END_Ge_Simulation/
 │   └── readout.jl         # Preamplifier, analog shaper and peak ADC
 ├── scenarios/             # Source presets, compatibility and run configurations
 ├── tools/                 # Local Control, orchestration, website generators and tests
-│   └── site_guide.html    # Maintained Windows setup and use guide
+│   └── site_guide.html    # Maintained Windows and macOS setup and use guide
 ├── models/                # Versioned SSD YAMLs, includes and provenance catalog
 └── docs/                  # Generated website — edit its maintained sources, not docs/
 ```
@@ -58,8 +56,12 @@ Saved studies are engineering simulations with their own inputs, event counts
 and validation limits. Deposited-energy truth (Edep) and readout-derived energy
 (Erec) describe different stages. Model geometry, compatible operating settings,
 numerical convergence and agreement with experiment must be assessed separately.
-Setup has been checked on the existing Windows/WSL computer; fresh-machine
-portability remains unvalidated.
+Windows setup has been checked on the existing Windows/WSL computer. Cloud
+macOS 15 checks completed the native CPU SAP22/Cs137 workflow on Apple Silicon
+and Intel, with 100 initial events per architecture and stage stop/resume.
+The preserved Mac data were checked through the production Control result
+reader on Windows. See the [platform test record](https://github.com/Kunming-CN/END2END_Ge_Simulation/pull/1)
+for the exact checks.
 
 See [Methods](https://kunming-cn.github.io/END2END_Ge_Simulation/methods/index.html)
 for stage definitions, calibration, counting rules and study-specific limits.

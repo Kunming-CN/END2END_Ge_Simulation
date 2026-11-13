@@ -37,6 +37,9 @@ PRESENTATION_PREDECESSORS = frozenset({
     'bae59d7ee0916648e41792c8732f81e682b87939efc706ce5c0116667a53dd1d',
     # Exact 376bd39 deployed display, byte matched to Git before route changes.
     '95c3b88535ee6698f88e4184f735c3c1e14b2667fb89a18d8d7107e092c31f5b'})
+# Exact 5dfd5fa deployed display before guide metadata changed. This is already
+# a presentation refresh, so it is admitted for copying, not for another refresh.
+SAVED_NAVIGATION_DISPLAY = '3a8ca29af5d05e8b8bdbd077aca4f8b605bacb07b763346221f9fd87818ddc06'
 EVENTS = ROOT / '.local/gegi-10m/reconstruction-v3/assembly-events.json'
 EVENTS_SHA256 = '4ceebc1c3d8c63479db1ced63edc230387de8a983934ef62d4a73d57499f8210'
 ASSET = 'scenarios/assets/gegi_cryostat_v1.json'
@@ -596,7 +599,8 @@ def validate_bundle(bundle=BUNDLE):
     scene = read(bundle/'scene.json')
     require(len(scene['volumes']) == 8 and {v['name'] for v in scene['volumes']} == set(LABELS), 'Public assembly census differs')
     current_sources = source_hashes()
-    require(manifest['source_sha256'] == current_sources or legacy or predecessor,
+    require(manifest['source_sha256'] == current_sources or legacy or predecessor
+            or manifest_hash == SAVED_NAVIGATION_DISPLAY,
             'Public assembly exporter source differs')
     require(all(manifest['source_sha256'][ref] == current_sources[ref] for ref in NATIVE_SOURCE_FILES),
             'Saved assembly native exporter source differs')

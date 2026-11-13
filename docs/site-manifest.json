@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "build_id": "5e2a7cdf9dc0fd029c76ae1520cf789113c77265d5a45e99163807eaf9dbf457",
+  "build_id": "6e04be2300ed5e84ed38dff432a9fcdf837ff9d584d1725c4f184d4876285381",
   "file_count": 1872,
-  "total_bytes": 493118530,
+  "total_bytes": 493121214,
   "html_pages": 109,
   "local_links_checked": 3317,
-  "resource_references_checked": 3370,
-  "page_navigation_checked": 1444,
-  "fragments_checked": 82,
+  "resource_references_checked": 3374,
+  "page_navigation_checked": 1448,
+  "fragments_checked": 86,
   "downloads_checked": 741,
   "media_references_checked": 1148,
   "metadata_references_checked": 35,
@@ -5160,8 +5160,8 @@
     },
     {
       "path": "detectors/index.html",
-      "bytes": 17379,
-      "sha256": "6275213e3e648f489cac392d36eaa39cd3dad5f5cd9fe5eff87a8142c641b557"
+      "bytes": 17371,
+      "sha256": "cd64dc5016765825e2a0a4f0f32b214ea24399fe7de00d494c73a66bc7db4a30"
     },
     {
       "path": "downloads/AK01.zip",
@@ -7715,13 +7715,13 @@
     },
     {
       "path": "guide.html",
-      "bytes": 51567,
-      "sha256": "7bf96d6c813e890c39c85593960e120e79e9ffd7fb2d21ae588617bd995ba038"
+      "bytes": 54249,
+      "sha256": "d03734d9b500dc44cf9aac302f20c301159d57f131997fb60d7b2b8def62cd09"
     },
     {
       "path": "index.html",
-      "bytes": 10753,
-      "sha256": "80d6c40d6f3e2d0cb85b8eacd3f4c400edde402c8f3c3a0dad11840a381b5c0d"
+      "bytes": 10763,
+      "sha256": "63d7f96cfb4e23867d2fc7f747a40a8cbcd7f37e4b735eec4e26ccf186411ee4"
     },
     {
       "path": "learn/index.html",
@@ -7791,12 +7791,12 @@
     {
       "path": "methods/lithium-display.json",
       "bytes": 3346,
-      "sha256": "d5163baf688db10e9bead9320ec7506cfc5813a7dd92894fd819026fdfc38ac0"
+      "sha256": "f6285cf37095a228dc3e46f8e29a36ebddceb31b9c449016c411396dcaf816c1"
     },
     {
       "path": "methods/native-li-display.json",
       "bytes": 4991,
-      "sha256": "7c27c25e638996a046867a352ece229ca43d446f106d3a0302f82794572c113a"
+      "sha256": "4becd3ed81523b8bd96477432f14a7780c25a282272aecae09a214a1be8b849a"
     },
     {
       "path": "methods/native-li.html",
@@ -9281,7 +9281,7 @@
     {
       "path": "results/gegi-campaign/publication.json",
       "bytes": 6324,
-      "sha256": "ab47c28287f6a1c9bd3fde640f40ed8787fd7ba9b25b2ae9b67a79c154491717"
+      "sha256": "a35c2c62bbefdfb84889468367eddedf561beb9326be1df341c38178387380ef"
     },
     {
       "path": "results/gegi-campaign/representatives.json",
@@ -9331,7 +9331,7 @@
     {
       "path": "spectra/manifest.json",
       "bytes": 7517,
-      "sha256": "d5c0843eeb8ec25582c32e3c15f92fbf892efa7cdba354aaea9b9a52199767c3"
+      "sha256": "5a9e3568dcbdc568dd74da2b646b2b5bf914f267d4611657240aa2a284cb679b"
     },
     {
       "path": "spectra/million-response.html",
@@ -9371,7 +9371,7 @@
     {
       "path": "viewers/manifest.json",
       "bytes": 81906,
-      "sha256": "ff294b3591524ef5c6fb2b7ebba0818c5b90132ace5f5453ff06ec2bff581a48"
+      "sha256": "bec647650f95d22702d7adcdf9d69a7b889caaf19d256a4e1a78898794c85d01"
     }
   ]
 }
