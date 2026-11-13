@@ -13,13 +13,13 @@
 |---|---|
 | Learn the signal chain | [Follow one signal](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html): six saved Cs137 10K examples connect deposits, charge, electronics and original event identities. |
 | Explore saved results and geometry | [Browse studies](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html), including Cs137 10K, 1M and GeGI; inspect the [detector catalog](https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/index.html) and [cryostat assemblies](https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/index.html). |
-| Run a new simulation on your computer | Follow the [Windows setup and use guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html), then start the local Control interface. |
+| Run a new simulation on your computer | Follow the [Windows and macOS setup guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html), then start the local Control interface. |
 
 ## Run locally
 
 [Download the student software ZIP](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip),
 extract it and open `tools/site_guide.html`. After preparing the dependencies,
-start **Control.cmd** on that computer to choose a compatible cryostat, detector
+start **Control.cmd** on Windows or **Control.command** on macOS to choose a compatible cryostat, detector
 and source, check the plan, and run, stop or resume a simulation. The guide and
 local compatibility checks identify the supported combinations.
 
@@ -36,7 +36,7 @@ END2END_Ge_Simulation/
 │   └── readout.jl         # Preamplifier, analog shaper and peak ADC
 ├── scenarios/             # Source presets, compatibility and run configurations
 ├── tools/                 # Local Control, orchestration, website generators and tests
-│   └── site_guide.html    # Maintained Windows setup and use guide
+│   └── site_guide.html    # Maintained Windows and macOS setup and use guide
 ├── models/                # Versioned SSD YAMLs, includes and provenance catalog
 └── docs/                  # Generated website — edit its maintained sources, not docs/
 ```
@@ -51,8 +51,9 @@ Saved studies are engineering simulations with their own inputs, event counts
 and validation limits. Deposited-energy truth (Edep) and readout-derived energy
 (Erec) describe different stages. Model geometry, compatible operating settings,
 numerical convergence and agreement with experiment must be assessed separately.
-Setup has been checked on the existing Windows/WSL computer; fresh-machine
-portability remains unvalidated.
+Windows setup has been checked on the existing Windows/WSL computer. Native
+macOS CPU support is undergoing installation and full-chain acceptance; see the
+guide for the current tested platforms and limits.
 
 See [Methods](https://kunming-cn.github.io/END2END_Ge_Simulation/methods/index.html)
 for stage definitions, calibration, counting rules and study-specific limits.

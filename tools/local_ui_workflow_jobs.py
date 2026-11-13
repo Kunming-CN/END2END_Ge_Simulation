@@ -130,7 +130,7 @@ class WorkflowController:
         except (OSError,ValueError,KeyError,ControlError):
             portable=None;checks.append({'label':'Portable source exporter and matching build receipt','available':False})
         try:
-            runtime=W.runtime_identity(2)
+            runtime=W.runtime_identity(2,verify_version=False) if sys.platform=='darwin' else W.runtime_identity(2)
             checks.append({'label':'Existing pinned Julia executable','available':True})
         except (OSError,ControlError):
             runtime=None;checks.append({'label':'Existing pinned Julia executable','available':False})
@@ -143,11 +143,14 @@ class WorkflowController:
         angle_ready=all(safe_path(self.root,ref).is_file() for ref in
             ('.local/m2a/angle-source-build-v1/cryostat_angle_export','.local/m2a/angle-source-build-v1/exporter-build.json'))
         checks.append({'label':'Angular source geometry exporter and build receipt','available':angle_ready})
+        setup_note = ('Run Setup.command to build the exporters in the existing locked environment. '
+                      if sys.platform == 'darwin' else
+                      'Run.cmd setup -BuildPortableSourceExporter builds the original exporter; Run.cmd setup -BuildCatalogSourceExporter builds the common model exporter; Run.cmd setup -BuildAngleSourceExporter builds angular geometry support. These use the existing locked environment. ')
         return {'status':'file_readiness_only','checks':checks,'runtime_identity':runtime,'portable_source':portable,
                 'catalog_models_file_ready':catalog_ready,
                 'angular_source_file_ready':angle_ready,
                 'ready_for_config_check':ready_for_config_check,'science_calls':0,
-                'note':'File readiness only. Run.cmd setup -BuildPortableSourceExporter builds the original exporter; Run.cmd setup -BuildCatalogSourceExporter builds the common model exporter; Run.cmd setup -BuildAngleSourceExporter builds angular geometry support. These use the existing locked environment. '+('Angular execution is available after a successful Check plan. ' if B.ANGULAR_EXECUTION_READY else 'Nonzero-angle execution is pending end-to-end acceptance. ')+'Check verifies current build/runtime identities; opening Control installs or builds nothing.',
+                'note':'File readiness only. '+setup_note+('Angular execution is available after a successful Check plan. ' if B.ANGULAR_EXECUTION_READY else 'Nonzero-angle execution is pending end-to-end acceptance. ')+'Check verifies current build/runtime identities; opening Control installs or builds nothing.',
                 'guide':W.catalog(self.root)['setup_guide']}
 
     def check(self,config):
@@ -266,7 +269,7 @@ class WorkflowController:
             log=safe_path(self.root,STATE+'/workflow-logs/'+job['id']+'.log');log.parent.mkdir(parents=True,exist_ok=True)
             mode=job['mode']+'-batches' if self._batch_job(job) else job['mode']+'-gegi' if self._gegi_job(job) else job['mode']+'-catalog' if self._catalog_job(job) else job['mode']
             argv=[sys.executable,'-B',str(self.root/'tools/scenario_workflow.py'),mode]
-            if Path(sys.executable).name.casefold()=='pvpython.exe':argv[1:1]=['--no-mpi','--disable-registry']
+            if Path(sys.executable).name.casefold() in ('pvpython','pvpython.exe'):argv[1:1]=['--no-mpi','--disable-registry']
             argv+=['--plan',str(plan_path)] if job['mode'] in ('run','continue') else ['--name',job['name']]
             argv+=['--dispatch-id',job['id']]
             def spawned(pid,identity):
@@ -443,7 +446,7 @@ class WorkflowController:
         out['output']=W.BASE+'/'+job['name'];out['error']=job.get('error');out['stages']={}
         out['workflow_kind']=job['plan'].get('kind')
         out['execution_contract']='serial_batches_v3' if self._batch_job(job) else 'legacy_v1'
-        out['can_inspect_failure']=not self._catalog_job(job) and not self._batch_job(job) and not self._gegi_job(job)
+        out['can_inspect_failure']=sys.platform!='darwin' and not self._catalog_job(job) and not self._batch_job(job) and not self._gegi_job(job)
         out['can_continue_prefix']=out['can_inspect_failure'] and R.eligible_name(job['name']) and job['status']=='dispatch_uncertain'
         out['can_finalize_results']=False
         out['can_recover_launch']=False

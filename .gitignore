@@ -13,6 +13,8 @@
 !Publish.cmd
 !Run.cmd
 !Control.cmd
+!Control.command
+!Setup.command
 !tools/
 !tools/**
 !scenarios/
@@ -44,6 +46,12 @@
 !transport/pixi.toml
 !transport/pixi.lock
 !transport/.pixi/config.toml
+!transport/macos/
+!transport/macos/pixi.toml
+!transport/macos/pixi.lock
+!transport/macos/workflow.sh
+!transport/macos/.pixi/
+!transport/macos/.pixi/config.toml
 !transport/cryostat-source.json
 !transport/cryostat-input-ledger.json
 !transport/Run.cmd

@@ -213,7 +213,7 @@ def verify(directory,stage='event_ledger'):
 
 def main(argv=None):
     global WINDOWS_ROOT
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('models','check','prepare','run','extract','verify'));p.add_argument('--selection-json');p.add_argument('--selection');p.add_argument('--checked');p.add_argument('--output');p.add_argument('--directory');p.add_argument('--stage',choices=('geometry','radiation','event_ledger'),default='event_ledger');p.add_argument('--windows-root',required=True);a=p.parse_args(argv);WINDOWS_ROOT=a.windows_root
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=('models','check','prepare','run','extract','verify'));p.add_argument('--selection-json');p.add_argument('--selection');p.add_argument('--checked');p.add_argument('--output');p.add_argument('--directory');p.add_argument('--stage',choices=('geometry','radiation','event_ledger'),default='event_ledger');P.project_root_argument(p);a=p.parse_args(argv);WINDOWS_ROOT=a.windows_root
     if a.action=='models':value=models()
     elif a.action=='check':value=check(W.decode_json(a.selection_json) if a.selection_json else cs.load(a.selection))
     elif a.action=='prepare':value=prepare(cs.load(a.selection),a.output,cs.load(a.checked))

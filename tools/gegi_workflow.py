@@ -54,12 +54,11 @@ def catalog_entries(root=W.ROOT):
 
 
 def command(root=W.ROOT):
-    return ['wsl.exe', '--distribution', 'Ubuntu-24.04', '--cd', str(Path(root)/'transport'),
-            '--exec', 'bash', './workflow.sh', 'python', '-B', './gegi_source.py']
+    return W.transport_prefix(root)+['python', '-B', './gegi_source.py']
 
 
 def query(args, root=W.ROOT, runner=subprocess.run):
-    p = runner(command(root)+args+['--windows-root', str(Path(root).resolve())], cwd=root,
+    p = runner(command(root)+args+W.transport_root_args(root), cwd=root,
                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=180, shell=False,
                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
     W.require(p.returncode == 0, 'GeGI transport check failed: '+p.stderr.decode('utf-8', errors='replace')[-3000:])
@@ -115,7 +114,8 @@ def check(selection, *, root=W.ROOT, allow_existing=False, validate_settings=W.s
     W.require(transport['kind'] == 'gegi_source_checked_v1' and transport['selection'] == selection,
               'GeGI source/cryostat check changed the selected settings.')
     pins = dict(transport['source_sha256'])
-    pins.update(pin_reader(root) if pin_reader else {p: W.sha(W.safe_path(root, p)) for p in SOURCES})
+    sources = SOURCES+('tools/charge_check.py', *W.MAC_TRANSPORT_SOURCES) if sys.platform == 'darwin' else SOURCES
+    pins.update(pin_reader(root) if pin_reader else {p: W.sha(W.safe_path(root, p)) for p in sources})
     numerics = {'drift_dt_ns': 1.0, 'drift_cap_ns': 1000.0, 'native_seed': 26101702,
                 'precision_bits': 64, 'diffusion': False, 'self_repulsion': False,
                 'field_policy': 'reuse exact native 34-electrode state or solve sequentially',
@@ -155,7 +155,7 @@ def native_request(directory, resolved, root=W.ROOT):
 def stage_commands(directory, resolved, root=W.ROOT):
     base = '../'+W.BASE+'/'+Path(directory).name
     common = command(root)
-    tail = ['--windows-root', str(Path(root).resolve())]
+    tail = W.transport_root_args(root)
     return {
         'geometry': common+['prepare', '--selection', base+'/selection.json', '--checked', base+'/source-checked.json', '--output', base+'/transport', *tail],
         'radiation': common+['run', '--directory', base+'/transport', *tail],

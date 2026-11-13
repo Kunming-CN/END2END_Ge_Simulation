@@ -67,11 +67,10 @@ def source_pins(root=W.ROOT):
     pins.update({ref:W.sha(Path(root)/ref) for ref in (*SOURCES,MODEL_REF,DEPENDENCY)})
     return pins
 def _command(root=W.ROOT):
-    return ['wsl.exe','--distribution','Ubuntu-24.04','--cd',str(Path(root)/'transport'),'--exec',
-            'bash','./workflow.sh','python','-B','./sap18_source.py']
+    return W.transport_prefix(root)+['python','-B','./sap18_source.py']
 def query(arguments,root=W.ROOT):
     import subprocess
-    result=subprocess.run(_command(root)+arguments+['--windows-root',str(Path(root).resolve())],
+    result=subprocess.run(_command(root)+arguments+W.transport_root_args(root),
         stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=120,shell=False,
         creationflags=subprocess.CREATE_NO_WINDOW if sys.platform=='win32' else 0)
     W.require(result.returncode==0,'SAP18 preflight failed: '+result.stderr.decode('utf-8',errors='replace')[-2000:])
@@ -86,7 +85,7 @@ def portable_stage(directory,resolved,stage,root=W.ROOT):
     return value
 def stage_commands(directory,resolved,root=W.ROOT,environment=None):
     s=resolved['selection'];t='../'+W.BASE+'/'+s['name']+'/transport';base='../'+W.BASE+'/'+s['name']
-    common=_command(root);identity=['--windows-root',str(Path(root).resolve())]
+    common=_command(root);identity=W.transport_root_args(root)
     env=environment or W.child_env(s['threads'])
     return {'geometry':common+['prepare','--request',base+'/portable-request.json','--checked-plan',base+'/portable-checked-plan.json','--output',t,*identity],
         'radiation':common+['run','--directory',t,*identity],

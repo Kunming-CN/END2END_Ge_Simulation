@@ -416,11 +416,11 @@ def main():
     global WINDOWS_ROOT
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
     p=sub.add_parser('check');p.add_argument('--request-json');p.add_argument('--directory')
-    p.add_argument('--stage',choices=('geometry','radiation','event_ledger'));p.add_argument('--windows-root',required=True)
+    p.add_argument('--stage',choices=('geometry','radiation','event_ledger'));P.project_root_argument(p)
     p=sub.add_parser('prepare');p.add_argument('--request',required=True);p.add_argument('--checked-plan',required=True)
-    p.add_argument('--output',required=True);p.add_argument('--windows-root',required=True)
+    p.add_argument('--output',required=True);P.project_root_argument(p)
     for name in ('run','extract'):
-        p=sub.add_parser(name);p.add_argument('--directory',required=True);p.add_argument('--windows-root',required=True)
+        p=sub.add_parser(name);p.add_argument('--directory',required=True);P.project_root_argument(p)
         if name=='extract':p.add_argument('--chunk-size',type=int,default=100)
     args=parser.parse_args();WINDOWS_ROOT=args.windows_root
     if args.command=='check':

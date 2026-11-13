@@ -1,5 +1,28 @@
 # Current handoff
 
+## Active macOS student runtime — 2026-11-13
+
+Owner approved shared Windows/macOS source and synchronized student delivery,
+with root directing gpt-6.1-sol ultra implementation. Proceed autonomously through
+installation, one small CPU full-chain run, result browsing and cooperative
+stop/resume; no extra review rounds or speculative defensive layers. Native
+Apple Silicon is the first target; Intel support depends on the same pinned
+dependency availability and actual checks. No Apple GPU work or large campaign.
+
+Starting source is clean `36417ee`; remote HEAD agrees. Actual process inspection
+found no active project Python/Julia/remage workers. Previous GeGI locks are
+retained inactive historical ownership, and automatic monitoring remains PAUSED.
+Existing scientific outputs and Windows dependency lock stay unchanged. Working
+evidence is `.local/macos-port/`. Implementation checks passed: 170 affected
+runtime tests, 72 transport tests and five student-package tests. Existing three
+Windows exporter receipts still validate without rebuilding; Linux environment
+and canonical model bytes are unchanged. The Mac lock resolves both architectures.
+Actual macOS installation and execution remain pending. Workflow `macos.yml` is
+committed on `codex/macos-runtime`; initial commit deliberately skipped execution
+until the complete runtime source is ready. This owner-requested milestone takes precedence over the old
+actual-feedback queue below. Root owns integrated checks, publication and final
+acceptance; cloud macOS tests are part of the newly authorized scope.
+
 ## Completed bounded-memory result browsing — 2026-10-23
 
 The existing GeGI viewer now reads summary/event index first, then one selected

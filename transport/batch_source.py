@@ -330,7 +330,7 @@ def verify_stream(directory):
 
 def main(argv=None):
     global WINDOWS_ROOT
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('action',choices=('check','prepare','run','extract','verify'));parser.add_argument('--request');parser.add_argument('--request-json');parser.add_argument('--checked');parser.add_argument('--shared');parser.add_argument('--batch');parser.add_argument('--output');parser.add_argument('--directory');parser.add_argument('--stage',choices=('geometry','radiation','event_ledger'),default='event_ledger');parser.add_argument('--windows-root',required=True);a=parser.parse_args(argv)
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('action',choices=('check','prepare','run','extract','verify'));parser.add_argument('--request');parser.add_argument('--request-json');parser.add_argument('--checked');parser.add_argument('--shared');parser.add_argument('--batch');parser.add_argument('--output');parser.add_argument('--directory');parser.add_argument('--stage',choices=('geometry','radiation','event_ledger'),default='event_ledger');P.project_root_argument(parser);a=parser.parse_args(argv)
     WINDOWS_ROOT=a.windows_root
     if a.action=='check':
         h.require(bool(a.request)!=bool(a.request_json),'Provide one request input')

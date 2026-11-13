@@ -11,10 +11,11 @@
   "source_hash_contracts": {"transport/scenario_source_portable.py": "source_inventory"},
   "groups": {
     "launchers_and_rights": [
-      "Control.cmd", "Run.cmd", "LICENSE", "THIRD_PARTY_NOTICES.md", "CITATION.cff"
+      "Control.cmd", "Run.cmd", "Control.command", "Setup.command", "LICENSE", "THIRD_PARTY_NOTICES.md", "CITATION.cff"
     ],
     "control_and_common_runtime": [
       "tools/local_ui.ps1", "tools/local_ui.py", "tools/local_ui_jobs.py",
+      "tools/macos_launch.sh", "tools/macos_setup.py",
       "tools/local_ui_gamma_jobs.py", "tools/local_ui_scenarios.py",
       "tools/local_ui_workflow_jobs.py", "tools/nonzero_events.py", "tools/local_workflow.html",
       "tools/local_workflow.js", "tools/focused_plots.js", "tools/gegi_signal_journey.js", "tools/model_type_labels.py",
@@ -83,6 +84,7 @@
       "transport/catalog_geometry.py", "transport/catalog_source.py", "transport/batch_source.py",
       "transport/source_pose.py", "transport/source_angle.py",
       "transport/Run.cmd", "transport/run.sh", "transport/workflow.sh",
+      "transport/macos/workflow.sh", "transport/macos/pixi.toml", "transport/macos/pixi.lock", "transport/macos/.pixi/config.toml",
       "transport/prepare.sh", "transport/gamma.sh", "transport/experiment.json",
       "transport/gegi_source.py", "transport/gegi_geometry.py"
     ],
@@ -118,6 +120,10 @@
     "tools/gegi_saved_control.py": ["tools/gegi_result_reader.py", "tools/gegi_saved_reconstruction.py", "tools/gegi_standalone_reconstruction.py", "tools/gegi_signal_reconstruction.py", "tools/gegi_joint_imaging.py", "tools/gegi_event_store.py", "tools/gegi_readout_checks.py", "tools/gegi_calibration_admission.py"],
     "tools/gegi_standalone_reconstruction.py": ["tools/gegi_signal_reconstruction.py", "tools/gegi_event_store.py", "tools/gegi_imaging.py", "tools/gegi_calibration_admission.py"],
     "Control.cmd": ["tools/local_ui.ps1"],
+    "Control.command": ["tools/macos_launch.sh", "tools/local_ui.py", "transport/macos/workflow.sh"],
+    "Setup.command": ["tools/macos_launch.sh", "tools/macos_setup.py", "transport/macos/pixi.toml", "transport/macos/pixi.lock"],
+    "tools/macos_setup.py": ["simulation/Project.toml", "simulation/Manifest.toml", "transport/cryostat-source.json", "transport/scenario_source_portable.py", "transport/catalog_exporter_setup.py", "transport/angle_exporter_setup.py"],
+    "transport/macos/workflow.sh": ["transport/macos/pixi.toml", "transport/macos/pixi.lock", "transport/macos/.pixi/config.toml"],
     "tools/local_ui.ps1": ["tools/local_ui.py"],
     "tools/local_ui.py": ["tools/local_workflow.html", "tools/local_workflow.js", "tools/focused_plots.js", "tools/gegi_signal_journey.js"],
     "Run.cmd": ["tools/scenario_cli.ps1"],
@@ -129,5 +135,5 @@
     "transport/angle_exporter_setup.py": ["transport/angle_exporter/CMakeLists.txt", "transport/cryostat_angle_export.cc"],
     "transport/workflow.sh": ["transport/pixi.toml", "transport/pixi.lock", "transport/.pixi/config.toml"]
   },
-  "scope": "Student desktop runtime, exact canonical models and environment definitions. Installed Julia/WSL/Pixi dependencies and separately fetched pinned LBNL originals are not bundled. No saved results, development tests, publication tools or private data."
+  "scope": "Shared Windows and macOS CPU student runtime, exact canonical models and platform environment definitions. Installed Julia/Pixi dependencies, Windows WSL and separately fetched pinned LBNL originals are not bundled. No saved results, development tests, publication tools or private data."
 }

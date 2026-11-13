@@ -50,8 +50,10 @@ saved results or standalone demonstration entry points belong in this package.
 The corrected Codex continuation publishes a versioned latest release whenever
 runtime delivery changes: build and verify the committed ZIP, create an immutable
 `student-runtime-<commit>` release with the existing GitHub CLI, and verify the
-actual public asset's commit and bytes. Do not create GitHub workflows or change
-OAuth scopes: the current login lacks workflow permission. The current ZIP and one compact
+actual public asset's commit and bytes. The 2026-11-13 owner authorization adds
+bounded macOS acceptance through GitHub Actions. The existing CLI login lacks
+workflow scope; use an authorized connected GitHub capability when available,
+and never change OAuth scopes or credentials automatically. The current ZIP and one compact
 delivery receipt stay under `.local/student-runtime-p1/`. Creating or opening the
 package does not install dependencies, start science or require private autonomy
 state. A full developer clone retains website/source/history. The GitHub source

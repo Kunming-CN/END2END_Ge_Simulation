@@ -10,14 +10,17 @@ from __future__ import annotations
 import copy
 import ctypes
 from datetime import datetime, timezone
+import errno
 import hashlib
 import json
 import math
 import os
 from pathlib import Path
+import platform
 import re
 import stat
 import subprocess
+import sys
 import threading
 import time
 import uuid
@@ -44,7 +47,8 @@ class ControlError(Exception):
 
 def existing_julia_environment(env):
     """Select the existing readable launcher in a CHILD environment only."""
-    if os.name != 'nt':
+    mac = sys.platform == 'darwin'
+    if os.name != 'nt' and not mac:
         return env
     # WindowsApps app-execution aliases can execute yet cannot be read
     # for the backend's launcher-byte provenance gate. Use the exact
@@ -56,6 +60,17 @@ def existing_julia_environment(env):
         chosen = env[explicit]
         if not chosen:
             raise ControlError('Explicit JULIA_EXE is empty. Select an existing readable Julia executable; no fallback was used.', 'unsupported_runtime')
+    elif mac:
+        architecture = {'arm64': 'aarch64', 'x86_64': 'x64'}.get(platform.machine())
+        depot = Path(env.get('JULIAUP_DEPOT_PATH') or (Path.home() / '.julia')) / 'juliaup'
+        chosen = ''
+        if architecture:
+            for installation in sorted(depot.glob(f'julia-1.13.0+0.{architecture}.apple.darwin*')):
+                binaries = (installation / 'Julia-1.13.app/Contents/Resources/julia/bin/julia',
+                            installation / 'bin/julia')
+                chosen = next((str(path) for path in binaries if path.is_file()), '')
+                if chosen:
+                    break
     else:
         profile = env.get('USERPROFILE') or env.get('UserProfile')
         if not profile:
@@ -68,6 +83,9 @@ def existing_julia_environment(env):
         with candidate.open('rb') as stream:
             if not stream.read(1):
                 raise OSError('empty executable')
+        if mac and (not candidate.is_absolute() or not os.access(candidate, os.X_OK)):
+            raise ControlError('JULIA_EXE must be the absolute path of an executable Julia 1.13.0 binary.',
+                               'unsupported_runtime')
     except (OSError, ValueError) as error:
         raise ControlError(('Explicit JULIA_EXE is not readable; no fallback was used.' if explicit is not None else
                             'The existing pinned Julia 1.13.0 binary is missing or unreadable. Set JULIA_EXE to a readable existing executable; nothing was installed.'),
@@ -132,8 +150,31 @@ def read_json(path):
     return value
 
 
+def mac_process_identity(pid):
+    # Darwin sys/proc_info.h: PROC_PIDTBSDINFO returns struct proc_bsdinfo.
+    # Its final two fields are process start seconds and microseconds.
+    class ProcBsdInfo(ctypes.Structure):
+        _fields_ = [('ids', ctypes.c_uint32 * 12),
+                    ('names', ctypes.c_char * 48),
+                    ('files_and_groups', ctypes.c_uint32 * 6),
+                    ('start_seconds', ctypes.c_uint64),
+                    ('start_microseconds', ctypes.c_uint64)]
+
+    info = ProcBsdInfo()
+    query = ctypes.CDLL('/usr/lib/libproc.dylib', use_errno=True).proc_pidinfo
+    query.argtypes = (ctypes.c_int, ctypes.c_int, ctypes.c_uint64, ctypes.c_void_p, ctypes.c_int)
+    query.restype = ctypes.c_int
+    size = ctypes.sizeof(info)
+    ctypes.set_errno(0)
+    if query(pid, 3, 0, ctypes.byref(info), size) == size:
+        return f'mac:{info.start_seconds}.{info.start_microseconds:06d}'
+    return None if ctypes.get_errno() == errno.ESRCH else 'unknown'
+
+
 def process_identity(pid):
-    """Windows creation FILETIME disambiguates reused PIDs; unknown stays blocking."""
+    """Use process creation time when available. Unknown stays blocking."""
+    if sys.platform == 'darwin':
+        return mac_process_identity(pid)
     if os.name != 'nt':
         try:
             os.kill(pid, 0)
@@ -369,6 +410,8 @@ class Controller:
             self._peer_busy = probe
 
     def _argv(self, name, detector=None, *, resume=False, dry=False, step=False):
+        if sys.platform == 'darwin':
+            raise ControlError('Use the configured Control workflow for new simulations on macOS.', 'unsupported_runtime')
         safe_path(self.root, 'tools/scenario_cli.ps1')
         command = ['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
                    'tools/scenario_cli.ps1', 'native-readout', '-Name', self._name(name), '-Json']

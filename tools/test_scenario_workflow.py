@@ -1,7 +1,9 @@
 """Finite workflow boundary tests. Fixtures are synthetic; no science is run."""
 import copy
 import json
+import os
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -128,6 +130,60 @@ class Workflow(unittest.TestCase):
         actual=W.settings_check(changed)
         self.assertEqual(actual['configuration']['gain'],10);self.assertEqual(actual['configuration']['adc_bits'],16)
         with self.assertRaises(W.ControlError):W.settings_check(dict(self.default,threshold_V=11))
+
+    def test_mac_settings_match_windows_and_check_types_without_a_child(self):
+        settings = dict(self.default, gain=10.5, adc_bits=16, peak_gate_start_ns=.125, peak_gate_end_ns=12)
+        windows = W.settings_check(settings) if os.name == 'nt' else None
+        with patch.object(sys, 'platform', 'darwin'), patch.object(W.subprocess, 'run') as launch:
+            actual = W.settings_check(settings)
+            self.assertEqual(actual['status'], 'valid_configuration_only')
+            self.assertEqual(actual['profile']['settings'], settings)
+            self.assertEqual(actual['configuration']['expected_primary_count'], None)
+            self.assertNotIn('max_total_samples', actual['configuration'])
+            if windows is not None:
+                for key in ('profile', 'configuration', 'physics_sha256'):
+                    self.assertEqual(actual[key], windows[key])
+            for changed in (dict(adc_bits=True), dict(adc_bits=16.0), dict(threshold_V=11),
+                            dict(peak_gate_end_ns=None), dict(peak_gate_end_ns=100000)):
+                with self.subTest(changed=changed), self.assertRaises(W.ControlError):
+                    W.settings_check(dict(settings, **changed))
+            launch.assert_not_called()
+
+    def test_mac_transport_dispatch_keeps_same_producers_and_relative_paths(self):
+        import batch_execution as B
+        import catalog_workflow as C
+        import decay_workflow as D
+        import gegi_workflow as G
+        import sap18_workflow as S
+        root = self.root/'install with spaces'
+        with patch.object(sys, 'platform', 'darwin'):
+            prefix = W.transport_prefix(root)
+            self.assertEqual(prefix[0:2], ['/bin/bash', '-c'])
+            self.assertIn('./macos/workflow.sh', prefix[2])
+            self.assertEqual(prefix[-1], str(root/'transport'))
+            for command, script in ((W.portable_command, 'scenario_source_portable'), (B.transport_command, 'batch_source'),
+                                    (C.command, 'catalog_source'), (D._command, 'decay_source'),
+                                    (G.command, 'gegi_source'), (S._command, 'sap18_source')):
+                self.assertEqual(command(root), prefix+['python', '-B', './'+script+'.py'])
+            resolved = {'selection': self.config, 'portable_source_plan': {}}
+            cmds = W.stage_commands(W.run_path(self.config['name'], root), resolved, root, {'JULIA_EXE': '/opt/julia'})
+            for stage in ('geometry', 'radiation', 'event_ledger'):
+                self.assertEqual(cmds[stage][:len(prefix)], prefix)
+                self.assertEqual(cmds[stage][-2:], ['--project-root', str(root.resolve())])
+                self.assertIn('../.local/runs/fixture-01/transport', cmds[stage])
+            self.assertEqual(cmds['response'][0], '/opt/julia')
+
+    def test_mac_check_probes_pinned_julia_and_readiness_only_hashes_files(self):
+        from subprocess import CompletedProcess
+        with patch.object(sys, 'platform', 'darwin'), patch.object(W, 'child_env', return_value={'JULIA_EXE': sys.executable}), \
+                patch.object(W.subprocess, 'run', return_value=CompletedProcess([], 0, b'julia version 1.13.0\n')) as launch:
+            self.assertEqual(W.runtime_identity(2, verify_version=False)['julia_sha256'], W.sha(sys.executable))
+            launch.assert_not_called()
+            self.assertEqual(W.runtime_identity(2)['julia_sha256'], W.sha(sys.executable))
+            launch.assert_called_once()
+            launch.return_value = CompletedProcess([], 0, b'julia version 1.13.3\n')
+            with self.assertRaisesRegex(W.ControlError, 'requires Julia 1.13.0'):
+                W.runtime_identity(2)
 
     def test_calibration_and_fractional_gate_fail_before_pins(self):
         for patch_values in ({'shaping_tau_us':51},{'shaping_tau_us':.00001},{'shaping_tau_us':1e308},
