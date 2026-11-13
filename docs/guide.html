@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Windows setup and supported local HPGe simulation workflows. Saved browsing, new radiation runs and private-input engineering examples have separate requirements."><link rel="canonical" href="https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html"><title>Setup and use · GeSignal</title>
+<meta name="description" content="Windows and macOS setup for supported local HPGe simulation workflows. Browse saved results or run new radiation, charge and readout simulations."><link rel="canonical" href="https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html"><title>Setup and use · GeSignal</title>
 <style>
 :root{color-scheme:light;--ink:#18323e;--muted:#536b76;--line:#d9e5e9;--accent:#007d8a}
 *{box-sizing:border-box}body{margin:0;background:#f4f8f9;color:var(--ink);font:17px/1.6 system-ui,sans-serif}
@@ -34,12 +34,13 @@ summary{cursor:pointer;font-weight:650}table{width:100%;border-collapse:collapse
 #page-navigation p{margin:5px 0;overflow-wrap:anywhere}#page-navigation a:focus-visible{outline:3px solid #f8ad30}
 @media(max-width:600px){#page-navigation{font-size:14px}#page-navigation nav{gap:6px 12px}}</style><nav aria-label="Primary"><a href="results/index.html">Results</a><a href="detectors/index.html">Detectors</a><a href="assemblies/index.html">Assemblies</a><a href="guide.html" aria-current="page">Run locally</a><a href="methods/index.html">Methods</a></nav><nav aria-label="Breadcrumb"><ol><li><a href="index.html">GeSignal</a></li><li><span aria-current="page">Run locally</span></li></ol></nav></div><!-- page-navigation:end -->
 <h1>Run and understand GeSignal</h1>
-<p>Set up Windows, use Control, or inspect the files and identities in a saved run.</p>
+<p>Set up Windows or macOS, use Control, and inspect the files in a saved run.</p>
 </header>
 <main>
 <section id="local-routes" aria-label="Local workflow steps">
 <h2>Local workflow</h2>
 <nav aria-label="Guide contents"><ol>
+<li><a href="#setup-macos">Set up macOS</a> — install the CPU runtime for Apple Silicon or Intel.</li>
 <li><a href="#setup">Set up Windows</a> — prepare the pinned environment and source files.</li>
 <li><a href="#local-control">Use Control</a> — check a supported setup and run the pipeline.</li>
 <li><a href="#saved-analysis">Read and analyze a saved result</a> — inspect event identities and original files.</li>
@@ -59,8 +60,21 @@ summary{cursor:pointer;font-weight:650}table{width:100%;border-collapse:collapse
 </details>
 </section>
 
+<section id="setup-macos">
+<h2>Set up macOS</h2>
+<p>Use the same <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip">student software ZIP</a> as Windows. The Mac launchers use native CPU calculations, with the same detector models, settings and result formats. A ChatGPT account, Windows installation or NVIDIA graphics card is not required.</p>
+<ol>
+<li><strong>Prepare the three platform tools once.</strong> Install <a href="https://github.com/JuliaLang/juliaup#installation">Juliaup</a> and <a href="https://pixi.prefix.dev/latest/installation/">Pixi</a> (0.81.0 or newer). Install Apple's Command Line Tools by running <code>xcode-select --install</code> in Terminal and completing Apple's installer. Use a native terminal for your Mac's processor. The dependency lock targets macOS 13 or newer.</li>
+<li><strong>Extract the software and run <code>Setup.command</code>.</strong> Setup installs the pinned Julia 1.13.0 CPU environment and the locked Mac transport environment, fetches the nine hash-checked cryostat source files, and builds the geometry exporters. Keep the extracted folder in its final location. Setup does not run a simulation. Its progress and any failure remain available for diagnosis.</li>
+<li><strong>Open <code>Control.command</code>.</strong> Keep its terminal window open while using the local application in your browser. Choose a compatible detector, cryostat and source, start with 100 initial events and one Julia thread, then use <strong>Check plan</strong> and <strong>Run simulation</strong>. The same <a href="#local-control">Control instructions</a> and <a href="#control-recovery">Stop/Resume controls</a> apply on both systems.</li>
+</ol>
+<p>If a launcher opens as text, open Terminal in the extracted folder and run <code>bash Setup.command</code> or <code>bash Control.command</code>. Opening Control uses the prepared environment; it installs nothing.</p>
+<p class="note" id="macos-validation">Mac support is undergoing installation and small full-chain acceptance on Apple Silicon and Intel. Dependency resolution is complete; actual macOS execution has not yet been verified. The existing Windows release remains available while these checks run.</p>
+</section>
+
 <section id="setup">
 <h2>Set up Windows</h2>
+<p>Using a Mac? Follow <a href="#setup-macos">Set up macOS</a>.</p>
 <p>Use PowerShell in the project root: the folder containing <code>Control.cmd</code> and <code>Run.cmd</code>. These steps explicitly install or acquire dependencies. Opening the website or Control does not install them.</p>
 <ol>
 <li><strong>Install the platform tools.</strong> You need Git, Windows Python 3.10+, Juliaup, WSL2 with Ubuntu-24.04, and Pixi inside Ubuntu. Follow the official <a href="https://github.com/JuliaLang/juliaup#installation">Juliaup</a>, <a href="https://learn.microsoft.com/windows/wsl/install">WSL</a> and <a href="https://pixi.prefix.dev/latest/installation/">Pixi</a> instructions. WSL may need an administrator and restart. No GPU or ParaView installation is required.</li>
@@ -119,7 +133,7 @@ foreach ($f in $m.files) {
 
 <section id="local-control">
 <h2>Use Control</h2>
-<p>Double-click <code>Control.cmd</code> in the project root. It opens the English <strong>Local simulation</strong> application. New runs calculate geometry/source preparation, radiation deposits, the event ledger, fields and charge, independent calibration, readout, and verified results.</p>
+<p>Open <code>Control.cmd</code> on Windows or <code>Control.command</code> on macOS in the project root. It opens the English <strong>Local simulation</strong> application. New runs calculate geometry/source preparation, radiation deposits, the event ledger, fields and charge, independent calibration, readout, and verified results.</p>
 <h3>First run: choose, check, run, then inspect results</h3>
 <ol>
 <li>Select a detector and inspect its model panel. Choose a supported cryostat, source, source/capsule angle, primary count and threads. Choose the radiation seed when the source policy permits it. Enter a new unused run name.</li>
@@ -162,7 +176,7 @@ foreach ($f in $m.files) {
 <p>The panel shows the saved run, batch, global/local initial IDs and pulse group. In raw LH5, filter <code>evtid</code> by the selected <em>local</em> initial ID in that batch; derived batch records use <code>global_initial_id</code>. Add <code>group_id</code> only to record types that carry it. For <code>scalars.csv</code> and <code>endpoints.csv</code>, decode <code>record_json</code> or use their JSONL versions. Ledger and response-truth rows represent whole primaries; keep all relevant deposits together.</p>
 <p>Normalized deposits use <code>energy_keV</code> in keV, detector-local <code>position_mm</code> in mm and <code>global_position_m</code> in m. Raw LH5 positions use m, step <code>edep</code> uses keV, track/particle <code>ekin</code> uses MeV and times use ns; each column's units in <code>manifest.json → raw_tables → columns</code> are authoritative. Pulse plots use ns since the pulse-group origin. Creation/deposition, group-relative and carrier-drift times remain distinct.</p>
 <p><strong>Download settings</strong>, <strong>Download run receipt</strong> and file links retrieve saved data only when chosen. Results live in <code>.local/runs/NAME/</code>; files above the browser download limit remain accessible there. Only runs owned by this Control instance appear in its list. CLI acceptance runs remain in their recorded local folders. Opening or inspecting a completed result does not rerun science.</p>
-<p>To reproduce a saved setup on your own PC, keep the resolved configuration and recorded model/source/runtime hashes, seeds, stage receipts and completion inventory. Install the documented Windows/WSL, locked remage/Geant4 and Julia/SSD runtimes and acquire the pinned upstream cryostat inputs using the setup section. A source-only clone does not supply private raw science or eliminate those prerequisites. Student installation and run feedback will guide portability fixes; fresh-machine acceptance is not claimed.</p>
+<p>To reproduce a saved setup, keep its resolved configuration, model/source/runtime hashes, seeds, stage receipts and completion inventory. Follow the setup section for your operating system to install the locked remage/Geant4 and Julia/SSD runtimes and acquire the pinned cryostat inputs. Software updates are shared across platforms; resuming a checkpoint still requires its recorded source and runtime identities. A source-only clone does not supply private raw science.</p>
 <p>Report a setup or run problem through <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/issues">GitHub Issues</a>. Include your operating system, project revision, detector/source/count, run name, failing step and exact error so the same setup can be checked.</p>
 </section>
 
@@ -176,14 +190,14 @@ foreach ($f in $m.files) {
 <p>The five original Control connectors retain their completed bounded examples. Each of the five added models completed one preselected 500-decay Cs137 case through the public Check, Run and Inspect commands on the existing prepared computer. All 2,500 initial events remain: 2,485 zero-deposit events and 15 pulse groups, comprising nine accepted groups, three below-threshold readout rejections and three KL01 native failures. The KL01 failures keep their original truth and error with unknown charge/readout null; they are not successful charge calculations. Cs137, Am241 and Ba133 share factorized software support across ten configurations; this does not mean thirty actual model/source science acceptances.</p>
 <p>These are bounded engineering examples with synthetic electronics and explicit model/geometry limitations. Successful processing does not establish calibrated charge-collection efficiency, experimental agreement, physical energy resolution or numerical convergence.</p>
 <p>Source creation/deposition time is not carrier drift time. A readout threshold changes acceptance, not the original primary census. Zeros, endpoint/cap flags, electronics rejects and native failures remain distinct. The GeRC02 Li50min operating variant and KM candidate keep their recorded model and polarity qualifications.</p>
-<p>Setup evidence covers the existing Windows/WSL computer; student feedback is the next source of portability evidence. Saved galleries, 10K campaigns and million-decay radiation results are distinct datasets; follow each page's scope and receipts.</p>
+<p>Platform setup and test scope are recorded in the installation sections above. Saved galleries, 10K campaigns and million-decay radiation results are distinct datasets; follow each page's scope and receipts.</p>
 </section>
 
 <section id="task-details"><h2>Configuration topics</h2>
 <details id="gegi-workflow"><summary>GeGI: source, 34 electrodes and Compton imaging</summary>
 <p><a href="assemblies/gegi/index.html">Rotate the GeGI cryostat and inspect its dimensions</a> · <a href="detectors/GeGI_3D/index.html">GeGI detector model</a> · <a href="results/gegi-campaign/index.html">Completed million-initial campaign: signals and imaging</a>. The public results and your own local runs retain separate input settings and event identities.</p>
 <ol>
-<li><strong>Choose the setup.</strong> Open <code>Control.cmd</code>, select <strong>GeGI cryostat</strong> and <strong>GeGI</strong>, then choose its monoenergetic gamma point source. Enter gamma energy from 1 to 10000 keV, source x/y/z in mm and 1–10000 initial gamma primaries. The crystal centre is the origin and +z is the front. This source is isotropic: the denominator counts every emitted gamma, including misses. Start with 100; a small run can have no Ge deposit.</li>
+<li><strong>Choose the setup.</strong> Open Control, select <strong>GeGI cryostat</strong> and <strong>GeGI</strong>, then choose its monoenergetic gamma point source. Enter gamma energy from 1 to 10000 keV, source x/y/z in mm and 1–10000 initial gamma primaries. The crystal centre is the origin and +z is the front. This source is isotropic: the denominator counts every emitted gamma, including misses. Start with 100; a small run can have no Ge deposit.</li>
 <li><strong>Check and run.</strong> Set electronics, a radiation seed and one or two Julia threads, then choose <strong>Check plan</strong>. Inspect the resolved settings and choose <strong>Run</strong> to execute geometry, transport, event ledger, native charge, independent calibration, readout and reconstruction in one workflow. Stop waits for a stage boundary; Resume reuses verified completed work with the saved settings. The first installation computes native fields; an exact locally saved GeGI state can be reused. Field data and precomputed examples are not included in the software ZIP.</li>
 <li><strong>Follow your event.</strong> Open the completed run and select an original nonzero primary ID. The event journey shows actual signed charge, current, preamp and shaper samples for all 32 strips and two guards, plus the shared waveform-reconstruction status. New standalone runs do not infer depth or create a source map without a compatible independent waveform calibration. Fixed energy readout and original timing diagnostics remain available. Open the event identity and stage-file panels for the exact native JSON/CSV, original LH5 transport, ledger, independent electronics calibration, configuration and recorded hashes under <code>.local/runs/NAME/</code>.</li>
 </ol>

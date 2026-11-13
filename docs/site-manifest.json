@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "build_id": "5e2a7cdf9dc0fd029c76ae1520cf789113c77265d5a45e99163807eaf9dbf457",
+  "build_id": "5b05f59018bf0771a1fada56bb3b810d043da9c6a419883a71b1f6bc19e56cc7",
   "file_count": 1872,
-  "total_bytes": 493118530,
+  "total_bytes": 493120884,
   "html_pages": 109,
   "local_links_checked": 3317,
-  "resource_references_checked": 3370,
-  "page_navigation_checked": 1444,
-  "fragments_checked": 82,
+  "resource_references_checked": 3374,
+  "page_navigation_checked": 1448,
+  "fragments_checked": 86,
   "downloads_checked": 741,
   "media_references_checked": 1148,
   "metadata_references_checked": 35,
@@ -5160,8 +5160,8 @@
     },
     {
       "path": "detectors/index.html",
-      "bytes": 17379,
-      "sha256": "6275213e3e648f489cac392d36eaa39cd3dad5f5cd9fe5eff87a8142c641b557"
+      "bytes": 17371,
+      "sha256": "cd64dc5016765825e2a0a4f0f32b214ea24399fe7de00d494c73a66bc7db4a30"
     },
     {
       "path": "downloads/AK01.zip",
@@ -7715,8 +7715,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 51567,
-      "sha256": "7bf96d6c813e890c39c85593960e120e79e9ffd7fb2d21ae588617bd995ba038"
+      "bytes": 53929,
+      "sha256": "9ca0a2f5bfd28fd95ffa09b7b03806a61a3ceca9f263f673facb0d091e03b335"
     },
     {
       "path": "index.html",

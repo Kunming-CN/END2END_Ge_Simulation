@@ -43,6 +43,26 @@ class DiscoveryTests(unittest.TestCase):
         scenario=D.LANDINGS['scenarios/lbnl-cs137/index.html']
         self.assertIn('shared Cs137, Am241, Ba133 and Co60 local workflows',scenario)
         self.assertIn('Legacy AK02/SAP22 CLI support',scenario)
+
+    def test_windows_only_guide_description_requires_exact_saved_snapshot(self):
+        old_id = '5e2a7cdf9dc0fd029c76ae1520cf789113c77265d5a45e99163807eaf9dbf457'
+        old = D.HISTORICAL_DESCRIPTIONS[old_id]
+        with mock.patch.dict(D.LANDINGS, old):
+            D.assemble(self.site)
+        saved_id = D.snapshot_identity(self.site)
+        seal = self.site/check_site.MANIFEST
+        seal.write_text(json.dumps({'build_id': old_id}))
+        with self.assertRaisesRegex(ValueError, 'Discovery metadata differs: guide.html'):
+            D.validate(self.site)
+        with mock.patch.dict(D.HISTORICAL_DESCRIPTIONS, {saved_id: old}):
+            seal.write_text(json.dumps({'build_id': saved_id}))
+            D.validate(self.site)
+            D.assemble(self.site)
+            D.validate(self.site)
+        guide = D.Metadata()
+        guide.feed((self.site/'guide.html').read_text(encoding='utf-8'))
+        self.assertEqual(guide.descriptions, [D.LANDINGS['guide.html']])
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1] / '.local')
         self.addCleanup(self.temp.cleanup)
