@@ -201,19 +201,23 @@ def run_once(control, run, evidence, deadline):
     return selection, receipt, boundary
 
 
-def verify_outputs(student, run, receipt, evidence):
-    batch = run / 'batches/b0000000000'
-    transport = batch / 'transport'
+def verify_raw_ledger(student, transport, evidence):
     # Production reader checks the LH5 scalar, all raw initial IDs and exact ledger values.
     # This is a read-only check and never calls remage to simulate again.
     verify = ['/bin/bash', './macos/workflow.sh', 'python', '-B', './batch_source.py', 'verify',
-              '--stage', 'event_ledger', '--directory', '../' + batch.relative_to(student).as_posix(),
+              '--stage', 'event_ledger', '--directory', '../' + transport.relative_to(student).as_posix(),
               '--project-root', str(student)]
     with (evidence / 'raw-ledger-verification.json').open('xb') as output, \
             (evidence / 'raw-ledger-verification.log').open('xb') as log:
         subprocess.run(verify, cwd=student / 'transport', stdout=output, stderr=log, check=True, timeout=150)
+    return read(evidence / 'raw-ledger-verification.json')
+
+
+def verify_outputs(run, receipt, verified_ledger):
+    batch = run / 'batches/b0000000000'
+    transport = batch / 'transport'
     ledger = read(transport / 'stream/manifest.json')
-    require(ledger == read(evidence / 'raw-ledger-verification.json'), 'Raw ledger verification differs from the sealed ledger')
+    require(ledger == verified_ledger, 'Raw ledger verification differs from the sealed ledger')
     radiation = read(transport / 'run.json')
     counts = receipt['counts']
     complete = read(run / 'COMPLETE.json')
@@ -245,6 +249,12 @@ def verify_outputs(student, run, receipt, evidence):
             and response['seed_family'] == NATIVE_SEED and response['native_failure_policy'] == 'record'
             and response['units'] == {'charge': 'fC', 'current': 'nA', 'voltage': 'V', 'energy': 'keV', 'time': 'ns'},
             'The field state, independent calibration, native seed, failure policy or signal units changed')
+    memory = prep['resource_preflight']
+    require(memory['initial_grid_guard_passed'] is True
+            and memory['memory_estimate_source'] == 'macOS Mach free + inactive + purgeable pages'
+            and 0 <= memory['free_physical_bytes_at_check'] <= memory['available_physical_bytes_at_check']
+            and memory['estimated_initial_working_bytes'] + memory['reserved_system_bytes'] <= memory['available_physical_bytes_at_check'],
+            'macOS field-memory preflight did not record the passed resource check')
     return ledger, counts, radiation['versions'], response['environment']
 
 
@@ -345,7 +355,8 @@ def main():
     deadline = time.monotonic() + 18 * 60
     with control_session(student, evidence) as control:
         selection, receipt, boundary = run_once(control, run, evidence, deadline)
-        ledger, counts, transport_versions, native_versions = verify_outputs(student, run, receipt, evidence)
+        verified_ledger = verify_raw_ledger(student, run / 'batches/b0000000000/transport', evidence)
+        ledger, counts, transport_versions, native_versions = verify_outputs(run, receipt, verified_ledger)
         view = verify_view(control, run, receipt, ledger, counts, evidence)
     save(evidence / 'acceptance.json', {'status': 'passed', 'terminal_run_status': receipt['status'],
          'scope': 'Packaged macOS Control and one bounded functional simulation', 'architecture': platform.machine(),

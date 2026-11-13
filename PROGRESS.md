@@ -17,21 +17,31 @@ evidence is `.local/macos-port/`. Implementation checks passed: 170 affected
 runtime tests, 72 transport tests and five student-package tests. Existing three
 Windows exporter receipts still validate without rebuilding; Linux environment
 and canonical model bytes are unchanged. The Mac lock resolves both architectures.
-GitHub run `43462246166` installed the full package on macOS 15.8.2 arm64,
-verified all 195 packaged files and both launcher modes, and passed Control
-start/stop/resume through geometry. Native preparation stopped before radiation:
-Julia 1.13.0's Darwin libuv counts only free pages. The resource guard now uses
-Mac free + inactive + purgeable pages while preserving its 512 MiB reserve,
-192 bytes/node and physical settings. Original free/available readings are kept
-separate, with quantitative rejection errors. 195 targeted Julia assertions
-passed without field/drift/calibration calls. Actual Mac verification of this
-correction is next; the first failure and setup evidence are preserved under
-`.local/macos-port/hosted-43462246166/`. Intel's initial run is still installing.
-Main commit `0749604` published the README development/test links; those links
-are also merged here. Corrected-memory acceptance is run `43466877974` at
-`c1b92a8`; the initial run and failure remain preserved. The
-formal student release is unchanged. Publication sources pass 27 targeted
-predecessor checks and the normal builder/checker, with saved science unchanged.
+At source `c1b92a8`, GitHub run `43466877974` completed the actual macOS 15.8.2
+arm64 chain: SAP22/Cs137, 100 initial events, 97 zero/3 nonzero, 3 accepted and
+no native failures/readout rejects. The actual package's 195 files and launcher
+modes passed, and geometry stop/resume reused its sealed work. A checker path
+bug (`batches/...` instead of `batches/.../transport`) then failed the job after
+science completed; it is corrected without a science rerun. Exact raw LH5 and
+sealed ledger were rechecked locally with original packaged code. An isolated
+local production Control reader verified protected HTTP, spectrum and waveform
+24/0 at 449.031879 keV using those Mac outputs; original hashes stayed unchanged.
+This last result-view check ran on Windows, not on a Mac browser. Evidence:
+`.local/macos-port/hosted-43466877974/supplement-arm64-final/acceptance-supplement.json`.
+Intel is still installing in the same run; wait for and preserve its artifacts.
+
+The preceding run `43462246166` exposed Julia 1.13.0's Mac free-page-only memory
+count before radiation. The fix uses free + inactive + purgeable pages with the
+original 512 MiB reserve and 192 bytes/node; free/available readings are separate.
+195 targeted Julia assertions passed with zero field/drift/calibration calls;
+the actual arm64 preparation now passes. That first failure and its superseded
+Intel installation are retained under `.local/macos-port/hosted-43462246166/`.
+Do not repeat completed Mac science to make the hosted checker status green.
+
+Main commit `0749604` published development links; draft PR #1 carries the current
+implementation. The formal student release is unchanged. Publication sources
+pass 27 targeted predecessor checks and the normal builder/checker, with saved
+science unchanged; final guide/homepage wording awaits Intel's actual outcome.
 This owner-requested milestone takes precedence over the old
 actual-feedback queue below. Root owns integrated checks, publication and final
 acceptance; cloud macOS tests are part of the newly authorized scope.
