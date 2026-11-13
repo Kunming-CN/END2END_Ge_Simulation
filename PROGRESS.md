@@ -1,5 +1,18 @@
 # Current handoff
 
+## macOS development status — 2026-11-13
+
+Owner authorized a synchronized native macOS CPU student version. Implementation
+is committed at `d8fdcc137d9833f33788c42a5790b06cf3a4e917` on
+`codex/macos-runtime`; that branch carries the current implementation handoff.
+Local checks passed: 170 affected runtime tests, 72 transport tests and five
+package tests. Actual Apple Silicon/Intel installation and bounded full-chain
+acceptance are pending in GitHub Actions run `43462246166`; both jobs remain
+queued as of 16:32 UTC. No macOS execution result is claimed. Main README now
+links the source and live test status; the current student release and published
+website remain unchanged until acceptance. This documentation-only update needs
+no simulation or unchanged-site rebuild. Monitoring remains PAUSED.
+
 ## Completed bounded-memory result browsing — 2026-10-23
 
 The existing GeGI viewer now reads summary/event index first, then one selected
