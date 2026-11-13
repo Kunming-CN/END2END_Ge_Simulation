@@ -42,6 +42,18 @@ end
         @test_throws ArgumentError C.validate_model(wrong;require_placement=true)
     end
 end
+@testset "macOS available memory widens page counts without double-counting speculation" begin
+    for page_bytes in (4096,16384)
+        sample=C.macos_memory_bytes(UInt32(10_000),UInt32(40_000),UInt32(1_000),page_bytes)
+        @test sample.free==10_000*page_bytes
+        @test sample.available==51_000*page_bytes
+        @test sample.source=="macOS Mach free + inactive + purgeable pages"
+    end
+    if Sys.isapple()
+        sample=C.macos_memory()
+        @test 0<sample.free<=sample.available
+    end
+end
 @testset "Compatible 3D/cylindrical models share membership and initial-grid API" begin
     rows=Any[]
     for id in ("AK01","SAP16","SAP17","Bipolar_reference_3D","KL01_3D")
@@ -57,7 +69,15 @@ end
         @test C.numerics(c)["min_spacing_mm"]==0.25 && C.numerics(c)["max_spacing_mm"]==2
         @test r["refinement_spacing_envelopes"]["0.25"]["largest_grid_node_envelope"]<=r["refinement_spacing_envelopes"]["0.05"]["largest_grid_node_envelope"]
         @test r["initial_grid_guard_passed"] && r["largest_initial_grid_nodes"]>0
-        @test_throws ArgumentError C.resource_plan(a.sim,cfg;free_bytes=0)
+        @test 0<r["free_physical_bytes_at_check"]<=r["available_physical_bytes_at_check"]
+        if !Sys.isapple()
+            @test r["memory_estimate_source"]=="Sys.free_memory()"
+            @test r["free_physical_bytes_at_check"]==r["available_physical_bytes_at_check"]
+        end
+        required=r["estimated_initial_working_bytes"]+512*1024^2
+        @test C.resource_plan(a.sim,cfg;free_bytes=required)["initial_grid_guard_passed"]
+        @test_throws r"Available after the 536870912-byte system reserve: 0 bytes. Measured 0 free bytes and estimated 0 available bytes" C.resource_plan(a.sim,cfg;free_bytes=0)
+        @test_throws ArgumentError C.resource_plan(a.sim,cfg;free_bytes=required-1)
         @test a.sim.electric_potential===missing && a.sim.electric_field===missing
         push!(rows,merge(Dict("model_id"=>id),r))
     end

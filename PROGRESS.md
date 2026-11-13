@@ -17,9 +17,20 @@ evidence is `.local/macos-port/`. Implementation checks passed: 170 affected
 runtime tests, 72 transport tests and five student-package tests. Existing three
 Windows exporter receipts still validate without rebuilding; Linux environment
 and canonical model bytes are unchanged. The Mac lock resolves both architectures.
-Actual macOS installation and execution remain pending. Workflow `macos.yml` is
-committed on `codex/macos-runtime`; initial commit deliberately skipped execution
-until the complete runtime source is ready. This owner-requested milestone takes precedence over the old
+GitHub run `43462246166` installed the full package on macOS 15.8.2 arm64,
+verified all 195 packaged files and both launcher modes, and passed Control
+start/stop/resume through geometry. Native preparation stopped before radiation:
+Julia 1.13.0's Darwin libuv counts only free pages. The resource guard now uses
+Mac free + inactive + purgeable pages while preserving its 512 MiB reserve,
+192 bytes/node and physical settings. Original free/available readings are kept
+separate, with quantitative rejection errors. 195 targeted Julia assertions
+passed without field/drift/calibration calls. Actual Mac verification of this
+correction is next; the first failure and setup evidence are preserved under
+`.local/macos-port/hosted-43462246166/`. Intel's initial run is still installing.
+The main README now links this development branch and live acceptance; the
+formal student release is unchanged. Publication sources pass 27 targeted
+predecessor checks and the normal builder/checker, with saved science unchanged.
+This owner-requested milestone takes precedence over the old
 actual-feedback queue below. Root owns integrated checks, publication and final
 acceptance; cloud macOS tests are part of the newly authorized scope.
 
