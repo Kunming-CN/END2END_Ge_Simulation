@@ -881,11 +881,11 @@
     "tools/hit_event_view.py": "7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e"
   },
   "adapter_sources": {
-    "tools/viewer_navigation.py": "e02cd07115a256db0ada7bac770fca93e7a92cb3263e4f1e591282d677c4889e",
+    "tools/viewer_navigation.py": "eca9acf0ebc1efd1408bc1c7f7bc387487b97971da59fed463d6a20c9d8ee1d5",
     "tools/viewer_navigation.js": "5f3f4c0062b4da291669bead6451fd611e30cd15061439695130269b5454709c",
     "tools/unified_event_viewer.html": "d1efb91d1b63dcf349e60f4f9467c963e0fe20fbbffb4edd74ae614020993d95",
     "tools/unified_event_viewer.js": "6701527fc01d29c7e502582a586b4ec5df9fe24802cefecd2973259726e011d7",
-    "tools/site_restructure.py": "b484f55894b9a82cc8ce465e8858d25a141a05d7836e608b9dfe0b17a04b95a8",
+    "tools/site_restructure.py": "e4f5f1964d94c86a5ac384774c03beca9a045195b5ad2725320d99e75c8fe54e",
     "tools/site_routes.py": "f77f2c715da8530239093523c8eb613c9e13f8cf5440c33bc5254c2cbbd352cb",
     "tools/geometry_web_delivery.py": "5db8416cf15332012dc970b70422bb4b77d71176937e9cad1989603c6986cca9",
     "tools/result_web_delivery.py": "458e86ba482e7af4495e4f55732fdf7b20a2ec6092680f455b042fbecabfe716"

@@ -7,12 +7,10 @@
 > **[Open the GeSignal website →](https://kunming-cn.github.io/END2END_Ge_Simulation/)**
 > Explore saved simulations and detector models online, with no installation.
 
-**macOS update — 13 November 2026:** Native CPU support for Apple Silicon and
-Intel Macs is implemented on the [Mac development branch](https://github.com/Kunming-CN/END2END_Ge_Simulation/tree/codex/macos-runtime),
-including `Setup.command`, `Control.command` and the shared simulation workflow.
-[Follow the macOS installation and full-chain tests](https://github.com/Kunming-CN/END2END_Ge_Simulation/actions/runs/43462246166).
-Mac acceptance is still pending; the latest student download remains the Windows
-release until those checks pass.
+**macOS is supported:** Apple Silicon and Intel Macs use the same student
+software ZIP as Windows. Run `Setup.command` once, then open `Control.command`.
+Follow the [Mac setup guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup-macos)
+to prepare the dependencies and start your first simulation.
 
 ## Start here
 
@@ -58,9 +56,12 @@ Saved studies are engineering simulations with their own inputs, event counts
 and validation limits. Deposited-energy truth (Edep) and readout-derived energy
 (Erec) describe different stages. Model geometry, compatible operating settings,
 numerical convergence and agreement with experiment must be assessed separately.
-Windows setup has been checked on the existing Windows/WSL computer. Native
-macOS CPU support is undergoing installation and full-chain acceptance; see the
-guide for the current tested platforms and limits.
+Windows setup has been checked on the existing Windows/WSL computer. Cloud
+macOS 15 checks completed the native CPU SAP22/Cs137 workflow on Apple Silicon
+and Intel, with 100 initial events per architecture and stage stop/resume.
+The preserved Mac data were checked through the production Control result
+reader on Windows. See the [platform test record](https://github.com/Kunming-CN/END2END_Ge_Simulation/pull/1)
+for the exact checks.
 
 See [Methods](https://kunming-cn.github.io/END2END_Ge_Simulation/methods/index.html)
 for stage definitions, calibration, counting rules and study-specific limits.
