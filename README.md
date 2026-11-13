@@ -7,6 +7,13 @@
 > **[Open the GeSignal website →](https://kunming-cn.github.io/END2END_Ge_Simulation/)**
 > Explore saved simulations and detector models online, with no installation.
 
+**macOS update — 13 November 2026:** Native CPU support for Apple Silicon and
+Intel Macs is implemented on the [Mac development branch](https://github.com/Kunming-CN/END2END_Ge_Simulation/tree/codex/macos-runtime),
+including `Setup.command`, `Control.command` and the shared simulation workflow.
+[Follow the macOS installation and full-chain tests](https://github.com/Kunming-CN/END2END_Ge_Simulation/actions/runs/43462246166).
+Mac acceptance is still pending; the latest student download remains the Windows
+release until those checks pass.
+
 ## Start here
 
 | Your goal | Where to start |

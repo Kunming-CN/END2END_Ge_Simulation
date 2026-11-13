@@ -27,7 +27,9 @@ separate, with quantitative rejection errors. 195 targeted Julia assertions
 passed without field/drift/calibration calls. Actual Mac verification of this
 correction is next; the first failure and setup evidence are preserved under
 `.local/macos-port/hosted-43462246166/`. Intel's initial run is still installing.
-The main README now links this development branch and live acceptance; the
+Main commit `0749604` published the README development/test links; those links
+are also merged here. Corrected-memory acceptance is run `43466877974` at
+`c1b92a8`; the initial run and failure remain preserved. The
 formal student release is unchanged. Publication sources pass 27 targeted
 predecessor checks and the normal builder/checker, with saved science unchanged.
 This owner-requested milestone takes precedence over the old
