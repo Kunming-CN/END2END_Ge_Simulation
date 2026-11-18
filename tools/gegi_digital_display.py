@@ -4,6 +4,7 @@ from hashlib import sha256
 from html import escape
 import json
 import math
+from pathlib import Path
 import re
 
 
@@ -13,6 +14,194 @@ DIGITAL_OBSERVABLES = {
     'fast': 'Signed fast area of nine strips',
     'fast_and_centered_cfd': 'Signed fast area + centered timing',
 }
+
+DOUBLE_PULSE_FILE = 'results/gegi-digital/double-pulse.json'
+PULSE_TOPOLOGIES = {
+    'same_strips': 'Same strips',
+    'adjacent_strips': 'Adjacent strips',
+    'far_strips': 'Far strips',
+}
+PULSE_OUTCOMES = {
+    'two_distinct_triggers': 'Triggers',
+    'both_energy_available': 'Energy',
+    'both_xy_available': 'XY',
+}
+PULSE_NOISE = {'nominal': 'Nominal electronic noise', 'none': 'Without electronic noise'}
+PULSE_STABILITY = {
+    **PULSE_OUTCOMES,
+    'both_energy_within_tolerance': 'Energy within tolerance',
+    'both_xy_within_tolerance': 'XY within tolerance',
+    'both_energy_and_xy_within_tolerance': 'Energy and XY within tolerance',
+}
+PULSE_DESIGN = (
+    'delays_ns', 'adc_phases_ns', 'ordered_energies_keV', 'noise_rms_V', 'match_tolerance_ns',
+    'relative_energy_tolerance', 'xy_isolated_radial_tolerance_mm', 'minimum_stable_suffix_points',
+    'noise_base_seed', 'noise_seed_rule', 'record_end_ns', 'selection', 'source_coordinate_exclusion_mm',
+    'matching', 'trigger_success', 'feature_success', 'metric_denominators', 'stability', 'electronics', 'scope',
+)
+PULSE_HASHES = ('digital_profile_sha256', 'digital_timing_sha256', 'substrip_calibration_sha256',
+                'field_cache_sha256', 'model_sha256')
+
+
+def attach_double_pulse(site, report_path):
+    source = report_path.read_bytes()
+    report = json.loads(source)
+    if report.get('kind') != 'gegi_saved_double_pulse_scan_v1' or report.get('status') != 'completed':
+        raise ValueError('Expected a completed GeGI double-pulse scan.')
+    target = site/DOUBLE_PULSE_FILE
+    if not (target.parent/'event.json').is_file():
+        raise ValueError('The GeGI digital example must be installed to publish its double-pulse study.')
+    design = {key: report['design'][key] for key in PULSE_DESIGN}
+    groups = {(noise, topology) for noise in PULSE_NOISE for topology in PULSE_TOPOLOGIES}
+    expected = {(noise, topology, delay) for noise, topology in groups for delay in design['delays_ns']}
+    summary = report['summary']
+    if len(summary) != len(expected) or {(r['noise'], r['topology'], r['delay_ns']) for r in summary} != expected:
+        raise ValueError('The GeGI double-pulse scan is missing or duplicating a trial group.')
+    fields = ('topology', 'noise', 'delay_ns', 'trials', *PULSE_STABILITY, 'both_pixels_correct',
+              'both_fast_ratios_available', 'truth_pulses', 'missing_truth_pulses', 'unmatched_triggers',
+              'one_trigger_for_two', 'single_trigger_multiple_collecting_strips', 'no_matched_triggers',
+              'reconstructed_triggers', 'false_triggers', 'electrode_pileup', 'pulse_availability', 'metrics')
+    public_summary = []
+    for row in summary:
+        n = row['trials']
+        triggers = row['two_distinct_triggers']
+        if (n <= 0 or not 0 <= row['both_energy_within_tolerance'] <= row['both_energy_available'] <= triggers <= n
+                or not 0 <= row['both_xy_within_tolerance'] <= row['both_xy_available'] <= triggers):
+            raise ValueError('GeGI double-pulse outcomes do not match their trial denominator.')
+        public_summary.append({key: row[key] for key in fields})
+    isolated_fields = ('topology', 'noise', 'trials', 'matched_triggers', 'energy_available',
+                       'xy_available', 'correct_pixel', 'unmatched_triggers', 'x_available', 'y_available',
+                       'both_fast_ratios_available', 'metrics')
+    isolated = [{key: row[key] for key in isolated_fields} for row in report['isolated_summary']]
+    if len(isolated) != len(groups) or {(r['noise'], r['topology']) for r in isolated} != groups:
+        raise ValueError('The GeGI double-pulse scan is missing or duplicating isolated controls.')
+    stable_fields = ('topology', 'noise', 'criterion', 'stable_from_ns', 'first_full_pass_ns',
+                     'regressions_after_first_full_pass_ns', 'count_decrease_delays_ns')
+    stability = [{key: row[key] for key in stable_fields} for row in report['stability']]
+    if (len(stability) != len(groups)*len(PULSE_STABILITY)
+            or {(r['noise'], r['topology'], r['criterion']) for r in stability}
+            != {(noise, topology, key) for noise, topology in groups for key in PULSE_STABILITY}):
+        raise ValueError('The GeGI double-pulse scan is missing or duplicating a stability outcome.')
+    provenance = report['provenance']
+    hashes = {key: provenance[key] for key in PULSE_HASHES}
+    sources = provenance['source_sha256']
+    project = Path(__file__).resolve().parents[1]
+    for name, digest in sources.items():
+        path = (project/name).resolve()
+        if (Path(name).is_absolute() or not path.is_relative_to(project) or not path.is_file()
+                or sha256(path.read_bytes()).hexdigest() != digest):
+            raise ValueError(f'GeGI double-pulse source changed after the scan: {name}')
+    counts = report['counts']
+    if (sum(row['trials'] for row in public_summary) != counts['paired_trials']
+            or sum(row['trials'] for row in isolated) != counts['isolated_trials']):
+        raise ValueError('GeGI double-pulse trial counts do not match the scan totals.')
+    data = dict(kind=report['kind'], status=report['status'], design=design, counts=counts, summary=public_summary,
+                pairs=report['pairs'], pair_summary=report['pair_summary'], isolated_summary=isolated,
+                empty_summary=report['empty_summary'], stability=stability,
+                provenance=dict(**hashes, report_sha256=sha256(source).hexdigest(),
+                                source_sha256=sources, input_sha256=sorted(provenance['input_sha256'].values()),
+                                field_precision_bits=provenance['field_precision_bits'],
+                                native_settings=provenance['native_settings'],
+                                python=provenance['python'], numpy=provenance['numpy']))
+    target.write_text(json.dumps(data, allow_nan=False, separators=(',', ':'))+'\n',
+                      encoding='utf-8', newline='\n')
+
+
+def pulse_table(scan, noise):
+    grid = {(row['delay_ns'], row['topology']): row for row in scan['summary'] if row['noise'] == noise}
+    delays = sorted({delay for delay, _ in grid})
+    rows = []
+    for delay in delays:
+        cells = []
+        for topology in PULSE_TOPOLOGIES:
+            group = grid[delay, topology]
+            n = group['trials']
+            for key in PULSE_OUTCOMES:
+                passed = group[key]
+                shade = ' style="background:#ecf6f2"' if passed == n else ''
+                cells.append(f'<td{shade}>{passed}/{n}</td>')
+        rows.append(f'<tr><th scope="row">{delay:g}</th>{"".join(cells)}</tr>')
+    group_headings = ''.join(f'<th colspan="3" scope="colgroup">{label}</th>'
+                             for label in PULSE_TOPOLOGIES.values())
+    headings = ''.join(f'<th scope="col">{label}</th>'
+                       for _ in PULSE_TOPOLOGIES for label in PULSE_OUTCOMES.values())
+    return f'''<div role="region" aria-label="{PULSE_NOISE[noise]} comparison" tabindex="0" style="overflow-x:auto">
+<table style="min-width:670px;font-variant-numeric:tabular-nums">
+<caption style="text-align:left;font-weight:600">{PULSE_NOISE[noise]} · successful trials / all trials</caption>
+<colgroup span="1"></colgroup><colgroup span="3"></colgroup><colgroup span="3"></colgroup><colgroup span="3"></colgroup>
+<thead><tr><th scope="col" rowspan="2">Delay (ns)</th>{group_headings}</tr><tr>{headings}</tr></thead>
+<tbody>{''.join(rows)}</tbody></table></div>'''
+
+
+def pulse_controls(scan):
+    isolated = {(r['noise'], r['topology']): r for r in scan['isolated_summary']}
+    stability = {(r['noise'], r['topology'], r['criterion']): r['stable_from_ns'] for r in scan['stability']}
+    empty = {row['noise']: row for row in scan['empty_summary']}
+    isolated_rows, stable_rows = [], []
+    for noise, condition in PULSE_NOISE.items():
+        for topology, label in PULSE_TOPOLOGIES.items():
+            row = isolated[noise, topology]
+            start = f'<tr><th scope="row">{label}</th><td>{condition}</td>'
+            cells = ''.join(f'<td>{row[key]}/{row["trials"]}</td>'
+                            for key in ('matched_triggers', 'energy_available', 'xy_available', 'correct_pixel'))
+            isolated_rows.append(f'{start}{cells}</tr>')
+            delays = [stability[noise, topology, key] for key in PULSE_STABILITY]
+            cells = ''.join(f'<td>{delay:g}</td>' if delay is not None else '<td>—</td>' for delay in delays)
+            stable_rows.append(f'{start}{cells}</tr>')
+    design = scan['design']
+    return f'''<details><summary>Controls and stable scan ranges</summary>
+<p>The controls replay each input pulse by itself. The paired-energy tolerance is
+{design["relative_energy_tolerance"]:.1%} relative to the isolated energy estimate. The paired XY tolerance is
+{design["xy_isolated_radial_tolerance_mm"]:g} mm radially from the isolated position estimate.</p>
+<div style="overflow-x:auto"><table>
+<caption style="text-align:left">Isolated pulse controls · successful trials / all trials</caption>
+<thead><tr><th scope="col">Strip relation</th><th scope="col">Noise</th><th scope="col">Matched trigger</th>
+<th scope="col">Energy</th><th scope="col">XY</th><th scope="col">Correct pixel</th></tr></thead>
+<tbody>{''.join(isolated_rows)}</tbody></table></div>
+<p>Empty controls had {empty["nominal"]["false_triggers"]} false triggers in {empty["nominal"]["trials"]} noisy windows
+and {empty["none"]["false_triggers"]} in {empty["none"]["trials"]} noiseless windows.</p>
+<p>A stable scan range starts when all trials pass at that delay and every subsequent sampled delay,
+with at least {design["minimum_stable_suffix_points"]} sampled delays in the range. A dash marks a missing all-pass range.</p>
+<div style="overflow-x:auto"><table>
+<caption style="text-align:left">Start of the stable scan range (ns)</caption>
+<thead><tr><th scope="col">Strip relation</th><th scope="col">Noise</th>
+{''.join(f'<th scope="col">{name}</th>' for name in PULSE_STABILITY.values())}</tr></thead>
+<tbody>{''.join(stable_rows)}</tbody></table></div></details>'''
+
+
+def double_pulse_section(scan):
+    design = scan['design']
+    energies = ', '.join(' + '.join(f'{e:g}' for e in pair) for pair in design['ordered_energies_keV'])
+    phases = ' and '.join(f'{phase:g}' for phase in design['adc_phases_ns'])
+    starts = {(r['topology'], r['criterion']): r['stable_from_ns']
+              for r in scan['stability'] if r['noise'] == 'nominal'}
+    trigger = {starts[topology, 'two_distinct_triggers'] for topology in PULSE_TOPOLOGIES}
+    nearby = {starts[topology, 'both_energy_and_xy_within_tolerance']
+              for topology in ('same_strips', 'adjacent_strips')}
+    far_energy = starts['far_strips', 'both_energy_within_tolerance']
+    overview = ''
+    if len(trigger) == len(nearby) == 1 and None not in trigger | nearby and far_energy is not None:
+        overview = f'''<p>With nominal noise, all groups sustained two matched triggers from <strong>{trigger.pop():g} ns</strong>
+on this scan. Same- and adjacent-strip groups met both energy and XY tolerances from <strong>{nearby.pop():g} ns</strong>.
+Far-strip energy met its tolerance from <strong>{far_energy:g} ns</strong>.</p>'''
+    return f'''<h2 id="gegi-double-pulse">When can GeGI resolve two close pulses?</h2>
+{overview}
+<p>Two simulated native charge responses were shifted in time and added before digitization. The same electronic
+stream supplied the triggers, energies and strip positions. Same-strip pulses share both collecting strips.
+Adjacent pulses differ by one X strip, and one adjacent pair shares a Y strip. Far pulses are separated by at
+least three strip pitches on each face.</p>
+<p><strong>Triggers</strong> requires exactly two reconstructed triggers at a nonzero delay, each within
+±{design["match_tolerance_ns"]:g} ns of the expected trigger time. <strong>Energy</strong> and <strong>XY</strong>
+also require the correct collecting strips for both pulses and a qualified energy or both calibrated lateral
+coordinates, respectively. Each fraction uses all trials at that delay and strip relation.</p>
+{pulse_table(scan, 'nominal')}
+<details><summary>Compare without electronic noise</summary>{pulse_table(scan, 'none')}</details>
+{pulse_controls(scan)}
+<p>The {scan["counts"]["paired_trials"]:,} paired trials used ordered energies of {energies} keV with sampling phases of
+{phases} ns. Nominal noise was
+{design["noise_rms_V"]["nominal"]*1e6:g} µV RMS before analog-to-digital conversion. Far-strip pairs include a
+location outside the position calibration. The sampled responses characterize the nominal simulated electronics.</p>
+<p><a href="gegi-digital/double-pulse.json">Open double-pulse counts, errors and scan settings (JSON)</a>.</p>'''
 
 
 def compact_pairing_study(study, source_hash, *, holdout=False):
@@ -180,12 +369,20 @@ def render(site):
         rows.append(f'<tr><th scope="row">{escape(c["name"])}</th>'
                     f'<td>{max(abs(v) for v in c["signed_induced_keV"]):.2f}</td>'
                     f'<td>{c["signed_induced_keV"][-1]:.2f}</td><td>{c["fast_area_V_ns"]:.3f}</td><td>{slow}</td></tr>')
-    card = f'''<section id="gegi" class="panel" data-dataset="gegi">
-<h2>How neighboring GeGI strips sense a drifting charge</h2>
+    pulse = site/DOUBLE_PULSE_FILE
+    card = '<section id="gegi" class="panel" data-dataset="gegi">\n'
+    has_pulse = pulse.is_file()
+    if has_pulse:
+        card += double_pulse_section(json.loads(pulse.read_bytes()))
+    heading = 'h3' if has_pulse else 'h2'
+    strip_table = f'''<div style="overflow-x:auto"><table><thead><tr><th>Strip</th><th>Largest |Q| (keV equivalent)</th><th>Final Q (keV equivalent)</th><th>Fast area (V·ns)</th><th>Slow energy (keV)</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>'''
+    if has_pulse:
+        strip_table = f'<details><summary>Strip measurements for this event</summary>{strip_table}</details>'
+    card += f'''<{heading}>How neighboring GeGI strips sense a drifting charge</{heading}>
 <p>During drift, both neighboring strips respond to the moving carriers. Their induced charge returns to zero, while their fast areas differ. The collecting strip supplies the slow energy signal.</p>
 <figure style="margin:0"><img style="width:100%;height:auto" width="1450" height="870" src="gegi-digital/signals.png" alt="Induced charge and digital fast and slow signals on three adjacent strips">
 <figcaption>Simulated primary {ex["event_id"]} · {ex["counts"]["initial_primaries"]:,} initial primaries, {ex["counts"]["nonzero_primaries"]} with a germanium deposit. Nominal digital readout.</figcaption></figure>
-<div style="overflow-x:auto"><table><thead><tr><th>Strip</th><th>Largest |Q| (keV equivalent)</th><th>Final Q (keV equivalent)</th><th>Fast area (V·ns)</th><th>Slow energy (keV)</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+{strip_table}
 <p><a href="gegi-digital/event.json">Event samples and readout settings</a> · <a href="gegi-campaign/index.html">View the saved Compton study</a></p>'''
     benchmark = ex.get('position_benchmark')
     if benchmark:
@@ -198,7 +395,8 @@ the radial XY RMS error changed from <strong>{xy["center_rmse_mm"]:.2f} to {xy["
 The depth RMS error was {benchmark["z"]["rmse_mm"]:.2f} mm on {benchmark["z"]["compared"]} points.
 These errors compare simulated coordinates within the sampled region.</p>'''
     if 'energy_order_check' in ex:
-        card += energy_order_section(ex['energy_order_check'], ex['counts'])
+        orders = energy_order_section(ex['energy_order_check'], ex['counts'])
+        card += f'<details><summary>Interaction ordering benchmark</summary>{orders}</details>' if has_pulse else orders
     if 'pairing_benchmark' in ex:
         card += '<details><summary>Two-site strip-pairing benchmark</summary>' + pairing_section(ex['pairing_benchmark']) + '</details>'
     card += '</section>'

@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "build_id": "2ca91d1672c1738ae060eb0a9306af31eb0276b6885859e0e91b4c275506af99",
-  "file_count": 1874,
-  "total_bytes": 493307027,
+  "build_id": "0efea0e0c45359f904d1e65ff0d026041b387fdbcfdd1ce1e7113c11e9a2e8d2",
+  "file_count": 1875,
+  "total_bytes": 493781071,
   "html_pages": 109,
-  "local_links_checked": 3321,
-  "resource_references_checked": 3378,
+  "local_links_checked": 3322,
+  "resource_references_checked": 3379,
   "page_navigation_checked": 1449,
   "fragments_checked": 87,
-  "downloads_checked": 743,
+  "downloads_checked": 744,
   "media_references_checked": 1149,
   "metadata_references_checked": 35,
   "other_references_checked": 2,
@@ -7715,8 +7715,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 55279,
-      "sha256": "68145fcba7664d39ae607ce0bc9a0ed9608a105d8686080477d5bcbbca08f049"
+      "bytes": 55940,
+      "sha256": "dcf2658bc038c07699c817976eb570e022306ff26c2de162cdbc67fc82126a0d"
     },
     {
       "path": "index.html",
@@ -9304,6 +9304,11 @@
       "sha256": "0dae723633233899468aab151f16a5131163ed66ca4d9f808879a9362b21a077"
     },
     {
+      "path": "results/gegi-digital/double-pulse.json",
+      "bytes": 456773,
+      "sha256": "711693259897e1363ff42d3089f389b01b93c48c199fde027389a90ec94e3fb6"
+    },
+    {
       "path": "results/gegi-digital/event.json",
       "bytes": 74534,
       "sha256": "074a465e0bbc1490fbbdb8cbd855798cbd4850999ad966bab89aa45c9e1a2aa1"
@@ -9315,8 +9320,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 12116,
-      "sha256": "8e1a75524f93ac20772320cfa24eb4b6fadb0b6685e40962deb4f0a494a6812f"
+      "bytes": 28726,
+      "sha256": "fe6b3be3a0eb3ec5087b0a5664554ebe5db5f1c47dc42e610ae84b57ae29bd1b"
     },
     {
       "path": "retired-studies.json",
