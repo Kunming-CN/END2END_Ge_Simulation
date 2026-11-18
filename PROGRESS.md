@@ -2,7 +2,7 @@
 
 ## Current stage · GeGI two-site reconstruction
 
-Students can select a detector/source in Control and run radiation transport, charge drift and readout. The GeGI extension has reached stage 4 of 5. Its nominal digital chain and single-site position estimates are available in the shared Windows/macOS student runtime. The [development plan](tools/NEXT_DEVELOPMENT_PLAN.md) is the current work queue.
+The GeGI extension has reached stage 4 of 5. The stable Windows/macOS student runtime includes nominal digital readout and single-site positions. The updated Control panel adds both energy-based Compton orders for each compatible strip pairing and compares the measured sum with the configured monoenergetic line. A missing spatial coordinate leaves the cone unavailable. The [development plan](tools/NEXT_DEVELOPMENT_PLAN.md) records the next work.
 
 | Saved check | Result |
 |---|---|
@@ -15,7 +15,13 @@ Students can select a detector/source in Control and run radiation transport, ch
 
 The pairing study uses 396 reference injections and a separate 40-mixture set to measure prediction residuals. A strip can sense carriers moving through its weighting field even when they eventually reach other electrodes. A related experimental germanium strip camera used neighboring transients for position interpolation. [Johnson et al. (2011)](https://doi.org/10.1088/0031-9155/56/18/007)
 
-The simulation processes a band-limited preamplifier signal sampled at a nominal 50 MS/s. A fixed pulser calibration sets the energy scale. The actual instrument's fast-feature definition, electronics settings and calibration still need matched evidence. The four energy-unique events in the standalone sample (1412, 1575, 2950 and 3472) use strip combinations outside the study. The published Compton map uses its original reconstruction.
+## Four transport-generated candidates
+
+The 662 keV standalone run had four energy-unique strip pairings. Total deposits in Ge were 470.40, 370.10, 662.00 and 418.13 keV in events 1412, 1575, 2950 and 3472 respectively. Under the full-absorption, stationary-free-electron model, the first three have one allowed order and the last has two. In 2950, digital energy admits only B → A (43.41°). The parent photon's Compton and photoelectric interactions occurred in A → B order. The measurement and the simulated history are shown side by side in the exhibit.
+
+At the eight hit pixels we reused 88 same-field center references and captured 224 full-electrode injections with the original Float32 field. The drift batch took 47.46 s with a 2.48 GB peak working set. In 16 separately composed two-site tests, fitting within the strips changed transverse RMS error from 1.747 to 0.945 mm and depth RMS from 0.237 to 0.106 mm. In event 2950 the fitted points differed from the simulated deposited-energy centroids by 0.45 and 2.49 mm. Both centroids fall outside the ±0.4-pitch training range on one axis. These checks support no validated new imaging cone from the four. Local evidence: `.local/gegi-digital-v1/standalone-order-spectra.json` and `.local/gegi-digital-v1/two-site-position/position-study.json`.
+
+The nominal electronics use a 50 MS/s digitizer and a fixed pulser calibration. Actual instrument fast-feature and electronics calibration require matched measurements. The published Compton map uses its original reconstruction.
 
 ## Software, studies and reproducibility
 

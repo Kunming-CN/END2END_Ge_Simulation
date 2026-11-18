@@ -377,23 +377,47 @@ function renderGeGIDigitalPosition(context,topology,position,pairs){
 }
 function renderGeGIDigitalPairs(context,target,pairs){
   const status={unique_energy_pairing:'One energy-compatible pairing',ambiguous_energy_pairing:'Both pairings are energy-compatible',incompatible_energies:'Neither pairing passes the energy tolerance'}[pairs.status]||'Pairing unresolved';
-  target.append(node('h3','Two-site strip pairings'),node('p',status+'. Energy compatibility leaves scatter order unresolved.'));
+  target.append(node('h3','Two-site strip pairings'),node('p',status+'.'));
+  if(pairs.source_line){
+    const {energy_keV,measured_minus_line_keV}=pairs.source_line;
+    target.append(node('p','Configured photon energy '+gegiDigitalValue(energy_keV,'keV')+' · measured X/Y average '+gegiDigitalValue(pairs.energy_keV,'keV')+' · measured minus configured '+(measured_minus_line_keV>0?'+':'')+gegiDigitalValue(measured_minus_line_keV,'keV')+'.','muted'));
+  }
+  if(pairs.compton_order_scope&&pairs.compatible_pairing_count>0)target.append(node('p','Compton scatter angles use the measured energy at both sites and assume one fully absorbed photon whose first scatter is on a free electron at rest.','muted'));
   if(pairs.reason)target.append(node('p',pairs.reason.replaceAll('_',' '),'muted'));
-  const list=node('ol');
+  const list=node('ol',undefined,'gegi-pairings');
   for(const pairing of pairs.pairings){
-    const row=node('li',pairing.energy_compatible?'Energy-compatible':'Energy-incompatible'),sites=node('ul');
-    for(const site of pairing.sites){
+    const row=node('li'),sites=node('ul');
+    row.append(node('strong',pairing.energy_compatible?'Energy-compatible':'Energy-incompatible'));
+    for(const [index,site] of pairing.sites.entries()){
       const x=gegiDigitalNeighborNames(context,[site.x_contact_id]),y=gegiDigitalNeighborNames(context,[site.y_contact_id]);
-      let text=x+' '+gegiDigitalValue(site.x_energy_keV,'keV')+' ↔ '+y+' '+gegiDigitalValue(site.y_energy_keV,'keV');
+      let text='Site '+(index+1)+' · '+x+' '+gegiDigitalValue(site.x_energy_keV,'keV')+' ↔ '+y+' '+gegiDigitalValue(site.y_energy_keV,'keV');
       if(site.energy_compatible)text+=' · pair energy '+gegiDigitalValue(site.energy_keV,'keV');
-      if(site.position_mm?.every(Number.isFinite))text+=' · modeled XYZ ('+site.position_mm.map(v=>gegiDigitalValue(v)).join(', ')+') mm';
+      if(site.position_mm?.length===3&&site.position_mm.every(Number.isFinite))text+=' · modeled XYZ ('+site.position_mm.map(v=>gegiDigitalValue(v)).join(', ')+') mm';
       const cfd=site.position?.depth?.cfd_difference_ns;
       if(Number.isFinite(cfd))text+=' · X − Y timing '+gegiDigitalValue(cfd,'ns');
       sites.append(node('li',text));
     }
     row.append(sites);
+    if(pairing.energy_compatible){
+      if(pairing.compton_orders?.length){
+        const orders=node('ul');
+        for(const order of pairing.compton_orders){
+          const [first,second]=order.site_index_order.map(i=>'Site '+(i+1));
+          const outcome=order.kinematically_allowed
+            ?'allowed by energy model · scatter angle '+gegiDigitalValue(order.half_angle_deg)+'°'
+            :'excluded by energy model';
+          orders.append(node('li',first+' → '+second+' · '+outcome));
+        }
+        row.append(node('p','Candidate interaction orders from energy'),orders);
+      }else row.append(node('p','Energy-based interaction orders are unavailable in this record.','muted'));
+      const coneCount=pairing.cones?.length||0;
+      const missingPosition=pairing.sites.some(site=>site.position_mm?.length!==3||!site.position_mm.every(Number.isFinite));
+      const spatial=coneCount?coneCount+' conditional spatial cone'+(coneCount===1?'':'s')+'.'
+        :missingPosition?'Spatial cone unavailable. Both sites need modeled XYZ positions.'
+        :'Spatial cone unavailable for this pairing.';
+      row.append(node('p',spatial,'muted'));
+    }
     if(pairing.flags?.length)row.append(node('p',pairing.flags.map(f=>f.replaceAll('_',' ')).join(' · '),'muted'));
-    row.append(node('p',pairing.cones?.length?pairing.cones.length+' conditional cone orders under full absorption.':'Compton cone unavailable for this pairing.','muted'));
     list.append(row);
   }
   target.append(list);

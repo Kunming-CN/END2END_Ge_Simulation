@@ -1,4 +1,6 @@
 """Replay one sealed GeGI native event through the independent digital readout."""
+import hashlib
+import math
 from pathlib import Path
 
 import gegi_event_store as S
@@ -39,6 +41,21 @@ def single_pixel(digital, channel_metadata):
                 x_contact_id=x, y_contact_id=y)
 
 
+def _compton_orders(sites):
+    """Evaluate the two energy assignments conditional on full photon absorption."""
+    orders = []
+    for first, second in ((0, 1), (1, 0)):
+        scatter, absorbed = sites[first]['energy_keV'], sites[second]['energy_keV']
+        # Match the energy expression and closed cosine interval in I.cone.
+        cosine = 1-I.ELECTRON_REST_KEV*(1/absorbed-1/(scatter+absorbed))
+        allowed = -1 <= cosine <= 1
+        orders.append({'site_index_order': [first, second], 'kinematically_allowed': allowed,
+                       'half_angle_deg': math.degrees(math.acos(cosine)) if allowed else None,
+                       'cos_theta': cosine, 'scatter_energy_keV': scatter,
+                       'absorbed_energy_keV': absorbed})
+    return orders
+
+
 def analyze_event(event, native, channel_metadata, *, calibration=None, source_identity=None,
                   include_traces=True, noise_seed=None):
     from gegi_digital_pairs import two_site_pairings
@@ -56,8 +73,25 @@ def analyze_event(event, native, channel_metadata, *, calibration=None, source_i
         pooled = infer_position(*inputs, source_identity=source_identity)
         position['pooled_axes'] = {axis: pooled[axis] for axis in ('x', 'y')}
     pairs = two_site_pairings(digital, channel_metadata, calibration=calibration, source_identity=source_identity)
+    pairs['compton_order_scope'] = 'Conditional on one fully absorbed photon.'
+    for pairing in pairs['pairings']:
+        pairing['compton_orders'] = _compton_orders(pairing['sites']) if pairing['energy_compatible'] else []
     return {'status': 'available', 'reason': None, 'readout': digital, 'topology': topology,
             'position': position, 'pairs': pairs}
+
+
+def _source_line(run, stamps, measured_keV):
+    expected = stamps.get('selection.json', {}).get('sha256')
+    if expected is None:
+        return None
+    data = W.safe_path(run, 'selection.json').read_bytes()
+    W.require(hashlib.sha256(data).hexdigest() == expected,
+              'Original GeGI source selection differs from the completed run.')
+    selection = W.decode_json(data.decode('utf-8-sig'))
+    energy = selection.get('gamma_energy_keV')
+    if selection.get('source') == 'gegi_mono_gamma_v1' and I.finite(energy) and energy > 0:
+        return {'energy_keV': energy, 'measured_minus_line_keV': measured_keV - energy}
+    return None
 
 
 def from_saved_event(event, channel_metadata, run, *, configuration_sha256,
@@ -99,4 +133,9 @@ def from_saved_event(event, channel_metadata, run, *, configuration_sha256,
     calibration = load_calibration(calibration_path) if calibration_path is not None else None
     result = analyze_event(event, native, channel_metadata, calibration=calibration, source_identity=source,
                            include_traces=include_traces)
+    pairs = result['pairs']
+    if pairs['compatible_pairing_count']:
+        line = _source_line(run, stamps, pairs['energy_keV'])
+        if line is not None:
+            pairs['source_line'] = line
     return dict(result, native_signals_sha256=expected)

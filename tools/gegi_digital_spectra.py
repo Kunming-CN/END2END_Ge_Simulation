@@ -50,6 +50,7 @@ def spectra(run):
                        'position': replay['position'], 'two_site': replay['pairs'],
                        'readout_flags': replay['readout']['flags']})
     return {'kind': 'gegi_digital_spectra_v1', 'configuration_sha256': receipt['configuration_sha256'],
+            'response_receipt_sha256': complete['artifacts']['response/run.json']['sha256'],
             'digital_profile_sha256': PROFILE_SHA256, 'original_counts': receipt['counts'],
             'selection': 'One entry per strip and available feature per saved nonzero primary. '
                          'Slow energies apply the digital detection threshold. Guards excluded from strip histograms.',

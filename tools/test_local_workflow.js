@@ -1358,7 +1358,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   const cachedImageRequests=run('gegiRequests.length');get('gegi-imaging-panel').open=false;await get('gegi-imaging-panel').ontoggle();get('gegi-imaging-panel').open=true;await get('gegi-imaging-panel').ontoggle();
   assert.equal(run('gegiRequests.length'),cachedImageRequests);
   // Digital readout is a separate, lazy selected-event request bound to the same run seal.
-  run(`var digitalRequests=[];var digitalMeta=standaloneDerived.channels.map((c,i)=>({...c,strip_index:i%17+1,guard:i%17===16}));
+  run(`var digitalRequests=[];var digitalPairings=null;var digitalMeta=standaloneDerived.channels.map((c,i)=>({...c,strip_index:i%17+1,guard:i%17===16}));
     var digitalApi=async path=>{
       const q=new URLSearchParams(path.split('?')[1]);
       if(!path.startsWith('/api/workflow/gegi-digital?'))return gegiFixtureReply({...standaloneDerived,channels:digitalMeta},path);
@@ -1367,6 +1367,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
       const digital={status:'available',readout:{status:'completed',profile:{sample_period_ns:20,adc_bits:16},calibration:{pulser_energy_keV:500},noise_seed:null,channels:digitalMeta.map(c=>({contact_id:c.id,slow_energy_keV:200,fast_area_V_ns:-1,fast_signal_keV_equiv:-2,flags:[],trace}))},
         topology:{status:'conditional_single_pixel',energy_keV:200,threshold_keV:5,x_contact_id:11,y_contact_id:24,collecting_contact_ids:[11,24]},
         position:{calibration_reference_energy_keV:500,calibration_source_status:'nominal_transfer',calibration_pair_coverage:'simulated_pair',x:{contact_id:11,strip_center_mm:2,neighbor_contact_ids:[10,12],ratio:-.1,status:'estimated',slot:0,position_mm:1.2},y:{contact_id:24,strip_center_mm:4,ratio:null,status:'uncalibrated_strip',position_mm:null},depth:{cfd_difference_ns:-20,position_mm:0.5,status:'estimated'}}};
+      if(digitalPairings){digital.pairs=digitalPairings;digital.position=null;digital.topology={status:'multi_strip',threshold_keV:5,collecting_contact_ids:[11,12,24,26]};}
       return {kind:'gegi_multichannel_digital_v1',name:gegiJob.name,event_id,configuration_sha256:gegiJob.configuration_sha256,results_sha256:'d'.repeat(64),saved_derivative_name:'standalone-derived',digital:event_id===49?{status:'unavailable',reason:'Native carrier response failed.'}:digital};
     }; api=digitalApi;`);
   await run("openGeGIResult(gegiJob,null,'standalone-derived')");
@@ -1391,13 +1392,32 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   await run(`finishDigital(digitalApi('/api/workflow/gegi-digital?name=gegi-dom&event=37'));lateDigital`);
   assert.match(get('gegi-digital-status').textContent,/Native carrier response failed/);
   assert.equal(get('gegi-digital-content').hidden,true);assert.equal(get('gegi-digital-plots').children.length,0);
-  run(`var pairA={energy_compatible:true,sites:[{x_contact_id:11,y_contact_id:24,x_energy_keV:210,y_energy_keV:210,energy_compatible:true,energy_keV:210}],cones:[],flags:['overlapping_fast_neighborhood']};
-    renderGeGIDigitalPosition(gegiResult,{collecting_contact_ids:[11,12,24,26],threshold_keV:5},null,{status:'ambiguous_energy_pairing',pairings:[pairA,{...pairA,sites:[{...pairA.sites[0],y_contact_id:26}]}]});`);
-  const pairDisplay=descendants(get('gegi-digital-position')).map(n=>n.textContent);
-  assert.ok(pairDisplay.some(text=>text.includes('Both pairings are energy-compatible')));
-  assert.ok(pairDisplay.some(text=>text.includes('strip 24 210 keV'))&&pairDisplay.some(text=>text.includes('strip 26 210 keV')));
-  assert.ok(pairDisplay.includes('Compton cone unavailable for this pairing.'));
-  console.log('GeGI digital readout: lazy selected event, derivative seal, ADC and branch overlays, modeled calibration, cached channel switches and stale failure clearing passed.');
+  run(`var pairSite=(x,y,ex,ey,position=null)=>({x_contact_id:x,y_contact_id:y,x_energy_keV:ex,y_energy_keV:ey,energy_compatible:ex===ey,energy_keV:(ex+ey)/2,position_mm:position});
+    var pairA={energy_compatible:true,sites:[pairSite(11,24,100,100),pairSite(12,26,562,562)],cones:[],flags:['overlapping_fast_neighborhood'],compton_orders:[{site_index_order:[0,1],kinematically_allowed:true,half_angle_deg:30.38445431389857},{site_index_order:[1,0],kinematically_allowed:false,half_angle_deg:null}]};
+    var pairB={energy_compatible:false,sites:[pairSite(11,26,100,562),pairSite(12,24,562,100)],cones:[],flags:['strip_energy_mismatch'],compton_orders:[]};
+    digitalPairings={status:'unique_energy_pairing',energy_keV:662,source_line:{energy_keV:660,measured_minus_line_keV:2},compatible_pairing_count:1,compton_order_scope:'Conditional on one fully absorbed photon.',pairings:[pairA,pairB]};
+    api=digitalApi;$('gegi-event').value='37';`);
+  await get('gegi-event').onchange();
+  const pairDisplay=()=>descendants(get('gegi-digital-position')).map(n=>n.textContent);
+  assert.equal(get('gegi-digital-content').hidden,false);
+  assert.ok(pairDisplay().includes('One energy-compatible pairing.'));
+  assert.ok(pairDisplay().includes('Configured photon energy 660 keV · measured X/Y average 662 keV · measured minus configured +2 keV.'));
+  assert.ok(pairDisplay().some(text=>text.includes('one fully absorbed photon whose first scatter is on a free electron at rest.')));
+  assert.ok(pairDisplay().includes('Site 1 · strip 11 100 keV ↔ strip 24 100 keV · pair energy 100 keV'));
+  assert.ok(pairDisplay().includes('Site 2 · strip 12 562 keV ↔ strip 26 562 keV · pair energy 562 keV'));
+  assert.ok(pairDisplay().includes('Site 1 → Site 2 · allowed by energy model · scatter angle 30.3845°'));
+  assert.ok(pairDisplay().includes('Site 2 → Site 1 · excluded by energy model'));
+  assert.ok(pairDisplay().includes('Spatial cone unavailable. Both sites need modeled XYZ positions.'));
+  assert.equal(pairDisplay().filter(text=>text.includes('Candidate interaction orders from energy')).length,1);
+  run(`var digitalXYZ={...pairA,sites:[pairSite(11,24,250,250,[0,0,0]),pairSite(12,26,250,250,[0,0,10])],cones:[{site_index_order:[0,1]},{site_index_order:[1,0]}],compton_orders:[{site_index_order:[0,1],kinematically_allowed:true,half_angle_deg:91.26048858117517},{site_index_order:[1,0],kinematically_allowed:true,half_angle_deg:91.26048858117517}]};
+    var oldPair={...digitalXYZ,sites:[pairSite(11,26,250,250),pairSite(12,24,250,250)],cones:[]};delete oldPair.compton_orders;
+    renderGeGIDigitalPosition(gegiResult,gegiResult.digital.topology,null,{status:'ambiguous_energy_pairing',pairings:[digitalXYZ,oldPair]});`);
+  assert.ok(pairDisplay().includes('Both pairings are energy-compatible.'));
+  assert.equal(pairDisplay().filter(text=>text.includes('allowed by energy model · scatter angle 91.2605°')).length,2);
+  assert.ok(pairDisplay().includes('2 conditional spatial cones.'));
+  assert.ok(pairDisplay().includes('Energy-based interaction orders are unavailable in this record.'));
+  assert.equal(pairDisplay().some(text=>text.includes('Configured photon energy')),false);
+  console.log('GeGI digital readout: lazy sealed selection, ADC and branch overlays, modeled calibration, energy-only orders, spatial-cone distinction, old records and stale failure clearing passed.');
   run(`var zeroGeGI={...standaloneV3Fixture,counts:{initial_primaries:100,zero_deposit_primaries:100,nonzero_primaries:0,native_failed_groups:0},events:[],imaging:null};api=async path=>gegiFixtureReply(zeroGeGI,path);gegiRequests.length=0;`);
   await run('openGeGIResult(gegiJob)');assert.equal(run('gegiRequests.length'),1);assert.equal(run('gegiResult.event'),null);
   assert.match(get('gegi-counts').textContent,/100 initial.*100 zero-deposit.*0 stored nonzero/);assert.match(get('gegi-event-summary').textContent,/No nonzero deposits/);
