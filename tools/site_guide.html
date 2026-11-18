@@ -209,6 +209,8 @@ foreach ($f in $m.files) {
 <p>For a compatible single-pixel candidate, inspect the signed neighbor difference divided by the collecting strip energy on each face. The supplied local calibration covers X11, X12, Y07 and Y09 over the simulated scan interval. The display reports the available coordinates and the calibration used.</p>
 <p>To collect all 32 strip spectra from a completed standalone run, choose a new output filename. The file includes the sparse histogram bins, unavailable counts and outcomes for the original nonzero primary IDs.</p>
 <pre>python -B tools/gegi_digital_spectra.py --run .local/runs/my-completed-gegi-run --output gegi-digital-spectra.json</pre>
+<p>To study pulse overlap, choose two nonzero event IDs with complete carrier collection from your run and set their separation in nanoseconds. Use the same ID twice to repeat a pulse on the same strips. For example, replace the run name and IDs below with your own. The output contains the common clock, signed ADC samples on 34 electrodes and the triggers reconstructed from those samples, with available energies and positions. Add <code>--noise-seed 17</code> to enable the nominal electronic noise.</p>
+<pre>python -B tools/gegi_pulse_replay.py --run .local/runs/my-completed-gegi-run --first 45 --second 1043 --delay-ns 600 --output pulse-pair.json</pre>
 </details>
 <details><summary>Reprocess an older completed standalone run</summary><pre>python -B tools/gegi_standalone_reconstruction.py --run .local/runs/my-completed-gegi-run --output .local/gegi-saved-reconstruction/my-standalone-derivative
 

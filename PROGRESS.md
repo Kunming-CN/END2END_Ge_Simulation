@@ -1,8 +1,10 @@
 # GeSignal handoff
 
-## Current stage · GeGI two-site reconstruction
+## Current stage · GeGI pulse overlap and two-site reconstruction
 
-The GeGI extension has reached stage 4 of 5. The stable Windows/macOS student runtime includes nominal digital readout and single-site positions. The updated Control panel adds both energy-based Compton orders for each compatible strip pairing and compares the measured sum with the configured monoenergetic line. A missing spatial coordinate leaves the cone unavailable. The [development plan](tools/NEXT_DEVELOPMENT_PLAN.md) records the next work.
+The GeGI extension is at stage 4 of 5. The current development milestone studies how overlapping pulses affect nominal fast and slow readout. The two-site Control panel shows both energy-based Compton orders for each compatible strip pairing and compares the measured sum with the configured monoenergetic line. A missing spatial coordinate leaves the cone unavailable. The [development plan](tools/NEXT_DEVELOPMENT_PLAN.md) records the next work.
+
+The student command `tools/gegi_pulse_replay.py` places two original nonzero IDs from one completed standalone run on a common 50 MS/s ADC clock. Both pulses share the front-end response, noise stream and quantizer. Coincident rises on the two detector faces provide timing. Each electrode is checked for contamination in its own feature window. The output retains signed ADC samples, trigger times, available energies and position status. Seven pulse-stream regression tests cover single-pulse digital parity, fractional delay, the feedback tail, channel-local overlap and incomplete measurements.
 
 | Saved check | Result |
 |---|---|

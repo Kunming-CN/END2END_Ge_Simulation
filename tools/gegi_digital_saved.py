@@ -94,9 +94,8 @@ def _source_line(run, stamps, measured_keV):
     return None
 
 
-def from_saved_event(event, channel_metadata, run, *, configuration_sha256,
-                     calibration_path=CALIBRATION, include_traces=True):
-    """Use one selected native CSV, bound to the original event and run seals."""
+def load_saved_native(event, channel_metadata, run, *, configuration_sha256):
+    """Load signed native charge with the original event, wiring and run seals."""
     if event.get('channels') is None:
         return {'status': 'unavailable', 'reason': 'Native carrier response failed for this primary.'}
     if event.get('signals_ref') is None and event.get('signals_sha256') is None:
@@ -128,14 +127,24 @@ def from_saved_event(event, channel_metadata, run, *, configuration_sha256,
     fields = receipt.get('fields') or {}
     source = {'model_sha256': receipt.get('model_sha256'), 'field_cache_sha256': fields.get('cache_sha256'),
               'field_precision_bits': fields.get('precision_bits')}
+    return {'status': 'available', 'native': native, 'source': source,
+            'stamps': stamps, 'native_signals_sha256': expected}
+
+
+def from_saved_event(event, channel_metadata, run, *, configuration_sha256,
+                     calibration_path=CALIBRATION, include_traces=True):
+    """Use one selected native CSV, bound to the original event and run seals."""
     from gegi_substrip import load_calibration
 
+    saved = load_saved_native(event, channel_metadata, run, configuration_sha256=configuration_sha256)
+    if saved['status'] != 'available':
+        return saved
     calibration = load_calibration(calibration_path) if calibration_path is not None else None
-    result = analyze_event(event, native, channel_metadata, calibration=calibration, source_identity=source,
+    result = analyze_event(event, saved['native'], channel_metadata, calibration=calibration, source_identity=saved['source'],
                            include_traces=include_traces)
     pairs = result['pairs']
     if pairs['compatible_pairing_count']:
-        line = _source_line(run, stamps, pairs['energy_keV'])
+        line = _source_line(run, saved['stamps'], pairs['energy_keV'])
         if line is not None:
             pairs['source_line'] = line
-    return dict(result, native_signals_sha256=expected)
+    return dict(result, native_signals_sha256=saved['native_signals_sha256'])

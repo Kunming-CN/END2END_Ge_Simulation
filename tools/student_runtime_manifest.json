@@ -38,7 +38,7 @@
       "tools/gegi_standalone_reconstruction.py", "tools/gegi_calibration_admission.py",
       "tools/gegi_signal_recovery.py", "tools/gegi_digital_readout.py", "tools/gegi_digital_saved.py",
       "tools/gegi_substrip.py", "tools/gegi_substrip_calibration.json", "tools/gegi_digital_spectra.py",
-      "tools/gegi_digital_pairs.py"
+      "tools/gegi_digital_pairs.py", "tools/gegi_pulse_stream.py", "tools/gegi_pulse_replay.py"
     ],
     "saved_data_and_readout_runtime": [
       "tools/charge_check.py", "tools/charge_check.ps1", "tools/replay_readout.py",
