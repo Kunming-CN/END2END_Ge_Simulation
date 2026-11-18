@@ -1,77 +1,19 @@
-# GeSignal — HPGe Radiation-to-Readout Simulation
+# GeSignal — HPGe radiation-to-readout simulation
 
-**GeSignal (`END2END_Ge_Simulation`)** follows radiation in high-purity germanium
-(HPGe) detectors from energy deposits to signed signals and an energy measurement:
-**Geant4/remage → SolidStateDetectors.jl → preamplifier → analog shaper → peak ADC**.
+GeSignal simulates energy deposits in high-purity germanium with Geant4/remage and follows the drifting charge with SolidStateDetectors.jl. The readout depends on the detector. The LBNL examples use a preamplifier, analog shaper and peak ADC. For GeGI, Control can replay saved strip signals through a nominal digitized preamplifier, use the fast response on neighboring strips for position, and measure energy on the slow branch. The GeGI electronics settings and position calibration describe the simulation.
 
-> **[Open the GeSignal website →](https://kunming-cn.github.io/END2END_Ge_Simulation/)**
-> Explore saved simulations and detector models online, with no installation.
+## Run a simulation
 
-**macOS is supported:** Apple Silicon and Intel Macs use the same student
-software ZIP as Windows. Run `Setup.command` once, then open `Control.command`.
-Follow the [Mac setup guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup-macos)
-to prepare the dependencies and start your first simulation.
+[Download the student software for Windows and macOS](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip) and extract it. Open `tools/site_guide.html` for prerequisites. On Windows open `Control.cmd`. On macOS run `Setup.command` once, then open `Control.command`. In Control, choose a cryostat, detector and source, check the plan, run it and open its results. The package includes the code, models and guide. [Setup and use guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html)
 
-## Start here
+## Explore saved results
 
-| Your goal | Where to start |
-|---|---|
-| Learn the signal chain | [Follow one signal](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html): six saved Cs137 10K examples connect deposits, charge, electronics and original event identities. |
-| Explore saved results and geometry | [Browse studies](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html), including Cs137 10K, 1M and GeGI; inspect the [detector catalog](https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/index.html) and [cryostat assemblies](https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/index.html). |
-| Run a new simulation on your computer | Follow the [Windows and macOS setup guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html), then start the local Control interface. |
+- [Follow one signal](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html) from a Cs137 energy deposit to a measured pulse in a simulation.
+- [Browse the results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) for Cs137 and GeGI studies, including event counts, settings and downloadable data. [Methods](https://kunming-cn.github.io/END2END_Ge_Simulation/methods/index.html)
+- Inspect the [17 detector models](https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/index.html) and their [cryostat assemblies](https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/index.html). Control lists executable combinations.
 
-## Run locally
+## Work with the source
 
-[Download the student software ZIP](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip),
-extract it and open `tools/site_guide.html`. After preparing the dependencies,
-start **Control.cmd** on Windows or **Control.command** on macOS to choose a compatible cryostat, detector
-and source, check the plan, and run, stop or resume a simulation. The guide and
-local compatibility checks identify the supported combinations.
+`transport/` owns radiation deposits, `simulation/` owns fields, drift and analog electronics, and `tools/gegi_digital_readout.py` implements the GeGI digital branches. The maintained generators in `tools/` build the saved website in `docs/`. [Maintenance guide](tools/MAINTENANCE.md) · [Current handoff](PROGRESS.md) · [Platform test record](https://github.com/Kunming-CN/END2END_Ge_Simulation/pull/1)
 
-The public website displays saved results. New simulations run locally through
-Control. The software ZIP contains code, models and the guide. Browse saved studies
-online; their pages provide the available data downloads.
-
-## Source map
-
-```text
-END2END_Ge_Simulation/
-├── transport/             # Geant4/remage radiation transport and deposit export
-├── simulation/            # Julia/SSD fields, carrier drift and electrode signals
-│   └── readout.jl         # Preamplifier, analog shaper and peak ADC
-├── scenarios/             # Source presets, compatibility and run configurations
-├── tools/                 # Local Control, orchestration, website generators and tests
-│   └── site_guide.html    # Maintained Windows and macOS setup and use guide
-├── models/                # Versioned SSD YAMLs, includes and provenance catalog
-└── docs/                  # Generated website — edit its maintained sources, not docs/
-```
-
-Use the [maintenance guide](tools/MAINTENANCE.md) to find each component's source
-owner and [PROGRESS.md](PROGRESS.md) for the current development handoff.
-
-<details>
-<summary>Scientific scope</summary>
-
-Saved studies are engineering simulations with their own inputs, event counts
-and validation limits. Deposited-energy truth (Edep) and readout-derived energy
-(Erec) describe different stages. Model geometry, compatible operating settings,
-numerical convergence and agreement with experiment must be assessed separately.
-Windows setup has been checked on the existing Windows/WSL computer. Cloud
-macOS 15 checks completed the native CPU SAP22/Cs137 workflow on Apple Silicon
-and Intel, with 100 initial events per architecture and stage stop/resume.
-The preserved Mac data were checked through the production Control result
-reader on Windows. See the [platform test record](https://github.com/Kunming-CN/END2END_Ge_Simulation/pull/1)
-for the exact checks.
-
-See [Methods](https://kunming-cn.github.io/END2END_Ge_Simulation/methods/index.html)
-for stage definitions, calibration, counting rules and study-specific limits.
-
-</details>
-
-## References and contributions
-
-[Report a problem or suggest a change](https://github.com/Kunming-CN/END2END_Ge_Simulation/issues),
-or read [Contributing](CONTRIBUTING.md). Cite the software with
-[CITATION.cff](CITATION.cff). Original software and maintained-source documentation
-use the [MIT License](LICENSE); [third-party and data rights](THIRD_PARTY_NOTICES.md)
-remain separate.
+[Issues](https://github.com/Kunming-CN/END2END_Ge_Simulation/issues) · [Contributing](CONTRIBUTING.md) · [Citation](CITATION.cff) · [MIT license](LICENSE) · [Third-party and data rights](THIRD_PARTY_NOTICES.md)
