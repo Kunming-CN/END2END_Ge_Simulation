@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "build_id": "ff36dfaf2a71b1c7056d5408f499832e3313800513fdf752a0e2d05ce9aac43f",
+  "build_id": "2ca91d1672c1738ae060eb0a9306af31eb0276b6885859e0e91b4c275506af99",
   "file_count": 1874,
-  "total_bytes": 493299679,
+  "total_bytes": 493307027,
   "html_pages": 109,
   "local_links_checked": 3321,
   "resource_references_checked": 3378,
@@ -9305,8 +9305,8 @@
     },
     {
       "path": "results/gegi-digital/event.json",
-      "bytes": 69244,
-      "sha256": "dd01bf6bb66894153226472b9b379387a1bbf9888b58f2d1198a614ed5b74760"
+      "bytes": 74534,
+      "sha256": "074a465e0bbc1490fbbdb8cbd855798cbd4850999ad966bab89aa45c9e1a2aa1"
     },
     {
       "path": "results/gegi-digital/signals.png",
@@ -9315,8 +9315,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 10058,
-      "sha256": "925c1d902377cbf160ff1dbc787fbe030a0c92971d985d61ea8ed1fdbfb7b69d"
+      "bytes": 12116,
+      "sha256": "8e1a75524f93ac20772320cfa24eb4b6fadb0b6685e40962deb4f0a494a6812f"
     },
     {
       "path": "retired-studies.json",

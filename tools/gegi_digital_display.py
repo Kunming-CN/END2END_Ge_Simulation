@@ -3,6 +3,7 @@ from collections import Counter
 from hashlib import sha256
 from html import escape
 import json
+import math
 import re
 
 
@@ -117,6 +118,56 @@ mixtures. The same model supplied {benchmark["training_injections"]} training in
 Experimental pairing accuracy remains unmeasured. <a href="gegi-digital/event.json">Case counts and fit scores</a>.</p>{holdout_text}'''
 
 
+def energy_order_section(check, counts):
+    candidates = check['candidates']
+    lines = {c['source_line']['energy_keV'] for c in candidates if c['source_line']}
+    source = f' of {lines.pop():g} keV each' if len(lines) == 1 and all(c['source_line'] for c in candidates) else ''
+    rows = []
+    notes = []
+    for c in candidates:
+        cells = [f"{escape(s['x_strip'])}/{escape(s['y_strip'])} · {s['energy_keV']:.2f}" for s in c['sites']]
+        orders = {tuple(o['site_index_order']): o for o in c['orders']}
+        for order in ((0, 1), (1, 0)):
+            o = orders[order]
+            cells.append(f"{o['half_angle_deg']:.2f}°" if o['kinematically_allowed'] else 'Excluded')
+        ref = c['transport_reference']
+        sequence = ref['site_index_order']
+        cells.append(' → '.join('AB'[i] for i in sequence) if sequence is not None
+                     else f"{ref['significant_interactions']} significant interactions")
+        rows.append(f"<tr><th scope=\"row\">{c['event_id']}</th><td>{c['deposited_keV']:.2f}</td>"
+                    + ''.join(f'<td>{cell}</td>' for cell in cells) + '</tr>')
+        if (c['source_line'] and sequence is not None
+                and math.isclose(c['deposited_keV'], c['source_line']['energy_keV'], abs_tol=1e-6)
+                and not orders[tuple(sequence)]['kinematically_allowed']):
+            notes.append(f"Primary {c['event_id']} deposited the full source energy in germanium. "
+                         "The energy model excludes the order recorded by transport.")
+            if 'fit_error_to_simulated_centroids_mm' in c:
+                a, b = c['fit_error_to_simulated_centroids_mm']
+                notes.append(f"Its fitted sites lie {a:.2f} and {b:.2f} mm from their simulated charge-deposition centroids.")
+    if 'position_study' in check:
+        s = check['position_study']
+        notes.append(f"Across {s['mixtures']} independent two-site mixtures, fitting positions within the strips "
+                     f"changed lateral RMS error from {s['centre_xy_rms_mm']:.2f} to {s['lateral_xy_rms_mm']:.2f} mm.")
+    extension = ''
+    if 'two_source_check' in check:
+        left, right = check['two_source_check']['sources']
+        both = left['both_orders_allowed'] + right['both_orders_allowed']
+        matched = left['full_deposit_cell_matches'] + right['full_deposit_cell_matches']
+        extension = f'''<p>Two further runs used {left['initial_primaries']:,} photons at x = {left['source_position_mm'][0]:g} mm
+and {right['initial_primaries']:,} at x = {right['source_position_mm'][0]:+g} mm. The runs yielded
+{left['unique_pairings']} and {right['unique_pairings']} unique energy pairings, respectively. Of those,
+{left['full_deposit_cell_matches']} and {right['full_deposit_cell_matches']} deposited the full photon energy in germanium and
+matched the cells of both significant transport interactions. The energy model allowed both orders in {both}/{matched} matched events.</p>'''
+    return f'''<h3>Which interaction could have happened first?</h3>
+<p>The run started with {counts['initial_primaries']:,} simulated photons{source}. Of the {counts['nonzero_primaries']}
+that deposited energy in germanium, {len(candidates)} had one energy-compatible pairing between faces.
+The two angle columns assume scattering from a stationary free electron followed by full absorption.
+The last column checks the inferred order against the simulated photon history. It uses parent interactions depositing at least 5 keV.</p>
+<div style="overflow-x:auto"><table><thead><tr><th>Primary</th><th>Deposited in Ge (keV)</th><th>Site A (keV)</th>
+<th>Site B (keV)</th><th>A → B</th><th>B → A</th><th>Transport reference</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+<p>{' '.join(notes)}</p>{extension}'''
+
+
 def render(site):
     data = site/'results/gegi-digital/event.json'
     if not data.exists():
@@ -146,8 +197,10 @@ Training used {benchmark["trained"]} injected points on four strip pairs. On {be
 the radial XY RMS error changed from <strong>{xy["center_rmse_mm"]:.2f} to {xy["substrip_rmse_mm"]:.2f} mm</strong>.
 The depth RMS error was {benchmark["z"]["rmse_mm"]:.2f} mm on {benchmark["z"]["compared"]} points.
 These errors compare simulated coordinates within the sampled region.</p>'''
+    if 'energy_order_check' in ex:
+        card += energy_order_section(ex['energy_order_check'], ex['counts'])
     if 'pairing_benchmark' in ex:
-        card += pairing_section(ex['pairing_benchmark'])
+        card += '<details><summary>Two-site strip-pairing benchmark</summary>' + pairing_section(ex['pairing_benchmark']) + '</details>'
     card += '</section>'
     page = site/'results/index.html'
     old = page.read_text(encoding='utf-8')

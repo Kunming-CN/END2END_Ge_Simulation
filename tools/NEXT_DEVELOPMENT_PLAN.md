@@ -13,7 +13,7 @@ The student workflow runs from detector and source selection through transport, 
 ## Delivery order
 
 1. Deliver the updated Control and the four-event comparison through the current PR. After its required review, verify the deployed exhibit and publish the matching stable student package.
-2. Evaluate energy ordering on the additional saved left and right source runs. Use the observed rate of reversals and unresolved cases to judge any change to imaging. Keep fit coordinates and source directions conditional while calibration near the strip gaps is incomplete.
+2. Keep both photon orders available in analysis. The independent left/right source check found four fully deposited and reference-matched candidates. Energy admitted both orders in all four. A spatial imaging update requires a calibrated response up to the strip gaps and a way to retain unresolved directions, including cases where the energy approximation excludes the simulated first interaction. The current Results page shows the source-line counterexample.
 3. Use the next matched acquisition to test the instrument fast/slow feature scales and reproduce its selected pixel map. Then compare channel and pixel spectra with matching population, calibration and normalization. The 32-channel simulated spectrum export is ready. An IPB configuration or cumulative N42 spectrum alone cannot supply the reference event list.
 
 Reuse complete saved signals for electronics changes. New transport or drift needs an identified missing physical input. Keep the student download software-only and publish saved studies through the website generator. [Previous development record](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/9941f0d663e835a225e43923e6271b3b8df17d17/tools/NEXT_DEVELOPMENT_PLAN.md)
