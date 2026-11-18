@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
-  "build_id": "6e04be2300ed5e84ed38dff432a9fcdf837ff9d584d1725c4f184d4876285381",
-  "file_count": 1872,
-  "total_bytes": 493121214,
+  "build_id": "8de9938f42c6e38d59c478b8cdb7bad4101e8081c46813b2c11b903a147c80c4",
+  "file_count": 1874,
+  "total_bytes": 493278250,
   "html_pages": 109,
-  "local_links_checked": 3317,
-  "resource_references_checked": 3374,
-  "page_navigation_checked": 1448,
-  "fragments_checked": 86,
-  "downloads_checked": 741,
-  "media_references_checked": 1148,
+  "local_links_checked": 3320,
+  "resource_references_checked": 3377,
+  "page_navigation_checked": 1449,
+  "fragments_checked": 87,
+  "downloads_checked": 742,
+  "media_references_checked": 1149,
   "metadata_references_checked": 35,
   "other_references_checked": 2,
   "files": [
@@ -1840,8 +1840,8 @@
     },
     {
       "path": "detectors/GeGI_3D/index.html",
-      "bytes": 6830,
-      "sha256": "ac25254b697ce09bf529b002f69696cd783a2f84e58c1cfcc1dfffb703c32977"
+      "bytes": 6939,
+      "sha256": "d97b5b503944ea194b6abcad689298193a32870a3400d79eb1225daadbdc2be9"
     },
     {
       "path": "detectors/GeGI_3D/octagon_geometry.png",
@@ -7715,8 +7715,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 54249,
-      "sha256": "d03734d9b500dc44cf9aac302f20c301159d57f131997fb60d7b2b8def62cd09"
+      "bytes": 55279,
+      "sha256": "68145fcba7664d39ae607ce0bc9a0ed9608a105d8686080477d5bcbbca08f049"
     },
     {
       "path": "index.html",
@@ -9304,9 +9304,19 @@
       "sha256": "0dae723633233899468aab151f16a5131163ed66ca4d9f808879a9362b21a077"
     },
     {
+      "path": "results/gegi-digital/event.json",
+      "bytes": 49945,
+      "sha256": "52bd9c7c1076830a5a712e21e7946b6a59125f2847ad645d9a4a6474fe4255dc"
+    },
+    {
+      "path": "results/gegi-digital/signals.png",
+      "bytes": 104662,
+      "sha256": "e1c3d9b0b0180d02d7c41984a61b5c3bdfb62f6bebf22a27a8d75753dc871d50"
+    },
+    {
       "path": "results/index.html",
-      "bytes": 6638,
-      "sha256": "1bff231252e4f6287c01ba83232c5decf9f0209f8a4effe8e2f8aa7732fcb731"
+      "bytes": 7928,
+      "sha256": "67755f8fe21d687e25190183fb65a08eb6a050c89adbbf4713be26393754c815"
     },
     {
       "path": "retired-studies.json",

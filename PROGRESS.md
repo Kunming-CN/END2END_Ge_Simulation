@@ -27,6 +27,14 @@ unestimated axis, radial XY RMS changed from 1.821 to 1.266 mm. Depth RMS was
 feature scales, channel maps, calibration and selection data for experimental
 comparison. The published Compton map uses its original reconstruction.
 Evidence and input hashes: `.local/gegi-digital-v1/`. No new Geant4 or SSD run.
+Student release `student-runtime-50f47a917c93`: 1,034,459 bytes, public ZIP
+SHA-256 `bb05b426a374d9e5e64b435d7f845e2a3524fcae7732d8022d68a627b00e21c0`.
+The Results hub displays the three original strip traces, digital branches,
+energy table and independent position check. The next bounded task uses the
+saved two-site mixtures to test which digital observables discriminate the
+two pairing hypotheses when the neighboring strips overlap. Count ambiguity.
+Use independently calibrated information; comparison with experiment needs the
+corresponding instrument data. Current-thread continuation is named `gegi`.
 
 ## Completed native macOS CPU support — 2026-11-13
 
