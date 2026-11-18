@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "build_id": "0efea0e0c45359f904d1e65ff0d026041b387fdbcfdd1ce1e7113c11e9a2e8d2",
-  "file_count": 1875,
-  "total_bytes": 493781071,
+  "build_id": "44d24083e7a20abf8300eb0c0d101942d141f337b7153b968d309c36307f9597",
+  "file_count": 1876,
+  "total_bytes": 493801756,
   "html_pages": 109,
-  "local_links_checked": 3322,
-  "resource_references_checked": 3379,
+  "local_links_checked": 3323,
+  "resource_references_checked": 3380,
   "page_navigation_checked": 1449,
   "fragments_checked": 87,
-  "downloads_checked": 744,
+  "downloads_checked": 745,
   "media_references_checked": 1149,
   "metadata_references_checked": 35,
   "other_references_checked": 2,
@@ -9319,9 +9319,14 @@
       "sha256": "e1c3d9b0b0180d02d7c41984a61b5c3bdfb62f6bebf22a27a8d75753dc871d50"
     },
     {
+      "path": "results/gegi-digital/source-exposure.json",
+      "bytes": 11749,
+      "sha256": "2af44dd61a7b6c23ce7e35bc550103cd2cc2a3e53167ad826ff66ab78169fa93"
+    },
+    {
       "path": "results/index.html",
-      "bytes": 28726,
-      "sha256": "fe6b3be3a0eb3ec5087b0a5664554ebe5db5f1c47dc42e610ae84b57ae29bd1b"
+      "bytes": 37662,
+      "sha256": "c24c345cb70e9b1d04019b1d781f3e203a8c419b7247874e2f96e4453b1383e9"
     },
     {
       "path": "retired-studies.json",

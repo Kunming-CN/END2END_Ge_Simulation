@@ -441,7 +441,7 @@ def install_geometry_delivery():
         destination.unlink()
 
 
-def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None, gegi_campaign_bundle=None, gegi_digital_example=None, gegi_digital_pairing_study=None, gegi_double_pulse=None):
+def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None, gegi_campaign_bundle=None, gegi_digital_example=None, gegi_digital_pairing_study=None, gegi_double_pulse=None, gegi_source_exposure=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -462,6 +462,15 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         old = checked_predecessor()
     if OUT.exists():
         remove_generated(OUT)
+    if gegi_source_exposure is not None:
+        from gegi_digital_display import attach_source_exposure, render as render_gegi_digital
+        if old is None:
+            raise ValueError('Publish the GeGI exposure onto a validated existing site snapshot.')
+        shutil.copytree(DESTINATION, OUT)
+        (OUT / MANIFEST).unlink()
+        attach_source_exposure(OUT, gegi_source_exposure)
+        render_gegi_digital(OUT)
+        return install_snapshot(old)
     if gegi_campaign_bundle is not None:
         from gegi_campaign_publication import install_bundle
         if old is None:
@@ -668,6 +677,7 @@ if __name__ == '__main__':
     parser.add_argument('--gegi-digital-example',type=Path,help='Install a saved strip-readout figure and event data with --restructure')
     parser.add_argument('--gegi-digital-pairing-study',type=Path,nargs='+',metavar='REPORT',help='Add saved pairing counts with --restructure. Supply the fixed-mixture report, then the optional holdout report.')
     parser.add_argument('--gegi-double-pulse',type=Path,help='Publish a completed GeGI double-pulse scan with --restructure')
+    parser.add_argument('--gegi-source-exposure',type=Path,help='Refresh only the GeGI Results panel with a completed source exposure')
     parser.add_argument('--gamma-showcase',type=Path,help='Copy a completed hash-checked saved gamma showcase; no scientific work or export')
     parser.add_argument('--ring-results',type=Path,help='Copy complete saved GeRC02/KMRC01 10K results and refresh all four current cases; no computation')
     parser.add_argument('--gegi-results',type=Path,nargs='+',help='Render one or two completed checked GeGI runs onto the saved website; no scientific work')
@@ -681,9 +691,9 @@ if __name__ == '__main__':
     if args.gegi_double_pulse and not args.restructure:parser.error('--gegi-double-pulse requires --restructure')
     if len(args.gegi_digital_pairing_study or ()) > 2:parser.error('--gegi-digital-pairing-study accepts at most two reports')
     if args.refresh_staged_readout and not args.finish_staged:parser.error('--refresh-staged-readout requires --finish-staged')
-    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_campaign_bundle)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
+    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_campaign_bundle,args.gegi_source_exposure)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
     if args.finish_staged:
         finish_staged(refresh_readout=args.refresh_staged_readout)
     else:
         if args.gegi_plane_z_mm is not None and args.gegi_results is None: parser.error('--gegi-plane-z-mm requires --gegi-results')
-        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle,args.gegi_digital_example,args.gegi_digital_pairing_study,args.gegi_double_pulse)
+        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle,args.gegi_digital_example,args.gegi_digital_pairing_study,args.gegi_double_pulse,args.gegi_source_exposure)

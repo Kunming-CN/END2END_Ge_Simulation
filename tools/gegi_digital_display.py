@@ -16,6 +16,7 @@ DIGITAL_OBSERVABLES = {
 }
 
 DOUBLE_PULSE_FILE = 'results/gegi-digital/double-pulse.json'
+SOURCE_EXPOSURE_FILE = 'results/gegi-digital/source-exposure.json'
 PULSE_TOPOLOGIES = {
     'same_strips': 'Same strips',
     'adjacent_strips': 'Adjacent strips',
@@ -204,6 +205,114 @@ location outside the position calibration. The sampled responses characterize th
 <p><a href="gegi-digital/double-pulse.json">Open double-pulse counts, errors and scan settings (JSON)</a>.</p>'''
 
 
+def exposure_section(data):
+    design = data['design']
+    exposure = data['exposure']
+    triggers = data['trigger_summary']
+    totals = {row['arrival_class']: row for row in data['summary'] if row['source'] == 'all'}
+    overall = totals['all']
+    rows = []
+    near = design['any_source_close_neighbor_ns']/1000
+    for category, label in (('isolated', 'Isolated'), ('close', f'Another Ge group within {near:g} µs')):
+        row = totals[category]
+        n = row['qualified_deposits']
+        rows.append(f'''<tr><th scope="row">{label}</th><td>{row['deposits']:,}</td><td>{n:,}</td>
+<td>{row['unique_matched']:,}/{n:,}</td><td>{row['matched_energy_qualified']:,}/{n:,}</td></tr>''')
+    from spectrum_plot import svg
+    histogram = data['slow_spectrum']
+    edges = histogram['bin_edges_keV']
+    counts = histogram['counts'].copy()
+    counts[0] -= histogram['exact_zero']
+    series = dict(label='Qualified trigger energy', counts=counts, total=histogram['entries'],
+                  **{key: histogram[key] for key in ('underflow', 'overflow', 'exact_zero')})
+    view = dict(edges=edges, view=[edges[0], edges[-1]], series=[series],
+                title='Slow-energy spectrum from qualified simulated triggers', xlabel='Slow energy (keV)')
+    chart = svg(view, 'linear').replace('<svg ', '<svg style="display:block;width:100%;max-width:760px;height:auto" ', 1)
+    activities = design['source_activities_bq']
+    unknown = overall['history_unqualified'] + overall['history_boundary_unknown']
+    return f'''<h2 id="gegi-source-exposure">One exposure with Cs-137 and Co-60</h2>
+<p>In this {exposure['clock_live_time_ns']/1e9:g} s simulated exposure, {overall['unique_matched']:,} of
+{overall['qualified_deposits']:,} qualified Ge deposit groups matched a unique trigger, and
+{overall['matched_energy_qualified']:,} had a qualified slow energy.</p>
+<p>Independent source clocks used example activities of {activities['cs137-left']/1000:g} kBq for Cs-137 and
+{activities['co60-right']/1000:g} kBq for Co-60. Delayed deposits from earlier parent decays can enter the exposure.
+The electronics start from zero with a {1000/design['sample_period_ns']:g} MS/s digitizer and
+{design['nominal_noise_rms_v']*1e6:g} µV RMS synthetic noise.</p>
+<p>Of {overall['deposits']:,} Ge deposit groups, {overall['native_unavailable']:,} lacked a usable native charge signal and
+{unknown:,} more fell in or near gaps in the signal history. Among qualified groups,
+{overall['missed']:,} were missed, {overall['merged']:,} shared {triggers['merged']:,} merged triggers and
+{overall['ambiguous']:,} had ambiguous matches.</p>
+<div role="region" aria-label="Exposure group comparison" tabindex="0" style="overflow-x:auto">
+<table style="min-width:580px;font-variant-numeric:tabular-nums"><thead><tr><th scope="col">Arrival neighborhood</th>
+<th scope="col">Ge groups</th><th scope="col">Qualified</th><th scope="col">Unique match</th>
+<th scope="col">Matched slow energy</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+<p>Over {exposure['qualified_adc_live_time_ns']/1e9:.6f} s of qualified ADC time, the readout returned
+{triggers['qualified_triggers']:,} triggers and {triggers['qualified_slow_energies']:,} usable slow energies.
+{triggers['unmatched']:,} triggers lacked a matching deposit. A trigger uses the coincident rise on both faces.
+A slow energy also requires a qualified collecting strip on each face and agreement between their energies.</p>
+<figure style="margin:16px 0"><figcaption><strong>Qualified slow-energy spectrum</strong></figcaption>
+{chart}<p class="muted">{sum(counts):,} entries in {edges[1]-edges[0]:g} keV bins from {edges[0]:g} to {edges[-1]:g} keV,
+with lower bin edges included. Underflow {series['underflow']:,}, overflow {series['overflow']:,}, exact zeros {series['exact_zero']:,}.
+The spectrum includes every qualified trigger with a slow-energy estimate.</p></figure>
+<p>Arrival neighborhoods use deposition times from both sources. These counts apply to the qualified portion of the
+simulated exposure. The JSON includes the signal-history rules, matching criteria and the noiseless close-pair cross-check.
+<a href="gegi-digital/source-exposure.json">Open the exposure census, spectrum and settings (JSON)</a>.</p>'''
+
+
+def attach_source_exposure(site, report_path):
+    report_bytes = report_path.read_bytes()
+    report = json.loads(report_bytes)
+    if report.get('kind') != 'gegi_saved_two_source_exposure_v1' or report.get('status') != 'completed':
+        raise ValueError('Expected a completed GeGI two-source exposure.')
+    path = site/SOURCE_EXPOSURE_FILE
+    if not (path.parent/'event.json').is_file():
+        raise ValueError('Install the GeGI digital example before publishing the source exposure.')
+    sources = report['source_sha256']
+    project = Path(__file__).resolve().parents[1]
+    for name, digest in sources.items():
+        source = (project/name).resolve()
+        if not source.is_relative_to(project/'tools') or sha256(source.read_bytes()).hexdigest() != digest:
+            raise ValueError(f'GeGI source exposure input code changed after replay: {name}')
+    fields = ('deposits', 'native_unavailable', 'history_unqualified', 'history_boundary_unknown', 'qualified_deposits',
+              'unique_matched', 'missed', 'merged', 'ambiguous', 'matched_energy_qualified', 'matched_energy_agrees')
+    summary = report['summary']
+    groups = {(source, category) for source in ('all', 'cs137-left', 'co60-right')
+              for category in ('all', 'isolated', 'close')}
+    if len(summary) != len(groups) or {(r['source'], r['arrival_class']) for r in summary} != groups:
+        raise ValueError('GeGI source exposure is missing or duplicating a census population.')
+    for row in summary:
+        n = row['qualified_deposits']
+        if (any(type(row[key]) is not int or row[key] < 0 for key in fields)
+                or sum(row[key] for key in ('native_unavailable', 'history_unqualified', 'history_boundary_unknown')) + n != row['deposits']
+                or sum(row[key] for key in ('unique_matched', 'missed', 'merged', 'ambiguous')) != n
+                or not row['matched_energy_agrees'] <= row['matched_energy_qualified'] <= row['unique_matched']):
+            raise ValueError('GeGI source exposure counts do not close.')
+    census = {(r['source'], r['arrival_class']): r for r in summary}
+    for source, category in groups:
+        totals = census[source, category]
+        if (source == 'all' and any(totals[key] != sum(census[s, category][key] for s in ('cs137-left', 'co60-right'))
+                                    for key in fields)
+                or category == 'all' and any(totals[key] != sum(census[source, c][key] for c in ('isolated', 'close'))
+                                             for key in fields)):
+            raise ValueError('GeGI source exposure group totals do not close.')
+    trigger_counts = report['trigger_summary']
+    if (sum(trigger_counts[key] for key in ('unique_matched', 'merged', 'ambiguous', 'unmatched', 'history_boundary_unknown'))
+            != trigger_counts['qualified_triggers']
+            or trigger_counts['unique_matched'] != census['all', 'all']['unique_matched']
+            or not 0 <= report['slow_spectrum']['entries'] == trigger_counts['qualified_slow_energies'] <= trigger_counts['qualified_triggers']):
+        raise ValueError('GeGI source exposure trigger and spectrum counts do not close.')
+    data = {key: report[key] for key in ('kind', 'status', 'design', 'summary', 'trigger_summary', 'slow_spectrum')}
+    data['exposure'] = {key: report['exposure'][key] for key in
+                        ('clock_live_time_ns', 'qualified_adc_live_time_ns', 'total_live_adc_samples',
+                         'qualified_live_adc_samples', 'masked_live_time_ns', 'maximum_unseen_tail_lsb',
+                         'sources', 'absolute_whole_exposure_efficiency')}
+    data['parity'] = {key: report['parity'][key] for key in ('adc_codes_identical', 'candidate_windows',
+                      'same_trigger_and_energy_status', 'max_slow_energy_delta_keV')}
+    data['provenance'] = dict(report_sha256=sha256(report_bytes).hexdigest(), source_sha256=sources,
+                              input_sha256=sorted(report['input_sha256'].values()))
+    path.write_text(json.dumps(data, allow_nan=False, separators=(',', ':'))+'\n', encoding='utf-8', newline='\n')
+
+
 def compact_pairing_study(study, source_hash, *, holdout=False):
     cases = []
     for case in study['cases']:
@@ -370,7 +479,10 @@ def render(site):
                     f'<td>{max(abs(v) for v in c["signed_induced_keV"]):.2f}</td>'
                     f'<td>{c["signed_induced_keV"][-1]:.2f}</td><td>{c["fast_area_V_ns"]:.3f}</td><td>{slow}</td></tr>')
     pulse = site/DOUBLE_PULSE_FILE
+    exposure = site/SOURCE_EXPOSURE_FILE
     card = '<section id="gegi" class="panel" data-dataset="gegi">\n'
+    if exposure.is_file():
+        card += exposure_section(json.loads(exposure.read_bytes()))
     has_pulse = pulse.is_file()
     if has_pulse:
         card += double_pulse_section(json.loads(pulse.read_bytes()))
