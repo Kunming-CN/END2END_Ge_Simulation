@@ -441,7 +441,7 @@ def install_geometry_delivery():
         destination.unlink()
 
 
-def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None, gegi_campaign_bundle=None, gegi_digital_example=None):
+def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None, gegi_campaign_bundle=None, gegi_digital_example=None, gegi_digital_pairing_study=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -509,6 +509,9 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         target.mkdir(parents=True, exist_ok=True)
         for name in ('event.json', 'signals.png'):
             shutil.copyfile(gegi_digital_example/name, target/name)
+    if gegi_digital_pairing_study is not None:
+        from gegi_digital_display import attach_pairing_study
+        attach_pairing_study(OUT, *gegi_digital_pairing_study)
     full_site = (OUT / 'models/catalog.json').is_file()
     if full_site:
         from site_study_retirement import apply as retire_studies
@@ -660,6 +663,7 @@ if __name__ == '__main__':
     parser.add_argument('--ssd-geometry',type=Path,help='Publish saved interactive SSD geometry assets only')
     parser.add_argument('--restructure',action='store_true',help='Rebuild navigation/hub pages from the validated current snapshot only')
     parser.add_argument('--gegi-digital-example',type=Path,help='Install a saved strip-readout figure and event data with --restructure')
+    parser.add_argument('--gegi-digital-pairing-study',type=Path,nargs='+',metavar='REPORT',help='Add saved pairing counts with --restructure. Supply the fixed-mixture report, then the optional holdout report.')
     parser.add_argument('--gamma-showcase',type=Path,help='Copy a completed hash-checked saved gamma showcase; no scientific work or export')
     parser.add_argument('--ring-results',type=Path,help='Copy complete saved GeRC02/KMRC01 10K results and refresh all four current cases; no computation')
     parser.add_argument('--gegi-results',type=Path,nargs='+',help='Render one or two completed checked GeGI runs onto the saved website; no scientific work')
@@ -669,10 +673,12 @@ if __name__ == '__main__':
     parser.add_argument('--refresh-staged-readout',action='store_true',help='With --finish-staged, refresh lossless saved-waveform delivery and its source-bound displays')
     args=parser.parse_args()
     if args.gegi_digital_example and not args.restructure:parser.error('--gegi-digital-example requires --restructure')
+    if args.gegi_digital_pairing_study and not args.restructure:parser.error('--gegi-digital-pairing-study requires --restructure')
+    if len(args.gegi_digital_pairing_study or ()) > 2:parser.error('--gegi-digital-pairing-study accepts at most two reports')
     if args.refresh_staged_readout and not args.finish_staged:parser.error('--refresh-staged-readout requires --finish-staged')
     if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_campaign_bundle)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
     if args.finish_staged:
         finish_staged(refresh_readout=args.refresh_staged_readout)
     else:
         if args.gegi_plane_z_mm is not None and args.gegi_results is None: parser.error('--gegi-plane-z-mm requires --gegi-results')
-        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle,args.gegi_digital_example)
+        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle,args.gegi_digital_example,args.gegi_digital_pairing_study)

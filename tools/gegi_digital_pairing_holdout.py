@@ -36,7 +36,11 @@ def load_selection():
             or frozen['digital_timing_sha256'] != S.D.TIMING_SHA256):
         raise ValueError('Digital readout differs from the frozen eight-mixture model')
     for source, digest in frozen['source_sha256'].items():
-        if S.hashlib.sha256((S.ROOT / source).read_bytes()).hexdigest() != digest:
+        data = (S.ROOT / source).read_bytes()
+        if source == 'tools/gegi_imaging.py':
+            # This frozen input digest was recorded from a CRLF working copy.
+            data = data.replace(b'\r\n', b'\n').replace(b'\n', b'\r\n')
+        if S.hashlib.sha256(data).hexdigest() != digest:
             raise ValueError(f'Frozen source changed: {source}')
 
     def original(path):
