@@ -204,6 +204,12 @@ foreach ($f in $m.files) {
 # Add only an existing independent compatible saved template directory:
 # --calibration .local/gegi-saved-inputs/calibrations/my-templates
 # Resume the identical unfinished recipe with --resume.</pre><p>The UI and command line share the reconstruction entry and receipts. The command-line imaging tool <code>tools/gegi_joint_imaging.py</code> consumes the derived hypotheses with an explicit conditional response model; its model assumptions and uncertainties must accompany any source inference.</p></details>
+<details><summary>Inspect fast and slow GeGI strip signals</summary>
+<p>Open a completed GeGI run in Control, choose a nonzero primary, and open the digital readout panel. Compare a collecting strip with its two neighbors. The sampled preamplifier signal feeds the fast transient measurement and slow energy filter. Both use a nominal simulated electronics profile.</p>
+<p>For a compatible single-pixel candidate, inspect the signed neighbor difference divided by the collecting strip energy on each face. The supplied local calibration covers X11, X12, Y07 and Y09 over the simulated scan interval. The display reports the available coordinates and the calibration used.</p>
+<p>To collect all 32 strip spectra from a completed standalone run, choose a new output filename. The file includes the sparse histogram bins, unavailable counts and outcomes for the original nonzero primary IDs.</p>
+<pre>python -B tools/gegi_digital_spectra.py --run .local/runs/my-completed-gegi-run --output gegi-digital-spectra.json</pre>
+</details>
 <details><summary>Reprocess an older completed standalone run</summary><pre>python -B tools/gegi_standalone_reconstruction.py --run .local/runs/my-completed-gegi-run --output .local/gegi-saved-reconstruction/my-standalone-derivative
 
 # Optionally add an existing independent compatible saved waveform bank:

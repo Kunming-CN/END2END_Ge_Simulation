@@ -97,6 +97,8 @@ import subprocess
 def forbidden(*args,**kwargs):raise AssertionError('Browsing may not start a process')
 subprocess.Popen=forbidden
 import local_ui,scenario_workflow,catalog_workflow,saved_focus_waveforms
+import gegi_digital_readout,gegi_digital_saved,gegi_substrip,gegi_digital_spectra,gegi_digital_pairs
+assert gegi_substrip.load_calibration(gegi_digital_saved.CALIBRATION)['digital_profile_sha256']==gegi_digital_readout.PROFILE_SHA256
 catalog=scenario_workflow.catalog()
 assert len(catalog['detectors'])==17 and len(catalog['sources'])==6
 assert all(not item['available'] and item['block_code']=='setup_required' for item in catalog['detectors'] if item['id']!='GeGI_3D')

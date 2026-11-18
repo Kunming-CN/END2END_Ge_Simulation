@@ -566,7 +566,7 @@ class WorkflowController:
     def gegi_browse(self,name,part,*,event_id=None,derivative=None,results_sha256=None):
         """Owned lightweight views; full inspection/indexing occurs once per open source."""
         with self._lock:
-            W.require(part in ('summary','event','imaging'),'Unknown GeGI result view.')
+            W.require(part in ('summary','event','imaging','digital'),'Unknown GeGI result view.')
             job=next((j for j in self._jobs if j['name']==name),None)
             W.require(job and self._gegi_job(job) and job['status'] in W.TERMINAL,
                       'Use a completed owned GeGI run for multichannel results.')
@@ -579,6 +579,7 @@ class WorkflowController:
                       'Saved GeGI results differ from the owned configuration.')
             if part=='summary':return reader.summary(results_sha256)
             if part=='event':return reader.event(event_id,results_sha256)
+            if part=='digital':return reader.digital(event_id,results_sha256,W.run_path(name,self.root))
             return reader.imaging(results_sha256)
 
     def _gegi_saved(self):

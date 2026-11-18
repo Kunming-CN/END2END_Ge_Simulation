@@ -4,7 +4,7 @@ const token=location.hash.slice(1)||sessionStorage.getItem('ge-control-token')||
 if(token)sessionStorage.setItem('ge-control-token',token);history.replaceState(null,'',location.pathname);
 let catalog=null,checked=null,noticeIsCheckedPlan=false,busy=false,active=false,selectedJob=null,selectedRun=null,result=null,selectionVersion=0,resultGeneration=0,plotGeneration=0;
 let modelPreviewGeneration=0,modelPreviewUrl=null,importGeneration=0,pageGeneration=0,pollGeneration=0,featureGeneration=0,acquisitionGeneration=0,resultOptionsGeneration=0,spectrumGeneration=0;
-let gegiResult=null,gegiGeneration=0,gegiJourney=null,gegiEventGeneration=0,gegiImagingGeneration=0;
+let gegiResult=null,gegiGeneration=0,gegiJourney=null,gegiEventGeneration=0,gegiImagingGeneration=0,gegiDigitalGeneration=0;
 let savedGeGIOptions=null,savedGeGIJob=null,savedGeGIBusy=false,savedGeGIGeneration=0;
 const continuationNames=new Map();
 const pendingActions=new Map();
@@ -208,7 +208,7 @@ function importedGeGIConfig(c,batched){
   if((c.electronics.peak_gate_start_ns===null)!==(c.electronics.peak_gate_end_ns===null))throw Error('A peak gate requires both boundaries.');
   return {...c,source_position_mm:[...c.source_position_mm],electronics:{...c.electronics}};
 }
-function resetGeGIResult(){gegiGeneration++;gegiEventGeneration++;gegiImagingGeneration++;if(gegiResult){gegiResult.event=null;gegiResult.imaging=null;}gegiResult=null;gegiJourney?.destroy?.();gegiJourney=null;$('gegi-result').hidden=true;$('gegi-plots').replaceChildren();$('gegi-journey').replaceChildren();$('gegi-imaging-panel').open=false;$('gegi-imaging').replaceChildren();$('gegi-imaging-status').textContent='';$('gegi-cones').textContent='';$('gegi-event-record').textContent='';$('gegi-truth-record').textContent='';$('gegi-event-filter').textContent='';$('gegi-event-files').replaceChildren();}
+function resetGeGIResult(){gegiGeneration++;gegiEventGeneration++;gegiImagingGeneration++;if(gegiResult){gegiResult.event=null;gegiResult.imaging=null;}resetGeGIDigital();gegiResult=null;gegiJourney?.destroy?.();gegiJourney=null;$('gegi-result').hidden=true;$('gegi-plots').replaceChildren();$('gegi-journey').replaceChildren();$('gegi-digital-panel').open=false;$('gegi-imaging-panel').open=false;$('gegi-imaging').replaceChildren();$('gegi-imaging-status').textContent='';$('gegi-cones').textContent='';$('gegi-event-record').textContent='';$('gegi-truth-record').textContent='';$('gegi-event-filter').textContent='';$('gegi-event-files').replaceChildren();}
 function gegiIdentity(reply,job,derivative=null){
   if(reply?.kind!=='gegi_multichannel_summary_v1'||reply.name!==job.name||reply.configuration_sha256!==job.configuration_sha256||reply.saved_derivative_name!==derivative||typeof reply.results_sha256!=='string'||!/^[a-f0-9]{64}$/.test(reply.results_sha256)||!reply.counts||reply.counts.initial_primaries!==job.selection.primary_count||!Array.isArray(reply.channels)||reply.channels.length!==34||!Array.isArray(reply.event_index)||typeof reply.imaging_available!=='boolean'||Object.hasOwn(reply,'events')||Object.hasOwn(reply,'imaging'))throw Error('Saved GeGI summary and selected run identities differ.');
   const ids=reply.event_index.map(e=>e.event_id);if(ids.some(id=>!Number.isSafeInteger(id)||id<0)||new Set(ids).size!==ids.length||reply.event_index.some(e=>!Number.isFinite(e.truth_edep_keV)||e.truth_edep_keV<=0||Object.keys(e).some(key=>!['event_id','status','truth_edep_keV'].includes(key))))throw Error('Saved GeGI nonzero event census is invalid.');
@@ -273,7 +273,7 @@ async function openGeGIResult(job,savedSummary=null,derivative=null){
   $('gegi-result').hidden=false;$('gegi-result').scrollIntoView({behavior:'smooth'});await loadGeGIEvent();
 }
 function clearGeGIEvent(message){
-  if(gegiResult)gegiResult.event=null;gegiSignalJourney(gegiResult,null);$('gegi-plots').replaceChildren();$('gegi-event-files').replaceChildren();$('gegi-event-record').textContent='';$('gegi-truth-record').textContent='';$('gegi-event-filter').textContent='';$('gegi-cones').textContent='';$('gegi-event-summary').textContent=message;
+  if(gegiResult)gegiResult.event=null;resetGeGIDigital();gegiSignalJourney(gegiResult,null);$('gegi-plots').replaceChildren();$('gegi-event-files').replaceChildren();$('gegi-event-record').textContent='';$('gegi-truth-record').textContent='';$('gegi-event-filter').textContent='';$('gegi-cones').textContent='';$('gegi-event-summary').textContent=message;
 }
 async function loadGeGIEvent(){
   const context=gegiResult;if(!context)return;const id=Number($('gegi-event').value),generation=++gegiEventGeneration;
@@ -283,16 +283,138 @@ async function loadGeGIEvent(){
   try{
     const reply=await api('/api/workflow/gegi-event?'+gegiPartQuery(context,{event:String(id)}));
     if(context!==gegiResult||generation!==gegiEventGeneration||Number($('gegi-event').value)!==id)return;
-    context.event=gegiEventIdentity(reply,context,id);showGeGIEvent();
+    context.event=gegiEventIdentity(reply,context,id);showGeGIEvent();showGeGIDigital();
   }catch(e){if(context===gegiResult&&generation===gegiEventGeneration)$('gegi-event-summary').textContent='Cannot load saved primary '+id+': '+e.message+' Select another event or reopen results to retry.';}
 }
-function gegiTracePlot(trace,key,label,unit){
-  const figure=node('figure',undefined,'plot'),times=trace?.time_ns,values=trace?.[key];figure.append(node('h3',label+' · '+unit));
-  if(!Array.isArray(times)||!Array.isArray(values)||times.length!==values.length||!times.length||!times.every(Number.isFinite)||!values.every(Number.isFinite)){figure.append(node('p','No saved '+label.toLowerCase()+' waveform for this channel.','muted'));return figure;}
-  let ymin=0,ymax=0;for(const value of values){ymin=Math.min(ymin,value);ymax=Math.max(ymax,value);}const span=ymax-ymin||1,xmin=times[0],xmax=times[times.length-1],xspan=xmax-xmin||1;
+function gegiTracePlot(trace,key,label,unit,{neighbor=null,names=null,digital=false}={}){
+  const figure=node('figure',undefined,'plot');figure.append(node('h3',label+' · '+unit));
+  const series=[trace,neighbor].map(item=>({times:item?.time_ns,values:item?.[key]}));
+  const valid=({times,values})=>Array.isArray(times)&&Array.isArray(values)&&times.length===values.length&&times.length&&times.every(Number.isFinite)&&values.every(Number.isFinite);
+  if(!valid(series[0])){figure.append(node('p',(digital?'No digital ':'No saved ')+label.toLowerCase()+' waveform for this channel.','muted'));return figure;}
+  if(!valid(series[1]))series.pop();
+  let ymin=0,ymax=0,xmin=Infinity,xmax=-Infinity;
+  for(const {times,values} of series){for(const v of values){ymin=Math.min(ymin,v);ymax=Math.max(ymax,v);}xmin=Math.min(xmin,times[0]);xmax=Math.max(xmax,times.at(-1));}
+  const span=ymax-ymin||1,xspan=xmax-xmin||1;
   const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 720 220');svg.setAttribute('role','img');svg.setAttribute('aria-label',label+' against time in ns, '+unit);
-  const line=document.createElementNS(ns,'polyline');line.setAttribute('points',values.map((v,i)=>(55+620*(times[i]-xmin)/xspan)+','+(180-145*(v-ymin)/span)).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke','#007d8a');line.setAttribute('stroke-width','1.4');svg.append(line);
-  for(const [x,y,text]of [[4,25,String(ymax)],[4,185,String(ymin)],[55,207,String(xmin)+' ns'],[555,207,String(xmax)+' ns']]){const t=document.createElementNS(ns,'text');t.setAttribute('x',x);t.setAttribute('y',y);t.textContent=text;svg.append(t);}figure.append(svg,node('figcaption','Saved signed samples; '+times.length+' original analog time points.','muted'));return figure;
+  series.forEach(({times,values},index)=>{const line=document.createElementNS(ns,'polyline');line.setAttribute('points',values.map((v,i)=>(55+620*(times[i]-xmin)/xspan)+','+(180-145*(v-ymin)/span)).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke',index?'#774597':'#007d8a');line.setAttribute('stroke-width',digital?'2':'1.4');if(index)line.setAttribute('stroke-dasharray','5 3');svg.append(line);});
+  const tick=v=>digital?String(Number(v.toPrecision(4))):String(v);
+  for(const [x,y,text]of [[4,25,tick(ymax)],[4,185,tick(ymin)],[55,207,String(xmin)+' ns'],[555,207,String(xmax)+' ns']]){const t=document.createElementNS(ns,'text');t.setAttribute('x',x);t.setAttribute('y',y);t.textContent=text;svg.append(t);}
+  const caption=digital?names[0]+' (solid)'+(series.length===2?' · '+names[1]+' (dashed)':'')+' · '+series[0].times.length+' modeled samples.':'Saved signed samples; '+series[0].times.length+' original analog time points.';
+  figure.append(svg,node('figcaption',caption,'muted'));return figure;
+}
+
+function resetGeGIDigital(){
+  ++gegiDigitalGeneration;if(gegiResult)gegiResult.digital=null;
+  $('gegi-digital-status').textContent='Select an original primary to inspect its digital readout.';
+  $('gegi-digital-content').hidden=true;
+  for(const id of ['gegi-digital-position','gegi-digital-measurements','gegi-digital-plots','gegi-digital-strip','gegi-digital-neighbor'])$(id).replaceChildren();
+}
+async function showGeGIDigital(){
+  const context=gegiResult,event=context?.event;
+  if(!$('gegi-digital-panel').open){++gegiDigitalGeneration;return;}
+  if(!event||context.digital)return;
+  const generation=++gegiDigitalGeneration,status=$('gegi-digital-status');
+  status.textContent='Modeling digital readout for original primary '+event.event_id+'…';
+  try{
+    const reply=await api('/api/workflow/gegi-digital?'+gegiPartQuery(context,{event:String(event.event_id)}));
+    if(context!==gegiResult||event!==context.event||generation!==gegiDigitalGeneration||!$('gegi-digital-panel').open)return;
+    gegiPartIdentity(reply,context,'gegi_multichannel_digital_v1');
+    const digital=reply.digital,channels=digital?.readout?.channels;
+    if(reply.event_id!==event.event_id||!(digital?.status==='unavailable'||digital?.status==='available'&&Array.isArray(channels)&&channels.length===34&&channels.every((c,i)=>c.contact_id===context.data.channels[i].id)))throw Error('Digital response differs from the selected primary or electrode census.');
+    context.digital=digital;
+    if(digital.status==='unavailable'){status.textContent=digital.reason;return;}
+    const {readout,topology,position,pairs}=digital,{profile,calibration}=readout;
+    status.textContent='Original primary '+event.event_id+' · '+profile.sample_period_ns+' ns samples · signed '+profile.adc_bits+'-bit ADC.'+(readout.status==='partial'?' Incomplete acquisition window.':'');
+    $('gegi-digital-calibration').textContent='Synthetic electronics · independent '+calibration.pulser_energy_keV+' keV pulser · slow flat top calibrated in keV and signed fast area in V·ns (also shown in pulser-equivalent keV). Noise '+(readout.noise_seed===null?'disabled.':'seed '+readout.noise_seed+'.');
+    renderGeGIDigitalPosition(context,topology,position,pairs);
+    options('gegi-digital-strip',context.data.channels.map(c=>({id:String(c.id),label:c.name+' · contact '+c.id})));
+    const first=topology.x_contact_id??topology.collecting_contact_ids[0];
+    if(first!==undefined)$('gegi-digital-strip').value=String(first);
+    $('gegi-digital-content').hidden=false;gegiDigitalNeighbors();
+  }catch(e){if(context===gegiResult&&event===context.event&&generation===gegiDigitalGeneration&&$('gegi-digital-panel').open){context.digital=null;status.textContent='Cannot load digital readout. '+e.message+' Close and reopen this panel to retry.';}}
+}
+function gegiDigitalValue(value,unit=''){return Number.isFinite(value)?String(Number(value.toPrecision(6)))+(unit?' '+unit:''):'Unavailable';}
+function gegiDigitalNeighborNames(context,ids){return (ids||[]).map(id=>context.data.channels.find(c=>c.id===id)?.name||'contact '+id).join(', ');}
+function renderGeGIDigitalPosition(context,topology,position,pairs){
+  const target=$('gegi-digital-position');target.replaceChildren();
+  const collectors=gegiDigitalNeighborNames(context,topology.collecting_contact_ids)||'none';
+  target.append(node('p','Strips and guards above '+topology.threshold_keV+' keV · '+collectors+'.'));
+  if(topology.status!=='conditional_single_pixel'){
+    if(pairs?.pairings?.length)renderGeGIDigitalPairs(context,target,pairs);
+    else target.append(node('p','Position unavailable. '+topology.reason,'muted'));
+    return;
+  }
+  target.append(node('p','Conditional single-pixel candidate · '+gegiDigitalValue(topology.energy_keV,'keV')+' averaged across the two faces. Signals on the same pixel can overlap.'));
+  if(!position){target.append(node('p','Sub-strip position calibration is unavailable.','muted'));return;}
+  const scope={matching_saved_fields:'matching saved simulation fields',nominal_transfer:'nominal transfer to a different field solution',source_identity_mismatch:'incompatible model or field identity'}[position.calibration_source_status];
+  const hasEstimate=position.status!=='unavailable'||position.depth?.status==='estimated';
+  const coverage=hasEstimate&&position.calibration_pair_coverage==='unverified_cross_strip_transfer'?' · unverified transfer across strip pairs':'';
+  target.append(node('p','Sub-strip calibration · '+position.calibration_reference_energy_keV+' keV simulated injections'+(scope?' · '+scope:'')+coverage+'.'+(position.mode==='cfd_conditioned'?' The XY slot tables use the estimated depth.':''),'muted'));
+  const list=node('ul');
+  for(const family of ['x','y']){
+    const axis=position[family];if(!axis)continue;
+    const name=gegiDigitalNeighborNames(context,[axis.contact_id]);
+    const neighbors=gegiDigitalNeighborNames(context,axis.neighbor_contact_ids);
+    const result=Number.isFinite(axis.position_mm)?'slot '+axis.slot+' (0–8) · '+gegiDigitalValue(axis.position_mm,'mm'):'unavailable · '+String(axis.reason||axis.status).replaceAll('_',' ');
+    const center=Number.isFinite(axis.position_mm)?' strip center ':' strip-center fallback ';
+    list.append(node('li',family.toUpperCase()+' · '+name+center+gegiDigitalValue(axis.strip_center_mm,'mm')+(neighbors?' · neighbors '+neighbors:'')+' · signed ratio '+gegiDigitalValue(axis.ratio)+' · '+result));
+  }
+  if(position.depth){
+    const depth=position.depth,z=Number.isFinite(depth.position_mm)?gegiDigitalValue(depth.position_mm,'mm from detector midplane'):'unavailable · '+depth.status.replaceAll('_',' ');
+    list.append(node('li','Z · preamp 50% crossing difference (X − Y) '+gegiDigitalValue(depth.cfd_difference_ns,'ns')+' · '+z));
+  }
+  target.append(list,node('p','The signed ratio is the higher-coordinate neighbor’s fast signal minus the lower-coordinate neighbor’s fast signal, divided by the collecting strip’s slow energy.','muted'));
+  if(position.pooled_axes){
+    const compare=node('details'),axes=node('ul');
+    compare.append(node('summary','Pooled XY calibration comparison'),node('p','Uses one ratio table per strip across the modeled depths.','muted'));
+    for(const family of ['x','y']){
+      const axis=position.pooled_axes[family],estimate=Number.isFinite(axis.position_mm)?'slot '+axis.slot+' (0–8) · '+gegiDigitalValue(axis.position_mm,'mm'):'unavailable · '+axis.status.replaceAll('_',' ');
+      axes.append(node('li',family.toUpperCase()+' · '+estimate));
+    }
+    compare.append(axes);target.append(compare);
+  }
+  if(position.calibration_sha256)target.append(savedIdentity('Sub-strip calibration identity',position.calibration_kind+' · SHA256 '+position.calibration_sha256));
+}
+function renderGeGIDigitalPairs(context,target,pairs){
+  const status={unique_energy_pairing:'One energy-compatible pairing',ambiguous_energy_pairing:'Both pairings are energy-compatible',incompatible_energies:'Neither pairing passes the energy tolerance'}[pairs.status]||'Pairing unresolved';
+  target.append(node('h3','Two-site strip pairings'),node('p',status+'. Energy compatibility leaves scatter order unresolved.'));
+  if(pairs.reason)target.append(node('p',pairs.reason.replaceAll('_',' '),'muted'));
+  const list=node('ol');
+  for(const pairing of pairs.pairings){
+    const row=node('li',pairing.energy_compatible?'Energy-compatible':'Energy-incompatible'),sites=node('ul');
+    for(const site of pairing.sites){
+      const x=gegiDigitalNeighborNames(context,[site.x_contact_id]),y=gegiDigitalNeighborNames(context,[site.y_contact_id]);
+      let text=x+' '+gegiDigitalValue(site.x_energy_keV,'keV')+' ↔ '+y+' '+gegiDigitalValue(site.y_energy_keV,'keV');
+      if(site.energy_compatible)text+=' · pair energy '+gegiDigitalValue(site.energy_keV,'keV');
+      if(site.position_mm?.every(Number.isFinite))text+=' · modeled XYZ ('+site.position_mm.map(v=>gegiDigitalValue(v)).join(', ')+') mm';
+      const cfd=site.position?.depth?.cfd_difference_ns;
+      if(Number.isFinite(cfd))text+=' · X − Y timing '+gegiDigitalValue(cfd,'ns');
+      sites.append(node('li',text));
+    }
+    row.append(sites);
+    if(pairing.flags?.length)row.append(node('p',pairing.flags.map(f=>f.replaceAll('_',' ')).join(' · '),'muted'));
+    row.append(node('p',pairing.cones?.length?pairing.cones.length+' conditional cone orders under full absorption.':'Compton cone unavailable for this pairing.','muted'));
+    list.append(row);
+  }
+  target.append(list);
+}
+function gegiDigitalNeighbors(){
+  const context=gegiResult;if(!context?.digital)return;
+  const strip=context.data.channels.find(c=>c.id===Number($('gegi-digital-strip').value));
+  const neighbors=strip&&!strip.guard?context.data.channels.filter(c=>!c.guard&&c.family===strip.family&&Math.abs(c.strip_index-strip.strip_index)===1):[];
+  options('gegi-digital-neighbor',neighbors.length?neighbors.map(c=>({id:String(c.id),label:c.name+' · contact '+c.id})):[{id:'',label:'No adjacent strip'}]);
+  $('gegi-digital-neighbor').disabled=!neighbors.length;renderGeGIDigitalPlots();
+}
+function renderGeGIDigitalPlots(){
+  const context=gegiResult,readout=context?.digital?.readout;if(!readout)return;
+  const ids=['gegi-digital-strip','gegi-digital-neighbor'].map(id=>Number($(id).value));
+  const channels=ids.map(id=>readout.channels.find(c=>c.contact_id===id)),names=ids.map(id=>gegiDigitalNeighborNames(context,[id]));
+  const target=$('gegi-digital-measurements');target.replaceChildren();
+  channels.forEach((c,i)=>{if(c)target.append(node('p',names[i]+' · slow '+gegiDigitalValue(c.slow_energy_keV,'keV')+' · signed fast '+gegiDigitalValue(c.fast_area_V_ns,'V·ns')+' · '+gegiDigitalValue(c.fast_signal_keV_equiv,'keV equivalent')+' · preamp 50% timing '+gegiDigitalValue(c.preamp_cfd50_ns,'ns')+(c.flags.length?' · '+c.flags.map(f=>f.replaceAll('_',' ')).join(', '):''),'muted'));});
+  const plots=$('gegi-digital-plots');plots.replaceChildren();
+  for(const [key,label,unit] of [['adc_code','Preamplifier ADC','signed code'],['fast_V','Fast shaped signal','V'],['slow_V','Slow trapezoid','V']]){
+    plots.append(gegiTracePlot(channels[0]?.trace,key,label,unit,{neighbor:channels[1]?.trace,names,digital:true}));
+  }
 }
 function showGeGIEvent(preserveJourney=false){
   const context=gegiResult;if(!context||!context.event)return;const event=context.event,id=Number($('gegi-channel').value),meta=context.data.channels.find(c=>c.id===id);$('gegi-plots').replaceChildren();
@@ -338,6 +460,7 @@ function renderGeGIImaging(){
   for(const [px,py,text]of [[55,345,'Azimuth '+x[0]+'°'],[525,345,String(x[x.length-1])+'°'],[4,25,String(y[y.length-1])+'°'],[4,320,String(y[0])+'°'],[55,372,'Elevation increases upward; detector +z is +90°.']]){const label=document.createElementNS(ns,'text');label.setAttribute('x',px);label.setAttribute('y',py);label.textContent=text;svg.append(label);}target.append(svg,node('p','Saved backprojection values; maximum '+maximum+'. This image uses reconstructed channel information. Truth deposit positions remain separate.','muted'));
 }
 $('gegi-event').onchange=loadGeGIEvent;$('gegi-channel').onchange=()=>showGeGIEvent();$('gegi-imaging-panel').ontoggle=showGeGIImaging;
+$('gegi-digital-panel').ontoggle=showGeGIDigital;$('gegi-digital-strip').onchange=gegiDigitalNeighbors;$('gegi-digital-neighbor').onchange=renderGeGIDigitalPlots;
 async function openResult(job){if(job.workflow_kind==='local_gegi_workflow_v1')return openGeGIResult(job);if(job.execution_contract==='serial_batches_v3')return openBatchResult(job);const prior=result?.job.name===job.name&&result?.job.configuration_sha256===job.configuration_sha256?{id:Number($('event').value),groupIndex:Number($('group').value)}:null;showRun(job);resetResultOptions();const generation=++resultGeneration;plotGeneration++;result=null;$('plots').replaceChildren();$('result').hidden=true;try{const responses=await Promise.all([artifact(job.name,'response/run.json'),artifact(job.name,'COMPLETE.json')]);const [report,complete]=await Promise.all(responses.map(r=>r.json()));if(generation!==resultGeneration||selectedJob!==job.name)return;const summaryHash=complete.artifacts?.['response/summary.html']?.sha256;if(complete.configuration_sha256!==job.configuration_sha256||!summaryHash||report.artifacts?.['summary.html']!==summaryHash||report.source_id!==undefined&&report.source_id!==job.selection.source)throw Error('Saved result and selected run identities differ.');let records=[],traces=[];if(report.cases){records=report.cases;}else{const files=await Promise.all([artifact(job.name,'response/scalars.jsonl'),artifact(job.name,'response/traces.jsonl')]);const texts=await Promise.all(files.map(r=>r.text()));if(generation!==resultGeneration||selectedJob!==job.name)return;[records,traces]=texts.map(s=>s.trim().split('\n').filter(Boolean).map(JSON.parse));}if(generation!==resultGeneration||selectedJob!==job.name)return;result={job,report,records,traces,summaryHash};loadResultOptions(result);$('batch-navigation').hidden=true;savedArtifacts(job,complete);$('result').hidden=false;$('result-heading').textContent=job.name+' · '+job.selection.detector+' · '+savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' original primaries';const ids=selectablePrimaryIds(records);options('event',primaryOptions(ids,result.records,result.traces));const choice=prior&&ids.includes(prior.id)?prior:firstSavedWaveform(records,traces);if(choice)$('event').value=String(choice.id);if(ids.length)showEvent(choice?.groupIndex);else clearSavedSelection('No nonzero deposits in this run. Initial counts and denominator are retained.');$('result').scrollIntoView({behavior:'smooth'});}catch(e){if(generation===resultGeneration&&selectedJob===job.name)throw e;}}
 function resetSpectrum(){spectrumGeneration++;if(result)result.spectrum=null;$('spectrum-panel').hidden=true;$('spectrum-panel').open=false;$('spectrum-status').textContent='';$('spectrum-content').replaceChildren();}
 function resetResultOptions(){resultOptionsGeneration++;if(result)result.options=null;for(const id of ['feature-panel','acquisition-panel']){$(id).hidden=true;$(id).open=false;}resetFeatures();resetAcquisition();resetSpectrum();$('result-options-status').textContent='';}

@@ -291,11 +291,12 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError('Invalid saved GeGI results request')
                 workflow.run_path(query['name'][0],self.server.controller.root)
                 return self.send_data(200,self.server.workflow_controller.gegi_results(query['name'][0]))
-            if parts.path in ('/api/workflow/gegi-summary','/api/workflow/gegi-event','/api/workflow/gegi-imaging'):
+            if parts.path in ('/api/workflow/gegi-summary','/api/workflow/gegi-event','/api/workflow/gegi-imaging','/api/workflow/gegi-digital'):
                 import re
                 part=parts.path.rsplit('-',1)[1]
                 query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
-                required={'name','event'} if part=='event' else {'name'}
+                required={'name','event'} if part in ('event','digital') else {'name'}
+                if part=='digital':required.add('results_sha256')
                 if (parts.fragment or not required<=set(query) or
                         not set(query)<=required|{'derivative','results_sha256'} or
                         any(len(v)!=1 for v in query.values()) or self.server.workflow_controller is None):

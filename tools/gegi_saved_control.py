@@ -372,5 +372,6 @@ class SavedGeGIControl:
             reader=self._reader(job)
             if part=='summary':return reader.summary(results_sha256)
             if part=='event':return reader.event(event_id,results_sha256)
+            if part=='digital':return reader.digital(event_id,results_sha256,W.run_path(original_name,self.root))
             W.require(part=='imaging','Unknown standalone GeGI result view.')
             return reader.imaging(results_sha256)

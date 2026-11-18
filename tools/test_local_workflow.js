@@ -25,7 +25,7 @@ const svgNs='http://www.w3.org/2000/svg';
 function xml(tag,attrs={},children=[]){return {nodeType:1,localName:tag,prefix:null,namespaceURI:null,attributes:Object.entries(attrs).map(([name,value])=>({name,value,prefix:null})),childNodes:children};}
 const svgDocument={doctype:null,documentElement:xml('svg',{role:'img',viewBox:'0 0 600 205'},[xml('polyline',{points:'55,160 565,35',fill:'none',stroke:'currentColor','stroke-width':'1.7'}),xml('text',{x:'5',y:'35'},[{nodeType:3,nodeValue:'-0.003'}])]),getElementsByTagName:()=>[]};
 class Parser{parseFromString(){return svgDocument;}}
-const elements=new Map(),get=id=>{if(!elements.has(id)){const find=n=>n.id===id?n:n.children?.map(find).find(Boolean);for(const root of elements.values()){const found=find(root);if(found)return found;}const root=new Element(['cryostat','detector','source','pose','threads','event','group','gegi-event','gegi-channel','gegi-saved-campaign','gegi-saved-calibration','gegi-saved-job'].includes(id)?'select':'div');root.rootConnected=true;elements.set(id,root);}return elements.get(id);};
+const elements=new Map(),get=id=>{if(!elements.has(id)){const find=n=>n.id===id?n:n.children?.map(find).find(Boolean);for(const root of elements.values()){const found=find(root);if(found)return found;}const root=new Element(['cryostat','detector','source','pose','threads','event','group','gegi-event','gegi-channel','gegi-digital-strip','gegi-digital-neighbor','gegi-saved-campaign','gegi-saved-calibration','gegi-saved-job'].includes(id)?'select':'div');root.rootConnected=true;elements.set(id,root);}return elements.get(id);};
 const fixtureDocument={getElementById:get,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>{const n=new Element(tag);n.namespaceURI=ns;return n;},createTextNode:text=>({textContent:text})};
 fixtureDocument.body=new Element('body');fixtureDocument.body.rootConnected=true;fixtureDocument.activeElement=fixtureDocument.body;
 const context=vm.createContext({document:fixtureDocument,DOMParser:Parser,
@@ -1357,6 +1357,47 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.equal(run('JSON.stringify(gegiResult.imaging)'),run('JSON.stringify(standaloneV3Fixture.imaging)'));
   const cachedImageRequests=run('gegiRequests.length');get('gegi-imaging-panel').open=false;await get('gegi-imaging-panel').ontoggle();get('gegi-imaging-panel').open=true;await get('gegi-imaging-panel').ontoggle();
   assert.equal(run('gegiRequests.length'),cachedImageRequests);
+  // Digital readout is a separate, lazy selected-event request bound to the same run seal.
+  run(`var digitalRequests=[];var digitalMeta=standaloneDerived.channels.map((c,i)=>({...c,strip_index:i%17+1,guard:i%17===16}));
+    var digitalApi=async path=>{
+      const q=new URLSearchParams(path.split('?')[1]);
+      if(!path.startsWith('/api/workflow/gegi-digital?'))return gegiFixtureReply({...standaloneDerived,channels:digitalMeta},path);
+      digitalRequests.push(path);const event_id=Number(q.get('event'));
+      const trace={time_ns:[-20,0,20],adc_code:[0,-4,12],fast_V:[0,-.4,.1],slow_V:[0,.02,.2]};
+      const digital={status:'available',readout:{status:'completed',profile:{sample_period_ns:20,adc_bits:16},calibration:{pulser_energy_keV:500},noise_seed:null,channels:digitalMeta.map(c=>({contact_id:c.id,slow_energy_keV:200,fast_area_V_ns:-1,fast_signal_keV_equiv:-2,flags:[],trace}))},
+        topology:{status:'conditional_single_pixel',energy_keV:200,threshold_keV:5,x_contact_id:11,y_contact_id:24,collecting_contact_ids:[11,24]},
+        position:{calibration_reference_energy_keV:500,calibration_source_status:'nominal_transfer',calibration_pair_coverage:'simulated_pair',x:{contact_id:11,strip_center_mm:2,neighbor_contact_ids:[10,12],ratio:-.1,status:'estimated',slot:0,position_mm:1.2},y:{contact_id:24,strip_center_mm:4,ratio:null,status:'uncalibrated_strip',position_mm:null},depth:{cfd_difference_ns:-20,position_mm:0.5,status:'estimated'}}};
+      return {kind:'gegi_multichannel_digital_v1',name:gegiJob.name,event_id,configuration_sha256:gegiJob.configuration_sha256,results_sha256:'d'.repeat(64),saved_derivative_name:'standalone-derived',digital:event_id===49?{status:'unavailable',reason:'Native carrier response failed.'}:digital};
+    }; api=digitalApi;`);
+  await run("openGeGIResult(gegiJob,null,'standalone-derived')");
+  assert.equal(run('digitalRequests.length'),0);
+  get('gegi-digital-panel').open=true;await get('gegi-digital-panel').ontoggle();
+  assert.match(run('digitalRequests[0]'),/derivative=standalone-derived.*event=37/);
+  assert.match(get('gegi-digital-status').textContent,/20 ns samples.*16-bit ADC/);
+  assert.match(get('gegi-digital-calibration').textContent,/500 keV pulser.*signed fast area/);
+  assert.match(get('gegi-digital-position').children[2].textContent,/nominal transfer/);
+  assert.match(get('gegi-digital-position').children[3].children[0].textContent,/signed ratio -0.1.*slot 0.*1.2 mm/);
+  assert.match(get('gegi-digital-position').children[3].children[1].textContent,/unavailable.*uncalibrated strip/);
+  assert.match(get('gegi-digital-position').children[3].children[2].textContent,/Z.*-20 ns.*0.5 mm from detector midplane/);
+  assert.equal(get('gegi-digital-strip').value,'11');
+  assert.deepEqual(get('gegi-digital-neighbor').children.map(n=>n.value),['10','12']);
+  assert.deepEqual(get('gegi-digital-plots').children.map(n=>n.children[0].textContent),['Preamplifier ADC · signed code','Fast shaped signal · V','Slow trapezoid · V']);
+  get('gegi-digital-neighbor').value='12';get('gegi-digital-neighbor').onchange();
+  assert.match(get('gegi-digital-plots').children[0].children.at(-1).textContent,/strip 11 \(solid\).*strip 12 \(dashed\)/);
+  get('gegi-digital-panel').open=false;await get('gegi-digital-panel').ontoggle();get('gegi-digital-panel').open=true;await get('gegi-digital-panel').ontoggle();
+  assert.equal(run('digitalRequests.length'),1);
+  run(`resetGeGIDigital(); var finishDigital; api=path=>path.startsWith('/api/workflow/gegi-digital?')&&path.includes('event=37')?new Promise(resolve=>finishDigital=resolve):digitalApi(path); var lateDigital=showGeGIDigital();`);
+  get('gegi-event').value='49';await get('gegi-event').onchange();
+  await run(`finishDigital(digitalApi('/api/workflow/gegi-digital?name=gegi-dom&event=37'));lateDigital`);
+  assert.match(get('gegi-digital-status').textContent,/Native carrier response failed/);
+  assert.equal(get('gegi-digital-content').hidden,true);assert.equal(get('gegi-digital-plots').children.length,0);
+  run(`var pairA={energy_compatible:true,sites:[{x_contact_id:11,y_contact_id:24,x_energy_keV:210,y_energy_keV:210,energy_compatible:true,energy_keV:210}],cones:[],flags:['overlapping_fast_neighborhood']};
+    renderGeGIDigitalPosition(gegiResult,{collecting_contact_ids:[11,12,24,26],threshold_keV:5},null,{status:'ambiguous_energy_pairing',pairings:[pairA,{...pairA,sites:[{...pairA.sites[0],y_contact_id:26}]}]});`);
+  const pairDisplay=descendants(get('gegi-digital-position')).map(n=>n.textContent);
+  assert.ok(pairDisplay.some(text=>text.includes('Both pairings are energy-compatible')));
+  assert.ok(pairDisplay.some(text=>text.includes('strip 24 210 keV'))&&pairDisplay.some(text=>text.includes('strip 26 210 keV')));
+  assert.ok(pairDisplay.includes('Compton cone unavailable for this pairing.'));
+  console.log('GeGI digital readout: lazy selected event, derivative seal, ADC and branch overlays, modeled calibration, cached channel switches and stale failure clearing passed.');
   run(`var zeroGeGI={...standaloneV3Fixture,counts:{initial_primaries:100,zero_deposit_primaries:100,nonzero_primaries:0,native_failed_groups:0},events:[],imaging:null};api=async path=>gegiFixtureReply(zeroGeGI,path);gegiRequests.length=0;`);
   await run('openGeGIResult(gegiJob)');assert.equal(run('gegiRequests.length'),1);assert.equal(run('gegiResult.event'),null);
   assert.match(get('gegi-counts').textContent,/100 initial.*100 zero-deposit.*0 stored nonzero/);assert.match(get('gegi-event-summary').textContent,/No nonzero deposits/);

@@ -65,6 +65,20 @@ class GeGIProtocol(unittest.TestCase):
         self.assertEqual(self.workflow.check_gegi.call_count,1)
         self.workflow.start.assert_not_called()
 
+    def test_digital_requires_original_id_and_sealed_summary(self):
+        path='/api/workflow/gegi-digital?name=gegi-owned&event=37&results_sha256='+'a'*64
+        reply={'kind':'gegi_multichannel_digital_v1','name':'gegi-owned','event_id':37}
+        self.workflow.gegi_browse.return_value=reply
+        self.assertEqual(self.request(path+'&derivative=gegi-derived'),(200,reply))
+        self.workflow.gegi_browse.assert_called_once_with('gegi-owned','digital',event_id=37,
+                                                        derivative='gegi-derived',results_sha256='a'*64)
+        for invalid in (path.split('&results_sha256=')[0],path.replace('event=37','event=037'),
+                        path+'&event=38',path+'&file=private',path+'&derivative=../private'):
+            self.assertEqual(self.request(invalid)[0],400)
+        self.assertEqual(self.request(path,token=False)[0],403)
+        self.assertEqual(self.request(path,origin='https://foreign.invalid')[0],403)
+        self.assertEqual(self.workflow.gegi_browse.call_count,1)
+
 
 class GeGIController(unittest.TestCase):
     def setUp(self):

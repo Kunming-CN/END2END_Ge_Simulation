@@ -200,6 +200,15 @@ class Reader:
         W.require(value['event_id']==event_id,'Selected saved GeGI event identity changed.')
         return {**self.identity,'kind':'gegi_multichannel_event_v1','event_id':event_id,'event':value}
 
+    def digital(self,event_id,expected_sha256,run):
+        from gegi_digital_saved import from_saved_event
+        W.require(expected_sha256 is not None,'Open the sealed GeGI summary before loading digital readout.')
+        selected=self.event(event_id,expected_sha256)['event']
+        value=from_saved_event(selected,self.index['header']['channels'],run,
+                               configuration_sha256=self.identity['configuration_sha256'])
+        self.guard(expected_sha256)
+        return {**self.identity,'kind':'gegi_multichannel_digital_v1','event_id':event_id,'digital':value}
+
     def imaging(self,expected_sha256=None):
         self.guard(expected_sha256)
         W.require(self.index['imaging'] is not None,'This saved GeGI result contains no imaging record.')

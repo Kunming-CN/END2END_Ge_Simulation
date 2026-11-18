@@ -1,5 +1,33 @@
 # Current handoff
 
+## GeGI digital strip readout — 2026-11-18
+
+Control can replay a selected sealed GeGI event through a signed preamplifier,
+finite analog bandwidth, nominal 50 MS/s waveform ADC, fast signed area, slow
+trapezoid flat top and two-face CFD timing. A 500 keV electronic pulser sets the
+fixed scale. The CLI `tools/gegi_digital_spectra.py` exports 32 strip spectra
+and selected-event outcomes. Simulation coefficients ship with the lightweight
+student runtime. The example traces and figure are website assets.
+
+Saved standalone 5,000-primary run: 4,958 zero and 42 nonzero. Digital replay
+found 25 conditional single-pixel candidates and four events with one compatible
+two-face energy pairing. Event 45 retains both neighbors of X03, with 13.06 and
+27.41 keV-equivalent transient maxima and zero terminal charge. The digital
+energy is 154.98 keV. Eight fixed two-site mixtures yielded 32/32 expected
+collectors and 0/240 spurious energy hits; all eight have two compatible energy
+pairings. Pairing does not establish a photon sequence.
+
+The nominal nine-slot tables cover X11, X12, Y07 and Y09 and the scanned
+±0.4-pitch interval. A depth-independent fit degraded XY on the first 80-point
+scan. The depth-conditioned fit used 396 points, then a distinct 80-point
+native-grid check selected without reading its signals. All 80 strip pairs
+were recovered, 40/80 returned both axes. With a strip-center fallback per
+unestimated axis, radial XY RMS changed from 1.821 to 1.266 mm. Depth RMS was
+0.278 mm (80/80). These are 500 keV simulated single-site checks. Use measured
+feature scales, channel maps, calibration and selection data for experimental
+comparison. The published Compton map uses its original reconstruction.
+Evidence and input hashes: `.local/gegi-digital-v1/`. No new Geant4 or SSD run.
+
 ## Completed native macOS CPU support — 2026-11-13
 
 Root accepted the shared Windows/macOS implementation by gpt-6.1-sol ultra.
