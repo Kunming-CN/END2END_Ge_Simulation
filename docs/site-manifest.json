@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "build_id": "44d24083e7a20abf8300eb0c0d101942d141f337b7153b968d309c36307f9597",
-  "file_count": 1876,
-  "total_bytes": 493801756,
+  "build_id": "62eb63f559f7124e88f557b4fe7d9d7d56f8384a911501aef909c914e4b592fb",
+  "file_count": 1877,
+  "total_bytes": 493831264,
   "html_pages": 109,
-  "local_links_checked": 3323,
-  "resource_references_checked": 3380,
+  "local_links_checked": 3324,
+  "resource_references_checked": 3381,
   "page_navigation_checked": 1449,
   "fragments_checked": 87,
-  "downloads_checked": 745,
+  "downloads_checked": 746,
   "media_references_checked": 1149,
   "metadata_references_checked": 35,
   "other_references_checked": 2,
@@ -9309,6 +9309,11 @@
       "sha256": "711693259897e1363ff42d3089f389b01b93c48c199fde027389a90ec94e3fb6"
     },
     {
+      "path": "results/gegi-digital/event-energy.json",
+      "bytes": 22541,
+      "sha256": "6c8c78b01c671c7f1d1446608e83ae297e2239a80057488eed6e4db070dcb8cc"
+    },
+    {
       "path": "results/gegi-digital/event.json",
       "bytes": 74534,
       "sha256": "074a465e0bbc1490fbbdb8cbd855798cbd4850999ad966bab89aa45c9e1a2aa1"
@@ -9325,8 +9330,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 37662,
-      "sha256": "c24c345cb70e9b1d04019b1d781f3e203a8c419b7247874e2f96e4453b1383e9"
+      "bytes": 44629,
+      "sha256": "2c2081cfa257d89c4f3edb951dbd6d0ea70ce4c39b2c1beb26abb7819afb9e9e"
     },
     {
       "path": "retired-studies.json",

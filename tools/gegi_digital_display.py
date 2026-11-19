@@ -17,6 +17,7 @@ DIGITAL_OBSERVABLES = {
 
 DOUBLE_PULSE_FILE = 'results/gegi-digital/double-pulse.json'
 SOURCE_EXPOSURE_FILE = 'results/gegi-digital/source-exposure.json'
+EVENT_ENERGY_FILE = 'results/gegi-digital/event-energy.json'
 PULSE_TOPOLOGIES = {
     'same_strips': 'Same strips',
     'adjacent_strips': 'Adjacent strips',
@@ -205,7 +206,43 @@ location outside the position calibration. The sampled responses characterize th
 <p><a href="gegi-digital/double-pulse.json">Open double-pulse counts, errors and scan settings (JSON)</a>.</p>'''
 
 
-def exposure_section(data):
+def spectrum_series(histogram, label):
+    counts = histogram['counts'].copy()
+    counts[0] -= histogram['exact_zero']
+    return dict(label=label, counts=counts, total=histogram['entries'],
+                **{key: histogram[key] for key in ('underflow', 'overflow', 'exact_zero')})
+
+
+def event_energy_section(study, trigger_summary):
+    counts = next(row for row in study['summary'] if row['source'] == row['arrival_class'] == 'all')
+    missing = counts['qualified_triggers'] - counts['baseline_energies']
+    guards = counts['remaining_without_energy_flags'].get('guard_collection', 0)
+    multiplicity = trigger_summary['missing_energy_flags'].get('unresolved_strip_multiplicity', 0)
+    recovered = counts['additional_baseline_flags'].get('unresolved_strip_multiplicity', 0)
+    bias = []
+    for key, reference in (('additional_bias_vs_truth_keV', 'the simulated Ge deposit'),
+                           ('additional_bias_vs_isolated_keV', 'the matched isolated replay')):
+        error = counts[key]
+        if error['n']:
+            bias.append(f'Compared with {reference}, the mean energy difference was {error["mean"]:+.4f} keV '
+                        f'and the root-mean-square difference was {error["rms"]:.3f} keV ({error["n"]:,} matches).')
+    multiplicity_text = f' This recovers {recovered:,} of {multiplicity:,} triggers flagged for strip multiplicity.' if multiplicity else ''
+    return f'''
+<h3 id="gegi-event-energy">Slow energy from multiple collecting strips</h3>
+<p><strong>{counts['combined_energies']:,}/{counts['qualified_triggers']:,} qualified triggers had a slow energy</strong>
+after retaining the {counts['baseline_energies']:,} single-pixel values and recovering {counts['additional_energies']:,}
+of {missing:,} triggers previously without an estimate.{multiplicity_text}</p>
+<p>The method sums qualified collecting strips on each face and averages the two sums when they agree. Additional entries
+require multiple collecting strips on at least one face. Guard collection was flagged in {guards:,} of the
+{counts['remaining_without_energy']:,} triggers still without an energy. Position and Compton reconstruction require
+a separate eligible strip pairing and any applicable position calibration.</p>
+<p>The spectrum uses the ADC measurements, including {counts['additional_merged']:,} added merged-trigger totals.
+Each merged trigger contributes one aggregate energy. The {counts['additional_unique_matched']:,} added entries with
+a unique deposit match are eligible for per-deposit bias checks. {' '.join(bias)}</p>
+<p><a href="gegi-digital/event-energy.json">Open the energy comparison, isolated controls and spectra (JSON)</a>.</p>'''
+
+
+def exposure_section(data, event_energy=None):
     design = data['design']
     exposure = data['exposure']
     triggers = data['trigger_summary']
@@ -221,13 +258,34 @@ def exposure_section(data):
     from spectrum_plot import svg
     histogram = data['slow_spectrum']
     edges = histogram['bin_edges_keV']
-    counts = histogram['counts'].copy()
-    counts[0] -= histogram['exact_zero']
-    series = dict(label='Qualified trigger energy', counts=counts, total=histogram['entries'],
-                  **{key: histogram[key] for key in ('underflow', 'overflow', 'exact_zero')})
+    series = spectrum_series(histogram, 'Qualified trigger energy')
     view = dict(edges=edges, view=[edges[0], edges[-1]], series=[series],
                 title='Slow-energy spectrum from qualified simulated triggers', xlabel='Slow energy (keV)')
+    caption = '<strong>Qualified slow-energy spectrum</strong>'
+    figure = '<figure style="margin:16px 0">'
+    notes = f'''{sum(series['counts']):,} entries in {edges[1]-edges[0]:g} keV bins from {edges[0]:g} to {edges[-1]:g} keV,
+with lower bin edges included. Underflow {series['underflow']:,}, overflow {series['overflow']:,}, exact zeros {series['exact_zero']:,}.
+The spectrum includes every qualified trigger with a slow-energy estimate.'''
+    energy_rule = 'A slow energy also requires a qualified collecting strip on each face and agreement between their energies.'
+    comparison = ''
+    if event_energy is not None:
+        energy_rule = 'The baseline slow-energy route requires one qualified collecting strip on each face and agreement between their energies.'
+        comparison = event_energy_section(event_energy, triggers)
+        addition = spectrum_series(event_energy['spectra']['additional'], 'Additional face-summed energies')
+        if addition['total']:
+            series['label'] = 'Single-pixel baseline'
+            view['series'].append(addition)
+            view['title'] = 'Single-pixel and additional face-summed energies'
+            figure = '<figure class="gegi-event-energy-spectrum" style="margin:16px 0">'
+            caption += ' · <span style="color:#15745b">Single-pixel baseline (solid)</span>' \
+                       ' · <span style="color:#72529a">Additional face sums (dashed)</span>'
+            notes = f'''{sum(series['counts']):,} baseline and {sum(addition['counts']):,} additional entries in view.
+Both use {edges[1]-edges[0]:g} keV bins from {edges[0]:g} to {edges[-1]:g} keV, with lower edges included.
+Baseline underflow, overflow and exact zeros are {series['underflow']:,}, {series['overflow']:,} and {series['exact_zero']:,}.
+Additional underflow, overflow and exact zeros are {addition['underflow']:,}, {addition['overflow']:,} and {addition['exact_zero']:,}.'''
     chart = svg(view, 'linear').replace('<svg ', '<svg style="display:block;width:100%;max-width:760px;height:auto" ', 1)
+    if len(view['series']) > 1:
+        chart = '<style>.gegi-event-energy-spectrum .spectrum-step+.spectrum-step{stroke:#72529a;stroke-dasharray:4 2}</style>' + chart
     activities = design['source_activities_bq']
     unknown = overall['history_unqualified'] + overall['history_boundary_unknown']
     return f'''<h2 id="gegi-source-exposure">One exposure with Cs-137 and Co-60</h2>
@@ -249,11 +307,9 @@ The electronics start from zero with a {1000/design['sample_period_ns']:g} MS/s 
 <p>Over {exposure['qualified_adc_live_time_ns']/1e9:.6f} s of qualified ADC time, the readout returned
 {triggers['qualified_triggers']:,} triggers and {triggers['qualified_slow_energies']:,} usable slow energies.
 {triggers['unmatched']:,} triggers lacked a matching deposit. A trigger uses the coincident rise on both faces.
-A slow energy also requires a qualified collecting strip on each face and agreement between their energies.</p>
-<figure style="margin:16px 0"><figcaption><strong>Qualified slow-energy spectrum</strong></figcaption>
-{chart}<p class="muted">{sum(counts):,} entries in {edges[1]-edges[0]:g} keV bins from {edges[0]:g} to {edges[-1]:g} keV,
-with lower bin edges included. Underflow {series['underflow']:,}, overflow {series['overflow']:,}, exact zeros {series['exact_zero']:,}.
-The spectrum includes every qualified trigger with a slow-energy estimate.</p></figure>
+{energy_rule}</p>{comparison}
+{figure}<figcaption>{caption}</figcaption>
+{chart}<p class="muted">{notes}</p></figure>
 <p>Arrival neighborhoods use deposition times from both sources. These counts apply to the qualified portion of the
 simulated exposure. The JSON includes the signal-history rules, matching criteria and the noiseless close-pair cross-check.
 <a href="gegi-digital/source-exposure.json">Open the exposure census, spectrum and settings (JSON)</a>.</p>'''
@@ -311,6 +367,50 @@ def attach_source_exposure(site, report_path):
     data['provenance'] = dict(report_sha256=sha256(report_bytes).hexdigest(), source_sha256=sources,
                               input_sha256=sorted(report['input_sha256'].values()))
     path.write_text(json.dumps(data, allow_nan=False, separators=(',', ':'))+'\n', encoding='utf-8', newline='\n')
+
+
+def attach_event_energy(site, report_path):
+    report_bytes = report_path.read_bytes()
+    report = json.loads(report_bytes)
+    if report.get('kind') != 'gegi_saved_two_source_event_energy_v1' or report.get('status') != 'completed':
+        raise ValueError('Expected a completed GeGI two-source event energy study.')
+    exposure = json.loads((site/SOURCE_EXPOSURE_FILE).read_bytes())
+    exposure_hash = report['binding']['exposure_sha256']
+    if exposure_hash != exposure['provenance']['report_sha256']:
+        raise ValueError('GeGI energy comparison belongs to a different source exposure.')
+    spectra = report['spectra']
+    baseline, additional, combined = (spectra[key] for key in ('baseline', 'additional', 'baseline_plus_additional'))
+    edges = baseline['bin_edges_keV']
+    if (baseline != exposure['slow_spectrum'] or any(h['bin_edges_keV'] != edges for h in (additional, combined))
+            or combined['counts'] != [a+b for a, b in zip(baseline['counts'], additional['counts'], strict=True)]
+            or any(combined[key] != baseline[key]+additional[key] for key in ('entries', 'underflow', 'overflow', 'exact_zero'))):
+        raise ValueError('The GeGI event energy comparison does not retain and extend the published baseline spectrum.')
+    from spectrum_plot import validate_spec
+    validate_spec(dict(edges=edges, view=[edges[0], edges[-1]],
+                       series=[spectrum_series(value, label) for label, value in spectra.items()]))
+    sources = report['binding']['source_sha256']
+    project = Path(__file__).resolve().parents[1]
+    for name, digest in sources.items():
+        source = (project/name).resolve()
+        if not source.is_relative_to(project/'tools') or sha256(source.read_bytes()).hexdigest() != digest:
+            raise ValueError(f'GeGI event energy input code changed after replay: {name}')
+    overall = next(row for row in report['summary'] if row['source'] == row['arrival_class'] == 'all')
+    triggers = exposure['trigger_summary']['qualified_triggers']
+    parity = report['baseline_parity']
+    if (overall['qualified_triggers'] != triggers or parity['trigger_identities_matched'] != triggers
+            or parity['baseline_exact'] != baseline['entries'] or not parity['identical_mask']
+            or any(overall[key] != spectrum['entries'] for key, spectrum in
+                   zip(('baseline_energies', 'additional_energies', 'combined_energies'), (baseline, additional, combined), strict=True))
+            or combined['entries'] + overall['remaining_without_energy'] != triggers
+            or sum(overall[key] for key in ('additional_unique_matched', 'additional_merged', 'additional_unassigned_other')) != additional['entries']):
+        raise ValueError('The GeGI event energy and trigger counts do not close.')
+    data = {key: report[key] for key in ('status', 'design', 'exposure_census', 'summary', 'geometry_summary',
+                                        'spectra', 'isolated_acceptance', 'baseline_parity')}
+    data['kind'] = 'gegi_saved_two_source_event_energy_public_v1'
+    data['binding'] = dict(exposure_sha256=exposure_hash, report_sha256=sha256(report_bytes).hexdigest(),
+                           source_sha256=sources, input_sha256=sorted(report['binding']['input_sha256'].values()))
+    (site/EVENT_ENERGY_FILE).write_text(json.dumps(data, allow_nan=False, separators=(',', ':'))+'\n',
+                                        encoding='utf-8', newline='\n')
 
 
 def compact_pairing_study(study, source_hash, *, holdout=False):
@@ -480,9 +580,14 @@ def render(site):
                     f'<td>{c["signed_induced_keV"][-1]:.2f}</td><td>{c["fast_area_V_ns"]:.3f}</td><td>{slow}</td></tr>')
     pulse = site/DOUBLE_PULSE_FILE
     exposure = site/SOURCE_EXPOSURE_FILE
+    event_energy = site/EVENT_ENERGY_FILE
     card = '<section id="gegi" class="panel" data-dataset="gegi">\n'
     if exposure.is_file():
-        card += exposure_section(json.loads(exposure.read_bytes()))
+        data = json.loads(exposure.read_bytes())
+        study = json.loads(event_energy.read_bytes()) if event_energy.is_file() else None
+        if study and study['binding']['exposure_sha256'] != data['provenance']['report_sha256']:
+            raise ValueError('GeGI energy comparison belongs to a different source exposure.')
+        card += exposure_section(data, study)
     has_pulse = pulse.is_file()
     if has_pulse:
         card += double_pulse_section(json.loads(pulse.read_bytes()))
