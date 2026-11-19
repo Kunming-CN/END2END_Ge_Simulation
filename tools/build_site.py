@@ -732,8 +732,8 @@ if __name__ == '__main__':
                         help='Add cumulative measured plane backprojections and counts with --gegi-fast-gate')
     parser.add_argument('--gegi-plane-priors', type=Path, nargs=2, metavar=('PRIOR_STUDY', 'HELDOUT_SCORE'),
                         help='Publish the saved four-block plane-prior comparison, held-out scores and guide')
-    parser.add_argument('--gegi-plane-intersections', type=Path, nargs=2, metavar=('IMAGE_STUDY', 'LEAVE_TWO_OUT'),
-                        help='Attach the saved three-intersection diagnostic to the four-block plane comparison')
+    parser.add_argument('--gegi-plane-intersections', type=Path, nargs='+', metavar='REPORT',
+                        help='Attach IMAGE_STUDY LEAVE_TWO_OUT and optionally ANCESTRY CONE_COMPARISON')
     parser.add_argument('--gegi-shared-clock', type=Path, nargs=4,
                         metavar=('MEASURED_STUDY', 'CLOCK_REFERENCE', 'POSITIVE_CONTROL', 'MERGED_WINDOWS'),
                         help='Publish saved GeGI timing counts, pulse controls and merged-trigger examples')
@@ -761,6 +761,8 @@ if __name__ == '__main__':
         parser.error('--gegi-pixel-depth requires --gegi-fast-gate')
     if args.gegi_measured_plane and not args.gegi_fast_gate:
         parser.error('--gegi-measured-plane requires --gegi-fast-gate')
+    if args.gegi_plane_intersections and len(args.gegi_plane_intersections) not in (2, 4):
+        parser.error('--gegi-plane-intersections requires IMAGE_STUDY LEAVE_TWO_OUT [ANCESTRY CONE_COMPARISON]')
     if len(args.gegi_digital_pairing_study or ()) > 2:parser.error('--gegi-digital-pairing-study accepts at most two reports')
     if args.refresh_staged_readout and not args.finish_staged:parser.error('--refresh-staged-readout requires --finish-staged')
     if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_campaign_bundle,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_fast_gate,args.gegi_plane_priors,args.gegi_shared_clock,args.gegi_merged_components,args.gegi_weak_strips,args.gegi_plane_intersections)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')

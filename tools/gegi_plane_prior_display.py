@@ -6,6 +6,8 @@ import json
 from math import isclose
 from pathlib import Path
 
+import gegi_cobalt_history_display as cobalt
+
 
 FOLDER = Path('results/gegi-digital')
 SUMMARY = FOLDER/'plane-priors.json'
@@ -104,6 +106,8 @@ def attach(site, sources):
                     or diagnostic['input_sha256'] != diagnostic_input_digests(summary, weak)
                     or weak['plane_study_sha256'] != summary['pooled_sha256']):
                 raise ValueError('Saved intersection diagnostic differs from the reattached plane-prior comparison')
+            if 'cobalt_histories' in diagnostic:
+                cobalt.validate_binding(diagnostic['cobalt_histories'], diagnostic, summary['windows'])
             return
     plot(views, windows, study['grids'], site/IMAGE)
     summary['image_sha256'] = sha256((site/IMAGE).read_bytes()).hexdigest()
@@ -174,7 +178,7 @@ def diagnostic_input_digests(baseline, weak):
     }
 
 
-def attach_intersections(site, image_path, influence_path):
+def attach_intersections(site, image_path, influence_path, ancestry_path=None, cone_path=None):
     from gegi_weak_strip_display import SUMMARY as WEAK_SUMMARY
 
     raw_image, raw_influence = (path.read_bytes() for path in (image_path, influence_path))
@@ -204,13 +208,22 @@ def attach_intersections(site, image_path, influence_path):
     if len(selected) != len(expected) or {tuple(row[k] for k in identity) for row in selected} != expected:
         raise ValueError('Intersection diagnostic changes the selected recorded trigger identities')
     views = compact_intersection_views(image, baseline)
-    baseline['three_intersection_diagnostic'] = dict(
+    diagnostic = dict(
         report_sha256=report_hashes, input_sha256=inputs, blocks=image['inputs'],
         source_sha256={key: report['source_sha256'] for key, report in [('image', image), ('influence', influence)]},
         subgroup_definition=image['subgroup_definition'], interpretation=image['interpretation'],
         checks=image['checks'], split_peak_separation_mm=image['split_peak_separation_mm'],
         selected_triggers=[{key: row[key] for key in (*identity, 'native_group')} for row in selected],
         views=views, leave_two_out=compact_influence(influence, views, baseline['windows']))
+    previous = baseline.get('three_intersection_diagnostic', {}).get('cobalt_histories')
+    if ancestry_path is not None and cone_path is not None:
+        diagnostic['cobalt_histories'] = cobalt.compact(ancestry_path, cone_path, diagnostic, baseline['windows'])
+    elif ancestry_path is not None or cone_path is not None:
+        raise ValueError('The archived Co-60 history comparison needs both saved reports')
+    elif previous is not None:
+        cobalt.validate_binding(previous, diagnostic, baseline['windows'])
+        diagnostic['cobalt_histories'] = previous
+    baseline['three_intersection_diagnostic'] = diagnostic
     (site/SUMMARY).write_text(json.dumps(baseline, allow_nan=False, separators=(',', ':'))+'\n',
                               encoding='utf-8', newline='\n')
 
@@ -247,6 +260,12 @@ def intersection_section(data):
     sizes = [full[label]['counts']['full']['triggers_with_geometry'] for label in energy_windows]
     low_rank, high_rank = [f"{line['all_pairs']['displacement_counts']['equal']}/{line['all_pairs']['pair_count']}"
                            for line in (low, high)]
+    if 'cobalt_histories' in diagnostic:
+        histories = cobalt.section(diagnostic, energy_windows)
+    else:
+        histories = '''<p>Each cobalt pair consists of two occurrences of a single archived history in one acquisition block.
+Each is the sole pair under that same-block, same-history comparison. Both 662 keV occurrences come from
+distinct histories. Pair comparisons can share triggers and archived histories.</p>'''
     return f'''<h4 id="gegi-three-intersections">Which triggers move the line-window peaks?</h4>
 <p>On the ±120 mm uniform-area image, two triggers contributed {low_pair['baseline_peak_removed_fraction']:.1%}
 of the 1,173 keV maximum cell. Setting them aside moved the maximum {low_pair['displacement_mm']:.0f} mm to the opposite edge.
@@ -266,9 +285,7 @@ cells among all ways to set aside two projected triggers in each window. Their d
 {low_rank} and {high_rank} pairs. The heights of the new maxima were {low_pair['maximum_reduction_fraction']:.1%}
 and {high_pair['maximum_reduction_fraction']:.1%} lower than the full-image maxima. Contributions at the four cells
 touching the programmed Co-60 source position were negligible on both footprints.</p>
-<p>Each cobalt pair consists of two occurrences of a single archived history in one acquisition block.
-Each is the sole pair under that same-block, same-history comparison. Both 662 keV occurrences come from
-distinct histories. Pair comparisons can share triggers and archived histories.</p></details>'''
+{histories}</details>'''
 
 
 def section(site):

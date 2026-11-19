@@ -242,9 +242,21 @@ cells among all ways to set aside two projected triggers in each window. Their d
 44/253 and 7/78 pairs. The heights of the new maxima were 18.2%
 and 27.2% lower than the full-image maxima. Contributions at the four cells
 touching the programmed Co-60 source position were negligible on both footprints.</p>
-<p>Each cobalt pair consists of two occurrences of a single archived history in one acquisition block.
-Each is the sole pair under that same-block, same-history comparison. Both 662 keV occurrences come from
-distinct histories. Pair comparisons can share triggers and archived histories.</p></details>
+
+<p>Each window had one pair from the same archived decay and block. In both decays one emitted Co-60 photon
+deposited its entire line energy in germanium. The other line photon contributed zero to these deposits.</p>
+<div role="region" aria-label="Four recorded triggers from two archived Co-60 decays." tabindex="0" style="overflow-x:auto">
+<table><caption>Four recorded triggers from two archived Co-60 decays.</caption><thead><tr><th scope="col">Recorded line window</th><th scope="col">Deposited in Ge</th><th scope="col">Energy by collection cell</th><th scope="col">Recorded energy and projected order (angle residual)</th></tr></thead><tbody><tr><th scope="row">1,173 keV<br>Block 3, triggers 349 and 414</th><td>1,173.227 keV</td><td>X13/Y15 1,014.013 keV<br>X16/Y10 154.388 keV<br>X14/Y13 4.826 keV</td><td>#349 1,168.54 keV<br>X16/Y10 → X13/Y15 (+59.8°)<br>#414 1,168.47 keV<br>X16/Y10 → X13/Y15 (+59.8°)</td></tr><tr><th scope="row">1,332 keV<br>Block 2, triggers 6 and 982</th><td>1,332.498 keV</td><td>X10/Y02 1,182.178 keV<br>X09/Y06 150.191 keV<br>X10/Y03 0.129 keV</td><td>#6 1,332.49 keV<br>X09/Y06 → X10/Y02 (+63.4°)<br>#982 1,332.43 keV<br>X09/Y06 → X10/Y02 (+63.3°)</td></tr></tbody></table></div>
+<p>For the 1,173 keV photon, three Compton scatters fed X13/Y15. A fourth fed the weak X14/Y13 cell,
+which was below threshold on both faces. At 1,332 keV, most of the first scatter fed X10/Y02. A small share,
+including direct deposition by the photon, collected at adjacent X10/Y03. It contributed on X10 while Y03
+was below threshold. A second scatter also fed X10/Y02.</p>
+<p>In each trigger the reconstruction orders the final photoelectric absorption cell before the dominant cell
+of the earlier scatters. Under the two-site, full-energy model, putting the high-energy cell first requires a
+Compton cosine below −1. The other X/Y pairing fails the measured energy tolerance. The angular residual is
+the angle between the cone axis and the direction to the programmed source, minus the energy-derived cone
+half-angle. The four triggers contributed four projected orders and zero unresolved units. Both 662 keV
+occurrences came from distinct histories. Pair comparisons can share triggers and archived histories.</p></details>
 <h4>How well does one half predict the other?</h4>
 <p>Each half-second map was used to predict the other half’s measured cone angles on the ±240 mm field.
 The comparison uses the same response model under the learned map and its own prior alone.
