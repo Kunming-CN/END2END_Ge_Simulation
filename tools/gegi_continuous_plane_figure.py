@@ -1,4 +1,4 @@
-"""Compare the measured-energy layers of two saved GeGI plane reconstructions."""
+"""Compare measured-energy layers for two exposures or two halves and their sum."""
 
 import argparse
 import gzip
@@ -18,18 +18,23 @@ def read_plane(path):
 
 
 def plot(reference, independent, output):
-    planes = [reference, independent]
-    grid = reference["grid"]
-    if grid != independent["grid"]:
+    plot_rows([("Reference exposure", reference), ("Independent exposure", independent)], output)
+
+
+def plot_rows(named_planes, output):
+    grid = named_planes[0][1]["grid"]
+    if any(grid != plane["grid"] for _, plane in named_planes):
         raise ValueError("The acquisitions need a common projection grid")
-    labels = [key for key in reference["layers"] if key.endswith("_keV")]
-    rows = [[plane["layers"][label] for label in labels] for plane in planes]
+    labels = sorted((key for key in named_planes[0][1]["layers"] if key.endswith("_keV")),
+                    key=lambda key: float(key.removesuffix("_keV")))
+    rows = [[plane["layers"][label] for label in labels] for _, plane in named_planes]
     norm = Normalize(0, max(np.max(layer["mass"]) for row in rows for layer in row))
     extent = grid["extent_mm"]
-    figure, axes = plt.subplots(2, len(labels), squeeze=False, figsize=(10.5, 7.1), layout="constrained")
+    figure, axes = plt.subplots(len(rows), len(labels), squeeze=False,
+                                figsize=(10.5, 3.15*len(rows) + .8), layout="constrained")
     figure.suptitle(f"GeGI  |  Measured two-strip Compton backprojections\n"
                     f"Assumed plane z = {grid['assumed_z_mm']:g} mm", fontsize=16)
-    for row, (name, layers) in enumerate(zip(("Reference exposure", "Independent exposure"), rows)):
+    for row, ((name, _), layers) in enumerate(zip(named_planes, rows)):
         for col, (label, layer) in enumerate(zip(labels, layers)):
             axis = axes[row, col]
             image = axis.imshow(layer["mass"], origin="lower", extent=(-extent, extent, -extent, extent),
@@ -39,7 +44,7 @@ def plot(reference, independent, output):
                            fontsize=10)
             if col == 0:
                 axis.set_ylabel(f"{name}\nDetector Y (mm)")
-            if row == 1:
+            if row == len(rows)-1:
                 axis.set_xlabel("Detector X (mm)")
             axis.tick_params(labelsize=8)
     figure.colorbar(image, ax=axes, shrink=.76, pad=.025,
@@ -48,10 +53,27 @@ def plot(reference, independent, output):
     plt.close(figure)
 
 
+def plot_exposure_study(study, output):
+    rows = []
+    for key, title in (("first_half", "First"), ("second_half", "Second"), ("full", "Pooled")):
+        view = study["views"][key]
+        selection = view["selection"]
+        clock_s = selection["clock_live_time_ns"] / 1e9
+        live_ms = selection["qualified_adc_live_time_ns"] / 1e6
+        label = f"{title} {clock_s:.2f} s  |  {live_ms:.1f} ms qualified"
+        rows.append((label, {"grid": study["grid"], "layers": view["layers"]}))
+    plot_rows(rows, output)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("reference", type=Path)
-    parser.add_argument("independent", type=Path)
+    parser.add_argument("--exposure-study", type=Path, help="Plot the two half-second exposures and their combined result")
+    parser.add_argument("planes", type=Path, nargs="*", help="Reference and independent plane files")
     parser.add_argument("output", type=Path)
     args = parser.parse_args()
-    plot(read_plane(args.reference), read_plane(args.independent), args.output)
+    if args.exposure_study and not args.planes:
+        plot_exposure_study(read_plane(args.exposure_study), args.output)
+    elif not args.exposure_study and len(args.planes) == 2:
+        plot(*map(read_plane, args.planes), args.output)
+    else:
+        parser.error("Supply two plane files or one --exposure-study")
