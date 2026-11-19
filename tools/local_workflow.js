@@ -610,13 +610,18 @@ function dualTwoStripPanel(job){
       if(trigger.adc_contacts?.length)target.append(dualADCPanel(job,trigger));
     }});
 }
-function dualPlaneMap(grid, layer){
-  const {x_mm:x,y_mm:y,step_mm:step,assumed_z_mm:z}=grid;
+function dualPlaneMap(grid, layer, crop){
+  const {x_mm:savedX,y_mm:savedY,step_mm:step,assumed_z_mm:z}=grid;
+  const inset=length=>crop?Math.min(Math.round(length/4),Math.floor((length-1)/2)):0;
+  const left=inset(savedX.length),right=savedX.length-left,bottom=inset(savedY.length),top=savedY.length-bottom;
+  const x=savedX.slice(left,right),y=savedY.slice(bottom,top);
   const figure=node('figure',undefined,'plot dual-plane-figure');
   const axes=node('div',undefined,'dual-plane-axes'),plot=node('canvas');
   const format=value=>Number(value.toPrecision(5)).toString();
+  const edges=values=>[values[0]-step/2,values.at(-1)+step/2];
+  const footprint=(xs,ys)=>'X '+edges(xs).map(format).join(' to ')+' mm · Y '+edges(ys).map(format).join(' to ')+' mm';
   function ticks(values,vertical){
-    const low=values[0]-step/2,high=values.at(-1)+step/2;
+    const [low,high]=edges(values);
     const labels=[low,(low+high)/2,high].map(value=>node('span',format(value)));
     const axis=node('div',undefined,vertical?'dual-plane-y':'dual-plane-x');
     axis.setAttribute('aria-hidden','true');axis.append(...(vertical?labels.reverse():labels));
@@ -624,20 +629,37 @@ function dualPlaneMap(grid, layer){
   }
   plot.width=x.length;plot.height=y.length;
   plot.setAttribute('role','img');
-  plot.setAttribute('aria-label','Backprojection at z = '+z+' mm. X increases right from '+format(x[0]-step/2)+
-    ' to '+format(x.at(-1)+step/2)+' mm. Y increases up from '+format(y[0]-step/2)+' to '+format(y.at(-1)+step/2)+' mm.');
+  plot.setAttribute('aria-label','Backprojection '+(crop?'crop ':'')+'at z = '+z+' mm. X increases right from '+
+    edges(x).map(format).join(' to ')+' mm. Y increases up from '+edges(y).map(format).join(' to ')+' mm.');
   const context=plot.getContext('2d'),image=context.createImageData(x.length,y.length);
-  let maximum=0;
-  for(const row of layer.mass)for(const mass of row)maximum=Math.max(maximum,mass);
+  let maximum=0,peakX=0,peakY=0,inside=0,outside=0;
+  const visible=(i,j)=>i>=left&&i<right&&j>=bottom&&j<top;
   for(const [j,row] of layer.mass.entries())for(const [i,mass] of row.entries()){
-    const fraction=maximum?mass/maximum:0, offset=((y.length-1-j)*x.length+i)*4;
+    if(mass>maximum){maximum=mass;peakX=i;peakY=j;}
+    if(visible(i,j))inside+=mass;
+    else outside+=mass;
+  }
+  for(let j=bottom;j<top;j++)for(let i=left;i<right;i++){
+    const fraction=maximum?layer.mass[j][i]/maximum:0, offset=((top-1-j)*x.length+i-left)*4;
     image.data.set([242-230*fraction,247-156*fraction,249-129*fraction,255],offset);
   }
   context.putImageData(image,0,0);
   const yLabel=node('span','Y (mm)','dual-plane-y-label'),xLabel=node('span','X (mm)','dual-plane-x-label');
   axes.append(yLabel,ticks(y,true),plot,ticks(x,false),xLabel);figure.append(axes);
-  figure.append(node('figcaption',(maximum?'Linear color from 0 to '+format(maximum)+' nominal trigger units per cell.':
-    'This window has no projected trigger mass.')+' Cell size '+step+' × '+step+' mm.','muted'));
+  const caption=node('figcaption',undefined,'muted');
+  const shown=crop?' Showing '+footprint(x,y)+' (whole saved cells).':'';
+  caption.append(node('div','Saved footprint '+footprint(savedX,savedY)+'.'+shown+
+    ' Grid spacing '+format(step)+' × '+format(step)+' mm.'));
+  caption.append(node('div','Projected weight in nominal trigger units · '+format(layer.projected_mass)+' total · '+
+    format(inside)+' inside view · '+format(outside)+' outside view.'));
+  if(maximum){
+    const edge=peakX===0||peakX===savedX.length-1||peakY===0||peakY===savedY.length-1;
+    caption.append(node('div','Brightest saved cell ('+format(savedX[peakX])+', '+format(savedY[peakY])+') mm'+
+      (edge?' · saved image edge':'')+(visible(peakX,peakY)?'':' · outside crop')+'.'));
+  }
+  caption.append(node('div',maximum?'Shared full-view color scale from 0 to '+format(maximum)+' nominal trigger units per cell.':
+    'This window has no projected trigger mass.'));
+  figure.append(caption);
   return figure;
 }
 function dualPlanePanel(job){
@@ -655,7 +677,12 @@ function dualPlanePanel(job){
       if(dualJob!==job)return;
       if(reply.name!==job.name||reply.report_sha256!==job.report_sha256)throw Error('The plane does not match the opened acquisition.');
       const {grid,selection,layers,model}=reply;
+      const controls=node('div',undefined,'dual-feature-faces');
       const label=node('label','Measured energy window'),windowChoice=node('select'),plot=node('div');
+      const viewLabel=node('label','Map view'),viewChoice=node('select');
+      const full=node('option','Full saved footprint'),crop=node('option','Center half-width crop');
+      full.value='full';crop.value='crop';crop.disabled=Math.max(grid.x_mm.length,grid.y_mm.length)===2;
+      viewChoice.append(full,crop);viewChoice.value='full';viewLabel.append(viewChoice);controls.append(label,viewLabel);
       const summary=node('p','','notice');summary.setAttribute('role','status');
       const keys=Object.keys(layers).filter(key=>key!=='all'&&key!=='other_energy').sort((a,b)=>parseFloat(a)-parseFloat(b));
       for(const key of ['all',...keys,'other_energy']){
@@ -665,7 +692,7 @@ function dualPlanePanel(job){
       windowChoice.value='all';label.append(windowChoice);
       body.append(node('p','Assumed plane z = '+grid.assumed_z_mm+' mm in detector coordinates. '+
         selection.two_strip_triggers+' two-strip triggers among '+selection.qualified_energies+' measured energies and '+
-        selection.qualified_triggers+' qualified triggers.'),label,node('p',selection.energy_windows,'muted'),summary,plot,
+        selection.qualified_triggers+' qualified triggers.'),controls,node('p',selection.energy_windows,'muted'),summary,plot,
         node('p',model.geometry+' '+model.ambiguity,'muted'),node('p',model.limits,'muted'));
       function paint(){
         const layer=layers[windowChoice.value];
@@ -673,9 +700,9 @@ function dualPlanePanel(job){
         summary.textContent=layer.triggers+' triggers in this window · '+layer.triggers_with_geometry+
           ' with projected geometry · '+layer.hypotheses+' of '+layer.allowed_hypotheses+' allowed alternatives projected. '+
           'Nominal trigger units: '+mass(layer.projected_mass)+' projected, '+mass(layer.unresolved_mass)+' unresolved.';
-        plot.replaceChildren(dualPlaneMap(grid,layer));
+        plot.replaceChildren(dualPlaneMap(grid,layer,viewChoice.value==='crop'));
       }
-      windowChoice.onchange=paint;paint();loaded=true;status.textContent='';
+      windowChoice.onchange=paint;viewChoice.onchange=paint;paint();loaded=true;status.textContent='';
     }catch(error){if(dualJob===job){body.replaceChildren();status.textContent=error.message;}}
     finally{loading=false;}
   };
