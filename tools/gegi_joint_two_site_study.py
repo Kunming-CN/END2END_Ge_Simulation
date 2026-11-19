@@ -26,16 +26,17 @@ SCALES = ROOT/'.local/gegi-digital-v1/two-site-pairing-study.json'
 SCALES_SHA = '61a09e18a72a33fdda849b208e6bc3e5587d3c8a5f0f789082dba60469e66ad5'
 
 
-def load_templates(inputs, cells, calibration, channels, excluded_positions):
+def load_templates(inputs, cells, calibration, channels, excluded_positions, *, lateral_captures=()):
     bank = cfd.scan.FULL
     complete = inputs.read(bank/'COMPLETE.json',cfd.scan.FULL_COMPLETE_SHA)
     request = inputs.read(bank/'bound-request.json',complete['request_sha256'])
     bundle = inputs.read(bank/'identity.json',complete['bundle_identity_sha256'])
     identity = bundle['calibration_identity_sha256']
-    _, fit_dir, fit_digest = cfd.depth.CAPTURES[0]
-    capture = inputs.read(fit_dir/'COMPLETE.json', fit_digest)
-    capture_req = inputs.read(fit_dir/'bound-request.json',capture['request_sha256'])
-    for specification in (request, capture_req):
+    _, default_dir, default_digest = cfd.depth.CAPTURES[0]
+    captures = [(folder, inputs.read(folder/'COMPLETE.json', digest))
+                for folder, digest in [(default_dir, default_digest), *lateral_captures]]
+    specifications = [inputs.read(folder/'bound-request.json', seal['request_sha256']) for folder, seal in captures]
+    for specification in [request, *specifications]:
         if (specification['channels'] != channels or specification['model_sha256'] != calibration['model_sha256']
                 or specification['field_cache']['sha256'] != calibration['field_cache_sha256']
                 or specification['field_precision_bits'] != calibration['field_precision_bits']
@@ -59,13 +60,15 @@ def load_templates(inputs, cells, calibration, channels, excluded_positions):
         cell = tuple(point['contact_ids'])
         z = point['position_mm'][2]
         center.setdefault(cell,{})[z] = extract(bank/'bank',point,entries[ref],identity)
-    for item in capture['records']:
-        cell = tuple(item['contact_ids'])
-        if item['role'] != 'fit' or cell not in cells:
-            continue
-        coord = (*item['offsets_pitch_fraction'], item['position_mm'][2])
-        spectra = extract(fit_dir,item,item,capture['request_sha256'])
-        correction.setdefault(cell,{})[coord] = spectra-center[cell][coord[2]]
+    for fit_dir, capture in captures:
+        for item in capture['records']:
+            cell = tuple(item['contact_ids'])
+            if item['role'] != 'fit' or cell not in cells or not item['valid'] or item['status'] != 'completed':
+                continue
+            coord = (*item['offsets_pitch_fraction'], item['position_mm'][2])
+            if coord[2] in center.get(cell, {}):
+                spectra = extract(fit_dir,item,item,capture['request_sha256'])
+                correction.setdefault(cell,{})[coord] = spectra-center[cell][coord[2]]
     templates = {}
     pitch = channels[1]['strip_center_mm']-channels[0]['strip_center_mm']
     for cell in sorted(cells):
@@ -73,7 +76,8 @@ def load_templates(inputs, cells, calibration, channels, excluded_positions):
         if sorted(z_map) != list(DEPTH_MM):
             continue
         grid = None
-        if cell in correction:
+        required = {(x,y,z) for x,y,z in product(LATERAL_FRACTION,LATERAL_FRACTION,LATERAL_DEPTH_MM) if x or y}
+        if required <= correction.get(cell,{}).keys():
             grid = np.array([np.zeros_like(z_map[z]) if x == y == 0 else correction[cell][x,y,z]
                              for x,y,z in product(LATERAL_FRACTION,LATERAL_FRACTION,LATERAL_DEPTH_MM)])
             grid = grid.reshape(3,3,3,*grid.shape[1:])

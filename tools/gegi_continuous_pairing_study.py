@@ -205,8 +205,8 @@ def pairing_score(pairings, reference):
     return comparison
 
 
-def source_references(source, deposits, frozen, hashes):
-    folder = CAMPAIGN / 'chunks' / source / 'b000000'
+def source_references(source, deposits, frozen, hashes, *, source_folder=None):
+    folder = CAMPAIGN / 'chunks' / source / 'b000000' if source_folder is None else Path(source_folder).resolve()
 
     def data(ref):
         path = folder / ref
@@ -222,8 +222,10 @@ def source_references(source, deposits, frozen, hashes):
             and transform['translation_global_mm'] == [0, 0, 0], 'Photon birth energy or coordinate convention differs')
     processes = {row['procid']: row['name'] for row in manifest['processes']}
     archive = 'transport/stream/events.jsonl'
-    stream = gzip.decompress(data(archive + '.gz'))
-    require(sha(stream) == manifest['events_sha256'] == done['archives'][archive]['original_sha256'],
+    compressed = (folder / (archive + '.gz')).is_file()
+    stream = gzip.decompress(data(archive + '.gz')) if compressed else data(archive)
+    sealed = done['archives'][archive]['original_sha256'] if compressed else done['artifacts'][archive]['sha256']
+    require(sha(stream) == manifest['events_sha256'] == sealed,
             'Uncompressed transport bytes differ from the original stream')
     wanted = {row['raw_event_id'] for row in deposits}
     transport = {}

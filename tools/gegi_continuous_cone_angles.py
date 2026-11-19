@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 from gegi_event_store import encoded, sha
 from gegi_imaging import cone
-from gegi_joint_acquisition_study import REPORT, REFERENCE, REFERENCE_SHA, ROOT
+from gegi_joint_acquisition_study import REPORT, REFERENCE, ROOT
 from gegi_joint_imaging import spectral_membership
 from gegi_two_site_cfd_study import angle_error, axis_between
 
@@ -16,6 +16,21 @@ from gegi_two_site_cfd_study import angle_error, axis_between
 def angular_residual(candidate, source_mm):
     """Signed geometric angle to the source minus the energy-derived half angle, degrees."""
     return angle_error(candidate['axis'], axis_between(source_mm, candidate['vertex_mm'])) - candidate['half_angle_deg']
+
+
+def fitted_cones(pair, fit):
+    for mode, models in fit.get('fits', {}).items():
+        for support, model in models.items():
+            if not model['optimizer_success']:
+                continue
+            sites = [dict(energy_keV=s['energy_keV'], position_mm=xyz) for s, xyz in
+                     zip(pair['sites'], model['positions_mm'], strict=True)]
+            for order in pair['compton_orders']:
+                if order['kinematically_allowed']:
+                    first, second = order['site_index_order']
+                    candidate = cone(sites[first], sites[second])
+                    if candidate is not None:
+                        yield dict(pairing=pair['index'], order=[first, second], method=mode, support=support, **candidate)
 
 
 def calculate(acquisition, fitted, truth):
@@ -35,18 +50,7 @@ def calculate(acquisition, fitted, truth):
                 raise ValueError('Saved energy pairing has changed')
             if not pair['energy_compatible']:
                 continue
-            for mode, fits in fit['fit'].get('fits', {}).items():
-                center = fits['center']
-                if not center['optimizer_success']:
-                    continue
-                sites = [dict(energy_keV=site['energy_keV'], position_mm=xyz) for site, xyz in
-                         zip(pair['sites'], center['positions_mm'], strict=True)]
-                for order in pair['compton_orders']:
-                    if order['kinematically_allowed']:
-                        first, second = order['site_index_order']
-                        candidate = cone(sites[first], sites[second])
-                        if candidate is not None:
-                            geometry.append(dict(pairing=pair['index'], order=[first, second], method=mode, **candidate))
+            geometry.extend(fitted_cones(pair, fit['fit']))
         if geometry:
             counts['with_conditional_geometry'] += 1
         hypotheses.append(dict(ordinal=i+1, energy_keV=trigger['energy_keV'], layer=layer, geometry=geometry))
@@ -67,7 +71,8 @@ def calculate(acquisition, fitted, truth):
             candidate['source_residual_deg'] = angular_residual(candidate, source_positions[source])
     return dict(kind='gegi_simulated_continuous_cone_angles_v1', trigger_denominator=acquisition['counts']['qualified_triggers'],
                 two_strip_denominator=len(measured), counts=counts, energy_layer_counts=Counter(h['layer'] for h in hypotheses),
-                definition='All allowed orders for one fully absorbed photon at two sites. Both position methods use strip centers in XY. '
+                definition='All allowed orders for one fully absorbed photon at two sites. Center solutions use strip-center XY; '
+                           'lateral solutions use measured XY from their calibrated response templates. '
                            'The reference source enters only after energy-window selection and reconstruction.',
                 residual='Signed source-to-cone angular residual in degrees. Repeated method estimates use the same triggers.',
                 candidates=hypotheses)
@@ -76,20 +81,25 @@ def calculate(acquisition, fitted, truth):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', required=True, type=Path)
-    output = parser.parse_args().output
+    parser.add_argument('--fit', type=Path, default=ROOT / '.local/gegi-joint-two-site/continuous.json',
+                        help='Saved joint fits for the acquisition')
+    parser.add_argument('--report', type=Path, default=REPORT)
+    parser.add_argument('--references', type=Path, default=REFERENCE)
+    args = parser.parse_args()
+    output = args.output
     if output.exists():
         raise FileExistsError(output)
-    inputs = [(REPORT, '0c5111b47ab7f84f1ddf0514b04484c8a86e167cf179111f79bb0d0d8fed453a'),
-              (ROOT / '.local/gegi-joint-two-site/continuous.json', '60464256affddba3c5ff784fbc786ed24ee6e60c843a55238085ca757bacb218'),
-              (REFERENCE, REFERENCE_SHA)]
-    data = []
-    for path, digest in inputs:
+    data, digests = [], {}
+    for role, path in [('acquisition', args.report), ('joint_fit', args.fit), ('transport_reference', args.references)]:
         raw = path.read_bytes()
-        if sha(raw) != digest:
-            raise ValueError('Changed input: ' + path.name)
+        digests[role] = sha(raw)
         data.append(json.loads(raw))
+    provenance = data[1]['input_sha256'].values()
+    if (digests['acquisition'] not in provenance or digests['transport_reference'] not in provenance
+            or data[2]['adc_sha256'] != data[0]['receipt']['known_component_adc_sha256']):
+        raise ValueError('The joint estimates, reference and acquisition identities differ')
     result = calculate(*data)
-    result['input_sha256'] = {path.relative_to(ROOT).as_posix(): digest for path, digest in inputs}
+    result['input_sha256'] = digests
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open('xb') as out:
         out.write(encoded(result) + b'\n')

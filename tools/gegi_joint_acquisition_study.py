@@ -30,14 +30,14 @@ def compare(positions, targets):
 
 def scores(fitted, reference, geometry):
     match = reference['comparison']
-    if match is None or fitted['index'] != match.get('truth_pairing_index'):
+    if match is None or not fitted['energy_compatible'] or fitted['index'] != match.get('truth_pairing_index'):
         return None
     sites = {tuple(s['cell']): s for s in reference['reference']['sites_in_birth_order']}
     cells = fitted['cells']
     centers = [[geometry[x]['strip_center_mm'], geometry[y]['strip_center_mm'], 0.] for x, y in cells]
     predictions = {'strip_centers_z0': centers}
     depths = fitted['apparent_depths_mm']
-    if all(z is not None for z in depths):
+    if len(depths) == len(cells) and all(z is not None for z in depths):
         predictions['strip_centers_cfd'] = [xy[:2] + [z] for xy, z in zip(centers, depths)]
     for mode, models in fitted['fit'].get('fits', {}).items():
         for name, model in models.items():
@@ -65,24 +65,28 @@ def summarize(rows):
     return out
 
 
-def run():
+def run(*, report_path=REPORT, windows_path=WINDOWS, reference_path=REFERENCE, lateral_captures=()):
     started = perf_counter()
     inputs = checks.scan.Inputs()
-    acquisition = inputs.read(REPORT, '0c5111b47ab7f84f1ddf0514b04484c8a86e167cf179111f79bb0d0d8fed453a')
-    report_sha = inputs.hashes[REPORT.relative_to(ROOT).as_posix()]
+    acquisition = inputs.read(report_path, sha(report_path.read_bytes()))
+    report_sha = inputs.hashes[report_path.relative_to(ROOT).as_posix()]
     receipt = acquisition['receipt']
     calibration = inputs.read(checks.CURVES, checks.CURVES_SHA)['provenance']
+    if (any(s['original'].get(key) != calibration[key] for s in acquisition['sources']
+            for key in ('model_sha256', 'field_cache_sha256', 'field_precision_bits'))
+            or any(receipt[key] != calibration[key] for key in ('digital_profile_sha256', 'digital_timing_sha256'))):
+        raise ValueError('Acquisition and calibration templates must share detector fields and a digital profile')
     scales = inputs.read(design.SCALES, design.SCALES_SHA)['controls']['group_rms_scales']
     bank = inputs.read(checks.scan.FULL/'COMPLETE.json', checks.scan.FULL_COMPLETE_SHA)
     channels = inputs.read(checks.scan.FULL/'bound-request.json', bank['request_sha256'])['channels']
     records = [r for r in acquisition['triggers'] if 'two_strip_pairings' in r]
     cells = { (s['x_contact_id'], s['y_contact_id']) for r in records for p in r['two_strip_pairings']['pairings']
              if p['energy_compatible'] for s in p['sites']}
-    templates = design.load_templates(inputs, cells, calibration, channels, set())
+    templates = design.load_templates(inputs, cells, calibration, channels, set(), lateral_captures=lateral_captures)
     hashes = {p.name: sha(p.read_bytes()) for p in (Path(__file__), Path(design.__file__),
               Path(design.__file__).with_name('gegi_joint_two_site.py'))}
     fits = []
-    with np.load(WINDOWS, allow_pickle=False) as data:
+    with np.load(windows_path, allow_pickle=False) as data:
         if (str(data['report_sha256']) != report_sha or str(data['known_component_adc_sha256']) != receipt['known_component_adc_sha256']
                 or not np.array_equal(data['relative_time_ns'], SAMPLE_NS)
                 or not np.array_equal(data['contact_ids'], [c['id'] for c in channels])
@@ -102,7 +106,7 @@ def run():
                 compton_orders=pairing['compton_orders'], fit=fit))
         fits.append(row)
     # Open the history only after every measured fit has been made.
-    truth = inputs.read(REFERENCE, REFERENCE_SHA)
+    truth = inputs.read(reference_path, REFERENCE_SHA if reference_path == REFERENCE else sha(reference_path.read_bytes()))
     if truth['adc_sha256'] != receipt['known_component_adc_sha256']:
         raise ValueError('Truth association belongs to another acquisition')
     geometry = {c['id']: c for c in channels}
@@ -116,17 +120,26 @@ def run():
                 two_strip_triggers=len(records), fitted_status_counts=Counter(p['fit']['status'] for r in fits for p in r['pairings']),
                 score_scope='Repeated source-library occurrences. Both orders retained. Comparisons use the same X/Y cell ordering.',
                 timing_scope='Simultaneous templates at a shared onset, measured slow energies and local voltage tails.',
-                input_sha256=inputs.hashes, adc_windows_sha256=sha(WINDOWS.read_bytes()), source_sha256=hashes,
+                lateral_template_cells=[cell for cell, t in templates.items() if t.lateral_correction_v_per_keV is not None],
+                acquisition_sha256=report_sha, input_sha256=inputs.hashes,
+                adc_windows_sha256=sha(windows_path.read_bytes()), source_sha256=hashes,
                 elapsed_s=perf_counter()-started, summary=summarize(fits), candidates=fits)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--report', type=Path, default=REPORT)
+    parser.add_argument('--windows', type=Path, default=WINDOWS)
+    parser.add_argument('--references', type=Path, default=REFERENCE)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--lateral-capture', nargs=2, action='append', default=[], metavar=('DIRECTORY', 'COMPLETE_SHA256'),
+                        help='Supplement archived lateral templates using the sealed fit records of this capture')
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
-    result = run()
+    result = run(report_path=args.report.resolve(), windows_path=args.windows.resolve(),
+                 reference_path=args.references.resolve(),
+                 lateral_captures=[(Path(folder).resolve(), digest) for folder, digest in args.lateral_capture])
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open('xb') as target:
         target.write(encoded(result) + b'\n')
