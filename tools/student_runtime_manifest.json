@@ -42,7 +42,7 @@
       "tools/gegi_event_energy.py", "tools/gegi_exposure_stream.py",
       "tools/gegi_source_library.py", "tools/gegi_dual_source.py", "tools/gegi_dual_control.py",
       "tools/gegi_pixel_map.py", "tools/gegi_refit_positions.py",
-      "tools/gegi_pixel_depth.py", "tools/gegi_pixel_depth_calibration.json", "tools/gegi_trigger_windows.py",
+      "tools/gegi_pixel_depth.py", "tools/gegi_pixel_depth_calibration.json", "tools/gegi_trigger_windows.py", "tools/gegi_window_activity.py",
       "tools/gegi_continuous_plane.py", "tools/gegi_joint_calibration.py", "tools/gegi_joint_two_site.py"
     ],
     "saved_data_and_readout_runtime": [
@@ -130,7 +130,7 @@
     "tools/gegi_digital_saved.py": ["tools/gegi_digital_readout.py", "tools/gegi_substrip.py", "tools/gegi_substrip_calibration.json", "tools/gegi_event_store.py", "tools/gegi_imaging.py", "tools/gegi_digital_pairs.py"],
     "tools/gegi_digital_pairs.py": ["tools/gegi_imaging.py", "tools/gegi_substrip.py"],
     "tools/gegi_digital_spectra.py": ["tools/gegi_digital_saved.py"],
-    "tools/gegi_dual_control.py": ["tools/gegi_dual_source.py"],
+    "tools/gegi_dual_control.py": ["tools/gegi_dual_source.py", "tools/gegi_window_activity.py"],
     "tools/gegi_dual_source.py": ["tools/gegi_pixel_depth.py", "tools/gegi_pixel_depth_calibration.json", "tools/gegi_trigger_windows.py"],
     "tools/gegi_continuous_plane.py": ["tools/gegi_joint_calibration.py", "tools/gegi_joint_imaging.py", "tools/gegi_imaging.py"],
     "tools/gegi_joint_calibration.py": ["tools/gegi_joint_two_site.py", "tools/gegi_digital_readout.py", "tools/gegi_event_store.py"],

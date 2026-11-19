@@ -545,8 +545,32 @@ function dualSinglePixelPanel(job){
         node('p','The estimate uses the detector midplane as zero and a timing table fit to isolated 500 keV simulated deposits.','muted'));
     }});
 }
+function dualFaceActivity(data){
+  const time=data.time_ns,x=data.x_change_keV,y=data.y_change_keV,threshold=data.coincidence_threshold_keV;
+  if(!Array.isArray(time)||time.length!==27||time.some((t,i)=>t!==-40+20*i)||
+      ![x,y].every(face=>Array.isArray(face)&&face.length===time.length&&face.every(Number.isFinite))||
+      !Number.isFinite(threshold)||!Array.isArray(data.groups))throw Error('Invalid saved-clock trigger response.');
+  const content=node('div'),unit='keV per '+data.sample_period_ns+' ns sample';
+  content.append(gegiTracePlot({time_ns:time,change:x},'change','Two-face trigger response',unit,{
+    neighbor:{time_ns:time,change:y},names:['X face','Y face'],digital:true,triggerRelative:true,threshold,
+    sampleCaption:'X face (solid) and Y face (dashed), including the guard on each face. Both responses must reach the dotted '+
+      threshold+' '+unit+' threshold on the same sample. These curves are derived from the 34 sampled preamp voltages.'}));
+  const rises=data.groups.filter(group=>group.coincident);
+  for(const group of rises){
+    const boundary=group.right_quiet_visible?'':' The window ends before a full quiet interval is visible.';
+    content.append(node('p','Coincident rise · first visible active sample '+group.first_active_ns+' ns · both faces reach threshold at '+
+      group.first_coincident_ns+' ns · last visible active sample '+group.last_active_ns+' ns.'+boundary,'muted'));
+  }
+  if(!rises.length)content.append(node('p','No simultaneous threshold crossing in the available samples.','muted'));
+  content.append(node('p','The trigger groups nearby active samples into one rise. A separate rise needs '+
+    data.quiet_samples+' consecutive samples with response magnitude at or below '+data.quiet_threshold_keV+' '+unit+
+    ' on both faces. Several deposits can contribute to one rise.','muted'));
+  if(data.saturated_contact_ids.length)content.append(node('p','The ADC reached its voltage limit on contacts '+
+    data.saturated_contact_ids.join(', ')+'. The affected signals are clipped.','notice'));
+  return content;
+}
 function dualADCPanel(job,trigger){
-  const panel=node('details'),label=node('label','Strip for sampled preamp voltage');
+  const panel=node('details'),label=node('label','ADC signal to inspect');
   const selection=node('select'),status=node('p',undefined,'muted'),target=node('div');
   status.setAttribute('role','status');
   const name=id=>dualStripLabel(id<=16?'X':'Y',id);
@@ -554,6 +578,7 @@ function dualADCPanel(job,trigger){
     const option=node('option',name(id)+' · '+(collecting?'Collector':'Neighbor'));
     option.value=String(id);selection.append(option);
   }
+  const faces=node('option','Trigger response on both faces');faces.value='faces';selection.append(faces);
   selection.value=String(trigger.adc_contacts.find(row=>row.collecting).contact_id);
   label.append(selection);panel.append(node('summary','Inspect simulated ADC samples'),label,status,target);
   const messages={not_captured:'This acquisition has no saved ADC windows.',
@@ -564,20 +589,24 @@ function dualADCPanel(job,trigger){
   async function load(){
     const ticket=++generation;
     if(!panel.open)return;
-    const contact=Number(selection.value);
-    status.textContent='Reading '+name(contact)+' ADC samples…';target.replaceChildren();
+    const faceView=selection.value==='faces',contact=faceView?null:Number(selection.value);
+    status.textContent=faceView?'Reading both detector faces…':'Reading '+name(contact)+' ADC samples…';target.replaceChildren();
     try{
-      const query=new URLSearchParams({name:job.name,report_sha256:job.report_sha256,
-        ordinal:trigger.ordinal,contact_id:contact});
-      const reply=await api('/api/workflow/gegi-dual/two-strip-adc?'+query);
+      const query=new URLSearchParams({name:job.name,report_sha256:job.report_sha256,ordinal:trigger.ordinal});
+      if(!faceView)query.set('contact_id',contact);
+      const route=faceView?'two-strip-activity':'two-strip-adc';
+      const reply=await api('/api/workflow/gegi-dual/'+route+'?'+query);
       if(ticket!==generation||!panel.isConnected||!panel.open)return;
       if(reply.name!==job.name||reply.report_sha256!==job.report_sha256||reply.ordinal!==trigger.ordinal||
-          reply.contact_id!==contact||reply.trigger_time_ns!==trigger.trigger_time_ns){
+          (!faceView&&reply.contact_id!==contact)||reply.trigger_time_ns!==trigger.trigger_time_ns){
         throw Error('The saved ADC window does not match the current trigger and strip.');
       }
       if(reply.status!=='captured'){
         status.textContent=messages[reply.status]||'Saved ADC samples are unavailable.';
         return;
+      }
+      if(faceView){
+        target.append(dualFaceActivity(reply.face_activity));status.textContent='';return;
       }
       const time=reply.relative_time_ns,volts=reply.preamp_V;
       if(!Array.isArray(time)||time.length!==29||time.some((sample,i)=>sample!==-80+20*i)||
@@ -901,23 +930,28 @@ async function loadGeGIEvent(){
     context.event=gegiEventIdentity(reply,context,id);showGeGIEvent();showGeGIDigital();
   }catch(e){if(context===gegiResult&&generation===gegiEventGeneration)$('gegi-event-summary').textContent='Cannot load saved primary '+id+': '+e.message+' Select another event or reopen results to retry.';}
 }
-function gegiTracePlot(trace,key,label,unit,{neighbor=null,names=null,digital=false,triggerRelative=false,sampleCaption=null}={}){
+function gegiTracePlot(trace,key,label,unit,{neighbor=null,names=null,digital=false,triggerRelative=false,sampleCaption=null,threshold=null}={}){
   const figure=node('figure',undefined,'plot');figure.append(node('h3',label+' · '+unit));
   const series=[trace,neighbor].map(item=>({times:item?.time_ns,values:item?.[key]}));
   const valid=({times,values})=>Array.isArray(times)&&Array.isArray(values)&&times.length===values.length&&times.length&&times.every(Number.isFinite)&&values.every(Number.isFinite);
   if(!valid(series[0])){figure.append(node('p',(digital?'No digital ':'No saved ')+label.toLowerCase()+' waveform for this channel.','muted'));return figure;}
   if(!valid(series[1]))series.pop();
-  let ymin=0,ymax=0,xmin=Infinity,xmax=-Infinity;
+  let ymin=0,ymax=threshold??0,xmin=Infinity,xmax=-Infinity;
   for(const {times,values} of series){for(const v of values){ymin=Math.min(ymin,v);ymax=Math.max(ymax,v);}xmin=Math.min(xmin,times[0]);xmax=Math.max(xmax,times.at(-1));}
   const span=ymax-ymin||1,xspan=xmax-xmin||1;
   const x=t=>55+620*(t-xmin)/xspan,y=v=>180-145*(v-ymin)/span;
   const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 720 220');svg.setAttribute('role','img');svg.setAttribute('aria-label',label+' against time '+(triggerRelative?'relative to trigger ':'')+'in ns, '+unit);
+  if(threshold!==null){
+    const line=document.createElementNS(ns,'line');
+    for(const [key,value] of Object.entries({x1:x(xmin),x2:x(xmax),y1:y(threshold),y2:y(threshold),stroke:'#645742','stroke-dasharray':'2 4'}))line.setAttribute(key,value);
+    svg.append(line);
+  }
   series.forEach(({times,values},index)=>{const line=document.createElementNS(ns,'polyline');line.setAttribute('points',values.map((v,i)=>x(times[i])+','+y(v)).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke',index?'#774597':'#007d8a');line.setAttribute('stroke-width',digital?'2':'1.4');if(index)line.setAttribute('stroke-dasharray','5 3');svg.append(line);});
-  if(triggerRelative)series[0].times.forEach((t,i)=>{
-    const value=series[0].values[i],mark=document.createElementNS(ns,'circle'),detail=document.createElementNS(ns,'title');
-    mark.setAttribute('cx',x(t));mark.setAttribute('cy',y(value));mark.setAttribute('r',2.5);mark.setAttribute('fill','#007d8a');
-    detail.textContent=t+' ns · '+value+' V';mark.append(detail);svg.append(mark);
-  });
+  if(triggerRelative)series.forEach(({times,values},index)=>times.forEach((t,i)=>{
+    const value=values[i],mark=document.createElementNS(ns,'circle'),detail=document.createElementNS(ns,'title');
+    mark.setAttribute('cx',x(t));mark.setAttribute('cy',y(value));mark.setAttribute('r',2.5);mark.setAttribute('fill',index?'#774597':'#007d8a');
+    detail.textContent=(names?names[index]+' · ':'')+t+' ns · '+value+' '+unit;mark.append(detail);svg.append(mark);
+  }));
   const tick=v=>digital?String(Number(v.toPrecision(4))):String(v);
   for(const [x,y,text]of [[4,25,tick(ymax)],[4,185,tick(ymin)],[55,207,String(xmin)+' ns'],[555,207,String(xmax)+' ns']]){const t=document.createElementNS(ns,'text');t.setAttribute('x',x);t.setAttribute('y',y);t.textContent=text;svg.append(t);}
   if(triggerRelative){const t=document.createElementNS(ns,'text');t.setAttribute('x',365);t.setAttribute('y',207);

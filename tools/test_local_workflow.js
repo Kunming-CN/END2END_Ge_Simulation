@@ -1716,6 +1716,11 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
     const dualPairJob={...positionJob,name:'pairings',result:{...positionJob.result,
       two_strip_pairings:{status:'available',count:2,trigger:dualPairRows[0]}}};
     api=async path=>{dualFixtureCalls.push([path]);
+      if(path.includes('/two-strip-activity?'))return {name:dualPairJob.name,report_sha256:dualPairJob.report_sha256,
+        ordinal:1,trigger_time_ns:dualPairRows[0].trigger_time_ns,status:'captured',face_activity:{
+          time_ns:Array.from({length:27},(_,i)=>-40+20*i),x_change_keV:Array(27).fill(6),y_change_keV:Array(27).fill(7),
+          sample_period_ns:20,quiet_samples:3,coincidence_threshold_keV:5,quiet_threshold_keV:3,saturated_contact_ids:[],
+          groups:[{coincident:true,first_active_ns:20,first_coincident_ns:40,last_active_ns:80,right_quiet_visible:true}]}};
       if(path.includes('/two-strip-adc?')){
         const query=new URLSearchParams(path.split('?')[1]),ordinal=Number(query.get('ordinal')),
           contact_id=Number(query.get('contact_id'));
@@ -1748,6 +1753,11 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   stripSelect.value='10';await stripSelect.onchange();
   assert.match(run('dualFixtureCalls.at(-1)[0]'),/&ordinal=1&contact_id=10$/);
   assert.match(pairText(),/X10 sampled preamplifier · V/);
+  stripSelect.value='faces';await stripSelect.onchange();
+  assert.match(run('dualFixtureCalls.at(-1)[0]'),/\/two-strip-activity\?name=pairings&report_sha256=9+&ordinal=1$/);
+  assert.match(pairText(),/Two-face trigger response.*X face \(solid\) and Y face \(dashed\).*both faces reach threshold at 40 ns/s);
+  assert.equal(descendants(firstADC).filter(node=>node.tagName==='polyline').length,2);
+  assert.equal(descendants(firstADC).filter(node=>node.tagName==='circle').length,54);
   const pairNext=descendants(pairPanel).find(node=>node.textContent==='Next trigger');
   await pairNext.click();
   assert.equal(run('dualFixtureCalls.at(-1)[0]'),'/api/workflow/gegi-dual/two-strip?name=pairings&report_sha256='+'9'.repeat(64)+'&ordinal=2');

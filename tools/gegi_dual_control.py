@@ -274,7 +274,7 @@ def two_strip_adc_contacts(xs, ys):
 
 
 def adc_window(path, report, digest, rows, ordinal, contact):
-    """Read one strip from the optional report-bound ADC window archive."""
+    """Read one strip, or the two-face trigger response of one saved ADC window."""
     if not path.is_file():
         return 'not_captured', None, None
     import numpy as np
@@ -285,7 +285,7 @@ def adc_window(path, report, digest, rows, ordinal, contact):
     samples, count = len(relative), len(rows)
     timing = report['receipt']
     with ZipFile(path) as bundle:
-        def array(key, shape, kind, sizes, index=None):
+        def array(key, shape, kind, sizes, index=None, strips=1):
             stamp = bundle.getinfo(key + '.npy')
             with bundle.open(stamp) as stream:
                 version = np.lib.format.read_magic(stream)
@@ -295,9 +295,9 @@ def adc_window(path, report, digest, rows, ordinal, contact):
                 W.require(saved_shape == shape and not fortran and dtype.kind == kind and dtype.itemsize in sizes
                           and stamp.file_size - stream.tell() == size, 'Invalid ADC array dimensions or type.')
                 if index is not None:
-                    # The only decoded codes are the selected 29 samples.
-                    size = samples*dtype.itemsize
-                    stream.seek(stream.tell() + index*size)
+                    row_bytes = samples*dtype.itemsize
+                    stream.seek(stream.tell() + index*row_bytes)
+                    size = strips*row_bytes
                 return np.frombuffer(stream.read(size), dtype=dtype)
 
         def text(key, shape=(), max_length=64):
@@ -333,8 +333,19 @@ def adc_window(path, report, digest, rows, ordinal, contact):
         status = statuses[ordinal-1]
         if status != 'captured':
             return status, None, None
-        index = captured.index(ordinal)*len(contacts) + contact-1
-        codes = array('adc_codes', (len(captured), len(contacts), samples), 'i', (2,), index)
+        first = captured.index(ordinal)*len(contacts)
+        shape = (len(captured), len(contacts), samples)
+        if contact is None:
+            from gegi_window_activity import analyze_window
+            profile = design.get('trigger_profile', trigger_settings('standard'))
+            W.require(profile == trigger_settings(profile['id']) and timing.get('trigger_profile', profile) == profile
+                      and timing['digital_profile_sha256'] == digital.PROFILE_SHA256
+                      and timing['digital_timing_sha256'] == digital.TIMING_SHA256,
+                      'The saved trigger settings do not match the simulated readout.')
+            codes = array('adc_codes', shape, 'i', (2,), first, len(contacts)).reshape(len(contacts), samples)
+            baseline = array('acquisition_baseline_v', (len(contacts),), 'f', (8,))
+            return status, times, analyze_window(codes, baseline, np.asarray(times), profile['id'])
+        codes = array('adc_codes', shape, 'i', (2,), first + contact-1)
         W.require(len(codes) == samples, 'Incomplete ADC samples.')
         return status, times, (codes*scale).tolist()
 
@@ -649,10 +660,13 @@ class DualSourceControl:
             raise ControlError('The saved trigger measurement is invalid.', 'invalid_features') from None
         return dict(name=name, report_sha256=digest, trigger=trigger)
 
-    def two_strip_adc(self, name, expected_sha256, ordinal, contact):
-        W.require(re.fullmatch(r'[1-9][0-9]{0,15}', ordinal) and re.fullmatch(r'[1-9][0-9]?', contact),
+    def two_strip_adc(self, name, expected_sha256, ordinal, contact=None):
+        W.require(re.fullmatch(r'[1-9][0-9]{0,15}', ordinal) and
+                  (contact is None or re.fullmatch(r'[1-9][0-9]?', contact)),
                   'Choose one two-strip trigger and one of its strips.')
-        ordinal, contact = int(ordinal), int(contact)
+        ordinal = int(ordinal)
+        if contact is not None:
+            contact = int(contact)
         report, digest = self._opened_report(name, expected_sha256)
         W.require(report.get('status') == 'completed' and report.get('kind') == REPORT_KIND,
                   'Choose a completed saved acquisition.')
@@ -662,15 +676,17 @@ class DualSourceControl:
             selected = two_strip_record(rows[ordinal-1], ordinal)
         except (KeyError, TypeError):
             raise ControlError('The saved trigger measurement is invalid.', 'invalid_features') from None
-        W.require(any(row['contact_id'] == contact for row in selected['adc_contacts']),
+        W.require(contact is None or any(row['contact_id'] == contact for row in selected['adc_contacts']),
                   'Choose a collecting strip or its physical neighbor.')
         try:
             path = safe_path(self.root, f'{OUTPUTS}/{name}/{TWO_STRIP_ADC_FILE}')
-            status, times, volts = adc_window(path, report, digest, rows, ordinal, contact)
+            status, times, values = adc_window(path, report, digest, rows, ordinal, contact)
         except (BadZipFile, ControlError, EOFError, ImportError, KeyError, OSError, RuntimeError, TypeError, ValueError):
-            status, times, volts = 'unverified', None, None
-        return dict(name=name, report_sha256=digest, ordinal=ordinal, contact_id=contact,
-                    trigger_time_ns=selected['trigger_time_ns'], status=status, relative_time_ns=times, preamp_V=volts)
+            status, times, values = 'unverified', None, None
+        result = dict(name=name, report_sha256=digest, ordinal=ordinal, trigger_time_ns=selected['trigger_time_ns'], status=status)
+        if contact is None:
+            return dict(result, face_activity=values)
+        return dict(result, contact_id=contact, relative_time_ns=times, preamp_V=values)
 
     def start(self, source_ids, activities_bq, live_time_s, seed, name, trigger_profile='standard'):
         W.run_path(name, self.root)

@@ -543,6 +543,7 @@ class DualControlTests(unittest.TestCase):
         codes = np.arange(34*29, dtype=np.int16).reshape(1, 34, 29) - 500
         sidecar = path.with_name(G.TWO_STRIP_ADC_FILE)
         arrays = dict(report_sha256=W.sha(path), **payload['receipt'], contact_ids=list(range(1, 35)),
+                      acquisition_baseline_v=np.zeros(34),
                       relative_time_ns=list(range(-80, 481, 20)), volts_per_code=D._LSB_V,
                       trigger_time_ns=[100., 1000., 1940.], two_strip_ordinal=[1], adc_codes=codes,
                       window_status=['captured', 'excluded_history', 'outside_live_time'])
@@ -560,9 +561,20 @@ class DualControlTests(unittest.TestCase):
             self.assertEqual(self.request('two-strip-adc?' + urlencode({**query, **invalid}))[0], 400)
         self.assertEqual(self.request(adc_route), (200, {**query, 'trigger_time_ns': 100., 'status': 'captured',
                          'relative_time_ns': arrays['relative_time_ns'], 'preamp_V': (codes[0, 3]*D._LSB_V).tolist()}))
+        from gegi_window_activity import analyze_window
+        face_query = {key: value for key, value in query.items() if key != 'contact_id'}
+        face_route = 'two-strip-activity?' + urlencode(face_query)
+        self.assertEqual(self.request(face_route, headers={'X-Control-Token': 'wrong'})[0], 403)
+        self.assertEqual(self.request(face_route + '&contact_id=4')[0], 400)
+        status, face = self.request(face_route)
+        self.assertEqual((status, face['status'], face['ordinal']), (200, 'captured', 1))
+        self.assertEqual(face['face_activity'], analyze_window(codes[0], arrays['acquisition_baseline_v'],
+                         np.asarray(arrays['relative_time_ns']), 'standard'))
         for ordinal, expected in ((2, 'excluded_history'), (3, 'outside_live_time')):
             status, excluded = self.request('two-strip-adc?' + urlencode({**query, 'ordinal': ordinal}))
             self.assertEqual((status, excluded['status'], excluded['relative_time_ns'], excluded['preamp_V']), (200, expected, None, None))
+            status, face = self.request('two-strip-activity?' + urlencode({**face_query, 'ordinal': ordinal}))
+            self.assertEqual((status, face['status'], face['face_activity']), (200, expected, None))
         np.savez_compressed(sidecar, **{**arrays, 'known_component_adc_sha256': '2'*64})
         status, changed = self.request(adc_route)
         self.assertEqual((status, changed['status'], changed['preamp_V']), (200, 'unverified', None))
