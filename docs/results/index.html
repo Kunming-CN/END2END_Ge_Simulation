@@ -255,12 +255,6 @@ extend beyond the sample spans and active current intervals.</p>
 group, left 4 ambiguous and linked 2 to two depositing groups each. Both triggers with
 two groups fell outside the two-strip selection. For each example, the recovered ADC stream's checksum matched the
 original acquisition and the local filtered samples reproduced the recorded rise.</p>
-<figure style="margin:1rem 0"><a href="gegi-digital/shared-clock-merged.png">
-<img loading="lazy" style="width:100%;height:auto" width="1000" height="687" src="gegi-digital/shared-clock-merged.png"
-alt="Two recovered waveform windows. Each has two simulated germanium deposit onsets and one recorded rise."></a>
-<figcaption>Green lines mark the two simulated deposit onsets for each trigger. The shaded span marks its one
-recorded rise. Trigger 683 returned 858.22 keV.
-Trigger 598 had guard-electrode activity and no accepted energy.</figcaption></figure>
 <h5 id="gegi-merged-components">Reading the two deposit groups separately</h5>
 <p>For each original merged trigger, the controls replay the same two archived current signals together and one at a
 time, at their original arrival times and ADC sampling phase. Both paired controls reproduce every original ADC code
@@ -269,7 +263,7 @@ in the saved window. To see the original slow energies and flags in Control, ope
 <figure style="margin:1rem 0"><a href="gegi-digital/shared-clock-components.png"><img loading="lazy" style="width:100%;height:auto"
 width="1215" height="837" src="gegi-digital/shared-clock-components.png"
 alt="X and Y trigger-filter traces for both original merged triggers, their paired controls and each isolated group."></a>
-<figcaption>Face changes on the original clock, using the ADC samples in the saved waveform window.</figcaption></figure>
+<figcaption>Vertical purple lines mark the two simulated deposit onsets. The shaded span is the single recorded rise. Each panel uses the saved ADC window on the original clock.</figcaption></figure>
 <p>The slow-energy table uses the +880 to +980 ns flat-top gate after each accepted trigger. The fast-signal table uses the
 same +0 to +240 ns gate after the original trigger for all four inputs, so a change in the automatic trigger time cannot
 move that comparison gate. The signed area is calibrated to an equivalent energy from a nominal pulser. The table
@@ -305,7 +299,51 @@ Of those, 3/3 showed one coincident rise.</p>
 ADC window.</p>
 <div role="region" aria-label="Outcomes / controlled mixtures at each delay" tabindex="0" style="overflow-x:auto">
 <table><caption>Outcomes / controlled mixtures at each delay</caption><thead><tr><th scope="col">Input delay</th><th scope="col">Second input inside ADC window</th><th scope="col">Second rearmed rise in window</th><th scope="col">Two accepted triggers on full clock</th></tr></thead><tbody><tr><th scope="row">0 ns</th><td>6/6</td><td>0/6</td><td>0/6</td></tr><tr><th scope="row">200 ns</th><td>6/6</td><td>1/6</td><td>1/6</td></tr><tr><th scope="row">300 ns</th><td>6/6</td><td>6/6</td><td>6/6</td></tr><tr><th scope="row">600 ns</th><td>0/6</td><td>0/6</td><td>6/6</td></tr></tbody></table></div>
-<p><a href="gegi-digital/shared-clock.json">Open the timing counts, definitions and source hashes (JSON)</a>.</p><h2 id="gegi-double-pulse">When can GeGI resolve two close pulses?</h2>
+<p><a href="gegi-digital/shared-clock.json">Open the timing counts, definitions and source hashes (JSON)</a>.</p><h4 id="gegi-weak-strips">Weak strip signals in two-strip triggers</h4>
+<p>The fixed late-step diagnostic flagged <strong>2/59</strong> evaluated
+triggers with no energy-compatible X/Y pairing and <strong>5/265</strong>
+with at least one. All 59 incompatible triggers had simulated carrier endpoints at three or four
+strip intersections (56 and 3, respectively). Among the compatible triggers,
+15/265 occupied three or more intersections.</p>
+<details><summary>Exposure counts, matched carrier evidence and ADC samples</summary>
+<div role="region" aria-label="Weak-step diagnostic by exposure and pairing" tabindex="0" style="overflow-x:auto">
+<table><caption>Weak-step diagnostic by exposure and pairing</caption><thead><tr><th scope="col">Exposure</th><th scope="col">X/Y energy pairing</th><th scope="col">Windows</th><th scope="col">Evaluated</th><th scope="col">Unevaluable</th><th scope="col">Windows flagged</th><th scope="col">Strips flagged</th></tr></thead><tbody><tr><th scope="row">First half</th><td>All</td><td>184</td><td>184</td><td>0</td><td>1</td><td>1</td></tr><tr><th scope="row">First half</th><td>No compatible pairing</td><td>31</td><td>31</td><td>0</td><td>1</td><td>1</td></tr><tr><th scope="row">First half</th><td>At least one compatible pairing</td><td>153</td><td>153</td><td>0</td><td>0</td><td>0</td></tr><tr><th scope="row">Second half</th><td>All</td><td>140</td><td>140</td><td>0</td><td>6</td><td>9</td></tr><tr><th scope="row">Second half</th><td>No compatible pairing</td><td>28</td><td>28</td><td>0</td><td>1</td><td>1</td></tr><tr><th scope="row">Second half</th><td>At least one compatible pairing</td><td>112</td><td>112</td><td>0</td><td>5</td><td>8</td></tr><tr><th scope="row">Pooled</th><td>All</td><td>324</td><td>324</td><td>0</td><td>7</td><td>10</td></tr><tr><th scope="row">Pooled</th><td>No compatible pairing</td><td>59</td><td>59</td><td>0</td><td>2</td><td>2</td></tr><tr><th scope="row">Pooled</th><td>At least one compatible pairing</td><td>265</td><td>265</td><td>0</td><td>5</td><td>8</td></tr></tbody></table></div>
+<p>Among the compatible triggers, 0/2 with two allowed X/Y
+assignments had a flag. The study retains both X/Y alternatives and the original weight of every trigger.
+The plane comparison still accounts for 254 projected and 70 unresolved
+trigger units.</p>
+<div role="region" aria-label="Comparison with the archived simulation endpoints in the pooled exposure" tabindex="0" style="overflow-x:auto">
+<table><caption>Comparison with the archived simulation endpoints in the pooled exposure</caption><thead><tr><th scope="col">X/Y energy pairing</th><th scope="col">Windows with native reference</th><th scope="col">Flagged strips compared</th><th scope="col">Comparable weak landings</th><th scope="col">Detected landings</th><th scope="col">Missed landings</th><th scope="col">Weak landings unevaluable by ADC</th><th scope="col">Induction only</th></tr></thead><tbody><tr><th scope="row">All</th><td>324</td><td>10</td><td>9</td><td>9</td><td>0</td><td>0</td><td>0</td></tr><tr><th scope="row">No compatible pairing</th><td>59</td><td>2</td><td>2</td><td>2</td><td>0</td><td>0</td><td>0</td></tr><tr><th scope="row">At least one compatible pairing</th><td>265</td><td>8</td><td>7</td><td>7</td><td>0</td><td>0</td><td>0</td></tr></tbody></table></div>
+<p>10/10 flags had at least one carrier landing in their matched group.
+The diagnostic detected 9/9 comparable
+landings inside the band, with 0 misses. One strip crossed the 0.613 keV-equivalent detection floor with 0.578 keV at the carrier endpoint versus 0.763 keV equivalent from the ADC.
+The 10 flagged strip observations came from 6 distinct
+archived groups and 8 distinct group and strip combinations.</p>
+<p>Summing the simulated deposits by the saved carrier endpoints and applying the original energy tolerance to the
+same four strips reproduced the exact compatible X/Y alternatives for 324/324
+triggers. Among the 57 incompatible triggers without a weak-step flag, the four measured strips
+accounted for all endpoint charge, across 54 three-intersection and
+3 four-intersection patterns. These intersections come from simulated carrier endpoints.</p>
+<p>A weak landing means that the total deposited energy of the rows with a saved carrier endpoint on that strip
+is in the diagnostic amplitude band. The simulation also provides the signed induced signal. With no endpoint on
+a strip, a terminal or transient signal can still arise from motion of carriers collected elsewhere.
+The comparison requires one uniquely assigned group with usable saved native records and no additional native current
+on the window. The table classifies induction-only flags at the modeled sensitivity scale.</p>
+<figure style="margin:1rem 0"><a href="gegi-digital/weak-strips.png"><img loading="lazy" style="width:100%;height:auto"
+width="1000" height="400" src="gegi-digital/weak-strips.png"
+alt="Corrected preamplifier ADC samples for X04 of trigger 741. The late samples show a sustained step."></a>
+<figcaption>Block 1, trigger 741, strip X04. The late mean was
+4.517 keV equivalent. Deposits whose carriers ended on this strip sum to
+4.640 keV. The final native induced signal was
+4.640 keV equivalent.</figcaption></figure>
+<p>The test uses the original 5-sigma noise criterion and the
+5 keV collection cutoff. It compares the mean of five late samples
+(+400 to +480 ns from the trigger) with the quiet reference after correcting for the nominal preamplifier decay.
+The first late sample must follow the end of the recorded rise by at least 120 ns.
+The first and last pairs of late samples must have means within 0.845 keV equivalent of each other.
+These frequencies describe the simulated readout in the saved windows.</p>
+<p><a href="gegi-digital/weak-strips.json">Open trigger identities, amplitudes, counts and source hashes (JSON)</a>.</p>
+</details><h2 id="gegi-double-pulse">When can GeGI resolve two close pulses?</h2>
 <p>With nominal noise, all groups sustained two matched triggers from <strong>300 ns</strong>
 on this scan. Same- and adjacent-strip groups met both energy and XY tolerances from <strong>1000 ns</strong>.
 Far-strip energy met its tolerance from <strong>300 ns</strong>.</p>

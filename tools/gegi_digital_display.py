@@ -1472,10 +1472,15 @@ def render(site):
         card += measured_plane_section(data)
         from gegi_plane_prior_display import SUMMARY as PRIOR_SUMMARY, section as prior_section
         from gegi_shared_clock_display import SUMMARY as CLOCK_SUMMARY, section as clock_section
+        from gegi_weak_strip_display import SUMMARY as WEAK_SUMMARY, section as weak_section
         if (site/PRIOR_SUMMARY).is_file():
             card += prior_section(site)
         if (site/CLOCK_SUMMARY).is_file():
+            from gegi_merged_component_display import consolidate_merged_figure
+            consolidate_merged_figure(site)
             card += clock_section(site, data)
+        if (site/WEAK_SUMMARY).is_file():
+            card += weak_section(site, data)
     has_pulse = pulse.is_file()
     if has_pulse:
         card += double_pulse_section(json.loads(pulse.read_bytes()))

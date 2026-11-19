@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "build_id": "78d9f025842fc8e2ffa757a8f0ad0f0a7d64a4f600b7948bbb18298f12e1b9b8",
-  "file_count": 1889,
-  "total_bytes": 495036815,
+  "build_id": "06543e173cd918789ad5fd7157e1019f5e3af5c044184dd5afa56b27f0cd822b",
+  "file_count": 1890,
+  "total_bytes": 496106439,
   "html_pages": 109,
-  "local_links_checked": 3341,
-  "resource_references_checked": 3400,
+  "local_links_checked": 3342,
+  "resource_references_checked": 3401,
   "page_navigation_checked": 1452,
   "fragments_checked": 90,
-  "downloads_checked": 754,
+  "downloads_checked": 755,
   "media_references_checked": 1157,
   "metadata_references_checked": 35,
   "other_references_checked": 2,
@@ -9361,22 +9361,17 @@
     {
       "path": "results/gegi-digital/shared-clock-components.json",
       "bytes": 246749,
-      "sha256": "cb3931930d21ca645ab9e10e20fd57c45462bcecf1cdc1e3b1ee872e2ba67baa"
+      "sha256": "87403992f5c3754cb5ca287aca92dfab1027947721d5738abcc9fb9fc49db340"
     },
     {
       "path": "results/gegi-digital/shared-clock-components.png",
-      "bytes": 140107,
-      "sha256": "7e4b03987005fdadc7fa8bf960ac537a9a695171a94b01349e087a48636b4d39"
-    },
-    {
-      "path": "results/gegi-digital/shared-clock-merged.png",
-      "bytes": 102632,
-      "sha256": "9ae2d988b1e1c6d031a98d9063dff05577af83a3d136b6aa3f6b10f3b07d1772"
+      "bytes": 158367,
+      "sha256": "2cd106733c715e4ef280a441ad20eaa0489b405cb6ffa60df89999cb25e93006"
     },
     {
       "path": "results/gegi-digital/shared-clock.json",
-      "bytes": 61776,
-      "sha256": "f23723ecdadd05b26be57b083e47baaac2dccaae63f2c3c77cda2bd34e70b9ab"
+      "bytes": 61640,
+      "sha256": "9cc0aebbddc77181a7c6c2f05fe7af1c4136e6bbba795ebd0612140f488a83ea"
     },
     {
       "path": "results/gegi-digital/signals.png",
@@ -9389,9 +9384,19 @@
       "sha256": "2af44dd61a7b6c23ce7e35bc550103cd2cc2a3e53167ad826ff66ab78169fa93"
     },
     {
+      "path": "results/gegi-digital/weak-strips.json",
+      "bytes": 1099078,
+      "sha256": "cd6f7fc2bfedd2cf958c98f2566a8ba7522c55d1f823d137022018d37cdfb757"
+    },
+    {
+      "path": "results/gegi-digital/weak-strips.png",
+      "bytes": 49656,
+      "sha256": "292b41984f9a31401921e7c8527863a1939d776b83e363938445005a0da4eaa5"
+    },
+    {
       "path": "results/index.html",
-      "bytes": 101194,
-      "sha256": "bf9a320879b6adb4170f5e2978acd4c6bbf85ecd33e155afd3bd739098c0f852"
+      "bytes": 106592,
+      "sha256": "5c21bdb590f8bc9a72a819504d272ab7a86bf0aa2dd7ad2944a182f2fea10184"
     },
     {
       "path": "retired-studies.json",

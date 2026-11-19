@@ -5,7 +5,6 @@ from hashlib import sha256
 from html import escape
 import json
 from pathlib import Path
-from struct import unpack_from
 
 
 SUMMARY = Path('results/gegi-digital/shared-clock.json')
@@ -114,13 +113,9 @@ def attach(site, sources):
                                                    'coincidence_threshold_keV')})
     controls = compact_controls(control, READOUT_VALIDATION_SHA256['pileup'], timing)
     examples = compact_merged(merged, reference, timing)
-    plot_merged(examples, site/MERGED_IMAGE)
-    image = (site/MERGED_IMAGE).read_bytes()
     result = dict(kind='gegi_shared_clock_public_v1', plane_study_sha256=pool_sha, windows=plane['windows'],
                   reports_sha256=report_hashes, source_sha256=source_hashes, blocks=blocks, views=views,
                   merged_examples=examples, controls=controls,
-                  merged_waveform_figure=dict(image_sha256=sha256(image).hexdigest(),
-                                              image_size_px=unpack_from('>II', image, 16)),
                   definitions={'recorded': measured['definitions'], 'reference': reference['design']},
                   timing=timing)
     validate_plane_binding(result, plane)
@@ -210,35 +205,6 @@ def compact_merged(report, reference, timing):
     return examples
 
 
-def plot_merged(examples, target):
-    from matplotlib.backends.backend_agg import FigureCanvasAgg
-    from matplotlib.figure import Figure
-
-    figure = Figure(figsize=(8, 5.5), layout='constrained')
-    FigureCanvasAgg(figure)
-    axes = figure.subplots(2, 1, sharex=True, sharey=True)
-    for axis, example in zip(axes, examples, strict=True):
-        activity = example['waveform']
-        times = activity['time_ns']
-        start, stop = example['recorded_rise_offsets_ns']
-        axis.axvspan(start, stop, color='#697a8a', alpha=.12, label='One recorded rise')
-        for i, onset in enumerate(example['simulated_deposit_onset_offsets_ns']):
-            axis.axvline(onset, color='#24684f', ls='-.', lw=1.3,
-                         label='Simulated Ge deposit onset' if i == 0 else None)
-        axis.plot(times, activity['x_change_keV'], color='#1765a0', marker='o', markersize=3, label='X face')
-        axis.plot(times, activity['y_change_keV'], color='#a24913', marker='x', markersize=4, label='Y face')
-        axis.axhline(activity['coincidence_threshold_keV'], color='#3b4249', ls='--', lw=1,
-                     label='Coincidence threshold')
-        strips = f'{example["x_collecting_strips"]} X × {example["y_collecting_strips"]} Y'
-        axis.set_title(f'Trigger {example["trigger_index"]} · {strips}', loc='left')
-        axis.set_ylabel('Face change\n(keV equivalent)')
-        axis.grid(axis='y', color='#dbe2ea', linewidth=.7)
-    handles, labels = axes[0].get_legend_handles_labels()
-    figure.legend(handles, labels, ncols=3, fontsize=9, loc='outside upper center')
-    axes[-1].set_xlabel('Time from recorded trigger (ns)')
-    figure.savefig(target, dpi=125, facecolor='white')
-
-
 def control_section(control):
     rows = []
     for delay, counts in control['by_delay_ns'].items():
@@ -258,22 +224,6 @@ Of those, {control['ordinary_two_strip_windows_with_one_rise']}/{ordinary} showe
 <p>At 600 ns the full clock recorded both triggers in all six cases and the second input arrived after the saved
 ADC window.</p>
 {counts_table}'''
-
-
-def merged_section(site, data):
-    image = (site/MERGED_IMAGE).read_bytes()
-    figure = data['merged_waveform_figure']
-    if sha256(image).hexdigest() != figure['image_sha256']:
-        raise ValueError('GeGI merged-trigger waveform figure differs from its public summary')
-    width, height = figure['image_size_px']
-    relative = MERGED_IMAGE.relative_to('results').as_posix()
-    first, second = data['merged_examples']
-    return f'''<figure style="margin:1rem 0"><a href="{relative}">
-<img loading="lazy" style="width:100%;height:auto" width="{width}" height="{height}" src="{relative}"
-alt="Two recovered waveform windows. Each has two simulated germanium deposit onsets and one recorded rise."></a>
-<figcaption>Green lines mark the two simulated deposit onsets for each trigger. The shaded span marks its one
-recorded rise. Trigger {first['trigger_index']} returned {first['energy_keV']:.2f} keV.
-Trigger {second['trigger_index']} had guard-electrode activity and no accepted energy.</figcaption></figure>'''
 
 
 def section(site, plane):
@@ -334,7 +284,6 @@ extend beyond the sample spans and active current intervals.</p>
 group, left {all_refs['ambiguous']} ambiguous and linked {all_refs['merged']} to two depositing groups each. Both triggers with
 two groups fell outside the two-strip selection. For each example, the recovered ADC stream's checksum matched the
 original acquisition and the local filtered samples reproduced the recorded rise.</p>
-{merged_section(site, data)}
 {component_section(site, data)}
 {control_section(data['controls'])}
 <p><a href="{relative}">Open the timing counts, definitions and source hashes (JSON)</a>.</p>'''

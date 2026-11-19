@@ -1,5 +1,15 @@
 # Project working rules
 
+## Owner update — 2026-11-19 lightweight software and GitHub exhibits
+
+Keep the student download focused on running and analyzing the student's own
+simulations. Publish research examples, saved results, figures and comparisons
+on the existing GitHub Pages site. When a new exhibit covers an older one,
+replace the older presentation and remove its superseded public files and links.
+Keep distinct evidence, original scientific data, IDs and reproducibility records.
+An exhibit-only update ships through Pages. Publish a new student package when
+its usable runtime changes. Keep the separate calibration download.
+
 ## Owner update — 2026-11-13 synchronized macOS student runtime
 
 Deliver native macOS CPU support using the shared Windows/Mac source and student

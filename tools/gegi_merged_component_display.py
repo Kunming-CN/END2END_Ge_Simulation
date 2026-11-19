@@ -7,7 +7,7 @@ from pathlib import Path
 from struct import unpack_from
 
 from gegi_event_store import trace_hash
-from gegi_shared_clock_display import MERGED_SHA256, SUMMARY as CLOCK_SUMMARY, read_study, table
+from gegi_shared_clock_display import MERGED_IMAGE, MERGED_SHA256, SUMMARY as CLOCK_SUMMARY, read_study, table
 
 
 SUMMARY = Path('results/gegi-digital/shared-clock-components.json')
@@ -73,11 +73,34 @@ def attach(site, study, recovered, charge):
     data['native_source_sha256'] = native['source_sha256']
     data['native_design'] = native['design']
     validate_binding(data, clock)
+    write_figure(site, data)
+
+
+def write_figure(site, data):
     plot_controls(data['examples'], site/FIGURE)
     image = (site/FIGURE).read_bytes()
     data['figure'] = dict(sha256=sha256(image).hexdigest(), size_px=unpack_from('>II', image, 16))
     (site/SUMMARY).write_text(json.dumps(data, allow_nan=False, separators=(',', ':'))+'\n',
                               encoding='utf-8', newline='\n')
+
+
+def consolidate_merged_figure(site):
+    """Move the onset and rise markers onto the comparison figure in the staged site."""
+    legacy = site/MERGED_IMAGE
+    if not legacy.is_file() or not (site/SUMMARY).is_file():
+        return
+    clock = json.loads((site/CLOCK_SUMMARY).read_bytes())
+    data = json.loads((site/SUMMARY).read_bytes())
+    validate_binding(data, clock)
+    previous = '9ae2d988b1e1c6d031a98d9063dff05577af83a3d136b6aa3f6b10f3b07d1772'
+    if (legacy.is_symlink() or sha256(legacy.read_bytes()).hexdigest() != previous
+            or sha256((site/FIGURE).read_bytes()).hexdigest() != data['figure']['sha256']):
+        raise ValueError('The saved GeGI waveform figures differ from their publication.')
+    write_figure(site, data)
+    clock.pop('merged_waveform_figure', None)
+    (site/CLOCK_SUMMARY).write_text(json.dumps(clock, separators=(',', ':'), allow_nan=False)+'\n',
+                                    encoding='utf-8', newline='\n')
+    legacy.unlink()
 
 
 def plot_controls(cases, target):
@@ -91,6 +114,12 @@ def plot_controls(cases, target):
         variants = case['variants']
         for axis, face in zip(row, ('x', 'y'), strict=True):
             original = case['original_activity']
+            rise, = [group for group in original['groups'] if group['coincident']]
+            axis.axvspan(rise['first_active_ns'], rise['last_active_ns'], color='#617482', alpha=.10,
+                         label='Recorded rise')
+            for i, group in enumerate(case['components']):
+                axis.axvline(group['ge_deposit_relative_ns'][0], color='#6d4583', ls=':', lw=1.1,
+                             label='Simulated deposit onset' if i == 0 else None)
             for source, label, color, linestyle in (
                 (original, 'Original acquisition', '#161b22', '-'),
                 (variants['pair']['activity'], VARIANTS['pair'], '#14639c', '--'),
@@ -254,7 +283,7 @@ in the saved window. To see the original slow energies and flags in Control, ope
 <figure style="margin:1rem 0"><a href="{image_path}"><img loading="lazy" style="width:100%;height:auto"
 width="{width}" height="{height}" src="{image_path}"
 alt="X and Y trigger-filter traces for both original merged triggers, their paired controls and each isolated group."></a>
-<figcaption>Face changes on the original clock, using the ADC samples in the saved waveform window.</figcaption></figure>
+<figcaption>Vertical purple lines mark the two simulated deposit onsets. The shaded span is the single recorded rise. Each panel uses the saved ADC window on the original clock.</figcaption></figure>
 <p>The slow-energy table uses the {slow} ns flat-top gate after each accepted trigger. The fast-signal table uses the
 same {fast} ns gate after the original trigger for all four inputs, so a change in the automatic trigger time cannot
 move that comparison gate. The signed area is calibrated to an equivalent energy from a nominal pulser. The table
