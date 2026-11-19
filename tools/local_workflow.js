@@ -610,6 +610,77 @@ function dualTwoStripPanel(job){
       if(trigger.adc_contacts?.length)target.append(dualADCPanel(job,trigger));
     }});
 }
+function dualPlaneMap(grid, layer){
+  const {x_mm:x,y_mm:y,step_mm:step,assumed_z_mm:z}=grid;
+  const figure=node('figure',undefined,'plot dual-plane-figure');
+  const axes=node('div',undefined,'dual-plane-axes'),plot=node('canvas');
+  const format=value=>Number(value.toPrecision(5)).toString();
+  function ticks(values,vertical){
+    const low=values[0]-step/2,high=values.at(-1)+step/2;
+    const labels=[low,(low+high)/2,high].map(value=>node('span',format(value)));
+    const axis=node('div',undefined,vertical?'dual-plane-y':'dual-plane-x');
+    axis.setAttribute('aria-hidden','true');axis.append(...(vertical?labels.reverse():labels));
+    return axis;
+  }
+  plot.width=x.length;plot.height=y.length;
+  plot.setAttribute('role','img');
+  plot.setAttribute('aria-label','Backprojection at z = '+z+' mm. X increases right from '+format(x[0]-step/2)+
+    ' to '+format(x.at(-1)+step/2)+' mm. Y increases up from '+format(y[0]-step/2)+' to '+format(y.at(-1)+step/2)+' mm.');
+  const context=plot.getContext('2d'),image=context.createImageData(x.length,y.length);
+  let maximum=0;
+  for(const row of layer.mass)for(const mass of row)maximum=Math.max(maximum,mass);
+  for(const [j,row] of layer.mass.entries())for(const [i,mass] of row.entries()){
+    const fraction=maximum?mass/maximum:0, offset=((y.length-1-j)*x.length+i)*4;
+    image.data.set([242-230*fraction,247-156*fraction,249-129*fraction,255],offset);
+  }
+  context.putImageData(image,0,0);
+  const yLabel=node('span','Y (mm)','dual-plane-y-label'),xLabel=node('span','X (mm)','dual-plane-x-label');
+  axes.append(yLabel,ticks(y,true),plot,ticks(x,false),xLabel);figure.append(axes);
+  figure.append(node('figcaption',(maximum?'Linear color from 0 to '+format(maximum)+' nominal trigger units per cell.':
+    'This window has no projected trigger mass.')+' Cell size '+step+' × '+step+' mm.','muted'));
+  return figure;
+}
+function dualPlanePanel(job){
+  if(job.result.measured_plane?.status!=='saved')return null;
+  const details=node('details'),body=node('div'),status=node('p','','notice');
+  status.setAttribute('role','status');
+  details.append(node('summary','Measured Compton backprojection on a plane'),status,body);
+  let loading=false,loaded=false;
+  details.ontoggle=async()=>{
+    if(!details.open||loading||loaded)return;
+    loading=true;status.textContent='Opening the saved plane…';
+    try{
+      const query=new URLSearchParams({name:job.name,report_sha256:job.report_sha256});
+      const reply=await api('/api/workflow/gegi-dual/plane?'+query);
+      if(dualJob!==job)return;
+      if(reply.name!==job.name||reply.report_sha256!==job.report_sha256)throw Error('The plane does not match the opened acquisition.');
+      const {grid,selection,layers,model}=reply;
+      const label=node('label','Measured energy window'),windowChoice=node('select'),plot=node('div');
+      const summary=node('p','','notice');summary.setAttribute('role','status');
+      const keys=Object.keys(layers).filter(key=>key!=='all'&&key!=='other_energy').sort((a,b)=>parseFloat(a)-parseFloat(b));
+      for(const key of ['all',...keys,'other_energy']){
+        const text=key==='all'?'All measured energies':key==='other_energy'?'Outside the line windows':'Around '+parseFloat(key)+' keV';
+        const option=node('option',text);option.value=key;windowChoice.append(option);
+      }
+      windowChoice.value='all';label.append(windowChoice);
+      body.append(node('p','Assumed plane z = '+grid.assumed_z_mm+' mm in detector coordinates. '+
+        selection.two_strip_triggers+' two-strip triggers among '+selection.qualified_energies+' measured energies and '+
+        selection.qualified_triggers+' qualified triggers.'),label,node('p',selection.energy_windows,'muted'),summary,plot,
+        node('p',model.geometry+' '+model.ambiguity,'muted'),node('p',model.limits,'muted'));
+      function paint(){
+        const layer=layers[windowChoice.value];
+        const mass=value=>Number(value.toPrecision(5));
+        summary.textContent=layer.triggers+' triggers in this window · '+layer.triggers_with_geometry+
+          ' with projected geometry · '+layer.hypotheses+' of '+layer.allowed_hypotheses+' allowed alternatives projected. '+
+          'Nominal trigger units: '+mass(layer.projected_mass)+' projected, '+mass(layer.unresolved_mass)+' unresolved.';
+        plot.replaceChildren(dualPlaneMap(grid,layer));
+      }
+      windowChoice.onchange=paint;paint();loaded=true;status.textContent='';
+    }catch(error){if(dualJob===job){body.replaceChildren();status.textContent=error.message;}}
+    finally{loading=false;}
+  };
+  return details;
+}
 function showDualJob(job){
   dualJob=job;
   const {result,...receipt}=job;
@@ -642,6 +713,8 @@ function showDualJob(job){
     content.append(dualSinglePixelPanel(job));
     const twoStrip=dualTwoStripPanel(job);
     if(twoStrip)content.append(twoStrip);
+    const plane=dualPlanePanel(job);
+    if(plane)content.append(plane);
     content.append(dualPixelMap(job));
   }
   dualControls();

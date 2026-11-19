@@ -1,6 +1,7 @@
 """Dual-source Control selection, session protection and async state contract."""
 
 from io import BytesIO
+import gzip
 import json
 import math
 from pathlib import Path
@@ -243,6 +244,58 @@ class DualControlTests(unittest.TestCase):
         self.assertEqual(archive.read_bytes(), original)
         self.assertEqual(read_pixel_map(archive), job['result']['pixel_map'])
         self.assertFalse(self.calls)
+
+    def test_protected_saved_plane_binds_report_and_preserves_unresolved_mass(self):
+        _, options = self.request('options')
+        report = fixture_report(options['libraries'], [18, 74], .05, 18)
+        report['triggers'][1]['two_strip_pairings'] = {}
+        path = self.root/G.report_ref('with-plane')
+        W.write(path, report)
+        query = urlencode(dict(name='with-plane', report_sha256=W.sha(path)))
+        route = 'plane?' + query
+        status, job = self.request('state?name=with-plane')
+        self.assertEqual(status, 200)
+        self.assertNotIn('measured_plane', job['result'])
+        self.assertEqual(self.request(route)[0], 400)
+
+        sidecar = path.with_name(G.PLANE_FILE)
+        layer = dict(mass=[[.2, 0], [.3, 0]], triggers=1, triggers_with_geometry=1,
+                     allowed_hypotheses=2, hypotheses=1, projected_mass=.5, unresolved_mass=.5)
+        empty = {key: 0 for key in layer}
+        empty['mass'] = [[0, 0], [0, 0]]
+        plane = dict(kind=G.PLANE_KIND, input_sha256=dict(acquisition=W.sha(path), waveform_fit='e'*64),
+                     grid=dict(x_mm=[-2, 2], y_mm=[-2, 2], assumed_z_mm=40, step_mm=4),
+                     model=dict(geometry='Measured fit', ambiguity='Two orders', normalization='Unit mass', limits='Assumed plane'),
+                     selection=dict(qualified_triggers=2, qualified_energies=2, two_strip_triggers=1,
+                                    energy_windows='Measured line windows'),
+                     layers={'all': layer, '661.657_keV': layer, 'other_energy': empty},
+                     triggers=['private internal trigger ledger'])
+
+        def save(payload):
+            sidecar.write_bytes(gzip.compress(json.dumps(payload).encode('utf-8')))
+
+        save(plane)
+        with patch.object(G, 'measured_plane_view', side_effect=AssertionError('Read before the panel opened')):
+            self.assertEqual(self.request('state?name=with-plane')[1]['result']['measured_plane'], {'status': 'saved'})
+        self.assertEqual(self.request(route, headers={'X-Control-Token': 'wrong'})[0], 403)
+        for invalid in (route + '&file=plane.json.gz', route + '&name=with-plane',
+                        'plane?' + urlencode(dict(name='with-plane', report_sha256='a'*64))):
+            self.assertEqual(self.request(invalid)[0], 400)
+        status, result = self.request(route)
+        self.assertEqual(status, 200)
+        self.assertEqual(result, {key: value for key, value in plane.items() if key not in ('triggers', 'input_sha256')}
+                         | {'name': 'with-plane', 'report_sha256': W.sha(path)})
+        for invalid in ({**plane, 'input_sha256': {'acquisition': 'a'*64}},
+                        {**plane, 'grid': dict(plane['grid'], y_mm=[2, -2])},
+                        {**plane, 'layers': dict(plane['layers'], all=dict(layer, unresolved_mass=0))},
+                        {**plane, 'layers': dict(plane['layers'], all=dict(layer, mass=[[0, 0], [0, 0]]))}):
+            save(invalid)
+            self.assertEqual(self.request(route)[0], 400)
+        sidecar.write_bytes(sidecar.read_bytes()[:-2])
+        self.assertEqual(self.request(route)[0], 400)
+        status, job = self.request('state?name=with-plane')
+        self.assertEqual(status, 200)
+        self.assertEqual(job['result']['spectra']['combined']['entries'], 2)
 
     def test_protected_feature_navigation_reads_only_selected_projection(self):
         _, options = self.request('options')

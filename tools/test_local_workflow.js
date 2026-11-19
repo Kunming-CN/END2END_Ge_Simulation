@@ -17,6 +17,9 @@ class Element {
   focus(){if(this.isConnected&&!this.disabled)fixtureDocument.activeElement=this;}
   setSelectionRange(start,end,direction='none'){this.selectionStart=start;this.selectionEnd=end;this.selectionDirection=direction;}
   click(){if(this.disabled)return;this.clicked=true;return this.onclick?.();}
+  getContext(kind){assert.equal(this.tagName,'canvas');assert.equal(kind,'2d');return {
+    createImageData:(width,height)=>({data:new Uint8ClampedArray(width*height*4)}),
+    putImageData:image=>{this.pixels=Array.from(image.data);}};}
   pressKey(key){if(fixtureDocument.activeElement!==this)return;if(this.tagName==='button'&&['Enter',' '].includes(key))return this.click();if(this.tagName==='summary'&&['Enter',' '].includes(key))this.parentElement.open=!this.parentElement.open;}
   setAttribute(name,value){this[name]=value;}
   removeAttribute(name){delete this[name];}
@@ -1760,5 +1763,41 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   const secondADC=findADC();secondADC.open=true;await secondADC.ontoggle();
   assert.match(pairText(),/overlaps time excluded for uncertain signal history/);
   assert.ok(!descendants(secondADC).some(node=>node.tagName==='svg'));
-  console.log('Dual-source Control covers energy intervals, bounded trigger browsing, position calibration transfer, and conditional two-strip pairings.');
+  // Saved planes are loaded only on opening, and retain physical cell orientation.
+  const planeTitle='Measured Compton backprojection on a plane';
+  const findPlane=()=>get('gegi-dual-results').children.find(node=>node.children[0]?.textContent===planeTitle);
+  assert.equal(findPlane(),undefined);
+  run(`const planeJob={...dualPairJob,name:'plane-fixture',result:{...dualPairJob.result,measured_plane:{status:'saved'}}};
+    const projectedLayer={mass:[[.5,0],[0,0]],triggers:2,triggers_with_geometry:1,allowed_hypotheses:3,hypotheses:1,projected_mass:.5,unresolved_mass:1.5};
+    const planeReply={name:planeJob.name,report_sha256:planeJob.report_sha256,
+      grid:{x_mm:[-2,2],y_mm:[-2,2],assumed_z_mm:40,step_mm:4},
+      selection:{two_strip_triggers:2,qualified_energies:3,qualified_triggers:4,energy_windows:'Half-width 2% of the line energy.'},
+      model:{geometry:'Strip-center XY.',ambiguity:'Equal split across allowed orders.',limits:'Conditional plane.'},
+      layers:{all:projectedLayer,'661.657_keV':projectedLayer,other_energy:{mass:[[0,0],[0,0]],triggers:0,
+        triggers_with_geometry:0,allowed_hypotheses:0,hypotheses:0,projected_mass:0,unresolved_mass:0}}};
+    let refusePlane=true;
+    api=async path=>{dualFixtureCalls.push([path]);if(!path.includes('/plane?'))return planeJob;
+      if(refusePlane)throw Error('The saved finite-plane result belongs to a different acquisition report.');return planeReply;};`);
+  get('gegi-dual-job').value='plane-fixture';await get('gegi-dual-job').onchange();
+  const plane=findPlane();assert.ok(plane);
+  assert.ok(!run('dualFixtureCalls').some(([url])=>url.includes('/plane?')));
+  plane.open=true;await plane.ontoggle();
+  assert.equal(run('dualFixtureCalls.at(-1)[0]'),'/api/workflow/gegi-dual/plane?name=plane-fixture&report_sha256='+'9'.repeat(64));
+  const planeText=()=>descendants(plane).map(node=>node.textContent).join(' ');
+  assert.match(planeText(),/belongs to a different acquisition report/);
+  assert.ok(descendants(get('gegi-dual-results')).some(node=>node.tagName==='table'));
+  run('refusePlane=false');plane.open=false;await plane.ontoggle();plane.open=true;await plane.ontoggle();
+  assert.match(planeText(),/z = 40 mm.*2 two-strip triggers among 3 measured energies and 4 qualified triggers/);
+  assert.match(planeText(),/1 of 3 allowed alternatives projected.*0\.5 projected, 1\.5 unresolved/);
+  assert.match(planeText(),/Equal split across allowed orders/);
+  const findCanvas=()=>descendants(plane).find(node=>node.tagName==='canvas');
+  assert.match(findCanvas()['aria-label'],/X increases right from -4 to 4 mm.*Y increases up from -4 to 4 mm/);
+  assert.deepEqual(findCanvas().pixels,[242,247,249,255,242,247,249,255,12,91,120,255,242,247,249,255]);
+  const planeChoice=descendants(plane).find(node=>node.tagName==='select');
+  assert.deepEqual(planeChoice.children.map(node=>node.textContent),['All measured energies','Around 661.657 keV','Outside the line windows']);
+  const requests=run('dualFixtureCalls.length');
+  planeChoice.value='other_energy';planeChoice.onchange();
+  assert.match(planeText(),/This window has no projected trigger mass/);
+  assert.equal(run('dualFixtureCalls.length'),requests);
+  console.log('Dual-source Control covers energy intervals, bounded trigger browsing, position calibration transfer, conditional two-strip pairings and saved plane maps.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

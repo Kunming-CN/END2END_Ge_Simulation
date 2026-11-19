@@ -1,12 +1,14 @@
 """Protected Control jobs for ADC replay from two imported GeGI source libraries."""
 
 import copy
+import gzip
 from hashlib import sha256
 from itertools import islice
 import math
 import re
 from sys import float_info
 import threading
+import zlib
 from zipfile import BadZipFile, ZipFile
 
 from gegi_pixel_map import X_IDS, Y_IDS, project_pixel_energy, project_pixel_map, unavailable
@@ -20,6 +22,8 @@ STATE = '.local/local-control-v1/gegi-dual-source-jobs.json'
 KIND = 'local_gegi_dual_source_jobs_v1'
 REPORT_KIND = 'gegi_dual_source_acquisition_v1'
 TWO_STRIP_ADC_FILE = 'two-strip-adc.npz'
+PLANE_FILE = 'plane.json.gz'
+PLANE_KIND = 'gegi_continuous_measured_plane_backprojection_v1'
 SOURCE_COUNTS = ('initial_parents_in_live_time', 'deposit_groups', 'complete_deposit_groups',
                  'right_censored_deposit_groups', 'native_unavailable_groups', 'prehistory_unqualified_groups')
 ADC_COUNTS = ('qualified_triggers', 'single_pixel_energies', 'additional_multi_strip_energies',
@@ -414,6 +418,74 @@ def report_views(report=None, *, reason=None):
     return views
 
 
+def saved_plane_path(root, name):
+    path = safe_path(root, f'{OUTPUTS}/{name}/{PLANE_FILE}')
+    return path if path.is_file() else None
+
+
+def measured_plane_view(report, digest, path):
+    missing = 'This acquisition has no saved finite-plane result.'
+    invalid = 'The saved finite-plane result is unavailable or invalid.'
+    W.require(path is not None, missing)
+    try:
+        with gzip.open(path, 'rt', encoding='utf-8') as stream:
+            saved = decode_json(stream.read())
+        W.require(saved['kind'] == PLANE_KIND, 'This saved finite-plane format is unsupported.')
+        W.require(saved['input_sha256']['acquisition'] == digest,
+                  'The saved finite-plane result belongs to a different acquisition report.')
+        grid, selection, model, layers = (saved[key] for key in ('grid', 'selection', 'model', 'layers'))
+        nx, ny = len(grid['x_mm']), len(grid['y_mm'])
+        step = grid['step_mm']
+        W.require(number(grid['assumed_z_mm']) and number(step) and step > 0 and min(nx, ny) >= 2, invalid)
+        for axis in (grid['x_mm'], grid['y_mm']):
+            W.require(type(axis) is list and all(number(value) for value in axis)
+                      and all(math.isclose(b - a, step, rel_tol=1e-8) for a, b in zip(axis, axis[1:])), invalid)
+        total = dict(qualified_triggers=report['counts']['qualified_triggers'],
+                     qualified_energies=report['counts']['qualified_energies'],
+                     two_strip_triggers=sum(1 for _ in two_strip_rows(report)))
+        W.require(all(type(selection[key]) is int and selection[key] == value for key, value in total.items())
+                  and type(selection['energy_windows']) is str, invalid)
+        text_keys = ('geometry', 'ambiguity', 'normalization', 'limits')
+        W.require(all(type(model[key]) is str for key in text_keys), invalid)
+        W.require(type(layers) is dict and 'all' in layers and 'other_energy' in layers
+                  and all(key in ('all', 'other_energy') or re.fullmatch(r'[0-9]+(?:\.[0-9]+)?_keV', key)
+                          for key in layers), invalid)
+        counts = ('triggers', 'triggers_with_geometry', 'allowed_hypotheses', 'hypotheses')
+        masses = ('projected_mass', 'unresolved_mass')
+        views = {}
+        for label, layer in layers.items():
+            W.require(all(type(layer[key]) is int and layer[key] >= 0 for key in counts)
+                      and all(number(layer[key]) and layer[key] >= 0 for key in masses)
+                      and layer['triggers_with_geometry'] <= min(layer['triggers'], layer['hypotheses'])
+                      and layer['hypotheses'] <= layer['allowed_hypotheses']
+                      and layer['projected_mass'] <= layer['triggers_with_geometry'] + 1e-9
+                      and math.isclose(sum(layer[key] for key in masses), layer['triggers'], abs_tol=1e-9), invalid)
+            pixels = layer['mass']
+            W.require(type(pixels) is list and len(pixels) == ny and all(type(row) is list and len(row) == nx
+                      and all(number(value) and value >= 0 for value in row) for row in pixels)
+                      and math.isclose(math.fsum(value for row in pixels for value in row),
+                                       layer['projected_mass'], abs_tol=1e-9), invalid)
+            views[label] = {key: layer[key] for key in ('mass', *counts, *masses)}
+        W.require(views['all']['triggers'] == total['two_strip_triggers']
+                  and all(views['all'][key] == sum(view[key] for label, view in views.items() if label != 'all')
+                          for key in counts)
+                  and all(math.isclose(views['all'][key], sum(view[key] for label, view in views.items() if label != 'all'),
+                                       abs_tol=1e-9) for key in masses), invalid)
+    except (EOFError, KeyError, OSError, OverflowError, TypeError, ValueError, zlib.error):
+        raise ControlError(invalid, 'invalid_gegi_plane') from None
+    return dict(kind=PLANE_KIND, grid={key: grid[key] for key in ('x_mm', 'y_mm', 'step_mm', 'assumed_z_mm')},
+                selection=dict(**total, energy_windows=selection['energy_windows']),
+                model={key: model[key] for key in text_keys}, layers=views)
+
+
+def add_plane_option(root, name, views):
+    try:
+        if saved_plane_path(root, name):
+            views['measured_plane'] = {'status': 'saved'}
+    except (ControlError, OSError):
+        pass
+
+
 def archived_report(root, name):
     """Read a stand-alone v1 report through the same view contract as a completed job."""
     reference = report_ref(name)
@@ -439,6 +511,7 @@ def archived_report(root, name):
         job['result'] = compact_report(report, job)
         job['trigger_profile'] = job['result']['trigger_profile']['id']
         job['result'].update(report_views(report))
+        add_plane_option(root, name, job['result'])
         return job
     except (AttributeError, ControlError, OSError, ValueError, TypeError, KeyError):
         raise ControlError('The saved acquisition report is unavailable or invalid.', 'invalid_gegi_dual_report') from None
@@ -506,6 +579,7 @@ class DualSourceControl:
                     views = report_views(reason=error.code)
                 else:
                     views = report_views(report)
+                    add_plane_option(self.root, name, views)
             job['result'].update(views if views is not None else report_views(reason='report_unverified'))
         return job
 
@@ -521,6 +595,13 @@ class DualSourceControl:
     def pixel_energy(self, name, expected_sha256, window, pixel):
         report, digest = self._opened_report(name, expected_sha256)
         return dict(name=name, report_sha256=digest, **project_pixel_energy(report, window, pixel))
+
+    def measured_plane(self, name, expected_sha256):
+        report, digest = self._opened_report(name, expected_sha256)
+        W.require(report.get('kind') == REPORT_KIND and report.get('status') == 'completed',
+                  'Choose a completed saved acquisition.')
+        return dict(name=name, report_sha256=digest,
+                    **measured_plane_view(report, digest, saved_plane_path(self.root, name)))
 
     def single_pixel(self, name, expected_sha256, ordinal):
         return self.selected_trigger(name, expected_sha256, ordinal, 'single-pixel')
