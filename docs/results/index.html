@@ -179,27 +179,28 @@ motion shifts the energy at the same scatter angle. <a href="https://github.com/
 error from 18.77° at strip centers to 10.81° with lateral
 positions. RMS transverse error across those 16 sites was 1.75 and
 1.31 mm, respectively.</p>
-<p><a href="gegi-digital/pixel-depth.json">Read the depth points, cone comparisons and source hashes (JSON)</a>.</p><h3 id="gegi-measured-plane">Compton backprojections from two acquisitions</h3>
-<p>Each row shows one simulated 250 ms exposure. The columns group triggers by measured
-energy. These maps use reconstructed energies and waveform-fit depths at strip centers.
-All six panels share a color scale in projected trigger weight per 4 × 4 mm cell.
-The assumed plane is z = 40 mm with X and Y spanning ±120 mm.
-The model uses a nominal 5° angular width plus strip-position uncertainty.</p>
+<p><a href="gegi-digital/pixel-depth.json">Read the depth points, cone comparisons and source hashes (JSON)</a>.</p><h3 id="gegi-measured-plane">Accumulating one second of Compton backprojection</h3>
+<p>Four independent 250 ms simulated acquisitions form two disjoint half-second samples. The pooled row sums both halves
+without rescaling their weights. The three columns select measured energy within ±2% of each displayed line.
+These maps use measured energies and waveform-fit depths at strip centers on an assumed plane at
+z = 40 mm with X and Y spanning ±120 mm.
+The model uses a nominal 5° angular width plus strip-position uncertainty.
+All panels share a scale in projected trigger weight per 4 × 4 mm cell.</p>
 <figure style="margin:1rem 0"><a href="gegi-digital/measured-compton-planes.png">
-<img loading="lazy" style="width:100%;height:auto" width="1890" height="1278" src="gegi-digital/measured-compton-planes.png"
-alt="Six Compton backprojection maps on one color scale. The reference exposure is on top, the independent exposure below."></a>
-<figcaption>Brighter cells carry more projected weight. Both 661.657 keV panels peak on the negative-X side.
-The 1332.49 keV maxima lie at the image boundary in both exposures.</figcaption></figure>
+<img loading="lazy" style="width:100%;height:auto" width="1890" height="1845" src="gegi-digital/measured-compton-planes.png"
+alt="Nine Compton backprojections on one color scale. Rows show the two half-second samples and their pooled result."></a>
+<figcaption>The maximum in each line window shifts by 121–217 mm between independent halves.
+The pooled 661.657 keV maximum is (−42, 2) mm, the same cell as in the first half.
+Pooled maxima for 1173.23 keV and all energies fall on the display boundary.</figcaption></figure>
 <div role="region" aria-label="Projection counts by measured energy window" tabindex="0" style="overflow-x:auto">
-<table><thead><tr><th scope="col">Energy-window center</th><th scope="col">Reference triggers projected</th>
-<th scope="col">Reference hypotheses</th><th scope="col">Independent triggers projected</th>
-<th scope="col">Independent hypotheses</th></tr></thead><tbody><tr><th scope="row">661.657 keV</th><td>5/11</td><td>8</td><td>14/16</td><td>31</td></tr><tr><th scope="row">1173.23 keV</th><td>1/6</td><td>2</td><td>6/8</td><td>11</td></tr><tr><th scope="row">1332.49 keV</th><td>1/1</td><td>2</td><td>6/10</td><td>10</td></tr></tbody></table></div>
-<p>Across all measured energies, 58/76 reference triggers and 67/79 independent triggers contributed.
-Each two-strip trigger supplies one unit of weight, shared among compatible strip pairings and allowed interaction orders.
-Each usable hypothesis spreads its share over the displayed plane. Unresolved weight stays outside the image
-(18 reference units and 12 independent units).</p>
-<p>These sparse backprojections depend on the assumed plane and its boundaries. Detector sensitivity is uncalibrated,
-and source position, distance and activity remain undetermined.
+<table><caption>Triggers projected / selected and number of projected hypotheses</caption><thead><tr>
+<th scope="col">Exposure</th><th scope="col">Qualified ADC time</th><th scope="col">All energies</th>
+<th scope="col">661.657 keV</th><th scope="col">1173.23 keV</th><th scope="col">1332.49 keV</th></tr></thead><tbody><tr><th scope="row">First half · 0.5 s</th><td>453.483 ms</td><td>145/184 triggers<br>221 hypotheses</td><td>29/37 triggers<br>57 hypotheses</td><td>11/19 triggers<br>19 hypotheses</td><td>8/19 triggers<br>12 hypotheses</td></tr><tr><th scope="row">Second half · 0.5 s</th><td>452.636 ms</td><td>109/140 triggers<br>150 hypotheses</td><td>20/30 triggers<br>36 hypotheses</td><td>12/15 triggers<br>16 hypotheses</td><td>5/5 triggers<br>10 hypotheses</td></tr><tr><th scope="row">Pooled · 1 s</th><td>906.120 ms</td><td>254/324 triggers<br>371 hypotheses</td><td>49/67 triggers<br>93 hypotheses</td><td>23/34 triggers<br>35 hypotheses</td><td>13/24 triggers<br>22 hypotheses</td></tr></tbody></table></div>
+<p>The pooled sample includes 3,905 qualified triggers, including
+324 two-strip triggers. Each two-strip trigger shares at most one unit
+of weight across compatible strip pairings and allowed interaction orders.
+The pooled map leaves 70 units unresolved.
+The split shifts and boundary maxima leave source positions unresolved on this plane. Detector sensitivity is uncalibrated.
 <a href="gegi-digital/measured-compton-planes.json">View the acquisition counts and source hashes (JSON)</a>.</p><h2 id="gegi-double-pulse">When can GeGI resolve two close pulses?</h2>
 <p>With nominal noise, all groups sustained two matched triggers from <strong>300 ns</strong>
 on this scan. Same- and adjacent-strip groups met both energy and XY tolerances from <strong>1000 ns</strong>.

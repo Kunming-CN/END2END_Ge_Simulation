@@ -7,6 +7,7 @@ import json
 import math
 from pathlib import Path
 import re
+from struct import unpack_from
 
 
 DIGITAL_OBSERVABLES = {
@@ -26,10 +27,10 @@ PIXEL_DEPTH_FILE = 'results/gegi-digital/pixel-depth.json'
 MEASURED_PLANE_FILE = 'results/gegi-digital/measured-compton-planes.json'
 MEASURED_PLANE_IMAGE = 'results/gegi-digital/measured-compton-planes.png'
 MEASURED_PLANE_SHA256 = {
-    'reference': '6ee616532ea0f13a653cf7e8cb4f057536c05f467008f823b5b855dcf59c9cff',
-    'independent': '5944b125333c3a6008de5121ff88c807d8d3a542024827133a71a4c046b46717',
-    'figure': '2cd496225e1e81a095bae70a03a18dcafca9cad1f989b42ec0293ea1afab2b38',
+    'study': '4306d85b53f6d28ddd0fcb9bfea23cf0af658a05646bbed82b7be7478d127727',
+    'figure': 'f8623bd4f3fd6f99e51774011a0349a133003ce9877c54e8ed149d0f194ee2ab',
 }
+MEASURED_PLANE_VIEWS = {'first_half': 'First half', 'second_half': 'Second half', 'full': 'Pooled'}
 PIXEL_DEPTH_SHA256 = {
     'isolated_study': 'fbf5f9eb76bee6c82f256de3515c350df4c350539c8f5062a7fd0c965794a399',
     'two_site_study': '308a0f5ec78757cc929d26b2d3280d78c685b91b38ee88837b157178cb85e2d7',
@@ -671,85 +672,107 @@ The dashed horizontal line is the detector midplane. Marks below the plot show {
 
 
 def attach_measured_plane(site, paths):
-    """Bind the published image and its census to the two frozen measured maps."""
+    """Bind the three-view image and public census to the frozen exposure study."""
     inputs = {}
     for (key, digest), path in zip(MEASURED_PLANE_SHA256.items(), paths, strict=True):
         raw = path.read_bytes()
         if sha256(raw).hexdigest() != digest:
             raise ValueError(f'Saved GeGI plane input changed: {key}')
         inputs[key] = raw
-    reference, independent = (json.loads(gzip.decompress(inputs[key])) for key in ('reference', 'independent'))
-    grid = reference['grid']
-    sigma = reference['model']['angular_nuisance_sigma_deg']
-    windows = [key for key in reference['layers'] if key.endswith('_keV')]
-    if (grid != independent['grid'] or sigma != independent['model']['angular_nuisance_sigma_deg']
-            or len(windows) != 3 or reference['layers'].keys() != independent['layers'].keys()
-            or reference['input_sha256']['acquisition'] != PIXEL_DEPTH_SHA256['acquisition']
-            or reference['input_sha256']['acquisition'] == independent['input_sha256']['acquisition']
-            or reference['selection']['clock_live_time_ns'] != independent['selection']['clock_live_time_ns']):
-        raise ValueError('The GeGI measured plane comparison must share one grid, kernel and energy selection')
-    exposures = []
-    for report in (reference, independent):
-        layers = report['layers']
-        selection = report['selection']
-        if (report['kind'] != 'gegi_continuous_measured_plane_backprojection_v1'
-                or layers['all']['triggers'] != selection['two_strip_triggers']
-                or any(not math.isclose(row['projected_mass'] + row['unresolved_mass'], row['triggers'])
-                       or not 0 <= row['triggers_with_geometry'] <= min(row['hypotheses'], row['triggers'])
-                       for row in layers.values())):
+    study = json.loads(gzip.decompress(inputs['study']))
+    first, second, pooled = (study['views'][key] for key in MEASURED_PLANE_VIEWS)
+    blocks = first['exposures'] + second['exposures']
+    if (study['kind'] != 'gegi_independent_measured_plane_exposure_comparison_v1'
+            or len(first['exposures']) != 2 or len(second['exposures']) != 2
+            or len(set(blocks)) != 4 or blocks != pooled['exposures']
+            or blocks != [record['name'] for record in study['inputs']]
+            or any(half['selection']['clock_live_time_ns'] != 5e8 for half in (first, second))):
+        raise ValueError('The GeGI plane comparison must pool two disjoint half-second views')
+    windows = [label for label in pooled['layers'] if label.endswith('_keV')]
+    counts = ('triggers', 'triggers_with_geometry', 'allowed_hypotheses', 'hypotheses',
+              'projected_mass', 'unresolved_mass')
+    selection_keys = ('clock_live_time_ns', 'qualified_adc_live_time_ns', 'qualified_triggers', 'qualified_energies',
+                      'two_strip_triggers')
+    if (len(windows) != 3 or any(view['layers'].keys() != pooled['layers'].keys() for view in (first, second))
+            or any(pooled['selection'][key] != first['selection'][key] + second['selection'][key]
+                   for key in selection_keys)
+            or any(not math.isclose(layer[key], first['layers'][label][key] + second['layers'][label][key],
+                                    abs_tol=1e-9)
+                   for label, layer in pooled['layers'].items() for key in counts)):
+        raise ValueError('Pooled GeGI exposure and trigger counts must sum over the two halves')
+    views = {}
+    for name, view in study['views'].items():
+        layers, selection = view['layers'], view['selection']
+        if (layers['all']['triggers'] != selection['two_strip_triggers']
+                or not 0 < selection['qualified_adc_live_time_ns'] <= selection['clock_live_time_ns']
+                or any(not math.isclose(layer['projected_mass'] + layer['unresolved_mass'], layer['triggers'],
+                                        abs_tol=1e-9)
+                       or not 0 <= layer['triggers_with_geometry'] <= min(layer['hypotheses'], layer['triggers'])
+                       for layer in layers.values())):
             raise ValueError('Saved GeGI measured plane trigger counts do not close')
-        exposures.append(dict(
-            clock_live_time_ns=selection['clock_live_time_ns'],
-            qualified_adc_live_time_ns=selection['qualified_adc_live_time_ns'],
-            layers={label: {v: layers[label][v] for v in
-                            ('triggers', 'triggers_with_geometry', 'hypotheses', 'projected_mass', 'unresolved_mass')}
-                    for label in ('all', *windows)}))
-    summary = dict(kind='gegi_measured_plane_public_v1', source_sha256=MEASURED_PLANE_SHA256,
-                   grid={key: grid[key] for key in ('assumed_z_mm', 'extent_mm', 'step_mm')},
-                   angular_nuisance_sigma_deg=sigma, windows=windows, exposures=exposures)
-    (site/MEASURED_PLANE_IMAGE).write_bytes(inputs['figure'])
+        views[name] = dict(selection={key: selection[key] for key in selection_keys},
+                           layers={label: {key: layer[key] for key in (*counts, 'peaks')}
+                                   for label, layer in layers.items()})
+    image = inputs['figure']
+    grid = study['grid']
+    summary = dict(kind='gegi_measured_plane_public_v2', source_sha256=MEASURED_PLANE_SHA256,
+                   grid={key: grid[key] for key in ('assumed_z_mm', 'extent_mm', 'step_mm')}, windows=windows,
+                   angular_nuisance_sigma_deg=5.,
+                   image_size_px=unpack_from('>II', image, 16), energy_windows=study['energy_windows'], views=views,
+                   split_peak_separation_mm=study['split_peak_separation_mm'])
+    (site/MEASURED_PLANE_IMAGE).write_bytes(image)
     (site/MEASURED_PLANE_FILE).write_text(json.dumps(summary, allow_nan=False, separators=(',', ':'))+'\n',
                                          encoding='utf-8', newline='\n')
 
 
 def measured_plane_section(data):
-    exposures = data['exposures']
     grid = data['grid']
     step = grid['step_mm']
-    all_triggers = [row['layers']['all'] for row in exposures]
-    counts = [f'{row["triggers_with_geometry"]}/{row["triggers"]}' for row in all_triggers]
-    unresolved = [f'{row["unresolved_mass"]:g}' for row in all_triggers]
+    windows, views = data['windows'], data['views']
+    headings = ''.join(f'<th scope="col">{float(label.removesuffix("_keV")):g} keV</th>' for label in windows)
     rows = []
-    for label in data['windows']:
-        cells = []
-        for exposure in exposures:
-            row = exposure['layers'][label]
-            cells.append(f'<td>{row["triggers_with_geometry"]}/{row["triggers"]}</td><td>{row["hypotheses"]}</td>')
-        energy = float(label.removesuffix('_keV'))
-        rows.append(f'<tr><th scope="row">{energy:g} keV</th>{"".join(cells)}</tr>')
+    for key, name in MEASURED_PLANE_VIEWS.items():
+        selection = views[key]['selection']
+        nominal = selection['clock_live_time_ns']/1e9
+        qualified = selection['qualified_adc_live_time_ns']/1e6
+        layers = [views[key]['layers'][label] for label in ('all', *windows)]
+        cells = ''.join(f'<td>{layer["triggers_with_geometry"]}/{layer["triggers"]} triggers<br>'
+                        f'{layer["hypotheses"]} hypotheses</td>' for layer in layers)
+        rows.append(f'<tr><th scope="row">{name} · {nominal:g} s</th><td>{qualified:.3f} ms</td>{cells}</tr>')
+    pooled = views['full']
+    strongest = pooled['layers'][windows[0]]['peaks'][0]['position_mm']
+    strongest_xy = ', '.join(f'{coord:g}'.replace('-', '−') for coord in strongest[:2])
+    separations = [data['split_peak_separation_mm'][label] for label in windows]
+    edge_labels = [f'{float(label.removesuffix("_keV")):g} keV' for label in windows
+                   if pooled['layers'][label]['peaks'][0]['on_image_edge']]
+    if pooled['layers']['all']['peaks'][0]['on_image_edge']:
+        edge_labels.append('all energies')
+    edges = ' and '.join(edge_labels)
+    width, height = data['image_size_px']
     image = MEASURED_PLANE_IMAGE.removeprefix('results/')
     summary = MEASURED_PLANE_FILE.removeprefix('results/')
-    return f'''<h3 id="gegi-measured-plane">Compton backprojections from two acquisitions</h3>
-<p>Each row shows one simulated {exposures[0]['clock_live_time_ns']/1e6:g} ms exposure. The columns group triggers by measured
-energy. These maps use reconstructed energies and waveform-fit depths at strip centers.
-All six panels share a color scale in projected trigger weight per {step:g} × {step:g} mm cell.
-The assumed plane is z = {grid['assumed_z_mm']:g} mm with X and Y spanning ±{grid['extent_mm']:g} mm.
-The model uses a nominal {data['angular_nuisance_sigma_deg']:g}° angular width plus strip-position uncertainty.</p>
+    return f'''<h3 id="gegi-measured-plane">Accumulating one second of Compton backprojection</h3>
+<p>Four independent 250 ms simulated acquisitions form two disjoint half-second samples. The pooled row sums both halves
+without rescaling their weights. The three columns select measured energy within ±2% of each displayed line.
+These maps use measured energies and waveform-fit depths at strip centers on an assumed plane at
+z = {grid['assumed_z_mm']:g} mm with X and Y spanning ±{grid['extent_mm']:g} mm.
+The model uses a nominal {data['angular_nuisance_sigma_deg']:g}° angular width plus strip-position uncertainty.
+All panels share a scale in projected trigger weight per {step:g} × {step:g} mm cell.</p>
 <figure style="margin:1rem 0"><a href="{image}">
-<img loading="lazy" style="width:100%;height:auto" width="1890" height="1278" src="{image}"
-alt="Six Compton backprojection maps on one color scale. The reference exposure is on top, the independent exposure below."></a>
-<figcaption>Brighter cells carry more projected weight. Both 661.657 keV panels peak on the negative-X side.
-The 1332.49 keV maxima lie at the image boundary in both exposures.</figcaption></figure>
+<img loading="lazy" style="width:100%;height:auto" width="{width}" height="{height}" src="{image}"
+alt="Nine Compton backprojections on one color scale. Rows show the two half-second samples and their pooled result."></a>
+<figcaption>The maximum in each line window shifts by {min(separations):.0f}–{max(separations):.0f} mm between independent halves.
+The pooled 661.657 keV maximum is ({strongest_xy}) mm, the same cell as in the first half.
+Pooled maxima for {edges} fall on the display boundary.</figcaption></figure>
 <div role="region" aria-label="Projection counts by measured energy window" tabindex="0" style="overflow-x:auto">
-<table><thead><tr><th scope="col">Energy-window center</th><th scope="col">Reference triggers projected</th>
-<th scope="col">Reference hypotheses</th><th scope="col">Independent triggers projected</th>
-<th scope="col">Independent hypotheses</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
-<p>Across all measured energies, {counts[0]} reference triggers and {counts[1]} independent triggers contributed.
-Each two-strip trigger supplies one unit of weight, shared among compatible strip pairings and allowed interaction orders.
-Each usable hypothesis spreads its share over the displayed plane. Unresolved weight stays outside the image
-({unresolved[0]} reference units and {unresolved[1]} independent units).</p>
-<p>These sparse backprojections depend on the assumed plane and its boundaries. Detector sensitivity is uncalibrated,
-and source position, distance and activity remain undetermined.
+<table><caption>Triggers projected / selected and number of projected hypotheses</caption><thead><tr>
+<th scope="col">Exposure</th><th scope="col">Qualified ADC time</th><th scope="col">All energies</th>
+{headings}</tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+<p>The pooled sample includes {pooled['selection']['qualified_triggers']:,} qualified triggers, including
+{pooled['selection']['two_strip_triggers']:,} two-strip triggers. Each two-strip trigger shares at most one unit
+of weight across compatible strip pairings and allowed interaction orders.
+The pooled map leaves {pooled['layers']['all']['unresolved_mass']:g} units unresolved.
+The split shifts and boundary maxima leave source positions unresolved on this plane. Detector sensitivity is uncalibrated.
 <a href="{summary}">View the acquisition counts and source hashes (JSON)</a>.</p>'''
 
 

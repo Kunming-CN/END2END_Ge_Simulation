@@ -64,21 +64,32 @@ class PublicationTests(unittest.TestCase):
 
     def test_measured_plane_distinguishes_trigger_denominators_and_hypotheses(self):
         import gegi_digital_display as exhibit
-        def exposure(total, projected, unresolved, line_total, line_projected, line_hypotheses):
-            return dict(clock_live_time_ns=250_000_000., layers={
-                'all': dict(triggers=total, triggers_with_geometry=projected, unresolved_mass=unresolved),
-                '661.657_keV': dict(triggers=line_total, triggers_with_geometry=line_projected,
-                                    hypotheses=line_hypotheses)})
-        data = dict(grid=dict(step_mm=4., extent_mm=120., assumed_z_mm=40.),
-                    angular_nuisance_sigma_deg=5., windows=['661.657_keV'],
-                    exposures=[exposure(76, 58, 18, 11, 5, 8), exposure(79, 67, 12, 16, 14, 31)])
+
+        labels = ['661.657_keV', '1173.23_keV', '1332.49_keV']
+        def exposure(seconds, milliseconds, qualified, groups):
+            layers = {label: dict(triggers=total, triggers_with_geometry=projected, hypotheses=hypotheses,
+                                  unresolved_mass=total-projected,
+                                  peaks=[dict(position_mm=[-42., 2., 40.], on_image_edge=label in ('all', labels[1]))])
+                      for label, (total, projected, hypotheses) in zip(['all', *labels], groups, strict=True)}
+            return dict(selection=dict(clock_live_time_ns=seconds*1e9, qualified_adc_live_time_ns=milliseconds*1e6,
+                                       qualified_triggers=qualified, two_strip_triggers=groups[0][0]), layers=layers)
+
+        views = dict(first_half=exposure(.5, 453.48338, 2031, [(184, 145, 221), (37, 29, 57), (19, 11, 19), (19, 8, 12)]),
+                     second_half=exposure(.5, 452.63636, 1874, [(140, 109, 150), (30, 20, 36), (15, 12, 16), (5, 5, 10)]),
+                     full=exposure(1., 906.11974, 3905, [(324, 254, 371), (67, 49, 93), (34, 23, 35), (24, 13, 22)]))
+        data = dict(grid=dict(step_mm=4., extent_mm=120., assumed_z_mm=40.), image_size_px=[1890, 1845],
+                    angular_nuisance_sigma_deg=5., windows=labels, views=views,
+                    split_peak_separation_mm=dict(zip(labels, [190.5, 217.3, 121.5])))
         panel = exhibit.measured_plane_section(data)
         self.assertIn('src="gegi-digital/measured-compton-planes.png"', panel)
         self.assertIn('z = 40 mm with X and Y spanning ±120 mm', panel)
         self.assertIn('4 × 4 mm cell', panel)
-        self.assertIn('>661.657 keV</th><td>5/11</td><td>8</td><td>14/16</td><td>31</td>', panel)
-        self.assertIn('58/76 reference triggers and 67/79 independent triggers', panel)
-        self.assertIn('18 reference units and 12 independent units', panel)
+        self.assertIn('First half · 0.5 s</th><td>453.483 ms</td><td>145/184 triggers<br>221 hypotheses', panel)
+        self.assertIn('Second half · 0.5 s</th><td>452.636 ms</td><td>109/140 triggers<br>150 hypotheses', panel)
+        self.assertIn('Pooled · 1 s</th><td>906.120 ms</td><td>254/324 triggers<br>371 hypotheses', panel)
+        self.assertIn('<td>49/67 triggers<br>93 hypotheses</td>', panel)
+        self.assertIn('1173.23 keV and all energies fall on the display boundary.', panel)
+        self.assertIn('pooled map leaves 70 units unresolved', panel)
 
     def test_gegi_replacement_allows_history_only_for_predecessor(self):
         import build_site as builder

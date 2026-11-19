@@ -710,8 +710,8 @@ if __name__ == '__main__':
     parser.add_argument('--gegi-pixel-depth', type=Path, nargs=8,
                         metavar=('ISOLATED', 'PAIRED', 'TABLE', 'ACQUISITION', 'JOINT', 'ANGLES', 'KINEMATICS', 'HOLDOUT'),
                         help='Add saved apparent-depth and conditional cone results with --gegi-fast-gate')
-    parser.add_argument('--gegi-measured-plane', type=Path, nargs=3, metavar=('REFERENCE', 'INDEPENDENT', 'FIGURE'),
-                        help='Add measured plane backprojections and counts with --gegi-fast-gate')
+    parser.add_argument('--gegi-measured-plane', type=Path, nargs=2, metavar=('EXPOSURE_STUDY', 'FIGURE'),
+                        help='Add cumulative measured plane backprojections and counts with --gegi-fast-gate')
     parser.add_argument('--gamma-showcase',type=Path,help='Copy a completed hash-checked saved gamma showcase; no scientific work or export')
     parser.add_argument('--ring-results',type=Path,help='Copy complete saved GeRC02/KMRC01 10K results and refresh all four current cases; no computation')
     parser.add_argument('--gegi-results',type=Path,nargs='+',help='Render one or two completed checked GeGI runs onto the saved website; no scientific work')
