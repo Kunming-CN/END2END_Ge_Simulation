@@ -1646,6 +1646,15 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run('finishFeature()');await staleRead;
   assert.ok(descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('predates capture of the fast neighbor readings')));
   assert.ok(!descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('80 ns after recording start')));
+  const rejectedPanel=run(`dualAcquisitionTriggerPanel({result:{acquisition_triggers:{status:'available',count:598,
+    trigger:{ordinal:598,trigger_time_ns:2000,rise_end_ns:2340,energy_keV:null,x_sum_keV:193.66,y_sum_keV:218.18,
+      x_collecting_strips:[3,7],y_collecting_strips:[22,23,30,31],guard_contact_ids:[17,34],
+      flags:['guard_collection'],event_energy_flags:['guard_collection','face_energy_mismatch']}}}})`);
+  const rejectedText=descendants(rejectedPanel).map(element=>element.textContent).join('\n');
+  assert.match(rejectedText,/Slow energy Unavailable/);
+  assert.match(rejectedText,/Y05, Y06, Y13, Y14 · Slow strip sum 218.18 keV/);
+  assert.match(rejectedText,/X guard, Y guard · Rise ended 340 ns/);
+  assert.match(rejectedText,/Event energy flags · guard collection · face energy mismatch/);
   run(`const measuredAxes={x:{status:'estimated',position_mm:4.25,slot:0},
       y:{status:'estimated',position_mm:-9.4,slot:1},z:{status:'estimated',position_mm:-1.3}};
     const positionRows=[{...firstFeature,x:{...xFirst,preamp_cfd50_ns:-1.25},y:{...yFirst,preamp_cfd50_ns:null},

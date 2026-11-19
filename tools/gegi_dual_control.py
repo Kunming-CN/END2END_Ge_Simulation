@@ -266,6 +266,33 @@ def two_strip_rows(report):
     return (row for row in report['triggers'] if row.get('two_strip_pairings') is not None)
 
 
+def acquisition_trigger(report, ordinal):
+    rows = report['triggers']
+    W.require(type(rows) is list and len(rows) == report['counts']['qualified_triggers']
+              and 1 <= ordinal <= len(rows), 'Choose a recorded trigger number in the saved acquisition.')
+    row = rows[ordinal-1]
+    time, end = row['trigger_time_ns'], row['rise_end_ns']
+    W.require(number(time) and number(end) and 0 <= time <= end, 'Invalid recorded rise times.')
+    result = dict(ordinal=ordinal, trigger_time_ns=time, rise_end_ns=end)
+    for key, allowed in (('x_collecting_strips', X_IDS), ('y_collecting_strips', Y_IDS), ('guard_contact_ids', (17, 34))):
+        contacts = row[key]
+        W.require(type(contacts) is list and all(type(i) is int and i in allowed for i in contacts)
+                  and len(contacts) == len(set(contacts)), 'Invalid recorded contact IDs.')
+        result[key] = contacts
+    for key in ('energy_keV', 'x_sum_keV', 'y_sum_keV'):
+        value = row[key]
+        W.require(value is None or (number(value) and value >= 0), 'Invalid recorded slow energy.')
+        result[key] = value
+    single, multi = row['single_pixel_energy_keV'], row['additional_multi_strip_energy_keV']
+    W.require((single is None or multi is None) and row['energy_keV'] == (multi if single is None else single),
+              'Recorded trigger energy differs from the spectrum selection.')
+    for key in ('flags', 'event_energy_flags'):
+        flags = row[key]
+        W.require(type(flags) is list and all(type(f) is str for f in flags), 'Invalid recorded trigger flags.')
+        result[key] = flags
+    return result
+
+
 def two_strip_adc_contacts(xs, ys):
     collectors = set(xs + ys)
     nearby = {cid for family, ids in ((xs, X_IDS), (ys, Y_IDS))
@@ -418,6 +445,12 @@ def report_views(report=None, *, reason=None):
         except (ControlError, KeyError, TypeError):
             features['reason'] = 'invalid_features'
     views = dict(pixel_map=pixels, single_pixel_features=features)
+    if pixels['status'] in ('available', 'empty') and report['triggers']:
+        try:
+            views['acquisition_triggers'] = dict(status='available', count=len(report['triggers']),
+                                                 trigger=acquisition_trigger(report, 1))
+        except (ControlError, KeyError, TypeError):
+            views['acquisition_triggers'] = dict(status='unavailable')
     if pixels['status'] in ('available', 'empty') and 'two_strip_pairings' in report['design']:
         try:
             rows = two_strip_rows(report)
@@ -644,7 +677,9 @@ class DualSourceControl:
         try:
             W.require(report['kind'] == REPORT_KIND and report['status'] == 'completed',
                       'Choose a completed saved acquisition.')
-            if mode == 'single-pixel':
+            if mode == 'acquisition-trigger':
+                trigger = acquisition_trigger(report, ordinal)
+            elif mode == 'single-pixel':
                 count = report['counts']['single_pixel_energies']
                 W.require(type(count) is int and ordinal <= count,
                           'Choose a single-pixel trigger number in the saved acquisition.')

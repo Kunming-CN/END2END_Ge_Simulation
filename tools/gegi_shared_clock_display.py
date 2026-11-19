@@ -277,6 +277,8 @@ Trigger {second['trigger_index']} had guard-electrode activity and no accepted e
 
 
 def section(site, plane):
+    from gegi_merged_component_display import section as component_section
+
     data = json.loads((site/SUMMARY).read_bytes())
     validate_plane_binding(data, plane)
     views = data['views']
@@ -333,5 +335,6 @@ group, left {all_refs['ambiguous']} ambiguous and linked {all_refs['merged']} to
 two groups fell outside the two-strip selection. For each example, the recovered ADC stream's checksum matched the
 original acquisition and the local filtered samples reproduced the recorded rise.</p>
 {merged_section(site, data)}
+{component_section(site, data)}
 {control_section(data['controls'])}
 <p><a href="{relative}">Open the timing counts, definitions and source hashes (JSON)</a>.</p>'''

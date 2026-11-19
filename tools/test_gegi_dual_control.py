@@ -327,6 +327,34 @@ class DualControlTests(unittest.TestCase):
                          ['uniform-solid-angle'])
         self.assertEqual(self.request(alternate_route)[0], 200)
 
+    def test_original_trigger_number_includes_guard_and_null_energy(self):
+        _, options = self.request('options')
+        report = fixture_report(options['libraries'], [18, 74], .05, 18)
+        for row in report['triggers']:
+            energy = row['single_pixel_energy_keV'] or row['additional_multi_strip_energy_keV']
+            row.update(rise_end_ns=row['trigger_time_ns'] + 20, energy_keV=energy,
+                       x_sum_keV=energy, y_sum_keV=energy, flags=[], event_energy_flags=[])
+        rejected = trigger(90, x=(3, 7), y=(22, 23, 30, 31), guard=(17, 34))
+        rejected.update(rise_end_ns=95, energy_keV=None, x_sum_keV=193.66, y_sum_keV=218.18,
+                        flags=['guard_collection'], event_energy_flags=['guard_collection', 'face_energy_mismatch'])
+        report['triggers'].append(rejected)
+        report['counts'].update(qualified_triggers=3, triggers_without_energy=1)
+        W.write(self.root/G.report_ref('original'), report)
+        _, job = self.request('state?name=original')
+        view = job['result']['acquisition_triggers']
+        self.assertEqual((view['count'], view['trigger']['ordinal'], view['trigger']['energy_keV']), (3, 1, 15))
+        self.assertNotIn('large_private_array', view['trigger'])
+        route = 'acquisition-trigger?' + urlencode(dict(name='original', report_sha256=job['report_sha256']))
+        self.assertEqual(self.request(route + '&ordinal=3', headers={'X-Control-Token': 'wrong'})[0], 403)
+        status, selected = self.request(route + '&ordinal=3')
+        self.assertEqual(status, 200)
+        row = selected['trigger']
+        self.assertIsNone(row['energy_keV'])
+        self.assertEqual(row['ordinal'], 3)
+        for field in ('guard_contact_ids', 'event_energy_flags', 'x_sum_keV', 'y_sum_keV'):
+            self.assertEqual(row[field], rejected[field])
+        self.assertEqual(self.request(route + '&ordinal=4')[0], 400)
+
     def test_protected_feature_navigation_reads_only_selected_projection(self):
         _, options = self.request('options')
         payload = fixture_report(options['libraries'], [18, 74], .05, 18)

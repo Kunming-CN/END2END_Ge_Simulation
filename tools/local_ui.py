@@ -301,7 +301,8 @@ class Handler(BaseHTTPRequestHandler):
                 pixel = (int(query['x'][0]), int(query['y'][0])) if 'x' in query else None
                 control = self.server.workflow_controller.gegi_dual_source()
                 return self.send_data(200, control.pixel_energy(query['name'][0], query['report_sha256'][0], window, pixel))
-            if parts.path in ('/api/workflow/gegi-dual/single-pixel', '/api/workflow/gegi-dual/two-strip'):
+            if parts.path in ('/api/workflow/gegi-dual/single-pixel', '/api/workflow/gegi-dual/two-strip',
+                              '/api/workflow/gegi-dual/acquisition-trigger'):
                 query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
                 if (parts.fragment or set(query) != {'name', 'report_sha256', 'ordinal'}
                         or any(len(values) != 1 for values in query.values()) or self.server.workflow_controller is None):

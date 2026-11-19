@@ -465,7 +465,8 @@ function dualApparentDepth(depth){
 function dualTriggerPanel(job,view,{mode,title,description,showReadings}){
   const panel=node('details'),first=view.trigger,count=view.count;
   panel.append(node('summary',title),node('p',description,'muted'));
-  const label=node('label',(mode==='single-pixel'?'Single-pixel':'Two-strip')+' trigger number (1–'+count+')');
+  const numberLabel={'single-pixel':'Single-pixel','two-strip':'Two-strip','acquisition-trigger':'Recorded'};
+  const label=node('label',numberLabel[mode]+' trigger number (1–'+count+')');
   const input=node('input');
   input.type='number';input.min='1';input.max=String(count);input.step='1';input.value=String(first.ordinal);
   label.append(input);
@@ -500,7 +501,7 @@ function dualTriggerPanel(job,view,{mode,title,description,showReadings}){
   async function select(wanted){
     if(!Number.isSafeInteger(wanted)||wanted<1||wanted>count){
       input.value=String(ordinal);
-      status.textContent='Enter a '+mode+' trigger number from 1 through '+count+'.';
+      status.textContent='Enter a '+numberLabel[mode].toLowerCase()+' trigger number from 1 through '+count+'.';
       return;
     }
     ordinal=wanted;input.value=String(wanted);navigationState();
@@ -523,6 +524,26 @@ function dualTriggerPanel(job,view,{mode,title,description,showReadings}){
   input.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();return select(Number(input.value));}};
   render(first);navigationState();
   return panel;
+}
+function dualAcquisitionTriggerPanel(job){
+  const view=job.result.acquisition_triggers;
+  if(!view)return null;
+  if(view.status!=='available')return node('p','Detailed recorded trigger outcomes are unavailable in this report.','muted');
+  return dualTriggerPanel(job,view,{mode:'acquisition-trigger',title:'Inspect any recorded trigger',
+    description:'Use the trigger number in the original acquisition, including triggers without an accepted energy.',
+    showReadings:(target,trigger)=>{
+      for(const face of ['X','Y']){
+        const key=face.toLowerCase(),strips=trigger[key+'_collecting_strips'].map(id=>dualStripLabel(face,id));
+        target.append(node('p',face+' collecting strips · '+(strips.join(', ')||'None')+' · Slow strip sum '+
+          dualFeatureValue(trigger[key+'_sum_keV'],'keV')));
+      }
+      const guards=trigger.guard_contact_ids.map(id=>id===17?'X guard':'Y guard');
+      target.append(node('p','Collecting guards · '+(guards.join(', ')||'None')+' · Rise ended '+
+        (trigger.rise_end_ns-trigger.trigger_time_ns)+' ns after trigger'));
+      for(const [label,flags] of [['Trigger',trigger.flags],['Event energy',trigger.event_energy_flags]]){
+        if(flags.length)target.append(node('p',label+' flags · '+flags.map(f=>f.replaceAll('_',' ')).join(' · ')));
+      }
+    }});
 }
 function dualSinglePixelPanel(job){
   const features=job.result.single_pixel_features;
@@ -792,6 +813,8 @@ function showDualJob(job){
       content.append(node('p',c.qualified_triggers+' qualified triggers · '+c.single_pixel_energies+' single-pixel energies · '+c.additional_multi_strip_energies+' additional multi-strip energies · '+c.triggers_without_energy+' without an energy.'));
       if(result.spectra?.combined)content.append(dualSpectrum(result.spectra.combined,c.qualified_triggers));
     }
+    const recorded=dualAcquisitionTriggerPanel(job);
+    if(recorded)content.append(recorded);
     content.append(dualSinglePixelPanel(job));
     const twoStrip=dualTwoStripPanel(job);
     if(twoStrip)content.append(twoStrip);
