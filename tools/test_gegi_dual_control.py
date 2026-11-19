@@ -9,6 +9,7 @@ import threading
 import time
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 import gegi_dual_control as G
@@ -320,6 +321,14 @@ class DualControlTests(unittest.TestCase):
                        method='family_template_transfer', tested_energies_keV=[500],
                        axes={**axes, 'y': dict(status='ratio_outside_calibration', position_mm=None, slot=None)})
         payload['triggers'] = [first, measured(40, 400, full), multi, measured(80, 680, partial)]
+        pixel_depths = {
+            2: dict(status='estimated', apparent_depth_mm=-1.45, cfd_x_minus_y_ns=-4.,
+                    evidence_level='local_independent_off_center_check'),
+            3: dict(status='outside_calibrated_cfd_range', apparent_depth_mm=None, cfd_x_minus_y_ns=150.,
+                    evidence_level='center_calibration_only'),
+        }
+        payload['triggers'][1]['pixel_depth'] = {**pixel_depths[2], 'debug': 'private-pixel-data'}
+        payload['triggers'][3]['pixel_depth'] = pixel_depths[3]
         payload['counts'].update(qualified_triggers=4, single_pixel_energies=3, qualified_energies=4)
         for name, counts in (('single_pixel', [1, 1, 1]), ('additional_multi_strip', [1, 0, 0]), ('combined', [2, 1, 1])):
             payload['spectra'][name].update(bin_edges_keV=[0, 250, 500, 750], counts=counts, entries=sum(counts))
@@ -332,6 +341,7 @@ class DualControlTests(unittest.TestCase):
         self.assertEqual(view['trigger']['nominal_position'], first['nominal_position'])
         self.assertEqual(view['trigger']['x']['preamp_cfd50_ns'], -1.25)
         self.assertIsNone(view['trigger']['y']['preamp_cfd50_ns'])
+        self.assertNotIn('pixel_depth', view['trigger'])
         for ordinal, estimate in ((2, full), (3, partial)):
             query = urlencode(dict(name='positions', report_sha256=job['report_sha256'], ordinal=ordinal))
             status, detail = self.request('single-pixel?' + query)
@@ -346,7 +356,11 @@ class DualControlTests(unittest.TestCase):
             self.assertEqual(position['axes']['x'], dict(status='estimated', position_mm=4.25, slot=0))
             self.assertEqual(position['axes']['y'], estimate['axes']['y'])
             self.assertEqual(detail['trigger']['y']['preamp_cfd50_ns'], 2.75)
+            self.assertEqual(detail['trigger']['pixel_depth'], pixel_depths[ordinal])
             self.assertNotIn('private-fit', json.dumps(detail))
+            self.assertNotIn('private-pixel-data', json.dumps(detail))
+        with self.assertRaisesRegex(G.ControlError, 'Invalid apparent pixel depth'):
+            G.pixel_depth_record({**pixel_depths[3], 'apparent_depth_mm': 4.})
 
     def test_two_strip_pairing_view_retains_alternatives_and_reads_one_trigger(self):
         _, options = self.request('options')
@@ -371,7 +385,15 @@ class DualControlTests(unittest.TestCase):
                         orders.append(dict(site_index_order=[first, second], kinematically_allowed=allowed,
                                            half_angle_deg=math.degrees(math.acos(cosine)) if allowed else None,
                                            cos_theta=cosine))
-                pairings.append(dict(index=index, energy_compatible=compatible, sites=sites, compton_orders=orders))
+                paired = dict(index=index, energy_compatible=compatible, sites=sites, compton_orders=orders)
+                if time == 60 and compatible:
+                    paired['pixel_depths'] = [
+                        dict(status='estimated', apparent_depth_mm=index-1.25, cfd_x_minus_y_ns=20.+index,
+                             evidence_level='local_independent_off_center_check'),
+                        dict(status='outside_calibrated_cfd_range', apparent_depth_mm=None, cfd_x_minus_y_ns=123.+index,
+                             evidence_level='center_calibration_only'),
+                    ]
+                pairings.append(paired)
             features = dict(compatible_pairing_count=sum(pair['energy_compatible'] for pair in pairings),
                             pairings=pairings, flags=['overlapping_x_neighborhoods'])
             return {**trigger(time, multi=sum(values), x=xs, y=ys), 'two_strip_pairings': features}
@@ -391,6 +413,7 @@ class DualControlTests(unittest.TestCase):
         pairs = first['two_strip_pairings']
         self.assertEqual(pairs['compatible_pairing_count'], 1)
         self.assertEqual([pair['energy_compatible'] for pair in pairs['pairings']], [True, False])
+        self.assertTrue(all('pixel_depths' not in pair for pair in pairs['pairings']))
         self.assertEqual(pairs['flags'], ['overlapping_x_neighborhoods'])
         orders = pairs['pairings'][0]['compton_orders']
         self.assertEqual([order['kinematically_allowed'] for order in orders], [True, False])
@@ -407,9 +430,59 @@ class DualControlTests(unittest.TestCase):
         self.assertEqual(selected['two_strip_pairings']['compatible_pairing_count'], 2)
         self.assertEqual([site['y_contact_id'] for site in selected['two_strip_pairings']['pairings'][1]['sites']],
                          [33, 32])
+        for projected, saved in zip(selected['two_strip_pairings']['pairings'],
+                                    payload['triggers'][2]['two_strip_pairings']['pairings'], strict=True):
+            self.assertEqual(projected['pixel_depths'], saved['pixel_depths'])
+        self.assertNotEqual(selected['two_strip_pairings']['pairings'][0]['pixel_depths'],
+                            selected['two_strip_pairings']['pairings'][1]['pixel_depths'])
         self.assertNotIn('private-spatial-data', json.dumps(reply))
         self.assertEqual(self.request('two-strip?' + urlencode({**query, 'ordinal': 3}))[0], 400)
         self.assertEqual(self.request('two-strip?' + urlencode({**query, 'report_sha256': '0'*64}))[0], 400)
+
+        old_adc = 'two-strip-adc?' + urlencode({**query, 'contact_id': 2})
+        status, missing = self.request(old_adc)
+        self.assertEqual((status, missing['status'], missing['preamp_V']), (200, 'not_captured', None))
+
+        import numpy as np
+        import gegi_digital_readout as D
+        payload['design']['adc_phase_ns'] = 0
+        payload['exposure'].update(clock_live_time_ns=2000, qualified_adc_live_time_ns=1980,
+                                   total_live_adc_samples=100, qualified_live_adc_samples=99,
+                                   excluded_intervals_ns=[[1200, 1220]])
+        payload['triggers'][1:] = [measured(t, (300, 300)) for t in (100, 1000, 1940)]
+        payload['counts'].update(qualified_triggers=4, additional_multi_strip_energies=3, qualified_energies=4)
+        payload['spectra']['additional_multi_strip'].update(overflow=3, entries=3)
+        payload['spectra']['combined'].update(overflow=3, entries=4)
+        payload['receipt'] = dict(known_component_adc_sha256='1'*64, digital_profile_sha256=D.PROFILE_SHA256,
+                                  digital_timing_sha256=D.TIMING_SHA256)
+        path = self.root/G.report_ref('adc-window')
+        W.write(path, payload)
+        codes = np.arange(34*29, dtype=np.int16).reshape(1, 34, 29) - 500
+        sidecar = path.with_name(G.TWO_STRIP_ADC_FILE)
+        arrays = dict(report_sha256=W.sha(path), **payload['receipt'], contact_ids=list(range(1, 35)),
+                      relative_time_ns=list(range(-80, 481, 20)), volts_per_code=D._LSB_V,
+                      trigger_time_ns=[100., 1000., 1940.], two_strip_ordinal=[1], adc_codes=codes,
+                      window_status=['captured', 'excluded_history', 'outside_live_time'])
+        np.savez_compressed(sidecar, **arrays)
+        query = dict(name='adc-window', report_sha256=W.sha(path), ordinal=1, contact_id=4)
+
+        with patch.object(G, 'adc_window', side_effect=AssertionError('Archive read before request')):
+            self.assertEqual(self.request('state?name=adc-window')[0], 200)
+            self.assertEqual(self.request('two-strip?' + urlencode({k: v for k, v in query.items() if k != 'contact_id'}))[0], 200)
+        adc_route = 'two-strip-adc?' + urlencode(query)
+        self.assertEqual(self.request(adc_route, headers={'X-Control-Token': 'wrong'})[0], 403)
+        self.assertEqual(self.request(adc_route + '&contact_id=2')[0], 400)
+        for invalid in ({'file': G.TWO_STRIP_ADC_FILE}, {'contact_id': 17}, {'name': '../adc-window'},
+                        {'report_sha256': '0'*64}, {'ordinal': 4}):
+            self.assertEqual(self.request('two-strip-adc?' + urlencode({**query, **invalid}))[0], 400)
+        self.assertEqual(self.request(adc_route), (200, {**query, 'trigger_time_ns': 100., 'status': 'captured',
+                         'relative_time_ns': arrays['relative_time_ns'], 'preamp_V': (codes[0, 3]*D._LSB_V).tolist()}))
+        for ordinal, expected in ((2, 'excluded_history'), (3, 'outside_live_time')):
+            status, excluded = self.request('two-strip-adc?' + urlencode({**query, 'ordinal': ordinal}))
+            self.assertEqual((status, excluded['status'], excluded['relative_time_ns'], excluded['preamp_V']), (200, expected, None, None))
+        np.savez_compressed(sidecar, **{**arrays, 'known_component_adc_sha256': '2'*64})
+        status, changed = self.request(adc_route)
+        self.assertEqual((status, changed['status'], changed['preamp_V']), (200, 'unverified', None))
 
     def test_energy_selection_uses_exact_bounds_and_full_pixel_spectrum(self):
         _, options = self.request('options')

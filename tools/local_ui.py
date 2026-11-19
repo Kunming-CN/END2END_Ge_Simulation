@@ -300,6 +300,14 @@ class Handler(BaseHTTPRequestHandler):
                 control = self.server.workflow_controller.gegi_dual_source()
                 return self.send_data(200, control.selected_trigger(query['name'][0], query['report_sha256'][0],
                                                                     query['ordinal'][0], parts.path.rsplit('/', 1)[1]))
+            if parts.path == '/api/workflow/gegi-dual/two-strip-adc':
+                query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
+                keys = ('name', 'report_sha256', 'ordinal', 'contact_id')
+                if (parts.fragment or set(query) != set(keys) or any(len(v) != 1 for v in query.values())
+                        or self.server.workflow_controller is None):
+                    raise ValueError('Choose one two-strip trigger and one of its strips')
+                control = self.server.workflow_controller.gegi_dual_source()
+                return self.send_data(200, control.two_strip_adc(*(query[key][0] for key in keys)))
             if parts.path in ('/api/workflow/gegi-saved/state','/api/workflow/gegi-saved/file','/api/workflow/gegi-saved/results'):
                 query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
                 keys={'name','file'} if parts.path.endswith('/file') else {'name'}

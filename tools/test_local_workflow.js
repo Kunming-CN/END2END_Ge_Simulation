@@ -1650,10 +1650,12 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
       {...nextFeature,single_pixel_energy_keV:400,x:{...nextFeature.x,preamp_cfd50_ns:-1.25},
         y:{...nextFeature.y,preamp_cfd50_ns:2.75},nominal_position:{status:'estimated',energy_scope:'within_tested_range',
           method:'direct_strip_calibration',tested_energies_keV:[250,500,662],
-          axes:measuredAxes,position_mm:[4.25,-9.4,-1.3]}},
+          axes:measuredAxes,position_mm:[4.25,-9.4,-1.3]},
+        pixel_depth:{status:'estimated',apparent_depth_mm:-1.45,cfd_x_minus_y_ns:-4,evidence_level:'local_independent_off_center_check'}},
       {...nextFeature,ordinal:3,trigger_time_ns:100,single_pixel_energy_keV:680,nominal_position:{status:'partial',
           energy_scope:'outside_tested_range',position_mm:null,method:'family_template_transfer',tested_energies_keV:[500],
-          axes:{...measuredAxes,y:{status:'ratio_outside_calibration',position_mm:null,slot:null}}}}];
+          axes:{...measuredAxes,y:{status:'ratio_outside_calibration',position_mm:null,slot:null}}},
+        pixel_depth:{status:'outside_calibrated_cfd_range',apparent_depth_mm:null,cfd_x_minus_y_ns:150,evidence_level:'center_calibration_only'}}];
     const positionJob={...dualFeatureJob,name:'position',result:{...dualFeatureJob.result,
       single_pixel_features:{...dualFeatureJob.result.single_pixel_features,trigger:positionRows[0],calibrated_ordinals:[2,3]}}};
     api=async path=>{dualFixtureCalls.push([path]);if(!path.includes('/single-pixel?'))return positionJob;
@@ -1669,12 +1671,13 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(positionText(),/Preamplifier 50% constant-fraction time · Unavailable/);
   assert.match(positionText(),/This X–Y pixel has no nominal position calibration/);
   assert.match(positionText(),/outside the tested 250–662 keV range/);
-  assert.doesNotMatch(positionText(),/Z \(depth\)|displayed coordinates are extrapolations/);
+  assert.doesNotMatch(positionText(),/Z \(depth\)|displayed coordinates are extrapolations|Apparent CFD depth/);
   picker.value='2';await picker.onchange();
   assert.equal(run('dualFixtureCalls.at(-1)[0]'),'/api/workflow/gegi-dual/single-pixel?name=position&report_sha256='+'9'.repeat(64)+'&ordinal=2');
   assert.match(positionText(),/All three detector coordinates were estimated.*X · 4\.250 mm.*Y · -9\.400 mm.*Z \(depth\) · -1\.300 mm/s);
   assert.match(positionText(),/\+2\.75 ns relative to trigger/);
   assert.match(positionText(),/Direct strip calibration\. Tested range 250–662 keV/);
+  assert.match(positionText(),/Apparent CFD depth · -1\.45 mm · CFD X − Y -4 ns · Independent off-center simulation check for this pixel/);
   assert.doesNotMatch(positionText(),/extrapolations/);
   picker.value='3';await picker.onchange();
   assert.match(positionText(),/Only some detector coordinates were estimated.*Y · Unavailable · fast ratio outside calibration/s);
@@ -1682,6 +1685,8 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(positionText(),/differs from the single tested 500 keV scale.*displayed coordinates are extrapolations/);
   assert.doesNotMatch(positionText(),/250–662/);
   assert.doesNotMatch(positionText(),/Y · -9\.400 mm/);
+  assert.match(positionText(),/Apparent CFD depth · Unavailable · timing difference outside the calibrated range · CFD X − Y \+150 ns · Pixel-center simulation calibration only/);
+  assert.doesNotMatch(positionText(),/-1\.45 mm/);
   run(`function dualPairingCase(ordinal,values){
       const ys=[24,25];
       const pairs=[ys,[...ys].reverse()].map((yOrder,index)=>{
@@ -1693,15 +1698,30 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
           const allowed=cosine>=-1&&cosine<=1;
           return {site_index_order:order,kinematically_allowed:allowed,half_angle_deg:allowed?Math.acos(cosine)*180/Math.PI:null};
         }):[];
-        return {energy_compatible:compatible,index,sites,compton_orders:orders};
+        const result={energy_compatible:compatible,index,sites,compton_orders:orders};
+        if(ordinal===2&&compatible)result.pixel_depths=[
+          {status:'estimated',apparent_depth_mm:index+0.25,cfd_x_minus_y_ns:3+index,evidence_level:'local_independent_off_center_check'},
+          {status:'collector_cfd_unavailable',apparent_depth_mm:null,cfd_x_minus_y_ns:null,evidence_level:'center_calibration_only'}
+        ];
+        return result;
       });
-      return {ordinal,trigger_time_ns:ordinal*60,energy_keV:values[0]+values[1],two_strip_pairings:{
+      return {ordinal,trigger_time_ns:ordinal*60,energy_keV:values[0]+values[1],
+        adc_contacts:[{contact_id:10,collecting:false},{contact_id:11,collecting:true}],two_strip_pairings:{
         compatible_pairing_count:pairs.filter(pair=>pair.energy_compatible).length,pairings:pairs,flags:['overlapping_x_neighborhoods']}};
     }
     const dualPairRows=[dualPairingCase(1,[100,500]),dualPairingCase(2,[300,300])];
     const dualPairJob={...positionJob,name:'pairings',result:{...positionJob.result,
       two_strip_pairings:{status:'available',count:2,trigger:dualPairRows[0]}}};
-    api=async path=>{dualFixtureCalls.push([path]);if(!path.includes('/two-strip?'))return dualPairJob;
+    api=async path=>{dualFixtureCalls.push([path]);
+      if(path.includes('/two-strip-adc?')){
+        const query=new URLSearchParams(path.split('?')[1]),ordinal=Number(query.get('ordinal')),
+          contact_id=Number(query.get('contact_id'));
+        return {name:dualPairJob.name,report_sha256:dualPairJob.report_sha256,ordinal,contact_id,
+          trigger_time_ns:dualPairRows[ordinal-1].trigger_time_ns,status:ordinal===1?'captured':'excluded_history',
+          relative_time_ns:ordinal===1?Array.from({length:29},(_,i)=>-80+20*i):null,
+          preamp_V:ordinal===1?Array.from({length:29},(_,i)=>(i-10)/1000):null};
+      }
+      if(!path.includes('/two-strip?'))return dualPairJob;
       const ordinal=Number(new URLSearchParams(path.split('?')[1]).get('ordinal'));
       return {name:dualPairJob.name,report_sha256:dualPairJob.report_sha256,trigger:dualPairRows[ordinal-1]};
     };`);
@@ -1714,13 +1734,31 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(pairText(),/One energy-compatible pairing.*Energy-compatible.*X11 100 keV ↔ Y07 100 keV.*Energy-incompatible.*X11 100 keV ↔ Y08 500 keV/s);
   assert.match(pairText(),/1 of 2 interaction orders allowed by energy.*Site 1 → Site 2 · allowed by energy model · scatter angle [\d.]+°.*Site 2 → Site 1 · excluded by energy model/s);
   assert.match(pairText(),/Fast-neighbor geometry · overlapping x neighborhoods/);
-  assert.doesNotMatch(pairText(),/Spatial cone|modeled XYZ/);
+  assert.doesNotMatch(pairText(),/Spatial cone|modeled XYZ|Apparent CFD depth|0\.660 mm/);
+  assert.ok(!run('dualFixtureCalls').some(([url])=>url.includes('/two-strip-adc?')));
+  const findADC=()=>descendants(pairPanel).find(node=>node.children[0]?.textContent==='Inspect simulated ADC samples');
+  const firstADC=findADC();firstADC.open=true;await firstADC.ontoggle();
+  assert.equal(run('dualFixtureCalls.at(-1)[0]'),'/api/workflow/gegi-dual/two-strip-adc?name=pairings&report_sha256='+'9'.repeat(64)+'&ordinal=1&contact_id=11');
+  assert.match(pairText(),/X11 sampled preamplifier · V.*Time relative to trigger.*29 saved ADC samples/s);
+  assert.equal(descendants(firstADC).filter(node=>node.tagName==='circle').length,29);
+  const stripSelect=descendants(firstADC).find(node=>node.tagName==='select');
+  stripSelect.value='10';await stripSelect.onchange();
+  assert.match(run('dualFixtureCalls.at(-1)[0]'),/&ordinal=1&contact_id=10$/);
+  assert.match(pairText(),/X10 sampled preamplifier · V/);
   const pairNext=descendants(pairPanel).find(node=>node.textContent==='Next trigger');
   await pairNext.click();
   assert.equal(run('dualFixtureCalls.at(-1)[0]'),'/api/workflow/gegi-dual/two-strip?name=pairings&report_sha256='+'9'.repeat(64)+'&ordinal=2');
   assert.match(pairText(),/Trigger 2 of 2 · 120 ns/);
   assert.match(pairText(),/Both pairings are energy-compatible/);
+  assert.match(pairText(),/X11 300 keV ↔ Y07 300 keV.*Apparent CFD depth · \+0\.25 mm.*X11 300 keV ↔ Y08 300 keV.*Apparent CFD depth · \+1\.25 mm/s);
+  assert.match(pairText(),/Apparent CFD depth · Unavailable · collector timing unavailable · Pixel-center simulation calibration only/);
+  assert.match(pairText(),/The strip neighborhoods overlap.*0\.660 mm for 32 nearby sites.*0\.074 mm for 36 sites/s);
+  assert.doesNotMatch(pairText(),/Spatial cone|modeled XYZ/);
   assert.equal((pairText().match(/2 of 2 interaction orders allowed by energy/g)||[]).length,2);
   assert.ok(pairNext.disabled);
+  assert.match(run('dualFixtureCalls.at(-1)[0]'),/\/two-strip\?.*&ordinal=2$/);
+  const secondADC=findADC();secondADC.open=true;await secondADC.ontoggle();
+  assert.match(pairText(),/overlaps time excluded for uncertain signal history/);
+  assert.ok(!descendants(secondADC).some(node=>node.tagName==='svg'));
   console.log('Dual-source Control covers energy intervals, bounded trigger browsing, position calibration transfer, and conditional two-strip pairings.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

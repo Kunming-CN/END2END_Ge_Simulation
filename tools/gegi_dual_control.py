@@ -7,6 +7,7 @@ import math
 import re
 from sys import float_info
 import threading
+from zipfile import BadZipFile, ZipFile
 
 from gegi_pixel_map import X_IDS, Y_IDS, project_pixel_energy, project_pixel_map, unavailable
 import scenario_workflow as W
@@ -18,6 +19,7 @@ OUTPUTS = '.local/gegi-dual-source'
 STATE = '.local/local-control-v1/gegi-dual-source-jobs.json'
 KIND = 'local_gegi_dual_source_jobs_v1'
 REPORT_KIND = 'gegi_dual_source_acquisition_v1'
+TWO_STRIP_ADC_FILE = 'two-strip-adc.npz'
 SOURCE_COUNTS = ('initial_parents_in_live_time', 'deposit_groups', 'complete_deposit_groups',
                  'right_censored_deposit_groups', 'native_unavailable_groups', 'prehistory_unqualified_groups')
 ADC_COUNTS = ('qualified_triggers', 'single_pixel_energies', 'additional_multi_strip_energies',
@@ -26,6 +28,10 @@ EXPOSURE = ('clock_live_time_ns', 'qualified_adc_live_time_ns', 'masked_live_tim
             'total_live_adc_samples', 'qualified_live_adc_samples')
 TRIGGER_THRESHOLDS = {'standard': 5.0, 'low-energy': 4.0}
 CALIBRATED_POSITION_STATUSES = ('estimated', 'partial', 'unavailable')
+PIXEL_DEPTH_STATUSES = ('estimated', 'invalid_pixel', 'readout_profile_mismatch', 'unconfirmed_field',
+                        'insufficient_center_knots', 'interior_center_knots_missing', 'nonmonotonic_center_timing',
+                        'collector_cfd_unavailable', 'outside_calibrated_cfd_range')
+PIXEL_DEPTH_EVIDENCE = ('local_independent_off_center_check', 'center_calibration_only')
 
 
 def number(value):
@@ -219,6 +225,17 @@ def single_pixel_rows(report):
     return (row for row in report['triggers'] if row['single_pixel_energy_keV'] is not None)
 
 
+def pixel_depth_record(depth):
+    status, position, cfd, evidence = (depth[key] for key in (
+        'status', 'apparent_depth_mm', 'cfd_x_minus_y_ns', 'evidence_level'))
+    W.require(status in PIXEL_DEPTH_STATUSES and (evidence is None or evidence in PIXEL_DEPTH_EVIDENCE)
+              and (cfd is None or number(cfd))
+              and (number(position) and number(cfd) and evidence in PIXEL_DEPTH_EVIDENCE
+                   if status == 'estimated' else position is None),
+              'Invalid apparent pixel depth.')
+    return dict(status=status, apparent_depth_mm=position, cfd_x_minus_y_ns=cfd, evidence_level=evidence)
+
+
 def single_pixel_record(report, ordinal):
     """Select one hit in ledger order, leaving all other rows in the report."""
     row = next(islice(single_pixel_rows(report), ordinal - 1, ordinal), None)
@@ -235,11 +252,86 @@ def single_pixel_record(report, ordinal):
                   y=trigger_face(features['y'], row['y_collecting_strips'], Y_IDS))
     if 'nominal_position' in row:
         result['nominal_position'] = nominal_position_record(row['nominal_position'])
+    if 'pixel_depth' in row:
+        result['pixel_depth'] = pixel_depth_record(row['pixel_depth'])
     return result
 
 
 def two_strip_rows(report):
     return (row for row in report['triggers'] if row.get('two_strip_pairings') is not None)
+
+
+def two_strip_adc_contacts(xs, ys):
+    collectors = set(xs + ys)
+    nearby = {cid for family, ids in ((xs, X_IDS), (ys, Y_IDS))
+              for strip in family for cid in (strip-1, strip+1) if cid in ids}
+    return [dict(contact_id=cid, collecting=cid in collectors) for cid in sorted(collectors | nearby)]
+
+
+def adc_window(path, report, digest, rows, ordinal, contact):
+    """Read one strip from the optional report-bound ADC window archive."""
+    if not path.is_file():
+        return 'not_captured', None, None
+    import numpy as np
+    import gegi_digital_readout as digital
+
+    period = digital._DT
+    relative = list(range(-4*period, digital._TIMING['gate_ns'][1] + 1, period))
+    samples, count = len(relative), len(rows)
+    timing = report['receipt']
+    with ZipFile(path) as bundle:
+        def array(key, shape, kind, sizes, index=None):
+            stamp = bundle.getinfo(key + '.npy')
+            with bundle.open(stamp) as stream:
+                version = np.lib.format.read_magic(stream)
+                headers = {(1, 0): np.lib.format.read_array_header_1_0, (2, 0): np.lib.format.read_array_header_2_0}
+                saved_shape, fortran, dtype = headers[version](stream)
+                size = math.prod(shape) * dtype.itemsize
+                W.require(saved_shape == shape and not fortran and dtype.kind == kind and dtype.itemsize in sizes
+                          and stamp.file_size - stream.tell() == size, 'Invalid ADC array dimensions or type.')
+                if index is not None:
+                    # The only decoded codes are the selected 29 samples.
+                    size = samples*dtype.itemsize
+                    stream.seek(stream.tell() + index*size)
+                return np.frombuffer(stream.read(size), dtype=dtype)
+
+        def text(key, shape=(), max_length=64):
+            return array(key, shape, 'U', range(4, 4*max_length+1, 4)).tolist()
+
+        for key, expected in [('report_sha256', digest),
+                              *[(key, timing[key]) for key in ('known_component_adc_sha256', 'digital_profile_sha256',
+                                                             'digital_timing_sha256')]]:
+            W.require(type(expected) is str and re.fullmatch(r'[0-9a-f]{64}', expected) and text(key) == [expected],
+                      'The ADC archive and selected acquisition hashes differ.')
+        scale, = array('volts_per_code', (), 'f', (8,))
+        contacts = array('contact_ids', (len(digital.CONTACT_IDS),), 'i', (4, 8)).tolist()
+        times = array('relative_time_ns', (samples,), 'i', (4, 8)).tolist()
+        recorded = array('trigger_time_ns', (count,), 'f', (8,)).tolist()
+        statuses = text('window_status', (count,), max_length=17)
+        W.require(scale == digital._LSB_V and contacts == list(digital.CONTACT_IDS) and times == relative
+                  and recorded == [row['trigger_time_ns'] for row in rows],
+                  'The ADC clock, strips or selected trigger times differ from the receipt.')
+        design, exposure = report['design'], report['exposure']
+        phase = design['adc_phase_ns']
+        last_sample = phase + (exposure['total_live_adc_samples']-1)*period
+        mask = exposure['excluded_intervals_ns']
+        expected_status = []
+        for time in recorded:
+            lo, hi = time+times[0], time+times[-1]
+            status = ('outside_live_time' if lo < phase or hi > last_sample else
+                      'excluded_history' if any(a <= hi and lo < b for a, b in mask) else 'captured')
+            expected_status.append(status)
+        W.require(statuses == expected_status, 'The ADC windows disagree with the acquisition time exclusions.')
+        captured = [i for i, status in enumerate(statuses, 1) if status == 'captured']
+        ordinals = array('two_strip_ordinal', (len(captured),), 'i', (4, 8)).tolist()
+        W.require(ordinals == captured, 'The ADC window ordinals differ from the captured triggers.')
+        status = statuses[ordinal-1]
+        if status != 'captured':
+            return status, None, None
+        index = captured.index(ordinal)*len(contacts) + contact-1
+        codes = array('adc_codes', (len(captured), len(contacts), samples), 'i', (2,), index)
+        W.require(len(codes) == samples, 'Incomplete ADC samples.')
+        return status, times, (codes*scale).tolist()
 
 
 def two_strip_record(row, ordinal):
@@ -271,10 +363,17 @@ def two_strip_record(row, ordinal):
             W.require(type(allowed) is bool and number(order['cos_theta'])
                       and (number(angle) and 0 <= angle <= 180 if allowed else angle is None),
                       'Invalid measured-energy Compton order.')
-        pairings.append(dict(index=pair['index'], energy_compatible=compatible, sites=sites, compton_orders=orders))
+        projected = dict(index=pair['index'], energy_compatible=compatible, sites=sites, compton_orders=orders)
+        if 'pixel_depths' in pair:
+            depths = pair['pixel_depths']
+            W.require(compatible and type(depths) is list and len(depths) == len(sites),
+                      'Apparent depths require an energy-compatible strip pairing and one record per site.')
+            projected['pixel_depths'] = [pixel_depth_record(depth) for depth in depths]
+        pairings.append(projected)
     count = sum(pair['energy_compatible'] for pair in pairings)
     W.require(raw['compatible_pairing_count'] == count, 'Two-strip pairing count disagrees with its alternatives.')
     return dict(ordinal=ordinal, trigger_time_ns=time, energy_keV=energy,
+                adc_contacts=two_strip_adc_contacts(xs, ys),
                 two_strip_pairings=dict(compatible_pairing_count=count, pairings=pairings, flags=flags))
 
 
@@ -449,6 +548,29 @@ class DualSourceControl:
         except (KeyError, TypeError):
             raise ControlError('The saved trigger measurement is invalid.', 'invalid_features') from None
         return dict(name=name, report_sha256=digest, trigger=trigger)
+
+    def two_strip_adc(self, name, expected_sha256, ordinal, contact):
+        W.require(re.fullmatch(r'[1-9][0-9]{0,15}', ordinal) and re.fullmatch(r'[1-9][0-9]?', contact),
+                  'Choose one two-strip trigger and one of its strips.')
+        ordinal, contact = int(ordinal), int(contact)
+        report, digest = self._opened_report(name, expected_sha256)
+        W.require(report.get('status') == 'completed' and report.get('kind') == REPORT_KIND,
+                  'Choose a completed saved acquisition.')
+        try:
+            rows = list(two_strip_rows(report))
+            W.require(ordinal <= len(rows), 'Choose a two-strip trigger number in the saved acquisition.')
+            selected = two_strip_record(rows[ordinal-1], ordinal)
+        except (KeyError, TypeError):
+            raise ControlError('The saved trigger measurement is invalid.', 'invalid_features') from None
+        W.require(any(row['contact_id'] == contact for row in selected['adc_contacts']),
+                  'Choose a collecting strip or its physical neighbor.')
+        try:
+            path = safe_path(self.root, f'{OUTPUTS}/{name}/{TWO_STRIP_ADC_FILE}')
+            status, times, volts = adc_window(path, report, digest, rows, ordinal, contact)
+        except (BadZipFile, ControlError, EOFError, ImportError, KeyError, OSError, RuntimeError, TypeError, ValueError):
+            status, times, volts = 'unverified', None, None
+        return dict(name=name, report_sha256=digest, ordinal=ordinal, contact_id=contact,
+                    trigger_time_ns=selected['trigger_time_ns'], status=status, relative_time_ns=times, preamp_V=volts)
 
     def start(self, source_ids, activities_bq, live_time_s, seed, name, trigger_profile='standard'):
         W.run_path(name, self.root)
