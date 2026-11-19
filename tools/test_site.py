@@ -62,6 +62,24 @@ class PublicationTests(unittest.TestCase):
         self.assertIn('8 held-out two-deposit mixtures', panel)
         self.assertIn('href="gegi-digital/pixel-depth.json"', panel)
 
+    def test_measured_plane_distinguishes_trigger_denominators_and_hypotheses(self):
+        import gegi_digital_display as exhibit
+        def exposure(total, projected, unresolved, line_total, line_projected, line_hypotheses):
+            return dict(clock_live_time_ns=250_000_000., layers={
+                'all': dict(triggers=total, triggers_with_geometry=projected, unresolved_mass=unresolved),
+                '661.657_keV': dict(triggers=line_total, triggers_with_geometry=line_projected,
+                                    hypotheses=line_hypotheses)})
+        data = dict(grid=dict(step_mm=4., extent_mm=120., assumed_z_mm=40.),
+                    angular_nuisance_sigma_deg=5., windows=['661.657_keV'],
+                    exposures=[exposure(76, 58, 18, 11, 5, 8), exposure(79, 67, 12, 16, 14, 31)])
+        panel = exhibit.measured_plane_section(data)
+        self.assertIn('src="gegi-digital/measured-compton-planes.png"', panel)
+        self.assertIn('z = 40 mm with X and Y spanning ±120 mm', panel)
+        self.assertIn('4 × 4 mm cell', panel)
+        self.assertIn('>661.657 keV</th><td>5/11</td><td>8</td><td>14/16</td><td>31</td>', panel)
+        self.assertIn('58/76 reference triggers and 67/79 independent triggers', panel)
+        self.assertIn('18 reference units and 12 independent units', panel)
+
     def test_gegi_replacement_allows_history_only_for_predecessor(self):
         import build_site as builder
         project=self.site/'gegi-replacement';docs=project/'docs';stage=project/'.local/site-build'

@@ -1,5 +1,6 @@
 """Render the saved digital strip example in the Results hub."""
 from collections import Counter
+import gzip
 from hashlib import sha256
 from html import escape
 import json
@@ -22,6 +23,13 @@ EDGE_POSITION_FILE = 'results/gegi-digital/edge-position.json'
 DUAL_SOURCE_HIT_MAP_FILE = 'results/gegi-digital/dual-source-hit-map.json'
 FAST_GATE_FILE = 'results/gegi-digital/fast-gate.json'
 PIXEL_DEPTH_FILE = 'results/gegi-digital/pixel-depth.json'
+MEASURED_PLANE_FILE = 'results/gegi-digital/measured-compton-planes.json'
+MEASURED_PLANE_IMAGE = 'results/gegi-digital/measured-compton-planes.png'
+MEASURED_PLANE_SHA256 = {
+    'reference': '6ee616532ea0f13a653cf7e8cb4f057536c05f467008f823b5b855dcf59c9cff',
+    'independent': '5944b125333c3a6008de5121ff88c807d8d3a542024827133a71a4c046b46717',
+    'figure': '2cd496225e1e81a095bae70a03a18dcafca9cad1f989b42ec0293ea1afab2b38',
+}
 PIXEL_DEPTH_SHA256 = {
     'isolated_study': 'fbf5f9eb76bee6c82f256de3515c350df4c350539c8f5062a7fd0c965794a399',
     'two_site_study': '308a0f5ec78757cc929d26b2d3280d78c685b91b38ee88837b157178cb85e2d7',
@@ -660,6 +668,89 @@ The dashed horizontal line is the detector midplane. Marks below the plot show {
 <text x="206" y="376" text-anchor="middle">Injected depth (mm)</text>
 <text x="16" y="161" text-anchor="middle" transform="rotate(-90 16 161)">Apparent depth (mm)</text>
 </g></svg>'''
+
+
+def attach_measured_plane(site, paths):
+    """Bind the published image and its census to the two frozen measured maps."""
+    inputs = {}
+    for (key, digest), path in zip(MEASURED_PLANE_SHA256.items(), paths, strict=True):
+        raw = path.read_bytes()
+        if sha256(raw).hexdigest() != digest:
+            raise ValueError(f'Saved GeGI plane input changed: {key}')
+        inputs[key] = raw
+    reference, independent = (json.loads(gzip.decompress(inputs[key])) for key in ('reference', 'independent'))
+    grid = reference['grid']
+    sigma = reference['model']['angular_nuisance_sigma_deg']
+    windows = [key for key in reference['layers'] if key.endswith('_keV')]
+    if (grid != independent['grid'] or sigma != independent['model']['angular_nuisance_sigma_deg']
+            or len(windows) != 3 or reference['layers'].keys() != independent['layers'].keys()
+            or reference['input_sha256']['acquisition'] != PIXEL_DEPTH_SHA256['acquisition']
+            or reference['input_sha256']['acquisition'] == independent['input_sha256']['acquisition']
+            or reference['selection']['clock_live_time_ns'] != independent['selection']['clock_live_time_ns']):
+        raise ValueError('The GeGI measured plane comparison must share one grid, kernel and energy selection')
+    exposures = []
+    for report in (reference, independent):
+        layers = report['layers']
+        selection = report['selection']
+        if (report['kind'] != 'gegi_continuous_measured_plane_backprojection_v1'
+                or layers['all']['triggers'] != selection['two_strip_triggers']
+                or any(not math.isclose(row['projected_mass'] + row['unresolved_mass'], row['triggers'])
+                       or not 0 <= row['triggers_with_geometry'] <= min(row['hypotheses'], row['triggers'])
+                       for row in layers.values())):
+            raise ValueError('Saved GeGI measured plane trigger counts do not close')
+        exposures.append(dict(
+            clock_live_time_ns=selection['clock_live_time_ns'],
+            qualified_adc_live_time_ns=selection['qualified_adc_live_time_ns'],
+            layers={label: {v: layers[label][v] for v in
+                            ('triggers', 'triggers_with_geometry', 'hypotheses', 'projected_mass', 'unresolved_mass')}
+                    for label in ('all', *windows)}))
+    summary = dict(kind='gegi_measured_plane_public_v1', source_sha256=MEASURED_PLANE_SHA256,
+                   grid={key: grid[key] for key in ('assumed_z_mm', 'extent_mm', 'step_mm')},
+                   angular_nuisance_sigma_deg=sigma, windows=windows, exposures=exposures)
+    (site/MEASURED_PLANE_IMAGE).write_bytes(inputs['figure'])
+    (site/MEASURED_PLANE_FILE).write_text(json.dumps(summary, allow_nan=False, separators=(',', ':'))+'\n',
+                                         encoding='utf-8', newline='\n')
+
+
+def measured_plane_section(data):
+    exposures = data['exposures']
+    grid = data['grid']
+    step = grid['step_mm']
+    all_triggers = [row['layers']['all'] for row in exposures]
+    counts = [f'{row["triggers_with_geometry"]}/{row["triggers"]}' for row in all_triggers]
+    unresolved = [f'{row["unresolved_mass"]:g}' for row in all_triggers]
+    rows = []
+    for label in data['windows']:
+        cells = []
+        for exposure in exposures:
+            row = exposure['layers'][label]
+            cells.append(f'<td>{row["triggers_with_geometry"]}/{row["triggers"]}</td><td>{row["hypotheses"]}</td>')
+        energy = float(label.removesuffix('_keV'))
+        rows.append(f'<tr><th scope="row">{energy:g} keV</th>{"".join(cells)}</tr>')
+    image = MEASURED_PLANE_IMAGE.removeprefix('results/')
+    summary = MEASURED_PLANE_FILE.removeprefix('results/')
+    return f'''<h3 id="gegi-measured-plane">Compton backprojections from two acquisitions</h3>
+<p>Each row shows one simulated {exposures[0]['clock_live_time_ns']/1e6:g} ms exposure. The columns group triggers by measured
+energy. These maps use reconstructed energies and waveform-fit depths at strip centers.
+All six panels share a color scale in projected trigger weight per {step:g} × {step:g} mm cell.
+The assumed plane is z = {grid['assumed_z_mm']:g} mm with X and Y spanning ±{grid['extent_mm']:g} mm.
+The model uses a nominal {data['angular_nuisance_sigma_deg']:g}° angular width plus strip-position uncertainty.</p>
+<figure style="margin:1rem 0"><a href="{image}">
+<img loading="lazy" style="width:100%;height:auto" width="1890" height="1278" src="{image}"
+alt="Six Compton backprojection maps on one color scale. The reference exposure is on top, the independent exposure below."></a>
+<figcaption>Brighter cells carry more projected weight. Both 661.657 keV panels peak on the negative-X side.
+The 1332.49 keV maxima lie at the image boundary in both exposures.</figcaption></figure>
+<div role="region" aria-label="Projection counts by measured energy window" tabindex="0" style="overflow-x:auto">
+<table><thead><tr><th scope="col">Energy-window center</th><th scope="col">Reference triggers projected</th>
+<th scope="col">Reference hypotheses</th><th scope="col">Independent triggers projected</th>
+<th scope="col">Independent hypotheses</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+<p>Across all measured energies, {counts[0]} reference triggers and {counts[1]} independent triggers contributed.
+Each two-strip trigger supplies one unit of weight, shared among compatible strip pairings and allowed interaction orders.
+Each usable hypothesis spreads its share over the displayed plane. Unresolved weight stays outside the image
+({unresolved[0]} reference units and {unresolved[1]} independent units).</p>
+<p>These sparse backprojections depend on the assumed plane and its boundaries. Detector sensitivity is uncalibrated,
+and source position, distance and activity remain undetermined.
+<a href="{summary}">View the acquisition counts and source hashes (JSON)</a>.</p>'''
 
 
 def cone_reference_table(data):
@@ -1332,6 +1423,7 @@ def render(site):
     hit_map = site/DUAL_SOURCE_HIT_MAP_FILE
     fast_gate = site/FAST_GATE_FILE
     pixel_depth = site/PIXEL_DEPTH_FILE
+    measured_plane = site/MEASURED_PLANE_FILE
     fast = None
     card = '<section id="gegi" class="panel" data-dataset="gegi">\n'
     if exposure.is_file():
@@ -1350,6 +1442,11 @@ def render(site):
         card += exposure_section(data, study, projection, fast)
     if pixel_depth.is_file():
         card += pixel_depth_section(json.loads(pixel_depth.read_bytes()))
+    if measured_plane.is_file():
+        data = json.loads(measured_plane.read_bytes())
+        if sha256((site/MEASURED_PLANE_IMAGE).read_bytes()).hexdigest() != data['source_sha256']['figure']:
+            raise ValueError('The GeGI measured plane figure differs from its attached census')
+        card += measured_plane_section(data)
     has_pulse = pulse.is_file()
     if has_pulse:
         card += double_pulse_section(json.loads(pulse.read_bytes()))

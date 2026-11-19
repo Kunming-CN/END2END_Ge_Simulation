@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
-  "build_id": "f2e22d40a5aae314048765f68b0ce2a128276c9342d06e9de0c39f2e7b96f834",
-  "file_count": 1881,
-  "total_bytes": 493940814,
+  "build_id": "c5e411caff63e4719fb0041ec4ee82967f671b107874e0e55cdbc6220da333d6",
+  "file_count": 1883,
+  "total_bytes": 494144255,
   "html_pages": 109,
-  "local_links_checked": 3329,
-  "resource_references_checked": 3388,
+  "local_links_checked": 3332,
+  "resource_references_checked": 3391,
   "page_navigation_checked": 1452,
   "fragments_checked": 90,
-  "downloads_checked": 750,
-  "media_references_checked": 1149,
+  "downloads_checked": 751,
+  "media_references_checked": 1151,
   "metadata_references_checked": 35,
   "other_references_checked": 2,
   "files": [
@@ -9334,6 +9334,16 @@
       "sha256": "e98eb9f7c8c8bb3d73042a97ff59d6aaee17cbfdcb21a5b9da35ed3f167854b1"
     },
     {
+      "path": "results/gegi-digital/measured-compton-planes.json",
+      "bytes": 1546,
+      "sha256": "fc9418dce85aa7443845e21c6c229735b657a016ffb3f5bd6d48c17e19a21041"
+    },
+    {
+      "path": "results/gegi-digital/measured-compton-planes.png",
+      "bytes": 199534,
+      "sha256": "2cd496225e1e81a095bae70a03a18dcafca9cad1f989b42ec0293ea1afab2b38"
+    },
+    {
       "path": "results/gegi-digital/pixel-depth.json",
       "bytes": 8565,
       "sha256": "46590d37b49213da38f03adc48309c4c98d6f67cf93e9cf7d843a63b5e04d86b"
@@ -9350,8 +9360,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 78525,
-      "sha256": "3f2cca0d0f1ecffb709117be478553ffb925f6d998bfe4443d363314aaf31a24"
+      "bytes": 80886,
+      "sha256": "1b38e030d86d557324e305e2079e2d5391cb4da396a8b5d5753430903e013ca9"
     },
     {
       "path": "retired-studies.json",
