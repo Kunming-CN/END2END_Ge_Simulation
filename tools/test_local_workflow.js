@@ -1367,7 +1367,8 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
       const digital={status:'available',readout:{status:'completed',profile:{sample_period_ns:20,adc_bits:16},calibration:{pulser_energy_keV:500},noise_seed:null,channels:digitalMeta.map(c=>({contact_id:c.id,slow_energy_keV:200,fast_area_V_ns:-1,fast_signal_keV_equiv:-2,flags:[],trace}))},
         topology:{status:'conditional_single_pixel',energy_keV:200,threshold_keV:5,x_contact_id:11,y_contact_id:24,collecting_contact_ids:[11,24]},
         position:{calibration_reference_energy_keV:500,calibration_source_status:'nominal_transfer',calibration_pair_coverage:'simulated_pair',x:{contact_id:11,strip_center_mm:2,neighbor_contact_ids:[10,12],ratio:-.1,status:'estimated',slot:0,position_mm:1.2},y:{contact_id:24,strip_center_mm:4,ratio:null,status:'uncalibrated_strip',position_mm:null},depth:{cfd_difference_ns:-20,position_mm:0.5,status:'estimated'}}};
-      if(digitalPairings){digital.pairs=digitalPairings;digital.position=null;digital.topology={status:'multi_strip',threshold_keV:5,collecting_contact_ids:[11,12,24,26]};}
+      if(digitalPairings){digital.pairs=digitalPairings;digital.position=null;digital.topology={status:'multi_strip',threshold_keV:5,collecting_contact_ids:[11,12,24,26]};
+        digital.trigger_energies=[{trigger_time_ns:20,energy_keV:662,x_sum_keV:661.9,y_sum_keV:662.1,flags:[]}];}
       return {kind:'gegi_multichannel_digital_v1',name:gegiJob.name,event_id,configuration_sha256:gegiJob.configuration_sha256,results_sha256:'d'.repeat(64),saved_derivative_name:'standalone-derived',digital:event_id===49?{status:'unavailable',reason:'Native carrier response failed.'}:digital};
     }; api=digitalApi;`);
   await run("openGeGIResult(gegiJob,null,'standalone-derived')");
@@ -1404,6 +1405,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.ok(pairDisplay().includes('Configured photon energy 660 keV · measured X/Y average 662 keV · measured minus configured +2 keV.'));
   assert.ok(pairDisplay().some(text=>text.includes('one fully absorbed photon whose first scatter is on a free electron at rest.')));
   assert.ok(pairDisplay().includes('Site 1 · strip 11 100 keV ↔ strip 24 100 keV · pair energy 100 keV'));
+  assert.ok(pairDisplay().includes('20 ns · 662 keV · X sum 661.9 keV · Y sum 662.1 keV'));
   assert.ok(pairDisplay().includes('Site 2 · strip 12 562 keV ↔ strip 26 562 keV · pair energy 562 keV'));
   assert.ok(pairDisplay().includes('Site 1 → Site 2 · allowed by energy model · scatter angle 30.3845°'));
   assert.ok(pairDisplay().includes('Site 2 → Site 1 · excluded by energy model'));

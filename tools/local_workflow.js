@@ -326,7 +326,7 @@ async function showGeGIDigital(){
     const {readout,topology,position,pairs}=digital,{profile,calibration}=readout;
     status.textContent='Original primary '+event.event_id+' · '+profile.sample_period_ns+' ns samples · signed '+profile.adc_bits+'-bit ADC.'+(readout.status==='partial'?' Incomplete acquisition window.':'');
     $('gegi-digital-calibration').textContent='Synthetic electronics · independent '+calibration.pulser_energy_keV+' keV pulser · slow flat top calibrated in keV and signed fast area in V·ns (also shown in pulser-equivalent keV). Noise '+(readout.noise_seed===null?'disabled.':'seed '+readout.noise_seed+'.');
-    renderGeGIDigitalPosition(context,topology,position,pairs);
+    renderGeGIDigitalPosition(context,topology,position,pairs,digital.trigger_energies);
     options('gegi-digital-strip',context.data.channels.map(c=>({id:String(c.id),label:c.name+' · contact '+c.id})));
     const first=topology.x_contact_id??topology.collecting_contact_ids[0];
     if(first!==undefined)$('gegi-digital-strip').value=String(first);
@@ -335,8 +335,18 @@ async function showGeGIDigital(){
 }
 function gegiDigitalValue(value,unit=''){return Number.isFinite(value)?String(Number(value.toPrecision(6)))+(unit?' '+unit:''):'Unavailable';}
 function gegiDigitalNeighborNames(context,ids){return (ids||[]).map(id=>context.data.channels.find(c=>c.id===id)?.name||'contact '+id).join(', ');}
-function renderGeGIDigitalPosition(context,topology,position,pairs){
+function renderGeGIDigitalPosition(context,topology,position,pairs,triggerEnergies){
   const target=$('gegi-digital-position');target.replaceChildren();
+  if(Array.isArray(triggerEnergies)){
+    target.append(node('h3','Energy per ADC trigger'));
+    if(!triggerEnergies.length)target.append(node('p','No two-face trigger in the sampled waveform.'));
+    for(const trigger of triggerEnergies){
+      const time=gegiDigitalValue(trigger.trigger_time_ns,'ns');
+      const reason=trigger.flags.map(flag=>flag.replaceAll('_',' ')).join(', ');
+      const energy=Number.isFinite(trigger.energy_keV)?gegiDigitalValue(trigger.energy_keV,'keV'):'Unavailable'+(reason?' · '+reason:'');
+      target.append(node('p',time+' · '+energy+' · X sum '+gegiDigitalValue(trigger.x_sum_keV,'keV')+' · Y sum '+gegiDigitalValue(trigger.y_sum_keV,'keV')));
+    }
+  }
   const collectors=gegiDigitalNeighborNames(context,topology.collecting_contact_ids)||'none';
   target.append(node('p','Strips and guards above '+topology.threshold_keV+' keV · '+collectors+'.'));
   if(topology.status!=='conditional_single_pixel'){
