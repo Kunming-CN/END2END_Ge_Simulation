@@ -1464,5 +1464,48 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run(`showDualJob({...dualFixtureJob,result:{...dualFixtureReport,counts:{...dualFixtureReport.counts,qualified_triggers:null},spectra:null}})`);
   assert.ok(descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('no ADC samples qualified')));
   assert.ok(descendants(get('gegi-dual-results')).every(node=>node.tagName!=='svg'));
+  run(`const mapAxes={x_contact_ids:Array.from({length:16},(_,i)=>i+1),y_contact_ids:Array.from({length:16},(_,i)=>i+18)};
+    const blankPixels=()=>Array.from({length:16},()=>Array(16).fill(0));
+    const pixels=blankPixels();pixels[15][0]=3;pixels[0][15]=1;
+    const filledMap={status:'available',reason:null,axes:mapAxes,counts:pixels,
+      totals:{qualified_triggers:7,mapped_single_pixel_triggers:4,multi_strip_energy_triggers:2,triggers_without_energy:1,occupied_pixels:2}};
+    const archiveJob={...dualFixtureJob,name:'archive',archived_report:true,output:'.local/gegi-dual-source/archive/report.json',
+      result:{...dualFixtureReport,pixel_map:filledMap,counts:{...dualFixtureReport.counts,qualified_triggers:7,single_pixel_energies:4,
+        additional_multi_strip_energies:2,triggers_without_energy:1},
+        spectra:{combined:{bin_edges_keV:[0,20,40],counts:[5,1],underflow:0,overflow:0}}}};
+    api=async path=>{dualFixtureCalls.push([path]);return path.endsWith('/options')?
+      {libraries:[],rejected:[],jobs:[{name:'archive',status:'completed',archived_report:true}]}:archiveJob;};`);
+  await get('gegi-dual-refresh').onclick();
+  assert.match(get('gegi-dual-status').textContent,/0 saved source libraries · 1 saved acquisition/);
+  assert.doesNotMatch(get('gegi-dual-status').textContent,/Copy a sealed source chunk/);
+  get('gegi-dual-job').value='archive';await get('gegi-dual-job').onchange();
+  assert.equal(run('dualFixtureCalls.at(-1)[0]'),'/api/workflow/gegi-dual/state?name=archive');
+  const pixelFigure=get('gegi-dual-results').children.at(-1),scroll=pixelFigure.children.find(node=>node.className==='dual-pixel-scroll');
+  assert.match(pixelFigure.children[1].textContent,/4 of 7 qualified triggers mapped · 2 of 256 pixels hit/);
+  assert.equal(scroll.tabIndex,0);
+  assert.equal(scroll.role,'region');
+  const [pixelHeader,pixelBody]=scroll.children[0].children;
+  assert.equal(pixelHeader.children[0].children[1].textContent,'X01');
+  assert.equal(pixelHeader.children[0].children[16].textContent,'X16');
+  assert.equal(pixelHeader.children[0].children[1].scope,'col');
+  assert.equal(pixelBody.children[0].children[0].scope,'row');
+  assert.equal(pixelBody.children[0].children[0].textContent,'Y16');
+  assert.equal(pixelBody.children[15].children[0].textContent,'Y01');
+  assert.equal(pixelBody.children[0].children[1].textContent,'3');
+  assert.equal(pixelBody.children[15].children[16].textContent,'1');
+  assert.equal(pixelBody.children[0].children[16].textContent,'0');
+  assert.match(pixelFigure.children.at(-1).textContent,/X01 to X16 from left to right.*Y16 to Y01 from top to bottom/);
+  assert.match(get('gegi-dual-receipt').textContent,/archived_report/);
+  run(`const emptyMap={...filledMap,status:'empty',counts:blankPixels(),
+    totals:{qualified_triggers:2,mapped_single_pixel_triggers:0,multi_strip_energy_triggers:1,triggers_without_energy:1,occupied_pixels:0}};
+    showDualJob({...dualFixtureJob,result:{...dualFixtureReport,pixel_map:emptyMap}})`);
+  assert.ok(descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('Every cell has zero selected triggers')));
+  assert.ok(descendants(get('gegi-dual-results')).some(node=>node.tagName==='table'));
+  run(`showDualJob({...dualFixtureJob,result:{...dualFixtureReport,
+    pixel_map:{status:'unavailable',reason:'report_changed',counts:null,totals:null}}})`);
+  assert.ok(descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('The saved report differs from its completion receipt.')));
+  assert.ok(descendants(get('gegi-dual-results')).some(node=>node.tagName==='svg'));
+  assert.ok(descendants(get('gegi-dual-results')).every(node=>node.tagName!=='table'));
+  assert.match(fs.readFileSync(__dirname+'/local_workflow.html','utf8'),/place <code>report\.json<\/code> in <code>\.local\/gegi-dual-source\/NAME\//);
   console.log('Dual-source Control import choices, recorded coordinates, exact seed, async dispatch, saved census, energy spectrum and unknown samples passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

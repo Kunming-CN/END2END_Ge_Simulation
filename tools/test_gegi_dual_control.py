@@ -10,9 +10,33 @@ from types import SimpleNamespace
 import unittest
 
 import gegi_dual_control as G
+from gegi_pixel_map import project_pixel_map, read_pixel_map
 import local_ui as U
 import local_ui_workflow_jobs as J
 import scenario_workflow as W
+
+
+def trigger(time, single=None, multi=None, x=(), y=(), guard=()):
+    return dict(trigger_time_ns=time, single_pixel_energy_keV=single, additional_multi_strip_energy_keV=multi,
+                x_collecting_strips=list(x), y_collecting_strips=list(y), guard_contact_ids=list(guard))
+
+
+def fixture_report(sources, activities, duration, seed):
+    def spectrum(n):
+        return dict(bin_edges_keV=[0, 20, 40], counts=[n, 0], entries=n, underflow=0, overflow=0, exact_zero=0)
+    return dict(kind=G.REPORT_KIND, status='completed', design=dict(clock_seed=seed, live_time_s=duration),
+                exposure=dict(clock_live_time_ns=100, qualified_adc_live_time_ns=80, masked_live_time_ns=20,
+                              total_live_adc_samples=5, qualified_live_adc_samples=4),
+                sources=[dict(activity_bq=bq, original=source, input_directory={'absolute': 'private-science-path'},
+                              counts=dict(parents=2, marked_zero_parents=1, group_onsets_in_live_time=1))
+                         for source, bq in zip(sources, activities)],
+                counts=dict(initial_parents_in_live_time=4, deposit_groups=2, complete_deposit_groups=2,
+                            right_censored_deposit_groups=0, native_unavailable_groups=0, prehistory_unqualified_groups=0,
+                            qualified_triggers=2, single_pixel_energies=1, additional_multi_strip_energies=1,
+                            qualified_energies=2, triggers_without_energy=0),
+                spectra=dict(single_pixel=spectrum(1), additional_multi_strip=spectrum(1), combined=spectrum(2)),
+                triggers=[{**trigger(20, single=15, x=(2,), y=(33,)), 'large_private_array': True},
+                          trigger(60, multi=16, x=(2, 3), y=(33,))])
 
 
 class DualControlTests(unittest.TestCase):
@@ -37,21 +61,7 @@ class DualControlTests(unittest.TestCase):
             self.ready.set()
             if not self.release.wait(5):
                 raise RuntimeError('Test fixture timed out')
-            def spectrum(n):
-                return dict(bin_edges_keV=[0, 20, 40], counts=[n, 0], entries=n, underflow=0, overflow=0, exact_zero=0)
-            payload = dict(kind=G.REPORT_KIND, status='completed', design=dict(clock_seed=seed, live_time_s=duration),
-                exposure=dict(clock_live_time_ns=100, qualified_adc_live_time_ns=80, masked_live_time_ns=20,
-                              total_live_adc_samples=5, qualified_live_adc_samples=4),
-                sources=[dict(activity_bq=bq, original=describe(path),
-                              counts=dict(parents=2, marked_zero_parents=1, group_onsets_in_live_time=1))
-                         for path, bq in zip(paths, activities)],
-                counts=dict(initial_parents_in_live_time=4, deposit_groups=2, complete_deposit_groups=2,
-                            right_censored_deposit_groups=0, native_unavailable_groups=0, prehistory_unqualified_groups=0,
-                            qualified_triggers=2, single_pixel_energies=1, additional_multi_strip_energies=1,
-                            qualified_energies=2, triggers_without_energy=0),
-                spectra=dict(single_pixel=spectrum(1), additional_multi_strip=spectrum(1), combined=spectrum(2)),
-                triggers=[{'large_private_array': True}])
-            W.write(report, payload)
+            W.write(report, fixture_report([describe(path) for path in paths], activities, duration, seed))
 
         self.workflow = J.WorkflowController(self.root)
         self.workflow._gegi_dual_control = G.DualSourceControl(self.workflow, describe=describe, runner=runner)
@@ -108,6 +118,10 @@ class DualControlTests(unittest.TestCase):
         self.finish()
         status, job = self.request('state?name=changed')
         self.assertEqual((status, job['status'], job['result']['spectra']['combined']['entries']), (200, 'completed', 2))
+        pixels = job['result']['pixel_map']
+        self.assertEqual(pixels['counts'][15][1], 1)
+        self.assertEqual(pixels['totals'], dict(qualified_triggers=2, mapped_single_pixel_triggers=1,
+                        multi_strip_energy_triggers=1, triggers_without_energy=0, occupied_pixels=1))
         self.assertNotIn('large_private_array', json.dumps(job))
         self.assertEqual(job['report_sha256'], W.sha(self.root/job['output']))
         self.assertEqual(J.WorkflowController(self.root).gegi_dual_source().state('changed'), job)
@@ -120,6 +134,86 @@ class DualControlTests(unittest.TestCase):
         self.assertEqual(restored.state('changed')['status'], 'completed')
         self.assertEqual(restored.state('in-progress')['status'], 'interrupted')
         self.assertEqual(len(self.calls), 1)
+
+    def test_old_completed_job_keeps_spectrum_if_saved_report_changes_or_is_missing(self):
+        _, options = self.request('options')
+        request = dict(source_ids=[source['id'] for source in options['libraries']],
+                       activities_bq=[18, 74], live_time_s=.05, seed='18', name='preserved')
+        self.assertEqual(self.request('start', request)[0], 200)
+        self.assertTrue(self.ready.wait(2))
+        self.finish()
+        old_state = (self.root/G.STATE).read_bytes()
+        job = J.WorkflowController(self.root).gegi_dual_source().state('preserved')
+        self.assertEqual(job['result']['pixel_map']['status'], 'available')
+        path = self.root/job['output']
+        report_sha = W.sha(path)
+        with path.open('ab') as out:
+            out.write(b'\n')
+        for reason in ('report_changed', 'report_missing'):
+            result = J.WorkflowController(self.root).gegi_dual_source().state('preserved')
+            self.assertEqual(result['status'], 'completed')
+            self.assertEqual(result['report_sha256'], report_sha)
+            self.assertEqual(result['result']['spectra'], job['result']['spectra'])
+            pixels = result['result']['pixel_map']
+            self.assertEqual((pixels['status'], pixels['reason'], pixels['counts']), ('unavailable', reason, None))
+            if reason == 'report_changed':
+                path.unlink()
+        self.assertEqual((self.root/G.STATE).read_bytes(), old_state)
+
+    def test_standalone_report_is_discovered_without_persisting_a_job(self):
+        _, options = self.request('options')
+        payload = fixture_report(options['libraries'], [18, 74], .05, 18)
+        archive = self.root/G.report_ref('archived')
+        W.write(archive, payload)
+        W.write(self.root/G.report_ref('not a valid name'), payload)
+        original = archive.read_bytes()
+        _, options = self.request('options')
+        self.assertEqual(options['jobs'], [{'name': 'archived', 'status': 'completed', 'archived_report': True}])
+        status, job = self.request('state?name=archived')
+        self.assertEqual((status, job['status'], job['archived_report']), (200, 'completed', True))
+        self.assertEqual(job['activities_bq'], [18, 74])
+        self.assertEqual(job['sources'][0]['source_position_mm'], [-40, 0, 40])
+        self.assertEqual(job['result']['spectra']['combined']['entries'], 2)
+        self.assertEqual(job['result']['pixel_map']['counts'][15][1], 1)
+        self.assertNotIn('private-science-path', json.dumps(job))
+        self.assertFalse((self.root/G.STATE).exists())
+        self.assertEqual(archive.read_bytes(), original)
+        self.assertEqual(read_pixel_map(archive), job['result']['pixel_map'])
+        self.assertFalse(self.calls)
+
+
+class PixelMapTests(unittest.TestCase):
+    def report(self, samples, triggers, singles, multis, missing):
+        return {'kind': G.REPORT_KIND, 'status': 'completed', 'exposure': {'qualified_live_adc_samples': samples},
+                'triggers': triggers, 'counts': dict(qualified_triggers=len(triggers) if triggers is not None else None,
+                    single_pixel_energies=singles, additional_multi_strip_energies=multis,
+                    qualified_energies=None if singles is None else singles + multis, triggers_without_energy=missing)}
+
+    def test_orientation_and_exclusive_counting(self):
+        rows = [trigger(20, single=20., x=(16,), y=(18,)), trigger(40, single=30., x=(16,), y=(18,)),
+                trigger(60, single=20., x=(1,), y=(33,)), trigger(80, multi=42, x=(1, 16), y=(33,)),
+                trigger(100, guard=(17, 34))]
+        pixels = project_pixel_map(self.report(400, rows, 3, 1, 1))
+        self.assertEqual((pixels['counts'][0][15], pixels['counts'][15][0]), (2, 1))
+        self.assertEqual(sum(map(sum, pixels['counts'])), 3)
+        self.assertEqual(pixels['totals'], dict(qualified_triggers=5, mapped_single_pixel_triggers=3,
+                        multi_strip_energy_triggers=1, triggers_without_energy=1, occupied_pixels=2))
+
+    def test_no_qualified_samples_and_measurable_empty_are_distinct(self):
+        unknown = project_pixel_map(self.report(0, None, None, None, None))
+        self.assertEqual((unknown['status'], unknown['reason'], unknown['counts'], unknown['totals']),
+                         ('unavailable', 'no_qualified_adc_samples', None, None))
+        empty = project_pixel_map(self.report(100, [trigger(20)], 0, 0, 1))
+        self.assertEqual((empty['status'], empty['reason']), ('empty', 'no_qualified_single_pixel_energies'))
+        self.assertEqual(sum(map(sum, empty['counts'])), 0)
+        self.assertEqual(empty['totals']['triggers_without_energy'], 1)
+
+    def test_malformed_single_or_duplicate_triggers_are_not_projected(self):
+        bad = trigger(20, single=30., x=(17,), y=(33,))
+        good = trigger(20, single=30., x=(1,), y=(33,))
+        for report in (self.report(100, [bad], 1, 0, 0), self.report(100, [good, good], 2, 0, 0),
+                       self.report(100, [good], 0, 0, 1)):
+            self.assertEqual(project_pixel_map(report)['reason'], 'invalid_report')
 
 
 if __name__ == '__main__':

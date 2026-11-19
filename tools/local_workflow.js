@@ -224,7 +224,11 @@ async function refreshDualSources(){
   try{
     const value=await api('/api/workflow/gegi-dual/options');setDualOptions(value,dualJob?.name);
     const rejected=value.rejected.map(item=>item.label+' — '+item.error).join(' ');
-    dualStatus(dualLibraries.length+' saved source libraries available. '+(dualLibraries.length?'Coordinates are recorded global x, y, z in millimetres.':'Copy a sealed source chunk into the import folder above.')+(rejected?' '+rejected:''),!!rejected);
+    const libraryCount=dualLibraries.length,jobCount=value.jobs.length;
+    let message=libraryCount+' saved source '+(libraryCount===1?'library':'libraries')+' · '+jobCount+' saved acquisition'+(jobCount===1?'':'s')+'.';
+    if(dualLibraries.length)message+=' Library coordinates are recorded global x, y, z in millimetres.';
+    else if(!value.jobs.length)message+=' Copy a sealed source chunk into the import folder above.';
+    dualStatus(message+(rejected?' '+rejected:''),!!rejected);
   }catch(e){dualStatus(e.message,true);}finally{dualBusy=false;dualControls();}
 }
 function dualSpectrum(histogram,denominator){
@@ -234,6 +238,51 @@ function dualSpectrum(histogram,denominator){
     domain:[edges[0],edges.at(-1),width], denominator, denominatorUnit:'qualified triggers', inside,
     underflow:histogram.underflow, overflow:histogram.overflow, notSelected:denominator-total,
     bins:new Map(counts.map((count,index)=>[index,count]))});
+}
+function dualPixelMap(map,qualifiedTriggers){
+  const figure=node('figure',undefined,'plot dual-pixel-map');
+  figure.append(node('h3','Detector pixel counts'));
+  if(!map||!['available','empty'].includes(map.status)){
+    const reasons={no_qualified_adc_samples:'No ADC samples qualified.',report_missing:'The saved report is missing.',
+      report_changed:'The saved report differs from its completion receipt.',
+      report_unverified:'The saved report could not be verified.',invalid_report:'The saved report has invalid pixel records.'};
+    const reason=map?.reason??(qualifiedTriggers===null?'no_qualified_adc_samples':'report_unverified');
+    figure.append(node('p','Pixel counts unavailable. '+(reasons[reason]||'The saved report could not be read.'),'muted'));
+    return figure;
+  }
+  const counts=map.counts,totals=map.totals;
+  const mapped=totals.mapped_single_pixel_triggers;
+  figure.append(node('p',mapped+' of '+totals.qualified_triggers+' qualified triggers mapped · '+totals.occupied_pixels+' of 256 pixels hit. '+
+    'The map counts one X–Y strip intersection for each qualified single-pixel energy. Source coordinates above describe emission locations.'));
+  const scroll=node('div',undefined,'dual-pixel-scroll');
+  scroll.tabIndex=0;
+  scroll.setAttribute('role','region');
+  scroll.setAttribute('aria-label','Scrollable detector pixel grid');
+  const table=node('table',undefined,'dual-pixel-table'),header=node('thead'),top=node('tr'),body=node('tbody');
+  table.setAttribute('aria-label','Selected trigger counts by detector strip intersection');
+  const strip=(letter,index)=>letter+String(index).padStart(2,'0');
+  const xLabels=map.axes.x_contact_ids.map(id=>strip('X',id)),yLabels=map.axes.y_contact_ids.map(id=>strip('Y',id-17));
+  top.append(node('th','Y / X'));
+  for(const label of xLabels){
+    const heading=node('th',label);heading.setAttribute('scope','col');top.append(heading);
+  }
+  header.append(top);
+  const maximum=Math.max(1,...counts.flat()),palette=['#eef3f5','#dceff1','#a9d8df','#246d80','#00485a'];
+  for(let y=yLabels.length-1;y>=0;y--){
+    const row=node('tr'),heading=node('th',yLabels[y]);heading.setAttribute('scope','row');row.append(heading);
+    for(const [x,count] of counts[y].entries()){
+      const cell=node('td',String(count)),shade=Math.ceil(4*Math.sqrt(count/maximum));
+      cell.style.backgroundColor=palette[shade];
+      if(shade>=3)cell.style.color='#fff';
+      cell.title=xLabels[x]+' / '+yLabels[y]+' · '+count+' selected triggers';
+      row.append(cell);
+    }
+    body.append(row);
+  }
+  table.append(header,body);scroll.append(table);
+  figure.append(scroll,node('figcaption','X01 to X16 from left to right. Y16 to Y01 from top to bottom. '+
+    (mapped?'Darker fill marks higher counts.':'Every cell has zero selected triggers in this qualified recording.'),'muted'));
+  return figure;
 }
 function showDualJob(job){
   dualJob=job;
@@ -259,6 +308,7 @@ function showDualJob(job){
       content.append(node('p',c.qualified_triggers+' qualified triggers · '+c.single_pixel_energies+' single-pixel energies · '+c.additional_multi_strip_energies+' additional multi-strip energies · '+c.triggers_without_energy+' without an energy.'));
       if(result.spectra?.combined)content.append(dualSpectrum(result.spectra.combined,c.qualified_triggers));
     }
+    content.append(dualPixelMap(result.pixel_map,c.qualified_triggers));
   }
   dualControls();
 }
@@ -293,7 +343,8 @@ $('gegi-dual-start').onclick=startDualAcquisition;
 $('gegi-dual-job').onchange=()=>{
   ++dualGeneration;dualJob=null;$('gegi-dual-receipt').textContent='No acquisition selected.';$('gegi-dual-results').replaceChildren();
   const name=$('gegi-dual-job').value;
-  if(name){dualStatus('Reading the saved acquisition…');void inspectDualJob(name);}else dualStatus('Choose an acquisition to view its saved result.');
+  if(name){dualStatus('Reading the saved acquisition…');return inspectDualJob(name);}
+  dualStatus('Choose an acquisition to view its saved result.');
 };
 
 function importedGeGIConfig(c,batched){

@@ -7,6 +7,7 @@ import re
 from sys import float_info
 import threading
 
+from gegi_pixel_map import project_pixel_map, read_pixel_map, unavailable
 import scenario_workflow as W
 from local_ui_jobs import ControlError, decode_json, safe_path
 
@@ -52,6 +53,29 @@ def discover(root, describe):
     return libraries, rejected
 
 
+def report_ref(name):
+    return f'{OUTPUTS}/{name}/report.json'
+
+
+def discover_reports(root, recorded):
+    """List direct report folders while leaving full validation to selection."""
+    folder = safe_path(root, OUTPUTS)
+    if not folder.is_dir():
+        return []
+    discovered = []
+    for child in sorted(folder.iterdir(), key=lambda item: item.name.casefold()):
+        name = child.name
+        if name in recorded:
+            continue
+        try:
+            W.run_path(name, root)
+            if safe_path(root, report_ref(name)).is_file():
+                discovered.append({'name': name, 'status': 'completed', 'archived_report': True})
+        except (ControlError, OSError):
+            continue
+    return discovered
+
+
 def spectrum_entries(spectrum):
     edges, counts = spectrum['bin_edges_keV'], spectrum['counts']
     W.require(len(edges) == len(counts) + 1 and len(counts) > 0 and all(type(x) is int for x in edges)
@@ -95,6 +119,36 @@ def compact_report(report, job):
     return {'counts': counts, 'exposure': exposure, 'sources': sources, 'spectra': spectra}
 
 
+def archived_report(root, name):
+    """Read a stand-alone v1 report through the same view contract as a completed job."""
+    reference = report_ref(name)
+    try:
+        body = safe_path(root, reference).read_bytes()
+        report = decode_json(body.decode('utf-8-sig'))
+        design, sources = report['design'], report['sources']
+        W.require(type(design['clock_seed']) is int and 0 <= design['clock_seed'] < 2**64
+                  and number(design['live_time_s']) and design['live_time_s'] > 0,
+                  'Saved acquisition settings are invalid.')
+        settings, activities = [], []
+        for row in sources:
+            activity, original = row['activity_bq'], row['original']
+            isotope, location = original['isotope'], original['source_position_mm']
+            W.require(number(activity) and activity >= 0 and type(isotope) is str
+                      and len(location) == 3 and all(number(v) for v in location),
+                      'Saved report is missing valid source measurements.')
+            activities.append(activity)
+            settings.append({'isotope': isotope, 'source_position_mm': location,
+                             'chunk_sha256': original['chunk_sha256']})
+        job = dict(name=name, status='completed', archived_report=True, output=reference,
+                   report_sha256=sha256(body).hexdigest(), seed=str(design['clock_seed']),
+                   live_time_s=design['live_time_s'], activities_bq=activities, sources=settings)
+        job['result'] = compact_report(report, job)
+        job['result']['pixel_map'] = project_pixel_map(report)
+        return job
+    except (AttributeError, ControlError, OSError, ValueError, TypeError, KeyError):
+        raise ControlError('The saved acquisition report is unavailable or invalid.', 'invalid_gegi_dual_report') from None
+
+
 class DualSourceControl:
     def __init__(self, workflow, *, describe=None, runner=None):
         self.workflow = workflow
@@ -126,14 +180,15 @@ class DualSourceControl:
     def options(self):
         libraries, rejected = self._imports()
         with self.workflow._lock:
-            return {'kind': 'local_gegi_dual_source_options_v1', 'libraries': [item[1] for item in libraries.values()],
-                    'rejected': rejected, 'jobs': [{'name': j['name'], 'status': j['status']} for j in self.jobs.values()]}
+            jobs = {j['name']: {'name': j['name'], 'status': j['status']} for j in self.jobs.values()}
+        return {'kind': 'local_gegi_dual_source_options_v1', 'libraries': [item[1] for item in libraries.values()],
+                'rejected': rejected, 'jobs': [*jobs.values(), *discover_reports(self.root, jobs)]}
 
     def _persist(self):
         W.write(self.state_path, {'kind': KIND, 'jobs': list(self.jobs.values())})
 
     def _result(self, job):
-        output = safe_path(self.root, f"{OUTPUTS}/{job['name']}/report.json")
+        output = safe_path(self.root, report_ref(job['name']))
         body = output.read_bytes()
         report = compact_report(decode_json(body.decode('utf-8-sig')), job)
         return dict(status='completed', result=report, report_sha256=sha256(body).hexdigest())
@@ -141,8 +196,23 @@ class DualSourceControl:
     def state(self, name):
         W.run_path(name, self.root)
         with self.workflow._lock:
-            W.require(name in self.jobs, 'Choose a saved dual-source acquisition.')
-            return copy.deepcopy(self.jobs[name])
+            job = copy.deepcopy(self.jobs.get(name))
+        if job is None:
+            return archived_report(self.root, name)
+        if job['status'] == 'completed':
+            # Older completed jobs already retain their verified compact spectra.
+            # Derive the map separately, without rewriting the report or job state.
+            expected = job.get('report_sha256')
+            pixel_map = unavailable('report_unverified')
+            if type(expected) is str and re.fullmatch(r'[0-9a-f]{64}', expected):
+                try:
+                    output = safe_path(self.root, report_ref(name))
+                except ControlError:
+                    pass
+                else:
+                    pixel_map = read_pixel_map(output, expected_sha256=expected)
+            job['result']['pixel_map'] = pixel_map
+        return job
 
     def start(self, source_ids, activities_bq, live_time_s, seed, name):
         W.run_path(name, self.root)
@@ -165,7 +235,7 @@ class DualSourceControl:
             output.mkdir(parents=True, exist_ok=False)
             reservation = 'gegi-dual-' + name
             job = dict(name=name, status='running', sources=source_metadata, activities_bq=activities_bq,
-                       live_time_s=live_time_s, seed=str(int(seed)), output=f'{OUTPUTS}/{name}/report.json',
+                       live_time_s=live_time_s, seed=str(int(seed)), output=report_ref(name),
                        started_utc=W.utc())
             self.jobs[name] = job
             try:

@@ -1,5 +1,16 @@
 # GeSignal handoff
 
+## Dual-source detector hit map
+
+Control displays the measured 16 × 16 detector hit map alongside the dual-source slow-energy spectrum. A trigger enters one cell when it has a qualified single-pixel energy and exactly one collecting strip on each face. The displayed X axis runs from X01 at left to X16 at right, with Y16 at the top. The [guide](tools/site_guide.html#gegi-dual-source) covers opening a saved report. The [export command](tools/gegi_pixel_map.py) reads the same receipt and writes counts in Y01-to-Y16 row order.
+
+| Saved exposure | Qualified triggers | Mapped | Occupied pixels | Multi-strip energies outside map | Triggers without energy |
+|---|---:|---:|---:|---:|---:|
+| 0.25 s · Cs-137 37 kBq, Co-60 37 kBq | 864 | 484 | 176 | 229 | 151 |
+| 0.05 s · Cs-137 18.5 kBq, Co-60 74 kBq | 259 | 113 | 80 | 77 | 69 |
+
+Both maps came directly from the saved trigger ledgers. The display represents measured strip intersections for both sources combined. The [interactive Results page](docs/results/index.html) includes the reference exposure. The instrument comparison still needs one matched GeGI acquisition and its pixel-selection and energy settings.
+
 ## GeGI position near a strip gap
 
 The deposit centroids in saved event 2950 motivated two one-axis scans. The Y coordinate of the X06/Y10 site falls 0.108 mm inside the metal edge. The X coordinate of the X08/Y11 site falls in the 0.250 mm gap, 0.066 mm from its midpoint. Both scans keep the orthogonal coordinate at the strip center. The original Float32 field and 12 existing reference waveforms were reused. The [capture command](tools/gegi_edge_capture.py) added 42 fit and 24 held-out 500 keV point injections. All 66 retained signed signals on 34 electrodes. Thirty-two ended on the original strip pair and 30 on the adjacent pair. At four exact gap-midpoint injections one carrier had no verified collecting contact. All four remain in the record. The run took 44.24 s locally and peaked at 2.20 GB, with zero field solves or transport calls.
