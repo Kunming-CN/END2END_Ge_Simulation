@@ -202,10 +202,19 @@ class Reader:
 
     def digital(self,event_id,expected_sha256,run):
         from gegi_digital_saved import from_saved_event
+        from gegi_event_energy import estimate_event_energy
+        from gegi_pulse_stream import reconstruct
         W.require(expected_sha256 is not None,'Open the sealed GeGI summary before loading digital readout.')
         selected=self.event(event_id,expected_sha256)['event']
         value=from_saved_event(selected,self.index['header']['channels'],run,
                                configuration_sha256=self.identity['configuration_sha256'])
+        if value['status'] == 'available':
+            traces = [row['trace'] for row in value['readout']['channels']]
+            pulses = reconstruct(traces[0]['time_ns'], [trace['adc_code'] for trace in traces])
+            value['trigger_energies'] = [
+                {'trigger_time_ns': pulse['trigger_time_ns'], **estimate_event_energy(pulse)}
+                for pulse in pulses['events']
+            ]
         self.guard(expected_sha256)
         return {**self.identity,'kind':'gegi_multichannel_digital_v1','event_id':event_id,'digital':value}
 

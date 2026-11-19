@@ -406,7 +406,7 @@ def verify_live(url, report):
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('spectra/')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('viewers/')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('assemblies/')})
-    selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('results/gegi-campaign/')})
+    selected.update({entry['path']:entry for entry in entries if entry['path'].startswith(('results/gegi-campaign/','results/gegi-digital/'))})
     selected.update({entry['path']:entry for entry in entries
                      if entry['path'].startswith('results/cs137-10k/') and '/traces/' in entry['path']})
     selected.update({entry['path']:entry for entry in entries

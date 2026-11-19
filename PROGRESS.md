@@ -1,397 +1,47 @@
-# Current handoff
+# GeSignal handoff
 
-## GeGI digital strip readout — 2026-11-18
+## Depth and two-site reconstruction in continuous acquisition
 
-Control can replay a selected sealed GeGI event through a signed preamplifier,
-finite analog bandwidth, nominal 50 MS/s waveform ADC, fast signed area, slow
-trapezoid flat top and two-face CFD timing. A 500 keV electronic pulser sets the
-fixed scale. The CLI `tools/gegi_digital_spectra.py` exports 32 strip spectra
-and selected-event outcomes. Simulation coefficients ship with the lightweight
-student runtime. The example traces and figure are website assets.
+**One second of simultaneous Cs-137 and Co-60 acquisition.** Four 250 ms blocks used disjoint original primary ranges and distinct arrival/noise seeds at 37 kBq per source. The [exposure study](tools/gegi_pool_measured_planes.py) sums measured weights on the common z = 40 mm plane. Across 906.120 ms of qualified ADC time, 3,905 triggers produced 3,010 energies. All 324 two-strip waveforms were retained. Of these, 254 contributed to the image and 70 remained unresolved. For the 662, 1,173 and 1,332 keV windows, 49/67, 23/34 and 13/24 selected triggers contributed. Their maximum cells were (−42, 2), (94, −118) and (6, 90) mm. Between the two disjoint halves those maxima moved 190.5, 217.3 and 121.5 mm respectively. The combined 662 keV peak lies close to the programmed Cs position (−40, 0) mm, but its second-half maximum lies on the boundary. Source positions were withheld from reconstruction. [Energy-window maps and counts](docs/results/index.html#gegi-measured-plane)
 
-Saved standalone 5,000-primary run: 4,958 zero and 42 nonzero. Digital replay
-found 25 conditional single-pixel candidates and four events with one compatible
-two-face energy pairing. Event 45 retains both neighbors of X03, with 13.06 and
-27.41 keV-equivalent transient maxima and zero terminal charge. The digital
-energy is 154.98 keV. Eight fixed two-site mixtures yielded 32/32 expected
-collectors and 0/240 spurious energy hits; all eight have two compatible energy
-pairings. Pairing does not establish a photon sequence.
+**Measured Compton backprojection.** The [plane exporter](tools/gegi_continuous_plane.py) projects each measured two-strip trigger onto a selected detector-coordinate plane using its slow energies and the joint fit to digitized preamp waveforms. Every allowed order remains in the result. Each trigger contributes at most one unit across its pairings and orders. At z = 40 mm, the first 250 ms exposure projected 58 of 76 two-strip triggers from 864 total. The independent exposure projected 67 of 79 from 1,018 total. In the 662, 1,173 and 1,332 keV windows the first exposure projected 5/11, 1/6 and 1/1 triggers; the independent exposure projected 14/16, 6/8 and 6/10. The 662 keV maxima were (−46, 14) and (−42, 2) mm. Both pooled maxima landed at the display boundary. These sparse exposures leave the two-source localization unresolved. To generate the [comparison figure](tools/gegi_continuous_plane_figure.py), use the two exported JSON gzip files in exposure order.
 
-The nominal nine-slot tables cover X11, X12, Y07 and Y09 and the scanned
-±0.4-pitch interval. A depth-independent fit degraded XY on the first 80-point
-scan. The depth-conditioned fit used 396 points, then a distinct 80-point
-native-grid check selected without reading its signals. All 80 strip pairs
-were recovered, 40/80 returned both axes. With a strip-center fallback per
-unestimated axis, radial XY RMS changed from 1.821 to 1.266 mm. Depth RMS was
-0.278 mm (80/80). These are 500 keV simulated single-site checks. Use measured
-feature scales, channel maps, calibration and selection data for experimental
-comparison. The published Compton map uses its original reconstruction.
-Evidence and input hashes: `.local/gegi-digital-v1/`. No new Geant4 or SSD run.
+**One rejected full-energy photon.** In the independent acquisition the excluded Cs-137 photon deposited energy in three strip intersections. The intermediate scatter supplied 4.640 keV to X04/Y03 including its local secondary deposits. Y03 collected this charge together with a larger deposit, while X04 was below the 5 keV collector threshold. The measured X03/Y03 energies then differed by 4.492 keV against a 3.802 keV pairing tolerance. A [late preamp step check](tools/gegi_heldout_pairing_loss_study.py) found 4.517 keV-equivalent on X04 and flagged only that trigger among all 79 two-strip windows. The nearest separate deposit group was 43.59 µs away. The two-site energy tolerance remains appropriate for this case.
 
-## Completed native macOS CPU support — 2026-11-13
+**From a new acquisition to a map.** Control saves the two-strip ADC windows beside the report during the normal electronics pass. Supply the external center-template calibration and an assumed z plane as described in the [student guide](tools/site_guide.html#gegi-dual-source). The portable [reconstruction command](tools/gegi_continuous_plane.py) reads the recorded voltages without opening simulated transport histories. On the 50 ms reference, direct capture reproduced all 26,622 previously replayed ADC values, trigger records, spectra and masks. The separate `gegi-center-calibration.npz` has all 11 depths for 216 of 256 cells, with 40 explicitly unsupported. It covers all 17, 58 and 71 energy-compatible assignments across the three exposures. The archive is 303,891,603 bytes with SHA-256 `72884e1c59090913e67cecd4aec742864b1f1e87867b79fee67bd5fe340eb233`. The smaller 27-cell study archive covered only 8 of 58 assignments in the first 250 ms run and zero of 71 in the independent run.
 
-Root accepted the shared Windows/macOS implementation by gpt-6.1-sol ultra.
-The student ZIP includes native `Setup.command` and `Control.command`, with one
-shared model/control/readout workflow and separate locked Mac transport packages.
-Windows/Linux locks, canonical models and original science remain unchanged.
-Local checks: 170 runtime tests, 72 transport tests, five package tests and 195
-catalog/resource assertions; existing three Windows exporter receipts still pass.
+**Independent acquisition.** Open `independent-b000001-250ms` to inspect two different archived Cs-137/Co-60 decay samples at 37 kBq each on the same 250 ms clock. Both original primary-ID ranges are disjoint from the reference, with unchanged positions and electronics. Of 1,018 triggers in 228.047 ms of qualified ADC time, 799 had an energy and 79 qualified as two-strip triggers. All 79 waveform windows were recovered. The independent [association study](tools/gegi_heldout_pairing_study.py) retained all 1,196 deposit groups and withheld ten close-arrival candidates from truth scoring. Of 47 exact two-interaction cell references, 46 admitted the true energy pairing. On those 46 occurrences from 31 original groups the charge-centroid axis RMS error was 21.67° with strip centers and z = 0, 14.94° with joint fast/timing features, and 14.07° with joint ADC waveforms. Site-depth RMS errors were 3.06, 1.12 and 0.85 mm. Nine of ten exact full-energy references allowed both interaction orders. The remaining reference's strip energies rejected the true pairing. These results use no new transport or drift and retain both permutations.
 
-At source `c1b92a8`, GitHub run `43466877974` completed the real CPU chain on
-macOS 15.8.2 arm64 and macOS 15.7.9 x86_64. Each used SAP22/Cs137, 100 initial
-events, radiation seed 26092631 and one Julia thread: 97 zero/3 nonzero events,
-3 accepted pulses, no native failures or readout rejects. Both verified all 195
-package files, launcher modes and geometry stop/resume with sealed-work reuse.
-No field caches or demonstrations were included in the package.
+In Control select `cs37k-co37k-250ms-depth` or `cs18p5k-co74k-50ms-depth-native`. The original simulated point sources are Cs-137 at (−40, 0, 40) mm and Co-60 at (40, 0, 40) mm. On the 250 ms acquisition, 360 of 484 single-pixel triggers had an apparent depth inside the pixel's timing curve. On the 50 ms acquisition, 80 of 113 did. The [portable table](tools/gegi_pixel_depth.py) covers 216 of 256 pixels. Independent off-center checks exist on 16 pixels. Of 188 withheld 500 keV positions, 150 returned a depth; RMS error on those positions was 0.201 mm versus 2.798 mm for z = 0. Six energies from 35 to 1,250 keV at two ADC phases were checked using the same isolated pulse shapes. At 35 keV the phases returned 148 and 133 depths. [Energy and phase study](tools/gegi_pixel_depth_energy_phase_study.py)
 
-The hosted checker then used the wrong batch directory after each successful
-run; its `/transport` path is corrected. Both original LH5 files and exact ledgers
-were rechecked from preserved data, followed by protected production Control
-HTTP spectrum/event/waveform checks on Windows. IDs 24/52/54 and waveform 24/0
-at 449.031879 keV passed, with unchanged originals and no new science. Finder,
-Safari and a physical student MacBook were not tested. This is bounded functional
-acceptance, not model convergence or experimental validation. Exact evidence:
-`.local/macos-port/hosted-43466877974/supplement-{arm64,x86_64}-final/acceptance-supplement.json`.
-Do not rerun completed science to turn the preserved hosted checker status green.
+The [two-strip ADC exporter](tools/gegi_trigger_windows.py) recovered all 76 reference windows and 27 changed-activity windows. Each contains 34 electrodes sampled every 20 ns from −80 to +480 ns around the measured trigger. The parent stream hashes matched. All 412 recorded collector CFD50 times were exactly reproducible from these samples, the acquisition baseline and the original slow energies. The standard 250 ms run was refitted from its saved collector parameters. A fresh 50 ms electronics replay also recovered every one of the old 259 triggers and all spectra.
 
-An earlier arm64 attempt stopped before radiation because Julia 1.13.0 counted
-only free Mac pages. The fix uses Mach free + inactive + purgeable pages, keeping
-the original 512 MiB reserve, 192 bytes/node and physical settings. Original free
-and estimated available bytes are recorded separately. The failed attempt and
-superseded Intel setup remain under `.local/macos-port/hosted-43462246166/`.
+In 48 controlled simultaneous two-point mixtures, nearby signals shifted the isolated time difference by up to 32.13 ns. The joint template fit recovered two depths on all 48 known pairings; the separate single-pixel curves did so on 24. In the [continuous joint-fit study](tools/gegi_joint_acquisition_study.py), independent transport histories supplied a charge-centroid axis for 41 occurrences from 27 original groups. On those same 41, axis RMS error fell from 24.27° at strip centers with z = 0 to 12.31° using fast/timing features and 12.62° using local ADC waveforms. The respective site-depth errors were 3.06, 1.06 and 0.92 mm on 82 site observations. These center-template fits retain strip-center XY. [Results](docs/results/index.html#gegi-apparent-depth)
 
-Homepage, guide and source are synchronized through PR #1 and the existing site
-builder. Exact source, student release, public-byte and live-site verification
-records are `.local/macos-port/receipt.json` and
-`.local/student-runtime-p1/COMPLETE.json`. Further work follows actual student
-feedback; monitoring remains PAUSED, with no resets or new campaign authorized.
+The [conditional angle study](tools/gegi_continuous_cone_angles.py) kept every energy-allowed order. Of 76 two-strip triggers, 18 fell in the three fixed line windows and seven yielded conditional cones. Two had an exact two-interaction, full-energy transport reference. On the original center templates, the true-order waveform fit gave source-to-cone residuals of −4.27° for Co-60 and −20.45° for Cs-137.
 
-## Completed bounded-memory result browsing — 2026-10-23
+For the Cs event, [64 new same-field injections](tools/gegi_capture_joint_lateral_target.py) supplied 48 lateral training positions and 16 independent checks, reusing 22 pixel-center responses. One local SSD worker took 45.34 s and peaked at 2.11 GB. On eight held-out simultaneous mixtures, lateral fitting reduced axis RMS error from 18.49° to 7.17° using fast/timing features and from 18.77° to 10.81° using ADC traces. On the targeted Cs transport event the waveform residual moved to −11.06° in the true order, while the reversed order gave −4.74°. The raw photon vertices and measured energies themselves give −10.60°. In the original Livermore transport the direction implies 201.52 keV for a stationary target electron, while 193.45 keV was absorbed at the second vertex. Bound-electron Doppler broadening permits such a difference. The source angle is a diagnostic, and selecting the order nearest the known source would pick the wrong order here. [Held-out mixtures](tools/gegi_cs_joint_lateral_holdout.py) · [Geant4 11.3.2 Compton implementation](https://github.com/Geant4/geant4/blob/v11.3.2/source/processes/electromagnetic/lowenergy/src/G4LivermoreComptonModel.cc#L334-L412)
 
-The existing GeGI viewer now reads summary/event index first, then one selected
-event's exact 34-channel signals and reconstruction. Full-run imaging loads when
-its existing panel opens. Original owned standalone runs and their reconstruction
-derivatives use the same viewer and sealed byte-range reader; original files,
-every event and numeric value remain intact. No physics/reconstruction change,
-new interface, dependency or extra AI review.
+## Continuous acquisition in Control
 
-Root accepted the integrated gpt-6.1-sol ultra implementation. 19 unique backend
-tests, frontend contracts and 5 package tests passed. All 42 actual saved events
-matched their original native fields and 34-channel arrays; source hashes stayed
-unchanged. The 107,972,753-byte aggregate was indexed with a 65,536-byte scan buffer.
-The separate read/compare process peaked at 50,450,432 bytes working set; this is
-not a browser-memory benchmark or comparison against the old reader.
+The [student preview and separate calibration download](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-preview-5edddc543377) support new acquisitions through measured-energy backprojections, original preamplifier samples, fit alternatives and pixel spectra. Open the run in Control and expand **Measured Compton backprojection on a plane**. A new 50 ms run at 18.5/74 kBq, clock seed 20261119, returned 246 triggers, 191 energies and all 25 two-strip windows. Nineteen triggers contributed to 29 hypotheses at z = 40 mm. Six trigger units remained unresolved. The extracted Windows application served all 72,000 map cells across four acquisitions and opened a legacy run without a map. Using the installed locked WSL environment, the extracted ZIP reconstructed the separate 250 ms acquisition from its ADC windows and the external calibration. All five maps reproduced the same peak cells and event counts; the largest absolute cell-weight difference was 2.21 × 10⁻⁹. GitHub reports the same SHA-256 for the 1,134,546-byte software ZIP (`435fd5958b5429fabb83f85dfb461769caeb188de80d097123c8f5b94eb3e53a`) and separate calibration as the local acceptance files. Stable publication follows PR #2 approval.
 
-Real-browser acceptance used the production inspector/API and real saved data;
-only historical CLI ownership was simulated in memory in a temporary read-only
-session. Opening results transferred 2,600,336 bytes of summary + first event.
-Changing channel made no extra request; changing event read one event; imaging
-loaded once on expansion and was reused. No bulk-result route was available.
-The temporary server was closed. Current exact evidence and student-release
-status: `.local/gegi-demand-loading/receipt.json` and
-`.local/student-runtime-p1/COMPLETE.json`. Further development follows actual use
-feedback; experimental alignment remains deferred and monitoring remains PAUSED.
+Open `cs37k-co37k-250ms-reconstructed` for the complete reference example. Its 864 triggers produced 713 energies, including 484 single-pixel measurements. Filter the detector map by measured energy, select a pixel for its full spectrum, or inspect the original signed neighbor signals, collecting energies and 50% preamp timing of a trigger. The 640–680, 1150–1190 and 1310–1350 keV intervals contain 21, 7 and 2 single-pixel hits. The 50 ms exposure contains 5, 3 and 2. For both acquisitions, summing all 256 measured pixel spectra reproduced the recorded single-pixel spectrum bin for bin.
 
-## Completed standalone saved-signal workflow — 2026-10-23
+The optional **Low energy** coincidence profile (4 keV per 20 ns) produced 883 triggers and 723 energies on exactly the same ADC stream as the standard 5 keV profile. It retained all original trigger times and their energies/nulls. Ten of its 19 additional triggers had measured energies. Both profiles keep the 3 keV quiet threshold. Use the [saved low-energy study](tools/gegi_low_energy_trigger.py) at source version `688cb74` to reproduce the fixed original comparison.
 
-Owner says experimental files are unavailable and explicitly defers alignment.
-Completed GeGI runs owned by Control now appear in the existing saved-signal
-panel. Reprocessing delegates to the unchanged standalone processor, writes a
-separate derivative, and opens it in the existing event viewer. Raw links retain
-the original run; original IDs/counts/signed signals/failure nulls are preserved.
-Campaign stop/resume remains available; standalone has no checkpoint boundary.
-Normal polling reads small metadata; large results load only when opened. No
-historical CLI ownership adoption, added page, inverse-model change or new physics.
+**Position.** In 80 independent simulated positions on the four directly calibrated strip pairs, continuous acquisition recovered the original collecting strips in all 12 tested energy/phase/noise conditions. With measured strip centers on abstaining axes, transverse RMS error was 1.223–1.266 mm versus 1.821 mm using centers alone. Depth RMS was 0.278–0.302 mm. Full XYZ was available at 32 or 40 of the 80 points depending on sampling phase. The [study](tools/gegi_continuous_position_study.py) records each condition separately.
 
-Root accepted the integrated change; gpt-6.1-sol ultra implemented it. Nine
-adapter tests, three authenticated HTTP tests, existing UI contracts and five
-package tests passed. An isolated synthetic owned-run browser case completed
-select -> reprocess -> existing viewer, preserving 100/98/2 and failed primary 49.
-Its full-workflow inspector was explicitly stubbed; real postprocess ran. Separate
-scientific checks passed on the real 100-primary all-zero run and complete real
-event 45 with 34 channels; source/original hashes were unchanged. The 108 MB,
-42-event aggregate was not loaded with only 0.79 GiB available. No installation test,
-extra AI review, new simulation or physical-validation claim.
+A [lateral transfer study](tools/gegi_position_transfer_study.py) tested nine additional interior pairs using held-out measurements. The busiest additional reference pixel, X15/Y07, received 16 new fixed holdout points on the existing field. Eight had both transverse coordinates. All-point transverse RMS using center fallback was 1.089–1.101 mm versus 2.030 mm at 500 keV. The transfer supplies XY axes with nulls for unsupported values. The 0.25 s receipt gained 18 triggers with at least one lateral estimate, including eight with both axes; the 0.05 s receipt gained six, including three with both. The original direct estimates were reproduced exactly. Reapply the estimator to saved collector readings with [the position refit CLI](tools/gegi_refit_positions.py); the two original ADC streams, energies and masks were preserved.
 
-Current delivery/release evidence: `.local/standalone-saved-control/receipt.json`
-and `.local/student-runtime-p1/COMPLETE.json`. Experimental plan steps 4–5 remain
-deferred; do not request the unavailable acquisition or guess its parser.
+**Two-strip events.** Of 76 qualified triggers with two strips on each face, 58 had one energy-compatible X/Y pairing and 18 had none. Of those 58, 37 permitted one energy-based photon order and 21 permitted both. The [independent truth comparison](tools/gegi_continuous_pairing_study.py) found exact two-interaction cells for 41 occurrences from 27 distinct original groups. All 41 retained the true pairing. Only two of these deposited the full photon birth energy; both orders remained allowed in both. The four collectors’ measured fast, slow and timing values are saved for the depth and cone study.
 
-## Unified event viewer — 2026-10-23
+## Readout choices and saved evidence
 
-Owner removed the separate geometry-only interface. The default and legacy
-`view=geometry` links now use the existing positive-event reader; AK02 selects
-saved primary213/group0. The Cryostat checkbox starts on and preserves manual
-visibility changes when selecting another event. The two LBNL assembly entries
-use the same reader. Explicit assembly context remains a control in that reader.
-No scientific data, geometry coordinates, compressed delivery or runtime changed.
+The simulation digitizes the signed, bandwidth-limited preamplifier output at 50 MS/s. Noncollecting neighbors show transient induced charge during drift even when their final induced charge is zero. In event 45, X03 carried 154.98 keV on the slow branch; X02 and X04 reached 13.06 and 27.41 keV-equivalent transient induced charge. The digital fast branch measures signed area and the slow branch measures energy. Simulations retain both the lower-minus-higher neighbor difference normalized to trigger energy and the convention used by the position calibration. Matching either to the physical GeGI requires its channel mapping and calibration.
 
-Root accepted the source diff and directed gpt-6.1-sol ultra implementation.
-36publication tests,17entry-navigation tests, targeted default/legacy identity
-and visibility checks, query/history checks and the affected adapter test passed.
-Normal builder checks passed for snapshot
-5e2a7cdf9dc0fd029c76ae1520cf789113c77265d5a45e99163807eaf9dbf457.
-Browser acceptance confirmed the old link opens213/0with the full cryostat;
-manually hiding it stays effective on next event220/0. Every saved examples
-payload and all image/video/CSV/gzip/archive bytes are unchanged. Git and live
-publication status are in `.local/viewer-unification/receipt.json`.
-
-## Completed cleanup milestone — 2026-10-23
-
-Owner approved P1/P2/P3 public removal, lossless10Kgeometry delivery and omission
-of raw downloads unnecessary for display. Root owns acceptance; gpt-6.1-sol ultra
-implemented the three concrete parts. No physics, resets, new environments or
-extra AI reviews. Monitoring stays PAUSED. Local scientific originals are intact.
-
-Validated snapshot1f967e0ed20616442aae17b556602e38d8a54ce6d931590a69b40d2e1de57c19:
-1,873files including manifest;493,496,065bytes versus994,900,290before cleanup.
-All109HTMLentrypoints remain valid, with three retired studies reduced to small
-compatibility entries.17models retain two original MP4s each;102duplicate/extra
-public movies removed, saving16,614,067bytes. Old200-primary teaching, gamma40
-and earlyGeGI payloads are retired publicly; exact local science remains.
-
-Geometry453,681,939 ->95,117,298bytes (79.034% smaller): all200chunks/20,000events,
-scene/index bytes and original identities retained. Two ring complete-response
-ZIPs (93,832,509bytes) stay local; all browser-required plots/scalars/waveforms
-remain online.883retainedmedia/CSV files and243waveform traces are byte-identical.
-The builder preserves these policies on future publication; portable validation
-requires no omitted private ZIPs. Do not rebuild the student runtime for this
-website-only milestone.
-
-36site tests passed plus targeted geometry/viewer/curation/retirement/delivery
-checks. Compressed viewer regression preserved236groups/972,019scalar comparisons.
-Real browser verified AK02event213->220,3Dpositive overlay, both1280x720MP4s through
-playback, and GeRC02primary61/group0charge/current/preamp/shaper plots. Normal
-final builder validators passed. First candidate's ringHTMLhash mismatch was
-fixed with5targeted tests; the existing generated stage was reused, not recomputed.
-All failure/resolution evidence and exact publication/live status are in the
-single `.local/publication-cleanup/receipt.json` and its named logs. No build or
-temporary preview server remains active after the local milestone.
-
-Next delivery order is in tools/NEXT_DEVELOPMENT_PLAN.md: presentation steps1–3
-are complete. Use a matched ImagerPro acquisition and documented observable
-contract before another inverse-model change. Preserve all434GeGIgroups/837
-candidates and the accepted nominal readout bridge; do not repeat completed
-physics or two-bright-spot investigations.
-
-## Current milestone — 2026-10-22
-
-Owner correction: the default Compton image must include every usable saved
-candidate, not only a selected energy window or two-site subset. The census is
-434 groups/837 candidates (647 two-site,169 three-site,21 four-site candidates).
-All pass the existing candidate geometry/energy-angle checks. The tested display
-now includes that exact population; pooled is the default and energy layers are
-optional. No new transport, drift, fits or source-truth input. The previous153-group
-display and fixed-case nominal readout bridge are complete and verified. Exact
-live status/receipt is in `.local/autonomy/state.json`. Root owns direction;
-implementation is gpt-6.1-sol
-ultra. No additional AI reviews, resets, large campaigns or repeated broad checks.
-The owner explicitly stopped further two-bright-spot investigation. The all-site
-1332.492 keV layer has19groups (old two-site layer18). State limited statistics.
-
-The same manual supervisor owns `.local/autonomy/gegi-saved-recovery.lock` as
-`gegi-saved-recovery-20261020`; previous ownership and pause records are retained.
-Automatic monitoring stays PAUSED. Bounded repair development/calculations and
-publication are authorized without repeated permission. Check actual processes,
-receipts and `.local/autonomy/state.json` before resuming; do not duplicate workers.
-All original science, failed attempts and identities remain permanent.
-
-Detailed preceding evidence is preserved at
-[2bf8b5e5fabb](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/2bf8b5e5fabb610e330109c0c20a9c0cb5f2327d/PROGRESS.md).
-Paths below are relative to `.local/gegi-10m/signal-recovery-v1/` unless specified.
-Use the receipt hashes and existing tests; do not rerun completed physics to recover
-context. `tools/NEXT_DEVELOPMENT_PLAN.md` retains the stage/evidence map.
-
-## Tested software and current publication
-
-Previous student release `student-runtime-2bf8b5e5fabb` was verified: 896158 bytes,
-187 members, ZIP SHA256
-`4b2790f41a6be34b65a6431a063ec154e44c7ae8f3e6359c46eeb5e1bd773038`.
-It contains single-pass readout, optional post-reconstruction two-site selection,
-and repaired order weights. Five package tests passed; versioned/latest public
-bytes, embedded source commit, receipt and guide link agree. No installation test.
-Its receipt is retained in `.local/student-runtime-p1/release-history.json`, SHA
-`f9c413b38da08d13ac4bc4092867628d5c8f07f454098f725ead758302138b7b`.
-The standalone Control integration above updates the student runtime; its current
-public release is recorded in `.local/student-runtime-p1/COMPLETE.json`.
-Do not rebuild the runtime for website-only edits.
-
-Previous153-group website13d952b is pushed and live-verified:983live files,
-298.990s on2026-10-22T23:50Z. Receipt `validation/order-prior-preservation/publication/validation.json`.
-GeGI manifest `61f0de0d58d2a13fde43196022633f2f0b86975cc1e9cd032847c41335f81bd8`.
-Exporter21tests/site36tests, page transformation/anchors/controls and both unchanged
-builder validators passed. Browser/CDP timed out; real browser acceptance is not
-claimed. Preserve prior failed exports/builds. Reuse exact section/nav/teaching-loader
-interfaces; do not edit pinned historical site tools. Build only through build_site;
-no hand edits to docs or repeated standalone local full check after builder checks.
-
-All-candidate selection census: `validation/order-prior-preservation/selection-census.json`,
-SHA `08f48335f9797fff27488aa3e671ff51b2ecb649ef00a9dd14e135a5422be578`.
-One saved-only scan0.144s: all energies/all sites434/837; all energies/two-site414/647;
-three energy windows/all sites162/393; previous windows/two-site153/287. All837
-retain the one-fully-absorbed-photon/charge-pixels-as-interactions assumptions.
-Old153/287 error measurements cover only that explicit subset, not the full map.
-All-event map is complete at `validation/order-prior-preservation/all-events/`:
-map-selection SHA `6259e649a74ed53db59bbb29f4db2f87d964ce8edd42b8ae0f29e7fcd0fb2c47`,
-COMPLETE `5938b6cd64a784bc4fe7b6b0647ff9fdf2d2a9867a6a3f053eb58e96c63fb51b`.
-One existing map call4.508s/4.730s total;434groups/837candidates, energy layers
-118/25/19/272other. Exact candidate geometry/priors/IDs preserved, mass262.149306
-plus unresolved171.850694. Forty iterations, unchanged z40mm/extent120mm/step4mm.
-The old153/287 evaluation covers137groups fully and16partially (63new candidates
-there);281groups have no evaluation in that subset,550candidate keys are uncovered.
-No new truth reads, fits, physics or peak investigation. A source-key preflight
-failure executed0map calls; its original code/receipt are retained.
-All-event publisher is frozen and tested:24exporter tests,36site tests and2checks
-after the capacity-only9MB change (legacy remains8MB). Real page transformation
-and all84fragment references pass. Raw bundle8,249,774bytes/30artifacts; manifest
-`b366307f3d5bd2db98f1b3132e2d35d9e9a480abcb35dd697d38e21b8a825683`.
-All5views are retained; pooled default,780of837cone intersections enter the square.
-Root inspected all3pooled PNGs. The first8MB-bound export failure is retained;
-image bytes were reused exactly. Build/live receipts extend the single
-`validation/order-prior-preservation/all-events/publication/validation.json`.
-The unchanged builder passed its predecessor and both final validators, installing
-1981files/109pages with3538links and84fragments in673.274s. Build ID
-`220d8dfd1722b5fb8d31c7e59450a34619a20d4c74ac4203a7e862ef0137eeaa`;
-installed GeGI manifest `0934a92dc9a9593be3237069ee65b7ca991796b1d074423e55fefb881ca53130`.
-Content commit a4cc2c2 is pushed and live-verified:986files,2026-10-23T00:32:57Z.
-The first --url check passed local validation, then hit HTTP503. Preserve that
-failure; unchanged verify_live passed on remote-only retry in104.098s using the
-same verified manifest. State.json and the single receipt above retain both attempts.
-No new runtime ZIP; subsequent handoff-only commits do not change published bytes.
-
-## Latest saved-data repair
-
-The approximate free-electron kinematic screen previously redistributed all mass
-to surviving site orders. Equal engineering priors are now assigned before that
-screen; unsupported orders retain unresolved mass. This is not a calibrated
-posterior or additional signal recovery. All18 reconstruction tests pass.
-
-Fixed200development+200holdout and153map checks preserve IDs, energies, candidates
-and all nonweight fields. The545group union contains280 original missing-mass
-records, still missing. Result:
-`validation/order-prior-preservation/evaluation/result.json`, SHA
-`27e7788afa17712cfc5d2ff51ce3aa11f13710e237516dde1e4666620de0ceab`.
-The initial wrong-directory failure scanned0groups and remains recorded.
-
-The repair has been applied to all434candidate groups/837candidates in a sparse
-new derivative. 212groups/323candidate weights decrease; total candidate mass
-338.583333 ->262.149306, unresolved95.416667 ->171.850694. All nonweight values
-match; all545validated subset records match. Original57613group census retained.
-Application plus one changed map took7.054s; map+checks1.581s. Current two-site map
-uses153groups/287orders:661/1173/1332layers113/22/18groups. The1332layer is exactly
-unchanged. Maps retain the fixed40iteration budget; no convergence claim or more
-peak/plane/leave-one-out work. Population result SHA
-`e0e6bc42b165e47537dd2a739a828630ca9209b7b64bfdbb3359974dc7433878`,
-map SHA`181e261b6e978cc4b1cfb0d7e7859665122c69dae2c7c187871be8bfbb8b9162`,
-in `validation/order-prior-preservation/population/`.
-
-Publication evaluation reuses the153group saved posthoc labels/geometry with exact
-new candidate keys/weights; no raw truth reads. Strict36correct/39wrong/212unknown
-candidate alternatives remain unchanged; these are not hard-choice error rates.
-Weighted median charge-centroid3D/absZ/absE errors1.439274mm/0.149247mm/0.373420keV.
-Photon-vertex error is separately1.432634mm on80sites. Original unweighted metrics
-remain exact. Angular errors are null because the old angle-array order cannot be
-proven; do not guess the mapping. Only6development+2holdout groups overlap the153;
-145 supplemental groups are posthoc, not a new holdout. Evaluation SHA
-`ce0d6d1ff3558250e71ca2b90c5e5a24d75448c128c57a7d6c836e23f61cec4a`.
-No additional validated imaging recoveries.
-
-## Reusable full-chain evidence
-
-- Native Geant4 model test:11.3.2/G4EMLOW8.6.1,30000Livermore plus3000Klein–Nishina
-  controls, fixed seeds. Free-electron-domain failures125/106/74of10000 at662/
-  1173.228/1332.492keV; controls0. Energy closure <=1.04e-13keV. Compile3.227s,
-  sample process1.233s. Atomic relaxation off, binding energy local: model diagnostic,
-  not detector transport or original event replay. COMPLETE SHA
-  `ce02d38a16b9c19f28f0520549c6a776e9af595b345aaa203f0320825096c5ee`,
-  `validation/bound-electron-response/native-sampler/`. Do not widen cuts from this.
-- Transport-only >2gamma-anchor prefilter rejected: it would remove14743of57613
-  groups, including228of414current two-site candidate groups. Seven tests; saved
-  scan40.475s. Keep zero-only skipping. Post-reconstruction `--two-site-only` has
-  seven passing tests and preserves excluded ambiguity/denominators.
-- Fixed400baseline pairing errors3/22development,5/24holdout; optional two-site
-  selection0/15,0/16 with false splits1/15,0/16. These are conditional hypotheses,
-  not validated hardware recovery. Source truth never enters the inverse.
--153map posthoc:306matched charge cells, unweighted median3D/absZ/absE errors
-  1.412926mm/0.135299mm/0.366593keV;80photon vertices in40groups median1.424950mm.
-  Parent ancestry gives152single-gamma-lineage groups. First-child attribution
-  resolves82groups to two dominant interactions:2correct-only/75both/5wrong-only,
-  71unknown;1/5keV sensitivity unchanged.407direct-root deposits remain unassigned,
-  max per-group energy0.51656keV. `validation/root-gamma-interaction/evaluation/`.
-- Native cell bank:378training points and80independent validation cases. Single-site
-  inverse80/80pixels; median/max3D0.010570/0.023088mm. Eight fixed ideal two-site
-  mixtures8/8nominal pairings, but cases3/7 nearly degenerate. Raw ideal charge,
-  sparse domain, no hardware discrimination claim. All relevant tests already pass.
-- Region bank5148records:378imports+4770new drifts,145s, no fields/transport/failures.
-  `calibration/native-region-bank/`. Fixed development720929 K1024 refinement:
-  2032new+16reused,69.181s; RMS2.754360 ->0.267866keV, correct pairing, centroid
-  errors0.0073225/0.0515993mm; opposite pairing93.1220keV. One development case,
-  not validated recovery/global optimum. `validation/native-region-720929-k1024/`.
-- Full34 original-grid bank:2991points =2551complete+176incomplete+264exclusions;
-  original selected-pair parity passes. Original calibration lacked other channels;
-  it could not supply them by export. Failed full34 inverse v1/v2/v3 remain retained.
-- Guard diagnosis identifies coarse weighting-grid interpolation on3saved paths.
-  WP17/20/34 local refinements pass unchanged1e-6update gates. These3potentials do
-  not establish all34/global convergence; do not splice them into production or
-  force endpoint1/0. Original paths, waveforms and failed solves remain preserved.
-- Existing fields are reused per native worker, not solved per event. Five resident
-  loads160.649s. SSD0.11.8/Julia1.13Float32,92.3K,-879/0V,-5e9cm^-3,ADL/Bruyneel,
-  1ns/max1000steps, no diffusion/self-repulsion. Preserve canonical hashes.
-- Single-pass electronics repair:68electronics+74failure-policy assertions and
-  6calibration tests pass. Saved benchmark3groups×2:6.990 ->6.410s, exact outputs;
-  electronics-only8.30%, not campaign speedup. Nominal circuit tests do not identify
-  actual GeGI filtering, noise, ADC, timing or guard observability.
-
-## Original campaign and experimental correspondence
-
-`.local/gegi-10m/campaign` is complete and permanent:1Mprimaries/100chunks,
-400kgammas+600kdecays;942395zero,57605nonzero primaries ->57613pulse groups.
-The old `.local/gegi-10m/reconstruction-v3` baseline has434conditional groups/
-837cones,162mapgroups/393orders. Its original1332layer19/58 is historical.
-55591spectroscopy groups,1896incomplete including426native failures,126unresolved.
-Keep original nulls/failures, all identities, seeds and denominators. These counts
-are not validated detector efficiency. The fixed development/holdout split remains.
-
-Owner-provided Juergen/Noomen emails establish that ImagerPro exports single-site
-and two-site .bin events, not multisite or waveforms. N42 FullDetector/AllEvents,
-256pixel/PixelTotal and32channel spectra are cumulative: no individualXYZ/dE.
-Their selected binary events reportedly reproduce the pixel map; exact population
-rules still awaitPHDS. Experimental reconstructed positions are not independent
-truth. Do not assume all spectral totals and binary events have one denominator.
-BEGe3820waveforms are not needed. Reply draft was delivered; no email was sent.
-
-Read-only local My Drive search found0.n42 and1736.bin files, all simulation/software
-artifacts, in4.416s. Two inaccessible paths are project test folders. This is not
-cloud-wide absence; prior G:Ge-STAR search was reused. Receipt
-`reference-index.experimental-data-search.json`, SHA
-`f8ea3f7a23c5034f316fe52b52efc407fd5706f8e173ee307a71f7a0c3181748`.
-Private PPT/manual index is `reference-index.json`; do not publish its source files
-or private paths. The manual duplicates DataStream type1 and omits GlobalTime units:
-no guessed binary parser. Need matched.bin/N42, format/version, acquisition/source
-settings and selections. Reproduce the experimental pixel map before comparing
-matching spectra; no event-by-event pairing to unrelated simulated events.
-
-The nominal readout bridge is now complete on the fixed8two-site cases. It uses16
-original full-duration34-channel records, each with complete carrier endpoints,
-existing causal summation/Julia channel_response and the saved global calibration.
-No truncated inverse prediction enters readout. Full support90–155ns plus the
-existing20shaping-constant/10000ns electronics tail; no new injection or physics.
-All272channels and IDs retained:32expected collectors accepted, ADC energy minus
-250keV expectation -0.261049 to+0.984532keV. Of240noncollectors,18also have positive
-peaks above threshold (up to7.096972keV equivalent), while none passes terminal-
-charge collection classification;222below-threshold energies stay null. All current
-balances pass, no saturation/window limit. Peak times319–1764ns are separate from
-ideal charge t50 times13.269–119.460ns. Terminal charge/t50 are native diagnostics,
-not established .bin observables. Positive peak ADC alone cannot identify collection.
-Three targeted tests pass; one Julia1thread/BLAS1 execution,15.931s total, exit0.
-No inverse fits or production change. `validation/native-pair-readout/result.json`,
-SHA`300991905ca16f5a2c69e5a0dd058bd8eea0e9fc55925dfc1c08d9ae66f2be70`;
-COMPLETE SHA`b84a29cd13c08fb9b13df7a63975214814a4c658b31533945b7ba448de883c98`.
-
-The all-event Compton display milestone is delivered; do not repeat its build,
-map or verification. The next experimental
-milestone is a matched.bin/N42 acquisition with format/settings: reproduce its
-selected pixel map and compare matching spectra. Preserve the demonstrated peak/
-collection ambiguity; do not invent hardware timing, use native terminal charge as
-measured input, or expand the inverse/campaign before defining the actual observable
-contract. No more two-bright-spot work and no large campaign yet.
+- [Fast-gate timing](tools/gegi_fast_gate_study.py) and [matched pileup comparison](tools/gegi_fast_pileup_study.py). Across 48 isolated triggers and 96 face comparisons, changing the fast gate to the injection-clock reference changed the normalized ratio by at most 0.000381. On the nominal two-pulse grid, 451 of 576 windows resolved two triggers. Five of 1,346 face readings were withheld for local pileup; the largest difference from the matched isolated reading was 0.000696.
+- [Low-energy trigger comparison](tools/gegi_low_energy_trigger.py). Among 45 isolated misses on the original 250 ms reference, 28 had activity below the 5 keV/20 ns coincidence threshold and 17 stayed below the quiet-activity threshold. The optional 4 keV/20 ns setting recovered 19. Zero accidental triggers in 0.20 s of simulated empty recording gives a one-sided 95% upper rate of 15.0/s for this noise model.
+- [Energy-window map and pixel spectra](tools/gegi_pixel_map.py). The 250 ms reference maps 484 single-pixel triggers into 176 pixels, with 229 additional multi-strip energies and 151 triggers without usable energy. The 50 ms run maps 113 into 80 pixels, with 77 additional energies and 69 triggers without energy. All counts are conditional on qualified recording intervals. Both sources and all 34 electrodes share one acquisition timeline.
+- [Strip-gap study](tools/gegi_edge_position_study.py). Sixty-six native points were captured using the same field; the widened ratio/timing calibration estimated 16 of 24 held-out coordinates. On those same points its one-axis RMS error of 1.117 mm exceeded the timing-only error of 0.389 mm. The direct position calibration retains the earlier interpolation.
+- [Student setup and use](tools/site_guide.html#gegi-dual-source) · [Development plan](tools/NEXT_DEVELOPMENT_PLAN.md) · [Complete previous handoff, evidence and package history](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/96f4cc0/PROGRESS.md). Large raw campaigns, original field solutions and charge libraries remain in the project’s preserved local data directories. Experimental comparison needs single/two-site records, pixel and channel spectra, the corresponding detector configuration and acquisition selections.

@@ -216,6 +216,8 @@ def current_results(site,model,campaign_models):
     """Offer only results present in this saved snapshot, with exact model scope."""
     links=[]
     if model=='GeGI_3D':
+        if (site/'results/gegi-digital/event.json').is_file():
+            links.append('<p><a href="../../results/index.html#gegi">Explore the fast and slow signals on adjacent GeGI strips</a>.</p>')
         route=('results/gegi-campaign/index.html' if (site/'results/gegi-campaign/publication.json').is_file() else
                'examples/gegi/index.html' if (site/'examples/gegi/publication.json').is_file() else None)
         if route:links.append('<p><a href="../../'+route+'">GeGI signals, reconstructed interactions and imaging study</a>.</p>')

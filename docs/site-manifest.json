@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
-  "build_id": "6e04be2300ed5e84ed38dff432a9fcdf837ff9d584d1725c4f184d4876285381",
-  "file_count": 1872,
-  "total_bytes": 493121214,
+  "build_id": "1858f01d9b16c70930a50ba00bd899fd5365fe6aa9438ded313bc665aa2965a3",
+  "file_count": 1883,
+  "total_bytes": 494234360,
   "html_pages": 109,
-  "local_links_checked": 3317,
-  "resource_references_checked": 3374,
-  "page_navigation_checked": 1448,
-  "fragments_checked": 86,
-  "downloads_checked": 741,
-  "media_references_checked": 1148,
+  "local_links_checked": 3332,
+  "resource_references_checked": 3391,
+  "page_navigation_checked": 1452,
+  "fragments_checked": 90,
+  "downloads_checked": 751,
+  "media_references_checked": 1151,
   "metadata_references_checked": 35,
   "other_references_checked": 2,
   "files": [
@@ -1840,8 +1840,8 @@
     },
     {
       "path": "detectors/GeGI_3D/index.html",
-      "bytes": 6830,
-      "sha256": "ac25254b697ce09bf529b002f69696cd783a2f84e58c1cfcc1dfffb703c32977"
+      "bytes": 6939,
+      "sha256": "d97b5b503944ea194b6abcad689298193a32870a3400d79eb1225daadbdc2be9"
     },
     {
       "path": "detectors/GeGI_3D/octagon_geometry.png",
@@ -7715,8 +7715,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 54249,
-      "sha256": "d03734d9b500dc44cf9aac302f20c301159d57f131997fb60d7b2b8def62cd09"
+      "bytes": 63271,
+      "sha256": "fdc3ad8d3985890549f455fbda2222b59f55ebacc5c95553b8b1f194b55b7ec7"
     },
     {
       "path": "index.html",
@@ -9304,9 +9304,64 @@
       "sha256": "0dae723633233899468aab151f16a5131163ed66ca4d9f808879a9362b21a077"
     },
     {
+      "path": "results/gegi-digital/double-pulse.json",
+      "bytes": 456773,
+      "sha256": "711693259897e1363ff42d3089f389b01b93c48c199fde027389a90ec94e3fb6"
+    },
+    {
+      "path": "results/gegi-digital/dual-source-hit-map.json",
+      "bytes": 1848,
+      "sha256": "e8c884627d9ed1579952e5c34f7e3ad221b879d03c539d0fb8768e9073d3b0ea"
+    },
+    {
+      "path": "results/gegi-digital/edge-position.json",
+      "bytes": 47015,
+      "sha256": "d8f31b51abcab155dca4d8e034b72d967d5607cb4e156154466af5ede480aa2f"
+    },
+    {
+      "path": "results/gegi-digital/event-energy.json",
+      "bytes": 22541,
+      "sha256": "6c8c78b01c671c7f1d1446608e83ae297e2239a80057488eed6e4db070dcb8cc"
+    },
+    {
+      "path": "results/gegi-digital/event.json",
+      "bytes": 74534,
+      "sha256": "074a465e0bbc1490fbbdb8cbd855798cbd4850999ad966bab89aa45c9e1a2aa1"
+    },
+    {
+      "path": "results/gegi-digital/fast-gate.json",
+      "bytes": 12344,
+      "sha256": "e98eb9f7c8c8bb3d73042a97ff59d6aaee17cbfdcb21a5b9da35ed3f167854b1"
+    },
+    {
+      "path": "results/gegi-digital/measured-compton-planes.json",
+      "bytes": 6041,
+      "sha256": "6031279023b6dfb8ab381bda86fc030de948e7006d1c0f393c699f693c45593e"
+    },
+    {
+      "path": "results/gegi-digital/measured-compton-planes.png",
+      "bytes": 283206,
+      "sha256": "f8623bd4f3fd6f99e51774011a0349a133003ce9877c54e8ed149d0f194ee2ab"
+    },
+    {
+      "path": "results/gegi-digital/pixel-depth.json",
+      "bytes": 8565,
+      "sha256": "46590d37b49213da38f03adc48309c4c98d6f67cf93e9cf7d843a63b5e04d86b"
+    },
+    {
+      "path": "results/gegi-digital/signals.png",
+      "bytes": 104662,
+      "sha256": "e1c3d9b0b0180d02d7c41984a61b5c3bdfb62f6bebf22a27a8d75753dc871d50"
+    },
+    {
+      "path": "results/gegi-digital/source-exposure.json",
+      "bytes": 11749,
+      "sha256": "2af44dd61a7b6c23ce7e35bc550103cd2cc2a3e53167ad826ff66ab78169fa93"
+    },
+    {
       "path": "results/index.html",
-      "bytes": 6638,
-      "sha256": "1bff231252e4f6287c01ba83232c5decf9f0209f8a4effe8e2f8aa7732fcb731"
+      "bytes": 81375,
+      "sha256": "42844445f4d51c93459de5b6eb5f39c5c96289264cfa328019e9ede1fcfa8d74"
     },
     {
       "path": "retired-studies.json",

@@ -1,9 +1,13 @@
+import hashlib
 import json
+import math
 import unittest
 from unittest.mock import patch
 
 import gegi_digital_pairs as P
 from gegi_digital_readout import digital_event
+from gegi_digital_saved import _source_line, analyze_event
+from local_ui_jobs import ControlError
 
 
 CHANNELS = [{'id': cid, 'family': 'X' if cid <= 17 else 'Y', 'guard': cid in (17, 34),
@@ -112,6 +116,66 @@ class DigitalPairingTest(unittest.TestCase):
         self.assertEqual([c['site_index_order'] for c in pairing['cones']], [[0, 1]])
         self.assertEqual([c['site_index_order'] for c in pairing['rejected_orders']], [[1, 0]])
         self.assertEqual(pairing['cones'][0]['vertex_mm'], [15, 100, 1])
+
+    def test_energy_orders_preserve_both_pairings_without_positions(self):
+        replay = outcomes({11: 200, 12: 200, 24: 200, 26: 200})
+        with patch('gegi_digital_readout.digital_event', return_value=replay):
+            result = analyze_event({}, {}, CHANNELS)['pairs']
+        self.assertEqual(result['status'], 'ambiguous_energy_pairing')
+        self.assertEqual(result['compatible_pairing_count'], 2)
+        self.assertEqual(result['compton_order_scope'], 'Conditional on one fully absorbed photon.')
+        for pairing in result['pairings']:
+            self.assertEqual([site['position_mm'] for site in pairing['sites']], [None, None])
+            self.assertEqual(pairing['cones'], [])
+            self.assertEqual(pairing['rejected_orders'], [])
+            orders = pairing['compton_orders']
+            self.assertEqual([order['site_index_order'] for order in orders], [[0, 1], [1, 0]])
+            self.assertTrue(all(order['kinematically_allowed'] for order in orders))
+            self.assertEqual(orders[0]['half_angle_deg'], orders[1]['half_angle_deg'])
+
+    def test_energy_orders_match_the_geometry_cone_near_the_backscatter_limit(self):
+        endpoint = P.I.ELECTRON_REST_KEV / 4
+        below = math.nextafter(endpoint, 0)
+        for one, two, expected in ((100, 400, [True, False]), (endpoint, endpoint, [True, True]),
+                                   (below, below, [False, False])):
+            with self.subTest(energies=(one, two)):
+                replay = outcomes({3: one, 9: two, 20: one, 26: two})
+                with patch('gegi_digital_readout.digital_event', return_value=replay), patch.object(
+                        P, 'infer_position', side_effect=lambda _, x, y, *args, **kwargs: estimated(x, y)):
+                    result = analyze_event({}, {}, CHANNELS, calibration=evaluated_calibration())['pairs']
+                pairing, alternate = result['pairings']
+                if one != two:
+                    self.assertEqual(alternate['compton_orders'], [])
+                orders = pairing['compton_orders']
+                self.assertEqual([order['kinematically_allowed'] for order in orders], expected)
+                cones = {tuple(cone['site_index_order']): cone for cone in pairing['cones']}
+                for order in orders:
+                    cone = cones.get(tuple(order['site_index_order']))
+                    if cone is None:
+                        self.assertIsNone(order['half_angle_deg'])
+                        self.assertLess(order['cos_theta'], -1)
+                    else:
+                        for key in ('half_angle_deg', 'cos_theta', 'scatter_energy_keV', 'absorbed_energy_keV'):
+                            self.assertEqual(order[key], cone[key])
+                        if one == endpoint:
+                            self.assertAlmostEqual(order['half_angle_deg'], 180, places=5)
+                json.dumps(result, allow_nan=False)
+
+    def test_source_line_requires_sealed_monoenergetic_selection(self):
+        with patch('gegi_digital_saved.W.safe_path') as path:
+            self.assertIsNone(_source_line('run', {}, 470))
+            path.assert_not_called()
+            for source, expected in (('gegi_mono_gamma_v1', {'energy_keV': 662, 'measured_minus_line_keV': -192}),
+                                     ('cs137_point_decay_v1', None)):
+                with self.subTest(source=source):
+                    data = json.dumps({'source': source, 'gamma_energy_keV': 662}).encode('utf-8')
+                    path.return_value.read_bytes.return_value = data
+                    stamps = {'selection.json': {'sha256': hashlib.sha256(data).hexdigest()}}
+                    self.assertEqual(_source_line('run', stamps, 470), expected)
+                    path.assert_called_with('run', 'selection.json')
+            path.return_value.read_bytes.return_value += b' '
+            with self.assertRaisesRegex(ControlError, 'source selection differs'):
+                _source_line('run', stamps, 470)
 
 
 if __name__ == '__main__':

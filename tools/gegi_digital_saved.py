@@ -1,7 +1,9 @@
 """Replay one sealed GeGI native event through the independent digital readout."""
+import hashlib
 from pathlib import Path
 
 import gegi_event_store as S
+from gegi_digital_pairs import compton_orders as _compton_orders
 import gegi_imaging as I
 import scenario_workflow as W
 
@@ -56,13 +58,29 @@ def analyze_event(event, native, channel_metadata, *, calibration=None, source_i
         pooled = infer_position(*inputs, source_identity=source_identity)
         position['pooled_axes'] = {axis: pooled[axis] for axis in ('x', 'y')}
     pairs = two_site_pairings(digital, channel_metadata, calibration=calibration, source_identity=source_identity)
+    pairs['compton_order_scope'] = 'Conditional on one fully absorbed photon.'
+    for pairing in pairs['pairings']:
+        pairing['compton_orders'] = _compton_orders(pairing['sites']) if pairing['energy_compatible'] else []
     return {'status': 'available', 'reason': None, 'readout': digital, 'topology': topology,
             'position': position, 'pairs': pairs}
 
 
-def from_saved_event(event, channel_metadata, run, *, configuration_sha256,
-                     calibration_path=CALIBRATION, include_traces=True):
-    """Use one selected native CSV, bound to the original event and run seals."""
+def _source_line(run, stamps, measured_keV):
+    expected = stamps.get('selection.json', {}).get('sha256')
+    if expected is None:
+        return None
+    data = W.safe_path(run, 'selection.json').read_bytes()
+    W.require(hashlib.sha256(data).hexdigest() == expected,
+              'Original GeGI source selection differs from the completed run.')
+    selection = W.decode_json(data.decode('utf-8-sig'))
+    energy = selection.get('gamma_energy_keV')
+    if selection.get('source') == 'gegi_mono_gamma_v1' and I.finite(energy) and energy > 0:
+        return {'energy_keV': energy, 'measured_minus_line_keV': measured_keV - energy}
+    return None
+
+
+def load_saved_native(event, channel_metadata, run, *, configuration_sha256):
+    """Load signed native charge with the original event, wiring and run seals."""
     if event.get('channels') is None:
         return {'status': 'unavailable', 'reason': 'Native carrier response failed for this primary.'}
     if event.get('signals_ref') is None and event.get('signals_sha256') is None:
@@ -94,9 +112,24 @@ def from_saved_event(event, channel_metadata, run, *, configuration_sha256,
     fields = receipt.get('fields') or {}
     source = {'model_sha256': receipt.get('model_sha256'), 'field_cache_sha256': fields.get('cache_sha256'),
               'field_precision_bits': fields.get('precision_bits')}
+    return {'status': 'available', 'native': native, 'source': source,
+            'stamps': stamps, 'native_signals_sha256': expected}
+
+
+def from_saved_event(event, channel_metadata, run, *, configuration_sha256,
+                     calibration_path=CALIBRATION, include_traces=True):
+    """Use one selected native CSV, bound to the original event and run seals."""
     from gegi_substrip import load_calibration
 
+    saved = load_saved_native(event, channel_metadata, run, configuration_sha256=configuration_sha256)
+    if saved['status'] != 'available':
+        return saved
     calibration = load_calibration(calibration_path) if calibration_path is not None else None
-    result = analyze_event(event, native, channel_metadata, calibration=calibration, source_identity=source,
+    result = analyze_event(event, saved['native'], channel_metadata, calibration=calibration, source_identity=saved['source'],
                            include_traces=include_traces)
-    return dict(result, native_signals_sha256=expected)
+    pairs = result['pairs']
+    if pairs['compatible_pairing_count']:
+        line = _source_line(run, saved['stamps'], pairs['energy_keV'])
+        if line is not None:
+            pairs['source_line'] = line
+    return dict(result, native_signals_sha256=saved['native_signals_sha256'])

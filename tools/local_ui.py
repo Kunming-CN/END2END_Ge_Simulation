@@ -272,6 +272,49 @@ class Handler(BaseHTTPRequestHandler):
                 if parts.query or parts.fragment or self.server.workflow_controller is None:
                     raise ValueError('Invalid saved GeGI input inventory request')
                 return self.send_data(200,self.server.workflow_controller.gegi_saved_options())
+            if parts.path == '/api/workflow/gegi-dual/options':
+                if parts.query or parts.fragment or self.server.workflow_controller is None:
+                    raise ValueError('Invalid GeGI source library request')
+                return self.send_data(200, self.server.workflow_controller.gegi_dual_source().options())
+            if parts.path == '/api/workflow/gegi-dual/state':
+                query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
+                if parts.fragment or set(query) != {'name'} or len(query['name']) != 1 or self.server.workflow_controller is None:
+                    raise ValueError('Choose one saved dual-source acquisition')
+                return self.send_data(200, self.server.workflow_controller.gegi_dual_source().state(query['name'][0]))
+            if parts.path == '/api/workflow/gegi-dual/plane':
+                query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
+                if (parts.fragment or set(query) != {'name', 'report_sha256'}
+                        or any(len(v) != 1 for v in query.values()) or self.server.workflow_controller is None):
+                    raise ValueError('Choose one opened dual-source acquisition')
+                control = self.server.workflow_controller.gegi_dual_source()
+                return self.send_data(200, control.measured_plane(query['name'][0], query['report_sha256'][0]))
+            if parts.path == '/api/workflow/gegi-dual/pixel-energy':
+                query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
+                required, optional = {'name', 'report_sha256'}, {'min_kev', 'max_kev', 'x', 'y'}
+                if (parts.fragment or self.server.workflow_controller is None or not required <= query.keys()
+                        or query.keys() - required - optional or any(len(v) != 1 for v in query.values())
+                        or ('min_kev' in query) != ('max_kev' in query) or ('x' in query) != ('y' in query)):
+                    raise ValueError('Choose a saved acquisition and supply both bounds or both strip numbers')
+                window = (float(query['min_kev'][0]), float(query['max_kev'][0])) if 'min_kev' in query else None
+                pixel = (int(query['x'][0]), int(query['y'][0])) if 'x' in query else None
+                control = self.server.workflow_controller.gegi_dual_source()
+                return self.send_data(200, control.pixel_energy(query['name'][0], query['report_sha256'][0], window, pixel))
+            if parts.path in ('/api/workflow/gegi-dual/single-pixel', '/api/workflow/gegi-dual/two-strip'):
+                query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
+                if (parts.fragment or set(query) != {'name', 'report_sha256', 'ordinal'}
+                        or any(len(values) != 1 for values in query.values()) or self.server.workflow_controller is None):
+                    raise ValueError('Choose one trigger from the opened acquisition')
+                control = self.server.workflow_controller.gegi_dual_source()
+                return self.send_data(200, control.selected_trigger(query['name'][0], query['report_sha256'][0],
+                                                                    query['ordinal'][0], parts.path.rsplit('/', 1)[1]))
+            if parts.path == '/api/workflow/gegi-dual/two-strip-adc':
+                query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
+                keys = ('name', 'report_sha256', 'ordinal', 'contact_id')
+                if (parts.fragment or set(query) != set(keys) or any(len(v) != 1 for v in query.values())
+                        or self.server.workflow_controller is None):
+                    raise ValueError('Choose one two-strip trigger and one of its strips')
+                control = self.server.workflow_controller.gegi_dual_source()
+                return self.send_data(200, control.two_strip_adc(*(query[key][0] for key in keys)))
             if parts.path in ('/api/workflow/gegi-saved/state','/api/workflow/gegi-saved/file','/api/workflow/gegi-saved/results'):
                 query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
                 keys={'name','file'} if parts.path.endswith('/file') else {'name'}
@@ -458,6 +501,12 @@ class Handler(BaseHTTPRequestHandler):
             if not 1 <= size <= 4096:
                 raise ValueError('Request size must be 1..4096 bytes')
             data = decode_json(self.rfile.read(size).decode('utf-8'))
+            if self.path == '/api/workflow/gegi-dual/start':
+                fields = {'source_ids', 'activities_bq', 'live_time_s', 'seed', 'name'}
+                if (type(data) is not dict or not fields <= data.keys() <= fields | {'trigger_profile'}
+                        or self.server.workflow_controller is None):
+                    raise ValueError('Choose two source libraries, activities, duration, seed and a new name')
+                return self.send_data(200, self.server.workflow_controller.gegi_dual_source().start(**data))
             if self.path == '/api/workflow/gegi-saved/reprocess':
                 if type(data) is not dict or set(data)!={'campaign_id','calibration_id','name','resume'} or \
                         any(type(data[k]) is not str for k in ('campaign_id','calibration_id','name')) or \

@@ -17,6 +17,80 @@ from check_site import MANIFEST, local_target, validate
 import export_models as models
 
 class PublicationTests(unittest.TestCase):
+    def test_pixel_depth_figure_shows_abstentions_and_paired_denominators(self):
+        import gegi_digital_display as exhibit
+        isolated = dict(bounds_mm=[-5, 5], reference_energy_keV=500, intended=2, estimated=1,
+                        injected_and_apparent_depth_mm=[[-3, -2.9], [4, None]],
+                        paired_cfd_rms_mm=.1, paired_midplane_rms_mm=3.)
+        near = dict(mixtures=24, both_depths_available=12, intended_sites=48, depth_estimates=32,
+                    paired_sites=32, paired_rms_mm=.660, isolated_rms_mm=.087)
+        far = dict(near, depth_estimates=36, paired_sites=36, paired_rms_mm=.074, isolated_rms_mm=.074)
+        methods = {name: dict(axis_error_deg=dict(rms=angle), depth_errors_mm=dict(rms=depth))
+                   for name, angle, depth in zip(exhibit.JOINT_DEPTH_METHODS, (24.27, 12.31, 12.62),
+                                                 (3.06, 1.06, .92), strict=True)}
+        cases = [dict(source=source, order=order, waveform_residual_deg=dict(center=center, lateral=lateral),
+                      transport_vertices_residual_deg=transport) for source, order, center, lateral, transport in (
+                      ('cs137-left', 'true', -20.45, -11.06, -10.60), ('cs137-left', 'reverse', 7.24, -4.74, -4.04),
+                      ('co60-right', 'true', -4.27, None, .59), ('co60-right', 'reverse', 58.52, None, 50.72))]
+        holdout = {name: dict(axis_error_deg=dict(rms=angle), xy_error_mm=dict(rms=xy))
+                   for name, angle, xy in [('center', 18.77, 1.75), ('lateral', 10.81, 1.31)]}
+        cones = dict(two_strip_triggers=76, in_line_windows=18, with_conditional_geometry=7, cases=cases,
+                     cs_holdout=dict(trials=8, sites=16, metrics=holdout),
+                     cs_true_order=dict(photon_path_angle_deg=139.76, outgoing_keV=193.45,
+                                        stationary_prediction_outgoing_keV=201.52, geant4_reference='https://github.com/Geant4/geant4'))
+        public = dict(isolated=isolated, paired=dict(near=near, disjoint=far),
+                      portable=dict(pixel_curve_statuses=dict(available=216, insufficient_center_knots=40),
+                                    off_center_pixels=16),
+                      joint=dict(matched_occurrences=41, original_groups=27, site_observations=82, methods=methods),
+                      cone_references=cones,
+                      acquisition=dict(duration_s=.25, single_pixel_statuses=dict(estimated=360, unavailable=124),
+                                       assignments_by_depth_count={'2': 34}, energy_compatible_assignments=58))
+        panel = exhibit.pixel_depth_section(public)
+        self.assertEqual(panel.count('<circle '), 1)
+        self.assertIn('show 1 unavailable estimates at their injected depths', panel)
+        self.assertIn('viewBox="0 0 381 390"', panel)
+        self.assertIn('>12/24</td><td>32/48</td><td>32</td><td>0.660 mm', panel)
+        self.assertIn('>12/24</td><td>36/48</td><td>36</td><td>0.074 mm', panel)
+        self.assertIn('360/484', panel)
+        self.assertIn('34/58', panel)
+        self.assertIn('41 matched occurrences from 27 original simulated groups', panel)
+        self.assertIn('12.62° with a joint ADC-waveform fit', panel)
+        self.assertIn('Cs-137, true order</th><td>−20.45°</td><td>−11.06°</td><td>−10.60°', panel)
+        self.assertIn('Cs-137, reverse order</th><td>+7.24°</td><td>−4.74°</td><td>−4.04°', panel)
+        self.assertIn('Co-60, true order</th><td>−4.27°</td><td>Center fit only</td><td>+0.59°', panel)
+        self.assertIn('Co-60, reverse order</th><td>+58.52°</td><td>Center fit only</td><td>+50.72°', panel)
+        self.assertIn('8 held-out two-deposit mixtures', panel)
+        self.assertIn('href="gegi-digital/pixel-depth.json"', panel)
+
+    def test_measured_plane_distinguishes_trigger_denominators_and_hypotheses(self):
+        import gegi_digital_display as exhibit
+
+        labels = ['661.657_keV', '1173.23_keV', '1332.49_keV']
+        def exposure(seconds, milliseconds, qualified, groups):
+            layers = {label: dict(triggers=total, triggers_with_geometry=projected, hypotheses=hypotheses,
+                                  unresolved_mass=total-projected,
+                                  peaks=[dict(position_mm=[-42., 2., 40.], on_image_edge=label in ('all', labels[1]))])
+                      for label, (total, projected, hypotheses) in zip(['all', *labels], groups, strict=True)}
+            return dict(selection=dict(clock_live_time_ns=seconds*1e9, qualified_adc_live_time_ns=milliseconds*1e6,
+                                       qualified_triggers=qualified, two_strip_triggers=groups[0][0]), layers=layers)
+
+        views = dict(first_half=exposure(.5, 453.48338, 2031, [(184, 145, 221), (37, 29, 57), (19, 11, 19), (19, 8, 12)]),
+                     second_half=exposure(.5, 452.63636, 1874, [(140, 109, 150), (30, 20, 36), (15, 12, 16), (5, 5, 10)]),
+                     full=exposure(1., 906.11974, 3905, [(324, 254, 371), (67, 49, 93), (34, 23, 35), (24, 13, 22)]))
+        data = dict(grid=dict(step_mm=4., extent_mm=120., assumed_z_mm=40.), image_size_px=[1890, 1845],
+                    angular_nuisance_sigma_deg=5., windows=labels, views=views,
+                    split_peak_separation_mm=dict(zip(labels, [190.5, 217.3, 121.5])))
+        panel = exhibit.measured_plane_section(data)
+        self.assertIn('src="gegi-digital/measured-compton-planes.png"', panel)
+        self.assertIn('z = 40 mm with X and Y spanning ±120 mm', panel)
+        self.assertIn('4 × 4 mm cell', panel)
+        self.assertIn('First half · 0.5 s</th><td>453.483 ms</td><td>145/184 triggers<br>221 hypotheses', panel)
+        self.assertIn('Second half · 0.5 s</th><td>452.636 ms</td><td>109/140 triggers<br>150 hypotheses', panel)
+        self.assertIn('Pooled · 1 s</th><td>906.120 ms</td><td>254/324 triggers<br>371 hypotheses', panel)
+        self.assertIn('<td>49/67 triggers<br>93 hypotheses</td>', panel)
+        self.assertIn('1173.23 keV and all energies fall on the display boundary.', panel)
+        self.assertIn('pooled map leaves 70 units unresolved', panel)
+
     def test_gegi_replacement_allows_history_only_for_predecessor(self):
         import build_site as builder
         project=self.site/'gegi-replacement';docs=project/'docs';stage=project/'.local/site-build'
