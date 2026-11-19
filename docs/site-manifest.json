@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "build_id": "06543e173cd918789ad5fd7157e1019f5e3af5c044184dd5afa56b27f0cd822b",
+  "build_id": "543c9ff5287d8ed1fd9c7d413d90f54d4acef7f7f1127b3c4ad960bdc588e61b",
   "file_count": 1890,
-  "total_bytes": 496106439,
+  "total_bytes": 496220430,
   "html_pages": 109,
   "local_links_checked": 3342,
-  "resource_references_checked": 3401,
-  "page_navigation_checked": 1452,
-  "fragments_checked": 90,
+  "resource_references_checked": 3402,
+  "page_navigation_checked": 1453,
+  "fragments_checked": 91,
   "downloads_checked": 755,
   "media_references_checked": 1157,
   "metadata_references_checked": 35,
@@ -9350,8 +9350,8 @@
     },
     {
       "path": "results/gegi-digital/plane-priors.json",
-      "bytes": 44687,
-      "sha256": "b961aa2db78e43400af31cb9dc4c3fc6db6311a2680b1e351532fb415a5e17cb"
+      "bytes": 154347,
+      "sha256": "47a29e13952eacfe5e96d5f0c8e1e59ebb6fcd743f30e902898f570f1b0c16eb"
     },
     {
       "path": "results/gegi-digital/plane-priors.png",
@@ -9395,8 +9395,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 106592,
-      "sha256": "5c21bdb590f8bc9a72a819504d272ab7a86bf0aa2dd7ad2944a182f2fea10184"
+      "bytes": 110923,
+      "sha256": "18323a39c53d5ae2d3f56a5b05cc32a7a9bb33826170fe88ba67a344e231f694"
     },
     {
       "path": "retired-studies.json",

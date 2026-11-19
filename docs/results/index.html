@@ -222,6 +222,29 @@ and 166.48 with uniform solid angle. The angular prior concentrates weight towar
 The 662 keV example shows the distinction between repeatability and accuracy. The wider-field peak moves from
 (−42, 2) mm to (−10, 14) mm when switching to uniform solid angle. The programmed Cs-137 position was
 (−40, 0) mm, withheld from fitting. Half-to-half agreement improves even as this pooled peak moves farther from the source.</p>
+<h4 id="gegi-three-intersections">Which triggers move the line-window peaks?</h4>
+<p>On the ±120 mm uniform-area image, two triggers contributed 41.9%
+of the 1,173 keV maximum cell. Setting them aside moved the maximum 236 mm to the opposite edge.
+On the ±240 mm uniform-area image, that maximum stayed at (86, 70) mm. The 1,332 keV maximum moved
+59.5 and 60.0 mm on the two respective area footprints. All pooled 662 keV peaks
+and all three pooled solid-angle peaks stayed in their original cells.</p>
+<details><summary>Peak coordinates, half-exposure shifts and pair comparisons</summary>
+<p>Three simulated charge-collection intersections label 15 trigger occurrences from
+10 distinct archived histories. Two are in each line window, out of
+49, 23 and 13 projected triggers in energy order. The full image includes all
+324 measured triggers, 371 projected orders and
+70 unresolved trigger units. The diagnostic sets aside only the labeled
+contributions and keeps every other order at its original weight. <a href="#gegi-weak-strips">See the endpoint comparison</a>.</p>
+<div role="region" aria-label="Full image → with three-intersection triggers set aside. Peak coordinates in mm." tabindex="0" style="overflow-x:auto">
+<table><caption>Full image → with three-intersection triggers set aside. Peak coordinates in mm.</caption><thead><tr><th scope="col">Energy window</th><th scope="col">Prior</th><th scope="col">Field</th><th scope="col">Peak X, Y</th><th scope="col">Peak move (mm)</th><th scope="col">Share at original peak</th><th scope="col">Half-to-half distance (mm)</th></tr></thead><tbody><tr><th scope="row">662 keV</th><td>Uniform area</td><td>±120 mm</td><td>(−42, 2) → (−42, 2)</td><td>0.0</td><td>2.96%</td><td>190.5 → 190.5</td></tr><tr><th scope="row">662 keV</th><td>Uniform area</td><td>±240 mm</td><td>(−42, 2) → (−42, 2)</td><td>0.0</td><td>2.95%</td><td>73.8 → 73.0</td></tr><tr><th scope="row">662 keV</th><td>Uniform solid angle</td><td>±120 mm</td><td>(−10, 14) → (−10, 14)</td><td>0.0</td><td>0.14%</td><td>11.3 → 5.7</td></tr><tr><th scope="row">662 keV</th><td>Uniform solid angle</td><td>±240 mm</td><td>(−10, 14) → (−10, 14)</td><td>0.0</td><td>0.14%</td><td>11.3 → 5.7</td></tr><tr><th scope="row">1,173 keV</th><td>Uniform area</td><td>±120 mm</td><td>(94, −118) → (98, 118)</td><td>236.0</td><td>41.89%</td><td>217.3 → 39.6</td></tr><tr><th scope="row">1,173 keV</th><td>Uniform area</td><td>±240 mm</td><td>(86, 70) → (86, 70)</td><td>0.0</td><td>&lt;0.01%</td><td>36.9 → 36.9</td></tr><tr><th scope="row">1,173 keV</th><td>Uniform solid angle</td><td>±120 mm</td><td>(30, 6) → (30, 6)</td><td>0.0</td><td>&lt;0.01%</td><td>0.0 → 0.0</td></tr><tr><th scope="row">1,173 keV</th><td>Uniform solid angle</td><td>±240 mm</td><td>(30, 6) → (30, 6)</td><td>0.0</td><td>&lt;0.01%</td><td>5.7 → 5.7</td></tr><tr><th scope="row">1,332 keV</th><td>Uniform area</td><td>±120 mm</td><td>(6, 90) → (46, 46)</td><td>59.5</td><td>41.21%</td><td>121.5 → 333.8</td></tr><tr><th scope="row">1,332 keV</th><td>Uniform area</td><td>±240 mm</td><td>(2, 86) → (50, 50)</td><td>60.0</td><td>45.62%</td><td>91.3 → 40.0</td></tr><tr><th scope="row">1,332 keV</th><td>Uniform solid angle</td><td>±120 mm</td><td>(18, −14) → (18, −14)</td><td>0.0</td><td>&lt;0.01%</td><td>36.0 → 36.0</td></tr><tr><th scope="row">1,332 keV</th><td>Uniform solid angle</td><td>±240 mm</td><td>(18, −14) → (18, −14)</td><td>0.0</td><td>&lt;0.01%</td><td>36.0 → 36.0</td></tr></tbody></table></div>
+<p>On the original uniform-area field, the cobalt pairs had the largest loss of weight at their original maximum
+cells among all ways to set aside two projected triggers in each window. Their displacements tied for largest in
+44/253 and 7/78 pairs. The heights of the new maxima were 18.2%
+and 27.2% lower than the full-image maxima. Contributions at the four cells
+touching the programmed Co-60 source position were negligible on both footprints.</p>
+<p>Each cobalt pair consists of two occurrences of a single archived history in one acquisition block.
+Each is the sole pair under that same-block, same-history comparison. Both 662 keV occurrences come from
+distinct histories. Pair comparisons can share triggers and archived histories.</p></details>
 <h4>How well does one half predict the other?</h4>
 <p>Each half-second map was used to predict the other half’s measured cone angles on the ±240 mm field.
 The comparison uses the same response model under the learned map and its own prior alone.
@@ -232,7 +255,7 @@ The 70 fully unresolved triggers contributed zero to the difference.</p>
 <p>The solid-angle prior alone puts 83.7% of its weight in the central square. The two half-second maps
 place 70.2% and 59.3% there. Both spread weight outward while improving agreement with the other half.
 This checks consistency with independent simulated signals under the assumed angular response.
-<a href="gegi-digital/plane-priors.json">Peak coordinates, counts, scores by energy and study hashes (JSON)</a>.</p><h4 id="gegi-shared-clock">Comparing close pulses on the shared clock</h4>
+<a href="gegi-digital/plane-priors.json">Peak coordinates, counts, comparisons and study hashes (JSON)</a>.</p><h4 id="gegi-shared-clock">Comparing close pulses on the shared clock</h4>
 <p>A separate recorded rise overlapped the saved preamplifier samples in <strong>0/324</strong> two-strip triggers.
 The simulation clock identified an additional group depositing energy in germanium within the same sampled span
 for <strong>0/324</strong> triggers.</p>
