@@ -19,6 +19,11 @@ DOUBLE_PULSE_FILE = 'results/gegi-digital/double-pulse.json'
 SOURCE_EXPOSURE_FILE = 'results/gegi-digital/source-exposure.json'
 EVENT_ENERGY_FILE = 'results/gegi-digital/event-energy.json'
 EDGE_POSITION_FILE = 'results/gegi-digital/edge-position.json'
+DUAL_SOURCE_HIT_MAP_FILE = 'results/gegi-digital/dual-source-hit-map.json'
+DUAL_SOURCE_REPORT_HASHES = (
+    '09cbc0e5a5821287b87acabe5d669fb0d7b1fccd8555b5b637479df82e2a99f7',
+    '3cb7a68854a2526dbf88d62cc20883b26f1359bdc7166b8867b9d7a049763a5c',
+)
 PULSE_TOPOLOGIES = {
     'same_strips': 'Same strips',
     'adjacent_strips': 'Adjacent strips',
@@ -243,7 +248,100 @@ a unique deposit match are eligible for per-deposit bias checks. {' '.join(bias)
 <p><a href="gegi-digital/event-energy.json">Open the energy comparison, isolated controls and spectra (JSON)</a>.</p>'''
 
 
-def exposure_section(data, event_energy=None):
+def dual_source_hit_map_section(data):
+    counts, totals = data['counts'], data['totals']
+    peak = max(map(max, counts))
+    columns = ''.join(f'<th scope="col">X{x:02d}</th>' for x in data['axes']['x_contact_ids'])
+    rows = []
+    for y, row in reversed(list(zip(data['axes']['y_contact_ids'], counts, strict=True))):
+        cells = []
+        for count in row:
+            background = f'hsl(186 70% {96-56*math.sqrt(count/peak):.1f}%)' if count else '#f6f8fa'
+            cells.append(f'<td style="background:{background}">{count}</td>')
+        rows.append(f'<tr><th scope="row">Y{y-17:02d}</th>{"".join(cells)}</tr>')
+    return f'''<style>
+.gegi-hit-map{{margin:1rem 0;max-width:760px}}
+.gegi-hit-map th,.gegi-hit-map td{{padding:.28rem .34rem;min-width:2.15rem;text-align:center;font-variant-numeric:tabular-nums;color:#122126}}
+.gegi-hit-map table{{font-size:.82rem;width:max-content;margin:0}}
+.gegi-hit-map tbody th{{position:sticky;left:0;z-index:1;background:#fff}}
+</style>
+<h3 id="gegi-dual-source-hit-map">Measured detector hit map</h3>
+<p><strong>{totals['mapped_single_pixel_triggers']:,} of {totals['qualified_triggers']:,}</strong> qualified triggers
+gave a single-pixel slow energy and contribute one count at their X/Y strip intersection.
+The other triggers gave {totals['multi_strip_energy_triggers']:,} multi-strip energy totals and
+{totals['triggers_without_energy']:,} with no qualified energy.</p>
+<figure class="gegi-hit-map">
+<div role="region" aria-label="Detector hit map by X and Y strip" tabindex="0" style="overflow-x:auto">
+<table><thead><tr><th scope="col">Y / X</th>{columns}</tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+<figcaption>Positive detector X points right and positive Y points up. Darker cells indicate more triggers.
+<a href="gegi-digital/dual-source-hit-map.json">Download map counts and settings (JSON)</a>.</figcaption></figure>'''
+
+
+def _checked_dual_source_report(path, expected_sha):
+    from gegi_pixel_map import project_pixel_map
+    raw = path.read_bytes()
+    if sha256(raw).hexdigest() != expected_sha:
+        raise ValueError('Saved dual-source acquisition receipt changed.')
+    report = json.loads(raw)
+    projection = project_pixel_map(report)
+    if projection['status'] != 'available':
+        raise ValueError('Expected a measured single-pixel population in the saved acquisition.')
+    return report, projection
+
+
+def _dual_source_map_binding(exposure, energy):
+    return {'source_exposure_sha256': exposure['provenance']['report_sha256'],
+            'event_energy_sha256': energy['binding']['report_sha256']}
+
+
+def public_dual_source_hit_map(site, report_paths):
+    """Project the reference trigger census and validate the changed-activity acquisition."""
+    if not all((site/ref).is_file() for ref in (SOURCE_EXPOSURE_FILE, EVENT_ENERGY_FILE)):
+        raise ValueError('Publish the GeGI source exposure and event energy before the detector hit map.')
+    exposure, energy = (json.loads((site/ref).read_bytes()) for ref in (SOURCE_EXPOSURE_FILE, EVENT_ENERGY_FILE))
+    main, alternate = (_checked_dual_source_report(path, digest) for path, digest in
+                       zip(report_paths, DUAL_SOURCE_REPORT_HASHES, strict=True))
+    report, projection = main
+    comparison, validation = alternate
+    totals = projection['totals']
+    source_design, acquisition = exposure['design'], report['design']
+    if (report['receipt']['known_component_adc_sha256'] != energy['baseline_parity']['known_component_adc_sha256']
+            or energy['binding']['exposure_sha256'] != exposure['provenance']['report_sha256']
+            or any(report['exposure'][key] != exposure['exposure'][key] for key in
+                   ('clock_live_time_ns', 'qualified_adc_live_time_ns', 'total_live_adc_samples', 'qualified_live_adc_samples'))
+            or any(acquisition[key] != source_design[key] for key in
+                   ('clock_seed', 'noise_seed', 'sample_period_ns', 'adc_phase_ns'))
+            or acquisition['adc_noise_rms_v'] != source_design['nominal_noise_rms_v']
+            or {s['key']: s['activity_bq'] for s in report['sources']} != source_design['source_activities_bq']
+            or totals['qualified_triggers'] != exposure['trigger_summary']['qualified_triggers']
+            or any(report['spectra'][new] != energy['spectra'][old] for new, old in
+                   (('single_pixel', 'baseline'), ('additional_multi_strip', 'additional'),
+                    ('combined', 'baseline_plus_additional')))):
+        raise ValueError('The reference hit map differs from the published exposure or energy census.')
+    return {
+        'kind': 'gegi_dual_source_hit_map_public_v1',
+        'axes': projection['axes'], 'counts': projection['counts'], 'totals': totals,
+        'design': {'clock_live_time_ns': report['exposure']['clock_live_time_ns'],
+                   'qualified_adc_live_time_ns': report['exposure']['qualified_adc_live_time_ns'],
+                   'activities_bq': source_design['source_activities_bq'],
+                   'selection': 'One count per qualified trigger with a single-pixel slow energy.',
+                   'matrix_order': 'Rows Y01 through Y16 and columns X01 through X16. The chart places Y16 at top.'},
+        'validation': {'clock_live_time_ns': comparison['exposure']['clock_live_time_ns'],
+                       'activities_bq': {s['key']: s['activity_bq'] for s in comparison['sources']},
+                       'totals': validation['totals']},
+        'binding': {**_dual_source_map_binding(exposure, energy),
+                    'reference_report_sha256': DUAL_SOURCE_REPORT_HASHES[0],
+                    'validation_report_sha256': DUAL_SOURCE_REPORT_HASHES[1]},
+    }
+
+
+def attach_dual_source_hit_map(site, report_paths):
+    result = public_dual_source_hit_map(site, report_paths)
+    (site/DUAL_SOURCE_HIT_MAP_FILE).write_text(json.dumps(result, allow_nan=False, separators=(',', ':'))+'\n',
+                                                encoding='utf-8', newline='\n')
+
+
+def exposure_section(data, event_energy=None, hit_map=None):
     design = data['design']
     exposure = data['exposure']
     triggers = data['trigger_summary']
@@ -289,6 +387,7 @@ Additional underflow, overflow and exact zeros are {addition['underflow']:,}, {a
         chart = '<style>.gegi-event-energy-spectrum .spectrum-step+.spectrum-step{stroke:#72529a;stroke-dasharray:4 2}</style>' + chart
     activities = design['source_activities_bq']
     unknown = overall['history_unqualified'] + overall['history_boundary_unknown']
+    map_section = dual_source_hit_map_section(hit_map) if hit_map is not None else ''
     return f'''<h2 id="gegi-source-exposure">One exposure with Cs-137 and Co-60</h2>
 <p>In this {exposure['clock_live_time_ns']/1e9:g} s simulated exposure, {overall['unique_matched']:,} of
 {overall['qualified_deposits']:,} qualified Ge deposit groups matched a unique trigger, and
@@ -308,7 +407,7 @@ The electronics start from zero with a {1000/design['sample_period_ns']:g} MS/s 
 <p>Over {exposure['qualified_adc_live_time_ns']/1e9:.6f} s of qualified ADC time, the readout returned
 {triggers['qualified_triggers']:,} triggers and {triggers['qualified_slow_energies']:,} usable slow energies.
 {triggers['unmatched']:,} triggers lacked a matching deposit. A trigger uses the coincident rise on both faces.
-{energy_rule}</p>{comparison}
+{energy_rule}</p>{map_section}{comparison}
 {figure}<figcaption>{caption}</figcaption>
 {chart}<p class="muted">{notes}</p></figure>
 <p>Arrival neighborhoods use deposition times from both sources. These counts apply to the qualified portion of the
@@ -751,13 +850,18 @@ def render(site):
     exposure = site/SOURCE_EXPOSURE_FILE
     event_energy = site/EVENT_ENERGY_FILE
     edge_position = site/EDGE_POSITION_FILE
+    hit_map = site/DUAL_SOURCE_HIT_MAP_FILE
     card = '<section id="gegi" class="panel" data-dataset="gegi">\n'
     if exposure.is_file():
         data = json.loads(exposure.read_bytes())
         study = json.loads(event_energy.read_bytes()) if event_energy.is_file() else None
         if study and study['binding']['exposure_sha256'] != data['provenance']['report_sha256']:
             raise ValueError('GeGI energy comparison belongs to a different source exposure.')
-        card += exposure_section(data, study)
+        projection = json.loads(hit_map.read_bytes()) if hit_map.is_file() else None
+        if projection and (not study or any(projection['binding'].get(key) != digest
+                                            for key, digest in _dual_source_map_binding(data, study).items())):
+            raise ValueError('The GeGI detector hit map belongs to a different publication.')
+        card += exposure_section(data, study, projection)
     has_pulse = pulse.is_file()
     if has_pulse:
         card += double_pulse_section(json.loads(pulse.read_bytes()))

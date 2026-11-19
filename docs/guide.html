@@ -219,10 +219,13 @@ foreach ($f in $m.files) {
 <p>Use two completed GeGI decay libraries with matching detector geometry and charge-response calibration. Each library supplies its isotope, physical source position, original misses and time-resolved electrode signals. To move a source, supply a library simulated at the new position.</p>
 <ol>
 <li>Copy each sealed campaign chunk into its own folder under <code>.local/gegi-saved-inputs/source-libraries/</code>. Keep <code>DONE.json</code>, <code>events.sqlite</code>, <code>source-checked.json</code> and the original <code>transport/</code> files together.</li>
-<li>In Control, open <strong>Run a dual-source GeGI acquisition</strong>, click <strong>Refresh source libraries</strong>, select both libraries and check their positions in mm. Enter each source’s activity in Bq, the common exposure in seconds, a random seed and a new result name.</li>
-<li>Run the acquisition. Open the result to compare source decay counts, qualified recording time, observed triggers and the energy spectrum. The receipt is <code>.local/gegi-dual-source/NAME/report.json</code>.</li>
+<li>In Control, open <strong>Run a dual-source GeGI acquisition</strong>, refresh the source libraries and acquisitions, select both libraries and check their positions in mm. Enter each source’s activity in Bq, the common exposure in seconds, a random seed and a new result name.</li>
+<li>Run the acquisition. Open its result to compare source decay counts, qualified recording time, the combined energy spectrum and the 16 × 16 detector hit map. The receipt is <code>.local/gegi-dual-source/NAME/report.json</code>.</li>
 </ol>
 <p>Both sources feed one continuous digitizer. A pair of closely spaced deposits can produce one trigger, and some triggers have no usable energy. Each qualified trigger with a measured total contributes one entry to the spectrum. The receipt records time excluded because a saved charge response or its electronic tail was uncertain.</p>
+<p>To open an existing dual-source report on another installation, copy it to <code>.local/gegi-dual-source/NAME/report.json</code> under a new name, refresh, then select it under <strong>Saved acquisition</strong>. Each mapped trigger has a qualified single-pixel energy and one collecting strip on each detector face. Its cell is the intersection of those strips. The spectrum also includes qualified multi-strip energies.</p>
+<p>To export the cell counts from a saved report, choose a new output filename. The first matrix row is Y01 and the first column is X01.</p>
+<pre>python -B tools/gegi_pixel_map.py .local/gegi-dual-source/NAME/report.json --output pixel-counts.json</pre>
 </details>
 <details><summary>Inspect fast and slow GeGI strip signals</summary>
 <p>Open a completed GeGI run in Control, choose a nonzero primary, and open the digital readout panel. Compare a collecting strip with its two neighbors. The sampled preamplifier signal feeds the fast transient measurement and slow energy filter. Both use a nominal simulated electronics profile.</p>
