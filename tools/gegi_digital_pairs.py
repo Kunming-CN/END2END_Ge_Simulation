@@ -1,5 +1,6 @@
 """Two-site energy assignments from GeGI digital strip observables."""
 
+import math
 import gegi_imaging as I
 from gegi_substrip import infer_position
 
@@ -40,6 +41,26 @@ def _site(x, y, hits):
             'x_minus_y_energy_keV': difference, 'energy_tolerance_keV': tolerance,
             'energy_compatible': abs(difference) <= tolerance, 'energy_keV': (ex + ey) / 2,
             'position_mm': None, 'position': None}
+
+
+def energy_pairings(xs, ys, hits):
+    """Both X/Y permutations for a measured two-by-two strip topology."""
+    for index, permutation in enumerate((ys, ys[::-1])):
+        sites = [_site(x, y, hits) for x, y in zip(xs, permutation, strict=True)]
+        yield {'index': index, 'sites': sites, 'energy_compatible': all(s['energy_compatible'] for s in sites)}
+
+
+def compton_orders(sites):
+    """Both orders under the single, fully absorbed photon hypothesis."""
+    orders = []
+    for first, second in ((0, 1), (1, 0)):
+        scatter, absorbed = sites[first]['energy_keV'], sites[second]['energy_keV']
+        cosine = 1 - I.ELECTRON_REST_KEV * (1/absorbed - 1/(scatter+absorbed))
+        allowed = -1 <= cosine <= 1
+        orders.append({'site_index_order': [first, second], 'kinematically_allowed': allowed,
+                       'half_angle_deg': math.degrees(math.acos(cosine)) if allowed else None,
+                       'cos_theta': cosine, 'scatter_energy_keV': scatter, 'absorbed_energy_keV': absorbed})
+    return orders
 
 
 def _positions(sites, digital, metadata, calibration, source_identity, flags):
@@ -93,13 +114,11 @@ def two_site_pairings(digital, channel_metadata, *, calibration=None, source_ide
 
     overlap = _neighborhood_flags(xs, ys, channel_metadata)
     result['energy_keV'] = sum(hits[cid] for cid in xs + ys) / 2
-    for index, permutation in enumerate((ys, ys[::-1])):
-        sites = [_site(x, y, hits) for x, y in zip(xs, permutation)]
-        compatible = all(site['energy_compatible'] for site in sites)
-        pairing = {'index': index, 'energy_compatible': compatible, 'flags': list(overlap),
-                   'sites': sites, 'cones': [], 'rejected_orders': []}
+    for pairing in energy_pairings(xs, ys, hits):
+        sites = pairing['sites']
+        pairing.update(flags=list(overlap), cones=[], rejected_orders=[])
         result['pairings'].append(pairing)
-        if not compatible:
+        if not pairing['energy_compatible']:
             pairing['flags'].append('strip_energy_mismatch')
             continue
         result['compatible_pairing_count'] += 1

@@ -1,9 +1,9 @@
 """Replay one sealed GeGI native event through the independent digital readout."""
 import hashlib
-import math
 from pathlib import Path
 
 import gegi_event_store as S
+from gegi_digital_pairs import compton_orders as _compton_orders
 import gegi_imaging as I
 import scenario_workflow as W
 
@@ -39,21 +39,6 @@ def single_pixel(digital, channel_metadata):
         return outcome
     return dict(outcome, status='conditional_single_pixel', energy_keV=(ex+ey)/2,
                 x_contact_id=x, y_contact_id=y)
-
-
-def _compton_orders(sites):
-    """Evaluate the two energy assignments conditional on full photon absorption."""
-    orders = []
-    for first, second in ((0, 1), (1, 0)):
-        scatter, absorbed = sites[first]['energy_keV'], sites[second]['energy_keV']
-        # Match the energy expression and closed cosine interval in I.cone.
-        cosine = 1-I.ELECTRON_REST_KEV*(1/absorbed-1/(scatter+absorbed))
-        allowed = -1 <= cosine <= 1
-        orders.append({'site_index_order': [first, second], 'kinematically_allowed': allowed,
-                       'half_angle_deg': math.degrees(math.acos(cosine)) if allowed else None,
-                       'cos_theta': cosine, 'scatter_energy_keV': scatter,
-                       'absorbed_energy_keV': absorbed})
-    return orders
 
 
 def analyze_event(event, native, channel_metadata, *, calibration=None, source_identity=None,

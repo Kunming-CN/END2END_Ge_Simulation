@@ -171,5 +171,80 @@ class SubstripTests(unittest.TestCase):
         self.assertEqual(result['x']['status'], 'depth_condition_unavailable')
 
 
+class FamilyTransferTests(unittest.TestCase):
+    def setUp(self):
+        self.calibration = S.load_calibration()
+        self.source = {k: self.calibration[k] for k in SOURCE}
+        self.geometry = [
+            {'id': first + i, 'family': family, 'guard': False,
+             'strip_center_mm': -37.03110468189838 + i * 4.9374806242531175}
+            for first, family in ((1, 'X'), (18, 'Y')) for i in range(16)]
+        self.template = S.prepare_family_transfer(self.calibration, self.geometry)
+        self.energy = 500.01981891705293
+        # Nominal continuous channel measurements from X15/Y07 holdout
+        # checkpoint point-02, relative injection offset 0 ns, no ADC noise.
+        measurements = [(14, None, 37.113617593410176, None),
+                        (15, 500.0235606228793, 345.76499039515926, 90.26748981137054),
+                        (16, None, 13.074057777892584, None),
+                        (23, None, 2.165171028946197, None),
+                        (24, 500.0160772112265, 418.4096483124079, 51.91440406844373),
+                        (25, None, -4.738641049626716, None)]
+        self.compact = {
+            'profile_sha256': self.calibration['digital_profile_sha256'],
+            'timing_sha256': self.calibration['depth_cfd']['timing_sha256'],
+            'channels': [{'contact_id': cid, 'slow_energy_keV': slow, 'fast_signal_keV_equiv': fast,
+                          'preamp_cfd50_ns': cfd} for cid, slow, fast, cfd in measurements]}
+
+    def infer(self, compact=None, **options):
+        settings = dict(source_identity=self.source, single_pixel_energy_keV=self.energy) | options
+        return S.infer_family_transfer(self.calibration, self.template, 15, 24,
+                                       self.compact if compact is None else compact, self.geometry, **settings)
+
+    def test_actual_hotspot_full_and_compact_channel_inputs_agree(self):
+        compact = self.infer()
+        full = deepcopy(self.compact)
+        full['channels'].append({'contact_id': 1})
+        full['slow_energy_keV'] = self.energy
+        self.assertEqual(self.infer(full, single_pixel_energy_keV=None), compact)
+        self.assertEqual(compact['transfer_evidence']['scope'], 'targeted_holdout')
+        self.assertEqual(compact['transfer_evidence']['independent_off_center_injections'], 16)
+        self.assertEqual(compact['transfer_evidence']['tested_injection_energies_keV'], [35, 64, 150, 350, 500, 600])
+        self.assertEqual((compact['x']['slot'], compact['y']['slot']), (1, 2))
+        self.assertAlmostEqual(compact['x']['position_mm'], 30.776962557844435)
+        self.assertAlmostEqual(compact['y']['position_mm'], -8.28399526958023)
+        self.assertEqual(compact['depth']['status'], 'conditioning_only')
+        self.assertIsNone(compact['depth']['position_mm'])
+
+    def test_unknown_field_energy_and_axis_support_are_independent(self):
+        data = self.compact | {'channels': self.compact['channels'][:-1]}
+        partial = self.infer(data)
+        self.assertEqual(partial['status'], 'partial')
+        self.assertIsNone(partial['y']['position_mm'])
+        for energy in (34.9, 600.1):
+            result = self.infer(single_pixel_energy_keV=energy)
+            self.assertEqual(result['transfer_status'], 'energy_outside_tested_range')
+            self.assertIsNone(result['x']['position_mm'])
+        other_field = self.source | {'field_cache_sha256': '0' * 64}
+        result = self.infer(source_identity=other_field)
+        self.assertEqual(result['status'], 'unavailable')
+        self.assertEqual(result['transfer_status'], 'nominal_transfer')
+        sparse = S.infer_family_transfer(self.calibration, self.template, 11, 21, self.compact, self.geometry,
+                                         source_identity=self.source, single_pixel_energy_keV=60.)
+        self.assertEqual(sparse['transfer_evidence']['scope'], 'sparse_holdout')
+        self.assertEqual(sparse['transfer_evidence']['independent_off_center_injections'], 4)
+        self.assertEqual(sparse['transfer_status'], 'energy_outside_tested_range')
+
+    def test_original_pairs_still_use_original_calibration(self):
+        remap = {14: 10, 15: 11, 16: 12}
+        same = self.compact | {'channels': [r | {'contact_id': remap.get(r['contact_id'], r['contact_id'])}
+                                            for r in self.compact['channels']]}
+        original = S.infer_position(self.calibration, 11, 24, same, self.geometry, source_identity=self.source,
+                                    mode='cfd_conditioned')
+        current = S.infer_family_transfer(self.calibration, self.template, 11, 24, same, self.geometry,
+                                          source_identity=self.source, single_pixel_energy_keV=35.)
+        self.assertEqual(current, original)
+        self.assertEqual(current['calibration_pair_coverage'], 'simulated_pair')
+
+
 if __name__ == '__main__':
     unittest.main()

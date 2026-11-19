@@ -2,6 +2,7 @@
 
 from io import BytesIO
 import json
+import math
 from pathlib import Path
 import tempfile
 import threading
@@ -11,7 +12,7 @@ import unittest
 from urllib.parse import urlencode
 
 import gegi_dual_control as G
-from gegi_pixel_map import project_pixel_map, read_pixel_map
+from gegi_pixel_map import project_pixel_energy, project_pixel_map, read_pixel_map
 import local_ui as U
 import local_ui_workflow_jobs as J
 import scenario_workflow as W
@@ -20,6 +21,11 @@ import scenario_workflow as W
 def trigger(time, single=None, multi=None, x=(), y=(), guard=()):
     return dict(trigger_time_ns=time, single_pixel_energy_keV=single, additional_multi_strip_energy_keV=multi,
                 x_collecting_strips=list(x), y_collecting_strips=list(y), guard_contact_ids=list(guard))
+
+
+def fixture_trigger_settings(profile):
+    return dict(id=profile, coincidence_threshold_keV_per_sample=4.0 if profile == 'low-energy' else 5.0,
+                quiet_threshold_keV_per_sample=3.0, sample_period_ns=20)
 
 
 def fixture_report(sources, activities, duration, seed):
@@ -69,6 +75,7 @@ class DualControlTests(unittest.TestCase):
         self.root = Path(area.name)
         self.ready, self.release = threading.Event(), threading.Event()
         self.calls = []
+        self.report_profile = None
         for name in ('first', 'second', 'incomplete'):
             (self.root/G.IMPORTS/name).mkdir(parents=True)
 
@@ -79,12 +86,16 @@ class DualControlTests(unittest.TestCase):
             return dict(isotope='Cs-137' if first else 'Co-60', source_position_mm=[-40 if first else 40, 0, 40],
                         original={'initial_primaries': 10000}, chunk_sha256=('a' if first else 'b')*64)
 
-        def runner(paths, activities, duration, seed, report):
-            self.calls.append((paths, activities, duration, seed, report))
+        def runner(paths, activities, duration, seed, report, *, trigger_profile):
+            self.calls.append((paths, activities, duration, seed, report, trigger_profile))
             self.ready.set()
             if not self.release.wait(5):
                 raise RuntimeError('Test fixture timed out')
-            W.write(report, fixture_report([describe(path) for path in paths], activities, duration, seed))
+            payload = fixture_report([describe(path) for path in paths], activities, duration, seed)
+            settings = fixture_trigger_settings(self.report_profile or trigger_profile)
+            payload['design']['trigger_profile'] = settings
+            payload['receipt'] = {'trigger_profile': settings}
+            W.write(report, payload)
 
         self.workflow = J.WorkflowController(self.root)
         self.workflow._gegi_dual_control = G.DualSourceControl(self.workflow, describe=describe, runner=runner)
@@ -125,22 +136,26 @@ class DualControlTests(unittest.TestCase):
         self.assertEqual(inventory['rejected'], [{'label': 'incomplete', 'error': 'Missing sealed receipt'}])
         self.assertNotIn(str(self.root), json.dumps(inventory))
         request = dict(source_ids=[a['id'], b['id']], activities_bq=[18500, 74000], live_time_s=.05,
-                       seed='18446744073709551615', name='changed')
+                       seed='18446744073709551615', name='changed', trigger_profile='low-energy')
         for changes in ({'output': '../escape.json'}, {'source_ids': ['../private', b['id']]},
-                        {'seed': '18446744073709551616'}, {'name': '../escape'}, {'activities_bq': [True, 0]}):
+                        {'seed': '18446744073709551616'}, {'name': '../escape'}, {'activities_bq': [True, 0]},
+                        {'trigger_profile': 'custom'}, {'trigger_profile': None}):
             self.assertEqual(self.request('start', {**request, **changes})[0], 400)
         self.assertEqual(self.request('start', request, {'Origin': 'https://foreign.invalid'})[0], 403)
         self.assertFalse(self.calls)
         status, job = self.request('start', request)
         self.assertEqual((status, job['status']), (200, 'running'))
+        self.assertEqual(job['trigger_profile'], 'low-energy')
         self.assertTrue(self.ready.wait(2))
         self.assertTrue(self.workflow.own_busy())
         self.assertEqual(self.request('start', {**request, 'name': 'second-run'})[0], 400)
         self.assertEqual(self.request('state?name=changed&file=../private')[0], 400)
         self.assertEqual(self.calls[0][1:4], ([18500, 74000], .05, 2**64-1))
+        self.assertEqual(self.calls[0][5], 'low-energy')
         self.finish()
         status, job = self.request('state?name=changed')
         self.assertEqual((status, job['status'], job['result']['spectra']['combined']['entries']), (200, 'completed', 2))
+        self.assertEqual(job['result']['trigger_profile'], fixture_trigger_settings('low-energy'))
         pixels = job['result']['pixel_map']
         self.assertEqual(pixels['counts'][15][1], 1)
         self.assertEqual(pixels['totals'], dict(qualified_triggers=2, mapped_single_pixel_triggers=1,
@@ -158,6 +173,18 @@ class DualControlTests(unittest.TestCase):
         self.assertEqual(restored.state('in-progress')['status'], 'interrupted')
         self.assertEqual(len(self.calls), 1)
 
+    def test_worker_refuses_result_with_different_trigger_profile(self):
+        self.report_profile = 'standard'
+        _, options = self.request('options')
+        request = dict(source_ids=[source['id'] for source in options['libraries']], activities_bq=[18, 74],
+                       live_time_s=.05, seed='18', name='wrong-profile', trigger_profile='low-energy')
+        self.assertEqual(self.request('start', request)[0], 200)
+        self.assertTrue(self.ready.wait(2))
+        self.finish()
+        status, job = self.request('state?name=wrong-profile')
+        self.assertEqual((status, job['status']), (200, 'failed'))
+        self.assertIn('used a different trigger profile', job['error'])
+
     def test_old_completed_job_keeps_spectrum_if_saved_report_changes_or_is_missing(self):
         _, options = self.request('options')
         request = dict(source_ids=[source['id'] for source in options['libraries']],
@@ -165,9 +192,15 @@ class DualControlTests(unittest.TestCase):
         self.assertEqual(self.request('start', request)[0], 200)
         self.assertTrue(self.ready.wait(2))
         self.finish()
+        self.assertEqual(self.calls[0][5], 'standard')
+        legacy_state = W.read(self.root/G.STATE)
+        legacy_state['jobs'][0].pop('trigger_profile')
+        legacy_state['jobs'][0]['result'].pop('trigger_profile')
+        W.write(self.root/G.STATE, legacy_state)
         old_state = (self.root/G.STATE).read_bytes()
         job = J.WorkflowController(self.root).gegi_dual_source().state('preserved')
         self.assertEqual(job['result']['pixel_map']['status'], 'available')
+        self.assertEqual(job['result']['trigger_profile'], fixture_trigger_settings('standard'))
         path = self.root/job['output']
         report_sha = W.sha(path)
         with path.open('ab') as out:
@@ -198,8 +231,12 @@ class DualControlTests(unittest.TestCase):
         self.assertEqual(job['activities_bq'], [18, 74])
         self.assertEqual(job['sources'][0]['source_position_mm'], [-40, 0, 40])
         self.assertEqual(job['result']['spectra']['combined']['entries'], 2)
+        self.assertEqual(job['result']['trigger_profile'], fixture_trigger_settings('standard'))
         self.assertEqual(job['result']['pixel_map']['counts'][15][1], 1)
         self.assertEqual(job['result']['single_pixel_features'], dict(status='unavailable', reason='not_captured'))
+        self.assertNotIn('two_strip_pairings', job['result'])
+        query = urlencode(dict(name='archived', report_sha256=job['report_sha256'], ordinal=1))
+        self.assertEqual(self.request('two-strip?' + query)[0], 400)
         self.assertNotIn('private-science-path', json.dumps(job))
         self.assertFalse((self.root/G.STATE).exists())
         self.assertEqual(archive.read_bytes(), original)
@@ -210,18 +247,25 @@ class DualControlTests(unittest.TestCase):
         _, options = self.request('options')
         payload = fixture_report(options['libraries'], [18, 74], .05, 18)
         add_measured_features(payload)
+        settings = fixture_trigger_settings('low-energy')
+        payload['design']['trigger_profile'] = settings
+        payload['receipt'] = {'trigger_profile': settings}
         archive = self.root/G.report_ref('featured')
         W.write(archive, payload)
         original = archive.read_bytes()
         status, job = self.request('state?name=featured')
         self.assertEqual(status, 200)
         result = job['result']
+        self.assertEqual(result['trigger_profile'], settings)
         self.assertEqual(result['pixel_map']['counts'][15][1], 2)
         self.assertEqual(result['spectra']['combined']['entries'], 3)
         features = result['single_pixel_features']
         self.assertEqual((features['status'], features['count'], features['fast_area_gate_ns']), ('available', 2, [0, 240]))
         first = features['trigger']
         self.assertEqual((first['ordinal'], first['trigger_time_ns'], first['single_pixel_energy_keV']), (1, 20, 15))
+        self.assertNotIn('calibrated_ordinals', features)
+        self.assertNotIn('nominal_position', first)
+        self.assertNotIn('preamp_cfd50_ns', first['x'])
         self.assertEqual(first['x']['low'], dict(contact_id=1, fast_keV_equiv=-1.5, flags=[]))
         self.assertEqual(first['x']['high']['fast_keV_equiv'], 0)
         self.assertEqual(first['y']['low'], dict(contact_id=32, fast_keV_equiv=None, flags=['fast_pileup']))
@@ -248,6 +292,151 @@ class DualControlTests(unittest.TestCase):
         status, error = self.request(route)
         self.assertEqual(status, 400)
         self.assertIn('differs from its completion receipt', error['error'])
+
+    def test_nominal_position_shortcuts_and_selected_axis_projection(self):
+        _, options = self.request('options')
+        payload = fixture_report(options['libraries'], [18, 74], .05, 18)
+        add_measured_features(payload)
+        first, multi, _ = payload['triggers']
+        first['nominal_position'] = dict(status='uncalibrated_pixel', energy_scope='outside_tested_range')
+        first['single_pixel_features']['x']['preamp_cfd50_ns'] = -1.25
+        first['single_pixel_features']['y']['preamp_cfd50_ns'] = None
+
+        def measured(time, energy, estimate):
+            def face(contact, cfd):
+                return dict(contact_id=contact, slow_energy_keV=energy, preamp_cfd50_ns=cfd,
+                            low=dict(contact_id=contact-1, fast_keV_equiv=2, flags=[]),
+                            high=dict(contact_id=contact+1, fast_keV_equiv=1, flags=[]), fast_ratio=1/energy)
+            return {**trigger(time, single=energy, x=(11,), y=(24,)), 'nominal_position': estimate,
+                    'single_pixel_features': {'x': face(11, -1.25), 'y': face(24, 2.75)}}
+
+        axes = dict(x=dict(status='estimated', position_mm=4.25, slot=0, private='private-fit'),
+                    y=dict(status='estimated', position_mm=-9.4, slot=1),
+                    z=dict(status='estimated', position_mm=-1.3))
+        full = dict(status='estimated', energy_scope='within_tested_range', axes=axes,
+                    position_mm=[4.25, -9.4, -1.3], method='direct_strip_calibration',
+                    tested_energies_keV=[250, 500, 662])
+        partial = dict(status='partial', energy_scope='outside_tested_range', position_mm=None,
+                       method='family_template_transfer', tested_energies_keV=[500],
+                       axes={**axes, 'y': dict(status='ratio_outside_calibration', position_mm=None, slot=None)})
+        payload['triggers'] = [first, measured(40, 400, full), multi, measured(80, 680, partial)]
+        payload['counts'].update(qualified_triggers=4, single_pixel_energies=3, qualified_energies=4)
+        for name, counts in (('single_pixel', [1, 1, 1]), ('additional_multi_strip', [1, 0, 0]), ('combined', [2, 1, 1])):
+            payload['spectra'][name].update(bin_edges_keV=[0, 250, 500, 750], counts=counts, entries=sum(counts))
+        W.write(self.root/G.report_ref('positions'), payload)
+
+        status, job = self.request('state?name=positions')
+        self.assertEqual(status, 200)
+        view = job['result']['single_pixel_features']
+        self.assertEqual(view['calibrated_ordinals'], [2, 3])
+        self.assertEqual(view['trigger']['nominal_position'], first['nominal_position'])
+        self.assertEqual(view['trigger']['x']['preamp_cfd50_ns'], -1.25)
+        self.assertIsNone(view['trigger']['y']['preamp_cfd50_ns'])
+        for ordinal, estimate in ((2, full), (3, partial)):
+            query = urlencode(dict(name='positions', report_sha256=job['report_sha256'], ordinal=ordinal))
+            status, detail = self.request('single-pixel?' + query)
+            self.assertEqual(status, 200)
+            self.assertEqual(detail['trigger']['ordinal'], ordinal)
+            position = detail['trigger']['nominal_position']
+            self.assertEqual(position['status'], estimate['status'])
+            self.assertEqual(position['energy_scope'], estimate['energy_scope'])
+            self.assertEqual(position['position_mm'], estimate['position_mm'])
+            self.assertEqual(position['method'], estimate['method'])
+            self.assertEqual(position['tested_energies_keV'], estimate['tested_energies_keV'])
+            self.assertEqual(position['axes']['x'], dict(status='estimated', position_mm=4.25, slot=0))
+            self.assertEqual(position['axes']['y'], estimate['axes']['y'])
+            self.assertEqual(detail['trigger']['y']['preamp_cfd50_ns'], 2.75)
+            self.assertNotIn('private-fit', json.dumps(detail))
+
+    def test_two_strip_pairing_view_retains_alternatives_and_reads_one_trigger(self):
+        _, options = self.request('options')
+        payload = fixture_report(options['libraries'], [18, 74], .05, 18)
+        payload['design']['two_strip_pairings'] = {'selection': 'two collecting strips per face'}
+        xs, ys = (2, 3), (32, 33)
+
+        def measured(time, values):
+            pairings = []
+            for index, order in enumerate((ys, ys[::-1])):
+                sites = [dict(x_contact_id=x, y_contact_id=y, x_energy_keV=values[xs.index(x)],
+                              y_energy_keV=values[ys.index(y)],
+                              energy_keV=(values[xs.index(x)]+values[ys.index(y)])/2,
+                              position_mm=['private-spatial-data']) for x, y in zip(xs, order, strict=True)]
+                compatible = all(site['x_energy_keV'] == site['y_energy_keV'] for site in sites)
+                orders = []
+                if compatible:
+                    energy = sum(values)
+                    for first, second in ((0, 1), (1, 0)):
+                        cosine = 1 - 511*(1/sites[second]['energy_keV'] - 1/energy)
+                        allowed = -1 <= cosine <= 1
+                        orders.append(dict(site_index_order=[first, second], kinematically_allowed=allowed,
+                                           half_angle_deg=math.degrees(math.acos(cosine)) if allowed else None,
+                                           cos_theta=cosine))
+                pairings.append(dict(index=index, energy_compatible=compatible, sites=sites, compton_orders=orders))
+            features = dict(compatible_pairing_count=sum(pair['energy_compatible'] for pair in pairings),
+                            pairings=pairings, flags=['overlapping_x_neighborhoods'])
+            return {**trigger(time, multi=sum(values), x=xs, y=ys), 'two_strip_pairings': features}
+
+        payload['triggers'][1:] = [measured(40, (100, 500)), measured(60, (300, 300))]
+        payload['counts'].update(qualified_triggers=3, additional_multi_strip_energies=2, qualified_energies=3)
+        payload['spectra']['additional_multi_strip'].update(counts=[0, 0], overflow=2, entries=2)
+        payload['spectra']['combined'].update(counts=[1, 0], overflow=2, entries=3)
+        path = self.root/G.report_ref('two-strip')
+        W.write(path, payload)
+        status, job = self.request('state?name=two-strip')
+        self.assertEqual(status, 200)
+        view = job['result']['two_strip_pairings']
+        self.assertEqual((view['status'], view['count']), ('available', 2))
+        first = view['trigger']
+        self.assertEqual((first['ordinal'], first['trigger_time_ns'], first['energy_keV']), (1, 40, 600))
+        pairs = first['two_strip_pairings']
+        self.assertEqual(pairs['compatible_pairing_count'], 1)
+        self.assertEqual([pair['energy_compatible'] for pair in pairs['pairings']], [True, False])
+        self.assertEqual(pairs['flags'], ['overlapping_x_neighborhoods'])
+        orders = pairs['pairings'][0]['compton_orders']
+        self.assertEqual([order['kinematically_allowed'] for order in orders], [True, False])
+        self.assertIsNone(orders[1]['half_angle_deg'])
+        self.assertNotIn('private-spatial-data', json.dumps(job))
+        query = dict(name='two-strip', report_sha256=job['report_sha256'], ordinal=2)
+        route = 'two-strip?' + urlencode(query)
+        self.assertEqual(self.request(route, headers={'X-Control-Token': 'wrong'})[0], 403)
+        status, reply = self.request(route)
+        self.assertEqual(status, 200)
+        self.assertEqual(set(reply), {'name', 'report_sha256', 'trigger'})
+        selected = reply['trigger']
+        self.assertEqual((selected['ordinal'], selected['trigger_time_ns']), (2, 60))
+        self.assertEqual(selected['two_strip_pairings']['compatible_pairing_count'], 2)
+        self.assertEqual([site['y_contact_id'] for site in selected['two_strip_pairings']['pairings'][1]['sites']],
+                         [33, 32])
+        self.assertNotIn('private-spatial-data', json.dumps(reply))
+        self.assertEqual(self.request('two-strip?' + urlencode({**query, 'ordinal': 3}))[0], 400)
+        self.assertEqual(self.request('two-strip?' + urlencode({**query, 'report_sha256': '0'*64}))[0], 400)
+
+    def test_energy_selection_uses_exact_bounds_and_full_pixel_spectrum(self):
+        _, options = self.request('options')
+        report = fixture_report(options['libraries'], [18, 74], .05, 18)
+        add_measured_features(report)
+        path = self.root/G.report_ref('window')
+        W.write(path, report)
+        route = 'pixel-energy?' + urlencode(dict(name='window', report_sha256=W.sha(path),
+                                                  min_kev=15, max_kev=18, x=2, y=16))
+        status, view = self.request(route)
+        self.assertEqual(status, 200)
+        self.assertEqual(view['name'], 'window')
+        self.assertEqual(view['selection'], dict(min_keV=15, max_keV=18, available_single_pixel_triggers=2,
+                                               selected_single_pixel_triggers=1))
+        self.assertEqual(view['pixel_map']['counts'][15][1], 1)
+        detail = view['pixel_spectrum']
+        self.assertEqual((detail['selected_entries'], detail['spectrum']['entries'], detail['spectrum']['counts']),
+                         (1, 2, [2, 0]))
+        empty = project_pixel_energy(report, (20, 40), (2, 16))
+        self.assertEqual((empty['pixel_map']['status'], empty['pixel_spectrum']['spectrum']['entries']), ('empty', 2))
+        self.assertEqual(self.request(route.replace('min_kev=15', 'min_kev=nan'))[0], 400)
+        self.assertEqual(self.request(route, headers={'X-Control-Token': 'wrong'})[0], 403)
+        bounds = report['spectra']['single_pixel']['bin_edges_keV']
+        report['triggers'][0]['single_pixel_energy_keV'] = bounds[-1]
+        detail = project_pixel_energy(report, (bounds[-1], bounds[-1]+1), (2, 16))['pixel_spectrum']
+        self.assertEqual((detail['selected_entries'], detail['spectrum']['entries'], detail['spectrum']['overflow']),
+                         (1, 2, 1))
 
     def test_malformed_fast_face_does_not_hide_existing_spectrum_and_map(self):
         _, options = self.request('options')

@@ -8,7 +8,7 @@ import re
 from sys import float_info
 import threading
 
-from gegi_pixel_map import X_IDS, Y_IDS, project_pixel_map, unavailable
+from gegi_pixel_map import X_IDS, Y_IDS, project_pixel_energy, project_pixel_map, unavailable
 import scenario_workflow as W
 from local_ui_jobs import ControlError, decode_json, safe_path
 
@@ -24,10 +24,19 @@ ADC_COUNTS = ('qualified_triggers', 'single_pixel_energies', 'additional_multi_s
               'qualified_energies', 'triggers_without_energy')
 EXPOSURE = ('clock_live_time_ns', 'qualified_adc_live_time_ns', 'masked_live_time_ns',
             'total_live_adc_samples', 'qualified_live_adc_samples')
+TRIGGER_THRESHOLDS = {'standard': 5.0, 'low-energy': 4.0}
+CALIBRATED_POSITION_STATUSES = ('estimated', 'partial', 'unavailable')
 
 
 def number(value):
     return type(value) in (float, int) and abs(value) <= float_info.max and math.isfinite(value)
+
+
+def trigger_settings(profile):
+    W.require(type(profile) is str and profile in TRIGGER_THRESHOLDS,
+              'Choose the Standard or Low-energy trigger profile.')
+    return dict(id=profile, coincidence_threshold_keV_per_sample=TRIGGER_THRESHOLDS[profile],
+                quiet_threshold_keV_per_sample=3.0, sample_period_ns=20)
 
 
 def discover(root, describe):
@@ -94,6 +103,13 @@ def compact_report(report, job):
     counts = {key: report['counts'][key] for key in (*SOURCE_COUNTS, *ADC_COUNTS)}
     exposure = {key: report['exposure'][key] for key in EXPOSURE}
     design = report['design']
+    trigger = design.get('trigger_profile', trigger_settings('standard'))
+    W.require(type(trigger) is dict and trigger == trigger_settings(trigger.get('id'))
+              and report.get('receipt', {}).get('trigger_profile', trigger) == trigger
+              and design.get('sample_period_ns', trigger['sample_period_ns']) == trigger['sample_period_ns'],
+              'The saved trigger profile and thresholds disagree.')
+    W.require(job.get('archived_report') or trigger['id'] == job.get('trigger_profile', 'standard'),
+              'The completed receipt used a different trigger profile from the selected acquisition.')
     originals = report['sources']
     W.require(design['clock_seed'] == int(job['seed']) and design['live_time_s'] == job['live_time_s']
               and len(originals) == 2 and all(r['activity_bq'] == activity
@@ -117,7 +133,7 @@ def compact_report(report, job):
     else:
         W.require(spectra is None and all(counts[key] is None for key in ADC_COUNTS),
                   'An exposure without qualified ADC time must retain unknown trigger counts.')
-    return {'counts': counts, 'exposure': exposure, 'sources': sources, 'spectra': spectra}
+    return {'counts': counts, 'exposure': exposure, 'sources': sources, 'spectra': spectra, 'trigger_profile': trigger}
 
 
 def load_report(root, name, expected_sha256=None):
@@ -146,6 +162,10 @@ def trigger_face(face, collecting, contact_ids):
               and number(slow) and slow > 0 and (ratio is None or number(ratio)),
               'Invalid collecting-strip measurement.')
     result = dict(contact_id=contact, slow_energy_keV=slow, fast_ratio=ratio)
+    if 'preamp_cfd50_ns' in face:
+        cfd = face['preamp_cfd50_ns']
+        W.require(cfd is None or number(cfd), 'Invalid collector preamplifier timing.')
+        result['preamp_cfd50_ns'] = cfd
     for side, adjacent in (('low', contact - 1), ('high', contact + 1)):
         neighbor = face[side]
         if adjacent not in contact_ids:
@@ -161,10 +181,47 @@ def trigger_face(face, collecting, contact_ids):
     return result
 
 
+def nominal_position_record(position):
+    status, energy_scope = position['status'], position['energy_scope']
+    W.require(status in (*CALIBRATED_POSITION_STATUSES, 'uncalibrated_pixel', 'unconfirmed_field')
+              and (energy_scope in ('within_tested_range', 'outside_tested_range')
+                   or energy_scope == 'not_applicable' and status in ('uncalibrated_pixel', 'unconfirmed_field')),
+              'Invalid nominal position status.')
+    result = dict(status=status, energy_scope=energy_scope)
+    if 'method' in position:
+        method = position['method']
+        W.require(method in ('direct_strip_calibration', 'family_template_transfer'), 'Invalid nominal position method.')
+        result['method'] = method
+    if 'tested_energies_keV' in position:
+        energies = position['tested_energies_keV']
+        W.require(type(energies) is list and all(number(energy) and energy > 0 for energy in energies),
+                  'Invalid tested energies for nominal position.')
+        result['tested_energies_keV'] = energies
+    if status in CALIBRATED_POSITION_STATUSES:
+        coordinates = position['position_mm']
+        W.require(coordinates is None or (type(coordinates) is list and len(coordinates) == 3
+                  and all(number(value) for value in coordinates)), 'Invalid nominal position coordinates.')
+        axes = {}
+        for key in ('x', 'y', 'z'):
+            axis = position['axes'][key]
+            value, reason = axis['position_mm'], axis['status']
+            W.require(type(reason) is str and (value is None or number(value)), 'Invalid nominal position axis.')
+            axes[key] = dict(position_mm=value, status=reason)
+            if 'slot' in axis:
+                slot = axis['slot']
+                W.require(slot is None or (type(slot) is int and slot >= 0), 'Invalid nominal position table index.')
+                axes[key]['slot'] = slot
+        result.update(position_mm=coordinates, axes=axes)
+    return result
+
+
+def single_pixel_rows(report):
+    return (row for row in report['triggers'] if row['single_pixel_energy_keV'] is not None)
+
+
 def single_pixel_record(report, ordinal):
     """Select one hit in ledger order, leaving all other rows in the report."""
-    rows = (row for row in report['triggers'] if row['single_pixel_energy_keV'] is not None)
-    row = next(islice(rows, ordinal - 1, ordinal), None)
+    row = next(islice(single_pixel_rows(report), ordinal - 1, ordinal), None)
     W.require(row is not None, 'The selected single-pixel trigger is missing.')
     if 'single_pixel_features' not in row:
         return None
@@ -173,9 +230,52 @@ def single_pixel_record(report, ordinal):
     W.require(number(time) and time >= 0 and number(energy) and energy > 0
               and row['additional_multi_strip_energy_keV'] is None and not row['guard_contact_ids'],
               'Invalid single-pixel trigger measurement.')
-    return dict(ordinal=ordinal, trigger_time_ns=time, single_pixel_energy_keV=energy,
-                x=trigger_face(features['x'], row['x_collecting_strips'], X_IDS),
-                y=trigger_face(features['y'], row['y_collecting_strips'], Y_IDS))
+    result = dict(ordinal=ordinal, trigger_time_ns=time, single_pixel_energy_keV=energy,
+                  x=trigger_face(features['x'], row['x_collecting_strips'], X_IDS),
+                  y=trigger_face(features['y'], row['y_collecting_strips'], Y_IDS))
+    if 'nominal_position' in row:
+        result['nominal_position'] = nominal_position_record(row['nominal_position'])
+    return result
+
+
+def two_strip_rows(report):
+    return (row for row in report['triggers'] if row.get('two_strip_pairings') is not None)
+
+
+def two_strip_record(row, ordinal):
+    time, energy = row['trigger_time_ns'], row['additional_multi_strip_energy_keV']
+    xs, ys = row['x_collecting_strips'], row['y_collecting_strips']
+    W.require(number(time) and time >= 0 and number(energy) and energy > 0
+              and row['single_pixel_energy_keV'] is None and not row['guard_contact_ids']
+              and len(xs) == len(set(xs)) == 2 and all(type(cid) is int and cid in X_IDS for cid in xs)
+              and len(ys) == len(set(ys)) == 2 and all(type(cid) is int and cid in Y_IDS for cid in ys),
+              'Invalid two-strip trigger measurement.')
+    raw = row['two_strip_pairings']
+    pairings, flags = [], raw['flags']
+    W.require(type(flags) is list and all(type(flag) is str for flag in flags)
+              and [pair['index'] for pair in raw['pairings']] == [0, 1],
+              'Invalid two-strip pairing alternatives.')
+    site_fields = ('x_contact_id', 'y_contact_id', 'x_energy_keV', 'y_energy_keV', 'energy_keV')
+    order_fields = ('site_index_order', 'kinematically_allowed', 'half_angle_deg', 'cos_theta')
+    for pair, y_order in zip(raw['pairings'], (ys, ys[::-1]), strict=True):
+        sites = [{key: site[key] for key in site_fields} for site in pair['sites']]
+        compatible = pair['energy_compatible']
+        orders = [{key: order[key] for key in order_fields} for order in pair['compton_orders']]
+        W.require(type(compatible) is bool and [site['x_contact_id'] for site in sites] == xs
+                  and [site['y_contact_id'] for site in sites] == y_order
+                  and all(number(s[key]) and s[key] > 0 for s in sites for key in site_fields[2:])
+                  and [order['site_index_order'] for order in orders] == ([[0, 1], [1, 0]] if compatible else []),
+                  'Invalid two-strip pairing measurements.')
+        for order in orders:
+            allowed, angle = order['kinematically_allowed'], order['half_angle_deg']
+            W.require(type(allowed) is bool and number(order['cos_theta'])
+                      and (number(angle) and 0 <= angle <= 180 if allowed else angle is None),
+                      'Invalid measured-energy Compton order.')
+        pairings.append(dict(index=pair['index'], energy_compatible=compatible, sites=sites, compton_orders=orders))
+    count = sum(pair['energy_compatible'] for pair in pairings)
+    W.require(raw['compatible_pairing_count'] == count, 'Two-strip pairing count disagrees with its alternatives.')
+    return dict(ordinal=ordinal, trigger_time_ns=time, energy_keV=energy,
+                two_strip_pairings=dict(compatible_pairing_count=count, pairings=pairings, flags=flags))
 
 
 def report_views(report=None, *, reason=None):
@@ -193,9 +293,26 @@ def report_views(report=None, *, reason=None):
                           'Invalid fast-area gate.')
                 features = dict(status='available', count=pixels['totals']['mapped_single_pixel_triggers'],
                                 fast_area_gate_ns=gate, trigger=trigger)
+                calibrated_ordinals = []
+                for ordinal, row in enumerate(single_pixel_rows(report), 1):
+                    position = row.get('nominal_position')
+                    if type(position) is dict and position.get('status') in CALIBRATED_POSITION_STATUSES and 'axes' in position:
+                        calibrated_ordinals.append(ordinal)
+                if calibrated_ordinals:
+                    features['calibrated_ordinals'] = calibrated_ordinals
         except (ControlError, KeyError, TypeError):
             features['reason'] = 'invalid_features'
-    return dict(pixel_map=pixels, single_pixel_features=features)
+    views = dict(pixel_map=pixels, single_pixel_features=features)
+    if pixels['status'] in ('available', 'empty') and 'two_strip_pairings' in report['design']:
+        try:
+            rows = two_strip_rows(report)
+            first = next(rows, None)
+            views['two_strip_pairings'] = (dict(status='empty', count=0) if first is None else
+                                          dict(status='available', count=1 + sum(1 for _ in rows),
+                                               trigger=two_strip_record(first, 1)))
+        except (ControlError, KeyError, TypeError):
+            views['two_strip_pairings'] = dict(status='unavailable')
+    return views
 
 
 def archived_report(root, name):
@@ -221,6 +338,7 @@ def archived_report(root, name):
                    report_sha256=digest, seed=str(design['clock_seed']),
                    live_time_s=design['live_time_s'], activities_bq=activities, sources=settings)
         job['result'] = compact_report(report, job)
+        job['trigger_profile'] = job['result']['trigger_profile']['id']
         job['result'].update(report_views(report))
         return job
     except (AttributeError, ControlError, OSError, ValueError, TypeError, KeyError):
@@ -275,7 +393,9 @@ class DualSourceControl:
             job = copy.deepcopy(self.jobs.get(name))
         if job is None:
             return archived_report(self.root, name)
+        profile = job.setdefault('trigger_profile', 'standard')
         if job['status'] == 'completed':
+            job['result'].setdefault('trigger_profile', trigger_settings(profile))
             # Older completed jobs already retain their verified compact spectra.
             # Project the views from the report without rewriting the job state.
             expected = job.get('report_sha256')
@@ -290,30 +410,49 @@ class DualSourceControl:
             job['result'].update(views if views is not None else report_views(reason='report_unverified'))
         return job
 
-    def single_pixel(self, name, expected_sha256, ordinal):
+    def _opened_report(self, name, expected_sha256):
         W.run_path(name, self.root)
-        W.require(re.fullmatch(r'[0-9a-f]{64}', expected_sha256)
-                  and re.fullmatch(r'[1-9][0-9]{0,15}', ordinal),
-                  'Choose one single-pixel trigger from the opened acquisition.')
-        ordinal = int(ordinal)
+        W.require(re.fullmatch(r'[0-9a-f]{64}', expected_sha256), 'Reopen the saved acquisition.')
         with self.workflow._lock:
             job = self.jobs.get(name)
             W.require(job is None or (job['status'] == 'completed' and job.get('report_sha256') == expected_sha256),
                       'The selected acquisition differs from the completed job. Reopen it.')
-        report, digest = load_report(self.root, name, expected_sha256)
+        return load_report(self.root, name, expected_sha256)
+
+    def pixel_energy(self, name, expected_sha256, window, pixel):
+        report, digest = self._opened_report(name, expected_sha256)
+        return dict(name=name, report_sha256=digest, **project_pixel_energy(report, window, pixel))
+
+    def single_pixel(self, name, expected_sha256, ordinal):
+        return self.selected_trigger(name, expected_sha256, ordinal, 'single-pixel')
+
+    def selected_trigger(self, name, expected_sha256, ordinal, mode):
+        W.require(re.fullmatch(r'[1-9][0-9]{0,15}', ordinal),
+                  'Choose one trigger from the opened acquisition.')
+        ordinal = int(ordinal)
+        report, digest = self._opened_report(name, expected_sha256)
         try:
-            count = report['counts']['single_pixel_energies']
-            W.require(report['kind'] == REPORT_KIND and report['status'] == 'completed'
-                      and type(count) is int and 1 <= ordinal <= count,
-                      'Choose a single-pixel trigger number in the saved acquisition.')
-            trigger = single_pixel_record(report, ordinal)
+            W.require(report['kind'] == REPORT_KIND and report['status'] == 'completed',
+                      'Choose a completed saved acquisition.')
+            if mode == 'single-pixel':
+                count = report['counts']['single_pixel_energies']
+                W.require(type(count) is int and ordinal <= count,
+                          'Choose a single-pixel trigger number in the saved acquisition.')
+                trigger = single_pixel_record(report, ordinal)
+                W.require(trigger is not None, 'This report predates capture of single-pixel fast readings.')
+            else:
+                W.require(mode == 'two-strip' and 'two_strip_pairings' in report['design'],
+                          'This report has no recorded two-strip pairings.')
+                row = next(islice(two_strip_rows(report), ordinal - 1, ordinal), None)
+                W.require(row is not None, 'Choose a two-strip trigger number in the saved acquisition.')
+                trigger = two_strip_record(row, ordinal)
         except (KeyError, TypeError):
             raise ControlError('The saved trigger measurement is invalid.', 'invalid_features') from None
-        W.require(trigger is not None, 'This report predates capture of single-pixel fast readings.')
         return dict(name=name, report_sha256=digest, trigger=trigger)
 
-    def start(self, source_ids, activities_bq, live_time_s, seed, name):
+    def start(self, source_ids, activities_bq, live_time_s, seed, name, trigger_profile='standard'):
         W.run_path(name, self.root)
+        trigger_settings(trigger_profile)
         W.require(type(source_ids) is list and len(source_ids) == 2 and all(type(v) is str for v in source_ids),
                   'Choose two offered saved source libraries.')
         W.require(type(activities_bq) is list and len(activities_bq) == 2
@@ -333,7 +472,7 @@ class DualSourceControl:
             output.mkdir(parents=True, exist_ok=False)
             reservation = 'gegi-dual-' + name
             job = dict(name=name, status='running', sources=source_metadata, activities_bq=activities_bq,
-                       live_time_s=live_time_s, seed=str(int(seed)), output=report_ref(name),
+                       live_time_s=live_time_s, seed=str(int(seed)), trigger_profile=trigger_profile, output=report_ref(name),
                        started_utc=W.utc())
             self.jobs[name] = job
             try:
@@ -362,7 +501,8 @@ class DualSourceControl:
                     runner = run
                 sources = [safe_path(self.root, ref) for ref in paths]
                 output = safe_path(self.root, job['output'])
-                runner(sources, job['activities_bq'], job['live_time_s'], int(job['seed']), output)
+                runner(sources, job['activities_bq'], job['live_time_s'], int(job['seed']), output,
+                       trigger_profile=job['trigger_profile'])
                 result = self._result(job)
         except Exception as error:
             result = dict(status='failed', error=str(error)[:1200])

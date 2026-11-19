@@ -23,6 +23,17 @@ _COUNTS = ('initial_primaries', 'zero_deposit_primaries', 'nonzero_primaries', '
 _FIELD_KEYS = ('model_sha256', 'geometry_sha256', 'field_calibration_sha256', 'drift_dt_ns',
                'ionisation_energy_eV', 'coordinate_transform')
 
+# The campaign calibration-admission receipt (SHA-256 c2d0c4527a95a52464b0cebf3e9122db8017d6268422525db259ff4c30ae1d0b)
+# linked all three native request generations and the sealed depth table to the same saved Float32 cache.
+_ADMITTED_MODEL_SHA256 = '4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04'
+_ADMITTED_DEPTH_SHA256 = '61f59e2fcdd43aa0f04d6a49a6e59c448bc6059057207a8bcd80d46074d29694'
+_ADMITTED_CACHE_SHA256 = 'f75280e7f21b1a1a06c2a6623aed62873065ca72db02bb1f93a61b9b853b90e8'
+_ADMITTED_REQUESTS = frozenset({
+    '06470249694b2c9e656f5ec6d8aa3be3f7e9b4dceb33d1ee2cca049a5c59bb83',
+    '292c76b5d71f2ea3f40a135e6ea1e4c59168e622e2163e050a93f1c41a85b87d',
+    'ae476cdc9349bddec75c36c87fb9538224cfdf8b848618d393aea983b663db29',
+})
+
 
 @dataclass(frozen=True)
 class SourceLibrary:
@@ -64,6 +75,49 @@ def _database(path):
     conn = sqlite3.connect(path.as_uri() + '?mode=ro', uri=True)
     conn.execute('PRAGMA query_only=ON')
     return conn
+
+
+def _is_sha256(value):
+    return isinstance(value, str) and re.fullmatch('[0-9a-f]{64}', value) is not None
+
+
+def _requested_cache_sha256(folder, request_sha256, model_sha256):
+    """Read only the optional, byte-matched request shipped with an imported chunk."""
+    path = folder / 'native-request.json'
+    try:
+        if not path.is_file() or not path.resolve().is_relative_to(folder):
+            return None
+        raw = path.read_bytes()
+        if store.sha(raw) != request_sha256:
+            return None
+        request = json.loads(raw)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(request, dict) or request.get('kind') != 'gegi_campaign_response_request_v1':
+        return None
+    numerics, field = request.get('numerics'), request.get('field_cache')
+    if (request.get('model_sha256') == model_sha256
+            and isinstance(numerics, dict) and numerics.get('field_policy') == 'reuse-only'
+            and isinstance(field, dict) and field.get('model_sha256') == model_sha256
+            and _is_sha256(field.get('sha256'))):
+        return field['sha256']
+    return None
+
+
+def _field_identity(folder, identity, response):
+    request = identity.get('native_request_sha256')
+    model = identity['model_sha256']
+    cache = None
+    if not _is_sha256(request) or request != response.get('native_request_sha256'):
+        request = None
+    elif (model == _ADMITTED_MODEL_SHA256 and identity['calibration_sha256'] == _ADMITTED_DEPTH_SHA256
+          and request in _ADMITTED_REQUESTS):
+        cache = _ADMITTED_CACHE_SHA256
+    else:
+        cache = _requested_cache_sha256(folder, request, model)
+    # The native request's fresh-solve precision setting does not describe an existing cache.
+    precision = 32 if model == _ADMITTED_MODEL_SHA256 and cache == _ADMITTED_CACHE_SHA256 else None
+    return {'native_request_sha256': request, 'field_cache_sha256': cache, 'field_precision_bits': precision}
 
 
 def _source_inputs(path):
@@ -151,6 +205,7 @@ def _source_inputs(path):
     meta = {'source_group': identity['source_group'], 'source_contract_id': source, 'isotope': label,
             'source_pdg': pdg, 'source_position_mm': position, 'coordinate_transform': manifest['coordinate_transform'],
             'model_sha256': model, 'geometry_sha256': geometry, 'field_calibration_sha256': calibration,
+            **_field_identity(folder, identity, response),
             'drift_dt_ns': recipe['drift_dt_ns'], 'ionisation_energy_eV': recipe['ionisation_energy_eV'],
             'field_binding_scope': 'The sealed campaign response binds this calibration hash to its loaded field and drift numerics.',
             'chunk_sha256': done_sha, 'database_sha256': artifacts['events.sqlite']['sha256'],

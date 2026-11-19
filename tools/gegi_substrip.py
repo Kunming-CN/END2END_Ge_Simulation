@@ -13,6 +13,7 @@ import json
 import math
 from pathlib import Path
 import re
+from statistics import median
 
 
 CALIBRATION_KIND = 'gegi_simulated_substrip_calibration_v1'
@@ -20,6 +21,10 @@ CALIBRATION_PATH = Path(__file__).with_name('gegi_substrip_calibration.json')
 RATIO_DEFINITION = '(higher_coordinate_neighbor_fast_keV_equiv - lower_coordinate_neighbor_fast_keV_equiv) / collector_slow_keV'
 CFD_DIFFERENCE_DEFINITION = 'x_collector_preamp_cfd50_ns - y_collector_preamp_cfd50_ns'
 SLOT_COUNT = 9
+FAMILY_TRANSFER_KIND = 'gegi_same_field_interior_family_xy_v1'
+_FAMILY_TRANSFER_CALIBRATION_SHA256 = '0999012b024982b16a11eb21cfbfff2d69912880d0439bec3ee430d90d1a9ca7'
+_FAMILY_HOTSPOT_HOLDOUTS = {(9, 26): 20, (15, 24): 16}
+_FAMILY_SPARSE_HOLDOUTS = {(2, 25), (3, 26), (6, 27), (8, 28), (9, 19), (10, 22), (11, 21)}
 
 
 def _finite(value):
@@ -278,3 +283,120 @@ def infer_position(calibration, x_contact_id, y_contact_id, digital_result, chan
     count = sum(result[axis]['status'] == 'estimated' for axis in ('x', 'y'))
     result['status'] = ('unavailable', 'partial', 'estimated')[count]
     return result
+
+
+def prepare_family_transfer(calibration, channel_geometry):
+    """Pool the fixed signed strip tables once per run. Unvalidated coefficients disable transfer."""
+    if calibration.get('calibration_sha256') != _FAMILY_TRANSFER_CALIBRATION_SHA256:
+        return None
+    geometry = {c['id']: c for c in channel_geometry}
+    depth = calibration['depth_cfd']
+    families = {}
+    for family, contacts in (('X', (11, 12)), ('Y', (24, 26))):
+        rows = [calibration['strips'][str(cid)] for cid in contacts]
+        for cid, row in zip(contacts, rows, strict=True):
+            q = geometry.get(cid, {})
+            if (q.get('family') != family or q.get('guard') is not False or not _finite(q.get('strip_center_mm'))
+                    or not math.isclose(q['strip_center_mm'], row['strip_center_mm'], abs_tol=1e-6, rel_tol=0)):
+                return None
+        planes = zip(*(depth['ratio_edges_by_strip'][str(cid)] for cid in contacts), strict=True)
+        edges = []
+        for left, right in planes:
+            direction = _direction(left)
+            edges.append([median((a, b)) for a, b in zip(left, right, strict=True)]
+                         if direction is not None and direction == _direction(right) else None)
+        families[family] = {'reference_contact_id': contacts[0], 'reference_center_mm': rows[0]['strip_center_mm'],
+                            'pitch_mm': rows[0]['strip_pitch_mm'], 'edges': edges}
+    return {'kind': FAMILY_TRANSFER_KIND, 'calibration_sha256': calibration['calibration_sha256'],
+            'depth_knots_mm': depth['depth_knots_mm'], 'families': families}
+
+
+def _family_transfer_evidence(pair):
+    count = _FAMILY_HOTSPOT_HOLDOUTS.get(pair)
+    if count is not None:
+        energies, level = [35, 64, 150, 350, 500, 600], 'targeted_holdout'
+    elif pair in _FAMILY_SPARSE_HOLDOUTS:
+        count, energies, level = 4, [64, 150, 350, 500, 600], 'sparse_holdout'
+    else:
+        return None
+    return {'scope': level, 'independent_off_center_injections': count,
+            'tested_injection_energies_keV': energies, 'energy_bounds_keV': [energies[0], energies[-1]]}
+
+
+def _transfer_family_axis(row, family, bracket):
+    if row['status'] != 'features_available':
+        return
+    center = family['reference_center_mm'] + (row['contact_id'] - family['reference_contact_id']) * family['pitch_mm']
+    if (not math.isclose(row['strip_center_mm'], center, abs_tol=1e-6, rel_tol=0)
+            or not math.isclose(row['strip_pitch_mm'], family['pitch_mm'], abs_tol=1e-6, rel_tol=0)):
+        row['status'] = 'strip_geometry_mismatch'
+        return
+    lo, hi, fraction = bracket
+    left, right = family['edges'][lo], family['edges'][hi]
+    if left is None or right is None or _direction(left) != _direction(right):
+        row['status'] = 'ambiguous_depth_polarity'
+        return
+    direction = _direction(left)
+    oriented = [direction * _lerp(a, b, fraction) for a, b in zip(left, right, strict=True)]
+    slot = _lookup_slot(direction * row['ratio'], oriented)
+    if slot is None:
+        row['status'] = 'ratio_outside_calibration'
+        return
+    offset_pitch = -.4 + .8 * (slot + .5) / SLOT_COUNT
+    row.update(status='estimated', slot=slot, position_mm=row['strip_center_mm'] + offset_pitch * row['strip_pitch_mm'])
+
+
+def infer_family_transfer(calibration, prepared, x_contact_id, y_contact_id, digital_result, channel_geometry, *,
+                          source_identity=None, single_pixel_energy_keV=None):
+    """Estimate validated interior X/Y from full or compact original channel measurements.
+
+    The compact form needs both collectors' slow energy and CFD time, signed fast
+    signals on available neighbors, and the original profile and timing hashes.
+    Held-out transfers use CFD depth internally. Their public depth is unknown.
+    """
+    pair = [x_contact_id, y_contact_id]
+    if pair in calibration['sampled_contact_pairs']:
+        return infer_position(calibration, *pair, digital_result, channel_geometry, source_identity=source_identity,
+                              mode='cfd_conditioned')
+    evidence = _family_transfer_evidence(tuple(pair))
+    geometry = {c['id']: c for c in channel_geometry}
+    features = {c['contact_id']: c for c in (digital_result.get('channels') or [])}
+    axes = {axis: substrip_axis_features(cid, axis.upper(), features, geometry)
+            for axis, cid in zip('xy', pair, strict=True)}
+    source_status = _source_status(calibration, source_identity)
+    profile_matches = digital_result.get('profile_sha256') == calibration['digital_profile_sha256']
+    depth = _depth_estimate(calibration, pair, features, digital_result, source_status, profile_matches)
+    energy = digital_result.get('slow_energy_keV') if single_pixel_energy_keV is None else single_pixel_energy_keV
+    if evidence is None:
+        status = 'pair_outside_tested_scope'
+    elif not prepared or prepared['calibration_sha256'] != calibration.get('calibration_sha256'):
+        status = 'family_template_unavailable'
+    elif source_status != 'matching_saved_fields':
+        status = source_status
+    elif not profile_matches:
+        status = 'digital_profile_mismatch'
+    elif not _finite(energy):
+        status = 'single_pixel_energy_unavailable'
+    elif not evidence['energy_bounds_keV'][0] <= energy <= evidence['energy_bounds_keV'][1]:
+        status = 'energy_outside_tested_range'
+    elif depth['status'] != 'estimated':
+        status = depth['status']
+    else:
+        status = 'within_tested_scope'
+    if status == 'within_tested_scope':
+        bracket = _bracket(depth['position_mm'], prepared['depth_knots_mm'])
+        for axis, row in axes.items():
+            _transfer_family_axis(row, prepared['families'][axis.upper()], bracket)
+    else:
+        for row in axes.values():
+            row['status'] = status
+    count = sum(row['status'] == 'estimated' for row in axes.values())
+    return {'calibration_kind': FAMILY_TRANSFER_KIND, 'calibration_sha256': calibration.get('calibration_sha256'),
+            'calibration_reference_energy_keV': calibration['reference_energy_keV'],
+            'mode': 'cfd_conditioned_family_transfer', 'transfer_status': status, 'transfer_evidence': evidence,
+            'calibration_source_status': source_status,
+            'calibration_pair_coverage': 'validated_family_transfer' if evidence else 'unverified_cross_strip_transfer',
+            'status': ('unavailable', 'partial', 'estimated')[count],
+            'depth': {**depth, 'status': 'conditioning_only' if depth['status'] == 'estimated' else depth['status'],
+                      'position_mm': None},
+            **axes}

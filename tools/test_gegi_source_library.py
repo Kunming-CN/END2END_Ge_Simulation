@@ -10,9 +10,10 @@ import gegi_source_clock as research
 import gegi_source_library as portable
 
 
-def make_chunk(directory, name, position, *, compressed=True, calibration='a'*64, failed=False):
+def make_chunk(directory, name, position, *, compressed=True, calibration='a'*64, failed=False,
+               model='b'*64, request_sha256=None, native_request=None):
     directory = Path(directory)
-    pdg, digest = 1000110220, 'b'*64
+    pdg, digest = 1000110220, model
     sidecars = {}
 
     def write(ref, data):
@@ -66,9 +67,15 @@ def make_chunk(directory, name, position, *, compressed=True, calibration='a'*64
                                                    'time': {'units': 'ns'}}}
                                for table in ('vtx', 'tracks', 'stp/germanium')}}
     write(portable._MANIFEST, manifest)
+    if native_request is not None:
+        raw = store.encoded(native_request)
+        (directory/'native-request.json').write_bytes(raw)
+        request_sha256 = store.sha(raw)
     identity = {'source_group': name, 'model_sha256': digest, 'calibration_sha256': calibration,
                 'raw_initial_id_base': 0, 'campaign_initial_offset': 40, 'chunk_index': 9,
                 'batch': {'primary_count': 2, 'local_initial_primary_id_range': [0, 1], 'radiation_seed': 23}}
+    if request_sha256 is not None:
+        identity['native_request_sha256'] = request_sha256
     channels = [{'id': cid, 'family': 'X' if cid <= 17 else 'Y', 'guard': cid in (17, 34),
                  'wiring_factor': 1 if cid <= 17 else -1} for cid in range(1, 35)]
     recipe = {'channels': channels, 'drift_dt_ns': 1., 'ionisation_energy_eV': 2.95}
@@ -77,6 +84,8 @@ def make_chunk(directory, name, position, *, compressed=True, calibration='a'*64
                 'store_identity_sha256': store.sha(store.encoded(identity)),
                 'calibration_sha256': calibration, 'readout_recipe': recipe, 'new_field_solve': False,
                 'readout_recipe_sha256': store.sha(store.encoded(recipe)), 'counts': counts}
+    if request_sha256 is not None:
+        response['native_request_sha256'] = request_sha256
     database = store.Store(directory/'events.sqlite', identity, create=True)
     try:
         endpoint = {'status': 'contact', 'step_limit_reached': False, 'contact_ids': [4]}
@@ -109,6 +118,9 @@ class PortableSourceLibraryTest(unittest.TestCase):
             self.assertEqual(portable.describe_source_library(left/'events.sqlite')['source_position_mm'], [-20., 3., 30.])
             a, b = map(portable.load_source_library, (left, right))
             portable.validate_compatible(a, b)
+            self.assertIsNone(a.metadata['native_request_sha256'])
+            self.assertIsNone(a.metadata['field_cache_sha256'])
+            self.assertIsNone(a.metadata['field_precision_bits'])
             row = {'raw_event_id': 1, 'group_id': 0, 'campaign_initial_id': 41}
             pulse, status, _ = portable.read_native(a, row)
             self.assertEqual(status, 'completed')
@@ -120,6 +132,36 @@ class PortableSourceLibraryTest(unittest.TestCase):
                 handle.write(b'# extra')
             with self.assertRaisesRegex(ValueError, 'Sealed chunk file changed'):
                 portable.load_source_library(left)
+
+    def test_admitted_field_identity_survives_a_relocated_chunk(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            model = portable._ADMITTED_MODEL_SHA256
+            request = 'ae476cdc9349bddec75c36c87fb9538224cfdf8b848618d393aea983b663db29'
+            depth = portable._ADMITTED_DEPTH_SHA256
+            sealed = make_chunk(Path(tmp)/'relocated', 'a', [1., 2., 3.], model=model,
+                                calibration=depth, request_sha256=request)
+            fields = portable.load_source_library(sealed).metadata
+            self.assertEqual(fields['native_request_sha256'], request)
+            self.assertEqual(fields['field_cache_sha256'], portable._ADMITTED_CACHE_SHA256)
+            self.assertEqual(fields['field_precision_bits'], 32)
+            unknown = make_chunk(Path(tmp)/'unadmitted', 'b', [1., 2., 3.], model=model, request_sha256=request)
+            self.assertIsNone(portable.describe_source_library(unknown)['field_cache_sha256'])
+
+    def test_matching_request_sidecar_binds_cache_without_fresh_solve_precision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            request = {'kind': 'gegi_campaign_response_request_v1', 'model_sha256': 'b'*64,
+                       'field_cache': {'model_sha256': 'b'*64, 'sha256': 'd'*64},
+                       'numerics': {'field_policy': 'reuse-only', 'precision_bits': 64}}
+            folder = make_chunk(Path(tmp)/'relocated', 'a', [1., 2., 3.], native_request=request)
+            metadata = portable.load_source_library(folder).metadata
+            self.assertEqual(metadata['native_request_sha256'], store.sha(store.encoded(request)))
+            self.assertEqual(metadata['field_cache_sha256'], 'd'*64)
+            self.assertIsNone(metadata['field_precision_bits'])
+            (folder/'native-request.json').write_bytes(store.encoded({**request, 'other': 'changed'}))
+            unknown = portable.load_source_library(folder).metadata
+            self.assertEqual(unknown['native_request_sha256'], metadata['native_request_sha256'])
+            self.assertIsNone(unknown['field_cache_sha256'])
+            self.assertIsNone(unknown['field_precision_bits'])
 
     def test_exact_clock_parity_at_ordinary_mean_and_zero_activity(self):
         with tempfile.TemporaryDirectory() as tmp:

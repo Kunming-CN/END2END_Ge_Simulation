@@ -1439,8 +1439,9 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
       native_unavailable_groups:0,prehistory_unqualified_groups:0,qualified_triggers:2,single_pixel_energies:1,additional_multi_strip_energies:1,triggers_without_energy:0},
       sources:[{parents:2,zero_parents:1,deposit_groups:1},{parents:2,zero_parents:1,deposit_groups:1}],
       exposure:{qualified_adc_live_time_ns:40000000,clock_live_time_ns:50000000},
-      spectra:{combined:{bin_edges_keV:[0,20,40],counts:[1,1],underflow:0,overflow:0}}};
-    const dualFixtureJob={name:'changed',status:'completed',sources:dualFixtureLibraries,activities_bq:[18500,74000],
+      spectra:{combined:{bin_edges_keV:[0,20,40],counts:[1,1],underflow:0,overflow:0}},
+      trigger_profile:{id:'low-energy',coincidence_threshold_keV_per_sample:4,quiet_threshold_keV_per_sample:3,sample_period_ns:20}};
+    const dualFixtureJob={name:'changed',status:'completed',sources:dualFixtureLibraries,activities_bq:[18500,74000],trigger_profile:'low-energy',
       output:'.local/gegi-dual-source/changed/report.json',seed:'18446744073709551615',result:dualFixtureReport};
     const dualFixtureCalls=[];
     api=async(path,data)=>{dualFixtureCalls.push([path,data]);if(path.endsWith('/options'))return dualFixtureOptions;
@@ -1449,16 +1450,18 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(get('gegi-dual-source-a').children[1].textContent,/Cs-137.*\[-40, 0, 40\] mm/);
   assert.match(get('gegi-dual-status').textContent,/incomplete.*Missing sealed receipt/);
   assert.equal(get('gegi-dual-start').disabled,true);
-  for(const [id,value] of Object.entries({'source-a':'cs','source-b':'co','activity-a':'18500','activity-b':'74000',duration:'.05',seed:'18446744073709551615',name:'changed'}))get('gegi-dual-'+id).value=value;
+  for(const [id,value] of Object.entries({'source-a':'cs','source-b':'co','activity-a':'18500','activity-b':'74000',
+    duration:'.05',seed:'18446744073709551615',name:'changed','trigger-profile':'low-energy'}))get('gegi-dual-'+id).value=value;
   get('gegi-dual-source-b').onchange();assert.equal(get('gegi-dual-start').disabled,false);
   await get('gegi-dual-start').onclick();
   assert.equal(get('gegi-dual-job').value,'changed');assert.equal(get('gegi-dual-start').disabled,true);
   assert.deepEqual(JSON.parse(run('JSON.stringify(dualFixtureCalls.at(-1))')),['/api/workflow/gegi-dual/start',{
-    source_ids:['cs','co'],activities_bq:[18500,74000],live_time_s:.05,seed:'18446744073709551615',name:'changed'}]);
+    source_ids:['cs','co'],activities_bq:[18500,74000],live_time_s:.05,seed:'18446744073709551615',name:'changed',trigger_profile:'low-energy'}]);
   await run("inspectDualJob('changed')");
   const dualContent=descendants(get('gegi-dual-results'));
   assert.ok(dualContent.some(node=>node['aria-label']?.includes('20 keV bin')));
   assert.ok(dualContent.some(node=>node.textContent.includes('2 qualified triggers · 1 single-pixel energies · 1 additional multi-strip energies')));
+  assert.ok(dualContent.some(node=>node.textContent.includes('Low-energy trigger · 4 keV-equivalent per 20 ns ADC sample on both faces · Quiet threshold 3')));
   assert.match(get('gegi-dual-receipt').textContent,/18446744073709551615/);
   assert.match(get('gegi-dual-receipt').textContent,/report\.json/);
   run(`showDualJob({...dualFixtureJob,result:{...dualFixtureReport,counts:{...dualFixtureReport.counts,qualified_triggers:null},spectra:null}})`);
@@ -1469,13 +1472,35 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
     const pixels=blankPixels();pixels[15][0]=3;pixels[0][15]=1;
     const filledMap={status:'available',reason:null,axes:mapAxes,counts:pixels,
       totals:{qualified_triggers:7,mapped_single_pixel_triggers:4,multi_strip_energy_triggers:2,triggers_without_energy:1,occupied_pixels:2}};
-    const archiveJob={...dualFixtureJob,name:'archive',archived_report:true,output:'.local/gegi-dual-source/archive/report.json',
+    const archiveJob={...dualFixtureJob,name:'archive',archived_report:true,report_sha256:'8'.repeat(64),trigger_profile:'standard',
+      output:'.local/gegi-dual-source/archive/report.json',
       result:{...dualFixtureReport,pixel_map:filledMap,single_pixel_features:{status:'unavailable',reason:'not_captured'},
+        trigger_profile:{...dualFixtureReport.trigger_profile,id:'standard',coincidence_threshold_keV_per_sample:5},
         counts:{...dualFixtureReport.counts,qualified_triggers:7,single_pixel_energies:4,
         additional_multi_strip_energies:2,triggers_without_energy:1},
         spectra:{combined:{bin_edges_keV:[0,20,40],counts:[5,1],underflow:0,overflow:0}}}};
-    api=async path=>{dualFixtureCalls.push([path]);return path.endsWith('/options')?
-      {libraries:[],rejected:[],jobs:[{name:'archive',status:'completed',archived_report:true}]}:archiveJob;};`);
+    let holdPixel=false,releasePixel;
+    api=async path=>{
+      dualFixtureCalls.push([path]);
+      if(path.endsWith('/options'))return {libraries:[],rejected:[],jobs:[{name:'archive',status:'completed',archived_report:true}]};
+      if(!path.includes('/pixel-energy?'))return archiveJob;
+      const query=new URLSearchParams(path.split('?')[1]),x=Number(query.get('x')),y=Number(query.get('y'));
+      const min=query.has('min_kev')?Number(query.get('min_kev')):null,max=query.has('max_kev')?Number(query.get('max_kev')):null;
+      const selected=min===null?4:min===20?1:0;
+      const active=blankPixels();
+      if(selected)active[15][0]=selected===4?3:1;
+      if(selected===4)active[0][15]=1;
+      const totals={...filledMap.totals,mapped_single_pixel_triggers:selected,
+        single_pixel_triggers_outside_window:4-selected,occupied_pixels:selected===4?2:selected};
+      const full=x===1&&y===16?3:x===16&&y===1?1:0;
+      const selectedEntries=min===null?full:min===20&&x===1&&y===16?1:0;
+      const reply={name:archiveJob.name,report_sha256:archiveJob.report_sha256,
+        selection:{min_keV:min,max_keV:max,available_single_pixel_triggers:4,selected_single_pixel_triggers:selected},
+        pixel_map:{...filledMap,status:selected?'available':'empty',counts:active,totals},
+        pixel_spectrum:x?{x_strip:x,y_strip:y,selected_entries:selectedEntries,spectrum:{bin_edges_keV:[0,20,40],
+          counts:full===3?[2,1]:[full,0],entries:full,underflow:0,overflow:0}}:null};
+      return holdPixel?new Promise(resolve=>releasePixel=()=>resolve(reply)):reply;
+    };`);
   await get('gegi-dual-refresh').onclick();
   assert.match(get('gegi-dual-status').textContent,/0 saved source libraries · 1 saved acquisition/);
   assert.doesNotMatch(get('gegi-dual-status').textContent,/Copy a sealed source chunk/);
@@ -1492,12 +1517,75 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.equal(pixelBody.children[0].children[0].scope,'row');
   assert.equal(pixelBody.children[0].children[0].textContent,'Y16');
   assert.equal(pixelBody.children[15].children[0].textContent,'Y01');
-  assert.equal(pixelBody.children[0].children[1].textContent,'3');
-  assert.equal(pixelBody.children[15].children[16].textContent,'1');
-  assert.equal(pixelBody.children[0].children[16].textContent,'0');
-  assert.match(pixelFigure.children.at(-1).textContent,/X01 to X16 from left to right.*Y16 to Y01 from top to bottom/);
+  const pixelButton=(x,y)=>pixelBody.children[16-y].children[x].children[0];
+  assert.equal(pixelButton(1,16).textContent,'3');
+  assert.equal(pixelButton(16,1).textContent,'1');
+  assert.equal(pixelButton(16,16).textContent,'0');
+  assert.ok(pixelFigure.children.some(element=>/X01 to X16 from left to right.*Y16 to Y01 from top to bottom/.test(element.textContent)));
   assert.match(get('gegi-dual-receipt').textContent,/archived_report/);
+  assert.ok(!descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('Inspect two-strip trigger pairings')));
+  assert.ok(descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('Standard trigger · 5 keV-equivalent per 20 ns ADC sample')));
   assert.ok(descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('predates capture of the fast neighbor readings')));
+  const gridText=()=>descendants(pixelFigure).map(element=>element.textContent).join('\n');
+  const applyEnergy=descendants(pixelFigure).find(node=>node.textContent==='Apply energy interval');
+  const resetEnergy=descendants(pixelFigure).find(node=>node.textContent==='Show all energies');
+  const [lowEnergy,highEnergy]=descendants(pixelFigure).filter(node=>node.tagName==='input');
+  const combinedPlot=descendants(get('gegi-dual-results')).find(node=>node['aria-label']?.startsWith('Combined slow-energy spectrum'));
+  assert.ok(combinedPlot);
+  const energyQuery=(params)=>'/api/workflow/gegi-dual/pixel-energy?name=archive&report_sha256='+'8'.repeat(64)+params;
+  lowEnergy.value='20';highEnergy.value='40';await applyEnergy.click();
+  assert.equal(run('dualFixtureCalls.at(-1)[0]'),energyQuery('&min_kev=20&max_kev=40'));
+  assert.match(gridText(),/1 of 4 qualified single-pixel triggers in 20 ≤ E < 40 keV/);
+  assert.ok(!descendants(pixelFigure).some(node=>node.tagName==='svg'));
+  const beforeReset=run('dualFixtureCalls.length');
+  await resetEnergy.click();
+  assert.equal(run('dualFixtureCalls.length'),beforeReset);
+  assert.match(gridText(),/4 of 7 qualified triggers mapped/);
+
+  const topLeft=pixelButton(1,16),topNeighbor=pixelButton(2,16);
+  assert.equal(topLeft.tabIndex,0);
+  assert.equal(topNeighbor.tabIndex,-1);
+  topLeft.focus();topLeft.onkeydown({key:'ArrowRight',preventDefault(){}});
+  assert.equal(fixtureDocument.activeElement,topNeighbor);
+  topNeighbor.onkeydown({key:'ArrowLeft',preventDefault(){}});
+  assert.equal(fixtureDocument.activeElement,topLeft);
+  await topLeft.pressKey('Enter');
+  assert.equal(run('dualFixtureCalls.at(-1)[0]'),energyQuery('&x=1&y=16'));
+  assert.equal(topLeft['aria-pressed'],'true');
+  assert.equal(fixtureDocument.activeElement,topLeft);
+  assert.match(gridText(),/3 qualified single-pixel triggers in the full spectrum\. Current map count 3/);
+  assert.match(gridText(),/X01 \/ Y16 slow-energy spectrum/);
+  lowEnergy.value='20';highEnergy.value='40';
+  await highEnergy.onkeydown({key:'Enter',preventDefault(){}});
+  assert.equal(run('dualFixtureCalls.at(-1)[0]'),energyQuery('&min_kev=20&max_kev=40&x=1&y=16'));
+  assert.match(gridText(),/1 of 4 qualified single-pixel triggers in 20 ≤ E < 40 keV/);
+  assert.match(gridText(),/3 qualified single-pixel triggers in the full spectrum\. Current map count 1/);
+  assert.equal(topLeft.textContent,'1');
+  assert.equal(pixelButton(16,1).textContent,'0');
+  assert.ok(combinedPlot.isConnected);
+  await pixelButton(16,1).click();
+  assert.equal(run('dualFixtureCalls.at(-1)[0]'),energyQuery('&min_kev=20&max_kev=40&x=16&y=1'));
+  assert.match(gridText(),/1 qualified single-pixel trigger in the full spectrum\. Current map count 0/);
+  assert.match(gridText(),/X16 \/ Y01 slow-energy spectrum/);
+  assert.equal(topLeft['aria-pressed'],'false');
+  const beforeInvalid=run('dualFixtureCalls.length');lowEnergy.value='40';
+  await applyEnergy.click();
+  assert.equal(run('dualFixtureCalls.length'),beforeInvalid);
+  assert.match(gridText(),/lower bound below the upper bound/);
+  lowEnergy.value='500';highEnergy.value='600';await applyEnergy.click();
+  assert.match(gridText(),/0 of 4 qualified single-pixel triggers in 500 ≤ E < 600 keV/);
+  assert.match(gridText(),/Every cell has zero selected triggers/);
+  await resetEnergy.click();
+  assert.equal(lowEnergy.value,'');
+  assert.equal(highEnergy.value,'');
+  assert.equal(run('dualFixtureCalls.at(-1)[0]'),energyQuery('&x=16&y=1'));
+  assert.match(gridText(),/4 of 7 qualified triggers mapped/);
+  assert.match(gridText(),/1 qualified single-pixel trigger in the full spectrum\. Current map count 1/);
+  run('holdPixel=true');
+  const oldPixel=topLeft.click();
+  get('gegi-dual-job').value='archive';await get('gegi-dual-job').onchange();
+  run('releasePixel()');await oldPixel;
+  assert.ok(!descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('X01 / Y16 slow-energy spectrum')));
   run(`const emptyMap={...filledMap,status:'empty',counts:blankPixels(),
     totals:{qualified_triggers:2,mapped_single_pixel_triggers:0,multi_strip_energy_triggers:1,triggers_without_energy:1,occupied_pixels:0}};
     showDualJob({...dualFixtureJob,result:{...dualFixtureReport,pixel_map:emptyMap}})`);
@@ -1508,7 +1596,9 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.ok(descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('The saved report differs from its completion receipt.')));
   assert.ok(descendants(get('gegi-dual-results')).some(node=>node.tagName==='svg'));
   assert.ok(descendants(get('gegi-dual-results')).every(node=>node.tagName!=='table'));
-  assert.match(fs.readFileSync(__dirname+'/local_workflow.html','utf8'),/place <code>report\.json<\/code> in <code>\.local\/gegi-dual-source\/NAME\//);
+  const workflowMarkup=fs.readFileSync(__dirname+'/local_workflow.html','utf8');
+  assert.match(workflowMarkup,/place <code>report\.json<\/code> in <code>\.local\/gegi-dual-source\/NAME\//);
+  assert.match(workflowMarkup,/<select id="gegi-dual-trigger-profile"><option value="standard">Standard.*<option value="low-energy">Low energy/s);
   run(`const xFirst={contact_id:2,slow_energy_keV:14.9,low:{contact_id:1,fast_keV_equiv:-1.5,flags:[]},
       high:{contact_id:3,fast_keV_equiv:0,flags:[]},fast_ratio:-.1};
     const yFirst={contact_id:33,slow_energy_keV:15.1,low:{contact_id:32,fast_keV_equiv:null,flags:['fast_pileup']},
@@ -1528,6 +1618,8 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(featurePanel.children[0].textContent,/Inspect single-pixel trigger measurements/);
   featurePanel.open=true;
   const selectedText=()=>descendants(featurePanel).map(element=>element.textContent).join('\n');
+  assert.doesNotMatch(selectedText(),/Nominal detector position|constant-fraction time/);
+  assert.ok(!descendants(featurePanel).some(element=>element.tagName==='select'));
   assert.match(selectedText(),/0 to 240 ns.*dimensionless/s);
   assert.match(selectedText(),/20 ns after recording start.*Slow energy 15 keV/);
   assert.match(selectedText(),/X02 \(contact 2\).*14\.9 keV.*X01 \(contact 1\) · -1\.5 keV-equivalent.*X03 \(contact 3\) · 0 keV-equivalent/s);
@@ -1551,5 +1643,84 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run('finishFeature()');await staleRead;
   assert.ok(descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('predates capture of the fast neighbor readings')));
   assert.ok(!descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('80 ns after recording start')));
-  console.log('Dual-source Control import, exact settings, saved spectra and pixel counts, and bounded signed fast/slow inspection passed.');
+  run(`const measuredAxes={x:{status:'estimated',position_mm:4.25,slot:0},
+      y:{status:'estimated',position_mm:-9.4,slot:1},z:{status:'estimated',position_mm:-1.3}};
+    const positionRows=[{...firstFeature,x:{...xFirst,preamp_cfd50_ns:-1.25},y:{...yFirst,preamp_cfd50_ns:null},
+      nominal_position:{status:'uncalibrated_pixel',energy_scope:'outside_tested_range'}},
+      {...nextFeature,single_pixel_energy_keV:400,x:{...nextFeature.x,preamp_cfd50_ns:-1.25},
+        y:{...nextFeature.y,preamp_cfd50_ns:2.75},nominal_position:{status:'estimated',energy_scope:'within_tested_range',
+          method:'direct_strip_calibration',tested_energies_keV:[250,500,662],
+          axes:measuredAxes,position_mm:[4.25,-9.4,-1.3]}},
+      {...nextFeature,ordinal:3,trigger_time_ns:100,single_pixel_energy_keV:680,nominal_position:{status:'partial',
+          energy_scope:'outside_tested_range',position_mm:null,method:'family_template_transfer',tested_energies_keV:[500],
+          axes:{...measuredAxes,y:{status:'ratio_outside_calibration',position_mm:null,slot:null}}}}];
+    const positionJob={...dualFeatureJob,name:'position',result:{...dualFeatureJob.result,
+      single_pixel_features:{...dualFeatureJob.result.single_pixel_features,trigger:positionRows[0],calibrated_ordinals:[2,3]}}};
+    api=async path=>{dualFixtureCalls.push([path]);if(!path.includes('/single-pixel?'))return positionJob;
+      const ordinal=Number(new URLSearchParams(path.split('?')[1]).get('ordinal'));
+      return {name:positionJob.name,report_sha256:positionJob.report_sha256,trigger:positionRows[ordinal-1]};
+    };`);
+  get('gegi-dual-job').value='position';await get('gegi-dual-job').onchange();
+  const positionPanel=get('gegi-dual-results').children.find(node=>node.tagName==='details');
+  const positionText=()=>descendants(positionPanel).map(element=>element.textContent).join('\n');
+  const picker=descendants(positionPanel).find(element=>element.tagName==='select');
+  assert.deepEqual(picker.children.map(element=>element.value),['','2','3']);
+  assert.match(positionText(),/Preamplifier 50% constant-fraction time · -1\.25 ns relative to trigger/);
+  assert.match(positionText(),/Preamplifier 50% constant-fraction time · Unavailable/);
+  assert.match(positionText(),/This X–Y pixel has no nominal position calibration/);
+  assert.match(positionText(),/outside the tested 250–662 keV range/);
+  assert.doesNotMatch(positionText(),/Z \(depth\)|displayed coordinates are extrapolations/);
+  picker.value='2';await picker.onchange();
+  assert.equal(run('dualFixtureCalls.at(-1)[0]'),'/api/workflow/gegi-dual/single-pixel?name=position&report_sha256='+'9'.repeat(64)+'&ordinal=2');
+  assert.match(positionText(),/All three detector coordinates were estimated.*X · 4\.250 mm.*Y · -9\.400 mm.*Z \(depth\) · -1\.300 mm/s);
+  assert.match(positionText(),/\+2\.75 ns relative to trigger/);
+  assert.match(positionText(),/Direct strip calibration\. Tested range 250–662 keV/);
+  assert.doesNotMatch(positionText(),/extrapolations/);
+  picker.value='3';await picker.onchange();
+  assert.match(positionText(),/Only some detector coordinates were estimated.*Y · Unavailable · fast ratio outside calibration/s);
+  assert.match(positionText(),/Strip-family template transfer\. Tested at 500 keV/);
+  assert.match(positionText(),/differs from the single tested 500 keV scale.*displayed coordinates are extrapolations/);
+  assert.doesNotMatch(positionText(),/250–662/);
+  assert.doesNotMatch(positionText(),/Y · -9\.400 mm/);
+  run(`function dualPairingCase(ordinal,values){
+      const ys=[24,25];
+      const pairs=[ys,[...ys].reverse()].map((yOrder,index)=>{
+        const sites=yOrder.map((id,i)=>({x_contact_id:11+i,y_contact_id:id,x_energy_keV:values[i],
+          y_energy_keV:values[ys.indexOf(id)],energy_keV:(values[i]+values[ys.indexOf(id)])/2}));
+        const compatible=sites.every(site=>site.x_energy_keV===site.y_energy_keV);
+        const orders=compatible?[[0,1],[1,0]].map(order=>{
+          const cosine=1-511*(1/sites[order[1]].energy_keV-1/(values[0]+values[1]));
+          const allowed=cosine>=-1&&cosine<=1;
+          return {site_index_order:order,kinematically_allowed:allowed,half_angle_deg:allowed?Math.acos(cosine)*180/Math.PI:null};
+        }):[];
+        return {energy_compatible:compatible,index,sites,compton_orders:orders};
+      });
+      return {ordinal,trigger_time_ns:ordinal*60,energy_keV:values[0]+values[1],two_strip_pairings:{
+        compatible_pairing_count:pairs.filter(pair=>pair.energy_compatible).length,pairings:pairs,flags:['overlapping_x_neighborhoods']}};
+    }
+    const dualPairRows=[dualPairingCase(1,[100,500]),dualPairingCase(2,[300,300])];
+    const dualPairJob={...positionJob,name:'pairings',result:{...positionJob.result,
+      two_strip_pairings:{status:'available',count:2,trigger:dualPairRows[0]}}};
+    api=async path=>{dualFixtureCalls.push([path]);if(!path.includes('/two-strip?'))return dualPairJob;
+      const ordinal=Number(new URLSearchParams(path.split('?')[1]).get('ordinal'));
+      return {name:dualPairJob.name,report_sha256:dualPairJob.report_sha256,trigger:dualPairRows[ordinal-1]};
+    };`);
+  get('gegi-dual-job').value='pairings';await get('gegi-dual-job').onchange();
+  const pairPanel=get('gegi-dual-results').children.find(node=>node.children[0]?.textContent==='Inspect two-strip trigger pairings (2)');
+  const pairText=()=>descendants(pairPanel).map(element=>element.textContent).join('\n');
+  assert.match(pairText(),/Slow energy 600 keV/);
+  assert.match(pairText(),/Two-strip trigger number \(1–2\)/);
+  assert.match(pairText(),/Pileup can produce the same strip pattern.*one fully absorbed photon/s);
+  assert.match(pairText(),/One energy-compatible pairing.*Energy-compatible.*X11 100 keV ↔ Y07 100 keV.*Energy-incompatible.*X11 100 keV ↔ Y08 500 keV/s);
+  assert.match(pairText(),/1 of 2 interaction orders allowed by energy.*Site 1 → Site 2 · allowed by energy model · scatter angle [\d.]+°.*Site 2 → Site 1 · excluded by energy model/s);
+  assert.match(pairText(),/Fast-neighbor geometry · overlapping x neighborhoods/);
+  assert.doesNotMatch(pairText(),/Spatial cone|modeled XYZ/);
+  const pairNext=descendants(pairPanel).find(node=>node.textContent==='Next trigger');
+  await pairNext.click();
+  assert.equal(run('dualFixtureCalls.at(-1)[0]'),'/api/workflow/gegi-dual/two-strip?name=pairings&report_sha256='+'9'.repeat(64)+'&ordinal=2');
+  assert.match(pairText(),/Trigger 2 of 2 · 120 ns/);
+  assert.match(pairText(),/Both pairings are energy-compatible/);
+  assert.equal((pairText().match(/2 of 2 interaction orders allowed by energy/g)||[]).length,2);
+  assert.ok(pairNext.disabled);
+  console.log('Dual-source Control covers energy intervals, bounded trigger browsing, position calibration transfer, and conditional two-strip pairings.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

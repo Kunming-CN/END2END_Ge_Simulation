@@ -12,11 +12,13 @@ import tempfile
 import numpy as np
 
 import gegi_digital_readout as digital
+import gegi_digital_pairs as digital_pairs
 import gegi_event_energy as event_energy
 from gegi_event_store import encoded, sha
 import gegi_exposure_stream as stream
 import gegi_pulse_stream
 import gegi_source_library as library
+import gegi_substrip as substrip
 
 
 KIND = 'gegi_dual_source_acquisition_v1'
@@ -159,27 +161,69 @@ def _fast_neighbor(cid, channels):
             'flags': flags}
 
 
+def _collector_features(cid, channels, neighbors):
+    low, high = (_fast_neighbor(neighbor, channels) for neighbor in neighbors[cid])
+    return {'contact_id': cid, 'slow_energy_keV': channels[cid]['slow_energy_keV'],
+            'preamp_cfd50_ns': channels[cid].get('preamp_cfd50_ns'), 'low': low, 'high': high}
+
+
 def _single_pixel_features(pulse, neighbors):
     channels = {row['contact_id']: row for row in pulse['channels']}
     axes = {}
     for axis, cid in zip(('x', 'y'), pulse['contact_ids'], strict=True):
-        low, high = (_fast_neighbor(neighbor, channels) for neighbor in neighbors[cid])
+        face = _collector_features(cid, channels, neighbors)
+        low, high = face['low'], face['high']
         ratio = None
         if low is not None and high is not None:
             fast_low, fast_high = low['fast_keV_equiv'], high['fast_keV_equiv']
             if fast_low is not None and fast_high is not None:
                 ratio = (fast_low - fast_high) / pulse['slow_energy_keV']
-        axes[axis] = {'contact_id': cid, 'slow_energy_keV': channels[cid]['slow_energy_keV'],
-                      'low': low, 'high': high, 'fast_ratio': ratio}
+        axes[axis] = dict(face, fast_ratio=ratio)
     return axes
 
 
-def _trigger_card(pulse, neighbors):
+def position_field_identity(calibration, source_metadata):
+    reference = {key: calibration[key] for key in ('model_sha256', 'field_cache_sha256', 'field_precision_bits')}
+    return reference if all(all(src.get(k) == v for k, v in reference.items()) for src in source_metadata) else None
+
+
+def _continuous_position(pulse, calibration, geometry, field_identity, family_transfer=None):
+    energy = pulse['slow_energy_keV']
+    if not field_identity:
+        return {'status': 'unconfirmed_field', 'energy_scope': 'not_applicable'}
+    pair = pulse['contact_ids']
+    if list(pair) in calibration['sampled_contact_pairs']:
+        estimate = substrip.infer_position(calibration, *pair, pulse, geometry,
+                                           source_identity=field_identity, mode='cfd_conditioned')
+        result = dict(method='direct_strip_calibration', tested_energies_keV=[250, 500, 662])
+    else:
+        evidence = substrip._family_transfer_evidence(tuple(pair))
+        if family_transfer is None or evidence is None:
+            return {'status': 'uncalibrated_pixel', 'energy_scope': 'not_applicable'}
+        estimate = substrip.infer_family_transfer(calibration, family_transfer, *pair, pulse, geometry,
+                                                 source_identity=field_identity, single_pixel_energy_keV=energy)
+        result = dict(method='family_template_transfer', tested_energies_keV=evidence['tested_injection_energies_keV'],
+                      transfer_status=estimate['transfer_status'], validation=evidence['scope'])
+    energies = result['tested_energies_keV']
+    result['energy_scope'] = 'within_tested_range' if energies[0] <= energy <= energies[-1] else 'outside_tested_range'
+    axes = {}
+    for axis, key in (('x', 'x'), ('y', 'y'), ('z', 'depth')):
+        measured = estimate[key]
+        axes[axis] = {'status': measured['status'], 'position_mm': measured['position_mm']}
+        if axis != 'z':
+            axes[axis]['slot'] = measured['slot']
+    values = [axes[axis]['position_mm'] for axis in ('x', 'y', 'z')]
+    full = None not in values
+    status = 'estimated' if full else 'partial' if any(v is not None for v in values) else 'unavailable'
+    return dict(result, status=status, axes=axes, position_mm=values if full else None)
+
+
+def _trigger_card(pulse, neighbors, *, calibration=None, geometry=None, field_identity=None, family_transfer=None):
     measured = event_energy.estimate_event_energy(pulse)
     single = pulse['slow_energy_keV']
     multiple = measured['x_count'] > 1 or measured['y_count'] > 1
     added = measured['energy_keV'] if single is None and multiple else None
-    return {'trigger_time_ns': pulse['trigger_time_ns'], 'rise_end_ns': pulse['rise_end_ns'],
+    card = {'trigger_time_ns': pulse['trigger_time_ns'], 'rise_end_ns': pulse['rise_end_ns'],
             'single_pixel_energy_keV': single, 'additional_multi_strip_energy_keV': added,
             'single_pixel_features': _single_pixel_features(pulse, neighbors) if measured['retains_legacy_single'] else None,
             'energy_keV': single if single is not None else added,
@@ -187,6 +231,20 @@ def _trigger_card(pulse, neighbors):
             'x_collecting_strips': measured['x_contact_ids'], 'y_collecting_strips': measured['y_contact_ids'],
             'guard_contact_ids': measured['guard_contact_ids'], 'flags': pulse['flags'],
             'event_energy_flags': measured['flags']}
+    if calibration is not None and measured['retains_legacy_single']:
+        card['nominal_position'] = _continuous_position(pulse, calibration, geometry, field_identity, family_transfer)
+    if geometry is not None and added is not None and measured['x_count'] == measured['y_count'] == 2:
+        xs, ys = measured['x_contact_ids'], measured['y_contact_ids']
+        channels = {r['contact_id']: r for r in pulse['channels']}
+        hits = {cid: channels[cid]['slow_energy_keV'] for cid in xs + ys}
+        pairings = list(digital_pairs.energy_pairings(xs, ys, hits))
+        for pairing in pairings:
+            pairing['compton_orders'] = digital_pairs.compton_orders(pairing['sites']) if pairing['energy_compatible'] else []
+        flags = digital_pairs._neighborhood_flags(xs, ys, geometry)
+        card['two_strip_pairings'] = dict(compatible_pairing_count=sum(p['energy_compatible'] for p in pairings),
+                                          pairings=pairings, flags=flags,
+                                          collectors=[_collector_features(cid, channels, neighbors) for cid in xs + ys])
+    return card
 
 
 def _relative_input(path, destination):
@@ -244,12 +302,14 @@ def _partial_deposits(schedule):
 def _implementation_hashes():
     paths = {'digital_readout_sha256': digital.__file__, 'estimator_sha256': event_energy.__file__,
              'runner_sha256': __file__, 'library_sha256': library.__file__,
-             'adc_stream_sha256': stream.__file__, 'pulse_stream_sha256': gegi_pulse_stream.__file__}
+             'adc_stream_sha256': stream.__file__, 'pulse_stream_sha256': gegi_pulse_stream.__file__,
+             'position_estimator_sha256': substrip.__file__, 'pairing_sha256': digital_pairs.__file__}
     return {label: sha(Path(path).read_bytes()) for label, path in paths.items()}
 
 
-def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=None):
+def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=None, trigger_profile='standard'):
     """Read two verified source chunks and write a portable result JSON file."""
+    profile = gegi_pulse_stream.trigger_profile_definition(trigger_profile)
     source_chunks, activities = tuple(source_chunks), tuple(activities_bq)
     if len(source_chunks) != 2 or len(activities) != 2:
         raise ValueError('Provide two source chunks and their two activities')
@@ -263,6 +323,9 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
         raise FileExistsError(output)
     implementation = _implementation_hashes()
     libraries = tuple(library.load_source_library(path) for path in source_chunks)
+    calibration = substrip.load_calibration()
+    family_transfer = substrip.prepare_family_transfer(calibration, libraries[0].channels)
+    field_identity = position_field_identity(calibration, [src.metadata for src in libraries])
     if any(output.is_relative_to(saved.directory) for saved in libraries):
         raise ValueError('Write the result outside the two saved source chunks')
     scheduling = library.schedule_sources(*libraries, activities_bq=activities, duration_ns=live_ns,
@@ -281,9 +344,11 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
     occurred = None
     if present:
         adc = stream.ADCExposure(components, live_time_ns=live_ns, phase_ns=PHASE_NS, noise_seed=noise_seed)
-        readout = stream.reconstruct_exposure(adc, block_samples=stream.DEFAULT_BLOCK_SAMPLES)
+        readout = stream.reconstruct_exposure(adc, block_samples=stream.DEFAULT_BLOCK_SAMPLES,
+                                              trigger_profile=trigger_profile)
         neighbors = _strip_neighbors(libraries[0].channels)
-        occurred = [_trigger_card(pulse, neighbors) for pulse in readout['events']
+        occurred = [_trigger_card(pulse, neighbors, calibration=calibration, geometry=libraries[0].channels,
+                                  field_identity=field_identity, family_transfer=family_transfer) for pulse in readout['events']
                     if 0 <= pulse['trigger_time_ns'] < live_ns
                     and not any(a <= pulse['rise_end_ns'] and b > pulse['trigger_time_ns'] for a, b in mask)]
     qualified_set = occurred if present else []
@@ -317,6 +382,7 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
         'kind': KIND, 'status': 'completed',
         'design': {'live_time_s': live_time_s, 'clock_seed': seed, 'noise_seed': noise_seed,
                    'adc_phase_ns': PHASE_NS, 'sample_period_ns': SAMPLE_PERIOD_NS,
+                   'trigger_profile': profile,
                    'adc_noise_rms_v': digital._PROFILE['optional_noise_rms_V'],
                    'clock_scope': 'Independent homogeneous parent clocks on the empirical saved source libraries. '
                                   'Delayed groups from earlier parents can enter the live interval. Reset nominal '
@@ -331,6 +397,19 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
                    'generalization_scope': 'Rates describe only qualified ADC time. Missing history prevents '
                                            'extending observed counts to a whole-exposure efficiency.',
                    'event_energy': event_energy.DEFINITION,
+                   'two_strip_pairings': {'selection': 'Qualified multi-strip total with two collecting strips on each face.',
+                                          'order_scope': 'Energy constraints for one fully absorbed photon. A trigger may contain more than one photon.'},
+                   'nominal_position': {'calibration_sha256': calibration['calibration_sha256'],
+                                        'matching_fields': field_identity is not None, 'mode': 'cfd_conditioned',
+                                        'sampled_contact_pairs': calibration['sampled_contact_pairs'],
+                                        'channel_geometry': [{key: channel[key] for key in
+                                                              ('id', 'family', 'guard', 'strip_center_mm')}
+                                                             for channel in libraries[0].channels],
+                                        'tested_energies_keV': [250, 500, 662],
+                                        'lateral_transfer': substrip.FAMILY_TRANSFER_KIND,
+                                        'ratio_definition': calibration['ratio_definition'],
+                                        'coordinate_unit': 'mm',
+                                        'scope': 'Point estimate for a measured single pixel. Multiple deposits can share a pixel.'},
                    'single_pixel_features': {
                        'fast_area_gate_ns': digital._PROFILE['fast_area_gate_ns'],
                        'fast_unit': 'keV-equivalent',
@@ -348,6 +427,7 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
         'unknown_groups': missing + partial, 'triggers': occurred,
         'receipt': {'python': platform.python_version(), 'numpy': np.__version__,
                     'digital_profile_sha256': digital.PROFILE_SHA256, 'digital_timing_sha256': digital.TIMING_SHA256,
+                    'trigger_profile': profile,
                     **implementation,
                     'known_component_adc_sha256': None if readout is None else readout['adc_sha256'],
                     'observed_result_sha256': sha(encoded({'counts': counts, 'spectra': spectra, 'triggers': occurred,
@@ -369,14 +449,18 @@ def main():
     parser.add_argument('--live-time-s', type=float, default=DEFAULT_LIVE_TIME_S)
     parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
     parser.add_argument('--noise-seed', type=int, help='Default: (clock seed + 100000000) modulo 2**64')
+    parser.add_argument('--trigger-profile', choices=gegi_pulse_stream.TRIGGER_PROFILES, default='standard',
+                        help='Face coincidence threshold per 20 ns sample: standard 5 keV, low-energy 4 keV')
     parser.add_argument('--output', type=Path, required=True, help='New JSON file or directory')
     args = parser.parse_args()
     try:
         result = run((args.source_a, args.source_b), (args.activity_a_bq, args.activity_b_bq),
-                     args.live_time_s, args.seed, args.output, noise_seed=args.noise_seed)
+                     args.live_time_s, args.seed, args.output, noise_seed=args.noise_seed,
+                     trigger_profile=args.trigger_profile)
     except (OSError, ValueError) as error:
         parser.exit(2, f'Error: {error}\n')
     print(json.dumps({'output': str(_report_path(args.output)), 'counts': result['counts'],
+                      'trigger_profile': result['design']['trigger_profile'],
                       'qualified_adc_live_time_ns': result['exposure']['qualified_adc_live_time_ns'],
                       'observed_result_sha256': result['receipt']['observed_result_sha256']}))
 

@@ -110,11 +110,11 @@ def _face_voltages(code):
     return np.array([code[face].sum(axis=0) for face in pulse._FACES]) * digital._LSB_V
 
 
-def _register_groups(groups, start, change):
+def _register_groups(groups, start, change, threshold=pulse._TRIGGER_KEV):
     indices = np.flatnonzero(np.max(np.abs(change), axis=0) > pulse._QUIET_KEV)
     if not indices.size:
         return
-    values = np.min(change, axis=0) >= pulse._TRIGGER_KEV
+    values = np.min(change, axis=0) >= threshold
     for group in np.split(indices, np.flatnonzero(np.diff(indices) > pulse._QUIET_SAMPLES) + 1):
         begin, end = int(group[0]) + start - 1, int(group[-1]) + start
         coincidence = bool(values[group[0]:group[-1]+1].any())
@@ -125,7 +125,7 @@ def _register_groups(groups, start, change):
             groups.append((begin, end, coincidence))
 
 
-def _find_activity(exposure, block_samples):
+def _find_activity(exposure, block_samples, threshold=pulse._TRIGGER_KEV):
     blocks = exposure.blocks(block_samples)
     first, preamble = next(blocks)
     baseline = (preamble * digital._LSB_V).mean(axis=1)
@@ -144,7 +144,7 @@ def _find_activity(exposure, block_samples):
         # two ADC samples are needed across block boundaries.
         increments = face[:, 1:] - _ALPHA * face[:, :-1]
         change = (increments[:, 1:] + increments[:, :-1]) / (pulse._FAST_SAMPLES * pulse._SLOW_GAIN)
-        _register_groups(groups, start, change)
+        _register_groups(groups, start, change, threshold)
     return baseline, groups, rail_by_contact, digest.hexdigest()
 
 
@@ -225,9 +225,10 @@ def _feature_contexts(exposure, block_samples, groups, baseline, contexts):
             break
 
 
-def reconstruct_exposure(exposure, *, block_samples=DEFAULT_BLOCK_SAMPLES):
+def reconstruct_exposure(exposure, *, block_samples=DEFAULT_BLOCK_SAMPLES, trigger_profile='standard'):
     """Reconstruct a complete clock from deterministic ADC blocks, without truth."""
-    baseline, groups, rail, adc_sha = _find_activity(exposure, block_samples)
+    threshold = pulse.trigger_threshold(trigger_profile)
+    baseline, groups, rail, adc_sha = _find_activity(exposure, block_samples, threshold)
     contexts = _contexts(exposure, groups)
     events, rejected = [], []
     if contexts:

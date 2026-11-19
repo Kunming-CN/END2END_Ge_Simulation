@@ -41,7 +41,7 @@
       "tools/gegi_digital_pairs.py", "tools/gegi_pulse_stream.py", "tools/gegi_pulse_replay.py",
       "tools/gegi_event_energy.py", "tools/gegi_exposure_stream.py",
       "tools/gegi_source_library.py", "tools/gegi_dual_source.py", "tools/gegi_dual_control.py",
-      "tools/gegi_pixel_map.py"
+      "tools/gegi_pixel_map.py", "tools/gegi_refit_positions.py"
     ],
     "saved_data_and_readout_runtime": [
       "tools/charge_check.py", "tools/charge_check.ps1", "tools/replay_readout.py",
@@ -129,6 +129,7 @@
     "tools/gegi_digital_pairs.py": ["tools/gegi_imaging.py", "tools/gegi_substrip.py"],
     "tools/gegi_digital_spectra.py": ["tools/gegi_digital_saved.py"],
     "tools/gegi_dual_control.py": ["tools/gegi_dual_source.py"],
+    "tools/gegi_refit_positions.py": ["tools/gegi_dual_source.py", "tools/gegi_substrip.py", "tools/gegi_substrip_calibration.json"],
     "Control.cmd": ["tools/local_ui.ps1"],
     "Control.command": ["tools/macos_launch.sh", "tools/local_ui.py", "transport/macos/workflow.sh"],
     "Setup.command": ["tools/macos_launch.sh", "tools/macos_setup.py", "transport/macos/pixi.toml", "transport/macos/pixi.lock"],

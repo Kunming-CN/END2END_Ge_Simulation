@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import math
+from types import MappingProxyType
 
 import numpy as np
 
@@ -25,6 +26,7 @@ _CFD_NS = D._TIMING['gate_ns'][1]
 _TRIGGER_KEV = 5.
 _QUIET_KEV = 3.
 _QUIET_SAMPLES = 3
+TRIGGER_PROFILES = MappingProxyType({'standard': _TRIGGER_KEV, 'low-energy': 4.})
 _LOCAL_INTERFERENCE_KEV = D._PROFILE['slow_threshold_keV']
 _SLOW_GAIN = D._CALIBRATION['slow_V_per_keV']
 _FAST_GAIN = D._CALIBRATION['fast_V_ns_per_keV_equiv']
@@ -49,6 +51,19 @@ DEFINITION = {
     'local_interference': 'For each other observed rise, project its measured pole-zero activity and settled charge step into this electrode’s slow trapezoid and locally referenced fast and timing gates. Screen affected observables without subtracting predicted interference.',
     'local_interference_threshold_keV_equiv': _LOCAL_INTERFERENCE_KEV,
 }
+
+
+def trigger_threshold(profile):
+    """Return the coincident face increment in keV-equivalent per sample."""
+    try:
+        return TRIGGER_PROFILES[profile]
+    except (KeyError, TypeError) as error:
+        raise ValueError('Trigger profile must be standard or low-energy') from error
+
+
+def trigger_profile_definition(profile):
+    return {'id': profile, 'coincidence_threshold_keV_per_sample': trigger_threshold(profile),
+            'quiet_threshold_keV_per_sample': _QUIET_KEV, 'sample_period_ns': D._DT}
 
 
 @dataclass(frozen=True)
@@ -144,7 +159,7 @@ def acquire(components, *, phase_ns=0., noise_seed=None, window_end_ns=None):
     return time_ns, adc_code
 
 
-def _activities(fast):
+def _activities(fast, threshold=_TRIGGER_KEV):
     # A coincident first difference of the corrected face sums suppresses
     # channel induction transients and retains charge increments on a tail.
     face = np.array([fast[s].sum(axis=0) for s in _FACES]) / _SLOW_GAIN
@@ -154,7 +169,7 @@ def _activities(fast):
     if not len(indices):
         return []
     groups = np.split(indices, np.flatnonzero(np.diff(indices) > _QUIET_SAMPLES) + 1)
-    coincidence = np.min(change, axis=0) >= _TRIGGER_KEV
+    coincidence = np.min(change, axis=0) >= threshold
     return [(g[0] + D._TRIGGER_INDEX - 1, g[-1] + D._TRIGGER_INDEX,
              bool(coincidence[g[0]:g[-1]+1].any())) for g in groups]
 
@@ -311,8 +326,10 @@ def _pulse_features(activity, time_ns, rail, centered, slow, fast, other_activit
             'position': None, 'position_mm': None}
 
 
-def reconstruct(time_ns, adc_code, *, channels=None, calibration=None, source_identity=None):
+def reconstruct(time_ns, adc_code, *, channels=None, calibration=None, source_identity=None,
+                trigger_profile='standard'):
     """Find pulses using only ADC samples and the fixed GeGI channel layout."""
+    threshold = trigger_threshold(trigger_profile)
     time_ns = np.asarray(time_ns, dtype=float)
     code = np.asarray(adc_code)
     if (time_ns.ndim != 1 or len(time_ns) <= D._TRIGGER_INDEX
@@ -330,7 +347,7 @@ def reconstruct(time_ns, adc_code, *, channels=None, calibration=None, source_id
     rail = (code == D._ADC_MIN) | (code == D._ADC_MAX)
     delayed = np.pad(centered[:, :-1], ((0, 0), (1, 0)))
     corrected = np.cumsum(centered - np.exp(-D._DT / D._TAU) * delayed, axis=1)
-    groups = _activities(fast)
+    groups = _activities(fast, threshold)
     next_starts = [group[0] for group in groups[1:]] + [len(time_ns)]
     activities = [_local_activity(*group, following, corrected, fast, rail)
                   for group, following in zip(groups, next_starts)]

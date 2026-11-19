@@ -9,6 +9,25 @@ from test_gegi_pulse_stream import prepare, pulse
 
 
 class ExposureStreamTest(unittest.TestCase):
+    def test_selectable_coincidence_matches_both_adc_reconstruction_paths(self):
+        components = [(prepare(pulse(energy=13.)), 17., 1.)]
+        clock = exposure.ADCExposure(components, live_time_ns=6000., noise_seed=61)
+        t, code = frozen.acquire(components, noise_seed=61, window_end_ns=5999.99)
+        standard = exposure.reconstruct_exposure(clock, block_samples=7)
+        self.assertEqual(standard, exposure.reconstruct_exposure(clock, block_samples=7, trigger_profile='standard'))
+        self.assertFalse(standard['events'])
+        self.assertFalse(frozen.reconstruct(t, code)['events'])
+
+        alternative = exposure.reconstruct_exposure(clock, block_samples=7, trigger_profile='low-energy')
+        self.assertEqual(alternative['adc_sha256'], standard['adc_sha256'])
+        self.assertEqual(len(alternative['events']), 1)
+        continuous = alternative['events'][0]
+        [short] = frozen.reconstruct(t, code, trigger_profile='low-energy')['events']
+        self.assertEqual((continuous['trigger_time_ns'], continuous['contact_ids']),
+                         (short['trigger_time_ns'], [3, 24]))
+        self.assertAlmostEqual(continuous['slow_energy_keV'], short['slow_energy_keV'], places=9)
+        self.assertEqual(exposure.reconstruct_exposure(clock, block_samples=7), standard)
+
     def test_global_adc_codes_match_one_acquisition_across_seams(self):
         a = prepare(pulse(neighbor=True))
         b = prepare(pulse((4, 21), energy=136.))
