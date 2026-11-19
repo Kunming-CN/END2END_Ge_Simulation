@@ -1,25 +1,10 @@
 # Project working rules
 
-## Owner priority — 2026-11-19 simultaneous commercial-source imaging
+## Owner correction — joint source generation and paused execution
 
-Run a large, realistic GeGI dual-source acquisition. Place two different isotopes
-at different locations with activities representative of commercial check sources.
-Both irradiate the same detector concurrently. Schedule decays independently on
-one clock, sum their signed analog preamplifier responses on each electrode,
-then apply channel noise, ADC sampling and triggering to the common stream.
-Retain overlap, pile-up, incomplete histories and all imaging
-orders. Preserve the nominal positions, activity reference, seeds, total parents
-and independent archived histories in the run configuration. Report the observed
-energy spectrum, source-direction errors and unresolved counts. Use the existing
-validated transport and drift libraries where applicable. Keep research examples
-on GitHub, and prioritize the actual simulation over repeated publication checks.
+All project simulations and automatic continuations are paused until the owner explicitly resumes them. The next production design is one physical acquisition. Define Cs-137 and Co-60 at their two positions in one geometry before the first decay. Generate a common chronological stream of new source decays with isotope identity and the appropriate source position, at 185 kBq and 37 kBq respectively. Each decay produces its isotope's physical emissions and daughters. Preserve delayed daughter times and explicitly define the source state at acquisition start.
 
-The current campaign models the RSS5 nominal activities of 185 kBq Cs-137
-at (−40, 0, 40) mm and 37 kBq Co-60 at (+40, 0, 40) mm. These are the chosen
-point-source model parameters; the owner specified the simultaneous scenario
-and commercial-strength sources. Its 25 independent 250 ms common-clock
-exposures reuse disjoint library chunks. Track the existing worker/checkpoints
-and resume completed stages in place.
+Transport these emissions through the same detector, then combine overlapping electrode currents in absolute time before shared front-end response, noise, ADC sampling and triggering. Acquisition lasts at least 60 uninterrupted seconds. Computing in blocks must retain time, electronic state and event identity across boundaries. Separate isotope simulations followed by waveform-library replay do not qualify as production. Historical replay studies may be used for readout diagnostics only. The prior scale proposal is withdrawn pending the owner's decision.
 
 ## Owner update — 2026-11-19 lightweight software and GitHub exhibits
 

@@ -156,8 +156,6 @@ def validate_plan(plan,*,frozen=False):
         total+=group['primary_count']
     require(type(plan.get('total_initial_primaries')) is int and total==plan['total_initial_primaries'] and 1<=total<=10000000,
             'Source-group counts must sum to the frozen initial-primary denominator, at most the authorized 10M')
-    id_base=plan.get('campaign_initial_id_base',0)
-    require(type(id_base) is int and 0<=id_base<=2**63-1-total,'Invalid campaign parent-ID namespace')
     if frozen:
         from gegi_campaign_analysis import criteria
         require(B.typed_equal(plan.get('analysis_criteria'),criteria()),'Frozen analysis criteria differ from the maintained implementation')
@@ -184,7 +182,7 @@ def physics_sha256(plan):
 
 
 def chunks(plan):
-    offset=plan.get('campaign_initial_id_base',0);index=0
+    offset=0;index=0
     for group in plan['groups']:
         for batch in B.iter_batches(group['partition']):
             yield {'source_group':group['id'],'chunk_index':index,'batch':batch,
@@ -956,19 +954,9 @@ def add_counts(totals,group,counts):
                 named[name]=named.get(name,0)+count
 
 
-def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_factory=None,
-        pair_batch_size=0,after_pairs=None):
+def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_factory=None):
     directory=local(directory,root);plan=read_plan(directory,root=root)
     require(type(max_chunks) is int and max_chunks>=0,'Invalid chunk bound')
-    require(type(pair_batch_size) is int and pair_batch_size>=0 and bool(pair_batch_size)==bool(after_pairs),
-            'Paired checkpoints require a batch size and callback')
-    roster=list(chunks(plan)) if pair_batch_size else chunks(plan)
-    if pair_batch_size:
-        require(len(plan['groups'])==2,'Paired checkpoints require two source groups')
-        first,second=plan['groups']
-        require(first['primary_count']==second['primary_count'],'Paired checkpoints require equal source counts')
-        roster.sort(key=lambda chunk:(chunk['batch']['batch_index'],chunk['chunk_index']))
-        final_pair=len(roster)//2
     inactive_children(directory,root=root)
     with locked(directory,resume=resume):
         if (directory/'COMPLETE.json').exists():return verify_complete(directory,plan,root=root)
@@ -981,52 +969,8 @@ def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_fa
         if worker_factory is None:
             from gegi_campaign_response import ResidentWorker
             worker_factory=ResidentWorker
-
-        def finish_chunk(folder,chunk,response):
-            nonlocal worker,new
-            if pair_batch_size:
-                request_target=folder/'native-request.json'
-                request_source=bound_file(root,plan['native_request'])
-                if not request_target.exists():
-                    with request_target.open('xb') as output:
-                        output.write(request_source.read_bytes())
-                require(sha(request_target)==plan['native_request']['sha256'],'Chunk native request copy changed')
-            done=seal_chunk(directory,plan,chunk,response,root=root)
-            add_counts(totals,chunk['source_group'],done['response']['counts'])
-            new+=1
-            progress(directory,plan,'running',totals,None)
-            if pair_batch_size and chunk['source_group']==second['id']:
-                pair=chunk['batch']['batch_index']+1
-                if pair in (1,final_pair) or pair % pair_batch_size==0:
-                    if worker is not None:
-                        worker.close()
-                        worker=None
-                    after_pairs(pair)
-
-        def start_native():
-            nonlocal worker
-            progress(directory,plan,'starting_native',totals,current)
-            if 'transport_revision' in plan:
-                import gegi_campaign_transport_recovery as T
-                spool=T.spool_path(directory,plan,root)
-            elif 'recovery' in plan:
-                import gegi_campaign_recovery as R
-                spool=R.spool_path(directory,plan,root)
-            else:spool=directory/'native-spool'
-            worker=worker_factory(bound_file(root,plan['native_request']),spool)
-            startup=time.perf_counter()
-            ready=worker.start()
-            require(ready.get('new_field_solve') is False and ready.get('field_cache_sha256')==
-                    read(bound_file(root,plan['native_request']))['field_cache']['sha256'], 'Resident native worker must reuse the exact frozen field cache')
-            startup_path=directory/'native-startup.json'
-            startup_record=read(startup_path) if startup_path.exists() else {'sessions':[]}
-            startup_record['sessions'].append({'recorded_utc':utc(),'elapsed_seconds':time.perf_counter()-startup,
-                'scope':'Resident initialization, cache loading and possible compilation warm-up; not production drift timing.',
-                'native_request_sha256':plan['native_request']['sha256'],'field_cache_sha256':ready['field_cache_sha256']})
-            write(startup_path,startup_record)
-
         try:
-            for chunk in roster:
+            for chunk in chunks(plan):
                 folder=chunk_path(directory,chunk);current=chunk
                 if (folder/'DONE.json').exists():
                     done=verify_done(directory,plan,chunk,root=root);add_counts(totals,chunk['source_group'],done['response']['counts']);continue
@@ -1040,20 +984,33 @@ def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_fa
                 selected=selection_for(plan,chunk)
                 response=completed_response(folder,chunk_identity(directory,plan,chunk,root=root))
                 if response is not None:
-                    finish_chunk(folder,chunk,response)
-                    continue
-                if pair_batch_size:
-                    if worker is not None:
-                        worker.close()
-                        worker=None
-                elif worker is None:
-                    start_native()
+                    done=seal_chunk(directory,plan,chunk,response,root=root)
+                    add_counts(totals,chunk['source_group'],done['response']['counts']);new+=1
+                    progress(directory,plan,'running',totals,None);continue
+                if worker is None:
+                    progress(directory,plan,'starting_native',totals,current)
+                    if 'transport_revision' in plan:
+                        import gegi_campaign_transport_recovery as T
+                        spool=T.spool_path(directory,plan,root)
+                    elif 'recovery' in plan:
+                        import gegi_campaign_recovery as R
+                        spool=R.spool_path(directory,plan,root)
+                    else:spool=directory/'native-spool'
+                    worker=worker_factory(bound_file(root,plan['native_request']),spool)
+                    startup=time.perf_counter()
+                    ready=worker.start()
+                    require(ready.get('new_field_solve') is False and ready.get('field_cache_sha256')==
+                            read(bound_file(root,plan['native_request']))['field_cache']['sha256'], 'Resident native worker must reuse the exact frozen field cache')
+                    startup_path=directory/'native-startup.json'
+                    startup_record=read(startup_path) if startup_path.exists() else {'sessions':[]}
+                    startup_record['sessions'].append({'recorded_utc':utc(),'elapsed_seconds':time.perf_counter()-startup,
+                        'scope':'Resident initialization, cache loading and possible compilation warm-up; not production drift timing.',
+                        'native_request_sha256':plan['native_request']['sha256'],'field_cache_sha256':ready['field_cache_sha256']})
+                    write(startup_path,startup_record)
                 tick=lambda:progress(directory,plan,'running_transport',totals,current)
                 transport_started=time.perf_counter()
                 manifest=transport.process(folder,selected,tick)
                 transport_elapsed=time.perf_counter()-transport_started
-                if worker is None:
-                    start_native()
                 progress(directory,plan,'running_native',totals,current)
                 native_started=time.perf_counter()
                 extra={}
@@ -1068,7 +1025,9 @@ def run(directory,*,resume=False,max_chunks=0,root=ROOT,transport=None,worker_fa
                 write(folder/'timings.json',{'transport_driver_wall_s':transport_elapsed,
                     'native_response_and_store_wall_s':time.perf_counter()-native_started,
                     'scope':'Measured orchestration stages. Transport driver includes checks/preparation/extraction; pure remage timing remains in transport/run.json. Native stage includes drift/readout/imaging/storage.'})
-                finish_chunk(folder,chunk,response)
+                done=seal_chunk(directory,plan,chunk,response,root=root)
+                add_counts(totals,chunk['source_group'],done['response']['counts']);new+=1
+                progress(directory,plan,'running',totals,None)
             require(sum(v['initial_primaries'] for v in totals.values())==plan['total_initial_primaries'],'Incomplete final campaign denominator')
             terminal='completed_with_native_failures' if any(g.get('native_failed_groups',0) for g in totals.values()) else 'completed'
             complete={'kind':KIND,'status':terminal,'plan_sha256':sha(directory/'plan.json'),
