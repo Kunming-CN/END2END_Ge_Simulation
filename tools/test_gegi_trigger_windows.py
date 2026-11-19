@@ -24,8 +24,9 @@ class TriggerWindowTests(unittest.TestCase):
         stop_ns = windows.digital._TIMING['gate_ns'][1]
         trigger = clock.sample_time_ns(60)
         second = clock.sample_time_ns(160)
-        out = windows.capture(clock, [10, trigger, second, clock.sample_time_ns(299)],
-                              [[second + stop_ns, second + stop_ns + 1]])
+        times = [10, trigger, second, clock.sample_time_ns(299)]
+        mask = [[second + stop_ns, second + stop_ns + 1]]
+        out = windows.capture(clock, times, mask)
         self.assertEqual(out['window_status'].tolist(),
                          ['outside_live_time', 'captured', 'excluded_history', 'outside_live_time'])
         self.assertEqual(out['two_strip_ordinal'].tolist(), [2])
@@ -34,6 +35,10 @@ class TriggerWindowTests(unittest.TestCase):
         for chunk in (raw[:, :3], raw):
             digest.update(chunk.T.astype('<i2').tobytes())
         self.assertEqual(digest.hexdigest(), out['known_component_adc_sha256'])
+        captured = {time: windows.capture_context(clock, time, mask, 53, raw[:, 53:91]) for time in times}
+        direct = windows.context_arrays(times, captured, out['acquisition_baseline_v'], digest.hexdigest())
+        for key in out:
+            np.testing.assert_array_equal(out[key], direct[key])
 
 
 if __name__ == '__main__':

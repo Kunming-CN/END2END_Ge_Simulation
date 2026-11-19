@@ -1,12 +1,19 @@
 """Source-blind selection, mass accounting, and plane conventions."""
 
 from copy import deepcopy
+from contextlib import redirect_stdout
+import gzip
+import io
+import json
 import math
+from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
-from gegi_continuous_plane import reconstruct
+from gegi_continuous_plane import main, reconstruct
 from gegi_imaging import ELECTRON_REST_KEV
 
 
@@ -86,6 +93,21 @@ class ContinuousPlaneTests(unittest.TestCase):
         for layer in result['layers'].values():
             self.assertEqual(layer['triggers'], 0)
             self.assertEqual(layer['mass'], [[0., 0.], [0., 0.]])
+
+    def test_portable_invocation_uses_and_writes_siblings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            report, windows, calibration, output = (folder/name for name in
+                ('report.json', 'two-strip-adc.npz', 'gegi-center-calibration.npz', 'plane.json.gz'))
+            windows.touch()
+            result = dict(layers={'all': dict(triggers=1, hypotheses=1, mass=[[1.]])})
+            argv = ['gegi_continuous_plane.py', '--acquisition', str(report), '--calibration', str(calibration),
+                    '--plane-z-mm', '40']
+            with patch('sys.argv', argv), redirect_stdout(io.StringIO()), \
+                    patch('gegi_continuous_plane.run_from_adc', return_value=result) as run:
+                main()
+            run.assert_called_once_with(report, windows, calibration, z_mm=40., extent_mm=120., step_mm=4., sigma_deg=5.)
+            self.assertEqual(json.loads(gzip.decompress(output.read_bytes())), result)
 
 
 if __name__ == '__main__':

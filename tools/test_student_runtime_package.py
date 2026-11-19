@@ -43,6 +43,12 @@ class StudentRuntimePackage(unittest.TestCase):
                 self.assertNotIn('href="#advanced-title"', guide)
                 self.assertIn('id="setup"', guide)
                 self.assertIn('id="saved-analysis"', guide)
+                self.assertIn('gegi_continuous_plane.py --acquisition', guide)
+                self.assertIn('gegi-center-calibration.npz', guide)
+                for tool in ('gegi_continuous_plane.py', 'gegi_joint_calibration.py', 'gegi_joint_two_site.py'):
+                    self.assertIn(f'{self.manifest["archive_root"]}/tools/{tool}', names)
+                self.assertFalse(any(p.endswith(('/gegi_joint_acquisition_study.py', '/gegi-center-calibration.npz'))
+                                     for p in names))
 
     def test_frozen_probe_and_missing_dependency_are_rejected(self):
         for ref in ('transport/geometry_probe.cc', 'transport/scenario_transport.py', 'tools/nonzero_events.py'):

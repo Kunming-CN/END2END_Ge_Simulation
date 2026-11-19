@@ -1,10 +1,12 @@
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
 import gegi_digital_readout as digital
 import gegi_exposure_stream as exposure
 import gegi_pulse_stream as frozen
+import gegi_trigger_windows as windows
 from test_gegi_pulse_stream import prepare, pulse
 
 
@@ -42,6 +44,27 @@ class ExposureStreamTest(unittest.TestCase):
                 code = np.concatenate([row[1] for row in segments], axis=1)
                 self.assertEqual(code.dtype, np.int16)
                 np.testing.assert_array_equal(code, expected)
+
+    def test_same_pass_capture_uses_existing_context_and_matches_adc_export(self):
+        first, second = prepare(pulse((3, 24), energy=190.)), prepare(pulse((11, 26), energy=470.))
+        components = [(first, 2017., 1.), (second, 2017., 1.)]
+        clock = exposure.ADCExposure(components, live_time_ns=10000., phase_ns=7., noise_seed=23)
+        captured = {}
+
+        def save(event, offset, code):
+            t = event['trigger_time_ns']
+            captured[t] = windows.capture_context(clock, t, [], offset, code)
+
+        with patch.object(clock, 'blocks', wraps=clock.blocks) as blocks:
+            readout = exposure.reconstruct_exposure(clock, block_samples=11, on_trigger=save)
+        self.assertEqual(blocks.call_count, 2)
+        times = [row['trigger_time_ns'] for row in readout['events']]
+        self.assertEqual(len(times), 1)
+        direct = windows.context_arrays(times, captured, readout.pop('acquisition_baseline_v'), readout['adc_sha256'])
+        self.assertEqual(readout, exposure.reconstruct_exposure(clock, block_samples=11))
+        replay = windows.capture(clock, times, [])
+        for key in replay:
+            np.testing.assert_array_equal(direct[key], replay[key])
 
     def test_dsp_state_at_seams_and_true_last_sample(self):
         a = prepare(pulse((3, 24)))

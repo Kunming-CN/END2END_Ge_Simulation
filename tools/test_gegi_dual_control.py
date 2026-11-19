@@ -88,8 +88,8 @@ class DualControlTests(unittest.TestCase):
             return dict(isotope='Cs-137' if first else 'Co-60', source_position_mm=[-40 if first else 40, 0, 40],
                         original={'initial_primaries': 10000}, chunk_sha256=('a' if first else 'b')*64)
 
-        def runner(paths, activities, duration, seed, report, *, trigger_profile):
-            self.calls.append((paths, activities, duration, seed, report, trigger_profile))
+        def runner(paths, activities, duration, seed, report, *, trigger_profile, capture_two_strip_adc):
+            self.calls.append((paths, activities, duration, seed, report, trigger_profile, capture_two_strip_adc))
             self.ready.set()
             if not self.release.wait(5):
                 raise RuntimeError('Test fixture timed out')
@@ -154,6 +154,7 @@ class DualControlTests(unittest.TestCase):
         self.assertEqual(self.request('state?name=changed&file=../private')[0], 400)
         self.assertEqual(self.calls[0][1:4], ([18500, 74000], .05, 2**64-1))
         self.assertEqual(self.calls[0][5], 'low-energy')
+        self.assertTrue(self.calls[0][6])
         self.finish()
         status, job = self.request('state?name=changed')
         self.assertEqual((status, job['status'], job['result']['spectra']['combined']['entries']), (200, 'completed', 2))

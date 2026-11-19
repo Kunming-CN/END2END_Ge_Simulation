@@ -705,7 +705,7 @@ class DualSourceControl:
                 sources = [safe_path(self.root, ref) for ref in paths]
                 output = safe_path(self.root, job['output'])
                 runner(sources, job['activities_bq'], job['live_time_s'], int(job['seed']), output,
-                       trigger_profile=job['trigger_profile'])
+                       trigger_profile=job['trigger_profile'], capture_two_strip_adc=True)
                 result = self._result(job)
         except Exception as error:
             result = dict(status='failed', error=str(error)[:1200])

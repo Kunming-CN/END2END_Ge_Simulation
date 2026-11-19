@@ -7,6 +7,7 @@ import math
 import os
 from pathlib import Path
 import platform
+import shutil
 import tempfile
 
 import numpy as np
@@ -20,6 +21,7 @@ import gegi_pixel_depth as pixel_depth
 import gegi_pulse_stream
 import gegi_source_library as library
 import gegi_substrip as substrip
+import gegi_trigger_windows as windows
 
 
 KIND = 'gegi_dual_source_acquisition_v1'
@@ -58,15 +60,14 @@ def _report_path(output):
     return path
 
 
-def _publish(report, path):
-    """Publish a fully written report without replacing a previous receipt."""
-    data = encoded(report) + b'\n'
+def _publish_artifact(path, write):
+    """Publish a complete artifact without replacing an earlier file."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = None
     try:
         with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f'.{path.stem}-', suffix='.tmp', delete=False) as out:
             temporary = Path(out.name)
-            out.write(data)
+            write(out)
             out.flush()
             os.fsync(out.fileno())
         # A hard link publishes the complete file while exclusively claiming the final name.
@@ -76,11 +77,24 @@ def _publish(report, path):
             raise
         except OSError:
             # Some removable/network filesystems lack links. Preserve the same no-replace rule.
-            with path.open('xb') as out:
-                out.write(data)
+            with temporary.open('rb') as source, path.open('xb') as out:
+                shutil.copyfileobj(source, out)
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)
+
+
+def _publish(report, path, *, adc_windows=None):
+    data = encoded(report) + b'\n'
+    sidecar = path.with_name(windows.ARCHIVE_NAME)
+    if adc_windows is not None:
+        _publish_artifact(sidecar, lambda target: windows.write_archive(target, adc_windows, sha(data)))
+    try:
+        _publish_artifact(path, lambda target: target.write(data))
+    except OSError:
+        if adc_windows is not None:
+            sidecar.unlink(missing_ok=True)
+        raise
 
 
 def _tail_bound_lsb(energy_keV, elapsed_ns):
@@ -335,11 +349,12 @@ def _implementation_hashes():
              'runner_sha256': __file__, 'library_sha256': library.__file__,
              'adc_stream_sha256': stream.__file__, 'pulse_stream_sha256': gegi_pulse_stream.__file__,
              'position_estimator_sha256': substrip.__file__, 'pairing_sha256': digital_pairs.__file__,
-             'pixel_depth_estimator_sha256': pixel_depth.__file__}
+             'pixel_depth_estimator_sha256': pixel_depth.__file__, 'adc_window_sha256': windows.__file__}
     return {label: sha(Path(path).read_bytes()) for label, path in paths.items()}
 
 
-def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=None, trigger_profile='standard'):
+def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=None, trigger_profile='standard',
+        capture_two_strip_adc=False):
     """Read two verified source chunks and write a portable result JSON file."""
     profile = gegi_pulse_stream.trigger_profile_definition(trigger_profile)
     source_chunks, activities = tuple(source_chunks), tuple(activities_bq)
@@ -353,6 +368,8 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
     output = _report_path(output)
     if output.exists():
         raise FileExistsError(output)
+    if capture_two_strip_adc and output.with_name(windows.ARCHIVE_NAME).exists():
+        raise FileExistsError(output.with_name(windows.ARCHIVE_NAME))
     implementation = _implementation_hashes()
     libraries = tuple(library.load_source_library(path) for path in source_chunks)
     calibration = substrip.load_calibration()
@@ -375,16 +392,29 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
     present = qualified_samples > 0
     readout = None
     occurred = None
+    adc_windows = None
     if present:
         adc = stream.ADCExposure(components, live_time_ns=live_ns, phase_ns=PHASE_NS, noise_seed=noise_seed)
-        readout = stream.reconstruct_exposure(adc, block_samples=stream.DEFAULT_BLOCK_SAMPLES,
-                                              trigger_profile=trigger_profile)
         neighbors = _strip_neighbors(libraries[0].channels)
-        occurred = [_trigger_card(pulse, neighbors, calibration=calibration, geometry=libraries[0].channels,
-                                  field_identity=field_identity, family_transfer=family_transfer,
-                                  depth_calibration=depth_calibration) for pulse in readout['events']
-                    if 0 <= pulse['trigger_time_ns'] < live_ns
-                    and not any(a <= pulse['rise_end_ns'] and b > pulse['trigger_time_ns'] for a, b in mask)]
+        occurred, captured = [], {}
+
+        def record_trigger(pulse, offset, context_codes):
+            time, end = pulse['trigger_time_ns'], pulse['rise_end_ns']
+            if not 0 <= time < live_ns or any(a <= end and b > time for a, b in mask):
+                return
+            card = _trigger_card(pulse, neighbors, calibration=calibration, geometry=libraries[0].channels,
+                                 field_identity=field_identity, family_transfer=family_transfer,
+                                 depth_calibration=depth_calibration)
+            occurred.append(card)
+            if capture_two_strip_adc and windows.is_two_strip(card):
+                captured[time] = windows.capture_context(adc, time, mask, offset, context_codes)
+
+        readout = stream.reconstruct_exposure(adc, block_samples=stream.DEFAULT_BLOCK_SAMPLES,
+                                              trigger_profile=trigger_profile, on_trigger=record_trigger)
+        occurred.sort(key=lambda card: card['trigger_time_ns'])
+        if capture_two_strip_adc:
+            times = [card['trigger_time_ns'] for card in occurred if windows.is_two_strip(card)]
+            adc_windows = windows.context_arrays(times, captured, readout['acquisition_baseline_v'], readout['adc_sha256'])
     qualified_set = occurred if present else []
     single = [t['single_pixel_energy_keV'] for t in qualified_set if t['single_pixel_energy_keV'] is not None]
     additional = [t['additional_multi_strip_energy_keV'] for t in qualified_set if t['additional_multi_strip_energy_keV'] is not None]
@@ -471,7 +501,7 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
     }
     if implementation != _implementation_hashes():
         raise RuntimeError('Replay source changed during acquisition')
-    _publish(report, output)
+    _publish(report, output, adc_windows=adc_windows)
     return report
 
 
@@ -486,12 +516,14 @@ def main():
     parser.add_argument('--noise-seed', type=int, help='Default: (clock seed + 100000000) modulo 2**64')
     parser.add_argument('--trigger-profile', choices=gegi_pulse_stream.TRIGGER_PROFILES, default='standard',
                         help='Face coincidence threshold per 20 ns sample: standard 5 keV, low-energy 4 keV')
+    parser.add_argument('--capture-two-strip-adc', action='store_true',
+                        help='Save two-strip preamp ADC windows in a sibling two-strip-adc.npz')
     parser.add_argument('--output', type=Path, required=True, help='New JSON file or directory')
     args = parser.parse_args()
     try:
         result = run((args.source_a, args.source_b), (args.activity_a_bq, args.activity_b_bq),
                      args.live_time_s, args.seed, args.output, noise_seed=args.noise_seed,
-                     trigger_profile=args.trigger_profile)
+                     trigger_profile=args.trigger_profile, capture_two_strip_adc=args.capture_two_strip_adc)
     except (OSError, ValueError) as error:
         parser.exit(2, f'Error: {error}\n')
     print(json.dumps({'output': str(_report_path(args.output)), 'counts': result['counts'],

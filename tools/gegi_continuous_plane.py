@@ -21,6 +21,8 @@ from gegi_joint_imaging import ResponseSettings, candidate_response, plane_grid,
 
 
 LINE_ENERGIES_KEV = (661.657, 1173.228, 1332.492)
+ADC_WINDOWS_FILE = 'two-strip-adc.npz'
+PLANE_FILE = 'plane.json.gz'
 
 
 def measured_events(acquisition, joint_fit):
@@ -39,6 +41,9 @@ def measured_events(acquisition, joint_fit):
         record = dict(event_id=trigger_index, energy_keV=trigger['energy_keV'], candidates=[])
         ledger = dict(trigger_index=trigger_index, two_strip_ordinal=ordinal, trigger_time_ns=trigger['trigger_time_ns'],
                       energy_keV=trigger['energy_keV'], pairings=[])
+        portable = 'calibration_bundle' in joint_fit
+        if portable:
+            ledger['adc_window_status'] = fitted['window_status']
         for pair in measured:
             fit = fits[pair['index']]
             sites = pair['sites']
@@ -51,9 +56,17 @@ def measured_events(acquisition, joint_fit):
                       if order['kinematically_allowed']]
             if len(set(orders)) != len(orders) or set(orders) - {(0, 1), (1, 0)}:
                 raise ValueError('Allowed orders must be unique orders of the two measured sites')
-            waveform = fit['fit'].get('fits', {}).get('waveform', {}).get('center')
+            fit_result = fit['fit']
+            waveform = fit_result.get('fits', {}).get('waveform', {}).get('center')
             pair_ledger = dict(index=pair['index'], cells=cells, site_energies_keV=[s['energy_keV'] for s in sites],
                                nominal_mass=1/compatible, orders=[])
+            if portable:
+                status = fit_result['status']
+                if waveform is None and status == 'fitted':
+                    status = 'no_waveform_fit'
+                elif waveform is not None and not waveform['optimizer_success']:
+                    status = 'optimizer_did_not_converge'
+                pair_ledger['waveform_fit_status'] = status
             ledger['pairings'].append(pair_ledger)
             fitted_sites = None
             if waveform is not None and waveform['optimizer_success']:
@@ -168,22 +181,67 @@ def run(acquisition_path, fit_path, **settings):
     return result
 
 
+def run_from_adc(acquisition_path, windows_path, calibration_path, **settings):
+    """Project an acquisition directly from its matched ADC windows and external calibration."""
+    try:
+        from gegi_joint_calibration import fit_portable_acquisition
+    except ModuleNotFoundError as error:
+        if error.name != 'scipy':
+            raise
+        raise ValueError('Waveform fitting requires SciPy. Run this command in the prepared Pixi environment in the guide.') from error
+    raw = acquisition_path.read_bytes()
+    acquisition = json.loads(raw)
+    acquisition_sha256 = hashlib.sha256(raw).hexdigest()
+    joint_fit = fit_portable_acquisition(acquisition, acquisition_sha256, windows_path, calibration_path)
+    result = reconstruct(acquisition, joint_fit, **settings)
+    bundle = joint_fit['calibration_bundle']
+    result['input_sha256'] = dict(acquisition=acquisition_sha256, adc_windows=joint_fit['adc_windows_sha256'],
+                                  calibration=bundle['archive_sha256'])
+    result['calibration_bundle'] = bundle
+    result['fit_source_sha256'] = joint_fit['source_sha256']
+    requested = len(bundle['requested_cells'])
+    if requested:
+        covered = len(bundle['calibrated_cells'])
+        result['model']['geometry'] += f' The external waveform calibration covers {covered} of {requested} pixels in compatible pairings.'
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--acquisition', type=Path, required=True)
-    parser.add_argument('--joint-fit', type=Path, required=True)
-    parser.add_argument('--output', type=Path, required=True, help='New compressed JSON plane map and trigger ledger')
+    calibration = parser.add_mutually_exclusive_group(required=True)
+    calibration.add_argument('--calibration', type=Path, help='External center-waveform calibration archive (NPZ)')
+    calibration.add_argument('--joint-fit', type=Path, help='Previously saved matching joint waveform fit (JSON)')
+    parser.add_argument('--adc-windows', type=Path, help=f'ADC windows for --calibration, defaults to sibling {ADC_WINDOWS_FILE}')
+    parser.add_argument('--output', type=Path, help=f'New compressed JSON map, defaults to sibling {PLANE_FILE} with --calibration')
     parser.add_argument('--plane-z-mm', type=float, required=True, help='Assumed plane in detector coordinates')
     parser.add_argument('--extent-mm', type=float, default=120., help='Plane half-width in each of X and Y')
     parser.add_argument('--step-mm', type=float, default=4., help='Square-cell size in mm')
     parser.add_argument('--sigma-deg', type=float, default=5., help='Nominal angular nuisance width')
     args = parser.parse_args()
-    result = run(args.acquisition, args.joint_fit, z_mm=args.plane_z_mm, extent_mm=args.extent_mm,
-                 step_mm=args.step_mm, sigma_deg=args.sigma_deg)
-    encoded = json.dumps(result, allow_nan=False, separators=(',', ':')).encode('utf-8')
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open('xb') as target:
-        target.write(gzip.compress(encoded+b'\n', mtime=0))
+    if args.adc_windows and args.joint_fit:
+        parser.error('--adc-windows requires --calibration')
+    if not args.output and args.joint_fit:
+        parser.error('--output is required with --joint-fit')
+    output = args.output or args.acquisition.with_name(PLANE_FILE)
+    if output.exists():
+        parser.error(f'Output already exists. Choose a new --output path or keep the existing result: {output}')
+    settings = dict(z_mm=args.plane_z_mm, extent_mm=args.extent_mm, step_mm=args.step_mm, sigma_deg=args.sigma_deg)
+    try:
+        if args.calibration:
+            windows = args.adc_windows or args.acquisition.with_name(ADC_WINDOWS_FILE)
+            if not windows.is_file():
+                raise ValueError(f'ADC windows unavailable: {windows}. Capture them in the acquisition or export them from its saved libraries.')
+            result = run_from_adc(args.acquisition, windows, args.calibration, **settings)
+        else:
+            result = run(args.acquisition, args.joint_fit, **settings)
+        encoded = json.dumps(result, allow_nan=False, separators=(',', ':')).encode('utf-8')
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with output.open('xb') as target:
+            target.write(gzip.compress(encoded+b'\n', mtime=0))
+    except (OSError, ValueError) as error:
+        parser.error(str(error))
+    print(f'Saved plane result to {output}')
     print(json.dumps({key: {k: v for k, v in layer.items() if k != 'mass'} for key, layer in result['layers'].items()}))
 
 

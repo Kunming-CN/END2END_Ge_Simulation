@@ -4,6 +4,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 import json
 from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -138,7 +139,8 @@ class TriggerProfileTests(unittest.TestCase):
 
     def test_cli_defaults_to_standard_and_passes_selected_profile(self):
         arguments = ['gegi_dual_source', '--source-a', 'saved-a', '--source-b', 'saved-b', '--output', 'new.json']
-        for options, name in (([], 'standard'), (['--trigger-profile', 'low-energy'], 'low-energy')):
+        for options, name, capture in (([], 'standard', False),
+                                       (['--trigger-profile', 'low-energy', '--capture-two-strip-adc'], 'low-energy', True)):
             profile = dual.gegi_pulse_stream.trigger_profile_definition(name)
             result = {'counts': {}, 'receipt': {'observed_result_sha256': 'abcd'},
                       'design': {'trigger_profile': profile}, 'exposure': {'qualified_adc_live_time_ns': 0}}
@@ -147,7 +149,40 @@ class TriggerProfileTests(unittest.TestCase):
                     dual.main()
             self.assertEqual(run.call_args.args[0], (Path('saved-a'), Path('saved-b')))
             self.assertEqual(run.call_args.kwargs['trigger_profile'], name)
+            self.assertEqual(run.call_args.kwargs['capture_two_strip_adc'], capture)
             self.assertEqual(json.loads(printed.getvalue())['trigger_profile'], profile)
+
+    def test_report_and_window_archive_use_exclusive_publication(self):
+        report = {'status': 'completed'}
+        with tempfile.TemporaryDirectory() as tmp:
+            import numpy as np
+
+            path = Path(tmp)/'report.json'
+            archive = path.with_name(dual.windows.ARCHIVE_NAME)
+            arrays = dual.windows.context_arrays([], {}, np.zeros(34), 'a'*64)
+            publish = dual._publish_artifact
+
+            def report_write_failure(destination, writer):
+                if destination == path:
+                    raise OSError('Report publication failed')
+                publish(destination, writer)
+
+            with patch.object(dual, '_publish_artifact', side_effect=report_write_failure):
+                with self.assertRaisesRegex(OSError, 'Report publication failed'):
+                    dual._publish(report, path, adc_windows=arrays)
+            self.assertFalse(path.exists())
+            self.assertFalse(archive.exists())
+
+            dual._publish(report, path, adc_windows=arrays)
+            with np.load(archive, allow_pickle=False) as sidecar:
+                self.assertEqual(sidecar['report_sha256'].item(), dual.sha(path.read_bytes()))
+                self.assertEqual(sidecar['known_component_adc_sha256'].item(), 'a'*64)
+                self.assertEqual(sidecar['adc_codes'].shape, (0, 34, 29))
+            previous = archive.read_bytes()
+            with self.assertRaises(FileExistsError):
+                dual._publish({'status': 'different'}, path, adc_windows=arrays)
+            self.assertEqual(archive.read_bytes(), previous)
+            self.assertEqual(json.loads(path.read_bytes()), report)
 
 
 if __name__ == '__main__':

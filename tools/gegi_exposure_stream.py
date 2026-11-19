@@ -202,7 +202,7 @@ def _context_readout(context, exposure, groups, baseline):
                                  activities[:i] + activities[i+1:])
 
 
-def _feature_contexts(exposure, block_samples, groups, baseline, contexts):
+def _feature_contexts(exposure, block_samples, groups, baseline, contexts, *, include_context=False):
     pending = iter(contexts)
     current, active = next(pending, None), []
     for offset, code in exposure.blocks(block_samples):
@@ -216,7 +216,8 @@ def _feature_contexts(exposure, block_samples, groups, baseline, contexts):
             lo, hi = max(offset, context.lo), min(end, context.hi)
             context.codes[:, lo-context.lo:hi-context.lo] = code[:, lo-offset:hi-offset]
             if context.hi <= end:
-                yield _context_readout(context, exposure, groups, baseline)
+                event = _context_readout(context, exposure, groups, baseline)
+                yield (event, context) if include_context else event
                 context.codes = None
             else:
                 remaining.append(context)
@@ -225,21 +226,23 @@ def _feature_contexts(exposure, block_samples, groups, baseline, contexts):
             break
 
 
-def reconstruct_exposure(exposure, *, block_samples=DEFAULT_BLOCK_SAMPLES, trigger_profile='standard'):
-    """Reconstruct a complete clock from deterministic ADC blocks, without truth."""
+def reconstruct_exposure(exposure, *, block_samples=DEFAULT_BLOCK_SAMPLES, trigger_profile='standard', on_trigger=None):
+    """Reconstruct the exposure; optionally observe each accepted event and its in-memory ADC context."""
     threshold = pulse.trigger_threshold(trigger_profile)
     baseline, groups, rail, adc_sha = _find_activity(exposure, block_samples, threshold)
     contexts = _contexts(exposure, groups)
     events, rejected = [], []
     if contexts:
-        candidates = _feature_contexts(exposure, block_samples, groups, baseline, contexts)
-        for event in candidates:
+        candidates = _feature_contexts(exposure, block_samples, groups, baseline, contexts, include_context=True)
+        for event, context in candidates:
             steps = event['face_step_keV']
             if steps is not None and min(steps) < MIN_COLLECTED_KEV:
                 rejected.append({'trigger_time_ns': event['trigger_time_ns'], 'face_step_keV': steps,
                                  'reason': 'no_persistent_coincident_charge_step'})
             else:
                 events.append(event)
+                if on_trigger is not None:
+                    on_trigger(event, context.lo, context.codes)
     events.sort(key=lambda event: event['trigger_time_ns'])
     flags = []
     if rail.any():
@@ -252,4 +255,5 @@ def reconstruct_exposure(exposure, *, block_samples=DEFAULT_BLOCK_SAMPLES, trigg
             'saturated_contact_ids': [cid for cid, n in zip(_IDS, rail) if n],
             'saturated_adc_codes': int(rail.sum()), 'adc_sha256': adc_sha,
             'adc_samples_per_channel': exposure.live_samples,
-            'preamble_samples_per_channel': PREAMBLE_SAMPLES}
+            'preamble_samples_per_channel': PREAMBLE_SAMPLES,
+            **({'acquisition_baseline_v': baseline} if on_trigger is not None else {})}
