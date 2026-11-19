@@ -8,6 +8,7 @@ from pathlib import Path
 import gegi_dual_source as acquisition
 from gegi_event_store import encoded, sha
 import gegi_substrip as substrip
+import gegi_pixel_depth as pixel_depth
 
 
 def recorded_pulse(trigger, receipt):
@@ -62,6 +63,7 @@ def refit(source, output, *, geometry_report=None):
     if receipt['observed_result_sha256'] != observed_hash():
         raise ValueError('Trigger measurements differ from the saved acquisition receipt.')
     calibration = substrip.load_calibration()
+    depth_calibration = pixel_depth.load_calibration()
     geometry, geometry_source_hash = _geometry(report, geometry_report)
     field = acquisition.position_field_identity(calibration, [s['original'] for s in report['sources']])
     family_transfer = substrip.prepare_family_transfer(calibration, geometry)
@@ -69,6 +71,8 @@ def refit(source, output, *, geometry_report=None):
         if trigger['single_pixel_energy_keV'] is not None:
             pulse = recorded_pulse(trigger, receipt)
             trigger['nominal_position'] = acquisition._continuous_position(pulse, calibration, geometry, field, family_transfer)
+        acquisition.attach_pixel_depths(trigger, depth_calibration, field, receipt['digital_profile_sha256'],
+                                        receipt['digital_timing_sha256'])
     for source_info in report['sources']:
         locators = source_info['input_directory']
         relative = locators['relative_to_report_directory']
@@ -77,11 +81,13 @@ def refit(source, output, *, geometry_report=None):
     report['design']['nominal_position'].update(calibration_sha256=calibration['calibration_sha256'],
                                                 channel_geometry=geometry, matching_fields=field is not None,
                                                 lateral_transfer=substrip.FAMILY_TRANSFER_KIND)
+    report['design']['pixel_depth'] = acquisition.depth_definition(depth_calibration)
     receipt['observed_result_sha256'] = observed_hash()
     receipt['position_reprocessing'] = dict(source_report_sha256=sha(raw), new_adc_samples=0,
                                            geometry_source_report_sha256=geometry_source_hash,
                                            refit_sha256=sha(Path(__file__).read_bytes()),
                                            position_code_sha256=sha(Path(substrip.__file__).read_bytes()),
+                                           pixel_depth_code_sha256=sha(Path(pixel_depth.__file__).read_bytes()),
                                            runner_sha256=sha(Path(acquisition.__file__).read_bytes()))
     acquisition._publish(report, output)
     return report

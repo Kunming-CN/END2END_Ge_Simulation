@@ -16,6 +16,7 @@ import gegi_digital_pairs as digital_pairs
 import gegi_event_energy as event_energy
 from gegi_event_store import encoded, sha
 import gegi_exposure_stream as stream
+import gegi_pixel_depth as pixel_depth
 import gegi_pulse_stream
 import gegi_source_library as library
 import gegi_substrip as substrip
@@ -218,7 +219,35 @@ def _continuous_position(pulse, calibration, geometry, field_identity, family_tr
     return dict(result, status=status, axes=axes, position_mm=values if full else None)
 
 
-def _trigger_card(pulse, neighbors, *, calibration=None, geometry=None, field_identity=None, family_transfer=None):
+def attach_pixel_depths(card, calibration, field_identity, profile_sha, timing_sha):
+    """Invert the measured collector time difference for each qualified strip pairing."""
+    def estimate(x, y):
+        return pixel_depth.estimate_depth(calibration, x['contact_id'], y['contact_id'],
+                                          x.get('preamp_cfd50_ns'), y.get('preamp_cfd50_ns'),
+                                          source_identity=field_identity, digital_profile_sha256=profile_sha,
+                                          digital_timing_sha256=timing_sha)
+
+    features = card.get('single_pixel_features')
+    if features:
+        card['pixel_depth'] = estimate(features['x'], features['y'])
+    group = card.get('two_strip_pairings')
+    if group and 'collectors' in group:
+        collectors = {row['contact_id']: row for row in group['collectors']}
+        for pairing in group['pairings']:
+            if pairing['energy_compatible']:
+                pairing['pixel_depths'] = [estimate(collectors[s['x_contact_id']], collectors[s['y_contact_id']])
+                                           for s in pairing['sites']]
+
+
+def depth_definition(calibration):
+    return dict(calibration_sha256=calibration['calibration_sha256'], difference='X minus Y preamp CFD50 (ns)',
+                reference_energy_keV=calibration['reference_energy_keV'], unit='mm',
+                scope='Apparent depth from isolated pulses at each pixel center. '
+                      'Simultaneous neighboring signals can shift the two-site timing.')
+
+
+def _trigger_card(pulse, neighbors, *, calibration=None, geometry=None, field_identity=None,
+                  family_transfer=None, depth_calibration=None):
     measured = event_energy.estimate_event_energy(pulse)
     single = pulse['slow_energy_keV']
     multiple = measured['x_count'] > 1 or measured['y_count'] > 1
@@ -244,6 +273,8 @@ def _trigger_card(pulse, neighbors, *, calibration=None, geometry=None, field_id
         card['two_strip_pairings'] = dict(compatible_pairing_count=sum(p['energy_compatible'] for p in pairings),
                                           pairings=pairings, flags=flags,
                                           collectors=[_collector_features(cid, channels, neighbors) for cid in xs + ys])
+    if depth_calibration is not None:
+        attach_pixel_depths(card, depth_calibration, field_identity, pulse['profile_sha256'], pulse['timing_sha256'])
     return card
 
 
@@ -303,7 +334,8 @@ def _implementation_hashes():
     paths = {'digital_readout_sha256': digital.__file__, 'estimator_sha256': event_energy.__file__,
              'runner_sha256': __file__, 'library_sha256': library.__file__,
              'adc_stream_sha256': stream.__file__, 'pulse_stream_sha256': gegi_pulse_stream.__file__,
-             'position_estimator_sha256': substrip.__file__, 'pairing_sha256': digital_pairs.__file__}
+             'position_estimator_sha256': substrip.__file__, 'pairing_sha256': digital_pairs.__file__,
+             'pixel_depth_estimator_sha256': pixel_depth.__file__}
     return {label: sha(Path(path).read_bytes()) for label, path in paths.items()}
 
 
@@ -324,6 +356,7 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
     implementation = _implementation_hashes()
     libraries = tuple(library.load_source_library(path) for path in source_chunks)
     calibration = substrip.load_calibration()
+    depth_calibration = pixel_depth.load_calibration()
     family_transfer = substrip.prepare_family_transfer(calibration, libraries[0].channels)
     field_identity = position_field_identity(calibration, [src.metadata for src in libraries])
     if any(output.is_relative_to(saved.directory) for saved in libraries):
@@ -348,7 +381,8 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
                                               trigger_profile=trigger_profile)
         neighbors = _strip_neighbors(libraries[0].channels)
         occurred = [_trigger_card(pulse, neighbors, calibration=calibration, geometry=libraries[0].channels,
-                                  field_identity=field_identity, family_transfer=family_transfer) for pulse in readout['events']
+                                  field_identity=field_identity, family_transfer=family_transfer,
+                                  depth_calibration=depth_calibration) for pulse in readout['events']
                     if 0 <= pulse['trigger_time_ns'] < live_ns
                     and not any(a <= pulse['rise_end_ns'] and b > pulse['trigger_time_ns'] for a, b in mask)]
     qualified_set = occurred if present else []
@@ -397,6 +431,7 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
                    'generalization_scope': 'Rates describe only qualified ADC time. Missing history prevents '
                                            'extending observed counts to a whole-exposure efficiency.',
                    'event_energy': event_energy.DEFINITION,
+                   'pixel_depth': depth_definition(depth_calibration),
                    'two_strip_pairings': {'selection': 'Qualified multi-strip total with two collecting strips on each face.',
                                           'order_scope': 'Energy constraints for one fully absorbed photon. A trigger may contain more than one photon.'},
                    'nominal_position': {'calibration_sha256': calibration['calibration_sha256'],
