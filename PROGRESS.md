@@ -2,6 +2,8 @@
 
 ## Continuous acquisition in Control
 
+The [Windows and macOS student preview](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-preview-6781f82ca7fb) includes continuous position fits, two-strip energy orders and selectable pixel spectra. The extracted Windows Control opened both saved acquisitions. Its protected HTTP routes reproduced all 256 pixel counts before and after energy selection, returned a partial lateral estimate with the missing axes intact, and preserved both pairings in a two-strip event. The downloaded ZIP is 1,094,362 bytes, SHA-256 `c35ca8043d9259ca21c6ca23fbc336a0e85c24818756d9e748c85d72c4fa8667`. Stable publication follows PR #2 approval.
+
 Open `cs37k-co37k-250ms-reconstructed` for the complete reference example. Its 864 triggers produced 713 energies, including 484 single-pixel measurements. Filter the detector map by measured energy, select a pixel for its full spectrum, or inspect the original signed neighbor signals, collecting energies and 50% preamp timing of a trigger. The 640–680, 1150–1190 and 1310–1350 keV intervals contain 21, 7 and 2 single-pixel hits. The 50 ms exposure contains 5, 3 and 2. For both acquisitions, summing all 256 measured pixel spectra reproduced the recorded single-pixel spectrum bin for bin.
 
 The optional **Low energy** coincidence profile (4 keV per 20 ns) produced 883 triggers and 723 energies on exactly the same ADC stream as the standard 5 keV profile. It retained all original trigger times and their energies/nulls. Ten of its 19 additional triggers had measured energies. Both profiles keep the 3 keV quiet threshold. Use the [saved low-energy study](tools/gegi_low_energy_trigger.py) at source version `688cb74` to reproduce the fixed original comparison.

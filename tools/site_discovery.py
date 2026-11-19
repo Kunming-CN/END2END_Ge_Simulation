@@ -105,33 +105,37 @@ def sitemap_bytes(paths):
             + rows + '</urlset>\n').encode('utf-8')
 
 
+def write_landing_metadata(site, path, description):
+    page = site / path
+    html = page.read_text(encoding='utf-8')
+    # These pages are maintained sources, not hash-bound result presentations.
+    html = re.sub(r'<meta\s+name="description"[^>]*>', '', html)
+    html = re.sub(r'<link\s+rel="canonical"[^>]*>', '', html)
+    html = re.sub(r'<meta\s+name="google-site-verification"[^>]*>', '', html)
+    html = html.replace('END2END Ge Simulation', 'GeSignal · HPGe detector simulation')
+    if not re.search(r'<head(?:\s[^>]*)?>', html, re.I):
+        html, opened = re.subn(r'(<html(?:\s[^>]*)?>)', r'\1<head>', html, count=1, flags=re.I)
+        html, closed = re.subn(r'(<body(?:\s[^>]*)?>)', r'</head>\1', html, count=1, flags=re.I)
+        if opened != 1 or closed != 1:
+            raise ValueError('Maintained discovery page cannot form an explicit head')
+    if path == 'index.html':
+        html = re.sub(r'<title>.*?</title>', '<title>' + escape(PROJECT_TITLE) + '</title>', html, count=1)
+    tags = (f'<meta name="description" content="{escape(description, quote=True)}">'
+            f'<link rel="canonical" href="{canonical(path)}">')
+    if path == 'index.html':
+        tags += f'<meta name="google-site-verification" content="{GOOGLE_VERIFICATION}">'
+    if '<title>' not in html:
+        raise ValueError(f'Maintained discovery page has no title: {path}')
+    html = html.replace('<title>', tags + '<title>', 1)
+    page.write_text(html, encoding='utf-8', newline='\n')
+
+
 def assemble(site):
     """Called only by the saved-data publisher after maintained pages are assembled."""
     site = Path(site)
     descriptions = landing_descriptions(site)
     for path, description in descriptions.items():
-        page = site / path
-        html = page.read_text(encoding='utf-8')
-        # These pages are maintained sources, not hash-bound result presentations.
-        html = re.sub(r'<meta\s+name="description"[^>]*>', '', html)
-        html = re.sub(r'<link\s+rel="canonical"[^>]*>', '', html)
-        html = re.sub(r'<meta\s+name="google-site-verification"[^>]*>', '', html)
-        html = html.replace('END2END Ge Simulation', 'GeSignal · HPGe detector simulation')
-        if not re.search(r'<head(?:\s[^>]*)?>', html, re.I):
-            html, opened = re.subn(r'(<html(?:\s[^>]*)?>)', r'\1<head>', html, count=1, flags=re.I)
-            html, closed = re.subn(r'(<body(?:\s[^>]*)?>)', r'</head>\1', html, count=1, flags=re.I)
-            if opened != 1 or closed != 1:
-                raise ValueError('Maintained discovery page cannot form an explicit head')
-        if path == 'index.html':
-            html = re.sub(r'<title>.*?</title>', '<title>' + escape(PROJECT_TITLE) + '</title>', html, count=1)
-        tags = (f'<meta name="description" content="{escape(description, quote=True)}">'
-                f'<link rel="canonical" href="{canonical(path)}">')
-        if path == 'index.html':
-            tags += f'<meta name="google-site-verification" content="{GOOGLE_VERIFICATION}">'
-        if '<title>' not in html:
-            raise ValueError(f'Maintained discovery page has no title: {path}')
-        html = html.replace('<title>', tags + '<title>', 1)
-        page.write_text(html, encoding='utf-8', newline='\n')
+        write_landing_metadata(site, path, description)
     (site / SITEMAP).write_bytes(sitemap_bytes(descriptions))
     (site / 'LICENSE').write_bytes(SOFTWARE_LICENSE.read_bytes())
 

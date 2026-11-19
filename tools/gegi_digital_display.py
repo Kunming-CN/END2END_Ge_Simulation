@@ -20,10 +20,18 @@ SOURCE_EXPOSURE_FILE = 'results/gegi-digital/source-exposure.json'
 EVENT_ENERGY_FILE = 'results/gegi-digital/event-energy.json'
 EDGE_POSITION_FILE = 'results/gegi-digital/edge-position.json'
 DUAL_SOURCE_HIT_MAP_FILE = 'results/gegi-digital/dual-source-hit-map.json'
+FAST_GATE_FILE = 'results/gegi-digital/fast-gate.json'
 DUAL_SOURCE_REPORT_HASHES = (
     '09cbc0e5a5821287b87acabe5d669fb0d7b1fccd8555b5b637479df82e2a99f7',
     '3cb7a68854a2526dbf88d62cc20883b26f1359bdc7166b8867b9d7a049763a5c',
 )
+FAST_GATE_ACQUISITION_SHA256 = '8d29dc1d9fd022e22bf7870c2da92ee50568ea6981a958203718da540d0ab2b3'
+FAST_GATE_STUDY_SHA256 = 'd424309d56d6d1bd002c8ae4387c4f218686f7a14032ac665f7860285178220e'
+READOUT_VALIDATION_SHA256 = {
+    'pileup': '742b5263a9e7c1599b7f9e299c4c59bb8ece3d5564d7b187548c8cad17028118',
+    'low_energy': 'a0fc0320859adbd0dbf15b2e4b7508feee6a528ff1bb2ec4d30c8e93198296ff',
+    'position': '440a8c7e931231773872ee6c9a2e82aaf8089d522f84b2beba425e2a08906525',
+}
 PULSE_TOPOLOGIES = {
     'same_strips': 'Same strips',
     'adjacent_strips': 'Adjacent strips',
@@ -341,7 +349,198 @@ def attach_dual_source_hit_map(site, report_paths):
                                                 encoding='utf-8', newline='\n')
 
 
-def exposure_section(data, event_energy=None, hit_map=None):
+def public_readout_validation(paths):
+    reports = {}
+    for (name, digest), path in zip(READOUT_VALIDATION_SHA256.items(), paths, strict=True):
+        source = path.read_bytes()
+        if sha256(source).hexdigest() != digest:
+            raise ValueError(f'Saved GeGI readout validation changed: {name}.')
+        reports[name] = json.loads(source)
+
+    overlap = reports['pileup']
+    nominal = overlap['summary']['nominal']
+    at_800_ns = [row for row in overlap['by_delay_and_topology']
+                 if row['condition'] == 'nominal' and row['delay_ns'] == 800]
+    pileup = dict(
+        nominal_windows=nominal['trials'], two_trigger_windows=nominal['trial_status']['two_distinct_triggers'],
+        two_trigger_windows_at_800_ns=sum(row['trial_status']['two_distinct_triggers'] for row in at_800_ns),
+        windows_at_800_ns=sum(row['trials'] for row in at_800_ns),
+        pulses_with_no_single_pixel_energy_at_800_ns=sum(
+            row['pulse_status'].get('paired_single_pixel_energy_unavailable', 0) for row in at_800_ns),
+        ratio_shift=nominal['ratio_shift'], unavailable_for_fast_pileup=nominal['axis_fast_unavailable_reasons']['fast_pileup'],
+        above_isolated_noise_abs_p95=nominal['above_isolated_noise_abs_p95'],
+        isolated_noise_ratio_abs_p95={e: row['abs_p95'] for e, row in overlap['isolated_noise_variation_by_energy_keV'].items()},
+    )
+
+    low = reports['low_energy']
+    design, continuous, empty = (low[key] for key in ('design', 'continuous', 'empty_control'))
+    threshold = dict(clock_live_time_ns=continuous['clock_live_time_ns'],
+                     evaluated_deposits=continuous['evaluated_deposit_occurrences'],
+                     sample_period_ns=design['sample_period_ns'],
+                     quiet_discriminator_keV_per_sample=design['quiet_discriminator_keV_per_sample'],
+                     empty_live_time_s=empty['live_time_s'], empty_windows=len(empty['windows']), profiles={})
+    for name in ('nominal', 'alternative'):
+        row = continuous['counts'][name]
+        rate = empty['poisson_count_model'][name]
+        threshold['profiles'][name] = dict(
+            coincidence_keV_per_sample=design['coincident_increment_keV_per_20_ns'][name],
+            qualified_triggers=row['qualified_triggers'], qualified_energies=row['qualified_trigger_energies'],
+            unique_matches=row['deposits_by_class']['unique_matched'],
+            accidental_triggers=rate['triggers'],
+            accidental_poisson_upper_95_per_s=rate['poisson_one_sided_95_percent_upper_per_s'],
+        )
+
+    position = reports['position']
+    conditions = []
+    for exposure in position['continuous_exposures']:
+        row = exposure['summary']
+        conditions.append(dict(
+            energy_keV=exposure['injection_energy_keV'], sample_offset_ns=exposure['injection_offset_ns'],
+            nominal_noise=exposure['noise_seed'] is not None, sampled_points=row['total_saved_points'],
+            points_on_supported_pairs=row['status_counts']['supported_calibration_pair'],
+            xy_same_points=row['xy_both_available'], xy_all_points=row['xy_with_measured_strip_center_fallback'],
+            depth=row['axes']['depth']['estimate'],
+        ))
+    reference = position['frozen_isolated_reference_summary']
+    xy = reference['xy']['all_points_strip_center_fallback']
+    isolated = dict(both_xy=reference['xy']['compared'], points=reference['xy']['total'],
+                    center_xy_rms_mm=xy['center_rmse_mm'], fallback_xy_rms_mm=xy['substrip_rmse_mm'],
+                    depth_rms_mm=reference['depth']['rmse_mm'])
+    return dict(pileup=pileup, threshold=threshold,
+                position=dict(conditions=conditions, isolated_reference=isolated,
+                              nominal_noise_rms_v=position['design']['nominal_noise_rms_v'],
+                              calibration_sha256=position['provenance']['calibration_sha256']),
+                source_report_sha256=READOUT_VALIDATION_SHA256)
+
+
+def attach_fast_gate(site, acquisition_path, study_path, *, validation_paths=None):
+    """Publish the sealed acquisition census, one measured trigger and gate control."""
+    report, projection = _checked_dual_source_report(acquisition_path, FAST_GATE_ACQUISITION_SHA256)
+    study_bytes = study_path.read_bytes()
+    if sha256(study_bytes).hexdigest() != FAST_GATE_STUDY_SHA256:
+        raise ValueError('Saved GeGI fast-gate comparison changed.')
+    study = json.loads(study_bytes)
+    if study['kind'] != 'gegi_saved_fast_gate_reference_study_v1':
+        raise ValueError('Expected the saved GeGI fast-gate comparison.')
+    hit_map = json.loads((site/DUAL_SOURCE_HIT_MAP_FILE).read_bytes())
+    prior = hit_map['validation']
+    activities = {source['key']: source['activity_bq'] for source in report['sources']}
+    live_ns = report['exposure']['clock_live_time_ns']
+    if (prior['totals'] != projection['totals'] or prior['activities_bq'] != activities
+            or prior['clock_live_time_ns'] != live_ns):
+        raise ValueError('The fast readings differ from the hit map’s 50 ms acquisition census.')
+    profile = report['receipt']['digital_profile_sha256']
+    if profile != study['provenance']['digital_profile_sha256']:
+        raise ValueError('The continuous acquisition and fast-gate comparison use different digital profiles.')
+
+    hits = [row for row in report['triggers'] if row['single_pixel_energy_keV'] is not None]
+    both, edge_count = 0, 0
+    for row in hits:
+        faces = row['single_pixel_features'].values()
+        both += all(face['fast_ratio'] is not None for face in faces)
+        edge_count += any(face[side] is None for face in faces for side in ('low', 'high'))
+    example = hits[2]
+    counts, design = study['counts'], study['design']
+    stats = study['summary']['ratio_shift_both_axes']
+    result = dict(
+        kind='gegi_continuous_fast_gate_public_v1',
+        acquisition=dict(clock_live_time_ns=live_ns, activities_bq=activities,
+                         qualified_single_pixel_triggers=len(hits), both_face_ratios=both, edge_triggers=edge_count,
+                         **report['design']['single_pixel_features']),
+        example=dict(ordinal=3, trigger_time_ns=example['trigger_time_ns'],
+                     single_pixel_energy_keV=example['single_pixel_energy_keV'], **example['single_pixel_features']),
+        gate_study=dict(unique_saved_pulses=counts['unique_saved_pulses'],
+                        **{key: design[key] for key in ('adc_sample_period_ns', 'adc_phases_ns', 'noise_rms_V',
+                           'linearly_scaled_injection_energy_keV', 'comparison', 'injection_reference', 'gate', 'scope')},
+                        ratio_shift_both_axes=stats),
+        binding=dict(acquisition_sha256=FAST_GATE_ACQUISITION_SHA256, gate_study_sha256=FAST_GATE_STUDY_SHA256,
+                     hit_map_validation_report_sha256=hit_map['binding']['validation_report_sha256'],
+                     digital_profile_sha256=profile),
+    )
+    if validation_paths is not None:
+        result['readout_validation'] = public_readout_validation(validation_paths)
+    (site/FAST_GATE_FILE).write_text(json.dumps(result, allow_nan=False, separators=(',', ':'))+'\n',
+                                    encoding='utf-8', newline='\n')
+
+
+def readout_validation_table(data):
+    t, p, position = (data[key] for key in ('threshold', 'pileup', 'position'))
+    standard, low = (t['profiles'][key] for key in ('nominal', 'alternative'))
+    noisy = [row for row in position['conditions'] if row['nominal_noise']]
+    points = position['isolated_reference']['points']
+
+    def span(values, spec):
+        values = list(values)
+        lo, hi = format(min(values), spec), format(max(values), spec)
+        return lo if lo == hi else f'{lo}–{hi}'
+
+    coverage = span((row['xy_same_points']['substrip']['n'] for row in noisy), 'd')
+    xy = span((row['xy_same_points']['substrip']['rms_mm'] for row in noisy), '.2f')
+    center = span((row['xy_same_points']['strip_center']['rms_mm'] for row in noisy), '.2f')
+    hybrid = span((row['xy_all_points']['hybrid']['rms_mm'] for row in noisy), '.2f')
+    all_center = span((row['xy_all_points']['strip_center']['rms_mm'] for row in noisy), '.2f')
+    depth = span((row['depth']['rms_mm'] for row in noisy), '.2f')
+    ratios = p['ratio_shift']
+    return f'''<h3 id="gegi-readout-validation">What the simulated readout resolves</h3>
+<div role="region" aria-label="GeGI readout validation" tabindex="0" style="overflow-x:auto"><table>
+<thead><tr><th scope="col">Measurement</th><th scope="col">Result</th></tr></thead><tbody>
+<tr><th scope="row">Lower trigger threshold</th><td>On the same {t['clock_live_time_ns']/1e9:g} s ADC record, lowering the coincidence threshold from
+{standard['coincidence_keV_per_sample']:g} to {low['coincidence_keV_per_sample']:g} keV-equivalent per {t['sample_period_ns']} ns raised unique matches from
+{standard['unique_matches']} to {low['unique_matches']} of {t['evaluated_deposits']} evaluable groups. Triggers rose from {standard['qualified_triggers']} to
+{low['qualified_triggers']} and measured energies from {standard['qualified_energies']} to {low['qualified_energies']}. The quiet threshold stayed at
+{t['quiet_discriminator_keV_per_sample']:g} keV-equivalent per sample. In {t['empty_live_time_s']:.2f} s of empty Gaussian-noise controls, the standard and low-energy profiles
+recorded {standard['accidental_triggers']} and {low['accidental_triggers']} accidentals, respectively. The one-sided 95% Poisson upper limit was
+{low['accidental_poisson_upper_95_per_s']:.1f}/s for either profile under this noise model.</td></tr>
+<tr><th scope="row">Pulse overlap</th><td>At a separation of 0.8 µs, {p['two_trigger_windows_at_800_ns']}/{p['windows_at_800_ns']} noisy trials resolved two triggers, while
+{p['pulses_with_no_single_pixel_energy_at_800_ns']}/{2*p['two_trigger_windows_at_800_ns']} resolved pulses lacked a single-pixel energy. Across all nominal-noise delays,
+{p['unavailable_for_fast_pileup']} face ratios were withheld for overlap. The {ratios['n']:,} available fast ratios changed from their matched isolated values by
+{ratios['rms']:.2e} RMS and at most {ratios['max_abs']:.2e}. {p['above_isolated_noise_abs_p95']} exceeded the corresponding energy’s isolated-noise 95th percentile.</td></tr>
+<tr><th scope="row">Calibrated position</th><td>The same {points} held-out points were replayed at {min(row['energy_keV'] for row in noisy):g}–{max(row['energy_keV'] for row in noisy):g} keV
+and two timing offsets. Both lateral coordinates were available for {coverage}/{points} points per noisy condition. On those points radial XY RMS error was
+{xy} mm, versus {center} mm at the strip centers. Across all {points}, using the measured strip center on an unavailable axis gave {hybrid} mm versus
+{all_center} mm for strip centers. Depth RMS error was {depth} mm on all {points} points per condition.</td></tr>
+</tbody></table></div>
+<p>Position uses the matched simulated field and four calibrated strip pairs. These are nominal electronics comparisons on saved simulated signals.
+<a href="gegi-digital/fast-gate.json">Read the numerical summaries and source hashes (JSON)</a>.</p>'''
+
+
+def fast_gate_section(data):
+    acquisition, example, study = (data[key] for key in ('acquisition', 'example', 'gate_study'))
+    rows = []
+    for axis, offset in (('X', 0), ('Y', 17)):
+        face = example[axis.lower()]
+        neighbors = ''.join(f'<td>{axis}{reading["contact_id"]-offset:02d} {reading["fast_keV_equiv"]:+.3f}</td>'
+                            for reading in (face['low'], face['high']))
+        rows.append(f'<tr><th scope="row">{axis}{face["contact_id"]-offset:02d}</th><td>{face["slow_energy_keV"]:.3f}</td>'
+                    f'{neighbors}<td>{face["fast_ratio"]:+.6f}</td></tr>')
+    phases = ', '.join(f'{phase:g}' for phase in study['adc_phases_ns'])
+    activities = acquisition['activities_bq']
+    start, end = acquisition['fast_area_gate_ns']
+    shifts = study['ratio_shift_both_axes']
+    validation = data.get('readout_validation')
+    followup = readout_validation_table(validation) if validation else (
+        '<p><a href="gegi-digital/fast-gate.json">Read the measurements and comparison settings (JSON)</a>.</p>')
+    return f'''<h3 id="gegi-fast-gate">Fast neighbor readings during acquisition</h3>
+<p>A {acquisition['clock_live_time_ns']/1e6:g} ms simulated acquisition at {activities['cs137-left']/1000:g} kBq Cs-137 and
+{activities['co60-right']/1000:g} kBq Co-60 recorded {acquisition['qualified_single_pixel_triggers']} qualified single-pixel triggers.
+<strong>{acquisition['both_face_ratios']} had ratios on both faces</strong>. For {acquisition['edge_triggers']} triggers, an outer
+strip had only one neighbor on its face.</p>
+<p>The fast branch integrates the signed neighbor signal from {start:g} to {end:g} ns relative to the trigger.
+The dimensionless ratio divides the lower-coordinate reading minus the higher-coordinate reading by the trigger’s slow energy.</p>
+<div role="region" aria-label="Fast and slow readings by collecting strip" tabindex="0" style="overflow-x:auto"><table>
+<caption style="text-align:left">Single-pixel trigger {example['ordinal']} at {example['trigger_time_ns']/1e6:.6f} ms.
+Trigger slow energy {example['single_pixel_energy_keV']:.3f} keV.</caption>
+<thead><tr><th scope="col">Collector</th><th scope="col">Slow (keV)</th><th scope="col">Lower neighbor (keV-equivalent)</th>
+<th scope="col">Higher neighbor (keV-equivalent)</th><th scope="col">Fast ratio</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+<p>In a separate noiseless control, {study['unique_saved_pulses']} saved pulses scaled to
+{study['linearly_scaled_injection_energy_keV']:g} keV were replayed at four ADC phases ({phases} ns).
+Moving the gate from the trigger to the first ADC sample at or after the known simulated injection kept the ADC codes
+and baseline fixed. Across {shifts['n']} face comparisons, the ratio changed by {shifts['rms']:.2e} RMS,
+with a maximum absolute shift of {shifts['max_abs']:.2e}.</p>
+{followup}'''
+
+
+def exposure_section(data, event_energy=None, hit_map=None, fast_gate=None):
     design = data['design']
     exposure = data['exposure']
     triggers = data['trigger_summary']
@@ -388,6 +587,7 @@ Additional underflow, overflow and exact zeros are {addition['underflow']:,}, {a
     activities = design['source_activities_bq']
     unknown = overall['history_unqualified'] + overall['history_boundary_unknown']
     map_section = dual_source_hit_map_section(hit_map) if hit_map is not None else ''
+    fast_section = fast_gate_section(fast_gate) if fast_gate is not None else ''
     return f'''<h2 id="gegi-source-exposure">One exposure with Cs-137 and Co-60</h2>
 <p>In this {exposure['clock_live_time_ns']/1e9:g} s simulated exposure, {overall['unique_matched']:,} of
 {overall['qualified_deposits']:,} qualified Ge deposit groups matched a unique trigger, and
@@ -407,7 +607,7 @@ The electronics start from zero with a {1000/design['sample_period_ns']:g} MS/s 
 <p>Over {exposure['qualified_adc_live_time_ns']/1e9:.6f} s of qualified ADC time, the readout returned
 {triggers['qualified_triggers']:,} triggers and {triggers['qualified_slow_energies']:,} usable slow energies.
 {triggers['unmatched']:,} triggers lacked a matching deposit. A trigger uses the coincident rise on both faces.
-{energy_rule}</p>{map_section}{comparison}
+{energy_rule}</p>{map_section}{fast_section}{comparison}
 {figure}<figcaption>{caption}</figcaption>
 {chart}<p class="muted">{notes}</p></figure>
 <p>Arrival neighborhoods use deposition times from both sources. These counts apply to the qualified portion of the
@@ -851,6 +1051,8 @@ def render(site):
     event_energy = site/EVENT_ENERGY_FILE
     edge_position = site/EDGE_POSITION_FILE
     hit_map = site/DUAL_SOURCE_HIT_MAP_FILE
+    fast_gate = site/FAST_GATE_FILE
+    fast = None
     card = '<section id="gegi" class="panel" data-dataset="gegi">\n'
     if exposure.is_file():
         data = json.loads(exposure.read_bytes())
@@ -861,7 +1063,11 @@ def render(site):
         if projection and (not study or any(projection['binding'].get(key) != digest
                                             for key, digest in _dual_source_map_binding(data, study).items())):
             raise ValueError('The GeGI detector hit map belongs to a different publication.')
-        card += exposure_section(data, study, projection)
+        fast = json.loads(fast_gate.read_bytes()) if fast_gate.is_file() else None
+        if fast and (not projection or fast['binding']['hit_map_validation_report_sha256']
+                     != projection['binding']['validation_report_sha256']):
+            raise ValueError('The GeGI fast-gate results belong to a different hit map.')
+        card += exposure_section(data, study, projection, fast)
     has_pulse = pulse.is_file()
     if has_pulse:
         card += double_pulse_section(json.loads(pulse.read_bytes()))
@@ -876,7 +1082,7 @@ def render(site):
 {strip_table}
 <p><a href="gegi-digital/event.json">Event samples and readout settings</a> · <a href="gegi-campaign/index.html">View the saved Compton study</a></p>'''
     benchmark = ex.get('position_benchmark')
-    if benchmark:
+    if benchmark and not (fast and fast.get('readout_validation')):
         xy = benchmark['all_axes']
         card += f'''<h3>Position check on independent simulated points</h3>
 <p>The time difference between the two collecting strips selects a depth-dependent calibration of the neighboring signals.

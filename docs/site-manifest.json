@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "build_id": "a30e08ca25f81459a1563c73fba3f17aa7c74f12ab9ab4abf4971ad616130dc7",
-  "file_count": 1879,
-  "total_bytes": 493899522,
+  "build_id": "f81f62ec8a47e9e4adccf6c1271083d14fe3f222787682efd07df06c533b0118",
+  "file_count": 1880,
+  "total_bytes": 493917608,
   "html_pages": 109,
-  "local_links_checked": 3326,
-  "resource_references_checked": 3385,
-  "page_navigation_checked": 1451,
-  "fragments_checked": 89,
-  "downloads_checked": 748,
+  "local_links_checked": 3328,
+  "resource_references_checked": 3387,
+  "page_navigation_checked": 1452,
+  "fragments_checked": 90,
+  "downloads_checked": 749,
   "media_references_checked": 1149,
   "metadata_references_checked": 35,
   "other_references_checked": 2,
@@ -7715,8 +7715,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 57975,
-      "sha256": "4479541e3c3d3fce55f16f1e3f26c3929a5505cd037699d5864890eea2824ee0"
+      "bytes": 60591,
+      "sha256": "fb8ccb0efb675d0c42f1bb602eaf4bdb1b8ad2e3cb3c590550248490ffb7e750"
     },
     {
       "path": "index.html",
@@ -9329,6 +9329,11 @@
       "sha256": "074a465e0bbc1490fbbdb8cbd855798cbd4850999ad966bab89aa45c9e1a2aa1"
     },
     {
+      "path": "results/gegi-digital/fast-gate.json",
+      "bytes": 12344,
+      "sha256": "e98eb9f7c8c8bb3d73042a97ff59d6aaee17cbfdcb21a5b9da35ed3f167854b1"
+    },
+    {
       "path": "results/gegi-digital/signals.png",
       "bytes": 104662,
       "sha256": "e1c3d9b0b0180d02d7c41984a61b5c3bdfb62f6bebf22a27a8d75753dc871d50"
@@ -9340,8 +9345,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 61989,
-      "sha256": "c6e67a90d75c80e8b809664421271f8c7d2e518c1e705de910712ff119e87d13"
+      "bytes": 65115,
+      "sha256": "646f28499f3e809e956bb7c481a7ba32464c850b1b32b813636b13d30d1c4ee1"
     },
     {
       "path": "retired-studies.json",
