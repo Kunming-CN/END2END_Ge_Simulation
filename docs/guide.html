@@ -17,10 +17,14 @@ pre code{padding:0;background:none;overflow-wrap:normal}li{margin:9px 0}details{
 summary{cursor:pointer;font-weight:650}table{width:100%;border-collapse:collapse;font-size:.95rem}th,td{text-align:left;border-bottom:1px solid var(--line);padding:10px;vertical-align:top}
 .note{border-left:4px solid var(--accent);padding-left:16px}section,details,h3{scroll-margin-top:20px}footer{font-size:.9rem}
 @media(max-width:720px){header,main,footer{padding:16px}.routes{grid-template-columns:1fr}section{padding:20px}h1{font-size:1.9rem}table{font-size:.85rem}th,td{padding:8px}}
+
+.guide-intro{padding-bottom:0}.guide-intro h1{margin-bottom:8px}.guide-intro p{margin-top:0}
+.guide-main{padding-top:0}#local-routes h2{margin-top:0}.setup-actions{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}
+.setup-actions .button{background:#076b79}
 </style>
 </head>
 <body>
-<header>
+<header class="guide-intro">
 <!-- page-navigation:start --><div id="page-navigation"><style id="site-navigation-style">body{overflow-wrap:anywhere}
 @media(max-width:450px){.channels{grid-template-columns:repeat(3,minmax(0,1fr))}}
 #page-navigation{width:100%;font:16px/1.5 system-ui;color:#173047;margin:12px 0}
@@ -33,31 +37,17 @@ summary{cursor:pointer;font-weight:650}table{width:100%;border-collapse:collapse
 #page-navigation .dataset-context{padding:8px 0;border-top:1px solid #d7e0e7}
 #page-navigation p{margin:5px 0;overflow-wrap:anywhere}#page-navigation a:focus-visible{outline:3px solid #f8ad30}
 @media(max-width:600px){#page-navigation{font-size:14px}#page-navigation nav{gap:6px 12px}}</style><nav aria-label="Primary"><a href="results/index.html">Results</a><a href="detectors/index.html">Detectors</a><a href="assemblies/index.html">Assemblies</a><a href="guide.html" aria-current="page">Run locally</a><a href="methods/index.html">Methods</a></nav><nav aria-label="Breadcrumb"><ol><li><a href="index.html">GeSignal</a></li><li><span aria-current="page">Run locally</span></li></ol></nav></div><!-- page-navigation:end -->
-<h1>Run and understand GeSignal</h1>
-<p>Set up Windows or macOS, use Control, and inspect the files in a saved run.</p>
+<h1>Download and run GeSignal</h1>
+<p>Run your own detector simulation on Windows or macOS.</p>
 </header>
-<main>
+<main class="guide-main">
 <section id="local-routes" aria-label="Local workflow steps">
-<h2>Local workflow</h2>
-<nav aria-label="Guide contents"><ol>
-<li><a href="#setup-macos">Set up macOS</a> — install the CPU runtime for Apple Silicon or Intel.</li>
-<li><a href="#setup">Set up Windows</a> — prepare the pinned environment and source files.</li>
-<li><a href="#local-control">Use Control</a> — check a supported setup and run the pipeline.</li>
-<li><a href="#saved-analysis">Read and analyze a saved result</a> — inspect event identities and original files.</li>
-<li><a href="#control-recovery">Stop and resume saved settings</a> — reuse verified completed work.</li>
-</ol></nav>
-<p><a href="#advanced-title">Advanced and historical routes</a> cover separate command-line, replay and recovery workflows.</p>
-</section>
-
-<section id="browse">
-<h2>Browse saved results</h2>
-<p><a href="results/index.html">Choose a saved dataset</a> to find its available waveforms, spectra, radiation views and exact files. The teaching, cryostat gamma, four-case Cs137 10K, two-case million-decay campaigns and <a href="results/gegi-campaign/index.html">GeGI Compton imaging</a> retain separate geometries and event IDs. Use the <a href="detectors/index.html">17-model detector library</a> for shapes, fields and original model settings, or compare <a href="assemblies/index.html">LBNL and GeGI assemblies</a>.</p>
-<p>The website displays saved data; it does not start simulations. Seventeen viewable models do not mean seventeen executable Control models.</p>
-<details><summary>Browse an offline website copy</summary>
-<p>Include <code>docs/</code> in your checkout. From the project root, use an existing Windows Python:</p>
-<pre><code>python -m http.server 8765 --bind 127.0.0.1 --directory docs</code></pre>
-<p>Open <code>http://127.0.0.1:8765/</code>. Interactive viewers need HTTP to load their saved data; opening HTML directly may show only a static fallback.</p>
-</details>
+<h2>Student software</h2>
+<p class="setup-actions"><a class="button" href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip">Download student software (ZIP)</a>
+<a href="#setup">Windows setup</a><a href="#setup-macos">macOS setup</a></p>
+<p>Extract the ZIP and follow the setup for your operating system. Then <a href="#local-control">open Control and start a 100-event run</a>. Use <a href="#saved-analysis">the results guide</a> to find its spectra, events and files.</p>
+<details><summary>Stop, resume and advanced workflows</summary>
+<p><a href="#control-recovery">Stop and resume a run</a> · <a href="#advanced-title">Command-line, replay and recovery workflows</a></p></details>
 </section>
 
 <section id="setup-macos">
@@ -357,6 +347,16 @@ wsl.exe -d Ubuntu-24.04 --cd "$Project" -- bash transport/workflow.sh python -B 
 <p><code>Open_Workspace.cmd</code> refreshes a local index of results, runs, models and evidence without launching science. Permanent archives, fields, checkpoints and unique failure records remain at their recorded paths. Follow the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/LOCAL_WORKSPACE.md">workspace guide</a> before reorganizing local files.</p>
 </details>
 </section>
+<section id="browse">
+<h2>Browse saved simulations</h2>
+<p><a href="results/index.html">Open simulation results</a> to see the GeGI acquisition, teaching signals, and four-case Cs137 10K and two-case million-decay campaigns. Each study has its own geometry and event IDs.</p>
+<details><summary>Browse an offline website copy</summary>
+<p>Include <code>docs/</code> in your checkout. From the project root, use an existing Windows Python:</p>
+<pre><code>python -m http.server 8765 --bind 127.0.0.1 --directory docs</code></pre>
+<p>Open <code>http://127.0.0.1:8765/</code>. Interactive viewers need HTTP to load their saved data; opening HTML directly may show only a static fallback.</p>
+</details>
+</section>
+
 <section id="downloads">
 <h2>Models and methods</h2>
 <p><a href="downloads/all-models.zip">Download all 17 model definitions with their includes</a>. Preserve their folder layout. These are model definitions, not field caches or seventeen executable adapters.</p>

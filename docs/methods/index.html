@@ -10,7 +10,37 @@ a{color:#075e9b}.top{display:flex;gap:16px;align-items:center;justify-content:sp
 table{border-collapse:collapse;width:100%;background:white}th,td{padding:9px;border-bottom:1px solid #dce3e8;text-align:left}
 .preview{margin:12px 0}.preview img,.preview svg{width:100%;height:180px;object-fit:contain}.preview figcaption{font-size:.82rem;color:#526575}.legend span{display:inline-block;width:12px;height:12px;margin-right:4px}iframe{max-width:100%}td,th{overflow-wrap:anywhere}.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#edf3f7;font-size:.85rem;margin-right:5px}
 footer{margin-top:32px;padding-top:18px;border-top:1px solid #ccd6de;color:#526575}
+summary{cursor:pointer}
+a:focus-visible,summary:focus-visible{outline:3px solid #087b89;outline-offset:4px}
 @media(max-width:760px){.cards,.grid{grid-template-columns:1fr}.wrap{padding:16px}.hero{padding-top:26px}}
+
+.top{padding-bottom:16px;border-bottom:1px solid #d7e0e7}
+.top>a{text-decoration:none;font-size:21px;color:#173047}
+.top #page-navigation{width:auto;margin:0}
+.top #page-navigation nav{margin:0}
+.top #page-navigation a{background:transparent;font-size:14px;padding:8px}
+.top #page-navigation nav[aria-label="Breadcrumb"]{display:none}
+.reader-intro{padding:24px 0 14px;max-width:760px}
+.reader-intro h1{font-size:clamp(2rem,4vw,2.75rem);line-height:1.1;margin:0 0 10px}
+.reader-intro p{margin:0;color:#405d6c}
+.reader-page .panel{margin:0 0 18px}
+.reader-page .panel h2:first-child{margin-top:0}
+.reader-page details{padding:10px 0}
+.reader-page .panel>details+details{border-top:1px solid #d7e0e7}
+.reader-page summary{font-weight:650;padding:6px 0}
+.reader-page .study-list{list-style:none;padding:0;margin:8px 0 0}
+.reader-page .study-list>section{border-top:1px solid #d7e0e7;padding:12px 0}
+.reader-page .study-list h3,.reader-page .study-list p{margin:4px 0}
+.reader-page figcaption{color:#405d6c;font-size:.92rem}
+.reader-page figure img{display:block;max-width:100%;margin-inline:auto}
+.reader-page [tabindex="0"]{max-width:100%}
+#gegi-data-methods{background:#edf6f7;border-radius:8px;padding:14px 18px;margin:20px 0}
+#gegi-data-methods h3,#gegi-data-methods p{margin:0}
+#gegi-data-methods p+p{margin-top:6px}
+.gegi-result-figure{margin:16px 0}.gegi-result-figure figcaption{margin-top:8px}
+.gegi-result-figure img{width:100%;height:auto}
+.gegi-result-summary{max-width:900px}
+.gegi-result-summary p{margin:8px 0}
 </style></head><body><main class="wrap"><header class="top"><a href="../index.html"><strong>GeSignal</strong></a><!-- page-navigation:start --><div id="page-navigation"><style id="site-navigation-style">body{overflow-wrap:anywhere}
 @media(max-width:450px){.channels{grid-template-columns:repeat(3,minmax(0,1fr))}}
 #page-navigation{width:100%;font:16px/1.5 system-ui;color:#173047;margin:12px 0}
@@ -22,8 +52,12 @@ footer{margin-top:32px;padding-top:18px;border-top:1px solid #ccd6de;color:#5265
 #page-navigation li+li:before{content:"›";padding-right:7px;color:#526575}
 #page-navigation .dataset-context{padding:8px 0;border-top:1px solid #d7e0e7}
 #page-navigation p{margin:5px 0;overflow-wrap:anywhere}#page-navigation a:focus-visible{outline:3px solid #f8ad30}
-@media(max-width:600px){#page-navigation{font-size:14px}#page-navigation nav{gap:6px 12px}}</style><nav aria-label="Primary"><a href="../results/index.html">Results</a><a href="../detectors/index.html">Detectors</a><a href="../assemblies/index.html">Assemblies</a><a href="../guide.html">Run locally</a><a href="index.html" aria-current="page">Methods</a></nav><nav aria-label="Breadcrumb"><ol><li><a href="../index.html">GeSignal</a></li><li><span aria-current="page">Methods</span></li></ol></nav></div><!-- page-navigation:end --></header><section class="hero"><p class="muted">Principles, assumptions and limits</p><h1>Methods & limitations</h1>
-<p>Start with the physical chain: radiation deposits energy, moving charges induce electrode signals, and electronics turn those signals into a reconstructed energy.</p></section>
+@media(max-width:600px){#page-navigation{font-size:14px}#page-navigation nav{gap:6px 12px}}</style><nav aria-label="Primary"><a href="../results/index.html">Results</a><a href="../detectors/index.html">Detectors</a><a href="../assemblies/index.html">Assemblies</a><a href="../guide.html">Run locally</a><a href="index.html" aria-current="page">Methods</a></nav><nav aria-label="Breadcrumb"><ol><li><a href="../index.html">GeSignal</a></li><li><span aria-current="page">Methods</span></li></ol></nav></div><!-- page-navigation:end --></header><div class="reader-page"><header class="reader-intro"><h1>Simulation methods</h1>
+<p>How GeSignal converts simulated radiation deposits into measured energies and Compton images.</p></header>
+<section class="panel" id="gegi-acquisition-method"><h2>Simultaneous GeGI imaging</h2>
+<p>Independent radioactive decays share one acquisition clock. The signed preamplifier voltages from both sources add on each of GeGI’s 34 electrodes. Channel noise is added before digitization. Triggers and measured energies are recovered from that common stream.</p>
+<p>A two-strip trigger can support multiple pairings or interaction orders. Each permitted Compton cone contributes its assigned weight to an assumed source plane. The uniform-area prior gives equal cells equal initial weight. The uniform-solid-angle prior weights cells by the angular area they cover from the detector center. Weight without a usable projection stays in the unresolved count. The programmed source coordinates are used to score the image peaks.</p>
+<p><a href="../results/index.html#gegi-data-methods">Open the GeGI result and public data</a> · <a href="../assemblies/gegi/index.html">GeGI geometry and coordinate system</a></p></section>
 <section class="panel"><h2>Radiation deposits</h2><p>Geant4/remage tracks the radiation and records deposited energy E<sub>dep</sub> in keV, positions in mm, creation/deposition times in ns and original primary/track identities. A primary may miss the crystal, interact more than once or produce delayed daughter deposits. Keep deposits belonging to one primary and pulse group together.</p></section>
 <section class="panel"><h2>Semiconductor charge and induction</h2><p>SolidStateDetectors.jl transports the generated electrons and holes in the detector electric field. Electrode weighting potentials determine the signed induced charge through the Shockley–Ramo relation. Charge in fC and current in nA belong to this stage; deposition time is not carrier drift time. Incomplete collection, guards and numerical termination flags remain part of the result.</p></section>
 <section class="panel"><h2>Electronics and reconstructed energy</h2><p>A fixed wiring convention passes the signed current to a preamplifier, analog shaper and peak ADC. Voltages are in V. Reconstructed energy E<sub>rec</sub> in keV uses an independent injection calibration shared across events, never an event-by-event match to E<sub>dep</sub>. Threshold, clipping and rejection can make energy unavailable; an unknown response is not zero.</p><p><a href="../spectra/pipeline.html">Follow these stages in six saved signals →</a></p></section>
@@ -31,4 +65,4 @@ footer{margin-top:32px;padding-top:18px;border-top:1px solid #ccd6de;color:#5265
 <div class="grid">
 <article class="card"><h2>Cryostats and sources</h2><p>LBNL and GeGI assembly geometry, compatibility, source placement and physical assumptions.</p><a href="../assemblies/index.html">Read assembly assumptions →</a></article>
 <article class="card"><h2>Local configuration and data</h2><p>Choose compatible models and read a saved result using the maintained guide.</p><a href="../guide.html#saved-analysis">Read the saved-data guide →</a></article></div>
-<details><summary>Advanced and historical Li studies</summary><p>Native diffusion, endpoints and grid sensitivity retain unresolved numerical limits.</p><p><a href="../lithium/lithium.html">Li-region diagnostics</a> · <a href="native-li.html">Open readable saved plots →</a></p></details><footer><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">GitHub</a> · <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/CONTRIBUTING.md">Contributing</a> · <a href="../LICENSE">MIT software license</a> · <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/THIRD_PARTY_NOTICES.md">Third-party and data rights</a></footer></main></body></html>
+<details><summary>Advanced and historical Li studies</summary><p>Native diffusion, endpoints and grid sensitivity retain unresolved numerical limits.</p><p><a href="../lithium/lithium.html">Li-region diagnostics</a> · <a href="native-li.html">Open readable saved plots →</a></p></details></div><footer><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">GitHub</a> · <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/CONTRIBUTING.md">Contributing</a> · <a href="../LICENSE">MIT software license</a> · <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/THIRD_PARTY_NOTICES.md">Third-party and data rights</a></footer></main></body></html>

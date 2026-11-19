@@ -12,6 +12,7 @@ import gegi_cobalt_history_display as cobalt
 FOLDER = Path('results/gegi-digital')
 SUMMARY = FOLDER/'plane-priors.json'
 IMAGE = FOLDER/'plane-priors.png'
+COMMERCIAL_KEY = 'commercial_acquisition'
 PRIORS = {'uniform-area': 'Uniform area', 'uniform-solid-angle': 'Uniform solid angle'}
 STUDY_SHA256 = 'cd0918844b62d57709d1825fd514ffbee999ee0211120c28b27c10ef7d2fe088'
 SCORE_SHA256 = '99dff8620e45d260009519fec2f0ae2a5f8b28283d03582268cdd71fc49fe081'
@@ -109,6 +110,8 @@ def attach(site, sources):
             if 'cobalt_histories' in diagnostic:
                 cobalt.validate_binding(diagnostic['cobalt_histories'], diagnostic, summary['windows'])
             return
+        if COMMERCIAL_KEY in published:
+            summary[COMMERCIAL_KEY] = published[COMMERCIAL_KEY]
     plot(views, windows, study['grids'], site/IMAGE)
     summary['image_sha256'] = sha256((site/IMAGE).read_bytes()).hexdigest()
     output.write_text(json.dumps(summary, allow_nan=False, separators=(',', ':'))+'\n', encoding='utf-8', newline='\n')

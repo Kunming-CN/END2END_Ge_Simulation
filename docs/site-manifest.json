@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
-  "build_id": "4ef65cfa4c87691df30588029ea372c8effbfb85b905c9cb5f3ed5157cfe90fc",
-  "file_count": 1890,
-  "total_bytes": 496270653,
+  "build_id": "3c6e4cbac0c8b2d508ae001a93202849e3a95074f81361e041e76c3f60d7913d",
+  "file_count": 1891,
+  "total_bytes": 496556273,
   "html_pages": 109,
-  "local_links_checked": 3342,
-  "resource_references_checked": 3402,
+  "local_links_checked": 3344,
+  "resource_references_checked": 3405,
   "page_navigation_checked": 1453,
-  "fragments_checked": 91,
-  "downloads_checked": 755,
-  "media_references_checked": 1157,
+  "fragments_checked": 93,
+  "downloads_checked": 756,
+  "media_references_checked": 1159,
   "metadata_references_checked": 35,
   "other_references_checked": 2,
   "files": [
@@ -7715,13 +7715,13 @@
     },
     {
       "path": "guide.html",
-      "bytes": 65913,
-      "sha256": "e368b88d9b97a09dfb8c3aeaf0b12f4f4e69fb3c4c1a3ac2962e8cc16a180c27"
+      "bytes": 65755,
+      "sha256": "ed3342e8f859ba4e80545093af951dbbdaa77ff4001d9082352033846fb4084b"
     },
     {
       "path": "index.html",
-      "bytes": 10763,
-      "sha256": "63d7f96cfb4e23867d2fc7f747a40a8cbcd7f37e4b735eec4e26ccf186411ee4"
+      "bytes": 9284,
+      "sha256": "b7c23547e6d9f4f8764cf355b55383efb020a9312387aeb7abd7e76f19cbbf61"
     },
     {
       "path": "learn/index.html",
@@ -7785,8 +7785,8 @@
     },
     {
       "path": "methods/index.html",
-      "bytes": 7139,
-      "sha256": "69de1a3eb9bd325b0d9361b17cd6506b4eb226750eda345626e67e14c81f0264"
+      "bytes": 9697,
+      "sha256": "e567a14e1d5c6fc455ab76ca3a42e6aa35ad863ebbfa150824adf9e742b66798"
     },
     {
       "path": "methods/lithium-display.json",
@@ -9350,8 +9350,8 @@
     },
     {
       "path": "results/gegi-digital/plane-priors.json",
-      "bytes": 202609,
-      "sha256": "21f0a2f312311cc7a2fec493812c20676bf5de02dd11fafc19e639ef8f792bc1"
+      "bytes": 211372,
+      "sha256": "7bc5e6295a91ce487d8df2cce1d96abd831b62be298e95277bc60676a28f09cc"
     },
     {
       "path": "results/gegi-digital/plane-priors.png",
@@ -9379,6 +9379,11 @@
       "sha256": "e1c3d9b0b0180d02d7c41984a61b5c3bdfb62f6bebf22a27a8d75753dc871d50"
     },
     {
+      "path": "results/gegi-digital/simultaneous-spectrum-and-images.png",
+      "bytes": 269079,
+      "sha256": "cde26c5ce0d846d30f49bad986d1108911d81ee5af31afc0eda5032b05fe0364"
+    },
+    {
       "path": "results/gegi-digital/source-exposure.json",
       "bytes": 11749,
       "sha256": "2af44dd61a7b6c23ce7e35bc550103cd2cc2a3e53167ad826ff66ab78169fa93"
@@ -9395,8 +9400,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 112884,
-      "sha256": "d4265276ef8307ba5e887b871f98ec67f34235e96e88711f575f7bce7ad4d403"
+      "bytes": 119741,
+      "sha256": "c84fe9cdd02da9e626f36a5cf57b00d1ee7d1a23020fa427b5edc81550804d56"
     },
     {
       "path": "retired-studies.json",

@@ -11,9 +11,11 @@ ORIGINAL='examples/native-li/comparison.html'
 ORIGINAL_SHA='8fcbe7c037f2246dc4d3e7a6e2830988bd02220e8bc25a0b452eda04c250c6b4'
 PAGE='methods/native-li.html'
 MANIFEST='methods/native-li-display.json'
-SOURCES=('tools/saved_archive_display.py','tools/site_restructure.py','tools/site_routes.py')
+SOURCES=('tools/saved_archive_display.py','tools/site_routes.py')
 LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in SOURCES}
 PREVIOUS_RECEIPTS=frozenset({
+    # Published before the independent reader-page layout changed.
+    '4becd3ed81523b8bd96477432f14a7780c25a282272aecae09a214a1be8b849a',
     # Exact validated 5b05f590 archive before the macOS homepage wording.
     '7c27c25e638996a046867a352ece229ca43d446f106d3a0302f82794572c113a',
     # Exact 4391574 published receipt before shared event-viewer links changed.
@@ -54,6 +56,7 @@ LITHIUM_SUMMARY_SHA='c5e1b2c85406f077cb692ac6e99dd1c9affe7cb6632a3098f96a86708e0
 LITHIUM_SOURCES=SOURCES+('tools/lithium_report.py','tools/pipeline_demo.py')
 LITHIUM_LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in LITHIUM_SOURCES}
 PREVIOUS_LITHIUM_RECEIPTS=frozenset({
+    'f6285cf37095a228dc3e46f8e29a36ebddceb31b9c449016c411396dcaf816c1',
     # Exact validated 5b05f590 archive before the macOS homepage wording.
     'd5163baf688db10e9bead9320ec7506cfc5813a7dd92894fd819026fdfc38ac0',
     # Exact 4391574 published receipt; original scientific files stay pinned.

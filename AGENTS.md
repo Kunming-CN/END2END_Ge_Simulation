@@ -1,6 +1,32 @@
 # Project working rules
 
+## Owner priority — 2026-11-19 simultaneous commercial-source imaging
+
+Run a large, realistic GeGI dual-source acquisition. Place two different isotopes
+at different locations with activities representative of commercial check sources.
+Both irradiate the same detector concurrently. Schedule decays independently on
+one clock, sum their signed analog preamplifier responses on each electrode,
+then apply channel noise, ADC sampling and triggering to the common stream.
+Retain overlap, pile-up, incomplete histories and all imaging
+orders. Preserve the nominal positions, activity reference, seeds, total parents
+and independent archived histories in the run configuration. Report the observed
+energy spectrum, source-direction errors and unresolved counts. Use the existing
+validated transport and drift libraries where applicable. Keep research examples
+on GitHub, and prioritize the actual simulation over repeated publication checks.
+
+The current campaign models the RSS5 nominal activities of 185 kBq Cs-137
+at (−40, 0, 40) mm and 37 kBq Co-60 at (+40, 0, 40) mm. These are the chosen
+point-source model parameters; the owner specified the simultaneous scenario
+and commercial-strength sources. Its 25 independent 250 ms common-clock
+exposures reuse disjoint library chunks. Track the existing worker/checkpoints
+and resume completed stages in place.
+
 ## Owner update — 2026-11-19 lightweight software and GitHub exhibits
+
+Review presentation changes in a rendered desktop browser. Follow the reader's
+path from the homepage to the main result, then to its supporting data or
+methods. Give the main result priority over earlier studies. Desktop is the
+owner's requested acceptance surface for this redesign.
 
 Keep the student download focused on running and analyzing the student's own
 simulations. Publish research examples, saved results, figures and comparisons

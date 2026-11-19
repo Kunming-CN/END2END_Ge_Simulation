@@ -10,6 +10,8 @@ a{color:#075e9b}.top{display:flex;gap:16px;align-items:center;justify-content:sp
 table{border-collapse:collapse;width:100%;background:white}th,td{padding:9px;border-bottom:1px solid #dce3e8;text-align:left}
 .preview{margin:12px 0}.preview img,.preview svg{width:100%;height:180px;object-fit:contain}.preview figcaption{font-size:.82rem;color:#526575}.legend span{display:inline-block;width:12px;height:12px;margin-right:4px}iframe{max-width:100%}td,th{overflow-wrap:anywhere}.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#edf3f7;font-size:.85rem;margin-right:5px}
 footer{margin-top:32px;padding-top:18px;border-top:1px solid #ccd6de;color:#526575}
+summary{cursor:pointer}
+a:focus-visible,summary:focus-visible{outline:3px solid #087b89;outline-offset:4px}
 @media(max-width:760px){.cards,.grid{grid-template-columns:1fr}.wrap{padding:16px}.hero{padding-top:26px}}
 
 body{background:#f7fafb}.wrap{max-width:1180px}.top{padding-bottom:16px;border-bottom:1px solid #d7e0e7}
@@ -17,6 +19,8 @@ body{background:#f7fafb}.wrap{max-width:1180px}.top{padding-bottom:16px;border-b
 .home-hero{padding:30px 0 20px;max-width:900px}.home-hero .eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#526575;margin:0 0 12px}
 .home-hero h1{font-size:clamp(2rem,4vw,3rem);letter-spacing:-.035em;line-height:1.12;margin:0 0 16px;color:#102d40}
 .home-hero .lead{font-size:18px;line-height:1.6;max-width:760px;margin:0;color:#405d6c}
+.home-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px 20px;margin:24px 0 10px}
+.home-actions a{font-weight:700}.home-actions .button{background:#076b79;color:white}
 .flow-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px}.flow-heading h2{font-size:19px;margin:10px 0 14px}.flow-heading small{color:#526575}
 .signal-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;list-style:none;padding:0;margin:0}
 .signal-flow>li{position:relative;padding:20px;background:#fff;border:1px solid #cfdee3;border-radius:12px;min-width:0}
@@ -25,30 +29,24 @@ body{background:#f7fafb}.wrap{max-width:1180px}.top{padding-bottom:16px;border-b
 .signal-flow svg{display:block;width:100%;height:82px;color:#395967}.signal-flow svg text{font:15px system-ui}
 .signal-flow .explanation{font-size:15px;line-height:1.5;min-height:67px;margin:9px 0 14px}.quantity{font-size:14px;background:#edf6f7;border-radius:6px;padding:8px 10px;margin:0;color:#075663}
 .energy-key{margin:14px 0 26px;font-size:14px;color:#405d6c;max-width:920px}.energy-key strong{color:#173047}
-.path-heading{font-size:20px;margin:0 0 14px}.reader-paths{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
-.reader-paths article{display:flex;flex-direction:column;align-items:flex-start;border-top:3px solid #9ebcc5;padding:16px 0 2px;min-width:0}
-.reader-paths article:first-child{border-color:#008391}.reader-paths h3{font-size:20px;margin:8px 0}.reader-paths p{font-size:15px;color:#405d6c;line-height:1.55;margin:0 0 16px}.reader-paths .audience{font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin:0;color:#526575}
-.reader-paths a{margin-top:auto;font-weight:700;text-decoration:none;padding:9px 13px;background:#e5eef2;border-radius:6px}.reader-paths article:first-child a{background:#087b89;color:white}
-.home-scope{margin:28px 0 0;font-size:13px;color:#526575}footer{font-size:13px;margin-top:24px}
-@media(max-width:760px){.top{gap:10px}.top nav{gap:2px}.top nav a{padding:6px;font-size:13px}.home-hero{padding-top:24px}.home-hero .lead{font-size:16px}.signal-flow,.reader-paths{grid-template-columns:1fr}.signal-flow{gap:14px}.signal-flow>li{display:grid;grid-template-columns:100px minmax(0,1fr);column-gap:14px;padding:16px}.signal-flow .step-label,.signal-flow h3,.signal-flow .engine,.signal-flow .explanation,.signal-flow .quantity{grid-column:2}.signal-flow svg{grid-column:1;grid-row:1/6;align-self:center;height:98px}.signal-flow>li+li:before{display:none}.signal-flow .explanation{min-height:0;margin:7px 0 10px}.signal-flow h3{font-size:19px}.signal-flow .quantity{font-size:13px}.flow-heading small{font-size:11px}.reader-paths{gap:14px}.reader-paths p{margin-bottom:12px}}
+.home-scope{margin:18px 0 0;font-size:15px;color:#405d6c}footer{font-size:13px;margin-top:24px}
+@media(max-width:760px){.top{gap:10px}.top nav{gap:2px}.top nav a{padding:6px;font-size:13px}.home-hero{padding-top:24px}.home-hero .lead{font-size:16px}.signal-flow{grid-template-columns:1fr;gap:14px}.signal-flow>li{display:grid;grid-template-columns:100px minmax(0,1fr);column-gap:14px;padding:16px}.signal-flow .step-label,.signal-flow h3,.signal-flow .engine,.signal-flow .explanation,.signal-flow .quantity{grid-column:2}.signal-flow svg{grid-column:1;grid-row:1/6;align-self:center;height:98px}.signal-flow>li+li:before{display:none}.signal-flow .explanation{min-height:0;margin:7px 0 10px}.signal-flow h3{font-size:19px}.signal-flow .quantity{font-size:13px}.flow-heading small{font-size:11px}}
 </style></head><body><main class="wrap"><header class="top"><a href="index.html"><strong>GeSignal</strong></a><nav aria-label="Primary"><a href="results/index.html">Results</a><a href="detectors/index.html">Detectors</a><a href="assemblies/index.html">Assemblies</a><a href="guide.html">Run locally</a><a href="methods/index.html">Methods</a></nav></header><section class="home-hero"><p class="eyebrow">GeSignal · END2END_Ge_Simulation</p>
-<h1>From a gamma ray<br>to a measured energy.</h1>
-<p class="lead">Explore how a high-purity germanium (HPGe) detector turns a radiation interaction into an electrical signal — and how that signal becomes an energy measurement.</p></section>
-<section id="pipeline-example" aria-labelledby="signal-chain-title"><div class="flow-heading"><h2 id="signal-chain-title">One physical chain. Three simulation stages.</h2><small>Conceptual diagram</small></div>
+<h1>Simulating gamma-ray detectors</h1>
+<p class="lead">GeSignal follows gamma rays through a high-purity germanium (HPGe) detector, from energy deposits and electrode signals to measured energies and, with GeGI, images of where the radiation came from.</p>
+<div class="home-actions" id="reader-paths-title"><a class="button" id="main-result-link" href="results/index.html">See the simultaneous GeGI acquisition</a>
+<a href="guide.html">Download and run with Control</a></div></section>
+<section id="pipeline-example" aria-labelledby="signal-chain-title"><div class="flow-heading"><h2 id="signal-chain-title">The simulation chain</h2><small>Conceptual diagram</small></div>
 <ol class="signal-flow">
-<li><span class="step-label">01 · Interaction</span><h3>Radiation deposits energy</h3><p class="engine">Geant4 / remage</p>
+<li><h3>Radiation deposits energy</h3><p class="engine">Geant4 / remage</p>
 <svg viewBox="0 0 260 90" aria-hidden="true"><rect x="102" y="10" width="105" height="70" rx="16" fill="#e3eef8" stroke="#83a8bd"/><path d="M15 45H125L158 27L179 61" fill="none" stroke="#087b89" stroke-width="3"/><path d="m117 39 9 6-9 6" fill="none" stroke="#087b89" stroke-width="2"/><circle cx="126" cy="45" r="5" fill="#cd6d43"/><circle cx="158" cy="27" r="5" fill="#cd6d43"/><circle cx="179" cy="61" r="5" fill="#cd6d43"/><text x="35" y="31">γ</text><text x="217" y="50">Ge</text></svg>
 <p class="explanation">Track interactions in the crystal and record where, when and how much energy is deposited.</p><p class="quantity">Deposited energy · E<sub>dep</sub> [keV]</p></li>
-<li><span class="step-label">02 · Detector signal</span><h3>Charges drift and induce signal</h3><p class="engine">SolidStateDetectors.jl</p>
+<li><h3>Drifting charges induce signals</h3><p class="engine">SolidStateDetectors.jl</p>
 <svg viewBox="0 0 260 90" aria-hidden="true"><rect x="27" y="12" width="206" height="66" rx="10" fill="#f1edf8" stroke="#b5a3c9"/><path d="M27 13v64M233 13v64" stroke="#795b9e" stroke-width="6"/><path d="M117 45H55m0 0 10-6m-10 6 10 6M143 45h62m0 0-10-6m10 6-10 6" stroke="#087b89" stroke-width="2" fill="none"/><circle cx="121" cy="45" r="13" fill="#dbeef0"/><circle cx="140" cy="45" r="13" fill="#e9dfef"/><text x="110" y="50">e⁻</text><text x="131" y="50">h⁺</text></svg>
 <p class="explanation">Transport electrons and holes in the electric field and calculate the charge induced on each electrode.</p><p class="quantity">Electrode charge · Q(t) [fC]</p></li>
-<li><span class="step-label">03 · Measurement</span><h3>Electronics reconstruct energy</h3><p class="engine">Preamplifier → shaper → peak ADC</p>
+<li><h3>Electronics reconstruct energy</h3><p class="engine">Preamplifier → shaper → peak ADC</p>
 <svg viewBox="0 0 260 90" aria-hidden="true"><g fill="#e5f2ee" stroke="#91b6ab"><rect x="5" y="22" width="70" height="46" rx="7"/><rect x="95" y="22" width="70" height="46" rx="7"/><rect x="185" y="22" width="70" height="46" rx="7"/></g><path d="M75 45h20m70 0h20" stroke="#087b89" stroke-width="2"/><g fill="#285c53" text-anchor="middle"><text x="40" y="51">Preamp</text><text x="130" y="51">Shape</text><text x="220" y="51">ADC</text></g></svg>
 <p class="explanation">Amplify and shape the signal. Convert the digitized peak to energy using a fixed calibration.</p><p class="quantity">Reconstructed energy · E<sub>rec</sub> [keV]</p></li>
 </ol><p class="energy-key"><strong>E<sub>dep</sub></strong> is energy left in the crystal. <strong>E<sub>rec</sub></strong> is energy inferred from the readout. Following both reveals how charge collection and electronics affect the measurement. ADC means analog-to-digital converter.</p></section>
-<section aria-labelledby="reader-paths-title"><h2 class="path-heading" id="reader-paths-title">Where would you like to start?</h2>
-<div class="reader-paths"><article><p class="audience">Learn · online · no installation</p><h3>Follow one signal</h3><p>Walk through six saved examples, from energy deposits to electrode signals and the final readout.</p><a href="spectra/pipeline.html">Learn the signal chain →</a></article>
-<article><p class="audience">Explore · online · no installation</p><h3>Browse simulation results</h3><p>Compare detector responses, study energy spectra and explore multichannel Compton imaging.</p><a href="results/index.html">Browse saved results →</a></article>
-<article><p class="audience">Run · Windows and macOS · local setup</p><h3>Run your own simulation</h3><p>Prepare the local environment, choose a compatible detector and source, then run with Control.</p><a href="guide.html">Set up and run locally →</a></article></div></section>
 <span id="native-cs137-10k"></span><span id="current-ring-10k"></span>
-<p class="home-scope">The online examples are saved simulations. Each study documents its model assumptions and validation limits.</p><footer><details><summary>More project resources</summary><p><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">GitHub</a> · <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/CONTRIBUTING.md">Contributing</a> · <a href="LICENSE">MIT software license</a> · <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/THIRD_PARTY_NOTICES.md">Third-party and data rights</a></p></details></footer></main></body></html>
+<p class="home-scope"><a href="spectra/pipeline.html">Learn the signal chain with six saved examples</a></p><footer><details><summary>More project resources</summary><p><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation">GitHub</a> · <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/CONTRIBUTING.md">Contributing</a> · <a href="LICENSE">MIT software license</a> · <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/THIRD_PARTY_NOTICES.md">Third-party and data rights</a></p></details></footer></main></body></html>

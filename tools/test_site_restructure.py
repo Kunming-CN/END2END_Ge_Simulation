@@ -70,7 +70,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertEqual(set(panels),{'gegi','teaching','tenk','million','gamma'})
         return panels
 
-    def test_current_gegi_and_campaigns_precede_collapsed_small_studies(self):
+    def test_current_gegi_precedes_collapsed_earlier_studies(self):
         root=self.fixture(with_results=True)
         rings=root/'examples/cs137-10k-rings';rings.mkdir();(rings/'manifest.json').write_text('{}')
         formal=root/'results/gegi-campaign';formal.mkdir(parents=True)
@@ -86,16 +86,15 @@ class SiteStructureTests(unittest.TestCase):
             S.apply(root)
         html=(root/'results/index.html').read_text();panels=self.result_panels(html)
         self.assertEqual(list(panels),['gegi','teaching','tenk','million','gamma'])
-        self.assertIn('All 434 conditional signal groups · 837 candidate cones',panels['gegi'])
-        self.assertIn('energy layers are optional',panels['gegi'])
+        self.assertIn('434 conditional signal groups with 434 selected for the joint map',panels['gegi'])
         self.assertEqual(html.count('Same-energy source separation remains unresolved'),1)
-        self.assertIn('six representative Cs137 signals',panels['teaching'])
+        self.assertIn('Six saved Cs-137 signals',panels['teaching'])
         self.assertIn('four separate cases',panels['tenk'])
         self.assertIn('one million initial decays per detector',panels['million'])
         scope=DisclosureScopes();scope.feed(html)
-        for ident in ('gegi','teaching','tenk','million','current-ring-10k'):
-            self.assertEqual(scope.ids[ident],(),ident)
-        self.assertEqual(scope.ids['gamma'],('historical-studies',))
+        self.assertEqual(scope.ids['gegi'],())
+        for ident in ('teaching','tenk','million','current-ring-10k','gamma'):
+            self.assertEqual(scope.ids[ident],('historical-studies',),ident)
         for href in ('../examples/pipeline.html','../examples/gegi/index.html',
                      '../examples/gamma-native/gamma.html'):
             self.assertNotIn(href,[url for url,closed in scope.links])
@@ -107,7 +106,7 @@ class SiteStructureTests(unittest.TestCase):
     def test_bare_detector_never_replaces_missing_current_teaching(self):
         root=self.fixture();(root/'spectra/teaching-examples.json').unlink();S.apply(root)
         html=(root/'results/index.html').read_text();scope=DisclosureScopes();scope.feed(html)
-        self.assertEqual(scope.ids['teaching'],())
+        self.assertEqual(scope.ids['teaching'],('historical-studies',))
         self.assertEqual(scope.ids['gamma'],('historical-studies',))
         self.assertIn('unavailable in this snapshot',self.result_panels(html)['teaching'])
         self.assertIn('have been retired',html)
@@ -209,13 +208,14 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('SolidStateDetectors.jl',home)
         self.assertIn('analog-to-digital converter',home)
         self.assertEqual(home.count('<svg '),3)
-        self.assertEqual(re.findall(r'<a href="([^"]+)"',home),
-                         ['spectra/pipeline.html','results/index.html','guide.html'])
+        self.assertEqual(re.findall(r'<a\b[^>]*href="([^"]+)"',home),
+                         ['results/index.html','guide.html','spectra/pipeline.html'])
+        self.assertLess(home.index('id="main-result-link"'),home.index('id="pipeline-example"'))
         self.assertNotIn('polyline',home)
         self.assertNotIn('primary 61',home)
         self.assertNotIn('first 5',home)
         self.assertNotIn('half',home)
-        self.assertIn('Windows and macOS · local setup',home)
+        self.assertIn('Download and run with Control',home)
 
     def test_result_hubs_are_conditional(self):
         root=self.fixture(with_results=True);S.apply(root)
@@ -230,7 +230,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('href="../../spectra/million-truth.html">Deposition spectra · AK02 &amp; SAP22',overview)
         results=(root/'results/index.html').read_text()
         panels=self.result_panels(results)
-        self.assertIn('Six saved signals',panels['teaching'])
+        self.assertIn('Six saved Cs-137 signals',panels['teaching'])
         self.assertIn('have been retired',panels['gamma'])
         self.assertIn('two separate cases',panels['tenk'])
         self.assertIn('cs137-10k/index.html',panels['tenk'])
@@ -308,6 +308,9 @@ class SiteStructureTests(unittest.TestCase):
     def test_guide_keeps_distinct_local_routes_and_historical_scopes(self):
         root=self.fixture();S.apply(root)
         guide=(root/'guide.html').read_text()
+        self.assertIn('Download student software (ZIP)',guide)
+        self.assertLess(guide.index('Download student software (ZIP)'),guide.index('id="setup-macos"'))
+        self.assertLess(guide.index('id="setup"'),guide.index('id="browse"'))
         anchors=('local-routes','browse','setup','choose','local-control','electronics','replay',
                  'native-readout','source-preparation','results','recovery','validation','workspace','downloads')
         ids=re.findall(r'\bid="([^"]+)"',guide)
@@ -344,7 +347,7 @@ class SiteStructureTests(unittest.TestCase):
             text=(root/path).read_text(encoding='utf-8')
             self.assertIn('1,000,000 initial records',text)
             self.assertIn('708 imaging-accepted pulse groups',text)
-            self.assertIn('results/gegi-campaign/index.html',text)
+            self.assertIn('href="gegi-campaign/index.html"',text)
             if path=='index.html':self.assertNotIn('examples/gegi/index.html',text)
 
     def test_conditional_gegi_summary_never_becomes_imaging_acceptance(self):

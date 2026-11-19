@@ -1449,6 +1449,20 @@ def render(site):
     measured_plane = site/MEASURED_PLANE_FILE
     fast = None
     card = '<section id="gegi" class="panel" data-dataset="gegi">\n'
+    from gegi_commercial_acquisition_display import section as commercial_section
+    commercial = commercial_section(site)
+    earlier_acquisition = ''
+    earlier_imaging = ''
+    readout = ''
+    plane = json.loads(measured_plane.read_bytes()) if measured_plane.is_file() else None
+    if plane and sha256((site/MEASURED_PLANE_IMAGE).read_bytes()).hexdigest() != plane['source_sha256']['figure']:
+        raise ValueError('The GeGI measured plane figure differs from its attached census')
+    if commercial:
+        card += commercial
+    elif plane:
+        card += '<h2>GeGI Compton imaging</h2>' + measured_plane_section(plane)
+    else:
+        card += '<h2>GeGI readout and reconstruction</h2>'
     if exposure.is_file():
         data = json.loads(exposure.read_bytes())
         study = json.loads(event_energy.read_bytes()) if event_energy.is_file() else None
@@ -1462,42 +1476,40 @@ def render(site):
         if fast and (not projection or fast['binding']['hit_map_validation_report_sha256']
                      != projection['binding']['validation_report_sha256']):
             raise ValueError('The GeGI fast-gate results belong to a different hit map.')
-        card += exposure_section(data, study, projection, fast)
+        earlier_acquisition += exposure_section(data, study, projection, fast)
     if pixel_depth.is_file():
-        card += pixel_depth_section(json.loads(pixel_depth.read_bytes()))
-    if measured_plane.is_file():
-        data = json.loads(measured_plane.read_bytes())
-        if sha256((site/MEASURED_PLANE_IMAGE).read_bytes()).hexdigest() != data['source_sha256']['figure']:
-            raise ValueError('The GeGI measured plane figure differs from its attached census')
-        card += measured_plane_section(data)
+        readout += pixel_depth_section(json.loads(pixel_depth.read_bytes()))
+    if plane:
+        if commercial:
+            earlier_imaging += measured_plane_section(plane)
         from gegi_plane_prior_display import SUMMARY as PRIOR_SUMMARY, section as prior_section
         from gegi_shared_clock_display import SUMMARY as CLOCK_SUMMARY, section as clock_section
         from gegi_weak_strip_display import SUMMARY as WEAK_SUMMARY, section as weak_section
         if (site/PRIOR_SUMMARY).is_file():
-            card += prior_section(site)
+            earlier_imaging += prior_section(site)
         if (site/CLOCK_SUMMARY).is_file():
             from gegi_merged_component_display import consolidate_merged_figure
             consolidate_merged_figure(site)
-            card += clock_section(site, data)
+            earlier_acquisition += clock_section(site, plane)
         if (site/WEAK_SUMMARY).is_file():
-            card += weak_section(site, data)
+            earlier_imaging += weak_section(site, plane)
     has_pulse = pulse.is_file()
     if has_pulse:
-        card += double_pulse_section(json.loads(pulse.read_bytes()))
+        readout += double_pulse_section(json.loads(pulse.read_bytes()))
     heading = 'h3' if has_pulse else 'h2'
     strip_table = f'''<div style="overflow-x:auto"><table><thead><tr><th>Strip</th><th>Largest |Q| (keV equivalent)</th><th>Final Q (keV equivalent)</th><th>Fast area (V·ns)</th><th>Slow energy (keV)</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>'''
     if has_pulse:
         strip_table = f'<details><summary>Strip measurements for this event</summary>{strip_table}</details>'
-    card += f'''<{heading}>How neighboring GeGI strips sense a drifting charge</{heading}>
+    readout += f'''<{heading}>How neighboring GeGI strips sense a drifting charge</{heading}>
 <p>During drift, both neighboring strips respond to the moving carriers. Their induced charge returns to zero, while their fast areas differ. The collecting strip supplies the slow energy signal.</p>
 <figure style="margin:0"><img style="width:100%;height:auto" width="1450" height="870" src="gegi-digital/signals.png" alt="Induced charge and digital fast and slow signals on three adjacent strips">
 <figcaption>Simulated primary {ex["event_id"]} · {ex["counts"]["initial_primaries"]:,} initial primaries, {ex["counts"]["nonzero_primaries"]} with a germanium deposit. Nominal digital readout.</figcaption></figure>
 {strip_table}
-<p><a href="gegi-digital/event.json">Event samples and readout settings</a> · <a href="gegi-campaign/index.html">View the saved Compton study</a></p>'''
+<p><a href="gegi-digital/event.json">Event samples and readout settings (JSON)</a></p>'''
     benchmark = ex.get('position_benchmark')
     if benchmark and not (fast and fast.get('readout_validation')):
         xy = benchmark['all_axes']
-        card += f'''<h3>Position check on independent simulated points</h3>
+        readout += f'''<h3>Position check on independent simulated points</h3>
 <p>The time difference between the two collecting strips selects a depth-dependent calibration of the neighboring signals.
 Training used {benchmark["trained"]} injected points on four strip pairs. On {benchmark["n"]} separate {benchmark["energy_keV"]:g} keV points,
 {benchmark["both"]} returned both lateral coordinates. Using the strip center for each unavailable axis,
@@ -1505,12 +1517,27 @@ the radial XY RMS error changed from <strong>{xy["center_rmse_mm"]:.2f} to {xy["
 The depth RMS error was {benchmark["z"]["rmse_mm"]:.2f} mm on {benchmark["z"]["compared"]} points.
 These errors compare simulated coordinates within the sampled region.</p>'''
     if edge_position.is_file():
-        card += edge_position_section(json.loads(edge_position.read_bytes()))
+        readout += edge_position_section(json.loads(edge_position.read_bytes()))
     if 'energy_order_check' in ex:
         orders = energy_order_section(ex['energy_order_check'], ex['counts'], edge_position=edge_position.is_file())
-        card += f'<details><summary>Interaction ordering benchmark</summary>{orders}</details>' if has_pulse else orders
+        readout += f'<details><summary>Interaction ordering benchmark</summary>{orders}</details>' if has_pulse else orders
     if 'pairing_benchmark' in ex:
-        card += '<details><summary>Two-site strip-pairing benchmark</summary>' + pairing_section(ex['pairing_benchmark']) + '</details>'
+        readout += '<details><summary>Two-site strip-pairing benchmark</summary>' + pairing_section(ex['pairing_benchmark']) + '</details>'
+    if not commercial:
+        card += '''<div id="gegi-data-methods"><h3>Data and methods</h3>
+<p><a href="../methods/index.html#gegi-acquisition-method">How GeGI acquisition and imaging work</a></p></div>'''
+    if (site/'results/gegi-campaign/publication.json').is_file():
+        earlier_imaging += '''<p><a href="gegi-campaign/index.html">Conditional imaging with four independent acquisitions</a>
+· Earlier two-position study with its own spectra, event data and signal walkthrough.</p>'''
+    card += '<h3 id="earlier-gegi-work">Earlier GeGI studies</h3>'
+    for ident, label, content in (
+        ('gegi-acquisition-studies','Short exposures, energy spectra and overlapping pulses',earlier_acquisition),
+        ('gegi-imaging-studies','Compton maps, image priors and ambiguous interactions',earlier_imaging),
+        ('gegi-readout-studies','Strip signals, timing, position calibration and event ordering',readout),
+    ):
+        if content:
+            content = re.sub(r'<(/?)h[23](?=[ >])', r'<\1h4', content)
+            card += f'<details id="{ident}"><summary>{label}</summary>{content}</details>'
     card += '</section>'
     page = site/'results/index.html'
     old = page.read_text(encoding='utf-8')
