@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
-  "build_id": "b230490af852cdc579bf7ffd1744fec506f5ea6304dde452e1508904ab716c22",
-  "file_count": 1885,
-  "total_bytes": 494468948,
+  "build_id": "0c53e3c1a9f5e061a35c8db0aa1f12f977955b41641472dce78b9f30a94dc9ef",
+  "file_count": 1887,
+  "total_bytes": 494639949,
   "html_pages": 109,
-  "local_links_checked": 3335,
-  "resource_references_checked": 3394,
+  "local_links_checked": 3338,
+  "resource_references_checked": 3397,
   "page_navigation_checked": 1452,
   "fragments_checked": 90,
-  "downloads_checked": 752,
-  "media_references_checked": 1153,
+  "downloads_checked": 753,
+  "media_references_checked": 1155,
   "metadata_references_checked": 35,
   "other_references_checked": 2,
   "files": [
@@ -7715,8 +7715,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 65204,
-      "sha256": "913515a2cf8136fe90970049452060baea2ce1008ecad37ab32335dde1cbf2ab"
+      "bytes": 65631,
+      "sha256": "9c38d395f7bf5b01f3a008b33a171875670f3bed2c82afb7383044a8d6049263"
     },
     {
       "path": "index.html",
@@ -9359,6 +9359,16 @@
       "sha256": "eed42bd559a37920f654911b52b2dd0f047b1e94b85ad5aa7786d1dee1b56111"
     },
     {
+      "path": "results/gegi-digital/shared-clock-merged.png",
+      "bytes": 102632,
+      "sha256": "9ae2d988b1e1c6d031a98d9063dff05577af83a3d136b6aa3f6b10f3b07d1772"
+    },
+    {
+      "path": "results/gegi-digital/shared-clock.json",
+      "bytes": 61776,
+      "sha256": "f23723ecdadd05b26be57b083e47baaac2dccaae63f2c3c77cda2bd34e70b9ab"
+    },
+    {
       "path": "results/gegi-digital/signals.png",
       "bytes": 104662,
       "sha256": "e1c3d9b0b0180d02d7c41984a61b5c3bdfb62f6bebf22a27a8d75753dc871d50"
@@ -9370,8 +9380,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 85300,
-      "sha256": "3962615fbf4701e05d0421f573c24bc3869be6267740738e0203f4f2254fc4f9"
+      "bytes": 91466,
+      "sha256": "d864706fe62a7dc3af9798045da0dc578812e5e3a699072ef5669f289979596d"
     },
     {
       "path": "retired-studies.json",

@@ -1470,9 +1470,12 @@ def render(site):
         if sha256((site/MEASURED_PLANE_IMAGE).read_bytes()).hexdigest() != data['source_sha256']['figure']:
             raise ValueError('The GeGI measured plane figure differs from its attached census')
         card += measured_plane_section(data)
-        from gegi_plane_prior_display import SUMMARY, section
-        if (site/SUMMARY).is_file():
-            card += section(site)
+        from gegi_plane_prior_display import SUMMARY as PRIOR_SUMMARY, section as prior_section
+        from gegi_shared_clock_display import SUMMARY as CLOCK_SUMMARY, section as clock_section
+        if (site/PRIOR_SUMMARY).is_file():
+            card += prior_section(site)
+        if (site/CLOCK_SUMMARY).is_file():
+            card += clock_section(site, data)
     has_pulse = pulse.is_file()
     if has_pulse:
         card += double_pulse_section(json.loads(pulse.read_bytes()))

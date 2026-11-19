@@ -232,7 +232,45 @@ The 70 fully unresolved triggers contributed zero to the difference.</p>
 <p>The solid-angle prior alone puts 83.7% of its weight in the central square. The two half-second maps
 place 70.2% and 59.3% there. Both spread weight outward while improving agreement with the other half.
 This checks consistency with independent simulated signals under the assumed angular response.
-<a href="gegi-digital/plane-priors.json">Peak coordinates, counts, scores by energy and study hashes (JSON)</a>.</p><h2 id="gegi-double-pulse">When can GeGI resolve two close pulses?</h2>
+<a href="gegi-digital/plane-priors.json">Peak coordinates, counts, scores by energy and study hashes (JSON)</a>.</p><h4 id="gegi-shared-clock">Comparing close pulses on the shared clock</h4>
+<p>A separate recorded rise overlapped the saved preamplifier samples in <strong>0/324</strong> two-strip triggers.
+The simulation clock identified an additional group depositing energy in germanium within the same sampled span
+for <strong>0/324</strong> triggers.</p>
+<p>The recorded check compares each sample span with separately registered rises in the acquisition. The reference check
+uses each distinct simulated deposit group's onset. A single onset without a unique assignment, or incomplete clock
+coverage without a confirmed extra onset, leaves the result unresolved. Close groups can produce one recorded rise.</p>
+<div role="region" aria-label="Timing flags / all selected two-strip triggers" tabindex="0" style="overflow-x:auto">
+<table><caption>Timing flags / all selected two-strip triggers</caption><thead><tr><th scope="col">Exposure</th><th scope="col">Additional recorded rise · ADC</th><th scope="col">Additional recorded rise · fast</th><th scope="col">Additional recorded rise · slow</th><th scope="col">Extra group · ADC</th><th scope="col">Unresolved group · ADC</th><th scope="col">Another group within 6 µs</th></tr></thead><tbody><tr><th scope="row">First half</th><td>0/184</td><td>0/184</td><td>0/184</td><td>0/184</td><td>0/184</td><td>13/184</td></tr><tr><th scope="row">Second half</th><td>0/140</td><td>0/140</td><td>0/140</td><td>0/140</td><td>0/140</td><td>8/140</td></tr><tr><th scope="row">Pooled</th><td>0/324</td><td>0/324</td><td>0/324</td><td>0/324</td><td>0/324</td><td>21/324</td></tr></tbody></table></div>
+<p>The spans relative to the recorded trigger time are ADC -80 to +480 ns, fast -80 to +240 ns, slow -620 to +980 ns. Rechecking the saved ADC voltages found
+0/324 windows with a second coincident rise after the
+trigger search had rearmed. Rearming requires 3 quiet samples. Coincidence requires both faces
+to reach a 5 keV-equivalent change per 20 ns sample.</p>
+<p>In a broader simulation-clock check, 21/324 triggers with a unique group assignment and full clock
+coverage had another deposit interval within 6 µs of the assigned group's interval. The signed pulse-current reference
+found an additional current component on the ADC span for 0/324 triggers. Preamplifier tails can
+extend beyond the sample spans and active current intervals.</p>
+<details><summary>Counts by measured gamma line</summary><div role="region" aria-label="Timing flags / two-strip triggers in each line window" tabindex="0" style="overflow-x:auto">
+<table><caption>Timing flags / two-strip triggers in each line window</caption><thead><tr><th scope="col">Measured line window</th><th scope="col">Additional recorded rise · ADC</th><th scope="col">Extra group · ADC</th><th scope="col">Unresolved group · ADC</th><th scope="col">Another group within 6 µs</th></tr></thead><tbody><tr><th scope="row">662 keV · First half</th><td>0/37</td><td>0/37</td><td>0/37</td><td>4/37</td></tr><tr><th scope="row">662 keV · Second half</th><td>0/30</td><td>0/30</td><td>0/30</td><td>0/30</td></tr><tr><th scope="row">662 keV · Pooled</th><td>0/67</td><td>0/67</td><td>0/67</td><td>4/67</td></tr><tr><th scope="row">1,173 keV · First half</th><td>0/19</td><td>0/19</td><td>0/19</td><td>1/19</td></tr><tr><th scope="row">1,173 keV · Second half</th><td>0/15</td><td>0/15</td><td>0/15</td><td>0/15</td></tr><tr><th scope="row">1,173 keV · Pooled</th><td>0/34</td><td>0/34</td><td>0/34</td><td>1/34</td></tr><tr><th scope="row">1,332 keV · First half</th><td>0/19</td><td>0/19</td><td>0/19</td><td>4/19</td></tr><tr><th scope="row">1,332 keV · Second half</th><td>0/5</td><td>0/5</td><td>0/5</td><td>0/5</td></tr><tr><th scope="row">1,332 keV · Pooled</th><td>0/24</td><td>0/24</td><td>0/24</td><td>4/24</td></tr></tbody></table></div></details>
+<p>Across all 3,905 qualified triggers, simulation timing associated 3,899 with one deposit
+group, left 4 ambiguous and linked 2 to two depositing groups each. Both triggers with
+two groups fell outside the two-strip selection. For each example, the recovered ADC stream's checksum matched the
+original acquisition and the local filtered samples reproduced the recorded rise.</p>
+<figure style="margin:1rem 0"><a href="gegi-digital/shared-clock-merged.png">
+<img loading="lazy" style="width:100%;height:auto" width="1000" height="687" src="gegi-digital/shared-clock-merged.png"
+alt="Two recovered waveform windows. Each has two simulated germanium deposit onsets and one recorded rise."></a>
+<figcaption>Green lines mark the two simulated deposit onsets for each trigger. The shaded span marks its one
+recorded rise. Trigger 683 returned 858.22 keV.
+Trigger 598 had guard-electrode activity and no accepted energy.</figcaption></figure>
+<h5>Checking the window method with known inputs</h5>
+<p>Each test combines two 250 keV pulses. The six tests at each delay cover same, adjacent and far strip pairs at two
+sampling phases. Each saved window is centered on the first accepted trigger, including cases with one collecting strip
+per face. The ordinary two-strip selection would save 3/24 first-trigger windows.
+Of those, 3/3 showed one coincident rise.</p>
+<p>At 600 ns the full clock recorded both triggers in all six cases and the second input arrived after the saved
+ADC window.</p>
+<div role="region" aria-label="Outcomes / controlled mixtures at each delay" tabindex="0" style="overflow-x:auto">
+<table><caption>Outcomes / controlled mixtures at each delay</caption><thead><tr><th scope="col">Input delay</th><th scope="col">Second input inside ADC window</th><th scope="col">Second rearmed rise in window</th><th scope="col">Two accepted triggers on full clock</th></tr></thead><tbody><tr><th scope="row">0 ns</th><td>6/6</td><td>0/6</td><td>0/6</td></tr><tr><th scope="row">200 ns</th><td>6/6</td><td>1/6</td><td>1/6</td></tr><tr><th scope="row">300 ns</th><td>6/6</td><td>6/6</td><td>6/6</td></tr><tr><th scope="row">600 ns</th><td>0/6</td><td>0/6</td><td>6/6</td></tr></tbody></table></div>
+<p><a href="gegi-digital/shared-clock.json">Open the timing counts, definitions and source hashes (JSON)</a>.</p><h2 id="gegi-double-pulse">When can GeGI resolve two close pulses?</h2>
 <p>With nominal noise, all groups sustained two matched triggers from <strong>300 ns</strong>
 on this scan. Same- and adjacent-strip groups met both energy and XY tolerances from <strong>1000 ns</strong>.
 Far-strip energy met its tolerance from <strong>300 ns</strong>.</p>
