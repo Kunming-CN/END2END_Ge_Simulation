@@ -13,8 +13,9 @@ from unittest.mock import patch
 
 import numpy as np
 
-from gegi_continuous_plane import main, reconstruct
+from gegi_continuous_plane import main, plane_prior_weights, reconstruct
 from gegi_imaging import ELECTRON_REST_KEV
+from gegi_joint_imaging import plane_grid
 
 
 def sample(pairs):
@@ -36,6 +37,44 @@ def sample(pairs):
 
 
 class ContinuousPlaneTests(unittest.TestCase):
+    def test_cell_solid_angles_cover_the_finite_square_from_either_side(self):
+        _, points = plane_grid(120., 4., 40.)
+        omega = plane_prior_weights(points, 4., 'uniform-solid-angle')
+        self.assertTrue(np.all(omega > 0))
+        self.assertAlmostEqual(math.fsum(omega), 4*math.atan2(120.**2, 40.*math.hypot(120., 120., 40.)))
+        np.testing.assert_array_equal(omega, plane_prior_weights(points*[1, 1, -1], 4., 'uniform-solid-angle'))
+        np.testing.assert_array_equal(omega[:60], omega[:60][::-1])
+        self.assertGreater(omega[29*60+29], omega[0])
+        centered = plane_prior_weights([[0., 0., 1e-20]], 4., 'uniform-solid-angle')
+        self.assertAlmostEqual(centered[0], 2*math.pi)
+        np.testing.assert_array_equal(plane_prior_weights([[0., 0., 0.]], 4., 'uniform-area'), [1.])
+        with self.assertRaisesRegex(ValueError, 'nonzero z'):
+            plane_prior_weights([[0., 0., 0.]], 4., 'uniform-solid-angle')
+
+    def test_prior_changes_only_distribution_and_model_on_the_same_grid(self):
+        acquisition, fit = sample([
+            ([[10, 26], [11, 27]], [417., 245.], [[0, 1], [1, 0]], [[-7., 7., 1.], [1., 14., 2.]]),
+            ([[10, 27], [11, 26]], [407., 255.], [[0, 1], [1, 0]], None),
+        ])
+        settings = dict(z_mm=40., extent_mm=24., step_mm=4.)
+        default = reconstruct(acquisition, fit, **settings)
+        area = reconstruct(acquisition, fit, **settings, plane_prior='uniform-area')
+        solid = reconstruct(acquisition, fit, **settings, plane_prior='uniform-solid-angle')
+        self.assertEqual(default, area)
+        self.assertEqual(area['model']['plane_prior'], 'uniform-area')
+        self.assertEqual(solid['model']['plane_prior'], 'uniform-solid-angle')
+        self.assertEqual(solid['model']['plane_prior_reference_origin_mm'], [0., 0., 0.])
+        self.assertAlmostEqual(solid['model']['plane_prior_coverage_sr'],
+                               4*math.atan2(24.**2, 40.*math.hypot(24., 24., 40.)))
+        for key in ('grid', 'selection', 'triggers'):
+            self.assertEqual(area[key], solid[key])
+        for label, layer in area['layers'].items():
+            area_totals = {key: value for key, value in layer.items() if key != 'mass'}
+            solid_layer = solid['layers'][label]
+            self.assertEqual(area_totals, {key: value for key, value in solid_layer.items() if key != 'mass'})
+            self.assertAlmostEqual(np.sum(solid_layer['mass']), solid_layer['projected_mass'])
+        self.assertNotEqual(area['layers']['all']['mass'], solid['layers']['all']['mass'])
+
     def test_extra_source_and_truth_fields_do_not_change_image_or_ledger(self):
         acquisitions = sample([
             ([[10, 26], [11, 27]], [417., 245.], [[0, 1], [1, 0]], [[-7., 7., 1.], [1., 14., 2.]]),
@@ -106,7 +145,8 @@ class ContinuousPlaneTests(unittest.TestCase):
             with patch('sys.argv', argv), redirect_stdout(io.StringIO()), \
                     patch('gegi_continuous_plane.run_from_adc', return_value=result) as run:
                 main()
-            run.assert_called_once_with(report, windows, calibration, z_mm=40., extent_mm=120., step_mm=4., sigma_deg=5.)
+            run.assert_called_once_with(report, windows, calibration, z_mm=40., extent_mm=120., step_mm=4.,
+                                        sigma_deg=5., plane_prior='uniform-area')
             self.assertEqual(json.loads(gzip.decompress(output.read_bytes())), result)
 
 

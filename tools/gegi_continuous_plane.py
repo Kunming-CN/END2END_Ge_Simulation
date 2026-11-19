@@ -23,6 +23,64 @@ from gegi_joint_imaging import ResponseSettings, candidate_response, plane_grid,
 LINE_ENERGIES_KEV = (661.657, 1173.228, 1332.492)
 ADC_WINDOWS_FILE = 'two-strip-adc.npz'
 PLANE_FILE = 'plane.json.gz'
+DEFAULT_PLANE_PRIOR = 'uniform-area'
+PLANE_PRIORS = (DEFAULT_PLANE_PRIOR, 'uniform-solid-angle')
+
+
+def _quadrant_solid_angle(x, y, width, height, z):
+    """Solid angle of a rectangle in one quadrant, split into two triangles."""
+    def direction(x, y):
+        radius = np.hypot(np.hypot(x, y), z)
+        return np.column_stack((x/radius, y/radius, z/radius)), radius
+
+    lower_left, _ = direction(x, y)
+    lower_right, right_radius = direction(x+width, y)
+    upper_left, upper_radius = direction(x, y+height)
+    upper_right, _ = direction(x+width, y+height)
+    edge_scale = (width/right_radius)*(height/upper_radius)
+    shared = 1 + (lower_right*upper_left).sum(axis=1)
+    # The determinant of the three unnormalized rays has magnitude z*width*height.
+    # Within one quadrant all pairwise dot products are nonnegative.
+    return sum(2*np.arctan2(edge_scale*corner[:, 2], shared+((lower_right+upper_left)*corner).sum(axis=1))
+               for corner in (lower_left, upper_right))
+
+
+def plane_prior_weights(points, step_mm, prior):
+    """Return unit area weights or exact square-cell solid angles in steradians."""
+    if prior not in PLANE_PRIORS:
+        raise ValueError(f'Unknown plane prior: {prior}')
+    points = np.asarray(points, dtype=float)
+    if (points.ndim != 2 or points.shape[1] != 3 or len(points) == 0 or not np.isfinite(points).all()
+            or not math.isfinite(step_mm) or step_mm <= 0 or np.any(points[:, 2] != points[0, 2])):
+        raise ValueError('Plane prior requires finite square-cell centers on one plane and a positive step')
+    if prior == DEFAULT_PLANE_PRIOR:
+        return np.ones(len(points), dtype=float)
+    z = abs(points[0, 2])
+    if z == 0:
+        raise ValueError('The uniform solid-angle prior requires a plane at nonzero z relative to the detector origin')
+
+    # Split cells that cross an axis and reflect their parts into the first quadrant.
+    half = step_mm/2
+
+    def sides(axis):
+        center = np.abs(points[:, axis])
+        crossing = np.maximum(half-center, 0.)
+        return ((np.maximum(center-half, 0.), step_mm-crossing), (np.zeros_like(center), crossing))
+
+    weights = np.zeros(len(points), dtype=float)
+    for x, width in sides(0):
+        for y, height in sides(1):
+            used = (width > 0) & (height > 0)
+            weights[used] += _quadrant_solid_angle(x[used], y[used], width[used], height[used], z)
+    return weights
+
+
+def plane_prior_metadata(prior, weights):
+    """Describe the prior measure and finite normalization support in a saved map."""
+    solid_angle = prior == 'uniform-solid-angle'
+    return dict(plane_prior=prior, plane_prior_reference_origin_mm=[0., 0., 0.] if solid_angle else None,
+                plane_prior_coverage_sr=math.fsum(weights) if solid_angle else None,
+                plane_prior_support='Finite square reconstruction grid on the assumed detector-coordinate plane.')
 
 
 def measured_events(acquisition, joint_fit):
@@ -89,10 +147,12 @@ def measured_events(acquisition, joint_fit):
     return records, accounting
 
 
-def reconstruct(acquisition, joint_fit, *, z_mm, extent_mm=120., step_mm=4., sigma_deg=5.):
+def reconstruct(acquisition, joint_fit, *, z_mm, extent_mm=120., step_mm=4., sigma_deg=5.,
+                plane_prior=DEFAULT_PLANE_PRIOR):
     settings = ResponseSettings(angular_nuisance_sigma_deg=sigma_deg)
     settings.validate()
     ticks, points = plane_grid(extent_mm, step_mm, z_mm)
+    prior_weights = plane_prior_weights(points, step_mm, plane_prior)
     records, accounting = measured_events(acquisition, joint_fit)
     events = prepare_events(records, settings)
     masks = {'all': np.ones(len(events), dtype=bool)}
@@ -108,6 +168,8 @@ def reconstruct(acquisition, joint_fit, *, z_mm, extent_mm=120., step_mm=4., sig
         for candidate, order in zip(event.candidates, (o for o in orders if o['status'] == 'available'), strict=True):
             valid = np.linalg.norm(points-candidate.vertex, axis=1) > 1e-9
             kernel = candidate_response(candidate, points[valid], settings)
+            if plane_prior != DEFAULT_PLANE_PRIOR:
+                kernel *= prior_weights[valid]
             norm = float(kernel.sum())
             if norm > 0:
                 image[valid] += candidate.prior*(kernel/norm)
@@ -140,6 +202,8 @@ def reconstruct(acquisition, joint_fit, *, z_mm, extent_mm=120., step_mm=4., sig
     if (total != acquisition['counts']['qualified_triggers'] or energied != acquisition['counts']['qualified_energies']
             or len(events) != joint_fit['two_strip_triggers']):
         raise ValueError('Measured event selection totals do not close')
+    prior_measure = ('uniform planar prior' if plane_prior == DEFAULT_PLANE_PRIOR else
+                     'uniform solid-angle prior at the detector origin (0, 0, 0) mm using each cell’s solid angle')
     return dict(
         kind='gegi_continuous_measured_plane_backprojection_v1',
         grid=dict(x_mm=ticks.tolist(), y_mm=ticks.tolist(), assumed_z_mm=z_mm, step_mm=step_mm, extent_mm=extent_mm,
@@ -156,11 +220,12 @@ def reconstruct(acquisition, joint_fit, *, z_mm, extent_mm=120., step_mm=4., sig
                              'pairings, then among each pairing’s kinematically allowed orders. Unresolved weight '
                              'remains outside the map, including compatible pairings with no allowed order.',
                    normalization='Finite-vertex angular likelihood with first-order strip-center uncertainty. Each '
-                                 'cone is normalized over the displayed plane cells under a uniform planar prior '
+                                 f'cone is normalized over the reconstruction grid cells under a {prior_measure} '
                                  'before multiplying by its nominal mass. Values are nominal trigger units per cell.',
                    limits='Sparse conditional backprojection. Changing the assumed plane or displayed footprint changes '
                           'the map. Energy and depth resolution, Doppler response and detector sensitivity are uncalibrated. '
-                          'Peaks cannot establish emission activity, source count, or distance.'),
+                          'Peaks cannot establish emission activity, source count, or distance.',
+                   **plane_prior_metadata(plane_prior, prior_weights)),
         layers=layers, triggers=accounting)
 
 
@@ -218,6 +283,8 @@ def main():
     parser.add_argument('--extent-mm', type=float, default=120., help='Plane half-width in each of X and Y')
     parser.add_argument('--step-mm', type=float, default=4., help='Square-cell size in mm')
     parser.add_argument('--sigma-deg', type=float, default=5., help='Nominal angular nuisance width')
+    parser.add_argument('--plane-prior', choices=PLANE_PRIORS, default=DEFAULT_PLANE_PRIOR,
+                        help='Per-cell geometric prior on the finite plane grid (default: %(default)s)')
     args = parser.parse_args()
     if args.adc_windows and args.joint_fit:
         parser.error('--adc-windows requires --calibration')
@@ -226,7 +293,8 @@ def main():
     output = args.output or args.acquisition.with_name(PLANE_FILE)
     if output.exists():
         parser.error(f'Output already exists. Choose a new --output path or keep the existing result: {output}')
-    settings = dict(z_mm=args.plane_z_mm, extent_mm=args.extent_mm, step_mm=args.step_mm, sigma_deg=args.sigma_deg)
+    settings = dict(z_mm=args.plane_z_mm, extent_mm=args.extent_mm, step_mm=args.step_mm, sigma_deg=args.sigma_deg,
+                    plane_prior=args.plane_prior)
     try:
         if args.calibration:
             windows = args.adc_windows or args.acquisition.with_name(ADC_WINDOWS_FILE)
