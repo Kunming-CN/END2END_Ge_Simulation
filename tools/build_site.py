@@ -441,7 +441,7 @@ def install_geometry_delivery():
         destination.unlink()
 
 
-def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None, gegi_campaign_bundle=None, gegi_digital_example=None, gegi_digital_pairing_study=None, gegi_double_pulse=None, gegi_source_exposure=None, gegi_event_energy=None, gegi_edge_position=None, gegi_pixel_map=None, gegi_fast_gate=None, gegi_readout_validation=None):
+def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None, gegi_campaign_bundle=None, gegi_digital_example=None, gegi_digital_pairing_study=None, gegi_double_pulse=None, gegi_source_exposure=None, gegi_event_energy=None, gegi_edge_position=None, gegi_pixel_map=None, gegi_fast_gate=None, gegi_readout_validation=None, gegi_pixel_depth=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -463,7 +463,7 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
     if OUT.exists():
         remove_generated(OUT)
     if any(report is not None for report in (gegi_source_exposure, gegi_event_energy, gegi_edge_position, gegi_fast_gate)):
-        from gegi_digital_display import (attach_edge_position, attach_event_energy, attach_fast_gate,
+        from gegi_digital_display import (attach_edge_position, attach_event_energy, attach_fast_gate, attach_pixel_depth,
                                           attach_source_exposure, render as render_gegi_digital)
         if old is None:
             raise ValueError('Publish the GeGI digital study onto a validated existing site snapshot.')
@@ -479,6 +479,8 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
             from site_discovery import LANDINGS, write_landing_metadata
             from site_routes import page_navigation
             attach_fast_gate(OUT, *gegi_fast_gate, validation_paths=gegi_readout_validation)
+            if gegi_pixel_depth is not None:
+                attach_pixel_depth(OUT, gegi_pixel_depth)
             template = (ROOT / 'tools/site_guide.html').read_text(encoding='utf-8')
             (OUT / 'guide.html').write_text(template.replace('__PAGE_NAVIGATION__', page_navigation('guide.html')),
                                            encoding='utf-8', newline='\n')
@@ -703,6 +705,9 @@ if __name__ == '__main__':
                         help='Refresh the GeGI Results panel and guide using the saved fast-feature acquisition and gate study')
     parser.add_argument('--gegi-readout-validation', type=Path, nargs=3, metavar=('PILEUP', 'LOW_ENERGY', 'POSITION'),
                         help='Add saved readout validation summaries with --gegi-fast-gate')
+    parser.add_argument('--gegi-pixel-depth', type=Path, nargs=8,
+                        metavar=('ISOLATED', 'PAIRED', 'TABLE', 'ACQUISITION', 'JOINT', 'ANGLES', 'KINEMATICS', 'HOLDOUT'),
+                        help='Add saved apparent-depth and conditional cone results with --gegi-fast-gate')
     parser.add_argument('--gamma-showcase',type=Path,help='Copy a completed hash-checked saved gamma showcase; no scientific work or export')
     parser.add_argument('--ring-results',type=Path,help='Copy complete saved GeRC02/KMRC01 10K results and refresh all four current cases; no computation')
     parser.add_argument('--gegi-results',type=Path,nargs='+',help='Render one or two completed checked GeGI runs onto the saved website; no scientific work')
@@ -717,6 +722,8 @@ if __name__ == '__main__':
     if args.gegi_pixel_map and not args.restructure:parser.error('--gegi-pixel-map requires --restructure')
     if args.gegi_readout_validation and not args.gegi_fast_gate:
         parser.error('--gegi-readout-validation requires --gegi-fast-gate')
+    if args.gegi_pixel_depth and not args.gegi_fast_gate:
+        parser.error('--gegi-pixel-depth requires --gegi-fast-gate')
     if len(args.gegi_digital_pairing_study or ()) > 2:parser.error('--gegi-digital-pairing-study accepts at most two reports')
     if args.refresh_staged_readout and not args.finish_staged:parser.error('--refresh-staged-readout requires --finish-staged')
     if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_campaign_bundle,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_fast_gate)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
@@ -724,4 +731,4 @@ if __name__ == '__main__':
         finish_staged(refresh_readout=args.refresh_staged_readout)
     else:
         if args.gegi_plane_z_mm is not None and args.gegi_results is None: parser.error('--gegi-plane-z-mm requires --gegi-results')
-        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle,args.gegi_digital_example,args.gegi_digital_pairing_study,args.gegi_double_pulse,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_pixel_map,gegi_fast_gate=args.gegi_fast_gate,gegi_readout_validation=args.gegi_readout_validation)
+        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle,args.gegi_digital_example,args.gegi_digital_pairing_study,args.gegi_double_pulse,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_pixel_map,gegi_fast_gate=args.gegi_fast_gate,gegi_readout_validation=args.gegi_readout_validation,gegi_pixel_depth=args.gegi_pixel_depth)

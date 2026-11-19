@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "build_id": "f81f62ec8a47e9e4adccf6c1271083d14fe3f222787682efd07df06c533b0118",
-  "file_count": 1880,
-  "total_bytes": 493917608,
+  "build_id": "f2e22d40a5aae314048765f68b0ce2a128276c9342d06e9de0c39f2e7b96f834",
+  "file_count": 1881,
+  "total_bytes": 493940814,
   "html_pages": 109,
-  "local_links_checked": 3328,
-  "resource_references_checked": 3387,
+  "local_links_checked": 3329,
+  "resource_references_checked": 3388,
   "page_navigation_checked": 1452,
   "fragments_checked": 90,
-  "downloads_checked": 749,
+  "downloads_checked": 750,
   "media_references_checked": 1149,
   "metadata_references_checked": 35,
   "other_references_checked": 2,
@@ -7715,8 +7715,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 60591,
-      "sha256": "fb8ccb0efb675d0c42f1bb602eaf4bdb1b8ad2e3cb3c590550248490ffb7e750"
+      "bytes": 61822,
+      "sha256": "7cce6fdb49eb2c6d1e56edb3e95c66fe65326d7985002039b9a1be176920330c"
     },
     {
       "path": "index.html",
@@ -9334,6 +9334,11 @@
       "sha256": "e98eb9f7c8c8bb3d73042a97ff59d6aaee17cbfdcb21a5b9da35ed3f167854b1"
     },
     {
+      "path": "results/gegi-digital/pixel-depth.json",
+      "bytes": 8565,
+      "sha256": "46590d37b49213da38f03adc48309c4c98d6f67cf93e9cf7d843a63b5e04d86b"
+    },
+    {
       "path": "results/gegi-digital/signals.png",
       "bytes": 104662,
       "sha256": "e1c3d9b0b0180d02d7c41984a61b5c3bdfb62f6bebf22a27a8d75753dc871d50"
@@ -9345,8 +9350,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 65115,
-      "sha256": "646f28499f3e809e956bb7c481a7ba32464c850b1b32b813636b13d30d1c4ee1"
+      "bytes": 78525,
+      "sha256": "3f2cca0d0f1ecffb709117be478553ffb925f6d998bfe4443d363314aaf31a24"
     },
     {
       "path": "retired-studies.json",

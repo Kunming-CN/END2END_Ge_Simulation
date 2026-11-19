@@ -21,6 +21,19 @@ EVENT_ENERGY_FILE = 'results/gegi-digital/event-energy.json'
 EDGE_POSITION_FILE = 'results/gegi-digital/edge-position.json'
 DUAL_SOURCE_HIT_MAP_FILE = 'results/gegi-digital/dual-source-hit-map.json'
 FAST_GATE_FILE = 'results/gegi-digital/fast-gate.json'
+PIXEL_DEPTH_FILE = 'results/gegi-digital/pixel-depth.json'
+PIXEL_DEPTH_SHA256 = {
+    'isolated_study': 'fbf5f9eb76bee6c82f256de3515c350df4c350539c8f5062a7fd0c965794a399',
+    'two_site_study': '308a0f5ec78757cc929d26b2d3280d78c685b91b38ee88837b157178cb85e2d7',
+    'portable_calibration': 'd8f34e1a2b012deba723d92c3e1ce509e672b51770fb8b55d9e14ac645b7b80d',
+    'acquisition': '0c5111b47ab7f84f1ddf0514b04484c8a86e167cf179111f79bb0d0d8fed453a',
+    'joint_acquisition_study': '60464256affddba3c5ff784fbc786ed24ee6e60c843a55238085ca757bacb218',
+    'cone_angle_study': '81975daeadf1530365a4a009a2cdcdec0719c2cc9668bfe9d8f1eb0ecab97e90',
+    'full_energy_kinematics': '09de0406a2803668cd02f9ab6f5ae7c74e6ce8161feb5cc2e8a2d21f724df274',
+    'cs_lateral_holdout': '939d7a78fc5f83586e6a4c464e18f0215808721f4ede3a7a1c91be843ee5da44',
+}
+JOINT_DEPTH_METHODS = ('strip_centers_z0', 'features_center', 'waveform_center')
+REFERENCE_ISOTOPES = {'cs137-left': 'Cs-137', 'co60-right': 'Co-60'}
 DUAL_SOURCE_REPORT_HASHES = (
     '09cbc0e5a5821287b87acabe5d669fb0d7b1fccd8555b5b637479df82e2a99f7',
     '3cb7a68854a2526dbf88d62cc20883b26f1359bdc7166b8867b9d7a049763a5c',
@@ -461,6 +474,272 @@ def attach_fast_gate(site, acquisition_path, study_path, *, validation_paths=Non
         result['readout_validation'] = public_readout_validation(validation_paths)
     (site/FAST_GATE_FILE).write_text(json.dumps(result, allow_nan=False, separators=(',', ':'))+'\n',
                                     encoding='utf-8', newline='\n')
+
+
+def public_cone_references(cones, kinematics, holdout, qualified, two_strip):
+    counts = cones['counts']
+    candidates = {c['transport_reference']['source']: c for c in cones['candidates'] if 'transport_reference' in c}
+    raw_cases = {c['source']: c for c in kinematics['cases']}
+    matched = holdout['identical_trial_support']['waveform']
+    metrics = matched['metrics']
+    if (cones['trigger_denominator'] != qualified or cones['two_strip_denominator'] != two_strip
+            or cones['input_sha256']['report.json'] != PIXEL_DEPTH_SHA256['acquisition']
+            or cones['input_sha256']['study.json'] != kinematics['input_pairing_study_sha256']
+            or candidates.keys() != raw_cases.keys() or candidates.keys() != REFERENCE_ISOTOPES.keys()
+            or len(raw_cases) != len(kinematics['cases'])
+            or len(candidates) != counts['exact_two_interaction_full_energy_references']
+            or not len(candidates) <= counts['with_conditional_geometry'] <= counts['in_line_windows'] <= two_strip
+            or holdout['status'] != 'completed' or holdout['counts']['trials'] != matched['trials']
+            or holdout['counts']['independent_sites'] != 2*matched['trials']
+            or any(m['axis_error_deg']['n'] != matched['trials'] or m['xy_error_mm']['n'] != 2*matched['trials']
+                   for m in metrics.values())):
+        raise ValueError('GeGI cone references and held-out denominators do not close')
+
+    rows = []
+    for source in REFERENCE_ISOTOPES:
+        candidate, raw = candidates[source], raw_cases[source]
+        reference = candidate['transport_reference']
+        if (reference['campaign_initial_id'] != raw['campaign_initial_id']
+                or reference['source_mm'] != raw['primary_origin_mm']):
+            raise ValueError('GeGI cone reference refers to a different raw photon history')
+        truth = reference['truth_order']
+        for order, (a, b), site_order in (('true', (0, 1), truth), ('reverse', (1, 0), truth[::-1])):
+            first, second = (raw['interaction_vertices_mm'][i] for i in (a, b))
+            energy = raw['measured_site_energies_keV'][b]
+            fits = {g['support']: g for g in candidate['geometry'] if g['method'] == 'waveform'
+                    and g['order'] == site_order and g['pairing'] == reference['truth_pairing']}
+            if (fits.keys() != ({'center', 'lateral'} if source == 'cs137-left' else {'center'})
+                    or any(g['absorbed_energy_keV'] != energy or g['half_angle_deg'] != fits['center']['half_angle_deg']
+                           for g in fits.values())):
+                raise ValueError('GeGI reference waveforms do not share the measured energy order')
+            incoming = [v - s for v, s in zip(first, reference['source_mm'], strict=True)]
+            outgoing = [v - f for v, f in zip(second, first, strict=True)]
+            dot = math.fsum(x*y for x, y in zip(incoming, outgoing, strict=True))
+            cosine = dot/(math.hypot(*incoming)*math.hypot(*outgoing))
+            geometric_angle = math.degrees(math.acos(cosine))
+            half_angle = fits['center']['half_angle_deg']
+            raw_residual = geometric_angle - half_angle
+            if order == 'true' and not math.isclose(raw_residual, raw['angles_deg']['configured_source_residual'], abs_tol=1e-10):
+                raise ValueError('GeGI raw photon angle does not reproduce the true-order reference')
+            rows.append(dict(source=source, campaign_initial_id=raw['campaign_initial_id'], order=order,
+                             energy_half_angle_deg=half_angle, transport_vertices_angle_deg=geometric_angle,
+                             transport_vertices_residual_deg=raw_residual,
+                             waveform_residual_deg={support: g['source_residual_deg'] for support, g in fits.items()}))
+    cs = raw_cases['cs137-left']
+    return dict(two_strip_triggers=two_strip, **counts, cases=rows,
+                cs_true_order=dict(photon_path_angle_deg=cs['angles_deg']['transport_chords'],
+                                   outgoing_keV=cs['photon_local_losses_keV'][1],
+                                   stationary_prediction_outgoing_keV=cs['stationary_prediction_outgoing_keV'],
+                                   geant4_reference=kinematics['physics_reference'][1]),
+                cs_holdout=dict(trials=matched['trials'], sites=holdout['counts']['independent_sites'],
+                                metrics={name: {key: metrics[f'waveform_{name}'][key] for key in ('axis_error_deg', 'xy_error_mm')}
+                                         for name in ('center', 'lateral')}))
+
+
+def attach_pixel_depth(site, paths):
+    """Publish only depth points, comparison metrics and the receipt census."""
+    inputs = []
+    for (name, digest), path in zip(PIXEL_DEPTH_SHA256.items(), paths, strict=True):
+        raw = path.read_bytes()
+        if sha256(raw).hexdigest() != digest:
+            raise ValueError(f'Saved GeGI pixel-depth input changed: {name}')
+        inputs.append(json.loads(raw))
+    isolated, two_site, table, acquisition, joint, cones, kinematics, holdout = inputs
+    if (isolated['status'] != 'completed' or two_site['status'] != 'completed'
+            or acquisition['status'] != 'completed'
+            or PIXEL_DEPTH_SHA256['isolated_study'] not in two_site['input_sha256'].values()
+            or PIXEL_DEPTH_SHA256['acquisition'] not in joint['input_sha256'].values()
+            or acquisition['design']['pixel_depth']['calibration_sha256'] != PIXEL_DEPTH_SHA256['portable_calibration']
+            or any(table[key] != isolated['provenance'][key] for key in
+                   ('model_sha256', 'field_cache_sha256', 'field_precision_bits',
+                    'digital_profile_sha256', 'digital_timing_sha256'))):
+        raise ValueError('GeGI apparent-depth studies and acquisition do not share the expected calibration')
+
+    bounds = [table['center_depth_grid_mm'][i] for i in (0, -1)]
+    checks = isolated['validation']
+    points = [[row['injected_xyz_mm'][2], row['estimated_z_mm']] for row in checks]
+    measured = [(z, observed) for z, observed in points if observed is not None]
+    statuses = dict(Counter(row['estimate_status'] for row in checks))
+    evidence = isolated['summary']['all']
+    portable = table['off_center_validation']
+    if (not all(math.isfinite(value) and bounds[0] <= value <= bounds[1] for point in points
+                for value in point if value is not None)
+            or len(points) != evidence['intended'] or len(measured) != evidence['estimated']
+            or statuses != evidence['status_counts'] or statuses['estimated'] != len(measured)
+            or any(evidence[key] != portable[key] for key in ('intended', 'estimated', 'status_counts'))
+            or not math.isclose(math.sqrt(math.fsum((z - a)**2 for z, a in measured) / len(measured)),
+                                evidence['paired_cfd_rms_mm'], rel_tol=1e-12)
+            or not math.isclose(math.sqrt(math.fsum(z*z for z, _ in measured) / len(measured)),
+                                evidence['paired_midplane_rms_mm'], rel_tol=1e-12)):
+        raise ValueError('GeGI apparent-depth points and published error denominators differ')
+
+    pairs = {}
+    for key in ('near', 'disjoint'):
+        row = two_site['summary'][key]
+        paired, control = (row['site_depth_errors_paired_mm'][name]
+                           for name in ('depth_error_mm', 'isolated_depth_error_mm'))
+        trials, both, sites = (row[name] for name in ('trials', 'both_depths_available', 'truth_sites_estimated'))
+        if not (0 <= 2*both <= sites <= 2*trials and paired['n'] == control['n'] <= sites):
+            raise ValueError('GeGI paired-depth denominators do not close')
+        pairs[key] = dict(mixtures=trials, both_depths_available=both, intended_sites=2*trials,
+                          depth_estimates=sites, paired_sites=paired['n'], paired_rms_mm=paired['rms'],
+                          isolated_rms_mm=control['rms'])
+
+    singles = [t['pixel_depth'] for t in acquisition['triggers'] if t['single_pixel_energy_keV'] is not None]
+    two_strip = [t['two_strip_pairings'] for t in acquisition['triggers'] if t.get('two_strip_pairings') is not None]
+    assignments = [p['pixel_depths'] for record in two_strip for p in record['pairings'] if p['energy_compatible']]
+    assignments_by_depth_count = Counter(sum(d['status'] == 'estimated' for d in pair) for pair in assignments)
+    curve_counts = Counter(row['status'] for row in table['pixels'].values())
+    if (len(singles) != acquisition['counts']['single_pixel_energies']
+            or not all(len(pair) == 2 for pair in assignments)
+            or sum(curve_counts.values()) != 256 or curve_counts != table['curve_status_counts']
+            or portable['pixels_checked'] != sum('off_center_check' in row for row in table['pixels'].values())):
+        raise ValueError('GeGI apparent-depth acquisition or portable pixel counts do not close')
+    fitted = [row for row in joint['candidates'] if any(p['score'] is not None for p in row['pairings'])]
+    count = len(fitted)
+    groups = {(g['source'], g['campaign_initial_id'], g['group_id'])
+              for row in fitted for g in row['reference_groups']}
+    matched_methods = {key: {metric: joint['summary']['charge_centroid'][key][metric] for metric in
+                             ('axis_error_deg', 'depth_errors_mm')} for key in JOINT_DEPTH_METHODS}
+    if (joint['qualified_triggers'] != acquisition['counts']['qualified_triggers']
+            or joint['two_strip_triggers'] != len(two_strip)
+            or any(len(row['reference_groups']) != 1 for row in fitted)
+            or any(metrics['axis_error_deg']['n'] != count or metrics['depth_errors_mm']['n'] != 2*count
+                   for metrics in matched_methods.values())):
+        raise ValueError('GeGI joint depth fits do not share the matched acquisition denominator')
+    result = dict(
+        kind='gegi_apparent_pixel_depth_public_v1', source_report_sha256=PIXEL_DEPTH_SHA256,
+        isolated=dict(bounds_mm=bounds, reference_energy_keV=table['reference_energy_keV'],
+                      injected_and_apparent_depth_mm=points, **{k: evidence[k] for k in
+                      ('intended', 'estimated', 'status_counts', 'paired_cfd_rms_mm', 'paired_midplane_rms_mm')}),
+        paired=pairs, portable=dict(pixel_curve_statuses=curve_counts, off_center_pixels=portable['pixels_checked']),
+        joint=dict(matched_occurrences=count, original_groups=len(groups), site_observations=2*count,
+                   reference='simulated charge centroids', methods=matched_methods),
+        cone_references=public_cone_references(cones, kinematics, holdout, joint['qualified_triggers'], len(two_strip)),
+        acquisition=dict(duration_s=acquisition['design']['live_time_s'], single_pixel_statuses=Counter(
+            d['status'] for d in singles), two_strip_triggers=len(two_strip),
+            assignments_by_depth_count=assignments_by_depth_count, energy_compatible_assignments=len(assignments)))
+    (site/PIXEL_DEPTH_FILE).write_text(json.dumps(result, allow_nan=False, separators=(',', ':'))+'\n',
+                                      encoding='utf-8', newline='\n')
+
+
+def apparent_depth_plot(data):
+    lo, hi = data['bounds_mm']
+    left, top, side = 62, 17, 288
+    right, bottom = left + side, top + side
+
+    def x(value):
+        return left + side*(value - lo)/(hi - lo)
+
+    def y(value):
+        return bottom - side*(value - lo)/(hi - lo)
+
+    ticks = [lo + step*(hi - lo)/4 for step in range(5)]
+    grid = ''.join(f'<path d="M{x(t):.2f} {top}V{bottom} M{left} {y(t):.2f}H{right}"/>'
+                   for t in ticks)
+    labels = ''.join(f'<text x="{x(t):.2f}" y="{bottom+20}" text-anchor="middle">{t:g}</text>'
+                     f'<text x="{left-9}" y="{y(t)+4:.2f}" text-anchor="end">{t:g}</text>' for t in ticks)
+    dots, withheld = [], []
+    for known, observed in data['injected_and_apparent_depth_mm']:
+        if observed is None:
+            withheld.append(f'<path d="M{x(known):.2f} 343v7"/>')
+        else:
+            dots.append(f'<circle cx="{x(known):.2f}" cy="{y(observed):.2f}" r="2.7"/>')
+    missing = data['intended'] - data['estimated']
+    return f'''<svg viewBox="0 0 381 390" role="img" aria-labelledby="gegi-depth-title gegi-depth-desc"
+style="display:block;width:100%;height:auto;max-width:500px;background:#fff">
+<title id="gegi-depth-title">Apparent depth against injected depth</title>
+<desc id="gegi-depth-desc">The plot shows {data['estimated']} of {data['intended']} available estimates against the equal-depth line.
+The dashed horizontal line is the detector midplane. Marks below the plot show {missing} unavailable estimates at their injected depths.</desc>
+<g fill="none" stroke="#d8e2e7">{grid}</g>
+<path d="M{left} {bottom}L{right} {top}" stroke="#516979" stroke-width="1.4"/>
+<path d="M{left} {y(0):.2f}H{right}" stroke="#9b562c" stroke-width="1.5" stroke-dasharray="6 4"/>
+<g fill="#087a85" opacity="0.69">{''.join(dots)}</g>
+<g fill="none" stroke="#a65a2e" stroke-width="1.6">{''.join(withheld)}</g>
+<g fill="#253b46" font-size="13" font-family="system-ui,sans-serif">{labels}
+<text x="206" y="376" text-anchor="middle">Injected depth (mm)</text>
+<text x="16" y="161" text-anchor="middle" transform="rotate(-90 16 161)">Apparent depth (mm)</text>
+</g></svg>'''
+
+
+def cone_reference_table(data):
+    def signed(angle):
+        return f'{angle:+.2f}°'.replace('-', '−') if angle is not None else 'Center fit only'
+
+    rows = []
+    for row in data['cases']:
+        label = REFERENCE_ISOTOPES[row['source']]
+        values = row['waveform_residual_deg']
+        rows.append(f'<tr><th scope="row">{label}, {row["order"]} order</th><td>{signed(values["center"])}</td>'
+                    f'<td>{signed(values.get("lateral"))}</td><td>{signed(row["transport_vertices_residual_deg"])}</td></tr>')
+    holdout, raw = data['cs_holdout'], data['cs_true_order']
+    center, lateral = (holdout['metrics'][key] for key in ('center', 'lateral'))
+    return f'''<h4>Interaction order and Compton angle</h4>
+<p>Of {data['two_strip_triggers']} two-strip triggers, {data['in_line_windows']} fell in the line-energy windows and
+{data['with_conditional_geometry']} yielded cones. Two individual simulated events had a transport history of exactly two
+interactions that deposited the photon’s full energy. Both orders were allowed by the measured energies.</p>
+<div role="region" aria-label="Cone-angle residuals for both interaction orders" tabindex="0" style="overflow-x:auto">
+<table><caption>Cone residual equals the geometric scatter angle from the known source minus the half-angle from measured energies.</caption><thead><tr>
+<th scope="col">Simulated event and order</th><th scope="col">Center waveform fit</th>
+<th scope="col">Lateral waveform fit</th><th scope="col">Transport vertices</th></tr></thead>
+<tbody>{''.join(rows)}</tbody></table></div>
+<p>Transport labels the true order and supplies the vertices for the last column. The comparison retains both orders. For Cs-137,
+the reverse order falls closer to the source even with the transport vertices. The Cs-137 photon scattered through
+{raw['photon_path_angle_deg']:.2f}° with {raw['outgoing_keV']:.2f} keV left, compared with the
+{raw['stationary_prediction_outgoing_keV']:.2f} keV predicted for an electron at rest. The simulated bound-electron
+motion shifts the energy at the same scatter angle. <a href="{escape(raw['geant4_reference'], quote=True)}">Geant4 Livermore Compton model</a>.</p>
+<p>At the two Cs-137 pixels, waveform fits on the same {holdout['trials']} held-out two-deposit mixtures reduced RMS axis
+error from {center['axis_error_deg']['rms']:.2f}° at strip centers to {lateral['axis_error_deg']['rms']:.2f}° with lateral
+positions. RMS transverse error across those {holdout['sites']} sites was {center['xy_error_mm']['rms']:.2f} and
+{lateral['xy_error_mm']['rms']:.2f} mm, respectively.</p>'''
+
+
+def pixel_depth_section(data):
+    isolated, portable, acquisition = (data[k] for k in ('isolated', 'portable', 'acquisition'))
+    missing = isolated['intended'] - isolated['estimated']
+    rows = []
+    for key, label in (('near', 'Overlapping neighborhoods'), ('disjoint', 'Separate neighborhoods')):
+        row = data['paired'][key]
+        rows.append(f'<tr><th scope="row">{label}</th><td>{row["both_depths_available"]}/{row["mixtures"]}</td>'
+                    f'<td>{row["depth_estimates"]}/{row["intended_sites"]}</td><td>{row["paired_sites"]}</td>'
+                    f'<td>{row["paired_rms_mm"]:.3f} mm</td><td>{row["isolated_rms_mm"]:.3f} mm</td></tr>')
+    single = acquisition['single_pixel_statuses']
+    total_pixels = sum(portable['pixel_curve_statuses'].values())
+    joint = data['joint']
+    baseline, features, waveform = (joint['methods'][k] for k in JOINT_DEPTH_METHODS)
+    return f'''<h3 id="gegi-apparent-depth">Apparent GeGI depth from collector timing</h3>
+<p>The depth table uses the time difference between the X and Y collecting strips as their preamplifier signals pass
+50% of their measured amplitude. The calibration uses isolated {isolated['reference_energy_keV']:g} keV deposits at
+pixel centers on the saved simulated field. It has usable timing curves on {portable['pixel_curve_statuses']['available']}
+of {total_pixels} pixels. Independent off-center checks covered {portable['off_center_pixels']} pixels.</p>
+<figure style="margin:1rem 0">
+{apparent_depth_plot(isolated)}
+<figcaption>Dots show {isolated['estimated']} estimates from {isolated['intended']} independent off-center injections.
+The solid diagonal marks equal injected and apparent depth. The dashed line marks the midplane (z = 0).
+Ticks below the axis mark {missing} injections outside the calibrated timing range.
+On the same {isolated['estimated']} estimated points, RMS error was <strong>{isolated['paired_cfd_rms_mm']:.3f} mm</strong>
+using collector timing and {isolated['paired_midplane_rms_mm']:.3f} mm using the midplane.</figcaption></figure>
+<h4>Two simultaneous deposits</h4>
+<p>These tests reused eight independent off-center waveforms at several energies and ADC settings.
+Nearby signals shift the collector timing and can bias apparent depth. Errors use the same scored sites
+for the simultaneous and isolated cases.</p>
+<div role="region" aria-label="Depth availability and errors for simultaneous deposits" tabindex="0" style="overflow-x:auto">
+<table><thead><tr><th scope="col">Strip neighborhoods</th><th scope="col">Mixtures with both depths</th>
+<th scope="col">Sites with depth</th><th scope="col">Sites scored</th><th scope="col">Simultaneous RMS error</th>
+<th scope="col">Isolated RMS error</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+<p>In the saved {acquisition['duration_s']:g} s simulated acquisition, {single['estimated']}/{sum(single.values())}
+single-pixel triggers had apparent depths. Both site timings were in range for
+{acquisition['assignments_by_depth_count']['2']}/{acquisition['energy_compatible_assignments']} energy-compatible
+two-strip assignments. Each apparent depth is conditional on its strip assignment.</p>
+<h4>Joint fits in the mixed-source acquisition</h4>
+<p>On {joint['matched_occurrences']} matched occurrences from {joint['original_groups']} original simulated groups,
+the RMS angle to the direction between the charge centroids was {baseline['axis_error_deg']['rms']:.2f}° with both sites
+at the midplane, {features['axis_error_deg']['rms']:.2f}° with a joint fast-signal and timing fit, and
+{waveform['axis_error_deg']['rms']:.2f}° with a joint ADC-waveform fit. Across the same {joint['site_observations']} sites,
+depth RMS errors were {baseline['depth_errors_mm']['rms']:.2f}, {features['depth_errors_mm']['rms']:.2f}, and
+{waveform['depth_errors_mm']['rms']:.2f} mm, respectively.</p>
+{cone_reference_table(data['cone_references'])}
+<p><a href="gegi-digital/pixel-depth.json">Read the depth points, cone comparisons and source hashes (JSON)</a>.</p>'''
 
 
 def readout_validation_table(data):
@@ -1052,6 +1331,7 @@ def render(site):
     edge_position = site/EDGE_POSITION_FILE
     hit_map = site/DUAL_SOURCE_HIT_MAP_FILE
     fast_gate = site/FAST_GATE_FILE
+    pixel_depth = site/PIXEL_DEPTH_FILE
     fast = None
     card = '<section id="gegi" class="panel" data-dataset="gegi">\n'
     if exposure.is_file():
@@ -1068,6 +1348,8 @@ def render(site):
                      != projection['binding']['validation_report_sha256']):
             raise ValueError('The GeGI fast-gate results belong to a different hit map.')
         card += exposure_section(data, study, projection, fast)
+    if pixel_depth.is_file():
+        card += pixel_depth_section(json.loads(pixel_depth.read_bytes()))
     has_pulse = pulse.is_file()
     if has_pulse:
         card += double_pulse_section(json.loads(pulse.read_bytes()))

@@ -17,6 +17,51 @@ from check_site import MANIFEST, local_target, validate
 import export_models as models
 
 class PublicationTests(unittest.TestCase):
+    def test_pixel_depth_figure_shows_abstentions_and_paired_denominators(self):
+        import gegi_digital_display as exhibit
+        isolated = dict(bounds_mm=[-5, 5], reference_energy_keV=500, intended=2, estimated=1,
+                        injected_and_apparent_depth_mm=[[-3, -2.9], [4, None]],
+                        paired_cfd_rms_mm=.1, paired_midplane_rms_mm=3.)
+        near = dict(mixtures=24, both_depths_available=12, intended_sites=48, depth_estimates=32,
+                    paired_sites=32, paired_rms_mm=.660, isolated_rms_mm=.087)
+        far = dict(near, depth_estimates=36, paired_sites=36, paired_rms_mm=.074, isolated_rms_mm=.074)
+        methods = {name: dict(axis_error_deg=dict(rms=angle), depth_errors_mm=dict(rms=depth))
+                   for name, angle, depth in zip(exhibit.JOINT_DEPTH_METHODS, (24.27, 12.31, 12.62),
+                                                 (3.06, 1.06, .92), strict=True)}
+        cases = [dict(source=source, order=order, waveform_residual_deg=dict(center=center, lateral=lateral),
+                      transport_vertices_residual_deg=transport) for source, order, center, lateral, transport in (
+                      ('cs137-left', 'true', -20.45, -11.06, -10.60), ('cs137-left', 'reverse', 7.24, -4.74, -4.04),
+                      ('co60-right', 'true', -4.27, None, .59), ('co60-right', 'reverse', 58.52, None, 50.72))]
+        holdout = {name: dict(axis_error_deg=dict(rms=angle), xy_error_mm=dict(rms=xy))
+                   for name, angle, xy in [('center', 18.77, 1.75), ('lateral', 10.81, 1.31)]}
+        cones = dict(two_strip_triggers=76, in_line_windows=18, with_conditional_geometry=7, cases=cases,
+                     cs_holdout=dict(trials=8, sites=16, metrics=holdout),
+                     cs_true_order=dict(photon_path_angle_deg=139.76, outgoing_keV=193.45,
+                                        stationary_prediction_outgoing_keV=201.52, geant4_reference='https://github.com/Geant4/geant4'))
+        public = dict(isolated=isolated, paired=dict(near=near, disjoint=far),
+                      portable=dict(pixel_curve_statuses=dict(available=216, insufficient_center_knots=40),
+                                    off_center_pixels=16),
+                      joint=dict(matched_occurrences=41, original_groups=27, site_observations=82, methods=methods),
+                      cone_references=cones,
+                      acquisition=dict(duration_s=.25, single_pixel_statuses=dict(estimated=360, unavailable=124),
+                                       assignments_by_depth_count={'2': 34}, energy_compatible_assignments=58))
+        panel = exhibit.pixel_depth_section(public)
+        self.assertEqual(panel.count('<circle '), 1)
+        self.assertIn('show 1 unavailable estimates at their injected depths', panel)
+        self.assertIn('viewBox="0 0 381 390"', panel)
+        self.assertIn('>12/24</td><td>32/48</td><td>32</td><td>0.660 mm', panel)
+        self.assertIn('>12/24</td><td>36/48</td><td>36</td><td>0.074 mm', panel)
+        self.assertIn('360/484', panel)
+        self.assertIn('34/58', panel)
+        self.assertIn('41 matched occurrences from 27 original simulated groups', panel)
+        self.assertIn('12.62° with a joint ADC-waveform fit', panel)
+        self.assertIn('Cs-137, true order</th><td>−20.45°</td><td>−11.06°</td><td>−10.60°', panel)
+        self.assertIn('Cs-137, reverse order</th><td>+7.24°</td><td>−4.74°</td><td>−4.04°', panel)
+        self.assertIn('Co-60, true order</th><td>−4.27°</td><td>Center fit only</td><td>+0.59°', panel)
+        self.assertIn('Co-60, reverse order</th><td>+58.52°</td><td>Center fit only</td><td>+50.72°', panel)
+        self.assertIn('8 held-out two-deposit mixtures', panel)
+        self.assertIn('href="gegi-digital/pixel-depth.json"', panel)
+
     def test_gegi_replacement_allows_history_only_for_predecessor(self):
         import build_site as builder
         project=self.site/'gegi-replacement';docs=project/'docs';stage=project/'.local/site-build'
