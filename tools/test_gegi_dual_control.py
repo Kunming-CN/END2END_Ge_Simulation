@@ -272,22 +272,27 @@ class DualControlTests(unittest.TestCase):
                      layers={'all': layer, '661.657_keV': layer, 'other_energy': empty},
                      triggers=['private internal trigger ledger'])
 
-        def save(payload):
-            sidecar.write_bytes(gzip.compress(json.dumps(payload).encode('utf-8')))
+        def save(payload, target=sidecar):
+            target.write_bytes(gzip.compress(json.dumps(payload).encode('utf-8')))
 
         save(plane)
         with patch.object(G, 'measured_plane_view', side_effect=AssertionError('Read before the panel opened')):
-            self.assertEqual(self.request('state?name=with-plane')[1]['result']['measured_plane'], {'status': 'saved'})
+            self.assertEqual(self.request('state?name=with-plane')[1]['result']['measured_plane'],
+                             {'status': 'saved', 'variants': ['saved']})
         self.assertEqual(self.request(route, headers={'X-Control-Token': 'wrong'})[0], 403)
         for invalid in (route + '&file=plane.json.gz', route + '&name=with-plane',
+                        route + '&prior=', route + '&prior=../plane.json.gz',
+                        route + '&prior=uniform-area&prior=uniform-solid-angle',
                         'plane?' + urlencode(dict(name='with-plane', report_sha256='a'*64))):
             self.assertEqual(self.request(invalid)[0], 400)
         status, result = self.request(route)
         self.assertEqual(status, 200)
         self.assertEqual(result, {key: value for key, value in plane.items() if key not in ('triggers', 'input_sha256')}
-                         | {'name': 'with-plane', 'report_sha256': W.sha(path)})
+                         | {'name': 'with-plane', 'report_sha256': W.sha(path),
+                            'model': dict(plane['model'], plane_prior='uniform-area')})
         for invalid in ({**plane, 'input_sha256': {'acquisition': 'a'*64}},
                         {**plane, 'grid': dict(plane['grid'], y_mm=[2, -2])},
+                        {**plane, 'model': dict(plane['model'], plane_prior='unsupported')},
                         {**plane, 'layers': dict(plane['layers'], all=dict(layer, unresolved_mass=0))},
                         {**plane, 'layers': dict(plane['layers'], all=dict(layer, mass=[[0, 0], [0, 0]]))}):
             save(invalid)
@@ -297,6 +302,30 @@ class DualControlTests(unittest.TestCase):
         status, job = self.request('state?name=with-plane')
         self.assertEqual(status, 200)
         self.assertEqual(job['result']['spectra']['combined']['entries'], 2)
+
+        alternate = path.with_name('plane-uniform-solid-angle.json.gz')
+        alternate_route = route + '&prior=uniform-solid-angle'
+        solid_angle = dict(plane, model=dict(plane['model'], plane_prior='uniform-solid-angle',
+                                           plane_prior_reference_origin_mm=[0, 0, 0], plane_prior_coverage_sr=.04))
+        for invalid in (plane, dict(solid_angle, grid=dict(plane['grid'], assumed_z_mm=0)),
+                        dict(solid_angle, model=dict(solid_angle['model'], plane_prior_reference_origin_mm=[0, 0, 1])),
+                        dict(solid_angle, input_sha256={'acquisition': 'a'*64})):
+            save(invalid, alternate)
+            self.assertEqual(self.request(alternate_route)[0], 400)
+        save(solid_angle, alternate)
+        save(plane)
+        self.assertEqual(self.request('state?name=with-plane')[1]['result']['measured_plane']['variants'],
+                         ['saved', 'uniform-solid-angle'])
+        status, result = self.request(alternate_route)
+        self.assertEqual(status, 200)
+        self.assertEqual(result['model'], solid_angle['model'])
+        self.assertEqual(result['report_sha256'], W.sha(path))
+        self.assertEqual(result['layers'], plane['layers'])
+        self.assertEqual(self.request(route)[1]['model']['plane_prior'], 'uniform-area')
+        sidecar.unlink()
+        self.assertEqual(self.request('state?name=with-plane')[1]['result']['measured_plane']['variants'],
+                         ['uniform-solid-angle'])
+        self.assertEqual(self.request(alternate_route)[0], 200)
 
     def test_protected_feature_navigation_reads_only_selected_projection(self):
         _, options = self.request('options')

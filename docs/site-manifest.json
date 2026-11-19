@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
-  "build_id": "1858f01d9b16c70930a50ba00bd899fd5365fe6aa9438ded313bc665aa2965a3",
-  "file_count": 1883,
-  "total_bytes": 494234360,
+  "build_id": "b230490af852cdc579bf7ffd1744fec506f5ea6304dde452e1508904ab716c22",
+  "file_count": 1885,
+  "total_bytes": 494468948,
   "html_pages": 109,
-  "local_links_checked": 3332,
-  "resource_references_checked": 3391,
+  "local_links_checked": 3335,
+  "resource_references_checked": 3394,
   "page_navigation_checked": 1452,
   "fragments_checked": 90,
-  "downloads_checked": 751,
-  "media_references_checked": 1151,
+  "downloads_checked": 752,
+  "media_references_checked": 1153,
   "metadata_references_checked": 35,
   "other_references_checked": 2,
   "files": [
@@ -7715,8 +7715,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 63271,
-      "sha256": "fdc3ad8d3985890549f455fbda2222b59f55ebacc5c95553b8b1f194b55b7ec7"
+      "bytes": 65204,
+      "sha256": "913515a2cf8136fe90970049452060baea2ce1008ecad37ab32335dde1cbf2ab"
     },
     {
       "path": "index.html",
@@ -9349,6 +9349,16 @@
       "sha256": "46590d37b49213da38f03adc48309c4c98d6f67cf93e9cf7d843a63b5e04d86b"
     },
     {
+      "path": "results/gegi-digital/plane-priors.json",
+      "bytes": 44687,
+      "sha256": "b961aa2db78e43400af31cb9dc4c3fc6db6311a2680b1e351532fb415a5e17cb"
+    },
+    {
+      "path": "results/gegi-digital/plane-priors.png",
+      "bytes": 184043,
+      "sha256": "eed42bd559a37920f654911b52b2dd0f047b1e94b85ad5aa7786d1dee1b56111"
+    },
+    {
       "path": "results/gegi-digital/signals.png",
       "bytes": 104662,
       "sha256": "e1c3d9b0b0180d02d7c41984a61b5c3bdfb62f6bebf22a27a8d75753dc871d50"
@@ -9360,8 +9370,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 81375,
-      "sha256": "42844445f4d51c93459de5b6eb5f39c5c96289264cfa328019e9ede1fcfa8d74"
+      "bytes": 85300,
+      "sha256": "3962615fbf4701e05d0421f573c24bc3869be6267740738e0203f4f2254fc4f9"
     },
     {
       "path": "retired-studies.json",

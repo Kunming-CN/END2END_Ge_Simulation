@@ -16,13 +16,15 @@ if __name__ == '__main__':
 
 import numpy as np
 
-from gegi_imaging import cone
+from gegi_imaging import ELECTRON_REST_KEV, cone
 from gegi_joint_imaging import ResponseSettings, candidate_response, plane_grid, prepare_events, spectral_membership
 
 
 LINE_ENERGIES_KEV = (661.657, 1173.228, 1332.492)
 ADC_WINDOWS_FILE = 'two-strip-adc.npz'
 PLANE_FILE = 'plane.json.gz'
+PLANE_KIND = 'gegi_continuous_measured_plane_backprojection_v1'
+GEOMETRY_KEYS = ('vertex_mm', 'axis', 'half_angle_deg', 'site_separation_mm')
 DEFAULT_PLANE_PRIOR = 'uniform-area'
 PLANE_PRIORS = (DEFAULT_PLANE_PRIOR, 'uniform-solid-angle')
 
@@ -83,10 +85,21 @@ def plane_prior_metadata(prior, weights):
                 plane_prior_support='Finite square reconstruction grid on the assumed detector-coordinate plane.')
 
 
+def _two_strip_triggers(acquisition):
+    return [(i, trigger) for i, trigger in enumerate(acquisition['triggers'], 1)
+            if trigger.get('two_strip_pairings') is not None]
+
+
+def _allowed_orders(pair):
+    orders = [tuple(order['site_index_order']) for order in pair['compton_orders'] if order['kinematically_allowed']]
+    if len(set(orders)) != len(orders) or set(orders) - {(0, 1), (1, 0)}:
+        raise ValueError('Allowed orders must be unique orders of the two measured sites')
+    return orders
+
+
 def measured_events(acquisition, joint_fit):
     """Read measured energies, strip identities, and successful center waveform positions."""
-    triggers = acquisition['triggers']
-    selected = [(i, trigger) for i, trigger in enumerate(triggers, 1) if trigger.get('two_strip_pairings') is not None]
+    selected = _two_strip_triggers(acquisition)
     records, accounting = [], []
     for ordinal, ((trigger_index, trigger), fitted) in enumerate(zip(selected, joint_fit['candidates'], strict=True), 1):
         if fitted['ordinal'] != ordinal or fitted['time_ns'] != trigger['trigger_time_ns']:
@@ -110,10 +123,7 @@ def measured_events(acquisition, joint_fit):
                 raise ValueError('Saved waveform strip identities differ from the measured energy pairing')
             if not pair['energy_compatible']:
                 continue
-            orders = [tuple(order['site_index_order']) for order in pair['compton_orders']
-                      if order['kinematically_allowed']]
-            if len(set(orders)) != len(orders) or set(orders) - {(0, 1), (1, 0)}:
-                raise ValueError('Allowed orders must be unique orders of the two measured sites')
+            orders = _allowed_orders(pair)
             fit_result = fit['fit']
             waveform = fit_result.get('fits', {}).get('waveform', {}).get('center')
             pair_ledger = dict(index=pair['index'], cells=cells, site_energies_keV=[s['energy_keV'] for s in sites],
@@ -138,8 +148,7 @@ def measured_events(acquisition, joint_fit):
                 item = dict(order=order, nominal_mass=1/(compatible*len(orders)),
                             status='no_waveform_fit' if fitted_sites is None else 'no_usable_cone')
                 if geometry is not None:
-                    item.update(status='available', **{key: geometry[key] for key in
-                                ('vertex_mm', 'axis', 'half_angle_deg', 'site_separation_mm')})
+                    item.update(status='available', **{key: geometry[key] for key in GEOMETRY_KEYS})
                     record['candidates'].append(dict(geometry, prior_weight=item['nominal_mass']))
                 pair_ledger['orders'].append(item)
         records.append(record)
@@ -147,13 +156,59 @@ def measured_events(acquisition, joint_fit):
     return records, accounting
 
 
+def _reuse_saved_events(acquisition, accounting):
+    """Recover measured cones from a freshly loaded ledger and reset their projection status."""
+    selected = _two_strip_triggers(acquisition)
+    records = []
+    for ordinal, ((index, trigger), row) in enumerate(zip(selected, accounting, strict=True), 1):
+        energy = trigger['energy_keV']
+        if (row['trigger_index'], row['two_strip_ordinal'], row['trigger_time_ns'], row['energy_keV']) != (
+                index, ordinal, trigger['trigger_time_ns'], energy):
+            raise ValueError('Saved plane trigger identities, times and energies must match the acquisition')
+        measured = [pair for pair in trigger['two_strip_pairings']['pairings'] if pair['energy_compatible']]
+        candidates = []
+        for pair, saved in zip(measured, row['pairings'], strict=True):
+            sites = pair['sites']
+            cells = [[site['x_contact_id'], site['y_contact_id']] for site in sites]
+            energies = [site['energy_keV'] for site in sites]
+            expected_orders = _allowed_orders(pair)
+            if (saved['index'], saved['cells'], saved['site_energies_keV'], saved['nominal_mass']) != (
+                    pair['index'], cells, energies, 1/len(measured)) or [
+                    tuple(order['order']) for order in saved['orders']] != expected_orders:
+                raise ValueError('Saved plane pairings and allowed orders must match the acquisition')
+            for kept in saved['orders']:
+                prior = kept['nominal_mass']
+                if prior != 1/(len(measured)*len(expected_orders)):
+                    raise ValueError('Saved plane order weights must match the measured alternatives')
+                status = kept['status']
+                if status in ('no_waveform_fit', 'no_usable_cone'):
+                    continue
+                if status not in ('projected', 'no_plane_response'):
+                    raise ValueError(f'Unrecognized saved cone status: {status}')
+                e1, e2 = (energies[i] for i in kept['order'])
+                if not all(math.isfinite(energy) and energy > 0 for energy in (e1, e2)):
+                    raise ValueError('Saved cone requires two positive finite site energies')
+                # Recompute the exact original cosine from the saved slow energies.
+                cosine = 1-ELECTRON_REST_KEV*(1/e2-1/(e1+e2))
+                candidates.append({key: kept[key] for key in GEOMETRY_KEYS} | dict(
+                    cos_theta=cosine, scatter_energy_keV=e1, absorbed_energy_keV=e2, prior_weight=prior))
+                kept['status'] = 'available'
+        records.append(dict(event_id=index, energy_keV=energy, candidates=candidates))
+    return records
+
+
 def reconstruct(acquisition, joint_fit, *, z_mm, extent_mm=120., step_mm=4., sigma_deg=5.,
                 plane_prior=DEFAULT_PLANE_PRIOR):
+    records, accounting = measured_events(acquisition, joint_fit)
+    return _project(acquisition, records, accounting, joint_fit['two_strip_triggers'], z_mm=z_mm,
+                    extent_mm=extent_mm, step_mm=step_mm, sigma_deg=sigma_deg, plane_prior=plane_prior)
+
+
+def _project(acquisition, records, accounting, two_strip_count, *, z_mm, extent_mm, step_mm, sigma_deg, plane_prior):
     settings = ResponseSettings(angular_nuisance_sigma_deg=sigma_deg)
     settings.validate()
     ticks, points = plane_grid(extent_mm, step_mm, z_mm)
     prior_weights = plane_prior_weights(points, step_mm, plane_prior)
-    records, accounting = measured_events(acquisition, joint_fit)
     events = prepare_events(records, settings)
     masks = {'all': np.ones(len(events), dtype=bool)}
     if events:
@@ -200,12 +255,12 @@ def reconstruct(acquisition, joint_fit, *, z_mm, extent_mm=120., step_mm=4., sig
     energied = sum(t['energy_keV'] is not None for t in acquisition['triggers'])
     without_pairing = sum(not row['pairings'] for row in accounting)
     if (total != acquisition['counts']['qualified_triggers'] or energied != acquisition['counts']['qualified_energies']
-            or len(events) != joint_fit['two_strip_triggers']):
+            or len(events) != two_strip_count):
         raise ValueError('Measured event selection totals do not close')
     prior_measure = ('uniform planar prior' if plane_prior == DEFAULT_PLANE_PRIOR else
                      'uniform solid-angle prior at the detector origin (0, 0, 0) mm using each cell’s solid angle')
     return dict(
-        kind='gegi_continuous_measured_plane_backprojection_v1',
+        kind=PLANE_KIND,
         grid=dict(x_mm=ticks.tolist(), y_mm=ticks.tolist(), assumed_z_mm=z_mm, step_mm=step_mm, extent_mm=extent_mm,
                   array_order='rows increase in y, columns increase in x; positions refer to cell centers'),
         selection=dict(qualified_triggers=total, qualified_energies=energied, triggers_without_energy=total-energied,
@@ -271,32 +326,77 @@ def run_from_adc(acquisition_path, windows_path, calibration_path, **settings):
     return result
 
 
+def run_from_plane(acquisition_path, plane_path, **overrides):
+    """Reproject the available orders in an earlier map without performing waveform fits."""
+    raw = acquisition_path.read_bytes()
+    packed = plane_path.read_bytes()
+    acquisition = json.loads(raw)
+    saved = json.loads(gzip.decompress(packed))
+    if not isinstance(saved, dict) or saved.get('kind') != PLANE_KIND:
+        raise ValueError('Expected a saved measured Compton plane')
+    try:
+        inputs = saved['input_sha256']
+        if inputs['acquisition'] != hashlib.sha256(raw).hexdigest():
+            raise ValueError('The saved plane is not bound to this acquisition')
+        grid, model = saved['grid'], saved['model']
+        if model['strip_pitch_mm'] != ResponseSettings().strip_pitch_mm:
+            raise ValueError('The saved plane uses a different strip pitch')
+        settings = dict(z_mm=grid['assumed_z_mm'], extent_mm=grid['extent_mm'], step_mm=grid['step_mm'],
+                        sigma_deg=model['angular_nuisance_sigma_deg'],
+                        plane_prior=model.get('plane_prior', DEFAULT_PLANE_PRIOR))
+        settings.update(overrides)
+        accounting = saved['triggers']
+        selection = saved['selection']
+        two_strip_count = selection['two_strip_triggers']
+        geometry = model['geometry']
+        records = _reuse_saved_events(acquisition, accounting)
+    except (KeyError, TypeError, IndexError) as error:
+        raise ValueError('Saved measured plane does not contain a valid trigger ledger and model') from error
+    result = _project(acquisition, records, accounting, two_strip_count, **settings)
+    if result['selection'] != selection:
+        raise ValueError('The saved plane selection does not match the acquisition')
+    result['model']['geometry'] = geometry
+    result['input_sha256'] = dict(inputs, parent_plane=hashlib.sha256(packed).hexdigest())
+    for key in ('calibration_bundle', 'fit_source_sha256'):
+        if key in saved:
+            result[key] = saved[key]
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--acquisition', type=Path, required=True)
-    calibration = parser.add_mutually_exclusive_group(required=True)
-    calibration.add_argument('--calibration', type=Path, help='External center-waveform calibration archive (NPZ)')
-    calibration.add_argument('--joint-fit', type=Path, help='Previously saved matching joint waveform fit (JSON)')
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument('--calibration', type=Path, help='External center-waveform calibration archive (NPZ)')
+    source.add_argument('--joint-fit', type=Path, help='Previously saved matching joint waveform fit (JSON)')
+    source.add_argument('--from-plane', type=Path, help='Reuse measured cones and settings from a matching saved plane (JSON.gz)')
     parser.add_argument('--adc-windows', type=Path, help=f'ADC windows for --calibration, defaults to sibling {ADC_WINDOWS_FILE}')
     parser.add_argument('--output', type=Path, help=f'New compressed JSON map, defaults to sibling {PLANE_FILE} with --calibration')
-    parser.add_argument('--plane-z-mm', type=float, required=True, help='Assumed plane in detector coordinates')
-    parser.add_argument('--extent-mm', type=float, default=120., help='Plane half-width in each of X and Y')
-    parser.add_argument('--step-mm', type=float, default=4., help='Square-cell size in mm')
-    parser.add_argument('--sigma-deg', type=float, default=5., help='Nominal angular nuisance width')
-    parser.add_argument('--plane-prior', choices=PLANE_PRIORS, default=DEFAULT_PLANE_PRIOR,
-                        help='Per-cell geometric prior on the finite plane grid (default: %(default)s)')
+    parser.add_argument('--plane-z-mm', type=float, help='Assumed plane in detector coordinates, required for a new fit')
+    parser.add_argument('--extent-mm', type=float, help='Plane half-width in X and Y (new fit default: 120 mm)')
+    parser.add_argument('--step-mm', type=float, help='Square-cell size (new fit default: 4 mm)')
+    parser.add_argument('--sigma-deg', type=float, help='Nominal angular nuisance width (new fit default: 5 degrees)')
+    parser.add_argument('--plane-prior', choices=PLANE_PRIORS,
+                        help=f'Per-cell geometric prior on the finite plane grid (new fit default: {DEFAULT_PLANE_PRIOR})')
     args = parser.parse_args()
-    if args.adc_windows and args.joint_fit:
+    if args.adc_windows and not args.calibration:
         parser.error('--adc-windows requires --calibration')
     if not args.output and args.joint_fit:
         parser.error('--output is required with --joint-fit')
+    if not args.output and args.from_plane:
+        parser.error('--output is required with --from-plane')
+    if args.plane_z_mm is None and not args.from_plane:
+        parser.error('--plane-z-mm is required with --joint-fit or --calibration')
     output = args.output or args.acquisition.with_name(PLANE_FILE)
     if output.exists():
         parser.error(f'Output already exists. Choose a new --output path or keep the existing result: {output}')
     settings = dict(z_mm=args.plane_z_mm, extent_mm=args.extent_mm, step_mm=args.step_mm, sigma_deg=args.sigma_deg,
                     plane_prior=args.plane_prior)
+    settings = {key: value for key, value in settings.items() if value is not None}
     try:
-        if args.calibration:
+        if args.from_plane:
+            result = run_from_plane(args.acquisition, args.from_plane, **settings)
+        elif args.calibration:
             windows = args.adc_windows or args.acquisition.with_name(ADC_WINDOWS_FILE)
             if not windows.is_file():
                 raise ValueError(f'ADC windows unavailable: {windows}. Capture them in the acquisition or export them from its saved libraries.')

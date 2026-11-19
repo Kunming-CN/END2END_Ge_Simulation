@@ -441,7 +441,7 @@ def install_geometry_delivery():
         destination.unlink()
 
 
-def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None, gegi_campaign_bundle=None, gegi_digital_example=None, gegi_digital_pairing_study=None, gegi_double_pulse=None, gegi_source_exposure=None, gegi_event_energy=None, gegi_edge_position=None, gegi_pixel_map=None, gegi_fast_gate=None, gegi_readout_validation=None, gegi_pixel_depth=None, gegi_measured_plane=None):
+def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None, gegi_campaign_bundle=None, gegi_digital_example=None, gegi_digital_pairing_study=None, gegi_double_pulse=None, gegi_source_exposure=None, gegi_event_energy=None, gegi_edge_position=None, gegi_pixel_map=None, gegi_fast_gate=None, gegi_readout_validation=None, gegi_pixel_depth=None, gegi_measured_plane=None, gegi_plane_priors=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -462,7 +462,7 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         old = checked_predecessor()
     if OUT.exists():
         remove_generated(OUT)
-    if any(report is not None for report in (gegi_source_exposure, gegi_event_energy, gegi_edge_position, gegi_fast_gate)):
+    if any(report is not None for report in (gegi_source_exposure, gegi_event_energy, gegi_edge_position, gegi_fast_gate, gegi_plane_priors)):
         from gegi_digital_display import (attach_edge_position, attach_event_energy, attach_fast_gate, attach_measured_plane,
                                           attach_pixel_depth, attach_source_exposure, render as render_gegi_digital)
         if old is None:
@@ -478,7 +478,11 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         else:
             from site_discovery import LANDINGS, write_landing_metadata
             from site_routes import page_navigation
-            attach_fast_gate(OUT, *gegi_fast_gate, validation_paths=gegi_readout_validation)
+            if gegi_plane_priors is not None:
+                from gegi_plane_prior_display import attach
+                attach(OUT, gegi_plane_priors)
+            else:
+                attach_fast_gate(OUT, *gegi_fast_gate, validation_paths=gegi_readout_validation)
             if gegi_pixel_depth is not None:
                 attach_pixel_depth(OUT, gegi_pixel_depth)
             if gegi_measured_plane is not None:
@@ -712,6 +716,8 @@ if __name__ == '__main__':
                         help='Add saved apparent-depth and conditional cone results with --gegi-fast-gate')
     parser.add_argument('--gegi-measured-plane', type=Path, nargs=2, metavar=('EXPOSURE_STUDY', 'FIGURE'),
                         help='Add cumulative measured plane backprojections and counts with --gegi-fast-gate')
+    parser.add_argument('--gegi-plane-priors', type=Path, nargs=2, metavar=('PRIOR_STUDY', 'HELDOUT_SCORE'),
+                        help='Publish the saved four-block plane-prior comparison, held-out scores and guide')
     parser.add_argument('--gamma-showcase',type=Path,help='Copy a completed hash-checked saved gamma showcase; no scientific work or export')
     parser.add_argument('--ring-results',type=Path,help='Copy complete saved GeRC02/KMRC01 10K results and refresh all four current cases; no computation')
     parser.add_argument('--gegi-results',type=Path,nargs='+',help='Render one or two completed checked GeGI runs onto the saved website; no scientific work')
@@ -732,9 +738,9 @@ if __name__ == '__main__':
         parser.error('--gegi-measured-plane requires --gegi-fast-gate')
     if len(args.gegi_digital_pairing_study or ()) > 2:parser.error('--gegi-digital-pairing-study accepts at most two reports')
     if args.refresh_staged_readout and not args.finish_staged:parser.error('--refresh-staged-readout requires --finish-staged')
-    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_campaign_bundle,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_fast_gate)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
+    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_campaign_bundle,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_fast_gate,args.gegi_plane_priors)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
     if args.finish_staged:
         finish_staged(refresh_readout=args.refresh_staged_readout)
     else:
         if args.gegi_plane_z_mm is not None and args.gegi_results is None: parser.error('--gegi-plane-z-mm requires --gegi-results')
-        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle,args.gegi_digital_example,args.gegi_digital_pairing_study,args.gegi_double_pulse,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_pixel_map,gegi_fast_gate=args.gegi_fast_gate,gegi_readout_validation=args.gegi_readout_validation,gegi_pixel_depth=args.gegi_pixel_depth,gegi_measured_plane=args.gegi_measured_plane)
+        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle,args.gegi_digital_example,args.gegi_digital_pairing_study,args.gegi_double_pulse,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_pixel_map,gegi_fast_gate=args.gegi_fast_gate,gegi_readout_validation=args.gegi_readout_validation,gegi_pixel_depth=args.gegi_pixel_depth,gegi_measured_plane=args.gegi_measured_plane,gegi_plane_priors=args.gegi_plane_priors)

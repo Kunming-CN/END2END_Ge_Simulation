@@ -3,6 +3,7 @@
 from copy import deepcopy
 from contextlib import redirect_stdout
 import gzip
+import hashlib
 import io
 import json
 import math
@@ -13,7 +14,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from gegi_continuous_plane import main, plane_prior_weights, reconstruct
+from gegi_continuous_plane import main, plane_prior_weights, reconstruct, run_from_plane
 from gegi_imaging import ELECTRON_REST_KEV
 from gegi_joint_imaging import plane_grid
 
@@ -133,6 +134,57 @@ class ContinuousPlaneTests(unittest.TestCase):
             self.assertEqual(layer['triggers'], 0)
             self.assertEqual(layer['mass'], [[0., 0.], [0., 0.]])
 
+    def test_reprojection_inherits_legacy_grid_and_binds_both_inputs(self):
+        acquisition, fit = sample([
+            ([[10, 26], [11, 27]], [417., 245.], [[0, 1], [1, 0]], [[-7., 7., 1.], [1., 14., 2.]]),
+        ])
+        settings = dict(z_mm=37., extent_mm=16., step_mm=2., sigma_deg=8.)
+        area = reconstruct(acquisition, fit, **settings)
+        report_bytes = json.dumps(acquisition).encode()
+        area['input_sha256'] = dict(acquisition=hashlib.sha256(report_bytes).hexdigest(), waveform_fit='c'*64)
+        del area['model']['plane_prior']
+        packed = gzip.compress(json.dumps(area).encode())
+        with tempfile.TemporaryDirectory() as directory:
+            report, plane, output = (Path(directory)/name for name in ('report.json', 'plane.json.gz', 'plane-solid-angle.json.gz'))
+            report.write_bytes(report_bytes)
+            plane.write_bytes(packed)
+            replay = run_from_plane(report, plane)
+            self.assertEqual(replay['layers'], area['layers'])
+            self.assertEqual(replay['model']['plane_prior'], 'uniform-area')
+            argv = ['gegi_continuous_plane.py', '--acquisition', str(report), '--from-plane', str(plane),
+                    '--plane-prior', 'uniform-solid-angle', '--output', str(output)]
+            with patch('sys.argv', argv), redirect_stdout(io.StringIO()):
+                main()
+            solid = json.loads(gzip.decompress(output.read_bytes()))
+            for key in ('grid', 'selection', 'triggers'):
+                self.assertEqual(solid[key], json.loads(json.dumps(area[key])))
+            self.assertEqual(solid['model']['angular_nuisance_sigma_deg'], 8.)
+            self.assertEqual(solid['model']['plane_prior'], 'uniform-solid-angle')
+            self.assertEqual(solid['input_sha256'], area['input_sha256'] | dict(parent_plane=hashlib.sha256(packed).hexdigest()))
+            self.assertNotEqual(solid['layers']['all']['mass'], area['layers']['all']['mass'])
+            report.write_bytes(report_bytes+b'\n')
+            with self.assertRaisesRegex(ValueError, 'not bound to this acquisition'):
+                run_from_plane(report, plane)
+
+    def test_reprojection_retries_saved_geometry_and_retains_unavailable_orders(self):
+        acquisition, fit = sample([
+            ([[10, 26], [11, 27]], [417., 245.], [[0, 1], [1, 0]], [[-7., 7., 1.], [1., 14., 2.]]),
+            ([[10, 27], [11, 26]], [407., 255.], [[0, 1]], None),
+        ])
+        report_bytes = json.dumps(acquisition).encode()
+        with patch('gegi_continuous_plane.candidate_response', return_value=np.zeros(16)):
+            saved = reconstruct(acquisition, fit, z_mm=-40., extent_mm=8., step_mm=4.)
+        saved['input_sha256'] = dict(acquisition=hashlib.sha256(report_bytes).hexdigest(), waveform_fit='c'*64)
+        orders = lambda result: [order['status'] for pair in result['triggers'][0]['pairings'] for order in pair['orders']]
+        self.assertEqual(orders(saved), ['no_plane_response', 'no_plane_response', 'no_waveform_fit'])
+        with tempfile.TemporaryDirectory() as directory:
+            report, plane = (Path(directory)/name for name in ('report.json', 'plane.json.gz'))
+            report.write_bytes(report_bytes)
+            plane.write_bytes(gzip.compress(json.dumps(saved).encode()))
+            replay = run_from_plane(report, plane, z_mm=40.)
+        self.assertEqual(orders(replay), ['projected', 'projected', 'no_waveform_fit'])
+        self.assertEqual(replay['triggers'][0]['unresolved_mass'], .5)
+
     def test_portable_invocation_uses_and_writes_siblings(self):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
@@ -145,8 +197,7 @@ class ContinuousPlaneTests(unittest.TestCase):
             with patch('sys.argv', argv), redirect_stdout(io.StringIO()), \
                     patch('gegi_continuous_plane.run_from_adc', return_value=result) as run:
                 main()
-            run.assert_called_once_with(report, windows, calibration, z_mm=40., extent_mm=120., step_mm=4.,
-                                        sigma_deg=5., plane_prior='uniform-area')
+            run.assert_called_once_with(report, windows, calibration, z_mm=40.)
             self.assertEqual(json.loads(gzip.decompress(output.read_bytes())), result)
 
 
