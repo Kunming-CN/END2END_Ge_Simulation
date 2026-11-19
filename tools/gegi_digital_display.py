@@ -18,6 +18,7 @@ DIGITAL_OBSERVABLES = {
 DOUBLE_PULSE_FILE = 'results/gegi-digital/double-pulse.json'
 SOURCE_EXPOSURE_FILE = 'results/gegi-digital/source-exposure.json'
 EVENT_ENERGY_FILE = 'results/gegi-digital/event-energy.json'
+EDGE_POSITION_FILE = 'results/gegi-digital/edge-position.json'
 PULSE_TOPOLOGIES = {
     'same_strips': 'Same strips',
     'adjacent_strips': 'Adjacent strips',
@@ -413,6 +414,170 @@ def attach_event_energy(site, report_path):
                                         encoding='utf-8', newline='\n')
 
 
+def attach_edge_position(site, report_path):
+    source = report_path.read_bytes()
+    report = json.loads(source)
+    if report.get('kind') != 'gegi_edge_position_single_group_study_v1' or report.get('status') != 'completed':
+        raise ValueError('Expected a completed GeGI 2950 strip-edge position study.')
+    example = json.loads((site/'results/gegi-digital/event.json').read_bytes())
+    provenance = report['provenance']
+    if provenance['digital_profile_sha256'] != example['profile_sha256']:
+        raise ValueError('The strip-edge study uses a different digital readout profile.')
+    project = Path(__file__).resolve().parents[1]
+    for name, digest in provenance['source_sha256'].items():
+        path = (project/name).resolve()
+        if not path.is_relative_to(project/'tools') or sha256(path.read_bytes()).hexdigest() != digest:
+            raise ValueError(f'GeGI edge study source changed after evaluation: {name}')
+
+    context = report['event_2950_context']
+    if context['event_id'] != 2950:
+        raise ValueError('The strip-edge study must describe simulated primary 2950.')
+    original = next(row for row in example['energy_order_check']['candidates'] if row['event_id'] == 2950)
+    event_sites = []
+    if [edge['site'] for edge in report['edges']] != ['A', 'B']:
+        raise ValueError('Expected the two scanned strip edges from primary 2950.')
+    for edge, ref, old_site, old_error in zip(report['edges'], context['sites'], original['sites'],
+                                              original['fit_error_to_simulated_centroids_mm'], strict=True):
+        label = [old_site['x_strip'], old_site['y_strip']]
+        if (edge['site'] != ref['site'] or edge['edge_id'] != ref['edge_id']
+                or edge['original_pair_ids'] != old_site['contact_ids'] or edge['original_strips'] != label
+                or not math.isclose(ref['old_waveform_fit_xyz_error_mm'], old_error, abs_tol=1e-9)
+                or ref['new_event_fit_mm'] is not None):
+            raise ValueError('Strip-edge study targets differ from the published primary 2950 sites.')
+        axis = edge['axis']
+        gap = [edge['original_metal_edge_mm'], edge['neighbor_metal_edge_mm']]
+        scan_position = ref['truth_energy_centroid_mm'][axis]
+        event_sites.append(dict(site=edge['site'], strip_names=label, axis=edge['axis_name'].upper(),
+                                centroid_mm=ref['truth_energy_centroid_mm'],
+                                offset_pitch=ref['truth_centroid_signed_xy_offsets_pitch'][axis],
+                                projected_into_gap=min(gap) <= scan_position <= max(gap), gap_edges_mm=gap))
+
+    design = report['design']
+    offsets, depths = design['holdout_offsets_pitch'], design['holdout_depths_mm']
+    expected = {(site['site'], offset, depth) for site in event_sites for offset in offsets for depth in depths}
+    holdout = []
+    for raw in report['holdout']:
+        xyz = raw['position_mm']
+        offset = next((v for v in offsets if math.isclose(v, raw['offset_pitch_fraction_toward_neighbor'], abs_tol=1e-12)), None)
+        key = raw['site'], offset, xyz[2]
+        if key not in expected:
+            raise ValueError('GeGI edge study duplicated or changed a held-out point.')
+        expected.remove(key)
+        status = raw['endpoints']['terminal_contact_status']
+        readout = raw['readout']['readout_status']
+        predictions = {k: {name: p[name] for name in ('position_mm', 'status')}
+                       for k, p in raw['predictions'].items()}
+        position = predictions['extended_fast']['position_mm']
+        holdout.append(dict(site=raw['site'], offset_pitch=offset, depth_mm=xyz[2], position_mm=xyz,
+                            target_axis=raw['target_axis'], true_target_mm=raw['true_target_mm'],
+                            signed_xy_offsets_pitch=raw['signed_xy_offsets_from_original_centers_pitch'],
+                            projected_geometry=raw['projected_geometry'], in_gap=raw['projected_geometry'] == 'projected_gap',
+                            terminal_status=status, shared_charge=raw['endpoints']['verified_shared_charge'],
+                            readout_status=readout, predictions=predictions,
+                            error_mm=None if position is None else position-raw['true_target_mm']))
+    if expected or len(holdout) != report['counts']['holdout']:
+        raise ValueError('GeGI edge study did not retain every held-out point.')
+    summary = {r['site']: r for r in report['summary']}
+    if len(report['summary']) != 3 or set(summary) != {'all', 'A', 'B'}:
+        raise ValueError('Missing GeGI strip-edge coverage summaries.')
+    for label, row in summary.items():
+        points = [p for p in holdout if label in ('all', p['site'])]
+        if row['n'] != len(points) or any(metrics['denominator'] != len(points)
+                or metrics['evaluated'] != sum(p['predictions'][key]['position_mm'] is not None for p in points)
+                for key, metrics in row['methods'].items()):
+            raise ValueError('GeGI edge summary coverage differs from the held-out records.')
+    data = {key: report[key] for key in ('status', 'design', 'counts', 'edges', 'event_2950_context', 'summary')}
+    data.update(kind='gegi_edge_position_public_v1', event_sites=event_sites, held_out=holdout,
+                provenance={**provenance, 'report_sha256': sha256(source).hexdigest(),
+                            'input_sha256': sorted(provenance['input_sha256'].values())})
+    (site/EDGE_POSITION_FILE).write_text(json.dumps(data, allow_nan=False, separators=(',', ':'))+'\n',
+                                         encoding='utf-8', newline='\n')
+
+
+def edge_position_section(study):
+    def rms(value):
+        return f'{value:.3f}'
+
+    sites = study['event_sites']
+    coordinates = []
+    for site in sites:
+        xyz = ', '.join(f'{x:.3f}' for x in site['centroid_mm'])
+        label = '/'.join(map(escape, site['strip_names']))
+        gap = ' to '.join(f'{x:.3f}' for x in sorted(site['gap_edges_mm']))
+        projection = 'within' if site['projected_into_gap'] else 'just outside'
+        coordinates.append(f'<li><strong>Site {escape(site["site"])} · {label}</strong> ({xyz}) mm. '
+                           f'The centroid projects {site["offset_pitch"]:+.3f} pitch from the strip centre on '
+                           f'{escape(site["axis"])}, {projection} the modeled gap from {gap} mm.</li>')
+    table = {(p['offset_pitch'], p['site'], p['depth_mm']): p for p in study['held_out']}
+    depths = sorted({depth for _, _, depth in table})
+    offsets = sorted({offset for offset, _, _ in table})
+    columns = [f'<th scope="colgroup" colspan="{len(depths)}">Site {escape(site["site"])} · {escape(site["axis"])}</th>'
+               for site in sites]
+    labels = [f'<th scope="col">z = {depth:g} mm</th>' for site in sites for depth in depths]
+    rows = []
+    for offset in offsets:
+        cells = []
+        for site in sites:
+            for depth in depths:
+                point = table[offset, site['site'], depth]
+                if point['error_mm'] is not None:
+                    value = f'{point["error_mm"]:+.3f} mm'
+                elif point['terminal_status'] == 'ambiguous_terminal_contact':
+                    value = 'Ambiguous contact'
+                elif point['terminal_status'] == 'terminal_unverified':
+                    value = 'Incomplete collection'
+                elif point['readout_status'] == 'multiple_positive_slow_strips':
+                    value = 'Multiple readout strips'
+                else:
+                    reasons = {'outside_measured_feature_hull': 'Outside model support',
+                               'fast_or_cfd_unavailable': 'Missing signal feature',
+                               'measured_pair_unsupported': 'Unsupported strip pair'}
+                    value = reasons.get(point['predictions']['extended_fast']['status'], 'Unavailable')
+                shade = ' style="background:#fff2d7"' if point['in_gap'] else ''
+                if point['terminal_status'] == 'migrated_to_target_neighbor':
+                    value += ' · adjacent strip'
+                if point['in_gap']:
+                    value += ' · gap'
+                cells.append(f'<td{shade}>{value}</td>')
+        rows.append(f'<tr><th scope="row">{offset:.3f}</th>{"".join(cells)}</tr>')
+    validation = next(row for row in study['summary'] if row['site'] == 'all')
+    methods = validation['methods']
+    compared = validation['inner_extended_common_support']
+    common = compared['extended_fast']['evaluated']
+    error_text = (f' On the {common} points covered by both calibrations, the one-axis RMS errors were '
+                  f'{rms(compared["frozen_inner"]["rms_mm"])} and '
+                  f'{rms(compared["extended_fast"]["rms_mm"])} mm, respectively.' if common else '')
+    ablation = validation['extended_fast_cfd_common_support']
+    matched = ablation['extended_fast']['evaluated']
+    timing_text = (f' On the {matched} points shared with the timing-only comparison, RMS error was '
+                   f'{rms(ablation["extended_fast"]["rms_mm"])} mm with both observables, '
+                   f'{rms(ablation["extended_cfd_only"]["rms_mm"])} mm with timing alone, and '
+                   f'{rms(ablation["gap_midpoint_prior"]["rms_mm"])} mm at the known gap midpoint.' if matched else '')
+    timing = methods['extended_cfd_only']
+    timing_all = (f' Timing alone returned {timing["evaluated"]}/{validation["n"]} positions with '
+                  f'{rms(timing["rms_mm"])} mm RMS.' if timing['evaluated'] else '')
+    migrated = validation['endpoint_counts'].get('migrated_to_target_neighbor', 0)
+    single_pair = validation['readout_counts'].get('single_slow_strip_per_face', 0)
+    return f'''<h3 id="gegi-edge-position">Position calibration at the strip edge</h3>
+<p>Both simulated deposition centroids in primary 2950 lie beyond the earlier ±0.4-pitch position range along one
+axis. The following detector-coordinate XYZ positions are the simulated deposited-energy centroids.</p>
+<ul>{''.join(coordinates)}</ul>
+<p>We compared two calibrations of the same interpolation using the signed neighboring-strip response
+and the measured timing difference between faces. At {study['design']['injection_energy_keV']:g} keV,
+training on the inner reference points gave a coordinate for {methods['frozen_inner']['evaluated']}/{validation['n']} held-out injections.
+Adding the edge references raised coverage to {methods['extended_fast']['evaluated']}/{validation['n']}.{error_text}
+{timing_text}{timing_all} The midpoint comparison uses advance knowledge of which gap was scanned.</p>
+<div role="region" aria-label="Held-out edge positions" tabindex="0" style="overflow-x:auto"><table>
+<caption style="text-align:left">Extended estimate minus reference along the tested coordinate. Shading marks the modeled gap.</caption>
+<colgroup span="1"></colgroup>{'<colgroup span="'+str(len(depths))+'"></colgroup>'*len(sites)}
+<thead><tr><th scope="col" rowspan="2">Offset toward neighbor (pitch)</th>{''.join(columns)}</tr>
+<tr>{''.join(labels)}</tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+<p>Terminal collection moved to the adjacent strip for {migrated}/{validation['n']} points. The slow branch returned a single strip on
+each face for {single_pair}/{validation['n']}. The simulations hold the other strip coordinate at its centre and use isolated pulses with no added noise.
+Carrier diffusion and self-repulsion are disabled. The two sites in primary 2950 still require a separate reconstruction.
+<a href="gegi-digital/edge-position.json">Open the edge geometry, coverage and error data (JSON)</a>.</p>'''
+
+
 def compact_pairing_study(study, source_hash, *, holdout=False):
     cases = []
     for case in study['cases']:
@@ -516,7 +681,7 @@ mixtures. The same model supplied {benchmark["training_injections"]} training in
 Experimental pairing accuracy remains unmeasured. <a href="gegi-digital/event.json">Case counts and fit scores</a>.</p>{holdout_text}'''
 
 
-def energy_order_section(check, counts):
+def energy_order_section(check, counts, *, edge_position=False):
     candidates = check['candidates']
     lines = {c['source_line']['energy_keV'] for c in candidates if c['source_line']}
     source = f' of {lines.pop():g} keV each' if len(lines) == 1 and all(c['source_line'] for c in candidates) else ''
@@ -541,7 +706,11 @@ def energy_order_section(check, counts):
                          "The energy model excludes the order recorded by transport.")
             if 'fit_error_to_simulated_centroids_mm' in c:
                 a, b = c['fit_error_to_simulated_centroids_mm']
-                notes.append(f"Its fitted sites lie {a:.2f} and {b:.2f} mm from their simulated charge-deposition centroids.")
+                if edge_position and c['event_id'] == 2950:
+                    notes.append(f'The earlier within-strip fit placed its two sites {a:.2f} and {b:.2f} mm from '
+                                 'their simulated centroids. <a href="#gegi-edge-position">See the edge-position check</a>.')
+                else:
+                    notes.append(f"Its fitted sites lie {a:.2f} and {b:.2f} mm from their simulated charge-deposition centroids.")
     if 'position_study' in check:
         s = check['position_study']
         notes.append(f"Across {s['mixtures']} independent two-site mixtures, fitting positions within the strips "
@@ -581,6 +750,7 @@ def render(site):
     pulse = site/DOUBLE_PULSE_FILE
     exposure = site/SOURCE_EXPOSURE_FILE
     event_energy = site/EVENT_ENERGY_FILE
+    edge_position = site/EDGE_POSITION_FILE
     card = '<section id="gegi" class="panel" data-dataset="gegi">\n'
     if exposure.is_file():
         data = json.loads(exposure.read_bytes())
@@ -611,8 +781,10 @@ Training used {benchmark["trained"]} injected points on four strip pairs. On {be
 the radial XY RMS error changed from <strong>{xy["center_rmse_mm"]:.2f} to {xy["substrip_rmse_mm"]:.2f} mm</strong>.
 The depth RMS error was {benchmark["z"]["rmse_mm"]:.2f} mm on {benchmark["z"]["compared"]} points.
 These errors compare simulated coordinates within the sampled region.</p>'''
+    if edge_position.is_file():
+        card += edge_position_section(json.loads(edge_position.read_bytes()))
     if 'energy_order_check' in ex:
-        orders = energy_order_section(ex['energy_order_check'], ex['counts'])
+        orders = energy_order_section(ex['energy_order_check'], ex['counts'], edge_position=edge_position.is_file())
         card += f'<details><summary>Interaction ordering benchmark</summary>{orders}</details>' if has_pulse else orders
     if 'pairing_benchmark' in ex:
         card += '<details><summary>Two-site strip-pairing benchmark</summary>' + pairing_section(ex['pairing_benchmark']) + '</details>'
