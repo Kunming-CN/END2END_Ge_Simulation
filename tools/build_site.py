@@ -472,6 +472,8 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
             raise ValueError('Publish the GeGI digital study onto a validated existing site snapshot.')
         shutil.copytree(DESTINATION, OUT)
         (OUT / MANIFEST).unlink()
+        from site_canonical_views import prepare
+        prepare(OUT)
         if gegi_commercial_acquisition is not None:
             from gegi_commercial_acquisition_display import attach
             attach(OUT, gegi_commercial_acquisition)
@@ -503,12 +505,7 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
                 attach_pixel_depth(OUT, gegi_pixel_depth)
             if gegi_measured_plane is not None:
                 attach_measured_plane(OUT, gegi_measured_plane)
-        from site_restructure import write_reader_pages
-        from site_discovery import LANDINGS, write_landing_metadata
-        write_reader_pages(OUT)
-        render_gegi_digital(OUT)
-        for path in ('index.html', 'results/index.html', 'guide.html', 'methods/index.html'):
-            write_landing_metadata(OUT, path, LANDINGS[path])
+        refresh_saved_presentation(OUT, restructure=True)
         return install_snapshot(old)
     if gegi_campaign_bundle is not None:
         from gegi_campaign_publication import install_bundle
@@ -552,6 +549,8 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         build_export()
     else:
         build_campaign_export(campaign)
+    from site_canonical_views import prepare
+    prepare(OUT)
     if gegi_digital_example is not None:
         target = OUT/'results/gegi-digital'
         target.mkdir(parents=True, exist_ok=True)
@@ -566,67 +565,77 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
     if gegi_pixel_map is not None:
         from gegi_digital_display import attach_dual_source_hit_map
         attach_dual_source_hit_map(OUT, gegi_pixel_map)
-    full_site = (OUT / 'models/catalog.json').is_file()
+    refresh_saved_presentation(OUT, restructure=restructure)
+    return install_snapshot(old)
+
+
+def refresh_saved_presentation(site, *, restructure=True):
+    """Use one presentation pass for ordinary and targeted saved-data publication."""
+    full_site = (site / 'models/catalog.json').is_file()
     if full_site:
         from site_study_retirement import apply as retire_studies
         from result_web_delivery import materialize_for_build
-        retire_studies(OUT)
-        materialize_for_build(OUT)
+        retire_studies(site)
+        materialize_for_build(site)
         install_geometry_delivery()
     if restructure:
         from saved_focus_pages import upgrade_displays
-        upgrade_displays(OUT)
+        upgrade_displays(site)
     from spectrum_display import assemble as assemble_spectra, ROUTES, route_current_pages
     from spectrum_display import teaching_available
-    spectrum_sources_ready=all((OUT / p).is_file() for p,target in ROUTES.items()
-                              if target != 'spectra/pipeline.html' or not teaching_available(OUT))
-    if restructure and (OUT / "models" / "catalog.json").is_file() and not spectrum_sources_ready:
+    spectrum_sources_ready=all((site / p).is_file() for p,target in ROUTES.items()
+                              if target != 'spectra/pipeline.html' or not teaching_available(site))
+    if restructure and (site / "models" / "catalog.json").is_file() and not spectrum_sources_ready:
         raise ValueError("Current full-site spectrum sources are incomplete; preserve the previous snapshot")
     if spectrum_sources_ready:
-        assemble_spectra(OUT)
+        assemble_spectra(site)
     from viewer_navigation import assemble as assemble_readers, route_current_pages as route_readers
     from site_restructure import apply as apply_site_structure
     # Tiny failure fixtures used by publication tests intentionally omit the model catalog.
     # Real builds still require models/catalog.json in the final validator below.
-    if (OUT / 'models' / 'catalog.json').is_file():
+    if (site / 'models' / 'catalog.json').is_file():
         # A saved native geometry derivative, never a radiation/SSD calculation.
         # Install before navigation so the assembly is a normal supported route.
         from gegi_assembly import publish as publish_gegi_assembly
-        publish_gegi_assembly(OUT)
-        apply_site_structure(OUT)
+        publish_gegi_assembly(site)
+        apply_site_structure(site)
         from gegi_digital_display import render as render_gegi_digital
-        render_gegi_digital(OUT)
+        render_gegi_digital(site)
         from ring_site import apply as apply_ring_pages
-        apply_ring_pages(OUT)
-        if (OUT/'detectors/GeGI_3D/runs/20260922_suite_v3/events/strip_gap_sharing/channels.csv').is_file():
+        apply_ring_pages(site)
+        if (site/'detectors/GeGI_3D/runs/20260922_suite_v3/events/strip_gap_sharing/channels.csv').is_file():
             from saved_plot_repairs import assemble as assemble_plot_repairs, patch_gallery
-            assemble_plot_repairs(OUT)
-            gallery=OUT/'detectors/GeGI_3D/gallery.html'
+            assemble_plot_repairs(site)
+            gallery=site/'detectors/GeGI_3D/gallery.html'
             gallery.write_text(patch_gallery(gallery.read_text(encoding='utf-8')),encoding='utf-8',newline='\n')
         from site_video_curation import apply as curate_videos
-        video_receipt = curate_videos(OUT)
+        video_receipt = curate_videos(site)
         if video_receipt['removed']:
             receipt_path = ROOT/'.local/publication-cleanup/videos.json'
             receipt_path.write_text(json.dumps(video_receipt, indent=2)+'\n', encoding='utf-8', newline='\n')
-    if (OUT / "spectra" / "manifest.json").is_file():
-        route_current_pages(OUT)
+    if (site / "spectra" / "manifest.json").is_file():
+        route_current_pages(site)
         from spectrum_display import finalize as finalize_spectra
-        finalize_spectra(OUT)
+        finalize_spectra(site)
     if full_site:
         from result_web_delivery import finalize as finalize_result_delivery
-        finalize_result_delivery(OUT)
-    assemble_readers(OUT)
-    if (OUT / 'viewers/manifest.json').is_file():
-        route_readers(OUT)
-    if (OUT / 'models/catalog.json').is_file():
+        finalize_result_delivery(site)
+    assemble_readers(site)
+    if (site / 'viewers/manifest.json').is_file():
+        route_readers(site)
+    if (site / 'models/catalog.json').is_file():
         from gegi_publication import link_current as link_gegi_results
-        link_gegi_results(OUT)
-        from site_discovery import assemble as assemble_discovery
-        assemble_discovery(OUT)
+        link_gegi_results(site)
     from gegi_campaign_publication import link_current as link_gegi_campaign
-    link_gegi_campaign(OUT)
-    normalize_text_outputs(OUT)
-    return install_snapshot(old)
+    link_gegi_campaign(site)
+    if full_site:
+        from site_routes import legacy_results_links
+        legacy_results_links(site)
+        from site_canonical_views import apply as apply_canonical_views
+        apply_canonical_views(site)
+        from site_discovery import assemble as assemble_discovery
+        assemble_discovery(site)
+    normalize_text_outputs(site)
 
 
 def install_snapshot(old):
@@ -658,7 +667,7 @@ def install_snapshot(old):
     return summary
 
 
-def finish_staged(refresh_readout=False):
+def finish_staged(refresh_readout=False, refresh_presentation=False):
     """Retry a saved stage; optionally refresh the retained-waveform display."""
     paths = (OUT, DESTINATION)
     linked = any(item.is_symlink() or getattr(item, 'is_junction', lambda: False)()
@@ -667,6 +676,23 @@ def finish_staged(refresh_readout=False):
         raise ValueError('A real generated stage and installed snapshot are required')
     if not (DESTINATION / MANIFEST).is_file() or (ROOT / '.local/site-previous').exists():
         raise ValueError('Inspect the installed snapshot or pending atomic swap before recovery')
+    if refresh_presentation:
+        from site_canonical_views import prepare
+        prepare(OUT)
+        # Repair only the precisely reversible discovery metadata from the
+        # interrupted architecture export. Its original body must match the
+        # campaign's existing receipt before any generator is allowed to run.
+        folder=OUT/'results/gegi-campaign'
+        if (folder/'publication.json').is_file():
+            record=json.loads((folder/'publication.json').read_bytes())['artifacts']['index.html']
+            page=folder/'index.html';raw=page.read_bytes()
+            if hashlib.sha256(raw).hexdigest()!=record['sha256']:
+                restored=re.sub(r'<meta\s+name="description"[^>]*>|<link\s+rel="canonical"[^>]*>', '', raw.decode('utf-8')).encode('utf-8')
+                if len(restored)!=record['bytes'] or hashlib.sha256(restored).hexdigest()!=record['sha256']:
+                    raise ValueError('Staged campaign content differs beyond discovery metadata')
+                page.write_bytes(restored)
+        refresh_saved_presentation(OUT, restructure=True)
+        return install_snapshot(validate(DESTINATION))
     if refresh_readout:
         from result_web_delivery import active as result_delivery_active
         if result_delivery_active(OUT):
@@ -755,6 +781,7 @@ if __name__ == '__main__':
     parser.add_argument('--gegi-campaign-bundle',type=Path,help='Copy a completed compact formal GeGI campaign public bundle; no analysis or physics')
     parser.add_argument('--finish-staged',action='store_true',help='Fully validate and install an existing generated stage after a publication-only failure; no regeneration')
     parser.add_argument('--refresh-staged-readout',action='store_true',help='With --finish-staged, refresh lossless saved-waveform delivery and its source-bound displays')
+    parser.add_argument('--refresh-staged-presentation',action='store_true',help='With --finish-staged, regenerate presentation from the checked saved stage without copying or rerunning science')
     args=parser.parse_args()
     if args.gegi_digital_example and not args.restructure:parser.error('--gegi-digital-example requires --restructure')
     if args.gegi_digital_pairing_study and not args.restructure:parser.error('--gegi-digital-pairing-study requires --restructure')
@@ -770,9 +797,10 @@ if __name__ == '__main__':
         parser.error('--gegi-plane-intersections requires IMAGE_STUDY LEAVE_TWO_OUT [ANCESTRY CONE_COMPARISON]')
     if len(args.gegi_digital_pairing_study or ()) > 2:parser.error('--gegi-digital-pairing-study accepts at most two reports')
     if args.refresh_staged_readout and not args.finish_staged:parser.error('--refresh-staged-readout requires --finish-staged')
+    if args.refresh_staged_presentation and not args.finish_staged:parser.error('--refresh-staged-presentation requires --finish-staged')
     if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_campaign_bundle,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_fast_gate,args.gegi_plane_priors,args.gegi_shared_clock,args.gegi_merged_components,args.gegi_weak_strips,args.gegi_plane_intersections,args.gegi_commercial_acquisition)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
     if args.finish_staged:
-        finish_staged(refresh_readout=args.refresh_staged_readout)
+        finish_staged(refresh_readout=args.refresh_staged_readout,refresh_presentation=args.refresh_staged_presentation)
     else:
         if args.gegi_plane_z_mm is not None and args.gegi_results is None: parser.error('--gegi-plane-z-mm requires --gegi-results')
         build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle,args.gegi_digital_example,args.gegi_digital_pairing_study,args.gegi_double_pulse,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_pixel_map,gegi_fast_gate=args.gegi_fast_gate,gegi_readout_validation=args.gegi_readout_validation,gegi_pixel_depth=args.gegi_pixel_depth,gegi_measured_plane=args.gegi_measured_plane,gegi_plane_priors=args.gegi_plane_priors,gegi_shared_clock=args.gegi_shared_clock,gegi_merged_components=args.gegi_merged_components,gegi_weak_strips=args.gegi_weak_strips,gegi_plane_intersections=args.gegi_plane_intersections,gegi_commercial_acquisition=args.gegi_commercial_acquisition)

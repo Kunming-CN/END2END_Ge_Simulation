@@ -35,7 +35,8 @@ class RingSiteTests(unittest.TestCase):
             base = (R.RING_FOLDER if ring else 'examples/cs137-10k') + '/' + model
             counts = {'initial_primaries': 10000, 'initial_decays': 10000, 'zero_deposit_primaries': 9997,
                       'groups': 3, 'accepted': 2, 'native_failed_groups': 1, 'readout_rejected': 0}
-            self.put(base + '/response/run.json', {'current_counts' if ring else 'counts': counts})
+            self.put(base + '/response/run.json', {'current_counts' if ring else 'counts': counts,
+                                                   'trace_examples': {'source_trace_records': 2}})
             native_bin = 198 if model == 'KMRC01_candidate' else 202
             hist = {'width_keV': 5, 'bins': [
                 {'stage': stage, 'bin': native_bin if stage=='native_terminal_charge' else 200,
@@ -131,6 +132,18 @@ class RingSiteTests(unittest.TestCase):
             self.assertIn('id="tenk-'+model+'"', html)
         self.assertIn('fixed −1 electronics', html)
 
+    def test_overview_waveform_coverage_uses_saved_metadata_and_archive_records(self):
+        self.fixture()
+        path = self.site / 'examples/cs137-10k/AK02/response/run.json'
+        report = R.read(path); report.pop('trace_examples'); self.put(path.relative_to(self.site), report)
+        with zipfile.ZipFile(path.parent / 'ledgers.zip', 'w') as archive:
+            archive.writestr('traces.jsonl', '{"event_id":1,"group_id":0}\n\n{"event_id":2,"group_id":0}\n')
+        cases = R.cases(self.site)
+        self.assertEqual([case['saved_waveforms'] for case in cases], [2,2,2,2])
+        cards = R.cards(cases, '../../')
+        self.assertEqual(cards.count('2 saved waveform records'), 4)
+        self.assertIn('complete scalar ledger covers all pulse groups', cards)
+
     def test_population_mismatch_refused_and_origin_sources_complete(self):
         self.fixture(); report = self.site / R.RING_FOLDER / 'GeRC02/response/run.json'
         o = R.read(report); o['current_counts']['accepted'] = 0; self.put(report.relative_to(self.site), o)
@@ -145,7 +158,7 @@ class RingSiteTests(unittest.TestCase):
 
     def report_fixture(self, model='AK02', traces=4):
         base = (R.RING_FOLDER if model in R.RING_MODELS else 'examples/cs137-10k') + '/' + model
-        case = dict(model=model, label=model, note='Frozen scientific fixture.', base=base,
+        case = dict(model=model, label=model, note='Frozen scientific fixture.', base=base, saved_waveforms=traces,
                     counts=dict(initial_primaries=10000, initial_decays=10000, zero_deposit_primaries=9999,
                                 groups=1, accepted=0, native_failed_groups=1, readout_rejected=0))
         folder = self.site / base / 'response'; folder.mkdir(parents=True, exist_ok=True)
@@ -279,11 +292,12 @@ class RingSiteTests(unittest.TestCase):
         runtime = r'''
 const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),{webcrypto}=require('node:crypto');
 const input=JSON.parse(fs.readFileSync(0,'utf8'));
-class Element{constructor(){this.children=[];this.value='';this.textContent='';this.hidden=false;this.open=false;}append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this.children=nodes;}removeAttribute(name){delete this[name];}}
+class Element{constructor(){this.children=[];this.value='';this.textContent='';this.hidden=false;this.open=false;this.dataset={};}append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this.children=nodes;}removeAttribute(name){delete this[name];}setAttribute(name,value){this[name]=value;}}
 const nodes=new Map(),get=id=>{if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);};get('saved-response-data').textContent=JSON.stringify(input.config);
+const navigationLinks=['result','files','events','spectrum'].map(kind=>{const node=new Element();node.dataset.contextLink=kind;return node;});
 const location={pathname:'/results/cs137-10k/AK02/charge-readout.html',search:'?study=cs137-10k&model=AK02&variant=AK02&event=698&group=0',hash:''},listeners=new Map(),requests=[];
 const move=url=>location.search=new URL(url,'https://test.invalid').search,history={replaceState:(_,__,url)=>move(url),pushState:(_,__,url)=>move(url)};
-const c=vm.createContext({document:{getElementById:get,createElement:()=>new Element(),querySelectorAll:()=>[]},URLSearchParams,location,history,crypto:webcrypto,Uint8Array,TextDecoder,Blob,Response,DecompressionStream,
+const c=vm.createContext({document:{getElementById:get,createElement:()=>new Element(),querySelectorAll:selector=>selector==='[data-context-link]'?navigationLinks:[]},URLSearchParams,location,history,crypto:webcrypto,Uint8Array,TextDecoder,Blob,Response,DecompressionStream,
 addEventListener:(name,fn)=>listeners.set(name,fn),fetch:async path=>{requests.push(path);const packed=Buffer.from(input.packed,'base64');return {ok:true,arrayBuffer:async()=>packed.buffer.slice(packed.byteOffset,packed.byteOffset+packed.byteLength)};},
 SavedFocusPlots:{focusEnd:()=>10,shaperEnd:()=>20,draw:(host,panels)=>{host.children=panels;}}});
 vm.runInContext(input.navigation,c);vm.runInContext(input.controller,c);
@@ -292,6 +306,8 @@ vm.runInContext(input.navigation,c);vm.runInContext(input.controller,c);
  assert.equal(get('selected-summary').children.length,3);assert.equal(get('selected-summary').children[0].textContent,'Truth deposited energy: 661.657 keV');assert.match(get('selected-3d').href,/event=698&group=0/);assert.equal(get('selected-teaching').hidden,true);
  assert.ok(get('selected-summary').children.every(n=>!n.textContent.includes('row IDs')&&!n.textContent.includes('Group origin')));
  location.search='?study=cs137-10k&model=AK02&variant=AK02&event=213&group=0';await listeners.get('popstate')();assert.match(get('selected-status').textContent,/Matching saved waveform: primary 213/);assert.equal(get('selected-plots').children.length,4);assert.equal(requests.length,1);
+ for(const [href,path]of [[get('selected-3d').href,'/results/cs137-10k/events.html'],[navigationLinks[3].href,'/results/cs137-10k/spectra.html'],[get('selected-teaching').href,'/learn/signals/index.html']]){const url=new URL(href,'https://test.invalid'+location.pathname);assert.equal(url.pathname,path);for(const [key,value]of Object.entries({study:'cs137-10k',model:'AK02',variant:'AK02',event:'213',group:'0'}))assert.equal(url.searchParams.get(key),value);}
+ assert.equal(navigationLinks[2].href,get('selected-3d').href);assert.equal(new URL(navigationLinks[3].href,'https://test.invalid'+location.pathname).hash,'#tenk-AK02');
  get('selected-details').open=true;get('selected-details').ontoggle();const exact=JSON.parse(get('selected-record').textContent);assert.deepEqual(exact.saved_trace,JSON.parse(input.raw));assert.equal(exact.pulse.event_id,213);assert.deepEqual(exact.pulse,input.config.pulses.find(p=>p.event_id===213));assert.match(get('selected-sampling').textContent,/retained original analog samples/);assert.doesNotMatch(get('selected-status').textContent,/samples:/);
  location.search='?study=cs137-10k&model=AK02&variant=AK02&event=698&group=0';await listeners.get('popstate')();assert.equal(get('selected-plots').children.length,0);assert.match(get('selected-status').textContent,/No published full waveform/);assert.equal(requests.length,1);assert.equal(JSON.parse(get('selected-record').textContent).saved_trace,null);
  location.search='?model=SAP22&event=213&group=0';await listeners.get('popstate')();assert.match(get('selected-status').textContent,/does not match this saved case/);assert.equal(get('selected-plots').children.length,0);assert.equal(requests.length,1);

@@ -1,16 +1,20 @@
 # GeSignal — HPGe radiation-to-readout simulation
 
-GeSignal simulates energy deposits in high-purity germanium with Geant4/remage and follows the drifting charge with SolidStateDetectors.jl. The readout depends on the detector. The LBNL examples use a preamplifier, analog shaper and peak ADC. For GeGI, Control can replay saved strip signals through a nominal digitized preamplifier, use the fast response on neighboring strips for position, and measure energy on the slow branch. The GeGI electronics settings and position calibration describe the simulation.
+GeSignal follows gamma-ray energy deposits in high-purity germanium through charge induction and detector readout. Browse saved research or run and analyze your own simulation.
+
+[Explore the website](https://kunming-cn.github.io/END2END_Ge_Simulation/) · [Choose a research study](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) · [Download and run locally](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html)
 
 ## Run a simulation
 
-[Download the student software for Windows and macOS](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip) and extract it. Open `tools/site_guide.html` for prerequisites. On Windows open `Control.cmd`. On macOS run `Setup.command` once, then open `Control.command`. In Control, choose a cryostat, detector and source, check the plan, run it and open its results. The package includes the code, models and guide. [Setup and use guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html)
+[Download the student software for Windows and macOS](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip), extract it and follow the [setup guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html). On Windows open `Control.cmd`; on macOS run `Setup.command` once, then open `Control.command`. Choose a compatible cryostat, detector and source, check the plan, run it and inspect the saved results. The software contains code, models and the guide; research exhibits and saved study data live on the website. GeGI calibration is a separate download.
 
 ## Explore saved results
 
-- [Follow one signal](https://kunming-cn.github.io/END2END_Ge_Simulation/spectra/pipeline.html) from a Cs137 energy deposit to a measured pulse in a simulation.
-- [Browse the results](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html) for Cs137 and GeGI studies, including event counts, settings and downloadable data. [Methods](https://kunming-cn.github.io/END2END_Ge_Simulation/methods/index.html)
+- [Follow one signal](https://kunming-cn.github.io/END2END_Ge_Simulation/learn/signals/index.html) from a saved Cs-137 energy deposit to readout.
+- [Browse the research](https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html): GeGI archived-library shared readout, four independent GeGI acquisitions, and separate Cs-137 10K and 1M studies. Each keeps its own sample, settings and identities.
 - Inspect the [17 detector models](https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/index.html) and their [cryostat assemblies](https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/index.html). Control lists executable combinations.
+
+Geant4/remage provides radiation deposits; SolidStateDetectors.jl calculates fields, drift and electrode charge. LBNL examples use analog shaping and a peak ADC. GeGI studies use nominal digitized strip readout and signal-derived interaction candidates. [Methods and interpretation](https://kunming-cn.github.io/END2END_Ge_Simulation/methods/index.html) distinguish functional software checks, numerical convergence and agreement with experiment.
 
 ## Work with the source
 

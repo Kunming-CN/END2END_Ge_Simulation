@@ -61,15 +61,19 @@ HISTORICAL_DESCRIPTIONS = {
 
 def landing_descriptions(site):
     site = Path(site)
+    canonical_layout = (site / 'canonical-views.json').is_file()
     descriptions = {}
     for path in routes.FIXED:
         record = routes.page_record(path)
         selected = (record['role'] in {'home', 'hub', 'guide', 'dataset', 'assembly'}
                     or record['role'] == 'method' and record['owner'] == 'site_restructure')
+        if canonical_layout:
+            selected = (selected or record['role'] == 'study' or path in routes.CANONICAL_VIEWS.values()
+                        or path == 'results/gegi-campaign/index.html') and path not in routes.CANONICAL_VIEWS
         if selected:
             # Selection belongs to the route registry; descriptions describe
             # those existing content pages without adding wrapper entrances.
-            descriptions[path] = LANDINGS[path]
+            descriptions[path] = LANDINGS.get(path, record['title'] + '. Saved study evidence, original identities, data and methods.')
     for model in routes.CASE_MODELS:
         path = routes.case_result_path(model)
         record = routes.page_record(path)
@@ -108,6 +112,11 @@ def sitemap_bytes(paths):
 def write_landing_metadata(site, path, description):
     page = site / path
     html = page.read_text(encoding='utf-8')
+    page.write_text(landing_metadata_html(html, path, description), encoding='utf-8', newline='\n')
+
+
+def landing_metadata_html(html, path, description):
+    """One deterministic metadata transform shared with canonical view generation."""
     # These pages are maintained sources, not hash-bound result presentations.
     html = re.sub(r'<meta\s+name="description"[^>]*>', '', html)
     html = re.sub(r'<link\s+rel="canonical"[^>]*>', '', html)
@@ -127,7 +136,7 @@ def write_landing_metadata(site, path, description):
     if '<title>' not in html:
         raise ValueError(f'Maintained discovery page has no title: {path}')
     html = html.replace('<title>', tags + '<title>', 1)
-    page.write_text(html, encoding='utf-8', newline='\n')
+    return html
 
 
 def assemble(site):

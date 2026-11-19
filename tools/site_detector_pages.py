@@ -7,15 +7,36 @@ from pathlib import Path
 from site_fragments import remove_sections, ids
 from model_type_labels import TYPE_LABELS
 
+MODEL_NAMES={
+    'BEGe_GD32B_reference':'GD32B BEGe reference',
+    'BEGe_reference':'BEGe reference',
+    'Bipolar_reference_3D':'Bipolar planar reference',
+    'COAX_ANG2_reference':'ANG2 coaxial reference',
+    'GeGI_3D':'GeGI double-sided strips',
+    'ICPC_48A_reference':'48A ICPC reference',
+    'ICPC_large_reference':'Large ICPC reference',
+    'KL01_3D':'KL01 planar detector',
+    'KMRC01_candidate':'KMRC01 candidate',
+    'PPC_PONaMa1_reference':'PONaMa1 reference',
+    'SAP18_ring08_scenario':'SAP18 ring scenario',
+}
+
+def model_name(model):
+    return MODEL_NAMES.get(model,model)
+
+def model_status(item):
+    """A short filter label; the complete recorded qualification stays visible."""
+    ident=item['id']
+    if 'candidate' in ident:return 'candidate'
+    if 'scenario' in ident or ident=='Bipolar_reference_3D':return 'scenario'
+    if 'reference' in ident:return 'reference'
+    return 'recorded model'
+
 RUN='20260922_suite_v3'
 MANAGED={'featured-detector-navigation','ssd-interactive-geometry','saved-gallery-intro'}
 SIGNAL_AXIS_NOTE='Horizontal signal axis: physical time (ns). Open the image or Signal CSV for original signed values.'
 CAMERA_CLOSE_MODELS={'Bipolar_reference_3D','KL01_3D','ICPC_48A_reference'}
-GALLERY_NAV_STYLE=('<style id="saved-gallery-navigation-style">'
-    'header #page-navigation{color:#edf4fb}header #page-navigation a{color:#a8dcff}'
-    'header #page-navigation li,header #page-navigation span{color:#edf4fb}'
-    'header #page-navigation li+li:before{color:#b9cadd}'
-    'header #page-navigation .dataset-context{border-color:#6c849d}</style>')
+GALLERY_NAV_STYLE=''  # The shared chrome supplies its own light, readable surface.
 EXAMPLE_LABELS={
     'fixed':'Fixed single-site control','cloud':'Charge-cloud control',
     'diffusion':'Diffusion control','diffusion_repulsion':'Diffusion and self-repulsion control',
@@ -123,6 +144,8 @@ def example_label(event):
 
 def gallery_presentation(text,model):
     """Describe existing images/examples without touching their media or data URLs."""
+    text=re.sub(r'<h1\b[^>]*>.*?</h1>',
+                lambda _:'<h1>'+escape(model_name(model))+' · Fields &amp; signals</h1>',text,count=1,flags=re.S)
     def image(match):
         tag=match.group(0)
         alt=re.search(r'\balt\s*=\s*([\"\'])(.*?)\1',tag,re.S)
@@ -144,7 +167,29 @@ def gallery_presentation(text,model):
         block=re.sub(r'<p class="saved-example-id">.*?</p>','',block,flags=re.S)
         label='<h3>'+escape(example_label(ident))+'</h3><p class="saved-example-id">Saved example ID: <code>'+escape(ident)+'</code>.</p>'
         return re.sub(r'<h3\b[^>]*>.*?</h3>',lambda _:label,block,count=1,flags=re.S)
-    return re.sub(r'<article class="card">.*?</article>',example,text,flags=re.S)
+    text=re.sub(r'<article class="card">.*?</article>',example,text,flags=re.S)
+    # Saved plots keep their files and values; the page exposes one signal first.
+    if 'id="saved-event-library"' not in text:
+        events=re.search(r'(<h2>Saved event examples</h2>.*?<div class="grid">)(.*?)(</div>\s*<footer>)',text,re.S)
+        if events:
+            cards=re.findall(r'<article class="card">.*?</article>',events[2],re.S)
+            if len(cards)>1 and ''.join(cards)==events[2]:
+                replacement=(events[1]+cards[0]+'</div><details id="saved-event-library"><summary>All saved events and original files ('+
+                             str(len(cards)-1)+' more)</summary><div class="grid">'+''.join(cards[1:])+events[3].replace('<footer>','</details><footer>',1))
+                text=text[:events.start()]+replacement+text[events.end():]
+    text=re.sub(r'<h2>Comparison figures</h2>(.*?)<h2>Saved event examples</h2>',
+                r'<details id="saved-comparisons"><summary>Signal comparisons and numerical controls</summary>\1</details><h2>Saved event examples</h2>',text,flags=re.S)
+    headings={
+        'Electric field and weighting potential':('saved-field-weighting','Electric field and weighting potential'),
+        'Presentation movies':('saved-carrier-drift','Carrier drift'),
+        'Saved event examples':('saved-signed-signals','Signed signals and saved events'),
+    }
+    for old,(ident,label) in headings.items():
+        text=text.replace('<h2>'+old+'</h2>','<h2 id="'+ident+'">'+label+'</h2>',1)
+    if model=='GeGI_3D':
+        text=text.replace('href="strip_explorer.html"','href="../../results/gegi-strip-study/index.html"')
+        text=text.replace('href="supplement.html"','href="../../results/gegi-notebook-study/index.html"')
+    return text
 
 def strip_navigation(text):
     """Repair the retained GeGI specialist reader without changing its payload."""
@@ -181,7 +226,7 @@ def catalog_model_summary(model,capabilities=None,catalog_control=None,dedicated
                 'assembly_href':'assemblies/gegi/index.html'}
     if catalog_control[model]['available']:
         detail='GeRC02 Li50min operating variant; catalog download is the 30-minute baseline.' if model=='GeRC02' else 'Nominal LBNL assembly · local Control workflow'
-        return {'label':'Run in LBNL cryostat','detail':detail,'assembly_href':'scenarios/lbnl-cs137/index.html'}
+        return {'label':'Run in LBNL cryostat','detail':detail,'assembly_href':'assemblies/lbnl/index.html'}
     return {'label':'View model · larger cryostat needed','detail':'Model exceeds the nominal LBNL cavity.',
             'assembly_href':None}
 
@@ -217,10 +262,12 @@ def current_results(site,model,campaign_models):
     links=[]
     if model=='GeGI_3D':
         if (site/'results/gegi-digital/event.json').is_file():
-            links.append('<p><a href="../../results/index.html#gegi">Explore the fast and slow signals on adjacent GeGI strips</a>.</p>')
+            links.append('<p><a href="../../results/gegi-shared-readout/index.html">GeGI shared readout · 25 × 250 ms archived-library windows</a>.</p>')
         route=('results/gegi-campaign/index.html' if (site/'results/gegi-campaign/publication.json').is_file() else
                'examples/gegi/index.html' if (site/'examples/gegi/publication.json').is_file() else None)
-        if route:links.append('<p><a href="../../'+route+'">GeGI signals, reconstructed interactions and imaging study</a>.</p>')
+        if route:links.append('<p><a href="../../'+route+'">GeGI four independent source acquisitions and conditional imaging</a>.</p>')
+        links.append('<p><a href="../../results/gegi-strip-study/index.html">Earlier 34-channel strip signals</a> · '
+                     '<a href="../../results/gegi-notebook-study/index.html">Executed fields and signals notebook</a>.</p>')
     if model in {'AK02','SAP22','GeRC02','KMRC01_candidate'}:
         base='examples/cs137-10k'+('-rings' if model in {'GeRC02','KMRC01_candidate'} else '')+'/'+model
         if (site/base/'response/run.json').is_file():
@@ -228,7 +275,7 @@ def current_results(site,model,campaign_models):
             links.append('<p id="current-ring-10k"><a href="../../results/cs137-10k/'+model+'/charge-readout.html">'+escape(label)+' · Cs137 10K charge and readout</a>.</p>')
     if model in campaign_models:
         links.append('<p id="native-cs137-10k"><a href="../../results/cs137-1m/index.html">Separate Cs137 1M campaign · '+escape(model)+'</a>.</p>')
-    return ('<section id="current-model-results" class="panel"><h2>Source-campaign results</h2>'+''.join(links)+'</section>' if links else '')
+    return ('<section id="current-model-results" class="panel"><h2>Related studies</h2>'+''.join(links)+'</section>' if links else '')
 
 def apply(site, write_page):
     site=Path(site)
@@ -253,13 +300,22 @@ def apply(site, write_page):
         if model=='GeGI_3D':cleaned=gegi_channel_captions(cleaned,site)
         cleaned=gallery_presentation(cleaned,model)
         cleaned=gallery_header(cleaned,model)
-        banner=(f'<section id="saved-gallery-intro"><h2>{escape(model)} earlier saved gallery</h2>'
+        banner=(f'<section id="saved-gallery-intro"><h2>{escape(model_name(model))} saved fields and signals</h2>'
                 '<p>Historical results · 22 September 2026. Original synthetic SSD study from <code>20260922_suite_v3</code>. '
                 f'<a href="index.html">Return to {escape(model)} overview and source-campaign results</a>. '
-                'Original settings and limitations remain below.</p></section>')
+                'Original settings and limitations remain below.</p>'
+                '<nav aria-label="Fields and signals"><a href="#saved-field-weighting">Electric field and weighting potential</a> · '
+                '<a href="#saved-carrier-drift">Carrier drift</a> · <a href="#saved-signed-signals">Signed signals</a></nav>'
+                '<p>Read the electric field and weighting-potential sections first, then carrier drift, '
+                'then signed electrode signals. Event IDs and original files remain beside each example.</p></section>')
         if cleaned.count('<main>')!=1:
             raise ValueError('Unexpected saved gallery structure: '+model)
         gallery.write_text(cleaned.replace('<main>','<main>'+banner,1),encoding='utf-8',newline='\n')
+        geometry=folder/'geometry.html'
+        if geometry.is_file():
+            geometry_text=geometry.read_text(encoding='utf-8')
+            geometry_text=re.sub(r'<h1\b[^>]*>.*?</h1>',lambda _:'<h1>'+escape(model_name(model))+' · Geometry</h1>',geometry_text,count=1,flags=re.S)
+            geometry.write_text(geometry_text,encoding='utf-8',newline='\n')
         count=len(item['contacts'])
         contact_rows=''.join('<tr><td>'+str(c['id'])+'</td><td>'+escape(c['name'])+
             '</td><td>'+str(c['potential_V'])+'</td></tr>' for c in item['contacts'])
@@ -271,7 +327,7 @@ def apply(site, write_page):
         supported=model in control_ids
         capability=catalog_model_summary(model,capabilities,catalog_control,dedicated_ids)
         run_note=(f'<p>Control supports {escape(model)} in the nominal LBNL modular cryostat. '
-                  '<a href="../../scenarios/lbnl-cs137/index.html">Assembly and compatibility</a>. '
+                  '<a href="../../assemblies/lbnl/index.html">Assembly and compatibility</a>. '
                   'Use the <a href="../../guide.html#local-control">Control instructions</a> '
                   'after <a href="../../guide.html#setup">setup</a>.</p>' if supported else
                   '<p>This model is available for browsing and needs a future larger cryostat.</p><p>'+escape(catalog_control[model]['reason'])+'</p>')
@@ -284,16 +340,14 @@ def apply(site, write_page):
                       'Compton cones and directional maps. Canonical 92.3 K and −879/0 V remain unchanged. '
                       'Mechanical approximations and simulated depth calibration do not establish hardware '
                       'or experimental validation.</p>')
-        special=('<details><summary>Earlier GeGI studies</summary><p><a href="strip_explorer.html">'
-                 'Saved 34-channel strip study</a> · <a href="supplement.html">Earlier supplementary study'
-                 '</a>. These retain their original settings and are separate from the current cryostat workflow.</p></details>' if model=='GeGI_3D' else '')
         legacy_ids=set(ids(strip_navigation_block(cleaned)))-MANAGED-{'contact-legend','native-cs137-10k','saved-signal-axis-note'}
         aliases=('<details class="panel"><summary>Earlier saved gallery sections</summary>'+''.join(
             f'<p id="{escape(i,quote=True)}"><a href="gallery.html#{escape(i,quote=True)}">Open saved gallery detail</a></p>'
             for i in sorted(legacy_ids))+'</details>' if legacy_ids else '')
         variant_note=('<p>Catalog model: original 30-minute GeRC02. Cs137 10K and local Control use a separate Li50min operating variant. '
                       'The model downloads on this page contain the 30-minute baseline.</p>' if model=='GeRC02' else '')
-        header=(f'<section class="hero"><h1>{escape(model)}</h1><p>{escape(TYPE_LABELS[model])} · {count} contacts</p>'
+        header=(f'<section class="hero"><h1>{escape(model_name(model))}</h1><p>Stable model ID: <code>{escape(model)}</code></p>'
+                f'<p>{escape(TYPE_LABELS[model])} · {count} contacts</p>'
                 '<p><strong>'+escape(capability['label'])+'</strong>.</p>'
                 '<p>Recorded model status: '+escape(item.get('status','Saved model'))+'</p>'+variant_note+'</section>')
         image=(f'<figure class="panel"><a href="runs/{RUN}/01_geometry.png">'
@@ -303,12 +357,13 @@ def apply(site, write_page):
                'Colors identify contact IDs; they do not show doping or Li thickness.</figcaption></figure>')
         nav=('<section id="featured-detector-navigation" class="panel"><h2>View this detector</h2><div class="grid">'
              '<article id="ssd-interactive-geometry"><h3><a href="geometry.html">Geometry</a></h3><p>Rotate the saved physical meshes and inspect contact IDs.</p></article>'
-             '<article id="contact-legend"><h3><a href="technical.html">Model &amp; files</a></h3><p>Original settings, contacts, signed bias and model downloads.</p></article></div></section>')
+             '<article><h3><a href="gallery.html">Fields &amp; signals</a></h3><p>Electric field, weighting potential, carrier drift and signed electrode signals.</p></article>'
+             '<article id="contact-legend"><h3><a href="technical.html">Parameters &amp; files</a></h3><p>Original settings, contacts, signed bias and model downloads.</p></article></div></section>')
         studies=('<section id="saved-studies" class="panel"><h2>Historical SSD study</h2>'
                  '<p><a href="gallery.html">Saved fields &amp; signals</a> · 22 September 2026 synthetic examples: field plots, movies and event signals.</p>'
-                 +special+'</section>')
+                 +'</section>')
         overview=(header+current_results(site,model,campaign_models)+image+nav+'<section class="panel"><h2>Local calculation support</h2>'+run_note+'</section>'+studies+aliases)
-        write_page(page,model+' · Detector overview',overview,2)
+        write_page(page,model_name(model)+' · Detector overview',overview,2)
         diagnostics=[]
         for name in ('validation.events.json','validation.scenes.json'):
             if (folder/'runs'/RUN/name).is_file():
@@ -341,7 +396,7 @@ def apply(site, write_page):
                    '</p><p><a href="gallery.html">Full saved gallery</a> · <a href="../../methods/index.html">Methods and limitations</a></p>'
                    '<p>Numerical/functional checks are not experimental calibration. Unknown responses '
                    'and incomplete collection must remain distinct from zero deposition.</p></section>'+run_note)
-        write_page(folder/'technical.html',model+' · Technical details',technical,2)
+        write_page(folder/'technical.html',model_name(model)+' · Parameters and files',technical,2)
         delivered.append(model)
     notebook=site/'detectors/GeGI_3D/supplement.html'
     if notebook.is_file():notebook.write_text(archive_notebook(notebook.read_text(encoding='utf-8')),encoding='utf-8',newline='\n')

@@ -14,6 +14,8 @@ MANIFEST='methods/native-li-display.json'
 SOURCES=('tools/saved_archive_display.py','tools/site_routes.py')
 LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in SOURCES}
 PREVIOUS_RECEIPTS=frozenset({
+ # Validated local architecture build 65f0e01b, before browser-found fixes.
+ 'c096502e72cf86f18f27754538b033dfcde410c0235753f85d92be9147940631',
     # Published before the independent reader-page layout changed.
     '4becd3ed81523b8bd96477432f14a7780c25a282272aecae09a214a1be8b849a',
     # Exact validated 5b05f590 archive before the macOS homepage wording.
@@ -56,6 +58,7 @@ LITHIUM_SUMMARY_SHA='c5e1b2c85406f077cb692ac6e99dd1c9affe7cb6632a3098f96a86708e0
 LITHIUM_SOURCES=SOURCES+('tools/lithium_report.py','tools/pipeline_demo.py')
 LITHIUM_LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in LITHIUM_SOURCES}
 PREVIOUS_LITHIUM_RECEIPTS=frozenset({
+ '50ac4d5002263828bb295f478f9ed5a276cb733c1365b9866a2207771fa2a210',
     'f6285cf37095a228dc3e46f8e29a36ebddceb31b9c449016c411396dcaf816c1',
     # Exact validated 5b05f590 archive before the macOS homepage wording.
     'd5163baf688db10e9bead9320ec7506cfc5813a7dd92894fd819026fdfc38ac0',
@@ -95,6 +98,14 @@ def require(ok,message):
 
 def scientific_components(text):
     """Keep original plot internals, tables, scripts and numerical settings verbatim."""
+    from site_routes import NAV_SCRIPT
+    # Remove only the exact generated navigation controller, never an arbitrary
+    # script carrying a similar marker. Original scientific scripts stay strict.
+    text = text.replace(NAV_SCRIPT, '')
+    # Exact controller from the validated architecture predecessor above.
+    text = re.sub(r'<script data-site-navigation>.*?</script>',
+                  lambda m: '' if hashlib.sha256(m[0].encode('utf-8')).hexdigest() ==
+                  '132669668388d195d9a1e273ef2733bc5c5e8516768b13a68ba68ff7fd81095c' else m[0], text, flags=re.S)
     return {tag:[hashlib.sha256(m.encode('utf-8')).hexdigest()
                  for m in re.findall(r'<'+tag+r'\b[^>]*>.*?</'+tag+r'>',text,re.S)]
             for tag in ('svg','table','script','pre')}

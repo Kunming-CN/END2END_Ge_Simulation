@@ -18,6 +18,8 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js','tools/result_web_delivery.py')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+ # Validated local architecture build 65f0e01b, before browser-found fixes.
+ '4be6c683787660b6238b226cd8ee914b27261d90645b88325752eb6bb1976d07',
     # Checked saved spectra from the published site before the reader-page redesign.
     '5a9e3568dcbdc568dd74da2b646b2b5bf914f267d4611657240aa2a284cb679b',
     # Exact validated 5b05f590 display before the macOS homepage wording.
@@ -462,8 +464,11 @@ def validate_home(site,manifest,strict=False):
             'spectrum_views':['spectra/million-truth.html','spectra/million-response.html']},'Campaign shell identity changed')
         text,block=home_component(site,PREVIEW_PATH)
         require(not block,'Campaign overview must link to dedicated spectrum views')
+        from site_routes import CANONICAL_VIEWS
         for path in metadata['spectrum_views']:
-            require(posixpath.relpath(path,posixpath.dirname(PREVIEW_PATH)) in text,'Campaign spectrum destination missing')
+            targets = (path, CANONICAL_VIEWS.get(path, path))
+            require(any(posixpath.relpath(target,posixpath.dirname(PREVIEW_PATH)) in text for target in targets),
+                    'Campaign spectrum destination missing')
         return
     key='campaign_preview' if 'campaign_preview' in manifest else 'homepage'
     metadata=manifest[key];path=metadata.get('path','index.html')

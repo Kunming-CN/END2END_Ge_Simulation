@@ -57,11 +57,10 @@ def write_page(path,title,body,depth=0,*,fold_footer=False,page_path=None,datase
     footer=display_footer(page_path)
     if fold_footer:
         footer=footer.replace('<footer>','<footer><details><summary>More project resources</summary><p>',1).replace('</footer>','</p></details></footer>',1)
-    html=(f'<!doctype html><html lang="en"><meta charset="utf-8">'
+    html=(f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
           f'<meta name="viewport" content="width=device-width,initial-scale=1">'
-          f'<title>{escape(title)}</title><style>{STYLE}{extra_style}</style><body><main class="wrap">'
-          f'<header class="top"><a href="{up}index.html"><strong>GeSignal</strong></a>'
-          f'{nav}</header>{body}{footer}</main></body></html>')
+          f'<title>{escape(title)}</title><style>{STYLE}{extra_style}</style></head><body><main class="wrap">'
+          f'<header class="top">{nav}</header>{body}{footer}</main></body></html>')
     path.write_text(html,encoding='utf-8',newline='\n')
 
 def detector_cards(catalog):
@@ -70,10 +69,13 @@ def detector_cards(catalog):
         ident=item['id']; require(re.fullmatch(r'[A-Za-z0-9_-]+',ident) is not None,'Unsafe detector ID')
         kind=detector_pages.TYPE_LABELS[ident];poster=f'{ident}/runs/{detector_pages.RUN}/01_geometry.png'
         capability=detector_pages.catalog_model_summary(ident)
-        rows.append(f'<article class="card"><a href="{escape(ident)}/index.html" aria-label="{escape(ident)} detector overview">'
+        assembly='gegi' if ident=='GeGI_3D' else 'lbnl' if capability['assembly_href'] else 'larger'
+        status=detector_pages.model_status(item)
+        name=detector_pages.model_name(ident)
+        rows.append(f'<article class="card" data-model="{escape(ident)}" data-geometry="{escape(kind,quote=True)}" data-assembly="{assembly}" data-status="{status}"><a href="{escape(ident)}/index.html" aria-label="{escape(name)} detector overview">'
                     f'<img loading="lazy" style="width:100%;height:220px;object-fit:contain" src="{escape(poster)}" '
                     f'alt="{escape(ident)} {escape(kind)}, saved geometry"></a>'
-                    f'<h2><a href="{escape(ident)}/index.html">{escape(ident)}</a></h2><p>{escape(kind)}</p>'
+                    f'<h2><a href="{escape(ident)}/index.html">{escape(name)}</a></h2><p><code>{escape(ident)}</code></p><p>{escape(kind)}</p>'
                     f'<p><strong>{escape(capability["label"])}</strong></p><p>{escape(capability["detail"])}</p>'
                     f'<p>Model status: {escape(item.get("status","saved model"))}. Public studies and validation limits are listed on its overview.</p></article>')
     return ''.join(rows)
@@ -86,53 +88,39 @@ body{background:#f7fafb}.wrap{max-width:1180px}.top{padding-bottom:16px;border-b
 .home-hero .lead{font-size:18px;line-height:1.6;max-width:760px;margin:0;color:#405d6c}
 .home-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px 20px;margin:24px 0 10px}
 .home-actions a{font-weight:700}.home-actions .button{background:#076b79;color:white}
-.flow-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px}.flow-heading h2{font-size:19px;margin:10px 0 14px}.flow-heading small{color:#526575}
-.signal-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;list-style:none;padding:0;margin:0}
-.signal-flow>li{position:relative;padding:20px;background:#fff;border:1px solid #cfdee3;border-radius:12px;min-width:0}
-.signal-flow>li+li:before{content:'→';position:absolute;left:-18px;top:108px;font-size:23px;color:#007e89}
-.step-label{color:#00727e;font-size:12px;font-weight:750;letter-spacing:.07em;text-transform:uppercase}.signal-flow h3{font-size:21px;margin:5px 0 0}.engine{font-size:13px;color:#526575;margin:3px 0 8px}
-.signal-flow svg{display:block;width:100%;height:82px;color:#395967}.signal-flow svg text{font:15px system-ui}
-.signal-flow .explanation{font-size:15px;line-height:1.5;min-height:67px;margin:9px 0 14px}.quantity{font-size:14px;background:#edf6f7;border-radius:6px;padding:8px 10px;margin:0;color:#075663}
-.energy-key{margin:14px 0 26px;font-size:14px;color:#405d6c;max-width:920px}.energy-key strong{color:#173047}
-.home-scope{margin:18px 0 0;font-size:15px;color:#405d6c}footer{font-size:13px;margin-top:24px}
-@media(max-width:760px){.top{gap:10px}.top nav{gap:2px}.top nav a{padding:6px;font-size:13px}.home-hero{padding-top:24px}.home-hero .lead{font-size:16px}.signal-flow{grid-template-columns:1fr;gap:14px}.signal-flow>li{display:grid;grid-template-columns:100px minmax(0,1fr);column-gap:14px;padding:16px}.signal-flow .step-label,.signal-flow h3,.signal-flow .engine,.signal-flow .explanation,.signal-flow .quantity{grid-column:2}.signal-flow svg{grid-column:1;grid-row:1/6;align-self:center;height:98px}.signal-flow>li+li:before{display:none}.signal-flow .explanation{min-height:0;margin:7px 0 10px}.signal-flow h3{font-size:19px}.signal-flow .quantity{font-size:13px}.flow-heading small{font-size:11px}}
+.home-feature{display:grid;grid-template-columns:1fr 1.2fr;gap:28px;align-items:center;margin:22px 0 32px}.home-feature h2{font-size:27px;line-height:1.2;margin:8px 0 14px}.home-feature figure{margin:0}.home-feature img{width:100%;height:auto}.home-feature figcaption{font-size:13px;color:#526575}.home-objects{grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}.home-objects h2{font-size:20px}.home-objects p{font-size:15px}.home-scope{margin:18px 0 0;font-size:15px;color:#405d6c}footer{font-size:13px;margin-top:24px}
+@media(max-width:760px){.home-feature,.home-objects{grid-template-columns:1fr}.top{gap:10px}.home-hero{padding-top:24px}.home-hero .lead{font-size:16px}}
 '''
 
 
 def homepage(commercial=False):
-    result_label = 'See the simultaneous GeGI acquisition' if commercial else 'See the latest GeGI result'
-    return f'''<section class="home-hero"><p class="eyebrow">GeSignal · END2END_Ge_Simulation</p>
-<h1>Simulating gamma-ray detectors</h1>
-<p class="lead">GeSignal follows gamma rays through a high-purity germanium (HPGe) detector, from energy deposits and electrode signals to measured energies and, with GeGI, images of where the radiation came from.</p>
-<div class="home-actions" id="reader-paths-title"><a class="button" id="main-result-link" href="results/index.html">{result_label}</a>
-<a href="guide.html">Download and run with Control</a></div></section>
-<section id="pipeline-example" aria-labelledby="signal-chain-title"><div class="flow-heading"><h2 id="signal-chain-title">The simulation chain</h2><small>Conceptual diagram</small></div>
-<ol class="signal-flow">
-<li><h3>Radiation deposits energy</h3><p class="engine">Geant4 / remage</p>
-<svg viewBox="0 0 260 90" aria-hidden="true"><rect x="102" y="10" width="105" height="70" rx="16" fill="#e3eef8" stroke="#83a8bd"/><path d="M15 45H125L158 27L179 61" fill="none" stroke="#087b89" stroke-width="3"/><path d="m117 39 9 6-9 6" fill="none" stroke="#087b89" stroke-width="2"/><circle cx="126" cy="45" r="5" fill="#cd6d43"/><circle cx="158" cy="27" r="5" fill="#cd6d43"/><circle cx="179" cy="61" r="5" fill="#cd6d43"/><text x="35" y="31">γ</text><text x="217" y="50">Ge</text></svg>
-<p class="explanation">Track interactions in the crystal and record where, when and how much energy is deposited.</p><p class="quantity">Deposited energy · E<sub>dep</sub> [keV]</p></li>
-<li><h3>Drifting charges induce signals</h3><p class="engine">SolidStateDetectors.jl</p>
-<svg viewBox="0 0 260 90" aria-hidden="true"><rect x="27" y="12" width="206" height="66" rx="10" fill="#f1edf8" stroke="#b5a3c9"/><path d="M27 13v64M233 13v64" stroke="#795b9e" stroke-width="6"/><path d="M117 45H55m0 0 10-6m-10 6 10 6M143 45h62m0 0-10-6m10 6-10 6" stroke="#087b89" stroke-width="2" fill="none"/><circle cx="121" cy="45" r="13" fill="#dbeef0"/><circle cx="140" cy="45" r="13" fill="#e9dfef"/><text x="110" y="50">e⁻</text><text x="131" y="50">h⁺</text></svg>
-<p class="explanation">Transport electrons and holes in the electric field and calculate the charge induced on each electrode.</p><p class="quantity">Electrode charge · Q(t) [fC]</p></li>
-<li><h3>Electronics reconstruct energy</h3><p class="engine">Preamplifier → shaper → peak ADC</p>
-<svg viewBox="0 0 260 90" aria-hidden="true"><g fill="#e5f2ee" stroke="#91b6ab"><rect x="5" y="22" width="70" height="46" rx="7"/><rect x="95" y="22" width="70" height="46" rx="7"/><rect x="185" y="22" width="70" height="46" rx="7"/></g><path d="M75 45h20m70 0h20" stroke="#087b89" stroke-width="2"/><g fill="#285c53" text-anchor="middle"><text x="40" y="51">Preamp</text><text x="130" y="51">Shape</text><text x="220" y="51">ADC</text></g></svg>
-<p class="explanation">Amplify and shape the signal. Convert the digitized peak to energy using a fixed calibration.</p><p class="quantity">Reconstructed energy · E<sub>rec</sub> [keV]</p></li>
-</ol><p class="energy-key"><strong>E<sub>dep</sub></strong> is energy left in the crystal. <strong>E<sub>rec</sub></strong> is energy inferred from the readout. Following both reveals how charge collection and electronics affect the measurement. ADC means analog-to-digital converter.</p></section>
-<span id="native-cs137-10k"></span><span id="current-ring-10k"></span>
-<p class="home-scope"><a href="spectra/pipeline.html">Learn the signal chain with six saved examples</a></p>'''
+    featured = ''
+    if commercial:
+        featured = '''<section class="home-feature panel" aria-labelledby="featured-study-title">
+<div><p class="eyebrow">Featured study</p><h2 id="featured-study-title">GeGI shared readout · 25 × 250 ms</h2>
+<p>Cs-137 and Co-60 archived single-isotope histories feed shared 34-electrode electronics. The 25 independent windows total 6.25 s, with a reset between windows.</p>
+<p>40,979 accepted energies from 53,033 qualified triggers; image peaks depend on the source-plane prior.</p>
+<p><a id="main-result-link" href="results/gegi-shared-readout/index.html">Read the study, spectra and images →</a></p></div>
+<figure><a href="results/gegi-shared-readout/index.html"><img width="2340" height="1155" src="results/gegi-digital/simultaneous-spectrum-and-images.png" alt="Saved combined energy spectrum and source-plane maps for the GeGI archived-library study"></a><figcaption>Saved spectrum and reconstructed source-plane maps.</figcaption></figure></section>'''
+    return '''<section class="home-hero"><p class="eyebrow">GeSignal · END2END_Ge_Simulation</p>
+<h1>From gamma-ray deposits to detector readout</h1>
+<p class="lead">Explore radiation transport, charge induction and readout in high-purity germanium (HPGe) detectors. Follow saved studies or run and analyze your own simulation.</p>
+<div class="home-actions" id="reader-paths-title"><a class="button" href="results/index.html">Browse research results</a>
+<a href="learn/signals/index.html">Start with one signal</a><a href="guide.html">Run locally</a></div></section>''' + featured + '''
+<section class="home-objects grid" aria-label="Models, assemblies and studies">
+<article><h2>Detector models</h2><p>Browse 17 models with their geometry, fields, signals and original parameters. Reference, candidate and scenario qualifications stay with each model.</p><a href="detectors/index.html">Explore detector models →</a></article>
+<article><h2>Cryostat assemblies</h2><p>Ten configurations fit the nominal LBNL cryostat. GeGI has its own assembly; six catalog models require a larger cryostat.</p><a href="assemblies/index.html">Compare the two assemblies →</a></article>
+<article><h2 id="signal-chain-title">Research and learning</h2><p>Each study keeps its own source, model variant and event identities. Learn how deposited energy differs from energy inferred by the readout.</p><a href="learn/index.html">Learn the signal chain →</a></article></section>
+<span id="pipeline-example"></span><span id="native-cs137-10k"></span><span id="current-ring-10k"></span>'''
 
 
 READER_STYLE = '''
 .top{padding-bottom:16px;border-bottom:1px solid #d7e0e7}
-.top>a{text-decoration:none;font-size:21px;color:#173047}
-.top #page-navigation{width:auto;margin:0}
-.top #page-navigation nav{margin:0}
-.top #page-navigation a{background:transparent;font-size:14px;padding:8px}
-.top #page-navigation nav[aria-label="Breadcrumb"]{display:none}
+.top #page-navigation{width:100%;margin:0}
 .reader-intro{padding:24px 0 14px;max-width:760px}
 .reader-intro h1{font-size:clamp(2rem,4vw,2.75rem);line-height:1.1;margin:0 0 10px}
 .reader-intro p{margin:0;color:#405d6c}
-.reader-page .panel{margin:0 0 18px}
+.reader-page .panel{margin:0 0 24px}.study-cards{margin:16px 0 32px;align-items:stretch}.study-cards h2{font-size:23px;line-height:1.3}.study-cards dl{font-size:15px}.study-cards dt{font-weight:700;margin-top:10px}.study-cards dd{margin:2px 0 0}.topic-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 28px}.topic-grid h3{font-size:18px;margin:12px 0 6px}.topic-grid p{margin-top:0}@media(max-width:760px){.topic-grid{grid-template-columns:1fr}}
 .reader-page .panel h2:first-child{margin-top:0}
 .reader-page details{padding:10px 0}
 .reader-page .panel>details+details{border-top:1px solid #d7e0e7}
@@ -152,82 +140,26 @@ READER_STYLE = '''
 .gegi-result-summary p{margin:8px 0}
 '''
 
-REVEAL_LINK_TARGET = '''<script>(function(){
-function revealLinkedStudy(){
-  let fragment;
-  try { fragment=decodeURIComponent(location.hash.slice(1)); } catch (error) { return; }
-  const target=document.getElementById(fragment);
-  if(!target)return;
-  let revealed=false;
-  for(let panel=target.parentElement.closest('details');panel;panel=panel.parentElement.closest('details')){
-    if(!panel.open){panel.open=true;revealed=true;}
-  }
-  if(revealed)target.scrollIntoView();
-}
-window.addEventListener('hashchange',revealLinkedStudy);
-revealLinkedStudy();
-})();</script>'''
-
-
 def write_methods(site):
-    result_url = '../results/index.html#gegi'
-    if (site/'results/gegi-digital/event.json').is_file():
-        result_url = '../results/index.html#gegi-data-methods'
-    methods=f'''<div class="reader-page"><header class="reader-intro"><h1>Simulation methods</h1>
-<p>How GeSignal converts simulated radiation deposits into measured energies and Compton images.</p></header>
-<section class="panel" id="gegi-acquisition-method"><h2>Simultaneous GeGI imaging</h2>
-<p>Independent radioactive decays share one acquisition clock. The signed preamplifier voltages from both sources add on each of GeGI’s 34 electrodes. Channel noise is added before digitization. Triggers and measured energies are recovered from that common stream.</p>
-<p>A two-strip trigger can support multiple pairings or interaction orders. Each permitted Compton cone contributes its assigned weight to an assumed source plane. The uniform-area prior gives equal cells equal initial weight. The uniform-solid-angle prior weights cells by the angular area they cover from the detector center. Weight without a usable projection stays in the unresolved count. The programmed source coordinates are used to score the image peaks.</p>
-<p><a href="{result_url}">Open the GeGI result and public data</a> · <a href="../assemblies/gegi/index.html">GeGI geometry and coordinate system</a></p></section>
-<section class="panel"><h2>Radiation deposits</h2><p>Geant4/remage tracks the radiation and records deposited energy E<sub>dep</sub> in keV, positions in mm, creation/deposition times in ns and original primary/track identities. A primary may miss the crystal, interact more than once or produce delayed daughter deposits. Keep deposits belonging to one primary and pulse group together.</p></section>
-<section class="panel"><h2>Semiconductor charge and induction</h2><p>SolidStateDetectors.jl transports the generated electrons and holes in the detector electric field. Electrode weighting potentials determine the signed induced charge through the Shockley–Ramo relation. Charge in fC and current in nA belong to this stage; deposition time is not carrier drift time. Incomplete collection, guards and numerical termination flags remain part of the result.</p></section>
-<section class="panel"><h2>Electronics and reconstructed energy</h2><p>A fixed wiring convention passes the signed current to a preamplifier, analog shaper and peak ADC. Voltages are in V. Reconstructed energy E<sub>rec</sub> in keV uses an independent injection calibration shared across events, never an event-by-event match to E<sub>dep</sub>. Threshold, clipping and rejection can make energy unavailable; an unknown response is not zero.</p><p><a href="../spectra/pipeline.html">Follow these stages in six saved signals →</a></p></section>
-<section class="panel"><h2>Counts, identity and validation</h2><p>Initial primaries or decays, nonzero primaries, pulse groups and accepted readout groups are distinct populations. Each plot names its denominator and selection. Event numbers only identify a record together with its study, independent run, model/variant and pulse group. Engineering completion, numerical convergence and agreement with measurement are separate claims; these examples are not measured detector calibration.</p><p>Plot display rounding does not change stored values or histogram bins. Each study retains exact settings, seeds, failure/null accounting and downloadable records.</p></section>
-<div class="grid">
-<article class="card"><h2>Cryostats and sources</h2><p>LBNL and GeGI assembly geometry, compatibility, source placement and physical assumptions.</p><a href="../assemblies/index.html">Read assembly assumptions →</a></article>
-<article class="card"><h2>Local configuration and data</h2><p>Choose compatible models and read a saved result using the maintained guide.</p><a href="../guide.html#saved-analysis">Read the saved-data guide →</a></article></div>
-<details><summary>Advanced and historical Li studies</summary><p>Native diffusion, endpoints and grid sensitivity retain unresolved numerical limits.</p><p><a href="../lithium/lithium.html">Li-region diagnostics</a> · <a href="../examples/native-li/comparison.html">Open selected study →</a></p></details></div>'''
-    if (site/'examples/native-li/comparison.html').is_file():
-        methods=methods.replace('href="../examples/native-li/comparison.html">Open selected study →',
-                                'href="native-li.html">Open readable saved plots →',1)
+    methods='''<div class="reader-page"><header class="reader-intro"><h1>Simulation methods</h1>
+<p>How radiation deposits become electrode signals, readout energies and interaction candidates.</p></header>
+<section class="panel"><h2>Radiation transport</h2><p>Geant4/remage records deposited energy E<sub>dep</sub> in keV, positions in mm, creation and deposition times in ns, and original primary and track identities. A primary may miss the crystal, interact more than once or produce delayed daughter deposits. Keep relevant deposits of one primary and pulse group together.</p></section>
+<section class="panel"><h2>Charge transport and induction</h2><p>SolidStateDetectors.jl transports electrons and holes through the detector electric field. Electrode weighting potentials determine signed induced charge through the Shockley–Ramo relation. Charge in fC and current in nA belong to this stage; deposition time is not carrier drift time. Incomplete collection, guard contacts and numerical termination flags stay with the response.</p></section>
+<section class="panel"><h2>Two readout branches</h2><div class="grid">
+<article><h3>LBNL analog electronics</h3><p>Signed current passes through fixed wiring, a preamplifier and analog shaper. A peak ADC (analog-to-digital converter) records one peak code. The analog numerical time grid is separate from a waveform digitizer.</p><p><a href="../learn/signals/index.html">Follow six saved 10K signals →</a></p></article>
+<article><h3>GeGI digitized strip readout</h3><p>The nominal digital branch samples preamplifier voltages on 34 electrodes. Fast neighboring-strip responses inform position, while the slow branch measures energy. X and Y are two measurements of the same deposited charge; their energies are not added.</p><p>Shared-readout studies combine overlapping signals before common noise, digitization and triggering. Their source history, clock organization and reset conditions belong to each study.</p><p><a href="../results/gegi-shared-readout/index.html">25 × 250 ms archived-library study →</a></p></article></div>
+<p>Voltages are in V and reconstructed energy E<sub>rec</sub> is in keV. Independent synthetic injections provide a fixed calibration shared across events. Gain is never chosen separately to match each event's E<sub>dep</sub>. Thresholds, clipping or rejection can leave energy unavailable; an unknown response is not zero.</p></section>
+<section class="panel" id="gegi-acquisition-method"><h2>Interaction candidates and Compton imaging</h2><p>A two-strip trigger may admit multiple pairings and interaction orders. Permitted Compton cones retain their assigned weights. A source-plane reconstruction then combines them under a stated spatial prior. Uniform area gives equal cells equal initial weight; uniform solid angle weights their angular area from the detector center. Weight without a usable projection remains unresolved.</p><p>Signal-derived positions and source truth have separate roles. Programmed source coordinates may evaluate a reconstructed peak; they do not choose measured candidates. Study pages retain the precise calibration, candidate policy, numerical budget and validation limits.</p><p><a href="../results/gegi-campaign/index.html">Four independent acquisitions and conditional imaging</a> · <a href="../results/gegi-plane-prior-study/index.html">Historical prior and weak-strip study</a></p></section>
+<section class="panel"><h2>Counts, identity and interpretation</h2><p>Initial primaries or decays, positive-deposit primaries, pulse groups, accepted energies and candidate orders are different populations. Each plot names its denominator and selection. An event number identifies a record together with its study, run, model variant and pulse group. Zero deposits, native failures, electronics rejections and unresolved imaging weight remain distinct.</p><p>Engineering completion, numerical convergence and agreement with measurement are separate conclusions. Plot rounding does not alter stored numbers or histogram bins. Exact settings, seeds, units, failure/null accounting and downloadable records remain in each study.</p></section>
+<div class="grid"><article class="card"><h2>Geometry and sources</h2><p>Read assembly dimensions, compatibility, coordinates and nominal assumptions.</p><a href="../assemblies/index.html">Compare the assemblies →</a></article>
+<article class="card"><h2>Run and analyze</h2><p>Configure a compatible detector and inspect your own saved result.</p><a href="../guide.html">Open the practical guide →</a></article></div>
+<p><a href="../results/native-li-selected-events/index.html">Native Li selected events</a> and <a href="../results/lithium-diagnostics/index.html">Li numerical diagnostics</a> retain their separate samples and unresolved limits.</p></div>'''
     write_page(site/'methods/index.html','Methods · GeSignal',methods,1,extra_style=READER_STYLE)
 
 
 def write_public_guide(site):
-    """Add the website entry points around the shared student setup instructions."""
-    guide = (Path(__file__).parent/'site_guide.html').read_text(encoding='utf-8')
-    opening = '''<header class="guide-intro">
-__PAGE_NAVIGATION__
-<h1>Download and run GeSignal</h1>
-<p>Run your own detector simulation on Windows or macOS.</p>
-</header>
-<main class="guide-main">
-<section id="local-routes" aria-label="Local workflow steps">
-<h2>Student software</h2>
-<p class="setup-actions"><a class="button" href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip">Download student software (ZIP)</a>
-<a href="#setup">Windows setup</a><a href="#setup-macos">macOS setup</a></p>
-<p>Extract the ZIP and follow the setup for your operating system. Then <a href="#local-control">open Control and start a 100-event run</a>. Use <a href="#saved-analysis">the results guide</a> to find its spectra, events and files.</p>
-<details><summary>Stop, resume and advanced workflows</summary>
-<p><a href="#control-recovery">Stop and resume a run</a> · <a href="#advanced-title">Command-line, replay and recovery workflows</a></p></details>
-</section>
-
-'''
-    start = guide.index('<header>')
-    end = guide.index('<section id="setup-macos">', start)
-    offline = guide.index('<details><summary>Browse an offline website copy</summary>', start)
-    offline_end = guide.index('</details>', offline)+len('</details>')
-    browse = '''<section id="browse">
-<h2>Browse saved simulations</h2>
-<p><a href="results/index.html">Open simulation results</a> to see the GeGI acquisition, teaching signals, and four-case Cs137 10K and two-case million-decay campaigns. Each study has its own geometry and event IDs.</p>
-''' + guide[offline:offline_end] + '\n</section>\n\n'
-    guide = guide[:start] + opening + guide[end:]
-    guide = guide.replace('<section id="downloads">',browse+'<section id="downloads">',1)
-    style = '''
-.guide-intro{padding-bottom:0}.guide-intro h1{margin-bottom:8px}.guide-intro p{margin-top:0}
-.guide-main{padding-top:0}#local-routes h2{margin-top:0}.setup-actions{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}
-.setup-actions .button{background:#076b79}
-'''
-    guide = guide.replace('</style>\n</head>',style+'</style>\n</head>',1)
+    """The student and public guide share one maintained task order."""
+    guide=(Path(__file__).parent/'site_guide.html').read_text(encoding='utf-8')
     (site/'guide.html').write_text(guide.replace('__PAGE_NAVIGATION__',page_navigation('guide.html')),
                                   encoding='utf-8',newline='\n')
 
@@ -238,49 +170,86 @@ def write_reader_pages(site):
     path = site/SUMMARY
     commercial = path.is_file() and COMMERCIAL_KEY in read(path)
     write_page(site/'index.html','GeSignal — HPGe Radiation-to-Readout Simulation',homepage(commercial),0,
-               fold_footer=True,nav_html=primary_navigation('index.html'),extra_style=HOME_STYLE)
+               fold_footer=True,extra_style=HOME_STYLE)
 
-    def study(ident, title, description, url, action, available, extra=''):
-        detail = f'<p><a href="{url}">{action}</a> · {description}</p>' if available else (
-            '<p>This study is unavailable in this snapshot.</p>')
-        return (f'<section id="{ident}" data-dataset="{ident}"><h3>{title}</h3>'
-                f'{detail}{extra}</section>')
+    def study(ident,title,purpose,nature,sample,outputs,limit,url,available=True):
+        action=('<p><a href="'+url+'">Open study →</a></p>' if available else '<p>Unavailable in this saved snapshot.</p>')
+        return ('<article class="card" id="'+ident+'" data-study="'+ident+'"><h2>'+title+'</h2>'
+                '<p>'+purpose+'</p><dl><dt>Data</dt><dd>'+nature+'</dd><dt>Sample</dt><dd>'+sample+'</dd>'
+                '<dt>Outputs</dt><dd>'+outputs+'</dd></dl><p class="muted">'+limit+'</p>'+action+'</article>')
 
-    formal = site/'results/gegi-campaign'
-    fallback = '<p>This result is unavailable in this snapshot.</p>'
-    if (formal/'publication.json').is_file():
-        saved = read(formal/'summary.json')
-        fallback = '<p><a href="gegi-campaign/index.html">Read the GeGI Compton imaging study</a>.</p>'
-        if saved.get('kind') == 'gegi_saved_publication_v3':
-            counts = saved['counts']
-            groups = counts['conditional_candidate_groups']
-            selected = saved['selected_conditional_imaging_groups']
-            fallback += (f'<p>{groups:,} conditional signal groups with {selected:,} selected for the joint map. '
-                         'Same-energy source separation remains unresolved.</p>')
+    formal=site/'results/gegi-campaign'
+    campaign_available=(formal/'publication.json').is_file()
+    campaign_outputs='Conditional source-plane images, candidate cones, historical spectra and signal examples.'
+    campaign_limit='Exact populations and saved iteration status are reported inside the study.'
+    if campaign_available:
+        summary=read(formal/'summary.json')
+        if summary.get('kind')=='gegi_saved_publication_v3':
+            groups=summary['counts']['conditional_candidate_groups']
+            selected=summary['selected_conditional_imaging_groups']
+            orders=summary['counts'].get('conditional_candidates')
+            campaign_outputs=f'{groups:,} conditional signal groups; {selected:,} selected for the joint map'
+            if orders is not None:campaign_outputs+=f'; {orders:,} candidate orders'
+            campaign_outputs+='; separate 708-group historical control.'
+            campaign_limit='The conditional image reached its 40-iteration budget; convergence remains unestablished. Same-energy source separation remains unresolved.'
         else:
-            accepted = sum(group['counts']['imaging_accepted_groups'] for group in saved['groups'].values())
-            fallback += f'<p>{saved["processed_initial_records"]:,} initial records and {accepted:,} imaging-accepted pulse groups.</p>'
-    results = f'''<div class="reader-page"><header class="reader-intro"><h1>Simulation results</h1></header>
-<section id="gegi" class="panel" data-dataset="gegi"><h2>GeGI Compton imaging</h2>{fallback}</section>
-<section class="panel" aria-labelledby="earlier-studies-title"><h2 id="earlier-studies-title">Other saved studies</h2>
-<details id="historical-studies"><summary>Cs-137 detector campaigns and signal examples</summary>
-<div class="study-list">'''
-    results += study('teaching','Six saved Cs-137 signals',
-        'Trace individual events through deposits, charge and the digitized readout.',
-        '../spectra/pipeline.html','Follow the saved signals',(site/'spectra/teaching-examples.json').is_file())
-    cases = 'four' if (site/'examples/cs137-10k-rings/manifest.json').is_file() else 'two'
-    results += study('tenk','10,000 Cs-137 decays per detector',
-        f'Compare spectra, inspect events and find the ledgers for {cases} separate cases.',
-        'cs137-10k/index.html','Open the 10K campaign',(site/'examples/cs137-10k/comparison.html').is_file(),
-        '<span id="current-ring-10k"></span>')
-    results += study('million','Cs-137 · one million initial decays per detector',
-        'Compare deposited and measured energy spectra and download the group records for AK02 and SAP22.',
-        'cs137-1m/index.html','Open the 1M campaign',all((site/path).is_file() for path in (
-            'examples/cs137-1m/summary.json','examples/cs137-1m-response/summary.json')))
-    results += '''<section id="gamma" data-dataset="gamma"><h3>Retired pilot studies</h3>
-<p>The 200-primary bare-detector, 40-primary cryostat gamma and early GeGI two-position bundles have been retired. Their original data are preserved in the project workspace.</p></section>
-</div></details></section></div>''' + REVEAL_LINK_TARGET
-    write_page(site/'results/index.html','Results · GeSignal',results,1,extra_style=READER_STYLE)
+            accepted=sum(row['counts']['imaging_accepted_groups'] for row in summary['groups'].values())
+            campaign_outputs=f'{summary["processed_initial_records"]:,} initial records and {accepted:,} imaging-accepted pulse groups in this earlier snapshot.'
+
+    results='''<div class="reader-page"><header class="reader-intro"><h1>Research results</h1>
+<p>Choose a study by its question and saved sample. Each study keeps its original models, counts, event identities and data.</p></header>
+<section aria-labelledby="main-studies"><h2 id="main-studies">Main studies</h2><div class="grid study-cards">'''
+    results+=study('gegi-shared-readout','GeGI shared readout · 25 × 250 ms',
+        'How do shared electronics and imaging priors affect a two-source readout?',
+        'Archived single-isotope histories sampled with replacement; shared 34-electrode electronics.',
+        '25 independent windows, 6.25 s total clock, with electronics reset between windows.',
+        'Energy spectra, source-plane images, sampling variation and prior sensitivity.',
+        'Historical library replay; the planned continuous joint-source acquisition is a separate design.',
+        'gegi-shared-readout/index.html',commercial)
+    results+=study('gegi-campaign','GeGI four independent source acquisitions',
+        'Which interaction candidates support a conditional Compton image?',
+        'Four separate radiation and charge acquisitions at two positions.',
+        'Two 662 keV photon runs of 200,000 primaries each; Cs-137 and Co-60 runs of 300,000 initial records each.',
+        campaign_outputs,campaign_limit,'gegi-campaign/index.html',campaign_available)
+    results+=study('tenk','Cs-137 10K · four detector cases',
+        'Follow radiation, charge and readout across four distinct detector cases.',
+        'Independent AK02, SAP22, GeRC02 Li50min and KMRC01 candidate simulations.',
+        '10,000 initial decays per case.',
+        'Readout, stage spectra, original event records and data ledgers.',
+        'Saved waveforms: four each for AK02, SAP22 and GeRC02; 231 for KMRC01 candidate. Scalar ledgers have broader coverage.',
+        'cs137-10k/index.html',(site/'examples/cs137-10k/comparison.html').is_file())
+    results+=study('million','Cs-137 1M · AK02 and SAP22',
+        'Compare deposition truth and measured-energy response at a larger sample size.',
+        'Two independent detector runs, separate from the 10K study.',
+        '1,000,000 initial Cs-137 decays per detector.',
+        'Deposition and response spectra, group records and failure counts.',
+        'Isolated 100 µs reset windows; no activity or pileup acquisition model. This study has no published 3D event viewer.',
+        'cs137-1m/index.html',all((site/path).is_file() for path in ('examples/cs137-1m/summary.json','examples/cs137-1m-response/summary.json')))
+    results+='</div></section><section class="panel" id="historical-studies" aria-labelledby="earlier-studies-title"><h2 id="earlier-studies-title">GeGI readout and imaging questions</h2><p>Earlier samples and controls remain distinct within each topic.</p><div class="topic-grid">'
+    topics=(
+        ('gegi-short-exposure','Short exposures and energy reconstruction','Early 250 ms exposures, hit maps and single-pixel versus multi-strip energy.'),
+        ('gegi-shared-clock-controls','Shared clock and merged triggers','The 3,905-trigger census, 324 two-strip records and controlled studies of triggers 683 and 598.'),
+        ('gegi-plane-prior-study','Imaging priors and weak strips','One-second sample, split exposures, area and solid-angle priors, intersections and weak-strip evidence.'),
+        ('gegi-position-calibration','Position, depth and threshold calibration','Fast neighboring strips, noise thresholds, apparent depth, joint fits and edge coverage.'),
+        ('gegi-double-pulse','Double-pulse resolution','1,368 pulse-pair trials with timing scans and separate trigger, energy and position criteria.'),
+        ('gegi-pairing-benchmark','Strip pairing and interaction order','Monoenergetic photons, original events and distinct training, control and held-out mixtures.'),
+    )
+    results+=''.join('<article><h3><a href="'+ident+'/index.html">'+title+'</a></h3><p>'+description+'</p></article>' for ident,title,description in topics)
+    results+='''</div></section><section class="panel" aria-labelledby="other-questions"><h2 id="other-questions">Other research and numerical evidence</h2><div class="topic-grid">
+<article><h3><a href="native-li-selected-events/index.html">Native Li readout · selected events</a></h3><p>Four selected events with signed charge, endpoints and readout; distinct from the numerical diagnostics.</p></article>
+<article><h3><a href="lithium-diagnostics/index.html">Li numerical diagnostics</a></h3><p>Grid, initialization and collection sensitivity, including retained numerical failures and limits on convergence claims.</p></article>
+<article><h3><a href="gegi-strip-study/index.html">GeGI early strip signals</a></h3><p>20 synthetic deposit and charge-cloud examples, 34 channels, truth points and induced signals.</p></article>
+<article><h3><a href="gegi-notebook-study/index.html">GeGI executed fields and signals notebook</a></h3><p>Saved historical outputs under their recorded parameters; the notebook is separate from later acquisition studies.</p></article>
+<article><h3><a href="../examples/cs137-10k-rings/KMRC01_candidate/response/original-native/summary.html">KM native negative-charge readout</a></h3><p>The original 0/231 accepted result is a separate control for the later fixed −1 wiring.</p></article>
+</div></section>
+<section class="panel" id="teaching"><h2>Start with one saved signal</h2><p><a href="../learn/signals/index.html">Follow six selected 10K events from energy deposits to readout</a>. Each example keeps its model variant, primary and pulse-group identity.</p></section>
+<section class="panel" id="gamma"><h2>Retired pilot studies</h2><p>The 200-primary bare-detector, 40-primary cryostat gamma and early GeGI two-position bundles have been retired. Their original data remain in the project workspace.</p>
+<p><a href="../examples/gamma-native/gamma.html">Cryostat gamma retirement record</a> · <a href="../examples/gegi/index.html">Early GeGI retirement record</a></p></section>
+<span id="current-ring-10k"></span></div>'''
+    if not (site/'spectra/teaching-examples.json').is_file():
+        results=results.replace('<p><a href="../learn/signals/index.html">Follow six selected 10K events from energy deposits to readout</a>. Each example keeps its model variant, primary and pulse-group identity.</p>',
+                                '<p>The six saved teaching signals are unavailable in this snapshot. <a href="../learn/index.html">Open the learning directory</a>.</p>')
+    write_page(site/'results/index.html','Research results · GeSignal',results,1,extra_style=READER_STYLE)
 
     write_methods(site)
     write_public_guide(site)
@@ -357,11 +326,25 @@ def refresh_gegi_reading_order(site):
     if evidence:
         evidence=evidence.replace('<section id="saved-evidence">','<details id="saved-evidence"><summary>Technical evidence and historical implementation notes</summary>',1)
         evidence=evidence.rsplit('</section>',1)[0]+'</details>'
-    nav=re.search(r'<nav class="local">.*?</nav>',text,re.S)
-    require(nav is not None,'Saved GeGI local navigation missing')
-    ordered=''.join(blocks[ident] for ident in ('new-map','spectra','journey'))+evidence
-    text=text[:nav.end()]+ordered+text[nav.end():]
+    text=re.sub(r'<section id="campaign-study-identity">.*?</section>','',text,flags=re.S)
+    text=re.sub(r'<h1\b[^>]*>.*?</h1>','<h1>GeGI four independent source acquisitions and conditional imaging</h1>',text,count=1,flags=re.S)
+    identity=('<section id="campaign-study-identity"><h2>Study design and saved populations</h2>'
+              '<p>Four independent acquisitions: two 662 keV monoenergetic photon runs of 200,000 initial primaries each, '
+              'plus Cs-137 and Co-60 runs of 300,000 initial records each. The combined count is 1,000,000 initial records.</p>'
+              '<p>The current conditional image uses <strong>434 signal-selected groups and 837 candidate orders</strong>. '
+              'Its 40 iterations reached the saved budget; convergence remains unestablished. '
+              'The separate historical control contains 708 groups.</p></section>')
+    ordered=identity+''.join(blocks[ident] for ident in ('new-map','journey','spectra'))+evidence
+    # Dataset views in the common page header are the only study-level menu.
+    nav=re.search(r'<nav class="local">.*?</nav>|<span id="campaign-reading-order"></span>',text,re.S)
+    require(nav is not None,'Saved GeGI reading-order marker missing')
+    text=text[:nav.start()]+'<span id="campaign-reading-order"></span>'+ordered+text[nav.end():]
     text=text.replace('<p><strong>Next operation:</strong>', '<p><strong>Historical development note at export:</strong>')
+    from site_discovery import landing_metadata_html
+    from site_routes import page_record
+    route='results/gegi-campaign/index.html'
+    description=page_record(route)['title']+'. Saved study evidence, original identities, data and methods.'
+    text=landing_metadata_html(text,route,description)
     body=public(text.encode('utf-8'));path.write_bytes(body)
     record['artifacts']['index.html']={'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest()}
     record['display_source_sha256']={'tools/site_restructure.py':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
@@ -392,22 +375,31 @@ def apply(site):
         validate_bundle(formal)
     write_reader_pages(site)
 
-    learn='''<meta http-equiv="refresh" content="0;url=../spectra/pipeline.html"><section class="hero"><h1>Signal walkthrough</h1><p>The explanation and six saved signals now share one teaching page.</p><p><a href="../spectra/pipeline.html">Continue to the six signal examples →</a></p></section>'''
-    write_page(site/'learn/index.html','Pipeline explanation · GeSignal',learn,1)
+    learn='''<div class="reader-page"><header class="reader-intro"><h1>Learn the detector signal chain</h1><p>Start with one saved event, then connect the signal to the detector, readout and original research.</p></header>
+<div class="grid"><article class="card"><h2>From deposits to readout</h2><p>Six saved Cs-137 events from the 10K study. Follow deposited energy, induced charge, current, preamplifier, shaper and peak ADC one stage at a time.</p><p><a href="signals/index.html">Start with one signal →</a></p></article>
+<article class="card"><h2>Methods and physical meaning</h2><p>Radiation transport, carrier drift, induction, analog and digitized readout, Compton candidates and counting rules.</p><p><a href="../methods/index.html">Read the methods →</a></p></article>
+<article class="card"><h2>Detector geometry</h2><p>Compare electrode shapes, electric fields and weighting potentials across the 17 recorded model definitions.</p><p><a href="../detectors/index.html">Explore the models →</a></p></article>
+<article class="card"><h2>Try your own simulation</h2><p>Install the student runtime, choose a compatible setup and inspect original event identities and saved files.</p><p><a href="../guide.html">Download, run and analyze →</a></p></article></div>
+<p>The six teaching examples retain their original study, model variant, primary and group IDs. <a href="../results/cs137-10k/index.html">Return to the full 10K study</a>.</p></div>'''
+    write_page(site/'learn/index.html','Learn · GeSignal',learn,1,extra_style=READER_STYLE)
 
-    featured_items=[x for x in catalog['detectors'] if x['id'] in control_ids]
-    dedicated_items=[x for x in catalog['detectors'] if x['id'] in dedicated_ids]
-    other_items=[x for x in catalog['detectors'] if x['id'] not in control_ids|dedicated_ids]
+    geometry_options=''.join('<option>'+escape(kind)+'</option>' for kind in sorted(set(detector_pages.TYPE_LABELS.values())))
+    filters='''<section class="panel" aria-labelledby="filter-title"><h2 id="filter-title">Find a model</h2><div class="catalog-filters">
+<label>Geometry<select id="filter-geometry"><option value="">All geometries</option>'''+geometry_options+'''</select></label>
+<label>Assembly<select id="filter-assembly"><option value="">All compatibility</option><option value="lbnl">LBNL compatible</option><option value="gegi">GeGI only</option><option value="larger">Larger cryostat needed</option></select></label>
+<label>Model status<select id="filter-status"><option value="">All statuses</option><option value="recorded model">Recorded model</option><option value="reference">Reference</option><option value="candidate">Candidate</option><option value="scenario">Scenario</option></select></label>
+<button type="button" id="reset-filters">Show all models</button></div><span id="other-models"></span><p id="model-filter-count" role="status" aria-live="polite">17 models shown.</p></section>'''
     det=('''<section class="hero"><p class="muted">Detector library</p><h1>Explore detector models</h1>
-<p>Choose a detector to inspect its geometry, saved fields and signals. All 17 model definitions retain their original settings and provenance.</p></section>
-<span id="current-ring-10k"></span>'''+detector_pages.catalog_introduction(capabilities, control_ids, dedicated_ids)+'''
-<h2>LBNL cryostat · Control configurations</h2><p>'''+str(control_count)+''' supported local configurations in the <a href="../scenarios/lbnl-cs137/index.html">LBNL modular cryostat</a>. GeRC02 uses a separate Li50min operating variant; its library geometry is the original 30-minute model.</p><div class="grid">'''+detector_cards({'detectors':featured_items})+'''</div>
-<h2>GeGI dedicated cryostat</h2><p>The <a href="../assemblies/gegi/index.html">GeGI cryostat</a> supports only the exact GeGI_3D model. It is a separate assembly at the same level as LBNL, with 34-electrode readout and Compton imaging.</p><div class="grid">'''+detector_cards({'detectors':dedicated_items})+'''</div>
-<details id="other-models" class="panel" style="margin:22px 0"><summary>'''+str(len(other_items))+''' more models · larger cryostat needed</summary><p>These models exceed the supported cryostat dimensions. Open a model to inspect its geometry and exact limits.</p><div class="grid">'''+detector_cards({'detectors':other_items})+'''</div></details>''')
-    write_page(site/'detectors/index.html','Detectors · GeSignal',det,1)
+<p>17 browsable model definitions. Each has an overview, geometry, fields and signals, and parameters with original files.</p></section><span id="current-ring-10k"></span>'''+filters+
+        '<div class="grid" id="model-catalog">'+detector_cards(catalog)+'</div>'+
+        detector_pages.catalog_introduction(capabilities,control_ids,dedicated_ids)+'''
+<script>(function(){const keys=['geometry','assembly','status'],fields=keys.map(k=>document.getElementById('filter-'+k)),cards=Array.from(document.querySelectorAll('#model-catalog [data-model]'));
+function filter(){let count=0;cards.forEach(card=>{card.hidden=!keys.every((key,i)=>!fields[i].value||card.dataset[key]===fields[i].value);if(!card.hidden)count++;});document.getElementById('model-filter-count').textContent=count+' of '+cards.length+' models shown.';}
+fields.forEach(field=>field.addEventListener('change',filter));document.getElementById('reset-filters').addEventListener('click',()=>{fields.forEach(field=>field.value='');filter();});filter();})();</script>''')
+    write_page(site/'detectors/index.html','Detectors · GeSignal',det,1,extra_style='''.catalog-filters{display:flex;align-items:end;gap:16px;flex-wrap:wrap}.catalog-filters label{display:grid;gap:6px}.catalog-filters select,.catalog-filters button{font:inherit;padding:8px;border:1px solid #9caeb9;border-radius:6px;background:white;color:#173047}#model-catalog [hidden]{display:none}#model-catalog h2{font-size:23px}#model-catalog code{overflow-wrap:anywhere}''')
     assemblies=('''<section class="hero"><p class="muted">Cryostat assemblies</p><h1>Choose a compatible assembly</h1>
 <p>LBNL and GeGI are separate cryostats. Detector selection never changes the assembly automatically. All 17 detector models remain browsable; six oversized models currently have no supported assembly.</p></section>
-<div class="grid"><article class="card"><h2>LBNL modular cryostat</h2><p>'''+str(control_count)+''' compatible detector configurations with nominal source placement. Original upstream geometry provenance and model-specific limits remain explicit.</p><p><a href="../scenarios/lbnl-cs137/index.html">Assembly and compatibility →</a></p><p><a href="../viewers/events.html?model=AK02&amp;view=positive">Open LBNL assembly and saved events →</a></p></article>
+<div class="grid"><article class="card"><h2>LBNL modular cryostat</h2><p>'''+str(control_count)+''' compatible detector configurations with nominal source placement. Original upstream geometry provenance and model-specific limits remain explicit.</p><p><a href="lbnl/index.html">Assembly and compatibility →</a></p><p><a href="../viewers/events.html?model=AK02&amp;view=positive">Open LBNL assembly and saved events →</a></p></article>
 <article class="card"><h2>GeGI cryostat</h2><p>Exact GeGI_3D only. Measured front layers and nominal side/rear enclosure; no other detector can be inserted.</p><p><a href="gegi/index.html">Rotate the GeGI assembly and inspect dimensions →</a></p><p><a href="../detectors/GeGI_3D/index.html">GeGI detector and workflow →</a></p></article></div>
 <p><a href="../detectors/index.html">Browse detectors</a> · <a href="../guide.html#local-control">Configure and run locally</a> · <a href="../results/index.html">Read saved results</a></p>''')
     write_page(site/'assemblies/index.html','Assemblies · GeSignal',assemblies,1)
@@ -416,14 +408,14 @@ def apply(site):
         a=s['models']['AK02']; b=s['models']['SAP22']
         body=f'''<section class="hero"><p class="muted">Separate completed campaign</p><h1>Cs137 · one million initial decays per detector</h1>
 <p>Nominal uncollimated LBNL cryostat geometry. Radiation transport, SSD charge response and synthetic peak ADC are saved; no measured-spectrum fit or calibrated CCE is claimed.</p>
-<p><a class="button" href="../../spectra/million-response.html">Response spectra · AK02 &amp; SAP22 →</a> · <a class="button" href="../../spectra/million-truth.html">Deposition spectra · AK02 &amp; SAP22 →</a></p></section>
+<p><a class="button" href="spectra/response.html">Response spectra · AK02 &amp; SAP22 →</a> · <a class="button" href="spectra/deposition.html">Deposition spectra · AK02 &amp; SAP22 →</a></p></section>
 <div class="grid"><article class="card"><h2>AK02</h2><p>{a["positive_ge_decays"]:,} positive-Ge decays; {a["response"]["accepted"]:,} accepted ADC groups.</p></article>
 <article class="card"><h2>SAP22</h2><p>{b["positive_ge_decays"]:,} positive-Ge decays; {b["response"]["accepted"]:,} accepted ADC groups.</p></article></div>
 <section class="panel" id="data-files"><h2>Data & settings</h2>
 <p><a href="../../examples/cs137-1m-response/groups.csv.gz">Complete saved response group records (CSV gzip)</a> · <a href="../../examples/cs137-1m-response/summary.json">Response settings and counts (JSON)</a> · <a href="../../examples/cs137-1m/summary.json">Transport summary (JSON)</a></p>
 <details><summary>Original saved reports</summary><p><a data-original-report href="../../examples/cs137-1m/report.html">Original deposition-truth report</a> · <a data-original-report href="../../examples/cs137-1m-response/report.html">Original response report</a></p></details>
 <p>Public scalar records do not contain every full waveform, private field cache or original LH5 file.</p></section>
-<section class="panel"><h2>Counting rules</h2><p>One million refers to initial Cs137 decays <strong>per detector</strong>. Positive deposits are grouped in isolated 100 µs reset windows; this is not an activity/live-time/pileup acquisition model. Native failures remain unknown responses and electronics rejection remains a separate outcome.</p></section>'''
+<section class="panel"><h2>Counting rules and view coverage</h2><p>This study provides deposition and response spectra and scalar group records. No 3D events from these million-decay runs are published. <a href="../cs137-10k/events.html">View 3D events from the separate 10K study</a>.</p><p>One million refers to initial Cs137 decays <strong>per detector</strong>. Positive deposits are grouped in isolated 100 µs reset windows; this is not an activity/live-time/pileup acquisition model. Native failures remain unknown responses and electronics rejection remains a separate outcome.</p></section>'''
         body+='<p>Two independent runs; 1,000,000 initial decays per detector. Full plots are in the spectrum views above. AK02 and SAP22 have different geometries.</p>'
         write_page(site/'results/cs137-1m/index.html','Cs137 1M results · GeSignal',body,2)
 
@@ -432,14 +424,14 @@ def apply(site):
         write_page(site/'results/cs137-1m/index.html','Cs137 1M results unavailable · GeSignal',body,2)
 
     if has_10k:
-        event_cards='''<article class="card"><h2>GeSignal event viewer</h2><p>Choose one primary and pulse group to inspect assembly, recorded deposits and Ge-positive evidence together. All 10,000 initial IDs per detector remain available, including zeros.</p><a href="../../viewers/events.html">Open the event viewer →</a></article>'''
+        event_cards='''<article class="card"><h2>GeSignal event viewer</h2><p>Choose one primary and pulse group to inspect assembly, recorded deposits and Ge-positive evidence together. All 10,000 initial IDs per detector remain available, including zeros.</p><a href="events.html">Open the event viewer →</a></article>'''
         if not (site/'viewers/events.html').is_file():
             event_cards='''<article class="card"><h2>Geometry and events</h2><a href="../../examples/cs137-10k-geometry/geometry.html">Rotate cryostat geometry and inspect events →</a></article>
 <article class="card"><h2>Ge-hit overlay</h2><a href="../../examples/cs137-10k-hits/hit_event_view.html">Open saved Ge-hit examples →</a></article>'''
         body='''<section class="hero"><p class="muted">Earlier engineering campaign</p><h1>Cs137 · 10k initial decays per detector</h1><p>This smaller run established the event-complete Geant4 → SSD → electronics workflow before the million-decay campaign.</p></section>
 <div class="grid"><article class="card"><h2>Response comparison</h2><a href="../../examples/cs137-10k/comparison.html">Open 10k response report →</a></article>
 '''+event_cards+'''</div>
-<p><a href="../../scenarios/lbnl-cs137/index.html">Nominal scenario context</a></p>'''
+<p><a href="../../assemblies/lbnl/index.html">Nominal scenario context</a></p>'''
         write_page(site/'results/cs137-10k/index.html','Cs137 10k results · GeSignal',body,2)
     else:
         body='''<section class="hero"><p class="muted">Campaign overview unavailable in this snapshot</p><h1>Cs137 · 10k initial decays per detector</h1><p>This stable overview URL is retained, but the checked 10k comparison is not included in this site snapshot. Use the Results page for currently available campaigns.</p></section>'''

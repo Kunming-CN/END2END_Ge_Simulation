@@ -16,7 +16,7 @@
 __PAGE_NAVIGATION__
 <h1>From Cs137 deposits to a saved pulse.</h1>
 <p class="intro">Choose one of six representative signals from the completed 10,000-decay cryostat cases. Follow deposited energy, signed native charge, electronics-input current, the preamp and the shaped peak. These curated examples teach the signal chain; they are not a spectrum or a random statistical sample.</p>
-<ol class="stages" aria-label="Signal chain"><li>1 · Radiation deposits</li><li>2 · Native signed charge</li><li>3 · Current → preamp</li><li>4 · Analog shaping</li><li>5 · Peak ADC → Erec</li></ol>
+<ol class="stages" aria-label="Signal chain"><li>1 · Radiation deposits</li><li>2 · Native signed charge</li><li>3 · Current</li><li>4 · Preamp</li><li>5 · Analog shaping</li><li>6 · Peak ADC → Erec</li></ol>
 <noscript>The plots need JavaScript. <a href="teaching-examples.json">The exact selected records</a> remain readable as JSON.</noscript>
 <section class="card selection"><label for="example-select">Saved example · detector / initial decay ID / pulse group</label><select id="example-select"></select><p id="selection-note" class="muted" aria-live="polite"></p></section>
 <div id="error" class="error" role="alert" hidden></div>
@@ -27,7 +27,7 @@ __PAGE_NAVIGATION__
 <p class="flagline" id="case-flags"></p>
 <p class="source-links"><a id="case-3d">This primary and pulse group in 3D</a><a id="case-readout">This saved charge and readout event</a></p>
 </section>
-<section class="card selection"><label for="stage-select">Follow one signal stage</label><select id="stage-select"><option value="charge">1 · Native signed induced charge</option><option value="current">2 · Electronics-input current</option><option value="preamp">3 · Analog preamp</option><option value="shaper">4 · Analog shaper and peak ADC</option></select><p id="stage-explanation" aria-live="polite"></p></section>
+<section class="card selection"><label for="stage-select">Follow one signal stage</label><select id="stage-select"><option value="deposits">1 · Radiation deposits</option><option value="charge">2 · Native signed induced charge</option><option value="current">3 · Electronics-input current</option><option value="preamp">4 · Analog preamp</option><option value="shaper">5 · Analog shaping</option><option value="adc">6 · Peak ADC and reconstructed energy</option></select><p id="stage-explanation" aria-live="polite"></p><div id="stage-records" hidden></div></section>
 <div class="plots" id="plots" aria-label="Four saved signal stages"></div>
 <section class="card">
 <h2>Fixed settings and exact source records</h2>
@@ -38,7 +38,7 @@ __PAGE_NAVIGATION__
 <details id="exact-details"><summary>Exact selected ledger, retained samples and settings</summary><pre id="exact-json"></pre></details>
 <details id="provenance-details"><summary>Source hashes and export binding</summary><pre id="provenance-json"></pre></details>
 </section>
-<section class="card"><h2>How to interpret these examples</h2><p>The nominal cryostat and source arrangement are engineering inputs, not a surveyed replica. Native transport includes finite parcel counts, caps and recorded failures. The electronics is synthetic and noiseless; these curves are not measured pulse comparisons or physical energy-resolution predictions.</p><p>Original signs, IDs, time origins, deposit rows and flags are retained. The complete 10K event ledgers, zeros and statistical distributions stay in the linked case records. GeRC02 here uses the saved Li 50 minute run variant; its catalog model retains the original 30 minute input. KM is a candidate with fixed readout wiring.</p><p class="muted">The earlier 200-event bare-gamma teaching dataset is retained as the <a href="../examples/pipeline.html">original teaching archive</a>.</p></section>
+<section class="card"><h2>How to interpret these examples</h2><p>The nominal cryostat and source arrangement are engineering inputs, not a surveyed replica. Native transport includes finite parcel counts, caps and recorded failures. The electronics is synthetic and noiseless; these curves are not measured pulse comparisons or physical energy-resolution predictions.</p><p>Original signs, IDs, time origins, deposit rows and flags are retained. The complete 10K event ledgers, zeros and statistical distributions stay in the linked case records. GeRC02 here uses the saved Li 50 minute run variant; its catalog model retains the original 30 minute input. KM is a candidate with fixed readout wiring.</p><p class="muted">The separate earlier 200-primary bare-gamma study is retired from the public exhibit. Its <a href="../examples/pipeline.html">retirement note</a> identifies that study; it does not contain the original curves. These six signals come from the four-case Cs137 10K study linked above.</p></section>
 </div>
 <footer><a href="teaching-examples.json">Exact six-example JSON</a> · All plotting data is also embedded here for offline use.</footer>
 </main>
@@ -52,16 +52,16 @@ const fmt=v=>v===null||v===undefined?"Unavailable":Number(v).toLocaleString("en-
 const exact=v=>v===null||v===undefined?"Unavailable":String(v);
 function facts(items){const host=$("case-facts");host.replaceChildren();for(const[label,value]of items){const div=document.createElement("div"),dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=label;dd.textContent=value;div.append(dt,dd);host.append(div);}}
 function selected(){return data.cases[$("example-select").selectedIndex];}
-const variants={AK02:'AK02',SAP22:'SAP22',GeRC02:'GeRC02_Li50min',KMRC01_candidate:'KMRC01_candidate'},stages=['charge','current','preamp','shaper'];
+const variants={AK02:'AK02',SAP22:'SAP22',GeRC02:'GeRC02_Li50min',KMRC01_candidate:'KMRC01_candidate'},stages=['deposits','charge','current','preamp','shaper','adc'];
 function selectionQuery(c){return new URLSearchParams({study:'cs137-10k',model:c.model,variant:variants[c.model],event:String(c.event_id),group:String(c.group_id)});}
 function writeSelection(replace=false){
  if(typeof history==='undefined'||typeof location==='undefined')return;
- const q=selectionQuery(selected());q.set('stage',$("stage-select").value||'charge');
+ const q=selectionQuery(selected());q.set('stage',$("stage-select").value||'deposits');
  const url=location.pathname+'?'+q+(location.hash||'');
  if(replace)history.replaceState(null,'',url);else if(url!==location.pathname+location.search+(location.hash||''))history.pushState(null,'',url);
 }
 function restoreSelection(){
- if(typeof location==='undefined'){$("stage-select").value='charge';render();return;}
+ if(typeof location==='undefined'){$("stage-select").value='deposits';render();return;}
  const q=new URLSearchParams(location.search),allowed=['study','model','variant','event','group','stage'];
  for(const key of q.keys())if(!allowed.includes(key)||q.getAll(key).length!==1)throw Error('Unknown or repeated selection parameter.');
  if(q.has('study')&&q.get('study')!=='cs137-10k')throw Error('This page contains selected signals from the Cs137 10K study.');
@@ -74,7 +74,7 @@ function restoreSelection(){
   index=data.cases.findIndex(c=>c.model===q.get('model')&&c.event_id===Number(q.get('event'))&&c.group_id===Number(q.get('group')));
   if(index<0)throw Error('No curated teaching waveform exists for this exact case, primary and group. Open its charge/readout result for the saved scalar records.');
  }
- const stage=q.get('stage')||'charge';if(!stages.includes(stage))throw Error('Unknown signal stage.');
+ const stage=q.get('stage')||'deposits';if(!stages.includes(stage))throw Error('Unknown signal stage.');
  $("example-select").selectedIndex=index;$("stage-select").value=stage;$("content").hidden=false;$("error").hidden=true;render();writeSelection(true);
 }
 function showError(error){$("error").hidden=false;$("error").textContent='Saved example unavailable: '+error.message;$("content").hidden=true;}
@@ -101,9 +101,17 @@ const panels=[
 {title:"Saved analog shaper · V",time_ns:t.time_ns,values:t.shaped_V,full_end_ns:analogEnd,focus_end_ns:SavedFocusPlots.shaperEnd(t.time_ns,t.shaped_V,peak,analogEnd),peak,note:analogNote+"Gold marker: exact original sampled peak from the scalar ledger; accepted ADC and Erec stay unchanged."}
 ];
 SavedFocusPlots.draw($("plots"),panels,"Time since selected group origin · ns");
-const stage=$("stage-select").value||'charge',stageIndex=stages.indexOf(stage);
-Array.from($("plots").children).forEach((figure,i)=>figure.hidden=i!==stageIndex);
-$("stage-explanation").textContent=["Moving electrons and holes induce a signed electrode signal. The final induced charge can differ from deposited energy when transport remains incomplete.","Current is charge change per recorded time bin. Its sign follows the fixed electronics wiring; the KM example keeps negative native charge and applies its recorded −1 wiring.","The preamp integrates the electronics-input current through the saved feedback circuit. Its voltage polarity follows that circuit.","The analog shaper sets the sampled peak. One independent calibration converts the peak ADC code to reconstructed energy; it is fixed across events."][stageIndex];
+const stage=$("stage-select").value||'deposits',stageIndex=stages.indexOf(stage);
+Array.from($("plots").children).forEach((figure,i)=>figure.hidden=i!==stageIndex-1);
+$("stage-explanation").textContent=["Radiation transport records where and when energy enters the semiconductor. The table shows the selected group's original raw deposition rows: energy in keV, delay from the group origin in ns, and global position in mm. A deposition time is not a carrier drift time.","The plot shows signed electrode charge in fC against time since this group began in ns. Moving electrons and holes induce that signal; its final value can differ from deposited energy when transport remains incomplete.","The plot shows electronics-input current in nA against time in ns. Current is charge change per recorded time bin. Its sign follows the fixed wiring; the KM example keeps negative native charge and applies its recorded −1 wiring.","The plot shows preamplifier voltage in V against time in ns. The preamp integrates the electronics-input current through the saved feedback circuit. Its voltage polarity follows that circuit.","The plot shows shaped voltage in V against time in ns, with the exact saved sampled peak marked. Analog shaping sets the pulse amplitude and duration before the peak ADC.","The peak analog-to-digital converter (ADC) records one integer code from the sampled shaped peak, rather than a digitized waveform. One independent synthetic injection calibrates that code to reconstructed energy in keV; the same calibration applies to every event."][stageIndex];
+const recordHost=$("stage-records");recordHost.replaceChildren();recordHost.hidden=stage!=='deposits'&&stage!=='adc';
+if(stage==='deposits'){
+ const wrap=document.createElement('div'),table=document.createElement('table'),head=document.createElement('tr'),body=document.createElement('tbody');wrap.className='table-scroll';
+ for(const label of ['Raw row','Edep · keV','Delay · ns','x · mm','y · mm','z · mm']){const th=document.createElement('th');th.textContent=label;head.append(th);}table.append(head,body);
+ const rows=new Set(p.raw_row_indices);for(const row of c.truth.steps)if(rows.has(row.raw_row_index)){const tr=document.createElement('tr');for(const value of [row.raw_row_index,row.energy_keV,row.time_ns-p.origin_time_ns,...row.position_mm]){const td=document.createElement('td');td.textContent=exact(value);tr.append(td);}body.append(tr);}wrap.append(table);recordHost.append(wrap);
+}else if(stage==='adc'){
+ for(const [label,value]of [['Original sampled peak',exact(r.peak_V)+' V at '+exact(r.peak_time_ns)+' ns'],['Peak ADC code',exact(r.adc_code)],['Reconstructed energy',r.accepted?exact(r.reconstructed_energy_keV)+' keV':'Not accepted: '+exact(r.rejection_reason)],['Independent calibration',m.calibration.method]]){const line=document.createElement('p');line.textContent=label+': '+value;recordHost.append(line);}
+}
 const config=m.readout_config;
 $("electronics-settings").textContent="Feedback "+exact(config.feedback_capacitance_pF)+" pF / "+exact(config.feedback_tau_us)+" µs; pole-zero "+exact(config.pole_zero_tau_us)+" µs; shaping "+exact(config.shaping_tau_us)+" µs; gain "+exact(config.gain)+"; "+exact(config.adc_bits)+"-bit peak ADC / "+exact(config.adc_full_scale_V)+" V; threshold "+exact(config.threshold_V)+" V. "+m.calibration.method+".";
 const folder="../"+m.source_folder;

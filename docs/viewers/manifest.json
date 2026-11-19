@@ -881,21 +881,21 @@
     "tools/hit_event_view.py": "7df235b8110fb19fbdf7c17ba18f7e7983fd3690af687fcd390cf7376649112e"
   },
   "adapter_sources": {
-    "tools/viewer_navigation.py": "eca9acf0ebc1efd1408bc1c7f7bc387487b97971da59fed463d6a20c9d8ee1d5",
+    "tools/viewer_navigation.py": "00ba2c40ef9def0afb0453806b1f2946507f68f7e4232aa0f7f82d621dd27eb6",
     "tools/viewer_navigation.js": "5f3f4c0062b4da291669bead6451fd611e30cd15061439695130269b5454709c",
     "tools/unified_event_viewer.html": "d1efb91d1b63dcf349e60f4f9467c963e0fe20fbbffb4edd74ae614020993d95",
     "tools/unified_event_viewer.js": "6701527fc01d29c7e502582a586b4ec5df9fe24802cefecd2973259726e011d7",
-    "tools/site_restructure.py": "e4f5f1964d94c86a5ac384774c03beca9a045195b5ad2725320d99e75c8fe54e",
-    "tools/site_routes.py": "f77f2c715da8530239093523c8eb613c9e13f8cf5440c33bc5254c2cbbd352cb",
+    "tools/site_restructure.py": "fe93f22d5d25c64f3595a37a54f9524bb5f67fe3d757b2f91bcc38e1f63deafe",
+    "tools/site_routes.py": "2261f5c4e8deb91e14005e4684dfb736a75d01f010c5b20f3311a28cde2853b4",
     "tools/geometry_web_delivery.py": "5db8416cf15332012dc970b70422bb4b77d71176937e9cad1989603c6986cca9",
-    "tools/result_web_delivery.py": "458e86ba482e7af4495e4f55732fdf7b20a2ec6092680f455b042fbecabfe716"
+    "tools/result_web_delivery.py": "579217bf0b64504d179b81547860c215c821dc0a133eafe830e6e671014ecbe0"
   },
   "pages": {
     "viewers/events.html": {
       "source": "tools/unified_event_viewer.html",
       "view": "positive",
       "role": "canonical",
-      "sha256": "84274b7d15a89403a0fb4f804568b416279c6a1d65edb2e92ac03c8fcc71dde2"
+      "sha256": "4aa2da9e0495b6a9470752c838f4ab2d860682651542db4dc1510c27301bb81f"
     },
     "viewers/geant4-assembly.html": {
       "source": "examples/cs137-10k-geometry/geometry.html",
@@ -1828,7 +1828,7 @@
       "bytes": 803
     },
     "examples/cs137-10k-rings/web-delivery.json": {
-      "sha256": "fdf6a1eb781e9f09a473ceb2a4e790ab221679843e191c6d27705ade15e66418",
+      "sha256": "15b1d168a3613d93cf96b200194ac7dc2d065971c39a133476f9ef08ca1d276a",
       "bytes": 2117
     },
     "examples/cs137-10k-rings/manifest.json": {

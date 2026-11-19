@@ -22,44 +22,27 @@ summary{cursor:pointer;font-weight:650}table{width:100%;border-collapse:collapse
 <body>
 <header>
 __PAGE_NAVIGATION__
-<h1>Run and understand GeSignal</h1>
-<p>Set up Windows or macOS, use Control, and inspect the files in a saved run.</p>
+<h1>Download, run and analyze GeSignal</h1>
+<p>Install the student software, complete a small run and follow its original records through the saved results.</p>
 </header>
 <main>
-<section id="local-routes" aria-label="Local workflow steps">
-<h2>Local workflow</h2>
-<nav aria-label="Guide contents"><ol>
-<li><a href="#setup-macos">Set up macOS</a> — install the CPU runtime for Apple Silicon or Intel.</li>
-<li><a href="#setup">Set up Windows</a> — prepare the pinned environment and source files.</li>
-<li><a href="#local-control">Use Control</a> — check a supported setup and run the pipeline.</li>
-<li><a href="#saved-analysis">Read and analyze a saved result</a> — inspect event identities and original files.</li>
-<li><a href="#control-recovery">Stop and resume saved settings</a> — reuse verified completed work.</li>
-</ol></nav>
-<p><a href="#advanced-title">Advanced and historical routes</a> cover separate command-line, replay and recovery workflows.</p>
-</section>
+<section id="local-routes" aria-label="Local workflow steps"><h2>From download to your own results</h2>
+<ol><li><a href="#download-software">Choose and download the software</a>.</li>
+<li><a href="#setup">Install and check Windows</a>, <a href="#setup-macos">macOS</a> or <a href="#setup-linux">Linux components</a>.</li>
+<li><a href="#local-control">Complete one small run</a>.</li>
+<li><a href="#find-results">Find the outputs and inspect one result</a>.</li>
+<li><a href="#control-recovery">Stop, resume and adjust settings</a>.</li>
+<li><a href="#saved-analysis">Analyze your own results</a>.</li>
+<li><a href="#troubleshooting">Troubleshoot</a> or open <a href="#advanced-title">advanced workflows</a>.</li></ol></section>
 
-<section id="browse">
-<h2>Browse saved results</h2>
-<p><a href="results/index.html">Choose a saved dataset</a> to find its available waveforms, spectra, radiation views and exact files. The teaching, cryostat gamma, four-case Cs137 10K, two-case million-decay campaigns and <a href="results/gegi-campaign/index.html">GeGI Compton imaging</a> retain separate geometries and event IDs. Use the <a href="detectors/index.html">17-model detector library</a> for shapes, fields and original model settings, or compare <a href="assemblies/index.html">LBNL and GeGI assemblies</a>.</p>
-<p>The website displays saved data; it does not start simulations. Seventeen viewable models do not mean seventeen executable Control models.</p>
-<details><summary>Browse an offline website copy</summary>
-<p>Include <code>docs/</code> in your checkout. From the project root, use an existing Windows Python:</p>
-<pre><code>python -m http.server 8765 --bind 127.0.0.1 --directory docs</code></pre>
-<p>Open <code>http://127.0.0.1:8765/</code>. Interactive viewers need HTTP to load their saved data; opening HTML directly may show only a static fallback.</p>
-</details>
-</section>
-
-<section id="setup-macos">
-<h2>Set up macOS</h2>
-<p>Use the same <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip">student software ZIP</a> as Windows. The Mac launchers use native CPU calculations, with the same detector models, settings and result formats. A ChatGPT account, Windows installation or NVIDIA graphics card is not required.</p>
-<ol>
-<li><strong>Prepare the three platform tools once.</strong> Install <a href="https://github.com/JuliaLang/juliaup#installation">Juliaup</a> and <a href="https://pixi.prefix.dev/latest/installation/">Pixi</a> (0.81.0 or newer). Install Apple's Command Line Tools by running <code>xcode-select --install</code> in Terminal and completing Apple's installer. Use a native terminal for your Mac's processor. The dependency lock targets macOS 13 or newer.</li>
-<li><strong>Extract the software and run <code>Setup.command</code>.</strong> Setup installs the pinned Julia 1.13.0 CPU environment and the locked Mac transport environment, fetches the nine hash-checked cryostat source files, and builds the geometry exporters. First setup includes downloading and compiling dependencies; later launches reuse them. Keep the extracted folder in its final location. Setup does not run a simulation. Its progress and any failure remain available for diagnosis.</li>
-<li><strong>Open <code>Control.command</code>.</strong> Keep its terminal window open while using the local application in your browser. Choose a compatible detector, cryostat and source, start with 100 initial events and one Julia thread, then use <strong>Check plan</strong> and <strong>Run simulation</strong>. The same <a href="#local-control">Control instructions</a> and <a href="#control-recovery">Stop/Resume controls</a> apply on both systems.</li>
-</ol>
-<p>If a launcher opens as text, open Terminal in the extracted folder and run <code>bash Setup.command</code> or <code>bash Control.command</code>. Opening Control uses the prepared environment; it installs nothing.</p>
-<p class="note" id="macos-validation">Native macOS 15 installation, CPU calculation and stage stop/resume have been checked with a 100-initial-event SAP22/Cs137 case. Its preserved Mac data were also checked through the production Control result reader on Windows. See the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/pull/1">Apple Silicon and Intel test records</a> for each platform's status and exact scope. This is a functional software check; detector accuracy and model-specific limits remain separate.</p>
-</section>
+<section id="download-software"><h2>1. Choose your download</h2>
+<p><a class="button" href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/download/student-runtime-f44859b48267/END2END-Ge-Student.zip">Download student software · ZIP</a></p>
+<p>Verified release <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-f44859b48267">student-runtime-f44859b48267</a> · 1,143,142 bytes (1.09 MiB) · shared Windows/macOS CPU source and launchers. Install the platform dependencies below, then use the same Control workflow.</p>
+<table><thead><tr><th>Download or source</th><th>Use</th><th>Contents and requirements</th></tr></thead><tbody>
+<tr><td>Student software</td><td>Run and analyze your simulations</td><td>Code, 17 model definitions, locked environment files and this guide. Dependencies are installed separately. Saved research examples, field caches and calibration banks are excluded.</td></tr>
+<tr><td><a href="results/index.html">Website study data</a></td><td>Read published research</td><td>Figures, saved results, comparisons and their data links. These are separate from the runtime and do not start simulations.</td></tr>
+<tr><td><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases">Separate GeGI calibration</a></td><td>Compatible GeGI waveform reconstruction</td><td>The simulated <code>gegi-center-calibration.npz</code> is 303,891,603 bytes (289.81 MiB). Use a calibration matching your saved fields and electronics; a public plot is not a calibration input.</td></tr></tbody></table>
+<p>Keep the extracted software in its final folder. Website-only exhibit changes do not require a new runtime package.</p></section>
 
 <section id="setup">
 <h2>Set up Windows</h2>
@@ -120,12 +103,28 @@ foreach ($f in $m.files) {
 </details>
 </section>
 
+<section id="setup-macos">
+<h2>Set up macOS</h2>
+<p>Use the same <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip">student software ZIP</a> as Windows. The Mac launchers use native CPU calculations, with the same detector models, settings and result formats. A ChatGPT account, Windows installation or NVIDIA graphics card is not required.</p>
+<ol>
+<li><strong>Prepare the three platform tools once.</strong> Install <a href="https://github.com/JuliaLang/juliaup#installation">Juliaup</a> and <a href="https://pixi.prefix.dev/latest/installation/">Pixi</a> (0.81.0 or newer). Install Apple's Command Line Tools by running <code>xcode-select --install</code> in Terminal and completing Apple's installer. Use a native terminal for your Mac's processor. The dependency lock targets macOS 13 or newer.</li>
+<li><strong>Extract the software and run <code>Setup.command</code>.</strong> Setup installs the pinned Julia 1.13.0 CPU environment and the locked Mac transport environment, fetches the nine hash-checked cryostat source files, and builds the geometry exporters. First setup includes downloading and compiling dependencies; later launches reuse them. Keep the extracted folder in its final location. Setup does not run a simulation. Its progress and any failure remain available for diagnosis.</li>
+<li><strong>Open <code>Control.command</code>.</strong> Keep its terminal window open while using the local application in your browser. Choose a compatible detector, cryostat and source, start with 100 initial events and one Julia thread, then use <strong>Check plan</strong> and <strong>Run simulation</strong>. The same <a href="#local-control">Control instructions</a> and <a href="#control-recovery">Stop/Resume controls</a> apply on both systems.</li>
+</ol>
+<p>If a launcher opens as text, open Terminal in the extracted folder and run <code>bash Setup.command</code> or <code>bash Control.command</code>. Opening Control uses the prepared environment; it installs nothing.</p>
+<p class="note" id="macos-validation">Native macOS 15 installation, CPU calculation and stage stop/resume have been checked with a 100-initial-event SAP22/Cs137 case. Its preserved Mac data were also checked through the production Control result reader on Windows. See the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/pull/1">Apple Silicon and Intel test records</a> for each platform's status and exact scope. This is a functional software check; detector accuracy and model-specific limits remain separate.</p>
+</section>
+
+<section id="setup-linux"><h2>Linux components and source use</h2>
+<p>The student launchers support Windows and macOS. Windows uses the locked Linux radiation-transport environment through WSL2. Native Linux users can work with the shared source, pinned Julia environment and <code>transport/pixi.lock</code>, but this release has no packaged Linux Control launcher or completed native Linux onboarding acceptance.</p>
+<p>Use the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/simulation/README.md">simulation component instructions</a> and <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/transport/README.md">transport installation checks</a> for that advanced route. Preserve the supplied locks and keep generated files under <code>.local/</code>.</p></section>
+
 <section id="local-control">
-<h2>Use Control</h2>
+<h2>3. Complete one small run</h2>
 <p>Open <code>Control.cmd</code> on Windows or <code>Control.command</code> on macOS in the project root. It opens the English <strong>Local simulation</strong> application. New runs calculate geometry/source preparation, radiation deposits, the event ledger, fields and charge, independent calibration, readout, and verified results.</p>
 <h3>First run: choose, check, run, then inspect results</h3>
 <ol>
-<li>Select a detector and inspect its model panel. Choose a supported cryostat, source, source/capsule angle, primary count and threads. Choose the radiation seed when the source policy permits it. Enter a new unused run name.</li>
+<li>Start with 100 initial events and one Julia thread. Select a detector and inspect its model panel. Choose a supported cryostat, source, source/capsule angle, primary count and threads. Choose the radiation seed when the source policy permits it. Enter a new unused run name.</li>
 <li>Adjust <strong>Electronics settings</strong> if needed. Use <strong>Export configuration</strong> or <strong>Load configuration</strong> to keep an exact setup.</li>
 <li>Click <strong>Check plan</strong>. Review the effective position/orientation in <strong>Checked source pose</strong> and the <strong>Checked next-run configuration</strong>. Changing any selection, including angle, invalidates the check.</li>
 <li>Click <strong>Run simulation</strong>. Follow <strong>Pipeline</strong> and open the stage logs from <strong>Runs</strong>.</li>
@@ -147,8 +146,19 @@ foreach ($f in $m.files) {
 <p><strong>Use a peak gate</strong> enables both boundaries. With it off, both are unset. One independent 500 keV injection calibrates the selected configuration; there is no per-event truth-energy gain. The analog calculation grid is separate from the peak ADC, which records one peak code rather than a sampled acquisition waveform.</p>
 </details>
 </section>
+
+<section id="find-results"><h2>4. Find the outputs and inspect one result</h2>
+<p>In <strong>Runs</strong>, open the completed run and choose <strong>Explore events</strong>. Read its saved detector, source and seed first, then select an original primary and pulse group. Compare deposited energy with reconstructed energy and inspect the signed charge and readout plots.</p>
+<p><strong>Saved stage files</strong>, below the plots, links the exact settings, radiation ledger, charge response, calibration and readout records. Your files live under <code>.local/runs/NAME/</code>. Keep the run name, batch, original initial ID and group ID together when moving between plots and files. A record without a saved waveform remains selectable with its available scalar data.</p>
+<p>Next, <a href="#control-recovery">learn Stop/Resume</a> or <a href="#saved-analysis">analyze the files and spectra</a>.</p></section>
+
+<section id="control-recovery">
+<h2>5. Stop, resume and adjust settings</h2>
+<p>For a decay run, choose <strong>Stop at next boundary</strong> in the run card. The current stage or batch reaches a verified completed boundary first; Stop is not immediate. When the status is <strong>Stopped at stage boundary</strong>, <strong>Resume saved settings</strong> verifies sealed stages and batches, reuses completed work and continues pending work with the same settings. Completed batches remain available through <strong>Explore events</strong>. Keep the launcher open until completion or the stopped boundary. Uncertain unsealed attempts are retained for inspection and refused rather than silently rerun. The legacy gamma route uses <strong>Stop after current stage</strong>. See the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/BATCH_PREVIEW.md">shared count and recovery contract</a>.</p>
+<p>To change detector, source or electronics, export or edit a configuration and choose a new unused run name. Resume always uses the stopped run’s saved settings.</p></section>
+
 <section id="saved-analysis">
-<h2>Read and analyze a saved result</h2>
+<h2>6. Analyze your own results</h2>
 <p>Use <strong>Show stages</strong> for that run's settings, receipts and logs; use <strong>Explore events</strong> for its original primary IDs and pulse groups. A saved nonzero waveform is selected first when available. The charge, original-bin current, analog preamp and analog shaper plots retain their signed signals and units.</p>
 <p>Each signal has a useful independent focus range; <strong>Full saved window</strong> restores its saved time span. Where a dense early preamp view is available, it is an explicitly labelled electronics-only replay from full signed charge. It does not recover unsaved original analog samples or alter the original peak, ADC code or reconstructed energy. Collection caps and incomplete endpoints remain visible.</p>
 <p>Truth deposited energy, induced charge-equivalent energy and reconstructed energy are separate values. A true zero has no fabricated waveform and keeps reconstructed energy unavailable. Native failures retain their truth and error; unknown response quantities remain null. Changing the next-run form does not relabel the saved result. <strong>Selected run source pose</strong> and <strong>Selected run settings</strong> show that run's recorded angle, position, rotation and provenance; earlier runs remain labelled as legacy fixed poses. Stop/Resume uses those saved settings.</p>
@@ -169,10 +179,12 @@ foreach ($f in $m.files) {
 <p>Report a setup or run problem through <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/issues">GitHub Issues</a>. Include your operating system, project revision, detector/source/count, run name, failing step and exact error so the same setup can be checked.</p>
 </section>
 
-<section id="control-recovery">
-<h2>Stop and resume saved settings</h2>
-<p>For a decay run, choose <strong>Stop at next boundary</strong> in the run card. The current stage or batch reaches a verified completed boundary first; Stop is not immediate. When the status is <strong>Stopped at stage boundary</strong>, <strong>Resume saved settings</strong> verifies sealed stages and batches, reuses completed work and continues pending work with the same settings. Completed batches remain available through <strong>Explore events</strong>. Keep the launcher open until completion or the stopped boundary. Uncertain unsealed attempts are retained for inspection and refused rather than silently rerun. The legacy gamma route uses <strong>Stop after current stage</strong>. See the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/BATCH_PREVIEW.md">shared count and recovery contract</a>.</p>
-</section>
+<section id="troubleshooting"><h2>7. Troubleshoot a setup or run</h2>
+<ul><li><strong>Setup fails:</strong> keep its log and exact error, then check the platform prerequisites and pinned versions above. Opening Control does not install dependencies.</li>
+<li><strong>Check plan refuses the setup:</strong> inspect the stated compatibility, source pose or missing input. Check again after any change.</li>
+<li><strong>No energy or waveform:</strong> check the initial/nonzero counts, native-failure status, threshold and saved-waveform coverage. An unavailable response is not zero.</li>
+<li><strong>A run was interrupted:</strong> inspect its saved completion state before another launch. Use <a href="#control-recovery">Resume saved settings</a> at a verified stopped boundary or the specifically supported <a href="#recovery">recovery tools</a>.</li></ul>
+<p>For <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/issues">GitHub Issues</a>, include the operating system, software revision, detector/source/count, run name, failing step and exact error.</p></section>
 
 <section id="validation">
 <h2>What the examples establish</h2>
@@ -184,13 +196,13 @@ foreach ($f in $m.files) {
 
 <section id="task-details"><h2>Configuration topics</h2>
 <details id="gegi-workflow"><summary>GeGI: source, 34 electrodes and Compton imaging</summary>
-<p><a href="assemblies/gegi/index.html">Rotate the GeGI cryostat and inspect its dimensions</a> · <a href="detectors/GeGI_3D/index.html">GeGI detector model</a> · <a href="results/gegi-campaign/index.html">Completed million-initial campaign: signals and imaging</a>. The public results and your own local runs retain separate input settings and event identities.</p>
+<p><a href="assemblies/gegi/index.html">Rotate the GeGI cryostat and inspect its dimensions</a> · <a href="detectors/GeGI_3D/index.html">GeGI detector model</a> · <a href="results/gegi-campaign/index.html">Four independent acquisitions: signals and conditional imaging</a>. The public results and your own local runs retain separate input settings and event identities.</p>
 <ol>
 <li><strong>Choose the setup.</strong> Open Control, select <strong>GeGI cryostat</strong> and <strong>GeGI</strong>, then choose its monoenergetic gamma point source. Enter gamma energy from 1 to 10000 keV, source x/y/z in mm and 1–10000 initial gamma primaries. The crystal centre is the origin and +z is the front. This source is isotropic: the denominator counts every emitted gamma, including misses. Start with 100; a small run can have no Ge deposit.</li>
 <li><strong>Check and run.</strong> Set electronics, a radiation seed and one or two Julia threads, then choose <strong>Check plan</strong>. Inspect the resolved settings and choose <strong>Run</strong> to execute geometry, transport, event ledger, native charge, independent calibration, readout and reconstruction in one workflow. Stop waits for a stage boundary; Resume reuses verified completed work with the saved settings. The first installation computes native fields; an exact locally saved GeGI state can be reused. Field data and precomputed examples are not included in the software ZIP.</li>
 <li><strong>Follow your event.</strong> Open the completed run and select an original nonzero primary ID. The event journey shows actual signed charge, current, preamp and shaper samples for all 32 strips and two guards, plus the shared waveform-reconstruction status. New standalone runs do not infer depth or create a source map without a compatible independent waveform calibration. Fixed energy readout and original timing diagnostics remain available. Open the event identity and stage-file panels for the exact native JSON/CSV, original LH5 transport, ledger, independent electronics calibration, configuration and recorded hashes under <code>.local/runs/NAME/</code>.</li>
 </ol>
-<p>The standalone transport workflow launches a monoenergetic gamma source. For simultaneous isotope acquisition, Control can replay two saved decay libraries with their original geometries and daughter delays. <a href="#gegi-dual-source">Run a dual-source acquisition</a>.</p>
+<p>The standalone transport workflow launches a monoenergetic gamma source. For historical shared-readout diagnostics, Control can replay two saved decay libraries with their original geometries and daughter delays. <a href="#gegi-dual-source">Run a dual-source acquisition</a>.</p>
 <p>The measured front stack has a 1.6 mm exterior cover, 0.8 mm inner shield and an 8.1 mm crystal-to-exterior-front distance. The missing side/rear dimensions and vacuum-gap split are explicit engineering approximations; both specified aluminium alloys use pure aluminium in this first transport model. The frozen 92.3 K, −879/0 V semiconductor model and its original assumptions are unchanged.</p>
 <p>X and Y each measure the same deposited charge and must not be added together as event energy. Fixed family wiring and independent injection calibration convert signed signals to readout energies. Failed or rejected nonzero events remain selectable; unavailable signal quantities remain null. Initial, zero-deposit, nonzero, failed and rejected counts retain the original efficiency denominator. Charge timing uses the saved analog numerical grid; a deposition time is not a drift time, and the peak ADC is not a digitized hardware waveform.</p>
 <p>Older saved GeGI runs use the historical terminal-charge CFD (constant-fraction discrimination) timing and strict two-by-two strip pairing, with central-pixel or explicitly supplied per-pixel timing tables. Those maps remain experimental legacy results. A displayed cone or two visible map peaks does not establish correct interaction depths or source locations. The separate <strong>Transport truth · evaluation only</strong> panel contains original radiation deposits; those positions and source coordinates do not choose signal-derived candidates.</p>
@@ -289,6 +301,7 @@ wsl.exe -d Ubuntu-24.04 --cd "$Project" -- bash transport/workflow.sh python -B 
 <p>The six oversized models remain view only in the LBNL assembly; GeGI requires its dedicated cryostat. Choose one or two Julia threads; CPU stages run serially. A source change invalidates Check plan. A loaded unsupported source is refused without replacing it with another selection.</p>
 
 </details></section>
+
 <section id="advanced-routes" aria-labelledby="advanced-title">
 <h2 id="advanced-title">Advanced and historical routes</h2>
 <p>Use these only for their stated inputs and scope. They are separate from the primary Control workflow.</p>
@@ -346,6 +359,18 @@ wsl.exe -d Ubuntu-24.04 --cd "$Project" -- bash transport/workflow.sh python -B 
 <p><code>Open_Workspace.cmd</code> refreshes a local index of results, runs, models and evidence without launching science. Permanent archives, fields, checkpoints and unique failure records remain at their recorded paths. Follow the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/LOCAL_WORKSPACE.md">workspace guide</a> before reorganizing local files.</p>
 </details>
 </section>
+
+<section id="browse">
+<h2>Browse saved results</h2>
+<p><a href="results/index.html">Choose a saved dataset</a> to find its available waveforms, spectra, radiation views and exact files. The teaching, cryostat gamma, four-case Cs137 10K, two-case million-decay campaigns and <a href="results/gegi-campaign/index.html">four independent GeGI source acquisitions</a> retain separate geometries and event IDs. Use the <a href="detectors/index.html">17-model detector library</a> for shapes, fields and original model settings, or compare <a href="assemblies/index.html">LBNL and GeGI assemblies</a>.</p>
+<p>The website displays saved data; it does not start simulations. Seventeen viewable models do not mean seventeen executable Control models.</p>
+<details><summary>Browse an offline website copy</summary>
+<p>Include <code>docs/</code> in your checkout. From the project root, use an existing Windows Python:</p>
+<pre><code>python -m http.server 8765 --bind 127.0.0.1 --directory docs</code></pre>
+<p>Open <code>http://127.0.0.1:8765/</code>. Interactive viewers need HTTP to load their saved data; opening HTML directly may show only a static fallback.</p>
+</details>
+</section>
+
 <section id="downloads">
 <h2>Models and methods</h2>
 <p><a href="downloads/all-models.zip">Download all 17 model definitions with their includes</a>. Preserve their folder layout. These are model definitions, not field caches or seventeen executable adapters.</p>

@@ -40,11 +40,11 @@ async function restore(replace=false){
  const key=event+'/'+group,trace=data.traces[key];
  $('selected-event').value=data.pulses.some(p=>p.event_id===event&&p.group_id===group)?key:'';
  $('selected-identity').textContent='Saved study: cs137-10k / '+data.variant+' · original primary '+event+(group===null?'':' · pulse group '+group);
- const viewer='../../../viewers/events.html?'+query(event,group)+'&view='+(pulse?'positive':'assembly');
+ const viewer='../events.html?'+query(event,group)+'&view='+(pulse?'positive':'assembly');
  $('selected-3d').href=viewer;$('selected-scalar-link').href=data.scalar_url;
- updateCaseNavigation({model:data.model,result:location.pathname+'?'+query(event,group),files:location.pathname+'?'+query(event,group)+'#data-files',events:viewer,spectrum:'../../../spectra/cs137-10k.html?'+query(event,group)+'#tenk-'+data.model},'Saved study: cs137-10k / '+data.variant+' · primary '+event+(group===null?'':' · group '+group));
+ updateCaseNavigation({model:data.model,result:location.pathname+'?'+query(event,group),files:location.pathname+'?'+query(event,group)+'#data-files',events:viewer,spectrum:'../spectra.html?'+query(event,group)+'#tenk-'+data.model},'Saved study: cs137-10k / '+data.variant+' · primary '+event+(group===null?'':' · group '+group));
  const teaching=data.teaching.some(k=>k[0]===event&&k[1]===group);$('selected-teaching').hidden=!teaching;
- if(teaching)$('selected-teaching').href='../../../spectra/pipeline.html?'+query(event,group);
+ if(teaching)$('selected-teaching').href='../../../learn/signals/index.html?'+query(event,group);
  const list=$('selected-summary');list.replaceChildren();
  if(pulse){for(const [label,value]of [['Truth deposited energy',energy(pulse.deposited_energy_keV)],['Signed native induced equivalent',energy(pulse.final_induced_keV)],['Peak-ADC reconstructed energy',pulse.readout?.accepted?energy(pulse.readout.reconstructed_energy_keV):'Not accepted']]){const p=document.createElement('p');p.textContent=label+': '+value;list.append(p);}
   const flags=pulse.transport_flags,notices=[];
@@ -162,7 +162,14 @@ def cases(site):
                 'SAP22': 'Original non-Li ICPC cross-check; different geometry.',
                 'GeRC02': 'Independent 280°C / 50-minute Li variant. Original 30-minute model retained.',
                 'KMRC01_candidate': 'Unchanged −370 V candidate model. Raw negative charge; fixed −1 electronics input and independent negative injection calibration.'}[model]
-        result.append({'model': model, 'label': label, 'note': note, 'counts': c, 'base': base})
+        if 'trace_examples' in report:
+            waveforms = report['trace_examples']['source_trace_records']
+        else:
+            with zipfile.ZipFile(site / base / 'response/ledgers.zip') as archive:
+                waveforms = sum(bool(line.strip()) for line in archive.open('traces.jsonl'))
+        require(type(waveforms) is int and waveforms >= 0, 'Invalid saved waveform count: ' + model)
+        result.append({'model': model, 'label': label, 'note': note, 'counts': c,
+                       'base': base, 'saved_waveforms': waveforms})
     return result
 
 
@@ -176,6 +183,7 @@ def cards(items, up):
                    + f'{c["zero_deposit_primaries"]:,} zero-Ge decays · {c["groups"]:,} pulse groups.</p><p>'
                    + f'{c["accepted"]:,} accepted · {c["native_failed_groups"]:,} native failures · '
                    + f'{c["readout_rejected"]:,} electronics rejects.</p><p>'
+                   + f'{case["saved_waveforms"]:,} saved waveform records; the complete scalar ledger covers all pulse groups.</p><p>'
                    + f'<a class="button" href="{up}{case_result_path(model)}">Open saved result →</a></p></article>')
     return '<div class="grid">' + ''.join(out) + '</div>'
 
@@ -492,7 +500,7 @@ def apply(site):
             'native failure and electronics rejection are distinct.</p>'
             '<p>Nominal mounting/source and isolated electronics windows; synthetic injection calibration. '
             'Processing completion does not establish calibrated Li CCE, experimental spectrum agreement or physical energy resolution.</p>'
-            '<p><a href="../../scenarios/lbnl-cs137/index.html">Scenario context</a> · '
+            '<p><a href="../../assemblies/lbnl/index.html">LBNL assembly and source geometry</a> · '
             '<a data-original-report href="../../examples/cs137-10k/comparison.html">Original AK02/SAP22 comparison (archive)</a> · '
             '<a href="../../examples/cs137-10k-rings/manifest.json">Ring provenance</a></p></section>')
     write_page(site / 'results/cs137-10k/index.html', 'Four-detector Cs137 10K · GeSignal', body, 2,

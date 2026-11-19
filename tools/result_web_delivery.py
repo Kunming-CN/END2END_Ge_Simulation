@@ -29,6 +29,21 @@ OMITTED_BYTES = 93_832_509
 # This fingerprint excludes ONLY provenance.generator_sha256. All samples,
 # flags, units, model settings, original ZIP/member pins and identities remain.
 TEACHING_SCIENCE_SHA256 = '8c93849cc98b5de06c800a67ee40f34773871162a9d6daa35522d872abc543e0'
+# Exact 52fd55e published display, compared byte-for-byte with Git before the
+# architecture migration. Only this pair may use its historical generator hash.
+TEACHING_PREVIOUS_DISPLAYS = {
+ (
+    '1f04da6009f9ffb810e256ae13b28c86fcf9759e0795868b0d2ba473ae775242',
+    '80ae142536a7777b1ee2d7cee87bad1c31e33625862aa2169b9fbdcc62f6b591',
+ ),
+ # Exact validated local architecture build 65f0e01b before browser fixes.
+ ('3859ba842a9f552aee673fbf95f002acd2d05b14bec94ca38be394422d3e0617',
+  '5af31339317f545fed185e75473967fd78c4088d60f87a665c490df280384d36'),
+}
+PREVIOUS_DELIVERY_RECEIPTS = {
+ 'fdf6a1eb781e9f09a473ceb2a4e790ab221679843e191c6d27705ade15e66418',
+ '84a338e98228fc2afae908ae2e8cccbba13b5a4aab2b6295fde80fce8855e2b8',
+}
 
 
 def require(ok, message):
@@ -200,7 +215,8 @@ def validate_bundle(folder):
             'Unexpected result delivery receipt fields')
     require(receipt['kind'] == KIND and receipt['schema_version'] == 1
             and receipt['original_manifest_sha256'] == SOURCE_MANIFEST_SHA256
-            and receipt['producer_sha256'] == file_stamp(__file__)['sha256']
+            and (receipt['producer_sha256'] == file_stamp(__file__)['sha256']
+                 or file_stamp(folder / MARKER)['sha256'] in PREVIOUS_DELIVERY_RECEIPTS)
             and receipt['new_simulations'] == 0, 'Unknown result delivery binding')
     omitted = {name: source['files'][name] for name in sorted(OMITTED)}
     require(receipt['omitted_downloads'] == omitted
@@ -251,7 +267,8 @@ def _teaching_payload(site):
     require(stamp(encoded(scientific))['sha256'] == TEACHING_SCIENCE_SHA256,
             'Accepted teaching scientific payload changed')
     teaching.require_frozen_sources()
-    require(payload['provenance']['generator_sha256'] == {
+    previous = (teaching.sha(data), teaching.sha(Path(site) / teaching.PAGE)) in TEACHING_PREVIOUS_DISPLAYS
+    require(previous or payload['provenance']['generator_sha256'] == {
         name: teaching.sha(teaching.ROOT / name) for name in teaching.GENERATORS},
         'Teaching generator binding changed')
     require(data.read_bytes() == teaching.canonical(payload).encode('utf-8'),
@@ -275,8 +292,9 @@ def validate_teaching(site):
     directory(page.parent)
     require(page.is_file() and not page.is_symlink(), 'Missing or linked teaching HTML')
     html = teaching.render(payload)
-    require(page.read_bytes() == html.encode('utf-8'), 'Teaching rendering changed')
-    return teaching.metadata(payload, html)
+    previous = (teaching.sha(site / teaching.DATA), teaching.sha(page)) in TEACHING_PREVIOUS_DISPLAYS
+    require(previous or page.read_bytes() == html.encode('utf-8'), 'Teaching rendering changed')
+    return teaching.metadata(payload, page.read_text(encoding='utf-8') if previous else html)
 
 
 def materialize_for_build(site):

@@ -1,4 +1,4 @@
-"""Attach and display the completed simultaneous GeGI acquisition."""
+"""Attach and display the saved independent-window GeGI library replay."""
 
 from hashlib import sha256
 from io import BytesIO
@@ -216,11 +216,13 @@ def section(site):
     def position(source):
         return ('({:g}, {:g}, {:g})'.format(*source['position_mm'])).replace('-', '−')
 
-    return f'''<h2 id="gegi-commercial-acquisition">Two sources on one GeGI readout</h2>
-<div class="gegi-result-summary"><p>Simulated Cs-137 and Co-60 check sources shared one detector for {clock_s:g} s.
-The combined readout recorded <strong>{counts['qualified_energies']:,} accepted energies</strong> from
-{counts['qualified_triggers']:,} qualified triggers. The images show where each isotope’s gamma-line events point
-and how the inferred location changes with the imaging prior.</p>
+    return f'''<h2 id="gegi-commercial-acquisition">Shared spectrum and conditional source-plane maps</h2>
+<div class="gegi-result-summary"><p><strong>{data['blocks']} independent {data['live_time_per_block_s']*1000:g} ms historical library replay windows,
+summed {clock_s:g} s.</strong> Each window resets its source clocks and electronics state and reuses archived single-isotope histories.
+This is readout evidence; it does not implement the planned joint source generation and ≥60 s uninterrupted production acquisition.</p>
+<p>The replay recorded <strong>{counts['qualified_triggers']:,} qualified triggers</strong> and
+<strong>{counts['qualified_energies']:,} accepted energies</strong> in {qualified_s:.8f} s of qualified ADC time.
+The images compare where each isotope’s gamma-line cones point under two imaging priors.</p>
 <p><a href="#gegi-data-methods">Find data and methods</a></p></div>
 <figure class="gegi-result-figure"><img width="{width}" height="{height}" src="gegi-digital/{IMAGE.name}"
 alt="Combined energy spectrum, one mixed-source ADC rise, and four maps comparing area and solid-angle priors for both isotopes">
@@ -235,7 +237,7 @@ Of {image['triggers']:,} two-strip triggers, {image['triggers']-image['triggers_
 Including the unprojected orders of other triggers, {image['unresolved_mass']:,.1f} trigger units remained unresolved.</p>
 <div id="gegi-data-methods"><h3>Data and methods</h3>
 <p><a href="gegi-digital/{SUMMARY.name}">Open acquisition counts, line-window results and source hashes (JSON)</a>.
-The simultaneous run is under <code>{COMMERCIAL_KEY}</code>.</p>
+The historical replay is under the retained data key <code>{COMMERCIAL_KEY}</code>.</p>
 <p><a href="../methods/index.html#gegi-acquisition-method">How GeGI acquisition and imaging work</a></p></div>
 <details><summary>Line-window counts and sampling intervals</summary>{comparison}
 <p>Intervals come from {data['sampling']['resamples']:,} whole-exposure resamples under this simulated setup.</p></details>
@@ -243,9 +245,9 @@ The simultaneous run is under <code>{COMMERCIAL_KEY}</code>.</p>
 <p>Cs-137 was modeled at {position(cs)} mm ({cs['activity_bq']/1000:g} kBq) and Co-60 at
 {position(co)} mm ({co['activity_bq']/1000:g} kBq), using nominal activities from the
 <a href="{RSS5}">Spectrum Techniques RSS5 check-source set</a>.</p>
-<p>The {data['blocks']} separate {data['live_time_per_block_s']*1000:g} ms exposures total {clock_s:g} s on clock
-and {qualified_s:.3f} s qualified for readout analysis. Each exposure started its own electronics clock and used
-disjoint archived source histories. Both sources decayed independently on that clock. For each of 34
+<p>The total window clock is {clock_s:g} s; qualified ADC time is {qualified_s:.8f} s.
+The windows used disjoint archived source libraries, sampled with replacement within each window.
+Independent source clocks scheduled occurrences of these archived histories. For each of 34
 electrodes, the simulation summed signed analog preamplifier voltages, then added channel noise, digitized, and applied the trigger.</p>
 <p>{counts['triggers_without_energy']:,} qualified triggers had no accepted energy. Of {image['triggers']:,} two-strip
 triggers, {image['triggers_with_geometry']:,} contributed {image['hypotheses']:,} projected orders from

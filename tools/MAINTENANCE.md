@@ -25,6 +25,25 @@ The beginner instructions have one authority: `tools/site_guide.html`, published
 as `guide.html`. Keep README short and link to that guide rather than adding
 another complete installation recipe.
 
+Display ownership is registered in `site_routes.py`: Results, Detectors,
+Assemblies, Learn and Run locally. Results is a study directory, with distinct
+study, case and view identities. `gegi_digital_display.py` writes the shared-readout
+study and six historical topics; it never replaces the Results directory.
+Its section map preserves old Results fragment links. The archived-library
+25 × 250 ms replay and the four independent GeGI acquisitions remain separate.
+
+`build_site.py` uses one saved-presentation pass for ordinary and targeted updates.
+`site_canonical_views.py` relocates the ten reader views only after their original
+generators have finished, and frames retained evidence through `site_chrome.py`.
+The generated `canonical-views.json` preserves compressed exact source HTML,
+source/output hashes and redirect identities. It lets existing scientific
+validators inspect the original generated views in a temporary mirror, while
+the actual published links and canonical pages are checked separately. The next
+build restores those exact source views in staging before regenerating them.
+Do not edit either the redirects or the canonical HTML by hand. Original data
+assets remain at their recorded paths; queries and fragments survive one-hop
+compatibility redirects. Discovery metadata is finalized before the site seal.
+
 Public delivery keeps browser-needed data separate from complete local science.
 `geometry_web_delivery.py` preserves every byte of the old AK02/SAP22 event
 bundle through gzip; its original manifest and unmodified scenes bind all20,000

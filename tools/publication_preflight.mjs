@@ -9,6 +9,7 @@ export const FIXTURE_CHECKS = [
   'tools/test_local_ui_jobs.py', 'tools/test_local_ui.py',
   'transport/test_scenario_prepare.py', 'tools/test_lithium_report.py',
   'tools/test_gallery_navigation.py', 'tools/test_site_restructure.py', 'tools/test_site_discovery.py',
+  'tools/test_site_routes.py', 'tools/test_site_hierarchy.py',
 ];
 export const PRIVATE_REGRESSIONS = [
   {test:'tools/test_gamma_complete_example.py', roots:['.local/gamma-complete-v1','.local/m11c-gamma-native-v1']},

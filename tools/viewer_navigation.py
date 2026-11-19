@@ -312,17 +312,22 @@ def validate(site,current=False):
     require(m['kind']=='unified_geant4_reader_v1','Wrong display manifest')
     manifest_hash=sha(manifest_path)
     previous=not current and manifest_hash in TRUSTED_PREVIOUS_UNIFIED_MANIFESTS
-    homepage_predecessor=not current and manifest_hash in (
-        PREVIOUS_HOMEPAGE_READER, 'bec647650f95d22702d7adcdf9d69a7b889caaf19d256a4e1a78898794c85d01')
+    homepage_predecessor=not current and manifest_hash == PREVIOUS_HOMEPAGE_READER
+    # Exact 52fd55e public/HEAD bytes authenticated before the route migration.
+    # Retain its positive default and all data bindings; its navigation is old.
+    architecture_predecessor=not current and manifest_hash in {
+        'bec647650f95d22702d7adcdf9d69a7b889caaf19d256a4e1a78898794c85d01',
+        # Validated local build 65f0e01b before the browser-found fixes.
+        'ac0eb13ae51c0c7a99f6f51f2442baf6b8652ac7412108bee785c43c0fcebae9'}
     legacy_sources=set(SOURCES)-{'tools/geometry_web_delivery.py','tools/result_web_delivery.py'}
     require(set(m['adapter_sources'])==set(SOURCES) or
             (previous and set(m['adapter_sources']) in (legacy_sources,legacy_sources-{'tools/site_routes.py'},
                 legacy_sources-{'tools/site_restructure.py','tools/site_routes.py'})),
             'Adapter source inventory mismatch')
     known_current=m['adapter_sources']==FROZEN
-    require(known_current or previous or homepage_predecessor,
+    require(known_current or previous or homepage_predecessor or architecture_predecessor,
             'Unknown adapter source binding; preserve the saved display instead of resealing it')
-    if current or known_current or homepage_predecessor or manifest_hash in (
+    if current or known_current or homepage_predecessor or architecture_predecessor or manifest_hash in (
             'bfaaa2373df476d2f95e1cf1b266c600119a6692bda40173bde3ca01db17b4c3',
             'd44b2095341d3ed08eccd8e89320fe82cfb361d8d077ef8c30ab48599e68b3ee',
             '0ce8330f3a246620d7d9f501a8232c8c461f5dfbb95c2bd33b0955a380f809e3'):

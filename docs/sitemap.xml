@@ -2,6 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/gegi/index.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/assemblies/lbnl/index.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/AK01/index.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/AK02/index.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/detectors/BEGe_GD32B_reference/index.html</loc></url>
@@ -23,13 +24,29 @@
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/learn/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/learn/signals/index.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/methods/index.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-10k/AK02/charge-readout.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-10k/GeRC02/charge-readout.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-10k/KMRC01_candidate/charge-readout.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-10k/SAP22/charge-readout.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-10k/events.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-10k/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-10k/spectra.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-1m/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-1m/spectra/deposition.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/cs137-1m/spectra/response.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-campaign/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-double-pulse/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-notebook-study/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-pairing-benchmark/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-plane-prior-study/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-position-calibration/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-shared-clock-controls/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-shared-readout/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-short-exposure/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/gegi-strip-study/index.html</loc></url>
   <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/index.html</loc></url>
-  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/scenarios/lbnl-cs137/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/lithium-diagnostics/index.html</loc></url>
+  <url><loc>https://kunming-cn.github.io/END2END_Ge_Simulation/results/native-li-selected-events/index.html</loc></url>
 </urlset>

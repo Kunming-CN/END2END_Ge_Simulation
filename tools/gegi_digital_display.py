@@ -1,4 +1,4 @@
-"""Render the saved digital strip example in the Results hub."""
+"""Render distinct saved GeGI studies without rewriting the Results directory."""
 from collections import Counter
 import gzip
 from hashlib import sha256
@@ -6,8 +6,10 @@ from html import escape
 import json
 import math
 from pathlib import Path
+import posixpath
 import re
 from struct import unpack_from
+from urllib.parse import urlsplit, urlunsplit
 
 
 DIGITAL_OBSERVABLES = {
@@ -1427,6 +1429,82 @@ The last column checks the inferred order against the simulated photon history. 
 <p>{' '.join(notes)}</p>{extension}'''
 
 
+GEGI_STUDIES = {
+    'shared-readout': ('GeGI historical library replay: 25 independent 250 ms windows', 'gegi'),
+    'short-exposure': ('GeGI short exposure and energy reconstruction', 'gegi-acquisition-studies'),
+    'shared-clock-controls': ('GeGI shared clock and merged-trigger controls', 'gegi-shared-clock-controls'),
+    'plane-prior-study': ('GeGI historical source-plane prior study', 'gegi-imaging-studies'),
+    'position-calibration': ('GeGI position, depth and threshold calibration', 'gegi-readout-studies'),
+    'double-pulse': ('GeGI double-pulse resolution study', 'gegi-double-pulse-study'),
+    'pairing-benchmark': ('GeGI strip-pairing and interaction-order benchmark', 'gegi-pairing-benchmark'),
+}
+GEGI_PAGE_PATHS = {key: f'results/gegi-{key}/index.html' for key in GEGI_STUDIES}
+GEGI_SECTION_TARGETS = {
+    anchor: GEGI_PAGE_PATHS[study] + '#' + anchor
+    for study, anchors in (
+        ('shared-readout', ('gegi', 'gegi-commercial-acquisition', 'gegi-data-methods', 'earlier-gegi-work')),
+        ('short-exposure', ('gegi-acquisition-studies', 'gegi-source-exposure',
+                            'gegi-dual-source-hit-map', 'gegi-event-energy')),
+        ('shared-clock-controls', ('gegi-shared-clock', 'gegi-merged-components')),
+        ('plane-prior-study', ('gegi-imaging-studies', 'gegi-measured-plane', 'gegi-plane-priors',
+                              'gegi-three-intersections', 'gegi-weak-strips')),
+        ('position-calibration', ('gegi-readout-studies', 'gegi-fast-gate', 'gegi-readout-validation',
+                                 'gegi-apparent-depth', 'gegi-depth-title', 'gegi-depth-desc', 'gegi-edge-position')),
+        ('double-pulse', ('gegi-double-pulse',)),
+        ('pairing-benchmark', ('gegi-pairing-benchmark',)),
+    ) for anchor in anchors
+}
+GEGI_STUDY_STYLE = '''
+.wrap{max-width:1180px}.study-heading{max-width:1000px;margin:24px 0}
+.study-heading h1{font-size:clamp(1.8rem,3vw,2.5rem);line-height:1.15;margin:8px 0}
+.study-heading p{margin:8px 0}.study-heading .eyebrow{font-size:.85rem;color:#526575}
+.gegi-study h2{font-size:1.4rem;line-height:1.25}.gegi-study h3{font-size:1.18rem}
+.gegi-study figure{margin:16px 0}.gegi-study figure img{max-width:100%;height:auto}
+.gegi-result-summary p{margin:10px 0}.gegi-result-figure img{display:block;width:100%;height:auto}
+.gegi-study details{margin:14px 0}.gegi-study summary{padding:8px 0;font-weight:600}
+.gegi-study table{font-size:.92rem}.gegi-study th,.gegi-study td{vertical-align:top}
+.gegi-study>p{max-width:90ch}.study-links{display:flex;gap:12px 24px;flex-wrap:wrap}
+'''
+
+
+def _study_links(content, current_path):
+    """Resolve the former Results-page URLs from the new study directory."""
+    def link(match):
+        attribute, quote, value = match.groups()
+        parts = urlsplit(value)
+        if parts.scheme or parts.netloc or value.startswith('/'):
+            return match.group(0)
+        if not parts.path and parts.fragment in GEGI_SECTION_TARGETS:
+            target = urlsplit(GEGI_SECTION_TARGETS[parts.fragment])
+        elif parts.path:
+            target = parts._replace(path=posixpath.normpath(posixpath.join('results', parts.path)))
+        else:
+            return match.group(0)
+        path = '' if target.path == current_path else posixpath.relpath(target.path, posixpath.dirname(current_path))
+        resolved = urlunsplit(('', '', path, target.query, target.fragment))
+        return attribute + '=' + quote + resolved + quote
+    return re.sub(r'\b(href|src)=([\"\'])(.*?)\2', link, content)
+
+
+def _write_study(site, key, content):
+    from site_restructure import write_page
+
+    title, anchor = GEGI_STUDIES[key]
+    path = GEGI_PAGE_PATHS[key]
+    category = 'Historical shared-readout study' if key == 'shared-readout' else 'Historical GeGI study'
+    related = (
+        '<p class="study-links"><a href="../index.html">All research</a>'
+        '<a href="../gegi-shared-readout/index.html">25 × 250 ms shared-readout study</a>'
+        '<a href="../gegi-campaign/index.html">Four independent acquisitions</a></p>'
+    )
+    if key == 'shared-readout':
+        related = '<p class="study-links"><a href="../index.html">All research</a><a href="../gegi-campaign/index.html">Four independent acquisitions</a></p>'
+    body = f'<header class="study-heading"><p class="eyebrow">{category}</p><h1>{escape(title)}</h1></header>'
+    body += f'<section id="{anchor}" class="gegi-study">{_study_links(content, path)}</section>' + related
+    write_page(site/path, title + ' · GeSignal', body, depth=2, page_path=path,
+               fold_footer=True, extra_style=GEGI_STUDY_STYLE)
+
+
 def render(site):
     data = site/'results/gegi-digital/event.json'
     if not data.exists():
@@ -1448,21 +1526,14 @@ def render(site):
     pixel_depth = site/PIXEL_DEPTH_FILE
     measured_plane = site/MEASURED_PLANE_FILE
     fast = None
-    card = '<section id="gegi" class="panel" data-dataset="gegi">\n'
     from gegi_commercial_acquisition_display import section as commercial_section
     commercial = commercial_section(site)
-    earlier_acquisition = ''
-    earlier_imaging = ''
-    readout = ''
+    sections = {key: '' for key in GEGI_STUDIES}
     plane = json.loads(measured_plane.read_bytes()) if measured_plane.is_file() else None
     if plane and sha256((site/MEASURED_PLANE_IMAGE).read_bytes()).hexdigest() != plane['source_sha256']['figure']:
         raise ValueError('The GeGI measured plane figure differs from its attached census')
     if commercial:
-        card += commercial
-    elif plane:
-        card += '<h2>GeGI Compton imaging</h2>' + measured_plane_section(plane)
-    else:
-        card += '<h2>GeGI readout and reconstruction</h2>'
+        sections['shared-readout'] = commercial
     if exposure.is_file():
         data = json.loads(exposure.read_bytes())
         study = json.loads(event_energy.read_bytes()) if event_energy.is_file() else None
@@ -1476,31 +1547,29 @@ def render(site):
         if fast and (not projection or fast['binding']['hit_map_validation_report_sha256']
                      != projection['binding']['validation_report_sha256']):
             raise ValueError('The GeGI fast-gate results belong to a different hit map.')
-        earlier_acquisition += exposure_section(data, study, projection, fast)
+        sections['short-exposure'] += exposure_section(data, study, projection)
+        if fast:
+            sections['position-calibration'] += fast_gate_section(fast)
     if pixel_depth.is_file():
-        readout += pixel_depth_section(json.loads(pixel_depth.read_bytes()))
+        sections['position-calibration'] += pixel_depth_section(json.loads(pixel_depth.read_bytes()))
     if plane:
-        if commercial:
-            earlier_imaging += measured_plane_section(plane)
+        sections['plane-prior-study'] += measured_plane_section(plane)
         from gegi_plane_prior_display import SUMMARY as PRIOR_SUMMARY, section as prior_section
         from gegi_shared_clock_display import SUMMARY as CLOCK_SUMMARY, section as clock_section
         from gegi_weak_strip_display import SUMMARY as WEAK_SUMMARY, section as weak_section
         if (site/PRIOR_SUMMARY).is_file():
-            earlier_imaging += prior_section(site)
+            sections['plane-prior-study'] += prior_section(site)
         if (site/CLOCK_SUMMARY).is_file():
-            from gegi_merged_component_display import consolidate_merged_figure
-            consolidate_merged_figure(site)
-            earlier_acquisition += clock_section(site, plane)
+            sections['shared-clock-controls'] += clock_section(site, plane)
         if (site/WEAK_SUMMARY).is_file():
-            earlier_imaging += weak_section(site, plane)
+            sections['plane-prior-study'] += weak_section(site, plane)
     has_pulse = pulse.is_file()
     if has_pulse:
-        readout += double_pulse_section(json.loads(pulse.read_bytes()))
-    heading = 'h3' if has_pulse else 'h2'
+        sections['double-pulse'] += double_pulse_section(json.loads(pulse.read_bytes()))
     strip_table = f'''<div style="overflow-x:auto"><table><thead><tr><th>Strip</th><th>Largest |Q| (keV equivalent)</th><th>Final Q (keV equivalent)</th><th>Fast area (V·ns)</th><th>Slow energy (keV)</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>'''
     if has_pulse:
         strip_table = f'<details><summary>Strip measurements for this event</summary>{strip_table}</details>'
-    readout += f'''<{heading}>How neighboring GeGI strips sense a drifting charge</{heading}>
+    sections['pairing-benchmark'] += f'''<h2>How neighboring GeGI strips sense a drifting charge</h2>
 <p>During drift, both neighboring strips respond to the moving carriers. Their induced charge returns to zero, while their fast areas differ. The collecting strip supplies the slow energy signal.</p>
 <figure style="margin:0"><img style="width:100%;height:auto" width="1450" height="870" src="gegi-digital/signals.png" alt="Induced charge and digital fast and slow signals on three adjacent strips">
 <figcaption>Simulated primary {ex["event_id"]} · {ex["counts"]["initial_primaries"]:,} initial primaries, {ex["counts"]["nonzero_primaries"]} with a germanium deposit. Nominal digital readout.</figcaption></figure>
@@ -1509,7 +1578,7 @@ def render(site):
     benchmark = ex.get('position_benchmark')
     if benchmark and not (fast and fast.get('readout_validation')):
         xy = benchmark['all_axes']
-        readout += f'''<h3>Position check on independent simulated points</h3>
+        sections['position-calibration'] += f'''<h3>Position check on independent simulated points</h3>
 <p>The time difference between the two collecting strips selects a depth-dependent calibration of the neighboring signals.
 Training used {benchmark["trained"]} injected points on four strip pairs. On {benchmark["n"]} separate {benchmark["energy_keV"]:g} keV points,
 {benchmark["both"]} returned both lateral coordinates. Using the strip center for each unavailable axis,
@@ -1517,31 +1586,29 @@ the radial XY RMS error changed from <strong>{xy["center_rmse_mm"]:.2f} to {xy["
 The depth RMS error was {benchmark["z"]["rmse_mm"]:.2f} mm on {benchmark["z"]["compared"]} points.
 These errors compare simulated coordinates within the sampled region.</p>'''
     if edge_position.is_file():
-        readout += edge_position_section(json.loads(edge_position.read_bytes()))
+        sections['position-calibration'] += edge_position_section(json.loads(edge_position.read_bytes()))
     if 'energy_order_check' in ex:
         orders = energy_order_section(ex['energy_order_check'], ex['counts'], edge_position=edge_position.is_file())
-        readout += f'<details><summary>Interaction ordering benchmark</summary>{orders}</details>' if has_pulse else orders
+        sections['pairing-benchmark'] += orders
     if 'pairing_benchmark' in ex:
-        readout += '<details><summary>Two-site strip-pairing benchmark</summary>' + pairing_section(ex['pairing_benchmark']) + '</details>'
-    if not commercial:
-        card += '''<div id="gegi-data-methods"><h3>Data and methods</h3>
-<p><a href="../methods/index.html#gegi-acquisition-method">How GeGI acquisition and imaging work</a></p></div>'''
-    if (site/'results/gegi-campaign/publication.json').is_file():
-        earlier_imaging += '''<p><a href="gegi-campaign/index.html">Conditional imaging with four independent acquisitions</a>
-· Earlier two-position study with its own spectra, event data and signal walkthrough.</p>'''
-    card += '<h3 id="earlier-gegi-work">Earlier GeGI studies</h3>'
-    for ident, label, content in (
-        ('gegi-acquisition-studies','Short exposures, energy spectra and overlapping pulses',earlier_acquisition),
-        ('gegi-imaging-studies','Compton maps, image priors and ambiguous interactions',earlier_imaging),
-        ('gegi-readout-studies','Strip signals, timing, position calibration and event ordering',readout),
-    ):
-        if content:
-            content = re.sub(r'<(/?)h[23](?=[ >])', r'<\1h4', content)
-            card += f'<details id="{ident}"><summary>{label}</summary>{content}</details>'
-    card += '</section>'
-    page = site/'results/index.html'
-    old = page.read_text(encoding='utf-8')
-    updated, n = re.subn(r'<section id="gegi"[^>]*>.*?</section>', lambda m: card, old, flags=re.S)
-    if n != 1:
-        raise ValueError('Expected one GeGI panel in the generated results hub.')
-    page.write_text(updated, encoding='utf-8', newline='\n')
+        sections['pairing-benchmark'] += pairing_section(ex['pairing_benchmark'])
+    introductions = {
+        'short-exposure': 'A saved short replay compares deposit groups, single-pixel energy and face-summed energy. It has its own exposure census and does not share the 25-window study denominator.',
+        'shared-clock-controls': 'Four independent 250 ms historical replay windows supply the 3,905-trigger census and 324 two-strip records. The recovered merged triggers and positive controls test what the shared electronics clock can distinguish.',
+        'plane-prior-study': 'This historical comparison uses the same 324 measured two-strip triggers from four independent 250 ms windows. It compares source-plane support, priors, unresolved alternatives and endpoint diagnostics.',
+        'position-calibration': 'Saved injections and acquisition records test neighbor gates, noise thresholds, apparent depth, joint fits and strip-edge coverage. Each comparison below retains its own sample and calibration conditions.',
+        'double-pulse': 'A fixed scan of 1,368 pulse pairs compares trigger separation with energy and position availability. It is a controlled readout study on saved signals.',
+        'pairing-benchmark': 'The original monoenergetic-photon event, interaction-order checks and separately composed training, control and held-out mixtures test distinct parts of strip reconstruction.',
+    }
+    historical = []
+    for key, (title, _) in GEGI_STUDIES.items():
+        if key == 'shared-readout' or not sections[key]:
+            continue
+        historical.append(f'<li><a href="gegi-{key}/index.html">{escape(title)}</a></li>')
+        content = re.sub(r'<(/?)h([345])(?=[ >])', lambda match: '<' + match[1] + 'h' + str(int(match[2])-1), sections[key])
+        _write_study(site, key, '<p>' + introductions[key] + '</p>' + content)
+    if commercial:
+        sections['shared-readout'] += ('<h2 id="earlier-gegi-work">Related historical studies</h2>'
+                                       '<p>These studies use earlier samples or controlled mixtures with separate denominators.</p><ul>'
+                                       + ''.join(historical) + '</ul>')
+        _write_study(site, 'shared-readout', sections['shared-readout'])

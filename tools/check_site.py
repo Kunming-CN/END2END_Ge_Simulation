@@ -197,9 +197,6 @@ def validate(site, require_manifest=True, require_models=False, *, allow_histori
                 pages[relative] = parser
     if total > MAX_PUBLIC_SITE_BYTES:
         raise ValueError('Site exceeded the GitHub Pages publication budget (1 GB).')
-    if (site/'assemblies/gegi/manifest.json').is_file():
-        from gegi_assembly import validate_bundle as validate_gegi_assembly
-        validate_gegi_assembly(site/'assemblies/gegi')
     names = {entry['path'] for entry in entries} | {MANIFEST}
     links = 0
     counts = dict(resource_references_checked=0, page_navigation_checked=0,
@@ -244,6 +241,46 @@ def validate(site, require_manifest=True, require_models=False, *, allow_histori
             targets = {local_target(page, url) for url in pages[page].urls} if page in pages else set()
             if not required <= targets:
                 raise ValueError('Missing model download links: ' + page)
+    from site_canonical_views import validation_view
+    with validation_view(site) as source_site:
+        validate_saved_components(source_site, allow_historical_gegi_sources=allow_historical_gegi_sources)
+    entries.sort(key=lambda item: item['path'])
+    encoded = json.dumps(entries, sort_keys=True, separators=(',', ':')).encode()
+    from site_discovery import validate as validate_discovery
+    validate_discovery(site, snapshot_build_id=hashlib.sha256(encoded).hexdigest())
+    result = {'schema_version': 1, 'build_id': hashlib.sha256(encoded).hexdigest(),
+              'file_count': len(entries), 'total_bytes': total,
+              'html_pages': len(pages), 'local_links_checked': links,
+              **counts,
+              'files': entries}
+    # total_bytes is the payload census; the hosting budget also includes the
+    # manifest itself. Before sealing, budget its exact generated serialization.
+    manifest_path = site / MANIFEST
+    manifest_bytes = (manifest_path.stat().st_size if require_manifest and manifest_path.is_file()
+                      else len((json.dumps(result, indent=2) + '\n').encode('utf-8')))
+    if manifest_bytes > MAX_PUBLIC_FILE_BYTES or total + manifest_bytes > MAX_PUBLIC_SITE_BYTES:
+        raise ValueError('GitHub publication size limit exceeded including the site manifest.')
+    if require_manifest:
+        saved_raw = (site / MANIFEST).read_bytes()
+        saved = json.loads(saved_raw)
+        if saved != result:
+            # Only this byte-exact predecessor may retain the older counter
+            # schema while protected staging validates it before rebuilding.
+            from site_discovery import NAVIGATION_PREDECESSOR
+            old_result = {key: value for key, value in result.items() if key not in counts}
+            predecessor = (result['build_id'] == NAVIGATION_PREDECESSOR and
+                           hashlib.sha256(saved_raw).hexdigest() == NAVIGATION_PREDECESSOR_MANIFEST_SHA256 and
+                           saved == old_result)
+            if not predecessor:
+                raise ValueError('Snapshot differs from its manifest; rebuild from sources.')
+    return result
+
+
+def validate_saved_components(site, *, allow_historical_gegi_sources=False):
+    """Validate original data and generated views through their existing contracts."""
+    if (site/'assemblies/gegi/manifest.json').is_file():
+        from gegi_assembly import validate_bundle as validate_gegi_assembly
+        validate_gegi_assembly(site/'assemblies/gegi')
     native_bundle = site / 'examples' / 'cs137-10k'
     if native_bundle.exists():
         from native_publication import validate_bundle
@@ -310,36 +347,6 @@ def validate(site, require_manifest=True, require_models=False, *, allow_histori
     if any((site/p).exists() for p in ('viewers/manifest.json','viewers/events.html','viewers/geant4-assembly.html','viewers/ge-positive.html')):
         from viewer_navigation import validate as validate_readers
         validate_readers(site)
-    entries.sort(key=lambda item: item['path'])
-    encoded = json.dumps(entries, sort_keys=True, separators=(',', ':')).encode()
-    from site_discovery import validate as validate_discovery
-    validate_discovery(site, snapshot_build_id=hashlib.sha256(encoded).hexdigest())
-    result = {'schema_version': 1, 'build_id': hashlib.sha256(encoded).hexdigest(),
-              'file_count': len(entries), 'total_bytes': total,
-              'html_pages': len(pages), 'local_links_checked': links,
-              **counts,
-              'files': entries}
-    # total_bytes is the payload census; the hosting budget also includes the
-    # manifest itself. Before sealing, budget its exact generated serialization.
-    manifest_path = site / MANIFEST
-    manifest_bytes = (manifest_path.stat().st_size if require_manifest and manifest_path.is_file()
-                      else len((json.dumps(result, indent=2) + '\n').encode('utf-8')))
-    if manifest_bytes > MAX_PUBLIC_FILE_BYTES or total + manifest_bytes > MAX_PUBLIC_SITE_BYTES:
-        raise ValueError('GitHub publication size limit exceeded including the site manifest.')
-    if require_manifest:
-        saved_raw = (site / MANIFEST).read_bytes()
-        saved = json.loads(saved_raw)
-        if saved != result:
-            # Only this byte-exact predecessor may retain the older counter
-            # schema while protected staging validates it before rebuilding.
-            from site_discovery import NAVIGATION_PREDECESSOR
-            old_result = {key: value for key, value in result.items() if key not in counts}
-            predecessor = (result['build_id'] == NAVIGATION_PREDECESSOR and
-                           hashlib.sha256(saved_raw).hexdigest() == NAVIGATION_PREDECESSOR_MANIFEST_SHA256 and
-                           saved == old_result)
-            if not predecessor:
-                raise ValueError('Snapshot differs from its manifest; rebuild from sources.')
-    return result
 
 
 def main():

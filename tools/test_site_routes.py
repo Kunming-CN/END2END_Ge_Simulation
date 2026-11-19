@@ -6,6 +6,7 @@ import unittest
 from html.parser import HTMLParser
 from pathlib import Path
 from unittest.mock import patch
+from urllib.parse import urlsplit
 
 import site_detector_pages as DetectorPages
 import site_restructure as Structure
@@ -18,7 +19,7 @@ class Links(HTMLParser):
     def __init__(self):
         super().__init__();self.links=[]
     def handle_starttag(self,tag,attrs):
-        if tag=='a':self.links.append(dict(attrs)['href'])
+        if tag=='a' and 'href' in dict(attrs):self.links.append(dict(attrs)['href'])
 
 
 def hrefs(text):
@@ -29,16 +30,16 @@ class RoutesTests(unittest.TestCase):
     def test_primary_tasks_do_not_select_a_dataset(self):
         for up in ('','../','../../','../../../'):
             self.assertEqual(hrefs(Structure.navigation(up)),[up+'results/index.html',
-                up+'detectors/index.html',up+'assemblies/index.html',up+'guide.html',up+'methods/index.html'])
+                up+'detectors/index.html',up+'assemblies/index.html',up+'learn/index.html',up+'guide.html'])
             self.assertNotIn('Waveforms',Structure.navigation(up))
             self.assertNotIn('Spectra',Structure.navigation(up))
 
     def test_dataset_views_never_substitute_another_saved_study(self):
         allowed={
-            'teaching':{'spectra/pipeline.html'},
+            'teaching':{'learn/signals/index.html'},
             'gamma':{'examples/gamma-native/gamma.html'},
-            'tenk':{'results/cs137-10k/index.html','spectra/cs137-10k.html','viewers/events.html'},
-            'million':{'results/cs137-1m/index.html','spectra/million-truth.html','spectra/million-response.html',
+            'tenk':{'results/cs137-10k/index.html','results/cs137-10k/spectra.html','results/cs137-10k/events.html'},
+            'million':{'results/cs137-1m/index.html','results/cs137-1m/spectra/deposition.html','results/cs137-1m/spectra/response.html',
                        'results/cs137-1m/index.html#data-files'},
         }
         for dataset,views in allowed.items():
@@ -46,8 +47,8 @@ class RoutesTests(unittest.TestCase):
             self.assertEqual(set(hrefs(Structure.dataset_navigation(dataset,current_path='detectors/AK02/index.html'))),
                              {'../../'+path for path in views})
         focused=hrefs(Structure.dataset_navigation('tenk',current_path='index.html',model='GeRC02'))
-        self.assertIn('viewers/events.html?model=GeRC02&view=positive',focused)
-        self.assertIn('spectra/cs137-10k.html#tenk-GeRC02',focused)
+        self.assertIn('results/cs137-10k/events.html?model=GeRC02&view=positive',focused)
+        self.assertIn('results/cs137-10k/spectra.html#tenk-GeRC02',focused)
         with self.assertRaisesRegex(ValueError,'Unknown saved dataset'):
             Structure.dataset_navigation('arbitrary')
 
@@ -70,17 +71,18 @@ class RoutesTests(unittest.TestCase):
                  patch('ssd_geometry_publication.refresh_viewers'),patch.object(Structure,'apply_detector_pages'):
                 Structure.apply(site)
             text=(site/'results/index.html').read_text(encoding='utf8')
-            panels={m.group(1):m.group(2) for m in re.finditer(
-                r'<section id="(gegi|teaching|gamma|tenk|million)"[^>]*>(.*?)</section>',text,re.S)}
-            self.assertEqual(set(panels),{'gegi','teaching','gamma','tenk','million'})
-            self.assertIn('unavailable in this snapshot',panels['gegi'])
-            self.assertIn('bare geometry',panels['teaching'])
-            self.assertIn('separate monoenergetic source and event namespace',panels['gamma'])
-            self.assertIn('four separate cases',panels['tenk'])
-            self.assertIn('one million initial decays per detector',panels['million'])
-            self.assertNotIn('viewers/events.html',panels['million'])
-            self.assertNotIn('viewers/events.html',panels['gamma'])
-            self.assertNotIn('spectra/cs137-10k.html',panels['teaching'])
+            studies={m.group(1):m.group(2) for m in re.finditer(
+                r'<article class="card" id="([^"]+)"[^>]*>(.*?)</article>',text,re.S)}
+            self.assertEqual(set(studies),{'gegi-shared-readout','gegi-campaign','tenk','million'})
+            self.assertIn('Unavailable in this saved snapshot',studies['gegi-shared-readout'])
+            self.assertIn('25 independent windows, 6.25 s total clock',studies['gegi-shared-readout'])
+            self.assertIn('Four separate radiation and charge acquisitions',studies['gegi-campaign'])
+            self.assertIn('cs137-10k/index.html',studies['tenk'])
+            self.assertIn('1,000,000 initial Cs-137 decays per detector',studies['million'])
+            self.assertNotIn('events.html',studies['million'])
+            self.assertIn('six saved teaching signals are unavailable in this snapshot',text)
+            self.assertIn('../learn/index.html',text)
+            self.assertNotIn('id="gegi-commercial-acquisition"',text)
 
     def test_all_saved_gallery_media_settings_and_anchors_survive(self):
         for gallery in sorted((ROOT/'docs/detectors').glob('*/gallery.html')):
@@ -109,12 +111,14 @@ class RoutesTests(unittest.TestCase):
                             for event in events))
 
     def test_gegi_return_repair_preserves_saved_payload(self):
-        original=(ROOT/'docs/detectors/GeGI_3D/strip_explorer.html').read_text(encoding='utf8')
+        from site_canonical_views import validation_view
+        with validation_view(ROOT/'docs') as source:
+            original=(source/'detectors/GeGI_3D/strip_explorer.html').read_text(encoding='utf8')
         repaired=DetectorPages.strip_navigation(original)
-        self.assertIn('href="../index.html">Detectors',repaired)
+        self.assertIn('href="../index.html"',repaired)
         self.assertIn('href="gallery.html">Return to GeGI saved fields &amp; signals',repaired)
-        self.assertEqual(re.findall(r'<script\b[^>]*>.*?</script>',original,re.S),
-                         re.findall(r'<script\b[^>]*>.*?</script>',repaired,re.S))
+        scientific_scripts=lambda text:re.findall(r'<script\b(?![^>]*data-site-navigation)[^>]*>.*?</script>',text,re.S)
+        self.assertEqual(scientific_scripts(original),scientific_scripts(repaired))
         self.assertEqual(repaired,DetectorPages.strip_navigation(repaired))
 
 
@@ -156,13 +160,76 @@ class RouteTests(unittest.TestCase):
         self.assertEqual(R.page_record('examples/gegi/index.html')['parent_id'],'results/index.html')
         self.assertEqual(R.page_record('examples/pipeline.html')['parent_id'],'results/index.html')
 
+    def test_canonical_views_and_separate_studies_keep_explicit_identity(self):
+        expected={
+            'spectra/cs137-10k.html':'results/cs137-10k/spectra.html',
+            'viewers/events.html':'results/cs137-10k/events.html',
+            'spectra/million-truth.html':'results/cs137-1m/spectra/deposition.html',
+            'spectra/million-response.html':'results/cs137-1m/spectra/response.html',
+            'spectra/pipeline.html':'learn/signals/index.html',
+            'scenarios/lbnl-cs137/index.html':'assemblies/lbnl/index.html',
+            'methods/native-li.html':'results/native-li-selected-events/index.html',
+            'lithium/lithium.html':'results/lithium-diagnostics/index.html',
+            'detectors/GeGI_3D/strip_explorer.html':'results/gegi-strip-study/index.html',
+            'detectors/GeGI_3D/supplement.html':'results/gegi-notebook-study/index.html',
+        }
+        self.assertEqual(R.CANONICAL_VIEWS,expected)
+        for old,new in expected.items():
+            self.assertEqual(R.page_record(old)['canonical_path'],new,old)
+            self.assertEqual(R.page_record(new)['canonical_path'],new,new)
+        studies=('gegi-shared-readout','gegi-campaign',*R.GEGI_STUDIES.keys(),
+                 'cs137-10k','cs137-1m','native-li-selected-events','lithium-diagnostics')
+        for study in set(studies):
+            record=R.page_record(f'results/{study}/index.html')
+            self.assertEqual(record['study_id'],study)
+            self.assertEqual(record['parent_id'],'results/index.html')
+        self.assertNotEqual(R.page_record('results/gegi-shared-readout/index.html')['study_id'],
+                            R.page_record('results/gegi-campaign/index.html')['study_id'])
+        for model,variant in (('GeRC02','GeRC02_Li50min'),('KMRC01_candidate','KMRC01_candidate')):
+            record=R.page_record(R.case_result_path(model))
+            self.assertEqual((record['study_id'],record['case_id'],record['variant_id'],record['view_id']),
+                             ('cs137-10k',model,variant,'readout'))
+
+    def test_each_navigation_group_selects_at_most_one_view(self):
+        pages=list(R.FIXED)+[R.case_result_path(model) for model in R.CASE_MODELS]
+        pages += [f'detectors/GeGI_3D/{name}' for name,_ in R.DETECTOR_VIEWS]
+        for path in pages:
+            html=R.page_navigation(path)
+            groups=re.findall(r'<nav\b[^>]*>.*?</nav>',html,re.S)
+            self.assertTrue(groups,path)
+            for group in groups:
+                self.assertLessEqual(len(re.findall(r'\baria-current=',group)),1,(path,group))
+        for dataset,current in (('gegi','results/gegi-campaign/index.html#spectra'),
+                                ('million','results/cs137-1m/index.html#data-files')):
+            html=R.dataset_navigation(dataset,current)
+            selected=re.findall(r'<a\b[^>]*aria-current="page"[^>]*>',html)
+            self.assertEqual(len(selected),1,(dataset,current))
+            self.assertIn('#'+urlsplit(current).fragment,selected[0])
+        self.assertIn('hashchange',R.NAV_SCRIPT)
+        self.assertIn('popstate',R.NAV_SCRIPT)
+
+    def test_legacy_results_fragments_point_to_their_exact_evidence(self):
+        from gegi_digital_display import GEGI_SECTION_TARGETS
+        self.write('results/index.html','<main><h1>Research results</h1></main>')
+        R.legacy_results_links(self.site)
+        first=(self.site/'results/index.html').read_text(encoding='utf-8')
+        self.assertIn('next.search=location.search',first)
+        for anchor,target in GEGI_SECTION_TARGETS.items():
+            self.assertIn(anchor,ids(first))
+            link=re.search(r'<li id="'+re.escape(anchor)+r'">(.*?)</li>',first,re.S)
+            self.assertIsNotNone(link,anchor)
+            self.assertEqual(hrefs(link[1]),[R.relative_url(target,'results/index.html')])
+            self.assertEqual(urlsplit(target).fragment,anchor)
+        R.legacy_results_links(self.site)
+        self.assertEqual(first,(self.site/'results/index.html').read_text(encoding='utf-8'))
+
     def test_geometry_navigation_has_only_assembly_identity(self):
         nav=R.assembly_navigation('viewers/events.html')
         self.assertIn('href="../assemblies/index.html" aria-current="true"',nav)
         self.assertIn('LBNL cryostat geometry',nav)
         self.assertNotIn('Cs137',nav)
         self.assertNotIn('data-context-link',nav)
-        self.assertEqual(nav.count('aria-label="Primary"'),1)
+        self.assertEqual(len(re.findall(r'<nav aria-label="Primary"',nav)),1)
 
     def test_relative_query_fragment_and_absolute_project_identity(self):
         expected = dict(path='viewers/events.html', query='model=GeRC02&view=positive',
