@@ -283,11 +283,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_data(200, self.server.workflow_controller.gegi_dual_source().state(query['name'][0]))
             if parts.path == '/api/workflow/gegi-dual/plane':
                 query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
-                if (parts.fragment or set(query) != {'name', 'report_sha256'}
+                required = {'name', 'report_sha256'}
+                if (parts.fragment or not required <= query.keys() <= required | {'prior'}
                         or any(len(v) != 1 for v in query.values()) or self.server.workflow_controller is None):
                     raise ValueError('Choose one opened dual-source acquisition')
                 control = self.server.workflow_controller.gegi_dual_source()
-                return self.send_data(200, control.measured_plane(query['name'][0], query['report_sha256'][0]))
+                return self.send_data(200, control.measured_plane(query['name'][0], query['report_sha256'][0],
+                                                                 query['prior'][0] if 'prior' in query else None))
             if parts.path == '/api/workflow/gegi-dual/pixel-energy':
                 query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
                 required, optional = {'name', 'report_sha256'}, {'min_kev', 'max_kev', 'x', 'y'}

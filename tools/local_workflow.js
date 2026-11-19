@@ -610,13 +610,18 @@ function dualTwoStripPanel(job){
       if(trigger.adc_contacts?.length)target.append(dualADCPanel(job,trigger));
     }});
 }
-function dualPlaneMap(grid, layer){
-  const {x_mm:x,y_mm:y,step_mm:step,assumed_z_mm:z}=grid;
+function dualPlaneMap(grid, layer, crop){
+  const {x_mm:savedX,y_mm:savedY,step_mm:step,assumed_z_mm:z}=grid;
+  const inset=length=>crop?Math.min(Math.round(length/4),Math.floor((length-1)/2)):0;
+  const left=inset(savedX.length),right=savedX.length-left,bottom=inset(savedY.length),top=savedY.length-bottom;
+  const x=savedX.slice(left,right),y=savedY.slice(bottom,top);
   const figure=node('figure',undefined,'plot dual-plane-figure');
   const axes=node('div',undefined,'dual-plane-axes'),plot=node('canvas');
   const format=value=>Number(value.toPrecision(5)).toString();
+  const edges=values=>[values[0]-step/2,values.at(-1)+step/2];
+  const footprint=(xs,ys)=>'X '+edges(xs).map(format).join(' to ')+' mm · Y '+edges(ys).map(format).join(' to ')+' mm';
   function ticks(values,vertical){
-    const low=values[0]-step/2,high=values.at(-1)+step/2;
+    const [low,high]=edges(values);
     const labels=[low,(low+high)/2,high].map(value=>node('span',format(value)));
     const axis=node('div',undefined,vertical?'dual-plane-y':'dual-plane-x');
     axis.setAttribute('aria-hidden','true');axis.append(...(vertical?labels.reverse():labels));
@@ -624,61 +629,109 @@ function dualPlaneMap(grid, layer){
   }
   plot.width=x.length;plot.height=y.length;
   plot.setAttribute('role','img');
-  plot.setAttribute('aria-label','Backprojection at z = '+z+' mm. X increases right from '+format(x[0]-step/2)+
-    ' to '+format(x.at(-1)+step/2)+' mm. Y increases up from '+format(y[0]-step/2)+' to '+format(y.at(-1)+step/2)+' mm.');
+  plot.setAttribute('aria-label','Backprojection '+(crop?'crop ':'')+'at z = '+z+' mm. X increases right from '+
+    edges(x).map(format).join(' to ')+' mm. Y increases up from '+edges(y).map(format).join(' to ')+' mm.');
   const context=plot.getContext('2d'),image=context.createImageData(x.length,y.length);
-  let maximum=0;
-  for(const row of layer.mass)for(const mass of row)maximum=Math.max(maximum,mass);
+  let maximum=0,peakX=0,peakY=0,inside=0,outside=0;
+  const visible=(i,j)=>i>=left&&i<right&&j>=bottom&&j<top;
   for(const [j,row] of layer.mass.entries())for(const [i,mass] of row.entries()){
-    const fraction=maximum?mass/maximum:0, offset=((y.length-1-j)*x.length+i)*4;
+    if(mass>maximum){maximum=mass;peakX=i;peakY=j;}
+    if(visible(i,j))inside+=mass;
+    else outside+=mass;
+  }
+  for(let j=bottom;j<top;j++)for(let i=left;i<right;i++){
+    const fraction=maximum?layer.mass[j][i]/maximum:0, offset=((top-1-j)*x.length+i-left)*4;
     image.data.set([242-230*fraction,247-156*fraction,249-129*fraction,255],offset);
   }
   context.putImageData(image,0,0);
   const yLabel=node('span','Y (mm)','dual-plane-y-label'),xLabel=node('span','X (mm)','dual-plane-x-label');
   axes.append(yLabel,ticks(y,true),plot,ticks(x,false),xLabel);figure.append(axes);
-  figure.append(node('figcaption',(maximum?'Linear color from 0 to '+format(maximum)+' nominal trigger units per cell.':
-    'This window has no projected trigger mass.')+' Cell size '+step+' × '+step+' mm.','muted'));
+  const caption=node('figcaption',undefined,'muted');
+  const shown=crop?' Showing '+footprint(x,y)+' (whole saved cells).':'';
+  caption.append(node('div','Saved footprint '+footprint(savedX,savedY)+'.'+shown+
+    ' Grid spacing '+format(step)+' × '+format(step)+' mm.'));
+  caption.append(node('div','Projected weight in nominal trigger units · '+format(layer.projected_mass)+' total · '+
+    format(inside)+' inside view · '+format(outside)+' outside view.'));
+  if(crop)caption.append(node('div','The crop keeps the saved cell weights. Outside-view weight comes from saved cells hidden by the crop.'));
+  if(maximum){
+    const edge=peakX===0||peakX===savedX.length-1||peakY===0||peakY===savedY.length-1;
+    caption.append(node('div','Brightest saved cell ('+format(savedX[peakX])+', '+format(savedY[peakY])+') mm'+
+      (edge?' · saved image edge':'')+(visible(peakX,peakY)?'':' · outside crop')+'.'));
+  }
+  caption.append(node('div',maximum?'Shared full-view color scale from 0 to '+format(maximum)+' nominal trigger units per cell.':
+    'This window has no projected trigger mass.'));
+  figure.append(caption);
   return figure;
 }
 function dualPlanePanel(job){
   if(job.result.measured_plane?.status!=='saved')return null;
   const details=node('details'),body=node('div'),status=node('p','','notice');
+  const labels={saved:'Primary saved map','uniform-area':'Uniform area','uniform-solid-angle':'Uniform solid angle'};
+  const variants=job.result.measured_plane.variants??['saved'];
+  const priorChoice=node('select');
+  for(const variant of variants){
+    const option=node('option',labels[variant]);option.value=variant;priorChoice.append(option);
+  }
+  priorChoice.value=variants[0];
   status.setAttribute('role','status');
-  details.append(node('summary','Measured Compton backprojection on a plane'),status,body);
-  let loading=false,loaded=false;
-  details.ontoggle=async()=>{
-    if(!details.open||loading||loaded)return;
-    loading=true;status.textContent='Opening the saved plane…';
+  details.append(node('summary','Measured Compton backprojection on a plane'));
+  if(variants.length>1){
+    const priorLabel=node('label','Saved plane map');priorLabel.append(priorChoice);details.append(priorLabel);
+  }
+  details.append(status,body);
+  let request=0,opened=false,selectedWindow='all',selectedView='full';
+  details.ontoggle=()=>{if(details.open&&!opened)return load();};
+  priorChoice.onchange=load;
+  async function load(){
+    const generation=++request,variant=priorChoice.value;
+    const current=()=>dualJob===job&&request===generation;
+    opened=true;status.textContent='Opening the saved plane…';body.replaceChildren();
     try{
       const query=new URLSearchParams({name:job.name,report_sha256:job.report_sha256});
+      if(variant!=='saved')query.set('prior',variant);
       const reply=await api('/api/workflow/gegi-dual/plane?'+query);
-      if(dualJob!==job)return;
+      if(!current())return;
       if(reply.name!==job.name||reply.report_sha256!==job.report_sha256)throw Error('The plane does not match the opened acquisition.');
       const {grid,selection,layers,model}=reply;
+      if(variant!=='saved'&&model.plane_prior!==variant)throw Error('The plane does not match the selected prior.');
+      if(variant==='saved')priorChoice.children[0].textContent=labels.saved+' · '+labels[model.plane_prior];
+      const origin=model.plane_prior_reference_origin_mm;
+      const prior=origin?'Uniform solid angle from detector origin ('+origin.join(', ')+') mm.':
+        'Uniform area (equal weight per unit area).';
+      const coverage=origin?', which subtends '+Number(model.plane_prior_coverage_sr.toPrecision(5))+' sr at that origin.':'.';
+      const controls=node('div',undefined,'dual-feature-faces');
       const label=node('label','Measured energy window'),windowChoice=node('select'),plot=node('div');
+      const viewLabel=node('label','Map view'),viewChoice=node('select');
+      const full=node('option','Full saved footprint'),crop=node('option','Center half-width crop');
+      full.value='full';crop.value='crop';crop.disabled=Math.max(grid.x_mm.length,grid.y_mm.length)===2;
+      viewChoice.append(full,crop);viewChoice.value=crop.disabled?'full':selectedView;viewLabel.append(viewChoice);controls.append(label,viewLabel);
       const summary=node('p','','notice');summary.setAttribute('role','status');
       const keys=Object.keys(layers).filter(key=>key!=='all'&&key!=='other_energy').sort((a,b)=>parseFloat(a)-parseFloat(b));
       for(const key of ['all',...keys,'other_energy']){
         const text=key==='all'?'All measured energies':key==='other_energy'?'Outside the line windows':'Around '+parseFloat(key)+' keV';
         const option=node('option',text);option.value=key;windowChoice.append(option);
       }
-      windowChoice.value='all';label.append(windowChoice);
+      windowChoice.value=Object.hasOwn(layers,selectedWindow)?selectedWindow:'all';label.append(windowChoice);
       body.append(node('p','Assumed plane z = '+grid.assumed_z_mm+' mm in detector coordinates. '+
         selection.two_strip_triggers+' two-strip triggers among '+selection.qualified_energies+' measured energies and '+
-        selection.qualified_triggers+' qualified triggers.'),label,node('p',selection.energy_windows,'muted'),summary,plot,
-        node('p',model.geometry+' '+model.ambiguity,'muted'),node('p',model.limits,'muted'));
+        selection.qualified_triggers+' qualified triggers.'),
+        node('p','Saved plane prior · '+prior+' Each cone was normalized over the full saved footprint'+coverage),
+        controls,node('p',selection.energy_windows,'muted'),summary,plot,
+        node('p',model.geometry+' '+model.ambiguity.replace('Unresolved weight remains outside the map',
+          'Unresolved weight is recorded separately'),'muted'),
+        node('p',model.limits.replace('displayed footprint','reconstruction footprint'),'muted'));
       function paint(){
-        const layer=layers[windowChoice.value];
+        selectedWindow=windowChoice.value;selectedView=viewChoice.value;
+        const layer=layers[selectedWindow];
         const mass=value=>Number(value.toPrecision(5));
         summary.textContent=layer.triggers+' triggers in this window · '+layer.triggers_with_geometry+
           ' with projected geometry · '+layer.hypotheses+' of '+layer.allowed_hypotheses+' allowed alternatives projected. '+
           'Nominal trigger units: '+mass(layer.projected_mass)+' projected, '+mass(layer.unresolved_mass)+' unresolved.';
-        plot.replaceChildren(dualPlaneMap(grid,layer));
+        plot.replaceChildren(dualPlaneMap(grid,layer,selectedView==='crop'));
       }
-      windowChoice.onchange=paint;paint();loaded=true;status.textContent='';
-    }catch(error){if(dualJob===job){body.replaceChildren();status.textContent=error.message;}}
-    finally{loading=false;}
-  };
+      windowChoice.onchange=paint;viewChoice.onchange=paint;paint();status.textContent='';
+    }catch(error){if(current()){opened=false;body.replaceChildren();status.textContent=error.message;}}
+  }
   return details;
 }
 function showDualJob(job){
@@ -715,6 +768,12 @@ function showDualJob(job){
     if(twoStrip)content.append(twoStrip);
     const plane=dualPlanePanel(job);
     if(plane)content.append(plane);
+    else if(result.two_strip_pairings?.status==='available'){
+      const instructions=node('a','Create a measured plane map');
+      instructions.href='https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#gegi-plane-reconstruction';
+      instructions.target='_blank';instructions.rel='noreferrer';
+      const hint=node('p');hint.append(instructions);content.append(hint);
+    }
     content.append(dualPixelMap(job));
   }
   dualControls();

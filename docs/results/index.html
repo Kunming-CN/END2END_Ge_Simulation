@@ -201,7 +201,38 @@ Pooled maxima for 1173.23 keV and all energies fall on the display boundary.</fi
 of weight across compatible strip pairings and allowed interaction orders.
 The pooled map leaves 70 units unresolved.
 The split shifts and boundary maxima leave source positions unresolved on this plane. Detector sensitivity is uncalibrated.
-<a href="gegi-digital/measured-compton-planes.json">View the acquisition counts and source hashes (JSON)</a>.</p><h2 id="gegi-double-pulse">When can GeGI resolve two close pulses?</h2>
+<a href="gegi-digital/measured-compton-planes.json">View the acquisition counts and source hashes (JSON)</a>.</p><h4 id="gegi-plane-priors">How the source-plane prior changes the image</h4>
+<p>Each 4 × 4 mm cell receives equal initial weight under uniform area. Under uniform solid angle,
+a cell receives the angular area it subtends at the detector center (0, 0, 0) mm. A central cell at z = 40 mm
+subtends a larger angle than a distant cell of the same size. Each measured cone is normalized separately
+over the chosen square. The waveform fits, competing interaction orders and their weights are shared by both models.</p>
+<figure style="margin:1rem 0"><a href="gegi-digital/plane-priors.png"><img loading="lazy"
+style="width:100%;height:auto" width="1380" height="960" src="gegi-digital/plane-priors.png"
+alt="Six pooled energy-window maps. Symbols mark the two independent half-exposure maxima on the wider field."></a>
+<figcaption>The dashed square encloses the original ±120 mm field within the ±240 mm reconstruction.
+The circle marks the first half-second maximum and the plus marks the second. The color scale shows the fraction
+of each panel’s own maximum so the spatial shapes are visible in all three energy windows.</figcaption></figure>
+<div role="region" aria-label="Peak displacements in millimeters" tabindex="0" style="overflow-x:auto">
+<table><caption>Peak displacements in mm. The crop keeps only the original cells of the wider reconstruction.</caption>
+<thead><tr><th scope="col">Energy window</th><th scope="col">Prior</th><th scope="col">1 s peak shift on widening</th>
+<th scope="col">1 s peak shift on widening, then cropping</th><th scope="col">Half-to-half, ±120 mm</th>
+<th scope="col">Half-to-half, ±240 mm</th></tr></thead><tbody><tr><th scope="row">662 keV</th><td>Uniform area</td><td>0.0</td><td>0.0</td><td>190.5</td><td>73.8</td></tr><tr><th scope="row">662 keV</th><td>Uniform solid angle</td><td>0.0</td><td>0.0</td><td>11.3</td><td>11.3</td></tr><tr><th scope="row">1,173 keV</th><td>Uniform area</td><td>188.2</td><td>188.2</td><td>217.3</td><td>36.9</td></tr><tr><th scope="row">1,173 keV</th><td>Uniform solid angle</td><td>0.0</td><td>0.0</td><td>0.0</td><td>5.7</td></tr><tr><th scope="row">1,332 keV</th><td>Uniform area</td><td>5.7</td><td>5.7</td><td>121.5</td><td>91.3</td></tr><tr><th scope="row">1,332 keV</th><td>Uniform solid angle</td><td>0.0</td><td>0.0</td><td>36.0</td><td>36.0</td></tr></tbody></table></div>
+<p>Of 254 projected trigger units in the wider field, the central square retains 55.67 with uniform area
+and 166.48 with uniform solid angle. The angular prior concentrates weight toward the detector axis.
+The 662 keV example shows the distinction between repeatability and accuracy. The wider-field peak moves from
+(−42, 2) mm to (−10, 14) mm when switching to uniform solid angle. The programmed Cs-137 position was
+(−40, 0) mm, withheld from fitting. Half-to-half agreement improves even as this pooled peak moves farther from the source.</p>
+<h4>How well does one half predict the other?</h4>
+<p>Each half-second map was used to predict the other half’s measured cone angles on the ±240 mm field.
+The comparison uses the same response model under the learned map and its own prior alone.
+A positive mean log ratio indicates that the learned map gives the held-out cones greater average log response.
+Across 324 selected triggers, the mean log ratio per trigger was
+-0.011 for uniform area and +0.142 for uniform solid angle, each relative to its own baseline.
+The 70 fully unresolved triggers contributed zero to the difference.</p>
+<p>The solid-angle prior alone puts 83.7% of its weight in the central square. The two half-second maps
+place 70.2% and 59.3% there. Both spread weight outward while improving agreement with the other half.
+This checks consistency with independent simulated signals under the assumed angular response.
+<a href="gegi-digital/plane-priors.json">Peak coordinates, counts, scores by energy and study hashes (JSON)</a>.</p><h2 id="gegi-double-pulse">When can GeGI resolve two close pulses?</h2>
 <p>With nominal noise, all groups sustained two matched triggers from <strong>300 ns</strong>
 on this scan. Same- and adjacent-strip groups met both energy and XY tolerances from <strong>1000 ns</strong>.
 Far-strip energy met its tolerance from <strong>300 ns</strong>.</p>

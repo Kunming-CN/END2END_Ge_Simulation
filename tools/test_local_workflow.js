@@ -1767,17 +1767,27 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   const planeTitle='Measured Compton backprojection on a plane';
   const findPlane=()=>get('gegi-dual-results').children.find(node=>node.children[0]?.textContent===planeTitle);
   assert.equal(findPlane(),undefined);
-  run(`const planeJob={...dualPairJob,name:'plane-fixture',result:{...dualPairJob.result,measured_plane:{status:'saved'}}};
-    const projectedLayer={mass:[[.5,0],[0,0]],triggers:2,triggers_with_geometry:1,allowed_hypotheses:3,hypotheses:1,projected_mass:.5,unresolved_mass:1.5};
+  assert.match(descendants(get('gegi-dual-results')).find(node=>node.textContent==='Create a measured plane map').href,
+    /guide\.html#gegi-plane-reconstruction$/);
+  run(`const planeJob={...dualPairJob,name:'plane-fixture',result:{...dualPairJob.result,
+      measured_plane:{status:'saved',variants:['saved','uniform-solid-angle']}}};
+    const projectedLayer={mass:[[0,0,0,0],[0,.125,0,0],[0,0,.25,0],[0,0,0,.5]],
+      triggers:2,triggers_with_geometry:1,allowed_hypotheses:3,hypotheses:1,projected_mass:.875,unresolved_mass:1.125};
     const planeReply={name:planeJob.name,report_sha256:planeJob.report_sha256,
-      grid:{x_mm:[-2,2],y_mm:[-2,2],assumed_z_mm:40,step_mm:4},
+      grid:{x_mm:[-6,-2,2,6],y_mm:[-10,-6,-2,2],assumed_z_mm:40,step_mm:4},
       selection:{two_strip_triggers:2,qualified_energies:3,qualified_triggers:4,energy_windows:'Half-width 2% of the line energy.'},
-      model:{geometry:'Strip-center XY.',ambiguity:'Equal split across allowed orders.',limits:'Conditional plane.'},
-      layers:{all:projectedLayer,'661.657_keV':projectedLayer,other_energy:{mass:[[0,0],[0,0]],triggers:0,
+      model:{plane_prior:'uniform-area',geometry:'Strip-center XY.',ambiguity:'Equal split across allowed orders.',
+        limits:'Changing the displayed footprint changes the map.'},
+      layers:{all:projectedLayer,'661.657_keV':projectedLayer,other_energy:{mass:Array.from({length:4},()=>[0,0,0,0]),triggers:0,
         triggers_with_geometry:0,allowed_hypotheses:0,hypotheses:0,projected_mass:0,unresolved_mass:0}}};
+    const solidLayer={...projectedLayer,mass:[[.125,0,0,0],[0,0,0,0],[0,0,.5,0],[0,0,0,.25]]};
+    const solidReply={...planeReply,model:{...planeReply.model,plane_prior:'uniform-solid-angle',
+        plane_prior_reference_origin_mm:[0,0,0],plane_prior_coverage_sr:4.123456},
+      layers:{...planeReply.layers,all:solidLayer,'661.657_keV':solidLayer}};
     let refusePlane=true;
     api=async path=>{dualFixtureCalls.push([path]);if(!path.includes('/plane?'))return planeJob;
-      if(refusePlane)throw Error('The saved finite-plane result belongs to a different acquisition report.');return planeReply;};`);
+      if(refusePlane)throw Error('The saved finite-plane result belongs to a different acquisition report.');
+      return path.includes('prior=uniform-solid-angle')?solidReply:planeReply;};`);
   get('gegi-dual-job').value='plane-fixture';await get('gegi-dual-job').onchange();
   const plane=findPlane();assert.ok(plane);
   assert.ok(!run('dualFixtureCalls').some(([url])=>url.includes('/plane?')));
@@ -1788,16 +1798,53 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.ok(descendants(get('gegi-dual-results')).some(node=>node.tagName==='table'));
   run('refusePlane=false');plane.open=false;await plane.ontoggle();plane.open=true;await plane.ontoggle();
   assert.match(planeText(),/z = 40 mm.*2 two-strip triggers among 3 measured energies and 4 qualified triggers/);
-  assert.match(planeText(),/1 of 3 allowed alternatives projected.*0\.5 projected, 1\.5 unresolved/);
+  assert.match(planeText(),/1 of 3 allowed alternatives projected.*0\.875 projected, 1\.125 unresolved/);
   assert.match(planeText(),/Equal split across allowed orders/);
+  assert.match(planeText(),/Saved plane prior · Uniform area \(equal weight per unit area\).*full saved footprint/);
+  assert.match(planeText(),/Changing the reconstruction footprint changes the map/);
   const findCanvas=()=>descendants(plane).find(node=>node.tagName==='canvas');
-  assert.match(findCanvas()['aria-label'],/X increases right from -4 to 4 mm.*Y increases up from -4 to 4 mm/);
-  assert.deepEqual(findCanvas().pixels,[242,247,249,255,242,247,249,255,12,91,120,255,242,247,249,255]);
-  const planeChoice=descendants(plane).find(node=>node.tagName==='select');
+  const fullCanvas=findCanvas(),fullPixels=fullCanvas.pixels;
+  assert.match(fullCanvas['aria-label'],/X increases right from -8 to 8 mm.*Y increases up from -12 to 4 mm/);
+  assert.deepEqual(fullPixels.slice(12,16),[12,91,120,255]);
+  assert.match(planeText(),/Saved footprint X -8 to 8 mm · Y -12 to 4 mm.*Grid spacing 4 × 4 mm/);
+  assert.match(planeText(),/0\.875 total · 0\.875 inside view · 0 outside view/);
+  const mapControls=()=>descendants(plane).filter(node=>node.tagName==='select');
+  const [priorChoice,planeChoice,viewChoice]=mapControls();
+  assert.deepEqual(priorChoice.children.map(node=>node.textContent),['Primary saved map · Uniform area','Uniform solid angle']);
   assert.deepEqual(planeChoice.children.map(node=>node.textContent),['All measured energies','Around 661.657 keV','Outside the line windows']);
+  assert.deepEqual(viewChoice.children.map(node=>node.textContent),['Full saved footprint','Center half-width crop']);
   const requests=run('dualFixtureCalls.length');
+  const savedLayer=run('JSON.stringify(projectedLayer)');
+  viewChoice.value='crop';viewChoice.onchange();
+  const cropped=findCanvas();
+  assert.deepEqual([cropped.width,cropped.height],[2,2]);
+  assert.match(cropped['aria-label'],/crop at z = 40 mm.*X increases right from -4 to 4 mm.*Y increases up from -8 to 0 mm/);
+  assert.deepEqual(cropped.pixels,[...fullPixels.slice(20,28),...fullPixels.slice(36,44)]);
+  assert.match(planeText(),/Showing X -4 to 4 mm · Y -8 to 0 mm \(whole saved cells\)/);
+  assert.match(planeText(),/0\.875 total · 0\.375 inside view · 0\.5 outside view/);
+  assert.match(planeText(),/The crop keeps the saved cell weights\. Outside-view weight comes from saved cells hidden by the crop/);
+  assert.match(planeText(),/Brightest saved cell \(6, 2\) mm · saved image edge · outside crop/);
+  assert.match(planeText(),/Shared full-view color scale from 0 to 0\.5 nominal trigger units per cell/);
   planeChoice.value='other_energy';planeChoice.onchange();
   assert.match(planeText(),/This window has no projected trigger mass/);
+  assert.match(planeText(),/0 total · 0 inside view · 0 outside view/);
+  assert.equal(findCanvas().width,2);
+  planeChoice.value='all';planeChoice.onchange();
+  viewChoice.value='full';viewChoice.onchange();
+  assert.deepEqual(findCanvas().pixels,fullPixels);
+  assert.equal(run('JSON.stringify(projectedLayer)'),savedLayer);
   assert.equal(run('dualFixtureCalls.length'),requests);
+  planeChoice.value='661.657_keV';planeChoice.onchange();
+  viewChoice.value='crop';viewChoice.onchange();
+  priorChoice.value='uniform-solid-angle';await priorChoice.onchange();
+  assert.match(run('dualFixtureCalls.at(-1)[0]'),/&prior=uniform-solid-angle$/);
+  assert.match(planeText(),/Saved plane prior · Uniform solid angle from detector origin \(0, 0, 0\) mm/);
+  assert.match(planeText(),/full saved footprint, which subtends 4\.1235 sr at that origin/);
+  assert.match(planeText(),/0\.875 total · 0\.5 inside view · 0\.375 outside view/);
+  assert.deepEqual(mapControls().map(node=>node.value),['uniform-solid-angle','661.657_keV','crop']);
+  assert.equal(findCanvas().width,2);
+  priorChoice.value='saved';await priorChoice.onchange();
+  assert.match(planeText(),/0\.875 total · 0\.375 inside view · 0\.5 outside view/);
+  assert.deepEqual(mapControls().map(node=>node.value),['saved','661.657_keV','crop']);
   console.log('Dual-source Control covers energy intervals, bounded trigger browsing, position calibration transfer, conditional two-strip pairings and saved plane maps.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

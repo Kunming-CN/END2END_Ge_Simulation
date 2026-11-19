@@ -24,6 +24,7 @@ REPORT_KIND = 'gegi_dual_source_acquisition_v1'
 TWO_STRIP_ADC_FILE = 'two-strip-adc.npz'
 PLANE_FILE = 'plane.json.gz'
 PLANE_KIND = 'gegi_continuous_measured_plane_backprojection_v1'
+PLANE_PRIORS = ('uniform-area', 'uniform-solid-angle')
 SOURCE_COUNTS = ('initial_parents_in_live_time', 'deposit_groups', 'complete_deposit_groups',
                  'right_censored_deposit_groups', 'native_unavailable_groups', 'prehistory_unqualified_groups')
 ADC_COUNTS = ('qualified_triggers', 'single_pixel_energies', 'additional_multi_strip_energies',
@@ -418,12 +419,14 @@ def report_views(report=None, *, reason=None):
     return views
 
 
-def saved_plane_path(root, name):
-    path = safe_path(root, f'{OUTPUTS}/{name}/{PLANE_FILE}')
+def saved_plane_path(root, name, prior=None):
+    W.require(prior is None or prior in PLANE_PRIORS, 'Choose one saved plane prior.')
+    filename = PLANE_FILE if prior is None else f'plane-{prior}.json.gz'
+    path = safe_path(root, f'{OUTPUTS}/{name}/{filename}')
     return path if path.is_file() else None
 
 
-def measured_plane_view(report, digest, path):
+def measured_plane_view(report, digest, path, expected_prior=None):
     missing = 'This acquisition has no saved finite-plane result.'
     invalid = 'The saved finite-plane result is unavailable or invalid.'
     W.require(path is not None, missing)
@@ -447,6 +450,18 @@ def measured_plane_view(report, digest, path):
                   and type(selection['energy_windows']) is str, invalid)
         text_keys = ('geometry', 'ambiguity', 'normalization', 'limits')
         W.require(all(type(model[key]) is str for key in text_keys), invalid)
+        W.require(expected_prior is None or model.get('plane_prior') == expected_prior,
+                  'The saved plane prior does not match its filename.')
+        prior = model.get('plane_prior', 'uniform-area')
+        W.require(prior in PLANE_PRIORS
+                  and (prior != 'uniform-solid-angle' or grid['assumed_z_mm'] != 0), invalid)
+        view_model = dict(plane_prior=prior, **{key: model[key] for key in text_keys})
+        if prior == 'uniform-solid-angle':
+            origin = model['plane_prior_reference_origin_mm']
+            coverage = model['plane_prior_coverage_sr']
+            W.require(type(origin) is list and len(origin) == 3 and all(number(value) and value == 0 for value in origin)
+                      and number(coverage) and 0 < coverage <= math.tau, invalid)
+            view_model.update(plane_prior_reference_origin_mm=origin, plane_prior_coverage_sr=coverage)
         W.require(type(layers) is dict and 'all' in layers and 'other_energy' in layers
                   and all(key in ('all', 'other_energy') or re.fullmatch(r'[0-9]+(?:\.[0-9]+)?_keV', key)
                           for key in layers), invalid)
@@ -475,15 +490,19 @@ def measured_plane_view(report, digest, path):
         raise ControlError(invalid, 'invalid_gegi_plane') from None
     return dict(kind=PLANE_KIND, grid={key: grid[key] for key in ('x_mm', 'y_mm', 'step_mm', 'assumed_z_mm')},
                 selection=dict(**total, energy_windows=selection['energy_windows']),
-                model={key: model[key] for key in text_keys}, layers=views)
+                model=view_model, layers=views)
 
 
 def add_plane_option(root, name, views):
-    try:
-        if saved_plane_path(root, name):
-            views['measured_plane'] = {'status': 'saved'}
-    except (ControlError, OSError):
-        pass
+    variants = []
+    for prior in (None, *PLANE_PRIORS):
+        try:
+            if saved_plane_path(root, name, prior):
+                variants.append(prior or 'saved')
+        except (ControlError, OSError):
+            continue
+    if variants:
+        views['measured_plane'] = dict(status='saved', variants=variants)
 
 
 def archived_report(root, name):
@@ -596,12 +615,12 @@ class DualSourceControl:
         report, digest = self._opened_report(name, expected_sha256)
         return dict(name=name, report_sha256=digest, **project_pixel_energy(report, window, pixel))
 
-    def measured_plane(self, name, expected_sha256):
+    def measured_plane(self, name, expected_sha256, prior=None):
         report, digest = self._opened_report(name, expected_sha256)
         W.require(report.get('kind') == REPORT_KIND and report.get('status') == 'completed',
                   'Choose a completed saved acquisition.')
         return dict(name=name, report_sha256=digest,
-                    **measured_plane_view(report, digest, saved_plane_path(self.root, name)))
+                    **measured_plane_view(report, digest, saved_plane_path(self.root, name, prior), prior))
 
     def single_pixel(self, name, expected_sha256, ordinal):
         return self.selected_trigger(name, expected_sha256, ordinal, 'single-pixel')
