@@ -6,6 +6,7 @@ let catalog=null,checked=null,noticeIsCheckedPlan=false,busy=false,active=false,
 let modelPreviewGeneration=0,modelPreviewUrl=null,importGeneration=0,pageGeneration=0,pollGeneration=0,featureGeneration=0,acquisitionGeneration=0,resultOptionsGeneration=0,spectrumGeneration=0;
 let gegiResult=null,gegiGeneration=0,gegiJourney=null,gegiEventGeneration=0,gegiImagingGeneration=0,gegiDigitalGeneration=0;
 let savedGeGIOptions=null,savedGeGIJob=null,savedGeGIBusy=false,savedGeGIGeneration=0;
+let dualLibraries=[],dualJob=null,dualBusy=false,dualGeneration=0;
 const continuationNames=new Map();
 const pendingActions=new Map();
 const stageNames={native_preparation:'Fields and injection calibration',geometry:'Geometry and source',radiation:'Radiation transport',event_ledger:'Event ledger',response:'Fields, charge, calibration and readout',results:'Verified results'};
@@ -41,7 +42,7 @@ function config(){const electronics={};for(const key of catalog.electronics_keys
 function invalidate(){selectionVersion++;checked=null;$('checked-plan').textContent=executableSelection()?'Selection changed. Check the new plan.':'No run plan for this setup. '+(currentDetector()?.reason||'Read the selected model’s configuration requirements.');if(noticeIsCheckedPlan)notice('Selection changed. The earlier checked plan is cleared. Check plan again before Run.');showSelection();showPose();controls();}
 function controls(){const runnable=executableSelection(),blocked=busy||active||!runnable||!checked||checked.execution_enabled===false;for(const id of ['check','save'])$(id).disabled=busy||active||!runnable;$('load').disabled=busy||active;$('start').disabled=blocked;
 const readiness=busy?'Run unavailable while the current action is pending. Wait for it to finish.':active?'Run unavailable while existing work is active or needs inspection. Review Runs and Previous saved jobs and recovery; wait for running work or use the available verification action.':!runnable?'Run unavailable. '+(currentDetector()?.available!==true?'View only · '+(currentDetector()?.reason||'No computation connector is available for this model.'):'This detector, source or cryostat combination is unavailable.')+' Choose a compute-supported combination in the current cryostat.':!checked?'Run unavailable. Check plan for the current setup; editing settings clears any earlier check.':checked.execution_enabled===false?'Run unavailable. This checked plan does not authorize execution; nonzero-angle acceptance is pending. Use an admitted zero-angle setup and Check plan again, or wait for execution support.':'Ready to Run with the checked next-run configuration. Editing settings requires another Check plan.';if($('run-readiness').textContent!==readiness)$('run-readiness').textContent=readiness;
-for(const id of ['source','pose','count','threads','name','use-peak-gate'])$(id).disabled=!runnable;$('cryostat').disabled=busy||active;$('angle-deg').disabled=!runnable||!angleCapability()||gegiSelection();$('gamma-energy-keV').disabled=!runnable||!gammaCapability()&&!gegiSelection();for(const axis of ['x','y','z'])$('gegi-source-'+axis).disabled=!runnable||!gegiSelection();$('seed').disabled=!runnable||!batchSelection()&&currentSource()?.fixed_seed!=null;for(const key of catalog?.electronics_keys||[])$('setting-'+key).disabled=!runnable||key.startsWith('peak_gate_')&&!$('use-peak-gate').checked;savedGeGIControls();}
+for(const id of ['source','pose','count','threads','name','use-peak-gate'])$(id).disabled=!runnable;$('cryostat').disabled=busy||active;$('angle-deg').disabled=!runnable||!angleCapability()||gegiSelection();$('gamma-energy-keV').disabled=!runnable||!gammaCapability()&&!gegiSelection();for(const axis of ['x','y','z'])$('gegi-source-'+axis).disabled=!runnable||!gegiSelection();$('seed').disabled=!runnable||!batchSelection()&&currentSource()?.fixed_seed!=null;for(const key of catalog?.electronics_keys||[])$('setting-'+key).disabled=!runnable||key.startsWith('peak_gate_')&&!$('use-peak-gate').checked;savedGeGIControls();dualControls();}
 function sourceLabel(id){return id==='mono_gamma_662_axis_v1'?'Monoenergetic gamma beam':catalog?.sources.find(s=>s.id===id)?.label||id;}
 function savedSourceLabel(selection){return sourceLabel(selection.source)+(['mono_gamma_662_axis_v1','gegi_mono_gamma_v1'].includes(selection.source)?' · '+savedGammaEnergy(selection)+' keV':'');}
 function detectorChanged(){const previous=$('source').value,original=currentDetector();if(!original)return;const d=detectorFits(original)?original:{...original,available:false,sources:[],reason:'This detector requires a different cryostat. Select a compatible cryostat.'},sources=catalog.sources.filter(s=>d.sources.includes(s.id)).map(s=>({...s,label:sourceLabel(s.id)}));options('source',sources);$('source').value=sources.some(s=>s.id===previous)?previous:sources[0]?.id||'';if(gegiSelection()&&previous!=='gegi_mono_gamma_v1'){$('count').value='100';$('seed').value='26101701';}$('operating-details').textContent=d.operating_label||'';$('numerics').textContent=gegiSelection()?'GeGI numerical, seed and field-cache settings are recorded in the checked plan. Each native drift realization supplies all 34 contact signals.':catalog.numerics||'';showModel(d);sourceChanged();}
@@ -131,7 +132,7 @@ function renderJobs(state){
   }
   syncRunList($('runs'),cards,'No runs created in this application.');controls();
 }
-async function poll(){const generation=++pollGeneration;try{const [state,legacy]=await Promise.all([api('/api/workflow/state'),api('/api/state')]);if(generation!==pollGeneration)return;renderJobs(state);renderLegacy(legacy);if(savedGeGIJob)void pollSavedGeGI();}catch(e){if(generation===pollGeneration)notice(e.message,true);}}
+async function poll(){const generation=++pollGeneration;try{const [state,legacy]=await Promise.all([api('/api/workflow/state'),api('/api/state')]);if(generation!==pollGeneration)return;renderJobs(state);renderLegacy(legacy);if(savedGeGIJob)void pollSavedGeGI();if(dualJob?.status==='running')void inspectDualJob(dualJob.name);}catch(e){if(generation===pollGeneration)notice(e.message,true);}}
 
 function savedGeGIControls(){
   const hasInput=!!savedGeGIOptions?.campaigns?.some(c=>c.id===$('gegi-saved-campaign').value),status=savedGeGIJob?.status;
@@ -198,6 +199,102 @@ $('gegi-saved-campaign').onchange=$('gegi-saved-calibration').onchange=savedGeGI
 $('gegi-saved-start').onclick=()=>reprocessSavedGeGI(false);$('gegi-saved-resume').onclick=()=>reprocessSavedGeGI(true);
 $('gegi-saved-stop').onclick=async()=>{if(savedGeGIJob?.input_kind==='standalone'||savedGeGIJob?.stop_supported===false){$('gegi-saved-status').textContent=savedGeGIJob.capability_note||'This saved reconstruction has no stop boundary.';return;}savedGeGIBusy=true;savedGeGIControls();try{showSavedGeGI(await api('/api/workflow/gegi-saved/stop',{name:savedGeGIJob.name}));}catch(e){$('gegi-saved-status').textContent=e.message;}finally{savedGeGIBusy=false;savedGeGIControls();}};
 $('gegi-saved-job').onchange=()=>{const job=savedGeGIOptions?.jobs.find(j=>j.name===$('gegi-saved-job').value);++savedGeGIGeneration;if(job){showSavedGeGI(job);void pollSavedGeGI();}else{savedGeGIJob=null;$('gegi-saved-record').textContent='No derivative selected.';$('gegi-saved-files').replaceChildren();$('gegi-saved-path').textContent='';savedGeGIControls();}};
+
+function dualSourceIds(){return ['a','b'].map(side=>$('gegi-dual-source-'+side).value);}
+function dualControls(){
+  $('gegi-dual-start').disabled=dualBusy||busy||active||dualJob?.status==='running'||
+    !dualSourceIds().every(id=>dualLibraries.some(library=>library.id===id));
+  $('gegi-dual-refresh').disabled=dualBusy;
+  $('gegi-dual-job').disabled=dualBusy;
+}
+function dualStatus(text,error=false){const target=$('gegi-dual-status');target.textContent=text;target.className='notice '+(error?'error':'okay');}
+function setDualOptions(value,name){
+  dualLibraries=value.libraries;
+  const libraries=dualLibraries.map(item=>({id:item.id,label:item.isotope+' · ['+item.source_position_mm.join(', ')+'] mm · '+item.label}));
+  for(const suffix of ['a','b']){
+    const id='gegi-dual-source-'+suffix,prior=$(id).value;
+    options(id,[{id:'',label:'Choose a library'},...libraries]);
+    if(libraries.some(item=>item.id===prior))$(id).value=prior;
+  }
+  options('gegi-dual-job',[{id:'',label:'Choose an acquisition'},...value.jobs.map(job=>({id:job.name,label:job.name+' · '+job.status}))]);
+  if(value.jobs.some(job=>job.name===name))$('gegi-dual-job').value=name;
+}
+async function refreshDualSources(){
+  dualBusy=true;dualControls();
+  try{
+    const value=await api('/api/workflow/gegi-dual/options');setDualOptions(value,dualJob?.name);
+    const rejected=value.rejected.map(item=>item.label+' — '+item.error).join(' ');
+    dualStatus(dualLibraries.length+' saved source libraries available. '+(dualLibraries.length?'Coordinates are recorded global x, y, z in millimetres.':'Copy a sealed source chunk into the import folder above.')+(rejected?' '+rejected:''),!!rejected);
+  }catch(e){dualStatus(e.message,true);}finally{dualBusy=false;dualControls();}
+}
+function dualSpectrum(histogram,denominator){
+  const edges=histogram.bin_edges_keV,counts=histogram.counts,width=edges[1]-edges[0];
+  const inside=counts.reduce((a,b)=>a+b,0),total=inside+histogram.underflow+histogram.overflow;
+  return histogramFigure({title:'Combined slow-energy spectrum',stage:'gegi_dual_event_energy',color:'#007d8a',
+    domain:[edges[0],edges.at(-1),width], denominator, denominatorUnit:'qualified triggers', inside,
+    underflow:histogram.underflow, overflow:histogram.overflow, notSelected:denominator-total,
+    bins:new Map(counts.map((count,index)=>[index,count]))});
+}
+function showDualJob(job){
+  dualJob=job;
+  const {result,...receipt}=job;
+  $('gegi-dual-receipt').textContent=JSON.stringify({...receipt,...(result?{counts:result.counts,exposure:result.exposure}:{})},null,2);
+  const content=$('gegi-dual-results');content.replaceChildren();
+  const option=Array.from($('gegi-dual-job').children).find(item=>item.value===job.name);
+  if(option)option.textContent=job.name+' · '+job.status;
+  dualStatus(job.name+' · '+(job.status==='running'?'replaying the saved acquisition…':job.status)+(job.error?' · '+job.error:''),!!job.error);
+  if(result){
+    const c=result.counts,t=result.exposure;
+    content.append(node('p',job.output,'muted'));
+    content.append(node('p',c.initial_parents_in_live_time+' initial parents in live time · '+c.deposit_groups+' Ge deposit groups · '+c.right_censored_deposit_groups+' extend beyond the recording · '+c.native_unavailable_groups+' lacked native response · '+c.prehistory_unqualified_groups+' had unqualified signal history.'));
+    const sources=node('ul');
+    for(const [index,source] of result.sources.entries()){
+      const library=job.sources[index];
+      sources.append(node('li',library.isotope+' · ['+library.source_position_mm.join(', ')+'] mm · '+job.activities_bq[index]+' Bq · '+source.parents+' parents ('+source.zero_parents+' zero-deposit library marks) · '+source.deposit_groups+' Ge groups starting in the exposure.'));
+    }
+    content.append(sources);
+    content.append(node('p',metricValue(t.qualified_adc_live_time_ns/1e9)+' s of '+metricValue(t.clock_live_time_ns/1e9)+' s qualified for ADC analysis.'));
+    if(c.qualified_triggers===null){content.append(node('p','Trigger and energy totals are unknown because no ADC samples qualified.','muted'));}
+    else{
+      content.append(node('p',c.qualified_triggers+' qualified triggers · '+c.single_pixel_energies+' single-pixel energies · '+c.additional_multi_strip_energies+' additional multi-strip energies · '+c.triggers_without_energy+' without an energy.'));
+      if(result.spectra?.combined)content.append(dualSpectrum(result.spectra.combined,c.qualified_triggers));
+    }
+  }
+  dualControls();
+}
+async function inspectDualJob(name){
+  const generation=++dualGeneration;
+  try{
+    const job=await api('/api/workflow/gegi-dual/state?'+new URLSearchParams({name}));
+    if(generation===dualGeneration&&job.name===name)showDualJob(job);
+  }catch(e){if(generation===dualGeneration)dualStatus(e.message,true);}
+}
+function dualSetting(id,label,min,exclusive=false){
+  const raw=$(id).value.trim(),value=Number(raw);
+  if(!raw||!Number.isFinite(value)||(exclusive?value<=min:value<min))throw Error(label);
+  return value;
+}
+async function startDualAcquisition(){
+  dualBusy=true;dualControls();
+  try{
+    const activities_bq=['a','b'].map(side=>dualSetting('gegi-dual-activity-'+side,'Enter a nonnegative activity in Bq for each library.',0));
+    const live_time_s=dualSetting('gegi-dual-duration','Enter a positive duration in seconds.',0,true),seed=$('gegi-dual-seed').value.trim();
+    if(!/^[0-9]{1,20}$/.test(seed)||BigInt(seed)>18446744073709551615n)throw Error('Enter an integer seed from 0 through 18446744073709551615.');
+    ++dualGeneration;
+    const job=await api('/api/workflow/gegi-dual/start',{source_ids:dualSourceIds(),activities_bq,live_time_s,seed,name:$('gegi-dual-name').value.trim()});
+    showDualJob(job);
+    const selection=$('gegi-dual-job');
+    const option=node('option',job.name+' · '+job.status);option.value=job.name;selection.append(option);selection.value=job.name;
+  }catch(e){dualStatus(e.message,true);}finally{dualBusy=false;dualControls();}
+}
+$('gegi-dual-refresh').onclick=refreshDualSources;
+$('gegi-dual-source-a').onchange=$('gegi-dual-source-b').onchange=dualControls;
+$('gegi-dual-start').onclick=startDualAcquisition;
+$('gegi-dual-job').onchange=()=>{
+  ++dualGeneration;dualJob=null;$('gegi-dual-receipt').textContent='No acquisition selected.';$('gegi-dual-results').replaceChildren();
+  const name=$('gegi-dual-job').value;
+  if(name){dualStatus('Reading the saved acquisition…');void inspectDualJob(name);}else dualStatus('Choose an acquisition to view its saved result.');
+};
 
 function importedGeGIConfig(c,batched){
   const fields=['name','cryostat','detector','source','pose','primary_count','seed','threads','electronics','gamma_energy_keV','source_position_mm'];
@@ -525,15 +622,17 @@ function histogramData(histogram,expectedInitial){
 function histogramFigure(series){
   const figure=node('figure',undefined,'plot');figure.append(node('h3',series.title));
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),add=(tag,attributes,text)=>{const child=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [key,value]of Object.entries(attributes))child.setAttribute(key,String(value));if(text!==undefined)child.textContent=String(text);svg.append(child);return child;};
-  svg.setAttribute('viewBox','0 0 640 220');svg.setAttribute('role','img');svg.setAttribute('aria-label',series.title+'; energy in keV, raw counts per 5 keV bin');
-  const left=60,right=620,top=18,bottom=167,maximum=Math.max(1,...[...series.bins.entries()].filter(([bin])=>bin>=0&&bin<1000).map(([,n])=>n)),x=energy=>left+(energy+1000)/5000*(right-left),y=count=>bottom-count/maximum*(bottom-top);
+  const [low,high,width]=series.domain??[-1000,4000,5],binCount=(high-low)/width;
+  svg.setAttribute('viewBox','0 0 640 220');svg.setAttribute('role','img');svg.setAttribute('aria-label',series.title+'; energy in keV, raw counts per '+width+' keV bin');
+  const left=60,right=620,top=18,bottom=167,maximum=Math.max(1,...[...series.bins.entries()].filter(([bin])=>bin>=0&&bin<binCount).map(([,n])=>n)),x=energy=>left+(energy-low)/(high-low)*(right-left),y=count=>bottom-count/maximum*(bottom-top);
   add('path',{d:'M'+left+','+top+'V'+bottom+'H'+right,fill:'none',stroke:'#69818c'});
-  for(const energy of [-1000,0,1000,2000,3000,4000]){add('path',{d:'M'+x(energy)+','+bottom+'v5',stroke:'#69818c'});add('text',{x:x(energy),y:bottom+20,'text-anchor':'middle'},energy);}
-  add('text',{x:left-8,y:bottom,'text-anchor':'end'},0);add('text',{x:left-8,y:top+4,'text-anchor':'end'},maximum);add('text',{x:10,y:14},'Counts');add('text',{x:(left+right)/2,y:212,'text-anchor':'middle'},'Energy · keV (5 keV bins)');
+  for(let i=0;i<=5;i++){const energy=low+(high-low)*i/5;add('path',{d:'M'+x(energy)+','+bottom+'v5',stroke:'#69818c'});add('text',{x:x(energy),y:bottom+20,'text-anchor':'middle'},energy);}
+  add('text',{x:left-8,y:bottom,'text-anchor':'end'},0);add('text',{x:left-8,y:top+4,'text-anchor':'end'},maximum);add('text',{x:10,y:14},'Counts');add('text',{x:(left+right)/2,y:212,'text-anchor':'middle'},'Energy · keV ('+width+' keV bins)');
   // Missing stored bins are zero counts; step back to baseline across every gap.
-  let path='M'+x(-1000)+','+y(0);for(let bin=0;bin<1000;bin++){const count=series.bins.get(bin)||0;path+='V'+y(count)+'H'+x(-1000+5*(bin+1));}path+='V'+y(0);
+  let path='M'+x(low)+','+y(0);for(let bin=0;bin<binCount;bin++){const count=series.bins.get(bin)||0;path+='V'+y(count)+'H'+x(low+width*(bin+1));}path+='V'+y(0);
   const curve=add('path',{d:path,fill:'none',stroke:series.color,'stroke-width':1.5});curve.setAttribute('data-series',series.stage);
-  figure.append(svg,node('figcaption','In range: '+series.inside+' · underflow (< −1000 keV): '+series.underflow+' · overflow (≥ 4000 keV): '+series.overflow+' · not selected: '+series.notSelected+' of '+series.denominator+(series.stage==='deposited_per_decay'?' initial primaries.':' pulse groups.'),'muted'));return figure;
+  const unit=series.denominatorUnit??(series.stage==='deposited_per_decay'?'initial primaries':'pulse groups');
+  figure.append(svg,node('figcaption','In range: '+series.inside+' · underflow (< '+String(low).replace('-','−')+' keV): '+series.underflow+' · overflow (≥ '+high+' keV): '+series.overflow+' · not selected: '+series.notSelected+' of '+series.denominator+' '+unit+'.','muted'));return figure;
 }
 async function loadSpectrum(){
   const context=result,descriptor=context?.spectrum,generation=++spectrumGeneration;if(!descriptor||$('spectrum-panel').hidden||!$('spectrum-panel').open)return;$('spectrum-content').replaceChildren();$('spectrum-status').textContent='Reading saved spectrum…';

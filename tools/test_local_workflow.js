@@ -25,7 +25,7 @@ const svgNs='http://www.w3.org/2000/svg';
 function xml(tag,attrs={},children=[]){return {nodeType:1,localName:tag,prefix:null,namespaceURI:null,attributes:Object.entries(attrs).map(([name,value])=>({name,value,prefix:null})),childNodes:children};}
 const svgDocument={doctype:null,documentElement:xml('svg',{role:'img',viewBox:'0 0 600 205'},[xml('polyline',{points:'55,160 565,35',fill:'none',stroke:'currentColor','stroke-width':'1.7'}),xml('text',{x:'5',y:'35'},[{nodeType:3,nodeValue:'-0.003'}])]),getElementsByTagName:()=>[]};
 class Parser{parseFromString(){return svgDocument;}}
-const elements=new Map(),get=id=>{if(!elements.has(id)){const find=n=>n.id===id?n:n.children?.map(find).find(Boolean);for(const root of elements.values()){const found=find(root);if(found)return found;}const root=new Element(['cryostat','detector','source','pose','threads','event','group','gegi-event','gegi-channel','gegi-digital-strip','gegi-digital-neighbor','gegi-saved-campaign','gegi-saved-calibration','gegi-saved-job'].includes(id)?'select':'div');root.rootConnected=true;elements.set(id,root);}return elements.get(id);};
+const elements=new Map(),get=id=>{if(!elements.has(id)){const find=n=>n.id===id?n:n.children?.map(find).find(Boolean);for(const root of elements.values()){const found=find(root);if(found)return found;}const root=new Element(['cryostat','detector','source','pose','threads','event','group','gegi-event','gegi-channel','gegi-digital-strip','gegi-digital-neighbor','gegi-saved-campaign','gegi-saved-calibration','gegi-saved-job','gegi-dual-source-a','gegi-dual-source-b','gegi-dual-job'].includes(id)?'select':'div');root.rootConnected=true;elements.set(id,root);}return elements.get(id);};
 const fixtureDocument={getElementById:get,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>{const n=new Element(tag);n.namespaceURI=ns;return n;},createTextNode:text=>({textContent:text})};
 fixtureDocument.body=new Element('body');fixtureDocument.body.rootConnected=true;fixtureDocument.activeElement=fixtureDocument.body;
 const context=vm.createContext({document:fixtureDocument,DOMParser:Parser,
@@ -1431,4 +1431,38 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run(`let staleSavedFail;api=()=>new Promise((resolve,reject)=>staleSavedFail=reject);savedGeGIJob={name:'obsolete'};const staleSavedPoll=pollSavedGeGI();savedGeGIJob={name:'current'};++savedGeGIGeneration;$('gegi-saved-status').textContent='Current selection';staleSavedFail(Error('Obsolete failure'));`);
   await run('staleSavedPoll');assert.equal(get('gegi-saved-status').textContent,'Current selection');
   console.log('Saved GeGI sealed-store/optional-bank requests, exact resume identity, bounded counters, protected summaries, Stop and stale-selection guards passed; no science routes.');
+  run(`busy=false;active=false;
+    const dualFixtureLibraries=[{id:'cs',label:'left',isotope:'Cs-137',source_position_mm:[-40,0,40]},
+      {id:'co',label:'right',isotope:'Co-60',source_position_mm:[40,0,40]}];
+    const dualFixtureOptions={libraries:dualFixtureLibraries,rejected:[{label:'incomplete',error:'Missing sealed receipt'}],jobs:[]};
+    const dualFixtureReport={counts:{initial_parents_in_live_time:4,deposit_groups:2,right_censored_deposit_groups:0,
+      native_unavailable_groups:0,prehistory_unqualified_groups:0,qualified_triggers:2,single_pixel_energies:1,additional_multi_strip_energies:1,triggers_without_energy:0},
+      sources:[{parents:2,zero_parents:1,deposit_groups:1},{parents:2,zero_parents:1,deposit_groups:1}],
+      exposure:{qualified_adc_live_time_ns:40000000,clock_live_time_ns:50000000},
+      spectra:{combined:{bin_edges_keV:[0,20,40],counts:[1,1],underflow:0,overflow:0}}};
+    const dualFixtureJob={name:'changed',status:'completed',sources:dualFixtureLibraries,activities_bq:[18500,74000],
+      output:'.local/gegi-dual-source/changed/report.json',seed:'18446744073709551615',result:dualFixtureReport};
+    const dualFixtureCalls=[];
+    api=async(path,data)=>{dualFixtureCalls.push([path,data]);if(path.endsWith('/options'))return dualFixtureOptions;
+      if(path.endsWith('/start')){const {result,...job}=dualFixtureJob;return {...job,status:'running'};}return dualFixtureJob;};`);
+  await get('gegi-dual-refresh').onclick();
+  assert.match(get('gegi-dual-source-a').children[1].textContent,/Cs-137.*\[-40, 0, 40\] mm/);
+  assert.match(get('gegi-dual-status').textContent,/incomplete.*Missing sealed receipt/);
+  assert.equal(get('gegi-dual-start').disabled,true);
+  for(const [id,value] of Object.entries({'source-a':'cs','source-b':'co','activity-a':'18500','activity-b':'74000',duration:'.05',seed:'18446744073709551615',name:'changed'}))get('gegi-dual-'+id).value=value;
+  get('gegi-dual-source-b').onchange();assert.equal(get('gegi-dual-start').disabled,false);
+  await get('gegi-dual-start').onclick();
+  assert.equal(get('gegi-dual-job').value,'changed');assert.equal(get('gegi-dual-start').disabled,true);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(dualFixtureCalls.at(-1))')),['/api/workflow/gegi-dual/start',{
+    source_ids:['cs','co'],activities_bq:[18500,74000],live_time_s:.05,seed:'18446744073709551615',name:'changed'}]);
+  await run("inspectDualJob('changed')");
+  const dualContent=descendants(get('gegi-dual-results'));
+  assert.ok(dualContent.some(node=>node['aria-label']?.includes('20 keV bin')));
+  assert.ok(dualContent.some(node=>node.textContent.includes('2 qualified triggers · 1 single-pixel energies · 1 additional multi-strip energies')));
+  assert.match(get('gegi-dual-receipt').textContent,/18446744073709551615/);
+  assert.match(get('gegi-dual-receipt').textContent,/report\.json/);
+  run(`showDualJob({...dualFixtureJob,result:{...dualFixtureReport,counts:{...dualFixtureReport.counts,qualified_triggers:null},spectra:null}})`);
+  assert.ok(descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('no ADC samples qualified')));
+  assert.ok(descendants(get('gegi-dual-results')).every(node=>node.tagName!=='svg'));
+  console.log('Dual-source Control import choices, recorded coordinates, exact seed, async dispatch, saved census, energy spectrum and unknown samples passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

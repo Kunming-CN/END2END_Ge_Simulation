@@ -59,6 +59,7 @@ class WorkflowController:
         self._launcher=launcher or self._spawn;self._checks={};self._active=None;self._entry_thread=None
         self._saved_verifier=Verifier(self.root)
         self._saved_gegi_control=None
+        self._gegi_dual_control=None
         self._gegi_readers={}
         path=safe_path(self.root,STATE+'/workflow-jobs.json')
         self._state_path=path
@@ -601,6 +602,13 @@ class WorkflowController:
     def gegi_saved_artifact(self,name,file):return self._gegi_saved().artifact(name,file)
 
     def gegi_saved_results(self,name):return self._gegi_saved().results(name)
+
+    def gegi_dual_source(self):
+        with self._lock:
+            if self._gegi_dual_control is None:
+                from gegi_dual_control import DualSourceControl
+                self._gegi_dual_control = DualSourceControl(self)
+            return self._gegi_dual_control
 
     def features(self,name,primary_id,group_id=None):
         """Verify a pre-exported derivative; no simulation, export or write on GET."""

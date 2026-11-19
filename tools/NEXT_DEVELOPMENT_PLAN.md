@@ -12,8 +12,8 @@ The student workflow runs from detector and source selection through transport, 
 
 ## Delivery order
 
-1. The controlled pulse-overlap study is complete. Release its stable student package and verify the deployed exhibit after the required PR review. The software preview and the local exhibit can already be used.
-2. The dual-source clock and multi-strip energy workflow are verified on the saved 0.25 s exposure. The next student milestone is a configurable simultaneous acquisition using two compatible saved source libraries. Expose each activity, the common duration and seed, and the original source positions. Replay the saved geometry associated with each library. Reuse the same clock, readout and event-energy estimator, with counts, spectra and a run receipt. Check the research preset before testing a changed activity. Keep experimental and saved scientific data outside the software download.
+1. Control and the command line now run a configurable simultaneous acquisition from two supplied GeGI source libraries. The [student guide](site_guide.html#gegi-dual-source) covers placement, activity, exposure and the saved count/spectrum receipt. A 0.25 s reference exposure and a 0.05 s changed-activity acquisition are recorded in the handoff.
+2. Release the matching stable student package and verify the deployed guide and digital exhibit after the required PR review. The software preview and local exhibit are available during review.
 3. Keep both photon orders available in analysis. The independent left/right source check found four fully deposited and reference-matched candidates. Energy admitted both orders in all four. A spatial imaging update requires a calibrated response up to the strip gaps and a way to retain unresolved directions, including cases where the energy approximation excludes the simulated first interaction.
 4. Use the next matched acquisition to test the instrument fast/slow feature scales and reproduce its selected pixel map. Then compare channel and pixel spectra with matching population, calibration and normalization. The 32-channel simulated spectrum export is ready.
 

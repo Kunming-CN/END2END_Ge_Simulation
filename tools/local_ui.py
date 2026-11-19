@@ -272,6 +272,15 @@ class Handler(BaseHTTPRequestHandler):
                 if parts.query or parts.fragment or self.server.workflow_controller is None:
                     raise ValueError('Invalid saved GeGI input inventory request')
                 return self.send_data(200,self.server.workflow_controller.gegi_saved_options())
+            if parts.path == '/api/workflow/gegi-dual/options':
+                if parts.query or parts.fragment or self.server.workflow_controller is None:
+                    raise ValueError('Invalid GeGI source library request')
+                return self.send_data(200, self.server.workflow_controller.gegi_dual_source().options())
+            if parts.path == '/api/workflow/gegi-dual/state':
+                query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
+                if parts.fragment or set(query) != {'name'} or len(query['name']) != 1 or self.server.workflow_controller is None:
+                    raise ValueError('Choose one saved dual-source acquisition')
+                return self.send_data(200, self.server.workflow_controller.gegi_dual_source().state(query['name'][0]))
             if parts.path in ('/api/workflow/gegi-saved/state','/api/workflow/gegi-saved/file','/api/workflow/gegi-saved/results'):
                 query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
                 keys={'name','file'} if parts.path.endswith('/file') else {'name'}
@@ -458,6 +467,11 @@ class Handler(BaseHTTPRequestHandler):
             if not 1 <= size <= 4096:
                 raise ValueError('Request size must be 1..4096 bytes')
             data = decode_json(self.rfile.read(size).decode('utf-8'))
+            if self.path == '/api/workflow/gegi-dual/start':
+                fields = {'source_ids', 'activities_bq', 'live_time_s', 'seed', 'name'}
+                if type(data) is not dict or set(data) != fields or self.server.workflow_controller is None:
+                    raise ValueError('Choose two source libraries, activities, duration, seed and a new name')
+                return self.send_data(200, self.server.workflow_controller.gegi_dual_source().start(**data))
             if self.path == '/api/workflow/gegi-saved/reprocess':
                 if type(data) is not dict or set(data)!={'campaign_id','calibration_id','name','resume'} or \
                         any(type(data[k]) is not str for k in ('campaign_id','calibration_id','name')) or \
