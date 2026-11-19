@@ -137,13 +137,51 @@ def _spectrum(values):
             'exact_zero': sum(value == 0 for value in values)}
 
 
-def _trigger_card(pulse):
+def _strip_neighbors(channels):
+    neighbors = {}
+    for family in ('X', 'Y'):
+        ordered = sorted((row for row in channels if row['family'] == family and not row['guard']),
+                         key=lambda row: row['strip_center_mm'])
+        strips = [row['id'] for row in ordered]
+        for i, cid in enumerate(strips):
+            low = strips[i-1] if i > 0 else None
+            high = strips[i+1] if i+1 < len(strips) else None
+            neighbors[cid] = (low, high)
+    return neighbors
+
+
+def _fast_neighbor(cid, channels):
+    if cid is None:
+        return None
+    channel = channels.get(cid, {})
+    flags = [flag for flag in channel.get('flags', []) if flag.startswith('fast_')]
+    return {'contact_id': cid, 'fast_keV_equiv': None if flags else channel.get('fast_signal_keV_equiv'),
+            'flags': flags}
+
+
+def _single_pixel_features(pulse, neighbors):
+    channels = {row['contact_id']: row for row in pulse['channels']}
+    axes = {}
+    for axis, cid in zip(('x', 'y'), pulse['contact_ids'], strict=True):
+        low, high = (_fast_neighbor(neighbor, channels) for neighbor in neighbors[cid])
+        ratio = None
+        if low is not None and high is not None:
+            fast_low, fast_high = low['fast_keV_equiv'], high['fast_keV_equiv']
+            if fast_low is not None and fast_high is not None:
+                ratio = (fast_low - fast_high) / pulse['slow_energy_keV']
+        axes[axis] = {'contact_id': cid, 'slow_energy_keV': channels[cid]['slow_energy_keV'],
+                      'low': low, 'high': high, 'fast_ratio': ratio}
+    return axes
+
+
+def _trigger_card(pulse, neighbors):
     measured = event_energy.estimate_event_energy(pulse)
     single = pulse['slow_energy_keV']
     multiple = measured['x_count'] > 1 or measured['y_count'] > 1
     added = measured['energy_keV'] if single is None and multiple else None
     return {'trigger_time_ns': pulse['trigger_time_ns'], 'rise_end_ns': pulse['rise_end_ns'],
             'single_pixel_energy_keV': single, 'additional_multi_strip_energy_keV': added,
+            'single_pixel_features': _single_pixel_features(pulse, neighbors) if measured['retains_legacy_single'] else None,
             'energy_keV': single if single is not None else added,
             'x_sum_keV': measured['x_sum_keV'], 'y_sum_keV': measured['y_sum_keV'],
             'x_collecting_strips': measured['x_contact_ids'], 'y_collecting_strips': measured['y_contact_ids'],
@@ -244,7 +282,8 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
     if present:
         adc = stream.ADCExposure(components, live_time_ns=live_ns, phase_ns=PHASE_NS, noise_seed=noise_seed)
         readout = stream.reconstruct_exposure(adc, block_samples=stream.DEFAULT_BLOCK_SAMPLES)
-        occurred = [_trigger_card(pulse) for pulse in readout['events']
+        neighbors = _strip_neighbors(libraries[0].channels)
+        occurred = [_trigger_card(pulse, neighbors) for pulse in readout['events']
                     if 0 <= pulse['trigger_time_ns'] < live_ns
                     and not any(a <= pulse['rise_end_ns'] and b > pulse['trigger_time_ns'] for a, b in mask)]
     qualified_set = occurred if present else []
@@ -291,7 +330,14 @@ def run(source_chunks, activities_bq, live_time_s, seed, output, *, noise_seed=N
                                    'and photon/site identities are unassigned for all measured triggers.',
                    'generalization_scope': 'Rates describe only qualified ADC time. Missing history prevents '
                                            'extending observed counts to a whole-exposure efficiency.',
-                   'event_energy': event_energy.DEFINITION},
+                   'event_energy': event_energy.DEFINITION,
+                   'single_pixel_features': {
+                       'fast_area_gate_ns': digital._PROFILE['fast_area_gate_ns'],
+                       'fast_unit': 'keV-equivalent',
+                       'fast_signal': 'Signed area relative to the recent quiet fast level.',
+                       'neighbor_order': 'Lower and higher strip-center coordinates on the same face.',
+                       'ratio_definition': '(low.fast_keV_equiv - high.fast_keV_equiv) / single_pixel_energy_keV',
+                   }},
         'exposure': {'clock_live_time_ns': live_ns, 'qualified_adc_live_time_ns': qualified_ns,
                      'masked_live_time_ns': masked_ns, 'total_live_adc_samples': total_samples,
                      'qualified_live_adc_samples': qualified_samples, 'excluded_intervals_ns': mask,

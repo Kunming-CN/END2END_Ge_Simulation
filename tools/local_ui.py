@@ -281,6 +281,14 @@ class Handler(BaseHTTPRequestHandler):
                 if parts.fragment or set(query) != {'name'} or len(query['name']) != 1 or self.server.workflow_controller is None:
                     raise ValueError('Choose one saved dual-source acquisition')
                 return self.send_data(200, self.server.workflow_controller.gegi_dual_source().state(query['name'][0]))
+            if parts.path == '/api/workflow/gegi-dual/single-pixel':
+                query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
+                if (parts.fragment or set(query) != {'name', 'report_sha256', 'ordinal'}
+                        or any(len(values) != 1 for values in query.values()) or self.server.workflow_controller is None):
+                    raise ValueError('Choose one single-pixel trigger from the opened acquisition')
+                control = self.server.workflow_controller.gegi_dual_source()
+                return self.send_data(200, control.single_pixel(query['name'][0], query['report_sha256'][0],
+                                                               query['ordinal'][0]))
             if parts.path in ('/api/workflow/gegi-saved/state','/api/workflow/gegi-saved/file','/api/workflow/gegi-saved/results'):
                 query=parse_qs(parts.query,strict_parsing=True,keep_blank_values=True)
                 keys={'name','file'} if parts.path.endswith('/file') else {'name'}

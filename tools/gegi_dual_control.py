@@ -2,12 +2,13 @@
 
 import copy
 from hashlib import sha256
+from itertools import islice
 import math
 import re
 from sys import float_info
 import threading
 
-from gegi_pixel_map import project_pixel_map, read_pixel_map, unavailable
+from gegi_pixel_map import X_IDS, Y_IDS, project_pixel_map, unavailable
 import scenario_workflow as W
 from local_ui_jobs import ControlError, decode_json, safe_path
 
@@ -119,12 +120,89 @@ def compact_report(report, job):
     return {'counts': counts, 'exposure': exposure, 'sources': sources, 'spectra': spectra}
 
 
+def load_report(root, name, expected_sha256=None):
+    """Read once and verify the same bytes used for every displayed derivative."""
+    try:
+        body = safe_path(root, report_ref(name)).read_bytes()
+    except ControlError:
+        raise ControlError('The saved report could not be verified.', 'report_unverified') from None
+    except OSError:
+        raise ControlError('The saved report is missing.', 'report_missing') from None
+    digest = sha256(body).hexdigest()
+    if expected_sha256 is not None and digest != expected_sha256:
+        raise ControlError('The saved report differs from its completion receipt.', 'report_changed')
+    try:
+        report = decode_json(body.decode('utf-8-sig'))
+        if type(report) is not dict:
+            raise ValueError('Expected a JSON object')
+    except ValueError:
+        raise ControlError('The saved acquisition report is invalid.', 'invalid_report') from None
+    return report, digest
+
+
+def trigger_face(face, collecting, contact_ids):
+    contact, slow, ratio = (face[key] for key in ('contact_id', 'slow_energy_keV', 'fast_ratio'))
+    W.require(collecting == [contact] and type(contact) is int and contact in contact_ids
+              and number(slow) and slow > 0 and (ratio is None or number(ratio)),
+              'Invalid collecting-strip measurement.')
+    result = dict(contact_id=contact, slow_energy_keV=slow, fast_ratio=ratio)
+    for side, adjacent in (('low', contact - 1), ('high', contact + 1)):
+        neighbor = face[side]
+        if adjacent not in contact_ids:
+            W.require(neighbor is None, 'A strip edge has no physical neighbor on this side.')
+            result[side] = None
+            continue
+        value, flags = neighbor['fast_keV_equiv'], neighbor['flags']
+        W.require(type(neighbor['contact_id']) is int and neighbor['contact_id'] == adjacent
+                  and (value is None or number(value)) and type(flags) is list
+                  and all(isinstance(flag, str) for flag in flags),
+                  'Invalid neighboring-strip measurement.')
+        result[side] = dict(contact_id=adjacent, fast_keV_equiv=value, flags=flags)
+    return result
+
+
+def single_pixel_record(report, ordinal):
+    """Select one hit in ledger order, leaving all other rows in the report."""
+    rows = (row for row in report['triggers'] if row['single_pixel_energy_keV'] is not None)
+    row = next(islice(rows, ordinal - 1, ordinal), None)
+    W.require(row is not None, 'The selected single-pixel trigger is missing.')
+    if 'single_pixel_features' not in row:
+        return None
+    features = row['single_pixel_features']
+    time, energy = row['trigger_time_ns'], row['single_pixel_energy_keV']
+    W.require(number(time) and time >= 0 and number(energy) and energy > 0
+              and row['additional_multi_strip_energy_keV'] is None and not row['guard_contact_ids'],
+              'Invalid single-pixel trigger measurement.')
+    return dict(ordinal=ordinal, trigger_time_ns=time, single_pixel_energy_keV=energy,
+                x=trigger_face(features['x'], row['x_collecting_strips'], X_IDS),
+                y=trigger_face(features['y'], row['y_collecting_strips'], Y_IDS))
+
+
+def report_views(report=None, *, reason=None):
+    pixels = unavailable(reason) if reason else project_pixel_map(report)
+    features = dict(status='unavailable', reason=pixels['reason'])
+    if pixels['status'] == 'available':
+        try:
+            trigger = single_pixel_record(report, 1)
+            if trigger is None and not report['design'].get('single_pixel_features'):
+                features['reason'] = 'not_captured'
+            else:
+                gate = report['design']['single_pixel_features']['fast_area_gate_ns']
+                W.require(trigger is not None and type(gate) is list and len(gate) == 2
+                          and all(number(bound) for bound in gate) and gate[0] < gate[1],
+                          'Invalid fast-area gate.')
+                features = dict(status='available', count=pixels['totals']['mapped_single_pixel_triggers'],
+                                fast_area_gate_ns=gate, trigger=trigger)
+        except (ControlError, KeyError, TypeError):
+            features['reason'] = 'invalid_features'
+    return dict(pixel_map=pixels, single_pixel_features=features)
+
+
 def archived_report(root, name):
     """Read a stand-alone v1 report through the same view contract as a completed job."""
     reference = report_ref(name)
     try:
-        body = safe_path(root, reference).read_bytes()
-        report = decode_json(body.decode('utf-8-sig'))
+        report, digest = load_report(root, name)
         design, sources = report['design'], report['sources']
         W.require(type(design['clock_seed']) is int and 0 <= design['clock_seed'] < 2**64
                   and number(design['live_time_s']) and design['live_time_s'] > 0,
@@ -140,10 +218,10 @@ def archived_report(root, name):
             settings.append({'isotope': isotope, 'source_position_mm': location,
                              'chunk_sha256': original['chunk_sha256']})
         job = dict(name=name, status='completed', archived_report=True, output=reference,
-                   report_sha256=sha256(body).hexdigest(), seed=str(design['clock_seed']),
+                   report_sha256=digest, seed=str(design['clock_seed']),
                    live_time_s=design['live_time_s'], activities_bq=activities, sources=settings)
         job['result'] = compact_report(report, job)
-        job['result']['pixel_map'] = project_pixel_map(report)
+        job['result'].update(report_views(report))
         return job
     except (AttributeError, ControlError, OSError, ValueError, TypeError, KeyError):
         raise ControlError('The saved acquisition report is unavailable or invalid.', 'invalid_gegi_dual_report') from None
@@ -188,10 +266,8 @@ class DualSourceControl:
         W.write(self.state_path, {'kind': KIND, 'jobs': list(self.jobs.values())})
 
     def _result(self, job):
-        output = safe_path(self.root, report_ref(job['name']))
-        body = output.read_bytes()
-        report = compact_report(decode_json(body.decode('utf-8-sig')), job)
-        return dict(status='completed', result=report, report_sha256=sha256(body).hexdigest())
+        report, digest = load_report(self.root, job['name'])
+        return dict(status='completed', result=compact_report(report, job), report_sha256=digest)
 
     def state(self, name):
         W.run_path(name, self.root)
@@ -201,18 +277,40 @@ class DualSourceControl:
             return archived_report(self.root, name)
         if job['status'] == 'completed':
             # Older completed jobs already retain their verified compact spectra.
-            # Derive the map separately, without rewriting the report or job state.
+            # Project the views from the report without rewriting the job state.
             expected = job.get('report_sha256')
-            pixel_map = unavailable('report_unverified')
+            views = None
             if type(expected) is str and re.fullmatch(r'[0-9a-f]{64}', expected):
                 try:
-                    output = safe_path(self.root, report_ref(name))
-                except ControlError:
-                    pass
+                    report, _ = load_report(self.root, name, expected)
+                except ControlError as error:
+                    views = report_views(reason=error.code)
                 else:
-                    pixel_map = read_pixel_map(output, expected_sha256=expected)
-            job['result']['pixel_map'] = pixel_map
+                    views = report_views(report)
+            job['result'].update(views if views is not None else report_views(reason='report_unverified'))
         return job
+
+    def single_pixel(self, name, expected_sha256, ordinal):
+        W.run_path(name, self.root)
+        W.require(re.fullmatch(r'[0-9a-f]{64}', expected_sha256)
+                  and re.fullmatch(r'[1-9][0-9]{0,15}', ordinal),
+                  'Choose one single-pixel trigger from the opened acquisition.')
+        ordinal = int(ordinal)
+        with self.workflow._lock:
+            job = self.jobs.get(name)
+            W.require(job is None or (job['status'] == 'completed' and job.get('report_sha256') == expected_sha256),
+                      'The selected acquisition differs from the completed job. Reopen it.')
+        report, digest = load_report(self.root, name, expected_sha256)
+        try:
+            count = report['counts']['single_pixel_energies']
+            W.require(report['kind'] == REPORT_KIND and report['status'] == 'completed'
+                      and type(count) is int and 1 <= ordinal <= count,
+                      'Choose a single-pixel trigger number in the saved acquisition.')
+            trigger = single_pixel_record(report, ordinal)
+        except (KeyError, TypeError):
+            raise ControlError('The saved trigger measurement is invalid.', 'invalid_features') from None
+        W.require(trigger is not None, 'This report predates capture of single-pixel fast readings.')
+        return dict(name=name, report_sha256=digest, trigger=trigger)
 
     def start(self, source_ids, activities_bq, live_time_s, seed, name):
         W.run_path(name, self.root)

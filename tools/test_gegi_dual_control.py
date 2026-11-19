@@ -8,6 +8,7 @@ import threading
 import time
 from types import SimpleNamespace
 import unittest
+from urllib.parse import urlencode
 
 import gegi_dual_control as G
 from gegi_pixel_map import project_pixel_map, read_pixel_map
@@ -37,6 +38,28 @@ def fixture_report(sources, activities, duration, seed):
                 spectra=dict(single_pixel=spectrum(1), additional_multi_strip=spectrum(1), combined=spectrum(2)),
                 triggers=[{**trigger(20, single=15, x=(2,), y=(33,)), 'large_private_array': True},
                           trigger(60, multi=16, x=(2, 3), y=(33,))])
+
+
+def add_measured_features(report):
+    def neighbor(contact, fast, flags=()):
+        return dict(contact_id=contact, fast_keV_equiv=fast, flags=list(flags))
+
+    report['design']['single_pixel_features'] = dict(fast_area_gate_ns=[0, 240])
+    first, multi = report['triggers']
+    x = dict(contact_id=2, slow_energy_keV=14.9, low=neighbor(1, -1.5), high=neighbor(3, 0), fast_ratio=-0.1)
+    y = dict(contact_id=33, slow_energy_keV=15.1, low=neighbor(32, None, ('fast_pileup',)), high=None,
+             fast_ratio=None)
+    first['single_pixel_features'] = dict(x={**x, 'private_row': 'private-measurement'}, y=y)
+    multi['single_pixel_features'] = None
+    report['triggers'].append({**trigger(80, single=18, x=(2,), y=(33,)),
+                               'single_pixel_features': dict(x={**x, 'slow_energy_keV': 18.2,
+                                                                'high': neighbor(3, 2.1), 'fast_ratio': -0.2},
+                                                             y={**y, 'slow_energy_keV': 17.8})})
+    report['counts'].update(qualified_triggers=3, single_pixel_energies=2, qualified_energies=3)
+    for name in ('single_pixel', 'combined'):
+        spectrum = report['spectra'][name]
+        spectrum['counts'][0] += 1
+        spectrum['entries'] += 1
 
 
 class DualControlTests(unittest.TestCase):
@@ -156,6 +179,7 @@ class DualControlTests(unittest.TestCase):
             self.assertEqual(result['result']['spectra'], job['result']['spectra'])
             pixels = result['result']['pixel_map']
             self.assertEqual((pixels['status'], pixels['reason'], pixels['counts']), ('unavailable', reason, None))
+            self.assertEqual(result['result']['single_pixel_features'], dict(status='unavailable', reason=reason))
             if reason == 'report_changed':
                 path.unlink()
         self.assertEqual((self.root/G.STATE).read_bytes(), old_state)
@@ -175,11 +199,67 @@ class DualControlTests(unittest.TestCase):
         self.assertEqual(job['sources'][0]['source_position_mm'], [-40, 0, 40])
         self.assertEqual(job['result']['spectra']['combined']['entries'], 2)
         self.assertEqual(job['result']['pixel_map']['counts'][15][1], 1)
+        self.assertEqual(job['result']['single_pixel_features'], dict(status='unavailable', reason='not_captured'))
         self.assertNotIn('private-science-path', json.dumps(job))
         self.assertFalse((self.root/G.STATE).exists())
         self.assertEqual(archive.read_bytes(), original)
         self.assertEqual(read_pixel_map(archive), job['result']['pixel_map'])
         self.assertFalse(self.calls)
+
+    def test_protected_feature_navigation_reads_only_selected_projection(self):
+        _, options = self.request('options')
+        payload = fixture_report(options['libraries'], [18, 74], .05, 18)
+        add_measured_features(payload)
+        archive = self.root/G.report_ref('featured')
+        W.write(archive, payload)
+        original = archive.read_bytes()
+        status, job = self.request('state?name=featured')
+        self.assertEqual(status, 200)
+        result = job['result']
+        self.assertEqual(result['pixel_map']['counts'][15][1], 2)
+        self.assertEqual(result['spectra']['combined']['entries'], 3)
+        features = result['single_pixel_features']
+        self.assertEqual((features['status'], features['count'], features['fast_area_gate_ns']), ('available', 2, [0, 240]))
+        first = features['trigger']
+        self.assertEqual((first['ordinal'], first['trigger_time_ns'], first['single_pixel_energy_keV']), (1, 20, 15))
+        self.assertEqual(first['x']['low'], dict(contact_id=1, fast_keV_equiv=-1.5, flags=[]))
+        self.assertEqual(first['x']['high']['fast_keV_equiv'], 0)
+        self.assertEqual(first['y']['low'], dict(contact_id=32, fast_keV_equiv=None, flags=['fast_pileup']))
+        self.assertIsNone(first['y']['high'])
+        self.assertIsNone(first['y']['fast_ratio'])
+        self.assertNotIn('private-measurement', json.dumps(job))
+        query = dict(name='featured', report_sha256=job['report_sha256'], ordinal=2)
+        route = 'single-pixel?' + urlencode(query)
+        self.assertEqual(self.request(route, headers={'X-Control-Token': 'wrong'})[0], 403)
+        status, selected = self.request(route)
+        self.assertEqual(status, 200)
+        self.assertEqual(set(selected), {'name', 'report_sha256', 'trigger'})
+        self.assertEqual(selected['report_sha256'], job['report_sha256'])
+        second = selected['trigger']
+        self.assertEqual((second['ordinal'], second['trigger_time_ns'], second['x']['fast_ratio']), (2, 80, -0.2))
+        for bad in (dict(ordinal=0), dict(ordinal=3), dict(name='../sealed'),
+                    dict(report_sha256='a'*64), dict(file='report.json')):
+            self.assertEqual(self.request('single-pixel?' + urlencode({**query, **bad}))[0], 400)
+        self.assertEqual(archive.read_bytes(), original)
+        self.assertFalse((self.root/G.STATE).exists())
+        self.assertFalse(self.calls)
+        with archive.open('ab') as out:
+            out.write(b'\n')
+        status, error = self.request(route)
+        self.assertEqual(status, 400)
+        self.assertIn('differs from its completion receipt', error['error'])
+
+    def test_malformed_fast_face_does_not_hide_existing_spectrum_and_map(self):
+        _, options = self.request('options')
+        payload = fixture_report(options['libraries'], [18, 74], .05, 18)
+        add_measured_features(payload)
+        payload['triggers'][0]['single_pixel_features']['y']['high'] = dict(contact_id=34, fast_keV_equiv=0, flags=[])
+        W.write(self.root/G.report_ref('bad-feature'), payload)
+        status, job = self.request('state?name=bad-feature')
+        self.assertEqual(status, 200)
+        self.assertEqual(job['result']['pixel_map']['status'], 'available')
+        self.assertEqual(job['result']['spectra']['combined']['entries'], 3)
+        self.assertEqual(job['result']['single_pixel_features'], dict(status='unavailable', reason='invalid_features'))
 
 
 class PixelMapTests(unittest.TestCase):

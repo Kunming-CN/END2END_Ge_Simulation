@@ -1470,7 +1470,8 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
     const filledMap={status:'available',reason:null,axes:mapAxes,counts:pixels,
       totals:{qualified_triggers:7,mapped_single_pixel_triggers:4,multi_strip_energy_triggers:2,triggers_without_energy:1,occupied_pixels:2}};
     const archiveJob={...dualFixtureJob,name:'archive',archived_report:true,output:'.local/gegi-dual-source/archive/report.json',
-      result:{...dualFixtureReport,pixel_map:filledMap,counts:{...dualFixtureReport.counts,qualified_triggers:7,single_pixel_energies:4,
+      result:{...dualFixtureReport,pixel_map:filledMap,single_pixel_features:{status:'unavailable',reason:'not_captured'},
+        counts:{...dualFixtureReport.counts,qualified_triggers:7,single_pixel_energies:4,
         additional_multi_strip_energies:2,triggers_without_energy:1},
         spectra:{combined:{bin_edges_keV:[0,20,40],counts:[5,1],underflow:0,overflow:0}}}};
     api=async path=>{dualFixtureCalls.push([path]);return path.endsWith('/options')?
@@ -1496,6 +1497,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.equal(pixelBody.children[0].children[16].textContent,'0');
   assert.match(pixelFigure.children.at(-1).textContent,/X01 to X16 from left to right.*Y16 to Y01 from top to bottom/);
   assert.match(get('gegi-dual-receipt').textContent,/archived_report/);
+  assert.ok(descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('predates capture of the fast neighbor readings')));
   run(`const emptyMap={...filledMap,status:'empty',counts:blankPixels(),
     totals:{qualified_triggers:2,mapped_single_pixel_triggers:0,multi_strip_energy_triggers:1,triggers_without_energy:1,occupied_pixels:0}};
     showDualJob({...dualFixtureJob,result:{...dualFixtureReport,pixel_map:emptyMap}})`);
@@ -1507,5 +1509,47 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.ok(descendants(get('gegi-dual-results')).some(node=>node.tagName==='svg'));
   assert.ok(descendants(get('gegi-dual-results')).every(node=>node.tagName!=='table'));
   assert.match(fs.readFileSync(__dirname+'/local_workflow.html','utf8'),/place <code>report\.json<\/code> in <code>\.local\/gegi-dual-source\/NAME\//);
-  console.log('Dual-source Control import choices, recorded coordinates, exact seed, async dispatch, saved census, energy spectrum and unknown samples passed.');
+  run(`const xFirst={contact_id:2,slow_energy_keV:14.9,low:{contact_id:1,fast_keV_equiv:-1.5,flags:[]},
+      high:{contact_id:3,fast_keV_equiv:0,flags:[]},fast_ratio:-.1};
+    const yFirst={contact_id:33,slow_energy_keV:15.1,low:{contact_id:32,fast_keV_equiv:null,flags:['fast_pileup']},
+      high:null,fast_ratio:null};
+    const firstFeature={ordinal:1,trigger_time_ns:20,single_pixel_energy_keV:15,x:xFirst,y:yFirst};
+    const nextFeature={ordinal:2,trigger_time_ns:80,single_pixel_energy_keV:18,x:{...xFirst,slow_energy_keV:18.2,
+      high:{...xFirst.high,fast_keV_equiv:2.1},fast_ratio:-.2},y:{...yFirst,slow_energy_keV:17.8}};
+    const dualFeatureJob={...archiveJob,name:'features',report_sha256:'9'.repeat(64),result:{...archiveJob.result,
+      single_pixel_features:{status:'available',count:4,fast_area_gate_ns:[0,240],trigger:firstFeature}}};
+    let deferFeature=false,finishFeature;
+    api=async path=>{dualFixtureCalls.push([path]);if(path.includes('/single-pixel?')){
+      const reply={name:dualFeatureJob.name,report_sha256:dualFeatureJob.report_sha256,trigger:nextFeature};
+      return deferFeature?new Promise(resolve=>finishFeature=()=>resolve(reply)):reply;
+    }return path.endsWith('name=features')?dualFeatureJob:archiveJob;};`);
+  get('gegi-dual-job').value='features';await get('gegi-dual-job').onchange();
+  const featurePanel=get('gegi-dual-results').children.find(node=>node.tagName==='details');
+  assert.match(featurePanel.children[0].textContent,/Inspect single-pixel trigger measurements/);
+  featurePanel.open=true;
+  const selectedText=()=>descendants(featurePanel).map(element=>element.textContent).join('\n');
+  assert.match(selectedText(),/0 to 240 ns.*dimensionless/s);
+  assert.match(selectedText(),/20 ns after recording start.*Slow energy 15 keV/);
+  assert.match(selectedText(),/X02 \(contact 2\).*14\.9 keV.*X01 \(contact 1\) · -1\.5 keV-equivalent.*X03 \(contact 3\) · 0 keV-equivalent/s);
+  assert.match(selectedText(),/Y16 \(contact 33\).*15\.1 keV.*Y15 \(contact 32\) · Unavailable · Pileup.*Higher neighbor · Detector edge.*Fast ratio · Unavailable/s);
+  const previous=descendants(featurePanel).find(node=>node.textContent==='Previous trigger');
+  const next=descendants(featurePanel).find(node=>node.textContent==='Next trigger');
+  assert.ok(previous.disabled);
+  await next.click();
+  assert.equal(run('dualFixtureCalls.at(-1)[0]'),'/api/workflow/gegi-dual/single-pixel?name=features&report_sha256='+'9'.repeat(64)+'&ordinal=2');
+  assert.match(selectedText(),/80 ns after recording start.*Slow energy 18 keV.*\+2\.1 keV-equivalent.*Fast ratio · -0\.2/s);
+  const input=descendants(featurePanel).find(node=>node.tagName==='input');
+  input.value='9';await input.onchange();
+  assert.match(selectedText(),/Enter a single-pixel trigger number from 1 through 4/);
+  const callCount=run('dualFixtureCalls.length');
+  await previous.click();
+  assert.equal(run('dualFixtureCalls.length'),callCount);
+  assert.match(selectedText(),/20 ns after recording start/);
+  run('deferFeature=true');
+  const staleRead=next.click();
+  get('gegi-dual-job').value='archive';await get('gegi-dual-job').onchange();
+  run('finishFeature()');await staleRead;
+  assert.ok(descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('predates capture of the fast neighbor readings')));
+  assert.ok(!descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('80 ns after recording start')));
+  console.log('Dual-source Control import, exact settings, saved spectra and pixel counts, and bounded signed fast/slow inspection passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

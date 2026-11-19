@@ -239,15 +239,19 @@ function dualSpectrum(histogram,denominator){
     underflow:histogram.underflow, overflow:histogram.overflow, notSelected:denominator-total,
     bins:new Map(counts.map((count,index)=>[index,count]))});
 }
+function dualStripLabel(face,id){return face+String(face==='X'?id:id-17).padStart(2,'0');}
+function dualReportReason(reason){
+  const reasons={no_qualified_adc_samples:'No ADC samples qualified.',report_missing:'The saved report is missing.',
+    report_changed:'The saved report differs from its completion receipt.',
+    report_unverified:'The saved report could not be verified.',invalid_report:'The saved report has invalid trigger records.'};
+  return reasons[reason]||'The saved report could not be read.';
+}
 function dualPixelMap(map,qualifiedTriggers){
   const figure=node('figure',undefined,'plot dual-pixel-map');
   figure.append(node('h3','Detector pixel counts'));
   if(!map||!['available','empty'].includes(map.status)){
-    const reasons={no_qualified_adc_samples:'No ADC samples qualified.',report_missing:'The saved report is missing.',
-      report_changed:'The saved report differs from its completion receipt.',
-      report_unverified:'The saved report could not be verified.',invalid_report:'The saved report has invalid pixel records.'};
     const reason=map?.reason??(qualifiedTriggers===null?'no_qualified_adc_samples':'report_unverified');
-    figure.append(node('p','Pixel counts unavailable. '+(reasons[reason]||'The saved report could not be read.'),'muted'));
+    figure.append(node('p','Pixel counts unavailable. '+dualReportReason(reason),'muted'));
     return figure;
   }
   const counts=map.counts,totals=map.totals;
@@ -260,8 +264,7 @@ function dualPixelMap(map,qualifiedTriggers){
   scroll.setAttribute('aria-label','Scrollable detector pixel grid');
   const table=node('table',undefined,'dual-pixel-table'),header=node('thead'),top=node('tr'),body=node('tbody');
   table.setAttribute('aria-label','Selected trigger counts by detector strip intersection');
-  const strip=(letter,index)=>letter+String(index).padStart(2,'0');
-  const xLabels=map.axes.x_contact_ids.map(id=>strip('X',id)),yLabels=map.axes.y_contact_ids.map(id=>strip('Y',id-17));
+  const xLabels=map.axes.x_contact_ids.map(id=>dualStripLabel('X',id)),yLabels=map.axes.y_contact_ids.map(id=>dualStripLabel('Y',id));
   top.append(node('th','Y / X'));
   for(const label of xLabels){
     const heading=node('th',label);heading.setAttribute('scope','col');top.append(heading);
@@ -283,6 +286,84 @@ function dualPixelMap(map,qualifiedTriggers){
   figure.append(scroll,node('figcaption','X01 to X16 from left to right. Y16 to Y01 from top to bottom. '+
     (mapped?'Darker fill marks higher counts.':'Every cell has zero selected triggers in this qualified recording.'),'muted'));
   return figure;
+}
+function dualFeatureValue(value,unit='',signed=false){
+  if(value===null)return 'Unavailable';
+  const shown=Number(value.toPrecision(7));
+  return (signed&&shown>0?'+':'')+shown+(unit?' '+unit:'');
+}
+function dualFeatureFace(axis,face){
+  const contact=id=>dualStripLabel(axis,id)+' (contact '+id+')';
+  const card=node('div',undefined,'plot');
+  card.append(node('h3',contact(face.contact_id)),node('p','Collecting strip, slow · '+dualFeatureValue(face.slow_energy_keV,'keV')));
+  for(const [label,neighbor] of [['Lower neighbor',face.low],['Higher neighbor',face.high]]){
+    if(neighbor===null){card.append(node('p',label+' · Detector edge'));continue;}
+    const flagLabels={fast_adc_saturation:'ADC saturation',fast_pileup:'Pileup',fast_window_truncated:'Fast window truncated'};
+    const flags=neighbor.flags.map(flag=>flagLabels[flag]||flag.replaceAll('_',' '));
+    card.append(node('p',label+' '+contact(neighbor.contact_id)+' · '+dualFeatureValue(neighbor.fast_keV_equiv,'keV-equivalent',true)
+      +(flags.length?' · '+flags.join(', '):'')));
+  }
+  card.append(node('p','Fast ratio · '+dualFeatureValue(face.fast_ratio,'',true)));
+  return card;
+}
+function dualSinglePixelPanel(job){
+  const features=job.result.single_pixel_features;
+  if(features?.status!=='available'){
+    const reasons={not_captured:'This saved acquisition predates capture of the fast neighbor readings.',
+      no_qualified_single_pixel_energies:'This acquisition has no qualified single-pixel energies.',
+      invalid_features:'The saved report has invalid fast and slow measurements.'};
+    const reason=features?.reason??'report_unverified';
+    return node('p','Single-pixel trigger measurements unavailable. '+(reasons[reason]||dualReportReason(reason)),'muted');
+  }
+  const panel=node('details'), first=features.trigger, count=features.count;
+  panel.append(node('summary','Inspect single-pixel trigger measurements'));
+  const [gateStart,gateEnd]=features.fast_area_gate_ns;
+  panel.append(node('p','Fast readings are signed integrals from '+gateStart+' to '+gateEnd+' ns relative to the trigger, in keV-equivalent. The dimensionless ratio divides (lower − higher) by the trigger’s slow energy.','muted'));
+  const label=node('label','Single-pixel trigger number (1–'+count+')');
+  const input=node('input');
+  input.type='number';input.min='1';input.max=String(count);input.step='1';input.value=String(first.ordinal);
+  label.append(input);
+  const navigation=node('div',undefined,'actions');
+  const previous=node('button','Previous trigger'),next=node('button','Next trigger');
+  navigation.append(previous,next);
+  const status=node('p',undefined,'muted'), readings=node('div');
+  status.setAttribute('role','status');
+  panel.append(label,navigation,status,readings);
+  let ordinal=first.ordinal,generation=0;
+  function render(trigger){
+    const faces=node('div',undefined,'dual-feature-faces');
+    faces.append(dualFeatureFace('X',trigger.x),dualFeatureFace('Y',trigger.y));
+    status.textContent='Trigger '+trigger.ordinal+' of '+count+' · '+trigger.trigger_time_ns+' ns after recording start · Slow energy '
+      +dualFeatureValue(trigger.single_pixel_energy_keV,'keV');
+    readings.replaceChildren(faces);
+  }
+  function navigationState(){previous.disabled=ordinal===1;next.disabled=ordinal===count;}
+  async function select(wanted){
+    if(!Number.isSafeInteger(wanted)||wanted<1||wanted>count){
+      input.value=String(ordinal);
+      status.textContent='Enter a single-pixel trigger number from 1 through '+count+'.';
+      return;
+    }
+    ordinal=wanted;input.value=String(wanted);navigationState();
+    const ticket=++generation;
+    if(wanted===first.ordinal){render(first);return;}
+    readings.replaceChildren();status.textContent='Reading trigger '+wanted+'…';
+    try{
+      const query=new URLSearchParams({name:job.name,report_sha256:job.report_sha256,ordinal:wanted});
+      const reply=await api('/api/workflow/gegi-dual/single-pixel?'+query);
+      if(ticket!==generation||!panel.isConnected)return;
+      if(reply.name!==job.name||reply.report_sha256!==job.report_sha256||reply.trigger?.ordinal!==wanted){
+        throw Error('The selected acquisition or trigger changed. Reopen the acquisition.');
+      }
+      render(reply.trigger);
+    }catch(e){if(ticket===generation&&panel.isConnected)status.textContent=e.message;}
+  }
+  previous.onclick=()=>select(ordinal-1);
+  next.onclick=()=>select(ordinal+1);
+  input.onchange=()=>select(Number(input.value));
+  input.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();return select(Number(input.value));}};
+  render(first);navigationState();
+  return panel;
 }
 function showDualJob(job){
   dualJob=job;
@@ -308,7 +389,7 @@ function showDualJob(job){
       content.append(node('p',c.qualified_triggers+' qualified triggers · '+c.single_pixel_energies+' single-pixel energies · '+c.additional_multi_strip_energies+' additional multi-strip energies · '+c.triggers_without_energy+' without an energy.'));
       if(result.spectra?.combined)content.append(dualSpectrum(result.spectra.combined,c.qualified_triggers));
     }
-    content.append(dualPixelMap(result.pixel_map,c.qualified_triggers));
+    content.append(dualSinglePixelPanel(job),dualPixelMap(result.pixel_map,c.qualified_triggers));
   }
   dualControls();
 }

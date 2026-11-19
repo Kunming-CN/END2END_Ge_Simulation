@@ -1,5 +1,11 @@
 # GeSignal handoff
 
+## Continuous single-pixel fast and slow measurements
+
+In Control, open the saved acquisition `cs18p5k-co74k-50ms-fast` and expand **Inspect single-pixel trigger measurements**. The replay used the same Cs-137 and Co-60 charge libraries, activities, clocks and noise as the existing 50 ms acquisition. All 259 original trigger times and energies, all three spectra, all nine excluded intervals, all 256 hit-map cells and the ADC hash matched. Replaying the electronics took 15.8 s locally.
+
+Each of the 113 qualified single-pixel triggers now carries both collectors’ slow energies and the signed readings on their available neighbors. In 92 triggers both faces supplied a ratio. Twelve X edges and nine Y edges had only one physical neighbor, leaving 205 available face ratios. All 205 were checked against the channel measurements. At 1.898080 ms (single-pixel trigger 3), X15 collected 457.400 keV, X14 and X16 measured +23.735 and +14.297 keV-equivalent. Their difference divided by the 457.406 keV trigger energy gave +0.020634. The Y ratio was −0.000877. The convention here is lower minus higher coordinate, normalized by trigger energy. The existing strip-position calibration uses higher minus lower and the collector’s slow energy. The new ratio is a measured observable in the nominal simulation. The report SHA-256 is `8d29dc1d9fd022e22bf7870c2da92ee50568ea6981a958203718da540d0ab2b3`.
+
 ## Dual-source detector hit map
 
 Control displays the measured 16 × 16 detector hit map alongside the dual-source slow-energy spectrum. A trigger enters one cell when it has a qualified single-pixel energy and exactly one collecting strip on each face. The displayed X axis runs from X01 at left to X16 at right, with Y16 at the top. The [guide](tools/site_guide.html#gegi-dual-source) covers opening a saved report. The [export command](tools/gegi_pixel_map.py) reads the same receipt and writes counts in Y01-to-Y16 row order.
