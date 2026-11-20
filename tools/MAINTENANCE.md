@@ -4,6 +4,16 @@ The website and the local workflow have different jobs. The public site is a
 saved-results browser; `Control.cmd` is the primary local application. The older
 generic `Run.cmd` calculation route remains distinct.
 
+The fresh mixed-source candidate route is owned by `gegi_candidate_control.py`,
+`gegi_mixed_acquisition.py` and `transport/gegi_mixed_source.py`. The bounded
+startup uses the existing native worker and shared readout, then
+`gegi_candidate_run.py` / `gegi_candidate_storage.py` retain conservative
+post-readout candidates. `gegi_storage_estimate.py` reads the small measured
+`gegi_storage_reference.json`; it never launches physics. Keep the reference's
+historical-library scope and unmeasured production scratch explicit. The student
+manifest includes these runtime sources and their dependencies, not saved runs.
+Candidate storage is not yet a long-acquisition transport/checkpoint engine.
+
 The existing saved-GeGI reprocessing panel also accepts completed standalone
 GeGI runs owned by Control. `gegi_saved_control.py` delegates those inputs to
 `gegi_standalone_reconstruction.postprocess`, writes a separate derivative, and

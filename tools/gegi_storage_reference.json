@@ -1,0 +1,197 @@
+{
+  "assumptions": [
+    "Same geometry, activities, readout, conservative selection and compression/record schema as the reference.",
+    "Ambiguous and multistrip candidates remain retained; candidate is not a uniquely reconstructed photon.",
+    "Event-dependent trigger pages, shared input-group ledger and exclusion-list bytes scale per original parent; fixed metadata/configuration is counted once.",
+    "The forecast covers the candidate/readout core. Additional fresh nonzero/delayed-daughter ledgers, source provenance, failures and retirement records are not measured by this historical reference.",
+    "SQLite page growth is estimated from measured allocation; the qualified-time-adjusted scenario divides event cost by the reference qualified fraction.",
+    "These are planning scenarios, not a confidence interval or guaranteed storage upper bound."
+  ],
+  "bytes": {
+    "all_compressed_trigger_blobs": 856649,
+    "archive": 1007616,
+    "by_decision": {
+      "candidate": {
+        "compressed_adc_bytes": 348890,
+        "compressed_record_bytes": 410392,
+        "count": 144
+      },
+      "rejected": {
+        "compressed_adc_bytes": 0,
+        "compressed_record_bytes": 97367,
+        "count": 402
+      }
+    },
+    "fixed_archive_pages": 16384,
+    "freelist_pages": 0,
+    "input_group_ledger": 31951,
+    "input_group_ledger_fixed": 37,
+    "page_count": 246,
+    "page_size": 4096,
+    "page_tables": {
+      "completion": {
+        "allocated_bytes": 4096,
+        "pages": 1,
+        "payload_bytes": 2356,
+        "unused_bytes": 1727
+      },
+      "metadata": {
+        "allocated_bytes": 8192,
+        "pages": 2,
+        "payload_bytes": 4103,
+        "unused_bytes": 4068
+      },
+      "sqlite_schema": {
+        "allocated_bytes": 4096,
+        "pages": 1,
+        "payload_bytes": 524,
+        "unused_bytes": 3451
+      },
+      "triggers": {
+        "allocated_bytes": 991232,
+        "pages": 242,
+        "payload_bytes": 927650,
+        "unused_bytes": 57748
+      }
+    },
+    "report": 9958,
+    "trigger_non_blob_bytes": 134583,
+    "trigger_pages": 991232,
+    "uncompressed_candidate_adc": 793628,
+    "variable_exclusion_json_per_copy": 418
+  },
+  "kind": "gegi_candidate_storage_reference_v1",
+  "observation": {
+    "elapsed_use": "Measured saved-source readout only; never extrapolated to fresh transport/drift runtime.",
+    "excluded_time_ns": 11188020.0,
+    "initial_parents": 11293,
+    "input_group_ledger_rows": 613,
+    "live_time_ns": 50000000.0,
+    "observed_coincident_rises": 546,
+    "qualified_fraction": 0.7762396,
+    "readout_elapsed_seconds": 16.32619330000034,
+    "rejected_rises": 402,
+    "saved_candidates": 144,
+    "selection_reason_counts": {
+      "guard_only_collection": 43,
+      "multistrip_imaging_candidate": 109,
+      "qualified_single_strip_pair": 231,
+      "uncertain_imaging_candidate": 35,
+      "unknown_native_history": 128
+    }
+  },
+  "provenance": {
+    "activities_bq": [
+      185000,
+      37000
+    ],
+    "archive_sha256": "6dbbd190bbcf98da71905ce05ec6a8dc21e329d80a88fc9e057c21291390be62",
+    "clock_seed": 20261120,
+    "input_group_ledger_sha256": "02d0a7de34b5c8b2e4ef703fa0b9ab2bc3ae1e5bf4597e4bc92deb6497ec58cb",
+    "noise_seed": 120261120,
+    "readout": {
+      "contact_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34
+      ],
+      "digital_profile_sha256": "e06a3b13b0f03cf80a9da2f198380ce526001ddb2e7a5d5beab7d64a7e804cf6",
+      "digital_timing_sha256": "b02028f58c876b03180cf1314c1d56b65fe6cc406d8d77aeb1f565efb1751e3f",
+      "readout_source_sha256": {
+        "digital_readout": "24423173f42819cbe65e2c4ccd5bf3856c15fe58a1f1ab5b0346187a11db0d13",
+        "exposure_stream": "6476239d0ddd1ff5760a6e67211649974abc84bc5f06fa7d9ee11f6c2bed99d7",
+        "pulse_stream": "a19200ecaf0e4a09195bc9b3d8d696de4029de4c6e97e5a31250033b0d7b3650"
+      },
+      "sample_period_ns": 20
+    },
+    "reference_report_sha256": "0e68009ccdcfb17dafa55a0f20f6061c54ea7cba70f9a6f6abfb140eb2f1cd51",
+    "scope": "historical source-library readout diagnostic; not fresh mixed-source generation",
+    "sources": [
+      {
+        "chunk_index": 45,
+        "chunk_sha256": "019c83ee91ce2c62eaef7994cb7eeb9c1b0591f5ca256c1a274bb96f148d44ed",
+        "database_sha256": "a6b9230d1b98424d5be97e5d826c0cf221912b7025e63266839be88801a808dc",
+        "drift_dt_ns": 1.0,
+        "field_cache_sha256": "f75280e7f21b1a1a06c2a6623aed62873065ca72db02bb1f93a61b9b853b90e8",
+        "field_calibration_sha256": "61f59e2fcdd43aa0f04d6a49a6e59c448bc6059057207a8bcd80d46074d29694",
+        "field_precision_bits": 32,
+        "geometry_sha256": "c26f089322dea21f597c13c43950784310795c7fa1a732e29c4fadc931de73a7",
+        "ionisation_energy_eV": 2.95,
+        "isotope": "Cs-137",
+        "model_sha256": "4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04",
+        "native_request_sha256": "ae476cdc9349bddec75c36c87fb9538224cfdf8b848618d393aea983b663db29",
+        "radiation_seed": 261540748,
+        "source_contract_id": "cs137_point_decay_v1",
+        "source_pdg": 1000551370,
+        "source_position_mm": [
+          -40.0,
+          0.0,
+          40.0
+        ],
+        "transport_sha256": "741e5228fc069c5757a2ba0b2d5df9bafe174017959747bea68cd6763c82008b"
+      },
+      {
+        "chunk_index": 75,
+        "chunk_sha256": "7538a33b47bc2df63b0063191dbbae3a16383dadb5c2b558a9a20235f11abdb2",
+        "database_sha256": "f72b3a99e6c8005982743ac73e3f4fe7b4ac3b260a5640d8bbef3234ca93536a",
+        "drift_dt_ns": 1.0,
+        "field_cache_sha256": "f75280e7f21b1a1a06c2a6623aed62873065ca72db02bb1f93a61b9b853b90e8",
+        "field_calibration_sha256": "61f59e2fcdd43aa0f04d6a49a6e59c448bc6059057207a8bcd80d46074d29694",
+        "field_precision_bits": 32,
+        "geometry_sha256": "c26f089322dea21f597c13c43950784310795c7fa1a732e29c4fadc931de73a7",
+        "ionisation_energy_eV": 2.95,
+        "isotope": "Co-60",
+        "model_sha256": "4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04",
+        "native_request_sha256": "06470249694b2c9e656f5ec6d8aa3be3f7e9b4dceb33d1ee2cca049a5c59bb83",
+        "radiation_seed": 261540749,
+        "source_contract_id": "co60_point_decay_v1",
+        "source_pdg": 1000270600,
+        "source_position_mm": [
+          40.0,
+          0.0,
+          40.0
+        ],
+        "transport_sha256": "b6a0468043d27995986b8d177f13e6023761a405b885154e95abff80ac9aad9a"
+      }
+    ]
+  },
+  "selection_policy": {
+    "ambiguity": "Keep incomplete, contaminated or unavailable classifications and all energy pairing/order alternatives.",
+    "kind": "gegi_conservative_readout_candidate_selection_v1",
+    "multistrip": "Keep at least two measured strips on either face, including charge sharing and unmatched faces.",
+    "rejection": "Reject only a clean measured one-strip pair, guard-only collection, or an explicit unusable/excluded rise.",
+    "scope": "Readout selection, not transport truth, photon identity or a validated hardware imaging efficiency."
+  },
+  "shared_field_cache_bytes": 857068900
+}

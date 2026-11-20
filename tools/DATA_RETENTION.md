@@ -16,6 +16,26 @@ These files and the reproducibility snapshot currently occupy the same physical 
 
 ## Permitted follow-up
 
+The November 20 candidate-storage mode has a separate retention contract for
+**new explicitly named runs only**. All available charge signals contribute to
+continuous readout before conservative measured-signal selection. Retain exact
+candidate ADC contexts, fast/slow/timing measurements and ambiguities; compact
+rejected-trigger records; spectra and initial/zero/nonzero/failure denominators;
+source/group identities, configurations, seeds, versions and hashes. After the
+candidate store and every saved candidate replay verify, the new run may retire
+its own declared transport/native scratch, recording exact paths, hashes and
+bytes in `scratch-retirement.json`. Preserve unique failures and partial runs.
+This policy never changes the protected older campaigns or their raw data.
+The fresh acceptance inputs and failed source-column binding attempt under
+`.local/candidate-storage-v1/fresh100/` remain scientific validation evidence.
+
+Confirmed synthetic fixture copies, superseded presentation staging and exact
+duplicate geometry exports removed on November 20 are enumerated with their
+proofs in `.local/cleanup-candidates-v1/receipt.json`. Their names alone were not
+used as deletion evidence. No junction/reparse tree or protected original was
+a deletion target. Report logical bytes removed separately from physical free
+space, which may differ for cloud-synchronized files.
+
 Preserve `.local/gegi-10m/` calibration, four-source pilots, actual stop/resume
 qualification, formal campaign and their unique failures as scientific records.
 The formal campaign retains each completed chunk's original transport and sparse

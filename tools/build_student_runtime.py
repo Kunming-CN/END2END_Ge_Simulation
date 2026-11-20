@@ -193,6 +193,8 @@ def standalone_guide(body, guide):
     text = re.sub(r'<p>[^<]*<a href="#advanced-title">.*?</p>', '', text, count=1, flags=re.S)
     def link(match):
         quote, href = match.groups()
+        if href == '#advanced-title':
+            href = urljoin(guide['public_base'], 'guide.html#advanced-title')
         return 'href=' + quote + (href if href.startswith(('#', 'http:', 'https:', 'mailto:')) else
                                   urljoin(guide['public_base'], href)) + quote
     text = re.sub(r'href=(["\'])(.*?)\1', link, text)

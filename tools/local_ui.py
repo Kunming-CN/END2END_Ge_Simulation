@@ -272,6 +272,36 @@ class Handler(BaseHTTPRequestHandler):
                 if parts.query or parts.fragment or self.server.workflow_controller is None:
                     raise ValueError('Invalid saved GeGI input inventory request')
                 return self.send_data(200,self.server.workflow_controller.gegi_saved_options())
+            if parts.path == '/api/workflow/gegi-candidates/options':
+                if parts.query or parts.fragment or self.server.workflow_controller is None:
+                    raise ValueError('Invalid mixed-source acquisition inventory request')
+                return self.send_data(200, self.server.workflow_controller.gegi_candidates().options())
+            if parts.path == '/api/workflow/gegi-candidates/estimate':
+                query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
+                keys = {'total_parents', 'activity_a_bq', 'activity_b_bq', 'a_x', 'a_y', 'a_z', 'b_x', 'b_y', 'b_z'}
+                if (parts.fragment or set(query) != keys or any(len(v) != 1 for v in query.values())
+                        or self.server.workflow_controller is None):
+                    raise ValueError('Choose a total planning count and both source activities and positions')
+                return self.send_data(200, self.server.workflow_controller.gegi_candidates().estimate(
+                    int(query['total_parents'][0]), [float(query['activity_'+source+'_bq'][0]) for source in ('a', 'b')],
+                    [[float(query[source+'_'+axis][0]) for axis in ('x', 'y', 'z')] for source in ('a', 'b')]))
+            if parts.path in ('/api/workflow/gegi-candidates/state', '/api/workflow/gegi-candidates/list',
+                              '/api/workflow/gegi-candidates/event'):
+                query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
+                keys = ({'name'} if parts.path.endswith('/state') else
+                        {'name', 'report_sha256', 'offset'} if parts.path.endswith('/list') else
+                        {'name', 'report_sha256', 'trigger_id', 'contact_id'})
+                if (parts.fragment or set(query) != keys or any(len(v) != 1 for v in query.values())
+                        or self.server.workflow_controller is None):
+                    raise ValueError('Choose one saved mixed-source acquisition and its original candidate')
+                control = self.server.workflow_controller.gegi_candidates()
+                if parts.path.endswith('/state'):
+                    return self.send_data(200, control.state(query['name'][0]))
+                if parts.path.endswith('/list'):
+                    return self.send_data(200, control.candidates(query['name'][0], query['report_sha256'][0],
+                                                                  int(query['offset'][0])))
+                return self.send_data(200, control.event(query['name'][0], query['report_sha256'][0],
+                                                       int(query['trigger_id'][0]), int(query['contact_id'][0])))
             if parts.path == '/api/workflow/gegi-dual/options':
                 if parts.query or parts.fragment or self.server.workflow_controller is None:
                     raise ValueError('Invalid GeGI source library request')
@@ -506,6 +536,11 @@ class Handler(BaseHTTPRequestHandler):
             if not 1 <= size <= 4096:
                 raise ValueError('Request size must be 1..4096 bytes')
             data = decode_json(self.rfile.read(size).decode('utf-8'))
+            if self.path == '/api/workflow/gegi-candidates/start':
+                fields = {'name', 'primary_count', 'seed', 'activities_bq', 'positions_mm'}
+                if type(data) is not dict or set(data) != fields or self.server.workflow_controller is None:
+                    raise ValueError('Choose both source activities, positions, initial decay count, seed and name')
+                return self.send_data(200, self.server.workflow_controller.gegi_candidates().start(**data))
             if self.path == '/api/workflow/gegi-dual/start':
                 fields = {'source_ids', 'activities_bq', 'live_time_s', 'seed', 'name'}
                 if (type(data) is not dict or not fields <= data.keys() <= fields | {'trigger_profile'}

@@ -12,7 +12,34 @@ The student workflow runs from detector and source selection through transport, 
 
 ## Delivery order
 
-**Current decision: paused by the owner.** Future production is a single mixed-source experiment from particle generation onward. Resume only on a new instruction from the owner.
+**Current decision, November 20:** candidate-only storage implementation and bounded fresh validation are authorized. Large production and scheduled continuation remain paused. The requested 20-million-parent case is a measured storage projection, not a production launch. Future production is a single mixed-source experiment from particle generation onward.
+
+**Delivered bounded path:** the mixed-source generator, existing native worker,
+continuous readout and conservative candidate store are connected in Control.
+All available signals enter readout; clean single-pixel and guard-only records
+keep counts/reasons without waveforms. Multi-strip and ambiguous candidates keep
+one lossless all-electrode context and exact fast/slow/timing measurements. The
+100-parent fresh startup has 83 Cs / 17 Co parents, 98 zero-deposit parents, one
+in-window single-pixel trigger and no candidates. A delayed daughter deposit at
+about 206 s is outside this sub-millisecond startup window. No pre-existing
+daughters are assumed. This is a small integration acceptance, not equilibrium
+source operation or validated imaging efficiency.
+
+The 50 ms saved-signal storage diagnostic has 11,293 scheduled parents, 418
+qualified triggers and 144 retained candidates, with exact readout replay for
+every candidate. Its compact archive is 1,007,616 bytes and its shared group
+ledger is 31,951 bytes. The measured storage model projects 1.81–2.34 GB of
+candidate core data for 20 million total parents, plus one 0.857 GB shared field
+cache. Fresh-run auxiliary provenance/failures and peak temporary space remain
+separate and unmeasured at that scale. The estimate uses historical libraries;
+the zero-candidate startup is not a storage-yield reference.
+
+**Next production milestone:** replace finite in-memory transport/current input
+with bounded blocks, preserve pending daughter emissions and electronics state
+in resumable checkpoints, and measure maximum temporary disk and memory. Verify
+block/stop-resume equivalence before enabling long acquisitions. Current fresh
+execution is deliberately limited to 1–500 parents. Do not infer production
+readiness or promise a fixed whole-run disk budget from the final archive size.
 
 1. Put Cs-137 at (−40, 0, 40) mm and Co-60 at (+40, 0, 40) mm in one GeGI geometry. Use the commercial reference activities, 185 kBq and 37 kBq. Generate fresh decays on one absolute timeline with a source label and its corresponding position. For constant activities, the combined Poisson rate is 222,000 per second, with source probabilities 5/6 and 1/6. Preserve each decay's emission cascade and delayed daughters. Define pre-exposure activity so the acquisition starts in the intended physical state.
 2. Transport that mixed stream in the same detector. Drift charge for its deposits, sum overlapping electrode currents and process them through the same continuous preamplifier, shaper, noise, ADC and trigger. Keep electronics and clocks continuous across computational buffers for **at least 60 seconds**.
@@ -20,7 +47,7 @@ The student workflow runs from detector and source selection through transport, 
 
 The earlier [25-window readout study](../docs/results/gegi-shared-readout/index.html) used archived per-isotope histories in one shared electronics simulation per 250 ms window. It provides a readout comparison, not a completed full-generation run under this plan.
 
-### Next milestone contract (design only; execution remains paused)
+### Mixed-source milestone contract (bounded validation authorized)
 
 The next implementation reuses the existing geometry, fields, carrier transport and readout functions. Its new responsibility is connecting fresh mixed-source generation to continuous detector state. Before any resumed calculation, record these inputs and outputs in the run configuration and checkpoint:
 
@@ -36,8 +63,8 @@ At the specified constant activities, the expected 60 s parent census is
 222,000 s⁻¹ × 60 s = **13,320,000 parent decays**, not triggers or imaging events.
 Assuming 34 channels, 50 million samples/s, 60 s and two bytes/sample, a complete
 uncompressed ADC stream would occupy **204 GB (about 190 GiB)**. This is a storage
-estimate under explicit assumptions, not a measured output size. Before production,
-choose the new format and full-stream retention policy, measure bounded throughput
+estimate under explicit assumptions, not a measured output size. Candidate-only
+retention is now implemented. Before production, measure bounded throughput
 and memory, and specify streaming buffers, retained trigger windows, event ledgers,
 checkpoints and the information needed to reproduce discarded samples. Existing
 scientific originals remain unchanged.

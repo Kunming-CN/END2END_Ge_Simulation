@@ -1,6 +1,59 @@
 # GeSignal handoff
 
-## Owner handoff, November 19
+## Current handoff, November 20
+
+**Candidate-storage milestone.** The owner resumed bounded implementation and
+small validation, not automation or a large campaign. Control connects fresh
+Cs-137/Co-60 generation in one geometry to existing native charge processing and
+shared continuous readout. Conservative selection happens after readout: retain
+multi-strip/ambiguous candidates with exact all-electrode ADC context and
+fast/slow/timing values; keep single-pixel energies, spectra, rejection reasons,
+original identities and full denominators without rejected waveforms. New-run
+scratch retires only after durable candidate verification. Older science stays.
+
+Fresh acceptance used seed 20261120 and 100 parents (83 Cs, 17 Co), with 98
+zero-deposit parents. The 0.425527 ms startup readout yielded one single-pixel
+trigger and zero candidates. One Cs daughter deposit at 205.938 s is explicitly
+outside this acquisition. Sources start with no pre-existing daughters. The
+corrected transport took 3.718 s; native worker startup/cache load plus acquisition
+took 59.039 s. The original failed FromFile column-binding attempt and its source
+are retained; no seed was changed. Evidence is in
+`.local/candidate-storage-v1/fresh100/` and
+`.local/gegi-candidate-runs/fresh-startup-100/`.
+
+The separate 50 ms historical-library storage diagnostic scheduled 11,293
+parents and produced 546 rises, 418 qualified triggers, 326 energies and 144
+candidates. All 144 fast/slow records replay exactly. Normalizing repeated group
+identities reduced its database from 2,248,704 to 1,007,616 bytes, plus a 31,951-byte
+shared ledger. Every ADC sample, trigger measurement, spectrum and count matches
+the pre-compaction run. At 185/37 kBq, 20 million total parents represent 90.09 s;
+the measured reference projects 1.81–2.34 GB of candidate core data plus a shared
+0.857 GB field cache. Additional fresh-run provenance/failures and peak scratch
+are unmeasured. `tools/gegi_storage_reference.json` preserves the public-safe
+measurement; local acceptance and projection are in `.local/candidate-storage-v1/`.
+
+Cleanup removed 150,342 files across 2,533 explicitly qualified disposable roots,
+6,970,456,396 logical bytes. Exact duplicate geometry exports retain their checked
+canonical counterparts; synthetic fixture proofs and scientific originals remain.
+Reparse targets were not traversed. The single compact removal manifest is
+`.local/cleanup-candidates-v1/receipt.json`. These are logical byte counts, not a
+claim about cloud-sync completion or physically reclaimed disk sectors.
+
+Runtime acceptance passed 26 integrated Python tests, the JavaScript workflow
+contracts, the 5-test package suite and 2 mocked Windows/macOS command checks.
+The source-generator checks and earlier 32 readout/storage regression checks
+remain applicable. Chrome desktop exercised candidate IDs, pagination, electrode
+changes, null values, zero-candidate startup statistics, storage planning and
+changed-position rejection. The software-only package has 233 members; separate
+calibration and published research examples remain external.
+
+**Remaining production work:** fresh execution is limited to 1–500 parents and
+uses finite input arrays. Pending-daughter/current buffers, continuous stop/resume
+and measured maximum disk/RAM remain necessary before a ≥60 s production run.
+The storage projection is not permission to launch 20 million parents. Scheduled
+continuation stays paused. See [the current plan](tools/NEXT_DEVELOPMENT_PLAN.md).
+
+## Earlier November 19 pause and presentation work
 
 **Paused by owner on November 19.** All project simulations and scheduled continuation are stopped. The withdrawn 230-pair job ran single-isotope transport and drift separately and produced zero joint acquisitions. There are zero running project simulation processes. The project heartbeat is paused, the dedicated launcher and image continuation have been removed, and the unlaunched expansion drafts were discarded. Both 10,000-parent single-source transport outputs are preserved locally as retired records; Cs drift was sealed and Co stopped after 283 committed drift groups. These records are excluded from joint production and imaging statistics. The [corrected plan](tools/NEXT_DEVELOPMENT_PLAN.md) requires two source definitions in one geometry from particle generation, a common absolute timeline, and at least 60 seconds of uninterrupted shared detector readout. The decision to resume belongs to the owner.
 

@@ -1,5 +1,21 @@
 # Project working rules
 
+## Owner update — 2026-11-20 candidate storage and bounded validation
+
+Implement continuous processing of all detector signals with permanent storage
+limited to imaging candidates' necessary fast/slow information and compact
+statistics. Keep ambiguous candidates and original identities; apply retention
+after shared readout, never by an unvalidated transport multiplicity cut.
+Small fresh simulations are authorized to validate this change. The requested
+20-million-initial-parent dual-source case is a storage estimate, not a launch
+authorization. Automated continuation and large production remain paused.
+For newly declared candidate-storage runs, successful transport/native scratch
+may be retired only after its required candidate records, census, provenance and
+failures are durably retained and verified. Existing original scientific data
+remain unchanged. Remove confirmed disposable test copies and duplicate display
+files, preserving unique evidence and avoiding reparse traversal. Synchronize
+the verified software and student release with GitHub.
+
 ## Owner correction — joint source generation and paused execution
 
 All project simulations and automatic continuations are paused until the owner explicitly resumes them. The next production design is one physical acquisition. Define Cs-137 and Co-60 at their two positions in one geometry before the first decay. Generate a common chronological stream of new source decays with isotope identity and the appropriate source position, at 185 kBq and 37 kBq respectively. Each decay produces its isotope's physical emissions and daughters. Preserve delayed daughter times and explicitly define the source state at acquisition start.

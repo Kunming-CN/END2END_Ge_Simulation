@@ -60,6 +60,7 @@ class WorkflowController:
         self._saved_verifier=Verifier(self.root)
         self._saved_gegi_control=None
         self._gegi_dual_control=None
+        self._gegi_candidate_control=None
         self._gegi_readers={}
         path=safe_path(self.root,STATE+'/workflow-jobs.json')
         self._state_path=path
@@ -609,6 +610,13 @@ class WorkflowController:
                 from gegi_dual_control import DualSourceControl
                 self._gegi_dual_control = DualSourceControl(self)
             return self._gegi_dual_control
+
+    def gegi_candidates(self):
+        with self._lock:
+            if self._gegi_candidate_control is None:
+                from gegi_candidate_control import CandidateControl
+                self._gegi_candidate_control = CandidateControl(self)
+            return self._gegi_candidate_control
 
     def features(self,name,primary_id,group_id=None):
         """Verify a pre-exported derivative; no simulation, export or write on GET."""

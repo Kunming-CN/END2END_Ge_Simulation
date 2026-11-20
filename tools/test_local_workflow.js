@@ -1866,4 +1866,74 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(planeText(),/0\.875 total · 0\.375 inside view · 0\.5 outside view/);
   assert.deepEqual(mapControls().map(node=>node.value),['saved','661.657_keV','crop']);
   console.log('Dual-source Control covers energy intervals, bounded trigger browsing, position calibration transfer, conditional two-strip pairings and saved plane maps.');
+  // Fresh mixed-source controls submit both sources together and keep stale
+  // selected-electrode replies away from the current candidate's signals.
+  assert.match(html,/Run GeGI with two fresh sources/);
+  assert.match(html,/Historical readout diagnostic · saved source libraries/);
+  for(const [id,value]of Object.entries({'gegi-candidate-count':'100','gegi-candidate-seed':'20261120',
+    'gegi-candidate-name':'fresh-ui-unit','gegi-candidate-activity-a':'185000','gegi-candidate-activity-b':'37000',
+    'gegi-candidate-a-x':'-40','gegi-candidate-a-y':'0','gegi-candidate-a-z':'40',
+    'gegi-candidate-b-x':'40','gegi-candidate-b-y':'0','gegi-candidate-b-z':'40'}))get(id).value=value;
+  run(`active=false;busy=false;candidateJob=null;candidateBusy=false;let candidateFixtureCalls=[];
+    api=async(path,data)=>{candidateFixtureCalls.push([path,data]);return {name:'fresh-ui-unit',status:'running'};};`);
+  await run('startCandidateRun()');
+  const freshRequest=JSON.parse(run('JSON.stringify(candidateFixtureCalls[0])'));
+  assert.equal(freshRequest[0],'/api/workflow/gegi-candidates/start');
+  assert.deepEqual(freshRequest[1],{name:'fresh-ui-unit',primary_count:100,seed:20261120,
+    activities_bq:[185000,37000],positions_mm:[[-40,0,40],[40,0,40]]});
+  assert.equal(get('gegi-candidate-start').disabled,true);
+  get('gegi-candidate-count').value='501';run('candidateJob=null');await run('startCandidateRun()');
+  assert.equal(run('candidateFixtureCalls.length'),1);
+  assert.match(get('gegi-candidate-status').textContent,/at most 500/);
+  run(`candidateJob={name:'saved-candidate',report_sha256:'a'.repeat(64)};
+    let candidateResolvers=[];api=(path)=>{candidateFixtureCalls.push([path]);return new Promise(resolve=>candidateResolvers.push(resolve));};`);
+  get('gegi-candidate-trigger').value='683';get('gegi-candidate-contact').value='4';
+  get('gegi-candidate-record').textContent='old trigger';
+  const firstCandidate=run('loadCandidateEvent()');
+  assert.equal(get('gegi-candidate-record').textContent,'');
+  get('gegi-candidate-contact').value='5';const secondCandidate=run('loadCandidateEvent()');
+  run(`const candidateReply=cid=>({trigger_id:683,contact_id:cid,channel:{fast_signal_keV_equiv:-17,
+    slow_energy_keV:null,preamp_cfd50_ns:null,flags:['slow_below_threshold']},sample_period_ns:20,
+    trace:{time_ns:[-20,0,20],adc_codes:[0,-1,0],preamp_V:[0,-0.01,0],fast_V:[0,-0.02,0],slow_keV:[0,-1,0]},
+    card:{energy_keV:662},identities:[],event_flags:[],filter_scope:'Exact saved context.'});
+    candidateResolvers[0](candidateReply(4));`);
+  await firstCandidate;
+  assert.equal(get('gegi-candidate-plots').children.length,0);
+  run('candidateResolvers[1](candidateReply(5))');await secondCandidate;
+  assert.equal(get('gegi-candidate-plots').children.length,3);
+  assert.match(get('gegi-candidate-event-status').textContent,/Original trigger 683 · electrode 5/);
+  assert.equal(get('gegi-candidate-features').children[0].children[0].children[0].textContent,'-17');
+  assert.equal(get('gegi-candidate-features').children[0].children[1].children[0].textContent,'Unavailable');
+  assert.match(run('candidateFixtureCalls.at(-1)[0]'),/trigger_id=683&contact_id=5$/);
+  assert.match(get('gegi-candidate-record').textContent,/"trigger_id": 683/);
+  console.log('Fresh mixed-source Control preserves both source settings, bounded counts, original trigger/electrode selection, signed/null fast/slow values and stale-response guards.');
+  get('gegi-candidate-estimate-count').value='20000000';
+  run(`let storageEstimateCalls=[],resolveStorageEstimate;api=path=>{storageEstimateCalls.push(path);return new Promise(resolve=>resolveStorageEstimate=resolve);};`);
+  const pendingEstimate=run('estimateCandidateStorage()');
+  assert.match(run('storageEstimateCalls[0]'),/estimate\?total_parents=20000000&activity_a_bq=185000&a_x=-40&a_y=0&a_z=40&activity_b_bq=37000&b_x=40&b_y=0&b_z=40$/);
+  run(`const storageEstimateReply={total_parents:20000000,planning_range_bytes:[2*1024**3,3*1024**3],
+    shared_field_cache_bytes:857068900,execution_primary_limit:500};resolveStorageEstimate(storageEstimateReply);`);
+  await pendingEstimate;
+  assert.match(get('gegi-candidate-storage').textContent,/20,000,000 total source decays: saved candidate core 2\.00–3\.00 GiB/);
+  assert.match(get('gegi-candidate-storage').textContent,/cache 0\.80 GiB, counted once/);
+  assert.match(get('gegi-candidate-storage').textContent,/Additional fresh-run records and temporary peak storage have not been measured/);
+  assert.match(get('gegi-candidate-storage').textContent,/fresh Run remains limited to 500 decays/);
+  const staleEstimate=run('estimateCandidateStorage()');
+  get('gegi-candidate-a-x').value='-39';get('gegi-candidate-a-x').oninput();
+  run('resolveStorageEstimate(storageEstimateReply)');await staleEstimate;
+  assert.match(get('gegi-candidate-storage').textContent,/Source or planning count changed/);
+  assert.doesNotMatch(get('gegi-candidate-storage').textContent,/2\.00–3\.00/);
+  assert.equal(get('gegi-candidate-estimate').disabled,false);
+  run(`api=async()=>{throw Error('A changed source position needs a matching measured reference.');};`);
+  await run('estimateCandidateStorage()');
+  assert.match(get('gegi-candidate-storage').textContent,/Storage estimate unavailable:.*matching measured reference/);
+  run(`candidateJob={name:'startup-fixture',report_sha256:'c'.repeat(64)};
+    showCandidateJob({...candidateJob,status:'completed',result:{counts:{qualified_triggers:0},
+      storage_counts:{saved_candidates:0,rejected_rises:0},artifacts:{'compton-candidates.sqlite':{bytes:16384}},
+      live_time_ns:400000,source:{initial_parents:100,zero_deposit_parents:93,nonzero_parents:7,delayed_groups_after_acquisition:7},
+      identity:{source_config:{initial_state:{policy:'new_parent_decays_empty_daughters_at_start'}}}}});`);
+  const startupText=descendants(get('gegi-candidate-summary')).map(item=>item.textContent).join(' ');
+  assert.match(startupText,/no pre-existing daughters at t = 0/);
+  assert.match(startupText,/Delayed deposit groups beyond this acquisition: 7/);
+  console.log('Pre-run storage planning uses current source settings, clears stale estimates, separates one shared cache and unmeasured scratch, and explains startup daughters and delayed groups.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

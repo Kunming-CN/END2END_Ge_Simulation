@@ -4,6 +4,7 @@ from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
 import hashlib
 import math
+from pathlib import Path
 
 import numpy as np
 
@@ -19,6 +20,10 @@ _IDS = digital.CONTACT_IDS
 _ALPHA = math.exp(-SAMPLE_PERIOD_NS / digital._TAU)
 _TAUS = np.array([digital._TAU, digital._BANDWIDTH_TAU])[:, None]
 _POLE_GAIN = digital._TAU / (digital._TAU - digital._BANDWIDTH_TAU)
+CONTEXT_KIND = 'gegi_exact_sparse_adc_context_v1'
+_CONTEXT_SOURCES = {name: hashlib.sha256(Path(path).read_bytes()).hexdigest() for name, path in
+                    (('exposure_stream', __file__), ('pulse_stream', pulse.__file__),
+                     ('digital_readout', digital.__file__))}
 
 
 class ADCExposure:
@@ -202,6 +207,74 @@ def _context_readout(context, exposure, groups, baseline):
                                  activities[:i] + activities[i+1:])
 
 
+def readout_context(context, exposure, groups, baseline, *, trigger_id, rejection_reason=None):
+    """Describe the exact finite DSP support; ADC codes are borrowed until callback return.
+
+    The local pole-zero accumulator may start at zero because its unknown common
+    offset cancels in every requested fast, slow, step and interference gate.
+    Keeping the same context origin also reproduces floating-point summation.
+    """
+    stop = context.neighboring.stop
+    return {'kind': CONTEXT_KIND, 'adc_codes': context.codes,
+            'first_sample_index': context.lo, 'stop_sample_index': context.hi,
+            'activity_groups': [list(groups[i]) for i in context.neighboring],
+            'pivot_activity_index': context.pivot - context.neighboring.start,
+            'following_activity_start_index': groups[stop][0] if stop < len(groups) else exposure.live_samples,
+            'acquisition_baseline_v': baseline.tolist(), 'adc_phase_ns': exposure.phase_ns,
+            'acquisition_live_samples': exposure.live_samples, 'sample_period_ns': SAMPLE_PERIOD_NS,
+            'contact_ids': list(_IDS), 'volts_per_code': digital._LSB_V,
+            'digital_profile_sha256': digital.PROFILE_SHA256, 'digital_timing_sha256': digital.TIMING_SHA256,
+            'readout_source_sha256': dict(_CONTEXT_SOURCES),
+            'readout_trigger_id': trigger_id, 'readout_rejection_reason': rejection_reason}
+
+
+def replay_readout_context(saved):
+    """Reproduce one readout from its saved preamp ADC context, without a source replay."""
+    code = np.asarray(saved['adc_codes'])
+    lo, hi = saved['first_sample_index'], saved['stop_sample_index']
+    live, phase = saved['acquisition_live_samples'], saved['adc_phase_ns']
+    baseline = np.asarray(saved['acquisition_baseline_v'], dtype=float)
+    groups = saved['activity_groups']
+    pivot, following = saved['pivot_activity_index'], saved['following_activity_start_index']
+    if (saved.get('kind') != CONTEXT_KIND or saved.get('contact_ids') != list(_IDS)
+            or saved.get('sample_period_ns') != SAMPLE_PERIOD_NS
+            or saved.get('volts_per_code') != digital._LSB_V
+            or saved.get('digital_profile_sha256') != digital.PROFILE_SHA256
+            or saved.get('digital_timing_sha256') != digital.TIMING_SHA256
+            or saved.get('readout_source_sha256') != _CONTEXT_SOURCES):
+        raise ValueError('Saved ADC context uses a different channel, filter or implementation identity')
+    if (any(type(v) is not int for v in (lo, hi, live, pivot, following))
+            or not -PREAMBLE_SAMPLES <= lo < hi <= live or live <= 0
+            or not math.isfinite(phase) or not 0 <= phase < SAMPLE_PERIOD_NS
+            or code.dtype != np.dtype('int16') or code.shape != (len(_IDS), hi-lo)
+            or np.any(code < digital._ADC_MIN) or np.any(code > digital._ADC_MAX)
+            or baseline.shape != (len(_IDS),) or not np.isfinite(baseline).all()
+            or not groups or not 0 <= pivot < len(groups)):
+        raise ValueError('Invalid saved ADC context bounds, baseline or signed samples')
+    for i, row in enumerate(groups):
+        if (len(row) != 3 or any(type(v) is not int for v in row[:2]) or type(row[2]) is not bool
+                or not lo <= row[0] < row[1] < hi
+                or (i and row[0] <= groups[i-1][1])):
+            raise ValueError('Invalid saved local activity identities or bounds')
+    if not groups[pivot][2] or following < groups[-1][1] or following > live:
+        raise ValueError('Invalid saved pivot or following activity')
+    # A following rise can be beyond this context. Only its start is used by
+    # _context_readout to stop the last neighboring activity's settling gate.
+    local_groups = [tuple(row) for row in groups] + [(following, following, False)]
+    clock = _SavedClock(live, phase)
+    context = _Context(lo, hi, pivot, range(len(groups)), code)
+    return _context_readout(context, clock, local_groups, baseline)
+
+
+@dataclass
+class _SavedClock:
+    live_samples: int
+    phase_ns: float
+
+    def sample_time_ns(self, index):
+        return np.asarray(index) * SAMPLE_PERIOD_NS + self.phase_ns
+
+
 def _feature_contexts(exposure, block_samples, groups, baseline, contexts, *, include_context=False):
     pending = iter(contexts)
     current, active = next(pending, None), []
@@ -226,28 +299,46 @@ def _feature_contexts(exposure, block_samples, groups, baseline, contexts, *, in
             break
 
 
-def reconstruct_exposure(exposure, *, block_samples=DEFAULT_BLOCK_SAMPLES, trigger_profile='standard', on_trigger=None):
-    """Reconstruct the exposure; optionally observe each accepted event and its in-memory ADC context."""
+def reconstruct_exposure(exposure, *, block_samples=DEFAULT_BLOCK_SAMPLES, trigger_profile='standard',
+                         on_trigger=None, on_readout_context=None, retain_events=True):
+    """Reconstruct all ADC activity; optionally retain exact candidate contexts.
+
+    The legacy on_trigger receives accepted events. on_readout_context receives
+    every coincident rise (including persistence rejections) and a borrowed exact
+    context; copy or stream its ADC samples before the callback returns.
+    Set retain_events=False with a sink to avoid retaining full scalar events or
+    rejected ledgers in memory. Accepted/rejected totals remain in the result.
+    """
     threshold = pulse.trigger_threshold(trigger_profile)
     baseline, groups, rail, adc_sha = _find_activity(exposure, block_samples, threshold)
     contexts = _contexts(exposure, groups)
     events, rejected = [], []
+    accepted_count, rejected_count = 0, 0
     if contexts:
         candidates = _feature_contexts(exposure, block_samples, groups, baseline, contexts, include_context=True)
-        for event, context in candidates:
+        for trigger_id, (event, context) in enumerate(candidates, 1):
             steps = event['face_step_keV']
-            if steps is not None and min(steps) < MIN_COLLECTED_KEV:
-                rejected.append({'trigger_time_ns': event['trigger_time_ns'], 'face_step_keV': steps,
-                                 'reason': 'no_persistent_coincident_charge_step'})
+            reason = ('no_persistent_coincident_charge_step'
+                      if steps is not None and min(steps) < MIN_COLLECTED_KEV else None)
+            if on_readout_context is not None:
+                on_readout_context(event, readout_context(context, exposure, groups, baseline,
+                                                        trigger_id=trigger_id, rejection_reason=reason))
+            if reason:
+                rejected_count += 1
+                if retain_events:
+                    rejected.append({'trigger_time_ns': event['trigger_time_ns'], 'face_step_keV': steps,
+                                     'reason': reason})
             else:
-                events.append(event)
+                accepted_count += 1
+                if retain_events:
+                    events.append(event)
                 if on_trigger is not None:
                     on_trigger(event, context.lo, context.codes)
     events.sort(key=lambda event: event['trigger_time_ns'])
     flags = []
     if rail.any():
         flags.append('adc_saturation')
-    if not events:
+    if not accepted_count:
         flags.append('no_coincident_trigger')
     return {'events': events, 'flags': flags, 'rejected_rises': rejected,
             'activity_count': len(groups), 'maximum_context_samples': max((c.hi-c.lo for c in contexts), default=0),
@@ -256,4 +347,6 @@ def reconstruct_exposure(exposure, *, block_samples=DEFAULT_BLOCK_SAMPLES, trigg
             'saturated_adc_codes': int(rail.sum()), 'adc_sha256': adc_sha,
             'adc_samples_per_channel': exposure.live_samples,
             'preamble_samples_per_channel': PREAMBLE_SAMPLES,
+            **({'accepted_trigger_count': accepted_count, 'rejected_rise_count': rejected_count}
+               if not retain_events else {}),
             **({'acquisition_baseline_v': baseline} if on_trigger is not None else {})}

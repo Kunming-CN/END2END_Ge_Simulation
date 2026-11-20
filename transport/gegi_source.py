@@ -385,7 +385,7 @@ def primary_tracks(rows, names, meta):
     source=meta['source_contract'];position=meta['source_position_global_mm']
     vertices,particles=rows['vtx'],rows['particles']
     h.require(len(vertices)==len(particles)==1 and vertices[0]['n_part']==1
-              and vertices[0]['time']==0 and particles[0]['vertexid']==0,
+              and vertices[0]['time']==meta.get('primary_vertex_time_ns',0) and particles[0]['vertexid']==0,
               'Missing/duplicate GeGI primary or changed initial GPS clock')
     vertex=[1000*vertices[0][a] for a in ('xloc','yloc','zloc')]
     h.require(h.np.allclose(vertex,position,rtol=0,atol=1e-9), 'Wrong actual source position/units')
@@ -443,7 +443,7 @@ def decay_record(eid, steps, tracks, names, source):
             'pulse_groups':cs.group_deposits(steps,source['grouping_policy']['horizon_ns'])}
 
 
-def events(path, meta):
+def events(path, meta, *, event_metadata=None):
     """Complete original primary census; positive Ge rows are the only SSD input.
 
     Raw step tables including zero rows and every passive hit stay in truth.lh5.
@@ -476,9 +476,10 @@ def events(path, meta):
             T.columns(raw[table], T.STEP_INTS, floats)
         cursors = {key: cs.Cursor(raw[key], count) for key in ('vtx','particles','tracks',*materials)}
         for eid in range(count):
+            current = meta if event_metadata is None else event_metadata(eid)
             rows = {key: cursor.take(eid) for key, cursor in cursors.items()}
             vertices, particles = rows['vtx'], rows['particles']
-            by_id = primary_tracks(rows,names,meta)
+            by_id = primary_tracks(rows,names,current)
             sums = {}; steps = []
             for table, material in materials.items():
                 values = []
@@ -508,8 +509,8 @@ def events(path, meta):
             event = {'event_id': eid, 'initial_primary_id': eid, 'energy_keV': edep, 'truth_edep_keV': edep,
                    'steps': steps, 'primary': particles[0], 'vertex': vertices[0], 'tracks': rows['tracks'],
                    'material_energy_keV': {m: math.fsum(values) for m, values in sums.items()}}
-            if meta['source_id'] in DECAY_SOURCES:
-                event.update(decay_record(eid,steps,rows['tracks'],names,meta['source_contract']))
+            if current['source_id'] in DECAY_SOURCES:
+                event.update(decay_record(eid,steps,rows['tracks'],names,current['source_contract']))
             yield event
         h.require(all(cursor.next is None for cursor in cursors.values()), 'Unconsumed raw GeGI rows')
 
