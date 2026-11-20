@@ -220,6 +220,8 @@ def _view(path, label, current_path, context=None):
 
 def dataset_navigation(dataset, current_path, model=None, model_label=None):
     require(dataset in DATASETS, "Unknown saved dataset")
+    if dataset == 'teaching':
+        return ''
     if model is not None and dataset == 'tenk':
         case_result_path(model)
     description, home = DATASETS[dataset]
@@ -236,8 +238,6 @@ def dataset_navigation(dataset, current_path, model=None, model_label=None):
         views.extend((("results/cs137-1m/spectra/deposition.html", "Deposition spectra", 'truth'),
                       ("results/cs137-1m/spectra/response.html", "Response spectra", 'response'),
                       (home + '#data-files', "Data & settings", 'files')))
-    elif dataset == 'teaching':
-        views.append((home, "Six signal examples", None))
     elif dataset == 'gamma':
         views.append((home, "Waveforms & event ledger", None))
     elif dataset == 'gegi':

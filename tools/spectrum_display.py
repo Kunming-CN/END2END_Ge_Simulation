@@ -18,6 +18,8 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js','tools/result_web_delivery.py')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+ # Exact c8d4d13 published manifest, checked against Git before student-page changes.
+ '060d1ccfa2323b478667baacae700eaacd4e51a7bcab0bde0807b39251456839',
  # Validated local architecture build 65f0e01b, before browser-found fixes.
  '4be6c683787660b6238b226cd8ee914b27261d90645b88325752eb6bb1976d07',
     # Checked saved spectra from the published site before the reader-page redesign.

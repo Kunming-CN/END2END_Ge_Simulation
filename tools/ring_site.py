@@ -456,8 +456,14 @@ def saved_report(site, case):
             '<h1>' + escape(case['label']) + ' · charge and readout</h1><p>' + escape(case['note']) + '</p></section>'
             + selected + '<details id="saved-waveforms" class="panel saved-response-report"><summary>Complete original report, settings and saved examples</summary>' + science + '</details>')
     data = '<section id="data-files" class="panel"><h2>Data and settings</h2><p>'
-    data += '<a class="button" href="' + escape(relative_url(case['base'] + '/response/ledgers.zip', current_path), quote=True) + '">Complete response archive (ZIP)</a></p>'
-    data += ('<p>Contains complete primary/pulse scalars, deposition truth, native endpoints, exact stage histograms, '
+    from result_web_delivery import OMITTED, PREFIX
+    archive = case['base'] + '/response/ledgers.zip'
+    if archive in {PREFIX + '/' + name for name in OMITTED}:
+        data += ('The complete response ZIP is retained locally and is not published here. '
+                 'Use the individual data and settings files below.</p>')
+    else:
+        data += '<a class="button" href="' + escape(relative_url(archive, current_path), quote=True) + '">Complete response archive (ZIP)</a></p>'
+    data += ('<p>The saved records include primary/pulse scalars, deposition truth, native endpoints, exact stage histograms, '
              'settings and the available saved signals/traces. Original zero events, signed quantities, native errors '
              'and electronics rejections are retained. Raw LH5 and field caches remain local.</p>')
     links = []
@@ -477,7 +483,7 @@ def saved_report(site, case):
         require((Path(site) / old).is_file(), 'Original KM native rejection history missing')
         data += ('<p><a href="' + escape(relative_url(old, current_path), quote=True) + '">Original KM native response: 0/231 accepted (archive)</a>. '
                  'The original positive-peak readout rejected all 231 groups. The current fixed −1 wiring is a separate derivative; '
-                 'raw negative native charge is preserved. The ZIP retains the complete original HTML and native records.</p>')
+                 'raw negative native charge is preserved. The local archive retains the complete original HTML and native records.</p>')
     from result_web_delivery import strip_archive_links
     return strip_archive_links(body + data + '</details></section>' + scripts, current_path)
 

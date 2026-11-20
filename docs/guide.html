@@ -12,6 +12,7 @@ a{color:var(--accent);text-underline-offset:3px}h1,h2,h3{line-height:1.25}h1{fon
 h2{font-size:1.6rem}h3{font-size:1.15rem}p{margin:12px 0}section{margin:24px 0;padding:26px;background:white;border:1px solid var(--line);border-radius:12px}
 .routes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.route{padding:20px;border:1px solid var(--line);border-radius:10px;background:#f8fbfc}
 .route h3{margin-top:0}.route p{font-size:.95rem}.button{display:inline-block;padding:9px 14px;border-radius:7px;background:var(--accent);color:white;text-decoration:none;font-weight:650}
+.platform-choices{display:flex;gap:12px;flex-wrap:wrap}.platform-choices button{font:inherit;cursor:pointer;border:2px solid var(--accent);padding:10px 24px;border-radius:7px;background:white;color:var(--accent);font-weight:650}.platform-choices button[aria-expanded="true"]{background:var(--accent);color:white}.platform-choices button:focus-visible{outline:3px solid #173047;outline-offset:3px}[hidden]{display:none!important}.setup-platform{border-top:5px solid var(--accent)}
 .muted,small{color:var(--muted)}code{background:#edf4f6;padding:2px 5px;overflow-wrap:anywhere}pre{background:#edf4f6;padding:16px;overflow:auto;line-height:1.45;font-size:.87rem}
 pre code{padding:0;background:none;overflow-wrap:normal}li{margin:9px 0}details{border-top:1px solid var(--line);padding:16px 0;margin-top:14px}
 summary{cursor:pointer;font-weight:650}table{width:100%;border-collapse:collapse;font-size:.95rem}th,td{text-align:left;border-bottom:1px solid var(--line);padding:10px;vertical-align:top}
@@ -58,9 +59,14 @@ addEventListener('hashchange',sync);addEventListener('popstate',sync);addEventLi
 <p>Install the student software, complete a small run and follow its original records through the saved results.</p>
 </header>
 <main>
+<section id="platform-choice"><h2>Choose your computer</h2>
+<p>Both platforms use the same student download. Choose one to show its installation steps.</p>
+<div class="platform-choices" role="group" aria-label="Your operating system"><button type="button" data-platform="setup" aria-controls="setup" aria-expanded="false">Windows</button><button type="button" data-platform="setup-macos" aria-controls="setup-macos" aria-expanded="false">macOS</button></div>
+<p class="muted" id="platform-status" role="status">Select Windows or macOS, then follow download → setup → one small run.</p>
+<noscript><style>.setup-platform[hidden]{display:block!important}.platform-choices{display:none}</style><p>JavaScript is off. Both platform instructions are shown below; follow the one for your computer.</p></noscript></section>
 <section id="local-routes" aria-label="Local workflow steps"><h2>From download to your own results</h2>
 <ol><li><a href="#download-software">Choose and download the software</a>.</li>
-<li><a href="#setup">Install and check Windows</a>, <a href="#setup-macos">macOS</a> or <a href="#setup-linux">Linux components</a>.</li>
+<li><a href="#platform-choice">Choose Windows or macOS</a> and complete its setup.</li>
 <li><a href="#local-control">Complete one small run</a>.</li>
 <li><a href="#find-results">Find the outputs and inspect one result</a>.</li>
 <li><a href="#control-recovery">Stop, resume and adjust settings</a>.</li>
@@ -73,20 +79,15 @@ addEventListener('hashchange',sync);addEventListener('popstate',sync);addEventLi
 <table><thead><tr><th>Download or source</th><th>Use</th><th>Contents and requirements</th></tr></thead><tbody>
 <tr><td>Student software</td><td>Run and analyze your simulations</td><td>Code, 17 model definitions, locked environment files and this guide. Dependencies are installed separately. Saved research examples, field caches and calibration banks are excluded.</td></tr>
 <tr><td><a href="results/index.html">Website study data</a></td><td>Read published research</td><td>Figures, saved results, comparisons and their data links. These are separate from the runtime and do not start simulations.</td></tr>
-<tr><td><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases">Separate GeGI calibration</a></td><td>Compatible GeGI waveform reconstruction</td><td>The simulated <code>gegi-center-calibration.npz</code> is 303,891,603 bytes (289.81 MiB). Use a calibration matching your saved fields and electronics; a public plot is not a calibration input.</td></tr></tbody></table>
+<tr><td><a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/download/student-runtime-f44859b48267/gegi-center-calibration.npz">Separate GeGI calibration</a></td><td>GeGI waveform-based position and source-plane reconstruction</td><td>The simulated <code>gegi-center-calibration.npz</code> is 303,891,603 bytes (289.81 MiB). Download it when reconstructing compatible GeGI digitized strip waveforms into positions and source-plane maps. The first SAP22 run below does not need it. It must match the saved fields and electronics; a public plot is not a calibration input.</td></tr></tbody></table>
 <p>Keep the extracted software in its final folder. Website-only exhibit changes do not require a new runtime package.</p></section>
 
-<section id="setup">
-<h2>Set up Windows</h2>
-<p>Using a Mac? Follow <a href="#setup-macos">Set up macOS</a>.</p>
+<section id="setup" class="setup-platform" hidden>
+<h2>2. Set up Windows</h2>
 <p>Use PowerShell in the project root: the folder containing <code>Control.cmd</code> and <code>Run.cmd</code>. These steps explicitly install or acquire dependencies. Opening the website or Control does not install them.</p>
 <ol>
 <li><strong>Install the platform tools.</strong> You need Git, Windows Python 3.10+, Juliaup, WSL2 with Ubuntu-24.04, and Pixi inside Ubuntu. Follow the official <a href="https://github.com/JuliaLang/juliaup#installation">Juliaup</a>, <a href="https://learn.microsoft.com/windows/wsl/install">WSL</a> and <a href="https://pixi.prefix.dev/latest/installation/">Pixi</a> instructions. WSL may need an administrator and restart. No GPU or ParaView installation is required.</li>
-<li><strong>Obtain the software.</strong> Students can <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip">download the software ZIP</a> and extract it. It includes the Control runtime, canonical detector models, pinned environment files and this guide. Saved results, standalone demonstrations, developer tests, reports and publication tools are excluded. Browse existing results online. Git history and installed dependencies are not included in the ZIP. Developers can instead use a source-only checkout:
-<pre><code>git clone --filter=blob:none --sparse https://github.com/Kunming-CN/END2END_Ge_Simulation.git
-cd END2END_Ge_Simulation
-git sparse-checkout set models simulation transport scenarios tools</code></pre>
-<p>To deliberately keep the saved website offline in a Git checkout, use <code>git sparse-checkout add docs</code>. A normal full clone includes the website and repository history; use the student runtime ZIP for the usual student workflow. The full source checkout is for development. Software-only Control shows original model settings and links to the online geometry viewer when a local saved preview is unavailable.</p></li>
+<li><strong>Extract the student software.</strong> Use the <a href="#download-software">verified software ZIP above</a>, and keep its extracted folder in its final location. It includes the Control runtime, canonical detector models, pinned environment files and this guide. Saved results, standalone demonstrations, developer tests, reports, publication tools, Git history and installed dependencies are excluded. Browse existing results online. Software-only Control shows original model settings and links to the online geometry viewer when a local saved preview is unavailable.</li>
 <li><strong>Prepare the pinned Julia environment.</strong>
 <pre><code>juliaup add 1.13.0
 juliaup override set 1.13.0
@@ -126,6 +127,7 @@ foreach ($f in $m.files) {
 .\Control.cmd</code></pre>
 <p>These explicit builds use the existing locked environment and record the exporter/source bindings. The first preserves the original five-model route; the second builds the shared geometry exporter for the additional compatible models; the third adds angular geometry support. They install or update no packages. In Control, <strong>Check environment</strong> reports file readiness. Select a setup and use <strong>Check plan</strong> to verify its current build, source, runtime and settings. Address any missing or changed dependency before running. Control opens a protected local page on <code>127.0.0.1</code>.</p></li>
 </ol>
+<p><strong>Setup checkpoint:</strong> Control opens <strong>Local simulation</strong> in your browser. <strong>Check environment</strong> lists the prepared dependencies; finish any missing item before continuing to <a href="#local-control">the first SAP22 run</a>.</p>
 <p class="note">The application and source-bound preparation have been verified on the existing Windows/WSL computer. Fresh-machine installation has not been established; student setup feedback will guide further fixes. A failed prerequisite check is not a successful installation.</p>
 <details><summary>Select an existing Python or Julia executable</summary>
 <p>Control uses <code>SITE_PYTHON</code> when set, otherwise an existing ParaView 6.1.1 Python, otherwise an existing PATH Python. To select an already installed interpreter for this PowerShell session:</p>
@@ -135,33 +137,32 @@ foreach ($f in $m.files) {
 </details>
 </section>
 
-<section id="setup-macos">
-<h2>Set up macOS</h2>
-<p>Use the same <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/latest/download/END2END-Ge-Student.zip">student software ZIP</a> as Windows. The Mac launchers use native CPU calculations, with the same detector models, settings and result formats. A ChatGPT account, Windows installation or NVIDIA graphics card is not required.</p>
+<section id="setup-macos" class="setup-platform" hidden>
+<h2>2. Set up macOS</h2>
+<p>Use the <a href="#download-software">verified student software ZIP above</a>. The Mac launchers use native CPU calculations, with the same detector models, settings and result formats. A ChatGPT account, Windows installation or NVIDIA graphics card is not required.</p>
 <ol>
 <li><strong>Prepare the three platform tools once.</strong> Install <a href="https://github.com/JuliaLang/juliaup#installation">Juliaup</a> and <a href="https://pixi.prefix.dev/latest/installation/">Pixi</a> (0.81.0 or newer). Install Apple's Command Line Tools by running <code>xcode-select --install</code> in Terminal and completing Apple's installer. Use a native terminal for your Mac's processor. The dependency lock targets macOS 13 or newer.</li>
 <li><strong>Extract the software and run <code>Setup.command</code>.</strong> Setup installs the pinned Julia 1.13.0 CPU environment and the locked Mac transport environment, fetches the nine hash-checked cryostat source files, and builds the geometry exporters. First setup includes downloading and compiling dependencies; later launches reuse them. Keep the extracted folder in its final location. Setup does not run a simulation. Its progress and any failure remain available for diagnosis.</li>
-<li><strong>Open <code>Control.command</code>.</strong> Keep its terminal window open while using the local application in your browser. Choose a compatible detector, cryostat and source, start with 100 initial events and one Julia thread, then use <strong>Check plan</strong> and <strong>Run simulation</strong>. The same <a href="#local-control">Control instructions</a> and <a href="#control-recovery">Stop/Resume controls</a> apply on both systems.</li>
+<li><strong>Open <code>Control.command</code>.</strong> Keep its terminal window open while using the local application in your browser. The <strong>Local simulation</strong> page is the setup checkpoint. Continue with <a href="#local-control">the first SAP22 run</a>; the same <a href="#control-recovery">Stop/Resume controls</a> apply on both systems.</li>
 </ol>
 <p>If a launcher opens as text, open Terminal in the extracted folder and run <code>bash Setup.command</code> or <code>bash Control.command</code>. Opening Control uses the prepared environment; it installs nothing.</p>
 <p class="note" id="macos-validation">Native macOS 15 installation, CPU calculation and stage stop/resume have been checked with a 100-initial-event SAP22/Cs137 case. Its preserved Mac data were also checked through the production Control result reader on Windows. See the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/pull/1">Apple Silicon and Intel test records</a> for each platform's status and exact scope. This is a functional software check; detector accuracy and model-specific limits remain separate.</p>
 </section>
 
-<section id="setup-linux"><h2>Linux components and source use</h2>
-<p>The student launchers support Windows and macOS. Windows uses the locked Linux radiation-transport environment through WSL2. Native Linux users can work with the shared source, pinned Julia environment and <code>transport/pixi.lock</code>, but this release has no packaged Linux Control launcher or completed native Linux onboarding acceptance.</p>
-<p>Use the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/simulation/README.md">simulation component instructions</a> and <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/transport/README.md">transport installation checks</a> for that advanced route. Preserve the supplied locks and keep generated files under <code>.local/</code>.</p></section>
-
 <section id="local-control">
 <h2>3. Complete one small run</h2>
 <p>Open <code>Control.cmd</code> on Windows or <code>Control.command</code> on macOS in the project root. It opens the English <strong>Local simulation</strong> application. New runs calculate geometry/source preparation, radiation deposits, the event ledger, fields and charge, independent calibration, readout, and verified results.</p>
-<h3>First run: choose, check, run, then inspect results</h3>
+<h3>First run: SAP22 · Cs-137 · 100 initial decays</h3>
+<p>Use the configuration from the completed native macOS and preserved Windows result-reader checks: <strong>LBNL modular cryostat</strong>, <strong>SAP22</strong>, <strong>Cs137 point decay</strong>, nominal source anchor, source/capsule angle <strong>+30°</strong>, <strong>100</strong> initial nuclei, radiation seed <strong>26092631</strong>, <strong>one</strong> Julia thread and unchanged default electronics. Use a new name such as <code>sap22-first</code>. This is a bounded software example; its saved acceptance contained 97 zero-deposit primaries and three accepted groups, while a changed configuration or seed may give different counts.</p>
 <ol>
-<li>Start with 100 initial events and one Julia thread. Select a detector and inspect its model panel. Choose a supported cryostat, source, source/capsule angle, primary count and threads. Choose the radiation seed when the source policy permits it. Enter a new unused run name.</li>
-<li>Adjust <strong>Electronics settings</strong> if needed. Use <strong>Export configuration</strong> or <strong>Load configuration</strong> to keep an exact setup.</li>
+<li>Choose the configuration above and inspect the SAP22 model panel. Enter the new unused run name.</li>
+<li>Keep <strong>Electronics settings</strong> at their defaults for this first run. Use <strong>Export configuration</strong> to save the exact setup.</li>
 <li>Click <strong>Check plan</strong>. Review the effective position/orientation in <strong>Checked source pose</strong> and the <strong>Checked next-run configuration</strong>. Changing any selection, including angle, invalidates the check.</li>
 <li>Click <strong>Run simulation</strong>. Follow <strong>Pipeline</strong> and open the stage logs from <strong>Runs</strong>.</li>
 <li>Choose <strong>Explore events</strong> after completion, or at a stopped boundary with completed batches. Find the matching files and event filters under <strong>Saved stage files</strong>, below the signal plots. The selected saved run stays separate from the next-run form.</li>
 </ol>
+<p><strong>What completion looks like:</strong> <strong>Pipeline</strong> reaches verified results and the run appears in <strong>Runs</strong>. Open it → <strong>Explore events</strong> → select a nonzero original primary and pulse group → compare charge and readout plots. <strong>Saved stage files</strong>, below the plots, opens the settings and actual ledgers. For <code>sap22-first</code>, the output folder is <code>.local/runs/sap22-first/</code>. Keep any recorded failures distinct from accepted groups.</p>
+<details><summary>After the first run: choose other settings</summary><p>Select another supported detector, cryostat, source, source/capsule angle, primary count or thread count. Choose the radiation seed when the source policy permits it, and adjust electronics as needed. Export or load a configuration to keep the setup. Each change requires a new <strong>Check plan</strong>. The <a href="#validation">model and source coverage</a> describes supported combinations and their acceptance scope.</p></details>
 <details id="control-electronics"><summary>The eleven electronics settings</summary>
 <p>All eleven are used by the checked execution:</p>
 <table>
@@ -268,7 +269,7 @@ foreach ($f in $m.files) {
 <p>Control saves two-strip ADC windows beside each new acquisition report. Open a two-strip trigger, expand its ADC waveform and select a collecting strip or neighbor. The plot shows volts sampled every 20 ns from 80 ns before the trigger through 480 ns after it. For an older run without windows, reconstruct them from the two original source libraries. The exporter verifies the original ADC stream.</p>
 <pre>python -B tools/gegi_trigger_windows.py .local/gegi-dual-source/NAME/report.json --source-a SOURCE_A_DIRECTORY --source-b SOURCE_B_DIRECTORY --output .local/gegi-dual-source/NAME/two-strip-adc.npz</pre>
 <p>To see how the acquisition triggered, choose <strong>Trigger response on both faces</strong> in the ADC inspector. The solid X and dashed Y curves show the filtered change on each detector face, including its guard. The dotted line is the selected coincidence threshold. Zero marks the recorded trigger reference, one sample before its first active sample. Several depositing groups can contribute to one recorded rise.</p>
-<p id="gegi-plane-reconstruction"><strong>Project your acquisition onto a plane.</strong> Put the separately supplied <code>gegi-center-calibration.npz</code> in <code>.local/</code>. The archive must match the acquisition’s simulated field and electronics. Find it on the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases">project releases page</a>. From the software folder, replace <code>NAME</code> with your acquisition name and choose a plane in detector coordinates. The examples use z = 40 mm.</p>
+<p id="gegi-plane-reconstruction"><strong>Project your acquisition onto a plane.</strong> Put the separate <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/download/student-runtime-f44859b48267/gegi-center-calibration.npz"><code>gegi-center-calibration.npz</code> from the matching student release</a> in <code>.local/</code>. This waveform-reconstruction calibration must match the acquisition’s simulated field and electronics. From the software folder, replace <code>NAME</code> with your acquisition name and choose a plane in detector coordinates. The examples use z = 40 mm.</p>
 <p>Choose a prior with <code>--plane-prior</code>. <code>uniform-area</code> gives each square millimeter equal prior weight and is the default used by older maps. <code>uniform-solid-angle</code> gives each steradian equal prior weight as viewed from the detector origin (0, 0, 0) mm. Each cell receives the weight of the solid angle subtended by its full area. Use a nonzero z for this option.</p>
 <pre><code># macOS Terminal
 bash transport/macos/workflow.sh python -B tools/gegi_continuous_plane.py --acquisition .local/gegi-dual-source/NAME/report.json --calibration .local/gegi-center-calibration.npz --plane-z-mm 40 --plane-prior uniform-area
@@ -335,8 +336,18 @@ wsl.exe -d Ubuntu-24.04 --cd "$Project" -- bash transport/workflow.sh python -B 
 </details></section>
 
 <section id="advanced-routes" aria-labelledby="advanced-title">
+<details id="advanced-workflows"><summary>Advanced and historical workflows</summary>
 <h2 id="advanced-title">Advanced and historical routes</h2>
 <p>Use these only for their stated inputs and scope. They are separate from the primary Control workflow.</p>
+<details id="setup-linux"><summary>Native Linux components</summary>
+<p>The student launchers support Windows and macOS. Windows uses the locked Linux radiation-transport environment through WSL2. Native Linux users can work with the shared source, pinned Julia environment and <code>transport/pixi.lock</code>, but this release has no packaged Linux Control launcher or completed native Linux onboarding acceptance.</p>
+<p>Use the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/simulation/README.md">simulation component instructions</a> and <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/transport/README.md">transport installation checks</a> for that advanced route. Preserve the supplied locks and keep generated files under <code>.local/</code>.</p></details>
+<details id="developer-source"><summary>Developer source checkout</summary>
+<p>Developers can use a source-only checkout instead of the student ZIP:</p>
+<pre><code>git clone --filter=blob:none --sparse https://github.com/Kunming-CN/END2END_Ge_Simulation.git
+cd END2END_Ge_Simulation
+git sparse-checkout set models simulation transport scenarios tools</code></pre>
+<p>To deliberately keep the saved website offline in a Git checkout, use <code>git sparse-checkout add docs</code>. A normal full clone includes the website and repository history; use the student runtime ZIP for the usual student workflow. The full source checkout is for development. Dependencies still need the platform setup above.</p></details>
 <details id="choose"><summary>Legacy Run.cmd setup and AK02/SAP22 generic runs</summary>
 <p>This older command-line route supports AK02 and SAP22, not the ring Control adapters. Its <code>check</code> and <code>-BuildExporter</code> refer to the legacy exporter, not Control's <code>-BuildPortableSourceExporter</code>. Prepare the common dependencies and pinned originals first.</p>
 <pre><code>.\Run.cmd check
@@ -390,6 +401,7 @@ wsl.exe -d Ubuntu-24.04 --cd "$Project" -- bash transport/workflow.sh python -B 
 <summary>Keep local results and evidence</summary>
 <p><code>Open_Workspace.cmd</code> refreshes a local index of results, runs, models and evidence without launching science. Permanent archives, fields, checkpoints and unique failure records remain at their recorded paths. Follow the <a href="https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/tools/LOCAL_WORKSPACE.md">workspace guide</a> before reorganizing local files.</p>
 </details>
+</details>
 </section>
 
 <section id="browse">
@@ -410,5 +422,26 @@ wsl.exe -d Ubuntu-24.04 --cd "$Project" -- bash transport/workflow.sh python -B 
 </section>
 </main>
 <footer>GeSignal · saved results and local calculation guide.</footer>
+<script>
+(function(){
+  const panels=[...document.querySelectorAll('.setup-platform')];
+  const choices=[...document.querySelectorAll('[data-platform]')];
+  function choose(id){
+    panels.forEach(panel=>{panel.hidden=panel.id!==id;});
+    choices.forEach(button=>button.setAttribute('aria-expanded',String(button.dataset.platform===id)));
+    document.getElementById('platform-status').textContent=(id==='setup'?'Windows':'macOS')+' selected. Download the software, then follow its setup steps below.';
+  }
+  function revealAnchor(){
+    let id;try{id=decodeURIComponent(location.hash.slice(1));}catch(error){return;}
+    const target=document.getElementById(id);if(!target)return;
+    const panel=target.closest('.setup-platform');if(panel)choose(panel.id);
+    for(let parent=target;parent;parent=parent.parentElement){if(parent.tagName==='DETAILS')parent.open=true;}
+  }
+  choices.forEach(button=>button.addEventListener('click',()=>{choose(button.dataset.platform);history.replaceState(null,'','#'+button.dataset.platform);}));
+  window.addEventListener('hashchange',revealAnchor);
+  document.addEventListener('click',event=>{const link=event.target.closest('a[href^="#"]');if(link)setTimeout(revealAnchor,0);});
+  revealAnchor();
+})();
+</script>
 </body>
 </html>

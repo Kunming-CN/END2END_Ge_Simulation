@@ -316,6 +316,8 @@ def validate(site,current=False):
     # Exact 52fd55e public/HEAD bytes authenticated before the route migration.
     # Retain its positive default and all data bindings; its navigation is old.
     architecture_predecessor=not current and manifest_hash in {
+        # Exact c8d4d13 published manifest, checked against Git.
+        'f1716adcb057acad9d3a1e37b8794a6edc48c974f7d8b4e4aaa5d7beb22af71d',
         'bec647650f95d22702d7adcdf9d69a7b889caaf19d256a4e1a78898794c85d01',
         # Validated local build 65f0e01b before the browser-found fixes.
         'ac0eb13ae51c0c7a99f6f51f2442baf6b8652ac7412108bee785c43c0fcebae9'}

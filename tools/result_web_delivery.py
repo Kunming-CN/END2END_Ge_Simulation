@@ -32,6 +32,9 @@ TEACHING_SCIENCE_SHA256 = '8c93849cc98b5de06c800a67ee40f34773871162a9d6daa35522d
 # Exact 52fd55e published display, compared byte-for-byte with Git before the
 # architecture migration. Only this pair may use its historical generator hash.
 TEACHING_PREVIOUS_DISPLAYS = {
+ # Exact c8d4d13 published payload and restored source HTML, checked against Git.
+ ('cf2cd2a6c5d820710ee43a10ff1dfa510da141ed6b8670fd9f318098e39a0dfe',
+  'eb8f5313e9e6d2836adb96eed44f8dab146f3cd2d4f3eb865f5fcee4b445323c'),
  (
     '1f04da6009f9ffb810e256ae13b28c86fcf9759e0795868b0d2ba473ae775242',
     '80ae142536a7777b1ee2d7cee87bad1c31e33625862aa2169b9fbdcc62f6b591',
@@ -41,6 +44,8 @@ TEACHING_PREVIOUS_DISPLAYS = {
   '5af31339317f545fed185e75473967fd78c4088d60f87a665c490df280384d36'),
 }
 PREVIOUS_DELIVERY_RECEIPTS = {
+ # Exact c8d4d13 published receipt, checked against Git.
+ '15b1d168a3613d93cf96b200194ac7dc2d065971c39a133476f9ef08ca1d276a',
  'fdf6a1eb781e9f09a473ceb2a4e790ab221679843e191c6d27705ade15e66418',
  '84a338e98228fc2afae908ae2e8cccbba13b5a4aab2b6295fde80fce8855e2b8',
 }
@@ -291,7 +296,7 @@ def validate_teaching(site):
     page = site / teaching.PAGE
     directory(page.parent)
     require(page.is_file() and not page.is_symlink(), 'Missing or linked teaching HTML')
-    html = teaching.render(payload)
+    html = teaching.render(payload, site)
     previous = (teaching.sha(site / teaching.DATA), teaching.sha(page)) in TEACHING_PREVIOUS_DISPLAYS
     require(previous or page.read_bytes() == html.encode('utf-8'), 'Teaching rendering changed')
     return teaching.metadata(payload, page.read_text(encoding='utf-8') if previous else html)

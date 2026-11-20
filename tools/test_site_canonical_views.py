@@ -6,11 +6,102 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import site_canonical_views as views
 
 
 class CanonicalViews(unittest.TestCase):
+    def test_direct_links_preserve_queries_fragments_and_scientific_bytes(self):
+        source = b'''<!doctype html><html><body>
+<a href="strip_explorer.html?event=two_wide_equal&amp;group=0#charge">Saved event</a>
+<a href="../../viewers/geant4-assembly.html?event=26&amp;model=KMRC01_candidate#data">Assembly</a>
+<a href="../../viewers/ge-positive.html?view=assembly&amp;event=26">Explicit mode</a>
+<script type="application/json">{"original_path":"strip_explorer.html","event":26,"signed":-0.0001234567890123456}</script>
+<script>const target='../../viewers/events.html?'+location.search;const science='saved.json';</script>
+</body></html>'''
+        output = views.direct_links_html(source, 'detectors/GeGI_3D/gallery.html')
+        text = output.decode()
+        self.assertIn('href="../../results/gegi-strip-study/index.html?event=two_wide_equal&amp;group=0#charge"', text)
+        self.assertIn('href="../../results/cs137-10k/events.html?event=26&amp;model=KMRC01_candidate&amp;view=assembly#data"', text)
+        self.assertIn('href="../../results/cs137-10k/events.html?view=assembly&amp;event=26"', text)
+        self.assertIn("target='../../results/cs137-10k/events.html?'+location.search", text)
+        self.assertIn("const science='saved.json';", text)
+        original_json = re.search(rb'<script type="application/json">.*?</script>', source)[0]
+        self.assertIn(original_json, output)
+        self.assertEqual(views.direct_links_html(output, 'detectors/GeGI_3D/gallery.html'), output)
+
+    def test_direct_link_receipt_is_reversible_and_apply_is_idempotent(self):
+        with tempfile.TemporaryDirectory(dir=views.ROOT / '.local', prefix='canonical-links-') as directory:
+            site = Path(directory)
+            original = site / 'detectors/GeGI_3D/gallery.html'
+            original.parent.mkdir(parents=True)
+            raw = b'<html><body><a href="strip_explorer.html?event=cloud#charge">Saved cloud</a><script type="application/json">{"event":26}</script></body></html>'
+            original.write_bytes(raw)
+            receipt = views.apply(site)
+            self.assertEqual([row['mode'] for row in receipt['pages']], ['linked'])
+            first = original.read_bytes()
+            first_receipt = (site / views.RECEIPT).read_bytes()
+            self.assertEqual(views.apply(site), receipt)
+            self.assertEqual((site / views.RECEIPT).read_bytes(), first_receipt)
+            with views.validation_view(site) as mirror:
+                self.assertEqual((mirror / 'detectors/GeGI_3D/gallery.html').read_bytes(), raw)
+                self.assertEqual(original.read_bytes(), first)
+            self.assertTrue(views.prepare(site))
+            self.assertEqual(original.read_bytes(), raw)
+            views.apply(site)
+            self.assertEqual(original.read_bytes(), first)
+            self.assertEqual((site / views.RECEIPT).read_bytes(), first_receipt)
+
+    def test_linked_landing_pin_survives_discovery(self):
+        import site_discovery as discovery
+        with tempfile.TemporaryDirectory(dir=views.ROOT / '.local', prefix='canonical-discovery-') as directory:
+            site = Path(directory)
+            page = site / 'assemblies/index.html'
+            page.parent.mkdir(parents=True)
+            raw = b'<!doctype html><html><head><title>Assemblies</title></head><body><a href="../viewers/events.html?model=AK02&amp;view=assembly#geometry">Geometry</a></body></html>'
+            page.write_bytes(raw)
+            views.apply(site)
+            pinned = page.read_bytes()
+            discovery.assemble(site)
+            self.assertEqual(page.read_bytes(), pinned)
+            views.validate(site, current=True)
+            self.assertTrue(views.prepare(site))
+            self.assertEqual(page.read_bytes(), raw)
+
+    def test_interrupted_discovery_recovery_requires_exact_source_and_metadata(self):
+        with tempfile.TemporaryDirectory(dir=views.ROOT / '.local', prefix='canonical-recovery-') as directory:
+            site = Path(directory)
+            page = site / 'assemblies/index.html'
+            page.parent.mkdir(parents=True)
+            raw = b'<!doctype html><html><head><title>Assemblies</title></head><body><a href="../viewers/events.html?view=assembly#geometry">Geometry</a></body></html>'
+            page.write_bytes(raw)
+            receipt = views.apply(site)
+            discovered = page.read_bytes()
+            old_pin = views.direct_links_html(raw, 'assemblies/index.html')
+            receipt['pages'][0]['canonical_sha256'] = views.digest(old_pin)
+            receipt['generators']['tools/site_canonical_views.py'] = '0' * 64
+            (site / views.RECEIPT).write_text(json.dumps(receipt), encoding='utf-8')
+            with self.assertRaisesRegex(ValueError, 'Direct-link page changed'):
+                views.prepare(site)
+            page.write_bytes(discovered.replace(b'>Geometry</a>', b'>Changed science</a>'))
+            tampered = page.read_bytes()
+            with self.assertRaisesRegex(ValueError, 'existing publication stage'):
+                views.recover_discovery_metadata(site)
+            with patch.object(views, 'STAGED_ROOT', site), \
+                 self.assertRaisesRegex(ValueError, 'beyond exact discovery metadata'):
+                views.recover_discovery_metadata(site)
+            self.assertEqual(page.read_bytes(), tampered)
+            page.write_bytes(discovered)
+            with patch.object(views, 'STAGED_ROOT', site):
+                recovered = views.recover_discovery_metadata(site)
+            self.assertEqual(recovered, [dict(path='assemblies/index.html',
+                discovered_sha256=views.digest(discovered), restored_sha256=views.digest(old_pin),
+                source_proven=True)])
+            self.assertEqual(page.read_bytes(), old_pin)
+            self.assertTrue(views.prepare(site))
+            self.assertEqual(page.read_bytes(), raw)
+
     def test_urls_rebase_once_and_saved_payload_stays_exact(self):
         source = b'''<!doctype html><html><head><title>saved</title></head><body>
 <a href="../spectra/cs137-10k.html?model=AK02&amp;event=213#tenk-AK02">Spectrum</a>

@@ -19,6 +19,7 @@ class ResultDeliveryTests(unittest.TestCase):
         cls.accepted_payload = json.loads((teaching.ROOT / 'docs' / teaching.DATA).read_bytes())
         cls.accepted_payload['provenance']['generator_sha256'] = {
             name: teaching.sha(teaching.ROOT / name) for name in teaching.GENERATORS}
+        cls.accepted_presentation = teaching.presentation(teaching.ROOT / 'docs', cls.accepted_payload)
 
     def setUp(self):
         owned = teaching.ROOT / '.local/publication-cleanup'
@@ -57,6 +58,9 @@ class ResultDeliveryTests(unittest.TestCase):
         self.start_patch(patch.object(D, 'SOURCE_MANIFEST_SHA256', D.stamp(body)['sha256']))
         self.start_patch(patch.object(D, 'OMITTED_BYTES', sum(self.source['files'][name]['bytes'] for name in D.OMITTED)))
         self.original_check = self.start_patch(patch.object(D.original, 'validate_bundle', return_value=self.source))
+        # These fixtures test exact omission/retention, not the published-file
+        # inventory exercised with all six real cases by test_teaching_examples.
+        self.start_patch(patch.object(teaching, 'presentation', return_value=self.accepted_presentation))
         payload = copy.deepcopy(self.accepted_payload)
         for name, body in ((teaching.DATA, teaching.canonical(payload).encode()),
                            (teaching.PAGE, teaching.render(payload).encode())):

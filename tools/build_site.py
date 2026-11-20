@@ -475,8 +475,12 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         from site_canonical_views import prepare
         prepare(OUT)
         if gegi_commercial_acquisition is not None:
-            from gegi_commercial_acquisition_display import attach
-            attach(OUT, gegi_commercial_acquisition)
+            from gegi_commercial_acquisition_display import IMAGE, attach
+            from gegi_commercial_dual_figure import plot
+            # Render only saved spectra, maps and ADC samples into owned staging.
+            # Keep the original campaign figure and all scientific inputs intact.
+            plot(gegi_commercial_acquisition, OUT / IMAGE)
+            attach(OUT, gegi_commercial_acquisition, figure_path=OUT / IMAGE)
         elif gegi_source_exposure is not None:
             attach_source_exposure(OUT, gegi_source_exposure)
         elif gegi_event_energy is not None:
@@ -677,7 +681,11 @@ def finish_staged(refresh_readout=False, refresh_presentation=False):
     if not (DESTINATION / MANIFEST).is_file() or (ROOT / '.local/site-previous').exists():
         raise ValueError('Inspect the installed snapshot or pending atomic swap before recovery')
     if refresh_presentation:
-        from site_canonical_views import prepare
+        from site_canonical_views import prepare, recover_discovery_metadata
+        if (OUT / 'canonical-views.json').is_file():
+            repairs = recover_discovery_metadata(OUT)
+            if repairs:
+                print(json.dumps({'recovered_discovery_metadata': repairs}), flush=True)
         prepare(OUT)
         # Repair only the precisely reversible discovery metadata from the
         # interrupted architecture export. Its original body must match the

@@ -21,18 +21,18 @@
     "examples/cs137-10k-rings/KMRC01_candidate/response/histograms.json": "11cfbed9fd93db18528a1a73f25a298fa554fd70c9f3136203468970a5c053e3"
   },
   "generators": {
-    "tools/spectrum_display.py": "ab93e0dc95af9fe4fb184ea76ea6f5bb91f18925b00c21c3e2e7442ffff540ae",
+    "tools/spectrum_display.py": "6917de53a11ca715a0b53088848334261a126490d2335c7ca06c385f789e384c",
     "tools/spectrum_plot.py": "f00dbf5efdb393f03eebd501cb71a74bbd268fc3f0cff240de9a7eb54948a29c",
     "tools/spectrum_controls.js": "804a9ea72a1347ebffa3d0a4caba64aa136ff3ab700190ca6a0e654f81601b5a",
-    "tools/viewer_navigation.py": "00ba2c40ef9def0afb0453806b1f2946507f68f7e4232aa0f7f82d621dd27eb6",
+    "tools/viewer_navigation.py": "240a08dd67fbf89ccbe77a2a4cb71e444d965674a4d2fd678ab3a41662d0e6f5",
     "tools/viewer_navigation.js": "5f3f4c0062b4da291669bead6451fd611e30cd15061439695130269b5454709c",
-    "tools/ring_site.py": "43684c4e127de0f68f00032abb224ea130ba8e2d4ac72be12049fe87e2c875a2",
-    "tools/site_restructure.py": "fe93f22d5d25c64f3595a37a54f9524bb5f67fe3d757b2f91bcc38e1f63deafe",
-    "tools/site_routes.py": "2261f5c4e8deb91e14005e4684dfb736a75d01f010c5b20f3311a28cde2853b4",
-    "tools/teaching_examples.py": "d8550e168908144fcbc978e85dbd061028530f46b5ea76c50d2bb775d001ba08",
-    "tools/teaching_examples.html": "6189624c1fa5353eac0fa0d986d8d34e37997e4b34dce1450465baecf3a4c909",
+    "tools/ring_site.py": "24b40942161da9cca54218b6a12a1a6eb78b8f02280b6cbee9d0f63dc508b5d6",
+    "tools/site_restructure.py": "336ca6d403cd91f581a7e853170e5cce95fb3df4d3bf7a0965765a3a9237d180",
+    "tools/site_routes.py": "1d30372488ff152f8face57587dd354f9fe227c2afe82db3fdbbff96a49ab73b",
+    "tools/teaching_examples.py": "bb2cda83eccdf74b8acd9923089d60105118d2fdcf2d579ccad4688ba37f391b",
+    "tools/teaching_examples.html": "a6617c8ec613864d52c1658f4f985e1d865db3c7ab4179856f5ba020fc9e02a9",
     "tools/focused_plots.js": "230c98bb7f41a5437f483aa9e168b8476a06b9d6ac4a782ba7681ce442ba49eb",
-    "tools/result_web_delivery.py": "579217bf0b64504d179b81547860c215c821dc0a133eafe830e6e671014ecbe0"
+    "tools/result_web_delivery.py": "c60a05324eb307a930ec2afe84b8c34e3b3764b5f177face507f6c4946ea64cd"
   },
   "pages": {
     "spectra/million-truth.html": {

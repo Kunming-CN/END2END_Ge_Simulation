@@ -1,4 +1,4 @@
-"""Plot the measured spectrum, a shared-clock ADC window and blind line images."""
+"""Plot saved historical-library replay spectra, an ADC window and blind maps."""
 
 import argparse
 from hashlib import sha256
@@ -98,10 +98,11 @@ def plot(campaign, output):
     markers = [Line2D([], [], linestyle='', marker='x', color='#196249', label='Programmed source'),
                Line2D([], [], linestyle='', marker='o', markerfacecolor='none', color='#32424d', label='Blind maximum')]
     spectrum.legend(handles=markers, loc='upper right', frameon=False, fontsize=9, title='Map symbols')
-    fig.suptitle(f"Simultaneous GeGI acquisition  |  Cs-137 185 kBq + Co-60 37 kBq\n"
-                 f"{live:g} s on clock, {qualified:.3f} s qualified  |  "
-                 f"{len(result['completed_blocks'])}/{len(result['planned_blocks'])} exposures",
-                 fontsize=15)
+    windows = len(result['completed_blocks'])
+    fig.suptitle(f"GeGI historical source-library replay  |  Cs-137 185 kBq + Co-60 37 kBq\n"
+                 f"{windows} independent {live/windows*1000:g} ms windows; electronics reset between windows\n"
+                 f"{live:g} s summed clock time, {qualified:.3f} s qualified",
+                 fontsize=14)
     tmp = output.with_suffix('.tmp')
     fig.savefig(tmp, format='png', dpi=150, facecolor='white',
                 metadata={'Description': 'results_sha256=' + sha256(raw).hexdigest(),

@@ -312,12 +312,51 @@ def build_payload(site):
     return payload
 
 
-def render(payload):
+def presentation(site, payload):
+    """Published choices and exact crystal sections, separate from saved science."""
+    from result_web_delivery import OMITTED, PREFIX
+    omitted = {PREFIX + "/" + name for name in OMITTED}
+    choices = (("run.json", "Parameters and run settings · JSON"),
+               ("scalars.jsonl", "Scalar records · JSON Lines"),
+               ("scalars.csv", "Scalar records · CSV"),
+               ("histograms.json", "Stage histograms · JSON"),
+               ("signals.csv", "Full native charge signals · CSV"),
+               ("ledgers.zip", "Complete source ledgers · ZIP"))
+    result = {}
+    for model, settings in payload["models"].items():
+        folder = settings["source_folder"]
+        downloads = [{"name": name, "label": label} for name, label in choices
+                     if folder + "/" + name not in omitted
+                     and (Path(site) / folder / name).is_file()]
+        require({"run.json", "histograms.json", "signals.csv"} <=
+                {row["name"] for row in downloads}, "Published teaching files incomplete: " + model)
+        source = ROOT / "models" / (model + ".yaml")
+        require(sha(source) == settings["settings"]["model_sha256"],
+                "Teaching crystal source changed: " + model)
+        # The four frozen teaching models all use this explicit polycone block.
+        # This narrow display reader is not a general scientific YAML parser.
+        section = re.search(r"\n    geometry:\n      polycone:\n        r:\n(.*?)\n        z:\n(.*?)\n  contacts:",
+                            source.read_text(encoding="utf-8"), re.S)
+        require(section is not None, "Teaching crystal polycone missing: " + model)
+        vectors = [[float(line.strip()[2:]) for line in block.splitlines()]
+                   for block in section.groups()]
+        require(len(vectors[0]) == len(vectors[1]) >= 4 and
+                all(math.isfinite(v) for vector in vectors for v in vector),
+                "Teaching crystal section invalid: " + model)
+        result[model] = {"downloads": downloads, "archive_available":
+                         any(row["name"] == "ledgers.zip" for row in downloads),
+                         "crystal": {"r_mm": vectors[0], "z_mm": vectors[1]}}
+    return result
+
+
+def render(payload, site=None):
     template = (ROOT / "tools/teaching_examples.html").read_text(encoding="utf-8")
     require(template.count("__TEACHING_DATA_JSON__") == template.count("__FOCUSED_PLOTS_JS__") ==
-            template.count("__PAGE_NAVIGATION__") == 1, "Teaching template tokens changed")
+            template.count("__PAGE_NAVIGATION__") == template.count("__PRESENTATION_JSON__") == 1,
+            "Teaching template tokens changed")
     data = canonical(payload).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     return template.replace("__TEACHING_DATA_JSON__", data).replace(
+        "__PRESENTATION_JSON__", canonical(presentation(site or ROOT / "docs", payload))).replace(
         "__FOCUSED_PLOTS_JS__", (ROOT / "tools/focused_plots.js").read_text(encoding="utf-8")).replace(
         "__PAGE_NAVIGATION__", page_navigation(PAGE, dataset="teaching"))
 
@@ -341,7 +380,7 @@ def write_if_changed(path, data):
 def assemble(site):
     site = Path(site)
     payload = build_payload(site)
-    html = render(payload)
+    html = render(payload, site)
     write_if_changed(site / DATA, canonical(payload).encode())
     write_if_changed(site / PAGE, html.encode())
     return metadata(payload, html)
@@ -355,7 +394,7 @@ def validate(site):
     require((site / DATA).is_file() and (site / PAGE).is_file(), "Partial teaching output")
     require(not (site / DATA).is_symlink() and not (site / PAGE).is_symlink(), "Linked teaching output")
     payload = build_payload(site)
-    html = render(payload)
+    html = render(payload, site)
     data_bytes, page_bytes = (site / DATA).read_bytes(), (site / PAGE).read_bytes()
     saved_hashes = (hashlib.sha256(data_bytes).hexdigest(), hashlib.sha256(page_bytes).hexdigest())
     if saved_hashes == PREVIOUS_DISPLAY or saved_hashes in PUBLISHED_PREVIOUS_DISPLAYS:

@@ -20,11 +20,12 @@ import posixpath
 import re
 import shutil
 import tempfile
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlsplit
 
 from site_routes import CANONICAL_VIEWS, page_navigation
 
 ROOT = Path(__file__).resolve().parents[1]
+STAGED_ROOT = ROOT / '.local/site-build'
 RECEIPT = 'canonical-views.json'
 KIND = 'saved_canonical_views_v1'
 SOURCES = ('tools/site_canonical_views.py', 'tools/site_routes.py',
@@ -85,13 +86,64 @@ def rebase_url(value, old, new, *, canonical=True):
     # adding a saved source folder. Keep their trailing slash after relocation.
     trailing = url.path.endswith('/')
     target = CANONICAL_VIEWS.get(resolved, resolved) if canonical else resolved
+    query = url.query
+    if canonical and resolved in VIEWER_ALIASES:
+        target = CANONICAL_VIEWS['viewers/events.html']
+        if not any(key == 'view' for key, _ in parse_qsl(query, keep_blank_values=True)):
+            query += ('&' if query else '') + 'view=' + VIEWER_ALIASES[resolved]
     path = posixpath.relpath(target, posixpath.dirname(new))
     if trailing and not path.endswith('/'):
         path += '/'
     # urlunsplit drops an empty '?' delimiter, which is significant in a JS
     # prefix immediately followed by a saved-selection query string.
-    return (path + ('?' + url.query if '?' in value.split('#', 1)[0] else '')
+    return (path + ('?' + query if query or '?' in value.split('#', 1)[0] else '')
             + ('#' + url.fragment if '#' in value else ''))
+
+
+def direct_url(value, path):
+    """Change only links to compatibility addresses, retaining saved selections."""
+    if not value or value.startswith(('#', '?', '/', '//')):
+        return value
+    url = urlsplit(value)
+    if url.scheme or url.netloc or not url.path:
+        return value
+    resolved = posixpath.normpath(posixpath.join(posixpath.dirname(path), url.path))
+    if resolved not in CANONICAL_VIEWS and resolved not in VIEWER_ALIASES:
+        return value
+    return rebase_url(value, path, path)
+
+
+def direct_links_html(raw, path):
+    """Rewrite display destinations without modifying embedded scientific JSON."""
+    def markup(text):
+        def attr(match):
+            href = direct_url(unescape(match['url']), path)
+            if href == unescape(match['url']):
+                return match[0]
+            return match['key'] + '=' + match['quote'] + escape(href, quote=True) + match['quote']
+        return ATTR.sub(attr, text)
+    text = raw.decode('utf-8')
+    parts, cursor = [], 0
+    for match in SCRIPT.finditer(text):
+        parts.append(markup(text[cursor:match.start()]))
+        opening, body, closing = match.groups()
+        if not re.search(r'type\s*=\s*[\"\x27]application/(?:ld\+)?json[\"\x27]', opening, re.I):
+            body = URL_STRING.sub(lambda m: m['quote'] + direct_url(m['url'], path) + m['quote'], body)
+        parts.append(markup(opening) + body + closing)
+        cursor = match.end()
+    parts.append(markup(text[cursor:]))
+    return ''.join(parts).encode('utf-8')
+
+
+def linked_html(raw, path):
+    output = direct_links_html(raw, path)
+    if output != raw:
+        # Discovery runs after canonical relocation. Pin its deterministic
+        # landing metadata now so that it cannot invalidate a links-only page.
+        from site_discovery import LANDINGS, landing_metadata_html
+        if path in LANDINGS:
+            output = landing_metadata_html(output.decode('utf-8'), path, LANDINGS[path]).encode('utf-8')
+    return output
 
 
 def rebase_markup(text, old, new):
@@ -202,7 +254,7 @@ def framed_html(raw, path):
     if path == 'assemblies/gegi/index.html':
         from site_discovery import LANDINGS, landing_metadata_html
         text = landing_metadata_html(text, path, LANDINGS[path])
-    return text.encode('utf-8')
+    return direct_links_html(text.encode('utf-8'), path)
 
 
 def source_bytes(record):
@@ -233,10 +285,18 @@ def validate(site, current=False):
     expected = {old for old in CANONICAL_VIEWS if (site / old).is_file()}
     expected.update(old for old in VIEWER_ALIASES if (site / old).is_file())
     expected.update(old for old in FRAMED_PAGES if (site / old).is_file())
+    expected.update(row['source'] for row in receipt['pages'] if row['mode'] == 'linked')
     require({row['source'] for row in receipt['pages']} == expected,
             'Canonical source page inventory differs')
     for row in receipt['pages']:
         raw = source_bytes(row)
+        if row['mode'] == 'linked':
+            output = local_path(site, row['source']).read_bytes()
+            require(digest(output) == row['canonical_sha256'], 'Direct-link page changed: ' + row['source'])
+            if same_sources:
+                require(output == linked_html(raw, row['source']),
+                        'Direct-link page differs from saved source: ' + row['source'])
+            continue
         if row['mode'] == 'framed':
             output = local_path(site, row['source']).read_bytes()
             require(digest(output) == row['canonical_sha256'], 'Framed report changed: ' + row['source'])
@@ -264,6 +324,46 @@ def write_owned(path, data):
     if path.exists():
         path.unlink()
     path.write_bytes(data)
+
+
+def recover_discovery_metadata(site):
+    """Undo only an exact, source-proven post-pin discovery transform in a stage.
+
+    Normal validation remains strict. The interrupted publisher may explicitly
+    call this before prepare(), then regenerate the presentation from its exact
+    saved source. Every other receipt-bound page must already match its pin.
+    """
+    from site_discovery import LANDINGS, landing_metadata_html
+    site = Path(site)
+    require(site.resolve() == STAGED_ROOT.resolve(),
+            'Discovery recovery requires the existing publication stage')
+    receipt = read_receipt(site)
+    repairs = []
+    for row in receipt['pages']:
+        raw = source_bytes(row)
+        checks = []
+        if row['canonical_sha256']:
+            checks.append((row['canonical'], row['canonical_sha256']))
+        if row['alias_sha256']:
+            checks.append((row['source'], row['alias_sha256']))
+        for name, pinned in checks:
+            actual = local_path(site, name).read_bytes()
+            if digest(actual) == pinned:
+                continue
+            require(row['mode'] == 'linked' and name == row['source'] and name in LANDINGS,
+                    'Staged page differs beyond recoverable discovery metadata: ' + name)
+            expected = direct_links_html(raw, name)
+            require(digest(expected) == pinned,
+                    'Staged direct-link pin cannot be reproduced from source: ' + name)
+            discovered = landing_metadata_html(expected.decode('utf-8'), name, LANDINGS[name]).encode('utf-8')
+            require(actual == discovered,
+                    'Staged page differs beyond exact discovery metadata: ' + name)
+            repairs.append((name, expected, digest(actual)))
+    for name, expected, _ in repairs:
+        write_owned(local_path(site, name), expected)
+    validate(site)
+    return [dict(path=name, discovered_sha256=actual_hash, restored_sha256=digest(expected),
+                 source_proven=True) for name, expected, actual_hash in repairs]
 
 
 def prepare(site):
@@ -318,6 +418,20 @@ def apply(site):
         output = framed_html(raw, name)
         write_owned(path, output)
         records.append(dict(source=name, canonical=name, mode='framed', view=None,
+                            source_sha256=digest(raw), source_bytes=len(raw),
+                            source_gzip_base64=base64.b64encode(gzip.compress(raw, mtime=0)).decode('ascii'),
+                            canonical_sha256=digest(output), alias_sha256=None))
+    handled = {row[key] for row in records for key in ('source', 'canonical')}
+    for path in sorted(site.rglob('*.html')):
+        name = path.relative_to(site).as_posix()
+        if name in handled:
+            continue
+        raw = path.read_bytes()
+        if direct_links_html(raw, name) == raw:
+            continue
+        output = linked_html(raw, name)
+        write_owned(path, output)
+        records.append(dict(source=name, canonical=name, mode='linked', view=None,
                             source_sha256=digest(raw), source_bytes=len(raw),
                             source_gzip_base64=base64.b64encode(gzip.compress(raw, mtime=0)).decode('ascii'),
                             canonical_sha256=digest(output), alias_sha256=None))

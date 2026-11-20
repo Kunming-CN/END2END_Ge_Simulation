@@ -67,7 +67,7 @@ def compact_priors(prior, result, config, cobalt):
     return comparisons
 
 
-def attach(site, campaign):
+def attach(site, campaign, *, figure_path=None):
     raw = (campaign/'results.json').read_bytes()
     result = json.loads(raw)
     clock = result['clock_reference']
@@ -96,7 +96,7 @@ def attach(site, campaign):
     prior_sha = sha256(prior_raw).hexdigest()
     if intervals['alternate_prior_sha256'] != prior_sha:
         raise ValueError('The sampling intervals refer to a different prior comparison')
-    figure = (campaign/IMAGE.name).read_bytes()
+    figure = (figure_path if figure_path is not None else campaign/IMAGE.name).read_bytes()
     with Image.open(BytesIO(figure)) as image:
         if (image.format != 'PNG' or image.info.get('Description') != f'results_sha256={results_sha}'
                 or image.info.get('AlternatePriorSHA256') != prior_sha):

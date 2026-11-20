@@ -70,7 +70,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertEqual(set(panels),{'gegi-shared-readout','gegi-campaign','teaching','tenk','million','gamma'})
         return panels
 
-    def test_catalog_has_four_visible_main_studies_and_distinct_historical_topics(self):
+    def test_catalog_has_four_visible_main_studies_and_closed_supporting_topics(self):
         root=self.fixture(with_results=True)
         formal=root/'results/gegi-campaign';formal.mkdir(parents=True)
         (formal/'publication.json').write_text('{}')
@@ -85,21 +85,31 @@ class SiteStructureTests(unittest.TestCase):
         scope=DisclosureScopes();scope.feed(html)
         for ident in ('gegi-shared-readout','gegi-campaign','tenk','million'):
             self.assertEqual(scope.ids[ident],(),ident)
-        self.assertIn('434 conditional signal groups; 434 selected for the joint map; 837 candidate orders',panels['gegi-campaign'])
-        self.assertIn('708-group historical control',panels['gegi-campaign'])
-        self.assertIn('40-iteration budget',panels['gegi-campaign'])
-        self.assertIn('25 independent windows, 6.25 s total clock',panels['gegi-shared-readout'])
+        self.assertLess(html.index('id="teaching"'),html.index('id="main-studies"'))
+        self.assertEqual(scope.ids['teaching'],())
+        self.assertEqual(len(re.findall('data-study=',html)),4)
+        for ident in ('gegi-shared-readout','gegi-campaign','tenk','million'):
+            for label in ('Question:','What you can see:','Key condition:'):
+                self.assertEqual(panels[ident].count(label),1)
+            self.assertNotIn('<dl>',panels[ident])
+        self.assertNotIn('434',panels['gegi-campaign'])
+        self.assertNotIn('708-group',panels['gegi-campaign'])
+        self.assertIn('25 independent 250 ms windows',panels['gegi-shared-readout'])
         self.assertIn('archived',panels['gegi-shared-readout'].lower())
-        self.assertIn('4',panels['gegi-campaign'])
-        self.assertIn('10,000 initial decays per case',panels['tenk'])
-        self.assertIn('Li50min',panels['tenk']);self.assertIn('231',panels['tenk'])
-        self.assertIn('1,000,000 initial Cs-137 decays per detector',panels['million'])
+        self.assertIn('Four separate acquisitions',panels['gegi-campaign'])
+        self.assertIn('selected original events',panels['tenk'])
+        self.assertIn('Two separate million-decay runs',panels['million'])
         for topic in ('gegi-short-exposure','gegi-shared-clock-controls','gegi-plane-prior-study',
                       'gegi-position-calibration','gegi-double-pulse','gegi-pairing-benchmark'):
-            self.assertIn('href="'+topic+'/index.html"',html)
+            self.assertIn((topic+'/index.html',('research-details',)),scope.links)
         for topic in ('native-li-selected-events','lithium-diagnostics','gegi-strip-study','gegi-notebook-study'):
-            self.assertIn('href="'+topic+'/index.html"',html)
+            self.assertIn((topic+'/index.html',('research-details',)),scope.links)
         self.assertIn('original-native/summary.html',html)
+        native=next(closed for href,closed in scope.links if 'original-native/summary.html' in href)
+        self.assertEqual(native,('research-details',))
+        self.assertEqual(scope.ids['gamma'],('historical-archive',))
+        for href in ('../examples/gamma-native/gamma.html','../examples/gegi/index.html'):
+            self.assertIn((href,('historical-archive',)),scope.links)
         self.assertIn('0/231',html)
         self.assertIn('historical-studies',scope.ids);self.assertIn('earlier-studies-title',scope.ids)
         ids=re.findall(r'\bid="([^"]+)"',html)
@@ -225,7 +235,7 @@ class SiteStructureTests(unittest.TestCase):
 
     def test_guide_follows_task_order_and_preserves_old_anchors_and_scopes(self):
         root=self.fixture();S.apply(root);guide=(root/'guide.html').read_text()
-        order=('download-software','setup','setup-macos','setup-linux','local-control','find-results','control-recovery','saved-analysis','troubleshooting')
+        order=('platform-choice','download-software','setup','setup-macos','local-control','find-results','control-recovery','saved-analysis','troubleshooting','advanced-routes','setup-linux','developer-source')
         offsets=[guide.index('id="'+ident+'"') for ident in order]
         self.assertEqual(offsets,sorted(offsets))
         ids=re.findall(r'\bid="([^"]+)"',guide);self.assertEqual(len(ids),len(set(ids)))
@@ -234,6 +244,23 @@ class SiteStructureTests(unittest.TestCase):
             self.assertRegex(guide,r'<details id="'+name+r'">')
         self.assertIn('1,143,142 bytes',guide);self.assertIn('303,891,603 bytes',guide)
         self.assertIn('student-runtime-f44859b48267',guide)
+        self.assertEqual(guide.count('https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/download/student-runtime-f44859b48267/gegi-center-calibration.npz'),2)
+        self.assertNotRegex(guide,r'href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases"')
+        for ident in ('setup','setup-macos'):
+            self.assertIn('<section id="'+ident+'" class="setup-platform" hidden>',guide)
+            self.assertIn('data-platform="'+ident+'" aria-controls="'+ident+'" aria-expanded="false"',guide)
+        self.assertIn('panel.hidden=panel.id!==id',guide)
+        self.assertIn("window.addEventListener('hashchange',revealAnchor)",guide)
+        self.assertIn("target.closest('.setup-platform')",guide)
+        scope=DisclosureScopes();scope.feed(guide)
+        self.assertEqual(scope.ids['setup-linux'],('advanced-workflows','setup-linux'))
+        self.assertEqual(scope.ids['developer-source'],('advanced-workflows','developer-source'))
+        self.assertIn('SAP22 · Cs-137 · 100 initial decays',guide)
+        self.assertIn('source/capsule angle <strong>+30°</strong>',guide)
+        self.assertIn('radiation seed <strong>26092631</strong>',guide)
+        self.assertIn('97 zero-deposit primaries and three accepted groups',guide)
+        self.assertIn('.local/runs/sap22-first/',guide)
+        self.assertIn('What completion looks like:',guide)
         self.assertIn('no packaged Linux Control launcher',guide)
         self.assertIn('field caches and calibration banks are excluded',guide)
         self.assertIn('four independent GeGI source acquisitions',guide)
@@ -246,7 +273,7 @@ class SiteStructureTests(unittest.TestCase):
         self.assertEqual(len(resume_lines),2)
         self.assertTrue(all('-Detector' not in line and '-PrimaryIds' not in line for line in resume_lines))
 
-    def test_conditional_summary_never_becomes_imaging_acceptance(self):
+    def test_compact_directory_preserves_the_separate_conditional_summary(self):
         root=self.fixture();formal=root/'results/gegi-campaign';formal.mkdir(parents=True)
         (formal/'publication.json').write_text('{}')
         (formal/'summary.json').write_text(json.dumps({'kind':'gegi_saved_publication_v3','initial_records':1000000,
@@ -254,9 +281,9 @@ class SiteStructureTests(unittest.TestCase):
         original=(formal/'summary.json').read_bytes()
         with patch('gegi_campaign_publication.validate_bundle'):S.apply(root)
         text=(root/'results/index.html').read_text()
-        self.assertIn('434 conditional signal groups',text)
-        self.assertIn('162 selected for the joint map',text)
-        self.assertIn('Same-energy source separation remains unresolved',text)
+        self.assertNotIn('434 conditional signal groups',text)
+        self.assertNotIn('162 selected for the joint map',text)
+        self.assertIn('conditional candidates retain pairing and interaction-order ambiguity',text)
         self.assertNotIn('imaging-accepted',text)
         self.assertEqual((formal/'summary.json').read_bytes(),original)
 

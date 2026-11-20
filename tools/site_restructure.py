@@ -121,7 +121,7 @@ READER_STYLE = '''
 .reader-intro h1{font-size:clamp(2rem,4vw,2.75rem);line-height:1.1;margin:0 0 10px}
 .reader-intro p{margin:0;color:#405d6c}
 .reader-page .panel{margin:0 0 24px}.study-cards{margin:16px 0 32px;align-items:stretch}.study-cards h2{font-size:23px;line-height:1.3}.study-cards dl{font-size:15px}.study-cards dt{font-weight:700;margin-top:10px}.study-cards dd{margin:2px 0 0}.topic-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 28px}.topic-grid h3{font-size:18px;margin:12px 0 6px}.topic-grid p{margin-top:0}@media(max-width:760px){.topic-grid{grid-template-columns:1fr}}
-.reader-page .panel h2:first-child{margin-top:0}
+.reader-page .panel h2:first-child{margin-top:0}.study-cards .study-question{font-size:16px}.study-cards strong{color:#173047}.research-details>.topic-grid{margin-bottom:20px}
 .reader-page details{padding:10px 0}
 .reader-page .panel>details+details{border-top:1px solid #d7e0e7}
 .reader-page summary{font-weight:650;padding:6px 0}
@@ -172,60 +172,41 @@ def write_reader_pages(site):
     write_page(site/'index.html','GeSignal — HPGe Radiation-to-Readout Simulation',homepage(commercial),0,
                fold_footer=True,extra_style=HOME_STYLE)
 
-    def study(ident,title,purpose,nature,sample,outputs,limit,url,available=True):
+    def study(ident,title,question,outputs,condition,url,available=True):
         action=('<p><a href="'+url+'">Open study →</a></p>' if available else '<p>Unavailable in this saved snapshot.</p>')
         return ('<article class="card" id="'+ident+'" data-study="'+ident+'"><h2>'+title+'</h2>'
-                '<p>'+purpose+'</p><dl><dt>Data</dt><dd>'+nature+'</dd><dt>Sample</dt><dd>'+sample+'</dd>'
-                '<dt>Outputs</dt><dd>'+outputs+'</dd></dl><p class="muted">'+limit+'</p>'+action+'</article>')
+                '<p class="study-question"><strong>Question:</strong> '+question+'</p>'
+                '<p><strong>What you can see:</strong> '+outputs+'</p>'
+                '<p class="muted"><strong>Key condition:</strong> '+condition+'</p>'+action+'</article>')
 
     formal=site/'results/gegi-campaign'
     campaign_available=(formal/'publication.json').is_file()
-    campaign_outputs='Conditional source-plane images, candidate cones, historical spectra and signal examples.'
-    campaign_limit='Exact populations and saved iteration status are reported inside the study.'
-    if campaign_available:
-        summary=read(formal/'summary.json')
-        if summary.get('kind')=='gegi_saved_publication_v3':
-            groups=summary['counts']['conditional_candidate_groups']
-            selected=summary['selected_conditional_imaging_groups']
-            orders=summary['counts'].get('conditional_candidates')
-            campaign_outputs=f'{groups:,} conditional signal groups; {selected:,} selected for the joint map'
-            if orders is not None:campaign_outputs+=f'; {orders:,} candidate orders'
-            campaign_outputs+='; separate 708-group historical control.'
-            campaign_limit='The conditional image reached its 40-iteration budget; convergence remains unestablished. Same-energy source separation remains unresolved.'
-        else:
-            accepted=sum(row['counts']['imaging_accepted_groups'] for row in summary['groups'].values())
-            campaign_outputs=f'{summary["processed_initial_records"]:,} initial records and {accepted:,} imaging-accepted pulse groups in this earlier snapshot.'
 
     results='''<div class="reader-page"><header class="reader-intro"><h1>Research results</h1>
-<p>Choose a study by its question and saved sample. Each study keeps its original models, counts, event identities and data.</p></header>
+<p>Choose a question to explore. Original samples, event identities, counts and data are inside each study.</p></header>
+<section class="panel" id="teaching"><h2>Start with one saved signal</h2><p><a href="../learn/signals/index.html">Follow six selected 10K events from energy deposits to readout</a>. Each example keeps its model variant, primary and pulse-group identity.</p></section>
 <section aria-labelledby="main-studies"><h2 id="main-studies">Main studies</h2><div class="grid study-cards">'''
     results+=study('gegi-shared-readout','GeGI shared readout · 25 × 250 ms',
         'How do shared electronics and imaging priors affect a two-source readout?',
-        'Archived single-isotope histories sampled with replacement; shared 34-electrode electronics.',
-        '25 independent windows, 6.25 s total clock, with electronics reset between windows.',
         'Energy spectra, source-plane images, sampling variation and prior sensitivity.',
-        'Historical library replay; the planned continuous joint-source acquisition is a separate design.',
+        'Archived-library replay in 25 independent 250 ms windows, with electronics reset between windows.',
         'gegi-shared-readout/index.html',commercial)
     results+=study('gegi-campaign','GeGI four independent source acquisitions',
         'Which interaction candidates support a conditional Compton image?',
-        'Four separate radiation and charge acquisitions at two positions.',
-        'Two 662 keV photon runs of 200,000 primaries each; Cs-137 and Co-60 runs of 300,000 initial records each.',
-        campaign_outputs,campaign_limit,'gegi-campaign/index.html',campaign_available)
+        'Conditional source-plane images, candidate cones, spectra and signal examples.',
+        'Four separate acquisitions; conditional candidates retain pairing and interaction-order ambiguity.',
+        'gegi-campaign/index.html',campaign_available)
     results+=study('tenk','Cs-137 10K · four detector cases',
-        'Follow radiation, charge and readout across four distinct detector cases.',
-        'Independent AK02, SAP22, GeRC02 Li50min and KMRC01 candidate simulations.',
-        '10,000 initial decays per case.',
+        'How do radiation deposits become measured energy in four detector cases?',
         'Readout, stage spectra, original event records and data ledgers.',
-        'Saved waveforms: four each for AK02, SAP22 and GeRC02; 231 for KMRC01 candidate. Scalar ledgers have broader coverage.',
+        'Independent detector runs; saved waveforms cover selected original events.',
         'cs137-10k/index.html',(site/'examples/cs137-10k/comparison.html').is_file())
     results+=study('million','Cs-137 1M · AK02 and SAP22',
-        'Compare deposition truth and measured-energy response at a larger sample size.',
-        'Two independent detector runs, separate from the 10K study.',
-        '1,000,000 initial Cs-137 decays per detector.',
+        'How do deposition truth and measured-energy spectra differ at a larger sample size?',
         'Deposition and response spectra, group records and failure counts.',
-        'Isolated 100 µs reset windows; no activity or pileup acquisition model. This study has no published 3D event viewer.',
+        'Two separate million-decay runs with isolated 100 µs reset windows.',
         'cs137-1m/index.html',all((site/path).is_file() for path in ('examples/cs137-1m/summary.json','examples/cs137-1m-response/summary.json')))
-    results+='</div></section><section class="panel" id="historical-studies" aria-labelledby="earlier-studies-title"><h2 id="earlier-studies-title">GeGI readout and imaging questions</h2><p>Earlier samples and controls remain distinct within each topic.</p><div class="topic-grid">'
+    results+='</div></section><section class="panel"><details id="research-details" class="research-details"><summary>Methods, diagnostics and deeper research</summary><p><a href="../methods/index.html">Read the signal-chain methods</a>, or open the evidence for a specific question. Samples and controls remain distinct within each topic.</p><section id="historical-studies" aria-labelledby="earlier-studies-title"><h2 id="earlier-studies-title">GeGI readout and imaging questions</h2><div class="topic-grid">'
     topics=(
         ('gegi-short-exposure','Short exposures and energy reconstruction','Early 250 ms exposures, hit maps and single-pixel versus multi-strip energy.'),
         ('gegi-shared-clock-controls','Shared clock and merged triggers','The 3,905-trigger census, 324 two-strip records and controlled studies of triggers 683 and 598.'),
@@ -241,10 +222,9 @@ def write_reader_pages(site):
 <article><h3><a href="gegi-strip-study/index.html">GeGI early strip signals</a></h3><p>20 synthetic deposit and charge-cloud examples, 34 channels, truth points and induced signals.</p></article>
 <article><h3><a href="gegi-notebook-study/index.html">GeGI executed fields and signals notebook</a></h3><p>Saved historical outputs under their recorded parameters; the notebook is separate from later acquisition studies.</p></article>
 <article><h3><a href="../examples/cs137-10k-rings/KMRC01_candidate/response/original-native/summary.html">KM native negative-charge readout</a></h3><p>The original 0/231 accepted result is a separate control for the later fixed −1 wiring.</p></article>
-</div></section>
-<section class="panel" id="teaching"><h2>Start with one saved signal</h2><p><a href="../learn/signals/index.html">Follow six selected 10K events from energy deposits to readout</a>. Each example keeps its model variant, primary and pulse-group identity.</p></section>
-<section class="panel" id="gamma"><h2>Retired pilot studies</h2><p>The 200-primary bare-detector, 40-primary cryostat gamma and early GeGI two-position bundles have been retired. Their original data remain in the project workspace.</p>
-<p><a href="../examples/gamma-native/gamma.html">Cryostat gamma retirement record</a> · <a href="../examples/gegi/index.html">Early GeGI retirement record</a></p></section>
+</div></section></details></section>
+<section class="panel"><details id="historical-archive"><summary>Historical archive</summary><section id="gamma"><h2>Retired pilot studies</h2><p>The 200-primary bare-detector, 40-primary cryostat gamma and early GeGI two-position bundles have been retired. Their original data remain in the project workspace.</p>
+<p><a href="../examples/gamma-native/gamma.html">Cryostat gamma retirement record</a> · <a href="../examples/gegi/index.html">Early GeGI retirement record</a></p></section></details></section>
 <span id="current-ring-10k"></span></div>'''
     if not (site/'spectra/teaching-examples.json').is_file():
         results=results.replace('<p><a href="../learn/signals/index.html">Follow six selected 10K events from energy deposits to readout</a>. Each example keeps its model variant, primary and pulse-group identity.</p>',

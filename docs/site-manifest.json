@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "build_id": "e7f161538430d66981ebe6fcf0bb3ce3dcd5b6411c0cd04b0dfff650c3705df1",
+  "build_id": "847f70adabd9657421ad2d5f26957004ebc24ce2815e105643ad8db5582d1424",
   "file_count": 1909,
-  "total_bytes": 503464820,
+  "total_bytes": 503507254,
   "html_pages": 126,
-  "local_links_checked": 3718,
-  "resource_references_checked": 3860,
-  "page_navigation_checked": 1874,
-  "fragments_checked": 255,
-  "downloads_checked": 763,
+  "local_links_checked": 3719,
+  "resource_references_checked": 3862,
+  "page_navigation_checked": 1875,
+  "fragments_checked": 256,
+  "downloads_checked": 764,
   "media_references_checked": 1160,
   "metadata_references_checked": 61,
   "other_references_checked": 2,
@@ -70,8 +70,8 @@
     },
     {
       "path": "assemblies/index.html",
-      "bytes": 7831,
-      "sha256": "da5025c9b87f3a692b69d5bcbbf3c938621465555ff188cb706c4641c7a942fa"
+      "bytes": 7841,
+      "sha256": "9bda3d2b91a5f4ac288bd8bede4c1179da0f776a0e3ba9cbcf4824324990dbd0"
     },
     {
       "path": "assemblies/lbnl/index.html",
@@ -80,8 +80,8 @@
     },
     {
       "path": "canonical-views.json",
-      "bytes": 6478467,
-      "sha256": "8b61e3a2c2b5126ed2ab19e961d39b4c268587aaf1edbb44b3bfc3a386e5daef"
+      "bytes": 6498177,
+      "sha256": "a58654f75924bdbc3863b7c82ecc1cafcd2b38bfce106dc4905819947aa2b24d"
     },
     {
       "path": "detectors/AK01/config/source.json",
@@ -1825,8 +1825,8 @@
     },
     {
       "path": "detectors/GeGI_3D/gallery.html",
-      "bytes": 38555,
-      "sha256": "96ef5c9616926d8a6028cfb06c2f24016fbc22e43b840f4ab8f0069634e231b4"
+      "bytes": 38995,
+      "sha256": "9182c7f2f94ccae6e40d868b34f59f78e8c14f6a2b2479c1da2e00787f4a0b98"
     },
     {
       "path": "detectors/GeGI_3D/geometry-active.json",
@@ -6295,8 +6295,8 @@
     },
     {
       "path": "examples/cs137-10k-geometry/geometry.html",
-      "bytes": 557,
-      "sha256": "936570a620e21d41c4ccb062c9b5568638966e2e3b07fc1d56e05fde9c2efc79"
+      "bytes": 577,
+      "sha256": "6abe59412bf4c9211fe0304cff881119f6730765dcf1bda49c406a953fb2f66a"
     },
     {
       "path": "examples/cs137-10k-geometry/geometry.html.gz",
@@ -7476,7 +7476,7 @@
     {
       "path": "examples/cs137-10k-rings/web-delivery.json",
       "bytes": 2117,
-      "sha256": "15b1d168a3613d93cf96b200194ac7dc2d065971c39a133476f9ef08ca1d276a"
+      "sha256": "fff0996db06b0e083a4fe2243a82ea1db910480e2543d53ee185050128f08ede"
     },
     {
       "path": "examples/cs137-10k/AK02/response/histograms.csv",
@@ -7690,8 +7690,8 @@
     },
     {
       "path": "examples/gamma-native/gamma.html",
-      "bytes": 2248,
-      "sha256": "71817eaeccf216bc26efc7c5d1cf4fb04682bb00d67165c46930c6a1594749b6"
+      "bytes": 2251,
+      "sha256": "5065bec53c686ed68aff6237f5632c4dcbfcfd853da550d78d6baf822c293b98"
     },
     {
       "path": "examples/gegi/index.html",
@@ -7720,13 +7720,13 @@
     },
     {
       "path": "examples/pipeline.html",
-      "bytes": 2010,
-      "sha256": "e07b1c842031a264accee22edbba0dcf65715a495cb1e76c6bd8f1f9234d7c4b"
+      "bytes": 2013,
+      "sha256": "b629a8f5dc191d742980d558a6fa92f805a818e7d5125bf1bbecc4a470a4e3eb"
     },
     {
       "path": "guide.html",
-      "bytes": 73155,
-      "sha256": "836497ab3bbe031f61d77fda510a739048b89c3fda1a5f1e5430dad9b8649310"
+      "bytes": 77741,
+      "sha256": "eb195ae56e83d5a279bfe4dab1f34b6a7be543ea512495f3a6ce255ae0af399e"
     },
     {
       "path": "index.html",
@@ -7735,13 +7735,13 @@
     },
     {
       "path": "learn/index.html",
-      "bytes": 9721,
-      "sha256": "5f8a6fb700f9d3a13f7b0a324d2f2ec8117b8b3148e2021266e8a3461cd1e61e"
+      "bytes": 9848,
+      "sha256": "6d7d7f1f5b591273695559877f2faebca2197b1b89f0118c5282b41e2524daec"
     },
     {
       "path": "learn/signals/index.html",
-      "bytes": 1053438,
-      "sha256": "47fe06a400db8898e2674958e4643b6ca32802d82117b7eebf28b4dcb98a14e2"
+      "bytes": 1060998,
+      "sha256": "124a005d7d094765ada532b37fc3821c35c52c5c46db3ae7da56792563feb114"
     },
     {
       "path": "lithium/axes-comparisons.csv",
@@ -7800,18 +7800,18 @@
     },
     {
       "path": "methods/index.html",
-      "bytes": 13129,
-      "sha256": "6c05ab387bbeb33d26baca6d1cbf388f51efbbf9f219efa46d1b367b65ba17d1"
+      "bytes": 13256,
+      "sha256": "cfaaecee8c62c9e0fe7db18099989bd3fca4fb510f7431863b9b57b7a8af6a09"
     },
     {
       "path": "methods/lithium-display.json",
       "bytes": 3245,
-      "sha256": "ec4605dba04df01a3b45fe52227bdae63a44bf2a429fd4d01fec1feb451c01a9"
+      "sha256": "199aecd6257bcfec9eccd8e164adc17bd518679e4d7faa0cf08b61a324c0aca8"
     },
     {
       "path": "methods/native-li-display.json",
       "bytes": 4890,
-      "sha256": "def9d5d12064ec3916843919e1842a0ec14432336cc2cf726e36143c78a1b712"
+      "sha256": "c1a71025c4c2cf4e15c28bf8b0ff00fa683f072b94ec5b7e82776ae24aeeec53"
     },
     {
       "path": "methods/native-li.html",
@@ -7920,8 +7920,8 @@
     },
     {
       "path": "results/cs137-10k/AK02/charge-readout.html",
-      "bytes": 507989,
-      "sha256": "78db3f5c3d062be54fe6c309f857db0a8e47a745c5d8c5409c762e623a9a90a6"
+      "bytes": 507997,
+      "sha256": "d9a8238c679c9b15b442a59b10871a8513a7cf57b36f9d509f9affa89ebf83eb"
     },
     {
       "path": "results/cs137-10k/AK02/traces/213-0.json.gz",
@@ -7945,8 +7945,8 @@
     },
     {
       "path": "results/cs137-10k/GeRC02/charge-readout.html",
-      "bytes": 1052826,
-      "sha256": "2d5c78e9bd9f8f31de2f58e26f237e8451bd3a22d821970dab117f3f937728e0"
+      "bytes": 1052925,
+      "sha256": "74215bfce6e55d3c4ebcfea648543dcb09630f4956332de9ea627f6fe50ae99c"
     },
     {
       "path": "results/cs137-10k/GeRC02/traces/61-0.json.gz",
@@ -7970,8 +7970,8 @@
     },
     {
       "path": "results/cs137-10k/KMRC01_candidate/charge-readout.html",
-      "bytes": 1596456,
-      "sha256": "a3b36948522675445ec95c8f6f07e1e7df079994c2a47c106ffb34b2d8d8a3f0"
+      "bytes": 1596565,
+      "sha256": "6b554e5bb7e5d141d2b2ca13e6d2fa6946b00c0236d75de482240efa7560e97f"
     },
     {
       "path": "results/cs137-10k/KMRC01_candidate/traces/1071-0.json.gz",
@@ -9130,8 +9130,8 @@
     },
     {
       "path": "results/cs137-10k/SAP22/charge-readout.html",
-      "bytes": 488825,
-      "sha256": "e463e3ee4263a9e45367cdf02c9aec7da8721daa8e63d1d8c1e2c8f1a959d393"
+      "bytes": 488833,
+      "sha256": "f8abfc871bf7361f1433d22cae17bf83ec0493663f9996633b10988be72f772b"
     },
     {
       "path": "results/cs137-10k/SAP22/traces/155-0.json.gz",
@@ -9316,7 +9316,7 @@
     {
       "path": "results/gegi-campaign/publication.json",
       "bytes": 6324,
-      "sha256": "075efc00dc22b0787f745cc403c74799fa3f22b0043223827b8910020a2486d3"
+      "sha256": "fb834dbdb3f96bd6edf00f0da81aea5eab4d8d1aa2d95c29553fcd354761cf45"
     },
     {
       "path": "results/gegi-campaign/representatives.json",
@@ -9386,7 +9386,7 @@
     {
       "path": "results/gegi-digital/plane-priors.json",
       "bytes": 211372,
-      "sha256": "7bc5e6295a91ce487d8df2cce1d96abd831b62be298e95277bc60676a28f09cc"
+      "sha256": "c3e0024bf3279c0bbd8578447fc41dfc3b90086ae72d7bb6bb66e3e06608e091"
     },
     {
       "path": "results/gegi-digital/plane-priors.png",
@@ -9415,8 +9415,8 @@
     },
     {
       "path": "results/gegi-digital/simultaneous-spectrum-and-images.png",
-      "bytes": 269079,
-      "sha256": "cde26c5ce0d846d30f49bad986d1108911d81ee5af31afc0eda5032b05fe0364"
+      "bytes": 278383,
+      "sha256": "a1fe2596ff6956563c2b7c475fc1894f025491562e572b6e334b8ea3128b076d"
     },
     {
       "path": "results/gegi-digital/source-exposure.json",
@@ -9480,8 +9480,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 21373,
-      "sha256": "0eba7d155512b3ed03e7a2372794ae4852966c194f66eae2898c99167dbc3f77"
+      "bytes": 21280,
+      "sha256": "94a9290359ebd5b31cf70303a52e98b9e0431d2c2c21bba093efc9bee8ab5003"
     },
     {
       "path": "results/lithium-diagnostics/index.html",
@@ -9516,7 +9516,7 @@
     {
       "path": "spectra/manifest.json",
       "bytes": 7517,
-      "sha256": "060d1ccfa2323b478667baacae700eaacd4e51a7bcab0bde0807b39251456839"
+      "sha256": "a6f6ba6657fc22a667ddc9030019c1e39ede6aaa8d49706cd6a6f62dc0286e0f"
     },
     {
       "path": "spectra/million-response.html",
@@ -9530,13 +9530,13 @@
     },
     {
       "path": "spectra/pipeline.html",
-      "bytes": 2192,
-      "sha256": "169c3f653a9df2860e528fe5a13cd218bdc9f6b20663196f0adadfbb9dc22819"
+      "bytes": 2605,
+      "sha256": "d4d41b49d44796ce61f9a5e30e1eac3bf965f25744e2eebb8fbd36eba671639b"
     },
     {
       "path": "spectra/teaching-examples.json",
       "bytes": 1012868,
-      "sha256": "cf2cd2a6c5d820710ee43a10ff1dfa510da141ed6b8670fd9f318098e39a0dfe"
+      "sha256": "96467b087f1bc4e825aa5f12e9f14a008f5428420452c55a672361d6c4419733"
     },
     {
       "path": "viewers/events.html",
@@ -9556,7 +9556,7 @@
     {
       "path": "viewers/manifest.json",
       "bytes": 81906,
-      "sha256": "f1716adcb057acad9d3a1e37b8794a6edc48c974f7d8b4e4aaa5d7beb22af71d"
+      "sha256": "243a63f7d2aa9b06267a3db7340f649fe2122abd28a6af663750eae96819dfd1"
     }
   ]
 }

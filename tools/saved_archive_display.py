@@ -14,6 +14,8 @@ MANIFEST='methods/native-li-display.json'
 SOURCES=('tools/saved_archive_display.py','tools/site_routes.py')
 LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in SOURCES}
 PREVIOUS_RECEIPTS=frozenset({
+    # Exact c8d4d13 published receipt, checked against Git.
+    'def9d5d12064ec3916843919e1842a0ec14432336cc2cf726e36143c78a1b712',
  # Validated local architecture build 65f0e01b, before browser-found fixes.
  'c096502e72cf86f18f27754538b033dfcde410c0235753f85d92be9147940631',
     # Published before the independent reader-page layout changed.
@@ -58,6 +60,8 @@ LITHIUM_SUMMARY_SHA='c5e1b2c85406f077cb692ac6e99dd1c9affe7cb6632a3098f96a86708e0
 LITHIUM_SOURCES=SOURCES+('tools/lithium_report.py','tools/pipeline_demo.py')
 LITHIUM_LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in LITHIUM_SOURCES}
 PREVIOUS_LITHIUM_RECEIPTS=frozenset({
+    # Exact c8d4d13 published receipt, checked against Git.
+    'ec4605dba04df01a3b45fe52227bdae63a44bf2a429fd4d01fec1feb451c01a9',
  '50ac4d5002263828bb295f478f9ed5a276cb733c1365b9866a2207771fa2a210',
     'f6285cf37095a228dc3e46f8e29a36ebddceb31b9c449016c411396dcaf816c1',
     # Exact validated 5b05f590 archive before the macOS homepage wording.

@@ -36,7 +36,7 @@ class RoutesTests(unittest.TestCase):
 
     def test_dataset_views_never_substitute_another_saved_study(self):
         allowed={
-            'teaching':{'learn/signals/index.html'},
+            'teaching':set(),
             'gamma':{'examples/gamma-native/gamma.html'},
             'tenk':{'results/cs137-10k/index.html','results/cs137-10k/spectra.html','results/cs137-10k/events.html'},
             'million':{'results/cs137-1m/index.html','results/cs137-1m/spectra/deposition.html','results/cs137-1m/spectra/response.html',
@@ -51,6 +51,13 @@ class RoutesTests(unittest.TestCase):
         self.assertIn('results/cs137-10k/spectra.html#tenk-GeRC02',focused)
         with self.assertRaisesRegex(ValueError,'Unknown saved dataset'):
             Structure.dataset_navigation('arbitrary')
+
+    def test_teaching_uses_breadcrumbs_without_singleton_dataset_navigation(self):
+        navigation = R.page_navigation('learn/signals/index.html')
+        self.assertIn('aria-label="Breadcrumb"', navigation)
+        self.assertIn('Six saved signals', navigation)
+        self.assertNotIn('<nav aria-label="Dataset views"', navigation)
+        self.assertNotIn('class="dataset-context"', navigation)
 
     def test_catalog_has_explicit_dataset_entries(self):
         with tempfile.TemporaryDirectory(dir=ROOT/'.local') as tmp:
@@ -75,10 +82,12 @@ class RoutesTests(unittest.TestCase):
                 r'<article class="card" id="([^"]+)"[^>]*>(.*?)</article>',text,re.S)}
             self.assertEqual(set(studies),{'gegi-shared-readout','gegi-campaign','tenk','million'})
             self.assertIn('Unavailable in this saved snapshot',studies['gegi-shared-readout'])
-            self.assertIn('25 independent windows, 6.25 s total clock',studies['gegi-shared-readout'])
-            self.assertIn('Four separate radiation and charge acquisitions',studies['gegi-campaign'])
+            self.assertIn('25 independent 250 ms windows',studies['gegi-shared-readout'])
+            self.assertIn('electronics reset between windows',studies['gegi-shared-readout'])
+            self.assertIn('Four separate acquisitions',studies['gegi-campaign'])
+            self.assertIn('interaction-order ambiguity',studies['gegi-campaign'])
             self.assertIn('cs137-10k/index.html',studies['tenk'])
-            self.assertIn('1,000,000 initial Cs-137 decays per detector',studies['million'])
+            self.assertIn('Two separate million-decay runs',studies['million'])
             self.assertNotIn('events.html',studies['million'])
             self.assertIn('six saved teaching signals are unavailable in this snapshot',text)
             self.assertIn('../learn/index.html',text)

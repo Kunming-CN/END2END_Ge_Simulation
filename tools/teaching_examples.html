@@ -10,46 +10,57 @@
 @media(max-width:750px){.plots svg text{font-size:16px}.plots svg text[y="235"][x="84"]{text-anchor:start}.plots svg text[y="235"][x="542"]{text-anchor:end}.plots svg text[transform]{display:none}}
 @media(max-width:440px){.energy{grid-template-columns:minmax(0,1fr);gap:10px}.energy>div{display:grid;grid-template-columns:1fr 1fr;align-items:center}.energy strong{font-size:21px}.plots figure{padding:12px}.source-links{gap:8px 13px}}
 </style>
+<style>
+.stages{gap:7px;margin:18px 0}.stages li{padding:0;background:none}.stages button{font-size:14px;padding:8px 11px}.stages button[aria-pressed=true]{background:var(--teal);color:white}.stage-controls{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:14px 0}.stage-controls button:disabled{opacity:.45;cursor:default}.stage-count{font-size:14px;color:var(--muted)}.lesson{padding:20px 24px}.lesson>p{max-width:85ch}.lesson .plots{display:block;margin:0}.lesson figure{margin:0;padding:12px 0;border:0;border-radius:0}.lesson figure figcaption{font-size:18px;font-weight:650;margin:0 0 8px}.lesson svg{display:block;width:100%;height:auto;max-height:430px}.lesson .plots figure{padding:12px 0}.lesson .flagline{margin-bottom:0}.selection-note{font-size:14px}.energy{border-top:0;margin-top:0}.archive-note{font-size:14px;color:var(--muted)}.download-list{display:flex;gap:8px 20px;flex-wrap:wrap;padding-left:20px}.download-list li{padding:3px 0}.deposit-note{font-size:14px;color:var(--muted);max-width:85ch}.details-intro{font-size:14px;color:var(--muted)}
+@media(max-width:750px){.lesson{padding:16px}.lesson svg{max-height:none}.stages button{font-size:13px}.energy{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <main>
 __PAGE_NAVIGATION__
-<h1>From Cs137 deposits to a saved pulse.</h1>
-<p class="intro">Choose one of six representative signals from the completed 10,000-decay cryostat cases. Follow deposited energy, signed native charge, electronics-input current, the preamp and the shaped peak. These curated examples teach the signal chain; they are not a spectrum or a random statistical sample.</p>
-<ol class="stages" aria-label="Signal chain"><li>1 · Radiation deposits</li><li>2 · Native signed charge</li><li>3 · Current</li><li>4 · Preamp</li><li>5 · Analog shaping</li><li>6 · Peak ADC → Erec</li></ol>
+<h1>Follow one signal from crystal to energy.</h1>
+<p class="intro">Energy deposited by radiation becomes moving charge, an electrical pulse and a reconstructed energy. Follow six saved signals from the Cs-137 10K study, one step at a time.</p>
 <noscript>The plots need JavaScript. <a href="teaching-examples.json">The exact selected records</a> remain readable as JSON.</noscript>
-<section class="card selection"><label for="example-select">Saved example · detector / initial decay ID / pulse group</label><select id="example-select"></select><p id="selection-note" class="muted" aria-live="polite"></p></section>
+<section class="card selection"><label for="example-select">Choose a saved signal</label><select id="example-select"></select></section>
 <div id="error" class="error" role="alert" hidden></div>
 <div id="content">
-<section class="card">
+<section class="card lesson">
 <h2 id="case-title"></h2><p id="case-explanation"></p>
-<div class="energy"><div><small>Truth Edep · group</small><strong id="edep"></strong><small>keV</small></div><div><small>Signed native induced equivalent</small><strong id="induced"></strong><small>keV</small></div><div><small>Accepted peak-ADC Erec</small><strong id="erec"></strong><small>keV</small></div></div>
-<p class="flagline" id="case-flags"></p>
+<ol class="stages" aria-label="Signal chain"><li><button id="stage-deposits" type="button">1 · Deposits</button></li><li><button id="stage-charge" type="button">2 · Charge</button></li><li><button id="stage-current" type="button">3 · Current</button></li><li><button id="stage-preamp" type="button">4 · Preamp</button></li><li><button id="stage-shaper" type="button">5 · Shaping</button></li><li><button id="stage-adc" type="button">6 · ADC → energy</button></li></ol>
+<select id="stage-select" aria-label="Signal stage" hidden><option value="deposits">Deposits</option><option value="charge">Charge</option><option value="current">Current</option><option value="preamp">Preamp</option><option value="shaper">Shaping</option><option value="adc">ADC</option></select>
+<p id="stage-explanation" aria-live="polite"></p>
+<figure id="deposit-figure"><figcaption>Where this group deposited energy</figcaption><div id="deposit-plot"></div><p class="deposit-note">Crystal axial section in detector-local coordinates: radius r = √(x² + y²) and height z. Angle around the axis is collapsed. Each dot is a positive deposit in this pulse group; dot area follows energy, with a minimum visible size. No paths between deposits are inferred.</p></figure>
+<div class="plots" id="plots" aria-label="Saved signal stage"></div>
+<figure id="adc-figure"><figcaption>One sampled peak becomes one energy estimate</figcaption><div id="adc-plot"></div><p class="deposit-note">A peak analog-to-digital converter (ADC) records one code from the shaped peak. One independent injection sets the same energy calibration for every event.</p></figure>
+<div class="stage-controls"><button id="stage-previous" type="button">← Previous step</button><span id="stage-count" class="stage-count"></span><button id="stage-next" type="button">Next step →</button></div>
+<p class="flagline" id="case-status"></p>
 <p class="source-links"><a id="case-3d">This primary and pulse group in 3D</a><a id="case-readout">This saved charge and readout event</a></p>
 </section>
-<section class="card selection"><label for="stage-select">Follow one signal stage</label><select id="stage-select"><option value="deposits">1 · Radiation deposits</option><option value="charge">2 · Native signed induced charge</option><option value="current">3 · Electronics-input current</option><option value="preamp">4 · Analog preamp</option><option value="shaper">5 · Analog shaping</option><option value="adc">6 · Peak ADC and reconstructed energy</option></select><p id="stage-explanation" aria-live="polite"></p><div id="stage-records" hidden></div></section>
-<div class="plots" id="plots" aria-label="Four saved signal stages"></div>
 <section class="card">
-<h2>Fixed settings and exact source records</h2>
-<details><summary>Event identity, sampling and transport settings</summary><dl class="facts" id="case-facts"></dl><p class="fact-note">Native endpoint flags remain separate from electronics acceptance. A close energy match or a small remaining induced signal is not proof of calibrated Li collection efficiency.</p></details>
-<p id="electronics-settings"></p><p class="muted">One independent synthetic injection sets the calibration slope across events. The numerical analog grid is followed by a peak ADC; it is not a waveform-digitizing acquisition. No new electronics replay is used in this page.</p>
-<div class="source-links"><a id="case-report">Case report</a><a id="case-files">Case data files</a><a id="source-csv">Full native charge CSV</a><a id="source-zip">Complete source ledgers ZIP</a><a id="source-run">Run settings JSON</a><a id="case-spectrum">All 10K stage spectra</a></div>
+<h2>Data and exact records</h2>
+<p class="details-intro">These six curated examples teach the signal chain; they are not a spectrum or a random sample. The exact records retain original values, identities and numerical status.</p>
+<div class="source-links"><a id="case-report">Case report</a><a id="case-files">All case files</a><a id="case-spectrum">All 10K stage spectra</a><a href="teaching-examples.json">Exact six-example JSON</a></div>
+<ul id="download-links" class="download-list" aria-label="Published data downloads"></ul><p id="archive-note" class="archive-note"></p>
+<details><summary>Energy values, event identity and numerical status</summary><p id="selection-note" class="muted"></p><div class="energy"><div><small>Truth deposited energy · Edep</small><strong id="edep"></strong><small>keV</small></div><div><small>Signed native induced equivalent</small><strong id="induced"></strong><small>keV</small></div><div><small>Accepted reconstructed energy · Erec</small><strong id="erec"></strong><small>keV</small></div></div><dl class="facts" id="case-facts"></dl><p class="flagline" id="case-flags"></p><p class="fact-note">Native endpoint flags remain separate from electronics acceptance. A close energy match or a small remaining induced signal is not proof of calibrated Li collection efficiency.</p></details>
+<details><summary>Fixed electronics and independent calibration</summary><p id="electronics-settings"></p><p class="muted">One independent synthetic injection sets the calibration slope across events. The numerical analog grid is followed by a peak ADC; it is not a waveform-digitizing acquisition. No new electronics replay is used in this page.</p></details>
 <details id="deposits-details"><summary id="deposits-summary"></summary><p class="muted">All recorded semiconductor STEP rows of this initial decay remain below, including zero-energy rows. Pulse-group row IDs identify which positive deposits feed this group. Deposition delays are radiation creation/deposition times, not drift times.</p><div class="table-scroll"><table><thead><tr><th>Raw row</th><th>In group</th><th>Edep keV</th><th>Delay from group ns</th><th>x mm</th><th>y mm</th><th>z mm</th><th>Track</th><th>Parent</th><th>PDG</th></tr></thead><tbody id="deposit-rows"></tbody></table></div></details>
 <details id="exact-details"><summary>Exact selected ledger, retained samples and settings</summary><pre id="exact-json"></pre></details>
 <details id="provenance-details"><summary>Source hashes and export binding</summary><pre id="provenance-json"></pre></details>
 </section>
-<section class="card"><h2>How to interpret these examples</h2><p>The nominal cryostat and source arrangement are engineering inputs, not a surveyed replica. Native transport includes finite parcel counts, caps and recorded failures. The electronics is synthetic and noiseless; these curves are not measured pulse comparisons or physical energy-resolution predictions.</p><p>Original signs, IDs, time origins, deposit rows and flags are retained. The complete 10K event ledgers, zeros and statistical distributions stay in the linked case records. GeRC02 here uses the saved Li 50 minute run variant; its catalog model retains the original 30 minute input. KM is a candidate with fixed readout wiring.</p><p class="muted">The separate earlier 200-primary bare-gamma study is retired from the public exhibit. Its <a href="../examples/pipeline.html">retirement note</a> identifies that study; it does not contain the original curves. These six signals come from the four-case Cs137 10K study linked above.</p></section>
+<section class="card"><details><summary>Model assumptions and earlier study</summary><p>The nominal cryostat and source arrangement are engineering inputs, not a surveyed replica. Native transport includes finite parcel counts, caps and recorded failures. The electronics is synthetic and noiseless; these curves are not measured pulse comparisons or physical energy-resolution predictions.</p><p>Original signs, IDs, time origins, deposit rows and flags are retained. The complete 10K event ledgers, zeros and statistical distributions stay in the linked case records. GeRC02 here uses the saved Li 50 minute run variant; its catalog model retains the original 30 minute input. KM is a candidate with fixed readout wiring.</p><p class="muted">The separate earlier 200-primary bare-gamma study is retired from the public exhibit. Its <a href="../examples/pipeline.html">retirement note</a> identifies that study; it does not contain the original curves. These six signals come from the four-case Cs137 10K study linked above.</p></details></section>
 </div>
 <footer><a href="teaching-examples.json">Exact six-example JSON</a> · All plotting data is also embedded here for offline use.</footer>
 </main>
 <script id="teaching-data" type="application/json">__TEACHING_DATA_JSON__</script>
+<script id="teaching-presentation" type="application/json">__PRESENTATION_JSON__</script>
 <script>__FOCUSED_PLOTS_JS__</script>
 <script>
 "use strict";
 (() => {
-const $=id=>document.getElementById(id),data=JSON.parse($("teaching-data").textContent);
-const fmt=v=>v===null||v===undefined?"Unavailable":Number(v).toLocaleString("en-US",{maximumSignificantDigits:8});
+const $=id=>document.getElementById(id),data=JSON.parse($("teaching-data").textContent),presentation=JSON.parse($("teaching-presentation").textContent);
+const fmt=v=>v===null||v===undefined?"Unavailable":Number(v).toLocaleString("en-US",{maximumFractionDigits:3});
 const exact=v=>v===null||v===undefined?"Unavailable":String(v);
+const prose=text=>text.replace(/-?\d+\.\d{4,}/g,value=>fmt(Number(value)));
 function facts(items){const host=$("case-facts");host.replaceChildren();for(const[label,value]of items){const div=document.createElement("div"),dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=label;dd.textContent=value;div.append(dt,dd);host.append(div);}}
 function selected(){return data.cases[$("example-select").selectedIndex];}
 const variants={AK02:'AK02',SAP22:'SAP22',GeRC02:'GeRC02_Li50min',KMRC01_candidate:'KMRC01_candidate'},stages=['deposits','charge','current','preamp','shaper','adc'];
@@ -80,17 +91,44 @@ function restoreSelection(){
 function showError(error){$("error").hidden=false;$("error").textContent='Saved example unavailable: '+error.message;$("content").hidden=true;}
 function details(){const c=selected(),m=data.models[c.model];$("exact-json").textContent=$("exact-details").open?JSON.stringify({selected_case:c,model_settings:m},null,2):"";$("provenance-json").textContent=$("provenance-details").open?JSON.stringify(data.provenance,null,2):"";if(!$("deposits-details").open){$("deposit-rows").replaceChildren();return;}const ids=new Set(c.pulse.raw_row_indices),body=$("deposit-rows");body.replaceChildren();for(const row of c.truth.steps){const tr=document.createElement("tr");for(const v of[row.raw_row_index,ids.has(row.raw_row_index)?"yes":"no",row.energy_keV,row.time_ns-c.pulse.origin_time_ns,...row.position_mm,row.track_id,row.parent_track_id,row.particle_pdg]){const td=document.createElement("td");td.textContent=exact(v);tr.append(td);}body.append(tr);}}
 function link(id,href){const node=$(id);node.href=href;}
+function svgNode(tag,attrs={},text){const node=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const[key,value]of Object.entries(attrs))node.setAttribute(key,value);if(text!==undefined)node.textContent=text;return node;}
+function depositPlot(c,crystal){
+ const host=$("deposit-plot"),svg=svgNode('svg',{viewBox:'0 0 760 340',role:'img','aria-label':'Selected energy deposits in the crystal axial section'}),rmax=Math.max(...crystal.r_mm),zmin=Math.min(...crystal.z_mm),zmax=Math.max(...crystal.z_mm);
+ const scale=Math.min(570/rmax,245/(zmax-zmin)),left=(760-rmax*scale)/2,bottom=282,X=r=>left+r*scale,Y=z=>bottom-(z-zmin)*scale;
+ svg.append(svgNode('title',{},'Positive deposits of this pulse group in the detector-local crystal section'));
+ for(let i=0;i<=4;i++){
+  const r=rmax*i/4,z=zmin+(zmax-zmin)*i/4;
+  svg.append(svgNode('line',{x1:X(r),x2:X(r),y1:Y(zmin),y2:Y(zmax),stroke:'#e2e9ec'}),svgNode('line',{x1:X(0),x2:X(rmax),y1:Y(z),y2:Y(z),stroke:'#e2e9ec'}));
+  svg.append(svgNode('text',{x:X(r),y:bottom+22,'text-anchor':'middle',fill:'#526575','font-size':13},fmt(r)),svgNode('text',{x:left-12,y:Y(z)+5,'text-anchor':'end',fill:'#526575','font-size':13},fmt(z)));
+ }
+ const outline=crystal.r_mm.map((r,i)=>(i?'L':'M')+X(r)+','+Y(crystal.z_mm[i])).join(' ')+' Z';
+ svg.append(svgNode('path',{d:outline,fill:'#dceef0','fill-opacity':.7,stroke:'#087a80','stroke-width':2}));
+ const ids=new Set(c.pulse.raw_row_indices),rows=c.truth.steps.filter(row=>ids.has(row.raw_row_index)&&row.energy_keV>0),largest=Math.max(...rows.map(row=>row.energy_keV));
+ for(const row of [...rows].sort((a,b)=>b.energy_keV-a.energy_keV)){
+  const [x,y,z]=row.position_mm,point=svgNode('circle',{cx:X(Math.hypot(x,y)),cy:Y(z),r:Math.max(2.5,18*Math.sqrt(row.energy_keV/largest)),fill:'#df8b26','fill-opacity':.72,stroke:'#855018','stroke-width':1,'data-raw-row':row.raw_row_index});
+  point.append(svgNode('title',{},'Raw row '+row.raw_row_index+' · '+fmt(row.energy_keV)+' keV · (x, y, z) = ('+row.position_mm.map(fmt).join(', ')+') mm'));svg.append(point);
+ }
+ svg.append(svgNode('text',{x:380,y:332,'text-anchor':'middle',fill:'#173047','font-size':15},'Radius r · mm'),svgNode('text',{x:left-50,y:24,fill:'#173047','font-size':15},'Height z · mm'));
+ host.replaceChildren(svg);
+}
+function adcPlot(r){
+ const svg=svgNode('svg',{viewBox:'0 0 760 210',role:'img','aria-label':'Saved peak voltage, ADC code and reconstructed energy'});
+ const items=[['Sampled shaped peak',fmt(r.peak_V)+' V'],['Peak ADC code',exact(r.adc_code)],['Reconstructed energy',r.accepted?fmt(r.reconstructed_energy_keV)+' keV':'Not accepted']];
+ items.forEach(([label,value],i)=>{const x=15+i*255;svg.append(svgNode('rect',{x,y:45,width:220,height:115,rx:9,fill:i===2?'#e1f1f1':'#eef3f4',stroke:'#b5c9d0'}),svgNode('text',{x:x+110,y:80,'text-anchor':'middle',fill:'#526575','font-size':15},label),svgNode('text',{x:x+110,y:123,'text-anchor':'middle',fill:'#173047','font-size':25,'font-weight':650},value));if(i<2)svg.append(svgNode('text',{x:x+238,y:110,'text-anchor':'middle',fill:'#087a80','font-size':26},'→'));});
+ $("adc-plot").replaceChildren(svg);
+}
 function render(){
 const c=selected(),m=data.models[c.model],p=c.pulse,r=p.readout,t=c.saved_trace.trace,q=c.native_charge.induced_equivalent_energy_keV,times=c.native_charge.time_since_origin_ns;
 const eion=m.calibration.ionisation_energy_eV,dt=m.calibration.time_step_ns,wiring=m.wiring.factor,chargeFactor=1000/eion*1.602176634e-19*1e15;
 const end=SavedFocusPlots.focusEnd(times,q),analogEnd=t.time_ns.at(-1),peak={t:r.peak_time_ns,v:r.peak_V};
-$("case-title").textContent=c.title;$("case-explanation").textContent=c.explanation;
+$("case-title").textContent=c.title;$("case-explanation").textContent=prose(c.explanation);
 $("selection-note").textContent='Cs137 10K / '+variants[c.model]+" · initial decay "+c.event_id+" · group "+c.group_id+" · exact saved records";
 $("edep").textContent=fmt(p.deposited_energy_keV);$("induced").textContent=fmt(p.final_induced_keV);$("erec").textContent=r.accepted?fmt(r.reconstructed_energy_keV):"Not accepted";
 const photon=c.truth.decay_photons.map(v=>exact(v.energy_keV)+" keV").join(", ")||"No recorded decay photon";
 const s=m.settings;
 facts([["Identity",c.model+" / decay "+c.event_id+" / group "+c.group_id],["Clock origin",exact(p.origin_time_ns)+" ns; plots use time since this group origin"],["Recorded decay photon energies",photon],["Recorded semiconductor deposits",c.truth.steps.length+" rows; "+c.positive_deposit_count+" positive-energy rows"],["Bias / runtime temperature",exact(s.bias_V)+" V / "+exact(s.temperature_K)+" K (stored "+exact(s.stored_temperature_K)+" K)"],["Native sampling / parcels",exact(s.drift_dt_ns)+" ns / "+exact(s.parcels)+" per deposit; seed family "+exact(s.seed_family)],["Saved native charge extent",exact(times[0])+"–"+exact(times.at(-1))+" ns; "+times.length+" original samples"],["Saved analog extent",exact(t.time_ns[0])+"–"+exact(analogEnd)+" ns; "+t.time_ns.length+" retained of "+r.original_sample_count+" original samples"],["Peak ADC",r.accepted?"Code "+r.adc_code+"; exact sampled peak "+exact(r.peak_V)+" V at "+exact(r.peak_time_ns)+" ns":"Rejected: "+exact(r.rejection_reason)],["Electronics wiring",exact(wiring)+" fixed factor from native charge to electronics input"]]);
 const f=p.transport_flags;
+$("case-status").textContent=(f.step_limits?f.step_limits+' carrier paths reached the numerical step limit; charge may be incomplete. ':'')+(r.tail_truncated_possible?'The saved finite window can truncate the pulse tail. ':'')+(r.accepted?'Readout accepted in this synthetic, noiseless example.':'Readout was not accepted: '+r.rejection_reason+'.');
 $("case-flags").textContent="Native parcels: "+f.carrier_parcels+"; geometric contacts: "+f.geometric_contacts+"; step-limit endpoints: "+f.step_limits+"; stopped without contact: "+f.stopped_without_contact+". Readout accepted: "+r.accepted+"; charge clipped: "+r.charge_clipped_at_window+"; window limited: "+r.window_limited+"; tail truncation possible: "+r.tail_truncated_possible+"; recovery not established: "+p.group.recovery_not_established+". Case native failures: "+m.counts.native_failed_groups+".";
 const analogNote="Exact retained original analog samples only: "+t.time_ns.length+" of "+r.original_sample_count+" points, "+exact(t.time_ns[0])+"–"+exact(analogEnd)+" ns. Lines connect retained points as visual guides; omitted points are unavailable. ";
 const inputNote=wiring===-1?"Fixed -1 KM wiring is applied before the electronics input. Native charge remains negative in the charge panel; current here has the electronics-input sign. ":"The recorded +1 wiring preserves the native sign at electronics input. ";
@@ -103,25 +141,26 @@ const panels=[
 SavedFocusPlots.draw($("plots"),panels,"Time since selected group origin · ns");
 const stage=$("stage-select").value||'deposits',stageIndex=stages.indexOf(stage);
 Array.from($("plots").children).forEach((figure,i)=>figure.hidden=i!==stageIndex-1);
-$("stage-explanation").textContent=["Radiation transport records where and when energy enters the semiconductor. The table shows the selected group's original raw deposition rows: energy in keV, delay from the group origin in ns, and global position in mm. A deposition time is not a carrier drift time.","The plot shows signed electrode charge in fC against time since this group began in ns. Moving electrons and holes induce that signal; its final value can differ from deposited energy when transport remains incomplete.","The plot shows electronics-input current in nA against time in ns. Current is charge change per recorded time bin. Its sign follows the fixed wiring; the KM example keeps negative native charge and applies its recorded −1 wiring.","The plot shows preamplifier voltage in V against time in ns. The preamp integrates the electronics-input current through the saved feedback circuit. Its voltage polarity follows that circuit.","The plot shows shaped voltage in V against time in ns, with the exact saved sampled peak marked. Analog shaping sets the pulse amplitude and duration before the peak ADC.","The peak analog-to-digital converter (ADC) records one integer code from the sampled shaped peak, rather than a digitized waveform. One independent synthetic injection calibrates that code to reconstructed energy in keV; the same calibration applies to every event."][stageIndex];
-const recordHost=$("stage-records");recordHost.replaceChildren();recordHost.hidden=stage!=='deposits'&&stage!=='adc';
-if(stage==='deposits'){
- const wrap=document.createElement('div'),table=document.createElement('table'),head=document.createElement('tr'),body=document.createElement('tbody');wrap.className='table-scroll';
- for(const label of ['Raw row','Edep · keV','Delay · ns','x · mm','y · mm','z · mm']){const th=document.createElement('th');th.textContent=label;head.append(th);}table.append(head,body);
- const rows=new Set(p.raw_row_indices);for(const row of c.truth.steps)if(rows.has(row.raw_row_index)){const tr=document.createElement('tr');for(const value of [row.raw_row_index,row.energy_keV,row.time_ns-p.origin_time_ns,...row.position_mm]){const td=document.createElement('td');td.textContent=exact(value);tr.append(td);}body.append(tr);}wrap.append(table);recordHost.append(wrap);
-}else if(stage==='adc'){
- for(const [label,value]of [['Original sampled peak',exact(r.peak_V)+' V at '+exact(r.peak_time_ns)+' ns'],['Peak ADC code',exact(r.adc_code)],['Reconstructed energy',r.accepted?exact(r.reconstructed_energy_keV)+' keV':'Not accepted: '+exact(r.rejection_reason)],['Independent calibration',m.calibration.method]]){const line=document.createElement('p');line.textContent=label+': '+value;recordHost.append(line);}
-}
+$("deposit-figure").hidden=stage!=='deposits';$("adc-figure").hidden=stage!=='adc';
+if(stage==='deposits')depositPlot(c,presentation[c.model].crystal);if(stage==='adc')adcPlot(r);
+for(const key of stages)$("stage-"+key).setAttribute('aria-pressed',String(key===stage));
+$("stage-previous").disabled=stageIndex===0;$("stage-next").disabled=stageIndex===stages.length-1;$("stage-count").textContent='Step '+(stageIndex+1)+' of '+stages.length;
+$("stage-explanation").textContent=[fmt(p.deposited_energy_keV)+" keV enters the crystal at the positions below. These deposits are grouped into the same saved signal. Radiation deposition time is distinct from the later carrier drift time.","Moving electrons and holes induce signed electrode charge, shown in femtocoulombs (fC). Its final value can differ from deposited energy when carrier transport is incomplete.","Current is the change in charge per time bin, shown in nanoamperes (nA). The fixed wiring sets its electronics-input sign; the KM example applies its recorded −1 wiring to negative native charge.","The preamplifier integrates the input current through a feedback circuit, producing voltage in volts (V). Its negative polarity here follows the saved circuit.","Analog shaping turns the preamplifier response into a pulse whose peak can be measured. The gold marker is the exact saved sampled peak; the curve joins retained samples.","The peak ADC converts the shaped peak voltage into an integer code. A fixed independent calibration converts that code into reconstructed energy; it is not a digitized waveform."][stageIndex];
 const config=m.readout_config;
 $("electronics-settings").textContent="Feedback "+exact(config.feedback_capacitance_pF)+" pF / "+exact(config.feedback_tau_us)+" µs; pole-zero "+exact(config.pole_zero_tau_us)+" µs; shaping "+exact(config.shaping_tau_us)+" µs; gain "+exact(config.gain)+"; "+exact(config.adc_bits)+"-bit peak ADC / "+exact(config.adc_full_scale_V)+" V; threshold "+exact(config.threshold_V)+" V. "+m.calibration.method+".";
 const folder="../"+m.source_folder;
 const query=selectionQuery(c),caseURL="../results/cs137-10k/"+c.model+"/charge-readout.html?"+query;
-link("case-report",caseURL);link("case-readout",caseURL);link("case-files",caseURL+"#data-files");link("case-3d","../viewers/events.html?"+query+'&view=positive');link("source-csv",folder+"/signals.csv");link("source-zip",folder+"/ledgers.zip");link("source-run",folder+"/run.json");link("case-spectrum","cs137-10k.html#tenk-"+c.model);
+link("case-report",caseURL);link("case-readout",caseURL);link("case-files",caseURL+"#data-files");link("case-3d","../viewers/events.html?"+query+'&view=positive');link("case-spectrum","cs137-10k.html#tenk-"+c.model);
+const downloadHost=$("download-links");downloadHost.replaceChildren();for(const file of presentation[c.model].downloads){const item=document.createElement('li'),anchor=document.createElement('a');anchor.href=folder+'/'+file.name;anchor.textContent=file.label;item.append(anchor);downloadHost.append(item);}
+$("archive-note").textContent=presentation[c.model].archive_available?'The complete source ZIP is published alongside these individual files.':'The complete source ZIP is retained locally and is not published. The individual files above and the exact six-example JSON are available here.';
 $("deposits-summary").textContent="All "+c.truth.steps.length+" semiconductor deposition rows and identities";
 details();
 }
 try{
-for(const c of data.cases){const option=document.createElement("option");option.value=c.model+"-"+c.event_id+"-"+c.group_id;option.textContent=c.title+" · "+c.model+" / "+c.event_id+" / "+c.group_id;$("example-select").append(option);}
+for(const c of data.cases){const option=document.createElement("option");option.value=c.model+"-"+c.event_id+"-"+c.group_id;option.textContent=c.title+" · "+c.model;$("example-select").append(option);}
+function chooseStage(stage){$("stage-select").value=stage;render();writeSelection();}
+for(const stage of stages)$("stage-"+stage).onclick=()=>chooseStage(stage);
+$("stage-previous").onclick=()=>{const index=stages.indexOf($("stage-select").value);if(index>0)chooseStage(stages[index-1]);};$("stage-next").onclick=()=>{const index=stages.indexOf($("stage-select").value);if(index<stages.length-1)chooseStage(stages[index+1]);};
 $("example-select").onchange=()=>{$("content").hidden=false;$("error").hidden=true;render();writeSelection();};$("stage-select").onchange=()=>{render();writeSelection();};for(const id of["exact-details","deposits-details","provenance-details"])$(id).ontoggle=details;restoreSelection();
 if(typeof window!=="undefined"&&typeof window.addEventListener==="function")for(const event of ['popstate','pageshow'])window.addEventListener(event,()=>{try{restoreSelection();}catch(error){showError(error);}});
 }catch(error){showError(error);}

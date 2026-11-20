@@ -18,7 +18,38 @@ The student workflow runs from detector and source selection through transport, 
 2. Transport that mixed stream in the same detector. Drift charge for its deposits, sum overlapping electrode currents and process them through the same continuous preamplifier, shaper, noise, ADC and trigger. Keep electronics and clocks continuous across computational buffers for **at least 60 seconds**.
 3. Image from the common measured data. Report parent decays, recorded triggers, accepted energies, usable cones and excluded cases separately. A 60-second exposure has 13.32 million expected parent decays; the imaging count must be measured. If testing range, fit x, y and z before comparing with the programmed positions. Scale, duration beyond one minute and storage are pending the owner's decision.
 
-The earlier [25-exposure readout study](../docs/results/index.html#gegi-commercial-acquisition) used archived per-isotope histories in one shared electronics simulation per 250 ms exposure. It provides a readout comparison, not a completed full-generation run under this plan.
+The earlier [25-window readout study](../docs/results/gegi-shared-readout/index.html) used archived per-isotope histories in one shared electronics simulation per 250 ms window. It provides a readout comparison, not a completed full-generation run under this plan.
+
+### Next milestone contract (design only; execution remains paused)
+
+The next implementation reuses the existing geometry, fields, carrier transport and readout functions. Its new responsibility is connecting fresh mixed-source generation to continuous detector state. Before any resumed calculation, record these inputs and outputs in the run configuration and checkpoint:
+
+| Boundary | Required record and acceptance |
+|---|---|
+| Source generation | Both isotope definitions, positions and activities are present before the first decay. Record the acquisition start state, source age or initial daughter populations, pre-acquisition history policy, random seeds and generator version. Do not silently assume an empty detector or secular equilibrium. |
+| Identity and time | One immutable acquisition ID and unique parent-decay ID identify the isotope and position. Daughter, emission, transport event and deposit IDs retain their parent relationships and absolute times, including delayed daughters across buffers. A trigger may contain multiple parents; one parent may contribute to multiple triggers. |
+| Continuous processing | Carry pending daughters and current tails, preamplifier/shaper/filter state, noise generator state, ADC sample index, trigger state and unfinished readout windows across buffers. A checkpoint also binds configuration/input hashes and the last committed identities so restart neither repeats nor drops records. |
+| Bounded acceptance after resumption | Process the same finite fresh-source input continuously, in several buffer sizes and through stop/resume. Compare identities, time ordering, deposited energy, signed charge, ADC codes and trigger/reconstruction records; document any necessary numerical tolerance. Place delayed emissions and overlapping pulses at buffer boundaries. Retain zero/nonzero/failure/unknown counts and close every stage's census before scaling. |
+| Production | Only after the bounded path passes, run one uninterrupted acquisition of at least 60 s. Report actual parent decays, deposits, triggers, accepted energies, usable imaging candidates, exclusions and unknowns separately. A completed pipeline alone does not establish instrument accuracy. |
+
+At the specified constant activities, the expected 60 s parent census is
+222,000 s⁻¹ × 60 s = **13,320,000 parent decays**, not triggers or imaging events.
+Assuming 34 channels, 50 million samples/s, 60 s and two bytes/sample, a complete
+uncompressed ADC stream would occupy **204 GB (about 190 GiB)**. This is a storage
+estimate under explicit assumptions, not a measured output size. Before production,
+choose the new format and full-stream retention policy, measure bounded throughput
+and memory, and specify streaming buffers, retained trigger windows, event ledgers,
+checkpoints and the information needed to reproduce discarded samples. Existing
+scientific originals remain unchanged.
+
+Fix reconstruction selections, interaction-order rules and imaging priors before
+independent evaluation. Split by original history or fresh parent-decay identity;
+repeated replays of one history are not independent evidence. Use source-position
+truth only to score final estimates. Report error with returned/total coverage,
+failure rate, energy/position range and uncertainty. Existing AK02/SAP22 measured
+spectra support a bounded spectrum comparison; no historical measured waveforms
+exist. GeGI comparison needs matched channel mapping, calibration, thresholds,
+pixel selection, acquisition time and normalization.
 
 ### Earlier saved studies
 
