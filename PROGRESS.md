@@ -47,6 +47,17 @@ changes, null values, zero-candidate startup statistics, storage planning and
 changed-position rejection. The software-only package has 233 members; separate
 calibration and published research examples remain external.
 
+Runtime source `da5089bca5c723a1d3bfdab53a0c46dcacc97338` is on GitHub main.
+Release [student-runtime-20261120-candidates](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-20261120-candidates)
+contains the exact-commit 1,260,393-byte ZIP, SHA-256
+`68ed74810d1baa1ac96893a1f60b7fa504f46b4e3daca0e61dc2246dc2533d2b`;
+the public download matched byte-for-byte. The separate calibration is unchanged.
+The saved-snapshot website build `f2dccc9ecf6f5859118a8d073f60b9e60247eee99e9de6c7a619e48760189e62`
+changes only `guide.html` among its 1,909 content files; all 1,783 non-HTML
+files are byte-identical. Thirty-eight publication tests and `check_site.py`
+passed, and Chrome followed Home → main study → methods plus the new guide.
+The local acceptance receipt records release verification and deployment status.
+
 **Remaining production work:** fresh execution is limited to 1–500 parents and
 uses finite input arrays. Pending-daughter/current buffers, continuous stop/resume
 and measured maximum disk/RAM remain necessary before a ≥60 s production run.
