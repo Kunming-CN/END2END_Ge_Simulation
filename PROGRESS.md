@@ -6,8 +6,9 @@
 with steady nuclear source inventory, preserved all-34-channel candidate signals,
 bounded memory and resumable processing. At 185/37 kBq the expected new-parent
 count is 1.11 million, plus pre-existing daughter decays counted separately.
-Implement the inventory and duration path, validate native isomer identity, then
-measure a prefix of this same run before expanding its computational blocks.
+The inventory, duration path and native-only optimization are implemented and
+prefix-validated. Finish this same acquisition, verify its final candidates/census,
+then report total retained bytes and peak scratch including unique failure data.
 The run `.local/gegi-candidate-runs/steady-five-seconds` is **running**, using the
 original source/RNG/readout checkpoint. Inspect progress, checkpoint and actual
 workers before any resume; never restart it. The first 500 roots passed native
@@ -56,12 +57,23 @@ main. The software-only ZIP is 1,311,580 bytes (239 sources plus package metadat
 SHA-256 `9e6be690387445c2e105b0c868ac2d39b664ccdaf6f66c5d8c4e0937e47b8a09`;
 GitHub's asset digest matches. Separate calibration remains. The local website
 build is `fa95f02118393fda31070082a628ba3560896889020dd3ac12343d6c1223b0fe`;
-only the generated guide and manifest changed. Final site deployment/check is
-pending. The actual worktree producer is retained separately as
+only the generated guide and manifest changed. Pages deployment succeeded and
+`check_site.py --url` verified 1,013 live files against this build. The actual
+worktree producer is retained separately as
 `native-only-producer.zip` (SHA-256
 `a6c1cc2ea30114ba5f28e1a5f102f102c407b2adafd3615fe6c6baae8be1e337`),
 because recorded runtime identities use actual local bytes, not Git-normalized
 line endings. Preserve that producer and the ongoing acquisition checkpoint.
+
+At 20:26 UTC the same manual run was active at approximately 0.402/5 s (8%).
+The optimized continuous process had run for about 35 minutes, implying roughly
+6–8 hours remaining if its measured throughput holds; this is not a guarantee.
+Native RSS peak was 2.53 GB, Python 125 MB, and owned run logical peak 139 MB;
+final storage and failure statistics are still pending. Current CLI uses
+`--duration-s 5 --initial-state-policy secular_equilibrium_poisson_daughters_v1
+--seed 20261120 --block-parents 10000 --resume`. Inspect actual processes,
+`progress.json` and the durable checkpoint before any continuation. No second
+worker, new acquisition or 90.09-second production run is authorized by this note.
 
 **Continuous streaming milestone:** implemented one joint parent clock with
 true Geant4 random-state continuation, a disk-backed delayed-deposit queue,
