@@ -1464,7 +1464,56 @@ GEGI_STUDY_STYLE = '''
 .gegi-study details{margin:14px 0}.gegi-study summary{padding:8px 0;font-weight:600}
 .gegi-study table{font-size:.92rem}.gegi-study th,.gegi-study td{vertical-align:top}
 .gegi-study>p{max-width:90ch}.study-links{display:flex;gap:12px 24px;flex-wrap:wrap}
+.study-contents{margin:16px 0;padding:12px 16px;background:#edf3f7;border-radius:8px}.study-contents ul{display:flex;gap:8px 24px;flex-wrap:wrap;margin:8px 0;padding-left:20px}.study-relations{margin-top:24px}.study-relations li{margin:8px 0}
 '''
+
+STUDY_CONTENTS = {
+    'position-calibration': (('gegi-fast-gate', 'Neighbor signals'), ('gegi-readout-validation', 'Thresholds and resolution'),
+                             ('gegi-apparent-depth', 'Apparent depth'), ('gegi-edge-position', 'Strip-edge position')),
+    'plane-prior-study': (('gegi-measured-plane', 'One-second sample'), ('gegi-plane-priors', 'Spatial priors'),
+                          ('gegi-three-intersections', 'Peak contributions'), ('gegi-weak-strips', 'Weak strips')),
+}
+STUDY_RELATION_NOTES = {
+    'short-exposure': 'Separate earlier replay sample; its energy comparison has its own exposure census.',
+    'shared-clock-controls': 'Uses the same four-window, 324 two-strip sample as the historical prior study.',
+    'plane-prior-study': 'The four-window, 324 two-strip sample is distinct from the 25-window replay and four-acquisition data.',
+    'position-calibration': 'Separate injections and acquisition samples explain how neighboring-strip features constrain position.',
+    'double-pulse': 'Separate controlled pulse-pair mixtures test timing, energy and position availability.',
+    'pairing-benchmark': 'Separate photon records and controlled mixtures test strip pairing and interaction order.',
+}
+
+
+def _study_contents(key, content):
+    links = [(anchor, label) for anchor, label in STUDY_CONTENTS.get(key, ())
+             if re.search(r'\bid=["\']' + re.escape(anchor) + r'["\']', content)]
+    if not links:
+        return ''
+    return ('<nav class="study-contents" aria-label="On this page"><strong>On this page</strong><ul>'
+            + ''.join(f'<li><a href="#{anchor}">{label}</a></li>' for anchor, label in links) + '</ul></nav>')
+
+
+def _study_reading_path(key):
+    paths = {
+        'short-exposure': '<strong>Next:</strong> <a href="../gegi-position-calibration/index.html#gegi-fast-gate">Neighbor signals and position</a> explain what remains beyond the single-pixel energy; these are separate calibration samples.',
+        'position-calibration': '<strong>Before:</strong> <a href="../gegi-short-exposure/index.html#gegi-event-energy">Single-pixel and multi-strip energy</a> separates energy measurement from position. <strong>Next:</strong> <a href="../gegi-pairing-benchmark/index.html">Strip-pairing controls</a> show why position estimates can admit several interaction candidates. The samples differ between these studies.',
+        'pairing-benchmark': '<strong>Before:</strong> <a href="../gegi-position-calibration/index.html">Position calibration</a> explains the neighbor features used here. <strong>Next:</strong> <a href="../gegi-campaign/index.html">Conditional imaging from four independent acquisitions</a> retains ambiguous pairings and orders on a different dataset.',
+        'plane-prior-study': '<strong>Before:</strong> <a href="../gegi-campaign/index.html">Four-acquisition conditional imaging</a> introduces candidate cones on a different dataset. Here the next question is how a spatial prior changes the image of the historical four-window sample.',
+    }
+    return '<p class="study-reading-path">' + paths[key] + '</p>' if key in paths else ''
+
+
+def _related_studies(key):
+    links = []
+    if key != 'shared-readout':
+        links.append('<li><a href="../gegi-shared-readout/index.html">25 × 250 ms shared-readout study</a> — different historical library replay: 6.25 s total, with electronics reset between windows.</li>')
+    links.append('<li><a href="../gegi-campaign/index.html">Four independent source acquisitions</a> — different dataset: two photon and two isotope acquisitions, totaling 1,000,000 initial records; four acquisitions do not mean four 250 ms windows.</li>')
+    if key == 'shared-clock-controls':
+        links.append('<li><a href="../gegi-plane-prior-study/index.html">Historical source-plane prior study</a> — another analysis of the same 324 measured two-strip triggers from four independent 250 ms windows (1 s total).</li>')
+    elif key == 'plane-prior-study':
+        links.append('<li><a href="../gegi-shared-clock-controls/index.html">Shared-clock and merged-trigger controls</a> — the same historical four-window sample, including the 324 two-strip triggers used here.</li>')
+    else:
+        links.append('<li><a href="../gegi-plane-prior-study/index.html">Historical source-plane prior study</a> — a separate historical selection: 324 measured two-strip triggers from four independent 250 ms windows (1 s total).</li>')
+    return '<aside class="study-relations" aria-label="Related studies"><h2>Related studies and their samples</h2><ul>' + ''.join(links) + '</ul><p><a href="../index.html">All research</a></p></aside>'
 
 
 def _study_links(content, current_path):
@@ -1492,15 +1541,9 @@ def _write_study(site, key, content):
     title, anchor = GEGI_STUDIES[key]
     path = GEGI_PAGE_PATHS[key]
     category = 'Historical shared-readout study' if key == 'shared-readout' else 'Historical GeGI study'
-    related = (
-        '<p class="study-links"><a href="../index.html">All research</a>'
-        '<a href="../gegi-shared-readout/index.html">25 × 250 ms shared-readout study</a>'
-        '<a href="../gegi-campaign/index.html">Four independent acquisitions</a></p>'
-    )
-    if key == 'shared-readout':
-        related = '<p class="study-links"><a href="../index.html">All research</a><a href="../gegi-campaign/index.html">Four independent acquisitions</a></p>'
     body = f'<header class="study-heading"><p class="eyebrow">{category}</p><h1>{escape(title)}</h1></header>'
-    body += f'<section id="{anchor}" class="gegi-study">{_study_links(content, path)}</section>' + related
+    body += _study_reading_path(key) + _study_contents(key, content)
+    body += f'<section id="{anchor}" class="gegi-study">{_study_links(content, path)}</section>' + _related_studies(key)
     write_page(site/path, title + ' · GeSignal', body, depth=2, page_path=path,
                fold_footer=True, extra_style=GEGI_STUDY_STYLE)
 
@@ -1604,7 +1647,7 @@ These errors compare simulated coordinates within the sampled region.</p>'''
     for key, (title, _) in GEGI_STUDIES.items():
         if key == 'shared-readout' or not sections[key]:
             continue
-        historical.append(f'<li><a href="gegi-{key}/index.html">{escape(title)}</a></li>')
+        historical.append(f'<li><a href="gegi-{key}/index.html">{escape(title)}</a> — {STUDY_RELATION_NOTES[key]}</li>')
         content = re.sub(r'<(/?)h([345])(?=[ >])', lambda match: '<' + match[1] + 'h' + str(int(match[2])-1), sections[key])
         _write_study(site, key, '<p>' + introductions[key] + '</p>' + content)
     if commercial:

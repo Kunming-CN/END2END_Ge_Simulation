@@ -156,4 +156,58 @@ class LithiumDisplayTests(unittest.TestCase):
         (self.site/D.LITHIUM_MANIFEST).write_text(json.dumps(receipt),encoding='utf-8')
         self.assertIsNone(D.previous_lithium_receipt(self.site))
 
+class CurrentPublishedPredecessors(unittest.TestCase):
+    """Admit only the exact pinned Git predecessor, with strict science pins."""
+    def setUp(self):
+        from site_canonical_views import RECEIPT, source_bytes
+        self.temp=tempfile.TemporaryDirectory(dir=D.ROOT/'.local',prefix='archive-predecessor-')
+        self.addCleanup(self.temp.cleanup)
+        self.site=Path(self.temp.name)
+        cache={}
+        def prior(name):
+            if name not in cache:
+                cache[name]=subprocess.run(['git','show','5135738:docs/'+name],cwd=D.ROOT,
+                                           stdout=subprocess.PIPE,check=True).stdout
+            return cache[name]
+        self.prior=prior
+        pages={row['source']:row for row in json.loads(prior(RECEIPT))['pages']}
+        def restore(name):
+            target=self.site/name;target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes(source_bytes(pages[name]) if name in pages else prior(name))
+        self.restore=restore
+
+    def test_exact_native_li_predecessor_preserves_original_output_and_reseal_checks(self):
+        for name in (D.ORIGINAL,D.PAGE,D.MANIFEST):self.restore(name)
+        receipt=(self.site/D.MANIFEST).read_bytes()
+        self.assertEqual(hashlib.sha256(receipt).hexdigest(),'c1a71025c4c2cf4e15c28bf8b0ff00fa683f072b94ec5b7e82776ae24aeeec53')
+        self.assertEqual(D.validate(self.site),json.loads(receipt))
+        original=self.site/D.ORIGINAL;raw=original.read_bytes();original.write_bytes(raw+b' ')
+        with self.assertRaisesRegex(ValueError,'archive changed'):D.validate(self.site)
+        original.write_bytes(raw)
+        page=self.site/D.PAGE;changed=page.read_bytes()+b' ';page.write_bytes(changed)
+        with self.assertRaisesRegex(ValueError,'HTML differs'):D.validate(self.site)
+        resealed=json.loads(receipt)
+        resealed['output'][D.PAGE]={'bytes':len(changed),'sha256':hashlib.sha256(changed).hexdigest()}
+        (self.site/D.MANIFEST).write_text(json.dumps(resealed),encoding='utf-8')
+        self.assertIsNone(D.previous_receipt(self.site))
+        with self.assertRaisesRegex(ValueError,'HTML differs'):D.validate(self.site)
+
+    def test_exact_lithium_predecessor_preserves_all_files_output_and_reseal_checks(self):
+        for name in json.loads(self.prior(D.LITHIUM_MANIFEST))['original_files']:
+            self.restore('lithium/'+name)
+        for name in (D.LITHIUM_PAGE,D.LITHIUM_MANIFEST):self.restore(name)
+        receipt=(self.site/D.LITHIUM_MANIFEST).read_bytes()
+        self.assertEqual(hashlib.sha256(receipt).hexdigest(),'199aecd6257bcfec9eccd8e164adc17bd518679e4d7faa0cf08b61a324c0aca8')
+        self.assertEqual(D.validate_lithium_display(self.site),json.loads(receipt))
+        profile=self.site/'lithium/profiles.csv';raw=profile.read_bytes();profile.write_bytes(raw+b' ')
+        with self.assertRaisesRegex(ValueError,'scientific file changed'):D.validate_lithium_display(self.site)
+        profile.write_bytes(raw)
+        page=self.site/D.LITHIUM_PAGE;changed=page.read_bytes()+b' ';page.write_bytes(changed)
+        with self.assertRaisesRegex(ValueError,'HTML differs'):D.validate_lithium_display(self.site)
+        resealed=json.loads(receipt)
+        resealed['output'][D.LITHIUM_PAGE]={'bytes':len(changed),'sha256':hashlib.sha256(changed).hexdigest()}
+        (self.site/D.LITHIUM_MANIFEST).write_text(json.dumps(resealed),encoding='utf-8')
+        self.assertIsNone(D.previous_lithium_receipt(self.site))
+
+
 if __name__=='__main__':unittest.main(verbosity=2)

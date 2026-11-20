@@ -18,6 +18,8 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js','tools/result_web_delivery.py')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+ # Exact 5135738 Git receipt before case/archive reading routes changed.
+ 'a6f6ba6657fc22a667ddc9030019c1e39ede6aaa8d49706cd6a6f62dc0286e0f',
  # Exact c8d4d13 published manifest, checked against Git before student-page changes.
  '060d1ccfa2323b478667baacae700eaacd4e51a7bcab0bde0807b39251456839',
  # Validated local architecture build 65f0e01b, before browser-found fixes.
@@ -265,6 +267,7 @@ def spectrum_focus(rows,page,context=None,prefix='tenk'):
 def four_detector_spectra(site,specs):
     from ring_site import cases
     from site_routes import page_navigation, case_result_path, relative_url
+    from result_web_delivery import ledger_archive_html
     rows=cases(site)
     require(len(rows)==4 and len(specs)==len(rows)*len(STAGES),'Four-detector spectrum inventory differs')
     body=('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -284,7 +287,7 @@ def four_detector_spectra(site,specs):
                + f'{c["zero_deposit_primaries"]:,} zero-Ge decays; {c["groups"]:,} groups; {c["accepted"]:,} accepted; '
                + f'{c["native_failed_groups"]:,} native failures; {c["readout_rejected"]:,} electronics rejects.</p><p>'
                + f'<a data-spectrum-case-link="result" data-case-model="{model}" data-base-href="{relative_url(case_result_path(model),"spectra/cs137-10k.html")}" href="{relative_url(case_result_path(model),"spectra/cs137-10k.html")}">Charge and readout</a> · <a href="{base}/response/histograms.json">Exact bins</a> · '
-               + f'<a href="{base}/response/ledgers.zip">Complete ledger archive</a></p>')
+               + ledger_archive_html(f'{base}/response/ledgers.zip','spectra/cs137-10k.html')+'</p>')
         for (stage,label),spec in zip(STAGES,specs[i*len(STAGES):(i+1)*len(STAGES)],strict=True):
             if stage in ('deposited_per_group','accepted_peak_ADC'):
                 body+='<div class="main-spectrum"><h3>'+html.escape(label)+'</h3>'+panel(spec)+'</div>'

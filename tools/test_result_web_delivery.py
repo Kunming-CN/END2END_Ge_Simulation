@@ -3,12 +3,39 @@ import copy
 import json
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
 
 import result_web_delivery as D
 import teaching_examples as teaching
+
+
+class PublishedTeachingPredecessor(unittest.TestCase):
+    def test_exact_git_pair_is_readable_but_page_and_science_mutations_are_refused(self):
+        from site_canonical_views import RECEIPT, source_bytes
+        def prior(name):
+            return subprocess.run(['git','show','5135738:docs/'+name],cwd=D.ROOT,
+                                  stdout=subprocess.PIPE,check=True).stdout
+        pages={row['source']:row for row in json.loads(prior(RECEIPT))['pages']}
+        data=prior(teaching.DATA)
+        page=source_bytes(pages[teaching.PAGE])
+        with tempfile.TemporaryDirectory(dir=D.ROOT/'.local',prefix='teaching-predecessor-') as directory:
+            site=Path(directory)
+            (site/teaching.DATA).parent.mkdir(parents=True)
+            (site/teaching.DATA).write_bytes(data)
+            (site/teaching.PAGE).write_bytes(page)
+            self.assertEqual(D._teaching_payload(site),json.loads(data))
+            (site/teaching.PAGE).write_bytes(page+b' ')
+            with self.assertRaisesRegex(ValueError,'generator binding changed'):
+                D._teaching_payload(site)
+            (site/teaching.PAGE).write_bytes(page)
+            changed=json.loads(data)
+            changed['cases'][0]['saved_trace']['trace']['time_ns'][1]+=0.25
+            (site/teaching.DATA).write_text(teaching.canonical(changed),encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'scientific payload changed'):
+                D._teaching_payload(site)
 
 
 class ResultDeliveryTests(unittest.TestCase):
@@ -191,6 +218,18 @@ class ResultDeliveryTests(unittest.TestCase):
         self.assertIn('https://example.test/ledgers.zip', actual)
         delivered, edits = D._rewrite(text, page)
         self.assertEqual(D._restore(delivered, edits), text)
+
+    def test_archive_availability_distinguishes_local_ring_and_public_download(self):
+        page='spectra/cs137-10k.html'
+        ring='../examples/cs137-10k-rings/GeRC02/response/ledgers.zip'
+        public='../examples/cs137-10k/AK02/response/ledgers.zip'
+        self.assertEqual(D.ledger_archive_html(ring,page),'<span class="local-archive">Complete ledger archive: retained locally; not available on this website.</span>')
+        self.assertEqual(D.ledger_archive_html(public,page),'<a href="'+public+'">Complete ledger archive</a>')
+        claim='Complete truth, endpoints, scalar CSV, histogram CSV and saved traces are delivered byte-for-byte inside the complete ledger ZIP; these download links open that ZIP.'
+        updated=D.public_report_html(claim,D.PREFIX+'/GeRC02/response/summary.html')
+        self.assertIn('retained locally',updated)
+        self.assertNotIn('these download links open',updated)
+        self.assertEqual(D.public_report_html(claim,'examples/cs137-10k/AK02/response/summary.html'),claim)
 
     def test_linked_member_is_rejected(self):
         D.finalize(self.site)

@@ -42,6 +42,7 @@ FIXED = {
     "spectra/million-truth.html": ("Deposition spectra", "results/cs137-1m/index.html", "Results", "reader", "spectrum_display"),
     "spectra/million-response.html": ("Response spectra", "results/cs137-1m/index.html", "Results", "reader", "spectrum_display"),
     "viewers/events.html": ("3D radiation events", "results/cs137-10k/index.html", "Results", "reader", "viewer_navigation"),
+    "examples/cs137-10k-hits/hit_event_view.html": ("AK02/SAP22 Ge-positive viewer (archive)", "results/cs137-10k/index.html", "Results", "archive", "frozen_publication"),
 }
 ALIASES = {"viewers/ge-positive.html": "viewers/events.html",
            "viewers/geant4-assembly.html": "viewers/events.html"}
@@ -258,6 +259,33 @@ def detector_navigation(current_path):
     return '<nav aria-label="Detector views">' + ''.join(
         _view(f'detectors/{model}/{name}', label, current_path) for name, label in DETECTOR_VIEWS) + '</nav>'
 
+
+def saved_case_return(path):
+    """Carry only the fixed 10K case identity through model/method/assembly views."""
+    eligible = bool(re.fullmatch(r'(?:detectors|assemblies)/[^/]+/[^/]+\.html',path)) or path in (
+        'methods/index.html', 'scenarios/lbnl-cs137/index.html')
+    if not eligible:
+        return ''
+    detector = path.split('/')[1] if path.startswith('detectors/') and path.count('/') > 1 else None
+    config = json.dumps({'base': relative_url('results/cs137-10k/index.html', path),
+                         'detector_base': relative_url('detectors/index.html', path),
+                         'detector': detector,
+                         'variants': {m: 'GeRC02_Li50min' if m == 'GeRC02' else m for m in CASE_MODELS}},
+                        separators=(',', ':'))
+    return ('<p id="saved-case-return" hidden><a id="saved-case-return-link"></a></p>'
+            '<script data-saved-case-return>(()=>{const config=' + config + ''';
+const box=document.getElementById('saved-case-return'),link=document.getElementById('saved-case-return-link');
+function sync(){box.hidden=true;link.removeAttribute('href');const q=new URLSearchParams(location.search),allowed=['study','model','variant','event','group'];
+for(const key of q.keys())if(!allowed.includes(key)||q.getAll(key).length!==1)return;
+const model=q.get('model');if(q.get('study')!=='cs137-10k'||!Object.hasOwn(config.variants,model)||q.get('variant')!==config.variants[model]||(config.detector&&config.detector!==model))return;
+for(const key of ['event','group'])if(q.has(key)){const raw=q.get(key),n=Number(raw);if(!/^(0|[1-9][0-9]*)$/.test(raw)||!Number.isSafeInteger(n)||(key==='event'&&n>9999))return;}
+if(q.has('group')&&!q.has('event'))return;
+const target=new URL(config.base,location.href);target.pathname=target.pathname.replace(/index\\.html$/,encodeURIComponent(model)+'/charge-readout.html');target.search=q.toString();target.hash='';
+link.href=target.href;link.textContent='Return to '+(model==='GeRC02'?'GeRC02 · Li50min':model==='KMRC01_candidate'?'KMRC01 candidate':model)+(q.has('event')?' / primary '+q.get('event'):'')+(q.has('group')?' / group '+q.get('group'):'')+' charge & readout';box.hidden=false;
+const prefix=new URL(config.detector_base,location.href).pathname.replace(/index\\.html$/,encodeURIComponent(model)+'/');
+document.querySelectorAll('#page-navigation nav[aria-label="Detector views"] a[href],a[data-saved-case-context][href]').forEach(a=>{const url=new URL(a.href,location.href);if(url.origin===location.origin&&url.pathname.startsWith(prefix)&&/^[^/]+\\.html$/.test(url.pathname.slice(prefix.length))){url.search=q.toString();a.href=url.href;}});}
+addEventListener('DOMContentLoaded',sync);addEventListener('pageshow',sync);addEventListener('popstate',sync);sync();})();</script>''')
+
 def page_navigation(path, dataset=None, model=None, model_label=None):
     source_path = next((old for old,new in CANONICAL_VIEWS.items() if new==path),path)
     if dataset is None:
@@ -272,7 +300,7 @@ def page_navigation(path, dataset=None, model=None, model_label=None):
     heading = ('<div class="site-heading"><a class="site-brand" href="'+relative_url('index.html',path)+'">GeSignal</a>'
                +primary_navigation(path)+'<a class="source-link" href="https://github.com/Kunming-CN/END2END_Ge_Simulation">Source</a></div>')
     return ('<!-- page-navigation:start --><div id="page-navigation"><style id="site-navigation-style">' + NAV_STYLE + '</style>' + heading
-            + breadcrumbs(path) + local + '</div>'+NAV_SCRIPT+'<!-- page-navigation:end -->')
+            + breadcrumbs(path) + local + saved_case_return(path) + '</div>'+NAV_SCRIPT+'<!-- page-navigation:end -->')
 
 
 def assembly_navigation(path):

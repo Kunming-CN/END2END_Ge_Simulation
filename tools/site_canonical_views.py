@@ -29,7 +29,8 @@ STAGED_ROOT = ROOT / '.local/site-build'
 RECEIPT = 'canonical-views.json'
 KIND = 'saved_canonical_views_v1'
 SOURCES = ('tools/site_canonical_views.py', 'tools/site_routes.py',
-           'tools/site_chrome.py', 'tools/site_discovery.py')
+           'tools/site_chrome.py', 'tools/site_discovery.py',
+           'tools/result_web_delivery.py', 'tools/gegi_assembly.html')
 VIEWER_ALIASES = {'viewers/ge-positive.html': 'positive',
                   'viewers/geant4-assembly.html': 'assembly'}
 FRAMED_REPORTS = (
@@ -43,7 +44,8 @@ FRAMED_REPORTS = (
     'examples/cs137-1m-response/report.html',
     'examples/native-li/comparison.html',
 )
-FRAMED_PAGES = FRAMED_REPORTS + ('assemblies/gegi/index.html',)
+FRAMED_ARCHIVES = ('examples/cs137-10k-hits/hit_event_view.html',)
+FRAMED_PAGES = FRAMED_REPORTS + ('assemblies/gegi/index.html',) + FRAMED_ARCHIVES
 NAV = re.compile(r'<!-- page-navigation:start -->.*?<!-- page-navigation:end -->', re.S)
 SCRIPT = re.compile(r'(<script\b[^>]*>)(.*?)(</script\s*>)', re.I | re.S)
 ATTR = re.compile(r'(?P<key>\b(?:href|src|poster|action|data-base-href))\s*=\s*(?P<quote>[\"\x27])(?P<url>.*?)(?P=quote)', re.I | re.S)
@@ -284,7 +286,11 @@ def validate(site, current=False):
     require(not current or same_sources, 'Canonical display sources changed')
     expected = {old for old in CANONICAL_VIEWS if (site / old).is_file()}
     expected.update(old for old in VIEWER_ALIASES if (site / old).is_file())
-    expected.update(old for old in FRAMED_PAGES if (site / old).is_file())
+    # A saved predecessor can be restored before newly registered archives are
+    # framed for the first time. Its existing receipt-bound pages stay strict.
+    recorded = {row['source'] for row in receipt['pages']}
+    expected.update(old for old in FRAMED_PAGES if (site / old).is_file()
+                    and (old not in FRAMED_ARCHIVES or same_sources or old in recorded))
     expected.update(row['source'] for row in receipt['pages'] if row['mode'] == 'linked')
     require({row['source'] for row in receipt['pages']} == expected,
             'Canonical source page inventory differs')

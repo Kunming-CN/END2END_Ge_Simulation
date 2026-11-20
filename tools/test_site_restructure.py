@@ -13,7 +13,7 @@ class DisclosureScopes(HTMLParser):
             self.closed.append(values.get('id','details') if 'open' not in values else None)
         scope=tuple(ident for ident in self.closed if ident)
         if 'id' in values:self.ids[values['id']]=scope
-        if tag=='a':self.links.append((values['href'],scope))
+        if tag=='a' and 'href' in values:self.links.append((values['href'],scope))
     def handle_endtag(self,tag):
         if tag=='details':self.closed.pop()
 
@@ -147,6 +147,9 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('KMRC01 candidate',html)
         self.assertIn('SAP18 ring scenario',html)
         self.assertIn('GeRC02 Li50min operating variant; catalog download is the 30-minute baseline.',html)
+        self.assertLess(html.index('A model is a saved crystal geometry'),html.index('class="catalog-filters"'))
+        self.assertIn('not all runnable in every cryostat',html)
+        self.assertIn("not experimental validation",html)
 
     def test_home_has_three_task_actions_and_accurate_featured_study(self):
         home=S.homepage(commercial=True);scope=DisclosureScopes();scope.feed(home)
@@ -181,6 +184,12 @@ class SiteStructureTests(unittest.TestCase):
         self.assertIn('GeGI digitized strip readout',methods)
         self.assertIn('X and Y are two measurements of the same deposited charge',methods)
         self.assertIn('an unknown response is not zero',methods)
+        for anchor in ('radiation-transport-method','charge-transport-method','readout-method','gegi-acquisition-method'):
+            self.assertIn('id="'+anchor+'"',methods)
+        self.assertIn('Raw LH5 positions are in metres',methods)
+        self.assertIn('detector-local <code>position_mm</code> in millimetres',methods)
+        self.assertIn('<code>global_position_m</code> in metres',methods)
+        self.assertIn('href="../guide.html#saved-analysis"',methods)
 
     def test_million_case_counts_and_stage_links_stay_independent_of_tenk(self):
         root=self.fixture(with_results=True);S.apply(root)

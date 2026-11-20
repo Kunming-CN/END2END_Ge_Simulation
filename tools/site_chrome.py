@@ -1,6 +1,7 @@
 """Shared document frame over retained historical HTML; scientific assets stay exact."""
 import re
-from site_routes import page_navigation, relative_url
+from pathlib import Path
+from site_routes import page_navigation, page_record, relative_url
 
 STYLE = '''
 body.site-document{margin:0!important;padding:24px!important;background:#f6f8fa!important;color:#173047!important;font:16px/1.6 system-ui!important;max-width:1440px!important;box-sizing:border-box;margin-inline:auto!important}
@@ -54,10 +55,38 @@ def frame_html(text, path):
     text = re.sub(r'(<body\b[^>]*class=")([^"]*)(")',
                   lambda m:m[1]+('site-document ' if 'site-document' not in m[2].split() else '')+m[2]+m[3],text,count=1,flags=re.I)
     note = ''
-    if path.startswith('examples/'):
+    if path == 'examples/cs137-10k-hits/hit_event_view.html':
+        events = relative_url('results/cs137-10k/events.html', path)
+        study = relative_url('results/cs137-10k/index.html', path)
+        note = ('<aside class="archive-identity"><strong>Historical AK02/SAP22 Ge-positive viewer</strong><p>'
+                'This earlier presentation retains 121 AK02 and 115 SAP22 Ge-positive primaries. '
+                'The current 10K viewer also includes the GeRC02 Li50min and KMRC01 candidate cases.</p>'
+                '<p><a href="'+study+'">Return to the current 10K study</a> · '
+                '<a id="archive-current-events" href="'+events+'?model=AK02&amp;view=positive">Return to the current event viewer</a></p></aside>')
+        text = text.replace('<a id="allEvents" href="../cs137-10k-geometry/geometry.html">original all-event viewer</a>',
+                            '<a id="allEvents" href="'+events+'?model=AK02&amp;view=assembly">current assembly viewer</a>')
+        text = text.replace("$('allEvents').href=m.all_events_url;", '')
+        if '/* archive-current-view-links */' not in text:
+            text = text.replace('async function selectModel(name){', 'async function selectModel(name){'
+                                '/* archive-current-view-links */'
+                                "const current="+repr(events)+"+'?model='+encodeURIComponent(name);"
+                                "$('allEvents').href=current+'&view=assembly';"
+                                "$('archive-current-events').href=current+'&view=positive';")
+        text = text.replace('The original all-event link requires the sibling published bundle.',
+                            'The all-event link opens the maintained website viewer.')
+    elif path.startswith('examples/'):
         note = ('<aside class="archive-identity"><strong>Original saved evidence</strong><p>'
                 'This report preserves its original study conditions and recorded outcomes. '
                 'Use the breadcrumb to return to the maintained study and its current views.</p></aside>')
+        parent = page_record(path)['parent_id']
+        if parent and parent.endswith('/charge-readout.html'):
+            link = relative_url(parent+'#data-files', path)
+            note = note.replace('</aside>', '<p><a href="'+link+'">Current data &amp; settings for this case</a></p></aside>')
+        if path.startswith('examples/cs137-10k-rings/'):
+            from result_web_delivery import public_report_html
+            text = public_report_html(text, path)
+            note = note.replace('</aside>', '<p>The complete ledger ZIP is retained locally and is not publicly downloadable. '
+                                'Public signed signals, scalar records and histogram files remain linked below.</p></aside>')
     frame = '<style id="shared-document-frame">'+STYLE+'</style>'+page_navigation(path)+note
     return re.sub(r'(<body\b[^>]*>)',lambda m:m[1]+frame,text,count=1,flags=re.I)
 
@@ -65,6 +94,15 @@ def frame_html(text, path):
 def assembly_html(text, path):
     """Put the saved assembly canvas before its optional radiation controls."""
     text = re.sub(r'<style>#page-navigation\{.*?</style>','',text,count=1,flags=re.S)
+    # Update only reading links/prose from the maintained assembly template; the
+    # saved geometry, event payload and original report remain receipt-bound.
+    template = Path(__file__).with_name('gegi_assembly.html').read_text(encoding='utf-8')
+    intro = re.search(r'<p><a href="../../results/gegi-campaign/index.html">.*?</p>', template, re.S)
+    relations = re.search(r'<p>The four built-in samples.*?</p>\s*<p>The <a href="../../results/gegi-shared-readout/index.html">.*?</p>', template, re.S)
+    if intro:
+        text = re.sub(r'<p><a href="../../results/gegi-campaign/index.html">.*?</p>',lambda _:intro[0],text,count=1,flags=re.S)
+    if relations:
+        text = re.sub(r'<p>The four built-in samples.*?</p>(?:\s*<p>The <a href="../../results/gegi-shared-readout/index.html">.*?</p>)?',lambda _:relations[0],text,count=1,flags=re.S)
     start = text.find('<p>The four built-in samples')
     end = text.find('<div class="bar" aria-label="Camera controls">')
     destination = '<details id="event-record-panel">'

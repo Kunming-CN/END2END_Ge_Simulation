@@ -1,11 +1,13 @@
 # Geant4/remage: radiation transport, not semiconductor charge transport
 
-For a first LBNL run on Windows, use the [single setup/run checklist](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup). The sections below are component-level and historical engineering references, not separate beginner workflows.
+For a first run, choose Windows or macOS in the [shared setup and run guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#platform-choice). The sections below are component-level and historical engineering references, not separate beginner workflows.
 
-This directory keeps one pinned Linux environment for radiation energy deposits.
-Windows uses Ubuntu 24.04 under WSL2; SSD remains native Windows Julia.
-The Pixi manifest pins remage 1.1.0 and Geant4 11.3.2, selected from the same
-conda-forge build family. Keep pixi.toml and pixi.lock together; upgrade on a
+The top-level Pixi files pin Linux x86-64 transport for Windows/WSL2 or configured
+Linux hosts. Windows uses Ubuntu 24.04 under WSL2; SSD remains native Julia.
+Native macOS CPU transport uses `macos/pixi.toml`, `macos/pixi.lock` and
+`macos/workflow.sh`, sharing the computation source and model inputs.
+Both platform environments pin remage 1.1.0 and Geant4 11.3.2 from conda-forge.
+Keep each platform's manifest and lock together; upgrade on a
 branch and rerun the smoke test before merging. Do not use a floating latest image.
 
 ## Boundaries
@@ -64,7 +66,9 @@ The project-local `.pixi/config.toml` places the large Linux environment in Pixi
 managed Linux cache, not the synced Windows folder. It is a runtime installation,
 not a second source checkout. Installation requires several GB for Geant4 data
 and dependencies. `Run.cmd` selects Ubuntu-24.04; `run.sh` is the native Linux
-entry. Only Linux x86-64 is locked here; macOS is not claimed as tested.
+entry. These commands and the top-level lock target Linux x86-64. Native macOS
+uses the separate committed `macos/` locks and entry; its current acceptance
+scope is recorded in the [macOS guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#macos-validation).
 
 ## Historical pre-integration geometry notes
 
@@ -100,7 +104,9 @@ as-built survey of the experimental assembly.
 `handoff.py` prepares immutable inputs, runs remage, and extracts a small JSON
 fixture from **flat** LH5. It accepts only canonical `AK02` (Anupama ICPC2,
 Li-contact primary case) and `SAP22` (non-Li cross-check with different geometry).
-GeGI is deferred. This adapter does not calculate charge or apply charge-loss corrections.
+This historical adapter covers only AK02/SAP22. Current GeGI calculations use
+the [dedicated GeGI cryostat workflow](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#gegi-workflow).
+This adapter does not calculate charge or apply charge-loss corrections.
 Continue with [the SSD replay](../simulation/README.md#radiation-deposit-replay-ak02-and-sap22).
 The example has no electronics, efficiency prediction or experimental validation.
 

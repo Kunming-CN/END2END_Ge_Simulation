@@ -26,6 +26,8 @@ __PAGE_NAVIGATION__
 <div id="content">
 <section class="card lesson">
 <h2 id="case-title"></h2><p id="case-explanation"></p>
+<p class="learning-goal"><strong>Follow one question:</strong> how do this group's energy deposits become charge, current, voltage and finally one energy estimate? By the last step, explain why deposited energy, final induced charge and reconstructed energy can differ; use the saved numerical and readout status below when interpreting that difference.</p>
+<p class="flagline" id="case-status"></p>
 <ol class="stages" aria-label="Signal chain"><li><button id="stage-deposits" type="button">1 · Deposits</button></li><li><button id="stage-charge" type="button">2 · Charge</button></li><li><button id="stage-current" type="button">3 · Current</button></li><li><button id="stage-preamp" type="button">4 · Preamp</button></li><li><button id="stage-shaper" type="button">5 · Shaping</button></li><li><button id="stage-adc" type="button">6 · ADC → energy</button></li></ol>
 <select id="stage-select" aria-label="Signal stage" hidden><option value="deposits">Deposits</option><option value="charge">Charge</option><option value="current">Current</option><option value="preamp">Preamp</option><option value="shaper">Shaping</option><option value="adc">ADC</option></select>
 <p id="stage-explanation" aria-live="polite"></p>
@@ -33,7 +35,6 @@ __PAGE_NAVIGATION__
 <div class="plots" id="plots" aria-label="Saved signal stage"></div>
 <figure id="adc-figure"><figcaption>One sampled peak becomes one energy estimate</figcaption><div id="adc-plot"></div><p class="deposit-note">A peak analog-to-digital converter (ADC) records one code from the shaped peak. One independent injection sets the same energy calibration for every event.</p></figure>
 <div class="stage-controls"><button id="stage-previous" type="button">← Previous step</button><span id="stage-count" class="stage-count"></span><button id="stage-next" type="button">Next step →</button></div>
-<p class="flagline" id="case-status"></p>
 <p class="source-links"><a id="case-3d">This primary and pulse group in 3D</a><a id="case-readout">This saved charge and readout event</a></p>
 </section>
 <section class="card">

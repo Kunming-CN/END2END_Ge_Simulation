@@ -42,6 +42,10 @@ async function restore(replace=false){
  $('selected-identity').textContent='Saved study: cs137-10k / '+data.variant+' · original primary '+event+(group===null?'':' · pulse group '+group);
  const viewer='../events.html?'+query(event,group)+'&view='+(pulse?'positive':'assembly');
  $('selected-3d').href=viewer;$('selected-scalar-link').href=data.scalar_url;
+  for(const link of document.querySelectorAll('[data-case-resource]')){
+   const [path,fragment]=link.dataset.caseResource.split('#');
+   link.href=path+'?'+query(event,group)+(fragment?'#'+fragment:'');
+  }
  updateCaseNavigation({model:data.model,result:location.pathname+'?'+query(event,group),files:location.pathname+'?'+query(event,group)+'#data-files',events:viewer,spectrum:'../spectra.html?'+query(event,group)+'#tenk-'+data.model},'Saved study: cs137-10k / '+data.variant+' · primary '+event+(group===null?'':' · group '+group));
  const teaching=data.teaching.some(k=>k[0]===event&&k[1]===group);$('selected-teaching').hidden=!teaching;
  if(teaching)$('selected-teaching').href='../../../learn/signals/index.html?'+query(event,group);
@@ -452,9 +456,19 @@ def saved_report(site, case):
                '<script>' + (tools / 'viewer_navigation.js').read_text(encoding='utf-8') + '</script>'
                '<script>' + (tools / 'focused_plots.js').read_text(encoding='utf-8') + '</script>'
                '<script id="saved-response-controller">' + READOUT_CONTROLLER + '</script>')
+    resource_links=[]
+    for route,label in ((f'detectors/{model}/index.html',case['label']+' model and variant'),
+                        ('assemblies/lbnl/index.html','Nominal LBNL cryostat'),
+                        ('methods/index.html#readout-method','Charge-to-energy readout method')):
+        href=escape(relative_url(route,current_path),quote=True)
+        resource_links.append(f'<a data-case-resource="{href}" href="{href}">{escape(label)}</a>')
+    resource_context=('<section id="case-resources" class="panel"><h2>Model, assembly and method</h2><p>'
+                      +' · '.join(resource_links)+'</p>'
+                      +('<p>This case uses the GeRC02 Li50min operating variant. The model catalog keeps the original 30-minute model; its overview and parameters explain the relationship.</p>' if model=='GeRC02' else '')
+                      +'</section>')
     body = (layout + '<section class="hero"><p class="muted">Saved Cs137 campaign · 10,000 initial decays</p>'
             '<h1>' + escape(case['label']) + ' · charge and readout</h1><p>' + escape(case['note']) + '</p></section>'
-            + selected + '<details id="saved-waveforms" class="panel saved-response-report"><summary>Complete original report, settings and saved examples</summary>' + science + '</details>')
+            + resource_context + selected + '<details id="saved-waveforms" class="panel saved-response-report"><summary>Complete original report, settings and saved examples</summary>' + science + '</details>')
     data = '<section id="data-files" class="panel"><h2>Data and settings</h2><p>'
     from result_web_delivery import OMITTED, PREFIX
     archive = case['base'] + '/response/ledgers.zip'

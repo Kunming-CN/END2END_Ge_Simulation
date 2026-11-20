@@ -143,9 +143,9 @@ READER_STYLE = '''
 def write_methods(site):
     methods='''<div class="reader-page"><header class="reader-intro"><h1>Simulation methods</h1>
 <p>How radiation deposits become electrode signals, readout energies and interaction candidates.</p></header>
-<section class="panel"><h2>Radiation transport</h2><p>Geant4/remage records deposited energy E<sub>dep</sub> in keV, positions in mm, creation and deposition times in ns, and original primary and track identities. A primary may miss the crystal, interact more than once or produce delayed daughter deposits. Keep relevant deposits of one primary and pulse group together.</p></section>
-<section class="panel"><h2>Charge transport and induction</h2><p>SolidStateDetectors.jl transports electrons and holes through the detector electric field. Electrode weighting potentials determine signed induced charge through the Shockley–Ramo relation. Charge in fC and current in nA belong to this stage; deposition time is not carrier drift time. Incomplete collection, guard contacts and numerical termination flags stay with the response.</p></section>
-<section class="panel"><h2>Two readout branches</h2><div class="grid">
+<section class="panel" id="radiation-transport-method"><h2>Radiation transport</h2><p>Geant4/remage records deposited energy E<sub>dep</sub> in keV, creation and deposition times in ns, and original primary and track identities. Raw LH5 positions are in metres. Normalized deposits use detector-local <code>position_mm</code> in millimetres and <code>global_position_m</code> in metres; the saved column units and coordinate transform remain authoritative. A primary may miss the crystal, interact more than once or produce delayed daughter deposits. Keep relevant deposits of one primary and pulse group together.</p><p><a href="../guide.html#saved-analysis">Saved field names, units and original event IDs →</a></p></section>
+<section class="panel" id="charge-transport-method"><h2>Charge transport and induction</h2><p>SolidStateDetectors.jl transports electrons and holes through the detector electric field. Electrode weighting potentials determine signed induced charge through the Shockley–Ramo relation. Charge in fC and current in nA belong to this stage; deposition time is not carrier drift time. Incomplete collection, guard contacts and numerical termination flags stay with the response.</p></section>
+<section class="panel" id="readout-method"><h2>Two readout branches</h2><div class="grid">
 <article><h3>LBNL analog electronics</h3><p>Signed current passes through fixed wiring, a preamplifier and analog shaper. A peak ADC (analog-to-digital converter) records one peak code. The analog numerical time grid is separate from a waveform digitizer.</p><p><a href="../learn/signals/index.html">Follow six saved 10K signals →</a></p></article>
 <article><h3>GeGI digitized strip readout</h3><p>The nominal digital branch samples preamplifier voltages on 34 electrodes. Fast neighboring-strip responses inform position, while the slow branch measures energy. X and Y are two measurements of the same deposited charge; their energies are not added.</p><p>Shared-readout studies combine overlapping signals before common noise, digitization and triggering. Their source history, clock organization and reset conditions belong to each study.</p><p><a href="../results/gegi-shared-readout/index.html">25 × 250 ms archived-library study →</a></p></article></div>
 <p>Voltages are in V and reconstructed energy E<sub>rec</sub> is in keV. Independent synthetic injections provide a fixed calibration shared across events. Gain is never chosen separately to match each event's E<sub>dep</sub>. Thresholds, clipping or rejection can leave energy unavailable; an unknown response is not zero.</p></section>
@@ -313,7 +313,16 @@ def refresh_gegi_reading_order(site):
               'plus Cs-137 and Co-60 runs of 300,000 initial records each. The combined count is 1,000,000 initial records.</p>'
               '<p>The current conditional image uses <strong>434 signal-selected groups and 837 candidate orders</strong>. '
               'Its 40 iterations reached the saved budget; convergence remains unestablished. '
-              'The separate historical control contains 708 groups.</p></section>')
+              'The separate historical control contains 708 groups.</p>'
+              '<p>Study setup: <a href="../../detectors/GeGI_3D/index.html">GeGI_3D detector model</a> · '
+              '<a href="../../assemblies/gegi/index.html">GeGI cryostat assembly</a> · '
+              '<a href="../../methods/index.html#gegi-acquisition-method">Readout candidates and Compton imaging method</a>.</p>'
+              '<p><strong>Before:</strong> <a href="../gegi-pairing-benchmark/index.html">Position and strip-pairing controls</a> '
+              'explain why a trigger can retain several candidates. <strong>Next:</strong> '
+              '<a href="../gegi-plane-prior-study/index.html">Historical source-plane prior study</a> '
+              'compares spatial assumptions on a different sample: 324 measured two-strip triggers from four independent 250 ms windows (1 s total).</p>'
+              '<p><a href="../gegi-shared-readout/index.html">Related 25 × 250 ms shared-readout study</a>: '
+              'a different historical library replay, totaling 6.25 s with electronics reset between windows.</p></section>')
     ordered=identity+''.join(blocks[ident] for ident in ('new-map','journey','spectra'))+evidence
     # Dataset views in the common page header are the only study-level menu.
     nav=re.search(r'<nav class="local">.*?</nav>|<span id="campaign-reading-order"></span>',text,re.S)
@@ -364,7 +373,7 @@ def apply(site):
     write_page(site/'learn/index.html','Learn · GeSignal',learn,1,extra_style=READER_STYLE)
 
     geometry_options=''.join('<option>'+escape(kind)+'</option>' for kind in sorted(set(detector_pages.TYPE_LABELS.values())))
-    filters='''<section class="panel" aria-labelledby="filter-title"><h2 id="filter-title">Find a model</h2><div class="catalog-filters">
+    filters='''<section class="panel" aria-labelledby="filter-title"><h2 id="filter-title">Find a model</h2><p>A model is a saved crystal geometry, electrode layout and material configuration. Browsable models are not all runnable in every cryostat: use Assembly to find compatible setups. Reference, candidate and scenario labels describe the model's role, not experimental validation.</p><div class="catalog-filters">
 <label>Geometry<select id="filter-geometry"><option value="">All geometries</option>'''+geometry_options+'''</select></label>
 <label>Assembly<select id="filter-assembly"><option value="">All compatibility</option><option value="lbnl">LBNL compatible</option><option value="gegi">GeGI only</option><option value="larger">Larger cryostat needed</option></select></label>
 <label>Model status<select id="filter-status"><option value="">All statuses</option><option value="recorded model">Recorded model</option><option value="reference">Reference</option><option value="candidate">Candidate</option><option value="scenario">Scenario</option></select></label>

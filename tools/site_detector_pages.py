@@ -46,6 +46,13 @@ EXAMPLE_LABELS={
     'three_dominant':'Three sites · unequal energy','three_depth':'Three sites at different depths',
     'strip_gap_sharing':'Charge sharing across a strip gap',
 }
+GALLERY_SECTION_LABELS={
+    'saved-field-weighting':'View saved electric fields and weighting potentials',
+    'saved-carrier-drift':'View saved carrier-drift trajectories',
+    'saved-comparisons':'View saved signal comparisons',
+    'saved-signed-signals':'View signed induced-charge signals',
+    'saved-event-library':'View saved event examples',
+}
 PLOT_LABELS={
     '01_geometry.png':'geometry and electrode contacts',
     '02_static_fields.png':'electric field and weighting-potential sections',
@@ -342,10 +349,11 @@ def apply(site, write_page):
                       'or experimental validation.</p>')
         legacy_ids=set(ids(strip_navigation_block(cleaned)))-MANAGED-{'contact-legend','native-cs137-10k','saved-signal-axis-note'}
         aliases=('<details class="panel"><summary>Earlier saved gallery sections</summary>'+''.join(
-            f'<p id="{escape(i,quote=True)}"><a href="gallery.html#{escape(i,quote=True)}">Open saved gallery detail</a></p>'
+            f'<p id="{escape(i,quote=True)}"><a href="gallery.html#{escape(i,quote=True)}">{escape(GALLERY_SECTION_LABELS.get(i,"View saved section · "+i.replace("-"," ")))}</a></p>'
             for i in sorted(legacy_ids))+'</details>' if legacy_ids else '')
         variant_note=('<p>Catalog model: original 30-minute GeRC02. Cs137 10K and local Control use a separate Li50min operating variant. '
-                      'The model downloads on this page contain the 30-minute baseline.</p>' if model=='GeRC02' else '')
+                      'The model downloads on this page contain the 30-minute baseline. '
+                      '<a data-saved-case-context href="technical.html">Compare the operating variant and original model</a>.</p>' if model=='GeRC02' else '')
         header=(f'<section class="hero"><h1>{escape(model_name(model))}</h1><p>Stable model ID: <code>{escape(model)}</code></p>'
                 f'<p>{escape(TYPE_LABELS[model])} · {count} contacts</p>'
                 '<p><strong>'+escape(capability['label'])+'</strong>.</p>'

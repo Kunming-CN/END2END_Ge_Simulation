@@ -2,6 +2,30 @@
 
 ## Current handoff, November 20
 
+**Website refinement:** archive viewers now identify their saved population and
+return to current views; ring ledger ZIPs explicitly remain local. The guide links
+the actual four-acquisition evaluation (153 groups / 287 orders, 550 unevaluated),
+without claiming an independent holdout. GeGI study links explain which samples
+differ. Model, assembly and method links retain the 10K case/event return context;
+teaching objectives, catalog guidance, platform entries and coordinate units are
+updated. All 38 active-run producer pins remain unchanged. Relevant source tests
+passed, including 38 publication and 17 gallery checks; the existing Windows
+symlink test is skipped. Exact Git-bound predecessor receipts preserve strict
+science/output checks after template changes.
+
+Generated build `c8a024e12b3ba29fb9b7a8f73a41bd08e99159f4181438f0bca9e3e4aed8ef32`
+passes `check_site.py`: 1,909 files, 503,708,731 bytes, 126 HTML pages, 3,773 local
+links and 281 fragments. The teaching scientific payload is identical after
+excluding generator hashes. Desktop Chrome verified all six teaching stages and
+the GeRC02 Li50min primary 61 / group 0 path through 3D, readout, model/variant,
+assembly and method with a same-event return. The legacy viewer switched to SAP22
+and returned to its current view; current assembly naming, local-only archives,
+the guide's expanded evidence target, GeGI relationships and long-page contents
+were checked. No download was clicked. GitHub/Pages publication and live byte
+verification are the remaining website steps; no new student package is needed.
+The same manual acquisition was running at 0.940/5 s with 10,627 complete and 364
+unavailable native groups during acceptance. Do not restart it.
+
 **Active milestone:** the owner now authorizes one **5 s physical acquisition**,
 with steady nuclear source inventory, preserved all-34-channel candidate signals,
 bounded memory and resumable processing. At 185/37 kBq the expected new-parent

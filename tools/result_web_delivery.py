@@ -7,6 +7,7 @@ only the two ZIPs' anchor tags. Build inputs are restored only in site staging.
 from __future__ import annotations
 
 import hashlib
+from html import escape
 from html.parser import HTMLParser
 import json
 import os
@@ -32,6 +33,9 @@ TEACHING_SCIENCE_SHA256 = '8c93849cc98b5de06c800a67ee40f34773871162a9d6daa35522d
 # Exact 52fd55e published display, compared byte-for-byte with Git before the
 # architecture migration. Only this pair may use its historical generator hash.
 TEACHING_PREVIOUS_DISPLAYS = {
+ # Exact 5135738 Git data and restored pre-frame page, before reading guidance.
+ ('96467b087f1bc4e825aa5f12e9f14a008f5428420452c55a672361d6c4419733',
+  'ce288edbe100a09e196a81ed5a368f0790450df385f76905b2bc99eb4a1d96b7'),
  # Exact c8d4d13 published payload and restored source HTML, checked against Git.
  ('cf2cd2a6c5d820710ee43a10ff1dfa510da141ed6b8670fd9f318098e39a0dfe',
   'eb8f5313e9e6d2836adb96eed44f8dab146f3cd2d4f3eb865f5fcee4b445323c'),
@@ -44,6 +48,8 @@ TEACHING_PREVIOUS_DISPLAYS = {
   '5af31339317f545fed185e75473967fd78c4088d60f87a665c490df280384d36'),
 }
 PREVIOUS_DELIVERY_RECEIPTS = {
+ # Exact current HEAD receipt before availability wording; source data stay pinned.
+ 'fff0996db06b0e083a4fe2243a82ea1db910480e2543d53ee185050128f08ede',
  # Exact c8d4d13 published receipt, checked against Git.
  '15b1d168a3613d93cf96b200194ac7dc2d065971c39a133476f9ef08ca1d276a',
  'fdf6a1eb781e9f09a473ceb2a4e790ab221679843e191c6d27705ade15e66418',
@@ -190,6 +196,28 @@ def _rewrite(text, page):
 def strip_archive_links(text, page):
     """Deterministic hook for maintained report/spectrum HTML generators."""
     return _rewrite(text, page)[0]
+
+
+def ledger_archive_html(href, page):
+    """Show an actual public download or an explicit local-only archive status."""
+    if _archive_target(page, href):
+        return '<span class="local-archive">Complete ledger archive: retained locally; not available on this website.</span>'
+    return '<a href="' + escape(href, quote=True) + '">Complete ledger archive</a>'
+
+
+def public_report_html(text, page):
+    """Correct a frozen report's public ZIP promise in its reversible site frame.
+
+    The canonical-view receipt preserves the exact pre-frame report bytes. The
+    ZIP omission receipt remains an exact anchor-only transform of the original.
+    """
+    if not any(page.startswith(PREFIX + '/' + model + '/response/') for model in ('GeRC02', 'KMRC01_candidate')):
+        return text
+    old = ('Complete truth, endpoints, scalar CSV, histogram CSV and saved traces are delivered '
+           'byte-for-byte inside the complete ledger ZIP; these download links open that ZIP.')
+    new = ('The complete ledger ZIP, including truth, endpoints, scalar CSV, histogram CSV and saved traces, '
+           'is retained locally and is not available for download on this website.')
+    return text.replace(old, new)
 
 
 def _restore(text, edits):

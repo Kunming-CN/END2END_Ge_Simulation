@@ -12,6 +12,77 @@ import site_canonical_views as views
 
 
 class CanonicalViews(unittest.TestCase):
+    def test_retained_hit_viewer_has_archive_identity_returns_and_reversible_bytes(self):
+        path = 'examples/cs137-10k-hits/hit_event_view.html'
+        raw = (views.ROOT / 'tools/hit_event_view.html').read_bytes()
+        with tempfile.TemporaryDirectory(dir=views.ROOT / '.local', prefix='archive-frame-') as directory:
+            site = Path(directory)
+            page = site / path
+            page.parent.mkdir(parents=True)
+            page.write_bytes(raw)
+            asset = page.with_name('science.json')
+            asset.write_bytes(b'{"event":26,"signed":-0.0001234567890123456}')
+            receipt = views.apply(site)
+            output = page.read_text(encoding='utf-8')
+            for label in ('Primary', 'Breadcrumb'):
+                self.assertEqual(output.count('<nav aria-label="'+label+'"'), 1)
+            self.assertIn('Historical AK02/SAP22 Ge-positive viewer', output)
+            self.assertIn('Return to the current 10K study', output)
+            self.assertIn('Return to the current event viewer', output)
+            self.assertIn('../../results/cs137-10k/events.html?model=', output)
+            self.assertNotIn("$('allEvents').href=m.all_events_url", output)
+            self.assertEqual(output.count('/* archive-current-view-links */'), 1)
+            from site_chrome import frame_html
+            self.assertEqual(frame_html(output, path), output)
+            self.assertEqual(receipt['pages'][0]['mode'], 'framed')
+            self.assertEqual(views.apply(site), receipt)
+            self.assertTrue(views.prepare(site))
+            self.assertEqual(page.read_bytes(), raw)
+            self.assertEqual(asset.read_bytes(), b'{"event":26,"signed":-0.0001234567890123456}')
+
+    def test_predecessor_receipt_can_restore_before_archive_framing_is_added(self):
+        path = 'examples/cs137-10k-hits/hit_event_view.html'
+        raw = (views.ROOT / 'tools/hit_event_view.html').read_bytes()
+        with tempfile.TemporaryDirectory(dir=views.ROOT / '.local', prefix='archive-upgrade-') as directory:
+            site = Path(directory)
+            page = site / path
+            page.parent.mkdir(parents=True)
+            page.write_bytes(raw)
+            prior = dict(kind=views.KIND, science_calls=0, routes=views.CANONICAL_VIEWS,
+                         generators={'tools/site_canonical_views.py':'previous source'}, pages=[])
+            (site / views.RECEIPT).write_text(json.dumps(prior),encoding='utf-8')
+            self.assertTrue(views.prepare(site))
+            self.assertEqual(page.read_bytes(),raw)
+            views.apply(site)
+            self.assertIn(b'Historical AK02/SAP22',page.read_bytes())
+            # Current-source receipts must not omit the newly registered archive.
+            current=json.loads((site / views.RECEIPT).read_bytes())
+            current['pages']=[]
+            (site / views.RECEIPT).write_text(json.dumps(current),encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'inventory differs'):
+                views.validate(site,current=True)
+
+    def test_ring_report_local_archive_notice_is_reversible_and_keeps_data(self):
+        path = 'examples/cs137-10k-rings/GeRC02/response/summary.html'
+        raw = (b'<html><body><h1>Original ring report</h1><p>Complete truth, endpoints, scalar CSV, histogram CSV and saved traces are delivered byte-for-byte inside the complete ledger ZIP; these download links open that ZIP. Direct signed signals, JSONL scalars and JSON histograms remain available.</p>'
+               b'<script type="application/json">{"event":26,"charge":null,"signed":-0.0001234567890123456}</script></body></html>')
+        with tempfile.TemporaryDirectory(dir=views.ROOT / '.local', prefix='ring-frame-') as directory:
+            site=Path(directory);page=site/path;page.parent.mkdir(parents=True);page.write_bytes(raw)
+            views.apply(site)
+            output=page.read_bytes()
+            self.assertIn(b'not available for download on this website',output)
+            self.assertIn(b'../../../../results/cs137-10k/GeRC02/charge-readout.html#data-files',output)
+            self.assertNotIn(b'these download links open that ZIP',output)
+            self.assertIn(re.search(rb'<script type="application/json">.*?</script>',raw)[0],output)
+            views.prepare(site)
+            self.assertEqual(page.read_bytes(),raw)
+
+    def test_main_viewer_assembly_entry_is_current_and_explicitly_scoped(self):
+        text=(views.ROOT/'tools/unified_event_viewer.html').read_text(encoding='utf-8')
+        self.assertIn('href="events.html?model=AK02&amp;view=assembly">AK02 assembly context (current viewer)',text)
+        self.assertNotIn('Earlier assembly viewer (archive)',text)
+        self.assertNotIn('href="../examples/cs137-10k-geometry/geometry.html"',text)
+
     def test_direct_links_preserve_queries_fragments_and_scientific_bytes(self):
         source = b'''<!doctype html><html><body>
 <a href="strip_explorer.html?event=two_wide_equal&amp;group=0#charge">Saved event</a>

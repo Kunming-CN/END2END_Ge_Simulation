@@ -2,12 +2,43 @@
 import gzip
 import json
 import re
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 from urllib.parse import urlsplit
 import viewer_navigation as V
+
+
+class PinnedPredecessor(unittest.TestCase):
+    def test_exact_git_viewer_keeps_positive_default_and_rejects_resealed_page(self):
+        from site_canonical_views import RECEIPT,source_bytes
+        def prior(name):
+            return subprocess.run(['git','show','5135738:docs/'+name],cwd=V.ROOT,
+                                  stdout=subprocess.PIPE,check=True).stdout
+        receipt=prior('viewers/manifest.json');manifest=json.loads(receipt)
+        pages={row['source']:row for row in json.loads(prior(RECEIPT))['pages']}
+        self.assertEqual(manifest['pages'][V.MAIN_PAGE]['view'],'positive')
+        with tempfile.TemporaryDirectory(dir=V.ROOT/'.local',prefix='viewer-predecessor-') as directory:
+            site=Path(directory);(site/'viewers').mkdir()
+            (site/'viewers/manifest.json').write_bytes(receipt)
+            for page in V.PAGES:
+                (site/page).write_bytes(source_bytes(pages[page]))
+            # This test covers the archived adapter/page boundary. Independent
+            # saved-asset validators keep ownership of their large input sets.
+            with patch.object(V,'origins',return_value=manifest['original_files']),\
+                 patch.object(V,'ring_bundle',return_value={}),\
+                 patch.object(V,'ring_records',return_value=manifest['saved_ring_files']),\
+                 patch.object(V,'response_records',return_value=manifest['saved_response_files']):
+                self.assertEqual(V.validate(site),manifest)
+                page=site/V.MAIN_PAGE;page.write_bytes(page.read_bytes()+b' ')
+                with self.assertRaisesRegex(ValueError,'Changed display HTML'):
+                    V.validate(site)
+                manifest['pages'][V.MAIN_PAGE]['sha256']=V.sha(page)
+                (site/'viewers/manifest.json').write_text(json.dumps(manifest),encoding='utf-8')
+                with self.assertRaisesRegex(ValueError,'Unknown adapter source binding'):
+                    V.validate(site)
 
 class Readers(unittest.TestCase):
     def original_html(self, site):

@@ -1,6 +1,6 @@
 # Configurable SSD CPU / NVIDIA examples
 
-For the nominal LBNL end-to-end workflow, start with the [Windows setup checklist](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup). This document is the advanced standalone SSD reference. The low-code LBNL preflight requires exactly Julia 1.13.0; the standalone parser accepts 1.13.x but other patch versions are not certified by that preflight.
+For the nominal LBNL end-to-end workflow, choose Windows or macOS in the [shared setup and run guide](https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#platform-choice). This document is the advanced standalone SSD reference. The CPU source and locked Julia project are shared across both platforms; the optional NVIDIA examples below have their separately stated hardware scope. The low-code LBNL preflight requires exactly Julia 1.13.0; the standalone parser accepts 1.13.x but other patch versions are not certified by that preflight.
 
 This cache-free example uses the exact distributed YAML snapshots and relative includes. Geometry, bias, impurity, drift and trapping settings remain those of the selected model. Catalog status/assumptions are included in each report. These bounded calculations do not reproduce the website's full numerical campaign or establish convergence or experimental agreement.
 
