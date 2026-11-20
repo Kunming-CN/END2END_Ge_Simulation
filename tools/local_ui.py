@@ -537,9 +537,11 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('Request size must be 1..4096 bytes')
             data = decode_json(self.rfile.read(size).decode('utf-8'))
             if self.path == '/api/workflow/gegi-candidates/start':
-                fields = {'name', 'primary_count', 'seed', 'activities_bq', 'positions_mm'}
-                if type(data) is not dict or set(data) != fields or self.server.workflow_controller is None:
-                    raise ValueError('Choose both source activities, positions, initial decay count, seed and name')
+                common = {'name', 'seed', 'activities_bq', 'positions_mm'}
+                if (type(data) is not dict or set(data) not in (common | {'primary_count'}, common | {'duration_s'})
+                        or ('duration_s' in data and data['duration_s'] is None)
+                        or self.server.workflow_controller is None):
+                    raise ValueError('Choose both sources, seed, name and either a startup count or physical duration')
                 return self.send_data(200, self.server.workflow_controller.gegi_candidates().start(**data))
             if self.path in ('/api/workflow/gegi-candidates/stop', '/api/workflow/gegi-candidates/resume'):
                 if (type(data) is not dict or set(data) != {'name'} or type(data['name']) is not str

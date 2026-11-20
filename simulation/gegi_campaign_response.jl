@@ -11,6 +11,7 @@ const check=G.check
 const KIND="gegi_campaign_response_request_v1"
 const PROTOCOL="gegi_campaign_response_protocol_v1"
 const GROUP_HORIZON_NS=100000.0
+const LEGACY_RESPONSE_MODE="isolated_readout_v1"
 const NATIVE_FAILURE_POLICY="gegi_campaign_native_domain_errors_v3"
 # The contact-start precondition cannot provide a trustworthy charge response.
 # Preserve the whole group as unknown; never move or discard its deposit rows.
@@ -55,6 +56,8 @@ function initialize(requestpath,out)
     check(get(get(req,"numerics",Dict()),"field_policy",nothing)=="reuse-only", "Campaign response requires reuse-only fields")
     check(get(req,"field_cache",nothing)!==nothing,"Campaign response requires an exact field cache; no solve fallback")
     check(get(req,"pulse_group_horizon_ns",GROUP_HORIZON_NS)==GROUP_HORIZON_NS,"Changed transport pulse-group horizon")
+    response_mode=get(req,"response_mode",LEGACY_RESPONSE_MODE)
+    check(response_mode in (LEGACY_RESPONSE_MODE,G.NATIVE_SIGNAL_ONLY),"Unsupported resident response mode")
     model=G.pinned_input(req,"model_ref","model_sha256");profile=G.pinned_input(req,"profile_ref","profile_sha256")
     check(req["model_sha256"]==G.MODEL_HASH,"Frozen GeGI model changed")
     for (ref,digest) in req["source_sha256"]
@@ -89,7 +92,8 @@ function initialize(requestpath,out)
         "drift_numerics"=>Dict(string(k)=>getproperty(cfg,k) for k in propertynames(cfg)),
         "electronics_calibration"=>cal,"ionisation_energy_eV"=>eion,"drift_dt_ns"=>cfg.dt,
         "pulse_group_horizon_ns"=>GROUP_HORIZON_NS,"environment"=>env)
-    (req=req,requestpath=requestpath,requestsha=requestsha,out=out,cfg=cfg,n=n,sim=sim,channels=channels,
+    response_mode==G.NATIVE_SIGNAL_ONLY && (ready["response_mode"]=response_mode)
+    (req=req,requestpath=requestpath,requestsha=requestsha,out=out,cfg=cfg,n=n,sim=sim,channels=channels,response_mode=response_mode,
         readout=readout,eion=eion,matrix=matrix,cal=cal,sources=frozen,ready=ready)
 end
 
@@ -156,7 +160,11 @@ function process_group(ctx,command;event_processor=G.process_event)
         G.save(inputpath,group)
     end
     event=try
-        event_processor(working,ctx.sim,ctx.cfg,ctx.channels,ctx.readout,ctx.cal,ctx.matrix,ctx.eion,ctx.n,signalpath)
+        if ctx.response_mode==G.NATIVE_SIGNAL_ONLY
+            event_processor(working,ctx.sim,ctx.cfg,ctx.channels,ctx.readout,ctx.cal,ctx.matrix,ctx.eion,ctx.n,signalpath;native_only=true)
+        else
+            event_processor(working,ctx.sim,ctx.cfg,ctx.channels,ctx.readout,ctx.cal,ctx.matrix,ctx.eion,ctx.n,signalpath)
+        end
     catch err
         known=err isa ArgumentError && err.msg in RECORDED_NATIVE_ARGUMENT_ERRORS
         failure=Dict("event_id"=>id,"status"=>known ? "native_failed" : "unexpected_failure",
@@ -179,6 +187,12 @@ function process_group(ctx,command;event_processor=G.process_event)
     event["group_origin_time_ns"]=origin;event["input_event_sha256"]=digest
     event["time_convention"]="Native/electronics time_ns is relative to group_origin_time_ns; input_steps retain original absolute transport time_ns."
     event["readout_horizon_ns"]=horizon
+    if ctx.response_mode==G.NATIVE_SIGNAL_ONLY
+        event["response_mode"]=G.NATIVE_SIGNAL_ONLY
+        event["readout_summary"]=nothing
+        event["readout_status"]=event["status"]=="native_failed" ? "native_unavailable" : "shared_readout_pending"
+        event["time_convention"]="Native time_ns is relative to group_origin_time_ns; shared electronics are processed separately on the absolute acquisition clock."
+    end
     for k in ("source_id","global_decay_id","initial_primary_id","root","source_group","chunk_index","campaign_initial_offset","pulse_group")
         haskey(group,k) && (event[k]=group[k])
     end

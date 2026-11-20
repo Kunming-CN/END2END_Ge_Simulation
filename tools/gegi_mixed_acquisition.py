@@ -67,7 +67,7 @@ def field_cache():
     raise ValueError('Initialize the GeGI detector with an ordinary small GeGI run first; this acquisition reuses its saved fields.')
 
 
-def native_request(output, count):
+def native_request(output, count, *, response_mode=None):
     cache = field_cache()
     refs = set(workflow.SOURCES) | {'simulation/gegi_campaign_response.jl',
             'simulation/gegi_pixel_calibration.jl', 'tools/gegi_campaign_response.py',
@@ -81,6 +81,10 @@ def native_request(output, count):
                      'precision_bits': 64, 'diffusion': False, 'self_repulsion': False,
                      'field_policy': 'reuse-only', 'scope': 'Deterministic engineering response; no measured resolution claim.'},
         'source_sha256': {ref: file_sha(ROOT / ref) for ref in sorted(refs)}}
+    if response_mode is not None:
+        if response_mode != 'native_signals_only_v1':
+            raise ValueError('Unknown native response mode')
+        request['response_mode'] = response_mode
     path = output / 'native-request.json'
     candidates.write_new(path, request)
     return path
@@ -116,7 +120,10 @@ def native_groups(event):
                                'use': 'drift partition only; shared continuous electronics'},
                'parent_event_metadata': {key: event[key] for key in (
                    'acquisition_id', 'parent_decay_id', 'isotope', 'absolute_parent_time_ns',
-                   'source_position_global_mm')}}
+                   'source_position_global_mm')}
+                   | {key: event[key] for key in (
+                       'origin', 'new_parent_decay_id', 'initial_daughter_id',
+                       'absolute_decay_time_ns', 'source_pdg', 'prehistory_identity') if key in event}}
 
 
 def _retire_success_scratch(output, paths):

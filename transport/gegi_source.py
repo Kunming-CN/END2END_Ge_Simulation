@@ -443,7 +443,7 @@ def decay_record(eid, steps, tracks, names, source):
             'pulse_groups':cs.group_deposits(steps,source['grouping_policy']['horizon_ns'])}
 
 
-def events(path, meta, *, event_metadata=None, native_empty_uid_aliases=False):
+def events(path, meta, *, event_metadata=None, native_empty_uid_aliases=False, primary_track_reader=None):
     """Complete original primary census; positive Ge rows are the only SSD input.
 
     Raw step tables including zero rows and every passive hit stay in truth.lh5.
@@ -484,7 +484,8 @@ def events(path, meta, *, event_metadata=None, native_empty_uid_aliases=False):
             current = meta if event_metadata is None else event_metadata(eid)
             rows = {key: cursor.take(eid) for key, cursor in cursors.items()}
             vertices, particles = rows['vtx'], rows['particles']
-            by_id = primary_tracks(rows,names,current)
+            by_id = (primary_tracks(rows,names,current) if primary_track_reader is None else
+                     primary_track_reader(rows,names,current))
             sums = {}; steps = []
             for table, material in materials.items():
                 values = []

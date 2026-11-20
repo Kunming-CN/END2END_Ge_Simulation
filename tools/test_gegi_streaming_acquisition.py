@@ -1,6 +1,7 @@
 """Integrated queue/continuation contracts with synthetic transport and native inputs."""
 import copy
 from contextlib import closing
+import gzip
 import json
 import os
 from pathlib import Path
@@ -39,11 +40,13 @@ class FakeNative:
 
 class FakeWorker:
     calls = []
+    groups = []
     def __init__(self, *args):
         self.process = type('Process', (), {'pid': os.getpid()})()
     def start(self): return {'channels': GEOMETRY, 'environment': {'kind': 'synthetic_native_runtime'}}
     def process_group(self, group, store):
         self.calls.append((group['event_id'], group['group_id']))
+        self.groups.append(copy.deepcopy(group))
         return {'status': 'completed'}
     def close(self): pass
 
@@ -61,12 +64,14 @@ class AcquisitionTests(unittest.TestCase):
             patch.object(A.digital, 'terminal_contacts_complete', return_value=True)]
         for item in self.patches: item.start()
         FakeWorker.calls = []
+        FakeWorker.groups = []
+        self.failure_fixture = False
 
     def tearDown(self):
         for item in reversed(self.patches): item.stop()
         self.temp.cleanup()
 
-    def request(self, output, count):
+    def request(self, output, count, **options):
         path = output / 'native-request.json'
         A.candidates.write_new(path, {'synthetic': True})
         return path
@@ -75,11 +80,21 @@ class AcquisitionTests(unittest.TestCase):
         action = args[0]
         def path(key): return (self.root / 'transport' / args[args.index(key)+1]).resolve()
         if action == 'init':
-            A.W.write(path('--output'), {'next_block_index': 0, 'last_parent_time_ns': 0.,
-                'safe_frontier_ns': 0., 'finished': False})
+            config = A.W.read(path('--config'))
+            state = {'next_block_index': 0, 'last_parent_time_ns': 0., 'safe_frontier_ns': 0., 'finished': False}
+            if config['initial_state']['policy'] == A.STEADY_POLICY:
+                state['initial_inventory'] = {'kind': 'synthetic_initial_inventory', 'policy': A.STEADY_POLICY,
+                    'initial_nuclei': 10, 'remaining_nuclei': 10, 'generated_initial_daughter_decays': 0}
+            A.W.write(path('--output'), state)
+        elif action == 'process-block':
+            self.transport(['prepare-block', *args[1:]], log)
+            directory = args[args.index('--output')+1]
+            for stage in ('run-block', 'extract', 'verify'):
+                self.transport([stage, '--directory', directory], log)
         elif action == 'prepare-block':
             directory = path('--output'); directory.mkdir(parents=True)
             A.W.write(directory / 'prepared.json', A.W.read(path('--checkpoint')))
+            A.W.write(directory / 'source-config.json', A.W.read(path('--config')))
         elif action == 'run-block':
             A.W.write(path('--directory') / 'run.json', {'status': 'complete'})
         elif action == 'extract':
@@ -88,13 +103,42 @@ class AcquisitionTests(unittest.TestCase):
             # Delayed parent 0 overlaps a later parent generated in block 1.
             rows = ([event(0, 1000., 5000., 'cs137'), event(1, 2000., 900000., 'cs137')]
                     if index == 0 else [event(2, 6000., 0., 'co60')])
+            config = A.W.read(directory / 'source-config.json')
+            duration = config['stop'].get('duration_ns')
+            if duration is not None:
+                daughter = event(1, 3000., 3000., 'cs137')
+                daughter.update(parent_decay_id=None, new_parent_decay_id=None, initial_daughter_id=0,
+                    origin='initial_daughter_inventory', isotope='Ba137m', source_pdg=1000561371,
+                    absolute_decay_time_ns=3000.)
+                rows = ([event(0, 1000., 5000., 'cs137'), daughter] if index == 0 else
+                    [event(2, 7000., 0., 'co60'), event(3, 8000., duration-8000., 'cs137'),
+                     event(4, 9000., duration-9000.+20., 'cs137')])
+                if self.failure_fixture and index == 1:
+                    rows = [event(2, 7000., 0., 'co60'), event(3, 9000., 0., 'cs137'),
+                            event(4, 9500., duration-9500.+20., 'cs137')]
             stream = directory / 'stream'; stream.mkdir()
             (stream / 'events.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in rows), encoding='utf-8')
             after = {'next_block_index': index+1, 'last_parent_time_ns': 2000. if index == 0 else 8000.,
                 'safe_frontier_ns': 2000. if index == 0 else 8000., 'finished': index == 1}
+            counts = {'zero_deposit_primaries': index, 'nonzero_primaries': 2-index}
+            primary_count = 2
+            if duration is not None:
+                after.update(last_parent_time_ns=1000. if index == 0 else 9000.,
+                    safe_frontier_ns=3000. if index == 0 else duration)
+                if self.failure_fixture and index == 1:
+                    after['last_parent_time_ns'] = 9500.
+                if 'initial_inventory' in before:
+                    after['initial_inventory'] = {**before['initial_inventory'], 'remaining_nuclei': 9,
+                                                  'generated_initial_daughter_decays': 1}
+                primary_count = 2 if index == 0 else 3
+                counts = {'new_parent_primaries': 1 if index == 0 else 3,
+                    'initial_daughter_primaries': 1 if index == 0 else 0,
+                    'zero_deposit_parents': 0, 'nonzero_parents': 1 if index == 0 else 3,
+                    'zero_deposit_initial_daughters': 0, 'nonzero_initial_daughters': 1 if index == 0 else 0,
+                    'zero_deposit_primaries': 0, 'nonzero_primaries': primary_count}
             A.W.write(directory / 'checkpoint-after.json', after)
-            A.W.write(stream / 'manifest.json', {'primary_count': 2, 'counts': {'zero_deposit_primaries': index,
-                'nonzero_primaries': 2-index}, 'events_file': 'events.jsonl', 'events_sha256': A.mixed.file_sha(stream/'events.jsonl')})
+            A.W.write(stream / 'manifest.json', {'primary_count': primary_count, 'counts': counts,
+                'events_file': 'events.jsonl', 'events_sha256': A.mixed.file_sha(stream/'events.jsonl')})
 
     def test_delayed_cross_block_signals_exact_after_stop_and_resume(self):
         complete = self.root / '.local/complete'
@@ -148,6 +192,32 @@ class AcquisitionTests(unittest.TestCase):
         self.assertEqual(result['status'], 'completed')
         self.assertEqual(result['source']['initial_parents'], 4)
 
+    def test_explicit_native_continuation_keeps_candidate_identity_and_group_phases(self):
+        output = self.root / '.local/native-continuation'
+        A.run(output, 4, block_parents=2, stop_after_groups=1, retain_validation_inputs=True)
+        original_request = (output / 'native-request.json').read_bytes()
+        with closing(sqlite3.connect(output / S.ARCHIVE_NAME)) as db:
+            original_metadata = db.execute('SELECT body FROM metadata').fetchone()[0]
+        original_identity = json.loads(original_metadata)['identity']
+        (output / 'native-only').mkdir()
+        request = output / 'native-only/native-request.json'
+        A.W.write(request, {'synthetic': True, 'response_mode': 'native_signals_only_v1'})
+        A.W.write(output / 'native-only-continuation.json', {'synthetic_admission_fixture': True})
+        active = {'original_identity': original_identity, 'active_request': request,
+            'active_spool': output / 'native-only/native-spool',
+            'active_store': output / 'native-only/native-scratch.sqlite'}
+        with patch.object(A.continuation, 'admit', return_value=active):
+            result = A.run(output, 4, block_parents=2, resume=True, retain_validation_inputs=True)
+        self.assertEqual(result['identity'], original_identity)
+        self.assertEqual(result['execution_provenance']['native_processing_phase'], 1)
+        self.assertNotEqual(result['execution_provenance']['active_producer_identity']['native_request_sha256'],
+                            original_identity['native_request_sha256'])
+        self.assertEqual((output / 'native-request.json').read_bytes(), original_request)
+        with closing(sqlite3.connect(output / S.ARCHIVE_NAME)) as db:
+            self.assertEqual(db.execute('SELECT body FROM metadata').fetchone()[0], original_metadata)
+            self.assertEqual(dict(db.execute('SELECT phase,count(*) FROM native_processing_phases GROUP BY phase')), {0: 1, 1: 1})
+        self.assertEqual(FakeWorker.calls, [(0, 0), (2, 0)])
+
     def test_native_runtime_change_refuses_before_new_drift(self):
         output = self.root / '.local/changed-native-runtime'
         A.run(output, 4, block_parents=2, stop_after_groups=1)
@@ -156,6 +226,107 @@ class AcquisitionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'runtime versions changed'):
                 A.run(output, 4, block_parents=2, resume=True)
         self.assertEqual(FakeWorker.calls, calls)
+
+    def test_five_second_request_is_minimal_and_initial_inventory_resolves_in_checkpoint(self):
+        output = self.root / '.local/five-second-prefix'
+        stopped = A.run(output, duration_s=5, initial_state_policy=A.STEADY_POLICY,
+                        block_parents=2, stop_after_groups=1, retain_validation_inputs=True)
+        self.assertEqual(stopped['status'], 'stopped')
+        config = A.W.read(output / 'source-config.json')
+        self.assertEqual(config['stop'], {'mode': 'duration', 'duration_ns': 5e9})
+        self.assertEqual(config['initial_state'], {'policy': 'secular_equilibrium_poisson_daughters_v1',
+                                                   'acquisition_start_ns': 0})
+        with closing(sqlite3.connect(output / S.ARCHIVE_NAME)) as db:
+            state = json.loads(db.execute('SELECT state FROM checkpoint').fetchone()[0])
+        self.assertEqual(state['source_checkpoint']['initial_inventory']['initial_nuclei'], 10)
+        self.assertTrue(state['readout']['pulses'])
+        self.assertLess(state['readout']['next_sample_index'], 1000)
+        self.assertEqual(state['stage_timings']['stages']['native_group']['count'], 1)
+        for invalid in (5.000001, 0, -1, True, float('inf')):
+            with self.subTest(duration=invalid), self.assertRaisesRegex(ValueError, 'no more than 5 seconds'):
+                A.run(self.root / '.local/rejected-duration', duration_s=invalid,
+                      initial_state_policy=A.STEADY_POLICY)
+        self.assertFalse((self.root / '.local/rejected-duration').exists())
+
+    def test_duration_exact_cutoff_separate_daughter_census_and_nullable_parent_identity(self):
+        output = self.root / '.local/duration-completed'
+        duration_s = .00002
+        result = A.run(output, duration_s=duration_s, initial_state_policy=A.STEADY_POLICY,
+                       block_parents=2, retain_validation_inputs=True)
+        self.assertEqual(result['live_time_ns'], 20000.)
+        self.assertNotEqual(result['live_time_ns'], 9000.+A.mixed.READOUT_TAIL_NS)
+        self.assertEqual(result['readout']['sample_frames_processed'], 1000)
+        census = result['source']
+        self.assertEqual(census['initial_parents'], 4)
+        self.assertEqual(census['initial_daughter_decays'], 1)
+        self.assertEqual(census['transport_primaries'], 5)
+        self.assertEqual(census['zero_deposit_parents']+census['nonzero_parents'], 4)
+        self.assertEqual(census['zero_deposit_initial_daughters']+census['nonzero_initial_daughters'], 1)
+        self.assertEqual(census['delayed_groups_after_acquisition'], 2)
+        self.assertEqual(FakeWorker.calls, [(0, 0), (1, 0), (2, 0)])
+        initial = next(group for group in FakeWorker.groups if group['event_id'] == 1)
+        self.assertIsNone(initial['parent_event_metadata']['parent_decay_id'])
+        self.assertIsNone(initial['parent_event_metadata']['new_parent_decay_id'])
+        self.assertEqual(initial['parent_event_metadata']['initial_daughter_id'], 0)
+        self.assertEqual(result['source_initial_state']['initial_nuclei'], 10)
+        with gzip.open(output/'input-groups.jsonl.gz', 'rt', encoding='utf-8') as handle:
+            ledger = [json.loads(line) for line in handle]
+        daughter = next(row for row in ledger if row['initial_daughter_id'] == 0)
+        self.assertIsNone(daughter['parent_decay_id'])
+        self.assertIsNone(daughter['new_parent_decay_id'])
+        self.assertEqual(daughter['global_decay_id'], 1)
+        self.assertEqual(daughter['origin'], 'initial_daughter_inventory')
+        self.assertEqual(sorted(row['first_ge_deposit_ns'] for row in ledger
+                                if row['status'] == 'daughter_deposits_after_acquisition'), [20000., 20020.])
+
+    def test_duration_stop_resume_restores_stage_counts_without_repeating_native_groups(self):
+        output = self.root / '.local/duration-resumed'
+        settings = {'duration_s': .00002, 'initial_state_policy': A.STEADY_POLICY,
+                    'block_parents': 2, 'retain_validation_inputs': True}
+        stopped = A.run(output, **settings, stop_after_groups=1)
+        self.assertEqual(stopped['status'], 'stopped')
+        with closing(sqlite3.connect(output/S.ARCHIVE_NAME)) as db:
+            before = json.loads(db.execute('SELECT state FROM checkpoint').fetchone()[0])
+        native_before = before['stage_timings']['stages']['native_group']
+        load_before = before['stage_timings']['stages']['native_worker_load']
+        self.assertEqual(native_before['count'], 1)
+        result = A.run(output, **settings, resume=True)
+        native_after = result['stage_timings']['stages']['native_group']
+        self.assertEqual(native_after['count'], 3)
+        self.assertGreaterEqual(native_after['total_seconds'], native_before['total_seconds'])
+        self.assertEqual(result['stage_timings']['stages']['native_worker_load']['count'], load_before['count']+1)
+        self.assertEqual(result['stage_timings']['native_outcomes'], {'completed': 3, 'failed': 0, 'unavailable': 0})
+        self.assertEqual(FakeWorker.calls, [(0, 0), (1, 0), (2, 0)])
+        self.assertEqual(result['live_time_ns'], 20000.)
+
+    def test_future_native_failure_excludes_prior_trigger_before_it_can_commit(self):
+        self.failure_fixture = True
+        process, read = FakeWorker.process_group, FakeNative.read
+
+        def process_with_failure(worker, group, store):
+            result = process(worker, group, store)
+            return {'status': 'native_failed', 'error': 'preserved synthetic domain failure'} if group['event_id'] == 3 else result
+
+        def read_with_failure(store, parent, group, **kwargs):
+            return ({'status': 'native_failed'}, None) if parent == 3 else read(store, parent, group, **kwargs)
+
+        output = self.root / '.local/future-failure'
+        with patch.object(FakeWorker, 'process_group', process_with_failure), \
+                patch.object(FakeNative, 'read', read_with_failure), \
+                patch.object(A.digital, 'terminal_contacts_complete', side_effect=lambda event: event['status'] == 'completed'):
+            result = A.run(output, duration_s=.00002, initial_state_policy=A.STEADY_POLICY,
+                           block_parents=2, retain_validation_inputs=True)
+        self.assertEqual(FakeWorker.calls, [(0, 0), (1, 0), (2, 0), (3, 0)])
+        self.assertEqual(result['source']['unavailable_native_groups'], 1)
+        self.assertEqual(result['stage_timings']['native_outcomes'], {'completed': 3, 'failed': 1, 'unavailable': 0})
+        self.assertEqual(result['counts']['qualified_triggers'], 0)
+        self.assertEqual(result['storage_counts']['saved_candidates'], 0)
+        self.assertGreater(result['storage_counts']['selection_reason_counts'].get('unknown_native_history', 0), 0)
+        expected = A.dual._history_mask([{'first_ge_deposit_ns': 9000., 'last_ge_deposit_ns': 9000.,
+                                         'positive_ge_energy_keV': 200.}], 20000.)
+        self.assertEqual(result['excluded_intervals_ns'], expected)
+        with closing(sqlite3.connect(output/S.ARCHIVE_NAME)) as db:
+            self.assertEqual(db.execute('SELECT count(*) FROM native_failures').fetchone()[0], 1)
 
 
 if __name__ == '__main__': unittest.main()

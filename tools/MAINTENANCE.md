@@ -4,15 +4,22 @@ The website and the local workflow have different jobs. The public site is a
 saved-results browser; `Control.cmd` is the primary local application. The older
 generic `Run.cmd` calculation route remains distinct.
 
-The fresh mixed-source candidate route is owned by `gegi_candidate_control.py`,
-`gegi_mixed_acquisition.py` and `transport/gegi_mixed_source.py`. The bounded
-startup uses the existing native worker and shared readout, then
-`gegi_candidate_run.py` / `gegi_candidate_storage.py` retain conservative
-post-readout candidates. `gegi_storage_estimate.py` reads the small measured
-`gegi_storage_reference.json`; it never launches physics. Keep the reference's
-historical-library scope and unmeasured production scratch explicit. The student
-manifest includes these runtime sources and their dependencies, not saved runs.
-Candidate storage is not yet a long-acquisition transport/checkpoint engine.
+The fresh mixed-source candidate route is owned by `gegi_candidate_control.py`;
+`gegi_streaming_acquisition.py` coordinates `transport/gegi_streaming_source.py`,
+the existing native worker and `gegi_streaming_readout.py`. The current modes are
+up to five physical seconds with a steady nuclear source inventory, or a fixed
+startup count of up to 500 new parents. `transport/gegi_source_inventory.py`
+binds the initial Ba137m inventory to pinned Geant4 decay data; electronics start
+quiet in both modes. `gegi_candidate_storage.py` commits candidate rows and the
+matching source/readout checkpoint atomically. Control retains the shared lease
+and original parameters through cooperative Stop/Resume. Missing-history
+exclusions belong in `gegi_missing_history.py`; resource measurements belong in
+`gegi_resource_monitor.py`. `gegi_candidate_run.py` owns the saved candidate
+verification and report contract. `gegi_storage_estimate.py` reads the small
+historical `gegi_storage_reference.json` without physics; keep that reference's
+scope separate from fresh-run wall time and peak storage. The student manifest
+includes runtime dependencies, not saved runs. Longer acquisitions remain a
+separate delivery milestone.
 
 The existing saved-GeGI reprocessing panel also accepts completed standalone
 GeGI runs owned by Control. `gegi_saved_control.py` delegates those inputs to

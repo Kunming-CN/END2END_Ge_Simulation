@@ -1871,11 +1871,19 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(html,/Run GeGI with two fresh sources/);
   assert.match(html,/all 34 detector channels/);
   assert.match(html,/Stop saves the current progress\. Resume continues the same acquisition clock/);
+  assert.match(html,/<option value="duration" selected>Steady source · physical duration/);
+  assert.match(html,/#gegi-candidate-duration-field\[hidden\]\s*,\s*#gegi-candidate-count-field\[hidden\]\s*\{\s*display\s*:\s*none\s*\}/);
+  assert.match(html,/id="gegi-candidate-duration"[^>]*max="5"[^>]*value="5"/);
+  assert.match(html,/Duration follows the detector's acquisition clock; the number of new source decays is random/);
   assert.match(html,/Historical readout diagnostic · saved source libraries/);
-  for(const [id,value]of Object.entries({'gegi-candidate-count':'100','gegi-candidate-seed':'20261120',
+  for(const [id,value]of Object.entries({'gegi-candidate-mode':'count','gegi-candidate-count':'100','gegi-candidate-seed':'20261120',
     'gegi-candidate-name':'fresh-ui-unit','gegi-candidate-activity-a':'185000','gegi-candidate-activity-b':'37000',
     'gegi-candidate-a-x':'-40','gegi-candidate-a-y':'0','gegi-candidate-a-z':'40',
     'gegi-candidate-b-x':'40','gegi-candidate-b-y':'0','gegi-candidate-b-z':'40'}))get(id).value=value;
+  run('candidateModeFields()');
+  assert.equal(get('gegi-candidate-count-field').hidden,false);
+  assert.equal(get('gegi-candidate-duration-field').hidden,true);
+  assert.match(get('gegi-candidate-scope').textContent,/100 new parent decays.*500.*no pre-existing/);
   run(`active=false;busy=false;candidateJob=null;candidateBusy=false;let candidateFixtureCalls=[];
     api=async(path,data)=>{candidateFixtureCalls.push([path,data]);return {name:'fresh-ui-unit',status:'running'};};`);
   await run('startCandidateRun()');
@@ -1907,6 +1915,27 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   get('gegi-candidate-count').value='501';run('candidateJob=null');await run('startCandidateRun()');
   assert.equal(run('candidateFixtureCalls.length'),3);
   assert.match(get('gegi-candidate-status').textContent,/at most 500/);
+  get('gegi-candidate-mode').value='duration';get('gegi-candidate-duration').value='5';
+  get('gegi-candidate-mode').onchange();
+  assert.equal(get('gegi-candidate-duration-field').hidden,false);
+  assert.equal(get('gegi-candidate-count-field').hidden,true);
+  assert.match(get('gegi-candidate-scope').textContent,/5 physical seconds.*source equilibrium model; electronics start quiet/);
+  run(`api=async(path,data)=>{candidateFixtureCalls.push([path,data]);return {name:'fresh-ui-unit',status:'running',duration_s:5};};`);
+  await run('startCandidateRun()');
+  assert.deepEqual(JSON.parse(run('JSON.stringify(candidateFixtureCalls.at(-1))')),
+    ['/api/workflow/gegi-candidates/start',{name:'fresh-ui-unit',duration_s:5,seed:20261120,
+      activities_bq:[185000,37000],positions_mm:[[-40,0,40],[40,0,40]]}]);
+  get('gegi-candidate-duration').value='5.1';run('candidateJob=null');await run('startCandidateRun()');
+  assert.equal(run('candidateFixtureCalls.length'),4);
+  assert.match(get('gegi-candidate-status').textContent,/physical acquisition duration no longer than 5 seconds/);
+  get('gegi-candidate-duration').value='5';
+  run(`showCandidateJob({name:'duration-progress',status:'running',duration_s:5,
+    progress:{acquisition_time_ns:2e9,new_parent_decays:1001,initial_daughter_decays:73}});`);
+  const durationProgressText=descendants(get('gegi-candidate-summary')).map(item=>item.textContent).join(' ');
+  assert.match(durationProgressText,/Physical acquisition time: 2 \/ 5 s/);
+  assert.match(durationProgressText,/New parent decays: 1001 · Initial-daughter decays: 73/);
+  const physicalProgress=descendants(get('gegi-candidate-summary')).find(item=>item.tagName==='progress');
+  assert.equal(physicalProgress.max,5);assert.equal(physicalProgress.value,2);
   run(`candidateJob={name:'saved-candidate',report_sha256:'a'.repeat(64)};
     let candidateResolvers=[];api=(path)=>{candidateFixtureCalls.push([path]);return new Promise(resolve=>candidateResolvers.push(resolve));};`);
   get('gegi-candidate-trigger').value='683';get('gegi-candidate-contact').value='4';
@@ -1939,7 +1968,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(get('gegi-candidate-storage').textContent,/20,000,000 total source decays: saved candidate core 2\.00–3\.00 GiB/);
   assert.match(get('gegi-candidate-storage').textContent,/cache 0\.80 GiB, counted once/);
   assert.match(get('gegi-candidate-storage').textContent,/Additional fresh-run records and temporary peak storage have not been measured/);
-  assert.match(get('gegi-candidate-storage').textContent,/fresh Run remains limited to 500 decays/);
+  assert.match(get('gegi-candidate-storage').textContent,/Startup checks allow up to 500 new parent decays.*up to 5 physical seconds/);
   const staleEstimate=run('estimateCandidateStorage()');
   get('gegi-candidate-a-x').value='-39';get('gegi-candidate-a-x').oninput();
   run('resolveStorageEstimate(storageEstimateReply)');await staleEstimate;
@@ -1957,5 +1986,19 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   const startupText=descendants(get('gegi-candidate-summary')).map(item=>item.textContent).join(' ');
   assert.match(startupText,/no pre-existing daughters at t = 0/);
   assert.match(startupText,/Delayed deposit groups beyond this acquisition: 7/);
+  run(`candidateJob={name:'steady-fixture',report_sha256:'d'.repeat(64)};
+    showCandidateJob({...candidateJob,status:'completed',result:{counts:{qualified_triggers:0},
+      storage_counts:{saved_candidates:0,rejected_rises:0},artifacts:{'compton-candidates.sqlite':{bytes:16384}},
+      live_time_ns:5e9,source:{initial_parents:1001,initial_daughter_decays:73,transport_primaries:1074,
+        zero_deposit_parents:1000,nonzero_parents:1,zero_deposit_initial_daughters:70,nonzero_initial_daughters:3},
+      identity:{source_config:{initial_state:{policy:'secular_equilibrium_poisson_daughters_v1',
+        initial_daughter_mean_population:44120000.5}}}}});`);
+  const steadyText=descendants(get('gegi-candidate-summary')).map(item=>item.textContent).join(' ');
+  assert.match(steadyText,/New parent decays: 1001 · Initial-daughter decays: 73 · Transported roots: 1074/);
+  assert.match(steadyText,/New parents without Ge deposits: 1000 · New parents with Ge deposits: 1/);
+  assert.match(steadyText,/Initial daughters without Ge deposits: 70 · Initial daughters with Ge deposits: 3/);
+  assert.match(steadyText,/source equilibrium model\. Electronics start quiet with zero signal history/);
+  assert.match(steadyText,/Mean initial daughter population:.*a statistical mean, separate from executed decay counts/);
+  assert.doesNotMatch(steadyText,/no pre-existing daughters/);
   console.log('Pre-run storage planning uses current source settings, clears stale estimates, separates one shared cache and unmeasured scratch, and explains startup daughters and delayed groups.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

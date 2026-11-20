@@ -1,7 +1,7 @@
 """Bounded joint-source transport, disk-backed delayed deposits and continuous readout.
 
-The first supported execution is a 1–500 parent startup acceptance. Blocks are
-computational checkpoints, never separate physical acquisitions. The source
+Supported acceptance is a 1–500 parent startup or up to five physical seconds.
+Blocks are computational checkpoints, never separate physical acquisitions. The source
 clock, transport RNG, active electrode currents and electronics survive resume.
 """
 from __future__ import annotations
@@ -18,6 +18,7 @@ import platform
 import shutil
 import sqlite3
 import subprocess
+import time
 import zlib
 
 import numpy as np
@@ -29,8 +30,10 @@ import gegi_digital_readout as digital
 import gegi_dual_source as dual
 import gegi_event_store as native_store
 import gegi_mixed_acquisition as mixed
+from gegi_missing_history import MissingHistory
+import gegi_native_continuation as continuation
 import gegi_pulse_stream as pulse
-from gegi_resource_monitor import Monitor, _linked, available_memory
+from gegi_resource_monitor import Monitor, TimerTotals, _linked, available_memory
 from gegi_streaming_readout import StreamingReadout
 import gegi_workflow as workflow
 import scenario_workflow as W
@@ -39,7 +42,11 @@ ROOT = Path(__file__).resolve().parents[1]
 KIND = 'gegi_streaming_acquisition_v1'
 OWN_SOURCES = ('tools/gegi_streaming_acquisition.py', 'tools/gegi_streaming_readout.py',
                'tools/gegi_candidate_storage.py', 'tools/gegi_candidate_run.py',
-               'transport/gegi_streaming_source.py')
+               'tools/gegi_mixed_acquisition.py', 'tools/gegi_resource_monitor.py', 'tools/gegi_missing_history.py',
+               'tools/gegi_native_continuation.py',
+               'transport/gegi_streaming_source.py', 'transport/gegi_source_inventory.py')
+STARTUP_POLICY = 'new_parent_decays_empty_daughters_at_start'
+STEADY_POLICY = 'secular_equilibrium_poisson_daughters_v1'
 COUNT_FIELDS = ('qualified_triggers', 'single_pixel_energies', 'additional_multi_strip_energies',
                 'qualified_energies', 'triggers_without_energy')
 
@@ -58,14 +65,28 @@ def relative(path):
     return '../' + Path(path).relative_to(ROOT).as_posix()
 
 
-def source_config(name, count, seed, activities, positions):
-    return {'kind': 'gegi_streaming_source_config_v1', 'acquisition_id': name,
+def source_config(name, count, seed, activities, positions, duration_s=None,
+                  initial_state_policy=STARTUP_POLICY):
+    config = {'kind': 'gegi_streaming_source_config_v1', 'acquisition_id': name,
         'seed': seed, 'clock_seed': seed, 'stop': {'mode': 'count', 'parent_count': count},
-        'initial_state': {'policy': 'new_parent_decays_empty_daughters_at_start',
+        'initial_state': {'policy': STARTUP_POLICY,
             'acquisition_start_ns': 0, 'initial_daughter_populations': {},
             'pre_acquisition_history': 'none', 'scope': 'startup acceptance, not secular equilibrium'},
         'sources': [{'id': sid, 'activity_Bq': rate, 'position_global_mm': list(position)}
             for sid, rate, position in zip((workflow.CS137, workflow.CO60), activities, positions, strict=True)]}
+    if duration_s is not None:
+        config['stop'] = {'mode': 'duration', 'duration_ns': duration_s * 1e9}
+    if initial_state_policy == STEADY_POLICY:
+        config['initial_state'] = {'policy': STEADY_POLICY, 'acquisition_start_ns': 0}
+    return config
+
+
+def producer_identity(config, request):
+    return {'kind': KIND, 'source_config': config, 'native_request_sha256': mixed.file_sha(request),
+        'environment': {'python': platform.python_version(), 'numpy': np.__version__, 'sqlite': sqlite3.sqlite_version},
+        'source_sha256': {ref: mixed.file_sha(ROOT / ref) for ref in OWN_SOURCES},
+        'readout_tail_ns': mixed.READOUT_TAIL_NS, 'scope': 'Fresh shared-clock bounded streaming acquisition.',
+        'native_primary_count_semantics': 'Configured count for startup; expected new-parent count for duration. Actual census is measured separately.'}
 
 
 def _schema(sink):
@@ -80,11 +101,18 @@ def _schema(sink):
         CREATE TABLE IF NOT EXISTS source_blocks (block_index INTEGER PRIMARY KEY, manifest BLOB NOT NULL,
           manifest_sha256 TEXT NOT NULL, after_state BLOB NOT NULL);
         CREATE TABLE IF NOT EXISTS native_failures (ordinal INTEGER PRIMARY KEY, record BLOB NOT NULL);
+        CREATE TABLE IF NOT EXISTS native_processing_phases (ordinal INTEGER PRIMARY KEY, phase INTEGER NOT NULL);
+        INSERT OR IGNORE INTO native_processing_phases
+          SELECT ordinal,0 FROM input_groups WHERE status NOT IN ('pending','daughter_deposits_after_acquisition');
     ''')
 
 
 def _group_meta(group):
-    return {'parent_decay_id': group['event_id'], 'source_id': group['source_id'],
+    parent = group['parent_event_metadata']
+    return {'parent_decay_id': parent['parent_decay_id'], 'global_decay_id': group['event_id'],
+        'new_parent_decay_id': parent.get('new_parent_decay_id', parent['parent_decay_id']),
+        'initial_daughter_id': parent.get('initial_daughter_id'), 'origin': parent.get('origin', 'new_parent_decay'),
+        'source_id': group['source_id'],
         'group_id': group['group_id'], 'first_ge_deposit_ns': group['group_origin_time_ns'],
         'last_ge_deposit_ns': max(row['time_ns'] for row in group['steps']),
         'positive_ge_energy_keV': sum(row['energy_keV'] for row in group['steps']),
@@ -109,9 +137,13 @@ def _ingest(sink, directory, after, census):
                      'pending', native_store.encoded(meta), zlib.compress(body), hashlib.sha256(body).hexdigest()))
                 census['deposit_groups'] += 1
     counts = manifest['counts']
-    census['initial_parents'] += manifest['primary_count']
-    census['zero_deposit_parents'] += counts['zero_deposit_primaries']
-    census['nonzero_parents'] += counts['nonzero_primaries']
+    census['transport_primaries'] += manifest['primary_count']
+    census['initial_parents'] += counts.get('new_parent_primaries', manifest['primary_count'])
+    census['initial_daughter_decays'] += counts.get('initial_daughter_primaries', 0)
+    census['zero_deposit_parents'] += counts.get('zero_deposit_parents', counts['zero_deposit_primaries'])
+    census['nonzero_parents'] += counts.get('nonzero_parents', counts['nonzero_primaries'])
+    for key in ('zero_deposit_initial_daughters', 'nonzero_initial_daughters'):
+        census[key] += counts.get(key, 0)
     sink.db.execute('INSERT INTO source_blocks VALUES (?,?,?,?)',
         (after['next_block_index'] - 1, native_store.encoded(manifest), mixed.file_sha(manifest_path), native_store.encoded(after)))
 
@@ -144,8 +176,9 @@ def _write_report(output, identity, state, completion, resources):
     if not ledger.exists():
         def export(handle):
             with gzip.GzipFile(fileobj=handle, mode='wb', mtime=0) as zipped, closing(sqlite3.connect(database)) as db:
-                for ordinal, status, body in db.execute('SELECT ordinal,status,metadata FROM input_groups ORDER BY ordinal'):
-                    zipped.write(native_store.encoded({'input_group_ordinal': ordinal, 'status': status, **json.loads(body)}) + b'\n')
+                for ordinal, status, body, phase in db.execute('SELECT g.ordinal,g.status,g.metadata,p.phase FROM input_groups g LEFT JOIN native_processing_phases p ON p.ordinal=g.ordinal ORDER BY g.ordinal'):
+                    zipped.write(native_store.encoded({'input_group_ordinal': ordinal, 'status': status,
+                        'native_processing_phase': phase, **json.loads(body)}) + b'\n')
         dual._publish_artifact(ledger, export)
     histograms = {name: Counter({int(k): v for k, v in values.items()}) for name, values in state['histograms'].items()}
     report = {'kind': candidates.KIND, 'status': 'completed', 'identity': identity,
@@ -154,15 +187,25 @@ def _write_report(output, identity, state, completion, resources):
             'rejected_rises', 'selection_reason_counts')},
         'readout': state['readout_statistics'], 'spectra': _spectra(histograms),
         'live_time_ns': state['live_time_ns'], 'excluded_intervals_ns': state['excluded_intervals_ns'],
-        'verification': verification, 'resources': resources,
+        'verification': verification, 'resources': resources, 'stage_timings': state.get('stage_timings'),
+        'first_native_group_seconds_per_session': state.get('first_native_group_seconds_per_session', []),
+        'missing_history_statistics': state.get('missing_history_statistics'),
+        'execution_provenance': state.get('execution_provenance'),
+        'stage_timing_baselines_by_native_phase': state.get('phase_timing_baselines'),
+        'source_initial_state': state['source_checkpoint'].get('initial_inventory', identity['source_config']['initial_state']),
+        'electronics_initial_state': 'Quiet zero state at t=0; stationary noise starts at acquisition t=0.',
         'software': {'readout': identity.get('environment'), 'native': state.get('native_environment')},
         'artifacts': {p.name: {'bytes': p.stat().st_size, 'sha256': mixed.file_sha(p)} for p in (database, ledger)},
         'retention': {'full_adc_stream_saved': False, 'native_inputs_saved_here': False,
             'candidate_signals': 'Exact all-34-electrode ADC contexts and fast/slow/timing measurements.',
             'truth_association': 'One-based input_groups ordinals; diagnostic association only, not event selection.',
             'delayed_deposits': 'Disk-backed original groups beyond the acquisition remain explicitly censored.',
-            'native_failure_policy': 'Preserve exact failure and conservatively mark subsequent history unknown.'},
-        'limitations': ['Bounded startup acceptance with no pre-existing daughter inventory.',
+            'native_failure_policy': ('Preserve exact failures and finite summed two-pole unavailable-history bounds.'
+                if state.get('missing_history') is not None else
+                'Preserve exact failure and conservatively mark subsequent startup history unknown.')},
+        'limitations': [('Steady nuclear inventory; electronics start from quiet zero state.'
+                         if identity['source_config']['initial_state']['policy'] == STEADY_POLICY else
+                         'Bounded startup acceptance with no pre-existing daughter inventory.'),
             'Continuous processing and restart do not establish detector accuracy or long-run throughput.']}
     candidates.write_new(output / candidates.REPORT_NAME, report)
     return report
@@ -188,38 +231,60 @@ def _sealed_state(path, identity):
 
 
 def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
-        positions_mm=((-40, 0, 40), (40, 0, 40)), on_progress=None, *, block_parents=50,
+        positions_mm=((-40, 0, 40), (40, 0, 40)), on_progress=None, *, block_parents=None,
         resume=False, stop_requested=None, stop_after_blocks=None, stop_after_groups=None,
-        retain_validation_inputs=False):
+        retain_validation_inputs=False, duration_s=None, initial_state_policy=STARTUP_POLICY):
     output = Path(output).resolve()
     if not output.is_relative_to((ROOT / '.local').resolve()) or output == (ROOT / '.local').resolve():
         raise ValueError('Use an owned acquisition directory under this project .local')
-    if type(primary_count) is not int or not 1 <= primary_count <= 500:
+    if duration_s is not None and (type(duration_s) not in (int, float) or not math.isfinite(duration_s) or not 0 < duration_s <= 5):
+        raise ValueError('Physical acquisition duration must be positive and no more than 5 seconds for this acceptance.')
+    if initial_state_policy not in (STARTUP_POLICY, STEADY_POLICY):
+        raise ValueError('Unknown nuclear source initial-state policy')
+    if initial_state_policy == STEADY_POLICY and duration_s is None:
+        raise ValueError('Steady inventory requires an explicit physical acquisition duration')
+    if duration_s is None and (type(primary_count) is not int or not 1 <= primary_count <= 500):
         raise ValueError('This streaming acceptance supports 1–500 initial parents. Long production remains a separate milestone.')
-    if type(block_parents) is not int or not 1 <= block_parents <= 500:
-        raise ValueError('Use a source block of 1–500 initial parents')
+    if block_parents is None:
+        block_parents = 500 if duration_s is not None else 50
+    if type(block_parents) is not int or not 1 <= block_parents <= 10000:
+        raise ValueError('Use a source block of 1–10000 transport roots')
     if any(_linked(p) for p in (output, *output.parents) if p.is_relative_to(ROOT)):
         raise ValueError('Linked acquisition directory refused')
-    config = source_config(output.name, primary_count, seed, activities_bq, positions_mm)
+    config = source_config(output.name, primary_count, seed, activities_bq, positions_mm, duration_s, initial_state_policy)
+    duration_ns = None if duration_s is None else duration_s * 1e9
+    state = None
     def progress(status, stage, **fields):
-        value = {'status': status, 'stage': stage, **fields}
+        saved_census = (state or {}).get('census', {})
+        source = (state or {}).get('source_checkpoint', {})
+        value = {'status': status, 'stage': stage, 'duration_s': duration_s,
+            'acquisition_time_ns': ((state or {}).get('readout') or {}).get('input_watermark_ns', 0),
+            'source_time_ns': source.get('safe_frontier_ns', 0),
+            'new_parent_decays': saved_census.get('initial_parents', 0),
+            'initial_daughter_decays': saved_census.get('initial_daughter_decays', 0), **fields}
         W.write(output / 'progress.json', value)
         if on_progress:
             on_progress(value)
     if resume:
         if W.read(output / 'source-config.json') != config:
             raise ValueError('Resume requires the original sources, seed, count and source state')
-        request = output / 'native-request.json'
+        request = output / ('native-only/native-request.json' if (output / 'native-only-continuation.json').exists()
+                            else 'native-request.json')
     else:
         if output.exists() and any(output.iterdir()):
             raise FileExistsError('Choose a fresh name or explicitly resume the existing acquisition')
         output.mkdir(parents=True, exist_ok=True)
         candidates.write_new(output / 'source-config.json', config)
-        request = mixed.native_request(output, primary_count)
-    identity = {'kind': KIND, 'source_config': config, 'native_request_sha256': mixed.file_sha(request),
-        'environment': {'python': platform.python_version(), 'numpy': np.__version__, 'sqlite': sqlite3.sqlite_version},
-        'source_sha256': {ref: mixed.file_sha(ROOT / ref) for ref in OWN_SOURCES},
-        'readout_tail_ns': mixed.READOUT_TAIL_NS, 'scope': 'Fresh shared-clock startup acquisition; bounded streaming acceptance.'}
+        # Native primary_count configures legacy readout metadata, not a physical
+        # source denominator. Duration counts are measured only by transport census.
+        nominal_count = primary_count if duration_s is None else max(1, math.ceil(sum(activities_bq) * duration_s))
+        request = mixed.native_request(output, nominal_count, response_mode='native_signals_only_v1')
+    current_identity = producer_identity(config, request)
+    active = continuation.admit(output, current_identity) if resume else None
+    identity = active['original_identity'] if active is not None else current_identity
+    spool_path = Path(active['active_spool']) if active is not None else output / 'native-spool'
+    native_path = Path(active['active_store']) if active is not None else output / 'native-scratch.sqlite'
+    native_phase = 1 if active is not None else 0
     if resume and (output / candidates.REPORT_NAME).exists():
         report = W.read(output / candidates.REPORT_NAME)
         if report['identity'] != identity:
@@ -240,11 +305,11 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
             raise ValueError('Linked stop marker refused')
         stop_marker.unlink(missing_ok=True)
     sink = storage.CandidateStore(database, identity, resume=resume and database.exists())
+    _schema(sink)
     worker = native = None
     completed = False
     state = sink.load_checkpoint() if resume else None
     if state is None:
-        _schema(sink)
         try:
             if not (output / 'source-checkpoint.json').exists():
                 transport_call(['init', '--config', relative(output / 'source-config.json'),
@@ -258,15 +323,25 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
             'unknown_since_ns': None, 'channels': None, 'live_time_ns': None, 'resources': {}}
         with sink.transaction():
             sink.save_checkpoint(state)
+    state['execution_provenance'] = {'active_producer_identity': current_identity,
+        'native_processing_phase': native_phase,
+        'continuation_receipt': ({'path': 'native-only-continuation.json',
+            'sha256': mixed.file_sha(output / 'native-only-continuation.json')} if active is not None else None)}
     census, counts = Counter(state['census']), Counter(state['counts'])
     histograms = {name: Counter({int(k): v for k, v in values.items()}) for name, values in state['histograms'].items()}
     readout = None
     channels = state['channels']
+    worker_group_count = 0
+    last_progress = time.perf_counter()
+    missing = (MissingHistory.restore(state['missing_history']) if state.get('missing_history') is not None else
+               MissingHistory(duration_ns) if duration_ns is not None else None)
 
     def observe(event, context):
         card = dual._trigger_card(event, dual._strip_neighbors(channels), geometry=channels)
         reason = context['readout_rejection_reason']
-        if state['unknown_since_ns'] is not None and event['rise_end_ns'] >= state['unknown_since_ns']:
+        if missing is not None and missing.contains(event['rise_end_ns'], trigger_time_ns=event['trigger_time_ns']):
+            reason = 'unknown_native_history'
+        elif missing is None and state['unknown_since_ns'] is not None and event['rise_end_ns'] >= state['unknown_since_ns']:
             reason = 'unknown_native_history'
         if reason is None:
             counts['qualified_triggers'] += 1
@@ -282,13 +357,16 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
         sink.observe(card, context, event=event, identities=related, rejection_reason=reason)
 
     readout = (StreamingReadout.restore(state['readout'], on_readout_context=observe) if state['readout'] else
-               StreamingReadout(noise_seed=seed + 100000000, on_readout_context=observe))
+               StreamingReadout(noise_seed=seed + 100000000, live_time_ns=duration_ns, on_readout_context=observe))
+    timers = TimerTotals(state.get('stage_timings'))
+    state.setdefault('phase_timing_baselines', {}).setdefault(str(native_phase), timers.snapshot())
     previous_resources = W.read(output / 'resources.json') if resume and (output / 'resources.json').exists() else state.get('resources')
     monitor = Monitor(output, previous_resources)
     def checkpoint():
         counts['qualified_energies'] = counts['single_pixel_energies'] + counts['additional_multi_strip_energies']
         counts['triggers_without_energy'] = counts['qualified_triggers'] - counts['qualified_energies']
-        state.update(readout=readout.checkpoint(), census=dict(census),
+        state.update(readout=readout.checkpoint(), census=dict(census), stage_timings=timers.snapshot(),
+                     missing_history=None if missing is None else missing.checkpoint(),
                      counts={key: counts[key] for key in COUNT_FIELDS}, histograms={k: {str(i): n for i, n in v.items()} for k, v in histograms.items()},
                      channels=channels, resources=monitor.data)
         sink.save_checkpoint(state)
@@ -310,15 +388,17 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
         if available is not None and available < estimated:
             return False
         progress('running', 'Loading the shared detector response', initial_parents=census['initial_parents'])
-        worker = response.ResidentWorker(request, output / 'native-spool')
-        ready = worker.start(); channels = ready['channels']
+        worker = response.ResidentWorker(request, spool_path)
+        with timers.measure('native_worker_load'):
+            ready = worker.start()
+        channels = ready['channels']
         environment = ready.get('environment')
         if state.get('native_environment') is not None and state['native_environment'] != environment:
             raise ValueError('Native runtime versions changed; retain the original acquisition environment')
         state['native_environment'] = environment
         monitor.pids['native'] = worker.process.pid
-        native_path = output / 'native-scratch.sqlite'
         native = native_store.Store(native_path, {'request_sha256': mixed.file_sha(request)}, create=not native_path.exists())
+        progress('running', 'Processing continuous detector signals', native_processing_phase=native_phase)
         return True
     try:
         with monitor:
@@ -326,7 +406,7 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
                 source = state['source_checkpoint']
                 frontier = source['safe_frontier_ns']
                 if source['finished']:
-                    frontier = source['last_parent_time_ns'] + mixed.READOUT_TAIL_NS
+                    frontier = duration_ns if duration_ns is not None else source['last_parent_time_ns'] + mixed.READOUT_TAIL_NS
                     state['live_time_ns'] = frontier
                 if should_stop():
                     return suspended('Stopped at a durable acquisition checkpoint')
@@ -340,42 +420,73 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
                     if worker is None:
                         if not start_native():
                             return suspended('Stopped before detector loading: insufficient available memory')
-                    saved = worker.process_group(group, native)
-                    _, signals = native.read(group['event_id'], group['group_id'], with_signals=True)
+                    native_started = time.perf_counter()
+                    with timers.measure('native_group'):
+                        saved = worker.process_group(group, native)
+                        _, signals = native.read(group['event_id'], group['group_id'], with_signals=True)
+                    if worker_group_count == 0:
+                        state.setdefault('first_native_group_seconds_per_session', []).append(time.perf_counter()-native_started)
+                    worker_group_count += 1
                     complete = digital.terminal_contacts_complete(saved)
+                    timers.record_native('completed' if complete else 'failed' if saved['status'] == 'native_failed' else 'unavailable')
                     with sink.transaction():
                         if not complete:
-                            start = max(0., group['group_origin_time_ns'] - dual.POST_NS)
-                            state['unknown_since_ns'] = min(start, state['unknown_since_ns']) if state['unknown_since_ns'] is not None else start
+                            if missing is not None:
+                                missing.add(group['group_origin_time_ns'], max(s['time_ns'] for s in group['steps']),
+                                            math.fsum(s['energy_keV'] for s in group['steps']))
+                            else:
+                                start = max(0., group['group_origin_time_ns'] - dual.POST_NS)
+                                state['unknown_since_ns'] = min(start, state['unknown_since_ns']) if state['unknown_since_ns'] is not None else start
                             sink.db.execute('INSERT INTO native_failures VALUES (?,?)', (ordinal,
                                 zlib.compress(native_store.encoded({'group': group, 'event': saved, 'native': signals}))))
                             census['unavailable_native_groups'] += 1
-                        readout.advance(group['group_origin_time_ns'])
-                        if complete:
-                            readout.push(pulse.prepare_native(signals, channels, terminal_complete=True), group['group_origin_time_ns'], 1.)
-                            census['complete_native_groups'] += 1
+                        with timers.measure('readout'):
+                            # Classify later native input before committing any
+                            # trigger whose feature window could include it.
+                            readout.advance(max(0., group['group_origin_time_ns'] - dual.POST_NS)
+                                            if missing is not None else group['group_origin_time_ns'])
+                            if complete:
+                                readout.push(pulse.prepare_native(signals, channels, terminal_complete=True), group['group_origin_time_ns'], 1.)
+                                census['complete_native_groups'] += 1
                         sink.db.execute('UPDATE input_groups SET status=?,pending=NULL WHERE ordinal=?', (saved['status'], ordinal))
-                        checkpoint()
+                        sink.db.execute('INSERT INTO native_processing_phases VALUES (?,?)', (ordinal, native_phase))
+                        with timers.measure('checkpoint'):
+                            checkpoint()
                     if not retain_validation_inputs:
                         with native.db:
                             native.db.execute('DELETE FROM events'); native.db.execute('DELETE FROM arrays')
+                    if time.perf_counter() - last_progress >= 1:
+                        progress('running', 'Processing continuous detector signals',
+                            complete_native_groups=census['complete_native_groups'],
+                            unavailable_native_groups=census['unavailable_native_groups'],
+                            native_processing_phase=native_phase)
+                        last_progress = time.perf_counter()
                     continue
                 if channels is not None or source['finished']:
                     if channels is None and not start_native():
                         return suspended('Stopped before detector loading: insufficient available memory')
                     with sink.transaction():
-                        readout.advance(frontier)
-                        checkpoint()
+                        with timers.measure('readout'):
+                            readout.advance(max(0., frontier - dual.POST_NS)
+                                            if missing is not None and not source['finished'] else frontier)
+                        with timers.measure('checkpoint'):
+                            checkpoint()
                 if source['finished']:
                     with sink.transaction():
-                        measured = readout.finalize(frontier)
+                        with timers.measure('readout'):
+                            measured = readout.finalize(frontier)
                         census['delayed_groups_after_acquisition'] = sink.db.execute("SELECT count(*) FROM input_groups WHERE status='pending'").fetchone()[0]
                         sink.db.execute("UPDATE input_groups SET status='daughter_deposits_after_acquisition' WHERE status='pending'")
                         state['readout_statistics'] = measured
-                        state['excluded_intervals_ns'] = ([] if state['unknown_since_ns'] is None else [[state['unknown_since_ns'], frontier]])
+                        state['excluded_intervals_ns'] = (missing.intervals(frontier) if missing is not None else
+                            [] if state['unknown_since_ns'] is None else [[state['unknown_since_ns'], frontier]])
+                        state['missing_history_statistics'] = None if missing is None else missing.statistics()
                         checkpoint()
                     if census['initial_parents'] != census['zero_deposit_parents'] + census['nonzero_parents']:
                         raise ValueError('Source denominator does not close')
+                    if (census['initial_daughter_decays'] != census['zero_deposit_initial_daughters'] + census['nonzero_initial_daughters'] or
+                            census['transport_primaries'] != census['initial_parents'] + census['initial_daughter_decays']):
+                        raise ValueError('Initial daughter and transport-root denominators do not close')
                     completion = sink.finalize(acquisition_statistics={'source': dict(census), 'counts': state['counts'], 'readout': measured,
                         'live_time_ns': frontier, 'excluded_intervals_ns': state['excluded_intervals_ns']})
                     break
@@ -388,23 +499,25 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
                 directory = output / 'transport' / f'b{index:06d}'
                 W.write(output / 'source-checkpoint.json', source)
                 progress('running', 'Generating the next joint-source block', initial_parents=census['initial_parents'], block_index=index)
-                if not (directory / 'prepared.json').exists():
-                    transport_call(['prepare-block', '--config', relative(output / 'source-config.json'),
+                with timers.measure('transport_cli'):
+                    transport_call(['process-block', '--config', relative(output / 'source-config.json'),
                         '--checkpoint', relative(output / 'source-checkpoint.json'), '--output', relative(directory),
                         '--max-parents', str(block_parents)], output / 'transport.log')
-                if not (directory / 'run.json').exists():
-                    transport_call(['run-block', '--directory', relative(directory)], output / 'transport.log')
-                if not (directory / 'stream/manifest.json').exists():
-                    transport_call(['extract', '--directory', relative(directory)], output / 'transport.log')
-                transport_call(['verify', '--directory', relative(directory)], output / 'transport.log')
                 after = W.read(directory / 'checkpoint-after.json')
+                run_receipt = W.read(directory / 'run.json')
+                if 'elapsed_seconds' in run_receipt:
+                    timers.record('transport_run', run_receipt['elapsed_seconds'])
                 with sink.transaction():
                     _ingest(sink, directory, after, census)
                     state['source_checkpoint'] = after
                     checkpoint()
                 if not retain_validation_inputs:
-                    _retire_block(output, directory)
-        report = _write_report(output, identity, state, completion, monitor.data)
+                    with timers.measure('transport_cli'):
+                        _retire_block(output, directory)
+                progress('running', 'Joint-source block committed', block_index=index,
+                         stage_timings=timers.snapshot(), resources=monitor.data)
+        with timers.measure('export'):
+            report = _write_report(output, identity, state, completion, monitor.data)
         completed = True
         progress('completed', 'Completed continuous candidate acquisition', resources=monitor.data)
         return report
@@ -418,16 +531,19 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
             worker.close()
         sink.close()
         W.write(output / 'resources.json', monitor.data)
-        if completed and not retain_validation_inputs and (output / 'native-scratch.sqlite').exists():
-            mixed._retire_success_scratch(output, [output / 'native-scratch.sqlite'])
+        W.write(output / 'stage-timings.json', timers.snapshot())
+        if completed and not retain_validation_inputs and native_path.exists():
+            mixed._retire_success_scratch(output, [native_path])
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--parents', type=int, default=100)
+    parser.add_argument('--duration-s', type=float)
+    parser.add_argument('--initial-state-policy', choices=(STARTUP_POLICY, STEADY_POLICY), default=STARTUP_POLICY)
     parser.add_argument('--seed', type=int, default=20261120)
-    parser.add_argument('--block-parents', type=int, default=50)
+    parser.add_argument('--block-parents', type=int)
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--stop-after-blocks', type=int)
     parser.add_argument('--stop-after-groups', type=int)
@@ -437,7 +553,8 @@ def main():
         result = run(args.output, args.parents, args.seed, block_parents=args.block_parents,
             resume=args.resume, stop_after_blocks=args.stop_after_blocks,
             stop_after_groups=args.stop_after_groups,
-            retain_validation_inputs=args.retain_validation_inputs)
+            retain_validation_inputs=args.retain_validation_inputs, duration_s=args.duration_s,
+            initial_state_policy=args.initial_state_policy)
     print(json.dumps({'status': result['status'], 'source': result['source']}))
 
 

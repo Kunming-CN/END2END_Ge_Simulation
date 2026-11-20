@@ -24,6 +24,7 @@ import subprocess
 import time
 
 import gegi_mixed_source as M
+import gegi_source_inventory as inventory
 
 S = M.S
 h = M.h
@@ -65,8 +66,11 @@ def validate(config):
     h.require(type(config) is dict and set(config) == set(default_config()) and config['kind'] == KIND,
               'Unsupported streaming source configuration')
     legacy = M.default_config(primary_count=1, seed=config['seed'], acquisition_id=config['acquisition_id'])
-    legacy.update({key: config[key] for key in ('clock_seed', 'sources', 'initial_state')})
+    legacy.update({key: config[key] for key in ('clock_seed', 'sources')})
     M.validate_config(legacy)
+    initial = config['initial_state']
+    h.require(initial == M.INITIAL_STATE or initial == {'policy': inventory.POLICY, 'acquisition_start_ns': 0},
+              'Use the explicit empty-daughter or secular-equilibrium initial state')
     stop = config['stop']
     h.require(type(stop) is dict, 'Specify one fixed duration or parent count')
     if stop.get('mode') == 'count':
@@ -83,12 +87,22 @@ def _tuple(value):
     return tuple(_tuple(v) for v in value) if isinstance(value, list) else value
 
 
-def initialize(config):
+def initialize(config, *, inventory_parameters=None):
     validate(config)
-    return {'kind': CHECKPOINT, 'config_sha256': digest(config), 'acquisition_id': config['acquisition_id'],
+    state = {'kind': CHECKPOINT, 'config_sha256': digest(config), 'acquisition_id': config['acquisition_id'],
             'next_parent_id': 0, 'last_parent_time_ns': 0., 'pending_parent': None,
             'rng_state': random.Random(config['clock_seed']).getstate(), 'finished': False,
-            'safe_frontier_ns': 0., 'next_block_index': 0, 'transport_rng': None}
+            'safe_frontier_ns': 0., 'next_block_index': 0, 'transport_rng': None,
+            'next_transport_id': 0, 'last_driver_time_ns': 0., 'processed_initial_daughter_decays': 0,
+            'initial_inventory': None}
+    if config['initial_state']['policy'] == inventory.POLICY:
+        params = inventory.installed_parameters() if inventory_parameters is None else inventory_parameters
+        source = config['sources'][0]
+        contract = inventory.contract(params, source['activity_Bq'], source['position_global_mm'])
+        # A dedicated RNG domain leaves every existing parent-clock draw intact.
+        seed = int(hashlib.sha256(('Ba137m-inventory:'+str(config['clock_seed'])).encode()).hexdigest()[:16], 16)
+        state['initial_inventory'] = inventory.initialize(contract, seed, config['acquisition_id'])
+    return state
 
 
 def _admit(config, checkpoint):
@@ -98,48 +112,82 @@ def _admit(config, checkpoint):
     h.require(type(checkpoint['next_parent_id']) is int and checkpoint['next_parent_id'] >= 0 and
               type(checkpoint['next_block_index']) is int and checkpoint['next_block_index'] >= 0,
               'Invalid immutable source checkpoint identities')
+    if config['initial_state']['policy'] == inventory.POLICY:
+        initial = checkpoint['initial_inventory']
+        h.require(initial is not None and initial['contract_sha256'] == inventory.digest(initial['contract']),
+                  'Resolved initial inventory contract changed')
 
 
 def next_block(config, checkpoint, max_parents=500):
-    """Return at most 500 new parents and the exact continuation state.
+    """Return a bounded joint transport-driver block and exact continuation.
 
     One look-ahead arrival is retained, never discarded/re-drawn at a boundary.
     A parent stream frontier permits committing only earlier physical emissions.
     """
     _admit(config, checkpoint)
-    h.require(type(max_parents) is int and 1 <= max_parents <= 500, 'Use 1–500 parents per block')
+    h.require(type(max_parents) is int and 1 <= max_parents <= 10000, 'Use 1–10000 transport drivers per block')
     state = copy.deepcopy(checkpoint); state['rng_state'] = _tuple(state['rng_state'])
+    state.setdefault('next_transport_id', state['next_parent_id'])
+    state.setdefault('last_driver_time_ns', state['last_parent_time_ns'])
+    state.setdefault('initial_inventory', None)
+    state.setdefault('processed_initial_daughter_decays', 0)
     if state['finished']: return [], state
     rng = random.Random(); rng.setstate(state['rng_state'])
     rate = math.fsum(source['activity_Bq'] for source in config['sources'])
     probability = config['sources'][0]['activity_Bq']/rate
+    presets = {source['id']: S.registered_preset(source['id']) for source in config['sources']}
     stop = config['stop']; parents = []
     def draw():
         clock = state['last_parent_time_ns']+rng.expovariate(rate)*1e9
         source = config['sources'][int(rng.random() >= probability)]
-        preset = S.registered_preset(source['id'])
+        preset = presets[source['id']]
         return {'acquisition_id': config['acquisition_id'], 'parent_decay_id': state['next_parent_id'],
+                'new_parent_decay_id': state['next_parent_id'], 'origin': 'new_parent',
                 'event_id': state['next_parent_id'], 'source_id': source['id'], 'isotope': preset['isotope'],
                 'source_pdg': S.cs.ION if source['id'] == S.CS137 else preset['pdg'],
                 'source_position_global_mm': source['position_global_mm'], 'absolute_parent_time_ns': clock}
     while len(parents) < max_parents:
         if stop['mode'] == 'count' and state['next_parent_id'] >= stop['parent_count']:
             state['finished'] = True; break
-        parent = state['pending_parent'] or draw(); state['pending_parent'] = None
-        if stop['mode'] == 'duration' and parent['absolute_parent_time_ns'] >= stop['duration_ns']:
-            state['pending_parent'] = parent; state['finished'] = True; break
-        parents.append(parent)
-        state['next_parent_id'] += 1; state['last_parent_time_ns'] = parent['absolute_parent_time_ns']
+        if state['pending_parent'] is None: state['pending_parent'] = draw()
+        parent = state['pending_parent']; daughter = None
+        if state['initial_inventory'] is not None:
+            initial = state['initial_inventory']
+            if initial['pending_decay'] is None:
+                row, initial = inventory.next_decay(initial)
+                initial['pending_decay'] = row
+                state['initial_inventory'] = initial
+            daughter = initial['pending_decay']
+        is_daughter = daughter is not None and daughter['absolute_parent_time_ns'] < parent['absolute_parent_time_ns']
+        chosen = daughter if is_daughter else parent
+        if stop['mode'] == 'duration' and chosen['absolute_parent_time_ns'] >= stop['duration_ns']:
+            state['finished'] = True; break
+        chosen = {**chosen, 'event_id': state['next_transport_id']}
+        parents.append(chosen); state['next_transport_id'] += 1
+        state['last_driver_time_ns'] = chosen['absolute_parent_time_ns']
+        if is_daughter:
+            state['initial_inventory']['pending_decay'] = None
+            state['processed_initial_daughter_decays'] += 1
+        else:
+            state['pending_parent'] = None
+            state['next_parent_id'] += 1; state['last_parent_time_ns'] = parent['absolute_parent_time_ns']
     if not state['finished']:
         if stop['mode'] == 'count' and state['next_parent_id'] >= stop['parent_count']:
             state['finished'] = True
         else:
-            state['pending_parent'] = draw()
-            if stop['mode'] == 'duration' and state['pending_parent']['absolute_parent_time_ns'] >= stop['duration_ns']:
-                state['finished'] = True
+            if state['pending_parent'] is None: state['pending_parent'] = draw()
+            # An unpeeked daughter may still precede the duration limit.
+            initial = state['initial_inventory']
+            if initial is not None and initial['pending_decay'] is None:
+                row, initial = inventory.next_decay(initial); initial['pending_decay'] = row
+                state['initial_inventory'] = initial
+            pending_times = [state['pending_parent']['absolute_parent_time_ns']]
+            if initial is not None and initial['pending_decay'] is not None:
+                pending_times.append(initial['pending_decay']['absolute_parent_time_ns'])
+            if stop['mode'] == 'duration' and min(pending_times) >= stop['duration_ns']: state['finished'] = True
     state['rng_state'] = rng.getstate()
     state['safe_frontier_ns'] = (stop['duration_ns'] if state['finished'] and stop['mode'] == 'duration'
-                                 else state['last_parent_time_ns'])
+                                 else state['last_driver_time_ns'])
     if parents: state['next_block_index'] += 1
     return parents, state
 
@@ -164,7 +212,8 @@ def _bound(binding):
 
 def _pins():
     return {**S.source_pins(), 'transport/gegi_mixed_source.py': h.sha256(M.__file__),
-            'transport/gegi_streaming_source.py': h.sha256(__file__)}
+            'transport/gegi_streaming_source.py': h.sha256(__file__),
+            'transport/gegi_source_inventory.py': h.sha256(inventory.__file__)}
 
 
 def build_rng_adapter(context):
@@ -203,7 +252,7 @@ def build_rng_adapter(context):
 def _context(config, directory):
     context = h.local_path(directory.parent/'source-context')
     legacy = M.default_config(primary_count=1, seed=config['seed'], acquisition_id=config['acquisition_id'])
-    legacy.update({key: config[key] for key in ('clock_seed', 'sources', 'initial_state')})
+    legacy.update({key: config[key] for key in ('clock_seed', 'sources')})
     if not context.exists(): M.prepare(legacy, context)  # geometry only; zero radiation calls
     meta = S.load(context/'prepared.json')
     h.require(meta['checked']['config'] == legacy, 'Shared geometry context belongs to another source configuration')
@@ -213,9 +262,12 @@ def _context(config, directory):
     return context, meta, build_rng_adapter(context)
 
 
-def block_macro(plan, count, restore=False):
+def block_macro(plan, count, restore=False, inventory_parameters=None):
     legacy = copy.deepcopy(plan); legacy['config']['primary_count'] = count
     text = M.macro(legacy)
+    if inventory_parameters is not None:
+        marker = '/RMG/Generator/Select FromFile'
+        text = text.replace(marker, '\n'.join(inventory.gps_registration(inventory_parameters))+'\n'+marker)
     beam = '/run/beamOn '+str(count)
     checkpoint = ('/random/resetEngineFrom rng-input.rndm\n' if restore else '')
     checkpoint += '/GeSignal/RNG/Save rng-before.rndm\n'+beam+'\n/GeSignal/RNG/Save rng-after.rndm'
@@ -233,8 +285,9 @@ def prepare_block(config, checkpoint, output, max_parents=500):
     h.require(not directory.exists(), 'Preserve existing incomplete block; do not restart implicitly')
     parents, after = next_block(config, checkpoint, max_parents)
     h.require(parents, 'Source clock is exhausted; no radiation block is needed')
+    _verify_inventory_runtime(checkpoint)
     transport_rng = checkpoint['transport_rng']
-    if checkpoint['next_parent_id']:
+    if checkpoint.get('next_transport_id', checkpoint['next_parent_id']):
         h.require(transport_rng is not None, 'Continuation requires the sealed preceding CLHEP state')
         previous = _bound(transport_rng).parent
         verify(previous)
@@ -247,13 +300,14 @@ def prepare_block(config, checkpoint, output, max_parents=500):
     h.write_new(directory/'parents.jsonl', M.json_lines(parents))
     M.write_primaries(directory/'primaries.lh5', parents)
     h.write_new(directory/'geometry.gdml', (context/'geometry.gdml').read_text())
-    h.write_new(directory/'run.mac', block_macro(context_meta['checked'], len(parents), transport_rng is not None))
+    params = _inventory_parameters(checkpoint)
+    h.write_new(directory/'run.mac', block_macro(context_meta['checked'], len(parents), transport_rng is not None, params))
     if transport_rng is not None:
         with _bound(transport_rng).open('rb') as original, (directory/'rng-input.rndm').open('xb') as copy_to:
             shutil.copyfileobj(original, copy_to)
     meta = {'kind': BLOCK, 'status': 'prepared', 'config': config,
             'block_index': checkpoint['next_block_index'], 'primary_count': len(parents),
-            'first_parent_id': parents[0]['parent_decay_id'], 'last_parent_id': parents[-1]['parent_decay_id'],
+            'first_parent_id': parents[0]['event_id'], 'last_parent_id': parents[-1]['event_id'],
             'context': _binding(context/'prepared.json'), 'executable': _binding(executable),
             'checkpoint_before_sha256': digest(checkpoint), 'source_sha256': _pins(),
             'files_sha256': {path.name: h.sha256(path) for path in directory.iterdir() if path.is_file()}}
@@ -278,9 +332,21 @@ def _prepared(directory):
     h.require(digest(before) == meta['checkpoint_before_sha256'] and
               hashlib.sha256(M.json_lines(parents).encode()).hexdigest() == meta['files_sha256']['parents.jsonl'] and
               S.load(directory/'clock-after.json') == json.loads(json.dumps(after)) and
-              (directory/'run.mac').read_text() == block_macro(context_meta['checked'], len(parents), before['transport_rng'] is not None),
+              (directory/'run.mac').read_text() == block_macro(context_meta['checked'], len(parents), before['transport_rng'] is not None,
+                                                             _inventory_parameters(before)),
               'Rehashed source block clock or macro semantics changed')
     return directory, meta, context_meta, parents
+
+
+def _inventory_parameters(checkpoint):
+    initial = checkpoint.get('initial_inventory')
+    return None if initial is None else initial['contract']['parameters']
+
+
+def _verify_inventory_runtime(checkpoint):
+    parameters = _inventory_parameters(checkpoint)
+    if parameters is not None:
+        h.require(inventory.installed_parameters() == parameters, 'Installed initial-inventory nuclear contract changed')
 
 
 def _extraction_compatibility(directory, meta):
@@ -371,31 +437,40 @@ def events(directory):
     directory, block, meta, parents = _prepared(directory)
     meta = {**meta, 'primary_count': len(parents)}
     contracts = {row['contract']['id']: row['contract'] for row in meta['checked']['sources']}
+    parameters = _inventory_parameters(S.load(directory/'checkpoint-before.json'))
     def for_event(local):
         p = parents[local]
-        return {**meta, 'source_id': p['source_id'], 'source_contract': contracts[p['source_id']],
+        contract = (inventory.daughter_contract(parameters, p['source_position_global_mm'])
+                    if p.get('origin') == 'initial_daughter_inventory' else contracts[p['source_id']])
+        return {**meta, 'source_id': p['source_id'], 'source_contract': contract,
                 'source_position_global_mm': p['source_position_global_mm'],
                 'primary_vertex_time_ns': p['absolute_parent_time_ns']}
-    for event in S.events(directory/'truth.lh5', meta, event_metadata=for_event, native_empty_uid_aliases=True):
+    def read_tracks(rows, names, current):
+        if current['source_contract']['id'] == inventory.DAUGHTER_SOURCE_ID:
+            return inventory.validate_initial_tracks(rows, names, current, parameters)
+        return S.primary_tracks(rows, names, current)
+    for event in S.events(directory/'truth.lh5', meta, event_metadata=for_event,
+                          native_empty_uid_aliases=True, primary_track_reader=read_tracks):
         local = event['event_id']
         yield _decorate(event, parents[local], local, block['block_index'])
 
 
 def _decorate(event, parent, local, block_index):
     origin = parent['absolute_parent_time_ns']
+    driver = parent['event_id']
     event.update(parent, transport_event_id=local, block_index=block_index,
-                 global_decay_id=parent['parent_decay_id'], initial_primary_id=parent['parent_decay_id'],
+                 global_decay_id=driver, initial_primary_id=driver,
                  primary_time_ns=origin, parent_clock_policy='checkpointed_pre_transport_marked_poisson_v1')
     for ordinal, step in enumerate(event['steps']):
         # LH5 row indices are file-local provenance. A semantic deposit identity
         # must remain unchanged when the same parent moves to another block.
         step.update(absolute_time_ns=origin+step['time_ns'], positive_ge_deposit_ordinal=ordinal,
-                    deposit_id=[parent['acquisition_id'], parent['parent_decay_id'], ordinal])
+                    deposit_id=[parent['acquisition_id'], driver, ordinal])
     for photon in event['decay_photons']:
         photon.update(absolute_time_ns=origin+photon['time_ns'],
-                      emission_id=[parent['acquisition_id'], parent['parent_decay_id'], photon['track_id']])
+                      emission_id=[parent['acquisition_id'], driver, photon['track_id']])
     for track in event.get('tracks', []):
-        track['global_track_id'] = [parent['acquisition_id'], parent['parent_decay_id'], track['trackid']]
+        track['global_track_id'] = [parent['acquisition_id'], driver, track['trackid']]
     event['pulse_group_use'] = 'drift partition only; no electronics reset'
     return event
 
@@ -445,14 +520,24 @@ def extract(directory):
     dest = directory/'stream'; h.require(not dest.exists(), 'Preserve incomplete derived block'); dest.mkdir()
     counts = {'initial_primaries': 0, 'zero_deposit_primaries': 0, 'nonzero_primaries': 0,
               'positive_ge_rows': 0, 'pulse_groups': 0,
+              'new_parent_primaries': 0, 'initial_daughter_primaries': 0, 'transport_primaries': 0,
+              'zero_deposit_parents': 0, 'nonzero_parents': 0,
+              'zero_deposit_initial_daughters': 0, 'nonzero_initial_daughters': 0,
               'by_source': {source['id']: {'parents': 0, 'zero': 0, 'nonzero': 0}
                             for source in meta['config']['sources']}}
     with (dest/'events.jsonl').open('x', encoding='utf-8', newline='\n') as out:
         for event in events(directory):
             counts['initial_primaries'] += 1
+            counts['transport_primaries'] += 1
             counts['nonzero_primaries' if event['steps'] else 'zero_deposit_primaries'] += 1
-            isotope = counts['by_source'][event['source_id']]
-            isotope['parents'] += 1; isotope['nonzero' if event['steps'] else 'zero'] += 1
+            daughter = event.get('origin') == 'initial_daughter_inventory'
+            counts['initial_daughter_primaries' if daughter else 'new_parent_primaries'] += 1
+            if daughter:
+                counts['nonzero_initial_daughters' if event['steps'] else 'zero_deposit_initial_daughters'] += 1
+            else:
+                counts['nonzero_parents' if event['steps'] else 'zero_deposit_parents'] += 1
+                isotope = counts['by_source'][event['source_id']]
+                isotope['parents'] += 1; isotope['nonzero' if event['steps'] else 'zero'] += 1
             counts['positive_ge_rows'] += len(event['steps']); counts['pulse_groups'] += len(event['pulse_groups'])
             if event['steps']: out.write(M.json_lines([event]))
     h.require(counts['initial_primaries'] == len(parents), 'Local block census does not close')
@@ -467,11 +552,16 @@ def extract(directory):
                 'events_file': 'events.jsonl', 'events_sha256': h.sha256(dest/'events.jsonl'),
                 'parents_sha256': h.sha256(directory/'parents.jsonl'),
                 'first_parent_id': meta['first_parent_id'], 'last_parent_id': meta['last_parent_id'],
+                'first_driver_id': meta['first_parent_id'], 'last_driver_id': meta['last_parent_id'],
                 'safe_frontier_ns': after['safe_frontier_ns'], 'source_finished': after['finished'],
                 'checkpoint_after': _binding(directory/'checkpoint-after.json'),
                 'clock_policy': 'Native child/step time_ns is parent-relative; absolute_time_ns adds the immutable global parent clock once.',
                 'daughter_policy': 'Every native delayed emission retained; consumer queues absolute future deposits across block boundaries.',
-                'source_initialization': meta['config']['initial_state']}
+                'source_initialization': meta['config']['initial_state'],
+                'initial_inventory_contract': (None if after.get('initial_inventory') is None else
+                                                after['initial_inventory']['contract']),
+                'initial_inventory_contract_sha256': (None if after.get('initial_inventory') is None else
+                                                       after['initial_inventory']['contract_sha256'])}
     h.publish_json(dest/'manifest.json', manifest)
     seal = {'kind': BLOCK, 'status': 'sealed', 'block_index': meta['block_index'],
             'config_sha256': digest(meta['config']), 'counts': counts,
@@ -532,9 +622,26 @@ def retire(directory, consumer_receipt):
     return {'status': 'retired_verified_source_scratch', 'retired_now_bytes': retired, 'block_index': verified['block_index']}
 
 
+def process_block(config, checkpoint, output, max_parents=500):
+    """Continue one exact block through its first unfinished stage, never rerun."""
+    directory = h.local_path(output)
+    if (directory/'prepared.json').exists():
+        _, saved, _, _ = _prepared(directory)
+        h.require(saved['config'] == config and saved['checkpoint_before_sha256'] == digest(checkpoint),
+                  'Existing source block belongs to another requested checkpoint/configuration')
+    else:
+        prepare_block(config, checkpoint, directory, max_parents)
+    if not (directory/'seal.json').exists():
+        if not (directory/'run.json').exists(): run_block(directory)
+        h.require(S.load(directory/'run.json')['status'] == 'complete',
+                  'A failed/interrupted transport cannot be rerun implicitly')
+        extract(directory)
+    return verify(directory)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('init', 'initialize', 'prepare-block', 'run-block', 'extract', 'verify', 'retire', 'repair-extraction'))
+    parser.add_argument('action', choices=('init', 'initialize', 'prepare-block', 'process-block', 'run-block', 'extract', 'verify', 'retire', 'repair-extraction'))
     parser.add_argument('--config'); parser.add_argument('--checkpoint'); parser.add_argument('--output')
     parser.add_argument('--directory'); parser.add_argument('--max-parents', type=int, default=500)
     parser.add_argument('--consumer-receipt')
@@ -543,9 +650,11 @@ def main(argv=None):
     if args.action in ('init', 'initialize'):
         value = initialize(S.load(args.config))
         if args.output: h.publish_json(h.local_path(args.output), value)
-    elif args.action == 'prepare-block':
+    elif args.action in ('prepare-block', 'process-block'):
         config = S.load(args.config)
-        value = prepare_block(config, S.load(args.checkpoint) if args.checkpoint else initialize(config), args.output, args.max_parents)
+        state = S.load(args.checkpoint) if args.checkpoint else initialize(config)
+        value = (process_block if args.action == 'process-block' else prepare_block)(
+            config, state, args.output, args.max_parents)
     elif args.action == 'retire': value = retire(args.directory, args.consumer_receipt)
     elif args.action == 'repair-extraction': value = repair_extraction(args.directory)
     else: value = {'run-block': run_block, 'extract': extract, 'verify': verify}[args.action](args.directory)

@@ -16,6 +16,7 @@ import struct
 import zlib
 
 KIND = 'gegi_native_scalar_store_v1'
+NATIVE_SIGNAL_ONLY = 'native_signals_only_v1'
 
 
 def encoded(value):
@@ -131,12 +132,28 @@ class Store:
         references = {}
         pending = {}
         channels = metadata.get('channels')
+        native_only = event.get('response_mode') == NATIVE_SIGNAL_ONLY
+        if native_only:
+            require(event.get('readout_summary') is None and event.get('readout_status') == (
+                'native_unavailable' if event['status'] == 'native_failed' else 'shared_readout_pending'),
+                'Native-only groups must leave isolated readout explicitly uncomputed')
+            metadata['storage']['electronics_trace_policy'] = 'Not computed; complete native currents feed the shared acquisition readout.'
         if channels is None:
             require(event['status'] == 'native_failed' and signals is None, 'Unknown signals must remain null')
         else:
             require(set(signals) == {c['contact_id'] for c in channels}, 'Signal/channel census mismatch')
-            for c in channels:
-                c['derived_trace_sha256'] = trace_hash(c.pop('trace'))
+            if native_only:
+                require(len(channels) == 34 and set(signals) == set(range(1, 35)), 'Native-only storage requires all 34 electrodes')
+                for c in channels:
+                    cid = c['contact_id']
+                    require(set(c) == {'contact_id', 'wiring_factor', 'final_induced_keV', 'final_wired_induced_keV'}
+                            and c['wiring_factor'] == (1 if cid <= 17 else -1)
+                            and c['final_induced_keV'] == signals[cid]['signed_induced_keV'][-1]
+                            and c['final_wired_induced_keV'] == c['wiring_factor']*c['final_induced_keV'],
+                            'Native-only channel identity or terminal charge changed')
+            else:
+                for c in channels:
+                    c['derived_trace_sha256'] = trace_hash(c.pop('trace'))
             for contact, native in signals.items():
                 require(set(native) == {'time_ns', 'signed_induced_keV'}, 'Unexpected native signal fields')
                 require(len(native['time_ns']) == len(native['signed_induced_keV']), 'Signal length mismatch')

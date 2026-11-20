@@ -122,6 +122,9 @@ class CandidateControlTests(unittest.TestCase):
         self.assertEqual(self.request('options', headers={'X-Control-Token': 'wrong'})[0], 403)
         status, options = self.request('options')
         self.assertEqual((status, options['defaults']['primary_count']), (200, 100))
+        self.assertEqual(options['defaults']['mode'], 'duration')
+        self.assertEqual(options['defaults']['duration_s'], 5)
+        self.assertEqual(options['defaults']['maximum_duration_s'], 5)
         settings = self.settings()
         for changed in ({'name': '../escape'}, {'primary_count': 501}, {'primary_count': True}, {'seed': 0},
                         {'activities_bq': [True, 37000]}, {'positions_mm': [[0, 0], [0, 0, 40]]},
@@ -256,6 +259,7 @@ class CandidateControlTests(unittest.TestCase):
             self.assertEqual(fields['activities_bq'], [185000, 37000])
             self.assertEqual(fields['positions_mm'], [[-40, 0, 40], [40, 0, 40]])
             self.assertEqual(fields['block_parents'], 50)
+            self.assertEqual(fields['initial_state_policy'], C.STARTUP_POLICY)
         self.assertFalse(invocations[0]['resume'])
         self.assertTrue(invocations[1]['resume'])
 
@@ -322,6 +326,109 @@ class CandidateControlTests(unittest.TestCase):
         self.assertEqual(self.control.state('mixed-unit')['status'], 'completed')
         self.assertFalse(self.control.state('mixed-unit')['resumable'])
         self.assertEqual(self.request('resume', {'name': 'mixed-unit'})[0], 400)
+
+    def test_physical_duration_equilibrium_progress_and_resume_are_immutable(self):
+        settings = self.settings()
+        settings.pop('primary_count')
+        settings['duration_s'] = 5
+        for changes in ({'duration_s': 0}, {'duration_s': -1}, {'duration_s': 5.001},
+                        {'duration_s': True}, {'duration_s': '5'}, {'duration_s': None},
+                        {'duration_s': float('nan')}, {'primary_count': 100},
+                        {'initial_state_policy': C.STARTUP_POLICY}):
+            self.assertEqual(self.request('start', settings | changes)[0], 400)
+        self.assertFalse(self.calls)
+        invocations = []
+        identity = {'scope': 'synthetic_duration_control_only'}
+
+        def runner(output, **fields):
+            invocations.append(fields)
+            self.assertEqual(fields['duration_s'], 5)
+            self.assertEqual(fields['initial_state_policy'], C.STEADY_POLICY)
+            self.assertNotIn('primary_count', fields)
+            if not fields['resume']:
+                with storage.CandidateStore(output/storage.ARCHIVE_NAME, identity) as sink:
+                    with sink.transaction():
+                        sink.save_checkpoint({'acquisition_time_ns': 2e9})
+                fields['on_progress']({'status': 'running', 'stage': 'unit_duration_progress',
+                    'acquisition_time_ns': 2e9, 'duration_s': 5,
+                    'new_parent_decays': 1001, 'initial_daughter_decays': 73})
+                self.ready.set()
+                if not self.release.wait(5):
+                    raise RuntimeError('Unit fixture timed out')
+                self.assertTrue(fields['stop_requested']())
+                return {'status': 'stopped', 'resumable': True}
+            with storage.CandidateStore(output/storage.ARCHIVE_NAME, identity, resume=True) as sink:
+                with sink.transaction():
+                    sink.save_checkpoint({'acquisition_time_ns': 5e9})
+                sink.finalize(acquisition_statistics={'scope': 'synthetic_unit_only', 'duration_s': 5})
+            database = output/storage.ARCHIVE_NAME
+            report = {'kind': C.REPORT_KIND, 'status': 'completed', 'identity': identity,
+                'counts': {'qualified_triggers': 0}, 'storage_counts': {'saved_candidates': 0, 'rejected_rises': 0},
+                'live_time_ns': 5e9, 'source': {'initial_parents': 1001, 'initial_daughter_decays': 73,
+                    'transport_primaries': 1074},
+                'artifacts': {storage.ARCHIVE_NAME: {'bytes': database.stat().st_size, 'sha256': W.sha(database)}}}
+            W.write(output/C.REPORT_NAME, report)
+            return report
+
+        self.control.runner = None
+        with patch.dict('sys.modules', {'gegi_streaming_acquisition': SimpleNamespace(run=runner)}):
+            status, job = self.request('start', settings)
+            self.assertEqual((status, job['mode'], job['duration_s']), (200, 'duration', 5))
+            self.assertIsNone(job['primary_count'])
+            self.assertEqual(job['initial_state_policy'], C.STEADY_POLICY)
+            self.assertTrue(self.ready.wait(2))
+            progress = self.control.state('mixed-unit')['progress']
+            self.assertEqual(progress['acquisition_time_ns'], 2e9)
+            self.assertEqual(progress['new_parent_decays'], 1001)
+            self.assertEqual(progress['initial_daughter_decays'], 73)
+            self.assertEqual(self.request('stop', {'name': 'mixed-unit'})[0], 200)
+            self.finish()
+            self.workflow = J.WorkflowController(self.root)
+            self.control = self.workflow.gegi_candidates()
+            self.server.workflow_controller = self.workflow
+            stopped = self.control.state('mixed-unit')
+            self.assertTrue(stopped['resumable'])
+            self.assertEqual((stopped['duration_s'], stopped['initial_state_policy']), (5, C.STEADY_POLICY))
+            self.assertEqual(self.request('resume', {'name': 'mixed-unit', 'duration_s': 1})[0], 400)
+            self.assertEqual(self.request('resume', {'name': 'mixed-unit', 'activities_bq': [1, 2]})[0], 400)
+            self.assertEqual(self.request('resume', {'name': 'mixed-unit'})[0], 200)
+            self.finish()
+        completed = self.control.state('mixed-unit')
+        self.assertEqual(completed['status'], 'completed')
+        self.assertEqual(completed['result']['source'], {'initial_parents': 1001,
+            'initial_daughter_decays': 73, 'transport_primaries': 1074})
+        self.assertEqual(len(invocations), 2)
+        self.assertFalse(invocations[0]['resume'])
+        self.assertTrue(invocations[1]['resume'])
+        for fields in invocations:
+            self.assertEqual(fields['block_parents'], 10000)
+            self.assertEqual(fields['seed'], 20261120)
+            self.assertEqual(fields['activities_bq'], [185000, 37000])
+            self.assertEqual(fields['positions_mm'], [[-40, 0, 40], [40, 0, 40]])
+
+    def test_default_runner_source_root_block_sizes_follow_acquisition_mode(self):
+        captured = {}
+
+        def runner(output, **settings):
+            captured[output.name] = settings
+            with storage.CandidateStore(output/storage.ARCHIVE_NAME, {'scope': 'unit_block_size_capture'}) as sink:
+                with sink.transaction():
+                    sink.save_checkpoint({'source_cursor': 0})
+            return {'status': 'stopped', 'resumable': True}
+
+        self.control.runner = None
+        with patch.dict('sys.modules', {'gegi_streaming_acquisition': SimpleNamespace(run=runner)}):
+            self.control.start(**(self.settings() | {'name': 'startup-block'}))
+            self.finish()
+            duration = self.settings() | {'name': 'duration-block', 'duration_s': 5}
+            duration.pop('primary_count')
+            self.control.start(**duration)
+            self.finish()
+        self.assertEqual(captured['startup-block']['block_parents'], 50)
+        self.assertEqual(captured['startup-block']['primary_count'], 100)
+        self.assertEqual(captured['duration-block']['block_parents'], 10000)
+        self.assertEqual(captured['duration-block']['duration_s'], 5)
+        self.assertNotIn('primary_count', captured['duration-block'])
 
 
 if __name__ == '__main__':

@@ -10,6 +10,7 @@ const Q=SSDQuickstart; const R=SSDReplay; const E=Readout; const P=ReadoutProfil
 const H=GeGISignalHelpers; const SSD=SolidStateDetectors
 const ROOT=Q.ROOT
 const MODEL_HASH="4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04"
+const NATIVE_SIGNAL_ONLY="native_signals_only_v1"
 const SOURCES=("gegi_response.jl","gegi_signal_helpers.jl","run.jl","replay.jl","readout.jl","readout_profiles.jl","readout_demo.json")
 check=E.check
 hashfile=E.hashfile
@@ -235,11 +236,13 @@ function channel_response(t,q,ch,readout,eion,cal,matrix;horizon_ns=nothing)
     result["wiring_factor"]=ch["wiring_factor"]
     result
 end
-function process_event(event,sim,cfg,channels,readout,cal,matrix,eion,n,signalfile)
+function process_event(event,sim,cfg,channels,readout,cal,matrix,eion,n,signalfile;
+                       native_only=false,deposit_processor=native_deposit)
+    check(native_only isa Bool,"Native-only response selection must be explicit")
     energy,t0=validate_event(event,n);components=[Any[] for _ in 1:34];outcomes=Any[]
     for (idx,step) in enumerate(event["steps"])
         step["energy_keV"]==0 && continue
-        waves,endpoints=native_deposit(sim,step["position_mm"],step["energy_keV"],cfg)
+        waves,endpoints=deposit_processor(sim,step["position_mm"],step["energy_keV"],cfg)
         for id in 1:34
             w=waves[id];push!(components[id],(delay=Float64(step["time_ns"]-t0),times=w.times,charge=w.charge))
         end
@@ -252,8 +255,10 @@ function process_event(event,sim,cfg,channels,readout,cal,matrix,eion,n,signalfi
         println(io,"contact_id,time_ns,signed_induced_keV,wired_induced_keV")
         for ch in channels
             id=ch["id"];t,q=R.causal_sum(components[id],cfg.dt)
-            result=channel_response(t,q,ch,readout,eion,cal,matrix;
-                horizon_ns=get(event,"readout_horizon_ns",nothing))
+            result=native_only ? Dict("contact_id"=>id,"wiring_factor"=>ch["wiring_factor"],
+                "final_induced_keV"=>last(q),"final_wired_induced_keV"=>ch["wiring_factor"]*last(q)) :
+                channel_response(t,q,ch,readout,eion,cal,matrix;
+                    horizon_ns=get(event,"readout_horizon_ns",nothing))
             for k in eachindex(t);println(io,id,',',t[k],',',q[k],',',ch["wiring_factor"]*q[k]);end
             push!(rows,result)
         end
@@ -263,11 +268,17 @@ function process_event(event,sim,cfg,channels,readout,cal,matrix,eion,n,signalfi
     limited=any(e->e["step_limit_reached"],endpoints)
     stopped=any(e->e["status"]=="stopped_without_contact",endpoints)
     status=limited ? "step_limit" : stopped ? "stopped_without_contact" : "completed"
-    Dict("event_id"=>event["event_id"],"primary_time_ns"=>t0,"truth_edep_keV"=>energy,
+    result=Dict{String,Any}("event_id"=>event["event_id"],"primary_time_ns"=>t0,"truth_edep_keV"=>energy,
         "status"=>status,"steps"=>outcomes,"channels"=>rows,
         "transport_flags"=>Dict("step_limits"=>count(e->e["step_limit_reached"],endpoints),
             "stopped_without_contact"=>count(e->e["status"]=="stopped_without_contact",endpoints)),
         "signals_ref"=>replace(relpath(signalfile,dirname(dirname(signalfile))),'\\'=>'/'),"signals_sha256"=>signalsha)
+    if native_only
+        result["response_mode"]=NATIVE_SIGNAL_ONLY
+        result["readout_status"]="shared_readout_pending"
+        result["readout_summary"]=nothing
+    end
+    result
 end
 function main(args=ARGS)
     args==["--help"] && return println("gegi_response.jl --request FILE --output DIR")

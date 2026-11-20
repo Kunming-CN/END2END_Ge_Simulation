@@ -869,9 +869,18 @@ $('gegi-dual-job').onchange=()=>{
 };
 
 function candidateStatus(text,error=false){$('gegi-candidate-status').textContent=text;$('gegi-candidate-status').className='notice '+(error?'error':'');}
+function candidateModeFields(){
+  const duration=$('gegi-candidate-mode').value!=='count';
+  $('gegi-candidate-duration-field').hidden=!duration;
+  $('gegi-candidate-count-field').hidden=duration;
+  $('gegi-candidate-scope').textContent=duration?
+    'Up to 5 physical seconds. Radioactive daughter populations use the source equilibrium model; electronics start quiet with zero signal history.':
+    'Start with 100 new parent decays; up to 500 are supported for the startup check. There are no pre-existing radioactive daughters at acquisition start.';
+}
+function candidateRunLimits(){return 'Startup checks allow up to 500 new parent decays; steady-source research acceptance allows up to 5 physical seconds.';}
 function invalidateCandidateEstimate(){
   ++candidateEstimateGeneration;$('gegi-candidate-estimate').disabled=false;
-  $('gegi-candidate-storage').textContent='Source or planning count changed. Estimate storage again for the current settings. Fresh Run remains limited to 500 decays.';
+  $('gegi-candidate-storage').textContent='Source or planning count changed. Estimate storage again for the current settings. '+candidateRunLimits();
 }
 async function estimateCandidateStorage(){
   const generation=++candidateEstimateGeneration,button=$('gegi-candidate-estimate'),target=$('gegi-candidate-storage');
@@ -887,8 +896,8 @@ async function estimateCandidateStorage(){
     const estimate=await api('/api/workflow/gegi-candidates/estimate?'+new URLSearchParams(fields));
     if(generation!==candidateEstimateGeneration)return;
     const gib=bytes=>(bytes/1024**3).toFixed(2),range=estimate.planning_range_bytes;
-    target.textContent=estimate.total_parents.toLocaleString('en-US')+' total source decays: saved candidate core '+gib(range[0])+'–'+gib(range[1])+' GiB. Shared field cache '+gib(estimate.shared_field_cache_bytes)+' GiB, counted once. Additional fresh-run records and temporary peak storage have not been measured. These saved-readout planning scenarios are not a guaranteed upper bound; fresh Run remains limited to '+estimate.execution_primary_limit+' decays.';
-  }catch(e){if(generation===candidateEstimateGeneration)target.textContent='Storage estimate unavailable: '+e.message+' Temporary peak storage has not been measured. Fresh Run remains limited to 500 decays.';}
+    target.textContent=estimate.total_parents.toLocaleString('en-US')+' total source decays: saved candidate core '+gib(range[0])+'–'+gib(range[1])+' GiB. Shared field cache '+gib(estimate.shared_field_cache_bytes)+' GiB, counted once. Additional fresh-run records and temporary peak storage have not been measured. These saved-readout planning scenarios are not a guaranteed upper bound. '+candidateRunLimits();
+  }catch(e){if(generation===candidateEstimateGeneration)target.textContent='Storage estimate unavailable: '+e.message+' Temporary peak storage has not been measured. '+candidateRunLimits();}
   finally{if(generation===candidateEstimateGeneration)button.disabled=false;}
 }
 function candidateControls(){
@@ -918,6 +927,16 @@ function showCandidateJob(job){
     (job.status==='stop_requested'?' · Saving progress before stopping.':'')+
     (job.status==='stopped'?' · Saved. Resume continues with the original sources and acquisition clock.':''),job.status==='failed');
   $('gegi-candidate-receipt').textContent=JSON.stringify(report||job,null,2);
+  if(!report){
+    const progress=job.progress||{},duration=job.duration_s??progress.duration_s;
+    if(Number.isFinite(progress.acquisition_time_ns)){
+      const seconds=progress.acquisition_time_ns/1e9;
+      summary.append(node('p','Physical acquisition time: '+metricValue(seconds)+(Number.isFinite(duration)?' / '+metricValue(duration):'')+' s.'));
+      if(Number.isFinite(duration)&&duration>0){const bar=node('progress');bar.max=duration;bar.value=Math.max(0,Math.min(seconds,duration));bar.setAttribute('aria-label','Physical acquisition progress');summary.append(bar);}
+    }
+    const census=[['New parent decays',progress.new_parent_decays??progress.initial_parents],['Initial-daughter decays',progress.initial_daughter_decays]].filter(([,value])=>Number.isFinite(value));
+    if(census.length)summary.append(node('p',census.map(([label,value])=>label+': '+value).join(' · '),'muted'));
+  }
   if(report){
     const counts=report.storage_counts,metrics=node('div',undefined,'metrics');
     for(const [label,value]of [['Qualified triggers',report.counts.qualified_triggers],['Saved candidates',counts.saved_candidates],['Rejected rises',counts.rejected_rises],['Candidate store · bytes',report.artifacts['compton-candidates.sqlite'].bytes]]){
@@ -925,10 +944,13 @@ function showCandidateJob(job){
     }
     summary.append(metrics,node('p',(report.identity?.scope?.includes('historical')?'Historical saved-library readout diagnostic. ':'')+
       'Acquisition '+metricValue(report.live_time_ns/1e9)+' s · all 34 channels processed; one all-electrode context saved per candidate.','muted'));
-    const source=report.source||{},census=[['Initial source decays',source.initial_parents],['Zero deposition',source.zero_deposit_parents],['Nonzero parents',source.nonzero_parents],['Native groups unavailable',source.unavailable_native_groups??source.native_unavailable_groups]].filter(([,value])=>value!==undefined);
+    const source=report.source||{},census=[['New parent decays',source.initial_parents],['Initial-daughter decays',source.initial_daughter_decays],['Transported roots',source.transport_primaries],['New parents without Ge deposits',source.zero_deposit_parents],['New parents with Ge deposits',source.nonzero_parents],['Initial daughters without Ge deposits',source.zero_deposit_initial_daughters],['Initial daughters with Ge deposits',source.nonzero_initial_daughters],['Native groups unavailable',source.unavailable_native_groups??source.native_unavailable_groups]].filter(([,value])=>value!==undefined);
     if(census.length)summary.append(node('p',census.map(([label,value])=>label+': '+value).join(' · '),'muted'));
     const initial=report.identity?.source_config?.initial_state;
     if(initial?.policy==='new_parent_decays_empty_daughters_at_start')summary.append(node('p','Startup source state: no pre-existing daughters at t = 0. Delayed deposit groups beyond this acquisition: '+(source.delayed_groups_after_acquisition===undefined?'not recorded':source.delayed_groups_after_acquisition)+'.','muted'));
+    if(initial?.policy==='secular_equilibrium_poisson_daughters_v1')summary.append(node('p','Radioactive daughter populations use the source equilibrium model. Electronics start quiet with zero signal history.','muted'));
+    const mean=initial?.initial_daughter_mean_population??source.initial_daughter_mean_population;
+    if(Number.isFinite(mean))summary.append(node('p','Mean initial daughter population: '+metricValue(mean)+' (a statistical mean, separate from executed decay counts).','muted'));
     if(changed)void loadCandidatePage(0);
   }else if(changed){$('gegi-candidate-view').hidden=true;$('gegi-candidate-plots').replaceChildren();candidatePage=null;}
   candidateControls();
@@ -943,11 +965,18 @@ async function startCandidateRun(){
   candidateBusy=true;candidateControls();
   try{
     const value=id=>{const text=$(id).value.trim();if(!text||!Number.isFinite(Number(text)))throw Error('Enter finite source activities and coordinates.');return Number(text);};
-    const primary_count=exactInteger($('gegi-candidate-count').value.trim(),'Initial source decays'),seed=exactInteger($('gegi-candidate-seed').value.trim(),'Seed');
-    if(primary_count>500)throw Error('This bounded validation accepts at most 500 initial source decays.');
-    const request={name:$('gegi-candidate-name').value.trim(),primary_count,seed,
+    const mode=$('gegi-candidate-mode').value,seed=exactInteger($('gegi-candidate-seed').value.trim(),'Seed');
+    if(!['count','duration'].includes(mode))throw Error('Choose a startup count or physical acquisition duration.');
+    const request={name:$('gegi-candidate-name').value.trim(),seed,
       activities_bq:['a','b'].map(source=>value('gegi-candidate-activity-'+source)),
       positions_mm:['a','b'].map(source=>['x','y','z'].map(axis=>value('gegi-candidate-'+source+'-'+axis)))};
+    if(mode==='duration'){
+      request.duration_s=value('gegi-candidate-duration');
+      if(request.duration_s<=0||request.duration_s>5)throw Error('Choose a positive physical acquisition duration no longer than 5 seconds.');
+    }else{
+      request.primary_count=exactInteger($('gegi-candidate-count').value.trim(),'New parent decays');
+      if(request.primary_count>500)throw Error('The startup check accepts at most 500 new parent decays.');
+    }
     ++candidateGeneration;++candidateEventGeneration;
     const job=await api('/api/workflow/gegi-candidates/start',request),select=$('gegi-candidate-job');
     const entry=node('option',job.name+' · '+job.status);entry.value=job.name;select.append(entry);select.value=job.name;showCandidateJob(job);
@@ -1000,6 +1029,8 @@ $('gegi-candidate-refresh').onclick=refreshCandidateRuns;
 $('gegi-candidate-start').onclick=startCandidateRun;
 $('gegi-candidate-stop').onclick=()=>manageCandidateRun('stop');
 $('gegi-candidate-resume').onclick=()=>manageCandidateRun('resume');
+$('gegi-candidate-mode').onchange=candidateModeFields;
+candidateModeFields();
 $('gegi-candidate-job').onchange=()=>{++candidateGeneration;++candidateEventGeneration;candidateJob=null;candidatePage=null;$('gegi-candidate-view').hidden=true;$('gegi-candidate-summary').replaceChildren();const name=$('gegi-candidate-job').value;if(name)void inspectCandidateJob(name);else candidateStatus('Choose a saved acquisition.');candidateControls();};
 $('gegi-candidate-trigger').onchange=$('gegi-candidate-contact').onchange=loadCandidateEvent;
 $('gegi-candidate-previous').onclick=()=>loadCandidatePage(Math.max(0,candidateOffset-100));

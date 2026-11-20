@@ -26,6 +26,9 @@ KIND = 'local_gegi_candidate_control_v1'
 REPORT_KIND = 'gegi_candidate_acquisition_v1'
 REPORT_NAME = 'candidate-acquisition.json'
 NAME = re.compile(r'[A-Za-z0-9][A-Za-z0-9_-]{0,47}\Z')
+STARTUP_POLICY = 'new_parent_decays_empty_daughters_at_start'
+STEADY_POLICY = 'secular_equilibrium_poisson_daughters_v1'
+MAX_DURATION_S = 5
 
 
 def _name(value):
@@ -113,6 +116,7 @@ class CandidateControl:
                 if safe_path(directory, REPORT_NAME).is_file():
                     jobs[child.name] = {'name': child.name, 'status': 'completed'}
         return {'kind': KIND, 'jobs': list(jobs.values()), 'defaults': {
+            'mode': 'duration', 'duration_s': 5, 'maximum_duration_s': MAX_DURATION_S,
             'primary_count': 100, 'maximum_primary_count': 500, 'seed': 20261120,
             'activities_bq': [185000, 37000], 'positions_mm': [[-40, 0, 40], [40, 0, 40]]},
             'new_science_calls': 0}
@@ -134,7 +138,8 @@ class CandidateControl:
                   'This storage reference uses Cs-137 at (−40, 0, 40) mm and Co-60 at (40, 0, 40) mm. '
                   'A changed source position needs a matching measured reference.')
         return {**estimate.estimate(total_parents, activities_bq, reference=reference),
-                'execution_primary_limit': 500, 'new_science_calls': 0}
+                'execution_primary_limit': 500, 'execution_duration_limit_s': MAX_DURATION_S,
+                'new_science_calls': 0}
 
     def state(self, name):
         directory = self._directory(name)
@@ -199,10 +204,14 @@ class CandidateControl:
                                 'recent quiet level. Slow energy uses the 880–980 ns gate and fixed pulser gain.'}
 
     def start(self, name, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
-              positions_mm=((-40, 0, 40), (40, 0, 40))):
+              positions_mm=((-40, 0, 40), (40, 0, 40)), *, duration_s=None):
         directory = self._directory(name)
-        W.require(type(primary_count) is int and 1 <= primary_count <= 500,
-                  'For this bounded validation, choose 1–500 initial source decays.')
+        if duration_s is None:
+            W.require(type(primary_count) is int and 1 <= primary_count <= 500,
+                      'For the startup check, choose 1–500 new parent decays.')
+        else:
+            W.require(_finite(duration_s) and 0 < duration_s <= MAX_DURATION_S,
+                      'Choose a positive physical acquisition duration no longer than 5 seconds.')
         W.require(type(seed) is int and 1 <= seed <= 2147483646, 'Use an integer seed from 1 through 2147483646.')
         W.require(type(activities_bq) in (list, tuple) and len(activities_bq) == 2
                   and all(_finite(v) and v > 0 for v in activities_bq), 'Enter positive Cs-137 and Co-60 activities in Bq.')
@@ -213,7 +222,9 @@ class CandidateControl:
             self.workflow._idle()
             W.require(name not in self.jobs and not directory.exists(), 'Choose a fresh acquisition name; existing data are preserved.')
             directory.mkdir(parents=True, exist_ok=False)
-            job = {'name': name, 'status': 'running', 'primary_count': primary_count, 'seed': seed,
+            job = {'name': name, 'status': 'running', 'primary_count': primary_count if duration_s is None else None,
+                   'duration_s': duration_s, 'mode': 'count' if duration_s is None else 'duration',
+                   'initial_state_policy': STARTUP_POLICY if duration_s is None else STEADY_POLICY, 'seed': seed,
                    'activities_bq': list(activities_bq), 'positions_mm': [list(p) for p in positions_mm],
                    'started_utc': W.utc(), 'output': OUTPUTS + '/' + name}
             self.jobs[name] = job
@@ -273,16 +284,22 @@ class CandidateControl:
                 W.verify_dispatch_reservations(None, self.root)
                 runner = self.runner
                 settings = {}
+                if job.get('duration_s') is None:
+                    settings['primary_count'] = job['primary_count']
+                else:
+                    settings['duration_s'] = job['duration_s']
                 if runner is None:
                     from gegi_streaming_acquisition import run
                     runner = run
-                    settings = {'resume': resume, 'stop_requested': stop.is_set, 'block_parents': 50}
+                    settings.update(resume=resume, stop_requested=stop.is_set,
+                                    block_parents=10000 if job.get('duration_s') is not None else 50,
+                                    initial_state_policy=job.get('initial_state_policy', STARTUP_POLICY))
 
                 def progress(value):
                     with self.workflow._lock:
                         job['progress'] = {'stage': value} if isinstance(value, str) else value
 
-                result = runner(directory, primary_count=job['primary_count'], seed=job['seed'],
+                result = runner(directory, seed=job['seed'],
                                 activities_bq=job['activities_bq'], positions_mm=job['positions_mm'],
                                 on_progress=progress, **settings)
                 if isinstance(result, dict) and result.get('status') == 'stopped':

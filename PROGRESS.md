@@ -2,6 +2,54 @@
 
 ## Current handoff, November 20
 
+**Active milestone:** the owner now authorizes one **5 s physical acquisition**,
+with steady nuclear source inventory, preserved all-34-channel candidate signals,
+bounded memory and resumable processing. At 185/37 kBq the expected new-parent
+count is 1.11 million, plus pre-existing daughter decays counted separately.
+Implement the inventory and duration path, validate native isomer identity, then
+measure a prefix of this same run before expanding its computational blocks.
+The run `.local/gegi-candidate-runs/steady-five-seconds` is **running**, using the
+original source/RNG/readout checkpoint. Inspect progress, checkpoint and actual
+workers before any resume; never restart it. The first 500 roots passed native
+isotope/clock/census checks. Its preserved first 1,000 roots contain 563 new
+parents, 437 initial Ba137m decays and 45 deposit groups; the 20-group validation
+prefix keeps its original native data and producer in
+`.local/steady-acquisition-v1/prefix-producer.zip`. All 11 prefix candidate
+contexts replay exactly; native evidence includes 76 adjacent-strip transients
+with exactly zero final charge. Full five-second acceptance remains pending.
+
+Measured native loading was 29.876 s, first group 15.470 s, subsequent 19 groups
+28.995 s, and shared readout 0.248 s. Peak native RSS was 2,076,749,824 B and owned
+run logical peak 13,880,483 B. The identified avoidable cost is 34 separate
+100,000-step isolated electronics calculations per group before shared readout.
+The opt-in native-signal-only path now removes that duplicate electronics stage.
+Two actual paired groups (Ba137m with 8 deposits and Co60 with 75 deposits) have
+bit-identical all-34-channel Float64 native arrays, endpoints, status and truth.
+The warmed Co group took 0.4484 s; this is one measured case, not a general speed
+guarantee. `native-only-continuation.json` explicitly binds this tested upgrade
+to the original producer, preserved checkpoint and equivalence proof. Processing
+phases distinguish the original 20 groups from new work; original identities and
+prefix files remain unchanged. Source blocks now use 10,000 chronological roots;
+the first larger block's transport took 7.991 s. The run has resumed after memory
+guards without repeating completed transport. Native failures and incomplete
+endpoints retain evidence and finite unavailable-history intervals.
+
+Duration UI/Control, inventory clock and finite unavailable-history masks are
+implemented. Ten acquisition, five missing-history, six profiler, thirteen source,
+five inventory and eight Control tests passed; desktop Chrome verified the
+duration/startup switch. Native-only checks passed 17 Python tests and 106 Julia
+assertions; seven explicit continuation tests passed. Runtime producers are frozen
+for the active run. Six package closure tests passed; publication is in progress.
+Control now uses the measured 10,000-root block size for duration jobs and keeps
+50-root blocks for startup checks. A read-only 102.010640 ms snapshot passed:
+41,000 roots, 1,154 complete and 50 unavailable native groups; all 310 candidates
+retain 34 ADC channels and all 10,540 channel feature rows replay exactly. The
+finite failure mask matches the prior summed-tail rule; no retained candidate
+intersects unknown history. Evidence is `live-prefix-acceptance.json` under the
+same steady acceptance folder. This is a prefix, not five-second completion. The
+90.09 s production case and automation stay paused. Previous completed evidence
+below remains applicable to unchanged parts.
+
 **Continuous streaming milestone:** implemented one joint parent clock with
 true Geant4 random-state continuation, a disk-backed delayed-deposit queue,
 bounded 34-channel readout and atomic candidate/checkpoint commits. Control now
@@ -54,9 +102,9 @@ Only the generated guide and site manifest changed; saved numerical exhibits
 remain unchanged. Owned preview/simulation processes are closed and automation
 is still paused.
 
-Next: define and validate the initial daughter inventory for a steady source,
-then measure a longer bounded cost pilot before choosing the 90.09 s run budget.
-The 90.09 s / 20-million-parent production acquisition and automation remain paused.
+The active five-second milestone above now covers the steady-source inventory
+and longer cost measurement. The 90.09 s / 20-million-parent production acquisition
+and automation remain paused.
 
 **Candidate-storage milestone.** The owner resumed bounded implementation and
 small validation, not automation or a large campaign. Control connects fresh

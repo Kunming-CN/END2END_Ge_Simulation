@@ -1,5 +1,16 @@
 # Project working rules
 
+## Owner update — 2026-11-20 five-second acquisition acceptance
+
+The owner explicitly requests a five-second physical acquisition to expose
+continuity and resource issues. Develop and validate the steady nuclear daughter
+inventory, then run this one joint Cs-137/Co-60 acquisition in resumable blocks.
+Measure the initial prefix of the same run before choosing its block size;
+preserve that work and all failures. This supersedes the old 500-parent cap for
+this acceptance only. It does not authorize the 90.09-second/20-million-parent
+production case or automated continuation. Electronics start from the declared
+quiet state; nuclear equilibrium alone is not electronic equilibrium.
+
 ## Owner update — continuous streaming development
 
 The owner authorized the proposed continuous-block and checkpoint/resume

@@ -31,7 +31,8 @@ class StreamingSourceTests(unittest.TestCase):
         self.assertEqual(whole, split)
         self.assertEqual(final['rng_state'], resumed['rng_state'])
         legacy = G.M.default_config(100, config['seed'], config['acquisition_id'])
-        self.assertEqual(whole, list(G.M.parent_schedule(legacy)))
+        original = list(G.M.parent_schedule(legacy))
+        self.assertEqual([{key: row[key] for key in original[0]} for row in whole], original)
         self.assertEqual([p['parent_decay_id'] for p in whole], list(range(100)))
         self.assertTrue(final['finished']); self.assertIsNone(final['pending_parent'])
 
@@ -60,8 +61,31 @@ class StreamingSourceTests(unittest.TestCase):
         self.assertEqual(start['next_parent_id'], 0)
         changed = copy.deepcopy(config); changed['sources'][0]['activity_Bq'] += 1
         with self.assertRaisesRegex(ValueError, 'mismatch'): G.next_block(changed, after)
-        for size in (0, 501, True):
+        for size in (0, 10001, True):
             with self.assertRaises(ValueError): G.next_block(config, start, size)
+
+    def test_equilibrium_driver_merge_keeps_original_new_parent_clock(self):
+        from test_gegi_source_inventory import parameters
+        config = G.default_config(parent_count=100)
+        config['initial_state'] = {'policy': G.inventory.POLICY, 'acquisition_start_ns': 0}
+        def collect(size):
+            state = G.initialize(config, inventory_parameters=parameters()); rows = []
+            while not state['finished']:
+                block, state = G.next_block(config, json_roundtrip(state), size); rows.extend(block)
+            return rows, state
+        whole, final = collect(10000); split, resumed = collect(11)
+        self.assertEqual(whole, split)
+        parents = [row for row in whole if row['origin'] == 'new_parent']
+        original = list(G.M.parent_schedule(G.M.default_config(100, config['seed'], config['acquisition_id'])))
+        self.assertEqual([row['absolute_parent_time_ns'] for row in parents], [row['absolute_parent_time_ns'] for row in original])
+        self.assertEqual([row['new_parent_decay_id'] for row in parents], list(range(100)))
+        self.assertEqual([row['event_id'] for row in whole], list(range(len(whole))))
+        daughters = [row for row in whole if row['origin'] == 'initial_daughter_inventory']
+        self.assertGreater(len(daughters), 0)
+        self.assertTrue(all(row['parent_decay_id'] is None for row in daughters))
+        self.assertEqual(final['next_parent_id'], 100)
+        self.assertEqual(final['next_transport_id'], len(whole))
+        self.assertEqual(final['rng_state'], resumed['rng_state'])
 
     def test_rng_restore_and_native_state_save_wrap_the_same_joint_beam(self):
         plan = {'config': G.M.default_config(), 'cryostat_contract': G.S.G.load_cryostat()}
@@ -149,6 +173,37 @@ class StreamingSourceTests(unittest.TestCase):
         physics_change = 'def next_block():\n return 3\ndef events():\n return 2\n'
         self.assertTrue(G._same_except(original, reader_fix, {'events'}))
         self.assertFalse(G._same_except(original, physics_change, {'events'}))
+
+    def test_process_block_continues_prepared_completed_and_sealed_stages(self):
+        config = G.default_config(); checkpoint = G.initialize(config)
+        saved = {'config': config, 'checkpoint_before_sha256': G.digest(checkpoint)}
+        for stage in ('prepared', 'transport_complete', 'sealed'):
+            with self.subTest(stage=stage), tempfile.TemporaryDirectory(dir=G.h.ROOT/'.local') as temp:
+                directory = Path(temp); (directory/'prepared.json').write_text('{}')
+                if stage != 'prepared': (directory/'run.json').write_text('{"status":"complete"}')
+                if stage == 'sealed': (directory/'seal.json').write_text('{}')
+                def complete_run(path): (path/'run.json').write_text('{"status":"complete"}')
+                with patch.object(G, '_prepared', return_value=(directory, saved, {}, [])), \
+                     patch.object(G, 'prepare_block') as prepare, \
+                     patch.object(G, 'run_block', side_effect=complete_run) as run, \
+                     patch.object(G, 'extract') as extract, patch.object(G, 'verify', return_value={'status': 'sealed'}):
+                    self.assertEqual(G.process_block(config, checkpoint, directory), {'status': 'sealed'})
+                    prepare.assert_not_called()
+                    self.assertEqual(run.call_count, int(stage == 'prepared'))
+                    self.assertEqual(extract.call_count, int(stage != 'sealed'))
+
+    def test_process_block_refuses_a_failed_or_mismatched_existing_stage(self):
+        config = G.default_config(); checkpoint = G.initialize(config)
+        saved = {'config': config, 'checkpoint_before_sha256': G.digest(checkpoint)}
+        with tempfile.TemporaryDirectory(dir=G.h.ROOT/'.local') as temp:
+            directory = Path(temp); (directory/'prepared.json').write_text('{}')
+            (directory/'run.json').write_text('{"status":"failed"}')
+            with patch.object(G, '_prepared', return_value=(directory, saved, {}, [])), \
+                 patch.object(G, 'run_block') as run, patch.object(G, 'extract') as extract:
+                with self.assertRaisesRegex(ValueError, 'cannot be rerun'): G.process_block(config, checkpoint, directory)
+                run.assert_not_called(); extract.assert_not_called()
+                saved['checkpoint_before_sha256'] = 'other'
+                with self.assertRaisesRegex(ValueError, 'another requested'): G.process_block(config, checkpoint, directory)
 
 
 if __name__ == '__main__': unittest.main()

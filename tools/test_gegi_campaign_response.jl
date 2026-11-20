@@ -39,6 +39,7 @@ if ARGS != ["--protocol-only"]
             command=Dict("group_json"=>text,"input_sha256"=>digest)
             request=joinpath(folder,"request.json");C.G.save(request,Dict("purpose"=>"software-only failure isolation test"))
             ctx=(out=folder,n=10000,sim=nothing,cfg=nothing,channels=nothing,readout=nothing,
+                 response_mode=C.LEGACY_RESPONSE_MODE,
                  cal=nothing,matrix=nothing,eion=nothing,requestpath=request,
                  requestsha=C.G.hashfile(request),sources=C.sources())
             calls=Ref(0)

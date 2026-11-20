@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL = 'gegi_campaign_response_protocol_v1'
 HORIZON_NS = 100000
 MAX_JSON_BYTES = 100_000_000
+LEGACY_RESPONSE_MODE = 'isolated_readout_v1'
 require = S.require
 
 
@@ -94,11 +95,15 @@ def verify_store_roundtrip(store, primary_id, group_id, event, signals, input_sh
         require(native is None and saved['channels'] is None, 'Unknown native response was fabricated')
     else:
         require(set(native) == set(signals), 'Stored channel census changed')
+        native_only = event.get('response_mode') == S.NATIVE_SIGNAL_ONLY
         for channel in event['channels']:
             other = next(c for c in saved['channels'] if c['contact_id'] == channel['contact_id'])
-            require(other['derived_trace_sha256'] == S.trace_hash(channel['trace']), 'Stored electronics trace identity changed')
-            require({k: v for k, v in other.items() if k != 'derived_trace_sha256'} ==
-                    {k: v for k, v in channel.items() if k != 'trace'}, 'Stored scalar channel changed')
+            if native_only:
+                require(other == channel and 'derived_trace_sha256' not in other, 'Stored native-only channel changed')
+            else:
+                require(other['derived_trace_sha256'] == S.trace_hash(channel['trace']), 'Stored electronics trace identity changed')
+                require({k: v for k, v in other.items() if k != 'derived_trace_sha256'} ==
+                        {k: v for k, v in channel.items() if k != 'trace'}, 'Stored scalar channel changed')
         for contact in signals:
             for key, values in signals[contact].items():
                 actual = native[contact][key]
@@ -112,6 +117,7 @@ def verify_store_roundtrip(store, primary_id, group_id, event, signals, input_sh
 
 def verify_replayed_channels(saved_event, replay):
     """Exact scalar and trace-hash comparison after real shared-electronics replay."""
+    require(saved_event.get('response_mode') != S.NATIVE_SIGNAL_ONLY, 'Native-only groups have no isolated electronics reference')
     expected = saved_event['channels']
     require(replay.get('drift_executed') is False, 'Replay must not rerun drift')
     actual = {c['contact_id']: c for c in replay['channels']}
@@ -158,6 +164,8 @@ class ResidentWorker:
         require(self.request['kind'] == 'gegi_campaign_response_request_v1' and
                 self.request['numerics']['field_policy'] == 'reuse-only' and self.request.get('field_cache'),
                 'Resident response requires pinned reuse-only fields')
+        mode = self.request.get('response_mode', LEGACY_RESPONSE_MODE)
+        require(mode in (LEGACY_RESPONSE_MODE, S.NATIVE_SIGNAL_ONLY), 'Unsupported resident response mode')
         self.spool.mkdir(parents=True, exist_ok=True)
         require(not self.spool.is_symlink(), 'Linked spool refused')
         identity = {'kind': PROTOCOL, 'request_sha256': self.request_sha256,
@@ -196,6 +204,7 @@ class ResidentWorker:
             require(self.ready['status'] == 'ready' and self.ready['request_sha256'] == self.request_sha256 and
                     self.ready['new_field_solve'] is False and
                     self.ready['field_cache_sha256'] == self.request['field_cache']['sha256'], 'Resident readiness identity mismatch')
+            require(self.ready.get('response_mode', LEGACY_RESPONSE_MODE) == mode, 'Resident response mode changed')
             return self.ready
         except BaseException:
             self.close()
@@ -242,6 +251,8 @@ class ResidentWorker:
 
     def process_group(self, group, store, *, calibration=None, photopeak_windows=None, calibration_sha256=None,
                       saved_native_failure=None):
+        native_only = self.ready.get('response_mode', LEGACY_RESPONSE_MODE) == S.NATIVE_SIGNAL_ONLY
+        require(not native_only or calibration is None, 'Native-only groups cannot request isolated reconstruction')
         body = S.encoded(group)
         digest = S.sha(body)
         primary_id, group_id = group['event_id'], group['group_id']
@@ -251,6 +262,8 @@ class ResidentWorker:
             imported=R.load_saved_failure(saved_native_failure,group,root=ROOT)
         if store.has(primary_id, group_id, digest):
             saved=store.read(primary_id, group_id)[0]
+            require((saved.get('response_mode') == S.NATIVE_SIGNAL_ONLY) == native_only,
+                    'Saved group response mode differs from the request')
             if imported is not None:
                 require(saved.get('saved_native_failure')==saved_native_failure and saved['status']=='native_failed'
                         and saved['channels'] is None and saved['native_signals'] is None and saved['error']==imported['error'],
@@ -263,6 +276,8 @@ class ResidentWorker:
                          input_steps=group['steps'],saved_native_failure=saved_native_failure)
             for key in ('source_id','global_decay_id','initial_primary_id','root','source_group','chunk_index','campaign_initial_offset'):
                 if key in group:event[key]=group[key]
+            if native_only:
+                event.update(response_mode=S.NATIVE_SIGNAL_ONLY, readout_status='native_unavailable', readout_summary=None)
         else:
             receipt = self.command('process', group_json=body.decode('utf-8'), input_sha256=digest)
             require(receipt['input_sha256'] == digest and receipt['event_id'] == primary_id and receipt['group_id'] == group_id,
@@ -270,17 +285,18 @@ class ResidentWorker:
             paths = self._spool_paths(receipt, digest)
             require(file_sha(paths['event_path']) == receipt['event_sha256'], 'Native event spool changed')
             event = read(paths['event_path'])
+            require((event.get('response_mode') == S.NATIVE_SIGNAL_ONLY) == native_only, 'Native response mode differs from the request')
             require(event['input_group'] == group and event['input_event_sha256'] == digest, 'Original group provenance changed')
             if receipt['signals_path'] is not None:
                 require(file_sha(paths['signals_path']) == receipt['signals_sha256'], 'Native signal spool changed')
                 native = S.native_csv(paths['signals_path'], event['channels'])
         require((event['status'] == 'native_failed') == (native is None), 'Unknown native signals must remain null')
-        event['readout_summary'] = readout_summary(event)
+        event['readout_summary'] = None if native_only else readout_summary(event)
         if calibration is not None:
             event['reconstruction'] = I.reconstruct_event(event, self.ready['channels'], calibration, photopeak_windows)
             event['calibration_sha256'] = calibration_sha256
             event['photopeak_windows_sha256'] = S.sha(S.encoded(photopeak_windows))
-        event['readout_recipe_sha256'] = S.sha(S.encoded(self.recipe()))
+        event['readout_recipe_sha256'] = None if native_only else S.sha(S.encoded(self.recipe()))
         store.append(primary_id, group_id, event, native, digest)
         saved = verify_store_roundtrip(store, primary_id, group_id, event, native, digest)
         if event['status'] != 'native_failed':
@@ -298,6 +314,7 @@ class ResidentWorker:
 
     def verify_saved_group(self, store, primary_id, group_id):
         event, native = store.read(primary_id, group_id, with_signals=True)
+        require(event.get('response_mode') != S.NATIVE_SIGNAL_ONLY, 'Native-only groups have no isolated electronics reference')
         require(native is not None, 'No electronics waveform exists for a native failure')
         request = {**self.recipe(), 'native_signals': native, 'horizon_ns': event.get('readout_horizon_ns')}
         digest = S.sha(S.encoded(request))

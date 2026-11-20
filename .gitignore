@@ -64,6 +64,8 @@
 # GeGI runtime: source only; native fields and reference documents stay local.
 !transport/gegi_geometry.py
 !transport/gegi_source.py
+!transport/gegi_source_inventory.py
+!transport/test_gegi_source_inventory.py
 !simulation/gegi_response.jl
 !simulation/gegi_signal_helpers.jl
 !simulation/test_gegi_signals.jl
