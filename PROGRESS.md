@@ -21,10 +21,14 @@ the GeRC02 Li50min primary 61 / group 0 path through 3D, readout, model/variant,
 assembly and method with a same-event return. The legacy viewer switched to SAP22
 and returned to its current view; current assembly naming, local-only archives,
 the guide's expanded evidence target, GeGI relationships and long-page contents
-were checked. No download was clicked. GitHub/Pages publication and live byte
-verification are the remaining website steps; no new student package is needed.
-The same manual acquisition was running at 0.940/5 s with 10,627 complete and 364
-unavailable native groups during acceptance. Do not restart it.
+were checked. No download was clicked. Source and generated pages are published
+in commit `98f18ba86c8f8e83a09e211da96a068530fa453d`; Pages deployment
+`44818639208` succeeded. `check_site.py --url` verified 1,013 live files against
+this exact build. No new student package was needed. The owned browser preview
+and HTTP server are closed. The same Python/Julia processes (31168/4256) remain
+active; acquisition reached 1.007/5 s at final publication verification. At the
+earlier 0.940 s acceptance snapshot there were 10,627 complete and 364 unavailable
+native groups. Five-second completion is still pending; do not restart it.
 
 **Active milestone:** the owner now authorizes one **5 s physical acquisition**,
 with steady nuclear source inventory, preserved all-34-channel candidate signals,
@@ -79,8 +83,8 @@ Published [student-runtime-20261120-steady](https://github.com/Kunming-CN/END2EN
 from exact source commit `b7357f1459f42e770f1ddffc4b9b59162a5dfdeb`, now on GitHub
 main. The software-only ZIP is 1,311,580 bytes (239 sources plus package metadata),
 SHA-256 `9e6be690387445c2e105b0c868ac2d39b664ccdaf6f66c5d8c4e0937e47b8a09`;
-GitHub's asset digest matches. Separate calibration remains. The local website
-build is `fa95f02118393fda31070082a628ba3560896889020dd3ac12343d6c1223b0fe`;
+GitHub's asset digest matches. Separate calibration remains. At that runtime
+publication, the website build was `fa95f02118393fda31070082a628ba3560896889020dd3ac12343d6c1223b0fe`;
 only the generated guide and manifest changed. Pages deployment succeeded and
 `check_site.py --url` verified 1,013 live files against this build. The actual
 worktree producer is retained separately as
