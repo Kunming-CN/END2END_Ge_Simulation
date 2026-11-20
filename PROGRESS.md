@@ -39,7 +39,7 @@ implemented. Ten acquisition, five missing-history, six profiler, thirteen sourc
 five inventory and eight Control tests passed; desktop Chrome verified the
 duration/startup switch. Native-only checks passed 17 Python tests and 106 Julia
 assertions; seven explicit continuation tests passed. Runtime producers are frozen
-for the active run. Six package closure tests passed; publication is in progress.
+for the active run. Six package closure tests and 38 publication tests passed.
 Control now uses the measured 10,000-root block size for duration jobs and keeps
 50-root blocks for startup checks. A read-only 102.010640 ms snapshot passed:
 41,000 roots, 1,154 complete and 50 unavailable native groups; all 310 candidates
@@ -49,6 +49,19 @@ intersects unknown history. Evidence is `live-prefix-acceptance.json` under the
 same steady acceptance folder. This is a prefix, not five-second completion. The
 90.09 s production case and automation stay paused. Previous completed evidence
 below remains applicable to unchanged parts.
+
+Published [student-runtime-20261120-steady](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-20261120-steady)
+from exact source commit `b7357f1459f42e770f1ddffc4b9b59162a5dfdeb`, now on GitHub
+main. The software-only ZIP is 1,311,580 bytes (239 sources plus package metadata),
+SHA-256 `9e6be690387445c2e105b0c868ac2d39b664ccdaf6f66c5d8c4e0937e47b8a09`;
+GitHub's asset digest matches. Separate calibration remains. The local website
+build is `fa95f02118393fda31070082a628ba3560896889020dd3ac12343d6c1223b0fe`;
+only the generated guide and manifest changed. Final site deployment/check is
+pending. The actual worktree producer is retained separately as
+`native-only-producer.zip` (SHA-256
+`a6c1cc2ea30114ba5f28e1a5f102f102c407b2adafd3615fe6c6baae8be1e337`),
+because recorded runtime identities use actual local bytes, not Git-normalized
+line endings. Preserve that producer and the ongoing acquisition checkpoint.
 
 **Continuous streaming milestone:** implemented one joint parent clock with
 true Geant4 random-state continuation, a disk-backed delayed-deposit queue,
