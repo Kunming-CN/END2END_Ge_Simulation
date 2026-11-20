@@ -18,8 +18,10 @@ Transport took 4.883 s, with a 155,901,952-byte child RSS peak. Native RSS peake
 at 2,489,970,688 bytes; Python at 64,634,880 bytes. Sampled run scratch/retained
 peak was 3,512,216 logical bytes, excluding the shared 857,068,900-byte field
 cache. These 100-parent measurements do not establish long-run throughput or
-storage scaling. The post-acceptance memory reserve was raised using the measured
-native peak; its stop/resume test passed without rerunning physics.
+storage scaling. Post-acceptance changes raised the memory reserve using the
+measured native peak, retained exact runtime versions and retired the verified
+empty native store. Relevant resource/version/resume and cleanup checks passed;
+the accepted physics/readout computations were reused.
 
 The separate 50 ms saved-data check reproduced all 546 trigger records and 144
 candidate contexts exactly through two checkpoint restores. It held at most
@@ -39,8 +41,18 @@ Chrome confirmed the new controls and existing all-channel candidate view,
 including electrode 6's weak fast signal with unavailable slow energy. A broader
 unchanged HTTP suite had blocked local sockets and two stale catalog expectations;
 the changed candidate Handler routes were checked directly. No new macOS actual
-streaming run was performed. Publication is finishing for
-`student-runtime-20261120-streaming`; the separate calibration release stays.
+streaming run was performed.
+
+Published [student-runtime-20261120-streaming](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-20261120-streaming)
+from exact source commit `8fc4dfdfbd9aed1298741533930801e588154dcc`.
+The 237-member software ZIP is 1,290,825 bytes, SHA-256
+`8492a7e139339739cb7280c3307d56445ae4db5f6a6d15ab5aa08b3d86b846d7`;
+GitHub's asset digest matches. The separate calibration release stays.
+Pages deployment succeeded; live validation checked 1,013 files for build
+`86311835eefe7f53291c874bcb46c459250cdd43d2ed5b5905435cfea226096b`.
+Only the generated guide and site manifest changed; saved numerical exhibits
+remain unchanged. Owned preview/simulation processes are closed and automation
+is still paused.
 
 Next: define and validate the initial daughter inventory for a steady source,
 then measure a longer bounded cost pilot before choosing the 90.09 s run budget.
