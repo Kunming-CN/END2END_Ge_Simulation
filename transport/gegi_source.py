@@ -443,7 +443,7 @@ def decay_record(eid, steps, tracks, names, source):
             'pulse_groups':cs.group_deposits(steps,source['grouping_policy']['horizon_ns'])}
 
 
-def events(path, meta, *, event_metadata=None):
+def events(path, meta, *, event_metadata=None, native_empty_uid_aliases=False):
     """Complete original primary census; positive Ge rows are the only SSD input.
 
     Raw step tables including zero rows and every passive hit stay in truth.lh5.
@@ -468,7 +468,12 @@ def events(path, meta, *, event_metadata=None):
         h.require(len(names) == len(processes), 'Duplicate process IDs')
         h.require({'stp/'+n for n in raw['stp'] if n != '__by_uid__'} == set(materials),
                   'Missing/foreign raw step table; absence is not zero')
-        cs.step_aliases(raw, materials)
+        aliases = raw['stp'].get('__by_uid__')
+        # Native remage-cpp leaves this redundant alias group empty; the Python
+        # launcher normally populates it. Named table/column census below stays
+        # exact. Legacy callers still require every alias when the group exists.
+        if not (native_empty_uid_aliases and isinstance(aliases, h5py.Group) and len(aliases) == 0):
+            cs.step_aliases(raw, materials)
         for table in materials:
             floats = {'edep': 'keV', 'time': 'ns', **{a: 'm' for a in T.POSITIONS}}
             if table == 'stp/germanium':

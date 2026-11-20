@@ -46,17 +46,17 @@ def verify_candidates(path):
     with closing(storage._open_readonly(path)) as db:
         if db.execute('PRAGMA integrity_check').fetchone()[0] != 'ok':
             raise ValueError('Candidate database integrity check failed')
-        ids = [row[0] for row in db.execute('SELECT trigger_id FROM triggers ORDER BY trigger_id')]
-    kept = 0
-    for trigger_id in ids:
-        record = storage.load_candidate(path, trigger_id)
-        if record['decision'] == 'candidate':
-            storage.replay_candidate(path, trigger_id)
-            kept += 1
+        kept = total = 0
+        for (trigger_id,) in db.execute('SELECT trigger_id FROM triggers ORDER BY trigger_id'):
+            total += 1
+            record = storage.load_candidate(path, trigger_id)
+            if record['decision'] == 'candidate':
+                storage.replay_candidate(path, trigger_id)
+                kept += 1
     summary = read_summary(path)
-    if (len(ids), kept) != (summary['observed_coincident_rises'], summary['saved_candidates']):
+    if (total, kept) != (summary['observed_coincident_rises'], summary['saved_candidates']):
         raise ValueError('Candidate and rejected trigger denominators do not close')
-    return {'status': 'verified_exact', 'candidates': kept, 'ledger_rows': len(ids),
+    return {'status': 'verified_exact', 'candidates': kept, 'ledger_rows': total,
             'check': 'All saved int16 samples, record hashes and re-extracted fast/slow/timing values.'}
 
 

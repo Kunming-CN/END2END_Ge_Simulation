@@ -2,6 +2,50 @@
 
 ## Current handoff, November 20
 
+**Continuous streaming milestone:** implemented one joint parent clock with
+true Geant4 random-state continuation, a disk-backed delayed-deposit queue,
+bounded 34-channel readout and atomic candidate/checkpoint commits. Control now
+supports cooperative Stop/Resume with the original source and electronics state.
+All candidate channels remain present, including zero-final-charge neighbors.
+
+Fresh acceptance completed 100 parents in two 50-parent blocks (83 Cs, 17 Co;
+98 zero, 2 nonzero). It stopped with one active native pulse and resumed without
+repeating that drift or the completed transport. The full ADC digest, counts,
+spectra and selection match the retained prior 100-parent native input. One
+single-pixel trigger was recorded; no imaging candidate was present. A delayed
+daughter group remains on disk beyond the 0.425527 ms startup recording.
+Transport took 4.883 s, with a 155,901,952-byte child RSS peak. Native RSS peaked
+at 2,489,970,688 bytes; Python at 64,634,880 bytes. Sampled run scratch/retained
+peak was 3,512,216 logical bytes, excluding the shared 857,068,900-byte field
+cache. These 100-parent measurements do not establish long-run throughput or
+storage scaling. The post-acceptance memory reserve was raised using the measured
+native peak; its stop/resume test passed without rerunning physics.
+
+The separate 50 ms saved-data check reproduced all 546 trigger records and 144
+candidate contexts exactly through two checkpoint restores. It held at most
+17 native pulses (2,221,592 array bytes), with a 51,463-byte serialized readout
+checkpoint; its complete validation process peaked at 75,538,432 resident bytes.
+Evidence and the exact acceptance producer are in `.local/streaming-acquisition-v1/`.
+The first native-source extraction exposed missing redundant UID aliases; the
+named physical tables were complete. An explicit extraction-only repair reused
+the completed 50-parent transport, preserved failure/provenance records and kept
+the strict legacy reader. Successful new scratch retired only after durable,
+verified deposit/census/RNG retention. Existing scientific originals are unchanged.
+
+Validation: 5 integrated queue/recovery/resource/version tests, 6 Control lifecycle/route
+tests, 9 storage tests, 5 incremental-readout tests, 10 source tests, JavaScript
+workflow contracts, 6 package tests and 38 publication tests passed. Desktop
+Chrome confirmed the new controls and existing all-channel candidate view,
+including electrode 6's weak fast signal with unavailable slow energy. A broader
+unchanged HTTP suite had blocked local sockets and two stale catalog expectations;
+the changed candidate Handler routes were checked directly. No new macOS actual
+streaming run was performed. Publication is finishing for
+`student-runtime-20261120-streaming`; the separate calibration release stays.
+
+Next: define and validate the initial daughter inventory for a steady source,
+then measure a longer bounded cost pilot before choosing the 90.09 s run budget.
+The 90.09 s / 20-million-parent production acquisition and automation remain paused.
+
 **Candidate-storage milestone.** The owner resumed bounded implementation and
 small validation, not automation or a large campaign. Control connects fresh
 Cs-137/Co-60 generation in one geometry to existing native charge processing and

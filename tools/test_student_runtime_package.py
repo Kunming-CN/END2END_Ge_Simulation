@@ -59,7 +59,7 @@ class StudentRuntimePackage(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Missing Julia include'):
             package.dependencies(self.manifest, bodies)
         bodies = dict(self.bodies); del bodies['tools/scenario_workflow.py']
-        with self.assertRaisesRegex(ValueError, 'Missing local/undeclared Python import'):
+        with self.assertRaisesRegex(ValueError, r'Missing (?:local/undeclared Python import|runtime dependency): .+ -> (?:tools/)?scenario_workflow(?:\.py)?'):
             package.dependencies(self.manifest, bodies)
 
     def test_frozen_runtime_inventory_never_executes_python(self):
@@ -70,6 +70,28 @@ class StudentRuntimePackage(unittest.TestCase):
         dynamic = ast.parse('def source_inventory():\n    return subprocess.check_output(["not-a-command"])\n')
         with self.assertRaises(ValueError):
             package.frozen_sources(dynamic, 'source_inventory')
+
+    def test_streaming_runtime_closure_and_embedded_transport_rng_adapter(self):
+        runtime = ('tools/gegi_streaming_acquisition.py', 'tools/gegi_streaming_readout.py',
+                   'tools/gegi_resource_monitor.py', 'transport/gegi_streaming_source.py')
+        for ref in runtime:
+            self.assertIn(ref, self.bodies)
+            missing = dict(self.bodies)
+            del missing[ref]
+            with self.assertRaisesRegex(ValueError, 'Missing runtime dependency'):
+                package.dependencies(self.manifest, missing)
+        syntax = ast.parse(self.bodies['transport/gegi_streaming_source.py'].decode())
+        adapter = next(ast.literal_eval(node.value) for node in syntax.body if isinstance(node, ast.Assign)
+                       and any(isinstance(target, ast.Name) and target.id == 'RNG_SOURCE' for target in node.targets))
+        self.assertIn('#include "RMGDefaultCli.hh"', adapter)
+        self.assertIn('CLHEP::HepRandom::saveEngineStatus', adapter)
+        self.assertIn('/GeSignal/RNG/', adapter)
+        guide = self.bodies['tools/site_guide.html'].decode()
+        self.assertIn('Resume saved acquisition', guide)
+        self.assertIn('Geant4 random-number state', guide)
+        self.assertIn('75.54 MB', guide)
+        self.assertIn('fresh radiation transport, the native field load', guide)
+        self.assertNotIn('tools/validate_gegi_streaming_readout.py', self.bodies)
 
     def test_tampered_source_and_unlisted_members_are_rejected(self):
         for extra in (False, True):
@@ -104,6 +126,8 @@ def forbidden(*args,**kwargs):raise AssertionError('Browsing may not start a pro
 subprocess.Popen=forbidden
 import local_ui,scenario_workflow,catalog_workflow,saved_focus_waveforms
 import gegi_digital_readout,gegi_digital_saved,gegi_substrip,gegi_digital_spectra,gegi_digital_pairs
+import gegi_streaming_acquisition,gegi_streaming_readout,gegi_resource_monitor,gegi_streaming_source
+assert 'CLHEP::HepRandom::saveEngineStatus' in gegi_streaming_source.RNG_SOURCE
 assert gegi_substrip.load_calibration(gegi_digital_saved.CALIBRATION)['digital_profile_sha256']==gegi_digital_readout.PROFILE_SHA256
 catalog=scenario_workflow.catalog()
 assert len(catalog['detectors'])==17 and len(catalog['sources'])==6

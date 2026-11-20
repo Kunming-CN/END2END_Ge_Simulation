@@ -1,5 +1,15 @@
 # Project working rules
 
+## Owner update — continuous streaming development
+
+The owner authorized the proposed continuous-block and checkpoint/resume
+development after the November 20 readiness assessment. Reuse the accepted
+geometry, fields and physics. Preserve all 34 candidate channels, including
+zero-final-charge neighbor transients. First deliver a bounded end-to-end
+streaming/resume acceptance and measured resource use. Reference established
+large-simulation practices where useful. This does not launch the 90.09-second
+or 20-million-parent production acquisition; automation remains paused.
+
 ## Owner update — 2026-11-20 candidate storage and bounded validation
 
 Implement continuous processing of all detector signals with permanent storage

@@ -10,6 +10,7 @@ import time
 from types import SimpleNamespace
 from urllib.parse import urlencode
 import unittest
+from unittest.mock import patch
 
 import gegi_candidate_control as C
 import gegi_candidate_storage as storage
@@ -177,6 +178,150 @@ class CandidateControlTests(unittest.TestCase):
         self.assertEqual(len(self.calls), 1)
         with self.assertRaisesRegex(W.ControlError, 'fresh acquisition name'):
             self.control.start(**self.settings())
+
+    def test_default_streaming_stop_restart_resume_keeps_original_settings_and_results(self):
+        invocations = []
+        identity = {'scope': 'synthetic_control_checkpoint_only'}
+
+        def runner(output, **settings):
+            invocations.append(settings)
+            settings['on_progress']({'stage': 'unit_checkpoint', 'status': 'running'})
+            self.ready.set()
+            if not settings['resume']:
+                if not self.release.wait(5):
+                    raise RuntimeError('Unit fixture timed out')
+                self.assertTrue(settings['stop_requested']())
+                self.assertEqual(list(output.iterdir()), [])
+                with storage.CandidateStore(output/storage.ARCHIVE_NAME, identity) as sink:
+                    with sink.transaction():
+                        sink.save_checkpoint({'source_cursor': 50, 'readout': {'next_sample': 180}})
+                settings['on_progress']({'stage': 'Saved unit checkpoint', 'status': 'stopped'})
+                return {'status': 'stopped', 'resumable': True}
+            self.assertFalse(settings['stop_requested']())
+            event, context = self.sample[0]
+            with storage.CandidateStore(output/storage.ARCHIVE_NAME, identity, resume=True) as sink:
+                self.assertEqual(sink.load_checkpoint()['source_cursor'], 50)
+                with sink.transaction():
+                    sink.observe(card(event), context, event=event)
+                    sink.save_checkpoint({'source_cursor': 100, 'readout': {'next_sample': 360}})
+                sink.finalize(acquisition_statistics={'scope': 'synthetic_unit_only'})
+            database = output/storage.ARCHIVE_NAME
+            W.write(output/C.REPORT_NAME, {'kind': C.REPORT_KIND, 'status': 'completed',
+                'identity': identity, 'counts': {'qualified_triggers': 1},
+                'storage_counts': {'saved_candidates': 1, 'rejected_rises': 0}, 'live_time_ns': 5000.,
+                'artifacts': {storage.ARCHIVE_NAME: {'bytes': database.stat().st_size, 'sha256': W.sha(database)}}})
+            return {'status': 'completed'}
+
+        self.control.runner = None
+        with patch.dict('sys.modules', {'gegi_streaming_acquisition': SimpleNamespace(run=runner)}):
+            self.assertEqual(self.request('start', self.settings())[0], 200)
+            self.assertTrue(self.ready.wait(2))
+            self.assertEqual(self.request('stop', {'name': 'mixed-unit'}, {'Origin': 'https://foreign.invalid'})[0], 403)
+            self.assertEqual(self.request('stop', {'name': 'mixed-unit', 'kill': True})[0], 400)
+            status, stopping = self.request('stop', {'name': 'mixed-unit'})
+            self.assertEqual((status, stopping['status']), (200, 'stop_requested'))
+            self.assertTrue(self.workflow.own_busy())
+            self.assertEqual(self.request('resume', {'name': 'mixed-unit'})[0], 400)
+            self.finish()
+            stopped = self.control.state('mixed-unit')
+            self.assertEqual(stopped['status'], 'stopped')
+            self.assertTrue(stopped['resumable'])
+            self.assertFalse(stopped['results_available'])
+            # Restart recovery never silently relaunches the saved job.
+            saved = W.read(self.control.state_path)
+            saved['jobs'][0]['status'] = 'stop_requested'
+            W.write(self.control.state_path, saved)
+            self.workflow = J.WorkflowController(self.root)
+            self.control = self.workflow.gegi_candidates()
+            self.server.workflow_controller = self.workflow
+            restored = self.control.state('mixed-unit')
+            self.assertEqual(restored['status'], 'interrupted')
+            self.assertTrue(restored['resumable'])
+            self.assertEqual(len(invocations), 1)
+            self.assertEqual(self.request('resume', {'name': 'mixed-unit', 'seed': 99})[0], 400)
+            self.assertEqual(self.request('resume', {'name': '../escape'})[0], 400)
+            self.assertEqual(self.request('resume', {'name': 'mixed-unit'})[0], 200)
+            self.finish()
+            completed = self.control.state('mixed-unit')
+            self.assertEqual(completed['status'], 'completed')
+            self.assertFalse(completed['resumable'])
+            self.assertEqual(self.request('resume', {'name': 'mixed-unit'})[0], 400)
+            self.assertEqual(self.request('stop', {'name': 'mixed-unit'})[0], 400)
+            status, page = self.request('list?name=mixed-unit&report_sha256='+completed['report_sha256']+'&offset=0')
+            self.assertEqual((status, page['total'], page['items'][0]['trigger_id']), (200, 1, 1))
+        self.assertEqual(len(invocations), 2)
+        for fields in invocations:
+            self.assertEqual(fields['primary_count'], 100)
+            self.assertEqual(fields['seed'], 20261120)
+            self.assertEqual(fields['activities_bq'], [185000, 37000])
+            self.assertEqual(fields['positions_mm'], [[-40, 0, 40], [40, 0, 40]])
+            self.assertEqual(fields['block_parents'], 50)
+        self.assertFalse(invocations[0]['resume'])
+        self.assertTrue(invocations[1]['resume'])
+
+    def test_failed_resume_preserves_the_first_error_record(self):
+        invocations = []
+
+        def runner(output, **settings):
+            invocations.append(settings)
+            if not (output/storage.ARCHIVE_NAME).exists():
+                with storage.CandidateStore(output/storage.ARCHIVE_NAME, {'scope': 'unit_fixture'}) as sink:
+                    with sink.transaction():
+                        sink.save_checkpoint({'source_cursor': 0})
+            raise ValueError('Preserved synthetic failure '+str(len(invocations)))
+
+        self.control.runner = runner
+        self.control.start(**self.settings())
+        self.finish()
+        directory = self.root/C.OUTPUTS/'mixed-unit'
+        first = (directory/'worker-error.log').read_bytes()
+        self.assertTrue(self.control.state('mixed-unit')['resumable'])
+        self.control.resume('mixed-unit')
+        self.finish()
+        self.assertEqual((directory/'worker-error.log').read_bytes(), first)
+        self.assertIn('synthetic failure 2', (directory/'worker-error-2.log').read_text())
+        self.assertEqual(self.control.state('mixed-unit')['error_log'], 'worker-error-2.log')
+        self.assertEqual(len(invocations), 2)
+
+    def test_sealed_checkpoint_without_report_resumes_export_only(self):
+        def interrupted_export(output, **settings):
+            with storage.CandidateStore(output/storage.ARCHIVE_NAME, {'scope': 'unit_sealed_recovery'}) as sink:
+                with sink.transaction():
+                    sink.save_checkpoint({'source_cursor': 100})
+                sink.finalize(acquisition_statistics={'scope': 'synthetic_unit_only'})
+            raise RuntimeError('Interrupted after sealing before report export')
+
+        self.control.runner = interrupted_export
+        self.control.start(**self.settings())
+        self.finish()
+        directory = self.root/C.OUTPUTS/'mixed-unit'
+        database = directory/storage.ARCHIVE_NAME
+        sealed_sha = W.sha(database)
+        self.assertFalse((directory/C.REPORT_NAME).exists())
+        self.assertTrue(self.control.state('mixed-unit')['resumable'])
+        recoveries = []
+
+        def recover_report(output, **settings):
+            recoveries.append(settings)
+            self.assertTrue(settings['resume'])
+            self.assertEqual(storage.store_summary(database)['status'], 'completed')
+            self.assertEqual(W.sha(database), sealed_sha)
+            report = {'kind': C.REPORT_KIND, 'status': 'completed',
+                'identity': {'scope': 'unit_sealed_recovery'}, 'counts': {'qualified_triggers': 0},
+                'storage_counts': {'saved_candidates': 0, 'rejected_rises': 0}, 'live_time_ns': 5000.,
+                'artifacts': {storage.ARCHIVE_NAME: {'bytes': database.stat().st_size, 'sha256': sealed_sha}}}
+            W.write(output/C.REPORT_NAME, report)
+            return report
+
+        self.control.runner = None
+        with patch.dict('sys.modules', {'gegi_streaming_acquisition': SimpleNamespace(run=recover_report)}):
+            self.assertEqual(self.request('resume', {'name': 'mixed-unit'})[0], 200)
+            self.finish()
+        self.assertEqual(len(recoveries), 1)
+        self.assertEqual(W.sha(database), sealed_sha)
+        self.assertEqual(self.control.state('mixed-unit')['status'], 'completed')
+        self.assertFalse(self.control.state('mixed-unit')['resumable'])
+        self.assertEqual(self.request('resume', {'name': 'mixed-unit'})[0], 400)
 
 
 if __name__ == '__main__':

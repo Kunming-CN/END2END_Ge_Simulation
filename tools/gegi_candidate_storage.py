@@ -8,7 +8,7 @@ two redundant arrays. Original scientific inputs and legacy archives are unchang
 """
 
 from collections import Counter
-from contextlib import closing
+from contextlib import closing, contextmanager
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -23,6 +23,8 @@ import gegi_exposure_stream as stream
 
 KIND = 'gegi_compton_candidate_context_store_v1'
 ARCHIVE_NAME = 'compton-candidates.sqlite'
+CHECKPOINT_KIND = 'gegi_compton_candidate_checkpoint_v1'
+MAX_CHECKPOINT_BYTES = 32 * 1024 * 1024
 POLICY = {
     'kind': 'gegi_conservative_readout_candidate_selection_v1',
     'multistrip': 'Keep at least two measured strips on either face, including charge sharing and unmatched faces.',
@@ -63,38 +65,178 @@ def _record_digest(record, adc_sha):
     return _digest(encoded({'record': record, 'adc_sha256': adc_sha}))
 
 
-class CandidateStore:
-    """One transaction per observed trigger; no retained collection of ADC contexts.
+def _json_object(value, label):
+    if not isinstance(value, dict):
+        raise ValueError(f'{label} must be a JSON object')
+    try:
+        body = encoded(value)
+        if json.loads(body) != value:
+            raise ValueError('Use string object keys and JSON arrays')
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f'{label} must contain finite standard JSON values') from exc
+    if len(body) > MAX_CHECKPOINT_BYTES:
+        raise ValueError(f'{label} exceeds the {MAX_CHECKPOINT_BYTES}-byte serialized limit')
+    return body
 
-    Creation is exclusive. A failed/interrupted database is preserved and is not
-    a completed acquisition; callers may open it read-only to inspect its ledger.
+
+def _metadata(identity):
+    return {'kind': KIND, 'selection_policy': POLICY, 'identity': identity,
+            'context_kind': stream.CONTEXT_KIND,
+            'record_encoding': 'zlib-compressed canonical UTF-8 JSON',
+            'adc_encoding': 'zlib-compressed channel-major little-endian signed int16',
+            'filter_state': 'Saved acquisition baseline and exact finite-support context origin; '
+                            'the common pole-zero accumulator offset cancels in every gate.',
+            'signal_scope': 'One all-channel preamp context; exact fast/slow scalar values and flags. '
+                            'Reconstruct derived waveforms with the recorded implementation.'}
+
+
+class CandidateStore:
+    """Bounded candidate records with optional atomic acquisition-block checkpoints.
+
+    Creation is exclusive. ``resume=True`` reopens an incomplete acquisition only
+    with matching immutable metadata and a checkpoint covering its last trigger.
+    Legacy stores remain readable; legacy rows without a checkpoint cannot resume.
+
+    Use ``with store.transaction():`` for a complete source/readout block, including
+    writes to orchestration-owned tables on ``store.db``, then call
+    ``store.save_checkpoint(state)`` last. Rows and checkpoint commit together.
+    Standalone ``observe`` retains its original one-trigger transaction behavior.
     """
 
-    def __init__(self, path, identity):
+    def __init__(self, path, identity, *, resume=False):
+        identity = json.loads(_json_object(identity, 'Acquisition identity'))
         self.path = Path(path)
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open('xb'):
-            pass
-        self.db = sqlite3.connect(self.path)
-        self.db.execute('PRAGMA synchronous=FULL')
-        self.db.executescript('''
-            CREATE TABLE metadata (singleton INTEGER PRIMARY KEY CHECK(singleton=1), body BLOB NOT NULL);
-            CREATE TABLE triggers (trigger_id INTEGER PRIMARY KEY, trigger_time_ns REAL NOT NULL,
-                decision TEXT NOT NULL, reason TEXT NOT NULL, record BLOB NOT NULL,
-                adc_codes BLOB, adc_sha256 TEXT, record_sha256 TEXT NOT NULL);
-            CREATE TABLE completion (singleton INTEGER PRIMARY KEY CHECK(singleton=1), body BLOB NOT NULL);
-        ''')
-        self.metadata = {'kind': KIND, 'selection_policy': POLICY, 'identity': identity,
-                         'context_kind': stream.CONTEXT_KIND,
-                         'record_encoding': 'zlib-compressed canonical UTF-8 JSON',
-                         'adc_encoding': 'zlib-compressed channel-major little-endian signed int16',
-                         'filter_state': 'Saved acquisition baseline and exact finite-support context origin; '
-                                         'the common pole-zero accumulator offset cancels in every gate.',
-                         'signal_scope': 'One all-channel preamp context; exact fast/slow scalar values and flags. '
-                                         'Reconstruct derived waveforms with the recorded implementation.'}
-        with self.db:
-            self.db.execute('INSERT INTO metadata VALUES (1,?)', (encoded(self.metadata),))
         self._finished = False
+        self._transaction_active = False
+        self._checkpoint_saved = False
+        self._identity_sha256 = _digest(encoded(identity))
+        self._metadata_body = encoded(_metadata(identity))
+        if resume:
+            if not self.path.is_file():
+                raise FileNotFoundError(self.path)
+            self.db = sqlite3.connect(self.path.resolve().as_uri() + '?mode=rw', uri=True)
+        else:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            with self.path.open('xb'):
+                pass
+            self.db = sqlite3.connect(self.path)
+        try:
+            self.db.execute('PRAGMA synchronous=FULL')
+            if resume:
+                if self.db.execute('SELECT 1 FROM completion WHERE singleton=1').fetchone():
+                    raise ValueError('Candidate acquisition is already complete; open it read-only')
+                row = self.db.execute('SELECT body FROM metadata WHERE singleton=1').fetchone()
+                if row is None or encoded(json.loads(row[0])) != self._metadata_body:
+                    raise ValueError('Candidate acquisition metadata or identity differs')
+                has_checkpoint = self.db.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='checkpoint'").fetchone()
+                if has_checkpoint:
+                    checkpoint = self.load_checkpoint()
+                else:
+                    checkpoint = None
+                if checkpoint is None and self.last_trigger_id:
+                    raise ValueError('Observed triggers have no resumable checkpoint')
+            else:
+                self.db.executescript('''
+                    CREATE TABLE metadata (singleton INTEGER PRIMARY KEY CHECK(singleton=1), body BLOB NOT NULL);
+                    CREATE TABLE triggers (trigger_id INTEGER PRIMARY KEY, trigger_time_ns REAL NOT NULL,
+                        decision TEXT NOT NULL, reason TEXT NOT NULL, record BLOB NOT NULL,
+                        adc_codes BLOB, adc_sha256 TEXT, record_sha256 TEXT NOT NULL);
+                    CREATE TABLE completion (singleton INTEGER PRIMARY KEY CHECK(singleton=1), body BLOB NOT NULL);
+                ''')
+                with self.db:
+                    self.db.execute('INSERT INTO metadata VALUES (1,?)', (self._metadata_body,))
+            self.db.executescript('''
+                CREATE TABLE IF NOT EXISTS checkpoint (
+                    singleton INTEGER PRIMARY KEY CHECK(singleton=1), identity_sha256 TEXT NOT NULL,
+                    last_trigger_id INTEGER NOT NULL, last_candidate_trigger_id INTEGER NOT NULL,
+                    last_record_sha256 TEXT, state BLOB NOT NULL, checkpoint_sha256 TEXT NOT NULL);
+                CREATE INDEX IF NOT EXISTS trigger_decision_id ON triggers(decision,trigger_id);
+            ''')
+            self.metadata = json.loads(self._metadata_body)
+        except BaseException:
+            self.db.close()
+            raise
+
+    @property
+    def last_trigger_id(self):
+        row = self.db.execute('SELECT trigger_id FROM triggers ORDER BY trigger_id DESC LIMIT 1').fetchone()
+        return row[0] if row else 0
+
+    def _boundary(self):
+        row = self.db.execute(
+            'SELECT trigger_id,record_sha256 FROM triggers ORDER BY trigger_id DESC LIMIT 1').fetchone()
+        candidate = self.db.execute(
+            "SELECT trigger_id FROM triggers WHERE decision='candidate' ORDER BY trigger_id DESC LIMIT 1").fetchone()
+        return (row[0], candidate[0] if candidate else 0, row[1]) if row else (0, 0, None)
+
+    def _checkpoint_digest(self, boundary, body):
+        last_id, last_candidate_id, last_record_sha = boundary
+        return _digest(encoded({'kind': CHECKPOINT_KIND, 'identity_sha256': self._identity_sha256,
+                                'last_trigger_id': last_id, 'last_candidate_trigger_id': last_candidate_id,
+                                'last_record_sha256': last_record_sha, 'state_sha256': _digest(body)}))
+
+    def load_checkpoint(self):
+        """Return the detached JSON state, checking identity and the committed row boundary."""
+        size = self.db.execute('SELECT length(state) FROM checkpoint WHERE singleton=1').fetchone()
+        if size is None:
+            return None
+        if size[0] > MAX_CHECKPOINT_BYTES:
+            raise ValueError('Stored acquisition checkpoint exceeds the serialized limit')
+        identity_sha, last_id, last_candidate_id, last_record_sha, body, digest = self.db.execute(
+            'SELECT identity_sha256,last_trigger_id,last_candidate_trigger_id,last_record_sha256,state,'
+            'checkpoint_sha256 FROM checkpoint WHERE singleton=1').fetchone()
+        boundary = (last_id, last_candidate_id, last_record_sha)
+        if (identity_sha != self._identity_sha256 or boundary != self._boundary()
+                or self._checkpoint_digest(boundary, body) != digest):
+            raise ValueError('Acquisition checkpoint identity, trigger boundary or state changed')
+        state = json.loads(body)
+        if not isinstance(state, dict):
+            raise ValueError('Stored acquisition checkpoint must be a JSON object')
+        return state
+
+    @contextmanager
+    def transaction(self):
+        """Commit a block and its final checkpoint together, or roll back all its writes."""
+        if self._finished:
+            raise ValueError('Candidate acquisition is already complete')
+        if self._transaction_active or self.db.in_transaction:
+            raise ValueError('Begin acquisition blocks outside any existing transaction')
+        self.db.execute('BEGIN IMMEDIATE')
+        self._transaction_active = True
+        self._checkpoint_saved = False
+        try:
+            yield self
+            if not self._checkpoint_saved:
+                raise ValueError('An acquisition block needs a checkpoint after its last trigger')
+            self.load_checkpoint()
+            self.db.commit()
+        except BaseException:
+            self.db.rollback()
+            raise
+        finally:
+            self._transaction_active = False
+            self._checkpoint_saved = False
+
+    @contextmanager
+    def _write(self):
+        if self._transaction_active:
+            yield
+        else:
+            with self.db:
+                yield
+
+    def save_checkpoint(self, state):
+        """Save at most 32 MiB of finite JSON, atomically with the current block's rows."""
+        if self._finished:
+            raise ValueError('Candidate acquisition is already complete')
+        body = _json_object(state, 'Acquisition checkpoint')
+        boundary = self._boundary()
+        with self._write():
+            self.db.execute('INSERT OR REPLACE INTO checkpoint VALUES (1,?,?,?,?,?,?)',
+                            (self._identity_sha256, *boundary, body, self._checkpoint_digest(boundary, body)))
+        if self._transaction_active:
+            self._checkpoint_saved = True
 
     def observe(self, card, context, *, event=None, trigger_id=None, identities=None, rejection_reason=None):
         """Retain a candidate, or only a compact ID/reason ledger row for a rejection.
@@ -132,10 +274,12 @@ class CandidateStore:
             record['summary'] = {key: card.get(key) for key in (
                 'x_collecting_strips', 'y_collecting_strips', 'guard_contact_ids',
                 'energy_keV', 'flags', 'event_energy_flags')}
-        with self.db:
+        with self._write():
             self.db.execute('INSERT INTO triggers VALUES (?,?,?,?,?,?,?,?)',
                             (trigger_id, card['trigger_time_ns'], record['decision'], reason,
                              zlib.compress(encoded(record)), blob, adc_sha, _record_digest(record, adc_sha)))
+        if self._transaction_active:
+            self._checkpoint_saved = False
         return {'trigger_id': trigger_id, 'decision': record['decision'], 'reason': reason}
 
     def statistics(self):
@@ -153,12 +297,15 @@ class CandidateStore:
         """Seal full acquisition denominators supplied by the orchestration layer."""
         if self._finished:
             raise ValueError('Candidate acquisition is already complete')
+        if self._transaction_active:
+            raise ValueError('Finalize after the acquisition block commits')
+        self.load_checkpoint()
         digest = sha256()
         for (value,) in self.db.execute('SELECT record_sha256 FROM triggers ORDER BY trigger_id'):
             digest.update(bytes.fromhex(value))
         completion = {'kind': KIND, 'status': 'completed', **self.statistics(),
                       'acquisition_statistics': acquisition_statistics, 'report_sha256': report_sha256,
-                      'metadata_sha256': _digest(encoded(self.metadata)), 'records_sha256': digest.hexdigest()}
+                      'metadata_sha256': _digest(self._metadata_body), 'records_sha256': digest.hexdigest()}
         with self.db:
             self.db.execute('INSERT INTO completion VALUES (1,?)', (encoded(completion),))
         self._finished = True

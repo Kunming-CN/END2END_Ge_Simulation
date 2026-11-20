@@ -134,7 +134,7 @@ function renderJobs(state){
   }
   syncRunList($('runs'),cards,'No runs created in this application.');controls();
 }
-async function poll(){const generation=++pollGeneration;try{const [state,legacy]=await Promise.all([api('/api/workflow/state'),api('/api/state')]);if(generation!==pollGeneration)return;renderJobs(state);renderLegacy(legacy);if(savedGeGIJob)void pollSavedGeGI();if(dualJob?.status==='running')void inspectDualJob(dualJob.name);if(candidateJob?.status==='running')void inspectCandidateJob(candidateJob.name);}catch(e){if(generation===pollGeneration)notice(e.message,true);}}
+async function poll(){const generation=++pollGeneration;try{const [state,legacy]=await Promise.all([api('/api/workflow/state'),api('/api/state')]);if(generation!==pollGeneration)return;renderJobs(state);renderLegacy(legacy);if(savedGeGIJob)void pollSavedGeGI();if(dualJob?.status==='running')void inspectDualJob(dualJob.name);if(['running','stop_requested'].includes(candidateJob?.status))void inspectCandidateJob(candidateJob.name);}catch(e){if(generation===pollGeneration)notice(e.message,true);}}
 
 function savedGeGIControls(){
   const hasInput=!!savedGeGIOptions?.campaigns?.some(c=>c.id===$('gegi-saved-campaign').value),status=savedGeGIJob?.status;
@@ -892,7 +892,10 @@ async function estimateCandidateStorage(){
   finally{if(generation===candidateEstimateGeneration)button.disabled=false;}
 }
 function candidateControls(){
-  $('gegi-candidate-start').disabled=candidateBusy||busy||active||candidateJob?.status==='running';
+  const running=['running','stop_requested'].includes(candidateJob?.status);
+  $('gegi-candidate-start').disabled=candidateBusy||busy||active||running;
+  $('gegi-candidate-stop').disabled=candidateBusy||candidateJob?.status!=='running';
+  $('gegi-candidate-resume').disabled=candidateBusy||busy||active||!candidateJob?.resumable;
   $('gegi-candidate-refresh').disabled=candidateBusy;
   $('gegi-candidate-previous').disabled=candidateBusy||candidateOffset===0;
   $('gegi-candidate-next').disabled=candidateBusy||!candidatePage||candidateOffset+candidatePage.items.length>=candidatePage.total;
@@ -908,8 +911,12 @@ async function refreshCandidateRuns(){
 function showCandidateJob(job){
   const changed=candidateJob?.name!==job.name||candidateJob?.report_sha256!==job.report_sha256;
   candidateJob=job;const report=job.result,summary=$('gegi-candidate-summary');summary.replaceChildren();
+  const entry=Array.from($('gegi-candidate-job').children).find(option=>option.value===job.name);
+  if(entry)entry.textContent=job.name+' · '+job.status.replaceAll('_',' ');
   candidateStatus(job.name+' · '+job.status.replaceAll('_',' ')+(job.error?' · '+job.error:'')+
-    (job.status==='running'&&job.progress?' · '+(job.progress.stage||job.progress.status||'processing'):''),job.status==='failed');
+    (job.status==='running'&&job.progress?' · '+(job.progress.stage||job.progress.status||'processing'):'')+
+    (job.status==='stop_requested'?' · Saving progress before stopping.':'')+
+    (job.status==='stopped'?' · Saved. Resume continues with the original sources and acquisition clock.':''),job.status==='failed');
   $('gegi-candidate-receipt').textContent=JSON.stringify(report||job,null,2);
   if(report){
     const counts=report.storage_counts,metrics=node('div',undefined,'metrics');
@@ -917,7 +924,7 @@ function showCandidateJob(job){
       const item=node('span',label);item.append(node('strong',String(value)));metrics.append(item);
     }
     summary.append(metrics,node('p',(report.identity?.scope?.includes('historical')?'Historical saved-library readout diagnostic. ':'')+
-      'Acquisition '+metricValue(report.live_time_ns/1e9)+' s · all signals processed; one all-electrode context saved per candidate.','muted'));
+      'Acquisition '+metricValue(report.live_time_ns/1e9)+' s · all 34 channels processed; one all-electrode context saved per candidate.','muted'));
     const source=report.source||{},census=[['Initial source decays',source.initial_parents],['Zero deposition',source.zero_deposit_parents],['Nonzero parents',source.nonzero_parents],['Native groups unavailable',source.unavailable_native_groups??source.native_unavailable_groups]].filter(([,value])=>value!==undefined);
     if(census.length)summary.append(node('p',census.map(([label,value])=>label+': '+value).join(' · '),'muted'));
     const initial=report.identity?.source_config?.initial_state;
@@ -945,6 +952,17 @@ async function startCandidateRun(){
     const job=await api('/api/workflow/gegi-candidates/start',request),select=$('gegi-candidate-job');
     const entry=node('option',job.name+' · '+job.status);entry.value=job.name;select.append(entry);select.value=job.name;showCandidateJob(job);
   }catch(e){candidateStatus(e.message,true);}finally{candidateBusy=false;candidateControls();}
+}
+async function manageCandidateRun(action){
+  const job=candidateJob;
+  if(!job)return;
+  const generation=++candidateGeneration;++candidateEventGeneration;
+  candidateBusy=true;candidateControls();
+  try{
+    const reply=await api('/api/workflow/gegi-candidates/'+action,{name:job.name});
+    if(generation===candidateGeneration&&$('gegi-candidate-job').value===job.name)showCandidateJob(reply);
+  }catch(e){if(generation===candidateGeneration)candidateStatus(e.message,true);}
+  finally{candidateBusy=false;candidateControls();}
 }
 async function loadCandidatePage(offset){
   const job=candidateJob,generation=++candidateEventGeneration;
@@ -980,6 +998,8 @@ async function loadCandidateEvent(){
 }
 $('gegi-candidate-refresh').onclick=refreshCandidateRuns;
 $('gegi-candidate-start').onclick=startCandidateRun;
+$('gegi-candidate-stop').onclick=()=>manageCandidateRun('stop');
+$('gegi-candidate-resume').onclick=()=>manageCandidateRun('resume');
 $('gegi-candidate-job').onchange=()=>{++candidateGeneration;++candidateEventGeneration;candidateJob=null;candidatePage=null;$('gegi-candidate-view').hidden=true;$('gegi-candidate-summary').replaceChildren();const name=$('gegi-candidate-job').value;if(name)void inspectCandidateJob(name);else candidateStatus('Choose a saved acquisition.');candidateControls();};
 $('gegi-candidate-trigger').onchange=$('gegi-candidate-contact').onchange=loadCandidateEvent;
 $('gegi-candidate-previous').onclick=()=>loadCandidatePage(Math.max(0,candidateOffset-100));

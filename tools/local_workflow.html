@@ -39,7 +39,7 @@
 <p class="muted">The response model is approximate. Full 34-channel independent templates are not generally available; unsupported signals may produce no supported 3D hypotheses. Conditional candidates are not validated recovered events, and no source location is supplied as the answer. Older saved maps using terminal-CFD timing and strict two-by-two strip selection remain experimental legacy results.</p>
 <details><summary>Saved derivative identity, totals and limitations</summary><pre id="gegi-saved-record">No derivative selected.</pre></details></section>
 <section id="gegi-candidate-panel"><h2>Run GeGI with two fresh sources</h2>
-<p>Cs-137 and Co-60 share one geometry, decay clock and detector readout. Process every signal; save full fast/slow readout context for Compton imaging candidates and keep the complete count statistics.</p>
+<p>Cs-137 and Co-60 share one geometry, decay clock and all 34 detector channels. Process every signal; save full fast/slow readout context for Compton imaging candidates and keep the complete count statistics.</p>
 <p class="muted">Start with 100 initial source decays. This bounded validation accepts at most 500; a 60-second production acquisition remains a separate milestone. Positions use detector x, y, z coordinates in mm.</p>
 <div class="horizontal"><label>Cs-137 activity · Bq<input id="gegi-candidate-activity-a" type="number" min="0" step="any" value="185000"></label><label>Co-60 activity · Bq<input id="gegi-candidate-activity-b" type="number" min="0" step="any" value="37000"></label></div>
 <div class="horizontal"><label>Cs-137 x · mm<input id="gegi-candidate-a-x" type="number" step="any" value="-40"></label><label>Co-60 x · mm<input id="gegi-candidate-b-x" type="number" step="any" value="40"></label></div>
@@ -49,7 +49,8 @@
 <p id="gegi-candidate-storage" class="notice" role="status" aria-live="polite">Storage estimate uses the selected sources and a measured saved-readout reference. Temporary peak storage has not been measured. Fresh execution below remains limited to 500 decays.</p>
 <div class="horizontal"><label>Initial source decays<input id="gegi-candidate-count" type="number" min="1" max="500" step="1" value="100"></label><label>Seed<input id="gegi-candidate-seed" type="number" min="1" max="2147483646" step="1" value="20261120"></label></div>
 <label>New acquisition name<input id="gegi-candidate-name" value="gegi-mixed-01" maxlength="48" autocomplete="off" spellcheck="false"></label>
-<div class="actions"><button id="gegi-candidate-start" class="primary">Run fresh acquisition</button><button id="gegi-candidate-refresh">Refresh saved acquisitions</button></div>
+<div class="actions"><button id="gegi-candidate-start" class="primary">Run fresh acquisition</button><button id="gegi-candidate-stop" disabled>Stop</button><button id="gegi-candidate-resume" disabled>Resume saved acquisition</button><button id="gegi-candidate-refresh">Refresh saved acquisitions</button></div>
+<p class="muted">Stop saves the current progress. Resume continues the same acquisition clock, source settings and electronics state.</p>
 <label>Saved acquisition<select id="gegi-candidate-job"><option value="">Choose an acquisition</option></select></label>
 <p id="gegi-candidate-status" class="notice" role="status" aria-live="polite">Run a small fresh acquisition, or refresh to open saved candidates.</p>
 <div id="gegi-candidate-summary"></div>

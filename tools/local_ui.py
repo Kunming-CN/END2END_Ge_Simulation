@@ -541,6 +541,13 @@ class Handler(BaseHTTPRequestHandler):
                 if type(data) is not dict or set(data) != fields or self.server.workflow_controller is None:
                     raise ValueError('Choose both source activities, positions, initial decay count, seed and name')
                 return self.send_data(200, self.server.workflow_controller.gegi_candidates().start(**data))
+            if self.path in ('/api/workflow/gegi-candidates/stop', '/api/workflow/gegi-candidates/resume'):
+                if (type(data) is not dict or set(data) != {'name'} or type(data['name']) is not str
+                        or self.server.workflow_controller is None):
+                    raise ValueError('Choose one fresh-source acquisition by its saved name')
+                control = self.server.workflow_controller.gegi_candidates()
+                method = control.stop if self.path.endswith('/stop') else control.resume
+                return self.send_data(200, method(data['name']))
             if self.path == '/api/workflow/gegi-dual/start':
                 fields = {'source_ids', 'activities_bq', 'live_time_s', 'seed', 'name'}
                 if (type(data) is not dict or not fields <= data.keys() <= fields | {'trigger_profile'}

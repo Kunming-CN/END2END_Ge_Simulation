@@ -1,10 +1,12 @@
 """Protected Control jobs and bounded saved views for fresh mixed-source GeGI runs."""
 
 import copy
+from contextlib import closing
 from hashlib import sha256
 import json
 import math
 import re
+import sqlite3
 import threading
 import traceback
 
@@ -41,6 +43,7 @@ class CandidateControl:
         self.root = workflow.root
         self.runner = runner
         self.jobs = {}
+        self._stop_events = {}
         self._verified_stores = {}
         self.state_path = safe_path(self.root, STATE)
         if self.state_path.is_file():
@@ -50,7 +53,7 @@ class CandidateControl:
             for original in state['jobs']:
                 job = copy.deepcopy(original)
                 _name(job['name'])
-                if job['status'] == 'running':
+                if job['status'] in ('running', 'stop_requested'):
                     job.update(status='interrupted', error='The previous Control session ended. Saved partial files are preserved.')
                 self.jobs[job['name']] = job
 
@@ -59,6 +62,18 @@ class CandidateControl:
 
     def _persist(self):
         W.write(self.state_path, {'kind': KIND, 'jobs': list(self.jobs.values())})
+
+    def _resumable(self, directory):
+        path = safe_path(directory, storage.ARCHIVE_NAME)
+        if not path.is_file() or safe_path(directory, REPORT_NAME).exists():
+            return False
+        try:
+            with closing(storage._open_readonly(path)) as db:
+                checkpoint = db.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='checkpoint'").fetchone()
+                return bool(checkpoint and db.execute('SELECT 1 FROM checkpoint WHERE singleton=1').fetchone())
+        except sqlite3.DatabaseError:
+            return False
 
     def _report(self, name, expected=None):
         directory = self._directory(name)
@@ -127,19 +142,21 @@ class CandidateControl:
             job = copy.deepcopy(self.jobs.get(name, {'name': name, 'status': 'saved'}))
             active = self.workflow._active == 'gegi-candidates-' + name
         progress = safe_path(directory, 'progress.json')
-        if progress.is_file():
+        if progress.is_file() and not active:
             job['progress'] = W.read(progress)
             if job['progress'].get('status') == 'failed':
                 job.update(status='failed', error=job['progress'].get('error', 'Inspect the preserved acquisition failure.'))
         if safe_path(directory, REPORT_NAME).is_file():
             _, report, digest = self._report(name, job.get('report_sha256'))
-            status = 'running' if active else 'failed' if job['status'] == 'failed' else 'completed'
+            status = job['status'] if active else 'failed' if job['status'] == 'failed' else 'completed'
             job.update(status=status, report_sha256=digest, result=report,
                        output=OUTPUTS + '/' + name, results_available=True)
             if status == 'completed':
                 job.pop('error', None)
         else:
             W.require(name in self.jobs, 'Unknown mixed-source acquisition.')
+        job['resumable'] = (not active and job['status'] in ('stopped', 'interrupted', 'failed')
+                            and self._resumable(directory))
         return job
 
     def candidates(self, name, report_sha256, offset=0):
@@ -200,44 +217,96 @@ class CandidateControl:
                    'activities_bq': list(activities_bq), 'positions_mm': [list(p) for p in positions_mm],
                    'started_utc': W.utc(), 'output': OUTPUTS + '/' + name}
             self.jobs[name] = job
+            return self._launch(job, resume=False)
+
+    def _launch(self, job, *, resume):
+        reservation = 'gegi-candidates-' + job['name']
+        stop = threading.Event()
+        self._stop_events[job['name']] = stop
+        job.update(status='running', resumable=False,
+                   progress={'status': 'running', 'stage': 'Resuming the saved acquisition' if resume
+                             else 'Initializing the shared source acquisition'})
+        job.pop('error', None)
+        job.pop('finished_utc', None)
+        if resume:
+            job['resumed_utc'] = W.utc()
+        self._persist()
+        self.workflow._active = reservation
+        thread = threading.Thread(target=self._work, args=(job, reservation, resume, stop),
+                                  name=reservation, daemon=True)
+        try:
+            thread.start()
+        except RuntimeError:
+            self.workflow._active = None
+            self._stop_events.pop(job['name'], None)
+            job.update(status='failed', error='The acquisition worker did not start.', finished_utc=W.utc())
             self._persist()
-            reservation = 'gegi-candidates-' + name
-            self.workflow._active = reservation
-            thread = threading.Thread(target=self._work, args=(job, reservation), name=reservation, daemon=True)
-            try:
-                thread.start()
-            except RuntimeError:
-                self.workflow._active = None
-                job.update(status='failed', error='The acquisition worker did not start.', finished_utc=W.utc())
-                self._persist()
-                raise
+            raise
+        return copy.deepcopy(job)
+
+    def stop(self, name):
+        self._directory(name)
+        with self.workflow._lock:
+            job = self.jobs.get(name)
+            W.require(job is not None and job['status'] in ('running', 'stop_requested')
+                      and self.workflow._active == 'gegi-candidates-' + name,
+                      'Choose the running fresh-source acquisition to stop.')
+            self._stop_events[name].set()
+            job['status'] = 'stop_requested'
+            self._persist()
             return copy.deepcopy(job)
 
-    def _work(self, job, reservation):
+    def resume(self, name):
+        directory = self._directory(name)
+        with self.workflow._lock:
+            self.workflow._idle()
+            job = self.jobs.get(name)
+            W.require(job is not None and job['status'] in ('stopped', 'interrupted', 'failed')
+                      and not safe_path(directory, REPORT_NAME).exists() and self._resumable(directory),
+                      'Choose an incomplete acquisition with a saved checkpoint to resume.')
+            return self._launch(job, resume=True)
+
+    def _work(self, job, reservation, resume, stop):
         directory = self._directory(job['name'])
         try:
             with W.execution_lease(self.root):
                 W.verify_dispatch_reservations(None, self.root)
                 runner = self.runner
+                settings = {}
                 if runner is None:
-                    from gegi_mixed_acquisition import run
+                    from gegi_streaming_acquisition import run
                     runner = run
+                    settings = {'resume': resume, 'stop_requested': stop.is_set, 'block_parents': 50}
 
                 def progress(value):
                     with self.workflow._lock:
                         job['progress'] = {'stage': value} if isinstance(value, str) else value
 
-                runner(directory, primary_count=job['primary_count'], seed=job['seed'],
-                       activities_bq=job['activities_bq'], positions_mm=job['positions_mm'], on_progress=progress)
-                _, _, digest = self._report(job['name'])
-                outcome = {'status': 'completed', 'report_sha256': digest, 'results_available': True}
+                result = runner(directory, primary_count=job['primary_count'], seed=job['seed'],
+                                activities_bq=job['activities_bq'], positions_mm=job['positions_mm'],
+                                on_progress=progress, **settings)
+                if isinstance(result, dict) and result.get('status') == 'stopped':
+                    W.require(result.get('resumable') is True and self._resumable(directory),
+                              'The acquisition stopped without a durable checkpoint. Its files are preserved.')
+                    outcome = {'status': 'stopped', 'resumable': True, 'results_available': False}
+                else:
+                    _, _, digest = self._report(job['name'])
+                    outcome = {'status': 'completed', 'resumable': False,
+                               'report_sha256': digest, 'results_available': True}
         except Exception as error:
-            safe_path(directory, 'worker-error.log').write_text(traceback.format_exc(), encoding='utf-8')
-            outcome = {'status': 'failed', 'error': str(error)[:1200], 'error_log': 'worker-error.log'}
+            ordinal = 1
+            filename = 'worker-error.log'
+            while safe_path(directory, filename).exists():
+                ordinal += 1
+                filename = f'worker-error-{ordinal}.log'
+            with safe_path(directory, filename).open('x', encoding='utf-8') as handle:
+                handle.write(traceback.format_exc())
+            outcome = {'status': 'failed', 'error': str(error)[:1200], 'error_log': filename}
         with self.workflow._lock:
             job.update(finished_utc=W.utc(), **outcome)
             try:
                 self._persist()
             finally:
+                self._stop_events.pop(job['name'], None)
                 if self.workflow._active == reservation:
                     self.workflow._active = None

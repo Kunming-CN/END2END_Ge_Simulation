@@ -1869,6 +1869,8 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   // Fresh mixed-source controls submit both sources together and keep stale
   // selected-electrode replies away from the current candidate's signals.
   assert.match(html,/Run GeGI with two fresh sources/);
+  assert.match(html,/all 34 detector channels/);
+  assert.match(html,/Stop saves the current progress\. Resume continues the same acquisition clock/);
   assert.match(html,/Historical readout diagnostic · saved source libraries/);
   for(const [id,value]of Object.entries({'gegi-candidate-count':'100','gegi-candidate-seed':'20261120',
     'gegi-candidate-name':'fresh-ui-unit','gegi-candidate-activity-a':'185000','gegi-candidate-activity-b':'37000',
@@ -1882,8 +1884,28 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.deepEqual(freshRequest[1],{name:'fresh-ui-unit',primary_count:100,seed:20261120,
     activities_bq:[185000,37000],positions_mm:[[-40,0,40],[40,0,40]]});
   assert.equal(get('gegi-candidate-start').disabled,true);
+  assert.equal(get('gegi-candidate-stop').disabled,false);
+  assert.equal(get('gegi-candidate-resume').disabled,true);
+  run(`api=async(path,data)=>{candidateFixtureCalls.push([path,data]);return {name:'fresh-ui-unit',status:'stop_requested'};};`);
+  await get('gegi-candidate-stop').onclick();
+  assert.deepEqual(JSON.parse(run('JSON.stringify(candidateFixtureCalls.at(-1))')),
+    ['/api/workflow/gegi-candidates/stop',{name:'fresh-ui-unit'}]);
+  assert.equal(get('gegi-candidate-stop').disabled,true);
+  assert.equal(get('gegi-candidate-resume').disabled,true);
+  assert.match(get('gegi-candidate-status').textContent,/Saving progress before stopping/);
+  run(`showCandidateJob({name:'fresh-ui-unit',status:'stopped',resumable:true});`);
+  assert.equal(get('gegi-candidate-resume').disabled,false);
+  assert.match(get('gegi-candidate-status').textContent,/Resume continues with the original sources and acquisition clock/);
+  get('gegi-candidate-seed').value='42';get('gegi-candidate-a-x').value='-35';
+  run(`api=async(path,data)=>{candidateFixtureCalls.push([path,data]);return {name:'fresh-ui-unit',status:'running',resumable:false};};`);
+  await get('gegi-candidate-resume').onclick();
+  assert.deepEqual(JSON.parse(run('JSON.stringify(candidateFixtureCalls.at(-1))')),
+    ['/api/workflow/gegi-candidates/resume',{name:'fresh-ui-unit'}]);
+  assert.equal(get('gegi-candidate-resume').disabled,true);
+  assert.equal(get('gegi-candidate-stop').disabled,false);
+  get('gegi-candidate-seed').value='20261120';get('gegi-candidate-a-x').value='-40';
   get('gegi-candidate-count').value='501';run('candidateJob=null');await run('startCandidateRun()');
-  assert.equal(run('candidateFixtureCalls.length'),1);
+  assert.equal(run('candidateFixtureCalls.length'),3);
   assert.match(get('gegi-candidate-status').textContent,/at most 500/);
   run(`candidateJob={name:'saved-candidate',report_sha256:'a'.repeat(64)};
     let candidateResolvers=[];api=(path)=>{candidateFixtureCalls.push([path]);return new Promise(resolve=>candidateResolvers.push(resolve));};`);
