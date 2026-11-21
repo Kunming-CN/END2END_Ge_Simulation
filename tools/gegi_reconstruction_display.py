@@ -31,6 +31,8 @@ SOURCES = {
     'energy_offsets': ('peak-energy-offsets.json.gz', 'f66664f15b2dfa28f78492009b6ec60e24573c09a1b816d5cf55599f105cc0cd'),
     'origins': ('cobalt-top-ten-origin.json', 'bf891c1ecb9c4e544461ae8e2a55d1145daaa70fb929f28f408b9f794b7811dc'),
     'kinematics': ('five-second-line-kinematics.json.gz', 'b77612d1594d93bb194949de03e7be94ad8d72761fc959e10ab533e679726aa2'),
+    'angular_tails': ('peak-tail-diagnostic.json', '87e32633dfb8f1756df9bce46f2b4aab365e224e14d2d4ebfd3c3455ed2551c2'),
+    'escape_geometry': ('conditional-escape-geometry-controls.json', '43b60e4766f6c7812dc5b3b449b43fabd68a08fd489c2a0f1ecb910cfd6671a6'),
 }
 WINDOWS = ('661.657_keV', '1173.23_keV', '1332.49_keV')
 PRIORS = ('uniform-area', 'uniform-solid-angle')
@@ -48,6 +50,8 @@ KINDS = {
     'energy_offsets': 'gegi_original_peak_energy_offsets_v1',
     'origins': 'gegi_ten_cobalt_peak_trigger_origins_v1',
     'kinematics': 'gegi_saved_candidate_kinematic_ledger_v1',
+    'angular_tails': 'gegi_original_peak_angular_tail_diagnostic_v1',
+    'escape_geometry': 'gegi_nominal_escape_geometry_peak_controls_v1',
 }
 
 
@@ -72,6 +76,11 @@ def validate_inputs(inputs):
             offsets['full_map_selection'] != attribution['saved_selection']):
         raise ValueError('Energy offsets must describe the same original measured maps')
     origins = inputs['origins']['science']
+    if (inputs['angular_tails']['input_sha256']['saved_map'] != bindings['saved_plane'] or
+            inputs['angular_tails']['input_sha256']['photon_origins'] != SOURCES['origins'][1] or
+            inputs['escape_geometry']['input_sha256']['original_map'] != bindings['saved_plane'] or
+            inputs['escape_geometry']['input_sha256']['origin'] != SOURCES['origins'][1]):
+        raise ValueError('Angular diagnostics must describe the same measured map and photon histories')
     ledger = inputs['kinematics']
     if (ledger['input_sha256']['saved_plane'] != bindings['saved_plane'] or
             ledger['input_sha256']['candidate_store'] != bindings['candidate_store'] or
@@ -231,6 +240,8 @@ def compact(inputs, maps):
         'full_lateral_acceptance': inputs['lateral_acceptance'],
         'energy_offsets': inputs['energy_offsets'],
         'photon_origins': inputs['origins']['science'],
+        'raw_angular_response': inputs['angular_tails'],
+        'conditional_escape_geometry': inputs['escape_geometry'],
         'line_hypothesis_summary': {k: inputs['kinematics'][k] for k in
                                     ('kind', 'model', 'methods', 'windows', 'photon_origin_score')},
         'historical_truth_control': {**{k: truth[k] for k in truth_fields},
@@ -371,6 +382,11 @@ They supplied <strong>53.52%</strong> of that corner, including <strong>46.50%</
 and deposited 1,154.35 keV together. A third scatter deposited 34.36 keV before the photon left Ge.
 The accompanying 1,173 keV photon deposited zero. The two-site full-absorption interpretation excludes the forward order
 and returns a 9.18° reverse cone, whose angular residual to the programmed source is 92.35°.</p>
+<p>At the original corner, that cone is still 53.90° from its angular center, or 5.65 times its effective 9.54° width.
+Its raw angular density is only 2.78 × 10<sup>−7</sup> rad<sup>−1</sup> there. Normalizing this weak tail over the finite grid
+nevertheless gives the cone a full unit of weight and places 0.02681 trigger units in the corner, explaining its 24.79% peak share.
+This conditional angular density is not a calibrated detector probability. The other leading cones have different residuals;
+their individual raw responses and both map extents are retained in the evidence JSON.</p>
 {details}
 <p>Each selected ADC context overlaps one Ge deposition group. The replay matches the original primary, random-state,
 canonical source-stream and native-input hashes; LH5 container byte hashes differ. Interaction processes are matched
@@ -388,6 +404,10 @@ photon history enters only the subsequent comparison. All original projected and
 trigger 12,841 admits neither order, consistent with its unresolved third scatter. Only 13.06% of the original 1,173-window
 corner comes from order geometries compatible with that resolved escape hypothesis. Compatibility alone cannot assign
 an isotope: the compatible Cs-window candidates also admit escape under both cobalt lines.</p>
+<p>The optional finite-vertex escape diagnostic uses the same saved waveform positions and the supplied incident line.
+For the verified two-scatter photons 42,261 and 19,477, the true-order angular residuals are +15.26° and −6.46° at 1,332.492 keV.
+Trigger 12,841 returns no such cone. These are three selected controls, not calibrated acceptance rates or a new image;
+the original maps retain their weights.</p>
 <p><a href="{KINEMATICS.name}">Complete measured-pair and incident-line ledger (lossless JSON gzip)</a> retains raw cosines,
 energy margins, both orders, original identities and all unknown cases. It applies no new selection or imaging weight.</p></details></section>'''
 

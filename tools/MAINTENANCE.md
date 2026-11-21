@@ -46,6 +46,9 @@ allocations or shared-strip fits; `gegi_adc_topology.py` and
 `gegi_incident_hypotheses.py` for explicit incident-line diagnostics, without
 refitting ADC. Both paths retain original counts, weights and unknown cases.
 Truth histories score completed results; they never choose the hypotheses.
+`gegi_incident_geometry.py` adds conditional finite-vertex escape cones at the
+saved waveform positions, preserving original outcomes without assigning image
+weights. Its CLI has no source-position input.
 
 New acquisitions use `gegi_candidate_truth.py` to retain candidate-linked photon
 ancestry, scored Ge steps and native outcomes before scratch retirement. This

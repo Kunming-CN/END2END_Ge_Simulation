@@ -47,8 +47,10 @@ class StudentRuntimePackage(unittest.TestCase):
                 self.assertIn('gegi-center-calibration.npz', guide)
                 self.assertIn('--incident-energy-keV ENERGY', guide)
                 self.assertIn('gegi_candidate_kinematics.py --saved-plane', guide)
+                self.assertIn('gegi_incident_geometry.py', guide)
                 for tool in ('gegi_continuous_plane.py', 'gegi_joint_calibration.py', 'gegi_joint_two_site.py',
-                             'gegi_candidate_topology.py', 'gegi_candidate_kinematics.py', 'gegi_incident_hypotheses.py'):
+                             'gegi_candidate_topology.py', 'gegi_candidate_kinematics.py', 'gegi_incident_hypotheses.py',
+                             'gegi_incident_geometry.py'):
                     self.assertIn(f'{self.manifest["archive_root"]}/tools/{tool}', names)
                 self.assertFalse(any(p.endswith(('/gegi_joint_acquisition_study.py', '/gegi-center-calibration.npz'))
                                      for p in names))
@@ -157,7 +159,7 @@ print('Isolated student Control imports and 17-model/6-source browsing passed; m
             result = subprocess.run(arguments + ['-B', '-c', code], cwd=root,
                                     capture_output=True, text=True, timeout=30)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            for tool in ('gegi_candidate_topology.py', 'gegi_candidate_kinematics.py'):
+            for tool in ('gegi_candidate_topology.py', 'gegi_candidate_kinematics.py', 'gegi_incident_geometry.py'):
                 result = subprocess.run(arguments + ['-B', f'tools/{tool}', '--help'], cwd=root,
                                         capture_output=True, text=True, timeout=30)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

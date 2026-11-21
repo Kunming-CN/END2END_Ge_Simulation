@@ -64,6 +64,17 @@ scatters need a response model, not a narrower cone or forced two-point answer.
 Then freeze the algorithm for the held-out distance/direction/strength/depth
 statistics in stage6. Current five-second results remain development evidence.
 
+The next deterministic chronological sample has 18 exact photon histories:
+seven clean two-vertex, nine merged and two with three distinct vertices. Its
+same-event substitutions indicate larger angular changes from fitted positions
+than from measured energies in the eight fully paired controls (including two
+named peak escapes). These remain descriptive, equal-six-per-window controls;
+exact photon step kinetic energies were not recorded. The current concrete
+tasks add an observational kinetic-energy sidecar with exact old-stream/RNG
+parity, and investigate the clean trigger 12271's incompatible face-energy
+pairings using saved ADC and deposit geometry. Do not replace missing photon
+kinetic energy or collection endpoints with silently inferred truth.
+
 **Completed readiness baseline before this resumed work:** the five-second mixed-source acquisition,
 its final count/resource accounting and its full saved-candidate imaging are
 complete. Verified source, student runtime and site delivery are published, and

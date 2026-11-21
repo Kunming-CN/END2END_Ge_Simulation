@@ -68,6 +68,17 @@ class StreamingSourceTests(unittest.TestCase):
         self.assertEqual(len(rows), 3)
         self.assertTrue(after['finished'])
 
+    def test_user_count_has_no_execution_ceiling_and_resume_keeps_a_small_block(self):
+        config = G.default_config(parent_count=100_000_001)
+        checkpoint = G.initialize(config)
+        first, checkpoint = G.next_block(config, checkpoint, 3)
+        second, resumed = G.next_block(config, json_roundtrip(checkpoint), 2)
+        self.assertEqual([p['parent_decay_id'] for p in first + second], list(range(5)))
+        self.assertEqual(resumed['next_parent_id'], 5)
+        self.assertFalse(resumed['finished'])
+        for count in (0, -1, True, 1.5):
+            with self.assertRaises(ValueError): G.validate(G.default_config(parent_count=count))
+
     def test_equilibrium_driver_merge_keeps_original_new_parent_clock(self):
         from test_gegi_source_inventory import parameters
         config = G.default_config(parent_count=100)

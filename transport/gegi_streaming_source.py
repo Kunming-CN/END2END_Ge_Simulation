@@ -75,7 +75,7 @@ def validate(config):
     h.require(type(stop) is dict, 'Specify one fixed duration or parent count')
     if stop.get('mode') == 'count':
         h.require(set(stop) == {'mode', 'parent_count'} and type(stop['parent_count']) is int and
-                  1 <= stop['parent_count'] <= 100_000_000, 'Invalid total parent count')
+                  stop['parent_count'] >= 1, 'Invalid total parent count')
     else:
         h.require(set(stop) == {'mode', 'duration_ns'} and stop.get('mode') == 'duration' and
                   type(stop['duration_ns']) in (int, float) and math.isfinite(stop['duration_ns']) and
