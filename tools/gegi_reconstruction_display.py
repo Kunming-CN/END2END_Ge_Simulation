@@ -40,6 +40,8 @@ SOURCES = {
     'boundary_grid_causes': ('trigger-12271-native-response/blind-grid/cause-diagnostic.json', '301e6ad4119e4ce7d832db9141b813d0dd7d25452791afd4d62f780eca6228c2'),
     'boundary_depth': ('trigger-12271-native-response/blind-grid/depth-refinement/comparison.json', '35286f3f8051908280c5e81300288da35a4698a094c2e7f07be7638b7e7c02c9'),
     'boundary_overlap': ('trigger-12271-native-response/blind-grid/depth-refinement/weak-overlap-validation-cli.json', '4d3f2c7ce7bb4160eb1707aa0dd46f82c22b9a06fdddfe42d398de43bf0cd8f3'),
+    'boundary_xy_isolated': ('trigger-12271-native-response/blind-grid/depth-refinement/xy-interpolation-validation.json', '1827f655b95bc3442e72a410fd075f02456879d8f1927a32a099d30c04f49ab5'),
+    'boundary_xy_overlap': ('trigger-12271-native-response/blind-grid/depth-refinement/xy-overlap-and-original-adc.json', 'b6d421683a266d964dd1e176982588befd89efa91070744fe9b532946ef97dec'),
 }
 WINDOWS = ('661.657_keV', '1173.23_keV', '1332.49_keV')
 PRIORS = ('uniform-area', 'uniform-solid-angle')
@@ -66,6 +68,8 @@ KINDS = {
     'boundary_grid_causes': 'gegi_boundary_grid_cause_diagnostic_v1',
     'boundary_depth': 'gegi_boundary_depth_refinement_v1',
     'boundary_overlap': 'gegi_fresh_weak_component_overlap_validation_v1',
+    'boundary_xy_isolated': 'gegi_frozen_xy_interpolation_validation_v1',
+    'boundary_xy_overlap': 'gegi_frozen_xy_overlap_and_original_adc_v1',
 }
 
 
@@ -277,6 +281,8 @@ def compact(inputs, maps):
         'boundary_grid_causes': inputs['boundary_grid_causes'],
         'boundary_depth_refinement': inputs['boundary_depth'],
         'boundary_overlap_validation': inputs['boundary_overlap'],
+        'boundary_xy_isolated': inputs['boundary_xy_isolated'],
+        'boundary_xy_overlap': inputs['boundary_xy_overlap'],
         'line_hypothesis_summary': {k: inputs['kinematics'][k] for k in
                                     ('kind', 'model', 'methods', 'windows', 'photon_origin_score')},
         'historical_truth_control': {**{k: truth[k] for k in truth_fields},
@@ -534,6 +540,33 @@ def boundary_response_section(data):
                                         '3-depth weak error RMS (mm)', '11-depth weak error RMS (mm)',
                                         '11-depth weak near-tie spread (mm)'),
                           'Weak-component stability across two physical layouts, ADC phases and noise seeds')
+    xy = data['boundary_xy_overlap']
+    isolated = data['boundary_xy_isolated']['controls']
+    single_errors = [[row['bilinear_xy']['position_errors_mm'][0] for row in isolated],
+                     [row['shape_preserving_xy']['position_error_mm'] for row in isolated]]
+    paired = xy['summary_on_matched_position_conditions']
+    xy_rows = [('Six isolated positions', '6',
+                number(math.sqrt(math.fsum(e*e for e in single_errors[0])/6), 3),
+                number(math.sqrt(math.fsum(e*e for e in single_errors[1])/6), 3),
+                str(sum(b > a for a, b in zip(*single_errors, strict=True))))]
+    for label, field, weak_only in (
+            ('All overlap components', 'all_component_position_rms_mm', False),
+            ('Weak overlap components', 'weak_component_position_rms_mm', True)):
+        before, after = [], []
+        for row in xy['conditions']:
+            a = row['refined_eleven_depth']['position_errors_mm']
+            b = row['shape_preserving_xy']['position_errors_mm']
+            fractions = xy['design']['fractions_in_measured_cell_order'][row['allocation_index']]
+            indices = [min(range(len(fractions)), key=fractions.__getitem__)] if weak_only else range(len(a))
+            before.extend(a[i] for i in indices)
+            after.extend(b[i] for i in indices)
+        xy_rows.append((label, str(len(before)), number(paired['refined_eleven_depth'][field], 3),
+                        number(paired['shape_preserving_xy'][field], 3),
+                        str(sum(b > a for a, b in zip(before, after, strict=True)))))
+    xy_table = table(xy_rows, ('Same saved inputs', 'Positions', 'Linear XY RMS (mm)',
+                               'PCHIP XY RMS (mm)', 'Positions worsened'),
+                     'Changing only X/Y interpolation in the same eleven-depth response bank')
+    xy_original = xy['original_adc']['shape_preserving_xy']
     single = grid['independent_single_pulse_controls']
     interior = [row for row in single if row['held_out_positions_for_scoring'][0]['role'] == 'interior_holdout']
     gap = [row for row in single if row['held_out_positions_for_scoring'][0]['role'] == 'gap_holdout']
@@ -586,6 +619,23 @@ weak-position change across repeated readouts increases from 0.148 to 0.593 mm; 
 calibration limits in 15 of the 23 matched refined conditions, versus 11 with three depths. These are two physical
 layouts with repeated readout conditions, not 24 independent photon histories. No acceptance threshold or imaging
 weight is changed.</p>
+<h3>Better waveform interpolation does not resolve every component</h3>
+<p>A subsequent fixed comparison replaces linear X/Y interpolation with the average of both axis orders of
+<a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html">piecewise cubic Hermite interpolation (PCHIP)</a>.
+It uses the same response bank, measured energies and ADC samples, with linear depth/time interpolation and no
+extrapolation across collection cells. All 297 training knots reproduce to numerical precision; contact identities
+and native charge closure are checked separately from interpolation of voltage templates.</p>
+{xy_table}
+<p>Both eleven-depth methods return positions for all 24 overlapping readouts. Their all34 waveform RMS changes
+from 4.428 to 3.930 ADC codes, but weak-component positions improve in only 12 of 24 conditions.
+The largest weak near-tie spread grows from <strong>2.36 to 2.81 mm</strong>, and outer-limit conditions increase
+from 15 to 16. The 10/45/45% allocation's weak-position RMS worsens from 0.886 to 1.089 mm.
+These 24 matched conditions differ from the earlier three-depth comparison's 23-condition denominator.</p>
+<p>On original trigger 12,271, all34 residual changes from {depth_fit['all34_adc_rms_codes']:.2f} to
+{xy_original['all34_adc_rms_codes']:.2f} codes and Y28 from {depth_fit['y28_adc_rms_codes']:.2f} to
+{xy_original['y28_adc_rms_codes']:.2f}. No independent position score is assigned to that measured fit.
+The two unsupported allocation alternatives and unresolved weight of one are retained. This research comparison
+is not a new default reconstruction or a detector-wide resolution measurement.</p>
 <details><summary>Inspect the initial three-depth grid and its independent controls</summary>
 {independent}
 <p>Six interior single-pulse controls improve in aggregate. For the two overlapping controls, three of six component

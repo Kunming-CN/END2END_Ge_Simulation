@@ -96,6 +96,15 @@ class ReconstructionDisplayTests(unittest.TestCase):
             self.assertEqual(overlap['fit_status_by_method']['refined_eleven_depth'], {'scored': 24})
             self.assertIsNone(overlap['source_position_mm'])
             self.assertIn('10 of 69 component positions worsen', page)
+            xy = public['boundary_xy_overlap']
+            self.assertEqual(xy['summary_on_matched_position_conditions']['matched_position_conditions'], 24)
+            self.assertEqual(len(public['boundary_xy_isolated']['controls']), 6)
+            self.assertEqual(xy['fit_status_by_method']['shape_preserving_xy'], {'scored': 24})
+            self.assertEqual(xy['original_adc']['adc_sha256'], xy['input_sha256']['original_adc'])
+            self.assertEqual((xy['original_adc']['original_projected_mass'],
+                              xy['original_adc']['original_unresolved_mass']), (0., 1.))
+            self.assertIsNone(xy['original_adc']['position_error_mm'])
+            self.assertIn('2.36 to 2.81 mm', page)
             self.assertNotIn('specified but have not run', page)
             self.assertTrue((site / display.ENERGY_IMAGE).is_file())
             ids = re.findall(r'id="(trigger-[0-9]+)"', page)

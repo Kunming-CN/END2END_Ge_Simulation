@@ -237,6 +237,24 @@ weak-position change across repeated readouts increases from 0.148 to 0.593 mm; 
 calibration limits in 15 of the 23 matched refined conditions, versus 11 with three depths. These are two physical
 layouts with repeated readout conditions, not 24 independent photon histories. No acceptance threshold or imaging
 weight is changed.</p>
+<h3>Better waveform interpolation does not resolve every component</h3>
+<p>A subsequent fixed comparison replaces linear X/Y interpolation with the average of both axis orders of
+<a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html">piecewise cubic Hermite interpolation (PCHIP)</a>.
+It uses the same response bank, measured energies and ADC samples, with linear depth/time interpolation and no
+extrapolation across collection cells. All 297 training knots reproduce to numerical precision; contact identities
+and native charge closure are checked separately from interpolation of voltage templates.</p>
+<div role="region" aria-label="Changing only X/Y interpolation in the same eleven-depth response bank" tabindex="0" style="overflow-x:auto">
+<table><caption>Changing only X/Y interpolation in the same eleven-depth response bank</caption><thead><tr><th scope="col">Same saved inputs</th><th scope="col">Positions</th><th scope="col">Linear XY RMS (mm)</th><th scope="col">PCHIP XY RMS (mm)</th><th scope="col">Positions worsened</th></tr></thead><tbody><tr><th scope="row">Six isolated positions</th><td>6</td><td>0.285</td><td>0.093</td><td>0</td></tr><tr><th scope="row">All overlap components</th><td>72</td><td>0.977</td><td>0.879</td><td>30</td></tr><tr><th scope="row">Weak overlap components</th><td>24</td><td>1.345</td><td>1.185</td><td>12</td></tr></tbody></table></div>
+<p>Both eleven-depth methods return positions for all 24 overlapping readouts. Their all34 waveform RMS changes
+from 4.428 to 3.930 ADC codes, but weak-component positions improve in only 12 of 24 conditions.
+The largest weak near-tie spread grows from <strong>2.36 to 2.81 mm</strong>, and outer-limit conditions increase
+from 15 to 16. The 10/45/45% allocation's weak-position RMS worsens from 0.886 to 1.089 mm.
+These 24 matched conditions differ from the earlier three-depth comparison's 23-condition denominator.</p>
+<p>On original trigger 12,271, all34 residual changes from 5.01 to
+4.80 codes and Y28 from 12.93 to
+12.38. No independent position score is assigned to that measured fit.
+The two unsupported allocation alternatives and unresolved weight of one are retained. This research comparison
+is not a new default reconstruction or a detector-wide resolution measurement.</p>
 <details><summary>Inspect the initial three-depth grid and its independent controls</summary>
 <div role="region" aria-label="Identical native inputs and quantized ADC controls, with energies measured from each ADC" tabindex="0" style="overflow-x:auto">
 <table><caption>Identical native inputs and quantized ADC controls, with energies measured from each ADC</caption><thead><tr><th scope="col">Independent control</th><th scope="col">Positions</th><th scope="col">Center RMS (mm)</th><th scope="col">Grid RMS (mm)</th><th scope="col">Positions worsened</th></tr></thead><tbody><tr><th scope="row">Interior single pulses</th><td>6</td><td>1.754</td><td>1.274</td><td>0</td></tr><tr><th scope="row">Outside-grid gap probes</th><td>3</td><td>2.631</td><td>2.401</td><td>0</td></tr><tr><th scope="row">Components in two overlapping pulses</th><td>6</td><td>1.916</td><td>1.802</td><td>3</td></tr></tbody></table></div>

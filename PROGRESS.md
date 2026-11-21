@@ -48,8 +48,17 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   with all prior input/metadata records and exact ledger prefixes unchanged.
   `serial-interleave.json` retains both stop/exit/resume proofs; no completed
   response was recomputed. This prefix is not a final recovery rate.
-  After closure, reconcile the parent/selected ledger and correct measured
-  tangency/self-hit witnesses in isolation; keep genuine outward corners unknown.
+  After closure, reconcile the parent/selected ledger. The native owner now
+  prepares the measured tangency/self-hit correction in an isolated helper with
+  pure geometry checks; pinned active producers stay unchanged. Keep genuine
+  outward corners unknown. No competing full native/field worker is running.
+  Isolated helper is ready: `simulation/native_segment_crossing.jl` SHA0579097c
+  and `tools/test_native_segment_crossing.jl` pass57geometryassertions without
+  fields/drift (peak707,915,776B).214613selectsvalidlaterfacefraction0.3972794892;
+  717723tinyrearintersectiongetspositiveprojectedmotion;3361staysunknown.
+  Six successful controls atFloat32/64arebit-identical. The UNAPPLIED patch
+  `native-drift-probe-run/segment-crossing-integration.patch` SHA59411f56 is
+  ready only after the active cap source pin closes; waveform recovery untested.
 * **Candidate worker:** `/root/candidate_attribution`. All 18 prespecified non-peak
   histories are complete: seven clean two-vertex, nine merged, two with three
   distinct vertices; 17 full-energy photons and one escape. All 18 exact
@@ -171,9 +180,32 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   closure is checked separately. SciPy1.16.3; depth/time remain linear.
   `xy-interpolation-validation.json` SHA1827f655b95bc3442e72a410fd075f02456879d8f1927a32a099d30c04f49ab5
   is local, not promoted into runtime or published detector-wide performance.
-  Worker now applies that frozen method to24same overlap ADCs plus original
-  12271, retaining measured energies/unknown alternatives/weights. New research
-  CLI `gegi_boundary_xy_study.py` is in progress; no new native. Cap continues.
+  The frozen method now has an actual24overlap+original12271 CLI acceptance.
+  `xy-overlap-and-original-adc.json` SHA
+  b6d421683a266d964dd1e176982588befd89efa91070744fe9b532946ef97dec;
+  `tools/gegi_boundary_xy_study.py` SHAc08aa74f4a7da751d8a15c5e6846c3033daab19830685e60a518b8b2baee1e61.
+  Bilinear11depth/PCHIPbothreturn24/24. All72positionRMS0.9774->0.8789mm,
+  weak24RMS1.3446->1.1853mm, butonly12weakpositionsimprove; allocation2weak
+  worsens0.886->1.089mm. All34fitRMS4.4278->3.9303codes,18/24improve.
+  Outer-limit conditions15->16 and largestweaknear-tie2.359->2.810mm.
+  Original12271all34/Y28RMS5.0105/12.9285->4.8048/12.3768codes; no position
+  truth score, both unsupported alternatives and weights0/1retained. SameADC/
+  energies/oldfields reproduce; onlyXYinterpolation changed, not a runtime default.
+  Joint alternatives now feed finite-vertex geometry on36sameADCcontrols across
+  three layouts:72pairs (44fit,24energy-incompatible,4template-unavailable),
+  original96orders retained. `position-cone-spread.json` SHA
+  eca34f3061c45cacc74dfd852e44634a2042a04daf1a6697ac10b72a929360c1;
+  consumerSHA12003acd6fd7d2f03c4c46bf7f4bff72b3e31348f8be8145c42623f87bbb6ce8.
+  Known-cell lateral axis span max4.8421deg,median0.000571deg; finite-angle
+  max6.374/5.238/4.961/4.875deg at50/100/300/1000mm. Shared alternative pairs
+  move together; fixed5degkernel is diagnostic, no probability/weight change.
+  Exact ADC/calibration/energies agree with archives; CURRENT producer replay
+  differs from historical lateral best positions by atmost2.445e-6mm and RMS
+  by2.265e-7ADCcodes. Archived fitterSHAe215 is unavailable in inspected sources;
+  recovered driverSHAfbf3d197 and all numeric deltas are retained. Historical
+  receipts omitted the joint alternate roster, so no exact-fit/roster claim.
+  Next attach the same diagnostic to saved five-second trigger/pair/order IDs,
+  reusing retained alternatives or explicitly recovering omitted ADC fit fields.
 
 ## Delivered reconstruction and scientific findings
 
@@ -256,6 +288,18 @@ settings change. GitHub main and Pages44906154382 are synchronized; required
 tools/check_site.py --url passes all1,018selected live files. The compact
 publication receipt records this build and retains exact unchanged asset bytes.
 Student runtime is unchanged; research traces stay outside its package.
+
+The next XY-interpolation exhibit integration has build98ba7366eeb90c24320e3c587762561cdca8d6776f13a6ad0ead9c0a3dc6b5e4,
+1,914files/513,699,083bytes. Two
+display checks and42publication tests pass. A display reader's singular/plural
+position-error key mismatch was caught and corrected; original JSONs unchanged.
+Both24condition results and all6isolated controls stay in the exact public
+evidence, including negative results. Normal builder and separatecheck_site.py
+pass. Chrome desktop homepage->XYcomparison->methods passes; preview/tab closed
+(the sandbox-local server was unreachable, then the same localhost preview was
+restarted successfully on the host). Source/Pages synchronization and required
+live validation remain. Joint-cone diagnostic source is included; its numerical
+receipt remains local for the candidate integration. No student runtime change.
 
 The exact-kinetic observer and future candidate-truth retention remain delivered:
 ten original blocks/34Ge-row joins,38focused checks, original producer/archive

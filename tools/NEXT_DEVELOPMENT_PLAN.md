@@ -100,10 +100,15 @@ one coarse failure remains. On23matched conditions positionRMS2.055->0.982mm,
 but10/69component errors worsen and weak near-ties reach2.36mm. Readout repeats
 are not independent photon histories. Three saved conditional profiles identify
 lateral interpolation mismatch and weak-component trade-offs: about2mm movement
-can add less than0.2ADCcodes RMS after other positions adjust. Next test improved
-XY interpolation on the existing response banks before adopting a mixture
-response. Keep independently held-out positions and the observed ambiguity.
-Then connect supported
+can add less than0.2ADCcodes RMS after other positions adjust. A fixed same-bank
+XY-PCHIP comparison improves six isolated positions from0.285to0.093mmRMS,
+but24overlaps show mixed outcomes: weakRMS1.345->1.185mm,only12/24improve,
+outer-limit conditions15->16and largestweaknear-tie2.36->2.81mm. Original12271
+all34RMS5.01->4.80codes retains unresolved weight1. No runtime promotion.
+Next carry retained joint position alternatives into finite-vertex geometry on
+the established36two-site controls, recovering omitted alternatives from the
+exact same ADC only. Quantify source-constraint ambiguity without assigning
+confidence or extra event weight. Then connect supported
 responses to interaction hypotheses and source geometry, retaining unknown
 topology where the waveforms do not identify it.
 
