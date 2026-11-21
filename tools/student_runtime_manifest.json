@@ -103,7 +103,8 @@
       "transport/Run.cmd", "transport/run.sh", "transport/workflow.sh",
       "transport/macos/workflow.sh", "transport/macos/pixi.toml", "transport/macos/pixi.lock", "transport/macos/.pixi/config.toml",
       "transport/prepare.sh", "transport/gamma.sh", "transport/experiment.json",
-      "transport/gegi_source.py", "transport/gegi_geometry.py", "transport/gegi_mixed_source.py", "transport/gegi_streaming_source.py", "transport/gegi_source_inventory.py"
+      "transport/gegi_source.py", "transport/gegi_geometry.py", "transport/gegi_mixed_source.py", "transport/gegi_streaming_source.py", "transport/gegi_source_inventory.py",
+      "transport/gegi_photon_steps.py", "transport/gegi_photon_step_observer.cc"
     ],
     "canonical_models_and_includes": [
       "models/catalog.json", "models/AK01.yaml", "models/AK02.yaml", "models/SAP22.yaml",
@@ -156,7 +157,8 @@
     "tools/gegi_campaign_response.py": ["tools/gegi_event_store.py", "tools/gegi_imaging.py", "tools/local_ui_jobs.py", "tools/gegi_campaign_recovery.py", "tools/gegi_campaign_analysis.py", "simulation/gegi_campaign_response.jl"],
     "tools/gegi_storage_estimate.py": ["tools/gegi_storage_reference.json"],
     "transport/gegi_mixed_source.py": ["transport/gegi_source.py", "transport/gegi_geometry.py", "transport/cs137.py", "transport/decay_source.py", "scenarios/source-presets.json"],
-    "transport/gegi_streaming_source.py": ["transport/gegi_mixed_source.py", "transport/gegi_source.py", "transport/gegi_geometry.py", "transport/gegi_source_inventory.py", "transport/pixi.toml", "transport/pixi.lock", "transport/macos/pixi.toml", "transport/macos/pixi.lock"],
+    "transport/gegi_streaming_source.py": ["transport/gegi_mixed_source.py", "transport/gegi_source.py", "transport/gegi_geometry.py", "transport/gegi_source_inventory.py", "transport/gegi_photon_steps.py", "transport/pixi.toml", "transport/pixi.lock", "transport/macos/pixi.toml", "transport/macos/pixi.lock"],
+    "transport/gegi_photon_steps.py": ["transport/gegi_photon_step_observer.cc"],
     "transport/gegi_source_inventory.py": [],
     "tools/gegi_workflow.py": ["tools/gegi_result_reader.py", "simulation/gegi_response.jl", "simulation/gegi_signal_helpers.jl", "transport/gegi_source.py", "transport/gegi_geometry.py", "scenarios/assets/gegi_cryostat_v1.json"],
     "tools/gegi_saved_control.py": ["tools/gegi_result_reader.py", "tools/gegi_saved_reconstruction.py", "tools/gegi_standalone_reconstruction.py", "tools/gegi_signal_reconstruction.py", "tools/gegi_joint_imaging.py", "tools/gegi_event_store.py", "tools/gegi_readout_checks.py", "tools/gegi_calibration_admission.py"],

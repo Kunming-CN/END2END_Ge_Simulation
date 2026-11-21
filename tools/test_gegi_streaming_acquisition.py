@@ -18,6 +18,8 @@ from test_gegi_digital_readout import CHANNELS
 
 GEOMETRY = [{**channel, 'family': 'X' if channel['id'] <= 17 else 'Y',
     'guard': channel['id'] in (17, 34), 'strip_center_mm': float(channel['id'] % 17)} for channel in CHANNELS]
+OBSERVATION = dict(kind='gegi_photon_step_sidecar_v1', file='photon-steps.csv', bytes=1720, sha256='d'*64,
+                   executable_sha256='e'*64, observer_source_sha256='f'*64, observer_reader_sha256='a'*64)
 
 
 def event(parent, clock, delay, source):
@@ -67,6 +69,7 @@ class AcquisitionTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         (self.root / '.local').mkdir()
         self.patches = [patch.object(A, 'ROOT', self.root), patch.object(A, 'OWN_SOURCES', ()),
+            patch.object(A, 'OBSERVER_SOURCES', ()),
             patch.object(A.mixed, 'native_request', self.request),
             patch.object(A, 'transport_call', self.transport),
             patch.object(A.response, 'ResidentWorker', FakeWorker),
@@ -131,6 +134,15 @@ class AcquisitionTests(unittest.TestCase):
             stream = directory / 'stream'; stream.mkdir()
             for local, event_row in enumerate(rows):
                 event_row.update(block_index=index, transport_event_id=local)
+                if config.get(A.PHOTON_KINEMATICS):
+                    photon = event_row['candidate_photon_truth']
+                    chord = photon['ge_gamma_steps'][0]
+                    photon['photon_step_observation_status'] = 'observed_exact'
+                    chord['observed_transport_step'] = dict(
+                        run_id=0, event_id=local, track_id=chord['track_id'], parent_track_id=chord['parent_track_id'],
+                        step_number=3, process='compt',
+                        pre={'kinetic_keV': 662., 'direction': [0., 0., -1.]},
+                        post={'kinetic_keV': 462., 'direction': [1., 0., 0.]})
             (stream / 'events.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in rows), encoding='utf-8')
             after = {'next_block_index': index+1, 'last_parent_time_ns': 2000. if index == 0 else 8000.,
                 'safe_frontier_ns': 2000. if index == 0 else 8000., 'finished': index == 1}
@@ -153,7 +165,9 @@ class AcquisitionTests(unittest.TestCase):
             A.W.write(directory / 'checkpoint-after.json', after)
             A.W.write(stream / 'manifest.json', {'primary_count': primary_count, 'counts': counts,
                 'block_index': index, 'candidate_photon_truth_kind': A.truth.PHOTON_KIND, 'source_lh5_sha256': '2'*64,
-                'events_file': 'events.jsonl', 'events_sha256': A.mixed.file_sha(stream/'events.jsonl')})
+                'events_file': 'events.jsonl', 'events_sha256': A.mixed.file_sha(stream/'events.jsonl'),
+                **({'source_contract': config, 'photon_step_observation': OBSERVATION}
+                   if config.get(A.PHOTON_KINEMATICS) else {})})
 
     def test_delayed_cross_block_signals_exact_after_stop_and_resume(self):
         complete = self.root / '.local/complete'
@@ -185,6 +199,7 @@ class AcquisitionTests(unittest.TestCase):
         self.assertEqual(set(driver_rows), {row['driver_id'] for row in delivered_groups.values()})
         self.assertEqual(driver_rows[0]['ge_gamma_steps'][0]['edep_keV'], 0.)
         self.assertEqual(driver_rows[0]['ge_gamma_steps'][0]['absolute_time_ns'], 6000.)
+        self.assertEqual(driver_rows[0]['photon_step_observation'], {'status': 'unavailable_not_recorded'})
         self.assertEqual(driver_rows[0]['positive_ge_deposits'][0]['raw_row_index'], 1)
         self.assertEqual(next(row for row in delivered_groups.values() if row['driver_id'] == 0)
                          ['native_steps'][0]['endpoints'][0]['contact_ids'], [3])
@@ -196,6 +211,38 @@ class AcquisitionTests(unittest.TestCase):
             self.assertEqual(got['context']['adc_codes'].tolist(), want['context']['adc_codes'].tolist())
             self.assertEqual(retained_triggers[trigger['trigger_id']]['input_group_ordinals'], got['identities'])
             self.assertNotIn('candidate_photon_truth', got['card'])
+
+    def test_opt_in_photon_kinematics_survive_resume_outside_reconstruction(self):
+        ordinary = self.root / '.local/ordinary'
+        observed = self.root / '.local/observed'
+        untouched = A.run(ordinary, 4, block_parents=2)
+        plain_groups = FakeWorker.groups[:]
+        FakeWorker.groups = []
+        A.run(observed, 4, block_parents=2, stop_after_blocks=1, retain_photon_kinematics=True)
+        with self.assertRaisesRegex(ValueError, 'original sources'):
+            A.run(observed, 4, resume=True, block_parents=2, retain_photon_kinematics=False)
+        result = A.run(observed, 4, resume=True, block_parents=2)
+        self.assertTrue(result['identity']['source_config'][A.PHOTON_KINEMATICS])
+        self.assertEqual(FakeWorker.groups, plain_groups)
+        for field in ('source', 'counts', 'spectra', 'storage_counts', 'readout'):
+            self.assertEqual(result[field], untouched[field])
+        with gzip.open(observed/A.truth.ARTIFACT, 'rt', encoding='utf-8') as stream:
+            rows = [json.loads(line) for line in stream]
+        driver_rows = [r for r in rows if r['record'] == 'transport_event']
+        self.assertGreater(len(driver_rows), 0)
+        self.assertEqual(result['retention']['candidate_truth']['photon_step_observation'],
+                         {'observed_exact': len(driver_rows), 'unavailable_not_recorded': 0})
+        for row in driver_rows:
+            self.assertEqual(row['photon_step_observation'], {'status': 'observed_exact', **OBSERVATION})
+            step = row['ge_gamma_steps'][0]['observed_transport_step']
+            self.assertEqual((step['process'], step['pre']['kinetic_keV'], step['post']['direction']), ('compt', 662., [1., 0., 0.]))
+            self.assertEqual(step['event_id'], row['transport_event_id'])
+        self.assertFalse((observed/A.truth.SCRATCH).exists())
+        for trigger in S.list_candidates(observed / S.ARCHIVE_NAME):
+            actual = S.load_candidate(observed / S.ARCHIVE_NAME, trigger['trigger_id'])
+            baseline = S.load_candidate(ordinary / S.ARCHIVE_NAME, trigger['trigger_id'])
+            self.assertEqual(actual['card'], baseline['card'])
+            self.assertEqual(actual['context']['adc_codes'].tolist(), baseline['context']['adc_codes'].tolist())
 
     def test_changed_sources_refuse_resume_without_touching_committed_data(self):
         output = self.root / '.local/changed'

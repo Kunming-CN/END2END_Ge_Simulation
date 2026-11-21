@@ -33,6 +33,7 @@ SOURCES = {
     'kinematics': ('five-second-line-kinematics.json.gz', 'b77612d1594d93bb194949de03e7be94ad8d72761fc959e10ab533e679726aa2'),
     'angular_tails': ('peak-tail-diagnostic.json', '87e32633dfb8f1756df9bce46f2b4aab365e224e14d2d4ebfd3c3455ed2551c2'),
     'escape_geometry': ('conditional-escape-geometry-controls.json', '43b60e4766f6c7812dc5b3b449b43fabd68a08fd489c2a0f1ecb910cfd6671a6'),
+    'exact_kinetics': ('chronological-window-origins/same-event-exact-kinetics.json', '9bca9f3d43f5f7fba86965873fe6a431934b2309953cc8343eb3a51dab4e0cd8'),
 }
 WINDOWS = ('661.657_keV', '1173.23_keV', '1332.49_keV')
 PRIORS = ('uniform-area', 'uniform-solid-angle')
@@ -52,6 +53,7 @@ KINDS = {
     'kinematics': 'gegi_saved_candidate_kinematic_ledger_v1',
     'angular_tails': 'gegi_original_peak_angular_tail_diagnostic_v1',
     'escape_geometry': 'gegi_nominal_escape_geometry_peak_controls_v1',
+    'exact_kinetics': 'gegi_same_event_exact_photon_kinetic_substitutions_v1',
 }
 
 
@@ -242,6 +244,8 @@ def compact(inputs, maps):
         'photon_origins': inputs['origins']['science'],
         'raw_angular_response': inputs['angular_tails'],
         'conditional_escape_geometry': inputs['escape_geometry'],
+        'exact_photon_controls': {k: inputs['exact_kinetics'][k] for k in
+                                 ('kind', 'input_sha256', 'source_sha256', 'status_counts', 'definition', 'rows')},
         'line_hypothesis_summary': {k: inputs['kinematics'][k] for k in
                                     ('kind', 'model', 'methods', 'windows', 'photon_origin_score')},
         'historical_truth_control': {**{k: truth[k] for k in truth_fields},
@@ -412,6 +416,53 @@ the original maps retain their weights.</p>
 energy margins, both orders, original identities and all unknown cases. It applies no new selection or imaging weight.</p></details></section>'''
 
 
+def exact_kinetics_section(data):
+    from gegi_shared_clock_display import table
+
+    controls = data['exact_photon_controls']
+    rows = []
+    for row in controls['rows']:
+        control = row.get('substitution_control')
+        if control is None or row['score_status'] != 'matched_energy_and_positions':
+            continue
+        terms = control['signed_arm_components_deg']
+        rows.append((f'{row["original_trigger_id"]:,}',
+                     'Chronological' if row['sample'] == 'chronological_sample' else 'Peak control',
+                     number(terms['transported_turn_minus_stationary_energy_angle_deg'], 3),
+                     number(terms['signal_position_contribution_deg'], 3),
+                     number(terms['measured_transfer_contribution_deg'], 4),
+                     number(terms['additional_nominal_incident_energy_contribution_deg'], 5)))
+    comparison = table(rows, ('Trigger', 'Sample', 'Transport model (°)', 'Fitted position (°)',
+                              'Measured transfer (°)', 'Nominal incident line (°)'),
+                       'Additive signed angular-residual terms on eight identical photon histories')
+    return f'''<section class="panel" id="exact-photon-controls"><h2>Separate physical angular spread from reconstruction errors</h2>
+<p>Ten original transport blocks were replayed with an observational photon-step recorder. Original primaries,
+random states, canonical detector streams and native inputs matched. The recorder retains true pre/post photon
+energies and directions. In all ten selected histories, the source-to-first-scatter ray matches the recorded incoming
+direction to numerical precision; no prior discrete scatter is present on that photon track.</p>
+<p>True energies do not imply a zero angular residual under the stationary free-electron formula.
+The configured <a href="https://github.com/Geant4/geant4/blob/v11.3.2/source/processes/electromagnetic/lowenergy/src/G4LivermoreComptonModel.cc#L334-L412">Geant4 11.3.2 Livermore model</a>
+samples the scattering direction, then updates the photon energy using bound-electron momentum and shell binding
+(Doppler broadening). This model contribution is kept separate from errors in fitted positions and measured energies.</p>
+<p>On eight histories with matched positions and energies, substituting fitted positions changes the angular residual
+by <strong>0.44–16.59°</strong> in magnitude; substituting measured energy transfers changes it by <strong>0.005–0.049°</strong>.
+These controls support improving position and charge-sharing models. They are selected cases from the development
+acquisition, not a detector resolution or an independent efficiency measurement.</p>
+<details><summary>Compare the same-event angular terms and retained unknowns</summary>
+{comparison}
+<p>The signed terms add to the nominal-line angular residual, with a separate source-alignment term consistent with
+floating-point roundoff. The ledger keeps all 18 prespecified chronological triggers plus three named peak controls: eight complete
+signal substitutions, trigger 12,271 with truth only, trigger 12,841 with unresolved merged scatters, and eleven without
+the new observer. All original projected and unresolved weights remain intact.</p>
+<p>Trigger 12,271 deposits charge across two Y strips after its second photon interaction. A three-cell signal fit
+recovers the measured energy allocation but leaves a large Y28 waveform residual and a nearly tied four-cell alternative.
+Nine existing response banks have no off-center templates in its three cells. Local injections and independent holdouts
+are specified but have not run; the carrier collection endpoints remain unknown.</p>
+<p>The <a href="{DATA.name}">evidence JSON</a> includes every selected identity, exact photon step, substitution and unknown
+status, bound to its original ADC and replay hashes. Earlier estimate-based records remain preserved locally.</p>
+</details></section>'''
+
+
 def sections(data):
     from gegi_shared_clock_display import table
     from gegi_joint_imaging import REFERENCES
@@ -535,6 +586,7 @@ conditions and 0.035 keV for eight targeted Cs conditions. These are readout che
 resolution measurements or a calibrated selection rule.</p></details>
 <details><summary>Original triggers and interaction orders</summary>{events}</details></section>
 {origin_section(data)}
+{exact_kinetics_section(data)}
 <section class="panel" id="range"><h2>Conditional three-dimensional position</h2>
 <p>The fit searches a full sphere and ranges from {number(primary["radial_search_mm"][0], 0)} to
 {number(primary["radial_search_mm"][1], 0)} mm from detector (0, 0, 0). The primary model uses a nominal

@@ -48,6 +48,7 @@ class StudentRuntimePackage(unittest.TestCase):
                 self.assertIn('--incident-energy-keV ENERGY', guide)
                 self.assertIn('gegi_candidate_kinematics.py --saved-plane', guide)
                 self.assertIn('gegi_incident_geometry.py', guide)
+                self.assertIn('--retain-photon-kinematics', guide)
                 for tool in ('gegi_continuous_plane.py', 'gegi_joint_calibration.py', 'gegi_joint_two_site.py',
                              'gegi_candidate_topology.py', 'gegi_candidate_kinematics.py', 'gegi_incident_hypotheses.py',
                              'gegi_incident_geometry.py'):
@@ -79,7 +80,8 @@ class StudentRuntimePackage(unittest.TestCase):
     def test_streaming_runtime_closure_and_embedded_transport_rng_adapter(self):
         runtime = ('tools/gegi_streaming_acquisition.py', 'tools/gegi_streaming_readout.py',
                    'tools/gegi_resource_monitor.py', 'transport/gegi_streaming_source.py',
-                   'tools/gegi_candidate_imaging.py')
+                   'tools/gegi_candidate_imaging.py', 'transport/gegi_photon_steps.py',
+                   'transport/gegi_photon_step_observer.cc')
         for ref in runtime:
             self.assertIn(ref, self.bodies)
             missing = dict(self.bodies)

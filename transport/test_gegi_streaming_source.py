@@ -1,12 +1,14 @@
 """Clock, checkpoint, bounded allocation and exact RNG macro tests; no physics."""
 import copy
 from contextlib import closing
+from hashlib import sha256
 import json
 from pathlib import Path
 import sqlite3
 import tempfile
 import unittest
 from unittest.mock import patch
+import zlib
 
 import gegi_streaming_source as G
 import test_gegi_source as Legacy
@@ -35,6 +37,15 @@ class StreamingSourceTests(unittest.TestCase):
         self.assertEqual([{key: row[key] for key in original[0]} for row in whole], original)
         self.assertEqual([p['parent_decay_id'] for p in whole], list(range(100)))
         self.assertTrue(final['finished']); self.assertIsNone(final['pending_parent'])
+
+    def test_observer_opt_in_does_not_change_original_parent_clock(self):
+        original = G.default_config(parent_count=21)
+        enabled = {**original, G.PHOTON_KINEMATICS: True}
+        parents, baseline = self.collect(original, [7])
+        observed, final = self.collect(enabled, [7])
+        self.assertEqual(observed, parents)
+        self.assertEqual(final['rng_state'], baseline['rng_state'])
+        self.assertNotEqual(final['config_sha256'], baseline['config_sha256'])
 
     def test_fixed_duration_keeps_next_arrival_and_frontier_at_exact_end(self):
         config = G.default_config(duration_ns=415527.2846520245)
@@ -218,6 +229,47 @@ class StreamingSourceTests(unittest.TestCase):
                     db.execute('INSERT INTO events VALUES (1)')
                 self.assertGreater(G.retire(directory, consumer)['retired_now_bytes'], 0)
             self.assertFalse((directory/'truth.lh5').exists())
+
+    def test_retirement_requires_exact_observer_staging_and_retires_only_its_csv(self):
+        with tempfile.TemporaryDirectory(dir=G.h.ROOT/'.local') as temp:
+            root = Path(temp)
+            directory, consumer, verified = self.retirement_fixture(root)
+            sidecar = directory/G.observer.ARTIFACT
+            sidecar.write_bytes(b'owned mock photon observations')
+            observation = dict(kind=G.observer.KIND, file=sidecar.name, bytes=sidecar.stat().st_size,
+                               sha256=G.h.sha256(sidecar))
+            manifest_path = directory/'stream/manifest.json'
+            manifest = G.S.load(manifest_path)
+            manifest.update(candidate_photon_truth_kind=G.S.CANDIDATE_PHOTON_TRUTH_KIND,
+                            photon_step_observation=observation)
+            manifest_path.write_text(json.dumps(manifest), encoding='utf-8')
+            seal = G.S.load(directory/'seal.json')
+            seal['artifacts'].update({sidecar.name: observation['sha256'], 'stream/manifest.json': G.h.sha256(manifest_path)})
+            (directory/'seal.json').write_text(json.dumps(seal), encoding='utf-8')
+            scratch = root/'candidate-truth-scratch.sqlite'
+            receipt = G.S.load(consumer)
+            receipt.update(source_manifest_sha256=G.h.sha256(manifest_path),
+                           candidate_truth_scratch_ref=scratch.relative_to(G.h.ROOT).as_posix())
+            consumer.write_text(json.dumps(receipt), encoding='utf-8')
+            verified['counts']['nonzero_primaries'] = 1
+            verified['seal_sha256'] = G.h.sha256(directory/'seal.json')
+            with closing(sqlite3.connect(root/'candidate.sqlite')) as db, db:
+                db.execute('UPDATE source_blocks SET manifest_sha256=?', (receipt['source_manifest_sha256'],))
+            with closing(sqlite3.connect(scratch)) as db, db:
+                db.execute('CREATE TABLE events (block_index INTEGER, body BLOB, digest TEXT)')
+                wrong = b'{"photon_step_observation":{"status":"unavailable_not_recorded"}}'
+                db.execute('INSERT INTO events VALUES (1,?,?)', (zlib.compress(wrong), sha256(wrong).hexdigest()))
+            with patch.object(G, 'verify', return_value=verified):
+                with self.assertRaisesRegex(ValueError, 'exact staged observation provenance'):
+                    G.retire(directory, consumer)
+                self.assertTrue(sidecar.exists())
+                actual = json.dumps(dict(photon_step_observation={'status': 'observed_exact', **observation})).encode()
+                with closing(sqlite3.connect(scratch)) as db, db:
+                    db.execute('UPDATE events SET body=?,digest=?', (zlib.compress(actual), sha256(actual).hexdigest()))
+                self.assertGreater(G.retire(directory, consumer)['retired_now_bytes'], 0)
+            self.assertFalse(sidecar.exists())
+            self.assertEqual(G._retired(directory)[sidecar.name], observation['sha256'])
+            self.assertTrue((directory/'rng-after.rndm').exists())
 
     def test_explicit_native_empty_alias_adapter_keeps_legacy_strict(self):
         fixture = Legacy.GeGILH5(); fixture.setUp(); self.addCleanup(fixture.doCleanups)

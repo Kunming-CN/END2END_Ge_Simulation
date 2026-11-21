@@ -185,6 +185,33 @@ Trigger 12,841 returns no such cone. These are three selected controls, not cali
 the original maps retain their weights.</p>
 <p><a href="candidate-line-kinematics.json.gz">Complete measured-pair and incident-line ledger (lossless JSON gzip)</a> retains raw cosines,
 energy margins, both orders, original identities and all unknown cases. It applies no new selection or imaging weight.</p></details></section>
+<section class="panel" id="exact-photon-controls"><h2>Separate physical angular spread from reconstruction errors</h2>
+<p>Ten original transport blocks were replayed with an observational photon-step recorder. Original primaries,
+random states, canonical detector streams and native inputs matched. The recorder retains true pre/post photon
+energies and directions. In all ten selected histories, the source-to-first-scatter ray matches the recorded incoming
+direction to numerical precision; no prior discrete scatter is present on that photon track.</p>
+<p>True energies do not imply a zero angular residual under the stationary free-electron formula.
+The configured <a href="https://github.com/Geant4/geant4/blob/v11.3.2/source/processes/electromagnetic/lowenergy/src/G4LivermoreComptonModel.cc#L334-L412">Geant4 11.3.2 Livermore model</a>
+samples the scattering direction, then updates the photon energy using bound-electron momentum and shell binding
+(Doppler broadening). This model contribution is kept separate from errors in fitted positions and measured energies.</p>
+<p>On eight histories with matched positions and energies, substituting fitted positions changes the angular residual
+by <strong>0.44–16.59°</strong> in magnitude; substituting measured energy transfers changes it by <strong>0.005–0.049°</strong>.
+These controls support improving position and charge-sharing models. They are selected cases from the development
+acquisition, not a detector resolution or an independent efficiency measurement.</p>
+<details><summary>Compare the same-event angular terms and retained unknowns</summary>
+<div role="region" aria-label="Additive signed angular-residual terms on eight identical photon histories" tabindex="0" style="overflow-x:auto">
+<table><caption>Additive signed angular-residual terms on eight identical photon histories</caption><thead><tr><th scope="col">Trigger</th><th scope="col">Sample</th><th scope="col">Transport model (°)</th><th scope="col">Fitted position (°)</th><th scope="col">Measured transfer (°)</th><th scope="col">Nominal incident line (°)</th></tr></thead><tbody><tr><th scope="row">3,450</th><td>Chronological</td><td>1.235</td><td>13.752</td><td>0.0054</td><td>−0.00013</td></tr><tr><th scope="row">4,891</th><td>Chronological</td><td>−2.334</td><td>9.580</td><td>−0.0207</td><td>−0.00234</td></tr><tr><th scope="row">19,477</th><td>Peak control</td><td>−3.611</td><td>−2.813</td><td>−0.0304</td><td>−0.00427</td></tr><tr><th scope="row">21,482</th><td>Chronological</td><td>−0.458</td><td>−0.494</td><td>−0.0126</td><td>−0.00183</td></tr><tr><th scope="row">31,186</th><td>Chronological</td><td>3.243</td><td>−4.877</td><td>−0.0494</td><td>−0.00515</td></tr><tr><th scope="row">39,366</th><td>Chronological</td><td>0.264</td><td>−0.443</td><td>0.0277</td><td>−0.00015</td></tr><tr><th scope="row">42,261</th><td>Peak control</td><td>−1.315</td><td>16.590</td><td>−0.0173</td><td>−0.00124</td></tr><tr><th scope="row">49,855</th><td>Chronological</td><td>4.116</td><td>−1.711</td><td>−0.0261</td><td>−0.00287</td></tr></tbody></table></div>
+<p>The signed terms add to the nominal-line angular residual, with a separate source-alignment term consistent with
+floating-point roundoff. The ledger keeps all 18 prespecified chronological triggers plus three named peak controls: eight complete
+signal substitutions, trigger 12,271 with truth only, trigger 12,841 with unresolved merged scatters, and eleven without
+the new observer. All original projected and unresolved weights remain intact.</p>
+<p>Trigger 12,271 deposits charge across two Y strips after its second photon interaction. A three-cell signal fit
+recovers the measured energy allocation but leaves a large Y28 waveform residual and a nearly tied four-cell alternative.
+Nine existing response banks have no off-center templates in its three cells. Local injections and independent holdouts
+are specified but have not run; the carrier collection endpoints remain unknown.</p>
+<p>The <a href="evidence.json">evidence JSON</a> includes every selected identity, exact photon step, substitution and unknown
+status, bound to its original ADC and replay hashes. Earlier estimate-based records remain preserved locally.</p>
+</details></section>
 <section class="panel" id="range"><h2>Conditional three-dimensional position</h2>
 <p>The fit searches a full sphere and ranges from 20 to
 10,000 mm from detector (0, 0, 0). The primary model uses a nominal

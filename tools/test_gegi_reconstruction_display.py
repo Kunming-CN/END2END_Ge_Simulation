@@ -53,6 +53,13 @@ class ReconstructionDisplayTests(unittest.TestCase):
             self.assertIn('5.65', page)
             self.assertEqual(public['raw_angular_response']['triggers'][0]['original_trigger_id'], 12841)
             self.assertTrue(public['conditional_escape_geometry']['reconstruction_preserves_original_rows'])
+            exact = public['exact_photon_controls']
+            self.assertEqual(len(exact['rows']), 21)
+            self.assertEqual(sum(row['score_status'] == 'matched_energy_and_positions' for row in exact['rows']), 8)
+            self.assertEqual(exact['status_counts']['verified_exact_photon_kinetic_steps'], 10)
+            self.assertNotIn('response_coverage_trigger_12271', exact)
+            self.assertIn('0.44–16.59°', page)
+            self.assertIn('Doppler broadening', page)
             self.assertTrue((site / display.ENERGY_IMAGE).is_file())
             ids = re.findall(r'id="(trigger-[0-9]+)"', page)
             self.assertEqual(len(ids), len(set(ids)))

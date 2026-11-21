@@ -47,6 +47,8 @@ OWN_SOURCES = ('tools/gegi_streaming_acquisition.py', 'tools/gegi_streaming_read
                'tools/gegi_native_continuation.py',
                'tools/gegi_stream_id_continuation.py',
                'transport/gegi_streaming_source.py', 'transport/gegi_source_inventory.py')
+OBSERVER_SOURCES = ('transport/gegi_photon_steps.py', 'transport/gegi_photon_step_observer.cc')
+PHOTON_KINEMATICS = 'retain_photon_kinematics'
 STARTUP_POLICY = 'new_parent_decays_empty_daughters_at_start'
 STEADY_POLICY = 'secular_equilibrium_poisson_daughters_v1'
 COUNT_FIELDS = ('qualified_triggers', 'single_pixel_energies', 'additional_multi_strip_energies',
@@ -84,10 +86,11 @@ def source_config(name, count, seed, activities, positions, duration_s=None,
 
 
 def producer_identity(config, request):
+    sources = OWN_SOURCES + (OBSERVER_SOURCES if config.get(PHOTON_KINEMATICS) else ())
     return {'kind': KIND, 'source_config': config, 'native_request_sha256': mixed.file_sha(request),
         'candidate_truth_kind': truth.KIND,
         'environment': {'python': platform.python_version(), 'numpy': np.__version__, 'sqlite': sqlite3.sqlite_version},
-        'source_sha256': {ref: mixed.file_sha(ROOT / ref) for ref in OWN_SOURCES},
+        'source_sha256': {ref: mixed.file_sha(ROOT / ref) for ref in sources},
         'readout_tail_ns': mixed.READOUT_TAIL_NS, 'scope': 'Fresh shared-clock bounded streaming acquisition.',
         'native_primary_count_semantics': 'Configured count for startup; expected new-parent count for duration. Actual census is measured separately.'}
 
@@ -132,6 +135,9 @@ def _ingest(sink, directory, after, census, *, retain_truth=False):
         raise ValueError('The completed source deposit stream changed')
     if retain_truth and manifest.get('candidate_photon_truth_kind') != truth.PHOTON_KIND:
         raise ValueError('This acquisition requires the scored Ge photon truth stream before retiring transport')
+    expected_observation = manifest.get('source_contract', {}).get(PHOTON_KINEMATICS, False)
+    if expected_observation and (not retain_truth or 'photon_step_observation' not in manifest):
+        raise ValueError('This source block requires a bound Ge photon-step observation before retirement')
     event_count = 0
     with events.open(encoding='utf-8') as handle:
         for line in handle:
@@ -256,7 +262,8 @@ def _sealed_state(path, identity):
 def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
         positions_mm=((-40, 0, 40), (40, 0, 40)), on_progress=None, *, block_parents=None,
         resume=False, stop_requested=None, stop_after_blocks=None, stop_after_groups=None,
-        retain_validation_inputs=False, duration_s=None, initial_state_policy=STARTUP_POLICY):
+        retain_validation_inputs=False, duration_s=None, initial_state_policy=STARTUP_POLICY,
+        retain_photon_kinematics=None):
     output = Path(output).resolve()
     if not output.is_relative_to((ROOT / '.local').resolve()) or output == (ROOT / '.local').resolve():
         raise ValueError('Use an owned acquisition directory under this project .local')
@@ -275,6 +282,13 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
     if any(_linked(p) for p in (output, *output.parents) if p.is_relative_to(ROOT)):
         raise ValueError('Linked acquisition directory refused')
     config = source_config(output.name, primary_count, seed, activities_bq, positions_mm, duration_s, initial_state_policy)
+    saved_config = W.read(output / 'source-config.json') if resume else None
+    if retain_photon_kinematics is None:
+        retain_photon_kinematics = (saved_config or {}).get(PHOTON_KINEMATICS, False)
+    if type(retain_photon_kinematics) is not bool:
+        raise ValueError('Photon-step retention must be enabled or disabled explicitly')
+    if retain_photon_kinematics:
+        config[PHOTON_KINEMATICS] = True
     duration_ns = None if duration_s is None else duration_s * 1e9
     state = None
     def progress(status, stage, **fields):
@@ -289,7 +303,7 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
         if on_progress:
             on_progress(value)
     if resume:
-        if W.read(output / 'source-config.json') != config:
+        if saved_config != config:
             raise ValueError('Resume requires the original sources, seed, count and source state')
         request = output / ('stream-id-repair/native-request.json' if (output / 'stream-id-continuation.json').exists()
                             else 'native-only/native-request.json' if (output / 'native-only-continuation.json').exists()
@@ -601,13 +615,15 @@ def main():
     parser.add_argument('--stop-after-blocks', type=int)
     parser.add_argument('--stop-after-groups', type=int)
     parser.add_argument('--retain-validation-inputs', action='store_true')
+    parser.add_argument('--retain-photon-kinematics', action='store_true', default=None,
+                        help='Record the exact Geant4 kinematics of candidate-linked Ge gamma steps.')
     args = parser.parse_args()
     with W.execution_lease(ROOT):
         result = run(args.output, args.parents, args.seed, block_parents=args.block_parents,
             resume=args.resume, stop_after_blocks=args.stop_after_blocks,
             stop_after_groups=args.stop_after_groups,
             retain_validation_inputs=args.retain_validation_inputs, duration_s=args.duration_s,
-            initial_state_policy=args.initial_state_policy)
+            initial_state_policy=args.initial_state_policy, retain_photon_kinematics=args.retain_photon_kinematics)
     print(json.dumps({'status': result['status'], 'source': result['source']}))
 
 

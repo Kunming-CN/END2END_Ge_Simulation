@@ -19,7 +19,8 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
 * **Native worker:** `/root/native_response`, session74071, Python17496/Julia29040,
   phase `.local/gegi-reconstruction-v1/native-recovery-segment-crossing/`.
   Request SHA c709ec329bae0ab05789970b1a234d7d0bb7c17ae45a5049757cf86a55cbfaac.
-  Latest checked1439/1971:619complete,392step_limit,424failed,4stopped. Prefix only.
+  Latest checked 1619/1971: 701 complete, 441 step_limit, 473 failed, 4 stopped.
+  This is a running prefix, not the final repair rate.
   Actual checkpoint/active-worker/native SQLite are authoritative. One earlier
   109-group phase retains39complete/29limit/41failed; only the exact39complete
   records were inherited. Diagnostic.jl drift-only work remains untested WIP,
@@ -33,20 +34,34 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   six chronological ranks per window, not a population-weighted or new-seed test.
   Receipt `chronological-window-origins/origins.json` SHA
   410e4705e8cc3ee6c809998339b06c86dcd0b1c543c29951a3d2fd0860c4f0fe.
-  Now implementing an isolated observational photon-step sidecar through the
-  installed remage 1.1.0 AddSteppingAction API. It will retain true pre/post
-  kinetic energy, process and trajectory. Preserve the original executable;
-  first prove unchanged RNG/canonical stream/native inputs on original block 50.
+  The optional photon-step observer passed exact primary/RNG/canonical-stream/
+  native-input parity on ten original blocks. Its 130 photon steps include
+  15 Ge Compton steps and 34 unique original Ge-row joins. The original
+  executable and archive are unchanged. `photon-step-observer-v1/kinetic-audit.json`
+  SHA fc35c110a09fc39a13d063ceac7b81b10de9d955c14f93e6cbf2fcaab6e9702f.
+  Future candidate-truth integration is implemented and tested. New acquisitions
+  opt in with `--retain-photon-kinematics`; resume restores the saved choice.
+  Exact steps attach to the original Ge rows in `candidate-truth.jsonl.gz`.
+  All 34 retained Ge rows from ten blocks pass the real input join/staging
+  acceptance; 24 transport/observer and 14 acquisition checks pass. No new
+  acquisition or native calculation was needed for this integration.
 * **Position worker:** `/root/position_model`. Same-event substitutions on all
   18 chronological IDs plus three named peak controls are complete. Among eight
   fully paired cases, position-only |ARM change| is 0.44-16.59 degrees versus
   0.005-0.049 degrees for energy alone. Five chronological absorption controls
   give ARM RMS 2.417 degrees for true vertices plus retained transfer estimate,
-  6.841 for positions only, 2.396 for energy only, 6.844 for both. Exact photon
-  step kinetic energies are unavailable; child-birth/local-deposit energy is
-  explicitly only a conditional estimate. Photon vertices, deposit centroids
-  and signal positions stay distinct. `same-event-substitutions.json` SHA
+  6.841 for positions only, 2.396 for energy only, 6.844 for both. This earlier
+  conditional estimate is preserved in `same-event-substitutions.json`, SHA
   d4df4a23ac615b63d691b9faabe9ef0a50b181049614ec18849d21dba293860d.
+  Exact photon kinetics now confirm its transfer estimates within 2.27e-13 keV
+  on the observed controls. The new receipt retains all 21 original IDs and
+  weights: ten observed histories, eight complete signal substitutions, one
+  clean truth-only case and one merged case without a false two-site match;
+  eleven histories have no observer. Source alignment, bound-electron model,
+  position, measured-energy and nominal-line angular terms are separate and
+  sum within 1e-10 degrees. `same-event-exact-kinetics.json` SHA
+  9bca9f3d43f5f7fba86965873fe6a431934b2309953cc8343eb3a51dab4e0cd8.
+  Photon vertices, deposit centroids and signal positions remain distinct.
   Trigger 12271 is explained at the nominal deposit-cell level: the second
   photon deposits 365.027/105.176 keV across Y27/Y28. Four strip totals match
   measured energies within 0.102 keV; the three-cell fit recovers the allocation
@@ -54,8 +69,10 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   nearly tied. The original unresolved weight stays one; carrier endpoints are
   unknown. `trigger-12271/charge-allocation-diagnostic.json` SHA
   3cf6a6738ea846a037b3b94262602792473b8307e1b49b3b0ab6c91e969c362d.
-  Next check existing off-template response coverage for these cells; defer any
-  needed native injection until the current native worker closes.
+  Nine existing banks contain no off-center response in these three cells.
+  The exact-kinetics receipt specifies ten unrun 500-keV all-channel points,
+  including independent holdouts. Run them serially after the active native
+  worker and its priority cause diagnostics; reuse the existing field cache.
 
 ## Delivered reconstruction and scientific findings
 
@@ -136,20 +153,34 @@ public bytes match. `publication-assets.json` is the combined receipt. Center
 and `gegi-lateral-calibration-v1` downloads remain separate and unchanged.
 
 The new photon observer remains outside this release. Ten same-input sidecars
-now have exact primary/RNG/canonical-stream/native parity; session 82114 exited0.
+have exact primary/RNG/canonical-stream/native parity; session 82114 exited0.
 First receipt `photon-step-observer-v1/b000050/observer-verification.json` SHA
 900255ab37e41a8db53e635b336306612ab02a558eb2ce291220ff74474246fe.
 The first receipt writer had a path-type error after transport completed; it
 was corrected from retained outputs without rerunning. Source is in
-`transport/gegi_photon_step_observer.cc` and `transport/gegi_photon_steps.py`,
-currently ignored by the existing transport allowlist. Add accepted source
-explicitly in the next integrated milestone, never wholesale force-add.
+`transport/gegi_photon_step_observer.cc` and `transport/gegi_photon_steps.py`;
+the transport allowlist names these and their focused test explicitly.
+Three reader/configuration tests pass. Nine measured replay calls total
+79.486012193 s with peak RSS 182,534,144 bytes; the first call lacks a process
+resource receipt after its preserved writer error. No repeat transport was used.
 Observed exact energy/angle differences are separate from measurement errors;
 the frozen macro chooses Livermore, whose Geant4 11.3.2 Compton model includes
 bound-electron momentum and shell binding. No per-step shell label is recorded.
-Finish the exact-energy substitution update and future-truth integration, then
-synchronize the accepted observer and native changes together. Reuse current
-site/desktop evidence unless presentation changes again.
+Exact-energy substitutions and future-truth integration are complete. The latter
+acceptance SHA is 773088ef540dc50398d69032665d9b388c39a7d243ee86b9c86972d5e55536aa
+at `photon-step-observer-v1/candidate-photon-retention-acceptance.json`.
+The original reader bytes remain in the observer build evidence, preserving
+the first receipts after the reader extension. The package manifest now includes
+both observer sources; six package checks pass. The existing exhibit adds all
+21 exact-control records and the eight additive angular comparisons. Two display
+checks and 42 publication tests pass. Site build
+`90f02331125a1685927e7915e6501bc41a90221e9b2d6b05019ff434c560a316`
+has 1,914 files / 512,749,015 bytes and passes the local site check. Desktop
+Chrome verified homepage -> result -> expanded exact angular table and the
+photon-retention/resume guide. The first sandbox preview could not be reached;
+the owned localhost preview worked outside the sandbox, and both preview
+processes and the tab are closed. Source/package publication and live checks
+are pending. Native diagnostic WIP remains separate until tested.
 
 ## Baseline and retained evidence
 

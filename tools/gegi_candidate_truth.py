@@ -42,9 +42,23 @@ def attach(db, path):
 
 def store_event(db, event, manifest, manifest_hash):
     photon_truth = event['candidate_photon_truth']
+    descriptor = manifest.get('photon_step_observation')
+    observation = {'status': 'unavailable_not_recorded'}
+    chords = photon_truth['ge_gamma_steps']
+    if descriptor is not None:
+        if (descriptor['kind'] != 'gegi_photon_step_sidecar_v1'
+                or photon_truth.get('photon_step_observation_status') != 'observed_exact'):
+            raise ValueError('Observed Ge photon kinematics are missing from the declared source block')
+        for row in chords:
+            step = row.get('observed_transport_step')
+            if step is None or (step['event_id'], step['track_id'], step['parent_track_id']) != (
+                    event['transport_event_id'], row['track_id'], row['parent_track_id']):
+                raise ValueError('Observed Ge photon step differs from its original event and ancestry identities')
+        observation = {'status': 'observed_exact', **descriptor}
+    elif any('observed_transport_step' in row for row in chords):
+        raise ValueError('Observed Ge photon kinematics must be bound to the source manifest')
     abstart = event['absolute_parent_time_ns']
-    photons = [dict(step, absolute_time_ns=abstart+step['time_ns'])
-               for step in photon_truth['ge_gamma_steps']]
+    photons = [dict(step, absolute_time_ns=abstart+step['time_ns']) for step in chords]
     births = [dict(track, absolute_birth_time_ns=abstart+track['birth_time_ns']) for track in photon_truth['track_births']]
     deposits = [{key: step[key] for key in ('raw_row_index', 'deposit_id', 'energy_keV', 'position_mm',
                 'pre_position_mm', 'post_position_mm', 'absolute_time_ns', 'parent_relative_time_ns',
@@ -60,7 +74,8 @@ def store_event(db, event, manifest, manifest_hash):
         source_position_global_mm=event['source_position_global_mm'], absolute_parent_time_ns=abstart,
         source_lh5_sha256=manifest['source_lh5_sha256'], source_manifest_sha256=manifest_hash,
         source_events_sha256=manifest['events_sha256'], decay_photons=event['decay_photons'],
-        ge_gamma_steps=photons, positive_ge_deposits=deposits, track_births=births))
+        ge_gamma_steps=photons, positive_ge_deposits=deposits, track_births=births,
+        photon_step_observation=observation))
     db.execute('INSERT INTO candidate_truth.events VALUES (?,?,?,?)',
                (driver, block_index, zlib.compress(body), sha256(body).hexdigest()))
 
@@ -96,7 +111,8 @@ def _rows(db, identity):
     yield dict(record='schema', kind=KIND, acquisition_identity_sha256=sha256(encoded(identity)).hexdigest(),
         transport_schema=PHOTON_KIND, clocks='Transport step and birth raw ns are parent-relative. Native outcome time is relative to group onset.',
         coordinates='Detector/world XYZ in mm as written by the attested GeGI transport transform.',
-        gamma_step_process='Unknown. The scored Ge step table has no interaction process column. Track-birth processes are separate.',
+        gamma_step_process='The observer records the Geant4 step-defining process when present. Older scored Ge chords have unavailable step processes. Track births are separate.',
+        photon_step_observation='Matched original Ge gamma rows optionally carry observer step IDs, pre/post keV and direction, volume and Geant4 event-clock time. The sidecar is bound at the source block.',
         association='A trigger links to every available original group in its recorded context. The links do not identify the photon, deposit or group causing that trigger.')
     if db.execute('''SELECT 1 FROM candidate_truth.links l LEFT JOIN triggers t ON t.trigger_id=l.trigger
                      WHERE t.trigger_id IS NULL OR t.decision<>'candidate' LIMIT 1''').fetchone():
@@ -150,12 +166,15 @@ def publish(database, scratch, target, identity):
         if not target.exists():
             _publish_artifact(target, write)
         counts = {'trigger_context': 0, 'transport_event': 0, 'input_group_response': 0}
+        coverage = {'observed_exact': 0, 'unavailable_not_recorded': 0}
         with gzip.open(target, 'rb') as stream:
             for row in _rows(db, identity):
                 if stream.readline() != encoded(row)+b'\n':
                     raise ValueError('Published candidate truth differs from its verified staging records')
                 if row['record'] in counts:
                     counts[row['record']] += 1
+                if row['record'] == 'transport_event':
+                    coverage[row.get('photon_step_observation', {}).get('status', 'unavailable_not_recorded')] += 1
             if stream.read(1):
                 raise ValueError('Unexpected trailing data in the candidate truth export')
-    return dict(kind=KIND, status='verified_exact', file=target.name, counts=counts)
+    return dict(kind=KIND, status='verified_exact', file=target.name, counts=counts, photon_step_observation=coverage)

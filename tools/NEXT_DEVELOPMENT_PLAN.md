@@ -69,11 +69,16 @@ seven clean two-vertex, nine merged and two with three distinct vertices. Its
 same-event substitutions indicate larger angular changes from fitted positions
 than from measured energies in the eight fully paired controls (including two
 named peak escapes). These remain descriptive, equal-six-per-window controls;
-exact photon step kinetic energies were not recorded. The current concrete
-tasks add an observational kinetic-energy sidecar with exact old-stream/RNG
-parity, and investigate the clean trigger 12271's incompatible face-energy
-pairings using saved ADC and deposit geometry. Do not replace missing photon
-kinetic energy or collection endpoints with silently inferred truth.
+the new observer has now recovered exact photon kinetics on ten same-input
+histories with unchanged RNG, canonical transport and native inputs. Those
+kinetics confirm the earlier conditional energy-transfer estimates and separate
+the transport model's bound-electron angular term from reconstruction errors.
+The next concrete work connects the sidecar to future candidate-truth retention
+and tests trigger 12271's shared-charge boundary response. Nine existing banks
+have no off-center traces in its three cells; ten specified local injections,
+including holdouts, await the active native worker's completion. Collection
+endpoints remain unknown until those calculations run. Original five-second
+selection and image weights remain unchanged.
 
 **Completed readiness baseline before this resumed work:** the five-second mixed-source acquisition,
 its final count/resource accounting and its full saved-candidate imaging are

@@ -7,7 +7,7 @@ delays once. The consumer owns the chronological future-deposit queue/readout.
 from __future__ import annotations
 import argparse
 import ast
-from contextlib import closing
+from contextlib import ExitStack, closing
 import copy
 import hashlib
 import itertools
@@ -22,8 +22,10 @@ import shutil
 import sqlite3
 import subprocess
 import time
+import zlib
 
 import gegi_mixed_source as M
+import gegi_photon_steps as observer
 import gegi_source_inventory as inventory
 
 S = M.S
@@ -31,6 +33,7 @@ h = M.h
 KIND = 'gegi_streaming_source_config_v1'
 CHECKPOINT = 'gegi_streaming_source_checkpoint_v1'
 BLOCK = 'gegi_streaming_source_block_v1'
+PHOTON_KINEMATICS = 'retain_photon_kinematics'
 RNG_SOURCE = r'''#include "RMGDefaultCli.hh"
 #include "G4GenericMessenger.hh"
 #include "Randomize.hh"
@@ -63,7 +66,8 @@ def default_config(*, parent_count=100, duration_ns=None, seed=20261120, acquisi
 
 
 def validate(config):
-    h.require(type(config) is dict and set(config) == set(default_config()) and config['kind'] == KIND,
+    h.require(type(config) is dict and set(config) - {PHOTON_KINEMATICS} == set(default_config())
+              and config['kind'] == KIND and type(config.get(PHOTON_KINEMATICS, False)) is bool,
               'Unsupported streaming source configuration')
     legacy = M.default_config(primary_count=1, seed=config['seed'], acquisition_id=config['acquisition_id'])
     legacy.update({key: config[key] for key in ('clock_seed', 'sources')})
@@ -210,10 +214,13 @@ def _bound(binding):
     return path
 
 
-def _pins():
+def _pins(config):
+    observation = ({ref.relative_to(h.ROOT).as_posix(): h.sha256(ref)
+                    for ref in (observer.SOURCE, Path(observer.__file__).resolve())}
+                   if config.get(PHOTON_KINEMATICS) else {})
     return {**S.source_pins(), 'transport/gegi_mixed_source.py': h.sha256(M.__file__),
             'transport/gegi_streaming_source.py': h.sha256(__file__),
-            'transport/gegi_source_inventory.py': h.sha256(inventory.__file__)}
+            'transport/gegi_source_inventory.py': h.sha256(inventory.__file__), **observation}
 
 
 def build_rng_adapter(context):
@@ -259,7 +266,16 @@ def _context(config, directory):
     for ref, sha in meta['files_sha256'].items():
         h.require(h.sha256(context/ref) == sha, 'Shared source context changed: '+ref)
     S.geometry_log_check(context, meta['checked'])
-    return context, meta, build_rng_adapter(context)
+    if not config.get(PHOTON_KINEMATICS):
+        return context, meta, build_rng_adapter(context)
+    observed = h.local_path(context/'photon-step-cli')
+    if not observed.exists():
+        return context, meta, observer.build_observer(observed)
+    receipt = S.load(observed/'build.json')
+    executable = observed/'gegi-photon-step-remage'
+    h.require(receipt['status'] == 'complete' and receipt['source_sha256'] == h.sha256(observer.SOURCE)
+              and receipt['executable_sha256'] == h.sha256(executable), 'Photon observer build changed')
+    return context, meta, executable
 
 
 def block_macro(plan, count, restore=False, inventory_parameters=None):
@@ -309,7 +325,7 @@ def prepare_block(config, checkpoint, output, max_parents=500):
             'block_index': checkpoint['next_block_index'], 'primary_count': len(parents),
             'first_parent_id': parents[0]['event_id'], 'last_parent_id': parents[-1]['event_id'],
             'context': _binding(context/'prepared.json'), 'executable': _binding(executable),
-            'checkpoint_before_sha256': digest(checkpoint), 'source_sha256': _pins(),
+            'checkpoint_before_sha256': digest(checkpoint), 'source_sha256': _pins(config),
             'files_sha256': {path.name: h.sha256(path) for path in directory.iterdir() if path.is_file()}}
     h.publish_json(directory/'prepared.json', meta)
     return meta
@@ -496,7 +512,7 @@ def _retired(directory):
               record['seal_sha256'] == h.sha256(directory/'seal.json'), 'Retirement differs from the sealed block')
     _bound(record['consumer_receipt'])
     seal = S.load(directory/'seal.json')
-    allowed = {'truth.lh5', 'primaries.lh5', 'parents.jsonl', 'stream/events.jsonl'}
+    allowed = {'truth.lh5', 'primaries.lh5', 'parents.jsonl', 'stream/events.jsonl', observer.ARTIFACT}
     h.require(set(record['artifacts']) <= allowed and all(seal['artifacts'].get(ref) == sha
               for ref, sha in record['artifacts'].items()), 'Retirement contains an unsealed or non-scratch artifact')
     return record['artifacts']
@@ -508,8 +524,36 @@ def _check_artifact(directory, ref, sha, retired):
     else: h.require(h.sha256(path) == sha, 'Source artifact changed: '+ref)
 
 
-def events(directory, *, include_candidate_truth=False):
-    directory, block, meta, parents = _prepared(directory)
+def _observation(directory, block, receipt):
+    if not block['config'].get(PHOTON_KINEMATICS):
+        return None
+    info = receipt['photon_step_observation']
+    sidecar = directory/observer.ARTIFACT
+    h.require(info['kind'] == observer.KIND and info['file'] == sidecar.name
+              and info['bytes'] == sidecar.stat().st_size and info['sha256'] == h.sha256(sidecar)
+              and info['executable_sha256'] == block['executable']['sha256']
+              and info['observer_source_sha256'] == block['source_sha256']['transport/gegi_photon_step_observer.cc']
+              and info['observer_reader_sha256'] == block['source_sha256']['transport/gegi_photon_steps.py'],
+              'Photon-step sidecar or its observer producer changed')
+    return info
+
+
+def _attach_photon_observations(source_events, photon_events):
+    current = next(photon_events, None)
+    for event in source_events:
+        local = event['event_id']
+        h.require(current is None or current[0] >= local, 'Photon observation has no original local event')
+        available = current is not None and current[0] == local
+        if 'candidate_photon_truth' in event:
+            event['candidate_photon_truth'] = observer.observe_ge_chords(
+                event['candidate_photon_truth'], local, current[1] if available else ())
+        if available:
+            current = next(photon_events, None)
+        yield event
+    h.require(current is None, 'Photon observations extend past the original primary census')
+
+
+def _events(directory, block, meta, parents, include_candidate_truth, observation):
     meta = {**meta, 'primary_count': len(parents)}
     contracts = {row['contract']['id']: row['contract'] for row in meta['checked']['sources']}
     parameters = _inventory_parameters(S.load(directory/'checkpoint-before.json'))
@@ -524,11 +568,23 @@ def events(directory, *, include_candidate_truth=False):
         if current['source_contract']['id'] == inventory.DAUGHTER_SOURCE_ID:
             return inventory.validate_initial_tracks(rows, names, current, parameters)
         return S.primary_tracks(rows, names, current)
-    for event in S.events(directory/'truth.lh5', meta, event_metadata=for_event,
-                          native_empty_uid_aliases=True, primary_track_reader=read_tracks,
-                          include_candidate_truth=include_candidate_truth):
-        local = event['event_id']
-        yield _decorate(event, parents[local], local, block['block_index'])
+    with ExitStack() as files:
+        rows = files.enter_context(closing(S.events(directory/'truth.lh5', meta, event_metadata=for_event,
+                                   native_empty_uid_aliases=True, primary_track_reader=read_tracks,
+                                   include_candidate_truth=include_candidate_truth)))
+        if observation is not None:
+            photons = files.enter_context(closing(observer.photon_events(directory/observer.ARTIFACT)))
+            rows = _attach_photon_observations(rows, photons)
+        for event in rows:
+            local = event['event_id']
+            yield _decorate(event, parents[local], local, block['block_index'])
+
+
+def events(directory, *, include_candidate_truth=False):
+    directory, block, meta, parents = _prepared(directory)
+    observation = (_observation(directory, block, S.load(directory/'run.json'))
+                   if include_candidate_truth and block['config'].get(PHOTON_KINEMATICS) else None)
+    yield from _events(directory, block, meta, parents, include_candidate_truth, observation)
 
 
 def _decorate(event, parent, local, block_index):
@@ -560,10 +616,13 @@ def run_block(directory):
                '-o', 'truth.lh5', '-g', 'geometry.gdml', '--', 'run.mac']
     receipt = {'kind': BLOCK, 'status': 'failed', 'command': command,
                'prepared_sha256': h.sha256(directory/'prepared.json')}
+    sidecar = directory/observer.ARTIFACT
+    observed = meta['config'].get(PHOTON_KINEMATICS)
     started = time.perf_counter()
     try:
         with (directory/'run.log').open('x') as log:
-            child = subprocess.Popen(command, cwd=directory, stdout=log, stderr=subprocess.STDOUT)
+            child = subprocess.Popen(command, cwd=directory, stdout=log, stderr=subprocess.STDOUT,
+                                     env=observer.observer_environment(sidecar) if observed else None)
             _, status, usage = os.wait4(child.pid, 0)
             child.returncode = os.waitstatus_to_exitcode(status)
         receipt.update(returncode=child.returncode,
@@ -576,6 +635,12 @@ def run_block(directory):
         if (directory/'rng-input.rndm').exists():
             h.require((directory/'rng-before.rndm').read_bytes() == (directory/'rng-input.rndm').read_bytes(),
                       'Restored CLHEP state changed before the first new decay')
+        if observed:
+            receipt['photon_step_observation'] = dict(
+                kind=observer.KIND, file=sidecar.name, bytes=sidecar.stat().st_size, sha256=h.sha256(sidecar),
+                executable_sha256=meta['executable']['sha256'],
+                observer_source_sha256=meta['source_sha256']['transport/gegi_photon_step_observer.cc'],
+                observer_reader_sha256=meta['source_sha256']['transport/gegi_photon_steps.py'])
         receipt.update(status='complete', source_lh5_sha256=h.sha256(directory/'truth.lh5'),
                        rng_before_sha256=h.sha256(directory/'rng-before.rndm'),
                        rng_after_sha256=h.sha256(directory/'rng-after.rndm'))
@@ -588,11 +653,13 @@ def run_block(directory):
 
 
 def extract(directory, *, include_candidate_truth=False):
-    directory, meta, _, parents = _prepared(directory)
+    directory, meta, context, parents = _prepared(directory)
     if (directory/'seal.json').exists(): return verify(directory)
     receipt = S.load(directory/'run.json')
     h.require(receipt['status'] == 'complete' and receipt['source_lh5_sha256'] == h.sha256(directory/'truth.lh5'),
               'Block transport incomplete or changed')
+    observation = _observation(directory, meta, receipt)
+    include_candidate_truth = include_candidate_truth or observation is not None
     dest = directory/'stream'; h.require(not dest.exists(), 'Preserve incomplete derived block'); dest.mkdir()
     counts = {'initial_primaries': 0, 'zero_deposit_primaries': 0, 'nonzero_primaries': 0,
               'positive_ge_rows': 0, 'pulse_groups': 0,
@@ -602,7 +669,7 @@ def extract(directory, *, include_candidate_truth=False):
               'by_source': {source['id']: {'parents': 0, 'zero': 0, 'nonzero': 0}
                             for source in meta['config']['sources']}}
     with (dest/'events.jsonl').open('x', encoding='utf-8', newline='\n') as out:
-        for event in events(directory, include_candidate_truth=include_candidate_truth):
+        for event in _events(directory, meta, context, parents, include_candidate_truth, observation):
             counts['initial_primaries'] += 1
             counts['transport_primaries'] += 1
             counts['nonzero_primaries' if event['steps'] else 'zero_deposit_primaries'] += 1
@@ -641,6 +708,8 @@ def extract(directory, *, include_candidate_truth=False):
     if include_candidate_truth:
         manifest.update(candidate_photon_truth_kind=S.CANDIDATE_PHOTON_TRUTH_KIND,
                         source_lh5_sha256=receipt['source_lh5_sha256'])
+    if observation is not None:
+        manifest['photon_step_observation'] = observation
     h.publish_json(dest/'manifest.json', manifest)
     seal = {'kind': BLOCK, 'status': 'sealed', 'block_index': meta['block_index'],
             'config_sha256': digest(meta['config']), 'counts': counts,
@@ -662,7 +731,7 @@ def verify(directory):
 
 
 def retire(directory, consumer_receipt):
-    """Retire this block's four raw scratch files only after durable ingestion."""
+    """Retire this block's raw scratch only after durable ingestion."""
     directory = h.local_path(directory)
     verified = verify(directory)
     consumer_receipt = h.local_path(consumer_receipt); receipt = S.load(consumer_receipt)
@@ -690,10 +759,21 @@ def retire(directory, consumer_receipt):
                   'Candidate truth scratch must belong to the same acquisition')
         with closing(sqlite3.connect(scratch.as_uri()+'?mode=ro', uri=True)) as db:
             events = db.execute('SELECT count(*) FROM events WHERE block_index=?', (verified['block_index'],)).fetchone()[0]
+            if (observation := manifest.get('photon_step_observation')) is not None:
+                for packed, expected in db.execute('SELECT body,digest FROM events WHERE block_index=?', (verified['block_index'],)):
+                    plain = zlib.decompress(packed)
+                    staged = json.loads(plain).get('photon_step_observation')
+                    h.require(hashlib.sha256(plain).hexdigest() == expected
+                              and staged == {'status': 'observed_exact', **observation},
+                              'Photon observer scratch retirement requires the exact staged observation provenance')
         h.require(events == verified['counts']['nonzero_primaries'],
                   'Transport retirement requires the committed positive-deposit photon truth census')
     seal = S.load(directory/'seal.json')
     refs = ('truth.lh5', 'primaries.lh5', 'parents.jsonl', 'stream/events.jsonl')
+    if (observation := manifest.get('photon_step_observation')) is not None:
+        h.require(seal['artifacts'].get(observer.ARTIFACT) == observation['sha256'],
+                  'Photon observer scratch differs from the sealed source manifest')
+        refs += (observer.ARTIFACT,)
     record = {'kind': 'gegi_streaming_source_retirement_v1', 'seal_sha256': verified['seal_sha256'],
               'consumer_receipt': _binding(consumer_receipt),
               'artifacts': {ref: seal['artifacts'][ref] for ref in refs},
