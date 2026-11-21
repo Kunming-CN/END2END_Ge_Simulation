@@ -14,8 +14,8 @@ The student workflow runs from detector and source selection through transport, 
 
 **Current readiness, November 21:** the same five-second mixed-source acquisition,
 its final count/resource accounting and its full saved-candidate imaging are
-complete. Finish the source/runtime/site delivery and publication below, then
-end and delete scheduled heartbeat `gegi`. The owner inspects the delivered
+complete. Verified source, student runtime and site delivery are published, and
+scheduled heartbeat `gegi` has been ended and deleted. The owner inspects the delivered
 configuration and budget before any 90.09-second/20-million-new-parent launch.
 Production remains one physical mixed-source experiment from particle generation
 onward; no larger run starts automatically.
@@ -51,16 +51,18 @@ producer versions, failures and delayed records. The compact accounting is
 canonical imaging derivative are under
 `.local/gegi-candidate-runs/steady-five-seconds/`.
 
-**Remaining delivery and stop condition:**
+**Delivery completed; automatic development ended:**
 
-1. Synchronize verified source, the changed student runtime and maintained site
-   with GitHub, completing the required saved-output, release and desktop-browser
-   checks. Reuse the completed physics, candidate replay and continuity evidence.
-2. Leave the proposed configuration and conditional resource budget below in the
-   owner handoff. Record remaining numerical/experimental limitations without
-   turning publication into another open-ended research or review round.
-3. After published readiness, end and delete heartbeat `gegi`, report the delivered
-   result and stop. The owner decides whether and when to launch the larger case.
+1. Source, student runtime and maintained site are synchronized with GitHub.
+   Exact package bytes, desktop Control/map reuse and the corrected guide were
+   checked; 1,013 deployed files match the final site build. See PROGRESS.md for
+   release and deployment identities.
+2. The proposed configuration and measured conditional resource budget below
+   are ready for owner inspection. Known numerical and experimental limitations
+   remain explicit; no larger production acquisition has been launched.
+3. Heartbeat `gegi` was deleted after publication. No automatic development or
+   repeated simulation is pending. The owner decides whether and when to launch
+   the larger case.
 
 Duration and new-parent-count configuration are now uncapped by the former
 five-second/500-parent development ceilings. Defaults remain five seconds and

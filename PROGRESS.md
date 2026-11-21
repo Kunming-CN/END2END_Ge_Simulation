@@ -2,12 +2,11 @@
 
 ## Current handoff, November 21
 
-**Readiness implementation and five-second acceptance are complete; publication
-is in progress.** The original acquisition exited with code 0. No acquisition or
+**Readiness implementation, five-second acceptance and publication are complete.** The original acquisition exited with code 0. No acquisition or
 analysis worker remains, and no 90.09-second/20-million-parent run was launched.
 The owner inspects the delivered software and results before that production
-choice. End the `gegi` heartbeat after the verified source, student package and
-Pages update are synchronized. Unrelated automations remain unchanged.
+choice. Heartbeat `gegi` has been ended and deleted after verified source, student
+package and Pages publication. Unrelated automations remain unchanged.
 
 The same physical acquisition generated **924,676 new Cs-137 parents and 185,199
 new Co-60 parents**, plus 867,305 initial daughters: 1,109,875 new parents and
@@ -81,14 +80,20 @@ Node UI contracts. Six package tests and 38 publication tests pass. The generate
 site and `check_site.py` pass: build
 `bf271437b7b7d7ff3708bea2758defb15ae61f22507370e7b42b07f7a5d3388c`,
 1,909 files, 503,709,873 bytes, 126 HTML pages, 3,773 local links and 281 fragments.
-Only the guide and site manifest changed. Source `22af0d7d6dc1` and its exact
-student package are published and the remote ZIP digest matches. Final rendered
-guide inspection caught the old pinned download link; it now uses the latest
-release route shared by README. Six package checks and regenerated-site validation
-pass for this correction.
-The first live-file check encountered HTTP 503; retry after the corrected guide
-deploys. Do not repeat the completed physics,
-ADC replay, or earlier stop/resume evidence merely to publish it.
+Only the guide and site manifest changed. Runtime source `b283e89fe205` and the
+[latest student package](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-b283e89fe205)
+are published: 1,336,704 bytes, 241 source files plus package metadata, SHA-256
+`fe3caae521a02f5294c8509982d61b00646455e0e6d032bd89038828283b1c96`.
+The remote digest and latest-release route match; separate calibration is unchanged.
+The guide download now follows that latest release, matching README. Desktop
+Chrome verified the current guide and link without downloading. Pages deployment
+44878682865 succeeded; `check_site.py --url` verified 1,013 live files against the
+exact build above. Two transient HTTP 503 failures motivated a small GET retry
+fix; its four focused tests and the full live verification pass. That publication
+tool correction is synchronized in `528a926` and changes no runtime or site bytes.
+The owned previews and calculation workers have ended. No required development
+or publication work remains in this readiness milestone; await owner inspection.
+Do not repeat completed physics, ADC replay or stop/resume evidence.
 
 Existing continuation evidence is retained under `.local/steady-acquisition-v1/`:
 prefix/native-only/stream-ID/transport-link producer archives and bridge receipts.
