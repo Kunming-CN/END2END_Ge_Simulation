@@ -28,21 +28,21 @@ and GPT-6.1 Sol Ultra (native).
   `owned-session.json` and `continuation-handoff.json`. Do not restart or edit
   pinned sources. Prior cap and small acceptance phases are closed.
 * **Candidate:** `/root/candidate_attribution` completed the full normalized
-  2,400-point saved-cohort diagnostic. It now reconstructs the first ten accepted
-  independent ideal observations per cohort. One ordered escape-curve reference
-  is sealed; its 61 exact samples are retained. A faster Gaussian-measure method
-  is being checked on that same reference before the resumable 40-curve bank.
-  Blind scores must be hashed before separate truth scoring. Keep empirical
-  joint measures matched to their own normalization and all uncomputed IDs.
+  2,400-point saved-cohort diagnostic and the first ten independent ideal
+  observations per cohort. All 40 ordered curves pass; the original reference,
+  faster bank, one necessary refinement and sealed blind/truth scores remain
+  separate. It now fits continuous source coordinates and radial direction
+  profiles to resolve coarse angular-grid error before expanding the sample.
+  Extend only needed curve domains; no extrapolation or truth-seeded fits.
 * **Position:** `/root/position_model` completed all 25 empirical curve tails
   and a normalized angular-energy mixture on unchanged atoms. Both absorption
   and escape now cover all 336 saved cobalt states. Global energy support is
-  derived exactly; only one lower coefficient anchor remains for global Co1173
-  escape. Its independent ideal forward sample is complete (100 cases at each
+  derived exactly; the single lower coefficient anchor now closes global Co1173
+  escape support. Its independent ideal forward sample is complete (100 cases at each
   non-grid source). A same-kernel Gaussian-probability quadrature has measured
   acceptance; the original production method stays unchanged. It now closes
-  the single global coefficient gap and provides a joint-atom sampler for the
-  empirical normalizer. No new native scattering samples or production weights.
+  the matching empirical topology normalizer using the verified joint-atom
+  sampler. No new native scattering samples or production weights.
 
 ## Accepted native repair and continuous-readout evidence
 
@@ -225,12 +225,20 @@ Exact support closures over every angular hat give first outgoing minima
 94.2014701/54.6044648/128.5207201keV at662/1173.228/1332.492keV. The second free
 Compton minima use the canonical510.99895069keV electron mass. The only global
 coefficient gap is44.9894706266-45.2908031927keV for the1173.228escape branch;
-one endpoint anchor would close it at the existing interpolation spacing.
+one endpoint anchor closes it at the existing interpolation spacing.
 Disjoint support intervals and their archived-atom witnesses remain explicit.
 `first-scatter-global-support.json` SHA
 `80f4c6aae958038bd7126b6bad0c8ee0641ffc9c5bcb5ba39456eb4e4169a0c5`;
 one analytic endpoint/union test passes. No new coefficient query was required
 to establish these bounds;661.657keV remains unrepresented.
+The subsequent exact44.98947062660872keV query succeeded with zero primaries:
+2.499s,139,300,864bytes peak. Combined225initialized anchors cover the represented
+global model. `empirical-global-rates/execution.json` SHA
+`19f6d6b46e26a10ff80df30688b8b5b2942e94880cc18e1300a652ed8e03e378`.
+The single-uniform conditional sampler retains the joint angular density and
+uses the same outgoing atom for all downstream factors. Two analytic mass/CDF
+checks pass; native first-scatter and canonical second-scatter electron masses
+remain explicit.
 
 `gegi_first_compton_arrival.py` supplies isotropic spreading, survival through
 active Ge and the first-Compton rate per emitted photon per mm^3. All 504 saved
@@ -286,6 +294,28 @@ executionSHA4702ee490ec447b1570ec45deae32d497f41c049daa2b1704fb2b733c6af8d8d.
 This validates an ideal mathematical sampler, not Geant4 transport, ADC or
 detector performance. The first10percohort are the reconstruction acceptance;
 all200remain available without regenerating samples or changing seeds.
+The same-kernel Gaussian-probability quadrature retains full physical support
+and finite log tails. Against61exact original references its maximum log error
+is0.0001381;16/32rule difference is0.0004759. Observed-factor checks took2.937s,
+versus94.170s for the prior call that also computes unobserved mass, so these
+are distinct workloads. The40curve bank took126.956s; one actual convergence
+failure required a2.797s128-order overlay. All40then pass maximum heldout log
+error0.009948 and direct adjacent-rule difference0.009626. Original failed and
+passing references are retained. Nine focused Gaussian/atom/forward tests pass;
+root checked exact source bindings and observation/blind/truth hashes.
+
+The first10events per cohort were scored with both randomized site orders and
+both physical branches before truth was opened. All20are retained; no missing
+order mass is renormalized away. Both select the nearest sampled direction,
+with3.907/5.839degree errors. Radial grid maxima are72.999/447.214mm versus
+true63.640/111.238mm, giving10.449/336.743mm position errors. Results agree across
+the four numerical scrambles/prefixes. The roughly20degree angular grid can
+confound radial inference; continuous direction/range optimization is the next
+concrete check. This is neither calibrated range nor detector validation.
+`ideal-forward-validation/first10-source-blind.json` SHA
+`0135383e262499269011263aa6977969793803a5e76d83e929adc503f02c41c5`;
+subsequent truth-score SHA
+`ddcce414910ec0433f2b69d38215294412e107122bf9ce16db9b98cf2b59ee74`.
 No activity or source truth is supplied. Passive attenuation,
 selected-acquisition normalization, secondary containment, position uncertainty
 and merged topology remain open before physical model weights and independent

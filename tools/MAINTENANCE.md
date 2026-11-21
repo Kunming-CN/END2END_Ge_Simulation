@@ -136,6 +136,8 @@ and retains unchanged holdouts and baseline conditional results.
 `gegi_empirical_energy_support.py` maps each atom over its angular-hat support
 to exact energy-support closures, preserving disjoint intervals and the archived
 samples setting each endpoint. Coefficient gaps remain explicit.
+`gegi_empirical_atom_sampling.py` samples the same joint conditional energy
+measure with one uniform coordinate and retains its angular density.
 `gegi_trial_joint_photon_response.py` adds first arrival to the saved trial grid.
 `gegi_ideal_two_interaction_mass.py` integrates the matching ideal free-electron
 two-interaction model with scrambled Sobol rays. It is a photon-topology mass,
@@ -147,6 +149,13 @@ retains undefined events, and hashes the blind grid result before truth scoring.
 `gegi_ideal_forward_sample.py` provides independent pseudorandom ideal-model
 observations with randomized labels and separate truth/accounting. It is not
 an ADC simulator or detector-performance validation.
+`gegi_gaussian_escape_quadrature.py` integrates the same escape kernel in the
+Gaussian probability variable; its benchmark preserves frozen reference values.
+`gegi_ideal_forward_reconstruction.py` builds declared observation curves;
+`gegi_ideal_forward_fast_bank.py` reuses verified references and the faster rule.
+`gegi_ideal_forward_curve_overlay.py` retains targeted failed-rule refinements
+without overwriting their parent bank. `gegi_ideal_forward_score.py` seals the
+source-blind grid fit before its separate truth-scoring command.
 `gegi_boundary_failure_recovery.py` resumes the identified boundary-failure
 class over the sealed duration-extension baseline. Exact accepted responses
 are inherited; per-group producer, timing and support layers remain explicit.

@@ -140,9 +140,14 @@ are complete in88.297s using exact shared spectral factors. The saved21-trigger
 source-blind diagnostic retains seven uncomputed records; its nominal1173case
 still peaks at the10m boundary. This is a small cohort, not full-five-second
 performance. Independent ideal samples at two off-grid sources are now retained:
-first reconstruct ten events each with randomized labels and separate truth,
-then reuse the remaining samples for numerical/statistical checks. Measure and
-validate the faster Gaussian-measure escape integral before expanding that bank.
+the first ten each now have sealed blind and subsequent truth scores. All40
+ordered curves pass, including one targeted refinement; the faster Gaussian-
+measure integral preserves the original references. Both sources select the
+nearest sampled direction, but their radial maxima72.999/447.214mm have markedly
+different errors. Resolve the coarse angular grid with continuous source and
+fixed-radius direction optimization before interpreting range or adding samples.
+The one global empirical coefficient gap is closed and the joint-atom sampler
+passes; its matched topology-normalization pilot is next.
 Match the empirical normalizer to its joint measure, and keep ideal topology
 selection distinct from actual ADC selection and confidence calibration.
 Secondary containment, position/Doppler response, passive material and acquisition
