@@ -23,6 +23,10 @@ while fixed metadata and measured free pages are counted once. New parents remai
 the scaling denominator, separately from initial daughters. Nine focused tests
 pass, including fresh source settings, page accounting and streamed ledger reads.
 This is candidate-core accounting, not yet the final five-second whole-run budget.
+Source `b2d29162664f` and its
+[student package](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-b2d29162664f)
+are published. The 1,319,261-byte ZIP has 241 members; the remote digest matches
+the exact-Git package receipt in `.local/student-runtime-p1/delivery.json`.
 All 39 active producer files still match the preserved phase-3 producer archive;
 the acquisition was untouched and healthy at 4.171437454 s on this activation.
 
