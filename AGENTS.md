@@ -1,5 +1,31 @@
 # Project working rules
 
+## Owner update — 2026-11-20 scheduled production preparation
+
+The owner explicitly resumes scheduled development in the existing GeGI
+heartbeat. Let the active five-second acquisition finish without restarting it
+or modifying its pinned producers. Use short scheduled activations and independent
+nonconflicting development instead of foreground minute-by-minute observation.
+Then complete the remaining readiness work in tools/NEXT_DEVELOPMENT_PLAN.md:
+final five-second census/candidate verification, measured resource and 90.09 s
+storage/runtime projections, and the fresh candidate-to-reconstruction handoff.
+Reuse completed continuity and stop/resume evidence. Fix actual execution or
+usability blockers; do not introduce extra AI, safety or boundary review rounds,
+arbitrary simulation-size ceilings, or speculative defensive infrastructure.
+
+If the same blocker recurs on two consecutive activations, prioritize its concrete
+cause and correction instead of issuing another unchanged reminder. Consult
+primary references or upstream projects when they resolve a specific difficulty.
+Keep necessary scientific/result checks, original data and unique failures;
+never manufacture a pass or bypass an external permission or usage requirement.
+Record an external blocker accurately if it requires the owner. No resets.
+
+When the recorded readiness conditions are met and verified software is
+synchronized with GitHub, pause this heartbeat and leave one compact handoff
+for the owner's inspection. Do not launch the 90.09 s or 20-million-parent
+production acquisition automatically. This update supersedes older automation
+pauses for this development scope only; unrelated automations stay unchanged.
+
 ## Owner update — user-configured simulation size
 
 Remove artificial duration, event-count and deposit-row execution ceilings from

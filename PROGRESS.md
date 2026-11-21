@@ -2,11 +2,27 @@
 
 ## Current handoff, November 20
 
-**Continuous acquisition repaired; same run active (November 20, 21:05 Chicago):**
+**Scheduled readiness development resumed (November 20, 22:38 Chicago):**
+The owner authorized the existing `gegi` heartbeat every 15 minutes in this chat,
+through the remaining readiness work in [the plan](tools/NEXT_DEVELOPMENT_PLAN.md).
+Its ACTIVE setting and target chat were read back from the app configuration;
+no new scheduled execution has yet been observed. Other automations remain
+unchanged. The foreground minute observer (session 8667) has stopped; the actual
+acquisition continues. After final five-second verification, finish measured
+resource accounting and the fresh candidate-to-analysis handoff, resolve concrete
+execution blockers, synchronize verified changes, then pause `gegi` for owner
+inspection. Do not automatically start 90.09 s/20-million-parent production.
+Reuse completed continuity tests. Two consecutive occurrences of the same blocker
+require cause-specific repair, not another unchanged reminder or extra review.
+
+**Continuous acquisition repaired; same run active:**
 The five-second Cs-137/Co-60 run has resumed from its original source, RNG and
-34-channel readout checkpoint. Actual readout time is 2.806565347 s; source time
-is 2.826249592 s. Native worker PID 25948 is active. Inspect live progress and
-host processes before any action; do not restart or launch another acquisition.
+34-channel readout checkpoint. The latest saved snapshot is at readout time
+3.966990613 s, with 880,886 new parents and 690,114 initial daughters; it is still
+running. Host inspection at 22:38 Chicago confirms acquisition Python PID 18224,
+created at 21:04:03, with the original output, seed and five-second duration.
+Inspect live progress and host process identities before any action; do not
+restart or launch another acquisition, or edit its pinned producer files.
 
 The original failure at 2.798250853 s was an invalid expected-count ID ceiling:
 621,834 new parents plus 489,166 initial daughters had produced 1,111,000
@@ -41,11 +57,14 @@ has the verified 1,317,716-byte software ZIP, SHA-256
 240 sources plus metadata. GitHub's asset digest matches; separate calibration
 is unchanged. Pages deployment 44859421534 succeeded; live verification checked
 1,013 files against the exact build. Final five-second census, storage and timing
-remain pending. At 21:13 Chicago the readout reached 2.902843500 s; the preceding
-five-minute slope suggests about three hours remaining, with event-dependent
-variation. The active acquisition exec session is 85953; read-only minute-check
-session is 8667. The latter only observes and never restarts computation.
-Current-session status checks continue; unattended automation is not enabled.
+remain pending. The active acquisition exec session is 85953. Scheduled development
+now replaces foreground observation; while this run remains active, do only
+independent work that does not compete for its calculation lease or alter inputs.
+Historical `.local/autonomy/*.lock` receipts inspected this session have no active
+worker and retain prior milestone evidence; their directory names alone are not
+current ownership. The acquisition's workflow lease remains authoritative for
+conflicting calculation work. Update actual state when it finishes before taking
+over the next milestone; preserve the historical receipts.
 Earlier snapshots below are historical and do not override this live handoff.
 
 **Website refinement:** archive viewers now identify their saved population and

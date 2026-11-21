@@ -12,9 +12,41 @@ The student workflow runs from detector and source selection through transport, 
 
 ## Delivery order
 
-**Current decision, November 20:** candidate-only storage implementation and bounded fresh validation are authorized. Large production and scheduled continuation remain paused. The requested 20-million-parent case is a measured storage projection, not a production launch. Future production is a single mixed-source experiment from particle generation onward.
+**Current decision, November 20:** scheduled development is authorized through
+large-acquisition readiness. Finish the existing five-second acquisition and the
+remaining work below, then pause the development heartbeat for owner inspection.
+The 90.09-second/20-million-parent case remains a resource projection and proposed
+configuration, not an automatic production launch. Production is a single
+mixed-source experiment from particle generation onward.
 
-**Delivered bounded path:** the mixed-source generator, existing native worker,
+**Remaining delivery and stop condition:**
+
+1. Finish the same five-second acquisition in
+   `.local/gegi-candidate-runs/steady-five-seconds`. Verify final parent/daughter,
+   zero/nonzero, complete/unavailable/outside-window and trigger/candidate totals,
+   candidate replay and finite unknown-history exclusions. Preserve delayed
+   deposits beyond the acquisition window and all unique failure evidence.
+2. Measure throughput, peak memory, peak temporary disk and final retained bytes,
+   including provenance, failures and delayed records. Update the 90.09-second
+   estimate with uncertainty; distinguish a fixed duration from exactly 20 million
+   new parents, and count initial daughters separately. Identify concrete execution
+   bottlenecks from these measurements and fix blockers to practical use.
+3. Verify or connect the fresh candidate store to the existing measured-data
+   reconstruction and imaging functions, retaining fixed selections, interaction
+   order rules, priors, original identities and unassigned/unknown weight. Reuse
+   saved data and completed Control/continuity tests; validate only changed paths.
+4. Synchronize verified source and any changed student runtime or exhibits with
+   GitHub. When the preceding results and a usable production configuration/resource
+   estimate are recorded and execution blockers are resolved, pause heartbeat
+   `gegi` and leave a compact owner handoff. Quantitative detector-accuracy limits
+   remain explicit; they do not initiate another open-ended research prerequisite.
+
+During the current run, leave pinned producers and scientific outputs untouched;
+advance only independent work. Do not repeat completed physics or continuity runs.
+Two consecutive occurrences of the same blocker require prioritizing its cause
+and correction, not repeating an unchanged reminder or weakening result checks.
+
+**Earlier startup evidence:** the mixed-source generator, existing native worker,
 continuous readout and conservative candidate store are connected in Control.
 All available signals enter readout; clean single-pixel and guard-only records
 keep counts/reasons without waveforms. Multi-strip and ambiguous candidates keep
@@ -34,12 +66,13 @@ cache. Fresh-run auxiliary provenance/failures and peak temporary space remain
 separate and unmeasured at that scale. The estimate uses historical libraries;
 the zero-candidate startup is not a storage-yield reference.
 
-**Next production milestone:** replace finite in-memory transport/current input
-with bounded blocks, preserve pending daughter emissions and electronics state
-in resumable checkpoints, and measure maximum temporary disk and memory. Verify
-block/stop-resume equivalence before enabling long acquisitions. Current fresh
-execution is deliberately limited to 1–500 parents. Do not infer production
-readiness or promise a fixed whole-run disk budget from the final archive size.
+**Delivered streaming implementation:** bounded transport/current blocks now
+preserve pending daughters and electronics state in resumable checkpoints.
+The recorded 100-parent split-50/50 fresh run, 50 ms two-restore check and 102 ms
+steady-source check provide continuity evidence; reuse the exact applicable
+receipts in PROGRESS.md. Five-second final resource accounting remains pending.
+The former 500-parent development size is not a runtime ceiling. Do not infer a
+whole-run disk budget from final candidate archive size alone.
 
 1. Put Cs-137 at (−40, 0, 40) mm and Co-60 at (+40, 0, 40) mm in one GeGI geometry. Use the commercial reference activities, 185 kBq and 37 kBq. Generate fresh decays on one absolute timeline with a source label and its corresponding position. For constant activities, the combined Poisson rate is 222,000 per second, with source probabilities 5/6 and 1/6. Preserve each decay's emission cascade and delayed daughters. Define pre-exposure activity so the acquisition starts in the intended physical state.
 2. Transport that mixed stream in the same detector. Drift charge for its deposits, sum overlapping electrode currents and process them through the same continuous preamplifier, shaper, noise, ADC and trigger. Keep electronics and clocks continuous across computational buffers for **at least 60 seconds**.
@@ -47,7 +80,7 @@ readiness or promise a fixed whole-run disk budget from the final archive size.
 
 The earlier [25-window readout study](../docs/results/gegi-shared-readout/index.html) used archived per-isotope histories in one shared electronics simulation per 250 ms window. It provides a readout comparison, not a completed full-generation run under this plan.
 
-### Mixed-source milestone contract (bounded validation authorized)
+### Mixed-source milestone contract (development authorized; production awaits owner)
 
 The next implementation reuses the existing geometry, fields, carrier transport and readout functions. Its new responsibility is connecting fresh mixed-source generation to continuous detector state. Before any resumed calculation, record these inputs and outputs in the run configuration and checkpoint:
 
@@ -57,7 +90,7 @@ The next implementation reuses the existing geometry, fields, carrier transport 
 | Identity and time | One immutable acquisition ID and unique parent-decay ID identify the isotope and position. Daughter, emission, transport event and deposit IDs retain their parent relationships and absolute times, including delayed daughters across buffers. A trigger may contain multiple parents; one parent may contribute to multiple triggers. |
 | Continuous processing | Carry pending daughters and current tails, preamplifier/shaper/filter state, noise generator state, ADC sample index, trigger state and unfinished readout windows across buffers. A checkpoint also binds configuration/input hashes and the last committed identities so restart neither repeats nor drops records. |
 | Bounded acceptance after resumption | Process the same finite fresh-source input continuously, in several buffer sizes and through stop/resume. Compare identities, time ordering, deposited energy, signed charge, ADC codes and trigger/reconstruction records; document any necessary numerical tolerance. Place delayed emissions and overlapping pulses at buffer boundaries. Retain zero/nonzero/failure/unknown counts and close every stage's census before scaling. |
-| Production | Only after the bounded path passes, run one uninterrupted acquisition of at least 60 s. Report actual parent decays, deposits, triggers, accepted energies, usable imaging candidates, exclusions and unknowns separately. A completed pipeline alone does not establish instrument accuracy. |
+| Production | After the readiness work passes, present one uninterrupted acquisition of at least 60 s for owner inspection; launch only after that decision. Report actual parent decays, deposits, triggers, accepted energies, usable imaging candidates, exclusions and unknowns separately. A completed pipeline alone does not establish instrument accuracy. |
 
 At the specified constant activities, the expected 60 s parent census is
 222,000 s⁻¹ × 60 s = **13,320,000 parent decays**, not triggers or imaging events.
