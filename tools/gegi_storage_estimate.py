@@ -18,6 +18,8 @@ import zlib
 KIND = 'gegi_candidate_storage_reference_v1'
 PACKAGED_REFERENCE = Path(__file__).with_name('gegi_storage_reference.json')
 SHARED_FIELD_CACHE_BYTES = 857068900
+EVENT_TABLES = {'triggers', 'input_groups', 'source_blocks', 'native_failures', 'native_processing_phases'}
+FIXED_TABLES = {'sqlite_schema', 'sqlite_master', 'metadata', 'completion', 'checkpoint'}
 
 
 def encoded(value):
@@ -47,8 +49,54 @@ def _safe_source(source):
             'field_cache_sha256', 'field_calibration_sha256', 'geometry_sha256',
             'model_sha256', 'native_request_sha256', 'radiation_seed', 'isotope',
             'source_contract_id', 'source_pdg', 'source_position_mm', 'drift_dt_ns',
-            'field_precision_bits', 'ionisation_energy_eV')
+            'field_precision_bits', 'ionisation_energy_eV', 'id', 'activity_Bq', 'position_global_mm')
     return {key: source[key] for key in keys if key in source}
+
+
+def _group_ledger_size(path):
+    """Count gzip rows incrementally, retaining its one-member envelope cost."""
+    with Path(path).open('rb') as stream:
+        header = stream.read(10)
+        if len(header) != 10 or header[:3] != b'\x1f\x8b\x08':
+            raise ValueError('Invalid input-group gzip header')
+        flags, size = header[3], 10
+        if flags & 4:
+            extra = stream.read(2)
+            if len(extra) != 2: raise ValueError('Truncated input-group gzip header')
+            count = int.from_bytes(extra, 'little')
+            if len(stream.read(count)) != count: raise ValueError('Truncated input-group gzip header')
+            size += 2+count
+        for flag in (8, 16):
+            if flags & flag:
+                while True:
+                    byte = stream.read(1)
+                    if not byte: raise ValueError('Truncated input-group gzip header')
+                    size += 1
+                    if byte == b'\0': break
+        if flags & 2:
+            if len(stream.read(2)) != 2: raise ValueError('Truncated input-group gzip header')
+            size += 2
+    with gzip.open(path, 'rb') as stream:
+        rows = sum(1 for _ in stream)
+    return Path(path).stat().st_size, size+8, rows
+
+
+def _page_classes(db, pages):
+    """Indexes grow with their owning event table, including SQLite autoindexes."""
+    owners = {name: table for name, table in db.execute(
+        "SELECT name,tbl_name FROM sqlite_schema WHERE type IN ('table','index')")}
+    result = {}
+    for name in pages:
+        owner = owners.get(name, name)
+        if owner in EVENT_TABLES: category = 'event'
+        elif owner in FIXED_TABLES: category = 'fixed_metadata'
+        else: raise ValueError('Unclassified candidate archive page object: '+name)
+        result[name] = {'table': owner, 'class': category}
+    return result
+
+
+def _variable_intervals(value):
+    return max(0, len(encoded(value))-2) if isinstance(value, list) else 0
 
 
 def reference_from_run(report_path, database_path=None):
@@ -67,14 +115,7 @@ def reference_from_run(report_path, database_path=None):
         ledger = report_path.with_name('input-groups.jsonl.gz')
         if ledger.stat().st_size != group_artifact['bytes'] or sha(ledger) != group_artifact['sha256']:
             raise ValueError('Input-group identity ledger differs from the completed report')
-        packed = ledger.read_bytes(); header = 10; flags = packed[3]
-        if flags & 4:
-            extra = int.from_bytes(packed[header:header+2], 'little'); header += 2+extra
-        for flag in (8, 16):
-            if flags & flag: header = packed.index(0, header)+1
-        if flags & 2: header += 2
-        group_bytes, group_fixed = len(packed), header+8
-        group_rows = len(gzip.decompress(packed).splitlines())
+        group_bytes, group_fixed, group_rows = _group_ledger_size(ledger)
     with closing(sqlite3.connect(database_path.resolve().as_uri()+'?mode=ro', uri=True)) as db:
         metadata = json.loads(db.execute('SELECT body FROM metadata WHERE singleton=1').fetchone()[0])
         completion_row = db.execute('SELECT body FROM completion WHERE singleton=1').fetchone()
@@ -93,6 +134,12 @@ def reference_from_run(report_path, database_path=None):
                          'SELECT name,count(*),sum(pgsize),sum(payload),sum(unused) FROM dbstat GROUP BY name')}
         except sqlite3.OperationalError as error:
             raise ValueError('SQLite dbstat is required to separate measured event pages from fixed metadata') from error
+        classes = _page_classes(db, pages)
+        event_pages = sum(pages[name]['allocated_bytes'] for name, row in classes.items() if row['class'] == 'event')
+        checkpoint = {}
+        if 'checkpoint' in pages:
+            row = db.execute('SELECT state FROM checkpoint WHERE singleton=1').fetchone()
+            if row is not None: checkpoint = json.loads(row[0])
         context_identity = None; uncompressed_adc = 0
         for body, adc_blob in db.execute("SELECT record,adc_codes FROM triggers WHERE decision='candidate'"):
             record = json.loads(zlib.decompress(body)); context = record['context']
@@ -110,47 +157,85 @@ def reference_from_run(report_path, database_path=None):
     live_time = report['live_time_ns']; parents = report['source']['initial_parents']
     if not math.isfinite(live_time) or live_time <= 0 or type(parents) is not int or parents <= 0:
         raise ValueError('Reference requires positive acquisition time and parent denominator')
+    daughters, roots = report['source'].get('initial_daughter_decays'), report['source'].get('transport_primaries')
+    invalid_roots = roots is not None and (type(roots) is not int or roots < parents)
+    invalid_daughters = daughters is not None and (type(daughters) is not int or daughters < 0 or
+                                                  (roots is not None and roots != parents+daughters))
+    if invalid_roots or invalid_daughters:
+        raise ValueError('New-parent and initial-daughter denominators do not close')
     excluded = _interval_duration(report['excluded_intervals_ns'], live_time)
     # The exclusion list is repeated in the report and completion JSON. Keep its
     # measured variable bytes separate from fixed configuration and histogram bins.
     interval_bytes = max(0, len(encoded(report['excluded_intervals_ns']))-2)
+    archive_intervals = sum(_variable_intervals(value) for value in (
+        completion.get('acquisition_statistics', {}).get('excluded_intervals_ns'),
+        checkpoint.get('excluded_intervals_ns'),
+        (checkpoint.get('missing_history') or {}).get('excluded_intervals_ns')))
     if sum(p['allocated_bytes'] for p in pages.values())+freelist*page_size != database_path.stat().st_size:
         raise ValueError('SQLite page allocation does not close against archive bytes')
     compressed = sum(s['compressed_record_bytes']+s['compressed_adc_bytes'] for s in sizes.values())
+    identity = report['identity']; config = identity.get('source_config')
+    sources = config['sources'] if config is not None else identity.get('sources', [])
+    activities = [source['activity_Bq'] for source in sources] if config is not None else identity.get('activities_bq')
     provenance = {'reference_report_sha256': sha(report_path), 'archive_sha256': artifact['sha256'],
                   'scope': report['identity'].get('scope'),
-                  'sources': [_safe_source(source) for source in report['identity'].get('sources', [])],
-                  'clock_seed': report['identity'].get('clock_seed'),
-                  'noise_seed': report['identity'].get('noise_seed'),
-                  'activities_bq': report['identity'].get('activities_bq'),
+                  'sources': [_safe_source(source) for source in sources],
+                  'clock_seed': config.get('clock_seed') if config is not None else identity.get('clock_seed'),
+                  'noise_seed': identity.get('noise_seed', (checkpoint.get('readout') or {}).get('settings', {}).get('noise_seed')),
+                  'activities_bq': activities,
                   'readout': context_identity}
+    if config is not None:
+        provenance['source_config_sha256'] = hashlib.sha256(encoded(config)).hexdigest()
+        provenance['source_config'] = {key: config[key] for key in ('kind','seed','clock_seed','stop') if key in config}
+        provenance['source_config']['sources'] = [_safe_source(source) for source in sources]
+        provenance['source_config']['initial_state'] = {key: config['initial_state'][key] for key in (
+            'policy','acquisition_start_ns','initial_daughter_populations','pre_acquisition_history','scope') if key in config.get('initial_state', {})}
+        provenance['producer_identity_sha256'] = hashlib.sha256(encoded(identity)).hexdigest()
+        if 'source_initial_state' in report:
+            provenance['source_initial_state_sha256'] = hashlib.sha256(encoded(report['source_initial_state'])).hexdigest()
+    stages = report.get('stage_timings')
+    readout_elapsed = ((stages or {}).get('stages', {}).get('readout', {}).get('total_seconds')
+                       if config is not None else report.get('elapsed_seconds'))
     if group_artifact is not None: provenance['input_group_ledger_sha256'] = group_artifact['sha256']
     return {'kind': KIND, 'provenance': provenance,
             'observation': {'initial_parents': parents, 'live_time_ns': live_time,
+                            'initial_daughter_decays': daughters, 'transport_primaries': roots,
+                            'parent_denominator': 'New source parents; initial daughters are counted separately.',
                             'excluded_time_ns': excluded, 'qualified_fraction': (live_time-excluded)/live_time,
                             'observed_coincident_rises': expected['observed_coincident_rises'],
                             'saved_candidates': expected['saved_candidates'],
                             'rejected_rises': expected['rejected_rises'],
                             'input_group_ledger_rows': group_rows,
                             'selection_reason_counts': expected['selection_reason_counts'],
-                            'readout_elapsed_seconds': report['elapsed_seconds'],
-                            'elapsed_use': 'Measured saved-source readout only; never extrapolated to fresh transport/drift runtime.'},
+                            'readout_elapsed_seconds': readout_elapsed,
+                            'stage_timings': stages,
+                            'stage_timing_baselines_by_native_phase': report.get('stage_timing_baselines_by_native_phase'),
+                            'first_native_group_seconds_per_session': report.get('first_native_group_seconds_per_session'),
+                            'elapsed_use': ('Fresh measured stage totals are retained, may overlap, and are never extrapolated. Readout time uses only the recorded readout stage, never full active elapsed.'
+                                            if config is not None else 'Measured saved-source acquisition/readout/archive processing; never extrapolated to fresh transport/drift runtime.')},
             'bytes': {'archive': database_path.stat().st_size, 'report': report_path.stat().st_size,
                       'by_decision': sizes, 'uncompressed_candidate_adc': uncompressed_adc,
                       'all_compressed_trigger_blobs': compressed,
                       'trigger_pages': pages['triggers']['allocated_bytes'],
+                      'event_archive_pages': event_pages,
+                      'event_auxiliary_pages': event_pages-pages['triggers']['allocated_bytes'],
                       'trigger_non_blob_bytes': pages['triggers']['allocated_bytes']-compressed,
                       'input_group_ledger': group_bytes, 'input_group_ledger_fixed': group_fixed,
-                      'fixed_archive_pages': database_path.stat().st_size-pages['triggers']['allocated_bytes']-freelist*page_size,
+                      'fixed_archive_pages': database_path.stat().st_size-event_pages-freelist*page_size,
+                      'freelist_reserved_bytes': freelist*page_size,
                       'variable_exclusion_json_per_copy': interval_bytes,
+                      'variable_archive_json_bytes': archive_intervals,
+                      'variable_report_json_bytes': interval_bytes,
                       'page_size': page_size, 'page_count': page_count, 'freelist_pages': freelist,
-                      'page_tables': pages},
+                      'page_tables': pages, 'page_object_classification': classes},
             'selection_policy': report['selection_policy'],
             'shared_field_cache_bytes': SHARED_FIELD_CACHE_BYTES,
             'assumptions': ['Same geometry, activities, readout, conservative selection and compression/record schema as the reference.',
                             'Ambiguous and multistrip candidates remain retained; candidate is not a uniquely reconstructed photon.',
-                            'Event-dependent trigger pages, shared input-group ledger and exclusion-list bytes scale per original parent; fixed metadata/configuration is counted once.',
-                            'The forecast covers the candidate/readout core. Additional fresh nonzero/delayed-daughter ledgers, source provenance, failures and retirement records are not measured by this historical reference.',
+                            'Measured event-table/index pages, shared input-group ledger and serialized exclusion lists scale per new parent; bounded metadata/filter state is counted once.',
+                            'Streaming input-group, source-block, native-failure and processing-phase tables/indexes are included when present. External run directories, producer/provenance archives, logs and retirement records remain additional.',
+                            'Measured SQLite freelist pages are reserved once; future transient/free-page growth is unmeasured.',
+                            'Daughter/group/failure rates per new parent assume the reference source-state mix; another duration does not independently solve its daughter inventory.',
                             'SQLite page growth is estimated from measured allocation; the qualified-time-adjusted scenario divides event cost by the reference qualified fraction.',
                             'These are planning scenarios, not a confidence interval or guaranteed storage upper bound.']}
 
@@ -178,10 +263,12 @@ def estimate(total_parents=20_000_000, activities_bq=(185000, 37000), reference=
     qualified = observation['qualified_fraction']
     if not 0 < qualified <= 1: raise ValueError('A usable reference needs positive qualified time')
     scale = total_parents/observation['initial_parents']
-    intervals = cost['variable_exclusion_json_per_copy']
-    fixed_db = cost['fixed_archive_pages']-intervals
+    intervals = cost.get('variable_report_json_bytes', cost['variable_exclusion_json_per_copy'])
+    archive_intervals = cost.get('variable_archive_json_bytes', cost['variable_exclusion_json_per_copy'])
+    event_pages = cost.get('event_archive_pages', cost['trigger_pages'])
+    fixed_db = cost['fixed_archive_pages']+cost.get('freelist_reserved_bytes', cost.get('freelist_pages', 0)*cost['page_size'])-archive_intervals
     fixed_report = cost['report']-intervals
-    event_db = cost['trigger_pages']+intervals
+    event_db = event_pages+archive_intervals
     fixed_groups = cost.get('input_group_ledger_fixed', 0)
     event_groups = cost.get('input_group_ledger', 0)-fixed_groups
     scenarios = {}
@@ -194,6 +281,7 @@ def estimate(total_parents=20_000_000, activities_bq=(185000, 37000), reference=
                            'final_output_bytes': archive+report+groups, 'candidate_archive_bytes': archive,
                            'run_summary_config_bytes': report,
                            'shared_input_group_ledger_bytes': groups,
+                           'scaled_event_auxiliary_bytes': math.ceil(cost.get('event_auxiliary_pages', 0)*event_scale),
                            'expected_candidates': observation['saved_candidates']*event_scale,
                            'expected_trigger_ledger_rows': observation['observed_coincident_rises']*event_scale,
                            'event_scale': event_scale}
@@ -207,7 +295,7 @@ def estimate(total_parents=20_000_000, activities_bq=(185000, 37000), reference=
               'scenarios': scenarios, 'planning_range_bytes': bounds,
               'estimated_output_scope': 'Candidate archive, shared input-group joins and readout summary/configuration only; final_output_bytes names this core, not the whole fresh run.',
               'additional_retained_fresh_data': {'status': 'not_estimated',
-                  'scope': 'Nonzero parent/deposit identity and late-daughter ledgers, source geometry/configuration/logs, unique native failures and scratch-retirement inventory remain necessary and separately retained.'},
+                  'scope': 'External run directories, native/producer archives, source geometry/configuration/logs and scratch-retirement inventory remain additional; event data already inside the measured candidate database and shared group ledger are included.'},
               'shared_field_cache_bytes': reference['shared_field_cache_bytes'],
               'runtime_scratch': {'status': 'not_estimated_from_this_readout_reference',
                   'scope': 'Bounded transport/deposit/drift inputs, pending daughters, current buffers, checkpoints and SQLite journals are separate from final retained candidates.',

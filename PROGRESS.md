@@ -6,7 +6,7 @@
 The owner authorized the existing `gegi` heartbeat every 15 minutes in this chat,
 through the remaining readiness work in [the plan](tools/NEXT_DEVELOPMENT_PLAN.md).
 Its ACTIVE setting and target chat were read back from the app configuration;
-no new scheduled execution has yet been observed. Other automations remain
+the first scheduled activation ran at 04:54 UTC November 21. Other automations remain
 unchanged. The foreground minute observer (session 8667) has stopped; the actual
 acquisition continues. After final five-second verification, finish measured
 resource accounting and the fresh candidate-to-analysis handoff, resolve concrete
@@ -14,6 +14,26 @@ execution blockers, synchronize verified changes, then pause `gegi` for owner
 inspection. Do not automatically start 90.09 s/20-million-parent production.
 Reuse completed continuity tests. Two consecutive occurrences of the same blocker
 require cause-specific repair, not another unchanged reminder or extra review.
+
+**Independent storage preparation:** the completed-run estimator now reads fresh
+streaming reports without requiring the historical replay-only elapsed field.
+It scales input-group, source-block, native-failure and phase tables and their
+indexes alongside candidate pages; actual exclusion-list copies are variable,
+while fixed metadata and measured free pages are counted once. New parents remain
+the scaling denominator, separately from initial daughters. Nine focused tests
+pass, including fresh source settings, page accounting and streamed ledger reads.
+This is candidate-core accounting, not yet the final five-second whole-run budget.
+All 39 active producer files still match the preserved phase-3 producer archive;
+the acquisition was untouched and healthy at 4.171437454 s on this activation.
+
+The next analysis implementation can reuse `gegi_joint_calibration.load`,
+`gegi_joint_two_site.fit_pairing` and `gegi_continuous_plane.reconstruct` through
+a post-completion candidate adapter. Preserve original trigger IDs, slice the
+existing ADC context, and retain rejected-summary/unknown-history accounting.
+Do not invent legacy library receipts. Actual model/cache/digital identities
+bind calibration; the admitted cached field is Float32, independently of the
+native request's 64-bit fresh-solve setting. This route is source-inspected;
+fresh candidate integration remains unimplemented and untested.
 
 **Continuous acquisition repaired; same run active:**
 The five-second Cs-137/Co-60 run has resumed from its original source, RNG and

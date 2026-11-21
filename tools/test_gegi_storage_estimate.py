@@ -1,11 +1,13 @@
 from contextlib import closing
 import gzip
 import json
+import math
 from pathlib import Path
 import sqlite3
 import tempfile
 import unittest
 import zlib
+from unittest.mock import patch
 
 import gegi_storage_estimate as E
 
@@ -37,6 +39,115 @@ class StorageEstimateTests(unittest.TestCase):
                   'selection_policy': {'ambiguity': 'keep'}}
         target = root/'candidate-acquisition.json'; target.write_bytes(E.encoded(report)+b'\n')
         return target, report
+
+    def fresh_fixture(self, root):
+        target, report = self.fixture(root)
+        database = root/'compton-candidates.sqlite'
+        with closing(sqlite3.connect(database)) as db, db:
+            db.executescript('CREATE TABLE input_groups(ordinal INTEGER PRIMARY KEY,parent INTEGER,group_id INTEGER,status TEXT,metadata BLOB,UNIQUE(parent,group_id));'
+                             'CREATE INDEX pending_time ON input_groups(status,ordinal);'
+                             'CREATE INDEX group_time ON input_groups(ordinal);'
+                             'CREATE INDEX trigger_decision ON triggers(decision);'
+                             'CREATE TABLE source_blocks(block_index INTEGER PRIMARY KEY,manifest BLOB);'
+                             'CREATE TABLE native_failures(ordinal INTEGER PRIMARY KEY,record BLOB);'
+                             'CREATE TABLE native_processing_phases(ordinal INTEGER PRIMARY KEY,phase INTEGER);'
+                             'CREATE TABLE checkpoint(singleton INTEGER PRIMARY KEY,state BLOB);')
+            for i in range(30):
+                db.execute('INSERT INTO input_groups VALUES(?,?,?,?,?)',
+                           (i+1,i//2+1,i%2,'completed',E.encoded({'raw_row_indices':list(range(200))})))
+                db.execute('INSERT INTO native_processing_phases VALUES(?,2)',(i+1,))
+            db.execute('INSERT INTO source_blocks VALUES(0,?)',(E.encoded({'source_census':'fixture'*800}),))
+            db.execute('INSERT INTO native_failures VALUES(1,?)',(zlib.compress(b'preserved native failure fixture'),))
+            db.execute('UPDATE completion SET body=?',(E.encoded({'saved_candidates':1,'acquisition_statistics':{
+                'excluded_intervals_ns':report['excluded_intervals_ns']}}),))
+            db.execute('INSERT INTO checkpoint VALUES(1,?)',(E.encoded({
+                'excluded_intervals_ns':report['excluded_intervals_ns'],
+                'missing_history':{'excluded_intervals_ns':[[10,25]]},
+                'readout':{'settings':{'noise_seed':120261120}}}),))
+            # Freed overflow pages belong to the measured physical archive;
+            # they must not disappear from a reference-sized forecast.
+            db.execute('CREATE TABLE disposable(value BLOB)')
+            db.execute('INSERT INTO disposable VALUES(?)',(b'x'*100000,))
+            db.execute('DROP TABLE disposable')
+        groups=root/'input-groups.jsonl.gz'
+        groups.write_bytes(gzip.compress(b''.join(E.encoded({'input_group_ordinal':i+1})+b'\n' for i in range(30)),mtime=0))
+        report.pop('elapsed_seconds')
+        report['identity']={'kind':'gegi_streaming_acquisition_v1','scope':'Fresh shared-clock fixture',
+            'source_config':{'kind':'gegi_streaming_source_config_v1','seed':20261120,'clock_seed':20261120,
+                'stop':{'mode':'duration','duration_ns':100.},
+                'initial_state':{'policy':'secular_equilibrium_poisson_daughters_v1','acquisition_start_ns':0},
+                'sources':[{'id':'cs137_point_decay_v1','activity_Bq':185000,'position_global_mm':[-40,0,40],
+                            'private_path':'C:/private/input'},
+                           {'id':'co60_point_decay_v1','activity_Bq':37000,'position_global_mm':[40,0,40]}]}}
+        report['source'].update(initial_daughter_decays=7,transport_primaries=17,deposit_groups=30)
+        report['source_initial_state']={'policy':'secular_equilibrium_poisson_daughters_v1','inventory_seed':3}
+        report['resources']={'active_elapsed_seconds':999.}
+        report['stage_timings']={'unit':'seconds','stages':{
+            'native_group':{'count':30,'total_seconds':40.},'readout':{'count':30,'total_seconds':1.25}}}
+        report['stage_timing_baselines_by_native_phase']={'2':{'readout_total_seconds':.5}}
+        report['first_native_group_seconds_per_session']=[3.5,2.75]
+        report['artifacts']={p.name:{'bytes':p.stat().st_size,'sha256':E.sha(p)} for p in (database,groups)}
+        target.write_bytes(E.encoded(report)+b'\n')
+        return target,report
+
+    def test_fresh_report_preserves_source_settings_and_measured_stage_times(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);path,report=self.fresh_fixture(root)
+            reference=E.reference_from_run(path)
+            self.assertEqual(reference['provenance']['activities_bq'],[185000,37000])
+            self.assertEqual(reference['provenance']['sources'][0]['position_global_mm'],[-40,0,40])
+            self.assertEqual(reference['provenance']['clock_seed'],20261120)
+            self.assertEqual(reference['provenance']['noise_seed'],120261120)
+            self.assertNotIn('C:/private',json.dumps(reference))
+            self.assertEqual(reference['observation']['readout_elapsed_seconds'],1.25)
+            self.assertEqual(reference['observation']['stage_timings'],report['stage_timings'])
+            self.assertEqual(reference['observation']['stage_timing_baselines_by_native_phase'],report['stage_timing_baselines_by_native_phase'])
+            self.assertEqual(reference['observation']['first_native_group_seconds_per_session'],[3.5,2.75])
+            report.pop('stage_timings');path.write_bytes(E.encoded(report))
+            self.assertIsNone(E.reference_from_run(path)['observation']['readout_elapsed_seconds'])
+
+    def test_fresh_event_tables_indexes_and_exclusion_copies_scale_per_new_parent(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path,report=self.fresh_fixture(Path(temp));reference=E.reference_from_run(path)
+            cost=reference['bytes'];classes=cost['page_object_classification']
+            for name in ('input_groups','source_blocks','native_failures','native_processing_phases',
+                         'pending_time','group_time','sqlite_autoindex_input_groups_1','trigger_decision'):
+                self.assertEqual(classes[name]['class'],'event',name)
+            self.assertEqual(classes['pending_time']['table'],'input_groups')
+            self.assertEqual(classes['checkpoint']['class'],'fixed_metadata')
+            self.assertGreater(cost['event_auxiliary_pages'],0)
+            self.assertEqual(cost['fixed_archive_pages']+cost['event_archive_pages']+cost['freelist_reserved_bytes'],cost['archive'])
+            self.assertGreater(cost['freelist_reserved_bytes'],0)
+            self.assertEqual(cost['variable_archive_json_bytes'],
+                             2*cost['variable_exclusion_json_per_copy']+len(E.encoded([[10,25]]))-2)
+            same=E.estimate(10,reference=reference)['scenarios']['as_observed']
+            value=E.estimate(20,reference=reference);twice=value['scenarios']['as_observed']
+            self.assertEqual(same['candidate_archive_bytes'],cost['archive'])
+            self.assertEqual(value['parent_scale'],2.)
+            self.assertEqual(value['reference_parent_count'],10)
+            self.assertEqual(reference['observation']['initial_daughter_decays'],7)
+            self.assertEqual(reference['observation']['transport_primaries'],17)
+            self.assertEqual(twice['scaled_event_auxiliary_bytes'],2*cost['event_auxiliary_pages'])
+            expected=math.ceil((cost['archive']+cost['event_archive_pages']+cost['variable_archive_json_bytes'])/cost['page_size'])*cost['page_size']
+            self.assertEqual(twice['candidate_archive_bytes'],expected)
+            self.assertEqual(twice['expected_candidates'],2.)
+            self.assertIsNone(value['runtime_prediction'])
+            self.assertEqual(value['additional_retained_fresh_data']['status'],'not_estimated')
+
+    def test_group_ledger_is_counted_without_whole_gzip_decompression(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path,_=self.fresh_fixture(Path(temp))
+            with patch.object(gzip,'decompress',side_effect=AssertionError('whole gzip decompression forbidden')):
+                reference=E.reference_from_run(path)
+            self.assertEqual(reference['observation']['input_group_ledger_rows'],30)
+
+    def test_fresh_parent_and_initial_daughter_census_must_close(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path,report=self.fresh_fixture(Path(temp))
+            report['source']['transport_primaries']=18
+            path.write_bytes(E.encoded(report))
+            with self.assertRaisesRegex(ValueError,'denominators do not close'):
+                E.reference_from_run(path)
 
     def test_exact_byte_measurement_and_public_provenance(self):
         with tempfile.TemporaryDirectory() as temp:
