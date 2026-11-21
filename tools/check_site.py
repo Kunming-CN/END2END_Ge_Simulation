@@ -367,6 +367,8 @@ def main():
 def verify_live(url, report):
     """Verify HTML, every model/download artifact, and representative media/data."""
     from concurrent.futures import ThreadPoolExecutor
+    import time
+    from urllib.error import HTTPError
     from urllib.parse import quote
     from urllib.request import Request, urlopen
     # ParaView's bundled Python may omit SSL; reuse Node HTTPS without relaxing TLS.
@@ -390,8 +392,17 @@ def verify_live(url, report):
             result = subprocess.run([node, '-e', script, target], capture_output=True, timeout=35, check=True)
             return result.stdout
         request = Request(target, headers={'User-Agent': 'SSD-site-verification/1.0'})
-        with urlopen(request, timeout=30) as response:
-            return response.read()
+        for attempt in range(3):
+            try:
+                with urlopen(request, timeout=30) as response:
+                    return response.read()
+            except HTTPError as error:
+                if error.code != 503:
+                    raise
+                error.close()
+                if attempt == 2:
+                    raise RuntimeError(f'Live HTTP 503 after 3 attempts: {relative} ({target})') from error
+                time.sleep(attempt + 1)
 
     remote = json.loads(download(MANIFEST))
     if remote != report:

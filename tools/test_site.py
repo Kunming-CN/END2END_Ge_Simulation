@@ -681,5 +681,84 @@ class ModelTests(unittest.TestCase):
         self.assertTrue(expected <= requested)
 
 
+class LiveVerificationTests(unittest.TestCase):
+    def setUp(self):
+        self.path = 'results/saved target.html'
+        self.data = b'<main>Original saved bytes</main>'
+        self.report = {'build_id': 'live-test', 'files': [dict(path=self.path, bytes=len(self.data),
+                      sha256=hashlib.sha256(self.data).hexdigest())]}
+        self.files = {self.path: self.data, MANIFEST: json.dumps(self.report).encode()}
+        self.requests = []
+
+    def response(self, request):
+        from urllib.parse import unquote, urlsplit
+        path = unquote(urlsplit(request.full_url).path).removeprefix('/site/')
+        self.requests.append(path)
+        return path
+
+    def test_live_503_then_success_retries_only_failed_get(self):
+        from check_site import verify_live
+        from urllib.error import HTTPError
+        def fake_open(request, timeout):
+            path = self.response(request)
+            if path == self.path and self.requests.count(path) == 1:
+                raise HTTPError(request.full_url, 503, 'Service Unavailable', {}, io.BytesIO())
+            return io.BytesIO(self.files[path])
+        with patch.dict(sys.modules, {'ssl': object()}), patch('urllib.request.urlopen', fake_open), patch('time.sleep') as sleep:
+            self.assertEqual(verify_live('https://example.org/site/', self.report), 1)
+        self.assertEqual(self.requests.count(MANIFEST), 1)
+        self.assertEqual(self.requests.count(self.path), 2)
+        sleep.assert_called_once_with(1)
+
+    def test_live_persistent_503_reports_path_and_target_after_three_attempts(self):
+        from check_site import verify_live
+        from urllib.error import HTTPError
+        def fake_open(request, timeout):
+            path = self.response(request)
+            if path == self.path:
+                raise HTTPError(request.full_url, 503, 'Service Unavailable', {}, io.BytesIO())
+            return io.BytesIO(self.files[path])
+        with patch.dict(sys.modules, {'ssl': object()}), patch('urllib.request.urlopen', fake_open), patch('time.sleep') as sleep:
+            with self.assertRaises(RuntimeError) as caught:
+                verify_live('https://example.org/site/', self.report)
+        message = str(caught.exception)
+        self.assertIn(self.path, message)
+        self.assertIn('https://example.org/site/results/saved%20target.html?build=live-test', message)
+        self.assertIn('after 3 attempts', message)
+        self.assertIsInstance(caught.exception.__cause__, HTTPError)
+        self.assertEqual(self.requests.count(self.path), 3)
+        self.assertEqual([call.args for call in sleep.call_args_list], [(1,), (2,)])
+
+    def test_live_other_http_errors_are_not_retried(self):
+        from check_site import verify_live
+        from urllib.error import HTTPError
+        for status in (404, 500):
+            with self.subTest(status=status):
+                self.requests.clear()
+                def fake_open(request, timeout):
+                    path = self.response(request)
+                    if path == self.path:
+                        raise HTTPError(request.full_url, status, 'Other HTTP failure', {}, io.BytesIO())
+                    return io.BytesIO(self.files[path])
+                with patch.dict(sys.modules, {'ssl': object()}), patch('urllib.request.urlopen', fake_open), patch('time.sleep') as sleep:
+                    with self.assertRaises(HTTPError) as caught:
+                        verify_live('https://example.org/site/', self.report)
+                self.assertEqual(caught.exception.code, status)
+                self.assertEqual(self.requests.count(self.path), 1)
+                sleep.assert_not_called()
+
+    def test_live_hash_mismatch_is_not_retried(self):
+        from check_site import verify_live
+        def fake_open(request, timeout):
+            path = self.response(request)
+            data = bytes(value ^ 1 for value in self.data) if path == self.path else self.files[path]
+            return io.BytesIO(data)
+        with patch.dict(sys.modules, {'ssl': object()}), patch('urllib.request.urlopen', fake_open), patch('time.sleep') as sleep:
+            with self.assertRaisesRegex(ValueError, 'Live content differs'):
+                verify_live('https://example.org/site/', self.report)
+        self.assertEqual(self.requests.count(self.path), 1)
+        sleep.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
