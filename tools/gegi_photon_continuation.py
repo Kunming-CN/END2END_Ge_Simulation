@@ -94,33 +94,58 @@ def exit_distance_mm(crystal, origin_mm, directions):
     return np.min(distance, axis=-1)
 
 
-def cosine_density(incident_keV, cosine):
-    """Unpolarized free stationary-electron Klein–Nishina density in d(cos theta)."""
-    if not math.isfinite(incident_keV) or incident_keV <= 0 or not -1 <= cosine <= 1:
-        raise ValueError('Klein–Nishina requires positive incident energy and a physical cosine')
+def _angle_model(incident_keV):
+    if not math.isfinite(incident_keV) or incident_keV <= 0:
+        raise ValueError('Klein–Nishina requires positive incident energy')
     x = incident_keV/ELECTRON_REST_KEV
 
     def shape(u):
         k = 1/(1 + x*(1-u))
         return k*k*(k + 1/k - (1-u*u))
 
-    return shape(cosine)/quad(shape, -1., 1., epsabs=1e-12, epsrel=1e-11)[0]
+    normalizer = quad(shape, -1., 1., epsabs=1e-12, epsrel=1e-11)[0]
+
+    def density(cosine):
+        if not -1 <= cosine <= 1:
+            raise ValueError('Klein–Nishina requires a physical cosine')
+        return shape(cosine)/normalizer
+
+    return density
+
+
+def cosine_density(incident_keV, cosine):
+    """Unpolarized free stationary-electron Klein–Nishina density in d(cos theta)."""
+    return _angle_model(incident_keV)(cosine)
 
 
 def solid_angle_density_per_sr(incident_keV, cosine):
     return cosine_density(incident_keV, cosine)/(2*math.pi)
 
 
+def _outgoing_cosine(incident_keV, outgoing_keV):
+    # Used only within the physical endpoint range. Clip roundoff at backscatter.
+    return max(-1., 1-ELECTRON_REST_KEV*(1/outgoing_keV-1/incident_keV))
+
+
+def outgoing_energy_model(incident_keV):
+    """Prepare one normalized KN energy density for repeated use at fixed energy."""
+    angle_density = _angle_model(incident_keV)
+    minimum = incident_keV/(1+2*incident_keV/ELECTRON_REST_KEV)
+
+    def density(outgoing_keV):
+        if not math.isfinite(outgoing_keV):
+            raise ValueError('Outgoing photon energy must be finite')
+        if not minimum <= outgoing_keV <= incident_keV:
+            return 0.
+        return angle_density(_outgoing_cosine(incident_keV, outgoing_keV))*ELECTRON_REST_KEV/outgoing_keV**2
+
+    return minimum, density
+
+
 def outgoing_density_per_keV(incident_keV, outgoing_keV):
     """Transform the normalized cosine density with |d cos(theta)/d E_out|."""
-    if not (math.isfinite(incident_keV) and incident_keV > 0 and math.isfinite(outgoing_keV)):
-        raise ValueError('Photon energies must be finite and incident energy positive')
-    minimum = incident_keV/(1+2*incident_keV/ELECTRON_REST_KEV)
-    if not minimum <= outgoing_keV <= incident_keV:
-        return 0.
-    # Clip roundoff at the already checked exact kinematic endpoint only.
-    cosine = max(-1., 1-ELECTRON_REST_KEV*(1/outgoing_keV-1/incident_keV))
-    return cosine_density(incident_keV, cosine)*ELECTRON_REST_KEV/outgoing_keV**2
+    _, density = outgoing_energy_model(incident_keV)
+    return density(outgoing_keV)
 
 
 def azimuth_survival(crystal, second_mm, incoming_direction, cosine, total_outgoing_per_mm, *, samples):
@@ -149,6 +174,24 @@ class PhotonRates:
             raise ValueError('Invalid explicitly supplied material rate decomposition')
 
 
+def rates_from_csv(path):
+    """Read the scoped initialization-only Geant4 export in keV and inverse mm."""
+    import csv
+
+    rates = {}
+    with Path(path).open(newline='') as stream:
+        for row in csv.DictReader(stream):
+            photo, compt, coherent, pair = [float(row[field+'_per_mm']) for field in ('photoelectric', 'compton', 'rayleigh', 'pair')]
+            if not math.isclose(float(row['density_g_cm3']), GE_G4_DENSITY_G_CM3, rel_tol=1e-14):
+                raise ValueError('Initialized Ge density differs from the saved material')
+            energy = float(row['energy_keV'])
+            if not math.isfinite(energy) or energy <= 0 or energy in rates or any(
+                    not math.isfinite(rate) or rate < 0 for rate in (coherent, pair)):
+                raise ValueError('Invalid rate table energy or coefficient')
+            rates[energy] = PhotonRates(math.fsum((photo, compt, coherent, pair)), photo, compt)
+    return rates
+
+
 def continuation(crystal, first_mm, second_mm, intermediate_keV, rates, *, outgoing_keV=None,
                  outgoing_total_per_mm=None, azimuth_samples=256):
     """Point continuation conditional on the outgoing state at the first scatter.
@@ -173,7 +216,7 @@ def continuation(crystal, first_mm, second_mm, intermediate_keV, rates, *, outgo
         energy_density = outgoing_density_per_keV(intermediate_keV, outgoing_keV)
         if not energy_density:
             return dict(result, resolved_escape_density_per_mm_keV=0., status='free_electron_kinematics_inadmissible')
-        cosine = max(-1., 1-ELECTRON_REST_KEV*(1/outgoing_keV-1/intermediate_keV))
+        cosine = _outgoing_cosine(intermediate_keV, outgoing_keV)
         average = azimuth_survival(crystal, second, axis, cosine, outgoing_total_per_mm, samples=azimuth_samples)
         result.update(escape_azimuth_survival=average, normalized_kn_outgoing_density_per_keV=energy_density,
                       resolved_escape_density_per_mm_keV=between*rates.compton_per_mm*energy_density*average)
@@ -182,7 +225,6 @@ def continuation(crystal, first_mm, second_mm, intermediate_keV, rates, *, outgo
 
 def saved_controls(probe, kinetics_path, observer_root):
     """Check exact history energies and actual Ge exits against the analytic paths."""
-    import csv
     import hashlib
     import json
     import sys
@@ -201,14 +243,7 @@ def saved_controls(probe, kinetics_path, observer_root):
             execution['photon_rates_sha256'] != digest(probe/'photon-rates.csv')):
         raise ValueError('Expected the initialized zero-event rate export')
     crystal = ge_halfspaces_from_gdml(probe/'geometry.gdml')
-    with (probe/'photon-rates.csv').open(newline='') as stream:
-        data = [dict((name, float(v)) for name, v in row.items()) for row in csv.DictReader(stream)]
-    rate_at = {}
-    for row in data:
-        photo, compt, coherent, pair = [row[field+'_per_mm'] for field in ('photoelectric','compton','rayleigh','pair')]
-        if not math.isclose(row['density_g_cm3'], GE_G4_DENSITY_G_CM3, rel_tol=1e-14):
-            raise ValueError('Initialized Ge density differs from the saved material')
-        rate_at[row['energy_keV']] = PhotonRates(math.fsum((photo,compt,coherent,pair)), photo, compt)
+    rate_at = rates_from_csv(probe/'photon-rates.csv')
     actual = json.loads(kinetics_path.read_bytes())
     trials = []
     labels = {'compton_then_absorption': 'phot', 'two_compton_then_escape': 'compt'}

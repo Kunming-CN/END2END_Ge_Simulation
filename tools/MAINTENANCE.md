@@ -82,6 +82,11 @@ input is `energies-keV.txt`; `/GeSignal/PhotonRates/Save` names the CSV output a
 initialization. Exact build/macro/material provenance accompanies local coefficient
 tables. This research component keeps free-electron angular density distinct from
 Livermore bound-electron transport and does not supply acquisition efficiency.
+`gegi_photon_observed_energy.py` convolves the endpoint and escape continuum onto
+one observed second-site energy axis with an explicit Gaussian test width and
+positive-weight energy quadrature. It retains separate integrated path masses,
+coefficient-grid sensitivity and missing measurements. This conditional research
+component does not change imaging weights or calibrate detector resolution.
 
 `gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
 allocations or shared-strip fits; `gegi_adc_topology.py` and

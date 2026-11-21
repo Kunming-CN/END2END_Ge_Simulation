@@ -358,10 +358,27 @@ and `check-site-escape-final-local.log`. Source/exhibit0bc3ab236f56a748e4829a05c
 and Pages44924594035 are published. Required live verification passes all1018
 selected files, log `check-site-escape-final-live.log`.
 
-The next physical-response component convolves photoelectric absorption and
-scatter/escape into the same observed-energy measure. Its2keV Gaussian width is
-an explicit analytic control, not a measured GeGI resolution. Candidate/position
-workers are using saved evidence; the active native cap retains pinned producers.
+The physical-response component now convolves photoelectric absorption and
+scatter/escape into the same observed-energy measure, in inverse-mm per observed
+keV. All nine saved histories remain, with eight measured second-site energies
+and12271unknown. Explicit2keV Gaussian width is an analytic control, not GeGI
+resolution. Receipt `photon-continuation-v1/observed-energy-controls.json` SHA
+c7c1d72eb605b8c1ca7ceb8bda188cc988e14da90d32184fdca5f1cf13bc04c4 binds exact
+sources, inputs and the independent ADC evidence. Seven focused tests pass;
+the original nine continuation results remain exact after shared preprocessing.
+Sixty-four additional coefficient energies were initialized in the same binary,
+geometry and macro with zero events.128->256energy nodes change escape mass by
+at most4.63e-8/mm and density by1.18e-11/(mm keV);17->65material-grid nodes change
+mass by7.15e-6/mm. First-site uncertainty, secondary containment, topology and
+selection remain separate. No calibrated hypothesis weights are claimed.
+The rejected adaptive integral0.987762637/mm exceeded the0.039272652/mm available
+mass. A retained constant-callback reproducer isolates sensitivity to ray matrix
+multiplication in that callback; the runtime's underlying defect is not diagnosed.
+Positive-weight quadrature gives0.0108483077/mm for this witness and passes the
+mass/convergence checks. The unique failure and reproducer remain in the receipt.
+Next the candidate worker connects these components to the same saved measured
+pair/order ledger, without truth inputs or changing official weights. The active
+native cap retains its pinned producers until closure.
 
 Prior XY/depth publication and its failure evidence are retained in the immutable
 handoff below.

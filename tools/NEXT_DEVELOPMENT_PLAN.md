@@ -104,10 +104,14 @@ derivations: initialized Livermore rates, attenuation, photoelectric path densit
 and normalized free-electron scatter/escape path-energy density. Three analytic
 tests and nine exact saved histories pass, including three actual Ge exits;
 coefficient extraction initialized the original configuration with zero events.
-Next scientific step is to place these factors into the same measured-energy
-response while retaining secondary containment, passive material and acquisition
-selection as separate terms. Different-density units cannot be compared as model
-probabilities. Angular scores alone cannot choose absorption versus escape or
+`gegi_photon_observed_energy.py` now places both factors in the same observed
+second-site energy measure. Nine histories/eight measured energies, seven focused
+checks and nested numerical comparisons pass; the rejected adaptive-integral
+witness remains recorded. Its explicit2keV test width is not a calibrated response.
+The next consumer uses saved measured pair/order identities with fixed measured
+first-site energy; first-site uncertainty, secondary containment, passive material
+and acquisition selection remain separate. Common units alone do not establish
+model probabilities. Angular scores alone cannot choose absorption versus escape or
 calibrate source range. Establish coverage, wrong-order rates and angular errors
 before changing event weights; unresolved intra-cell scatters need a response
 model, not a narrower cone or forced two-point answer. The proven fixed-line
