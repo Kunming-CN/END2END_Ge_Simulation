@@ -137,7 +137,7 @@
   "entrypoint_dependencies": {
     "tools/gegi_candidate_control.py": ["tools/gegi_candidate_storage.py", "tools/gegi_exposure_stream.py", "tools/gegi_pulse_stream.py", "tools/gegi_streaming_acquisition.py", "tools/gegi_candidate_imaging.py", "tools/gegi_candidate_records.py", "tools/gegi_candidate_range.py", "tools/local_ui_jobs.py"],
     "tools/gegi_candidate_records.py": ["tools/gegi_candidate_imaging.py", "tools/gegi_joint_imaging.py"],
-    "tools/gegi_candidate_range.py": ["tools/gegi_candidate_records.py", "tools/gegi_continuous_plane.py", "tools/gegi_joint_imaging.py", "tools/gegi_source_range.py"],
+    "tools/gegi_candidate_range.py": ["tools/gegi_candidate_records.py", "tools/gegi_continuous_plane.py", "tools/gegi_incident_geometry.py", "tools/gegi_joint_imaging.py", "tools/gegi_source_range.py"],
     "tools/gegi_candidate_cone_spread.py": ["tools/gegi_candidate_range.py", "tools/gegi_candidate_records.py", "tools/gegi_cone_spread_geometry.py", "tools/gegi_event_store.py", "tools/scenario_workflow.py"],
     "tools/gegi_cone_spread_geometry.py": ["tools/gegi_imaging.py", "tools/gegi_joint_imaging.py"],
     "tools/gegi_candidate_kinematics.py": ["tools/gegi_candidate_records.py", "tools/gegi_candidate_storage.py", "tools/gegi_continuous_plane.py", "tools/gegi_incident_hypotheses.py", "tools/gegi_joint_imaging.py", "tools/scenario_workflow.py"],

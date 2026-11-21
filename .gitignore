@@ -66,6 +66,7 @@
 !transport/gegi_source.py
 !transport/gegi_source_inventory.py
 !transport/gegi_photon_step_observer.cc
+!transport/gegi_photon_rates.cc
 !transport/gegi_photon_steps.py
 !transport/test_gegi_photon_steps.py
 !transport/test_gegi_source_inventory.py

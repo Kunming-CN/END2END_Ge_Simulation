@@ -61,6 +61,23 @@ It preserves chronological and peak-control cohorts, original pairing/order
 weights and missing fits. Same-cell depth splits expose an algebraic ambiguity
 of the linear center templates; they do not establish physical indistinguishability.
 
+`gegi_incident_range_controls.py` profiles the same prespecified measured-window
+cohorts under absorption and each explicit incident-line escape hypothesis. It
+uses the shared finite-vertex scorer in unsplit mode, retaining unsupported
+precheck order mass and scoring truth only after fitting. The diagnostic order
+weights are distinct from official acquisition weights; angular scores alone
+cannot rank physical absorption/escape models. Both control tools are research
+entries, outside the student package.
+
+`gegi_photon_continuation.py` evaluates conditional bulk-Ge path and outgoing-energy
+densities using explicit material rates and the saved GDML geometry. The separate
+`transport/gegi_photon_rates.cc` exports initialized Geant4 process coefficients
+with zero events, using the original remage macro's physics and cuts. Its energy
+input is `energies-keV.txt`; `/GeSignal/PhotonRates/Save` names the CSV output after
+initialization. Exact build/macro/material provenance accompanies local coefficient
+tables. This research component keeps free-electron angular density distinct from
+Livermore bound-electron transport and does not supply acquisition efficiency.
+
 `gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
 allocations or shared-strip fits; `gegi_adc_topology.py` and
 `gegi_candidate_shared_topology.py` supply the numerical models.

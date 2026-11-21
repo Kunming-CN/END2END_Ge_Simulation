@@ -48,9 +48,10 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   with all prior input/metadata records and exact ledger prefixes unchanged.
   `serial-interleave.json` retains both stop/exit/resume proofs; no completed
   response was recomputed. This prefix is not a final recovery rate.
-  After the fourth cooperative interleave, the2026-11-21T15:10:16UTC snapshot
-  held376/537groups:102complete,269limited,fivestopped. The stopped375prefix
-  and all prior input/metadata/ledger/source bytes were preserved before resume.
+  After the fourth cooperative interleave, the16:00UTC activation verified
+  the same processes advancing, with469/537durable groups:130complete,
+  334limited,fivestopped; checkpoint455is coarser. The stopped375prefix and
+  all prior input/metadata/ledger/source bytes were preserved before resume.
   `native-cap5000-step-limits/continuation-handoff.json` records this snapshot.
   After closure, reconcile the parent/selected ledger. The native owner now
   prepares the measured tangency/self-hit correction in an isolated helper with
@@ -172,166 +173,108 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   `tools/gegi_interaction_hypothesis_controls.py` SHA93f67bc302f12e361ff86130a8229f65ff4f4225f95f7be6966eee2b9978eabd.
   Two targeted tests and the real saved-input analysis pass inJLab3.11.14/
   NumPy2.4.2/SciPy1.16.3. No refits, transport/native calls or changed weights.
-  Next candidate worker deliverable connects explicit escape cones to the existing
-  finite-vertex source/radial-profile consumer on the same controls. Settings are
-  fixed before truth scoring; mixed/merged topology and normalization limits stay
-  explicit. No uncalibrated mixture is promoted to production.
+  The finite-vertex incident-line adapter is now complete, using the shared
+  AngularScore with an explicit unsplit mode; its default split behavior is
+  unchanged. Three original six-trigger measured-window cohorts and three named
+  peak witnesses remain separate. The diagnostic splits original pair mass equally
+  before testing either order and leaves unsupported mass unresolved. It does not
+  inherit the official absorption-only order rejection into the escape branch.
+  All24cohort/hypothesis cells are retained:13all-unresolved,10open/far-supported,
+  one closed under the uncalibrated score-drop2diagnostic.1173absorption has5/6
+  geometric triggers/mass4and favors the10000mmsearch edge;1332.492escape has3/6/
+  mass1.5and radius141.38mm, but only0.28977log-score gain over infinity: no range
+  identification.1332window absorption gives(35.77,-2.50,40.86)mm/radius54.36,
+  far gain3.9853and a closed diagnostic; its escape branches are unsupported.
+  All geometry-supported single-trigger witnesses have open profiles.
+  `incident-line-range-controls.json` SHAddac75500053fc63af01e15c6fa7504e736f748db2639e315f43835dd3d154de;
+  pretruth fit digestb09a0d542984289b1a6032ea775152620b953f9c307ec1d95fade9e207a85df3
+  is unchanged after scoring. Runtime9.629s; two new and six existing tests pass.
+  AdapterSHAc54dd0f3422c2b22c7770c65bd91c14caede238298aaf720160e778a52c261cd.
+  Exact executed scorerSHAa018a620 is retained asincident-line-range-controls-scorer.py;
+  trackedLFscorerSHAd13c34dd has identical parsed AST. No expensive rerun.
+  All models are conditional angular responses, missing calibrated energy-line,
+  detection/escape selection and order/topology probabilities; cross-model scores
+  cannot select a physical hypothesis. The next conditional photon-continuation
+  component is complete from Yoneda/MEGAlib/Geant4primary methods: bulk survival,
+  photoelectric path density(mm^-1) and scatter+escape path/energy density
+  (mm^-1keV^-1), with a normalized free-electron energy Jacobian and unobserved
+  azimuth average. These different measures cannot be ranked before adding the
+  measured energy/charge response. No source or event weights change.
+  Original remage1.1.0/Geant4 11.3.2 Livermore initialization extracted17energies
+  (154.783-1332.498keV) from exactGDML/G4_Ge5.323g/cm3 and original cuts, in
+  2.190s/139329536Bpeak/zero primaries. RatesCSV SHA
+  73338fc40c27a5dbbfb092986e8c777b131c45da831b4e49ecb53050f97b9c81.
+  Nine exact histories (sixabsorption/threeescape) pass identity/energy/vertex
+  joins. Analytic exits3.319580084868297/6.9078458672033705/9.025046588164116mm
+  match recorded rays within2e-15mm; azimuth256->1024changes atmost4.63e-6.
+  The per-ray survival and unobserved-azimuth average are different conditions,
+  not an accuracy comparison. Three analytic tests pass, including normalized
+  solid-angle/energy measures and explicit units. `photon-continuation-v1/
+  saved-controls.json` SHA7d4c24e68b1936633d5b483a99cbebcb3e5cf3b640d546766dc7b114e85a8474.
+  A complete measured likelihood still needs entrance/passive material transport,
+  secondary containment, joint energy/position response and acquisition/topology
+  selection. No inferred full detection efficiency or physical model selection.
   The selected-cap continuation helper now preserves the full 1,971 denominator
   through the sealed parent, carries deferred statuses explicitly, and unions
   missing-history tails at each group's actual support. Twelve focused checks
   pass; the real whole-group 2590 pilot confirms the extended response path.
-* **Position worker:** `/root/position_model`. Same-event substitutions on all
-  18 chronological IDs plus three named peak controls are complete. Among eight
-  fully paired cases, position-only |ARM change| is 0.44-16.59 degrees versus
-  0.005-0.049 degrees for energy alone. Five chronological absorption controls
-  give ARM RMS 2.417 degrees for true vertices plus retained transfer estimate,
-  6.841 for positions only, 2.396 for energy only, 6.844 for both. This earlier
-  conditional estimate is preserved in `same-event-substitutions.json`, SHA
-  d4df4a23ac615b63d691b9faabe9ef0a50b181049614ec18849d21dba293860d.
-  Exact photon kinetics now confirm its transfer estimates within 2.27e-13 keV
-  on the observed controls. The new receipt retains all 21 original IDs and
-  weights: ten observed histories, eight complete signal substitutions, one
-  clean truth-only case and one merged case without a false two-site match;
-  eleven histories have no observer. Source alignment, bound-electron model,
-  position, measured-energy and nominal-line angular terms are separate and
-  sum within 1e-10 degrees. `same-event-exact-kinetics.json` SHA
-  9bca9f3d43f5f7fba86965873fe6a431934b2309953cc8343eb3a51dab4e0cd8.
-  Photon vertices, deposit centroids and signal positions remain distinct.
-  Trigger 12271 is explained at the nominal deposit-cell level: the second
-  photon deposits 365.027/105.176 keV across Y27/Y28. Four strip totals match
-  measured energies within 0.102 keV; the three-cell fit recovers the allocation
-  but retains 32.18 ADC-code overall RMS and 138.26 on Y28. A four-cell fit is
-  nearly tied. The original unresolved weight stays one; carrier endpoints are
-  unknown. `trigger-12271/charge-allocation-diagnostic.json` SHA
-  3cf6a6738ea846a037b3b94262602792473b8307e1b49b3b0ab6c91e969c362d.
-  Ten specified 500-keV point injections now have all 34 signed responses and
-  complete endpoints, using the original Float32 field state without a solve.
-  Sixteen local response alternatives preserve the original ADC and measured
-  cell energies. The best reduces all34 RMS 32.17797 -> 4.21475 ADC codes and
-  Y28 138.25977 -> 15.82682. Three independent noisy holdout positions improve
-  errors 2.5793/2.5860/1.9246 -> 0.0354/0.0579/0.1500 mm. The neighborhood was
-  specified from replay geometry, so this is local response evidence, not blind
-  detector-wide resolution. Three charge components remain distinct from two
-  photon vertices; original imaging weight stays zero/unresolved one. The actual
-  distributed deposits' carrier allocation remains unknown.
-  `trigger-12271/boundary-adc-comparison.json` SHA
-  1aa8643fc3578a1d5bff2803df61dfbf43110a2621cc4562f2ebbd317a91b110.
-  Capture COMPLETE SHA116fe3d44b7c5eb2cca4f2e9ae53cc781504876bc8f6b18932289799fe1ce719;
-  native40.7149s/peak2,345,721,856B. The first new entry-point syntax failure
-  occurred before field loading and is retained separately. The reusable
-  `tools/gegi_boundary_response_comparison.py` CLI now reproduces every scientific
-  field in a separate receipt, SHA
-  5c2113ff0f9d4f5896d4006d55e53553f82fb43e992941d1d19a1c45ae8f6c84.
-  It remains a case-specific local diagnostic: best fit uses a predeclared
-  first-component anchor; keeping that component centered still gives all34
-  RMS13.67/Y28 51.88. Unknown production events do not receive that anchor.
-  The measured-only grid is complete in `trigger-12271-native-response/blind-grid`:
-  request943a7f0ada027fac190e6770fcb85711175794a933c2ae562411acc61130d6df;
-  planner51b736f08622a09294a7f2aa207767d0b393ae3fdfd9406c4d2625a7159d411b;
-  scorer2d41b3f21a01235b63b481c63def7e71e1093ee71fd93dfcfaff7b64c1739c0a.
-  Geometry and measured cells define72training/6interior/3outside-grid gap points;
-  33center traces are reused. All81points/all34signedarrays/162contacts pass,
-  native41.7444s/peak2,382,675,968B; COMPLETE SHA
-  de871ff158754bcd9099aa4cf74d6399d70a1c277b8163617d6112261fdc7fdc.
-  `comparison.json` SHA8095c236c5cc97e8e9b197e0dda37bdbbbc8da8d5b926ac8eaccd47edfdc3537
-  gives original all34/Y28 RMS10.75854/39.85115codes without a replay-defined
-  anchor. Interior6single-point position RMS1.754->1.274mm; two overlaps/six
-  components1.916->1.802mm, but3/6worsen. Three gap probes remain outside fit
-  support. Original alternatives,near-ties and weights0/1are retained. Next:
-  Same-input diagnosis is complete: all11ADC hashes reproduce. Interpolation
-  error at the true overlap positions is25.07/27.20ADCcodes versus2.29/2.26noise
-  and0.18/0.17quantization. Exact energies shift positions at most0.00475mm;
-  noiseless second-overlap shifts at most0.028mm, with the same erroneous pattern.
-  Fits settle at internal knots and near-ties span up to1.31mm.
-  `cause-diagnostic.json` SHA301e6ad4119e4ce7d832db9141b813d0dd7d25452791afd4d62f780eca6228c2
-  binds original data; no acceptance or weight changed.
-  Depth-only refinement is complete at `blind-grid/depth-refinement`:192newfit
-  points+6freshcontrols,72oldfits+33centers reused; all198responses/all34arrays/
-  396contacts verified. Capture42.8021s/peak2,354,872,320B, COMPLETE SHA
-  55d40027af56b58104f66554b0c4f0434d460a35688883969f913b601db08aa4.
-  Request934ff10317aab1ab4391df1c5098931fef2e83e75c13ecd20fefbb9e02ec3e3c;
-  `comparison.json` SHA35286f3f8051908280c5e81300288da35a4698a094c2e7f07be7638b7e7c02c9.
-  All12coarse fits reproduce with zero numeric difference. Same original ADC
-  all34/Y28 RMS10.7585/39.8511 ->5.0105/12.9285codes. Fresh6single-point errors
-  RMS1.2372->0.28485mm,all6improve. Old overlap components1.8019->1.3029mm,
-  but2/6worsen; oldgap controls now reach the Y limit and remain outside support.
-  No imaging promotion. Twenty-four fresh ADC conditions on the fixed six points
-  (two layouts,three allocations,two phases,two noise replicates) are complete.
-  Refined24converge; coarse23converge and one failure is retained. On23matched
-  conditions all34RMS17.445->4.403codes,component-positionRMS2.055->0.982mm;
-  10/69component errors worsen. Weak near-ties reach2.36mm; outer-limit fits
-  increase11->15. These are two physical layouts,not24independent histories.
-  `weak-overlap-validation-cli.json` SHA
-  4d3f2c7ce7bb4160eb1707aa0dd46f82c22b9a06fdddfe42d398de43bf0cd8f3
-  reproduces all24ADC hashes and every scientific field of originalc3567a4c;
-  only producer name/hash differs. Reusable toolSHA
-  bd3ed12dfee54e97453f02ef6b45562bcf1a9905e87937074ec83486f18b900a.
-  Bound diagnosis is complete: all24bound hits in15matched conditions are XY,
-  noneZ/onset. Three saved conditions0/6/21 have known-position interpolation
-  RMS10.82-12.78codes versus2.12-2.27noise. With nuisance coordinates refitted,
-  weakX can move1.975mm for+0.200codes RMS and weakY2.268mm for+0.182codes.
-  `weak-overlap-bound-diagnostic.json` SHAd676304f2d5061eebde5edacf15ca2482dbd788caa63db0cd82c3a374deed058
-  retains the three conditional profiles; this is local diagnostic evidence,
-  not confidence coverage. A prespecified symmetric X/Y PCHIP contrast on the
-  same banks/six fresh held-outs is now complete: all six improve, position
-  RMS0.284846->0.092752mm and known-position waveformRMS13.22817->4.75310codes.
-  All297training knots reproduce within1.36e-20V/keV; native contact/charge
-  closure is checked separately. SciPy1.16.3; depth/time remain linear.
-  `xy-interpolation-validation.json` SHA1827f655b95bc3442e72a410fd075f02456879d8f1927a32a099d30c04f49ab5
-  is local, not promoted into runtime or published detector-wide performance.
-  The frozen method now has an actual24overlap+original12271 CLI acceptance.
-  `xy-overlap-and-original-adc.json` SHA
-  b6d421683a266d964dd1e176982588befd89efa91070744fe9b532946ef97dec;
-  `tools/gegi_boundary_xy_study.py` SHAc08aa74f4a7da751d8a15c5e6846c3033daab19830685e60a518b8b2baee1e61.
-  Bilinear11depth/PCHIPbothreturn24/24. All72positionRMS0.9774->0.8789mm,
-  weak24RMS1.3446->1.1853mm, butonly12weakpositionsimprove; allocation2weak
-  worsens0.886->1.089mm. All34fitRMS4.4278->3.9303codes,18/24improve.
-  Outer-limit conditions15->16 and largestweaknear-tie2.359->2.810mm.
-  Original12271all34/Y28RMS5.0105/12.9285->4.8048/12.3768codes; no position
-  truth score, both unsupported alternatives and weights0/1retained. SameADC/
-  energies/oldfields reproduce; onlyXYinterpolation changed, not a runtime default.
-  Joint alternatives now feed finite-vertex geometry on36sameADCcontrols across
-  three layouts:72pairs (44fit,24energy-incompatible,4template-unavailable),
-  original96orders retained. `position-cone-spread.json` SHA
-  eca34f3061c45cacc74dfd852e44634a2042a04daf1a6697ac10b72a929360c1;
-  consumerSHA12003acd6fd7d2f03c4c46bf7f4bff72b3e31348f8be8145c42623f87bbb6ce8.
-  Known-cell lateral axis span max4.8421deg,median0.000571deg; finite-angle
-  max6.374/5.238/4.961/4.875deg at50/100/300/1000mm. Shared alternative pairs
-  move together; fixed5degkernel is diagnostic, no probability/weight change.
-  Exact ADC/calibration/energies agree with archives; CURRENT producer replay
-  differs from historical lateral best positions by atmost2.445e-6mm and RMS
-  by2.265e-7ADCcodes. Archived fitterSHAe215 is unavailable in inspected sources;
-  recovered driverSHAfbf3d197 and all numeric deltas are retained. Historical
-  receipts omitted the joint alternate roster, so no exact-fit/roster claim.
-  Candidate adapter is complete with zero refits: all3822triggers/7644pairs,
-  full14909census, exact original ADC/order/weight ledgers. Retained local centers
-  cover2983pairs/4053orders, local lateral151/208(143partial+8full), all34centers
-  132/179 and all34lateral8/10. Largest axis/50mmangle spans are68.20/76.41deg
-  forlocalcenters and44.38/48.06deg for the different all34lateral population.
-  All maxima witnesses converged; one other unconverged alternative is retained.
-  `candidate-cone-spread.json.gz` SHA5d0224b85239ef5e86eb020a106bdb331b53838d38f8588394dcb02eb00bcf53;
-  firstconsumerSHA5ef0ceb50bc5bc077d3f1222b9fb1f045e76b8efcf2d34e32a8d158833b25851.
-  Local center alternatives come from the saved lateral compatibility pass,
-  with original-center shifts≤0.0002114mm explicitly retained.
-  Twelve archived three/four-point controls now confirm that geometric stability
-  does not establish two-point topology:10/12stillproject, all10withmultiple
-  saved cones. Median lateral trigger-max axis span0.00059058deg vspositive
-  0.00059845deg; negative maxima1.203deg axis/1.664deg at50mm are inside the
-  positive range. Allfourfour-point two-cell conditions are stable below0.0008deg.
-  `negative-cone-spread.json` SHA57618e7916b58a4c826a9a5c2f603d55257e2a2d57808e3d29f73110fdc44d14;
-  newconsumerSHA8ed12ca554be4916bc136e9c015246c302ff443d7076d1369c008b96188ca540.
-  All12ADC/283input hashes match. Current fitted-source hashes match archived;
-  uncertainty-driver variation and raw per-fit deltas are retained. No positive
-  replay, native call, gate or weight change. The generic candidate diagnostic
-  now uses a small shared geometry module without research-fixture imports.
-  In the original Python3.11.14/NumPy2.4.2 environment, all scientific fields
-  reproduce exactly: `candidate-cone-spread-runtime-reference-env.json.gz`
-  SHA0ee76234a975a01312b621acf16638cd2d862aaecbaaa0a67b8b27021f4cc4e7.
-  The optional-compatibility path also retains all3822triggers/7644pairs and
-  weights without inventing absent all34models. Six package checks pass,
-  including the isolated ZIP CLI. Original consumer5ef0ceb5 is preserved;
-  measured NumPy2.3.5 roundoff (max7.89e-13deg) remains separate evidence.
-  Runtime/guide membership is published at82f6554; exhibit publication follows.
+* **Position worker:** `/root/position_model` integrated the accepted same-event
+  hypothesis/range evidence into the existing page. Both focused display tests
+  and42publication tests pass; desktop homepage->new range table->methods passes.
+  The next generic runtime mode `--escape-incident-energy-keV` is implemented
+  with explicit optional trigger IDs, no truth inputs and unsupported mass retained.
+  Actual18chronological-control CLI output and three separate peak witness results
+  exactly reproduce every archived profile/order/mass. Eight focused range tests
+  pass and default numeric function ASTs are unchanged. The maintained guide and
+  explicit package dependencies are updated; two targeted package tests pass,
+  including the unpacked CLI. Actual saved outputSHA
+  fc143454bcbd90bafba661db0f4a6a500e0f723c4909315dcd4d56ab7e31f26f.
+  Exact executed sourcea05ea005 is retained asportable-escape-range-1332-controls-producer.py;
+  trackedLFsourcebcda8268 is byte-identical after newline normalization and AST-
+  identical, without another scientific replay. Committed package/release and
+  final guide/site publication are pending; no student release claim yet.
+  Completed position work is retained, without new native calls or refits:
+  * All34-channel compatibility and optional lateral grids are portable. On36
+    matched off-template controls, full34lateral improves axis10.26->5.00deg and
+    XY1.802->1.044mm. Six grids cover151/2983pairings;143partial/eightfull. Four
+    other grids worsen axis7.17->9.32deg and were not promoted. Shared-strip
+    census4410/3833usable;32actual fits cover16conditions/fourlayouts.
+  * Ten exact photon histories retain21original IDs and eight full substitutions.
+    Position-only |ARM change| is0.44-16.59deg versus0.005-0.049deg for energy.
+    Exact kinetics confirm the earlier transfer estimate within2.27e-13keV;
+    bound-electron scattering, source alignment and reconstruction terms are
+    separate. Photon vertices, charge centroids and signal positions stay distinct.
+    `same-event-exact-kinetics.json` SHA9bca9f3d43f5f7fba86965873fe6a431934b2309953cc8343eb3a51dab4e0cd8.
+  * Trigger12271has two photon vertices but charge in three nominal cells. The
+    measured-cell grid has81initial responses and198depth-refinement responses,
+    all34signed/complete contacts, from original Float32 fields without a solve.
+    Three->eleven depth levels reduce original all34/Y28RMS10.7585/39.8511->
+    5.0105/12.9285codes and fresh six-point positionRMS1.2372->0.28485mm.
+    Exact ADC diagnosis identifies interpolation mismatch25-28codes versus
+    noise~2.3codes; energy-only displacement is atmost0.00475mm.
+  * Twenty-four overlap conditions share two physical layouts, three energy
+    allocations, two phases and two noise replicates. Refined24converge; one
+    coarse failure is retained. On23matched conditions positionRMS2.055->0.982mm,
+    but10/69components worsen. Weak near-ties reach2.36mm; outer-limit fits15/23.
+    `weak-overlap-validation-cli.json` SHA4d3f2c7ce7bb4160eb1707aa0dd46f82c22b9a06fdddfe42d398de43bf0cd8f3.
+  * Same-bank symmetricXY-PCHIP improves six isolated positions0.284846->0.092752mm
+    but the24overlap conditions remain mixed:72componentRMS0.9774->0.8789mm,
+    weak24RMS1.3446->1.1853mm, only12weakpositions improve, outer-limit15->16,
+    weak near-tie2.359->2.810mm. Original12271all34/Y28RMS5.0105/12.9285->
+    4.8048/12.3768codes retains both unsupported alternatives and weights0/1.
+    `xy-overlap-and-original-adc.json` SHAb6d421683a266d964dd1e176982588befd89efa91070744fe9b532946ef97dec.
+    This local research interpolation is not a runtime default or detector-wide
+    position validation. No position truth score is assigned to original12271.
+  * Joint-alternative geometry covers36sameADCcontrols,12known multi-point
+    negatives and all3822saved candidates/7644pairs.10/12negative controls still
+    project with stable cones; median maximum axis span0.00059058deg versus
+    positive0.00059845deg. Stable geometry therefore does not identify two sites.
+    The portable cone diagnostic retains every original mass and permits absent
+    all34refits explicitly. OriginalPython3.11.14/NumPy2.4.2 scientific parity
+    is exact; alternateNumPy2.3.5roundoff is retained separately.
+    AcceptanceSHA94408be98ad7c36e982f2fcfa7f8d63815f89f9914fac563ea9d60f5c5531bb3.
+  Full producer/request/array hashes, recorded failures and earlier publication
+  receipts remain in the immutable handoff below and their bound local evidence.
 
 ## Delivered reconstruction and scientific findings
 
@@ -419,10 +362,17 @@ buildf3a7a5896e005b9b4b58443c50b003173422e44ee71d129d0a515cf031d582eb,
 1914files/537945754bytes/127HTMLpages. Separate `tools/check_site.py` passes,
 log `check-site-readout-local.log`. Source/exhibit009702db0f3fbbaa6316ba8cb37b2a40198d5c0f
 and Pages44918809010are published; requiredlivecheck passes all1018selected
-files, log `check-site-readout-live.log`. The subsequent hypothesis-control tool
-is source/local evidence only; its results will accompany the next source-response
-milestone rather than another unchanged site build.
-Research acceptance tools do not change the student runtime or calibration.
+files, log `check-site-readout-live.log`.
+
+Next integrated delivery adds the same-ADC interaction/range exhibit and the
+portable fixed-line escape mode. Research photon-continuation tools remain
+outside the student package. Both display tests,42site tests, eight range tests,
+two targeted package tests and three continuation tests pass. Initial exhibit
+buildd5ca6cc69639c857fd9fb54582b16e17cd783934cf6ffff6b65735bbbe4309b7
+and desktop homepage->range controls->methods acceptance pass. The subsequently
+completed portable CLI adds one maintained-guide paragraph, so final builder,
+committed software ZIP/public bytes and live deployment checks remain pending.
+Original results, calibration download and the active native cap stay unchanged.
 
 Prior XY/depth publication and its failure evidence are retained in the immutable
 handoff below.
@@ -446,5 +396,5 @@ and123–125activehours exclude new diagnostic truth overhead and are not launch
 authorization. No waveform library replay qualifies as joint-source production.
 
 Earlier exact results, producer hashes and publication history remain in the
-[immutable integrated handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/82f6554683fd0ce976a2dab7083c80a009e2af92/PROGRESS.md).
+[immutable integrated handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/4425875b350f68c6e7ec333d5d39d9d428330b84/PROGRESS.md).
 Use [the maintained guide](tools/site_guide.html) and [source ownership](tools/MAINTENANCE.md).

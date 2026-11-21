@@ -38,14 +38,17 @@ def require(ok, message):
 class AngularScore:
     """Batch the existing angular response, including declared site/energy errors."""
 
-    def __init__(self, first, second, settings):
+    def __init__(self, first, second, settings, *, require_both_splits=True):
         events = first + second
         informative = [event for event in events if event.candidates]
         self.first_informative = sum(bool(event.candidates) for event in first)
         self.unknown = np.array([event.unresolved_mass for event in informative])
         self.starts = np.cumsum([0] + [len(event.candidates) for event in informative[:-1]])
         self.candidates = [cone for event in informative for cone in event.candidates]
-        require(0 < self.first_informative < len(informative), 'Both splits need measured cone geometry')
+        if require_both_splits:
+            require(0 < self.first_informative < len(informative), 'Both splits need measured cone geometry')
+        else:
+            require(bool(informative), 'The pooled score needs measured cone geometry')
         self.vertex = np.array([c.vertex for c in self.candidates])
         self.axis = np.array([c.axis for c in self.candidates])
         self.theta = np.array([c.theta for c in self.candidates])

@@ -87,13 +87,27 @@ clean chronological escape retains its true order only under the correct
 incident-line escape hypothesis. Five of nine known merged histories still
 admit absorption cones, two also escape. An exact linear-template depth split
 demonstrates a model ambiguity, not physical resolution. No event weights change.
-Next scientific step: connect these explicit escape cones to the existing
-finite-vertex source-position/radial-profile consumer and compare the same
-controls under fixed, explicit hypotheses. Source coordinates score finished
-results only. Establish coverage, wrong-order rates and angular errors before
-changing event weights; unresolved intra-cell scatters need a response model,
-not a narrower cone or forced two-point answer. Conditional normalization and
-selection remain material limits on any mixed-hypothesis source fit.
+The explicit escape cones now use the shared finite-vertex radial-profile
+consumer. Three six-trigger measured-window cohorts and three separate peak
+witnesses retain all24hypothesis/cohort cells:13fully unresolved,10open profiles,
+one closed only under an uncalibrated score-drop diagnostic. The1173window's
+1332escape optimum141.38mm has just0.28977log-score gain over infinity and no
+identified range. Equal precheck order allocation is a diagnostic contrast,
+not a new production prior. Fits are hashed before optional truth scoring.
+Conditional bulk-Ge photon continuation is now implemented from primary response
+derivations: initialized Livermore rates, attenuation, photoelectric path density
+and normalized free-electron scatter/escape path-energy density. Three analytic
+tests and nine exact saved histories pass, including three actual Ge exits;
+coefficient extraction initialized the original configuration with zero events.
+Next scientific step is to place these factors into the same measured-energy
+response while retaining secondary containment, passive material and acquisition
+selection as separate terms. Different-density units cannot be compared as model
+probabilities. Angular scores alone cannot choose absorption versus escape or
+calibrate source range. Establish coverage, wrong-order rates and angular errors
+before changing event weights; unresolved intra-cell scatters need a response
+model, not a narrower cone or forced two-point answer. The proven fixed-line
+diagnostic is also being delivered through the existing portable candidate-range
+CLI, retaining the default absorption workflow and complete original identities.
 Then freeze the algorithm for the held-out distance/direction/strength/depth
 statistics in stage6. Current five-second results remain development evidence.
 

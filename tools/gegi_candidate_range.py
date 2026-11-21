@@ -26,6 +26,9 @@ from gegi_source_range import AngularScore, profiled_background
 from gegi_joint_imaging import ResponseSettings, spectral_membership
 
 
+ESCAPE_RANGE_KIND = 'gegi_candidate_fixed_line_escape_range_v1'
+
+
 def direction(angles):
     theta, phi = np.asarray(angles).T
     return np.array([np.sin(theta)*np.cos(phi), np.sin(theta)*np.sin(phi), np.cos(theta)]).T
@@ -174,13 +177,81 @@ def analyze_events(events, times_ns, live_time_ns, settings, radii, *, direction
                                                             fits['no_extra_background']['position_mm']))
 
 
+def prepare_escape_events(saved, bound_rows, settings, incident_energy_keV, selected_ids):
+    """Apply the same fixed-line cone and precheck mass policy to saved fits."""
+    from gegi_incident_geometry import pairing_geometry, hypotheses
+    from gegi_joint_imaging import prepare_events
+
+    lines = hypotheses.configuration([incident_energy_keV])['incident_energies_keV']
+    receipt = saved['fit_receipt']
+    position_model = receipt.get('position_model', 'center')
+    records, ledger = [], []
+    selected = set(selected_ids)
+    for old, fitted, binding in zip(saved['triggers'], receipt['candidates'], bound_rows, strict=True):
+        trigger_id = old['original_trigger_id']
+        if trigger_id not in selected:
+            continue
+        original_pairs = {pair['index']: pair for pair in old['pairings']}
+        cones, orders = [], []
+        for slot in fitted['pairings']:
+            original = original_pairs.get(slot['index'])
+            pairing = pairing_geometry(slot, original, position_model, lines)
+            kinematics = pairing['kinematics']
+            branches = {tuple(row['site_index_order']): row for line in kinematics.get('incident_line_hypotheses', ())
+                        for row in line['two_resolved_scatter_escape_orders']}
+            pair_mass = original['nominal_mass'] if original is not None else 0.
+            original_orders = {tuple(row['order']): row for row in original['orders']} if original is not None else {}
+            for order in hypotheses.ORDERS:
+                branch = branches.get(order)
+                cone = branch['cone'] if branch is not None else None
+                mass = pair_mass / 2
+                if cone is not None:
+                    cones.append(dict(cone, second_vertex_mm=cone['second_site_mm'], prior_weight=mass))
+                orders.append(dict(pair_index=slot['index'], cells=slot['cells'], order=list(order),
+                                   original_nominal_pair_mass=pair_mass, diagnostic_precheck_order_mass=mass,
+                                   original_absorption_order=original_orders.get(order),
+                                   state='projectable' if cone is not None else 'energy_pairing_unavailable' if branch is None
+                                   else 'unsupported_kinematics_or_geometry',
+                                   geometry_status=branch['geometry_status'] if branch is not None else kinematics['status'],
+                                   projected_mass=mass if cone is not None else 0., conditional_cone=cone))
+        records.append(dict(event_id=trigger_id, energy_keV=old['energy_keV'], candidates=cones))
+        ledger.append(dict(original_trigger_id=trigger_id, trigger_time_ns=old['trigger_time_ns'],
+                           archive_record_sha256=binding['archive_record_sha256'], archive_adc_sha256=binding['archive_adc_sha256'],
+                           official_projected_mass=old['projected_mass'], official_unresolved_mass=old['unresolved_mass'], orders=orders))
+    events = prepare_events(records, settings)
+    for event, row in zip(events, ledger, strict=True):
+        row['diagnostic_projected_mass'] = math.fsum(cone.prior for cone in event.candidates)
+        row['diagnostic_unresolved_mass'] = event.unresolved_mass
+    return events, ledger
+
+
+def analyze_escape_events(events, settings, radii, *, directions, starts, background, score_drop, profile_background):
+    ids = [event.identity[0] for event in events]
+    result = dict(selected_original_trigger_ids=ids, fits={})
+    if not any(event.candidates for event in events):
+        return dict(result, status='all_selected_triggers_unresolved' if ids else 'no_selected_triggers',
+                    accounting=dict(selected_triggers=len(events), triggers_with_geometry=0, allowed_saved_geometry_orders=0,
+                                    projected_trigger_mass=0., unresolved_trigger_mass=float(len(events))))
+    scorer = AngularScore(events, [], settings, require_both_splits=False)
+    modes = {'primary': (background, 'all')}
+    if profile_background:
+        modes['profiled_background'] = (None, 'all')
+    fits = {name: fit_profile(scorer, radii, mode=mode, directions=directions,
+                              starts=starts, score_drop=score_drop) for name, mode in modes.items()}
+    return dict(result, status='conditional_scores_computed', accounting=scorer.accounting,
+                response_parity_max_abs=scorer.validate(float(radii[0])), fits=fits)
+
+
 def run(path, *, radius_min_mm=20., radius_max_mm=10000., radial_points=49,
         directions=192, starts=6, background=.25, score_drop=2., output=None, archive=None,
-        profile_background=False):
+        profile_background=False, escape_incident_energy_keV=None, trigger_ids=None):
     from gegi_candidate_records import events_from_saved
     begun = time.perf_counter(); path = Path(path)
     if output is not None and Path(output).exists():
         raise FileExistsError(output)
+    escape = escape_incident_energy_keV is not None
+    if trigger_ids is not None and not escape:
+        raise ValueError('An explicit trigger subset is available only for the fixed-line escape diagnostic')
     raw = path.read_bytes(); saved = json.loads(gzip.decompress(raw) if path.suffix == '.gz' else raw)
     settings = ResponseSettings(strip_pitch_mm=saved['model']['strip_pitch_mm'],
                                 angular_nuisance_sigma_deg=saved['model']['angular_nuisance_sigma_deg'])
@@ -212,12 +283,42 @@ def run(path, *, radius_min_mm=20., radius_max_mm=10000., radial_points=49,
         fits={}, source_sha256={name: hashlib.sha256((Path(__file__).parent/name).read_bytes()).hexdigest()
                                for name in (Path(__file__).name, 'gegi_joint_imaging.py',
                                             'gegi_source_range.py', 'gegi_candidate_records.py')})
+    if escape:
+        available_ids = [event.identity[0] for event in events]
+        requested = available_ids if trigger_ids is None else tuple(trigger_ids)
+        selected_set = set(requested)
+        if (not requested or len(selected_set) != len(requested) or not selected_set <= set(available_ids)
+                or any(type(i) is not int or i <= 0 for i in requested)):
+            raise ValueError('Select distinct original two-strip trigger IDs from the saved map')
+        keep = np.array([i in selected_set for i in available_ids], dtype=bool)
+        selected_ids = [i for i, yes in zip(available_ids, keep, strict=True) if yes]
+        escape_events, ledger = prepare_escape_events(saved, rows, settings, escape_incident_energy_keV, selected_ids)
+        result['kind'] = ESCAPE_RANGE_KIND
+        result['scope'] = dict(original_two_strip_triggers=len(available_ids), selected_original_trigger_ids=selected_ids,
+                               omitted_original_trigger_count=len(available_ids)-len(selected_ids),
+                               selected_outside_line_windows=[i for i, outside, yes in zip(
+                                   available_ids, masks['other_energy'], keep, strict=True) if yes and outside])
+        result['escape_trigger_order_ledger'] = ledger
+        result['model'].update(fixed_incident_energy_keV=escape_incident_energy_keV,
+            interaction_hypothesis='two_resolved_compton_scatters_then_escape',
+            order_mass_policy='Diagnostic only. Split each original measured pairing mass equally over both orders before checking '
+                              'escape support. Unsupported mass stays uniform in angle without renormalization. Original map weights stay fixed.',
+            limitations='Each window fits one hypothetical common position from the conditional angular score. Energy-line likelihood, '
+                        'escape and detection acceptance, and calibrated order, topology or source-membership probabilities are unavailable.')
+        for name in ('gegi_incident_geometry.py', 'gegi_incident_hypotheses.py'):
+            result['source_sha256'][name] = hashlib.sha256((Path(__file__).parent/name).read_bytes()).hexdigest()
     for label in labels:
         mask = masks[label]
-        selected = [event for event, keep in zip(events, mask, strict=True) if keep]
-        result['fits'][label] = analyze_events(selected, times[mask], saved['selection']['clock_live_time_ns'],
-            settings, radii, directions=directions, starts=starts, background=background, score_drop=score_drop,
-            profile_background=profile_background)
+        if escape:
+            selected = [event for event, yes in zip(escape_events, mask[keep], strict=True) if yes]
+            result['fits'][label] = analyze_escape_events(selected, settings, radii, directions=directions, starts=starts,
+                background=background, score_drop=score_drop, profile_background=profile_background)
+            result['fits'][label]['original_window_trigger_count'] = int(mask.sum())
+        else:
+            selected = [event for event, yes in zip(events, mask, strict=True) if yes]
+            result['fits'][label] = analyze_events(selected, times[mask], saved['selection']['clock_live_time_ns'],
+                settings, radii, directions=directions, starts=starts, background=background, score_drop=score_drop,
+                profile_background=profile_background)
         result['elapsed_seconds'] = time.perf_counter()-begun
         result['status'] = 'complete' if len(result['fits']) == len(labels) else 'partial'
         if output:
@@ -246,12 +347,16 @@ def main():
     parser.add_argument('--background', type=float, default=.25)
     parser.add_argument('--profile-background', action='store_true',
                         help='Also optimize the uniform-angle fraction at every source position')
+    parser.add_argument('--escape-incident-energy-keV', type=float, metavar='ENERGY',
+                        help='Fit two resolved Compton scatters followed by escape at one supplied photon energy')
+    parser.add_argument('--trigger-id', type=int, action='append', help='Repeat to select original trigger IDs for the escape diagnostic')
     parser.add_argument('--score-drop', type=float, default=2.)
     args = parser.parse_args()
     run(args.imaging, radius_min_mm=args.radius_min_mm, radius_max_mm=args.radius_max_mm,
         radial_points=args.radial_points, directions=args.directions, starts=args.starts,
         background=args.background, score_drop=args.score_drop, output=args.output, archive=args.archive,
-        profile_background=args.profile_background)
+        profile_background=args.profile_background, escape_incident_energy_keV=args.escape_incident_energy_keV,
+        trigger_ids=args.trigger_id)
 
 
 if __name__ == '__main__':
