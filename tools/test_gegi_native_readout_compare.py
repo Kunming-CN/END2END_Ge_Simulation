@@ -1,6 +1,8 @@
 import unittest
 
-from gegi_native_readout_compare import TRIGGER_FIELDS, baseline_mismatches, compare_ledgers
+import numpy as np
+
+from gegi_native_readout_compare import TRIGGER_FIELDS, baseline_mismatches, compare_adc, compare_ledgers
 
 
 def trigger(trigger_id, time_ns, rise_end_ns, decision='candidate'):
@@ -10,6 +12,12 @@ def trigger(trigger_id, time_ns, rise_end_ns, decision='candidate'):
 
 
 class ReadoutComparisonTests(unittest.TestCase):
+    def test_adc_differences_keep_clock_indices_across_chunks(self):
+        old = np.array([[0, -32768, 0, 0], [0, 0, 0, -123]], dtype=np.int16)
+        new = np.array([[0, 32767, 0, 2], [0, 0, 0, 123]], dtype=np.int16)
+        self.assertEqual(compare_adc(old, new, 100, 2), dict(frames=2, values=3,
+            maximum_absolute_adc_codes=65535, first_and_last_changed_sample_indexes=[101, 103]))
+
     def test_baseline_reports_a_candidate_adc_mismatch(self):
         old = trigger(19, 100., 120.)
         reference = [tuple(old[k] for k in TRIGGER_FIELDS)]

@@ -37,7 +37,7 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   waveform recovery. The subsequent whole-group 2590 acceptance at 5 us is
   complete: all eight original rows, 16 carrier contacts and 34 valid signed
   waveforms through 3,193 ns. The selected 537-limit phase is now running in
-  `native-cap5000-step-limits`, Python27768/Julia8476, session29912, request SHA
+  `native-cap5000-step-limits`, Python18384/Julia27556, session62982, request SHA
   3436be0712bb60d584defc7951ffaf4ff8746855a584a9156bf4c4e8589889c0.
   It inherits the exact complete pilot and computes 536 new groups. The sealed
   849 complete and 585 other unknown groups are not rerun. Producers are pinned
@@ -48,8 +48,9 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   with all prior input/metadata records and exact ledger prefixes unchanged.
   `serial-interleave.json` retains both stop/exit/resume proofs; no completed
   response was recomputed. This prefix is not a final recovery rate.
-  At2026-11-21T14:07:30UTC, actual processes were alive and the durable ledger
-  held296/537groups:76complete,216limited,fourstopped; checkpoint278is coarser.
+  After the fourth cooperative interleave, the2026-11-21T15:10:16UTC snapshot
+  held376/537groups:102complete,269limited,fivestopped. The stopped375prefix
+  and all prior input/metadata/ledger/source bytes were preserved before resume.
   `native-cap5000-step-limits/continuation-handoff.json` records this snapshot.
   After closure, reconcile the parent/selected ledger. The native owner now
   prepares the measured tangency/self-hit correction in an isolated helper with
@@ -80,7 +81,7 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   All 34 retained Ge rows from ten blocks pass the real input join/staging
   acceptance; 24 transport/observer and 14 acquisition checks pass. No new
   acquisition or native calculation was needed for this integration.
-  Current work prepares the first complete continuous-readout repair acceptance:
+  The first complete continuous-readout repair acceptance used:
   checkpoint2.37828180194ms -> unavailable ordinal119/event2459, ending before
   6.19974311743ms.43successful responses are absent, all in originalb000002.
   Exact10,000-driver transport replay is complete:8.979s/peak179,953,664B,
@@ -119,13 +120,44 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   Its initial final-write hardlink failed; complete scientific bytes were
   promoted by rename without replay. Producer.py is retained; the CLI now uses
   the existing rename writer in its exclusively-created output directory.
-  Two focused checks pass; trackedconsumerSHA
-  f3d1ad6a347991190d76ebe82032bbfca510ea5ef35a81455ae5f77f2d1572da.
-  Next prepare the full originalb000002safe-frontier interval using already
-  replayed transport and43responses, retaining delayed/out-of-interval groups
-  and still-unknown causes. Native owner must see exact additional work counts
-  before another serial interleave. Candidate owner prepares this extension;
-  position owner adds only the completed first-case evidence to the native panel.
+  The current comparator also reproduces this first case exactly; its successful
+  output uses the existing atomic rename writer. Original scientific producer
+  b09b90f0 and writer-only correctionf3d1ad6a remain distinct provenance.
+  FullB2recipe is now frozen at `native-readout-block2/recipe.json`, SHA
+  1516062891e590d72e950e3bd591d8a097c1ea7f06cfaecfc777c3be33807224.
+  Interval ends27,498,038.838090543ns:303chronological groups,288originalcomplete
+  and15unavailable,264triggers/69candidates.192of495rawgroups are deferred.
+  All495group input hashes verify from the existing replay; additional245inputs/
+  6278rows SHA7b034f5a86c458ba4168c4be0d3e11cb6afab603e15b150062b9beafc2510fbd.
+  Nine responses are complete (seven1001ns,two5001ns); six remain unknown
+  (four1001ns,two5001ns). Original288 regeneration is complete:43metadata/array
+  BLOBs inherited byte-exact,245new calls in67.894native seconds,102.316s total,
+  peakcombinedRSS2,221,916,160B. All7519rows/15038contact endpoints/all34signed
+  signals and original input hashes pass. Original cache bytes/attributes and
+  original43store are unchanged. `native-readout-original288/validation.json`
+  SHA113b80a76cdf67aceff3907446354673be286572016ae199ba721931a46745ea
+  binds StoreSHAbd87a37398dad770aef3aafc813ccb11a9831b2383df79d3cc2d6758ee327752.
+  No new transport, fields or environment. The same cap resumed afterward.
+  WholeB2 comparison now passes in13.375s under the original runtime: all264
+  trigger records19-282 and69candidate ADC hashes reproduce exactly before any
+  substitution. The nine repaired responses yield273rises/98candidates/175rejects
+  versus264/69/195. All264original rise times remain:206rows unchanged,58changed,
+  including57changed ADC contexts.23old unknown-history rejects become candidates;
+  nine new rises yield six candidates and three rejects. Six native groups stay
+  unknown. The conditional mask union changes7,153,400->2,926,760ns
+  (357670->146338frames):old-only4,230,020/shared2,923,380/new-only3,380ns;
+  longer support for remaining unknown groups explains the new-only interval.
+  No pending confirmed rise remains at the guard. ADC changes213837/1255987frames,
+  859534values,max11578codes; no pre-onset changes. This measures only the
+  25.119757ms interval, not five-second efficiency or physical-event return.
+  `native-readout-block2/comparison-run/comparison.json` SHA
+  006f8c9206e9e30079a3adf41ff7b82d8d034a97c0174efe966f316983521707;
+  comparatorSHA64d8cf2464ec7d16181d08d6f582529dc6234f766d08b05ed69f80f50d833de0.
+  Three focused checks and first-case scientific regression pass. Both SQLite
+  censuses/integrity/hashes and original archive immutability pass. Native repair
+  changes the actual readout; old triggers are never merely relabeled.
+  Next: use existing independent histories to compare absorption, resolved-escape
+  and merged hypotheses without source-truth selection or new physics launches.
   The selected-cap continuation helper now preserves the full 1,971 denominator
   through the sealed parent, carries deferred statuses explicitly, and unions
   missing-history tails at each group's actual support. Twelve focused checks
@@ -358,6 +390,17 @@ Separate tools/check_site.py passes in session93846. Exhibit/source commit
 4e639e92ade23f43b0a91c9eedc14f74382edb03 and Pages44913043154 are published;
 required tools/check_site.py --url passes all1,018selected live files.
 The actual runtime asset and site build are both verified.
+
+The subsequent native/readout exhibit combines the single2459substitution and
+completeB2interval in one table, with exact trigger/ADC provenance and mixed
+support masks. Two focused display tests and42publication tests pass. Chrome
+desktop acceptance follows homepage->main result->new native/readout table
+and counts->signal-chain methods; owned tab/server closed without downloads or
+settings changes. Standard builder completed, log `site-build-readout.log`:
+buildf3a7a5896e005b9b4b58443c50b003173422e44ee71d129d0a515cf031d582eb,
+1914files/537945754bytes/127HTMLpages. Separate `tools/check_site.py` passes,
+log `check-site-readout-local.log`; GitHub publication/live check follow.
+Research acceptance tools do not change the student runtime or calibration.
 
 Prior XY/depth publication and its failure evidence are retained in the immutable
 handoff below.

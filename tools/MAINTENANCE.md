@@ -46,11 +46,14 @@ the student package. The report preserves original candidate/order weights and
 missing models. Stable alternative cones alone do not establish two-site topology.
 
 `gegi_native_readout_compare.py` is a research acceptance entry for an original
-electronic checkpoint, sealed native responses and a separately retained repair.
+electronic checkpoint, retained native responses and a fixed repair recipe.
 It first reproduces original trigger records and candidate ADC hashes, then
-substitutes the repaired response through the same shared readout. Branch-local
-trigger IDs, unchanged records, new crossings and clipped history intervals stay
-separate; native completion alone is not restored continuous-readout exposure.
+substitutes one or several repaired responses through the same shared readout.
+Whole-block recipes retain delayed groups and each unknown response's actual
+configured support. Branch-local trigger IDs, unchanged records, new crossings
+and clipped history intervals stay separate; native completion alone is not
+restored continuous-readout exposure. Mutable recovery stores are bound by the
+exact selected records and ledger prefix, without claiming a whole-store hash.
 
 `gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
 allocations or shared-strip fits; `gegi_adc_topology.py` and

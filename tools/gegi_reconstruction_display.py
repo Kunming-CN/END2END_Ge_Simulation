@@ -35,6 +35,11 @@ SOURCES = {
     'escape_geometry': ('conditional-escape-geometry-controls.json', '43b60e4766f6c7812dc5b3b449b43fabd68a08fd489c2a0f1ecb910cfd6671a6'),
     'exact_kinetics': ('chronological-window-origins/same-event-exact-kinetics.json', '9bca9f3d43f5f7fba86965873fe6a431934b2309953cc8343eb3a51dab4e0cd8'),
     'native_repair': ('native-response-repair.json', '45c8ac5afb77ec9c73949fa529861b46a6869213f75ae17677f6969adc6dc0f8'),
+    'native_readout_2459': ('native-readout-repair-2459/comparison.json', '35fdbe63787e00c3c08c23287429c919bbb7a2c8e2f9072cba76ac0d66b2f3e9'),
+    'native_readout_original43': ('native-readout-original43/validation.json', 'fdec8de099dc8ef189f57bdd84acf64f881f547cd3ff5029c054b3f425b8c497'),
+    'native_readout_block2': ('native-readout-block2/comparison-run/comparison.json', '006f8c9206e9e30079a3adf41ff7b82d8d034a97c0174efe966f316983521707'),
+    'native_readout_block2_recipe': ('native-readout-block2/recipe.json', '1516062891e590d72e950e3bd591d8a097c1ea7f06cfaecfc777c3be33807224'),
+    'native_readout_original288': ('native-readout-original288/validation.json', '113b80a76cdf67aceff3907446354673be286572016ae199ba721931a46745ea'),
     'boundary_response': ('chronological-window-origins/trigger-12271/boundary-adc-comparison.json', '1aa8643fc3578a1d5bff2803df61dfbf43110a2621cc4562f2ebbd317a91b110'),
     'boundary_grid': ('trigger-12271-native-response/blind-grid/comparison.json', '8095c236c5cc97e8e9b197e0dda37bdbbbc8da8d5b926ac8eaccd47edfdc3537'),
     'boundary_grid_causes': ('trigger-12271-native-response/blind-grid/cause-diagnostic.json', '301e6ad4119e4ce7d832db9141b813d0dd7d25452791afd4d62f780eca6228c2'),
@@ -49,6 +54,7 @@ SOURCES = {
 
 CONE_SPREAD_SOURCES = {'positive': 'positive_cone_spread', 'negative': 'negative_cone_spread',
                        'candidates': 'candidate_cone_spread'}
+NATIVE_READOUT_WRITER_SHA256 = 'f3d1ad6a347991190d76ebe82032bbfca510ea5ef35a81455ae5f77f2d1572da'
 WINDOWS = ('661.657_keV', '1173.23_keV', '1332.49_keV')
 PRIORS = ('uniform-area', 'uniform-solid-angle')
 CASES = tuple(f'{extent}_mm_{prior}' for extent in (120, 240) for prior in PRIORS)
@@ -69,6 +75,11 @@ KINDS = {
     'escape_geometry': 'gegi_nominal_escape_geometry_peak_controls_v1',
     'exact_kinetics': 'gegi_same_event_exact_photon_kinetic_substitutions_v1',
     'native_repair': 'gegi_native_response_repair_summary_v1',
+    'native_readout_2459': 'gegi_native_readout_counterfactual_v1',
+    'native_readout_original43': 'gegi_original43_native_validation_v1',
+    'native_readout_block2': 'gegi_native_readout_counterfactual_v1',
+    'native_readout_block2_recipe': 'gegi_continuous_readout_block_acceptance_recipe_v1',
+    'native_readout_original288': 'gegi_original_block2_success288_native_validation_v1',
     'boundary_response': 'gegi_trigger_12271_boundary_adc_comparison_v1',
     'boundary_grid': 'gegi_measured_cell_boundary_grid_diagnostic_v1',
     'boundary_grid_causes': 'gegi_boundary_grid_cause_diagnostic_v1',
@@ -110,6 +121,69 @@ def validate_cone_spread(inputs, bindings, selection):
             or candidates['summary']['pairings'] != sum(len(t['pairings']) for t in candidates['triggers'])
             or model_counts['local_center']['pairings_with_saved_model'] != inputs['position']['candidates']['baseline_waveform_center']['scored_pairings']):
         raise ValueError('Candidate cone spread must preserve the original acquisition and fit census')
+
+
+def validate_native_readout(inputs, bindings, selection):
+    comparison = inputs['native_readout_2459']
+    validation = inputs['native_readout_original43']
+    regenerated = comparison['regenerated_responses']
+    if (comparison['original_archive_sha256'] != bindings['candidate_store']
+            or comparison['original_phase_request_sha256'] != validation['exact_original_request_sha256']
+            or any(regenerated[key]['sha256'] != validation[receipt] for key, receipt in
+                   (('completion', 'completion_sha256'), ('native_ready', 'ready_sha256'), ('store', 'store_sha256')))
+            or any(comparison['original_acquisition_counts'][key] != selection[key] for key in
+                   ('qualified_triggers', 'qualified_energies', 'triggers_without_energy'))
+            or not all(validation[key] for key in ('all_terminal_complete', 'all34_signed_signals_valid',
+                                                   'all_original_input_hashes_exact'))
+            or validation['carrier_contact_endpoints'] != 2*validation['deposit_rows']):
+        raise ValueError('Continuous readout must use the exact regenerated native groups from the original acquisition')
+    joins = comparison['trigger_comparison']
+    baseline = comparison['baseline']
+    if (comparison['status'] != 'baseline_verified_and_substitution_measured'
+            or any(comparison['baseline_mismatches'].values())
+            or len(joins['equal_time_associations']) != len(baseline['triggers'])
+            or joins['baseline_without_equal_time_counterfactual']
+            or any(row['changed_fields'] for row in joins['equal_time_associations'])):
+        raise ValueError('The continuous-readout comparison must preserve the verified baseline triggers and contexts')
+
+
+def validate_block_readout(inputs):
+    first = inputs['native_readout_2459']
+    block = inputs['native_readout_block2']
+    validation = inputs['native_readout_original288']
+    recipe = inputs['native_readout_block2_recipe']
+    census = block['original_block_groups']
+    phase = recipe['original_readout']['settings']['phase_ns']
+    sample_period = recipe['original_readout']['adc_sample_period_ns']
+    first_change, _ = block['changed_adc']['first_and_last_changed_sample_indexes']
+    if (any(block[k] != first[k] for k in ('original_archive_sha256', 'original_checkpoint_sha256',
+                                           'original_phase_request_sha256', 'original_acquisition_counts'))
+            or block['interval_ns'][0] != first['interval_ns'][0] or block['interval_ns'] != recipe['interval_ns']
+            or block['recipe']['sha256'] != validation['recipe_sha256'] or validation['recipe_sha256'] != SOURCES['native_readout_block2_recipe'][1]
+            or validation['request_sha256'] != block['original_phase_request_sha256']
+            or any(block['regenerated_responses'][k]['sha256'] != validation[v] for k, v in
+                   (('completion', 'completion_sha256'), ('native_ready', 'ready_sha256'), ('store', 'store_sha256')))
+            or not all(validation[k] for k in ('all_terminal_complete', 'all34_signed_signals_valid',
+                                                'all_original_input_hashes_exact', 'inherited_metadata_array_blobs_exact'))
+            or validation['carrier_contact_endpoints'] != 2*validation['deposit_rows']
+            or validation['inherited_groups'] + validation['new_native_calls'] != census['original_status_counts']['completed']
+            or validation['group_count'] != census['original_status_counts']['completed']
+            or sum(census['original_status_counts'].values()) != census['chronological_total']
+            or sum(census['deferred_beyond_safe_frontier_counts'].values()) + census['chronological_total'] != census['all_raw_b2_groups']):
+        raise ValueError('The expanded replay must use the same checkpoint and all original completed responses in scope')
+    before, after = block['baseline'], block['repaired']
+    joined = block['trigger_comparison']
+    overlap = block['conditional_mask_overlap']
+    if (block['status'] != 'baseline_verified_and_substitution_measured' or any(block['baseline_mismatches'].values())
+            or joined['baseline_without_equal_time_counterfactual']
+            or len(joined['equal_time_associations']) != len(before['triggers'])
+            or len(joined['equal_time_associations']) + len(joined['counterfactual_without_equal_time_baseline']) != len(after['triggers'])
+            or overlap['before_only_ns'] + overlap['overlap_ns'] != before['mask_union_clipped_ns']
+            or overlap['after_only_ns'] + overlap['overlap_ns'] != after['mask_union_clipped_ns']
+            or block['readout_settings']['phase_ns'] != phase
+            or first_change*sample_period + phase < min(r['identity']['onset_ns'] for r in block['repair_targets']
+                                                        if r['current_native']['terminal_complete'])):
+        raise ValueError('Expanded replay trigger, history or sample clock evidence does not reconcile')
 
 
 def validate_inputs(inputs):
@@ -159,6 +233,8 @@ def validate_inputs(inputs):
         raise ValueError('Reconstruction data do not share the original five-second acquisition and center fits')
     selection = attribution['saved_selection']
     validate_cone_spread(inputs, bindings, selection)
+    validate_native_readout(inputs, bindings, selection)
+    validate_block_readout(inputs)
     source = attribution['saved_source_census']
     fitted = position['baseline_waveform_center']['scored_pairings']
     coverage = position['fitted_pairings_by_lateral_supported_site_count']
@@ -249,6 +325,23 @@ def compact_cone_spread(inputs):
     return out
 
 
+def compact_native_readout(inputs):
+    def omit_binding_paths(value):
+        if isinstance(value, dict):
+            return {k: omit_binding_paths(v) for k, v in value.items() if k != 'ref'}
+        if isinstance(value, list):
+            return [omit_binding_paths(v) for v in value]
+        return value
+
+    return {'comparison': omit_binding_paths(inputs['native_readout_2459']),
+            'original_response_validation': inputs['native_readout_original43'],
+            'comparison_writer_source_sha256': NATIVE_READOUT_WRITER_SHA256,
+            'whole_block': {'comparison': omit_binding_paths(inputs['native_readout_block2']),
+                            'original_response_validation': inputs['native_readout_original288'],
+                            'adc_sample_period_ns': inputs['native_readout_block2_recipe']['original_readout']['adc_sample_period_ns'],
+                            'original_trigger_ledger_binding': inputs['native_readout_block2_recipe']['original_trigger_ledger']}}
+
+
 def compact(inputs, maps):
     a, position, partial, truth, range_fit = (inputs[key] for key in
         ('attribution', 'position', 'partial_lateral', 'truth_control', 'range'))
@@ -315,6 +408,7 @@ def compact(inputs, maps):
         'exact_photon_controls': {k: inputs['exact_kinetics'][k] for k in
                                  ('kind', 'input_sha256', 'source_sha256', 'status_counts', 'definition', 'rows')},
         'native_response_repair': inputs['native_repair'],
+        'native_readout_counterfactual': compact_native_readout(inputs),
         'local_boundary_response': {
             **{k: inputs['boundary_response'][k] for k in
                ('kind', 'original_trigger_id', 'input_sha256', 'source_sha256',
@@ -724,6 +818,92 @@ the observed residual reduction. Both grid and replay-defined controls, all alte
 exact source hashes remain in the <a href="{DATA.name}">evidence JSON</a>.</p></details></section>'''
 
 
+def native_block_detail(comparison, validation):
+    baseline, repaired = comparison['baseline'], comparison['repaired']
+    before = {r['trigger_id']: r for r in baseline['triggers']}
+    after = {r['trigger_id']: r for r in repaired['triggers']}
+    joins = comparison['trigger_comparison']
+    matched = joins['equal_time_associations']
+    changed = sum(bool(r['changed_fields']) for r in matched)
+    waveform_changes = sum('all34_context_adc_sha256' in r['changed_fields'] for r in matched)
+    promoted = sum(before[r['original_trigger_id']]['reason'] == 'unknown_native_history'
+                   and after[r['counterfactual_trigger_id']]['decision'] == 'candidate' for r in matched)
+    new = joins['counterfactual_without_equal_time_baseline']
+    new_candidates = sum(after[r['counterfactual_trigger_id']]['decision'] == 'candidate' for r in new)
+    new_overlaps = sum(bool(r['original_trigger_ids_with_overlapping_rise']) for r in new)
+    census, counts = comparison['original_block_groups'], comparison['treatment_native_counts']
+    deferred = sum(census['deferred_beyond_safe_frontier_counts'].values())
+    completed = counts['originally_unavailable_group_current_outcomes']['completed']
+    support = counts['remaining_unknown_configured_support_ns_counts']
+    pulse_changes = comparison['changed_adc']
+    first_frame, stop_frame = baseline['adc_sample_indexes']
+    mask = comparison['conditional_mask_overlap']
+    guard_pending = len(baseline['pending_confirmed_rises_at_guard']) + len(repaired['pending_confirmed_rises_at_guard'])
+    return f'''<p>The block replay included {census['chronological_total']} groups. Its {validation['group_count']} original complete
+responses comprised {validation['inherited_groups']} inherited and {validation['new_native_calls']} newly regenerated responses.
+Of the {baseline['observed_unknown_native_groups']} originally unavailable groups, {completed} entered the repaired replay and
+{repaired['observed_unknown_native_groups']} remained unknown. A further {deferred} raw block groups were deferred past the safe
+frontier.</p>
+<p>All {len(matched)} original rise times were retained among the {len(repaired['triggers'])} repaired rises.
+{len(matched)-changed} matched trigger records stayed identical across the compared fields and {changed} changed,
+including {waveform_changes} ADC contexts. {promoted} rises previously rejected for unknown native history became candidates.
+The substitution also produced {len(new)} new rises, of which {new_candidates} were candidates and
+{len(new)-new_candidates} were rejected. {new_overlaps} new rises overlapped an original rise and {guard_pending} confirmed
+rises were pending at the stopping guard. Of {number(stop_frame-first_frame, 0)} ADC frames, {number(pulse_changes['frames'], 0)}
+changed after the first replacement onset. The {number(pulse_changes['values'], 0)} changed values differed by up to
+{number(pulse_changes['maximum_absolute_adc_codes'], 0)} codes.</p>
+<p>Within the block interval, {number(mask['before_only_ns'], 0)} ns were masked only in the baseline and
+{number(mask['overlap_ns'], 0)} ns in both replays. The {number(mask['after_only_ns'], 0)} ns masked only after replacement
+reflect the longer support for unresolved responses. Of the remaining unknowns, {support['1001']} use 1,001 ns of
+configured support and {support['5001']} use 5,001 ns.</p>'''
+
+
+def native_readout_comparison(counterfactual):
+    from gegi_shared_clock_display import table
+
+    replay = counterfactual['comparison']
+    validation = counterfactual['original_response_validation']
+    repaired = replay['repaired']
+    match_count = len(replay['trigger_comparison']['equal_time_associations'])
+    extra, = replay['trigger_comparison']['counterfactual_without_equal_time_baseline']
+    extra_trigger = next(t for t in repaired['triggers'] if t['trigger_id'] == extra['counterfactual_trigger_id'])
+    substituted = replay['target_original_input']['event_id']
+    altered = replay['changed_adc']
+    experiments = [(f'One response (event {number(substituted, 0)})', replay)]
+    whole = counterfactual.get('whole_block')
+    if whole is not None:
+        experiments.append(('Complete block interval', whole['comparison']))
+
+    def transition(before, after, places=0):
+        return f'{number(before, places)} → {number(after, places if after else 0)}'
+
+    rows = []
+    for label, experiment in experiments:
+        start, stop = (number(v, 3) for v in experiment['interval_ns'])
+        original, replaced = experiment['baseline'], experiment['repaired']
+        decisions = original['decision_counts'], replaced['decision_counts']
+        places = 0 if float(original['mask_union_clipped_ns']).is_integer() else 3
+        rows.append((f'{label}<br>{start}–{stop}',
+                     f'{len(original["triggers"])} trigger records<br>{decisions[0]["candidate"]} candidate ADCs',
+                     transition(*(d['candidate'] for d in decisions)), transition(*(d['rejected'] for d in decisions)),
+                     transition(original['mask_union_clipped_ns'], replaced['mask_union_clipped_ns'], places),
+                     transition(original['masked_adc_frames'], replaced['masked_adc_frames'])))
+    counts = table(rows, ('Replay interval (ns)', 'Exact baseline matches', 'Imaging candidates', 'Rejected rises',
+                          'Missing-history time (ns)', 'Masked ADC frames'), 'Counts before and after native-response replacement')
+    whole_detail = native_block_detail(whole['comparison'], whole['original_response_validation']) if whole is not None else ''
+    return f'''<h3 id="native-readout-repair-2459">Native-response repair changed the saved block readout</h3>
+<p>The replay used the same saved checkpoint. The single-response comparison regenerated {validation['group_count']} original responses
+from {number(validation['deposit_rows'], 0)} deposit rows with {number(validation['carrier_contact_endpoints'], 0)} carrier
+contact endpoints and valid signals on all 34 electrodes. Substituting the response for event {number(substituted, 0)} left {match_count} trigger contexts
+unchanged and added one rise at {number(extra_trigger['time_ns'], 0)} ns, rejected as {escape(extra_trigger['reason'].replace('_', ' '))}.
+The substitution changed {number(altered['frames'], 0)} ADC frames and {number(altered['values'], 0)} channel values, with a
+maximum absolute change of {number(altered['maximum_absolute_adc_codes'], 0)} ADC codes.</p>
+{counts}
+{whole_detail}
+<p>These measurements cover the stated clock intervals. Full-tail recovery and five-second detection efficiency
+remain unmeasured. <a href="{DATA.name}">Exact trigger ledger and response provenance (JSON)</a>.</p>'''
+
+
 def native_repair_section(data):
     from gegi_shared_clock_display import table
 
@@ -743,6 +923,8 @@ def native_repair_section(data):
     outcomes = table(rows, ('Original cause', 'Groups', 'Complete', 'Duration reached',
                             'Boundary projection failed', 'Stopped before contact'),
                      'All originally unavailable native-response groups, with original identities retained')
+    counterfactual = data.get('native_readout_counterfactual')
+    measured = native_readout_comparison(counterfactual) if counterfactual is not None else ''
     return f'''<section class="panel" id="native-repair"><h2>Recover native charge responses by cause</h2>
 <p>All <strong>{census["original_unavailable_groups"]:,}</strong> originally unavailable groups have been reprocessed or
 matched to exact prior complete responses. <strong>{census["complete_groups"]:,}</strong> now have complete native charge
@@ -754,6 +936,7 @@ analytic boundary crossing address identified numerical defects.</p>
 <strong>{mask["original"]["excluded_seconds"]:.9f} s</strong> to <strong>{mask["remaining"]["excluded_seconds"]:.9f} s</strong>.
 This is conditional native availability. The original ADC stream, triggers, accepted exposure and source images remain
 unchanged; restoring those requires replaying the shared electronic history with the recovered currents.</p>
+{measured}
 <details><summary>Why extending every trajectory is not a complete repair</summary>
 <p>Sixteen configured drift-only conditions examined 41 original deposited rows, with 47 evaluations including repeated
 durations. For transport event 2,590, both carriers are still moving at 1 μs and reach contacts at 2.553 and 2.778 μs.

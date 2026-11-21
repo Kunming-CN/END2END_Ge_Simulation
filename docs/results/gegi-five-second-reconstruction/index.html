@@ -303,6 +303,34 @@ analytic boundary crossing address identified numerical defects.</p>
 <strong>0.965632420 s</strong> to <strong>0.560239440 s</strong>.
 This is conditional native availability. The original ADC stream, triggers, accepted exposure and source images remain
 unchanged; restoring those requires replaying the shared electronic history with the recovered currents.</p>
+<h3 id="native-readout-repair-2459">Native-response repair changed the saved block readout</h3>
+<p>The replay used the same saved checkpoint. The single-response comparison regenerated 43 original responses
+from 1,241 deposit rows with 2,482 carrier
+contact endpoints and valid signals on all 34 electrodes. Substituting the response for event 2,459 left 41 trigger contexts
+unchanged and added one rise at 6,193,200 ns, rejected as guard only collection.
+The substitution changed 328 ADC frames and 1,284 channel values, with a
+maximum absolute change of 2,480 ADC codes.</p>
+<div role="region" aria-label="Counts before and after native-response replacement" tabindex="0" style="overflow-x:auto">
+<table><caption>Counts before and after native-response replacement</caption><thead><tr><th scope="col">Replay interval (ns)</th><th scope="col">Exact baseline matches</th><th scope="col">Imaging candidates</th><th scope="col">Rejected rises</th><th scope="col">Missing-history time (ns)</th><th scope="col">Masked ADC frames</th></tr></thead><tbody><tr><th scope="row">One response (event 2,459)<br>2,378,281.802–6,199,743.117</th><td>41 trigger records<br>14 candidate ADCs</td><td>14 → 14</td><td>27 → 28</td><td>10,563.117 → 0</td><td>529 → 0</td></tr><tr><th scope="row">Complete block interval<br>2,378,281.802–27,498,038.838</th><td>264 trigger records<br>69 candidate ADCs</td><td>69 → 98</td><td>195 → 175</td><td>7,153,400 → 2,926,760</td><td>357,670 → 146,338</td></tr></tbody></table></div>
+<p>The block replay included 303 groups. Its 288 original complete
+responses comprised 43 inherited and 245 newly regenerated responses.
+Of the 15 originally unavailable groups, 9 entered the repaired replay and
+6 remained unknown. A further 192 raw block groups were deferred past the safe
+frontier.</p>
+<p>All 264 original rise times were retained among the 273 repaired rises.
+206 matched trigger records stayed identical across the compared fields and 58 changed,
+including 57 ADC contexts. 23 rises previously rejected for unknown native history became candidates.
+The substitution also produced 9 new rises, of which 6 were candidates and
+3 were rejected. 0 new rises overlapped an original rise and 0 confirmed
+rises were pending at the stopping guard. Of 1,255,987 ADC frames, 213,837
+changed after the first replacement onset. The 859,534 changed values differed by up to
+11,578 codes.</p>
+<p>Within the block interval, 4,230,020 ns were masked only in the baseline and
+2,923,380 ns in both replays. The 3,380 ns masked only after replacement
+reflect the longer support for unresolved responses. Of the remaining unknowns, 4 use 1,001 ns of
+configured support and 2 use 5,001 ns.</p>
+<p>These measurements cover the stated clock intervals. Full-tail recovery and five-second detection efficiency
+remain unmeasured. <a href="evidence.json">Exact trigger ledger and response provenance (JSON)</a>.</p>
 <details><summary>Why extending every trajectory is not a complete repair</summary>
 <p>Sixteen configured drift-only conditions examined 41 original deposited rows, with 47 evaluations including repeated
 durations. For transport event 2,590, both carriers are still moving at 1 μs and reach contacts at 2.553 and 2.778 μs.

@@ -65,6 +65,49 @@ class ReconstructionDisplayTests(unittest.TestCase):
             self.assertEqual(repair['census']['complete_groups'], 849)
             self.assertEqual(repair['conditional_mask']['remaining']['excluded_time_ns'], 560239440.0)
             self.assertIn('0.560239440 s', page)
+            counterfactual = public['native_readout_counterfactual']
+            readout_name, readout_sha = display.SOURCES['native_readout_2459']
+            archive = display.read_bound(directory / readout_name, readout_sha)
+            for binding in (archive['baseline']['store'], archive['repaired']['store'], archive['recipe'],
+                            *(archive['regenerated_responses'][k] for k in ('store', 'native_ready', 'completion'))):
+                del binding['ref']
+            self.assertEqual(counterfactual['comparison'], archive)
+            validation_name, validation_sha = display.SOURCES['native_readout_original43']
+            self.assertEqual(counterfactual['original_response_validation'],
+                             display.read_bound(directory / validation_name, validation_sha))
+            self.assertEqual(public['source_sha256']['native_readout_2459'], readout_sha)
+            self.assertEqual(public['source_sha256']['native_readout_original43'], validation_sha)
+            self.assertNotIn('.local', json.dumps(counterfactual))
+            self.assertIn('id="native-readout-repair-2459"', page)
+            self.assertIn('2,378,281.802–6,199,743.117', page)
+            self.assertIn('41 trigger records<br>14 candidate ADCs', page)
+            self.assertIn('10,563.117 → 0', page)
+            self.assertIn('guard only collection', page)
+            self.assertIn('328 ADC frames and 1,284 channel values', page)
+            block = counterfactual['whole_block']
+            block_name, block_sha = display.SOURCES['native_readout_block2']
+            block_archive = display.read_bound(directory / block_name, block_sha)
+            for binding in (block_archive['baseline']['store'], block_archive['repaired']['store'], block_archive['recipe'],
+                            *(block_archive['regenerated_responses'][k] for k in ('store', 'native_ready', 'completion'))):
+                del binding['ref']
+            for target in block_archive['repair_targets']:
+                inherited = target['current_native'].get('inherited_producer')
+                if inherited is not None:
+                    del inherited['ref']
+            self.assertEqual(block['comparison'], block_archive)
+            self.assertEqual(public['source_sha256']['native_readout_block2'], block_sha)
+            block_native_name, block_native_sha = display.SOURCES['native_readout_original288']
+            self.assertEqual(block['original_response_validation'],
+                             display.read_bound(directory / block_native_name, block_native_sha))
+            self.assertEqual(block['adc_sample_period_ns'], 20)
+            self.assertIn('2,378,281.802–27,498,038.838', page)
+            self.assertIn('264 trigger records<br>69 candidate ADCs', page)
+            self.assertIn('69 → 98', page)
+            self.assertIn('7,153,400 → 2,926,760', page)
+            self.assertIn('58 changed,\nincluding 57 ADC contexts', page)
+            self.assertIn('23 rises previously rejected for unknown native history became candidates', page)
+            self.assertIn('1,255,987 ADC frames, 213,837', page)
+            self.assertIn('192 raw block groups were deferred', page)
             boundary = public['local_boundary_response']
             self.assertEqual(boundary['original_trigger_id'], 12271)
             self.assertEqual((boundary['original_projected_mass'], boundary['original_unresolved_mass']), (0., 1.))

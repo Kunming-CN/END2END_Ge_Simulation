@@ -23,7 +23,9 @@ import gegi_dual_source as dual
 import gegi_pulse_stream as pulse
 import gegi_streaming_readout as stream
 from gegi_event_store import Store, encoded
+from gegi_missing_history import MissingHistory, PRODUCER_SHA256 as MIXED_HISTORY_SHA256, native_support_ns
 from gegi_native_continuation import _snapshot_check, native_array_digest
+from gegi_native_failure_recovery import mask_overlap
 import scenario_workflow as W
 
 
@@ -84,7 +86,7 @@ def response(store, row):
     return arrays
 
 
-def response_store(path, stack, rows, recipe_sha256):
+def response_store(path, stack, rows, recipe_sha256, channels):
     """Require the exact regenerated phase and census before exposing its pulse arrays."""
     completion_path = path.with_name('completion.json')
     ready_path = path.with_name('native-ready.json')
@@ -106,10 +108,11 @@ def response_store(path, stack, rows, recipe_sha256):
                   'Regenerated responses did not use the original verified field cache')
         W.require(set(store.keys()) == {(row['event_id'], row['group_id']) for row in rows},
                   'Regenerated native response census differs from the acceptance input')
-        histories = {row['ordinal']: response(store, row) for row in rows}
-    return histories, dict(store=binding(path), completion=binding(completion_path), native_ready=binding(ready_path),
-                           field_cache_precision_bits=ready['fields']['precision_bits'],
-                           drift_precision_bits=stack['numerics']['precision_bits'])
+        pulses = {row['ordinal']: pulse.prepare_native(response(store, row), channels, terminal_complete=True)
+                  for row in rows}
+    return pulses, dict(store=binding(path), completion=binding(completion_path), native_ready=binding(ready_path),
+                        field_cache_precision_bits=ready['fields']['precision_bits'],
+                        drift_precision_bits=stack['numerics']['precision_bits'])
 
 
 def actual_repair(target):
@@ -128,14 +131,73 @@ def actual_repair(target):
     return arrays
 
 
-def run_branch(name, output, state, History, original_db, history, pulses, interval, identity):
+def block_repairs(recipe, channels):
+    """Use complete responses and configured horizons from the frozen per-group ledger."""
+    available, unknown = {}, {}
+    for phase, provenance in recipe['repair_sources'].items():
+        identity = W.read(bound(provenance['identity']))
+        request = W.read(bound(provenance['request']))
+        bound(provenance['producer_archive'])
+        prefix = provenance['ledger_prefix']
+        with (W.ROOT / prefix['ref']).open('rb') as ledger:
+            raw = ledger.read(prefix['bytes'])
+        W.require(sha256(raw).hexdigest() == prefix['sha256'], 'Frozen repair ledger prefix differs')
+        receipts = {row['ordinal']: row for line in raw.splitlines() if (row := json.loads(line))}
+        support = native_support_ns(request['numerics'])
+        numerics = provenance['readiness_drift_numerics']
+        W.require(support == provenance['configured_native_support_ns'] == numerics['dt']*numerics['max_steps'],
+                  'Configured native repair support differs')
+        path = (bound(provenance['sealed_store']) if 'sealed_store' in provenance else
+                W.ROOT / provenance['store_ref'])
+        with closing(readonly(path)) as db:
+            store = Store.__new__(Store)
+            store.path, store.db = path, db
+            W.require(json.loads(db.execute('SELECT body FROM identity').fetchone()[0])['identity'] == identity,
+                      'Repair store identity differs')
+            for target in recipe['repair_targets']:
+                row, current = target['identity'], target['current_native']
+                if current['phase'] != phase:
+                    continue
+                ordinal = row['ordinal']
+                group = (row['event_id'], row['group_id'])
+                entry = receipts[ordinal]
+                completion = current['terminal_complete']
+                info, arrays = store.read(*group, with_signals=completion)
+                observed = db.execute('SELECT input_sha256,metadata_sha256 FROM events WHERE primary_id=? AND group_id=?',
+                                      group).fetchone()
+                W.require(entry['input_sha256'] == row['input_sha256'] and entry['complete'] == completion and
+                          info['status'] == entry['new_status'] == current['status'] and
+                          observed == (row['input_sha256'], current['metadata_sha256']) and
+                          stream.digital.terminal_contacts_complete(info) == completion and
+                          support == current['configured_native_support_ns'], f'Repair status or binding differs: {group}')
+                if completion:
+                    W.require(native_array_digest(arrays) == current['signed_native_arrays_sha256'],
+                              f'Repaired signed native signals differ: {group}')
+                    available[ordinal] = pulse.prepare_native(arrays, channels, terminal_complete=True)
+                else:
+                    unknown[ordinal] = support
+    W.require(len(available) + len(unknown) == len(recipe['repair_targets']), 'Repair availability census does not close')
+    return available, unknown
+
+
+def run_branch(name, output, state, History, original_db, history, pulses, interval, identity, unknown_support=None):
     """Drive the original pulse, readout, and candidate stages on one saved clock."""
     start, stop = interval
     channels = state['channels']
     neighbors = dual._strip_neighbors(channels)
-    missing = History.restore(state['missing_history'])
+    history_state = state['missing_history']
+    if unknown_support is None:
+        missing = History.restore(history_state)
+    else:
+        W.require(history_state['failure_count'] == 0, 'Mixed support requires this empty original history anchor')
+        missing = MissingHistory(history_state['live_time_ns'], max_active_failures=history_state['max_active_failures'])
     trigger_contexts = {}
-    adc_blocks = []
+    period = dual.SAMPLE_PERIOD_NS
+    phase = state['readout']['settings']['phase_ns']
+    first_index = state['readout']['next_sample_index']
+    stop_index = math.ceil((stop-phase)/period)
+    adc = np.empty((34, stop_index-first_index), dtype=np.int16)
+    next_index = first_index
     database = output / (name + '.sqlite')
 
     def on_context(event, context):
@@ -154,9 +216,11 @@ def run_branch(name, output, state, History, original_db, history, pulses, inter
             all34_context_adc_sha256=sha256(np.asarray(context['adc_codes'], dtype='<i2', order='C').tobytes()).hexdigest())
 
     def on_adc(first, codes):
-        if adc_blocks:
-            W.require(adc_blocks[-1][0] + adc_blocks[-1][1].shape[1] == first, 'Saved ADC samples are not adjacent')
-        adc_blocks.append((first, codes))
+        nonlocal next_index
+        end = first + codes.shape[1]
+        W.require(first == next_index and end <= stop_index, 'Saved ADC frames do not cover the fixed clock interval')
+        adc[:, first-first_index:end-first_index] = codes
+        next_index = end
 
     with storage.CandidateStore(database, {**identity, 'branch': name}) as sink:
         readout = stream.StreamingReadout.restore(state['readout'], on_readout_context=on_context, on_adc_block=on_adc)
@@ -170,6 +234,9 @@ def run_branch(name, output, state, History, original_db, history, pulses, inter
             native = pulses.get(group['ordinal'])
             if native is None:
                 W.require(group['original_status'] != 'completed', 'A completed native pulse is missing')
+                if unknown_support is not None:
+                    # The same union method as cap recovery: each missing group adds its own absolute horizon.
+                    missing.native_support_ns = unknown_support[group['ordinal']]
                 missing.add(onset, group['last_deposit_ns'], group['positive_ge_energy_keV'])
             readout.advance(max(0., onset - dual.POST_NS))
             if native is not None:
@@ -181,19 +248,13 @@ def run_branch(name, output, state, History, original_db, history, pulses, inter
         rows = sink.db.execute(TRIGGER_SQL, interval).fetchall()
         ledger = [dict(zip(TRIGGER_FIELDS, row), **trigger_contexts[row[0]]) for row in rows]
 
-    period = dual.SAMPLE_PERIOD_NS
-    phase = saved['settings']['phase_ns']
-    first_index = state['readout']['next_sample_index']
-    stop_index = saved['next_sample_index']
-    W.require(adc_blocks[0][0] == first_index, 'First regenerated ADC sample differs from the checkpoint')
-    adc = np.concatenate([block for _, block in adc_blocks], axis=1)
-    W.require(adc.shape == (34, stop_index - first_index), 'Regenerated ADC frame census differs')
+    W.require(saved['next_sample_index'] == stop_index == next_index, 'Regenerated ADC frame census differs')
     clipped = [[max(lo, start), min(hi, stop)] for lo, hi in missing.intervals() if lo < stop and hi > start]
     masked_samples = sum(math.ceil((hi-phase)/period) - math.ceil((lo-phase)/period) for lo, hi in clipped)
     pending = [dict(coincidence_sample=a, end_sample=b) for a, b, pair in saved['groups']
                if pair and a > saved['emitted_through']]
     summary = dict(store=binding(database), triggers=ledger, decision_counts=dict(Counter(r['decision'] for r in ledger)),
-                   adc_sample_indexes=[first_index, stop_index], adc_sha256=sha256(adc.astype('<i2', copy=False).tobytes()).hexdigest(),
+                   adc_sample_indexes=[first_index, stop_index], adc_sha256=sha256(adc.astype('<i2', copy=False)).hexdigest(),
                    observed_unknown_native_groups=mask['failure_count'], mask_intervals_clipped_ns=clipped,
                    mask_union_clipped_ns=sum(hi-lo for lo, hi in clipped), masked_adc_frames=masked_samples,
                    pending_confirmed_rises_at_guard=pending)
@@ -232,6 +293,25 @@ def compare_ledgers(before, after):
                 baseline_without_equal_time_counterfactual=[row['trigger_id'] for row in before if row['time_ns'] not in after_times])
 
 
+def compare_adc(before, after, first_index, block_samples):
+    W.require(before.shape == after.shape, 'The acquisition ADC clock must match between branches')
+    frames = values = maximum = 0
+    limits = None
+    for start in range(0, before.shape[1], block_samples):
+        take = slice(start, start+block_samples)
+        delta = np.subtract(after[:, take], before[:, take], dtype=np.int32)
+        changed = np.flatnonzero(np.any(delta != 0, axis=0))
+        if changed.size:
+            frames += int(changed.size)
+            values += int(np.count_nonzero(delta))
+            maximum = max(maximum, int(np.abs(delta).max()))
+            if limits is None:
+                limits = [first_index+start+int(changed[0]), None]
+            limits[1] = first_index+start+int(changed[-1])
+    return dict(frames=frames, values=values, maximum_absolute_adc_codes=maximum,
+                first_and_last_changed_sample_indexes=limits)
+
+
 def run(recipe_path, response_path, output):
     started = time.perf_counter()
     recipe = W.read(recipe_path)
@@ -247,14 +327,18 @@ def run(recipe_path, response_path, output):
     check_readout_sources(checkpoint, state, acquisition['identity'])
     History = legacy_history(checkpoint)
     rows = recipe['missing_original_responses']
-    responses, native_provenance = response_store(response_path, recipe['original_native_phase'], rows,
-                                                   recipe_binding['sha256'])
-    pulses = {ordinal: pulse.prepare_native(arrays, state['channels'], terminal_complete=True)
-              for ordinal, arrays in responses.items()}
-    repair_target = recipe['repair_target']
-    target = repair_target['identity']
-    history = sorted([*rows, target], key=lambda row: (row['onset_ns'], row['ordinal']))
     interval = recipe['interval_ns']
+    block_recipe = 'repair_targets' in recipe
+    if block_recipe:
+        targets = recipe['repair_targets']
+        frontier = W.read(bound(recipe['end_source_checkpoint']))['safe_frontier_ns']
+        W.require(frontier == recipe['source_safe_frontier_ns'] and interval[1] == frontier-dual.POST_NS,
+                  'The original source block and ADC guard differ')
+    else:
+        targets = [recipe['repair_target']]
+    pulses, native_provenance = response_store(response_path, recipe['original_native_phase'], rows,
+                                                recipe_binding['sha256'], state['channels'])
+    history = sorted([*rows, *(target['identity'] for target in targets)], key=lambda row: (row['onset_ns'], row['ordinal']))
     identity = dict(kind='gegi_native_readout_counterfactual_v1', original_checkpoint_sha256=snapshot['checkpoint_sha256'],
                     original_archive_sha256=recipe['original_archive']['sha256'], interval_ns=interval)
     output.mkdir(parents=True, exist_ok=False)
@@ -264,16 +348,22 @@ def run(recipe_path, response_path, output):
                   regenerated_responses=native_provenance, original_acquisition_counts=acquisition['counts'],
                   original_readout_runtime=checkpoint['runtime'], actual_runtime=dict(python=platform.python_version(),
                     numpy=np.__version__, sqlite=sqlite3.sqlite_version), readout_settings=checkpoint['settings'],
-                  target_original_input=target,
                   interpretation='A saved-input counterfactual over one clock interval. Trigger IDs are branch-local. '
                   'Equal sample times support comparison; unmatched crossings are retained without inferring physical event identity.')
+    if block_recipe:
+        result.update(source_safe_frontier_ns=frontier, original_block_groups=recipe['original_groups'], repair_targets=targets,
+                      treatment_native_counts=recipe['treatment_native_counts'], missing_history_model_sha256=MIXED_HISTORY_SHA256)
+    else:
+        result['target_original_input'] = targets[0]['identity']
     with closing(readonly(archive)) as original_db:
-        old = original_db.execute('SELECT record FROM native_failures WHERE ordinal=?', (target['ordinal'],)).fetchone()
-        W.require(old is not None and sha256(old[0]).hexdigest() == repair_target['original_native']['record_zlib_sha256'],
-                  'Original unavailable response differs')
-        original_failure = json.loads(zlib.decompress(old[0]))
-        W.require(sha256(encoded(original_failure['group'])).hexdigest() == target['input_sha256'] and
-                  not stream.digital.terminal_contacts_complete(original_failure['event']), 'Original unavailable group differs')
+        for target in targets:
+            row = target['identity']
+            old = original_db.execute('SELECT record FROM native_failures WHERE ordinal=?', (row['ordinal'],)).fetchone()
+            W.require(old is not None and sha256(old[0]).hexdigest() == target['original_native']['record_zlib_sha256'],
+                      'Original unavailable response differs')
+            original_failure = json.loads(zlib.decompress(old[0]))
+            W.require(sha256(encoded(original_failure['group'])).hexdigest() == row['input_sha256'] and
+                      not stream.digital.terminal_contacts_complete(original_failure['event']), 'Original unavailable group differs')
         reference = original_db.execute(TRIGGER_SQL, interval).fetchall()
         compact = [(a, b, c, e, f) for a, b, c, _, e, f in reference]
         expected = recipe['original_trigger_ledger']['sha256_of_ordered_id_time_decision_adc_and_record_hash_rows']
@@ -282,22 +372,23 @@ def run(recipe_path, response_path, output):
         mismatches = baseline_mismatches(reference, before['triggers'])
         result.update(baseline=before, baseline_mismatches=mismatches, status='baseline_mismatch')
         if not any(mismatches.values()):
-            repaired = pulse.prepare_native(actual_repair(repair_target), state['channels'], terminal_complete=True)
+            if block_recipe:
+                repaired, unknown_support = block_repairs(recipe, state['channels'])
+            else:
+                replacement = pulse.prepare_native(actual_repair(targets[0]), state['channels'], terminal_complete=True)
+                repaired, unknown_support = {targets[0]['identity']['ordinal']: replacement}, None
             after, new_adc = run_branch('repaired', output, state, History, original_db, history,
-                                        {**pulses, target['ordinal']: repaired}, interval, identity)
-            delta = new_adc.astype(np.int32) - original_adc.astype(np.int32)
-            changed = np.flatnonzero(np.any(delta != 0, axis=0))
-            start_index = before['adc_sample_indexes'][0]
-            if changed.size:
-                first_change = ((start_index + int(changed[0])) * dual.SAMPLE_PERIOD_NS +
+                                         {**pulses, **repaired}, interval, identity, unknown_support=unknown_support)
+            changed = compare_adc(original_adc, new_adc, before['adc_sample_indexes'][0], checkpoint['settings']['block_samples'])
+            if changed['frames']:
+                first_change = (changed['first_and_last_changed_sample_indexes'][0] * dual.SAMPLE_PERIOD_NS +
                                 checkpoint['settings']['phase_ns'])
-                W.require(first_change >= target['onset_ns'], 'ADC changed before the substituted response started')
+                earliest_repair = min(row['onset_ns'] for row in history if row['ordinal'] in repaired)
+                W.require(first_change >= earliest_repair, 'ADC changed before the first substituted response started')
             result.update(status='baseline_verified_and_substitution_measured', repaired=after,
                           trigger_comparison=compare_ledgers(before['triggers'], after['triggers']),
-                          changed_adc=dict(frames=int(changed.size), values=int(np.count_nonzero(delta)),
-                              maximum_absolute_adc_codes=int(np.abs(delta).max()),
-                              first_and_last_changed_sample_indexes=[start_index+int(changed[0]), start_index+int(changed[-1])]
-                              if changed.size else None))
+                          changed_adc=changed,
+                          conditional_mask_overlap=mask_overlap(before['mask_intervals_clipped_ns'], after['mask_intervals_clipped_ns']))
     result['wall_seconds'] = time.perf_counter() - started
     W.write(output / 'comparison.json', result)
     return result

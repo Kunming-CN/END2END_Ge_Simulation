@@ -67,9 +67,18 @@ serially from the frozen phase1producer, then resume the unchanged cap worker.
 The43responses and exact baseline41triggers/14candidate ADCs now pass. Replacing
 only2459adds one guard-only rejected rise, with14candidates unchanged; the
 10.563us clipped unknown interval disappears only inside the replayed3.821ms.
-Next extend through the originalb000002safe frontier with existing transport,
-reusing43responses and preserving delayed groups and mixed1001/5001ns unknown
-supports. Native recovery alone still cannot remove an old continuous mask.
+The originalb000002safe-frontier extension is complete:43original responses
+reused and245regenerated from the frozen producer, all7519rows/15038contacts
+verified. The original264trigger records and69candidate ADCs reproduce exactly
+before nine available responses enter the same readout/noise history. The
+25.119757ms interval then has273rises/98candidates/175rejects;23old excluded
+triggers become candidates and six candidates arise at new crossing times.
+Six groups remain unknown and192rawblock groups lie beyond the safe frontier.
+The conditional mask union changes7,153,400->2,926,760ns with actual1001/5001ns
+supports; the longer support adds3380ns in previously unmasked locations.
+These are actual continuous-readout changes, not relabeled old triggers or
+five-second efficiency. Both first-case and whole-block evidence are consolidated
+in the native-response exhibit. No further original block rerun is needed.
 
 Next scientific step: evaluate absorption, resolved escape and merged/mixed
 hypotheses against independent photon histories and the same measured response.
