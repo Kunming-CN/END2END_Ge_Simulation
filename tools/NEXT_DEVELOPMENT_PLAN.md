@@ -94,6 +94,11 @@ one closed only under an uncalibrated score-drop diagnostic. The1173window's
 1332escape optimum141.38mm has just0.28977log-score gain over infinity and no
 identified range. Equal precheck order allocation is a diagnostic contrast,
 not a new production prior. Fits are hashed before optional truth scoring.
+The generic candidate CLI now provides the same fixed-line escape profiles via
+`--escape-incident-energy-keV`, with optional original trigger IDs and every
+unsupported weight retained. Actual18control and three peak-witness outputs
+match the research adapter exactly. Runtime967bdd5 is published with exact public
+bytes verified; eight focused range and two targeted package checks pass.
 Conditional bulk-Ge photon continuation is now implemented from primary response
 derivations: initialized Livermore rates, attenuation, photoelectric path density
 and normalized free-electron scatter/escape path-energy density. Three analytic

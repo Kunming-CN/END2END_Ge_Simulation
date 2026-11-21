@@ -48,9 +48,9 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   with all prior input/metadata records and exact ledger prefixes unchanged.
   `serial-interleave.json` retains both stop/exit/resume proofs; no completed
   response was recomputed. This prefix is not a final recovery rate.
-  After the fourth cooperative interleave, the16:00UTC activation verified
-  the same processes advancing, with469/537durable groups:130complete,
-  334limited,fivestopped; checkpoint455is coarser. The stopped375prefix and
+  After the fourth cooperative interleave, the16:30UTC activation verified
+  the same processes advancing, with508/537durable groups:138complete,
+  365limited,fivestopped; checkpoint495is coarser. The stopped375prefix and
   all prior input/metadata/ledger/source bytes were preserved before resume.
   `native-cap5000-step-limits/continuation-handoff.json` records this snapshot.
   After closure, reconcile the parent/selected ledger. The native owner now
@@ -232,9 +232,15 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   Exact executed sourcea05ea005 is retained asportable-escape-range-1332-controls-producer.py;
   trackedLFsourcebcda8268 is byte-identical after newline normalization and AST-
   identical, without another scientific replay. The committed967bdd5 software
-  package is published and its public bytes verified. The next position task
-  extracts energy residuals from existing independent injections without new
-  native calls, truth-based rematching or a claimed detector calibration.
+  package is published and its public bytes verified. Independent energy-error
+  extraction now retains all92saved ADC identities, with96general,16targeted-Cs
+  and72three-cell component residuals. RMS errors are0.022914/0.026880/0.041420keV;
+  all56wrong-cell and24multipoint pairings remain unmapped. Twelve fixed-condition
+  noise-seed pairs give descriptive scales0.025837-0.046430keV by cell/allocation,
+  not a transferable Gaussian width or measured GeGI calibration. Receipt
+  `control-energy-errors.json` SHA648be622135395bd1b4489ccb4986acebc7b417338da1a00d4c2cff1b882265a;
+  extractor76168297 retains exact input hashes, identities and order ledgers.
+  Root reproduced the entire sealed92-row receipt byte-for-byte in memory.
   Completed position work is retained, without new native calls or refits:
   * All34-channel compatibility and optional lateral grids are portable. On36
     matched off-template controls, full34lateral improves axis10.26->5.00deg and
@@ -348,8 +354,9 @@ guide. Owned tabs/preview servers are closed; no downloads or settings changes.
 Final standard builder and separate `tools/check_site.py` pass:
 buildf2fc9e918535f7d44f25ec5ccd930490a8d31952392f3d58dbb75eaa9bcb4778,
 1914files/538384358bytes/127HTMLpages. Logs are `site-build-escape-final.log`
-and `check-site-escape-final-local.log`. The accepted exhibit is ready to deploy;
-Pages and required live exact-byte verification remain pending.
+and `check-site-escape-final-local.log`. Source/exhibit0bc3ab236f56a748e4829a05c741d155da0537aa
+and Pages44924594035 are published. Required live verification passes all1018
+selected files, log `check-site-escape-final-live.log`.
 
 The next physical-response component convolves photoelectric absorption and
 scatter/escape into the same observed-energy measure. Its2keV Gaussian width is

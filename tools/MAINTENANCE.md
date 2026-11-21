@@ -69,6 +69,11 @@ weights are distinct from official acquisition weights; angular scores alone
 cannot rank physical absorption/escape models. Both control tools are research
 entries, outside the student package.
 
+`gegi_control_energy_errors.py` extracts measured per-cell energy residuals from
+sealed independent ADC controls. It preserves exact terminal-cell matches,
+unmatched pairings, noise seeds and repeated physical layouts. Paired-seed RMS
+differences describe simulated repeatability, not a calibrated detector response.
+
 `gegi_photon_continuation.py` evaluates conditional bulk-Ge path and outgoing-energy
 densities using explicit material rates and the saved GDML geometry. The separate
 `transport/gegi_photon_rates.cc` exports initialized Geant4 process coefficients
