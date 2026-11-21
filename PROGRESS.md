@@ -1,393 +1,203 @@
 # GeSignal handoff
 
-## Current work and ownership
+## Current state and continuation
 
-Continue the owner's signal -> interaction -> source-position objective through
+Continue the owner's signal -> interaction -> source-position objective in
 [the six-stage plan](tools/NEXT_DEVELOPMENT_PLAN.md). The current-thread `gegi`
-heartbeat is ACTIVE every 30 minutes. No resets, extra review agents, new
-frontend or automatic 90.09 s / 20-million-parent production. Reuse the completed
-five-second acquisition and retained independent controls.
+heartbeat remains active every 30 minutes. No resets, model substitution, extra
+review agents, new frontend or automatic 90.09 s / 20-million-parent acquisition.
+Reuse the completed five-second acquisition and retained independent controls.
 
-Thread `01a1fd1a-3e72-7eb2-b7bf-c8c2d59236fd` owns
-`.local/autonomy/gegi-reconstruction.lock`. Check its owner record and actual
-workers before launching anything; do not duplicate running calculations.
-Default sandbox process lookup may hide elevated owned workers. The interface
-cannot verify or switch the leader to GPT-6 Astra Ultra; no switch was claimed.
-Implementation agents remain explicit GPT-6.2 Sol Ultra (candidate/position)
-and GPT-6.1 Sol Ultra (native).
+The current three calculations are complete: the 580-group boundary cohort and
+three stopped-carrier witnesses, continuous ideal-source profiles, and the
+empirical cobalt normalization grid. Root accepted the prepared implementations
+after all three development agents encountered a usage limit. Further agent
+implementation is blocked until the same configured models are available; do not
+retry unchanged expensive work or use resets. The tool reported Nov 27, 2026,
+10:55 AM as retry time, without stating its timezone.
 
-* **Native:** `/root/native_response` owns the active serial 580 boundary-failure
-  cohort in `native-boundary-cause-recovery-v4`: Python 32616 / Julia 28244,
-  session 91091. Request 3c8d8c62..., producer archive 89c910fe... are frozen.
-  The 13,345-row selection inherits complete 214613 and computes 579 groups;
-  1,391 other baseline groups and their actual supports are retained. The first
-  ten durable results are one complete, eight limited and one stopped. Actual
-  native startup peak is 3,375,845,376 bytes, above the small acceptance peak;
-  steady native RSS is about 2.00 GB with 2.60 GB available at the measured
-  post-startup snapshot. Exact PIDs/start identities and checkpoints are in
-  `owned-session.json` and `continuation-handoff.json`. Do not restart or edit
-  pinned sources. Prior cap and small acceptance phases are closed.
-* **Candidate:** `/root/candidate_attribution` completed the full normalized
-  2,400-point saved-cohort diagnostic and the first ten independent ideal
-  observations per cohort. All 40 ordered curves pass; the original reference,
-  faster bank, one necessary refinement and sealed blind/truth scores remain
-  separate. It now fits continuous source coordinates and radial direction
-  profiles to resolve coarse angular-grid error before expanding the sample.
-  Extend only needed curve domains; no extrapolation or truth-seeded fits.
-* **Position:** `/root/position_model` completed all 25 empirical curve tails
-  and a normalized angular-energy mixture on unchanged atoms. Both absorption
-  and escape now cover all 336 saved cobalt states. Global energy support is
-  derived exactly; the single lower coefficient anchor now closes global Co1173
-  escape support. Its independent ideal forward sample is complete (100 cases at each
-  non-grid source). A same-kernel Gaussian-probability quadrature has measured
-  acceptance; the original production method stays unchanged. It now closes
-  the matching empirical topology normalizer using the verified joint-atom
-  sampler. No new native scattering samples or production weights.
+Thread `01a1fd1a-3e72-7eb2-b7bf-c8c2d59236fd` owns this development. Check actual
+processes, `.local/autonomy/state.json` and any lock before starting work. The
+original Python 32616 / Julia 28244, continuous-fit Python 14884 and stopped-probe
+Julia 456 have finished. Their old session IDs are history, not launch authority.
+The interface cannot verify or switch the leader to GPT-6 Astra Ultra; no switch
+was claimed. Implementation assignments remain GPT-6.2 Sol Ultra for candidate
+and position work, GPT-6.1 Sol Ultra for native response.
 
-All three development-agent turns encountered the same usage limit on November
-21. No resets or model changes were used. Root is completing already prepared
-calculations and their acceptance: continuous ideal fits, the empirical grid,
-and the surviving native cohort. Unfinished implementation stays assigned to
-the same models. The ownership record distinguishes the agent interruption
-from live Python/Julia processes; do not restart those workers.
+| Stage | Delivered | Still required for final acceptance |
+|---|---|---|
+| 1. Cobalt edge attribution | Original three-window maps, trigger/pair/order contributions, removal/time/extent sensitivity and exact dominant photon histories. | Diagnostic delivery complete; preserve it as the baseline. |
+| 2. Native response | Cause-specific repairs, full 1,971-group reconciliation, actual same-history readout controls and three stopped-state causes. | Repair remaining false stopping, resolve moving limits and valid partial-response classes, then replay available neighborhoods. |
+| 3. Internal positions | All-34-channel residuals, alternate fits, lateral and shared-strip controls. | Independent acceptance rules, reliable substrip/depth errors, broader topology coverage and propagated uncertainty. |
+| 4. Fixed-plane closure | Same-event substitutions, 18 chronological histories plus three separate peak controls; wrong two-site interpretations identified. | Connect improved physical hypotheses/selection to saved candidates and establish stable source results. |
+| 5. Candidate 3D | Portable range diagnostics, consistent photon factors/normalizers, blind continuous ideal controls. | Apply the matching measured response, validate range identifiability and selection effects; ideal controls are not detector validation. |
+| 6. Statistics | Independent ideal inputs retained at two off-grid sources; first ten per cohort tested. | Freeze the algorithm, then held-out sample-size, distance, direction, strength and unequal-depth studies with failure/unknown rates. |
 
-## Accepted native repair and continuous-readout evidence
+Next concrete implementation: resolve the retained CD_OUTSIDE false-stop witness;
+keep true constrained stationarity separate from sub-ulp motion. For source fitting,
+reuse the measured endpoint integrals to extend response curves, connect the
+empirical numerator to its matched normalizer, and then expand independent tests.
+Do not choose hypotheses or positions because they approach source truth.
 
-The original 1,971 unavailable groups remain the denominator. The first cause
-repair completed 849 (810 new, 39 inherited), leaving 537 limited, 580 boundary
-failures and five stopped. The selected 537-group 5 us continuation is now sealed:
-146 complete, 385 limited and six stopped, using one inherited pilot and 536 new
-calculations. Effective full counts are **995 complete, 580 failed, 385 limited,
-11 stopped**. All selected input identities and actual producer/timing layers
-reconcile; other completed responses were not rerun.
+## Native completion and remaining causes
 
-`native-cap5000-step-limits/recovery.json` SHA
-`a92f44a552ba45cea9e5e072ed858d32e8cf2b8ca184bb8bb367cef7e123929c`;
-full `recovery-status.jsonl` SHA
-`2b2977672ad83c54cc525b94b5b961b32452bc288c06126204df12df81e4c538`.
-Mixed actual supports give a conditional unknown-history union of 489,370,980 ns,
-versus original 965,632,420 ns and prior 560,239,440 ns. Longer support adds
-1,231,660 ns outside the original mask; the net decrease is not a pure subset.
-Native completion alone does not restore original ADC, triggers or efficiency.
+The V4 serial cohort `native-boundary-cause-recovery-v4` is sealed: 580 groups,
+13,345 rows, one inherited exact response and 579 new calculations. Request
+`3c8d8c62...`, producer archive `89c910fe...` stayed frozen. Its results are
+51 complete, 416 step-limited and 113 stopped without contact. With unchanged
+prior layers, the original 1,971 denominator is now **1,046 complete, 801 limited,
+124 stopped**, with no remaining `native_failed` group. Native availability is
+53.07% of the originally unavailable groups; this is not acquisition efficiency.
 
-The first tangent-crossing correction preserved all 20 successful groups but
-recovered none of three whole-group witnesses. That V2 failure remains in
-`native-segment-crossing-acceptance/validation.json`, SHA 5a2e2a47d6d99f8a...
-It isolated a second simultaneously active surface. V3 now projects onto all
-active inward halfspaces, keeping original fields, contacts and 1 ns steps.
-Group 214613 completes all 16 deposits / 32 geometric contacts and 34 signed
-waveforms through 199 ns. Groups 717723 and 3361 reach 1 us with 49/50 and 18/36
-contacts and stay unknown. All 20 successful-control waveform bytes and full
-endpoint records remain exact. This one newly restored group has not yet been
-added to the sealed 995 count.
+Root independently recomputed original input identities, selected/inherited
+records, actual 1,001/5,001 ns supports and the full mask union. All 580 timing
+records and the SQLite seal match; the database hash stayed unchanged.
+Conditional unknown history is **465,069,020 ns**, versus the original
+965,632,420 ns and prior 489,370,980 ns. The longer-support layers add
+1,227,880 ns outside the original mask. No original ADC or trigger was relabeled.
+Cohort wall time 5,382.414 s; native peak 3,375,845,376 bytes.
 
-`native-active-halfspace-acceptance/validation.json` SHA
-`93666032236f6a2e80c730430154bec83c40fdd9ed4e5ca8b65e3c989149f24f`;
-request 6a1654d0..., producer archive af16d49c...; 54.6838 s wall time, native peak
-3,198,865,408 bytes. Original field hash verified after execution. 77 geometry
-and 45 native assertions plus nine Python recovery checks pass. Runtime helper
-SHA e2383c4d..., integration cad7f3f3... are committed in 853eacd.
+* `recovery.json`: `a49725d8715266d3f9e000e5c690ed61a508524bb1352b5be4ff61b7f8d9a1ff`
+* `recovery-status.jsonl`: `5c02cf4f5c23b2bd81de1d4ba5a8e51048fbd613e5ef67ac8d564f6c7b93af5f`
+* `recovery-status-summary.json`: `b17e50f50fe8d9c7f739a3cb85685baf0da0efb648222512b3ed8d4bda202756`
+* `native.sqlite`: `6f356c7dfbcf04acd34ce9d2cfa65507524ee844bd02e7cf8343c2426de849a0`
 
-The subsequent 5 us diagnostic found all 19 noncontact carriers moving at 1 us.
-Group 3361 still moves at 5 us; 717723 falsely stopped at 2,730.858 ns because
-subtracting nearly equal projection costs discarded a feasible 0.645 pm tangent
-step. V4 uses the equivalent maximum retained-projection norm. The saved-state
-regression and 85 geometry / 45 native assertions pass. Whole-group acceptance
-again keeps all 20 controls and completed 214613 exact; both other groups now
-remain moving limits at 5 us. No additional whole-group completion is claimed.
-`native-stable-halfspace-acceptance/validation.json` SHA
-`f488c8ac6fae7c8bb4bca7347c6aaaa67171cbd7e293e2b351af17bbc7bb81b4`;
-105.912 s wall, native peak 3,190,276,096 bytes. Root verified receipt/source
-bindings; 12 focused Python recovery checks pass. V3 failures remain retained.
+The prepared three-deposit diagnostic ran after cohort closure in one cache load:
+51.184 s, native peak 3,156,426,752 bytes. Original endpoints and 1,001/5,001-step
+paths are exact. Installed model: static cached fields, ADL2016 drift at 92.3 K,
+NoChargeTrapping, diffusion/self-repulsion off; no fields or models changed.
 
-Actual continuous-readout repair was separately demonstrated, not inferred from
-mask removal. The first-case replay exactly reproduced 41 original triggers and
-14 ADC candidates before replacing group 2459. A whole b000002 safe-frontier
-replay then reused/regenerated all 288 original successful responses, verified
-7,519 deposit rows / 15,038 contacts, and exactly reproduced 264 triggers / 69
-candidate ADCs. Substituting nine repaired groups through the same electronic
-and noise history produced 273 rises / 98 candidates / 175 rejections: 23 old
-excluded triggers became candidates and six candidates arose at new crossings.
-Six groups remain unknown; 192 raw-block groups lie beyond the safe frontier.
-The 25.119757 ms comparison mask changes 7,153,400 -> 2,926,760 ns, including
-3,380 ns newly covered by extended support. Receipt
-`native-readout-block2/comparison-run/comparison.json` SHA
-`006f8c9206e9e30079a3adf41ff7b82d8d034a97c0174efe966f316983521707`.
-Both actual readout acceptances are published; do not repeat them without a
-relevant change. All original acquisitions and unique failures remain intact.
+| Witness | Observed cause |
+|---|---|
+| 13635 / raw 3822 | Corner projection is exactly zero; 256-bit normal-cone certificate has nonnegative multipliers and zero residual. Stationary under this declared boundary model. |
+| 69417 / raw 12416 | Nonzero tangent step 2.424e-18 m is below coordinate resolution; not the same as exact zero admissible motion. |
+| 119171 / raw 11425 | Unconstrained step 5.366e-5 m remains, but crossing returns CD_OUTSIDE and pinned SSD's internal-error branch sets `done=true`. Preserve as unresolved numerical stopping. |
 
-## Reconstruction result and next physical model
+All 34 channels per witness agree with Ramo endpoint bookkeeping within
+8.89e-16 keV; conditional interpolation preserves the original prefix and flat
+tail through 10 us. Flat interpolation alone does not establish completion.
+No whole-group status or mask was promoted. Evidence in
+`native-stopped-state-diagnosis/`: results SHA
+`d441b8579fc0cb718b3d8b5ed2f97dc5c5317c31c453e6bfb6a4c11eed597325`, validation SHA
+`f83bf95b576d8779fc00391edff73bc2d35884406e9a06f27af71ca598f1fb19`.
+Pinned SSD ChargeDrift.jl SHA `0358c255...`, lines 239-242, confirms the third branch.
 
-Cobalt edge attribution is tied to actual triggers, pairings and orders. Three
-escaping 1332 keV photons contribute 47.0007% of the 1173-keV corner support;
-two merged 1173-keV histories add 14.3559%. Five full 1332-keV histories with
-2-5 Compton scatters contribute 53.5161% of that window's corner support.
-Eighteen chronological non-peak controls and three separate peak controls retain
-exact photon histories. Multi-scatter merging, wrong order, escaped energy and
-finite-plane normalization are distinct effects; no truth-driven event deletion.
-Optional future photon-kinematic retention passed exact stream/input parity.
+Prior V4 acceptance retained all 20 successful-control waveform bytes/endpoints
+and repaired 214613; its receipt remains
+`native-stable-halfspace-acceptance/validation.json`, SHA `f488c8ac...`.
+The earlier failed V2/V3 witnesses and cap phase remain preserved, not rerun.
+Actual continuous-readout controls are also complete: 41 original triggers / 14
+ADCs reproduced before replacing 2459; the b000002 safe-frontier replay reproduced
+264 triggers / 69 ADCs before nine repaired responses produced 273 rises /
+98 candidates / 175 rejections. Twenty-three old excluded triggers and six new
+crossings become candidates. Six groups remain unknown in that 25.119757 ms
+interval; it does not establish full-five-second trigger recovery. Whole-block
+comparison SHA `006f8c9206e9e30079a3adf41ff7b82d8d034a97c0174efe966f316983521707`.
 
-All-34-channel and independent lateral/depth controls are implemented. The
-36-control lateral test improved axis error 10.26 -> 5.00 degrees and XY error
-1.80 -> 1.04 mm, but four other grids worsened 7.17 -> 9.32 degrees. Known merged
-histories can fit stable two-site cones with small residuals, so no residual or
-stability gate was promoted. The three-cell weak-overlap refinement improves
-some conditions and worsens others; original trigger 12271 remains unresolved.
-Independent ADC residuals are retained in `control-energy-errors.json`, SHA
-648be622...; they do not establish a calibrated Gaussian detector resolution.
+## Photon response and continuous-source acceptance
 
-The portable candidate CLI supports explicit incident-line escape hypotheses via
-`--escape-incident-energy-keV`. Same-event finite-vertex range profiles preserve
-all 24 cohort/hypothesis cells: 13 unresolved, ten open and one closed only under
-an uncalibrated score-drop diagnostic. The 1173-window / 1332-escape optimum at
-141.38 mm gains only 0.28977 log-score over infinity: distance remains unidentified.
-Positions are fitted before truth scoring. Angular scores cannot rank physical
-absorption versus escape probabilities or establish range confidence intervals.
+All photon receipts below are under `photon-continuation-v1/`. Source-independent
+factors retain the same first outgoing energy through both measured energies and
+continuation. Stable logs preserve numerical tails. All 28 parent escape curves
+and 25 required lower tails pass; all 336 saved cobalt states are covered.
+Original failures, coefficients, curve domains and inherited evaluations remain.
 
-The new conditional bulk-Ge response uses initialized original Livermore process
-rates (zero transport events), attenuation, normalized free-electron angular
-response and measured-energy convolution. Both hypotheses use the same observed
-energy measure. Explicit 2 keV Gaussian widths are analytic controls. Nine exact
-histories retain eight measured second-site energies and one unavailable pairing.
-The measured consumer preserves 21 triggers / 42 pairings / 84 orders / 252 line
-states: 62 computed, 168 original strip-pairing failures, 22 inadmissible fixed
-first scatters. Source-conditioned geometry removes the latter exact-energy
-assumption: six prespecified source points compute 504 states, retaining 1,008
-unavailable slots. Receipt `source-trial-response-controls.json` SHA 297b281d...
-contains the blind response digest before truth scoring.
+The empirical angular-energy kernel uses the archived 33,000 native samples at
+exact 662 / 1173.228 / 1332.492 keV. Untouched holdout nominal-68% coverage remains
+65.30 / 66.45 / 66.05%, worst angular bin 52.17%; no accuracy gain or calibrated
+probability is claimed. **661.657 keV is unrepresented**, not replaced by 662.
+The 44.98947062660872 keV zero-event coefficient query closes global support:
+225 anchors, 2.499 s, peak 139,300,864 bytes. Native first-scatter electron mass
+510.99891 keV and canonical second-scatter 510.99895069 keV remain explicit.
 
-Stable log-density support preserves numerical tails without floors or altered
-raw outputs. Thirteen focused checks and actual extreme endpoints pass; the
-rejected adaptive-integral and earlier endpoint-quadrature failures are retained.
-Two escape-curve benchmarks reuse 134 direct samples and pass independent-energy
-checks with maximum density errors 0.638% / 0.437%. Measured construction and
-validation cost 43.37 / 59.13 s; 2,400 interpolation queries cost 0.0974 / 0.1525 ms.
-The complete 28-curve bank exposed 12 curves with representable-tail quadrature
-discrepancies. Its immutable base SHA c88975d5... retains 146 imported and 1,896
-new samples (1,480.418 s wall). A separate 79.024 s overlay, SHA 180f5e70...,
-reuses 748 passing points and adds 98 references; only 24 need order 512 after
-measured order-256 failure. All 28 now pass independent-energy checks, maximum
-absolute log error 0.00982486. Six focused resume/coverage/repair tests pass.
-The full 2,400-point grid takes 7.970 s, computing 201,600 finite-log states per
-branch and preserving 403,200 original unavailable-geometry states. The six-point
-reference has exact intermediate energies and maximum representable escape log
-differences 0.00816692 (second site) / 0.00650737 (joint); underflows stay separate.
-`trial-grid-conditional-response.json` SHA
-`e35e3df0c30b19cb95e84755b004141eada88bd9449f08b86ca2686cfc69d98b`, NPZ SHA
-`f563d90b9a8aa683f31f4e2d31af4670d51334b2fe4ff494d336cd28b9a4bc9c`.
-Root verified every producer, dataset hash and exact status/finite-log mask.
-These are conditional responses, not validated source fits.
-
-The empirical kernel reuses all 33,000 archived native samples at exact
-662 / 1173.228 / 1332.492 keV. Each line uses 8,000 Livermore development draws,
-2,000 holdouts and 1,000 free-electron controls. Sixteen angular bins interpolate
-bound-preserving energy residuals; this is an explicit empirical approximation.
-Mean holdout continuous ranked probability scores are 6.470 / 8.974 / 8.963 keV
-versus 8.080 / 11.128 / 11.154 for the free-energy point. Central 68% coverage is
-65.45 / 66.15 / 66.40%, with a worst angular bin at 52.17%; no calibrated coverage
-claim. **661.657 keV is unrepresented.** All atoms and uncovered continuation mass
-remain explicit. Receipt `first-scatter-energy-kernel.json` SHA
-`52c1622d66b02fc5453c57fc5a68f1384f89270196ec41384fb3268c12ad50aa`;
-four focused checks pass. Its shared-atom consumer has five tests and a recorded
-six-point acceptance, SHA ea928291...: 336 cobalt states, 672 incompatible-pair
-states and 504 unrepresented Cs states. Absorption has 321 full / 15 partial
-states. With the verified curve overlay, escape has 245 full / 91 partial,
-recovering all 144 formerly uncomputed states while preserving existing results.
-Overlay receipt SHA fc8641f1...; all atom mass is retained without renormalization.
-One zero-event initialization added 42 exact material anchors down to 45.290803
-keV. All 336 states now have full coefficient support and absorption coverage.
-Escape keeps 245 full / 91 partial, with its old covered contributions unchanged;
-0.03534-2.11792% atom mass lies outside verified curve domains in the partial
-states. Receipt `empirical-first-scatter-rate-support-controls.json` SHA
-add31f02734dd08fd629c98e0f1e989b5c918b1f0b59b640db82273eecc5b913.
-The exporter succeeded; a post-export exact-float density assertion prevented
-recording its elapsed/RSS counters. Those fields remain unavailable, with the
-failure preserved. Exact density and coefficients were verified against prior
-initialized material records without rerunning. Angular density stays separate.
-
-All 25 lower-tail intervals are now independently verified, retaining all 28
-parent curves and their exact boundary samples. Full coverage is restored for
-all 336 cobalt states; 526 new direct samples have maximum heldout log error
-0.00976252 and direct quadrature difference 1.01274e-6. The resumed worker took
-379.93 s after a 61.09 s pilot, with peak working set 97,165,312 bytes.
-`empirical-escape-tail-controls.json` SHA
-`5ca33c958306b3736037fe878391bea9708e3d0cf3e0ce6d0e43942a6aad4a1e`;
-tail database SHA d4df2efb8bf754212b33a9d3583b468b0fa857acb1ca1d0b9c33e36bf15376f1.
-Original contributions are carried unchanged and new tails added in log space.
-Seven combined logs change: trigger19477 at one prespecified trial gains a
-0.2266% tail mass yet changes from -4584.4124 to -288.5936. Small omitted
-distribution mass is therefore not a bound on the observed-response error.
-
-The consistent empirical joint angle-energy mixture normalizes each angular
-hat and uses its original development mass; conditional bin shares change by
-at most 0.13028, with the exact same energy atoms. Integrated joint mass is one
-within 2.2e-16. All 336 cobalt states remain fully covered, while 504 Cs-line
-states are unrepresented and 672 pairing states unavailable. The untouched
-holdout shows no accuracy gain: nominal68% coverage 65.30/66.45/66.05%, worst
-angular bin52.17%, with CRPS6.4703/8.9815/8.9682keV. Three analytic tests pass.
-`first-scatter-joint-controls.json` SHA
-`69629dedaebd33e8460d411a7560090962a1d0af78f28458d9850b9b1ca7d476`.
-This replaces neither the baseline conditional receipt nor production weights.
-Exact support closures over every angular hat give first outgoing minima
-94.2014701/54.6044648/128.5207201keV at662/1173.228/1332.492keV. The second free
-Compton minima use the canonical510.99895069keV electron mass. The only global
-coefficient gap is44.9894706266-45.2908031927keV for the1173.228escape branch;
-one endpoint anchor closes it at the existing interpolation spacing.
-Disjoint support intervals and their archived-atom witnesses remain explicit.
-`first-scatter-global-support.json` SHA
-`80f4c6aae958038bd7126b6bad0c8ee0641ffc9c5bcb5ba39456eb4e4169a0c5`;
-one analytic endpoint/union test passes. No new coefficient query was required
-to establish these bounds;661.657keV remains unrepresented.
-The subsequent exact44.98947062660872keV query succeeded with zero primaries:
-2.499s,139,300,864bytes peak. Combined225initialized anchors cover the represented
-global model. `empirical-global-rates/execution.json` SHA
-`19f6d6b46e26a10ff80df30688b8b5b2942e94880cc18e1300a652ed8e03e378`.
-The single-uniform conditional sampler retains the joint angular density and
-uses the same outgoing atom for all downstream factors. Two analytic mass/CDF
-checks pass; native first-scatter and canonical second-scatter electron masses
-remain explicit.
-The matching empirical topology pilot preserves the original eight Sobol
-coordinates and samples the shared atom with a ninth scrambled coordinate.
-All32paired cobalt first-Compton values are exact; no unknown mass remains.
-Pilot SHAfd4b62796ced01a6cecd161e99d0d4cb95903cf9b0085dd39475e563cc0edd22.
-The cached full grid now contains4,800normalizers at2,400positions for the two
-exact cobalt lines. Preparation6.416s plus geometry/checkpoint80.916s gives
-87.850s total. All32nested pilot rows remain exact. Relative replicate SD is
-median2.137%, maximum14.257%; maximum coarse/fine change24.040% stays recorded.
-No ADC-selection or confidence calibration is inferred. Two focused tests and
-root source/database/receipt bindings pass. The662keV reference remains separate;
-661.657keV is unsupported. `cached-empirical-normalization-full.json` SHA
+Matching empirical normalization now has 4,800 entries for both cobalt lines at
+2,400 source points. Four original 8D Sobol streams retain a ninth conditional
+atom coordinate, nested 512/4,096 samples. All 32 paired pilot rows match exactly;
+zero sampled unresolved mass. Wall 87.850 s including 6.416 s cache preparation.
+Relative replicate SD median 2.137%, maximum 14.257%; maximum coarse/fine change
+24.040% remains recorded. Two focused tests and root source/receipt/database
+checks pass. Full receipt SHA
 `02285073460fb8b3731b30e8a162a22e1a786f8fe0e708eebf82f6aa13fe2969`.
-
-`gegi_first_compton_arrival.py` supplies isotropic spreading, survival through
-active Ge and the first-Compton rate per emitted photon per mm^3. All 504 saved
-trial geometries match the existing incoming-angle convention; independent
-forward/reverse clipping differs by at most 2.03e-12 mm. Five analytic checks
-pass, including competing-rate slab integration and in-Ge sources. Receipt
-`first-compton-arrival-controls.json` SHA a6c99c56a45dcbdb3c6968b41550559ae232b185eccf29d9ac631b964832c1b7.
-The full joint grid now includes this arrival factor: 201,600 finite values per
-branch in mm^-6 keV^-2 per emitted isotropic photon; 403,200 unavailable states
-per branch and all original identities remain. All 504 six-point arrival checks
-are exact; 74 of 2,400 trial points are in Ge and remain labeled. Runtime9.690s.
-`trial-grid-joint-photon-response.json` SHA
-`8d80242f45fcd7a355e34fd4bebf179671a96e00627b9c42d90bc05bbe7b7a3a`;
-root verified the NPZ hash and masks. The idealized two-interaction integral
-uses four scrambled Sobol seeds3100-3103 and nested512/4096 draws at prescribed
-trial indices1(in Ge)/4(10m). The two-branch masses span0.0651-0.0910 and
-2.33e-7-3.49e-7 respectively, with0.86-2.23% coarse/fine differences. This is
-modeled photon topology, not ADC efficiency. A tiny unsampled Cs coefficient
-gap has an explicit analytic mass bound. Five analytic/identity tests pass.
-`ideal-two-interaction-normalization-controls.json` SHA
-`935540f68954b7d70fa96f42c491eaf6025009a2c13a3ce58c2aedf53fb86ffd`.
-Exact caching of source-independent energy, angle and rate arrays reproduces
-all previous sample values. The full7,200normalizers take88.297s (1.321s shared
-preparation,18.808s incoming geometry,66.160s cached paths), with all four
-scrambles and512/4096prefixes retained. Fine relative replicate SD is median
-1.998%, maximum14.015%; largest coarse/fine difference21.763% stays recorded.
-`shared-ideal-topology-normalization-full.json` SHA
+Ideal free-electron normalization separately retains 7,200 entries, SHA
 `09667b6a5c75e2187037279af192cc51999cff384924484c3978ac00148a7cff`.
+These are ideal photon-topology masses, not ADC-selection normalizers.
 
-The source-blind diagnostic retains all21prespecified triggers and seven
-structurally uncomputed records, without neutral densities. The chronological
-Cs/Co1173/Co1332cohorts have2/5/4computed triggers out of six each; three peak
-controls stay separate. All18hypothesis grid maxima are stable across numerical
-scrambles/prefixes, which is not event-level statistical stability. At nominal
-energies, the Co1173maximum reaches the10m boundary, so range is unidentifiable;
-Cs/Co1332are radial-interior grid points. Post-score directional errors are
-26.557/16.410/8.737degrees, and position errors30.491/9945.749/15.104mm. These
-small control cohorts are not the full five-second image or a resolution study.
-`ideal-normalized-source-diagnostic-full.json` SHA
-`cb2cd3ccbdc6619d4bf0a47e8f438fc06780e80f63219536027b85c34dfaf1a7`;
-blinddigest7af514d8c78af9640abfe10501264b6402ee5adb76630a1f5c7971981f40ebe4.
-Root verified producer hashes and unchanged blind digest; three focused cache/
-mixture checks pass. No hypothesis is selected because it approaches truth.
+Independent ideal observations retain 100 events at each off-grid source with
+separate truth and randomized site labels; PCG64 seeds 2607112101/02 and independent
+2 keV noise. The first ten per cohort use all 40 ordered response curves. The
+Gaussian-probability quadrature passes frozen-reference and tail checks; no
+curve extrapolation or unsupported order mass renormalization is used.
+Observations SHA `c86a4af7cae4fea71923e6412783f52e0b2b1cdaadd6d12be9eba3a51640bba6`.
 
-Independent ideal forward validation now retains100accepted1173.228keV events
-at each off-grid source(25,-20,55)/(-55,18,95)mm, using PCG64seeds2607112101/02
-and independent2keV site noise. Enclosing-cone attempt counts are16950/3855,
-entered counts1840/1637 and emission fractions1/.0906541. Observed site labels
-are randomized; source, topology and ordered vertices are in a separate truth
-file. All200identities, geometry and true energy closure pass; two draw-law
-tests pass. `ideal-forward-validation/observations.json` SHAc86a4af7cae4fea71923e6412783f52e0b2b1cdaadd6d12be9eba3a51640bba6,
-executionSHA4702ee490ec447b1570ec45deae32d497f41c049daa2b1704fb2b733c6af8d8d.
-This validates an ideal mathematical sampler, not Geant4 transport, ADC or
-detector performance. The first10percohort are the reconstruction acceptance;
-all200remain available without regenerating samples or changing seeds.
-The same-kernel Gaussian-probability quadrature retains full physical support
-and finite log tails. Against61exact original references its maximum log error
-is0.0001381;16/32rule difference is0.0004759. Observed-factor checks took2.937s,
-versus94.170s for the prior call that also computes unobserved mass, so these
-are distinct workloads. The40curve bank took126.956s; one actual convergence
-failure required a2.797s128-order overlay. All40then pass maximum heldout log
-error0.009948 and direct adjacent-rule difference0.009626. Original failed and
-passing references are retained. Nine focused Gaussian/atom/forward tests pass;
-root checked exact source bindings and observation/blind/truth hashes.
+The coarse 2,400-point grid had position errors 10.449 / 336.743 mm. Continuous
+exterior-source fitting of the **same 20 events** now converges all 110 local
+optimizations, with direction reoptimized at 25 radii per cohort. Original grid
+score parity is within 3.64e-12. Source/observation/curve hashes and the blind
+digest pass before a separate truth-scoring command. Four independent numerical
+scrambles check the frozen fits/profiles. Post-score results:
 
-The first10events per cohort were scored with both randomized site orders and
-both physical branches before truth was opened. All20are retained; no missing
-order mass is renormalized away. Both select the nearest sampled direction,
-with3.907/5.839degree errors. Radial grid maxima are72.999/447.214mm versus
-true63.640/111.238mm, giving10.449/336.743mm position errors. Results agree across
-the four numerical scrambles/prefixes. The roughly20degree angular grid
-confounds radial inference; the continuous same-data check below resolves this
-large grid error. This is neither calibrated range nor detector validation.
-`ideal-forward-validation/first10-source-blind.json` SHA
-`0135383e262499269011263aa6977969793803a5e76d83e929adc503f02c41c5`;
-subsequent truth-score SHA
-`ddcce414910ec0433f2b69d38215294412e107122bf9ce16db9b98cf2b59ee74`.
-Continuous external-source fitting on these same20observations now completes
-all110local optimizations and25direction-optimized radii per cohort. Original
-grid-score parity is within3.64e-12; source/observation/curve bindings and the
-sealed blind digest pass before separate truth scoring. Post-score position
-errors are0.2843/3.1510mm, direction errors0.1408/0.1702degrees, and radial errors
-+0.2372/-3.1341mm. Both radial maxima are interior. Four independent numerical
-scrambles retain finite profiles; these are not calibrated confidence intervals.
-The point-vertex source model is singular at an internal observed vertex, so
-this finite continuous result explicitly uses the exterior geometric view.
-Two independent analytic optimization checks pass. The run took378.474s and
-retains5,133direct endpoint samples, all resolved, including the19pilot samples.
-About240.3s belongs to these direct integrals: extending the original curves
-with this retained evidence is the measured next speedup before larger samples.
-Blind SHA`c8f0d90ff3c9e5513c86386ad08ff4d5a335116117050dd12131ae948ea84a67`;
-truth-score SHA`bbb41f9104adec2d987c22bb127fe6dc1b3fbd848f97189009ed88bc92c7a3d9`.
-Both files are under`ideal-forward-validation/continuous-first10-*.json`.
-No activity or source truth is supplied. Passive attenuation,
-selected-acquisition normalization, secondary containment, position uncertainty
-and merged topology remain open before physical model weights and independent
-source-position statistical validation.
+| Cohort | Position error | Direction error | Center-distance error |
+|---|---:|---:|---:|
+| 1 | 0.2843 mm | 0.1408 degrees | +0.2372 mm |
+| 2 | 3.1510 mm | 0.1702 degrees | -3.1341 mm |
 
-## Publication and baseline
+Both radial optima are interior. This establishes a material coarse-angular-grid
+bias in these ideal controls, not GeGI resolution or confidence coverage. Exact
+point-vertex densities are singular at internal observed vertices, so the finite
+continuous result explicitly uses the exterior geometric view. Source truth and
+activity are never optimization inputs. Two independent analytic optimization
+checks and nine earlier Gaussian/atom/forward tests pass.
 
-Source 4b6b3502dad0580c39ec70272afc9d960c0b2f2d is pushed. The software-only release
-[student-runtime-4b6b3502dad0](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-4b6b3502dad0)
-includes stable V4 projection and is verified byte-for-byte: 1,412,386 bytes /
-257 members, SHA
-`0d117494d882353682a8cbcdae0f332fe909ac6bd8723fa5629633afe11627f9`, asset 776486538.
-Dependency closure includes 119 Python files, 57 Julia includes, 17 models and 21
-frozen pins. Two targeted packaging checks pass. Calibration remains separate
-and unchanged. Research kernels/results are outside the student package.
+The run took 378.474 s and retains 5,133 direct endpoint samples with no unresolved
+quadratures; about 240.3 s was direct-integral work. Extend curves from these
+retained values before larger tests. The remaining 180 observations need no
+regeneration. In `ideal-forward-validation/`:
 
-Existing Pages source 0bc3ab2 / run 44924594035 is fully deployed: build
-`f2fc9e918535f7d44f25ec5ccd930490a8d31952392f3d58dbb75eaa9bcb4778`, 1,914 files,
-538,384,358 bytes, 127 HTML pages and 1,018 exact live-file checks. Desktop path
-homepage -> main result -> same-event range controls -> methods was inspected.
-No new exhibit content changed in this runtime release; no repeat build needed.
-Authorities: `.local/student-runtime-p1/delivery.json` and
+* `continuous-first10-blind.json`: `c8f0d90ff3c9e5513c86386ad08ff4d5a335116117050dd12131ae948ea84a67`
+* `continuous-first10-truth-score.json`: `bbb41f9104adec2d987c22bb127fe6dc1b3fbd848f97189009ed88bc92c7a3d9`
+
+The saved real-candidate diagnostic still has only 2/5/4 computed chronological
+Cs/Co1173/Co1332 triggers out of six each; seven uncomputed records and three
+separate peak controls remain. Nominal Co1173 reaches the 10 m grid boundary.
+It is not a full-five-second image or a range identification. Passive material,
+secondary containment, position/Doppler response, merged topology and acquisition
+selection remain open before physical model weights or statistical conclusions.
+
+## Baseline, publication and retained history
+
+Original data: `.local/gegi-candidate-runs/steady-five-seconds` is unchanged.
+924,676 Cs + 185,199 Co new parents, 867,305 initial daughters; 102,516 groups =
+56,713 complete + 1,971 unavailable + 43,832 after five seconds. There are 52,371
+rises, 42,275 qualified triggers, 32,502 energies and 14,909 retained candidates.
+The two-strip fit covers 3,822; 11,087 remain outside it. Projected 2,891.5 and
+unresolved 930.5 are weights, not event counts or efficiency. Original unknown
+history 0.965632420 s (19.31%) is not hardware deadtime. Cost 6.83 active hours,
+819,359,442 retained bytes before imaging. The 90.09 s / 20M storage/runtime
+projection is not launch authorization.
+
+Cobalt attribution remains: three escaping 1332 photons supply 47.00% of the
+1173-window corner; two merged full1173 histories add 14.36%. Five dominant
+1332-window histories contain 2-5 Compton scatters plus absorption in two cells;
+reverse orders supply 46.50% of that corner. In independent position controls,
+10/12 known multi-point mixtures pass a stable two-site fit; residual alone is
+not an acceptance rule. Some lateral grids improve while four worsen axis error.
+Keep these failed interpretations and denominators.
+
+Research source is synchronized with GitHub; the latest research results above
+remain local evidence and this handoff, pending the next maintained exhibit
+update. The student runtime is unchanged from the verified V4 release
+[student-runtime-4b6b3502dad0](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-4b6b3502dad0):
+1,412,386 bytes / 257 members, SHA
+`0d117494d882353682a8cbcdae0f332fe909ac6bd8723fa5629633afe11627f9`.
+Calibration stays separate and unchanged. Research data are not bundled.
+Existing Pages source 0bc3ab2 / run 44924594035 passed 1,018 exact live-file checks
+and desktop homepage -> result -> evidence/methods acceptance. Its build is
+`f2fc9e918535f7d44f25ec5ccd930490a8d31952392f3d58dbb75eaa9bcb4778`.
+No unchanged site/runtime build was repeated. Publication receipts are
+`.local/student-runtime-p1/delivery.json` and
 `.local/gegi-reconstruction-v1/publication-assets.json`.
 
-Original five-second baseline: 924,676 new Cs parents + 185,199 new Co parents +
-867,305 initial daughters. 102,516 deposit groups = 56,713 complete + 1,971
-unavailable + 43,832 after five seconds. 52,371 rises / 42,275 qualified / 32,502
-energies / 14,909 retained candidates. Two-strip model covers 3,822; 11,087 remain
-outside it. 2,891.5 projected + 930.5 unresolved are weights, not event counts or
-efficiency. Original unknown history 0.965632420 s (19.31%) is not hardware deadtime.
-The run cost 6.83 active hours and retained 819,359,442 bytes before imaging.
-Conditional 90.09 s / 20M estimates of 15.77-19.26 GB and 123-125 active hours are
-not production authorization.
-
-All new local evidence is under `.local/gegi-reconstruction-v1/`; photon-response
-receipts mentioned above are in its `photon-continuation-v1/` subdirectory.
-Earlier exact sources, evidence and scientific limits remain in the
-[immutable integrated handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/853eacdc905c96dc1cc990c636e96632b0470139/PROGRESS.md),
-which links the earlier retained history. Follow [the maintained guide](tools/site_guide.html)
-and [source ownership](tools/MAINTENANCE.md).
+All current local evidence stays under `.local/gegi-reconstruction-v1/`.
+The [immutable preceding handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/a69f770/PROGRESS.md)
+retains exact intermediate receipts, failures and earlier-history links. Follow
+[the maintained guide](tools/site_guide.html) and [source ownership](tools/MAINTENANCE.md).

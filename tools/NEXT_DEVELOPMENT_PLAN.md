@@ -62,9 +62,16 @@ now restores214613 with32contacts/all34signedsignals and keeps20controls exact;
 717723 and3361 continue to1us but remain incomplete. The5us motion diagnostic
 exposed cancellation in717723's projection-cost comparison. Stable retained-norm
 selection corrects that false stop, preserves20exact controls and leaves both
-witnesses moving/limited at5us. The serial580boundary-failure cohort is running
-with one inherited complete group and579new calculations at original support.
-The sealed995complete census is unchanged until reconciliation.
+witnesses moving/limited at5us. The serial580boundary-failure cohort is complete:
+51complete,416limited,113stopped, including one exact inherited response.
+The reconciled full1971counts are1046complete,801limited,124stopped; no group
+remains in the native_failed category. Actual mixed supports give465069020ns
+conditional unknown history, retaining1227880ns outside the original mask.
+Three original stopped witnesses then separated an exact constrained stationary
+corner, a nonzero2.424e-18m sub-coordinate tangent step, and CD_OUTSIDE reaching
+SSD's internal-error done branch despite a5.366e-5m unconstrained step. All34
+channels satisfy endpoint bookkeeping, but no partial response or old trigger
+was promoted. Fix the concrete crossing witness before further recovery batches.
 The first continuous-readout acceptance uses ordinal119/event2459 and43original
 successful responses fromb000002, with exactrandom-state/input recovery.
 The43responses and exact baseline41triggers/14candidate ADCs now pass. Replacing
