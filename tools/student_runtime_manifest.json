@@ -71,7 +71,7 @@
       "simulation/readout_profiles.jl", "simulation/readout_demo.json",
       "simulation/native_readout_profile.json", "simulation/native_li_example.jl",
       "simulation/native_stream.jl", "simulation/native_response.jl",
-      "simulation/native_response_guarded.jl", "simulation/native_boundary_guard.jl",
+      "simulation/native_response_guarded.jl", "simulation/native_boundary_guard.jl", "simulation/native_segment_crossing.jl",
       "simulation/gamma_native_example.jl", "simulation/scenario_response.jl",
       "simulation/ring_stream.jl", "simulation/ring_response.jl",
       "simulation/ring_polarity.jl", "simulation/workflow_ring_response.jl",

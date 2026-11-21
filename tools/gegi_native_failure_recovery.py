@@ -46,7 +46,7 @@ def prepare(source, output, *, prior_recovery=None):
 def _prepare(source, output, request, *, prior_recovery=None, extension=None):
     output = Path(output).resolve()
     store.require(output.is_relative_to(ROOT/'.local') and not output.exists(), 'Use a new project-local recovery root')
-    refs = set(request['source_sha256']) | {'simulation/native_boundary_guard.jl',
+    refs = set(request['source_sha256']) | {'simulation/native_boundary_guard.jl', 'simulation/native_segment_crossing.jl',
         'tools/gegi_native_failure_recovery.py', 'tools/gegi_missing_history.py',
         'tools/gegi_native_failure_diagnostic.py', 'tools/gegi_resource_monitor.py', 'tools/gegi_digital_readout.py'}
     request['source_sha256'] = {ref: response.file_sha(ROOT/ref) for ref in sorted(refs)}

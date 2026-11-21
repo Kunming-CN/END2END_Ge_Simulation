@@ -1,6 +1,8 @@
 # Opt-in, process-local safety patch for pinned SSD 0.11.8. No package-file edits.
+include("native_segment_crossing.jl")
 module NativeBoundaryGuard
 using SolidStateDetectors, SHA, LinearAlgebra
+using ..NativeSegmentCrossing
 const SSD=SolidStateDetectors
 const EXPECTED="0358c255e37c38f62eee6f1e476c0ed48560708dfcd3d367d2688eaa022232ad"
 const INSTALLED=Ref(false)
@@ -20,7 +22,7 @@ function projected_surface_step(det,point_types,current,projected,istep,start)
     next in det.semiconductor && return next,one(typeof(current.x))
     # A projected step can meet a second face/contact before its full endpoint.
     # Reuse SSD's exact CSG segment crossing instead of a 0.001 backoff grid.
-    crossing,kind,_=SSD.get_crossing_pos(det,point_types,current,next)
+    crossing,kind,_=NativeSegmentCrossing.get_crossing_pos(det,point_types,current,next)
     denominator=dot(projected,projected)
     fraction=dot(crossing-current,projected)/denominator
     if kind==SSD.CD_OUTSIDE || !(isfinite(fraction) && 0<fraction<=1 && crossing in det.semiconductor)
@@ -39,6 +41,12 @@ function patched_source(source::String;analytic_semiconductor=false)
     replacement=old*"                    throw(Main.NativeBoundaryGuard.BoundaryStall(istep, Main.NativeBoundaryGuard.xyz(startpos[n]), Main.NativeBoundaryGuard.xyz(current_pos[n]), Main.NativeBoundaryGuard.xyz(next_pos)))\n"
     text=replace(body.match,old=>replacement;count=1)
     if analytic_semiconductor
+        native_crossing="get_crossing_pos(det, point_types, copy(current_pos[n]), current_pos[n] + step_vectors[n])"
+        count(native_crossing,text)==1 || throw(ArgumentError("Pinned native crossing call changed"))
+        text=replace(text,native_crossing=>"Main.NativeSegmentCrossing."*native_crossing;count=1)
+        native_projection="CartesianVector{T}(project_to_plane(step_vectors[n], surface_normal))"
+        count(native_projection,text)==1 || throw(ArgumentError("Pinned native surface projection changed"))
+        text=replace(text,native_projection=>"Main.NativeSegmentCrossing.surface_step(det, current_pos[n], step_vectors[n], surface_normal)";count=1)
         old="normal[n] = done[n] || _is_next_point_in_det(current_pos[n]+step_vectors[n], det, point_types)"
         count(old,text)==1 || throw(ArgumentError("Pinned native next-point admission changed"))
         text=replace(text,old=>"normal[n] = done[n] || ((current_pos[n]+step_vectors[n]) in det.semiconductor && !((current_pos[n]+step_vectors[n]) in det.contacts))";count=1)
@@ -70,7 +78,7 @@ function provenance()
     Dict("kind"=>"ssd_0_11_8_boundary_guard_v1","installed"=>INSTALLED[],"native_source_sha256"=>EXPECTED,
         "change"=>"Fail closed before native unwritten terminal row; no position/signal substitution",
         "package_files_modified"=>false,"next_point_admission"=>ANALYTIC_SEMICONDUCTOR[] ? "analytic_semiconductor" : "native_grid_or_geometry",
-        "floating_projection"=>ANALYTIC_SEMICONDUCTOR[] ? "analytic_projected_segment_crossing_v1" : "native_linear_backoff_with_unwritten_row_guard")
+        "floating_projection"=>ANALYTIC_SEMICONDUCTOR[] ? "analytic_projected_segment_crossing_v3_active_halfspaces" : "native_linear_backoff_with_unwritten_row_guard")
 end
 function detail(e::BoundaryStall)
     Dict("type"=>"NativeBoundaryStall","message"=>sprint(showerror,e),"step"=>e.step,

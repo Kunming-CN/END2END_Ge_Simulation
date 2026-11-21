@@ -167,6 +167,7 @@
 
 # Opt-in native boundary safety and resumable response stage.
 !simulation/native_boundary_guard.jl
+!simulation/native_segment_crossing.jl
 !simulation/test_native_boundary_guard.jl
 !simulation/native_checkpoint_batch.jl
 !simulation/test_native_checkpoint_batch.jl

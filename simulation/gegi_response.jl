@@ -12,7 +12,7 @@ const H=GeGISignalHelpers; const SSD=SolidStateDetectors
 const ROOT=Q.ROOT
 const MODEL_HASH="4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04"
 const NATIVE_SIGNAL_ONLY="native_signals_only_v1"
-const SOURCES=("gegi_response.jl","gegi_signal_helpers.jl","native_boundary_guard.jl","run.jl","replay.jl","readout.jl","readout_profiles.jl","readout_demo.json")
+const SOURCES=("gegi_response.jl","gegi_signal_helpers.jl","native_boundary_guard.jl","native_segment_crossing.jl","run.jl","replay.jl","readout.jl","readout_profiles.jl","readout_demo.json")
 check=E.check
 hashfile=E.hashfile
 struct NativeResponseError <: Exception

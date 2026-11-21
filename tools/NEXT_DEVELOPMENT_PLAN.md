@@ -56,10 +56,13 @@ truth-tuned tolerance. The1971-group parent repair and537selected duration
 continuation are sealed and reconciled:995complete,580failed,385limited,11stopped.
 The artificial native-step execution ceiling is removed. Actual1001/5001ns
 supports produce a489370980ns conditional unknown union, not restored ADC exposure.
-The first tangent/self-hit correction keeps20successcontrols exact but allthree
-whole-group witnesses still fail: two advance to a second active surface and one
-is unchanged. The next cause-specific repair handles simultaneous surface
-constraints, retaining unknowns where no admissible motion/contact exists.
+The first tangent/self-hit correction kept20successcontrols exact but allthree
+whole-group witnesses still failed. The simultaneous active-surface correction
+now restores214613 with32contacts/all34signedsignals and keeps20controls exact;
+717723 and3361 continue to1us but remain incomplete. Inspect their remaining
+motion and extend actual configured support where warranted, then apply the
+accepted correction serially to the580boundary-failure cohort with exact
+inheritance. The sealed995complete census is unchanged until reconciliation.
 The first continuous-readout acceptance uses ordinal119/event2459 and43original
 successful responses fromb000002, with exactrandom-state/input recovery.
 The43responses and exact baseline41triggers/14candidate ADCs now pass. Replacing
@@ -115,9 +118,15 @@ receive explicit response terms; no exact-measured-first gate is inherited.
 Six prespecified points compute504supported states with132newly evaluable states.
 Stable log densities preserve extreme numerical tails. Two response curves pass
 independent-energy interpolation checks (.638%/.437%maximum measured density
-errors), reusing failed-coarse-run quadratures. Extend verified curve coverage
-across unique measured pair/orders and reuse retained bound-electron samples for
-the first-scatter response; neither step changes official image weights yet.
+errors), reusing failed-coarse-run quadratures. The28unique-pair/order curve bank
+is running with retained direct samples. A representable endpoint tail exposed
+an actual128/256quadrature discrepancy; targeted256/512checks support repair of
+only affected samples after the pinned bank closes. The archived33000native
+samples now supply an empirical conditional energy kernel at exact662/1173.228/
+1332.492keV, with independent holdout coverage and angular-bin undercoverage
+retained.661.657keV stays unsupported. Integrate the same latent outgoing energy
+through both measured energies and continuation, retaining uncovered mass and
+the separate angular-prior approximation. Neither step changes official weights.
 Secondary containment, position/Doppler response, passive material and acquisition
 selection remain separate. Common units alone do not establish
 model probabilities. Angular scores alone cannot choose absorption versus escape or

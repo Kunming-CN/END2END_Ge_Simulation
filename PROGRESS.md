@@ -61,10 +61,20 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   Receipt `native-segment-crossing-acceptance/validation.json` SHA
   5a2e2a47d6d99f8abbf07469d6270f3e5ed2c2ddba9b6e8183859739dcbd49f0.
   214613row4924advances108->109steps and717723row9951advances to112; both then
-  meet a second active face.3361row3653remains at39. Native owner now implements
-  simultaneous admissible surface projection for these concrete intersections;
-  zero progress/contact absence remains unknown. Runtime changes and helper
-  inclusion are WIP, not published. No580group replay is launched.
+  meet a second active face.3361row3653remains at39. The simultaneous active-face
+  correction now completes original group214613: all16deposits/32geometric
+  contacts and34signedwaveforms through199ns. Groups717723 and3361 now continue
+  to the configured1us cap with49/50 and18/36contacts; both remain unknown.
+  All20control CSVbytes and full endpoint records stay exact. Receipt
+  `native-active-halfspace-acceptance/validation.json` SHA
+  93666032236f6a2e80c730430154bec83c40fdd9ed4e5ca8b65e3c989149f24f;
+  request6a1654d0/archiveaf16d49c,54.6838s,peaknative3198865408B, unchanged inputs
+  and verified original fields.77geometry/45native assertions and9Python checks
+  pass. Root accepts this demonstrated repair; helper dependency closure is
+  explicit. Runtime publication is next. Native owner inspects the two remaining
+  trajectories and prepares the serial580-failure cause cohort, reusing accepted
+  outputs. Full995cap seal and original ADC remain unchanged; the new witness
+  is not yet counted in that sealed cumulative ledger.
 * **Candidate worker:** `/root/candidate_attribution`. All 18 prespecified non-peak
   histories are complete: seven clean two-vertex, nine merged, two with three
   distinct vertices; 17 full-energy photons and one escape. All 18 exact
@@ -417,8 +427,21 @@ SHAd4560c9b847314095368b2bbcfbb5e1029a38342dd302b7e93dd1380c7b73c9e retains
 take.0974/.1525ms. Fourfocused checks pass. These are two-branch numerical checks,
 not population accuracy. The candidate owner now integrates coverage for all
 unique pair/orders of the same21trigger cohort with resumable verified curves;
-the position owner constructs a heldout Doppler kernel from retained native
-single-scatter samples, keeping exact incident-energy support explicit.
+the position owner has built an empirical conditional outgoing-energy kernel
+from all33000archived native samples, without new transport. Receipt
+`photon-continuation-v1/first-scatter-energy-kernel.json` SHA
+52c1622d66b02fc5453c57fc5a68f1384f89270196ec41384fb3268c12ad50aa.
+At each exact662/1173.228/1332.492keV line,8000Livermore samples develop the
+16angular-bin approximation and2000 are held out;1000free controls remain.
+Mean heldout predictive errors are6.470/8.974/8.963keV versus8.080/11.128/11.154
+for the free-energy point. Central68%coverage is65.45/66.15/66.40%, but the
+worst angular bin is52.17%; this is not calibrated detector resolution or
+uniform angular coverage. Four focused tests pass. The661.657keV line remains
+unrepresented. All outgoing-energy atoms and uncovered continuation mass remain
+explicit, with no tail clipping or renormalization. The next consumer carries
+each shared outgoing energy through both measurements and continuation; the
+empirical angular interpolation and separate angular-prior approximation remain
+visible. The free-electron primary path stays unchanged.
 Selected-acquisition normalization, first flux,
 position/Doppler response and merged topology remain open; no new source estimate
 or calibrated event probabilities follow from these conditional components.

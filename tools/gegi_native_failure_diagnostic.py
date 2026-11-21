@@ -72,6 +72,8 @@ def reconcile_recovery(output):
     from gegi_native_failure_recovery import groups
     output = Path(output).resolve()
     identity = response.read(output/'identity.json')
+    if 'cap_extension' in identity:
+        return reconcile_cap_extension(output)
     if (output/'active-worker.json').exists():
         storage.require(response.read(output/'active-worker.json')['status'] == 'closed',
                         'Reconcile after the native recovery worker has closed')
@@ -105,6 +107,87 @@ def reconcile_recovery(output):
                   'status_ledger_sha256': response.file_sha(target),
                   'scope': 'Source identities joined to committed native records; missing append times remain null. '
                            'No original trigger or shared readout record changes.'}
+        response.write(summary, result)
+        return result
+    finally:
+        native.close()
+
+
+def reconcile_cap_extension(output):
+    """Join selected cap results to their sealed full parent, retaining both lineages."""
+    import gegi_campaign_response as response
+    import gegi_event_store as storage
+    import gegi_digital_readout as digital
+    from gegi_native_failure_recovery import groups, sealed_parent, ready_support, extension_history
+    output = Path(output).resolve()
+    identity = response.read(output/'identity.json'); receipt = response.read(output/'recovery.json')
+    storage.require(response.read(output/'active-worker.json')['status'] == 'closed'
+                    and receipt['status'] == 'completed' and receipt['identity'] == identity,
+                    'Reconcile a closed and completed cap extension')
+    extension = identity['cap_extension']; parent_binding = extension['parent']
+    parent = response.ROOT/parent_binding['ref']
+    binding, parent_identity, _, old_support, parent_receipt, parent_rows = sealed_parent(parent, parent_binding)
+    support = ready_support(response.read(output/'native-ready.json'), response.read(output/'native-request.json'))
+    source = response.ROOT/identity['source_ref']; selected = set(extension['selected_ordinals'])
+    storage.require(response.file_sha(source/'compton-candidates.sqlite') == identity['source_sha256'], 'Original input changed')
+    timing_blob = (output/'recovery-ledger.jsonl').read_bytes(); lines = timing_blob.splitlines(keepends=True)
+    trailing = lines[-1] if lines and not lines[-1].endswith(b'\n') else b''
+    timings = {(r['event_id'], r['group_id']): r for r in
+               (json.loads(line) for line in (lines[:-1] if trailing else lines))}
+    target, summary = output/'recovery-status.jsonl', output/'recovery-status-summary.json'
+    storage.require(not target.exists() and not summary.exists(), 'Retain the existing reconciled ledger')
+    native = storage.Store(output/'native.sqlite', identity)
+    counts, transitions, origins, timing_counts = Counter(), Counter(), Counter(), Counter()
+    total = chosen = 0
+    layer = {'ref': str(output.relative_to(response.ROOT)), 'request_sha256': identity['request_sha256'],
+             'producer_archive_sha256': response.file_sha(output/'producer-source.zip'),
+             'ready_sha256': response.file_sha(output/'native-ready.json')}
+    try:
+        saved_completion = native.db.execute('SELECT body FROM completion WHERE singleton=1').fetchone()
+        storage.require(saved_completion is not None and json.loads(saved_completion[0]) == receipt, 'Cap SQLite/report seal differs')
+        with target.open('xb') as stream:
+            for ordinal, group, original in groups(source):
+                key = group['event_id'], group['group_id']; digest = storage.sha(storage.encoded(group))
+                prior = parent_rows[key]
+                storage.require((prior['ordinal'], prior['input_sha256']) == (ordinal, digest), 'Parent input identity differs')
+                if ordinal in selected:
+                    storage.require(native.has(*key, digest), 'Selected native result missing')
+                    event = native.read(*key)[0]; storage.require(event['input_group'] == group, 'Selected retained truth differs')
+                    timing = timings.get(key); complete = digital.terminal_contacts_complete(event)
+                    storage.require(complete == (event['status'] == 'completed'), 'Selected completion lacks contacts')
+                    row = dict(prior, new_status=event['status'], new_domain_error=event.get('native_domain_error'),
+                               complete=complete, native_recovery_inherited=event.get('native_recovery_inherited'),
+                               elapsed_seconds=None if timing is None else timing['elapsed_seconds'],
+                               timing_status='no_retained_timing_entry' if timing is None else timing.get('timing_status', 'measured'))
+                    if timing is not None:
+                        storage.require(timing['input_sha256'] == digest, 'Selected timing input differs')
+                    metadata_sha = native.db.execute('SELECT metadata_sha256 FROM events WHERE primary_id=? AND group_id=?', key).fetchone()[0]
+                    row.update(native_origin='selected_cap_result', native_support_ns=support,
+                               native_record_binding=dict(layer, event_metadata_sha256=metadata_sha))
+                    chosen += 1
+                else:
+                    row = dict(prior, native_origin='retained_parent', native_support_ns=old_support,
+                               native_record_binding=binding)
+                counts[row['new_status']] += 1; origins[row['native_origin']] += 1
+                transitions[(original.get('native_domain_error') or original['status'])+' -> '+row['new_status']] += 1
+                timing_counts[row['native_origin']+':'+row['timing_status']] += 1
+                stream.write(storage.encoded(row)+b'\n'); total += 1
+        storage.require(total == identity['group_count'] == parent_identity['group_count']
+                        and chosen == len(selected) == native.db.execute('SELECT count(*) FROM events').fetchone()[0],
+                        'Original/selected census does not close')
+        acquisition = response.read(source/'candidate-acquisition.json')
+        history = extension_history(groups(source), native, acquisition, parent_receipt, parent_rows, selected, old_support, support)
+        storage.require(history == receipt['conditional_history'] and dict(counts) == history['effective_counts'],
+                        'Reconciled mixed-support history differs from the sealed receipt')
+        result = {'kind': 'gegi_reconciled_selected_cap_ledger_v1', 'groups': total, 'selected_groups': chosen,
+                  'complete_native_groups': counts['completed'], 'counts': dict(counts), 'origins': dict(origins),
+                  'transitions': dict(transitions), 'timing_counts': dict(timing_counts),
+                  'retained_timing_tail_bytes': len(trailing),
+                  'status_ledger_sha256': response.file_sha(target), 'parent_binding': binding,
+                  'selected_binding': layer, 'mixed_support_history_verified': True,
+                  'conditional_history': {k: v for k, v in history.items() if k != 'remaining_intervals_ns'},
+                  'scope': 'Original1971 denominator; actual parent/selected producer layers and inherited pointers retained. '
+                           'Conditional numerical support only; no original ADC, trigger or image changes.'}
         response.write(summary, result)
         return result
     finally:

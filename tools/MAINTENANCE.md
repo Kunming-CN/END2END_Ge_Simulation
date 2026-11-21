@@ -109,6 +109,12 @@ intermediate energy for fixed vertices, observed energy and width. A Gaussian
 tail envelope is removed for interpolation and restored on evaluation. Direct
 quadrature at non-knot energies measures error; refinement preserves prior
 samples and tests new midpoints. Construction and query costs stay separate.
+`gegi_compton_energy_kernel.py` derives an empirical conditional outgoing-energy
+measure from the exact archived native Livermore samples. It retains the fixed
+development/holdout split, angular interpolation approximation, exact incident
+energies and all uncovered continuation mass. Consumers must send the same
+outgoing-energy atom through both measured-energy factors and continuation;
+the kernel does not supply an angular prior or detector-resolution calibration.
 
 `gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
 allocations or shared-strip fits; `gegi_adc_topology.py` and
