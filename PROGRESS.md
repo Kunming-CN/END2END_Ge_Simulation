@@ -37,14 +37,17 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   waveform recovery. The subsequent whole-group 2590 acceptance at 5 us is
   complete: all eight original rows, 16 carrier contacts and 34 valid signed
   waveforms through 3,193 ns. The selected 537-limit phase is now running in
-  `native-cap5000-step-limits`, Python25124/Julia32104, session13409, request SHA
+  `native-cap5000-step-limits`, Python26380/Julia5880, session86331, request SHA
   3436be0712bb60d584defc7951ffaf4ff8746855a584a9156bf4c4e8589889c0.
   It inherits the exact complete pilot and computes 536 new groups. The sealed
   849 complete and 585 other unknown groups are not rerun. Producers are pinned
   until closure; inspect the marker/checkpoint before any further native launch.
-  Recorded durable prefix15/537: three complete (one inherited),12still limited,
-  563.385s for14new groups. This is progress, not a final recovery rate. The
-  phase continuation-handoff.json preserves launch identity and next reconciliation.
+  Cooperative interleaves stopped cleanly at75groups for the81point grid and
+  at138groups for the198point depth study. The latter prefix is31complete,
+  105limited,two stopped. Both captures ran serially; the same cap store resumed
+  with all prior input/metadata records and exact ledger prefixes unchanged.
+  `serial-interleave.json` retains both stop/exit/resume proofs; no completed
+  response was recomputed. This prefix is not a final recovery rate.
   After closure, reconcile the parent/selected ledger and correct measured
   tangency/self-hit witnesses in isolation; keep genuine outward corners unknown.
 * **Candidate worker:** `/root/candidate_attribution`. All 18 prespecified non-peak
@@ -114,6 +117,56 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   It remains a case-specific local diagnostic: best fit uses a predeclared
   first-component anchor; keeping that component centered still gives all34
   RMS13.67/Y28 51.88. Unknown production events do not receive that anchor.
+  The measured-only grid is complete in `trigger-12271-native-response/blind-grid`:
+  request943a7f0ada027fac190e6770fcb85711175794a933c2ae562411acc61130d6df;
+  planner51b736f08622a09294a7f2aa207767d0b393ae3fdfd9406c4d2625a7159d411b;
+  scorer2d41b3f21a01235b63b481c63def7e71e1093ee71fd93dfcfaff7b64c1739c0a.
+  Geometry and measured cells define72training/6interior/3outside-grid gap points;
+  33center traces are reused. All81points/all34signedarrays/162contacts pass,
+  native41.7444s/peak2,382,675,968B; COMPLETE SHA
+  de871ff158754bcd9099aa4cf74d6399d70a1c277b8163617d6112261fdc7fdc.
+  `comparison.json` SHA8095c236c5cc97e8e9b197e0dda37bdbbbc8da8d5b926ac8eaccd47edfdc3537
+  gives original all34/Y28 RMS10.75854/39.85115codes without a replay-defined
+  anchor. Interior6single-point position RMS1.754->1.274mm; two overlaps/six
+  components1.916->1.802mm, but3/6worsen. Three gap probes remain outside fit
+  support. Original alternatives,near-ties and weights0/1are retained. Next:
+  Same-input diagnosis is complete: all11ADC hashes reproduce. Interpolation
+  error at the true overlap positions is25.07/27.20ADCcodes versus2.29/2.26noise
+  and0.18/0.17quantization. Exact energies shift positions at most0.00475mm;
+  noiseless second-overlap shifts at most0.028mm, with the same erroneous pattern.
+  Fits settle at internal knots and near-ties span up to1.31mm.
+  `cause-diagnostic.json` SHA301e6ad4119e4ce7d832db9141b813d0dd7d25452791afd4d62f780eca6228c2
+  binds original data; no acceptance or weight changed.
+  Depth-only refinement is complete at `blind-grid/depth-refinement`:192newfit
+  points+6freshcontrols,72oldfits+33centers reused; all198responses/all34arrays/
+  396contacts verified. Capture42.8021s/peak2,354,872,320B, COMPLETE SHA
+  55d40027af56b58104f66554b0c4f0434d460a35688883969f913b601db08aa4.
+  Request934ff10317aab1ab4391df1c5098931fef2e83e75c13ecd20fefbb9e02ec3e3c;
+  `comparison.json` SHA35286f3f8051908280c5e81300288da35a4698a094c2e7f07be7638b7e7c02c9.
+  All12coarse fits reproduce with zero numeric difference. Same original ADC
+  all34/Y28 RMS10.7585/39.8511 ->5.0105/12.9285codes. Fresh6single-point errors
+  RMS1.2372->0.28485mm,all6improve. Old overlap components1.8019->1.3029mm,
+  but2/6worsen; oldgap controls now reach the Y limit and remain outside support.
+  No imaging promotion. Twenty-four fresh ADC conditions on the fixed six points
+  (two layouts,three allocations,two phases,two noise replicates) are complete.
+  Refined24converge; coarse23converge and one failure is retained. On23matched
+  conditions all34RMS17.445->4.403codes,component-positionRMS2.055->0.982mm;
+  10/69component errors worsen. Weak near-ties reach2.36mm; outer-limit fits
+  increase11->15. These are two physical layouts,not24independent histories.
+  `weak-overlap-validation-cli.json` SHA
+  4d3f2c7ce7bb4160eb1707aa0dd46f82c22b9a06fdddfe42d398de43bf0cd8f3
+  reproduces all24ADC hashes and every scientific field of originalc3567a4c;
+  only producer name/hash differs. Reusable toolSHA
+  bd3ed12dfee54e97453f02ef6b45562bcf1a9905e87937074ec83486f18b900a.
+  Bound diagnosis is complete: all24bound hits in15matched conditions are XY,
+  noneZ/onset. Three saved conditions0/6/21 have known-position interpolation
+  RMS10.82-12.78codes versus2.12-2.27noise. With nuisance coordinates refitted,
+  weakX can move1.975mm for+0.200codes RMS and weakY2.268mm for+0.182codes.
+  `weak-overlap-bound-diagnostic.json` SHAd676304f2d5061eebde5edacf15ca2482dbd788caa63db0cd82c3a374deed058
+  retains the three conditional profiles; this is local diagnostic evidence,
+  not confidence coverage. Next test XY interpolation on existing banks and
+  the same held-out points; prepare missing geometry-defined points only if
+  those banks cannot support the test. No new native launch. Cap continues.
 
 ## Delivered reconstruction and scientific findings
 
@@ -165,76 +218,43 @@ remains strongly model-sensitive. Profiles are conditional, not calibrated
 confidence intervals. The independent statistics stage follows fixed response
 and selection; current five-second data remain development evidence.
 
-## Current integrated changes and publication
+## Publication and current integration
 
-New conditional escape geometry CLI is implemented/tested, with no imaging
-weights or source input.13conditional cones/71inadmissible orders were recorded
-on21selected triggers overthree supplied lines. Verified42261/19477 true-order
-ARM becomes+15.26/-6.46deg;12841 remains without a resolved escape cone.
-`conditional-escape-geometry-controls.json` SHA
-43b60e4766f6c7812dc5b3b449b43fabd68a08fd489c2a0f1ecb910cfd6671a6.
-Three focused geometry tests and six unpacked-package checks passed.
+Published source/runtime milestone `7a7d8a70478174a2f191dd5b44b98de0590cf36f`
+and handoff `d602327508887124250fba9d6eebb3a1d0b8b4a3` are on GitHub main.
+The software-only release `student-runtime-7a7d8a704781` has1,401,641bytes /
+254members, SHA f5b4988a77c257adc5c6542267fd419527f43939c3abc59fa2e3ef73c73b4f7e.
+Actual public bytes/latest-release identity match. Separate center/lateral
+calibrations are unchanged. No new student release is needed for the current
+research-only grid tools unless runtime membership or behavior changes.
 
-The remaining continuous parent-count100M ceiling is removed; positive integer
-format stays.18clock/checkpoint tests pass, including a100000001 configured count
-that produces onlyfive clock rows across resume. No new acquisition launched.
-Initial sandbox hard-link test failures were permission errors; the unchanged
-suite passed with normal permissions. Active transport uses frozen original
-source; native request has no pin to this changed module.
+Website736e94f1863cb21c4841785bb900edfd487c74f6ca0eaa1a8a75d7c05180c468
+contains1,914files/512,814,661bytes. Pages44897993944 and requiredlive1018files
+passed. Two display checks,42publication tests,six package checks and desktop
+homepage->boundary/cause tables->methods acceptance passed; preview/tab closed.
+Combined publication receipt: `.local/gegi-reconstruction-v1/publication-assets.json`.
 
-Source, software-only package and website milestone `f52b116` are published.
-Website build `90f02331125a1685927e7915e6501bc41a90221e9b2d6b05019ff434c560a316`
-contains 1,914 files / 512,749,015 bytes. Required 42 publication tests, local
-site check and two display tests pass. Desktop Chrome checked the expanded
-eight-event angular comparison and photon-retention/resume guide. Required live
-check verified 1,018 files, including all five exhibit files. Preview sessions closed.
-Release `student-runtime-f52b116aa388`: 1,401,622 bytes / 254 members, SHA
-da84fd23dfb549e143014bcd1e81c87ace1d26094131a20a0d48badc08ece5d7;
-public bytes match. `publication-assets.json` is the combined receipt. Center
-and `gegi-lateral-calibration-v1` downloads remain separate and unchanged.
+Current integrated milestone adds measured-only grid fitting, same-input
+interpolation/energy/noise diagnosis and tested depth-only refinement. The exhibit
+separates regular-grid results from the replay-defined anchor, retains worsened
+overlap positions and all unknowns. Updated2display checks and42site tests pass.
+A display-variable collision was caught by the numeric assertion and corrected;
+scientific inputs were unchanged. The earlier staging build was stopped before
+publication to include the completed24-condition result; its log is retained.
+The final combined build is aa306865677e0e66754ffd30809ba0a1c586a9934d4b89d2ed2185542ca6daf6:
+1,914files/513,462,216bytes,127HTMLpages. The normal builder and separate
+tools/check_site.py pass; desktop homepage->main result->depth/overlap/cause
+tables->methods passes. Owned preview/tab are closed; no browser download or
+settings change. Source/Pages synchronization and required live check are next.
+Student runtime is unchanged; research traces stay outside its package.
 
-The new photon observer is included in this release. Ten same-input sidecars
-have exact primary/RNG/canonical-stream/native parity; session 82114 exited0.
-First receipt `photon-step-observer-v1/b000050/observer-verification.json` SHA
-900255ab37e41a8db53e635b336306612ab02a558eb2ce291220ff74474246fe.
-The first receipt writer had a path-type error after transport completed; it
-was corrected from retained outputs without rerunning. Source is in
-`transport/gegi_photon_step_observer.cc` and `transport/gegi_photon_steps.py`;
-the transport allowlist names these and their focused test explicitly.
-Three reader/configuration tests pass. Nine measured replay calls total
-79.486012193 s with peak RSS 182,534,144 bytes; the first call lacks a process
-resource receipt after its preserved writer error. No repeat transport was used.
-Observed exact energy/angle differences are separate from measurement errors;
-the frozen macro chooses Livermore, whose Geant4 11.3.2 Compton model includes
-bound-electron momentum and shell binding. No per-step shell label is recorded.
-Exact-energy substitutions and future-truth integration are complete. The latter
-acceptance SHA is 773088ef540dc50398d69032665d9b388c39a7d243ee86b9c86972d5e55536aa
-at `photon-step-observer-v1/candidate-photon-retention-acceptance.json`.
-The original reader bytes remain in the observer build evidence, preserving
-the first receipts after the reader extension. The package manifest now includes
-both observer sources; six package checks pass. The existing exhibit adds all
-21 exact-control records and the eight additive angular comparisons. Two display
-checks and 42 publication tests pass. The first sandbox preview could not be
-reached; the owned localhost preview worked outside the sandbox, and both
-preview processes and the tab are closed. Pages deployment 44894665317 and
-live verification are complete; source, ZIP and exhibit all match this release.
-The native worker completed 16 fixed saved-row probe conditions from
-`native-drift-probes.json`, SHA
-d0114d3fbc02975a9bf364ef073be7045fa249d277265f7f826c2ff0c4b5dcbf.
-The corresponding source changes and native/local-boundary exhibit are published. Build736e94f1863cb21c4841785bb900edfd487c74f6ca0eaa1a8a75d7c05180c468
-contains1,914files/512,814,661bytes. Two display checks,42publication tests,
-six package checks and the local site check pass. Desktop Chrome verified the
-expanded three-holdout comparison, cause table, conditional intervals and methods
-route; owned preview/tab are closed. Source7a7d8a7 and software-only release
-`student-runtime-7a7d8a704781` are published. ZIP1,401,641bytes/254members SHA
-f5b4988a77c257adc5c6542267fd419527f43939c3abc59fa2e3ef73c73b4f7e
-matches the actual public download and latest-release identity. Pages deployment
-44897993944 succeeded; required live validation passed all1,018checked files,
-including the five exhibit files. Source, package and live exhibit are synchronized.
-`native-response-repair.json` SHA
-45c8ac5afb77ec9c73949fa529861b46a6869213f75ae17677f6969adc6dc0f8
-is a reproducible, path-free summary of the complete ledger and numerical probes.
-Native ownership remains serial; do not launch a competing process.
+The exact-kinetic observer and future candidate-truth retention remain delivered:
+ten original blocks/34Ge-row joins,38focused checks, original producer/archive
+provenance retained. The extension uses `--retain-photon-kinematics`, restored on
+resume. Exact controlSHA9bca9f3d and retentionacceptanceSHA773088ef remain as above.
+Historical incident-line/conditional-escape diagnostics, parent-count cap removal
+and earlier publication receipts remain in the immutable handoff linked below.
+No production acquisition is running.
 
 ## Baseline and retained evidence
 
@@ -253,5 +273,5 @@ and123–125activehours exclude new diagnostic truth overhead and are not launch
 authorization. No waveform library replay qualifies as joint-source production.
 
 Earlier exact results, producer hashes and publication history remain in the
-[immutable integrated handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/ee7c3ca73a1a39a68421f43493e196831dc2b555/PROGRESS.md).
+[immutable integrated handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/7a7d8a70478174a2f191dd5b44b98de0590cf36f/PROGRESS.md).
 Use [the maintained guide](tools/site_guide.html) and [source ownership](tools/MAINTENANCE.md).

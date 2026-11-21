@@ -71,7 +71,31 @@ class ReconstructionDisplayTests(unittest.TestCase):
             self.assertEqual(len(boundary['native_points']), 10)
             self.assertEqual(len(boundary['independent_holdouts']), 3)
             self.assertTrue(all('record_ref' not in point for point in boundary['native_points']))
-            self.assertIn('32.18 to 4.21 ADC codes RMS', page)
+            self.assertIn('5.01 with eleven depths', page)
+            grid = public['measured_boundary_grid']
+            self.assertEqual(grid['measured_scope']['original_unresolved_mass'], 1.)
+            self.assertEqual(len(grid['captured_points']), 81)
+            self.assertEqual(len(grid['independent_single_pulse_controls']), 9)
+            self.assertEqual(len(grid['independent_overlap_controls']), 2)
+            self.assertTrue(all('record_ref' not in point for point in grid['captured_points']))
+            self.assertIn('three of six component', page)
+            cause = public['boundary_grid_causes']
+            self.assertEqual(cause['input_sha256']['original_comparison'], display.SOURCES['boundary_grid'][1])
+            self.assertEqual(len(cause['controls']), 11)
+            self.assertIn('25.07 and 27.20 ADC codes RMS', page)
+            depth = public['boundary_depth_refinement']
+            self.assertEqual(depth['capture_counts'], {'new_points': 198, 'reused_center_points': 33, 'reused_fit_points': 72})
+            self.assertEqual(depth['coarse_fitter_parity']['maximum_absolute_serialized_numeric_delta'], 0.)
+            self.assertEqual(len(depth['independent_fresh_interior_controls']), 6)
+            self.assertIn('two of six component positions worsen', page)
+            overlap = public['boundary_overlap_validation']
+            self.assertEqual(len(overlap['conditions']), 24)
+            self.assertEqual(overlap['design']['physical_layout_count'], 2)
+            self.assertEqual(overlap['fit_status_by_method']['coarse_three_depth'],
+                             {'optimizer_unconverged': 1, 'scored': 23})
+            self.assertEqual(overlap['fit_status_by_method']['refined_eleven_depth'], {'scored': 24})
+            self.assertIsNone(overlap['source_position_mm'])
+            self.assertIn('10 of 69 component positions worsen', page)
             self.assertNotIn('specified but have not run', page)
             self.assertTrue((site / display.ENERGY_IMAGE).is_file())
             ids = re.findall(r'id="(trigger-[0-9]+)"', page)

@@ -36,6 +36,10 @@ SOURCES = {
     'exact_kinetics': ('chronological-window-origins/same-event-exact-kinetics.json', '9bca9f3d43f5f7fba86965873fe6a431934b2309953cc8343eb3a51dab4e0cd8'),
     'native_repair': ('native-response-repair.json', '45c8ac5afb77ec9c73949fa529861b46a6869213f75ae17677f6969adc6dc0f8'),
     'boundary_response': ('chronological-window-origins/trigger-12271/boundary-adc-comparison.json', '1aa8643fc3578a1d5bff2803df61dfbf43110a2621cc4562f2ebbd317a91b110'),
+    'boundary_grid': ('trigger-12271-native-response/blind-grid/comparison.json', '8095c236c5cc97e8e9b197e0dda37bdbbbc8da8d5b926ac8eaccd47edfdc3537'),
+    'boundary_grid_causes': ('trigger-12271-native-response/blind-grid/cause-diagnostic.json', '301e6ad4119e4ce7d832db9141b813d0dd7d25452791afd4d62f780eca6228c2'),
+    'boundary_depth': ('trigger-12271-native-response/blind-grid/depth-refinement/comparison.json', '35286f3f8051908280c5e81300288da35a4698a094c2e7f07be7638b7e7c02c9'),
+    'boundary_overlap': ('trigger-12271-native-response/blind-grid/depth-refinement/weak-overlap-validation-cli.json', '4d3f2c7ce7bb4160eb1707aa0dd46f82c22b9a06fdddfe42d398de43bf0cd8f3'),
 }
 WINDOWS = ('661.657_keV', '1173.23_keV', '1332.49_keV')
 PRIORS = ('uniform-area', 'uniform-solid-angle')
@@ -58,6 +62,10 @@ KINDS = {
     'exact_kinetics': 'gegi_same_event_exact_photon_kinetic_substitutions_v1',
     'native_repair': 'gegi_native_response_repair_summary_v1',
     'boundary_response': 'gegi_trigger_12271_boundary_adc_comparison_v1',
+    'boundary_grid': 'gegi_measured_cell_boundary_grid_diagnostic_v1',
+    'boundary_grid_causes': 'gegi_boundary_grid_cause_diagnostic_v1',
+    'boundary_depth': 'gegi_boundary_depth_refinement_v1',
+    'boundary_overlap': 'gegi_fresh_weak_component_overlap_validation_v1',
 }
 
 
@@ -260,6 +268,15 @@ def compact(inputs, maps):
                 'independent_holdouts', 'method', 'interpretation')},
             'native_points': [{k: v for k, v in point.items() if k != 'record_ref'}
                               for point in inputs['boundary_response']['native_points']]},
+        'measured_boundary_grid': {
+            **{k: inputs['boundary_grid'][k] for k in
+               ('kind', 'input_sha256', 'source_sha256', 'measured_scope', 'calibration_support',
+                'original_adc', 'independent_single_pulse_controls', 'independent_overlap_controls', 'interpretation')},
+            'captured_points': [{k: v for k, v in point.items() if k not in ('record_ref', 'ref')}
+                                for point in inputs['boundary_grid']['captured_points']]},
+        'boundary_grid_causes': inputs['boundary_grid_causes'],
+        'boundary_depth_refinement': inputs['boundary_depth'],
+        'boundary_overlap_validation': inputs['boundary_overlap'],
         'line_hypothesis_summary': {k: inputs['kinematics'][k] for k in
                                     ('kind', 'model', 'methods', 'windows', 'photon_origin_score')},
         'historical_truth_control': {**{k: truth[k] for k in truth_fields},
@@ -480,6 +497,58 @@ def boundary_response_section(data):
     comparison = response['original_12271_adc_comparison']
     baseline = comparison['baseline_center_three_cell']
     best = comparison['sampled_models'][comparison['best_sampled_all34_model_index']]
+    grid = data['measured_boundary_grid']
+    grid_fit = grid['original_adc']['within_cell_fit']
+    depth = data['boundary_depth_refinement']
+    depth_fit = depth['original_adc']['refined_lateral_fit']
+    old = depth['existing_development_controls']
+    earlier_single = [r for r in old if r['control_set'] == 'independent_single_pulse_controls']
+    groups_refined = [
+        ('Fresh interior positions', depth['independent_fresh_interior_controls']),
+        ('Earlier interior positions', [r for r in earlier_single
+                                       if r['coarse']['held_out_positions_for_scoring'][0]['role'] == 'interior_holdout']),
+        ('Earlier overlap components', [r for r in old if r['control_set'] == 'independent_overlap_controls']),
+        ('Earlier outside-grid gap probes', [r for r in earlier_single
+                                           if r['coarse']['held_out_positions_for_scoring'][0]['role'] == 'gap_holdout'])]
+    refined_rows = []
+    for label, controls in groups_refined:
+        before = [e for row in controls for e in row['coarse']['lateral']['position_errors_mm']]
+        after = [e for row in controls for e in row['refined']['position_errors_mm']]
+        rms = lambda values: math.sqrt(math.fsum(e*e for e in values)/len(values))
+        refined_rows.append((label, str(len(before)), number(rms(before), 3), number(rms(after), 3),
+                             str(sum(b > a for a, b in zip(before, after, strict=True)))))
+    refinement = table(refined_rows, ('Matched positions', 'Count', '3-depth RMS (mm)', '11-depth RMS (mm)',
+                                     'Positions worsened'), 'Changing only the depth axis of the response grid')
+    overlap = data['boundary_overlap_validation']
+    overlap_rows = []
+    for row in overlap['summary_by_energy_allocation']:
+        fractions = overlap['design']['fractions_in_measured_cell_order'][row['allocation_index']]
+        before = row['fit_statistics']['coarse_three_depth']
+        after = row['fit_statistics']['refined_eleven_depth']
+        overlap_rows.append((' / '.join(f'{100*f:g}%' for f in fractions),
+                             str(row['common_position_conditions']),
+                             number(before['weak_component_position_rms_mm'], 3),
+                             number(after['weak_component_position_rms_mm'], 3),
+                             number(after['max_weak_near_tie_displacement_mm'], 3)))
+    overlap_table = table(overlap_rows, ('Component energy fractions', 'Matched conditions',
+                                        '3-depth weak error RMS (mm)', '11-depth weak error RMS (mm)',
+                                        '11-depth weak near-tie spread (mm)'),
+                          'Weak-component stability across two physical layouts, ADC phases and noise seeds')
+    single = grid['independent_single_pulse_controls']
+    interior = [row for row in single if row['held_out_positions_for_scoring'][0]['role'] == 'interior_holdout']
+    gap = [row for row in single if row['held_out_positions_for_scoring'][0]['role'] == 'gap_holdout']
+    groups = [('Interior single pulses', interior), ('Outside-grid gap probes', gap),
+              ('Components in two overlapping pulses', grid['independent_overlap_controls'])]
+    errors = []
+    for label, controls in groups:
+        before = [e for row in controls for e in row['center']['position_errors_mm']]
+        after = [e for row in controls for e in row['lateral']['position_errors_mm']]
+        rms = lambda values: math.sqrt(math.fsum(e*e for e in values)/len(values))
+        errors.append((label, str(len(before)), number(rms(before), 3), number(rms(after), 3),
+                       str(sum(b > a for a, b in zip(before, after, strict=True)))))
+    independent = table(errors, ('Independent control', 'Positions', 'Center RMS (mm)',
+                                 'Grid RMS (mm)', 'Positions worsened'),
+                        'Identical native inputs and quantized ADC controls, with energies measured from each ADC')
     rows = []
     for holdout in response['independent_holdouts']:
         fitted = next(row for row in holdout['off_center_alternatives']
@@ -490,16 +559,57 @@ def boundary_response_section(data):
                      number(fitted['position_error_mm'], 4)))
     holdouts = table(rows, ('Point', 'Injected position (mm)', 'Center error (mm)', 'Local-template error (mm)'),
                      'Three noisy ADC controls at positions excluded from the fitted template alternatives')
-    return f'''<section class="panel" id="local-boundary-response"><h2>Explain the waveform near a strip boundary</h2>
-<p>Trigger 12,271 contains two photon interaction vertices but charge in three nominal strip cells. Ten local native
-injections now supply all 34 electrode responses and complete carrier endpoints. Keeping the original ADC and measured
-strip-energy allocation, the best of 16 sampled response models reduces the all-channel residual from
-<strong>{baseline["all34_adc_rms_codes"]:.2f} to {best["all34_adc_rms_codes"]:.2f} ADC codes RMS</strong>.
-On Y28, it changes from <strong>{baseline["y28_adc_rms_codes"]:.2f} to {best["y28_adc_rms_codes"]:.2f} codes</strong>.</p>
-<p>The improvement supports using positions within a strip and separate charge components to explain this waveform.
-Three charge components do not establish three photon interactions. The original trigger remains unresolved with
-zero imaging weight; the local comparison does not choose a source position.</p>
-<details><summary>Inspect independent local controls and the remaining interpretation limits</summary>
+    return f'''<section class="panel" id="local-boundary-response"><h2>Fit within-strip positions without a replay-defined anchor</h2>
+<p>For trigger 12,271, response grids derived from measured strip cells and detector geometry reduce all34 residual
+RMS from {baseline["all34_adc_rms_codes"]:.2f} ADC codes at strip centers to {grid_fit["all34_adc_rms_codes"]:.2f} with three
+lateral-response depths, then <strong>{depth_fit["all34_adc_rms_codes"]:.2f} with eleven depths</strong>.
+Y28 changes from {baseline["y28_adc_rms_codes"]:.2f} to {grid_fit["y28_adc_rms_codes"]:.2f}, then
+<strong>{depth_fit["y28_adc_rms_codes"]:.2f} codes</strong>.
+The fit keeps the same original ADC and measured component energies; photon vertices and source coordinates do not
+select its calibration positions. The depth-only test keeps the X/Y grid and fit unchanged, reuses 72 prior grid responses
+and 33 center traces, and adds 192 depth-grid responses plus six fresh validation positions. All responses retain 34
+electrodes and complete carrier endpoints. Reusing the old three-depth grid reproduces all twelve prior fits exactly.</p>
+{refinement}
+<p>All six fresh interior positions improve, with RMS 1.237 → 0.285 mm. The earlier controls now serve as development
+evidence: overlap errors decrease in aggregate, but two of six component positions worsen. All three near-gap fits reach
+the Y limit and remain outside calibrated X/Y support. These are local simulated point-response tests; position accuracy
+over the detector and photon-interaction identification remain unvalidated.</p>
+<h3>Overlapping components retain position ambiguity</h3>
+<p>The six fresh native responses form two fixed three-component layouts. Three energy allocations, two ADC phases
+and two noise realizations produce 24 distinct readout conditions. The eleven-depth fit converges in all 24;
+the three-depth fit fails to converge in one, which remains recorded. On the 23 matched conditions, all34 waveform
+RMS decreases from 17.445 to 4.403 codes and component-position RMS from 2.055 to 0.982 mm,
+but <strong>10 of 69 component positions worsen</strong>.</p>
+{overlap_table}
+<p>Weak-component near-tied positions still differ by as much as 2.36 mm. For the 29/55/16% allocation, the largest
+weak-position change across repeated readouts increases from 0.148 to 0.593 mm; fitted parameters reach the outer
+calibration limits in 15 of the 23 matched refined conditions, versus 11 with three depths. These are two physical
+layouts with repeated readout conditions, not 24 independent photon histories. No acceptance threshold or imaging
+weight is changed.</p>
+<details><summary>Inspect the initial three-depth grid and its independent controls</summary>
+{independent}
+<p>Six interior single-pulse controls improve in aggregate. For the two overlapping controls, three of six component
+positions worsen even though the aggregate RMS decreases. A lower waveform residual therefore does not establish a
+correct interaction position. The three near-gap controls lie outside the fitted ±0.4-pitch grid. All original pairing
+alternatives and near-tied fits remain recorded; the uncalibrated fourth cell is explicit.</p></details>
+<p>This event contains two photon interaction vertices but charge in three nominal cells. Three charge components do
+not establish three photon interactions. Its original imaging weight remains zero, with unresolved weight one.</p>
+<details><summary>Why the lower residual still leaves position errors</summary>
+<p>All eleven original control ADC hashes reproduce. At the known positions of the two overlapping controls, template
+interpolation alone differs from the native waveform by <strong>25.07 and 27.20 ADC codes RMS</strong>. The corresponding
+noise contribution is 2.29 and 2.26 codes, and quantization contributes about 0.18 and 0.17 codes. These are separate
+same-clock waveform comparisons, not an additive uncertainty budget.</p>
+<p>Replacing measured component energies with their known injected values moves any fitted position by at most
+0.00475 mm and leaves all three worsened overlap positions worse. Removing noise in the second overlap changes its
+positions by at most 0.028 mm. All six isolated fits settle at internal lateral grid knots; the weak overlap component
+settles near internal depth knots. Nearly tied overlap solutions differ by up to 1.31 mm. These results identify
+interpolation mismatch and ambiguous component positions as priorities; they do not support an energy cut or a narrower
+imaging cone. The complete comparisons remain in the <a href="{DATA.name}">evidence JSON</a>.</p></details>
+<details><summary>Compare the earlier replay-defined local test</summary>
+<p>The earlier ten-point test used a neighborhood specified from the replay geometry, including a first-component
+anchor. Its best of 16 alternatives reduced all34 RMS to <strong>{best["all34_adc_rms_codes"]:.2f} ADC codes</strong>
+and Y28 to <strong>{best["y28_adc_rms_codes"]:.2f}</strong>. That case-specific benefit is distinct from locating an
+unknown event using a grid defined only by measured cells.</p>
 {holdouts}
 <p>The probe neighborhood was specified from the replay geometry before comparing the ADC. Three additional positions
 were excluded from the template alternatives and scored only after fitting independent noisy, quantized ADC controls.
@@ -508,8 +618,8 @@ known carrier endpoints; the carrier allocation of the original distributed depo
 <p>Models keep the strip-derived component energies fixed, sum full-electrode point responses and fit a common onset.
 Only complete responses ending in the required collecting cells enter an alternative; no interpolation crosses a
 collection boundary. The quiet pretrigger Y28 tail is approximately −3 ADC codes, and removing it does not account for
-the observed residual reduction. All 16 alternatives, per-channel residuals, three holdout comparisons and exact source
-hashes remain in the <a href="{DATA.name}">evidence JSON</a>.</p></details></section>'''
+the observed residual reduction. Both grid and replay-defined controls, all alternatives, per-channel residuals and
+exact source hashes remain in the <a href="{DATA.name}">evidence JSON</a>.</p></details></section>'''
 
 
 def native_repair_section(data):

@@ -208,16 +208,60 @@ the new observer. All original projected and unresolved weights remain intact.</
 <p>The <a href="evidence.json">evidence JSON</a> includes every selected identity, exact photon step, substitution and unknown
 status, bound to its original ADC and replay hashes. Earlier estimate-based records remain preserved locally.</p>
 </details></section>
-<section class="panel" id="local-boundary-response"><h2>Explain the waveform near a strip boundary</h2>
-<p>Trigger 12,271 contains two photon interaction vertices but charge in three nominal strip cells. Ten local native
-injections now supply all 34 electrode responses and complete carrier endpoints. Keeping the original ADC and measured
-strip-energy allocation, the best of 16 sampled response models reduces the all-channel residual from
-<strong>32.18 to 4.21 ADC codes RMS</strong>.
-On Y28, it changes from <strong>138.26 to 15.83 codes</strong>.</p>
-<p>The improvement supports using positions within a strip and separate charge components to explain this waveform.
-Three charge components do not establish three photon interactions. The original trigger remains unresolved with
-zero imaging weight; the local comparison does not choose a source position.</p>
-<details><summary>Inspect independent local controls and the remaining interpretation limits</summary>
+<section class="panel" id="local-boundary-response"><h2>Fit within-strip positions without a replay-defined anchor</h2>
+<p>For trigger 12,271, response grids derived from measured strip cells and detector geometry reduce all34 residual
+RMS from 32.18 ADC codes at strip centers to 10.76 with three
+lateral-response depths, then <strong>5.01 with eleven depths</strong>.
+Y28 changes from 138.26 to 39.85, then
+<strong>12.93 codes</strong>.
+The fit keeps the same original ADC and measured component energies; photon vertices and source coordinates do not
+select its calibration positions. The depth-only test keeps the X/Y grid and fit unchanged, reuses 72 prior grid responses
+and 33 center traces, and adds 192 depth-grid responses plus six fresh validation positions. All responses retain 34
+electrodes and complete carrier endpoints. Reusing the old three-depth grid reproduces all twelve prior fits exactly.</p>
+<div role="region" aria-label="Changing only the depth axis of the response grid" tabindex="0" style="overflow-x:auto">
+<table><caption>Changing only the depth axis of the response grid</caption><thead><tr><th scope="col">Matched positions</th><th scope="col">Count</th><th scope="col">3-depth RMS (mm)</th><th scope="col">11-depth RMS (mm)</th><th scope="col">Positions worsened</th></tr></thead><tbody><tr><th scope="row">Fresh interior positions</th><td>6</td><td>1.237</td><td>0.285</td><td>0</td></tr><tr><th scope="row">Earlier interior positions</th><td>6</td><td>1.274</td><td>0.500</td><td>0</td></tr><tr><th scope="row">Earlier overlap components</th><td>6</td><td>1.802</td><td>1.303</td><td>2</td></tr><tr><th scope="row">Earlier outside-grid gap probes</th><td>3</td><td>2.401</td><td>0.468</td><td>0</td></tr></tbody></table></div>
+<p>All six fresh interior positions improve, with RMS 1.237 → 0.285 mm. The earlier controls now serve as development
+evidence: overlap errors decrease in aggregate, but two of six component positions worsen. All three near-gap fits reach
+the Y limit and remain outside calibrated X/Y support. These are local simulated point-response tests; position accuracy
+over the detector and photon-interaction identification remain unvalidated.</p>
+<h3>Overlapping components retain position ambiguity</h3>
+<p>The six fresh native responses form two fixed three-component layouts. Three energy allocations, two ADC phases
+and two noise realizations produce 24 distinct readout conditions. The eleven-depth fit converges in all 24;
+the three-depth fit fails to converge in one, which remains recorded. On the 23 matched conditions, all34 waveform
+RMS decreases from 17.445 to 4.403 codes and component-position RMS from 2.055 to 0.982 mm,
+but <strong>10 of 69 component positions worsen</strong>.</p>
+<div role="region" aria-label="Weak-component stability across two physical layouts, ADC phases and noise seeds" tabindex="0" style="overflow-x:auto">
+<table><caption>Weak-component stability across two physical layouts, ADC phases and noise seeds</caption><thead><tr><th scope="col">Component energy fractions</th><th scope="col">Matched conditions</th><th scope="col">3-depth weak error RMS (mm)</th><th scope="col">11-depth weak error RMS (mm)</th><th scope="col">11-depth weak near-tie spread (mm)</th></tr></thead><tbody><tr><th scope="row">29% / 55% / 16%</th><td>8</td><td>3.275</td><td>1.315</td><td>2.168</td></tr><tr><th scope="row">45% / 45% / 10%</th><td>8</td><td>3.111</td><td>1.706</td><td>2.359</td></tr><tr><th scope="row">10% / 45% / 45%</th><td>7</td><td>2.479</td><td>0.885</td><td>0.668</td></tr></tbody></table></div>
+<p>Weak-component near-tied positions still differ by as much as 2.36 mm. For the 29/55/16% allocation, the largest
+weak-position change across repeated readouts increases from 0.148 to 0.593 mm; fitted parameters reach the outer
+calibration limits in 15 of the 23 matched refined conditions, versus 11 with three depths. These are two physical
+layouts with repeated readout conditions, not 24 independent photon histories. No acceptance threshold or imaging
+weight is changed.</p>
+<details><summary>Inspect the initial three-depth grid and its independent controls</summary>
+<div role="region" aria-label="Identical native inputs and quantized ADC controls, with energies measured from each ADC" tabindex="0" style="overflow-x:auto">
+<table><caption>Identical native inputs and quantized ADC controls, with energies measured from each ADC</caption><thead><tr><th scope="col">Independent control</th><th scope="col">Positions</th><th scope="col">Center RMS (mm)</th><th scope="col">Grid RMS (mm)</th><th scope="col">Positions worsened</th></tr></thead><tbody><tr><th scope="row">Interior single pulses</th><td>6</td><td>1.754</td><td>1.274</td><td>0</td></tr><tr><th scope="row">Outside-grid gap probes</th><td>3</td><td>2.631</td><td>2.401</td><td>0</td></tr><tr><th scope="row">Components in two overlapping pulses</th><td>6</td><td>1.916</td><td>1.802</td><td>3</td></tr></tbody></table></div>
+<p>Six interior single-pulse controls improve in aggregate. For the two overlapping controls, three of six component
+positions worsen even though the aggregate RMS decreases. A lower waveform residual therefore does not establish a
+correct interaction position. The three near-gap controls lie outside the fitted ±0.4-pitch grid. All original pairing
+alternatives and near-tied fits remain recorded; the uncalibrated fourth cell is explicit.</p></details>
+<p>This event contains two photon interaction vertices but charge in three nominal cells. Three charge components do
+not establish three photon interactions. Its original imaging weight remains zero, with unresolved weight one.</p>
+<details><summary>Why the lower residual still leaves position errors</summary>
+<p>All eleven original control ADC hashes reproduce. At the known positions of the two overlapping controls, template
+interpolation alone differs from the native waveform by <strong>25.07 and 27.20 ADC codes RMS</strong>. The corresponding
+noise contribution is 2.29 and 2.26 codes, and quantization contributes about 0.18 and 0.17 codes. These are separate
+same-clock waveform comparisons, not an additive uncertainty budget.</p>
+<p>Replacing measured component energies with their known injected values moves any fitted position by at most
+0.00475 mm and leaves all three worsened overlap positions worse. Removing noise in the second overlap changes its
+positions by at most 0.028 mm. All six isolated fits settle at internal lateral grid knots; the weak overlap component
+settles near internal depth knots. Nearly tied overlap solutions differ by up to 1.31 mm. These results identify
+interpolation mismatch and ambiguous component positions as priorities; they do not support an energy cut or a narrower
+imaging cone. The complete comparisons remain in the <a href="evidence.json">evidence JSON</a>.</p></details>
+<details><summary>Compare the earlier replay-defined local test</summary>
+<p>The earlier ten-point test used a neighborhood specified from the replay geometry, including a first-component
+anchor. Its best of 16 alternatives reduced all34 RMS to <strong>4.21 ADC codes</strong>
+and Y28 to <strong>15.83</strong>. That case-specific benefit is distinct from locating an
+unknown event using a grid defined only by measured cells.</p>
 <div role="region" aria-label="Three noisy ADC controls at positions excluded from the fitted template alternatives" tabindex="0" style="overflow-x:auto">
 <table><caption>Three noisy ADC controls at positions excluded from the fitted template alternatives</caption><thead><tr><th scope="col">Point</th><th scope="col">Injected position (mm)</th><th scope="col">Center error (mm)</th><th scope="col">Local-template error (mm)</th></tr></thead><tbody><tr><th scope="row">6</th><td>(−26.530, 9.855, −0.275)</td><td>2.5793</td><td>0.0354</td></tr><tr><th scope="row">7</th><td>(−26.600, 9.885, −0.345)</td><td>2.5860</td><td>0.0579</td></tr><tr><th scope="row">9</th><td>(−33.000, 9.070, 3.460)</td><td>1.9246</td><td>0.1500</td></tr></tbody></table></div>
 <p>The probe neighborhood was specified from the replay geometry before comparing the ADC. Three additional positions
@@ -227,8 +271,8 @@ known carrier endpoints; the carrier allocation of the original distributed depo
 <p>Models keep the strip-derived component energies fixed, sum full-electrode point responses and fit a common onset.
 Only complete responses ending in the required collecting cells enter an alternative; no interpolation crosses a
 collection boundary. The quiet pretrigger Y28 tail is approximately −3 ADC codes, and removing it does not account for
-the observed residual reduction. All 16 alternatives, per-channel residuals, three holdout comparisons and exact source
-hashes remain in the <a href="evidence.json">evidence JSON</a>.</p></details></section>
+the observed residual reduction. Both grid and replay-defined controls, all alternatives, per-channel residuals and
+exact source hashes remain in the <a href="evidence.json">evidence JSON</a>.</p></details></section>
 <section class="panel" id="native-repair"><h2>Recover native charge responses by cause</h2>
 <p>All <strong>1,971</strong> originally unavailable groups have been reprocessed or
 matched to exact prior complete responses. <strong>849</strong> now have complete native charge

@@ -86,8 +86,25 @@ ADC codes; three independent local noisy holdouts also improve position error.
 This replay-defined neighborhood does not establish blind detector-wide accuracy.
 All point endpoints are complete, while the original distributed deposits'
 carrier allocation remains unknown. Original selection and imaging weights are
-unchanged. Package the reusable comparison, then connect the resulting local
-response evidence to independently selected interaction hypotheses; retain unknown
+unchanged. The reusable comparison is published. A subsequent grid defined from
+measured cells and regular detector coordinates improves the same all34 residual
+to10.76codes. Same-clock controls identify template interpolation as the dominant
+error:25-28codes versus about2.3codes noise, with negligible energy-only shifts.
+Increasing only the lateral-template depth axis from3to11levels improves the
+same event to5.01codes and six fresh single-point positions from1.24to0.28mm RMS.
+Two of six old overlapping components still worsen, and gap probes remain
+outside calibrated XY support. Keep the original unresolved imaging weight.
+The six fresh positions now form two layouts tested under three component-energy
+allocations,two ADCphases and two noise replicates. All24refined fits converge;
+one coarse failure remains. On23matched conditions positionRMS2.055->0.982mm,
+but10/69component errors worsen and weak near-ties reach2.36mm. Readout repeats
+are not independent photon histories. Three saved conditional profiles identify
+lateral interpolation mismatch and weak-component trade-offs: about2mm movement
+can add less than0.2ADCcodes RMS after other positions adjust. Next test improved
+XY interpolation on the existing response banks before adopting a mixture
+response. Keep independently held-out positions and the observed ambiguity.
+Then connect supported
+responses to interaction hypotheses and source geometry, retaining unknown
 topology where the waveforms do not identify it.
 
 **Completed readiness baseline before this resumed work:** the five-second mixed-source acquisition,
