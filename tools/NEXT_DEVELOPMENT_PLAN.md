@@ -58,6 +58,13 @@ ceiling is removed. A whole-group 5 us acceptance recovered event 2590; selected
 continuation now processes only the 537 prior duration-limited groups, inheriting
 the exact pilot. Mixed response supports enter the union of missing-history
 intervals. Separate tangency/corner defects await isolated cause-specific repair.
+The next continuous-readout acceptance targets the first retained unavailable
+group, ordinal119/event2459. Starting from the earliest saved checkpoint needs
+43missing successful responses from original transport blockb000002. Exact
+random-state/parent/native-input producer preflight passes; recover the same
+inputs first, then regenerate the original baseline responses serially after
+the active native phase closes. Verify original ADC/triggers before substituting
+the repaired response. No old mask is removed from native recovery alone.
 
 Next scientific step: evaluate absorption, resolved escape and merged/mixed
 hypotheses against independent photon histories and the same measured response.

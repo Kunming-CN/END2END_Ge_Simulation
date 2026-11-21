@@ -80,6 +80,17 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   All 34 retained Ge rows from ten blocks pass the real input join/staging
   acceptance; 24 transport/observer and 14 acquisition checks pass. No new
   acquisition or native calculation was needed for this integration.
+  Current work prepares the first complete continuous-readout repair acceptance:
+  checkpoint2.37828180194ms -> unavailable ordinal119/event2459, ending before
+  6.19974311743ms.43successful responses are absent, all in originalb000002.
+  The exact10,000-driver/RNG/parent/native-producer preflight passes; original
+  per-group input hashes and field cache survive. The agent is preparing the
+  input-only recovery in `native-readout-acceptance-inputs/`, with recipe
+  `native-readout-acceptance-recipe.json`. Available RAM5,917,818,880B exceeds
+  that block's measured182,718,464B transport peak. Inspect agent/recipe/process
+  status before another replay. No native child or readout substitution is
+  authorized concurrently with the active cap worker. Original continuous
+  response/trigger recovery remains unverified until baseline replay matches.
   The selected-cap continuation helper now preserves the full 1,971 denominator
   through the sealed parent, carries deferred statuses explicitly, and unions
   missing-history tails at each group's actual support. Twelve focused checks
@@ -308,12 +319,13 @@ log `site-build-cone.log`: buildd82916258df66cf22b9ca65d6e18c192b27ac8c219cb494d
 1,914files/537,569,063bytes,127HTMLpages. Chrome desktop acceptance follows
 homepage->new compatibility evidence->methods->expanded student CLI guide.
 Owned preview/tab are closed; no download or browser settings change.
-Separate tools/check_site.py passes in session93846; exhibit commit and
-requiredlive acceptance remain pending. Source/runtime above is delivered.
+Separate tools/check_site.py passes in session93846. Exhibit/source commit
+4e639e92ade23f43b0a91c9eedc14f74382edb03 and Pages44913043154 are published;
+required tools/check_site.py --url passes all1,018selected live files.
+The actual runtime asset and site build are both verified.
 
 Prior XY/depth publication and its failure evidence are retained in the immutable
-handoff below. The previous live site is98ba7366eeb90c24320e3c587762561cdca8d6776f13a6ad0ead9c0a3dc6b5e4,
-Pages44910473627,1,914files/513,699,083bytes, with1,018livefiles verified.
+handoff below.
 The publication authority is `.local/gegi-reconstruction-v1/publication-assets.json`;
 package authority is `.local/student-runtime-p1/delivery.json`.
 
