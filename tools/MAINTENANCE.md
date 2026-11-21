@@ -109,12 +109,23 @@ intermediate energy for fixed vertices, observed energy and width. A Gaussian
 tail envelope is removed for interpolation and restored on evaluation. Direct
 quadrature at non-knot energies measures error; refinement preserves prior
 samples and tests new midpoints. Construction and query costs stay separate.
+`gegi_candidate_trial_curve_bank.py` retains each direct sample and sealed curve
+for exact resume. `gegi_trial_curve_quadrature_repair.py` extends only failed
+numerical references in a bound overlay. `gegi_candidate_grid_response.py` uses
+these curves on the saved trial grid, with unavailable geometry and finite log
+responses recorded separately. No numerical coverage state selects events.
 `gegi_compton_energy_kernel.py` derives an empirical conditional outgoing-energy
 measure from the exact archived native Livermore samples. It retains the fixed
 development/holdout split, angular interpolation approximation, exact incident
 energies and all uncovered continuation mass. Consumers must send the same
 outgoing-energy atom through both measured-energy factors and continuation;
 the kernel does not supply an angular prior or detector-resolution calibration.
+`gegi_empirical_first_scatter_response.py` applies that shared outgoing-energy
+measure to both measured sites and continuation. Partial support keeps its
+original atom weights; it does not renormalize or silently add an angular prior.
+`gegi_boundary_failure_recovery.py` resumes the identified boundary-failure
+class over the sealed duration-extension baseline. Exact accepted responses
+are inherited; per-group producer, timing and support layers remain explicit.
 
 `gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
 allocations or shared-strip fits; `gegi_adc_topology.py` and

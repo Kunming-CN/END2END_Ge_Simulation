@@ -59,10 +59,12 @@ supports produce a489370980ns conditional unknown union, not restored ADC exposu
 The first tangent/self-hit correction kept20successcontrols exact but allthree
 whole-group witnesses still failed. The simultaneous active-surface correction
 now restores214613 with32contacts/all34signedsignals and keeps20controls exact;
-717723 and3361 continue to1us but remain incomplete. Inspect their remaining
-motion and extend actual configured support where warranted, then apply the
-accepted correction serially to the580boundary-failure cohort with exact
-inheritance. The sealed995complete census is unchanged until reconciliation.
+717723 and3361 continue to1us but remain incomplete. The5us motion diagnostic
+exposed cancellation in717723's projection-cost comparison. Stable retained-norm
+selection corrects that false stop, preserves20exact controls and leaves both
+witnesses moving/limited at5us. The serial580boundary-failure cohort is running
+with one inherited complete group and579new calculations at original support.
+The sealed995complete census is unchanged until reconciliation.
 The first continuous-readout acceptance uses ordinal119/event2459 and43original
 successful responses fromb000002, with exactrandom-state/input recovery.
 The43responses and exact baseline41triggers/14candidate ADCs now pass. Replacing
@@ -118,15 +120,19 @@ receive explicit response terms; no exact-measured-first gate is inherited.
 Six prespecified points compute504supported states with132newly evaluable states.
 Stable log densities preserve extreme numerical tails. Two response curves pass
 independent-energy interpolation checks (.638%/.437%maximum measured density
-errors), reusing failed-coarse-run quadratures. The28unique-pair/order curve bank
-is running with retained direct samples. A representable endpoint tail exposed
-an actual128/256quadrature discrepancy; targeted256/512checks support repair of
-only affected samples after the pinned bank closes. The archived33000native
+errors), reusing failed-coarse-run quadratures. All28unique-pair/order curves now
+pass after targeted256/512repair of actual tail-convergence failures. The full
+2400point grid computes201600supported states per branch in7.970s; original
+geometry failures and underflow references remain explicit. The archived33000native
 samples now supply an empirical conditional energy kernel at exact662/1173.228/
 1332.492keV, with independent holdout coverage and angular-bin undercoverage
 retained.661.657keV stays unsupported. Integrate the same latent outgoing energy
-through both measured energies and continuation, retaining uncovered mass and
-the separate angular-prior approximation. Neither step changes official weights.
+through both measured energies and continuation. That consumer now passes the
+same six-point acceptance; the repaired curve overlay restores144uncomputed
+escape states, leaving245full/91partial cobalt states. Initialize the recorded
+missing low-energy coefficient queries, keep unvalidated curve domains explicit,
+and implement incident-photon arrival with a separate angular factor. Neither
+step changes official weights or establishes selection normalization.
 Secondary containment, position/Doppler response, passive material and acquisition
 selection remain separate. Common units alone do not establish
 model probabilities. Angular scores alone cannot choose absorption versus escape or

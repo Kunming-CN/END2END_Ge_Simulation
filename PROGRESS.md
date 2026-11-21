@@ -16,31 +16,29 @@ cannot verify or switch the leader to GPT-6 Astra Ultra; no switch was claimed.
 Implementation agents remain explicit GPT-6.2 Sol Ultra (candidate/position)
 and GPT-6.1 Sol Ultra (native).
 
-* **Native:** `/root/native_response` owns all serial native work. The 537-group
-  duration continuation and V3 surface acceptance are closed. It is preparing
-  last-segment diagnostics for the 19 noncontact carriers in groups 717723 and
-  3361, then a 5 us whole-group extension where ongoing motion supports it.
-  The accepted helper is frozen. The next cause cohort is the 580 retained
-  boundary failures, with accepted results inherited and actual configured
-  support retained. It is authorized after the small extension and fresh memory
-  check; no competing native worker or field solve. The last root memory check
-  found about 3.33 GB available, close to the measured 3.20 GB native peak.
-* **Candidate:** `/root/candidate_attribution` owns the running 28-curve bank,
-  Python PID 3912, shell PID 19744, tool session 94572. Exact phase is
-  `.local/gegi-reconstruction-v1/photon-continuation-v1/`; base database
-  `trial-escape-curve-bank.sqlite` and append log have durable direct samples.
-  Producer e64c8ce5 is pinned. After base closure, run only the targeted higher
-  quadrature overlay `trial-escape-curve-repair512.sqlite`, then the complete
-  2,400-point `trial-grid-conditional-response.json` / `.npz`. Do not restart or
-  edit the live producer. Six focused resume/coverage/repair checks pass; the
-  final full-grid calculation is still pending.
-* **Position:** `/root/position_model` completed the empirical outgoing-energy
-  kernel and is integrating one shared latent outgoing energy through both
-  measured-energy terms and second-site continuation. The separate optional
-  consumer has five analytic checks and a real in-memory six-point preflight;
-  the recorded escape acceptance waits for the completed bank. Keep missing
-  coefficient/curve mass explicit. It does not change the free-electron primary
-  path, production weights or fitted source positions.
+* **Native:** `/root/native_response` owns the active serial 580 boundary-failure
+  cohort in `native-boundary-cause-recovery-v4`: Python 32616 / Julia 28244,
+  session 91091. Request 3c8d8c62..., producer archive 89c910fe... are frozen.
+  The 13,345-row selection inherits complete 214613 and computes 579 groups;
+  1,391 other baseline groups and their actual supports are retained. The first
+  ten durable results are one complete, eight limited and one stopped. Actual
+  native startup peak is 3,375,845,376 bytes, above the small acceptance peak;
+  steady native RSS is about 2.00 GB with 2.60 GB available at the measured
+  post-startup snapshot. Exact PIDs/start identities and checkpoints are in
+  `owned-session.json` and `continuation-handoff.json`. Do not restart or edit
+  pinned sources. Prior cap and small acceptance phases are closed.
+* **Candidate:** `/root/candidate_attribution` completed the 28-curve bank,
+  targeted quadrature overlay and full 2,400-point grid. No bank worker remains.
+  It now implements the separate incident-photon arrival/first-Compton density
+  from trial geometry, with explicit units, active-Ge path and omitted passive
+  materials/selection normalization. No source truth, new transport or source
+  optimization is supplied. Keep completed numerical producers unchanged.
+* **Position:** `/root/position_model` completed the shared-outgoing-energy
+  consumer and its six-point acceptance. The verified quadrature overlay
+  restores 144 previously unavailable cobalt escape states. It now initializes
+  only missing low-energy material coefficients in coordination with native
+  memory use. Existing curve domains remain explicit; new coefficients do not
+  validate extrapolation. No production weights or fitted source positions change.
 
 ## Accepted native repair and continuous-readout evidence
 
@@ -78,6 +76,18 @@ request 6a1654d0..., producer archive af16d49c...; 54.6838 s wall time, native p
 3,198,865,408 bytes. Original field hash verified after execution. 77 geometry
 and 45 native assertions plus nine Python recovery checks pass. Runtime helper
 SHA e2383c4d..., integration cad7f3f3... are committed in 853eacd.
+
+The subsequent 5 us diagnostic found all 19 noncontact carriers moving at 1 us.
+Group 3361 still moves at 5 us; 717723 falsely stopped at 2,730.858 ns because
+subtracting nearly equal projection costs discarded a feasible 0.645 pm tangent
+step. V4 uses the equivalent maximum retained-projection norm. The saved-state
+regression and 85 geometry / 45 native assertions pass. Whole-group acceptance
+again keeps all 20 controls and completed 214613 exact; both other groups now
+remain moving limits at 5 us. No additional whole-group completion is claimed.
+`native-stable-halfspace-acceptance/validation.json` SHA
+`f488c8ac6fae7c8bb4bca7347c6aaaa67171cbd7e293e2b351af17bbc7bb81b4`;
+105.912 s wall, native peak 3,190,276,096 bytes. Root verified receipt/source
+bindings; 12 focused Python recovery checks pass. V3 failures remain retained.
 
 Actual continuous-readout repair was separately demonstrated, not inferred from
 mask removal. The first-case replay exactly reproduced 41 original triggers and
@@ -141,10 +151,21 @@ rejected adaptive-integral and earlier endpoint-quadrature failures are retained
 Two escape-curve benchmarks reuse 134 direct samples and pass independent-energy
 checks with maximum density errors 0.638% / 0.437%. Measured construction and
 validation cost 43.37 / 59.13 s; 2,400 interpolation queries cost 0.0974 / 0.1525 ms.
-The current 28-curve bank exposed representable tail quadrature discrepancies;
-256 -> 512 verification resolved the first two witnesses. Repair only affected
-samples after base closure; preserve accepted samples and the original bank.
-The complete bank and grid are still in progress, not validated source fits.
+The complete 28-curve bank exposed 12 curves with representable-tail quadrature
+discrepancies. Its immutable base SHA c88975d5... retains 146 imported and 1,896
+new samples (1,480.418 s wall). A separate 79.024 s overlay, SHA 180f5e70...,
+reuses 748 passing points and adds 98 references; only 24 need order 512 after
+measured order-256 failure. All 28 now pass independent-energy checks, maximum
+absolute log error 0.00982486. Six focused resume/coverage/repair tests pass.
+The full 2,400-point grid takes 7.970 s, computing 201,600 finite-log states per
+branch and preserving 403,200 original unavailable-geometry states. The six-point
+reference has exact intermediate energies and maximum representable escape log
+differences 0.00816692 (second site) / 0.00650737 (joint); underflows stay separate.
+`trial-grid-conditional-response.json` SHA
+`e35e3df0c30b19cb95e84755b004141eada88bd9449f08b86ca2686cfc69d98b`, NPZ SHA
+`f563d90b9a8aa683f31f4e2d31af4670d51334b2fe4ff494d336cd28b9a4bc9c`.
+Root verified every producer, dataset hash and exact status/finite-log mask.
+These are conditional responses, not validated source fits.
 
 The empirical kernel reuses all 33,000 archived native samples at exact
 662 / 1173.228 / 1332.492 keV. Each line uses 8,000 Livermore development draws,
@@ -156,8 +177,14 @@ versus 8.080 / 11.128 / 11.154 for the free-energy point. Central 68% coverage i
 claim. **661.657 keV is unrepresented.** All atoms and uncovered continuation mass
 remain explicit. Receipt `first-scatter-energy-kernel.json` SHA
 `52c1622d66b02fc5453c57fc5a68f1384f89270196ec41384fb3268c12ad50aa`;
-four focused checks pass. Its shared-atom consumer must keep angular density
-separate and disclose partial material/curve coverage. First-incidence flux,
+four focused checks pass. Its shared-atom consumer has five tests and a recorded
+six-point acceptance, SHA ea928291...: 336 cobalt states, 672 incompatible-pair
+states and 504 unrepresented Cs states. Absorption has 321 full / 15 partial
+states. With the verified curve overlay, escape has 245 full / 91 partial,
+recovering all 144 formerly uncomputed states while preserving existing results.
+Overlay receipt SHA fc8641f1...; all atom mass is retained without renormalization.
+Missing coefficient endpoints extend to 45.291 keV; their exact query plan is
+retained. Angular density remains explicitly absent and separate. First-incidence flux,
 selected-acquisition normalization, secondary containment, position uncertainty
 and merged topology remain open before physical model weights and independent
 source-position statistical validation.

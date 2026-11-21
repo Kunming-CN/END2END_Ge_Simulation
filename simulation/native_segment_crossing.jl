@@ -32,7 +32,7 @@ function surface_step(det,p::SSD.CartesianPoint{T},step::SSD.CartesianVector{T},
     feasible(v)=all(n->dot(n,v)>=-tol,normals)
     feasible(step) && return step
     feasible(original) && return original
-    best=zero(step);cost=dot(step,step)
+    best=zero(step);retained=zero(T)
     candidates=SSD.CartesianVector{T}[step]
     append!(candidates,[SSD.CartesianVector{T}(SSD.project_to_plane(step,n)) for n in normals])
     for i in eachindex(normals),j in i+1:length(normals)
@@ -43,9 +43,12 @@ function surface_step(det,p::SSD.CartesianPoint{T},step::SSD.CartesianVector{T},
     end
     for candidate in candidates
         feasible(candidate) || continue
-        change=candidate-step;candidate_cost=dot(change,change)
-        if candidate_cost<cost
-            best=candidate;cost=candidate_cost
+        # Each candidate is an orthogonal projection of step. Maximizing its
+        # retained norm is equivalent to minimizing the rejected norm, without
+        # subtracting nearly equal normal components when tangent motion is tiny.
+        candidate_retained=dot(candidate,candidate)
+        if candidate_retained>retained
+            best=candidate;retained=candidate_retained
         end
     end
     best

@@ -115,6 +115,29 @@ const RESULTS=Any[]
                 "time_step_ns"=>1,"geometric_contact"=>false))
         end
     end
+    @testset "Tiny feasible tangent motion survives normal-cost cancellation" begin
+        # Exact final V3 717723 electron state from the preserved 5 us run.
+        p=point([-.029332772398631777,-.03430683790815734,.0055])
+        step=SSD.CartesianVector{Float64}(-2.2208676048537906e-5,-2.2208675136449447e-5,3.9416468193657255e-5)
+        normals=N.active_inward_normals(DET,p)
+        direction=normalize(cross(normals[1],normals[2]))
+        expected=SSD.CartesianVector{Float64}(direction*dot(direction,step))
+        corrected=N.surface_step(DET,p,step,SSD.CartesianVector{Float64}(0.,0.,-1.))
+        @test length(normals)==2
+        @test norm(corrected-expected)<=8eps(Float64)*norm(step) && norm(corrected)>0
+        @test p+corrected!=p && p+corrected in DET.semiconductor
+        @test all(n->dot(n,corrected)>=-CSG.csg_default_tol(Float64),normals)
+        @test !(p+corrected in DET.contacts)
+        # The tangent is deliberately much smaller than either outward normal.
+        p=point([-.045,-.0134494837707869,.0055])
+        step=SSD.CartesianVector{Float64}(-3e-5,1e-13,4e-5)
+        corrected=N.surface_step(DET,p,step,SSD.CartesianVector{Float64}(0.,0.,-1.))
+        @test corrected==SSD.CartesianVector{Float64}(0.,1e-13,0.)
+        @test p+corrected!=p && p+corrected in DET.semiconductor
+        @test !(p+corrected in DET.contacts)
+        push!(RESULTS,Dict("event_id"=>717723,"saved_v3_projection_was_zero"=>true,
+            "stable_projection_m"=>xyz(expected),"coordinate_changes"=>true,"geometric_contact"=>false))
+    end
     @testset "Inward motion is retained and an outward-only corner cannot collect" begin
         p=point([-.045,-.0134494837707869,.0055]);normals=N.active_inward_normals(DET,p)
         inward=SSD.CartesianVector{Float64}(1e-5,2e-5,-3e-5)
