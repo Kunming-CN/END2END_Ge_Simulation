@@ -19,7 +19,7 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
 * **Native worker:** `/root/native_response`, session74071, Python17496/Julia29040,
   phase `.local/gegi-reconstruction-v1/native-recovery-segment-crossing/`.
   Request SHA c709ec329bae0ab05789970b1a234d7d0bb7c17ae45a5049757cf86a55cbfaac.
-  Latest checked1339/1971:581complete,362step_limit,392failed,4stopped. Prefix only.
+  Latest checked1439/1971:619complete,392step_limit,424failed,4stopped. Prefix only.
   Actual checkpoint/active-worker/native SQLite are authoritative. One earlier
   109-group phase retains39complete/29limit/41failed; only the exact39complete
   records were inherited. Diagnostic.jl drift-only work remains untested WIP,
@@ -59,7 +59,7 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
 
 ## Delivered reconstruction and scientific findings
 
-Commit `ee7c3ca73a1a39a68421f43493e196831dc2b555` is published on GitHub main.
+Commit `f65c25b7003c41e0082e5e7cd884815d726502bf` is published on GitHub main.
 Control traces a source-plane peak -> trigger/pair/order -> original34-channel
 ADC. Full34 residuals, optional six-grid lateral positions, future candidate
 truth retention and conditional finite-vertex3D range profiles are portable.
@@ -124,23 +124,32 @@ Initial sandbox hard-link test failures were permission errors; the unchanged
 suite passed with normal permissions. Active transport uses frozen original
 source; native request has no pin to this changed module.
 
-The geometry/raw-tail website build is complete:
-`e490cc275ba69674c23289291da75746b0b2990b9a431c7ec1dd403c65c53815`,
-1,914 files / 512,600,559 bytes. Required 42 publication tests and local
-`check_site.py` pass; focused display tests pass. Desktop Chrome checked the
-raw-density explanation, conditional escape results and new CLI guide. Preview
-server/tab are closed. This integrated source/site/package milestone is ready
-for normal publication. Native diagnostic and new photon observer WIP stay
-excluded until their own acceptance completes.
+Source, software-only package and website milestone `f65c25b` are published.
+Website build `e490cc275ba69674c23289291da75746b0b2990b9a431c7ec1dd403c65c53815`
+contains 1,914 files / 512,600,559 bytes. Required 42 publication tests, local
+site check and two display tests pass. Desktop Chrome checked the raw-density
+explanation, conditional escape results and new CLI guide. Required live check
+verified 1,018 files, including all five exhibit files. Preview sessions closed.
+Release `student-runtime-f65c25b7003c`: 1,393,756 bytes / 252 members, SHA
+4dc2fab9280e13b7f7a282e05c44776065da8ce0e7f8d98ab803d0e38100738a;
+public bytes match. `publication-assets.json` is the combined receipt. Center
+and `gegi-lateral-calibration-v1` downloads remain separate and unchanged.
 
-Already live: ee7c3ca website build
-995fc07a6b6e58c560773349152272e25fedb62e7df07f49a1e038d6f8bae38a,
-1914files/512579480bytes;42publication+focused tests and desktop passed.
-Required live check verified1018files including allfive exhibit files.
-Release `student-runtime-ee7c3ca73a1a`:1390490bytes/251members, SHA
-659c8ac212aa28b11c2d96aa332f438d5a4e12a057fe5ae97792b1e0168ba260;
-public bytes match. `publication-assets.json` is the combined receipt.
-Center and `gegi-lateral-calibration-v1` downloads stay separate and unchanged.
+The new photon observer remains outside this release. Ten same-input sidecars
+now have exact primary/RNG/canonical-stream/native parity; session 82114 exited0.
+First receipt `photon-step-observer-v1/b000050/observer-verification.json` SHA
+900255ab37e41a8db53e635b336306612ab02a558eb2ce291220ff74474246fe.
+The first receipt writer had a path-type error after transport completed; it
+was corrected from retained outputs without rerunning. Source is in
+`transport/gegi_photon_step_observer.cc` and `transport/gegi_photon_steps.py`,
+currently ignored by the existing transport allowlist. Add accepted source
+explicitly in the next integrated milestone, never wholesale force-add.
+Observed exact energy/angle differences are separate from measurement errors;
+the frozen macro chooses Livermore, whose Geant4 11.3.2 Compton model includes
+bound-electron momentum and shell binding. No per-step shell label is recorded.
+Finish the exact-energy substitution update and future-truth integration, then
+synchronize the accepted observer and native changes together. Reuse current
+site/desktop evidence unless presentation changes again.
 
 ## Baseline and retained evidence
 
