@@ -105,10 +105,14 @@ XY-PCHIP comparison improves six isolated positions from0.285to0.093mmRMS,
 but24overlaps show mixed outcomes: weakRMS1.345->1.185mm,only12/24improve,
 outer-limit conditions15->16and largestweaknear-tie2.36->2.81mm. Original12271
 all34RMS5.01->4.80codes retains unresolved weight1. No runtime promotion.
-Next carry retained joint position alternatives into finite-vertex geometry on
-the established36two-site controls, recovering omitted alternatives from the
-exact same ADC only. Quantify source-constraint ambiguity without assigning
-confidence or extra event weight. Then connect supported
+Joint alternatives now quantify finite-vertex ambiguity on36sameADCcontrols;
+the source code variation is retained rather than claiming exact historical-fit
+parity. A zero-refit adapter carries all3822saved triggers/7644pairs and original
+weights, with coverage separated by local/full34 and center/lateral models.
+Next compare geometric stability against the12known wrong-topology controls and
+deliver the generic candidate diagnostic without research-fixture dependencies.
+No threshold or calibrated confidence follows from these deterministic spans.
+Then connect supported
 responses to interaction hypotheses and source geometry, retaining unknown
 topology where the waveforms do not identify it.
 

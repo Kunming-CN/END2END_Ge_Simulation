@@ -204,8 +204,23 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   by2.265e-7ADCcodes. Archived fitterSHAe215 is unavailable in inspected sources;
   recovered driverSHAfbf3d197 and all numeric deltas are retained. Historical
   receipts omitted the joint alternate roster, so no exact-fit/roster claim.
-  Next attach the same diagnostic to saved five-second trigger/pair/order IDs,
-  reusing retained alternatives or explicitly recovering omitted ADC fit fields.
+  Candidate adapter is complete with zero refits: all3822triggers/7644pairs,
+  full14909census, exact original ADC/order/weight ledgers. Retained local centers
+  cover2983pairs/4053orders, local lateral151/208(143partial+8full), all34centers
+  132/179 and all34lateral8/10. Largest axis/50mmangle spans are68.20/76.41deg
+  forlocalcenters and44.38/48.06deg for the different all34lateral population.
+  All maxima witnesses converged; one other unconverged alternative is retained.
+  `candidate-cone-spread.json.gz` SHA5d0224b85239ef5e86eb020a106bdb331b53838d38f8588394dcb02eb00bcf53;
+  firstconsumerSHA5ef0ceb50bc5bc077d3f1222b9fb1f045e76b8efcf2d34e32a8d158833b25851.
+  Local center alternatives come from the saved lateral compatibility pass,
+  with original-center shifts≤0.0002114mm explicitly retained.
+  Position worker now tests the same geometry diagnostic on12archived known
+  three/four-point controls, recovering only omitted alternatives with exact
+  ADC/native input identities. No gate/weight changes. Candidate worker is
+  making the generic diagnostic portable by extracting the exact pure geometry
+  functions from research-fixture imports and adding runtime/guide membership.
+  Preserve the first tested consumer before edits; verify scientific-output
+  parity once on saved inputs. This runtime extension is not yet published.
 
 ## Delivered reconstruction and scientific findings
 
@@ -297,9 +312,11 @@ Both24condition results and all6isolated controls stay in the exact public
 evidence, including negative results. Normal builder and separatecheck_site.py
 pass. Chrome desktop homepage->XYcomparison->methods passes; preview/tab closed
 (the sandbox-local server was unreachable, then the same localhost preview was
-restarted successfully on the host). Source/Pages synchronization and required
-live validation remain. Joint-cone diagnostic source is included; its numerical
-receipt remains local for the candidate integration. No student runtime change.
+restarted successfully on the host). Sourceafa8cbf2e9ad6f34762e2b1d78be8be6a584b580
+and Pages44910473627 are published; requiredlive1018files pass. Joint-cone
+diagnostic source is included; its numerical receipt remains local for candidate
+integration. Current student runtime remains7a7d8a704781. The next generic
+candidate-diagnostic runtime extension is under development, not released.
 
 The exact-kinetic observer and future candidate-truth retention remain delivered:
 ten original blocks/34Ge-row joins,38focused checks, original producer/archive
