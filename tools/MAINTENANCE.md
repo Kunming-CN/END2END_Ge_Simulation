@@ -140,6 +140,13 @@ samples setting each endpoint. Coefficient gaps remain explicit.
 `gegi_ideal_two_interaction_mass.py` integrates the matching ideal free-electron
 two-interaction model with scrambled Sobol rays. It is a photon-topology mass,
 not the actual readout/candidate-selection normalizer.
+`gegi_shared_topology_normalization.py` reuses exact source-independent spectral
+factors while retaining common Sobol streams and per-point numerical variation.
+`gegi_normalized_source_diagnostic.py` scores trigger-level hypothesis mixtures,
+retains undefined events, and hashes the blind grid result before truth scoring.
+`gegi_ideal_forward_sample.py` provides independent pseudorandom ideal-model
+observations with randomized labels and separate truth/accounting. It is not
+an ADC simulator or detector-performance validation.
 `gegi_boundary_failure_recovery.py` resumes the identified boundary-failure
 class over the sealed duration-extension baseline. Exact accepted responses
 are inherited; per-group producer, timing and support layers remain explicit.

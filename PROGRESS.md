@@ -27,21 +27,22 @@ and GPT-6.1 Sol Ultra (native).
   post-startup snapshot. Exact PIDs/start identities and checkpoints are in
   `owned-session.json` and `continuation-handoff.json`. Do not restart or edit
   pinned sources. Prior cap and small acceptance phases are closed.
-* **Candidate:** `/root/candidate_attribution` completed the full 2,400-point
-  joint first-arrival/continuation grid and idealized two-interaction integral.
-  It now profiles exact reuse of energy, angular and material factors across
-  source trials before normalizing the complete grid. The fixed pilot is radial
-  indices 4/12/24 times directions 0/32/64/95, plus the prior in-Ge replay check.
-  Keep the empirical joint measure matched to its own normalization. No source
-  truth, new transport or calibrated-confidence claim is supplied.
+* **Candidate:** `/root/candidate_attribution` completed the full normalized
+  2,400-point saved-cohort diagnostic. It now reconstructs the first ten accepted
+  independent ideal observations per cohort. One ordered escape-curve reference
+  is sealed; its 61 exact samples are retained. A faster Gaussian-measure method
+  is being checked on that same reference before the resumable 40-curve bank.
+  Blind scores must be hashed before separate truth scoring. Keep empirical
+  joint measures matched to their own normalization and all uncomputed IDs.
 * **Position:** `/root/position_model` completed all 25 empirical curve tails
   and a normalized angular-energy mixture on unchanged atoms. Both absorption
   and escape now cover all 336 saved cobalt states. Global energy support is
   derived exactly; only one lower coefficient anchor remains for global Co1173
-  escape. It now prepares an independent ideal-model forward sample at two
-  non-grid external positions, with fresh pseudorandom seeds and observations
-  separate from truth. This checks model/code consistency, not Geant4, ADC or
-  detector performance. No production weights change or new native sampling.
+  escape. Its independent ideal forward sample is complete (100 cases at each
+  non-grid source). A same-kernel Gaussian-probability quadrature has measured
+  acceptance; the original production method stays unchanged. It now closes
+  the single global coefficient gap and provides a joint-atom sampler for the
+  empirical normalizer. No new native scattering samples or production weights.
 
 ## Accepted native repair and continuous-readout evidence
 
@@ -251,6 +252,40 @@ modeled photon topology, not ADC efficiency. A tiny unsampled Cs coefficient
 gap has an explicit analytic mass bound. Five analytic/identity tests pass.
 `ideal-two-interaction-normalization-controls.json` SHA
 `935540f68954b7d70fa96f42c491eaf6025009a2c13a3ce58c2aedf53fb86ffd`.
+Exact caching of source-independent energy, angle and rate arrays reproduces
+all previous sample values. The full7,200normalizers take88.297s (1.321s shared
+preparation,18.808s incoming geometry,66.160s cached paths), with all four
+scrambles and512/4096prefixes retained. Fine relative replicate SD is median
+1.998%, maximum14.015%; largest coarse/fine difference21.763% stays recorded.
+`shared-ideal-topology-normalization-full.json` SHA
+`09667b6a5c75e2187037279af192cc51999cff384924484c3978ac00148a7cff`.
+
+The source-blind diagnostic retains all21prespecified triggers and seven
+structurally uncomputed records, without neutral densities. The chronological
+Cs/Co1173/Co1332cohorts have2/5/4computed triggers out of six each; three peak
+controls stay separate. All18hypothesis grid maxima are stable across numerical
+scrambles/prefixes, which is not event-level statistical stability. At nominal
+energies, the Co1173maximum reaches the10m boundary, so range is unidentifiable;
+Cs/Co1332are radial-interior grid points. Post-score directional errors are
+26.557/16.410/8.737degrees, and position errors30.491/9945.749/15.104mm. These
+small control cohorts are not the full five-second image or a resolution study.
+`ideal-normalized-source-diagnostic-full.json` SHA
+`cb2cd3ccbdc6619d4bf0a47e8f438fc06780e80f63219536027b85c34dfaf1a7`;
+blinddigest7af514d8c78af9640abfe10501264b6402ee5adb76630a1f5c7971981f40ebe4.
+Root verified producer hashes and unchanged blind digest; three focused cache/
+mixture checks pass. No hypothesis is selected because it approaches truth.
+
+Independent ideal forward validation now retains100accepted1173.228keV events
+at each off-grid source(25,-20,55)/(-55,18,95)mm, using PCG64seeds2607112101/02
+and independent2keV site noise. Enclosing-cone attempt counts are16950/3855,
+entered counts1840/1637 and emission fractions1/.0906541. Observed site labels
+are randomized; source, topology and ordered vertices are in a separate truth
+file. All200identities, geometry and true energy closure pass; two draw-law
+tests pass. `ideal-forward-validation/observations.json` SHAc86a4af7cae4fea71923e6412783f52e0b2b1cdaadd6d12be9eba3a51640bba6,
+executionSHA4702ee490ec447b1570ec45deae32d497f41c049daa2b1704fb2b733c6af8d8d.
+This validates an ideal mathematical sampler, not Geant4 transport, ADC or
+detector performance. The first10percohort are the reconstruction acceptance;
+all200remain available without regenerating samples or changing seeds.
 No activity or source truth is supplied. Passive attenuation,
 selected-acquisition normalization, secondary containment, position uncertainty
 and merged topology remain open before physical model weights and independent

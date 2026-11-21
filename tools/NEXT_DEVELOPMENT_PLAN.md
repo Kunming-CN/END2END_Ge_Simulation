@@ -135,9 +135,14 @@ escape previously retained0.03534-2.11792%uncovered mass in91states. All25needed
 lower tails now pass independent checks and all336states have full support.
 The normalized empirical angular-energy mixture uses unchanged atoms and retains
 the original holdout's undercoverage; no accuracy gain or official weight change.
-The full first-arrival/continuation grid and a two-point idealized topology
-normalizer are complete. Profile reuse of source-independent energy/rate factors
-with common Sobol draws, then build the source-blind normalized diagnostic.
+The full first-arrival/continuation grid and7,200idealized topology normalizers
+are complete in88.297s using exact shared spectral factors. The saved21-trigger
+source-blind diagnostic retains seven uncomputed records; its nominal1173case
+still peaks at the10m boundary. This is a small cohort, not full-five-second
+performance. Independent ideal samples at two off-grid sources are now retained:
+first reconstruct ten events each with randomized labels and separate truth,
+then reuse the remaining samples for numerical/statistical checks. Measure and
+validate the faster Gaussian-measure escape integral before expanding that bank.
 Match the empirical normalizer to its joint measure, and keep ideal topology
 selection distinct from actual ADC selection and confidence calibration.
 Secondary containment, position/Doppler response, passive material and acquisition
