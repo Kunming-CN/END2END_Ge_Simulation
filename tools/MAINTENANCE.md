@@ -94,6 +94,14 @@ observations outside physical deposited-energy support retain measurement tails.
 It initializes only missing coefficient queries and hashes the completed measured
 response before optional truth scoring. It is a research consumer, not a new
 production selection or source likelihood.
+`gegi_point_source_response.py` predicts first-scatter energy from an explicit
+trial point and the two vertices, then combines both measured-energy terms with
+the first Klein-Nishina density and the path-to-volume factor. Its consumer
+`gegi_candidate_trial_response.py` retains the saved pair/order ledger and a
+declared radial/directional grid. These conditional components omit the first
+incidence and selected-acquisition normalization; trial response is not a fitted
+source location. Their frozen six-point acceptance exposes floating-point tails
+that require log-density evaluation before combining events.
 
 `gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
 allocations or shared-strip fits; `gegi_adc_topology.py` and

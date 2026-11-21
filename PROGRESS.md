@@ -381,9 +381,22 @@ supplied line;12271lacks a qualified original pairing. Merged topology stays
 unidentified. Seven focused checks pass, including observation-tail retention;
 root confirms exact source hashes and pre/post-scoring digest.96new coefficient
 energies reused81previous anchors, zero transport events. Evaluation16.833s;
-original candidate weights and source fits stay fixed. Next position/candidate
-workers connect explicit trial-source geometry to first-scatter kinematics and
-both energy measurement terms; selected-acquisition normalization remains open.
+original candidate weights and source fits stay fixed.
+The finite-vertex trial-source consumer now predicts first-scatter energy from
+geometry and applies both measured-energy responses inmm^-3keV^-2. The original
+25radius/96direction grid is preflighted, without truth input; six prespecified
+points evaluate504states and retain1008unavailable slots.132states excluded by
+the fixed-measured-first approximation are now evaluated. Receipt
+`photon-continuation-v1/source-trial-response-controls.json` SHA
+297b281d16cb03627c7a436689fc331350611117aa87dd2909e33e858f8a2cea; blinddigest
+33fa9c840c8bdc2a5aa30b761a3f0ae7e812872973f7f75cb8b614c0142e1384 stays unchanged.
+Eight focused primitive/adapter checks pass. Five missing initialized coefficient
+queries generated zero transport events. Actual504statecost153.269s; continuation
+dominates the measured.537sprofile. With nominal2/2keV widths,421first densities
+underflow; these are numerical zeros, not physical exclusions. Stable log-density
+support is now being implemented. Selected-acquisition normalization, first flux,
+position/Doppler response and merged topology remain open; no new source estimate
+or calibrated event probabilities follow from these conditional components.
 
 Prior XY/depth publication and its failure evidence are retained in the immutable
 handoff below.
