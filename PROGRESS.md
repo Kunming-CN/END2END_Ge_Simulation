@@ -36,10 +36,12 @@ and GPT-6.1 Sol Ultra (native).
   truth, new transport or calibrated-confidence claim is supplied.
 * **Position:** `/root/position_model` completed all 25 empirical curve tails
   and a normalized angular-energy mixture on unchanged atoms. Both absorption
-  and escape now cover all 336 saved cobalt states. It derives the exact global
-  energy support over the mixture's cosine intervals and coordinates a matching
-  shared-atom sampler for normalization. Prior curves/conditional kernels remain;
-  no production weights change or new native sampling is needed.
+  and escape now cover all 336 saved cobalt states. Global energy support is
+  derived exactly; only one lower coefficient anchor remains for global Co1173
+  escape. It now prepares an independent ideal-model forward sample at two
+  non-grid external positions, with fresh pseudorandom seeds and observations
+  separate from truth. This checks model/code consistency, not Geant4, ADC or
+  detector performance. No production weights change or new native sampling.
 
 ## Accepted native repair and continuous-readout evidence
 
@@ -218,6 +220,16 @@ angular bin52.17%, with CRPS6.4703/8.9815/8.9682keV. Three analytic tests pass.
 `first-scatter-joint-controls.json` SHA
 `69629dedaebd33e8460d411a7560090962a1d0af78f28458d9850b9b1ca7d476`.
 This replaces neither the baseline conditional receipt nor production weights.
+Exact support closures over every angular hat give first outgoing minima
+94.2014701/54.6044648/128.5207201keV at662/1173.228/1332.492keV. The second free
+Compton minima use the canonical510.99895069keV electron mass. The only global
+coefficient gap is44.9894706266-45.2908031927keV for the1173.228escape branch;
+one endpoint anchor would close it at the existing interpolation spacing.
+Disjoint support intervals and their archived-atom witnesses remain explicit.
+`first-scatter-global-support.json` SHA
+`80f4c6aae958038bd7126b6bad0c8ee0641ffc9c5bcb5ba39456eb4e4169a0c5`;
+one analytic endpoint/union test passes. No new coefficient query was required
+to establish these bounds;661.657keV remains unrepresented.
 
 `gegi_first_compton_arrival.py` supplies isotropic spreading, survival through
 active Ge and the first-Compton rate per emitted photon per mm^3. All 504 saved

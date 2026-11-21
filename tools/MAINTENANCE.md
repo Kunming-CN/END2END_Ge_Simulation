@@ -133,6 +133,9 @@ separate resumable bank, preserving parent-domain evaluations. Its new
 contributions are added to the original response in log space.
 `gegi_empirical_compton_joint.py` normalizes the angular-hat/energy-atom mixture
 and retains unchanged holdouts and baseline conditional results.
+`gegi_empirical_energy_support.py` maps each atom over its angular-hat support
+to exact energy-support closures, preserving disjoint intervals and the archived
+samples setting each endpoint. Coefficient gaps remain explicit.
 `gegi_trial_joint_photon_response.py` adds first arrival to the saved trial grid.
 `gegi_ideal_two_interaction_mass.py` integrates the matching ideal free-electron
 two-interaction model with scrambled Sobol rays. It is a photon-topology mass,
