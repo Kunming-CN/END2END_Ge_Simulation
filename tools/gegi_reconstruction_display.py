@@ -42,7 +42,13 @@ SOURCES = {
     'boundary_overlap': ('trigger-12271-native-response/blind-grid/depth-refinement/weak-overlap-validation-cli.json', '4d3f2c7ce7bb4160eb1707aa0dd46f82c22b9a06fdddfe42d398de43bf0cd8f3'),
     'boundary_xy_isolated': ('trigger-12271-native-response/blind-grid/depth-refinement/xy-interpolation-validation.json', '1827f655b95bc3442e72a410fd075f02456879d8f1927a32a099d30c04f49ab5'),
     'boundary_xy_overlap': ('trigger-12271-native-response/blind-grid/depth-refinement/xy-overlap-and-original-adc.json', 'b6d421683a266d964dd1e176982588befd89efa91070744fe9b532946ef97dec'),
+    'positive_cone_spread': ('position-cone-spread.json', 'eca34f3061c45cacc74dfd852e44634a2042a04daf1a6697ac10b72a929360c1'),
+    'negative_cone_spread': ('negative-cone-spread.json', '57618e7916b58a4c826a9a5c2f603d55257e2a2d57808e3d29f73110fdc44d14'),
+    'candidate_cone_spread': ('candidate-cone-spread.json.gz', '5d0224b85239ef5e86eb020a106bdb331b53838d38f8588394dcb02eb00bcf53'),
 }
+
+CONE_SPREAD_SOURCES = {'positive': 'positive_cone_spread', 'negative': 'negative_cone_spread',
+                       'candidates': 'candidate_cone_spread'}
 WINDOWS = ('661.657_keV', '1173.23_keV', '1332.49_keV')
 PRIORS = ('uniform-area', 'uniform-solid-angle')
 CASES = tuple(f'{extent}_mm_{prior}' for extent in (120, 240) for prior in PRIORS)
@@ -70,6 +76,9 @@ KINDS = {
     'boundary_overlap': 'gegi_fresh_weak_component_overlap_validation_v1',
     'boundary_xy_isolated': 'gegi_frozen_xy_interpolation_validation_v1',
     'boundary_xy_overlap': 'gegi_frozen_xy_overlap_and_original_adc_v1',
+    'positive_cone_spread': 'gegi_matched_position_cone_spread_v1',
+    'negative_cone_spread': 'gegi_wrong_topology_joint_cone_spread_v1',
+    'candidate_cone_spread': 'gegi_five_second_candidate_joint_cone_spread_v1',
 }
 
 
@@ -78,6 +87,29 @@ def read_bound(path, digest):
     if sha256(raw).hexdigest() != digest:
         raise ValueError(f'The saved reconstruction input changed: {path.name}')
     return json.loads(gzip.decompress(raw) if path.suffix == '.gz' else raw)
+
+
+def validate_cone_spread(inputs, bindings, selection):
+    positive, negative, candidates = (inputs[key] for key in CONE_SPREAD_SOURCES.values())
+    model_counts = candidates['summary']['models']
+    scope = candidates['scope']
+    expected_trials = inputs['position']['controls']['general']['matched_comparisons'][
+        'waveform_all_center_to_waveform_all_lateral']['trial_ids']
+    if (not positive['grid'] == negative['grid'] == candidates['grid']
+            or any(row['input_sha256']['position_uncertainty'] != SOURCES['uncertainty'][1] for row in (positive, negative))
+            or positive['input_sha256']['position_compatibility'] != SOURCES['position'][1]
+            or negative['input_sha256']['positive_cone_spread'] != SOURCES['positive_cone_spread'][1]
+            or [t['trial_id'] for t in positive['trials']] != expected_trials
+            or len(negative['negative_controls']) != inputs['uncertainty']['negative_conditions']):
+        raise ValueError('Cone-spread controls must share the original control ADC and evaluation grid')
+    if (candidates['input_sha256']['center_map'] != bindings['saved_plane']
+            or candidates['input_sha256']['candidate_store'] != bindings['candidate_store']
+            or candidates['input_sha256']['all34_compatibility'] != SOURCES['position'][1]
+            or not scope['two_strip_candidates'] == selection['two_strip_triggers'] == len(candidates['triggers'])
+            or scope['saved_candidates'] - scope['retained_candidates_outside_two_strip_scope'] != len(candidates['triggers'])
+            or candidates['summary']['pairings'] != sum(len(t['pairings']) for t in candidates['triggers'])
+            or model_counts['local_center']['pairings_with_saved_model'] != inputs['position']['candidates']['baseline_waveform_center']['scored_pairings']):
+        raise ValueError('Candidate cone spread must preserve the original acquisition and fit census')
 
 
 def validate_inputs(inputs):
@@ -126,6 +158,7 @@ def validate_inputs(inputs):
             or any(v['input_sha256'] != dict(same, baseline_fit=bindings['saved_plane']) for v in (position, partial))):
         raise ValueError('Reconstruction data do not share the original five-second acquisition and center fits')
     selection = attribution['saved_selection']
+    validate_cone_spread(inputs, bindings, selection)
     source = attribution['saved_source_census']
     fitted = position['baseline_waveform_center']['scored_pairings']
     coverage = position['fitted_pairings_by_lateral_supported_site_count']
@@ -198,6 +231,24 @@ def source_arm(order, source_mm):
     return math.degrees(math.acos(max(-1., min(1., cosine)))) - order['half_angle_deg']
 
 
+def compact_cone_spread(inputs):
+    out = {'grid': inputs['positive_cone_spread']['grid']}
+    for scope, key in CONE_SPREAD_SOURCES.items():
+        item = inputs[key]
+        bindings = item['input_sha256']
+        packet = {k: v for k, v in item.items() if k not in ('grid', 'input_sha256')}
+        packet['input_sha256'] = {k: digest for k, digest in bindings.items() if Path(k).name == k}
+        packet['archived_file_sha256'] = sorted(digest for k, digest in bindings.items() if Path(k).name != k)
+        for field in ('source_sha256', 'archived_fit_source_sha256', 'archived_source_sha256'):
+            if field in item:
+                sources = {Path(k).name: digest for k, digest in item[field].items()}
+                if len(sources) != len(item[field]):
+                    raise ValueError('Cone-spread source file names are ambiguous')
+                packet[field] = sources
+        out[scope] = packet
+    return out
+
+
 def compact(inputs, maps):
     a, position, partial, truth, range_fit = (inputs[key] for key in
         ('attribution', 'position', 'partial_lateral', 'truth_control', 'range'))
@@ -254,6 +305,7 @@ def compact(inputs, maps):
         'range': {'model': range_fit['model'], 'fits': range_fit['fits']},
         'profiled_range': inputs['profiled_range'],
         'uncertainty_controls': inputs['uncertainty'],
+        'joint_cone_spread': compact_cone_spread(inputs),
         'additional_lateral_controls': inputs['additional_lateral'],
         'full_lateral_acceptance': inputs['lateral_acceptance'],
         'energy_offsets': inputs['energy_offsets'],
@@ -717,6 +769,39 @@ when calculating unknown-history intervals. Source and ledger hashes, all cause 
 <a href="{DATA.name}">evidence JSON</a>.</p></details></section>'''
 
 
+def cone_spread_section(data):
+    from gegi_shared_clock_display import table
+
+    evidence = data['joint_cone_spread']
+    comparison = evidence['negative']['comparison']['lateral']
+    negative = comparison['negative_trials_all_pairings']
+    positive = comparison['retained_positive_trials_all_pairings']
+    left, right = (r['trigger_max_axis_span_deg']['median'] for r in (negative, positive))
+    models = evidence['candidates']['summary']['models']
+    names = (('local_center', 'Local waveform, center'), ('local_lateral', 'Local waveform, lateral (143 partial, 8 full)'),
+             ('all34_center', 'All 34 channels, center'), ('all34_lateral', 'All 34 channels, full lateral'))
+    rows = []
+    for key, label in names:
+        model = models[key]
+        rows.append((label, f'{model["pairings_with_saved_model"]:,}',
+                     f'{model["orders_with_multiple_geometries"]:,}', number(model['maximum_axis_span_deg']),
+                     number(model['maximum_finite_vertex_angle_span_deg_by_radius'][0])))
+    candidate_table = table(rows, ('Saved waveform fit', 'Pairings with saved fits', 'Orders with alternatives',
+                                   'Largest axis span (°)', 'Largest angle span at 50 mm (°)'),
+                            'Sampled cone spread in the five-second candidate archive')
+    return f'''<h3 id="cone-spread">Stable cones can come from more than two interactions</h3>
+<p><strong>{negative['trials_with_multiple_geometries_for_an_order']}/{negative['readout_conditions']}</strong> known three- or
+four-point readouts returned two-site cones with multiple sampled solutions. With all 34 channels and lateral fits, the median
+of each readout's largest axis span was <strong>{number(left, 6)}°</strong> for those mixtures and
+<strong>{number(right, 6)}°</strong> for the {positive['readout_conditions']} two-point controls. Each cohort spans
+{positive['physical_layouts']} physical layouts with repeated readout conditions. These results give no basis for a stability cut.</p>
+<p>Each sampled fit moves its two positions together. For the same measured order and energies, we compare the cone axis
+and the angle from the fitted first interaction to points on four preset shells (50, 100, 300 and 1,000 mm).
+The {evidence['candidates']['summary']['triggers']:,} five-second candidates retain their original imaging weights.
+The table compares different fit populations, with the all-34-channel results available for a subset.</p>
+{candidate_table}'''
+
+
 def sections(data):
     from gegi_shared_clock_display import table
     from gegi_joint_imaging import REFERENCES
@@ -887,6 +972,7 @@ evidence JSON. Repeated phases and noise realizations share the same physical po
 and is not a detector-wide uncertainty calibration. The comparison follows the useful same-input distinction between
 exact and resolution-degraded data in <a href="https://doi.org/10.1118/1.4959551">Andreyev et al. (2016)</a>, while
 retaining this detector's own signals and geometries.</p>
+{cone_spread_section(data)}
 <details><summary>Historical photon and deposit geometry controls</summary>
 <p>A separate archived replay links {held["matched_exact_photon_occurrences"]} occurrences to
 {held["independent_original_groups"]} original interaction groups with verified photon vertices.

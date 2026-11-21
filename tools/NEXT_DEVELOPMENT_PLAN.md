@@ -113,7 +113,8 @@ The12known wrong-topology controls confirm that geometry stability alone cannot
 identify two interactions:10/12stillproject, with median spans overlapping the
 positive controls. The generic diagnostic now runs without research-fixture
 dependencies and with optional all34refits; exact scientific parity and six
-package checks pass. Publish it with the saved candidate/control evidence.
+package checks pass. Runtime82f6554 is published with exact public-byte checks;
+the matching candidate/control exhibit passes local/desktop acceptance.
 No threshold or calibrated confidence follows from these deterministic spans.
 Then connect supported
 responses to interaction hypotheses and source geometry, retaining unknown

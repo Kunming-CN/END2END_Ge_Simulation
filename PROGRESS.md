@@ -48,6 +48,9 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   with all prior input/metadata records and exact ledger prefixes unchanged.
   `serial-interleave.json` retains both stop/exit/resume proofs; no completed
   response was recomputed. This prefix is not a final recovery rate.
+  At2026-11-21T14:07:30UTC, actual processes were alive and the durable ledger
+  held296/537groups:76complete,216limited,fourstopped; checkpoint278is coarser.
+  `native-cap5000-step-limits/continuation-handoff.json` records this snapshot.
   After closure, reconcile the parent/selected ledger. The native owner now
   prepares the measured tangency/self-hit correction in an isolated helper with
   pure geometry checks; pinned active producers stay unchanged. Keep genuine
@@ -232,7 +235,7 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   weights without inventing absent all34models. Six package checks pass,
   including the isolated ZIP CLI. Original consumer5ef0ceb5 is preserved;
   measured NumPy2.3.5 roundoff (max7.89e-13deg) remains separate evidence.
-  Runtime/guide membership is complete; package and exhibit publication follows.
+  Runtime/guide membership is published at82f6554; exhibit publication follows.
 
 ## Delivered reconstruction and scientific findings
 
@@ -286,57 +289,33 @@ and selection; current five-second data remain development evidence.
 
 ## Publication and current integration
 
-Published source/runtime milestone `7a7d8a70478174a2f191dd5b44b98de0590cf36f`
-and handoff `d602327508887124250fba9d6eebb3a1d0b8b4a3` are on GitHub main.
-The software-only release `student-runtime-7a7d8a704781` has1,401,641bytes /
-254members, SHA f5b4988a77c257adc5c6542267fd419527f43939c3abc59fa2e3ef73c73b4f7e.
-Actual public bytes/latest-release identity match. Separate center/lateral
-calibrations are unchanged. No new student release is needed for the current
-research-only grid tools unless runtime membership or behavior changes.
+The software-only release `student-runtime-82f6554683fd` is published from
+82f6554683fd0ce976a2dab7083c80a009e2af92:1,407,897bytes/256members,
+SHA2e3c041f74750acb5056d9d4b7910752e90651d76320ec465069e12b144976cb.
+Actual public bytes/latest-release identity match; calibration downloads remain
+separate. Six package tests and committed-source archive verification pass.
+The generic cone diagnostic preserves all3822triggers/7644pairs and exact
+scientific parity in the original environment. Compact acceptance receipt
+`candidate-cone-spread-runtime-acceptance.json` SHA
+94408be98ad7c36e982f2fcfa7f8d63815f89f9914fac563ea9d60f5c5531bb3
+retains commands, hashes, alternate-environment roundoff and original test log.
 
-Website736e94f1863cb21c4841785bb900edfd487c74f6ca0eaa1a8a75d7c05180c468
-contains1,914files/512,814,661bytes. Pages44897993944 and requiredlive1018files
-passed. Two display checks,42publication tests,six package checks and desktop
-homepage->boundary/cause tables->methods acceptance passed; preview/tab closed.
-Combined publication receipt: `.local/gegi-reconstruction-v1/publication-assets.json`.
+The cone-stability exhibit now includes every numerical row of the36positive,
+12negative and3822candidate comparisons in the existing evidence JSON. Two
+focused display tests pass, comparing exact exported rows and original digests;
+42publication tests pass. The normal builder completed in session49278,
+log `site-build-cone.log`: buildd82916258df66cf22b9ca65d6e18c192b27ac8c219cb494d6c16b6eeca4a7eee,
+1,914files/537,569,063bytes,127HTMLpages. Chrome desktop acceptance follows
+homepage->new compatibility evidence->methods->expanded student CLI guide.
+Owned preview/tab are closed; no download or browser settings change.
+Separate tools/check_site.py passes in session93846; exhibit commit and
+requiredlive acceptance remain pending. Source/runtime above is delivered.
 
-Published milestone `d5a5802c3cf0647d7d63661984710eeee31175a4` adds measured-only grid fitting, same-input
-interpolation/energy/noise diagnosis and tested depth-only refinement. The exhibit
-separates regular-grid results from the replay-defined anchor, retains worsened
-overlap positions and all unknowns. Updated2display checks and42site tests pass.
-A display-variable collision was caught by the numeric assertion and corrected;
-scientific inputs were unchanged. The earlier staging build was stopped before
-publication to include the completed24-condition result; its log is retained.
-The final combined build is aa306865677e0e66754ffd30809ba0a1c586a9934d4b89d2ed2185542ca6daf6:
-1,914files/513,462,216bytes,127HTMLpages. The normal builder and separate
-tools/check_site.py pass; desktop homepage->main result->depth/overlap/cause
-tables->methods passes. Owned preview/tab are closed; no browser download or
-settings change. GitHub main and Pages44906154382 are synchronized; required
-tools/check_site.py --url passes all1,018selected live files. The compact
-publication receipt records this build and retains exact unchanged asset bytes.
-Student runtime is unchanged; research traces stay outside its package.
-
-The next XY-interpolation exhibit integration has build98ba7366eeb90c24320e3c587762561cdca8d6776f13a6ad0ead9c0a3dc6b5e4,
-1,914files/513,699,083bytes. Two
-display checks and42publication tests pass. A display reader's singular/plural
-position-error key mismatch was caught and corrected; original JSONs unchanged.
-Both24condition results and all6isolated controls stay in the exact public
-evidence, including negative results. Normal builder and separatecheck_site.py
-pass. Chrome desktop homepage->XYcomparison->methods passes; preview/tab closed
-(the sandbox-local server was unreachable, then the same localhost preview was
-restarted successfully on the host). Sourceafa8cbf2e9ad6f34762e2b1d78be8be6a584b580
-and Pages44910473627 are published; requiredlive1018files pass. Joint-cone
-diagnostic source is included; its numerical receipt remains local for candidate
-integration. Current student runtime remains7a7d8a704781. The next generic
-candidate-diagnostic runtime extension is under development, not released.
-
-The exact-kinetic observer and future candidate-truth retention remain delivered:
-ten original blocks/34Ge-row joins,38focused checks, original producer/archive
-provenance retained. The extension uses `--retain-photon-kinematics`, restored on
-resume. Exact controlSHA9bca9f3d and retentionacceptanceSHA773088ef remain as above.
-Historical incident-line/conditional-escape diagnostics, parent-count cap removal
-and earlier publication receipts remain in the immutable handoff linked below.
-No production acquisition is running.
+Prior XY/depth publication and its failure evidence are retained in the immutable
+handoff below. The previous live site is98ba7366eeb90c24320e3c587762561cdca8d6776f13a6ad0ead9c0a3dc6b5e4,
+Pages44910473627,1,914files/513,699,083bytes, with1,018livefiles verified.
+The publication authority is `.local/gegi-reconstruction-v1/publication-assets.json`;
+package authority is `.local/student-runtime-p1/delivery.json`.
 
 ## Baseline and retained evidence
 
@@ -355,5 +334,5 @@ and123–125activehours exclude new diagnostic truth overhead and are not launch
 authorization. No waveform library replay qualifies as joint-source production.
 
 Earlier exact results, producer hashes and publication history remain in the
-[immutable integrated handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/7a7d8a70478174a2f191dd5b44b98de0590cf36f/PROGRESS.md).
+[immutable integrated handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/82f6554683fd0ce976a2dab7083c80a009e2af92/PROGRESS.md).
 Use [the maintained guide](tools/site_guide.html) and [source ownership](tools/MAINTENANCE.md).

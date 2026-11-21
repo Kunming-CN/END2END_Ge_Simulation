@@ -366,6 +366,18 @@ evidence JSON. Repeated phases and noise realizations share the same physical po
 and is not a detector-wide uncertainty calibration. The comparison follows the useful same-input distinction between
 exact and resolution-degraded data in <a href="https://doi.org/10.1118/1.4959551">Andreyev et al. (2016)</a>, while
 retaining this detector's own signals and geometries.</p>
+<h3 id="cone-spread">Stable cones can come from more than two interactions</h3>
+<p><strong>10/12</strong> known three- or
+four-point readouts returned two-site cones with multiple sampled solutions. With all 34 channels and lateral fits, the median
+of each readout's largest axis span was <strong>0.000591°</strong> for those mixtures and
+<strong>0.000598°</strong> for the 36 two-point controls. Each cohort spans
+3 physical layouts with repeated readout conditions. These results give no basis for a stability cut.</p>
+<p>Each sampled fit moves its two positions together. For the same measured order and energies, we compare the cone axis
+and the angle from the fitted first interaction to points on four preset shells (50, 100, 300 and 1,000 mm).
+The 3,822 five-second candidates retain their original imaging weights.
+The table compares different fit populations, with the all-34-channel results available for a subset.</p>
+<div role="region" aria-label="Sampled cone spread in the five-second candidate archive" tabindex="0" style="overflow-x:auto">
+<table><caption>Sampled cone spread in the five-second candidate archive</caption><thead><tr><th scope="col">Saved waveform fit</th><th scope="col">Pairings with saved fits</th><th scope="col">Orders with alternatives</th><th scope="col">Largest axis span (°)</th><th scope="col">Largest angle span at 50 mm (°)</th></tr></thead><tbody><tr><th scope="row">Local waveform, center</th><td>2,983</td><td>3,991</td><td>68.20</td><td>76.41</td></tr><tr><th scope="row">Local waveform, lateral (143 partial, 8 full)</th><td>151</td><td>205</td><td>31.63</td><td>37.93</td></tr><tr><th scope="row">All 34 channels, center</th><td>132</td><td>179</td><td>9.54</td><td>12.02</td></tr><tr><th scope="row">All 34 channels, full lateral</th><td>8</td><td>10</td><td>44.38</td><td>48.06</td></tr></tbody></table></div>
 <details><summary>Historical photon and deposit geometry controls</summary>
 <p>A separate archived replay links 41 occurrences to
 27 original interaction groups with verified photon vertices.

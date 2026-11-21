@@ -106,6 +106,29 @@ class ReconstructionDisplayTests(unittest.TestCase):
             self.assertIsNone(xy['original_adc']['position_error_mm'])
             self.assertIn('2.36 to 2.81 mm', page)
             self.assertNotIn('specified but have not run', page)
+            cone_spread = public['joint_cone_spread']
+            for scope, row_key in (('positive', 'trials'), ('negative', 'negative_controls'), ('candidates', 'triggers')):
+                key = display.CONE_SPREAD_SOURCES[scope]
+                filename, digest = display.SOURCES[key]
+                original = display.read_bound(directory / filename, digest)
+                exported = cone_spread[scope]
+                self.assertEqual(digest, public['source_sha256'][key])
+                self.assertEqual(cone_spread['grid'], original['grid'])
+                self.assertTrue(exported[row_key] == original[row_key], f'{scope} scientific rows changed')
+                self.assertCountEqual(original['input_sha256'].values(),
+                                      [*exported['input_sha256'].values(), *exported['archived_file_sha256']])
+                self.assertTrue(all('/' not in name and '\\' not in name for name in exported['source_sha256']))
+                self.assertNotIn('.local/', json.dumps(exported))
+            negative = cone_spread['negative']['comparison']['lateral']['negative_trials_all_pairings']
+            self.assertEqual((negative['trials_with_multiple_geometries_for_an_order'], negative['readout_conditions']), (10, 12))
+            models = cone_spread['candidates']['summary']['models']
+            self.assertEqual([models[m]['pairings_with_saved_model'] for m in ('local_center', 'local_lateral',
+                                                                              'all34_center', 'all34_lateral')],
+                             [2983, 151, 132, 8])
+            self.assertIn('id="cone-spread"', page)
+            self.assertIn('0.000591°', page)
+            self.assertIn('76.41', page)
+            self.assertIn(f'href="{display.DATA.name}"', page)
             self.assertTrue((site / display.ENERGY_IMAGE).is_file())
             ids = re.findall(r'id="(trigger-[0-9]+)"', page)
             self.assertEqual(len(ids), len(set(ids)))
