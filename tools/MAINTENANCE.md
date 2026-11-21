@@ -123,6 +123,11 @@ the kernel does not supply an angular prior or detector-resolution calibration.
 `gegi_empirical_first_scatter_response.py` applies that shared outgoing-energy
 measure to both measured sites and continuation. Partial support keeps its
 original atom weights; it does not renormalize or silently add an angular prior.
+`gegi_empirical_rate_support.py` binds additional initialized material rates to
+the same empirical acceptance while keeping existing curve domains fixed.
+`gegi_first_compton_arrival.py` supplies the incident path, isotropic spreading
+and competing first-Compton density per emitted photon. Source activity,
+passive attenuation and selected-acquisition normalization stay separate.
 `gegi_boundary_failure_recovery.py` resumes the identified boundary-failure
 class over the sealed duration-extension baseline. Exact accepted responses
 are inherited; per-group producer, timing and support layers remain explicit.

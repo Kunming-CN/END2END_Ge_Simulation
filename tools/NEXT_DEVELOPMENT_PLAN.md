@@ -129,10 +129,14 @@ samples now supply an empirical conditional energy kernel at exact662/1173.228/
 retained.661.657keV stays unsupported. Integrate the same latent outgoing energy
 through both measured energies and continuation. That consumer now passes the
 same six-point acceptance; the repaired curve overlay restores144uncomputed
-escape states, leaving245full/91partial cobalt states. Initialize the recorded
-missing low-energy coefficient queries, keep unvalidated curve domains explicit,
-and implement incident-photon arrival with a separate angular factor. Neither
-step changes official weights or establishes selection normalization.
+escape states, leaving245full/91partial cobalt states.42initialized lower-energy
+queries give all336states full coefficient support and absorption coverage;
+escape still retains0.03534-2.11792%uncovered mass in91states. Extend only those
+25needed lower curve tails, preserving accepted domains and prior samples.
+Incident-photon arrival now passes504saved-geometry and five analytic checks.
+Combine it with the full grid, then check the idealized two-interaction
+normalizer separately from actual ADC selection before interpreting fitted
+source ranges. No official weights have changed.
 Secondary containment, position/Doppler response, passive material and acquisition
 selection remain separate. Common units alone do not establish
 model probabilities. Angular scores alone cannot choose absorption versus escape or

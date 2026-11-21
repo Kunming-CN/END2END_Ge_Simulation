@@ -28,17 +28,18 @@ and GPT-6.1 Sol Ultra (native).
   `owned-session.json` and `continuation-handoff.json`. Do not restart or edit
   pinned sources. Prior cap and small acceptance phases are closed.
 * **Candidate:** `/root/candidate_attribution` completed the 28-curve bank,
-  targeted quadrature overlay and full 2,400-point grid. No bank worker remains.
-  It now implements the separate incident-photon arrival/first-Compton density
-  from trial geometry, with explicit units, active-Ge path and omitted passive
-  materials/selection normalization. No source truth, new transport or source
-  optimization is supplied. Keep completed numerical producers unchanged.
+  targeted quadrature overlay, full 2,400-point grid and first-Compton arrival
+  component. No bank worker remains. It now combines the saved grid with that
+  arrival factor and implements a small idealized two-interaction normalization
+  check, distinct from actual ADC selection. No source truth, new transport or
+  source optimization is supplied. Keep completed numerical producers unchanged.
 * **Position:** `/root/position_model` completed the shared-outgoing-energy
   consumer and its six-point acceptance. The verified quadrature overlay
-  restores 144 previously unavailable cobalt escape states. It now initializes
-  only missing low-energy material coefficients in coordination with native
-  memory use. Existing curve domains remain explicit; new coefficients do not
-  validate extrapolation. No production weights or fitted source positions change.
+  restores 144 previously unavailable cobalt escape states. All missing material
+  coefficient queries are complete. It now extends only the 25 lower curve tails
+  needed by 91 partial cobalt states, first measuring one widest interval and
+  retaining all accepted base-domain evaluations. No production weights or fitted
+  source positions change; no additional transport or native sampling is needed.
 
 ## Accepted native repair and continuous-readout evidence
 
@@ -183,18 +184,35 @@ states and 504 unrepresented Cs states. Absorption has 321 full / 15 partial
 states. With the verified curve overlay, escape has 245 full / 91 partial,
 recovering all 144 formerly uncomputed states while preserving existing results.
 Overlay receipt SHA fc8641f1...; all atom mass is retained without renormalization.
-Missing coefficient endpoints extend to 45.291 keV; their exact query plan is
-retained. Angular density remains explicitly absent and separate. First-incidence flux,
+One zero-event initialization added 42 exact material anchors down to 45.290803
+keV. All 336 states now have full coefficient support and absorption coverage.
+Escape keeps 245 full / 91 partial, with its old covered contributions unchanged;
+0.03534-2.11792% atom mass lies outside verified curve domains in the partial
+states. Receipt `empirical-first-scatter-rate-support-controls.json` SHA
+add31f02734dd08fd629c98e0f1e989b5c918b1f0b59b640db82273eecc5b913.
+The exporter succeeded; a post-export exact-float density assertion prevented
+recording its elapsed/RSS counters. Those fields remain unavailable, with the
+failure preserved. Exact density and coefficients were verified against prior
+initialized material records without rerunning. Angular density stays separate.
+
+`gegi_first_compton_arrival.py` supplies isotropic spreading, survival through
+active Ge and the first-Compton rate per emitted photon per mm^3. All 504 saved
+trial geometries match the existing incoming-angle convention; independent
+forward/reverse clipping differs by at most 2.03e-12 mm. Five analytic checks
+pass, including competing-rate slab integration and in-Ge sources. Receipt
+`first-compton-arrival-controls.json` SHA a6c99c56a45dcbdb3c6968b41550559ae232b185eccf29d9ac631b964832c1b7.
+No activity or source truth is supplied. Passive attenuation,
 selected-acquisition normalization, secondary containment, position uncertainty
 and merged topology remain open before physical model weights and independent
 source-position statistical validation.
 
 ## Publication and baseline
 
-Source 853eacdc905c96dc1cc990c636e96632b0470139 is pushed. The software-only release
-[student-runtime-853eacdc905c](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-853eacdc905c)
-is public and verified byte-for-byte: 1,412,276 bytes / 257 members, SHA
-`995d49815d2dffec1019fe3bd851e1e589852a721e496e77bf26bd5a28bb2d26`, asset 776376352.
+Source 4b6b3502dad0580c39ec70272afc9d960c0b2f2d is pushed. The software-only release
+[student-runtime-4b6b3502dad0](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-4b6b3502dad0)
+includes stable V4 projection and is verified byte-for-byte: 1,412,386 bytes /
+257 members, SHA
+`0d117494d882353682a8cbcdae0f332fe909ac6bd8723fa5629633afe11627f9`, asset 776486538.
 Dependency closure includes 119 Python files, 57 Julia includes, 17 models and 21
 frozen pins. Two targeted packaging checks pass. Calibration remains separate
 and unchanged. Research kernels/results are outside the student package.
