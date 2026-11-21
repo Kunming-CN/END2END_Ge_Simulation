@@ -231,8 +231,10 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   fc143454bcbd90bafba661db0f4a6a500e0f723c4909315dcd4d56ab7e31f26f.
   Exact executed sourcea05ea005 is retained asportable-escape-range-1332-controls-producer.py;
   trackedLFsourcebcda8268 is byte-identical after newline normalization and AST-
-  identical, without another scientific replay. Committed package/release and
-  final guide/site publication are pending; no student release claim yet.
+  identical, without another scientific replay. The committed967bdd5 software
+  package is published and its public bytes verified. The next position task
+  extracts energy residuals from existing independent injections without new
+  native calls, truth-based rematching or a claimed detector calibration.
   Completed position work is retained, without new native calls or refits:
   * All34-channel compatibility and optional lateral grids are portable. On36
     matched off-template controls, full34lateral improves axis10.26->5.00deg and
@@ -328,51 +330,31 @@ and selection; current five-second data remain development evidence.
 
 ## Publication and current integration
 
-The software-only release `student-runtime-82f6554683fd` is published from
-82f6554683fd0ce976a2dab7083c80a009e2af92:1,407,897bytes/256members,
-SHA2e3c041f74750acb5056d9d4b7910752e90651d76320ec465069e12b144976cb.
-Actual public bytes/latest-release identity match; calibration downloads remain
-separate. Six package tests and committed-source archive verification pass.
-The generic cone diagnostic preserves all3822triggers/7644pairs and exact
-scientific parity in the original environment. Compact acceptance receipt
-`candidate-cone-spread-runtime-acceptance.json` SHA
-94408be98ad7c36e982f2fcfa7f8d63815f89f9914fac563ea9d60f5c5531bb3
-retains commands, hashes, alternate-environment roundoff and original test log.
+The software-only release `student-runtime-967bdd5ece3c` is published from
+967bdd5ece3cd46b5454545246305df2c6f0b6de:1,410,156bytes/256members,
+SHA4e9d6462c1005cc5a261935c15abaa564a8a75648f541a82e84843f7ffbd2255.
+The latest-release identity and actual public ZIP bytes match. Eight focused
+range tests, two targeted package tests including the unpacked CLI, and committed
+source/dependency closure verification pass. Earlier unaffected package checks
+are retained, not rerun. Calibration remains a separate unchanged download.
+Research photon-continuation tools are outside the student package.
 
-The cone-stability exhibit now includes every numerical row of the36positive,
-12negative and3822candidate comparisons in the existing evidence JSON. Two
-focused display tests pass, comparing exact exported rows and original digests;
-42publication tests pass. The normal builder completed in session49278,
-log `site-build-cone.log`: buildd82916258df66cf22b9ca65d6e18c192b27ac8c219cb494d6c16b6eeca4a7eee,
-1,914files/537,569,063bytes,127HTMLpages. Chrome desktop acceptance follows
-homepage->new compatibility evidence->methods->expanded student CLI guide.
-Owned preview/tab are closed; no download or browser settings change.
-Separate tools/check_site.py passes in session93846. Exhibit/source commit
-4e639e92ade23f43b0a91c9eedc14f74382edb03 and Pages44913043154 are published;
-required tools/check_site.py --url passes all1,018selected live files.
-The actual runtime asset and site build are both verified.
+The existing exhibit now includes all18chronological controls and three separate
+peak witnesses, exact ADC/fit identities,42pairings/84orders and full conditional
+range profiles. It retains the prior cone-stability and native/readout evidence.
+Two focused display tests and42publication tests pass. Chrome desktop acceptance
+follows homepage->range controls->methods and the expanded fixed-line escape CLI
+guide. Owned tabs/preview servers are closed; no downloads or settings changes.
+Final standard builder and separate `tools/check_site.py` pass:
+buildf2fc9e918535f7d44f25ec5ccd930490a8d31952392f3d58dbb75eaa9bcb4778,
+1914files/538384358bytes/127HTMLpages. Logs are `site-build-escape-final.log`
+and `check-site-escape-final-local.log`. The accepted exhibit is ready to deploy;
+Pages and required live exact-byte verification remain pending.
 
-The subsequent native/readout exhibit combines the single2459substitution and
-completeB2interval in one table, with exact trigger/ADC provenance and mixed
-support masks. Two focused display tests and42publication tests pass. Chrome
-desktop acceptance follows homepage->main result->new native/readout table
-and counts->signal-chain methods; owned tab/server closed without downloads or
-settings changes. Standard builder completed, log `site-build-readout.log`:
-buildf3a7a5896e005b9b4b58443c50b003173422e44ee71d129d0a515cf031d582eb,
-1914files/537945754bytes/127HTMLpages. Separate `tools/check_site.py` passes,
-log `check-site-readout-local.log`. Source/exhibit009702db0f3fbbaa6316ba8cb37b2a40198d5c0f
-and Pages44918809010are published; requiredlivecheck passes all1018selected
-files, log `check-site-readout-live.log`.
-
-Next integrated delivery adds the same-ADC interaction/range exhibit and the
-portable fixed-line escape mode. Research photon-continuation tools remain
-outside the student package. Both display tests,42site tests, eight range tests,
-two targeted package tests and three continuation tests pass. Initial exhibit
-buildd5ca6cc69639c857fd9fb54582b16e17cd783934cf6ffff6b65735bbbe4309b7
-and desktop homepage->range controls->methods acceptance pass. The subsequently
-completed portable CLI adds one maintained-guide paragraph, so final builder,
-committed software ZIP/public bytes and live deployment checks remain pending.
-Original results, calibration download and the active native cap stay unchanged.
+The next physical-response component convolves photoelectric absorption and
+scatter/escape into the same observed-energy measure. Its2keV Gaussian width is
+an explicit analytic control, not a measured GeGI resolution. Candidate/position
+workers are using saved evidence; the active native cap retains pinned producers.
 
 Prior XY/depth publication and its failure evidence are retained in the immutable
 handoff below.
@@ -396,5 +378,5 @@ and123–125activehours exclude new diagnostic truth overhead and are not launch
 authorization. No waveform library replay qualifies as joint-source production.
 
 Earlier exact results, producer hashes and publication history remain in the
-[immutable integrated handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/4425875b350f68c6e7ec333d5d39d9d428330b84/PROGRESS.md).
+[immutable integrated handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/967bdd5ece3cd46b5454545246305df2c6f0b6de/PROGRESS.md).
 Use [the maintained guide](tools/site_guide.html) and [source ownership](tools/MAINTENANCE.md).

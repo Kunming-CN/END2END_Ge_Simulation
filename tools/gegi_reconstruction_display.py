@@ -34,6 +34,8 @@ SOURCES = {
     'angular_tails': ('peak-tail-diagnostic.json', '87e32633dfb8f1756df9bce46f2b4aab365e224e14d2d4ebfd3c3455ed2551c2'),
     'escape_geometry': ('conditional-escape-geometry-controls.json', '43b60e4766f6c7812dc5b3b449b43fabd68a08fd489c2a0f1ecb910cfd6671a6'),
     'exact_kinetics': ('chronological-window-origins/same-event-exact-kinetics.json', '9bca9f3d43f5f7fba86965873fe6a431934b2309953cc8343eb3a51dab4e0cd8'),
+    'interaction_hypothesis_controls': ('interaction-hypothesis-controls.json', '2fbb089ff286421bf3ba1a47b16bfbf1ca0e6bbd841c105a15fbab57a68b5951'),
+    'incident_line_range_controls': ('incident-line-range-controls.json', 'ddac75500053fc63af01e15c6fa7504e736f748db2639e315f43835dd3d154de'),
     'native_repair': ('native-response-repair.json', '45c8ac5afb77ec9c73949fa529861b46a6869213f75ae17677f6969adc6dc0f8'),
     'native_readout_2459': ('native-readout-repair-2459/comparison.json', '35fdbe63787e00c3c08c23287429c919bbb7a2c8e2f9072cba76ac0d66b2f3e9'),
     'native_readout_original43': ('native-readout-original43/validation.json', 'fdec8de099dc8ef189f57bdd84acf64f881f547cd3ff5029c054b3f425b8c497'),
@@ -74,6 +76,8 @@ KINDS = {
     'angular_tails': 'gegi_original_peak_angular_tail_diagnostic_v1',
     'escape_geometry': 'gegi_nominal_escape_geometry_peak_controls_v1',
     'exact_kinetics': 'gegi_same_event_exact_photon_kinetic_substitutions_v1',
+    'interaction_hypothesis_controls': 'gegi_same_adc_interaction_hypothesis_controls_v1',
+    'incident_line_range_controls': 'gegi_incident_line_conditional_range_controls_v1',
     'native_repair': 'gegi_native_response_repair_summary_v1',
     'native_readout_2459': 'gegi_native_readout_counterfactual_v1',
     'native_readout_original43': 'gegi_original43_native_validation_v1',
@@ -186,6 +190,55 @@ def validate_block_readout(inputs):
         raise ValueError('Expanded replay trigger, history or sample clock evidence does not reconcile')
 
 
+def validate_incident_line_controls(inputs, bindings):
+    interactions = inputs['interaction_hypothesis_controls']
+    ranges = inputs['incident_line_range_controls']
+    measured = ranges['measured_analysis']
+    provenance = interactions['input_sha256']
+    if (any(row['input_sha256'][k] != bindings[k] for k in ('saved_plane', 'candidate_store')
+            for row in (interactions, measured))
+            or provenance['chronological_selection'] != measured['input_sha256']['chronological_selection']
+            or provenance['conditional_geometries'] != measured['input_sha256']['conditional_geometry']
+            or provenance['verified_photon_controls'] != SOURCES['exact_kinetics'][1]
+            or ranges['post_fit_truth_scores']['input_sha256']['exact_kinetic_controls'] != SOURCES['exact_kinetics'][1]
+            or ranges['post_fit_truth_scores']['source_coordinates_used_for_fit']
+            or interactions['incident_lines_keV'] != measured['settings']['escape_incident_lines_keV']):
+        raise ValueError('The interaction and range controls must use the same saved fit before photon scoring')
+    original = {r['original_trigger_id']: r for r in interactions['rows']}
+    ids = []
+    for label, group in measured['measured_groups'].items():
+        selected = group['selected_original_trigger_ids']
+        ids.extend(selected)
+        if label in WINDOWS:
+            window = inputs['attribution']['windows'][label]['original_triggers']
+            window_ids = {r['original_trigger_id'] for r in window}
+            if (len(selected) != 6 or not set(selected) <= window_ids
+                    or len(window_ids) != group['original_window_trigger_count']):
+                raise ValueError('The original chronological range cohort changed')
+            cohort = 'chronological_sample'
+        else:
+            if group['cohort'] != 'supplemental_peak_witness' or len(selected) != 1:
+                raise ValueError('Peak witnesses must remain separate from chronological controls')
+            cohort = 'peak_control'
+        if any(original[i]['truth_score']['cohort'] != cohort for i in selected):
+            raise ValueError('The range and interaction records differ in cohort membership')
+        for fit in group['hypotheses'].values():
+            rows = fit['per_trigger_order_ledger']
+            if ([r['original_trigger_id'] for r in rows] != selected or fit['selected_trigger_count'] != len(selected)
+                    or not math.isclose(fit['projected_trigger_mass'] + fit['unresolved_trigger_mass'], len(selected),
+                                        rel_tol=0., abs_tol=1e-12)):
+                raise ValueError('The conditional range must retain the full measured cohort and unresolved mass')
+            for row in rows:
+                record = original[row['original_trigger_id']]
+                if (row['archive_record_sha256'] != record['archive_record_sha256']
+                        or row['official_projected_mass'] != record['original_projected_mass']
+                        or row['official_unresolved_mass'] != record['original_unresolved_mass']
+                        or any(2*o['diagnostic_precheck_order_mass'] != o['original_nominal_pair_mass'] for o in row['orders'])):
+                    raise ValueError('The diagnostic order weights must preserve original measured identities and weights')
+    if len(ids) != len(interactions['rows']) or sorted(ids) != sorted(original):
+        raise ValueError('The interaction hypotheses must cover all chronological and peak controls once')
+
+
 def validate_inputs(inputs):
     for key, kind in KINDS.items():
         if inputs[key]['kind'] != kind:
@@ -235,6 +288,7 @@ def validate_inputs(inputs):
     validate_cone_spread(inputs, bindings, selection)
     validate_native_readout(inputs, bindings, selection)
     validate_block_readout(inputs)
+    validate_incident_line_controls(inputs, bindings)
     source = attribution['saved_source_census']
     fitted = position['baseline_waveform_center']['scored_pairings']
     coverage = position['fitted_pairings_by_lateral_supported_site_count']
@@ -397,6 +451,8 @@ def compact(inputs, maps):
                      'partial_fresh': partial['retained_candidates']['summary']},
         'range': {'model': range_fit['model'], 'fits': range_fit['fits']},
         'profiled_range': inputs['profiled_range'],
+        'interaction_hypothesis_controls': inputs['interaction_hypothesis_controls'],
+        'incident_line_range_controls': inputs['incident_line_range_controls'],
         'uncertainty_controls': inputs['uncertainty'],
         'joint_cone_spread': compact_cone_spread(inputs),
         'additional_lateral_controls': inputs['additional_lateral'],
@@ -985,6 +1041,53 @@ The table compares different fit populations, with the all-34-channel results av
 {candidate_table}'''
 
 
+def incident_line_control_section(data):
+    from gegi_shared_clock_display import table
+
+    controls = data['interaction_hypothesis_controls']
+    range_controls = data['incident_line_range_controls']['measured_analysis']
+    groups = range_controls['measured_groups']
+
+    def support(branch):
+        text = (f'{branch["triggers_with_geometry"]}/{branch["selected_trigger_count"]} with geometry, '
+                f'{branch["projected_trigger_mass"]:g} projected trigger weight')
+        fit = branch['fit']
+        if fit is None:
+            return text
+        if fit['profile_diagnostic']['upper_open'] or fit['profile_diagnostic']['lower_open']:
+            return text + '<br>Open distance profile'
+        return text + f'<br>Closed sampled profile at a {number(fit["center_distance_mm"])} mm optimum'
+
+    rows = []
+    for label in WINDOWS:
+        group = groups[label]
+        branches = group['hypotheses']
+        escaped = [f'{number(branch["escape_incident_line_keV"], 3)} keV incident<br>{support(branch)}'
+                   for name, branch in branches.items() if name.startswith('resolved_escape_') and branch['triggers_with_geometry']]
+        rows.append((title(label), f'{len(group["selected_original_trigger_ids"]):,} / '
+                    f'{group["eligible_chronological_trigger_count"]:,} / {group["original_window_trigger_count"]:,}',
+                    support(branches['observed_sum_absorption']), '<br>'.join(escaped) or 'No geometry for the supplied lines'))
+    cohorts = table(rows, ('Measured energy window', 'Selected / eligible / original triggers', 'Observed-sum absorption',
+                           'Resolved escape under supplied incident lines'), 'Same-ADC conditional range controls by measured window')
+    fit = groups['1173.23_keV']['hypotheses']['resolved_escape_1332.49_keV']['fit']
+    merged = controls['summary_by_cohort']['chronological_sample']['by_verified_topology']['merged_photon_vertices']
+    trials = sum(len(groups[k]['selected_original_trigger_ids']) for k in WINDOWS)
+    peaks = sum(g['cohort'] == 'supplemental_peak_witness' for g in groups.values())
+    return f'''<h3 id="incident-line-range-controls">The 1,173 keV control leaves distance unidentified</h3>
+<p>The same measured ADC, energies and positions supply both point hypotheses for {trials} prespecified chronological
+controls. The {peaks} peak witnesses are separate in the <a href="{DATA.name}">evidence JSON</a>. Photon truth enters after fitting.
+Of {merged['triggers']} controls with merged photon vertices, {merged['absorption_cone']} still admit an absorption cone and
+{merged['resolved_escape_cone']} admit an escape cone. A two-point direction for a merged history remains unresolved.</p>
+{cohorts}
+<p>In the 1,173.23 keV window, escape under a 1,332.492 keV incident line gives a conditional optimum at
+<strong>{number(fit['center_distance_mm'])} mm</strong> and gains <strong>{number(fit['score_gain_over_far_field'], 5)}</strong>
+log-score units over the far-field fit. The upper profile stays open and the distance remains unidentified.</p>
+<p>Each hypothesis fits one hypothetical common location per cohort. The diagnostic splits each measured pairing's weight
+equally between the two orders before checking support. Unsupported weight remains uniform in angle. Official image weights
+stay fixed. The conditional angular score lacks the energy-line likelihood, escape and detection acceptance, and the selection
+likelihood for two sources. It supplies neither calibrated model probabilities nor a basis to choose among hypotheses.</p>'''
+
+
 def sections(data):
     from gegi_shared_clock_display import table
     from gegi_joint_imaging import REFERENCES
@@ -1128,7 +1231,8 @@ mixtures. The score gains describe this conditional model; they are not detectio
 intervals. The two cobalt energies still give different best-fit distances.</p></details>
 <details><summary>Clock-half and background fits</summary>{range_table}
 <p>Profile support gives the lowest and highest sampled ranges within two log-score units of the optimum. Depth, energy and background
-response lack independent calibration for these data. The support has no calibrated confidence level.</p></details></section>
+response lack independent calibration for these data. The support has no calibrated confidence level.</p></details>
+{incident_line_control_section(data)}</section>
 <section class="panel" id="position"><h2>Position checks on the saved ADC</h2>
 <p>The full-channel check scored all 34 contacts for each of {position["fitted_pairings"]:,} fitted pairings.
 Refitting center positions with all contacts gave similar axis errors on the independent mixtures.

@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "build_id": "f3a7a5896e005b9b4b58443c50b003173422e44ee71d129d0a515cf031d582eb",
+  "build_id": "f2fc9e918535f7d44f25ec5ccd930490a8d31952392f3d58dbb75eaa9bcb4778",
   "file_count": 1914,
-  "total_bytes": 537945754,
+  "total_bytes": 538384358,
   "html_pages": 127,
-  "local_links_checked": 3796,
-  "resource_references_checked": 4023,
+  "local_links_checked": 3797,
+  "resource_references_checked": 4024,
   "page_navigation_checked": 2021,
   "fragments_checked": 353,
-  "downloads_checked": 774,
+  "downloads_checked": 775,
   "media_references_checked": 1164,
   "metadata_references_checked": 62,
   "other_references_checked": 2,
@@ -7725,8 +7725,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 94665,
-      "sha256": "f680560e89dc5d0d2a050c8196e40628101b09aa4edfd39fb8ebe84f57d6e9f8"
+      "bytes": 95296,
+      "sha256": "9dc044f3ebaa9944da8b058edd8395003539502807807f5be4bd010065a732c0"
     },
     {
       "path": "index.html",
@@ -9445,13 +9445,13 @@
     },
     {
       "path": "results/gegi-five-second-reconstruction/evidence.json",
-      "bytes": 29365802,
-      "sha256": "bab47bb3a9ee19740191653936b87579b75b9ba8cc2cdaeaba8ade8ce7bd2824"
+      "bytes": 29801214,
+      "sha256": "ad0f43d578fa641d7106664b2cde0811f55df56bb62d226949ecf38fb72eb4ca"
     },
     {
       "path": "results/gegi-five-second-reconstruction/index.html",
-      "bytes": 99427,
-      "sha256": "ddb5bed5c919f01fa2418f933ee94f068895523b9f8c9a67b98c6b1b94191627"
+      "bytes": 101988,
+      "sha256": "b32e0b4b5511975180e4a45c3f42f9e7cb46f655df4dede435a2a2689fd22b4f"
     },
     {
       "path": "results/gegi-five-second-reconstruction/peak-energy-offsets.png",

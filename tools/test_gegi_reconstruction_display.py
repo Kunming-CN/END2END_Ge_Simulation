@@ -60,6 +60,28 @@ class ReconstructionDisplayTests(unittest.TestCase):
             self.assertNotIn('response_coverage_trigger_12271', exact)
             self.assertIn('0.44–16.59°', page)
             self.assertIn('Doppler broadening', page)
+            for name in ('interaction_hypothesis_controls', 'incident_line_range_controls'):
+                filename, digest = display.SOURCES[name]
+                self.assertEqual(public[name], display.read_bound(directory / filename, digest))
+                self.assertEqual(public['source_sha256'][name], digest)
+                self.assertNotIn('.local', json.dumps(public[name]))
+            point_trials = public['interaction_hypothesis_controls']['rows']
+            self.assertEqual(sum(r['truth_score']['cohort'] == 'chronological_sample' for r in point_trials), 18)
+            self.assertEqual(sum(r['truth_score']['cohort'] == 'peak_control' for r in point_trials), 3)
+            self.assertEqual(sum(len(p['orders']) for r in point_trials for p in r['pairings']), 84)
+            groups = public['incident_line_range_controls']['measured_analysis']['measured_groups']
+            self.assertEqual([groups[k]['original_window_trigger_count'] for k in display.WINDOWS], [1069, 163, 117])
+            target = groups['1173.23_keV']['hypotheses']['resolved_escape_1332.49_keV']
+            self.assertEqual((target['selected_trigger_count'], target['projected_trigger_mass'],
+                              target['unresolved_trigger_mass']), (6, 1.5, 4.5))
+            self.assertTrue(target['fit']['profile_diagnostic']['far_field_supported'])
+            self.assertTrue(target['fit']['profile_diagnostic']['upper_open'])
+            self.assertIn('id="incident-line-range-controls"', page)
+            self.assertIn('141.38 mm', page)
+            self.assertIn('0.28977', page)
+            self.assertIn('the distance remains unidentified', page)
+            self.assertIn('6 / 158 / 163', page)
+            self.assertIn('equally between the two orders', page)
             repair = public['native_response_repair']
             self.assertEqual(sum(repair['census']['final_status_counts'].values()), 1971)
             self.assertEqual(repair['census']['complete_groups'], 849)
