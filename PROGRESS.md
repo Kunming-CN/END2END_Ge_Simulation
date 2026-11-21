@@ -11,10 +11,14 @@ Reuse the completed five-second acquisition and retained independent controls.
 The current three calculations are complete: the 580-group boundary cohort and
 three stopped-carrier witnesses, continuous ideal-source profiles, and the
 empirical cobalt normalization grid. Root accepted the prepared implementations
-after all three development agents encountered a usage limit. Further agent
-implementation is blocked until the same configured models are available; do not
-retry unchanged expensive work or use resets. The tool reported Nov 27, 2026,
-10:55 AM as retry time, without stating its timezone.
+after all three development agents encountered a usage limit. The owner has now
+confirmed availability was restored, and fresh activations of all three original
+agents succeeded. The earlier quota error is historical, not a current blocker.
+No resets or model substitutions were used. Native continues the exact CD_OUTSIDE
+repair; candidate has verified four curve-side extensions and is testing the
+remaining independent observations; position connects empirical response and normalization
+to the saved candidate cohorts. Finish these integrated paths before optional
+research or presentation work.
 
 Thread `01a1fd1a-3e72-7eb2-b7bf-c8c2d59236fd` owns this development. Check actual
 processes, `.local/autonomy/state.json` and any lock before starting work. The
@@ -148,10 +152,20 @@ continuous result explicitly uses the exterior geometric view. Source truth and
 activity are never optimization inputs. Two independent analytic optimization
 checks and nine earlier Gaussian/atom/forward tests pass.
 
-The run took 378.474 s and retains 5,133 direct endpoint samples with no unresolved
-quadratures; about 240.3 s was direct-integral work. Extend curves from these
-retained values before larger tests. The remaining 180 observations need no
-regeneration. In `ideal-forward-validation/`:
+The original run took 378.474 s and retains 5,133 direct endpoint samples with no
+unresolved quadratures; about 240.3 s was direct-integral work. Four separately
+bound outer segments now reuse these values, leaving all original curve domains
+unchanged. Their 2,566 withheld references and 12 fresh checks pass maximum log
+errors 3.20e-6 / 1.84e-5. Construction took 1.845 s. The same complete profiles
+take 117.021 s, with both fitted source coordinates bit-identical, 54 paired score
+locations and all 50 radial shells agreeing within 2.654e-6. All 198,737 old
+in-domain interpolations are unchanged; 5,143 outer lookups need no new direct
+integrals. Root inspected sources and verified receipt/data hashes and blind
+digest. Extension SHA `d7b7f18f2f0a7bb79f238d9b70569f7c71d246a3bc7988dc3ebadf5ae13cd1ed`,
+replay SHA `b125b87c759d51c8ad65dd6dbfff96e5f7921345fbbdf53c9b7162145a8d2ebf`.
+The remaining 180 observations now supply predeclared chronological blocks of
+ten and cumulative 50/100-event controls; preserve old block zero and all IDs.
+In `ideal-forward-validation/`:
 
 * `continuous-first10-blind.json`: `c8f0d90ff3c9e5513c86386ad08ff4d5a335116117050dd12131ae948ea84a67`
 * `continuous-first10-truth-score.json`: `bbb41f9104adec2d987c22bb127fe6dc1b3fbd848f97189009ed88bc92c7a3d9`

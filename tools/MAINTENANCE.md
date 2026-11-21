@@ -163,6 +163,10 @@ source-blind grid fit before its separate truth-scoring command.
 continuous exterior-source fits and fixed-radius direction profiles. It retains
 direct checks outside frozen curve domains and independent numerical scrambles;
 truth scoring is a separate command after the blind result is sealed.
+`gegi_ideal_forward_curve_extensions.py` uses saved direct endpoint references
+to add only needed outer curve segments. `gegi_ideal_forward_extended_profile.py`
+replays the same observations, retaining original curves and exact fit/score
+comparisons before applying the numerical change to independent statistics.
 `gegi_boundary_failure_recovery.py` resumes the identified boundary-failure
 class over the sealed duration-extension baseline. Exact accepted responses
 are inherited; per-group producer, timing and support layers remain explicit.
