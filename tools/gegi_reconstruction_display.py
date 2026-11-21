@@ -34,6 +34,8 @@ SOURCES = {
     'angular_tails': ('peak-tail-diagnostic.json', '87e32633dfb8f1756df9bce46f2b4aab365e224e14d2d4ebfd3c3455ed2551c2'),
     'escape_geometry': ('conditional-escape-geometry-controls.json', '43b60e4766f6c7812dc5b3b449b43fabd68a08fd489c2a0f1ecb910cfd6671a6'),
     'exact_kinetics': ('chronological-window-origins/same-event-exact-kinetics.json', '9bca9f3d43f5f7fba86965873fe6a431934b2309953cc8343eb3a51dab4e0cd8'),
+    'native_repair': ('native-response-repair.json', '45c8ac5afb77ec9c73949fa529861b46a6869213f75ae17677f6969adc6dc0f8'),
+    'boundary_response': ('chronological-window-origins/trigger-12271/boundary-adc-comparison.json', '1aa8643fc3578a1d5bff2803df61dfbf43110a2621cc4562f2ebbd317a91b110'),
 }
 WINDOWS = ('661.657_keV', '1173.23_keV', '1332.49_keV')
 PRIORS = ('uniform-area', 'uniform-solid-angle')
@@ -54,6 +56,8 @@ KINDS = {
     'angular_tails': 'gegi_original_peak_angular_tail_diagnostic_v1',
     'escape_geometry': 'gegi_nominal_escape_geometry_peak_controls_v1',
     'exact_kinetics': 'gegi_same_event_exact_photon_kinetic_substitutions_v1',
+    'native_repair': 'gegi_native_response_repair_summary_v1',
+    'boundary_response': 'gegi_trigger_12271_boundary_adc_comparison_v1',
 }
 
 
@@ -246,6 +250,16 @@ def compact(inputs, maps):
         'conditional_escape_geometry': inputs['escape_geometry'],
         'exact_photon_controls': {k: inputs['exact_kinetics'][k] for k in
                                  ('kind', 'input_sha256', 'source_sha256', 'status_counts', 'definition', 'rows')},
+        'native_response_repair': inputs['native_repair'],
+        'local_boundary_response': {
+            **{k: inputs['boundary_response'][k] for k in
+               ('kind', 'original_trigger_id', 'input_sha256', 'source_sha256',
+                'measured_adc_samples_relative_to_trigger_ns', 'electrode_ids',
+                'original_projected_mass', 'original_unresolved_mass',
+                'observed_early_y28_baseline_tail', 'original_12271_adc_comparison',
+                'independent_holdouts', 'method', 'interpretation')},
+            'native_points': [{k: v for k, v in point.items() if k != 'record_ref'}
+                              for point in inputs['boundary_response']['native_points']]},
         'line_hypothesis_summary': {k: inputs['kinematics'][k] for k in
                                     ('kind', 'model', 'methods', 'windows', 'photon_origin_score')},
         'historical_truth_control': {**{k: truth[k] for k in truth_fields},
@@ -454,13 +468,93 @@ acquisition, not a detector resolution or an independent efficiency measurement.
 floating-point roundoff. The ledger keeps all 18 prespecified chronological triggers plus three named peak controls: eight complete
 signal substitutions, trigger 12,271 with truth only, trigger 12,841 with unresolved merged scatters, and eleven without
 the new observer. All original projected and unresolved weights remain intact.</p>
-<p>Trigger 12,271 deposits charge across two Y strips after its second photon interaction. A three-cell signal fit
-recovers the measured energy allocation but leaves a large Y28 waveform residual and a nearly tied four-cell alternative.
-Nine existing response banks have no off-center templates in its three cells. Local injections and independent holdouts
-are specified but have not run; the carrier collection endpoints remain unknown.</p>
 <p>The <a href="{DATA.name}">evidence JSON</a> includes every selected identity, exact photon step, substitution and unknown
 status, bound to its original ADC and replay hashes. Earlier estimate-based records remain preserved locally.</p>
 </details></section>'''
+
+
+def boundary_response_section(data):
+    from gegi_shared_clock_display import table
+
+    response = data['local_boundary_response']
+    comparison = response['original_12271_adc_comparison']
+    baseline = comparison['baseline_center_three_cell']
+    best = comparison['sampled_models'][comparison['best_sampled_all34_model_index']]
+    rows = []
+    for holdout in response['independent_holdouts']:
+        fitted = next(row for row in holdout['off_center_alternatives']
+                      if row['point_index'] == holdout['best_off_center_training_point_index'])
+        rows.append((str(holdout['point_index']),
+                     coordinates(holdout['injected_position_mm'], 3),
+                     number(holdout['center']['position_error_mm'], 4),
+                     number(fitted['position_error_mm'], 4)))
+    holdouts = table(rows, ('Point', 'Injected position (mm)', 'Center error (mm)', 'Local-template error (mm)'),
+                     'Three noisy ADC controls at positions excluded from the fitted template alternatives')
+    return f'''<section class="panel" id="local-boundary-response"><h2>Explain the waveform near a strip boundary</h2>
+<p>Trigger 12,271 contains two photon interaction vertices but charge in three nominal strip cells. Ten local native
+injections now supply all 34 electrode responses and complete carrier endpoints. Keeping the original ADC and measured
+strip-energy allocation, the best of 16 sampled response models reduces the all-channel residual from
+<strong>{baseline["all34_adc_rms_codes"]:.2f} to {best["all34_adc_rms_codes"]:.2f} ADC codes RMS</strong>.
+On Y28, it changes from <strong>{baseline["y28_adc_rms_codes"]:.2f} to {best["y28_adc_rms_codes"]:.2f} codes</strong>.</p>
+<p>The improvement supports using positions within a strip and separate charge components to explain this waveform.
+Three charge components do not establish three photon interactions. The original trigger remains unresolved with
+zero imaging weight; the local comparison does not choose a source position.</p>
+<details><summary>Inspect independent local controls and the remaining interpretation limits</summary>
+{holdouts}
+<p>The probe neighborhood was specified from the replay geometry before comparing the ADC. Three additional positions
+were excluded from the template alternatives and scored only after fitting independent noisy, quantized ADC controls.
+These are local response tests, not a blind detector-wide position-resolution measurement. The ten injected points have
+known carrier endpoints; the carrier allocation of the original distributed deposits remains unmeasured.</p>
+<p>Models keep the strip-derived component energies fixed, sum full-electrode point responses and fit a common onset.
+Only complete responses ending in the required collecting cells enter an alternative; no interpolation crosses a
+collection boundary. The quiet pretrigger Y28 tail is approximately −3 ADC codes, and removing it does not account for
+the observed residual reduction. All 16 alternatives, per-channel residuals, three holdout comparisons and exact source
+hashes remain in the <a href="{DATA.name}">evidence JSON</a>.</p></details></section>'''
+
+
+def native_repair_section(data):
+    from gegi_shared_clock_display import table
+
+    repair = data['native_response_repair']
+    census, mask = repair['census'], repair['conditional_mask']
+    labels = {'stopped_without_contact': 'Stopped before contact', 'step_limit': 'Reached configured duration',
+              'Deposit starts on a GeGI contact': 'Start classified on a contact',
+              'Noncontact endpoint outside crystal': 'Endpoint outside crystal without contact',
+              'Invalid native signed charge': 'Signed-charge check failed'}
+    rows = []
+    for cause in census['cause_transitions']:
+        result = cause['outcomes']
+        rows.append((labels[cause['original_domain_error'] or cause['original_status']],
+                     f'{cause["groups"]:,}', f'{result.get("completed", 0):,}',
+                     f'{result.get("step_limit", 0):,}', f'{result.get("native_failed", 0):,}',
+                     f'{result.get("stopped_without_contact", 0):,}'))
+    outcomes = table(rows, ('Original cause', 'Groups', 'Complete', 'Duration reached',
+                            'Boundary projection failed', 'Stopped before contact'),
+                     'All originally unavailable native-response groups, with original identities retained')
+    return f'''<section class="panel" id="native-repair"><h2>Recover native charge responses by cause</h2>
+<p>All <strong>{census["original_unavailable_groups"]:,}</strong> originally unavailable groups have been reprocessed or
+matched to exact prior complete responses. <strong>{census["complete_groups"]:,}</strong> now have complete native charge
+responses: 810 newly processed and 39 inherited. The remaining {census["remaining_unavailable_groups"]:,} keep their
+failure or unknown status. The same field samples and detector model were retained; Float64 drift coordinates and
+analytic boundary crossing address identified numerical defects.</p>
+{outcomes}
+<p>Using the original 1,001 ns numerical support policy, the modeled union of unknown-history intervals changes from
+<strong>{mask["original"]["excluded_seconds"]:.9f} s</strong> to <strong>{mask["remaining"]["excluded_seconds"]:.9f} s</strong>.
+This is conditional native availability. The original ADC stream, triggers, accepted exposure and source images remain
+unchanged; restoring those requires replaying the shared electronic history with the recovered currents.</p>
+<details><summary>Why extending every trajectory is not a complete repair</summary>
+<p>Sixteen configured drift-only conditions examined 41 original deposited rows, with 47 evaluations including repeated
+durations. For transport event 2,590, both carriers are still moving at 1 μs and reach contacts at 2.553 and 2.778 μs.
+For transport event 132,649, the electron instead reaches a stationary projected position at 1.712 μs; extending the calculation
+from 5 to 20 μs leaves it unchanged. The remaining stopped-row probes retain stationary electrons without contact
+and holes at contacts.</p>
+<p>Two boundary witnesses expose distinct geometry problems: roundoff in a tangential segment can select its starting
+face again, while a projection onto one face can point outward through another face at a corner. These observations
+guide the next numerical corrections. A drift-only point reaching a contact does not establish a complete group waveform.</p>
+<p>The arbitrary 20,000-sample execution ceiling has been removed; the requested duration and time step determine the
+sample count. Default timing remains 1 ns over 1,000 ns. Longer-response studies must use their actual configured support
+when calculating unknown-history intervals. Source and ledger hashes, all cause counts and measured resources are in the
+<a href="{DATA.name}">evidence JSON</a>.</p></details></section>'''
 
 
 def sections(data):
@@ -587,6 +681,8 @@ resolution measurements or a calibrated selection rule.</p></details>
 <details><summary>Original triggers and interaction orders</summary>{events}</details></section>
 {origin_section(data)}
 {exact_kinetics_section(data)}
+{boundary_response_section(data)}
+{native_repair_section(data)}
 <section class="panel" id="range"><h2>Conditional three-dimensional position</h2>
 <p>The fit searches a full sphere and ranges from {number(primary["radial_search_mm"][0], 0)} to
 {number(primary["radial_search_mm"][1], 0)} mm from detector (0, 0, 0). The primary model uses a nominal

@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "build_id": "90f02331125a1685927e7915e6501bc41a90221e9b2d6b05019ff434c560a316",
+  "build_id": "736e94f1863cb21c4841785bb900edfd487c74f6ca0eaa1a8a75d7c05180c468",
   "file_count": 1914,
-  "total_bytes": 512749015,
+  "total_bytes": 512814661,
   "html_pages": 127,
-  "local_links_checked": 3792,
-  "resource_references_checked": 4019,
+  "local_links_checked": 3794,
+  "resource_references_checked": 4021,
   "page_navigation_checked": 2021,
   "fragments_checked": 353,
-  "downloads_checked": 770,
+  "downloads_checked": 772,
   "media_references_checked": 1164,
   "metadata_references_checked": 62,
   "other_references_checked": 2,
@@ -9445,13 +9445,13 @@
     },
     {
       "path": "results/gegi-five-second-reconstruction/evidence.json",
-      "bytes": 4189042,
-      "sha256": "d6c7ace869db1ec7a74c14e054d8c5b3476e7d1895544e5a3845c235f53a8848"
+      "bytes": 4248940,
+      "sha256": "d281a526c4e9e2911717e4772c9348c781937e240440d4b729348763817b9d6b"
     },
     {
       "path": "results/gegi-five-second-reconstruction/index.html",
-      "bytes": 80209,
-      "sha256": "4e2faa59d26feb442fdbe5a0b22994f5a04af53d37122e8c7a812724c95013f4"
+      "bytes": 85957,
+      "sha256": "10b9964d6272f12a0032ab40c9eac58d32254d5b3540b89b7336e4eda02722ae"
     },
     {
       "path": "results/gegi-five-second-reconstruction/peak-energy-offsets.png",

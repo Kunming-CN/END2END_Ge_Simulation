@@ -205,13 +205,55 @@ acquisition, not a detector resolution or an independent efficiency measurement.
 floating-point roundoff. The ledger keeps all 18 prespecified chronological triggers plus three named peak controls: eight complete
 signal substitutions, trigger 12,271 with truth only, trigger 12,841 with unresolved merged scatters, and eleven without
 the new observer. All original projected and unresolved weights remain intact.</p>
-<p>Trigger 12,271 deposits charge across two Y strips after its second photon interaction. A three-cell signal fit
-recovers the measured energy allocation but leaves a large Y28 waveform residual and a nearly tied four-cell alternative.
-Nine existing response banks have no off-center templates in its three cells. Local injections and independent holdouts
-are specified but have not run; the carrier collection endpoints remain unknown.</p>
 <p>The <a href="evidence.json">evidence JSON</a> includes every selected identity, exact photon step, substitution and unknown
 status, bound to its original ADC and replay hashes. Earlier estimate-based records remain preserved locally.</p>
 </details></section>
+<section class="panel" id="local-boundary-response"><h2>Explain the waveform near a strip boundary</h2>
+<p>Trigger 12,271 contains two photon interaction vertices but charge in three nominal strip cells. Ten local native
+injections now supply all 34 electrode responses and complete carrier endpoints. Keeping the original ADC and measured
+strip-energy allocation, the best of 16 sampled response models reduces the all-channel residual from
+<strong>32.18 to 4.21 ADC codes RMS</strong>.
+On Y28, it changes from <strong>138.26 to 15.83 codes</strong>.</p>
+<p>The improvement supports using positions within a strip and separate charge components to explain this waveform.
+Three charge components do not establish three photon interactions. The original trigger remains unresolved with
+zero imaging weight; the local comparison does not choose a source position.</p>
+<details><summary>Inspect independent local controls and the remaining interpretation limits</summary>
+<div role="region" aria-label="Three noisy ADC controls at positions excluded from the fitted template alternatives" tabindex="0" style="overflow-x:auto">
+<table><caption>Three noisy ADC controls at positions excluded from the fitted template alternatives</caption><thead><tr><th scope="col">Point</th><th scope="col">Injected position (mm)</th><th scope="col">Center error (mm)</th><th scope="col">Local-template error (mm)</th></tr></thead><tbody><tr><th scope="row">6</th><td>(−26.530, 9.855, −0.275)</td><td>2.5793</td><td>0.0354</td></tr><tr><th scope="row">7</th><td>(−26.600, 9.885, −0.345)</td><td>2.5860</td><td>0.0579</td></tr><tr><th scope="row">9</th><td>(−33.000, 9.070, 3.460)</td><td>1.9246</td><td>0.1500</td></tr></tbody></table></div>
+<p>The probe neighborhood was specified from the replay geometry before comparing the ADC. Three additional positions
+were excluded from the template alternatives and scored only after fitting independent noisy, quantized ADC controls.
+These are local response tests, not a blind detector-wide position-resolution measurement. The ten injected points have
+known carrier endpoints; the carrier allocation of the original distributed deposits remains unmeasured.</p>
+<p>Models keep the strip-derived component energies fixed, sum full-electrode point responses and fit a common onset.
+Only complete responses ending in the required collecting cells enter an alternative; no interpolation crosses a
+collection boundary. The quiet pretrigger Y28 tail is approximately −3 ADC codes, and removing it does not account for
+the observed residual reduction. All 16 alternatives, per-channel residuals, three holdout comparisons and exact source
+hashes remain in the <a href="evidence.json">evidence JSON</a>.</p></details></section>
+<section class="panel" id="native-repair"><h2>Recover native charge responses by cause</h2>
+<p>All <strong>1,971</strong> originally unavailable groups have been reprocessed or
+matched to exact prior complete responses. <strong>849</strong> now have complete native charge
+responses: 810 newly processed and 39 inherited. The remaining 1,122 keep their
+failure or unknown status. The same field samples and detector model were retained; Float64 drift coordinates and
+analytic boundary crossing address identified numerical defects.</p>
+<div role="region" aria-label="All originally unavailable native-response groups, with original identities retained" tabindex="0" style="overflow-x:auto">
+<table><caption>All originally unavailable native-response groups, with original identities retained</caption><thead><tr><th scope="col">Original cause</th><th scope="col">Groups</th><th scope="col">Complete</th><th scope="col">Duration reached</th><th scope="col">Boundary projection failed</th><th scope="col">Stopped before contact</th></tr></thead><tbody><tr><th scope="row">Stopped before contact</th><td>918</td><td>614</td><td>5</td><td>296</td><td>3</td></tr><tr><th scope="row">Reached configured duration</th><td>644</td><td>2</td><td>530</td><td>112</td><td>0</td></tr><tr><th scope="row">Endpoint outside crystal without contact</th><td>170</td><td>0</td><td>0</td><td>168</td><td>2</td></tr><tr><th scope="row">Start classified on a contact</th><td>238</td><td>233</td><td>2</td><td>3</td><td>0</td></tr><tr><th scope="row">Signed-charge check failed</th><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td></tr></tbody></table></div>
+<p>Using the original 1,001 ns numerical support policy, the modeled union of unknown-history intervals changes from
+<strong>0.965632420 s</strong> to <strong>0.560239440 s</strong>.
+This is conditional native availability. The original ADC stream, triggers, accepted exposure and source images remain
+unchanged; restoring those requires replaying the shared electronic history with the recovered currents.</p>
+<details><summary>Why extending every trajectory is not a complete repair</summary>
+<p>Sixteen configured drift-only conditions examined 41 original deposited rows, with 47 evaluations including repeated
+durations. For transport event 2,590, both carriers are still moving at 1 μs and reach contacts at 2.553 and 2.778 μs.
+For transport event 132,649, the electron instead reaches a stationary projected position at 1.712 μs; extending the calculation
+from 5 to 20 μs leaves it unchanged. The remaining stopped-row probes retain stationary electrons without contact
+and holes at contacts.</p>
+<p>Two boundary witnesses expose distinct geometry problems: roundoff in a tangential segment can select its starting
+face again, while a projection onto one face can point outward through another face at a corner. These observations
+guide the next numerical corrections. A drift-only point reaching a contact does not establish a complete group waveform.</p>
+<p>The arbitrary 20,000-sample execution ceiling has been removed; the requested duration and time step determine the
+sample count. Default timing remains 1 ns over 1,000 ns. Longer-response studies must use their actual configured support
+when calculating unknown-history intervals. Source and ledger hashes, all cause counts and measured resources are in the
+<a href="evidence.json">evidence JSON</a>.</p></details></section>
 <section class="panel" id="range"><h2>Conditional three-dimensional position</h2>
 <p>The fit searches a full sphere and ranges from 20 to
 10,000 mm from detector (0, 0, 0). The primary model uses a nominal

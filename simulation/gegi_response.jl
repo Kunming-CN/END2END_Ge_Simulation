@@ -103,12 +103,13 @@ function numerics(req)
     analytic=get(n,"analytic_semiconductor_boundary",false)
     check(analytic isa Bool,"Analytic semiconductor boundary selection must be explicit")
     dt=Float64(get(n,"drift_dt_ns",1.0)); cap=Float64(get(n,"drift_cap_ns",1000.0))
+    check(E.finite(dt) && 0.25<=dt<=10, "GeGI time step must be 0.25..10 ns")
     check(E.finite(cap) && cap>dt,"Invalid drift cap")
-    steps=ceil(Int,cap/dt)+1
+    step_ratio=cap/dt
+    check(E.finite(step_ratio) && step_ratio<typemax(Int),"Drift cap/time step exceeds the native integer sample index")
+    steps=ceil(Int,step_ratio)+1
     minspace=Float64(get(n,"min_grid_mm",0.5)); maxspace=Float64(get(n,"max_grid_mm",2.0))
     iterations=get(n,"max_iterations",50000); threads=req["selection"]["threads"]
-    check(E.finite(dt) && 0.25<=dt<=10, "GeGI time step must be 0.25..10 ns")
-    check(E.integer(steps) && 100<=steps<=20000, "GeGI drift steps must be 100..20000")
     check(E.finite(minspace) && E.finite(maxspace) && 0.05<=minspace<=maxspace<=5, "Invalid GeGI field grid bounds")
     check(E.integer(iterations) && 250<=iterations<=50000, "Invalid field iteration bound")
     check(E.integer(threads) && 1<=threads<=min(2,Threads.nthreads()),"Use one or two Julia threads")

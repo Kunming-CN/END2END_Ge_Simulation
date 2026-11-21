@@ -2,6 +2,21 @@ include(joinpath(@__DIR__,"..","simulation","gegi_campaign_response.jl"))
 using Test, Unitful
 const C=GeGICampaignResponse;const G=C.G;const B=G.NativeBoundaryGuard
 
+@testset "Configured drift duration has no artificial sample ceiling" begin
+    req=Dict("selection"=>Dict("threads"=>1),"numerics"=>Dict("drift_dt_ns"=>1.,"drift_cap_ns"=>1000.))
+    before=deepcopy(req)
+    @test G.numerics(req).max_steps==1001
+    @test req==before
+    for (cap,steps) in ((5.,6),(1000.25,1002),(20000.,20001))
+        candidate=deepcopy(req);candidate["numerics"]["drift_cap_ns"]=cap
+        @test G.numerics(candidate).max_steps==steps
+    end
+    for (dt,cap) in ((0.,1000.),(NaN,1000.),(1.,Inf),(1.,1.),(1.,1e30))
+        candidate=deepcopy(req);candidate["numerics"]["drift_dt_ns"]=dt;candidate["numerics"]["drift_cap_ns"]=cap
+        @test_throws ArgumentError G.numerics(candidate)
+    end
+end
+
 @testset "Native waveform errors identify exact signed samples" begin
     @test G.validate_native_charge([0.,-2.,0.],[0.,1.,2.],3)===nothing
     for (q,expected) in (([0.],["sample_count_lt_2"]),([0.,Inf],["nonfinite_signed_sample"]),

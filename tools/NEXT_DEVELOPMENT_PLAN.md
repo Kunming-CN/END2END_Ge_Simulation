@@ -52,9 +52,12 @@ The portable optional topology path connects 2x2 energy flows and shared-strip
 1x2/2x1 ADC fits, preserving unknown interaction count and the full census.
 Explicit incident-line diagnostics compare observed-sum absorption and two
 resolved Compton scatters followed by escape, with raw kinematic margins and no
-truth-tuned tolerance. Native recovery continues in its pinned process. After
-it closes, remove the identified artificial native-step ceiling and test exact
-moving-tail inputs with actual support reflected in missing-history accounting.
+truth-tuned tolerance. The full 1,971-group native repair is sealed, with 849
+complete responses and 1,122 remaining unknown. The artificial native-step
+ceiling is removed. A whole-group 5 us acceptance recovered event 2590; selected
+continuation now processes only the 537 prior duration-limited groups, inheriting
+the exact pilot. Mixed response supports enter the union of missing-history
+intervals. Separate tangency/corner defects await isolated cause-specific repair.
 
 Next scientific step: evaluate absorption, resolved escape and merged/mixed
 hypotheses against independent photon histories and the same measured response.
@@ -76,12 +79,16 @@ the transport model's bound-electron angular term from reconstruction errors.
 The sidecar is now connected to future candidate-truth retention through the
 optional `--retain-photon-kinematics` setting, preserved across resume. Exact
 joins on ten retained blocks/34 Ge rows and 38 focused checks pass; the runtime
-and same-event comparisons are published at `f52b116`. Next test trigger 12271's
-shared-charge boundary response. Nine existing banks
-have no off-center traces in its three cells; ten specified local injections,
-including holdouts, await the active native worker's completion. Collection
-endpoints remain unknown until those calculations run. Original five-second
-selection and image weights remain unchanged.
+and same-event comparisons are published at `f52b116`. Ten local injections now
+test trigger 12271's shared-charge boundary response. With fixed measured strip
+energies, their best sampled model lowers all34 residual RMS from 32.18 to 4.21
+ADC codes; three independent local noisy holdouts also improve position error.
+This replay-defined neighborhood does not establish blind detector-wide accuracy.
+All point endpoints are complete, while the original distributed deposits'
+carrier allocation remains unknown. Original selection and imaging weights are
+unchanged. Package the reusable comparison, then connect the resulting local
+response evidence to independently selected interaction hypotheses; retain unknown
+topology where the waveforms do not identify it.
 
 **Completed readiness baseline before this resumed work:** the five-second mixed-source acquisition,
 its final count/resource accounting and its full saved-candidate imaging are

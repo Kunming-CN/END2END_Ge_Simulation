@@ -16,17 +16,32 @@ launching or writing pinned sources. Do not start another native worker.
 Default sandbox process lookup can be empty even while its elevated owned
 session advances; a narrow elevated read-only lookup verified the exact PIDs.
 
-* **Native worker:** `/root/native_response`, session74071, Python17496/Julia29040,
-  phase `.local/gegi-reconstruction-v1/native-recovery-segment-crossing/`.
-  Request SHA c709ec329bae0ab05789970b1a234d7d0bb7c17ae45a5049757cf86a55cbfaac.
-  Latest checked 1919/1971: 827 complete, 522 step_limit, 565 failed, 5 stopped.
-  This is a running prefix, not the final repair rate.
-  Actual checkpoint/active-worker/native SQLite are authoritative. One earlier
-  109-group phase retains39complete/29limit/41failed; only the exact39complete
-  records were inherited. Diagnostic.jl drift-only work remains untested WIP,
-  excluded from releases. Finish the existing phase, reconcile all1971 and mask
-  union, then remove the artificial20000-step ceiling and test same moving-tail
-  inputs with actual configured support reflected in unknown-history bounds.
+* **Native worker:** `/root/native_response` owns serial continuation. The full
+  phase `.local/gegi-reconstruction-v1/native-recovery-segment-crossing/` exited
+  successfully and sealed all 1,971 groups: 849 complete, 537 step_limit,
+  580 boundary projection failures and five stopped without contact. Of the
+  complete responses, 810 are new and 39 inherited from the retained earlier
+  phase; all 1,932 new calculations have timing. The exact status ledger SHA is
+  0b0833f63059a1daa47308c2ca0e78f5fee82646f448aab3817f4d68465865da.
+  The modeled unknown-history union changes from 965,632,420 to 560,239,440 ns;
+  original ADC, triggers and images remain unchanged. This is native recovery,
+  not restored continuous-readout exposure. No original group was overwritten.
+  The 20,000-sample execution ceiling is removed after that worker's exit;
+  45 focused Julia assertions pass, with default timing unchanged. Sixteen
+  drift-only conditions (41 unique rows, 47 row evaluations) completed in
+  `native-drift-probe-run`, request SHA
+  75e6b752fceef754133abf6b94de09ef39d827a789f65441d1ca67b02b9fd7fa.
+  Event 2590 reaches both contacts by 2.778 us; 132649 becomes stationary at
+  1.712 us and stays so at 5/20 us. Tangential roundoff and outward corner
+  projection are separate witnesses. These probes do not establish whole-group
+  waveform recovery. The subsequent whole-group 2590 acceptance at 5 us is
+  complete: all eight original rows, 16 carrier contacts and 34 valid signed
+  waveforms through 3,193 ns. The selected 537-limit phase is now running in
+  `native-cap5000-step-limits`, Python25124/Julia32104, session13409, request SHA
+  3436be0712bb60d584defc7951ffaf4ff8746855a584a9156bf4c4e8589889c0.
+  It inherits the exact complete pilot and computes 536 new groups. The sealed
+  849 complete and 585 other unknown groups are not rerun. Producers are pinned
+  until closure; inspect the marker/checkpoint before any further native launch.
 * **Candidate worker:** `/root/candidate_attribution`. All 18 prespecified non-peak
   histories are complete: seven clean two-vertex, nine merged, two with three
   distinct vertices; 17 full-energy photons and one escape. All 18 exact
@@ -45,6 +60,10 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   All 34 retained Ge rows from ten blocks pass the real input join/staging
   acceptance; 24 transport/observer and 14 acquisition checks pass. No new
   acquisition or native calculation was needed for this integration.
+  The selected-cap continuation helper now preserves the full 1,971 denominator
+  through the sealed parent, carries deferred statuses explicitly, and unions
+  missing-history tails at each group's actual support. Twelve focused checks
+  pass; the real whole-group 2590 pilot confirms the extended response path.
 * **Position worker:** `/root/position_model`. Same-event substitutions on all
   18 chronological IDs plus three named peak controls are complete. Among eight
   fully paired cases, position-only |ARM change| is 0.44-16.59 degrees versus
@@ -69,10 +88,27 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   nearly tied. The original unresolved weight stays one; carrier endpoints are
   unknown. `trigger-12271/charge-allocation-diagnostic.json` SHA
   3cf6a6738ea846a037b3b94262602792473b8307e1b49b3b0ab6c91e969c362d.
-  Nine existing banks contain no off-center response in these three cells.
-  The exact-kinetics receipt specifies ten unrun 500-keV all-channel points,
-  including independent holdouts. Run them serially after the active native
-  worker and its priority cause diagnostics; reuse the existing field cache.
+  Ten specified 500-keV point injections now have all 34 signed responses and
+  complete endpoints, using the original Float32 field state without a solve.
+  Sixteen local response alternatives preserve the original ADC and measured
+  cell energies. The best reduces all34 RMS 32.17797 -> 4.21475 ADC codes and
+  Y28 138.25977 -> 15.82682. Three independent noisy holdout positions improve
+  errors 2.5793/2.5860/1.9246 -> 0.0354/0.0579/0.1500 mm. The neighborhood was
+  specified from replay geometry, so this is local response evidence, not blind
+  detector-wide resolution. Three charge components remain distinct from two
+  photon vertices; original imaging weight stays zero/unresolved one. The actual
+  distributed deposits' carrier allocation remains unknown.
+  `trigger-12271/boundary-adc-comparison.json` SHA
+  1aa8643fc3578a1d5bff2803df61dfbf43110a2621cc4562f2ebbd317a91b110.
+  Capture COMPLETE SHA116fe3d44b7c5eb2cca4f2e9ae53cc781504876bc8f6b18932289799fe1ce719;
+  native40.7149s/peak2,345,721,856B. The first new entry-point syntax failure
+  occurred before field loading and is retained separately. The reusable
+  `tools/gegi_boundary_response_comparison.py` CLI now reproduces every scientific
+  field in a separate receipt, SHA
+  5c2113ff0f9d4f5896d4006d55e53553f82fb43e992941d1d19a1c45ae8f6c84.
+  It remains a case-specific local diagnostic: best fit uses a predeclared
+  first-component anchor; keeping that component centered still gives all34
+  RMS13.67/Y28 51.88. Unknown production events do not receive that anchor.
 
 ## Delivered reconstruction and scientific findings
 
@@ -177,11 +213,19 @@ checks and 42 publication tests pass. The first sandbox preview could not be
 reached; the owned localhost preview worked outside the sandbox, and both
 preview processes and the tab are closed. Pages deployment 44894665317 and
 live verification are complete; source, ZIP and exhibit all match this release.
-Native diagnostic WIP remains separate until tested. The native worker has
-prepared 16 unrun, fixed saved-row probes in `native-drift-probes.json`, SHA
+The native worker completed 16 fixed saved-row probe conditions from
+`native-drift-probes.json`, SHA
 d0114d3fbc02975a9bf364ef073be7045fa249d277265f7f826c2ff0c4b5dcbf.
-After final sealing and reconciliation it owns the next serial native phase,
-then the ten 12271 injections. No competing native process is authorized.
+The corresponding source changes and native/local-boundary exhibit are ready
+for publication. Build736e94f1863cb21c4841785bb900edfd487c74f6ca0eaa1a8a75d7c05180c468
+contains1,914files/512,814,661bytes. Two display checks,42publication tests,
+six package checks and the local site check pass. Desktop Chrome verified the
+expanded three-holdout comparison, cause table, conditional intervals and methods
+route; owned preview/tab are closed. Git/release/live deployment remains pending.
+`native-response-repair.json` SHA
+45c8ac5afb77ec9c73949fa529861b46a6869213f75ae17677f6969adc6dc0f8
+is a reproducible, path-free summary of the complete ledger and numerical probes.
+Native ownership remains serial; do not launch a competing process.
 
 ## Baseline and retained evidence
 
