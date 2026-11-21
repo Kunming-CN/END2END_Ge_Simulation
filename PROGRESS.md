@@ -42,7 +42,7 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   It inherits the exact complete pilot and computes 536 new groups. The sealed
   849 complete and 585 other unknown groups are not rerun. Producers are pinned
   until closure; inspect the marker/checkpoint before any further native launch.
-  Current durable prefix15/537: three complete (one inherited),12still limited,
+  Recorded durable prefix15/537: three complete (one inherited),12still limited,
   563.385s for14new groups. This is progress, not a final recovery rate. The
   phase continuation-handoff.json preserves launch identity and next reconciliation.
   After closure, reconcile the parent/selected ledger and correct measured
@@ -221,8 +221,7 @@ live verification are complete; source, ZIP and exhibit all match this release.
 The native worker completed 16 fixed saved-row probe conditions from
 `native-drift-probes.json`, SHA
 d0114d3fbc02975a9bf364ef073be7045fa249d277265f7f826c2ff0c4b5dcbf.
-The corresponding source changes and native/local-boundary exhibit are ready
-for publication. Build736e94f1863cb21c4841785bb900edfd487c74f6ca0eaa1a8a75d7c05180c468
+The corresponding source changes and native/local-boundary exhibit are published. Build736e94f1863cb21c4841785bb900edfd487c74f6ca0eaa1a8a75d7c05180c468
 contains1,914files/512,814,661bytes. Two display checks,42publication tests,
 six package checks and the local site check pass. Desktop Chrome verified the
 expanded three-holdout comparison, cause table, conditional intervals and methods
@@ -230,7 +229,8 @@ route; owned preview/tab are closed. Source7a7d8a7 and software-only release
 `student-runtime-7a7d8a704781` are published. ZIP1,401,641bytes/254members SHA
 f5b4988a77c257adc5c6542267fd419527f43939c3abc59fa2e3ef73c73b4f7e
 matches the actual public download and latest-release identity. Pages deployment
-44897993944 succeeded; required live-file validation is running.
+44897993944 succeeded; required live validation passed all1,018checked files,
+including the five exhibit files. Source, package and live exhibit are synchronized.
 `native-response-repair.json` SHA
 45c8ac5afb77ec9c73949fa529861b46a6869213f75ae17677f6969adc6dc0f8
 is a reproducible, path-free summary of the complete ledger and numerical probes.
