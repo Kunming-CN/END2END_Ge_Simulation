@@ -87,6 +87,13 @@ one observed second-site energy axis with an explicit Gaussian test width and
 positive-weight energy quadrature. It retains separate integrated path masses,
 coefficient-grid sensitivity and missing measurements. This conditional research
 component does not change imaging weights or calibrate detector resolution.
+`gegi_candidate_observed_energy.py` plans and evaluates those factors using saved
+measured pairing/order identities, fitted vertices and explicit incident lines.
+Missing strip pairings and inadmissible fixed first scatters remain separate;
+observations outside physical deposited-energy support retain measurement tails.
+It initializes only missing coefficient queries and hashes the completed measured
+response before optional truth scoring. It is a research consumer, not a new
+production selection or source likelihood.
 
 `gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
 allocations or shared-strip fits; `gegi_adc_topology.py` and

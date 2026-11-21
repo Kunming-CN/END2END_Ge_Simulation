@@ -108,9 +108,14 @@ coefficient extraction initialized the original configuration with zero events.
 second-site energy measure. Nine histories/eight measured energies, seven focused
 checks and nested numerical comparisons pass; the rejected adaptive-integral
 witness remains recorded. Its explicit2keV test width is not a calibrated response.
-The next consumer uses saved measured pair/order identities with fixed measured
-first-site energy; first-site uncertainty, secondary containment, passive material
-and acquisition selection remain separate. Common units alone do not establish
+The saved measured consumer now computes62of252line/order states across21original
+triggers, retaining168incompatible strip-pairing states and22inadmissible fixed
+first scatters. Observation tails above physical energy support are evaluated.
+Its completed measured response is hashed before photon scoring. Next, trial
+source geometry predicts the first outgoing energy and both measured energies
+receive explicit response terms; no exact-measured-first gate is inherited.
+Secondary containment, position/Doppler response, passive material and acquisition
+selection remain separate. Common units alone do not establish
 model probabilities. Angular scores alone cannot choose absorption versus escape or
 calibrate source range. Establish coverage, wrong-order rates and angular errors
 before changing event weights; unresolved intra-cell scatters need a response

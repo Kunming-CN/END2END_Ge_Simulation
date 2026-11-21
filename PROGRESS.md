@@ -36,27 +36,20 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   projection are separate witnesses. These probes do not establish whole-group
   waveform recovery. The subsequent whole-group 2590 acceptance at 5 us is
   complete: all eight original rows, 16 carrier contacts and 34 valid signed
-  waveforms through 3,193 ns. The selected 537-limit phase is now running in
-  `native-cap5000-step-limits`, Python18384/Julia27556, session62982, request SHA
+  waveforms through 3,193 ns. The selected537-limit phase closed successfully in
+  `native-cap5000-step-limits`, formerPython18384/Julia27556,session62982,requestSHA
   3436be0712bb60d584defc7951ffaf4ff8746855a584a9156bf4c4e8589889c0.
-  It inherits the exact complete pilot and computes 536 new groups. The sealed
-  849 complete and 585 other unknown groups are not rerun. Producers are pinned
-  until closure; inspect the marker/checkpoint before any further native launch.
-  Cooperative interleaves stopped cleanly at75groups for the81point grid and
-  at138groups for the198point depth study. The latter prefix is31complete,
-  105limited,two stopped. Both captures ran serially; the same cap store resumed
-  with all prior input/metadata records and exact ledger prefixes unchanged.
-  `serial-interleave.json` retains both stop/exit/resume proofs; no completed
-  response was recomputed. This prefix is not a final recovery rate.
-  After the fourth cooperative interleave, the16:30UTC activation verified
-  the same processes advancing, with508/537durable groups:138complete,
-  365limited,fivestopped; checkpoint495is coarser. The stopped375prefix and
-  all prior input/metadata/ledger/source bytes were preserved before resume.
-  `native-cap5000-step-limits/continuation-handoff.json` records this snapshot.
-  After closure, reconcile the parent/selected ledger. The native owner now
-  prepares the measured tangency/self-hit correction in an isolated helper with
-  pure geometry checks; pinned active producers stay unchanged. Keep genuine
-  outward corners unknown. No competing full native/field worker is running.
+  It reused one complete pilot and computed536new groups. Final selectedcounts:
+  146complete,385step_limit,sixstopped. Effective1971parentcounts are995complete,
+  580failed,385limited,11stopped;849priorcomplete and585otherunknown were not rerun.
+  The mixed-support conditional unknown-history union is489370980ns, versus
+  original965632420ns and prior560239440ns. This is not restored continuous ADC.
+  SealedrecoverySHAa92f44a552ba45cea9e5e072ed858d32e8cf2b8ca184bb8bb367cef7e123929c;
+  sessionexit0,closed marker and SQLite/report seal agree. All cooperative
+  stop/resume prefix proofs remain in `serial-interleave.json`. At17:04UTC the
+  native owner is reconciling exact parent/selected producer lineage, then will
+  apply the measured tangency/self-hit correction and run original whole-group
+  witnesses serially. Keep genuine outward corners unknown; no duplicate worker.
   Isolated helper is ready: `simulation/native_segment_crossing.jl` SHA0579097c
   and `tools/test_native_segment_crossing.jl` pass57geometryassertions without
   fields/drift (peak707,915,776B).214613selectsvalidlaterfacefraction0.3972794892;
@@ -376,9 +369,21 @@ mass. A retained constant-callback reproducer isolates sensitivity to ray matrix
 multiplication in that callback; the runtime's underlying defect is not diagnosed.
 Positive-weight quadrature gives0.0108483077/mm for this witness and passes the
 mass/convergence checks. The unique failure and reproducer remain in the receipt.
-Next the candidate worker connects these components to the same saved measured
-pair/order ledger, without truth inputs or changing official weights. The active
-native cap retains its pinned producers until closure.
+The saved measured consumer is complete:21trigger IDs/42pairs/84orders/252line
+states, with62computed across14triggers,168original X/Y-strip pairing failures
+and22inadmissible fixed first scatters. Observed energy above the true endpoint
+or escape support still enters the Gaussian response. Receipt
+`photon-continuation-v1/measured-second-site-controls.json` SHA
+320515e296fe2c822538c65cf42fec0f8668d4bef2571a9bdea863167f450fed binds measured
+digest05613b42110df6c147b9eed1b3fe7c6ef5a23972060c056a38f33044142cde3d before
+truth scoring. Eight of nine clean histories retain the true order at the nearest
+supplied line;12271lacks a qualified original pairing. Merged topology stays
+unidentified. Seven focused checks pass, including observation-tail retention;
+root confirms exact source hashes and pre/post-scoring digest.96new coefficient
+energies reused81previous anchors, zero transport events. Evaluation16.833s;
+original candidate weights and source fits stay fixed. Next position/candidate
+workers connect explicit trial-source geometry to first-scatter kinematics and
+both energy measurement terms; selected-acquisition normalization remains open.
 
 Prior XY/depth publication and its failure evidence are retained in the immutable
 handoff below.
