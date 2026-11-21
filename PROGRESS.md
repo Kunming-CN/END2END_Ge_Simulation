@@ -164,9 +164,16 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   weakX can move1.975mm for+0.200codes RMS and weakY2.268mm for+0.182codes.
   `weak-overlap-bound-diagnostic.json` SHAd676304f2d5061eebde5edacf15ca2482dbd788caa63db0cd82c3a374deed058
   retains the three conditional profiles; this is local diagnostic evidence,
-  not confidence coverage. Next test XY interpolation on existing banks and
-  the same held-out points; prepare missing geometry-defined points only if
-  those banks cannot support the test. No new native launch. Cap continues.
+  not confidence coverage. A prespecified symmetric X/Y PCHIP contrast on the
+  same banks/six fresh held-outs is now complete: all six improve, position
+  RMS0.284846->0.092752mm and known-position waveformRMS13.22817->4.75310codes.
+  All297training knots reproduce within1.36e-20V/keV; native contact/charge
+  closure is checked separately. SciPy1.16.3; depth/time remain linear.
+  `xy-interpolation-validation.json` SHA1827f655b95bc3442e72a410fd075f02456879d8f1927a32a099d30c04f49ab5
+  is local, not promoted into runtime or published detector-wide performance.
+  Worker now applies that frozen method to24same overlap ADCs plus original
+  12271, retaining measured energies/unknown alternatives/weights. New research
+  CLI `gegi_boundary_xy_study.py` is in progress; no new native. Cap continues.
 
 ## Delivered reconstruction and scientific findings
 
@@ -234,7 +241,7 @@ passed. Two display checks,42publication tests,six package checks and desktop
 homepage->boundary/cause tables->methods acceptance passed; preview/tab closed.
 Combined publication receipt: `.local/gegi-reconstruction-v1/publication-assets.json`.
 
-Current integrated milestone adds measured-only grid fitting, same-input
+Published milestone `d5a5802c3cf0647d7d63661984710eeee31175a4` adds measured-only grid fitting, same-input
 interpolation/energy/noise diagnosis and tested depth-only refinement. The exhibit
 separates regular-grid results from the replay-defined anchor, retains worsened
 overlap positions and all unknowns. Updated2display checks and42site tests pass.
@@ -245,7 +252,9 @@ The final combined build is aa306865677e0e66754ffd30809ba0a1c586a9934d4b89d2ed21
 1,914files/513,462,216bytes,127HTMLpages. The normal builder and separate
 tools/check_site.py pass; desktop homepage->main result->depth/overlap/cause
 tables->methods passes. Owned preview/tab are closed; no browser download or
-settings change. Source/Pages synchronization and required live check are next.
+settings change. GitHub main and Pages44906154382 are synchronized; required
+tools/check_site.py --url passes all1,018selected live files. The compact
+publication receipt records this build and retains exact unchanged asset bytes.
 Student runtime is unchanged; research traces stay outside its package.
 
 The exact-kinetic observer and future candidate-truth retention remain delivered:
