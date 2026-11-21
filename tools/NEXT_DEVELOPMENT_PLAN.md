@@ -52,18 +52,16 @@ The portable optional topology path connects 2x2 energy flows and shared-strip
 1x2/2x1 ADC fits, preserving unknown interaction count and the full census.
 Explicit incident-line diagnostics compare observed-sum absorption and two
 resolved Compton scatters followed by escape, with raw kinematic margins and no
-truth-tuned tolerance. The full 1,971-group native repair is sealed, with 849
-complete responses and 1,122 remaining unknown. The artificial native-step
-ceiling is removed. A whole-group 5 us acceptance recovered event 2590; selected
-continuation now processes only the 537 prior duration-limited groups, inheriting
-the exact pilot. Mixed response supports enter the union of missing-history
-intervals. Separate tangency/corner defects await isolated cause-specific repair.
-The next continuous-readout acceptance targets the first retained unavailable
-group, ordinal119/event2459. Starting from the earliest saved checkpoint needs
-43missing successful responses from original transport blockb000002. Exact
-random-state/parent/native-input recovery now passes for all43groups/1241rows.
-Use a cooperative cap interleave to regenerate the original baseline responses
-serially from the frozen phase1producer, then resume the unchanged cap worker.
+truth-tuned tolerance. The1971-group parent repair and537selected duration
+continuation are sealed and reconciled:995complete,580failed,385limited,11stopped.
+The artificial native-step execution ceiling is removed. Actual1001/5001ns
+supports produce a489370980ns conditional unknown union, not restored ADC exposure.
+The first tangent/self-hit correction keeps20successcontrols exact but allthree
+whole-group witnesses still fail: two advance to a second active surface and one
+is unchanged. The next cause-specific repair handles simultaneous surface
+constraints, retaining unknowns where no admissible motion/contact exists.
+The first continuous-readout acceptance uses ordinal119/event2459 and43original
+successful responses fromb000002, with exactrandom-state/input recovery.
 The43responses and exact baseline41triggers/14candidate ADCs now pass. Replacing
 only2459adds one guard-only rejected rise, with14candidates unchanged; the
 10.563us clipped unknown interval disappears only inside the replayed3.821ms.
@@ -111,9 +109,12 @@ witness remains recorded. Its explicit2keV test width is not a calibrated respon
 The saved measured consumer now computes62of252line/order states across21original
 triggers, retaining168incompatible strip-pairing states and22inadmissible fixed
 first scatters. Observation tails above physical energy support are evaluated.
-Its completed measured response is hashed before photon scoring. Next, trial
-source geometry predicts the first outgoing energy and both measured energies
+Its completed measured response is hashed before photon scoring. Trialsource
+geometry now predicts the first outgoing energy and both measured energies
 receive explicit response terms; no exact-measured-first gate is inherited.
+Six prespecified points compute504supported states with132newly evaluable states.
+Stable log densities preserve extreme numerical tails; independent-energy
+interpolation benchmarks target the measured continuation-integral bottleneck.
 Secondary containment, position/Doppler response, passive material and acquisition
 selection remain separate. Common units alone do not establish
 model probabilities. Angular scores alone cannot choose absorption versus escape or

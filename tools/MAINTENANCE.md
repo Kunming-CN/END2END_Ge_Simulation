@@ -100,8 +100,10 @@ the first Klein-Nishina density and the path-to-volume factor. Its consumer
 `gegi_candidate_trial_response.py` retains the saved pair/order ledger and a
 declared radial/directional grid. These conditional components omit the first
 incidence and selected-acquisition normalization; trial response is not a fitted
-source location. Their frozen six-point acceptance exposes floating-point tails
-that require log-density evaluation before combining events.
+source location. Their frozen six-point acceptance exposes floating-point tails.
+`gegi_photon_log_response.py` supports optional natural-log densities and analytic
+endpoint subdivisions. Raw fields remain unchanged; zero physical rates remain
+distinct from numerical underflow, with no density floor or renormalization.
 
 `gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
 allocations or shared-strip fits; `gegi_adc_topology.py` and

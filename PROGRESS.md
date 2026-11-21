@@ -45,18 +45,26 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   The mixed-support conditional unknown-history union is489370980ns, versus
   original965632420ns and prior560239440ns. This is not restored continuous ADC.
   SealedrecoverySHAa92f44a552ba45cea9e5e072ed858d32e8cf2b8ca184bb8bb367cef7e123929c;
-  sessionexit0,closed marker and SQLite/report seal agree. All cooperative
-  stop/resume prefix proofs remain in `serial-interleave.json`. At17:04UTC the
-  native owner is reconciling exact parent/selected producer lineage, then will
-  apply the measured tangency/self-hit correction and run original whole-group
-  witnesses serially. Keep genuine outward corners unknown; no duplicate worker.
+  sessionexit0,closed marker and SQLite/report seal agree. Full1971input/producer
+  reconciliation passes; derivedledgerSHA2b2977672ad83c54cc525b94b5b961b32452bc288c06126204df12df81e4c538,
+  with39priorparent+onepilot inherited and536new timings retained. Longer support
+  adds1231660ns outside the original mask; net reduction is not a pure subset.
+  All cooperative prefix proofs remain in `serial-interleave.json`.
   Isolated helper is ready: `simulation/native_segment_crossing.jl` SHA0579097c
   and `tools/test_native_segment_crossing.jl` pass57geometryassertions without
   fields/drift (peak707,915,776B).214613selectsvalidlaterfacefraction0.3972794892;
   717723tinyrearintersectiongetspositiveprojectedmotion;3361staysunknown.
-  Six successful controls atFloat32/64arebit-identical. The UNAPPLIED patch
-  `native-drift-probe-run/segment-crossing-integration.patch` SHA59411f56 is
-  ready only after the active cap source pin closes; waveform recovery untested.
+  Six successful controls atFloat32/64arebit-identical. CorrectedUTF8patchc7b51434
+  replaced a retained encoding-failed59411f56 preparation artifact. Actualv2
+  whole-group acceptance completed in46.2725s,peaknative3198586880B;20/20control
+  waveformCSVbytes and endpoint records remain exact, but0/3witnesses recover.
+  Receipt `native-segment-crossing-acceptance/validation.json` SHA
+  5a2e2a47d6d99f8abbf07469d6270f3e5ed2c2ddba9b6e8183859739dcbd49f0.
+  214613row4924advances108->109steps and717723row9951advances to112; both then
+  meet a second active face.3361row3653remains at39. Native owner now implements
+  simultaneous admissible surface projection for these concrete intersections;
+  zero progress/contact absence remains unknown. Runtime changes and helper
+  inclusion are WIP, not published. No580group replay is launched.
 * **Candidate worker:** `/root/candidate_attribution`. All 18 prespecified non-peak
   histories are complete: seven clean two-vertex, nine merged, two with three
   distinct vertices; 17 full-energy photons and one escape. All 18 exact
@@ -394,7 +402,16 @@ Eight focused primitive/adapter checks pass. Five missing initialized coefficien
 queries generated zero transport events. Actual504statecost153.269s; continuation
 dominates the measured.537sprofile. With nominal2/2keV widths,421first densities
 underflow; these are numerical zeros, not physical exclusions. Stable log-density
-support is now being implemented. Selected-acquisition normalization, first flux,
+support now passes13focused tests and actual-witness checks, with raw outputs
+unchanged. Receipt `photon-continuation-v1/log-density-endpoint-acceptance.json`
+SHAafc7577a10a383db3ea2f24235550d7536a05becaadb92cb31bc57a8c5152d09 retains
+finite5330absorption/escape logs-3180.832862/-15762.911901 despite rawzero.
+Analytic endpoint subdivisions remove the witnessed2.35-log-unit quadrature
+discrepancy without cutting the support; prior failed result remains retained.
+The candidate worker now benchmarks reusable intermediate-energy response curves
+on two chronological branches and independent energy queries. Coarse errors
+exceeded the.01log-error target and are being refined, not silently accepted.
+Selected-acquisition normalization, first flux,
 position/Doppler response and merged topology remain open; no new source estimate
 or calibrated event probabilities follow from these conditional components.
 

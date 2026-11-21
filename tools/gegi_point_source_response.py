@@ -21,6 +21,7 @@ import math
 import numpy as np
 
 import gegi_photon_continuation as photon
+from gegi_photon_log_response import density_evidence, gaussian_log_density_per_kev
 from gegi_photon_observed_energy import gaussian_density_per_kev, observed_continuation
 
 
@@ -48,12 +49,13 @@ def first_compton_state(source_mm, first_mm, second_mm, incident_keV):
 
 def point_source_response(crystal, source_mm, first_mm, second_mm, incident_keV, observed_first_keV,
                           observed_second_keV, rates_at, outgoing_total, *, sigma_first_keV, sigma_second_keV,
-                          azimuth_samples=256, energy_order=256):
+                          azimuth_samples=256, energy_order=256, include_log=False):
     """Return branch densities with rates_at(E) in PhotonRates and outgoing_total(E) in inverse mm.
 
     For tabulated rates, pass the existing total_rate_interpolator to
     outgoing_total. The caller supplies the intermediate rate components
     on their verified domain. Unsupported table lookups propagate unchanged.
+    Set include_log to retain finite natural logs when raw densities underflow.
     """
     state = first_compton_state(source_mm, first_mm, second_mm, incident_keV)
     intermediate = state['intermediate_keV']
@@ -65,10 +67,10 @@ def point_source_response(crystal, source_mm, first_mm, second_mm, incident_keV,
     inverse_area = (1/state['site_separation_mm'])**2
     second_response = observed_continuation(crystal, first_mm, second_mm, intermediate, rates_at(intermediate),
                                             outgoing_total, [observed_second_keV], sigma_keV=sigma_second_keV,
-                                            azimuth_samples=azimuth_samples, energy_order=energy_order)
+                                            azimuth_samples=azimuth_samples, energy_order=energy_order, include_log=include_log)
     second = second_response['observations'][0]
     factor = first_kn*inverse_area*first_density
-    return dict(state, incident_keV=incident_keV, observed_first_keV=observed_first_keV,
+    result = dict(state, incident_keV=incident_keV, observed_first_keV=observed_first_keV,
                 observed_second_keV=observed_second_keV, sigma_first_keV=sigma_first_keV, sigma_second_keV=sigma_second_keV,
                 first_kn_density_per_sr=first_kn, inverse_intersite_area_per_mm2=inverse_area,
                 first_measurement_density_per_keV=first_density,
@@ -78,3 +80,20 @@ def point_source_response(crystal, source_mm, first_mm, second_mm, incident_keV,
                     branch: first_kn*inverse_area*mass
                     for branch, mass in second_response['observed_integrated_mass_per_mm'].items()},
                 second_site_response=second_response)
+    if include_log:
+        log_first = gaussian_log_density_per_kev(observed_first_keV, state['expected_first_deposit_keV'], sigma_first_keV)
+        log_spatial = math.log(first_kn)-2*math.log(state['site_separation_mm'])
+        result['log_first_measurement_density_per_keV'], result['first_measurement_density_status'] = density_evidence(
+            first_density, log_first, supported=True)
+        integrated = second_response['log_observed_integrated_mass_per_mm']
+        result['log_energy_integrated_branch_density_per_mm3'] = {
+            branch: log_spatial+mass if mass is not None else None for branch, mass in integrated.items()}
+        for branch in ('absorption', 'escape'):
+            name = branch+'_per_mm3_observed_keV2'
+            second_log = second['log_'+branch+'_per_mm_observed_keV']
+            if second_log is None:
+                result['log_'+name], result[branch+'_density_status'] = None, second[branch+'_density_status']
+            else:
+                result['log_'+name], result[branch+'_density_status'] = density_evidence(
+                    result[name], log_spatial+log_first+second_log, supported=True)
+    return result

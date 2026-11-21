@@ -15,6 +15,7 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 from scipy.integrate import quad
+from scipy.special import logsumexp
 
 from gegi_imaging import ELECTRON_REST_KEV
 
@@ -148,7 +149,7 @@ def outgoing_density_per_keV(incident_keV, outgoing_keV):
     return density(outgoing_keV)
 
 
-def azimuth_survival(crystal, second_mm, incoming_direction, cosine, total_outgoing_per_mm, *, samples):
+def azimuth_survival(crystal, second_mm, incoming_direction, cosine, total_outgoing_per_mm, *, samples, include_log=False):
     """Average the zero-interaction Ge exit survival at fixed final scatter angle."""
     u = np.asarray(incoming_direction, dtype=float)
     if (u.shape != (3,) or not np.isclose(np.linalg.norm(u), 1., atol=1e-10, rtol=0.) or not -1 <= cosine <= 1 or
@@ -159,7 +160,11 @@ def azimuth_survival(crystal, second_mm, incoming_direction, cosine, total_outgo
     phase = np.arange(samples)*2*math.pi/samples
     rays = cosine*u + math.sqrt(1-cosine*cosine)*(np.cos(phase)[:,None]*transverse + np.sin(phase)[:,None]*np.cross(u, transverse))
     lengths = exit_distance_mm(crystal, second_mm, rays)
-    return float(np.mean(np.exp(-total_outgoing_per_mm*lengths)))
+    log_transmission = -total_outgoing_per_mm*lengths
+    survival = float(np.mean(np.exp(log_transmission)))
+    if include_log:
+        return survival, float(logsumexp(log_transmission)-math.log(samples))
+    return survival
 
 
 @dataclass(frozen=True)

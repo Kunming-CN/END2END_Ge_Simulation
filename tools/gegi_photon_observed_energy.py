@@ -17,9 +17,10 @@ import time
 
 import numpy as np
 import scipy
-from scipy.special import roots_legendre
+from scipy.special import logsumexp, roots_legendre
 
 import gegi_photon_continuation as photon
+from gegi_photon_log_response import density_evidence, gaussian_log_density_per_kev, gaussian_tail_knots
 
 
 def gaussian_density_per_kev(observed_keV, deposited_keV, sigma_keV):
@@ -30,8 +31,8 @@ def gaussian_density_per_kev(observed_keV, deposited_keV, sigma_keV):
 
 
 def observed_continuation(crystal, first_mm, second_mm, intermediate_keV, rates, outgoing_total, observed_keV,
-                          *, sigma_keV, azimuth_samples=256, energy_order=256):
-    """Compare densities per observed keV per path-mm with no observed-energy cut."""
+                          *, sigma_keV, azimuth_samples=256, energy_order=256, include_log=False):
+    """Return raw densities and optional natural logs per observed keV per path-mm."""
     observed_keV = list(observed_keV)
     gaussian_density_per_kev(0., 0., sigma_keV)
     if type(energy_order) is not int or energy_order < 2:
@@ -43,47 +44,95 @@ def observed_continuation(crystal, first_mm, second_mm, intermediate_keV, rates,
     max_deposit = intermediate_keV-min_outgoing
     axis = (np.asarray(second_mm) - first_mm)/between['internal_path_mm']
     quadrature = [roots_legendre(n) for n in (energy_order//2,energy_order)]
+    optical_depth = rates.total_per_mm*between['internal_path_mm']
+    log_compt_mass = (math.log(rates.compton_per_mm)-optical_depth) if include_log and rates.compton_per_mm else -math.inf
 
     def escape_spectrum(deposit):
         outgoing = intermediate_keV-deposit
         # Values come from a quadrature on the known physical interval.
         outgoing = min(intermediate_keV,max(min_outgoing,outgoing))
         cosine = photon._outgoing_cosine(intermediate_keV, outgoing)
-        survive = photon.azimuth_survival(crystal, second_mm, axis, cosine, outgoing_total(outgoing), samples=azimuth_samples)
-        return compt_mass*energy_density(outgoing)*survive
+        survival = photon.azimuth_survival(crystal, second_mm, axis, cosine, outgoing_total(outgoing),
+                                          samples=azimuth_samples, include_log=include_log)
+        if include_log:
+            raw_survival, log_survival = survival
+            kn = energy_density(outgoing)
+            return compt_mass*kn*raw_survival, log_compt_mass+math.log(kn)+log_survival
+        return compt_mass*energy_density(outgoing)*survival
 
     def integral(fn, knots=()):
-        if not compt_mass:
-            return 0.,0.
+        if not compt_mass and not (include_log and rates.compton_per_mm):
+            return 0., 0., -math.inf, None
         stops = [0.,*knots,max_deposit]
         results = []
+        log_results = []
         for nodes, weights in quadrature:
             terms = []
+            log_terms = []
             for left,right in zip(stops[:-1],stops[1:],strict=True):
                 half = (right-left)/2
                 values = [fn(left+half*(1+node)) for node in nodes]
+                if include_log:
+                    logs = [v[1] for v in values]
+                    values = [v[0] for v in values]
+                    if half > 0.:
+                        log_terms.append(math.log(half)+float(logsumexp(logs, b=weights)))
                 terms.append(half*float(np.dot(values,weights)))
             results.append(math.fsum(terms))
-        return results[1],abs(results[1]-results[0])
+            if include_log:
+                log_results.append(float(logsumexp(log_terms)))
+        log_difference = abs(log_results[1]-log_results[0]) if log_results and all(map(math.isfinite, log_results)) else None
+        return results[1], abs(results[1]-results[0]), log_results[1] if log_results else -math.inf, log_difference
 
-    escape_mass, mass_error = integral(escape_spectrum)
+    escape_mass, mass_error, log_escape_mass, _ = integral(escape_spectrum)
     if escape_mass > compt_mass + 2*mass_error + 1e-12:
         raise ValueError('Escape continuum mass exceeds the available Compton path mass')
     rows = []
+    log_photo_mass = (math.log(rates.photoelectric_per_mm)-optical_depth) if include_log and rates.photoelectric_per_mm else -math.inf
     for observed in observed_keV:
         absorption = photo_mass*gaussian_density_per_kev(observed, intermediate_keV, sigma_keV)
         # Segment near the Gaussian mode to resolve even a narrow explicit width.
         knots = [observed+x*sigma_keV for x in (-8,-4,0,4,8) if 0 < observed+x*sigma_keV < max_deposit]
-        escape, error = integral(lambda deposit:escape_spectrum(deposit)*gaussian_density_per_kev(observed,deposit,sigma_keV), knots)
-        rows.append(dict(observed_keV=observed, absorption_per_mm_observed_keV=absorption,
-                         escape_per_mm_observed_keV=escape, escape_quadrature_difference=error))
-    return dict(sigma_keV=sigma_keV, energy_response='unit-normalized Gaussian on the entire real observed-energy axis',
+        tail_knots = []
+        if include_log and rates.compton_per_mm:
+            nearest = min(max_deposit, max(0., observed))
+            # If even the closest supported deposit underflows, every raw
+            # quadrature value is zero. Resolve the endpoint for the log result.
+            if gaussian_density_per_kev(observed, nearest, sigma_keV) == 0.:
+                tail_knots = gaussian_tail_knots(observed, nearest, max_deposit, sigma_keV)
+                knots = sorted(set(knots+tail_knots))
+        def response(deposit):
+            spectrum = escape_spectrum(deposit)
+            density = gaussian_density_per_kev(observed, deposit, sigma_keV)
+            if include_log:
+                raw, log_spectrum = spectrum
+                return raw*density, log_spectrum+gaussian_log_density_per_kev(observed, deposit, sigma_keV)
+            return spectrum*density
+
+        escape, error, log_escape, log_error = integral(response, knots)
+        row = dict(observed_keV=observed, absorption_per_mm_observed_keV=absorption,
+                   escape_per_mm_observed_keV=escape, escape_quadrature_difference=error)
+        if include_log:
+            log_absorption = log_photo_mass+gaussian_log_density_per_kev(observed, intermediate_keV, sigma_keV)
+            row['log_absorption_per_mm_observed_keV'], row['absorption_density_status'] = density_evidence(
+                absorption, log_absorption, supported=rates.photoelectric_per_mm > 0.)
+            row['log_escape_per_mm_observed_keV'], row['escape_density_status'] = density_evidence(
+                escape, log_escape, supported=rates.compton_per_mm > 0.)
+            row['log_escape_quadrature_difference'] = log_error
+            row['log_escape_endpoint_knots_keV'] = tail_knots
+        rows.append(row)
+    result = dict(sigma_keV=sigma_keV, energy_response='unit-normalized Gaussian on the entire real observed-energy axis',
                 true_absorption_endpoint_keV=intermediate_keV, true_escape_deposit_support_keV=[0.,max_deposit],
                 internal_path_mm=between['internal_path_mm'], no_interaction_survival=between['no_interaction_survival_to_second'],
                 photoelectric_endpoint_mass_per_mm=photo_mass, pre_escape_Compton_path_mass_per_mm=compt_mass,
                 true_escape_continuum_mass_per_mm=escape_mass, escape_mass_quadrature_difference_per_mm=mass_error,
                 observed_integrated_mass_per_mm=dict(absorption=photo_mass,escape=escape_mass),
                 observations=rows)
+    if include_log:
+        result['log_observed_integrated_mass_per_mm'] = dict(
+            absorption=density_evidence(photo_mass, log_photo_mass, supported=rates.photoelectric_per_mm > 0.)[0],
+            escape=density_evidence(escape_mass, log_escape_mass, supported=rates.compton_per_mm > 0.)[0])
+    return result
 
 
 def total_rate_interpolator(rates):
