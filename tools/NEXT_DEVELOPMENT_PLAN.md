@@ -33,6 +33,15 @@ next executable step. A finite optimum or an optimizer covariance alone is not
 a calibrated range interval; report open profiles and model sensitivity. Retain
 one compact current handoff, source/input hashes and necessary unique evidence.
 
+Owner refinement: prioritize complete usable paths, concrete program/algorithm
+defects and usable events excluded by an unsupported interface. Some noisy or
+incompatible events remain unresolved; universal event recovery is not required.
+Reuse the completed controls and current calculations rather than repeating
+validation or expanding difficult-event investigations. Connect the existing
+shared-strip fit to CLI/Control next, alongside the matching measured response.
+Hayward's charge-loss/inter-strip work and the ORNL GeGI holdup paper inform
+method choices; detector-specific calibration values are not transferable inputs.
+
 Delivered in the resumed work: original peak/order attribution; all-34 residual
 diagnostics; optional portable six-grid lateral correction; candidate-only truth
 retention; conditional 3D range profiles and exact far-field comparison. The
@@ -71,7 +80,10 @@ Three original stopped witnesses then separated an exact constrained stationary
 corner, a nonzero2.424e-18m sub-coordinate tangent step, and CD_OUTSIDE reaching
 SSD's internal-error done branch despite a5.366e-5m unconstrained step. All34
 channels satisfy endpoint bookkeeping, but no partial response or old trigger
-was promoted. Fix the concrete crossing witness before further recovery batches.
+was promoted. The conditioned-crossing correction now completes119171's23deposits
+and46contacts, preserves21previous complete groups exactly, and passes94geometry
+and45native assertions. Only this one of124stopped groups matches the cause;
+deliver the runtime without another recovery cohort. Preserve the other unknowns.
 The first continuous-readout acceptance uses ordinal119/event2459 and43original
 successful responses fromb000002, with exactrandom-state/input recovery.
 The43responses and exact baseline41triggers/14candidate ADCs now pass. Replacing

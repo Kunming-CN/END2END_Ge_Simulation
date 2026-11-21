@@ -55,6 +55,30 @@ const RESULTS=Any[]
             "corrected_kind"=>fixed[2],"corrected_hit_equals_start"=>true,
             "projected_fraction"=>fraction,"projected_position_m"=>xyz(next[1]),"geometric_contact"=>false))
     end
+    @testset "119171: near-tangent rear distance is not face distance" begin
+        a=point([.018768015936894165,-.04487159436989512,-.004488722367791633])
+        step=SSD.CartesianVector{Float64}(9.825162287463676e-6,9.824761405859146e-6,-5.182930914398237e-5)
+        b=a+step;tol=CSG.csg_default_tol(Float64)
+        surface=only(filter(s->CSG.distance_to_surface(a,s)<=tol,CSG.surfaces(DET.semiconductor.geometry)))
+        hit=only(CSG.intersection(surface,CSG.Line{Float64}(a,normalize(b-a))))
+        @test SSD.get_crossing_pos(DET,PT,a,b)[2]==SSD.CD_OUTSIDE
+        @test norm(hit-a)>tol && dot(hit-a,normalize(b-a))<0
+        @test CSG.distance_to_surface(a,surface)<tol
+        fixed=N.get_crossing_pos(DET,PT,a,b)
+        @test fixed[2]==SSD.CD_FLOATING_BOUNDARY && fixed[1]==a
+        @test dot(fixed[3],b-a)<-tol
+        projected=N.surface_step(DET,a,b-a,fixed[3])
+        @test norm(projected)>0 && a+projected!=a && a+projected in DET.semiconductor
+        @test !(a+projected in DET.contacts)
+        # A genuinely interior start retains the positive native crossing.
+        inside=a+2tol*fixed[3];target=inside+step
+        native=SSD.get_crossing_pos(DET,PT,inside,target)
+        @test native[2]!=SSD.CD_OUTSIDE && native[1]!=inside
+        @test N.get_crossing_pos(DET,PT,inside,target)==native
+        push!(RESULTS,Dict("event_id"=>119171,"raw_row_index"=>11425,
+            "native_rear_hit_distance_m"=>norm(hit-a),"normal_distance_to_surface_m"=>CSG.distance_to_surface(a,surface),
+            "corrected_hit_equals_start"=>true,"projected_step_m"=>xyz(projected),"geometric_contact"=>false))
+    end
     @testset "3361: genuine outward uncontacted corner stays unresolved" begin
         a=point([-.045,-.0134494837707869,.0055])
         b=point([-.04505973027955724,-.013449869801858116,.0055])

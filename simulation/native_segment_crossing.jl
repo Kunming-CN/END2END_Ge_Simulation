@@ -79,9 +79,11 @@ function get_crossing_pos(det,point_types,a::SSD.CartesianPoint{T},b::SSD.Cartes
             delta=hit-a;signed=dot(delta,direction);length=norm(delta)
             normal_motion=dot(n,segment)
             length<=tol && abs(normal_motion)<=tol && continue
-            if -tol<=signed<0 && length<=tol && normal_motion < -tol
-                # A surface hit a few ulps behind an outward-moving boundary
-                # start represents that start, not a backwards path increment.
+            if signed<0 && CSG.distance_to_surface(a,surface)<=tol && normal_motion < -tol
+                # A nearly tangent line amplifies a face-normal rounding error
+                # into a larger rear path distance. Test boundary membership
+                # with CSG's surface distance, not the ill-conditioned line
+                # distance; an outward step then departs this boundary start.
                 hit=a;signed=zero(T);length=zero(T)
             end
             if 0<=signed<=1 && length<norm(best[1]-a)

@@ -8,17 +8,16 @@ heartbeat remains active every 30 minutes. No resets, model substitution, extra
 review agents, new frontend or automatic 90.09 s / 20-million-parent acquisition.
 Reuse the completed five-second acquisition and retained independent controls.
 
-The current three calculations are complete: the 580-group boundary cohort and
-three stopped-carrier witnesses, continuous ideal-source profiles, and the
-empirical cobalt normalization grid. Root accepted the prepared implementations
-after all three development agents encountered a usage limit. The owner has now
-confirmed availability was restored, and fresh activations of all three original
-agents succeeded. The earlier quota error is historical, not a current blocker.
-No resets or model substitutions were used. Native continues the exact CD_OUTSIDE
-repair; candidate has verified four curve-side extensions and is testing the
-remaining independent observations; position connects empirical response and normalization
-to the saved candidate cohorts. Finish these integrated paths before optional
-research or presentation work.
+The owner has refined the immediate priority: finish usable reconstruction paths,
+repair actual numerical/algorithm defects and recover missed usable candidates.
+A minority of noisy or incompatible events may remain unresolved; explaining
+every difficult event is not a delivery prerequisite. Reuse accepted evidence;
+do not repeat broad validation or expand statistical sweeps before integration.
+All three original development agents resumed successfully without a reset or
+model substitution. Earlier quota errors are historical, not a current blocker.
+The conditioned-crossing repair is complete. Candidate work connects existing
+shared-strip fits to CLI/Control; position work connects the sealed empirical
+response to measured inputs. Current calculations and all originals are retained.
 
 Thread `01a1fd1a-3e72-7eb2-b7bf-c8c2d59236fd` owns this development. Check actual
 processes, `.local/autonomy/state.json` and any lock before starting work. The
@@ -31,16 +30,17 @@ and position work, GPT-6.1 Sol Ultra for native response.
 | Stage | Delivered | Still required for final acceptance |
 |---|---|---|
 | 1. Cobalt edge attribution | Original three-window maps, trigger/pair/order contributions, removal/time/extent sensitivity and exact dominant photon histories. | Diagnostic delivery complete; preserve it as the baseline. |
-| 2. Native response | Cause-specific repairs, full 1,971-group reconciliation, actual same-history readout controls and three stopped-state causes. | Repair remaining false stopping, resolve moving limits and valid partial-response classes, then replay available neighborhoods. |
+| 2. Native response | Cause-specific repairs, full 1,971-group reconciliation, same-history readout controls and repaired conditioned crossing. | Deliver the runtime correction; retain remaining limited/stationary groups as unknown, without making universal recovery a prerequisite. |
 | 3. Internal positions | All-34-channel residuals, alternate fits, lateral and shared-strip controls. | Independent acceptance rules, reliable substrip/depth errors, broader topology coverage and propagated uncertainty. |
 | 4. Fixed-plane closure | Same-event substitutions, 18 chronological histories plus three separate peak controls; wrong two-site interpretations identified. | Connect improved physical hypotheses/selection to saved candidates and establish stable source results. |
 | 5. Candidate 3D | Portable range diagnostics, consistent photon factors/normalizers, blind continuous ideal controls. | Apply the matching measured response, validate range identifiability and selection effects; ideal controls are not detector validation. |
 | 6. Statistics | Independent ideal inputs retained at two off-grid sources; first ten per cohort tested. | Freeze the algorithm, then held-out sample-size, distance, direction, strength and unequal-depth studies with failure/unknown rates. |
 
-Next concrete implementation: resolve the retained CD_OUTSIDE false-stop witness;
-keep true constrained stationarity separate from sub-ulp motion. For source fitting,
-reuse the measured endpoint integrals to extend response curves, connect the
-empirical numerator to its matched normalizer, and then expand independent tests.
+Next concrete implementation: deliver the accepted crossing correction and the
+existing shared-strip reconstruction through the normal saved-candidate workflow.
+Keep true constrained stationarity separate from sub-ulp motion. Source fitting
+must use its matched empirical numerator and normalizer; preserve current
+independent tests without launching the remaining statistical expansion now.
 Do not choose hypotheses or positions because they approach source truth.
 
 ## Native completion and remaining causes
@@ -75,7 +75,7 @@ NoChargeTrapping, diffusion/self-repulsion off; no fields or models changed.
 |---|---|
 | 13635 / raw 3822 | Corner projection is exactly zero; 256-bit normal-cone certificate has nonnegative multipliers and zero residual. Stationary under this declared boundary model. |
 | 69417 / raw 12416 | Nonzero tangent step 2.424e-18 m is below coordinate resolution; not the same as exact zero admissible motion. |
-| 119171 / raw 11425 | Unconstrained step 5.366e-5 m remains, but crossing returns CD_OUTSIDE and pinned SSD's internal-error branch sets `done=true`. Preserve as unresolved numerical stopping. |
+| 119171 / raw 11425 | Near-tangent intersection amplifies surface-normal rounding into a rear hit. The corrected crossing now completes the whole group. |
 
 All 34 channels per witness agree with Ramo endpoint bookkeeping within
 8.89e-16 keV; conditional interpolation preserves the original prefix and flat
@@ -85,6 +85,19 @@ No whole-group status or mask was promoted. Evidence in
 `d441b8579fc0cb718b3d8b5ed2f97dc5c5317c31c453e6bfb6a4c11eed597325`, validation SHA
 `f83bf95b576d8779fc00391edff73bc2d35884406e9a06f27af71ca598f1fb19`.
 Pinned SSD ChargeDrift.jl SHA `0358c255...`, lines 239-242, confirms the third branch.
+
+The focused conditioned-crossing correction uses the existing CSG surface-distance
+tolerance for an outward start on the boundary instead of its ill-conditioned
+rear line distance. It changes no fields, contact priority or drift duration.
+Group 119171 now completes all 23 deposits / 46 carrier contacts and all 34 signed
+signals. Twenty original success controls and 214613 remain byte/endpoint exact.
+All 22 groups / 631 deposits complete; 94 geometry and 45 native assertions pass.
+The census of all 124 stopped groups finds only this one matching cause, so no
+larger native rerun is indicated. Acceptance took 105.341 s, peak native RSS
+3,176,071,168 bytes. The sealed 1,971-group baseline and old readout masks remain
+unchanged; this separately retained completion is not a restored trigger claim.
+Receipt `native-conditioned-crossing-acceptance/validation.json`, SHA
+`79c56b890a759158b1ea25f3c7522fc3923c19e5b8938f8589a9c3e67db8408b`.
 
 Prior V4 acceptance retained all 20 successful-control waveform bytes/endpoints
 and repaired 214613; its receipt remains

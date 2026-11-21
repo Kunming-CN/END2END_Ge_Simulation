@@ -78,7 +78,7 @@ function provenance()
     Dict("kind"=>"ssd_0_11_8_boundary_guard_v1","installed"=>INSTALLED[],"native_source_sha256"=>EXPECTED,
         "change"=>"Fail closed before native unwritten terminal row; no position/signal substitution",
         "package_files_modified"=>false,"next_point_admission"=>ANALYTIC_SEMICONDUCTOR[] ? "analytic_semiconductor" : "native_grid_or_geometry",
-        "floating_projection"=>ANALYTIC_SEMICONDUCTOR[] ? "analytic_projected_segment_crossing_v4_stable_active_halfspaces" : "native_linear_backoff_with_unwritten_row_guard")
+        "floating_projection"=>ANALYTIC_SEMICONDUCTOR[] ? "analytic_projected_segment_crossing_v5_conditioned_rear_hit" : "native_linear_backoff_with_unwritten_row_guard")
 end
 function detail(e::BoundaryStall)
     Dict("type"=>"NativeBoundaryStall","message"=>sprint(showerror,e),"step"=>e.step,
