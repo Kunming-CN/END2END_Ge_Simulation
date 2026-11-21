@@ -559,6 +559,137 @@ class CandidateControlTests(unittest.TestCase):
         with self.assertRaisesRegex(W.ControlError, 'denominators differ'):
             self.control.analysis_plane('mixed-unit', request['report_sha256'], saved['analysis_id'], W.sha(path))
 
+    def test_peak_contributors_are_bound_to_map_window_and_paged(self):
+        directory, acquisition, result = self.imaging_fixture()
+        path = directory/'candidate-imaging.json.gz'
+        path.write_bytes(gzip.compress(W.encoded(result), mtime=0))
+        fields = dict(name='mixed-unit', report_sha256=acquisition['report_sha256'], analysis_id=path.name,
+                      analysis_sha256=W.sha(path), layer='other_energy', offset=0)
+        route = 'contributors?'+urlencode(fields)
+        self.assertEqual(self.request(route, headers={'X-Control-Token': 'wrong'})[0], 403)
+        for changes in ({'offset': -1}, {'analysis_id': '../file'}, {'analysis_sha256': '0'*64}, {'layer': 'unknown'}):
+            self.assertEqual(self.request('contributors?'+urlencode(fields | changes))[0], 400)
+        before = {p.name: W.sha(p) for p in directory.iterdir() if p.is_file()}
+        with patch('gegi_candidate_records.peak_cell_contributors', return_value={
+                'peak': {'position_mm': [-2., -2., 40.], 'on_image_edge': True, 'mass': 1.},
+                'contributors': [dict(original_trigger_id=tid) for tid in range(1, 12)]}) as projector:
+            status, first = self.request(route)
+            self.assertEqual((status, first['offset'], first['total']), (200, 0, 11))
+            self.assertEqual(first['items'][0]['original_trigger_id'], 1)
+            status, last = self.request('contributors?'+urlencode(fields | {'offset': 10}))
+            self.assertEqual((status, last['offset'], last['items']), (200, 10, [dict(original_trigger_id=11)]))
+            self.assertEqual(first['analysis_sha256'], fields['analysis_sha256'])
+            projector.assert_called_once()
+        self.assertEqual(before, {p.name: W.sha(p) for p in directory.iterdir() if p.is_file()})
+
+    def test_electrode_compatibility_recipe_does_not_reuse_plain_map(self):
+        directory, request, result = self.imaging_fixture()
+        plain = directory/'candidate-imaging.json.gz'
+        plain.write_bytes(gzip.compress(W.encoded(result), mtime=0))
+        self.assertEqual(self.request('analyze', request | {'compatibility': 'yes'})[0], 400)
+        status, reused = self.request('analyze', request)
+        self.assertEqual((status, reused['reused'], reused['compatibility']), (200, True, False))
+        calls = []
+        def runner(argv, **kwargs):
+            calls.append(argv)
+            compatible = copy.deepcopy(result)
+            compatible['candidate_analysis']['compatibility'] = True
+            output = (self.root/'transport'/argv[argv.index('--output')+1]).resolve()
+            output.write_bytes(gzip.compress(W.encoded(compatible), mtime=0))
+            return {'exit_code': 0, 'output': '{}'}
+        self.control.analysis_runner = runner
+        with patch.object(W, 'transport_prefix', return_value=['installed-transport-tool']):
+            status, job = self.request('analyze', request | {'compatibility': True})
+            self.assertEqual((status, job['status']), (200, 'running'))
+            self.finish()
+        self.assertIn('--compatibility', calls[0])
+        status, reused = self.request('analyze', request | {'compatibility': True})
+        self.assertEqual((status, reused['reused'], reused['compatibility']), (200, True, True))
+        self.assertNotEqual(reused['analysis_id'], plain.name)
+
+    def test_lateral_overlay_admits_distinct_bound_analysis_recipe(self):
+        directory, request, result = self.imaging_fixture()
+        overlay = self.root/'.local/gegi-lateral-calibration.npz'
+        overlay.write_bytes(b'synthetic lateral overlay')
+        found, = self.control.options()['lateral_calibrations']
+        self.assertNotIn(found['id'], {row['id'] for row in self.control.options()['calibrations']})
+        self.assertEqual(self.request('analyze', request | {'lateral_calibration_id':'../escape'})[0], 400)
+        calls = []
+        def runner(argv, **kwargs):
+            calls.append(argv)
+            bundle = {'archive_sha256':W.sha(overlay),'coverage_cells':[[3,24]]}
+            modified = copy.deepcopy(result)
+            modified['input_sha256']['lateral_calibration'] = bundle['archive_sha256']
+            modified['candidate_analysis'].update(position_model='lateral',lateral_calibration=bundle)
+            modified['fit_receipt'].update(position_model='lateral',lateral_calibration_bundle=bundle)
+            output = (self.root/'transport'/argv[argv.index('--output')+1]).resolve()
+            output.write_bytes(gzip.compress(W.encoded(modified),mtime=0))
+            return {'exit_code':0,'output':'{}'}
+        self.control.analysis_runner = runner
+        selected = request | {'lateral_calibration_id':found['id']}
+        with patch.object(W,'transport_prefix',return_value=['installed-transport-tool']):
+            status, job = self.request('analyze', selected)
+            self.assertEqual((status,job['status']),(200,'running'))
+            self.finish()
+        self.assertEqual(calls[0][calls[0].index('--position-model'):],
+                         ['--position-model','lateral','--lateral-calibration','../.local/gegi-lateral-calibration.npz'])
+        status, reused = self.request('analyze', selected)
+        self.assertEqual((status,reused['reused'],reused['position_model']),(200,True,'lateral'))
+
+    def test_range_open_is_read_only_and_range_worker_reuses_only_same_recipe(self):
+        directory, request, saved = self.imaging_fixture()
+        empty = dict(saved['layers']['all'], triggers=0, triggers_with_geometry=0, allowed_hypotheses=0,
+                     hypotheses=0, projected_mass=0., unresolved_mass=0., mass=[[0.,0.],[0.,0.]])
+        saved['layers'].update({key:empty for key in C.RANGE_WINDOWS[:3]})
+        map_path = directory/'candidate-imaging.json.gz'
+        map_path.write_bytes(gzip.compress(W.encoded(saved),mtime=0))
+        binding = dict(name=request['name'], report_sha256=request['report_sha256'], analysis_id=map_path.name,
+                       analysis_sha256=W.sha(map_path))
+        range_result = dict(kind=C.RANGE_KIND, status='complete', input_sha256=binding['analysis_sha256'],
+                            input_bindings=saved['input_sha256'], acquisition_selection=saved['selection'],
+                            source_sha256=self.control._range_sources(), model=dict(radial_search_mm=[20.,10000.],
+                            radial_points=49,directional_seeds=192,optimized_starts=6,extra_uniform_angle_fraction=.25,
+                            background_profiling=True), fits={key:dict(status='insufficient_geometry_for_clock_halves',
+                            selected_triggers=0) for key in C.RANGE_WINDOWS})
+        archived = directory/'candidate-range-archive.json'
+        W.write(archived,range_result | {'source_sha256':{key:'1'*64 for key in C.RANGE_SOURCES}})
+        before = set(directory.iterdir())
+        calls = []
+        def runner(argv, **kwargs):
+            calls.append(argv)
+            output = (self.root/'transport'/argv[argv.index('--output')+1]).resolve()
+            W.write(output,range_result)
+            return {'exit_code':0,'output':'{}'}
+        self.control.analysis_runner = runner
+        status, plane = self.request('plane?'+urlencode(binding))
+        self.assertEqual(status,200)
+        entry, = plane['range_options']
+        self.assertFalse(entry['current_solver'])
+        self.assertTrue(entry['profile_background'])
+        query = 'range?'+urlencode(binding | {k:entry[k] for k in ('range_id','range_sha256')})
+        self.assertEqual(self.request(query,headers={'X-Control-Token':'no'})[0],403)
+        self.assertEqual(self.request(query.replace(entry['range_sha256'],'0'*64))[0],400)
+        status, opened = self.request(query)
+        self.assertEqual((status,opened['result']['input_sha256']),(200,binding['analysis_sha256']))
+        self.assertEqual(set(directory.iterdir()),before)
+        self.assertFalse(calls)
+        analysis = binding | dict(radius_min_mm=20.,radius_max_mm=10000.,profile_background=True)
+        for wrong in ({'analysis_sha256':'0'*64},{'radius_min_mm':0},{'profile_background':'true'},{'source_position':[1,2,3]}):
+            self.assertEqual(self.request('range',analysis | wrong)[0],400)
+        with patch.object(W,'transport_prefix',return_value=['installed-transport']):
+            status, start = self.request('range',analysis)
+            self.assertEqual((status,start['status']),(200,'running'))
+            self.finish()
+        self.assertIn('../tools/gegi_candidate_range.py',calls[0])
+        self.assertIn('--profile-background',calls[0])
+        job = self.control.state('mixed-unit')['range_analysis']
+        self.assertEqual(job['status'],'completed')
+        self.assertEqual(self.control.state('mixed-unit')['range_analysis']['range_result']['range_sha256'],
+                         W.sha(directory/start['range_file']))
+        status, reused = self.request('range',analysis)
+        self.assertEqual((status,reused['status'],reused['reused'],reused['current_solver']),(200,'completed',True,True))
+        self.assertEqual(len(calls),1)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,6 +1,7 @@
 """Portable center-template calibration for measured GeGI two-strip fits."""
 
 from collections import Counter
+from dataclasses import replace
 import hashlib
 import json
 import math
@@ -12,7 +13,7 @@ import numpy as np
 
 import gegi_digital_readout as digital
 from gegi_event_store import encoded, sha
-from gegi_joint_two_site import DEPTH_MM, SAMPLE_NS, VOLTAGE_NS, Template, fit_pairing
+from gegi_joint_two_site import DEPTH_MM, LATERAL_DEPTH_MM, LATERAL_FRACTION, SAMPLE_NS, VOLTAGE_NS, Template, fit_pairing
 
 
 KIND = 'gegi_joint_center_calibration_v1'
@@ -24,6 +25,13 @@ AXES = {'depth_mm': DEPTH_MM.tolist(), 'analog_time_from_onset_ns': VOLTAGE_NS.t
 UNITS = {'center_templates': 'V/keV', 'center_template_storage': 'little-endian float64',
          'strip_centers': 'mm', 'face_depths': 'mm', 'fast': 'keV-equivalent', 'centered_cfd': 'ns', 'pair_cfd': 'ns'}
 TEMPLATE_SHAPE = (len(DEPTH_MM), len(digital.CONTACT_IDS), len(VOLTAGE_NS))
+LATERAL_KIND = 'gegi_joint_lateral_calibration_v1'
+LATERAL_AXES = {'x_strip_pitch_fraction': list(LATERAL_FRACTION), 'y_strip_pitch_fraction': list(LATERAL_FRACTION),
+                'depth_mm': list(LATERAL_DEPTH_MM), 'contact_ids': AXES['contact_ids'],
+                'analog_time_from_onset_ns': AXES['analog_time_from_onset_ns']}
+LATERAL_UNITS = {'correction': 'V/keV', 'storage': 'little-endian float64',
+                 'offset': 'fraction of strip pitch from the strip center'}
+LATERAL_SHAPE = tuple(len(axis) for axis in LATERAL_AXES.values())
 
 
 def require_identity(acquisition, identity):
@@ -101,8 +109,7 @@ def save(path, *, identity, channels, scales, requested, templates, provenance):
     return manifest, sha(manifest_bytes)
 
 
-def load(path):
-    """Load the center models without consulting the template-generation archives."""
+def _read_archive(path, data_key):
     with path.open('rb') as stream:
         archive_hash = hashlib.sha256()
         for block in iter(lambda: stream.read(1 << 20), b''):
@@ -111,11 +118,62 @@ def load(path):
         with np.load(stream, allow_pickle=False) as archive:
             manifest_bytes = archive['manifest_utf8'].tobytes()
             manifest = json.loads(manifest_bytes)
-            voltage = archive['center_v_per_keV']
+            voltage = archive[data_key]
+    return manifest, voltage, sha(manifest_bytes), archive_hash.hexdigest()
+
+
+def load(path):
+    """Load the original center models without consulting the template-generation archives."""
+    manifest, voltage, content_sha, archive_sha = _read_archive(path, 'center_v_per_keV')
     centers, pitch, calibrated = _validate(manifest, voltage)
     templates = {(x, y): Template((x, y), (centers[x], centers[y]), pitch, values)
                  for (x, y), values in zip(calibrated, voltage, strict=True)}
-    return manifest, templates, sha(manifest_bytes), archive_hash.hexdigest()
+    return manifest, templates, content_sha, archive_sha
+
+
+def _lateral_cells(manifest, values, center_manifest, center_content_sha, center_archive_sha):
+    centers = {tuple(cell) for cell in center_manifest['calibrated_cells']}
+    cells = [tuple(cell) for cell in manifest['supported_cells']]
+    missing = [tuple(cell) for cell in manifest['center_only_cells']]
+    if (manifest['kind'] != LATERAL_KIND or manifest['axes'] != LATERAL_AXES or manifest['units'] != LATERAL_UNITS
+            or manifest['axis_order'] != list(LATERAL_AXES)
+            or manifest['identity'] != center_manifest['identity']
+            or manifest['center_calibration'] != {'content_sha256': center_content_sha, 'archive_sha256': center_archive_sha}
+            or not cells or cells != sorted(set(cells)) or not set(cells) <= centers
+            or missing != sorted(centers-set(cells))):
+        raise ValueError('Lateral calibration format, coverage or exact center binding differs')
+    center = list(LATERAL_FRACTION).index(0.)
+    if (values.shape != (len(cells), *LATERAL_SHAPE) or values.dtype != np.dtype('<f8')
+            or not values.flags.c_contiguous or not np.isfinite(values).all()
+            or np.any(values[:, center, center] != 0.) or sha(values) != manifest['correction_sha256']):
+        raise ValueError('Lateral correction samples, center reference, or hash differs')
+    return cells
+
+
+def save_lateral(path, *, center_manifest, center_content_sha, center_archive_sha, corrections, provenance):
+    """Write only the calibrated lateral offsets, bound to the original center archive."""
+    cells = sorted(corrections)
+    values = np.asarray([corrections[cell] for cell in cells], dtype='<f8', order='C')
+    manifest = {'kind': LATERAL_KIND, 'identity': center_manifest['identity'],
+                'center_calibration': {'content_sha256': center_content_sha, 'archive_sha256': center_archive_sha},
+                'axes': LATERAL_AXES, 'axis_order': list(LATERAL_AXES), 'units': LATERAL_UNITS, 'supported_cells': cells,
+                'center_only_cells': sorted({tuple(cell) for cell in center_manifest['calibrated_cells']}-set(cells)),
+                'correction_sha256': sha(values), 'provenance': provenance}
+    payload = encoded(manifest)
+    _lateral_cells(json.loads(payload), values, center_manifest, center_content_sha, center_archive_sha)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('xb') as stream:
+        np.savez_compressed(stream, manifest_utf8=np.frombuffer(payload, dtype=np.uint8), lateral_correction_v_per_keV=values)
+    return manifest, sha(payload)
+
+
+def load_lateral(path, center_manifest, templates, center_content_sha, center_archive_sha):
+    """Attach exact archived corrections and retain the original center samples."""
+    manifest, values, content_sha, archive_sha = _read_archive(path, 'lateral_correction_v_per_keV')
+    cells = _lateral_cells(manifest, values, center_manifest, center_content_sha, center_archive_sha)
+    augmented = templates | {cell: replace(templates[cell], lateral_correction_v_per_keV=grid)
+                             for cell, grid in zip(cells, values, strict=True)}
+    return manifest, augmented, content_sha, archive_sha
 
 
 def measured_selection(acquisition):

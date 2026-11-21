@@ -12,7 +12,38 @@ The student workflow runs from detector and source selection through transport, 
 
 ## Delivery order
 
-**Current readiness, November 21:** the same five-second mixed-source acquisition,
+**Active reconstruction development, November 21:** the owner has resumed work
+after the completed readiness delivery. The current-thread `gegi` heartbeat runs
+every 30 minutes. This supersedes the completed-readiness pause below for this
+development scope. The five-second archive is the development baseline; new
+independent inputs establish generalization after selection/model choices settle.
+
+| Delivery | Implementation and acceptance |
+|---|---|
+| 1. Edge-peak attribution | Reproduce all three saved line-window maps; trace original trigger, pairing and order contributions; leave-trigger-out, time blocks and extent/prior sensitivity without changing selection. |
+| 2. Native response repair | Classify all 1,971 unavailable groups with exact numerical causes, retain deposit/contact evidence, repair confirmed defects and replay retained inputs. Report native recovery separately from continuous-readout recovery. |
+| 3. Internal positions | All-34-channel compatibility, residuals/timing/alternate solutions; compare center and supported lateral models on the same independent injections, retaining errors and coverage. |
+| 4. Fixed-plane closure | Same-event truth/position/energy/pairing/order substitutions where full originals exist. Record missing truth explicitly, use ARM and internal errors as well as source peaks. Add compact diagnostic truth retention before new scratch retirement. |
+| 5. Candidate 3D localization | Reuse finite-vertex event response on new candidate identities, preserving order mixtures and unresolved weight. Fit unrestricted direction and configurable radial profiles; compare both cobalt lines, clock halves, background assumptions and expanded radial searches. Score truth only afterward. |
+| 6. Independent statistics | Freeze algorithm/selection, then evaluate held-out positions/seeds and targeted distance/direction/strength/depth changes; retain unreturned/unknown cases. Larger production follows a concrete statistical question. |
+
+The implementation uses the existing software and saved inputs; no new frontend,
+review rounds or full acquisition restart. Each integrated result advances the
+next executable step. A finite optimum or an optimizer covariance alone is not
+a calibrated range interval; report open profiles and model sensitivity. Retain
+one compact current handoff, source/input hashes and necessary unique evidence.
+
+Implemented in the resumed work: original peak/order attribution; all-34 residual
+diagnostics; optional portable six-grid lateral correction; matched historical
+truth controls; candidate-only truth retention for future acquisitions; finite
+vertex 3D scoring, background profiling and exact far-field comparison. Native
+failure recovery is running separately. Independent controls show that 10/12
+known three-/four-point mixtures can pass the two-site model with small residuals,
+so no residual-only acceptance gate is supported. The immediate reconstruction
+step compares measured ADC against three-/four-corner energy flows and retains
+indistinguishable topology, alongside additional held-out position checks.
+
+**Completed readiness baseline before this resumed work:** the five-second mixed-source acquisition,
 its final count/resource accounting and its full saved-candidate imaging are
 complete. Verified source, student runtime and site delivery are published, and
 scheduled heartbeat `gegi` has been ended and deleted. The owner inspects the delivered
@@ -51,7 +82,7 @@ producer versions, failures and delayed records. The compact accounting is
 canonical imaging derivative are under
 `.local/gegi-candidate-runs/steady-five-seconds/`.
 
-**Delivery completed; automatic development ended:**
+**Historical readiness delivery (superseded automation state):**
 
 1. Source, student runtime and maintained site are synchronized with GitHub.
    Exact package bytes, desktop Control/map reuse and the corrected guide were

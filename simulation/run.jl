@@ -252,7 +252,8 @@ function endpoint_report(event, sim, cfg)
     [begin
         endpoint = last(path)
         contacts = [c.id for c in sim.detector.contacts if endpoint in c.geometry]
-        at_limit = length(path) >= cfg.max_steps
+        # Reaching a contact on the last permitted step completes this carrier.
+        at_limit = isempty(contacts) && length(path) >= cfg.max_steps
         Dict("species" => species, "samples" => length(path), "position_mm" => Float64[endpoint.x, endpoint.y, endpoint.z] .* 1000,
             "contact_ids" => contacts, "step_limit_reached" => at_limit,
             "inside_semiconductor" => endpoint in sim.detector.semiconductor,

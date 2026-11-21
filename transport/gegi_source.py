@@ -443,7 +443,33 @@ def decay_record(eid, steps, tracks, names, source):
             'pulse_groups':cs.group_deposits(steps,source['grouping_policy']['horizon_ns'])}
 
 
-def events(path, meta, *, event_metadata=None, native_empty_uid_aliases=False, primary_track_reader=None):
+CANDIDATE_PHOTON_TRUTH_KIND = 'gegi_candidate_photon_truth_v1'
+
+
+def candidate_photon_truth(ge_rows, tracks_by_id, names, decay_photons, deposits):
+    """Keep scored Ge gamma chords, positive deposits and their track-birth ancestry."""
+    photon_steps = [dict(raw_row_index=row['raw_row_index'], track_id=row['trackid'],
+                         parent_track_id=row['parent_trackid'], time_ns=row['time'], edep_keV=row['edep'],
+                         pre_position_mm=[1000*row[a+'_pre'] for a in ('xloc','yloc','zloc')],
+                         post_position_mm=[1000*row[a+'_post'] for a in ('xloc','yloc','zloc')])
+                    for row in ge_rows if row['particle'] == 22]
+    needed = {row['track_id'] for row in (*photon_steps, *decay_photons, *deposits)}
+    ancestry = {}
+    for track_id in sorted(needed):
+        while track_id and track_id not in ancestry:
+            track = tracks_by_id[track_id]
+            parent = track['parent_trackid']
+            ancestry[track_id] = dict(raw_row_index=track['raw_row_index'], track_id=track_id,
+                parent_track_id=parent, pdg=track['particle'], birth_time_ns=track['time'],
+                birth_kinetic_energy_keV=1000*track['ekin'],
+                birth_position_mm=[1000*track[a] for a in ('xloc','yloc','zloc')],
+                birth_process_id=track['procid'], birth_process=names.get(track['procid']))
+            track_id = parent
+    return dict(ge_gamma_steps=photon_steps, track_births=[ancestry[key] for key in sorted(ancestry)])
+
+
+def events(path, meta, *, event_metadata=None, native_empty_uid_aliases=False, primary_track_reader=None,
+           include_candidate_truth=False):
     """Complete original primary census; positive Ge rows are the only SSD input.
 
     Raw step tables including zero rows and every passive hit stay in truth.lh5.
@@ -517,6 +543,9 @@ def events(path, meta, *, event_metadata=None, native_empty_uid_aliases=False, p
                    'material_energy_keV': {m: math.fsum(values) for m, values in sums.items()}}
             if current['source_id'] in DECAY_SOURCES:
                 event.update(decay_record(eid,steps,rows['tracks'],names,current['source_contract']))
+            if include_candidate_truth and steps:
+                event['candidate_photon_truth'] = candidate_photon_truth(
+                    rows['stp/germanium'], by_id, names, event.get('decay_photons', []), steps)
             yield event
         h.require(all(cursor.next is None for cursor in cursors.values()), 'Unconsumed raw GeGI rows')
 

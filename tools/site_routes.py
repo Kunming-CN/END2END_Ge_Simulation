@@ -36,6 +36,8 @@ FIXED = {
     "lithium/lithium.html": ("Lithium diagnostics", "methods/index.html", "Methods", "method", "saved_archive_display"),
     "results/cs137-10k/index.html": ("Cs137 10K", "results/index.html", "Results", "dataset", "ring_site"),
     "results/cs137-1m/index.html": ("Cs137 1M", "results/index.html", "Results", "dataset", "site_restructure"),
+    "results/gegi-five-second-reconstruction/index.html": ("GeGI five-second reconstruction", "results/index.html", "Results",
+                                                          "study", "gegi_reconstruction_display"),
     "spectra/pipeline.html": ("Selected signals", "results/index.html", "Results", "reader", "teaching_examples"),
     "examples/gamma-native/gamma.html": ("Cryostat gamma", "results/index.html", "Results", "reader", "saved_focus_pages"),
     "spectra/cs137-10k.html": ("Stage spectra", "results/cs137-10k/index.html", "Results", "reader", "spectrum_display"),

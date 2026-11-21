@@ -7,6 +7,7 @@ from hashlib import sha256
 import json
 import math
 import os
+from pathlib import Path
 import re
 import sqlite3
 import threading
@@ -35,6 +36,11 @@ PLANE_KIND = 'gegi_continuous_measured_plane_backprojection_v1'
 ANALYSIS_KIND = 'gegi_candidate_measured_imaging_v1'
 PLANE_PRIORS = ('uniform-area', 'uniform-solid-angle')
 MAP_NAME = re.compile(r'candidate-imaging(?:-[A-Za-z0-9_-]+)?\.json\.gz\Z')
+RANGE_NAME = re.compile(r'candidate-range(?:-[A-Za-z0-9_-]+)?\.json\Z')
+RANGE_KIND = 'gegi_candidate_conditional_range_v1'
+RANGE_SOURCES = ('gegi_candidate_range.py', 'gegi_source_range.py', 'gegi_joint_imaging.py', 'gegi_candidate_records.py')
+RANGE_WINDOWS = ('661.657_keV', '1173.23_keV', '1332.49_keV', 'cobalt_both_lines')
+CONTRIBUTOR_PAGE_SIZE = 10
 
 
 def _name(value):
@@ -52,7 +58,9 @@ def _matching_analysis(view, recipe):
             and all(view['grid'][key] == recipe[arg] for key, arg in
                     (('assumed_z_mm', 'z_mm'), ('extent_mm', 'extent_mm'), ('step_mm', 'step_mm')))
             and view['model']['angular_nuisance_sigma_deg'] == recipe['sigma_deg']
-            and view['model']['plane_prior'] == recipe['plane_prior'])
+            and view['model']['plane_prior'] == recipe['plane_prior']
+            and view['candidate_analysis'].get('compatibility', False) == recipe.get('compatibility', False)
+            and view['input_sha256'].get('lateral_calibration') == recipe.get('lateral_calibration_sha256'))
 
 
 class CandidateControl:
@@ -62,6 +70,7 @@ class CandidateControl:
         self.runner = runner
         self.analysis_runner = analysis_runner or run_command
         self._analysis_cache = {}
+        self._contributors_cache = None
         self._analysis_running = set()
         self.jobs = {}
         self._stop_events = {}
@@ -77,9 +86,10 @@ class CandidateControl:
                 if job['status'] in ('running', 'stop_requested'):
                     job.update(status='interrupted', error='The previous Control session ended. Saved partial files are preserved.')
                 self.jobs[job['name']] = job
-                analysis = job.get('analysis')
-                if analysis and analysis['status'] == 'running' and not W.identity_ended(analysis.get('driver')):
-                    self.workflow._active = 'gegi-candidate-imaging-' + job['name']
+                for key, kind in (('analysis', 'imaging'), ('range_analysis', 'range')):
+                    analysis = job.get(key)
+                    if analysis and analysis['status'] == 'running' and not W.identity_ended(analysis.get('driver')):
+                        self.workflow._active = f"gegi-candidate-{kind}-{job['name']}"
 
     def _directory(self, name):
         return safe_path(self.root, OUTPUTS + '/' + _name(name))
@@ -136,16 +146,20 @@ class CandidateControl:
                 directory = self._directory(child.name)
                 if safe_path(directory, REPORT_NAME).is_file():
                     jobs[child.name] = {'name': child.name, 'status': 'completed'}
-        return {'kind': KIND, 'jobs': list(jobs.values()), 'calibrations': self._calibrations(), 'defaults': {
+        return {'kind': KIND, 'jobs': list(jobs.values()), 'calibrations': self._calibrations(),
+            'lateral_calibrations': self._calibrations(lateral=True), 'defaults': {
             'mode': 'duration', 'duration_s': 5, 'maximum_duration_s': None,
             'primary_count': 100, 'maximum_primary_count': None, 'seed': 20261120,
             'activities_bq': [185000, 37000], 'positions_mm': [[-40, 0, 40], [40, 0, 40]]},
             'new_science_calls': 0}
 
-    def _calibrations(self):
-        refs = ['.local/gegi-center-calibration.npz',
-                '.local/gegi-joint-two-site/gegi-center-calibration.npz']
-        imports = safe_path(self.root, '.local/gegi-saved-inputs/calibrations')
+    def _calibrations(self, *, lateral=False):
+        if lateral:
+            refs = ['.local/gegi-lateral-calibration.npz', '.local/gegi-reconstruction-v1/gegi-lateral-calibration.npz']
+            imports = safe_path(self.root, '.local/gegi-saved-inputs/lateral-calibrations')
+        else:
+            refs = ['.local/gegi-center-calibration.npz', '.local/gegi-joint-two-site/gegi-center-calibration.npz']
+            imports = safe_path(self.root, '.local/gegi-saved-inputs/calibrations')
         if imports.is_dir():
             refs += [p.relative_to(self.root).as_posix() for p in sorted(imports.glob('*.npz'))]
         return [{'id': W.digest({'candidate_calibration': ref}), 'label': ref, 'ref': ref}
@@ -178,6 +192,7 @@ class CandidateControl:
                   and analysis['excluded_intervals_ns'] == report.get('excluded_intervals_ns', []),
                   'Saved imaging and acquisition identities or denominators differ.')
         W.require(analysis['scope'] in ('all_two_strip_candidates', 'explicit_analysis_subset')
+                  and type(analysis.get('compatibility', False)) is bool
                   and selection['qualified_triggers'] == report['counts']['qualified_triggers']
                   and selection['qualified_energies'] == report['counts']['qualified_energies']
                   and selection['two_strip_triggers'] == analysis['two_strip_candidates']
@@ -187,6 +202,14 @@ class CandidateControl:
                   and saved['fit_receipt']['two_strip_triggers'] == analysis['two_strip_candidates']
                   and len({row['original_trigger_id'] for row in saved['triggers']}) == len(saved['triggers']),
                   'Saved imaging trigger identities or scope differ.')
+        position_model = analysis.get('position_model', 'center')
+        W.require(position_model in ('center', 'lateral') and saved['fit_receipt'].get('position_model', 'center') == position_model
+                  and ('lateral_calibration' in saved['input_sha256']) == (position_model == 'lateral'),
+                  'Saved imaging position model and its calibration binding differ.')
+        if position_model == 'lateral':
+            W.require(analysis['lateral_calibration'] == saved['fit_receipt']['lateral_calibration_bundle']
+                      and analysis['lateral_calibration']['archive_sha256'] == saved['input_sha256']['lateral_calibration'],
+                      'Saved imaging lateral calibration receipt differs.')
         W.require(selection['clock_live_time_ns'] == report['live_time_ns']
                   and math.isclose(selection['qualified_adc_live_time_ns'], report['live_time_ns'] -
                       math.fsum(hi-lo for lo, hi in report.get('excluded_intervals_ns', [])), abs_tol=1e-6),
@@ -235,7 +258,9 @@ class CandidateControl:
             view = self._analysis_view(safe_path(self._directory(name), path.name), report, digest)
             maps.append({key: view[key] for key in ('analysis_id', 'analysis_sha256')} | {
                 'scope': view['candidate_analysis']['scope'], 'z_mm': view['grid']['assumed_z_mm'],
-                'plane_prior': view['model']['plane_prior']})
+                'plane_prior': view['model']['plane_prior'],
+                'compatibility': view['candidate_analysis'].get('compatibility', False),
+                'position_model': view['candidate_analysis'].get('position_model', 'center')})
         return sorted(maps, key=lambda row: (row['scope'] != 'all_two_strip_candidates', row['analysis_id']))
 
     def analysis_plane(self, name, report_sha256, analysis_id, analysis_sha256):
@@ -243,13 +268,141 @@ class CandidateControl:
         _, report, digest = self._database(name, report_sha256)
         view = self._analysis_view(safe_path(self._directory(name), analysis_id), report, digest)
         W.require(view['analysis_sha256'] == analysis_sha256, 'Saved imaging changed. Reopen its saved result.')
+        if view['candidate_analysis']['scope'] == 'all_two_strip_candidates':
+            view['range_options'] = sorted((row for row, _ in self._saved_ranges(name, view)),
+                key=lambda row: (not row['current_solver'], not row['profile_background'], -row['radial_points'], row['file']))
         return dict(name=name, report_sha256=digest, **view)
 
-    def analyze(self, name, report_sha256, calibration_id, z_mm, extent_mm=120., step_mm=4., sigma_deg=5., plane_prior='uniform-area'):
+    @staticmethod
+    def _range_sources():
+        return {name: W.sha(Path(__file__).with_name(name)) for name in RANGE_SOURCES}
+
+    def _read_range(self, path, view):
+        raw = path.read_bytes()
+        result = json.loads(raw)
+        if (result.get('kind') != RANGE_KIND or result.get('status') != 'complete'
+                or result.get('input_sha256') != view['analysis_sha256']
+                or result.get('input_bindings') != view['input_sha256']
+                or result.get('acquisition_selection') != view['selection']
+                or set(result.get('fits', {})) != set(RANGE_WINDOWS)):
+            raise ValueError('Range result is incomplete or belongs to a different saved image')
+        sources = result['source_sha256']
+        if set(sources) != set(RANGE_SOURCES) or any(not re.fullmatch(r'[0-9a-f]{64}', value) for value in sources.values()):
+            raise ValueError('Range result is missing solver source hashes')
+        fit = result['fits']
+        original_ids = set(view['original_trigger_ids'])
+        for label in RANGE_WINDOWS:
+            count = sum(view['layers'][key]['triggers'] for key in RANGE_WINDOWS[1:3]) if label == 'cobalt_both_lines' else view['layers'][label]['triggers']
+            row = fit[label]
+            if row['status'] == 'conditional_scores_computed':
+                ids = row['selected_original_trigger_ids']
+                if len(set(ids)) != count or len(ids) != count or not set(ids) <= original_ids or row['accounting']['selected_triggers'] != count:
+                    raise ValueError('Range result trigger census differs from its saved energy windows')
+            elif row['status'] != 'insufficient_geometry_for_clock_halves' or row['selected_triggers'] != count:
+                raise ValueError('Range result status or trigger census differs from its saved energy windows')
+        stamp = sha256(raw).hexdigest()
+        model = result['model']
+        ref = path.relative_to(self.root).as_posix()
+        return dict(range_id=W.digest({'candidate_range': ref}), range_sha256=stamp, file=path.name,
+                    radial_search_mm=model['radial_search_mm'], radial_points=model['radial_points'],
+                    profile_background=model.get('background_profiling', False),
+                    current_solver=sources == self._range_sources()), result
+
+    def _saved_ranges(self, name, view):
+        for directory in (self._directory(name), safe_path(self.root, '.local/gegi-reconstruction-v1')):
+            for path in sorted(directory.glob('candidate-range*.json')):
+                if not RANGE_NAME.fullmatch(path.name):
+                    continue
+                try:
+                    yield self._read_range(safe_path(directory, path.name), view)
+                except (OSError, KeyError, TypeError, ValueError):
+                    # Range workers publish progress to separate files before their final result.
+                    continue
+
+    def _range_view(self, name, report_sha256, analysis_id, analysis_sha256):
+        W.require(type(analysis_id) is str and MAP_NAME.fullmatch(analysis_id), 'Choose a saved candidate map.')
+        _, report, digest = self._report(name, report_sha256)
+        view = self._analysis_view(safe_path(self._directory(name), analysis_id), report, digest)
+        W.require(view['analysis_sha256'] == analysis_sha256 and view['candidate_analysis']['scope'] == 'all_two_strip_candidates',
+                  'Range analysis requires the opened full candidate map.')
+        return view, digest
+
+    def analysis_range(self, name, report_sha256, analysis_id, analysis_sha256, range_id, range_sha256):
+        view, digest = self._range_view(name, report_sha256, analysis_id, analysis_sha256)
+        for entry, result in self._saved_ranges(name, view):
+            if entry['range_id'] == range_id and entry['range_sha256'] == range_sha256:
+                return dict(name=name, report_sha256=digest, analysis_id=analysis_id, analysis_sha256=analysis_sha256,
+                            range_result=entry, result=result)
+        raise ValueError('Choose an available saved range result bound to this map.')
+
+    def run_range(self, name, report_sha256, analysis_id, analysis_sha256, radius_min_mm, radius_max_mm, profile_background=False):
+        W.require(_finite(radius_min_mm) and _finite(radius_max_mm) and 0 < radius_min_mm < radius_max_mm
+                  and type(profile_background) is bool, 'Enter a positive increasing range search in mm.')
+        view, digest = self._range_view(name, report_sha256, analysis_id, analysis_sha256)
+        archive, _, _ = self._database(name, digest)
+        directory = archive.parent
+        recipe = dict(analysis_id=analysis_id, analysis_sha256=analysis_sha256,
+                      report_sha256=digest, source_sha256=self._range_sources(),
+                      radius_min_mm=radius_min_mm, radius_max_mm=radius_max_mm, profile_background=profile_background)
+        with self.workflow._lock:
+            for row, result in self._saved_ranges(name, view):
+                if row['current_solver'] and self._matching_range(result, recipe):
+                    return dict(status='completed', reused=True, **row)
+            self.workflow._idle()
+            stem = 'candidate-range-' + W.digest(recipe)
+            filename = stem + '.json'
+            attempt = 1
+            while any(safe_path(directory, filename+suffix).exists() for suffix in ('', '.tmp', '.log')):
+                attempt += 1
+                filename = f'{stem}-attempt{attempt}.json'
+            job = self.jobs.setdefault(name, {'name': name, 'status': 'completed', 'report_sha256': digest})
+            analysis = dict(status='running', started_utc=W.utc(), range_file=filename, **recipe)
+            return self._launch_analysis(job, 'range_analysis', 'range', analysis)
+
+    @staticmethod
+    def _matching_range(result, recipe):
+        model = result['model']
+        return (result['source_sha256'] == recipe['source_sha256']
+                and result['input_sha256'] == recipe['analysis_sha256']
+                and model.get('background_profiling', False) == recipe['profile_background']
+                and model['radial_search_mm'] == [recipe['radius_min_mm'], recipe['radius_max_mm']]
+                and (model['radial_points'], model['directional_seeds'], model['optimized_starts'],
+                     model['extra_uniform_angle_fraction']) == (49, 192, 6, .25)
+                and all(row['fits']['primary']['profile_diagnostic']['score_drop'] == 2. for row in result['fits'].values()
+                        if row['status'] == 'conditional_scores_computed'))
+
+    def analysis_contributors(self, name, report_sha256, analysis_id, analysis_sha256, layer, offset=0):
+        """Inspect the original orders supporting the selected saved map's brightest cell."""
+        from gegi_candidate_records import peak_cell_contributors
+
+        W.require(type(analysis_id) is str and MAP_NAME.fullmatch(analysis_id), 'Choose one saved candidate imaging result.')
+        W.require(type(offset) is int and offset >= 0, 'Choose a nonnegative contributor page offset.')
+        archive, report, digest = self._database(name, report_sha256)
+        path = safe_path(self._directory(name), analysis_id)
+        view = self._analysis_view(path, report, digest)
+        W.require(view['analysis_sha256'] == analysis_sha256 and layer in view['layers'],
+                  'Choose a measured-energy window from the opened candidate map.')
+        key = (archive, digest, analysis_sha256, layer)
+        cached = self._contributors_cache
+        if cached and cached[0] == key:
+            result = cached[1]
+        else:
+            raw = path.read_bytes()
+            W.require(sha256(raw).hexdigest() == analysis_sha256, 'Saved imaging changed. Reopen its saved result.')
+            result = peak_cell_contributors(json.loads(gzip.decompress(raw)), archive, layer)
+            self._contributors_cache = (key, result)
+        contributors = result['contributors']
+        return dict(name=name, report_sha256=digest, analysis_id=analysis_id, analysis_sha256=analysis_sha256,
+                    layer=layer, peak=result['peak'], offset=offset, total=len(contributors), page_size=CONTRIBUTOR_PAGE_SIZE,
+                    items=contributors[offset:offset+CONTRIBUTOR_PAGE_SIZE])
+
+    def analyze(self, name, report_sha256, calibration_id, z_mm, extent_mm=120., step_mm=4., sigma_deg=5.,
+                plane_prior='uniform-area', compatibility=False, lateral_calibration_id=None):
         W.require(all(_finite(v) for v in (z_mm, extent_mm, step_mm, sigma_deg))
                   and extent_mm > 0 and 0 < step_mm <= 2*extent_mm and sigma_deg > 0
                   and plane_prior in PLANE_PRIORS and (plane_prior != 'uniform-solid-angle' or z_mm != 0),
                   'Choose finite plane settings with positive extent, grid spacing and angular width.')
+        W.require(type(compatibility) is bool, 'Select whether to record all-electrode fit diagnostics.')
         directory, report, digest = self._report(name, report_sha256)
         W.require(report.get('verification', {}).get('status') == 'verified_exact',
                   'Choose a completed acquisition with exact saved-candidate verification.')
@@ -257,6 +410,13 @@ class CandidateControl:
         W.require(calibration is not None, 'Import the separate matching GeGI calibration and refresh the input list.')
         settings = dict(z_mm=z_mm, extent_mm=extent_mm, step_mm=step_mm, sigma_deg=sigma_deg, plane_prior=plane_prior)
         recipe = dict(report_sha256=digest, calibration_sha256=W.sha(safe_path(self.root, calibration['ref'])), **settings)
+        if compatibility:
+            recipe['compatibility'] = True
+        lateral = None
+        if lateral_calibration_id is not None:
+            lateral = next((row for row in self._calibrations(lateral=True) if row['id'] == lateral_calibration_id), None)
+            W.require(lateral is not None, 'Import a matching lateral calibration and refresh the input list.')
+            recipe['lateral_calibration_sha256'] = W.sha(safe_path(self.root, lateral['ref']))
         with self.workflow._lock:
             for row in self._analysis_maps(name, report, digest):
                 view = self._analysis_view(safe_path(directory, row['analysis_id']), report, digest)
@@ -272,47 +432,80 @@ class CandidateControl:
             job = self.jobs.setdefault(name, {'name': name, 'status': 'completed', 'report_sha256': digest})
             analysis = dict(status='running', started_utc=W.utc(), analysis_id=filename,
                             calibration_ref=calibration['ref'], **recipe)
-            job['analysis'] = analysis
-            reservation = 'gegi-candidate-imaging-' + name
-            self.workflow._active = reservation
-            self._analysis_running.add(name)
-            self._persist()
-            thread = threading.Thread(target=self._analysis_work, args=(job, analysis, reservation), daemon=True, name=reservation)
-            try:
-                thread.start()
-            except RuntimeError:
-                self.workflow._active = None
-                self._analysis_running.discard(name)
-                analysis.update(status='failed', error='The imaging worker did not start.')
-                self._persist()
-                raise
-            return copy.deepcopy(analysis)
+            if lateral is not None:
+                analysis['lateral_calibration_ref'] = lateral['ref']
+            return self._launch_analysis(job, 'analysis', 'imaging', analysis)
 
-    def _analysis_work(self, job, analysis, reservation):
+    def _launch_analysis(self, job, key, kind, analysis):
+        name = job['name']
+        job[key] = analysis
+        reservation = f'gegi-candidate-{kind}-{name}'
+        self.workflow._active = reservation
+        self._analysis_running.add(name)
+        self._persist()
+        thread = threading.Thread(target=self._analysis_work, args=(job, analysis, reservation, kind), daemon=True, name=reservation)
+        try:
+            thread.start()
+        except RuntimeError:
+            self.workflow._active = None
+            self._analysis_running.discard(name)
+            analysis.update(status='failed', error='The saved analysis worker did not start.')
+            self._persist()
+            raise
+        return copy.deepcopy(analysis)
+
+    @staticmethod
+    def _analysis_arguments(analysis, kind, prefix):
+        if kind == 'range':
+            argv = ['../tools/gegi_candidate_range.py', '--imaging', prefix+analysis['analysis_id'],
+                    '--output', prefix+analysis['range_file'], '--radius-min-mm', str(analysis['radius_min_mm']),
+                    '--radius-max-mm', str(analysis['radius_max_mm'])]
+            if analysis['profile_background']:
+                argv.append('--profile-background')
+            return argv
+        argv = ['../tools/gegi_candidate_imaging.py', '--report', prefix+REPORT_NAME, '--calibration',
+                '../'+analysis['calibration_ref'], '--output', prefix+analysis['analysis_id']]
+        for key, flag in (('z_mm','--plane-z-mm'),('extent_mm','--extent-mm'),('step_mm','--step-mm'),
+                          ('sigma_deg','--sigma-deg'),('plane_prior','--plane-prior')):
+            argv += [flag, str(analysis[key])]
+        if analysis.get('compatibility'):
+            argv.append('--compatibility')
+        if analysis.get('lateral_calibration_ref'):
+            argv += ['--position-model', 'lateral', '--lateral-calibration', '../'+analysis['lateral_calibration_ref']]
+        return argv
+
+    def _range_receipt(self, name, analysis):
+        view, _ = self._range_view(name, analysis['report_sha256'], analysis['analysis_id'], analysis['analysis_sha256'])
+        path = safe_path(self._directory(name), analysis['range_file'])
+        row, result = self._read_range(path, view)
+        W.require(row['current_solver'] and self._matching_range(result, analysis),
+                  'The saved range worker changed its imaging identity, settings or solver source version.')
+        return row
+
+    def _analysis_work(self, job, analysis, reservation, kind):
         directory = self._directory(job['name'])
-        log = safe_path(directory, analysis['analysis_id'] + '.log')
+        output_name = analysis['analysis_id'] if kind == 'imaging' else analysis['range_file']
+        log = safe_path(directory, output_name + '.log')
         try:
             with W.execution_lease(self.root):
                 W.verify_dispatch_reservations(None, self.root)
                 prefix = '../' + directory.relative_to(self.root).as_posix() + '/'
                 argv = W.transport_prefix(self.root) + ['env', 'OPENBLAS_NUM_THREADS=1', 'OMP_NUM_THREADS=1',
-                    'python', '-B', '../tools/gegi_candidate_imaging.py',
-                    '--report', prefix+REPORT_NAME, '--calibration', '../'+analysis['calibration_ref'],
-                    '--output', prefix+analysis['analysis_id']]
-                for key, flag in (('z_mm','--plane-z-mm'),('extent_mm','--extent-mm'),('step_mm','--step-mm'),
-                                  ('sigma_deg','--sigma-deg'),('plane_prior','--plane-prior')):
-                    argv += [flag, str(analysis[key])]
+                    'python', '-B', *self._analysis_arguments(analysis, kind, prefix)]
                 def spawned(pid, identity):
                     with self.workflow._lock:
                         analysis['driver'] = dict(pid=pid, identity=identity)
                         self._persist()
                 with log.open('x', encoding='utf-8') as handle:
                     result = self.analysis_runner(argv, cwd=self.root, env=os.environ.copy(), on_output=handle.write, on_spawn=spawned)
-                W.require(result['exit_code'] == 0, 'Saved-candidate imaging failed. Inspect its retained analysis log.')
-                _, report, digest = self._report(job['name'], analysis['report_sha256'])
-                view = self._analysis_view(safe_path(directory, analysis['analysis_id']), report, digest)
-                W.require(_matching_analysis(view, analysis), 'The imaging worker changed the requested full-analysis recipe.')
-                analysis.update(status='completed', analysis_sha256=view['analysis_sha256'])
+                W.require(result['exit_code'] == 0, f'Saved-candidate {kind} analysis failed. Inspect its retained analysis log.')
+                if kind == 'range':
+                    analysis.update(status='completed', range_result=self._range_receipt(job['name'], analysis))
+                else:
+                    _, report, digest = self._report(job['name'], analysis['report_sha256'])
+                    view = self._analysis_view(safe_path(directory, analysis['analysis_id']), report, digest)
+                    W.require(_matching_analysis(view, analysis), 'The imaging worker changed the requested full-analysis recipe.')
+                    analysis.update(status='completed', analysis_sha256=view['analysis_sha256'])
         except Exception as error:
             analysis.update(status='failed', error=str(error)[:1200])
         finally:
@@ -374,6 +567,18 @@ class CandidateControl:
                 self.jobs[name]['analysis'] = copy.deepcopy(analysis)
                 self._persist()
                 if self.workflow._active == 'gegi-candidate-imaging-' + name:
+                    self.workflow._active = None
+            ranged = job.get('range_analysis')
+            if (ranged and ranged['status'] == 'running' and name not in self._analysis_running
+                    and W.identity_ended(ranged.get('driver'))):
+                try:
+                    ranged.update(status='completed', range_result=self._range_receipt(name, ranged))
+                except (OSError, KeyError, TypeError, ValueError, W.ControlError):
+                    ranged.update(status='failed', error='The previous range-analysis session ended without a matching complete result.')
+                ranged['finished_utc'] = W.utc()
+                self.jobs[name]['range_analysis'] = copy.deepcopy(ranged)
+                self._persist()
+                if self.workflow._active == 'gegi-candidate-range-' + name:
                     self.workflow._active = None
         else:
             W.require(name in self.jobs, 'Unknown mixed-source acquisition.')

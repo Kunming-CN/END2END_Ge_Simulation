@@ -30,6 +30,21 @@ weight remain explicit. The canonical derivative is `candidate-imaging.json.gz`;
 Control opens saved imaging and writes separately identified new recipes. Keep
 original acquisition data and calibration/model/cache/digital identities intact.
 
+`gegi_candidate_records.py` is the common saved-fit/ADC identity adapter for
+peak contributors and three-dimensional scoring. `gegi_candidate_diagnostic.py`
+owns attribution and stability studies; `gegi_candidate_range.py` uses the
+shared `gegi_source_range.py` angular kernel for finite-distance profiles and the
+exact far-field limit. Optional all-contact diagnostics and position-tested
+lateral overlays use the existing `gegi_joint_two_site.py` fit and
+`gegi_joint_calibration.py` bundle identities. Keep the center calibration and
+lateral overlay as separate downloads, outside the software ZIP.
+
+New acquisitions use `gegi_candidate_truth.py` to retain candidate-linked photon
+ancestry, scored Ge steps and native outcomes before scratch retirement. This
+diagnostic artifact is separate from reconstruction inputs; a readout-context
+join is not a causal photon identification. Retired five-second scratch cannot
+be recreated from its surviving scalar ledger.
+
 `gegi_storage_estimate.py` reads the sanitized measured five-second
 `gegi_storage_reference.json` without physics. It preserves separate new-parent
 and initial-daughter denominators, scales measured event tables/indexes and
@@ -42,9 +57,11 @@ field cache. The conditional 20-million-new-parent full-pipeline budget is about
 16–19.3 GB and 123–125 active hours; future temporary space and peak RAM remain
 unbounded. Do not add nested transport time twice or treat a measured peak as a
 production bound. The student manifest includes runtime dependencies and this
-small metrics reference, not saved runs or caches. After verified readiness is
-published, end and delete heartbeat `gegi`; the owner inspects the proposed
-90.09-second/20-million-parent configuration before any larger launch.
+small metrics reference, not saved runs or caches. The November 21 owner update
+resumes reconstruction development in the half-hour `gegi` heartbeat. Follow
+PROGRESS.md and its active worker ownership, continuing the next executable
+milestone; the earlier readiness stop is historical. The 90.09-second /
+20-million-parent production case remains unlaunched.
 
 The existing saved-GeGI reprocessing panel also accepts completed standalone
 GeGI runs owned by Control. `gegi_saved_control.py` delegates those inputs to

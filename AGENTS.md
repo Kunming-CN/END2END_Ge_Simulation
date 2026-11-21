@@ -1,5 +1,27 @@
 # Project working rules
 
+## Owner update — 2026-11-21 signal reconstruction development
+
+Resume the signal -> interaction -> source-position development in
+tools/NEXT_DEVELOPMENT_PLAN.md. Reuse the completed five-second acquisition.
+First deliver candidate-level cobalt edge attribution and cause-specific native
+response repair in parallel; continue through all-channel compatibility,
+independent internal-position tests, same-event imaging controls, candidate 3D
+range profiles and independent statistical validation. Do not stop after a small
+edit when a next authorized step is executable. The 20-million-parent production
+case remains after algorithm/event-selection decisions, not an automatic launch.
+
+Use GPT-6 Astra Ultra as leader and GPT-6.1 Sol Ultra or GPT-6.2 Sol Ultra for
+implementation according to the task. Do not silently change models or claim a
+leader switch the current interface cannot perform. The current-thread GeGI
+heartbeat may continue every 30 minutes; inspect ownership and running work
+before resuming. No extra review agents, repeated broad audits, speculative
+defensive infrastructure or arbitrary execution ceilings. Retain concrete
+numerical, identity and data-integrity checks, original data and unique failures.
+Use primary references/upstream code to resolve difficult causes. Truth may score
+finished reconstructions but must not select their source locations. Preserve
+the existing GitHub/software-only release/Pages publication rules. No resets.
+
 ## Owner update — 2026-11-20 scheduled production preparation
 
 The owner explicitly resumes scheduled development in the existing GeGI

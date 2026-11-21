@@ -21,18 +21,18 @@
     "examples/cs137-10k-rings/KMRC01_candidate/response/histograms.json": "11cfbed9fd93db18528a1a73f25a298fa554fd70c9f3136203468970a5c053e3"
   },
   "generators": {
-    "tools/spectrum_display.py": "316dbc0e05932aee6112f3fc4b288e1a22b517440f4c21479e6aa6d264d4624c",
+    "tools/spectrum_display.py": "25f2dd85c06a251a425ee858637649d3c15bbcab62aee402682a09331e67ff20",
     "tools/spectrum_plot.py": "f00dbf5efdb393f03eebd501cb71a74bbd268fc3f0cff240de9a7eb54948a29c",
     "tools/spectrum_controls.js": "804a9ea72a1347ebffa3d0a4caba64aa136ff3ab700190ca6a0e654f81601b5a",
-    "tools/viewer_navigation.py": "f6a3c5d390611899ba7b01c1d511016d59ea8fbb6280a414b0fc5089c0dc35d6",
+    "tools/viewer_navigation.py": "595b2fd333d11bb41881ee9c121c0a0e77d5e32ef78991eef05a2993b24af115",
     "tools/viewer_navigation.js": "5f3f4c0062b4da291669bead6451fd611e30cd15061439695130269b5454709c",
     "tools/ring_site.py": "ab023be86303ab388fa0d45dc96e16d7daed58fb93e890d298b91b801591cc6e",
-    "tools/site_restructure.py": "48767468218d575e8333b78a22405fe779e9e7270d3f1f04653fbf61c28ee665",
-    "tools/site_routes.py": "d83247b5709a80640d4907c13924ae2f0af56a990eb82510677502c0c58ddd21",
+    "tools/site_restructure.py": "657257ef5eb379f767a9ebcad03591ef5bd31b1fd5d6708546405ee7486b115d",
+    "tools/site_routes.py": "510cb0834a8ee7d5e4b99ddeeb8d7bef060a1c11a0ef2e08f1f91157d783cef2",
     "tools/teaching_examples.py": "bb2cda83eccdf74b8acd9923089d60105118d2fdcf2d579ccad4688ba37f391b",
     "tools/teaching_examples.html": "987d27335cb190b6d8c6ccc772ed32ed31a51a92e52fcc1bff6a0b7a148069fb",
     "tools/focused_plots.js": "230c98bb7f41a5437f483aa9e168b8476a06b9d6ac4a782ba7681ce442ba49eb",
-    "tools/result_web_delivery.py": "b0427a8557158beca7d3e2387383578a31ad0ff57ea9e72bfb6f7c8937ce9691"
+    "tools/result_web_delivery.py": "97a12c952aebeb794a6a843fa15ca412048af8f5a7a73670f6302a7ba8dc456a"
   },
   "pages": {
     "spectra/million-truth.html": {

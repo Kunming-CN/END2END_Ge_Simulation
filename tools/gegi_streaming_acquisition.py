@@ -24,12 +24,13 @@ import numpy as np
 
 import gegi_candidate_run as candidates
 import gegi_candidate_storage as storage
+import gegi_candidate_truth as truth
 import gegi_campaign_response as response
 import gegi_digital_readout as digital
 import gegi_dual_source as dual
 import gegi_event_store as native_store
 import gegi_mixed_acquisition as mixed
-from gegi_missing_history import MissingHistory
+from gegi_missing_history import MissingHistory, native_support_ns
 import gegi_native_continuation as continuation
 import gegi_stream_id_continuation as stream_ids
 import gegi_pulse_stream as pulse
@@ -41,7 +42,7 @@ import scenario_workflow as W
 ROOT = Path(__file__).resolve().parents[1]
 KIND = 'gegi_streaming_acquisition_v1'
 OWN_SOURCES = ('tools/gegi_streaming_acquisition.py', 'tools/gegi_streaming_readout.py',
-               'tools/gegi_candidate_storage.py', 'tools/gegi_candidate_run.py',
+               'tools/gegi_candidate_storage.py', 'tools/gegi_candidate_run.py', 'tools/gegi_candidate_truth.py',
                'tools/gegi_mixed_acquisition.py', 'tools/gegi_resource_monitor.py', 'tools/gegi_missing_history.py',
                'tools/gegi_native_continuation.py',
                'tools/gegi_stream_id_continuation.py',
@@ -84,6 +85,7 @@ def source_config(name, count, seed, activities, positions, duration_s=None,
 
 def producer_identity(config, request):
     return {'kind': KIND, 'source_config': config, 'native_request_sha256': mixed.file_sha(request),
+        'candidate_truth_kind': truth.KIND,
         'environment': {'python': platform.python_version(), 'numpy': np.__version__, 'sqlite': sqlite3.sqlite_version},
         'source_sha256': {ref: mixed.file_sha(ROOT / ref) for ref in OWN_SOURCES},
         'readout_tail_ns': mixed.READOUT_TAIL_NS, 'scope': 'Fresh shared-clock bounded streaming acquisition.',
@@ -121,15 +123,22 @@ def _group_meta(group):
         'parent_event_metadata': group['parent_event_metadata']}
 
 
-def _ingest(sink, directory, after, census):
+def _ingest(sink, directory, after, census, *, retain_truth=False):
     manifest_path = directory / 'stream/manifest.json'
     manifest = W.read(manifest_path)
     events = manifest_path.parent / manifest['events_file']
+    manifest_hash = mixed.file_sha(manifest_path)
     if mixed.file_sha(events) != manifest['events_sha256']:
         raise ValueError('The completed source deposit stream changed')
+    if retain_truth and manifest.get('candidate_photon_truth_kind') != truth.PHOTON_KIND:
+        raise ValueError('This acquisition requires the scored Ge photon truth stream before retiring transport')
+    event_count = 0
     with events.open(encoding='utf-8') as handle:
         for line in handle:
             event = mixed.absolute_event(json.loads(line))
+            if retain_truth:
+                truth.store_event(sink.db, event, manifest, manifest_hash)
+                event_count += 1
             for group in mixed.native_groups(event):
                 meta = _group_meta(group)
                 body = native_store.encoded(group)
@@ -138,6 +147,8 @@ def _ingest(sink, directory, after, census):
                      'pending', native_store.encoded(meta), zlib.compress(body), hashlib.sha256(body).hexdigest()))
                 census['deposit_groups'] += 1
     counts = manifest['counts']
+    if retain_truth and event_count != counts['nonzero_primaries']:
+        raise ValueError('Staged photon truth does not close against the original positive-deposit transport census')
     census['transport_primaries'] += manifest['primary_count']
     census['initial_parents'] += counts.get('new_parent_primaries', manifest['primary_count'])
     census['initial_daughter_decays'] += counts.get('initial_daughter_primaries', 0)
@@ -146,10 +157,10 @@ def _ingest(sink, directory, after, census):
     for key in ('zero_deposit_initial_daughters', 'nonzero_initial_daughters'):
         census[key] += counts.get(key, 0)
     sink.db.execute('INSERT INTO source_blocks VALUES (?,?,?,?)',
-        (after['next_block_index'] - 1, native_store.encoded(manifest), mixed.file_sha(manifest_path), native_store.encoded(after)))
+        (after['next_block_index'] - 1, native_store.encoded(manifest), manifest_hash, native_store.encoded(after)))
 
 
-def _retire_block(output, directory):
+def _retire_block(output, directory, *, retain_truth=False):
     receipt = directory / 'candidate-retention.json'
     if (directory / 'retired-artifacts.json').exists():
         return
@@ -158,7 +169,9 @@ def _retire_block(output, directory):
             'block_index': W.read(directory / 'checkpoint-after.json')['next_block_index'] - 1,
             'source_manifest_sha256': mixed.file_sha(directory / 'stream/manifest.json'),
             'checkpoint_after_sha256': mixed.file_sha(directory / 'checkpoint-after.json'),
-            'database_ref': (output / storage.ARCHIVE_NAME).relative_to(ROOT).as_posix()})
+            'database_ref': (output / storage.ARCHIVE_NAME).relative_to(ROOT).as_posix(),
+            **({'candidate_truth_scratch_ref': (output / truth.SCRATCH).relative_to(ROOT).as_posix()}
+               if retain_truth else {})})
     transport_call(['retire', '--directory', relative(directory), '--consumer-receipt', relative(receipt)], output / 'transport.log')
 
 
@@ -173,6 +186,13 @@ def _spectra(histograms):
 def _write_report(output, identity, state, completion, resources):
     database = output / storage.ARCHIVE_NAME
     verification = candidates.verify_candidates(database)
+    artifacts = [database]
+    truth_retention = {'status': 'unavailable_legacy',
+                       'scope': 'Readout context ordinals alone cannot identify the initiating photon or recreate retired steps.'}
+    if identity.get('candidate_truth_kind') == truth.KIND:
+        target = output / truth.ARTIFACT
+        truth_retention = truth.publish(database, output / truth.SCRATCH, target, identity)
+        artifacts.append(target)
     ledger = output / 'input-groups.jsonl.gz'
     if not ledger.exists():
         def export(handle):
@@ -181,6 +201,7 @@ def _write_report(output, identity, state, completion, resources):
                     zipped.write(native_store.encoded({'input_group_ordinal': ordinal, 'status': status,
                         'native_processing_phase': phase, **json.loads(body)}) + b'\n')
         dual._publish_artifact(ledger, export)
+    artifacts.append(ledger)
     histograms = {name: Counter({int(k): v for k, v in values.items()}) for name, values in state['histograms'].items()}
     report = {'kind': candidates.KIND, 'status': 'completed', 'identity': identity,
         'selection_policy': storage.POLICY, 'source': state['census'], 'counts': state['counts'],
@@ -196,10 +217,11 @@ def _write_report(output, identity, state, completion, resources):
         'source_initial_state': state['source_checkpoint'].get('initial_inventory', identity['source_config']['initial_state']),
         'electronics_initial_state': 'Quiet zero state at t=0; stationary noise starts at acquisition t=0.',
         'software': {'readout': identity.get('environment'), 'native': state.get('native_environment')},
-        'artifacts': {p.name: {'bytes': p.stat().st_size, 'sha256': mixed.file_sha(p)} for p in (database, ledger)},
+        'artifacts': {p.name: {'bytes': p.stat().st_size, 'sha256': mixed.file_sha(p)} for p in artifacts},
         'retention': {'full_adc_stream_saved': False, 'native_inputs_saved_here': False,
             'candidate_signals': 'Exact all-34-electrode ADC contexts and fast/slow/timing measurements.',
             'truth_association': 'One-based input_groups ordinals; diagnostic association only, not event selection.',
+            'candidate_truth': truth_retention,
             'delayed_deposits': 'Disk-backed original groups beyond the acquisition remain explicitly censored.',
             'native_failure_policy': ('Preserve exact failures and finite summed two-pole unavailable-history bounds.'
                 if state.get('missing_history') is not None else
@@ -285,6 +307,10 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
     current_identity = producer_identity(config, request)
     active = (stream_ids.admit(output, current_identity) or continuation.admit(output, current_identity)) if resume else None
     identity = active['original_identity'] if active is not None else current_identity
+    retain_truth = identity.get('candidate_truth_kind') == truth.KIND
+    truth_scratch = output / truth.SCRATCH
+    if retain_truth and _linked(truth_scratch):
+        raise ValueError('Linked candidate truth scratch refused')
     spool_path = Path(active['active_spool']) if active is not None else output / 'native-spool'
     native_path = Path(active['active_store']) if active is not None else output / 'native-scratch.sqlite'
     native_phase = active.get('native_phase', 1) if active is not None else 0
@@ -293,6 +319,13 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
         if report['identity'] != identity:
             raise ValueError('Completed acquisition producer changed')
         candidates.verify_candidates(output / storage.ARCHIVE_NAME)
+        if retain_truth:
+            truth_path = W.safe_path(output, truth.ARTIFACT)
+            binding = report['artifacts'].get(truth.ARTIFACT, {})
+            retention = report.get('retention', {}).get('candidate_truth', {})
+            if (retention.get('status') != 'verified_exact' or not truth_path.is_file()
+                    or truth_path.stat().st_size != binding.get('bytes') or mixed.file_sha(truth_path) != binding.get('sha256')):
+                raise ValueError('Completed acquisition candidate truth is missing or differs from its verified artifact')
         return report
     database = output / storage.ARCHIVE_NAME
     if resume and database.exists():
@@ -301,6 +334,8 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
             state, completion = sealed
             resources = W.read(output / 'resources.json') if (output / 'resources.json').exists() else state['resources']
             report = _write_report(output, identity, state, completion, resources)
+            if retain_truth and not retain_validation_inputs:
+                mixed._retire_success_scratch(output, [native_path, truth_scratch])
             progress('completed', 'Recovered the completed acquisition report', resources=resources)
             return report
         stop_marker = output / 'stop.request'
@@ -308,7 +343,13 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
             raise ValueError('Linked stop marker refused')
         stop_marker.unlink(missing_ok=True)
     sink = storage.CandidateStore(database, identity, resume=resume and database.exists())
-    _schema(sink)
+    try:
+        _schema(sink)
+        if retain_truth:
+            truth.attach(sink.db, truth_scratch)
+    except BaseException:
+        sink.close()
+        raise
     worker = native = None
     completed = False
     state = sink.load_checkpoint() if resume else None
@@ -337,8 +378,10 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
     channels = state['channels']
     worker_group_count = 0
     last_progress = time.perf_counter()
-    missing = (MissingHistory.restore(state['missing_history']) if state.get('missing_history') is not None else
-               MissingHistory(duration_ns) if duration_ns is not None else None)
+    native_support = native_support_ns(response.read(request)['numerics'])
+    missing = (MissingHistory.restore(state['missing_history'], native_support_ns=native_support)
+               if state.get('missing_history') is not None else
+               MissingHistory(duration_ns, native_support_ns=native_support) if duration_ns is not None else None)
 
     def observe(event, context):
         card = dual._trigger_card(event, dual._strip_neighbors(channels), geometry=channels)
@@ -358,7 +401,9 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
         first = context['first_sample_index'] * 20 + context['adc_phase_ns'] - 40 * digital._TAU
         last = context['stop_sample_index'] * 20 + context['adc_phase_ns']
         related = [row[0] for row in sink.db.execute('SELECT ordinal FROM input_groups WHERE onset_ns BETWEEN ? AND ? ORDER BY onset_ns,ordinal', (first, last))]
-        sink.observe(card, context, event=event, identities=related, rejection_reason=reason)
+        observed = sink.observe(card, context, event=event, identities=related, rejection_reason=reason)
+        if retain_truth and observed['decision'] == 'candidate':
+            truth.link_candidate(sink.db, observed['trigger_id'], related)
 
     readout = (StreamingReadout.restore(state['readout'], on_readout_context=observe) if state['readout'] else
                StreamingReadout(noise_seed=seed + 100000000, live_time_ns=duration_ns, on_readout_context=observe))
@@ -434,6 +479,8 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
                     complete = digital.terminal_contacts_complete(saved)
                     timers.record_native('completed' if complete else 'failed' if saved['status'] == 'native_failed' else 'unavailable')
                     with sink.transaction():
+                        if retain_truth:
+                            truth.store_response(sink.db, ordinal, group, saved, native_phase)
                         if not complete:
                             if missing is not None:
                                 missing.add(group['group_origin_time_ns'], max(s['time_ns'] for s in group['steps']),
@@ -506,18 +553,18 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
                 with timers.measure('transport_cli'):
                     transport_call(['process-block', '--config', relative(output / 'source-config.json'),
                         '--checkpoint', relative(output / 'source-checkpoint.json'), '--output', relative(directory),
-                        '--max-parents', str(block_parents)], output / 'transport.log')
+                        '--max-parents', str(block_parents), *(['--candidate-truth'] if retain_truth else [])], output / 'transport.log')
                 after = W.read(directory / 'checkpoint-after.json')
                 run_receipt = W.read(directory / 'run.json')
                 if 'elapsed_seconds' in run_receipt:
                     timers.record('transport_run', run_receipt['elapsed_seconds'])
                 with sink.transaction():
-                    _ingest(sink, directory, after, census)
+                    _ingest(sink, directory, after, census, retain_truth=retain_truth)
                     state['source_checkpoint'] = after
                     checkpoint()
                 if not retain_validation_inputs:
                     with timers.measure('transport_cli'):
-                        _retire_block(output, directory)
+                        _retire_block(output, directory, retain_truth=retain_truth)
                 progress('running', 'Joint-source block committed', block_index=index,
                          stage_timings=timers.snapshot(), resources=monitor.data)
         with timers.measure('export'):
@@ -536,8 +583,10 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
         sink.close()
         W.write(output / 'resources.json', monitor.data)
         W.write(output / 'stage-timings.json', timers.snapshot())
-        if completed and not retain_validation_inputs and native_path.exists():
-            mixed._retire_success_scratch(output, [native_path])
+        if completed and not retain_validation_inputs:
+            scratch = [native_path, truth_scratch] if retain_truth else [native_path]
+            if any(path.exists() for path in scratch):
+                mixed._retire_success_scratch(output, scratch)
 
 
 def main():

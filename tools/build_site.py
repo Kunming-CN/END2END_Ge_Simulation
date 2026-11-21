@@ -441,7 +441,7 @@ def install_geometry_delivery():
         destination.unlink()
 
 
-def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None, gegi_campaign_bundle=None, gegi_digital_example=None, gegi_digital_pairing_study=None, gegi_double_pulse=None, gegi_source_exposure=None, gegi_event_energy=None, gegi_edge_position=None, gegi_pixel_map=None, gegi_fast_gate=None, gegi_readout_validation=None, gegi_pixel_depth=None, gegi_measured_plane=None, gegi_plane_priors=None, gegi_shared_clock=None, gegi_merged_components=None, gegi_weak_strips=None, gegi_plane_intersections=None, gegi_commercial_acquisition=None):
+def build(campaign=None, geometry=None, hit_view=None, million=None, native_response=None, ssd_geometry=None, restructure=False, gamma_showcase=None, ring_results=None, gegi_results=None, gegi_plane_z_mm=None, gegi_campaign_bundle=None, gegi_digital_example=None, gegi_digital_pairing_study=None, gegi_double_pulse=None, gegi_source_exposure=None, gegi_event_energy=None, gegi_edge_position=None, gegi_pixel_map=None, gegi_fast_gate=None, gegi_readout_validation=None, gegi_pixel_depth=None, gegi_measured_plane=None, gegi_plane_priors=None, gegi_shared_clock=None, gegi_merged_components=None, gegi_weak_strips=None, gegi_plane_intersections=None, gegi_commercial_acquisition=None, gegi_reconstruction=None):
     """Validate in staging, then replace only the generated publication folder."""
     local = ROOT / '.local'
     local.mkdir(exist_ok=True)
@@ -465,7 +465,7 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
     if any(report is not None for report in (gegi_source_exposure, gegi_event_energy, gegi_edge_position,
                                              gegi_fast_gate, gegi_plane_priors, gegi_shared_clock,
                                              gegi_merged_components, gegi_weak_strips, gegi_plane_intersections,
-                                             gegi_commercial_acquisition)):
+                                             gegi_commercial_acquisition, gegi_reconstruction)):
         from gegi_digital_display import (attach_edge_position, attach_event_energy, attach_fast_gate, attach_measured_plane,
                                           attach_pixel_depth, attach_source_exposure, render as render_gegi_digital)
         if old is None:
@@ -474,7 +474,10 @@ def build(campaign=None, geometry=None, hit_view=None, million=None, native_resp
         (OUT / MANIFEST).unlink()
         from site_canonical_views import prepare
         prepare(OUT)
-        if gegi_commercial_acquisition is not None:
+        if gegi_reconstruction is not None:
+            from gegi_reconstruction_display import attach
+            attach(OUT, gegi_reconstruction)
+        elif gegi_commercial_acquisition is not None:
             from gegi_commercial_acquisition_display import IMAGE, attach
             from gegi_commercial_dual_figure import plot
             # Render only saved spectra, maps and ADC samples into owned staging.
@@ -603,6 +606,8 @@ def refresh_saved_presentation(site, *, restructure=True):
         from gegi_assembly import publish as publish_gegi_assembly
         publish_gegi_assembly(site)
         apply_site_structure(site)
+        from gegi_reconstruction_display import render as render_gegi_reconstruction
+        render_gegi_reconstruction(site)
         from gegi_digital_display import render as render_gegi_digital
         render_gegi_digital(site)
         from ring_site import apply as apply_ring_pages
@@ -769,6 +774,8 @@ if __name__ == '__main__':
                         help='Add cumulative measured plane backprojections and counts with --gegi-fast-gate')
     parser.add_argument('--gegi-plane-priors', type=Path, nargs=2, metavar=('PRIOR_STUDY', 'HELDOUT_SCORE'),
                         help='Publish the saved four-block plane-prior comparison, held-out scores and guide')
+    parser.add_argument('--gegi-reconstruction', type=Path, metavar='EVIDENCE_DIR',
+                        help='Publish the checked five-second GeGI reconstruction evidence')
     parser.add_argument('--gegi-commercial-acquisition', type=Path, metavar='CAMPAIGN_DIR',
                         help='Attach the completed 25-block simultaneous GeGI acquisition, intervals, and figure')
     parser.add_argument('--gegi-plane-intersections', type=Path, nargs='+', metavar='REPORT',
@@ -806,9 +813,9 @@ if __name__ == '__main__':
     if len(args.gegi_digital_pairing_study or ()) > 2:parser.error('--gegi-digital-pairing-study accepts at most two reports')
     if args.refresh_staged_readout and not args.finish_staged:parser.error('--refresh-staged-readout requires --finish-staged')
     if args.refresh_staged_presentation and not args.finish_staged:parser.error('--refresh-staged-presentation requires --finish-staged')
-    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_campaign_bundle,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_fast_gate,args.gegi_plane_priors,args.gegi_shared_clock,args.gegi_merged_components,args.gegi_weak_strips,args.gegi_plane_intersections,args.gegi_commercial_acquisition)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
+    if sum(x is not None for x in (args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_campaign_bundle,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_fast_gate,args.gegi_plane_priors,args.gegi_shared_clock,args.gegi_merged_components,args.gegi_weak_strips,args.gegi_plane_intersections,args.gegi_commercial_acquisition,args.gegi_reconstruction)) + int(args.restructure) + int(args.finish_staged)>1: parser.error('Select one publication mode')
     if args.finish_staged:
         finish_staged(refresh_readout=args.refresh_staged_readout,refresh_presentation=args.refresh_staged_presentation)
     else:
         if args.gegi_plane_z_mm is not None and args.gegi_results is None: parser.error('--gegi-plane-z-mm requires --gegi-results')
-        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle,args.gegi_digital_example,args.gegi_digital_pairing_study,args.gegi_double_pulse,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_pixel_map,gegi_fast_gate=args.gegi_fast_gate,gegi_readout_validation=args.gegi_readout_validation,gegi_pixel_depth=args.gegi_pixel_depth,gegi_measured_plane=args.gegi_measured_plane,gegi_plane_priors=args.gegi_plane_priors,gegi_shared_clock=args.gegi_shared_clock,gegi_merged_components=args.gegi_merged_components,gegi_weak_strips=args.gegi_weak_strips,gegi_plane_intersections=args.gegi_plane_intersections,gegi_commercial_acquisition=args.gegi_commercial_acquisition)
+        build(args.native_campaign,args.geometry_events,args.hit_view,args.million_results,args.native_response,args.ssd_geometry,args.restructure,args.gamma_showcase,args.ring_results,args.gegi_results,args.gegi_plane_z_mm,args.gegi_campaign_bundle,args.gegi_digital_example,args.gegi_digital_pairing_study,args.gegi_double_pulse,args.gegi_source_exposure,args.gegi_event_energy,args.gegi_edge_position,args.gegi_pixel_map,gegi_fast_gate=args.gegi_fast_gate,gegi_readout_validation=args.gegi_readout_validation,gegi_pixel_depth=args.gegi_pixel_depth,gegi_measured_plane=args.gegi_measured_plane,gegi_plane_priors=args.gegi_plane_priors,gegi_shared_clock=args.gegi_shared_clock,gegi_merged_components=args.gegi_merged_components,gegi_weak_strips=args.gegi_weak_strips,gegi_plane_intersections=args.gegi_plane_intersections,gegi_commercial_acquisition=args.gegi_commercial_acquisition,gegi_reconstruction=args.gegi_reconstruction)

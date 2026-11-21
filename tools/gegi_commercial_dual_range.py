@@ -18,7 +18,8 @@ from scipy.optimize import minimize
 
 import gegi_continuous_plane as plane
 from gegi_commercial_dual_prior import CAMPAIGN, COBALT, LINES, atomic_json, digest, require
-from gegi_joint_imaging import ResponseSettings, _erf, candidate_response, event_response, prepare_events, spectral_membership
+from gegi_joint_imaging import ResponseSettings, prepare_events, spectral_membership
+from gegi_source_range import AngularScore, POINT_CONE_BUDGET
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,7 +29,6 @@ MAX_DEPTH_MM = 2500.
 FAR_DEPTH_MM = 1e7
 EXTRA_BACKGROUND = .25
 LABELS = (LINES[0], COBALT)
-POINT_CONE_BUDGET = 65_536
 FIT_MODES = ((EXTRA_BACKGROUND, 'all'), (0., 'all'), (EXTRA_BACKGROUND, 'first'), (EXTRA_BACKGROUND, 'second'))
 
 
@@ -124,81 +124,6 @@ def load_events(campaign, config, binding, cohort, settings):
     return blocks, provenance
 
 
-class AngularScore:
-    """Batch the existing angular response over cones with default strip covariance."""
-
-    def __init__(self, first, second, settings):
-        events = first + second
-        informative = [event for event in events if event.candidates]
-        self.first_informative = sum(bool(event.candidates) for event in first)
-        self.unknown = np.array([event.unresolved_mass for event in informative])
-        self.starts = np.cumsum([0] + [len(event.candidates) for event in informative[:-1]])
-        self.candidates = [cone for event in informative for cone in event.candidates]
-        require(0 < self.first_informative < len(informative), 'Both splits need measured cone geometry')
-        self.vertex = np.array([c.vertex for c in self.candidates])
-        self.axis = np.array([c.axis for c in self.candidates])
-        self.theta = np.array([c.theta for c in self.candidates])
-        self.length = np.array([c.separation for c in self.candidates])
-        self.mass = np.array([c.prior for c in self.candidates])
-        self.settings = settings
-        self.xy_var = settings.strip_pitch_mm**2/12.
-        self.nuisance_var = math.radians(settings.angular_nuisance_sigma_deg)**2
-        covariance = np.array([np.diag([self.xy_var, self.xy_var, 0.])]*2)
-        require(all(np.array_equal(c.position_covariance, covariance) and c.energy_angle_variance == 0.
-                    for c in self.candidates), 'Batched score requires the saved default strip-only covariance')
-        self.informative = informative
-        self.points_per_batch = max(1, POINT_CONE_BUDGET//len(self.candidates))
-        self.accounting = dict(selected_triggers=len(events), triggers_with_geometry=len(informative),
-                               allowed_saved_geometry_orders=len(self.candidates), projected_trigger_mass=math.fsum(self.mass),
-                               unresolved_trigger_mass=math.fsum(event.unresolved_mass for event in events))
-        require(math.isclose(self.accounting['projected_trigger_mass'] + self.accounting['unresolved_trigger_mass'],
-                             len(events), abs_tol=1e-10), 'Selected trigger weights do not close')
-
-    def relative_response(self, points):
-        ray = np.asarray(points)[:, None, :] - self.vertex
-        distance = np.linalg.norm(ray, axis=2)
-        unit = ray / distance[:, :, None]
-        cosine = np.clip(np.einsum('pni,ni->pn', unit, self.axis), -1., 1.)
-        alpha = np.arccos(cosine)
-        sine = np.sqrt(np.maximum(0., 1-cosine*cosine))
-        denominator = np.maximum(sine, 1e-8)[:, :, None]
-        qa = (unit[:, :, :2]-cosine[:, :, None]*self.axis[:, :2]) / denominator
-        qu = (self.axis[:, :2]-cosine[:, :, None]*unit[:, :, :2]) / denominator
-        g2 = qa / self.length[None, :, None]
-        g1 = -g2 + qu / distance[:, :, None]
-        variance = self.xy_var * np.sum(g1*g1 + g2*g2, axis=2)
-        sigma = np.sqrt(variance + self.nuisance_var)
-        width = math.sqrt(2.)*sigma
-        normalizer = .5*(_erf((math.pi-alpha)/width)+_erf(alpha/width))
-        angular = np.exp(-.5*((self.theta-alpha)/sigma)**2)/(math.sqrt(2.*math.pi)*sigma*normalizer)
-        # At the pole use the reference implementation's analytic tangent-plane limit.
-        for point_index, cone_index in np.argwhere(sine < 1e-7):
-            angular[point_index, cone_index] = candidate_response(
-                self.candidates[cone_index], points[point_index:point_index+1], self.settings)[0]
-        return np.add.reduceat(angular*self.mass*math.pi, self.starts, axis=1) + self.unknown
-
-    def validate(self, z_min):
-        points = np.array([[0., 0., z_min], [22., -11., 79.], [-120., 181., 1500.]])
-        reference = math.pi*np.column_stack([event_response(event, points, self.settings) for event in self.informative])
-        actual = np.concatenate([self.relative_response(part) for part in self.batches(points)])
-        difference = float(np.max(np.abs(actual-reference)))
-        require(np.allclose(actual, reference, rtol=1e-10, atol=1e-11), 'Batched score disagrees with the angular kernel')
-        return difference
-
-    def batches(self, points):
-        for start in range(0, len(points), self.points_per_batch):
-            yield points[start:start+self.points_per_batch]
-
-    def score(self, points, *modes):
-        slices = {'first': slice(None, self.first_informative), 'second': slice(self.first_informative, None),
-                  'all': slice(None)}
-        scores = []
-        for part in self.batches(points):
-            response = self.relative_response(part)
-            scores.append(np.column_stack([np.log((1.-background)*response[:, slices[split]] + background).sum(axis=1)
-                                           for background, split in modes]))
-        return np.concatenate(scores)
-
 
 def xyz(slope, depth):
     return np.column_stack((np.atleast_2d(slope)*depth, np.full(len(np.atleast_2d(slope)), depth)))
@@ -293,7 +218,8 @@ def run(campaign, block_limit=None, *, write=True):
     depths = np.r_[np.geomspace(z_min, MAX_DEPTH_MM, 21), FAR_DEPTH_MM]
     source_dir = Path(__file__).resolve().parent
     source_hashes = {name: digest((source_dir / name).read_bytes()) for name in
-                     (Path(__file__).name, 'gegi_continuous_plane.py', 'gegi_joint_imaging.py', 'gegi_commercial_dual_prior.py')}
+                     (Path(__file__).name, 'gegi_source_range.py', 'gegi_continuous_plane.py',
+                      'gegi_joint_imaging.py', 'gegi_commercial_dual_prior.py')}
     require(source_hashes['gegi_continuous_plane.py'] == pins['gegi_continuous_plane.py'],
             'The acquisition requires its frozen cone kernel')
     blocks, provenance = load_events(campaign, config, binding, cohort, settings)

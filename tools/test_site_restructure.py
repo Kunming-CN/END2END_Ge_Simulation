@@ -251,9 +251,9 @@ class SiteStructureTests(unittest.TestCase):
         self.assertTrue(set(('local-routes','browse','setup','choose','local-control','electronics','replay','native-readout','source-preparation','results','recovery','validation','workspace','downloads')).issubset(ids))
         for name in ('choose','replay','native-readout','source-preparation','results','recovery'):
             self.assertRegex(guide,r'<details id="'+name+r'">')
-        self.assertIn('1,143,142 bytes',guide);self.assertIn('303,891,603 bytes',guide)
+        self.assertIn('latest student release',guide);self.assertIn('303,891,603 bytes',guide)
         self.assertIn('student-runtime-f44859b48267',guide)
-        self.assertEqual(guide.count('https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/download/student-runtime-f44859b48267/gegi-center-calibration.npz'),2)
+        self.assertEqual(guide.count('https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/download/student-runtime-f44859b48267/gegi-center-calibration.npz'),3)
         self.assertNotRegex(guide,r'href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases"')
         for ident in ('setup','setup-macos'):
             self.assertIn('<section id="'+ident+'" class="setup-platform" hidden>',guide)

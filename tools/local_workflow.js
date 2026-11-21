@@ -9,7 +9,7 @@ let savedGeGIOptions=null,savedGeGIJob=null,savedGeGIBusy=false,savedGeGIGenerat
 let dualLibraries=[],dualJob=null,dualBusy=false,dualGeneration=0;
 let candidateJob=null,candidateBusy=false,candidateGeneration=0,candidateEventGeneration=0,candidateOffset=0,candidatePage=null;
 let candidateEstimateGeneration=0;
-let candidatePlaneGeneration=0;
+let candidatePlaneGeneration=0,candidateRangeRefresh=null;
 const continuationNames=new Map();
 const pendingActions=new Map();
 const stageNames={native_preparation:'Fields and injection calibration',geometry:'Geometry and source',radiation:'Radiation transport',event_ledger:'Event ledger',response:'Fields, charge, calibration and readout',results:'Verified results'};
@@ -135,7 +135,7 @@ function renderJobs(state){
   }
   syncRunList($('runs'),cards,'No runs created in this application.');controls();
 }
-async function poll(){const generation=++pollGeneration;try{const [state,legacy]=await Promise.all([api('/api/workflow/state'),api('/api/state')]);if(generation!==pollGeneration)return;renderJobs(state);renderLegacy(legacy);if(savedGeGIJob)void pollSavedGeGI();if(dualJob?.status==='running')void inspectDualJob(dualJob.name);if(['running','stop_requested'].includes(candidateJob?.status)||candidateJob?.analysis?.status==='running')void inspectCandidateJob(candidateJob.name);}catch(e){if(generation===pollGeneration)notice(e.message,true);}}
+async function poll(){const generation=++pollGeneration;try{const [state,legacy]=await Promise.all([api('/api/workflow/state'),api('/api/state')]);if(generation!==pollGeneration)return;renderJobs(state);renderLegacy(legacy);if(savedGeGIJob)void pollSavedGeGI();if(dualJob?.status==='running')void inspectDualJob(dualJob.name);if(['running','stop_requested'].includes(candidateJob?.status)||candidateJob?.analysis?.status==='running'||candidateJob?.range_analysis?.status==='running')void inspectCandidateJob(candidateJob.name);}catch(e){if(generation===pollGeneration)notice(e.message,true);}}
 
 function savedGeGIControls(){
   const hasInput=!!savedGeGIOptions?.campaigns?.some(c=>c.id===$('gegi-saved-campaign').value),status=savedGeGIJob?.status;
@@ -914,7 +914,7 @@ async function estimateCandidateStorage(){
 }
 function candidateControls(){
   const running=['running','stop_requested'].includes(candidateJob?.status);
-  const analyzing=candidateJob?.analysis?.status==='running';
+  const analyzing=candidateJob?.analysis?.status==='running'||candidateJob?.range_analysis?.status==='running';
   $('gegi-candidate-start').disabled=candidateBusy||busy||active||running;
   $('gegi-candidate-stop').disabled=candidateBusy||candidateJob?.status!=='running';
   $('gegi-candidate-resume').disabled=candidateBusy||busy||active||!candidateJob?.resumable;
@@ -923,6 +923,7 @@ function candidateControls(){
   $('gegi-candidate-next').disabled=candidateBusy||!candidatePage||candidateOffset+candidatePage.items.length>=candidatePage.total;
   $('gegi-candidate-analyze').disabled=candidateBusy||busy||active||analyzing||candidateJob?.status!=='completed'||!$('gegi-candidate-calibration').value;
   $('gegi-candidate-open-map').disabled=candidateBusy||!$('gegi-candidate-map').value;
+  candidateRangeRefresh?.(candidateJob);
 }
 async function refreshCandidateRuns(){
   candidateBusy=true;candidateControls();
@@ -933,6 +934,10 @@ async function refreshCandidateRuns(){
     options('gegi-candidate-calibration',[{id:'',label:'Choose an imported calibration'},...(reply.calibrations||[])]);
     if((reply.calibrations||[]).some(row=>row.id===calibration))$('gegi-candidate-calibration').value=calibration;
     else if(reply.calibrations?.length)$('gegi-candidate-calibration').value=reply.calibrations[0].id;
+    const lateral=$('gegi-candidate-lateral-calibration').value,lateralOptions=(reply.lateral_calibrations||[])
+      .map(row=>({...row,label:'Lateral where calibrated · '+row.label}));
+    options('gegi-candidate-lateral-calibration',[{id:'',label:'Center templates'},...lateralOptions]);
+    $('gegi-candidate-lateral-calibration').value=lateralOptions.some(row=>row.id===lateral)?lateral:'';
     candidateStatus(reply.jobs.length+' saved acquisitions. Select one to inspect its statistics and candidates.');
   }catch(e){candidateStatus(e.message,true);}finally{candidateBusy=false;candidateControls();}
 }
@@ -943,7 +948,9 @@ function showCandidateJob(job){
   if(changed){++candidatePlaneGeneration;$('gegi-candidate-map-view').replaceChildren();}
   const priorMap=$('gegi-candidate-map').value,maps=job.analysis_maps||[];
   options('gegi-candidate-map',[{id:'',label:'Choose a saved map'},...maps.map(row=>({id:row.analysis_id,
-    label:(row.scope==='all_two_strip_candidates'?'Full analysis':'Partial analysis')+' · z = '+row.z_mm+' mm · '+row.plane_prior}))]);
+    label:(row.scope==='all_two_strip_candidates'?'Full analysis':'Partial analysis')+' · z = '+row.z_mm+' mm · '+row.plane_prior+
+      (row.position_model==='lateral'?' · Lateral where calibrated':'')+
+      (row.compatibility?' · All-electrode fit residuals':'')}))]);
   $('gegi-candidate-map').value=maps.some(row=>row.analysis_id===priorMap)?priorMap:maps[0]?.analysis_id||'';
   const analysis=job.analysis;
   $('gegi-candidate-analysis-status').textContent=analysis?.status==='running'?'Analyzing saved candidates in the installed transport environment…':
@@ -1028,6 +1035,9 @@ async function analyzeCandidateRun(){
   try{
     const request={name:job.name,report_sha256:job.report_sha256,calibration_id:$('gegi-candidate-calibration').value,
       plane_prior:$('gegi-candidate-plane-prior').value};
+    if($('gegi-candidate-compatibility').checked)request.compatibility=true;
+    const lateral=$('gegi-candidate-lateral-calibration').value;
+    if(lateral)request.lateral_calibration_id=lateral;
     for(const [key,id]of [['z_mm','z'],['extent_mm','extent'],['step_mm','step'],['sigma_deg','sigma']]){
       const text=$('gegi-candidate-plane-'+id).value.trim();request[key]=Number(text);
       if(!text||!Number.isFinite(request[key]))throw Error('Enter finite plane settings.');
@@ -1045,7 +1055,7 @@ async function openCandidatePlane(){
   const generation=++candidatePlaneGeneration,target=$('gegi-candidate-map-view'),status=$('gegi-candidate-analysis-status');
   const current=()=>generation===candidatePlaneGeneration&&candidateJob?.name===job.name&&candidateJob?.report_sha256===job.report_sha256&&
     $('gegi-candidate-map').value===selected.analysis_id&&(candidateJob.analysis_maps||[]).some(row=>row.analysis_id===selected.analysis_id&&row.analysis_sha256===selected.analysis_sha256);
-  target.replaceChildren();status.textContent='Opening the saved source-plane map…';
+  candidateRangeRefresh=null;target.replaceChildren();status.textContent='Opening the saved source-plane map…';
   try{
     const reply=await api('/api/workflow/gegi-candidates/plane?'+new URLSearchParams({name:job.name,
       report_sha256:job.report_sha256,analysis_id:selected.analysis_id,analysis_sha256:selected.analysis_sha256}));
@@ -1055,19 +1065,242 @@ async function openCandidatePlane(){
     const {grid,layers,model,selection,candidate_analysis:analysis}=reply,partial=analysis.scope!=='all_two_strip_candidates';
     status.textContent=(partial?'Partial analysis':'Full analysis')+' · '+analysis.selected_original_trigger_ids.length+' of '+analysis.two_strip_candidates+' two-strip candidates selected.';
     const source=analysis.source_census,layerChoice=node('select'),plot=node('div'),summary=node('p','','notice');
+    const inspect=node('button','Inspect peak contributors'),contributors=node('div');
+    let contributorGeneration=0;
     for(const key of Object.keys(layers)){const option=node('option',key==='all'?'All measured energies':key==='other_energy'?'Outside line windows':parseFloat(key)+' keV');option.value=key;layerChoice.append(option);}
     layerChoice.value='all';const label=node('label','Measured energy window');label.append(layerChoice);
     target.append(node('h4',partial?'Partial source-plane analysis':'Source-plane analysis'),
       node('p',selection.qualified_triggers+' qualified triggers · '+selection.qualified_energies+' measured energies · '+selection.two_strip_triggers+' two-strip candidates. '+
         selection.qualified_adc_live_time_ns/1e9+' of '+selection.clock_live_time_ns/1e9+' s qualified after unknown-history exclusion.'),
       node('p','Original source census: '+source.initial_parents+' new parents · '+source.initial_daughter_decays+' initial-daughter decays. Native groups unavailable: '+source.unavailable_native_groups+'.'),
-      node('p','Assumed plane z = '+grid.assumed_z_mm+' mm; saved prior '+model.plane_prior+'. '+model.normalization),label,summary,plot,
+      node('p','Assumed plane z = '+grid.assumed_z_mm+' mm; saved prior '+model.plane_prior+'. '+model.normalization),label,summary,plot,inspect,contributors,
       node('p',model.geometry+' '+model.ambiguity+' '+model.limits,'muted'),
       featureDetails('Original IDs, full census and analysis provenance',{analysis_sha256:reply.analysis_sha256,input_sha256:reply.input_sha256,original_trigger_ids:reply.original_trigger_ids,candidate_analysis:analysis}));
-    function paint(){const layer=layers[layerChoice.value];summary.textContent=layer.triggers+' triggers · '+layer.triggers_with_geometry+' with geometry · '+
-      metricValue(layer.projected_mass)+' projected and '+metricValue(layer.unresolved_mass)+' unresolved nominal trigger units.';plot.replaceChildren(dualPlaneMap(grid,layer,false));}
+    if(analysis.position_model==='lateral'){
+      const support=analysis.position_calibration_support_pair_counts,used=analysis.position_pair_counts;
+      const fallback=Object.entries(analysis.position_fallback_counts).map(([reason,count])=>count+' '+lateralFallbackText(reason));
+      status.textContent+=' Lateral positions requested.';
+      target.append(node('p','Lateral calibration covers '+analysis.lateral_calibration.coverage_cells.length+' pixels. Across captured, energy-compatible pairs, ' +
+        (support['2']||0)+' have two supported sites, '+(support['1']||0)+' have one, and '+(support['0']||0)+' have zero. Successful positions used '+
+        (used.lateral||0)+' two-site lateral fits, '+(used.partial_lateral||0)+' one-site lateral fits, and '+(used.center||0)+' center fits.','notice'));
+      if(fallback.length)target.append(node('p','Lateral fallback · '+fallback.join(' · '),'muted'));
+    }
+    if(!partial)target.append(candidateRangePanel(reply,current));
+    function paint(){
+      const layer=layers[layerChoice.value];++contributorGeneration;contributors.replaceChildren();inspect.disabled=layer.projected_mass<=0;
+      summary.textContent=layer.triggers+' triggers · '+layer.triggers_with_geometry+' with geometry · '+
+        metricValue(layer.projected_mass)+' projected and '+metricValue(layer.unresolved_mass)+' unresolved nominal trigger units.';
+      plot.replaceChildren(dualPlaneMap(grid,layer,false));
+    }
+    async function openContributors(offset=0){
+      const layer=layerChoice.value,requestGeneration=++contributorGeneration,message=node('p','Reading saved pair fits and order contributions…','notice');
+      const stillCurrent=()=>current()&&requestGeneration===contributorGeneration&&layerChoice.value===layer;
+      message.setAttribute('role','status');contributors.replaceChildren(message);inspect.disabled=true;
+      try{
+        const result=await api('/api/workflow/gegi-candidates/contributors?'+new URLSearchParams({name:job.name,
+          report_sha256:job.report_sha256,analysis_id:selected.analysis_id,analysis_sha256:selected.analysis_sha256,layer,offset:String(offset)}));
+        if(!stillCurrent())return;
+        if(result.name!==job.name||result.report_sha256!==job.report_sha256||result.analysis_id!==selected.analysis_id||
+          result.analysis_sha256!==selected.analysis_sha256||result.layer!==layer||result.offset!==offset)throw Error('Peak contributions belong to a different saved map or energy window.');
+        if(!result.peak){message.textContent='This layer has no projected contribution.';return;}
+        message.textContent='Brightest cell ('+result.peak.position_mm.join(', ')+') mm'+(result.peak.on_image_edge?' · image edge':'')+
+          ' · '+metricValue(result.peak.mass)+' nominal trigger units. Contributors '+(offset+1)+'–'+(offset+result.items.length)+' of '+result.total+'.';
+        const list=node('ol');list.start=offset+1;
+        for(const row of result.items){
+          const trigger=node('li'),button=node('button','Open trigger '+row.original_trigger_id+' waveforms');
+          button.onclick=()=>stillCurrent()?openCandidateWaveforms(row):undefined;
+          trigger.append(node('strong','Trigger '+row.original_trigger_id+' · '+metricValue(row.energy_keV)+' keV · '+
+            metricValue(100*row.peak_cell_share)+'% of peak cell'));
+          for(const pair of row.pairings){
+            const usedModel=pair.waveform_position_model;
+            const waveform=pair.lateral_fit_diagnostics?.[usedModel]??pair.center_fit_diagnostics.waveform;
+            const cellText=pair.cells.map(cell=>'('+cell.join(', ')+')').join(' and ');
+            const orders=pair.orders.map(order=>'order '+order.order.map(i=>i+1).join(' → ')+' · '+
+              metricValue(100*order.peak_cell_mass/result.peak.mass)+'% of peak cell');
+            trigger.append(node('p','Pair '+pair.index+' · electrodes '+cellText+' · '+
+              (waveform?'waveform residual RMS '+metricValue(waveform.weighted_residual_rms)+' in noise-scale units':pair.waveform_fit_status.replaceAll('_',' '))+
+              (orders.length?' · '+orders.join(' · '):''),'muted'));
+            if(pair.lateral_calibration_support){
+              const used={lateral:'Two-site lateral fit',partial_lateral:'One-site lateral fit',center:'Center fit'}[usedModel]||'Waveform position unavailable';
+              const support=pair.lateral_calibration_support.map((supported,index)=>'site '+(index+1)+' '+(supported?'has a lateral grid':'has no lateral grid'));
+              const fallback=pair.lateral_fallback_reason?' · '+lateralFallbackText(pair.lateral_fallback_reason):'';
+              trigger.append(node('p',used+' · '+support.join(' · ')+fallback,'muted'));
+            }
+            if(waveform?.compatibility)trigger.append(candidateCompatibilityDetails(waveform));
+          }
+          trigger.append(featureDetails('Fit positions, order weights and original IDs',row),button);list.append(trigger);
+        }
+        const previous=node('button','Previous contributors'),next=node('button','Next contributors'),navigation=node('div',undefined,'actions');
+        previous.disabled=offset===0;previous.onclick=()=>openContributors(Math.max(0,offset-result.page_size));
+        next.disabled=offset+result.page_size>=result.total;next.onclick=()=>openContributors(offset+result.page_size);
+        navigation.append(previous,next);contributors.append(list,navigation);
+      }catch(error){if(stillCurrent())message.textContent=error.message;}
+      finally{if(stillCurrent())inspect.disabled=false;}
+    }
+    inspect.onclick=()=>openContributors();
     layerChoice.onchange=paint;paint();
   }catch(error){if(current()){target.replaceChildren();status.textContent=error.message;}}
+}
+function candidateRangePanel(map,current){
+  const region=node('section'),message=node('p','','notice'),output=node('div'),choices=node('select');
+  const rangeOptions=new Map((map.range_options||[]).map(row=>[row.range_id,row]));
+  const min=node('input'),max=node('input'),nuisance=node('input'),run=node('button','Run 3D range analysis'),open=node('button','Open saved range analysis');
+  const binding={name:map.name,report_sha256:map.report_sha256,analysis_id:map.analysis_id,analysis_sha256:map.analysis_sha256};
+  let loading=false,viewGeneration=0,lastStatus=null;
+  message.setAttribute('role','status');message.setAttribute('aria-live','polite');
+  for(const [input,value] of [[min,'20'],[max,'10000']]){input.type='number';input.step='any';input.min='0';input.value=value;}
+  nuisance.type='checkbox';nuisance.style.cssText='display:inline;width:auto;min-height:0;margin-right:8px';
+  const fields=node('div',undefined,'horizontal');
+  for(const [text,input] of [['Minimum search distance · mm',min],['Maximum search distance · mm',max]]){
+    const label=node('label',text);label.append(input);fields.append(label);
+  }
+  const nuisanceLabel=node('label');nuisanceLabel.append(nuisance,node('span','Also fit the uniform-angle background fraction'));
+  const saved=node('label','Saved 3D range results');saved.append(choices);
+  const actions=node('div',undefined,'actions');actions.append(open,run);
+  region.append(node('h4','Three-dimensional source range'),node('p','Fit directions on the full sphere and scan distance from detector origin (0, 0, 0) mm. The score profiles are uncalibrated.'),
+    saved,fields,nuisanceLabel,actions,message,output);
+  function refreshChoices(){
+    const selected=choices.value;
+    choices.replaceChildren();
+    for(const row of rangeOptions.values()){
+      const text=row.file+' · '+row.radial_search_mm.join('–')+' mm'+(row.profile_background?' · Profiled background':'')+
+        (row.current_solver?'':' · Archived solver');
+      const option=node('option',text);option.value=row.range_id;choices.append(option);
+    }
+    if(!rangeOptions.size){const option=node('option','No saved range results');option.value='';choices.append(option);}
+    choices.value=rangeOptions.has(selected)?selected:rangeOptions.keys().next().value||'';
+    open.disabled=!choices.value;
+  }
+  refreshChoices();
+  async function openResult(entry){
+    const generation=++viewGeneration;output.replaceChildren();message.textContent='Opening the saved range analysis…';
+    try{
+      const reply=await api('/api/workflow/gegi-candidates/range?'+new URLSearchParams({...binding,range_id:entry.range_id,range_sha256:entry.range_sha256}));
+      if(!current()||generation!==viewGeneration)return;
+      if(Object.keys(binding).some(key=>reply[key]!==binding[key])||reply.range_result.range_sha256!==entry.range_sha256||
+        reply.range_result.range_id!==entry.range_id||reply.result.input_sha256!==map.analysis_sha256)throw Error('The range result belongs to a different saved map.');
+      message.textContent=entry.current_solver?'Saved range analysis opened.':'Archived range analysis opened with its recorded solver version.';
+      output.append(renderCandidateRange(reply.result));
+    }catch(error){if(current()&&generation===viewGeneration)message.textContent=error.message;}
+  }
+  choices.onchange=()=>{++viewGeneration;output.replaceChildren();open.disabled=!choices.value;};
+  open.onclick=()=>openResult(rangeOptions.get(choices.value));
+  run.onclick=async()=>{
+    const low=Number(min.value),high=Number(max.value);
+    if(!Number.isFinite(low)||!Number.isFinite(high)||low<=0||high<=low){message.textContent='Choose a positive increasing distance search.';return;}
+    loading=true;run.disabled=true;message.textContent='Preparing range analysis from saved fits…';
+    try{
+      const reply=await api('/api/workflow/gegi-candidates/range',{...binding,radius_min_mm:low,radius_max_mm:high,profile_background:nuisance.checked===true});
+      if(!current())return;
+      if(reply.reused){rangeOptions.set(reply.range_id,reply);refreshChoices();choices.value=reply.range_id;await openResult(reply);}
+      else await inspectCandidateJob(map.name);
+    }catch(error){if(current())message.textContent=error.message;}
+    finally{loading=false;candidateRangeRefresh?.(candidateJob);}
+  };
+  candidateRangeRefresh=job=>{
+    if(!current())return;
+    const range=job?.range_analysis;
+    run.disabled=loading||busy||active||job?.analysis?.status==='running'||range?.status==='running';
+    if(range?.analysis_sha256!==map.analysis_sha256||range.status===lastStatus)return;
+    lastStatus=range.status;
+    if(range.status==='running')message.textContent='Analyzing three-dimensional range from saved candidates…';
+    if(range.status==='failed')message.textContent=range.error;
+    if(range.status==='completed'&&range.range_result){
+      const entry=range.range_result;
+      rangeOptions.set(entry.range_id,entry);refreshChoices();choices.value=entry.range_id;
+      message.textContent='Range analysis complete. Open the saved result.';
+    }
+  };
+  candidateRangeRefresh(candidateJob);
+  return region;
+}
+function renderCandidateRange(result){
+  const region=node('div'),view=node('div'),window=node('select'),label=node('label','Measured energy window');
+  const names={'661.657_keV':'661.657 keV','1173.23_keV':'1173.23 keV','1332.49_keV':'1332.49 keV',cobalt_both_lines:'Co-60 line windows combined'};
+  const fitNames={primary:'Fixed background',no_extra_background:'No extra background',first_clock_half:'First clock half',
+    second_clock_half:'Second clock half',profiled_background:'Profiled background'};
+  for(const key of Object.keys(result.fits)){const option=node('option',names[key]);option.value=key;window.append(option);}
+  window.value='661.657_keV';label.append(window);region.append(label,view);
+  const value=number=>Number.isFinite(number)?number.toFixed(2):'Unavailable';
+  function paint(){
+    const row=result.fits[window.value];view.replaceChildren();
+    if(row.status!=='conditional_scores_computed'){
+      view.append(node('p',row.selected_triggers+' measured triggers. At least one clock half has no usable cone geometry.','notice'));return;
+    }
+    const account=row.accounting,table=node('table'),body=node('tbody'),head=node('thead'),labels=node('tr');
+    for(const text of ['Model','X, Y, Z (mm)','Center distance (mm)','Range score support','Gain over infinite distance']){
+      const cell=node('th',text);cell.scope='col';labels.append(cell);
+    }
+    head.append(labels);table.append(head,body);
+    for(const [key,fit] of Object.entries(row.fits)){
+      const cells=node('tr'),profile=fit.profile_diagnostic;
+      const status=profile.far_field_supported?'Infinite distance within score drop':profile.lower_open||profile.upper_open?
+        'Open at search '+(profile.lower_open&&profile.upper_open?'bounds':profile.lower_open?'minimum':'maximum'):'Closed on sampled range';
+      for(const text of [fitNames[key],fit.position_mm.map(value).join(', '),value(fit.center_distance_mm),status,value(fit.score_gain_over_far_field)])cells.append(node('td',text));
+      body.append(cells);
+    }
+    const profiled=row.fits.profiled_background,primary=row.fits.primary,scroll=node('div',undefined,'dual-pixel-scroll');scroll.append(table);
+    const profileDifference=profiled?' · Profiled versus fixed background '+value(Math.hypot(...profiled.position_mm.map((v,i)=>v-primary.position_mm[i])))+' mm.':'.';
+    view.append(node('p',account.selected_triggers+' original triggers · '+account.triggers_with_geometry+' with geometry · '+
+      account.allowed_saved_geometry_orders+' saved orders · '+value(account.projected_trigger_mass)+' projected and '+
+      value(account.unresolved_trigger_mass)+' unresolved trigger units. Clock halves '+row.split_trigger_counts.join(' / ')+'.'),
+      scroll,node('p','Position disagreement · Clock halves '+value(row.split_position_difference_mm)+' mm · Removing extra background '+
+        value(row.background_position_difference_mm)+' mm'+profileDifference,'notice'),
+      candidateRangePlot(row.fits,fitNames,result.model.radial_search_mm),
+      featureDetails('Original selected trigger IDs and solver provenance',{selected_original_trigger_ids:row.selected_original_trigger_ids,
+        source_sha256:result.source_sha256,input_bindings:result.input_bindings,software:result.software,model:result.model}));
+  }
+  window.onchange=paint;paint();return region;
+}
+function candidateRangePlot(fits,names,bounds){
+  const wrapper=node('figure'),canvas=node('canvas'),caption=node('figcaption');
+  canvas.width=680;canvas.height=250;canvas.style.maxWidth='100%';canvas.setAttribute('role','img');
+  canvas.setAttribute('aria-label','Radial profile score loss versus center distance in millimeters on a logarithmic axis');
+  const ctx=canvas.getContext('2d'),colors=['#12539c','#a12f26','#287444','#74429a','#8d5e0d'];
+  const series=Object.entries(fits),drop=fits.primary.profile_diagnostic.score_drop;
+  const x=distance=>54+(Math.log(distance/bounds[0])/Math.log(bounds[1]/bounds[0]))*595;
+  const maxLoss=Math.max(drop*1.2,...series.flatMap(([,fit])=>fit.radial_profile.map(row=>row.loss_from_best_score)));
+  const y=loss=>210-(Math.log1p(loss)/Math.log1p(maxLoss))*178;
+  const line=(x0,y0,x1,y1)=>{ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();};
+  ctx.strokeStyle='#657585';ctx.fillStyle='#354457';ctx.font='13px sans-serif';
+  line(54,32,54,210);line(54,210,649,210);line(54,y(drop),649,y(drop));
+  ctx.fillText('Score loss (log(1 + loss) scale)',8,20);
+  for(const tick of [0,drop,10,50,maxLoss].filter((v,i,a)=>v<=maxLoss&&a.indexOf(v)===i)){
+    ctx.fillText(tick===maxLoss?tick.toPrecision(3):String(tick),8,y(tick)+4);
+  }
+  ctx.fillText(String(bounds[0]),54,229);ctx.fillText(String(bounds[1]),610,229);ctx.fillText('Center distance (mm, log scale)',260,245);
+  series.forEach(([key,fit],i)=>{
+    const color=colors[i],profile=fit.radial_profile;ctx.strokeStyle=color;ctx.lineWidth=1.8;ctx.beginPath();
+    profile.forEach((row,index)=>{const method=index?'lineTo':'moveTo';ctx[method](x(row.center_distance_mm),y(row.loss_from_best_score));});
+    ctx.stroke();const legend=node('span',names[key]+(i===series.length-1?'':' · '));legend.style.color=color;caption.append(legend);
+  });
+  wrapper.append(canvas,caption,node('p','The line at score loss '+drop+' is a descriptive comparison threshold. Profiles and coordinate estimates are uncalibrated.','muted'));
+  return wrapper;
+}
+function lateralFallbackText(reason){
+  return {no_lateral_calibration_for_either_site:'without a lateral grid at either site',
+    no_lateral_waveform_fit:'without a lateral waveform fit',
+    lateral_optimizer_did_not_converge:'with a failed lateral optimizer'}[reason]||reason.replaceAll('_',' ');
+}
+function candidateCompatibilityDetails(fit){
+  const details=node('details'),compatibility=fit.compatibility,table=node('table');
+  details.append(node('summary','Residuals across all 34 electrodes'),
+    node('p','ADC residuals are measured minus modeled after quiet-tail subtraction. The waveform fit used the marked electrodes.','muted'));
+  const boundaries=Object.entries(fit.parameter_boundaries||{}).filter(([,value])=>value).map(([key,value])=>key+' '+value);
+  if(boundaries.length)details.append(node('p','Fit parameters at a bound · '+boundaries.join(' · '),'muted'));
+  const head=node('thead'),labels=node('tr'),body=node('tbody');
+  for(const text of ['Electrode','Fit role','RMS (ADC codes)','Signed peak (ADC codes)','Peak time (ns)']){
+    const cell=node('th',text);cell.scope='col';labels.append(cell);
+  }
+  head.append(labels);table.append(head,body);
+  for(const [index,id] of compatibility.contact_ids.entries()){
+    const row=node('tr');
+    for(const value of [id,compatibility.fitted_contact_ids.includes(id)?'Fit electrode':'Other electrode',
+      metricValue(compatibility.adc_rms_codes[index]),metricValue(compatibility.adc_peak_codes[index]),
+      metricValue(compatibility.adc_peak_time_ns[index])])row.append(node('td',String(value)));
+    body.append(row);
+  }
+  details.append(table);return details;
 }
 async function loadCandidatePage(offset){
   const job=candidateJob,generation=++candidateEventGeneration;
@@ -1077,13 +1310,29 @@ async function loadCandidatePage(offset){
     if(job!==candidateJob||generation!==candidateEventGeneration)return;
     candidatePage=reply;candidateOffset=offset;
     options('gegi-candidate-trigger',reply.items.map(item=>({id:String(item.trigger_id),label:'Trigger '+item.trigger_id+' · '+metricValue(item.card.energy_keV)+' keV · '+item.reason.replaceAll('_',' ')})));
-    options('gegi-candidate-contact',Array.from({length:34},(_,i)=>({id:String(i+1),label:'Electrode '+(i+1)+(i===16||i===33?' · guard':'')})));
+    candidateContactOptions();
     $('gegi-candidate-page').textContent=reply.total?'Candidates '+(offset+1)+'–'+(offset+reply.items.length)+' of '+reply.total:'No imaging candidates in this acquisition. The full statistics remain above.';
     $('gegi-candidate-view').hidden=false;
     $('gegi-candidate-trigger').disabled=$('gegi-candidate-contact').disabled=!reply.items.length;
     if(reply.items.length){const collecting=[...reply.items[0].card.x_collecting_strips,...reply.items[0].card.y_collecting_strips];if(collecting.length)$('gegi-candidate-contact').value=String(collecting[0]);void loadCandidateEvent();}
     else{$('gegi-candidate-features').replaceChildren();$('gegi-candidate-plots').replaceChildren();$('gegi-candidate-record').textContent='';$('gegi-candidate-event-status').textContent='No candidate waveform was saved.';}
   }catch(e){if(job===candidateJob)candidateStatus(e.message,true);}finally{candidateBusy=false;candidateControls();}
+}
+function candidateContactOptions(){
+  options('gegi-candidate-contact',Array.from({length:34},(_,i)=>({id:String(i+1),label:'Electrode '+(i+1)+(i===16||i===33?' · guard':'')})));
+}
+async function openCandidateWaveforms(row){
+  const trigger=$('gegi-candidate-trigger'),contact=$('gegi-candidate-contact'),view=$('gegi-candidate-view');
+  const id=String(row.original_trigger_id);
+  if(!Array.from(trigger.children).some(option=>option.value===id)){
+    const option=node('option','Trigger '+id+' · '+metricValue(row.energy_keV)+' keV · peak contributor');option.value=id;trigger.append(option);
+  }
+  trigger.value=id;candidateContactOptions();
+  contact.value=String(row.pairings.find(pair=>pair.orders.some(order=>order.peak_cell_mass>0))?.cells[0][0]??1);
+  trigger.disabled=contact.disabled=false;view.hidden=false;
+  if(!candidatePage)$('gegi-candidate-page').textContent='Original trigger selected from the saved image.';
+  view.focus?.({preventScroll:true});view.scrollIntoView?.({behavior:'smooth'});
+  await loadCandidateEvent();
 }
 async function loadCandidateEvent(){
   const job=candidateJob,trigger_id=$('gegi-candidate-trigger').value,contact_id=$('gegi-candidate-contact').value,generation=++candidateEventGeneration;

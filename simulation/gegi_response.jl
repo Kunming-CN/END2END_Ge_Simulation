@@ -3,17 +3,40 @@
 include("replay.jl")
 include("readout_profiles.jl")
 include("gegi_signal_helpers.jl")
+include("native_boundary_guard.jl")
 module GeGIResponse
-using ..SSDQuickstart, ..SSDReplay, ..Readout, ..ReadoutProfiles, ..GeGISignalHelpers
+using ..SSDQuickstart, ..SSDReplay, ..Readout, ..ReadoutProfiles, ..GeGISignalHelpers, ..NativeBoundaryGuard
 using SolidStateDetectors, Unitful, JSON, SHA, Serialization, LinearAlgebra
 const Q=SSDQuickstart; const R=SSDReplay; const E=Readout; const P=ReadoutProfiles
 const H=GeGISignalHelpers; const SSD=SolidStateDetectors
 const ROOT=Q.ROOT
 const MODEL_HASH="4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04"
 const NATIVE_SIGNAL_ONLY="native_signals_only_v1"
-const SOURCES=("gegi_response.jl","gegi_signal_helpers.jl","run.jl","replay.jl","readout.jl","readout_profiles.jl","readout_demo.json")
+const SOURCES=("gegi_response.jl","gegi_signal_helpers.jl","native_boundary_guard.jl","run.jl","replay.jl","readout.jl","readout_profiles.jl","readout_demo.json")
 check=E.check
 hashfile=E.hashfile
+struct NativeResponseError <: Exception
+    domain_error::String
+    diagnostic::Dict{String,Any}
+end
+Base.showerror(io::IO,err::NativeResponseError)=print(io,err.domain_error)
+jsonnumber(value)=isfinite(value) ? value : string(value)
+function validate_native_charge(q,t,id)
+    failed=String[]
+    length(q)>=2 || push!(failed,"sample_count_lt_2")
+    all(isfinite,q) || push!(failed,"nonfinite_signed_sample")
+    isempty(q) || first(q)==0 || push!(failed,"initial_signed_sample_nonzero")
+    isempty(failed) && return nothing
+    offending=findall(!isfinite,q)
+    !isempty(q) && first(q)!=0 && push!(offending,1)
+    indices=sort!(unique!([collect(1:min(3,length(q)));collect(max(1,length(q)-2):length(q));
+        [j for i in offending for j in max(1,i-2):min(length(q),i+2)]]))
+    detail=Dict{String,Any}("failed_invariants"=>failed,"contact_id"=>id,"sample_count"=>length(q),
+        "native_samples_available"=>true,"nonfinite_sample_indices"=>findall(!isfinite,q),
+        "samples"=>[Dict("index"=>i,"time_ns"=>jsonnumber(t[i]),"signed_induced_keV"=>jsonnumber(q[i]),
+            "signed_float64_bits"=>bitstring(q[i])) for i in indices])
+    throw(NativeResponseError("Invalid native signed charge",detail))
+end
 function transient_io(err)
     (err isa Base.IOError && err.code in (Base.UV_EACCES,Base.UV_EPERM,Base.UV_EBUSY)) ||
         (err isa SystemError && err.errnum in (Base.Libc.EACCES,Base.Libc.EPERM,Base.Libc.EBUSY))
@@ -73,9 +96,12 @@ function pinned_input(req,key,hashkey)
 end
 function numerics(req)
     n=get(req,"numerics",Dict())
-    check(Set(keys(n))<=Set(("drift_dt_ns","drift_cap_ns","native_seed","precision_bits","diffusion","self_repulsion","field_policy","depth_calibration","scope","min_grid_mm","max_grid_mm","max_iterations")),"Unknown GeGI numerical setting")
+    check(Set(keys(n))<=Set(("drift_dt_ns","drift_cap_ns","native_seed","precision_bits","cached_drift_precision_bits","analytic_semiconductor_boundary","diffusion","self_repulsion","field_policy","depth_calibration","scope","min_grid_mm","max_grid_mm","max_iterations")),"Unknown GeGI numerical setting")
     check(get(n,"diffusion",false)===false && get(n,"self_repulsion",false)===false,"This GeGI worker implements deterministic point-charge drift")
     check(get(n,"precision_bits",64)==64,"Fresh GeGI fields require Float64")
+    check(get(n,"cached_drift_precision_bits",nothing) in (nothing,64),"Cached drift precision must be explicitly Float64 or unchanged")
+    analytic=get(n,"analytic_semiconductor_boundary",false)
+    check(analytic isa Bool,"Analytic semiconductor boundary selection must be explicit")
     dt=Float64(get(n,"drift_dt_ns",1.0)); cap=Float64(get(n,"drift_cap_ns",1000.0))
     check(E.finite(cap) && cap>dt,"Invalid drift cap")
     steps=ceil(Int,cap/dt)+1
@@ -86,7 +112,35 @@ function numerics(req)
     check(E.finite(minspace) && E.finite(maxspace) && 0.05<=minspace<=maxspace<=5, "Invalid GeGI field grid bounds")
     check(E.integer(iterations) && 250<=iterations<=50000, "Invalid field iteration bound")
     check(E.integer(threads) && 1<=threads<=min(2,Threads.nthreads()),"Use one or two Julia threads")
-    (dt=dt,max_steps=steps,min_grid=minspace,max_grid=maxspace,max_iterations=iterations,threads=threads,contact=1)
+    (dt=dt,max_steps=steps,min_grid=minspace,max_grid=maxspace,max_iterations=iterations,threads=threads,contact=1,
+        analytic_boundary=analytic)
+end
+promote_cached_value(value)=value
+promote_cached_value(value::Float32)=Float64(value)
+promote_cached_value(value::Unitful.Quantity{Float32})=Float64(ustrip(value))*unit(value)
+promote_cached_value(value::NamedTuple)=map(promote_cached_value,value)
+promote_cached_value(value::AbstractArray{<:Integer})=value
+promote_cached_value(value::AbstractArray)=map(promote_cached_value,value)
+function promote_cached_drift(sim)
+    # Promote the saved samples exactly; never interpolate a new grid or solve.
+    # Geometry is rebuilt from the same pinned model in Float64, so the carrier
+    # integrator no longer applies Float32's 10 nm contact/50 um crossing tolerance.
+    check(SSD.get_precision_type(sim)==Float32,"Only a Float32 cached state needs promotion")
+    result=Simulation{Float64}(sim.config_dict)
+    for (name,constructor) in ((:electric_potential,SSD.ElectricPotential),(:point_types,SSD.PointTypes),(:electric_field,SSD.ElectricField))
+        old=getproperty(sim,name)
+        new=constructor(promote_cached_value(NamedTuple(old)))
+        check(new.data==old.data,"Cached field samples changed during promotion")
+        check(all(new.grid.axes[i].ticks==Float64.(old.grid.axes[i].ticks) for i in 1:3),"Cached grid changed during promotion")
+        setproperty!(result,name,new)
+    end
+    result.weighting_potentials=[begin
+        new=SSD.WeightingPotential(promote_cached_value(NamedTuple(old)))
+        check(new.data==old.data && all(new.grid.axes[i].ticks==Float64.(old.grid.axes[i].ticks) for i in 1:3),
+            "Cached weighting potential or grid changed during promotion")
+        new
+    end for old in sim.weighting_potentials]
+    result
 end
 function load_fields(req,model,out,cfg,report)
     started=time()
@@ -101,6 +155,12 @@ function load_fields(req,model,out,cfg,report)
         report["fields"]=Dict("mode"=>"explicit_exact_model_cache","cache_sha256"=>cache["sha256"],
             "precision_bits"=>8sizeof(SSD.get_precision_type(sim)),"solve_seconds"=>0.0,
             "qualification"=>"Reuses saved numerical fields; no new convergence claim")
+        if get(get(req,"numerics",Dict()),"cached_drift_precision_bits",nothing)==64 && SSD.get_precision_type(sim)==Float32
+            sim=promote_cached_drift(sim)
+            report["fields"]["cached_solution_precision_bits"]=32
+            report["fields"]["drift_precision_bits"]=64
+            report["fields"]["cached_sample_promotion"]="Exact Float32-to-Float64 samples and grid; same model geometry parsed as Float64; no field solve or convergence claim"
+        end
     else
         cache=joinpath(out,"fields.jls"); receipt=joinpath(out,"fields.json")
         if isfile(cache) && isfile(receipt)
@@ -140,10 +200,37 @@ function native_deposit(sim,xyz,energy,cfg; ids=1:34)
     T=SSD.get_precision_type(sim)
     point=SSD.CartesianPoint{T}((T.(xyz)./T(1000))...)
     check(point in sim.detector.semiconductor,"Positive deposit outside GeGI crystal")
-    check(!any(c->point in c.geometry,sim.detector.contacts),"Deposit starts on a GeGI contact")
+    contacts=[c.id for c in sim.detector.contacts if point in c.geometry]
+    isempty(contacts) || throw(NativeResponseError("Deposit starts on a GeGI contact",
+        Dict{String,Any}("contact_ids"=>contacts,"stored_position_mm"=>Float64[point.x,point.y,point.z].*1000,
+            "precision_bits"=>8sizeof(T))))
     event=SSD.Event([point],[energy*u"keV"])
-    SSD.drift_charges!(event,sim;Δt=cfg.dt*u"ns",max_nsteps=cfg.max_steps,
-        geometry_check=true,diffusion=false,self_repulsion=false,end_drift_when_no_field=true,verbose=false)
+    # SSD 0.11.8 otherwise exposes an unwritten terminal path row after a failed
+    # floating-boundary projection. Reuse the pinned guard and retain the failure
+    # before signal interpolation; an unavailable carrier path is never a signal.
+    NativeBoundaryGuard.install!(;analytic_semiconductor=get(cfg,:analytic_boundary,false))
+    try
+        Base.invokelatest(SSD.drift_charges!,event,sim;Δt=cfg.dt*u"ns",max_nsteps=cfg.max_steps,
+            geometry_check=true,diffusion=false,self_repulsion=false,end_drift_when_no_field=true,verbose=false)
+    catch err
+        err isa NativeBoundaryGuard.BoundaryStall || rethrow()
+        detail=NativeBoundaryGuard.detail(err)
+        p=SSD.CartesianPoint{T}(T.(err.last_valid_m)...)
+        field=SSD.get_velocity_vector(SSD.interpolated_vectorfield(sim.electric_field),p)
+        detail["terminal_field_V_m"]=Float64[field.x,field.y,field.z]
+        detail["terminal_contact_ids"]=[c.id for c in sim.detector.contacts if p in c.geometry]
+        detail["inside_semiconductor"]=p in sim.detector.semiconductor
+        tolerance=SSD.ConstructiveSolidGeometry.csg_default_tol(T)
+        faces=String[]
+        for (name,value,halfwidth) in (("x",p.x,T(0.045)),("y",p.y,T(0.045)),("z",p.z,T(0.0055)))
+            abs(abs(value)-halfwidth)<=tolerance && push!(faces,name*(value<0 ? "-" : "+"))
+        end
+        abs(abs(p.x)+abs(p.y)-T(0.045)*sqrt(T(2)))<=tolerance && push!(faces,"diagonal")
+        detail["nominal_crystal_faces"]=faces
+        detail["failure_class"]=length(faces)>=2 && isempty(detail["terminal_contact_ids"]) ?
+            "no_positive_projected_motion_at_uncontacted_face_intersection" : detail["reason"]
+        throw(NativeResponseError("Native floating-boundary projection failed",detail))
+    end
     stored=event.locations[1][1]
     check((stored.x,stored.y,stored.z)==(point.x,point.y,point.z),"SSD changed a deposited location")
     wave=Dict{Int,Any}()
@@ -155,11 +242,12 @@ function native_deposit(sim,xyz,energy,cfg; ids=1:34)
         observed=Float64.(ustrip.(u"ns",w.time)); t=collect(0:length(observed)-1).*cfg.dt
         check(all(isapprox.(observed,t;rtol=2e-6,atol=max(1e-5,cfg.dt*2e-6))),"SSD changed the requested time grid")
         q=Float64.(ustrip.(u"keV",w.signal))
-        check(length(q)>=2 && all(isfinite,q) && first(q)==0,"Invalid native signed charge")
+        validate_native_charge(q,t,id)
         wave[id]=(times=t,charge=q)
     end
     endpoints=Q.endpoint_report(event,sim,cfg)
-    check(all(e->e["inside_semiconductor"]||!isempty(e["contact_ids"]),endpoints),"Noncontact endpoint outside crystal")
+    all(e->e["inside_semiconductor"]||!isempty(e["contact_ids"]),endpoints) ||
+        throw(NativeResponseError("Noncontact endpoint outside crystal",Dict{String,Any}("endpoints"=>endpoints)))
     wave,endpoints
 end
 function depth_calibration(sim,cfg,channels,energy)
@@ -244,7 +332,14 @@ function process_event(event,sim,cfg,channels,readout,cal,matrix,eion,n,signalfi
     energy,t0=validate_event(event,n);components=[Any[] for _ in 1:34];outcomes=Any[]
     for (idx,step) in enumerate(event["steps"])
         step["energy_keV"]==0 && continue
-        waves,endpoints=deposit_processor(sim,step["position_mm"],step["energy_keV"],cfg)
+        waves,endpoints=try
+            deposit_processor(sim,step["position_mm"],step["energy_keV"],cfg)
+        catch err
+            err isa NativeResponseError || rethrow()
+            merge!(err.diagnostic,Dict("input_step_index"=>idx,"raw_row_index"=>get(step,"raw_row_index",nothing),
+                "input_position_mm"=>step["position_mm"],"input_energy_keV"=>step["energy_keV"]))
+            rethrow()
+        end
         for id in 1:34
             w=waves[id];push!(components[id],(delay=Float64(step["time_ns"]-t0),times=w.times,charge=w.charge))
         end
@@ -362,11 +457,16 @@ function main(args=ARGS)
                     record=try
                         process_event(event,sim,cfg,channels,readout,cal,matrix,eion,n,signals)
                     catch err
-                        if err isa ArgumentError && err.msg in ("Noncontact endpoint outside crystal","Invalid waveform support")
-                            Dict("event_id"=>id,"primary_time_ns"=>get(event,"primary_time_ns",0),
+                        domain=err isa NativeResponseError ? err.domain_error : err isa ArgumentError ? err.msg : nothing
+                        known=domain in ("Noncontact endpoint outside crystal","Invalid waveform support",
+                            "Deposit starts on a GeGI contact","Invalid native signed charge","Native floating-boundary projection failed")
+                        if known
+                            failed=Dict{String,Any}("event_id"=>id,"primary_time_ns"=>get(event,"primary_time_ns",0),
                                 "truth_edep_keV"=>sum(s["energy_keV"] for s in event["steps"]),
                                 "status"=>"native_failed","steps"=>event["steps"],"channels"=>nothing,
-                                "error"=>sprint(showerror,err),"signals_ref"=>nothing,"signals_sha256"=>nothing)
+                                "error"=>sprint(showerror,err),"native_domain_error"=>domain,"signals_ref"=>nothing,"signals_sha256"=>nothing)
+                            err isa NativeResponseError && (failed["native_failure_diagnostic"]=err.diagnostic)
+                            failed
                         else
                             rethrow()
                         end

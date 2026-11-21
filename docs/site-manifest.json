@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
-  "build_id": "bf271437b7b7d7ff3708bea2758defb15ae61f22507370e7b42b07f7a5d3388c",
-  "file_count": 1909,
-  "total_bytes": 503709873,
-  "html_pages": 126,
-  "local_links_checked": 3773,
-  "resource_references_checked": 3927,
-  "page_navigation_checked": 1938,
-  "fragments_checked": 281,
-  "downloads_checked": 766,
-  "media_references_checked": 1160,
-  "metadata_references_checked": 61,
+  "build_id": "b173155aa8f5375c9b02229264d9decc26ebaa1c466d328f977d44eb151954b4",
+  "file_count": 1912,
+  "total_bytes": 505937620,
+  "html_pages": 127,
+  "local_links_checked": 3788,
+  "resource_references_checked": 4004,
+  "page_navigation_checked": 2010,
+  "fragments_checked": 342,
+  "downloads_checked": 768,
+  "media_references_checked": 1162,
+  "metadata_references_checked": 62,
   "other_references_checked": 2,
   "files": [
     {
@@ -81,7 +81,7 @@
     {
       "path": "canonical-views.json",
       "bytes": 6513610,
-      "sha256": "b3ceebf9d3d774ff8e4b4a73fafd59cc38b66ce39646f20b24cd9940586ef3f5"
+      "sha256": "79e1e84f93d349550f038ec0c176aec932af03071eb0467f00f7d19ba398bcb0"
     },
     {
       "path": "detectors/AK01/config/source.json",
@@ -7476,7 +7476,7 @@
     {
       "path": "examples/cs137-10k-rings/web-delivery.json",
       "bytes": 2117,
-      "sha256": "a43d52f474e51c733c615041f176fa75ca67050cc11561ec72abbdf6c97e8694"
+      "sha256": "3c2919a12e7ac411d90d2ad199ff65da3a9f1523a935166b156218236f59e3ee"
     },
     {
       "path": "examples/cs137-10k/AK02/response/histograms.csv",
@@ -7725,13 +7725,13 @@
     },
     {
       "path": "guide.html",
-      "bytes": 87527,
-      "sha256": "84f62063f4a3fa5bb1cba9b769019a2ec5a82895ca2b29edbf178a6aa8945062"
+      "bytes": 91395,
+      "sha256": "0b905fc6488a669f058c6eda760a526fc4b41c2974d936dd981afb8e68451db3"
     },
     {
       "path": "index.html",
-      "bytes": 10586,
-      "sha256": "4384ccca4db96ed4b7d9ca315462930deebdd461385e0f1b4702903727d74e84"
+      "bytes": 10619,
+      "sha256": "23b7bc3a2c200430a5ee2a8a5bc1d73d43cf2a04e48daf4aa9903f9d69dc6871"
     },
     {
       "path": "learn/index.html",
@@ -7741,7 +7741,7 @@
     {
       "path": "learn/signals/index.html",
       "bytes": 1061356,
-      "sha256": "ffc343be131713b0d9b746cb2547b377a6340cfbfeecf43986b20284c1c4dc98"
+      "sha256": "ba3530b06d2b018a7a50d57d87b7adfead634f8050d73b12b9280112a61611ff"
     },
     {
       "path": "lithium/axes-comparisons.csv",
@@ -7811,7 +7811,7 @@
     {
       "path": "methods/native-li-display.json",
       "bytes": 4890,
-      "sha256": "3ae59097c5b46833af699c3961305f63a284e76b19e3c3d1e08c01b3b152722e"
+      "sha256": "bf66f4a8688138a0fe8cd196dc3879d8a4cb1241330e450a913ed5577c60854a"
     },
     {
       "path": "methods/native-li.html",
@@ -9316,7 +9316,7 @@
     {
       "path": "results/gegi-campaign/publication.json",
       "bytes": 6324,
-      "sha256": "32c282d50711e5f020410a9ee588a333246d9136edfc32dc423bb3624767fbc1"
+      "sha256": "1c4c448829336ac9df7503b8f769c6690c170d26e22a579f4edf659fe78cc711"
     },
     {
       "path": "results/gegi-campaign/representatives.json",
@@ -9439,6 +9439,21 @@
       "sha256": "15cf1b81bc6bd667f3024c74ac3cf1c0c709986b4eb6c03b01c992ac684be4b0"
     },
     {
+      "path": "results/gegi-five-second-reconstruction/evidence.json",
+      "bytes": 2019240,
+      "sha256": "d8cdb369da63ea766da8f5a117162fca52ec4df0fd839b4b533f23d7d40d4770"
+    },
+    {
+      "path": "results/gegi-five-second-reconstruction/index.html",
+      "bytes": 67249,
+      "sha256": "2918f3ac52e548c4963c88473bc09441d814a1228f2b4d18092c21684cf985d0"
+    },
+    {
+      "path": "results/gegi-five-second-reconstruction/source-plane-priors.png",
+      "bytes": 136913,
+      "sha256": "059522fd4e28651e8e0c9f3632dcbccdf75fba332c574cce25150a0a9a88b180"
+    },
+    {
       "path": "results/gegi-notebook-study/index.html",
       "bytes": 2046338,
       "sha256": "5703fcee534ac21c44be1ba4732bee7cad06d55a2f45ab1862692685520e650b"
@@ -9480,8 +9495,8 @@
     },
     {
       "path": "results/index.html",
-      "bytes": 21280,
-      "sha256": "94a9290359ebd5b31cf70303a52e98b9e0431d2c2c21bba093efc9bee8ab5003"
+      "bytes": 21598,
+      "sha256": "39253cbe00e19f3868614c4bcafeca6440e996956f192e34738704c30969234e"
     },
     {
       "path": "results/lithium-diagnostics/index.html",
@@ -9505,8 +9520,8 @@
     },
     {
       "path": "sitemap.xml",
-      "bytes": 5427,
-      "sha256": "41c6f63a10e2bc1bc03bcf82e00f844c30b9c27395f867dc2711d7782e2c6b92"
+      "bytes": 5553,
+      "sha256": "c1b02959098e010f1ab34a0c68dc9152de6d4278903c0085a7008ee6f6c7e5a2"
     },
     {
       "path": "spectra/cs137-10k.html",
@@ -9516,7 +9531,7 @@
     {
       "path": "spectra/manifest.json",
       "bytes": 7517,
-      "sha256": "fc67b81ade832f55f2ddf847e01db91f5ec15c141e67a201c046ea7c675c19d5"
+      "sha256": "ee858dc7271c626df0d0a97e31756aac332319e37c8527647131520d978c011e"
     },
     {
       "path": "spectra/million-response.html",
@@ -9536,7 +9551,7 @@
     {
       "path": "spectra/teaching-examples.json",
       "bytes": 1012868,
-      "sha256": "49d36be457c1feb4136dfc8e5a8588af8f3bf6fc098c62bd5dae740d0ed030c6"
+      "sha256": "4cf4fb15e907767068a16e2a95294619161440342b3a063a0baa021ed8ea1b4b"
     },
     {
       "path": "viewers/events.html",
@@ -9556,7 +9571,7 @@
     {
       "path": "viewers/manifest.json",
       "bytes": 81906,
-      "sha256": "cd93340b1ec97338c50cfef3c6db8a0f35749d1c5d9a52e780bf2047da001ea6"
+      "sha256": "b8f48298963e156d41d2abd1c864ba0fc40b64fa9df0dd001bc532f6abe77bf1"
     }
   ]
 }

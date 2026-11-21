@@ -133,7 +133,8 @@ def _checkpoint(db, identity):
 
 
 def run(report_path, calibration_path, *, z_mm, extent_mm=120., step_mm=4., sigma_deg=5.,
-        plane_prior=plane.DEFAULT_PLANE_PRIOR, trigger_ids=None, max_two_strip=None):
+        plane_prior=plane.DEFAULT_PLANE_PRIOR, trigger_ids=None, max_two_strip=None, compatibility=False,
+        position_model='center', lateral_calibration_path=None):
     """Return one map/fit/provenance document. Optional subsets retain unresolved mass."""
     begun = time.perf_counter(); report_path = Path(report_path); calibration_path = Path(calibration_path)
     raw = report_path.read_bytes(); report = json.loads(raw); directory = report_path.parent
@@ -143,6 +144,10 @@ def run(report_path, calibration_path, *, z_mm, extent_mm=120., step_mm=4., sigm
               'Complete saved-candidate verification before measured reconstruction')
     W.require(max_two_strip is None or type(max_two_strip) is int and max_two_strip > 0,
               'The optional two-strip analysis subset must be a positive integer')
+    W.require(type(compatibility) is bool, 'Select whether to record all-electrode fit diagnostics')
+    W.require(position_model in ('center', 'lateral') and (lateral_calibration_path is not None) == (position_model == 'lateral'),
+              'The lateral position model requires its separate lateral calibration and the matching center archive')
+    fit_options = {'compatibility': True} if compatibility else {}
     requested_ids = None if trigger_ids is None else set(trigger_ids)
     W.require(requested_ids is None or requested_ids and all(type(tid) is int and tid > 0 for tid in requested_ids),
               'Select original positive trigger IDs')
@@ -151,6 +156,14 @@ def run(report_path, calibration_path, *, z_mm, extent_mm=120., step_mm=4., sigm
     W.require(database_sha == report['artifacts'][storage.ARCHIVE_NAME]['sha256'], 'Completed candidate archive changed')
     request, native_provenance = _request_chain(directory, report)
     manifest, templates, calibration_content_sha, calibration_archive_sha = calibration.load(calibration_path)
+    lateral_bundle = None
+    if lateral_calibration_path is not None:
+        lateral_calibration_path = Path(lateral_calibration_path)
+        lateral, templates, lateral_content_sha, lateral_archive_sha = calibration.load_lateral(
+            lateral_calibration_path, manifest, templates, calibration_content_sha, calibration_archive_sha)
+        lateral_bundle = {'archive_sha256': lateral_archive_sha, 'content_sha256': lateral_content_sha,
+                          'coverage_cells': lateral['supported_cells'], 'identity': lateral['identity']}
+        fit_options['include_partial_lateral'] = True
     summary = storage.store_summary(database)
     W.require(summary['status'] == 'completed' and summary['metadata']['identity'] == report['identity'] and
               all(summary['completion'][key] == value for key, value in report['storage_counts'].items()),
@@ -189,12 +202,16 @@ def run(report_path, calibration_path, *, z_mm, extent_mm=120., step_mm=4., sigm
                     elif volts is None: result = {'status': window_status}
                     else:
                         started = time.perf_counter()
-                        result = fit_pairing(pairing, event['collectors'], templates, manifest['feature_scales'], local_adc_volts=volts)
+                        result = fit_pairing(pairing, event['collectors'], templates, manifest['feature_scales'],
+                                             local_adc_volts=volts, **fit_options)
                         fit_seconds += time.perf_counter()-started
                     fit_status[result['status']] += 1
-                    fitted['pairings'].append({'index': pairing['index'], 'energy_compatible': pairing['energy_compatible'],
-                        'cells': [[site['x_contact_id'], site['y_contact_id']] for site in pairing['sites']],
-                        'compton_orders': pairing['compton_orders'], 'fit': result})
+                    cells = [[site['x_contact_id'], site['y_contact_id']] for site in pairing['sites']]
+                    descriptor = {'index': pairing['index'], 'energy_compatible': pairing['energy_compatible'],
+                                  'cells': cells, 'compton_orders': pairing['compton_orders'], 'fit': result}
+                    if lateral_bundle is not None:
+                        descriptor['lateral_calibration_support'] = [cell in lateral_bundle['coverage_cells'] for cell in cells]
+                    fitted['pairings'].append(descriptor)
                 fits.append(fitted)
             cards.append(minimal); original_ids.append(trigger_id); joins.append(record['identities'])
     W.require(record_chain.hexdigest() == summary['completion']['records_sha256'] and
@@ -214,13 +231,17 @@ def run(report_path, calibration_path, *, z_mm, extent_mm=120., step_mm=4., sigm
               'calibrated_cells': sorted(cells & templates.keys()), 'missing_cells': sorted(cells - templates.keys())}
     fit_receipt = {'kind': 'gegi_candidate_measured_waveform_fits_v1', 'two_strip_triggers': all_two_strip,
                    'calibration_bundle': bundle, 'candidates': fits}
+    if lateral_bundle is not None:
+        fit_receipt.update(position_model=position_model, lateral_calibration_bundle=lateral_bundle)
     result = plane.reconstruct(acquisition, fit_receipt, z_mm=z_mm, extent_mm=extent_mm, step_mm=step_mm,
                                sigma_deg=sigma_deg, plane_prior=plane_prior)
     for ledger in result['triggers']:
         index = ledger['trigger_index']-1
         ledger.update(original_trigger_id=original_ids[index], diagnostic_input_group_ordinals=joins[index])
     W.require(W.sha(database) == database_sha and report_path.read_bytes() == raw and
-              W.sha(calibration_path) == calibration_archive_sha, 'Completed acquisition or calibration changed during analysis')
+              W.sha(calibration_path) == calibration_archive_sha and (lateral_bundle is None or
+              W.sha(lateral_calibration_path) == lateral_bundle['archive_sha256']),
+              'Completed acquisition or calibration changed during analysis')
     result.update(input_sha256={'acquisition': hashlib.sha256(raw).hexdigest(), 'candidate_store': database_sha,
                                'calibration': calibration_archive_sha}, calibration_bundle=bundle, fit_receipt=fit_receipt,
         candidate_analysis={'kind': KIND, 'scope': 'all_two_strip_candidates' if requested_ids is None and max_two_strip is None else 'explicit_analysis_subset',
@@ -239,6 +260,17 @@ def run(report_path, calibration_path, *, z_mm, extent_mm=120., step_mm=4., sigm
             'software': {'python': platform.python_version(), 'numpy': np.__version__, 'scipy': scipy.__version__},
             'source_sha256': {Path(module.__file__).name: W.sha(Path(module.__file__)) for module in
                               (storage, plane, calibration, joint, digital, library)} | {Path(__file__).name: W.sha(Path(__file__))}})
+    if compatibility:
+        result['candidate_analysis']['compatibility'] = True
+    if lateral_bundle is not None:
+        result['input_sha256']['lateral_calibration'] = lateral_bundle['archive_sha256']
+        captured = [pair for row in result['triggers'] if row['adc_window_status'] == 'captured' for pair in row['pairings']]
+        result['candidate_analysis'].update(position_model=position_model, lateral_calibration=lateral_bundle,
+            position_pair_counts=dict(Counter(pair['waveform_position_model'] for pair in captured
+                                              if pair['waveform_position_model'] is not None)),
+            position_calibration_support_pair_counts=dict(Counter(sum(pair['lateral_calibration_support']) for pair in captured)),
+            position_fallback_counts=dict(Counter(pair['lateral_fallback_reason'] for pair in captured
+                if pair['lateral_fallback_reason'] is not None)))
     return result
 
 
@@ -249,10 +281,16 @@ def main():
     parser.add_argument('--extent-mm', type=float, default=120.); parser.add_argument('--step-mm', type=float, default=4.)
     parser.add_argument('--sigma-deg', type=float, default=5.); parser.add_argument('--plane-prior', choices=plane.PLANE_PRIORS, default=plane.DEFAULT_PLANE_PRIOR)
     parser.add_argument('--trigger-id', type=int, action='append'); parser.add_argument('--max-two-strip', type=int)
+    parser.add_argument('--compatibility', action='store_true',
+                        help='Save all-electrode ADC residuals and sampled fit alternatives for the existing waveform fit')
+    parser.add_argument('--position-model', choices=('center', 'lateral'), default='center')
+    parser.add_argument('--lateral-calibration', type=Path)
     args = parser.parse_args(); W.safe_path(args.output.absolute().parent, args.output.name)
     W.require(not args.output.exists(), 'Choose a new analysis output; existing evidence is preserved')
     result = run(args.report, args.calibration, z_mm=args.plane_z_mm, extent_mm=args.extent_mm, step_mm=args.step_mm,
-                 sigma_deg=args.sigma_deg, plane_prior=args.plane_prior, trigger_ids=args.trigger_id, max_two_strip=args.max_two_strip)
+                 sigma_deg=args.sigma_deg, plane_prior=args.plane_prior, trigger_ids=args.trigger_id,
+                 max_two_strip=args.max_two_strip, compatibility=args.compatibility, position_model=args.position_model,
+                 lateral_calibration_path=args.lateral_calibration)
     data = gzip.compress(W.encoded(result), mtime=0)
     with args.output.open('xb') as handle: handle.write(data)
     print(json.dumps({'output': str(args.output), 'scope': result['candidate_analysis']['scope'],

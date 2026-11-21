@@ -19,7 +19,8 @@ class Element {
   click(){if(this.disabled)return;this.clicked=true;return this.onclick?.();}
   getContext(kind){assert.equal(this.tagName,'canvas');assert.equal(kind,'2d');return {
     createImageData:(width,height)=>({data:new Uint8ClampedArray(width*height*4)}),
-    putImageData:image=>{this.pixels=Array.from(image.data);}};}
+    putImageData:image=>{this.pixels=Array.from(image.data);},beginPath(){},stroke(){},fillText(){},
+    moveTo(x,y){assert.ok(Number.isFinite(x)&&Number.isFinite(y));},lineTo(x,y){assert.ok(Number.isFinite(x)&&Number.isFinite(y));}};}
   pressKey(key){if(fixtureDocument.activeElement!==this)return;if(this.tagName==='button'&&['Enter',' '].includes(key))return this.click();if(this.tagName==='summary'&&['Enter',' '].includes(key))this.parentElement.open=!this.parentElement.open;}
   setAttribute(name,value){this[name]=value;}
   removeAttribute(name){delete this[name];}
@@ -2048,15 +2049,50 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
     const candidatePartialReply={...candidateMapReply,analysis_id:candidatePartialRow.analysis_id,
       analysis_sha256:candidatePartialRow.analysis_sha256,candidate_analysis:{...candidateMapReply.candidate_analysis,
         scope:'explicit_analysis_subset',selected_original_trigger_ids:[61]}};
+    const savedRange={range_id:'r'.repeat(64),range_sha256:'b'.repeat(64),file:'candidate-range-profiled.json',
+      radial_search_mm:[20,10000],radial_points:49,profile_background:true,current_solver:false};
+    candidateMapReply.range_options=[savedRange];
+    const profileFit={position_mm:[-39.49,-0.21,38.55],center_distance_mm:55.19,score_gain_over_far_field:6.5,
+      profile_diagnostic:{score_drop:2,upper_open:false,lower_open:false,far_field_supported:false},
+      radial_profile:[{center_distance_mm:20,loss_from_best_score:4},{center_distance_mm:55.19,loss_from_best_score:0},
+        {center_distance_mm:10000,loss_from_best_score:6.5}]};
+    const scoredRange={status:'conditional_scores_computed',accounting:{selected_triggers:2,triggers_with_geometry:1,
+      allowed_saved_geometry_orders:2,projected_trigger_mass:0.875,unresolved_trigger_mass:1.125},
+      split_trigger_counts:[1,1],selected_original_trigger_ids:[61,683],split_position_difference_mm:1.64,
+      background_position_difference_mm:5.98,fits:{primary:profileFit,no_extra_background:profileFit,
+        first_clock_half:profileFit,second_clock_half:profileFit,profiled_background:{...profileFit,
+          profile_diagnostic:{...profileFit.profile_diagnostic,far_field_supported:true}}}};
+    const rangeReply={name:candidateMapJob.name,report_sha256:candidateMapJob.report_sha256,
+      analysis_id:candidateMapRow.analysis_id,analysis_sha256:candidateMapRow.analysis_sha256,range_result:savedRange,
+      result:{input_sha256:candidateMapRow.analysis_sha256,input_bindings:candidateMapReply.input_sha256,
+        model:{radial_search_mm:[20,10000]},source_sha256:{solver:'d'.repeat(64)},
+        fits:{'661.657_keV':scoredRange,'1173.23_keV':scoredRange,'1332.49_keV':scoredRange,cobalt_both_lines:scoredRange}}};
+    const contributionReply={name:candidateMapJob.name,report_sha256:candidateMapJob.report_sha256,
+      analysis_id:candidateMapRow.analysis_id,analysis_sha256:candidateMapRow.analysis_sha256,
+      offset:0,total:1,page_size:10,layer:'all',peak:{position_mm:[6,2,40],on_image_edge:true,mass:0.5},
+      items:[{original_trigger_id:683,energy_keV:1173.25,peak_cell_share:0.25,pairings:[{index:0,
+        cells:[[5,24],[8,27]],center_fit_diagnostics:{waveform:{weighted_residual_rms:32.5,
+          parameter_boundaries:{z1_mm:'upper'},compatibility:{contact_ids:[5,34],fitted_contact_ids:[5],
+            adc_rms_codes:[3,10],adc_peak_codes:[6,-24],adc_peak_time_ns:[4,20]}}},
+        waveform_position_model:'center',lateral_calibration_support:[false,true],
+        lateral_fallback_reason:'lateral_optimizer_did_not_converge',
+        orders:[{order:[1,0],peak_cell_mass:0.125}]}]}]};
     let candidateAnalysisCalls=[];
     api=async(path,data)=>{candidateAnalysisCalls.push([path,data]);
-      if(path.endsWith('/options'))return {jobs:[{name:candidateMapJob.name,status:'completed'}],calibrations:[{id:'external-calibration',label:'Imported separate calibration'}]};
+      if(path.endsWith('/options'))return {jobs:[{name:candidateMapJob.name,status:'completed'}],calibrations:[{id:'external-calibration',label:'Imported separate calibration'}],
+        lateral_calibrations:[{id:'external-lateral',label:'Imported lateral corrections'}]};
       if(path.endsWith('/analyze'))return {status:'completed',reused:true,...candidateMapRow};
       if(path.includes('/state?'))return candidateMapJob;
       if(path.includes('/list?'))return {items:[],total:0,offset:0};
+      if(path.endsWith('/range'))return {status:'completed',reused:true,...savedRange};
+      if(path.includes('/range?'))return rangeReply;
+      if(path.includes('/contributors?'))return contributionReply;
+      if(path.includes('/event?'))return candidateReply(5);
       return path.includes('candidate-imaging-prefix')?candidatePartialReply:candidateMapReply;};`);
   await run('refreshCandidateRuns()');
   assert.equal(get('gegi-candidate-calibration').value,'external-calibration');
+  assert.equal(get('gegi-candidate-lateral-calibration').value,'');
+  assert.match(get('gegi-candidate-lateral-calibration').children.at(-1).textContent,/Lateral where calibrated/);
   get('gegi-candidate-job').value='candidate-map';
   run('showCandidateJob(candidateMapJob)');await run('Promise.resolve()');
   assert.equal(get('gegi-candidate-imaging').hidden,false);
@@ -2077,12 +2113,50 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(candidateMapText(),/selected_original_trigger_ids[\s\S]*61[\s\S]*683/);
   const candidateCanvas=descendants(get('gegi-candidate-map-view')).find(node=>node.tagName==='canvas');
   assert.match(candidateCanvas['aria-label'],/X increases right from -8 to 8 mm.*Y increases up from -12 to 4 mm/);
+  const candidateButton=label=>descendants(get('gegi-candidate-map-view')).find(node=>node.tagName==='button'&&node.textContent===label);
+  assert.equal(run("candidateAnalysisCalls.filter(([path])=>path.includes('/range')).length"),0);
+  await candidateButton('Open saved range analysis').onclick();
+  assert.match(candidateMapText(),/Archived range analysis opened with its recorded solver version/);
+  assert.match(candidateMapText(),/55.19 Closed on sampled range 6.50/);
+  assert.match(candidateMapText(),/Infinite distance within score drop.*Clock halves 1.64 mm/s);
+  assert.match(candidateMapText(),/Original selected trigger IDs and solver provenance[\s\S]*61[\s\S]*683/);
+  assert.ok(descendants(get('gegi-candidate-map-view')).some(node=>node.tagName==='canvas'&&
+    node['aria-label']?.includes('Radial profile score loss')));
+  await candidateButton('Run 3D range analysis').onclick();
+  const rangeRequest=JSON.parse(run("JSON.stringify(candidateAnalysisCalls.find(([path])=>path.endsWith('/range'))[1])"));
+  assert.deepEqual(rangeRequest,{name:'candidate-map',report_sha256:'e'.repeat(64),analysis_id:'candidate-imaging.json.gz',
+    analysis_sha256:'1'.repeat(64),radius_min_mm:20,radius_max_mm:10000,profile_background:false});
+  await candidateButton('Inspect peak contributors').onclick();
+  assert.match(candidateMapText(),/Brightest cell \(6, 2, 40\) mm · image edge.*Trigger 683 · 1173.25 keV · 25% of peak cell/);
+  assert.match(candidateMapText(),/waveform residual RMS 32.5 in noise-scale units · order 2 → 1 · 25% of peak cell/);
+  assert.match(candidateMapText(),/Center fit · site 1 has no lateral grid · site 2 has a lateral grid · with a failed lateral optimizer/);
+  assert.match(candidateMapText(),/Residuals across all 34 electrodes.*z1_mm upper.*5 Fit electrode 3 6 4\s+34 Other electrode 10 -24 20/);
+  await candidateButton('Open trigger 683 waveforms').onclick();
+  assert.equal(get('gegi-candidate-contact').children.length,34);
+  assert.equal(get('gegi-candidate-trigger').value,'683');
+  assert.match(get('gegi-candidate-event-status').textContent,/Original trigger 683 · electrode 5/);
+  const observeCandidateApi=run('api');
+  run(`let resolveContributors;api=()=>new Promise(resolve=>resolveContributors=resolve);`);
+  const staleContributors=candidateButton('Inspect peak contributors').onclick();
+  const candidateLayer=descendants(get('gegi-candidate-map-view')).find(node=>node.tagName==='select');
+  candidateLayer.value=candidateLayer.children.find(option=>option.value!=='all').value;candidateLayer.onchange();
+  run('resolveContributors(contributionReply)');await staleContributors;
+  assert.equal(candidateButton('Open trigger 683 waveforms'),undefined);
+  context.restoreCandidateApi=observeCandidateApi;run('api=restoreCandidateApi');
   await get('gegi-candidate-open-map').onclick();
   assert.equal(run("candidateAnalysisCalls.filter(([path])=>path.endsWith('/analyze')).length"),1);
+  get('gegi-candidate-compatibility').checked=true;
+  get('gegi-candidate-lateral-calibration').value='external-lateral';
+  await get('gegi-candidate-analyze').onclick();
+  assert.equal(run("candidateAnalysisCalls.filter(([path])=>path.endsWith('/analyze')).at(-1)[1].compatibility"),true);
+  assert.equal(run("candidateAnalysisCalls.filter(([path])=>path.endsWith('/analyze')).at(-1)[1].lateral_calibration_id"),'external-lateral');
+  get('gegi-candidate-compatibility').checked=false;
+  get('gegi-candidate-lateral-calibration').value='';
   get('gegi-candidate-map').value='candidate-imaging-prefix.json.gz';get('gegi-candidate-map').onchange();
   await get('gegi-candidate-open-map').onclick();
   assert.match(get('gegi-candidate-analysis-status').textContent,/Partial analysis · 1 of 2/);
   assert.match(candidateMapText(),/Partial source-plane analysis/);
+  assert.equal(candidateButton('Run 3D range analysis'),undefined);
   run(`api=async()=>({...candidatePartialReply,analysis_sha256:'f'.repeat(64)});`);
   await get('gegi-candidate-open-map').onclick();
   assert.match(get('gegi-candidate-analysis-status').textContent,/identities differ/);

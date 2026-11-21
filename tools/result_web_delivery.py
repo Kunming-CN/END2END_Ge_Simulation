@@ -33,6 +33,9 @@ TEACHING_SCIENCE_SHA256 = '8c93849cc98b5de06c800a67ee40f34773871162a9d6daa35522d
 # Exact 52fd55e published display, compared byte-for-byte with Git before the
 # architecture migration. Only this pair may use its historical generator hash.
 TEACHING_PREVIOUS_DISPLAYS = {
+ # Exact 8d7c76e payload and its restored canonical-view source before the GeGI results route.
+ ('49d36be457c1feb4136dfc8e5a8588af8f3bf6fc098c62bd5dae740d0ed030c6',
+  'c81cfffb6f0459c76d57e5b7e02c23988b9e6e5218dc00a8004e24e384e621fa'),
  # Exact 5135738 Git data and restored pre-frame page, before reading guidance.
  ('96467b087f1bc4e825aa5f12e9f14a008f5428420452c55a672361d6c4419733',
   'ce288edbe100a09e196a81ed5a368f0790450df385f76905b2bc99eb4a1d96b7'),
@@ -48,6 +51,8 @@ TEACHING_PREVIOUS_DISPLAYS = {
   '5af31339317f545fed185e75473967fd78c4088d60f87a665c490df280384d36'),
 }
 PREVIOUS_DELIVERY_RECEIPTS = {
+ # Exact 8d7c76e delivery before the five-second GeGI results route.
+ 'a43d52f474e51c733c615041f176fa75ca67050cc11561ec72abbdf6c97e8694',
  # Exact current HEAD receipt before availability wording; source data stay pinned.
  'fff0996db06b0e083a4fe2243a82ea1db910480e2543d53ee185050128f08ede',
  # Exact c8d4d13 published receipt, checked against Git.

@@ -508,7 +508,7 @@ def _check_artifact(directory, ref, sha, retired):
     else: h.require(h.sha256(path) == sha, 'Source artifact changed: '+ref)
 
 
-def events(directory):
+def events(directory, *, include_candidate_truth=False):
     directory, block, meta, parents = _prepared(directory)
     meta = {**meta, 'primary_count': len(parents)}
     contracts = {row['contract']['id']: row['contract'] for row in meta['checked']['sources']}
@@ -525,7 +525,8 @@ def events(directory):
             return inventory.validate_initial_tracks(rows, names, current, parameters)
         return S.primary_tracks(rows, names, current)
     for event in S.events(directory/'truth.lh5', meta, event_metadata=for_event,
-                          native_empty_uid_aliases=True, primary_track_reader=read_tracks):
+                          native_empty_uid_aliases=True, primary_track_reader=read_tracks,
+                          include_candidate_truth=include_candidate_truth):
         local = event['event_id']
         yield _decorate(event, parents[local], local, block['block_index'])
 
@@ -586,7 +587,7 @@ def run_block(directory):
         h.publish_json(directory/'run.json', receipt)
 
 
-def extract(directory):
+def extract(directory, *, include_candidate_truth=False):
     directory, meta, _, parents = _prepared(directory)
     if (directory/'seal.json').exists(): return verify(directory)
     receipt = S.load(directory/'run.json')
@@ -601,7 +602,7 @@ def extract(directory):
               'by_source': {source['id']: {'parents': 0, 'zero': 0, 'nonzero': 0}
                             for source in meta['config']['sources']}}
     with (dest/'events.jsonl').open('x', encoding='utf-8', newline='\n') as out:
-        for event in events(directory):
+        for event in events(directory, include_candidate_truth=include_candidate_truth):
             counts['initial_primaries'] += 1
             counts['transport_primaries'] += 1
             counts['nonzero_primaries' if event['steps'] else 'zero_deposit_primaries'] += 1
@@ -637,6 +638,9 @@ def extract(directory):
                                                 after['initial_inventory']['contract']),
                 'initial_inventory_contract_sha256': (None if after.get('initial_inventory') is None else
                                                        after['initial_inventory']['contract_sha256'])}
+    if include_candidate_truth:
+        manifest.update(candidate_photon_truth_kind=S.CANDIDATE_PHOTON_TRUTH_KIND,
+                        source_lh5_sha256=receipt['source_lh5_sha256'])
     h.publish_json(dest/'manifest.json', manifest)
     seal = {'kind': BLOCK, 'status': 'sealed', 'block_index': meta['block_index'],
             'config_sha256': digest(meta['config']), 'counts': counts,
@@ -678,6 +682,16 @@ def retire(directory, consumer_receipt):
         groups = db.execute('SELECT count(*) FROM input_groups WHERE parent BETWEEN ? AND ?',
                             (manifest['first_parent_id'], manifest['last_parent_id'])).fetchone()[0]
         h.require(groups == verified['counts']['pulse_groups'], 'Candidate database group census does not close')
+    if manifest.get('candidate_photon_truth_kind') == S.CANDIDATE_PHOTON_TRUTH_KIND:
+        truth_ref = receipt.get('candidate_truth_scratch_ref')
+        h.require(isinstance(truth_ref, str) and bool(truth_ref), 'Transport retirement needs its committed candidate truth scratch')
+        scratch = h.local_path(h.ROOT/truth_ref)
+        h.require(scratch.parent == database.parent and scratch.name == 'candidate-truth-scratch.sqlite',
+                  'Candidate truth scratch must belong to the same acquisition')
+        with closing(sqlite3.connect(scratch.as_uri()+'?mode=ro', uri=True)) as db:
+            events = db.execute('SELECT count(*) FROM events WHERE block_index=?', (verified['block_index'],)).fetchone()[0]
+        h.require(events == verified['counts']['nonzero_primaries'],
+                  'Transport retirement requires the committed positive-deposit photon truth census')
     seal = S.load(directory/'seal.json')
     refs = ('truth.lh5', 'primaries.lh5', 'parents.jsonl', 'stream/events.jsonl')
     record = {'kind': 'gegi_streaming_source_retirement_v1', 'seal_sha256': verified['seal_sha256'],
@@ -697,7 +711,7 @@ def retire(directory, consumer_receipt):
     return {'status': 'retired_verified_source_scratch', 'retired_now_bytes': retired, 'block_index': verified['block_index']}
 
 
-def process_block(config, checkpoint, output, max_parents=500):
+def process_block(config, checkpoint, output, max_parents=500, *, include_candidate_truth=False):
     """Continue one exact block through its first unfinished stage, never rerun."""
     directory = h.local_path(output)
     if (directory/'prepared.json').exists():
@@ -710,7 +724,7 @@ def process_block(config, checkpoint, output, max_parents=500):
         if not (directory/'run.json').exists(): run_block(directory)
         h.require(S.load(directory/'run.json')['status'] == 'complete',
                   'A failed/interrupted transport cannot be rerun implicitly')
-        extract(directory)
+        extract(directory, include_candidate_truth=include_candidate_truth)
     return verify(directory)
 
 
@@ -720,6 +734,7 @@ def main(argv=None):
     parser.add_argument('--config'); parser.add_argument('--checkpoint'); parser.add_argument('--output')
     parser.add_argument('--directory'); parser.add_argument('--max-parents', type=int, default=500)
     parser.add_argument('--consumer-receipt')
+    parser.add_argument('--candidate-truth', action='store_true')
     parser.add_argument('--producer-package')
     S.P.project_root_argument(parser, required=False); args = parser.parse_args(argv)
     if args.windows_root: S.P.project_identity(args.windows_root)
@@ -729,12 +744,15 @@ def main(argv=None):
     elif args.action in ('prepare-block', 'process-block'):
         config = S.load(args.config)
         state = S.load(args.checkpoint) if args.checkpoint else initialize(config)
-        value = (process_block if args.action == 'process-block' else prepare_block)(
-            config, state, args.output, args.max_parents)
+        if args.action == 'process-block':
+            value = process_block(config, state, args.output, args.max_parents, include_candidate_truth=args.candidate_truth)
+        else:
+            value = prepare_block(config, state, args.output, args.max_parents)
     elif args.action == 'retire': value = retire(args.directory, args.consumer_receipt)
     elif args.action == 'repair-extraction': value = repair_extraction(args.directory)
     elif args.action == 'admit-block-limit': value = admit_block_limit_continuation(args.directory, args.producer_package)
-    else: value = {'run-block': run_block, 'extract': extract, 'verify': verify}[args.action](args.directory)
+    elif args.action == 'extract': value = extract(args.directory, include_candidate_truth=args.candidate_truth)
+    else: value = {'run-block': run_block, 'verify': verify}[args.action](args.directory)
     print(json.dumps(value, sort_keys=True, allow_nan=False))
 
 

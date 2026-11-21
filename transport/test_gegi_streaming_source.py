@@ -116,6 +116,28 @@ class StreamingSourceTests(unittest.TestCase):
         self.assertEqual(first['tracks'][0]['global_track_id'], second['tracks'][0]['global_track_id'])
         self.assertNotEqual(first['steps'][0]['raw_row_index'], second['steps'][0]['raw_row_index'])
 
+    def test_photon_truth_retains_zero_steps_and_positive_deposit_ancestry(self):
+        def track(tid, parent, pdg, procid, energy):
+            return dict(trackid=tid, parent_trackid=parent, particle=pdg, raw_row_index=100+tid,
+                        procid=procid, ekin=energy, time=3.*tid, xloc=.001*tid, yloc=.002, zloc=.003)
+        tracks = {1: track(1, 0, 1000270600, -1, 0.), 2: track(2, 1, 22, 3, 1.173),
+                  3: track(3, 2, 11, 4, .19), 4: track(4, 1, 11, 3, .25)}
+        def step(index, tid, energy):
+            track = tracks[tid]
+            return dict(raw_row_index=index, particle=track['particle'], trackid=tid,
+                        parent_trackid=track['parent_trackid'], edep=energy, time=12.,
+                        xloc_pre=.002, yloc_pre=.003, zloc_pre=.004, xloc_post=.005, yloc_post=.006, zloc_post=.007)
+        ge = [step(5, 2, 0.), step(6, 2, .03), step(7, 3, 190.)]
+        saved = G.S.candidate_photon_truth(ge, tracks, {3: 'RadioactiveDecay', 4: 'compt'},
+                                         [{'track_id': 2}], [{'track_id': 3}])
+        self.assertEqual([row['raw_row_index'] for row in saved['ge_gamma_steps']], [5, 6])
+        self.assertEqual(saved['ge_gamma_steps'][0]['edep_keV'], 0.)
+        self.assertEqual(saved['ge_gamma_steps'][0]['post_position_mm'], [5., 6., 7.])
+        self.assertNotIn('process', saved['ge_gamma_steps'][0])
+        self.assertEqual([t['track_id'] for t in saved['track_births']], [1, 2, 3])
+        self.assertEqual(saved['track_births'][1]['birth_kinetic_energy_keV'], 1173.)
+        self.assertEqual(saved['track_births'][2]['birth_process'], 'compt')
+
     def retirement_fixture(self, root, groups=1):
         directory = root/'block'; (directory/'stream').mkdir(parents=True)
         for ref in ('truth.lh5', 'primaries.lh5', 'parents.jsonl', 'stream/events.jsonl'):
@@ -159,6 +181,33 @@ class StreamingSourceTests(unittest.TestCase):
                 G.retire(directory, consumer)
             self.assertTrue((directory/'truth.lh5').exists())
 
+    def test_transport_retirement_requires_new_photon_truth_staging_commit(self):
+        with tempfile.TemporaryDirectory(dir=G.h.ROOT/'.local') as temp:
+            root = Path(temp)
+            directory, consumer, verified = self.retirement_fixture(root)
+            manifest_path = directory/'stream/manifest.json'
+            manifest = G.S.load(manifest_path)
+            manifest['candidate_photon_truth_kind'] = G.S.CANDIDATE_PHOTON_TRUTH_KIND
+            manifest_path.write_text(json.dumps(manifest), encoding='utf-8')
+            receipt = G.S.load(consumer)
+            scratch = root/'candidate-truth-scratch.sqlite'
+            receipt.update(source_manifest_sha256=G.h.sha256(manifest_path),
+                           candidate_truth_scratch_ref=scratch.relative_to(G.h.ROOT).as_posix())
+            consumer.write_text(json.dumps(receipt), encoding='utf-8')
+            with closing(sqlite3.connect(root/'candidate.sqlite')) as db, db:
+                db.execute('UPDATE source_blocks SET manifest_sha256=?', (receipt['source_manifest_sha256'],))
+            verified['counts']['nonzero_primaries'] = 1
+            with closing(sqlite3.connect(scratch)) as db, db:
+                db.execute('CREATE TABLE events (block_index INTEGER)')
+            with patch.object(G, 'verify', return_value=verified):
+                with self.assertRaisesRegex(ValueError, 'committed positive-deposit'):
+                    G.retire(directory, consumer)
+                self.assertTrue((directory/'truth.lh5').exists())
+                with closing(sqlite3.connect(scratch)) as db, db:
+                    db.execute('INSERT INTO events VALUES (1)')
+                self.assertGreater(G.retire(directory, consumer)['retired_now_bytes'], 0)
+            self.assertFalse((directory/'truth.lh5').exists())
+
     def test_explicit_native_empty_alias_adapter_keeps_legacy_strict(self):
         fixture = Legacy.GeGILH5(); fixture.setUp(); self.addCleanup(fixture.doCleanups)
         meta = fixture.fixture()
@@ -171,6 +220,19 @@ class StreamingSourceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Missing/foreign raw step table'):
             list(G.S.events(fixture.path, meta, native_empty_uid_aliases=True))
 
+    def test_opt_in_flat_lh5_truth_preserves_native_positive_deposit_inputs(self):
+        fixture = Legacy.GeGILH5(); fixture.setUp(); self.addCleanup(fixture.doCleanups)
+        def include_zero_energy_photon(bundle):
+            bundle['steps'].append(dict(bundle['steps'][-1], trackid=4, parent_trackid=2, particle=22, edep=0.))
+        meta = fixture.fixture(mutate=include_zero_energy_photon)
+        before = list(G.S.events(fixture.path, meta))
+        with_truth = list(G.S.events(fixture.path, meta, include_candidate_truth=True))
+        saved = with_truth[1].pop('candidate_photon_truth')
+        self.assertEqual(with_truth, before)
+        step, = saved['ge_gamma_steps']
+        self.assertEqual((step['raw_row_index'], step['track_id'], step['parent_track_id'], step['edep_keV']), (2, 4, 2, 0.))
+        self.assertIn('compt', [t['birth_process'] for t in saved['track_births']])
+
     def test_extraction_repair_cannot_change_source_clock_or_transport_functions(self):
         original = 'def next_block():\n return 1\ndef events():\n return 2\n'
         reader_fix = 'def next_block():\n return 1\ndef events():\n return 3\n'
@@ -181,7 +243,7 @@ class StreamingSourceTests(unittest.TestCase):
     def test_block_limit_continuation_proves_same_clock_and_sealed_transport(self):
         import hashlib
         import zipfile
-        current = Path(G.__file__).read_text()
+        current = Path(G.__file__).read_text(encoding='utf-8')
         original = current.replace(
             "    h.require(type(max_parents) is int and max_parents > 0, 'Transport drivers per block must be a positive integer')\n",
             "    h.require(type(max_parents) is int and 1 <= max_parents <= 10000, 'Use 1–10000 transport drivers per block')\n", 1).replace(

@@ -14,6 +14,8 @@ MANIFEST='methods/native-li-display.json'
 SOURCES=('tools/saved_archive_display.py','tools/site_routes.py')
 LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in SOURCES}
 PREVIOUS_RECEIPTS=frozenset({
+    # Exact 8d7c76e receipt before adding the five-second GeGI results route.
+    '3ae59097c5b46833af699c3961305f63a284e76b19e3c3d1e08c01b3b152722e',
     # Exact current HEAD receipt before archive/return navigation changes.
     'c1a71025c4c2cf4e15c28bf8b0ff00fa683f072b94ec5b7e82776ae24aeeec53',
     # Exact c8d4d13 published receipt, checked against Git.
@@ -62,6 +64,8 @@ LITHIUM_SUMMARY_SHA='c5e1b2c85406f077cb692ac6e99dd1c9affe7cb6632a3098f96a86708e0
 LITHIUM_SOURCES=SOURCES+('tools/lithium_report.py','tools/pipeline_demo.py')
 LITHIUM_LOADED={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in LITHIUM_SOURCES}
 PREVIOUS_LITHIUM_RECEIPTS=frozenset({
+    # Exact 8d7c76e receipt before adding the five-second GeGI results route.
+    '24d09e64c2acad7787a1aa17cb13bfb0d374008576f6a045d53531e6cb68f84d',
     # Exact current HEAD receipt before archive/return navigation changes.
     '199aecd6257bcfec9eccd8e164adc17bd518679e4d7faa0cf08b61a324c0aca8',
     # Exact c8d4d13 published receipt, checked against Git.
@@ -268,13 +272,20 @@ def upgrade_lithium_display(site):
     """Add shared navigation to the published frozen report without new science."""
     site=Path(site)
     if not (site/LITHIUM_PAGE).is_file():return False
-    output,receipt=lithium_expected(site);raw=(site/LITHIUM_PAGE).read_bytes()
+    raw=(site/LITHIUM_PAGE).read_bytes()
     if (site/LITHIUM_MANIFEST).exists():
-        if previous_lithium_receipt(site) is None:
+        previous=previous_lithium_receipt(site)
+        if previous is not None:
+            from site_routes import page_navigation
+            if page_navigation(LITHIUM_PAGE).encode('utf-8') in raw:
+                return previous
+        else:
+            output,receipt=lithium_expected(site)
             require(raw==output,'Lithium display HTML differs')
             require(json.loads((site/LITHIUM_MANIFEST).read_bytes())==receipt,'Lithium display receipt differs')
             return receipt
     else:require(hashlib.sha256(raw).hexdigest()==LITHIUM_ORIGINAL_SHA,'Unknown original lithium HTML')
+    output,receipt=lithium_expected(site)
     (site/LITHIUM_PAGE).write_bytes(output)
     (site/LITHIUM_MANIFEST).parent.mkdir(parents=True,exist_ok=True)
     (site/LITHIUM_MANIFEST).write_text(json.dumps(receipt,sort_keys=True,indent=2)+'\n',encoding='utf-8',newline='\n')

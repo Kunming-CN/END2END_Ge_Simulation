@@ -119,13 +119,16 @@ def compare_fit(result, trial, pairing):
     for mode, fits in result['fits'].items():
         for support, fit in fits.items():
             xyz = fit['positions_mm']
+            lateral = fit.get('site_lateral_support', (support == 'lateral',) * 2)
+            first_z = 2 * lateral[0]
+            second_z = first_z + 1 + 2 * lateral[1]
             output[f'{mode}_{support}'] = {
                 'axis_error_deg': cfd.angle_error(cfd.axis_between(*xyz),cfd.axis_between(*truth)),
                 'site_depth_error_mm': [a[2]-b[2] for a,b in zip(xyz,truth,strict=True)],
                 'site_xy_error_mm': [math.dist(a[:2],b[:2]) for a,b in zip(xyz,truth,strict=True)],
                 'weighted_residual_rms': fit['weighted_residual_rms'],
                 'minimum_scaled_jacobian_singular_value': min(fit['scaled_jacobian_singular_values']),
-                'largest_near_tie_depth_spread_mm': max(fit['sampled_near_tie_spread'][i] for i in ((2,5) if support == 'lateral' else (0,1))),
+                'largest_near_tie_depth_spread_mm': max(fit['sampled_near_tie_spread'][i] for i in (first_z, second_z)),
                 'model_crossings_available': fit['modeled_cfd_available'], 'optimizer_success': fit['optimizer_success'],
             }
     return output
@@ -153,7 +156,7 @@ def summary(rows):
     return result
 
 
-def run(*, pilot=False):
+def run(*, pilot=False, compatibility=False, partial_lateral=False, case_indices=None):
     start = time.perf_counter()
     sources = ('gegi_joint_two_site_study.py','gegi_joint_two_site.py','gegi_two_site_cfd_study.py',
                'gegi_pixel_cfd_depth_study.py','gegi_pulse_scan.py','gegi_dual_source.py','gegi_pulse_stream.py',
@@ -175,6 +178,8 @@ def run(*, pilot=False):
     templates = load_templates(inputs,cells,calibration['provenance'],channels,{tuple(v['xyz_mm']) for v in injection.values()})
     results = []
     for index,trial in enumerate(saved['trials']):
+        if case_indices is not None and trial['case_index'] not in case_indices:
+            continue
         if pilot and not (trial['case_index'] in (0,2) and trial['energies_keV'] == [132.4,529.6]
                           and trial['adc_phase_ns'] == 0 and trial['noise'] == 'none'):
             continue
@@ -184,7 +189,9 @@ def run(*, pilot=False):
             measured = {'energy_compatible': pairing['energy_compatible'],
                         'sites': [dict(x_contact_id=site['contact_ids'][0],y_contact_id=site['contact_ids'][1],
                                        energy_keV=site['energy_keV']) for site in pairing['sites']]}
-            result = fit_pairing(measured,trial['paired_collectors'],templates,scales,local_adc_volts=volts)
+            result = fit_pairing(measured,trial['paired_collectors'],templates,scales,local_adc_volts=volts,
+                                 compatibility=compatibility,include_all_channels=compatibility,
+                                 include_partial_lateral=partial_lateral)
             fits.append(dict(result,pairing_index=pairing['index'],contact_ids=[site['contact_ids'] for site in pairing['sites']],
                              order_hypotheses=[{k:v for k,v in order.items() if k != 'conditional_cone'} for order in pairing['orders']]))
         for fit,pairing in zip(fits,trial['measured_pairings'],strict=True):
@@ -193,6 +200,8 @@ def run(*, pilot=False):
                 truth = comparison
         results.append({'trial_index':index,'neighborhood':trial['neighborhood'],'case_index':trial['case_index'],
                         'adc_sha256':trial['adc_sha256'],'energies_keV':trial['energies_keV'],'fits':fits,'truth_comparison':truth})
+        if compatibility:
+            results[-1]['truth_injections'] = trial['truth_injections']
     if implementation != source_hashes():
         raise ValueError('Fit or readout code changed during replay')
     return {'kind':'gegi_saved_joint_two_site_study_v1','status':'completed','design':{

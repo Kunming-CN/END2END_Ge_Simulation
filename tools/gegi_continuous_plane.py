@@ -97,10 +97,36 @@ def _allowed_orders(pair):
     return orders
 
 
+def waveform_position_fit(fit, position_model):
+    modes = fit['fit'].get('fits', {}).get('waveform', {})
+    center = modes.get('center')
+    if position_model == 'center':
+        return center, 'center', None
+    if position_model != 'lateral':
+        raise ValueError('Unknown waveform position model')
+    support = fit['lateral_calibration_support']
+    if len(support) != 2 or any(type(flag) is not bool for flag in support):
+        raise ValueError('Expected lateral support for each measured site')
+    if not any(support):
+        return center, 'center', 'no_lateral_calibration_for_either_site'
+    kind = 'lateral' if all(support) else 'partial_lateral'
+    corrected = modes.get(kind)
+    if corrected is None:
+        return center, 'center', 'no_lateral_waveform_fit'
+    if not corrected['optimizer_success']:
+        return center, 'center', 'lateral_optimizer_did_not_converge'
+    if kind == 'partial_lateral' and (corrected['site_lateral_support'] != support or center is None or any(
+            a[:2] != b[:2] for a, b, supported in zip(corrected['positions_mm'], center['positions_mm'], support, strict=True)
+            if not supported)):
+        raise ValueError('Partial lateral waveform fit moved an unsupported site off its strip center')
+    return corrected, kind, None
+
+
 def measured_events(acquisition, joint_fit):
-    """Read measured energies, strip identities, and successful center waveform positions."""
+    """Read measured energies, strip identities and the declared saved waveform positions."""
     selected = _two_strip_triggers(acquisition)
     records, accounting = [], []
+    position_model = joint_fit.get('position_model', 'center')
     for ordinal, ((trigger_index, trigger), fitted) in enumerate(zip(selected, joint_fit['candidates'], strict=True), 1):
         if fitted['ordinal'] != ordinal or fitted['time_ns'] != trigger['trigger_time_ns']:
             raise ValueError('Saved waveform fits must match each measured two-strip time and ordinal')
@@ -125,7 +151,7 @@ def measured_events(acquisition, joint_fit):
                 continue
             orders = _allowed_orders(pair)
             fit_result = fit['fit']
-            waveform = fit_result.get('fits', {}).get('waveform', {}).get('center')
+            waveform, used_model, fallback = waveform_position_fit(fit, position_model)
             pair_ledger = dict(index=pair['index'], cells=cells, site_energies_keV=[s['energy_keV'] for s in sites],
                                nominal_mass=1/compatible, orders=[])
             if portable:
@@ -135,6 +161,9 @@ def measured_events(acquisition, joint_fit):
                 elif waveform is not None and not waveform['optimizer_success']:
                     status = 'optimizer_did_not_converge'
                 pair_ledger['waveform_fit_status'] = status
+            if position_model == 'lateral':
+                pair_ledger.update(waveform_position_model=used_model if waveform and waveform['optimizer_success'] else None,
+                                   lateral_calibration_support=fit['lateral_calibration_support'], lateral_fallback_reason=fallback)
             ledger['pairings'].append(pair_ledger)
             fitted_sites = None
             if waveform is not None and waveform['optimizer_success']:
@@ -200,8 +229,12 @@ def _reuse_saved_events(acquisition, accounting):
 def reconstruct(acquisition, joint_fit, *, z_mm, extent_mm=120., step_mm=4., sigma_deg=5.,
                 plane_prior=DEFAULT_PLANE_PRIOR):
     records, accounting = measured_events(acquisition, joint_fit)
-    return _project(acquisition, records, accounting, joint_fit['two_strip_triggers'], z_mm=z_mm,
-                    extent_mm=extent_mm, step_mm=step_mm, sigma_deg=sigma_deg, plane_prior=plane_prior)
+    result = _project(acquisition, records, accounting, joint_fit['two_strip_triggers'], z_mm=z_mm,
+                      extent_mm=extent_mm, step_mm=step_mm, sigma_deg=sigma_deg, plane_prior=plane_prior)
+    if joint_fit.get('position_model') == 'lateral':
+        result['model']['geometry'] = ('Measured waveform positions use the calibrated lateral grid at each supported site. '
+                                      'Unsupported sites retain strip-center XY. Failed lateral fits fall back to available center fits.')
+    return result
 
 
 def _project(acquisition, records, accounting, two_strip_count, *, z_mm, extent_mm, step_mm, sigma_deg, plane_prior):

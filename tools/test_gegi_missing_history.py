@@ -5,7 +5,7 @@ import random
 import unittest
 
 import gegi_dual_source as dual
-from gegi_missing_history import HistoryOverflow, MissingHistory
+from gegi_missing_history import HistoryOverflow, MissingHistory, native_support_ns
 from gegi_streaming_readout import StreamingReadout
 from test_gegi_pulse_stream import prepare, pulse
 
@@ -16,6 +16,19 @@ def original(rows, live):
 
 
 class MissingHistoryTests(unittest.TestCase):
+    def test_native_support_is_bound_to_actual_drift_grid_and_checkpoint(self):
+        self.assertEqual(native_support_ns({'drift_dt_ns': 1., 'drift_cap_ns': 1000.}), 1001.)
+        self.assertEqual(native_support_ns({'drift_dt_ns': 2.5, 'drift_cap_ns': 1001.}), 1005.)
+        history = MissingHistory(5e6, native_support_ns=1005.)
+        history.add(10000., 10010., 662.)
+        saved = history.checkpoint()
+        self.assertEqual(saved['max_horizon_ns'], 11015.)
+        self.assertEqual(MissingHistory.restore(saved, native_support_ns=1005.).checkpoint(), saved)
+        with self.assertRaisesRegex(ValueError, 'response configuration'):
+            MissingHistory.restore(saved, native_support_ns=1001.)
+        for invalid in ({'drift_dt_ns': 0.}, {'drift_cap_ns': float('inf')}, {'drift_dt_ns': 2., 'drift_cap_ns': 1.}):
+            with self.assertRaises(ValueError):
+                native_support_ns(invalid)
     def test_exact_legacy_union_for_overlapping_horizons_and_recording_edges(self):
         rng = random.Random(20261120)
         live = 5e6+19.5

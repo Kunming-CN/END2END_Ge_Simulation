@@ -149,7 +149,10 @@ class HierarchyTests(unittest.TestCase):
                 page,fragment=destination.split('#',1)
                 self.assertIn(fragment,ids(exhibits[page]),anchor)
             home=(fixture/'index.html').read_text(encoding='utf-8')
-            self.assertIn('id="main-result-link" href="results/gegi-shared-readout/index.html"',home)
+            from gegi_reconstruction_display import DATA, PAGE
+            reconstruction = (fixture / DATA).is_file()
+            featured = PAGE.as_posix() if reconstruction else 'results/gegi-shared-readout/index.html'
+            self.assertIn(f'id="main-result-link" href="{featured}"',home)
             self.assertLess(home.index('id="main-result-link"'),home.index('id="pipeline-example"'))
             self.assertNotIn('<figure class="spectrum-panel"',home)
             guide=(fixture/'guide.html').read_text(encoding='utf-8')
@@ -164,8 +167,9 @@ class HierarchyTests(unittest.TestCase):
             self.assertNotIn('../examples/gamma-native/gamma.html',learn)
             studies={m.group(1):m.group(2) for m in re.finditer(
                 r'<article class="card" id="([^"]+)"[^>]*>(.*?)</article>',results,re.S)}
-            self.assertEqual(list(studies),['gegi-shared-readout','gegi-campaign','tenk','million'])
-            self.assertIn('gegi-shared-readout/index.html',studies['gegi-shared-readout'])
+            featured_id = PAGE.parent.name if reconstruction else 'gegi-shared-readout'
+            self.assertEqual(list(studies),[featured_id,'gegi-campaign','tenk','million'])
+            self.assertIn('gegi-shared-readout/index.html',results)
             for population in ('434 conditional signal groups','434 selected for the joint map',
                                '837 candidate orders','708-group historical control'):
                 self.assertIn(population,studies['gegi-campaign'])

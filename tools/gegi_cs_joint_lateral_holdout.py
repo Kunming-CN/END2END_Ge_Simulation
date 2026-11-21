@@ -96,7 +96,7 @@ def fit_orders(pairing, result):
     return output
 
 
-def run():
+def run(*, compatibility=False):
     start = perf_counter()
     scan = joint.cfd.scan
     paths = [ROOT/'tools'/name for name in (Path(__file__).name, 'gegi_joint_two_site_study.py', 'gegi_joint_two_site.py',
@@ -121,7 +121,8 @@ def run():
     for trial, card, volts in observed:
         if card is not None:
             for pairing in card['pairings']:
-                result = joint.fit_pairing(pairing, card['collectors'], templates, scales, local_adc_volts=volts)
+                result = joint.fit_pairing(pairing, card['collectors'], templates, scales, local_adc_volts=volts,
+                                           compatibility=compatibility, include_all_channels=compatibility)
                 pattern = [dict(contact_ids=[site['x_contact_id'],site['y_contact_id']]) for site in pairing['sites']]
                 truth = joint.compare_fit(result, trial, {'sites': pattern})
                 trial['fits'].append(dict(result, pairing_index=pairing['index'],

@@ -21,11 +21,18 @@ GEOMETRY = [{**channel, 'family': 'X' if channel['id'] <= 17 else 'Y',
 
 
 def event(parent, clock, delay, source):
+    point = [2., 3., 4.]
     return {'event_id': parent, 'parent_decay_id': parent, 'acquisition_id': 'test',
         'isotope': source, 'source_id': source, 'absolute_parent_time_ns': clock,
         'source_position_global_mm': [-40, 0, 40],
-        'steps': [{'raw_row_index': 0, 'time_ns': delay, 'absolute_time_ns': clock+delay, 'energy_keV': 200.}],
-        'pulse_groups': [{'group_id': 0, 'origin_time_ns': delay, 'row_indices': [0]}]}
+        'steps': [{'raw_row_index': 1, 'time_ns': delay, 'absolute_time_ns': clock+delay, 'energy_keV': 200.,
+                   'deposit_id': ['test', parent, 0], 'position_mm': point, 'pre_position_mm': point,
+                   'post_position_mm': point, 'track_id': 3, 'parent_track_id': 2, 'pdg': 11}],
+        'decay_photons': [{'track_id': 2, 'parent_track_id': 1, 'time_ns': delay}],
+        'candidate_photon_truth': {'ge_gamma_steps': [{'raw_row_index': 0, 'track_id': 2, 'parent_track_id': 1,
+            'time_ns': delay, 'edep_keV': 0., 'pre_position_mm': [1., 2., 3.], 'post_position_mm': point}],
+            'track_births': [{'track_id': 2, 'parent_track_id': 1, 'birth_time_ns': delay, 'birth_process': 'RadioactiveDecay'}]},
+        'pulse_groups': [{'group_id': 0, 'origin_time_ns': delay, 'row_indices': [1]}]}
 
 
 class FakeNative:
@@ -47,7 +54,10 @@ class FakeWorker:
     def process_group(self, group, store):
         self.calls.append((group['event_id'], group['group_id']))
         self.groups.append(copy.deepcopy(group))
-        return {'status': 'completed'}
+        return {'status': 'completed', 'event_id': group['event_id'], 'group_id': group['group_id'],
+                'input_event_sha256': '3'*64, 'signals_sha256': '4'*64,
+                'steps': [{'raw_row_index': row['raw_row_index'], 'endpoints': [{'species': 'electron',
+                           'contact_ids': [3], 'status': 'contact'}]} for row in group['steps']]}
     def close(self): pass
 
 
@@ -73,7 +83,8 @@ class AcquisitionTests(unittest.TestCase):
 
     def request(self, output, count, **options):
         path = output / 'native-request.json'
-        A.candidates.write_new(path, {'synthetic': True, 'selection': {'primary_count': count}, **options})
+        A.candidates.write_new(path, {'synthetic': True, 'selection': {'primary_count': count},
+            'numerics': {'drift_dt_ns': 1., 'drift_cap_ns': 1000.}, **options})
         return path
 
     def transport(self, args, log):
@@ -87,6 +98,7 @@ class AcquisitionTests(unittest.TestCase):
                     'initial_nuclei': 10, 'remaining_nuclei': 10, 'generated_initial_daughter_decays': 0}
             A.W.write(path('--output'), state)
         elif action == 'process-block':
+            self.assertIn('--candidate-truth', args)
             self.transport(['prepare-block', *args[1:]], log)
             directory = args[args.index('--output')+1]
             for stage in ('run-block', 'extract', 'verify'):
@@ -117,6 +129,8 @@ class AcquisitionTests(unittest.TestCase):
                     rows = [event(2, 7000., 0., 'co60'), event(3, 9000., 0., 'cs137'),
                             event(4, 9500., duration-9500.+20., 'cs137')]
             stream = directory / 'stream'; stream.mkdir()
+            for local, event_row in enumerate(rows):
+                event_row.update(block_index=index, transport_event_id=local)
             (stream / 'events.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in rows), encoding='utf-8')
             after = {'next_block_index': index+1, 'last_parent_time_ns': 2000. if index == 0 else 8000.,
                 'safe_frontier_ns': 2000. if index == 0 else 8000., 'finished': index == 1}
@@ -138,6 +152,7 @@ class AcquisitionTests(unittest.TestCase):
                     'zero_deposit_primaries': 0, 'nonzero_primaries': primary_count}
             A.W.write(directory / 'checkpoint-after.json', after)
             A.W.write(stream / 'manifest.json', {'primary_count': primary_count, 'counts': counts,
+                'block_index': index, 'candidate_photon_truth_kind': A.truth.PHOTON_KIND, 'source_lh5_sha256': '2'*64,
                 'events_file': 'events.jsonl', 'events_sha256': A.mixed.file_sha(stream/'events.jsonl')})
 
     def test_delayed_cross_block_signals_exact_after_stop_and_resume(self):
@@ -157,12 +172,30 @@ class AcquisitionTests(unittest.TestCase):
         self.assertEqual(FakeWorker.calls, [(0, 0), (2, 0)])
         for field in ('source', 'counts', 'spectra', 'storage_counts', 'readout'):
             self.assertEqual(actual[field], expected[field])
+        self.assertEqual(actual['retention']['candidate_truth']['status'], 'verified_exact')
+        with gzip.open(complete/A.truth.ARTIFACT, 'rb') as expected_truth, gzip.open(resumed/A.truth.ARTIFACT, 'rb') as resumed_truth:
+            self.assertNotEqual(expected_truth.readline(), resumed_truth.readline())
+            self.assertEqual(expected_truth.read(), resumed_truth.read())
+        with gzip.open(resumed/A.truth.ARTIFACT, 'rt', encoding='utf-8') as handle:
+            truth_rows = [json.loads(line) for line in handle]
+        retained_triggers = {row['original_trigger_id']: row for row in truth_rows if row['record'] == 'trigger_context'}
+        driver_rows = {row['driver_id']: row for row in truth_rows if row['record'] == 'transport_event'}
+        delivered_groups = {row['input_group_ordinal']: row for row in truth_rows if row['record'] == 'input_group_response'}
+        self.assertEqual(set(delivered_groups), {i for row in retained_triggers.values() for i in row['input_group_ordinals']})
+        self.assertEqual(set(driver_rows), {row['driver_id'] for row in delivered_groups.values()})
+        self.assertEqual(driver_rows[0]['ge_gamma_steps'][0]['edep_keV'], 0.)
+        self.assertEqual(driver_rows[0]['ge_gamma_steps'][0]['absolute_time_ns'], 6000.)
+        self.assertEqual(driver_rows[0]['positive_ge_deposits'][0]['raw_row_index'], 1)
+        self.assertEqual(next(row for row in delivered_groups.values() if row['driver_id'] == 0)
+                         ['native_steps'][0]['endpoints'][0]['contact_ids'], [3])
         self.assertEqual(A.candidates.verify_candidates(resumed / S.ARCHIVE_NAME)['status'], 'verified_exact')
         for trigger in S.list_candidates(resumed / S.ARCHIVE_NAME):
             got = S.load_candidate(resumed / S.ARCHIVE_NAME, trigger['trigger_id'])
             want = S.load_candidate(complete / S.ARCHIVE_NAME, trigger['trigger_id'])
             self.assertEqual(got['readout'], want['readout'])
             self.assertEqual(got['context']['adc_codes'].tolist(), want['context']['adc_codes'].tolist())
+            self.assertEqual(retained_triggers[trigger['trigger_id']]['input_group_ordinals'], got['identities'])
+            self.assertNotIn('candidate_photon_truth', got['card'])
 
     def test_changed_sources_refuse_resume_without_touching_committed_data(self):
         output = self.root / '.local/changed'
@@ -180,6 +213,27 @@ class AcquisitionTests(unittest.TestCase):
         calls = list(FakeWorker.calls)
         result = A.run(output, 4, block_parents=2, resume=True)
         self.assertEqual(result['status'], 'completed')
+        self.assertEqual(FakeWorker.calls, calls)
+        self.assertEqual(result['retention']['candidate_truth']['status'], 'verified_exact')
+        self.assertFalse((output/A.truth.SCRATCH).exists())
+        self.assertIn(A.truth.SCRATCH, [row['path'] for row in A.W.read(output/'scratch-retirement.json')['files']])
+
+    def test_completed_resume_requires_intact_candidate_truth_after_scratch_retirement(self):
+        output = self.root / '.local/completed-truth'
+        settings = {'primary_count': 4, 'block_parents': 2}
+        A.run(output, **settings)
+        self.assertFalse((output/A.truth.SCRATCH).exists())
+        calls = list(FakeWorker.calls)
+        artifact = output/A.truth.ARTIFACT
+        original = artifact.read_bytes()
+        self.assertEqual(A.run(output, resume=True, **settings)['status'], 'completed')
+        for corrupted in (None, bytes([original[0]^1])+original[1:]):
+            if corrupted is None:
+                artifact.unlink()
+            else:
+                artifact.write_bytes(corrupted)
+            with self.assertRaisesRegex(ValueError, 'candidate truth is missing or differs'):
+                A.run(output, resume=True, **settings)
         self.assertEqual(FakeWorker.calls, calls)
 
     def test_low_memory_stops_before_native_and_resumes_same_queue(self):
@@ -207,7 +261,8 @@ class AcquisitionTests(unittest.TestCase):
         original_identity = json.loads(original_metadata)['identity']
         (output / namespace).mkdir()
         request = output / namespace / 'native-request.json'
-        A.W.write(request, {'synthetic': True, 'response_mode': 'native_signals_only_v1'})
+        A.W.write(request, {'synthetic': True, 'response_mode': 'native_signals_only_v1',
+                            'numerics': {'drift_dt_ns': 1., 'drift_cap_ns': 1000.}})
         A.W.write(output / receipt_path, {'synthetic_admission_fixture': True})
         active = {'original_identity': original_identity, 'active_request': request,
             'active_spool': output / namespace / 'native-spool',
@@ -332,7 +387,9 @@ class AcquisitionTests(unittest.TestCase):
 
         def process_with_failure(worker, group, store):
             result = process(worker, group, store)
-            return {'status': 'native_failed', 'error': 'preserved synthetic domain failure'} if group['event_id'] == 3 else result
+            if group['event_id'] == 3:
+                return dict(result, status='native_failed', error='preserved synthetic domain failure')
+            return result
 
         def read_with_failure(store, parent, group, **kwargs):
             return ({'status': 'native_failed'}, None) if parent == 3 else read(store, parent, group, **kwargs)
@@ -348,6 +405,8 @@ class AcquisitionTests(unittest.TestCase):
         self.assertEqual(result['stage_timings']['native_outcomes'], {'completed': 3, 'failed': 1, 'unavailable': 0})
         self.assertEqual(result['counts']['qualified_triggers'], 0)
         self.assertEqual(result['storage_counts']['saved_candidates'], 0)
+        self.assertEqual(result['retention']['candidate_truth']['counts'],
+                         {'trigger_context': 0, 'transport_event': 0, 'input_group_response': 0})
         self.assertGreater(result['storage_counts']['selection_reason_counts'].get('unknown_native_history', 0), 0)
         expected = A.dual._history_mask([{'first_ge_deposit_ns': 9000., 'last_ge_deposit_ns': 9000.,
                                          'positive_ge_energy_keV': 200.}], 20000.)

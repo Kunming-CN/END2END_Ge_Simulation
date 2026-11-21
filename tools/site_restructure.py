@@ -93,9 +93,19 @@ body{background:#f7fafb}.wrap{max-width:1180px}.top{padding-bottom:16px;border-b
 '''
 
 
-def homepage(commercial=False):
+def homepage(commercial=False, reconstruction=False):
     featured = ''
-    if commercial:
+    if reconstruction:
+        from gegi_reconstruction_display import IMAGE, IMAGE_SIZE, PAGE
+        featured = f'''<section class="home-feature panel" aria-labelledby="featured-study-title">
+<div><p class="eyebrow">Featured study</p><h2 id="featured-study-title">GeGI five-second reconstruction</h2>
+<p>One chronological Cs-137 and Co-60 acquisition yielded 42,275 qualified triggers and 3,822 two-strip candidates.</p>
+<p>One original trigger contributed 24.79% of the brightest cell in the 1,173.23 keV area-weighted image. The peak follows the grid edge as the plane grows.</p>
+<p><a id="main-result-link" href="{PAGE.as_posix()}">Explore the maps, triggers and range fits →</a></p></div>
+<figure><a href="{PAGE.as_posix()}"><img width="{IMAGE_SIZE[0]}" height="{IMAGE_SIZE[1]}" src="{IMAGE.as_posix()}"
+ alt="Six source-plane maps for three measured energy windows and two imaging priors"></a>
+<figcaption>The same measured candidates projected with two priors.</figcaption></figure></section>'''
+    elif commercial:
         featured = '''<section class="home-feature panel" aria-labelledby="featured-study-title">
 <div><p class="eyebrow">Featured study</p><h2 id="featured-study-title">GeGI shared readout · 25 × 250 ms</h2>
 <p>Cs-137 and Co-60 archived single-isotope histories feed shared 34-electrode electronics. The 25 independent windows total 6.25 s, with a reset between windows.</p>
@@ -166,10 +176,12 @@ def write_public_guide(site):
 
 def write_reader_pages(site):
     from gegi_plane_prior_display import SUMMARY, COMMERCIAL_KEY
+    from gegi_reconstruction_display import DATA as RECONSTRUCTION_DATA, PAGE as RECONSTRUCTION_PAGE
 
     path = site/SUMMARY
     commercial = path.is_file() and COMMERCIAL_KEY in read(path)
-    write_page(site/'index.html','GeSignal — HPGe Radiation-to-Readout Simulation',homepage(commercial),0,
+    reconstruction = (site/RECONSTRUCTION_DATA).is_file()
+    write_page(site/'index.html','GeSignal — HPGe Radiation-to-Readout Simulation',homepage(commercial, reconstruction),0,
                fold_footer=True,extra_style=HOME_STYLE)
 
     def study(ident,title,question,outputs,condition,url,available=True):
@@ -186,11 +198,18 @@ def write_reader_pages(site):
 <p>Choose a question to explore. Original samples, event identities, counts and data are inside each study.</p></header>
 <section class="panel" id="teaching"><h2>Start with one saved signal</h2><p><a href="../learn/signals/index.html">Follow six selected 10K events from energy deposits to readout</a>. Each example keeps its model variant, primary and pulse-group identity.</p></section>
 <section aria-labelledby="main-studies"><h2 id="main-studies">Main studies</h2><div class="grid study-cards">'''
-    results+=study('gegi-shared-readout','GeGI shared readout · 25 × 250 ms',
-        'How do shared electronics and imaging priors affect a two-source readout?',
-        'Energy spectra, source-plane images, sampling variation and prior sensitivity.',
-        'Archived-library replay in 25 independent 250 ms windows, with electronics reset between windows.',
-        'gegi-shared-readout/index.html',commercial)
+    if reconstruction:
+        results+=study('gegi-five-second-reconstruction','GeGI five-second acquisition and reconstruction',
+            'Which measured triggers drive the source-plane image, and how stable are conditional range fits?',
+            'Three line windows, two imaging priors, original trigger contributions and matched position controls.',
+            'One physical Cs-137 and Co-60 simulation with a common clock and shared readout.',
+            RECONSTRUCTION_PAGE.relative_to('results').as_posix())
+    else:
+        results+=study('gegi-shared-readout','GeGI shared readout · 25 × 250 ms',
+            'How do shared electronics and imaging priors affect a two-source readout?',
+            'Energy spectra, source-plane images, sampling variation and prior sensitivity.',
+            'Archived-library replay in 25 independent 250 ms windows, with electronics reset between windows.',
+            'gegi-shared-readout/index.html',commercial)
     results+=study('gegi-campaign','GeGI four independent source acquisitions',
         'Which interaction candidates support a conditional Compton image?',
         'Conditional source-plane images, candidate cones, spectra and signal examples.',
@@ -207,6 +226,8 @@ def write_reader_pages(site):
         'Two separate million-decay runs with isolated 100 µs reset windows.',
         'cs137-1m/index.html',all((site/path).is_file() for path in ('examples/cs137-1m/summary.json','examples/cs137-1m-response/summary.json')))
     results+='</div></section><section class="panel"><details id="research-details" class="research-details"><summary>Methods, diagnostics and deeper research</summary><p><a href="../methods/index.html">Read the signal-chain methods</a>, or open the evidence for a specific question. Samples and controls remain distinct within each topic.</p><section id="historical-studies" aria-labelledby="earlier-studies-title"><h2 id="earlier-studies-title">GeGI readout and imaging questions</h2><div class="topic-grid">'
+    if reconstruction and commercial:
+        results+='<article id="gegi-shared-readout"><h3><a href="gegi-shared-readout/index.html">GeGI shared readout · 25 × 250 ms</a></h3><p>Archived-library replay in 25 independent windows, with spectra, image priors and sampling variation.</p></article>'
     topics=(
         ('gegi-short-exposure','Short exposures and energy reconstruction','Early 250 ms exposures, hit maps and single-pixel versus multi-strip energy.'),
         ('gegi-shared-clock-controls','Shared clock and merged triggers','The 3,905-trigger census, 324 two-strip records and controlled studies of triggers 683 and 598.'),

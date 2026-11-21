@@ -14,11 +14,12 @@ const GROUP_HORIZON_NS=100000.0
 const LEGACY_RESPONSE_MODE="isolated_readout_v1"
 const FINITE_EVENT_ID_POLICY="finite_primary_count_v1"
 const STREAMING_EVENT_ID_POLICY="streaming_transport_driver_v1"
-const NATIVE_FAILURE_POLICY="gegi_campaign_native_domain_errors_v3"
+const NATIVE_FAILURE_POLICY="gegi_campaign_native_domain_errors_v4"
 # The contact-start precondition cannot provide a trustworthy charge response.
 # Preserve the whole group as unknown; never move or discard its deposit rows.
 const RECORDED_NATIVE_ARGUMENT_ERRORS=("Noncontact endpoint outside crystal",
-    "Invalid waveform support","Deposit starts on a GeGI contact","Invalid native signed charge")
+    "Invalid waveform support","Deposit starts on a GeGI contact","Invalid native signed charge",
+    "Native floating-boundary projection failed")
 
 function sources()
     names=unique([collect(G.SOURCES);"gegi_pixel_calibration.jl";"gegi_campaign_response.jl";"Project.toml";"Manifest.toml"])
@@ -98,6 +99,8 @@ function initialize(requestpath,out)
         "field_cache_sha256"=>req["field_cache"]["sha256"],"field_cache"=>req["field_cache"],
         "new_field_solve"=>false,"fields"=>report["fields"],"channels"=>channels,"readout_config"=>readout,
         "drift_numerics"=>Dict(string(k)=>getproperty(cfg,k) for k in propertynames(cfg)),
+        "native_boundary_policy"=>Dict("analytic_semiconductor_boundary"=>cfg.analytic_boundary,
+            "floating_projection"=>cfg.analytic_boundary ? "analytic_projected_segment_crossing_v1" : "native_linear_backoff_with_unwritten_row_guard"),
         "electronics_calibration"=>cal,"ionisation_energy_eV"=>eion,"drift_dt_ns"=>cfg.dt,
         "pulse_group_horizon_ns"=>GROUP_HORIZON_NS,"environment"=>env)
     response_mode==G.NATIVE_SIGNAL_ONLY && (ready["response_mode"]=response_mode)
@@ -175,13 +178,17 @@ function process_group(ctx,command;event_processor=G.process_event)
             event_processor(working,ctx.sim,ctx.cfg,ctx.channels,ctx.readout,ctx.cal,ctx.matrix,ctx.eion,ctx.n,signalpath)
         end
     catch err
-        known=err isa ArgumentError && err.msg in RECORDED_NATIVE_ARGUMENT_ERRORS
+        domain=err isa G.NativeResponseError ? err.domain_error : err isa ArgumentError ? err.msg : nothing
+        known=domain in RECORDED_NATIVE_ARGUMENT_ERRORS
         failure=Dict("event_id"=>id,"status"=>known ? "native_failed" : "unexpected_failure",
             "channels"=>nothing,"truth_edep_keV"=>sum(s["energy_keV"] for s in group["steps"]),
             "steps"=>group["steps"],"error"=>sprint(showerror,err),"exception_type"=>string(typeof(err)),
             "signals_ref"=>nothing,"signals_sha256"=>nothing,"transport_flags"=>nothing,
-            "native_failure_policy"=>NATIVE_FAILURE_POLICY,"native_domain_error"=>known ? err.msg : nothing)
-        if known && err.msg=="Invalid native signed charge"
+            "native_failure_policy"=>NATIVE_FAILURE_POLICY,"native_domain_error"=>known ? domain : nothing)
+        if err isa G.NativeResponseError
+            failure["native_failure_diagnostic"]=err.diagnostic
+            domain=="Invalid native signed charge" && (failure["native_waveform_failure"]=err.diagnostic)
+        elseif known && domain=="Invalid native signed charge"
             failure["native_waveform_failure"]=Dict("failed_invariant"=>"undetermined",
                 "checked_invariants"=>["sample_count >= 2","all signed samples finite","initial signed sample exactly zero"],
                 "native_samples_available"=>false)

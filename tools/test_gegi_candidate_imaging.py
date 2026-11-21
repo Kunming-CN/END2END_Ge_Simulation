@@ -137,6 +137,77 @@ class CandidateImagingTests(unittest.TestCase):
         self.assertEqual(self.run_analysis(max_two_strip=1)['candidate_analysis']['selected_original_trigger_ids'],[9])
         with self.assertRaisesRegex(A.W.ControlError,'not an eligible'):self.run_analysis(trigger_ids=[4])
 
+    def test_optional_electrode_diagnostics_preserve_default_plane_and_orders(self):
+        baseline = self.run_analysis()
+        def fitted(*args, **kwargs):
+            self.assertTrue(kwargs['compatibility'])
+            self.assertEqual(kwargs['local_adc_volts'].shape, (34, 29))
+            fitted = self.fitted(*args, **kwargs)
+            fitted['fits']['waveform']['center']['compatibility'] = {'contact_ids': list(range(1, 35))}
+            return fitted
+        with patch.object(A.calibration, 'load', side_effect=self.loaded), patch.object(A, 'fit_pairing', side_effect=fitted):
+            compatible = A.run(self.report, self.calibration, z_mm=40., extent_mm=40., compatibility=True)
+        self.assertTrue(compatible['candidate_analysis']['compatibility'])
+        self.assertNotIn('compatibility', baseline['candidate_analysis'])
+        for key in ('selection', 'triggers', 'layers'):
+            self.assertEqual(compatible[key], baseline[key])
+        fit = compatible['fit_receipt']['candidates'][0]['pairings'][0]['fit']['fits']['waveform']['center']
+        self.assertEqual(fit['compatibility']['contact_ids'], list(range(1, 35)))
+
+    def test_portable_lateral_round_trip_preserves_center_and_exact_binding(self):
+        C = A.calibration
+        cells = [(3,24), (11,29)]
+        manifest = dict(self.manifest, calibrated_cells=cells)
+        center_values = np.zeros(C.TEMPLATE_SHAPE)
+        templates = {xy:C.Template(xy, (0.,0.), 5., center_values) for xy in cells}
+        correction = np.zeros(C.LATERAL_SHAPE)
+        correction[0, 0] = -1.2e-6
+        path = self.root/'lateral.npz'
+        archive, content = '1'*64, '2'*64
+        C.save_lateral(path, center_manifest=manifest, center_content_sha=content, center_archive_sha=archive,
+                       corrections={cells[0]:correction}, provenance={'source_sha256':'3'*64})
+        loaded, models, _, album = C.load_lateral(path, manifest, templates, content, archive)
+        self.assertEqual(loaded['supported_cells'], [[3,24]])
+        self.assertEqual(loaded['center_only_cells'], [[11,29]])
+        self.assertEqual(album, A.W.sha(path))
+        self.assertIs(models[cells[0]].center_v_per_keV, templates[cells[0]].center_v_per_keV)
+        self.assertIs(models[cells[1]], templates[cells[1]])
+        np.testing.assert_array_equal(models[cells[0]].lateral_correction_v_per_keV, correction)
+        with self.assertRaisesRegex(ValueError,'exact center binding'):
+            C.load_lateral(path, manifest, templates, content, '4'*64)
+        correction[1, 1, 0, 0, 0] = 1e-9
+        with self.assertRaisesRegex(ValueError,'center reference'):
+            C.save_lateral(self.root/'wrong-grid.npz', center_manifest=manifest, center_content_sha=content,
+                           center_archive_sha=archive, corrections={cells[0]:correction}, provenance={})
+
+    def test_partial_lateral_projects_actual_position_and_labels_optimizer_fallback(self):
+        baseline = self.run_analysis()
+        overlay = self.root/'lateral.npz'; overlay.write_bytes(b'synthetic overlay')
+        selection = {'identity':self.manifest['identity'], 'supported_cells':[[3,24]]}
+        def fitted(*args, **kwargs):
+            self.assertTrue(kwargs['include_partial_lateral'])
+            result = self.fitted(*args, **kwargs)
+            result['fits']['waveform']['partial_lateral'] = {
+                'optimizer_success': converged, 'site_lateral_support':[True, False],
+                'positions_mm':[[-6.,1.,-2.],[5.,0.,2.]]}
+            return result
+        for converged in (True, False):
+            with self.subTest(converged=converged), patch.object(A.calibration,'load',side_effect=self.loaded), \
+                    patch.object(A.calibration,'load_lateral',return_value=(selection,{},'3'*64,A.W.sha(overlay))), \
+                    patch.object(A,'fit_pairing',side_effect=fitted):
+                result = A.run(self.report,self.calibration,z_mm=40.,extent_mm=40.,position_model='lateral',
+                               lateral_calibration_path=overlay)
+            pair = result['triggers'][0]['pairings'][0]
+            self.assertEqual(pair['lateral_calibration_support'], [True,False])
+            self.assertEqual(pair['waveform_position_model'], 'partial_lateral' if converged else 'center')
+            self.assertEqual(pair['lateral_fallback_reason'], None if converged else 'lateral_optimizer_did_not_converge')
+            self.assertEqual(pair['orders'][0]['vertex_mm'],[-6.,1.,-2.] if converged else [-5.,0.,-1.])
+            self.assertEqual(pair['orders'][1]['vertex_mm'],[5.,0.,2.] if converged else [5.,0.,1.])
+            self.assertEqual(result['selection'],baseline['selection'])
+            self.assertEqual(result['layers']['all']['projected_mass'],baseline['layers']['all']['projected_mass'])
+            if not converged:
+                self.assertEqual(result['layers'],baseline['layers'])
+
     def test_missing_templates_and_failed_optimizer_are_not_promoted_to_geometry(self):
         for fit in ({'status':'no_center_template_for_pixel'},
                     {'status':'fitted','fits':{'waveform':{'center':{'optimizer_success':False}}}}):

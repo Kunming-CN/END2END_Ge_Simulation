@@ -15,13 +15,21 @@ from pathlib import Path
 import gegi_dual_source as dual
 
 
-KIND = 'gegi_finite_missing_history_v1'
+KIND = 'gegi_finite_missing_history_v2'
 PRODUCER_SHA256 = sha256(Path(__file__).read_bytes()).hexdigest()
 TAIL_SOURCE_SHA256 = sha256(Path(dual.__file__).read_bytes()).hexdigest()
 
 
 def _number(value):
     return type(value) in (int, float) and math.isfinite(value)
+
+
+def native_support_ns(numerics):
+    """Requested drift-step ceiling plus SSD's one native signal-support step."""
+    dt, cap = numerics.get('drift_dt_ns', 1.), numerics.get('drift_cap_ns', 1000.)
+    if not _number(dt) or not _number(cap) or dt <= 0 or cap <= dt:
+        raise ValueError('Use finite positive drift spacing and a longer drift cap')
+    return (math.ceil(cap/dt)+1)*dt
 
 
 class HistoryOverflow(RuntimeError):
@@ -33,13 +41,17 @@ class HistoryOverflow(RuntimeError):
 
 
 class MissingHistory:
-    def __init__(self, live_time_ns, *, max_active_failures=65536):
+    def __init__(self, live_time_ns, *, max_active_failures=65536,
+                 native_support_ns=dual.NATIVE_DRIFT_CAP_NS+1.):
         if not _number(live_time_ns) or live_time_ns <= 0:
             raise ValueError('Define the finite physical recording interval')
         if type(max_active_failures) is not int or max_active_failures <= 0:
             raise ValueError('Use a positive active missing-history bound')
+        if not _number(native_support_ns) or native_support_ns <= 0:
+            raise ValueError('Use the configured positive native signal support')
         self.live_time_ns = float(live_time_ns)
         self.max_active_failures = max_active_failures
+        self.native_support_ns = float(native_support_ns)
         self._active = []
         self._excluded = []
         self._starts = []
@@ -54,7 +66,7 @@ class MissingHistory:
                 or not 0 <= first_ns < self.live_time_ns or last_ns < first_ns or energy_keV < 0
                 or (self._last_onset is not None and first_ns < self._last_onset)):
             raise ValueError('Add finite unavailable-group times and energy in onset order inside the recording')
-        horizon = last_ns+dual.NATIVE_DRIFT_CAP_NS+1
+        horizon = last_ns+self.native_support_ns
         if not math.isfinite(horizon):
             raise ValueError('The unavailable-current horizon must remain finite')
         maximum = max(self._max_horizon, horizon)
@@ -125,18 +137,22 @@ class MissingHistory:
     def checkpoint(self):
         return {'kind': KIND, 'producer_sha256': PRODUCER_SHA256, 'tail_source_sha256': TAIL_SOURCE_SHA256,
                 'live_time_ns': self.live_time_ns, 'max_active_failures': self.max_active_failures,
+                'native_support_ns': self.native_support_ns,
                 'active_bounds': [list(row) for row in self._active],
                 'excluded_intervals_ns': [list(row) for row in self._excluded],
                 'last_onset_ns': self._last_onset, 'max_horizon_ns': self._max_horizon,
                 'failure_count': self._failure_count, 'active_bounds_peak': self._active_peak}
 
     @classmethod
-    def restore(cls, state, *, max_active_failures=None):
+    def restore(cls, state, *, max_active_failures=None, native_support_ns=None):
         if (state.get('kind') != KIND or state.get('producer_sha256') != PRODUCER_SHA256
                 or state.get('tail_source_sha256') != TAIL_SOURCE_SHA256):
             raise ValueError('Missing-history checkpoint implementation changed')
         result = cls(state['live_time_ns'], max_active_failures=(
-            state['max_active_failures'] if max_active_failures is None else max_active_failures))
+            state['max_active_failures'] if max_active_failures is None else max_active_failures),
+            native_support_ns=state['native_support_ns'])
+        if native_support_ns is not None and result.native_support_ns != native_support_ns:
+            raise ValueError('Missing-history native support changed from its response configuration')
         active, excluded = state['active_bounds'], state['excluded_intervals_ns']
         if (type(active) is not list or type(excluded) is not list or len(active) > result.max_active_failures
                 or not _number(state['max_horizon_ns']) or state['max_horizon_ns'] < 0

@@ -18,6 +18,8 @@ ROUTES={'examples/cs137-1m/report.html':'spectra/million-truth.html',
         'examples/pipeline.html':'spectra/pipeline.html'}
 GENERATORS=('tools/spectrum_display.py','tools/spectrum_plot.py','tools/spectrum_controls.js','tools/viewer_navigation.py','tools/viewer_navigation.js','tools/ring_site.py','tools/site_restructure.py','tools/site_routes.py','tools/teaching_examples.py','tools/teaching_examples.html','tools/focused_plots.js','tools/result_web_delivery.py')
 TRUSTED_PREVIOUS_MANIFESTS=frozenset({
+ # Exact 8d7c76e snapshot before the five-second GeGI results route.
+ 'fc67b81ade832f55f2ddf847e01db91f5ec15c141e67a201c046ea7c675c19d5',
  # Exact 5135738 Git receipt before case/archive reading routes changed.
  'a6f6ba6657fc22a667ddc9030019c1e39ede6aaa8d49706cd6a6f62dc0286e0f',
  # Exact c8d4d13 published manifest, checked against Git before student-page changes.
