@@ -1,472 +1,198 @@
 # GeSignal handoff
 
-## Active work and continuity
+## Current work and ownership
 
-The owner resumed the full signal -> interaction -> source-position queue after
-8d7c76e. Current-thread heartbeat `gegi` is ACTIVE every30minutes. Follow
-[the six-stage plan](tools/NEXT_DEVELOPMENT_PLAN.md); no resets, extra reviewers,
-new frontend or automatic90.09s/20M production. The completed five-second run is
-unchanged. This interface cannot verify/switch the leader to GPT-6 Astra Ultra;
-no switch claimed. Workers are explicit6.2SolUltra(candidate/position) and
-6.1SolUltra(native), with current ownership below.
+Continue the owner's signal -> interaction -> source-position objective through
+[the six-stage plan](tools/NEXT_DEVELOPMENT_PLAN.md). The current-thread `gegi`
+heartbeat is ACTIVE every 30 minutes. No resets, extra review agents, new
+frontend or automatic 90.09 s / 20-million-parent production. Reuse the completed
+five-second acquisition and retained independent controls.
 
-Owned lock `.local/autonomy/gegi-reconstruction.lock`, thread
-`01a1fd1a-3e72-7eb2-b7bf-c8c2d59236fd`. Inspect actual markers/checkpoints before
-launching or writing pinned sources. Do not start another native worker.
-Default sandbox process lookup can be empty even while its elevated owned
-session advances; a narrow elevated read-only lookup verified the exact PIDs.
+Thread `01a1fd1a-3e72-7eb2-b7bf-c8c2d59236fd` owns
+`.local/autonomy/gegi-reconstruction.lock`. Check its owner record and actual
+workers before launching anything; do not duplicate running calculations.
+Default sandbox process lookup may hide elevated owned workers. The interface
+cannot verify or switch the leader to GPT-6 Astra Ultra; no switch was claimed.
+Implementation agents remain explicit GPT-6.2 Sol Ultra (candidate/position)
+and GPT-6.1 Sol Ultra (native).
 
-* **Native worker:** `/root/native_response` owns serial continuation. The full
-  phase `.local/gegi-reconstruction-v1/native-recovery-segment-crossing/` exited
-  successfully and sealed all 1,971 groups: 849 complete, 537 step_limit,
-  580 boundary projection failures and five stopped without contact. Of the
-  complete responses, 810 are new and 39 inherited from the retained earlier
-  phase; all 1,932 new calculations have timing. The exact status ledger SHA is
-  0b0833f63059a1daa47308c2ca0e78f5fee82646f448aab3817f4d68465865da.
-  The modeled unknown-history union changes from 965,632,420 to 560,239,440 ns;
-  original ADC, triggers and images remain unchanged. This is native recovery,
-  not restored continuous-readout exposure. No original group was overwritten.
-  The 20,000-sample execution ceiling is removed after that worker's exit;
-  45 focused Julia assertions pass, with default timing unchanged. Sixteen
-  drift-only conditions (41 unique rows, 47 row evaluations) completed in
-  `native-drift-probe-run`, request SHA
-  75e6b752fceef754133abf6b94de09ef39d827a789f65441d1ca67b02b9fd7fa.
-  Event 2590 reaches both contacts by 2.778 us; 132649 becomes stationary at
-  1.712 us and stays so at 5/20 us. Tangential roundoff and outward corner
-  projection are separate witnesses. These probes do not establish whole-group
-  waveform recovery. The subsequent whole-group 2590 acceptance at 5 us is
-  complete: all eight original rows, 16 carrier contacts and 34 valid signed
-  waveforms through 3,193 ns. The selected537-limit phase closed successfully in
-  `native-cap5000-step-limits`, formerPython18384/Julia27556,session62982,requestSHA
-  3436be0712bb60d584defc7951ffaf4ff8746855a584a9156bf4c4e8589889c0.
-  It reused one complete pilot and computed536new groups. Final selectedcounts:
-  146complete,385step_limit,sixstopped. Effective1971parentcounts are995complete,
-  580failed,385limited,11stopped;849priorcomplete and585otherunknown were not rerun.
-  The mixed-support conditional unknown-history union is489370980ns, versus
-  original965632420ns and prior560239440ns. This is not restored continuous ADC.
-  SealedrecoverySHAa92f44a552ba45cea9e5e072ed858d32e8cf2b8ca184bb8bb367cef7e123929c;
-  sessionexit0,closed marker and SQLite/report seal agree. Full1971input/producer
-  reconciliation passes; derivedledgerSHA2b2977672ad83c54cc525b94b5b961b32452bc288c06126204df12df81e4c538,
-  with39priorparent+onepilot inherited and536new timings retained. Longer support
-  adds1231660ns outside the original mask; net reduction is not a pure subset.
-  All cooperative prefix proofs remain in `serial-interleave.json`.
-  Isolated helper is ready: `simulation/native_segment_crossing.jl` SHA0579097c
-  and `tools/test_native_segment_crossing.jl` pass57geometryassertions without
-  fields/drift (peak707,915,776B).214613selectsvalidlaterfacefraction0.3972794892;
-  717723tinyrearintersectiongetspositiveprojectedmotion;3361staysunknown.
-  Six successful controls atFloat32/64arebit-identical. CorrectedUTF8patchc7b51434
-  replaced a retained encoding-failed59411f56 preparation artifact. Actualv2
-  whole-group acceptance completed in46.2725s,peaknative3198586880B;20/20control
-  waveformCSVbytes and endpoint records remain exact, but0/3witnesses recover.
-  Receipt `native-segment-crossing-acceptance/validation.json` SHA
-  5a2e2a47d6d99f8abbf07469d6270f3e5ed2c2ddba9b6e8183859739dcbd49f0.
-  214613row4924advances108->109steps and717723row9951advances to112; both then
-  meet a second active face.3361row3653remains at39. The simultaneous active-face
-  correction now completes original group214613: all16deposits/32geometric
-  contacts and34signedwaveforms through199ns. Groups717723 and3361 now continue
-  to the configured1us cap with49/50 and18/36contacts; both remain unknown.
-  All20control CSVbytes and full endpoint records stay exact. Receipt
-  `native-active-halfspace-acceptance/validation.json` SHA
-  93666032236f6a2e80c730430154bec83c40fdd9ed4e5ca8b65e3c989149f24f;
-  request6a1654d0/archiveaf16d49c,54.6838s,peaknative3198865408B, unchanged inputs
-  and verified original fields.77geometry/45native assertions and9Python checks
-  pass. Root accepts this demonstrated repair; helper dependency closure is
-  explicit. Runtime publication is next. Native owner inspects the two remaining
-  trajectories and prepares the serial580-failure cause cohort, reusing accepted
-  outputs. Full995cap seal and original ADC remain unchanged; the new witness
-  is not yet counted in that sealed cumulative ledger.
-* **Candidate worker:** `/root/candidate_attribution`. All 18 prespecified non-peak
-  histories are complete: seven clean two-vertex, nine merged, two with three
-  distinct vertices; 17 full-energy photons and one escape. All 18 exact
-  primary/RNG/canonical-stream/native-input comparisons pass. Selection remains
-  six chronological ranks per window, not a population-weighted or new-seed test.
-  Receipt `chronological-window-origins/origins.json` SHA
-  410e4705e8cc3ee6c809998339b06c86dcd0b1c543c29951a3d2fd0860c4f0fe.
-  The optional photon-step observer passed exact primary/RNG/canonical-stream/
-  native-input parity on ten original blocks. Its 130 photon steps include
-  15 Ge Compton steps and 34 unique original Ge-row joins. The original
-  executable and archive are unchanged. `photon-step-observer-v1/kinetic-audit.json`
-  SHA fc35c110a09fc39a13d063ceac7b81b10de9d955c14f93e6cbf2fcaab6e9702f.
-  Future candidate-truth integration is implemented and tested. New acquisitions
-  opt in with `--retain-photon-kinematics`; resume restores the saved choice.
-  Exact steps attach to the original Ge rows in `candidate-truth.jsonl.gz`.
-  All 34 retained Ge rows from ten blocks pass the real input join/staging
-  acceptance; 24 transport/observer and 14 acquisition checks pass. No new
-  acquisition or native calculation was needed for this integration.
-  The first complete continuous-readout repair acceptance used:
-  checkpoint2.37828180194ms -> unavailable ordinal119/event2459, ending before
-  6.19974311743ms.43successful responses are absent, all in originalb000002.
-  Exact10,000-driver transport replay is complete:8.979s/peak179,953,664B,
-  both CLHEP states, parent bytes, after-clock and full canonical stream match.
-  All43successful groups/1241Ge rows and target2459match original input hashes.
-  `native-readout-acceptance-inputs/trigger-20/verified-native-inputs.json`
-  SHA7cb97398caae565e7291bb42cc26526974fb209ef66459757a0bd541e5f997cb;
-  transportverificationSHA2f29277852e3646aa1dd1844dbc3aa2c32935ba82a4185398085b33d4acb7cd8.
-  RecipeSHAe1461e1bcec8cf515d295685e07e465e867fb331d6bb66c8792e19c4280e7484
-  retains the extraction-wrapper path failure and successful extraction-only
-  recovery; transport was not rerun. Original LH5 container hash differs while
-  scientific stream/inputs match. Third cooperative interleave stopped cap
-  cleanly at343/537:89complete,249limited,fivestopped, all prefixes unchanged.
-  Frozen phase1producer now regenerated all43original successes/1241rows with
-  2482contact endpoints and valid all34signedsignals in57.675s (56.735sactive),
-  combinedRSSpeak2,148,974,592B.
-  `native-readout-original43/validation.json` binds StoreSHA
-  a51a74745419cc1ff8cb460e688df2ce4c2512b7876cd7195654fa7232fe8b43,
-  completionSHA0a65bd5893e7ce1d6a7c52ec5e0daeb1e229cc72b8f92a53c630b3c3a350409a.
-  The original cachehash/attributes are unchanged; its snapshot hardlink is
-  not a second physical cache. Samecap resumed at343 with all prefix/source
-  hashes unchanged (Python27768/Julia8476/session29912); candidate owner
-  executes the same-checkpoint comparator under originalPython3.12.14/
-  NumPy2.3.5/SQLite3.53.1 at `.cache/codex-runtimes/codex-primary-runtime`.
-  No competing native/field process. Same-history readout acceptance now passes:
-  all41original triggers19-59 (times/reasons/fullrecords) and14candidate ADCs
-  reproduce exactly in2.85784s. Substituting only2459preserves all41contexts and
-  adds counterfactual rise60at6,193,200ns, rejected asguard_only_collection.
-  Candidate count stays14; rejected27->28.328ADCframes/1284values change,
-  maximum2480codes, with no pre-onset change. The clipped unknown-history union
-  is10,563.117429828271ns/529sampleframes->0 ONLY through6,199,743.117429828ns;
-  this neither restores the full tail nor measures five-second efficiency.
-  `native-readout-repair-2459/comparison.json` SHA
-  35fdbe63787e00c3c08c23287429c919bbb7a2c8e2f9072cba76ac0d66b2f3e9
-  binds both SQLite ledgers, original producerb09b90f0 and exact original runtime.
-  Its initial final-write hardlink failed; complete scientific bytes were
-  promoted by rename without replay. Producer.py is retained; the CLI now uses
-  the existing rename writer in its exclusively-created output directory.
-  The current comparator also reproduces this first case exactly; its successful
-  output uses the existing atomic rename writer. Original scientific producer
-  b09b90f0 and writer-only correctionf3d1ad6a remain distinct provenance.
-  FullB2recipe is now frozen at `native-readout-block2/recipe.json`, SHA
-  1516062891e590d72e950e3bd591d8a097c1ea7f06cfaecfc777c3be33807224.
-  Interval ends27,498,038.838090543ns:303chronological groups,288originalcomplete
-  and15unavailable,264triggers/69candidates.192of495rawgroups are deferred.
-  All495group input hashes verify from the existing replay; additional245inputs/
-  6278rows SHA7b034f5a86c458ba4168c4be0d3e11cb6afab603e15b150062b9beafc2510fbd.
-  Nine responses are complete (seven1001ns,two5001ns); six remain unknown
-  (four1001ns,two5001ns). Original288 regeneration is complete:43metadata/array
-  BLOBs inherited byte-exact,245new calls in67.894native seconds,102.316s total,
-  peakcombinedRSS2,221,916,160B. All7519rows/15038contact endpoints/all34signed
-  signals and original input hashes pass. Original cache bytes/attributes and
-  original43store are unchanged. `native-readout-original288/validation.json`
-  SHA113b80a76cdf67aceff3907446354673be286572016ae199ba721931a46745ea
-  binds StoreSHAbd87a37398dad770aef3aafc813ccb11a9831b2383df79d3cc2d6758ee327752.
-  No new transport, fields or environment. The same cap resumed afterward.
-  WholeB2 comparison now passes in13.375s under the original runtime: all264
-  trigger records19-282 and69candidate ADC hashes reproduce exactly before any
-  substitution. The nine repaired responses yield273rises/98candidates/175rejects
-  versus264/69/195. All264original rise times remain:206rows unchanged,58changed,
-  including57changed ADC contexts.23old unknown-history rejects become candidates;
-  nine new rises yield six candidates and three rejects. Six native groups stay
-  unknown. The conditional mask union changes7,153,400->2,926,760ns
-  (357670->146338frames):old-only4,230,020/shared2,923,380/new-only3,380ns;
-  longer support for remaining unknown groups explains the new-only interval.
-  No pending confirmed rise remains at the guard. ADC changes213837/1255987frames,
-  859534values,max11578codes; no pre-onset changes. This measures only the
-  25.119757ms interval, not five-second efficiency or physical-event return.
-  `native-readout-block2/comparison-run/comparison.json` SHA
-  006f8c9206e9e30079a3adf41ff7b82d8d034a97c0174efe966f316983521707;
-  comparatorSHA64d8cf2464ec7d16181d08d6f582529dc6234f766d08b05ed69f80f50d833de0.
-  Three focused checks and first-case scientific regression pass. Both SQLite
-  censuses/integrity/hashes and original archive immutability pass. Native repair
-  changes the actual readout; old triggers are never merely relabeled.
-  Same-ADC hypothesis comparison is now complete on all18prespecified histories
-  and three separately reported peak controls:42pairs/84orders, nulls and original
-  masses retained. Of six clean chronological absorption histories, five have
-  usable fits; both orders pass in all five, with ARM RMS6.844deg chronological
-  versus41.684deg reverse. Clean escape4891admits its true order only under the
-  correct incident-line escape hypothesis (ARM+7.223deg); observed-sum absorption
-  retains the reverse order (46.692deg). Five of nine known merged histories still
-  allow absorption cones, two also escape. No false directional order is assigned
-  to merged/other histories.28same-cell depth splits across14fit pairs reproduce
-  all34center predictions within5.457e-12ADCcodes: an algebraic interpolation
-  ambiguity, not independently validated physical indistinguishability.
-  `interaction-hypothesis-controls.json` SHA
-  2fbb089ff286421bf3ba1a47b16bfbf1ca0e6bbd841c105a15fbab57a68b5951;
-  `tools/gegi_interaction_hypothesis_controls.py` SHA93f67bc302f12e361ff86130a8229f65ff4f4225f95f7be6966eee2b9978eabd.
-  Two targeted tests and the real saved-input analysis pass inJLab3.11.14/
-  NumPy2.4.2/SciPy1.16.3. No refits, transport/native calls or changed weights.
-  The finite-vertex incident-line adapter is now complete, using the shared
-  AngularScore with an explicit unsplit mode; its default split behavior is
-  unchanged. Three original six-trigger measured-window cohorts and three named
-  peak witnesses remain separate. The diagnostic splits original pair mass equally
-  before testing either order and leaves unsupported mass unresolved. It does not
-  inherit the official absorption-only order rejection into the escape branch.
-  All24cohort/hypothesis cells are retained:13all-unresolved,10open/far-supported,
-  one closed under the uncalibrated score-drop2diagnostic.1173absorption has5/6
-  geometric triggers/mass4and favors the10000mmsearch edge;1332.492escape has3/6/
-  mass1.5and radius141.38mm, but only0.28977log-score gain over infinity: no range
-  identification.1332window absorption gives(35.77,-2.50,40.86)mm/radius54.36,
-  far gain3.9853and a closed diagnostic; its escape branches are unsupported.
-  All geometry-supported single-trigger witnesses have open profiles.
-  `incident-line-range-controls.json` SHAddac75500053fc63af01e15c6fa7504e736f748db2639e315f43835dd3d154de;
-  pretruth fit digestb09a0d542984289b1a6032ea775152620b953f9c307ec1d95fade9e207a85df3
-  is unchanged after scoring. Runtime9.629s; two new and six existing tests pass.
-  AdapterSHAc54dd0f3422c2b22c7770c65bd91c14caede238298aaf720160e778a52c261cd.
-  Exact executed scorerSHAa018a620 is retained asincident-line-range-controls-scorer.py;
-  trackedLFscorerSHAd13c34dd has identical parsed AST. No expensive rerun.
-  All models are conditional angular responses, missing calibrated energy-line,
-  detection/escape selection and order/topology probabilities; cross-model scores
-  cannot select a physical hypothesis. The next conditional photon-continuation
-  component is complete from Yoneda/MEGAlib/Geant4primary methods: bulk survival,
-  photoelectric path density(mm^-1) and scatter+escape path/energy density
-  (mm^-1keV^-1), with a normalized free-electron energy Jacobian and unobserved
-  azimuth average. These different measures cannot be ranked before adding the
-  measured energy/charge response. No source or event weights change.
-  Original remage1.1.0/Geant4 11.3.2 Livermore initialization extracted17energies
-  (154.783-1332.498keV) from exactGDML/G4_Ge5.323g/cm3 and original cuts, in
-  2.190s/139329536Bpeak/zero primaries. RatesCSV SHA
-  73338fc40c27a5dbbfb092986e8c777b131c45da831b4e49ecb53050f97b9c81.
-  Nine exact histories (sixabsorption/threeescape) pass identity/energy/vertex
-  joins. Analytic exits3.319580084868297/6.9078458672033705/9.025046588164116mm
-  match recorded rays within2e-15mm; azimuth256->1024changes atmost4.63e-6.
-  The per-ray survival and unobserved-azimuth average are different conditions,
-  not an accuracy comparison. Three analytic tests pass, including normalized
-  solid-angle/energy measures and explicit units. `photon-continuation-v1/
-  saved-controls.json` SHA7d4c24e68b1936633d5b483a99cbebcb3e5cf3b640d546766dc7b114e85a8474.
-  A complete measured likelihood still needs entrance/passive material transport,
-  secondary containment, joint energy/position response and acquisition/topology
-  selection. No inferred full detection efficiency or physical model selection.
-  The selected-cap continuation helper now preserves the full 1,971 denominator
-  through the sealed parent, carries deferred statuses explicitly, and unions
-  missing-history tails at each group's actual support. Twelve focused checks
-  pass; the real whole-group 2590 pilot confirms the extended response path.
-* **Position worker:** `/root/position_model` integrated the accepted same-event
-  hypothesis/range evidence into the existing page. Both focused display tests
-  and42publication tests pass; desktop homepage->new range table->methods passes.
-  The next generic runtime mode `--escape-incident-energy-keV` is implemented
-  with explicit optional trigger IDs, no truth inputs and unsupported mass retained.
-  Actual18chronological-control CLI output and three separate peak witness results
-  exactly reproduce every archived profile/order/mass. Eight focused range tests
-  pass and default numeric function ASTs are unchanged. The maintained guide and
-  explicit package dependencies are updated; two targeted package tests pass,
-  including the unpacked CLI. Actual saved outputSHA
-  fc143454bcbd90bafba661db0f4a6a500e0f723c4909315dcd4d56ab7e31f26f.
-  Exact executed sourcea05ea005 is retained asportable-escape-range-1332-controls-producer.py;
-  trackedLFsourcebcda8268 is byte-identical after newline normalization and AST-
-  identical, without another scientific replay. The committed967bdd5 software
-  package is published and its public bytes verified. Independent energy-error
-  extraction now retains all92saved ADC identities, with96general,16targeted-Cs
-  and72three-cell component residuals. RMS errors are0.022914/0.026880/0.041420keV;
-  all56wrong-cell and24multipoint pairings remain unmapped. Twelve fixed-condition
-  noise-seed pairs give descriptive scales0.025837-0.046430keV by cell/allocation,
-  not a transferable Gaussian width or measured GeGI calibration. Receipt
-  `control-energy-errors.json` SHA648be622135395bd1b4489ccb4986acebc7b417338da1a00d4c2cff1b882265a;
-  extractor76168297 retains exact input hashes, identities and order ledgers.
-  Root reproduced the entire sealed92-row receipt byte-for-byte in memory.
-  Completed position work is retained, without new native calls or refits:
-  * All34-channel compatibility and optional lateral grids are portable. On36
-    matched off-template controls, full34lateral improves axis10.26->5.00deg and
-    XY1.802->1.044mm. Six grids cover151/2983pairings;143partial/eightfull. Four
-    other grids worsen axis7.17->9.32deg and were not promoted. Shared-strip
-    census4410/3833usable;32actual fits cover16conditions/fourlayouts.
-  * Ten exact photon histories retain21original IDs and eight full substitutions.
-    Position-only |ARM change| is0.44-16.59deg versus0.005-0.049deg for energy.
-    Exact kinetics confirm the earlier transfer estimate within2.27e-13keV;
-    bound-electron scattering, source alignment and reconstruction terms are
-    separate. Photon vertices, charge centroids and signal positions stay distinct.
-    `same-event-exact-kinetics.json` SHA9bca9f3d43f5f7fba86965873fe6a431934b2309953cc8343eb3a51dab4e0cd8.
-  * Trigger12271has two photon vertices but charge in three nominal cells. The
-    measured-cell grid has81initial responses and198depth-refinement responses,
-    all34signed/complete contacts, from original Float32 fields without a solve.
-    Three->eleven depth levels reduce original all34/Y28RMS10.7585/39.8511->
-    5.0105/12.9285codes and fresh six-point positionRMS1.2372->0.28485mm.
-    Exact ADC diagnosis identifies interpolation mismatch25-28codes versus
-    noise~2.3codes; energy-only displacement is atmost0.00475mm.
-  * Twenty-four overlap conditions share two physical layouts, three energy
-    allocations, two phases and two noise replicates. Refined24converge; one
-    coarse failure is retained. On23matched conditions positionRMS2.055->0.982mm,
-    but10/69components worsen. Weak near-ties reach2.36mm; outer-limit fits15/23.
-    `weak-overlap-validation-cli.json` SHA4d3f2c7ce7bb4160eb1707aa0dd46f82c22b9a06fdddfe42d398de43bf0cd8f3.
-  * Same-bank symmetricXY-PCHIP improves six isolated positions0.284846->0.092752mm
-    but the24overlap conditions remain mixed:72componentRMS0.9774->0.8789mm,
-    weak24RMS1.3446->1.1853mm, only12weakpositions improve, outer-limit15->16,
-    weak near-tie2.359->2.810mm. Original12271all34/Y28RMS5.0105/12.9285->
-    4.8048/12.3768codes retains both unsupported alternatives and weights0/1.
-    `xy-overlap-and-original-adc.json` SHAb6d421683a266d964dd1e176982588befd89efa91070744fe9b532946ef97dec.
-    This local research interpolation is not a runtime default or detector-wide
-    position validation. No position truth score is assigned to original12271.
-  * Joint-alternative geometry covers36sameADCcontrols,12known multi-point
-    negatives and all3822saved candidates/7644pairs.10/12negative controls still
-    project with stable cones; median maximum axis span0.00059058deg versus
-    positive0.00059845deg. Stable geometry therefore does not identify two sites.
-    The portable cone diagnostic retains every original mass and permits absent
-    all34refits explicitly. OriginalPython3.11.14/NumPy2.4.2 scientific parity
-    is exact; alternateNumPy2.3.5roundoff is retained separately.
-    AcceptanceSHA94408be98ad7c36e982f2fcfa7f8d63815f89f9914fac563ea9d60f5c5531bb3.
-  Full producer/request/array hashes, recorded failures and earlier publication
-  receipts remain in the immutable handoff below and their bound local evidence.
+* **Native:** `/root/native_response` owns all serial native work. The 537-group
+  duration continuation and V3 surface acceptance are closed. It is preparing
+  last-segment diagnostics for the 19 noncontact carriers in groups 717723 and
+  3361, then a 5 us whole-group extension where ongoing motion supports it.
+  The accepted helper is frozen. The next cause cohort is the 580 retained
+  boundary failures, with accepted results inherited and actual configured
+  support retained. It is authorized after the small extension and fresh memory
+  check; no competing native worker or field solve. The last root memory check
+  found about 3.33 GB available, close to the measured 3.20 GB native peak.
+* **Candidate:** `/root/candidate_attribution` owns the running 28-curve bank,
+  Python PID 3912, shell PID 19744, tool session 94572. Exact phase is
+  `.local/gegi-reconstruction-v1/photon-continuation-v1/`; base database
+  `trial-escape-curve-bank.sqlite` and append log have durable direct samples.
+  Producer e64c8ce5 is pinned. After base closure, run only the targeted higher
+  quadrature overlay `trial-escape-curve-repair512.sqlite`, then the complete
+  2,400-point `trial-grid-conditional-response.json` / `.npz`. Do not restart or
+  edit the live producer. Six focused resume/coverage/repair checks pass; the
+  final full-grid calculation is still pending.
+* **Position:** `/root/position_model` completed the empirical outgoing-energy
+  kernel and is integrating one shared latent outgoing energy through both
+  measured-energy terms and second-site continuation. The separate optional
+  consumer has five analytic checks and a real in-memory six-point preflight;
+  the recorded escape acceptance waits for the completed bank. Keep missing
+  coefficient/curve mass explicit. It does not change the free-electron primary
+  path, production weights or fitted source positions.
 
-## Delivered reconstruction and scientific findings
+## Accepted native repair and continuous-readout evidence
 
-Commit `7a7d8a70478174a2f191dd5b44b98de0590cf36f` is published on GitHub main.
-Control traces a source-plane peak -> trigger/pair/order -> original34-channel
-ADC. Full34 residuals, optional six-grid lateral positions, future candidate
-truth retention and conditional finite-vertex3D range profiles are portable.
-Shared-strip and2x2 topology diagnostics plus complete incident-line kinematics
-are in the software-only release. Current official maps/selection are unchanged.
+The original 1,971 unavailable groups remain the denominator. The first cause
+repair completed 849 (810 new, 39 inherited), leaving 537 limited, 580 boundary
+failures and five stopped. The selected 537-group 5 us continuation is now sealed:
+146 complete, 385 limited and six stopped, using one inherited pilot and 536 new
+calculations. Effective full counts are **995 complete, 580 failed, 385 limited,
+11 stopped**. All selected input identities and actual producer/timing layers
+reconcile; other completed responses were not rerun.
 
-The main causal result is established by exact original-state transport replays
-of the ten dominant cobalt contributors. Three escaping1332-keV photons supply
-47.0007% of the1173-window corner; two merged full1173 histories add14.3559%.
-All five leading1332-window photons are full-energy with2–5 Compton scatters
-plus absorption; reverse nominal-cell orders supply46.5032% of that corner.
-All primary/RNG/canonical-stream/target-native-input hashes match; LH5 container
-byte hashes differ. There was no native/readout rerun, and earlier electronics
-tails remain unisolated. `cobalt-top-ten-origin.json` binds the exact producers.
+`native-cap5000-step-limits/recovery.json` SHA
+`a92f44a552ba45cea9e5e072ed858d32e8cf2b8ca184bb8bb367cef7e123929c`;
+full `recovery-status.jsonl` SHA
+`2b2977672ad83c54cc525b94b5b961b32452bc288c06126204df12df81e4c538`.
+Mixed actual supports give a conditional unknown-history union of 489,370,980 ns,
+versus original 965,632,420 ns and prior 560,239,440 ns. Longer support adds
+1,231,660 ns outside the original mask; the net decrease is not a pure subset.
+Native completion alone does not restore original ADC, triggers or efficiency.
 
-Trigger12841 merges two vertices4.54micrometres apart and is forced into an
-incorrect reverse9.18deg cone. Its corner ARM53.896deg is5.65effective widths;
-raw angular density2.779e-7/rad becomes0.02681trigger units after finite-grid
-normalization,24.79% of the peak. Source density is2.365e-21/rad. All ten peak
-shares reproduce within8.33e-17. `peak-tail-diagnostic.json` SHA
-87e32633dfb8f1756df9bce46f2b4aab365e224e14d2d4ebfd3c3455ed2551c2
-retains both120/240mm grids. These conditional densities are not efficiencies.
+The first tangent-crossing correction preserved all 20 successful groups but
+recovered none of three whole-group witnesses. That V2 failure remains in
+`native-segment-crossing-acceptance/validation.json`, SHA 5a2e2a47d6d99f8a...
+It isolated a second simultaneously active surface. V3 now projects onto all
+active inward halfspaces, keeping original fields, contacts and 1 ns steps.
+Group 214613 completes all 16 deposits / 32 geometric contacts and 34 signed
+waveforms through 199 ns. Groups 717723 and 3361 reach 1 us with 49/50 and 18/36
+contacts and stay unknown. All 20 successful-control waveform bytes and full
+endpoint records remain exact. This one newly restored group has not yet been
+added to the sealed 995 count.
 
-All3822 triggers/7644 pair alternatives are retained in the full incident-line
-ledger, including4607 incompatible alternatives. At1332.492keV, nominal two-
-scatter escape orders carry only13.06% of the original1173corner. Compatibility
-also admits Co escape in Cs candidates, so it cannot identify an isotope.
-Energy-window narrowing cannot fix both corners:1173half-peak-weight needs
-|offset|4.577keV;1332half-weight is within0.091keV. No cut was introduced.
+`native-active-halfspace-acceptance/validation.json` SHA
+`93666032236f6a2e80c730430154bec83c40fdd9ed4e5ca8b65e3c989149f24f`;
+request 6a1654d0..., producer archive af16d49c...; 54.6838 s wall time, native peak
+3,198,865,408 bytes. Original field hash verified after execution. 77 geometry
+and 45 native assertions plus nine Python recovery checks pass. Runtime helper
+SHA e2383c4d..., integration cad7f3f3... are committed in 853eacd.
 
-Independent ADC controls: full34 lateral vs full34 center on36 matched conditions
-improves axis10.26->5.00deg andXY1.80->1.04mm. Six grids support151/2983pairings,
-not the whole detector. Four other grids worsen axis7.17->9.32deg and were not
-promoted.10/12 known multi-point conditions still produce two-point cones with
-small residuals; no residual gate is justified. The full optional lateral replay
-preserves all3822 IDs/weights/peak cells; conditional3D fits move0.16–0.47mm.
-Shared-strip census4410, of which3833have usable measurement/templates;32actual
-fits converge,16injected conditions overfourlayouts give axis5.04deg/depth0.184mm
-RMS. This establishes usable fitting, not photon multiplicity identification.
+Actual continuous-readout repair was separately demonstrated, not inferred from
+mask removal. The first-case replay exactly reproduced 41 original triggers and
+14 ADC candidates before replacing group 2459. A whole b000002 safe-frontier
+replay then reused/regenerated all 288 original successful responses, verified
+7,519 deposit rows / 15,038 contacts, and exactly reproduced 264 triggers / 69
+candidate ADCs. Substituting nine repaired groups through the same electronic
+and noise history produced 273 rises / 98 candidates / 175 rejections: 23 old
+excluded triggers became candidates and six candidates arose at new crossings.
+Six groups remain unknown; 192 raw-block groups lie beyond the safe frontier.
+The 25.119757 ms comparison mask changes 7,153,400 -> 2,926,760 ns, including
+3,380 ns newly covered by extended support. Receipt
+`native-readout-block2/comparison-run/comparison.json` SHA
+`006f8c9206e9e30079a3adf41ff7b82d8d034a97c0174efe966f316983521707`.
+Both actual readout acceptances are published; do not repeat them without a
+relevant change. All original acquisitions and unique failures remain intact.
 
-The3D adapter fits free direction and center distance, source/activity unknown.
-Fixed25% extra-background Cs/1173/1332 ranges are55.19/56.21/64.40mm; clock-half
-shifts1.64/43.61/28.85mm. Profiling background gives55.41/56.32/64.92mm. Cobalt
-remains strongly model-sensitive. Profiles are conditional, not calibrated
-confidence intervals. The independent statistics stage follows fixed response
-and selection; current five-second data remain development evidence.
+## Reconstruction result and next physical model
 
-## Publication and current integration
+Cobalt edge attribution is tied to actual triggers, pairings and orders. Three
+escaping 1332 keV photons contribute 47.0007% of the 1173-keV corner support;
+two merged 1173-keV histories add 14.3559%. Five full 1332-keV histories with
+2-5 Compton scatters contribute 53.5161% of that window's corner support.
+Eighteen chronological non-peak controls and three separate peak controls retain
+exact photon histories. Multi-scatter merging, wrong order, escaped energy and
+finite-plane normalization are distinct effects; no truth-driven event deletion.
+Optional future photon-kinematic retention passed exact stream/input parity.
 
-The software-only release `student-runtime-967bdd5ece3c` is published from
-967bdd5ece3cd46b5454545246305df2c6f0b6de:1,410,156bytes/256members,
-SHA4e9d6462c1005cc5a261935c15abaa564a8a75648f541a82e84843f7ffbd2255.
-The latest-release identity and actual public ZIP bytes match. Eight focused
-range tests, two targeted package tests including the unpacked CLI, and committed
-source/dependency closure verification pass. Earlier unaffected package checks
-are retained, not rerun. Calibration remains a separate unchanged download.
-Research photon-continuation tools are outside the student package.
+All-34-channel and independent lateral/depth controls are implemented. The
+36-control lateral test improved axis error 10.26 -> 5.00 degrees and XY error
+1.80 -> 1.04 mm, but four other grids worsened 7.17 -> 9.32 degrees. Known merged
+histories can fit stable two-site cones with small residuals, so no residual or
+stability gate was promoted. The three-cell weak-overlap refinement improves
+some conditions and worsens others; original trigger 12271 remains unresolved.
+Independent ADC residuals are retained in `control-energy-errors.json`, SHA
+648be622...; they do not establish a calibrated Gaussian detector resolution.
 
-The existing exhibit now includes all18chronological controls and three separate
-peak witnesses, exact ADC/fit identities,42pairings/84orders and full conditional
-range profiles. It retains the prior cone-stability and native/readout evidence.
-Two focused display tests and42publication tests pass. Chrome desktop acceptance
-follows homepage->range controls->methods and the expanded fixed-line escape CLI
-guide. Owned tabs/preview servers are closed; no downloads or settings changes.
-Final standard builder and separate `tools/check_site.py` pass:
-buildf2fc9e918535f7d44f25ec5ccd930490a8d31952392f3d58dbb75eaa9bcb4778,
-1914files/538384358bytes/127HTMLpages. Logs are `site-build-escape-final.log`
-and `check-site-escape-final-local.log`. Source/exhibit0bc3ab236f56a748e4829a05c741d155da0537aa
-and Pages44924594035 are published. Required live verification passes all1018
-selected files, log `check-site-escape-final-live.log`.
+The portable candidate CLI supports explicit incident-line escape hypotheses via
+`--escape-incident-energy-keV`. Same-event finite-vertex range profiles preserve
+all 24 cohort/hypothesis cells: 13 unresolved, ten open and one closed only under
+an uncalibrated score-drop diagnostic. The 1173-window / 1332-escape optimum at
+141.38 mm gains only 0.28977 log-score over infinity: distance remains unidentified.
+Positions are fitted before truth scoring. Angular scores cannot rank physical
+absorption versus escape probabilities or establish range confidence intervals.
 
-The physical-response component now convolves photoelectric absorption and
-scatter/escape into the same observed-energy measure, in inverse-mm per observed
-keV. All nine saved histories remain, with eight measured second-site energies
-and12271unknown. Explicit2keV Gaussian width is an analytic control, not GeGI
-resolution. Receipt `photon-continuation-v1/observed-energy-controls.json` SHA
-c7c1d72eb605b8c1ca7ceb8bda188cc988e14da90d32184fdca5f1cf13bc04c4 binds exact
-sources, inputs and the independent ADC evidence. Seven focused tests pass;
-the original nine continuation results remain exact after shared preprocessing.
-Sixty-four additional coefficient energies were initialized in the same binary,
-geometry and macro with zero events.128->256energy nodes change escape mass by
-at most4.63e-8/mm and density by1.18e-11/(mm keV);17->65material-grid nodes change
-mass by7.15e-6/mm. First-site uncertainty, secondary containment, topology and
-selection remain separate. No calibrated hypothesis weights are claimed.
-The rejected adaptive integral0.987762637/mm exceeded the0.039272652/mm available
-mass. A retained constant-callback reproducer isolates sensitivity to ray matrix
-multiplication in that callback; the runtime's underlying defect is not diagnosed.
-Positive-weight quadrature gives0.0108483077/mm for this witness and passes the
-mass/convergence checks. The unique failure and reproducer remain in the receipt.
-The saved measured consumer is complete:21trigger IDs/42pairs/84orders/252line
-states, with62computed across14triggers,168original X/Y-strip pairing failures
-and22inadmissible fixed first scatters. Observed energy above the true endpoint
-or escape support still enters the Gaussian response. Receipt
-`photon-continuation-v1/measured-second-site-controls.json` SHA
-320515e296fe2c822538c65cf42fec0f8668d4bef2571a9bdea863167f450fed binds measured
-digest05613b42110df6c147b9eed1b3fe7c6ef5a23972060c056a38f33044142cde3d before
-truth scoring. Eight of nine clean histories retain the true order at the nearest
-supplied line;12271lacks a qualified original pairing. Merged topology stays
-unidentified. Seven focused checks pass, including observation-tail retention;
-root confirms exact source hashes and pre/post-scoring digest.96new coefficient
-energies reused81previous anchors, zero transport events. Evaluation16.833s;
-original candidate weights and source fits stay fixed.
-The finite-vertex trial-source consumer now predicts first-scatter energy from
-geometry and applies both measured-energy responses inmm^-3keV^-2. The original
-25radius/96direction grid is preflighted, without truth input; six prespecified
-points evaluate504states and retain1008unavailable slots.132states excluded by
-the fixed-measured-first approximation are now evaluated. Receipt
-`photon-continuation-v1/source-trial-response-controls.json` SHA
-297b281d16cb03627c7a436689fc331350611117aa87dd2909e33e858f8a2cea; blinddigest
-33fa9c840c8bdc2a5aa30b761a3f0ae7e812872973f7f75cb8b614c0142e1384 stays unchanged.
-Eight focused primitive/adapter checks pass. Five missing initialized coefficient
-queries generated zero transport events. Actual504statecost153.269s; continuation
-dominates the measured.537sprofile. With nominal2/2keV widths,421first densities
-underflow; these are numerical zeros, not physical exclusions. Stable log-density
-support now passes13focused tests and actual-witness checks, with raw outputs
-unchanged. Receipt `photon-continuation-v1/log-density-endpoint-acceptance.json`
-SHAafc7577a10a383db3ea2f24235550d7536a05becaadb92cb31bc57a8c5152d09 retains
-finite5330absorption/escape logs-3180.832862/-15762.911901 despite rawzero.
-Analytic endpoint subdivisions remove the witnessed2.35-log-unit quadrature
-discrepancy without cutting the support; prior failed result remains retained.
-Two chronological response-curve benchmarks now pass the.01log-error target
-after preserving the failed coarse curves and reusing134direct samples. Only
-12new quadratures were needed. Receipt `photon-continuation-v1/escape-response-curve-refined.json`
-SHAd4560c9b847314095368b2bbcfbb5e1029a38342dd302b7e93dd1380c7b73c9e retains
-3450/4891maxheldout logerrors.0063995/.0043626 (density.638%/.437%), including
-17underflowtail queries. Actualbuild+verification43.37/59.13s;2400curvequeries
-take.0974/.1525ms. Fourfocused checks pass. These are two-branch numerical checks,
-not population accuracy. The candidate owner now integrates coverage for all
-unique pair/orders of the same21trigger cohort with resumable verified curves;
-the position owner has built an empirical conditional outgoing-energy kernel
-from all33000archived native samples, without new transport. Receipt
-`photon-continuation-v1/first-scatter-energy-kernel.json` SHA
-52c1622d66b02fc5453c57fc5a68f1384f89270196ec41384fb3268c12ad50aa.
-At each exact662/1173.228/1332.492keV line,8000Livermore samples develop the
-16angular-bin approximation and2000 are held out;1000free controls remain.
-Mean heldout predictive errors are6.470/8.974/8.963keV versus8.080/11.128/11.154
-for the free-energy point. Central68%coverage is65.45/66.15/66.40%, but the
-worst angular bin is52.17%; this is not calibrated detector resolution or
-uniform angular coverage. Four focused tests pass. The661.657keV line remains
-unrepresented. All outgoing-energy atoms and uncovered continuation mass remain
-explicit, with no tail clipping or renormalization. The next consumer carries
-each shared outgoing energy through both measurements and continuation; the
-empirical angular interpolation and separate angular-prior approximation remain
-visible. The free-electron primary path stays unchanged.
-Selected-acquisition normalization, first flux,
-position/Doppler response and merged topology remain open; no new source estimate
-or calibrated event probabilities follow from these conditional components.
+The new conditional bulk-Ge response uses initialized original Livermore process
+rates (zero transport events), attenuation, normalized free-electron angular
+response and measured-energy convolution. Both hypotheses use the same observed
+energy measure. Explicit 2 keV Gaussian widths are analytic controls. Nine exact
+histories retain eight measured second-site energies and one unavailable pairing.
+The measured consumer preserves 21 triggers / 42 pairings / 84 orders / 252 line
+states: 62 computed, 168 original strip-pairing failures, 22 inadmissible fixed
+first scatters. Source-conditioned geometry removes the latter exact-energy
+assumption: six prespecified source points compute 504 states, retaining 1,008
+unavailable slots. Receipt `source-trial-response-controls.json` SHA 297b281d...
+contains the blind response digest before truth scoring.
 
-Prior XY/depth publication and its failure evidence are retained in the immutable
-handoff below.
-The publication authority is `.local/gegi-reconstruction-v1/publication-assets.json`;
-package authority is `.local/student-runtime-p1/delivery.json`.
+Stable log-density support preserves numerical tails without floors or altered
+raw outputs. Thirteen focused checks and actual extreme endpoints pass; the
+rejected adaptive-integral and earlier endpoint-quadrature failures are retained.
+Two escape-curve benchmarks reuse 134 direct samples and pass independent-energy
+checks with maximum density errors 0.638% / 0.437%. Measured construction and
+validation cost 43.37 / 59.13 s; 2,400 interpolation queries cost 0.0974 / 0.1525 ms.
+The current 28-curve bank exposed representable tail quadrature discrepancies;
+256 -> 512 verification resolved the first two witnesses. Repair only affected
+samples after base closure; preserve accepted samples and the original bank.
+The complete bank and grid are still in progress, not validated source fits.
 
-## Baseline and retained evidence
+The empirical kernel reuses all 33,000 archived native samples at exact
+662 / 1173.228 / 1332.492 keV. Each line uses 8,000 Livermore development draws,
+2,000 holdouts and 1,000 free-electron controls. Sixteen angular bins interpolate
+bound-preserving energy residuals; this is an explicit empirical approximation.
+Mean holdout continuous ranked probability scores are 6.470 / 8.974 / 8.963 keV
+versus 8.080 / 11.128 / 11.154 for the free-energy point. Central 68% coverage is
+65.45 / 66.15 / 66.40%, with a worst angular bin at 52.17%; no calibrated coverage
+claim. **661.657 keV is unrepresented.** All atoms and uncovered continuation mass
+remain explicit. Receipt `first-scatter-energy-kernel.json` SHA
+`52c1622d66b02fc5453c57fc5a68f1384f89270196ec41384fb3268c12ad50aa`;
+four focused checks pass. Its shared-atom consumer must keep angular density
+separate and disclose partial material/curve coverage. First-incidence flux,
+selected-acquisition normalization, secondary containment, position uncertainty
+and merged topology remain open before physical model weights and independent
+source-position statistical validation.
 
-Original `.local/gegi-candidate-runs/steady-five-seconds/`:924676newCs parents,
-185199newCo parents,867305initial daughters;102516deposit groups=56713complete
-+1971unavailable+43832after5s.52371rises,42275qualified,32502energies,
-14909retained;3822two-strip and11087outside that model.2891.5projected+
-930.5unresolved are trigger weights, not efficiency or physical event counts.
-Original unknown history0.965632420s(19.31%) is not hardwaredeadtime. Native
-repair alone does not restore old continuous triggers or justify removing masks.
+## Publication and baseline
 
-All new evidence lives under `.local/gegi-reconstruction-v1/`. The accepted
-five-second run took6.83active hours, retained819359442bytes before imaging,
-peakfiles1.019GB/combinedRSS2.609GB. Conditional90.09s/20M estimates15.77–19.26GB
-and123–125activehours exclude new diagnostic truth overhead and are not launch
-authorization. No waveform library replay qualifies as joint-source production.
+Source 853eacdc905c96dc1cc990c636e96632b0470139 is pushed. The software-only release
+[student-runtime-853eacdc905c](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-853eacdc905c)
+is public and verified byte-for-byte: 1,412,276 bytes / 257 members, SHA
+`995d49815d2dffec1019fe3bd851e1e589852a721e496e77bf26bd5a28bb2d26`, asset 776376352.
+Dependency closure includes 119 Python files, 57 Julia includes, 17 models and 21
+frozen pins. Two targeted packaging checks pass. Calibration remains separate
+and unchanged. Research kernels/results are outside the student package.
 
-Earlier exact results, producer hashes and publication history remain in the
-[immutable integrated handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/967bdd5ece3cd46b5454545246305df2c6f0b6de/PROGRESS.md).
-Use [the maintained guide](tools/site_guide.html) and [source ownership](tools/MAINTENANCE.md).
+Existing Pages source 0bc3ab2 / run 44924594035 is fully deployed: build
+`f2fc9e918535f7d44f25ec5ccd930490a8d31952392f3d58dbb75eaa9bcb4778`, 1,914 files,
+538,384,358 bytes, 127 HTML pages and 1,018 exact live-file checks. Desktop path
+homepage -> main result -> same-event range controls -> methods was inspected.
+No new exhibit content changed in this runtime release; no repeat build needed.
+Authorities: `.local/student-runtime-p1/delivery.json` and
+`.local/gegi-reconstruction-v1/publication-assets.json`.
+
+Original five-second baseline: 924,676 new Cs parents + 185,199 new Co parents +
+867,305 initial daughters. 102,516 deposit groups = 56,713 complete + 1,971
+unavailable + 43,832 after five seconds. 52,371 rises / 42,275 qualified / 32,502
+energies / 14,909 retained candidates. Two-strip model covers 3,822; 11,087 remain
+outside it. 2,891.5 projected + 930.5 unresolved are weights, not event counts or
+efficiency. Original unknown history 0.965632420 s (19.31%) is not hardware deadtime.
+The run cost 6.83 active hours and retained 819,359,442 bytes before imaging.
+Conditional 90.09 s / 20M estimates of 15.77-19.26 GB and 123-125 active hours are
+not production authorization.
+
+All new local evidence is under `.local/gegi-reconstruction-v1/`; photon-response
+receipts mentioned above are in its `photon-continuation-v1/` subdirectory.
+Earlier exact sources, evidence and scientific limits remain in the
+[immutable integrated handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/853eacdc905c96dc1cc990c636e96632b0470139/PROGRESS.md),
+which links the earlier retained history. Follow [the maintained guide](tools/site_guide.html)
+and [source ownership](tools/MAINTENANCE.md).
