@@ -230,6 +230,13 @@ between original and shared maps; the selected two-event view clearly reports
 4,408 omitted shared candidates. No full refit or acquisition was repeated.
 CLI receipt SHA `f42b87fe...`; saved desktop map SHA `3c11875e...`.
 
+Hayward-informed timing/face-energy evidence now reads the same saved shared
+fits without a refit or a timing veto. Triggers 11/13 retain exact original
+identities, ADC hashes and weights. Their same-face measured/model CFD contrasts
+are 9.558/12.783 ns and 13.697/6.259 ns; adjacent trigger 13 remains ambiguous.
+The focused missing-crossing test passes. Receipt `shared-strip-timing-evidence.json`
+SHA `f8a32392...`; this diagnostic does not promote a charge-loss correction.
+
 The prepared empirical scorer separately verifies all 21 original archive/ADC/
 fit identities and reproduces the sealed blind result exactly in 5.08 s. It
 currently consumes a previously prepared matched grid; arbitrary-candidate grid

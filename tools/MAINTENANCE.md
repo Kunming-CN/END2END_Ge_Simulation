@@ -187,6 +187,11 @@ Control checkbox attach it to the usual saved analysis; `--shared-trigger-id`
 selects an explicit diagnostic subset. Original trigger identities, omitted counts
 and unresolved weights stay visible. The existing two-by-two range consumer is
 unchanged; the shared view currently provides a conditional plane map.
+`gegi_shared_strip_evidence.py` reads a completed shared-strip topology receipt
+and compares saved relative CFD times and opposite-face energies without refits,
+timing cuts or weight changes. Missing crossings remain unavailable and adjacent
+strip patterns remain ambiguous. This is a research diagnostic, not a new
+charge-loss calibration or event-selection rule.
 `gegi_candidate_empirical_score.py` scores an explicitly supplied prepared
 empirical numerator/index with its matching normalizer and original candidate
 archive. It is a prepared-grid consumer; it does not itself prepare arbitrary
