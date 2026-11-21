@@ -128,6 +128,15 @@ the same empirical acceptance while keeping existing curve domains fixed.
 `gegi_first_compton_arrival.py` supplies the incident path, isotropic spreading
 and competing first-Compton density per emitted photon. Source activity,
 passive attenuation and selected-acquisition normalization stay separate.
+`gegi_empirical_escape_tails.py` extends only required energy intervals in a
+separate resumable bank, preserving parent-domain evaluations. Its new
+contributions are added to the original response in log space.
+`gegi_empirical_compton_joint.py` normalizes the angular-hat/energy-atom mixture
+and retains unchanged holdouts and baseline conditional results.
+`gegi_trial_joint_photon_response.py` adds first arrival to the saved trial grid.
+`gegi_ideal_two_interaction_mass.py` integrates the matching ideal free-electron
+two-interaction model with scrambled Sobol rays. It is a photon-topology mass,
+not the actual readout/candidate-selection normalizer.
 `gegi_boundary_failure_recovery.py` resumes the identified boundary-failure
 class over the sealed duration-extension baseline. Exact accepted responses
 are inherited; per-group producer, timing and support layers remain explicit.

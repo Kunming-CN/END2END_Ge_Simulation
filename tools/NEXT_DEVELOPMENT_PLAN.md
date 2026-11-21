@@ -131,12 +131,15 @@ through both measured energies and continuation. That consumer now passes the
 same six-point acceptance; the repaired curve overlay restores144uncomputed
 escape states, leaving245full/91partial cobalt states.42initialized lower-energy
 queries give all336states full coefficient support and absorption coverage;
-escape still retains0.03534-2.11792%uncovered mass in91states. Extend only those
-25needed lower curve tails, preserving accepted domains and prior samples.
-Incident-photon arrival now passes504saved-geometry and five analytic checks.
-Combine it with the full grid, then check the idealized two-interaction
-normalizer separately from actual ADC selection before interpreting fitted
-source ranges. No official weights have changed.
+escape previously retained0.03534-2.11792%uncovered mass in91states. All25needed
+lower tails now pass independent checks and all336states have full support.
+The normalized empirical angular-energy mixture uses unchanged atoms and retains
+the original holdout's undercoverage; no accuracy gain or official weight change.
+The full first-arrival/continuation grid and a two-point idealized topology
+normalizer are complete. Profile reuse of source-independent energy/rate factors
+with common Sobol draws, then build the source-blind normalized diagnostic.
+Match the empirical normalizer to its joint measure, and keep ideal topology
+selection distinct from actual ADC selection and confidence calibration.
 Secondary containment, position/Doppler response, passive material and acquisition
 selection remain separate. Common units alone do not establish
 model probabilities. Angular scores alone cannot choose absorption versus escape or

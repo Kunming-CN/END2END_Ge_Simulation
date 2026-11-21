@@ -27,19 +27,19 @@ and GPT-6.1 Sol Ultra (native).
   post-startup snapshot. Exact PIDs/start identities and checkpoints are in
   `owned-session.json` and `continuation-handoff.json`. Do not restart or edit
   pinned sources. Prior cap and small acceptance phases are closed.
-* **Candidate:** `/root/candidate_attribution` completed the 28-curve bank,
-  targeted quadrature overlay, full 2,400-point grid and first-Compton arrival
-  component. No bank worker remains. It now combines the saved grid with that
-  arrival factor and implements a small idealized two-interaction normalization
-  check, distinct from actual ADC selection. No source truth, new transport or
-  source optimization is supplied. Keep completed numerical producers unchanged.
-* **Position:** `/root/position_model` completed the shared-outgoing-energy
-  consumer and its six-point acceptance. The verified quadrature overlay
-  restores 144 previously unavailable cobalt escape states. All missing material
-  coefficient queries are complete. It now extends only the 25 lower curve tails
-  needed by 91 partial cobalt states, first measuring one widest interval and
-  retaining all accepted base-domain evaluations. No production weights or fitted
-  source positions change; no additional transport or native sampling is needed.
+* **Candidate:** `/root/candidate_attribution` completed the full 2,400-point
+  joint first-arrival/continuation grid and idealized two-interaction integral.
+  It now profiles exact reuse of energy, angular and material factors across
+  source trials before normalizing the complete grid. The fixed pilot is radial
+  indices 4/12/24 times directions 0/32/64/95, plus the prior in-Ge replay check.
+  Keep the empirical joint measure matched to its own normalization. No source
+  truth, new transport or calibrated-confidence claim is supplied.
+* **Position:** `/root/position_model` completed all 25 empirical curve tails
+  and a normalized angular-energy mixture on unchanged atoms. Both absorption
+  and escape now cover all 336 saved cobalt states. It derives the exact global
+  energy support over the mixture's cosine intervals and coordinates a matching
+  shared-atom sampler for normalization. Prior curves/conditional kernels remain;
+  no production weights change or new native sampling is needed.
 
 ## Accepted native repair and continuous-readout evidence
 
@@ -195,12 +195,50 @@ recording its elapsed/RSS counters. Those fields remain unavailable, with the
 failure preserved. Exact density and coefficients were verified against prior
 initialized material records without rerunning. Angular density stays separate.
 
+All 25 lower-tail intervals are now independently verified, retaining all 28
+parent curves and their exact boundary samples. Full coverage is restored for
+all 336 cobalt states; 526 new direct samples have maximum heldout log error
+0.00976252 and direct quadrature difference 1.01274e-6. The resumed worker took
+379.93 s after a 61.09 s pilot, with peak working set 97,165,312 bytes.
+`empirical-escape-tail-controls.json` SHA
+`5ca33c958306b3736037fe878391bea9708e3d0cf3e0ce6d0e43942a6aad4a1e`;
+tail database SHA d4df2efb8bf754212b33a9d3583b468b0fa857acb1ca1d0b9c33e36bf15376f1.
+Original contributions are carried unchanged and new tails added in log space.
+Seven combined logs change: trigger19477 at one prespecified trial gains a
+0.2266% tail mass yet changes from -4584.4124 to -288.5936. Small omitted
+distribution mass is therefore not a bound on the observed-response error.
+
+The consistent empirical joint angle-energy mixture normalizes each angular
+hat and uses its original development mass; conditional bin shares change by
+at most 0.13028, with the exact same energy atoms. Integrated joint mass is one
+within 2.2e-16. All 336 cobalt states remain fully covered, while 504 Cs-line
+states are unrepresented and 672 pairing states unavailable. The untouched
+holdout shows no accuracy gain: nominal68% coverage 65.30/66.45/66.05%, worst
+angular bin52.17%, with CRPS6.4703/8.9815/8.9682keV. Three analytic tests pass.
+`first-scatter-joint-controls.json` SHA
+`69629dedaebd33e8460d411a7560090962a1d0af78f28458d9850b9b1ca7d476`.
+This replaces neither the baseline conditional receipt nor production weights.
+
 `gegi_first_compton_arrival.py` supplies isotropic spreading, survival through
 active Ge and the first-Compton rate per emitted photon per mm^3. All 504 saved
 trial geometries match the existing incoming-angle convention; independent
 forward/reverse clipping differs by at most 2.03e-12 mm. Five analytic checks
 pass, including competing-rate slab integration and in-Ge sources. Receipt
 `first-compton-arrival-controls.json` SHA a6c99c56a45dcbdb3c6968b41550559ae232b185eccf29d9ac631b964832c1b7.
+The full joint grid now includes this arrival factor: 201,600 finite values per
+branch in mm^-6 keV^-2 per emitted isotropic photon; 403,200 unavailable states
+per branch and all original identities remain. All 504 six-point arrival checks
+are exact; 74 of 2,400 trial points are in Ge and remain labeled. Runtime9.690s.
+`trial-grid-joint-photon-response.json` SHA
+`8d80242f45fcd7a355e34fd4bebf179671a96e00627b9c42d90bc05bbe7b7a3a`;
+root verified the NPZ hash and masks. The idealized two-interaction integral
+uses four scrambled Sobol seeds3100-3103 and nested512/4096 draws at prescribed
+trial indices1(in Ge)/4(10m). The two-branch masses span0.0651-0.0910 and
+2.33e-7-3.49e-7 respectively, with0.86-2.23% coarse/fine differences. This is
+modeled photon topology, not ADC efficiency. A tiny unsampled Cs coefficient
+gap has an explicit analytic mass bound. Five analytic/identity tests pass.
+`ideal-two-interaction-normalization-controls.json` SHA
+`935540f68954b7d70fa96f42c491eaf6025009a2c13a3ce58c2aedf53fb86ffd`.
 No activity or source truth is supplied. Passive attenuation,
 selected-acquisition normalization, secondary containment, position uncertainty
 and merged topology remain open before physical model weights and independent
