@@ -159,6 +159,10 @@ Gaussian probability variable; its benchmark preserves frozen reference values.
 `gegi_ideal_forward_curve_overlay.py` retains targeted failed-rule refinements
 without overwriting their parent bank. `gegi_ideal_forward_score.py` seals the
 source-blind grid fit before its separate truth-scoring command.
+`gegi_ideal_forward_continuous.py` uses that unchanged observation model for
+continuous exterior-source fits and fixed-radius direction profiles. It retains
+direct checks outside frozen curve domains and independent numerical scrambles;
+truth scoring is a separate command after the blind result is sealed.
 `gegi_boundary_failure_recovery.py` resumes the identified boundary-failure
 class over the sealed duration-extension baseline. Exact accepted responses
 are inherited; per-group producer, timing and support layers remain explicit.

@@ -144,8 +144,13 @@ the first ten each now have sealed blind and subsequent truth scores. All40
 ordered curves pass, including one targeted refinement; the faster Gaussian-
 measure integral preserves the original references. Both sources select the
 nearest sampled direction, but their radial maxima72.999/447.214mm have markedly
-different errors. Resolve the coarse angular grid with continuous source and
-fixed-radius direction optimization before interpreting range or adding samples.
+different errors. The same20-event continuous external-source fit now completes
+all110local optimizations and25radii per cohort; post-score position errors fall
+to0.2843/3.1510mm. This confirms coarse angular discretization as a material cause
+of the ideal-grid error, not detector resolution or confidence coverage. Reuse
+the5,133retained direct endpoint values to extend curves before larger samples;
+their240.3s cost dominates the378.5s run. Then evaluate held-out statistical and
+physical-response behavior, keeping the exterior-view assumption explicit.
 The one global empirical coefficient gap is closed and the joint-atom sampler
 passes. Matching empirical normalization now covers both cobalt lines at all
 2400positions, with exact pilot reuse and per-point numerical variation. Keep

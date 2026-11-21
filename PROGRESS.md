@@ -328,13 +328,29 @@ both physical branches before truth was opened. All20are retained; no missing
 order mass is renormalized away. Both select the nearest sampled direction,
 with3.907/5.839degree errors. Radial grid maxima are72.999/447.214mm versus
 true63.640/111.238mm, giving10.449/336.743mm position errors. Results agree across
-the four numerical scrambles/prefixes. The roughly20degree angular grid can
-confound radial inference; continuous direction/range optimization is the next
-concrete check. This is neither calibrated range nor detector validation.
+the four numerical scrambles/prefixes. The roughly20degree angular grid
+confounds radial inference; the continuous same-data check below resolves this
+large grid error. This is neither calibrated range nor detector validation.
 `ideal-forward-validation/first10-source-blind.json` SHA
 `0135383e262499269011263aa6977969793803a5e76d83e929adc503f02c41c5`;
 subsequent truth-score SHA
 `ddcce414910ec0433f2b69d38215294412e107122bf9ce16db9b98cf2b59ee74`.
+Continuous external-source fitting on these same20observations now completes
+all110local optimizations and25direction-optimized radii per cohort. Original
+grid-score parity is within3.64e-12; source/observation/curve bindings and the
+sealed blind digest pass before separate truth scoring. Post-score position
+errors are0.2843/3.1510mm, direction errors0.1408/0.1702degrees, and radial errors
++0.2372/-3.1341mm. Both radial maxima are interior. Four independent numerical
+scrambles retain finite profiles; these are not calibrated confidence intervals.
+The point-vertex source model is singular at an internal observed vertex, so
+this finite continuous result explicitly uses the exterior geometric view.
+Two independent analytic optimization checks pass. The run took378.474s and
+retains5,133direct endpoint samples, all resolved, including the19pilot samples.
+About240.3s belongs to these direct integrals: extending the original curves
+with this retained evidence is the measured next speedup before larger samples.
+Blind SHA`c8f0d90ff3c9e5513c86386ad08ff4d5a335116117050dd12131ae948ea84a67`;
+truth-score SHA`bbb41f9104adec2d987c22bb127fe6dc1b3fbd848f97189009ed88bc92c7a3d9`.
+Both files are under`ideal-forward-validation/continuous-first10-*.json`.
 No activity or source truth is supplied. Passive attenuation,
 selected-acquisition normalization, secondary containment, position uncertainty
 and merged topology remain open before physical model weights and independent
