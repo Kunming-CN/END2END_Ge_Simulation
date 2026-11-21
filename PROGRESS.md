@@ -156,8 +156,26 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   Three focused checks and first-case scientific regression pass. Both SQLite
   censuses/integrity/hashes and original archive immutability pass. Native repair
   changes the actual readout; old triggers are never merely relabeled.
-  Next: use existing independent histories to compare absorption, resolved-escape
-  and merged hypotheses without source-truth selection or new physics launches.
+  Same-ADC hypothesis comparison is now complete on all18prespecified histories
+  and three separately reported peak controls:42pairs/84orders, nulls and original
+  masses retained. Of six clean chronological absorption histories, five have
+  usable fits; both orders pass in all five, with ARM RMS6.844deg chronological
+  versus41.684deg reverse. Clean escape4891admits its true order only under the
+  correct incident-line escape hypothesis (ARM+7.223deg); observed-sum absorption
+  retains the reverse order (46.692deg). Five of nine known merged histories still
+  allow absorption cones, two also escape. No false directional order is assigned
+  to merged/other histories.28same-cell depth splits across14fit pairs reproduce
+  all34center predictions within5.457e-12ADCcodes: an algebraic interpolation
+  ambiguity, not independently validated physical indistinguishability.
+  `interaction-hypothesis-controls.json` SHA
+  2fbb089ff286421bf3ba1a47b16bfbf1ca0e6bbd841c105a15fbab57a68b5951;
+  `tools/gegi_interaction_hypothesis_controls.py` SHA93f67bc302f12e361ff86130a8229f65ff4f4225f95f7be6966eee2b9978eabd.
+  Two targeted tests and the real saved-input analysis pass inJLab3.11.14/
+  NumPy2.4.2/SciPy1.16.3. No refits, transport/native calls or changed weights.
+  Next candidate worker deliverable connects explicit escape cones to the existing
+  finite-vertex source/radial-profile consumer on the same controls. Settings are
+  fixed before truth scoring; mixed/merged topology and normalization limits stay
+  explicit. No uncalibrated mixture is promoted to production.
   The selected-cap continuation helper now preserves the full 1,971 denominator
   through the sealed parent, carries deferred statuses explicitly, and unions
   missing-history tails at each group's actual support. Twelve focused checks
@@ -399,7 +417,11 @@ and counts->signal-chain methods; owned tab/server closed without downloads or
 settings changes. Standard builder completed, log `site-build-readout.log`:
 buildf3a7a5896e005b9b4b58443c50b003173422e44ee71d129d0a515cf031d582eb,
 1914files/537945754bytes/127HTMLpages. Separate `tools/check_site.py` passes,
-log `check-site-readout-local.log`; GitHub publication/live check follow.
+log `check-site-readout-local.log`. Source/exhibit009702db0f3fbbaa6316ba8cb37b2a40198d5c0f
+and Pages44918809010are published; requiredlivecheck passes all1018selected
+files, log `check-site-readout-live.log`. The subsequent hypothesis-control tool
+is source/local evidence only; its results will accompany the next source-response
+milestone rather than another unchanged site build.
 Research acceptance tools do not change the student runtime or calibration.
 
 Prior XY/depth publication and its failure evidence are retained in the immutable

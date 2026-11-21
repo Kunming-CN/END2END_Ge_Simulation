@@ -55,6 +55,12 @@ and clipped history intervals stay separate; native completion alone is not
 restored continuous-readout exposure. Mutable recovery stores are bound by the
 exact selected records and ledger prefix, without claiming a whole-store hash.
 
+`gegi_interaction_hypothesis_controls.py` joins fixed measured absorption/escape
+branches to verified photon histories only after constructing the branches.
+It preserves chronological and peak-control cohorts, original pairing/order
+weights and missing fits. Same-cell depth splits expose an algebraic ambiguity
+of the linear center templates; they do not establish physical indistinguishability.
+
 `gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
 allocations or shared-strip fits; `gegi_adc_topology.py` and
 `gegi_candidate_shared_topology.py` supply the numerical models.

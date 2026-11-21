@@ -80,11 +80,20 @@ These are actual continuous-readout changes, not relabeled old triggers or
 five-second efficiency. Both first-case and whole-block evidence are consolidated
 in the native-response exhibit. No further original block rerun is needed.
 
-Next scientific step: evaluate absorption, resolved escape and merged/mixed
-hypotheses against independent photon histories and the same measured response.
-Source coordinates score finished results only. Establish coverage, wrong-order
-rates and angular errors before changing event weights; unresolved intra-cell
-scatters need a response model, not a narrower cone or forced two-point answer.
+The same-ADC hypothesis ledger now preserves all18chronological histories and
+three separate peak controls. Five of six clean absorptions have usable fits;
+both orders are allowed, with ARM RMS6.84deg true versus41.68deg reverse. The
+clean chronological escape retains its true order only under the correct
+incident-line escape hypothesis. Five of nine known merged histories still
+admit absorption cones, two also escape. An exact linear-template depth split
+demonstrates a model ambiguity, not physical resolution. No event weights change.
+Next scientific step: connect these explicit escape cones to the existing
+finite-vertex source-position/radial-profile consumer and compare the same
+controls under fixed, explicit hypotheses. Source coordinates score finished
+results only. Establish coverage, wrong-order rates and angular errors before
+changing event weights; unresolved intra-cell scatters need a response model,
+not a narrower cone or forced two-point answer. Conditional normalization and
+selection remain material limits on any mixed-hypothesis source fit.
 Then freeze the algorithm for the held-out distance/direction/strength/depth
 statistics in stage6. Current five-second results remain development evidence.
 
