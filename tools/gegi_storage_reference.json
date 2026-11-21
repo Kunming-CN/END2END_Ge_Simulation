@@ -1,94 +1,372 @@
 {
+  "analysis_extension_basis": {
+    "candidate_count": 14909,
+    "derivative_bytes": 1901334,
+    "derivative_sha256": "78124e398de1dbe41f2f4ca5d17269c9b213ae7f207d4c13b4943b8fc90e0863",
+    "fit_seconds": 162.5073709549994,
+    "input_report_sha256": "cacc91e7501bf6dc402fdea6086952506accb360a33f7d765c5e31a294b41403",
+    "kind": "gegi_completed_candidate_imaging_resource_basis_v1",
+    "new_parent_count": 1109875,
+    "process_peak_resident_bytes": 551071744,
+    "processing_seconds": 229.959389909,
+    "processing_time_precision": "Measured full offline analysis wall seconds; fit time is a subset and is not added again.",
+    "scope": "Optional sequential offline imaging derivative, measured separately from acquisition. Required cached calibration is shared once; calibration generation time is not measured. Future analysis memory is not assumed flat.",
+    "shared_calibration_archive_sha256": "72884e1c59090913e67cecd4aec742864b1f1e87867b79fee67bd5fe340eb233",
+    "shared_calibration_bytes": 303891603,
+    "shared_calibration_content_sha256": "da1eb2251ab0708fb9b65acf2ce1d7dfc244d14836240623c73d6897304ca930",
+    "two_strip_eligible_count": 3822
+  },
   "assumptions": [
     "Same geometry, activities, readout, conservative selection and compression/record schema as the reference.",
     "Ambiguous and multistrip candidates remain retained; candidate is not a uniquely reconstructed photon.",
-    "Event-dependent trigger pages, shared input-group ledger and exclusion-list bytes scale per original parent; fixed metadata/configuration is counted once.",
-    "The forecast covers the candidate/readout core. Additional fresh nonzero/delayed-daughter ledgers, source provenance, failures and retirement records are not measured by this historical reference.",
+    "Measured event-table/index pages, shared input-group ledger and serialized exclusion lists scale per new parent; bounded metadata/filter state is counted once.",
+    "Streaming input-group, source-block, native-failure and processing-phase tables/indexes are included when present. External run directories, producer/provenance archives, logs and retirement records remain additional.",
+    "Measured SQLite freelist pages are reserved once; future transient/free-page growth is unmeasured.",
+    "Daughter/group/failure rates per new parent assume the reference source-state mix; another duration does not independently solve its daughter inventory.",
     "SQLite page growth is estimated from measured allocation; the qualified-time-adjusted scenario divides event cost by the reference qualified fraction.",
-    "These are planning scenarios, not a confidence interval or guaranteed storage upper bound."
+    "These are planning scenarios, not a confidence interval or guaranteed storage upper bound.",
+    "Whole-retained scenarios add observed external failure spools, transport block lineage and logs. Prefix/repair originals, existing external producer evidence and shared field cache are counted once.",
+    "The five-second active-time and repaired-segment rates are conditional same-runtime scenarios; future peak scratch/RAM are not bounded.",
+    "Optional offline imaging adds its observed derivative rate and one shared calibration separately. Calibration generation, new analysis products and changed failure/candidate rates are not included."
   ],
   "bytes": {
-    "all_compressed_trigger_blobs": 856649,
-    "archive": 1007616,
+    "all_compressed_trigger_blobs": 89713973,
+    "archive": 732524544,
     "by_decision": {
       "candidate": {
-        "compressed_adc_bytes": 348890,
-        "compressed_record_bytes": 410392,
-        "count": 144
+        "compressed_adc_bytes": 35730493,
+        "compressed_record_bytes": 44531689,
+        "count": 14909
       },
       "rejected": {
         "compressed_adc_bytes": 0,
-        "compressed_record_bytes": 97367,
-        "count": 402
+        "compressed_record_bytes": 9451791,
+        "count": 37462
       }
     },
-    "fixed_archive_pages": 16384,
-    "freelist_pages": 0,
-    "input_group_ledger": 31951,
-    "input_group_ledger_fixed": 37,
-    "page_count": 246,
-    "page_size": 4096,
-    "page_tables": {
+    "event_archive_pages": 732250112,
+    "event_auxiliary_pages": 629387264,
+    "fixed_archive_pages": 172032,
+    "freelist_pages": 25,
+    "freelist_reserved_bytes": 102400,
+    "input_group_ledger": 12522188,
+    "input_group_ledger_fixed": 51,
+    "page_count": 178839,
+    "page_object_classification": {
+      "checkpoint": {
+        "class": "fixed_metadata",
+        "table": "checkpoint"
+      },
       "completion": {
-        "allocated_bytes": 4096,
-        "pages": 1,
-        "payload_bytes": 2356,
-        "unused_bytes": 1727
+        "class": "fixed_metadata",
+        "table": "completion"
+      },
+      "group_time": {
+        "class": "event",
+        "table": "input_groups"
+      },
+      "input_groups": {
+        "class": "event",
+        "table": "input_groups"
       },
       "metadata": {
-        "allocated_bytes": 8192,
-        "pages": 2,
-        "payload_bytes": 4103,
-        "unused_bytes": 4068
+        "class": "fixed_metadata",
+        "table": "metadata"
+      },
+      "native_failures": {
+        "class": "event",
+        "table": "native_failures"
+      },
+      "native_processing_phases": {
+        "class": "event",
+        "table": "native_processing_phases"
+      },
+      "pending_time": {
+        "class": "event",
+        "table": "input_groups"
+      },
+      "source_blocks": {
+        "class": "event",
+        "table": "source_blocks"
+      },
+      "sqlite_autoindex_input_groups_1": {
+        "class": "event",
+        "table": "input_groups"
+      },
+      "sqlite_schema": {
+        "class": "fixed_metadata",
+        "table": "sqlite_schema"
+      },
+      "trigger_decision_id": {
+        "class": "event",
+        "table": "triggers"
+      },
+      "triggers": {
+        "class": "event",
+        "table": "triggers"
+      }
+    },
+    "page_size": 4096,
+    "page_tables": {
+      "checkpoint": {
+        "allocated_bytes": 122880,
+        "pages": 30,
+        "payload_bytes": 122700,
+        "unused_bytes": 46
+      },
+      "completion": {
+        "allocated_bytes": 40960,
+        "pages": 10,
+        "payload_bytes": 40001,
+        "unused_bytes": 905
+      },
+      "group_time": {
+        "allocated_bytes": 1892352,
+        "pages": 462,
+        "payload_bytes": 1402325,
+        "unused_bytes": 176939
+      },
+      "input_groups": {
+        "allocated_bytes": 384552960,
+        "pages": 93885,
+        "payload_bytes": 201992971,
+        "unused_bytes": 180377788
+      },
+      "metadata": {
+        "allocated_bytes": 4096,
+        "pages": 1,
+        "payload_bytes": 2907,
+        "unused_bytes": 1176
+      },
+      "native_failures": {
+        "allocated_bytes": 230744064,
+        "pages": 56334,
+        "payload_bytes": 229033356,
+        "unused_bytes": 1445608
+      },
+      "native_processing_phases": {
+        "allocated_bytes": 638976,
+        "pages": 156,
+        "payload_bytes": 201722,
+        "unused_bytes": 92029
+      },
+      "pending_time": {
+        "allocated_bytes": 4784128,
+        "pages": 1168,
+        "payload_bytes": 3959418,
+        "unused_bytes": 503150
+      },
+      "source_blocks": {
+        "allocated_bytes": 4100096,
+        "pages": 1001,
+        "payload_bytes": 3841896,
+        "unused_bytes": 249852
+      },
+      "sqlite_autoindex_input_groups_1": {
+        "allocated_bytes": 1495040,
+        "pages": 365,
+        "payload_bytes": 990629,
+        "unused_bytes": 192487
       },
       "sqlite_schema": {
         "allocated_bytes": 4096,
         "pages": 1,
-        "payload_bytes": 524,
-        "unused_bytes": 3451
+        "payload_bytes": 2053,
+        "unused_bytes": 1882
+      },
+      "trigger_decision_id": {
+        "allocated_bytes": 1179648,
+        "pages": 288,
+        "payload_bytes": 891797,
+        "unused_bytes": 127286
       },
       "triggers": {
-        "allocated_bytes": 991232,
-        "pages": 242,
-        "payload_bytes": 927650,
-        "unused_bytes": 57748
+        "allocated_bytes": 102862848,
+        "pages": 25113,
+        "payload_bytes": 96673658,
+        "unused_bytes": 5549716
       }
     },
-    "report": 9958,
-    "trigger_non_blob_bytes": 134583,
-    "trigger_pages": 991232,
-    "uncompressed_candidate_adc": 793628,
-    "variable_exclusion_json_per_copy": 418
+    "report": 64444,
+    "trigger_non_blob_bytes": 13148875,
+    "trigger_pages": 102862848,
+    "uncompressed_candidate_adc": 82231448,
+    "variable_archive_json_bytes": 113888,
+    "variable_exclusion_json_per_copy": 37975,
+    "variable_report_json_bytes": 37975
   },
   "kind": "gegi_candidate_storage_reference_v1",
   "observation": {
-    "elapsed_use": "Measured saved-source readout only; never extrapolated to fresh transport/drift runtime.",
-    "excluded_time_ns": 11188020.0,
-    "initial_parents": 11293,
-    "input_group_ledger_rows": 613,
-    "live_time_ns": 50000000.0,
-    "observed_coincident_rises": 546,
-    "qualified_fraction": 0.7762396,
-    "readout_elapsed_seconds": 16.32619330000034,
-    "rejected_rises": 402,
-    "saved_candidates": 144,
+    "actual_new_parents_by_isotope": {
+      "co60_point_decay_v1": {
+        "nonzero": 14417,
+        "parents": 185199,
+        "zero": 170782
+      },
+      "cs137_point_decay_v1": {
+        "nonzero": 44607,
+        "parents": 924676,
+        "zero": 880069
+      }
+    },
+    "elapsed_use": "Stage times are retained for attribution. Runtime scenarios use measured active wall/resource snapshots; overlapping transport_run is never added twice.",
+    "excluded_time_ns": 965632420.0,
+    "first_native_group_seconds_per_session": [
+      15.469712000000072,
+      12.07612010000048,
+      15.79815179999423,
+      11.768295699999726
+    ],
+    "initial_daughter_decays": 867305,
+    "initial_parents": 1109875,
+    "input_group_ledger_rows": 102516,
+    "live_time_ns": 5000000000.0,
+    "observed_coincident_rises": 52371,
+    "parent_denominator": "New source parents; initial daughters are counted separately.",
+    "qualified_fraction": 0.806873516,
+    "qualified_triggers": 42275,
+    "readout_elapsed_seconds": 576.0813812993492,
+    "rejected_rises": 37462,
+    "saved_candidates": 14909,
     "selection_reason_counts": {
-      "guard_only_collection": 43,
-      "multistrip_imaging_candidate": 109,
-      "qualified_single_strip_pair": 231,
-      "uncertain_imaging_candidate": 35,
-      "unknown_native_history": 128
-    }
+      "guard_only_collection": 4993,
+      "multistrip_imaging_candidate": 11266,
+      "qualified_single_strip_pair": 22373,
+      "uncertain_imaging_candidate": 3643,
+      "unknown_native_history": 10096
+    },
+    "source_census": {
+      "complete_native_groups": 56713,
+      "delayed_groups_after_acquisition": 43832,
+      "deposit_groups": 102516,
+      "initial_daughter_decays": 867305,
+      "initial_parents": 1109875,
+      "nonzero_initial_daughters": 43476,
+      "nonzero_parents": 59024,
+      "transport_primaries": 1977180,
+      "unavailable_native_groups": 1971,
+      "zero_deposit_initial_daughters": 823829,
+      "zero_deposit_parents": 1050851
+    },
+    "stage_timing_source": "Final measured timing snapshot after export; its SHA-256 is in provenance.",
+    "stage_timings": {
+      "kind": "gegi_stage_timing_totals_v1",
+      "native_outcomes": {
+        "completed": 56713,
+        "failed": 409,
+        "unavailable": 1562
+      },
+      "scope": "Measured inclusive wall times; nested stage totals overlap. No transport/native/readout production runtime extrapolation.",
+      "stages": {
+        "checkpoint": {
+          "count": 58882,
+          "exception_count": 0,
+          "max_seconds": 0.5226402999978745,
+          "min_seconds": 0.0009119000005739508,
+          "total_seconds": 232.74626890097716,
+          "unsealed_measurement_count": 3
+        },
+        "export": {
+          "count": 1,
+          "exception_count": 0,
+          "max_seconds": 90.73716790000617,
+          "min_seconds": 90.73716790000617,
+          "total_seconds": 90.73716790000617,
+          "unsealed_measurement_count": 0
+        },
+        "native_group": {
+          "count": 58684,
+          "exception_count": 0,
+          "max_seconds": 41.75732439999956,
+          "min_seconds": 0.010219499999948312,
+          "total_seconds": 16065.972654099513,
+          "unsealed_measurement_count": 0
+        },
+        "native_worker_load": {
+          "count": 4,
+          "exception_count": 0,
+          "max_seconds": 29.876212099999975,
+          "min_seconds": 27.345451799999864,
+          "total_seconds": 113.37195029999566,
+          "unsealed_measurement_count": 0
+        },
+        "readout": {
+          "count": 58886,
+          "exception_count": 0,
+          "max_seconds": 0.6890289999937522,
+          "min_seconds": 7.210000330815092e-05,
+          "total_seconds": 576.0813812993492,
+          "unsealed_measurement_count": 0
+        },
+        "transport_cli": {
+          "count": 396,
+          "exception_count": 0,
+          "max_seconds": 42.78223740000067,
+          "min_seconds": 2.594439100001182,
+          "total_seconds": 6863.203266999992,
+          "unsealed_measurement_count": 0
+        },
+        "transport_extract": {
+          "count": 0,
+          "exception_count": 0,
+          "max_seconds": null,
+          "min_seconds": null,
+          "total_seconds": 0.0,
+          "unsealed_measurement_count": 0
+        },
+        "transport_prepare": {
+          "count": 0,
+          "exception_count": 0,
+          "max_seconds": null,
+          "min_seconds": null,
+          "total_seconds": 0.0,
+          "unsealed_measurement_count": 0
+        },
+        "transport_run": {
+          "count": 200,
+          "exception_count": 0,
+          "max_seconds": 10.652597566,
+          "min_seconds": 2.503304952999997,
+          "total_seconds": 1609.4680604419982,
+          "unsealed_measurement_count": 0
+        },
+        "transport_verify": {
+          "count": 0,
+          "exception_count": 0,
+          "max_seconds": null,
+          "min_seconds": null,
+          "total_seconds": 0.0,
+          "unsealed_measurement_count": 0
+        }
+      },
+      "unit": "seconds"
+    },
+    "transport_primaries": 1977180
   },
   "provenance": {
     "activities_bq": [
       185000,
       37000
     ],
-    "archive_sha256": "6dbbd190bbcf98da71905ce05ec6a8dc21e329d80a88fc9e057c21291390be62",
+    "archive_sha256": "3132151b4f13a80d07c1c6769e2a67a9d90bc4c128350a343c69b78f68fffbc1",
     "clock_seed": 20261120,
-    "input_group_ledger_sha256": "02d0a7de34b5c8b2e4ef703fa0b9ab2bc3ae1e5bf4597e4bc92deb6497ec58cb",
+    "final_stage_timings_sha256": "335b958a8c26a6af8869742a4a77ec423d039986cd67075e55739296eff7f0ba",
+    "initial_inventory": {
+      "generated_initial_daughters": 867306,
+      "initial_nuclei": 38704772,
+      "inventory_seed": 3332383852266248527,
+      "remaining_nuclei": 37837466,
+      "transported_initial_daughters": 867305
+    },
+    "input_group_ledger_sha256": "a1aac68dac2f4cc64d28bccfb8e4862590820b233330022aad7a1a4135a8005f",
     "noise_seed": 120261120,
+    "original_and_repair_producer_archive_sha256": {
+      "native-only-producer.zip": "a6c1cc2ea30114ba5f28e1a5f102f102c407b2adafd3615fe6c6baae8be1e337",
+      "prefix-producer.zip": "72915fc2739536e55aa013a85c7e70d4bf983940c61182ca04170815976b9fd0",
+      "stream-id-producer.zip": "40c6c189d6d37f0746013ac4d886a3ecc50a883681ea246289647dc3f68dd898",
+      "transport-link-producer.zip": "f971dfed3cbc0039aa7ab17486f102644e2fcbc4e66d93ac3bca80975a28d7ff"
+    },
+    "producer_identity_sha256": "2c4a3259268c5d18754cd1b7aea8710ec6f7a715a16b9279c959e9919cb2b03e",
     "readout": {
       "contact_ids": [
         1,
@@ -135,54 +413,62 @@
       },
       "sample_period_ns": 20
     },
-    "reference_report_sha256": "0e68009ccdcfb17dafa55a0f20f6061c54ea7cba70f9a6f6abfb140eb2f1cd51",
-    "scope": "historical source-library readout diagnostic; not fresh mixed-source generation",
+    "reference_report_sha256": "cacc91e7501bf6dc402fdea6086952506accb360a33f7d765c5e31a294b41403",
+    "scope": "Fresh shared-clock bounded streaming acquisition.",
+    "source_accounting": "200 committed source manifests; one prefetched initial daughter lies outside T and is not a transported primary.",
+    "source_config": {
+      "clock_seed": 20261120,
+      "initial_state": {
+        "acquisition_start_ns": 0,
+        "policy": "secular_equilibrium_poisson_daughters_v1"
+      },
+      "kind": "gegi_streaming_source_config_v1",
+      "seed": 20261120,
+      "sources": [
+        {
+          "activity_Bq": 185000,
+          "id": "cs137_point_decay_v1",
+          "position_global_mm": [
+            -40,
+            0,
+            40
+          ]
+        },
+        {
+          "activity_Bq": 37000,
+          "id": "co60_point_decay_v1",
+          "position_global_mm": [
+            40,
+            0,
+            40
+          ]
+        }
+      ],
+      "stop": {
+        "duration_ns": 5000000000.0,
+        "mode": "duration"
+      }
+    },
+    "source_config_sha256": "69390d19632fcf52c182ef9d1449c080179e95d928f83d265ad6c9efc7be1aa1",
+    "source_initial_state_sha256": "b8b44081846014206a6de2f90b7f631d3a75d747a67d15f31e82afe821167b23",
     "sources": [
       {
-        "chunk_index": 45,
-        "chunk_sha256": "019c83ee91ce2c62eaef7994cb7eeb9c1b0591f5ca256c1a274bb96f148d44ed",
-        "database_sha256": "a6b9230d1b98424d5be97e5d826c0cf221912b7025e63266839be88801a808dc",
-        "drift_dt_ns": 1.0,
-        "field_cache_sha256": "f75280e7f21b1a1a06c2a6623aed62873065ca72db02bb1f93a61b9b853b90e8",
-        "field_calibration_sha256": "61f59e2fcdd43aa0f04d6a49a6e59c448bc6059057207a8bcd80d46074d29694",
-        "field_precision_bits": 32,
-        "geometry_sha256": "c26f089322dea21f597c13c43950784310795c7fa1a732e29c4fadc931de73a7",
-        "ionisation_energy_eV": 2.95,
-        "isotope": "Cs-137",
-        "model_sha256": "4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04",
-        "native_request_sha256": "ae476cdc9349bddec75c36c87fb9538224cfdf8b848618d393aea983b663db29",
-        "radiation_seed": 261540748,
-        "source_contract_id": "cs137_point_decay_v1",
-        "source_pdg": 1000551370,
-        "source_position_mm": [
-          -40.0,
-          0.0,
-          40.0
-        ],
-        "transport_sha256": "741e5228fc069c5757a2ba0b2d5df9bafe174017959747bea68cd6763c82008b"
+        "activity_Bq": 185000,
+        "id": "cs137_point_decay_v1",
+        "position_global_mm": [
+          -40,
+          0,
+          40
+        ]
       },
       {
-        "chunk_index": 75,
-        "chunk_sha256": "7538a33b47bc2df63b0063191dbbae3a16383dadb5c2b558a9a20235f11abdb2",
-        "database_sha256": "f72b3a99e6c8005982743ac73e3f4fe7b4ac3b260a5640d8bbef3234ca93536a",
-        "drift_dt_ns": 1.0,
-        "field_cache_sha256": "f75280e7f21b1a1a06c2a6623aed62873065ca72db02bb1f93a61b9b853b90e8",
-        "field_calibration_sha256": "61f59e2fcdd43aa0f04d6a49a6e59c448bc6059057207a8bcd80d46074d29694",
-        "field_precision_bits": 32,
-        "geometry_sha256": "c26f089322dea21f597c13c43950784310795c7fa1a732e29c4fadc931de73a7",
-        "ionisation_energy_eV": 2.95,
-        "isotope": "Co-60",
-        "model_sha256": "4b6c71c178c81e68bc1fe093d491b59ab99f19aed5adaba5fc61bba74d445c04",
-        "native_request_sha256": "06470249694b2c9e656f5ec6d8aa3be3f7e9b4dceb33d1ee2cca049a5c59bb83",
-        "radiation_seed": 261540749,
-        "source_contract_id": "co60_point_decay_v1",
-        "source_pdg": 1000270600,
-        "source_position_mm": [
-          40.0,
-          0.0,
-          40.0
-        ],
-        "transport_sha256": "b6a0468043d27995986b8d177f13e6023761a405b885154e95abff80ac9aad9a"
+        "activity_Bq": 37000,
+        "id": "co60_point_decay_v1",
+        "position_global_mm": [
+          40,
+          0,
+          40
+        ]
       }
     ]
   },
@@ -193,5 +479,143 @@
     "rejection": "Reject only a clean measured one-strip pair, guard-only collection, or an explicit unusable/excluded rise.",
     "scope": "Readout selection, not transport truth, photon identity or a validated hardware imaging efficiency."
   },
-  "shared_field_cache_bytes": 857068900
+  "shared_field_cache_bytes": 857068900,
+  "whole_run_basis": {
+    "kind": "gegi_completed_whole_run_resource_basis_v1",
+    "new_parent_count": 1109875,
+    "peaks": {
+      "process_peak_resident_bytes": {
+        "native": 2538078208,
+        "python": 411467776
+      },
+      "run_logical_bytes_peak": 1019254940,
+      "sampled_combined_resident_peak_bytes": 2609360896,
+      "sampling_interval_seconds": 0.5,
+      "transport_child_max_rss_bytes": 183296000
+    },
+    "provenance": {
+      "accounting_receipt_sha256_at_packaging": "66061e2765adee4dd46b9e1d3346bf07ffa65d3ad21d53512800078573e017a2",
+      "acquisition_report_sha256": "cacc91e7501bf6dc402fdea6086952506accb360a33f7d765c5e31a294b41403",
+      "resources_sha256": "1014d1bfb7d99b7cac6b65301a64b5bee71936b1b7d2c0781556c9704ad6a4fd",
+      "stage_timings_sha256": "335b958a8c26a6af8869742a4a77ec423d039986cd67075e55739296eff7f0ba"
+    },
+    "retained": {
+      "candidate_core_bytes": 745111176,
+      "existing_external_evidence_once_bytes": 4838881,
+      "fixed_run_categories": {
+        "original_first_two_transport_raw_blocks_fixed": {
+          "bytes": 7122671,
+          "files": 8
+        },
+        "original_native_prefix_and_adapter_fixed": {
+          "bytes": 1164795,
+          "files": 6
+        },
+        "repair_phase_provenance_and_preserved_stores_fixed": {
+          "bytes": 1154674,
+          "files": 23
+        },
+        "run_configuration_resources_control_logs_fixed": {
+          "bytes": 20150,
+          "files": 7
+        },
+        "transport_repair_evidence_fixed": {
+          "bytes": 41172,
+          "files": 2
+        },
+        "transport_source_context_fixed": {
+          "bytes": 1885653,
+          "files": 14
+        }
+      },
+      "fixed_run_preservation_bytes": 11389115,
+      "run_bytes": 819359442,
+      "scope": "Measured acquisition retained files. Original prefix/repair originals are fixed preservation; existing external producer/source evidence is counted once. Encoding is unchanged; no compression-pilot savings are deducted.",
+      "variable_external_categories": {
+        "native_failed_group_spool_originals_variable": {
+          "bytes": 45370804,
+          "files": 1227
+        },
+        "transport_block_lineage_variable": {
+          "bytes": 17286657,
+          "files": 2995
+        },
+        "transport_cli_log_variable": {
+          "bytes": 201690,
+          "files": 1
+        }
+      },
+      "variable_external_records_bytes": 62859151
+    },
+    "runtime_scope": {
+      "control_versions": {
+        "numpy": "2.3.5",
+        "python": "3.12.14",
+        "sqlite": "3.53.1"
+      },
+      "field_cache_sha256": "f75280e7f21b1a1a06c2a6623aed62873065ca72db02bb1f93a61b9b853b90e8",
+      "hardware_scope": "CPU model and total system RAM were not recorded in this resource measurement; timing is not a cross-hardware guarantee.",
+      "native_versions": {
+        "environment_manifest_sha256": "14b1dc8cd127ffa0ec417939ba4abdf6b31fb2258290b6f5d922f4def8ade051",
+        "julia_version": "1.13.0",
+        "ssd_version": "0.11.8"
+      },
+      "peak_interpretation": "Reference process peaks are measured at different times; do not sum them or scale them with target parents.",
+      "peak_scope": "Python/native process RSS and owned run logical files; transport child peak is reported separately. Peaks between samples may be missed.",
+      "platform": "Original Windows CPU control/native worker and existing Linux Pixi transport environment.",
+      "transport_versions": {
+        "geant4": "11.3.2",
+        "geant4-data-ensdfstate": "3.0",
+        "geant4-data-photonevaporation": "6.1",
+        "geant4-data-radioactivedecay": "6.1.2",
+        "remage": "1.1.0"
+      }
+    },
+    "time": {
+      "active_elapsed_seconds": 24595.746192,
+      "active_minus_principal_scopes_seconds": 653.6335025001681,
+      "native_worker_load": {
+        "count": 4,
+        "total_seconds": 113.37195029999566
+      },
+      "nested_transport_run_seconds": 1609.4680604419982,
+      "phase3_bridge_segment": {
+        "active_seconds": 10691.602977399998,
+        "new_parent_count": 488041,
+        "scope": "Checkpoint bridge-to-final resource difference; includes startup/overhead and may include the failed phase2 tail, not a pure steady-state benchmark."
+      },
+      "principal_scopes": {
+        "checkpoint": {
+          "count": 58882,
+          "seconds": 232.74626890097716,
+          "unsealed_measurement_count": 3
+        },
+        "export": {
+          "count": 1,
+          "seconds": 90.73716790000617,
+          "unsealed_measurement_count": 0
+        },
+        "native_group": {
+          "count": 58684,
+          "seconds": 16065.972654099513,
+          "unsealed_measurement_count": 0
+        },
+        "native_worker_load": {
+          "count": 4,
+          "seconds": 113.37195029999566,
+          "unsealed_measurement_count": 0
+        },
+        "readout": {
+          "count": 58886,
+          "seconds": 576.0813812993492,
+          "unsealed_measurement_count": 0
+        },
+        "transport_cli": {
+          "count": 396,
+          "seconds": 6863.203266999992,
+          "unsealed_measurement_count": 0
+        }
+      }
+    }
+  }
 }

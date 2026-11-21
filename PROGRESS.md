@@ -1,95 +1,104 @@
 # GeSignal handoff
 
-## Current handoff, November 20
+## Current handoff, November 21
 
-**Scheduled readiness development resumed (November 20, 22:38 Chicago):**
-The owner authorized the existing `gegi` heartbeat every 15 minutes in this chat,
-through the remaining readiness work in [the plan](tools/NEXT_DEVELOPMENT_PLAN.md).
-Its ACTIVE setting and target chat were read back from the app configuration;
-the first scheduled activation ran at 04:54 UTC November 21. Other automations remain
-unchanged. The foreground minute observer (session 8667) has stopped; the actual
-acquisition continues. After final five-second verification, finish measured
-resource accounting and the fresh candidate-to-analysis handoff, resolve concrete
-execution blockers, synchronize verified changes, then pause `gegi` for owner
-inspection. Do not automatically start 90.09 s/20-million-parent production.
-Reuse completed continuity tests. Two consecutive occurrences of the same blocker
-require cause-specific repair, not another unchanged reminder or extra review.
+**Readiness implementation and five-second acceptance are complete; publication
+is in progress.** The original acquisition exited with code 0. No acquisition or
+analysis worker remains, and no 90.09-second/20-million-parent run was launched.
+The owner inspects the delivered software and results before that production
+choice. End the `gegi` heartbeat after the verified source, student package and
+Pages update are synchronized. Unrelated automations remain unchanged.
 
-**Independent storage preparation:** the completed-run estimator now reads fresh
-streaming reports without requiring the historical replay-only elapsed field.
-It scales input-group, source-block, native-failure and phase tables and their
-indexes alongside candidate pages; actual exclusion-list copies are variable,
-while fixed metadata and measured free pages are counted once. New parents remain
-the scaling denominator, separately from initial daughters. Nine focused tests
-pass, including fresh source settings, page accounting and streamed ledger reads.
-This is candidate-core accounting, not yet the final five-second whole-run budget.
-Source `b2d29162664f` and its
-[student package](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-b2d29162664f)
-are published. The 1,319,261-byte ZIP has 241 members; the remote digest matches
-the exact-Git package receipt in `.local/student-runtime-p1/delivery.json`.
-All 39 active producer files still match the preserved phase-3 producer archive;
-the acquisition was untouched and healthy at 4.171437454 s on this activation.
+The same physical acquisition generated **924,676 new Cs-137 parents and 185,199
+new Co-60 parents**, plus 867,305 initial daughters: 1,109,875 new parents and
+1,977,180 chronological transport roots. The source positions remain (-40,0,40)
+and (+40,0,40) mm, activities 185/37 kBq, seed 20261120, equilibrium nuclear
+inventory and quiet initial electronics. All seven census relations close.
+Of 102,516 deposit groups, 56,713 completed native response, 1,971 were unavailable
+and 43,832 were delayed beyond five seconds. All 200 source blocks and the final
+source checkpoint reconcile; the top-level source-checkpoint file is the last
+CLI input, not a missing terminal block.
 
-The next analysis implementation can reuse `gegi_joint_calibration.load`,
-`gegi_joint_two_site.fit_pairing` and `gegi_continuous_plane.reconstruct` through
-a post-completion candidate adapter. Preserve original trigger IDs, slice the
-existing ADC context, and retain rejected-summary/unknown-history accounting.
-Do not invent legacy library receipts. Actual model/cache/digital identities
-bind calibration; the admitted cached field is Float32, independently of the
-native request's 64-bit fresh-solve setting. This route is source-inspected;
-fresh candidate integration remains unimplemented and untested.
+The 52,371 observed rises contain 42,275 qualified triggers, 32,502 measured
+energies and **14,909 retained imaging candidates**. Exact final verification
+covered every candidate's int16 ADC context, hashes and reconstructed fast/slow/
+timing measurements. Each candidate keeps all 34 electrodes, including
+noncollecting neighbor transients. Native-response failures remain recorded;
+0.965632420 s of unknown readout history is excluded explicitly. The 1,971 groups
+comprise 644 step-limit, 918 stopped-without-contact and 409 failed responses.
+These are retained response exclusions, not an assertion of detector accuracy.
+No original scientific outputs were changed or deleted.
 
-**Continuous acquisition repaired; same run active:**
-The five-second Cs-137/Co-60 run has resumed from its original source, RNG and
-34-channel readout checkpoint. The latest saved snapshot is at readout time
-3.966990613 s, with 880,886 new parents and 690,114 initial daughters; it is still
-running. Host inspection at 22:38 Chicago confirms acquisition Python PID 18224,
-created at 21:04:03, with the original output, seed and five-second duration.
-Inspect live progress and host process identities before any action; do not
-restart or launch another acquisition, or edit its pinned producer files.
+**Measured resources and proposed scale.** The acquisition retained 819,359,442
+bytes. Sampled run-directory peak was 1,019,254,940 bytes; simultaneous Python/
+native resident memory peaked at 2,609,360,896 bytes. Active work took
+24,595.746192 s (6.83 h), excluding interruptions. Native group response accounted
+for 16,065.97 s and transport CLI for 6,863.20 s; nested transport timing is not
+added again. The separate shared field cache is 857,068,900 bytes, counted once.
+Exact records are in `.local/steady-acquisition-v1/five-second-acceptance.json`.
 
-The original failure at 2.798250853 s was an invalid expected-count ID ceiling:
-621,834 new parents plus 489,166 initial daughters had produced 1,111,000
-transport roots, but the native request used 1,110,000 expected new parents as
-an ID bound. Event 1,110,048 is now completed. Duration streams explicitly use
-nonnegative chronological transport IDs; actual census remains separate. Removed
-artificial duration/count/deposit-row ceilings from the continuous runtime and
-Control; defaults remain 5 s/100. Scientific inputs and finite-dataset census
-consistency remain unchanged. No larger acquisition was launched.
+For 20 million **new parents**, the measured conditional scenarios predict
+13.42–16.64 GB candidate core, 15.43–18.91 GB whole acquisition including the shared
+field and retained external evidence once, or **15.77–19.26 GB including optional
+imaging and its separate calibration once**. Acquisition plus analysis projects
+122.86–124.54 active hours on this workstation. These are measured-rate planning
+scenarios, not confidence intervals or guaranteed future peaks. Temporary files
+need additional space; five-second peak RAM/disk is measured, future peaks are
+not. At 222 kBq combined activity, 20 million expected parents corresponds to
+90.090090 s. A fixed 90.09 s acquisition has a random count; exact-count startup
+mode has a different initial daughter policy and is not interchangeable.
+Proposed production reuses duration mode, both positions/activities and steady
+inventory, with a separately recorded seed and output root chosen before launch.
 
-Explicit phase 2 preserved the prior 33,014 groups and processed another 31.
-Phase 3 links sealed block 112 to the exact block-size-check correction; its AST
-comparison preserves all physical clock/macro/RNG functions. Block 113 completed
-without repeating earlier radiation. A subsequent memory stop resumed after
-owned preview/tests ended. Both failures, original producer versions and bridge
-checkpoints remain preserved. Current exact producer is
-`.local/steady-acquisition-v1/transport-link-producer.zip`, SHA-256
-`f971dfed3cbc0039aa7ab17486f102644e2fcbc4e66d93ac3bca80975a28d7ff`.
+**Fresh candidates now reach measured reconstruction and Control.**
+`tools/gegi_candidate_imaging.py` streams saved ADC contexts through the existing
+center-template fit and source-plane backprojection. It binds the saved producer
+phase chain and exact model/cache/digital calibration, preserves original trigger
+IDs and full qualified/rejected populations, and never reruns transport or drift.
+The loaded field cache is Float32; the native request's fresh-solve precision
+setting does not describe that serialized cache. Optional subsets are explicitly
+partial, with omitted weight unresolved.
 
-Validation: six focused Python ID/group tests, 63 Julia assertions, ten repair
-continuation tests, 18 integrated acquisition/package tests, eight Control tests
-and Node UI contracts pass. Transport source has 13 checks (one Windows symlink
-skip) plus four targeted final compatibility/clock checks. Chrome rendered
-90.09 s and 20,000,000 inputs with no maximum attributes; no Run or download was
-clicked. Preview tab/server are closed. All 38 publication tests pass. Generated
-build `923f841eccdf69b3ac7198b2cfb1e963dedcef17caa40e7c51b143b655694d99`
-and `check_site.py` pass: only guide and manifest change. Source commit
-`c649d8e5985875175329927a95448e13aaae580e` is on GitHub main. Release
-[student-runtime-c649d8e59858](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-c649d8e59858)
-has the verified 1,317,716-byte software ZIP, SHA-256
-`4b3fe08790f2546700ac00a897f2a774591307198dd2bd81de40441f2c721db3`,
-240 sources plus metadata. GitHub's asset digest matches; separate calibration
-is unchanged. Pages deployment 44859421534 succeeded; live verification checked
-1,013 files against the exact build. Final five-second census, storage and timing
-remain pending. The active acquisition exec session is 85953. Scheduled development
-now replaces foreground observation; while this run remains active, do only
-independent work that does not compete for its calculation lease or alter inputs.
-Historical `.local/autonomy/*.lock` receipts inspected this session have no active
-worker and retain prior milestone evidence; their directory names alone are not
-current ownership. The acquisition's workflow lease remains authoritative for
-conflicting calculation work. Update actual state when it finishes before taking
-over the next milestone; preserve the historical receipts.
-Earlier snapshots below are historical and do not override this live handoff.
+All **3,822 two-strip candidates** were processed in 229.96 s with a measured
+551,071,744-byte process peak. The full result is
+`.local/gegi-candidate-runs/steady-five-seconds/candidate-imaging.json.gz`
+(1,901,334 bytes; SHA-256
+`78124e398de1dbe41f2f4ca5d17269c9b213ae7f207d4c13b4943b8fc90e0863`).
+All layers reconcile: 2,891.5 projected + 930.5 unresolved nominal trigger units.
+The 661.657, 1173.23 and 1332.49 keV windows contain 1,069, 163 and 117 triggers.
+The assumed plane is z=40 mm, uniform area, +/-120 mm with 4 mm cells and 5-degree
+angular width. The Cs-window brightest cell is (-42,-2) mm; the 1173 keV maximum
+is at the saved image edge. These observations do not establish joint-source
+localization accuracy or independently infer source distance.
+
+Control discovers the separate calibration, creates or reuses full analysis and
+opens saved maps with energy windows, original identities and unresolved counts.
+Desktop Chrome verified the completed run, both isotope windows, coordinate
+orientation, the current 20M estimate and reuse of the already completed map.
+No Run or Download was clicked; the owned preview tab/server are closed.
+Focused checks passed: 8 imaging tests, 10 Control tests, 13 estimator tests and
+Node UI contracts. Six package tests and 38 publication tests pass. The generated
+site and `check_site.py` pass: build
+`64135abe1aa172a14a09bd0b1da9231a48e0bc0d1789f3b38aa4fe3de1687c64`,
+1,909 files, 503,709,899 bytes, 126 HTML pages, 3,773 local links and 281 fragments.
+Only the guide and site manifest changed. GitHub/package/live verification remains
+for this integrated milestone; do not repeat the completed physics,
+ADC replay, or earlier stop/resume evidence merely to publish it.
+
+Existing continuation evidence is retained under `.local/steady-acquisition-v1/`:
+prefix/native-only/stream-ID/transport-link producer archives and bridge receipts.
+The original count-bound failure at 2.798250853 s and later memory stop are
+preserved. Phase 3 resumed the same source/RNG/electronics checkpoint; its archive
+SHA-256 is `f971dfed3cbc0039aa7ab17486f102644e2fcbc4e66d93ac3bca80975a28d7ff`.
+Artificial duration, count and deposit-row execution ceilings were removed in the
+previous delivery. Necessary input formats, identities and census remain checked.
+Most large retained payloads are already compressed; a read-only exact-roundtrip
+pilot found only about 43.5 MB additional JSON compression at five seconds, so no
+new archive format was introduced for this milestone.
+
+[Previous full handoff](https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/696dcfa/PROGRESS.md)
+preserves the prior receipts. The snapshots below are historical and do not
+override this current handoff.
 
 **Website refinement:** archive viewers now identify their saved population and
 return to current views; ring ledger ZIPs explicitly remain local. The guide links

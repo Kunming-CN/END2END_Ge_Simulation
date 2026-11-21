@@ -285,6 +285,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_data(200, self.server.workflow_controller.gegi_candidates().estimate(
                     int(query['total_parents'][0]), [float(query['activity_'+source+'_bq'][0]) for source in ('a', 'b')],
                     [[float(query[source+'_'+axis][0]) for axis in ('x', 'y', 'z')] for source in ('a', 'b')]))
+            if parts.path == '/api/workflow/gegi-candidates/plane':
+                query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
+                if (parts.fragment or set(query) != {'name', 'report_sha256', 'analysis_id', 'analysis_sha256'}
+                        or any(len(v) != 1 for v in query.values()) or self.server.workflow_controller is None):
+                    raise ValueError('Choose one saved candidate analysis and its acquisition identity')
+                return self.send_data(200, self.server.workflow_controller.gegi_candidates().analysis_plane(
+                    **{key: value[0] for key, value in query.items()}))
             if parts.path in ('/api/workflow/gegi-candidates/state', '/api/workflow/gegi-candidates/list',
                               '/api/workflow/gegi-candidates/event'):
                 query = parse_qs(parts.query, strict_parsing=True, keep_blank_values=True)
@@ -536,6 +543,11 @@ class Handler(BaseHTTPRequestHandler):
             if not 1 <= size <= 4096:
                 raise ValueError('Request size must be 1..4096 bytes')
             data = decode_json(self.rfile.read(size).decode('utf-8'))
+            if self.path == '/api/workflow/gegi-candidates/analyze':
+                fields = {'name', 'report_sha256', 'calibration_id', 'z_mm', 'extent_mm', 'step_mm', 'sigma_deg', 'plane_prior'}
+                if type(data) is not dict or set(data) != fields or self.server.workflow_controller is None:
+                    raise ValueError('Choose a completed candidate acquisition, calibration and source-plane settings')
+                return self.send_data(200, self.server.workflow_controller.gegi_candidates().analyze(**data))
             if self.path == '/api/workflow/gegi-candidates/start':
                 common = {'name', 'seed', 'activities_bq', 'positions_mm'}
                 if (type(data) is not dict or set(data) not in (common | {'primary_count'}, common | {'duration_s'})

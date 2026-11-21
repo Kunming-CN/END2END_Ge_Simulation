@@ -2,13 +2,16 @@
 
 import copy
 from contextlib import closing
+import gzip
 from hashlib import sha256
 import json
 import math
+import os
 import re
 import sqlite3
 import threading
 import traceback
+import zlib
 
 import numpy as np
 
@@ -16,7 +19,7 @@ import gegi_candidate_storage as storage
 import gegi_digital_readout as digital
 import gegi_exposure_stream as stream
 import gegi_pulse_stream as pulse
-from local_ui_jobs import safe_path
+from local_ui_jobs import safe_path, run_command
 import scenario_workflow as W
 
 
@@ -28,6 +31,10 @@ REPORT_NAME = 'candidate-acquisition.json'
 NAME = re.compile(r'[A-Za-z0-9][A-Za-z0-9_-]{0,47}\Z')
 STARTUP_POLICY = 'new_parent_decays_empty_daughters_at_start'
 STEADY_POLICY = 'secular_equilibrium_poisson_daughters_v1'
+PLANE_KIND = 'gegi_continuous_measured_plane_backprojection_v1'
+ANALYSIS_KIND = 'gegi_candidate_measured_imaging_v1'
+PLANE_PRIORS = ('uniform-area', 'uniform-solid-angle')
+MAP_NAME = re.compile(r'candidate-imaging(?:-[A-Za-z0-9_-]+)?\.json\.gz\Z')
 
 
 def _name(value):
@@ -39,11 +46,23 @@ def _finite(value):
     return type(value) in (int, float) and math.isfinite(value)
 
 
+def _matching_analysis(view, recipe):
+    return (view['candidate_analysis']['scope'] == 'all_two_strip_candidates'
+            and view['input_sha256']['calibration'] == recipe['calibration_sha256']
+            and all(view['grid'][key] == recipe[arg] for key, arg in
+                    (('assumed_z_mm', 'z_mm'), ('extent_mm', 'extent_mm'), ('step_mm', 'step_mm')))
+            and view['model']['angular_nuisance_sigma_deg'] == recipe['sigma_deg']
+            and view['model']['plane_prior'] == recipe['plane_prior'])
+
+
 class CandidateControl:
-    def __init__(self, workflow, *, runner=None):
+    def __init__(self, workflow, *, runner=None, analysis_runner=None):
         self.workflow = workflow
         self.root = workflow.root
         self.runner = runner
+        self.analysis_runner = analysis_runner or run_command
+        self._analysis_cache = {}
+        self._analysis_running = set()
         self.jobs = {}
         self._stop_events = {}
         self._verified_stores = {}
@@ -58,6 +77,9 @@ class CandidateControl:
                 if job['status'] in ('running', 'stop_requested'):
                     job.update(status='interrupted', error='The previous Control session ended. Saved partial files are preserved.')
                 self.jobs[job['name']] = job
+                analysis = job.get('analysis')
+                if analysis and analysis['status'] == 'running' and not W.identity_ended(analysis.get('driver')):
+                    self.workflow._active = 'gegi-candidate-imaging-' + job['name']
 
     def _directory(self, name):
         return safe_path(self.root, OUTPUTS + '/' + _name(name))
@@ -114,11 +136,192 @@ class CandidateControl:
                 directory = self._directory(child.name)
                 if safe_path(directory, REPORT_NAME).is_file():
                     jobs[child.name] = {'name': child.name, 'status': 'completed'}
-        return {'kind': KIND, 'jobs': list(jobs.values()), 'defaults': {
+        return {'kind': KIND, 'jobs': list(jobs.values()), 'calibrations': self._calibrations(), 'defaults': {
             'mode': 'duration', 'duration_s': 5, 'maximum_duration_s': None,
             'primary_count': 100, 'maximum_primary_count': None, 'seed': 20261120,
             'activities_bq': [185000, 37000], 'positions_mm': [[-40, 0, 40], [40, 0, 40]]},
             'new_science_calls': 0}
+
+    def _calibrations(self):
+        refs = ['.local/gegi-center-calibration.npz',
+                '.local/gegi-joint-two-site/gegi-center-calibration.npz']
+        imports = safe_path(self.root, '.local/gegi-saved-inputs/calibrations')
+        if imports.is_dir():
+            refs += [p.relative_to(self.root).as_posix() for p in sorted(imports.glob('*.npz'))]
+        return [{'id': W.digest({'candidate_calibration': ref}), 'label': ref, 'ref': ref}
+                for ref in refs if safe_path(self.root, ref).is_file()]
+
+    def _analysis_view(self, path, report, digest):
+        try:
+            return self._checked_analysis_view(path, report, digest)
+        except W.ControlError:
+            raise
+        except (EOFError, KeyError, OSError, OverflowError, TypeError, ValueError, zlib.error) as error:
+            raise W.ControlError('The saved candidate imaging result is invalid; preserve it for inspection.') from error
+
+    def _checked_analysis_view(self, path, report, digest):
+        stamp = path.stat()
+        signature = (stamp.st_size, stamp.st_mtime_ns, digest)
+        cached = self._analysis_cache.get(path)
+        if cached and cached[0] == signature:
+            return copy.deepcopy(cached[1])
+        raw = path.read_bytes()
+        saved = json.loads(gzip.decompress(raw))
+        analysis = saved['candidate_analysis']
+        grid, model, layers, selection = (saved[key] for key in ('grid', 'model', 'layers', 'selection'))
+        W.require(saved['kind'] == PLANE_KIND and analysis['kind'] == ANALYSIS_KIND
+                  and saved['input_sha256']['acquisition'] == digest
+                  and saved['input_sha256']['candidate_store'] == report['artifacts'][storage.ARCHIVE_NAME]['sha256']
+                  and analysis['qualified_counts'] == report['counts']
+                  and analysis['storage_counts'] == report['storage_counts']
+                  and analysis['source_census'] == report.get('source', {})
+                  and analysis['excluded_intervals_ns'] == report.get('excluded_intervals_ns', []),
+                  'Saved imaging and acquisition identities or denominators differ.')
+        W.require(analysis['scope'] in ('all_two_strip_candidates', 'explicit_analysis_subset')
+                  and selection['qualified_triggers'] == report['counts']['qualified_triggers']
+                  and selection['qualified_energies'] == report['counts']['qualified_energies']
+                  and selection['two_strip_triggers'] == analysis['two_strip_candidates']
+                  and len(saved['triggers']) == analysis['two_strip_candidates']
+                  and all(type(row['original_trigger_id']) is int and row['original_trigger_id'] > 0 for row in saved['triggers'])
+                  and saved['fit_receipt']['kind'] == 'gegi_candidate_measured_waveform_fits_v1'
+                  and saved['fit_receipt']['two_strip_triggers'] == analysis['two_strip_candidates']
+                  and len({row['original_trigger_id'] for row in saved['triggers']}) == len(saved['triggers']),
+                  'Saved imaging trigger identities or scope differ.')
+        W.require(selection['clock_live_time_ns'] == report['live_time_ns']
+                  and math.isclose(selection['qualified_adc_live_time_ns'], report['live_time_ns'] -
+                      math.fsum(hi-lo for lo, hi in report.get('excluded_intervals_ns', [])), abs_tol=1e-6),
+                  'Saved imaging unknown-history or live-time denominator differs.')
+        ids = analysis['selected_original_trigger_ids']
+        W.require(all(type(tid) is int and tid > 0 for tid in ids) and len(ids) == len(set(ids))
+                  and set(ids) <= {row['original_trigger_id'] for row in saved['triggers']}
+                  and (analysis['scope'] != 'all_two_strip_candidates' or len(ids) == analysis['two_strip_candidates']),
+                  'Saved imaging selected trigger IDs differ.')
+        nx, ny = len(grid['x_mm']), len(grid['y_mm'])
+        W.require(min(nx, ny) >= 2 and _finite(grid['assumed_z_mm']) and _finite(grid['step_mm'])
+                  and grid['step_mm'] > 0 and model['plane_prior'] in PLANE_PRIORS,
+                  'Invalid saved source-plane grid.')
+        for axis in ('x_mm', 'y_mm'):
+            W.require(all(_finite(v) for v in grid[axis]) and all(math.isclose(b-a, grid['step_mm'], rel_tol=1e-8)
+                      for a, b in zip(grid[axis], grid[axis][1:])), 'Invalid saved source-plane axis.')
+        W.require('all' in layers and 'other_energy' in layers, 'Missing saved source-plane layers.')
+        for layer in layers.values():
+            W.require(all(type(layer[key]) is int and layer[key] >= 0 for key in
+                          ('triggers', 'triggers_with_geometry', 'allowed_hypotheses', 'hypotheses'))
+                      and all(_finite(layer[key]) and layer[key] >= 0 for key in ('projected_mass', 'unresolved_mass'))
+                      and len(layer['mass']) == ny and all(len(row) == nx and all(_finite(v) and v >= 0 for v in row)
+                          for row in layer['mass'])
+                      and math.isclose(math.fsum(v for row in layer['mass'] for v in row), layer['projected_mass'], abs_tol=1e-9)
+                      and math.isclose(layer['projected_mass']+layer['unresolved_mass'], layer['triggers'], abs_tol=1e-9),
+                      'Saved source-plane mass or dimensions differ.')
+        W.require(layers['all']['triggers'] == analysis['two_strip_candidates'], 'Saved plane trigger denominator differs.')
+        for key in ('triggers', 'triggers_with_geometry', 'allowed_hypotheses', 'hypotheses', 'projected_mass', 'unresolved_mass'):
+            W.require(math.isclose(layers['all'][key], math.fsum(row[key] for label, row in layers.items() if label != 'all'), abs_tol=1e-9),
+                      'Saved plane energy layers do not reconcile.')
+        view = {key: saved[key] for key in ('kind', 'grid', 'model', 'layers', 'selection', 'candidate_analysis', 'input_sha256')}
+        view['original_trigger_ids'] = [row['original_trigger_id'] for row in saved['triggers']]
+        view.update(analysis_id=path.name, analysis_sha256=sha256(raw).hexdigest())
+        self._analysis_cache[path] = (signature, view)
+        return copy.deepcopy(view)
+
+    def _analysis_maps(self, name, report, digest):
+        maps = []
+        active = self.jobs.get(name, {}).get('analysis')
+        for path in sorted(self._directory(name).glob('candidate-imaging*.json.gz')):
+            if not MAP_NAME.fullmatch(path.name):
+                continue
+            if (active and active['status'] == 'running' and active['analysis_id'] == path.name
+                    and (name in self._analysis_running or not W.identity_ended(active.get('driver')))):
+                continue
+            view = self._analysis_view(safe_path(self._directory(name), path.name), report, digest)
+            maps.append({key: view[key] for key in ('analysis_id', 'analysis_sha256')} | {
+                'scope': view['candidate_analysis']['scope'], 'z_mm': view['grid']['assumed_z_mm'],
+                'plane_prior': view['model']['plane_prior']})
+        return sorted(maps, key=lambda row: (row['scope'] != 'all_two_strip_candidates', row['analysis_id']))
+
+    def analysis_plane(self, name, report_sha256, analysis_id, analysis_sha256):
+        W.require(type(analysis_id) is str and MAP_NAME.fullmatch(analysis_id), 'Choose one saved candidate imaging result.')
+        _, report, digest = self._database(name, report_sha256)
+        view = self._analysis_view(safe_path(self._directory(name), analysis_id), report, digest)
+        W.require(view['analysis_sha256'] == analysis_sha256, 'Saved imaging changed. Reopen its saved result.')
+        return dict(name=name, report_sha256=digest, **view)
+
+    def analyze(self, name, report_sha256, calibration_id, z_mm, extent_mm=120., step_mm=4., sigma_deg=5., plane_prior='uniform-area'):
+        W.require(all(_finite(v) for v in (z_mm, extent_mm, step_mm, sigma_deg))
+                  and extent_mm > 0 and 0 < step_mm <= 2*extent_mm and sigma_deg > 0
+                  and plane_prior in PLANE_PRIORS and (plane_prior != 'uniform-solid-angle' or z_mm != 0),
+                  'Choose finite plane settings with positive extent, grid spacing and angular width.')
+        directory, report, digest = self._report(name, report_sha256)
+        W.require(report.get('verification', {}).get('status') == 'verified_exact',
+                  'Choose a completed acquisition with exact saved-candidate verification.')
+        calibration = next((row for row in self._calibrations() if row['id'] == calibration_id), None)
+        W.require(calibration is not None, 'Import the separate matching GeGI calibration and refresh the input list.')
+        settings = dict(z_mm=z_mm, extent_mm=extent_mm, step_mm=step_mm, sigma_deg=sigma_deg, plane_prior=plane_prior)
+        recipe = dict(report_sha256=digest, calibration_sha256=W.sha(safe_path(self.root, calibration['ref'])), **settings)
+        with self.workflow._lock:
+            for row in self._analysis_maps(name, report, digest):
+                view = self._analysis_view(safe_path(directory, row['analysis_id']), report, digest)
+                if _matching_analysis(view, recipe):
+                    return {'status': 'completed', 'reused': True, **row}
+            self.workflow._idle()
+            stem = 'candidate-imaging-' + W.digest(recipe)
+            filename = stem + '.json.gz'
+            attempt = 1
+            while safe_path(directory, filename).exists() or safe_path(directory, filename+'.log').exists():
+                attempt += 1
+                filename = stem + '-attempt' + str(attempt) + '.json.gz'
+            job = self.jobs.setdefault(name, {'name': name, 'status': 'completed', 'report_sha256': digest})
+            analysis = dict(status='running', started_utc=W.utc(), analysis_id=filename,
+                            calibration_ref=calibration['ref'], **recipe)
+            job['analysis'] = analysis
+            reservation = 'gegi-candidate-imaging-' + name
+            self.workflow._active = reservation
+            self._analysis_running.add(name)
+            self._persist()
+            thread = threading.Thread(target=self._analysis_work, args=(job, analysis, reservation), daemon=True, name=reservation)
+            try:
+                thread.start()
+            except RuntimeError:
+                self.workflow._active = None
+                self._analysis_running.discard(name)
+                analysis.update(status='failed', error='The imaging worker did not start.')
+                self._persist()
+                raise
+            return copy.deepcopy(analysis)
+
+    def _analysis_work(self, job, analysis, reservation):
+        directory = self._directory(job['name'])
+        log = safe_path(directory, analysis['analysis_id'] + '.log')
+        try:
+            with W.execution_lease(self.root):
+                W.verify_dispatch_reservations(None, self.root)
+                prefix = '../' + directory.relative_to(self.root).as_posix() + '/'
+                argv = W.transport_prefix(self.root) + ['env', 'OPENBLAS_NUM_THREADS=1', 'OMP_NUM_THREADS=1',
+                    'python', '-B', '../tools/gegi_candidate_imaging.py',
+                    '--report', prefix+REPORT_NAME, '--calibration', '../'+analysis['calibration_ref'],
+                    '--output', prefix+analysis['analysis_id']]
+                for key, flag in (('z_mm','--plane-z-mm'),('extent_mm','--extent-mm'),('step_mm','--step-mm'),
+                                  ('sigma_deg','--sigma-deg'),('plane_prior','--plane-prior')):
+                    argv += [flag, str(analysis[key])]
+                def spawned(pid, identity):
+                    with self.workflow._lock:
+                        analysis['driver'] = dict(pid=pid, identity=identity)
+                        self._persist()
+                with log.open('x', encoding='utf-8') as handle:
+                    result = self.analysis_runner(argv, cwd=self.root, env=os.environ.copy(), on_output=handle.write, on_spawn=spawned)
+                W.require(result['exit_code'] == 0, 'Saved-candidate imaging failed. Inspect its retained analysis log.')
+                _, report, digest = self._report(job['name'], analysis['report_sha256'])
+                view = self._analysis_view(safe_path(directory, analysis['analysis_id']), report, digest)
+                W.require(_matching_analysis(view, analysis), 'The imaging worker changed the requested full-analysis recipe.')
+                analysis.update(status='completed', analysis_sha256=view['analysis_sha256'])
+        except Exception as error:
+            analysis.update(status='failed', error=str(error)[:1200])
+        finally:
+            with self.workflow._lock:
+                analysis['finished_utc'] = W.utc()
+                self._persist()
+                self._analysis_running.discard(job['name'])
+                if self.workflow._active == reservation:
+                    self.workflow._active = None
 
     def estimate(self, total_parents, activities_bq, positions_mm):
         """Use the small public format reference; never inspect or launch science."""
@@ -132,7 +335,8 @@ class CandidateControl:
                           for p in positions_mm), 'Enter two finite detector-coordinate positions in mm.')
         import gegi_storage_estimate as estimate
         reference = estimate.load_reference()
-        reference_positions = [source['source_position_mm'] for source in reference['provenance']['sources']]
+        reference_positions = [source.get('source_position_mm', source.get('position_global_mm'))
+                               for source in reference['provenance']['sources']]
         W.require([list(p) for p in positions_mm] == reference_positions,
                   'This storage reference uses Cs-137 at (−40, 0, 40) mm and Co-60 at (40, 0, 40) mm. '
                   'A changed source position needs a matching measured reference.')
@@ -157,6 +361,20 @@ class CandidateControl:
                        output=OUTPUTS + '/' + name, results_available=True)
             if status == 'completed':
                 job.pop('error', None)
+            job['analysis_maps'] = self._analysis_maps(name, report, digest)
+            analysis = job.get('analysis')
+            if (analysis and analysis['status'] == 'running' and name not in self._analysis_running
+                    and W.identity_ended(analysis.get('driver'))):
+                saved = next((row for row in job['analysis_maps'] if row['analysis_id'] == analysis['analysis_id']), None)
+                analysis.update(status='completed' if saved else 'failed', finished_utc=W.utc())
+                if saved:
+                    analysis['analysis_sha256'] = saved['analysis_sha256']
+                else:
+                    analysis['error'] = 'The previous analysis session ended without a completed map; its evidence is preserved.'
+                self.jobs[name]['analysis'] = copy.deepcopy(analysis)
+                self._persist()
+                if self.workflow._active == 'gegi-candidate-imaging-' + name:
+                    self.workflow._active = None
         else:
             W.require(name in self.jobs, 'Unknown mixed-source acquisition.')
         job['resumable'] = (not active and job['status'] in ('stopped', 'interrupted', 'failed')

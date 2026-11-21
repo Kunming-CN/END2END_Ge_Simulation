@@ -5,48 +5,99 @@ The student workflow runs from detector and source selection through transport, 
 | GeGI stage | Status and scope |
 |---|---|
 | 1. Electrode signals | Saved complete signed traces cover 32 strips and two guards, including transient charge on noncollecting neighbors. |
-| 2. Fast and slow readout | Control replays a nominal digitized preamplifier signal. The fast branch measures signed area, the slow branch measures pulse energy and collecting-strip timing supplies a depth observable. |
+| 2. Fast and slow readout | Fresh continuous acquisition and saved replay use the same nominal digitized preamplifier readout. The fast branch measures signed area, the slow branch measures pulse energy and collecting-strip timing supplies a depth observable. |
 | 3. Single-site position | Four directly calibrated strip pairs, lateral transfer on nine additional pairs, and apparent-depth timing curves across 216 pixels. Control shows evidence and availability per estimate. |
-| 4. Two-site reconstruction | New Control runs capture two-strip ADC windows. The portable center-template fit reconstructs allowed Compton cones from these windows. Control opens the energy-resolved maps and reports unresolved trigger weight. Comparison with independent simulated histories covers 46 energy-compatible occurrences. |
+| 4. Two-site reconstruction | The completed five-second candidate archive feeds the existing center-template fit and conditional Compton maps. All 3,822 eligible two-strip candidates were processed; 11,087 other retained candidates remain outside that fit scope. Control opens saved maps and reports unresolved weight. The earlier independent-history comparison covers 46 energy-compatible occurrences. |
 | 5. Experimental comparison | The 32-channel simulated spectrum export is available. Matching the instrument selection, pixel map and spectra requires a common acquisition and its metadata. |
 
 ## Delivery order
 
-**Current decision, November 20:** scheduled development is authorized through
-large-acquisition readiness. Finish the existing five-second acquisition and the
-remaining work below, then pause the development heartbeat for owner inspection.
-The 90.09-second/20-million-parent case remains a resource projection and proposed
-configuration, not an automatic production launch. Production is a single
-mixed-source experiment from particle generation onward.
+**Current readiness, November 21:** the same five-second mixed-source acquisition,
+its final count/resource accounting and its full saved-candidate imaging are
+complete. Finish the source/runtime/site delivery and publication below, then
+end and delete scheduled heartbeat `gegi`. The owner inspects the delivered
+configuration and budget before any 90.09-second/20-million-new-parent launch.
+Production remains one physical mixed-source experiment from particle generation
+onward; no larger run starts automatically.
+
+**Completed five-second evidence.** The acquisition contains 1,109,875 new parents:
+924,676 Cs-137 and 185,199 Co-60, plus 867,305 initial Ba137m daughter decays counted
+separately. Of 102,516 deposited groups, 56,713 have complete native response,
+1,971 are explicitly unavailable and 43,832 delayed groups lie outside the
+five-second window. All 52,371 trigger records remain accounted for; 42,275 are
+qualified and 14,909 candidates retain lossless all-34-channel ADC contexts.
+Every candidate's saved fast/slow/timing measurements replay exactly. Finite
+unavailable-history exclusions cover 0.96563242 s; numerical/domain failures
+remain evidence rather than fabricated zero signals.
+
+The canonical `candidate-imaging.json.gz` is a separate 1,901,334-byte derivative
+of that archive. It processes all 3,822 eligible two-strip candidates, preserves
+the remaining candidate census and closes the image/unassigned-weight accounting.
+Original trigger IDs and diagnostic source joins remain distinct from pairing
+selection. Calibration admission binds the exact model, field-cache and digital
+identities, including the admitted Float32 field state. Full offline processing
+took 229.959 s with a 551,071,744-byte process peak; this establishes a working
+conditional reconstruction, not experimental detector accuracy or imaging
+efficiency.
+
+The retained acquisition is 819,359,442 bytes before imaging. Its sampled run-file
+peak was 1,019,254,940 bytes and sampled combined Python/native RSS peaked at
+2,609,360,896 bytes. Acquisition active time was 24,595.746 s (6.832 h); nested
+Geant4 time is not added again to its enclosing transport-CLI time. One shared
+field cache is 857,068,900 bytes and the optional imaging calibration is
+303,891,603 bytes, each counted once. Preserve the original prefix data, repair
+producer versions, failures and delayed records. The compact accounting is
+`.local/steady-acquisition-v1/five-second-acceptance.json`; the completed run and
+canonical imaging derivative are under
+`.local/gegi-candidate-runs/steady-five-seconds/`.
 
 **Remaining delivery and stop condition:**
 
-1. Finish the same five-second acquisition in
-   `.local/gegi-candidate-runs/steady-five-seconds`. Verify final parent/daughter,
-   zero/nonzero, complete/unavailable/outside-window and trigger/candidate totals,
-   candidate replay and finite unknown-history exclusions. Preserve delayed
-   deposits beyond the acquisition window and all unique failure evidence.
-2. Measure throughput, peak memory, peak temporary disk and final retained bytes,
-   including provenance, failures and delayed records. Update the 90.09-second
-   estimate with uncertainty; distinguish a fixed duration from exactly 20 million
-   new parents, and count initial daughters separately. Identify concrete execution
-   bottlenecks from these measurements and fix blockers to practical use.
-3. Verify or connect the fresh candidate store to the existing measured-data
-   reconstruction and imaging functions, retaining fixed selections, interaction
-   order rules, priors, original identities and unassigned/unknown weight. Reuse
-   saved data and completed Control/continuity tests; validate only changed paths.
-4. Synchronize verified source and any changed student runtime or exhibits with
-   GitHub. When the preceding results and a usable production configuration/resource
-   estimate are recorded and execution blockers are resolved, pause heartbeat
-   `gegi` and leave a compact owner handoff. Quantitative detector-accuracy limits
-   remain explicit; they do not initiate another open-ended research prerequisite.
+1. Synchronize verified source, the changed student runtime and maintained site
+   with GitHub, completing the required saved-output, release and desktop-browser
+   checks. Reuse the completed physics, candidate replay and continuity evidence.
+2. Leave the proposed configuration and conditional resource budget below in the
+   owner handoff. Record remaining numerical/experimental limitations without
+   turning publication into another open-ended research or review round.
+3. After published readiness, end and delete heartbeat `gegi`, report the delivered
+   result and stop. The owner decides whether and when to launch the larger case.
 
-During the current run, leave pinned producers and scientific outputs untouched;
-advance only independent work. Do not repeat completed physics or continuity runs.
-Two consecutive occurrences of the same blocker require prioritizing its cause
-and correction, not repeating an unchanged reminder or weakening result checks.
+Duration and new-parent-count configuration are now uncapped by the former
+five-second/500-parent development ceilings. Defaults remain five seconds and
+100 startup parents. Positive-input, identity, finite-window and resource checks
+remain; an expected new-parent count is never a bound on chronological transport
+IDs, which also cover initial daughters. Two consecutive instances of the same
+execution blocker require a cause-specific repair, not an unchanged retry.
 
-**Earlier startup evidence:** the mixed-source generator, existing native worker,
+### Proposed configuration for owner inspection
+
+Use the same GeGI geometry with Cs-137 at (−40, 0, 40) mm and 185 kBq, and Co-60
+at (+40, 0, 40) mm and 37 kBq. Both sources exist before the first decay and share
+one absolute clock. Retain the explicit secular initial Ba137m inventory and
+quiet electronics start. Transport, drift, overlapping electrode currents,
+readout and checkpoints remain continuous across computational blocks.
+
+A fixed duration of about **90.09009 s** gives **20 million expected new parents**
+at the combined 222,000 s⁻¹ activity. It does not guarantee exactly 20 million:
+the realized parent count is stochastic, and initial daughters are additional.
+An exact 20-million-new-parent stopping rule instead has a stochastic duration;
+record its final readout-window policy explicitly. Source probabilities are 5/6
+Cs-137 and 1/6 Co-60; triggers, usable cones and initial daughters are separate
+measured populations. This proposed duration meets the earlier at-least-60-second
+production design, but awaits the owner's inspection and launch decision.
+
+The packaged fresh reference gives conditional complete-pipeline scenarios of
+about **16–19.3 GB retained**, including the imaging derivative, shared field
+cache, shared calibration and preserved evidence once, and about **123–125 active
+hours** in the measured runtime. Temporary disk and future peak RAM are **not
+bounded** by these figures. The longer-duration daughter mix, failure rate,
+checkpoint growth and compute contention may differ; calibration-generation
+time is not included. The original encoding is unchanged. These are planning
+scenarios, not confidence limits, a storage upper bound or a readiness guarantee.
+
+### Earlier bounded integration and format evidence
+
+**Historical startup evidence:** the mixed-source generator, existing native worker,
 continuous readout and conservative candidate store are connected in Control.
 All available signals enter readout; clean single-pixel and guard-only records
 keep counts/reasons without waveforms. Multi-strip and ambiguous candidates keep
@@ -57,32 +108,30 @@ about 206 s is outside this sub-millisecond startup window. No pre-existing
 daughters are assumed. This is a small integration acceptance, not equilibrium
 source operation or validated imaging efficiency.
 
-The 50 ms saved-signal storage diagnostic has 11,293 scheduled parents, 418
+The historical 50 ms saved-signal storage diagnostic has 11,293 scheduled parents, 418
 qualified triggers and 144 retained candidates, with exact readout replay for
 every candidate. Its compact archive is 1,007,616 bytes and its shared group
-ledger is 31,951 bytes. The measured storage model projects 1.81–2.34 GB of
-candidate core data for 20 million total parents, plus one 0.857 GB shared field
-cache. Fresh-run auxiliary provenance/failures and peak temporary space remain
-separate and unmeasured at that scale. The estimate uses historical libraries;
-the zero-candidate startup is not a storage-yield reference.
+ledger is 31,951 bytes. Its earlier 1.81–2.34 GB format-only candidate-core
+projection excluded fresh source/failure/late records. It is superseded for
+current planning by the measured five-second reference and whole-retained budget
+above; the replay remains applicable continuity evidence. The zero-candidate
+startup is not a storage-yield reference.
 
 **Delivered streaming implementation:** bounded transport/current blocks now
 preserve pending daughters and electronics state in resumable checkpoints.
 The recorded 100-parent split-50/50 fresh run, 50 ms two-restore check and 102 ms
 steady-source check provide continuity evidence; reuse the exact applicable
-receipts in PROGRESS.md. Five-second final resource accounting remains pending.
-The former 500-parent development size is not a runtime ceiling. Do not infer a
-whole-run disk budget from final candidate archive size alone.
-
-1. Put Cs-137 at (−40, 0, 40) mm and Co-60 at (+40, 0, 40) mm in one GeGI geometry. Use the commercial reference activities, 185 kBq and 37 kBq. Generate fresh decays on one absolute timeline with a source label and its corresponding position. For constant activities, the combined Poisson rate is 222,000 per second, with source probabilities 5/6 and 1/6. Preserve each decay's emission cascade and delayed daughters. Define pre-exposure activity so the acquisition starts in the intended physical state.
-2. Transport that mixed stream in the same detector. Drift charge for its deposits, sum overlapping electrode currents and process them through the same continuous preamplifier, shaper, noise, ADC and trigger. Keep electronics and clocks continuous across computational buffers for **at least 60 seconds**.
-3. Image from the common measured data. Report parent decays, recorded triggers, accepted energies, usable cones and excluded cases separately. A 60-second exposure has 13.32 million expected parent decays; the imaging count must be measured. If testing range, fit x, y and z before comparing with the programmed positions. Scale, duration beyond one minute and storage are pending the owner's decision.
+receipts in PROGRESS.md. Final five-second accounting and full candidate imaging
+now add the measured evidence summarized above. Do not infer a whole-run disk
+budget from final candidate archive size alone.
 
 The earlier [25-window readout study](../docs/results/gegi-shared-readout/index.html) used archived per-isotope histories in one shared electronics simulation per 250 ms window. It provides a readout comparison, not a completed full-generation run under this plan.
 
-### Mixed-source milestone contract (development authorized; production awaits owner)
+### Maintained mixed-source contract (implemented; production awaits owner)
 
-The next implementation reuses the existing geometry, fields, carrier transport and readout functions. Its new responsibility is connecting fresh mixed-source generation to continuous detector state. Before any resumed calculation, record these inputs and outputs in the run configuration and checkpoint:
+The implementation reuses the existing geometry, fields, carrier transport and
+readout functions, connecting fresh mixed-source generation to continuous detector
+state. Record these inputs and outputs for each new or resumed acquisition:
 
 | Boundary | Required record and acceptance |
 |---|---|
@@ -90,16 +139,16 @@ The next implementation reuses the existing geometry, fields, carrier transport 
 | Identity and time | One immutable acquisition ID and unique parent-decay ID identify the isotope and position. Daughter, emission, transport event and deposit IDs retain their parent relationships and absolute times, including delayed daughters across buffers. A trigger may contain multiple parents; one parent may contribute to multiple triggers. |
 | Continuous processing | Carry pending daughters and current tails, preamplifier/shaper/filter state, noise generator state, ADC sample index, trigger state and unfinished readout windows across buffers. A checkpoint also binds configuration/input hashes and the last committed identities so restart neither repeats nor drops records. |
 | Bounded acceptance after resumption | Process the same finite fresh-source input continuously, in several buffer sizes and through stop/resume. Compare identities, time ordering, deposited energy, signed charge, ADC codes and trigger/reconstruction records; document any necessary numerical tolerance. Place delayed emissions and overlapping pulses at buffer boundaries. Retain zero/nonzero/failure/unknown counts and close every stage's census before scaling. |
-| Production | After the readiness work passes, present one uninterrupted acquisition of at least 60 s for owner inspection; launch only after that decision. Report actual parent decays, deposits, triggers, accepted energies, usable imaging candidates, exclusions and unknowns separately. A completed pipeline alone does not establish instrument accuracy. |
+| Production | After published readiness and owner inspection, launch only the approved uninterrupted acquisition. The proposed 90.09 s case satisfies the at-least-60-second design. Report actual parent decays, deposits, triggers, accepted energies, usable imaging candidates, exclusions and unknowns separately. A completed pipeline alone does not establish instrument accuracy. |
 
 At the specified constant activities, the expected 60 s parent census is
 222,000 s⁻¹ × 60 s = **13,320,000 parent decays**, not triggers or imaging events.
 Assuming 34 channels, 50 million samples/s, 60 s and two bytes/sample, a complete
 uncompressed ADC stream would occupy **204 GB (about 190 GiB)**. This is a storage
 estimate under explicit assumptions, not a measured output size. Candidate-only
-retention is now implemented. Before production, measure bounded throughput
-and memory, and specify streaming buffers, retained trigger windows, event ledgers,
-checkpoints and the information needed to reproduce discarded samples. Existing
+retention is implemented and its five-second throughput/resources are measured.
+Use those conditional rates with the recorded buffers, trigger contexts, ledgers
+and checkpoints; larger-duration peak resources remain unvalidated. Existing
 scientific originals remain unchanged.
 
 Fix reconstruction selections, interaction-order rules and imaging priors before

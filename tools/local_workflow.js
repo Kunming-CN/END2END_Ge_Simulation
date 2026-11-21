@@ -9,6 +9,7 @@ let savedGeGIOptions=null,savedGeGIJob=null,savedGeGIBusy=false,savedGeGIGenerat
 let dualLibraries=[],dualJob=null,dualBusy=false,dualGeneration=0;
 let candidateJob=null,candidateBusy=false,candidateGeneration=0,candidateEventGeneration=0,candidateOffset=0,candidatePage=null;
 let candidateEstimateGeneration=0;
+let candidatePlaneGeneration=0;
 const continuationNames=new Map();
 const pendingActions=new Map();
 const stageNames={native_preparation:'Fields and injection calibration',geometry:'Geometry and source',radiation:'Radiation transport',event_ledger:'Event ledger',response:'Fields, charge, calibration and readout',results:'Verified results'};
@@ -134,7 +135,7 @@ function renderJobs(state){
   }
   syncRunList($('runs'),cards,'No runs created in this application.');controls();
 }
-async function poll(){const generation=++pollGeneration;try{const [state,legacy]=await Promise.all([api('/api/workflow/state'),api('/api/state')]);if(generation!==pollGeneration)return;renderJobs(state);renderLegacy(legacy);if(savedGeGIJob)void pollSavedGeGI();if(dualJob?.status==='running')void inspectDualJob(dualJob.name);if(['running','stop_requested'].includes(candidateJob?.status))void inspectCandidateJob(candidateJob.name);}catch(e){if(generation===pollGeneration)notice(e.message,true);}}
+async function poll(){const generation=++pollGeneration;try{const [state,legacy]=await Promise.all([api('/api/workflow/state'),api('/api/state')]);if(generation!==pollGeneration)return;renderJobs(state);renderLegacy(legacy);if(savedGeGIJob)void pollSavedGeGI();if(dualJob?.status==='running')void inspectDualJob(dualJob.name);if(['running','stop_requested'].includes(candidateJob?.status)||candidateJob?.analysis?.status==='running')void inspectCandidateJob(candidateJob.name);}catch(e){if(generation===pollGeneration)notice(e.message,true);}}
 
 function savedGeGIControls(){
   const hasInput=!!savedGeGIOptions?.campaigns?.some(c=>c.id===$('gegi-saved-campaign').value),status=savedGeGIJob?.status;
@@ -896,30 +897,58 @@ async function estimateCandidateStorage(){
     const estimate=await api('/api/workflow/gegi-candidates/estimate?'+new URLSearchParams(fields));
     if(generation!==candidateEstimateGeneration)return;
     const gib=bytes=>(bytes/1024**3).toFixed(2),range=estimate.planning_range_bytes;
-    target.textContent=estimate.total_parents.toLocaleString('en-US')+' total source decays: saved candidate core '+gib(range[0])+'–'+gib(range[1])+' GiB. Shared field cache '+gib(estimate.shared_field_cache_bytes)+' GiB, counted once. Additional fresh-run records and temporary peak storage have not been measured. These saved-readout planning scenarios are not a guaranteed upper bound. '+candidateRunDefaults();
-  }catch(e){if(generation===candidateEstimateGeneration)target.textContent='Storage estimate unavailable: '+e.message+' Temporary peak storage has not been measured. '+candidateRunDefaults();}
+    let text=estimate.total_parents.toLocaleString('en-US')+' total source decays: saved candidate core '+gib(range[0])+'–'+gib(range[1])+' GiB. Shared field cache '+gib(estimate.shared_field_cache_bytes)+' GiB, counted once. ';
+    const whole=estimate.whole_retained_planning_range_bytes,shared=estimate.whole_retained_with_shared_planning_range_bytes;
+    if(whole&&shared)text+='Conditional whole retained run '+gib(whole[0])+'–'+gib(whole[1])+' GiB; including the shared cache and existing external evidence once: '+gib(shared[0])+'–'+gib(shared[1])+' GiB. ';
+    else text+='Additional fresh-run records have not been measured. ';
+    const pipeline=estimate.complete_pipeline_with_shared_planning_range_bytes;
+    if(pipeline)text+='With optional source-plane imaging: '+gib(pipeline[0])+'–'+gib(pipeline[1])+' GiB including the shared waveform calibration once ('+gib(estimate.analysis_extension.shared_calibration_once_bytes)+' GiB). ';
+    const runtime=estimate.runtime_prediction?.planning_range_seconds;
+    if(runtime)text+='Conditional active processing '+(runtime[0]/3600).toFixed(1)+'–'+(runtime[1]/3600).toFixed(1)+' hours at the measured reference rates. ';
+    const pipelineRuntime=estimate.complete_pipeline_runtime_prediction?.planning_range_seconds;
+    if(pipelineRuntime)text+='Including optional imaging: '+(pipelineRuntime[0]/3600).toFixed(1)+'–'+(pipelineRuntime[1]/3600).toFixed(1)+' active hours under the same conditional scaling. ';
+    text+='Future peak temporary storage has not been forecast. These planning scenarios are not a guaranteed upper bound. '+candidateRunDefaults();
+    target.textContent=text;
+  }catch(e){if(generation===candidateEstimateGeneration)target.textContent='Storage estimate unavailable: '+e.message+' Future peak temporary storage has not been forecast. '+candidateRunDefaults();}
   finally{if(generation===candidateEstimateGeneration)button.disabled=false;}
 }
 function candidateControls(){
   const running=['running','stop_requested'].includes(candidateJob?.status);
+  const analyzing=candidateJob?.analysis?.status==='running';
   $('gegi-candidate-start').disabled=candidateBusy||busy||active||running;
   $('gegi-candidate-stop').disabled=candidateBusy||candidateJob?.status!=='running';
   $('gegi-candidate-resume').disabled=candidateBusy||busy||active||!candidateJob?.resumable;
   $('gegi-candidate-refresh').disabled=candidateBusy;
   $('gegi-candidate-previous').disabled=candidateBusy||candidateOffset===0;
   $('gegi-candidate-next').disabled=candidateBusy||!candidatePage||candidateOffset+candidatePage.items.length>=candidatePage.total;
+  $('gegi-candidate-analyze').disabled=candidateBusy||busy||active||analyzing||candidateJob?.status!=='completed'||!$('gegi-candidate-calibration').value;
+  $('gegi-candidate-open-map').disabled=candidateBusy||!$('gegi-candidate-map').value;
 }
 async function refreshCandidateRuns(){
   candidateBusy=true;candidateControls();
   try{const reply=await api('/api/workflow/gegi-candidates/options'),prior=$('gegi-candidate-job').value;
     options('gegi-candidate-job',[{id:'',label:'Choose an acquisition'},...reply.jobs.map(job=>({id:job.name,label:job.name+' · '+job.status}))]);
     if(reply.jobs.some(job=>job.name===prior))$('gegi-candidate-job').value=prior;
+    const calibration=$('gegi-candidate-calibration').value;
+    options('gegi-candidate-calibration',[{id:'',label:'Choose an imported calibration'},...(reply.calibrations||[])]);
+    if((reply.calibrations||[]).some(row=>row.id===calibration))$('gegi-candidate-calibration').value=calibration;
+    else if(reply.calibrations?.length)$('gegi-candidate-calibration').value=reply.calibrations[0].id;
     candidateStatus(reply.jobs.length+' saved acquisitions. Select one to inspect its statistics and candidates.');
   }catch(e){candidateStatus(e.message,true);}finally{candidateBusy=false;candidateControls();}
 }
 function showCandidateJob(job){
   const changed=candidateJob?.name!==job.name||candidateJob?.report_sha256!==job.report_sha256;
   candidateJob=job;const report=job.result,summary=$('gegi-candidate-summary');summary.replaceChildren();
+  $('gegi-candidate-imaging').hidden=!report;
+  if(changed){++candidatePlaneGeneration;$('gegi-candidate-map-view').replaceChildren();}
+  const priorMap=$('gegi-candidate-map').value,maps=job.analysis_maps||[];
+  options('gegi-candidate-map',[{id:'',label:'Choose a saved map'},...maps.map(row=>({id:row.analysis_id,
+    label:(row.scope==='all_two_strip_candidates'?'Full analysis':'Partial analysis')+' · z = '+row.z_mm+' mm · '+row.plane_prior}))]);
+  $('gegi-candidate-map').value=maps.some(row=>row.analysis_id===priorMap)?priorMap:maps[0]?.analysis_id||'';
+  const analysis=job.analysis;
+  $('gegi-candidate-analysis-status').textContent=analysis?.status==='running'?'Analyzing saved candidates in the installed transport environment…':
+    analysis?.status==='failed'?'Analysis failed: '+analysis.error:maps.length?'Saved maps are available. Opening a map does not repeat the fit.':
+    'Choose the separate matching calibration and plane settings, then analyze all two-strip candidates.';
   const entry=Array.from($('gegi-candidate-job').children).find(option=>option.value===job.name);
   if(entry)entry.textContent=job.name+' · '+job.status.replaceAll('_',' ');
   candidateStatus(job.name+' · '+job.status.replaceAll('_',' ')+(job.error?' · '+job.error:'')+
@@ -992,6 +1021,54 @@ async function manageCandidateRun(action){
   }catch(e){if(generation===candidateGeneration)candidateStatus(e.message,true);}
   finally{candidateBusy=false;candidateControls();}
 }
+async function analyzeCandidateRun(){
+  const job=candidateJob,generation=candidateGeneration;
+  if(!job?.report_sha256)return;
+  candidateBusy=true;candidateControls();
+  try{
+    const request={name:job.name,report_sha256:job.report_sha256,calibration_id:$('gegi-candidate-calibration').value,
+      plane_prior:$('gegi-candidate-plane-prior').value};
+    for(const [key,id]of [['z_mm','z'],['extent_mm','extent'],['step_mm','step'],['sigma_deg','sigma']]){
+      const text=$('gegi-candidate-plane-'+id).value.trim();request[key]=Number(text);
+      if(!text||!Number.isFinite(request[key]))throw Error('Enter finite plane settings.');
+    }
+    const reply=await api('/api/workflow/gegi-candidates/analyze',request);
+    if(generation!==candidateGeneration||candidateJob?.name!==job.name)return;
+    await inspectCandidateJob(job.name);
+    if(reply.reused){$('gegi-candidate-map').value=reply.analysis_id;await openCandidatePlane();}
+  }catch(error){if(generation===candidateGeneration)$('gegi-candidate-analysis-status').textContent=error.message;}
+  finally{candidateBusy=false;candidateControls();}
+}
+async function openCandidatePlane(){
+  const job=candidateJob,selected=(job?.analysis_maps||[]).find(row=>row.analysis_id===$('gegi-candidate-map').value);
+  if(!selected)return;
+  const generation=++candidatePlaneGeneration,target=$('gegi-candidate-map-view'),status=$('gegi-candidate-analysis-status');
+  const current=()=>generation===candidatePlaneGeneration&&candidateJob?.name===job.name&&candidateJob?.report_sha256===job.report_sha256&&
+    $('gegi-candidate-map').value===selected.analysis_id&&(candidateJob.analysis_maps||[]).some(row=>row.analysis_id===selected.analysis_id&&row.analysis_sha256===selected.analysis_sha256);
+  target.replaceChildren();status.textContent='Opening the saved source-plane map…';
+  try{
+    const reply=await api('/api/workflow/gegi-candidates/plane?'+new URLSearchParams({name:job.name,
+      report_sha256:job.report_sha256,analysis_id:selected.analysis_id,analysis_sha256:selected.analysis_sha256}));
+    if(!current())return;
+    if(reply.name!==job.name||reply.report_sha256!==job.report_sha256||reply.analysis_id!==selected.analysis_id||
+      reply.analysis_sha256!==selected.analysis_sha256||reply.kind!=='gegi_continuous_measured_plane_backprojection_v1')throw Error('Saved imaging and selected acquisition identities differ.');
+    const {grid,layers,model,selection,candidate_analysis:analysis}=reply,partial=analysis.scope!=='all_two_strip_candidates';
+    status.textContent=(partial?'Partial analysis':'Full analysis')+' · '+analysis.selected_original_trigger_ids.length+' of '+analysis.two_strip_candidates+' two-strip candidates selected.';
+    const source=analysis.source_census,layerChoice=node('select'),plot=node('div'),summary=node('p','','notice');
+    for(const key of Object.keys(layers)){const option=node('option',key==='all'?'All measured energies':key==='other_energy'?'Outside line windows':parseFloat(key)+' keV');option.value=key;layerChoice.append(option);}
+    layerChoice.value='all';const label=node('label','Measured energy window');label.append(layerChoice);
+    target.append(node('h4',partial?'Partial source-plane analysis':'Source-plane analysis'),
+      node('p',selection.qualified_triggers+' qualified triggers · '+selection.qualified_energies+' measured energies · '+selection.two_strip_triggers+' two-strip candidates. '+
+        selection.qualified_adc_live_time_ns/1e9+' of '+selection.clock_live_time_ns/1e9+' s qualified after unknown-history exclusion.'),
+      node('p','Original source census: '+source.initial_parents+' new parents · '+source.initial_daughter_decays+' initial-daughter decays. Native groups unavailable: '+source.unavailable_native_groups+'.'),
+      node('p','Assumed plane z = '+grid.assumed_z_mm+' mm; saved prior '+model.plane_prior+'. '+model.normalization),label,summary,plot,
+      node('p',model.geometry+' '+model.ambiguity+' '+model.limits,'muted'),
+      featureDetails('Original IDs, full census and analysis provenance',{analysis_sha256:reply.analysis_sha256,input_sha256:reply.input_sha256,original_trigger_ids:reply.original_trigger_ids,candidate_analysis:analysis}));
+    function paint(){const layer=layers[layerChoice.value];summary.textContent=layer.triggers+' triggers · '+layer.triggers_with_geometry+' with geometry · '+
+      metricValue(layer.projected_mass)+' projected and '+metricValue(layer.unresolved_mass)+' unresolved nominal trigger units.';plot.replaceChildren(dualPlaneMap(grid,layer,false));}
+    layerChoice.onchange=paint;paint();
+  }catch(error){if(current()){target.replaceChildren();status.textContent=error.message;}}
+}
 async function loadCandidatePage(offset){
   const job=candidateJob,generation=++candidateEventGeneration;
   if(!job?.report_sha256)return;
@@ -1030,11 +1107,15 @@ $('gegi-candidate-stop').onclick=()=>manageCandidateRun('stop');
 $('gegi-candidate-resume').onclick=()=>manageCandidateRun('resume');
 $('gegi-candidate-mode').onchange=candidateModeFields;
 candidateModeFields();
-$('gegi-candidate-job').onchange=()=>{++candidateGeneration;++candidateEventGeneration;candidateJob=null;candidatePage=null;$('gegi-candidate-view').hidden=true;$('gegi-candidate-summary').replaceChildren();const name=$('gegi-candidate-job').value;if(name)void inspectCandidateJob(name);else candidateStatus('Choose a saved acquisition.');candidateControls();};
+$('gegi-candidate-job').onchange=()=>{++candidateGeneration;++candidateEventGeneration;++candidatePlaneGeneration;candidateJob=null;candidatePage=null;$('gegi-candidate-view').hidden=true;$('gegi-candidate-imaging').hidden=true;$('gegi-candidate-map-view').replaceChildren();$('gegi-candidate-map').value='';$('gegi-candidate-summary').replaceChildren();const name=$('gegi-candidate-job').value;if(name)void inspectCandidateJob(name);else candidateStatus('Choose a saved acquisition.');candidateControls();};
 $('gegi-candidate-trigger').onchange=$('gegi-candidate-contact').onchange=loadCandidateEvent;
 $('gegi-candidate-previous').onclick=()=>loadCandidatePage(Math.max(0,candidateOffset-100));
 $('gegi-candidate-next').onclick=()=>loadCandidatePage(candidateOffset+100);
 $('gegi-candidate-estimate').onclick=estimateCandidateStorage;
+$('gegi-candidate-analyze').onclick=analyzeCandidateRun;
+$('gegi-candidate-open-map').onclick=openCandidatePlane;
+$('gegi-candidate-calibration').onchange=candidateControls;
+$('gegi-candidate-map').onchange=()=>{++candidatePlaneGeneration;$('gegi-candidate-map-view').replaceChildren();candidateControls();};
 for(const id of ['gegi-candidate-estimate-count',...['a','b'].flatMap(source=>['gegi-candidate-activity-'+source,...['x','y','z'].map(axis=>'gegi-candidate-'+source+'-'+axis)])])$(id).addEventListener('input',invalidateCandidateEstimate);
 
 function importedGeGIConfig(c,batched){

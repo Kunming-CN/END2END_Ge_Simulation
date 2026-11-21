@@ -73,7 +73,8 @@ class StudentRuntimePackage(unittest.TestCase):
 
     def test_streaming_runtime_closure_and_embedded_transport_rng_adapter(self):
         runtime = ('tools/gegi_streaming_acquisition.py', 'tools/gegi_streaming_readout.py',
-                   'tools/gegi_resource_monitor.py', 'transport/gegi_streaming_source.py')
+                   'tools/gegi_resource_monitor.py', 'transport/gegi_streaming_source.py',
+                   'tools/gegi_candidate_imaging.py')
         for ref in runtime:
             self.assertIn(ref, self.bodies)
             missing = dict(self.bodies)
@@ -89,8 +90,9 @@ class StudentRuntimePackage(unittest.TestCase):
         guide = self.bodies['tools/site_guide.html'].decode()
         self.assertIn('Resume saved acquisition', guide)
         self.assertIn('Geant4 random-number state', guide)
-        self.assertIn('75.54 MB', guide)
-        self.assertIn('fresh radiation transport, the native field load', guide)
+        self.assertIn('819 MB', guide)
+        self.assertIn('924,676 new Cs-137 parents, 185,199 new Co-60 parents', guide)
+        self.assertIn('Analyze all two-strip candidates', guide)
         self.assertNotIn('tools/validate_gegi_streaming_readout.py', self.bodies)
 
     def test_tampered_source_and_unlisted_members_are_rejected(self):

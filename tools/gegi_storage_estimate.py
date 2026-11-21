@@ -1,8 +1,8 @@
-"""Estimate candidate archive space from a measured completed readout reference.
+"""Plan storage and conditional work rates from measured completed references.
 
-This is a storage model, not a fresh-production acceptance or processing-time
-prediction. Source-history replay is useful for measuring the retention format;
-its candidate yield and missing-history fraction are explicit model assumptions.
+Historical format references remain supported. A measured fresh acquisition can
+also supply whole-retained and optional offline-analysis costs. These scenarios
+do not certify future daughter mix, runtime, peak resources or detector accuracy.
 """
 from __future__ import annotations
 import argparse
@@ -247,7 +247,7 @@ def load_reference(path=PACKAGED_REFERENCE):
 
 
 def estimate(total_parents=20_000_000, activities_bq=(185000, 37000), reference=None, disk_budget_bytes=None):
-    """Pure preflight: no simulation, allocation, deletion or duration-based timing fit."""
+    """Pure planning from saved measurements; no simulation or execution gate."""
     if type(total_parents) is not int or total_parents <= 0:
         raise ValueError('Use a positive total parent count')
     if (len(activities_bq) != 2 or any(type(a) not in (int, float) or not math.isfinite(a) or a <= 0 for a in activities_bq)):
@@ -298,16 +298,89 @@ def estimate(total_parents=20_000_000, activities_bq=(185000, 37000), reference=
                   'scope': 'External run directories, native/producer archives, source geometry/configuration/logs and scratch-retirement inventory remain additional; event data already inside the measured candidate database and shared group ledger are included.'},
               'shared_field_cache_bytes': reference['shared_field_cache_bytes'],
               'runtime_scratch': {'status': 'not_estimated_from_this_readout_reference',
-                  'scope': 'Bounded transport/deposit/drift inputs, pending daughters, current buffers, checkpoints and SQLite journals are separate from final retained candidates.',
-                  'production_ready': False},
+                  'future_peak_disk_bytes': None, 'future_peak_resident_bytes': None,
+                  'scope': 'Bounded transport/deposit/drift inputs, pending daughters, current buffers, checkpoints and SQLite journals are separate from final retained candidates.'},
               'provenance': reference['provenance'], 'assumptions': reference['assumptions'],
               'runtime_prediction': None,
               'scope': 'Candidate-core storage planning only; full fresh final retention and peak disk are not certified. 20M fresh parents and continuous production are not tested or launched by this estimate.'}
+    basis = reference.get('whole_run_basis')
+    if basis is not None:
+        retained, measured_time = basis['retained'], basis['time']
+        if (basis['new_parent_count'] != observation['initial_parents'] or
+                retained['candidate_core_bytes'] != cost['archive']+cost['report']+cost.get('input_group_ledger', 0) or
+                retained['run_bytes'] != retained['candidate_core_bytes']+retained['variable_external_records_bytes']+retained['fixed_run_preservation_bytes']):
+            raise ValueError('Measured whole-run new-parent denominator or retained costs do not close')
+        whole = {}
+        for name, scenario in scenarios.items():
+            variable = math.ceil(retained['variable_external_records_bytes']*scenario['event_scale'])
+            run_bytes = scenario['candidate_core_bytes']+variable+retained['fixed_run_preservation_bytes']
+            whole[name] = {'candidate_core_bytes': scenario['candidate_core_bytes'],
+                           'scaled_external_event_records_bytes': variable,
+                           'fixed_run_preservation_bytes': retained['fixed_run_preservation_bytes'],
+                           'run_retained_bytes': run_bytes,
+                           'shared_field_cache_once_bytes': reference['shared_field_cache_bytes'],
+                           'existing_external_evidence_once_bytes': retained['existing_external_evidence_once_bytes'],
+                           'run_plus_cache_and_existing_evidence_bytes': run_bytes+reference['shared_field_cache_bytes']+retained['existing_external_evidence_once_bytes']}
+        loads = measured_time['native_worker_load']
+        segment = measured_time['phase3_bridge_segment']
+        time_scenarios = {'observed_active_rate': measured_time['active_elapsed_seconds']*scale,
+                          'one_native_load_adjusted': (measured_time['active_elapsed_seconds']-loads['total_seconds'])*scale+loads['total_seconds']/loads['count'],
+                          'phase3_bridge_rate': segment['active_seconds']*total_parents/segment['new_parent_count']}
+        result.update(whole_retained_scenarios=whole,
+                      whole_retained_planning_range_bytes=[row['run_retained_bytes'] for row in whole.values()],
+                      whole_retained_with_shared_planning_range_bytes=[row['run_plus_cache_and_existing_evidence_bytes'] for row in whole.values()],
+                      measured_reference_resources={'live_time_ns': observation['live_time_ns'],
+                          'new_parent_count': observation['initial_parents'], 'initial_daughter_decays': observation['initial_daughter_decays'],
+                          'active_elapsed_seconds': measured_time['active_elapsed_seconds'], 'run_retained_bytes': retained['run_bytes'],
+                          **basis['peaks'], 'runtime_scope': basis['runtime_scope']},
+                      runtime_prediction={'status': 'conditional_measured_rate_scenarios',
+                          'planning_range_seconds': [min(time_scenarios.values()), max(time_scenarios.values())],
+                          'scenarios_seconds': time_scenarios,
+                          'scope': 'Same-runtime measured work-rate scenarios, not a confidence interval or guarantee. One-load case counts a measured mean worker load once; other startup/JIT overhead remains. The phase-3 segment includes startup and possibly a failed-phase tail. Small runs need a separate startup-latency model. Nested transport_run is never added to transport_cli or active wall.'},
+                      additional_retained_fresh_data={'status': 'measured_reference_rates_used',
+                          'scope': 'Observed failure spools, transport block lineage and logs scale per new parent. Original prefix/repair evidence and one shared field cache are fixed once. Unmeasured analysis outputs and changed retention policies remain additional.'},
+                      runtime_scratch={'status': 'measured_reference_only_future_peak_unbounded',
+                          'measured_reference_run_peak_bytes': basis['peaks']['run_logical_bytes_peak'],
+                          'future_peak_disk_bytes': None, 'future_peak_resident_bytes': None,
+                          'scope': 'The saved five-second peak is measured, not extrapolated. Future scratch/journals, daughter mix, checkpoint growth and compute contention are not bounded.'},
+                      scope='Conditional whole-retained and active-time planning from one measured five-second acquisition. Future daughter mix, peak resources, detector accuracy and production readiness are not certified; no larger run is launched.')
+        analysis = reference.get('analysis_extension_basis')
+        if analysis is not None:
+            if analysis['new_parent_count'] != observation['initial_parents']:
+                raise ValueError('Measured analysis new-parent denominator differs')
+            pipeline = {}
+            for name, row in whole.items():
+                derivative = math.ceil(analysis['derivative_bytes']*scenarios[name]['event_scale'])
+                pipeline[name] = {'acquisition_run_retained_bytes': row['run_retained_bytes'],
+                                  'analysis_derivative_bytes': derivative,
+                                  'run_retained_bytes': row['run_retained_bytes']+derivative,
+                                  'shared_field_cache_once_bytes': reference['shared_field_cache_bytes'],
+                                  'shared_calibration_once_bytes': analysis['shared_calibration_bytes'],
+                                  'existing_external_evidence_once_bytes': retained['existing_external_evidence_once_bytes'],
+                                  'run_plus_cache_calibration_and_evidence_bytes': row['run_plus_cache_and_existing_evidence_bytes']+derivative+analysis['shared_calibration_bytes'],
+                                  'analysis_processing_seconds': analysis['processing_seconds']*scenarios[name]['event_scale']}
+            result.update(analysis_extension={'status': 'measured_offline_analysis_extension',
+                              'reference_derivative_bytes': analysis['derivative_bytes'],
+                              'derivative_sha256': analysis['derivative_sha256'],
+                              'reference_processing_seconds': analysis['processing_seconds'],
+                              'processing_time_precision': analysis['processing_time_precision'],
+                              'reference_process_peak_resident_bytes': analysis['process_peak_resident_bytes'],
+                              'shared_calibration_once_bytes': analysis['shared_calibration_bytes'],
+                              'scope': 'Optional offline imaging: derivative scales at the observed rate; its separate shared calibration is counted once. Acquisition baseline and its measured peak are unchanged.'},
+                          complete_pipeline_scenarios=pipeline,
+                          complete_pipeline_with_shared_planning_range_bytes=[row['run_plus_cache_calibration_and_evidence_bytes'] for row in pipeline.values()],
+                          complete_pipeline_runtime_prediction={'status': 'conditional_measured_rate_scenarios',
+                              'planning_range_seconds': [min(time_scenarios.values())+pipeline['as_observed']['analysis_processing_seconds'],
+                                                         max(time_scenarios.values())+pipeline['qualified_time_adjusted']['analysis_processing_seconds']],
+                              'scope': 'Sequential acquisition plus the measured offline-analysis rate. Analysis time is rounded; future peak RAM/disk and changed candidate yield are not bounded. Separate process peaks are not summed.'})
     if disk_budget_bytes is not None:
         if type(disk_budget_bytes) is not int or disk_budget_bytes <= 0:
             raise ValueError('Use a positive disk budget in bytes')
-        needed = bounds[1]+reference['shared_field_cache_bytes']
+        needed = (result['complete_pipeline_with_shared_planning_range_bytes'][1] if 'complete_pipeline_scenarios' in result else
+                  result['whole_retained_with_shared_planning_range_bytes'][1] if basis is not None else
+                  bounds[1]+reference['shared_field_cache_bytes'])
         result['disk_budget'] = {'bytes': disk_budget_bytes, 'final_upper_scenario_plus_shared_fields_bytes': needed,
+            'basis': 'complete_pipeline_with_optional_shared_calibration' if 'complete_pipeline_scenarios' in result else 'acquisition_with_shared_fields' if basis is not None else 'candidate_core_with_shared_fields',
             'remaining_before_unestimated_scratch_bytes': disk_budget_bytes-needed,
             'status': 'final_and_shared_fit_scratch_unbudgeted' if disk_budget_bytes >= needed else 'insufficient_for_final_and_shared',
             'shared_field_policy': 'Count once if this budget also needs to hold the existing shared field cache; do not duplicate it per run.'}

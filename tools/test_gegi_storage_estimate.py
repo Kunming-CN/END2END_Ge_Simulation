@@ -1,7 +1,9 @@
 from contextlib import closing
+import copy
 import gzip
 import json
 import math
+import re
 from pathlib import Path
 import sqlite3
 import tempfile
@@ -131,8 +133,74 @@ class StorageEstimateTests(unittest.TestCase):
             expected=math.ceil((cost['archive']+cost['event_archive_pages']+cost['variable_archive_json_bytes'])/cost['page_size'])*cost['page_size']
             self.assertEqual(twice['candidate_archive_bytes'],expected)
             self.assertEqual(twice['expected_candidates'],2.)
-            self.assertIsNone(value['runtime_prediction'])
             self.assertEqual(value['additional_retained_fresh_data']['status'],'not_estimated')
+
+    def test_packaged_fresh_whole_run_denominator_and_shared_costs(self):
+        reference=E.load_reference();n=reference['observation']['initial_parents']
+        self.assertEqual(n,1109875)
+        self.assertEqual(reference['observation']['initial_daughter_decays'],867305)
+        self.assertEqual(reference['observation']['transport_primaries'],1977180)
+        self.assertEqual(reference['observation']['actual_new_parents_by_isotope']['co60_point_decay_v1']['parents'],185199)
+        same=E.estimate(n,reference=reference)
+        twice=E.estimate(2*n,reference=reference)
+        row=same['whole_retained_scenarios']['as_observed'];double=twice['whole_retained_scenarios']['as_observed']
+        self.assertEqual(row['run_retained_bytes'],819359442)
+        self.assertEqual(row['run_plus_cache_and_existing_evidence_bytes'],1681267223)
+        self.assertEqual(double['fixed_run_preservation_bytes'],row['fixed_run_preservation_bytes'])
+        self.assertEqual(double['shared_field_cache_once_bytes'],857068900)
+        self.assertEqual(double['existing_external_evidence_once_bytes'],4838881)
+        self.assertEqual(double['scaled_external_event_records_bytes'],2*row['scaled_external_event_records_bytes'])
+        self.assertEqual(twice['parent_scale'],2.)
+        self.assertEqual(same['measured_reference_resources'],twice['measured_reference_resources'])
+        self.assertEqual(same['measured_reference_resources']['run_logical_bytes_peak'],1019254940)
+        self.assertEqual(same['runtime_scratch']['status'],'measured_reference_only_future_peak_unbounded')
+        self.assertIsNone(same['runtime_scratch']['future_peak_disk_bytes'])
+        broken=copy.deepcopy(reference);broken['whole_run_basis']['new_parent_count']=1977180
+        with self.assertRaisesRegex(ValueError,'denominator'):
+            E.estimate(n,reference=broken)
+
+    def test_fresh_time_uses_active_wall_with_one_load_and_no_nested_double_count(self):
+        reference=E.load_reference();n=reference['observation']['initial_parents']
+        same=E.estimate(n,reference=reference);twice=E.estimate(2*n,reference=reference)
+        time=same['runtime_prediction'];double=twice['runtime_prediction'];basis=reference['whole_run_basis']['time']
+        self.assertEqual(time['scenarios_seconds']['observed_active_rate'],24595.746192)
+        self.assertEqual(double['scenarios_seconds']['observed_active_rate'],2*24595.746192)
+        loads=basis['native_worker_load'];fixed_load=loads['total_seconds']/loads['count']
+        expected=2*(basis['active_elapsed_seconds']-loads['total_seconds'])+fixed_load
+        self.assertEqual(double['scenarios_seconds']['one_native_load_adjusted'],expected)
+        changed=copy.deepcopy(reference)
+        changed['whole_run_basis']['time']['nested_transport_run_seconds']=99999999.
+        self.assertEqual(E.estimate(n,reference=changed)['runtime_prediction'],time)
+        self.assertEqual(time['planning_range_seconds'],[min(time['scenarios_seconds'].values()),max(time['scenarios_seconds'].values())])
+
+    def test_analysis_derivative_and_optional_shared_calibration_are_separate(self):
+        reference=E.load_reference();n=reference['observation']['initial_parents']
+        same=E.estimate(n,reference=reference);twice=E.estimate(2*n,reference=reference)
+        acquisition=same['whole_retained_scenarios']['as_observed'];pipeline=same['complete_pipeline_scenarios']['as_observed']
+        double=twice['complete_pipeline_scenarios']['as_observed']
+        self.assertEqual(acquisition['run_retained_bytes'],819359442)
+        self.assertEqual(pipeline['analysis_derivative_bytes'],1901334)
+        self.assertEqual(pipeline['run_retained_bytes'],819359442+1901334)
+        self.assertEqual(pipeline['run_plus_cache_calibration_and_evidence_bytes'],1681267223+1901334+303891603)
+        self.assertEqual(double['analysis_derivative_bytes'],2*1901334)
+        self.assertEqual(double['shared_calibration_once_bytes'],303891603)
+        self.assertEqual(pipeline['shared_field_cache_once_bytes'],857068900)
+        self.assertEqual(pipeline['analysis_processing_seconds'],229.959389909)
+        budget=E.estimate(n,reference=reference,disk_budget_bytes=100*1024**3)
+        self.assertEqual(budget['disk_budget']['final_upper_scenario_plus_shared_fields_bytes'],budget['complete_pipeline_with_shared_planning_range_bytes'][1])
+        self.assertEqual(budget['disk_budget']['basis'],'complete_pipeline_with_optional_shared_calibration')
+        self.assertEqual(same['analysis_extension']['reference_process_peak_resident_bytes'],551071744)
+        self.assertIsNone(same['runtime_scratch']['future_peak_resident_bytes'])
+
+    def test_packaged_reference_is_public_settings_and_measurements_only(self):
+        text=E.PACKAGED_REFERENCE.read_text(encoding='utf-8');reference=json.loads(text)
+        self.assertIsNone(re.search(r'[A-Za-z]:[\\/]|/mnt/[a-z]/|/home/[^/\s]+|file://|My Drive|/Users/',text))
+        self.assertNotIn('input_steps',text)
+        self.assertNotIn('raw_row_indices',text)
+        self.assertNotIn('adc_codes',text)
+        self.assertEqual(reference['provenance']['sources'][0]['position_global_mm'],[-40,0,40])
+        self.assertEqual(reference['provenance']['sources'][1]['position_global_mm'],[40,0,40])
+        self.assertEqual(reference['analysis_extension_basis']['input_report_sha256'],reference['provenance']['reference_report_sha256'])
 
     def test_group_ledger_is_counted_without_whole_gzip_decompression(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -173,7 +241,8 @@ class StorageEstimateTests(unittest.TestCase):
             self.assertEqual(observed['shared_input_group_ledger_bytes'], reference['bytes']['input_group_ledger'])
             self.assertGreater(value['planning_range_bytes'][1], value['planning_range_bytes'][0])
             self.assertIsNone(value['runtime_prediction'])
-            self.assertFalse(value['runtime_scratch']['production_ready'])
+            self.assertIsNone(value['runtime_scratch']['future_peak_disk_bytes'])
+            self.assertIsNone(value['runtime_scratch']['future_peak_resident_bytes'])
 
     def test_budget_does_not_pretend_to_bound_unmeasured_scratch(self):
         value = E.estimate(disk_budget_bytes=100*1024**3)

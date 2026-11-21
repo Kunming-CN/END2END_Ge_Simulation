@@ -47,7 +47,7 @@
 <div class="horizontal"><label>Cs-137 y · mm<input id="gegi-candidate-a-y" type="number" step="any" value="0"></label><label>Co-60 y · mm<input id="gegi-candidate-b-y" type="number" step="any" value="0"></label></div>
 <div class="horizontal"><label>Cs-137 z · mm<input id="gegi-candidate-a-z" type="number" step="any" value="40"></label><label>Co-60 z · mm<input id="gegi-candidate-b-z" type="number" step="any" value="40"></label></div>
 <div class="horizontal"><label>Storage planning · total source decays<input id="gegi-candidate-estimate-count" type="text" inputmode="numeric" value="20000000" autocomplete="off"></label><div class="actions"><button id="gegi-candidate-estimate">Estimate storage</button></div></div>
-<p id="gegi-candidate-storage" class="notice" role="status" aria-live="polite">Storage estimate uses the selected sources and a measured saved-readout reference. Temporary peak storage has not been measured.</p>
+<p id="gegi-candidate-storage" class="notice" role="status" aria-live="polite">Storage estimate uses the selected sources and a measured reference. Future peak temporary storage has not been forecast.</p>
 <label>Acquisition mode<select id="gegi-candidate-mode"><option value="duration" selected>Steady source · physical duration</option><option value="count">Startup check · fixed new-parent count</option></select></label>
 <div class="horizontal"><label id="gegi-candidate-duration-field">Physical duration · s<input id="gegi-candidate-duration" type="number" min="0" step="any" value="5"></label><label id="gegi-candidate-count-field" hidden>New parent decays<input id="gegi-candidate-count" type="number" min="1" step="1" value="100"></label><label>Seed<input id="gegi-candidate-seed" type="number" min="1" max="2147483646" step="1" value="20261120"></label></div>
 <p id="gegi-candidate-scope" class="muted">Choose a positive physical duration; the default is 5 seconds. Radioactive daughter populations use the source equilibrium model; electronics start quiet with zero signal history.</p>
@@ -57,6 +57,15 @@
 <label>Saved acquisition<select id="gegi-candidate-job"><option value="">Choose an acquisition</option></select></label>
 <p id="gegi-candidate-status" class="notice" role="status" aria-live="polite">Run a small fresh acquisition, or refresh to open saved candidates.</p>
 <div id="gegi-candidate-summary"></div>
+<section id="gegi-candidate-imaging" hidden><h3>Reconstruct a source-plane map</h3>
+<p>Analyze the saved two-strip candidates with the separate matching waveform calibration. This reads existing data and creates a derived map; it does not run radiation transport or carrier drift. Download the separate calibration into <code>.local/gegi-center-calibration.npz</code>, then refresh saved acquisitions.</p>
+<label>External calibration<select id="gegi-candidate-calibration"><option value="">Choose an imported calibration</option></select></label>
+<div class="horizontal"><label>Assumed plane z · mm<input id="gegi-candidate-plane-z" type="number" step="any" value="40"></label><label>Plane half-width · mm<input id="gegi-candidate-plane-extent" type="number" min="0" step="any" value="120"></label><label>Grid spacing · mm<input id="gegi-candidate-plane-step" type="number" min="0" step="any" value="4"></label><label>Angular width · degrees<input id="gegi-candidate-plane-sigma" type="number" min="0" step="any" value="5"></label></div>
+<label>Plane prior<select id="gegi-candidate-plane-prior"><option value="uniform-area">Uniform area</option><option value="uniform-solid-angle">Uniform solid angle from detector origin</option></select></label>
+<div class="actions"><button id="gegi-candidate-analyze" disabled>Analyze all two-strip candidates</button></div>
+<p id="gegi-candidate-analysis-status" class="notice" role="status" aria-live="polite">Choose a completed acquisition.</p>
+<label>Saved source-plane map<select id="gegi-candidate-map"><option value="">No saved map</option></select></label><button id="gegi-candidate-open-map" disabled>Open saved map</button>
+<div id="gegi-candidate-map-view"></div></section>
 <div id="gegi-candidate-view" hidden><div class="horizontal"><label>Original candidate trigger<select id="gegi-candidate-trigger"></select></label><label>Electrode<select id="gegi-candidate-contact"></select></label></div>
 <div class="actions"><button id="gegi-candidate-previous">Previous candidates</button><button id="gegi-candidate-next">Next candidates</button></div><p id="gegi-candidate-page" class="muted"></p>
 <p id="gegi-candidate-event-status" class="notice" role="status" aria-live="polite"></p><div id="gegi-candidate-features"></div><div id="gegi-candidate-plots" class="plot-grid"></div>

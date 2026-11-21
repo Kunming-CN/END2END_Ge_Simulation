@@ -1,6 +1,7 @@
 """Bounded Control lifecycle, protection and saved selected-electrode contracts."""
 
 import copy
+import gzip
 from io import BytesIO
 import json
 from pathlib import Path
@@ -107,9 +108,12 @@ class CandidateControlTests(unittest.TestCase):
         self.assertEqual(estimate['new_science_calls'], 0)
         self.assertEqual(estimate['shared_field_cache_bytes'], 857068900)
         self.assertGreater(estimate['planning_range_bytes'][1], estimate['planning_range_bytes'][0])
-        self.assertFalse(estimate['runtime_scratch']['production_ready'])
-        self.assertEqual(estimate['runtime_scratch']['status'], 'not_estimated_from_this_readout_reference')
-        self.assertIsNone(estimate['runtime_prediction'])
+        self.assertIsNone(estimate['runtime_scratch']['future_peak_disk_bytes'])
+        self.assertEqual(estimate['runtime_prediction']['status'], 'conditional_measured_rate_scenarios')
+        self.assertGreater(estimate['whole_retained_with_shared_planning_range_bytes'][0], estimate['planning_range_bytes'][0])
+        self.assertEqual(estimate['analysis_extension']['shared_calibration_once_bytes'], 303891603)
+        self.assertGreater(estimate['complete_pipeline_runtime_prediction']['planning_range_seconds'][0],
+                           estimate['runtime_prediction']['planning_range_seconds'][0])
         for changes in ({'total_parents': '0'}, {'total_parents': '9007199254740992'},
                         {'total_parents': '1.5'}, {'activity_a_bq': 'nan'},
                         {'activity_a_bq': '37000'}, {'a_x': '-39'}, {'b_z': 'inf'}, {'path': '../private'}):
@@ -446,6 +450,114 @@ class CandidateControlTests(unittest.TestCase):
             self.assertEqual(settings['initial_state_policy'], C.STEADY_POLICY if 'duration_s' in settings else C.STARTUP_POLICY)
             self.assertEqual(settings['activities_bq'], [185000, 37000])
             self.assertEqual(settings['positions_mm'], [[-40, 0, 40], [40, 0, 40]])
+
+    def imaging_fixture(self):
+        self.control.start(**self.settings()); self.finish()
+        directory = self.root/C.OUTPUTS/'mixed-unit'
+        report = W.read(directory/C.REPORT_NAME)
+        report['counts']['qualified_energies'] = 1
+        report.update(source={'initial_parents': 100, 'initial_daughter_decays': 0, 'unavailable_native_groups': 1},
+                      excluded_intervals_ns=[[1000., 2000.]], verification={'status': 'verified_exact'})
+        W.write(directory/C.REPORT_NAME, report)
+        # This is an input-discovery fixture, never loaded as a physical calibration.
+        calibration = self.root/'.local/gegi-center-calibration.npz'
+        calibration.write_bytes(b'synthetic separate waveform calibration')
+        self.control.jobs['mixed-unit'].pop('report_sha256', None)
+        digest = W.sha(directory/C.REPORT_NAME)
+        request = dict(name='mixed-unit', report_sha256=digest,
+                       calibration_id=self.control.options()['calibrations'][0]['id'],
+                       z_mm=40., extent_mm=2., step_mm=4., sigma_deg=5., plane_prior='uniform-area')
+        layer = dict(triggers=1, triggers_with_geometry=1, allowed_hypotheses=1, hypotheses=1,
+                     projected_mass=1., unresolved_mass=0., mass=[[1., 0.], [0., 0.]])
+        result = dict(kind=C.PLANE_KIND,
+            input_sha256={'acquisition': digest, 'candidate_store': report['artifacts'][storage.ARCHIVE_NAME]['sha256'],
+                          'calibration': W.sha(calibration)},
+            grid=dict(x_mm=[-2., 2.], y_mm=[-2., 2.], step_mm=4., extent_mm=2., assumed_z_mm=40.),
+            model=dict(plane_prior='uniform-area', angular_nuisance_sigma_deg=5., geometry='Synthetic fixture',
+                       normalization='Nominal mass', ambiguity='Retain unresolved alternatives', limits='No scientific fit'),
+            layers={'all': layer, 'other_energy': copy.deepcopy(layer)},
+            selection=dict(qualified_triggers=1, qualified_energies=1, two_strip_triggers=1,
+                           clock_live_time_ns=5000., qualified_adc_live_time_ns=4000., energy_windows='Fixture'),
+            candidate_analysis=dict(kind=C.ANALYSIS_KIND, scope='all_two_strip_candidates',
+                two_strip_candidates=1, selected_original_trigger_ids=[1], qualified_counts=report['counts'],
+                storage_counts=report['storage_counts'], source_census=report['source'],
+                excluded_intervals_ns=report['excluded_intervals_ns']),
+            fit_receipt=dict(kind='gegi_candidate_measured_waveform_fits_v1', two_strip_triggers=1),
+            triggers=[{'original_trigger_id': 1}])
+        return directory, request, result
+
+    def test_imaging_protected_child_recipe_saved_view_and_matching_reuse(self):
+        directory, request, result = self.imaging_fixture()
+        original = {name: W.sha(directory/name) for name in (C.REPORT_NAME, storage.ARCHIVE_NAME)}
+        captured = []; self.ready.clear(); self.release.clear()
+        def runner(argv, **kwargs):
+            captured.append(argv); kwargs['on_output']('Saved-data unit fixture only\n'); self.ready.set()
+            if not self.release.wait(5): raise RuntimeError('Unit fixture timed out')
+            output = (self.root/'transport'/argv[argv.index('--output')+1]).resolve()
+            output.write_bytes(gzip.compress(W.encoded(result), mtime=0))
+            return {'exit_code': 0, 'output': '{}'}
+        self.control.analysis_runner = runner
+        for changes in ({'report_sha256': '0'*64}, {'calibration_id': '../private'}, {'step_mm': 0},
+                        {'z_mm': float('nan')}, {'plane_prior': 'unknown'}, {'trigger_ids': [1]}):
+            self.assertEqual(self.request('analyze', request | changes)[0], 400)
+        self.assertEqual(self.request('analyze', request, {'Origin': 'https://foreign.invalid'})[0], 403)
+        self.assertFalse(captured)
+        with patch.object(W, 'transport_prefix', return_value=['existing-transport-helper']) as prefix:
+            status, job = self.request('analyze', request)
+            self.assertEqual((status, job['status']), (200, 'running'))
+            self.assertTrue(self.ready.wait(2)); self.assertTrue(self.workflow.own_busy())
+            self.assertEqual(self.control.state('mixed-unit')['analysis']['status'], 'running')
+            self.assertEqual(self.request('analyze', request)[0], 400)
+            self.finish(); prefix.assert_called_once_with(self.root)
+        argv = captured[0]
+        self.assertEqual(argv[:7], ['existing-transport-helper', 'env', 'OPENBLAS_NUM_THREADS=1',
+                                   'OMP_NUM_THREADS=1', 'python', '-B', '../tools/gegi_candidate_imaging.py'])
+        self.assertEqual(argv[argv.index('--calibration')+1], '../.local/gegi-center-calibration.npz')
+        self.assertNotIn('--max-two-strip', argv); self.assertNotIn('--trigger-id', argv)
+        job = self.control.state('mixed-unit'); self.assertEqual(job['analysis']['status'], 'completed')
+        saved = job['analysis_maps'][0]
+        query = 'plane?'+urlencode(dict(name='mixed-unit', report_sha256=request['report_sha256'], **saved))
+        # Inventory display fields are not accepted as arbitrary route parameters.
+        self.assertEqual(self.request(query)[0], 400)
+        query = 'plane?'+urlencode({key: value for key, value in dict(name='mixed-unit', report_sha256=request['report_sha256'], **saved).items()
+                                    if key in ('name','report_sha256','analysis_id','analysis_sha256')})
+        status, view = self.request(query)
+        self.assertEqual(status, 200); self.assertEqual(view['candidate_analysis']['source_census'], result['candidate_analysis']['source_census'])
+        self.assertEqual(view['original_trigger_ids'], [1])
+        self.assertEqual(view['candidate_analysis']['excluded_intervals_ns'], [[1000., 2000.]])
+        self.assertNotIn('triggers', view); self.assertNotIn('fit_receipt', view)
+        self.assertEqual(self.request(query.replace(saved['analysis_sha256'], '0'*64))[0], 400)
+        self.assertEqual(self.request(query.replace(request['report_sha256'], '0'*64))[0], 400)
+        self.assertEqual(self.request(query, headers={'X-Control-Token': 'wrong'})[0], 403)
+        status, reused = self.request('analyze', request)
+        self.assertEqual((status, reused['status'], reused['reused']), (200, 'completed', True))
+        self.assertEqual(len(captured), 1)
+        self.assertEqual(original, {name: W.sha(directory/name) for name in original})
+        # An already completed map survives a Control interruption without a refit.
+        saved_state = W.read(self.control.state_path)
+        saved_state['jobs'][0]['analysis'].update(status='running', driver=None)
+        W.write(self.control.state_path, saved_state)
+        restored = J.WorkflowController(self.root).gegi_candidates()
+        self.assertEqual(restored.state('mixed-unit')['analysis']['status'], 'completed')
+        self.assertEqual(len(captured), 1)
+
+    def test_imported_partial_map_is_explicit_and_never_reused_as_full(self):
+        directory, request, result = self.imaging_fixture()
+        result['candidate_analysis'].update(scope='explicit_analysis_subset', selected_original_trigger_ids=[])
+        for layer in result['layers'].values():
+            layer.update(triggers_with_geometry=0, hypotheses=0, projected_mass=0., unresolved_mass=1., mass=[[0.,0.],[0.,0.]])
+        path = directory/'candidate-imaging-prefix.json.gz'; path.write_bytes(gzip.compress(W.encoded(result), mtime=0))
+        saved = self.control.state('mixed-unit')['analysis_maps'][0]
+        view = self.control.analysis_plane('mixed-unit', request['report_sha256'], saved['analysis_id'], saved['analysis_sha256'])
+        self.assertEqual(view['candidate_analysis']['scope'], 'explicit_analysis_subset')
+        self.control.analysis_runner = lambda *a, **k: {'exit_code': 7, 'output': 'Synthetic failed analysis'}
+        status, job = self.request('analyze', request); self.assertEqual((status, job['status']), (200, 'running'))
+        self.finish(); self.assertEqual(self.control.state('mixed-unit')['analysis']['status'], 'failed')
+        self.assertEqual(json.loads(gzip.decompress(path.read_bytes()))['candidate_analysis']['scope'], 'explicit_analysis_subset')
+        result['candidate_analysis']['source_census']['initial_parents'] = 99
+        path.write_bytes(gzip.compress(W.encoded(result), mtime=0))
+        with self.assertRaisesRegex(W.ControlError, 'denominators differ'):
+            self.control.analysis_plane('mixed-unit', request['report_sha256'], saved['analysis_id'], W.sha(path))
 
 
 if __name__ == '__main__':

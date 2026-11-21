@@ -1982,7 +1982,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   await pendingEstimate;
   assert.match(get('gegi-candidate-storage').textContent,/20,000,000 total source decays: saved candidate core 2\.00–3\.00 GiB/);
   assert.match(get('gegi-candidate-storage').textContent,/cache 0\.80 GiB, counted once/);
-  assert.match(get('gegi-candidate-storage').textContent,/Additional fresh-run records and temporary peak storage have not been measured/);
+  assert.match(get('gegi-candidate-storage').textContent,/Additional fresh-run records have not been measured.*Future peak temporary storage has not been forecast/);
   assert.match(get('gegi-candidate-storage').textContent,/Defaults are 100 new parent decays or 5 physical seconds.*requested acquisition/);
   const staleEstimate=run('estimateCandidateStorage()');
   get('gegi-candidate-a-x').value='-39';get('gegi-candidate-a-x').oninput();
@@ -1993,6 +1993,16 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run(`api=async()=>{throw Error('A changed source position needs a matching measured reference.');};`);
   await run('estimateCandidateStorage()');
   assert.match(get('gegi-candidate-storage').textContent,/Storage estimate unavailable:.*matching measured reference/);
+  run(`api=async()=>({...storageEstimateReply,whole_retained_planning_range_bytes:[12*1024**3,15*1024**3],
+    whole_retained_with_shared_planning_range_bytes:[14*1024**3,17*1024**3],
+    complete_pipeline_with_shared_planning_range_bytes:[15*1024**3,18*1024**3],analysis_extension:{shared_calibration_once_bytes:303891603},
+    complete_pipeline_runtime_prediction:{planning_range_seconds:[124*3600,125*3600]},
+    runtime_prediction:{planning_range_seconds:[122*3600,123*3600]}});`);
+  await run('estimateCandidateStorage()');
+  assert.match(get('gegi-candidate-storage').textContent,/whole retained run 12\.00–15\.00 GiB.*cache and existing external evidence once: 14\.00–17\.00 GiB/);
+  assert.match(get('gegi-candidate-storage').textContent,/active processing 122\.0–123\.0 hours at the measured reference rates.*Future peak temporary storage has not been forecast/);
+  assert.match(get('gegi-candidate-storage').textContent,/optional source-plane imaging: 15\.00–18\.00 GiB.*shared waveform calibration once \(0\.28 GiB\)/);
+  assert.match(get('gegi-candidate-storage').textContent,/Including optional imaging: 124\.0–125\.0 active hours under the same conditional scaling/);
   run(`candidateJob={name:'startup-fixture',report_sha256:'c'.repeat(64)};
     showCandidateJob({...candidateJob,status:'completed',result:{counts:{qualified_triggers:0},
       storage_counts:{saved_candidates:0,rejected_rises:0},artifacts:{'compton-candidates.sqlite':{bytes:16384}},
@@ -2015,5 +2025,74 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(steadyText,/source equilibrium model\. Electronics start quiet with zero signal history/);
   assert.match(steadyText,/Mean initial daughter population:.*a statistical mean, separate from executed decay counts/);
   assert.doesNotMatch(steadyText,/no pre-existing daughters/);
+  // Candidate imaging uses completed fresh records directly, without legacy libraries.
+  assert.match(html,/Analyze all two-strip candidates/);
+  assert.match(html,/\.local\/gegi-center-calibration\.npz/);
+  run(`busy=false;active=false;candidateBusy=false;
+    const candidateMapRow={analysis_id:'candidate-imaging.json.gz',analysis_sha256:'1'.repeat(64),
+      scope:'all_two_strip_candidates',z_mm:40,plane_prior:'uniform-area'};
+    const candidatePartialRow={...candidateMapRow,analysis_id:'candidate-imaging-prefix.json.gz',
+      analysis_sha256:'2'.repeat(64),scope:'explicit_analysis_subset'};
+    const candidateMapJob={name:'candidate-map',status:'completed',report_sha256:'e'.repeat(64),
+      analysis_maps:[candidateMapRow,candidatePartialRow],result:{counts:{qualified_triggers:4},
+        storage_counts:{saved_candidates:2,rejected_rises:2},artifacts:{'compton-candidates.sqlite':{bytes:16384}},
+        live_time_ns:5e9,source:{initial_parents:1000,initial_daughter_decays:70}}};
+    const candidateMapReply={...planeReply,name:candidateMapJob.name,report_sha256:candidateMapJob.report_sha256,
+      kind:'gegi_continuous_measured_plane_backprojection_v1',analysis_id:candidateMapRow.analysis_id,
+      analysis_sha256:candidateMapRow.analysis_sha256,input_sha256:{acquisition:candidateMapJob.report_sha256},
+      selection:{...planeReply.selection,clock_live_time_ns:5e9,qualified_adc_live_time_ns:4e9},
+      model:{...planeReply.model,normalization:'Uniform area, normalized on the saved grid.'},
+      candidate_analysis:{scope:'all_two_strip_candidates',selected_original_trigger_ids:[61,683],two_strip_candidates:2,
+        source_census:{initial_parents:1000,initial_daughter_decays:70,unavailable_native_groups:3},
+        excluded_intervals_ns:[[0,1e9]]}};
+    const candidatePartialReply={...candidateMapReply,analysis_id:candidatePartialRow.analysis_id,
+      analysis_sha256:candidatePartialRow.analysis_sha256,candidate_analysis:{...candidateMapReply.candidate_analysis,
+        scope:'explicit_analysis_subset',selected_original_trigger_ids:[61]}};
+    let candidateAnalysisCalls=[];
+    api=async(path,data)=>{candidateAnalysisCalls.push([path,data]);
+      if(path.endsWith('/options'))return {jobs:[{name:candidateMapJob.name,status:'completed'}],calibrations:[{id:'external-calibration',label:'Imported separate calibration'}]};
+      if(path.endsWith('/analyze'))return {status:'completed',reused:true,...candidateMapRow};
+      if(path.includes('/state?'))return candidateMapJob;
+      if(path.includes('/list?'))return {items:[],total:0,offset:0};
+      return path.includes('candidate-imaging-prefix')?candidatePartialReply:candidateMapReply;};`);
+  await run('refreshCandidateRuns()');
+  assert.equal(get('gegi-candidate-calibration').value,'external-calibration');
+  get('gegi-candidate-job').value='candidate-map';
+  run('showCandidateJob(candidateMapJob)');await run('Promise.resolve()');
+  assert.equal(get('gegi-candidate-imaging').hidden,false);
+  assert.equal(get('gegi-candidate-map').value,'candidate-imaging.json.gz');
+  assert.match(get('gegi-candidate-map').children.at(-1).textContent,/Partial analysis/);
+  for(const [id,value]of Object.entries({z:'40',extent:'120',step:'4',sigma:'5'}))get('gegi-candidate-plane-'+id).value=value;
+  get('gegi-candidate-plane-prior').value='uniform-area';
+  await get('gegi-candidate-analyze').onclick();
+  const analyzeCall=JSON.parse(run("JSON.stringify(candidateAnalysisCalls.find(([path])=>path.endsWith('/analyze')))"));
+  assert.deepEqual(analyzeCall,['/api/workflow/gegi-candidates/analyze',{name:'candidate-map',report_sha256:'e'.repeat(64),
+    calibration_id:'external-calibration',z_mm:40,extent_mm:120,step_mm:4,sigma_deg:5,plane_prior:'uniform-area'}]);
+  const candidateMapText=()=>descendants(get('gegi-candidate-map-view')).map(node=>node.textContent).join(' ');
+  assert.match(get('gegi-candidate-analysis-status').textContent,/Full analysis · 2 of 2 two-strip candidates/);
+  assert.match(candidateMapText(),/4 qualified triggers · 3 measured energies · 2 two-strip candidates.*4 of 5 s qualified/);
+  assert.match(candidateMapText(),/1000 new parents · 70 initial-daughter decays.*unavailable: 3/);
+  assert.match(candidateMapText(),/Assumed plane z = 40 mm; saved prior uniform-area/);
+  assert.match(candidateMapText(),/0\.875 projected and 1\.125 unresolved/);
+  assert.match(candidateMapText(),/selected_original_trigger_ids[\s\S]*61[\s\S]*683/);
+  const candidateCanvas=descendants(get('gegi-candidate-map-view')).find(node=>node.tagName==='canvas');
+  assert.match(candidateCanvas['aria-label'],/X increases right from -8 to 8 mm.*Y increases up from -12 to 4 mm/);
+  await get('gegi-candidate-open-map').onclick();
+  assert.equal(run("candidateAnalysisCalls.filter(([path])=>path.endsWith('/analyze')).length"),1);
+  get('gegi-candidate-map').value='candidate-imaging-prefix.json.gz';get('gegi-candidate-map').onchange();
+  await get('gegi-candidate-open-map').onclick();
+  assert.match(get('gegi-candidate-analysis-status').textContent,/Partial analysis · 1 of 2/);
+  assert.match(candidateMapText(),/Partial source-plane analysis/);
+  run(`api=async()=>({...candidatePartialReply,analysis_sha256:'f'.repeat(64)});`);
+  await get('gegi-candidate-open-map').onclick();
+  assert.match(get('gegi-candidate-analysis-status').textContent,/identities differ/);
+  assert.equal(get('gegi-candidate-map-view').children.length,0);
+  run(`let resolveCandidatePlane;api=()=>new Promise(resolve=>resolveCandidatePlane=resolve);`);
+  const lateCandidatePlane=get('gegi-candidate-open-map').onclick();
+  get('gegi-candidate-job').value='';get('gegi-candidate-job').onchange();
+  assert.equal(get('gegi-candidate-imaging').hidden,true);
+  run('resolveCandidatePlane(candidatePartialReply)');await lateCandidatePlane;
+  assert.equal(get('gegi-candidate-map-view').children.length,0);
+  console.log('Candidate imaging: imported calibration, full default recipe, matching saved-map reuse, source/unknown census, original IDs, partial labels, existing map renderer and stale identity guards passed; mocked saved-data analysis only.');
   console.log('Pre-run storage planning uses current source settings, clears stale estimates, separates one shared cache and unmeasured scratch, and explains startup daughters and delayed groups.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

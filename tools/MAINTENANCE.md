@@ -6,20 +6,45 @@ generic `Run.cmd` calculation route remains distinct.
 
 The fresh mixed-source candidate route is owned by `gegi_candidate_control.py`;
 `gegi_streaming_acquisition.py` coordinates `transport/gegi_streaming_source.py`,
-the existing native worker and `gegi_streaming_readout.py`. The current modes are
-up to five physical seconds with a steady nuclear source inventory, or a fixed
-startup count of up to 500 new parents. `transport/gegi_source_inventory.py`
+the existing native worker and `gegi_streaming_readout.py`. Duration and new-parent
+count modes have no former five-second/500-parent development ceiling; defaults
+remain five seconds and 100 startup parents. Positive configuration, identity,
+finite-window and resource checks remain. `transport/gegi_source_inventory.py`
 binds the initial Ba137m inventory to pinned Geant4 decay data; electronics start
 quiet in both modes. `gegi_candidate_storage.py` commits candidate rows and the
 matching source/readout checkpoint atomically. Control retains the shared lease
 and original parameters through cooperative Stop/Resume. Missing-history
 exclusions belong in `gegi_missing_history.py`; resource measurements belong in
 `gegi_resource_monitor.py`. `gegi_candidate_run.py` owns the saved candidate
-verification and report contract. `gegi_storage_estimate.py` reads the small
-historical `gegi_storage_reference.json` without physics; keep that reference's
-scope separate from fresh-run wall time and peak storage. The student manifest
-includes runtime dependencies, not saved runs. Longer acquisitions remain a
-separate delivery milestone.
+verification and report contract. `gegi_native_continuation.py` and
+`gegi_stream_id_continuation.py` preserve explicit producer/repair phases; never
+silently rebaseline an existing store or use nominal new-parent count as a bound
+on transport IDs that include initial daughters.
+
+`gegi_candidate_imaging.py` connects completed candidate archives to the existing
+calibration, two-strip fit and conditional-map functions. The same five-second
+acquisition is complete: 1,109,875 new parents (924,676 Cs-137 / 185,199 Co-60),
+867,305 initial daughters, 14,909 exact-replayed candidates and all 3,822 eligible
+two-strip candidates processed. Other retained candidates and unknown/unassigned
+weight remain explicit. The canonical derivative is `candidate-imaging.json.gz`;
+Control opens saved imaging and writes separately identified new recipes. Keep
+original acquisition data and calibration/model/cache/digital identities intact.
+
+`gegi_storage_estimate.py` reads the sanitized measured five-second
+`gegi_storage_reference.json` without physics. It preserves separate new-parent
+and initial-daughter denominators, scales measured event tables/indexes and
+external event records, and counts fixed preservation and shared caches once.
+Acquisition retention is 819,359,442 bytes; its sampled run-file peak is
+1,019,254,940 bytes and sampled Python/native RSS peak is 2,609,360,896 bytes.
+The 1,901,334-byte imaging derivative and optional 303,891,603-byte shared
+calibration are separate from the acquisition and its 857,068,900-byte shared
+field cache. The conditional 20-million-new-parent full-pipeline budget is about
+16–19.3 GB and 123–125 active hours; future temporary space and peak RAM remain
+unbounded. Do not add nested transport time twice or treat a measured peak as a
+production bound. The student manifest includes runtime dependencies and this
+small metrics reference, not saved runs or caches. After verified readiness is
+published, end and delete heartbeat `gegi`; the owner inspects the proposed
+90.09-second/20-million-parent configuration before any larger launch.
 
 The existing saved-GeGI reprocessing panel also accepts completed standalone
 GeGI runs owned by Control. `gegi_saved_control.py` delegates those inputs to
