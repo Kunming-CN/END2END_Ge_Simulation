@@ -33,8 +33,18 @@ skip) plus four targeted final compatibility/clock checks. Chrome rendered
 90.09 s and 20,000,000 inputs with no maximum attributes; no Run or download was
 clicked. Preview tab/server are closed. All 38 publication tests pass. Generated
 build `923f841eccdf69b3ac7198b2cfb1e963dedcef17caa40e7c51b143b655694d99`
-and `check_site.py` pass: only guide and manifest change. Runtime/release/GitHub
-publication is next. Final five-second census, storage and timing remain pending.
+and `check_site.py` pass: only guide and manifest change. Source commit
+`c649d8e5985875175329927a95448e13aaae580e` is on GitHub main. Release
+[student-runtime-c649d8e59858](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-c649d8e59858)
+has the verified 1,317,716-byte software ZIP, SHA-256
+`4b3fe08790f2546700ac00a897f2a774591307198dd2bd81de40441f2c721db3`,
+240 sources plus metadata. GitHub's asset digest matches; separate calibration
+is unchanged. Pages deployment 44859421534 succeeded; live verification checked
+1,013 files against the exact build. Final five-second census, storage and timing
+remain pending. At 21:13 Chicago the readout reached 2.902843500 s; the preceding
+five-minute slope suggests about three hours remaining, with event-dependent
+variation. The active acquisition exec session is 85953; read-only minute-check
+session is 8667. The latter only observes and never restarts computation.
 Current-session status checks continue; unattended automation is not enabled.
 Earlier snapshots below are historical and do not override this live handoff.
 
