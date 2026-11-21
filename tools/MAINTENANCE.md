@@ -138,6 +138,9 @@ to exact energy-support closures, preserving disjoint intervals and the archived
 samples setting each endpoint. Coefficient gaps remain explicit.
 `gegi_empirical_atom_sampling.py` samples the same joint conditional energy
 measure with one uniform coordinate and retains its angular density.
+`gegi_empirical_topology_normalization.py` integrates that same measure over
+the ideal two-interaction topology. `gegi_cached_empirical_normalization.py`
+reuses source-independent factors and resumes exact source-grid point records.
 `gegi_trial_joint_photon_response.py` adds first arrival to the saved trial grid.
 `gegi_ideal_two_interaction_mass.py` integrates the matching ideal free-electron
 two-interaction model with scrambled Sobol rays. It is a photon-topology mass,

@@ -44,6 +44,13 @@ and GPT-6.1 Sol Ultra (native).
   the matching empirical topology normalizer using the verified joint-atom
   sampler. No new native scattering samples or production weights.
 
+All three development-agent turns encountered the same usage limit on November
+21. No resets or model changes were used. Root is completing already prepared
+calculations and their acceptance: continuous ideal fits, the empirical grid,
+and the surviving native cohort. Unfinished implementation stays assigned to
+the same models. The ownership record distinguishes the agent interruption
+from live Python/Julia processes; do not restart those workers.
+
 ## Accepted native repair and continuous-readout evidence
 
 The original 1,971 unavailable groups remain the denominator. The first cause
@@ -239,6 +246,18 @@ The single-uniform conditional sampler retains the joint angular density and
 uses the same outgoing atom for all downstream factors. Two analytic mass/CDF
 checks pass; native first-scatter and canonical second-scatter electron masses
 remain explicit.
+The matching empirical topology pilot preserves the original eight Sobol
+coordinates and samples the shared atom with a ninth scrambled coordinate.
+All32paired cobalt first-Compton values are exact; no unknown mass remains.
+Pilot SHAfd4b62796ced01a6cecd161e99d0d4cb95903cf9b0085dd39475e563cc0edd22.
+The cached full grid now contains4,800normalizers at2,400positions for the two
+exact cobalt lines. Preparation6.416s plus geometry/checkpoint80.916s gives
+87.850s total. All32nested pilot rows remain exact. Relative replicate SD is
+median2.137%, maximum14.257%; maximum coarse/fine change24.040% stays recorded.
+No ADC-selection or confidence calibration is inferred. Two focused tests and
+root source/database/receipt bindings pass. The662keV reference remains separate;
+661.657keV is unsupported. `cached-empirical-normalization-full.json` SHA
+`02285073460fb8b3731b30e8a162a22e1a786f8fe0e708eebf82f6aa13fe2969`.
 
 `gegi_first_compton_arrival.py` supplies isotropic spreading, survival through
 active Ge and the first-Compton rate per emitted photon per mm^3. All 504 saved

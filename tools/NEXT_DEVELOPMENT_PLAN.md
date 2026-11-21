@@ -147,7 +147,10 @@ nearest sampled direction, but their radial maxima72.999/447.214mm have markedly
 different errors. Resolve the coarse angular grid with continuous source and
 fixed-radius direction optimization before interpreting range or adding samples.
 The one global empirical coefficient gap is closed and the joint-atom sampler
-passes; its matched topology-normalization pilot is next.
+passes. Matching empirical normalization now covers both cobalt lines at all
+2400positions, with exact pilot reuse and per-point numerical variation. Keep
+its numerator and denominator in the same angular-energy measure when applying
+it to the retained measured candidates.
 Match the empirical normalizer to its joint measure, and keep ideal topology
 selection distinct from actual ADC selection and confidence calibration.
 Secondary containment, position/Doppler response, passive material and acquisition
