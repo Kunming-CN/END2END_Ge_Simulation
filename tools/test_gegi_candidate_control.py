@@ -486,6 +486,28 @@ class CandidateControlTests(unittest.TestCase):
             triggers=[{'original_trigger_id': 1}])
         return directory, request, result
 
+    def test_shared_plane_is_a_separate_bound_recipe_and_rejects_duplicate_ids(self):
+        _, request, saved = self.imaging_fixture()
+        saved['candidate_analysis'].update(include_shared_strip=True, saved_candidates=3,
+                                           retained_candidates_outside_two_strip_scope=2)
+        saved['shared_strip_plane'] = {'kind': C.SHARED_PLANE_KIND, 'scope': 'all_shared_strip_candidates',
+            'population': {'saved_candidates': 3, 'shared_strip_candidates': 1,
+                           'shared_topology_counts': {'1x2': 1}, 'shared_fit_input_status': {'ready': 1}},
+            'omitted_original_trigger_count': 0, 'fit_status_counts': {'scored': 1},
+            'layers': copy.deepcopy(saved['layers']), 'triggers': [{'original_trigger_id': 2}]}
+        view = C._shared_plane_view(saved, 2, 2, [1])
+        self.assertEqual(view['original_trigger_ids'], [2])
+        self.assertNotIn('triggers', view)
+        analysis = dict(request, calibration_sha256=saved['input_sha256']['calibration'])
+        self.assertFalse(C._matching_analysis(saved, analysis))
+        analysis['include_shared_strip'] = True
+        self.assertTrue(C._matching_analysis(saved, analysis))
+        self.assertIn('--include-shared-strip', C.CandidateControl._analysis_arguments(
+            dict(analysis, calibration_ref='center.npz', analysis_id='candidate-imaging-shared.json.gz'), 'imaging', './'))
+        saved['shared_strip_plane']['triggers'][0]['original_trigger_id'] = 1
+        with self.assertRaisesRegex(W.ControlError, 'shared-strip trigger identities'):
+            C._shared_plane_view(saved, 2, 2, [1])
+
     def test_imaging_protected_child_recipe_saved_view_and_matching_reuse(self):
         directory, request, result = self.imaging_fixture()
         original = {name: W.sha(directory/name) for name in (C.REPORT_NAME, storage.ARCHIVE_NAME)}

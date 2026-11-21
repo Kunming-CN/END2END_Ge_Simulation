@@ -559,7 +559,7 @@ class Handler(BaseHTTPRequestHandler):
             data = decode_json(self.rfile.read(size).decode('utf-8'))
             if self.path == '/api/workflow/gegi-candidates/analyze':
                 fields = {'name', 'report_sha256', 'calibration_id', 'z_mm', 'extent_mm', 'step_mm', 'sigma_deg', 'plane_prior'}
-                if (type(data) is not dict or not fields <= set(data) <= fields | {'compatibility', 'lateral_calibration_id'}
+                if (type(data) is not dict or not fields <= set(data) <= fields | {'compatibility', 'lateral_calibration_id', 'include_shared_strip'}
                         or self.server.workflow_controller is None):
                     raise ValueError('Choose a completed candidate acquisition, calibration and source-plane settings')
                 return self.send_data(200, self.server.workflow_controller.gegi_candidates().analyze(**data))

@@ -31,7 +31,7 @@ and position work, GPT-6.1 Sol Ultra for native response.
 |---|---|---|
 | 1. Cobalt edge attribution | Original three-window maps, trigger/pair/order contributions, removal/time/extent sensitivity and exact dominant photon histories. | Diagnostic delivery complete; preserve it as the baseline. |
 | 2. Native response | Cause-specific repairs, full 1,971-group reconciliation, same-history readout controls and repaired conditioned crossing. | Deliver the runtime correction; retain remaining limited/stationary groups as unknown, without making universal recovery a prerequisite. |
-| 3. Internal positions | All-34-channel residuals, alternate fits, lateral and shared-strip controls. | Independent acceptance rules, reliable substrip/depth errors, broader topology coverage and propagated uncertainty. |
+| 3. Internal positions | All-34-channel residuals, alternate fits, lateral controls and shared-strip fits integrated into CLI/Control. | Reliable substrip/depth errors, distinction between charge sharing and close interactions, and propagated uncertainty. |
 | 4. Fixed-plane closure | Same-event substitutions, 18 chronological histories plus three separate peak controls; wrong two-site interpretations identified. | Connect improved physical hypotheses/selection to saved candidates and establish stable source results. |
 | 5. Candidate 3D | Portable range diagnostics, consistent photon factors/normalizers, blind continuous ideal controls. | Apply the matching measured response, validate range identifiability and selection effects; ideal controls are not detector validation. |
 | 6. Statistics | Independent ideal inputs retained at two off-grid sources; first ten per cohort tested. | Freeze the algorithm, then held-out sample-size, distance, direction, strength and unequal-depth studies with failure/unknown rates. |
@@ -189,7 +189,12 @@ integrals. Root inspected sources and verified receipt/data hashes and blind
 digest. Extension SHA `d7b7f18f2f0a7bb79f238d9b70569f7c71d246a3bc7988dc3ebadf5ae13cd1ed`,
 replay SHA `b125b87c759d51c8ad65dd6dbfff96e5f7921345fbbdf53c9b7162145a8d2ebf`.
 The remaining 180 observations now supply predeclared chronological blocks of
-ten and cumulative 50/100-event controls; preserve old block zero and all IDs.
+ten and cumulative 50/100-event controls. Only the first new block per source
+was run before the owner's scope refinement: 40 curves in 170.959 s and two
+converged blind fits of 20 total observations in 45.699 s, all original IDs
+retained. Frozen positive-rule comparisons differ by at most 1.81e-5 in log
+response. The remaining expansion was not launched. Preserve old block zero,
+all IDs and `independent-first-block-blind.json` SHA `3f549b34...`.
 In `ideal-forward-validation/`:
 
 * `continuous-first10-blind.json`: `c8f0d90ff3c9e5513c86386ad08ff4d5a335116117050dd12131ae948ea84a67`
@@ -201,6 +206,31 @@ separate peak controls remain. Nominal Co1173 reaches the 10 m grid boundary.
 It is not a full-five-second image or a range identification. Passive material,
 secondary containment, position/Doppler response, merged topology and acquisition
 selection remain open before physical model weights or statistical conclusions.
+
+The normal imaging command and Control now offer an optional shared-strip
+companion map. The archive contains 4,410 such candidates: 3,833 captured ADCs
+with matching templates, 102 missing calibration, 473 unqualified energy and
+two masked. These are input-coverage counts, not successful imaging counts.
+The actual CLI refit IDs 11 (1x2), 13 (2x1) and baseline 12841 in 31.657 s.
+Both shared fits yield one/two allowed cones and exactly match the prior saved
+fit projection, totaling two nominal units. All omitted original IDs/weights
+remain explicit. The selected baseline retains its weights/order; its depth
+differs from the historical fit by 9.13e-7 mm under different recorded SciPy/
+NumPy versions. Same-current-code opt-in/absent comparisons are exact.
+Four focused Python checks, the Control JavaScript contract and two package
+checks pass. Desktop Control opens the saved five-second analysis and switches
+between original and shared maps; the selected two-event view clearly reports
+4,408 omitted shared candidates. No full refit or acquisition was repeated.
+CLI receipt SHA `f42b87fe...`; saved desktop map SHA `3c11875e...`.
+
+The prepared empirical scorer separately verifies all 21 original archive/ADC/
+fit identities and reproduces the sealed blind result exactly in 5.08 s. It
+currently consumes a previously prepared matched grid; arbitrary-candidate grid
+preparation is the next integration task. Exact 661.657-keV native sampling is
+prepared but has not compiled/run. The black-screen interruption left no active
+physics workers; execution and file access recovered on November 21 at 21:39 UTC
+with about 4.7 GiB available physical memory. The unconfirmed documentation patch
+and commit had not applied; they are resubmitted after actual-state inspection.
 
 ## Baseline, publication and retained history
 

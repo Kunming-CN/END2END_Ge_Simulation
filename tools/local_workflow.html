@@ -64,6 +64,7 @@
 <div class="horizontal"><label>Assumed plane z · mm<input id="gegi-candidate-plane-z" type="number" step="any" value="40"></label><label>Plane half-width · mm<input id="gegi-candidate-plane-extent" type="number" min="0" step="any" value="120"></label><label>Grid spacing · mm<input id="gegi-candidate-plane-step" type="number" min="0" step="any" value="4"></label><label>Angular width · degrees<input id="gegi-candidate-plane-sigma" type="number" min="0" step="any" value="5"></label></div>
 <label>Plane prior<select id="gegi-candidate-plane-prior"><option value="uniform-area">Uniform area</option><option value="uniform-solid-angle">Uniform solid angle from detector origin</option></select></label>
 <label for="gegi-candidate-compatibility"><input id="gegi-candidate-compatibility" type="checkbox" style="display:inline;width:auto;min-height:0;margin-right:8px">Save fit residuals on all 34 electrodes</label>
+<label for="gegi-candidate-shared-strip"><input id="gegi-candidate-shared-strip" type="checkbox" style="display:inline;width:auto;min-height:0;margin-right:8px">Add a map for candidates that share a strip</label>
 <div class="actions"><button id="gegi-candidate-analyze" disabled>Analyze all two-strip candidates</button></div>
 <p id="gegi-candidate-analysis-status" class="notice" role="status" aria-live="polite">Choose a completed acquisition.</p>
 <label>Saved source-plane map<select id="gegi-candidate-map"><option value="">No saved map</option></select></label><button id="gegi-candidate-open-map" disabled>Open saved map</button>

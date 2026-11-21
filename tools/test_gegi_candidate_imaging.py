@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 import numpy as np
 import gegi_candidate_imaging as A
+import gegi_candidate_shared_imaging as Shared
 import gegi_candidate_storage as S
 
 
@@ -153,6 +154,42 @@ class CandidateImagingTests(unittest.TestCase):
             self.assertEqual(compatible[key], baseline[key])
         fit = compatible['fit_receipt']['candidates'][0]['pairings'][0]['fit']['fits']['waveform']['center']
         self.assertEqual(fit['compatibility']['contact_ids'], list(range(1, 35)))
+
+    def test_shared_plane_keeps_both_orientations_and_unknowns_separate_from_baseline(self):
+        baseline = self.run_analysis()
+
+        def row(trigger, x, y, available=True):
+            cells = [(x[0], y[0]), (x[-1], y[-1])]
+            sites = [{'energy_keV': energy, 'position_mm': position} for energy, position in
+                     [(300., [-5., 0., -1.]), (300., [5., 0., 1.])]]
+            fit = {'status': 'missing_center_template'}
+            if available:
+                fit = {'status': 'scored', 'global_adc_rms_codes': 3., 'fit': {
+                    'site_positions_mm': [site['position_mm'] for site in sites],
+                    'depth_boundary_sites': [], 'onset_at_boundary': False},
+                    'conditional_orders': [{'site_index_order': order,
+                                            'conditional_cone': Shared.shared.compton.cone(*(sites[i] for i in order))}
+                                           for order in ([0, 1], [1, 0])]}
+            return {'original_trigger_id': trigger, 'trigger_time_ns': 20.*trigger, 'original_measured_energy_keV': 600.,
+                    'adc_window_status': 'captured', 'archive_record_sha256': 'a'*64, 'archive_adc_sha256': 'b'*64,
+                    'original_x_collecting_strips': x, 'original_y_collecting_strips': y,
+                    'conditional_energy_allocation': {'status': 'energy_qualified', 'site_energies_keV': [300., 300.],
+                                                      'cells': cells}, 'fit': fit}
+
+        triggers = [row(22, [3], [24, 29]), row(23, [3, 11], [24]), row(24, [3], [24, 26], False)]
+        with patch.object(Shared.shared, 'run', return_value={'complete_saved_candidate_population': {},
+                    'omitted_original_trigger_count': 0, 'fit_status_counts': {'scored': 2, 'missing_center_template': 1},
+                    'triggers': triggers}):
+            result = self.run_analysis(include_shared_strip=True)
+        for key in ('grid', 'model', 'layers', 'triggers', 'selection', 'fit_receipt'):
+            self.assertEqual(result[key], baseline[key])
+        companion = result['shared_strip_plane']
+        self.assertEqual(companion['layers']['all']['projected_mass'], 2.)
+        self.assertEqual(companion['layers']['all']['unresolved_mass'], 1.)
+        self.assertEqual([r['original_trigger_id'] for r in companion['triggers']], [22, 23, 24])
+        self.assertEqual([r['projected_mass'] for r in companion['triggers']], [1., 1., 0.])
+        self.assertEqual([o['status'] for o in companion['triggers'][2]['pairings'][0]['orders']],
+                         ['no_waveform_fit', 'no_waveform_fit'])
 
     def test_portable_lateral_round_trip_preserves_center_and_exact_binding(self):
         C = A.calibration

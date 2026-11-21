@@ -2150,6 +2150,24 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   await get('gegi-candidate-analyze').onclick();
   assert.equal(run("candidateAnalysisCalls.filter(([path])=>path.endsWith('/analyze')).at(-1)[1].compatibility"),true);
   assert.equal(run("candidateAnalysisCalls.filter(([path])=>path.endsWith('/analyze')).at(-1)[1].lateral_calibration_id"),'external-lateral');
+  get('gegi-candidate-shared-strip').checked=true;
+  run(`candidateMapRow.include_shared_strip=true;
+    candidateMapReply.shared_strip_plane={scope:'all_shared_strip_candidates',original_trigger_ids:[780],
+      population:{shared_strip_candidates:1},fit_status_counts:{scored:1},omitted_original_trigger_count:0,
+      model:{...candidateMapReply.model,geometry:'Shared-strip fitted depths'},
+      layers:{...candidateMapReply.layers,all:{...candidateMapReply.layers.all,triggers:1,triggers_with_geometry:1,
+        projected_mass:1,unresolved_mass:0}}};`);
+  await get('gegi-candidate-analyze').onclick();
+  assert.equal(run("candidateAnalysisCalls.filter(([path])=>path.endsWith('/analyze')).at(-1)[1].include_shared_strip"),true);
+  const topologyChoice=descendants(get('gegi-candidate-map-view')).find(node=>node.tagName==='select'&&
+    node.children.some(option=>option.value==='shared'));
+  topologyChoice.value='shared';topologyChoice.onchange();
+  assert.match(candidateMapText(),/1 triggers · 1 with geometry · 1 projected and 0 unresolved.*Shared-strip fitted depths/s);
+  assert.equal(candidateButton('Inspect peak contributors').hidden,true);
+  assert.equal(candidateButton('Run 3D range analysis').parentElement.parentElement.hidden,true);
+  topologyChoice.value='two-by-two';topologyChoice.onchange();
+  assert.equal(candidateButton('Inspect peak contributors').hidden,false);
+  get('gegi-candidate-shared-strip').checked=false;
   get('gegi-candidate-compatibility').checked=false;
   get('gegi-candidate-lateral-calibration').value='';
   get('gegi-candidate-map').value='candidate-imaging-prefix.json.gz';get('gegi-candidate-map').onchange();

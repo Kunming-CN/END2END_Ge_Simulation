@@ -949,6 +949,7 @@ function showCandidateJob(job){
   const priorMap=$('gegi-candidate-map').value,maps=job.analysis_maps||[];
   options('gegi-candidate-map',[{id:'',label:'Choose a saved map'},...maps.map(row=>({id:row.analysis_id,
     label:(row.scope==='all_two_strip_candidates'?'Full analysis':'Partial analysis')+' · z = '+row.z_mm+' mm · '+row.plane_prior+
+      (row.include_shared_strip?' · shared-strip map':'')+
       (row.position_model==='lateral'?' · Lateral where calibrated':'')+
       (row.compatibility?' · All-electrode fit residuals':'')}))]);
   $('gegi-candidate-map').value=maps.some(row=>row.analysis_id===priorMap)?priorMap:maps[0]?.analysis_id||'';
@@ -1036,6 +1037,7 @@ async function analyzeCandidateRun(){
     const request={name:job.name,report_sha256:job.report_sha256,calibration_id:$('gegi-candidate-calibration').value,
       plane_prior:$('gegi-candidate-plane-prior').value};
     if($('gegi-candidate-compatibility').checked)request.compatibility=true;
+    if($('gegi-candidate-shared-strip').checked)request.include_shared_strip=true;
     const lateral=$('gegi-candidate-lateral-calibration').value;
     if(lateral)request.lateral_calibration_id=lateral;
     for(const [key,id]of [['z_mm','z'],['extent_mm','extent'],['step_mm','step'],['sigma_deg','sigma']]){
@@ -1062,10 +1064,13 @@ async function openCandidatePlane(){
     if(!current())return;
     if(reply.name!==job.name||reply.report_sha256!==job.report_sha256||reply.analysis_id!==selected.analysis_id||
       reply.analysis_sha256!==selected.analysis_sha256||reply.kind!=='gegi_continuous_measured_plane_backprojection_v1')throw Error('Saved imaging and selected acquisition identities differ.');
-    const {grid,layers,model,selection,candidate_analysis:analysis}=reply,partial=analysis.scope!=='all_two_strip_candidates';
+    const {grid,layers,model,selection,candidate_analysis:analysis,shared_strip_plane:shared}=reply,partial=analysis.scope!=='all_two_strip_candidates';
     status.textContent=(partial?'Partial analysis':'Full analysis')+' · '+analysis.selected_original_trigger_ids.length+' of '+analysis.two_strip_candidates+' two-strip candidates selected.';
     const source=analysis.source_census,layerChoice=node('select'),plot=node('div'),summary=node('p','','notice');
     const inspect=node('button','Inspect peak contributors'),contributors=node('div');
+    const geometryNote=node('p',model.geometry+' '+model.ambiguity+' '+model.limits,'muted');
+    const mapChoice=shared?node('select'):null, mapLabel=shared?node('label','Candidate groups'):null;
+    let sharedDetails=null;
     let contributorGeneration=0;
     for(const key of Object.keys(layers)){const option=node('option',key==='all'?'All measured energies':key==='other_energy'?'Outside line windows':parseFloat(key)+' keV');option.value=key;layerChoice.append(option);}
     layerChoice.value='all';const label=node('label','Measured energy window');label.append(layerChoice);
@@ -1073,9 +1078,22 @@ async function openCandidatePlane(){
       node('p',selection.qualified_triggers+' qualified triggers · '+selection.qualified_energies+' measured energies · '+selection.two_strip_triggers+' two-strip candidates. '+
         selection.qualified_adc_live_time_ns/1e9+' of '+selection.clock_live_time_ns/1e9+' s qualified after unknown-history exclusion.'),
       node('p','Original source census: '+source.initial_parents+' new parents · '+source.initial_daughter_decays+' initial-daughter decays. Native groups unavailable: '+source.unavailable_native_groups+'.'),
-      node('p','Assumed plane z = '+grid.assumed_z_mm+' mm; saved prior '+model.plane_prior+'. '+model.normalization),label,summary,plot,inspect,contributors,
-      node('p',model.geometry+' '+model.ambiguity+' '+model.limits,'muted'),
+      node('p','Assumed plane z = '+grid.assumed_z_mm+' mm; saved prior '+model.plane_prior+'. '+model.normalization),
+      ...(mapLabel?[mapLabel]:[]),label,summary,plot,inspect,contributors,
+      geometryNote,
       featureDetails('Original IDs, full census and analysis provenance',{analysis_sha256:reply.analysis_sha256,input_sha256:reply.input_sha256,original_trigger_ids:reply.original_trigger_ids,candidate_analysis:analysis}));
+    if(shared){
+      for(const [value,text] of [['two-by-two','Two collecting strips on each face'],['shared','Shared strip on one face']]){
+        const option=node('option',text);option.value=value;mapChoice.append(option);
+      }
+      mapChoice.value='two-by-two';
+      mapLabel.append(mapChoice);
+      sharedDetails=featureDetails('Shared-strip trigger IDs and fit counts',{original_trigger_ids:shared.original_trigger_ids,
+        complete_population:shared.population,fit_status_counts:shared.fit_status_counts,
+        omitted_original_trigger_count:shared.omitted_original_trigger_count});
+      target.append(sharedDetails);
+      mapChoice.onchange=paint;
+    }
     if(analysis.position_model==='lateral'){
       const support=analysis.position_calibration_support_pair_counts,used=analysis.position_pair_counts;
       const fallback=Object.entries(analysis.position_fallback_counts).map(([reason,count])=>count+' '+lateralFallbackText(reason));
@@ -1085,11 +1103,19 @@ async function openCandidatePlane(){
         (used.lateral||0)+' two-site lateral fits, '+(used.partial_lateral||0)+' one-site lateral fits, and '+(used.center||0)+' center fits.','notice'));
       if(fallback.length)target.append(node('p','Lateral fallback · '+fallback.join(' · '),'muted'));
     }
-    if(!partial)target.append(candidateRangePanel(reply,current));
+    const range=!partial?candidateRangePanel(reply,current):null;
+    if(range)target.append(range);
     function paint(){
-      const layer=layers[layerChoice.value];++contributorGeneration;contributors.replaceChildren();inspect.disabled=layer.projected_mass<=0;
+      const showingShared=mapChoice?.value==='shared';
+      const active=showingShared?shared:reply,layer=active.layers[layerChoice.value];
+      ++contributorGeneration;contributors.replaceChildren();inspect.disabled=layer.projected_mass<=0||showingShared;
+      inspect.hidden=showingShared;
+      if(range)range.hidden=showingShared;
+      if(sharedDetails)sharedDetails.hidden=!showingShared;
+      geometryNote.textContent=active.model.geometry+' '+active.model.ambiguity+' '+active.model.limits;
       summary.textContent=layer.triggers+' triggers · '+layer.triggers_with_geometry+' with geometry · '+
         metricValue(layer.projected_mass)+' projected and '+metricValue(layer.unresolved_mass)+' unresolved nominal trigger units.';
+      if(showingShared&&shared.omitted_original_trigger_count)summary.textContent+=' '+shared.omitted_original_trigger_count+' shared-strip triggers outside this analysis subset.';
       plot.replaceChildren(dualPlaneMap(grid,layer,false));
     }
     async function openContributors(offset=0){

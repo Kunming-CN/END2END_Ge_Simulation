@@ -181,6 +181,16 @@ are inherited; per-group producer, timing and support layers remain explicit.
 `gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
 allocations or shared-strip fits; `gegi_adc_topology.py` and
 `gegi_candidate_shared_topology.py` supply the numerical models.
+`gegi_candidate_shared_imaging.py` projects those shared-strip fits into a separate
+same-grid view. `gegi_candidate_imaging.py --include-shared-strip` and the matching
+Control checkbox attach it to the usual saved analysis; `--shared-trigger-id`
+selects an explicit diagnostic subset. Original trigger identities, omitted counts
+and unresolved weights stay visible. The existing two-by-two range consumer is
+unchanged; the shared view currently provides a conditional plane map.
+`gegi_candidate_empirical_score.py` scores an explicitly supplied prepared
+empirical numerator/index with its matching normalizer and original candidate
+archive. It is a prepared-grid consumer; it does not itself prepare arbitrary
+acquisitions or supply ADC-selection calibration.
 `gegi_candidate_kinematics.py` uses only saved measured pairing energies and
 `gegi_incident_hypotheses.py` for explicit incident-line diagnostics, without
 refitting ADC. Both paths retain original counts, weights and unknown cases.

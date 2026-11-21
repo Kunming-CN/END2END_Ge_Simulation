@@ -134,7 +134,7 @@ def _checkpoint(db, identity):
 
 def run(report_path, calibration_path, *, z_mm, extent_mm=120., step_mm=4., sigma_deg=5.,
         plane_prior=plane.DEFAULT_PLANE_PRIOR, trigger_ids=None, max_two_strip=None, compatibility=False,
-        position_model='center', lateral_calibration_path=None):
+        position_model='center', lateral_calibration_path=None, include_shared_strip=False, shared_trigger_ids=None):
     """Return one map/fit/provenance document. Optional subsets retain unresolved mass."""
     begun = time.perf_counter(); report_path = Path(report_path); calibration_path = Path(calibration_path)
     raw = report_path.read_bytes(); report = json.loads(raw); directory = report_path.parent
@@ -145,6 +145,8 @@ def run(report_path, calibration_path, *, z_mm, extent_mm=120., step_mm=4., sigm
     W.require(max_two_strip is None or type(max_two_strip) is int and max_two_strip > 0,
               'The optional two-strip analysis subset must be a positive integer')
     W.require(type(compatibility) is bool, 'Select whether to record all-electrode fit diagnostics')
+    W.require(type(include_shared_strip) is bool and (include_shared_strip or shared_trigger_ids is None),
+              'Select shared-strip imaging before choosing original shared-strip trigger IDs')
     W.require(position_model in ('center', 'lateral') and (lateral_calibration_path is not None) == (position_model == 'lateral'),
               'The lateral position model requires its separate lateral calibration and the matching center archive')
     fit_options = {'compatibility': True} if compatibility else {}
@@ -233,11 +235,19 @@ def run(report_path, calibration_path, *, z_mm, extent_mm=120., step_mm=4., sigm
                    'calibration_bundle': bundle, 'candidates': fits}
     if lateral_bundle is not None:
         fit_receipt.update(position_model=position_model, lateral_calibration_bundle=lateral_bundle)
-    result = plane.reconstruct(acquisition, fit_receipt, z_mm=z_mm, extent_mm=extent_mm, step_mm=step_mm,
-                               sigma_deg=sigma_deg, plane_prior=plane_prior)
+    settings = dict(z_mm=z_mm, extent_mm=extent_mm, step_mm=step_mm, sigma_deg=sigma_deg, plane_prior=plane_prior)
+    result = plane.reconstruct(acquisition, fit_receipt, **settings)
     for ledger in result['triggers']:
         index = ledger['trigger_index']-1
         ledger.update(original_trigger_id=original_ids[index], diagnostic_input_group_ordinals=joins[index])
+    if include_shared_strip:
+        import gegi_candidate_shared_imaging as shared_imaging
+
+        shared_plane = shared_imaging.reconstruct(acquisition, report, database, manifest, templates, shared_trigger_ids,
+                                                  **settings)
+        W.require(not {row['original_trigger_id'] for row in result['triggers']}.intersection(
+            row['original_trigger_id'] for row in shared_plane['triggers']), 'Original two-by-two and shared-strip IDs overlap')
+        result['shared_strip_plane'] = shared_plane
     W.require(W.sha(database) == database_sha and report_path.read_bytes() == raw and
               W.sha(calibration_path) == calibration_archive_sha and (lateral_bundle is None or
               W.sha(lateral_calibration_path) == lateral_bundle['archive_sha256']),
@@ -262,6 +272,12 @@ def run(report_path, calibration_path, *, z_mm, extent_mm=120., step_mm=4., sigm
                               (storage, plane, calibration, joint, digital, library)} | {Path(__file__).name: W.sha(Path(__file__))}})
     if compatibility:
         result['candidate_analysis']['compatibility'] = True
+    if include_shared_strip:
+        result['candidate_analysis']['include_shared_strip'] = True
+        shared = shared_imaging.shared
+        result['candidate_analysis']['source_sha256'].update(
+            {Path(module.__file__).name: W.sha(Path(module.__file__)) for module in
+             (shared_imaging, shared, shared.topology, shared.dual, shared.compton, shared_imaging.pairs)})
     if lateral_bundle is not None:
         result['input_sha256']['lateral_calibration'] = lateral_bundle['archive_sha256']
         captured = [pair for row in result['triggers'] if row['adc_window_status'] == 'captured' for pair in row['pairings']]
@@ -285,12 +301,17 @@ def main():
                         help='Save all-electrode ADC residuals and sampled fit alternatives for the existing waveform fit')
     parser.add_argument('--position-model', choices=('center', 'lateral'), default='center')
     parser.add_argument('--lateral-calibration', type=Path)
+    parser.add_argument('--include-shared-strip', action='store_true',
+                        help='Add a separate conditional plane view for 1×2 and 2×1 strip candidates')
+    parser.add_argument('--shared-trigger-id', type=int, action='append',
+                        help='Select an original shared-strip trigger for a partial companion view, repeatable')
     args = parser.parse_args(); W.safe_path(args.output.absolute().parent, args.output.name)
     W.require(not args.output.exists(), 'Choose a new analysis output; existing evidence is preserved')
     result = run(args.report, args.calibration, z_mm=args.plane_z_mm, extent_mm=args.extent_mm, step_mm=args.step_mm,
                  sigma_deg=args.sigma_deg, plane_prior=args.plane_prior, trigger_ids=args.trigger_id,
                  max_two_strip=args.max_two_strip, compatibility=args.compatibility, position_model=args.position_model,
-                 lateral_calibration_path=args.lateral_calibration)
+                 lateral_calibration_path=args.lateral_calibration, include_shared_strip=args.include_shared_strip,
+                 shared_trigger_ids=args.shared_trigger_id)
     data = gzip.compress(W.encoded(result), mtime=0)
     with args.output.open('xb') as handle: handle.write(data)
     print(json.dumps({'output': str(args.output), 'scope': result['candidate_analysis']['scope'],

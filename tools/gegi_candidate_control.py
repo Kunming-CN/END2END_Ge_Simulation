@@ -34,6 +34,7 @@ STARTUP_POLICY = 'new_parent_decays_empty_daughters_at_start'
 STEADY_POLICY = 'secular_equilibrium_poisson_daughters_v1'
 PLANE_KIND = 'gegi_continuous_measured_plane_backprojection_v1'
 ANALYSIS_KIND = 'gegi_candidate_measured_imaging_v1'
+SHARED_PLANE_KIND = 'gegi_candidate_shared_strip_plane_v1'
 PLANE_PRIORS = ('uniform-area', 'uniform-solid-angle')
 MAP_NAME = re.compile(r'candidate-imaging(?:-[A-Za-z0-9_-]+)?\.json\.gz\Z')
 RANGE_NAME = re.compile(r'candidate-range(?:-[A-Za-z0-9_-]+)?\.json\Z')
@@ -60,7 +61,51 @@ def _matching_analysis(view, recipe):
             and view['model']['angular_nuisance_sigma_deg'] == recipe['sigma_deg']
             and view['model']['plane_prior'] == recipe['plane_prior']
             and view['candidate_analysis'].get('compatibility', False) == recipe.get('compatibility', False)
+            and view['candidate_analysis'].get('include_shared_strip', False) == recipe.get('include_shared_strip', False)
+            and (not recipe.get('include_shared_strip') or
+                 view['shared_strip_plane']['scope'] == 'all_shared_strip_candidates')
             and view['input_sha256'].get('lateral_calibration') == recipe.get('lateral_calibration_sha256'))
+
+
+def _checked_layers(layers, nx, ny, denominator):
+    W.require('all' in layers and 'other_energy' in layers, 'Missing saved source-plane layers.')
+    counts = ('triggers', 'triggers_with_geometry', 'allowed_hypotheses', 'hypotheses')
+    masses = ('projected_mass', 'unresolved_mass')
+    for layer in layers.values():
+        W.require(all(type(layer[key]) is int and layer[key] >= 0 for key in counts)
+                  and all(_finite(layer[key]) and layer[key] >= 0 for key in masses)
+                  and len(layer['mass']) == ny and all(len(row) == nx and all(_finite(v) and v >= 0 for v in row)
+                      for row in layer['mass'])
+                  and math.isclose(math.fsum(v for row in layer['mass'] for v in row), layer['projected_mass'], abs_tol=1e-9)
+                  and math.isclose(layer['projected_mass']+layer['unresolved_mass'], layer['triggers'], abs_tol=1e-9),
+                  'Saved source-plane mass or dimensions differ.')
+    W.require(layers['all']['triggers'] == denominator, 'Saved plane trigger denominator differs.')
+    for key in (*counts, *masses):
+        W.require(math.isclose(layers['all'][key], math.fsum(row[key] for label, row in layers.items() if label != 'all'), abs_tol=1e-9),
+                  'Saved plane energy layers do not reconcile.')
+
+
+def _shared_plane_view(saved, nx, ny, primary_ids):
+    plane = saved.get('shared_strip_plane')
+    declared = saved['candidate_analysis'].get('include_shared_strip', False)
+    W.require(type(declared) is bool and declared == (plane is not None), 'Saved shared-strip plane binding differs.')
+    if plane is None:
+        return None
+    ids = [row['original_trigger_id'] for row in plane['triggers']]
+    population = plane['population']; count = population['shared_strip_candidates']
+    omitted = plane['omitted_original_trigger_count']
+    W.require(plane['kind'] == SHARED_PLANE_KIND and plane['scope'] in ('all_shared_strip_candidates', 'explicit_shared_strip_subset')
+              and (plane['scope'] != 'all_shared_strip_candidates' or omitted == 0)
+              and type(omitted) is int and omitted >= 0 and len(ids)+omitted == count
+              and count == sum(population['shared_topology_counts'].values()) == sum(population['shared_fit_input_status'].values())
+              and len(ids) == sum(plane['fit_status_counts'].values())
+              and population['saved_candidates'] == saved['candidate_analysis']['saved_candidates']
+              and count <= saved['candidate_analysis']['retained_candidates_outside_two_strip_scope']
+              and all(type(tid) is int and tid > 0 for tid in ids)
+              and ids == sorted(set(ids)) and not set(ids).intersection(primary_ids),
+              'Saved shared-strip trigger identities or counts differ.')
+    _checked_layers(plane['layers'], nx, ny, len(ids))
+    return {key: value for key, value in plane.items() if key != 'triggers'} | {'original_trigger_ids': ids}
 
 
 class CandidateControl:
@@ -226,22 +271,12 @@ class CandidateControl:
         for axis in ('x_mm', 'y_mm'):
             W.require(all(_finite(v) for v in grid[axis]) and all(math.isclose(b-a, grid['step_mm'], rel_tol=1e-8)
                       for a, b in zip(grid[axis], grid[axis][1:])), 'Invalid saved source-plane axis.')
-        W.require('all' in layers and 'other_energy' in layers, 'Missing saved source-plane layers.')
-        for layer in layers.values():
-            W.require(all(type(layer[key]) is int and layer[key] >= 0 for key in
-                          ('triggers', 'triggers_with_geometry', 'allowed_hypotheses', 'hypotheses'))
-                      and all(_finite(layer[key]) and layer[key] >= 0 for key in ('projected_mass', 'unresolved_mass'))
-                      and len(layer['mass']) == ny and all(len(row) == nx and all(_finite(v) and v >= 0 for v in row)
-                          for row in layer['mass'])
-                      and math.isclose(math.fsum(v for row in layer['mass'] for v in row), layer['projected_mass'], abs_tol=1e-9)
-                      and math.isclose(layer['projected_mass']+layer['unresolved_mass'], layer['triggers'], abs_tol=1e-9),
-                      'Saved source-plane mass or dimensions differ.')
-        W.require(layers['all']['triggers'] == analysis['two_strip_candidates'], 'Saved plane trigger denominator differs.')
-        for key in ('triggers', 'triggers_with_geometry', 'allowed_hypotheses', 'hypotheses', 'projected_mass', 'unresolved_mass'):
-            W.require(math.isclose(layers['all'][key], math.fsum(row[key] for label, row in layers.items() if label != 'all'), abs_tol=1e-9),
-                      'Saved plane energy layers do not reconcile.')
+        _checked_layers(layers, nx, ny, analysis['two_strip_candidates'])
         view = {key: saved[key] for key in ('kind', 'grid', 'model', 'layers', 'selection', 'candidate_analysis', 'input_sha256')}
         view['original_trigger_ids'] = [row['original_trigger_id'] for row in saved['triggers']]
+        shared_view = _shared_plane_view(saved, nx, ny, view['original_trigger_ids'])
+        if shared_view is not None:
+            view['shared_strip_plane'] = shared_view
         view.update(analysis_id=path.name, analysis_sha256=sha256(raw).hexdigest())
         self._analysis_cache[path] = (signature, view)
         return copy.deepcopy(view)
@@ -260,7 +295,8 @@ class CandidateControl:
                 'scope': view['candidate_analysis']['scope'], 'z_mm': view['grid']['assumed_z_mm'],
                 'plane_prior': view['model']['plane_prior'],
                 'compatibility': view['candidate_analysis'].get('compatibility', False),
-                'position_model': view['candidate_analysis'].get('position_model', 'center')})
+                'position_model': view['candidate_analysis'].get('position_model', 'center'),
+                **({'include_shared_strip': True} if 'shared_strip_plane' in view else {})})
         return sorted(maps, key=lambda row: (row['scope'] != 'all_two_strip_candidates', row['analysis_id']))
 
     def analysis_plane(self, name, report_sha256, analysis_id, analysis_sha256):
@@ -397,12 +433,13 @@ class CandidateControl:
                     items=contributors[offset:offset+CONTRIBUTOR_PAGE_SIZE])
 
     def analyze(self, name, report_sha256, calibration_id, z_mm, extent_mm=120., step_mm=4., sigma_deg=5.,
-                plane_prior='uniform-area', compatibility=False, lateral_calibration_id=None):
+                plane_prior='uniform-area', compatibility=False, lateral_calibration_id=None, include_shared_strip=False):
         W.require(all(_finite(v) for v in (z_mm, extent_mm, step_mm, sigma_deg))
                   and extent_mm > 0 and 0 < step_mm <= 2*extent_mm and sigma_deg > 0
                   and plane_prior in PLANE_PRIORS and (plane_prior != 'uniform-solid-angle' or z_mm != 0),
                   'Choose finite plane settings with positive extent, grid spacing and angular width.')
         W.require(type(compatibility) is bool, 'Select whether to record all-electrode fit diagnostics.')
+        W.require(type(include_shared_strip) is bool, 'Select whether to add a shared-strip plane.')
         directory, report, digest = self._report(name, report_sha256)
         W.require(report.get('verification', {}).get('status') == 'verified_exact',
                   'Choose a completed acquisition with exact saved-candidate verification.')
@@ -412,6 +449,8 @@ class CandidateControl:
         recipe = dict(report_sha256=digest, calibration_sha256=W.sha(safe_path(self.root, calibration['ref'])), **settings)
         if compatibility:
             recipe['compatibility'] = True
+        if include_shared_strip:
+            recipe['include_shared_strip'] = True
         lateral = None
         if lateral_calibration_id is not None:
             lateral = next((row for row in self._calibrations(lateral=True) if row['id'] == lateral_calibration_id), None)
@@ -470,6 +509,8 @@ class CandidateControl:
             argv += [flag, str(analysis[key])]
         if analysis.get('compatibility'):
             argv.append('--compatibility')
+        if analysis.get('include_shared_strip'):
+            argv.append('--include-shared-strip')
         if analysis.get('lateral_calibration_ref'):
             argv += ['--position-model', 'lateral', '--lateral-calibration', '../'+analysis['lateral_calibration_ref']]
         return argv
