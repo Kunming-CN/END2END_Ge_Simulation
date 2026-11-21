@@ -102,7 +102,8 @@ class CandidateControlTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(estimate['total_parents'], 20000000)
         self.assertEqual(estimate['activities_bq'], [185000, 37000])
-        self.assertEqual(estimate['execution_primary_limit'], 500)
+        self.assertIsNone(estimate['execution_primary_limit'])
+        self.assertIsNone(estimate['execution_duration_limit_s'])
         self.assertEqual(estimate['new_science_calls'], 0)
         self.assertEqual(estimate['shared_field_cache_bytes'], 857068900)
         self.assertGreater(estimate['planning_range_bytes'][1], estimate['planning_range_bytes'][0])
@@ -124,9 +125,11 @@ class CandidateControlTests(unittest.TestCase):
         self.assertEqual((status, options['defaults']['primary_count']), (200, 100))
         self.assertEqual(options['defaults']['mode'], 'duration')
         self.assertEqual(options['defaults']['duration_s'], 5)
-        self.assertEqual(options['defaults']['maximum_duration_s'], 5)
+        self.assertIsNone(options['defaults']['maximum_duration_s'])
+        self.assertIsNone(options['defaults']['maximum_primary_count'])
         settings = self.settings()
-        for changed in ({'name': '../escape'}, {'primary_count': 501}, {'primary_count': True}, {'seed': 0},
+        for changed in ({'name': '../escape'}, {'primary_count': 0}, {'primary_count': -1},
+                        {'primary_count': 1.5}, {'primary_count': '100'}, {'primary_count': True}, {'seed': 0},
                         {'activities_bq': [True, 37000]}, {'positions_mm': [[0, 0], [0, 0, 40]]},
                         {'output': '.local/other'}):
             self.assertEqual(self.request('start', settings | changed)[0], 400)
@@ -331,7 +334,7 @@ class CandidateControlTests(unittest.TestCase):
         settings = self.settings()
         settings.pop('primary_count')
         settings['duration_s'] = 5
-        for changes in ({'duration_s': 0}, {'duration_s': -1}, {'duration_s': 5.001},
+        for changes in ({'duration_s': 0}, {'duration_s': -1}, {'duration_s': float('inf')},
                         {'duration_s': True}, {'duration_s': '5'}, {'duration_s': None},
                         {'duration_s': float('nan')}, {'primary_count': 100},
                         {'initial_state_policy': C.STARTUP_POLICY}):
@@ -418,17 +421,31 @@ class CandidateControlTests(unittest.TestCase):
 
         self.control.runner = None
         with patch.dict('sys.modules', {'gegi_streaming_acquisition': SimpleNamespace(run=runner)}):
-            self.control.start(**(self.settings() | {'name': 'startup-block'}))
-            self.finish()
-            duration = self.settings() | {'name': 'duration-block', 'duration_s': 5}
-            duration.pop('primary_count')
-            self.control.start(**duration)
-            self.finish()
+            for name, selection in (('startup-block', {'primary_count': 100}),
+                                    ('large-count', {'primary_count': 20000000}),
+                                    ('duration-block', {'duration_s': 5}),
+                                    ('long-duration', {'duration_s': 90.09})):
+                settings = self.settings() | {'name': name}
+                settings.pop('primary_count')
+                status, job = self.request('start', settings | selection)
+                self.assertEqual((status, job['status']), (200, 'running'))
+                for field, value in selection.items():
+                    self.assertEqual(job[field], value)
+                self.finish()
         self.assertEqual(captured['startup-block']['block_parents'], 50)
         self.assertEqual(captured['startup-block']['primary_count'], 100)
+        self.assertEqual(captured['large-count']['primary_count'], 20000000)
+        self.assertEqual(captured['large-count']['block_parents'], 50)
         self.assertEqual(captured['duration-block']['block_parents'], 10000)
         self.assertEqual(captured['duration-block']['duration_s'], 5)
         self.assertNotIn('primary_count', captured['duration-block'])
+        self.assertEqual(captured['long-duration']['duration_s'], 90.09)
+        self.assertEqual(captured['long-duration']['block_parents'], 10000)
+        self.assertNotIn('primary_count', captured['long-duration'])
+        for name, settings in captured.items():
+            self.assertEqual(settings['initial_state_policy'], C.STEADY_POLICY if 'duration_s' in settings else C.STARTUP_POLICY)
+            self.assertEqual(settings['activities_bq'], [185000, 37000])
+            self.assertEqual(settings['positions_mm'], [[-40, 0, 40], [40, 0, 40]])
 
 
 if __name__ == '__main__':

@@ -55,7 +55,7 @@ def write(path, value):
 def pulse_groups(event, source_id, context):
     """Retain the transport's exact anchored-window assignment and original rows."""
     steps = event['steps']
-    require(isinstance(steps, list) and 0 < len(steps) <= 100000, 'Sparse event requires bounded positive rows')
+    require(isinstance(steps, list) and len(steps) > 0, 'Sparse event requires positive rows')
     require(all(s['energy_keV'] > 0 for s in steps), 'Zero input belongs only in the primary census')
     rows = {s['raw_row_index']: s for s in steps}
     require(len(rows) == len(steps), 'Duplicate transport raw row')

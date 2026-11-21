@@ -125,7 +125,7 @@ def next_block(config, checkpoint, max_parents=500):
     A parent stream frontier permits committing only earlier physical emissions.
     """
     _admit(config, checkpoint)
-    h.require(type(max_parents) is int and 1 <= max_parents <= 10000, 'Use 1–10000 transport drivers per block')
+    h.require(type(max_parents) is int and max_parents > 0, 'Transport drivers per block must be a positive integer')
     state = copy.deepcopy(checkpoint); state['rng_state'] = _tuple(state['rng_state'])
     state.setdefault('next_transport_id', state['next_parent_id'])
     state.setdefault('last_driver_time_ns', state['last_parent_time_ns'])
@@ -318,7 +318,7 @@ def prepare_block(config, checkpoint, output, max_parents=500):
 def _prepared(directory):
     directory = h.local_path(directory); meta = S.load(directory/'prepared.json')
     h.require(meta['kind'] == BLOCK and meta['status'] == 'prepared', 'Unsupported transport block')
-    compatibility = _extraction_compatibility(directory, meta)
+    compatibility = {**_extraction_compatibility(directory, meta), **_block_limit_compatibility(directory, meta)}
     for ref, sha in meta['source_sha256'].items():
         actual = h.sha256(h.ROOT/ref)
         h.require(actual == sha or (compatibility.get(ref, {}).get('old_sha256') == sha and
@@ -410,6 +410,81 @@ def _same_except(original, current, permitted_functions):
             or isinstance(node, ast.Import) and all(alias.name == 'ast' for alias in node.names))]
         return ast.dump(syntax, include_attributes=False)
     return filtered(original) == filtered(current)
+
+
+def _block_limit_only(original, current):
+    """Prove the one policy check change; compare every physical function AST."""
+    checks = (
+        "h.require(type(max_parents) is int and 1 <= max_parents <= 10000, 'Use 1–10000 transport drivers per block')",
+        "h.require(type(max_parents) is int and max_parents > 0, 'Transport drivers per block must be a positive integer')")
+    assignments = (
+        'compatibility = _extraction_compatibility(directory, meta)',
+        'compatibility = {**_extraction_compatibility(directory, meta), **_block_limit_compatibility(directory, meta)}')
+    plumbing = {'_block_limit_only', '_block_limit_compatibility', 'admit_block_limit_continuation', 'main'}
+    def normalized(text, index):
+        tree = ast.parse(text)
+        for name, expected in (('next_block', checks[index]), ('_prepared', assignments[index])):
+            function = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == name)
+            match = ast.dump(ast.parse(expected).body[0], include_attributes=False)
+            found = [i for i, node in enumerate(function.body) if ast.dump(node, include_attributes=False) == match]
+            if len(found) != 1: return None
+            function.body[found[0]] = ast.Pass()
+        tree.body = [node for node in tree.body if not (isinstance(node, ast.FunctionDef) and node.name in plumbing)]
+        return ast.dump(tree, include_attributes=False)
+    old = normalized(original, 0)
+    return old is not None and old == normalized(current, 1)
+
+
+def _block_limit_compatibility(directory, meta):
+    path = directory/'block-limit-compatibility.json'
+    if not path.exists(): return {}
+    record = S.load(path); run = S.load(directory/'run.json'); seal = S.load(directory/'seal.json')
+    h.require(record['kind'] == 'gegi_streaming_block_limit_continuation_v1' and
+              not (directory/'extraction-compatibility.json').exists() and run['status'] == 'complete' and
+              seal['status'] == 'sealed' and record['prepared_sha256'] == h.sha256(directory/'prepared.json') and
+              record['run_sha256'] == h.sha256(directory/'run.json') and
+              record['seal_sha256'] == h.sha256(directory/'seal.json'), 'Block-limit continuation belongs to another sealed block')
+    h.require(record['source_lh5_sha256'] == run['source_lh5_sha256'] == seal['artifacts']['truth.lh5'] and
+              record['rng_before_sha256'] == run['rng_before_sha256'] == seal['artifacts']['rng-before.rndm'] and
+              record['rng_after_sha256'] == run['rng_after_sha256'] == seal['artifacts']['rng-after.rndm'] and
+              record['macro_sha256'] == meta['files_sha256']['run.mac'] == seal['artifacts']['run.mac'],
+              'Block-limit continuation changed sealed transport proof')
+    ref = 'transport/gegi_streaming_source.py'; change = record['source_change']
+    original = _bound(change['original_source']); _bound(record['producer_package'])
+    h.require(change['old_sha256'] == meta['source_sha256'][ref] == h.sha256(original) and
+              change['new_sha256'] == h.sha256(__file__) and
+              _block_limit_only(original.read_text(), Path(__file__).read_text()),
+              'Block-limit continuation changed code outside the exact limit/plumbing correction')
+    return {ref: change}
+
+
+def admit_block_limit_continuation(directory, producer_package):
+    """Explicitly admit the saved pre-limit-removal producer; never rerun it."""
+    import zipfile
+    directory = h.local_path(directory); package = h.local_path(producer_package)
+    meta = S.load(directory/'prepared.json'); run = S.load(directory/'run.json'); seal = S.load(directory/'seal.json')
+    target = directory/'block-limit-compatibility.json'; snapshot = directory/'source-before-block-limit-continuation.py'
+    h.require(not target.exists() and not snapshot.exists() and run['status'] == 'complete' and seal['status'] == 'sealed',
+              'Preserve existing continuation evidence; admission requires a sealed complete block')
+    ref = 'transport/gegi_streaming_source.py'
+    with zipfile.ZipFile(package) as archive: original = archive.read('END2END-Ge-Student/'+ref)
+    h.require(hashlib.sha256(original).hexdigest() == meta['source_sha256'][ref] and
+              _block_limit_only(original.decode('utf-8-sig'), Path(__file__).read_text()),
+              'Producer snapshot does not prove the exact block-limit removal')
+    for dependency, sha in meta['source_sha256'].items():
+        h.require(dependency == ref or h.sha256(h.ROOT/dependency) == sha, 'Changed transport dependency: '+dependency)
+    with snapshot.open('xb') as stream: stream.write(original); stream.flush(); os.fsync(stream.fileno())
+    record = {'kind': 'gegi_streaming_block_limit_continuation_v1',
+        'prepared_sha256': h.sha256(directory/'prepared.json'), 'run_sha256': h.sha256(directory/'run.json'),
+        'seal_sha256': h.sha256(directory/'seal.json'), 'macro_sha256': meta['files_sha256']['run.mac'],
+        'source_lh5_sha256': run['source_lh5_sha256'], 'rng_before_sha256': run['rng_before_sha256'],
+        'rng_after_sha256': run['rng_after_sha256'], 'producer_package': _binding(package),
+        'source_change': {'old_sha256': meta['source_sha256'][ref], 'new_sha256': h.sha256(__file__),
+                          'original_source': _binding(snapshot)},
+        'scope': 'Only remove the 10000-driver allocation policy check and add explicit admission plumbing; source clock, geometry, macro, physical transport, census and CLHEP state unchanged. No simulation executed.'}
+    h.publish_json(target, record)
+    verify(directory)
+    return record
 
 
 def _retired(directory):
@@ -641,10 +716,11 @@ def process_block(config, checkpoint, output, max_parents=500):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('init', 'initialize', 'prepare-block', 'process-block', 'run-block', 'extract', 'verify', 'retire', 'repair-extraction'))
+    parser.add_argument('action', choices=('init', 'initialize', 'prepare-block', 'process-block', 'run-block', 'extract', 'verify', 'retire', 'repair-extraction', 'admit-block-limit'))
     parser.add_argument('--config'); parser.add_argument('--checkpoint'); parser.add_argument('--output')
     parser.add_argument('--directory'); parser.add_argument('--max-parents', type=int, default=500)
     parser.add_argument('--consumer-receipt')
+    parser.add_argument('--producer-package')
     S.P.project_root_argument(parser, required=False); args = parser.parse_args(argv)
     if args.windows_root: S.P.project_identity(args.windows_root)
     if args.action in ('init', 'initialize'):
@@ -657,6 +733,7 @@ def main(argv=None):
             config, state, args.output, args.max_parents)
     elif args.action == 'retire': value = retire(args.directory, args.consumer_receipt)
     elif args.action == 'repair-extraction': value = repair_extraction(args.directory)
+    elif args.action == 'admit-block-limit': value = admit_block_limit_continuation(args.directory, args.producer_package)
     else: value = {'run-block': run_block, 'extract': extract, 'verify': verify}[args.action](args.directory)
     print(json.dumps(value, sort_keys=True, allow_nan=False))
 

@@ -1,5 +1,15 @@
 # Project working rules
 
+## Owner update — user-configured simulation size
+
+Remove artificial duration, event-count and deposit-row execution ceilings from
+the continuous simulation and its user interface. Expected random counts must
+never bound chronological transport IDs. Retain valid input formats, exact
+census/identity checks and resumable data integrity. Defaults and acceptance
+sample sizes are configuration choices, not hard-coded approval gates. The
+current acquisition still targets the owner's requested five seconds; do not
+silently expand an already configured run.
+
 ## Owner update — 2026-11-20 five-second acquisition acceptance
 
 The owner explicitly requests a five-second physical acquisition to expose

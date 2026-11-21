@@ -73,7 +73,7 @@ class AcquisitionTests(unittest.TestCase):
 
     def request(self, output, count, **options):
         path = output / 'native-request.json'
-        A.candidates.write_new(path, {'synthetic': True})
+        A.candidates.write_new(path, {'synthetic': True, 'selection': {'primary_count': count}, **options})
         return path
 
     def transport(self, args, log):
@@ -193,29 +193,37 @@ class AcquisitionTests(unittest.TestCase):
         self.assertEqual(result['source']['initial_parents'], 4)
 
     def test_explicit_native_continuation_keeps_candidate_identity_and_group_phases(self):
+        self.assert_continuation(1, 'native-only', 'native-only-continuation.json', A.continuation)
+
+    def test_stream_id_repair_keeps_checkpoint_and_never_repeats_completed_groups(self):
+        self.assert_continuation(2, 'stream-id-repair', 'stream-id-continuation.json', A.stream_ids)
+
+    def assert_continuation(self, phase, namespace, receipt_path, module):
         output = self.root / '.local/native-continuation'
         A.run(output, 4, block_parents=2, stop_after_groups=1, retain_validation_inputs=True)
         original_request = (output / 'native-request.json').read_bytes()
         with closing(sqlite3.connect(output / S.ARCHIVE_NAME)) as db:
             original_metadata = db.execute('SELECT body FROM metadata').fetchone()[0]
         original_identity = json.loads(original_metadata)['identity']
-        (output / 'native-only').mkdir()
-        request = output / 'native-only/native-request.json'
+        (output / namespace).mkdir()
+        request = output / namespace / 'native-request.json'
         A.W.write(request, {'synthetic': True, 'response_mode': 'native_signals_only_v1'})
-        A.W.write(output / 'native-only-continuation.json', {'synthetic_admission_fixture': True})
+        A.W.write(output / receipt_path, {'synthetic_admission_fixture': True})
         active = {'original_identity': original_identity, 'active_request': request,
-            'active_spool': output / 'native-only/native-spool',
-            'active_store': output / 'native-only/native-scratch.sqlite'}
-        with patch.object(A.continuation, 'admit', return_value=active):
+            'active_spool': output / namespace / 'native-spool',
+            'active_store': output / namespace / 'native-scratch.sqlite',
+            'native_phase': phase, 'receipt_path': receipt_path}
+        with patch.object(module, 'admit', return_value=active):
             result = A.run(output, 4, block_parents=2, resume=True, retain_validation_inputs=True)
         self.assertEqual(result['identity'], original_identity)
-        self.assertEqual(result['execution_provenance']['native_processing_phase'], 1)
+        self.assertEqual(result['execution_provenance']['native_processing_phase'], phase)
+        self.assertEqual(result['execution_provenance']['continuation_receipt']['path'], receipt_path)
         self.assertNotEqual(result['execution_provenance']['active_producer_identity']['native_request_sha256'],
                             original_identity['native_request_sha256'])
         self.assertEqual((output / 'native-request.json').read_bytes(), original_request)
         with closing(sqlite3.connect(output / S.ARCHIVE_NAME)) as db:
             self.assertEqual(db.execute('SELECT body FROM metadata').fetchone()[0], original_metadata)
-            self.assertEqual(dict(db.execute('SELECT phase,count(*) FROM native_processing_phases GROUP BY phase')), {0: 1, 1: 1})
+            self.assertEqual(dict(db.execute('SELECT phase,count(*) FROM native_processing_phases GROUP BY phase')), {0: 1, phase: 1})
         self.assertEqual(FakeWorker.calls, [(0, 0), (2, 0)])
 
     def test_native_runtime_change_refuses_before_new_drift(self):
@@ -242,11 +250,30 @@ class AcquisitionTests(unittest.TestCase):
         self.assertTrue(state['readout']['pulses'])
         self.assertLess(state['readout']['next_sample_index'], 1000)
         self.assertEqual(state['stage_timings']['stages']['native_group']['count'], 1)
-        for invalid in (5.000001, 0, -1, True, float('inf')):
-            with self.subTest(duration=invalid), self.assertRaisesRegex(ValueError, 'no more than 5 seconds'):
+        request = A.W.read(output / 'native-request.json')
+        self.assertEqual(request['event_id_policy'], 'streaming_transport_driver_v1')
+        self.assertEqual(request['selection']['primary_count'], 1110000)
+        for invalid in (0, -1, True, float('inf'), float('nan')):
+            with self.subTest(duration=invalid), self.assertRaisesRegex(ValueError, 'positive finite'):
                 A.run(self.root / '.local/rejected-duration', duration_s=invalid,
                       initial_state_policy=A.STEADY_POLICY)
         self.assertFalse((self.root / '.local/rejected-duration').exists())
+
+    def test_user_duration_count_and_block_size_have_no_artificial_ceiling(self):
+        # Synthetic transport stops after its first tiny block: no long simulation.
+        for label, settings in (
+            ('duration', {'duration_s': 90.09, 'initial_state_policy': A.STEADY_POLICY}),
+            ('count', {'primary_count': 20000000}),
+        ):
+            with self.subTest(label=label):
+                output = self.root / '.local' / label
+                result = A.run(output, **settings, block_parents=20000, stop_after_blocks=1)
+                self.assertEqual(result['status'], 'stopped')
+                config = A.W.read(output / 'source-config.json')
+                expected = ({'mode': 'duration', 'duration_ns': 90.09e9} if label == 'duration'
+                            else {'mode': 'count', 'parent_count': 20000000})
+                self.assertEqual(config['stop'], expected)
+                self.assertEqual(FakeWorker.calls, [])
 
     def test_duration_exact_cutoff_separate_daughter_census_and_nullable_parent_identity(self):
         output = self.root / '.local/duration-completed'

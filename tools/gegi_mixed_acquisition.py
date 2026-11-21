@@ -28,8 +28,8 @@ import gegi_workflow as workflow
 import scenario_workflow as W
 
 ROOT = Path(__file__).resolve().parents[1]
-MAX_PARENTS = 500
 READOUT_TAIL_NS = 10_000.
+STREAMING_EVENT_ID_POLICY = 'streaming_transport_driver_v1'
 
 
 def file_sha(path):
@@ -67,7 +67,9 @@ def field_cache():
     raise ValueError('Initialize the GeGI detector with an ordinary small GeGI run first; this acquisition reuses its saved fields.')
 
 
-def native_request(output, count, *, response_mode=None):
+def native_request(output, count, *, response_mode=None, event_id_policy=None):
+    if event_id_policy not in (None, 'finite_primary_count_v1', STREAMING_EVENT_ID_POLICY):
+        raise ValueError('Unknown native event ID policy')
     cache = field_cache()
     refs = set(workflow.SOURCES) | {'simulation/gegi_campaign_response.jl',
             'simulation/gegi_pixel_calibration.jl', 'tools/gegi_campaign_response.py',
@@ -85,6 +87,8 @@ def native_request(output, count, *, response_mode=None):
         if response_mode != 'native_signals_only_v1':
             raise ValueError('Unknown native response mode')
         request['response_mode'] = response_mode
+    if event_id_policy is not None:
+        request['event_id_policy'] = event_id_policy
     path = output / 'native-request.json'
     candidates.write_new(path, request)
     return path
@@ -159,8 +163,8 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
     output = Path(output).resolve()
     if not output.is_relative_to((ROOT / '.local').resolve()):
         raise ValueError('Use a new output directory inside this workspace .local folder')
-    if type(primary_count) is not int or not 1 <= primary_count <= MAX_PARENTS:
-        raise ValueError('This fresh startup validation supports 1–500 initial parents; it is not long-run production.')
+    if type(primary_count) is not int or primary_count < 1:
+        raise ValueError('Initial parent count must be a positive integer.')
     if output.exists() and any(output.iterdir()):
         raise FileExistsError('Choose a new acquisition directory; existing data are preserved')
     output.mkdir(parents=True, exist_ok=True)

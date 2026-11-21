@@ -61,8 +61,12 @@ class StreamingSourceTests(unittest.TestCase):
         self.assertEqual(start['next_parent_id'], 0)
         changed = copy.deepcopy(config); changed['sources'][0]['activity_Bq'] += 1
         with self.assertRaisesRegex(ValueError, 'mismatch'): G.next_block(changed, after)
-        for size in (0, 10001, True):
+        for size in (0, -1, True, 1.5):
             with self.assertRaises(ValueError): G.next_block(config, start, size)
+        small = G.default_config(parent_count=3)
+        rows, after = G.next_block(small, G.initialize(small), 20000)
+        self.assertEqual(len(rows), 3)
+        self.assertTrue(after['finished'])
 
     def test_equilibrium_driver_merge_keeps_original_new_parent_clock(self):
         from test_gegi_source_inventory import parameters
@@ -173,6 +177,55 @@ class StreamingSourceTests(unittest.TestCase):
         physics_change = 'def next_block():\n return 3\ndef events():\n return 2\n'
         self.assertTrue(G._same_except(original, reader_fix, {'events'}))
         self.assertFalse(G._same_except(original, physics_change, {'events'}))
+
+    def test_block_limit_continuation_proves_same_clock_and_sealed_transport(self):
+        import hashlib
+        import zipfile
+        current = Path(G.__file__).read_text()
+        original = current.replace(
+            "    h.require(type(max_parents) is int and max_parents > 0, 'Transport drivers per block must be a positive integer')\n",
+            "    h.require(type(max_parents) is int and 1 <= max_parents <= 10000, 'Use 1–10000 transport drivers per block')\n", 1).replace(
+            '    compatibility = {**_extraction_compatibility(directory, meta), **_block_limit_compatibility(directory, meta)}\n',
+            '    compatibility = _extraction_compatibility(directory, meta)\n', 1)
+        self.assertTrue(G._block_limit_only(original, current))
+        changed = current.replace("state['next_transport_id'] += 1", "state['next_transport_id'] += 2", 1)
+        self.assertFalse(G._block_limit_only(original, changed))
+        changed = current.replace('/GeSignal/RNG/Save rng-after.rndm', '/GeSignal/RNG/Save changed.rndm', 1)
+        self.assertFalse(G._block_limit_only(original, changed))
+        namespace = {'__name__': 'source_before_block_limit', '__file__': G.__file__}
+        exec(compile(original, '<preserved source>', 'exec'), namespace)
+        config = G.default_config(parent_count=100)
+        checkpoint = G.initialize(config)
+        old_rows, old_after = namespace['next_block'](config, checkpoint, 50)
+        self.assertEqual((old_rows, old_after), G.next_block(config, checkpoint, 50))
+        self.assertEqual(namespace['block_macro']({'config': G.M.default_config(), 'cryostat_contract': G.S.G.load_cryostat()},50,True),
+                         G.block_macro({'config': G.M.default_config(), 'cryostat_contract': G.S.G.load_cryostat()},50,True))
+        with tempfile.TemporaryDirectory(dir=G.h.ROOT/'.local') as temp:
+            root = Path(temp); directory = root/'block'; directory.mkdir()
+            for name in ('truth.lh5', 'rng-before.rndm', 'rng-after.rndm', 'run.mac'):
+                (directory/name).write_bytes(('synthetic sealed '+name).encode())
+            hashes = {p.name: G.h.sha256(p) for p in directory.iterdir()}
+            meta = {'source_sha256': {'transport/gegi_streaming_source.py': hashlib.sha256(original.encode()).hexdigest()},
+                    'files_sha256': {'run.mac': hashes['run.mac']}}
+            G.h.publish_json(directory/'prepared.json', meta)
+            G.h.publish_json(directory/'run.json', {'status': 'complete', 'source_lh5_sha256': hashes['truth.lh5'],
+                'rng_before_sha256': hashes['rng-before.rndm'], 'rng_after_sha256': hashes['rng-after.rndm']})
+            G.h.publish_json(directory/'seal.json', {'status': 'sealed', 'artifacts': hashes})
+            before = {p.name: p.read_bytes() for p in directory.iterdir()}
+            package = root/'producer.zip'
+            with zipfile.ZipFile(package, 'w') as archive:
+                archive.writestr('END2END-Ge-Student/transport/gegi_streaming_source.py', original)
+            with patch.object(G, 'verify', return_value={'status': 'sealed'}):
+                record = G.admit_block_limit_continuation(directory, package)
+            self.assertEqual(record['kind'], 'gegi_streaming_block_limit_continuation_v1')
+            self.assertFalse((directory/'extraction-compatibility.json').exists())
+            self.assertEqual(before, {name: (directory/name).read_bytes() for name in before})
+            self.assertEqual(set(G._block_limit_compatibility(directory, meta)), {'transport/gegi_streaming_source.py'})
+            with self.assertRaisesRegex(ValueError, 'Preserve existing'):
+                G.admit_block_limit_continuation(directory, package)
+            (directory/'run.json').write_bytes((directory/'run.json').read_bytes()+b' ')
+            with self.assertRaisesRegex(ValueError, 'another sealed block'):
+                G._block_limit_compatibility(directory, meta)
 
     def test_process_block_continues_prepared_completed_and_sealed_stages(self):
         config = G.default_config(); checkpoint = G.initialize(config)

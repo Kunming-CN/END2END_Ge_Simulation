@@ -874,13 +874,13 @@ function candidateModeFields(){
   $('gegi-candidate-duration-field').hidden=!duration;
   $('gegi-candidate-count-field').hidden=duration;
   $('gegi-candidate-scope').textContent=duration?
-    'Up to 5 physical seconds. Radioactive daughter populations use the source equilibrium model; electronics start quiet with zero signal history.':
-    'Start with 100 new parent decays; up to 500 are supported for the startup check. There are no pre-existing radioactive daughters at acquisition start.';
+    'Choose a positive physical duration; the default is 5 seconds. Radioactive daughter populations use the source equilibrium model; electronics start quiet with zero signal history.':
+    'Choose a positive integer number of new parent decays; the default is 100. There are no pre-existing radioactive daughters at acquisition start.';
 }
-function candidateRunLimits(){return 'Startup checks allow up to 500 new parent decays; steady-source research acceptance allows up to 5 physical seconds.';}
+function candidateRunDefaults(){return 'Defaults are 100 new parent decays or 5 physical seconds; runtime and storage depend on the requested acquisition.';}
 function invalidateCandidateEstimate(){
   ++candidateEstimateGeneration;$('gegi-candidate-estimate').disabled=false;
-  $('gegi-candidate-storage').textContent='Source or planning count changed. Estimate storage again for the current settings. '+candidateRunLimits();
+  $('gegi-candidate-storage').textContent='Source or planning count changed. Estimate storage again for the current settings. '+candidateRunDefaults();
 }
 async function estimateCandidateStorage(){
   const generation=++candidateEstimateGeneration,button=$('gegi-candidate-estimate'),target=$('gegi-candidate-storage');
@@ -896,8 +896,8 @@ async function estimateCandidateStorage(){
     const estimate=await api('/api/workflow/gegi-candidates/estimate?'+new URLSearchParams(fields));
     if(generation!==candidateEstimateGeneration)return;
     const gib=bytes=>(bytes/1024**3).toFixed(2),range=estimate.planning_range_bytes;
-    target.textContent=estimate.total_parents.toLocaleString('en-US')+' total source decays: saved candidate core '+gib(range[0])+'–'+gib(range[1])+' GiB. Shared field cache '+gib(estimate.shared_field_cache_bytes)+' GiB, counted once. Additional fresh-run records and temporary peak storage have not been measured. These saved-readout planning scenarios are not a guaranteed upper bound. '+candidateRunLimits();
-  }catch(e){if(generation===candidateEstimateGeneration)target.textContent='Storage estimate unavailable: '+e.message+' Temporary peak storage has not been measured. '+candidateRunLimits();}
+    target.textContent=estimate.total_parents.toLocaleString('en-US')+' total source decays: saved candidate core '+gib(range[0])+'–'+gib(range[1])+' GiB. Shared field cache '+gib(estimate.shared_field_cache_bytes)+' GiB, counted once. Additional fresh-run records and temporary peak storage have not been measured. These saved-readout planning scenarios are not a guaranteed upper bound. '+candidateRunDefaults();
+  }catch(e){if(generation===candidateEstimateGeneration)target.textContent='Storage estimate unavailable: '+e.message+' Temporary peak storage has not been measured. '+candidateRunDefaults();}
   finally{if(generation===candidateEstimateGeneration)button.disabled=false;}
 }
 function candidateControls(){
@@ -972,10 +972,9 @@ async function startCandidateRun(){
       positions_mm:['a','b'].map(source=>['x','y','z'].map(axis=>value('gegi-candidate-'+source+'-'+axis)))};
     if(mode==='duration'){
       request.duration_s=value('gegi-candidate-duration');
-      if(request.duration_s<=0||request.duration_s>5)throw Error('Choose a positive physical acquisition duration no longer than 5 seconds.');
+      if(request.duration_s<=0)throw Error('Choose a finite positive physical acquisition duration in seconds.');
     }else{
       request.primary_count=exactInteger($('gegi-candidate-count').value.trim(),'New parent decays');
-      if(request.primary_count>500)throw Error('The startup check accepts at most 500 new parent decays.');
     }
     ++candidateGeneration;++candidateEventGeneration;
     const job=await api('/api/workflow/gegi-candidates/start',request),select=$('gegi-candidate-job');

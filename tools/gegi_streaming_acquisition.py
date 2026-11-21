@@ -1,6 +1,5 @@
-"""Bounded joint-source transport, disk-backed delayed deposits and continuous readout.
+"""Joint-source transport, disk-backed delayed deposits and continuous readout.
 
-Supported acceptance is a 1–500 parent startup or up to five physical seconds.
 Blocks are computational checkpoints, never separate physical acquisitions. The source
 clock, transport RNG, active electrode currents and electronics survive resume.
 """
@@ -32,6 +31,7 @@ import gegi_event_store as native_store
 import gegi_mixed_acquisition as mixed
 from gegi_missing_history import MissingHistory
 import gegi_native_continuation as continuation
+import gegi_stream_id_continuation as stream_ids
 import gegi_pulse_stream as pulse
 from gegi_resource_monitor import Monitor, TimerTotals, _linked, available_memory
 from gegi_streaming_readout import StreamingReadout
@@ -44,6 +44,7 @@ OWN_SOURCES = ('tools/gegi_streaming_acquisition.py', 'tools/gegi_streaming_read
                'tools/gegi_candidate_storage.py', 'tools/gegi_candidate_run.py',
                'tools/gegi_mixed_acquisition.py', 'tools/gegi_resource_monitor.py', 'tools/gegi_missing_history.py',
                'tools/gegi_native_continuation.py',
+               'tools/gegi_stream_id_continuation.py',
                'transport/gegi_streaming_source.py', 'transport/gegi_source_inventory.py')
 STARTUP_POLICY = 'new_parent_decays_empty_daughters_at_start'
 STEADY_POLICY = 'secular_equilibrium_poisson_daughters_v1'
@@ -237,18 +238,18 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
     output = Path(output).resolve()
     if not output.is_relative_to((ROOT / '.local').resolve()) or output == (ROOT / '.local').resolve():
         raise ValueError('Use an owned acquisition directory under this project .local')
-    if duration_s is not None and (type(duration_s) not in (int, float) or not math.isfinite(duration_s) or not 0 < duration_s <= 5):
-        raise ValueError('Physical acquisition duration must be positive and no more than 5 seconds for this acceptance.')
+    if duration_s is not None and (type(duration_s) not in (int, float) or not math.isfinite(duration_s) or duration_s <= 0):
+        raise ValueError('Physical acquisition duration must be a positive finite number.')
     if initial_state_policy not in (STARTUP_POLICY, STEADY_POLICY):
         raise ValueError('Unknown nuclear source initial-state policy')
     if initial_state_policy == STEADY_POLICY and duration_s is None:
         raise ValueError('Steady inventory requires an explicit physical acquisition duration')
-    if duration_s is None and (type(primary_count) is not int or not 1 <= primary_count <= 500):
-        raise ValueError('This streaming acceptance supports 1–500 initial parents. Long production remains a separate milestone.')
+    if duration_s is None and (type(primary_count) is not int or primary_count <= 0):
+        raise ValueError('Initial parent count must be a positive integer.')
     if block_parents is None:
         block_parents = 500 if duration_s is not None else 50
-    if type(block_parents) is not int or not 1 <= block_parents <= 10000:
-        raise ValueError('Use a source block of 1–10000 transport roots')
+    if type(block_parents) is not int or block_parents <= 0:
+        raise ValueError('Source block size must be a positive integer.')
     if any(_linked(p) for p in (output, *output.parents) if p.is_relative_to(ROOT)):
         raise ValueError('Linked acquisition directory refused')
     config = source_config(output.name, primary_count, seed, activities_bq, positions_mm, duration_s, initial_state_policy)
@@ -268,7 +269,8 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
     if resume:
         if W.read(output / 'source-config.json') != config:
             raise ValueError('Resume requires the original sources, seed, count and source state')
-        request = output / ('native-only/native-request.json' if (output / 'native-only-continuation.json').exists()
+        request = output / ('stream-id-repair/native-request.json' if (output / 'stream-id-continuation.json').exists()
+                            else 'native-only/native-request.json' if (output / 'native-only-continuation.json').exists()
                             else 'native-request.json')
     else:
         if output.exists() and any(output.iterdir()):
@@ -278,13 +280,14 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
         # Native primary_count configures legacy readout metadata, not a physical
         # source denominator. Duration counts are measured only by transport census.
         nominal_count = primary_count if duration_s is None else max(1, math.ceil(sum(activities_bq) * duration_s))
-        request = mixed.native_request(output, nominal_count, response_mode='native_signals_only_v1')
+        request = mixed.native_request(output, nominal_count, response_mode='native_signals_only_v1',
+            **({'event_id_policy': 'streaming_transport_driver_v1'} if duration_s is not None else {}))
     current_identity = producer_identity(config, request)
-    active = continuation.admit(output, current_identity) if resume else None
+    active = (stream_ids.admit(output, current_identity) or continuation.admit(output, current_identity)) if resume else None
     identity = active['original_identity'] if active is not None else current_identity
     spool_path = Path(active['active_spool']) if active is not None else output / 'native-spool'
     native_path = Path(active['active_store']) if active is not None else output / 'native-scratch.sqlite'
-    native_phase = 1 if active is not None else 0
+    native_phase = active.get('native_phase', 1) if active is not None else 0
     if resume and (output / candidates.REPORT_NAME).exists():
         report = W.read(output / candidates.REPORT_NAME)
         if report['identity'] != identity:
@@ -323,10 +326,11 @@ def run(output, primary_count=100, seed=20261120, activities_bq=(185000, 37000),
             'unknown_since_ns': None, 'channels': None, 'live_time_ns': None, 'resources': {}}
         with sink.transaction():
             sink.save_checkpoint(state)
+    receipt_path = active.get('receipt_path', 'native-only-continuation.json') if active is not None else None
     state['execution_provenance'] = {'active_producer_identity': current_identity,
         'native_processing_phase': native_phase,
-        'continuation_receipt': ({'path': 'native-only-continuation.json',
-            'sha256': mixed.file_sha(output / 'native-only-continuation.json')} if active is not None else None)}
+        'continuation_receipt': ({'path': receipt_path,
+            'sha256': mixed.file_sha(output / receipt_path)} if active is not None else None)}
     census, counts = Counter(state['census']), Counter(state['counts'])
     histograms = {name: Counter({int(k): v for k, v in values.items()}) for name, values in state['histograms'].items()}
     readout = None

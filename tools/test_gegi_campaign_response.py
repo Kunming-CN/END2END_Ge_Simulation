@@ -70,6 +70,17 @@ class AdapterTests(unittest.TestCase):
         self.assertEqual(groups[0]['group_origin_time_ns'], 7.)
         self.assertIsNone(groups[0]['horizon_ns'])
 
+    def test_sparse_rows_have_no_100000_ceiling_but_keep_validity_and_identity(self):
+        steps=[step(row,float(row)) for row in range(100001)]
+        event={'event_id':3,'vertex':{'time':0.},'steps':steps}
+        group=next(C.pulse_groups(event,'gamma',{}))
+        self.assertEqual(len(group['steps']),100001)
+        self.assertIs(group['steps'][-1],steps[-1])
+        self.assertEqual(group['steps'][-1]['raw_row_index'],100000)
+        for invalid in ([],[step(0,0.),step(0,1.)],[{**step(0,0.),'energy_keV':0.}]):
+            with self.subTest(rows=len(invalid)),self.assertRaises(ValueError):
+                list(C.pulse_groups({**event,'steps':invalid},'gamma',{}))
+
     def spool_receipt(self, group, failed=False):
         digest = S.sha(S.encoded(group));stem = 'g-'+digest
         event = {'event_id': group['event_id'], 'group_id': group['group_id'],

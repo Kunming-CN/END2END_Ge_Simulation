@@ -12,6 +12,8 @@ const KIND="gegi_campaign_response_request_v1"
 const PROTOCOL="gegi_campaign_response_protocol_v1"
 const GROUP_HORIZON_NS=100000.0
 const LEGACY_RESPONSE_MODE="isolated_readout_v1"
+const FINITE_EVENT_ID_POLICY="finite_primary_count_v1"
+const STREAMING_EVENT_ID_POLICY="streaming_transport_driver_v1"
 const NATIVE_FAILURE_POLICY="gegi_campaign_native_domain_errors_v3"
 # The contact-start precondition cannot provide a trustworthy charge response.
 # Preserve the whole group as unknown; never move or discard its deposit rows.
@@ -50,6 +52,13 @@ function owned_output(out,identity)
     end
     out
 end
+function event_id_bound(req)
+    n=req["selection"]["primary_count"]
+    check(E.integer(n) && n>=1,"Invalid campaign primary count")
+    policy=get(req,"event_id_policy",FINITE_EVENT_ID_POLICY)
+    check(policy in (FINITE_EVENT_ID_POLICY,STREAMING_EVENT_ID_POLICY),"Unsupported resident event ID policy")
+    policy==STREAMING_EVENT_ID_POLICY ? nothing : n
+end
 function initialize(requestpath,out)
     requestpath=G.input_path(requestpath);req=E.readjson(requestpath)
     check(req["kind"]==KIND,"Unsupported campaign response request")
@@ -63,8 +72,7 @@ function initialize(requestpath,out)
     for (ref,digest) in req["source_sha256"]
         check(G.hashfile(G.input_path(ref))==digest,"Changed pinned source: "*ref)
     end
-    cfg=G.numerics(req);n=req["selection"]["primary_count"]
-    check(E.integer(n) && 1<=n<=10000000,"Invalid campaign primary identity bound")
+    cfg=G.numerics(req);n=req["selection"]["primary_count"];identity_bound=event_id_bound(req)
     readout=P.load(profile).config
     readout["expected_primary_count"]=n # Metadata only; the pinned profile bytes and electronics settings remain unchanged.
     check(readout["peak_policy"]==E.SIGNED_PEAK_POLICY,"GeGI requires signed-input readout")
@@ -93,7 +101,8 @@ function initialize(requestpath,out)
         "electronics_calibration"=>cal,"ionisation_energy_eV"=>eion,"drift_dt_ns"=>cfg.dt,
         "pulse_group_horizon_ns"=>GROUP_HORIZON_NS,"environment"=>env)
     response_mode==G.NATIVE_SIGNAL_ONLY && (ready["response_mode"]=response_mode)
-    (req=req,requestpath=requestpath,requestsha=requestsha,out=out,cfg=cfg,n=n,sim=sim,channels=channels,response_mode=response_mode,
+    haskey(req,"event_id_policy") && (ready["event_id_policy"]=req["event_id_policy"])
+    (req=req,requestpath=requestpath,requestsha=requestsha,out=out,cfg=cfg,n=identity_bound,sim=sim,channels=channels,response_mode=response_mode,
         readout=readout,eion=eion,matrix=matrix,cal=cal,sources=frozen,ready=ready)
 end
 

@@ -2,6 +2,42 @@
 
 ## Current handoff, November 20
 
+**Continuous acquisition repaired; same run active (November 20, 21:05 Chicago):**
+The five-second Cs-137/Co-60 run has resumed from its original source, RNG and
+34-channel readout checkpoint. Actual readout time is 2.806565347 s; source time
+is 2.826249592 s. Native worker PID 25948 is active. Inspect live progress and
+host processes before any action; do not restart or launch another acquisition.
+
+The original failure at 2.798250853 s was an invalid expected-count ID ceiling:
+621,834 new parents plus 489,166 initial daughters had produced 1,111,000
+transport roots, but the native request used 1,110,000 expected new parents as
+an ID bound. Event 1,110,048 is now completed. Duration streams explicitly use
+nonnegative chronological transport IDs; actual census remains separate. Removed
+artificial duration/count/deposit-row ceilings from the continuous runtime and
+Control; defaults remain 5 s/100. Scientific inputs and finite-dataset census
+consistency remain unchanged. No larger acquisition was launched.
+
+Explicit phase 2 preserved the prior 33,014 groups and processed another 31.
+Phase 3 links sealed block 112 to the exact block-size-check correction; its AST
+comparison preserves all physical clock/macro/RNG functions. Block 113 completed
+without repeating earlier radiation. A subsequent memory stop resumed after
+owned preview/tests ended. Both failures, original producer versions and bridge
+checkpoints remain preserved. Current exact producer is
+`.local/steady-acquisition-v1/transport-link-producer.zip`, SHA-256
+`f971dfed3cbc0039aa7ab17486f102644e2fcbc4e66d93ac3bca80975a28d7ff`.
+
+Validation: six focused Python ID/group tests, 63 Julia assertions, ten repair
+continuation tests, 18 integrated acquisition/package tests, eight Control tests
+and Node UI contracts pass. Transport source has 13 checks (one Windows symlink
+skip) plus four targeted final compatibility/clock checks. Chrome rendered
+90.09 s and 20,000,000 inputs with no maximum attributes; no Run or download was
+clicked. Preview tab/server are closed. All 38 publication tests pass. Generated
+build `923f841eccdf69b3ac7198b2cfb1e963dedcef17caa40e7c51b143b655694d99`
+and `check_site.py` pass: only guide and manifest change. Runtime/release/GitHub
+publication is next. Final five-second census, storage and timing remain pending.
+Current-session status checks continue; unattended automation is not enabled.
+Earlier snapshots below are historical and do not override this live handoff.
+
 **Website refinement:** archive viewers now identify their saved population and
 return to current views; ring ledger ZIPs explicitly remain local. The guide links
 the actual four-acquisition evaluation (153 groups / 287 orders, 550 unevaluated),

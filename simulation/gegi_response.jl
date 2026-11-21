@@ -190,9 +190,11 @@ function depth_calibration(sim,cfg,channels,energy)
             "Overlapping interactions on one strip cannot be resolved by this timing estimator."])
 end
 function validate_event(event,n)
-    id=event["event_id"];check(E.integer(id)&&0<=id<n,"Invalid original primary ID")
+    # A duration stream has no finite census yet. Only the resident worker's
+    # explicit streaming policy supplies nothing; legacy callers retain n.
+    id=event["event_id"];check(E.integer(id)&&id>=0&&(n===nothing||id<n),"Invalid original primary ID")
     t0=get(event,"primary_time_ns",0.0);check(E.finite(t0)&&t0>=0,"Invalid primary time")
-    steps=event["steps"];check(1<=length(steps)<=100000,"Invalid sparse positive event")
+    steps=event["steps"];check(length(steps)>=1,"Invalid sparse positive event")
     total=0.0
     for s in steps
         check(E.finite(s["energy_keV"])&&s["energy_keV"]>=0,"Invalid deposit energy")
@@ -307,7 +309,7 @@ function main(args=ARGS)
     end
     n=manifest["primary_count"];zero=manifest["zero_deposit_primaries"];nonzero=manifest["nonzero_primaries"]
     counts=Dict("initial_primaries"=>n,"zero_deposit_primaries"=>zero,"nonzero_primaries"=>nonzero)
-    check(E.integer(n)&&1<=n<=100000&&E.integer(zero)&&E.integer(nonzero)&&zero>=0&&nonzero>=0&&zero+nonzero==n,"Invalid sparse census")
+    check(E.integer(n)&&n>=1&&E.integer(zero)&&E.integer(nonzero)&&zero>=0&&nonzero>=0&&zero+nonzero==n,"Invalid sparse census")
     readout["expected_primary_count"]=n
     report=Dict{String,Any}("schema_version"=>1,"kind"=>"gegi_multichannel_results_v1","status"=>"running",
         "configuration_sha256"=>req["configuration_sha256"],"request_sha256"=>requestsha,
