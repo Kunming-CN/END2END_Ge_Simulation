@@ -14,7 +14,10 @@ state before writes or launches. Worker assignments are explicit GPT-6.2 Sol
 Ultra (candidate/position) and GPT-6.1 Sol Ultra (native). This interface cannot
 verify or switch the leader to the requested GPT-6 Astra Ultra; no switch claimed.
 
-**Implemented and evaluated; integrated publication is in progress.**
+**Published baseline: `679dd8dd5d418fa47f5e42b948260d77be817e35`.**
+The next integrated milestone adds the ten photon histories, complete measured-line
+ledger and portable topology tools. Its local publication acceptance is complete;
+publication receipts below distinguish local validation from live deployment.
 
 * Peak attribution reproduces all three original five-second maps to 2.90e-14
   trigger units. Trigger 12841 / pairing 0 / reverse order supplies 24.79% of the
@@ -24,6 +27,24 @@ verify or switch the leader to the requested GPT-6 Astra Ultra; no switch claime
   solid-angle weighting; this does not validate that prior or causal photon
   interpretation. Original selection is unchanged. Exact per-trigger/order,
   time-block and footprint evidence: `five-second-edge-attribution.json.gz`.
+* Exact original-state transport replays now explain the ten dominant cobalt
+  contributors. In the 1173 window, escaping 1332 photons (12841,42261,19477)
+  supply 47.0007% of the original corner; full1173 merged histories (49893,22781)
+  supply another 14.3559%. In the 1332 window, all five leading photons are fully
+  absorbed but have 2-5 Compton scatters plus photoelectric absorption; their
+  reverse nominal-cell orders supply 46.5032% of the original corner.
+  Trigger12841's first two vertices are 4.54 micrometres apart. All ten replays
+  match original primary, before/after CLHEP, canonical full-stream and target
+  native-input hashes; raw LH5 container hashes differ. One timed Ge group lies
+  in each ADC context; earlier electronic tails were not isolated. No drift or
+  readout replay ran. `cobalt-top-ten-origin.json` SHA
+  bf891c1ecb9c4e544461ae8e2a55d1145daaa70fb929f28f408b9f794b7811dc
+  binds the local replay/classification producers. Public export uses science
+  only. Ten serial original blocks took 87.56 s transport, peak child RSS 183 MB.
+* Saved-energy offsets distinguish the windows: 1173 corner half-weight needs
+  |offset|4.577 keV despite median candidate offset0.075 keV; 1332 corner half-weight
+  is within0.091 keV. No energy cut adopted. `peak-energy-offsets.json.gz` and its
+  checked PNG preserve all1349 line-window trigger/order weights.
 * Control's peak-contributor path opens the original 34-electrode ADC context.
   Desktop Chrome verified 1173 keV -> trigger 12841 -> electrode 8 (81 samples),
   without starting a simulation or download. Optional all-34 residual diagnostics
@@ -50,8 +71,9 @@ verify or switch the leader to the requested GPT-6 Astra Ultra; no switch claime
   (SHA 6accb91c8e3076b0b535e5d3a1fea662c951450aab9645b97a1c9ad79fcccd24).
 * Historical same-event controls retain 41 matched occurrences / 27 groups, but
   only two full-energy photons and no full 1173 keV example. Photon vertices,
-  energy-weighted deposit centroids and signal estimates stay distinct. Fresh
-  complete transport survives only in b000000/b000001, not the other 198 blocks.
+  energy-weighted deposit centroids and signal estimates stay distinct. Original
+  complete transport survives only in b000000/b000001; the ten exact targeted
+  replays above now supply additional selected photon histories.
 * Three-dimensional scoring now reads the fresh saved candidate geometry,
   preserves order/unknown weight, and fits full-sphere direction and center
   distance without source truth/activity. The refined 49-radius / 192-direction
@@ -105,10 +127,14 @@ Inspect `native-recovery*/active-worker.json`, logs, identity and checkpoints;
 do not launch a competing Julia worker or modify active pinned producer files.
 Native recovery does not reconstruct the previously omitted continuous readout.
 
-The current phase reached 202/1,971 durable records: 84 complete (including 39
-inherited), 54 at the configured drift limit and 64 specifically stopped at an
-uncontacted face intersection with no positive projected motion. This prefix is
-not the final recovery fraction. Python 17496 / Julia 29040 remain active.
+The current phase reached 999/1,971 durable records: 433 complete (including 39
+inherited), 263 at the configured drift limit, 299 failed and four stopped.
+This prefix is not the final recovery fraction. Python 17496 / Julia 29040 remain
+active, confirmed from the owned session and an elevated read-only process query.
+Default sandbox process visibility can be empty while this worker advances.
+An additional stopped witness ends 0.1965 micrometres below the top diagonal
+face; its exact row and trajectory remain in `native-stopped-exemplar.json`.
+The agent is adding a drift-only diagnostic, not changing the pinned producer.
 
 The full optional lateral replay preserves all 3,822 trigger identities, orders
 and 2,891.5/930.5 projected/unresolved weights. It uses 143 one-site and eight
@@ -127,21 +153,49 @@ input interface, not identified photon topology. The separate shared-strip
 study and ADC three-/four-corner study preserve alternatives without changing
 the released two-strip map. The latter shows residuals cannot choose topology.
 
-Immediate work: finish native recovery and same-input moving-tail extensions;
-connect the measured sparse/continuous energy-flow hypotheses through an optional
-portable CLI; evaluate ambiguity before replacing default event selection.
+The optional portable topology CLI now handles both two-by-two and shared-strip
+inputs, with original energy, unresolved statuses and no new imaging weight.
+Actual four-trigger/two-shared-trigger checks passed, along with focused tests.
+The complete source-coordinate-free incident-line ledger covers all 3,822 triggers
+and 7,644 pair alternatives, including all 4,607 incompatible alternatives.
+At nominal1332.492keV, 55/163 triggers in the1173window admit a resolved escape
+order, but those exact orders supply only13.06% of its original corner.
+Truth histories enter after this calculation. Triggers42261/19477 admit their
+true escape order; merged12841 admits neither. Cs candidates also admit Co-line
+escape, so admissibility does not identify an isotope. No new cut or weight.
+`five-second-line-kinematics.json.gz` SHA
+b77612d1594d93bb194949de03e7be94ad8d72761fc959e10ab533e679726aa2;
+3.95s before gzip, complete lossless ledger published separately from software.
+
+Immediate work: finish native recovery and same-input moving-tail extensions.
+Candidate agent now attributes18 prespecified non-peak triggers (six chronological
+ranks per window), reusing exact original-block replays. These are held-out
+histories inside the development run, not independent new-seed validation.
+Position agent connects resolved escape kinematics to finite-vertex geometry in
+a separate diagnostic; merged/mixed hypotheses remain unknown and official maps
+remain unchanged. Next establish independent response/selection controls before
+assigning direction weights to escape or merged topologies. Keep physical
+interaction count explicit rather than treating a good ADC fit as two scatters.
 Four additional archived lateral grids failed to improve aggregate axis error
 (7.17 -> 9.32 deg) and were not promoted into the six-grid calibration.
 
-Publication acceptance is complete locally: build
-`b173155aa8f5375c9b02229264d9decc26ebaa1c466d328f977d44eb151954b4`,
-1,912 files / 505,937,620 bytes; 42 publication tests, 13 route tests, six package
-checks and the UI contracts passed. Desktop Chrome verified Control's saved
-range profiles (including an open 1332-keV no-background profile), lateral
-controls, and homepage -> new exhibit -> methods. Preview servers are closed.
-Commit/push, exact software-only student release, separate lateral calibration
-release and live byte verification follow. Keep the heartbeat active through
-the remaining development queue; no large production run has started.
+The current local website build is
+`995fc07a6b6e58c560773349152272e25fedb62e7df07f49a1e038d6f8bae38a`,
+1,914 files / 512,579,480 bytes. Required42 publication tests and `check_site.py`
+passed. Focused topology/math9, candidate-kinematics3, package6 and display2
+checks passed; actual saved-trigger CLIs also ran. Desktop Chrome verified
+homepage -> cobalt photon table -> energy-offset plot -> complete-ledger link
+and the maintained student CLI guide. No browser download was triggered;
+the temporary preview server/tab are closed. Native diagnostic WIP remains
+outside this source/site/package milestone until its own tests finish.
+
+The previous baseline679dd8d is live, with software release
+`student-runtime-679dd8dd5d41` and separate `gegi-lateral-calibration-v1`.
+Its public ZIP and calibration bytes matched exactly; the next immutable software
+release must be built from the new commit, followed by normal push and required
+live `check_site.py --url`. Update `publication-assets.json` after actual success.
+Keep the existing center/lateral calibration downloads separate and unchanged.
+Heartbeat remains active through the queue; no large production run has started.
 
 ## Preserved baseline and history
 

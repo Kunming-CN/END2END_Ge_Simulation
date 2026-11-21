@@ -12,6 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DIRECTORY = Path('results/gegi-five-second-reconstruction')
 DATA = DIRECTORY / 'evidence.json'
 IMAGE = DIRECTORY / 'source-plane-priors.png'
+ENERGY_IMAGE = DIRECTORY / 'peak-energy-offsets.png'
+KINEMATICS = DIRECTORY / 'candidate-line-kinematics.json.gz'
 PAGE = DIRECTORY / 'index.html'
 TITLE = 'GeGI five-second acquisition and reconstruction'
 IMAGE_SIZE = (1680, 1020)
@@ -24,6 +26,11 @@ SOURCES = {
     'range': ('candidate-range-refined.json', 'f509c9d60e52c951b36855f039f09588c3f79753db40300856ce49d2f25e12a7'),
     'profiled_range': ('candidate-range-profiled.json', '59822b5c5a83ef28fbc7e657ba22a64a94c07923de799c7d61ecf2117f7cdbb8'),
     'uncertainty': ('position-uncertainty-controls.json', '6accb91c8e3076b0b535e5d3a1fea662c951450aab9645b97a1c9ad79fcccd24'),
+    'additional_lateral': ('additional-lateral-grid-controls.json', 'd55b7a5a33aac1f2ba9d0633dfd8471758dba81643a1086ebb60a1702640ef3e'),
+    'lateral_acceptance': ('candidate-lateral-acceptance.json', '1e4050fd14e11b2ab0455763c654f089f1d52fb4d40f5734c2bfb3b820d38225'),
+    'energy_offsets': ('peak-energy-offsets.json.gz', 'f66664f15b2dfa28f78492009b6ec60e24573c09a1b816d5cf55599f105cc0cd'),
+    'origins': ('cobalt-top-ten-origin.json', 'bf891c1ecb9c4e544461ae8e2a55d1145daaa70fb929f28f408b9f794b7811dc'),
+    'kinematics': ('five-second-line-kinematics.json.gz', 'b77612d1594d93bb194949de03e7be94ad8d72761fc959e10ab533e679726aa2'),
 }
 WINDOWS = ('661.657_keV', '1173.23_keV', '1332.49_keV')
 PRIORS = ('uniform-area', 'uniform-solid-angle')
@@ -36,6 +43,11 @@ KINDS = {
     'range': 'gegi_candidate_conditional_range_v1',
     'profiled_range': 'gegi_candidate_conditional_range_v1',
     'uncertainty': 'gegi_position_empirical_uncertainty_controls_v1',
+    'additional_lateral': 'gegi_additional_existing_lateral_grid_controls_v1',
+    'lateral_acceptance': 'gegi_full_saved_lateral_acceptance_v1',
+    'energy_offsets': 'gegi_original_peak_energy_offsets_v1',
+    'origins': 'gegi_ten_cobalt_peak_trigger_origins_v1',
+    'kinematics': 'gegi_saved_candidate_kinematic_ledger_v1',
 }
 
 
@@ -54,6 +66,32 @@ def validate_inputs(inputs):
     position = inputs['position']['candidates']
     partial = inputs['partial_lateral']['retained_candidates']
     bindings = attribution['input_sha256']
+    offsets = inputs['energy_offsets']
+    if (offsets['input_sha256']['attribution'] != SOURCES['attribution'][1] or
+            offsets['input_sha256']['baseline'] != bindings['saved_plane'] or
+            offsets['full_map_selection'] != attribution['saved_selection']):
+        raise ValueError('Energy offsets must describe the same original measured maps')
+    origins = inputs['origins']['science']
+    ledger = inputs['kinematics']
+    if (ledger['input_sha256']['saved_plane'] != bindings['saved_plane'] or
+            ledger['input_sha256']['candidate_store'] != bindings['candidate_store'] or
+            ledger['input_sha256']['photon_origin_score_only'] != SOURCES['origins'][1] or
+            ledger['original_selection'] != attribution['saved_selection']):
+        raise ValueError('The incident-line ledger must preserve the original candidate selection')
+    if (origins['analysis_input_sha256'] != bindings['saved_plane'] or
+            origins['attribution_sha256'] != SOURCES['attribution'][1]):
+        raise ValueError('Photon origins must refer to the original measured map and attribution')
+    for label, window in origins['windows'].items():
+        case = attribution['windows'][label]['cases'][CASES[0]]
+        shares = {row['original_trigger_id']: row for row in case['trigger_contributions']}
+        expected_ids = case['trigger_concentration']['ranked_top_trigger_ids'][:5]
+        if [row['original_trigger_id'] for row in window['triggers']] != expected_ids:
+            raise ValueError('Photon origins must cover the original five leading peak contributors')
+        for row in window['triggers']:
+            original = shares[row['original_trigger_id']]
+            if not math.isclose(row['original_peak_cell_share'], original['support']['peak_cell']/case['peak']['mass'],
+                                rel_tol=0., abs_tol=1e-12):
+                raise ValueError('Photon-origin joins changed the original peak contribution')
     same = {k: bindings[k] for k in ('acquisition', 'candidate_store', 'calibration')}
     if (fits['input_sha256'] != bindings['saved_plane'] or fits['input_bindings'] != same
             or fits['acquisition_selection'] != attribution['saved_selection']
@@ -189,6 +227,12 @@ def compact(inputs, maps):
         'range': {'model': range_fit['model'], 'fits': range_fit['fits']},
         'profiled_range': inputs['profiled_range'],
         'uncertainty_controls': inputs['uncertainty'],
+        'additional_lateral_controls': inputs['additional_lateral'],
+        'full_lateral_acceptance': inputs['lateral_acceptance'],
+        'energy_offsets': inputs['energy_offsets'],
+        'photon_origins': inputs['origins']['science'],
+        'line_hypothesis_summary': {k: inputs['kinematics'][k] for k in
+                                    ('kind', 'model', 'methods', 'windows', 'photon_origin_score')},
         'historical_truth_control': {**{k: truth[k] for k in truth_fields},
                                      'full_energy_controls': [row for row in truth['rows']
                                                               if row['containment'] == 'full_energy_at_photon_birth']},
@@ -239,6 +283,11 @@ def attach(site, directory):
     (site / DIRECTORY).mkdir(parents=True, exist_ok=True)
     plot(data['maps'], site / IMAGE)
     data['figure_sha256'] = sha256((site / IMAGE).read_bytes()).hexdigest()
+    energy_image = (directory / ENERGY_IMAGE.name).read_bytes()
+    if sha256(energy_image).hexdigest() != inputs['energy_offsets']['figure_sha256']:
+        raise ValueError('The saved energy-offset figure differs from its numerical evidence')
+    (site / ENERGY_IMAGE).write_bytes(energy_image)
+    (site / KINEMATICS).write_bytes((directory / SOURCES['kinematics'][0]).read_bytes())
     (site / DATA).write_text(json.dumps(data, allow_nan=False, separators=(',', ':')) + '\n',
                              encoding='utf-8', newline='\n')
 
@@ -289,6 +338,58 @@ def trigger_detail(trigger):
                     f'Available measured pairings and orders for trigger {ident:,}')
             + '<p>The source residual is the angle from the cone axis to the programmed source minus the energy-derived opening.'
               ' The evidence JSON includes the original ADC digest and per-contact residuals.</p></details>')
+
+
+def origin_section(data):
+    from gegi_shared_clock_display import table
+
+    rows = []
+    for label, window in data['photon_origins']['windows'].items():
+        for trigger in window['triggers']:
+            truth = trigger['photon_truth']
+            emitters = [g for g in truth['emitted_gammas'] if g['ge_deposited_keV'] > 0.]
+            processes = [r['child_birth_processes'] for r in truth['ge_interactions_matched_to_births']]
+            nc, np = (sum(name in p for p in processes) for name in ('compt', 'phot'))
+            history = f'{nc} Compton' + (f' + {np} photoelectric' if np else ' + Ge exit')
+            forward = {p['nominal_order_survives_saved_projection'] for p in trigger['measured_pairings']}
+            order_status = 'retained' if True in forward else 'excluded' if forward == {False} else 'unassigned'
+            ident = trigger['original_trigger_id']
+            rows.append((title(label), f'<a href="#trigger-{ident}">{ident:,}</a>',
+                         number(100*trigger['original_peak_cell_share'])+'%',
+                         ' + '.join(number(g['emitted_keV']) for g in emitters),
+                         number(trigger['ge_deposit_keV']), history, order_status))
+    details = table(rows, ('Measured window', 'Trigger', 'Peak share', 'Photon energy (keV)',
+                          'Ge deposit (keV)', 'Photon history', 'Forward nominal-cell order'),
+                    'Verified transport origins of the ten leading cobalt-window peak contributors')
+    return f'''<section class="panel" id="photon-origins"><h2>Two recorded sites can hide several photon scatters</h2>
+<p>Exact original-state transport replays traced the five largest contributors to each cobalt-window peak.
+In the 1,173 keV window, three escaping 1,332 keV photons supplied <strong>47.00%</strong> of the original corner;
+two full-energy 1,173 keV photons with merged interactions supplied another <strong>14.36%</strong>.
+In the 1,332 keV window, all five were full-energy photons with two to five Compton scatters followed by photoelectric absorption.
+They supplied <strong>53.52%</strong> of that corner, including <strong>46.50%</strong> through the reverse nominal-cell order.</p>
+<p>For trigger <a href="#trigger-12841">12,841</a>, the first two photon vertices were only <strong>4.54 μm</strong> apart
+and deposited 1,154.35 keV together. A third scatter deposited 34.36 keV before the photon left Ge.
+The accompanying 1,173 keV photon deposited zero. The two-site full-absorption interpretation excludes the forward order
+and returns a 9.18° reverse cone, whose angular residual to the programmed source is 92.35°.</p>
+{details}
+<p>Each selected ADC context overlaps one Ge deposition group. The replay matches the original primary, random-state,
+canonical source-stream and native-input hashes; LH5 container byte hashes differ. Interaction processes are matched
+from child births to scored photon vertices. Earlier electronics tails were not isolated, and neither drift nor readout
+was rerun. Nominal cells describe nearest-strip geometry. Other triggers remain causally unclassified.</p>
+<p>These failures distinguish measured energy, photon containment and interaction count. Merged-pixel artifacts are also
+examined by <a href="https://doi.org/10.1109/TNS.2020.3005834">Shy, Xia and He (2020)</a>;
+<a href="https://doi.org/10.1016/j.astropartphys.2022.102765">Yoneda et al.</a> model absorption and escape separately.
+Their detector performance and selection parameters are not transferred to GeGI. Original candidate weights and maps remain unchanged.</p>
+<details><summary>Test absorption and escape hypotheses from measured energies</summary>
+<p>The new optional incident-line ledger checks all 3,822 original triggers and 7,644 measured pair alternatives,
+including 4,607 pairs whose strip energies are incompatible. It reads measured energies and explicitly supplied line energies;
+photon history enters only the subsequent comparison. All original projected and unresolved weights remain intact.</p>
+<p>At 1,332.492 keV, the measured energies of triggers 42,261 and 19,477 admit their true two-scatter escape order;
+trigger 12,841 admits neither order, consistent with its unresolved third scatter. Only 13.06% of the original 1,173-window
+corner comes from order geometries compatible with that resolved escape hypothesis. Compatibility alone cannot assign
+an isotope: the compatible Cs-window candidates also admit escape under both cobalt lines.</p>
+<p><a href="{KINEMATICS.name}">Complete measured-pair and incident-line ledger (lossless JSON gzip)</a> retains raw cosines,
+energy margins, both orders, original identities and all unknown cases. It applies no new selection or imaging weight.</p></details></section>'''
 
 
 def sections(data):
@@ -372,6 +473,7 @@ def sections(data):
                               ' → '.join(number(v, 3) for v in r['depth_error_rms_mm'])))
     position_table = table(position_rows, ('Identical ADC trials', 'Axis RMS error (°)', 'XY RMS error (mm)', 'Depth RMS error (mm)'),
                            'Independent simulated point-injection position controls')
+    additional = data['additional_lateral_controls']['matched_comparisons']['waveform']['all']
     coverage = position['coverage']
     held = data['historical_truth_control']
     primary = data['range']['model']
@@ -384,6 +486,8 @@ of the brightest cell on the ±120 mm uniform-area map. Removing <a href="#trigg
 moves the maximum {number(corner["without_trigger"]["shift_mm"], 0)} mm to {coordinates(new_peak[:2], 0)} mm.
 With the trigger retained, widening the map moves the maximum to the larger corner.
 On the same measured events, the uniform-solid-angle peak lies at {coordinates(solid_angle_peak[:2], 0)} mm.</p>
+<p>Targeted transport replay identifies the leading trigger as an escaping 1,332 keV photon with three scatters;
+the dominant 1,332 keV-window contributors instead contain full-energy photons with merged multiple interactions.</p>
 <p>The conditional 3D fits put the Cs-137 window close to the programmed source. The Co-60 positions vary with clock half
 and assumed background. These data leave cobalt localization unvalidated.</p></header>
 <section class="panel" id="plane"><h2>What drives the source-plane peaks?</h2>
@@ -397,7 +501,20 @@ cells by the angular area they subtend from the detector center.</p>
 {comparison}
 <p>Each row links the five largest contributors to its peak cell. The acquisition census includes every retained two-strip trigger.</p>
 <p>Energy-window membership uses measured energy. Programmed source positions enter only when scoring the completed fits.</p>
+<details><summary>Measured energy offsets and the original peak contributions</summary>
+<figure class="gegi-five-second-figure"><a href="{ENERGY_IMAGE.name}"><img src="{ENERGY_IMAGE.name}"
+ alt="Energy offset versus peak contribution and cumulative curves for the three measured windows."></a>
+<figcaption>Every retained trigger keeps its original contribution, including zero. The curves describe the existing maps;
+they do not define a new energy cut.</figcaption></figure>
+<p>The 1,173 keV corner reaches half its weight only at an absolute energy offset of 4.577 keV,
+although the median retained-candidate offset is 0.075 keV. Its three largest contributors supply 47.00% of the corner.
+The 1,332 keV corner reaches half its weight within 0.091 keV of its window center, so a broad energy window alone
+cannot explain that second artifact. The original half-widths are max(5 keV, 2% of the nominal line energy).</p>
+<p>Separate known point-deposit injections give simulated total-energy residuals of 0.038 keV RMS for 48 general
+conditions and 0.035 keV for eight targeted Cs conditions. These are readout checks, not monoenergetic photon
+resolution measurements or a calibrated selection rule.</p></details>
 <details><summary>Original triggers and interaction orders</summary>{events}</details></section>
+{origin_section(data)}
 <section class="panel" id="range"><h2>Conditional three-dimensional position</h2>
 <p>The fit searches a full sphere and ranges from {number(primary["radial_search_mm"][0], 0)} to
 {number(primary["radial_search_mm"][1], 0)} mm from detector (0, 0, 0). The primary model uses a nominal
@@ -425,6 +542,11 @@ Lateral fitting reduced matched errors where six position-tested response grids 
 <strong>{coverage["1"]:,}</strong> had a grid for one. The one-grid fit estimates that site's lateral coordinates
 and keeps the other site at its strip center. All {coverage["1"]:,} one-grid fits converged with valid modeled timing crossings.
 The twelve independent one-grid trials repeat one pair of injection coordinates across energy, phase and noise settings.</p>
+<p>The complete optional lateral replay preserved all 3,822 original trigger identities and assigned weights.
+The three line-window peak cells stayed unchanged; the four conditional 3D window fits moved only 0.16–0.47 mm.
+Four additional archived lateral grids were tested on {additional['total_conditions']} independent conditions:
+their axis RMS error changed from {number(additional['axis_rmse_deg'][0])}° to
+{number(additional['axis_rmse_deg'][1])}°, although XY and depth errors decreased. Those grids were not added to the released overlay.</p>
 <h3>A small residual does not establish two interactions</h3>
 <p>Independent off-template native traces supplied {uncertainty['positive_conditions']} two-point readout conditions
 and {uncertainty['negative_conditions']} known three- or four-point conditions. Of the latter,
@@ -442,7 +564,8 @@ retaining this detector's own signals and geometries.</p>
 {held["independent_original_groups"]} original interaction groups with verified photon vertices.
 Only two matched line-energy occurrences deposited the photon birth energy in germanium.
 The evidence retains measured fit positions, photon vertices and energy-weighted deposit centroids as distinct values.
-The fresh five-second trigger windows do not establish that same causal photon association.</p></details></section>
+For the fresh five-second archive, the ten targeted replays above now establish those selected photon histories;
+other trigger contexts retain uncertain causal associations.</p></details></section>
 <section class="panel" id="data"><h2>Data and methods</h2>
 <p>{counts["clock_live_time_ns"]/1e9:g} s from one chronological Cs-137/Co-60 acquisition yielded
 {counts["qualified_triggers"]:,} qualified triggers, {counts["qualified_energies"]:,} measured energies and
@@ -464,7 +587,9 @@ def render(site):
 
     data = json.loads(target.read_bytes())
     if (data['kind'] != 'gegi_public_five_second_reconstruction_v1' or
-            sha256((site / IMAGE).read_bytes()).hexdigest() != data['figure_sha256']):
+            sha256((site / IMAGE).read_bytes()).hexdigest() != data['figure_sha256'] or
+            sha256((site / ENERGY_IMAGE).read_bytes()).hexdigest() != data['energy_offsets']['figure_sha256'] or
+            sha256((site / KINEMATICS).read_bytes()).hexdigest() != data['source_sha256']['kinematics']):
         raise ValueError('The saved five-second exhibit figure and evidence do not match')
     styles = READER_STYLE + '''
 .gegi-five-second-figure{margin:14px 0 18px}.gegi-five-second-figure img{max-width:100%;height:auto}

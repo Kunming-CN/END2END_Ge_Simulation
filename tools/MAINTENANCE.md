@@ -39,11 +39,22 @@ lateral overlays use the existing `gegi_joint_two_site.py` fit and
 `gegi_joint_calibration.py` bundle identities. Keep the center calibration and
 lateral overlay as separate downloads, outside the software ZIP.
 
+`gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
+allocations or shared-strip fits; `gegi_adc_topology.py` and
+`gegi_candidate_shared_topology.py` supply the numerical models.
+`gegi_candidate_kinematics.py` uses only saved measured pairing energies and
+`gegi_incident_hypotheses.py` for explicit incident-line diagnostics, without
+refitting ADC. Both paths retain original counts, weights and unknown cases.
+Truth histories score completed results; they never choose the hypotheses.
+
 New acquisitions use `gegi_candidate_truth.py` to retain candidate-linked photon
 ancestry, scored Ge steps and native outcomes before scratch retirement. This
 diagnostic artifact is separate from reconstruction inputs; a readout-context
-join is not a causal photon identification. Retired five-second scratch cannot
-be recreated from its surviving scalar ledger.
+join is not a causal photon identification. A surviving scalar ledger alone
+cannot recover retired photon histories. Targeted same-input transport replays
+require the saved primary/random states, exact producers and comparison against
+the original canonical stream and native-input hashes; preserve differing raw
+container hashes rather than claiming byte-identical LH5 recovery.
 
 `gegi_storage_estimate.py` reads the sanitized measured five-second
 `gegi_storage_reference.json` without physics. It preserves separate new-parent

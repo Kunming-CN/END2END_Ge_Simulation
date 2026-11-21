@@ -43,6 +43,14 @@ class ReconstructionDisplayTests(unittest.TestCase):
             self.assertIn('10/12', page)
             self.assertIn('66.6%', page)
             self.assertEqual(public['uncertainty_controls']['negative_conditions'], 12)
+            self.assertNotIn('local_replay', public['photon_origins'])
+            origin = public['photon_origins']['windows']['1173.23_keV']['triggers'][0]
+            self.assertEqual(origin['original_trigger_id'], 12841)
+            self.assertEqual([round(g['emitted_keV']) for g in origin['photon_truth']['emitted_gammas']
+                              if g['ge_deposited_keV'] > 0.], [1332])
+            self.assertIn('46.50%', page)
+            self.assertIn('9.32', page)
+            self.assertTrue((site / display.ENERGY_IMAGE).is_file())
             ids = re.findall(r'id="(trigger-[0-9]+)"', page)
             self.assertEqual(len(ids), len(set(ids)))
             self.assertIn('trigger-12841', ids)

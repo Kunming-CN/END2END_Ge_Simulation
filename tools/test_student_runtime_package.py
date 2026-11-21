@@ -45,7 +45,10 @@ class StudentRuntimePackage(unittest.TestCase):
                 self.assertIn('id="saved-analysis"', guide)
                 self.assertIn('gegi_continuous_plane.py --acquisition', guide)
                 self.assertIn('gegi-center-calibration.npz', guide)
-                for tool in ('gegi_continuous_plane.py', 'gegi_joint_calibration.py', 'gegi_joint_two_site.py'):
+                self.assertIn('--incident-energy-keV ENERGY', guide)
+                self.assertIn('gegi_candidate_kinematics.py --saved-plane', guide)
+                for tool in ('gegi_continuous_plane.py', 'gegi_joint_calibration.py', 'gegi_joint_two_site.py',
+                             'gegi_candidate_topology.py', 'gegi_candidate_kinematics.py', 'gegi_incident_hypotheses.py'):
                     self.assertIn(f'{self.manifest["archive_root"]}/tools/{tool}', names)
                 self.assertFalse(any(p.endswith(('/gegi_joint_acquisition_study.py', '/gegi-center-calibration.npz'))
                                      for p in names))
@@ -131,6 +134,8 @@ subprocess.Popen=forbidden
 import local_ui,scenario_workflow,catalog_workflow,saved_focus_waveforms
 import gegi_digital_readout,gegi_digital_saved,gegi_substrip,gegi_digital_spectra,gegi_digital_pairs
 import gegi_streaming_acquisition,gegi_streaming_readout,gegi_resource_monitor,gegi_streaming_source
+import gegi_incident_hypotheses
+assert gegi_incident_hypotheses.configuration([661.657])['incident_energies_keV']==[661.657]
 assert 'CLHEP::HepRandom::saveEngineStatus' in gegi_streaming_source.RNG_SOURCE
 assert gegi_substrip.load_calibration(gegi_digital_saved.CALIBRATION)['digital_profile_sha256']==gegi_digital_readout.PROFILE_SHA256
 catalog=scenario_workflow.catalog()
@@ -152,6 +157,11 @@ print('Isolated student Control imports and 17-model/6-source browsing passed; m
             result = subprocess.run(arguments + ['-B', '-c', code], cwd=root,
                                     capture_output=True, text=True, timeout=30)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            for tool in ('gegi_candidate_topology.py', 'gegi_candidate_kinematics.py'):
+                result = subprocess.run(arguments + ['-B', f'tools/{tool}', '--help'], cwd=root,
+                                        capture_output=True, text=True, timeout=30)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn('--incident-energy-keV', result.stdout)
 
 
 if __name__ == '__main__':

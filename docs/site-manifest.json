@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
-  "build_id": "b173155aa8f5375c9b02229264d9decc26ebaa1c466d328f977d44eb151954b4",
-  "file_count": 1912,
-  "total_bytes": 505937620,
+  "build_id": "995fc07a6b6e58c560773349152272e25fedb62e7df07f49a1e038d6f8bae38a",
+  "file_count": 1914,
+  "total_bytes": 512579480,
   "html_pages": 127,
-  "local_links_checked": 3788,
-  "resource_references_checked": 4004,
-  "page_navigation_checked": 2010,
-  "fragments_checked": 342,
-  "downloads_checked": 768,
-  "media_references_checked": 1162,
+  "local_links_checked": 3791,
+  "resource_references_checked": 4018,
+  "page_navigation_checked": 2021,
+  "fragments_checked": 353,
+  "downloads_checked": 769,
+  "media_references_checked": 1164,
   "metadata_references_checked": 62,
   "other_references_checked": 2,
   "files": [
@@ -7725,8 +7725,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 91395,
-      "sha256": "0b905fc6488a669f058c6eda760a526fc4b41c2974d936dd981afb8e68451db3"
+      "bytes": 93075,
+      "sha256": "9a34b71d4b8319e866c6b61ab949f8f2a80d90266dd65ca87b0d9ead7c53717d"
     },
     {
       "path": "index.html",
@@ -9439,14 +9439,24 @@
       "sha256": "15cf1b81bc6bd667f3024c74ac3cf1c0c709986b4eb6c03b01c992ac684be4b0"
     },
     {
+      "path": "results/gegi-five-second-reconstruction/candidate-line-kinematics.json.gz",
+      "bytes": 4459113,
+      "sha256": "b77612d1594d93bb194949de03e7be94ad8d72761fc959e10ab533e679726aa2"
+    },
+    {
       "path": "results/gegi-five-second-reconstruction/evidence.json",
-      "bytes": 2019240,
-      "sha256": "d8cdb369da63ea766da8f5a117162fca52ec4df0fd839b4b533f23d7d40d4770"
+      "bytes": 4025657,
+      "sha256": "085f5c6996aaa020bb517cdd82d47e3b594444ae9fd615930e82babe3ce3895f"
     },
     {
       "path": "results/gegi-five-second-reconstruction/index.html",
-      "bytes": 67249,
-      "sha256": "2918f3ac52e548c4963c88473bc09441d814a1228f2b4d18092c21684cf985d0"
+      "bytes": 74888,
+      "sha256": "f40cea42c388c691264ec0a8ec30299500936cec6c7670e8b7d497a8d47cbc8b"
+    },
+    {
+      "path": "results/gegi-five-second-reconstruction/peak-energy-offsets.png",
+      "bytes": 167011,
+      "sha256": "b702e008654b7f199c1db215c7b0b92fe95e53ffa0f103ba507f498c19d48b2e"
     },
     {
       "path": "results/gegi-five-second-reconstruction/source-plane-priors.png",

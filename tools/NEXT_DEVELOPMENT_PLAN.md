@@ -33,15 +33,36 @@ next executable step. A finite optimum or an optimizer covariance alone is not
 a calibrated range interval; report open profiles and model sensitivity. Retain
 one compact current handoff, source/input hashes and necessary unique evidence.
 
-Implemented in the resumed work: original peak/order attribution; all-34 residual
-diagnostics; optional portable six-grid lateral correction; matched historical
-truth controls; candidate-only truth retention for future acquisitions; finite
-vertex 3D scoring, background profiling and exact far-field comparison. Native
-failure recovery is running separately. Independent controls show that 10/12
-known three-/four-point mixtures can pass the two-site model with small residuals,
-so no residual-only acceptance gate is supported. The immediate reconstruction
-step compares measured ADC against three-/four-corner energy flows and retains
-indistinguishable topology, alongside additional held-out position checks.
+Delivered in the resumed work: original peak/order attribution; all-34 residual
+diagnostics; optional portable six-grid lateral correction; candidate-only truth
+retention; conditional 3D range profiles and exact far-field comparison. The
+full optional lateral run preserves all 3,822 original triggers and weights.
+Independent controls reject a residual-only two-site acceptance rule: 10/12
+known multi-point mixtures pass, and four extra lateral grids worsen axis error.
+
+Exact original-state transport replays now explain the ten dominant cobalt
+contributors. Three escaping 1332-keV photons supply 47.00% of the 1173-window
+corner; its two other leading histories contain merged full1173 interactions.
+All five leading 1332-window photons are fully absorbed but contain 2-5 Compton
+scatters plus absorption in two nominal cells. Their reverse orders supply46.50%
+of that corner. No original selection or imaging weights changed. Energy offsets
+alone therefore cannot repair both windows.
+
+The portable optional topology path connects 2x2 energy flows and shared-strip
+1x2/2x1 ADC fits, preserving unknown interaction count and the full census.
+Explicit incident-line diagnostics compare observed-sum absorption and two
+resolved Compton scatters followed by escape, with raw kinematic margins and no
+truth-tuned tolerance. Native recovery continues in its pinned process. After
+it closes, remove the identified artificial native-step ceiling and test exact
+moving-tail inputs with actual support reflected in missing-history accounting.
+
+Next scientific step: evaluate absorption, resolved escape and merged/mixed
+hypotheses against independent photon histories and the same measured response.
+Source coordinates score finished results only. Establish coverage, wrong-order
+rates and angular errors before changing event weights; unresolved intra-cell
+scatters need a response model, not a narrower cone or forced two-point answer.
+Then freeze the algorithm for the held-out distance/direction/strength/depth
+statistics in stage6. Current five-second results remain development evidence.
 
 **Completed readiness baseline before this resumed work:** the five-second mixed-source acquisition,
 its final count/resource accounting and its full saved-candidate imaging are

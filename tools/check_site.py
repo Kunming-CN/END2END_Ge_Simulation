@@ -141,9 +141,10 @@ def validate(site, require_manifest=True, require_models=False, *, allow_histori
         gegi_assembly_payload = relative in {'assemblies/gegi/viewer.js', 'assemblies/gegi/geometry.gdml',
                                              'assemblies/gegi/gegi_signal_journey.js'}
         gegi_campaign_script = relative == 'results/gegi-campaign/gegi_signal_journey.js'
+        gegi_kinematic_payload = relative == 'results/gegi-five-second-reconstruction/candidate-line-kinematics.json.gz'
         if gegi_campaign_script and not (site/'results/gegi-campaign/publication.json').is_file():
             raise ValueError('GeGI journey script requires a complete hash-bound campaign bundle')
-        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in {'sitemap.xml', 'LICENSE'} and relative not in model_outputs and not ledger_zip and not geometry_file and not geometry_gzip and not hit_payload and not million_payload and not native_response_payload and not ring_payload and not readout_trace and not gegi_assembly_payload and not gegi_campaign_script:
+        if f.name != '.nojekyll' and f.suffix.lower() not in EXTENSIONS and relative not in {'sitemap.xml', 'LICENSE'} and relative not in model_outputs and not ledger_zip and not geometry_file and not geometry_gzip and not hit_payload and not million_payload and not native_response_payload and not ring_payload and not readout_trace and not gegi_assembly_payload and not gegi_campaign_script and not gegi_kinematic_payload:
             raise ValueError(f'Unapproved public file: {relative}')
         data = f.read_bytes()
         if readout_trace:
@@ -424,7 +425,7 @@ def verify_live(url, report):
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('spectra/')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('viewers/')})
     selected.update({entry['path']:entry for entry in entries if entry['path'].startswith('assemblies/')})
-    selected.update({entry['path']:entry for entry in entries if entry['path'].startswith(('results/gegi-campaign/','results/gegi-digital/'))})
+    selected.update({entry['path']:entry for entry in entries if entry['path'].startswith(('results/gegi-campaign/','results/gegi-digital/','results/gegi-five-second-reconstruction/'))})
     selected.update({entry['path']:entry for entry in entries
                      if entry['path'].startswith('results/cs137-10k/') and '/traces/' in entry['path']})
     selected.update({entry['path']:entry for entry in entries
