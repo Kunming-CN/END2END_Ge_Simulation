@@ -214,13 +214,25 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   firstconsumerSHA5ef0ceb50bc5bc077d3f1222b9fb1f045e76b8efcf2d34e32a8d158833b25851.
   Local center alternatives come from the saved lateral compatibility pass,
   with original-center shifts≤0.0002114mm explicitly retained.
-  Position worker now tests the same geometry diagnostic on12archived known
-  three/four-point controls, recovering only omitted alternatives with exact
-  ADC/native input identities. No gate/weight changes. Candidate worker is
-  making the generic diagnostic portable by extracting the exact pure geometry
-  functions from research-fixture imports and adding runtime/guide membership.
-  Preserve the first tested consumer before edits; verify scientific-output
-  parity once on saved inputs. This runtime extension is not yet published.
+  Twelve archived three/four-point controls now confirm that geometric stability
+  does not establish two-point topology:10/12stillproject, all10withmultiple
+  saved cones. Median lateral trigger-max axis span0.00059058deg vspositive
+  0.00059845deg; negative maxima1.203deg axis/1.664deg at50mm are inside the
+  positive range. Allfourfour-point two-cell conditions are stable below0.0008deg.
+  `negative-cone-spread.json` SHA57618e7916b58a4c826a9a5c2f603d55257e2a2d57808e3d29f73110fdc44d14;
+  newconsumerSHA8ed12ca554be4916bc136e9c015246c302ff443d7076d1369c008b96188ca540.
+  All12ADC/283input hashes match. Current fitted-source hashes match archived;
+  uncertainty-driver variation and raw per-fit deltas are retained. No positive
+  replay, native call, gate or weight change. The generic candidate diagnostic
+  now uses a small shared geometry module without research-fixture imports.
+  In the original Python3.11.14/NumPy2.4.2 environment, all scientific fields
+  reproduce exactly: `candidate-cone-spread-runtime-reference-env.json.gz`
+  SHA0ee76234a975a01312b621acf16638cd2d862aaecbaaa0a67b8b27021f4cc4e7.
+  The optional-compatibility path also retains all3822triggers/7644pairs and
+  weights without inventing absent all34models. Six package checks pass,
+  including the isolated ZIP CLI. Original consumer5ef0ceb5 is preserved;
+  measured NumPy2.3.5 roundoff (max7.89e-13deg) remains separate evidence.
+  Runtime/guide membership is complete; package and exhibit publication follows.
 
 ## Delivered reconstruction and scientific findings
 

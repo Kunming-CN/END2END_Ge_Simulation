@@ -48,12 +48,14 @@ class StudentRuntimePackage(unittest.TestCase):
                 self.assertIn('--incident-energy-keV ENERGY', guide)
                 self.assertIn('gegi_candidate_kinematics.py --saved-plane', guide)
                 self.assertIn('gegi_incident_geometry.py', guide)
+                self.assertIn('gegi_candidate_cone_spread.py --center-map', guide)
                 self.assertIn('--retain-photon-kinematics', guide)
                 for tool in ('gegi_continuous_plane.py', 'gegi_joint_calibration.py', 'gegi_joint_two_site.py',
                              'gegi_candidate_topology.py', 'gegi_candidate_kinematics.py', 'gegi_incident_hypotheses.py',
-                             'gegi_incident_geometry.py'):
+                             'gegi_incident_geometry.py', 'gegi_candidate_cone_spread.py', 'gegi_cone_spread_geometry.py'):
                     self.assertIn(f'{self.manifest["archive_root"]}/tools/{tool}', names)
-                self.assertFalse(any(p.endswith(('/gegi_joint_acquisition_study.py', '/gegi-center-calibration.npz'))
+                self.assertFalse(any(p.endswith(('/gegi_joint_acquisition_study.py', '/gegi-center-calibration.npz',
+                                                 '/gegi_position_cone_spread.py', '/gegi_joint_two_site_study.py'))
                                      for p in names))
 
     def test_frozen_probe_and_missing_dependency_are_rejected(self):
@@ -166,6 +168,10 @@ print('Isolated student Control imports and 17-model/6-source browsing passed; m
                                         capture_output=True, text=True, timeout=30)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assertIn('--incident-energy-keV', result.stdout)
+            result = subprocess.run(arguments + ['-B', 'tools/gegi_candidate_cone_spread.py', '--help'], cwd=root,
+                                    capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn('[--compatibility COMPATIBILITY]', result.stdout)
 
 
 if __name__ == '__main__':

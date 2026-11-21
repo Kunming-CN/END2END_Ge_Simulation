@@ -39,6 +39,12 @@ lateral overlays use the existing `gegi_joint_two_site.py` fit and
 `gegi_joint_calibration.py` bundle identities. Keep the center calibration and
 lateral overlay as separate downloads, outside the software ZIP.
 
+`gegi_candidate_cone_spread.py` compares joint alternative positions retained in
+center/lateral maps and an optional all-34 refit receipt. The portable geometry
+kernel is `gegi_cone_spread_geometry.py`; research injection studies stay outside
+the student package. The report preserves original candidate/order weights and
+missing models. Stable alternative cones alone do not establish two-site topology.
+
 `gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
 allocations or shared-strip fits; `gegi_adc_topology.py` and
 `gegi_candidate_shared_topology.py` supply the numerical models.

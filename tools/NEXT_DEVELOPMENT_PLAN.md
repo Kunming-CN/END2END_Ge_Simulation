@@ -109,8 +109,11 @@ Joint alternatives now quantify finite-vertex ambiguity on36sameADCcontrols;
 the source code variation is retained rather than claiming exact historical-fit
 parity. A zero-refit adapter carries all3822saved triggers/7644pairs and original
 weights, with coverage separated by local/full34 and center/lateral models.
-Next compare geometric stability against the12known wrong-topology controls and
-deliver the generic candidate diagnostic without research-fixture dependencies.
+The12known wrong-topology controls confirm that geometry stability alone cannot
+identify two interactions:10/12stillproject, with median spans overlapping the
+positive controls. The generic diagnostic now runs without research-fixture
+dependencies and with optional all34refits; exact scientific parity and six
+package checks pass. Publish it with the saved candidate/control evidence.
 No threshold or calibrated confidence follows from these deterministic spans.
 Then connect supported
 responses to interaction hypotheses and source geometry, retaining unknown
