@@ -93,6 +93,8 @@ class StudentRuntimePackage(unittest.TestCase):
         self.assertIn('819 MB', guide)
         self.assertIn('924,676 new Cs-137 parents, 185,199 new Co-60 parents', guide)
         self.assertIn('Analyze all two-strip candidates', guide)
+        self.assertIn('releases/latest/download/END2END-Ge-Student.zip', guide)
+        self.assertNotIn('acquisitions up to five physical seconds', guide)
         self.assertNotIn('tools/validate_gegi_streaming_readout.py', self.bodies)
 
     def test_tampered_source_and_unlisted_members_are_rejected(self):

@@ -79,10 +79,15 @@ No Run or Download was clicked; the owned preview tab/server are closed.
 Focused checks passed: 8 imaging tests, 10 Control tests, 13 estimator tests and
 Node UI contracts. Six package tests and 38 publication tests pass. The generated
 site and `check_site.py` pass: build
-`64135abe1aa172a14a09bd0b1da9231a48e0bc0d1789f3b38aa4fe3de1687c64`,
-1,909 files, 503,709,899 bytes, 126 HTML pages, 3,773 local links and 281 fragments.
-Only the guide and site manifest changed. GitHub/package/live verification remains
-for this integrated milestone; do not repeat the completed physics,
+`bf271437b7b7d7ff3708bea2758defb15ae61f22507370e7b42b07f7a5d3388c`,
+1,909 files, 503,709,873 bytes, 126 HTML pages, 3,773 local links and 281 fragments.
+Only the guide and site manifest changed. Source `22af0d7d6dc1` and its exact
+student package are published and the remote ZIP digest matches. Final rendered
+guide inspection caught the old pinned download link; it now uses the latest
+release route shared by README. Six package checks and regenerated-site validation
+pass for this correction.
+The first live-file check encountered HTTP 503; retry after the corrected guide
+deploys. Do not repeat the completed physics,
 ADC replay, or earlier stop/resume evidence merely to publish it.
 
 Existing continuation evidence is retained under `.local/steady-acquisition-v1/`:
