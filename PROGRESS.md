@@ -19,7 +19,7 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
 * **Native worker:** `/root/native_response`, session74071, Python17496/Julia29040,
   phase `.local/gegi-reconstruction-v1/native-recovery-segment-crossing/`.
   Request SHA c709ec329bae0ab05789970b1a234d7d0bb7c17ae45a5049757cf86a55cbfaac.
-  Latest checked 1619/1971: 701 complete, 441 step_limit, 473 failed, 4 stopped.
+  Latest checked 1919/1971: 827 complete, 522 step_limit, 565 failed, 5 stopped.
   This is a running prefix, not the final repair rate.
   Actual checkpoint/active-worker/native SQLite are authoritative. One earlier
   109-group phase retains39complete/29limit/41failed; only the exact39complete
@@ -76,7 +76,7 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
 
 ## Delivered reconstruction and scientific findings
 
-Commit `f65c25b7003c41e0082e5e7cd884815d726502bf` is published on GitHub main.
+Commit `f52b116aa38874e690afa796098dbaf35655c1d2` is published on GitHub main.
 Control traces a source-plane peak -> trigger/pair/order -> original34-channel
 ADC. Full34 residuals, optional six-grid lateral positions, future candidate
 truth retention and conditional finite-vertex3D range profiles are portable.
@@ -141,18 +141,18 @@ Initial sandbox hard-link test failures were permission errors; the unchanged
 suite passed with normal permissions. Active transport uses frozen original
 source; native request has no pin to this changed module.
 
-Source, software-only package and website milestone `f65c25b` are published.
-Website build `e490cc275ba69674c23289291da75746b0b2990b9a431c7ec1dd403c65c53815`
-contains 1,914 files / 512,600,559 bytes. Required 42 publication tests, local
-site check and two display tests pass. Desktop Chrome checked the raw-density
-explanation, conditional escape results and new CLI guide. Required live check
-verified 1,018 files, including all five exhibit files. Preview sessions closed.
-Release `student-runtime-f65c25b7003c`: 1,393,756 bytes / 252 members, SHA
-4dc2fab9280e13b7f7a282e05c44776065da8ce0e7f8d98ab803d0e38100738a;
+Source, software-only package and website milestone `f52b116` are published.
+Website build `90f02331125a1685927e7915e6501bc41a90221e9b2d6b05019ff434c560a316`
+contains 1,914 files / 512,749,015 bytes. Required 42 publication tests, local
+site check and two display tests pass. Desktop Chrome checked the expanded
+eight-event angular comparison and photon-retention/resume guide. Required live
+check verified 1,018 files, including all five exhibit files. Preview sessions closed.
+Release `student-runtime-f52b116aa388`: 1,401,622 bytes / 254 members, SHA
+da84fd23dfb549e143014bcd1e81c87ace1d26094131a20a0d48badc08ece5d7;
 public bytes match. `publication-assets.json` is the combined receipt. Center
 and `gegi-lateral-calibration-v1` downloads remain separate and unchanged.
 
-The new photon observer remains outside this release. Ten same-input sidecars
+The new photon observer is included in this release. Ten same-input sidecars
 have exact primary/RNG/canonical-stream/native parity; session 82114 exited0.
 First receipt `photon-step-observer-v1/b000050/observer-verification.json` SHA
 900255ab37e41a8db53e635b336306612ab02a558eb2ce291220ff74474246fe.
@@ -173,14 +173,15 @@ The original reader bytes remain in the observer build evidence, preserving
 the first receipts after the reader extension. The package manifest now includes
 both observer sources; six package checks pass. The existing exhibit adds all
 21 exact-control records and the eight additive angular comparisons. Two display
-checks and 42 publication tests pass. Site build
-`90f02331125a1685927e7915e6501bc41a90221e9b2d6b05019ff434c560a316`
-has 1,914 files / 512,749,015 bytes and passes the local site check. Desktop
-Chrome verified homepage -> result -> expanded exact angular table and the
-photon-retention/resume guide. The first sandbox preview could not be reached;
-the owned localhost preview worked outside the sandbox, and both preview
-processes and the tab are closed. Source/package publication and live checks
-are pending. Native diagnostic WIP remains separate until tested.
+checks and 42 publication tests pass. The first sandbox preview could not be
+reached; the owned localhost preview worked outside the sandbox, and both
+preview processes and the tab are closed. Pages deployment 44894665317 and
+live verification are complete; source, ZIP and exhibit all match this release.
+Native diagnostic WIP remains separate until tested. The native worker has
+prepared 16 unrun, fixed saved-row probes in `native-drift-probes.json`, SHA
+d0114d3fbc02975a9bf364ef073be7045fa249d277265f7f826c2ff0c4b5dcbf.
+After final sealing and reconciliation it owns the next serial native phase,
+then the ten 12271 injections. No competing native process is authorized.
 
 ## Baseline and retained evidence
 
