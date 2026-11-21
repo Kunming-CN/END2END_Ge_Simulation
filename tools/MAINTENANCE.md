@@ -104,6 +104,11 @@ source location. Their frozen six-point acceptance exposes floating-point tails.
 `gegi_photon_log_response.py` supports optional natural-log densities and analytic
 endpoint subdivisions. Raw fields remain unchanged; zero physical rates remain
 distinct from numerical underflow, with no density floor or renormalization.
+`gegi_escape_response_curve.py` reuses the second-site integral as a function of
+intermediate energy for fixed vertices, observed energy and width. A Gaussian
+tail envelope is removed for interpolation and restored on evaluation. Direct
+quadrature at non-knot energies measures error; refinement preserves prior
+samples and tests new midpoints. Construction and query costs stay separate.
 
 `gegi_candidate_topology.py` reopens saved ADC for optional two-by-two energy
 allocations or shared-strip fits; `gegi_adc_topology.py` and

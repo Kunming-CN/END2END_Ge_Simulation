@@ -113,8 +113,11 @@ Its completed measured response is hashed before photon scoring. Trialsource
 geometry now predicts the first outgoing energy and both measured energies
 receive explicit response terms; no exact-measured-first gate is inherited.
 Six prespecified points compute504supported states with132newly evaluable states.
-Stable log densities preserve extreme numerical tails; independent-energy
-interpolation benchmarks target the measured continuation-integral bottleneck.
+Stable log densities preserve extreme numerical tails. Two response curves pass
+independent-energy interpolation checks (.638%/.437%maximum measured density
+errors), reusing failed-coarse-run quadratures. Extend verified curve coverage
+across unique measured pair/orders and reuse retained bound-electron samples for
+the first-scatter response; neither step changes official image weights yet.
 Secondary containment, position/Doppler response, passive material and acquisition
 selection remain separate. Common units alone do not establish
 model probabilities. Angular scores alone cannot choose absorption versus escape or

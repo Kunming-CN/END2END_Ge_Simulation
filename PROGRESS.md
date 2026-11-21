@@ -408,9 +408,17 @@ SHAafc7577a10a383db3ea2f24235550d7536a05becaadb92cb31bc57a8c5152d09 retains
 finite5330absorption/escape logs-3180.832862/-15762.911901 despite rawzero.
 Analytic endpoint subdivisions remove the witnessed2.35-log-unit quadrature
 discrepancy without cutting the support; prior failed result remains retained.
-The candidate worker now benchmarks reusable intermediate-energy response curves
-on two chronological branches and independent energy queries. Coarse errors
-exceeded the.01log-error target and are being refined, not silently accepted.
+Two chronological response-curve benchmarks now pass the.01log-error target
+after preserving the failed coarse curves and reusing134direct samples. Only
+12new quadratures were needed. Receipt `photon-continuation-v1/escape-response-curve-refined.json`
+SHAd4560c9b847314095368b2bbcfbb5e1029a38342dd302b7e93dd1380c7b73c9e retains
+3450/4891maxheldout logerrors.0063995/.0043626 (density.638%/.437%), including
+17underflowtail queries. Actualbuild+verification43.37/59.13s;2400curvequeries
+take.0974/.1525ms. Fourfocused checks pass. These are two-branch numerical checks,
+not population accuracy. The candidate owner now integrates coverage for all
+unique pair/orders of the same21trigger cohort with resumable verified curves;
+the position owner constructs a heldout Doppler kernel from retained native
+single-scatter samples, keeping exact incident-energy support explicit.
 Selected-acquisition normalization, first flux,
 position/Doppler response and merged topology remain open; no new source estimate
 or calibrated event probabilities follow from these conditional components.
