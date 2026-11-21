@@ -139,6 +139,18 @@ Ideal free-electron normalization separately retains 7,200 entries, SHA
 `09667b6a5c75e2187037279af192cc51999cff384924484c3978ac00148a7cff`.
 These are ideal photon-topology masses, not ADC-selection normalizers.
 
+The matching measured-cobalt path is now sealed on the original 21 identities:
+14 scoreable and seven original geometry-unknown records remain fixed. All 56
+required outer intervals are covered: 34 retain checked existing Gaussian rules,
+22 use the batched positive-energy rule after actual rare-tail failures. The
+original failed bank is preserved. All 134,400 cells per branch are finite, with
+no uncovered atoms; grid evaluation took 28.55 s. The unchanged six-point control
+agrees within 2.91e-11 and two focused numerical checks pass. Different cobalt
+line hypotheses still prefer different positions; this small noisy cohort is not
+an identified source distance. Source/array hashes and the blind digest were
+checked before recording the separate truth result. Continue with the measured
+input adapter rather than tuning these peaks toward truth.
+
 Independent ideal observations retain 100 events at each off-grid source with
 separate truth and randomized site labels; PCG64 seeds 2607112101/02 and independent
 2 keV noise. The first ten per cohort use all 40 ordered response curves. The

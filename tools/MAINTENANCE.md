@@ -167,6 +167,13 @@ truth scoring is a separate command after the blind result is sealed.
 to add only needed outer curve segments. `gegi_ideal_forward_extended_profile.py`
 replays the same observations, retaining original curves and exact fit/score
 comparisons before applying the numerical change to independent statistics.
+`gegi_empirical_measured_grid.py` applies the empirical angular-energy response
+and matching topology normalization to saved candidate identities. Its extension
+builder and `gegi_empirical_measured_extension_overlay.py` retain failed numerical
+attempts separately. `gegi_batched_escape_quadrature.py` batches the existing
+positive-energy rule where rare-tail escape survival defeats the faster rule.
+The blind result is sealed before separate truth scoring; this remains a
+conditional photon model, not an ADC-selection calibration.
 `gegi_boundary_failure_recovery.py` resumes the identified boundary-failure
 class over the sealed duration-extension baseline. Exact accepted responses
 are inherited; per-group producer, timing and support layers remain explicit.
