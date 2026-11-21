@@ -37,7 +37,7 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   waveform recovery. The subsequent whole-group 2590 acceptance at 5 us is
   complete: all eight original rows, 16 carrier contacts and 34 valid signed
   waveforms through 3,193 ns. The selected 537-limit phase is now running in
-  `native-cap5000-step-limits`, Python26380/Julia5880, session86331, request SHA
+  `native-cap5000-step-limits`, Python27768/Julia8476, session29912, request SHA
   3436be0712bb60d584defc7951ffaf4ff8746855a584a9156bf4c4e8589889c0.
   It inherits the exact complete pilot and computes 536 new groups. The sealed
   849 complete and 585 other unknown groups are not rerun. Producers are pinned
@@ -83,14 +83,49 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   Current work prepares the first complete continuous-readout repair acceptance:
   checkpoint2.37828180194ms -> unavailable ordinal119/event2459, ending before
   6.19974311743ms.43successful responses are absent, all in originalb000002.
-  The exact10,000-driver/RNG/parent/native-producer preflight passes; original
-  per-group input hashes and field cache survive. The agent is preparing the
-  input-only recovery in `native-readout-acceptance-inputs/`, with recipe
-  `native-readout-acceptance-recipe.json`. Available RAM5,917,818,880B exceeds
-  that block's measured182,718,464B transport peak. Inspect agent/recipe/process
-  status before another replay. No native child or readout substitution is
-  authorized concurrently with the active cap worker. Original continuous
-  response/trigger recovery remains unverified until baseline replay matches.
+  Exact10,000-driver transport replay is complete:8.979s/peak179,953,664B,
+  both CLHEP states, parent bytes, after-clock and full canonical stream match.
+  All43successful groups/1241Ge rows and target2459match original input hashes.
+  `native-readout-acceptance-inputs/trigger-20/verified-native-inputs.json`
+  SHA7cb97398caae565e7291bb42cc26526974fb209ef66459757a0bd541e5f997cb;
+  transportverificationSHA2f29277852e3646aa1dd1844dbc3aa2c32935ba82a4185398085b33d4acb7cd8.
+  RecipeSHAe1461e1bcec8cf515d295685e07e465e867fb331d6bb66c8792e19c4280e7484
+  retains the extraction-wrapper path failure and successful extraction-only
+  recovery; transport was not rerun. Original LH5 container hash differs while
+  scientific stream/inputs match. Third cooperative interleave stopped cap
+  cleanly at343/537:89complete,249limited,fivestopped, all prefixes unchanged.
+  Frozen phase1producer now regenerated all43original successes/1241rows with
+  2482contact endpoints and valid all34signedsignals in57.675s (56.735sactive),
+  combinedRSSpeak2,148,974,592B.
+  `native-readout-original43/validation.json` binds StoreSHA
+  a51a74745419cc1ff8cb460e688df2ce4c2512b7876cd7195654fa7232fe8b43,
+  completionSHA0a65bd5893e7ce1d6a7c52ec5e0daeb1e229cc72b8f92a53c630b3c3a350409a.
+  The original cachehash/attributes are unchanged; its snapshot hardlink is
+  not a second physical cache. Samecap resumed at343 with all prefix/source
+  hashes unchanged (Python27768/Julia8476/session29912); candidate owner
+  executes the same-checkpoint comparator under originalPython3.12.14/
+  NumPy2.3.5/SQLite3.53.1 at `.cache/codex-runtimes/codex-primary-runtime`.
+  No competing native/field process. Same-history readout acceptance now passes:
+  all41original triggers19-59 (times/reasons/fullrecords) and14candidate ADCs
+  reproduce exactly in2.85784s. Substituting only2459preserves all41contexts and
+  adds counterfactual rise60at6,193,200ns, rejected asguard_only_collection.
+  Candidate count stays14; rejected27->28.328ADCframes/1284values change,
+  maximum2480codes, with no pre-onset change. The clipped unknown-history union
+  is10,563.117429828271ns/529sampleframes->0 ONLY through6,199,743.117429828ns;
+  this neither restores the full tail nor measures five-second efficiency.
+  `native-readout-repair-2459/comparison.json` SHA
+  35fdbe63787e00c3c08c23287429c919bbb7a2c8e2f9072cba76ac0d66b2f3e9
+  binds both SQLite ledgers, original producerb09b90f0 and exact original runtime.
+  Its initial final-write hardlink failed; complete scientific bytes were
+  promoted by rename without replay. Producer.py is retained; the CLI now uses
+  the existing rename writer in its exclusively-created output directory.
+  Two focused checks pass; trackedconsumerSHA
+  f3d1ad6a347991190d76ebe82032bbfca510ea5ef35a81455ae5f77f2d1572da.
+  Next prepare the full originalb000002safe-frontier interval using already
+  replayed transport and43responses, retaining delayed/out-of-interval groups
+  and still-unknown causes. Native owner must see exact additional work counts
+  before another serial interleave. Candidate owner prepares this extension;
+  position owner adds only the completed first-case evidence to the native panel.
   The selected-cap continuation helper now preserves the full 1,971 denominator
   through the sealed parent, carries deferred statuses explicitly, and unions
   missing-history tails at each group's actual support. Twelve focused checks

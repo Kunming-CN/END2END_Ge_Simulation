@@ -61,10 +61,15 @@ intervals. Separate tangency/corner defects await isolated cause-specific repair
 The next continuous-readout acceptance targets the first retained unavailable
 group, ordinal119/event2459. Starting from the earliest saved checkpoint needs
 43missing successful responses from original transport blockb000002. Exact
-random-state/parent/native-input producer preflight passes; recover the same
-inputs first, then regenerate the original baseline responses serially after
-the active native phase closes. Verify original ADC/triggers before substituting
-the repaired response. No old mask is removed from native recovery alone.
+random-state/parent/native-input recovery now passes for all43groups/1241rows.
+Use a cooperative cap interleave to regenerate the original baseline responses
+serially from the frozen phase1producer, then resume the unchanged cap worker.
+The43responses and exact baseline41triggers/14candidate ADCs now pass. Replacing
+only2459adds one guard-only rejected rise, with14candidates unchanged; the
+10.563us clipped unknown interval disappears only inside the replayed3.821ms.
+Next extend through the originalb000002safe frontier with existing transport,
+reusing43responses and preserving delayed groups and mixed1001/5001ns unknown
+supports. Native recovery alone still cannot remove an old continuous mask.
 
 Next scientific step: evaluate absorption, resolved escape and merged/mixed
 hypotheses against independent photon histories and the same measured response.
