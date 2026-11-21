@@ -42,6 +42,11 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
   It inherits the exact complete pilot and computes 536 new groups. The sealed
   849 complete and 585 other unknown groups are not rerun. Producers are pinned
   until closure; inspect the marker/checkpoint before any further native launch.
+  Current durable prefix15/537: three complete (one inherited),12still limited,
+  563.385s for14new groups. This is progress, not a final recovery rate. The
+  phase continuation-handoff.json preserves launch identity and next reconciliation.
+  After closure, reconcile the parent/selected ledger and correct measured
+  tangency/self-hit witnesses in isolation; keep genuine outward corners unknown.
 * **Candidate worker:** `/root/candidate_attribution`. All 18 prespecified non-peak
   histories are complete: seven clean two-vertex, nine merged, two with three
   distinct vertices; 17 full-energy photons and one escape. All 18 exact
@@ -112,7 +117,7 @@ session advances; a narrow elevated read-only lookup verified the exact PIDs.
 
 ## Delivered reconstruction and scientific findings
 
-Commit `f52b116aa38874e690afa796098dbaf35655c1d2` is published on GitHub main.
+Commit `7a7d8a70478174a2f191dd5b44b98de0590cf36f` is published on GitHub main.
 Control traces a source-plane peak -> trigger/pair/order -> original34-channel
 ADC. Full34 residuals, optional six-grid lateral positions, future candidate
 truth retention and conditional finite-vertex3D range profiles are portable.
@@ -221,7 +226,11 @@ for publication. Build736e94f1863cb21c4841785bb900edfd487c74f6ca0eaa1a8a75d7c051
 contains1,914files/512,814,661bytes. Two display checks,42publication tests,
 six package checks and the local site check pass. Desktop Chrome verified the
 expanded three-holdout comparison, cause table, conditional intervals and methods
-route; owned preview/tab are closed. Git/release/live deployment remains pending.
+route; owned preview/tab are closed. Source7a7d8a7 and software-only release
+`student-runtime-7a7d8a704781` are published. ZIP1,401,641bytes/254members SHA
+f5b4988a77c257adc5c6542267fd419527f43939c3abc59fa2e3ef73c73b4f7e
+matches the actual public download and latest-release identity. Pages deployment
+44897993944 succeeded; required live-file validation is running.
 `native-response-repair.json` SHA
 45c8ac5afb77ec9c73949fa529861b46a6869213f75ae17677f6969adc6dc0f8
 is a reproducible, path-free summary of the complete ledger and numerical probes.
