@@ -8,6 +8,13 @@ heartbeat remains active every 30 minutes. No resets, model substitution, extra
 review agents, new frontend or automatic 90.09 s / 20-million-parent acquisition.
 Reuse the completed five-second acquisition and retained independent controls.
 
+The November 21 roadmap is now reconciled in the existing development plan:
+finish normal-entry native/calibration integration, shared-candidate coverage and
+generic empirical preparation; pursue measured lossless performance work in
+parallel, then full-3D position uncertainty and matched Cs/Co source inference.
+This documentation update adds no runtime acceptance or production launch and
+does not transfer ownership of the active reconstruction workers.
+
 The owner has refined the immediate priority: finish usable reconstruction paths,
 repair actual numerical/algorithm defects and recover missed usable candidates.
 A minority of noisy or incompatible events may remain unresolved; explaining
@@ -254,15 +261,17 @@ Keep these failed interpretations and denominators.
 
 Research source is synchronized with GitHub; the latest research results above
 remain local evidence and this handoff, pending the next maintained exhibit
-update. The student runtime is unchanged from the verified V4 release
-[student-runtime-4b6b3502dad0](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-4b6b3502dad0):
-1,412,386 bytes / 257 members, SHA
-`0d117494d882353682a8cbcdae0f332fe909ac6bd8723fa5629633afe11627f9`.
+update. The student runtime now includes shared-strip imaging and the accepted
+conditioned-crossing correction:
+[student-runtime-fc960f96b782](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-fc960f96b782).
+The release completed despite the interrupted chat; exact public bytes and the
+latest-release target were subsequently verified. 1,415,668 bytes / 258 members,
+SHA `611f4c69db5f37c5d18dd5f026c85d1f334b6c720f6399c30fecbf1d68323015`.
 Calibration stays separate and unchanged. Research data are not bundled.
 Existing Pages source 0bc3ab2 / run 44924594035 passed 1,018 exact live-file checks
 and desktop homepage -> result -> evidence/methods acceptance. Its build is
 `f2fc9e918535f7d44f25ec5ccd930490a8d31952392f3d58dbb75eaa9bcb4778`.
-No unchanged site/runtime build was repeated. Publication receipts are
+No unchanged site build or physics calculation was repeated. Publication receipts are
 `.local/student-runtime-p1/delivery.json` and
 `.local/gegi-reconstruction-v1/publication-assets.json`.
 

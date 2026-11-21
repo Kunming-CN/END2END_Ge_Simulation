@@ -7,7 +7,7 @@ The student workflow runs from detector and source selection through transport, 
 | 1. Electrode signals | Saved complete signed traces cover 32 strips and two guards, including transient charge on noncollecting neighbors. |
 | 2. Fast and slow readout | Fresh continuous acquisition and saved replay use the same nominal digitized preamplifier readout. The fast branch measures signed area, the slow branch measures pulse energy and collecting-strip timing supplies a depth observable. |
 | 3. Single-site position | Four directly calibrated strip pairs, lateral transfer on nine additional pairs, and apparent-depth timing curves across 216 pixels. Control shows evidence and availability per estimate. |
-| 4. Two-site reconstruction | The completed five-second candidate archive feeds the existing center-template fit and conditional Compton maps. All 3,822 eligible two-strip candidates were processed; 11,087 other retained candidates remain outside that fit scope. Control opens saved maps and reports unresolved weight. The earlier independent-history comparison covers 46 energy-compatible occurrences. |
+| 4. Two-site reconstruction | All 3,822 eligible two-strip candidates were processed from the completed five-second archive; 11,087 remain outside that original fit scope. Optional shared-strip companion imaging is now connected to CLI/Control, with two selected shared candidates accepted. Its 4,410-candidate input census is not a completed full refit. |
 | 5. Experimental comparison | The 32-channel simulated spectrum export is available. Matching the instrument selection, pixel map and spectra requires a common acquisition and its metadata. |
 
 ## Delivery order
@@ -20,12 +20,12 @@ independent inputs establish generalization after selection/model choices settle
 
 | Delivery | Implementation and acceptance |
 |---|---|
-| 1. Edge-peak attribution | Reproduce all three saved line-window maps; trace original trigger, pairing and order contributions; leave-trigger-out, time blocks and extent/prior sensitivity without changing selection. |
-| 2. Native response repair | Classify all 1,971 unavailable groups with exact numerical causes, retain deposit/contact evidence, repair confirmed defects and replay retained inputs. Report native recovery separately from continuous-readout recovery. |
-| 3. Internal positions | All-34-channel compatibility, residuals/timing/alternate solutions; compare center and supported lateral models on the same independent injections, retaining errors and coverage. |
-| 4. Fixed-plane closure | Same-event truth/position/energy/pairing/order substitutions where full originals exist. Record missing truth explicitly, use ARM and internal errors as well as source peaks. Add compact diagnostic truth retention before new scratch retirement. |
-| 5. Candidate 3D localization | Reuse finite-vertex event response on new candidate identities, preserving order mixtures and unresolved weight. Fit unrestricted direction and configurable radial profiles; compare both cobalt lines, clock halves, background assumptions and expanded radial searches. Score truth only afterward. |
-| 6. Independent statistics | Freeze algorithm/selection, then evaluate held-out positions/seeds and targeted distance/direction/strength/depth changes; retain unreturned/unknown cases. Larger production follows a concrete statistical question. |
+| 1. Edge-peak attribution | Delivered. Reuse the three-window contributions and exact dominant histories to choose physical hypotheses; do not repeat event archaeology as a delivery prerequisite. |
+| 2. Native response repair | Cause-specific repairs and the 1,971-group reconciliation are delivered. Connect accepted numerics and configurable support to new normal acquisitions, with matching calibration; preserve old producers and distinguish native completion from readout recovery. |
+| 3. Internal positions | Shared-strip CLI/Control is delivered on selected controls. Complete saved-candidate coverage, full-34-channel fits, independent lateral/depth tests and joint uncertainty propagation. Extend direct full-3D calibration toward all 216 pixels without symmetry substitutions. |
+| 4. Fixed-plane closure | Reuse the same-event substitutions and retained photon histories. Apply supported topology/escape alternatives and quantify angular errors and retained/unknown counts on identical candidate IDs. |
+| 5. Candidate 3D localization | Generalize empirical candidate preparation, add the exact Cs line and continuous empirical source fitting; incorporate matched passive geometry, observation/selection response and cobalt double-line inference. Then connect joint Cs/Co localization to CLI/Control. |
+| 6. Independent statistics | Freeze algorithm/selection, then use retained held-out controls and targeted independent full-chain positions/seeds. Measure distance/direction/strength/depth behavior and failure/unknown rates; larger production still requires the owner's launch decision. |
 
 The implementation uses the existing software and saved inputs; no new frontend,
 review rounds or full acquisition restart. Each integrated result advances the
@@ -37,10 +37,256 @@ Owner refinement: prioritize complete usable paths, concrete program/algorithm
 defects and usable events excluded by an unsupported interface. Some noisy or
 incompatible events remain unresolved; universal event recovery is not required.
 Reuse the completed controls and current calculations rather than repeating
-validation or expanding difficult-event investigations. Connect the existing
-shared-strip fit to CLI/Control next, alongside the matching measured response.
+validation or expanding difficult-event investigations. The shared-strip
+CLI/Control connection is delivered at `fc960f9`; finish its archive coverage
+and downstream empirical localization rather than reimplementing that connection.
 Hayward's charge-loss/inter-strip work and the ORNL GeGI holdup paper inform
 method choices; detector-specific calibration values are not transferable inputs.
+
+## Incorporated roadmap: executable work after the November 21 integration
+
+The external roadmap was written against `982df71`. Reconcile it with the
+`fc960f9` handoff and actual source, rather than treating its missing-feature
+list as the current state. This is a planning update, not acceptance of new
+runtime behavior or an instruction to restart the acquisition. The existing
+reconstruction owner retains its workers, lock and scheduled continuation.
+Uncommitted empirical-preparation, exact-Cs and shared-strip diagnostic work
+belongs to that owner and must be reused when delivered.
+
+Three useful constraints carry forward: performance work preserves physical
+inputs and necessary information; detector response stays fully three-dimensional
+with all 34 electrodes; current validation uses simulation and primary methods,
+without waiting for unavailable measured GeGI data. Keep the six scientific
+stages above. Performance improvements are a parallel implementation lane, not
+a new prerequisite for every candidate or source-reconstruction delivery.
+
+### Immediate normal-workflow integration
+
+1. **Deliver accepted native numerics to new acquisitions.** The inspected
+   `gegi_mixed_acquisition.native_request()` still omits
+   `analytic_semiconductor_boundary` and `cached_drift_precision_bits` and sets
+   a 1,000 ns drift support. Connect the validated boundary correction and
+   promoted drift precision explicitly through request creation, runtime and
+   calibration admission. Distinguish field-cache precision from drift arithmetic;
+   promoting cached values does not recompute a Float64 field solution. Bind the
+   actual model, fields, numerics and readout to a compatible calibration instead
+   of removing identity checks. Keep support configurable. If staged continuation
+   is used, apply it only to moving step-limited carriers, retain the original
+   prefix, and test it against the same configured longer-support calculation.
+   Stationary and unresolved cases remain explicit; a longer duration is not
+   evidence of collection. Use actual per-group support in unknown-history masks
+   and readout frontiers. Reuse the successful and failure witnesses already
+   accepted, followed by a small normal-entry integration check if required.
+   Do not promise zero failures or a particular unknown-time fraction in a new
+   sample, and do not rewrite the original five-second responses or triggers.
+
+2. **Finish shared-strip coverage using the delivered interface.** Preserve
+   `--include-shared-strip`, the original 2x2 map and its weights. The saved archive
+   has 4,410 shared-topology candidates: 3,833 have matching captured inputs,
+   102 lack calibration, 473 have unqualified energy and two are masked. These
+   are input-coverage categories, not additional successful reconstructions.
+   Process supported saved candidates with original IDs and explicit remaining
+   categories; continue interrupted analysis from retained outputs. Carry 1x2,
+   2x1 and 2x2 hypotheses through the common candidate/range adapters. Report
+   per-topology and combined views without counting an event twice. Compare the
+   three line windows on the same original population, including unresolved
+   weights. Reuse the accepted selected-trigger CLI and desktop checks.
+
+3. **Finish generic empirical preparation and exact Cs support.** Reuse
+   `gegi_candidate_empirical_score.py` and the in-progress preparation work to
+   build responses for selected or all supported saved candidates, rather than
+   another hard-coded 21-trigger adapter. Inputs must specify candidate identities,
+   topology/order alternatives, measured energies, position uncertainty when
+   available, the exact geometry and matched response/normalizer. An unavailable
+   covariance is unknown, not a zero matrix. Preserve the sealed 21-identity score
+   comparison, then exercise genuinely different saved IDs. Add 661.657 keV to
+   the empirical sampler with separate fitting/holdout data and required energy
+   support; retain 662 keV as a distinct historical line. Do not add unrelated
+   photon lines. Exact-Cs sampling is prepared, not yet accepted, at this baseline.
+
+Deliver these changes through the existing CLI and Control, using the usual
+software-only release and separate calibration download. Publish new results
+through the maintained exhibit generator. No acquisition rerun is needed merely
+to publish a planning or presentation change.
+
+### Parallel lossless performance work
+
+The [five-second measurements](gegi_storage_reference.json) record 24,595.746 s
+active time, including 16,065.973 s in the native-group scope over 58,684 groups.
+That scope includes calculation and data handling. The transport-command scope
+records 6,863.203 s over 396 timed calls spanning block processing and retirement;
+1,609.468 s of transport-run time is nested inside it. The difference is not a
+measurement of process startup alone, and 396 timers do not establish 396 WSL
+launches. Separate calculation, serialization, hashing, store operations, launch,
+extraction and retirement on retained input slices before selecting changes.
+
+1. Reduce the measured native data-handling cost first: batch requests to the
+   resident Julia worker and transfer full-precision binary arrays instead of
+   per-group CSV and temporary SQLite round trips where equivalent. Check pinned
+   immutable inputs when opening/resuming the worker, preserving producer
+   provenance and payload integrity. Keep variable support, signed channel order,
+   deposit delays, all neighbor transients and complete failure records. Evaluate
+   independent-group CPU threading only with demonstrated thread-local state,
+   deterministic results and measured memory headroom. Feed completed groups into
+   the chronological readout reducer in the original order and safe frontier;
+   parallel completion order must not change the noise stream or accumulation.
+
+2. Measure resident transport reuse independently of block-size changes. Keep
+   seeds and source blocks fixed for the first comparison. Choose subsequent
+   configurable batch/block sizes from measured time, memory and recovery cost,
+   not a universal 100,000-parent default or a fixed thread count. Reuse the
+   installed environment. Move retirement only if the same retention prerequisites
+   and exact source records are preserved; no original scientific store is cleaned
+   up as part of this work.
+
+3. Optimize pending storage or checkpoint frequency only where measured. Pending
+   waveform payloads may be separated from the permanent identity ledger, while
+   every required failure and candidate remains retained. Account for logical
+   records, allocated pages, free pages and indexes separately; noncandidate data
+   are not automatically disposable. A durable batch commit must bind consumed
+   inputs, failures, candidate/trigger records and the full electronic/noise/random
+   state to one frontier, including any external pending queue. Before-commit
+   interruption replays uncommitted work; after-commit interruption resumes without
+   duplicated or missing groups, even before acknowledgement or retirement.
+
+Use retained same-history controls with overlap, delayed deposits and failures.
+For performance-only changes require unchanged payload bytes, or exact decoded
+values when serialization changes, and unchanged 34-channel ADC samples, triggers,
+IDs, masks and census. Numerical/physical repairs have separately versioned
+intentional changes and their own acceptance. Report cold/warm times, peak memory,
+peak disk and retained disk on matched inputs. Do not impose an extra one-second
+double acquisition, promise 5-15x speedup/60% shrinkage, or turn compiler/backend
+replacement into the next task. Reuse accepted improvements for later calibration.
+
+### Internal interaction positions and topology
+
+The coverage target is direct full-3D calibration of all 216 valid pixels, using
+the actual field and all 34 weighting potentials. Do not substitute two-dimensional
+fields, rotated pixels or translated central responses. Extend usable coverage
+incrementally so accepted regions reach the normal workflow before the entire
+bank finishes. The proposed 5x5x11 grid is a starting configuration, not a proven
+accuracy threshold. Check collected-contact identity and interpolation on held-out
+positions; a surface strip width alone does not define the collection basin at
+every depth. Treat gap/edge responses separately from smooth interior interpolation,
+with unavailable coverage reported rather than silently extrapolated.
+
+Preserve full-precision templates first and use lossless binary compression and
+per-pixel loading. Float32 plus a 5 ns time grid changes numerical information;
+20 ns ADC sampling and a 20 ns analog time constant do not prove it lossless.
+If later explored, keep it a separately labeled approximation with independent
+waveform, timing, position and trigger comparisons over ADC phases, energies and
+boundaries. Do not adopt the proposed sub-millimeter accuracy, sub-GB memory or
+few-minute bank-generation claims as established acceptance thresholds.
+
+Compare the existing refined-depth and XY interpolation methods on matched
+independent point and overlap controls before promotion: their isolated-point
+improvement does not remove the observed weak-component failures. Add analytic
+derivatives only for a supported interpolant and check them against direct
+differences. Jointly fit supported energy sharing and coordinates using all
+channels; releasing an energy fraction must not silently enforce full collection
+or introduce unconstrained loss parameters. Retain alternative fits and explicit
+unknown interaction counts.
+
+Use waveform rise/timing/current features and competing topologies to address
+merged interactions, but do not gate every alternative solely on a large residual:
+10/12 known wrong-topology controls already pass the two-site fit. Reuse those
+negative controls and the chronological histories to measure both false acceptance
+and loss of clean events; reserve independent controls for final assessment.
+Information criteria or residual differences are diagnostics until their error
+rates are established. Propagate a joint position/energy/time uncertainty or
+retained alternatives, including cross-vertex correlations. Two isolated 3x3
+covariance blocks omit those correlations. A regularized inverse Hessian must not
+turn a flat, constrained or multimodal fit into a calibrated finite error bar.
+
+### Empirical continuous 3D source localization
+
+1. **Unify the actual scorer and continuous search.** Connect the generic measured
+   candidate response and its matched empirical normalization to the existing
+   continuous direction/log-radius optimizer. Reuse validated response curves and
+   withheld interpolation checks. Keep the declared exterior-source domain tied
+   to the configured cryostat geometry rather than allowing internal singular
+   optima. Reoptimize direction on each radial shell and compare the far-field
+   limit. A smooth normalization interpolant must retain its numerical uncertainty
+   and agree with independent direct evaluations; smoothing is not calibration.
+
+2. **Match passive geometry and measurement response.** Include modeled aluminum
+   paths consistently in arrival density and normalization using the canonical
+   geometry and upstream attenuation coefficients. This corrects unscattered
+   transmission; photons scattered in passive material require their own response
+   or an explicit unresolved/background class. Convolve supported joint vertex
+   uncertainty with the photon model and replace the diagnostic 2 keV width with
+   a separately characterized simulated readout response. Include correlations,
+   energy sharing and selection bias; do not impose a Fano-like energy dependence
+   on a baseline that has no such fluctuation model. Current development photon
+   peaks can diagnose a response but are not independent calibration evidence.
+
+3. **Normalize the selection actually used.** For observations y and source s,
+   define the selected density from the modeled observation distribution and
+   integrate that same distribution over the declared accepted observations.
+   Geometry, guard policy, measured strip thresholds, topology availability,
+   energy windows and readout quality must match between numerator and normalizer.
+   Applying thresholds to true deposited energies or ideal strip IDs alone is
+   not the noisy ADC selection. Use independently simulated acceptance where an
+   analytic response is inadequate. Retain the existing ideal-topology normalizer
+   as a clearly conditional diagnostic until this is available. At fixed joint
+   source rates, pileup and unknown electronic history may make acceptance depend
+   on the acquisition state; do not silently treat it as a universal single-photon
+   sensitivity. Report that scope when interpreting rates or source strengths.
+
+4. **Fit the cobalt lines jointly, then the Cs/Co scene.** Use known emission
+   yields b_l in one same-source mixture with density
+   `sum_l b_l * f_l(y | s) / sum_l b_l * Z_l(s)` for the stated single-photon
+   selected-event model. Equal emission yields do not imply equal selected counts.
+   Preserve full-absorption/escape and order alternatives, and include a normalized
+   merged/accidental component only where supported. Same-parent two-photon
+   coincidences require a joint response or explicit separate class; a line
+   mixture alone is not a cascade model. A Cs/Co point-source mixture is the next
+   concrete scene closure. Reuse its response and sensitivity for list-mode
+   maximum-likelihood expectation-maximization (MLEM) when a distributed image
+   is needed. MLEM itself does not establish source number, range identifiability
+   or calibrated activity; test those separately rather than adding a second
+   general imaging engine now.
+
+5. **Connect and report the result honestly.** Expose supported empirical fitting
+   through the existing range CLI and Control alongside the angular diagnostic.
+   Report coordinates, radial profiles, line/topology comparisons, unsupported
+   counts and original weights. Check the same-event controls before wider saved
+   archive processing. Improvement in the 1173-keV corner must follow from the
+   response/selection model, not truth-selected cuts. A flat/open profile or a
+   boundary optimum is a reportable outcome; neither an interior optimum nor a
+   closed distance interval is a mandatory pass condition for the five-second data.
+
+Method references inform these tasks without importing another detector's
+parameters: [Yoneda et al., physical interaction and measurement probabilities](https://arxiv.org/abs/2107.01846)
+and [Hayward and Wehe, inter-strip interpolation and close-interaction ambiguity](https://websites.umich.edu/~dkw/dkw_personal_website/DSSD_HPGe.html).
+
+### Independent validation and deferred extensions
+
+Freeze the usable algorithm, calibration and selection before statistical expansion.
+The remaining saved ideal observations test the mathematical implementation; they
+do not replace independent transport/drift/readout observations. Then choose a
+compact full-chain matrix addressing a specific uncertainty in distance, direction,
+source strength or unequal source depth, after measuring the next computation.
+Keep sample sizes configurable and avoid automatically turning every proposed
+1-2 s condition into a new campaign. Separate clean, sharing, merged, escape and
+unknown populations; report position/angular/range errors, false-order/topology
+rates, retained fraction and empirical interval coverage. Test sample-size scaling
+rather than requiring exact inverse-square-root behavior in a poorly identified
+model. Truth scores completed blind fits only. Document achieved limits instead
+of tuning cuts to obtain predetermined accuracy or closed profiles.
+
+The 90.09 s / 20-million-parent case remains a separate owner launch decision,
+even after validation. New arbitrary-size acquisitions, GPU drift development,
+global Float64 field regeneration, a wholesale package move, unrelated photon
+lines and non-GeGI geometry projects are not implied by adopting this roadmap.
+Fano fluctuations, diffusion, trapping and crosstalk remain versioned future
+simulation options when they answer a concrete question; literature parameters
+are hypotheses, not measured GeGI calibration. Avoid double counting charge-cloud
+effects already represented by transport deposits. Real-data import remains
+conditional on actual data and metadata and does not block the current simulation
+objective. Retain the existing environments, originals and unique failures.
+
+## Retained reconstruction evidence
 
 Delivered in the resumed work: original peak/order attribution; all-34 residual
 diagnostics; optional portable six-grid lateral correction; candidate-only truth
