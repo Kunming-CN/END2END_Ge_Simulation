@@ -1,5 +1,29 @@
 # GeSignal handoff
 
+## November 24 macOS student repair
+
+Sunil Chhetri reported a successful SAP22 run after locally repairing two
+geometry handoff failures. The repair-script attachments were unavailable.
+The current source confirmed both omissions in the nominal Cs-137 path.
+Shared batch preparation now includes the saved `geometry_checks` report that
+the Julia batch reader requires. Portable preparation records its actual
+`native_geometry_wall_s`; legacy missing-field metadata uses its paired
+completion receipt. Known preceding exporter builds retain exact compiled
+source/runtime/evidence checks while the updated Python execution is pinned.
+
+Targeted portable-source regression passes all 52 tests under the existing
+WSL/Pixi environment. Student package acceptance passes six tests, and the
+existing Julia 1.13 batch contracts pass all 84 assertions on Windows.
+The eight existing batch-source tests pass; all three added shared-preparation
+tests pass after correcting tuple/list serialization in the test assertions.
+The original ParaView Python test attempt lacked PyYAML and POSIX/hard-link
+support; the environment limitation is recorded and the fixture failure retained.
+No new Mac full-chain run was performed. Use the repaired release for a new run;
+this delivery does not migrate earlier failed scientific directories.
+Publication and validation records are in `.local/macos-geometry-handoff/`
+and `.local/macos-port/sunil-bugfix-*.log`. This student support task leaves
+the reconstruction ownership and next development steps below in place.
+
 ## Current state and continuation
 
 Continue the owner's signal -> interaction -> source-position objective in

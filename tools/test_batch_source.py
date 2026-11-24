@@ -1,6 +1,6 @@
 """Shared batch transport contracts with injected legacy readers; no science."""
 from contextlib import redirect_stdout
-import copy,io,json,sys,unittest
+import copy,io,json,sys,tempfile,types,unittest
 from pathlib import Path
 from unittest.mock import Mock,patch
 import scenario_workflow as W
@@ -86,5 +86,84 @@ class Source(unittest.TestCase):
             batch=copy.deepcopy(self.batch);batch[key]=value
             with self.subTest(key=key),self.assertRaises((W.ControlError,ValueError)):S.validate_batch(batch)
         S.validate_batch(self.batch)
+
+class SharedPreparation(unittest.TestCase):
+    def prepared(self,angle=0):
+        import source_angle as A
+        import test_scenario_prepare as F
+        folder=tempfile.TemporaryDirectory(prefix='batch-geometry-',dir=W.ROOT/'.local')
+        self.addCleanup(folder.cleanup);out=Path(folder.name)/'shared'
+        selection=dict(name='geometry-fixture',cryostat=W.CRYOSTAT,detector='SAP22',source=W.CS,
+            pose='nominal',primary_count=100,seed=42,threads=1,electronics={})
+        if angle:selection['angle_deg']=angle
+        request=S.selection_request(selection)
+        runtime={'kind':'synthetic-no-runtime'}
+        original={'request':request,'execution_contract':{'kind':S.P.EXECUTION_KIND,'version':1,
+            'source_mode':S.P.CS137,'exporter_sha256':'f'*64},'portable_source_sha256':{S.P.ADAPTER_REF:S.P.digest(S.P.adapter_path())},
+            'runtime':runtime,'upstream_sha256':S.cs.upstream_hashes(),'gamma_plan':None}
+        checked={'selection':selection,'legacy_geometry_plan':original}
+        scenario=S.cs.load(W.ROOT/'transport/cryostat_nominal.json')
+        source=scenario['source']['position_global_mm']
+        if angle:
+            pose=A.Pose.resolve(angle)
+            angular={'source_pose':pose,'source_position_global_mm':pose['position_global_mm'],
+                'source_contract':S.C.source_preset(W.CS),'source_mode':'cs137_legacy',
+                'gps_precision_contract':A.GPS_PRECISION_CONTRACT,'runtime':runtime,'decay_data':None,'source_sha256':{}}
+            checked['angle_geometry_plan']={**angular,'selection':dict(selection,primary_count=20)}
+            checked['source_pose']=pose;source=pose['position_global_mm']
+            mocked=patch.object(A,'check',return_value=checked['angle_geometry_plan']);mocked.start();self.addCleanup(mocked.stop)
+        report=F.report_fixture({'assets':{'detector':{'id':'SAP22'}},'coordinate_transform':scenario['coordinate_transform'],
+            'source_position_global_mm':source})
+        if angle:
+            for volume in report['volumes'][18:20]:volume['rotation_local_to_global']=pose['capsule_rotation_local_to_global']
+            anchors=S.DW.anchors(W.ROOT)
+            report['volumes'][17].update(translation_global_mm=[x+y for x,y in zip(anchors['expected_vacuum_global_translation_mm'],anchors['spacer']['vacuum_centre_mm'])],
+                rotation_local_to_global=A.assembly.ROTATION)
+        def runtime_data(output,identity,mode):
+            (output/'runtime').mkdir()
+            S.h.publish_json(output/'runtime/emlow-data.json',{'kind':'synthetic-fixture'})
+            S.h.publish_json(output/'runtime/runtime.json',{'identity':identity})
+        def exporter(command,**kwargs):
+            Path(command[-2]).write_text('<gdml><!-- SYNTHETIC UNIT FIXTURE --></gdml>\n',encoding='utf-8')
+            Path(command[-1]).write_text(S.P.text(report),encoding='utf-8')
+            kwargs['stdout'].write('Synthetic geometry fixture; no exporter or simulation ran.\n')
+            return types.SimpleNamespace(returncode=0)
+        for obj,name,kwargs in ((S,'check',{'return_value':checked}),(S.P,'validate_checked_plan',{'return_value':original}),
+                (S.P,'recheck_runtime_data',{'return_value':0}),(S.P,'runtime_data',{'side_effect':runtime_data}),
+                (S.P.subprocess,'run',{'side_effect':exporter})):
+            mocked=patch.object(obj,name,**kwargs);mocked.start();self.addCleanup(mocked.stop)
+        shared=S.prepare(selection,out,checked)
+        return out,shared,report
+
+    def test_nominal_sap22_shared_report_reaches_native_contract(self):
+        out,shared,report=self.prepared()
+        self.assertNotIn('geometry_checks',S.cs.load(out/'legacy/prepared.json'))
+        self.assertEqual(shared['geometry_checks'],report)
+        self.assertIs(shared['geometry_checks']['overlaps_passed'],True)
+        self.assertIs(shared['geometry_checks']['source_inside_fill'],True)
+        self.assertEqual(W.encoded(S.read_shared(out/'prepared.json')),W.encoded(shared))
+        batch=E.batch_at(E.partition(100,42),0)
+        self.assertIn('/run/beamOn 100\n',S.macro(shared,batch))
+        # Rehashing the inline copy must not override its checked report file.
+        altered=copy.deepcopy(shared);altered['geometry_checks']['overlaps_passed']=False
+        (out/'prepared.json').write_text(S.P.text(altered),encoding='utf-8')
+        with self.assertRaisesRegex(ValueError,'source/geometry/model/unit/clock'):
+            S.read_shared(out/'prepared.json')
+
+    def test_angular_sap22_preparation_preserves_report_and_pose(self):
+        out,shared,report=self.prepared(30)
+        self.assertEqual(shared['geometry_checks'],report)
+        self.assertEqual(shared['source_pose']['angle_deg'],30)
+        self.assertEqual(W.encoded(S.read_shared(out/'prepared.json')),W.encoded(shared))
+        self.assertIn('/control/useDoublePrecision true\n/gps/pos/centre ',
+            S.macro(shared,E.batch_at(E.partition(100,42),0)))
+
+    def test_legacy_shared_report_ref_stays_readable_without_rewriting(self):
+        out,shared,_=self.prepared();shared.pop('geometry_checks')
+        path=out/'prepared.json';path.write_text(S.P.text(shared),encoding='utf-8')
+        before=S.h.sha256(path)
+        self.assertEqual(W.encoded(S.read_shared(path)),W.encoded(shared))
+        self.assertEqual(S.h.sha256(path),before)
+
 
 if __name__=='__main__':unittest.main()
