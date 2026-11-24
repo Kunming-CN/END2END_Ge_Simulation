@@ -28,8 +28,14 @@ Data files were opened in the actual UI. Results remain under
 completion without overwriting other errors; the full DOM contract suite passes.
 Final desktop reload shows an enabled Start, and reopening the saved run displays
 its real waveforms. Repeated Control.cmd -NoBrowser reuses PID 31156 with no busy
-job. Publication of the verified source/package follows this milestone; no
-additional simulation or reconstruction work is required here.
+job. Runtime `d9ea403c95122bd584759f28bb9c21a720bcb4ec` is pushed to PR #4 and
+published as the [latest student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-d9ea403c9512).
+The public latest-download ZIP and packaged source commit match the build:
+1,425,496 bytes, SHA256
+`538055daf4e1d03fa8ede034a4e4cf58e2b8d9f6b38680db288425cbdce32c37`.
+Main still requires external approval; no new Pages deployment is claimed.
+The classroom waveform page remains open. No additional simulation or
+reconstruction work is required for this student-startup milestone.
 
 ## November 24 Control reopening repair
 
@@ -45,7 +51,7 @@ reused the same PID 8212/port 4153, with one listener. The initial fixture run's
 WinError 10013 is retained; the same tests passed through normal elevated tool
 approval. Evidence is in `.local/student-ui-v1/`; scientific workers and locks
 are unchanged. Runtime `20f4fee81998f05b9aed121e0ef456f2c0daaa85` is pushed to
-PR #4 and published as the [latest student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-20f4fee81998).
+PR #4 and published as the [preceding Control release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-20f4fee81998).
 Public bytes and package commit were verified: 1,424,281 bytes, SHA256
 `cdd064fd4d85af9303780e83755f7c189dab00d86237cd58105b2b3c777c160c`.
 The local Control page is open; repeated launch reuses its session. Main remains
