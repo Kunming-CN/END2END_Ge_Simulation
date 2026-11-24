@@ -33,11 +33,13 @@ const elements=new Map(),get=id=>{if(!elements.has(id)){const find=n=>n.id===id?
 const fixtureDocument={getElementById:get,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>{const n=new Element(tag);n.namespaceURI=ns;return n;},createTextNode:text=>({textContent:text}),querySelectorAll:selector=>{const match=/^\[data-([a-z-]+)\]$/.exec(selector);assert.ok(match,selector);const key=match[1].replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase());return [...elements.values()].filter(element=>Object.hasOwn(element.dataset,key));}};
 for(const match of fs.readFileSync(__dirname+'/local_workflow.html','utf8').matchAll(/<([a-z][a-z0-9-]*)\b([^>]*)>/gi)){const id=/\bid="([^"]+)"/.exec(match[2]);if(!id&&!/\bdata-/.test(match[2]))continue;const element=get(id?.[1]||'fixture-control-'+elements.size);element.tagName=match[1];for(const data of match[2].matchAll(/\bdata-([a-z-]+)="([^"]+)"/g))element.dataset[data[1].replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase())]=data[2];if(/\bhidden(?:\s|$)/.test(match[2]))element.hidden=true;}
 fixtureDocument.body=new Element('body');fixtureDocument.body.rootConnected=true;fixtureDocument.activeElement=fixtureDocument.body;
+const startupFetches=[];
 const context=vm.createContext({document:fixtureDocument,DOMParser:Parser,
   location:{hash:'#fixture',pathname:'/'},sessionStorage:{getItem:()=>'',setItem:()=>{}},history:{replaceState:()=>{}},
-  URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL:()=>{}},URLSearchParams,TextDecoder,Uint8Array,confirm:()=>true,fetch:()=>new Promise(()=>{}),setInterval:()=>{},setTimeout:()=>{}});
+  URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL:()=>{}},URLSearchParams,TextDecoder,Uint8Array,confirm:()=>true,fetch:path=>{startupFetches.push(path);return path==='/api/workflow/setup'?Promise.resolve({ok:true,json:async()=>({platform:'windows',prerequisites:[{id:'fixture',label:'Startup test fixture',status:'unavailable',detail:'Mocked environment response.',action:'Recheck prerequisites.'}],checks:[]})}):new Promise(()=>{});},setInterval:()=>{},setTimeout:()=>{}});
 vm.runInContext(fs.readFileSync(__dirname+'/focused_plots.js','utf8'),context);
 vm.runInContext(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),context);
+assert.deepEqual(startupFetches,['/api/workflow/setup','/api/workflow/catalog']);
 function run(code){return vm.runInContext(code,context);}
 function descendants(n){return n.children.flatMap(child=>[child,...descendants(child)]);}
 // Older contracts isolate optional availability traffic; changed-path tests restore the actual request.
@@ -2231,7 +2233,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.match(get('model-capability-details').textContent,/pinned LBNL cryostat inputs/);
   for(const id of ['start','check','save','source','pose'])assert.equal(get(id).disabled,true,id);
   run(`const freshSetupCalls=[];api=async path=>{freshSetupCalls.push(path);if(path==='/api/workflow/setup')return{checks:[{available:false,label:'LBNL cryostat setup'}],note:'Follow the setup guide.'};throw Error('Unexpected fresh-package action '+path);};`);
-  await get('setup-required-help').onclick();assert.equal(run('currentPage'),'help');assert.match(get('setup-notice').textContent,/Missing: LBNL cryostat setup/);
+  await get('setup-required-help').onclick();assert.equal(run('currentPage'),'new');assert.match(get('setup-notice').textContent,/Missing: LBNL cryostat setup/);
   await get('start').onclick();assert.deepEqual(JSON.parse(run('JSON.stringify(freshSetupCalls)')),['/api/workflow/setup']);
   get('cryostat').value='gegi_cryostat_v1';run('cryostatChanged();');
   assert.equal(get('detector').value,'GeGI_3D');assert.equal(get('setup-required').hidden,true);
@@ -2412,5 +2414,65 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   const beforeStoragePoll=run("storageCalls.filter(call=>call.path==='/api/workflow/trash'&&!call.body).length");await run('poll()');
   assert.equal(run("storageCalls.filter(call=>call.path==='/api/workflow/trash'&&!call.body).length"),beforeStoragePoll);
   console.log('Run storage: capability/activity refusal, recoverable workflow/candidate deletion, selected-result clearing, pending locks, restore, exact-count permanent confirmation/cancellation, error recovery and lazy trash reads passed.');
+  // Prerequisites are visible in the main workflow. Startup runs one real API
+  // request; explicit rechecks serialize and do not turn polling into probes.
+  run(`const beforePrerequisitesAPI=api;let prerequisiteCalls=0,prerequisiteResolve,prerequisiteReject;
+    api=(path,body)=>path==='/api/workflow/setup'?(prerequisiteCalls++,new Promise((resolve,reject)=>{prerequisiteResolve=resolve;prerequisiteReject=reject;})):beforePrerequisitesAPI(path,body);`);
+  const heldPrerequisites=get('setup').click();assert.equal(get('setup').disabled,true);assert.match(get('setup-notice').textContent,/Checking installed tools/);
+  assert.equal(get('prerequisites-list').children.length,0);await get('setup').click();await run('checkPrerequisites()');assert.equal(run('prerequisiteCalls'),1);
+  run(`prerequisiteResolve({platform:'windows',guide_url:'/guide.html#setup',ready_for_config_check:false,checks:[],prerequisites:[
+      {id:'python',label:'Windows Python',status:'ready',detail:'Configured Python found.',action:''},
+      {id:'wsl',label:'WSL2 / Ubuntu',status:'missing',detail:'Ubuntu is not installed.',action:'Install Ubuntu 24.04, then run setup.'},
+      {id:'julia',label:'Julia runtime',status:'mismatch',detail:'Found 1.12; required 1.13.0.',action:'Select the pinned Julia runtime.'},
+      {id:'pixi',label:'Pixi',status:'unavailable',detail:'The version command could not be checked.',action:'Open the setup guide and recheck Pixi.'}]});`);await heldPrerequisites;
+  assert.equal(get('setup').disabled,false);assert.match(get('prerequisites-platform').textContent,/Windows.*Python 3.10.*WSL2.*Pixi inside Ubuntu/);
+  assert.match(get('setup-notice').textContent,/1 of 4 prerequisites ready.*3 items need attention/);assert.equal(get('prerequisites-details').open,true);
+  assert.deepEqual(get('prerequisites-list').children.map(row=>row.children[1].children[0].textContent),['Ready','Missing','Version mismatch','Could not check']);
+  assert.match(get('prerequisites-list').children[1].children[2].children[1].textContent,/Install Ubuntu 24.04/);
+  assert.equal(get('guide').href,'/guide.html#setup');assert.equal(get('setup-required-guide').href,'/guide.html#setup');
+  run('showSetupGuidance(currentDetector());');assert.equal(get('guide').href,'/guide.html#setup');
+  const beforePrerequisitesPoll=run('prerequisiteCalls');await run('poll()');await run('poll()');assert.equal(run('prerequisiteCalls'),beforePrerequisitesPoll);
+  run("showPage('help');");get('help-open-setup').onclick();assert.equal(run('currentPage'),'new');assert.equal(fixtureDocument.activeElement,get('setup'));
+  const readyPrerequisites=get('setup').click();
+  run(`prerequisiteResolve({platform:'macos',guide_url:'/guide.html#setup-macos',ready_for_config_check:true,checks:[],prerequisites:[{id:'pixi',label:'Native Pixi environment',status:'ready',detail:'Locked Python and simulation tools found.',action:''},{id:'julia',label:'Julia 1.13.0',status:'ready',detail:'Pinned environment found.',action:''}]});`);await readyPrerequisites;
+  assert.match(get('prerequisites-platform').textContent,/macOS.*Apple Command Line Tools.*Setup.command/);assert.doesNotMatch(get('prerequisites-platform').textContent,/WSL/);
+  assert.match(get('setup-notice').textContent,/All 2 required prerequisites are ready/);assert.equal(get('guide').href,'/guide.html#setup-macos');assert.equal(get('prerequisites-details').open,false);
+  const optionalPrerequisites=get('setup').click();
+  run(`prerequisiteResolve({platform:'windows',ready_for_config_check:true,checks:[],prerequisites:[
+    {id:'numpy',label:'Host NumPy',required:true,status:'ready',detail:'Required module found.',action:''},
+    {id:'host-analysis',label:'Host SciPy / h5py / PyYAML',required:false,status:'missing',detail:'Optional analysis packages are absent.',action:'Install only when using host analysis tools.'}]});`);await optionalPrerequisites;
+  assert.match(get('setup-notice').textContent,/All 1 required prerequisites are ready.*1 optional tool is not ready/);
+  assert.doesNotMatch(get('setup-notice').textContent,/needs attention|required before/);assert.equal(get('prerequisites-details').open,false);
+  assert.doesNotMatch(get('prerequisites-platform').textContent,/with NumPy, SciPy/);
+  const optionalDetails=get('prerequisites-list').children[1].children[0].children[0];
+  assert.equal(optionalDetails.tagName,'details');assert.equal(optionalDetails.open,false);assert.match(optionalDetails.children[0].textContent,/Optional checks/);
+  run(`showPrerequisites({platform:'windows',ready_for_config_check:true,prerequisites:[{id:'unknown',label:'Required runtime',required:true,status:'unrecognized'}]});`);
+  assert.match(get('setup-notice').textContent,/0 of 1 prerequisites ready.*needs attention/);assert.equal(get('prerequisites-details').open,true);
+  const failedPrerequisites=get('setup').click();run("prerequisiteReject(Error('Environment checker unavailable'));");await failedPrerequisites;
+  assert.match(get('setup-notice').textContent,/Unable to check prerequisites.*Environment checker unavailable/);assert.doesNotMatch(get('setup-notice').textContent,/All .* ready/);
+  assert.equal(get('prerequisites-list').children.length,0);assert.equal(get('setup').disabled,false);
+  const emptyPrerequisites=get('setup').click();run('prerequisiteResolve({platform:"macos",prerequisites:[],checks:[]});');await emptyPrerequisites;
+  assert.match(get('setup-notice').textContent,/full prerequisite list was not returned/);assert.doesNotMatch(get('setup-notice').textContent,/All .* ready/);
+  assert.equal(startupFetches.filter(path=>path==='/api/workflow/setup').length,1);
+  // A stdlib-only host can serve Control while catalog imports fail. Its
+  // independent setup result must still explain the missing Python packages.
+  const independentRequests=[];let independentSetupResolve;
+  const independentContext=vm.createContext({document:fixtureDocument,DOMParser:Parser,
+    location:{hash:'#fixture',pathname:'/'},sessionStorage:{getItem:()=>'',setItem:()=>{}},history:{replaceState:()=>{}},
+    URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL:()=>{}},URLSearchParams,TextDecoder,Uint8Array,confirm:()=>true,
+    fetch:path=>{independentRequests.push(path);return path==='/api/workflow/setup'?new Promise(resolve=>independentSetupResolve=resolve):Promise.resolve({ok:false,json:async()=>({error:"No module named 'numpy'"})});},setInterval:()=>{},setTimeout:()=>{}});
+  vm.runInContext(fs.readFileSync(__dirname+'/focused_plots.js','utf8'),independentContext);
+  vm.runInContext(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),independentContext);
+  for(let tick=0;tick<8;tick++)await Promise.resolve();
+  assert.deepEqual(independentRequests,['/api/workflow/setup','/api/workflow/catalog']);assert.match(get('notice').textContent,/No module named 'numpy'/);
+  assert.equal(get('setup').disabled,true);assert.equal(typeof get('help-open-setup').onclick,'function');
+  independentSetupResolve({ok:true,json:async()=>({platform:'windows',guide_url:'/guide.html#setup',ready_for_config_check:false,checks:[],prerequisites:[
+    {id:'host-science',label:'Python science packages',status:'missing',detail:"No module named 'numpy'",action:'Install NumPy, SciPy, h5py and PyYAML in the Python used by Control.'}]})});
+  for(let tick=0;tick<8;tick++)await Promise.resolve();
+  assert.equal(get('setup').disabled,false);assert.match(get('setup-notice').textContent,/0 of 1 prerequisites ready.*attention/);
+  assert.equal(get('prerequisites-list').children[0].children[0].textContent,'Python science packages');
+  assert.match(get('prerequisites-list').children[0].children[2].children[1].textContent,/Install NumPy.*Python used by Control/);
+  assert.equal(get('guide').href,'/guide.html#setup');assert.equal(get('page-new').hidden,false);
+  console.log('Visible startup prerequisites: one automatic independent request, serialized recheck, Windows/macOS details and local guide, exact statuses/actions, failure/empty non-readiness and no polling probes passed.');
   console.log('Student UI one-click check/start and failed-check refusal, exact angle/position/electronics copies, unique names, poll-stable pages, compact run rows, cryostat/catalog choices, cross-batch sparse-ID search and waveform/tab keyboard controls passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

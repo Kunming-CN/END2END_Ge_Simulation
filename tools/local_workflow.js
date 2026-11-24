@@ -13,6 +13,7 @@ let candidatePlaneGeneration=0,candidateRangeRefresh=null;
 let knownRuns=[],currentPage='new',currentTask='standard',runDetailKind='standard',resultTab='overview',waveformStage='charge',eventFindGeneration=0;
 let runStatusNotice=null;
 let trashEntries=[],trashBusy=false,trashServerBusy=false,trashGeneration=0,candidateOptionsGeneration=0;
+let setupCheckPending=false,setupGuideUrl=null;
 const continuationNames=new Map();
 const pendingActions=new Map();
 const stageNames={native_preparation:'Fields and injection calibration',geometry:'Geometry and source',radiation:'Radiation transport',event_ledger:'Event ledger',response:'Fields, charge, calibration and readout',results:'Verified results'};
@@ -205,10 +206,73 @@ function setupRequired(detector=currentDetector()){
 }
 function showSetupGuidance(detector){
   $('setup-required').hidden=!setupRequired(detector);
-  if(catalog.setup_guide){
-    $('guide').href=catalog.setup_guide;
-    $('setup-required-guide').href=catalog.setup_guide;
+  updateSetupGuide();
+}
+function updateSetupGuide(){
+  const url=setupGuideUrl||catalog?.setup_guide;
+  if(url){
+    $('guide').href=url;
+    $('setup-required-guide').href=url;
   }
+}
+function openPrerequisites(){
+  showPage('new');$('prerequisites-panel').scrollIntoView({behavior:'smooth'});$('setup').focus();
+}
+function showPrerequisites(reply){
+  const platform=reply.platform;
+  $('prerequisites-platform').textContent=platform==='windows'?
+    'Windows: Python 3.10+ with NumPy; Juliaup; WSL2 with Ubuntu 24.04; and Pixi inside Ubuntu. Optional host analysis tools are listed separately.':platform==='macos'?
+    'macOS: Juliaup, Pixi and Apple Command Line Tools. Setup.command prepares the locked Python, science packages and simulation environments.':
+    'The checks below inspect the installed tools, pinned simulation environments and required model inputs on this computer.';
+  if(reply.guide_url){setupGuideUrl=reply.guide_url;updateSetupGuide();}
+  const complete=Array.isArray(reply.prerequisites)&&reply.prerequisites.length>0;
+  const items=complete?reply.prerequisites:(reply.checks||[]).map((item,index)=>({id:'legacy-'+index,label:item.label,status:item.available?'ready':'missing',detail:item.detail||'',action:''}));
+  const statuses={ready:'Ready',missing:'Missing',mismatch:'Version mismatch',unavailable:'Could not check'};
+  let ready=0,optionalUnready=0;
+  const requiredCount=items.filter(item=>item.required!==false).length,rows=[],optionalRows=[];
+  for(const item of items){
+    const status=Object.hasOwn(statuses,item.status)?item.status:'unavailable';
+    if(item.required!==false&&status==='ready')ready++;
+    if(item.required===false&&status!=='ready')optionalUnready++;
+    const row=node('tr'),label=node('th',item.label),state=node('td'),description=node('td');
+    label.setAttribute('scope','row');state.append(node('span',statuses[status],'prerequisite-status '+status));
+    if(item.detail)description.append(node('p',item.detail));
+    if(item.action&&status!=='ready')description.append(node('p',item.action));
+    row.append(label,state,description);(item.required===false?optionalRows:rows).push(row);
+  }
+  if(optionalRows.length){
+    const row=node('tr'),cell=node('td'),details=node('details'),table=node('table',undefined,'prerequisites-table'),body=node('tbody');
+    cell.setAttribute('colspan','3');table.setAttribute('aria-label','Optional checks');
+    body.append(...optionalRows);table.append(body);details.append(node('summary','Optional checks ('+optionalRows.length+')'),table);
+    cell.append(details);row.append(cell);rows.push(row);
+  }
+  $('prerequisites-list').replaceChildren(...rows);
+  if(!complete||!requiredCount){
+    const legacy=(reply.checks||[]).map(item=>(item.available?'✓ ':'Missing: ')+item.label).join(' · ');
+    $('setup-notice').textContent=(legacy?legacy+'. ':'')+'The full prerequisite list was not returned. Open the setup guide and recheck after updating Control.';
+    $('prerequisites-details').open=true;
+  }else if(ready===requiredCount&&reply.ready_for_config_check!==false){
+    $('setup-notice').textContent='All '+requiredCount+' required prerequisites are ready. Start simulation also checks the selected run.'+
+      (optionalUnready?' '+optionalUnready+' optional '+(optionalUnready===1?'tool is':'tools are')+' not ready.':'');
+    $('prerequisites-details').open=false;
+  }else{
+    const unresolved=requiredCount-ready;
+    $('setup-notice').textContent=ready+' of '+requiredCount+' prerequisites ready. '+(unresolved?
+      unresolved+' '+(unresolved===1?'item needs':'items need')+' attention; follow the steps below.':'Additional setup is required before a simulation configuration can be checked.');
+    $('prerequisites-details').open=true;
+  }
+  $('setup-record').textContent=JSON.stringify(reply,null,2);
+}
+async function checkPrerequisites(){
+  if(setupCheckPending)return;
+  setupCheckPending=true;$('setup').disabled=true;$('setup').textContent='Checking prerequisites…';
+  $('setup-notice').textContent='Checking installed tools, simulation environments and required model inputs…';
+  $('prerequisites-list').replaceChildren();$('setup-record').textContent='Check in progress.';
+  try{showPrerequisites(await api('/api/workflow/setup'));}
+  catch(e){
+    $('setup-notice').textContent='Unable to check prerequisites: '+e.message+' Recheck or open the full setup guide.';
+    $('setup-record').textContent=e.message;$('prerequisites-details').open=true;
+  }finally{setupCheckPending=false;$('setup').disabled=false;$('setup').textContent='Recheck prerequisites';}
 }
 function detectorItems(){
   const items=catalog.detectors.map(detector=>detectorFits(detector)?detector:{
@@ -2396,7 +2460,7 @@ $('event-find').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault()
 $('event-previous').onclick=()=>moveSavedEvent(-1).catch(e=>notice(e.message,true));
 $('event-next').onclick=()=>moveSavedEvent(1).catch(e=>notice(e.message,true));
 $('group').onchange=showGroup;
-$('setup').onclick=async()=>{try{const r=await api('/api/workflow/setup');$('setup-notice').textContent=r.checks.map(c=>(c.available?'✓ ':'Missing: ')+c.label).join(' · ')+' '+r.note;}catch(e){$('setup-notice').textContent=e.message;}};
+$('setup').onclick=checkPrerequisites;
 $('check').onclick=async()=>{if(busy||active||!executableSelection())return;const version=selectionVersion,button=$('check'),focused=document.activeElement===button;busy=true;checked=null;showPose();controls();try{const submitted=config(),serialized=JSON.stringify(submitted),batched=batchSelection(),gegi=gegiSelection();const reply=await api(gegi?'/api/workflow/check-gegi':batched?'/api/workflow/check-batches':'/api/workflow/check',batched?{request:batchRequest(submitted)}:{config:submitted});if(version!==selectionVersion||JSON.stringify(config())!==serialized){notice('Selection changed while Check was pending. Check the current setup.');return;}if(gegi&&(reply.kind!=='local_gegi_workflow_v1'||reply.status!=='checked_configuration'||typeof reply.check_id!=='string'))throw Error('Check did not authorize this GeGI configuration.');const pendingAngle=batched&&submitted.angle_deg!==undefined&&submitted.angle_deg!==0&&reply.execution_enabled===false&&reply.resolved?.source_pose;if(batched&&(reply.kind!=='local_scenario_batch_execution_v3'||reply.schema_version!==3||(!pendingAngle&&(reply.execution_enabled!==true||typeof reply.check_id!=='string'))))throw Error('Check did not authorize batch execution.');checked=reply;$('checked-plan').textContent=JSON.stringify(checked.resolved,null,2);showPose(checked.resolved);notice(gegi?'GeGI configuration checked. Run records the selected source, all readout channels and signal-based imaging.':pendingAngle?'Angle and geometry inputs checked. Nonzero-angle execution is unavailable: the fixed pilot failed source-position identity; end-to-end acceptance is pending.':batched?'Exact count checked: '+submitted.primary_count+' initial primaries in '+checked.resolved.batching.batch_count+' serial batches. Run uses this checked plan.':'Gamma configuration checked. Run uses its checked energy, source anchor and 20-primary settings.',false,true);}catch(e){if(version===selectionVersion){checked=null;notice(e.message,true);}}finally{busy=false;controls();if(focused&&button.isConnected&&!button.disabled&&document.activeElement===document.body)button.focus({preventScroll:true});}};
 $('start').onclick=async()=>{
   if(busy||active||!executableSelection())return;
@@ -2496,10 +2560,10 @@ for(const button of document.querySelectorAll('[data-result-tab]')){
 for(const button of document.querySelectorAll('[data-waveform-stage]'))button.onclick=()=>showWaveformStage(button.dataset.waveformStage);
 $('browse-catalog').onchange=cryostatChanged;
 $('setup-required-help').onclick=()=>{
-  showPage('help');
-  $('setup').focus();
-  return $('setup').onclick();
+  openPrerequisites();
+  return checkPrerequisites();
 };
+$('help-open-setup').onclick=openPrerequisites;
 $('run-list-back').onclick=openRunList;
 $('open-saved-analysis').onclick=()=>{
   showPage('runs');
@@ -2513,4 +2577,5 @@ $('trash-refresh').onclick=refreshTrash;
 $('trash-empty').onclick=emptyRunTrash;
 $('run-trash').ontoggle=()=>{if($('run-trash').open&&!trashBusy)void refreshTrash();};
 showPage('new');showTask('standard');showResultTab('overview');showWaveformStage();
+void checkPrerequisites();
 (async()=>{try{catalog=await api('/api/workflow/catalog');options('cryostat',catalog.cryostats);electronics();$('numerics').textContent=catalog.numerics;$('setup-limit').textContent=catalog.setup_limit||'';selectDetector('AK02');stageList();for(const id of ['pose','angle-deg','gamma-energy-keV','gegi-source-x','gegi-source-y','gegi-source-z','count','seed','threads','name'])$(id).addEventListener('input',invalidate);$('cryostat').onchange=cryostatChanged;$('detector').onchange=detectorChanged;$('source').onchange=sourceChanged;await poll();$('name').value=uniqueRunName();invalidate();void estimateCandidateStorage();setInterval(poll,2500);}catch(e){notice(e.message,true);$('check').disabled=true;}})();

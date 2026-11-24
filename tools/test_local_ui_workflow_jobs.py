@@ -223,11 +223,16 @@ class Jobs(unittest.TestCase):
         for relative in ('transport/cryostat-source.json','simulation/Manifest.toml'):
             path=self.root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'fixture')
         backend=SimpleNamespace(EXPORTER_REF='.local/new-exporter',BUILD_REF='.local/new-build.json')
-        portable=SimpleNamespace(file_readiness=lambda root:{'available':True})
-        with patch.dict('sys.modules',{'scenario_source_portable':portable}),patch.object(W,'runtime_identity',return_value={}),patch.object(W,'source_pins',return_value={}),patch.object(W,'catalog',return_value={'setup_guide':'fixture'}),patch.object(J,'catalog_backend',return_value=backend):
+        portable=SimpleNamespace(file_readiness=lambda root:{'available':True,'build_receipt_ref':'fixture'})
+        environment={'platform':'windows','ready':True,'prerequisites':[{'id':'fixture','status':'ready','required':True}]}
+        with patch.dict('sys.modules',{'scenario_source_portable':portable}),patch.object(W,'runtime_identity',return_value={}),patch.object(W,'source_pins',return_value={}),patch.object(J.local_prerequisites,'inspect',return_value=environment),patch.object(J,'catalog_backend',return_value=backend):
             reply=self.controller.setup()
             self.assertFalse(reply['angular_source_file_ready'])
             self.assertTrue(reply['ready_for_config_check']);self.assertFalse(reply['catalog_models_file_ready']);self.assertEqual(reply['science_calls'],0)
+            self.assertEqual(reply['status'],'prerequisites_checked')
+            self.assertEqual(reply['guide_url'],'/guide.html#requirements')
+            with patch.object(J.local_prerequisites,'inspect',return_value=dict(environment,ready=False)):
+                self.assertFalse(self.controller.setup()['ready_for_config_check'])
             for relative in (backend.EXPORTER_REF,backend.BUILD_REF):
                 path=self.root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'fixture')
             self.assertTrue(self.controller.setup()['catalog_models_file_ready'])

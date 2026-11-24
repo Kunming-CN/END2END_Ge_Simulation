@@ -3,6 +3,7 @@
 !.gitignore
 !.gitattributes
 !README.md
+!/START_HERE.html
 # Reviewed community root files only.
 !/LICENSE
 !/CONTRIBUTING.md

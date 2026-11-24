@@ -32,6 +32,28 @@ class Protocol(unittest.TestCase):
 
     def close(self):self.server.shutdown();self.server.server_close();self.thread.join()
 
+    def test_fixed_local_guide_is_readable_without_session(self):
+        status,body,headers=self.request(route='/guide.html',headers={'X-Control-Token':None})
+        self.assertEqual(status,200)
+        self.assertEqual(body,(self.server.static_root/'site_guide.html').read_bytes().replace(b'__PAGE_NAVIGATION__',b''))
+        self.assertNotIn(b'__PAGE_NAVIGATION__',body)
+        self.assertIn('text/html',headers['Content-Type'])
+        self.assertEqual(headers['Cache-Control'],'no-store')
+        for route in ('/site_guide.html','/guide.html?path=../PROGRESS.md','/../PROGRESS.md'):
+            self.assertEqual(self.request(route=route,headers={'X-Control-Token':None})[0],403)
+        self.workflow.setup.assert_not_called()
+
+    def test_setup_remains_protected_and_returns_prerequisites(self):
+        reply={'status':'prerequisites_checked','platform':'windows','ready_for_config_check':False,
+               'guide_url':'/guide.html#requirements','prerequisites':[{'id':'numpy','status':'missing'}]}
+        self.workflow.setup.return_value=reply
+        self.assertEqual(self.request(route='/api/workflow/setup',headers={'X-Control-Token':None})[0],403)
+        self.workflow.setup.assert_not_called()
+        status,body,_=self.request(route='/api/workflow/setup')
+        self.assertEqual(status,200);self.assertEqual(json.loads(body),reply)
+        self.workflow.setup.assert_called_once_with()
+        self.workflow.start.assert_not_called()
+
     def request(self,method='GET',route='/api/workflow/state',body=None,headers=None):
         values={'Host':'127.0.0.1:'+str(self.server.server_port),'X-Control-Token':self.server.token}
         if method=='POST':values.update({'Origin':self.server.origin,'Content-Type':'application/json'})

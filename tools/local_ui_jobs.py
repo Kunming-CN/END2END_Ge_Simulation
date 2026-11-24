@@ -196,8 +196,12 @@ def windows_snapshot_identity(pid):
         status = query(5, None, 0, ctypes.byref(length))  # SystemProcessInformation
         if status & 0xffffffff != 0xc0000004 or length.value < ctypes.sizeof(ProcessInfo):
             return 'unknown'  # STATUS_INFO_LENGTH_MISMATCH supplies the required size.
-        buffer = ctypes.create_string_buffer(length.value)
+        # Process/thread entries can grow between the size query and the read.
+        buffer = ctypes.create_string_buffer(length.value + 65536)
         status = query(5, buffer, len(buffer), ctypes.byref(length))
+        if status & 0xffffffff == 0xc0000004 and length.value > len(buffer):
+            buffer = ctypes.create_string_buffer(length.value + 65536)
+            status = query(5, buffer, len(buffer), ctypes.byref(length))
     except (OSError, AttributeError):
         return 'unknown'
     if status != 0 or not ctypes.sizeof(ProcessInfo) <= length.value <= len(buffer):

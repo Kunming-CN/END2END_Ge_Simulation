@@ -244,7 +244,7 @@ class SiteStructureTests(unittest.TestCase):
 
     def test_guide_follows_task_order_and_preserves_old_anchors_and_scopes(self):
         root=self.fixture();S.apply(root);guide=(root/'guide.html').read_text()
-        order=('platform-choice','download-software','setup','setup-macos','local-control','find-results','control-recovery','saved-analysis','troubleshooting','advanced-routes','setup-linux','developer-source')
+        order=('requirements','platform-choice','download-software','setup','setup-macos','local-control','find-results','control-recovery','saved-analysis','troubleshooting','advanced-routes','setup-linux','developer-source')
         offsets=[guide.index('id="'+ident+'"') for ident in order]
         self.assertEqual(offsets,sorted(offsets))
         ids=re.findall(r'\bid="([^"]+)"',guide);self.assertEqual(len(ids),len(set(ids)))
@@ -256,11 +256,22 @@ class SiteStructureTests(unittest.TestCase):
         self.assertEqual(guide.count('https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/download/student-runtime-f44859b48267/gegi-center-calibration.npz'),3)
         self.assertNotRegex(guide,r'href="https://github.com/Kunming-CN/END2END_Ge_Simulation/releases"')
         for ident in ('setup','setup-macos'):
-            self.assertIn('<section id="'+ident+'" class="setup-platform" hidden>',guide)
-            self.assertIn('data-platform="'+ident+'" aria-controls="'+ident+'" aria-expanded="false"',guide)
-        self.assertIn('panel.hidden=panel.id!==id',guide)
+            self.assertIn('<section id="'+ident+'" class="setup-platform">',guide)
+            self.assertNotIn('<section id="'+ident+'" class="setup-platform" hidden>',guide)
+            self.assertIn('href="#'+ident+'"',guide)
+        self.assertNotIn('panel.hidden=panel.id!==id',guide)
+        self.assertIn('py -3.13 -m pip install numpy',guide)
+        self.assertIn('Windows Python · Control',guide)
+        self.assertIn('Pixi Python and radiation transport',guide)
+        self.assertIn('id="languages"',guide)
+        self.assertIn('No Node.js, npm',guide)
+        self.assertIn('CUDA.jl 6.4.0',guide)
+        for ref in ('simulation/Project.toml','simulation/Manifest.toml','transport/pixi.toml',
+                    'transport/pixi.lock','transport/macos/pixi.toml','transport/macos/pixi.lock'):
+            self.assertIn('https://github.com/Kunming-CN/END2END_Ge_Simulation/blob/main/'+ref,guide)
+        self.assertIn('wsl --install -d Ubuntu-24.04',guide)
+        self.assertIn('Mac setup complete. Open Control.command.',guide)
         self.assertIn("window.addEventListener('hashchange',revealAnchor)",guide)
-        self.assertIn("target.closest('.setup-platform')",guide)
         scope=DisclosureScopes();scope.feed(guide)
         self.assertEqual(scope.ids['setup-linux'],('advanced-workflows','setup-linux'))
         self.assertEqual(scope.ids['developer-source'],('advanced-workflows','developer-source'))

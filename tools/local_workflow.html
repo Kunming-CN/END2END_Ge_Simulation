@@ -542,6 +542,56 @@
       gap: 14px;
       margin-bottom: 22px;
     }
+    .prerequisites-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .prerequisites-heading h2, .prerequisites-heading .actions {
+      margin: 0;
+    }
+    .prerequisites-heading a.button {
+      text-decoration: none;
+    }
+    .prerequisites-scroll {
+      overflow-x: auto;
+    }
+    .prerequisites-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: .86rem;
+    }
+    .prerequisites-table th, .prerequisites-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    .prerequisites-table thead {
+      background: #f0f6f7;
+    }
+    .prerequisites-table th:first-child {
+      width: 23%;
+    }
+    .prerequisites-table td:nth-child(2) {
+      width: 140px;
+      white-space: nowrap;
+    }
+    .prerequisites-table p {
+      margin: 0 0 6px;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+    .prerequisite-status {
+      display: inline-block;
+      font-weight: 650;
+    }
+    .prerequisite-status.missing, .prerequisite-status.mismatch, .prerequisite-status.unavailable {
+      color: #9e3434;
+    }
     .task-choice {
       display: flex;
       flex-direction: column;
@@ -856,6 +906,32 @@
         <h2>New simulation</h2>
         <p class="muted">Choose a task, configure the detector, then start your run.</p>
       </div>
+      <section id="prerequisites-panel" aria-labelledby="prerequisites-title">
+        <div class="prerequisites-heading">
+          <h2 id="prerequisites-title">Prerequisites &amp; setup</h2>
+          <div class="actions">
+            <button id="setup" type="button">Recheck prerequisites</button>
+            <a id="guide" class="button" target="_blank" rel="noreferrer" href="https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup">Full setup guide</a>
+          </div>
+        </div>
+        <p id="prerequisites-platform" class="muted">Checking the tools and simulation environments required on this computer.</p>
+        <p id="setup-notice" class="notice" role="status" aria-live="polite">Checking prerequisites…</p>
+        <details id="prerequisites-details" open>
+          <summary>Requirements and installation steps</summary>
+          <div class="prerequisites-scroll">
+            <table class="prerequisites-table" aria-describedby="setup-notice">
+              <thead>
+                <tr><th scope="col">Requirement</th><th scope="col">Status</th><th scope="col">Result and next step</th></tr>
+              </thead>
+              <tbody id="prerequisites-list"></tbody>
+            </table>
+          </div>
+        </details>
+        <details>
+          <summary>Environment check details</summary>
+          <pre id="setup-record">The first check runs automatically when Control opens.</pre>
+        </details>
+      </section>
       <div class="task-choices" aria-label="Simulation type">
         <button type="button" class="task-choice" data-task-choice="standard" aria-controls="standard-task" aria-pressed="true">
           <strong>Detector simulation</strong>
@@ -1575,12 +1651,10 @@
       </div>
       <section>
         <h2>Setup and documentation</h2>
-        <p class="muted">Check your installed environment or open the setup guide.</p>
+        <p class="muted">Prerequisites, installation steps and the current environment check are on New simulation.</p>
         <div class="actions">
-          <button id="setup">Check environment</button>
-          <a id="guide" target="_blank" rel="noreferrer" href="https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup">Setup guide</a>
+          <button id="help-open-setup" type="button">Open prerequisites &amp; setup</button>
         </div>
-        <p id="setup-notice" class="muted">Uses your existing configured environment.</p>
       </section>
       <section>
         <h2>From simulation to results</h2>

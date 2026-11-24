@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "build_id": "612e2072c1e431309f67a02552a0d70451057ed01dd8e6b5d5836d243dd9f7a2",
+  "build_id": "1c16a2b12c9e4de1ab104cc6e1bbc962013ab27fd4676f8a1848b6096bd6976b",
   "file_count": 1914,
-  "total_bytes": 538386554,
+  "total_bytes": 538398500,
   "html_pages": 127,
   "local_links_checked": 3797,
-  "resource_references_checked": 4024,
-  "page_navigation_checked": 2021,
-  "fragments_checked": 353,
+  "resource_references_checked": 4027,
+  "page_navigation_checked": 2024,
+  "fragments_checked": 356,
   "downloads_checked": 775,
   "media_references_checked": 1164,
   "metadata_references_checked": 62,
@@ -7725,8 +7725,8 @@
     },
     {
       "path": "guide.html",
-      "bytes": 97492,
-      "sha256": "b1e40583b4923f5397649c57c1777aaced727c7328f0b6cb2639480f4ba9820e"
+      "bytes": 109438,
+      "sha256": "07cdac5cd191cf8af48c5a087788e3e0e917ebc33738111217634d70b429847c"
     },
     {
       "path": "index.html",

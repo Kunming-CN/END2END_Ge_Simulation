@@ -25,6 +25,7 @@ from local_ui_jobs import safe_path
 ROOT = Path(__file__).resolve().parents[1]
 STATE = '.local/local-control-v1'
 STATIC = {'/': ('local_workflow.html', 'text/html; charset=utf-8'),
+          '/guide.html': ('site_guide.html', 'text/html; charset=utf-8'),
           '/focused_plots.js': ('focused_plots.js', 'text/javascript; charset=utf-8'),
           '/gegi_signal_journey.js': ('gegi_signal_journey.js', 'text/javascript; charset=utf-8'),
           '/local_workflow.js': ('local_workflow.js', 'text/javascript; charset=utf-8'),
@@ -293,7 +294,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.reject(403, 'Loopback host required')
         if parts.path in STATIC and not parts.query:
             name, mime = STATIC[parts.path]
-            return self.send_data(200, (self.server.static_root / name).read_bytes(), mime)
+            body = (self.server.static_root / name).read_bytes()
+            if parts.path == '/guide.html':
+                body = body.replace(b'__PAGE_NAVIGATION__', b'')
+            return self.send_data(200, body, mime)
         if not self.authorized(download=parts.path == '/api/file', gamma_download=parts.path == '/api/gamma-file', workflow_download=parts.path in ('/api/workflow-file','/api/workflow-file/plots','/api/workflow-file/focus')):
             return
         try:

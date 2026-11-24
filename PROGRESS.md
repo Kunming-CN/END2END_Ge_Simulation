@@ -1,5 +1,40 @@
 # GeSignal handoff
 
+## November 24 complete student prerequisites and installation route
+
+The maintained setup guide now exposes both platform routes and a complete
+language/tool/package inventory before installation. It distinguishes Windows
+Control Python/NumPy from locked WSL or Mac transport Python; lists Julia,
+C++/CMake/Ninja, shells, browser requirements, exact main package versions and
+Geant4 datasets; and links the complete manifest/lock dependency lists. README
+and the student ZIP include an offline `START_HERE.html` entry. Missing Windows
+Python now points to that entry. No environment was installed or changed here.
+
+New simulation automatically checks installed versions, imports, Julia package
+and artifact metadata, locked transport records, model inputs and exporter
+receipts. Recheck is explicit; ordinary polling does not rerun probes. Required
+and optional dependencies remain distinct, and ready details collapse. A fixed
+local guide route works independently of catalog/NumPy availability.
+
+Forty targeted backend/protocol tests, the full frontend DOM suite, the guide
+regression and 42 publication-tool tests pass. The real owner setup probe took
+9.77 seconds and found all 11 required items ready; host SciPy/PyYAML are optional
+and absent. Actual desktop Chrome showed the automatic result, expandable exact
+versions, the setup link and preserved classroom run. No new simulation was run.
+Default-sandbox hard-link test failures and the successful approved rerun remain
+under `.local/student-ui-v1/`, together with HTTP and browser acceptance evidence.
+All seven extracted-package checks pass. Actual browser acceptance also exposed
+a transient Start-button block: the Windows process snapshot grew between its
+size query and read, producing 3 unknown identities in 200 native probes. The
+reader now allocates growth headroom and resizes once for that exact status;
+real failures remain unknown. Eleven identity/regression tests pass, and 200
+post-fix samples had zero unknown identities or false busy states. The final
+Control server was reopened in desktop Chrome with all required prerequisites
+ready and Start enabled. All 37 HTTP protocol tests pass. The generated site
+and standalone checker pass for build
+`1c16a2b12c9e4de1ab104cc6e1bbc962013ab27fd4676f8a1848b6096bd6976b`.
+Public delivery is the remaining step.
+
 ## November 24 My runs recycle bin
 
 Ordinary detector runs and GeGI acquisitions now have Delete run, Restore and

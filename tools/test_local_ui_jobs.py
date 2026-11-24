@@ -79,7 +79,7 @@ class WindowsRuntimeTests(unittest.TestCase):
                 return -1073741820  # STATUS_INFO_LENGTH_MISMATCH
             if fill_status:
                 return fill_status
-            self.assertEqual(capacity, len(blob))
+            self.assertGreaterEqual(capacity, len(blob))
             J.ctypes.memmove(buffer, blob, len(blob))
             if returned_length is not None:
                 length._obj.value = returned_length
@@ -97,7 +97,40 @@ class WindowsRuntimeTests(unittest.TestCase):
         with mock.patch.object(J.ctypes, 'WinDLL') as library:
             library.return_value.NtQuerySystemInformation = query
             self.assertEqual(J.windows_snapshot_identity(3756), self.new_creation)
-        self.assertEqual(calls, [0, len(blob)])
+        self.assertEqual(calls, [0, len(blob) + 65536])
+
+    def test_snapshot_growth_between_size_query_and_read_fits_headroom(self):
+        blob = self.snapshot_bytes([(50, self.old_creation), (3756, self.new_creation)])
+        calls = []
+        def query(kind, buffer, capacity, length):
+            calls.append(capacity)
+            length._obj.value = len(blob) - 80 if buffer is None else len(blob)
+            if buffer is None:return -1073741820
+            self.assertGreaterEqual(capacity, len(blob))
+            J.ctypes.memmove(buffer, blob, len(blob))
+            return 0
+        with mock.patch.object(J.ctypes, 'WinDLL') as library:
+            library.return_value.NtQuerySystemInformation = query
+            self.assertEqual(J.windows_snapshot_identity(3756), self.new_creation)
+        self.assertEqual(calls, [0, len(blob) - 80 + 65536])
+
+    def test_snapshot_excess_growth_resizes_once_and_preserves_failure(self):
+        blob = self.snapshot_bytes([(50, self.old_creation)] * 599 + [(3756, self.new_creation)])
+        for repeated_growth in (False, True):
+            calls = []
+            def query(kind, buffer, capacity, length):
+                calls.append(capacity)
+                length._obj.value = 128 if buffer is None else len(blob)
+                if buffer is None or capacity < len(blob):return -1073741820
+                if repeated_growth:
+                    length._obj.value = capacity + 80
+                    return -1073741820
+                J.ctypes.memmove(buffer, blob, len(blob))
+                return 0
+            with self.subTest(repeated_growth=repeated_growth),mock.patch.object(J.ctypes, 'WinDLL') as library:
+                library.return_value.NtQuerySystemInformation = query
+                self.assertEqual(J.windows_snapshot_identity(3756), 'unknown' if repeated_growth else self.new_creation)
+            self.assertEqual(calls, [0, 128 + 65536, len(blob) + 65536])
 
     def test_restricted_snapshot_absence_and_zero_creation_remain_unknown(self):
         for entries in ([(50, self.old_creation)], [(3756, 0)]):
@@ -108,9 +141,9 @@ class WindowsRuntimeTests(unittest.TestCase):
                     self.assertEqual(J.windows_snapshot_identity(3756), 'unknown')
                 self.assertEqual(len(calls), 2)
 
-    def test_query_failure_growth_and_truncation_stay_unknown_without_retry(self):
+    def test_query_failure_and_truncation_stay_unknown_without_retry(self):
         blob = self.snapshot_bytes([(3756, self.new_creation)])
-        for status, returned in ((-1073741790, None), (-1073741820, None), (0, 1), (0, len(blob) + 1)):
+        for status, returned in ((-1073741790, None), (-1073741820, None), (0, 1), (0, len(blob) + 65537)):
             with self.subTest(status=status, returned=returned):
                 query, calls = self.snapshot_query(blob, fill_status=status, returned_length=returned)
                 with mock.patch.object(J.ctypes, 'WinDLL') as library:

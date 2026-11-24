@@ -11,10 +11,10 @@
   "source_hash_contracts": {"transport/scenario_source_portable.py": "source_inventory"},
   "groups": {
     "launchers_and_rights": [
-      "Control.cmd", "Run.cmd", "Control.command", "Setup.command", "LICENSE", "THIRD_PARTY_NOTICES.md", "CITATION.cff"
+      "Control.cmd", "Run.cmd", "Control.command", "Setup.command", "README.md", "START_HERE.html", "LICENSE", "THIRD_PARTY_NOTICES.md", "CITATION.cff"
     ],
     "control_and_common_runtime": [
-      "tools/local_ui.ps1", "tools/local_ui.py", "tools/local_ui_jobs.py",
+      "tools/local_ui.ps1", "tools/local_ui.py", "tools/local_ui_jobs.py", "tools/local_prerequisites.py",
       "tools/macos_launch.sh", "tools/macos_setup.py",
       "tools/local_ui_gamma_jobs.py", "tools/local_ui_scenarios.py",
       "tools/local_ui_workflow_jobs.py", "tools/local_run_trash.py", "tools/nonzero_events.py", "tools/local_workflow.html",
