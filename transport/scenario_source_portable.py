@@ -76,6 +76,8 @@ BUILD_KEYS = {"kind", "schema_version", "status", "adapter_version", "producer_s
 # This one Python-only option upgrade is separately pinned at execution time.
 HISTORICAL_BUILD_PRODUCER = "b99bfc20ece50e0a87fc22bdb78effea049d27a90fb1b8a1311bcf0e29305f4d"
 PRE_MACOS_BUILD_PRODUCER = "229cc4159e7fc8c42328112b64e771d2c5bd7b36b7af94969bbeddcd4d14b375"
+# Python-only geometry metadata repair; compiled inputs and build evidence stay pinned.
+PRE_GEOMETRY_METADATA_BUILD_PRODUCER = "d2dd56b2af7d377d50616c53a1577fc2acda1abebcc449ac1daf9f4feab36457"
 GAMMA_TRANSPORT_SHA256 = "906c8c83a7c40d0e1fafef3ca7149c5efd418fe4a3a003befca714fed7ed88de"
 NONZERO_STORAGE_SHA256 = "a28ae48e426defe7c03b2f8d2398afcf2ca35dbd26c28fa00670101e1240a2c8"
 
@@ -609,12 +611,12 @@ def build_exporter(windows_root):
 def validate_build_binding(value, producer):
     if value.get("project_identity", {}).get("macos_root") is not None:
         exact(value["source_sha256"], {**source_inventory(), **MACOS_PINS}, "macOS canonical build sources changed")
-        require(value["producer_sha256"] == producer, "macOS build producer changed")
+        require(value["producer_sha256"] in (producer, PRE_GEOMETRY_METADATA_BUILD_PRODUCER), "macOS build producer changed")
     elif value.get("producer_sha256") == HISTORICAL_BUILD_PRODUCER:
         exact(value["source_sha256"], PINNED, "historical build sources changed; no old-version rebase")
     else:
         exact(value["source_sha256"], source_inventory(), "rehashing cannot admit changed canonical source")
-        require(value["producer_sha256"] in (producer, PRE_MACOS_BUILD_PRODUCER), "build producer changed")
+        require(value["producer_sha256"] in (producer, PRE_MACOS_BUILD_PRODUCER, PRE_GEOMETRY_METADATA_BUILD_PRODUCER), "build producer changed")
 
 
 def validate_build_receipt(value, identity, runtime, producer, recipe, semantics):
@@ -841,7 +843,7 @@ def metadata_for(directory, checked, report, model_contract, elapsed, files):
               "exporter_sha256": checked["execution_contract"]["exporter_sha256"], "upstream_sha256": checked["upstream_sha256"],
               "material_tables": {"stp/" + v["name"]: v["material"] for v in report["volumes"] if v["name"] != "ledger_0_PV"},
               "files_sha256": files, "execution_contract": checked["execution_contract"],
-              "portable_source_sha256": checked["portable_source_sha256"]}
+              "portable_source_sha256": checked["portable_source_sha256"], "native_geometry_wall_s": elapsed}
     if request["source_mode"] == CS137 and not ring_case(request):
         # The frozen AK/SAP Julia reader admits only basename entries in this
         # legacy map. The new paired reader owns the additional nested evidence.
@@ -862,8 +864,7 @@ def metadata_for(directory, checked, report, model_contract, elapsed, files):
                     "source point and capsule/fill move together; capsule axis global +y", "overlap sampling is not geometry convergence",
                     "planned count/seed/macro are inputs; no emitted event census or raw quantities exist"],
                 "unknowns": scenario["unknowns"], "omitted": scenario["omitted"],
-                "unscored_volumes": [{"name": "ledger_0_PV", "material": "G4_AIR", "reason": "world is unscored; world/escape/neutrino energy closure not established"}],
-                "native_geometry_wall_s": elapsed}
+                "unscored_volumes": [{"name": "ledger_0_PV", "material": "G4_AIR", "reason": "world is unscored; world/escape/neutrino energy closure not established"}]}
     base = {**common, "kind": ring.PREPARED_KIND if ring_case(request) else "cs137_prepared_v1",
             "model_sha256": model_contract["source_model_sha256"] if model_contract else h.PINNED[model],
             "primary_count": request["primary_count"], "seed": request["seed"], "source_pdg": cs.ION,
@@ -874,7 +875,7 @@ def metadata_for(directory, checked, report, model_contract, elapsed, files):
                 [{"name": "ledger_0_PV", "material": "G4_AIR", "reason": "Geant4 world retains default region; no world-air deposition ledger or full energy closure is claimed"}]}
     if ring_case(request):
         base.update(producer_adapter="ring_cs137_v1", model_contract=model_contract, ring_source_sha256=ring.ring_source_hashes(),
-                    probes=probes, analytic_volume_mm3=ring.reference_volume(model), native_geometry_wall_s=elapsed,
+                    probes=probes, analytic_volume_mm3=ring.reference_volume(model),
                     mounting_contract=scenario["mounting_contract"])
     return base
 
@@ -980,11 +981,16 @@ def read_prepared(directory, windows_root):
         require(model_contract["variant_id"] == request["detector"], "effective model variant mismatch")
         expected_ref = (directory / "effective-model/GeRC02.yaml").relative_to(ROOT).as_posix() if request["detector"] == "GeRC02_Li50min" else "models/KMRC01_candidate.yaml"
         require(model_contract["effective_model_ref"] == expected_ref, "effective model belongs to a different run")
-    timing = meta.get("native_geometry_wall_s", 0)
+    receipt = load(directory / "prepare-receipt.json")
+    legacy_timing = "native_geometry_wall_s" not in meta and request["source_mode"] == CS137 and not ring_case(request)
+    timing = receipt.get("native_geometry_wall_s") if legacy_timing else meta.get("native_geometry_wall_s")
     require(type(timing) in (int, float) and math.isfinite(timing) and timing >= 0, "invalid geometry timing")
     expected = metadata_for(directory, checked, report, model_contract, timing, pins)
+    if legacy_timing:
+        # Early AK/SAP Cs137 metadata omitted this field. Its paired, hash-bound
+        # completion receipt is the original timing authority; never invent zero.
+        expected.pop("native_geometry_wall_s")
     exact(meta, expected, "rehashed prepared semantics/provenance/legacy source maps changed")
-    receipt = load(directory / "prepare-receipt.json")
     require(set(receipt) == {"kind", "status", "stage", "execution_contract", "portable_source_sha256", "command", "native_geometry_wall_s", "returncode", "prepared_sha256", "preparation_wall_s"}, "unsupported completed preparation receipt")
     exact([receipt["kind"], receipt["stage"]], [s.KIND if request["source_mode"] == GAMMA else "portable_source_prepare_receipt_v1", "geometry_preparation"], "preparation receipt kind/stage changed")
     require(receipt["status"] == "complete" and type(receipt["returncode"]) is int and receipt["returncode"] == 0,

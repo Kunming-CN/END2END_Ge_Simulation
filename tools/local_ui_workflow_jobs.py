@@ -21,6 +21,7 @@ import workflow_finalize as F
 import workflow_launch as L
 import saved_waveforms
 import saved_focus_waveforms
+import local_prerequisites
 from saved_terminal import Verifier
 from local_ui_jobs import ControlError, process_identity, safe_path
 
@@ -62,6 +63,7 @@ class WorkflowController:
         self._gegi_dual_control=None
         self._gegi_candidate_control=None
         self._gegi_readers={}
+        self._run_trash=None
         path=safe_path(self.root,STATE+'/workflow-jobs.json')
         self._state_path=path
         if path.exists():
@@ -121,39 +123,67 @@ class WorkflowController:
 
     def setup(self):
         checks=[]
+        prerequisites=[]
+        setup_action=('Run Setup.command. See /guide.html#setup-macos.' if sys.platform=='darwin' else
+                      'Follow /guide.html#setup using the existing locked environment.')
         for label,relative in (('Pinned cryostat inventory','transport/cryostat-source.json'),
                                ('Julia project','simulation/Manifest.toml')):
-            checks.append({'label':label,'available':safe_path(self.root,relative).is_file()})
+            available=safe_path(self.root,relative).is_file()
+            checks.append({'label':label,'available':available})
+            prerequisites.append({'id':'file_'+relative,'label':label,'status':'ready' if available else 'missing',
+                                  'detail':relative,'action':'Restore this file from the student package.','required':True})
         try:
             sys.path.insert(0,str(W.ROOT/'transport')) if str(W.ROOT/'transport') not in sys.path else None
             from scenario_source_portable import file_readiness
             portable=file_readiness(self.root)
             checks.append({'label':'Portable source exporter and matching build receipt','available':True})
-        except (OSError,ValueError,KeyError,ControlError):
+            prerequisites.append({'id':'portable_exporter','label':'Portable source exporter and matching build receipt',
+                                  'status':'ready','detail':portable['build_receipt_ref'],'action':setup_action,'required':True})
+        except (OSError,ValueError,KeyError,ControlError) as error:
             portable=None;checks.append({'label':'Portable source exporter and matching build receipt','available':False})
+            prerequisites.append({'id':'portable_exporter','label':'Portable source exporter and matching build receipt',
+                                  'status':'missing' if isinstance(error,FileNotFoundError) else 'mismatch',
+                                  'detail':str(error),'action':setup_action,'required':True})
         try:
-            runtime=W.runtime_identity(2,verify_version=False) if sys.platform=='darwin' else W.runtime_identity(2)
+            runtime=W.runtime_identity(2,verify_version=False)
             checks.append({'label':'Existing pinned Julia executable','available':True})
         except (OSError,ControlError):
             runtime=None;checks.append({'label':'Existing pinned Julia executable','available':False})
-        try:W.source_pins('AK02',self.root,portable=True);checks.append({'label':'Exact model and upstream input bytes','available':True})
-        except (OSError,ValueError,KeyError,ControlError):checks.append({'label':'Exact model and upstream input bytes','available':False})
-        ready_for_config_check=all(c['available'] for c in checks)
+        try:
+            W.source_pins('AK02',self.root,portable=True)
+            checks.append({'label':'Exact model and upstream input bytes','available':True})
+            prerequisites.append({'id':'model_inputs','label':'Exact model and upstream input bytes','status':'ready',
+                                  'detail':'Canonical AK02 model, cryostat inputs and pinned source bytes verified.',
+                                  'action':setup_action,'required':True})
+        except (OSError,ValueError,KeyError,ControlError) as error:
+            checks.append({'label':'Exact model and upstream input bytes','available':False})
+            prerequisites.append({'id':'model_inputs','label':'Exact model and upstream input bytes',
+                                  'status':'missing' if isinstance(error,FileNotFoundError) else 'mismatch',
+                                  'detail':str(error),'action':setup_action,'required':True})
+        core_files_ready=all(c['available'] for c in checks)
+        environment=local_prerequisites.inspect(self.root,julia_executable=(runtime or {}).get('julia_executable'))
         backend=catalog_backend()
         catalog_ready=safe_path(self.root,backend.EXPORTER_REF).is_file() and safe_path(self.root,backend.BUILD_REF).is_file()
         checks.append({'label':'Common model geometry exporter and build receipt','available':catalog_ready})
         angle_ready=all(safe_path(self.root,ref).is_file() for ref in
             ('.local/m2a/angle-source-build-v1/cryostat_angle_export','.local/m2a/angle-source-build-v1/exporter-build.json'))
         checks.append({'label':'Angular source geometry exporter and build receipt','available':angle_ready})
+        for item_id,label,available in (('catalog_exporter_files','Common model exporter files',catalog_ready),
+                                        ('angular_exporter_files','Angular source exporter files',angle_ready)):
+            prerequisites.append({'id':item_id,'label':label,'status':'ready' if available else 'missing',
+                                  'detail':'Exporter and receipt files present; configuration check verifies their runtime/build binding.' if available else 'Exporter or build receipt is absent.',
+                                  'action':setup_action,'required':False})
         setup_note = ('Run Setup.command to build the exporters in the existing locked environment. '
                       if sys.platform == 'darwin' else
                       'Run.cmd setup -BuildPortableSourceExporter builds the original exporter; Run.cmd setup -BuildCatalogSourceExporter builds the common model exporter; Run.cmd setup -BuildAngleSourceExporter builds angular geometry support. These use the existing locked environment. ')
-        return {'status':'file_readiness_only','checks':checks,'runtime_identity':runtime,'portable_source':portable,
+        return {'status':'prerequisites_checked','checks':checks,'runtime_identity':runtime,'portable_source':portable,
+                'platform':environment['platform'],'prerequisites':environment['prerequisites']+prerequisites,'read_only':True,
                 'catalog_models_file_ready':catalog_ready,
                 'angular_source_file_ready':angle_ready,
-                'ready_for_config_check':ready_for_config_check,'science_calls':0,
-                'note':'File readiness only. '+setup_note+('Angular execution is available after a successful Check plan. ' if B.ANGULAR_EXECUTION_READY else 'Nonzero-angle execution is pending end-to-end acceptance. ')+'Check verifies current build/runtime identities; opening Control installs or builds nothing.',
-                'guide':W.catalog(self.root)['setup_guide']}
+                'ready_for_config_check':core_files_ready and environment['ready'],'science_calls':0,
+                'note':setup_note+('Angular execution is available after a successful Check plan. ' if B.ANGULAR_EXECUTION_READY else 'Nonzero-angle execution is pending end-to-end acceptance. ')+'Checks read installed versions and package/build records; configuration check verifies the selected run. Nothing is installed or built.',
+                'guide':'/guide.html#requirements','guide_url':'/guide.html#requirements',
+                'public_guide':'https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup'+('-macos' if sys.platform=='darwin' else '')}
 
     def check(self,config):
         with self._lock:
@@ -437,7 +467,7 @@ class WorkflowController:
                 self._jobs.append(job);self._persist()
             return self._launch(job)
 
-    def _view(self,job):
+    def _view(self,job,*,trash_busy=None):
         out={k:copy.deepcopy(job[k]) for k in ('id','name','status','created_utc')}
         out['selection']=copy.deepcopy(job['plan']['resolved']['selection'])
         out['source_pose']=copy.deepcopy(job['plan']['resolved'].get('source_pose'))
@@ -481,10 +511,22 @@ class WorkflowController:
             # This live progress is display-only until terminal artifact verification.
             if (directory/'response/progress.json').exists():out['response_progress']=W.read(directory/'response/progress.json')
         except (OSError,ValueError,ControlError):pass
+        out.update(self.run_trash().eligibility('workflow',job['name'],busy=trash_busy))
         return out
 
     def snapshot(self):
-        with self._lock:return {'kind':'local_workflow_state_v1','busy':self.own_busy(),'jobs':[self._view(j) for j in self._jobs]}
+        with self._lock:
+            busy=self.own_busy()
+            trash_busy=busy or self._peer_busy()
+            return {'kind':'local_workflow_state_v1','busy':busy,
+                    'jobs':[self._view(j,trash_busy=trash_busy) for j in self._jobs]}
+
+    def run_trash(self):
+        with self._lock:
+            if self._run_trash is None:
+                from local_run_trash import RunTrash
+                self._run_trash=RunTrash(self)
+            return self._run_trash
 
     def artifact(self,name,file):
         with self._lock:

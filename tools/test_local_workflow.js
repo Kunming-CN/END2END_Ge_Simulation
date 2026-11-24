@@ -30,13 +30,16 @@ function xml(tag,attrs={},children=[]){return {nodeType:1,localName:tag,prefix:n
 const svgDocument={doctype:null,documentElement:xml('svg',{role:'img',viewBox:'0 0 600 205'},[xml('polyline',{points:'55,160 565,35',fill:'none',stroke:'currentColor','stroke-width':'1.7'}),xml('text',{x:'5',y:'35'},[{nodeType:3,nodeValue:'-0.003'}])]),getElementsByTagName:()=>[]};
 class Parser{parseFromString(){return svgDocument;}}
 const elements=new Map(),get=id=>{if(!elements.has(id)){const find=n=>n.id===id?n:n.children?.map(find).find(Boolean);for(const root of elements.values()){const found=find(root);if(found)return found;}const root=new Element(['cryostat','detector','source','pose','threads','event','group','gegi-event','gegi-channel','gegi-digital-strip','gegi-digital-neighbor','gegi-saved-campaign','gegi-saved-calibration','gegi-saved-job','gegi-dual-source-a','gegi-dual-source-b','gegi-dual-job'].includes(id)?'select':'div');root.rootConnected=true;elements.set(id,root);}return elements.get(id);};
-const fixtureDocument={getElementById:get,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>{const n=new Element(tag);n.namespaceURI=ns;return n;},createTextNode:text=>({textContent:text})};
+const fixtureDocument={getElementById:get,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>{const n=new Element(tag);n.namespaceURI=ns;return n;},createTextNode:text=>({textContent:text}),querySelectorAll:selector=>{const match=/^\[data-([a-z-]+)\]$/.exec(selector);assert.ok(match,selector);const key=match[1].replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase());return [...elements.values()].filter(element=>Object.hasOwn(element.dataset,key));}};
+for(const match of fs.readFileSync(__dirname+'/local_workflow.html','utf8').matchAll(/<([a-z][a-z0-9-]*)\b([^>]*)>/gi)){const id=/\bid="([^"]+)"/.exec(match[2]);if(!id&&!/\bdata-/.test(match[2]))continue;const element=get(id?.[1]||'fixture-control-'+elements.size);element.tagName=match[1];for(const data of match[2].matchAll(/\bdata-([a-z-]+)="([^"]+)"/g))element.dataset[data[1].replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase())]=data[2];if(/\bhidden(?:\s|$)/.test(match[2]))element.hidden=true;}
 fixtureDocument.body=new Element('body');fixtureDocument.body.rootConnected=true;fixtureDocument.activeElement=fixtureDocument.body;
+const startupFetches=[];
 const context=vm.createContext({document:fixtureDocument,DOMParser:Parser,
   location:{hash:'#fixture',pathname:'/'},sessionStorage:{getItem:()=>'',setItem:()=>{}},history:{replaceState:()=>{}},
-  URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL:()=>{}},URLSearchParams,TextDecoder,Uint8Array,fetch:()=>new Promise(()=>{}),setInterval:()=>{},setTimeout:()=>{}});
+  URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL:()=>{}},URLSearchParams,TextDecoder,Uint8Array,confirm:()=>true,fetch:path=>{startupFetches.push(path);return path==='/api/workflow/setup'?Promise.resolve({ok:true,json:async()=>({platform:'windows',prerequisites:[{id:'fixture',label:'Startup test fixture',status:'unavailable',detail:'Mocked environment response.',action:'Recheck prerequisites.'}],checks:[]})}):new Promise(()=>{});},setInterval:()=>{},setTimeout:()=>{}});
 vm.runInContext(fs.readFileSync(__dirname+'/focused_plots.js','utf8'),context);
 vm.runInContext(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),context);
+assert.deepEqual(startupFetches,['/api/workflow/setup','/api/workflow/catalog']);
 function run(code){return vm.runInContext(code,context);}
 function descendants(n){return n.children.flatMap(child=>[child,...descendants(child)]);}
 // Older contracts isolate optional availability traffic; changed-path tests restore the actual request.
@@ -125,16 +128,16 @@ assert.doesNotMatch(hintLabels.get('31')+hintLabels.get('32')+hintLabels.get('33
 // Every selected field and both gate boundaries are part of the checked data.
 run('electronics();');
 for(const label of get('electronics').children)assert.equal(label.htmlFor,label.children[0].id);
-const html=fs.readFileSync(__dirname+'/local_workflow.html','utf8');
+const html=fs.readFileSync(__dirname+'/local_workflow.html','utf8').replace(/\s+/g,' ');
 assert.match(html,/position_mm in mm and global_position_m in m/);
 assert.match(html,/raw LH5, position columns use m, step edep uses keV and time uses ns; track and particle ekin use MeV/);
 assert.match(html,/raw_tables.*columns; those units are authoritative/);
 assert.match(html,/Deposition time, particle creation time and carrier drift time describe different stages/);
 assert.doesNotMatch(html,/Energy uses keV; positions use mm/);
-assert.match(html,/Check environment inspects installed files\. Check plan validates the selected source, runtime and settings/);
-assert.match(html,/<h2>Next-run setup<\/h2>/);
-assert.match(html,/Editing them clears its checked plan; the selected saved run and its events keep their recorded settings/);
-assert.match(html,/<h2>Selected saved run · pipeline<\/h2>/);
+for(const page of ['new','runs','help'])assert.match(html,new RegExp('data-page="'+page+'"'));assert.match(html,/id="start"[^>]*>Start simulation/);
+assert.match(html,/id="standard-task"/);
+assert.match(html,/id="run-detail"[^>]*hidden/);
+assert.match(html,/id="pipeline"/);
 assert.match(html,/Selected saved-run settings · exact recorded inputs/);
 assert.match(html,/id="start"[^>]+aria-describedby="run-readiness"/);
 assert.match(html,/id="run-readiness"[^>]+role="status"[^>]+aria-live="polite"/);
@@ -148,7 +151,7 @@ assert.equal(run('config().electronics.peak_gate_start_ns'),null);
 get('use-peak-gate').checked=true;run('gateFields();');
 assert.equal(run('config().electronics.peak_gate_start_ns'),100);
 assert.equal(run('config().electronics.peak_gate_end_ns'),2000);
-run("checked={check_id:'old'};invalidate();");assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
+run("checked={check_id:'old'};invalidate();");assert.equal(run('checked'),null);assert.equal(get('start').disabled,false);
 assert.equal(run('importedConfig(config()).seed'),26092631);
 assert.throws(()=>run('importedConfig({...config(),seed:42})'),/unavailable/);
 assert.throws(()=>run('importedConfig({...config(),extra:1})'),/fields/);
@@ -160,17 +163,17 @@ for(const bad of [true,'30',null,30,-30])assert.throws(()=>run(`importedConfig({
 get('source').value='cs137_point_decay_v1';run('sourceChanged();');
 assert.equal(get('angle-deg').disabled,false);assert.match(get('angle-limit').textContent,/-30° to 30°.*engineering placement/);
 assert.equal(get('angle-deg').value,'0');assert.equal(run("Object.hasOwn(config(),'angle_deg')"),false);
-for(const angle of [30,-30]){get('angle-deg').value=String(angle);run('invalidate();');assert.equal(run('config().angle_deg'),angle);assert.equal(run('importedRequest(batchRequest(config())).angle_deg'),angle);assert.equal(get('start').disabled,true);}
+for(const angle of [30,-30]){get('angle-deg').value=String(angle);run('invalidate();');assert.equal(run('config().angle_deg'),angle);assert.equal(run('importedRequest(batchRequest(config())).angle_deg'),angle);assert.equal(get('start').disabled,false);}
 for(const bad of [true,'30',null,30.0001,-30.0001])assert.throws(()=>run(`importedRequest(batchRequest({...config(),angle_deg:${JSON.stringify(bad)}}))`),/angle/);
 for(const bad of ['NaN','Infinity','-Infinity'])assert.throws(()=>run(`importedRequest(batchRequest({...config(),angle_deg:${bad}}))`),/angle/);
 for(const bad of ['', 'NaN','31','-31']){get('angle-deg').value=bad;assert.throws(()=>run('config()'),/angle/);}
-get('angle-deg').value='30';run('invalidate();');assert.match(get('source-pose-preview').textContent,/Check plan to resolve/);
+get('angle-deg').value='30';run('invalidate();');assert.match(get('source-pose-preview').textContent,/Start simulation checks/);
 run('showPose({selection:config(),source_pose:sourcePose30,source_position_global_mm:sourcePose30.position_global_mm});');
 assert.match(get('source-pose-preview').textContent,/Checked effective source pose · angle 30°.*capsule axis/);
 assert.ok(get('source-pose-preview').textContent.includes(run('sourcePose30.position_global_mm.join(", ")')));
 assert.deepEqual(JSON.parse(get('source-pose-identity').textContent).source_pose,JSON.parse(run('JSON.stringify(sourcePose30)')));
 assert.equal(JSON.parse(get('source-pose-identity').textContent).source_pose.anchors_sha256,'8'.repeat(64));
-get('angle-deg').value='-30';run('invalidate();');assert.match(get('source-pose-preview').textContent,/Check plan to resolve/);assert.equal(get('source-pose-identity').textContent,'No checked source pose.');
+get('angle-deg').value='-30';run('invalidate();');assert.match(get('source-pose-preview').textContent,/Start simulation checks/);assert.equal(get('source-pose-identity').textContent,'No checked source pose.');
 get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');assert.equal(get('angle-deg').value,'0');assert.equal(get('angle-deg').disabled,true);assert.equal(run("Object.hasOwn(config(),'angle_deg')"),false);
 assert.equal(get('count').value,'20');assert.equal(get('seed').value,'26092631');
 // Ring changes visibly remove unavailable gamma; imports cannot bypass this.
@@ -181,7 +184,7 @@ assert.throws(()=>run("importedConfig({...config(),source:'mono_gamma_662_axis_v
 get('detector').value='GeRC02';run('detectorChanged();');assert.match(get('operating-details').textContent,/Li50min/);
 get('detector').value='AK02';run('detectorChanged();');get('source').value='mono_gamma_662_axis_v1';run('sourceChanged();');
 assert.equal(get('source').children.length,2);
-assert.match(html,/\.plot\{margin:0;min-width:0\}/);assert.match(html,/\.plot-grid>p,\.plot-grid>small\{grid-column:1\/-1;min-width:0;overflow-wrap:anywhere\}/);
+assert.match(html.replace(/\s+/g,''),/\.plot\{margin:0;min-width:0;?\}/);assert.match(html.replace(/\s+/g,''),/\.plot-grid>p,\.plot-grid>small\{grid-column:1\/-1;min-width:0;overflow-wrap:anywhere;?\}/);
 // Every catalog model is selectable for inspection, while unsupported selections
 // cannot Check, Start or export. The immutable selected run stays independent.
 run("const currentModels=catalog.detectors;catalog.detectors=[...currentModels,...Array.from({length:13},(_,i)=>({id:'view-'+i,label:'Reference '+i,available:false,reason:'No checked connector',sources:[],model:{group:'reference',status:'reference only',assumptions:['No physical identity claim'],contacts:[{id:1,name:'readout',potential_V:0},{id:2,name:'outer',potential_V:-380}],readout_contact_id:1},geometry_url:'https://example.test/geometry'}))];options('detector',catalog.detectors,true);");
@@ -202,11 +205,12 @@ assert.equal(get('model-contacts').children.length,34);assert.equal(get('model-c
 assert.equal(get('model-contacts').children[8].textContent,'Contact 9 · strip 9 · -879 V · catalog readout');
 run('catalog.detectors=currentModels;');get('detector').value='AK02';run('detectorChanged();');
 // The common model entry is selected by its checked contract, not detector IDs.
+get('browse-catalog').checked=true;
 run("catalog.detectors.push({id:'AK01',available:true,workflow_kind:'local_catalog_workflow_v1',sources:['cs137_point_decay_v1'],operating_label:'Original 78 K; readout contact 1; contact 2 +700 V',parameter_summary:[{label:'Model temperature',value:78,unit:'K'},{label:'Readout contact',value:1}],checks:[{label:'Cryostat fit',status:'supported',detail:'Fits the selected LBNL cavity'}]},{id:'large-model',available:false,block_code:'cryostat_size',reason:'Radius 40 mm exceeds cryostat half-width 20.574 mm; a larger cryostat is needed.',sources:[],operating_label:'Original 92.3 K; readout contact 9'});options('detector',detectorItems(),true);");
 assert.ok(get('detector').children.slice(0,5).every(n=>!n.textContent.includes('larger cryostat')));
 get('detector').value='AK01';run('detectorChanged();');
 assert.equal(run('sharedModelSelection()'),true);assert.equal(get('check').disabled,false);
-assert.match(get('model-capability').textContent,/Available in the current cryostat.*Check plan/);
+assert.match(get('model-capability').textContent,/Ready for simulation in this cryostat/);
 assert.equal(get('model-parameters').children[0].textContent,'Model temperature: 78 K');
 assert.equal(get('model-parameters').children[1].textContent,'Readout contact: 1');
 get('detector').value='large-model';run('detectorChanged();');
@@ -226,35 +230,35 @@ run("stageList({event_ledger:{status:'completed',reuse:'verified_transport_prefi
 assert.match(get('pipeline').children[2].children[1].children[0].textContent,/saved artifacts verified; original execution time unavailable/);
 assert.doesNotMatch(get('pipeline').children[2].children[1].children[0].textContent,/0\.00 s/);
 run("continuationNames.set('m14a-gamma-ui-02','chosen-new-name');renderJobs({busy:true,jobs:[{id:'a',name:'m14a-gamma-ui-02',status:'dispatch_uncertain',can_continue_prefix:true,selection:{detector:'SAP22',source:'mono_gamma_662_axis_v1',primary_count:20},stages:{}}]});");
-const continuation=get('runs').children[0].children.find(n=>n.tagName==='label');
+const continuation=get('run-detail-content').children[0].children.find(n=>n.tagName==='label');
 assert.equal(continuation.htmlFor,'continue-name-a');assert.equal(continuation.children[0].value,'chosen-new-name');
-assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Continue from verified transport'));
+assert.ok(get('run-detail-content').children[0].children.some(n=>n.textContent==='Continue from verified transport'));
 run("renderJobs({busy:true,jobs:[{id:'b',name:'ring-ended',status:'dispatch_uncertain',can_finalize_results:true,selection:{detector:'GeRC02',source:'cs137_point_decay_v1',primary_count:500},stages:{}}]});");
-assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Finalize saved results'));
-assert.ok(get('runs').children[0].children.some(n=>/No simulation is repeated/.test(n.textContent)));
+assert.ok(get('run-detail-content').children[0].children.some(n=>n.textContent==='Finalize saved results'));
+assert.ok(get('run-detail-content').children[0].children.some(n=>/No simulation is repeated/.test(n.textContent)));
 assert.match(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),/api\('\/api\/workflow\/finalize-results',\{name:job.name\}\)/);
 run("renderJobs({busy:true,jobs:[{id:'b',name:'ring-ended',status:'dispatch_uncertain',can_finalize_results:false,selection:{detector:'GeRC02',source:'cs137_point_decay_v1',primary_count:500},stages:{}}]});");
-assert.ok(!get('runs').children[0].children.some(n=>n.textContent==='Finalize saved results'));
+assert.ok(!get('run-detail-content').children[0].children.some(n=>n.textContent==='Finalize saved results'));
 run('renderJobs({busy:false,jobs:[]});');
 // The read-only saved completion action remains visible beside uncertain work.
 run("const launchFailure={id:'not-created',name:'not-created',status:'dispatch_uncertain',execution_contract:'serial_batches_v3',can_inspect_failure:false,can_recover_launch:true,error:'Original preparation error',selection:{detector:'AK02',source:'cs137_point_decay_v1',primary_count:500},stages:{}};renderJobs({busy:true,jobs:[launchFailure]});");
-assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Recover not-launched failure'));
-assert.ok(!get('runs').children[0].children.some(n=>n.textContent==='Verify existing completion'||n.textContent==='Inspect denied launch'));
-assert.ok(get('runs').children[0].children.some(n=>/process creation was never invoked/.test(n.textContent)));
-assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Original preparation error'));
+assert.ok(get('run-detail-content').children[0].children.some(n=>n.textContent==='Recover not-launched failure'));
+assert.ok(!get('run-detail-content').children[0].children.some(n=>n.textContent==='Verify existing completion'||n.textContent==='Inspect denied launch'));
+assert.ok(get('run-detail-content').children[0].children.some(n=>/process creation was never invoked/.test(n.textContent)));
+assert.ok(get('run-detail-content').children[0].children.some(n=>n.textContent==='Original preparation error'));
 run("renderJobs({busy:true,jobs:[{...launchFailure,can_recover_launch:false}]});");
-assert.ok(!get('runs').children[0].children.some(n=>n.textContent==='Recover not-launched failure'));
-assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Verify existing completion'));
+assert.ok(!get('run-detail-content').children[0].children.some(n=>n.textContent==='Recover not-launched failure'));
+assert.ok(get('run-detail-content').children[0].children.some(n=>n.textContent==='Verify existing completion'));
 run("renderJobs({busy:false,jobs:[{...launchFailure,status:'launch_failed',can_recover_launch:false}]});");
-assert.ok(get('runs').children[0].children.some(n=>/No calculation started.*new run name/.test(n.textContent)));
-assert.ok(!get('runs').children[0].children.some(n=>n.textContent==='Resume saved settings'||n.textContent==='Recover not-launched failure'));
+assert.ok(get('run-detail-content').children[0].children.some(n=>/No calculation started.*new run name/.test(n.textContent)));
+assert.ok(!get('run-detail-content').children[0].children.some(n=>n.textContent==='Resume saved settings'||n.textContent==='Recover not-launched failure'));
 assert.match(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),/api\('\/api\/workflow\/recover-launch',\{name:job.name\}\)/);
 run("renderJobs({busy:true,jobs:[{...launchFailure,status:'stopped',can_recover_launch:false,can_verify_saved_execution:true}]});");
-assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Verify saved execution'));
-assert.ok(get('runs').children[0].children.some(n=>/CLI Resume.*new sealed boundary/.test(n.textContent)));
-assert.ok(get('runs').children[0].children.some(n=>n.textContent==='Resume saved settings'));
+assert.ok(get('run-detail-content').children[0].children.some(n=>n.textContent==='Verify saved execution'));
+assert.ok(get('run-detail-content').children[0].children.some(n=>/CLI Resume.*new sealed boundary/.test(n.textContent)));
+assert.ok(get('run-detail-content').children[0].children.some(n=>n.textContent==='Resume saved settings'));
 run("renderJobs({busy:false,jobs:[{...launchFailure,status:'launch_failed',can_recover_launch:false,can_verify_saved_execution:false}]});");
-assert.ok(!get('runs').children[0].children.some(n=>n.textContent==='Verify saved execution'));
+assert.ok(!get('run-detail-content').children[0].children.some(n=>n.textContent==='Verify saved execution'));
 run('renderJobs({busy:false,jobs:[]});');
 run("renderJobs({busy:true,jobs:[]});renderLegacy({gamma:{busy:true,jobs:[{id:'old',label:'old-completion',status:'verification-required',blocks_new_work:true,can_verify:true}]}});");
 assert.ok(get('legacy-runs').children[0].children.some(n=>n.textContent==='Verify saved completion'));
@@ -285,11 +289,11 @@ run(`const focusJob={id:'focus-a',name:'focus-a',configuration_sha256:'9'.repeat
 const otherFocusJob={...focusJob,id:'focus-b',name:'focus-b',configuration_sha256:'8'.repeat(64),can_continue_prefix:false};
 const focusState={busy:false,jobs:[otherFocusJob,focusJob]};renderJobs(focusState);`);
 const findButton=(card,label)=>card.children.find(n=>n.tagName==='button'&&n.textContent===label);
-const focusedCard=get('runs').children[0],stagesButton=findButton(focusedCard,'Show stages');
+const focusedCard=get('run-detail-content').children[0],stagesButton=findButton(focusedCard,'View stages');
 stagesButton.focus();const unchangedMoves=stagesButton.moves;
 for(let i=0;i<2;i++){
   run('renderJobs(JSON.parse(JSON.stringify(focusState)));');
-  assert.equal(get('runs').children[0],focusedCard);assert.equal(findButton(focusedCard,'Show stages'),stagesButton);
+  assert.equal(get('run-detail-content').children[0],focusedCard);assert.equal(findButton(focusedCard,'View stages'),stagesButton);
   assert.equal(fixtureDocument.activeElement,stagesButton);assert.equal(stagesButton.moves,unchangedMoves);assert.equal(stagesButton.focusLosses,0);
 }
 const stageDetails=focusedCard.children.find(n=>n.tagName==='details'),stageSummary=stageDetails.children[0];
@@ -307,7 +311,7 @@ assert.ok(findButton(focusedCard,'Recover not-launched failure'));assert.equal(f
 // A list reorder must restore the same surviving input if moving its card
 // detaches focus. Removing an unavailable action must not focus another action.
 run('renderJobs({...focusState,jobs:[focusJob,otherFocusJob]});renderJobs(focusState);');
-assert.equal(get('runs').children[0],focusedCard);assert.equal(fixtureDocument.activeElement,continuationInput);
+assert.equal(get('run-detail-content').children[0],focusedCard);assert.equal(fixtureDocument.activeElement,continuationInput);
 assert.deepEqual([continuationInput.selectionStart,continuationInput.selectionEnd,continuationInput.selectionDirection],[2,8,'backward']);
 const removedResume=findButton(focusedCard,'Resume saved settings');removedResume.focus();
 run('renderJobs({...focusState,busy:true,jobs:[otherFocusJob,{...focusJob,status:"running"}]});');
@@ -395,7 +399,7 @@ get('count').value='500';get('source').value='mono_gamma_662_axis_v1';run('sourc
 // Gamma options are offered only when the backend advertises both existing
 // anchors. New typed selections bind energy; legacy inputs still resolve 662.
 assert.match(html,/<div id="gamma-controls" hidden>/);
-assert.match(html,/<label for="gamma-energy-keV">Gamma energy · keV<input id="gamma-energy-keV" type="number" min="0" step="any" value="662"/);
+assert.match(html,/<label for="gamma-energy-keV">\s*Gamma energy · keV\s*<input id="gamma-energy-keV" type="number" min="0" step="any" value="662"/);
 assert.equal(get('gamma-controls').hidden,true);assert.equal(get('gamma-energy-keV').disabled,true);
 assert.equal(run("Object.hasOwn(config(),'gamma_energy_keV')"),false);
 run(`const gammaControls={enabled:true,energy_keV:{default:662,minimum_exclusive:0},source_poses:['nominal','plus5mm'],fixed_primary_count:20,fixed_seed:26092631,direction_global:[0,-1,0],time_ns:0,units:{energy:'keV',length:'mm',time:'ns'},scope:'AK02 and SAP22; existing source anchors only'};
@@ -404,7 +408,7 @@ assert.equal(get('gamma-controls').hidden,false);assert.equal(get('gamma-energy-
 assert.deepEqual(get('pose').children.map(o=>o.value),['nominal','plus5mm']);assert.equal(get('pose').value,'plus5mm');
 assert.equal(get('gamma-energy-keV').value,'662');assert.equal(run('config().gamma_energy_keV'),662);
 get('gamma-energy-keV').value='1000';get('pose').value='nominal';run("checked={check_id:'earlier-gamma'};invalidate();");
-assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
+assert.equal(run('checked'),null);assert.equal(get('start').disabled,false);
 assert.equal(run('config().gamma_energy_keV'),1000);assert.equal(run('config().pose'),'nominal');
 assert.equal(run('config().primary_count'),20);assert.equal(run('config().seed'),26092631);
 assert.match(get('setup-preview').textContent,/Monoenergetic gamma beam · 1000 keV · nominal anchor/);
@@ -501,16 +505,16 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
 // A delayed old Check reply cannot enable Start for a changed current selection.
 (async()=>{
   // Two actual poll() calls, then native-like keyboard activation of the safe
-  // Show stages action. API replacements below are local in-memory fixtures.
+  // View stages action. API replacements below are local in-memory fixtures.
   run(`let strictState=JSON.parse(JSON.stringify(focusState)),strictLegacyState={gamma:{jobs:[]}},strictPollCalls=[];api=async(path,body)=>{strictPollCalls.push({path,body});if(path==='/api/workflow/state')return strictState;if(path==='/api/state')return strictLegacyState;throw Error('Unexpected fixture action');};renderJobs(strictState);`);
-  const pollCard=get('runs').children[0],keyboardStages=findButton(pollCard,'Show stages');keyboardStages.focus();
-  for(let i=0;i<2;i++){await run('poll()');assert.equal(get('runs').children[0],pollCard);assert.equal(findButton(pollCard,'Show stages'),keyboardStages);assert.equal(fixtureDocument.activeElement,keyboardStages);assert.equal(keyboardStages.moves,0);}
+  let pollCard=get('run-detail-content').children[0],keyboardStages=findButton(pollCard,'View stages');keyboardStages.focus();
+  for(let i=0;i<2;i++){await run('poll()');assert.equal(get('run-detail-content').children[0],pollCard);assert.equal(findButton(pollCard,'View stages'),keyboardStages);assert.equal(fixtureDocument.activeElement,keyboardStages);assert.equal(keyboardStages.moves,0);}
   assert.equal(run('strictPollCalls.length'),4);
   await keyboardStages.pressKey('Enter');assert.equal(run('selectedJob'),'focus-a');assert.equal(fixtureDocument.activeElement,keyboardStages);assert.equal(keyboardStages.disabled,false);
   assert.ok(JSON.parse(run('JSON.stringify(strictPollCalls)')).every(c=>['/api/workflow/state','/api/state'].includes(c.path)));
   run('strictState={...strictState,jobs:[otherFocusJob,{...focusJob,stages:{geometry:{status:"completed",elapsed_seconds:22}},error:"updated receipt"}]};');
   await run('poll()');await keyboardStages.pressKey(' ');
-  assert.equal(run('selectedRun.stages.geometry.elapsed_seconds'),22);assert.equal(findButton(pollCard,'Show stages'),keyboardStages);
+  assert.equal(run('selectedRun.stages.geometry.elapsed_seconds'),22);assert.equal(findButton(pollCard,'View stages'),keyboardStages);
   // Pending operations cannot be repeated or revived by unrelated polls.
   // Even disappearance/reappearance of the same logical action stays pending;
   // the original removed button never transfers focus to the new action node.
@@ -576,13 +580,13 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.equal(pollCard.children.filter(n=>verifyLabels.includes(n.textContent)).length,0);assert.equal(run('pendingActions.size'),0);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);assert.equal(reappearedVerify.disabled,true);assert.ok(findButton(pollCard,'Recover not-launched failure'));
   console.log('STRICT-03 shared Verify identity: exclusive presentation, both held label directions, single POST, success/rejection, revocation/reappearance and original Recover/Inspect permissions passed.');
   run('strictState={busy:false,jobs:[otherFocusJob,focusJob]};');await run('poll()');
-  const disappearingCard=get('runs').children[1],disappearingResume=findButton(disappearingCard,'Resume saved settings');disappearingResume.focus();const disappearingOperation=disappearingResume.pressKey('Enter'),disappearingCount=run('strictActionCalls.length');
+  run('showRun(otherFocusJob);renderJobs(strictState);');const disappearingCard=get('run-detail-content').children[0],disappearingResume=findButton(disappearingCard,'Resume saved settings');disappearingResume.focus();const disappearingOperation=disappearingResume.pressKey('Enter'),disappearingCount=run('strictActionCalls.length');
   run('strictState={busy:false,jobs:[focusJob]};');await run('poll()');assert.equal(disappearingCard.isConnected,false);
   run('strictState={busy:false,jobs:[otherFocusJob,focusJob]};');await run('poll()');
-  const reappearingResume=findButton(get('runs').children[1],'Resume saved settings');assert.notEqual(reappearingResume,disappearingResume);assert.equal(reappearingResume.disabled,true);await reappearingResume.click();assert.equal(run('strictActionCalls.length'),disappearingCount);
+  run('showRun(otherFocusJob);renderJobs(strictState);');const reappearingResume=findButton(get('run-detail-content').children[0],'Resume saved settings');assert.notEqual(reappearingResume,disappearingResume);assert.equal(reappearingResume.disabled,true);await reappearingResume.click();assert.equal(run('strictActionCalls.length'),disappearingCount);
   run('strictResolveAction({});');await disappearingOperation;assert.equal(reappearingResume.disabled,false);assert.equal(fixtureDocument.activeElement,fixtureDocument.body);
   run('strictState={busy:false,jobs:[otherFocusJob,focusJob]};');await run('poll()');
-  const currentContinuation=pollCard.children.find(n=>n.tagName==='label').children[0];currentContinuation.focus();await run('poll()');
+  run('showRun(focusJob);renderJobs(strictState);');pollCard=get('run-detail-content').children[0];const currentContinuation=pollCard.children.find(n=>n.tagName==='label').children[0];currentContinuation.focus();await run('poll()');
   currentContinuation.value='after-poll-input';currentContinuation.oninput();currentContinuation.setSelectionRange(4,9);
   const continueButton=findButton(pollCard,'Continue from verified transport');const continuationOperation=continueButton.click();
   assert.deepEqual(JSON.parse(run('JSON.stringify(strictActionCalls.at(-1))')),{path:'/api/workflow/continue-prefix',body:{name:'focus-a',new_name:'after-poll-input'}});
@@ -596,7 +600,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.deepEqual(JSON.parse(run('JSON.stringify(strictActionCalls.at(-1))')),{path:'/api/gamma-verify',body:{job_id:'legacy-focus'}});
   assert.equal(run('pendingActions.size'),0);
   run('renderJobs({busy:false,jobs:[]});renderLegacy({gamma:{jobs:[]}});showRun(savedJob);');
-  console.log('STRICT-03 two polls, Enter/Space Show stages, pending Resume/Recover/Verify/legacy Verify, removal/reappearance, current continuation input and denied action contracts passed.');
+  console.log('STRICT-03 two polls, Enter/Space View stages, pending Resume/Recover/Verify/legacy Verify, removal/reappearance, current continuation input and denied action contracts passed.');
   // Desktop feedback follows the normal Check -> edit -> recheck path. Status
   // polls preserve the latest real action error and the selected saved record.
   get('detector').value='SAP22';get('source').value='cs137_point_decay_v1';run('sourceChanged();');get('angle-deg').value='0';run('invalidate();');
@@ -607,34 +611,34 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   result={job:feedbackJob,records:[{record_kind:'decay',event_id:7,deposited_energy_keV:4,pulse_count:1},{record_kind:'pulse',event_id:7,group_id:3,origin_time_ns:5000,deposited_energy_keV:4,final_induced_keV:-4,readout:null},{record_kind:'decay',event_id:8,deposited_energy_keV:0,pulse_count:0,zero_deposit:true}],traces:[]};$('event').value='7';showEvent(1);`);
   const feedbackResult=run('result'),feedbackSaved=run('JSON.stringify(selectedRun)'),feedbackPlan=get('run-plan').textContent,feedbackRecord=get('event-record').textContent;
   const feedbackButton=get('check');feedbackButton.tagName='button';feedbackButton.focus();
-  assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/Run unavailable.*Check plan for the current setup/);
+  assert.equal(get('start').disabled,false);assert.match(get('run-readiness').textContent,/Start simulation checks/);
   const feedbackCheck=feedbackButton.pressKey('Enter');
-  assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/current action is pending.*Wait/);
+  assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/Checking or starting/);
   assert.equal(run('feedbackCalls.at(-1).path'),'/api/workflow/check-batches');assert.equal(run('feedbackCalls.at(-1).body.request.selection.detector'),'SAP22');
   const pendingFeedbackCalls=run('feedbackCalls.length');await feedbackButton.click();await run("$('start').onclick()");assert.equal(run('feedbackCalls.length'),pendingFeedbackCalls);
   // Model the browser moving focus to body when a focused button disables.
   fixtureDocument.activeElement=fixtureDocument.body;
   run("const feedbackReply=()=>({kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:true,check_id:'feedback-checked',resolved:{selection:config(),batching:{batch_count:1}}});feedbackResolve(feedbackReply());");await feedbackCheck;
-  assert.equal(fixtureDocument.activeElement,feedbackButton);assert.equal(get('start').disabled,false);assert.match(get('run-readiness').textContent,/Ready to Run with the checked next-run configuration/);
+  assert.equal(fixtureDocument.activeElement,feedbackButton);assert.equal(get('start').disabled,false);assert.match(get('run-readiness').textContent,/Start simulation checks/);
   assert.match(get('notice').textContent,/Exact count checked.*Run uses this checked plan/);
   const readyWrites=get('run-readiness').textWrites;await run('poll()');await run('poll()');assert.equal(get('run-readiness').textWrites,readyWrites);
   get('name').value='feedback-next-edited';run('invalidate();');
-  assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);assert.match(get('notice').textContent,/earlier checked plan is cleared.*Check plan again/);assert.doesNotMatch(get('notice').textContent,/Run uses this checked plan/);
-  assert.match(get('run-readiness').textContent,/editing settings clears any earlier check/);
+  assert.equal(run('checked'),null);assert.equal(get('start').disabled,false);assert.match(get('notice').textContent,/Settings changed.*Start simulation will check/);assert.doesNotMatch(get('notice').textContent,/Run uses this checked plan/);
+  assert.match(get('run-readiness').textContent,/checks the environment and settings/);
   assert.equal(run('result'),feedbackResult);assert.equal(run('JSON.stringify(selectedRun)'),feedbackSaved);assert.equal(get('run-plan').textContent,feedbackPlan);assert.equal(get('event-record').textContent,feedbackRecord);assert.equal(get('event').value,'7');assert.equal(get('group').value,'1');
   assert.equal(get('result-data').children[0].children[1].children[0].textContent,'-4');assert.equal(get('result-data').children[0].children[2].children[0].textContent,'Unavailable');assert.equal(run('result.records.length'),3);assert.equal(run('result.records[2].zero_deposit'),true);
   feedbackButton.focus();const movedFocusCheck=feedbackButton.pressKey('Enter');get('event').focus();run('feedbackResolve(feedbackReply());');await movedFocusCheck;
   assert.equal(fixtureDocument.activeElement,get('event'));assert.equal(get('start').disabled,false);
-  const feedbackVerify=findButton(get('runs').children[0],'Verify saved execution');await feedbackVerify.click();
+  const feedbackVerify=findButton(get('run-detail-content').children[0],'Verify saved execution');await feedbackVerify.click();
   assert.match(get('notice').textContent,/Saved verification fixture error/);assert.equal(get('notice').className,'notice error');assert.ok(run('checked'));
   await run('poll()');await run('poll()');get('setting-gain').value='4';run('invalidate();');
-  assert.equal(get('notice').textContent,'Saved verification fixture error');assert.equal(get('notice').className,'notice error');assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
+  assert.equal(get('notice').textContent,'Saved verification fixture error');assert.equal(get('notice').className,'notice error');assert.equal(run('checked'),null);assert.equal(get('start').disabled,false);
   const failedFeedbackCheck=run("$('check').onclick()");run("feedbackReject(Error('Current Check fixture error'));");await failedFeedbackCheck;
   await run('poll()');await run('poll()');assert.equal(get('notice').textContent,'Current Check fixture error');assert.equal(get('notice').className,'notice error');assert.equal(run('checked'),null);
   const importFeedbackCheck=run("$('check').onclick()");run('feedbackResolve(feedbackReply());');await importFeedbackCheck;
   run("$('import').files=[{size:100,text:async()=>JSON.stringify({...config(),extra:true})}];");await run("$('import').onchange()");
   assert.match(get('notice').textContent,/Configuration fields do not match/);const importFailure=get('notice').textContent;assert.ok(run('checked'));
-  await run('poll()');await run('poll()');get('name').value='feedback-after-import';run('invalidate();');assert.equal(get('notice').textContent,importFailure);assert.equal(get('notice').className,'notice error');assert.equal(get('start').disabled,true);
+  await run('poll()');await run('poll()');get('name').value='feedback-after-import';run('invalidate();');assert.equal(get('notice').textContent,importFailure);assert.equal(get('notice').className,'notice error');assert.equal(get('start').disabled,false);
   const informationFeedbackCheck=run("$('check').onclick()");run('feedbackResolve(feedbackReply());');await informationFeedbackCheck;
   run("notice('Saved operation information retained.');");get('name').value='feedback-after-info';run('invalidate();');assert.equal(get('notice').textContent,'Saved operation information retained.');
   // W1: a recheck clears authorization before an edit. Its old owned success
@@ -644,22 +648,22 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   feedbackButton.focus();const rejectedRetryCheck=feedbackButton.pressKey('Enter');
   assert.equal(run('checked'),null);assert.equal(run('busy'),true);assert.equal(get('start').disabled,true);assert.equal(run('noticeIsCheckedPlan'),true);
   get('name').value='feedback-held-retry-reject';get('name').focus();run('invalidate();');
-  assert.equal(run('noticeIsCheckedPlan'),false);assert.match(get('notice').textContent,/earlier checked plan is cleared.*Check plan again/);assert.doesNotMatch(get('notice').textContent,/Run uses this checked plan/);assert.equal(get('start').disabled,true);
+  assert.equal(run('noticeIsCheckedPlan'),false);assert.match(get('notice').textContent,/Settings changed.*Start simulation will check/);assert.doesNotMatch(get('notice').textContent,/Run uses this checked plan/);assert.equal(get('start').disabled,true);
   const clearedRetryNotice=get('notice').textContent;run("feedbackReject(Error('Obsolete held Check rejection'));");await rejectedRetryCheck;await run('poll()');
-  assert.equal(run('checked'),null);assert.equal(run('busy'),false);assert.equal(get('start').disabled,true);assert.equal(get('notice').textContent,clearedRetryNotice);assert.equal(fixtureDocument.activeElement,get('name'));
-  assert.match(get('run-readiness').textContent,/Run unavailable.*Check plan for the current setup/);
+  assert.equal(run('checked'),null);assert.equal(run('busy'),false);assert.equal(get('start').disabled,false);assert.equal(get('notice').textContent,clearedRetryNotice);assert.equal(fixtureDocument.activeElement,get('name'));
+  assert.match(get('run-readiness').textContent,/Start simulation checks/);
   const successRetryBaseCheck=run("$('check').onclick()");run('feedbackResolve(feedbackReply());');await successRetryBaseCheck;
   assert.equal(get('start').disabled,false);feedbackButton.focus();const successfulRetryCheck=feedbackButton.pressKey('Enter');run('const staleFeedbackReply=feedbackReply();');
   get('name').value='feedback-held-retry-success';get('name').focus();run('invalidate();');assert.doesNotMatch(get('notice').textContent,/Run uses this checked plan/);assert.equal(run('noticeIsCheckedPlan'),false);
   run('feedbackResolve(staleFeedbackReply);');await successfulRetryCheck;await run('poll()');
-  assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);assert.match(get('notice').textContent,/Selection changed while Check was pending/);assert.doesNotMatch(get('notice').textContent,/Run uses this checked plan/);assert.equal(fixtureDocument.activeElement,get('name'));
+  assert.equal(run('checked'),null);assert.equal(get('start').disabled,false);assert.match(get('notice').textContent,/Selection changed while Check was pending/);assert.doesNotMatch(get('notice').textContent,/Run uses this checked plan/);assert.equal(fixtureDocument.activeElement,get('name'));
   console.log('W1 repeated Check: held edit immediately clears old owned success; obsolete rejection and successful reply retain disabled Run, generation fences and current name focus; poll never revives the old notice.');
   const activeFeedbackCheck=run("$('check').onclick()");run('feedbackResolve(feedbackReply());');await activeFeedbackCheck;
-  run('feedbackState={...feedbackState,busy:true};');await run('poll()');assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/existing work is active or needs inspection.*Review Runs/);
+  run('feedbackState={...feedbackState,busy:true};');await run('poll()');assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/Existing work is active or needs inspection.*My runs/);
   const activeFeedbackCalls=run('feedbackCalls.length');await run("$('start').onclick()");await run("$('check').onclick()");assert.equal(run('feedbackCalls.length'),activeFeedbackCalls);
-  run('feedbackState={...feedbackState,busy:false};');await run('poll()');assert.equal(get('start').disabled,false);assert.match(get('run-readiness').textContent,/Ready to Run/);
-  get('detector').value='large-model';run('detectorChanged();');assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/View only.*Radius 40 mm.*larger cryostat.*compute-supported/);
-  get('detector').value='SAP22';run('detectorChanged();');run('currentSource().available=false;controls();');assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/combination is unavailable.*compute-supported/);
+  run('feedbackState={...feedbackState,busy:false};');await run('poll()');assert.equal(get('start').disabled,false);assert.match(get('run-readiness').textContent,/Start simulation checks/);
+  get('detector').value='large-model';run('detectorChanged();');assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/View only.*Radius 40 mm.*larger cryostat.*supported setup/);
+  get('detector').value='SAP22';run('detectorChanged();');run('currentSource().available=false;controls();');assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/combination is unavailable.*supported setup/);
   run('delete currentSource().available;catalog.cryostats[0].available=false;controls();');assert.equal(get('start').disabled,true);assert.match(get('run-readiness').textContent,/combination is unavailable/);run('catalog.cryostats[0].available=true;controls();');
   // An edited view-only choice cannot receive focus when a stale Check ends.
   feedbackButton.focus();const revokedFeedbackCheck=feedbackButton.pressKey('Enter');get('detector').value='large-model';run('detectorChanged();');fixtureDocument.activeElement=fixtureDocument.body;
@@ -679,11 +683,11 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run("let resolveAngleCheck,angleCheckRequests=[];api=(path,body)=>{angleCheckRequests.push({path,body});return new Promise(resolve=>resolveAngleCheck=resolve);};");
   const staleAngleCheck=run("$('check').onclick()");assert.equal(run('angleCheckRequests[0].body.request.selection.angle_deg'),30);
   get('angle-deg').value='-30';run("invalidate();resolveAngleCheck({kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:true,check_id:'stale-angle',resolved:{selection:{angle_deg:30},source_pose:sourcePose30,batching:{batch_count:1}}});");await staleAngleCheck;
-  assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);assert.match(get('source-pose-preview').textContent,/Check plan to resolve/);
+  assert.equal(run('checked'),null);assert.equal(get('start').disabled,false);assert.match(get('source-pose-preview').textContent,/Start simulation checks/);
   get('angle-deg').value='30';run('invalidate();');
   const pendingAngle=run("$('check').onclick()");run("resolveAngleCheck({kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:false,resolved:{selection:config(),source_pose:sourcePose30,source_position_global_mm:sourcePose30.position_global_mm,batching:{batch_count:1}}});");await pendingAngle;
   assert.equal(get('start').disabled,true);assert.equal(run('checked.execution_enabled'),false);
-  assert.match(get('run-readiness').textContent,/checked plan does not authorize execution.*nonzero-angle acceptance is pending.*Check plan again/);
+  assert.match(get('run-readiness').textContent,/cannot run yet.*nonzero-angle acceptance is pending.*zero-angle/);
   assert.match(get('notice').textContent,/Nonzero-angle execution is unavailable/);
   assert.match(get('source-pose-preview').textContent,/angle 30°/);
   const callsBeforePendingStart=run('angleCheckRequests.length');await run("$('start').onclick()");assert.equal(run('angleCheckRequests.length'),callsBeforePendingStart);
@@ -693,7 +697,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   await run("$('start').onclick()");
   assert.equal(run('angleActionCalls[0].path'),'/api/workflow/start');assert.deepEqual(JSON.parse(run('JSON.stringify(angleActionCalls[0].body)')),{check_id:'checked-angle'});
   assert.match(get('saved-source-pose').textContent,/angle 30°/);get('angle-deg').value='-30';run('invalidate();');assert.match(get('saved-source-pose').textContent,/angle 30°/);
-  const resumeAngle=get('runs').children[0].children.find(n=>n.textContent==='Resume saved settings');assert.ok(resumeAngle);await resumeAngle.onclick();
+  const resumeAngle=get('run-detail-content').children[0].children.find(n=>n.textContent==='Resume saved settings');assert.ok(resumeAngle);await resumeAngle.onclick();
   assert.deepEqual(JSON.parse(run("JSON.stringify(angleActionCalls.find(c=>c.path==='/api/workflow/resume').body)")),{name:'saved-sap-angle'});assert.equal(get('angle-deg').value,'-30');assert.match(get('saved-source-pose').textContent,/angle 30°/);
   // Loading/exporting retains the optional angle; legacy explicit zero is
   // normalized without mutating the imported object or replacing a bad setup.
@@ -705,12 +709,12 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run("let resolveCheck;api=()=>new Promise(resolve=>resolveCheck=resolve);");
   const pending=run("$('check').onclick()");
   get('detector').value='SAP22';run("invalidate();resolveCheck({check_id:'old',resolved:{selection:{detector:'AK02'}}});");
-  await pending;assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
+  await pending;assert.equal(run('checked'),null);assert.equal(get('start').disabled,false);
   for(const [id,value]of [['name','changed-name'],['setting-gain','4'],['source','am241_point_decay_v1']]){
     const old=run("$('check').onclick()");get(id).value=value;
     run(id==='source'?"sourceChanged();":"invalidate();");
     run("resolveCheck({check_id:'stale',resolved:{selection:{detector:'AK02'}}});");await old;
-    assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
+    assert.equal(run('checked'),null);assert.equal(get('start').disabled,false);
   }
   const current=run("$('check').onclick()");run("resolveCheck({kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:true,check_id:'new',resolved:{selection:{detector:'SAP22'},batching:{batch_count:1}}});");await current;
   assert.equal(run('checked.check_id'),'new');assert.equal(get('start').disabled,false);
@@ -749,7 +753,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run("previewReplies[0]({ok:true,blob:async()=>({})});");await oldPreview;
   assert.equal(get('model-preview').alt,'GeRC02 saved catalog geometry');
   const failedPreview=run("loadModelPreview(currentDetector())");run("previewReplies[2]({ok:false});");await failedPreview;
-  assert.equal(get('model-preview-box').hidden,true);assert.match(get('model-preview-status').textContent,/public website/);
+  assert.equal(get('model-preview-box').hidden,true);assert.match(get('model-preview-status').textContent,/parameters remain available/);assert.equal(get('model-preview-fallback').hidden,false);
   // A slow old report cannot replace a newer run; native failure stays null.
   run("let reports=[];artifact=(name,file)=>new Promise((resolve,reject)=>reports.push({name,file,resolve,reject}));const newerJob={...savedJob,name:'newer-run',configuration_sha256:'b'.repeat(64)};");
   const oldReport=run('openResult(savedJob)'),newReport=run('openResult(newerJob)');
@@ -842,7 +846,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   // Saved PSD1 features remain lazy, tied to exact global/group identities and
   // source/profile/bundle hashes. Invalid/capped candidates are separate from
   // canonical null features; signed values, zeros and the census stay intact.
-  assert.match(html,/<details id="feature-panel" hidden><summary>Saved waveform features and deposition topology<\/summary>/);
+  assert.match(html,/<details id="feature-panel" hidden>\s*<summary>Saved waveform features and deposition topology<\/summary>/);
   assert.match(html,/existing verified export; opening it verifies saved data without starting a simulation or export/);
   run(`const featureJob={...batchJob,name:'feature-saved',configuration_sha256:'a'.repeat(64)};
     const featureRows=[{record_kind:'decay',global_initial_id:371,event_id:121,batch_index:1,local_initial_id:121,pulse_count:1,deposited_energy_keV:4},
@@ -917,7 +921,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   get('feature-panel').open=false;get('feature-panel').ontoggle();
   // PSD2 is an additive saved-only lane: no export action, original signed
   // voltages and source-invalid energies stay distinct from observations.
-  assert.match(html,/<details id="acquisition-panel" hidden><summary>Saved synthetic waveform acquisition<\/summary>/);
+  assert.match(html,/<details id="acquisition-panel" hidden>\s*<summary>Saved synthetic waveform acquisition<\/summary>/);
   assert.doesNotMatch(html,/id="(?:export|run|download)-acquisition"/);
   run(`const acquisitionProfile={kind:'synthetic_waveform_acquisition_profile_v1',schema_version:1,name:'synthetic-preamp-fixture',sampling_rate_Hz:1e8,adc:{bits:14,minimum_V:-.1,maximum_V:.1},record_window_ns:[-10,10],trigger:{kind:'external_group_origin',offset_ns:0,prehistory:'isolated_reset_zero_before_group_origin'},bandwidth:{kind:'causal_single_pole_lowpass',cutoff_Hz:1e7},noise:{kind:'postfilter_sampled_iid_gaussian_voltage',rms_V:0,root_seed_uint64:'20261014'},measurement_polarity:-1,calibration:{kind:'independent_delta_charge_injection',energy_keV:500}};
     const acquisitionTrace={time_since_origin_ns:[-10,0,10],signed_preamp_V:[0,-.003,-.001],bandwidth_limited_preamp_V:[0,-.002,-.001],noise_V:[0,0,0],noisy_voltage_V:[0,-.002,-.001],adc_code:[8192,8028,8110],adc_center_V:[0,-.002,-.001]};
@@ -1018,7 +1022,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.deepEqual(JSON.parse(run('JSON.stringify(spectrumFiles)')),[{name:'result-options-saved',file:'results/histograms.json'}]);
   assert.match(get('spectrum-status').textContent,/Full saved run.*100 initial primaries \(efficiency denominator\).*97 zero-deposit.*3 nonzero-deposit.*3 pulse groups.*2 accepted/);
   const spectrumText=featureText(get('spectrum-content'));
-  assert.match(spectrumText,/Truth deposited energy Edep.*Peak-ADC reconstructed energy Erec/s);
+  assert.match(spectrumText,/Truth deposited energy Edep.*Readout equivalent energy/s);
   assert.match(spectrumText,/underflow.*1.*overflow.*2.*not selected: 0 of 100 initial primaries/s);
   assert.match(spectrumText,/not selected: 1 of 3 pulse groups/);
   assert.match(spectrumText,/Native failed groups: 0.*readout rejected: 1.*saturated: 0/);
@@ -1077,7 +1081,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run('gammaCheckResolve(checkedGammaReply());');await gammaCheck;
   assert.equal(get('start').disabled,false);assert.match(get('source-pose-preview').textContent,/1000 keV · nominal anchor/);
   const frozenCheckedGamma=run('JSON.stringify(checked.resolved.selection)');
-  get('gamma-energy-keV').value='1200';run('invalidate();');assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);
+  get('gamma-energy-keV').value='1200';run('invalidate();');assert.equal(run('checked'),null);assert.equal(get('start').disabled,false);
   run(`const gammaImport=JSON.parse(${JSON.stringify(frozenCheckedGamma)});$('import').files=[{size:100,text:async()=>JSON.stringify(gammaImport)}];`);
   await run("$('import').onchange()");
   assert.equal(get('gamma-energy-keV').value,'1000');assert.equal(get('pose').value,'nominal');assert.equal(run('config().gamma_energy_keV'),1000);assert.equal(run('checked'),null);
@@ -1085,7 +1089,7 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   await run("$('import').onchange()");assert.equal(get('gamma-energy-keV').value,'662');assert.equal(run('config().gamma_energy_keV'),662);assert.equal(get('pose').value,'nominal');
   const staleGammaCheck=run("$('check').onclick()");run('const obsoleteGammaReply=checkedGammaReply();');
   get('gamma-energy-keV').value='1000';run('invalidate();gammaCheckResolve(obsoleteGammaReply);');await staleGammaCheck;
-  assert.equal(run('checked'),null);assert.equal(get('start').disabled,true);assert.match(get('notice').textContent,/Selection changed while Check was pending/);
+  assert.equal(run('checked'),null);assert.equal(get('start').disabled,false);assert.match(get('notice').textContent,/Selection changed while Check was pending/);
   // Sparse gamma native cases preserve original IDs, full count context, and
   // failed/null signals. Historical zero cases are excluded only from browsing.
   run(`const sparseGammaReport={cases:[{initial_primary_id:3,event_id:31,zero_ge:false,status:'native_failed',truth_ge_edep_keV:4,final_induced_keV:null,readout:null},{initial_primary_id:17,event_id:170,zero_ge:false,status:'native_completed',truth_ge_edep_keV:15,final_induced_keV:-14,readout:{accepted:false,reconstructed_energy_keV:null}}],counts:{initial_primaries:20,zero_deposit_primaries:18,nonzero_primaries:2},artifacts:{'summary.html':'c'.repeat(64)}};
@@ -1600,9 +1604,9 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.ok(descendants(get('gegi-dual-results')).some(node=>node.textContent.includes('The saved report differs from its completion receipt.')));
   assert.ok(descendants(get('gegi-dual-results')).some(node=>node.tagName==='svg'));
   assert.ok(descendants(get('gegi-dual-results')).every(node=>node.tagName!=='table'));
-  const workflowMarkup=fs.readFileSync(__dirname+'/local_workflow.html','utf8');
+  const workflowMarkup=fs.readFileSync(__dirname+'/local_workflow.html','utf8').replace(/\s+/g,' ');
   assert.match(workflowMarkup,/place <code>report\.json<\/code> in <code>\.local\/gegi-dual-source\/NAME\//);
-  assert.match(workflowMarkup,/<select id="gegi-dual-trigger-profile"><option value="standard">Standard.*<option value="low-energy">Low energy/s);
+  assert.match(workflowMarkup,/<select id="gegi-dual-trigger-profile">\s*<option value="standard">Standard.*<option value="low-energy">Low energy/s);
   run(`const xFirst={contact_id:2,slow_energy_keV:14.9,low:{contact_id:1,fast_keV_equiv:-1.5,flags:[]},
       high:{contact_id:3,fast_keV_equiv:0,flags:[]},fast_ratio:-.1};
     const yFirst={contact_id:33,slow_energy_keV:15.1,low:{contact_id:32,fast_keV_equiv:null,flags:['fast_pileup']},
@@ -1869,8 +1873,8 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   console.log('Dual-source Control covers energy intervals, bounded trigger browsing, position calibration transfer, conditional two-strip pairings and saved plane maps.');
   // Fresh mixed-source controls submit both sources together and keep stale
   // selected-electrode replies away from the current candidate's signals.
-  assert.match(html,/Run GeGI with two fresh sources/);
-  assert.match(html,/all 34 detector channels/);
+  assert.match(html,/GeGI two-source acquisition/);
+  assert.match(html,/all 34 detector channels/i);
   assert.match(html,/Stop saves the current progress\. Resume continues the same acquisition clock/);
   assert.match(html,/<option value="duration" selected>Steady source · physical duration/);
   assert.match(html,/#gegi-candidate-duration-field\[hidden\]\s*,\s*#gegi-candidate-count-field\[hidden\]\s*\{\s*display\s*:\s*none\s*\}/);
@@ -2187,4 +2191,288 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.equal(get('gegi-candidate-map-view').children.length,0);
   console.log('Candidate imaging: imported calibration, full default recipe, matching saved-map reuse, source/unknown census, original IDs, partial labels, existing map renderer and stale identity guards passed; mocked saved-data analysis only.');
   console.log('Pre-run storage planning uses current source settings, clears stale estimates, separates one shared cache and unmeasured scratch, and explains startup daughters and delayed groups.');
+  // Student navigation and copies operate on the exact saved selection. Polls
+  // may refresh the selected receipt without changing the page or next setup.
+  run(`busy=false;active=false;savedGeGIJob=null;candidateJob=null;dualJob=null;
+    const uiSelection={...angleImport,name:'student-original',angle_deg:30,electronics:{...angleImport.electronics,peak_gate_start_ns:100,peak_gate_end_ns:2000}};
+    const uiJob={name:uiSelection.name,status:'completed',configuration_sha256:'2'.repeat(64),execution_contract:'serial_batches_v3',selection:uiSelection,stages:{},batching:{batch_cap:10000,batch_count:1},created_utc:'2026-11-24T12:00:00Z'};
+    const uiState={busy:false,jobs:[uiJob,{...uiJob,name:'student-original-copy-01',configuration_sha256:'3'.repeat(64)}]};
+    renderJobs(uiState);selectRun(uiJob);copyAsNewRun(uiJob);const copiedUI=config();
+    api=async path=>path==='/api/workflow/state'?uiState:{gamma:{jobs:[]}};`);
+  assert.equal(run('currentPage'),'new');assert.equal(get('page-new').hidden,false);assert.equal(get('run-detail').hidden,false);
+  assert.equal(run('copiedUI.name'),'student-original-copy-02');
+  assert.deepEqual(JSON.parse(run('JSON.stringify({...copiedUI,name:uiSelection.name})')),JSON.parse(run('JSON.stringify(uiSelection)')));
+  const copiedBeforePoll=run('JSON.stringify(config())');await run('poll()');
+  assert.equal(run('currentPage'),'new');assert.equal(run('JSON.stringify(config())'),copiedBeforePoll);
+  assert.equal(get('runs').children.length,2);assert.ok(get('runs').children.every(row=>row.children.filter(child=>child.tagName==='button').length===2));
+  assert.ok(get('runs').children.every(row=>row.children.find(child=>child.textContent==='Delete run').disabled));
+  assert.ok(get('runs').children.every(row=>row.children.some(child=>child.textContent==='2026-11-24T12:00:00Z')));
+  run(`copyAsNewRun({...gegiJob,selection:{...gegiSubmitted,source_position_mm:[1.25,-2.5,87.5],electronics:{...gegiSubmitted.electronics,peak_gate_start_ns:15,peak_gate_end_ns:350}}});`);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(config().source_position_mm)')),[1.25,-2.5,87.5]);
+  assert.equal(run('config().electronics.peak_gate_start_ns'),15);assert.equal(run('config().electronics.peak_gate_end_ns'),350);
+  assert.equal(run('config().seed'),run('gegiSubmitted.seed'));assert.equal(run('config().gamma_energy_keV'),run('gegiSubmitted.gamma_energy_keV'));
+  run(`$('browse-catalog').checked=false;$('cryostat').value='lbnl_modular_nominal_v1';cryostatChanged();`);
+  assert.ok(JSON.parse(run('JSON.stringify(detectorItems())')).every(item=>item.available===true&&(!item.assemblies||item.assemblies.includes('lbnl_modular_nominal_v1'))));
+  get('browse-catalog').checked=true;get('browse-catalog').onchange();assert.equal(run('detectorItems().length'),run('catalog.detectors.length'));
+  // A fresh student package has the canonical models but no machine-local
+  // LBNL setup. Keep those models visible with an actionable setup route;
+  // never replace the selected cryostat with the bundled GeGI connector.
+  run(`const configuredStudentCatalog=catalog;
+    const freshPendingModels=Array.from({length:16},(_,index)=>({id:index===0?'AK02':'pending-'+index,label:index===0?'AK02':'Pending '+index,
+      available:false,block_code:'setup_required',setup_required:true,reason:'Download the pinned LBNL cryostat inputs using the setup guide.',
+      assemblies:['lbnl_modular_nominal_v1'],sources:[],model:{contacts:[]}}));
+    catalog={...catalog,setup_guide:'https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup-macos',
+      detectors:[...freshPendingModels,configuredStudentCatalog.detectors.find(detector=>detector.id==='GeGI_3D')]};
+    $('browse-catalog').checked=false;$('cryostat').value='lbnl_modular_nominal_v1';active=false;selectDetector('AK02');`);
+  assert.equal(get('cryostat').value,'lbnl_modular_nominal_v1');assert.equal(get('detector').value,'AK02');
+  assert.equal(get('detector').children.length,16);assert.ok(get('detector').children.every(option=>option.textContent.endsWith('Setup required')));
+  assert.equal(get('source').children[0].textContent,'Available after setup');assert.equal(get('pose').children[0].textContent,'Available after setup');
+  assert.equal(get('setup-required').hidden,false);assert.equal(get('model-panel').hidden,false);
+  assert.match(get('model-capability').textContent,/Setup required on this computer/);assert.match(get('run-readiness').textContent,/Complete setup/);
+  assert.equal(get('setup-required-guide').href,run('catalog.setup_guide'));assert.equal(get('guide').href,run('catalog.setup_guide'));
+  assert.match(get('model-capability-details').textContent,/pinned LBNL cryostat inputs/);
+  for(const id of ['start','check','save','source','pose'])assert.equal(get(id).disabled,true,id);
+  run(`const freshSetupCalls=[];api=async path=>{freshSetupCalls.push(path);if(path==='/api/workflow/setup')return{checks:[{available:false,label:'LBNL cryostat setup'}],note:'Follow the setup guide.'};throw Error('Unexpected fresh-package action '+path);};`);
+  await get('setup-required-help').onclick();assert.equal(run('currentPage'),'new');assert.match(get('setup-notice').textContent,/Missing: LBNL cryostat setup/);
+  await get('start').onclick();assert.deepEqual(JSON.parse(run('JSON.stringify(freshSetupCalls)')),['/api/workflow/setup']);
+  get('cryostat').value='gegi_cryostat_v1';run('cryostatChanged();');
+  assert.equal(get('detector').value,'GeGI_3D');assert.equal(get('setup-required').hidden,true);
+  run(`catalog={...catalog,detectors:[{...freshPendingModels[0],available:true,block_code:null,setup_required:false,sources:['cs137_point_decay_v1']},...freshPendingModels.slice(1)]};
+    $('cryostat').value='lbnl_modular_nominal_v1';selectDetector('not-in-catalog');`);
+  assert.equal(get('detector').value,'AK02');assert.equal(get('detector').children.length,1);assert.equal(get('setup-required').hidden,true);assert.equal(get('start').disabled,false);
+  run('catalog=configuredStudentCatalog;selectDetector("AK02");');
+  console.log('Fresh student setup-required models remain visible; setup help and platform guide are reachable; missing setup cannot launch; installed cryostat filtering is unchanged.');
+  run(`copyAsNewRun(uiJob);checked=null;const oneClickCalls=[];let oneClickJob;
+    api=async(path,body)=>{oneClickCalls.push({path,body});if(path==='/api/workflow/check-batches')return{kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:true,check_id:'one-click',resolved:{selection:body.request.selection,batching:{batch_count:1}}};if(path==='/api/workflow/start'){oneClickJob={...uiJob,name:config().name,selection:config(),status:'dispatch_uncertain'};return oneClickJob;}if(path==='/api/workflow/state')return{busy:['dispatch_uncertain','running'].includes(oneClickJob.status),jobs:[...uiState.jobs,oneClickJob]};if(path==='/api/state')return{gamma:{jobs:[]}};throw Error('Unexpected student UI route '+path);};`);
+  assert.equal(get('start').disabled,false);await get('start').onclick();
+  assert.deepEqual(JSON.parse(run('JSON.stringify(oneClickCalls.slice(0,2).map(call=>call.path))')),['/api/workflow/check-batches','/api/workflow/start']);
+  assert.equal(run('oneClickCalls[1].body.check_id'),'one-click');assert.equal(run('currentPage'),'runs');assert.equal(get('run-detail').hidden,false);
+  // The launch reply can precede the worker receipt. Only that owned run-status
+  // notice follows later state polls; genuine errors and other feedback stay.
+  assert.match(get('notice').textContent,/Inspection required/);
+  run(`renderJobs({busy:false,jobs:[{...oneClickJob,configuration_sha256:'f'.repeat(64),status:'completed'}]});`);
+  assert.match(get('notice').textContent,/Inspection required/);
+  run("oneClickJob={...oneClickJob,status:'running'};");await run('poll()');assert.match(get('notice').textContent,/: Running\.$/);
+  run("oneClickJob={...oneClickJob,status:'completed'};");await run('poll()');assert.match(get('notice').textContent,/: Completed\.$/);
+  const completedNoticeWrites=get('notice').textWrites;await run('poll()');assert.equal(get('notice').textWrites,completedNoticeWrites);
+  run("notice('Inspection required: a different action failed.',true);oneClickJob={...oneClickJob,status:'stopped'};");await run('poll()');
+  assert.equal(get('notice').textContent,'Inspection required: a different action failed.');assert.equal(get('notice').className,'notice error');
+  run("notice('Configuration copied for another run.');oneClickJob={...oneClickJob,status:'completed'};");await run('poll()');
+  assert.equal(get('notice').textContent,'Configuration copied for another run.');
+  console.log('Launch inspection status follows matching run/configuration updates through completion; repeated polls retain text and unrelated errors or feedback.');
+  run(`active=false;checked=null;oneClickCalls.length=0;api=async(path,body)=>{oneClickCalls.push({path,body});throw Error('Missing selected runtime');};controls();`);
+  await get('start').onclick();assert.equal(run('oneClickCalls.length'),1);assert.equal(run('oneClickCalls[0].path'),'/api/workflow/check-batches');assert.match(get('notice').textContent,/Missing selected runtime/);
+  // Search uses original global IDs to locate the right sealed batch and sparse
+  // page. Missing zero-deposit IDs never create selectable records or waveforms.
+  run(`const findJob={...uiJob,name:'find-events',selection:{...uiSelection,name:'find-events',primary_count:2000},batching:{batch_cap:1000,batch_count:2},batch_progress:{completed_batch_count:2},counts:{initial_primaries:2000,zero_deposit_primaries:1700,groups:0,accepted:0}};
+    function findPage(batch,offset){const records=Array.from({length:Math.min(100,150-offset)},(_,index)=>{const local=2*(offset+index)+1;return{batch_index:batch,local_initial_id:local,global_initial_id:batch*1000+local,primary:{record_kind:'decay',event_id:local,deposited_energy_keV:1,pulse_count:0,zero_deposit:false},pulse_groups:[],truth:{steps:[{energy_keV:1}]}};});return{kind:'local_batch_event_page_v1',name:findJob.name,configuration_sha256:findJob.configuration_sha256,batch_index:batch,batch_offset:batch*1000,batch_primary_count:1000,offset,limit:100,pagination_kind:'stored_nonzero_events_v1',counts:{initial_primaries:1000,zero_deposit_primaries:850},available_record_count:150,nonzero_record_count:150,efficiency_denominator:1000,next_offset:offset+records.length<150?offset+records.length:null,records,traces:[],batch_sha256:'4'.repeat(64),response_summary_sha256:'5'.repeat(64),artifacts:[]};}
+    showRun(findJob);result={job:findJob,records:[],traces:[],page:null,options:{spectrum_file:null}};const findCalls=[];
+    api=async path=>{findCalls.push(path);const q=new URLSearchParams(path.split('?')[1]);return findPage(Number(q.get('batch')),Number(q.get('offset')));};$('event-find').value='1251';`);
+  await get('event-find-button').onclick();assert.equal(get('event').value,'1251');assert.equal(get('batch-index').value,'1');assert.equal(get('page-offset').value,'100');assert.equal(run('findCalls.length'),2);
+  assert.match(get('event-find-status').textContent,/Showing original event 1251/);assert.equal(run('result.records.length'),50);
+  await get('previous-page').onclick();assert.equal(get('batch-index').value,'1');assert.equal(get('page-offset').value,'0');
+  await get('previous-page').onclick();assert.equal(get('batch-index').value,'0');assert.equal(get('page-offset').value,'100');
+  await get('next-page').onclick();assert.equal(get('batch-index').value,'1');assert.equal(get('page-offset').value,'0');
+  await get('event-previous').onclick();assert.equal(get('event').value,'299');
+  get('event-find').value='1251';await get('event-find-button').onclick();assert.equal(get('event').value,'1251');
+  get('event-find').value='1250';await get('event-find-button').onclick();assert.match(get('event-find-status').textContent,/no saved nonzero-deposit record/);assert.equal(get('event').value,'1251');
+  const beforeRangeCheck=run('findCalls.length');get('event-find').value='2000';await get('event-find-button').onclick();assert.match(get('event-find-status').textContent,/range from 0 to 1999/);assert.equal(run('findCalls.length'),beforeRangeCheck);
+  run(`$('plots').replaceChildren(...Array.from({length:4},()=>node('figure')));showWaveformStage('current');showResultTab('events');`);
+  assert.deepEqual(get('plots').children.map(figure=>figure.hidden),[true,false,true,true]);assert.equal(get('event').value,'1251');assert.equal(get('result-events').hidden,false);assert.equal(get('result-overview').hidden,true);
+  get('result-tab-events').onkeydown({key:'ArrowRight',preventDefault(){}});assert.equal(run('resultTab'),'files');assert.equal(fixtureDocument.activeElement,get('result-tab-files'));
+  run("showWaveformStage('all');showPage('help');renderJobs({busy:false,jobs:[findJob]});");assert.ok(get('plots').children.every(figure=>figure.hidden===false));assert.equal(run('currentPage'),'help');assert.equal(run('resultTab'),'files');assert.equal(run('waveformStage'),'all');
+  // Crossing to another saved page keeps its available pulse-group waveform.
+  run(`const beforeBoundaryPlots=loadPlots,boundaryPlotCalls=[];
+    loadPlots=async(context,id,group)=>boundaryPlotCalls.push({id,group});
+    api=async path=>{const q=new URLSearchParams(path.split('?')[1]),batch=Number(q.get('batch')),offset=Number(q.get('offset')),page=findPage(batch,offset);if(batch===1&&offset===0){page.records[0].primary.pulse_count=1;page.records[0].pulse_groups=[{record_kind:'pulse',event_id:1,group_id:0,origin_time_ns:100,deposited_energy_keV:1,final_induced_keV:1,readout:{trace:{}}}];}return page;};$('batch-index').value='0';$('page-offset').value='100';`);
+  await run('loadBatchPage()');get('event').value='299';run('showEvent()');await get('event-next').onclick();
+  assert.equal(get('event').value,'1001');assert.equal(get('group').value,'1');assert.match(get('event-identity').textContent,/pulse group 0/);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(boundaryPlotCalls.at(-1))')),{id:1001,group:0});run('loadPlots=beforeBoundaryPlots;');
+  run("notice('Copied an earlier run.');");get('nav-help').onclick();assert.equal(get('notice').textContent,'');
+  run("notice('A retained action error.',true);");get('nav-new').onclick();assert.equal(get('notice').textContent,'A retained action error.');
+  run("notice('Copied an earlier run.');");fixtureDocument.querySelectorAll('[data-task-choice]').find(button=>button.dataset.taskChoice==='gegi').onclick();assert.equal(get('notice').textContent,'');assert.equal(run('currentTask'),'gegi');
+  run(`api=async path=>{const q=new URLSearchParams(path.split('?')[1]),batch=Number(q.get('batch')),offset=Number(q.get('offset'));const page=findPage(batch,offset);return batch===0?{...page,records:[],available_record_count:0,nonzero_record_count:0,next_offset:null,counts:{initial_primaries:1000,zero_deposit_primaries:1000}}:page;};$('batch-index').value='0';$('page-offset').value='0';`);
+  await run('loadBatchPage()');assert.equal(get('event').children.length,0);assert.equal(get('next-page').disabled,false);assert.equal(get('event-next').disabled,false);
+  await get('next-page').onclick();assert.equal(get('batch-index').value,'1');assert.equal(get('event').value,'1001');
+  // Candidate acquisitions and owned run results have separate detail views.
+  // Returning restores only an already loaded result with the selected identity.
+  run(`showRun(findJob);showResultTab('files');$('result').hidden=false;openRunList();openRunDetail('gegi');`);
+  assert.equal(get('standard-run-detail').hidden,true);assert.equal(get('gegi-acquisition-detail').hidden,false);
+  assert.equal(get('result').hidden,true);assert.equal(get('gegi-result').hidden,true);
+  run('renderJobs({busy:false,jobs:[findJob]});');assert.equal(get('result').hidden,true);
+  run('openRunDetail();');assert.equal(get('result').hidden,false);assert.equal(get('gegi-result').hidden,true);assert.equal(run('resultTab'),'files');
+  run('showRun(gegiJob);gegiResult={job:gegiJob};openRunDetail();');assert.equal(get('result').hidden,true);assert.equal(get('gegi-result').hidden,false);
+  run("openRunDetail('gegi');");assert.equal(get('result').hidden,true);assert.equal(get('gegi-result').hidden,true);
+  run('openRunDetail();');assert.equal(get('result').hidden,true);assert.equal(get('gegi-result').hidden,false);
+  run("showRun({...findJob,configuration_sha256:'6'.repeat(64)});openRunDetail();");assert.equal(get('result').hidden,true);assert.equal(get('gegi-result').hidden,true);
+  // A saved-result read begun before switching to an acquisition may finish,
+  // but its panel must stay hidden until the matching owned run is reopened.
+  run(`const separatedReads=[],separatedJob={...uiJob,execution_contract:'legacy_v1'};artifact=(name,file)=>new Promise(resolve=>separatedReads.push({name,file,resolve}));
+    resultOptionsRequest=async job=>({kind:'local_saved_result_options_v1',name:job.name,configuration_sha256:job.configuration_sha256,feature_export_present:false,acquisition_export_present:false,spectrum_file:null,spectrum_scope:null});`);
+  const separatedResult=run('openResult(separatedJob)');run("openRunDetail('gegi');");
+  run(`separatedReads.find(row=>row.file==='response/run.json').resolve({json:async()=>({cases:[],artifacts:{'summary.html':'7'.repeat(64)}})});
+    separatedReads.find(row=>row.file==='COMPLETE.json').resolve({json:async()=>({configuration_sha256:uiJob.configuration_sha256,artifacts:{'response/summary.html':{sha256:'7'.repeat(64)}}})});`);
+  await separatedResult;assert.equal(get('result').hidden,true);assert.equal(get('gegi-result').hidden,true);assert.equal(get('gegi-acquisition-detail').hidden,false);
+  run('openRunDetail();');assert.equal(get('result').hidden,false);assert.equal(get('gegi-result').hidden,true);
+  console.log('Candidate versus owned-run detail separation, matching cached-result restoration and late saved-result visibility regression passed.');
+  // Run deletion uses only mocked storage APIs. No original folders or science
+  // outputs are moved by these browser contracts.
+  run(`let storageRuns=[{...uiJob,name:'disposable-standard',selection:{...uiJob.selection,name:'disposable-standard'},can_delete:true},
+      {...uiJob,name:'active-standard',selection:{...uiJob.selection,name:'active-standard'},status:'running',can_delete:false,delete_reason:'A worker is active.'}];
+    let storageCandidates=[{name:'disposable-candidate',status:'stopped',can_delete:true,analysis_maps:[]}],storageDeleted=[],storageCalls=[],storageConfirmations=[],storageAllow=false,storageHold=false,storageResolve,storageReject='';
+    const storageOriginals=new Map();let storageNextID=1;
+    confirm=message=>{storageConfirmations.push(message);return storageAllow;};
+    api=async(path,body)=>{
+      storageCalls.push({path,body});
+      if(path==='/api/workflow/state')return{busy:false,jobs:storageRuns};
+      if(path==='/api/state')return{gamma:{jobs:[]}};
+      if(path==='/api/workflow/gegi-candidates/options')return{jobs:storageCandidates,calibrations:[]};
+      if(path==='/api/workflow/trash'&&!body)return{entries:[...storageDeleted],busy:false};
+      if(path==='/api/workflow/trash'){
+        if(storageReject==='delete')throw Error('Shared input is still in use.');
+        if(storageHold)await new Promise(resolve=>storageResolve=resolve);
+        const list=body.kind==='workflow'?storageRuns:storageCandidates,original=list.find(job=>job.name===body.name);
+        const entry={id:'trash-'+storageNextID++,kind:body.kind,name:body.name,deleted_utc:'2026-11-24T18:00:00Z',status:'trashed',can_restore:true};
+        storageOriginals.set(entry.id,original);storageDeleted.push(entry);
+        if(body.kind==='workflow')storageRuns=storageRuns.filter(job=>job.name!==body.name);else storageCandidates=storageCandidates.filter(job=>job.name!==body.name);
+        return{entry};
+      }
+      if(path==='/api/workflow/trash/restore'){
+        if(storageReject==='restore')throw Error('A run with this name already exists.');
+        const entry=storageDeleted.find(item=>item.id===body.id),original=storageOriginals.get(body.id);
+        if(entry.kind==='workflow')storageRuns.push(original);else storageCandidates.push(original);
+        storageDeleted=storageDeleted.filter(item=>item.id!==body.id);return{restored:entry};
+      }
+      if(path==='/api/workflow/trash/empty'){
+        if(storageReject==='empty')throw Error('Recycle-bin contents changed. Refresh and try again.');
+        storageDeleted=storageDeleted.filter(entry=>!body.ids.includes(entry.id));return{deleted_ids:body.ids};
+      }
+      throw Error('Unexpected storage route '+path);
+    };
+    active=false;candidateBusy=false;trashServerBusy=false;renderJobs({busy:false,jobs:storageRuns});showRun(storageRuns[0]);
+    result={job:storageRuns[0],records:[],traces:[]};$('result').hidden=false;$('plots').append(node('figure'));openRunDetail();`);
+  const storageRow=name=>get('runs').children.find(row=>row.children[0].textContent===name);
+  const storageDelete=name=>storageRow(name).children.find(child=>child.textContent==='Delete run');
+  assert.equal(storageDelete('active-standard').disabled,true);assert.equal(storageDelete('active-standard').title,'A worker is active.');
+  await run("deleteStoredRun('workflow',{...storageRuns[1],can_delete:true})");assert.equal(run('storageConfirmations.length'),0);
+  assert.equal(run('storageCalls.length'),0);assert.ok(get('run-detail-content').children[0].children.some(child=>child.textContent==='Delete run'));
+  await storageDelete('disposable-standard').click();assert.equal(run('storageCalls.length'),0);assert.match(run('storageConfirmations[0]'),/Move.*disposable-standard.*recycle bin/);
+  run('storageAllow=true;storageHold=true;');const heldStorageDelete=storageDelete('disposable-standard').click();
+  assert.equal(run('trashBusy'),true);assert.ok(get('runs').children.every(row=>row.children.find(child=>child.textContent==='Delete run').disabled));
+  assert.equal(get('trash-empty').disabled,true);await storageDelete('disposable-standard').click();assert.equal(run('storageCalls.length'),1);
+  run('storageResolve();');await heldStorageDelete;run('storageHold=false;');
+  assert.equal(run('trashBusy'),false);assert.equal(storageRow('disposable-standard'),undefined);assert.equal(run('result'),null);assert.equal(get('plots').children.length,0);
+  assert.equal(get('run-detail').hidden,true);assert.equal(get('run-list-panel').hidden,false);assert.equal(run('trashEntries[0].name'),'disposable-standard');
+  assert.deepEqual(JSON.parse(run('JSON.stringify(storageCalls[0])')),{path:'/api/workflow/trash',body:{kind:'workflow',name:'disposable-standard'}});
+  const restoreConfirmations=run('storageConfirmations.length');
+  await get('trash-entries').children[0].children.find(child=>child.textContent==='Restore').click();
+  assert.ok(storageRow('disposable-standard'));assert.equal(run('trashEntries.length'),0);assert.equal(run('storageConfirmations.length'),restoreConfirmations);
+  assert.ok(run("storageCalls.some(call=>call.path==='/api/workflow/trash/restore'&&call.body.id==='trash-1')"));
+  run(`$('gegi-candidate-job').value='disposable-candidate';showCandidateJob(storageCandidates[0]);openRunDetail('gegi');`);
+  assert.equal(get('gegi-candidate-delete').disabled,false);await get('gegi-candidate-delete').click();
+  assert.equal(run('candidateJob'),null);assert.equal(get('gegi-candidate-job').value,'');assert.equal(get('gegi-candidate-view').hidden,true);assert.equal(get('gegi-candidate-imaging').hidden,true);
+  assert.equal(get('run-detail').hidden,true);assert.equal(get('gegi-candidate-summary').children.length,0);
+  assert.equal(run('trashEntries[0].kind'),'candidate');
+  await get('trash-entries').children[0].children.find(child=>child.textContent==='Restore').click();
+  assert.ok(get('gegi-candidate-job').children.some(option=>option.value==='disposable-candidate'));
+  await storageDelete('disposable-standard').click();
+  run(`$('gegi-candidate-job').value='disposable-candidate';showCandidateJob(storageCandidates[0]);openRunDetail('gegi');`);await get('gegi-candidate-delete').click();
+  assert.equal(run('trashEntries.length'),2);assert.equal(get('trash-empty').disabled,false);
+  const beforeCancelledEmpty=run('storageCalls.length');run('storageAllow=false;');await get('trash-empty').click();
+  assert.equal(run('storageCalls.length'),beforeCancelledEmpty);assert.match(run('storageConfirmations.at(-1)'),/Permanently delete 2 runs.*cannot be undone/);
+  const emptyIDs=JSON.parse(run('JSON.stringify(trashEntries.map(entry=>entry.id))'));run('storageAllow=true;');await get('trash-empty').click();
+  assert.deepEqual(JSON.parse(run("JSON.stringify(storageCalls.find(call=>call.path==='/api/workflow/trash/empty').body)")),{ids:emptyIDs,confirmation:'DELETE'});
+  assert.equal(run('trashEntries.length'),0);assert.equal(get('trash-empty').disabled,true);assert.match(get('trash-entries').textContent,/empty/);
+  run(`storageRuns.push({...uiJob,name:'refused-delete',selection:{...uiJob.selection,name:'refused-delete'},can_delete:true});renderJobs({busy:false,jobs:storageRuns});storageReject='delete';`);
+  await storageDelete('refused-delete').click();assert.ok(storageRow('refused-delete'));assert.equal(storageDelete('refused-delete').disabled,false);
+  assert.equal(run('trashBusy'),false);assert.match(get('notice').textContent,/Shared input is still in use/);assert.equal(get('notice').className,'notice error');
+  run("storageReject='';");await storageDelete('refused-delete').click();run("storageReject='restore';");
+  await get('trash-entries').children[0].children.find(child=>child.textContent==='Restore').click();
+  assert.equal(run('trashEntries.length'),1);assert.match(get('notice').textContent,/name already exists/);assert.equal(run('trashBusy'),false);
+  run("storageReject='empty';");await get('trash-empty').click();assert.equal(run('trashEntries.length'),1);assert.match(get('notice').textContent,/contents changed/);
+  run(`storageReject='';storageDeleted.push({id:'failed-move',kind:'workflow',name:'retained-failure',status:'move_failed',can_restore:false,deleted_utc:'2026-11-24T18:10:00Z'});showTrash({entries:[...storageDeleted],busy:false});`);
+  const failedTrash=get('trash-entries').children.find(row=>row.children[0].textContent==='retained-failure');
+  assert.equal(failedTrash.children.find(child=>child.textContent==='Restore').disabled,true);
+  assert.ok(failedTrash.children.some(child=>/Needs inspection.*retained/.test(child.textContent)));
+  const beforeFailedRestore=run('storageCalls.length');await run("restoreStoredRun(storageDeleted.find(entry=>entry.id==='failed-move'))");
+  assert.equal(run('storageCalls.length'),beforeFailedRestore);assert.equal(get('trash-empty').disabled,false);
+  await get('trash-empty').click();
+  assert.match(run('storageConfirmations.at(-1)'),/Permanently delete 1 run/);
+  assert.ok(!JSON.parse(run("JSON.stringify(storageCalls.filter(call=>call.path==='/api/workflow/trash/empty').at(-1).body.ids)")).includes('failed-move'));
+  assert.equal(run('trashEntries.length'),1);assert.equal(run('trashEntries[0].id'),'failed-move');assert.equal(get('trash-empty').disabled,true);
+  const beforeFailureOnlyEmpty=run('storageCalls.length');await run('emptyRunTrash()');assert.equal(run('storageCalls.length'),beforeFailureOnlyEmpty);
+  run(`storageDeleted.push({id:'interrupted-empty',kind:'workflow',name:'retry-empty',status:'purging',can_restore:false,can_empty:true,deleted_utc:'2026-11-24T18:15:00Z'});showTrash({entries:[...storageDeleted],busy:false});`);
+  const interruptedEmpty=get('trash-entries').children.find(row=>row.children[0].textContent==='retry-empty');
+  assert.equal(interruptedEmpty.children.find(child=>child.textContent==='Restore').disabled,true);
+  assert.ok(interruptedEmpty.children.some(child=>/Emptying was interrupted.*retry/.test(child.textContent)));
+  assert.equal(get('trash-empty').disabled,false);await get('trash-empty').click();
+  assert.deepEqual(JSON.parse(run("JSON.stringify(storageCalls.filter(call=>call.path==='/api/workflow/trash/empty').at(-1).body)")),{ids:['interrupted-empty'],confirmation:'DELETE'});
+  assert.equal(run('trashEntries.length'),1);assert.equal(run('trashEntries[0].id'),'failed-move');assert.equal(get('trash-empty').disabled,true);
+  const beforeClosedTrash=run('storageCalls.length');get('run-trash').open=false;get('run-trash').ontoggle();assert.equal(run('storageCalls.length'),beforeClosedTrash);
+  run("storageReject='';");get('run-trash').open=true;get('run-trash').ontoggle();await Promise.resolve();await Promise.resolve();
+  assert.equal(run('storageCalls.at(-1).path'),'/api/workflow/trash');assert.equal(run('storageCalls.at(-1).body'),undefined);
+  const beforeStoragePoll=run("storageCalls.filter(call=>call.path==='/api/workflow/trash'&&!call.body).length");await run('poll()');
+  assert.equal(run("storageCalls.filter(call=>call.path==='/api/workflow/trash'&&!call.body).length"),beforeStoragePoll);
+  console.log('Run storage: capability/activity refusal, recoverable workflow/candidate deletion, selected-result clearing, pending locks, restore, exact-count permanent confirmation/cancellation, error recovery and lazy trash reads passed.');
+  // Prerequisites are visible in the main workflow. Startup runs one real API
+  // request; explicit rechecks serialize and do not turn polling into probes.
+  run(`const beforePrerequisitesAPI=api;let prerequisiteCalls=0,prerequisiteResolve,prerequisiteReject;
+    api=(path,body)=>path==='/api/workflow/setup'?(prerequisiteCalls++,new Promise((resolve,reject)=>{prerequisiteResolve=resolve;prerequisiteReject=reject;})):beforePrerequisitesAPI(path,body);`);
+  const heldPrerequisites=get('setup').click();assert.equal(get('setup').disabled,true);assert.match(get('setup-notice').textContent,/Checking installed tools/);
+  assert.equal(get('prerequisites-list').children.length,0);await get('setup').click();await run('checkPrerequisites()');assert.equal(run('prerequisiteCalls'),1);
+  run(`prerequisiteResolve({platform:'windows',guide_url:'/guide.html#setup',ready_for_config_check:false,checks:[],prerequisites:[
+      {id:'python',label:'Windows Python',status:'ready',detail:'Configured Python found.',action:''},
+      {id:'wsl',label:'WSL2 / Ubuntu',status:'missing',detail:'Ubuntu is not installed.',action:'Install Ubuntu 24.04, then run setup.'},
+      {id:'julia',label:'Julia runtime',status:'mismatch',detail:'Found 1.12; required 1.13.0.',action:'Select the pinned Julia runtime.'},
+      {id:'pixi',label:'Pixi',status:'unavailable',detail:'The version command could not be checked.',action:'Open the setup guide and recheck Pixi.'}]});`);await heldPrerequisites;
+  assert.equal(get('setup').disabled,false);assert.match(get('prerequisites-platform').textContent,/Windows.*Python 3.10.*WSL2.*Pixi inside Ubuntu/);
+  assert.match(get('setup-notice').textContent,/1 of 4 prerequisites ready.*3 items need attention/);assert.equal(get('prerequisites-details').open,true);
+  assert.deepEqual(get('prerequisites-list').children.map(row=>row.children[1].children[0].textContent),['Ready','Missing','Version mismatch','Could not check']);
+  assert.match(get('prerequisites-list').children[1].children[2].children[1].textContent,/Install Ubuntu 24.04/);
+  assert.equal(get('guide').href,'/guide.html#setup');assert.equal(get('setup-required-guide').href,'/guide.html#setup');
+  run('showSetupGuidance(currentDetector());');assert.equal(get('guide').href,'/guide.html#setup');
+  const beforePrerequisitesPoll=run('prerequisiteCalls');await run('poll()');await run('poll()');assert.equal(run('prerequisiteCalls'),beforePrerequisitesPoll);
+  run("showPage('help');");get('help-open-setup').onclick();assert.equal(run('currentPage'),'new');assert.equal(fixtureDocument.activeElement,get('setup'));
+  const readyPrerequisites=get('setup').click();
+  run(`prerequisiteResolve({platform:'macos',guide_url:'/guide.html#setup-macos',ready_for_config_check:true,checks:[],prerequisites:[{id:'pixi',label:'Native Pixi environment',status:'ready',detail:'Locked Python and simulation tools found.',action:''},{id:'julia',label:'Julia 1.13.0',status:'ready',detail:'Pinned environment found.',action:''}]});`);await readyPrerequisites;
+  assert.match(get('prerequisites-platform').textContent,/macOS.*Apple Command Line Tools.*Setup.command/);assert.doesNotMatch(get('prerequisites-platform').textContent,/WSL/);
+  assert.match(get('setup-notice').textContent,/All 2 required prerequisites are ready/);assert.equal(get('guide').href,'/guide.html#setup-macos');assert.equal(get('prerequisites-details').open,false);
+  const optionalPrerequisites=get('setup').click();
+  run(`prerequisiteResolve({platform:'windows',ready_for_config_check:true,checks:[],prerequisites:[
+    {id:'numpy',label:'Host NumPy',required:true,status:'ready',detail:'Required module found.',action:''},
+    {id:'host-analysis',label:'Host SciPy / h5py / PyYAML',required:false,status:'missing',detail:'Optional analysis packages are absent.',action:'Install only when using host analysis tools.'}]});`);await optionalPrerequisites;
+  assert.match(get('setup-notice').textContent,/All 1 required prerequisites are ready.*1 optional tool is not ready/);
+  assert.doesNotMatch(get('setup-notice').textContent,/needs attention|required before/);assert.equal(get('prerequisites-details').open,false);
+  assert.doesNotMatch(get('prerequisites-platform').textContent,/with NumPy, SciPy/);
+  const optionalDetails=get('prerequisites-list').children[1].children[0].children[0];
+  assert.equal(optionalDetails.tagName,'details');assert.equal(optionalDetails.open,false);assert.match(optionalDetails.children[0].textContent,/Optional checks/);
+  run(`showPrerequisites({platform:'windows',ready_for_config_check:true,prerequisites:[{id:'unknown',label:'Required runtime',required:true,status:'unrecognized'}]});`);
+  assert.match(get('setup-notice').textContent,/0 of 1 prerequisites ready.*needs attention/);assert.equal(get('prerequisites-details').open,true);
+  const failedPrerequisites=get('setup').click();run("prerequisiteReject(Error('Environment checker unavailable'));");await failedPrerequisites;
+  assert.match(get('setup-notice').textContent,/Unable to check prerequisites.*Environment checker unavailable/);assert.doesNotMatch(get('setup-notice').textContent,/All .* ready/);
+  assert.equal(get('prerequisites-list').children.length,0);assert.equal(get('setup').disabled,false);
+  const emptyPrerequisites=get('setup').click();run('prerequisiteResolve({platform:"macos",prerequisites:[],checks:[]});');await emptyPrerequisites;
+  assert.match(get('setup-notice').textContent,/full prerequisite list was not returned/);assert.doesNotMatch(get('setup-notice').textContent,/All .* ready/);
+  assert.equal(startupFetches.filter(path=>path==='/api/workflow/setup').length,1);
+  // A stdlib-only host can serve Control while catalog imports fail. Its
+  // independent setup result must still explain the missing Python packages.
+  const independentRequests=[];let independentSetupResolve;
+  const independentContext=vm.createContext({document:fixtureDocument,DOMParser:Parser,
+    location:{hash:'#fixture',pathname:'/'},sessionStorage:{getItem:()=>'',setItem:()=>{}},history:{replaceState:()=>{}},
+    URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL:()=>{}},URLSearchParams,TextDecoder,Uint8Array,confirm:()=>true,
+    fetch:path=>{independentRequests.push(path);return path==='/api/workflow/setup'?new Promise(resolve=>independentSetupResolve=resolve):Promise.resolve({ok:false,json:async()=>({error:"No module named 'numpy'"})});},setInterval:()=>{},setTimeout:()=>{}});
+  vm.runInContext(fs.readFileSync(__dirname+'/focused_plots.js','utf8'),independentContext);
+  vm.runInContext(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),independentContext);
+  for(let tick=0;tick<8;tick++)await Promise.resolve();
+  assert.deepEqual(independentRequests,['/api/workflow/setup','/api/workflow/catalog']);assert.match(get('notice').textContent,/No module named 'numpy'/);
+  assert.equal(get('setup').disabled,true);assert.equal(typeof get('help-open-setup').onclick,'function');
+  independentSetupResolve({ok:true,json:async()=>({platform:'windows',guide_url:'/guide.html#setup',ready_for_config_check:false,checks:[],prerequisites:[
+    {id:'host-science',label:'Python science packages',status:'missing',detail:"No module named 'numpy'",action:'Install NumPy, SciPy, h5py and PyYAML in the Python used by Control.'}]})});
+  for(let tick=0;tick<8;tick++)await Promise.resolve();
+  assert.equal(get('setup').disabled,false);assert.match(get('setup-notice').textContent,/0 of 1 prerequisites ready.*attention/);
+  assert.equal(get('prerequisites-list').children[0].children[0].textContent,'Python science packages');
+  assert.match(get('prerequisites-list').children[0].children[2].children[1].textContent,/Install NumPy.*Python used by Control/);
+  assert.equal(get('guide').href,'/guide.html#setup');assert.equal(get('page-new').hidden,false);
+  console.log('Visible startup prerequisites: one automatic independent request, serialized recheck, Windows/macOS details and local guide, exact statuses/actions, failure/empty non-readiness and no polling probes passed.');
+  console.log('Student UI one-click check/start and failed-check refusal, exact angle/position/electronics copies, unique names, poll-stable pages, compact run rows, cryostat/catalog choices, cross-batch sparse-ID search and waveform/tab keyboard controls passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

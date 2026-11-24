@@ -37,11 +37,22 @@ class StudentRuntimePackage(unittest.TestCase):
             with zipfile.ZipFile(first) as bundle:
                 names = bundle.namelist()
                 self.assertFalse(any('/docs/' in p or '/test_' in p or '/.local/' in p for p in names))
+                prefix = self.manifest['archive_root'] + '/'
+                readme = bundle.read(prefix + 'README.md').decode()
+                start = bundle.read(prefix + 'START_HERE.html').decode()
+                self.assertIn('(tools/site_guide.html#requirements)', readme)
+                self.assertIn('Windows Python 3.10+', readme)
+                self.assertIn('Juliaup, Pixi 0.81+', readme)
+                self.assertIn('url=tools/site_guide.html#requirements', start)
+                self.assertIn('href="tools/site_guide.html#requirements"', start)
                 guide = bundle.read(self.manifest['archive_root'] + '/tools/site_guide.html').decode()
                 self.assertNotIn('__PAGE_NAVIGATION__', guide)
                 self.assertNotIn('id="advanced-routes"', guide)
                 self.assertNotIn('href="#advanced-title"', guide)
                 self.assertIn('id="setup"', guide)
+                self.assertIn('id="requirements"', guide)
+                self.assertIn('py -3.13 -m pip install numpy', guide)
+                self.assertNotIn('class="setup-platform" hidden', guide)
                 self.assertIn('id="saved-analysis"', guide)
                 self.assertIn('gegi_continuous_plane.py --acquisition', guide)
                 self.assertIn('gegi-center-calibration.npz', guide)
@@ -177,6 +188,142 @@ print('Isolated student Control imports and 17-model/6-source browsing passed; m
                                     capture_output=True, text=True, timeout=30)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn('--escape-incident-energy-keV ENERGY', result.stdout)
+
+    def test_clean_zip_control_http_check_and_start_without_science(self):
+        """Real unpacked HTTP/controllers; prerequisite and launch seams run no science."""
+        with self.temporary() as directory:
+            parent = Path(directory)
+            archive = parent/'student.zip'
+            package.write_archive(archive, self.manifest, self.bodies, self.modes)
+            with zipfile.ZipFile(archive) as bundle:
+                for member in bundle.namelist():
+                    self.assertFalse({'.local', '.git', 'docs'} & set(Path(member).parts))
+                bundle.extractall(parent)
+            root = parent/self.manifest['archive_root']
+            self.assertFalse((root/'.local').exists())
+            code = """
+import copy
+import http.client
+import json
+from pathlib import Path
+import subprocess
+import sys
+import threading
+from unittest.mock import patch
+
+root=Path.cwd()
+assert not (root/'.local').exists() and not (root/'.git').exists()
+sys.path[:0]=[str(root/'tools'),str(root/'transport')]
+def forbidden(*args,**kwargs):raise AssertionError('Clean-package protocol test may not start a worker')
+subprocess.Popen=forbidden
+import local_ui as U
+import local_ui_workflow_jobs as J
+import scenario_workflow as W
+import scenario_source_portable as portable
+for module in (U,J,W,portable):
+    assert Path(module.__file__).resolve().is_relative_to(root)
+assert U.ROOT==W.ROOT==root
+
+coordination=threading.RLock()
+controller=U.Controller(root,coordination_lock=coordination)
+gamma=U.GammaController(root,coordination_lock=coordination,peer_busy=controller.own_busy)
+configured=J.WorkflowController(root,coordination_lock=coordination,
+    peer_busy=lambda:controller.own_busy() or gamma.own_busy())
+controller.set_peer_busy(lambda:gamma.own_busy() or configured.own_busy())
+gamma.set_peer_busy(lambda:controller.own_busy() or configured.own_busy())
+server=U.Server(0,controller,token='unpacked-package-session',
+    gamma_controller=gamma,workflow_controller=configured)
+thread=threading.Thread(target=server.serve_forever,daemon=True)
+thread.start()
+
+def request(route,body=None,token=server.token):
+    headers={'Host':'127.0.0.1:'+str(server.server_port),'X-Control-Token':token}
+    method='GET' if body is None else 'POST'
+    if body is not None:
+        headers.update({'Origin':server.origin,'Content-Type':'application/json'})
+        body=json.dumps(body)
+    connection=http.client.HTTPConnection('127.0.0.1',server.server_port,timeout=3)
+    try:
+        connection.request(method,route,body=body,headers=headers)
+        response=connection.getresponse()
+        data=response.read()
+        return response.status,(json.loads(data) if route.startswith('/api/') else data.decode())
+    finally:connection.close()
+
+try:
+    status,page=request('/')
+    assert status==200
+    for label in ('New simulation','My runs','Help','Start simulation'):
+        assert label in page
+    status,script=request('/local_workflow.js')
+    assert status==200 and '/api/workflow/check-batches' in script and '/api/workflow/start' in script
+    status,state=request('/api/state')
+    assert status==200 and state['active'] is None and state['jobs']==[]
+    assert state['gamma']['active'] is None and state['gamma']['jobs']==[]
+    status,state=request('/api/workflow/state')
+    assert status==200 and state['busy'] is False and state['jobs']==[]
+    status,catalog=request('/api/workflow/catalog')
+    assert status==200 and len(catalog['detectors'])==17 and len(catalog['sources'])==6
+    lbnl=[item for item in catalog['detectors'] if item['id']!='GeGI_3D']
+    assert all(not item['available'] and item['block_code']=='setup_required' for item in lbnl)
+    assert all(item['reason'] for item in lbnl)
+    selection={'name':'clean-package-protocol','cryostat':W.CRYOSTAT,'detector':'SAP22',
+        'source':W.CS,'pose':'nominal','primary_count':100,'seed':26092631,'threads':1,
+        'electronics':catalog['electronics_defaults'],'angle_deg':30}
+    submitted={'request':{'kind':'local_scenario_batch_request_v2','schema_version':2,'selection':selection}}
+
+    # No Setup has run. Use the production file-readiness helper at the existing
+    # transport-reader seam, without invoking WSL, Julia or a geometry worker.
+    def missing_setup(config,root):
+        return J.B.check(config,root=root,transport_reader=lambda config,root:portable.file_readiness(root))
+    configured._batch_resolver=missing_setup
+    status,denied=request('/api/workflow/check-batches',submitted)
+    assert status==400 and denied.get('error')=='missing file: '+portable.BUILD_RECEIPT_REF,(status,denied)
+    assert configured.snapshot()=={'kind':'local_workflow_state_v1','busy':False,'jobs':[]}
+    assert not configured._checks and not W.run_path(selection['name'],root).exists()
+
+    # This fixture supplies dependency readiness only for the protocol path.
+    # Count/seed partitioning, HTTP authorization, plan recheck and the durable
+    # launch reservation are real; the scientific launch boundary is intercepted.
+    resolver_calls=[]
+    def ready_protocol_plan(config,root):
+        assert config==selection and root==W.ROOT
+        resolver_calls.append(copy.deepcopy(config))
+        resolved={'selection':copy.deepcopy(config),'batching':J.B.partition(config['primary_count'],config['seed'])}
+        return {'kind':J.B.CHECKED_KIND,'schema_version':3,'status':'checked_configuration',
+            'science_calls':0,'execution_enabled':True,'resolved':resolved,'configuration_sha256':W.digest(resolved)}
+    configured._batch_resolver=ready_protocol_plan
+    status,denied=request('/api/workflow/check-batches',submitted,token='wrong-session')
+    assert status==403 and resolver_calls==[]
+    status,checked=request('/api/workflow/check-batches',submitted)
+    assert status==200 and checked['science_calls']==0 and checked['execution_enabled'] is True
+    assert checked['resolved']['selection']==selection and len(resolver_calls)==1
+    assert configured.snapshot()['busy'] is False
+    assert not W.run_path(selection['name'],root).exists()
+    with patch.object(configured,'_launch',side_effect=configured._view) as launch:
+        status,started=request('/api/workflow/start',{'check_id':checked['check_id']})
+        assert status==200 and started['name']==selection['name'] and started['selection']==selection
+        assert started['execution_contract']=='serial_batches_v3' and len(resolver_calls)==2
+        assert launch.call_count==1
+        status,replayed=request('/api/workflow/start',{'check_id':checked['check_id']})
+        assert status==400 and launch.call_count==1
+    saved=W.read(root/J.STATE/'workflow-jobs.json')
+    assert len(saved['jobs'])==1 and saved['jobs'][0]['name']==selection['name']
+    assert saved['jobs'][0]['plan']['resolved']['selection']==selection
+    assert saved['jobs'][0]['driver'] is None
+    assert not W.run_path(selection['name'],root).exists()
+    print('Clean ZIP Control HTTP: empty idle state, configurable catalog, explicit missing-setup refusal, authorized batch Check/Start and one durable dispatch; dependency readiness injected, scientific launch intercepted, no workers or science.')
+finally:
+    server.shutdown()
+    server.server_close()
+    thread.join()
+"""
+            arguments = [sys.executable]
+            if Path(sys.executable).name.lower() == 'pvpython.exe':
+                arguments += ['--no-mpi', '--disable-registry']
+            result = subprocess.run(arguments + ['-B', '-c', code], cwd=root,
+                                    capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
 if __name__ == '__main__':

@@ -105,6 +105,7 @@ def shared_document(meta,checked,legacy):
         legacy_prepared_sha256=h.sha256(legacy/'prepared.json'),
         geometry_ref=(legacy/'geometry.gdml').relative_to(h.ROOT).as_posix(),
         geometry_report_ref=(legacy/'geometry-report.json').relative_to(h.ROOT).as_posix(),
+        geometry_checks=cs.load(legacy/'geometry-report.json'),
         scenario_ref=(legacy/'scenario.json').relative_to(h.ROOT).as_posix(),
         checked_transport=checked,
         files_sha256={p.relative_to(h.ROOT).as_posix():h.sha256(p) for p in legacy.rglob('*') if p.is_file()})
@@ -129,7 +130,11 @@ def read_shared(path):
         import sap18_source as S
         S.WINDOWS_ROOT=WINDOWS_ROOT;meta=S.read_prepared(legacy)[1]
     else:meta=P.read_prepared(legacy,WINDOWS_ROOT)[1]
-    h.require(B.typed_equal(m,shared_document(meta,checked,legacy)),
+    expected=shared_document(meta,checked,legacy)
+    if 'geometry_checks' not in m and 'geometry_checks' not in meta:
+        # Early portable AK/SAP preparations exposed only the pinned report ref.
+        expected.pop('geometry_checks')
+    h.require(B.typed_equal(m,expected),
         'Rehashed shared source/geometry/model/unit/clock edits are refused')
     return m
 

@@ -11,7 +11,7 @@ if (-not $python) {
     }
 }
 if (-not $python -or -not (Test-Path -LiteralPath $python -PathType Leaf)) {
-    throw 'An existing Python 3.10+ is required. Set SITE_PYTHON for this launch; nothing is installed automatically. See tools/site_guide.html.'
+    throw 'An existing Python 3.10+ is required. Set SITE_PYTHON for this launch; nothing is installed automatically. Open START_HERE.html in this project for installation steps (tools/site_guide.html).'
 }
 $argv = @()
 if ((Split-Path -Leaf $python) -eq 'pvpython.exe') { $argv += @('--no-mpi','--disable-registry') }

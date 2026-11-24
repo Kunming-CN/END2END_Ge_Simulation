@@ -171,6 +171,54 @@ def mac_process_identity(pid):
     return None if ctypes.get_errno() == errno.ESRCH else 'unknown'
 
 
+def windows_snapshot_identity(pid):
+    """Read a denied process's creation time without opening its process handle."""
+    # Microsoft documents SystemProcessInformation and its linked entries.
+    # The CreateTime prefix is from System Informer's upstream phnt/ntexapi.h:
+    # https://github.com/winsiderss/phnt/blob/master/ntexapi.h
+    class UnicodeString(ctypes.Structure):
+        _fields_ = [('length', ctypes.c_uint16), ('maximum', ctypes.c_uint16),
+                    ('buffer', ctypes.c_void_p)]
+
+    class ProcessInfo(ctypes.Structure):
+        _fields_ = [('next_offset', ctypes.c_uint32), ('threads', ctypes.c_uint32),
+                    ('reserved', ctypes.c_byte * 24), ('created', ctypes.c_int64),
+                    ('user_time', ctypes.c_int64), ('kernel_time', ctypes.c_int64),
+                    ('image_name', UnicodeString), ('base_priority', ctypes.c_int32),
+                    ('pid', ctypes.c_void_p)]
+
+    try:
+        query = ctypes.WinDLL('ntdll').NtQuerySystemInformation
+        query.argtypes = (ctypes.c_uint32, ctypes.c_void_p, ctypes.c_uint32,
+                          ctypes.POINTER(ctypes.c_uint32))
+        query.restype = ctypes.c_int32
+        length = ctypes.c_uint32()
+        status = query(5, None, 0, ctypes.byref(length))  # SystemProcessInformation
+        if status & 0xffffffff != 0xc0000004 or length.value < ctypes.sizeof(ProcessInfo):
+            return 'unknown'  # STATUS_INFO_LENGTH_MISMATCH supplies the required size.
+        # Process/thread entries can grow between the size query and the read.
+        buffer = ctypes.create_string_buffer(length.value + 65536)
+        status = query(5, buffer, len(buffer), ctypes.byref(length))
+        if status & 0xffffffff == 0xc0000004 and length.value > len(buffer):
+            buffer = ctypes.create_string_buffer(length.value + 65536)
+            status = query(5, buffer, len(buffer), ctypes.byref(length))
+    except (OSError, AttributeError):
+        return 'unknown'
+    if status != 0 or not ctypes.sizeof(ProcessInfo) <= length.value <= len(buffer):
+        return 'unknown'
+    offset = 0
+    while offset + ctypes.sizeof(ProcessInfo) <= length.value:
+        item = ProcessInfo.from_buffer(buffer, offset)
+        if item.pid == pid:
+            return str(item.created) if item.created > 0 else 'unknown'
+        if item.next_offset < ctypes.sizeof(ProcessInfo):
+            break
+        offset += item.next_offset
+    # Restricted process snapshots may omit an existing protected process.
+    # Absence here never proves termination; only a returned creation time does.
+    return 'unknown'
+
+
 def process_identity(pid):
     """Use process creation time when available. Unknown stays blocking."""
     if sys.platform == 'darwin':
@@ -191,11 +239,11 @@ def process_identity(pid):
     api.CloseHandle.argtypes = (wintypes.HANDLE,)
     handle = api.OpenProcess(0x1000, False, pid)
     if not handle:
-        return None if ctypes.get_last_error() == 87 else 'unknown'
+        return None if ctypes.get_last_error() == 87 else windows_snapshot_identity(pid)
     try:
         times = [wintypes.FILETIME() for _ in range(4)]
         if not api.GetProcessTimes(handle, *[ctypes.byref(t) for t in times]):
-            return 'unknown'
+            return windows_snapshot_identity(pid)
         return str((times[0].dwHighDateTime << 32) | times[0].dwLowDateTime)
     finally:
         api.CloseHandle(handle)

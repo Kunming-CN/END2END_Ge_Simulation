@@ -1,108 +1,1764 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GeSignal · Local simulation</title>
-<style>
-:root{font-family:system-ui,sans-serif;color:#193649;background:#f2f6f7;color-scheme:light;--accent:#008a96;--line:#d5e2e6}*{box-sizing:border-box}body{margin:0}header{background:white;border-bottom:1px solid var(--line);padding:22px max(24px,calc((100vw - 1440px)/2))}header h1{font-size:1.6rem;margin:4px 0}header p{margin:4px 0;color:#557080}.brand{color:var(--accent);font-size:.8rem;letter-spacing:.12em;font-weight:750}main{max-width:1440px;margin:auto;padding:24px;display:grid;grid-template-columns:350px 1fr;gap:24px;align-items:start}section,.card{background:white;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:20px}h2{font-size:1.15rem;margin:0 0 16px}h3{font-size:1rem;margin:12px 0}label{display:block;font-size:.88rem;font-weight:650;margin:14px 0}input,select{display:block;width:100%;font:inherit;color:inherit;border:1px solid #9bb4c0;border-radius:7px;padding:10px;margin-top:6px;min-height:43px}button,a.button{font:inherit;border:1px solid #9bb4c0;border-radius:8px;background:#f4f8f9;color:#244e63;padding:10px 14px;min-height:43px;cursor:pointer}button.primary{background:#007d8a;border-color:#007d8a;color:white}button:disabled{opacity:.5;cursor:default}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #efa21e;outline-offset:3px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.actions button{flex:1}.muted,small{color:#587280;font-size:.86rem;line-height:1.55}summary{cursor:pointer;padding:12px 0;min-height:44px;font-weight:650}details{border-top:1px solid var(--line);margin-top:16px}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto;background:#f1f6f7;padding:14px;font-size:.78rem}.notice{line-height:1.6;overflow-wrap:anywhere}.error{color:#ac3636}.okay{color:#216553}.stage{padding:14px 0;border-top:1px solid var(--line);display:flex;align-items:center;gap:12px}.stage:first-child{border:0}.dot{width:11px;height:11px;border-radius:50%;background:#c4d2d9;flex:none}.stage.completed .dot{background:#00947b}.stage.running .dot,.stage.command_exited .dot{background:#e2a524}.stage.dispatch_intent .dot{background:#008a96}.stage-title{flex:1}.stage small{display:block}.pill{border-radius:20px;padding:4px 10px;background:#eef4f5;font-size:.8rem;white-space:nowrap}.run{padding:18px 0;border-top:1px solid var(--line)}.run:first-child{border:0}.run p{margin:7px 0}.run button{margin:6px 8px 0 0}.run strong{overflow-wrap:anywhere}.plot-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}.plot{border:1px solid var(--line);border-radius:10px;padding:14px}.plot h3{margin:0 0 6px}.plot svg{width:100%;height:auto;font-size:11px}.metrics{display:flex;flex-wrap:wrap;gap:14px}.metrics span{background:#f0f6f7;padding:12px 16px;border-radius:8px}.metrics strong{display:block;font-size:1.2rem}a{color:#007d8a}footer{margin-top:20px;color:#647b87;font-size:.82rem;line-height:1.6}.horizontal{display:grid;grid-template-columns:1fr 1fr;gap:12px}#result-data{overflow-wrap:anywhere}#stage-files{border-top:1px solid var(--line);margin-top:20px;padding-top:12px}#result-options-status:empty{display:none}#spectrum-content svg{width:100%;height:auto;font-size:11px}#import{display:none}#gegi-imaging svg{width:100%;height:auto;font-size:11px}#gegi-files button{display:block;margin:8px 0;max-width:100%}@media(max-width:960px){main{grid-template-columns:300px 1fr;padding:18px;gap:18px}}@media(max-width:760px){main{display:block;padding:14px}section,.card{padding:18px}header{padding:18px}.plot-grid{grid-template-columns:1fr}.actions{gap:8px}}
-#model-panel{overflow-wrap:anywhere}.model-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}.model-grid>div{min-width:0}#model-variant:empty{display:none}@media(max-width:760px){.model-grid{grid-template-columns:1fr}}#model-contacts{padding-left:20px;font-size:.86rem;line-height:1.6;max-height:240px;overflow:auto}#model-preview-box{margin:12px 0}#model-preview{display:block;width:100%;height:280px;object-fit:contain;border:1px solid var(--line);border-radius:8px}#model-view{display:inline-block;min-height:44px;padding:8px 0}#model-capability{font-weight:650}#model-preview-status{font-size:.8rem}
-.plot{margin:0;min-width:0}.plot-grid>p,.plot-grid>small{grid-column:1/-1;min-width:0;overflow-wrap:anywhere}.plot-grid figcaption{overflow-wrap:anywhere}main>aside,main>div{min-width:0}#saved-artifacts>div{padding:12px 0}#saved-artifacts button,#saved-artifacts small{display:block;max-width:100%;margin:6px 0;overflow-wrap:anywhere}
-.gegi-pairings{padding-inline-start:1.35rem;line-height:1.5}.gegi-pairings>li+li{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}.gegi-pairings ul{padding-inline-start:1.15rem;margin:4px 0}.gegi-pairings p{margin:8px 0 4px}
-.dual-pixel-map{margin-top:16px}.dual-pixel-scroll{max-width:100%;overflow-x:auto;margin:10px 0}.dual-pixel-scroll:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.dual-pixel-table{width:100%;min-width:35rem;border-spacing:1px;font-size:.8rem;font-variant-numeric:tabular-nums;text-align:center}.dual-pixel-table th,.dual-pixel-table td{padding:.3rem .22rem;white-space:nowrap}.dual-pixel-table th{background:#edf4f6}.dual-pixel-table th:first-child{position:sticky;left:0;z-index:1}
-.dual-pixel-table td{padding:1px}.dual-pixel-table button{width:100%;min-height:30px;padding:2px;border:0;border-radius:3px;background:transparent;color:inherit}.dual-pixel-table button[aria-pressed="true"]{box-shadow:inset 0 0 0 2px #b96909}.dual-pixel-table button:focus-visible{outline-offset:-2px}
-.dual-feature-faces{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));gap:12px}
-#gegi-candidate-duration-field[hidden],#gegi-candidate-count-field[hidden]{display:none}
-.dual-plane-figure{width:min(100%,32rem)}.dual-plane-axes{display:grid;grid-template-columns:auto auto minmax(0,1fr);grid-template-rows:auto auto auto;gap:4px 8px;font-size:.78rem;font-variant-numeric:tabular-nums}.dual-plane-axes canvas{grid-column:3;grid-row:1;width:100%;height:auto;image-rendering:pixelated;border:1px solid var(--line)}.dual-plane-y{grid-column:2;grid-row:1;display:flex;flex-direction:column;justify-content:space-between;text-align:right}.dual-plane-y-label{grid-column:1;grid-row:1;place-self:center;writing-mode:vertical-rl;transform:rotate(180deg)}.dual-plane-x{grid-column:3;grid-row:2;display:flex;justify-content:space-between}.dual-plane-x-label{grid-column:3;grid-row:3;text-align:center}.dual-plane-figure figcaption{margin-top:8px}
-</style><script src="/focused_plots.js" defer></script><script src="/gegi_signal_journey.js" defer></script><script src="/local_workflow.js" defer></script></head><body>
-<header><div class="brand">GESIGNAL</div><h1>Local simulation</h1><p>Choose the setup. Run the pipeline. Inspect every stage.</p></header>
-<main><aside><section><h2>Next-run setup</h2><p class="muted">These controls configure the next run. Editing them clears its checked plan; the selected saved run and its events keep their recorded settings.</p><div class="actions"><button id="setup">Check environment</button><a id="guide" target="_blank" rel="noreferrer" href="https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup">Setup guide</a></div><p class="muted">Check environment inspects installed files. Check plan validates the selected source, runtime and settings before Run.</p><p id="setup-notice" class="muted">Uses your existing configured environment.</p>
-<label for="cryostat">Cryostat<select id="cryostat"></select></label><label for="detector">Detector · all catalog models</label><select id="detector" aria-describedby="model-capability"></select>
-<p id="model-capability" class="notice" role="status" aria-live="polite"></p><label for="source">Source<select id="source"></select></label><label for="pose">Source anchor<select id="pose"></select></label><div id="gamma-controls" hidden><label for="gamma-energy-keV">Gamma energy · keV<input id="gamma-energy-keV" type="number" min="0" step="any" value="662" aria-describedby="gamma-limit" disabled></label><p id="gamma-limit" class="muted"></p></div><label for="angle-deg">Source/capsule angle · degrees<input id="angle-deg" type="number" min="-30" max="30" step="any" value="0" aria-describedby="angle-limit" disabled></label><p id="angle-limit" class="muted">Zero retains the nominal source position. Check plan resolves an admitted decay source's bounded angular placement.</p><p id="source-details" class="muted"></p><p id="source-pose-preview" class="notice" role="status" aria-live="polite">Check plan to resolve the selected source energy, angle and position.</p><details><summary>Checked source pose</summary><pre id="source-pose-identity">No checked source pose.</pre></details><details><summary>Source identity and acceptance</summary><pre id="source-identity"></pre></details>
-<div id="gegi-source-controls" hidden><p class="muted">Source position in detector coordinates: x and y follow the strip axes; +z is the front face. Units: mm.</p><div class="horizontal"><label for="gegi-source-x">Source x · mm<input id="gegi-source-x" type="number" step="any" value="0"></label><label for="gegi-source-y">Source y · mm<input id="gegi-source-y" type="number" step="any" value="0"></label></div><label for="gegi-source-z">Source z · mm<input id="gegi-source-z" type="number" step="any" value="100"></label></div>
-<div class="horizontal"><label for="count">Initial primaries<input id="count" type="text" inputmode="numeric" pattern="[0-9]+" value="500" autocomplete="off" aria-describedby="count-limit"></label><label for="threads">Julia threads<select id="threads"><option value="2">2</option><option value="1">1</option></select></label></div><p id="count-limit" class="muted">Enter an exact positive integer. Decay sources run serial batches of at most 10000; practical runtime and storage still depend on the requested count.</p><label for="seed">Radiation seed<input id="seed" type="number" value="26092631" min="1" max="2147483646" step="1"></label><label for="name">Run name<input id="name" value="local-run-01" maxlength="48" pattern="[A-Za-z0-9_-]{1,48}" spellcheck="false" autocomplete="off"></label>
-<details><summary>Electronics settings</summary><label for="use-peak-gate"><input id="use-peak-gate" type="checkbox" style="display:inline;width:auto;min-height:0;margin-right:8px">Use a peak gate</label><div id="electronics"></div><p class="muted">One independent 500 keV injection determines the gain for this configuration. The analog time grid is separate from the peak ADC.</p></details>
-<details><summary>Model and numerical settings</summary><p class="muted" id="operating-details"></p><p class="muted" id="numerics"></p><p class="muted">CPU stages run serially. Native failure quantities remain null.</p><p id="setup-limit" class="muted"></p></details>
-<div class="actions"><button id="save">Export configuration</button><button id="load">Load configuration</button></div><input type="file" id="import" accept="application/json,.json">
-<p id="setup-preview" class="muted">Current setup</p><details><summary>Checked next-run configuration</summary><pre id="checked-plan">No checked plan yet.</pre></details>
-<div class="actions"><button id="check">Check plan</button><button id="start" class="primary" aria-describedby="run-readiness" disabled>Run simulation</button></div><p id="run-readiness" class="notice" role="status" aria-live="polite">Run unavailable. Check plan for the current setup.</p><p id="notice" class="notice" role="status" aria-live="polite">Check the selected setup before Run.</p></section>
-<footer id="catalog-counts">Catalog geometry inspection is separate from supported local computation. The public website shows saved results. Detector and source compatibility follows the selected cryostat.</footer></aside>
-<div><section id="model-panel" aria-labelledby="model-title"><h2 id="model-title">Selected catalog model</h2><p id="model-summary" class="muted"></p><p id="model-variant" class="muted"></p><div id="model-requirements" hidden><h3>Model parameters and setup requirements</h3><ul id="model-parameters"></ul><details><summary>Compatibility checks for this cryostat</summary><ul id="model-checks"></ul></details></div><div class="model-grid">
-<div><figure id="model-preview-box" hidden><img id="model-preview" alt=""><figcaption class="muted">Saved catalog geometry only. Contact colors do not specify lithium thickness or doping.</figcaption></figure><p id="model-preview-status" class="muted" role="status"></p><a id="model-view" target="_blank" rel="noreferrer">Open saved rotatable geometry · public website</a></div>
-<div><h3>Catalog contacts · signed voltages</h3><p id="model-contact-summary" class="muted"></p><details id="model-contact-list"><summary>Contact names and signed potentials</summary><ul id="model-contacts"></ul></details><details><summary>Model assumptions and identity</summary><p id="model-capability-details" class="muted"></p><p id="model-assumptions" class="muted"></p><pre id="model-identity"></pre></details></div></div></section><section><h2>Selected saved run · pipeline</h2><p id="selected" class="muted">No run selected. Start a simulation or choose Show stages in Runs.</p><p class="muted">This pipeline and event explorer use the selected run's saved settings. The next-run controls on the left do not change these results.</p><p id="saved-source-pose" class="muted">No saved source pose selected.</p><p id="batch-progress" class="notice" role="status" aria-live="polite"></p><div id="pipeline"></div><p id="response-progress" class="muted"></p><details><summary>Selected saved-run settings · exact recorded inputs</summary><pre id="run-plan">No run selected.</pre></details><p class="muted">Stop waits for the current stage or batch boundary. Resume keeps the saved settings and reuses verified completed work. Interrupted partial stages require inspection.</p></section>
-<section><h2>Runs</h2><p id="legacy-notice" class="muted" role="status" hidden></p><div id="runs">No runs created in this application.</div><details id="legacy-recovery" hidden><summary>Previous saved jobs and recovery</summary><div id="legacy-runs"></div><p class="muted">Verify saved completion reads existing results. Inspect denied launch applies only to a recognized first-stage WSL access denial after complete process checks. Failed files remain unchanged; use a new run name.</p></details></section>
-<section id="gegi-saved-panel"><h2>Reprocess saved GeGI signals</h2>
-<p>Choose a completed standalone GeGI run or a campaign with sealed SQLite signal stores. Reprocessing reads saved signals and fixed readout values into a separate derivative. It starts no radiation, carrier drift, field solve or calibration.</p>
-<p class="muted">Completed GeGI runs owned by Control appear automatically. Imported campaign folders belong in <code>.local/gegi-saved-inputs/campaigns/NAME/</code>; independent saved template folders belong in <code>.local/gegi-saved-inputs/calibrations/NAME/</code>. Existing project dataset/campaign folders and their saved calibration siblings are also offered. Standalone reprocessing has no checkpoint boundary, so Stop and Resume are unavailable; campaign processing retains its chunk boundaries.</p>
-<div class="actions"><button id="gegi-saved-refresh">Refresh saved inputs</button></div>
-<div class="horizontal"><label>Completed GeGI input<select id="gegi-saved-campaign"></select></label><label>Independent saved templates<select id="gegi-saved-calibration"><option value="">None · unsupported depth remains unknown</option></select></label></div>
-<label>New derivative name<input id="gegi-saved-name" value="gegi-saved-01" maxlength="48" autocomplete="off" spellcheck="false"></label>
-<div class="actions"><button id="gegi-saved-start" disabled>Reprocess saved signals</button><button id="gegi-saved-resume" disabled>Resume selected derivative</button><button id="gegi-saved-stop" disabled>Stop after current chunk</button></div>
-<label>Existing derivative<select id="gegi-saved-job"><option value="">Choose a saved derivative</option></select></label>
-<p id="gegi-saved-status" class="notice" role="status" aria-live="polite">Refresh saved inputs to list completed GeGI runs and campaign stores on this computer.</p>
-<p id="gegi-saved-path" class="muted"></p><div id="gegi-saved-files" class="actions"></div>
-<p class="muted">The response model is approximate. Full 34-channel independent templates are not generally available; unsupported signals may produce no supported 3D hypotheses. Conditional candidates are not validated recovered events, and no source location is supplied as the answer. Older saved maps using terminal-CFD timing and strict two-by-two strip selection remain experimental legacy results.</p>
-<details><summary>Saved derivative identity, totals and limitations</summary><pre id="gegi-saved-record">No derivative selected.</pre></details></section>
-<section id="gegi-candidate-panel"><h2>Run GeGI with two fresh sources</h2>
-<p>Cs-137 and Co-60 share one geometry, decay clock and all 34 detector channels. Process every signal; save full fast/slow readout context for Compton imaging candidates and keep the complete count statistics.</p>
-<p class="muted">Choose a physical duration or fixed new-parent count. The defaults are 5 seconds and 100 decays. Duration follows the detector's acquisition clock; the number of new source decays is random. Positions use detector x, y, z coordinates in mm.</p>
-<div class="horizontal"><label>Cs-137 activity · Bq<input id="gegi-candidate-activity-a" type="number" min="0" step="any" value="185000"></label><label>Co-60 activity · Bq<input id="gegi-candidate-activity-b" type="number" min="0" step="any" value="37000"></label></div>
-<div class="horizontal"><label>Cs-137 x · mm<input id="gegi-candidate-a-x" type="number" step="any" value="-40"></label><label>Co-60 x · mm<input id="gegi-candidate-b-x" type="number" step="any" value="40"></label></div>
-<div class="horizontal"><label>Cs-137 y · mm<input id="gegi-candidate-a-y" type="number" step="any" value="0"></label><label>Co-60 y · mm<input id="gegi-candidate-b-y" type="number" step="any" value="0"></label></div>
-<div class="horizontal"><label>Cs-137 z · mm<input id="gegi-candidate-a-z" type="number" step="any" value="40"></label><label>Co-60 z · mm<input id="gegi-candidate-b-z" type="number" step="any" value="40"></label></div>
-<div class="horizontal"><label>Storage planning · total source decays<input id="gegi-candidate-estimate-count" type="text" inputmode="numeric" value="20000000" autocomplete="off"></label><div class="actions"><button id="gegi-candidate-estimate">Estimate storage</button></div></div>
-<p id="gegi-candidate-storage" class="notice" role="status" aria-live="polite">Storage estimate uses the selected sources and a measured reference. Future peak temporary storage has not been forecast.</p>
-<label>Acquisition mode<select id="gegi-candidate-mode"><option value="duration" selected>Steady source · physical duration</option><option value="count">Startup check · fixed new-parent count</option></select></label>
-<div class="horizontal"><label id="gegi-candidate-duration-field">Physical duration · s<input id="gegi-candidate-duration" type="number" min="0" step="any" value="5"></label><label id="gegi-candidate-count-field" hidden>New parent decays<input id="gegi-candidate-count" type="number" min="1" step="1" value="100"></label><label>Seed<input id="gegi-candidate-seed" type="number" min="1" max="2147483646" step="1" value="20261120"></label></div>
-<p id="gegi-candidate-scope" class="muted">Choose a positive physical duration; the default is 5 seconds. Radioactive daughter populations use the source equilibrium model; electronics start quiet with zero signal history.</p>
-<label>New acquisition name<input id="gegi-candidate-name" value="gegi-mixed-01" maxlength="48" autocomplete="off" spellcheck="false"></label>
-<div class="actions"><button id="gegi-candidate-start" class="primary">Run fresh acquisition</button><button id="gegi-candidate-stop" disabled>Stop</button><button id="gegi-candidate-resume" disabled>Resume saved acquisition</button><button id="gegi-candidate-refresh">Refresh saved acquisitions</button></div>
-<p class="muted">Stop saves the current progress. Resume continues the same acquisition clock, source settings and electronics state.</p>
-<label>Saved acquisition<select id="gegi-candidate-job"><option value="">Choose an acquisition</option></select></label>
-<p id="gegi-candidate-status" class="notice" role="status" aria-live="polite">Run a small fresh acquisition, or refresh to open saved candidates.</p>
-<div id="gegi-candidate-summary"></div>
-<section id="gegi-candidate-imaging" hidden><h3>Reconstruct a source-plane map</h3>
-<p>Analyze the saved two-strip candidates with the separate matching waveform calibration. This reads existing data and creates a derived map; it does not run radiation transport or carrier drift. Download the separate calibration into <code>.local/gegi-center-calibration.npz</code>, then refresh saved acquisitions.</p>
-<label>External calibration<select id="gegi-candidate-calibration"><option value="">Choose an imported calibration</option></select></label>
-<label>Interaction position model<select id="gegi-candidate-lateral-calibration"><option value="">Center templates</option></select></label>
-<div class="horizontal"><label>Assumed plane z · mm<input id="gegi-candidate-plane-z" type="number" step="any" value="40"></label><label>Plane half-width · mm<input id="gegi-candidate-plane-extent" type="number" min="0" step="any" value="120"></label><label>Grid spacing · mm<input id="gegi-candidate-plane-step" type="number" min="0" step="any" value="4"></label><label>Angular width · degrees<input id="gegi-candidate-plane-sigma" type="number" min="0" step="any" value="5"></label></div>
-<label>Plane prior<select id="gegi-candidate-plane-prior"><option value="uniform-area">Uniform area</option><option value="uniform-solid-angle">Uniform solid angle from detector origin</option></select></label>
-<label for="gegi-candidate-compatibility"><input id="gegi-candidate-compatibility" type="checkbox" style="display:inline;width:auto;min-height:0;margin-right:8px">Save fit residuals on all 34 electrodes</label>
-<label for="gegi-candidate-shared-strip"><input id="gegi-candidate-shared-strip" type="checkbox" style="display:inline;width:auto;min-height:0;margin-right:8px">Add a map for candidates that share a strip</label>
-<div class="actions"><button id="gegi-candidate-analyze" disabled>Analyze all two-strip candidates</button></div>
-<p id="gegi-candidate-analysis-status" class="notice" role="status" aria-live="polite">Choose a completed acquisition.</p>
-<label>Saved source-plane map<select id="gegi-candidate-map"><option value="">No saved map</option></select></label><button id="gegi-candidate-open-map" disabled>Open saved map</button>
-<div id="gegi-candidate-map-view"></div></section>
-<div id="gegi-candidate-view" tabindex="-1" hidden><h3>Candidate waveforms</h3><div class="horizontal"><label>Original candidate trigger<select id="gegi-candidate-trigger"></select></label><label>Electrode<select id="gegi-candidate-contact"></select></label></div>
-<div class="actions"><button id="gegi-candidate-previous">Previous candidates</button><button id="gegi-candidate-next">Next candidates</button></div><p id="gegi-candidate-page" class="muted"></p>
-<p id="gegi-candidate-event-status" class="notice" role="status" aria-live="polite"></p><div id="gegi-candidate-features"></div><div id="gegi-candidate-plots" class="plot-grid"></div>
-<details><summary>Selected candidate identities and alternatives</summary><pre id="gegi-candidate-record"></pre></details></div>
-<details><summary>Acquisition statistics and saved files</summary><pre id="gegi-candidate-receipt">No acquisition selected.</pre></details></section>
-<section id="gegi-dual-panel"><h2>Historical readout diagnostic · saved source libraries</h2>
-<p>Replay two saved source libraries on one acquisition clock. Each library supplies its recorded isotope and source coordinates.</p>
-<p class="muted">Place each sealed chunk in <code>.local/gegi-saved-inputs/source-libraries/NAME/</code>. Refresh after copying the libraries.</p>
-<div class="actions"><button id="gegi-dual-refresh">Refresh source libraries and acquisitions</button></div>
-<div class="horizontal"><label>Library A<select id="gegi-dual-source-a"><option value="">Choose a library</option></select></label>
-<label>Activity A (Bq)<input id="gegi-dual-activity-a" type="number" min="0" step="any" value="37000"></label></div>
-<div class="horizontal"><label>Library B<select id="gegi-dual-source-b"><option value="">Choose a library</option></select></label>
-<label>Activity B (Bq)<input id="gegi-dual-activity-b" type="number" min="0" step="any" value="37000"></label></div>
-<div class="horizontal"><label>Duration (s)<input id="gegi-dual-duration" type="number" min="0" step="any" value="0.25"></label>
-<label>Seed<input id="gegi-dual-seed" type="text" inputmode="numeric" maxlength="20" value="20261118"></label></div>
-<label>Trigger profile<select id="gegi-dual-trigger-profile"><option value="standard">Standard · 5 keV-equivalent per sample</option>
-<option value="low-energy">Low energy · 4 keV-equivalent per sample</option></select></label>
-<label>New acquisition name<input id="gegi-dual-name" value="gegi-dual-01" maxlength="48" autocomplete="off" spellcheck="false"></label>
-<div class="actions"><button id="gegi-dual-start" disabled>Run acquisition</button></div>
-<label>Saved acquisition<select id="gegi-dual-job"><option value="">Choose an acquisition</option></select></label>
-<p class="muted">To open a saved report, place <code>report.json</code> in <code>.local/gegi-dual-source/NAME/</code>, refresh, and select the acquisition. Put its <code>plane.json.gz</code> in the same folder to view a saved Compton backprojection.</p>
-<p id="gegi-dual-status" class="notice" role="status" aria-live="polite">Refresh to find imported source libraries and saved acquisitions.</p>
-<div id="gegi-dual-results"></div>
-<details><summary>Acquisition receipt and settings</summary><pre id="gegi-dual-receipt">No acquisition selected.</pre></details>
-</section>
-<section id="log-view" hidden><h2 id="log-title">Stage log</h2><pre id="log-text"></pre><p class="muted">This log stays open while the run list refreshes. Text decoding is display only; original saved bytes remain unchanged.</p></section>
-<section id="result" hidden><h2>Event explorer</h2><p id="result-heading"></p><div id="batch-navigation" hidden><div class="horizontal"><label for="batch-index">Saved batch index · zero based<input id="batch-index" type="text" inputmode="numeric" value="0"></label><label for="page-offset">Nonzero event offset<input id="page-offset" type="text" inputmode="numeric" value="0"></label></div><div class="actions"><button id="load-page">Load saved page</button><button id="previous-page">Previous page</button><button id="next-page">Next page</button></div><p id="page-status" class="muted" role="status"></p></div><div class="horizontal"><label for="event">Initial primary ID<select id="event"></select></label><label for="group">Primary summary or pulse group<select id="group"></select></label></div><p class="muted">Only nonzero-deposit events are listed; initial and zero-deposit counts remain in the summary. Pulse and readout hints describe its saved records.</p><p id="event-identity" class="muted"></p><div id="result-data"></div><div id="plots" class="plot-grid"></div><p id="result-options-status" class="muted" role="status" aria-live="polite"></p><details id="spectrum-panel" hidden><summary>Saved energy spectrum · raw counts</summary><p id="spectrum-status" class="notice" role="status" aria-live="polite"></p><div id="spectrum-content"></div></details><div id="stage-files"><h3>Saved stage files</h3><p class="muted">Original files for the selected saved run and loaded batch. These protected links retrieve saved data; no simulation starts. Larger files remain in .local/runs/NAME/ on this computer.</p><p id="analysis-selection" class="notice" role="status" aria-live="polite"></p><p id="analysis-state" class="muted"></p><details><summary>Selected event filters and units</summary><p id="analysis-filter" class="muted"></p><p class="muted">Normalized deposits use energy_keV in keV, detector-local position_mm in mm and global_position_m in m. In raw LH5, position columns use m, step edep uses keV and time uses ns; track and particle ekin use MeV. Check each raw column’s units in manifest.json → raw_tables → columns; those units are authoritative. The manifest also records the coordinate transform. Pulse plots use time since pulse-group origin in ns. Deposition time, particle creation time and carrier drift time describe different stages.</p></details><div id="saved-artifacts"></div></div><details id="feature-panel" hidden><summary>Saved waveform features and deposition topology</summary><p class="muted">Features use the full-resolution signed native charge and the recorded independent energy calibration. This panel reads an existing verified export; opening it verifies saved data without starting a simulation or export.</p><p id="feature-status" class="notice" role="status" aria-live="polite">Open this panel to inspect the selected primary’s saved features. No simulation or export starts.</p><div id="feature-content"></div></details><details id="acquisition-panel" hidden><summary>Saved synthetic waveform acquisition</summary><p class="muted">Inspect an existing verified acquisition export with explicit sampling, bipolar waveform ADC, trigger, bandwidth, noise and independent injection calibration. Opening this panel verifies saved data without starting a simulation or export. Original peak-ADC readout and waveform features remain separate.</p><p id="acquisition-status" class="notice" role="status" aria-live="polite">Open this panel to inspect the selected primary’s saved synthetic acquisition. No simulation or export starts.</p><div id="acquisition-content"></div></details><details><summary>All original records for this primary</summary><pre id="event-record"></pre></details></section>
-<section id="gegi-result" hidden><h2>GeGI multichannel results and Compton imaging</h2><p id="gegi-result-heading"></p><p id="gegi-counts" class="notice"></p><p id="gegi-limitations" class="muted"></p><p class="muted">Select an original nonzero primary to follow its saved signals through independent energy/timing calibration, strip pairing, reconstructed interactions and every viable Compton cone. Candidates use channel information and fixed line hypotheses; truth source and deposit positions do not select a candidate.</p><div class="horizontal"><label for="gegi-event">Original nonzero primary ID<select id="gegi-event"></select></label><label id="gegi-channel-control" for="gegi-channel">Readout channel<select id="gegi-channel"></select></label></div><p id="gegi-event-summary" class="notice"></p><div id="gegi-journey"></div><div id="gegi-plots" class="plot-grid"></div>
-<details id="gegi-digital-panel"><summary>Digital strip waveforms, positions and Compton orders</summary>
-<p id="gegi-digital-status" class="notice" role="status"></p>
-<div id="gegi-digital-content" hidden>
-<p id="gegi-digital-calibration" class="muted"></p><div id="gegi-digital-position"></div>
-<div class="horizontal"><label for="gegi-digital-strip">Electrode<select id="gegi-digital-strip"></select></label><label for="gegi-digital-neighbor">Neighbor strip<select id="gegi-digital-neighbor"></select></label></div>
-<div id="gegi-digital-measurements"></div><div id="gegi-digital-plots" class="plot-grid"></div>
-</div></details>
-<details id="gegi-imaging-panel"><summary>Full saved-run direction image and selected-event cone records</summary><p id="gegi-imaging-status" class="notice"></p><div id="gegi-imaging"></div><pre id="gegi-cones"></pre></details><details><summary>Exact selected signal and reconstruction records</summary><pre id="gegi-event-record"></pre></details><details><summary>Transport truth · evaluation only</summary><p class="muted">These original radiation deposits provide evaluation evidence. They are separate from the signal-derived interaction positions and scatter-order candidates.</p><pre id="gegi-truth-record"></pre></details><details><summary>Selected event identity, filters and original native files</summary><p id="gegi-event-filter" class="muted"></p><div id="gegi-event-files"></div></details><div id="gegi-files"><h3>Actual saved stage data</h3></div></section>
-</div></main></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GeSignal · Simulation Control</title>
+  <style>
+    :root {
+      font-family:system-ui,sans-serif;
+      color:#193649;
+      background:#f2f6f7;
+      color-scheme:light;
+      --accent:#008a96;
+      --line:#d5e2e6
+    }
+    * {
+      box-sizing:border-box
+    }
+    body {
+      margin:0
+    }
+    header {
+      background:white;
+      border-bottom:1px solid var(--line);
+      padding:22px max(24px,calc((100vw - 1440px)/2))
+    }
+    header h1 {
+      font-size:1.6rem;
+      margin:4px 0
+    }
+    header p {
+      margin:4px 0;
+      color:#557080
+    }
+    .brand {
+      color:var(--accent);
+      font-size:.8rem;
+      letter-spacing:.12em;
+      font-weight:750
+    }
+    main {
+      max-width:1280px;
+      margin:auto;
+      padding:28px 32px
+    }
+    section,.card {
+      background:white;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:22px;
+      margin-bottom:20px
+    }
+    h2 {
+      font-size:1.15rem;
+      margin:0 0 16px
+    }
+    h3 {
+      font-size:1rem;
+      margin:12px 0
+    }
+    label {
+      display:block;
+      font-size:.88rem;
+      font-weight:650;
+      margin:14px 0
+    }
+    input,select {
+      display:block;
+      width:100%;
+      font:inherit;
+      color:inherit;
+      border:1px solid #9bb4c0;
+      border-radius:7px;
+      padding:10px;
+      margin-top:6px;
+      min-height:43px
+    }
+    button,a.button {
+      font:inherit;
+      border:1px solid #9bb4c0;
+      border-radius:8px;
+      background:#f4f8f9;
+      color:#244e63;
+      padding:10px 14px;
+      min-height:43px;
+      cursor:pointer
+    }
+    button.primary {
+      background:#007d8a;
+      border-color:#007d8a;
+      color:white
+    }
+    button:disabled {
+      opacity:.5;
+      cursor:default
+    }
+    button.danger {
+      color: #9e3434;
+      border-color: #d6b2b2;
+    }
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible {
+      outline:3px solid #efa21e;
+      outline-offset:3px
+    }
+    .actions {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:18px
+    }
+    .actions button {
+      flex:1
+    }
+    .muted,small {
+      color:#587280;
+      font-size:.86rem;
+      line-height:1.55
+    }
+    summary {
+      cursor:pointer;
+      padding:12px 0;
+      min-height:44px;
+      font-weight:650
+    }
+    details {
+      border-top:1px solid var(--line);
+      margin-top:16px
+    }
+    pre {
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+      max-height:300px;
+      overflow:auto;
+      background:#f1f6f7;
+      padding:14px;
+      font-size:.78rem
+    }
+    .notice {
+      line-height:1.6;
+      overflow-wrap:anywhere
+    }
+    .error {
+      color:#ac3636
+    }
+    .okay {
+      color:#216553
+    }
+    .stage {
+      padding:14px 0;
+      border-top:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      gap:12px
+    }
+    .stage:first-child {
+      border:0
+    }
+    .dot {
+      width:11px;
+      height:11px;
+      border-radius:50%;
+      background:#c4d2d9;
+      flex:none
+    }
+    .stage.completed .dot {
+      background:#00947b
+    }
+    .stage.running .dot,.stage.command_exited .dot {
+      background:#e2a524
+    }
+    .stage.dispatch_intent .dot {
+      background:#008a96
+    }
+    .stage-title {
+      flex:1
+    }
+    .stage small {
+      display:block
+    }
+    .pill {
+      border-radius:20px;
+      padding:4px 10px;
+      background:#eef4f5;
+      font-size:.8rem;
+      white-space:nowrap
+    }
+    .run {
+      padding:18px 0;
+      border-top:1px solid var(--line)
+    }
+    .run:first-child {
+      border:0
+    }
+    .run p {
+      margin:7px 0
+    }
+    .run button {
+      margin:6px 8px 0 0
+    }
+    .run strong {
+      overflow-wrap:anywhere
+    }
+    .plot-grid {
+      display:grid;
+      grid-template-columns:minmax(0,1fr);
+      gap:16px
+    }
+    .plot {
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:14px
+    }
+    .plot h3 {
+      margin:0 0 6px
+    }
+    .plot svg {
+      width:100%;
+      height:auto;
+      font-size:11px
+    }
+    .metrics {
+      display:flex;
+      flex-wrap:wrap;
+      gap:14px
+    }
+    .metrics span {
+      background:#f0f6f7;
+      padding:12px 16px;
+      border-radius:8px
+    }
+    .metrics strong {
+      display:block;
+      font-size:1.2rem
+    }
+    a {
+      color:#007d8a
+    }
+    footer {
+      margin-top:20px;
+      color:#647b87;
+      font-size:.82rem;
+      line-height:1.6
+    }
+    .horizontal {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      gap:12px
+    }
+    #result-data {
+      overflow-wrap:anywhere
+    }
+    #stage-files {
+      border-top:1px solid var(--line);
+      margin-top:20px;
+      padding-top:12px
+    }
+    #result-options-status:empty {
+      display:none
+    }
+    #spectrum-content svg {
+      width:100%;
+      height:auto;
+      font-size:11px
+    }
+    #import {
+      display:none
+    }
+    #gegi-imaging svg {
+      width:100%;
+      height:auto;
+      font-size:11px
+    }
+    #gegi-files button {
+      display:block;
+      margin:8px 0;
+      max-width:100%
+    }
+    @media(max-width:760px) {
+      main {
+        display:block;
+        padding:14px
+      }
+      section,.card {
+        padding:18px
+      }
+      header {
+        padding:18px
+      }
+      .plot-grid {
+        grid-template-columns:1fr
+      }
+      .actions {
+        gap:8px
+      }
+    }
+    #model-panel {
+      overflow-wrap:anywhere
+    }
+    .model-grid {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      gap:20px
+    }
+    .model-grid>div {
+      min-width:0
+    }
+    #model-variant:empty {
+      display:none
+    }
+    @media(max-width:760px) {
+      .model-grid {
+        grid-template-columns:1fr
+      }
+    }
+    #model-contacts {
+      padding-left:20px;
+      font-size:.86rem;
+      line-height:1.6;
+      max-height:240px;
+      overflow:auto
+    }
+    #model-preview-box {
+      margin:12px 0
+    }
+    #model-preview {
+      display:block;
+      width:100%;
+      height:280px;
+      object-fit:contain;
+      border:1px solid var(--line);
+      border-radius:8px
+    }
+    #model-view {
+      display:inline-block;
+      min-height:44px;
+      padding:8px 0
+    }
+    #model-capability {
+      font-weight:650
+    }
+    #model-preview-status {
+      font-size:.8rem
+    }
+    .plot {
+      margin:0;
+      min-width:0
+    }
+    .plot-grid>p,.plot-grid>small {
+      grid-column:1/-1;
+      min-width:0;
+      overflow-wrap:anywhere
+    }
+    .plot-grid figcaption {
+      overflow-wrap:anywhere
+    }
+    main>aside,main>div {
+      min-width:0
+    }
+    #saved-artifacts>div {
+      padding:12px 0
+    }
+    #saved-artifacts button,#saved-artifacts small {
+      display:block;
+      max-width:100%;
+      margin:6px 0;
+      overflow-wrap:anywhere
+    }
+    .gegi-pairings {
+      padding-inline-start:1.35rem;
+      line-height:1.5
+    }
+    .gegi-pairings>li+li {
+      margin-top:12px;
+      padding-top:12px;
+      border-top:1px solid var(--line)
+    }
+    .gegi-pairings ul {
+      padding-inline-start:1.15rem;
+      margin:4px 0
+    }
+    .gegi-pairings p {
+      margin:8px 0 4px
+    }
+    .dual-pixel-map {
+      margin-top:16px
+    }
+    .dual-pixel-scroll {
+      max-width:100%;
+      overflow-x:auto;
+      margin:10px 0
+    }
+    .dual-pixel-scroll:focus-visible {
+      outline:2px solid var(--accent);
+      outline-offset:2px
+    }
+    .dual-pixel-table {
+      width:100%;
+      min-width:35rem;
+      border-spacing:1px;
+      font-size:.8rem;
+      font-variant-numeric:tabular-nums;
+      text-align:center
+    }
+    .dual-pixel-table th,.dual-pixel-table td {
+      padding:.3rem .22rem;
+      white-space:nowrap
+    }
+    .dual-pixel-table th {
+      background:#edf4f6
+    }
+    .dual-pixel-table th:first-child {
+      position:sticky;
+      left:0;
+      z-index:1
+    }
+    .dual-pixel-table td {
+      padding:1px
+    }
+    .dual-pixel-table button {
+      width:100%;
+      min-height:30px;
+      padding:2px;
+      border:0;
+      border-radius:3px;
+      background:transparent;
+      color:inherit
+    }
+    .dual-pixel-table button[aria-pressed="true"] {
+      box-shadow:inset 0 0 0 2px #b96909
+    }
+    .dual-pixel-table button:focus-visible {
+      outline-offset:-2px
+    }
+    .dual-feature-faces {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));
+      gap:12px
+    }
+    #gegi-candidate-duration-field[hidden],#gegi-candidate-count-field[hidden] {
+      display:none
+    }
+    .dual-plane-figure {
+      width:min(100%,32rem)
+    }
+    .dual-plane-axes {
+      display:grid;
+      grid-template-columns:auto auto minmax(0,1fr);
+      grid-template-rows:auto auto auto;
+      gap:4px 8px;
+      font-size:.78rem;
+      font-variant-numeric:tabular-nums
+    }
+    .dual-plane-axes canvas {
+      grid-column:3;
+      grid-row:1;
+      width:100%;
+      height:auto;
+      image-rendering:pixelated;
+      border:1px solid var(--line)
+    }
+    .dual-plane-y {
+      grid-column:2;
+      grid-row:1;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      text-align:right
+    }
+    .dual-plane-y-label {
+      grid-column:1;
+      grid-row:1;
+      place-self:center;
+      writing-mode:vertical-rl;
+      transform:rotate(180deg)
+    }
+    .dual-plane-x {
+      grid-column:3;
+      grid-row:2;
+      display:flex;
+      justify-content:space-between
+    }
+    .dual-plane-x-label {
+      grid-column:3;
+      grid-row:3;
+      text-align:center
+    }
+    .dual-plane-figure figcaption {
+      margin-top:8px
+    }
+    /* Student navigation and focused workspaces. */
+    [hidden] {
+      display: none !important;
+    }
+    body {
+      background: #f3f6f8;
+    }
+    header {
+      padding: 18px 32px;
+    }
+    .header-inner {
+      max-width: 1216px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    header h1 {
+      font-size: 1.35rem;
+      margin: 4px 0 0;
+    }
+    .main-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .main-nav button {
+      background: transparent;
+      border-color: transparent;
+      font-weight: 650;
+    }
+    .main-nav button[aria-current="page"] {
+      background: #e4f3f3;
+      color: #006b76;
+    }
+    .app-page {
+      min-width: 0;
+    }
+    .page-heading {
+      margin-bottom: 20px;
+    }
+    .page-heading h2 {
+      font-size: 1.45rem;
+      margin-bottom: 6px;
+    }
+    .page-heading p {
+      margin: 0;
+    }
+    .task-choices {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .prerequisites-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .prerequisites-heading h2, .prerequisites-heading .actions {
+      margin: 0;
+    }
+    .prerequisites-heading a.button {
+      text-decoration: none;
+    }
+    .prerequisites-scroll {
+      overflow-x: auto;
+    }
+    .prerequisites-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: .86rem;
+    }
+    .prerequisites-table th, .prerequisites-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    .prerequisites-table thead {
+      background: #f0f6f7;
+    }
+    .prerequisites-table th:first-child {
+      width: 23%;
+    }
+    .prerequisites-table td:nth-child(2) {
+      width: 140px;
+      white-space: nowrap;
+    }
+    .prerequisites-table p {
+      margin: 0 0 6px;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+    .prerequisite-status {
+      display: inline-block;
+      font-weight: 650;
+    }
+    .prerequisite-status.missing, .prerequisite-status.mismatch, .prerequisite-status.unavailable {
+      color: #9e3434;
+    }
+    .task-choice {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      align-items: flex-start;
+      text-align: left;
+      background: white;
+      padding: 15px 18px;
+      border-color: var(--line);
+    }
+    .task-choice strong {
+      font-size: 1rem;
+    }
+    .task-choice span {
+      font-size: .86rem;
+      color: #587280;
+    }
+    .task-choice[aria-pressed="true"] {
+      border-color: #008a96;
+      box-shadow: inset 0 0 0 1px #008a96;
+      background: #f0fafa;
+    }
+    .setup-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+    .setup-layout section {
+      min-width: 0;
+      margin-bottom: 0;
+    }
+    #standard-setup label {
+      margin: 10px 0;
+    }
+    #standard-setup .horizontal {
+      gap: 16px;
+    }
+    #standard-setup .notice, #standard-setup .muted {
+      margin: 8px 0;
+    }
+    #standard-setup #model-capability {
+      font-size: .84rem;
+      font-weight: 500;
+    }
+    .setup-callout {
+      border: 1px solid #c4dadd;
+      background: #f0f8f8;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 12px 0;
+    }
+    .setup-callout p {
+      font-size: .88rem;
+      line-height: 1.5;
+    }
+    .setup-callout .actions {
+      margin-top: 12px;
+    }
+    .setup-callout a.button {
+      text-decoration: none;
+    }
+    #standard-more-settings {
+      margin-top: 14px;
+    }
+    .start-actions {
+      display: flex;
+      margin-top: 20px;
+    }
+    .start-actions button {
+      min-width: 190px;
+      font-weight: 650;
+    }
+    #notice:empty {
+      display: none;
+    }
+    #notice:not(:empty) {
+      margin: 0 0 20px;
+      padding: 12px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+    }
+    #run-readiness {
+      font-size: .84rem;
+    }
+    #model-preview {
+      height: 285px;
+      background: #fbfcfc;
+    }
+    #model-panel h2 {
+      margin-bottom: 8px;
+    }
+    #model-panel figure {
+      margin: 12px 0 0;
+    }
+    #model-panel footer {
+      margin-top: 14px;
+    }
+    .model-fallback {
+      background: #f4f8f9;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .model-fallback h3 {
+      margin-top: 0;
+    }
+    #model-preview-facts p {
+      margin: 8px 0;
+      font-size: .88rem;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+    }
+    .checkbox-label input {
+      width: auto;
+      min-height: 0;
+      margin: 0;
+    }
+    .source-card {
+      background: #f4f8f9;
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .source-card h3 {
+      margin-top: 0;
+    }
+    .coordinates {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .horizontal > *, .coordinates > * {
+      min-width: 0;
+    }
+    #gegi-task {
+      max-width: 940px;
+    }
+    .detail-toolbar {
+      display: flex;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .detail-toolbar .actions {
+      margin: 0;
+    }
+    .view-tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--line);
+      margin: 20px 0;
+    }
+    .view-tabs button {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 12px 16px;
+      border-bottom: 3px solid transparent;
+    }
+    .view-tabs button[aria-selected="true"] {
+      border-bottom-color: #008a96;
+      color: #006d78;
+      font-weight: 700;
+    }
+    .event-tools {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .event-search {
+      display: flex;
+      align-items: end;
+      gap: 8px;
+    }
+    .event-search label {
+      margin: 0;
+    }
+    .event-tools .actions {
+      margin: 0;
+    }
+    .event-tools .actions button {
+      flex: auto;
+    }
+    #event-find-status {
+      flex-basis: 100%;
+      margin: 0;
+      font-size: .88rem;
+    }
+    #event-find-status:empty {
+      display: none;
+    }
+    .stage-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 14px 0;
+    }
+    .stage-tabs button {
+      min-height: 38px;
+      padding: 8px 12px;
+    }
+    .stage-tabs button[aria-pressed="true"] {
+      color: white;
+      background: #007d8a;
+      border-color: #007d8a;
+    }
+    #result-summary {
+      margin: 12px 0 20px;
+    }
+    #result-overview #spectrum-panel {
+      border-top: 0;
+    }
+    #result-files #stage-files {
+      border-top: 0;
+      margin-top: 0;
+      padding-top: 0;
+    }
+    #candidate-runs-panel .horizontal {
+      align-items: end;
+    }
+    #candidate-runs-panel .actions {
+      margin-bottom: 14px;
+    }
+    #research-tools > section {
+      margin-top: 14px;
+    }
+    @media (max-width: 960px) {
+      main {
+        padding: 24px;
+      }
+      .setup-layout {
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+        gap: 16px;
+      }
+      .setup-layout section {
+        padding: 18px;
+      }
+    }
+    @media (max-width: 760px) {
+      header {
+        padding: 16px;
+      }
+      .header-inner {
+        display: block;
+      }
+      .main-nav {
+        margin-top: 14px;
+      }
+      .main-nav button {
+        padding: 9px 10px;
+      }
+      main {
+        padding: 18px 14px;
+      }
+      .setup-layout, .task-choices, .source-grid {
+        grid-template-columns: 1fr;
+      }
+      .task-choices {
+        gap: 8px;
+      }
+      .task-choice {
+        padding: 12px 14px;
+      }
+      .setup-layout section {
+        margin-bottom: 0;
+      }
+      .view-tabs {
+        overflow-x: auto;
+      }
+      .view-tabs button {
+        white-space: nowrap;
+        padding-inline: 10px;
+      }
+      .coordinates {
+        gap: 8px;
+      }
+    }
+  </style>
+  <script src="/focused_plots.js" defer></script>
+  <script src="/gegi_signal_journey.js" defer></script>
+  <script src="/local_workflow.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div>
+        <div class="brand">GESIGNAL</div>
+        <h1>Simulation Control</h1>
+      </div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <button id="nav-new" type="button" data-nav="new" aria-controls="page-new" aria-current="page">New simulation</button>
+        <button id="nav-runs" type="button" data-nav="runs" aria-controls="page-runs" aria-current="false">My runs</button>
+        <button id="nav-help" type="button" data-nav="help" aria-controls="page-help" aria-current="false">Help</button>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <p id="notice" class="notice" role="status" aria-live="polite"></p>
+    <div id="page-new" class="app-page" data-page="new">
+      <div class="page-heading">
+        <h2>New simulation</h2>
+        <p class="muted">Choose a task, configure the detector, then start your run.</p>
+      </div>
+      <section id="prerequisites-panel" aria-labelledby="prerequisites-title">
+        <div class="prerequisites-heading">
+          <h2 id="prerequisites-title">Prerequisites &amp; setup</h2>
+          <div class="actions">
+            <button id="setup" type="button">Recheck prerequisites</button>
+            <a id="guide" class="button" target="_blank" rel="noreferrer" href="https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup">Full setup guide</a>
+          </div>
+        </div>
+        <p id="prerequisites-platform" class="muted">Checking the tools and simulation environments required on this computer.</p>
+        <p id="setup-notice" class="notice" role="status" aria-live="polite">Checking prerequisites…</p>
+        <details id="prerequisites-details" open>
+          <summary>Requirements and installation steps</summary>
+          <div class="prerequisites-scroll">
+            <table class="prerequisites-table" aria-describedby="setup-notice">
+              <thead>
+                <tr><th scope="col">Requirement</th><th scope="col">Status</th><th scope="col">Result and next step</th></tr>
+              </thead>
+              <tbody id="prerequisites-list"></tbody>
+            </table>
+          </div>
+        </details>
+        <details>
+          <summary>Environment check details</summary>
+          <pre id="setup-record">The first check runs automatically when Control opens.</pre>
+        </details>
+      </section>
+      <div class="task-choices" aria-label="Simulation type">
+        <button type="button" class="task-choice" data-task-choice="standard" aria-controls="standard-task" aria-pressed="true">
+          <strong>Detector simulation</strong>
+          <span>Configure one detector and source.</span>
+        </button>
+        <button type="button" class="task-choice" data-task-choice="gegi" aria-controls="gegi-task" aria-pressed="false">
+          <strong>GeGI two-source acquisition</strong>
+          <span>Simulate Cs-137 and Co-60 together.</span>
+        </button>
+      </div>
+      <div id="standard-task" class="task-panel" data-task-panel="standard">
+        <div class="setup-layout">
+          <section id="standard-setup" aria-labelledby="standard-title">
+            <h2 id="standard-title">Simulation setup</h2>
+            <div class="horizontal">
+              <label for="cryostat">
+                Cryostat
+                <select id="cryostat"></select>
+              </label>
+              <label for="detector">
+                Detector
+                <select id="detector" aria-describedby="model-capability"></select>
+              </label>
+            </div>
+            <p id="model-capability" class="notice" role="status" aria-live="polite"></p>
+            <div id="setup-required" class="setup-callout" hidden>
+              <p>Follow the Setup guide for this computer, then reopen Control.</p>
+              <div class="actions">
+                <button id="setup-required-help" type="button">Check setup</button>
+                <a id="setup-required-guide" class="button" target="_blank" rel="noreferrer" href="https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup">Setup guide</a>
+              </div>
+            </div>
+            <div class="horizontal">
+              <label for="source">
+                Source
+                <select id="source"></select>
+              </label>
+              <label for="pose">
+                Source position
+                <select id="pose"></select>
+              </label>
+            </div>
+            <div id="gamma-controls" hidden>
+              <label for="gamma-energy-keV">
+                Gamma energy · keV
+                <input id="gamma-energy-keV" type="number" min="0" step="any" value="662" aria-describedby="gamma-limit" disabled>
+              </label>
+              <p id="gamma-limit" class="muted"></p>
+            </div>
+            <div id="gegi-source-controls" hidden>
+              <p class="muted">Source position in detector coordinates: x and y follow the strip axes; +z is the front face. Units: mm.</p>
+              <div class="horizontal">
+                <label for="gegi-source-x">
+                  Source x · mm
+                  <input id="gegi-source-x" type="number" step="any" value="0">
+                </label>
+                <label for="gegi-source-y">
+                  Source y · mm
+                  <input id="gegi-source-y" type="number" step="any" value="0">
+                </label>
+              </div>
+              <label for="gegi-source-z">
+                Source z · mm
+                <input id="gegi-source-z" type="number" step="any" value="100">
+              </label>
+            </div>
+            <div class="horizontal">
+              <label for="count">
+                <span id="count-label">Number of initial primaries</span>
+                <input id="count" type="text" inputmode="numeric" pattern="[0-9]+" value="500" autocomplete="off" aria-describedby="count-limit">
+              </label>
+              <label for="name">
+                Run name
+                <input id="name" value="local-run-01" maxlength="48" pattern="[A-Za-z0-9_-]{1,48}" spellcheck="false" autocomplete="off">
+              </label>
+            </div>
+            <p id="count-limit" class="muted">Includes every initial primary, including those that miss the detector.</p>
+            <details id="standard-more-settings">
+              <summary>More settings</summary>
+              <div class="horizontal">
+                <label for="seed">
+                  Random seed
+                  <input id="seed" type="number" value="26092631" min="1" max="2147483646" step="1">
+                </label>
+                <label for="threads">
+                  CPU threads
+                  <select id="threads">
+                    <option value="2">2</option>
+                    <option value="1">1</option>
+                  </select>
+                </label>
+              </div>
+              <details>
+                <summary>Source position and recorded settings</summary>
+                <label for="angle-deg">
+                  Source angle · degrees
+                  <input id="angle-deg" type="number" min="-30" max="30" step="any" value="0" aria-describedby="angle-limit" disabled>
+                </label>
+                <p id="angle-limit" class="muted">Zero retains the nominal source position. Check plan resolves an admitted decay source's bounded angular placement.</p>
+                <p id="source-details" class="muted"></p>
+                <p id="source-pose-preview" class="notice" role="status" aria-live="polite">Check plan to resolve the selected source energy, angle and position.</p>
+                <details>
+                  <summary>Checked source pose</summary>
+                  <pre id="source-pose-identity">No checked source pose.</pre>
+                </details>
+                <details>
+                  <summary>Source identity and acceptance</summary>
+                  <pre id="source-identity"></pre>
+                </details>
+              </details>
+              <details>
+                <summary>Electronics settings</summary>
+                <label for="use-peak-gate">
+                  <input id="use-peak-gate" type="checkbox" style="display:inline;width:auto;min-height:0;margin-right:8px">
+                  Use a peak gate
+                </label>
+                <div id="electronics"></div>
+                <p class="muted">One independent 500 keV injection determines the gain for this configuration. The analog time grid is separate from the peak ADC.</p>
+              </details>
+              <details>
+                <summary>Model and numerical settings</summary>
+                <p class="muted" id="operating-details"></p>
+                <p class="muted" id="numerics"></p>
+                <p class="muted">CPU stages run serially. Native failure quantities remain null.</p>
+                <p id="setup-limit" class="muted"></p>
+              </details>
+              <div class="actions">
+                <button id="save">Export configuration</button>
+                <button id="load">Load configuration</button>
+              </div>
+              <input type="file" id="import" accept="application/json,.json">
+              <p id="setup-preview" class="muted">Current setup</p>
+              <details>
+                <summary>Check the configuration</summary>
+                <p class="muted">Inspect the resolved configuration before starting, if needed.</p>
+                <div class="actions">
+                  <button id="check">Check plan</button>
+                </div>
+                <details>
+                  <summary>Checked next-run configuration</summary>
+                  <pre id="checked-plan">No checked plan yet.</pre>
+                </details>
+              </details>
+            </details>
+            <div class="start-actions">
+              <button id="start" class="primary" aria-describedby="run-readiness" disabled>Start simulation</button>
+            </div>
+            <p id="run-readiness" class="notice" role="status" aria-live="polite">Choose your setup to begin.</p>
+          </section>
+          <section id="model-panel" aria-labelledby="model-title">
+            <h2 id="model-title">Detector preview</h2>
+            <p id="model-summary" class="muted"></p>
+            <p id="model-variant" class="muted"></p>
+            <div>
+              <figure id="model-preview-box" hidden>
+                <img id="model-preview" alt="">
+                <figcaption class="muted">Catalog geometry. Contact colors identify electrodes.</figcaption>
+              </figure>
+              <div id="model-preview-fallback" class="model-fallback" hidden>
+                <h3>Model at a glance</h3>
+                <div id="model-preview-facts"></div>
+              </div>
+              <p id="model-preview-status" class="muted" role="status"></p>
+              <a id="model-view" target="_blank" rel="noreferrer">Open rotatable geometry</a>
+            </div>
+            <p id="model-contact-summary" class="muted"></p>
+            <details>
+              <summary>Contacts and model details</summary>
+              <details id="model-contact-list">
+                <summary>Contact names and signed potentials</summary>
+                <ul id="model-contacts"></ul>
+              </details>
+              <div id="model-requirements" hidden>
+                <h3>Model parameters and setup requirements</h3>
+                <ul id="model-parameters"></ul>
+                <details>
+                  <summary>Compatibility checks for this cryostat</summary>
+                  <ul id="model-checks"></ul>
+                </details>
+              </div>
+              <details>
+                <summary>Model assumptions and identity</summary>
+                <p id="model-capability-details" class="muted"></p>
+                <p id="model-assumptions" class="muted"></p>
+                <p class="muted">Contact colors do not specify lithium thickness or doping.</p>
+                <pre id="model-identity"></pre>
+              </details>
+            </details>
+            <details>
+              <summary>Browse the full catalog</summary>
+              <label class="checkbox-label" for="browse-catalog">
+                <input id="browse-catalog" type="checkbox">
+                Show all catalog models
+              </label>
+              <p class="muted">Some catalog models are available for geometry inspection only.</p>
+            </details>
+            <footer id="catalog-counts">Catalog geometry inspection is separate from supported local computation. The public website shows saved results. Detector and source compatibility follows the selected cryostat.</footer>
+          </section>
+        </div>
+      </div>
+      <div id="gegi-task" class="task-panel" data-task-panel="gegi" hidden>
+        <section id="gegi-candidate-panel" aria-labelledby="gegi-task-title">
+          <h2 id="gegi-task-title">GeGI two-source acquisition</h2>
+          <p class="muted">Cs-137 and Co-60 share one detector, decay clock and 34-channel readout. Source positions use detector coordinates.</p>
+          <div class="horizontal source-grid">
+            <div class="source-card">
+              <h3>Cs-137</h3>
+              <label for="gegi-candidate-activity-a">
+                Activity · Bq
+                <input id="gegi-candidate-activity-a" type="number" min="0" step="any" value="185000">
+              </label>
+              <div class="coordinates">
+                <label for="gegi-candidate-a-x">
+                  X · mm
+                  <input id="gegi-candidate-a-x" type="number" step="any" value="-40">
+                </label>
+                <label for="gegi-candidate-a-y">
+                  Y · mm
+                  <input id="gegi-candidate-a-y" type="number" step="any" value="0">
+                </label>
+                <label for="gegi-candidate-a-z">
+                  Z · mm
+                  <input id="gegi-candidate-a-z" type="number" step="any" value="40">
+                </label>
+              </div>
+            </div>
+            <div class="source-card">
+              <h3>Co-60</h3>
+              <label for="gegi-candidate-activity-b">
+                Activity · Bq
+                <input id="gegi-candidate-activity-b" type="number" min="0" step="any" value="37000">
+              </label>
+              <div class="coordinates">
+                <label for="gegi-candidate-b-x">
+                  X · mm
+                  <input id="gegi-candidate-b-x" type="number" step="any" value="40">
+                </label>
+                <label for="gegi-candidate-b-y">
+                  Y · mm
+                  <input id="gegi-candidate-b-y" type="number" step="any" value="0">
+                </label>
+                <label for="gegi-candidate-b-z">
+                  Z · mm
+                  <input id="gegi-candidate-b-z" type="number" step="any" value="40">
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="horizontal">
+            <label for="gegi-candidate-mode">
+              Acquisition mode
+              <select id="gegi-candidate-mode">
+                <option value="duration" selected>Steady source · physical duration</option>
+                <option value="count">Startup check · fixed new-parent count</option>
+              </select>
+            </label>
+            <label id="gegi-candidate-duration-field">
+              Physical duration · s
+              <input id="gegi-candidate-duration" type="number" min="0" step="any" value="5">
+            </label>
+            <label id="gegi-candidate-count-field" hidden>
+              New parent decays
+              <input id="gegi-candidate-count" type="number" min="1" step="1" value="100">
+            </label>
+          </div>
+          <label for="gegi-candidate-name">
+            Run name
+            <input id="gegi-candidate-name" value="gegi-mixed-01" maxlength="48" autocomplete="off" spellcheck="false">
+          </label>
+          <details>
+            <summary>More settings</summary>
+            <label for="gegi-candidate-seed">
+              Random seed
+              <input id="gegi-candidate-seed" type="number" min="1" max="2147483646" step="1" value="20261120">
+            </label>
+            <details>
+              <summary>Storage estimate</summary>
+              <label for="gegi-candidate-estimate-count">
+                Planned source decays
+                <input id="gegi-candidate-estimate-count" type="text" inputmode="numeric" value="20000000" autocomplete="off">
+              </label>
+              <div class="actions">
+                <button id="gegi-candidate-estimate">Estimate storage</button>
+              </div>
+              <p id="gegi-candidate-storage" class="notice" role="status" aria-live="polite">Storage estimate uses the selected sources and a measured reference. Future peak temporary storage has not been forecast.</p>
+            </details>
+            <details>
+              <summary>Acquisition model and saved signals</summary>
+              <p class="muted">All 34 detector channels are processed. Imaging candidates retain their fast and slow readout context, and the complete acquisition counts remain saved.</p>
+              <p class="muted">Choose a physical duration or fixed new-parent count. The defaults are 5 seconds and 100 decays. Duration follows the detector's acquisition clock; the number of new source decays is random. Positions use detector x, y, z coordinates in mm.</p>
+              <p id="gegi-candidate-scope" class="muted">Choose a positive physical duration; the default is 5 seconds. Radioactive daughter populations use the source equilibrium model; electronics start quiet with zero signal history.</p>
+              <p class="muted">Stop saves the current progress. Resume continues the same acquisition clock, source settings and electronics state.</p>
+            </details>
+          </details>
+          <div class="start-actions">
+            <button id="gegi-candidate-start" class="primary">Start simulation</button>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div id="page-runs" class="app-page" data-page="runs" hidden>
+      <div id="run-list-panel">
+        <div class="page-heading">
+          <h2>My runs</h2>
+          <p class="muted">Open a run to see its progress, results and saved files.</p>
+        </div>
+        <section id="ordinary-runs-panel">
+          <h2>Detector simulations</h2>
+          <p id="legacy-notice" class="muted" role="status" hidden></p>
+          <div id="runs">No runs created in this application.</div>
+        </section>
+        <section id="candidate-runs-panel">
+          <h2>GeGI acquisitions</h2>
+          <div class="horizontal">
+            <label for="gegi-candidate-job">
+              Saved acquisition
+              <select id="gegi-candidate-job">
+                <option value="">Choose an acquisition</option>
+              </select>
+            </label>
+            <div class="actions">
+              <button id="gegi-candidate-refresh">Refresh saved acquisitions</button>
+            </div>
+          </div>
+        </section>
+        <section id="saved-analysis-entry">
+          <h2>Saved analyses</h2>
+          <p class="muted">Reconstruct existing GeGI signals and open saved analysis results.</p>
+          <div class="actions">
+            <button id="open-saved-analysis" type="button">Open saved analyses</button>
+          </div>
+        </section>
+        <section>
+          <details id="run-trash">
+            <summary id="run-trash-summary">Recycle bin</summary>
+            <p class="muted">Deleted runs stay here until restored or permanently removed.</p>
+            <div class="actions">
+              <button id="trash-refresh" type="button">Refresh recycle bin</button>
+              <button id="trash-empty" type="button" class="danger" disabled>Empty recycle bin</button>
+            </div>
+            <p id="trash-status" class="notice" role="status" aria-live="polite"></p>
+            <div id="trash-entries"></div>
+          </details>
+        </section>
+      </div>
+      <div id="run-detail" hidden>
+        <div class="detail-toolbar">
+          <button id="run-list-back" type="button">← My runs</button>
+        </div>
+        <section id="standard-run-detail">
+          <h2>Run progress</h2>
+          <div id="run-detail-content" class="actions"></div>
+          <p id="selected" class="muted">No run selected. Open a run from My runs.</p>
+          <p id="saved-source-pose" class="muted">No saved source pose selected.</p>
+          <p id="batch-progress" class="notice" role="status" aria-live="polite"></p>
+          <details id="run-stage-details">
+            <summary>Simulation stages</summary>
+            <div id="pipeline"></div>
+          </details>
+          <p id="response-progress" class="muted"></p>
+          <details>
+            <summary>Selected saved-run settings · exact recorded inputs</summary>
+            <pre id="run-plan">No run selected.</pre>
+          </details>
+          <details>
+            <summary>Stopping and resuming</summary>
+            <p class="muted">Stop waits for the current stage or batch boundary. Resume uses the saved settings and verified completed work. Partial interrupted stages need inspection.</p>
+          </details>
+        </section>
+        <section id="result" hidden>
+          <h2>Simulation results</h2>
+          <p id="result-heading"></p>
+          <nav class="view-tabs" role="tablist" aria-label="Run results">
+            <button id="result-tab-overview" type="button" role="tab" data-result-tab="overview" aria-controls="result-overview" aria-selected="true" tabindex="0">Overview</button>
+            <button id="result-tab-events" type="button" role="tab" data-result-tab="events" aria-controls="result-events" aria-selected="false" tabindex="-1">Events &amp; waveforms</button>
+            <button id="result-tab-files" type="button" role="tab" data-result-tab="files" aria-controls="result-files" aria-selected="false" tabindex="-1">Data files</button>
+          </nav>
+          <div id="result-overview" data-result-panel="overview" role="tabpanel" aria-labelledby="result-tab-overview">
+            <div id="result-summary" class="metrics" aria-label="Run counts"></div>
+            <details id="spectrum-panel" hidden>
+              <summary>Saved energy spectrum · raw counts</summary>
+              <p id="spectrum-status" class="notice" role="status" aria-live="polite"></p>
+              <div id="spectrum-content"></div>
+            </details>
+          </div>
+          <div id="result-events" data-result-panel="events" role="tabpanel" aria-labelledby="result-tab-events" hidden>
+            <div id="batch-navigation" hidden>
+              <details id="advanced-event-navigation">
+                <summary>Advanced event navigation</summary>
+                <div class="horizontal">
+                  <label for="batch-index">
+                    Saved batch index · zero based
+                    <input id="batch-index" type="text" inputmode="numeric" value="0">
+                  </label>
+                  <label for="page-offset">
+                    Nonzero event offset
+                    <input id="page-offset" type="text" inputmode="numeric" value="0">
+                  </label>
+                </div>
+                <div class="actions">
+                  <button id="load-page">Load saved page</button>
+                </div>
+              </details>
+              <div class="actions">
+                <button id="previous-page">Previous page</button>
+                <button id="next-page">Next page</button>
+              </div>
+              <p id="page-status" class="muted" role="status"></p>
+            </div>
+            <div class="event-tools">
+              <div class="event-search">
+                <label for="event-find">
+                  Find event ID
+                  <input id="event-find" type="text" inputmode="numeric" placeholder="Original primary ID" autocomplete="off">
+                </label>
+                <button id="event-find-button" type="button">Find event</button>
+              </div>
+              <div class="actions">
+                <button id="event-previous" type="button">← Previous event</button>
+                <button id="event-next" type="button">Next event →</button>
+              </div>
+              <p id="event-find-status" class="notice" role="status" aria-live="polite"></p>
+            </div>
+            <div class="horizontal">
+              <label for="event">
+                Event · original primary ID
+                <select id="event"></select>
+              </label>
+              <label for="group">
+                Pulse group
+                <select id="group"></select>
+              </label>
+            </div>
+            <p class="muted">Only nonzero-deposit events are listed; initial and zero-deposit counts remain in the summary. Pulse and readout hints describe its saved records.</p>
+            <p id="event-identity" class="muted"></p>
+            <div id="result-data"></div>
+            <h3>Signal waveforms</h3>
+            <div class="stage-tabs" role="group" aria-label="Signal stage">
+              <button type="button" data-waveform-stage="all" aria-pressed="true">All stages</button>
+              <button type="button" data-waveform-stage="charge" aria-pressed="false">Charge</button>
+              <button type="button" data-waveform-stage="current" aria-pressed="false">Current</button>
+              <button type="button" data-waveform-stage="preamp" aria-pressed="false">Preamplifier</button>
+              <button type="button" data-waveform-stage="shaper" aria-pressed="false">Shaped signal</button>
+            </div>
+            <div id="plots" class="plot-grid"></div>
+            <p id="result-options-status" class="muted" role="status" aria-live="polite"></p>
+          </div>
+          <div id="result-files" data-result-panel="files" role="tabpanel" aria-labelledby="result-tab-files" hidden>
+            <div id="stage-files">
+              <h3>Saved stage files</h3>
+              <p class="muted">Original files for the selected saved run and loaded batch. These protected links retrieve saved data; no simulation starts. Larger files remain in .local/runs/NAME/ on this computer.</p>
+              <p id="analysis-selection" class="notice" role="status" aria-live="polite"></p>
+              <p id="analysis-state" class="muted"></p>
+              <details>
+                <summary>Selected event filters and units</summary>
+                <p id="analysis-filter" class="muted"></p>
+                <p class="muted">Normalized deposits use energy_keV in keV, detector-local position_mm in mm and global_position_m in m. In raw LH5, position columns use m, step edep uses keV and time uses ns; track and particle ekin use MeV. Check each raw column’s units in manifest.json → raw_tables → columns; those units are authoritative. The manifest also records the coordinate transform. Pulse plots use time since pulse-group origin in ns. Deposition time, particle creation time and carrier drift time describe different stages.</p>
+              </details>
+              <div id="saved-artifacts"></div>
+            </div>
+            <details id="feature-panel" hidden>
+              <summary>Saved waveform features and deposition topology</summary>
+              <p class="muted">Features use the full-resolution signed native charge and the recorded independent energy calibration. This panel reads an existing verified export; opening it verifies saved data without starting a simulation or export.</p>
+              <p id="feature-status" class="notice" role="status" aria-live="polite">Open this panel to inspect the selected primary’s saved features. No simulation or export starts.</p>
+              <div id="feature-content"></div>
+            </details>
+            <details id="acquisition-panel" hidden>
+              <summary>Saved synthetic waveform acquisition</summary>
+              <p class="muted">Inspect an existing verified acquisition export with explicit sampling, bipolar waveform ADC, trigger, bandwidth, noise and independent injection calibration. Opening this panel verifies saved data without starting a simulation or export. Original peak-ADC readout and waveform features remain separate.</p>
+              <p id="acquisition-status" class="notice" role="status" aria-live="polite">Open this panel to inspect the selected primary’s saved synthetic acquisition. No simulation or export starts.</p>
+              <div id="acquisition-content"></div>
+            </details>
+            <details>
+              <summary>All original records for this primary</summary>
+              <pre id="event-record"></pre>
+            </details>
+          </div>
+        </section>
+        <section id="gegi-result" hidden>
+          <h2>GeGI multichannel results and Compton imaging</h2>
+          <p id="gegi-result-heading"></p>
+          <p id="gegi-counts" class="notice"></p>
+          <p id="gegi-limitations" class="muted"></p>
+          <p class="muted">Select an original nonzero primary to follow its saved signals through independent energy/timing calibration, strip pairing, reconstructed interactions and every viable Compton cone. Candidates use channel information and fixed line hypotheses; truth source and deposit positions do not select a candidate.</p>
+          <div class="horizontal">
+            <label for="gegi-event">
+              Original nonzero primary ID
+              <select id="gegi-event"></select>
+            </label>
+            <label id="gegi-channel-control" for="gegi-channel">
+              Readout channel
+              <select id="gegi-channel"></select>
+            </label>
+          </div>
+          <p id="gegi-event-summary" class="notice"></p>
+          <div id="gegi-journey"></div>
+          <div id="gegi-plots" class="plot-grid"></div>
+          <details id="gegi-digital-panel">
+            <summary>Digital strip waveforms, positions and Compton orders</summary>
+            <p id="gegi-digital-status" class="notice" role="status"></p>
+            <div id="gegi-digital-content" hidden>
+              <p id="gegi-digital-calibration" class="muted"></p>
+              <div id="gegi-digital-position"></div>
+              <div class="horizontal">
+                <label for="gegi-digital-strip">
+                  Electrode
+                  <select id="gegi-digital-strip"></select>
+                </label>
+                <label for="gegi-digital-neighbor">
+                  Neighbor strip
+                  <select id="gegi-digital-neighbor"></select>
+                </label>
+              </div>
+              <div id="gegi-digital-measurements"></div>
+              <div id="gegi-digital-plots" class="plot-grid"></div>
+            </div>
+          </details>
+          <details id="gegi-imaging-panel">
+            <summary>Full saved-run direction image and selected-event cone records</summary>
+            <p id="gegi-imaging-status" class="notice"></p>
+            <div id="gegi-imaging"></div>
+            <pre id="gegi-cones"></pre>
+          </details>
+          <details>
+            <summary>Exact selected signal and reconstruction records</summary>
+            <pre id="gegi-event-record"></pre>
+          </details>
+          <details>
+            <summary>Transport truth · evaluation only</summary>
+            <p class="muted">These original radiation deposits provide evaluation evidence. They are separate from the signal-derived interaction positions and scatter-order candidates.</p>
+            <pre id="gegi-truth-record"></pre>
+          </details>
+          <details>
+            <summary>Selected event identity, filters and original native files</summary>
+            <p id="gegi-event-filter" class="muted"></p>
+            <div id="gegi-event-files"></div>
+          </details>
+          <div id="gegi-files">
+            <h3>Actual saved stage data</h3>
+          </div>
+        </section>
+        <div id="gegi-acquisition-detail" hidden>
+          <section>
+            <h2>GeGI acquisition</h2>
+            <div class="actions">
+              <button id="gegi-candidate-stop" disabled>Stop</button>
+              <button id="gegi-candidate-resume" disabled>Resume saved acquisition</button>
+              <button id="gegi-candidate-delete" class="danger" disabled>Delete run</button>
+            </div>
+            <p id="gegi-candidate-status" class="notice" role="status" aria-live="polite">Run a small fresh acquisition, or refresh to open saved candidates.</p>
+            <div id="gegi-candidate-summary"></div>
+            <section id="gegi-candidate-imaging" hidden>
+              <h3>Reconstruct a source-plane map</h3>
+              <p>
+                Analyze the saved two-strip candidates with the separate matching waveform calibration. This reads existing data and creates a derived map; it does not run radiation transport or carrier drift. Download the separate calibration into
+                <code>.local/gegi-center-calibration.npz</code>
+                , then refresh saved acquisitions.
+              </p>
+              <label>
+                External calibration
+                <select id="gegi-candidate-calibration">
+                  <option value="">Choose an imported calibration</option>
+                </select>
+              </label>
+              <label>
+                Interaction position model
+                <select id="gegi-candidate-lateral-calibration">
+                  <option value="">Center templates</option>
+                </select>
+              </label>
+              <div class="horizontal">
+                <label>
+                  Assumed plane z · mm
+                  <input id="gegi-candidate-plane-z" type="number" step="any" value="40">
+                </label>
+                <label>
+                  Plane half-width · mm
+                  <input id="gegi-candidate-plane-extent" type="number" min="0" step="any" value="120">
+                </label>
+                <label>
+                  Grid spacing · mm
+                  <input id="gegi-candidate-plane-step" type="number" min="0" step="any" value="4">
+                </label>
+                <label>
+                  Angular width · degrees
+                  <input id="gegi-candidate-plane-sigma" type="number" min="0" step="any" value="5">
+                </label>
+              </div>
+              <label>
+                Plane prior
+                <select id="gegi-candidate-plane-prior">
+                  <option value="uniform-area">Uniform area</option>
+                  <option value="uniform-solid-angle">Uniform solid angle from detector origin</option>
+                </select>
+              </label>
+              <label for="gegi-candidate-compatibility">
+                <input id="gegi-candidate-compatibility" type="checkbox" style="display:inline;width:auto;min-height:0;margin-right:8px">
+                Save fit residuals on all 34 electrodes
+              </label>
+              <label for="gegi-candidate-shared-strip">
+                <input id="gegi-candidate-shared-strip" type="checkbox" style="display:inline;width:auto;min-height:0;margin-right:8px">
+                Add a map for candidates that share a strip
+              </label>
+              <div class="actions">
+                <button id="gegi-candidate-analyze" disabled>Analyze all two-strip candidates</button>
+              </div>
+              <p id="gegi-candidate-analysis-status" class="notice" role="status" aria-live="polite">Choose a completed acquisition.</p>
+              <label>
+                Saved source-plane map
+                <select id="gegi-candidate-map">
+                  <option value="">No saved map</option>
+                </select>
+              </label>
+              <button id="gegi-candidate-open-map" disabled>Open saved map</button>
+              <div id="gegi-candidate-map-view"></div>
+            </section>
+            <div id="gegi-candidate-view" tabindex="-1" hidden>
+              <h3>Candidate waveforms</h3>
+              <div class="horizontal">
+                <label>
+                  Original candidate trigger
+                  <select id="gegi-candidate-trigger"></select>
+                </label>
+                <label>
+                  Electrode
+                  <select id="gegi-candidate-contact"></select>
+                </label>
+              </div>
+              <div class="actions">
+                <button id="gegi-candidate-previous">Previous candidates</button>
+                <button id="gegi-candidate-next">Next candidates</button>
+              </div>
+              <p id="gegi-candidate-page" class="muted"></p>
+              <p id="gegi-candidate-event-status" class="notice" role="status" aria-live="polite"></p>
+              <div id="gegi-candidate-features"></div>
+              <div id="gegi-candidate-plots" class="plot-grid"></div>
+              <details>
+                <summary>Selected candidate identities and alternatives</summary>
+                <pre id="gegi-candidate-record"></pre>
+              </details>
+            </div>
+            <details>
+              <summary>Acquisition statistics and saved files</summary>
+              <pre id="gegi-candidate-receipt">No acquisition selected.</pre>
+            </details>
+          </section>
+        </div>
+        <section id="log-view" hidden>
+          <h2 id="log-title">Stage log</h2>
+          <pre id="log-text"></pre>
+          <p class="muted">This log stays open while the run list refreshes. Text decoding is display only; original saved bytes remain unchanged.</p>
+        </section>
+      </div>
+      <div id="saved-analysis" hidden>
+        <div class="actions">
+          <button id="saved-analysis-back" type="button">← My runs</button>
+        </div>
+        <section id="gegi-saved-panel">
+          <h2>Analyze saved GeGI signals</h2>
+          <p class="muted">Choose a completed GeGI run and save the reconstruction as a separate analysis.</p>
+          <div class="actions">
+            <button id="gegi-saved-refresh">Refresh saved inputs</button>
+          </div>
+          <div class="horizontal">
+            <label>
+              Completed GeGI input
+              <select id="gegi-saved-campaign"></select>
+            </label>
+            <label>
+              Independent saved templates
+              <select id="gegi-saved-calibration">
+                <option value="">None · unsupported depth remains unknown</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            New derivative name
+            <input id="gegi-saved-name" value="gegi-saved-01" maxlength="48" autocomplete="off" spellcheck="false">
+          </label>
+          <div class="actions">
+            <button id="gegi-saved-start" disabled>Reprocess saved signals</button>
+            <button id="gegi-saved-resume" disabled>Resume selected derivative</button>
+            <button id="gegi-saved-stop" disabled>Stop after current chunk</button>
+          </div>
+          <label>
+            Existing derivative
+            <select id="gegi-saved-job">
+              <option value="">Choose a saved derivative</option>
+            </select>
+          </label>
+          <p id="gegi-saved-status" class="notice" role="status" aria-live="polite">Refresh saved inputs to list completed GeGI runs and campaign stores on this computer.</p>
+          <p id="gegi-saved-path" class="muted"></p>
+          <div id="gegi-saved-files" class="actions"></div>
+          <details>
+            <summary>Saved derivative identity, totals and limitations</summary>
+            <pre id="gegi-saved-record">No derivative selected.</pre>
+          </details>
+          <details>
+            <summary>Input locations and reconstruction assumptions</summary>
+            <p>Choose a completed standalone GeGI run or a campaign with sealed SQLite signal stores. Reprocessing reads saved signals and fixed readout values into a separate derivative. It starts no radiation, carrier drift, field solve or calibration.</p>
+            <p class="muted">
+              Completed GeGI runs owned by Control appear automatically. Imported campaign folders belong in
+              <code>.local/gegi-saved-inputs/campaigns/NAME/</code>
+              ; independent saved template folders belong in
+              <code>.local/gegi-saved-inputs/calibrations/NAME/</code>
+              . Existing project dataset/campaign folders and their saved calibration siblings are also offered. Standalone reprocessing has no checkpoint boundary, so Stop and Resume are unavailable; campaign processing retains its chunk boundaries.
+            </p>
+            <p class="muted">The response model is approximate. Full 34-channel independent templates are not generally available; unsupported signals may produce no supported 3D hypotheses. Conditional candidates are not validated recovered events, and no source location is supplied as the answer. Older saved maps using terminal-CFD timing and strict two-by-two strip selection remain experimental legacy results.</p>
+          </details>
+        </section>
+      </div>
+    </div>
+    <div id="page-help" class="app-page" data-page="help" hidden>
+      <div class="page-heading">
+        <h2>Help</h2>
+        <p class="muted">Set up the application, understand the workflow, or open research tools.</p>
+      </div>
+      <section>
+        <h2>Setup and documentation</h2>
+        <p class="muted">Prerequisites, installation steps and the current environment check are on New simulation.</p>
+        <div class="actions">
+          <button id="help-open-setup" type="button">Open prerequisites &amp; setup</button>
+        </div>
+      </section>
+      <section>
+        <h2>From simulation to results</h2>
+        <p class="muted">Start with New simulation. Your run appears in My runs, where you can monitor stages, stop or resume, and open the results.</p>
+        <p class="muted">Overview shows the run counts and energy spectrum. Events &amp; waveforms follows individual primary events through the saved signals. Data files provides the original stage outputs and recorded settings.</p>
+        <details>
+          <summary>Counts, coordinates and signal stages</summary>
+          <p class="muted">An initial primary may miss the detector or produce several pulse groups. Keep the initial, zero-deposit, nonzero and failure counts when comparing results.</p>
+          <p class="muted">Energy deposited by radiation and energy reconstructed from the readout are different quantities. Deposition time, carrier drift time and the analog sampling grid describe different stages. File details record the saved units and coordinate conventions.</p>
+        </details>
+      </section>
+      <section>
+        <details id="research-tools">
+          <summary>Research tools</summary>
+          <p class="muted">Advanced saved-data diagnostics and recovery tools.</p>
+          <section id="gegi-dual-panel">
+            <h2>Historical readout diagnostic · saved source libraries</h2>
+            <p>Replay two saved source libraries on one acquisition clock. Each library supplies its recorded isotope and source coordinates.</p>
+            <p class="muted">
+              Place each sealed chunk in
+              <code>.local/gegi-saved-inputs/source-libraries/NAME/</code>
+              . Refresh after copying the libraries.
+            </p>
+            <div class="actions">
+              <button id="gegi-dual-refresh">Refresh source libraries and acquisitions</button>
+            </div>
+            <div class="horizontal">
+              <label>
+                Library A
+                <select id="gegi-dual-source-a">
+                  <option value="">Choose a library</option>
+                </select>
+              </label>
+              <label>
+                Activity A (Bq)
+                <input id="gegi-dual-activity-a" type="number" min="0" step="any" value="37000">
+              </label>
+            </div>
+            <div class="horizontal">
+              <label>
+                Library B
+                <select id="gegi-dual-source-b">
+                  <option value="">Choose a library</option>
+                </select>
+              </label>
+              <label>
+                Activity B (Bq)
+                <input id="gegi-dual-activity-b" type="number" min="0" step="any" value="37000">
+              </label>
+            </div>
+            <div class="horizontal">
+              <label>
+                Duration (s)
+                <input id="gegi-dual-duration" type="number" min="0" step="any" value="0.25">
+              </label>
+              <label>
+                Seed
+                <input id="gegi-dual-seed" type="text" inputmode="numeric" maxlength="20" value="20261118">
+              </label>
+            </div>
+            <label>
+              Trigger profile
+              <select id="gegi-dual-trigger-profile">
+                <option value="standard">Standard · 5 keV-equivalent per sample</option>
+                <option value="low-energy">Low energy · 4 keV-equivalent per sample</option>
+              </select>
+            </label>
+            <label>
+              New acquisition name
+              <input id="gegi-dual-name" value="gegi-dual-01" maxlength="48" autocomplete="off" spellcheck="false">
+            </label>
+            <div class="actions">
+              <button id="gegi-dual-start" disabled>Run acquisition</button>
+            </div>
+            <label>
+              Saved acquisition
+              <select id="gegi-dual-job">
+                <option value="">Choose an acquisition</option>
+              </select>
+            </label>
+            <p class="muted">
+              To open a saved report, place
+              <code>report.json</code>
+              in
+              <code>.local/gegi-dual-source/NAME/</code>
+              , refresh, and select the acquisition. Put its
+              <code>plane.json.gz</code>
+              in the same folder to view a saved Compton backprojection.
+            </p>
+            <p id="gegi-dual-status" class="notice" role="status" aria-live="polite">Refresh to find imported source libraries and saved acquisitions.</p>
+            <div id="gegi-dual-results"></div>
+            <details>
+              <summary>Acquisition receipt and settings</summary>
+              <pre id="gegi-dual-receipt">No acquisition selected.</pre>
+            </details>
+          </section>
+          <details id="legacy-recovery" hidden>
+            <summary>Previous saved jobs and recovery</summary>
+            <div id="legacy-runs"></div>
+            <p class="muted">Verify saved completion reads existing results. Inspect denied launch applies only to a recognized first-stage WSL access denial after complete process checks. Failed files remain unchanged; use a new run name.</p>
+          </details>
+        </details>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

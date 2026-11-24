@@ -2,6 +2,7 @@
 import argparse
 from contextlib import contextmanager
 import hashlib
+from http.client import HTTPConnection, HTTPException
 from http.cookies import SimpleCookie, CookieError
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -24,6 +25,7 @@ from local_ui_jobs import safe_path
 ROOT = Path(__file__).resolve().parents[1]
 STATE = '.local/local-control-v1'
 STATIC = {'/': ('local_workflow.html', 'text/html; charset=utf-8'),
+          '/guide.html': ('site_guide.html', 'text/html; charset=utf-8'),
           '/focused_plots.js': ('focused_plots.js', 'text/javascript; charset=utf-8'),
           '/gegi_signal_journey.js': ('gegi_signal_journey.js', 'text/javascript; charset=utf-8'),
           '/local_workflow.js': ('local_workflow.js', 'text/javascript; charset=utf-8'),
@@ -131,6 +133,10 @@ def guarded(root, relative):
     return current
 
 
+class ControlAlreadyOpen(RuntimeError):
+    pass
+
+
 @contextmanager
 def server_lease(root):
     folder = guarded(root, STATE)
@@ -146,10 +152,13 @@ def server_lease(root):
             try:
                 msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
             except OSError as error:
-                raise RuntimeError('Local control is already open; use its existing browser window.') from error
+                raise ControlAlreadyOpen('Local control is already open; use its existing browser window.') from error
         else:
             import fcntl
-            fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            try:
+                fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as error:
+                raise ControlAlreadyOpen('Local control is already open; use its existing browser window.') from error
         try:
             yield folder
         finally:
@@ -158,6 +167,45 @@ def server_lease(root):
                 msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
             else:
                 fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+
+
+def existing_control_session(root):
+    """Verify the locked server's saved loopback session without starting work."""
+    try:
+        saved = decode_json(guarded(root, STATE + '/server.json').read_text(encoding='utf-8'))
+        if (not isinstance(saved, dict) or set(saved) != {'pid', 'url', 'origin'} or
+                type(saved['pid']) is not int or saved['pid'] <= 0 or
+                not isinstance(saved['origin'], str) or not isinstance(saved['url'], str)):
+            raise ValueError('Invalid saved Control session')
+        origin = saved['origin']
+        parsed = urlsplit(origin)
+        port = parsed.port
+        if (parsed.scheme != 'http' or parsed.hostname != '127.0.0.1' or
+                port is None or not 1 <= port <= 65535 or origin != 'http://127.0.0.1:' + str(port)):
+            raise ValueError('Saved Control origin is not loopback')
+        session = saved['url']
+        token = urlsplit(session).fragment
+        if (not token or not token.isascii() or
+                any(not (char.isalnum() or char in '-_') for char in token) or
+                session != origin + '/#' + token):
+            raise ValueError('Invalid saved Control session link')
+        connection = HTTPConnection('127.0.0.1', port, timeout=3)
+        try:
+            connection.request('GET', '/api/state', headers={'X-Control-Token': token})
+            response = connection.getresponse()
+            body = response.read()
+            if response.status != 200:
+                raise ValueError('Saved Control session was not accepted')
+            state = decode_json(body.decode('utf-8'))
+            if (not isinstance(state, dict) or not isinstance(state.get('jobs'), list) or
+                    not isinstance(state.get('runs'), list) or 'active' not in state):
+                raise ValueError('Saved Control server did not return its state')
+        finally:
+            connection.close()
+        return origin, session
+    except (OSError, ValueError, HTTPException) as error:
+        raise RuntimeError('Control is already open, but its saved session could not be verified. '
+                           'No second server was started.') from error
 
 
 class Server(ThreadingHTTPServer):
@@ -246,7 +294,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.reject(403, 'Loopback host required')
         if parts.path in STATIC and not parts.query:
             name, mime = STATIC[parts.path]
-            return self.send_data(200, (self.server.static_root / name).read_bytes(), mime)
+            body = (self.server.static_root / name).read_bytes()
+            if parts.path == '/guide.html':
+                body = body.replace(b'__PAGE_NAVIGATION__', b'')
+            return self.send_data(200, body, mime)
         if not self.authorized(download=parts.path == '/api/file', gamma_download=parts.path == '/api/gamma-file', workflow_download=parts.path in ('/api/workflow-file','/api/workflow-file/plots','/api/workflow-file/focus')):
             return
         try:
@@ -272,6 +323,10 @@ class Handler(BaseHTTPRequestHandler):
                 if parts.query or parts.fragment or self.server.workflow_controller is None:
                     raise ValueError('Invalid saved GeGI input inventory request')
                 return self.send_data(200,self.server.workflow_controller.gegi_saved_options())
+            if parts.path == '/api/workflow/trash':
+                if parts.query or parts.fragment or self.server.workflow_controller is None:
+                    raise ValueError('Invalid recycle-bin inventory request')
+                return self.send_data(200, self.server.workflow_controller.run_trash().snapshot())
             if parts.path == '/api/workflow/gegi-candidates/options':
                 if parts.query or parts.fragment or self.server.workflow_controller is None:
                     raise ValueError('Invalid mixed-source acquisition inventory request')
@@ -557,6 +612,21 @@ class Handler(BaseHTTPRequestHandler):
             if not 1 <= size <= 4096:
                 raise ValueError('Request size must be 1..4096 bytes')
             data = decode_json(self.rfile.read(size).decode('utf-8'))
+            if self.path in ('/api/workflow/trash', '/api/workflow/trash/restore', '/api/workflow/trash/empty'):
+                if type(data) is not dict or self.server.workflow_controller is None:
+                    raise ValueError('Choose a run or an existing recycle-bin entry')
+                trash = self.server.workflow_controller.run_trash()
+                if self.path == '/api/workflow/trash':
+                    if set(data) != {'kind', 'name'} or type(data['kind']) is not str or type(data['name']) is not str:
+                        raise ValueError('Choose the run kind and name')
+                    return self.send_data(200, trash.move(**data))
+                if self.path.endswith('/restore'):
+                    if set(data) != {'id'}:
+                        raise ValueError('Choose one recycle-bin entry')
+                    return self.send_data(200, trash.restore(data['id']))
+                if set(data) != {'ids', 'confirmation'}:
+                    raise ValueError('Confirm the explicitly selected recycle-bin entries')
+                return self.send_data(200, trash.empty(**data))
             if self.path == '/api/workflow/gegi-candidates/analyze':
                 fields = {'name', 'report_sha256', 'calibration_id', 'z_mm', 'extent_mm', 'step_mm', 'sigma_deg', 'plane_prior'}
                 if (type(data) is not dict or not fields <= set(data) <= fields | {'compatibility', 'lateral_calibration_id', 'include_shared_strip'}
@@ -675,30 +745,36 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if not 0 <= args.port <= 65535:
         parser.error('Port must be 0..65535')
-    with server_lease(ROOT) as folder:
-        coordination = threading.RLock()
-        controller = Controller(ROOT, coordination_lock=coordination)
-        gamma = GammaController(ROOT, coordination_lock=coordination, peer_busy=controller.own_busy)
-        configured=WorkflowController(ROOT,coordination_lock=coordination,
-                                      peer_busy=lambda: controller.own_busy() or gamma.own_busy())
-        controller.set_peer_busy(lambda: gamma.own_busy() or configured.own_busy())
-        gamma.set_peer_busy(lambda: controller.own_busy() or configured.own_busy())
-        server = Server(args.port, controller, gamma_controller=gamma, workflow_controller=configured)
-        session = server.origin + '/#' + server.token
-        receipt = folder / 'server.json'
-        receipt.write_text(json.dumps({'pid': os.getpid(), 'url': session, 'origin': server.origin}, indent=2), encoding='utf-8')
-        print('Local control: ' + server.origin + ' (session link opens in your browser).', flush=True)
-        print('Keep this terminal open. Stop waits for the current workflow stage; incomplete or uncertain workers are preserved for inspection.', flush=True)
+    try:
+        with server_lease(ROOT) as folder:
+            coordination = threading.RLock()
+            controller = Controller(ROOT, coordination_lock=coordination)
+            gamma = GammaController(ROOT, coordination_lock=coordination, peer_busy=controller.own_busy)
+            configured=WorkflowController(ROOT,coordination_lock=coordination,
+                                          peer_busy=lambda: controller.own_busy() or gamma.own_busy())
+            controller.set_peer_busy(lambda: gamma.own_busy() or configured.own_busy())
+            gamma.set_peer_busy(lambda: controller.own_busy() or configured.own_busy())
+            server = Server(args.port, controller, gamma_controller=gamma, workflow_controller=configured)
+            session = server.origin + '/#' + server.token
+            receipt = folder / 'server.json'
+            receipt.write_text(json.dumps({'pid': os.getpid(), 'url': session, 'origin': server.origin}, indent=2), encoding='utf-8')
+            print('Local control: ' + server.origin + ' (session link opens in your browser).', flush=True)
+            print('Keep this terminal open. Stop waits for the current workflow stage; incomplete or uncertain workers are preserved for inspection.', flush=True)
+            if not args.no_browser:
+                webbrowser.open(session)
+            try:
+                server.serve_forever(poll_interval=0.5)
+            except KeyboardInterrupt:
+                pass
+            finally:
+                server.server_close()
+                # Keep scientific/job records; remove only this ephemeral session secret.
+                receipt.unlink(missing_ok=True)
+    except ControlAlreadyOpen:
+        origin, session = existing_control_session(ROOT)
         if not args.no_browser:
             webbrowser.open(session)
-        try:
-            server.serve_forever(poll_interval=0.5)
-        except KeyboardInterrupt:
-            pass
-        finally:
-            server.server_close()
-            # Keep scientific/job records; remove only this ephemeral session secret.
-            receipt.unlink(missing_ok=True)
+        print('Local control already running: ' + origin + ' (existing session reused).', flush=True)
     return 0
 
 

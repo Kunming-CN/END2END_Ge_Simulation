@@ -1,5 +1,199 @@
 # GeSignal handoff
 
+## November 24 complete student prerequisites and installation route
+
+The maintained setup guide now exposes both platform routes and a complete
+language/tool/package inventory before installation. It distinguishes Windows
+Control Python/NumPy from locked WSL or Mac transport Python; lists Julia,
+C++/CMake/Ninja, shells, browser requirements, exact main package versions and
+Geant4 datasets; and links the complete manifest/lock dependency lists. README
+and the student ZIP include an offline `START_HERE.html` entry. Missing Windows
+Python now points to that entry. No environment was installed or changed here.
+
+New simulation automatically checks installed versions, imports, Julia package
+and artifact metadata, locked transport records, model inputs and exporter
+receipts. Recheck is explicit; ordinary polling does not rerun probes. Required
+and optional dependencies remain distinct, and ready details collapse. A fixed
+local guide route works independently of catalog/NumPy availability.
+
+Forty targeted backend/protocol tests, the full frontend DOM suite, the guide
+regression and 42 publication-tool tests pass. The real owner setup probe took
+9.77 seconds and found all 11 required items ready; host SciPy/PyYAML are optional
+and absent. Actual desktop Chrome showed the automatic result, expandable exact
+versions, the setup link and preserved classroom run. No new simulation was run.
+Default-sandbox hard-link test failures and the successful approved rerun remain
+under `.local/student-ui-v1/`, together with HTTP and browser acceptance evidence.
+All seven extracted-package checks pass. Actual browser acceptance also exposed
+a transient Start-button block: the Windows process snapshot grew between its
+size query and read, producing 3 unknown identities in 200 native probes. The
+reader now allocates growth headroom and resizes once for that exact status;
+real failures remain unknown. Eleven identity/regression tests pass, and 200
+post-fix samples had zero unknown identities or false busy states. The final
+Control server was reopened in desktop Chrome with all required prerequisites
+ready and Start enabled. All 37 HTTP protocol tests pass. The generated site
+and standalone checker pass for build
+`1c16a2b12c9e4de1ab104cc6e1bbc962013ab27fd4676f8a1848b6096bd6976b`.
+Runtime `6691bd7e142ce57c6376f76118afeaf402e9e28e` is published as the
+[latest student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-6691bd7e142c).
+The actual public ZIP has 1,445,460 bytes and SHA256
+`adcb8877b25741364201c8598ac890e2172fb5e3042cdb7868e2438368cb3289`;
+its packaged commit, root onboarding entries and complete language/package
+guide match the verified build. The maintained public setup entry remains
+<https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html>.
+Publication follows the existing owner-maintenance exception documented in
+tools/MAINTENANCE.md; branch protection and account permissions are unchanged.
+
+## November 24 My runs recycle bin
+
+Ordinary detector runs and GeGI acquisitions now have Delete run, Restore and
+Empty recycle bin. Deletion moves the selected run and its dispatch records into
+`.local/run-trash/`; restoration preserves original file bytes and refuses name
+collisions. Active/unknown workers and recorded dependent analyses are identified
+before moving data. Explicit selected trash IDs and confirmation govern permanent
+removal. Windows read-only directory handling is confined to the selected trash
+tree; partial purges retain their metadata, disable restoration and allow retry.
+
+Thirteen targeted trash/HTTP tests and 30 existing workflow-controller tests pass.
+An isolated real Control server verified ordinary/candidate move and exact-byte
+restore, rejected a wrong empty confirmation, and emptied a disposable candidate
+after the Windows directory fix. Original scientific runs were not used as test
+deletion targets. The classroom 100-decay SAP22 run remains completed with all
+3 accepted signals. Evidence and the initial read-only-directory failure are in
+`.local/student-ui-v1/`. Desktop Chrome loaded the test page, but Computer Use
+then stopped because it could not reliably identify the current Windows browser
+URL; a complete browser interaction acceptance is not claimed for this change.
+The full frontend DOM suite and all seven final package tests pass. The initial
+package check ran during the last frontend edit and detected changed package
+identity; its log is retained and the stable-source rerun passes. The owner's
+idle Control was refreshed on port 5435; its real API exposes the new capabilities,
+retains the completed classroom run, and has an empty recycle bin. Runtime
+`c6c5d4b242ac92215498684d4574259cc6cba634` is pushed to PR #4 and published as
+the [latest student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-c6c5d4b242ac).
+Public bytes, packaged source commit and the included trash module were verified:
+1,432,273 bytes, SHA256
+`abc033ca08cd5c36190d0dcab1a01c74f29336d03f8b4184f229bd709dbaa16d`.
+Main still awaits its required external review. No Pages sources changed here.
+
+## November 24 Start simulation repair and classroom acceptance
+
+Start simulation was disabled because an October completed job's saved Windows
+PID had been reused by a protected system service. Opening that process failed,
+leaving its identity unknown and incorrectly blocking new work. The Windows
+identity reader now obtains the exact creation time from the native process
+snapshot when a process handle is unavailable. Actual creation-time comparison
+clears this stale identity; genuinely unknown identities remain blocking.
+Nine targeted tests pass, including actual Windows process identity and the
+shared GUI/CLI exclusion behavior. Existing job/scientific records are retained.
+
+Fresh student packages show compatible setup-pending detectors and a Check setup
+entry instead of an empty selector and unexplained disabled Start. Seven package
+tests pass in the existing WSL/Pixi environment, including a real extracted ZIP
+and local HTTP check/start protocol. This is not a new-machine installation test.
+
+Root started `class-sap22-100-20261124` through the actual desktop Chrome UI:
+SAP22, Cs-137, 100 initial decays, +30 degrees, seed 26092631, one Julia thread.
+It completed from 11:47:25 to 11:50:49 local time: 97 zero-deposit primaries,
+3 nonzero primaries, 3 accepted pulse groups, no native/readout failures or
+saturation. Saved original IDs are 24, 52 and 54. Read-only batch inspection
+verifies completion; Overview, event navigation, all four waveform stages and
+Data files were opened in the actual UI. Results remain under
+`.local/runs/class-sap22-100-20261124/`; compact evidence is in
+`.local/student-ui-v1/`. The launch-status banner now follows its own run through
+completion without overwriting other errors; the full DOM contract suite passes.
+Final desktop reload shows an enabled Start, and reopening the saved run displays
+its real waveforms. Repeated Control.cmd -NoBrowser reuses PID 31156 with no busy
+job. Runtime `d9ea403c95122bd584759f28bb9c21a720bcb4ec` is pushed to PR #4 and
+published as the [latest student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-d9ea403c9512).
+The public latest-download ZIP and packaged source commit match the build:
+1,425,496 bytes, SHA256
+`538055daf4e1d03fa8ede034a4e4cf58e2b8d9f6b38680db288425cbdce32c37`.
+Main still requires external approval; no new Pages deployment is claimed.
+The classroom waveform page remains open. No additional simulation or
+reconstruction work is required for this student-startup milestone.
+
+## November 24 Control reopening repair
+
+The owner's second Control.cmd launch was blocked by the still-running hidden
+desktop-acceptance server (PID 10884, loopback port 2744). Root verified its
+original command and start time, then stopped that owned UI server only.
+The previous launcher reported an occupied server lease without reopening its
+page. The repaired shared Python entry reuses a responding local Control session
+on repeated launches while retaining the single-server lease. Seven targeted
+tests pass. Actual Windows Control.cmd startup opened the page; the second
+Control.cmd invocation and -NoBrowser invocation both exited successfully and
+reused the same PID 8212/port 4153, with one listener. The initial fixture run's
+WinError 10013 is retained; the same tests passed through normal elevated tool
+approval. Evidence is in `.local/student-ui-v1/`; scientific workers and locks
+are unchanged. Runtime `20f4fee81998f05b9aed121e0ef456f2c0daaa85` is pushed to
+PR #4 and published as the [preceding Control release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-20f4fee81998).
+Public bytes and package commit were verified: 1,424,281 bytes, SHA256
+`cdd064fd4d85af9303780e83755f7c189dab00d86237cd58105b2b3c777c160c`.
+The local Control page is open; repeated launch reuses its session. Main remains
+awaiting its required external approval.
+
+## November 24 student interface simplification
+
+Control now has New simulation, My runs and Help. Ordinary detector setup and
+GeGI two-source acquisition have separate entry panels. The ordinary form
+filters compatible detectors, suggests an editable unused name, groups advanced
+settings and checks the selected configuration when Start simulation is clicked.
+Saved runs have compact history rows, separate detail views and Copy as new run
+with the complete recorded source/seed/electronics configuration.
+Ordinary results have Overview, Events & waveforms and Data files, with retained
+run counts/spectra, global original-ID search across batches, event navigation,
+signal-stage selection and grouped original artifacts. Saved GeGI acquisition,
+reconstruction and historical research tools retain their dedicated views.
+
+Root opened the actual local Control server in the owner's desktop Chrome and
+used existing AK01 and GeGI saved data. This is a UI acceptance, with no new
+simulation or scientific-data migration. Relevant DOM contracts, six package
+tests, 42 site tests and generated-site integrity checks passed. The 33 protocol
+tests initially exposed two outdated catalog assertions; those assertions were
+corrected for the existing GeGI connector and both targeted cases passed.
+Evidence and preserved initial failures are in `.local/student-ui-v1/`.
+The maintained guide and generated Pages guide follow the revised workflow.
+Runtime commit `60bd997d1328f79ab28c96d4732da85f5254ba15` is pushed to PR #4.
+The [new student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-60bd997d1328)
+was published and is included in the newer Control repair above. Its public ZIP
+and packaged commit were verified:
+1,423,583 bytes, SHA256
+`15e3723cdaa32d7157161563d43ceb65f40970ffe01986ef33171c46395375bf`.
+The protected main branch still requires an external approval; Pages deployment
+awaits that merge. No live Pages update is claimed. The local desktop Control
+tab remains open. Reconstruction ownership below is unchanged.
+
+## November 24 macOS student repair
+
+Sunil Chhetri reported a successful SAP22 run after locally repairing two
+geometry handoff failures. The repair-script attachments were unavailable.
+The current source confirmed both omissions in the nominal Cs-137 path.
+Shared batch preparation now includes the saved `geometry_checks` report that
+the Julia batch reader requires. Portable preparation records its actual
+`native_geometry_wall_s`; legacy missing-field metadata uses its paired
+completion receipt. Known preceding exporter builds retain exact compiled
+source/runtime/evidence checks while the updated Python execution is pinned.
+
+Targeted portable-source regression passes all 52 tests under the existing
+WSL/Pixi environment. Student package acceptance passes six tests, and the
+existing Julia 1.13 batch contracts pass all 84 assertions on Windows.
+The eight existing batch-source tests pass; all three added shared-preparation
+tests pass after correcting tuple/list serialization in the test assertions.
+The original ParaView Python test attempt lacked PyYAML and POSIX/hard-link
+support; the environment limitation is recorded and the fixture failure retained.
+No new Mac full-chain run was performed. Use the repaired release for a new run;
+this delivery does not migrate earlier failed scientific directories.
+Publication and validation records are in `.local/macos-geometry-handoff/`
+and `.local/macos-port/sunil-bugfix-*.log`. The repaired
+[student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-4bf93e41ee43)
+was published with exact public bytes and packaged commit verified; the student
+interface release above supersedes it and includes the same repair.
+Its 1,415,954-byte ZIP has SHA256
+`4654abb9c638a775f71789efab93659a76128f31e42ecae4ae0c8bdbd0d53da5`.
+[PR #4](https://github.com/Kunming-CN/END2END_Ge_Simulation/pull/4) awaits the
+protected main branch's required approval; automatic merging is disabled.
+This student support task leaves
+the reconstruction ownership and next development steps below in place.
+
 ## Current state and continuation
 
 Continue the owner's signal -> interaction -> source-position objective in

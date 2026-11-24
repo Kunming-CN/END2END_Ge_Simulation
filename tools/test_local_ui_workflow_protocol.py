@@ -32,6 +32,28 @@ class Protocol(unittest.TestCase):
 
     def close(self):self.server.shutdown();self.server.server_close();self.thread.join()
 
+    def test_fixed_local_guide_is_readable_without_session(self):
+        status,body,headers=self.request(route='/guide.html',headers={'X-Control-Token':None})
+        self.assertEqual(status,200)
+        self.assertEqual(body,(self.server.static_root/'site_guide.html').read_bytes().replace(b'__PAGE_NAVIGATION__',b''))
+        self.assertNotIn(b'__PAGE_NAVIGATION__',body)
+        self.assertIn('text/html',headers['Content-Type'])
+        self.assertEqual(headers['Cache-Control'],'no-store')
+        for route in ('/site_guide.html','/guide.html?path=../PROGRESS.md','/../PROGRESS.md'):
+            self.assertEqual(self.request(route=route,headers={'X-Control-Token':None})[0],403)
+        self.workflow.setup.assert_not_called()
+
+    def test_setup_remains_protected_and_returns_prerequisites(self):
+        reply={'status':'prerequisites_checked','platform':'windows','ready_for_config_check':False,
+               'guide_url':'/guide.html#requirements','prerequisites':[{'id':'numpy','status':'missing'}]}
+        self.workflow.setup.return_value=reply
+        self.assertEqual(self.request(route='/api/workflow/setup',headers={'X-Control-Token':None})[0],403)
+        self.workflow.setup.assert_not_called()
+        status,body,_=self.request(route='/api/workflow/setup')
+        self.assertEqual(status,200);self.assertEqual(json.loads(body),reply)
+        self.workflow.setup.assert_called_once_with()
+        self.workflow.start.assert_not_called()
+
     def request(self,method='GET',route='/api/workflow/state',body=None,headers=None):
         values={'Host':'127.0.0.1:'+str(self.server.server_port),'X-Control-Token':self.server.token}
         if method=='POST':values.update({'Origin':self.server.origin,'Content-Type':'application/json'})
@@ -55,6 +77,43 @@ class Protocol(unittest.TestCase):
         for method in ('start','check','check_batches','finalize_results','verify','features','acquisition','artifact'):
             getattr(self.workflow,method).assert_not_called()
         self.assertEqual(self.request('POST','/api/workflow/result-options?name=saved',{})[0],404)
+
+    def test_trash_routes_preserve_exact_selected_kind_name_and_ids(self):
+        trash = self.workflow.run_trash.return_value
+        entry = {'id': 'a'*32, 'kind': 'workflow', 'name': 'UI-test-disposable', 'deleted_utc': 'fixture'}
+        trash.snapshot.return_value = {'entries': [entry], 'busy': False}
+        trash.move.return_value = {'entry': entry}
+        trash.restore.return_value = {'restored': entry}
+        trash.empty.return_value = {'deleted_ids': [entry['id']]}
+        self.assertEqual(json.loads(self.request(route='/api/workflow/trash')[1]), {'entries': [entry], 'busy': False})
+        for route, data, expected in (
+                ('/api/workflow/trash', {'kind': 'workflow', 'name': entry['name']}, {'entry': entry}),
+                ('/api/workflow/trash/restore', {'id': entry['id']}, {'restored': entry}),
+                ('/api/workflow/trash/empty', {'ids': [entry['id']], 'confirmation': 'DELETE'}, {'deleted_ids': [entry['id']]})):
+            status, body, headers = self.request('POST', route, data)
+            self.assertEqual(status, 200); self.assertEqual(json.loads(body), expected)
+            self.assertEqual(headers['Cache-Control'], 'no-store')
+        trash.move.assert_called_once_with(kind='workflow', name=entry['name'])
+        trash.restore.assert_called_once_with(entry['id'])
+        trash.empty.assert_called_once_with(ids=[entry['id']], confirmation='DELETE')
+        self.workflow.start.assert_not_called(); self.workflow.check.assert_not_called()
+
+    def test_trash_routes_require_session_origin_and_closed_request_fields(self):
+        trash = self.workflow.run_trash.return_value
+        self.assertEqual(self.request(route='/api/workflow/trash', headers={'X-Control-Token': None})[0], 403)
+        self.assertEqual(self.request('POST', '/api/workflow/trash', {'kind': 'workflow', 'name': 'saved'},
+                                      {'Origin': 'https://evil.example'})[0], 403)
+        for route in ('/api/workflow/trash?name=saved', '/api/workflow/trash#x'):
+            self.assertEqual(self.request(route=route)[0], 400)
+        for route, body in (
+                ('/api/workflow/trash', {'name': 'saved'}),
+                ('/api/workflow/trash', {'kind': True, 'name': 'saved'}),
+                ('/api/workflow/trash', {'kind': 'workflow', 'name': 'saved', 'path': '../other'}),
+                ('/api/workflow/trash/restore', {'id': 'a'*32, 'name': 'saved'}),
+                ('/api/workflow/trash/empty', {'confirmation': 'DELETE'})):
+            self.assertEqual(self.request('POST', route, body)[0], 400)
+        for method in ('snapshot', 'move', 'restore', 'empty'):
+            getattr(trash, method).assert_not_called()
 
     def test_saved_result_options_requires_session_not_download_cookie(self):
         route='/api/workflow/result-options?name=saved'
@@ -97,7 +156,10 @@ class Protocol(unittest.TestCase):
                     with patch.object(W,'settings_check',side_effect=AssertionError('Settings executed')), self.assertRaises(W.ControlError):
                         W._resolve(candidate,root=self.server.controller.root)
         self.assertTrue({d['id'] for d in catalog['detectors'] if d['available']} <=
-                        set(W.MODELS)|{'AK01','SAP16','SAP17','Bipolar_reference_3D','KL01_3D'})
+                        set(W.MODELS)|{'AK01','SAP16','SAP17','Bipolar_reference_3D','KL01_3D','GeGI_3D'})
+        gegi=next(d for d in catalog['detectors'] if d['id']=='GeGI_3D')
+        self.assertEqual(gegi['assemblies'],['gegi_cryostat_v1'])
+        self.assertEqual(gegi['workflow_kind'],J.GEGI_KIND)
         self.assertTrue({'AK02','SAP22','GeRC02','KMRC01_candidate'} <= {d['id'] for d in catalog['detectors'] if d['available']})
 
     def test_sap18_exact_capability_after_acceptance_and_unchecked_edits_refused(self):
@@ -108,7 +170,7 @@ class Protocol(unittest.TestCase):
         self.assertEqual([s for s in sap['sources'] if s in legacy],[W.CS])
         self.assertNotIn(W.GAMMA,sap['sources'])
         self.assertIn('identity unresolved',sap['operating_label'])
-        self.assertEqual({d['id'] for d in catalog['detectors'] if d['available'] and d.get('workflow_kind')!=J.CATALOG_KIND},
+        self.assertEqual({d['id'] for d in catalog['detectors'] if d['available'] and d.get('workflow_kind') not in (J.CATALOG_KIND,J.GEGI_KIND)},
                          {'AK02','SAP22','GeRC02','KMRC01_candidate',W.SAP18})
         original=W.read(W.ROOT/'scenarios/detector-capabilities.json')
         self.assertIs(next(d for d in original['detectors'] if d['model_id']==W.SAP18)['lbnl_execution_implemented'],False)

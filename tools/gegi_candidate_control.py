@@ -191,6 +191,9 @@ class CandidateControl:
                 directory = self._directory(child.name)
                 if safe_path(directory, REPORT_NAME).is_file():
                     jobs[child.name] = {'name': child.name, 'status': 'completed'}
+        busy = self.workflow.own_busy() or self.workflow._peer_busy()
+        for name, job in jobs.items():
+            job.update(self.workflow.run_trash().eligibility('candidate', name, busy=busy))
         return {'kind': KIND, 'jobs': list(jobs.values()), 'calibrations': self._calibrations(),
             'lateral_calibrations': self._calibrations(lateral=True), 'defaults': {
             'mode': 'duration', 'duration_s': 5, 'maximum_duration_s': None,
@@ -625,6 +628,7 @@ class CandidateControl:
             W.require(name in self.jobs, 'Unknown mixed-source acquisition.')
         job['resumable'] = (not active and job['status'] in ('stopped', 'interrupted', 'failed')
                             and self._resumable(directory))
+        job.update(self.workflow.run_trash().eligibility('candidate', name))
         return job
 
     def candidates(self, name, report_sha256, offset=0):

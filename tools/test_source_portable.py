@@ -124,6 +124,23 @@ class BuildAndBindingFixtures(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.validate(changed)
 
+    def test_python_geometry_fix_reuses_exact_macos_build_without_source_rebase(self):
+        self.identity = {'macos_root':'/Users/student/clone','compiled_project_local':'/Users/student/clone/.local'}
+        value = copy.deepcopy(self.receipt)
+        value.update(project_identity=self.identity, producer_sha256=adapter.PRE_GEOMETRY_METADATA_BUILD_PRODUCER,
+                     source_sha256={**adapter.source_inventory(), **adapter.MACOS_PINS})
+        self.validate(value)
+        for change in (lambda v:v.update(producer_sha256='f'*64),
+                       lambda v:v['source_sha256'].update({'transport/cryostat_export.cc':'f'*64}),
+                       lambda v:v['source_sha256'].update({adapter.MACOS_LOCK:'f'*64})):
+            changed = copy.deepcopy(value); change(changed)
+            with self.assertRaises(ValueError): self.validate(changed)
+
+    def test_python_geometry_fix_reuses_exact_windows_build(self):
+        value = copy.deepcopy(self.receipt)
+        value['producer_sha256'] = adapter.PRE_GEOMETRY_METADATA_BUILD_PRODUCER
+        self.validate(value)
+
     def test_rehashed_recipe_and_target_overrides_refused(self):
         for key, replacement in (("configure_argv", ["cmake", "-DEXTRA=1"]), ("target", "foreign"), ("compiler", "/foreign/compiler"), ("target_compile_argv", ["c++", "-include", "injection.h"])):
             value = copy.deepcopy(self.receipt)
@@ -322,10 +339,10 @@ class PairedPreparation(unittest.TestCase):
         self.directory=Path(self.temp.name)/'prepared'
         self.request={'detector':'AK02','source_mode':adapter.GAMMA,'source_pose':'plus5mm','primary_count':20,'seed':26092631, **self.gamma_changes}
         self.h,self.cs,self.s,self.gamma,self.ring,self.models=adapter.helpers()
-        self.checked={'request':self.request,'execution_contract':{'kind':adapter.EXECUTION_KIND,'version':1,'source_mode':adapter.GAMMA,
+        self.checked={'request':self.request,'execution_contract':{'kind':adapter.EXECUTION_KIND,'version':1,'source_mode':self.request['source_mode'],
                       'exporter_sha256':'f'*64},'portable_source_sha256':{adapter.ADAPTER_REF:adapter.digest(adapter.adapter_path())},
                       'runtime':{'kind':'synthetic-no-runtime'},'upstream_sha256':self.cs.upstream_hashes(),
-                      'gamma_plan':adapter.resolve_gamma_plan(self.request)}
+                      'gamma_plan':adapter.resolve_gamma_plan(self.request) if self.request['source_mode']==adapter.GAMMA else None}
         if adapter.gamma_options(self.request):
             self.checked['gamma_source_configuration'] = self.checked['gamma_plan']['gamma_source_configuration']
         for target,name,value in ((adapter,'validate_checked_plan',lambda *a:copy.deepcopy(self.checked)),
@@ -338,7 +355,9 @@ class PairedPreparation(unittest.TestCase):
             self.h.publish_json(path/'runtime.json',{'identity':runtime})
         mocked=patch.object(adapter,'runtime_data',side_effect=datasets);mocked.start();self.addCleanup(mocked.stop)
         import test_scenario_prepare as fixture
-        self.report=fixture.report_fixture(self.checked['gamma_plan'])
+        scenario=adapter.geometry_contract(self.request,self.checked['gamma_plan'])[2]
+        self.report=fixture.report_fixture(self.checked['gamma_plan'] or {'assets':{'detector':{'id':adapter.model_id(self.request)}},
+            'coordinate_transform':scenario['coordinate_transform'],'source_position_global_mm':scenario['source']['position_global_mm']})
         def exporter(command,**kwargs):
             Path(command[-2]).write_text('<gdml><!-- SYNTHETIC UNIT FIXTURE --></gdml>\n',encoding='utf-8')
             Path(command[-1]).write_text(adapter.text(self.report),encoding='utf-8')
@@ -387,6 +406,54 @@ class PairedPreparation(unittest.TestCase):
             value=adapter.load(path);value.update(edits);path.write_text(adapter.text(value),encoding='utf-8')
             with self.subTest(edits=edits),self.assertRaises(ValueError):adapter.read_prepared(self.directory,'D:\\mock\\clone')
             path.write_bytes(original)
+
+
+class CsPreparation(unittest.TestCase):
+    gamma_changes = {'detector':'SAP22','source_mode':adapter.CS137,'source_pose':'nominal'}
+    setUp = PairedPreparation.setUp
+
+    def save_metadata(self, value):
+        (self.directory/'prepared.json').write_text(adapter.text(value),encoding='utf-8')
+        receipt=adapter.load(self.directory/'prepare-receipt.json')
+        receipt['prepared_sha256']=adapter.digest(self.directory/'prepared.json')
+        (self.directory/'prepare-receipt.json').write_text(adapter.text(receipt),encoding='utf-8')
+
+    def test_sap22_cs137_preparation_records_actual_timing_and_reads(self):
+        _,meta,_,_,_=adapter.read_prepared(self.directory,'D:\\mock\\clone')
+        receipt=adapter.load(self.directory/'prepare-receipt.json')
+        self.assertGreater(meta['native_geometry_wall_s'],0)
+        self.assertEqual(meta['native_geometry_wall_s'],receipt['native_geometry_wall_s'])
+        self.assertEqual(meta['primary_count'],20)
+        self.assertIn('/run/beamOn 20\n',(self.directory/'run.mac').read_text())
+
+    def test_legacy_missing_timing_uses_paired_receipt_without_rewriting(self):
+        meta=adapter.load(self.directory/'prepared.json');meta.pop('native_geometry_wall_s')
+        self.save_metadata(meta)
+        before={ref:adapter.digest(self.directory/ref) for ref in ('prepared.json','prepare-receipt.json')}
+        self.assertEqual(adapter.read_prepared(self.directory,'D:\\mock\\clone')[1],meta)
+        self.assertEqual(before,{ref:adapter.digest(self.directory/ref) for ref in before})
+        meta['clock_policy']='changed'
+        self.save_metadata(meta)
+        with self.assertRaisesRegex(ValueError,'semantics/provenance'):
+            adapter.read_prepared(self.directory,'D:\\mock\\clone')
+
+    def test_new_timing_mismatch_and_invalid_legacy_receipt_are_refused(self):
+        meta=adapter.load(self.directory/'prepared.json')
+        meta['native_geometry_wall_s']+=1
+        self.save_metadata(meta)
+        with self.assertRaisesRegex(ValueError,'geometry receipt/timing changed'):
+            adapter.read_prepared(self.directory,'D:\\mock\\clone')
+        meta.pop('native_geometry_wall_s');self.save_metadata(meta)
+        path=self.directory/'prepare-receipt.json';receipt=adapter.load(path)
+        for value in (True,-1,None):
+            changed=copy.deepcopy(receipt);changed['native_geometry_wall_s']=value
+            path.write_text(adapter.text(changed),encoding='utf-8')
+            with self.subTest(timing=value),self.assertRaisesRegex(ValueError,'invalid geometry timing'):
+                adapter.read_prepared(self.directory,'D:\\mock\\clone')
+        for edits in ({'prepared_sha256':'f'*64},{'command':['foreign-exporter']},{'status':'failed'}):
+            path.write_text(adapter.text({**receipt,**edits}),encoding='utf-8')
+            with self.subTest(edits=edits),self.assertRaises(ValueError):
+                adapter.read_prepared(self.directory,'D:\\mock\\clone')
 
 
 class OptionPreparation(PairedPreparation):

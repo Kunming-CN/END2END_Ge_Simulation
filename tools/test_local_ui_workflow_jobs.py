@@ -1,5 +1,6 @@
 """Owned plan/start/reopen tests. Every scientific launch is mocked."""
 import copy
+import os
 import stat
 from pathlib import Path
 import tempfile
@@ -11,6 +12,7 @@ from unittest.mock import patch
 import local_ui_workflow_jobs as J
 import workflow_recovery as R
 import scenario_workflow as W
+import local_ui_jobs as P
 
 
 class Jobs(unittest.TestCase):
@@ -221,11 +223,16 @@ class Jobs(unittest.TestCase):
         for relative in ('transport/cryostat-source.json','simulation/Manifest.toml'):
             path=self.root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'fixture')
         backend=SimpleNamespace(EXPORTER_REF='.local/new-exporter',BUILD_REF='.local/new-build.json')
-        portable=SimpleNamespace(file_readiness=lambda root:{'available':True})
-        with patch.dict('sys.modules',{'scenario_source_portable':portable}),patch.object(W,'runtime_identity',return_value={}),patch.object(W,'source_pins',return_value={}),patch.object(W,'catalog',return_value={'setup_guide':'fixture'}),patch.object(J,'catalog_backend',return_value=backend):
+        portable=SimpleNamespace(file_readiness=lambda root:{'available':True,'build_receipt_ref':'fixture'})
+        environment={'platform':'windows','ready':True,'prerequisites':[{'id':'fixture','status':'ready','required':True}]}
+        with patch.dict('sys.modules',{'scenario_source_portable':portable}),patch.object(W,'runtime_identity',return_value={}),patch.object(W,'source_pins',return_value={}),patch.object(J.local_prerequisites,'inspect',return_value=environment),patch.object(J,'catalog_backend',return_value=backend):
             reply=self.controller.setup()
             self.assertFalse(reply['angular_source_file_ready'])
             self.assertTrue(reply['ready_for_config_check']);self.assertFalse(reply['catalog_models_file_ready']);self.assertEqual(reply['science_calls'],0)
+            self.assertEqual(reply['status'],'prerequisites_checked')
+            self.assertEqual(reply['guide_url'],'/guide.html#requirements')
+            with patch.object(J.local_prerequisites,'inspect',return_value=dict(environment,ready=False)):
+                self.assertFalse(self.controller.setup()['ready_for_config_check'])
             for relative in (backend.EXPORTER_REF,backend.BUILD_REF):
                 path=self.root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'fixture')
             self.assertTrue(self.controller.setup()['catalog_models_file_ready'])
@@ -291,6 +298,31 @@ class Jobs(unittest.TestCase):
             with self.subTest(identity=identity),patch.object(W,'inspect',return_value=receipt),patch.object(W,'process_identity',return_value=identity),self.assertRaises(W.ControlError):self.controller.verify(job['name'])
         with patch.object(W,'inspect',return_value=receipt),patch.object(W,'process_identity',return_value=None):self.controller.verify(job['name']);self.assertFalse(self.controller.own_busy())
         with patch.object(W,'process_identity',return_value='unknown'):self.assertTrue(self.controller.own_busy())
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows process creation identity')
+    def test_reused_denied_pid_releases_terminal_gui_and_cli_without_changing_history(self):
+        job = self.result_job()
+        job['driver'] = {'pid': 3756, 'identity': '134354775724664173'}
+        state = {'kind': 'local_workflow_jobs_v1', 'jobs': [copy.deepcopy(job)]}
+        path = self.root / '.local/local-control-v1/workflow-jobs.json'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        W.write(path, state, fresh=True)
+        original = path.read_bytes()
+        with patch.object(P.ctypes, 'WinDLL') as library, \
+             patch.object(P.ctypes, 'get_last_error', return_value=5), \
+             patch.object(P, 'windows_snapshot_identity') as snapshot:
+            library.return_value.OpenProcess.return_value = None
+            for identity, blocked in (('134400079469454292', False),
+                                      ('134354775724664173', True), ('unknown', True)):
+                with self.subTest(current_identity=identity):
+                    snapshot.return_value = identity
+                    self.assertEqual(self.controller.own_busy(), blocked)
+                    if blocked:
+                        with self.assertRaises(W.ControlError):W.verify_dispatch_reservations(None, self.root)
+                    else:
+                        W.verify_dispatch_reservations(None, self.root)
+                    self.assertEqual(path.read_bytes(), original)
+                    self.assertEqual(self.controller._jobs, [job])
 
     def test_common_lease_blocks_retained_route_reservation(self):
         with W.execution_lease(self.root):
