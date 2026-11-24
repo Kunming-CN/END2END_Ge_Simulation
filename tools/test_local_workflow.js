@@ -2211,11 +2211,52 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   run(`$('browse-catalog').checked=false;$('cryostat').value='lbnl_modular_nominal_v1';cryostatChanged();`);
   assert.ok(JSON.parse(run('JSON.stringify(detectorItems())')).every(item=>item.available===true&&(!item.assemblies||item.assemblies.includes('lbnl_modular_nominal_v1'))));
   get('browse-catalog').checked=true;get('browse-catalog').onchange();assert.equal(run('detectorItems().length'),run('catalog.detectors.length'));
+  // A fresh student package has the canonical models but no machine-local
+  // LBNL setup. Keep those models visible with an actionable setup route;
+  // never replace the selected cryostat with the bundled GeGI connector.
+  run(`const configuredStudentCatalog=catalog;
+    const freshPendingModels=Array.from({length:16},(_,index)=>({id:index===0?'AK02':'pending-'+index,label:index===0?'AK02':'Pending '+index,
+      available:false,block_code:'setup_required',setup_required:true,reason:'Download the pinned LBNL cryostat inputs using the setup guide.',
+      assemblies:['lbnl_modular_nominal_v1'],sources:[],model:{contacts:[]}}));
+    catalog={...catalog,setup_guide:'https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup-macos',
+      detectors:[...freshPendingModels,configuredStudentCatalog.detectors.find(detector=>detector.id==='GeGI_3D')]};
+    $('browse-catalog').checked=false;$('cryostat').value='lbnl_modular_nominal_v1';active=false;selectDetector('AK02');`);
+  assert.equal(get('cryostat').value,'lbnl_modular_nominal_v1');assert.equal(get('detector').value,'AK02');
+  assert.equal(get('detector').children.length,16);assert.ok(get('detector').children.every(option=>option.textContent.endsWith('Setup required')));
+  assert.equal(get('source').children[0].textContent,'Available after setup');assert.equal(get('pose').children[0].textContent,'Available after setup');
+  assert.equal(get('setup-required').hidden,false);assert.equal(get('model-panel').hidden,false);
+  assert.match(get('model-capability').textContent,/Setup required on this computer/);assert.match(get('run-readiness').textContent,/Complete setup/);
+  assert.equal(get('setup-required-guide').href,run('catalog.setup_guide'));assert.equal(get('guide').href,run('catalog.setup_guide'));
+  assert.match(get('model-capability-details').textContent,/pinned LBNL cryostat inputs/);
+  for(const id of ['start','check','save','source','pose'])assert.equal(get(id).disabled,true,id);
+  run(`const freshSetupCalls=[];api=async path=>{freshSetupCalls.push(path);if(path==='/api/workflow/setup')return{checks:[{available:false,label:'LBNL cryostat setup'}],note:'Follow the setup guide.'};throw Error('Unexpected fresh-package action '+path);};`);
+  await get('setup-required-help').onclick();assert.equal(run('currentPage'),'help');assert.match(get('setup-notice').textContent,/Missing: LBNL cryostat setup/);
+  await get('start').onclick();assert.deepEqual(JSON.parse(run('JSON.stringify(freshSetupCalls)')),['/api/workflow/setup']);
+  get('cryostat').value='gegi_cryostat_v1';run('cryostatChanged();');
+  assert.equal(get('detector').value,'GeGI_3D');assert.equal(get('setup-required').hidden,true);
+  run(`catalog={...catalog,detectors:[{...freshPendingModels[0],available:true,block_code:null,setup_required:false,sources:['cs137_point_decay_v1']},...freshPendingModels.slice(1)]};
+    $('cryostat').value='lbnl_modular_nominal_v1';selectDetector('not-in-catalog');`);
+  assert.equal(get('detector').value,'AK02');assert.equal(get('detector').children.length,1);assert.equal(get('setup-required').hidden,true);assert.equal(get('start').disabled,false);
+  run('catalog=configuredStudentCatalog;selectDetector("AK02");');
+  console.log('Fresh student setup-required models remain visible; setup help and platform guide are reachable; missing setup cannot launch; installed cryostat filtering is unchanged.');
   run(`copyAsNewRun(uiJob);checked=null;const oneClickCalls=[];let oneClickJob;
-    api=async(path,body)=>{oneClickCalls.push({path,body});if(path==='/api/workflow/check-batches')return{kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:true,check_id:'one-click',resolved:{selection:body.request.selection,batching:{batch_count:1}}};if(path==='/api/workflow/start'){oneClickJob={...uiJob,name:config().name,selection:config(),status:'running'};return oneClickJob;}if(path==='/api/workflow/state')return{busy:true,jobs:[...uiState.jobs,oneClickJob]};if(path==='/api/state')return{gamma:{jobs:[]}};throw Error('Unexpected student UI route '+path);};`);
+    api=async(path,body)=>{oneClickCalls.push({path,body});if(path==='/api/workflow/check-batches')return{kind:'local_scenario_batch_execution_v3',schema_version:3,execution_enabled:true,check_id:'one-click',resolved:{selection:body.request.selection,batching:{batch_count:1}}};if(path==='/api/workflow/start'){oneClickJob={...uiJob,name:config().name,selection:config(),status:'dispatch_uncertain'};return oneClickJob;}if(path==='/api/workflow/state')return{busy:['dispatch_uncertain','running'].includes(oneClickJob.status),jobs:[...uiState.jobs,oneClickJob]};if(path==='/api/state')return{gamma:{jobs:[]}};throw Error('Unexpected student UI route '+path);};`);
   assert.equal(get('start').disabled,false);await get('start').onclick();
   assert.deepEqual(JSON.parse(run('JSON.stringify(oneClickCalls.slice(0,2).map(call=>call.path))')),['/api/workflow/check-batches','/api/workflow/start']);
   assert.equal(run('oneClickCalls[1].body.check_id'),'one-click');assert.equal(run('currentPage'),'runs');assert.equal(get('run-detail').hidden,false);
+  // The launch reply can precede the worker receipt. Only that owned run-status
+  // notice follows later state polls; genuine errors and other feedback stay.
+  assert.match(get('notice').textContent,/Inspection required/);
+  run(`renderJobs({busy:false,jobs:[{...oneClickJob,configuration_sha256:'f'.repeat(64),status:'completed'}]});`);
+  assert.match(get('notice').textContent,/Inspection required/);
+  run("oneClickJob={...oneClickJob,status:'running'};");await run('poll()');assert.match(get('notice').textContent,/: Running\.$/);
+  run("oneClickJob={...oneClickJob,status:'completed'};");await run('poll()');assert.match(get('notice').textContent,/: Completed\.$/);
+  const completedNoticeWrites=get('notice').textWrites;await run('poll()');assert.equal(get('notice').textWrites,completedNoticeWrites);
+  run("notice('Inspection required: a different action failed.',true);oneClickJob={...oneClickJob,status:'stopped'};");await run('poll()');
+  assert.equal(get('notice').textContent,'Inspection required: a different action failed.');assert.equal(get('notice').className,'notice error');
+  run("notice('Configuration copied for another run.');oneClickJob={...oneClickJob,status:'completed'};");await run('poll()');
+  assert.equal(get('notice').textContent,'Configuration copied for another run.');
+  console.log('Launch inspection status follows matching run/configuration updates through completion; repeated polls retain text and unrelated errors or feedback.');
   run(`active=false;checked=null;oneClickCalls.length=0;api=async(path,body)=>{oneClickCalls.push({path,body});throw Error('Missing selected runtime');};controls();`);
   await get('start').onclick();assert.equal(run('oneClickCalls.length'),1);assert.equal(run('oneClickCalls[0].path'),'/api/workflow/check-batches');assert.match(get('notice').textContent,/Missing selected runtime/);
   // Search uses original global IDs to locate the right sealed batch and sparse

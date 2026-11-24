@@ -11,6 +11,7 @@ let candidateJob=null,candidateBusy=false,candidateGeneration=0,candidateEventGe
 let candidateEstimateGeneration=0;
 let candidatePlaneGeneration=0,candidateRangeRefresh=null;
 let knownRuns=[],currentPage='new',currentTask='standard',runDetailKind='standard',resultTab='overview',waveformStage='charge',eventFindGeneration=0;
+let runStatusNotice=null;
 const continuationNames=new Map();
 const pendingActions=new Map();
 const stageNames={native_preparation:'Fields and injection calibration',geometry:'Geometry and source',radiation:'Radiation transport',event_ledger:'Event ledger',response:'Fields, charge, calibration and readout',results:'Verified results'};
@@ -98,25 +99,43 @@ function showWaveformStage(stage=waveformStage){
   }
   for(const button of document.querySelectorAll('[data-waveform-stage]'))button.setAttribute('aria-pressed',String(button.dataset.waveformStage===stage));
 }
-function notice(text,error=false,checkedPlan=false){noticeIsCheckedPlan=checkedPlan;$('notice').textContent=text;$('notice').className='notice '+(error?'error':'okay');}
-function options(id,items,inspection=false){const s=$(id);s.replaceChildren();for(const item of items){const suffix=inspection?(item.available?' · Compute supported':item.block_code==='cryostat_size'?' · Needs larger cryostat':' · View only'):item.available===false?' · '+item.reason:'';const o=node('option',item.label+suffix);o.value=item.id;o.disabled=!inspection&&item.available===false;s.append(o);}}
+function notice(text,error=false,checkedPlan=false){runStatusNotice=null;noticeIsCheckedPlan=checkedPlan;$('notice').textContent=text;$('notice').className='notice '+(error?'error':'okay');}
+function showRunStatusNotice(job){
+  notice('Run '+job.name+': '+(stateNames[job.status]||job.status)+'.');
+  runStatusNotice={name:job.name,configuration_sha256:job.configuration_sha256,status:job.status};
+}
+function options(id,items,inspection=false){const s=$(id);s.replaceChildren();for(const item of items){const suffix=inspection?(item.available?' · Compute supported':item.block_code==='setup_required'?' · Setup required':item.block_code==='cryostat_size'?' · Needs larger cryostat':' · View only'):item.available===false?' · '+item.reason:'';const o=node('option',item.label+suffix);o.value=item.id;o.disabled=!inspection&&item.available===false;s.append(o);}}
 function detectorFits(d,cryostat=$('cryostat').value){return !d?.assemblies?.length?cryostat!=='gegi_cryostat_v1':d.assemblies.includes(cryostat);}
+function setupRequired(detector=currentDetector()){
+  return detector?.block_code==='setup_required'&&detectorFits(detector);
+}
+function showSetupGuidance(detector){
+  $('setup-required').hidden=!setupRequired(detector);
+  if(catalog.setup_guide){
+    $('guide').href=catalog.setup_guide;
+    $('setup-required-guide').href=catalog.setup_guide;
+  }
+}
 function detectorItems(){
   const items=catalog.detectors.map(detector=>detectorFits(detector)?detector:{
     ...detector,available:false,block_code:'cryostat_mismatch',reason:'Choose a compatible cryostat for this detector.'
   });
-  if(!$('browse-catalog').checked)return items.filter(detector=>detector.available===true);
+  if(!$('browse-catalog').checked){
+    const ready=items.filter(detector=>detector.available===true);
+    return ready.length?ready:items.filter(setupRequired);
+  }
   return [...items.filter(detector=>detector.available===true),...items.filter(detector=>detector.available!==true)];
 }
 function sharedModelSelection(){return currentDetector()?.workflow_kind==='local_catalog_workflow_v1';}
 function gegiSelection(){return currentDetector()?.workflow_kind==='local_gegi_workflow_v1';}
-function cryostatChanged(){
-  const previous=$('detector').value,items=detectorItems();
+function selectDetector(preferred=$('detector').value){
+  const items=detectorItems();
   options('detector',items,true);
-  const choice=items.find(detector=>detector.id===previous)||items[0];
+  const choice=items.find(detector=>detector.id===preferred)||items[0];
   $('detector').value=choice?.id||'';
   detectorChanged();
 }
+function cryostatChanged(){selectDetector();}
 function showModelRequirements(d){const list=$('model-parameters');list.replaceChildren();if(!d.parameter_summary?.length&&d.operating_label)list.append(node('li',d.operating_label));for(const p of d.parameter_summary||[]){const row=node('li',p.label+': '+String(p.value)+(p.unit?' '+p.unit:''));list.append(row);}const checks=$('model-checks');checks.replaceChildren();for(const c of d.checks||[]){checks.append(node('li',c.label+' · '+c.status+(c.detail?' · '+c.detail:'')));}$('model-requirements').hidden=!list.children.length&&!checks.children.length;}
 function currentDetector(){return catalog?.detectors.find(d=>d.id===$('detector').value);}
 function currentSource(){return catalog?.sources.find(s=>s.id===$('source').value);}
@@ -151,6 +170,7 @@ function controls(){
   let readiness;
   if(busy)readiness='Checking or starting the simulation…';
   else if(active)readiness='Existing work is active or needs inspection. Open My runs for progress and available actions.';
+  else if(setupRequired())readiness='Complete setup on this computer before starting a simulation.';
   else if(!runnable)readiness='Simulation unavailable. '+(currentDetector()?.available!==true?
     'View only · '+(currentDetector()?.reason||'No computation connector is available for this model.'):
     'This detector, source or cryostat combination is unavailable.')+' Choose a supported setup.';
@@ -168,10 +188,27 @@ function controls(){
 }
 function sourceLabel(id){return id==='mono_gamma_662_axis_v1'?'Monoenergetic gamma beam':catalog?.sources.find(s=>s.id===id)?.label||id;}
 function savedSourceLabel(selection){return sourceLabel(selection.source)+(['mono_gamma_662_axis_v1','gegi_mono_gamma_v1'].includes(selection.source)?' · '+savedGammaEnergy(selection)+' keV':'');}
-function detectorChanged(){const previous=$('source').value,original=currentDetector();if(!original)return;const d=detectorFits(original)?original:{...original,available:false,sources:[],reason:'This detector requires a different cryostat. Select a compatible cryostat.'},sources=catalog.sources.filter(s=>d.sources.includes(s.id)).map(s=>({...s,label:sourceLabel(s.id)}));options('source',sources);$('source').value=sources.some(s=>s.id===previous)?previous:sources[0]?.id||'';if(gegiSelection()&&previous!=='gegi_mono_gamma_v1'){$('count').value='100';$('seed').value='26101701';}$('operating-details').textContent=d.operating_label||'';$('numerics').textContent=gegiSelection()?'GeGI numerical, seed and field-cache settings are recorded in the checked plan. Each native drift realization supplies all 34 contact signals.':catalog.numerics||'';showModel(d);sourceChanged();}
+function detectorChanged(){
+  const previous=$('source').value,original=currentDetector();
+  $('model-panel').hidden=!original;
+  showSetupGuidance(original);
+  if(!original){
+    options('source',[]);options('pose',[]);
+    $('model-capability').textContent='No compatible detector is available in this cryostat. Choose another cryostat or browse the full catalog.';
+    invalidate();return;
+  }
+  const d=detectorFits(original)?original:{...original,available:false,sources:[],reason:'This detector requires a different cryostat. Select a compatible cryostat.'};
+  const sources=catalog.sources.filter(source=>d.sources.includes(source.id)).map(source=>({...source,label:sourceLabel(source.id)}));
+  options('source',sources.length?sources:setupRequired(d)?[{id:'',label:'Available after setup'}]:[]);
+  $('source').value=sources.some(source=>source.id===previous)?previous:sources[0]?.id||'';
+  if(gegiSelection()&&previous!=='gegi_mono_gamma_v1'){$('count').value='100';$('seed').value='26101701';}
+  $('operating-details').textContent=d.operating_label||'';
+  $('numerics').textContent=gegiSelection()?'GeGI numerical, seed and field-cache settings are recorded in the checked plan. Each native drift realization supplies all 34 contact signals.':catalog.numerics||'';
+  showModel(d);sourceChanged();
+}
 function showModel(d){const m=d.model||{},count=catalog.detectors.filter(x=>x.available===true).length;
 $('catalog-counts').textContent=catalog.detectors.length+' catalog models can be inspected; '+count+' have supported local computation connectors. The public website shows saved results.';
-$('model-capability').textContent=d.available?'Ready for simulation in this cryostat.':'View only · '+(d.reason||'No executable configuration is available for this setup.');$('model-capability-details').textContent=d.reason||d.operating_label||'';
+$('model-capability').textContent=d.available?'Ready for simulation in this cryostat.':setupRequired(d)?'Setup required on this computer.':'View only · '+(d.reason||'No executable configuration is available for this setup.');$('model-capability-details').textContent=d.reason||d.operating_label||'';
 $('model-title').textContent=d.id;$('model-summary').textContent=[d.type_label,m.group,m.status,m.coordinate_system?m.coordinate_system+' coordinates':''].filter(Boolean).join(' · ');
 $('model-contact-summary').textContent=(m.contacts||[]).length+' contacts · catalog readout contact '+(m.readout_contact_id??'unavailable');if($('model-contact-list').dataset.model!==d.id){$('model-contact-list').open=false;$('model-contact-list').dataset.model=d.id;}$('model-contacts').replaceChildren();$('model-contacts').tabIndex=(m.contacts||[]).length>8?0:-1;for(const c of m.contacts||[])$('model-contacts').append(node('li','Contact '+c.id+' · '+c.name+' · '+(c.potential_V>0?'+':'')+c.potential_V+' V'+(c.id===m.readout_contact_id?' · catalog readout':'')));
 $('model-assumptions').textContent=(m.assumptions||[]).join(' ');$('model-variant').textContent=d.id==='GeRC02'?'Preview: frozen catalog Ge30min base. Computation: separate Li50min variant at 553.15 K; stored 78 K, runtime 77 K; fresh fields.':'';
@@ -207,7 +244,7 @@ async function loadModelPreview(detector){
 }
 function showSelection(){if(!catalog)return;$('count-label').textContent=initialCountLabel({source:$('source').value});$('setup-preview').textContent=executableSelection()?'Current setup · '+$('detector').value+' · '+sourceLabel($('source').value)+(currentSource()?.id==='mono_gamma_662_axis_v1'?' · '+(gammaCapability()?$('gamma-energy-keV').value:662)+' keV · '+$('pose').value+' anchor':'')+' · '+$('count').value+' '+initialCountLabel({source:$('source').value}).toLowerCase()+' · '+$('threads').value+' Julia threads'+(angleCapability()?' · '+$('angle-deg').value+'° source angle':''):'Inspecting catalog model · '+$('detector').value+' · view only; no source or computation selected';}
 function showRun(job){const changed=selectedJob!==job.name||selectedRun?.configuration_sha256!==job.configuration_sha256;if(changed){$('run-stage-details').open=['running','stop_requested'].includes(job.status);eventFindGeneration++;$('event-find-button').disabled=false;resultGeneration++;plotGeneration++;result=null;resetResultOptions();resetGeGIResult();$('result').hidden=true;$('plots').replaceChildren();clearSavedSelection();$('saved-artifacts').replaceChildren();}selectedJob=job.name;selectedRun=job;$('selected').textContent='Selected run · '+job.name+' · '+job.selection.detector+' · '+savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' initial primaries';$('saved-source-pose').textContent=poseText(job,'Selected run source pose');$('run-plan').textContent=JSON.stringify({configuration_sha256:job.configuration_sha256,selection:job.selection,source_pose:job.source_pose||null,source_position_global_mm:job.source_position_global_mm,...(job.gamma_source_configuration?{gamma_source_configuration:job.gamma_source_configuration}:{})},null,2);stageList(job.stages,job.execution_contract==='serial_batches_v3');responseProgress(job);batchProgress(job);}
-function sourceChanged(){const s=currentSource();gammaFields();angleFields();if(!s){options('pose',[]);if(!$('count').value)$('count').value='500';$('source-details').textContent='A source cannot be selected until this detector has a checked computation connector.';$('source-identity').textContent='';invalidate();return;}if(gegiSelection()){options('pose',[{id:'custom',label:'Custom detector-coordinate position'}]);$('pose').value='custom';$('count').readOnly=false;$('count-limit').textContent='GeGI accepts 1–10000 initial gamma primaries per run. Start with 100; runtime and storage depend on the selected settings.';$('seed').disabled=false;$('angle-limit').textContent='GeGI uses the three recorded source coordinates. Capsule rotation does not apply.';$('source-details').textContent='Isotropic monoenergetic gamma point source. The count includes every emitted gamma, including misses. Use the two-source acquisition panel for fresh Cs-137 and Co-60 decays on one continuous readout clock.';$('source-identity').textContent=JSON.stringify({source_id:s.id,count_unit:'emitted gamma primaries',coordinate_system:'detector_xyz',position_unit:'mm',energy_unit:'keV',source_contract:s.source_contract},null,2);invalidate();return;}const gamma=gammaCapability(s);options('pose',gamma?gamma.source_poses.map(id=>({id,label:id==='nominal'?'Nominal source anchor':'+5 mm along global y'})):[{id:s.pose,label:s.pose_label||s.pose}]);$('pose').value=s.pose;const batching=batchSelection();$('count').readOnly=!batching;if(!batching)$('count').value=String(s.counts[0]);else if(!$('count').value)$('count').value='500';$('count-limit').textContent=batching?'Enter a positive integer.':'This gamma connector uses 20 photons and a fixed radiation seed.';$('seed').disabled=!batching&&s.fixed_seed!=null;if($('seed').disabled)$('seed').value=String(s.fixed_seed);$('source-details').textContent=[s.details||s.reason,s.count_unit?'Count unit: '+s.count_unit+'.':null,s.position_global_mm?(gamma?'Catalog default anchor':'Catalog fixed or zero-angle position')+' ['+s.position_global_mm.join(', ')+'] mm in the global frame.':null].filter(Boolean).join(' ');$('source-identity').textContent=JSON.stringify({source_id:s.id,count_unit:s.count_unit,position_global_mm:s.position_global_mm,source_angle:s.source_angle,gamma_controls:s.gamma_controls,source_contract:s.source_contract,acceptance:s.acceptance},null,2);invalidate();}
+function sourceChanged(){const s=currentSource();gammaFields();angleFields();if(!s){options('pose',setupRequired()?[{id:'',label:'Available after setup'}]:[]);if(!$('count').value)$('count').value='500';$('source-details').textContent=setupRequired()?'Complete the setup guide to enable sources for this detector.':'A source cannot be selected until this detector has a checked computation connector.';$('source-identity').textContent='';invalidate();return;}if(gegiSelection()){options('pose',[{id:'custom',label:'Custom detector-coordinate position'}]);$('pose').value='custom';$('count').readOnly=false;$('count-limit').textContent='GeGI accepts 1–10000 initial gamma primaries per run. Start with 100; runtime and storage depend on the selected settings.';$('seed').disabled=false;$('angle-limit').textContent='GeGI uses the three recorded source coordinates. Capsule rotation does not apply.';$('source-details').textContent='Isotropic monoenergetic gamma point source. The count includes every emitted gamma, including misses. Use the two-source acquisition panel for fresh Cs-137 and Co-60 decays on one continuous readout clock.';$('source-identity').textContent=JSON.stringify({source_id:s.id,count_unit:'emitted gamma primaries',coordinate_system:'detector_xyz',position_unit:'mm',energy_unit:'keV',source_contract:s.source_contract},null,2);invalidate();return;}const gamma=gammaCapability(s);options('pose',gamma?gamma.source_poses.map(id=>({id,label:id==='nominal'?'Nominal source anchor':'+5 mm along global y'})):[{id:s.pose,label:s.pose_label||s.pose}]);$('pose').value=s.pose;const batching=batchSelection();$('count').readOnly=!batching;if(!batching)$('count').value=String(s.counts[0]);else if(!$('count').value)$('count').value='500';$('count-limit').textContent=batching?'Enter a positive integer.':'This gamma connector uses 20 photons and a fixed radiation seed.';$('seed').disabled=!batching&&s.fixed_seed!=null;if($('seed').disabled)$('seed').value=String(s.fixed_seed);$('source-details').textContent=[s.details||s.reason,s.count_unit?'Count unit: '+s.count_unit+'.':null,s.position_global_mm?(gamma?'Catalog default anchor':'Catalog fixed or zero-angle position')+' ['+s.position_global_mm.join(', ')+'] mm in the global frame.':null].filter(Boolean).join(' ');$('source-identity').textContent=JSON.stringify({source_id:s.id,count_unit:s.count_unit,position_global_mm:s.position_global_mm,source_angle:s.source_angle,gamma_controls:s.gamma_controls,source_contract:s.source_contract,acceptance:s.acceptance},null,2);invalidate();}
 
 function electronics(){for(const key of catalog.electronics_keys){const [name,unit]=labels[key],label=node('label',name+(unit?' · '+unit:''));let input;if(key==='peak_policy'){input=node('select');for(const [value,text] of [['signed_input_positive_peak','Signed input, positive peak'],['legacy_reject_negative_input','Reject negative input']]){const o=node('option',text);o.value=value;input.append(o);}}else{input=node('input');input.type='number';input.step=key==='adc_bits'?'1':'any';}input.id='setting-'+key;label.htmlFor=input.id;input.value=catalog.electronics_defaults[key]??'';input.addEventListener('input',invalidate);label.append(input);$('electronics').append(label);}gateFields();}
 function gateFields(){for(const key of ['peak_gate_start_ns','peak_gate_end_ns'])$('setting-'+key).disabled=!$('use-peak-gate').checked;}
@@ -251,6 +288,10 @@ async function openLog(name,stage){return openLogFile(name,stage+'.log',stageNam
 function renderLegacy(state){const cards=[],held=(state.gamma?.jobs||[]).filter(j=>j.blocks_new_work===true);$('legacy-notice').hidden=!held.length;if(held.length){$('legacy-notice').textContent=held.some(j=>j.can_verify)?'Before starting another calculation, choose Verify saved completion in Previous saved jobs and recovery. This reads existing results only.':'Saved Gamma work needs verification or inspection before a new calculation. Verify saved completion is currently unavailable because its activity or uncertainty is unresolved, or its terminal files are incomplete. Open Help → Research tools for the saved job and recorded error.';}for(const job of state.gamma?.jobs||[]){const row=runKey(node('div',undefined,'run'),'gamma:'+JSON.stringify(job.id??job.label));row.append(node('strong','Saved gamma · '+job.label),node('p',job.status));if(job.error)row.append(node('p',job.error.message,'muted'));if(job.can_verify)row.append(action('Verify saved completion',()=>api('/api/gamma-verify',{job_id:job.id})));else if(job.blocks_new_work===true)row.append(node('p','Verify saved completion reads terminal results only. It stays unavailable while this saved job’s activity, uncertainty or incomplete output is unresolved.','muted'));bindRunActions(row);cards.push(row);}for(const job of state.jobs||[]){const row=runKey(node('div',undefined,'run'),'native:'+job.name);row.append(node('strong','Saved native example · '+job.name),node('p',job.status+' · retained history'));cards.push(row);}syncRunList($('legacy-runs'),cards);$('legacy-recovery').hidden=!cards.length;if(!cards.length)$('legacy-recovery').open=false;}
 function renderJobs(state){
   active=state.busy;
+  if(runStatusNotice){
+    const job=state.jobs.find(job=>job.name===runStatusNotice.name&&job.configuration_sha256===runStatusNotice.configuration_sha256);
+    if(job&&job.status!==runStatusNotice.status)showRunStatusNotice(job);
+  }
   knownRuns=state.jobs;if(!knownRuns.some(job=>job.name===selectedJob))selectedJob=knownRuns.at(-1)?.name??null;
   const cards=[],detailCards=[];
   for(const job of [...state.jobs].reverse()){
@@ -2257,8 +2298,7 @@ $('start').onclick=async()=>{
     showRun(job);
     checked=null;
     openRunDetail();
-    const started=['running','completed','completed_with_native_failures'].includes(job.status);
-    notice((started?'Started '+job.name:'Run '+job.name+': '+(stateNames[job.status]||job.status))+'.');
+    showRunStatusNotice(job);
     await poll();
     if($('name').value===job.name){$('name').value=uniqueRunName();invalidate();}
   }catch(e){
@@ -2344,6 +2384,11 @@ for(const button of document.querySelectorAll('[data-result-tab]')){
 }
 for(const button of document.querySelectorAll('[data-waveform-stage]'))button.onclick=()=>showWaveformStage(button.dataset.waveformStage);
 $('browse-catalog').onchange=cryostatChanged;
+$('setup-required-help').onclick=()=>{
+  showPage('help');
+  $('setup').focus();
+  return $('setup').onclick();
+};
 $('run-list-back').onclick=openRunList;
 $('open-saved-analysis').onclick=()=>{
   showPage('runs');
@@ -2354,4 +2399,4 @@ $('open-saved-analysis').onclick=()=>{
 };
 $('saved-analysis-back').onclick=openRunList;
 showPage('new');showTask('standard');showResultTab('overview');showWaveformStage();
-(async()=>{try{catalog=await api('/api/workflow/catalog');options('cryostat',catalog.cryostats);options('detector',detectorItems(),true);$('detector').value='AK02';electronics();$('numerics').textContent=catalog.numerics;$('setup-limit').textContent=catalog.setup_limit||'';detectorChanged();stageList();for(const id of ['pose','angle-deg','gamma-energy-keV','gegi-source-x','gegi-source-y','gegi-source-z','count','seed','threads','name'])$(id).addEventListener('input',invalidate);$('cryostat').onchange=cryostatChanged;$('detector').onchange=detectorChanged;$('source').onchange=sourceChanged;await poll();$('name').value=uniqueRunName();invalidate();void estimateCandidateStorage();setInterval(poll,2500);}catch(e){notice(e.message,true);$('check').disabled=true;}})();
+(async()=>{try{catalog=await api('/api/workflow/catalog');options('cryostat',catalog.cryostats);electronics();$('numerics').textContent=catalog.numerics;$('setup-limit').textContent=catalog.setup_limit||'';selectDetector('AK02');stageList();for(const id of ['pose','angle-deg','gamma-energy-keV','gegi-source-x','gegi-source-y','gegi-source-z','count','seed','threads','name'])$(id).addEventListener('input',invalidate);$('cryostat').onchange=cryostatChanged;$('detector').onchange=detectorChanged;$('source').onchange=sourceChanged;await poll();$('name').value=uniqueRunName();invalidate();void estimateCandidateStorage();setInterval(poll,2500);}catch(e){notice(e.message,true);$('check').disabled=true;}})();

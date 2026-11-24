@@ -1,5 +1,36 @@
 # GeSignal handoff
 
+## November 24 Start simulation repair and classroom acceptance
+
+Start simulation was disabled because an October completed job's saved Windows
+PID had been reused by a protected system service. Opening that process failed,
+leaving its identity unknown and incorrectly blocking new work. The Windows
+identity reader now obtains the exact creation time from the native process
+snapshot when a process handle is unavailable. Actual creation-time comparison
+clears this stale identity; genuinely unknown identities remain blocking.
+Nine targeted tests pass, including actual Windows process identity and the
+shared GUI/CLI exclusion behavior. Existing job/scientific records are retained.
+
+Fresh student packages show compatible setup-pending detectors and a Check setup
+entry instead of an empty selector and unexplained disabled Start. Seven package
+tests pass in the existing WSL/Pixi environment, including a real extracted ZIP
+and local HTTP check/start protocol. This is not a new-machine installation test.
+
+Root started `class-sap22-100-20261124` through the actual desktop Chrome UI:
+SAP22, Cs-137, 100 initial decays, +30 degrees, seed 26092631, one Julia thread.
+It completed from 11:47:25 to 11:50:49 local time: 97 zero-deposit primaries,
+3 nonzero primaries, 3 accepted pulse groups, no native/readout failures or
+saturation. Saved original IDs are 24, 52 and 54. Read-only batch inspection
+verifies completion; Overview, event navigation, all four waveform stages and
+Data files were opened in the actual UI. Results remain under
+`.local/runs/class-sap22-100-20261124/`; compact evidence is in
+`.local/student-ui-v1/`. The launch-status banner now follows its own run through
+completion without overwriting other errors; the full DOM contract suite passes.
+Final desktop reload shows an enabled Start, and reopening the saved run displays
+its real waveforms. Repeated Control.cmd -NoBrowser reuses PID 31156 with no busy
+job. Publication of the verified source/package follows this milestone; no
+additional simulation or reconstruction work is required here.
+
 ## November 24 Control reopening repair
 
 The owner's second Control.cmd launch was blocked by the still-running hidden

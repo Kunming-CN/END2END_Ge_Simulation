@@ -583,6 +583,23 @@
       font-size: .84rem;
       font-weight: 500;
     }
+    .setup-callout {
+      border: 1px solid #c4dadd;
+      background: #f0f8f8;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 12px 0;
+    }
+    .setup-callout p {
+      font-size: .88rem;
+      line-height: 1.5;
+    }
+    .setup-callout .actions {
+      margin-top: 12px;
+    }
+    .setup-callout a.button {
+      text-decoration: none;
+    }
     #standard-more-settings {
       margin-top: 14px;
     }
@@ -860,6 +877,13 @@
               </label>
             </div>
             <p id="model-capability" class="notice" role="status" aria-live="polite"></p>
+            <div id="setup-required" class="setup-callout" hidden>
+              <p>Follow the Setup guide for this computer, then reopen Control.</p>
+              <div class="actions">
+                <button id="setup-required-help" type="button">Check setup</button>
+                <a id="setup-required-guide" class="button" target="_blank" rel="noreferrer" href="https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html#setup">Setup guide</a>
+              </div>
+            </div>
             <div class="horizontal">
               <label for="source">
                 Source

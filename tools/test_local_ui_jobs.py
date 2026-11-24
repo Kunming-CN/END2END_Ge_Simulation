@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import struct
 import tempfile
 import threading
 import unittest
@@ -47,6 +48,98 @@ class MacRuntimeTests(unittest.TestCase):
             self.assertEqual(J.existing_julia_environment(dict(env, JULIA_EXE=str(julia)))['JULIA_EXE'], str(julia))
             with self.assertRaises(J.ControlError):
                 J.existing_julia_environment(dict(env, JULIA_EXE=str(julia)+'-missing'))
+
+
+@unittest.skipUnless(os.name == 'nt', 'Windows process creation identity')
+class WindowsRuntimeTests(unittest.TestCase):
+    old_creation = '134354775724664173'
+    new_creation = '134400079469454292'
+
+    def snapshot_bytes(self, entries):
+        # Independent Windows SYSTEM_PROCESS_INFORMATION ABI prefix. Entries
+        # contain no strings or threads because the reader needs only PID/time.
+        blob = bytearray(128 * len(entries))
+        pid_offset = 80 if J.ctypes.sizeof(J.ctypes.c_void_p) == 8 else 68
+        pid_format = '<Q' if J.ctypes.sizeof(J.ctypes.c_void_p) == 8 else '<I'
+        for index, (pid, created) in enumerate(entries):
+            offset = index * 128
+            struct.pack_into('<I', blob, offset, 128 if index + 1 < len(entries) else 0)
+            struct.pack_into('<q', blob, offset + 32, int(created))
+            struct.pack_into(pid_format, blob, offset + pid_offset, pid)
+        return bytes(blob)
+
+    def snapshot_query(self, blob, *, fill_status=0, returned_length=None):
+        calls = []
+        def query(kind, buffer, capacity, length):
+            self.assertEqual(kind, 5)
+            calls.append(capacity)
+            length._obj.value = len(blob)
+            if buffer is None:
+                self.assertEqual(capacity, 0)
+                return -1073741820  # STATUS_INFO_LENGTH_MISMATCH
+            if fill_status:
+                return fill_status
+            self.assertEqual(capacity, len(blob))
+            J.ctypes.memmove(buffer, blob, len(blob))
+            if returned_length is not None:
+                length._obj.value = returned_length
+            return 0
+        return query, calls
+
+    def test_actual_snapshot_creation_matches_handle_creation(self):
+        expected = J.process_identity(os.getpid())
+        self.assertNotIn(expected, (None, 'unknown'))
+        self.assertEqual(J.windows_snapshot_identity(os.getpid()), expected)
+
+    def test_snapshot_reads_exact_filetime_from_later_linked_entry(self):
+        blob = self.snapshot_bytes([(50, self.old_creation), (3756, self.new_creation)])
+        query, calls = self.snapshot_query(blob)
+        with mock.patch.object(J.ctypes, 'WinDLL') as library:
+            library.return_value.NtQuerySystemInformation = query
+            self.assertEqual(J.windows_snapshot_identity(3756), self.new_creation)
+        self.assertEqual(calls, [0, len(blob)])
+
+    def test_restricted_snapshot_absence_and_zero_creation_remain_unknown(self):
+        for entries in ([(50, self.old_creation)], [(3756, 0)]):
+            with self.subTest(entries=entries):
+                query, calls = self.snapshot_query(self.snapshot_bytes(entries))
+                with mock.patch.object(J.ctypes, 'WinDLL') as library:
+                    library.return_value.NtQuerySystemInformation = query
+                    self.assertEqual(J.windows_snapshot_identity(3756), 'unknown')
+                self.assertEqual(len(calls), 2)
+
+    def test_query_failure_growth_and_truncation_stay_unknown_without_retry(self):
+        blob = self.snapshot_bytes([(3756, self.new_creation)])
+        for status, returned in ((-1073741790, None), (-1073741820, None), (0, 1), (0, len(blob) + 1)):
+            with self.subTest(status=status, returned=returned):
+                query, calls = self.snapshot_query(blob, fill_status=status, returned_length=returned)
+                with mock.patch.object(J.ctypes, 'WinDLL') as library:
+                    library.return_value.NtQuerySystemInformation = query
+                    self.assertEqual(J.windows_snapshot_identity(3756), 'unknown')
+                self.assertEqual(len(calls), 2)
+        with mock.patch.object(J.ctypes, 'WinDLL', side_effect=OSError('Query unavailable')):
+            self.assertEqual(J.windows_snapshot_identity(3756), 'unknown')
+
+    def test_access_denied_uses_creation_snapshot_but_missing_pid_stays_missing(self):
+        with mock.patch.object(J.ctypes, 'WinDLL') as library, \
+             mock.patch.object(J.ctypes, 'get_last_error', return_value=5), \
+             mock.patch.object(J, 'windows_snapshot_identity', return_value=self.new_creation) as snapshot:
+            library.return_value.OpenProcess.return_value = None
+            self.assertEqual(J.process_identity(3756), self.new_creation)
+            snapshot.assert_called_once_with(3756)
+            snapshot.reset_mock()
+            with mock.patch.object(J.ctypes, 'get_last_error', return_value=87):
+                self.assertIsNone(J.process_identity(3756))
+            snapshot.assert_not_called()
+
+    def test_failed_handle_time_uses_snapshot_and_closes_handle(self):
+        with mock.patch.object(J.ctypes, 'WinDLL') as library, \
+             mock.patch.object(J, 'windows_snapshot_identity', return_value='unknown') as snapshot:
+            library.return_value.OpenProcess.return_value = 123
+            library.return_value.GetProcessTimes.return_value = 0
+            self.assertEqual(J.process_identity(3756), 'unknown')
+            snapshot.assert_called_once_with(3756)
+            library.return_value.CloseHandle.assert_called_once_with(123)
 
 
 def planned():
