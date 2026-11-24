@@ -21,8 +21,14 @@ tests initially exposed two outdated catalog assertions; those assertions were
 corrected for the existing GeGI connector and both targeted cases passed.
 Evidence and preserved initial failures are in `.local/student-ui-v1/`.
 The maintained guide and generated Pages guide follow the revised workflow.
-Source/package publication is the remaining delivery step; PR #4 still requires
-the protected main branch's approval. Reconstruction ownership below is unchanged.
+Runtime commit `60bd997d1328f79ab28c96d4732da85f5254ba15` is pushed to PR #4.
+The [new student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-60bd997d1328)
+is the latest download. Its public ZIP and packaged commit were verified:
+1,423,583 bytes, SHA256
+`15e3723cdaa32d7157161563d43ceb65f40970ffe01986ef33171c46395375bf`.
+The protected main branch still requires an external approval; Pages deployment
+awaits that merge. No live Pages update is claimed. The local desktop Control
+tab remains open. Reconstruction ownership below is unchanged.
 
 ## November 24 macOS student repair
 
@@ -47,7 +53,8 @@ this delivery does not migrate earlier failed scientific directories.
 Publication and validation records are in `.local/macos-geometry-handoff/`
 and `.local/macos-port/sunil-bugfix-*.log`. The repaired
 [student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-4bf93e41ee43)
-is the latest download, with exact public bytes and packaged commit verified.
+was published with exact public bytes and packaged commit verified; the student
+interface release above supersedes it and includes the same repair.
 Its 1,415,954-byte ZIP has SHA256
 `4654abb9c638a775f71789efab93659a76128f31e42ecae4ae0c8bdbd0d53da5`.
 [PR #4](https://github.com/Kunming-CN/END2END_Ge_Simulation/pull/4) awaits the
