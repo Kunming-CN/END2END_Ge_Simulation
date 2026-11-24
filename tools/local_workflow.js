@@ -10,6 +10,7 @@ let dualLibraries=[],dualJob=null,dualBusy=false,dualGeneration=0;
 let candidateJob=null,candidateBusy=false,candidateGeneration=0,candidateEventGeneration=0,candidateOffset=0,candidatePage=null;
 let candidateEstimateGeneration=0;
 let candidatePlaneGeneration=0,candidateRangeRefresh=null;
+let knownRuns=[],currentPage='new',currentTask='standard',runDetailKind='standard',resultTab='overview',waveformStage='charge',eventFindGeneration=0;
 const continuationNames=new Map();
 const pendingActions=new Map();
 const stageNames={native_preparation:'Fields and injection calibration',geometry:'Geometry and source',radiation:'Radiation transport',event_ledger:'Event ledger',response:'Fields, charge, calibration and readout',results:'Verified results'};
@@ -17,13 +18,105 @@ const stateNames={dispatch_uncertain:'Inspection required',running:'Running',sto
 const labels={shaping_tau_us:['Shaping time','µs'],gain:['Shaper gain','V/V'],threshold_V:['Peak threshold','V'],adc_bits:['Peak ADC bits','bits'],adc_full_scale_V:['Peak ADC full scale','V'],feedback_capacitance_pF:['Feedback capacitance','pF'],feedback_tau_us:['Feedback decay','µs'],pole_zero_tau_us:['Pole-zero time','µs'],peak_policy:['Peak policy',''],peak_gate_start_ns:['Peak gate start','ns; blank = none'],peak_gate_end_ns:['Peak gate end','ns; blank = none']};
 async function api(path,data){const r=await fetch(path,{method:data?'POST':'GET',headers:{'X-Control-Token':token,...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{}),cache:'no-store'});const v=await r.json();if(!r.ok)throw Error(v.error||'Local action failed.');return v;}
 function node(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
+function showPage(page){
+  currentPage=page;
+  for(const panel of document.querySelectorAll('[data-page]'))panel.hidden=panel.dataset.page!==page;
+  for(const button of document.querySelectorAll('[data-nav]'))button.setAttribute('aria-current',button.dataset.nav===page?'page':'false');
+}
+function showTask(task){
+  currentTask=task;
+  for(const panel of document.querySelectorAll('[data-task-panel]'))panel.hidden=panel.dataset.taskPanel!==task;
+  for(const button of document.querySelectorAll('[data-task-choice]'))button.setAttribute('aria-pressed',String(button.dataset.taskChoice===task));
+}
+function openRunList(){
+  showPage('runs');
+  $('run-list-panel').hidden=false;
+  $('run-detail').hidden=true;
+  $('saved-analysis').hidden=true;
+}
+function openRunDetail(kind='standard'){
+  runDetailKind=kind;
+  showPage('runs');
+  $('run-list-panel').hidden=true;
+  $('run-detail').hidden=false;
+  $('saved-analysis').hidden=true;
+  $('standard-run-detail').hidden=kind!=='standard';
+  $('gegi-acquisition-detail').hidden=kind!=='gegi';
+  $('result').hidden=kind!=='standard'||result?.job.name!==selectedJob||result?.job.configuration_sha256!==selectedRun?.configuration_sha256;
+  $('gegi-result').hidden=kind!=='standard'||gegiResult?.job.name!==selectedJob||gegiResult?.job.configuration_sha256!==selectedRun?.configuration_sha256;
+}
+function selectRun(job){
+  showRun(job);
+  renderJobs({busy:active,jobs:knownRuns});
+  openRunDetail();
+}
+function uniqueRunName(base='simulation'){
+  const stem=base.replace(/[^A-Za-z0-9_-]/g,'-').slice(0,40)||'simulation';
+  const used=new Set(knownRuns.map(job=>job.name.toLowerCase()));
+  let name=stem+'-01',suffix=1;
+  while(used.has(name.toLowerCase()))name=stem+'-'+String(++suffix).padStart(2,'0');
+  return name;
+}
+function initialCountLabel(selection){
+  return ['mono_gamma_662_axis_v1','gegi_mono_gamma_v1'].includes(selection?.source)?'Incident photons':'Initial decays';
+}
+function showResultSummary(counts=result?.summaryCounts||result?.report?.counts||result?.job?.counts||{}){
+  const selection=result?.job.selection||selectedRun?.selection;
+  if(!selection)return;
+  const initial=counts.initial_primaries??counts.initial_decays??selection.primary_count;
+  const zero=counts.zero_deposit_primaries;
+  const items=[
+    [initialCountLabel(selection),initial],
+    ['Zero deposition',zero],
+    ['Nonzero deposition',counts.nonzero_primaries??(zero===undefined?undefined:initial-zero)],
+    ['Pulse groups',counts.groups??counts.pulse_groups],
+    ['Accepted readout',counts.accepted??counts.accepted_groups],
+    ['Native failures',counts.native_failed_groups],
+    ['Readout rejected',counts.readout_rejected],
+    ['Saturated',counts.saturated??counts.saturated_groups]
+  ];
+  $('result-summary').replaceChildren(...featureMetrics(items.filter(([,value])=>value!==undefined)).children);
+  $('event-find-status').textContent='Original event IDs: 0–'+(selection.primary_count-1)+'. Find opens the saved nonzero record, including other completed batches.';
+}
+function showResultTab(tab){
+  resultTab=tab;
+  for(const panel of document.querySelectorAll('[data-result-panel]'))panel.hidden=panel.dataset.resultPanel!==tab;
+  for(const button of document.querySelectorAll('[data-result-tab]')){
+    const selected=button.dataset.resultTab===tab;
+    button.setAttribute('aria-selected',String(selected));
+    button.tabIndex=selected?0:-1;
+  }
+  if(tab==='overview'&&result?.spectrum&&!$('spectrum-panel').hidden&&!$('spectrum-panel').open)$('spectrum-panel').open=true;
+}
+function showWaveformStage(stage=waveformStage){
+  waveformStage=stage;
+  let index=0;
+  for(const figure of $('plots').children){
+    if(figure.tagName.toLowerCase()!=='figure')continue;
+    figure.dataset.waveformStage=['charge','current','preamp','shaper'][index++];
+    figure.hidden=stage!=='all'&&figure.dataset.waveformStage!==stage;
+  }
+  for(const button of document.querySelectorAll('[data-waveform-stage]'))button.setAttribute('aria-pressed',String(button.dataset.waveformStage===stage));
+}
 function notice(text,error=false,checkedPlan=false){noticeIsCheckedPlan=checkedPlan;$('notice').textContent=text;$('notice').className='notice '+(error?'error':'okay');}
 function options(id,items,inspection=false){const s=$(id);s.replaceChildren();for(const item of items){const suffix=inspection?(item.available?' · Compute supported':item.block_code==='cryostat_size'?' · Needs larger cryostat':' · View only'):item.available===false?' · '+item.reason:'';const o=node('option',item.label+suffix);o.value=item.id;o.disabled=!inspection&&item.available===false;s.append(o);}}
 function detectorFits(d,cryostat=$('cryostat').value){return !d?.assemblies?.length?cryostat!=='gegi_cryostat_v1':d.assemblies.includes(cryostat);}
-function detectorItems(){const items=catalog.detectors.map(d=>detectorFits(d)?d:{...d,available:false,block_code:'cryostat_mismatch',reason:'Choose a compatible cryostat for this detector.'});return [...items.filter(d=>d.available===true),...items.filter(d=>d.available!==true)];}
+function detectorItems(){
+  const items=catalog.detectors.map(detector=>detectorFits(detector)?detector:{
+    ...detector,available:false,block_code:'cryostat_mismatch',reason:'Choose a compatible cryostat for this detector.'
+  });
+  if(!$('browse-catalog').checked)return items.filter(detector=>detector.available===true);
+  return [...items.filter(detector=>detector.available===true),...items.filter(detector=>detector.available!==true)];
+}
 function sharedModelSelection(){return currentDetector()?.workflow_kind==='local_catalog_workflow_v1';}
 function gegiSelection(){return currentDetector()?.workflow_kind==='local_gegi_workflow_v1';}
-function cryostatChanged(){const previous=$('detector').value;options('detector',detectorItems(),true);const choice=catalog.detectors.find(d=>d.id===previous&&detectorFits(d))||catalog.detectors.find(d=>d.available&&detectorFits(d));if(choice)$('detector').value=choice.id;detectorChanged();}
+function cryostatChanged(){
+  const previous=$('detector').value,items=detectorItems();
+  options('detector',items,true);
+  const choice=items.find(detector=>detector.id===previous)||items[0];
+  $('detector').value=choice?.id||'';
+  detectorChanged();
+}
 function showModelRequirements(d){const list=$('model-parameters');list.replaceChildren();if(!d.parameter_summary?.length&&d.operating_label)list.append(node('li',d.operating_label));for(const p of d.parameter_summary||[]){const row=node('li',p.label+': '+String(p.value)+(p.unit?' '+p.unit:''));list.append(row);}const checks=$('model-checks');checks.replaceChildren();for(const c of d.checks||[]){checks.append(node('li',c.label+' · '+c.status+(c.detail?' · '+c.detail:'')));}$('model-requirements').hidden=!list.children.length&&!checks.children.length;}
 function currentDetector(){return catalog?.detectors.find(d=>d.id===$('detector').value);}
 function currentSource(){return catalog?.sources.find(s=>s.id===$('source').value);}
@@ -37,30 +130,84 @@ function angleCapability(source=currentSource()){const c=source?.source_angle;re
 function sourceAngle(){if(gegiSelection())return 0;const text=$('angle-deg').value;if(typeof text!=='string'||text.trim()===''||!Number.isFinite(Number(text)))throw Error('Source angle must be a finite number of degrees.');const angle=Number(text),c=angleCapability();if(c?angle<c.min_deg||angle>c.max_deg:angle!==0)throw Error(c?'Source angle must be between '+c.min_deg+' and '+c.max_deg+' degrees.':'This source keeps its fixed position; source angle must be zero.');return angle;}
 function angleFields(){const c=gegiSelection()?null:angleCapability();if(!c)$('angle-deg').value='0';else if(!$('angle-deg').value)$('angle-deg').value='0';$('angle-deg').min=c?.min_deg??0;$('angle-deg').max=c?.max_deg??0;$('angle-limit').textContent=c?(c.nonzero_execution_ready?'Supported source angle: ':'Geometry preview range: ')+c.min_deg+'° to '+c.max_deg+'°. '+c.convention+'. Check plan resolves the pose. '+(c.nonzero_execution_ready?'Run uses the checked pose. Geometry support across this range is not an experimental efficiency validation.':'Nonzero-angle Run is unavailable pending end-to-end acceptance.'):gammaCapability()?'Gamma uses the selected source anchor and fixed beam direction. Source angle is zero.':'This source keeps its legacy fixed position and direction. Source angle is zero.';}
 function poseText(resolved,label){const s=resolved.selection||{};if(s.cryostat==='gegi_cryostat_v1')return label+' · '+(s.source==='gegi_mono_gamma_v1'?s.gamma_energy_keV+' keV':sourceLabel(s.source))+' · source detector xyz ['+(s.source_position_mm||[]).join(', ')+'] mm';const p=resolved.source_pose,g=resolved.gamma_source_configuration,position=g?.position_global_mm||p?.position_global_mm||resolved.source_position_global_mm;if(s.source==='mono_gamma_662_axis_v1')return label+' · '+(g?.energy_keV??savedGammaEnergy(s))+' keV · '+(g?.source_pose??s.pose??'legacy source')+' anchor'+(position?' · global ['+position.join(', ')+'] mm':' · saved position unavailable')+' · beam ['+(g?.direction_global||[0,-1,0]).join(', ')+'] · creation time '+(g?.time_ns??0)+' ns';return label+' · '+(p?'angle '+p.angle_deg+'°':s.angle_deg?'recorded angle '+s.angle_deg+'°; resolved pose unavailable':'legacy fixed pose')+(position?' · global ['+position.join(', ')+'] mm':' · saved position unavailable')+(p?.capsule_axis_global?' · capsule axis ['+p.capsule_axis_global.join(', ')+']':'')+(p?.coordinate_convention?' · '+p.coordinate_convention:'');}
-function showPose(resolved=null){$('source-pose-preview').textContent=resolved?poseText(resolved,'Checked effective source pose'):executableSelection()?'Check plan to resolve the selected source energy, angle and position.':'No executable source pose for this catalog model.';$('source-pose-identity').textContent=resolved?JSON.stringify({source_pose:resolved.source_pose||null,source_position_global_mm:resolved.source_position_global_mm,...(resolved.selection?.cryostat==='gegi_cryostat_v1'?{source_position_mm:resolved.selection.source_position_mm,gamma_energy_keV:resolved.selection.gamma_energy_keV}:{}),...(resolved.gamma_source_configuration?{gamma_source_configuration:resolved.gamma_source_configuration}:{})},null,2):'No checked source pose.';}
+function showPose(resolved=null){$('source-pose-preview').textContent=resolved?poseText(resolved,'Checked effective source pose'):executableSelection()?'Start simulation checks the source energy, angle and position.':'No executable source pose for this catalog model.';$('source-pose-identity').textContent=resolved?JSON.stringify({source_pose:resolved.source_pose||null,source_position_global_mm:resolved.source_position_global_mm,...(resolved.selection?.cryostat==='gegi_cryostat_v1'?{source_position_mm:resolved.selection.source_position_mm,gamma_energy_keV:resolved.selection.gamma_energy_keV}:{}),...(resolved.gamma_source_configuration?{gamma_source_configuration:resolved.gamma_source_configuration}:{})},null,2):'No checked source pose.';}
 function exactInteger(text,label,positive=true){if(typeof text!=='string'||! /^[0-9]+$/.test(text))throw Error(label+' must be a decimal integer.');const n=Number(text);if(!Number.isSafeInteger(n)||n<(positive?1:0))throw Error(label+' is outside the exact safe-integer range.');return n;}
 function batchRequest(selection){return {kind:'local_scenario_batch_request_v2',schema_version:2,selection};}
 function sourcePosition(){return ['x','y','z'].map(axis=>{const text=$('gegi-source-'+axis).value;if(typeof text!=='string'||text.trim()===''||!Number.isFinite(Number(text)))throw Error('GeGI source coordinates must be finite values in mm.');return Number(text);});}
-function config(){const electronics={};for(const key of catalog.electronics_keys){const value=$('setting-'+key).value;electronics[key]=key.startsWith('peak_gate_')&&!$('use-peak-gate').checked?null:key==='peak_policy'?value:value===''?null:Number(value);}const selection={name:$('name').value,cryostat:$('cryostat').value,detector:$('detector').value,source:$('source').value,pose:$('pose').value,primary_count:exactInteger($('count').value,'Initial primaries'),seed:Number($('seed').value),threads:Number($('threads').value),electronics},angle=sourceAngle();if(angle!==0)selection.angle_deg=angle;if(gammaCapability()||gegiSelection())selection.gamma_energy_keV=gammaEnergy();if(gegiSelection())selection.source_position_mm=sourcePosition();return selection;}
-function invalidate(){selectionVersion++;checked=null;$('checked-plan').textContent=executableSelection()?'Selection changed. Check the new plan.':'No run plan for this setup. '+(currentDetector()?.reason||'Read the selected model’s configuration requirements.');if(noticeIsCheckedPlan)notice('Selection changed. The earlier checked plan is cleared. Check plan again before Run.');showSelection();showPose();controls();}
-function controls(){const runnable=executableSelection(),blocked=busy||active||!runnable||!checked||checked.execution_enabled===false;for(const id of ['check','save'])$(id).disabled=busy||active||!runnable;$('load').disabled=busy||active;$('start').disabled=blocked;
-const readiness=busy?'Run unavailable while the current action is pending. Wait for it to finish.':active?'Run unavailable while existing work is active or needs inspection. Review Runs and Previous saved jobs and recovery; wait for running work or use the available verification action.':!runnable?'Run unavailable. '+(currentDetector()?.available!==true?'View only · '+(currentDetector()?.reason||'No computation connector is available for this model.'):'This detector, source or cryostat combination is unavailable.')+' Choose a compute-supported combination in the current cryostat.':!checked?'Run unavailable. Check plan for the current setup; editing settings clears any earlier check.':checked.execution_enabled===false?'Run unavailable. This checked plan does not authorize execution; nonzero-angle acceptance is pending. Use an admitted zero-angle setup and Check plan again, or wait for execution support.':'Ready to Run with the checked next-run configuration. Editing settings requires another Check plan.';if($('run-readiness').textContent!==readiness)$('run-readiness').textContent=readiness;
-for(const id of ['source','pose','count','threads','name','use-peak-gate'])$(id).disabled=!runnable;$('cryostat').disabled=busy||active;$('angle-deg').disabled=!runnable||!angleCapability()||gegiSelection();$('gamma-energy-keV').disabled=!runnable||!gammaCapability()&&!gegiSelection();for(const axis of ['x','y','z'])$('gegi-source-'+axis).disabled=!runnable||!gegiSelection();$('seed').disabled=!runnable||!batchSelection()&&currentSource()?.fixed_seed!=null;for(const key of catalog?.electronics_keys||[])$('setting-'+key).disabled=!runnable||key.startsWith('peak_gate_')&&!$('use-peak-gate').checked;savedGeGIControls();dualControls();candidateControls();}
+function config(){const electronics={};for(const key of catalog.electronics_keys){const value=$('setting-'+key).value;electronics[key]=key.startsWith('peak_gate_')&&!$('use-peak-gate').checked?null:key==='peak_policy'?value:value===''?null:Number(value);}const selection={name:$('name').value,cryostat:$('cryostat').value,detector:$('detector').value,source:$('source').value,pose:$('pose').value,primary_count:exactInteger($('count').value,'Initial count'),seed:Number($('seed').value),threads:Number($('threads').value),electronics},angle=sourceAngle();if(angle!==0)selection.angle_deg=angle;if(gammaCapability()||gegiSelection())selection.gamma_energy_keV=gammaEnergy();if(gegiSelection())selection.source_position_mm=sourcePosition();return selection;}
+function invalidate(){
+  selectionVersion++;
+  checked=null;
+  $('checked-plan').textContent=executableSelection()?'Settings will be checked before the simulation starts.':
+    'No run plan for this setup. '+(currentDetector()?.reason||'Read the selected model’s configuration requirements.');
+  if(noticeIsCheckedPlan)notice('Settings changed. Start simulation will check the current setup.');
+  showSelection();showPose();controls();
+}
+function controls(){
+  const runnable=executableSelection(),blocked=busy||active||!runnable||checked?.execution_enabled===false;
+  for(const id of ['check','save'])$(id).disabled=busy||active||!runnable;
+  $('load').disabled=busy||active;
+  $('start').disabled=blocked;
+  let readiness;
+  if(busy)readiness='Checking or starting the simulation…';
+  else if(active)readiness='Existing work is active or needs inspection. Open My runs for progress and available actions.';
+  else if(!runnable)readiness='Simulation unavailable. '+(currentDetector()?.available!==true?
+    'View only · '+(currentDetector()?.reason||'No computation connector is available for this model.'):
+    'This detector, source or cryostat combination is unavailable.')+' Choose a supported setup.';
+  else if(checked?.execution_enabled===false)readiness='This setup cannot run yet: nonzero-angle acceptance is pending. Choose an admitted zero-angle setup.';
+  else readiness='Start simulation checks the environment and settings, then starts this run.';
+  if($('run-readiness').textContent!==readiness)$('run-readiness').textContent=readiness;
+  for(const id of ['source','pose','count','threads','name','use-peak-gate'])$(id).disabled=!runnable;
+  $('cryostat').disabled=busy||active;
+  $('angle-deg').disabled=!runnable||!angleCapability()||gegiSelection();
+  $('gamma-energy-keV').disabled=!runnable||!gammaCapability()&&!gegiSelection();
+  for(const axis of ['x','y','z'])$('gegi-source-'+axis).disabled=!runnable||!gegiSelection();
+  $('seed').disabled=!runnable||!batchSelection()&&currentSource()?.fixed_seed!=null;
+  for(const key of catalog?.electronics_keys||[])$('setting-'+key).disabled=!runnable||key.startsWith('peak_gate_')&&!$('use-peak-gate').checked;
+  savedGeGIControls();dualControls();candidateControls();
+}
 function sourceLabel(id){return id==='mono_gamma_662_axis_v1'?'Monoenergetic gamma beam':catalog?.sources.find(s=>s.id===id)?.label||id;}
 function savedSourceLabel(selection){return sourceLabel(selection.source)+(['mono_gamma_662_axis_v1','gegi_mono_gamma_v1'].includes(selection.source)?' · '+savedGammaEnergy(selection)+' keV':'');}
 function detectorChanged(){const previous=$('source').value,original=currentDetector();if(!original)return;const d=detectorFits(original)?original:{...original,available:false,sources:[],reason:'This detector requires a different cryostat. Select a compatible cryostat.'},sources=catalog.sources.filter(s=>d.sources.includes(s.id)).map(s=>({...s,label:sourceLabel(s.id)}));options('source',sources);$('source').value=sources.some(s=>s.id===previous)?previous:sources[0]?.id||'';if(gegiSelection()&&previous!=='gegi_mono_gamma_v1'){$('count').value='100';$('seed').value='26101701';}$('operating-details').textContent=d.operating_label||'';$('numerics').textContent=gegiSelection()?'GeGI numerical, seed and field-cache settings are recorded in the checked plan. Each native drift realization supplies all 34 contact signals.':catalog.numerics||'';showModel(d);sourceChanged();}
 function showModel(d){const m=d.model||{},count=catalog.detectors.filter(x=>x.available===true).length;
 $('catalog-counts').textContent=catalog.detectors.length+' catalog models can be inspected; '+count+' have supported local computation connectors. The public website shows saved results.';
-$('model-capability').textContent=d.available?(sharedModelSelection()?'Available in the current cryostat. Check plan before Run.':'Computation supported for the listed sources. Check plan before Run.'):'View only · '+(d.reason||'No executable configuration is available for this setup.');$('model-capability-details').textContent=d.reason||d.operating_label||'';
+$('model-capability').textContent=d.available?'Ready for simulation in this cryostat.':'View only · '+(d.reason||'No executable configuration is available for this setup.');$('model-capability-details').textContent=d.reason||d.operating_label||'';
 $('model-title').textContent=d.id;$('model-summary').textContent=[d.type_label,m.group,m.status,m.coordinate_system?m.coordinate_system+' coordinates':''].filter(Boolean).join(' · ');
-$('model-contact-summary').textContent=(m.contacts||[]).length+' contacts · catalog readout contact '+(m.readout_contact_id??'unavailable');$('model-contact-list').open=(m.contacts||[]).length<=8;$('model-contacts').replaceChildren();$('model-contacts').tabIndex=(m.contacts||[]).length>8?0:-1;for(const c of m.contacts||[])$('model-contacts').append(node('li','Contact '+c.id+' · '+c.name+' · '+(c.potential_V>0?'+':'')+c.potential_V+' V'+(c.id===m.readout_contact_id?' · catalog readout':'')));
+$('model-contact-summary').textContent=(m.contacts||[]).length+' contacts · catalog readout contact '+(m.readout_contact_id??'unavailable');if($('model-contact-list').dataset.model!==d.id){$('model-contact-list').open=false;$('model-contact-list').dataset.model=d.id;}$('model-contacts').replaceChildren();$('model-contacts').tabIndex=(m.contacts||[]).length>8?0:-1;for(const c of m.contacts||[])$('model-contacts').append(node('li','Contact '+c.id+' · '+c.name+' · '+(c.potential_V>0?'+':'')+c.potential_V+' V'+(c.id===m.readout_contact_id?' · catalog readout':'')));
 $('model-assumptions').textContent=(m.assumptions||[]).join(' ');$('model-variant').textContent=d.id==='GeRC02'?'Preview: frozen catalog Ge30min base. Computation: separate Li50min variant at 553.15 K; stored 78 K, runtime 77 K; fresh fields.':'';
 showModelRequirements(d);$('model-identity').textContent=JSON.stringify(m,null,2);$('model-view').href=d.geometry_url||'';$('model-view').hidden=!d.geometry_url;loadModelPreview(d);}
-async function loadModelPreview(d){const generation=++modelPreviewGeneration;if(modelPreviewUrl){URL.revokeObjectURL(modelPreviewUrl);modelPreviewUrl=null;}$('model-preview-box').hidden=true;$('model-preview').removeAttribute('src');$('model-preview-status').textContent='Loading saved catalog geometry…';
-try{const r=await fetch('/api/model-preview?'+new URLSearchParams({model:d.id}),{headers:{'X-Control-Token':token},cache:'no-store'});if(!r.ok)throw Error('Saved preview unavailable here. Use Open saved rotatable geometry on the public website.');const blob=await r.blob();if(generation!==modelPreviewGeneration||currentDetector()?.id!==d.id)return;modelPreviewUrl=URL.createObjectURL(blob);$('model-preview').src=modelPreviewUrl;$('model-preview').alt=d.id+' saved catalog geometry';$('model-preview-box').hidden=false;$('model-preview-status').textContent='Saved geometry · no calculation ran.';}catch(e){if(generation===modelPreviewGeneration)$('model-preview-status').textContent=e.message;}}
-function showSelection(){if(!catalog)return;$('setup-preview').textContent=executableSelection()?'Current setup · '+$('detector').value+' · '+sourceLabel($('source').value)+(currentSource()?.id==='mono_gamma_662_axis_v1'?' · '+(gammaCapability()?$('gamma-energy-keV').value:662)+' keV · '+$('pose').value+' anchor':'')+' · '+$('count').value+' initial primaries · '+$('threads').value+' Julia threads'+(angleCapability()?' · '+$('angle-deg').value+'° source angle':''):'Inspecting catalog model · '+$('detector').value+' · view only; no source or computation selected';}
-function showRun(job){const changed=selectedJob!==job.name||selectedRun?.configuration_sha256!==job.configuration_sha256;if(changed){resultGeneration++;plotGeneration++;result=null;resetResultOptions();resetGeGIResult();$('result').hidden=true;$('plots').replaceChildren();clearSavedSelection();$('saved-artifacts').replaceChildren();}selectedJob=job.name;selectedRun=job;$('selected').textContent='Selected run · '+job.name+' · '+job.selection.detector+' · '+savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' initial primaries';$('saved-source-pose').textContent=poseText(job,'Selected run source pose');$('run-plan').textContent=JSON.stringify({configuration_sha256:job.configuration_sha256,selection:job.selection,source_pose:job.source_pose||null,source_position_global_mm:job.source_position_global_mm,...(job.gamma_source_configuration?{gamma_source_configuration:job.gamma_source_configuration}:{})},null,2);stageList(job.stages,job.execution_contract==='serial_batches_v3');responseProgress(job);batchProgress(job);}
-function sourceChanged(){const s=currentSource();gammaFields();angleFields();if(!s){options('pose',[]);if(!$('count').value)$('count').value='500';$('source-details').textContent='A source cannot be selected until this detector has a checked computation connector.';$('source-identity').textContent='';invalidate();return;}if(gegiSelection()){options('pose',[{id:'custom',label:'Custom detector-coordinate position'}]);$('pose').value='custom';$('count').readOnly=false;$('count-limit').textContent='GeGI accepts 1–10000 initial gamma primaries per run. Start with 100; runtime and storage depend on the selected settings.';$('seed').disabled=false;$('angle-limit').textContent='GeGI uses the three recorded source coordinates. Capsule rotation does not apply.';$('source-details').textContent='Isotropic monoenergetic gamma point source. The count includes every emitted gamma, including misses. Use the two-source acquisition panel for fresh Cs-137 and Co-60 decays on one continuous readout clock.';$('source-identity').textContent=JSON.stringify({source_id:s.id,count_unit:'emitted gamma primaries',coordinate_system:'detector_xyz',position_unit:'mm',energy_unit:'keV',source_contract:s.source_contract},null,2);invalidate();return;}const gamma=gammaCapability(s);options('pose',gamma?gamma.source_poses.map(id=>({id,label:id==='nominal'?'Nominal source anchor':'+5 mm along global y'})):[{id:s.pose,label:s.pose_label||s.pose}]);$('pose').value=s.pose;const batching=batchSelection();$('count').readOnly=!batching;if(!batching)$('count').value=String(s.counts[0]);else if(!$('count').value)$('count').value='500';$('count-limit').textContent=batching?'Enter an exact positive integer (1..9007199254740991). Serial radiation batches contain at most 10000 initial primaries. Check separately enforces seed capacity; practical runtime and storage are not guaranteed by that numeric limit.':'This gamma connector uses 20 initial gamma primaries and its fixed radiation seed. Arbitrary-count gamma execution is pending.';$('seed').disabled=!batching&&s.fixed_seed!=null;if($('seed').disabled)$('seed').value=String(s.fixed_seed);$('source-details').textContent=[s.details||s.reason,s.count_unit?'Count unit: '+s.count_unit+'.':null,s.position_global_mm?(gamma?'Catalog default anchor':'Catalog fixed or zero-angle position')+' ['+s.position_global_mm.join(', ')+'] mm in the global frame.':null].filter(Boolean).join(' ');$('source-identity').textContent=JSON.stringify({source_id:s.id,count_unit:s.count_unit,position_global_mm:s.position_global_mm,source_angle:s.source_angle,gamma_controls:s.gamma_controls,source_contract:s.source_contract,acceptance:s.acceptance},null,2);invalidate();}
+async function loadModelPreview(detector){
+  const generation=++modelPreviewGeneration;
+  $('model-preview-fallback').hidden=true;
+  $('model-preview-facts').replaceChildren();
+  for(const item of (detector.parameter_summary||[]).slice(0,4)){
+    $('model-preview-facts').append(node('p',item.label+': '+item.value+(item.unit?' '+item.unit:'')));
+  }
+  $('model-preview-facts').append(node('p',(detector.model?.contacts||[]).length+' electrical contacts'));
+  if(modelPreviewUrl){URL.revokeObjectURL(modelPreviewUrl);modelPreviewUrl=null;}
+  $('model-preview-box').hidden=true;
+  $('model-preview').removeAttribute('src');
+  $('model-preview-status').textContent='Loading saved catalog geometry…';
+  try{
+    const response=await fetch('/api/model-preview?'+new URLSearchParams({model:detector.id}),{headers:{'X-Control-Token':token},cache:'no-store'});
+    if(!response.ok)throw Error('Saved preview unavailable.');
+    const blob=await response.blob();
+    if(generation!==modelPreviewGeneration||currentDetector()?.id!==detector.id)return;
+    modelPreviewUrl=URL.createObjectURL(blob);
+    $('model-preview').src=modelPreviewUrl;
+    $('model-preview').alt=detector.id+' saved catalog geometry';
+    $('model-preview-box').hidden=false;
+    $('model-preview-status').textContent='';
+  }catch(e){
+    if(generation===modelPreviewGeneration){
+      $('model-preview-fallback').hidden=false;
+      $('model-preview-status').textContent='Saved geometry preview is unavailable in this package. The model parameters remain available.';
+    }
+  }
+}
+function showSelection(){if(!catalog)return;$('count-label').textContent=initialCountLabel({source:$('source').value});$('setup-preview').textContent=executableSelection()?'Current setup · '+$('detector').value+' · '+sourceLabel($('source').value)+(currentSource()?.id==='mono_gamma_662_axis_v1'?' · '+(gammaCapability()?$('gamma-energy-keV').value:662)+' keV · '+$('pose').value+' anchor':'')+' · '+$('count').value+' '+initialCountLabel({source:$('source').value}).toLowerCase()+' · '+$('threads').value+' Julia threads'+(angleCapability()?' · '+$('angle-deg').value+'° source angle':''):'Inspecting catalog model · '+$('detector').value+' · view only; no source or computation selected';}
+function showRun(job){const changed=selectedJob!==job.name||selectedRun?.configuration_sha256!==job.configuration_sha256;if(changed){$('run-stage-details').open=['running','stop_requested'].includes(job.status);eventFindGeneration++;$('event-find-button').disabled=false;resultGeneration++;plotGeneration++;result=null;resetResultOptions();resetGeGIResult();$('result').hidden=true;$('plots').replaceChildren();clearSavedSelection();$('saved-artifacts').replaceChildren();}selectedJob=job.name;selectedRun=job;$('selected').textContent='Selected run · '+job.name+' · '+job.selection.detector+' · '+savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' initial primaries';$('saved-source-pose').textContent=poseText(job,'Selected run source pose');$('run-plan').textContent=JSON.stringify({configuration_sha256:job.configuration_sha256,selection:job.selection,source_pose:job.source_pose||null,source_position_global_mm:job.source_position_global_mm,...(job.gamma_source_configuration?{gamma_source_configuration:job.gamma_source_configuration}:{})},null,2);stageList(job.stages,job.execution_contract==='serial_batches_v3');responseProgress(job);batchProgress(job);}
+function sourceChanged(){const s=currentSource();gammaFields();angleFields();if(!s){options('pose',[]);if(!$('count').value)$('count').value='500';$('source-details').textContent='A source cannot be selected until this detector has a checked computation connector.';$('source-identity').textContent='';invalidate();return;}if(gegiSelection()){options('pose',[{id:'custom',label:'Custom detector-coordinate position'}]);$('pose').value='custom';$('count').readOnly=false;$('count-limit').textContent='GeGI accepts 1–10000 initial gamma primaries per run. Start with 100; runtime and storage depend on the selected settings.';$('seed').disabled=false;$('angle-limit').textContent='GeGI uses the three recorded source coordinates. Capsule rotation does not apply.';$('source-details').textContent='Isotropic monoenergetic gamma point source. The count includes every emitted gamma, including misses. Use the two-source acquisition panel for fresh Cs-137 and Co-60 decays on one continuous readout clock.';$('source-identity').textContent=JSON.stringify({source_id:s.id,count_unit:'emitted gamma primaries',coordinate_system:'detector_xyz',position_unit:'mm',energy_unit:'keV',source_contract:s.source_contract},null,2);invalidate();return;}const gamma=gammaCapability(s);options('pose',gamma?gamma.source_poses.map(id=>({id,label:id==='nominal'?'Nominal source anchor':'+5 mm along global y'})):[{id:s.pose,label:s.pose_label||s.pose}]);$('pose').value=s.pose;const batching=batchSelection();$('count').readOnly=!batching;if(!batching)$('count').value=String(s.counts[0]);else if(!$('count').value)$('count').value='500';$('count-limit').textContent=batching?'Enter a positive integer.':'This gamma connector uses 20 photons and a fixed radiation seed.';$('seed').disabled=!batching&&s.fixed_seed!=null;if($('seed').disabled)$('seed').value=String(s.fixed_seed);$('source-details').textContent=[s.details||s.reason,s.count_unit?'Count unit: '+s.count_unit+'.':null,s.position_global_mm?(gamma?'Catalog default anchor':'Catalog fixed or zero-angle position')+' ['+s.position_global_mm.join(', ')+'] mm in the global frame.':null].filter(Boolean).join(' ');$('source-identity').textContent=JSON.stringify({source_id:s.id,count_unit:s.count_unit,position_global_mm:s.position_global_mm,source_angle:s.source_angle,gamma_controls:s.gamma_controls,source_contract:s.source_contract,acceptance:s.acceptance},null,2);invalidate();}
 
 function electronics(){for(const key of catalog.electronics_keys){const [name,unit]=labels[key],label=node('label',name+(unit?' · '+unit:''));let input;if(key==='peak_policy'){input=node('select');for(const [value,text] of [['signed_input_positive_peak','Signed input, positive peak'],['legacy_reject_negative_input','Reject negative input']]){const o=node('option',text);o.value=value;input.append(o);}}else{input=node('input');input.type='number';input.step=key==='adc_bits'?'1':'any';}input.id='setting-'+key;label.htmlFor=input.id;input.value=catalog.electronics_defaults[key]??'';input.addEventListener('input',invalidate);label.append(input);$('electronics').append(label);}gateFields();}
 function gateFields(){for(const key of ['peak_gate_start_ns','peak_gate_end_ns'])$('setting-'+key).disabled=!$('use-peak-gate').checked;}
@@ -101,19 +248,20 @@ async function artifact(name,file,rawDownload=false){const r=await fetch('/api/w
 async function download(name,file){const r=await artifact(name,file,true),blob=await r.blob(),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download=name+'-'+file.replaceAll('/','-');a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 async function openLogFile(name,file,label){const response=await artifact(name,file),bytes=new Uint8Array(await response.arrayBuffer());const text=new TextDecoder(bytes[1]===0||bytes[0]===255&&bytes[1]===254?'utf-16le':'utf-8').decode(bytes);$('log-title').textContent=name+' · '+label;$('log-text').textContent=text;$('log-view').hidden=false;$('log-view').scrollIntoView({behavior:'smooth'});}
 async function openLog(name,stage){return openLogFile(name,stage+'.log',stageNames[stage]||stage);}
-function renderLegacy(state){const cards=[],held=(state.gamma?.jobs||[]).filter(j=>j.blocks_new_work===true);$('legacy-notice').hidden=!held.length;if(held.length){$('legacy-notice').textContent=held.some(j=>j.can_verify)?'Before starting another calculation, choose Verify saved completion in Previous saved jobs and recovery. This reads existing results only.':'Saved Gamma work needs verification or inspection before a new calculation. Verify saved completion is currently unavailable because its activity or uncertainty is unresolved, or its terminal files are incomplete. Review the recorded error below.';}for(const job of state.gamma?.jobs||[]){const row=runKey(node('div',undefined,'run'),'gamma:'+JSON.stringify(job.id??job.label));row.append(node('strong','Saved gamma · '+job.label),node('p',job.status));if(job.error)row.append(node('p',job.error.message,'muted'));if(job.can_verify)row.append(action('Verify saved completion',()=>api('/api/gamma-verify',{job_id:job.id})));else if(job.blocks_new_work===true)row.append(node('p','Verify saved completion reads terminal results only. It stays unavailable while this saved job’s activity, uncertainty or incomplete output is unresolved.','muted'));bindRunActions(row);cards.push(row);}for(const job of state.jobs||[]){const row=runKey(node('div',undefined,'run'),'native:'+job.name);row.append(node('strong','Saved native example · '+job.name),node('p',job.status+' · retained history'));cards.push(row);}syncRunList($('legacy-runs'),cards);$('legacy-recovery').hidden=!cards.length;if(!cards.length)$('legacy-recovery').open=false;}
+function renderLegacy(state){const cards=[],held=(state.gamma?.jobs||[]).filter(j=>j.blocks_new_work===true);$('legacy-notice').hidden=!held.length;if(held.length){$('legacy-notice').textContent=held.some(j=>j.can_verify)?'Before starting another calculation, choose Verify saved completion in Previous saved jobs and recovery. This reads existing results only.':'Saved Gamma work needs verification or inspection before a new calculation. Verify saved completion is currently unavailable because its activity or uncertainty is unresolved, or its terminal files are incomplete. Open Help → Research tools for the saved job and recorded error.';}for(const job of state.gamma?.jobs||[]){const row=runKey(node('div',undefined,'run'),'gamma:'+JSON.stringify(job.id??job.label));row.append(node('strong','Saved gamma · '+job.label),node('p',job.status));if(job.error)row.append(node('p',job.error.message,'muted'));if(job.can_verify)row.append(action('Verify saved completion',()=>api('/api/gamma-verify',{job_id:job.id})));else if(job.blocks_new_work===true)row.append(node('p','Verify saved completion reads terminal results only. It stays unavailable while this saved job’s activity, uncertainty or incomplete output is unresolved.','muted'));bindRunActions(row);cards.push(row);}for(const job of state.jobs||[]){const row=runKey(node('div',undefined,'run'),'native:'+job.name);row.append(node('strong','Saved native example · '+job.name),node('p',job.status+' · retained history'));cards.push(row);}syncRunList($('legacy-runs'),cards);$('legacy-recovery').hidden=!cards.length;if(!cards.length)$('legacy-recovery').open=false;}
 function renderJobs(state){
   active=state.busy;
-  const cards=[];
+  knownRuns=state.jobs;if(!knownRuns.some(job=>job.name===selectedJob))selectedJob=knownRuns.at(-1)?.name??null;
+  const cards=[],detailCards=[];
   for(const job of [...state.jobs].reverse()){
     const card=runKey(node('div',undefined,'run'),'workflow:'+JSON.stringify([job.name,job.configuration_sha256]));
     card.append(node('strong',job.name+' · '+job.selection.detector),node('p',savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' primaries · '+(stateNames[job.status]||job.status)));
     if(job.error)card.append(node('p',job.error,'error'));
-    card.append(action('Show stages',()=>showRun(job)));
+    card.append(action('View stages',()=>{$('run-stage-details').open=true;showRun(job);}),action('Copy as new run',()=>copyAsNewRun(job)));
     if(['running','stop_requested'].includes(job.status))card.append(action(job.execution_contract==='serial_batches_v3'?'Stop at next boundary':'Stop after current stage',()=>api('/api/workflow/stop',{name:job.name})));
     if(job.status==='stopped')card.append(action('Resume saved settings',()=>api('/api/workflow/resume',{name:job.name})));
     if(job.can_verify_saved_execution)card.append(node('p','After a CLI Resume finishes or stops at a new sealed boundary, verify its saved execution here. This checks existing results and preserves the original failed launch evidence.','muted'),action('Verify saved execution',async()=>{const next=await api('/api/workflow/verify',{name:job.name});showRun(next);notice('Saved execution verified. The original failed launch evidence is preserved.');},'workflow-verify'));
-    if(['completed','completed_with_native_failures'].includes(job.status)||job.execution_contract==='serial_batches_v3'&&job.status==='stopped'&&job.batch_progress?.completed_batch_count>0)card.append(action('Explore events',()=>openResult(job)),action('Download settings',()=>download(job.name,'resolved-config.json')),action('Download run receipt',()=>download(job.name,'run.json')));
+    if(['completed','completed_with_native_failures'].includes(job.status)||job.execution_contract==='serial_batches_v3'&&job.status==='stopped'&&job.batch_progress?.completed_batch_count>0){const open=action('Open results',()=>openResult(job));open.className='primary';card.append(open,action('Download settings',()=>download(job.name,'resolved-config.json')),action('Download run receipt',()=>download(job.name,'run.json')));}
     if(job.status==='dispatch_uncertain'){
       if(job.can_recover_launch)card.append(node('p','The saved launch record proves process creation was never invoked. Recovery checks the evidence and preserves its plan, error and logs. A failed new run needs a new name; a failed Resume returns to its unchanged sealed boundary.','muted'),action('Recover not-launched failure',async()=>{const next=await api('/api/workflow/recover-launch',{name:job.name});showRun(next);notice(next.status==='stopped'?'The unchanged sealed boundary is available for Resume. The failed launch evidence stays saved.':'Failed launch evidence preserved. Check a new run name to continue.');}));
       else{if(!job.can_verify_saved_execution)card.append(action('Verify existing completion',()=>api('/api/workflow/verify',{name:job.name}),'workflow-verify'));if(job.can_inspect_failure!==false)card.append(action('Inspect denied launch',()=>api('/api/workflow/inspect-failure',{name:job.name})));}
@@ -130,10 +278,20 @@ function renderJobs(state){
     }
     const details=runKey(node('details'),'stage-details'),summary=runKey(node('summary','Stage receipts and logs'),'stage-summary');details.dataset.run=job.name;details.append(summary);
     for(const [stage,r]of Object.entries(job.stages)){details.append(node('p',(stageNames[stage]||stage.replaceAll('_',' '))+' · '+r.status));if(stage!=='results'&&job.execution_contract!=='serial_batches_v3')details.append(action('Open '+stage+' log',()=>openLog(job.name,stage),'stage-log:'+stage));}for(const log of job.logs||[])details.append(action('Open '+log.label+' log',()=>openLogFile(job.name,log.file,log.label),'saved-log:'+log.file));if(job.batch_progress)details.append(node('pre',JSON.stringify(job.batch_progress,null,2)));
-    details.append(node('pre',JSON.stringify(job.stages,null,2)));card.append(details);bindRunActions(card);cards.push(card);
+    details.append(node('pre',JSON.stringify(job.stages,null,2)));card.append(details);bindRunActions(card);
+    const row=runKey(node('div',undefined,'run run-row'),'workflow:'+JSON.stringify([job.name,job.configuration_sha256]));
+    row.append(
+      node('strong',job.name),
+      node('p',job.selection.detector+' · '+savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' '+initialCountLabel(job.selection).toLowerCase()),
+      node('small',job.created_utc||'Saved creation time unavailable'),
+      node('span',stateNames[job.status]||job.status,'pill'),
+      action('Open run',()=>selectRun(job))
+    );
+    bindRunActions(row);cards.push(row);
+    if(selectedJob===job.name)detailCards.push(card);
     if(selectedJob===job.name)showRun(job);
   }
-  syncRunList($('runs'),cards,'No runs created in this application.');controls();
+  syncRunList($('runs'),cards,'No runs created in this application.');syncRunList($('run-detail-content'),detailCards);controls();
 }
 async function poll(){const generation=++pollGeneration;try{const [state,legacy]=await Promise.all([api('/api/workflow/state'),api('/api/state')]);if(generation!==pollGeneration)return;renderJobs(state);renderLegacy(legacy);if(savedGeGIJob)void pollSavedGeGI();if(dualJob?.status==='running')void inspectDualJob(dualJob.name);if(['running','stop_requested'].includes(candidateJob?.status)||candidateJob?.analysis?.status==='running'||candidateJob?.range_analysis?.status==='running')void inspectCandidateJob(candidateJob.name);}catch(e){if(generation===pollGeneration)notice(e.message,true);}}
 
@@ -166,7 +324,7 @@ async function openSavedGeGIResult(job){
     const source=state.jobs.find(j=>j.name===job.source_run_name&&j.workflow_kind==='local_gegi_workflow_v1');
     if(!source)throw Error('The original owned GeGI run is unavailable. Refresh saved inputs.');
     if(data.saved_derivative_name!==job.name)throw Error('Saved GeGI reconstruction and selected derivative identities differ.');
-    const opening=openGeGIResult(source,data,job.name);generation=gegiGeneration;await opening;
+    knownRuns=state.jobs;selectRun(source);const opening=openGeGIResult(source,data,job.name);generation=gegiGeneration;await opening;
   }catch(e){if(generation===gegiGeneration&&savedGeGIJob?.name===job.name)$('gegi-saved-status').textContent=e.message;}
 }
 async function pollSavedGeGI(){
@@ -992,10 +1150,10 @@ function showCandidateJob(job){
   }else if(changed){$('gegi-candidate-view').hidden=true;$('gegi-candidate-plots').replaceChildren();candidatePage=null;}
   candidateControls();
 }
-async function inspectCandidateJob(name){
+async function inspectCandidateJob(name,open=false){
   const generation=candidateGeneration;
   try{const job=await api('/api/workflow/gegi-candidates/state?'+new URLSearchParams({name}));
-    if(generation===candidateGeneration&&$('gegi-candidate-job').value===name)showCandidateJob(job);
+    if(generation===candidateGeneration&&$('gegi-candidate-job').value===name){showCandidateJob(job);if(open)openRunDetail('gegi');}
   }catch(e){if(generation===candidateGeneration)candidateStatus(e.message,true);}
 }
 async function startCandidateRun(){
@@ -1015,7 +1173,7 @@ async function startCandidateRun(){
     }
     ++candidateGeneration;++candidateEventGeneration;
     const job=await api('/api/workflow/gegi-candidates/start',request),select=$('gegi-candidate-job');
-    const entry=node('option',job.name+' · '+job.status);entry.value=job.name;select.append(entry);select.value=job.name;showCandidateJob(job);
+    const entry=node('option',job.name+' · '+job.status);entry.value=job.name;select.append(entry);select.value=job.name;showCandidateJob(job);openRunDetail('gegi');
   }catch(e){candidateStatus(e.message,true);}finally{candidateBusy=false;candidateControls();}
 }
 async function manageCandidateRun(action){
@@ -1382,7 +1540,7 @@ $('gegi-candidate-stop').onclick=()=>manageCandidateRun('stop');
 $('gegi-candidate-resume').onclick=()=>manageCandidateRun('resume');
 $('gegi-candidate-mode').onchange=candidateModeFields;
 candidateModeFields();
-$('gegi-candidate-job').onchange=()=>{++candidateGeneration;++candidateEventGeneration;++candidatePlaneGeneration;candidateJob=null;candidatePage=null;$('gegi-candidate-view').hidden=true;$('gegi-candidate-imaging').hidden=true;$('gegi-candidate-map-view').replaceChildren();$('gegi-candidate-map').value='';$('gegi-candidate-summary').replaceChildren();const name=$('gegi-candidate-job').value;if(name)void inspectCandidateJob(name);else candidateStatus('Choose a saved acquisition.');candidateControls();};
+$('gegi-candidate-job').onchange=()=>{++candidateGeneration;++candidateEventGeneration;++candidatePlaneGeneration;candidateJob=null;candidatePage=null;$('gegi-candidate-view').hidden=true;$('gegi-candidate-imaging').hidden=true;$('gegi-candidate-map-view').replaceChildren();$('gegi-candidate-map').value='';$('gegi-candidate-summary').replaceChildren();const name=$('gegi-candidate-job').value;if(name)void inspectCandidateJob(name,true);else candidateStatus('Choose a saved acquisition.');candidateControls();};
 $('gegi-candidate-trigger').onchange=$('gegi-candidate-contact').onchange=loadCandidateEvent;
 $('gegi-candidate-previous').onclick=()=>loadCandidatePage(Math.max(0,candidateOffset-100));
 $('gegi-candidate-next').onclick=()=>loadCandidatePage(candidateOffset+100);
@@ -1451,6 +1609,7 @@ function gegiSignalJourney(context,event){
   gegiJourney=shared.mount(target,{groups:{'Selected saved event':group}},{scope:'student',selectedContactId:Number($('gegi-channel').value),onChannelChange:id=>{$('gegi-channel').value=String(id);showGeGIEvent(true);}});
 }
 async function openGeGIResult(job,savedSummary=null,derivative=null){
+  $('run-stage-details').open=false;openRunDetail();
   const prior=gegiResult?.job.name===job.name?{event:$('gegi-event').value,channel:$('gegi-channel').value}:null;
   showRun(job);resetGeGIResult();const generation=gegiGeneration;resultGeneration++;plotGeneration++;result=null;resetResultOptions();$('result').hidden=true;
   let reply;try{reply=savedSummary??await api('/api/workflow/gegi-summary?'+new URLSearchParams({name:job.name,...(derivative?{derivative}:{})}));}catch(e){if(generation!==gegiGeneration||selectedJob!==job.name)return;throw e;}
@@ -1464,7 +1623,7 @@ async function openGeGIResult(job,savedSummary=null,derivative=null){
   if(prior&&data.event_index.some(e=>String(e.event_id)===prior.event))$('gegi-event').value=prior.event;
   if(prior&&data.channels.some(c=>String(c.id)===prior.channel))$('gegi-channel').value=prior.channel;
   gegiSavedFiles(job);
-  $('gegi-result').hidden=false;$('gegi-result').scrollIntoView({behavior:'smooth'});await loadGeGIEvent();
+  $('gegi-result').hidden=runDetailKind!=='standard';$('gegi-result').scrollIntoView({behavior:'smooth'});await loadGeGIEvent();
 }
 function clearGeGIEvent(message){
   if(gegiResult)gegiResult.event=null;resetGeGIDigital();gegiSignalJourney(gegiResult,null);$('gegi-plots').replaceChildren();$('gegi-event-files').replaceChildren();$('gegi-event-record').textContent='';$('gegi-truth-record').textContent='';$('gegi-event-filter').textContent='';$('gegi-cones').textContent='';$('gegi-event-summary').textContent=message;
@@ -1709,18 +1868,19 @@ function renderGeGIImaging(){
 }
 $('gegi-event').onchange=loadGeGIEvent;$('gegi-channel').onchange=()=>showGeGIEvent();$('gegi-imaging-panel').ontoggle=showGeGIImaging;
 $('gegi-digital-panel').ontoggle=showGeGIDigital;$('gegi-digital-strip').onchange=gegiDigitalNeighbors;$('gegi-digital-neighbor').onchange=renderGeGIDigitalPlots;
-async function openResult(job){if(job.workflow_kind==='local_gegi_workflow_v1')return openGeGIResult(job);if(job.execution_contract==='serial_batches_v3')return openBatchResult(job);const prior=result?.job.name===job.name&&result?.job.configuration_sha256===job.configuration_sha256?{id:Number($('event').value),groupIndex:Number($('group').value)}:null;showRun(job);resetResultOptions();const generation=++resultGeneration;plotGeneration++;result=null;$('plots').replaceChildren();$('result').hidden=true;try{const responses=await Promise.all([artifact(job.name,'response/run.json'),artifact(job.name,'COMPLETE.json')]);const [report,complete]=await Promise.all(responses.map(r=>r.json()));if(generation!==resultGeneration||selectedJob!==job.name)return;const summaryHash=complete.artifacts?.['response/summary.html']?.sha256;if(complete.configuration_sha256!==job.configuration_sha256||!summaryHash||report.artifacts?.['summary.html']!==summaryHash||report.source_id!==undefined&&report.source_id!==job.selection.source)throw Error('Saved result and selected run identities differ.');let records=[],traces=[];if(report.cases){records=report.cases;}else{const files=await Promise.all([artifact(job.name,'response/scalars.jsonl'),artifact(job.name,'response/traces.jsonl')]);const texts=await Promise.all(files.map(r=>r.text()));if(generation!==resultGeneration||selectedJob!==job.name)return;[records,traces]=texts.map(s=>s.trim().split('\n').filter(Boolean).map(JSON.parse));}if(generation!==resultGeneration||selectedJob!==job.name)return;result={job,report,records,traces,summaryHash};loadResultOptions(result);$('batch-navigation').hidden=true;savedArtifacts(job,complete);$('result').hidden=false;$('result-heading').textContent=job.name+' · '+job.selection.detector+' · '+savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' original primaries';const ids=selectablePrimaryIds(records);options('event',primaryOptions(ids,result.records,result.traces));const choice=prior&&ids.includes(prior.id)?prior:firstSavedWaveform(records,traces);if(choice)$('event').value=String(choice.id);if(ids.length)showEvent(choice?.groupIndex);else clearSavedSelection('No nonzero deposits in this run. Initial counts and denominator are retained.');$('result').scrollIntoView({behavior:'smooth'});}catch(e){if(generation===resultGeneration&&selectedJob===job.name)throw e;}}
+async function openResult(job){$('run-stage-details').open=false;openRunDetail();showResultTab('overview');if(job.workflow_kind==='local_gegi_workflow_v1')return openGeGIResult(job);if(job.execution_contract==='serial_batches_v3')return openBatchResult(job);const prior=result?.job.name===job.name&&result?.job.configuration_sha256===job.configuration_sha256?{id:Number($('event').value),groupIndex:Number($('group').value)}:null;showRun(job);resetResultOptions();const generation=++resultGeneration;plotGeneration++;result=null;$('plots').replaceChildren();$('result').hidden=true;try{const responses=await Promise.all([artifact(job.name,'response/run.json'),artifact(job.name,'COMPLETE.json')]);const [report,complete]=await Promise.all(responses.map(r=>r.json()));if(generation!==resultGeneration||selectedJob!==job.name)return;const summaryHash=complete.artifacts?.['response/summary.html']?.sha256;if(complete.configuration_sha256!==job.configuration_sha256||!summaryHash||report.artifacts?.['summary.html']!==summaryHash||report.source_id!==undefined&&report.source_id!==job.selection.source)throw Error('Saved result and selected run identities differ.');let records=[],traces=[];if(report.cases){records=report.cases;}else{const files=await Promise.all([artifact(job.name,'response/scalars.jsonl'),artifact(job.name,'response/traces.jsonl')]);const texts=await Promise.all(files.map(r=>r.text()));if(generation!==resultGeneration||selectedJob!==job.name)return;[records,traces]=texts.map(s=>s.trim().split('\n').filter(Boolean).map(JSON.parse));}if(generation!==resultGeneration||selectedJob!==job.name)return;result={job,report,records,traces,summaryHash};showResultSummary();loadResultOptions(result);$('batch-navigation').hidden=true;savedArtifacts(job,complete);$('result').hidden=runDetailKind!=='standard';$('result-heading').textContent=job.name+' · '+job.selection.detector+' · '+savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' original primaries';const ids=selectablePrimaryIds(records);options('event',primaryOptions(ids,result.records,result.traces));const choice=prior&&ids.includes(prior.id)?prior:firstSavedWaveform(records,traces);if(choice)$('event').value=String(choice.id);if(ids.length)showEvent(choice?.groupIndex);else clearSavedSelection('No nonzero deposits in this run. Initial counts and denominator are retained.');$('result').scrollIntoView({behavior:'smooth'});}catch(e){if(generation===resultGeneration&&selectedJob===job.name)throw e;}}
 function resetSpectrum(){spectrumGeneration++;if(result)result.spectrum=null;$('spectrum-panel').hidden=true;$('spectrum-panel').open=false;$('spectrum-status').textContent='';$('spectrum-content').replaceChildren();}
 function resetResultOptions(){resultOptionsGeneration++;if(result)result.options=null;for(const id of ['feature-panel','acquisition-panel']){$(id).hidden=true;$(id).open=false;}resetFeatures();resetAcquisition();resetSpectrum();$('result-options-status').textContent='';}
 function resultOptionsIdentity(reply,job){if(reply.kind!=='local_saved_result_options_v1'||reply.name!==job.name||reply.configuration_sha256!==job.configuration_sha256||typeof reply.feature_export_present!=='boolean'||typeof reply.acquisition_export_present!=='boolean'||!(reply.spectrum_file===null&&reply.spectrum_scope===null||['results/histograms.json','response/histograms.json'].includes(reply.spectrum_file)&&reply.spectrum_scope==='full_run'))throw Error('Saved result options and selected run identities differ.');return reply;}
 async function resultOptionsRequest(job){return api('/api/workflow/result-options?'+new URLSearchParams({name:job.name}));}
 function configureSpectrum(context){
   resetSpectrum();if(context!==result||!context.options)return;
+  showResultSummary();
   const options=context.options,page=context.page;
   if(options.spectrum_file)context.spectrum={file:options.spectrum_file,scope:'full_run',initial:context.job.selection.primary_count};
   else if(page){const saved=page.artifacts?.find(a=>/^batches\/b[0-9]{10}\/response\/histograms\.json$/.test(a.file));if(saved)context.spectrum={file:saved.file,scope:'selected_batch',batch:page.batch_index,batch_sha256:page.batch_sha256,initial:page.batch_primary_count};}
-  if(!context.spectrum)return;
-  $('spectrum-panel').hidden=false;$('spectrum-status').textContent=(context.spectrum.scope==='full_run'?'Full saved run':'Selected sealed batch '+context.spectrum.batch)+' · open to read original raw-count histograms.';
+  if(!context.spectrum){const note=node('p','No energy spectrum was saved for this run. Open Events & waveforms or Data files to inspect its saved results.','muted');note.dataset.spectrumNote='true';$('result-summary').append(note);return;}
+  $('spectrum-panel').hidden=false;$('spectrum-status').textContent=(context.spectrum.scope==='full_run'?'Full saved run':'Selected sealed batch '+context.spectrum.batch)+' · original raw-count histograms.';if(resultTab==='overview')$('spectrum-panel').open=true;
 }
 async function loadResultOptions(context){
   if(context!==result)return;resetResultOptions();const generation=resultOptionsGeneration,runGeneration=resultGeneration;let received=false;
@@ -1732,7 +1892,7 @@ function histogramData(histogram,expectedInitial){
   if(histogram?.width_keV!==5||!Array.isArray(histogram.bins)||!counts||!integer(counts.initial_primaries)||counts.initial_primaries<1||counts.initial_primaries!==expectedInitial||!integer(counts.zero_deposit_primaries)||counts.zero_deposit_primaries>counts.initial_primaries||!integer(counts.groups)||!integer(counts.accepted)||counts.accepted>counts.groups||counts.nonzero_primaries!==undefined&&counts.nonzero_primaries!==counts.initial_primaries-counts.zero_deposit_primaries)throw Error('Saved spectrum initial census or pulse counts differ.');
   const allowed=['deposited_per_decay','deposited_per_group','native_terminal_charge','window_charge','preamp_charge_equivalent','analog_shaped_equivalent','accepted_peak_ADC'],seen=new Set(),stages=new Map(allowed.map(s=>[s,new Map()]));
   for(const row of histogram.bins){const key=row.stage+':'+row.bin;if(!stages.has(row.stage)||!integer(row.count)||row.count===0||!Number.isInteger(row.bin)||row.bin< -1||row.bin>1000||seen.has(key)||row.lower_keV!==(row.bin===-1?null:-1000+5*row.bin)||row.upper_keV!==(row.bin===1000?null:-1000+5*(row.bin+1)))throw Error('Saved spectrum contains invalid or repeated bins.');seen.add(key);stages.get(row.stage).set(row.bin,row.count);}
-  const series=[{stage:'deposited_per_decay',title:'Truth deposited energy Edep · per initial primary',denominator:counts.initial_primaries,color:'#007d8a'},{stage:'accepted_peak_ADC',title:'Peak-ADC reconstructed energy Erec · accepted pulse groups',denominator:counts.groups,color:'#b56c15'}].map(item=>({...item,bins:stages.get(item.stage)}));
+  const series=[{stage:'deposited_per_decay',title:'Truth deposited energy Edep · per initial primary',denominator:counts.initial_primaries,color:'#007d8a'},{stage:'accepted_peak_ADC',title:'Readout equivalent energy · accepted pulse groups',denominator:counts.groups,color:'#b56c15'}].map(item=>({...item,bins:stages.get(item.stage)}));
   for(const item of series){item.total=[...item.bins.values()].reduce((a,b)=>a+b,0);item.underflow=item.bins.get(-1)||0;item.overflow=item.bins.get(1000)||0;item.inside=item.total-item.underflow-item.overflow;item.notSelected=item.denominator-item.total;if(!Number.isSafeInteger(item.total)||item.total!==(item.stage==='deposited_per_decay'?counts.initial_primaries:counts.accepted))throw Error('Saved spectrum totals differ from its complete census.');}
   return {counts,series,width_keV:histogram.width_keV};
 }
@@ -1753,7 +1913,7 @@ function histogramFigure(series){
 }
 async function loadSpectrum(){
   const context=result,descriptor=context?.spectrum,generation=++spectrumGeneration;if(!descriptor||$('spectrum-panel').hidden||!$('spectrum-panel').open)return;$('spectrum-content').replaceChildren();$('spectrum-status').textContent='Reading saved spectrum…';
-  try{const response=await artifact(context.job.name,descriptor.file),histogram=await response.json();if(generation!==spectrumGeneration||context!==result||context.spectrum!==descriptor||selectedJob!==context.job.name||!$('spectrum-panel').open)return;const data=histogramData(histogram,descriptor.initial),counts=data.counts;$('spectrum-status').textContent=(descriptor.scope==='full_run'?'Full saved run':'Selected sealed batch '+descriptor.batch)+' · '+counts.initial_primaries+' initial primaries (efficiency denominator) · '+counts.zero_deposit_primaries+' zero-deposit · '+(counts.initial_primaries-counts.zero_deposit_primaries)+' nonzero-deposit · '+counts.groups+' pulse groups · '+counts.accepted+' accepted.';const content=$('spectrum-content');content.append(node('p','Native failed groups: '+metricValue(counts.native_failed_groups)+' · readout rejected: '+metricValue(counts.readout_rejected)+' · saturated: '+metricValue(counts.saturated)+'. Counts are saved totals, not efficiencies or physical resolution. No fit, normalization or energy rescaling is applied.','muted'));const plots=node('div',undefined,'plot-grid');for(const series of data.series)plots.append(histogramFigure(series));content.append(plots,node('p','Truth includes the zero-deposit initial primaries. Reconstructed energy includes accepted pulse groups only; one primary may create several groups. This spectrum reads '+descriptor.file+' independently of the event page.','muted'));}
+  try{const response=await artifact(context.job.name,descriptor.file),histogram=await response.json();if(generation!==spectrumGeneration||context!==result||context.spectrum!==descriptor||selectedJob!==context.job.name||!$('spectrum-panel').open)return;const data=histogramData(histogram,descriptor.initial),counts=data.counts;if(descriptor.scope==='full_run'){context.summaryCounts=counts;showResultSummary(counts);}$('spectrum-status').textContent=(descriptor.scope==='full_run'?'Full saved run':'Selected sealed batch '+descriptor.batch)+' · '+counts.initial_primaries+' initial primaries (efficiency denominator) · '+counts.zero_deposit_primaries+' zero-deposit · '+(counts.initial_primaries-counts.zero_deposit_primaries)+' nonzero-deposit · '+counts.groups+' pulse groups · '+counts.accepted+' accepted.';const content=$('spectrum-content');content.append(node('p','Native failed groups: '+metricValue(counts.native_failed_groups)+' · readout rejected: '+metricValue(counts.readout_rejected)+' · saturated: '+metricValue(counts.saturated)+'. Counts are saved totals, not efficiencies or physical resolution. No fit, normalization or energy rescaling is applied.','muted'));const plots=node('div',undefined,'plot-grid');for(const series of data.series)plots.append(histogramFigure(series));content.append(plots,node('p','Truth includes the zero-deposit initial primaries. Reconstructed energy includes accepted pulse groups only; one primary may create several groups. This spectrum reads '+descriptor.file+' independently of the event page.','muted'));}
   catch(e){if(generation===spectrumGeneration&&context===result&&context.spectrum===descriptor&&$('spectrum-panel').open)$('spectrum-status').textContent='Saved spectrum unavailable. '+e.message;}
 }
 $('spectrum-panel').ontoggle=()=>{if($('spectrum-panel').open&&!$('spectrum-panel').hidden)loadSpectrum();else{spectrumGeneration++;$('spectrum-content').replaceChildren();}};
@@ -1777,14 +1937,14 @@ function savedArtifacts(job,complete){const files=[
 function flatBatchRecords(page){return page.records.flatMap(item=>[item.primary,...item.pulse_groups].filter(Boolean).map(record=>({...record,global_initial_id:item.global_initial_id,local_initial_id:item.local_initial_id,batch_index:item.batch_index,raw_truth:item.truth})));}
 function pageIdentity(reply,job,batch,offset){if(reply.kind!=='local_batch_event_page_v1'||reply.name!==job.name||reply.configuration_sha256!==job.configuration_sha256||reply.batch_index!==batch||reply.offset!==offset||reply.limit!==100||!Array.isArray(reply.records)||reply.records.length>100||!Array.isArray(reply.traces)||typeof reply.batch_sha256!=='string'||! /^[0-9a-f]{64}$/.test(reply.batch_sha256))throw Error('Saved event page and selected run identities differ.');const sparse=reply.pagination_kind==='stored_nonzero_events_v1';if(sparse){const n=reply.batch_primary_count,z=reply.counts?.zero_deposit_primaries,a=reply.available_record_count;if(!Number.isSafeInteger(n)||n<1||!Number.isSafeInteger(z)||z<0||z>n||!Number.isSafeInteger(a)||a!==n-z||reply.nonzero_record_count!==a||reply.efficiency_denominator!==n||reply.counts?.initial_primaries!==n||offset>a||reply.records.length!==Math.min(100,a-offset)||reply.next_offset!==(offset+reply.records.length<a?offset+reply.records.length:null))throw Error('Saved nonzero page changed its initial census or denominator.');}let previous=-1;for(const [i,row]of reply.records.entries()){if(row.batch_index!==batch||!Number.isSafeInteger(row.local_initial_id)||row.local_initial_id<0||row.global_initial_id!==reply.batch_offset+row.local_initial_id||!Array.isArray(row.pulse_groups)||!row.primary||!row.truth||(sparse?(row.local_initial_id<=previous||row.local_initial_id>=reply.batch_primary_count||row.primary.zero_deposit!==false||!Array.isArray(row.truth.steps)||!row.truth.steps.some(step=>Number.isFinite(step.energy_keV)&&step.energy_keV!==0)):row.local_initial_id!==offset+i))throw Error('Incomplete saved primary identity.');previous=row.local_initial_id;}return reply;}
 function selectablePrimaryIds(records){const zeros=new Set(records.filter(r=>r.zero_deposit===true||r.zero_ge===true).map(r=>r.initial_primary_id??r.event_id));return [...new Set(records.map(r=>r.initial_primary_id??r.event_id))].filter(id=>!zeros.has(id));}
-async function openBatchResult(job){const prior=result?.job.name===job.name&&result?.job.configuration_sha256===job.configuration_sha256&&result?.page?{batch:result.page.batch_index,offset:result.page.offset,id:Number($('event').value),groupIndex:Number($('group').value)}:null;showRun(job);resultGeneration++;plotGeneration++;pageGeneration++;result={job,page:null,records:[],traces:[]};loadResultOptions(result);clearSavedSelection('Saved page not loaded.');$('result').hidden=false;$('batch-navigation').hidden=false;$('result-heading').textContent=job.name+' · '+job.selection.detector+' · '+savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' original primaries';$('batch-index').value=String(prior?.batch??0);$('page-offset').value=String(prior?.offset??0);$('saved-artifacts').replaceChildren();$('plots').replaceChildren();await loadBatchPage(prior);$('result').scrollIntoView({behavior:'smooth'});}
-async function loadBatchPage(prior){if(!result||result.job.execution_contract!=='serial_batches_v3')return;const context=result,job=context.job,batch=exactInteger($('batch-index').value,'Saved batch index',false),offset=exactInteger($('page-offset').value,'Nonzero event offset',false),generation=++pageGeneration,runGeneration=resultGeneration;plotGeneration++;resetSpectrum();context.page=null;context.records=[];context.traces=[];context.summaryHash=null;clearSavedSelection('Saved page not loaded.');$('saved-artifacts').replaceChildren();$('plots').replaceChildren();$('previous-page').disabled=true;$('next-page').disabled=true;$('page-status').textContent='Checking saved batch '+batch+'…';try{const reply=pageIdentity(await api('/api/workflow/events?'+new URLSearchParams({name:job.name,batch:String(batch),offset:String(offset),limit:'100'})),job,batch,offset);if(generation!==pageGeneration||runGeneration!==resultGeneration||context!==result||selectedJob!==job.name)return;context.page=reply;context.records=flatBatchRecords(reply);context.traces=reply.traces;context.summaryHash=reply.response_summary_sha256;const ids=reply.records.map(r=>r.global_initial_id);options('event',primaryOptions(ids,result.records,result.traces));$('page-status').textContent='Batch '+batch+(reply.pagination_kind==='stored_nonzero_events_v1'?' · '+reply.available_record_count+' nonzero-deposit events · '+reply.counts.zero_deposit_primaries+' zero-deposit inputs omitted':ids.length?' · local IDs '+ids.map(id=>id-reply.batch_offset).join(', '):' · no records on this page')+' · '+reply.batch_primary_count+' initial primaries; efficiency denominator unchanged.';$('previous-page').disabled=offset===0;$('next-page').disabled=reply.next_offset===null;const choice=prior&&ids.includes(prior.id)?prior:firstSavedWaveform(context.records,context.traces);if(choice)$('event').value=String(choice.id);if(ids.length)showEvent(choice?.groupIndex);else clearSavedSelection('No nonzero deposits on this page. Initial counts and denominator are retained.');batchArtifacts(job,reply);if(context.options)configureSpectrum(context);}catch(e){if(generation===pageGeneration&&context===result){$('page-status').textContent=e.message;throw e;}}}
+async function openBatchResult(job){const prior=result?.job.name===job.name&&result?.job.configuration_sha256===job.configuration_sha256&&result?.page?{batch:result.page.batch_index,offset:result.page.offset,id:Number($('event').value),groupIndex:Number($('group').value)}:null;showRun(job);resultGeneration++;plotGeneration++;pageGeneration++;result={job,page:null,records:[],traces:[]};showResultSummary();loadResultOptions(result);clearSavedSelection('Saved page not loaded.');$('result').hidden=runDetailKind!=='standard';$('batch-navigation').hidden=false;$('result-heading').textContent=job.name+' · '+job.selection.detector+' · '+savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' original primaries';$('batch-index').value=String(prior?.batch??0);$('page-offset').value=String(prior?.offset??0);$('saved-artifacts').replaceChildren();$('plots').replaceChildren();await loadBatchPage(prior);$('result').scrollIntoView({behavior:'smooth'});}
+async function loadBatchPage(prior,savedPage=null){if(!result||result.job.execution_contract!=='serial_batches_v3')return;const context=result,job=context.job,batch=exactInteger($('batch-index').value,'Saved batch index',false),offset=exactInteger($('page-offset').value,'Nonzero event offset',false),generation=++pageGeneration,runGeneration=resultGeneration;plotGeneration++;resetSpectrum();context.page=null;context.records=[];context.traces=[];context.summaryHash=null;clearSavedSelection('Saved page not loaded.');$('saved-artifacts').replaceChildren();$('plots').replaceChildren();$('previous-page').disabled=true;$('next-page').disabled=true;$('page-status').textContent='Checking saved batch '+batch+'…';try{const reply=pageIdentity(savedPage||await api('/api/workflow/events?'+new URLSearchParams({name:job.name,batch:String(batch),offset:String(offset),limit:'100'})),job,batch,offset);if(generation!==pageGeneration||runGeneration!==resultGeneration||context!==result||selectedJob!==job.name)return;context.page=reply;context.records=flatBatchRecords(reply);context.traces=reply.traces;context.summaryHash=reply.response_summary_sha256;const ids=reply.records.map(r=>r.global_initial_id);options('event',primaryOptions(ids,result.records,result.traces));$('page-status').textContent='Batch '+batch+(reply.pagination_kind==='stored_nonzero_events_v1'?' · '+reply.available_record_count+' nonzero-deposit events · '+reply.counts.zero_deposit_primaries+' zero-deposit inputs omitted':ids.length?' · local IDs '+ids.map(id=>id-reply.batch_offset).join(', '):' · no records on this page')+' · '+reply.batch_primary_count+' initial primaries; efficiency denominator unchanged.';$('previous-page').disabled=offset===0&&batch===0;const completed=job.batch_progress?.completed_batch_count??job.batching.batch_count;$('next-page').disabled=reply.next_offset===null&&batch+1>=completed;const choice=prior&&ids.includes(prior.id)?prior:firstSavedWaveform(context.records,context.traces);if(choice)$('event').value=String(choice.id);if(ids.length)showEvent(choice?.groupIndex);else clearSavedSelection('No nonzero deposits on this page. Initial counts and denominator are retained.');eventNavigation();batchArtifacts(job,reply);showResultSummary();if(context.options)configureSpectrum(context);}catch(e){if(generation===pageGeneration&&context===result){$('page-status').textContent=e.message;throw e;}}}
 function batchArtifacts(job,page){const entries=['resolved-config.json','run.json',...(['completed','completed_with_native_failures'].includes(job.status)?['COMPLETE.json']:[])].map(file=>({file,stamp:null}));if(job.status?.startsWith('completed')&&result?.job.name===job.name&&result.options?.spectrum_file)entries.push({file:result.options.spectrum_file,stamp:null});for(const stamp of page.artifacts||[])entries.push({file:stamp.file,stamp});artifactSections(job,entries);$('saved-artifacts').append(savedIdentity('Sealed batch identity','SHA256 · '+page.batch_sha256+' · complete raw radiation and original saved traces remain in this batch.'));
 }
-async function loadBatchPlots(context,id,group,generation){try{const batch=context.page.batch_index,reply=await api('/api/workflow/batch-waveforms?'+new URLSearchParams({name:context.job.name,batch:String(batch),primary:String(id),group:group===null?'none':String(group)}));if(generation!==plotGeneration||context!==result||selectedJob!==context.job.name)return;const original=reply.record,record=primaryRecords(context.records,id).find(r=>savedGroup(r)?.id===group);if(reply.kind!=='local_batch_waveform_v1'||reply.name!==context.job.name||reply.configuration_sha256!==context.job.configuration_sha256||reply.batch_index!==batch||reply.batch_sha256!==context.page.batch_sha256||reply.response_summary_sha256!==context.summaryHash||recordPrimary(original)!==id||original.group_id!==group||original.origin_time_ns!==record?.origin_time_ns||!record?.readout)throw Error('Saved batch waveform and current selection identities differ.');const trace=original.trace,rd=record.readout,charge=reply.charge_input,peak={t:rd.peak_time_ns,v:rd.peak_V};if(!charge||!Array.isArray(charge.time_since_origin_ns)||!Array.isArray(charge.induced_equivalent_energy_keV))throw Error('Exact saved charge samples are unavailable.');const t=charge.time_since_origin_ns,q=charge.induced_equivalent_energy_keV,end=Math.min(rd.readout_end_ns,SavedFocusPlots.focusEnd(t,q));const originalDt=trace.current_bin_end_ns.map((stop,i)=>stop-trace.current_bin_start_ns[i]).find(width=>width>0);const panels=[{title:'Signed native charge · induced equivalent keV',time_ns:t,values:q,full_end_ns:t.at(-1),focus_end_ns:Math.min(t.at(-1),end),note:'Every saved signed native charge sample is retained. The camera focus does not prove complete collection; endpoint and cap flags remain.'},{title:'Original-bin current · nA',time_ns:trace.time_ns,values:trace.raw_native_current_nA||trace.current_nA,bin_start_ns:trace.current_bin_start_ns,bin_end_ns:trace.current_bin_end_ns,full_end_ns:rd.readout_end_ns,focus_end_ns:end,current_from_charge:{time_ns:t,values:q,ionisation_energy_eV:reply.ionisation_energy_eV,time_step_ns:originalDt,readout_end_ns:rd.readout_end_ns},note:'Signed current on every original numerical interval from the complete saved native charge. No smoothing or polarity change; ADC and energy remain unchanged.'},{title:'Analog preamp · V',time_ns:trace.time_ns,values:trace.preamp_V,full_end_ns:rd.readout_end_ns,focus_end_ns:end,note:'Original retained samples; omitted analog samples remain unavailable.'},{title:'Analog shaper · V',time_ns:trace.time_ns,values:trace.shaped_V,full_end_ns:rd.readout_end_ns,focus_end_ns:SavedFocusPlots.shaperEnd(trace.time_ns,trace.shaped_V,peak,rd.readout_end_ns),peak,note:'Gold marker is the exact saved sampled peak. ADC, reconstructed energy and flags remain unchanged.'}];SavedFocusPlots.draw($('plots'),panels,'Time since pulse-group origin · ns');$('plots').append(savedIdentity('Saved waveform identity','Sealed batch SHA256 · '+reply.batch_sha256));}catch(e){if(generation===plotGeneration&&context===result)$('plots').replaceChildren(node('p',e.message,'error'));}}
+async function loadBatchPlots(context,id,group,generation){try{const batch=context.page.batch_index,reply=await api('/api/workflow/batch-waveforms?'+new URLSearchParams({name:context.job.name,batch:String(batch),primary:String(id),group:group===null?'none':String(group)}));if(generation!==plotGeneration||context!==result||selectedJob!==context.job.name)return;const original=reply.record,record=primaryRecords(context.records,id).find(r=>savedGroup(r)?.id===group);if(reply.kind!=='local_batch_waveform_v1'||reply.name!==context.job.name||reply.configuration_sha256!==context.job.configuration_sha256||reply.batch_index!==batch||reply.batch_sha256!==context.page.batch_sha256||reply.response_summary_sha256!==context.summaryHash||recordPrimary(original)!==id||original.group_id!==group||original.origin_time_ns!==record?.origin_time_ns||!record?.readout)throw Error('Saved batch waveform and current selection identities differ.');const trace=original.trace,rd=record.readout,charge=reply.charge_input,peak={t:rd.peak_time_ns,v:rd.peak_V};if(!charge||!Array.isArray(charge.time_since_origin_ns)||!Array.isArray(charge.induced_equivalent_energy_keV))throw Error('Exact saved charge samples are unavailable.');const t=charge.time_since_origin_ns,q=charge.induced_equivalent_energy_keV,end=Math.min(rd.readout_end_ns,SavedFocusPlots.focusEnd(t,q));const originalDt=trace.current_bin_end_ns.map((stop,i)=>stop-trace.current_bin_start_ns[i]).find(width=>width>0);const panels=[{title:'Signed native charge · induced equivalent keV',time_ns:t,values:q,full_end_ns:t.at(-1),focus_end_ns:Math.min(t.at(-1),end),note:'Every saved signed native charge sample is retained. The camera focus does not prove complete collection; endpoint and cap flags remain.'},{title:'Original-bin current · nA',time_ns:trace.time_ns,values:trace.raw_native_current_nA||trace.current_nA,bin_start_ns:trace.current_bin_start_ns,bin_end_ns:trace.current_bin_end_ns,full_end_ns:rd.readout_end_ns,focus_end_ns:end,current_from_charge:{time_ns:t,values:q,ionisation_energy_eV:reply.ionisation_energy_eV,time_step_ns:originalDt,readout_end_ns:rd.readout_end_ns},note:'Signed current on every original numerical interval from the complete saved native charge. No smoothing or polarity change; ADC and energy remain unchanged.'},{title:'Analog preamp · V',time_ns:trace.time_ns,values:trace.preamp_V,full_end_ns:rd.readout_end_ns,focus_end_ns:end,note:'Original retained samples; omitted analog samples remain unavailable.'},{title:'Analog shaper · V',time_ns:trace.time_ns,values:trace.shaped_V,full_end_ns:rd.readout_end_ns,focus_end_ns:SavedFocusPlots.shaperEnd(trace.time_ns,trace.shaped_V,peak,rd.readout_end_ns),peak,note:'Gold marker is the exact saved sampled peak. ADC, reconstructed energy and flags remain unchanged.'}];SavedFocusPlots.draw($('plots'),panels,'Time since pulse-group origin · ns');showWaveformStage();$('plots').append(savedIdentity('Saved waveform identity','Sealed batch SHA256 · '+reply.batch_sha256));}catch(e){if(generation===plotGeneration&&context===result)$('plots').replaceChildren(node('p',e.message,'error'));}}
 $('load-page').onclick=()=>loadBatchPage().catch(e=>notice(e.message,true));
-$('previous-page').onclick=()=>{if(!result?.page)return;$('page-offset').value=String(Math.max(0,result.page.offset-100));loadBatchPage().catch(e=>notice(e.message,true));};
-$('next-page').onclick=()=>{if(result?.page?.next_offset==null)return;$('page-offset').value=String(result.page.next_offset);loadBatchPage().catch(e=>notice(e.message,true));};
+$('previous-page').onclick=()=>moveSavedPage(-1).catch(e=>notice(e.message,true));
+$('next-page').onclick=()=>moveSavedPage(1).catch(e=>notice(e.message,true));
 function recordPrimary(r){return r.global_initial_id??r.initial_primary_id??r.event_id;}
 function primaryRecords(records,id){return records.filter(r=>recordPrimary(r)===id);}
 function primaryOptions(ids,records,traces){return ids.map(id=>({id:String(id),label:String(id)+' · '+primaryHint(primaryRecords(records,id),traces)}));}
@@ -1825,7 +1985,7 @@ function analysisSelection(r){
   $('analysis-state').textContent=r.zero_deposit?'Zero deposition: this primary has no pulse group. No deposition waveform or reconstructed energy is inferred.':r.zero_ge?'Known zero input: only an explicitly saved zero-input response can be shown; no deposition pulse is inferred.':r.native_error||/native.*fail/.test(r.status||'')?'Native transport failed. Truth and identity remain saved; null charge, endpoint or readout values are unknown. Keep any recorded signal sign and the exact failure.':summary?'This is the initial-primary summary. Choose a pulse group to inspect its charge and readout; a summary does not create a pulse.':!r.readout?'Readout is unavailable for this record. Keep null results as unknown and retain signed charge and endpoint flags.':'Use the saved signed signals and readout values. Reconstructed energy uses the independent calibration recorded for this run; it is not the truth deposit energy.';
 }
 function clearSavedSelection(message='No saved primary selected.'){options('event',[]);options('group',[]);$('event-identity').textContent='';$('event-record').textContent=message;$('result-data').replaceChildren();analysisSelection();resetFeatures();resetAcquisition();}
-function showEvent(groupIndex=0){if(!result)return;const id=Number($('event').value),rs=primaryRecords(result.records,id);$('event-record').textContent=JSON.stringify(rs,null,2);options('group',rs.map((r,index)=>({id:String(index),label:r.record_kind==='pulse'?'Pulse group '+r.group_id+' · origin '+r.origin_time_ns+' ns':r.record_kind==='decay'||r.record_kind==='primary'?'Primary summary':r.zero_ge?'Known zero input':'Gamma response · group 0'})));if(Number.isInteger(groupIndex)&&groupIndex>=0&&groupIndex<rs.length)$('group').value=String(groupIndex);showGroup();}
+function showEvent(groupIndex=0){if(!result)return;eventNavigation();$('event-find').value=$('event').value;const id=Number($('event').value),rs=primaryRecords(result.records,id);$('event-record').textContent=JSON.stringify(rs,null,2);options('group',rs.map((r,index)=>({id:String(index),label:r.record_kind==='pulse'?'Pulse group '+r.group_id+' · origin '+r.origin_time_ns+' ns':r.record_kind==='decay'||r.record_kind==='primary'?'Primary summary':r.zero_ge?'Known zero input':'Gamma response · group 0'})));if(Number.isInteger(groupIndex)&&groupIndex>=0&&groupIndex<rs.length)$('group').value=String(groupIndex);showGroup();}
 function savedGroup(r){if(r.record_kind==='pulse'&&Number.isInteger(r.group_id))return {id:r.group_id};if(!r.record_kind&&Number.isInteger(r.initial_primary_id)&&typeof r.zero_ge==='boolean')return {id:r.zero_ge?null:0};return null;}
 function featureSelection(){
   if(!result)return null;
@@ -1963,19 +2123,235 @@ async function loadPlots(context,id,group,generation){
     const hashes=[reply.sidecar_manifest_sha256,reply.sidecar_data_sha256];
     if(!hashes.every(h=>h===null)&&!hashes.every(h=>typeof h==='string'&&/^[0-9a-f]{64}$/.test(h)))throw Error('Incomplete display derivative binding.');
     const peak=reply.panels[3].peak;if(!peak||!Object.is(peak.t,record.readout.peak_time_ns)||!Object.is(peak.v,record.readout.peak_V))throw Error('Original sampled peak changed.');
-    SavedFocusPlots.draw($('plots'),reply.panels,reply.clock);
+    SavedFocusPlots.draw($('plots'),reply.panels,reply.clock);showWaveformStage();
     const original=node('button','Download original saved plots');original.onclick=()=>download(context.job.name,'response/summary.html').catch(e=>notice(e.message,true));
     $('plots').append(original,node('p',reply.notes.join(' '),'muted'),savedIdentity('Saved waveform identity','Original artifact SHA256 · '+reply.summary_sha256+(hashes[0]?' · display derivative '+hashes[0]:'')));
   }catch(e){if(generation===plotGeneration&&context===result)$('plots').replaceChildren(node('p',e.message,'error'));}
 }
-function showGroup(){const generation=++plotGeneration,id=Number($('event').value),rs=result?primaryRecords(result.records,id):[],r=rs[Number($('group').value)],primary=rs.find(r=>['decay','primary'].includes(r.record_kind));if(!r){clearSavedSelection('No records for this primary.');$('plots').replaceChildren();return;}analysisSelection(r);$('event-identity').textContent='Initial primary '+id+(r.record_kind==='pulse'?' · pulse group '+r.group_id+' · origin '+r.origin_time_ns+' ns':primary?' · primary summary · '+primary.pulse_count+' pulse groups':r.zero_ge?' · known zero input':' · gamma response group 0');$('result-data').replaceChildren();const edep=r.truth_ge_edep_keV??r.deposited_energy_keV,charge=r.final_induced_keV??(r.zero_deposit?0:null),rec=r.readout?.reconstructed_energy_keV,metrics=node('div',undefined,'metrics');for(const [label,value]of [['Truth Edep · keV',edep],['Induced equivalent · keV',charge],['Reconstructed energy · keV',rec]]){const span=node('span',label);span.append(node('strong',metricValue(value)));metrics.append(span);} $('result-data').append(metrics,node('p',r.status||r.rejection_reason||(r.zero_deposit?'True zero deposition · no pulse group':r.record_kind==='pulse'?'Recorded pulse group':'Recorded primary')));const group=savedGroup(r),hasTrace=group&&r.readout&&(r.readout.trace||result.traces.some(t=>(t.global_initial_id??t.event_id)===id&&t.group_id===group.id));$('plots').replaceChildren(node('p',hasTrace?'Loading original saved waveforms…':r.zero_deposit?'No pulse waveform for this zero-deposit primary.':'No saved waveform for this record. Pulse groups retain their scalar results.','muted'));if(hasTrace)loadPlots(result,id,group.id,generation);resetFeatures();if($('feature-panel').open&&!$('feature-panel').hidden)loadFeatures();resetAcquisition();if($('acquisition-panel').open&&!$('acquisition-panel').hidden)loadAcquisition();}
-$('event').onchange=()=>showEvent();
+function showGroup(){const generation=++plotGeneration,id=Number($('event').value),rs=result?primaryRecords(result.records,id):[],r=rs[Number($('group').value)],primary=rs.find(r=>['decay','primary'].includes(r.record_kind));if(!r){clearSavedSelection('No records for this primary.');$('plots').replaceChildren();return;}analysisSelection(r);$('event-identity').textContent='Initial primary '+id+(r.record_kind==='pulse'?' · pulse group '+r.group_id+' · origin '+r.origin_time_ns+' ns':primary?' · primary summary · '+primary.pulse_count+' pulse groups':r.zero_ge?' · known zero input':' · gamma response group 0');$('result-data').replaceChildren();const edep=r.truth_ge_edep_keV??r.deposited_energy_keV,charge=r.final_induced_keV??(r.zero_deposit?0:null),rec=r.readout?.reconstructed_energy_keV,metrics=node('div',undefined,'metrics');for(const [label,value]of [['Truth Edep · keV',edep],['Induced equivalent · keV',charge],['Readout equivalent energy · keV',rec]]){const span=node('span',label);span.append(node('strong',metricValue(value)));metrics.append(span);} $('result-data').append(metrics,node('p',r.status||r.rejection_reason||(r.zero_deposit?'True zero deposition · no pulse group':r.record_kind==='pulse'?'Recorded pulse group':'Recorded primary')));const group=savedGroup(r),hasTrace=group&&r.readout&&(r.readout.trace||result.traces.some(t=>(t.global_initial_id??t.event_id)===id&&t.group_id===group.id));$('plots').replaceChildren(node('p',hasTrace?'Loading original saved waveforms…':r.zero_deposit?'No pulse waveform for this zero-deposit primary.':'No saved waveform for this record. Pulse groups retain their scalar results.','muted'));if(hasTrace)loadPlots(result,id,group.id,generation);resetFeatures();if($('feature-panel').open&&!$('feature-panel').hidden)loadFeatures();resetAcquisition();if($('acquisition-panel').open&&!$('acquisition-panel').hidden)loadAcquisition();}
+function eventNavigation(){
+  const ids=[...$('event').children].map(option=>Number(option.value));
+  const index=ids.indexOf(Number($('event').value)),page=result?.page;
+  const completed=result?.job.batch_progress?.completed_batch_count??result?.job.batching?.batch_count??0;
+  const priorPage=page&&(page.offset>0||page.batch_index>0);
+  const laterPage=page&&(page.next_offset!==null||page.batch_index+1<completed);
+  $('event-previous').disabled=index<=0&&!priorPage;
+  $('event-next').disabled=(index<0||index===ids.length-1)&&!laterPage;
+}
+async function findSavedEvent(){
+  const context=result,generation=++eventFindGeneration;
+  if(!context)return;
+  let id;
+  try{id=exactInteger($('event-find').value.trim(),'Original event ID',false);}
+  catch(e){$('event-find-status').textContent=e.message;return;}
+  if(id>=context.job.selection.primary_count){
+    $('event-find-status').textContent='Event IDs for this run range from 0 to '+(context.job.selection.primary_count-1)+'.';
+    return;
+  }
+  $('event-find-button').disabled=true;
+  $('event-find-status').textContent='Finding original event '+id+'…';
+  try{
+    if(!primaryRecords(context.records,id).length&&context.job.execution_contract==='serial_batches_v3'){
+      const batch=Math.floor(id/context.job.batching.batch_cap);
+      const completed=context.job.batch_progress?.completed_batch_count??context.job.batching.batch_count;
+      if(batch>=completed)throw Error('This event belongs to a batch that is not complete. Open a completed event or resume the run.');
+      let low=0,high=null;
+      while(high===null||low<=high){
+        const page=high===null?0:Math.floor((low+high)/2),offset=page*100;
+        const response=await api('/api/workflow/events?'+new URLSearchParams({
+          name:context.job.name,batch:String(batch),offset:String(offset),limit:'100'
+        }));
+        const reply=pageIdentity(response,context.job,batch,offset);
+        if(generation!==eventFindGeneration||context!==result||selectedJob!==context.job.name)return;
+        const ids=reply.records.map(row=>row.global_initial_id);
+        if(ids.includes(id)){
+          $('batch-index').value=String(batch);
+          $('page-offset').value=String(offset);
+          await loadBatchPage({id,groupIndex:0},reply);
+          break;
+        }
+        if(!ids.length||id>=ids[0]&&id<=ids.at(-1))break;
+        if(high===null)high=Math.ceil(reply.available_record_count/100)-1;
+        if(id>ids.at(-1))low=page+1;
+        else high=page-1;
+      }
+    }
+    if(generation!==eventFindGeneration||context!==result||selectedJob!==context.job.name)return;
+    const records=primaryRecords(context.records,id);
+    if(!records.length||records.some(record=>record.zero_deposit===true||record.zero_ge===true)){
+      throw Error('Event '+id+' has no saved nonzero-deposit record. Initial and zero-deposition counts remain in Overview.');
+    }
+    $('event').value=String(id);
+    const choice=firstSavedWaveform(records,context.traces);
+    showEvent(choice?.groupIndex??0);
+    showResultTab('events');
+    $('event-find-status').textContent='Showing original event '+id+'.';
+  }catch(e){
+    if(generation===eventFindGeneration&&context===result)$('event-find-status').textContent=e.message;
+  }finally{
+    if(generation===eventFindGeneration)$('event-find-button').disabled=false;
+  }
+}
+async function moveSavedPage(direction){
+  ++eventFindGeneration;
+  $('event-find-button').disabled=false;
+  const context=result;
+  if(!context?.page)return;
+  const page=context.page,crossedBack=direction<0&&page.offset===0;
+  let batch=page.batch_index,offset=direction<0?Math.max(0,page.offset-100):page.next_offset;
+  if(crossedBack){batch--;offset=0;}
+  else if(direction>0&&offset===null){batch++;offset=0;}
+  const completed=context.job.batch_progress?.completed_batch_count??context.job.batching.batch_count;
+  while(batch>=0&&batch<completed){
+    $('batch-index').value=String(batch);
+    $('page-offset').value=String(offset);
+    await loadBatchPage();
+    if(context!==result)return;
+    if(crossedBack&&offset===0&&context.page.available_record_count>100){
+      offset=Math.floor((context.page.available_record_count-1)/100)*100;
+      $('page-offset').value=String(offset);
+      await loadBatchPage();
+      if(context!==result)return;
+    }
+    if(context.page.records.length)return;
+    batch+=direction;offset=0;
+  }
+}
+async function moveSavedEvent(direction){
+  ++eventFindGeneration;
+  $('event-find-button').disabled=false;
+  const context=result;
+  if(!context)return;
+  const ids=[...$('event').children].map(option=>Number(option.value));
+  const index=ids.indexOf(Number($('event').value)),next=ids[index+direction];
+  if(next!==undefined){
+    $('event').value=String(next);
+    showEvent(firstSavedWaveform(primaryRecords(context.records,next),context.traces)?.groupIndex??0);
+    return;
+  }
+  await moveSavedPage(direction);
+  if(context!==result)return;
+  const available=[...$('event').children];
+  if(available.length){
+    $('event').value=available[direction<0?available.length-1:0].value;
+    const id=Number($('event').value);
+    showEvent(firstSavedWaveform(primaryRecords(context.records,id),context.traces)?.groupIndex??0);
+  }
+}
+$('event').onchange=()=>{++eventFindGeneration;$('event-find-button').disabled=false;showEvent();};
+$('event-find-button').onclick=()=>findSavedEvent();
+$('event-find').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();void findSavedEvent();}};
+$('event-previous').onclick=()=>moveSavedEvent(-1).catch(e=>notice(e.message,true));
+$('event-next').onclick=()=>moveSavedEvent(1).catch(e=>notice(e.message,true));
 $('group').onchange=showGroup;
 $('setup').onclick=async()=>{try{const r=await api('/api/workflow/setup');$('setup-notice').textContent=r.checks.map(c=>(c.available?'✓ ':'Missing: ')+c.label).join(' · ')+' '+r.note;}catch(e){$('setup-notice').textContent=e.message;}};
 $('check').onclick=async()=>{if(busy||active||!executableSelection())return;const version=selectionVersion,button=$('check'),focused=document.activeElement===button;busy=true;checked=null;showPose();controls();try{const submitted=config(),serialized=JSON.stringify(submitted),batched=batchSelection(),gegi=gegiSelection();const reply=await api(gegi?'/api/workflow/check-gegi':batched?'/api/workflow/check-batches':'/api/workflow/check',batched?{request:batchRequest(submitted)}:{config:submitted});if(version!==selectionVersion||JSON.stringify(config())!==serialized){notice('Selection changed while Check was pending. Check the current setup.');return;}if(gegi&&(reply.kind!=='local_gegi_workflow_v1'||reply.status!=='checked_configuration'||typeof reply.check_id!=='string'))throw Error('Check did not authorize this GeGI configuration.');const pendingAngle=batched&&submitted.angle_deg!==undefined&&submitted.angle_deg!==0&&reply.execution_enabled===false&&reply.resolved?.source_pose;if(batched&&(reply.kind!=='local_scenario_batch_execution_v3'||reply.schema_version!==3||(!pendingAngle&&(reply.execution_enabled!==true||typeof reply.check_id!=='string'))))throw Error('Check did not authorize batch execution.');checked=reply;$('checked-plan').textContent=JSON.stringify(checked.resolved,null,2);showPose(checked.resolved);notice(gegi?'GeGI configuration checked. Run records the selected source, all readout channels and signal-based imaging.':pendingAngle?'Angle and geometry inputs checked. Nonzero-angle execution is unavailable: the fixed pilot failed source-position identity; end-to-end acceptance is pending.':batched?'Exact count checked: '+submitted.primary_count+' initial primaries in '+checked.resolved.batching.batch_count+' serial batches. Run uses this checked plan.':'Gamma configuration checked. Run uses its checked energy, source anchor and 20-primary settings.',false,true);}catch(e){if(version===selectionVersion){checked=null;notice(e.message,true);}}finally{busy=false;controls();if(focused&&button.isConnected&&!button.disabled&&document.activeElement===document.body)button.focus({preventScroll:true});}};
-$('start').onclick=async()=>{if(busy||active||!checked||checked.execution_enabled===false||!executableSelection())return;busy=true;controls();try{const job=await api('/api/workflow/start',{check_id:checked.check_id});showRun(job);checked=null;notice('Run reserved: '+job.name+'. Stages will appear as the backend observes them.');await poll();}catch(e){checked=null;notice(e.message,true);}finally{busy=false;controls();}};
+$('start').onclick=async()=>{
+  if(busy||active||!executableSelection())return;
+  const version=selectionVersion;
+  if(!checked)await $('check').onclick();
+  if(version!==selectionVersion||busy||active||!checked||checked.execution_enabled===false||!executableSelection())return;
+  busy=true;controls();
+  try{
+    const job=await api('/api/workflow/start',{check_id:checked.check_id});
+    showRun(job);
+    checked=null;
+    openRunDetail();
+    const started=['running','completed','completed_with_native_failures'].includes(job.status);
+    notice((started?'Started '+job.name:'Run '+job.name+': '+(stateNames[job.status]||job.status))+'.');
+    await poll();
+    if($('name').value===job.name){$('name').value=uniqueRunName();invalidate();}
+  }catch(e){
+    checked=null;notice(e.message,true);
+  }finally{
+    busy=false;controls();
+  }
+};
 $('save').onclick=()=>{if(busy||active||!executableSelection())return;try{const blob=new Blob([JSON.stringify(batchSelection()?batchRequest(config()):config(),null,2)+'\n'],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='gesignal-configuration.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){notice(e.message,true);}};
 function importedConfig(c,batched=false){if(c?.source==='gegi_mono_gamma_v1'||c?.cryostat==='gegi_cryostat_v1'||c?.detector==='GeGI_3D')return importedGeGIConfig(c,batched);const fields=['name','cryostat','detector','source','pose','primary_count','seed','threads','electronics'];for(const key of ['angle_deg','gamma_energy_keV'])if(c&&Object.hasOwn(c,key))fields.push(key);if(!c||Array.isArray(c)||Object.keys(c).sort().join()!=fields.sort().join()||!c.electronics||Object.keys(c.electronics).sort().join()!=[...catalog.electronics_keys].sort().join())throw Error('Configuration fields do not match this application.');const source=catalog.sources.find(s=>s.id===c.source),detector=catalog.detectors.find(d=>d.id===c.detector),gamma=gammaCapability(source);if(!source||source.available===false||!catalog.cryostats.some(x=>x.id===c.cryostat&&x.available)||!detector?.available||!detectorFits(detector,c.cryostat)||detector.sources&&!detector.sources.includes(c.source)||!(gamma?gamma.source_poses.includes(c.pose):source.pose===c.pose)||(batched?!Number.isSafeInteger(c.primary_count)||c.primary_count<1||source.id==='mono_gamma_662_axis_v1':!source.counts.includes(c.primary_count))||![1,2].includes(c.threads)||!Number.isInteger(c.seed)||c.seed<1||c.seed>2147483646||typeof c.name!=='string'||(!batched&&source.fixed_seed!=null&&c.seed!==source.fixed_seed))throw Error('The imported setup is unavailable. No selection was replaced.');const hasGammaEnergy=Object.hasOwn(c,'gamma_energy_keV'),energy=hasGammaEnergy?c.gamma_energy_keV:gamma?.energy_keV.default;if(hasGammaEnergy&&(!gamma||batched)||gamma&&(typeof energy!=='number'||!Number.isFinite(energy)||energy<=0))throw Error('The imported gamma energy is unavailable. Use a finite positive number in keV for a supported gamma source. No selection was replaced.');const angle=Object.hasOwn(c,'angle_deg')?c.angle_deg:0,capability=angleCapability(source);if(typeof angle!=='number'||!Number.isFinite(angle)||(capability?angle<capability.min_deg||angle>capability.max_deg:angle!==0))throw Error('The imported source angle is unavailable. No selection was replaced.');for(const key of catalog.electronics_keys){const value=c.electronics[key];if(key==='peak_policy'?typeof value!=='string':key.startsWith('peak_gate_')?value!==null&&(typeof value!=='number'||!Number.isFinite(value)):typeof value!=='number'||!Number.isFinite(value))throw Error('Imported electronics values have invalid types.');}if((c.electronics.peak_gate_start_ns===null)!==(c.electronics.peak_gate_end_ns===null))throw Error('A peak gate requires both boundaries.');const normalized={...c};if(angle===0)delete normalized.angle_deg;if(gamma)normalized.gamma_energy_keV=energy;return normalized;}
 function importedRequest(value){if(value?.kind==='local_scenario_batch_request_v2'){if(Object.keys(value).sort().join()!=='kind,schema_version,selection'||value.schema_version!==2)throw Error('Batch request fields do not match this application.');return importedConfig(value.selection,true);}return importedConfig(value);}
-$('load').onclick=()=>{if(!busy&&!active)$('import').click();};$('import').onchange=async()=>{const generation=++importGeneration,version=selectionVersion;try{if(busy||active)throw Error('Wait for the current action before loading a configuration.');const f=$('import').files[0];if(!f||f.size>65536)throw Error('Choose a configuration JSON under 64 KiB.');const c=importedRequest(JSON.parse(await f.text()));if(generation!==importGeneration||version!==selectionVersion||busy||active)throw Error('Selection or activity changed while loading. Choose the configuration file again.');for(const id of ['name','cryostat','detector','source','threads'])$(id).value=c[id];detectorChanged();$('seed').value=c.seed;$('count').value=String(c.primary_count);$('pose').value=c.pose;$('angle-deg').value=String(c.angle_deg??0);$('gamma-energy-keV').value=String(c.gamma_energy_keV??662);if(c.source_position_mm)for(const [i,axis]of ['x','y','z'].entries())$('gegi-source-'+axis).value=String(c.source_position_mm[i]);for(const key of catalog.electronics_keys)$('setting-'+key).value=c.electronics[key]??'';$('use-peak-gate').checked=c.electronics.peak_gate_start_ns!==null;gateFields();invalidate();notice('Configuration loaded. Check plan validates the admitted setup.');}catch(e){if(generation===importGeneration)notice(e.message,true);}finally{if(generation===importGeneration)$('import').value='';}};
-(async()=>{try{catalog=await api('/api/workflow/catalog');options('cryostat',catalog.cryostats);options('detector',detectorItems(),true);$('detector').value='AK02';electronics();$('numerics').textContent=catalog.numerics;$('setup-limit').textContent=catalog.setup_limit||'';detectorChanged();stageList();for(const id of ['pose','angle-deg','gamma-energy-keV','gegi-source-x','gegi-source-y','gegi-source-z','count','seed','threads','name'])$(id).addEventListener('input',invalidate);$('cryostat').onchange=cryostatChanged;$('detector').onchange=detectorChanged;$('source').onchange=sourceChanged;await poll();void estimateCandidateStorage();setInterval(poll,2500);}catch(e){notice(e.message,true);$('check').disabled=true;}})();
+function applyConfiguration(selection){
+  $('cryostat').value=selection.cryostat;
+  options('detector',detectorItems(),true);
+  $('detector').value=selection.detector;
+  $('source').value=selection.source;
+  detectorChanged();
+  for(const id of ['name','threads','seed'])$(id).value=String(selection[id]);
+  $('count').value=String(selection.primary_count);
+  $('pose').value=selection.pose;
+  $('angle-deg').value=String(selection.angle_deg??0);
+  $('gamma-energy-keV').value=String(selection.gamma_energy_keV??662);
+  if(selection.source_position_mm){
+    for(const [index,axis]of ['x','y','z'].entries())$('gegi-source-'+axis).value=String(selection.source_position_mm[index]);
+  }
+  for(const key of catalog.electronics_keys)$('setting-'+key).value=selection.electronics[key]??'';
+  $('use-peak-gate').checked=selection.electronics.peak_gate_start_ns!==null;
+  gateFields();invalidate();
+}
+function copyAsNewRun(job){
+  const selection=importedConfig(job.selection,job.execution_contract==='serial_batches_v3');
+  applyConfiguration({...selection,name:uniqueRunName(job.name+'-copy')});
+  showTask('standard');showPage('new');
+  notice('Copied '+job.name+' with its saved source, seed and electronics. Review the new name and settings, then Start simulation.');
+}
+$('load').onclick=()=>{if(!busy&&!active)$('import').click();};
+$('import').onchange=async()=>{
+  const generation=++importGeneration,version=selectionVersion;
+  try{
+    if(busy||active)throw Error('Wait for the current action before loading a configuration.');
+    const file=$('import').files[0];
+    if(!file||file.size>65536)throw Error('Choose a configuration JSON under 64 KiB.');
+    const selection=importedRequest(JSON.parse(await file.text()));
+    if(generation!==importGeneration||version!==selectionVersion||busy||active){
+      throw Error('Selection or activity changed while loading. Choose the configuration file again.');
+    }
+    applyConfiguration(selection);
+    showTask('standard');showPage('new');
+    notice('Configuration loaded. Review the settings, then Start simulation.');
+  }catch(e){
+    if(generation===importGeneration)notice(e.message,true);
+  }finally{
+    if(generation===importGeneration)$('import').value='';
+  }
+};
+for(const button of document.querySelectorAll('[data-nav]')){
+  button.onclick=()=>{
+    if($('notice').className!=='notice error')notice('');
+    if(button.dataset.nav==='runs'){openRunList();void refreshCandidateRuns();}
+    else showPage(button.dataset.nav);
+  };
+}
+for(const button of document.querySelectorAll('[data-task-choice]')){
+  button.onclick=()=>{
+    if($('notice').className!=='notice error')notice('');
+    showTask(button.dataset.taskChoice);
+  };
+}
+for(const button of document.querySelectorAll('[data-result-tab]')){
+  button.onclick=()=>showResultTab(button.dataset.resultTab);
+  button.onkeydown=event=>{
+    const tabs=[...document.querySelectorAll('[data-result-tab]')],index=tabs.indexOf(button);
+    let next;
+    if(event.key==='ArrowRight')next=(index+1)%tabs.length;
+    else if(event.key==='ArrowLeft')next=(index+tabs.length-1)%tabs.length;
+    else if(event.key==='Home')next=0;
+    else if(event.key==='End')next=tabs.length-1;
+    else return;
+    event.preventDefault();
+    showResultTab(tabs[next].dataset.resultTab);
+    tabs[next].focus();
+  };
+}
+for(const button of document.querySelectorAll('[data-waveform-stage]'))button.onclick=()=>showWaveformStage(button.dataset.waveformStage);
+$('browse-catalog').onchange=cryostatChanged;
+$('run-list-back').onclick=openRunList;
+$('open-saved-analysis').onclick=()=>{
+  showPage('runs');
+  $('run-list-panel').hidden=true;
+  $('run-detail').hidden=true;
+  $('saved-analysis').hidden=false;
+  void refreshSavedGeGI();
+};
+$('saved-analysis-back').onclick=openRunList;
+showPage('new');showTask('standard');showResultTab('overview');showWaveformStage();
+(async()=>{try{catalog=await api('/api/workflow/catalog');options('cryostat',catalog.cryostats);options('detector',detectorItems(),true);$('detector').value='AK02';electronics();$('numerics').textContent=catalog.numerics;$('setup-limit').textContent=catalog.setup_limit||'';detectorChanged();stageList();for(const id of ['pose','angle-deg','gamma-energy-keV','gegi-source-x','gegi-source-y','gegi-source-z','count','seed','threads','name'])$(id).addEventListener('input',invalidate);$('cryostat').onchange=cryostatChanged;$('detector').onchange=detectorChanged;$('source').onchange=sourceChanged;await poll();$('name').value=uniqueRunName();invalidate();void estimateCandidateStorage();setInterval(poll,2500);}catch(e){notice(e.message,true);$('check').disabled=true;}})();

@@ -97,7 +97,10 @@ class Protocol(unittest.TestCase):
                     with patch.object(W,'settings_check',side_effect=AssertionError('Settings executed')), self.assertRaises(W.ControlError):
                         W._resolve(candidate,root=self.server.controller.root)
         self.assertTrue({d['id'] for d in catalog['detectors'] if d['available']} <=
-                        set(W.MODELS)|{'AK01','SAP16','SAP17','Bipolar_reference_3D','KL01_3D'})
+                        set(W.MODELS)|{'AK01','SAP16','SAP17','Bipolar_reference_3D','KL01_3D','GeGI_3D'})
+        gegi=next(d for d in catalog['detectors'] if d['id']=='GeGI_3D')
+        self.assertEqual(gegi['assemblies'],['gegi_cryostat_v1'])
+        self.assertEqual(gegi['workflow_kind'],J.GEGI_KIND)
         self.assertTrue({'AK02','SAP22','GeRC02','KMRC01_candidate'} <= {d['id'] for d in catalog['detectors'] if d['available']})
 
     def test_sap18_exact_capability_after_acceptance_and_unchecked_edits_refused(self):
@@ -108,7 +111,7 @@ class Protocol(unittest.TestCase):
         self.assertEqual([s for s in sap['sources'] if s in legacy],[W.CS])
         self.assertNotIn(W.GAMMA,sap['sources'])
         self.assertIn('identity unresolved',sap['operating_label'])
-        self.assertEqual({d['id'] for d in catalog['detectors'] if d['available'] and d.get('workflow_kind')!=J.CATALOG_KIND},
+        self.assertEqual({d['id'] for d in catalog['detectors'] if d['available'] and d.get('workflow_kind') not in (J.CATALOG_KIND,J.GEGI_KIND)},
                          {'AK02','SAP22','GeRC02','KMRC01_candidate',W.SAP18})
         original=W.read(W.ROOT/'scenarios/detector-capabilities.json')
         self.assertIs(next(d for d in original['detectors'] if d['model_id']==W.SAP18)['lbnl_execution_implemented'],False)

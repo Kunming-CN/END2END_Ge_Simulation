@@ -1,5 +1,29 @@
 # GeSignal handoff
 
+## November 24 student interface simplification
+
+Control now has New simulation, My runs and Help. Ordinary detector setup and
+GeGI two-source acquisition have separate entry panels. The ordinary form
+filters compatible detectors, suggests an editable unused name, groups advanced
+settings and checks the selected configuration when Start simulation is clicked.
+Saved runs have compact history rows, separate detail views and Copy as new run
+with the complete recorded source/seed/electronics configuration.
+Ordinary results have Overview, Events & waveforms and Data files, with retained
+run counts/spectra, global original-ID search across batches, event navigation,
+signal-stage selection and grouped original artifacts. Saved GeGI acquisition,
+reconstruction and historical research tools retain their dedicated views.
+
+Root opened the actual local Control server in the owner's desktop Chrome and
+used existing AK01 and GeGI saved data. This is a UI acceptance, with no new
+simulation or scientific-data migration. Relevant DOM contracts, six package
+tests, 42 site tests and generated-site integrity checks passed. The 33 protocol
+tests initially exposed two outdated catalog assertions; those assertions were
+corrected for the existing GeGI connector and both targeted cases passed.
+Evidence and preserved initial failures are in `.local/student-ui-v1/`.
+The maintained guide and generated Pages guide follow the revised workflow.
+Source/package publication is the remaining delivery step; PR #4 still requires
+the protected main branch's approval. Reconstruction ownership below is unchanged.
+
 ## November 24 macOS student repair
 
 Sunil Chhetri reported a successful SAP22 run after locally repairing two
