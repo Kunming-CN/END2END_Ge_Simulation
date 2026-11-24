@@ -1,5 +1,31 @@
 # GeSignal handoff
 
+## November 24 My runs recycle bin
+
+Ordinary detector runs and GeGI acquisitions now have Delete run, Restore and
+Empty recycle bin. Deletion moves the selected run and its dispatch records into
+`.local/run-trash/`; restoration preserves original file bytes and refuses name
+collisions. Active/unknown workers and recorded dependent analyses are identified
+before moving data. Explicit selected trash IDs and confirmation govern permanent
+removal. Windows read-only directory handling is confined to the selected trash
+tree; partial purges retain their metadata, disable restoration and allow retry.
+
+Thirteen targeted trash/HTTP tests and 30 existing workflow-controller tests pass.
+An isolated real Control server verified ordinary/candidate move and exact-byte
+restore, rejected a wrong empty confirmation, and emptied a disposable candidate
+after the Windows directory fix. Original scientific runs were not used as test
+deletion targets. The classroom 100-decay SAP22 run remains completed with all
+3 accepted signals. Evidence and the initial read-only-directory failure are in
+`.local/student-ui-v1/`. Desktop Chrome loaded the test page, but Computer Use
+then stopped because it could not reliably identify the current Windows browser
+URL; a complete browser interaction acceptance is not claimed for this change.
+The full frontend DOM suite and all seven final package tests pass. The initial
+package check ran during the last frontend edit and detected changed package
+identity; its log is retained and the stable-source rerun passes. The owner's
+idle Control was refreshed on port 5435; its real API exposes the new capabilities,
+retains the completed classroom run, and has an empty recycle bin. Publication
+follows this verified source milestone.
+
 ## November 24 Start simulation repair and classroom acceptance
 
 Start simulation was disabled because an October completed job's saved Windows

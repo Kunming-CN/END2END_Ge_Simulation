@@ -56,6 +56,43 @@ class Protocol(unittest.TestCase):
             getattr(self.workflow,method).assert_not_called()
         self.assertEqual(self.request('POST','/api/workflow/result-options?name=saved',{})[0],404)
 
+    def test_trash_routes_preserve_exact_selected_kind_name_and_ids(self):
+        trash = self.workflow.run_trash.return_value
+        entry = {'id': 'a'*32, 'kind': 'workflow', 'name': 'UI-test-disposable', 'deleted_utc': 'fixture'}
+        trash.snapshot.return_value = {'entries': [entry], 'busy': False}
+        trash.move.return_value = {'entry': entry}
+        trash.restore.return_value = {'restored': entry}
+        trash.empty.return_value = {'deleted_ids': [entry['id']]}
+        self.assertEqual(json.loads(self.request(route='/api/workflow/trash')[1]), {'entries': [entry], 'busy': False})
+        for route, data, expected in (
+                ('/api/workflow/trash', {'kind': 'workflow', 'name': entry['name']}, {'entry': entry}),
+                ('/api/workflow/trash/restore', {'id': entry['id']}, {'restored': entry}),
+                ('/api/workflow/trash/empty', {'ids': [entry['id']], 'confirmation': 'DELETE'}, {'deleted_ids': [entry['id']]})):
+            status, body, headers = self.request('POST', route, data)
+            self.assertEqual(status, 200); self.assertEqual(json.loads(body), expected)
+            self.assertEqual(headers['Cache-Control'], 'no-store')
+        trash.move.assert_called_once_with(kind='workflow', name=entry['name'])
+        trash.restore.assert_called_once_with(entry['id'])
+        trash.empty.assert_called_once_with(ids=[entry['id']], confirmation='DELETE')
+        self.workflow.start.assert_not_called(); self.workflow.check.assert_not_called()
+
+    def test_trash_routes_require_session_origin_and_closed_request_fields(self):
+        trash = self.workflow.run_trash.return_value
+        self.assertEqual(self.request(route='/api/workflow/trash', headers={'X-Control-Token': None})[0], 403)
+        self.assertEqual(self.request('POST', '/api/workflow/trash', {'kind': 'workflow', 'name': 'saved'},
+                                      {'Origin': 'https://evil.example'})[0], 403)
+        for route in ('/api/workflow/trash?name=saved', '/api/workflow/trash#x'):
+            self.assertEqual(self.request(route=route)[0], 400)
+        for route, body in (
+                ('/api/workflow/trash', {'name': 'saved'}),
+                ('/api/workflow/trash', {'kind': True, 'name': 'saved'}),
+                ('/api/workflow/trash', {'kind': 'workflow', 'name': 'saved', 'path': '../other'}),
+                ('/api/workflow/trash/restore', {'id': 'a'*32, 'name': 'saved'}),
+                ('/api/workflow/trash/empty', {'confirmation': 'DELETE'})):
+            self.assertEqual(self.request('POST', route, body)[0], 400)
+        for method in ('snapshot', 'move', 'restore', 'empty'):
+            getattr(trash, method).assert_not_called()
+
     def test_saved_result_options_requires_session_not_download_cookie(self):
         route='/api/workflow/result-options?name=saved'
         for headers in ({'X-Control-Token':None},{'Host':'evil.example'},

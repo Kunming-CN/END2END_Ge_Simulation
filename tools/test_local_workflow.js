@@ -35,7 +35,7 @@ for(const match of fs.readFileSync(__dirname+'/local_workflow.html','utf8').matc
 fixtureDocument.body=new Element('body');fixtureDocument.body.rootConnected=true;fixtureDocument.activeElement=fixtureDocument.body;
 const context=vm.createContext({document:fixtureDocument,DOMParser:Parser,
   location:{hash:'#fixture',pathname:'/'},sessionStorage:{getItem:()=>'',setItem:()=>{}},history:{replaceState:()=>{}},
-  URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL:()=>{}},URLSearchParams,TextDecoder,Uint8Array,fetch:()=>new Promise(()=>{}),setInterval:()=>{},setTimeout:()=>{}});
+  URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL:()=>{}},URLSearchParams,TextDecoder,Uint8Array,confirm:()=>true,fetch:()=>new Promise(()=>{}),setInterval:()=>{},setTimeout:()=>{}});
 vm.runInContext(fs.readFileSync(__dirname+'/focused_plots.js','utf8'),context);
 vm.runInContext(fs.readFileSync(__dirname+'/local_workflow.js','utf8'),context);
 function run(code){return vm.runInContext(code,context);}
@@ -2202,7 +2202,8 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   assert.deepEqual(JSON.parse(run('JSON.stringify({...copiedUI,name:uiSelection.name})')),JSON.parse(run('JSON.stringify(uiSelection)')));
   const copiedBeforePoll=run('JSON.stringify(config())');await run('poll()');
   assert.equal(run('currentPage'),'new');assert.equal(run('JSON.stringify(config())'),copiedBeforePoll);
-  assert.equal(get('runs').children.length,2);assert.ok(get('runs').children.every(row=>row.children.filter(child=>child.tagName==='button').length===1));
+  assert.equal(get('runs').children.length,2);assert.ok(get('runs').children.every(row=>row.children.filter(child=>child.tagName==='button').length===2));
+  assert.ok(get('runs').children.every(row=>row.children.find(child=>child.textContent==='Delete run').disabled));
   assert.ok(get('runs').children.every(row=>row.children.some(child=>child.textContent==='2026-11-24T12:00:00Z')));
   run(`copyAsNewRun({...gegiJob,selection:{...gegiSubmitted,source_position_mm:[1.25,-2.5,87.5],electronics:{...gegiSubmitted.electronics,peak_gate_start_ns:15,peak_gate_end_ns:350}}});`);
   assert.deepEqual(JSON.parse(run('JSON.stringify(config().source_position_mm)')),[1.25,-2.5,87.5]);
@@ -2312,5 +2313,104 @@ assert.equal(get('analysis-selection').textContent,'No saved primary selected.')
   await separatedResult;assert.equal(get('result').hidden,true);assert.equal(get('gegi-result').hidden,true);assert.equal(get('gegi-acquisition-detail').hidden,false);
   run('openRunDetail();');assert.equal(get('result').hidden,false);assert.equal(get('gegi-result').hidden,true);
   console.log('Candidate versus owned-run detail separation, matching cached-result restoration and late saved-result visibility regression passed.');
+  // Run deletion uses only mocked storage APIs. No original folders or science
+  // outputs are moved by these browser contracts.
+  run(`let storageRuns=[{...uiJob,name:'disposable-standard',selection:{...uiJob.selection,name:'disposable-standard'},can_delete:true},
+      {...uiJob,name:'active-standard',selection:{...uiJob.selection,name:'active-standard'},status:'running',can_delete:false,delete_reason:'A worker is active.'}];
+    let storageCandidates=[{name:'disposable-candidate',status:'stopped',can_delete:true,analysis_maps:[]}],storageDeleted=[],storageCalls=[],storageConfirmations=[],storageAllow=false,storageHold=false,storageResolve,storageReject='';
+    const storageOriginals=new Map();let storageNextID=1;
+    confirm=message=>{storageConfirmations.push(message);return storageAllow;};
+    api=async(path,body)=>{
+      storageCalls.push({path,body});
+      if(path==='/api/workflow/state')return{busy:false,jobs:storageRuns};
+      if(path==='/api/state')return{gamma:{jobs:[]}};
+      if(path==='/api/workflow/gegi-candidates/options')return{jobs:storageCandidates,calibrations:[]};
+      if(path==='/api/workflow/trash'&&!body)return{entries:[...storageDeleted],busy:false};
+      if(path==='/api/workflow/trash'){
+        if(storageReject==='delete')throw Error('Shared input is still in use.');
+        if(storageHold)await new Promise(resolve=>storageResolve=resolve);
+        const list=body.kind==='workflow'?storageRuns:storageCandidates,original=list.find(job=>job.name===body.name);
+        const entry={id:'trash-'+storageNextID++,kind:body.kind,name:body.name,deleted_utc:'2026-11-24T18:00:00Z',status:'trashed',can_restore:true};
+        storageOriginals.set(entry.id,original);storageDeleted.push(entry);
+        if(body.kind==='workflow')storageRuns=storageRuns.filter(job=>job.name!==body.name);else storageCandidates=storageCandidates.filter(job=>job.name!==body.name);
+        return{entry};
+      }
+      if(path==='/api/workflow/trash/restore'){
+        if(storageReject==='restore')throw Error('A run with this name already exists.');
+        const entry=storageDeleted.find(item=>item.id===body.id),original=storageOriginals.get(body.id);
+        if(entry.kind==='workflow')storageRuns.push(original);else storageCandidates.push(original);
+        storageDeleted=storageDeleted.filter(item=>item.id!==body.id);return{restored:entry};
+      }
+      if(path==='/api/workflow/trash/empty'){
+        if(storageReject==='empty')throw Error('Recycle-bin contents changed. Refresh and try again.');
+        storageDeleted=storageDeleted.filter(entry=>!body.ids.includes(entry.id));return{deleted_ids:body.ids};
+      }
+      throw Error('Unexpected storage route '+path);
+    };
+    active=false;candidateBusy=false;trashServerBusy=false;renderJobs({busy:false,jobs:storageRuns});showRun(storageRuns[0]);
+    result={job:storageRuns[0],records:[],traces:[]};$('result').hidden=false;$('plots').append(node('figure'));openRunDetail();`);
+  const storageRow=name=>get('runs').children.find(row=>row.children[0].textContent===name);
+  const storageDelete=name=>storageRow(name).children.find(child=>child.textContent==='Delete run');
+  assert.equal(storageDelete('active-standard').disabled,true);assert.equal(storageDelete('active-standard').title,'A worker is active.');
+  await run("deleteStoredRun('workflow',{...storageRuns[1],can_delete:true})");assert.equal(run('storageConfirmations.length'),0);
+  assert.equal(run('storageCalls.length'),0);assert.ok(get('run-detail-content').children[0].children.some(child=>child.textContent==='Delete run'));
+  await storageDelete('disposable-standard').click();assert.equal(run('storageCalls.length'),0);assert.match(run('storageConfirmations[0]'),/Move.*disposable-standard.*recycle bin/);
+  run('storageAllow=true;storageHold=true;');const heldStorageDelete=storageDelete('disposable-standard').click();
+  assert.equal(run('trashBusy'),true);assert.ok(get('runs').children.every(row=>row.children.find(child=>child.textContent==='Delete run').disabled));
+  assert.equal(get('trash-empty').disabled,true);await storageDelete('disposable-standard').click();assert.equal(run('storageCalls.length'),1);
+  run('storageResolve();');await heldStorageDelete;run('storageHold=false;');
+  assert.equal(run('trashBusy'),false);assert.equal(storageRow('disposable-standard'),undefined);assert.equal(run('result'),null);assert.equal(get('plots').children.length,0);
+  assert.equal(get('run-detail').hidden,true);assert.equal(get('run-list-panel').hidden,false);assert.equal(run('trashEntries[0].name'),'disposable-standard');
+  assert.deepEqual(JSON.parse(run('JSON.stringify(storageCalls[0])')),{path:'/api/workflow/trash',body:{kind:'workflow',name:'disposable-standard'}});
+  const restoreConfirmations=run('storageConfirmations.length');
+  await get('trash-entries').children[0].children.find(child=>child.textContent==='Restore').click();
+  assert.ok(storageRow('disposable-standard'));assert.equal(run('trashEntries.length'),0);assert.equal(run('storageConfirmations.length'),restoreConfirmations);
+  assert.ok(run("storageCalls.some(call=>call.path==='/api/workflow/trash/restore'&&call.body.id==='trash-1')"));
+  run(`$('gegi-candidate-job').value='disposable-candidate';showCandidateJob(storageCandidates[0]);openRunDetail('gegi');`);
+  assert.equal(get('gegi-candidate-delete').disabled,false);await get('gegi-candidate-delete').click();
+  assert.equal(run('candidateJob'),null);assert.equal(get('gegi-candidate-job').value,'');assert.equal(get('gegi-candidate-view').hidden,true);assert.equal(get('gegi-candidate-imaging').hidden,true);
+  assert.equal(get('run-detail').hidden,true);assert.equal(get('gegi-candidate-summary').children.length,0);
+  assert.equal(run('trashEntries[0].kind'),'candidate');
+  await get('trash-entries').children[0].children.find(child=>child.textContent==='Restore').click();
+  assert.ok(get('gegi-candidate-job').children.some(option=>option.value==='disposable-candidate'));
+  await storageDelete('disposable-standard').click();
+  run(`$('gegi-candidate-job').value='disposable-candidate';showCandidateJob(storageCandidates[0]);openRunDetail('gegi');`);await get('gegi-candidate-delete').click();
+  assert.equal(run('trashEntries.length'),2);assert.equal(get('trash-empty').disabled,false);
+  const beforeCancelledEmpty=run('storageCalls.length');run('storageAllow=false;');await get('trash-empty').click();
+  assert.equal(run('storageCalls.length'),beforeCancelledEmpty);assert.match(run('storageConfirmations.at(-1)'),/Permanently delete 2 runs.*cannot be undone/);
+  const emptyIDs=JSON.parse(run('JSON.stringify(trashEntries.map(entry=>entry.id))'));run('storageAllow=true;');await get('trash-empty').click();
+  assert.deepEqual(JSON.parse(run("JSON.stringify(storageCalls.find(call=>call.path==='/api/workflow/trash/empty').body)")),{ids:emptyIDs,confirmation:'DELETE'});
+  assert.equal(run('trashEntries.length'),0);assert.equal(get('trash-empty').disabled,true);assert.match(get('trash-entries').textContent,/empty/);
+  run(`storageRuns.push({...uiJob,name:'refused-delete',selection:{...uiJob.selection,name:'refused-delete'},can_delete:true});renderJobs({busy:false,jobs:storageRuns});storageReject='delete';`);
+  await storageDelete('refused-delete').click();assert.ok(storageRow('refused-delete'));assert.equal(storageDelete('refused-delete').disabled,false);
+  assert.equal(run('trashBusy'),false);assert.match(get('notice').textContent,/Shared input is still in use/);assert.equal(get('notice').className,'notice error');
+  run("storageReject='';");await storageDelete('refused-delete').click();run("storageReject='restore';");
+  await get('trash-entries').children[0].children.find(child=>child.textContent==='Restore').click();
+  assert.equal(run('trashEntries.length'),1);assert.match(get('notice').textContent,/name already exists/);assert.equal(run('trashBusy'),false);
+  run("storageReject='empty';");await get('trash-empty').click();assert.equal(run('trashEntries.length'),1);assert.match(get('notice').textContent,/contents changed/);
+  run(`storageReject='';storageDeleted.push({id:'failed-move',kind:'workflow',name:'retained-failure',status:'move_failed',can_restore:false,deleted_utc:'2026-11-24T18:10:00Z'});showTrash({entries:[...storageDeleted],busy:false});`);
+  const failedTrash=get('trash-entries').children.find(row=>row.children[0].textContent==='retained-failure');
+  assert.equal(failedTrash.children.find(child=>child.textContent==='Restore').disabled,true);
+  assert.ok(failedTrash.children.some(child=>/Needs inspection.*retained/.test(child.textContent)));
+  const beforeFailedRestore=run('storageCalls.length');await run("restoreStoredRun(storageDeleted.find(entry=>entry.id==='failed-move'))");
+  assert.equal(run('storageCalls.length'),beforeFailedRestore);assert.equal(get('trash-empty').disabled,false);
+  await get('trash-empty').click();
+  assert.match(run('storageConfirmations.at(-1)'),/Permanently delete 1 run/);
+  assert.ok(!JSON.parse(run("JSON.stringify(storageCalls.filter(call=>call.path==='/api/workflow/trash/empty').at(-1).body.ids)")).includes('failed-move'));
+  assert.equal(run('trashEntries.length'),1);assert.equal(run('trashEntries[0].id'),'failed-move');assert.equal(get('trash-empty').disabled,true);
+  const beforeFailureOnlyEmpty=run('storageCalls.length');await run('emptyRunTrash()');assert.equal(run('storageCalls.length'),beforeFailureOnlyEmpty);
+  run(`storageDeleted.push({id:'interrupted-empty',kind:'workflow',name:'retry-empty',status:'purging',can_restore:false,can_empty:true,deleted_utc:'2026-11-24T18:15:00Z'});showTrash({entries:[...storageDeleted],busy:false});`);
+  const interruptedEmpty=get('trash-entries').children.find(row=>row.children[0].textContent==='retry-empty');
+  assert.equal(interruptedEmpty.children.find(child=>child.textContent==='Restore').disabled,true);
+  assert.ok(interruptedEmpty.children.some(child=>/Emptying was interrupted.*retry/.test(child.textContent)));
+  assert.equal(get('trash-empty').disabled,false);await get('trash-empty').click();
+  assert.deepEqual(JSON.parse(run("JSON.stringify(storageCalls.filter(call=>call.path==='/api/workflow/trash/empty').at(-1).body)")),{ids:['interrupted-empty'],confirmation:'DELETE'});
+  assert.equal(run('trashEntries.length'),1);assert.equal(run('trashEntries[0].id'),'failed-move');assert.equal(get('trash-empty').disabled,true);
+  const beforeClosedTrash=run('storageCalls.length');get('run-trash').open=false;get('run-trash').ontoggle();assert.equal(run('storageCalls.length'),beforeClosedTrash);
+  run("storageReject='';");get('run-trash').open=true;get('run-trash').ontoggle();await Promise.resolve();await Promise.resolve();
+  assert.equal(run('storageCalls.at(-1).path'),'/api/workflow/trash');assert.equal(run('storageCalls.at(-1).body'),undefined);
+  const beforeStoragePoll=run("storageCalls.filter(call=>call.path==='/api/workflow/trash'&&!call.body).length");await run('poll()');
+  assert.equal(run("storageCalls.filter(call=>call.path==='/api/workflow/trash'&&!call.body).length"),beforeStoragePoll);
+  console.log('Run storage: capability/activity refusal, recoverable workflow/candidate deletion, selected-result clearing, pending locks, restore, exact-count permanent confirmation/cancellation, error recovery and lazy trash reads passed.');
   console.log('Student UI one-click check/start and failed-check refusal, exact angle/position/electronics copies, unique names, poll-stable pages, compact run rows, cryostat/catalog choices, cross-batch sparse-ID search and waveform/tab keyboard controls passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -12,6 +12,7 @@ let candidateEstimateGeneration=0;
 let candidatePlaneGeneration=0,candidateRangeRefresh=null;
 let knownRuns=[],currentPage='new',currentTask='standard',runDetailKind='standard',resultTab='overview',waveformStage='charge',eventFindGeneration=0;
 let runStatusNotice=null;
+let trashEntries=[],trashBusy=false,trashServerBusy=false,trashGeneration=0,candidateOptionsGeneration=0;
 const continuationNames=new Map();
 const pendingActions=new Map();
 const stageNames={native_preparation:'Fields and injection calibration',geometry:'Geometry and source',radiation:'Radiation transport',event_ledger:'Event ledger',response:'Fields, charge, calibration and readout',results:'Verified results'};
@@ -104,6 +105,99 @@ function showRunStatusNotice(job){
   notice('Run '+job.name+': '+(stateNames[job.status]||job.status)+'.');
   runStatusNotice={name:job.name,configuration_sha256:job.configuration_sha256,status:job.status};
 }
+function canDeleteRun(job){
+  return job?.can_delete===true&&!trashBusy&&!busy&&!candidateBusy&&
+    !['running','stop_requested'].includes(job.status)&&job.analysis?.status!=='running'&&job.range_analysis?.status!=='running';
+}
+function deleteRunButton(job,kind='workflow'){
+  const button=action('Delete run',()=>deleteStoredRun(kind,job),'delete-run',false);
+  button.className='danger';button.runActionBlocked=!canDeleteRun(job);
+  button.title=job.delete_reason||'Move this run to the recycle bin. It can be restored.';
+  return button;
+}
+function canEmptyTrashEntry(entry){return entry.can_empty??(entry.status==='trashed');}
+function renderTrash(){
+  $('run-trash-summary').textContent='Recycle bin ('+trashEntries.length+')';
+  const blocked=trashBusy||busy||candidateBusy||active||trashServerBusy,cards=[];
+  for(const entry of trashEntries){
+    const card=runKey(node('div',undefined,'run'),'trash:'+entry.id);
+    const restore=action('Restore',()=>restoreStoredRun(entry),'restore',false);
+    restore.runActionBlocked=blocked||entry.can_restore===false;
+    card.append(node('strong',entry.name),node('p',(entry.kind==='candidate'?'GeGI acquisition':'Detector simulation')+' · deleted '+entry.deleted_utc,'muted'),restore);
+    if(entry.status==='purging')card.append(node('p','Emptying was interrupted. Empty the recycle bin again to retry.','error'));
+    else if(entry.status&&entry.status!=='trashed')card.append(node('p','Needs inspection · deletion is incomplete. Data has been retained.','error'));
+    bindRunActions(card);cards.push(card);
+  }
+  syncRunList($('trash-entries'),cards,'The recycle bin is empty.');
+  $('trash-refresh').disabled=trashBusy;
+  $('trash-empty').disabled=blocked||!trashEntries.some(canEmptyTrashEntry);
+}
+function showTrash(reply){
+  trashEntries=reply.entries;trashServerBusy=reply.busy===true;renderTrash();
+  $('trash-status').textContent=trashServerBusy?'Run management is busy. Refresh after the active work finishes.':'';
+}
+async function refreshTrash(){
+  const generation=++trashGeneration;
+  try{const reply=await api('/api/workflow/trash');if(generation===trashGeneration)showTrash(reply);}
+  catch(e){if(generation===trashGeneration){$('trash-status').textContent=e.message;notice(e.message,true);}}
+}
+function clearDeletedSelection(kind,name){
+  if(kind==='workflow')knownRuns=knownRuns.filter(job=>job.name!==name);
+  if(kind==='workflow'&&selectedJob===name){
+    ++resultGeneration;++plotGeneration;++pageGeneration;++eventFindGeneration;
+    resetResultOptions();resetGeGIResult();result=null;selectedJob=null;selectedRun=null;
+    clearSavedSelection();$('plots').replaceChildren();$('saved-artifacts').replaceChildren();$('result').hidden=true;
+    $('selected').textContent='No run selected. Open a run from My runs.';$('run-plan').textContent='No run selected.';$('log-view').hidden=true;
+    if(runDetailKind==='standard')openRunList();
+  }
+  if(kind==='candidate'&&candidateJob?.name===name){
+    const select=$('gegi-candidate-job');
+    options('gegi-candidate-job',Array.from(select.children).filter(option=>option.value!==name).map(option=>({id:option.value,label:option.textContent})));
+    $('gegi-candidate-job').value='';clearCandidateSelection();
+    if(runDetailKind==='gegi')openRunList();
+  }
+}
+async function refreshStorageViews(){
+  const generation=++pollGeneration,candidateVersion=++candidateOptionsGeneration,trashVersion=++trashGeneration;
+  const [state,candidates,deleted]=await Promise.all([
+    api('/api/workflow/state'),api('/api/workflow/gegi-candidates/options'),api('/api/workflow/trash')
+  ]);
+  if(generation===pollGeneration)renderJobs(state);
+  if(candidateVersion===candidateOptionsGeneration)showCandidateOptions(candidates);
+  if(trashVersion===trashGeneration)showTrash(deleted);
+}
+async function mutateStoredRuns(path,request,success,afterChange=()=>{}){
+  if(trashBusy||candidateBusy)return;
+  trashBusy=true;renderJobs({busy:active,jobs:knownRuns});renderTrash();
+  let changed=false;
+  try{
+    const reply=await api(path,request);changed=true;afterChange(reply);
+    await refreshStorageViews();notice(success);
+  }catch(e){
+    const message=(changed?success+' Refresh failed: ':'')+e.message;
+    $('trash-status').textContent=message;notice(message,true);
+  }finally{
+    trashBusy=false;renderJobs({busy:active,jobs:knownRuns});renderTrash();
+  }
+}
+async function deleteStoredRun(kind,job){
+  if(!canDeleteRun(job))return;
+  if(!confirm('Move "'+job.name+'" to the recycle bin? You can restore it later.'))return;
+  return mutateStoredRuns('/api/workflow/trash',{kind,name:job.name},'Moved '+job.name+' to the recycle bin.',reply=>{
+    trashEntries.push(reply.entry);clearDeletedSelection(kind,job.name);
+  });
+}
+async function restoreStoredRun(entry){
+  if(trashBusy||busy||candidateBusy||active||trashServerBusy||entry.can_restore===false)return;
+  return mutateStoredRuns('/api/workflow/trash/restore',{id:entry.id},'Restored '+entry.name+'.',()=>{trashEntries=trashEntries.filter(item=>item.id!==entry.id);});
+}
+async function emptyRunTrash(){
+  if(trashBusy||busy||candidateBusy||active||trashServerBusy)return;
+  const ids=trashEntries.filter(canEmptyTrashEntry).map(entry=>entry.id),count=ids.length;
+  if(!count)return;
+  if(!confirm('Permanently delete '+count+' '+(count===1?'run':'runs')+' from the recycle bin? This cannot be undone.'))return;
+  return mutateStoredRuns('/api/workflow/trash/empty',{ids,confirmation:'DELETE'},'Permanently deleted '+count+' '+(count===1?'run.':'runs.'),()=>{trashEntries=trashEntries.filter(entry=>!ids.includes(entry.id));});
+}
 function options(id,items,inspection=false){const s=$(id);s.replaceChildren();for(const item of items){const suffix=inspection?(item.available?' · Compute supported':item.block_code==='setup_required'?' · Setup required':item.block_code==='cryostat_size'?' · Needs larger cryostat':' · View only'):item.available===false?' · '+item.reason:'';const o=node('option',item.label+suffix);o.value=item.id;o.disabled=!inspection&&item.available===false;s.append(o);}}
 function detectorFits(d,cryostat=$('cryostat').value){return !d?.assemblies?.length?cryostat!=='gegi_cryostat_v1':d.assemblies.includes(cryostat);}
 function setupRequired(detector=currentDetector()){
@@ -163,7 +257,7 @@ function invalidate(){
   showSelection();showPose();controls();
 }
 function controls(){
-  const runnable=executableSelection(),blocked=busy||active||!runnable||checked?.execution_enabled===false;
+  const runnable=executableSelection(),blocked=busy||trashBusy||active||!runnable||checked?.execution_enabled===false;
   for(const id of ['check','save'])$(id).disabled=busy||active||!runnable;
   $('load').disabled=busy||active;
   $('start').disabled=blocked;
@@ -252,15 +346,15 @@ $('use-peak-gate').onchange=()=>{gateFields();invalidate();};
 function stageList(stages={},batched=false){$('pipeline').replaceChildren();const entries=batched?Object.keys(stages).map(key=>[key,stageNames[key]||key.replaceAll('_',' ')]):Object.entries(stageNames).filter(([key])=>key!=='native_preparation');for(const [key,title] of entries){const r=stages[key],row=node('div',undefined,'stage '+(r?.status||''));row.append(node('span',undefined,'dot'));const titleBox=node('div',title,'stage-title');titleBox.append(node('small',r?.reuse?(typeof r.original_elapsed_seconds==='number'?'Reused · originally '+r.original_elapsed_seconds.toFixed(2)+' s':'Reused · saved artifacts verified; original execution time unavailable'):typeof r?.elapsed_seconds==='number'?r.elapsed_seconds.toFixed(2)+' s observed':r?.status==='completed'?'Completed · saved receipt':'Waiting for execution'));row.append(titleBox,node('span',r?.reuse?'Reused':r?.status==='completed'?'Completed':r?.status?.replaceAll('_',' ')||'Pending','pill'));$('pipeline').append(row);}}
 function batchProgress(job){const p=job.batch_progress;$('batch-progress').textContent=job.execution_contract==='serial_batches_v3'?(p?'Completed '+(p.completed_batch_count??0)+'/'+(p.batch_count??job.batching?.batch_count)+' batches · '+(p.completed_primary_count??0)+'/'+job.selection.primary_count+' initial primaries'+(Number.isInteger(p.active_batch_index)?' · active batch '+p.active_batch_index:'')+(p.active_stage?' · '+p.active_stage.replaceAll('_',' '):''):'Checked serial plan · '+job.batching?.batch_count+' batches · '+job.selection.primary_count+' initial primaries · awaiting the first receipt'):'';}
 function responseProgress(job){const p=job.response_progress;$('response-progress').textContent=p?'Native stage: '+p.stage.replaceAll('_',' ')+' · '+p.status+(p.expected_primary_count!==null?' · '+p.completed_primary_count+'/'+p.expected_primary_count+' original primaries':'')+' · '+p.elapsed_seconds.toFixed(2)+' s observed':'';}
-function action(label,fn,key=label){const b=node('button',label);b.dataset.renderKey='action:'+key;b.runAction=fn;b.onclick=async()=>{const actionKey=b.runActionKey||b;if(b.disabled||pendingActions.has(actionKey))return;const focused=document.activeElement===b;pendingActions.set(actionKey,b);b.disabled=true;try{await b.runAction();await poll();}catch(e){notice(e.message,true);}finally{const current=pendingActions.get(actionKey);pendingActions.delete(actionKey);if(current?.isConnected){current.disabled=false;if(current===b&&focused&&document.activeElement===document.body)current.focus({preventScroll:true});}}};return b;}
+function action(label,fn,key=label,refresh=true){const b=node('button',label);b.dataset.renderKey='action:'+key;b.runAction=fn;b.onclick=async()=>{const actionKey=b.runActionKey||b;if(b.disabled||pendingActions.has(actionKey))return;const focused=document.activeElement===b;pendingActions.set(actionKey,b);b.disabled=true;try{await b.runAction();if(refresh)await poll();}catch(e){notice(e.message,true);}finally{const current=pendingActions.get(actionKey);pendingActions.delete(actionKey);if(current?.isConnected){current.disabled=!!current.runActionBlocked;if(current===b&&focused&&document.activeElement===document.body)current.focus({preventScroll:true});}}};return b;}
 // Reconcile only these polled lists. Keep surviving controls in place; merely
 // appending an existing focused node again would also lose browser focus.
 function runKey(n,key){n.dataset.renderKey=key;return n;}
 function visitRunNodes(n,fn){fn(n);for(const child of n.children)visitRunNodes(child,fn);}
-function bindRunActions(card){visitRunNodes(card,n=>{if(n.runAction){n.runActionKey=card.dataset.renderKey+'/'+n.dataset.renderKey;n.disabled=pendingActions.has(n.runActionKey);}});}
+function bindRunActions(card){visitRunNodes(card,n=>{if(n.runAction){n.runActionKey=card.dataset.renderKey+'/'+n.dataset.renderKey;n.disabled=!!n.runActionBlocked||pendingActions.has(n.runActionKey);}});}
 function syncRunNode(current,next){
   if(current.className!==next.className)current.className=next.className;
-  if(next.runAction){current.runAction=next.runAction;current.runActionKey=next.runActionKey;current.disabled=pendingActions.has(current.runActionKey);if(current.disabled)pendingActions.set(current.runActionKey,current);}
+  if(next.runAction){current.runAction=next.runAction;current.runActionKey=next.runActionKey;current.runActionBlocked=next.runActionBlocked;current.title=next.title;current.disabled=!!current.runActionBlocked||pendingActions.has(current.runActionKey);if(pendingActions.has(current.runActionKey))pendingActions.set(current.runActionKey,current);}
   if(next.tagName.toLowerCase()==='input'){current.id=next.id;current.maxLength=next.maxLength;current.oninput=next.oninput;return;}
   if(next.tagName.toLowerCase()==='label')current.htmlFor=next.htmlFor;
   if(!next.children.length){if(current.textContent!==next.textContent)current.textContent=next.textContent;return;}
@@ -298,7 +392,7 @@ function renderJobs(state){
     const card=runKey(node('div',undefined,'run'),'workflow:'+JSON.stringify([job.name,job.configuration_sha256]));
     card.append(node('strong',job.name+' · '+job.selection.detector),node('p',savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' primaries · '+(stateNames[job.status]||job.status)));
     if(job.error)card.append(node('p',job.error,'error'));
-    card.append(action('View stages',()=>{$('run-stage-details').open=true;showRun(job);}),action('Copy as new run',()=>copyAsNewRun(job)));
+    card.append(action('View stages',()=>{$('run-stage-details').open=true;showRun(job);}),action('Copy as new run',()=>copyAsNewRun(job)),deleteRunButton(job));
     if(['running','stop_requested'].includes(job.status))card.append(action(job.execution_contract==='serial_batches_v3'?'Stop at next boundary':'Stop after current stage',()=>api('/api/workflow/stop',{name:job.name})));
     if(job.status==='stopped')card.append(action('Resume saved settings',()=>api('/api/workflow/resume',{name:job.name})));
     if(job.can_verify_saved_execution)card.append(node('p','After a CLI Resume finishes or stops at a new sealed boundary, verify its saved execution here. This checks existing results and preserves the original failed launch evidence.','muted'),action('Verify saved execution',async()=>{const next=await api('/api/workflow/verify',{name:job.name});showRun(next);notice('Saved execution verified. The original failed launch evidence is preserved.');},'workflow-verify'));
@@ -326,13 +420,13 @@ function renderJobs(state){
       node('p',job.selection.detector+' · '+savedSourceLabel(job.selection)+' · '+job.selection.primary_count+' '+initialCountLabel(job.selection).toLowerCase()),
       node('small',job.created_utc||'Saved creation time unavailable'),
       node('span',stateNames[job.status]||job.status,'pill'),
-      action('Open run',()=>selectRun(job))
+      action('Open run',()=>selectRun(job)),deleteRunButton(job)
     );
     bindRunActions(row);cards.push(row);
     if(selectedJob===job.name)detailCards.push(card);
     if(selectedJob===job.name)showRun(job);
   }
-  syncRunList($('runs'),cards,'No runs created in this application.');syncRunList($('run-detail-content'),detailCards);controls();
+  syncRunList($('runs'),cards,'No runs created in this application.');syncRunList($('run-detail-content'),detailCards);controls();renderTrash();
 }
 async function poll(){const generation=++pollGeneration;try{const [state,legacy]=await Promise.all([api('/api/workflow/state'),api('/api/state')]);if(generation!==pollGeneration)return;renderJobs(state);renderLegacy(legacy);if(savedGeGIJob)void pollSavedGeGI();if(dualJob?.status==='running')void inspectDualJob(dualJob.name);if(['running','stop_requested'].includes(candidateJob?.status)||candidateJob?.analysis?.status==='running'||candidateJob?.range_analysis?.status==='running')void inspectCandidateJob(candidateJob.name);}catch(e){if(generation===pollGeneration)notice(e.message,true);}}
 
@@ -1114,19 +1208,20 @@ async function estimateCandidateStorage(){
 function candidateControls(){
   const running=['running','stop_requested'].includes(candidateJob?.status);
   const analyzing=candidateJob?.analysis?.status==='running'||candidateJob?.range_analysis?.status==='running';
-  $('gegi-candidate-start').disabled=candidateBusy||busy||active||running;
+  $('gegi-candidate-start').disabled=candidateBusy||busy||trashBusy||active||running;
   $('gegi-candidate-stop').disabled=candidateBusy||candidateJob?.status!=='running';
-  $('gegi-candidate-resume').disabled=candidateBusy||busy||active||!candidateJob?.resumable;
-  $('gegi-candidate-refresh').disabled=candidateBusy;
+  $('gegi-candidate-resume').disabled=candidateBusy||busy||trashBusy||active||!candidateJob?.resumable;
+  $('gegi-candidate-refresh').disabled=candidateBusy||trashBusy;
   $('gegi-candidate-previous').disabled=candidateBusy||candidateOffset===0;
   $('gegi-candidate-next').disabled=candidateBusy||!candidatePage||candidateOffset+candidatePage.items.length>=candidatePage.total;
-  $('gegi-candidate-analyze').disabled=candidateBusy||busy||active||analyzing||candidateJob?.status!=='completed'||!$('gegi-candidate-calibration').value;
+  $('gegi-candidate-analyze').disabled=candidateBusy||busy||trashBusy||active||analyzing||candidateJob?.status!=='completed'||!$('gegi-candidate-calibration').value;
   $('gegi-candidate-open-map').disabled=candidateBusy||!$('gegi-candidate-map').value;
+  $('gegi-candidate-delete').disabled=!canDeleteRun(candidateJob);
+  $('gegi-candidate-delete').title=candidateJob?.delete_reason||'Move this acquisition to the recycle bin. It can be restored.';
   candidateRangeRefresh?.(candidateJob);
 }
-async function refreshCandidateRuns(){
-  candidateBusy=true;candidateControls();
-  try{const reply=await api('/api/workflow/gegi-candidates/options'),prior=$('gegi-candidate-job').value;
+function showCandidateOptions(reply){
+    const prior=$('gegi-candidate-job').value;
     options('gegi-candidate-job',[{id:'',label:'Choose an acquisition'},...reply.jobs.map(job=>({id:job.name,label:job.name+' · '+job.status}))]);
     if(reply.jobs.some(job=>job.name===prior))$('gegi-candidate-job').value=prior;
     const calibration=$('gegi-candidate-calibration').value;
@@ -1138,7 +1233,22 @@ async function refreshCandidateRuns(){
     options('gegi-candidate-lateral-calibration',[{id:'',label:'Center templates'},...lateralOptions]);
     $('gegi-candidate-lateral-calibration').value=lateralOptions.some(row=>row.id===lateral)?lateral:'';
     candidateStatus(reply.jobs.length+' saved acquisitions. Select one to inspect its statistics and candidates.');
-  }catch(e){candidateStatus(e.message,true);}finally{candidateBusy=false;candidateControls();}
+}
+async function refreshCandidateRuns(){
+  if(trashBusy)return;
+  const generation=++candidateOptionsGeneration;
+  candidateBusy=true;candidateControls();
+  try{const reply=await api('/api/workflow/gegi-candidates/options');if(generation===candidateOptionsGeneration)showCandidateOptions(reply);}
+  catch(e){candidateStatus(e.message,true);}finally{if(generation===candidateOptionsGeneration){candidateBusy=false;candidateControls();}}
+}
+function clearCandidateSelection(){
+  ++candidateGeneration;++candidateEventGeneration;++candidatePlaneGeneration;
+  candidateJob=null;candidatePage=null;candidateOffset=0;candidateRangeRefresh=null;
+  $('gegi-candidate-view').hidden=true;$('gegi-candidate-imaging').hidden=true;
+  for(const id of ['gegi-candidate-map-view','gegi-candidate-summary','gegi-candidate-features','gegi-candidate-plots'])$(id).replaceChildren();
+  for(const id of ['gegi-candidate-map','gegi-candidate-trigger','gegi-candidate-contact'])options(id,[]);
+  $('gegi-candidate-receipt').textContent='No acquisition selected.';
+  $('gegi-candidate-record').textContent='';candidateControls();
 }
 function showCandidateJob(job){
   const changed=candidateJob?.name!==job.name||candidateJob?.report_sha256!==job.report_sha256;
@@ -1579,9 +1689,10 @@ $('gegi-candidate-refresh').onclick=refreshCandidateRuns;
 $('gegi-candidate-start').onclick=startCandidateRun;
 $('gegi-candidate-stop').onclick=()=>manageCandidateRun('stop');
 $('gegi-candidate-resume').onclick=()=>manageCandidateRun('resume');
+$('gegi-candidate-delete').onclick=()=>deleteStoredRun('candidate',candidateJob);
 $('gegi-candidate-mode').onchange=candidateModeFields;
 candidateModeFields();
-$('gegi-candidate-job').onchange=()=>{++candidateGeneration;++candidateEventGeneration;++candidatePlaneGeneration;candidateJob=null;candidatePage=null;$('gegi-candidate-view').hidden=true;$('gegi-candidate-imaging').hidden=true;$('gegi-candidate-map-view').replaceChildren();$('gegi-candidate-map').value='';$('gegi-candidate-summary').replaceChildren();const name=$('gegi-candidate-job').value;if(name)void inspectCandidateJob(name,true);else candidateStatus('Choose a saved acquisition.');candidateControls();};
+$('gegi-candidate-job').onchange=()=>{clearCandidateSelection();const name=$('gegi-candidate-job').value;if(name)void inspectCandidateJob(name,true);else candidateStatus('Choose a saved acquisition.');};
 $('gegi-candidate-trigger').onchange=$('gegi-candidate-contact').onchange=loadCandidateEvent;
 $('gegi-candidate-previous').onclick=()=>loadCandidatePage(Math.max(0,candidateOffset-100));
 $('gegi-candidate-next').onclick=()=>loadCandidatePage(candidateOffset+100);
@@ -2398,5 +2509,8 @@ $('open-saved-analysis').onclick=()=>{
   void refreshSavedGeGI();
 };
 $('saved-analysis-back').onclick=openRunList;
+$('trash-refresh').onclick=refreshTrash;
+$('trash-empty').onclick=emptyRunTrash;
+$('run-trash').ontoggle=()=>{if($('run-trash').open&&!trashBusy)void refreshTrash();};
 showPage('new');showTask('standard');showResultTab('overview');showWaveformStage();
 (async()=>{try{catalog=await api('/api/workflow/catalog');options('cryostat',catalog.cryostats);electronics();$('numerics').textContent=catalog.numerics;$('setup-limit').textContent=catalog.setup_limit||'';selectDetector('AK02');stageList();for(const id of ['pose','angle-deg','gamma-energy-keV','gegi-source-x','gegi-source-y','gegi-source-z','count','seed','threads','name'])$(id).addEventListener('input',invalidate);$('cryostat').onchange=cryostatChanged;$('detector').onchange=detectorChanged;$('source').onchange=sourceChanged;await poll();$('name').value=uniqueRunName();invalidate();void estimateCandidateStorage();setInterval(poll,2500);}catch(e){notice(e.message,true);$('check').disabled=true;}})();

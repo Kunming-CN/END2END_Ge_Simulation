@@ -94,6 +94,10 @@
       opacity:.5;
       cursor:default
     }
+    button.danger {
+      color: #9e3434;
+      border-color: #d6b2b2;
+    }
     button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible {
       outline:3px solid #efa21e;
       outline-offset:3px
@@ -1184,6 +1188,18 @@
             <button id="open-saved-analysis" type="button">Open saved analyses</button>
           </div>
         </section>
+        <section>
+          <details id="run-trash">
+            <summary id="run-trash-summary">Recycle bin</summary>
+            <p class="muted">Deleted runs stay here until restored or permanently removed.</p>
+            <div class="actions">
+              <button id="trash-refresh" type="button">Refresh recycle bin</button>
+              <button id="trash-empty" type="button" class="danger" disabled>Empty recycle bin</button>
+            </div>
+            <p id="trash-status" class="notice" role="status" aria-live="polite"></p>
+            <div id="trash-entries"></div>
+          </details>
+        </section>
       </div>
       <div id="run-detail" hidden>
         <div class="detail-toolbar">
@@ -1387,6 +1403,7 @@
             <div class="actions">
               <button id="gegi-candidate-stop" disabled>Stop</button>
               <button id="gegi-candidate-resume" disabled>Resume saved acquisition</button>
+              <button id="gegi-candidate-delete" class="danger" disabled>Delete run</button>
             </div>
             <p id="gegi-candidate-status" class="notice" role="status" aria-live="polite">Run a small fresh acquisition, or refresh to open saved candidates.</p>
             <div id="gegi-candidate-summary"></div>

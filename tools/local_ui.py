@@ -319,6 +319,10 @@ class Handler(BaseHTTPRequestHandler):
                 if parts.query or parts.fragment or self.server.workflow_controller is None:
                     raise ValueError('Invalid saved GeGI input inventory request')
                 return self.send_data(200,self.server.workflow_controller.gegi_saved_options())
+            if parts.path == '/api/workflow/trash':
+                if parts.query or parts.fragment or self.server.workflow_controller is None:
+                    raise ValueError('Invalid recycle-bin inventory request')
+                return self.send_data(200, self.server.workflow_controller.run_trash().snapshot())
             if parts.path == '/api/workflow/gegi-candidates/options':
                 if parts.query or parts.fragment or self.server.workflow_controller is None:
                     raise ValueError('Invalid mixed-source acquisition inventory request')
@@ -604,6 +608,21 @@ class Handler(BaseHTTPRequestHandler):
             if not 1 <= size <= 4096:
                 raise ValueError('Request size must be 1..4096 bytes')
             data = decode_json(self.rfile.read(size).decode('utf-8'))
+            if self.path in ('/api/workflow/trash', '/api/workflow/trash/restore', '/api/workflow/trash/empty'):
+                if type(data) is not dict or self.server.workflow_controller is None:
+                    raise ValueError('Choose a run or an existing recycle-bin entry')
+                trash = self.server.workflow_controller.run_trash()
+                if self.path == '/api/workflow/trash':
+                    if set(data) != {'kind', 'name'} or type(data['kind']) is not str or type(data['name']) is not str:
+                        raise ValueError('Choose the run kind and name')
+                    return self.send_data(200, trash.move(**data))
+                if self.path.endswith('/restore'):
+                    if set(data) != {'id'}:
+                        raise ValueError('Choose one recycle-bin entry')
+                    return self.send_data(200, trash.restore(data['id']))
+                if set(data) != {'ids', 'confirmation'}:
+                    raise ValueError('Confirm the explicitly selected recycle-bin entries')
+                return self.send_data(200, trash.empty(**data))
             if self.path == '/api/workflow/gegi-candidates/analyze':
                 fields = {'name', 'report_sha256', 'calibration_id', 'z_mm', 'extent_mm', 'step_mm', 'sigma_deg', 'plane_prior'}
                 if (type(data) is not dict or not fields <= set(data) <= fields | {'compatibility', 'lateral_calibration_id', 'include_shared_strip'}

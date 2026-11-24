@@ -62,6 +62,7 @@ class WorkflowController:
         self._gegi_dual_control=None
         self._gegi_candidate_control=None
         self._gegi_readers={}
+        self._run_trash=None
         path=safe_path(self.root,STATE+'/workflow-jobs.json')
         self._state_path=path
         if path.exists():
@@ -437,7 +438,7 @@ class WorkflowController:
                 self._jobs.append(job);self._persist()
             return self._launch(job)
 
-    def _view(self,job):
+    def _view(self,job,*,trash_busy=None):
         out={k:copy.deepcopy(job[k]) for k in ('id','name','status','created_utc')}
         out['selection']=copy.deepcopy(job['plan']['resolved']['selection'])
         out['source_pose']=copy.deepcopy(job['plan']['resolved'].get('source_pose'))
@@ -481,10 +482,22 @@ class WorkflowController:
             # This live progress is display-only until terminal artifact verification.
             if (directory/'response/progress.json').exists():out['response_progress']=W.read(directory/'response/progress.json')
         except (OSError,ValueError,ControlError):pass
+        out.update(self.run_trash().eligibility('workflow',job['name'],busy=trash_busy))
         return out
 
     def snapshot(self):
-        with self._lock:return {'kind':'local_workflow_state_v1','busy':self.own_busy(),'jobs':[self._view(j) for j in self._jobs]}
+        with self._lock:
+            busy=self.own_busy()
+            trash_busy=busy or self._peer_busy()
+            return {'kind':'local_workflow_state_v1','busy':busy,
+                    'jobs':[self._view(j,trash_busy=trash_busy) for j in self._jobs]}
+
+    def run_trash(self):
+        with self._lock:
+            if self._run_trash is None:
+                from local_run_trash import RunTrash
+                self._run_trash=RunTrash(self)
+            return self._run_trash
 
     def artifact(self,name,file):
         with self._lock:
