@@ -23,8 +23,13 @@ The full frontend DOM suite and all seven final package tests pass. The initial
 package check ran during the last frontend edit and detected changed package
 identity; its log is retained and the stable-source rerun passes. The owner's
 idle Control was refreshed on port 5435; its real API exposes the new capabilities,
-retains the completed classroom run, and has an empty recycle bin. Publication
-follows this verified source milestone.
+retains the completed classroom run, and has an empty recycle bin. Runtime
+`c6c5d4b242ac92215498684d4574259cc6cba634` is pushed to PR #4 and published as
+the [latest student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-c6c5d4b242ac).
+Public bytes, packaged source commit and the included trash module were verified:
+1,432,273 bytes, SHA256
+`abc033ca08cd5c36190d0dcab1a01c74f29336d03f8b4184f229bd709dbaa16d`.
+Main still awaits its required external review. No Pages sources changed here.
 
 ## November 24 Start simulation repair and classroom acceptance
 
