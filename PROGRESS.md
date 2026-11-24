@@ -13,7 +13,12 @@ Control.cmd invocation and -NoBrowser invocation both exited successfully and
 reused the same PID 8212/port 4153, with one listener. The initial fixture run's
 WinError 10013 is retained; the same tests passed through normal elevated tool
 approval. Evidence is in `.local/student-ui-v1/`; scientific workers and locks
-are unchanged. The repaired runtime is ready for publication.
+are unchanged. Runtime `20f4fee81998f05b9aed121e0ef456f2c0daaa85` is pushed to
+PR #4 and published as the [latest student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-20f4fee81998).
+Public bytes and package commit were verified: 1,424,281 bytes, SHA256
+`cdd064fd4d85af9303780e83755f7c189dab00d86237cd58105b2b3c777c160c`.
+The local Control page is open; repeated launch reuses its session. Main remains
+awaiting its required external approval.
 
 ## November 24 student interface simplification
 
@@ -38,7 +43,8 @@ Evidence and preserved initial failures are in `.local/student-ui-v1/`.
 The maintained guide and generated Pages guide follow the revised workflow.
 Runtime commit `60bd997d1328f79ab28c96d4732da85f5254ba15` is pushed to PR #4.
 The [new student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-60bd997d1328)
-is the latest download. Its public ZIP and packaged commit were verified:
+was published and is included in the newer Control repair above. Its public ZIP
+and packaged commit were verified:
 1,423,583 bytes, SHA256
 `15e3723cdaa32d7157161563d43ceb65f40970ffe01986ef33171c46395375bf`.
 The protected main branch still requires an external approval; Pages deployment
