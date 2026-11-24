@@ -21,7 +21,14 @@ support; the environment limitation is recorded and the fixture failure retained
 No new Mac full-chain run was performed. Use the repaired release for a new run;
 this delivery does not migrate earlier failed scientific directories.
 Publication and validation records are in `.local/macos-geometry-handoff/`
-and `.local/macos-port/sunil-bugfix-*.log`. This student support task leaves
+and `.local/macos-port/sunil-bugfix-*.log`. The repaired
+[student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-4bf93e41ee43)
+is the latest download, with exact public bytes and packaged commit verified.
+Its 1,415,954-byte ZIP has SHA256
+`4654abb9c638a775f71789efab93659a76128f31e42ecae4ae0c8bdbd0d53da5`.
+[PR #4](https://github.com/Kunming-CN/END2END_Ge_Simulation/pull/4) awaits the
+protected main branch's required approval; automatic merging is disabled.
+This student support task leaves
 the reconstruction ownership and next development steps below in place.
 
 ## Current state and continuation
