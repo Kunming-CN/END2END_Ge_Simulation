@@ -1,5 +1,20 @@
 # GeSignal handoff
 
+## November 24 Control reopening repair
+
+The owner's second Control.cmd launch was blocked by the still-running hidden
+desktop-acceptance server (PID 10884, loopback port 2744). Root verified its
+original command and start time, then stopped that owned UI server only.
+The previous launcher reported an occupied server lease without reopening its
+page. The repaired shared Python entry reuses a responding local Control session
+on repeated launches while retaining the single-server lease. Seven targeted
+tests pass. Actual Windows Control.cmd startup opened the page; the second
+Control.cmd invocation and -NoBrowser invocation both exited successfully and
+reused the same PID 8212/port 4153, with one listener. The initial fixture run's
+WinError 10013 is retained; the same tests passed through normal elevated tool
+approval. Evidence is in `.local/student-ui-v1/`; scientific workers and locks
+are unchanged. The repaired runtime is ready for publication.
+
 ## November 24 student interface simplification
 
 Control now has New simulation, My runs and Help. Ordinary detector setup and

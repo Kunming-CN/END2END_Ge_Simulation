@@ -2,6 +2,7 @@
 import argparse
 from contextlib import contextmanager
 import hashlib
+from http.client import HTTPConnection, HTTPException
 from http.cookies import SimpleCookie, CookieError
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -131,6 +132,10 @@ def guarded(root, relative):
     return current
 
 
+class ControlAlreadyOpen(RuntimeError):
+    pass
+
+
 @contextmanager
 def server_lease(root):
     folder = guarded(root, STATE)
@@ -146,10 +151,13 @@ def server_lease(root):
             try:
                 msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
             except OSError as error:
-                raise RuntimeError('Local control is already open; use its existing browser window.') from error
+                raise ControlAlreadyOpen('Local control is already open; use its existing browser window.') from error
         else:
             import fcntl
-            fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            try:
+                fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as error:
+                raise ControlAlreadyOpen('Local control is already open; use its existing browser window.') from error
         try:
             yield folder
         finally:
@@ -158,6 +166,45 @@ def server_lease(root):
                 msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
             else:
                 fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+
+
+def existing_control_session(root):
+    """Verify the locked server's saved loopback session without starting work."""
+    try:
+        saved = decode_json(guarded(root, STATE + '/server.json').read_text(encoding='utf-8'))
+        if (not isinstance(saved, dict) or set(saved) != {'pid', 'url', 'origin'} or
+                type(saved['pid']) is not int or saved['pid'] <= 0 or
+                not isinstance(saved['origin'], str) or not isinstance(saved['url'], str)):
+            raise ValueError('Invalid saved Control session')
+        origin = saved['origin']
+        parsed = urlsplit(origin)
+        port = parsed.port
+        if (parsed.scheme != 'http' or parsed.hostname != '127.0.0.1' or
+                port is None or not 1 <= port <= 65535 or origin != 'http://127.0.0.1:' + str(port)):
+            raise ValueError('Saved Control origin is not loopback')
+        session = saved['url']
+        token = urlsplit(session).fragment
+        if (not token or not token.isascii() or
+                any(not (char.isalnum() or char in '-_') for char in token) or
+                session != origin + '/#' + token):
+            raise ValueError('Invalid saved Control session link')
+        connection = HTTPConnection('127.0.0.1', port, timeout=3)
+        try:
+            connection.request('GET', '/api/state', headers={'X-Control-Token': token})
+            response = connection.getresponse()
+            body = response.read()
+            if response.status != 200:
+                raise ValueError('Saved Control session was not accepted')
+            state = decode_json(body.decode('utf-8'))
+            if (not isinstance(state, dict) or not isinstance(state.get('jobs'), list) or
+                    not isinstance(state.get('runs'), list) or 'active' not in state):
+                raise ValueError('Saved Control server did not return its state')
+        finally:
+            connection.close()
+        return origin, session
+    except (OSError, ValueError, HTTPException) as error:
+        raise RuntimeError('Control is already open, but its saved session could not be verified. '
+                           'No second server was started.') from error
 
 
 class Server(ThreadingHTTPServer):
@@ -675,30 +722,36 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if not 0 <= args.port <= 65535:
         parser.error('Port must be 0..65535')
-    with server_lease(ROOT) as folder:
-        coordination = threading.RLock()
-        controller = Controller(ROOT, coordination_lock=coordination)
-        gamma = GammaController(ROOT, coordination_lock=coordination, peer_busy=controller.own_busy)
-        configured=WorkflowController(ROOT,coordination_lock=coordination,
-                                      peer_busy=lambda: controller.own_busy() or gamma.own_busy())
-        controller.set_peer_busy(lambda: gamma.own_busy() or configured.own_busy())
-        gamma.set_peer_busy(lambda: controller.own_busy() or configured.own_busy())
-        server = Server(args.port, controller, gamma_controller=gamma, workflow_controller=configured)
-        session = server.origin + '/#' + server.token
-        receipt = folder / 'server.json'
-        receipt.write_text(json.dumps({'pid': os.getpid(), 'url': session, 'origin': server.origin}, indent=2), encoding='utf-8')
-        print('Local control: ' + server.origin + ' (session link opens in your browser).', flush=True)
-        print('Keep this terminal open. Stop waits for the current workflow stage; incomplete or uncertain workers are preserved for inspection.', flush=True)
+    try:
+        with server_lease(ROOT) as folder:
+            coordination = threading.RLock()
+            controller = Controller(ROOT, coordination_lock=coordination)
+            gamma = GammaController(ROOT, coordination_lock=coordination, peer_busy=controller.own_busy)
+            configured=WorkflowController(ROOT,coordination_lock=coordination,
+                                          peer_busy=lambda: controller.own_busy() or gamma.own_busy())
+            controller.set_peer_busy(lambda: gamma.own_busy() or configured.own_busy())
+            gamma.set_peer_busy(lambda: controller.own_busy() or configured.own_busy())
+            server = Server(args.port, controller, gamma_controller=gamma, workflow_controller=configured)
+            session = server.origin + '/#' + server.token
+            receipt = folder / 'server.json'
+            receipt.write_text(json.dumps({'pid': os.getpid(), 'url': session, 'origin': server.origin}, indent=2), encoding='utf-8')
+            print('Local control: ' + server.origin + ' (session link opens in your browser).', flush=True)
+            print('Keep this terminal open. Stop waits for the current workflow stage; incomplete or uncertain workers are preserved for inspection.', flush=True)
+            if not args.no_browser:
+                webbrowser.open(session)
+            try:
+                server.serve_forever(poll_interval=0.5)
+            except KeyboardInterrupt:
+                pass
+            finally:
+                server.server_close()
+                # Keep scientific/job records; remove only this ephemeral session secret.
+                receipt.unlink(missing_ok=True)
+    except ControlAlreadyOpen:
+        origin, session = existing_control_session(ROOT)
         if not args.no_browser:
             webbrowser.open(session)
-        try:
-            server.serve_forever(poll_interval=0.5)
-        except KeyboardInterrupt:
-            pass
-        finally:
-            server.server_close()
-            # Keep scientific/job records; remove only this ephemeral session secret.
-            receipt.unlink(missing_ok=True)
+        print('Local control already running: ' + origin + ' (existing session reused).', flush=True)
     return 0
 
 

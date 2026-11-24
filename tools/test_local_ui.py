@@ -287,6 +287,108 @@ class Protocol(unittest.TestCase):
         # Released file remains evidence; a subsequent process can acquire it.
         with U.server_lease(self.controller.root): pass
 
+    def control_session_receipt(self, **changes):
+        saved = {'pid': 1, 'url': self.server.origin + '/#' + self.server.token,
+                 'origin': self.server.origin}
+        saved.update(changes)
+        receipt = U.guarded(self.controller.root, U.STATE + '/server.json')
+        receipt.write_text(json.dumps(saved), encoding='utf-8')
+        return receipt
+
+    def test_repeated_launch_opens_verified_existing_session_and_retains_lease(self):
+        with U.server_lease(self.controller.root):
+            receipt = self.control_session_receipt()
+            original = receipt.read_bytes()
+            with patch.object(U, 'ROOT', self.controller.root), \
+                 patch.object(U, 'Controller', side_effect=AssertionError('Second controller')), \
+                 patch.object(U.webbrowser, 'open', return_value=True) as opened:
+                self.assertEqual(U.main([]), 0)
+            opened.assert_called_once_with(self.server.origin + '/#' + self.server.token)
+            self.assertEqual(receipt.read_bytes(), original)
+            with self.assertRaises(U.ControlAlreadyOpen):
+                with U.server_lease(self.controller.root): pass
+        self.assertEqual(self.controller.calls, [])
+
+    def test_repeated_no_browser_launch_verifies_without_opening_browser(self):
+        with U.server_lease(self.controller.root):
+            receipt = self.control_session_receipt()
+            original = receipt.read_bytes()
+            with patch.object(U, 'ROOT', self.controller.root), \
+                 patch.object(U, 'Controller', side_effect=AssertionError('Second controller')):
+                self.assertEqual(U.main(['--no-browser']), 0)
+            self.assertEqual(receipt.read_bytes(), original)
+        self.opener.assert_not_called()
+        self.assertEqual(self.controller.calls, [])
+
+    def test_repeated_launch_refuses_wrong_token_and_unrecognized_live_response(self):
+        with U.server_lease(self.controller.root):
+            for token, state in (('wrong-token', {'active': None, 'jobs': [], 'runs': []}),
+                                 (self.server.token, {'unrelated': True})):
+                with self.subTest(token_matches=token == self.server.token):
+                    receipt = self.control_session_receipt(url=self.server.origin + '/#' + token)
+                    original = receipt.read_bytes()
+                    with patch.object(U, 'ROOT', self.controller.root), \
+                         patch.object(U, 'Controller', side_effect=AssertionError('Second controller')), \
+                         patch.object(self.controller, 'snapshot', return_value=state):
+                        with self.assertRaisesRegex(RuntimeError, 'could not be verified'):
+                            U.main([])
+                    self.assertEqual(receipt.read_bytes(), original)
+        self.opener.assert_not_called()
+        self.assertEqual(self.controller.calls, [])
+
+    def test_repeated_launch_refuses_invalid_receipt_before_any_connection(self):
+        with U.server_lease(self.controller.root):
+            for changes in ({'origin': 'https://example.com'},
+                            {'origin': 'http://127.0.0.1:0'},
+                            {'url': self.server.origin + '/?other=1#' + self.server.token},
+                            {'url': self.server.origin + '/#bad\r\nheader'},
+                            {'pid': True}):
+                with self.subTest(changes=changes):
+                    receipt = self.control_session_receipt(**changes)
+                    original = receipt.read_bytes()
+                    with patch.object(U, 'ROOT', self.controller.root), \
+                         patch.object(U, 'Controller', side_effect=AssertionError('Second controller')), \
+                         patch.object(U, 'HTTPConnection') as connection:
+                        with self.assertRaisesRegex(RuntimeError, 'could not be verified'):
+                            U.main([])
+                    connection.assert_not_called()
+                    self.assertEqual(receipt.read_bytes(), original)
+        self.opener.assert_not_called()
+
+    def test_repeated_launch_refuses_missing_or_unresponsive_session(self):
+        with U.server_lease(self.controller.root):
+            with patch.object(U, 'ROOT', self.controller.root), \
+                 patch.object(U, 'Controller', side_effect=AssertionError('Second controller')), \
+                 patch.object(U, 'HTTPConnection', side_effect=ConnectionRefusedError) as connection:
+                with self.assertRaisesRegex(RuntimeError, 'could not be verified'):
+                    U.main([])
+                connection.assert_not_called()
+                receipt = self.control_session_receipt()
+                original = receipt.read_bytes()
+                with self.assertRaisesRegex(RuntimeError, 'could not be verified'):
+                    U.main([])
+                connection.assert_called_once()
+                self.assertEqual(receipt.read_bytes(), original)
+        self.opener.assert_not_called()
+
+    def test_released_lease_starts_fresh_server_and_ignores_stale_receipt(self):
+        with U.server_lease(self.controller.root):
+            receipt = self.control_session_receipt(url=self.server.origin + '/#stale-token')
+        with patch.object(U, 'ROOT', self.controller.root), \
+             patch.object(U, 'Controller'), patch.object(U, 'GammaController'), \
+             patch.object(U, 'WorkflowController'), patch.object(U, 'Server') as server, \
+             patch.object(U, 'HTTPConnection') as connection:
+            server.return_value.origin = 'http://127.0.0.1:12345'
+            server.return_value.token = 'new-test-session'
+            self.assertEqual(U.main(['--no-browser']), 0)
+        server.assert_called_once()
+        server.return_value.serve_forever.assert_called_once_with(poll_interval=0.5)
+        server.return_value.server_close.assert_called_once()
+        connection.assert_not_called()
+        self.opener.assert_not_called()
+        self.assertFalse(receipt.exists())
+        with U.server_lease(self.controller.root): pass
+
     def gamma_fixture(self):
         from test_local_ui_gamma_jobs import Runner
         self.gamma_runner = Runner()
