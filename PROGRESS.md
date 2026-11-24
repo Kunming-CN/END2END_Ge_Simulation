@@ -33,7 +33,15 @@ Control server was reopened in desktop Chrome with all required prerequisites
 ready and Start enabled. All 37 HTTP protocol tests pass. The generated site
 and standalone checker pass for build
 `1c16a2b12c9e4de1ab104cc6e1bbc962013ab27fd4676f8a1848b6096bd6976b`.
-Public delivery is the remaining step.
+Runtime `6691bd7e142ce57c6376f76118afeaf402e9e28e` is published as the
+[latest student release](https://github.com/Kunming-CN/END2END_Ge_Simulation/releases/tag/student-runtime-6691bd7e142c).
+The actual public ZIP has 1,445,460 bytes and SHA256
+`adcb8877b25741364201c8598ac890e2172fb5e3042cdb7868e2438368cb3289`;
+its packaged commit, root onboarding entries and complete language/package
+guide match the verified build. The maintained public setup entry remains
+<https://kunming-cn.github.io/END2END_Ge_Simulation/guide.html>.
+Publication follows the existing owner-maintenance exception documented in
+tools/MAINTENANCE.md; branch protection and account permissions are unchanged.
 
 ## November 24 My runs recycle bin
 
